@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --night-void: #855a34;
+  --night-ink: #ddbb8c;
+  --night-panel: rgba(247, 233, 205, 0.88);
+  --night-panel-strong: rgba(232, 210, 173, 0.96);
+  --paper-soft: #edd8b5;
+  --paper-main: #f8e9cc;
+  --paper-deep: #996534;
+  --amber: #a96f3d;
+  --amber-soft: rgba(169, 111, 61, 0.16);
+  --moss-soft: rgba(125, 141, 99, 0.14);
+  --line-soft: rgba(110, 73, 38, 0.16);
+  --line-strong: rgba(110, 73, 38, 0.3);
+  --text-main: #302114;
+  --text-dim: rgba(48, 33, 20, 0.7);
+  --text-faint: rgba(48, 33, 20, 0.48);
+  --shadow-deep: 0 28px 92px rgba(86, 55, 27, 0.18);
+  --shadow-amber: 0 16px 44px rgba(146, 92, 47, 0.16);
+  --grain:
+    radial-gradient(circle at 18% 14%, rgba(255, 250, 241, 0.24) 0, transparent 22%),
+    radial-gradient(circle at 82% 8%, rgba(117, 76, 37, 0.12) 0, transparent 28%),
+    radial-gradient(circle at 50% 100%, rgba(160, 126, 82, 0.08) 0, transparent 24%);
+  --wood-grain:
+    repeating-linear-gradient(
+      90deg,
+      rgba(113, 73, 34, 0.1) 0 2px,
+      rgba(244, 227, 198, 0.06) 2px 9px,
+      rgba(140, 95, 52, 0.08) 9px 16px,
+      rgba(255, 248, 236, 0.04) 16px 24px,
+      rgba(122, 83, 42, 0.08) 24px 40px
+    );
+  --wood-sheen:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      rgba(255, 249, 239, 0.18) 14%,
+      transparent 30%,
+      rgba(120, 81, 40, 0.08) 48%,
+      transparent 66%,
+      rgba(255, 249, 239, 0.12) 84%,
+      transparent 100%
+    );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: linear-gradient(180deg, #8b5f38 0%, #b37b47 24%, #d3a36c 58%, #e5c08f 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    var(--wood-grain),
+    linear-gradient(180deg, rgba(150, 101, 55, 0.96) 0%, rgba(182, 125, 72, 0.98) 22%, rgba(213, 169, 112, 0.98) 54%, rgba(236, 205, 158, 0.98) 100%),
+    var(--wood-sheen),
+    var(--grain);
+  color: var(--text-main);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(255, 249, 238, 0.3) 0, transparent 20%),
+    radial-gradient(circle at 84% 16%, rgba(107, 68, 31, 0.14) 0, transparent 24%),
+    linear-gradient(120deg, transparent 0%, rgba(255, 248, 237, 0.1) 18%, transparent 32%, rgba(95, 63, 32, 0.08) 50%, transparent 70%, rgba(255, 249, 241, 0.1) 88%, transparent 100%);
+  opacity: 0.84;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(87, 56, 28, 0.08) 0 1px,
+      transparent 1px 12px,
+      rgba(255, 249, 238, 0.04) 12px 19px,
+      transparent 19px 32px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 18px,
+      rgba(98, 64, 32, 0.03) 18px 19px,
+      transparent 19px 38px
+    );
+  mask-image: radial-gradient(circle at center, black 20%, transparent 78%);
+}
+
+::placeholder {
+  color: rgba(101, 72, 45, 0.48);
+}
+
+::selection {
+  background: rgba(191, 133, 73, 0.24);
+}
+
+.page-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  background:
+    linear-gradient(180deg, rgba(247, 235, 209, 0.86), rgba(227, 204, 165, 0.94)),
+    var(--wood-grain);
+  box-shadow: var(--shadow-deep);
+}
+
+.page-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 241, 0.24), transparent 40%),
+    radial-gradient(circle at top left, rgba(255, 245, 228, 0.22), transparent 24%);
+}
+
+.page-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(111, 73, 35, 0.08) 0 2px,
+      transparent 2px 14px,
+      rgba(255, 249, 238, 0.05) 14px 22px,
+      transparent 22px 40px
+    );
+}
+
+.paper-panel {
+  position: relative;
+  border: 1px solid rgba(115, 77, 39, 0.14);
+  background:
+    linear-gradient(180deg, rgba(239, 224, 194, 0.94), rgba(216, 189, 148, 0.96)),
+    var(--wood-grain);
+  box-shadow: var(--shadow-deep);
+}
+
+.paper-panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 248, 236, 0.26), transparent 34%);
+}
+
+.paper-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.14;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(108, 71, 35, 0.09) 0 2px,
+      transparent 2px 11px,
+      rgba(255, 248, 238, 0.05) 11px 17px,
+      transparent 17px 32px
+    );
+}
+
+.paper-sheet {
+  position: relative;
+  border: 1px solid rgba(182, 133, 79, 0.22);
+  background:
+    linear-gradient(180deg, rgba(252, 245, 231, 0.98), rgba(236, 218, 187, 0.94)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.42), transparent 34%);
+  color: #221d17;
+  box-shadow: 0 22px 60px rgba(130, 93, 48, 0.16);
+}
+
+.paper-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.26;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(137, 92, 48, 0.08) 0 1px,
+      transparent 1px 14px,
+      rgba(255, 251, 244, 0.08) 14px 20px,
+      transparent 20px 34px
+    ),
+    linear-gradient(transparent 96%, rgba(63, 48, 29, 0.08) 96%);
+  background-size: 100% 100%, 100% 36px;
+}
+
+.wood-dialog {
+  position: relative;
+  border: 1px solid rgba(178, 129, 73, 0.3);
+  background:
+    linear-gradient(180deg, rgba(233, 205, 160, 0.98), rgba(207, 168, 115, 0.97)),
+    var(--wood-grain),
+    radial-gradient(circle at top, rgba(255, 249, 239, 0.18), transparent 34%);
+  color: #221d17;
+  box-shadow: 0 24px 64px rgba(130, 92, 45, 0.15);
+}
+
+.wood-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.28;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(118, 78, 37, 0.16) 0 2px,
+      transparent 2px 13px,
+      rgba(255, 247, 233, 0.06) 13px 20px,
+      transparent 20px 34px
+    ),
+    linear-gradient(180deg, transparent 96%, rgba(63, 48, 29, 0.08) 96%);
+  background-size: 100% 100%, 100% 36px;
+}
+
+.wood-chip {
+  border: 1px solid rgba(168, 124, 69, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 237, 0.62), rgba(246, 232, 206, 0.58)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(132, 91, 47, 0.06) 0 1px,
+      transparent 1px 10px,
+      rgba(255, 250, 241, 0.08) 10px 15px,
+      transparent 15px 24px
+    );
+  color: #6a4f33;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.wood-board {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(93, 58, 28, 0.26);
+  background:
+    linear-gradient(180deg, rgba(229, 202, 164, 0.96), rgba(191, 152, 104, 0.98)),
+    var(--wood-grain);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 229, 0.22),
+    inset 0 -1px 0 rgba(94, 61, 30, 0.12),
+    0 20px 48px rgba(74, 44, 20, 0.22);
+}
+
+.wood-board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(131, 87, 45, 0.16) 0 2px,
+      transparent 2px 14px,
+      rgba(255, 246, 231, 0.08) 14px 21px,
+      transparent 21px 36px
+    ),
+    linear-gradient(135deg, rgba(255, 249, 237, 0.12), transparent 36%);
+}
+
+.wood-board::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(233, 205, 162, 0.06);
+}
+
+.archive-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: theme("fontFamily.mono");
+  font-size: 0.69rem;
+  letter-spacing: 0.26em;
+  color: #8f6034;
+}
+
+.archive-label::before {
+  content: "";
+  display: inline-block;
+  width: 2rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.stagger-rise {
+  animation: rise-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ambient-float {
+  animation: ambient-float 7s ease-in-out infinite;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ambient-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

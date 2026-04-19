@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InterviewDimension {
+  joy
+}
+
+enum InterviewSessionStatus {
+  active
+  completed
+  abandoned
+}
+
+enum InterviewRole {
+  user
+  assistant
+  system
+}
+
+enum InputMode {
+  text
+  voice
+}
+
+enum JoyInterviewStage {
+  collect_event
+  probe_reason
+  probe_pattern
+  wrap_up
+  finalize
+}
+
+enum JoyEntrySource {
+  ai_draft_direct
+  ai_draft_edited
+}
+
+enum AIRequestStage {
+  transcribe
+  extract
+  generate
+}
+
+model User {
+  id          String             @id @default(cuid())
+  createdAt   DateTime           @default(now())
+  settings    UserSettings?
+  sessions    InterviewSession[]
+  joyEntries  JoyEntry[]
+  memoryFacts MemoryFact[]
+}
+
+model UserSettings {
+  id                            String   @id @default(cuid())
+  userId                        String   @unique
+  memoryEnabled                 Boolean  @default(false)
+  transcriptAutoFallbackEnabled Boolean  @default(true)
+  timezone                      String   @default("Asia/Shanghai")
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+  user                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InterviewSession {
+  id                    String                 @id @default(cuid())
+  userId                String
+  dimension             InterviewDimension
+  status                InterviewSessionStatus @default(active)
+  stage                 JoyInterviewStage      @default(collect_event)
+  turnCount             Int                    @default(0)
+  startedAt             DateTime               @default(now())
+  completedAt           DateTime?
+  lastAssistantQuestion String?
+  draftSummary          String?
+  finalEntryId          String?                @unique
+  messages              InterviewMessage[]
+  snapshots             JoyInterviewSnapshot[]
+  aiRequestLogs         AIRequestLog[]
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joyEntry              JoyEntry?              @relation("SessionJoyEntry")
+
+  @@index([userId, status])
+}
+
+model InterviewMessage {
+  id        String           @id @default(cuid())
+  sessionId String
+  role      InterviewRole
+  inputMode InputMode?
+  content   String
+  sequence  Int
+  createdAt DateTime         @default(now())
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, sequence])
+  @@index([sessionId, createdAt])
+}
+
+model JoyInterviewSnapshot {
+  id              String           @id @default(cuid())
+  sessionId       String
+  version         Int
+  event           String?
+  feeling         String?
+  whyItMattered   String?
+  happinessType   String?
+  selfPattern     String?
+  confidence      Float?
+  missingSlots    String[]
+  createdAt       DateTime         @default(now())
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, version])
+  @@index([sessionId, createdAt])
+}
+
+model JoyEntry {
+  id              String         @id @default(cuid())
+  userId          String
+  sessionId       String   @unique
+  date            DateTime
+  title           String
+  content         String
+  event           String?
+  feeling         String?
+  whyItMattered   String?
+  happinessType   String?
+  selfPattern     String?
+  tags            String[]
+  source          JoyEntrySource
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model MemoryFact {
+  id              String             @id @default(cuid())
+  userId          String
+  dimension       InterviewDimension
+  kind            String
+  summary         String
+  evidenceEntryIds String[]
+  salience        Float              @default(0)
+  lastUsedAt      DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dimension, kind])
+}
+
+model AIRequestLog {
+  id        String          @id @default(cuid())
+  sessionId String
+  stage     AIRequestStage
+  provider  String
+  latencyMs Int?
+  success   Boolean
+  errorCode String?
+  createdAt DateTime        @default(now())
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, stage])
+}
