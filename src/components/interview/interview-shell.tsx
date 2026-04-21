@@ -21,11 +21,9 @@ const interviewBootstrapTasks = new Map<InterviewDimension, Promise<InterviewSes
 
 function MessageBubble({
   message,
-  label,
   content
 }: {
   message?: InterviewMessage;
-  label?: string;
   content?: string;
 }) {
   const isAssistant = message ? message.role === "assistant" : true;
@@ -40,9 +38,6 @@ function MessageBubble({
             : "border-[rgba(133,91,47,0.2)] bg-[linear-gradient(180deg,rgba(221,185,133,0.96),rgba(195,152,97,0.96))] text-[#2f2823]"
         }`}
       >
-        <p className="mb-2 font-mono text-[0.65rem] tracking-[0.22em] text-current/55">
-          {label ?? (isAssistant ? "访谈者" : "我的回答")}
-        </p>
         <p className="whitespace-pre-wrap">{bubbleContent}</p>
       </div>
     </div>
@@ -164,7 +159,6 @@ export function InterviewShell() {
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const showFinalizeButton = status === "completed" && !draft;
-  const showFinalizeHint = !draft && !showFinalizeButton;
   const showRestartButton = Boolean(sessionId || messages.length > 0);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
@@ -493,9 +487,6 @@ export function InterviewShell() {
             <h2 className="font-display text-[2rem] leading-tight text-ink md:text-[2.35rem]">
               {dimensionMeta.title}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/72">
-              {dimensionMeta.description}
-            </p>
           </div>
           {showRestartButton ? (
             <div className="flex flex-wrap gap-2">
@@ -513,18 +504,14 @@ export function InterviewShell() {
 
         <div className="relative z-10 mt-4 flex min-h-[280px] flex-col gap-3 rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
           <div className="flex items-center justify-between border-b border-[rgba(156,114,70,0.12)] pb-2.5">
-            <p className="max-w-xl text-sm leading-6 text-ink/62">{dimensionMeta.writingHint}</p>
             <p className="font-mono text-[0.68rem] tracking-[0.24em] text-ink/58">{statusText}</p>
           </div>
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
-          {optimisticUserMessage ? <MessageBubble label="我的回答" content={optimisticUserMessage} /> : null}
+          {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} /> : null}
           {showStreamingBubble ? (
-            <MessageBubble
-              label={assistantState === "thinking" ? "访谈者正在思考" : "访谈者正在回应"}
-              content={assistantState === "thinking" ? "我正在顺着你刚刚提到的内容整理下一句。" : streamedAssistantText || "…"}
-            />
+            <MessageBubble content={assistantState === "thinking" ? "正在思考中..." : streamedAssistantText || "…"} />
           ) : null}
           {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
             <div className="flex h-full items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
@@ -533,7 +520,6 @@ export function InterviewShell() {
           ) : null}
           {showBootBubble ? (
             <MessageBubble
-              label={bootState === "restoring" ? "正在恢复对话" : "正在准备开场"}
               content={
                 bootState === "restoring"
                   ? "我正在把你上一次停下来的访谈接回来。"
@@ -545,10 +531,7 @@ export function InterviewShell() {
         </div>
 
         <div className="wood-dialog relative z-10 mt-4 rounded-[30px] p-3.5 shadow-[0_24px_60px_rgba(130,92,45,0.15)]">
-          <div className="flex items-start justify-between gap-4">
-            <label htmlFor="interview-input" className="block max-w-2xl text-sm leading-6 text-[#4e4135]">
-              {dimensionMeta.inputLabel}
-            </label>
+          <div className="flex items-center justify-end gap-4">
             <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[#6b6259]">
               第 {turnCount || 0} 轮
             </p>
@@ -561,9 +544,7 @@ export function InterviewShell() {
             className="mt-2.5 min-h-24 w-full resize-none rounded-[24px] border border-[rgba(133,91,47,0.22)] bg-[linear-gradient(180deg,rgba(251,245,235,0.94),rgba(241,227,202,0.95)),repeating-linear-gradient(90deg,rgba(144,98,52,0.05)_0_1px,transparent_1px_12px,rgba(255,250,241,0.06)_12px_18px,transparent_18px_28px)] px-4 py-2.5 text-sm leading-6 text-[#241d16] shadow-[inset_0_1px_0_rgba(255,255,255,0.58),0_10px_24px_rgba(125,91,47,0.08)] outline-none transition placeholder:text-[#8d6b4a] focus:border-[#9f6838] focus:bg-[linear-gradient(180deg,rgba(252,247,239,0.98),rgba(244,231,207,0.98))] focus:shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_0_0_4px_rgba(169,111,61,0.12)]"
           />
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2.5">
-            <p className="text-sm text-[#5a4a3c]">
-              {showFinalizeHint ? "访谈收束后可整理成日志草稿。" : draft ? "日志草稿已整理，可在右侧查看。" : ""}
-            </p>
+            {draft ? <p className="text-sm text-[#5a4a3c]">日志草稿已整理，可在右侧查看。</p> : <div />}
             <div className="flex gap-3">
               <button
                 type="button"

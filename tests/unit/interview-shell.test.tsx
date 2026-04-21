@@ -155,6 +155,12 @@ describe("InterviewShell", () => {
 
     expect(screen.queryByRole("button", { name: "开始访谈" })).not.toBeInTheDocument();
     expect(screen.queryByText("恢复会话")).not.toBeInTheDocument();
+    expect(screen.queryByText("访谈者")).not.toBeInTheDocument();
+    expect(screen.queryByText("我的回答")).not.toBeInTheDocument();
+    expect(screen.queryByText("访谈会逐步从事件进入感受，再进入为什么重要。页面左侧负责专注表达，右侧负责让结构慢慢显形。")).not.toBeInTheDocument();
+    expect(screen.queryByText("建议先写具体事件，再补充为什么开心。")).not.toBeInTheDocument();
+    expect(screen.queryByText("把这一轮想到的内容直接写下来，先说具体发生了什么，再补充当时为什么会开心。")).not.toBeInTheDocument();
+    expect(screen.queryByText("访谈收束后可整理成日志草稿。")).not.toBeInTheDocument();
 
     expect(await screen.findByText(openingMessage.content)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重新开始" })).toBeInTheDocument();
@@ -171,6 +177,8 @@ describe("InterviewShell", () => {
     });
     expect(screen.getByRole("button", { name: "整理成日志" })).toBeInTheDocument();
     expect(screen.queryByText("访谈收束后可整理成日志草稿。")).not.toBeInTheDocument();
+    expect(screen.queryByText("访谈者")).not.toBeInTheDocument();
+    expect(screen.queryByText("我的回答")).not.toBeInTheDocument();
   });
 
   it("starts a fresh session instead of auto-restoring a completed draft session", async () => {

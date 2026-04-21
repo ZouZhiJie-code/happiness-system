@@ -203,14 +203,44 @@ export async function streamJoyAssistantMessage(input: {
     };
   }
 
+  const startedAt = Date.now();
+
   return {
     provider: provider.name,
     usedFallback: false,
-    stream: provider.stream({
-      messages,
-      temperature: 0.45,
-      maxTokens: 180
-    }),
+    stream: (async function* () {
+      try {
+        for await (const delta of provider.stream!({
+          messages,
+          temperature: 0.45,
+          maxTokens: 180
+        })) {
+          yield delta;
+        }
+
+        await logAttempt(input.sessionId, {
+          stage: "generate",
+          provider: provider.name,
+          success: true,
+          latencyMs: Date.now() - startedAt,
+          errorCode: null
+        });
+      } catch (error) {
+        await logAttempt(input.sessionId, {
+          stage: "generate",
+          provider: provider.name,
+          success: false,
+          latencyMs: null,
+          errorCode:
+            error instanceof AIProviderError
+              ? `QUESTION_${error.code}`
+              : error instanceof Error
+                ? `QUESTION_${error.name}`
+                : "QUESTION_UNKNOWN_ERROR"
+        });
+        throw error;
+      }
+    })(),
     fallbackQuestion
   };
 }
