@@ -168,6 +168,8 @@ export function InterviewShell() {
   const streamCompletedRef = useRef(false);
   const streamResolverRef = useRef<(() => void) | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const shellRef = useRef<HTMLElement | null>(null);
+  const [shellHeight, setShellHeight] = useState<number | null>(null);
 
   useEffect(() => {
     setDimension(currentDimension);
@@ -296,6 +298,32 @@ export function InterviewShell() {
       bottomRef.current.scrollIntoView({ block: "end" });
     }
   }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantText]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateShellHeight = () => {
+      const shellElement = shellRef.current;
+
+      if (!shellElement) {
+        return;
+      }
+
+      const top = shellElement.getBoundingClientRect().top;
+      const viewportGap = window.innerWidth >= 768 ? 20 : 16;
+      const nextHeight = Math.max(520, Math.floor(window.innerHeight - top - viewportGap));
+      setShellHeight(nextHeight);
+    };
+
+    updateShellHeight();
+    window.addEventListener("resize", updateShellHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateShellHeight);
+    };
+  }, []);
 
   async function handleRestart() {
     setError(null);
@@ -480,8 +508,12 @@ export function InterviewShell() {
   const showStreamingBubble = assistantState !== "idle";
 
   return (
-    <section className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-      <div className="page-shell rounded-[36px] p-4 md:p-5">
+    <section
+      ref={shellRef}
+      className="grid min-h-0 gap-5 overflow-hidden lg:grid-cols-[minmax(0,1.3fr)_minmax(19rem,0.7fr)]"
+      style={shellHeight ? { height: `${shellHeight}px` } : undefined}
+    >
+      <div className="page-shell flex min-h-0 flex-col rounded-[36px] p-4 md:p-5">
         <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="font-display text-[2rem] leading-tight text-ink md:text-[2.35rem]">
@@ -502,35 +534,42 @@ export function InterviewShell() {
           ) : null}
         </div>
 
-        <div className="relative z-10 mt-4 flex min-h-[280px] flex-col gap-3 rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
+        <div className="relative z-10 mt-4 flex min-h-0 flex-1 flex-col rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
           <div className="flex items-center justify-between border-b border-[rgba(156,114,70,0.12)] pb-2.5">
             <p className="font-mono text-[0.68rem] tracking-[0.24em] text-ink/58">{statusText}</p>
           </div>
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-          {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} /> : null}
-          {showStreamingBubble ? (
-            <MessageBubble content={assistantState === "thinking" ? "正在思考中..." : streamedAssistantText || "…"} />
-          ) : null}
-          {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
-            <div className="flex h-full items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
-              {dimensionMeta.emptyState}
+          <div
+            data-testid="interview-message-scroll"
+            className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
+          >
+            <div className="flex min-h-full flex-col gap-3 pb-1">
+              {messages.map((message) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} /> : null}
+              {showStreamingBubble ? (
+                <MessageBubble content={assistantState === "thinking" ? "正在思考中..." : streamedAssistantText || "…"} />
+              ) : null}
+              {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
+                <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
+                  {dimensionMeta.emptyState}
+                </div>
+              ) : null}
+              {showBootBubble ? (
+                <MessageBubble
+                  content={
+                    bootState === "restoring"
+                      ? "我正在把你上一次停下来的访谈接回来。"
+                      : "我正在准备这一轮访谈的第一句提问。"
+                  }
+                />
+              ) : null}
+              <div ref={bottomRef} />
             </div>
-          ) : null}
-          {showBootBubble ? (
-            <MessageBubble
-              content={
-                bootState === "restoring"
-                  ? "我正在把你上一次停下来的访谈接回来。"
-                  : "我正在准备这一轮访谈的第一句提问。"
-              }
-            />
-          ) : null}
-          <div ref={bottomRef} />
+          </div>
         </div>
 
-        <div className="wood-dialog relative z-10 mt-4 rounded-[30px] p-3.5 shadow-[0_24px_60px_rgba(130,92,45,0.15)]">
+        <div className="wood-dialog relative z-10 mt-4 shrink-0 rounded-[30px] p-3.5 shadow-[0_24px_60px_rgba(130,92,45,0.15)]">
           <div className="flex items-center justify-end gap-4">
             <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[#6b6259]">
               第 {turnCount || 0} 轮
@@ -570,8 +609,8 @@ export function InterviewShell() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="wood-board rounded-[32px] p-6">
+      <div className="flex min-h-0 flex-col gap-6">
+        <div className="wood-board shrink-0 rounded-[32px] p-6">
           <div className="relative z-10">
             <h3 className="font-display text-[1.7rem] text-[#2f2217] md:text-[1.95rem]">抽取快照</h3>
             <p className="mt-2 text-sm leading-7 text-[#5a4632]">
@@ -598,13 +637,13 @@ export function InterviewShell() {
           </dl>
         </div>
 
-        <div className="wood-dialog rounded-[32px] p-6">
+        <div className="wood-dialog flex min-h-0 flex-1 flex-col rounded-[32px] p-6">
           <div className="relative z-10">
             <h3 className="font-display text-[1.7rem] text-[#221d17] md:text-[1.95rem]">日志草稿</h3>
             {!draft ? <p className="mt-2 text-sm leading-7 text-[#5d5042]">{dimensionMeta.draftDescription}</p> : null}
           </div>
           {draft ? (
-            <div className="mt-5 space-y-3 text-sm leading-8 text-[#3f352c]">
+            <div className="panel-scroll mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 text-sm leading-8 text-[#3f352c]">
               <p className="font-display text-xl text-[#221d17]">{draft.title}</p>
               <p className="whitespace-pre-line">{draft.content}</p>
             </div>

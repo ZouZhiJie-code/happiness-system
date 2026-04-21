@@ -165,6 +165,7 @@ describe("InterviewShell", () => {
     expect(await screen.findByText(openingMessage.content)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重新开始" })).toBeInTheDocument();
     expect(screen.getAllByText("第 0 轮")).toHaveLength(1);
+    expect(screen.getByTestId("interview-message-scroll")).toHaveClass("overflow-y-auto");
   });
 
   it("shows the finalize action after restoring a completed interview without a draft", async () => {

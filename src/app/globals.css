@@ -319,6 +319,26 @@ body::after {
   color: #8f6034;
 }
 
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(132, 88, 42, 0.45) transparent;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+.panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: linear-gradient(180deg, rgba(185, 135, 81, 0.86), rgba(135, 91, 48, 0.92));
+  background-clip: padding-box;
+}
+
 .archive-label::before {
   content: "";
   display: inline-block;
