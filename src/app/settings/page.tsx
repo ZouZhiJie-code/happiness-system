@@ -9,7 +9,7 @@ export default function SettingsPage() {
         <p className="archive-label mt-6">访谈偏好</p>
         <h1 className="mt-5 font-display text-5xl leading-[0.96] text-ink md:text-6xl">开始前，先确认这次记录方式</h1>
         <p className="mt-4 max-w-3xl text-sm leading-8 text-ink/76">
-          这里只保留和本次开心记录直接相关的少量偏好，让你先确认系统会如何陪你完成这次访谈。
+          这里只保留和本次日志访谈直接相关的少量偏好，让你先确认系统会如何陪你完成这次记录。
         </p>
       </section>
 

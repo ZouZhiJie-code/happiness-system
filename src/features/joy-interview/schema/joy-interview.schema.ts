@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
+
 const joySnapshotSchema = z.object({
   event: z.string().nullable(),
   feeling: z.string().nullable(),
@@ -33,7 +35,7 @@ const joyEntryDraftSchema = z.object({
 
 export const interviewSessionSchema = z.object({
   id: z.string(),
-  dimension: z.literal("joy"),
+  dimension: interviewDimensionSchema,
   status: z.enum(["active", "completed", "abandoned"]),
   stage: z.enum(["collect_event", "probe_reason", "probe_pattern", "wrap_up", "finalize"]),
   turnCount: z.number().int().nonnegative(),
@@ -47,7 +49,7 @@ export const interviewSessionSchema = z.object({
 });
 
 export const startInterviewRequestSchema = z.object({
-  dimension: z.literal("joy")
+  dimension: interviewDimensionSchema
 });
 
 export const startInterviewResponseSchema = z.object({

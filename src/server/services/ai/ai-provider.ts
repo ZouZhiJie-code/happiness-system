@@ -20,6 +20,7 @@ export interface AICompletionResult {
 export interface AIProvider {
   readonly name: string;
   complete(params: AICompletionParams): Promise<AICompletionResult>;
+  stream?(params: AICompletionParams): AsyncIterable<string>;
 }
 
 export class AIProviderError extends Error {

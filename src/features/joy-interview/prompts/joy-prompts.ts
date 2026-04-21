@@ -1,5 +1,6 @@
 import type { AIChatMessage } from "@/server/services/ai/ai-provider";
-import type { InterviewMessage, JoyInterviewStage, JoySnapshot } from "@/types/interview";
+import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
+import type { InterviewDimension, InterviewMessage, JoyInterviewStage, JoySnapshot } from "@/types/interview";
 
 export const joyInterviewPrinciples = [
   "先收具体事件，再追问为什么开心，最后收束出模式。",
@@ -30,6 +31,7 @@ function formatSnapshot(snapshot: JoySnapshot) {
 }
 
 export function buildJoyExtractMessages(input: {
+  dimension: InterviewDimension;
   stage: JoyInterviewStage;
   turnCount: number;
   lastAssistantQuestion: string;
@@ -37,11 +39,13 @@ export function buildJoyExtractMessages(input: {
   snapshot: JoySnapshot;
   messages: InterviewMessage[];
 }): AIChatMessage[] {
+  const config = getInterviewDimensionConfig(input.dimension);
+
   return [
     {
       role: "system",
       content: [
-        "你是幸福日志产品中的结构化抽取器，只负责从用户这轮表达中抽取开心维度信息。",
+        `你是幸福日志产品中的结构化抽取器，只负责从用户这轮表达中抽取${config.label}维度信息。`,
         "你不能决定流程，不写安慰，不提建议，不扩写没有证据的信息。",
         "如果用户没明确说到，就返回 null。",
         '只返回 JSON：{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}'
@@ -62,20 +66,23 @@ export function buildJoyExtractMessages(input: {
 }
 
 export function buildJoyQuestionMessages(input: {
+  dimension: InterviewDimension;
   stage: JoyInterviewStage;
   userMessage: string;
   snapshot: JoySnapshot;
   messages: InterviewMessage[];
 }): AIChatMessage[] {
+  const config = getInterviewDimensionConfig(input.dimension);
+
   return [
     {
       role: "system",
       content: [
-        "你是一个中文幸福日志访谈者，要根据给定阶段写一句简短自然的下一句。",
+        `你是一个中文幸福日志访谈者，要根据给定阶段写一句简短自然的下一句，当前维度是${config.label}。`,
         "流程已由程序决定，你不能擅自结束、换维度或长篇分析。",
         "语气要温和、具体、像真实访谈，不空泛，不说套话。",
         "如果阶段是 wrap_up，就写一句自然收束语，告诉用户你将整理草稿。",
-        '只返回 JSON：{"question":string}'
+        "只返回一句纯文本问题或收束语，不要返回 JSON，不要加引号。"
       ].join("\n")
     },
     {
@@ -92,14 +99,17 @@ export function buildJoyQuestionMessages(input: {
 }
 
 export function buildJoyDraftMessages(input: {
+  dimension: InterviewDimension;
   snapshot: JoySnapshot;
   messages: InterviewMessage[];
 }): AIChatMessage[] {
+  const config = getInterviewDimensionConfig(input.dimension);
+
   return [
     {
       role: "system",
       content: [
-        "你是幸福日志产品中的中文写作助手，要把开心访谈整理成一份忠于用户原意的日志草稿。",
+        `你是幸福日志产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
         "内容要简洁，可编辑，像用户自己会保留下来的日记。",
         '只返回 JSON：{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'

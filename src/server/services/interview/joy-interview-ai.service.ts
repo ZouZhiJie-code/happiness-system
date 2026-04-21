@@ -10,7 +10,6 @@ import {
 import {
   joyDraftResultSchema,
   joyExtractResultSchema,
-  joyQuestionSchema,
   type JoyDraftResult
 } from "@/features/joy-interview/schema/joy-ai.schema";
 import {
@@ -21,8 +20,15 @@ import {
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
+import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
-import type { InterviewSessionRecord, JoyEntryDraft, JoyInterviewStage, JoySnapshot } from "@/types/interview";
+import type {
+  InterviewDimension,
+  InterviewSessionRecord,
+  JoyEntryDraft,
+  JoyInterviewStage,
+  JoySnapshot
+} from "@/types/interview";
 
 function sanitizeNullableString(value: string | null | undefined) {
   if (!value) {
@@ -65,13 +71,14 @@ export async function extractJoySnapshotWithAI(input: {
   session: InterviewSessionRecord;
   userMessage: string;
 }): Promise<JoySnapshot> {
-  const fallbackSnapshot = extractJoySignals(input.userMessage, input.session.snapshot);
+  const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot);
   const provider = getAIProvider();
   const aiResult = await completeStructuredOutput({
     provider,
     stage: "extract",
     schema: joyExtractResultSchema,
     messages: buildJoyExtractMessages({
+      dimension: input.session.dimension,
       stage: input.session.stage,
       turnCount: input.session.turnCount + 1,
       lastAssistantQuestion: input.session.lastAssistantQuestion,
@@ -94,34 +101,118 @@ export async function extractJoySnapshotWithAI(input: {
 }
 
 export async function generateJoyAssistantMessage(input: {
+  dimension: InterviewDimension;
   sessionId: string;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
   userMessage: string;
   messages: InterviewSessionRecord["messages"];
 }) {
-  const fallbackQuestion = buildAssistantQuestion(input.stage, input.snapshot);
+  const fallbackQuestion = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
   const provider = getAIProvider();
-  const aiResult = await completeStructuredOutput({
-    provider,
-    stage: "generate",
-    schema: joyQuestionSchema,
-    messages: buildJoyQuestionMessages({
-      stage: input.stage,
-      userMessage: input.userMessage,
-      snapshot: input.snapshot,
-      messages: input.messages
-    }),
-    temperature: 0.45,
-    maxTokens: 180,
-    onAttempt: (attempt) =>
-      logAttempt(input.sessionId, {
-        ...attempt,
-        errorCode: attempt.errorCode ? `QUESTION_${attempt.errorCode}` : null
-      })
+  const messages = buildJoyQuestionMessages({
+    dimension: input.dimension,
+    stage: input.stage,
+    userMessage: input.userMessage,
+    snapshot: input.snapshot,
+    messages: input.messages
   });
 
-  return aiResult?.question?.trim() || fallbackQuestion;
+  if (!provider) {
+    await logAttempt(input.sessionId, {
+      stage: "generate",
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "QUESTION_PROVIDER_NOT_CONFIGURED"
+    });
+
+    return fallbackQuestion;
+  }
+
+  try {
+    const result = await provider.complete({
+      messages,
+      temperature: 0.45,
+      maxTokens: 180
+    });
+    const content = normalizeAssistantQuestion(result.content);
+
+    await logAttempt(input.sessionId, {
+      stage: "generate",
+      provider: result.provider,
+      success: true,
+      latencyMs: result.latencyMs,
+      errorCode: null
+    });
+
+    return content || fallbackQuestion;
+  } catch (error) {
+    await logAttempt(input.sessionId, {
+      stage: "generate",
+      provider: provider.name,
+      success: false,
+      latencyMs: null,
+      errorCode:
+        error instanceof AIProviderError
+          ? `QUESTION_${error.code}`
+          : error instanceof Error
+            ? `QUESTION_${error.name}`
+            : "QUESTION_UNKNOWN_ERROR"
+    });
+
+    return fallbackQuestion;
+  }
+}
+
+function normalizeAssistantQuestion(content: string) {
+  return content
+    .replace(/^["'\s]+|["'\s]+$/g, "")
+    .replace(/^question\s*[:：]\s*/i, "")
+    .trim();
+}
+
+export async function streamJoyAssistantMessage(input: {
+  dimension: InterviewDimension;
+  sessionId: string;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  userMessage: string;
+  messages: InterviewSessionRecord["messages"];
+}) {
+  const fallbackQuestion = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
+  const provider = getAIProvider();
+  const messages = buildJoyQuestionMessages({
+    dimension: input.dimension,
+    stage: input.stage,
+    userMessage: input.userMessage,
+    snapshot: input.snapshot,
+    messages: input.messages
+  });
+
+  if (!provider || !provider.stream) {
+    const content = await generateJoyAssistantMessage(input);
+
+    return {
+      provider: provider?.name ?? "disabled",
+      usedFallback: true,
+      stream: (async function* () {
+        yield content;
+      })(),
+      fallbackQuestion
+    };
+  }
+
+  return {
+    provider: provider.name,
+    usedFallback: false,
+    stream: provider.stream({
+      messages,
+      temperature: 0.45,
+      maxTokens: 180
+    }),
+    fallbackQuestion
+  };
 }
 
 function normalizeDraftResult(draft: JoyDraftResult): JoyEntryDraft {
@@ -139,13 +230,14 @@ function normalizeDraftResult(draft: JoyDraftResult): JoyEntryDraft {
 }
 
 export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
-  const fallbackDraft = createDraft(session.snapshot);
+  const fallbackDraft = createDraft(session.dimension, session.snapshot);
   const provider = getAIProvider();
   const aiResult = await completeStructuredOutput({
     provider,
     stage: "generate",
     schema: joyDraftResultSchema,
     messages: buildJoyDraftMessages({
+      dimension: session.dimension,
       snapshot: session.snapshot,
       messages: session.messages
     }),

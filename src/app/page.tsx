@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { StartInterviewLink } from "@/components/home/start-interview-link";
+
 const methodSteps = [
   {
     index: "01",
@@ -38,12 +40,7 @@ export default function HomePage() {
               最后整理成一份清楚、可编辑、可确认的日志草稿。
             </p>
             <div className="mt-7 grid w-full max-w-[52rem] gap-4 sm:grid-cols-2">
-              <Link
-                href="/interview"
-                className="flex min-h-[6rem] w-full items-center justify-center rounded-full border border-[rgba(115,74,37,0.24)] bg-[linear-gradient(180deg,#d8b17d,#c3925b)] px-10 py-5 text-center text-[22px] font-bold leading-none tracking-[0.01em] text-[#2f2823] shadow-[0_18px_34px_rgba(145,94,48,0.16),inset_0_1px_0_rgba(255,247,234,0.34)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb985,#c99862)] md:text-[23px]"
-              >
-                开始日志访谈
-              </Link>
+              <StartInterviewLink />
               <Link
                 href="/settings"
                 className="flex min-h-[6rem] w-full items-center justify-center rounded-full border border-[rgba(115,74,37,0.24)] bg-[linear-gradient(180deg,#d8b17d,#c3925b)] px-10 py-5 text-center text-[22px] font-bold leading-none tracking-[0.01em] text-[#2f2823] shadow-[0_18px_34px_rgba(145,94,48,0.16),inset_0_1px_0_rgba(255,247,234,0.34)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb985,#c99862)] md:text-[23px]"

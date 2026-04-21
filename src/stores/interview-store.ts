@@ -2,9 +2,16 @@
 
 import { create } from "zustand";
 
-import type { InterviewMessage, InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
+import type {
+  InterviewDimension,
+  InterviewMessage,
+  InterviewSessionRecord,
+  JoyEntryDraft,
+  JoySnapshot
+} from "@/types/interview";
 
 interface InterviewState {
+  dimension: InterviewDimension;
   sessionId: string | null;
   status: InterviewSessionRecord["status"] | null;
   stage: InterviewSessionRecord["stage"] | null;
@@ -12,13 +19,15 @@ interface InterviewState {
   messages: InterviewMessage[];
   snapshot: JoySnapshot | null;
   draft: JoyEntryDraft | null;
+  setDimension: (dimension: InterviewDimension) => void;
   setSession: (session: InterviewSessionRecord) => void;
   hydrate: (session: InterviewSessionRecord) => void;
   setDraft: (draft: JoyEntryDraft) => void;
-  reset: () => void;
+  reset: (nextDimension?: InterviewDimension) => void;
 }
 
 const initialState = {
+  dimension: "joy" as InterviewDimension,
   sessionId: null,
   status: null,
   stage: null,
@@ -30,17 +39,21 @@ const initialState = {
 
 export const useInterviewStore = create<InterviewState>((set) => ({
   ...initialState,
+  setDimension: (dimension) => set({ dimension }),
   setSession: (session) =>
     set({
+      dimension: session.dimension,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,
       turnCount: session.turnCount,
       messages: session.messages,
-      snapshot: session.snapshot
+      snapshot: session.snapshot,
+      draft: session.finalEntry
     }),
   hydrate: (session) =>
     set({
+      dimension: session.dimension,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,
@@ -50,5 +63,5 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       draft: session.finalEntry
     }),
   setDraft: (draft) => set({ draft }),
-  reset: () => set(initialState)
+  reset: (nextDimension) => set({ ...initialState, dimension: nextDimension ?? initialState.dimension })
 }));

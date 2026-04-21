@@ -1,25 +1,30 @@
 import {
   createDraft,
   extractJoySignals,
+  getOpeningQuestion,
   getNextStage,
-  openingQuestion
+  buildAssistantQuestion
 } from "@/features/joy-interview/server/joy-interview-engine";
 
 describe("joy interview engine", () => {
   it("starts a joy session with an opening question", () => {
-    expect(openingQuestion).toContain("开心");
+    expect(getOpeningQuestion("joy")).toContain("开心");
   });
 
   it("extracts reason and pattern signals from user input", () => {
-    const snapshot = extractJoySignals("今天和同事一起把难题解决了，因为我发现自己真的能扛住压力。", {
-      event: null,
-      feeling: null,
-      whyItMattered: null,
-      happinessType: null,
-      selfPattern: null,
-      confidence: 0.2,
-      missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
-    });
+    const snapshot = extractJoySignals(
+      "joy",
+      "今天和同事一起把难题解决了，因为我发现自己真的能扛住压力。",
+      {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+      }
+    );
 
     expect(snapshot.event).toContain("今天和同事一起把难题解决了");
     expect(snapshot.whyItMattered).toContain("因为");
@@ -44,7 +49,7 @@ describe("joy interview engine", () => {
   });
 
   it("creates a draft after a completed conversation", () => {
-    const finalized = createDraft({
+    const finalized = createDraft("joy", {
       event: "今天和家人一起吃饭聊天",
       feeling: "轻松踏实",
       whyItMattered: "因为我最近很久没有这种轻松感了",
@@ -57,5 +62,20 @@ describe("joy interview engine", () => {
     expect(finalized.title).toContain("今天的开心");
     expect(finalized.content).toContain("今天让我开心的事情");
     expect(finalized.source).toBe("ai_draft_direct");
+  });
+
+  it("uses dimension-specific prompts for non-joy interviews", () => {
+    expect(getOpeningQuestion("gratitude")).toContain("谢谢");
+    expect(
+      buildAssistantQuestion("improvement", "probe_pattern", {
+        event: "今天开会时我打断了别人",
+        feeling: "警觉想调整",
+        whyItMattered: "因为我希望表达更稳一点",
+        happinessType: "表达型改进",
+        selfPattern: null,
+        confidence: 0.8,
+        missingSlots: []
+      })
+    ).toContain("表达");
   });
 });

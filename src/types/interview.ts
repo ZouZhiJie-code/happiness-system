@@ -1,4 +1,4 @@
-export type InterviewDimension = "joy";
+export type InterviewDimension = "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude";
 export type InterviewSessionStatus = "active" | "completed" | "abandoned";
 export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";

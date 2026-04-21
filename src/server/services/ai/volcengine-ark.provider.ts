@@ -115,4 +115,122 @@ export class VolcengineArkProvider implements AIProvider {
       clearTimeout(timeoutId);
     }
   }
+
+  async *stream({ messages, temperature = 0.2, maxTokens = 180 }: AICompletionParams): AsyncIterable<string> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: this.endpointId,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          stream: true
+        }),
+        cache: "no-store",
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        throw new AIProviderError(errorText || "AI request failed.", "UPSTREAM_HTTP_ERROR", response.status);
+      }
+
+      if (!response.body) {
+        throw new AIProviderError("Streaming response body is empty.", "EMPTY_STREAM");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          buffer += decoder.decode();
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const data = event
+            .split(/\r?\n/)
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trim())
+            .join("");
+
+          if (!data) continue;
+          if (data === "[DONE]") return;
+
+          const payload = JSON.parse(data) as {
+            choices?: Array<{
+              delta?: {
+                content?: unknown;
+              };
+              message?: {
+                content?: unknown;
+              };
+            }>;
+          };
+          const content =
+            extractMessageContent(payload.choices?.[0]?.delta?.content) ||
+            extractMessageContent(payload.choices?.[0]?.message?.content);
+
+          if (content) {
+            yield content;
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        for (const line of buffer.split(/\r?\n/)) {
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+
+          const payload = JSON.parse(data) as {
+            choices?: Array<{
+              delta?: {
+                content?: unknown;
+              };
+              message?: {
+                content?: unknown;
+              };
+            }>;
+          };
+          const content =
+            extractMessageContent(payload.choices?.[0]?.delta?.content) ||
+            extractMessageContent(payload.choices?.[0]?.message?.content);
+
+          if (content) {
+            yield content;
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof AIProviderError) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new AIProviderError("AI request timed out.", "TIMEOUT");
+      }
+
+      throw new AIProviderError(error instanceof Error ? error.message : "Unknown AI provider error.", "REQUEST_FAILED");
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 }

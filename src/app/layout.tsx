@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "幸福系统",
-  description: "用结构化访谈整理每日开心时刻的记录界面。"
+  description: "用结构化访谈整理每日开心、充实、思考、改进与感谢的记录界面。"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

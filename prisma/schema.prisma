@@ -9,6 +9,10 @@ datasource db {
 
 enum InterviewDimension {
   joy
+  fulfillment
+  reflection
+  improvement
+  gratitude
 }
 
 enum InterviewSessionStatus {

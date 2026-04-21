@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "INVALID_START_REQUEST" }, { status: 400 });
   }
 
-  const result = await startJoyInterview();
+  const result = await startJoyInterview(parsed.data.dimension);
   const payload = startInterviewResponseSchema.parse(result);
 
   return NextResponse.json(payload);

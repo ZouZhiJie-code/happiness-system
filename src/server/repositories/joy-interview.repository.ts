@@ -2,6 +2,7 @@ import {
   Prisma,
   PrismaClient,
   type AIRequestStage,
+  type InterviewDimension as PrismaInterviewDimension,
   type InputMode,
   type InterviewSessionStatus,
   type JoyInterviewStage
@@ -9,7 +10,7 @@ import {
 
 import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
-import type { InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
+import type { InterviewDimension, InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
 
 const DEMO_USER_ID = "local-demo-user";
 const DEMO_TIMEZONE = "Asia/Shanghai";
@@ -115,14 +116,14 @@ async function ensureDemoUser(database: DatabaseClient) {
   return DEMO_USER_ID;
 }
 
-export async function createJoyInterviewSession(openingQuestion: string) {
+export async function createJoyInterviewSession(dimension: InterviewDimension, openingQuestion: string) {
   const userId = await ensureDemoUser(prisma);
   const emptySnapshot = createEmptySnapshot();
 
   const session = await prisma.interviewSession.create({
     data: {
       userId,
-      dimension: "joy",
+      dimension: dimension as PrismaInterviewDimension,
       status: "active",
       stage: "collect_event",
       lastAssistantQuestion: openingQuestion,
