@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import {
-  getCompletedRestartMessage,
+  getInactiveSessionMessage,
   getNextStage,
   getOpeningQuestion
 } from "@/features/joy-interview/server/joy-interview-engine";
@@ -11,6 +11,7 @@ import {
   createJoyInterviewSession,
   findJoyInterviewSessionById,
   markJoyEntrySaved,
+  pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
   saveJoyInterviewDraft
 } from "@/server/repositories/joy-interview.repository";
@@ -73,6 +74,10 @@ export async function reopenJoyInterviewSession(sessionId: string) {
     };
   }
 
+  if (session.status !== "paused") {
+    throw new Error("SESSION_NOT_REOPENABLE");
+  }
+
   const reopenedSession = await reopenJoyInterviewSessionRecord(sessionId);
 
   if (!reopenedSession) {
@@ -81,6 +86,34 @@ export async function reopenJoyInterviewSession(sessionId: string) {
 
   return {
     session: reopenedSession
+  };
+}
+
+export async function pauseJoyInterviewSession(sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (session.status === "paused") {
+    return {
+      session
+    };
+  }
+
+  if (session.status === "completed") {
+    throw new Error("SESSION_ALREADY_COMPLETED");
+  }
+
+  if (session.status === "abandoned") {
+    throw new Error("SESSION_NOT_PAUSABLE");
+  }
+
+  const pausedSession = await pauseJoyInterviewSessionRecord(sessionId);
+
+  return {
+    session: pausedSession
   };
 }
 
@@ -95,6 +128,10 @@ export async function completeJoyInterviewSession(sessionId: string) {
     return {
       session
     };
+  }
+
+  if (session.status === "abandoned") {
+    throw new Error("SESSION_NOT_COMPLETABLE");
   }
 
   const completedSession = await completeJoyInterviewSessionRecord(sessionId);
@@ -121,7 +158,7 @@ async function getActiveInterviewSession(sessionId: string) {
 
   if (session.status !== "active") {
     return {
-      assistantMessage: getCompletedRestartMessage(session.dimension),
+      assistantMessage: getInactiveSessionMessage(session.dimension, session.status),
       sessionStatus: session.status,
       turnCount: session.turnCount,
       snapshot: session.snapshot,

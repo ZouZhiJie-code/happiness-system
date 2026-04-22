@@ -1,5 +1,5 @@
 export type InterviewDimension = "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude";
-export type InterviewSessionStatus = "active" | "completed" | "abandoned";
+export type InterviewSessionStatus = "active" | "paused" | "completed" | "abandoned";
 export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";
 export type JoyEntrySource = "ai_draft_direct" | "ai_draft_edited";
@@ -61,6 +61,7 @@ export interface InterviewSessionRecord {
   messages: InterviewMessage[];
   snapshot: JoySnapshot;
   startedAt: string;
+  pausedAt: string | null;
   completedAt: string | null;
   journalEntry: JournalEntryRecord | null;
 }

@@ -1,8 +1,9 @@
 import type { InterviewSessionRecord } from "@/types/interview";
 
-const { completeJoyInterviewSessionRecord, findJoyInterviewSessionById, reopenJoyInterviewSessionRecord } = vi.hoisted(() => ({
+const { completeJoyInterviewSessionRecord, findJoyInterviewSessionById, pauseJoyInterviewSessionRecord, reopenJoyInterviewSessionRecord } = vi.hoisted(() => ({
   completeJoyInterviewSessionRecord: vi.fn(),
   findJoyInterviewSessionById: vi.fn(),
+  pauseJoyInterviewSessionRecord: vi.fn(),
   reopenJoyInterviewSessionRecord: vi.fn()
 }));
 
@@ -12,6 +13,7 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   createJoyInterviewSession: vi.fn(),
   findJoyInterviewSessionById,
   markJoyEntrySaved: vi.fn(),
+  pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
   saveJoyInterviewDraft: vi.fn()
 }));
@@ -24,7 +26,7 @@ vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
 }));
 
 vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
-  getCompletedRestartMessage: vi.fn(),
+  getInactiveSessionMessage: vi.fn(),
   getNextStage: vi.fn(),
   getOpeningQuestion: vi.fn()
 }));
@@ -35,7 +37,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
   return {
     id: "session-1",
     dimension: "joy",
-    status: "completed",
+    status: "paused",
     stage: "finalize",
     turnCount: 4,
     lastAssistantQuestion: "现在要不要帮你整理成日志？",
@@ -51,7 +53,8 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
       missingSlots: []
     },
     startedAt: "2026-04-21T00:00:00.000Z",
-    completedAt: "2026-04-21T00:08:00.000Z",
+    pausedAt: "2026-04-21T00:08:00.000Z",
+    completedAt: null,
     journalEntry: {
       id: "entry-1",
       title: "今天的开心：和家人一起吃饭聊天",
@@ -76,6 +79,7 @@ describe("reopenJoyInterviewSession", () => {
   beforeEach(() => {
     completeJoyInterviewSessionRecord.mockReset();
     findJoyInterviewSessionById.mockReset();
+    pauseJoyInterviewSessionRecord.mockReset();
     reopenJoyInterviewSessionRecord.mockReset();
   });
 
@@ -86,39 +90,54 @@ describe("reopenJoyInterviewSession", () => {
   });
 
   it("returns an active session without reopening it again", async () => {
-    const session = buildSession({ status: "active", stage: "wrap_up", completedAt: null });
+    const session = buildSession({ status: "active", stage: "wrap_up", pausedAt: null, completedAt: null });
     findJoyInterviewSessionById.mockResolvedValue(session);
 
     await expect(reopenJoyInterviewSession(session.id)).resolves.toEqual({ session });
     expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 
-  it("reopens a completed session that already has a journal entry", async () => {
-    const completedSession = buildSession();
+  it("reopens a paused session that already has a journal entry", async () => {
+    const pausedSession = buildSession();
     const reopenedSession = buildSession({
       status: "active",
       stage: "wrap_up",
+      pausedAt: null,
       completedAt: null
     });
-    findJoyInterviewSessionById.mockResolvedValue(completedSession);
+    findJoyInterviewSessionById.mockResolvedValue(pausedSession);
     reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
-    await expect(reopenJoyInterviewSession(completedSession.id)).resolves.toEqual({ session: reopenedSession });
-    expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith(completedSession.id);
+    await expect(reopenJoyInterviewSession(pausedSession.id)).resolves.toEqual({ session: reopenedSession });
+    expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith(pausedSession.id);
   });
 
-  it("reopens completed sessions even when no journal entry exists yet", async () => {
-    const completedSession = buildSession({ journalEntry: null });
+  it("reopens paused sessions even when no journal entry exists yet", async () => {
+    const pausedSession = buildSession({ journalEntry: null });
     const reopenedSession = buildSession({
       journalEntry: null,
       status: "active",
       stage: "wrap_up",
+      pausedAt: null,
       completedAt: null
     });
-    findJoyInterviewSessionById.mockResolvedValue(completedSession);
+    findJoyInterviewSessionById.mockResolvedValue(pausedSession);
     reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
     await expect(reopenJoyInterviewSession("session-1")).resolves.toEqual({ session: reopenedSession });
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith("session-1");
+  });
+
+  it("rejects completed sessions because they are no longer reopenable", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        status: "completed",
+        pausedAt: null,
+        completedAt: "2026-04-21T00:10:00.000Z"
+      })
+    );
+
+    await expect(reopenJoyInterviewSession("session-1")).rejects.toThrow("SESSION_NOT_REOPENABLE");
+    expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 });

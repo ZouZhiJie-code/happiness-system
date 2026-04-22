@@ -31,17 +31,17 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getOpeningQuestion: vi.fn()
 }));
 
-import { completeJoyInterviewSession } from "@/server/services/interview/joy-interview.service";
+import { pauseJoyInterviewSession } from "@/server/services/interview/joy-interview.service";
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
     id: "session-1",
     dimension: "joy",
     status: "active",
-    stage: "probe_reason",
-    turnCount: 2,
-    lastAssistantQuestion: "这件事为什么会让你这么开心？",
-    draftSummary: null,
+    stage: "wrap_up",
+    turnCount: 4,
+    lastAssistantQuestion: "现在要不要帮你整理成日志？",
+    draftSummary: "因为我被接住了",
     messages: [],
     snapshot: {
       event: "今天和家人一起吃饭聊天",
@@ -60,7 +60,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
   };
 }
 
-describe("completeJoyInterviewSession", () => {
+describe("pauseJoyInterviewSession", () => {
   beforeEach(() => {
     completeJoyInterviewSessionRecord.mockReset();
     findJoyInterviewSessionById.mockReset();
@@ -71,30 +71,42 @@ describe("completeJoyInterviewSession", () => {
   it("throws when the session does not exist", async () => {
     findJoyInterviewSessionById.mockResolvedValue(null);
 
-    await expect(completeJoyInterviewSession("missing")).rejects.toThrow("SESSION_NOT_FOUND");
+    await expect(pauseJoyInterviewSession("missing")).rejects.toThrow("SESSION_NOT_FOUND");
   });
 
-  it("returns completed sessions as-is without completing again", async () => {
+  it("returns paused sessions as-is without pausing again", async () => {
     const session = buildSession({
-      status: "completed",
-      completedAt: "2026-04-21T00:08:00.000Z"
+      status: "paused",
+      pausedAt: "2026-04-21T00:08:00.000Z"
     });
     findJoyInterviewSessionById.mockResolvedValue(session);
 
-    await expect(completeJoyInterviewSession(session.id)).resolves.toEqual({ session });
-    expect(completeJoyInterviewSessionRecord).not.toHaveBeenCalled();
+    await expect(pauseJoyInterviewSession(session.id)).resolves.toEqual({ session });
+    expect(pauseJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 
-  it("marks active sessions as completed while preserving their stage", async () => {
+  it("marks active sessions as paused", async () => {
     const activeSession = buildSession();
-    const completedSession = buildSession({
-      status: "completed",
-      completedAt: "2026-04-21T00:08:00.000Z"
+    const pausedSession = buildSession({
+      status: "paused",
+      pausedAt: "2026-04-21T00:08:00.000Z"
     });
     findJoyInterviewSessionById.mockResolvedValue(activeSession);
-    completeJoyInterviewSessionRecord.mockResolvedValue(completedSession);
+    pauseJoyInterviewSessionRecord.mockResolvedValue(pausedSession);
 
-    await expect(completeJoyInterviewSession(activeSession.id)).resolves.toEqual({ session: completedSession });
-    expect(completeJoyInterviewSessionRecord).toHaveBeenCalledWith(activeSession.id);
+    await expect(pauseJoyInterviewSession(activeSession.id)).resolves.toEqual({ session: pausedSession });
+    expect(pauseJoyInterviewSessionRecord).toHaveBeenCalledWith(activeSession.id);
+  });
+
+  it("rejects completed sessions", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        status: "completed",
+        completedAt: "2026-04-21T00:09:00.000Z"
+      })
+    );
+
+    await expect(pauseJoyInterviewSession("session-1")).rejects.toThrow("SESSION_ALREADY_COMPLETED");
+    expect(pauseJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 });

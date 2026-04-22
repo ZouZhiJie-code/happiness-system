@@ -24,6 +24,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
     }
 
+    if (error instanceof Error && error.message === "SESSION_NOT_COMPLETABLE") {
+      return NextResponse.json({ error: "SESSION_NOT_COMPLETABLE" }, { status: 409 });
+    }
+
     return NextResponse.json({ error: "SESSION_COMPLETE_FAILED" }, { status: 500 });
   }
 }

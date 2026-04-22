@@ -17,6 +17,7 @@ enum InterviewDimension {
 
 enum InterviewSessionStatus {
   active
+  paused
   completed
   abandoned
 }
@@ -84,6 +85,7 @@ model InterviewSession {
   stage                 JoyInterviewStage      @default(collect_event)
   turnCount             Int                    @default(0)
   startedAt             DateTime               @default(now())
+  pausedAt              DateTime?
   completedAt           DateTime?
   lastAssistantQuestion String?
   draftSummary          String?

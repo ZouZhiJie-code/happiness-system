@@ -44,7 +44,7 @@ const journalEntrySchema = joyEntryDraftSchema.extend({
 export const interviewSessionSchema = z.object({
   id: z.string(),
   dimension: interviewDimensionSchema,
-  status: z.enum(["active", "completed", "abandoned"]),
+  status: z.enum(["active", "paused", "completed", "abandoned"]),
   stage: z.enum(["collect_event", "probe_reason", "probe_pattern", "wrap_up", "finalize"]),
   turnCount: z.number().int().nonnegative(),
   lastAssistantQuestion: z.string(),
@@ -52,6 +52,7 @@ export const interviewSessionSchema = z.object({
   messages: z.array(interviewMessageSchema),
   snapshot: joySnapshotSchema,
   startedAt: z.string(),
+  pausedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
   journalEntry: journalEntrySchema.nullable()
 });
@@ -74,7 +75,7 @@ export const respondInterviewRequestSchema = z.object({
 
 export const respondInterviewResponseSchema = z.object({
   assistantMessage: z.string(),
-  sessionStatus: z.enum(["active", "completed", "abandoned"]),
+  sessionStatus: z.enum(["active", "paused", "completed", "abandoned"]),
   turnCount: z.number().int().nonnegative(),
   snapshot: joySnapshotSchema,
   isReadyForDraft: z.boolean(),
@@ -107,6 +108,14 @@ export const reopenInterviewResponseSchema = z.object({
   session: interviewSessionSchema
 });
 
+export const pauseInterviewRequestSchema = z.object({
+  sessionId: z.string()
+});
+
+export const pauseInterviewResponseSchema = z.object({
+  session: interviewSessionSchema
+});
+
 export const completeInterviewRequestSchema = z.object({
   sessionId: z.string()
 });
@@ -132,6 +141,7 @@ export type RespondInterviewRequest = z.infer<typeof respondInterviewRequestSche
 export type GenerateDraftRequest = z.infer<typeof generateDraftRequestSchema>;
 export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
 export type ReopenInterviewRequest = z.infer<typeof reopenInterviewRequestSchema>;
+export type PauseInterviewRequest = z.infer<typeof pauseInterviewRequestSchema>;
 export type CompleteInterviewRequest = z.infer<typeof completeInterviewRequestSchema>;
 export type UpdateJoyEntryRequest = z.infer<typeof updateJoyEntryRequestSchema>;
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

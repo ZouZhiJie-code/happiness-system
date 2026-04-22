@@ -1,5 +1,5 @@
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
-import type { InterviewDimension, JoyEntryDraft, JoyInterviewStage, JoySnapshot } from "@/types/interview";
+import type { InterviewDimension, InterviewSessionStatus, JoyEntryDraft, JoyInterviewStage, JoySnapshot } from "@/types/interview";
 
 export interface JoySignalFields {
   event: string | null;
@@ -189,8 +189,18 @@ export function getOpeningQuestion(dimension: InterviewDimension) {
   return getInterviewDimensionConfig(dimension).openingQuestion;
 }
 
-export function getCompletedRestartMessage(dimension: InterviewDimension) {
-  return getInterviewDimensionConfig(dimension).completedRestartMessage;
+export function getInactiveSessionMessage(dimension: InterviewDimension, status: Exclude<InterviewSessionStatus, "active">) {
+  const config = getInterviewDimensionConfig(dimension);
+
+  if (status === "paused") {
+    return config.pausedResumeMessage;
+  }
+
+  if (status === "completed") {
+    return config.completedMessage;
+  }
+
+  return config.completedMessage;
 }
 
 export function buildAssistantQuestion(

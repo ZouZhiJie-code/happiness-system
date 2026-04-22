@@ -102,6 +102,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     })),
     snapshot: mapSnapshot(session.snapshots[0]),
     startedAt: session.startedAt.toISOString(),
+    pausedAt: session.pausedAt?.toISOString() ?? null,
     completedAt: session.completedAt?.toISOString() ?? null,
     journalEntry: mapJournalEntry(session.joyEntry)
   };
@@ -342,6 +343,7 @@ export async function reopenJoyInterviewSessionRecord(sessionId: string) {
       data: {
         status: "active",
         stage: existing.stage === "finalize" ? "wrap_up" : existing.stage,
+        pausedAt: null,
         completedAt: null
       },
       include: interviewSessionInclude
@@ -355,12 +357,31 @@ export async function reopenJoyInterviewSessionRecord(sessionId: string) {
   return mapInterviewSession(session);
 }
 
+export async function pauseJoyInterviewSessionRecord(sessionId: string) {
+  const pausedAt = new Date();
+
+  const session = await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: {
+      status: "paused",
+      pausedAt,
+      completedAt: null
+    },
+    include: interviewSessionInclude
+  });
+
+  return mapInterviewSession(session);
+}
+
 export async function completeJoyInterviewSessionRecord(sessionId: string) {
+  const completedAt = new Date();
+
   const session = await prisma.interviewSession.update({
     where: { id: sessionId },
     data: {
       status: "completed",
-      completedAt: new Date()
+      completedAt,
+      pausedAt: null
     },
     include: interviewSessionInclude
   });
@@ -414,9 +435,10 @@ export async function markJoyEntrySaved(sessionId: string) {
     return tx.interviewSession.update({
       where: { id: sessionId },
       data: {
-        status: "completed",
+        status: "paused",
         stage: "finalize",
-        completedAt: existing.completedAt ?? savedAt,
+        pausedAt: existing.pausedAt ?? savedAt,
+        completedAt: null,
         draftSummary: existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
         finalEntryId: existing.joyEntry.id
       },

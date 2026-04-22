@@ -59,13 +59,11 @@ function MessageBubble({
 function DraftTransitionCard({
   onGenerate,
   disabled,
-  isGenerating,
-  onContinue
+  isGenerating
 }: {
   onGenerate: () => void;
   disabled: boolean;
   isGenerating: boolean;
-  onContinue?: () => void;
 }) {
   return (
     <div className="ml-4 w-full max-w-[31rem] rounded-[28px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(250,243,230,0.98),rgba(235,217,187,0.92))] p-4 shadow-[0_18px_42px_rgba(124,83,43,0.12)]">
@@ -83,34 +81,24 @@ function DraftTransitionCard({
         >
           {isGenerating ? "正在整理..." : "生成日志"}
         </button>
-        {onContinue ? (
-          <button
-            type="button"
-            onClick={onContinue}
-            disabled={disabled}
-            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            继续访谈
-          </button>
-        ) : null}
       </div>
     </div>
   );
 }
 
 function ActiveDraftCard({
-  onOpenWorkspace,
+  onToggleWorkspace,
+  workspaceToggleLabel,
   onContinueInterview,
-  onCompleteInterview,
-  panelOpen,
-  completionDisabled,
+  onPauseInterview,
+  pauseDisabled,
   isDraftStale
 }: {
-  onOpenWorkspace: () => void;
+  onToggleWorkspace: () => void;
+  workspaceToggleLabel: string;
   onContinueInterview: () => void;
-  onCompleteInterview: () => void;
-  panelOpen: boolean;
-  completionDisabled: boolean;
+  onPauseInterview: () => void;
+  pauseDisabled: boolean;
   isDraftStale: boolean;
 }) {
   return (
@@ -123,15 +111,13 @@ function ActiveDraftCard({
           : "你可以回到右侧继续编辑，也可以直接在这里补充更多内容，稍后再同步到日志。"}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        {!panelOpen ? (
-          <button
-            type="button"
-            onClick={onOpenWorkspace}
-            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
-          >
-            打开日志
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={onToggleWorkspace}
+          className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
+        >
+          {workspaceToggleLabel}
+        </button>
         <button
           type="button"
           onClick={onContinueInterview}
@@ -141,11 +127,11 @@ function ActiveDraftCard({
         </button>
         <button
           type="button"
-          onClick={onCompleteInterview}
-          disabled={completionDisabled}
+          onClick={onPauseInterview}
+          disabled={pauseDisabled}
           className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          结束本轮访谈
+          暂停访谈
         </button>
       </div>
     </div>
@@ -164,73 +150,75 @@ function SaveToast({ message }: { message: string }) {
 }
 
 function InterviewMetaActions({
-  onCompleteInterview,
-  completionDisabled
+  onPauseInterview,
+  pauseDisabled
 }: {
-  onCompleteInterview: () => void;
-  completionDisabled: boolean;
+  onPauseInterview: () => void;
+  pauseDisabled: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onCompleteInterview}
-      disabled={completionDisabled}
+      onClick={onPauseInterview}
+      disabled={pauseDisabled}
       className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
     >
-      结束本轮访谈
+      暂停访谈
     </button>
   );
 }
 
 function InterviewEndedCard({
   title,
-  onOpenWorkspace,
-  openWorkspaceLabel,
+  onToggleWorkspace,
+  workspaceToggleLabel,
   onReopen,
-  onRestart,
-  panelOpen,
+  onCompleteInterview,
   reopenDisabled,
-  restartDisabled
+  completeDisabled
 }: {
   title: string;
-  onOpenWorkspace?: () => void;
-  openWorkspaceLabel?: string;
-  onReopen: () => void;
-  onRestart: () => void;
-  panelOpen: boolean;
-  reopenDisabled: boolean;
-  restartDisabled: boolean;
+  onToggleWorkspace?: () => void;
+  workspaceToggleLabel?: string;
+  onReopen?: () => void;
+  onCompleteInterview?: () => void;
+  reopenDisabled?: boolean;
+  completeDisabled?: boolean;
 }) {
   return (
     <div className="relative overflow-hidden rounded-[30px] border border-[rgba(137,95,53,0.18)] bg-[linear-gradient(180deg,rgba(251,244,232,0.98),rgba(233,216,190,0.96))] p-4 shadow-[0_22px_54px_rgba(124,83,43,0.14)]">
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)]" />
       <h4 className="font-display text-[1.35rem] text-[#2e2319]">{title}</h4>
       <div className="mt-4 flex flex-wrap gap-2">
-        {!panelOpen && onOpenWorkspace && openWorkspaceLabel ? (
+        {onToggleWorkspace && workspaceToggleLabel ? (
           <button
             type="button"
-            onClick={onOpenWorkspace}
+            onClick={onToggleWorkspace}
             className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
           >
-            {openWorkspaceLabel}
+            {workspaceToggleLabel}
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={onReopen}
-          disabled={reopenDisabled}
-          className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.82)] px-4 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(255,250,242,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          继续补充访谈
-        </button>
-        <button
-          type="button"
-          onClick={onRestart}
-          disabled={restartDisabled}
-          className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          重新开始
-        </button>
+        {onReopen ? (
+          <button
+            type="button"
+            onClick={onReopen}
+            disabled={reopenDisabled}
+            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.82)] px-4 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(255,250,242,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            继续补充访谈
+          </button>
+        ) : null}
+        {onCompleteInterview ? (
+          <button
+            type="button"
+            onClick={onCompleteInterview}
+            disabled={completeDisabled}
+            className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            结束访谈
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -397,6 +385,7 @@ export function InterviewShell() {
   const [draftGenerateIssue, setDraftGenerateIssue] = useState<DraftGenerateIssue | null>(null);
   const [isSavingJournal, setIsSavingJournal] = useState(false);
   const [isReopeningInterview, setIsReopeningInterview] = useState(false);
+  const [isPausingInterview, setIsPausingInterview] = useState(false);
   const [isCompletingInterview, setIsCompletingInterview] = useState(false);
   const [draftSyncState, setDraftSyncState] = useState<DraftSyncState>("idle");
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -435,7 +424,9 @@ export function InterviewShell() {
   const showStreamingBubble = assistantState !== "idle";
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
-  const isInterviewLocked = status === "completed";
+  const isInterviewPaused = status === "paused";
+  const isInterviewCompleted = status === "completed";
+  const isInterviewLocked = isInterviewPaused || isInterviewCompleted;
   const hasUnsavedDraftChanges = Boolean(
     journalEntry && (draftTitle !== journalEntry.title || draftContent !== journalEntry.content)
   );
@@ -447,8 +438,25 @@ export function InterviewShell() {
       !draftTooLong &&
       (journalEntry.status !== "saved" || hasUnsavedDraftChanges)
   );
+  const canPauseInterview = Boolean(
+    sessionId &&
+      status === "active" &&
+      !isBusy &&
+      !isGeneratingDraft &&
+      !isSavingJournal &&
+      !isReopeningInterview &&
+      !isPausingInterview &&
+      !isCompletingInterview
+  );
   const canCompleteInterview = Boolean(
-    sessionId && status === "active" && !isBusy && !isGeneratingDraft && !isSavingJournal && !isReopeningInterview && !isCompletingInterview
+    sessionId &&
+      status === "paused" &&
+      !isBusy &&
+      !isGeneratingDraft &&
+      !isSavingJournal &&
+      !isReopeningInterview &&
+      !isPausingInterview &&
+      !isCompletingInterview
   );
   const canSendInput = Boolean(
     input.trim() &&
@@ -456,6 +464,7 @@ export function InterviewShell() {
       !isGeneratingDraft &&
       !isSavingJournal &&
       !isReopeningInterview &&
+      !isPausingInterview &&
       !isCompletingInterview &&
       !isInterviewLocked
   );
@@ -728,6 +737,7 @@ export function InterviewShell() {
     setDraftError(null);
     setDraftGenerateIssue(null);
     setDraftGenerateState("idle");
+    setIsPausingInterview(false);
     setIsCompletingInterview(false);
     setToastState(null);
     setPanelOpen(false);
@@ -821,7 +831,11 @@ export function InterviewShell() {
     }
 
     if (isInterviewLocked || isReopeningInterview) {
-      setError("本轮访谈已结束，如需补充内容，请先点击“继续补充访谈”。");
+      setError(
+        isInterviewPaused
+          ? "本轮访谈已暂停，如需补充内容，请先点击“继续补充访谈”。"
+          : "本轮访谈已结束，不能继续补充。"
+      );
       return;
     }
 
@@ -950,7 +964,15 @@ export function InterviewShell() {
   }
 
   async function handleReopenInterview() {
-    if (!sessionId || isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isCompletingInterview) {
+    if (
+      !sessionId ||
+      isBusy ||
+      isGeneratingDraft ||
+      isSavingJournal ||
+      isReopeningInterview ||
+      isPausingInterview ||
+      isCompletingInterview
+    ) {
       return;
     }
 
@@ -977,6 +999,51 @@ export function InterviewShell() {
       setError("暂时无法恢复访谈，请稍后重试。");
     } finally {
       setIsReopeningInterview(false);
+    }
+  }
+
+  async function handlePauseInterview() {
+    if (!sessionId || !canPauseInterview) {
+      return;
+    }
+
+    stopDraftAutosave();
+
+    const confirmed = window.confirm("暂停后你仍然可以继续补充访谈。现在暂停本轮访谈吗？");
+
+    if (!confirmed) {
+      return;
+    }
+
+    if (hasUnsavedDraftChanges) {
+      const synced = await persistDraftEdits();
+
+      if (!synced) {
+        return;
+      }
+    }
+
+    setError(null);
+    setDraftError(null);
+    setIsPausingInterview(true);
+
+    try {
+      const response = await fetch("/api/interview/session/pause", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId })
+      });
+
+      if (!response.ok) {
+        throw new Error("SESSION_PAUSE_FAILED");
+      }
+
+      const data = (await response.json()) as { session: InterviewSessionRecord };
+      hydrate(data.session);
+    } catch {
+      setError("暂时无法暂停访谈，请稍后重试。");
+    } finally {
+      setIsPausingInterview(false);
     }
   }
 
@@ -1122,7 +1189,7 @@ export function InterviewShell() {
 
     stopDraftAutosave();
 
-    const confirmed = window.confirm("结束后你仍然可以继续补充访谈。现在结束本轮访谈吗？");
+    const confirmed = window.confirm("结束后将不能继续补充这轮访谈。现在结束访谈吗？");
 
     if (!confirmed) {
       return;
@@ -1172,6 +1239,19 @@ export function InterviewShell() {
     setPanelOpen(false);
   }
 
+  async function handleTogglePanel() {
+    if (!canOpenWorkspace) {
+      return;
+    }
+
+    if (panelOpen) {
+      await handleClosePanel();
+      return;
+    }
+
+    setPanelOpen(true);
+  }
+
   const statusText =
     bootState === "restoring"
       ? "恢复会话中"
@@ -1179,15 +1259,20 @@ export function InterviewShell() {
         ? "准备开场中"
         : isReopeningInterview
           ? "恢复访谈中"
+          : isPausingInterview
+            ? "暂停访谈中"
           : isCompletingInterview
             ? "结束访谈中"
-            : status === "completed"
-              ? "访谈已收束"
+            : status === "paused"
+              ? "访谈已暂停"
+              : status === "completed"
+                ? "访谈已结束"
               : sessionId
                 ? "会话进行中"
                 : "等待连接";
 
   const canOpenWorkspace = Boolean(journalEntry);
+  const workspaceToggleLabel = panelOpen ? "关闭日志" : hasSavedJournal ? "打开日志" : "继续整理日志";
 
   return (
     <section
@@ -1199,17 +1284,6 @@ export function InterviewShell() {
         <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="font-display text-[2rem] leading-tight text-ink md:text-[2.35rem]">{dimensionMeta.title}</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canOpenWorkspace && !panelOpen && !isInterviewLocked ? (
-              <button
-                type="button"
-                onClick={() => setPanelOpen(true)}
-                className="rounded-full border border-[rgba(168,124,69,0.24)] bg-[rgba(250,241,225,0.56)] px-5 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(250,241,225,0.86)]"
-              >
-                {hasSavedJournal ? "打开日志" : "继续整理日志"}
-              </button>
-            ) : null}
           </div>
         </div>
 
@@ -1248,16 +1322,15 @@ export function InterviewShell() {
                   onGenerate={handleGenerateDraft}
                   disabled={isBusy || isGeneratingDraft}
                   isGenerating={isGeneratingDraft}
-                  onContinue={() => setPanelOpen(false)}
                 />
               ) : null}
               {showActiveDraftCard ? (
                 <ActiveDraftCard
-                  onOpenWorkspace={() => setPanelOpen(true)}
+                  onToggleWorkspace={() => void handleTogglePanel()}
+                  workspaceToggleLabel={workspaceToggleLabel}
                   onContinueInterview={handleContinueInterview}
-                  onCompleteInterview={handleCompleteInterview}
-                  panelOpen={panelOpen}
-                  completionDisabled={!canCompleteInterview}
+                  onPauseInterview={handlePauseInterview}
+                  pauseDisabled={!canPauseInterview}
                   isDraftStale={isDraftStale}
                 />
               ) : null}
@@ -1273,14 +1346,17 @@ export function InterviewShell() {
           {isInterviewLocked ? (
             <div className="mt-3">
               <InterviewEndedCard
-                title="本轮访谈已结束"
-                onOpenWorkspace={journalEntry ? () => setPanelOpen(true) : undefined}
-                openWorkspaceLabel={journalEntry ? (hasSavedJournal ? "打开日志" : "继续整理日志") : undefined}
-                onReopen={handleReopenInterview}
-                onRestart={handleRestart}
-                panelOpen={panelOpen}
-                reopenDisabled={isReopeningInterview || isBusy || isGeneratingDraft || isSavingJournal || isCompletingInterview}
-                restartDisabled={isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isCompletingInterview}
+                title={isInterviewPaused ? "本轮访谈已暂停" : "访谈已结束"}
+                onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
+                workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
+                onReopen={isInterviewPaused ? handleReopenInterview : undefined}
+                onCompleteInterview={isInterviewPaused ? handleCompleteInterview : undefined}
+                reopenDisabled={
+                  isReopeningInterview || isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview
+                }
+                completeDisabled={
+                  isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isPausingInterview || isCompletingInterview
+                }
               />
             </div>
           ) : (
@@ -1295,10 +1371,12 @@ export function InterviewShell() {
                 className="mt-2.5 min-h-24 w-full resize-none rounded-[24px] border border-[rgba(133,91,47,0.22)] bg-[linear-gradient(180deg,rgba(251,245,235,0.94),rgba(241,227,202,0.95)),repeating-linear-gradient(90deg,rgba(144,98,52,0.05)_0_1px,transparent_1px_12px,rgba(255,250,241,0.06)_12px_18px,transparent_18px_28px)] px-4 py-2.5 text-sm leading-6 text-[#241d16] shadow-[inset_0_1px_0_rgba(255,255,255,0.58),0_10px_24px_rgba(125,91,47,0.08)] outline-none transition placeholder:text-[#8d6b4a] focus:border-[#9f6838] focus:bg-[linear-gradient(180deg,rgba(252,247,239,0.98),rgba(244,231,207,0.98))] focus:shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_0_0_4px_rgba(169,111,61,0.12)]"
               />
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3">
-                <InterviewMetaActions
-                  onCompleteInterview={handleCompleteInterview}
-                  completionDisabled={!canCompleteInterview}
-                />
+                {!showActiveDraftCard ? (
+                  <InterviewMetaActions
+                    onPauseInterview={handlePauseInterview}
+                    pauseDisabled={!canPauseInterview}
+                  />
+                ) : null}
                 <button
                   type="button"
                   onClick={handleSend}
@@ -1395,7 +1473,7 @@ export function InterviewShell() {
                 <button
                   type="button"
                   onClick={handleRegenerateDraft}
-                  disabled={isGeneratingDraft || isSavingJournal || isCompletingInterview}
+                  disabled={isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
                   className="rounded-full border border-[rgba(168,124,69,0.24)] bg-[rgba(250,241,225,0.56)] px-4 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(250,241,225,0.86)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   生成最新日志
@@ -1403,7 +1481,7 @@ export function InterviewShell() {
                 <button
                   type="button"
                   onClick={handleSaveJournal}
-                  disabled={!canSaveJournal || isGeneratingDraft || isSavingJournal || isCompletingInterview}
+                  disabled={!canSaveJournal || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
                   className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {hasSavedJournal ? "保存修改" : "保存正式日志"}
