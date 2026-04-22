@@ -533,6 +533,17 @@ export function InterviewShell() {
   }, [journalEntry]);
 
   useEffect(() => {
+    const inputElement = inputRef.current;
+
+    if (!inputElement) {
+      return;
+    }
+
+    inputElement.style.height = "0px";
+    inputElement.style.height = `${Math.min(Math.max(inputElement.scrollHeight, 72), 176)}px`;
+  }, [input]);
+
+  useEffect(() => {
     sessionStateRef.current = {
       sessionId,
       dimension
@@ -1252,24 +1263,7 @@ export function InterviewShell() {
     setPanelOpen(true);
   }
 
-  const statusText =
-    bootState === "restoring"
-      ? "恢复会话中"
-      : bootState === "booting"
-        ? "准备开场中"
-        : isReopeningInterview
-          ? "恢复访谈中"
-          : isPausingInterview
-            ? "暂停访谈中"
-          : isCompletingInterview
-            ? "结束访谈中"
-            : status === "paused"
-              ? "访谈已暂停"
-              : status === "completed"
-                ? "访谈已结束"
-              : sessionId
-                ? "会话进行中"
-                : "等待连接";
+  const turnLabel = turnCount > 0 ? `第 ${turnCount} 轮` : null;
 
   const canOpenWorkspace = Boolean(journalEntry);
   const workspaceToggleLabel = panelOpen ? "关闭日志" : hasSavedJournal ? "打开日志" : "继续整理日志";
@@ -1281,15 +1275,9 @@ export function InterviewShell() {
       style={shellHeight ? { height: `${shellHeight}px` } : undefined}
     >
       <div className="page-shell flex min-h-0 flex-col rounded-[36px] p-4 md:p-5">
-        <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="font-display text-[2rem] leading-tight text-ink md:text-[2.35rem]">{dimensionMeta.title}</h2>
-          </div>
-        </div>
-
-        <div className="relative z-10 mt-4 flex min-h-0 flex-1 flex-col rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
-          <div className="border-b border-[rgba(156,114,70,0.12)] pb-2.5">
-            <p className="font-mono text-[0.68rem] tracking-[0.24em] text-ink/58">{statusText}</p>
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
+          <div className="border-b border-[rgba(156,114,70,0.12)] pb-2">
+            {turnLabel ? <p className="font-mono text-[0.68rem] tracking-[0.24em] text-ink/58">{turnLabel}</p> : null}
           </div>
           <div
             data-testid="interview-message-scroll"
@@ -1339,12 +1327,9 @@ export function InterviewShell() {
           </div>
         </div>
 
-        <div className="wood-dialog relative z-10 mt-4 shrink-0 rounded-[30px] p-3.5 shadow-[0_24px_60px_rgba(130,92,45,0.15)]">
-          <div className="flex items-center">
-            <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[#6b6259]">第 {turnCount || 0} 轮</p>
-          </div>
+        <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
           {isInterviewLocked ? (
-            <div className="mt-3">
+            <div>
               <InterviewEndedCard
                 title={isInterviewPaused ? "本轮访谈已暂停" : "访谈已结束"}
                 onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
@@ -1361,31 +1346,42 @@ export function InterviewShell() {
             </div>
           ) : (
             <>
-              <textarea
-                ref={inputRef}
-                id="interview-input"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={handleInputKeyDown}
-                placeholder={dimensionMeta.inputPlaceholder}
-                className="mt-2.5 min-h-24 w-full resize-none rounded-[24px] border border-[rgba(133,91,47,0.22)] bg-[linear-gradient(180deg,rgba(251,245,235,0.94),rgba(241,227,202,0.95)),repeating-linear-gradient(90deg,rgba(144,98,52,0.05)_0_1px,transparent_1px_12px,rgba(255,250,241,0.06)_12px_18px,transparent_18px_28px)] px-4 py-2.5 text-sm leading-6 text-[#241d16] shadow-[inset_0_1px_0_rgba(255,255,255,0.58),0_10px_24px_rgba(125,91,47,0.08)] outline-none transition placeholder:text-[#8d6b4a] focus:border-[#9f6838] focus:bg-[linear-gradient(180deg,rgba(252,247,239,0.98),rgba(244,231,207,0.98))] focus:shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_0_0_4px_rgba(169,111,61,0.12)]"
-              />
-              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3">
-                {!showActiveDraftCard ? (
-                  <InterviewMetaActions
-                    onPauseInterview={handlePauseInterview}
-                    pauseDisabled={!canPauseInterview}
-                  />
-                ) : null}
+              <div className="relative overflow-hidden rounded-[26px] border border-[rgba(133,91,47,0.22)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(241,227,202,0.97)),repeating-linear-gradient(90deg,rgba(144,98,52,0.05)_0_1px,transparent_1px_12px,rgba(255,250,241,0.06)_12px_18px,transparent_18px_28px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.58),0_10px_24px_rgba(125,91,47,0.08)] transition focus-within:border-[#9f6838] focus-within:bg-[linear-gradient(180deg,rgba(252,247,239,0.98),rgba(244,231,207,0.98))] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_0_0_4px_rgba(169,111,61,0.12)]">
+                <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.92),transparent)]" />
+                <textarea
+                  ref={inputRef}
+                  id="interview-input"
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={dimensionMeta.inputPlaceholder}
+                  className="max-h-44 min-h-[4.5rem] w-full resize-none bg-transparent px-4 py-3 pr-24 text-sm leading-6 text-[#241d16] outline-none transition placeholder:text-[#8d6b4a]"
+                />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={!canSendInput}
-                  className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label={assistantState === "idle" ? "发送回答" : "生成中"}
+                  className="absolute bottom-3 right-3 inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-3 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {assistantState === "idle" ? "发送回答" : "生成中"}
+                  {assistantState === "idle" ? (
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3.5 10h9" />
+                      <path d="M9.5 4.5 15 10l-5.5 5.5" />
+                    </svg>
+                  ) : (
+                    <span className="px-1 text-xs font-medium">生成中</span>
+                  )}
                 </button>
               </div>
+              {!showActiveDraftCard ? (
+                <div className="mt-2 flex items-center justify-start">
+                  <InterviewMetaActions
+                    onPauseInterview={handlePauseInterview}
+                    pauseDisabled={!canPauseInterview}
+                  />
+                </div>
+              ) : null}
             </>
           )}
           {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}

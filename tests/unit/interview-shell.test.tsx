@@ -297,6 +297,8 @@ describe("InterviewShell", () => {
 
     expect(screen.queryByText("抽取快照")).not.toBeInTheDocument();
     expect(screen.queryByText("日志草稿")).not.toBeInTheDocument();
+    expect(screen.queryByText("今晚的记录从一段具体经历开始。")).not.toBeInTheDocument();
+    expect(screen.queryByText("会话进行中")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "整理成日志" })).not.toBeInTheDocument();
     const generateButton = screen.getByRole("button", { name: "生成日志" });
     expect(generateButton).toBeInTheDocument();
@@ -1068,6 +1070,9 @@ describe("InterviewShell", () => {
     render(<InterviewShell />);
 
     const textarea = await screen.findByRole("textbox");
+    const sendButton = screen.getByRole("button", { name: "发送回答" });
+
+    expect(sendButton).toBeInTheDocument();
 
     fireEvent.change(textarea, { target: { value: "第一行" } });
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
