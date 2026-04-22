@@ -5,7 +5,7 @@ import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
 import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
-import type { InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
+import type { AssistantTurnPayload, InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/interview",
@@ -27,6 +27,24 @@ const baseSnapshot: JoySnapshot = {
   confidence: 0.9,
   missingSlots: []
 };
+
+function buildAssistantPayload(overrides: Partial<AssistantTurnPayload> = {}): AssistantTurnPayload {
+  return {
+    insight: "",
+    analysis: "",
+    question: "今天有没有一个让你真心开心的瞬间？先讲那个具体时刻。",
+    stateUpdate: {
+      turnPhase: "digging",
+      shouldEndDimension: false,
+      offerChoice: false,
+      choiceReason: ""
+    },
+    meta: {
+      depthReached: []
+    },
+    ...overrides
+  };
+}
 
 const openingMessage: InterviewMessage = {
   id: "assistant-opening",
@@ -320,6 +338,190 @@ describe("InterviewShell", () => {
     expect(generateButton.closest(".max-w-2xl")).toBeNull();
     expect(screen.getByTestId("interview-floating-composer")).toContainElement(screen.getByRole("textbox"));
     expect(screen.getByTestId("interview-top-bar")).toContainElement(screen.getByRole("button", { name: "暂停访谈" }));
+  });
+
+  it("renders structured assistant messages as separate insight and question bubbles", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-structured" }));
+
+    const structuredSession = buildSession({
+      id: "session-structured",
+      status: "active",
+      stage: "probe_reason",
+      turnCount: 1,
+      messages: [
+        {
+          id: "assistant-structured",
+          role: "assistant",
+          content: "{\"insight\":\"今天这段轻松感已经有轮廓了。\",\"analysis\":\"用户已说：和家人一起吃饭；下一步问：原因层\",\"question\":\"那一刻为什么会让你这么放松？\",\"stateUpdate\":{\"turnPhase\":\"digging\",\"shouldEndDimension\":false,\"offerChoice\":false,\"choiceReason\":\"\"},\"meta\":{\"depthReached\":[\"event\"]}}",
+          assistantPayload: buildAssistantPayload({
+            insight: "今天这段轻松感已经有轮廓了。",
+            analysis: "用户已说：和家人一起吃饭；下一步问：原因层",
+            question: "那一刻为什么会让你这么放松？",
+            meta: {
+              depthReached: ["event"]
+            }
+          }),
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: "那一刻为什么会让你这么放松？",
+      snapshot: {
+        ...baseSnapshot,
+        whyItMattered: null,
+        happinessType: null,
+        missingSlots: ["whyItMattered", "happinessTypeOrSelfPattern"]
+      }
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-structured")) {
+        return new Response(JSON.stringify(structuredSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("今天这段轻松感已经有轮廓了。")).toBeInTheDocument();
+    expect(screen.getByText("那一刻为什么会让你这么放松？")).toBeInTheDocument();
+  });
+
+  it("shows choice actions and sends the continue action without creating an optimistic user bubble", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice" }));
+
+    const choicePayload = buildAssistantPayload({
+      insight: "我们已经抓到和家人一起吃饭这个片段，但还差一点更深的展开。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceReason: "连续追问没有新增信息，先让用户决定是否继续。"
+      },
+      meta: {
+        depthReached: ["event"]
+      }
+    });
+    const choiceSession = buildSession({
+      id: "session-choice",
+      status: "active",
+      stage: "probe_reason",
+      turnCount: 1,
+      messages: [
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: JSON.stringify(choicePayload),
+          assistantPayload: choicePayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: "",
+      snapshot: {
+        ...baseSnapshot,
+        whyItMattered: null,
+        happinessType: null,
+        missingSlots: ["whyItMattered", "happinessTypeOrSelfPattern"]
+      }
+    });
+    const continuedPayload = buildAssistantPayload({
+      insight: "我们换个角度，把当时让你松下来的东西再看细一点。",
+      question: "当时周围的环境或者节奏，有什么特别打动你？",
+      meta: {
+        depthReached: ["event"]
+      }
+    });
+    const continuedSession = buildSession({
+      id: "session-choice",
+      status: "active",
+      stage: "probe_reason",
+      turnCount: 1,
+      messages: [
+        ...choiceSession.messages,
+        {
+          id: "assistant-continued",
+          role: "assistant",
+          content: JSON.stringify(continuedPayload),
+          assistantPayload: continuedPayload,
+          sequence: 1,
+          createdAt: "2026-04-21T00:01:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: continuedPayload.question,
+      snapshot: choiceSession.snapshot
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-choice")) {
+        return new Response(JSON.stringify(choiceSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          'event: phase\ndata: {"state":"insight"}\n\n',
+          `event: delta\ndata: ${JSON.stringify({ target: "insight", text: continuedPayload.insight })}\n\n`,
+          'event: phase\ndata: {"state":"question"}\n\n',
+          `event: delta\ndata: ${JSON.stringify({ target: "question", text: continuedPayload.question })}\n\n`,
+          `event: session\ndata: ${JSON.stringify({ session: continuedSession })}\n\n`
+        ]);
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("button", { name: "换个角度继续聊" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "现在整理日志" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "换个角度继续聊" }));
+
+    expect(await screen.findByText("当时周围的环境或者节奏，有什么特别打动你？")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
+    expect(screen.queryByText("换个角度继续聊")).not.toBeInTheDocument();
+
+    const continueCall = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([url]) => String(url).endsWith("/api/interview/session/respond/stream")
+    );
+    expect(continueCall).toBeTruthy();
+    expect(JSON.parse(String(continueCall?.[1]?.body))).toEqual({
+      action: "continue",
+      sessionId: "session-choice"
+    });
   });
 
   it("keeps auto-scroll inside the interview message panel instead of using scrollIntoView", async () => {

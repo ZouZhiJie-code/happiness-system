@@ -9,9 +9,16 @@ import {
   type JoyInterviewStage
 } from "@prisma/client";
 
+import {
+  createOpeningAssistantTurnPayload,
+  getAssistantDisplayParts,
+  parseAssistantTurnPayload,
+  serializeAssistantTurnPayload
+} from "@/features/joy-interview/assistant-turn";
 import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
 import type {
+  AssistantTurnPayload,
   InterviewDimension,
   InterviewSessionRecord,
   JournalEntryRecord,
@@ -97,6 +104,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
       role: message.role,
       inputMode: message.inputMode ?? undefined,
       content: message.content,
+      assistantPayload: message.role === "assistant" ? parseAssistantTurnPayload(message.content) : null,
       sequence: message.sequence,
       createdAt: message.createdAt.toISOString()
     })),
@@ -132,6 +140,7 @@ async function ensureDemoUser(database: DatabaseClient) {
 export async function createJoyInterviewSession(dimension: InterviewDimension, openingQuestion: string) {
   const userId = await ensureDemoUser(prisma);
   const emptySnapshot = createEmptySnapshot();
+  const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
 
   const session = await prisma.interviewSession.create({
     data: {
@@ -144,7 +153,7 @@ export async function createJoyInterviewSession(dimension: InterviewDimension, o
         create: [
           {
             role: "assistant",
-            content: openingQuestion,
+            content: serializeAssistantTurnPayload(openingAssistantTurn),
             sequence: 0
           }
         ]
@@ -185,9 +194,9 @@ export async function findJoyInterviewSessionById(sessionId: string) {
 
 interface AppendJoyInterviewTurnInput {
   sessionId: string;
-  userMessage: string;
-  inputMode: InputMode;
-  assistantMessage: string;
+  userMessage?: string;
+  inputMode?: InputMode;
+  assistantTurn: AssistantTurnPayload;
   snapshot: JoySnapshot;
   nextStage: JoyInterviewStage;
   nextStatus: InterviewSessionStatus;
@@ -209,24 +218,29 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
 
     const nextSequence = existing.messages.length;
     const nextSnapshotVersion = (existing.snapshots[0]?.version ?? -1) + 1;
+    const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
+    const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
 
-    await tx.interviewMessage.createMany({
-      data: [
-        {
-          sessionId: input.sessionId,
-          role: "user",
-          inputMode: input.inputMode,
-          content: input.userMessage,
-          sequence: nextSequence
-        },
-        {
-          sessionId: input.sessionId,
-          role: "assistant",
-          content: input.assistantMessage,
-          sequence: nextSequence + 1
-        }
-      ]
+    const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
+
+    if (input.userMessage) {
+      messagesToCreate.push({
+        sessionId: input.sessionId,
+        role: "user",
+        inputMode: input.inputMode,
+        content: input.userMessage,
+        sequence: nextSequence
+      });
+    }
+
+    messagesToCreate.push({
+      sessionId: input.sessionId,
+      role: "assistant",
+      content: serializedAssistantTurn,
+      sequence: nextSequence + (input.userMessage ? 1 : 0)
     });
+
+    await tx.interviewMessage.createMany({ data: messagesToCreate });
 
     await tx.joyInterviewSnapshot.create({
       data: {
@@ -248,7 +262,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         turnCount: input.nextTurnCount,
         stage: input.nextStage,
         status: input.nextStatus,
-        lastAssistantQuestion: input.assistantMessage,
+        lastAssistantQuestion: assistantQuestion,
         draftSummary: input.draftSummary,
         completedAt: input.completedAt
       },

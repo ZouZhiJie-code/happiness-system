@@ -28,12 +28,10 @@ export async function POST(request: Request) {
 
       try {
         const result = await streamJoyInterviewResponse(
-          parsed.data.sessionId,
-          parsed.data.userMessage,
-          parsed.data.inputMode,
+          parsed.data,
           {
             onPhase: (phase) => send("phase", { state: phase }),
-            onDelta: (delta) => send("delta", { text: delta })
+            onDelta: (delta) => send("delta", delta)
           }
         );
 
@@ -45,6 +43,11 @@ export async function POST(request: Request) {
           send("error", {
             code: "SESSION_NOT_FOUND",
             message: "未找到当前访谈会话。"
+          });
+        } else if (error instanceof Error && error.message === "SESSION_CONTINUE_UNAVAILABLE") {
+          send("error", {
+            code: "SESSION_CONTINUE_UNAVAILABLE",
+            message: "当前会话没有可继续追问的选择状态。"
           });
         } else {
           send("error", {

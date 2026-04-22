@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
+const assistantDepthSchema = z.enum(["event", "feeling", "reason", "clue", "pattern"]);
+const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
 
 const joySnapshotSchema = z.object({
   event: z.string().nullable(),
@@ -12,11 +14,27 @@ const joySnapshotSchema = z.object({
   missingSlots: z.array(z.string())
 });
 
+export const assistantTurnPayloadSchema = z.object({
+  insight: z.string().max(120),
+  analysis: z.string().max(240),
+  question: z.string().max(160),
+  stateUpdate: z.object({
+    turnPhase: assistantTurnPhaseSchema,
+    shouldEndDimension: z.boolean(),
+    offerChoice: z.boolean(),
+    choiceReason: z.string().max(160)
+  }),
+  meta: z.object({
+    depthReached: z.array(assistantDepthSchema).max(5)
+  })
+});
+
 const interviewMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant", "system"]),
   inputMode: z.enum(["text", "voice"]).optional(),
   content: z.string(),
+  assistantPayload: assistantTurnPayloadSchema.nullable().optional(),
   sequence: z.number().int().nonnegative(),
   createdAt: z.string()
 });
@@ -67,14 +85,22 @@ export const startInterviewResponseSchema = z.object({
   session: interviewSessionSchema
 });
 
-export const respondInterviewRequestSchema = z.object({
-  sessionId: z.string(),
-  userMessage: z.string().min(1).max(1200),
-  inputMode: z.enum(["text", "voice"]).default("text")
-});
+export const respondInterviewRequestSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("reply"),
+    sessionId: z.string(),
+    userMessage: z.string().min(1).max(1200),
+    inputMode: z.enum(["text", "voice"]).default("text")
+  }),
+  z.object({
+    action: z.literal("continue"),
+    sessionId: z.string()
+  })
+]);
 
 export const respondInterviewResponseSchema = z.object({
   assistantMessage: z.string(),
+  assistantTurn: assistantTurnPayloadSchema.nullable(),
   sessionStatus: z.enum(["active", "paused", "completed", "abandoned"]),
   turnCount: z.number().int().nonnegative(),
   snapshot: joySnapshotSchema,

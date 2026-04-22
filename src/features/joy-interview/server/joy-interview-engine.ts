@@ -179,8 +179,8 @@ export function extractJoySignals(dimension: InterviewDimension, message: string
 export function getNextStage(snapshot: JoySnapshot, turnCount: number): JoyInterviewStage {
   if (!snapshot.event) return "collect_event";
   if (!snapshot.whyItMattered) return "probe_reason";
-  if (!snapshot.happinessType && !snapshot.selfPattern && turnCount < 4) return "probe_pattern";
-  if (turnCount >= 4 || snapshot.happinessType || snapshot.selfPattern) return "wrap_up";
+  if (!snapshot.happinessType && !snapshot.selfPattern && turnCount < 5) return "probe_pattern";
+  if (turnCount >= 5 || snapshot.happinessType || snapshot.selfPattern) return "wrap_up";
 
   return "collect_event";
 }
@@ -229,7 +229,7 @@ export function buildAssistantQuestion(
       }
 
       if (dimension === "improvement" && snapshot.happinessType === "表达型改进") {
-        return "如果把焦点放回那一刻，你最想调的是表达方式，还是表达时机？";
+        return "如果把焦点放回那一刻，你最想调整的表达细节是什么？";
       }
 
       return config.genericPatternQuestion;

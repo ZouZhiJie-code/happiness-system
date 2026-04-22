@@ -1,28 +1,16 @@
 import type { AIRequestStage } from "@prisma/client";
 
-import {
-  buildAssistantQuestion,
-  createDraft,
-  extractJoySignals,
-  mergeJoySignals,
-  type JoySignalFields
-} from "@/features/joy-interview/server/joy-interview-engine";
-import {
-  joyDraftResultSchema,
-  joyExtractResultSchema,
-  type JoyDraftResult
-} from "@/features/joy-interview/schema/joy-ai.schema";
-import {
-  buildJoyDraftMessages,
-  buildJoyExtractMessages,
-  buildJoyQuestionMessages
-} from "@/features/joy-interview/prompts/joy-prompts";
+import { buildAssistantQuestion, createDraft, extractJoySignals, mergeJoySignals, type JoySignalFields } from "@/features/joy-interview/server/joy-interview-engine";
+import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
+import { joyDraftResultSchema, joyExtractResultSchema, type JoyDraftResult } from "@/features/joy-interview/schema/joy-ai.schema";
+import { buildJoyDraftMessages, buildJoyExtractMessages, buildJoyQuestionMessages } from "@/features/joy-interview/prompts/joy-prompts";
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
-import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import type {
+  AssistantDepth,
+  AssistantTurnPayload,
   InterviewDimension,
   InterviewSessionRecord,
   JoyEntryDraft,
@@ -38,6 +26,10 @@ function sanitizeNullableString(value: string | null | undefined) {
   const trimmed = value.trim();
 
   return trimmed || null;
+}
+
+function trimToLength(value: string, maxLength: number) {
+  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
 
 function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
@@ -100,149 +92,146 @@ export async function extractJoySnapshotWithAI(input: {
   return mergeJoySignals(input.session.snapshot, normalizeExtractedFields(aiResult));
 }
 
-export async function generateJoyAssistantMessage(input: {
-  dimension: InterviewDimension;
-  sessionId: string;
-  stage: JoyInterviewStage;
+function createFallbackInsight(input: {
+  continueFromChoice: boolean;
   snapshot: JoySnapshot;
-  userMessage: string;
-  messages: InterviewSessionRecord["messages"];
+  stage: JoyInterviewStage;
 }) {
-  const fallbackQuestion = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
-  const provider = getAIProvider();
-  const messages = buildJoyQuestionMessages({
-    dimension: input.dimension,
-    stage: input.stage,
-    userMessage: input.userMessage,
-    snapshot: input.snapshot,
-    messages: input.messages
-  });
-
-  if (!provider) {
-    await logAttempt(input.sessionId, {
-      stage: "generate",
-      provider: "disabled",
-      success: false,
-      latencyMs: null,
-      errorCode: "QUESTION_PROVIDER_NOT_CONFIGURED"
-    });
-
-    return fallbackQuestion;
+  if (input.continueFromChoice) {
+    return "我们换个角度，把这段经历再看清一点。";
   }
 
-  try {
-    const result = await provider.complete({
-      messages,
-      temperature: 0.45,
-      maxTokens: 180
-    });
-    const content = normalizeAssistantQuestion(result.content);
-
-    await logAttempt(input.sessionId, {
-      stage: "generate",
-      provider: result.provider,
-      success: true,
-      latencyMs: result.latencyMs,
-      errorCode: null
-    });
-
-    return content || fallbackQuestion;
-  } catch (error) {
-    await logAttempt(input.sessionId, {
-      stage: "generate",
-      provider: provider.name,
-      success: false,
-      latencyMs: null,
-      errorCode:
-        error instanceof AIProviderError
-          ? `QUESTION_${error.code}`
-          : error instanceof Error
-            ? `QUESTION_${error.name}`
-            : "QUESTION_UNKNOWN_ERROR"
-    });
-
-    return fallbackQuestion;
+  if (!input.snapshot.event || input.stage === "collect_event") {
+    return "先把那个具体片段抓稳，我们再往下走。";
   }
+
+  if (!input.snapshot.whyItMattered || input.stage === "probe_reason") {
+    return "这个片段已经有轮廓了，还差它为什么重要。";
+  }
+
+  if (!input.snapshot.happinessType && !input.snapshot.selfPattern) {
+    return "你已经说到它的重要性了，接下来可以往更深的线索走。";
+  }
+
+  return "这段经历背后的线索已经开始清楚了。";
 }
 
-function normalizeAssistantQuestion(content: string) {
-  return content
-    .replace(/^["'\s]+|["'\s]+$/g, "")
-    .replace(/^question\s*[:：]\s*/i, "")
-    .trim();
-}
-
-export async function streamJoyAssistantMessage(input: {
+function createFallbackAssistantTurn(input: {
   dimension: InterviewDimension;
-  sessionId: string;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
-  userMessage: string;
-  messages: InterviewSessionRecord["messages"];
-}) {
-  const fallbackQuestion = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
-  const provider = getAIProvider();
-  const messages = buildJoyQuestionMessages({
-    dimension: input.dimension,
-    stage: input.stage,
-    userMessage: input.userMessage,
-    snapshot: input.snapshot,
-    messages: input.messages
-  });
+  nextDepthReached: AssistantDepth[];
+  continueFromChoice: boolean;
+}): AssistantTurnPayload {
+  const question = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
 
-  if (!provider || !provider.stream) {
-    const content = await generateJoyAssistantMessage(input);
+  return {
+    insight: createFallbackInsight({
+      continueFromChoice: input.continueFromChoice,
+      snapshot: input.snapshot,
+      stage: input.stage
+    }),
+    analysis: "用户已说：已有片段但仍需继续澄清；下一步问：当前阶段对应的未覆盖层次",
+    question,
+    stateUpdate: {
+      turnPhase: input.stage === "wrap_up" ? "closing" : input.continueFromChoice ? "digging" : "digging",
+      shouldEndDimension: input.stage === "wrap_up",
+      offerChoice: false,
+      choiceReason: ""
+    },
+    meta: {
+      depthReached: input.nextDepthReached
+    }
+  };
+}
 
+function normalizeAssistantTurnPayload(payload: AssistantTurnPayload): AssistantTurnPayload {
+  const parsed = assistantTurnPayloadSchema.safeParse(payload);
+
+  if (parsed.success) {
     return {
-      provider: provider?.name ?? "disabled",
-      usedFallback: true,
-      stream: (async function* () {
-        yield content;
-      })(),
-      fallbackQuestion
+      ...parsed.data,
+      meta: {
+        depthReached: parsed.data.meta.depthReached
+      }
     };
   }
 
-  const startedAt = Date.now();
-
   return {
-    provider: provider.name,
-    usedFallback: false,
-    stream: (async function* () {
-      try {
-        for await (const delta of provider.stream!({
-          messages,
-          temperature: 0.45,
-          maxTokens: 180
-        })) {
-          yield delta;
-        }
-
-        await logAttempt(input.sessionId, {
-          stage: "generate",
-          provider: provider.name,
-          success: true,
-          latencyMs: Date.now() - startedAt,
-          errorCode: null
-        });
-      } catch (error) {
-        await logAttempt(input.sessionId, {
-          stage: "generate",
-          provider: provider.name,
-          success: false,
-          latencyMs: null,
-          errorCode:
-            error instanceof AIProviderError
-              ? `QUESTION_${error.code}`
-              : error instanceof Error
-                ? `QUESTION_${error.name}`
-                : "QUESTION_UNKNOWN_ERROR"
-        });
-        throw error;
-      }
-    })(),
-    fallbackQuestion
+    insight: trimToLength(payload.insight ?? "", 120),
+    analysis: trimToLength(payload.analysis ?? "", 240),
+    question: trimToLength(payload.question ?? "", 160),
+    stateUpdate: {
+      turnPhase: payload.stateUpdate?.turnPhase ?? "digging",
+      shouldEndDimension: Boolean(payload.stateUpdate?.shouldEndDimension),
+      offerChoice: Boolean(payload.stateUpdate?.offerChoice),
+      choiceReason: trimToLength(payload.stateUpdate?.choiceReason ?? "", 160)
+    },
+    meta: {
+      depthReached: payload.meta?.depthReached ?? []
+    }
   };
+}
+
+export async function generateJoyAssistantTurn(input: {
+  dimension: InterviewDimension;
+  sessionId: string;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+  messages: InterviewSessionRecord["messages"];
+  nextTurnCount: number;
+  previousDepthReached: AssistantDepth[];
+  nextDepthReached: AssistantDepth[];
+  recentQuestions: string[];
+  consecutiveNoDepthGain: number;
+  consecutiveInvalidReplies: number;
+  isMeaningfulReply: boolean;
+  continueFromChoice: boolean;
+}) {
+  const fallbackTurn = createFallbackAssistantTurn({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    nextDepthReached: input.nextDepthReached,
+    continueFromChoice: input.continueFromChoice
+  });
+  const provider = getAIProvider();
+  const messages = buildJoyQuestionMessages({
+    dimension: input.dimension,
+    stage: input.stage,
+    userMessage: input.userMessage,
+    snapshot: input.snapshot,
+    messages: input.messages,
+    nextTurnCount: input.nextTurnCount,
+    previousDepthReached: input.previousDepthReached,
+    nextDepthReached: input.nextDepthReached,
+    recentQuestions: input.recentQuestions,
+    consecutiveNoDepthGain: input.consecutiveNoDepthGain,
+    consecutiveInvalidReplies: input.consecutiveInvalidReplies,
+    isMeaningfulReply: input.isMeaningfulReply,
+    continueFromChoice: input.continueFromChoice
+  });
+  const aiResult = await completeStructuredOutput({
+    provider,
+    stage: "generate",
+    schema: assistantTurnPayloadSchema,
+    messages,
+    temperature: 0.45,
+    maxTokens: 500,
+    onAttempt: (attempt) =>
+      logAttempt(input.sessionId, {
+        ...attempt,
+        errorCode: attempt.errorCode ? `QUESTION_${attempt.errorCode}` : null
+      })
+  });
+
+  if (!aiResult) {
+    logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");
+    return fallbackTurn;
+  }
+
+  return normalizeAssistantTurnPayload(aiResult);
 }
 
 function normalizeDraftResult(draft: JoyDraftResult): JoyEntryDraft {

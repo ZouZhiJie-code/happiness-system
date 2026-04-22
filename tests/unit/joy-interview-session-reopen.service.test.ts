@@ -20,12 +20,12 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
   extractJoySnapshotWithAI: vi.fn(),
-  generateJoyAssistantMessage: vi.fn(),
-  generateJoyDraftWithAI: vi.fn(),
-  streamJoyAssistantMessage: vi.fn()
+  generateJoyAssistantTurn: vi.fn(),
+  generateJoyDraftWithAI: vi.fn()
 }));
 
 vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
+  buildAssistantQuestion: vi.fn(),
   getInactiveSessionMessage: vi.fn(),
   getNextStage: vi.fn(),
   getOpeningQuestion: vi.fn()

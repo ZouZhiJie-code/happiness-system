@@ -15,13 +15,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await respondToJoyInterview(parsed.data.sessionId, parsed.data.userMessage, parsed.data.inputMode);
+    const result = await respondToJoyInterview(parsed.data);
     const payload = respondInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);
   } catch (error) {
     if (error instanceof Error && error.message === "SESSION_NOT_FOUND") {
       return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
+    }
+
+    if (error instanceof Error && error.message === "SESSION_CONTINUE_UNAVAILABLE") {
+      return NextResponse.json({ error: "SESSION_CONTINUE_UNAVAILABLE" }, { status: 409 });
     }
 
     return NextResponse.json({ error: "INTERVIEW_RESPOND_FAILED" }, { status: 500 });

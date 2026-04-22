@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
@@ -15,7 +16,8 @@ import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
 
 type BootState = "idle" | "booting" | "restoring";
-type AssistantState = "idle" | "thinking" | "streaming";
+type AssistantState = "idle" | "thinking" | "insight" | "question";
+type StreamingTarget = "insight" | "question";
 type DraftSyncState = "idle" | "saving" | "saved" | "error";
 type DraftGenerateState = "idle" | "loading" | "error";
 type ToastState = {
@@ -37,28 +39,54 @@ const interviewBootstrapTasks = new Map<InterviewDimension, Promise<InterviewSes
 function MessageBubble({
   message,
   content,
-  role
+  role,
+  variant = "default"
 }: {
   message?: InterviewMessage;
   content?: string;
   role?: InterviewMessage["role"];
+  variant?: "default" | "question";
 }) {
   const bubbleRole = message?.role ?? role ?? "assistant";
   const isAssistant = bubbleRole === "assistant";
   const bubbleContent = content ?? message?.content ?? "";
+  const isQuestion = variant === "question";
 
   return (
     <div className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}>
       <div
         className={`max-w-2xl rounded-[28px] border px-4 py-3 text-sm leading-7 shadow-soft ${
           isAssistant
-            ? "border-[rgba(156,114,70,0.14)] bg-[rgba(255,248,238,0.44)] text-ink"
+            ? isQuestion
+              ? "border-[rgba(166,111,59,0.24)] bg-[linear-gradient(180deg,rgba(255,246,234,0.98),rgba(243,226,199,0.96))] text-[#2b2118]"
+              : "border-[rgba(156,114,70,0.14)] bg-[rgba(255,248,238,0.44)] text-ink"
             : "border-[rgba(133,91,47,0.2)] bg-[linear-gradient(180deg,rgba(221,185,133,0.96),rgba(195,152,97,0.96))] text-[#2f2823]"
         }`}
       >
-        <p className="whitespace-pre-wrap">{bubbleContent}</p>
+        <p className={`whitespace-pre-wrap ${isQuestion ? "font-medium" : ""}`}>{bubbleContent}</p>
       </div>
     </div>
+  );
+}
+
+function ConversationMessage({ message }: { message: InterviewMessage }) {
+  if (message.role !== "assistant") {
+    return <MessageBubble message={message} />;
+  }
+
+  const assistantPayload = message.assistantPayload;
+
+  if (!assistantPayload) {
+    return <MessageBubble message={message} />;
+  }
+
+  const parts = getAssistantDisplayParts(assistantPayload);
+
+  return (
+    <React.Fragment>
+      {parts.insight ? <MessageBubble content={parts.insight} role="assistant" /> : null}
+      {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+    </React.Fragment>
   );
 }
 
@@ -137,6 +165,46 @@ function ActiveDraftCard({
           className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           暂停访谈
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ChoiceActionCard({
+  onContinue,
+  onGenerate,
+  continueDisabled,
+  generateDisabled
+}: {
+  onContinue: () => void;
+  onGenerate: () => void;
+  continueDisabled: boolean;
+  generateDisabled: boolean;
+}) {
+  return (
+    <div className="ml-4 w-full max-w-[31rem] rounded-[28px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(250,243,230,0.98),rgba(235,217,187,0.92))] p-4 shadow-[0_18px_42px_rgba(124,83,43,0.12)]">
+      <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">访谈分岔点</p>
+      <h4 className="mt-2 font-display text-[1.35rem] text-[#2e2319]">可以换个角度继续，也可以现在整理</h4>
+      <p className="mt-2 text-sm leading-7 text-[#594537]">
+        如果你愿意，我会换一个切口继续帮你往里挖；如果现在的信息已经够了，也可以直接整理成日志。
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={continueDisabled}
+          className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          换个角度继续聊
+        </button>
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={generateDisabled}
+          className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          现在整理日志
         </button>
       </div>
     </div>
@@ -384,7 +452,8 @@ export function InterviewShell() {
   const [bootState, setBootState] = useState<BootState>("idle");
   const [assistantState, setAssistantState] = useState<AssistantState>("idle");
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
-  const [streamedAssistantText, setStreamedAssistantText] = useState("");
+  const [streamedAssistantInsight, setStreamedAssistantInsight] = useState("");
+  const [streamedAssistantQuestion, setStreamedAssistantQuestion] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
   const [draftGenerateIssue, setDraftGenerateIssue] = useState<DraftGenerateIssue | null>(null);
@@ -400,9 +469,19 @@ export function InterviewShell() {
   const [toastState, setToastState] = useState<ToastState>(null);
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
+  const latestAssistantMessage = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index]?.role === "assistant") {
+        return messages[index];
+      }
+    }
+
+    return null;
+  }, [messages]);
+  const latestAssistantPayload = latestAssistantMessage?.assistantPayload ?? null;
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
-  const streamQueueRef = useRef("");
+  const streamQueueRef = useRef<Array<{ target: StreamingTarget; text: string }>>([]);
   const streamTimerRef = useRef<number | null>(null);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const streamCompletedRef = useRef(false);
@@ -425,9 +504,16 @@ export function InterviewShell() {
   });
   const [shellHeight, setShellHeight] = useState<number | null>(null);
 
-  const showDraftPrompt = Boolean(sessionId && !journalEntry && status === "active" && stage === "wrap_up");
-  const showActiveDraftCard = Boolean(sessionId && journalEntry && status === "active");
-  const showStreamingBubble = assistantState !== "idle";
+  const showChoiceCard = Boolean(
+    sessionId &&
+      status === "active" &&
+      latestAssistantPayload?.stateUpdate.offerChoice &&
+      !optimisticUserMessage &&
+      assistantState === "idle"
+  );
+  const showDraftPrompt = Boolean(sessionId && !journalEntry && status === "active" && stage === "wrap_up" && !showChoiceCard);
+  const showActiveDraftCard = Boolean(sessionId && journalEntry && status === "active" && !showChoiceCard);
+  const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantInsight || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
   const isInterviewPaused = status === "paused";
@@ -472,7 +558,8 @@ export function InterviewShell() {
       !isReopeningInterview &&
       !isPausingInterview &&
       !isCompletingInterview &&
-      !isInterviewLocked
+      !isInterviewLocked &&
+      !showChoiceCard
   );
   const isDraftStale = useMemo(() => {
     if (!journalEntry || messages.length === 0) {
@@ -590,11 +677,12 @@ export function InterviewShell() {
 
   const clearStreamState = useCallback(() => {
     stopStreamPump();
-    streamQueueRef.current = "";
+    streamQueueRef.current = [];
     pendingSessionRef.current = null;
     streamCompletedRef.current = false;
     setOptimisticUserMessage(null);
-    setStreamedAssistantText("");
+    setStreamedAssistantInsight("");
+    setStreamedAssistantQuestion("");
     setAssistantState("idle");
   }, [stopStreamPump]);
 
@@ -618,7 +706,7 @@ export function InterviewShell() {
       return;
     }
 
-    if (!streamCompletedRef.current || streamQueueRef.current || !pendingSessionRef.current) {
+    if (!streamCompletedRef.current || streamQueueRef.current.length > 0 || !pendingSessionRef.current) {
       return;
     }
 
@@ -627,14 +715,15 @@ export function InterviewShell() {
     pendingSessionRef.current = null;
     streamCompletedRef.current = false;
     setOptimisticUserMessage(null);
-    setStreamedAssistantText("");
+    setStreamedAssistantInsight("");
+    setStreamedAssistantQuestion("");
     setAssistantState("idle");
     streamResolverRef.current?.();
     streamResolverRef.current = null;
   }
 
-  function enqueueAssistantDelta(text: string, activeStreamId: number) {
-    streamQueueRef.current += text;
+  function enqueueAssistantDelta(target: StreamingTarget, text: string, activeStreamId: number) {
+    streamQueueRef.current.push({ target, text });
 
     if (streamTimerRef.current) {
       return;
@@ -646,16 +735,26 @@ export function InterviewShell() {
         return;
       }
 
-      if (!streamQueueRef.current) {
+      if (streamQueueRef.current.length === 0) {
         maybeFinalizeStream(activeStreamId);
         return;
       }
 
-      const nextChar = streamQueueRef.current.slice(0, 1);
-      streamQueueRef.current = streamQueueRef.current.slice(1);
-      setStreamedAssistantText((current) => current + nextChar);
+      const nextChunk = streamQueueRef.current[0];
+      const nextChar = nextChunk.text.slice(0, 1);
+      nextChunk.text = nextChunk.text.slice(1);
 
-      if (!streamQueueRef.current) {
+      if (nextChunk.target === "insight") {
+        setStreamedAssistantInsight((current) => current + nextChar);
+      } else {
+        setStreamedAssistantQuestion((current) => current + nextChar);
+      }
+
+      if (!nextChunk.text) {
+        streamQueueRef.current.shift();
+      }
+
+      if (streamQueueRef.current.length === 0) {
         maybeFinalizeStream(activeStreamId);
       }
     }, 18);
@@ -777,7 +876,7 @@ export function InterviewShell() {
 
     // Keep the chat pinned to the latest message without scrolling the whole document.
     messageScrollElement.scrollTop = messageScrollElement.scrollHeight;
-  }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantText]);
+  }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantInsight, streamedAssistantQuestion]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -848,10 +947,18 @@ export function InterviewShell() {
     }
   }
 
-  async function handleSend() {
-    const nextInput = input.trim();
-
-    if (!nextInput || isBusy) {
+  async function runInterviewAction(
+    payload:
+      | {
+          action: "reply";
+          userMessage: string;
+          inputMode: "text";
+        }
+      | {
+          action: "continue";
+        }
+  ) {
+    if (isBusy) {
       return;
     }
 
@@ -864,13 +971,24 @@ export function InterviewShell() {
       return;
     }
 
+    const optimisticMessage = payload.action === "reply" ? payload.userMessage.trim() : null;
+
+    if (payload.action === "reply" && !optimisticMessage) {
+      return;
+    }
+
     setError(null);
-    setInput("");
+    if (payload.action === "reply") {
+      setInput("");
+      setOptimisticUserMessage(optimisticMessage);
+    } else {
+      setOptimisticUserMessage(null);
+    }
     setIsBusy(true);
-    setOptimisticUserMessage(nextInput);
-    setStreamedAssistantText("");
+    setStreamedAssistantInsight("");
+    setStreamedAssistantQuestion("");
     setAssistantState("thinking");
-    streamQueueRef.current = "";
+    streamQueueRef.current = [];
     pendingSessionRef.current = null;
     streamCompletedRef.current = false;
     const activeStreamId = activeStreamIdRef.current + 1;
@@ -886,20 +1004,30 @@ export function InterviewShell() {
       const response = await fetch("/api/interview/session/respond/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: resolvedSessionId,
-          userMessage: nextInput,
-          inputMode: "text"
-        })
+        body: JSON.stringify(
+          payload.action === "reply"
+            ? {
+                action: "reply",
+                sessionId: resolvedSessionId,
+                userMessage: optimisticMessage,
+                inputMode: payload.inputMode
+              }
+            : {
+                action: "continue",
+                sessionId: resolvedSessionId
+              }
+        )
       });
 
       if (!response.ok || !response.body) {
         throw new Error("INTERVIEW_RESPOND_FAILED");
       }
 
+      const responseBody = response.body;
+
       await new Promise<void>(async (resolve, reject) => {
         streamResolverRef.current = resolve;
-        const reader = response.body!.getReader();
+        const reader = responseBody.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
 
@@ -913,7 +1041,7 @@ export function InterviewShell() {
           if (parsed.event === "phase") {
             const nextState = parsed.data.state;
 
-            if (nextState === "thinking" || nextState === "streaming") {
+            if (nextState === "thinking" || nextState === "insight" || nextState === "question") {
               setAssistantState(nextState);
             }
 
@@ -922,9 +1050,13 @@ export function InterviewShell() {
 
           if (parsed.event === "delta") {
             const text = typeof parsed.data.text === "string" ? parsed.data.text : "";
+            const target =
+              parsed.data.target === "insight" || parsed.data.target === "question"
+                ? (parsed.data.target as StreamingTarget)
+                : "question";
 
             if (text) {
-              enqueueAssistantDelta(text, activeStreamId);
+              enqueueAssistantDelta(target, text, activeStreamId);
             }
 
             return;
@@ -981,11 +1113,21 @@ export function InterviewShell() {
       });
     } catch {
       clearStreamState();
-      setInput(nextInput);
-      setError("这一轮提交失败了，请再试一次。");
+      if (payload.action === "reply" && optimisticMessage) {
+        setInput(optimisticMessage);
+      }
+      setError(payload.action === "continue" ? "暂时无法继续追问，请稍后再试。" : "这一轮提交失败了，请再试一次。");
     } finally {
       setIsBusy(false);
     }
+  }
+
+  async function handleSend() {
+    await runInterviewAction({
+      action: "reply",
+      userMessage: input,
+      inputMode: "text"
+    });
   }
 
   async function handleReopenInterview() {
@@ -1077,6 +1219,13 @@ export function InterviewShell() {
     window.setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
+  }
+
+  async function handleContinueChoice() {
+    setPanelOpen(false);
+    await runInterviewAction({
+      action: "continue"
+    });
   }
 
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -1309,11 +1458,19 @@ export function InterviewShell() {
           >
             <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
               {messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
+                <ConversationMessage key={message.id} message={message} />
               ))}
               {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
               {showStreamingBubble ? (
-                <MessageBubble content={assistantState === "thinking" ? "正在思考中..." : streamedAssistantText || "…"} />
+                <>
+                  {assistantState === "thinking" && !streamedAssistantInsight && !streamedAssistantQuestion ? (
+                    <MessageBubble content="正在思考中..." />
+                  ) : null}
+                  {streamedAssistantInsight ? <MessageBubble content={streamedAssistantInsight} role="assistant" /> : null}
+                  {streamedAssistantQuestion ? (
+                    <MessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
+                  ) : null}
+                </>
               ) : null}
               {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
                 <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
@@ -1336,6 +1493,17 @@ export function InterviewShell() {
                   isGenerating={isGeneratingDraft}
                 />
               ) : null}
+              {showChoiceCard ? (
+                <>
+                  <ChoiceActionCard
+                    onContinue={() => void handleContinueChoice()}
+                    onGenerate={handleGenerateDraft}
+                    continueDisabled={isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
+                    generateDisabled={isBusy || isGeneratingDraft}
+                  />
+                  {error ? <p className="ml-4 text-sm text-[#9f3a2f]">{error}</p> : null}
+                </>
+              ) : null}
               {showActiveDraftCard ? (
                 <ActiveDraftCard
                   onToggleWorkspace={() => void handleTogglePanel()}
@@ -1349,7 +1517,7 @@ export function InterviewShell() {
             </div>
           </div>
 
-          {!isInterviewLocked ? (
+          {!isInterviewLocked && !showChoiceCard ? (
             <div
               data-testid="interview-floating-composer"
               className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"

@@ -4,6 +4,8 @@ export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";
 export type JoyEntrySource = "ai_draft_direct" | "ai_draft_edited";
 export type JoyEntryStatus = "draft" | "saved";
+export type AssistantDepth = "event" | "feeling" | "reason" | "clue" | "pattern";
+export type AssistantTurnPhase = "opening" | "digging" | "closing" | "choice";
 export type JoyInterviewStage =
   | "collect_event"
   | "probe_reason"
@@ -11,11 +13,27 @@ export type JoyInterviewStage =
   | "wrap_up"
   | "finalize";
 
+export interface AssistantTurnPayload {
+  insight: string;
+  analysis: string;
+  question: string;
+  stateUpdate: {
+    turnPhase: AssistantTurnPhase;
+    shouldEndDimension: boolean;
+    offerChoice: boolean;
+    choiceReason: string;
+  };
+  meta: {
+    depthReached: AssistantDepth[];
+  };
+}
+
 export interface InterviewMessage {
   id: string;
   role: InterviewRole;
   inputMode?: InputMode;
   content: string;
+  assistantPayload?: AssistantTurnPayload | null;
   sequence: number;
   createdAt: string;
 }
