@@ -1,12 +1,14 @@
 import type { InterviewSessionRecord } from "@/types/interview";
 
-const { findJoyInterviewSessionById, reopenJoyInterviewSessionRecord } = vi.hoisted(() => ({
+const { completeJoyInterviewSessionRecord, findJoyInterviewSessionById, reopenJoyInterviewSessionRecord } = vi.hoisted(() => ({
+  completeJoyInterviewSessionRecord: vi.fn(),
   findJoyInterviewSessionById: vi.fn(),
   reopenJoyInterviewSessionRecord: vi.fn()
 }));
 
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
   appendJoyInterviewTurn: vi.fn(),
+  completeJoyInterviewSessionRecord,
   createJoyInterviewSession: vi.fn(),
   findJoyInterviewSessionById,
   markJoyEntrySaved: vi.fn(),
@@ -72,6 +74,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
 
 describe("reopenJoyInterviewSession", () => {
   beforeEach(() => {
+    completeJoyInterviewSessionRecord.mockReset();
     findJoyInterviewSessionById.mockReset();
     reopenJoyInterviewSessionRecord.mockReset();
   });
@@ -104,10 +107,18 @@ describe("reopenJoyInterviewSession", () => {
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith(completedSession.id);
   });
 
-  it("rejects completed sessions that do not have a journal entry", async () => {
-    findJoyInterviewSessionById.mockResolvedValue(buildSession({ journalEntry: null }));
+  it("reopens completed sessions even when no journal entry exists yet", async () => {
+    const completedSession = buildSession({ journalEntry: null });
+    const reopenedSession = buildSession({
+      journalEntry: null,
+      status: "active",
+      stage: "wrap_up",
+      completedAt: null
+    });
+    findJoyInterviewSessionById.mockResolvedValue(completedSession);
+    reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
-    await expect(reopenJoyInterviewSession("session-1")).rejects.toThrow("SESSION_REOPEN_UNSUPPORTED");
-    expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
+    await expect(reopenJoyInterviewSession("session-1")).resolves.toEqual({ session: reopenedSession });
+    expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith("session-1");
   });
 });

@@ -7,6 +7,7 @@ import {
 } from "@/features/joy-interview/server/joy-interview-engine";
 import {
   appendJoyInterviewTurn,
+  completeJoyInterviewSessionRecord,
   createJoyInterviewSession,
   findJoyInterviewSessionById,
   markJoyEntrySaved,
@@ -72,12 +73,34 @@ export async function reopenJoyInterviewSession(sessionId: string) {
     };
   }
 
-  if (!session.journalEntry) {
-    throw new Error("SESSION_REOPEN_UNSUPPORTED");
+  const reopenedSession = await reopenJoyInterviewSessionRecord(sessionId);
+
+  if (!reopenedSession) {
+    throw new Error("SESSION_NOT_FOUND");
   }
 
   return {
-    session: await reopenJoyInterviewSessionRecord(sessionId)
+    session: reopenedSession
+  };
+}
+
+export async function completeJoyInterviewSession(sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (session.status === "completed") {
+    return {
+      session
+    };
+  }
+
+  const completedSession = await completeJoyInterviewSessionRecord(sessionId);
+
+  return {
+    session: completedSession
   };
 }
 

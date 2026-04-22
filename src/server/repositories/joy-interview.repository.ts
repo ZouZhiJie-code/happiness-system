@@ -327,12 +327,40 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
 }
 
 export async function reopenJoyInterviewSessionRecord(sessionId: string) {
+  const session = await prisma.$transaction(async (tx) => {
+    const existing = await tx.interviewSession.findUnique({
+      where: { id: sessionId },
+      include: interviewSessionInclude
+    });
+
+    if (!existing) {
+      return null;
+    }
+
+    return tx.interviewSession.update({
+      where: { id: sessionId },
+      data: {
+        status: "active",
+        stage: existing.stage === "finalize" ? "wrap_up" : existing.stage,
+        completedAt: null
+      },
+      include: interviewSessionInclude
+    });
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  return mapInterviewSession(session);
+}
+
+export async function completeJoyInterviewSessionRecord(sessionId: string) {
   const session = await prisma.interviewSession.update({
     where: { id: sessionId },
     data: {
-      status: "active",
-      stage: "wrap_up",
-      completedAt: null
+      status: "completed",
+      completedAt: new Date()
     },
     include: interviewSessionInclude
   });

@@ -107,6 +107,14 @@ export const reopenInterviewResponseSchema = z.object({
   session: interviewSessionSchema
 });
 
+export const completeInterviewRequestSchema = z.object({
+  sessionId: z.string()
+});
+
+export const completeInterviewResponseSchema = z.object({
+  session: interviewSessionSchema
+});
+
 export const updateJoyEntryRequestSchema = joyEntryDraftSchema.extend({
   title: z.string().max(80),
   content: z.string().max(3000)
@@ -124,5 +132,6 @@ export type RespondInterviewRequest = z.infer<typeof respondInterviewRequestSche
 export type GenerateDraftRequest = z.infer<typeof generateDraftRequestSchema>;
 export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
 export type ReopenInterviewRequest = z.infer<typeof reopenInterviewRequestSchema>;
+export type CompleteInterviewRequest = z.infer<typeof completeInterviewRequestSchema>;
 export type UpdateJoyEntryRequest = z.infer<typeof updateJoyEntryRequestSchema>;
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

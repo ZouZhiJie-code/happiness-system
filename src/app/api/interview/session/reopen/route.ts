@@ -24,10 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
     }
 
-    if (error instanceof Error && error.message === "SESSION_REOPEN_UNSUPPORTED") {
-      return NextResponse.json({ error: "SESSION_REOPEN_UNSUPPORTED" }, { status: 409 });
-    }
-
     return NextResponse.json({ error: "SESSION_REOPEN_FAILED" }, { status: 500 });
   }
 }

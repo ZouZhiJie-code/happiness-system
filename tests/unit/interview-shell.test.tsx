@@ -171,6 +171,45 @@ describe("InterviewShell", () => {
         );
       }
 
+      if (url.endsWith("/api/interview/session/complete")) {
+        return new Response(
+          JSON.stringify({
+            session: buildSession({
+              id: "session-ready",
+              status: "completed",
+              stage: "wrap_up",
+              turnCount: 2,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:04:00.000Z",
+              journalEntry: baseJournalEntry
+            })
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body)) as JournalEntryRecord;
+
+        return new Response(
+          JSON.stringify({
+            ...body,
+            status: "draft",
+            source: "ai_draft_edited",
+            updatedAt: "2026-04-21T00:09:00.000Z",
+            savedAt: null
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
       if (url.includes("/api/interview/session/")) {
         const sessionId = url.split("/").pop();
 
@@ -221,6 +260,7 @@ describe("InterviewShell", () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -254,7 +294,11 @@ describe("InterviewShell", () => {
     expect(screen.queryByText("访谈继续留在左侧，这里负责承接日志生成、编辑、重写和确认。")).not.toBeInTheDocument();
     expect(screen.getByDisplayValue(baseJournalEntry.title)).toBeInTheDocument();
     expect(screen.getByText(/今天让我开心的事情是：今天和家人一起吃饭聊天/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "保存为正式日志" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存正式日志" })).toBeInTheDocument();
+    expect(screen.getByText("日志草稿已生成")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "继续访谈" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "结束本轮访谈" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("本轮访谈已结束")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "关闭" })).not.toBeInTheDocument();
   });
@@ -279,6 +323,8 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("日志整理工作区")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "保存修改" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存修改" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "生成最新日志" })).toBeInTheDocument();
   });
 
   it("requires an explicit reopen before the user can continue the interview", async () => {
@@ -402,7 +448,7 @@ describe("InterviewShell", () => {
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
     expect(
-      await screen.findByText("当前日志草稿基于更早的访谈内容，如需同步最新补充，请重新生成。")
+      await screen.findByText("当前日志草稿基于更早的访谈内容，如需同步最新补充，请生成最新日志。")
     ).toBeInTheDocument();
     expect(screen.queryByText("你正在补充访谈，当前日志可能已过期。")).not.toBeInTheDocument();
     expect(screen.queryByText("你正在补充访谈，右侧日志会继续保留。")).not.toBeInTheDocument();
@@ -467,6 +513,260 @@ describe("InterviewShell", () => {
     expect(await screen.findByText("这次没能成功生成日志")).toBeInTheDocument();
     expect(screen.getByText("AI 暂时没能完成整理，请稍后重试。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重试生成" })).toBeInTheDocument();
+  });
+
+  it("shows a toast after saving edits and disables save again until the next change", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    const editedSavedEntry: JournalEntryRecord = {
+      ...savedJournalEntry,
+      title: "今天的开心：和家人一起吃饭聊天（补充）",
+      content: `${savedJournalEntry.content}\n我也记得那种被接住的感觉。`,
+      status: "draft",
+      source: "ai_draft_edited",
+      updatedAt: "2026-04-21T00:09:00.000Z",
+      savedAt: null
+    };
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.includes("/api/interview/session/") && !url.endsWith("/draft/save")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-with-journal",
+              status: "completed",
+              stage: "finalize",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:08:00.000Z",
+              journalEntry: savedJournalEntry
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+        return new Response(JSON.stringify(editedSavedEntry), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/draft/save")) {
+        return new Response(
+          JSON.stringify({
+            draftEntry: {
+              ...editedSavedEntry,
+              status: "saved",
+              savedAt: "2026-04-21T00:10:00.000Z",
+              updatedAt: "2026-04-21T00:10:00.000Z"
+            },
+            session: buildSession({
+              id: "session-with-journal",
+              status: "completed",
+              stage: "finalize",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:10:00.000Z",
+              journalEntry: {
+                ...editedSavedEntry,
+                status: "saved",
+                savedAt: "2026-04-21T00:10:00.000Z",
+                updatedAt: "2026-04-21T00:10:00.000Z"
+              }
+            })
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    render(<InterviewShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "打开日志" }));
+
+    const saveButton = await screen.findByRole("button", { name: "保存修改" });
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(screen.getByDisplayValue(savedJournalEntry.title), {
+      target: { value: editedSavedEntry.title }
+    });
+
+    expect(screen.getByRole("button", { name: "保存修改" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "保存修改" }));
+
+    expect(await screen.findByText("当前日志已保存")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "保存修改" })).toBeDisabled();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("当前日志已保存")).not.toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    expect(screen.queryByText("已保存")).not.toBeInTheDocument();
+  });
+
+  it("allows the user to end the interview explicitly before saving a journal", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<InterviewShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "结束本轮访谈" }));
+
+    expect(await screen.findByText("本轮访谈已结束")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/session/complete",
+      expect.objectContaining({
+        method: "POST"
+      })
+    );
+    expect(screen.getByRole("button", { name: "继续补充访谈" })).toBeInTheDocument();
+  });
+
+  it("cancels the pending autosave timer before explicit save to avoid duplicate draft writes", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.includes("/api/interview/session/") && !url.endsWith("/draft/save")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-with-journal",
+              status: "completed",
+              stage: "finalize",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:08:00.000Z",
+              journalEntry: savedJournalEntry
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+        return new Response(
+          JSON.stringify({
+            ...savedJournalEntry,
+            title: "和同事骑自行车（新标题）",
+            status: "draft",
+            source: "ai_draft_edited",
+            savedAt: null,
+            updatedAt: "2026-04-21T00:09:00.000Z"
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/draft/save")) {
+        return new Response(
+          JSON.stringify({
+            draftEntry: {
+              ...savedJournalEntry,
+              title: "和同事骑自行车（新标题）",
+              status: "saved",
+              source: "ai_draft_edited",
+              savedAt: "2026-04-21T00:10:00.000Z",
+              updatedAt: "2026-04-21T00:10:00.000Z"
+            },
+            session: buildSession({
+              id: "session-with-journal",
+              status: "completed",
+              stage: "finalize",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:10:00.000Z",
+              journalEntry: {
+                ...savedJournalEntry,
+                title: "和同事骑自行车（新标题）",
+                status: "saved",
+                source: "ai_draft_edited",
+                savedAt: "2026-04-21T00:10:00.000Z",
+                updatedAt: "2026-04-21T00:10:00.000Z"
+              }
+            })
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    render(<InterviewShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "打开日志" }));
+    fireEvent.change(screen.getByDisplayValue(savedJournalEntry.title), {
+      target: { value: "和同事骑自行车（新标题）" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "保存修改" }));
+
+    await waitFor(() => {
+      const putCalls = vi.mocked(global.fetch).mock.calls.filter(
+        ([input, init]) => String(input).includes("/api/joy-entry/") && init?.method === "PUT"
+      );
+
+      expect(putCalls).toHaveLength(1);
+    }, { timeout: 2000 });
+
+    await waitFor(() => {
+      expect(screen.queryByText("当前日志已保存")).not.toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    const putCalls = vi.mocked(global.fetch).mock.calls.filter(
+      ([input, init]) => String(input).includes("/api/joy-entry/") && init?.method === "PUT"
+    );
+
+    expect(putCalls).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "保存修改" })).toBeDisabled();
   });
 
   it("sends on Enter and preserves newline on Shift+Enter", async () => {
