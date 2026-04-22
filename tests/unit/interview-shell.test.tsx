@@ -1,10 +1,10 @@
 import React from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { InterviewShell } from "@/components/interview/interview-shell";
 import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
-import type { InterviewMessage, InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
+import type { InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
@@ -30,7 +30,7 @@ const openingMessage: InterviewMessage = {
   createdAt: "2026-04-21T00:00:00.000Z"
 };
 
-const completedMessages: InterviewMessage[] = [
+const promptMessages: InterviewMessage[] = [
   openingMessage,
   {
     id: "user-1",
@@ -38,19 +38,40 @@ const completedMessages: InterviewMessage[] = [
     content: "今天和家人一起吃饭聊天，因为我最近很少这么放松。",
     sequence: 1,
     createdAt: "2026-04-21T00:01:00.000Z"
+  },
+  {
+    id: "assistant-2",
+    role: "assistant",
+    content: "我已经抓到这段开心的重点了。现在要不要帮你整理成日志？",
+    sequence: 2,
+    createdAt: "2026-04-21T00:02:00.000Z"
   }
 ];
 
-const baseDraft: JoyEntryDraft = {
+const baseJournalEntry: JournalEntryRecord = {
+  id: "entry-1",
   title: "今天的开心：和家人一起吃饭聊天",
-  content: "今天让我开心的事情是：今天和家人一起吃饭聊天。",
+  content: "今天让我开心的事情是：今天和家人一起吃饭聊天。\n这件事之所以重要，是因为：因为我最近很久没有这种轻松感了。",
   event: baseSnapshot.event,
   feeling: baseSnapshot.feeling,
   whyItMattered: baseSnapshot.whyItMattered,
   happinessType: baseSnapshot.happinessType,
   selfPattern: baseSnapshot.selfPattern,
   tags: ["关系型开心", "轻松踏实"],
-  source: "ai_draft_direct"
+  source: "ai_draft_direct",
+  status: "draft",
+  linkedSessionIds: ["session-ready"],
+  updatedAt: "2026-04-21T00:03:00.000Z",
+  savedAt: null
+};
+
+const savedJournalEntry: JournalEntryRecord = {
+  ...baseJournalEntry,
+  id: "entry-saved",
+  status: "saved",
+  linkedSessionIds: ["session-with-journal"],
+  updatedAt: "2026-04-21T00:08:00.000Z",
+  savedAt: "2026-04-21T00:08:00.000Z"
 };
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
@@ -74,15 +95,251 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     },
     startedAt: "2026-04-21T00:00:00.000Z",
     completedAt: null,
-    finalEntry: null,
+    journalEntry: null,
     ...overrides
   };
+}
+
+function buildSseResponse(chunks: string[]) {
+  const encoder = new TextEncoder();
+
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        chunks.forEach((chunk) => controller.enqueue(encoder.encode(chunk)));
+        controller.close();
+      }
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream; charset=utf-8" }
+    }
+  );
 }
 
 describe("InterviewShell", () => {
   beforeEach(() => {
     useInterviewStore.getState().reset("joy");
     window.localStorage.clear();
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/draft/generate")) {
+        const session = buildSession({
+          id: "session-ready",
+          status: "active",
+          stage: "wrap_up",
+          turnCount: 2,
+          messages: promptMessages,
+          snapshot: baseSnapshot,
+          journalEntry: baseJournalEntry
+        });
+
+        return new Response(JSON.stringify({ draftEntry: baseJournalEntry, session }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/reopen")) {
+        return new Response(
+          JSON.stringify({
+            session: buildSession({
+              id: "session-with-journal",
+              status: "active",
+              stage: "wrap_up",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              journalEntry: savedJournalEntry
+            })
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/interview/session/")) {
+        const sessionId = url.split("/").pop();
+
+        if (sessionId === "session-ready") {
+          return new Response(
+            JSON.stringify(
+              buildSession({
+                id: "session-ready",
+                status: "active",
+                stage: "wrap_up",
+                turnCount: 2,
+                messages: promptMessages,
+                snapshot: baseSnapshot
+              })
+            ),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
+        }
+
+        if (sessionId === "session-with-journal") {
+          return new Response(
+            JSON.stringify(
+              buildSession({
+                id: "session-with-journal",
+                status: "completed",
+                stage: "finalize",
+                turnCount: 4,
+                messages: promptMessages,
+                snapshot: baseSnapshot,
+                completedAt: "2026-04-21T00:08:00.000Z",
+                journalEntry: savedJournalEntry
+              })
+            ),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          );
+        }
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    render(<InterviewShell />);
+
+    await waitFor(() => {
+      expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("抽取快照")).not.toBeInTheDocument();
+    expect(screen.queryByText("日志草稿")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "整理成日志" })).not.toBeInTheDocument();
+    const generateButton = screen.getByRole("button", { name: "生成日志" });
+    expect(generateButton).toBeInTheDocument();
+    expect(generateButton.closest(".max-w-2xl")).toBeNull();
+  });
+
+  it("opens the writing workspace and shows the generated journal after clicking generate", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    render(<InterviewShell />);
+
+    const generateButton = await screen.findByRole("button", { name: "生成日志" });
+    fireEvent.click(generateButton);
+
+    expect(await screen.findByText("日志整理工作区")).toBeInTheDocument();
+    expect(screen.queryByText("日志生成写作面板")).not.toBeInTheDocument();
+    expect(screen.queryByText("访谈继续留在左侧，这里负责承接日志生成、编辑、重写和确认。")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue(baseJournalEntry.title)).toBeInTheDocument();
+    expect(screen.getByText(/今天让我开心的事情是：今天和家人一起吃饭聊天/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存为正式日志" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "关闭" })).not.toBeInTheDocument();
+  });
+
+  it("shows a locked end-state for an existing saved journal and lets the user reopen the workspace", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    render(<InterviewShell />);
+
+    await waitFor(() => {
+      expect(screen.getByText("第 4 轮")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("本轮访谈已结束")).toBeInTheDocument();
+    expect(screen.queryByText("日志整理工作区")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开日志" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "继续补充访谈" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "重新开始" })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "打开日志" }));
+
+    expect(await screen.findByText("日志整理工作区")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存修改" })).toBeInTheDocument();
+  });
+
+  it("requires an explicit reopen before the user can continue the interview", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    render(<InterviewShell />);
+
+    await waitFor(() => {
+      expect(screen.getByText("第 4 轮")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "继续补充访谈" }));
+
+    expect(await screen.findByRole("textbox")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/session/reopen",
+      expect.objectContaining({
+        method: "POST"
+      })
+    );
+  });
+
+  it("marks the journal as stale after reopened interview messages arrive", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    const reopenedSession = buildSession({
+      id: "session-with-journal",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 4,
+      messages: promptMessages,
+      snapshot: baseSnapshot,
+      journalEntry: savedJournalEntry
+    });
+    const updatedSession = buildSession({
+      id: "session-with-journal",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 5,
+      messages: [
+        ...promptMessages,
+        {
+          id: "user-3",
+          role: "user",
+          content: "我还想补充，那一刻我也觉得被接住了。",
+          sequence: 3,
+          createdAt: "2026-04-21T00:09:00.000Z"
+        },
+        {
+          id: "assistant-4",
+          role: "assistant",
+          content: "这份被接住的感觉也很关键。你想把它放进日志里吗？",
+          sequence: 4,
+          createdAt: "2026-04-21T00:10:00.000Z"
+        }
+      ],
+      snapshot: baseSnapshot,
+      journalEntry: savedJournalEntry
+    });
 
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -96,100 +353,196 @@ describe("InterviewShell", () => {
         });
       }
 
+      if (url.endsWith("/api/interview/session/reopen")) {
+        return new Response(JSON.stringify({ session: reopenedSession }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          'event: phase\ndata: {"state":"streaming"}\n\n',
+          'event: delta\ndata: {"text":"这份被接住的感觉也很关键。你想把它放进日志里吗？"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: updatedSession })}\n\n`
+        ]);
+      }
+
       if (url.includes("/api/interview/session/")) {
-        const sessionId = url.split("/").pop();
-
-        if (sessionId === "session-completed") {
-          return new Response(
-            JSON.stringify(
-              buildSession({
-                id: "session-completed",
-                status: "completed",
-                stage: "finalize",
-                turnCount: 4,
-                messages: completedMessages,
-                snapshot: baseSnapshot,
-                completedAt: "2026-04-21T00:08:00.000Z"
-              })
-            ),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" }
-            }
-          );
-        }
-
-        if (sessionId === "session-with-draft") {
-          return new Response(
-            JSON.stringify(
-              buildSession({
-                id: "session-with-draft",
-                status: "completed",
-                stage: "finalize",
-                turnCount: 4,
-                messages: completedMessages,
-                snapshot: baseSnapshot,
-                completedAt: "2026-04-21T00:08:00.000Z",
-                finalEntry: baseDraft
-              })
-            ),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" }
-            }
-          );
-        }
+        return new Response(JSON.stringify(buildSession({
+          id: "session-with-journal",
+          status: "completed",
+          stage: "finalize",
+          turnCount: 4,
+          messages: promptMessages,
+          snapshot: baseSnapshot,
+          completedAt: "2026-04-21T00:08:00.000Z",
+          journalEntry: savedJournalEntry
+        })), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
       }
 
       throw new Error(`Unhandled fetch: ${url}`);
     }) as typeof fetch;
-  });
-
-  afterEach(() => {
-    cleanup();
-    vi.restoreAllMocks();
-  });
-
-  it("auto-starts the interview and does not render the old start button", async () => {
-    render(<InterviewShell />);
-
-    expect(screen.queryByRole("button", { name: "开始访谈" })).not.toBeInTheDocument();
-    expect(screen.queryByText("恢复会话")).not.toBeInTheDocument();
-    expect(screen.queryByText("访谈者")).not.toBeInTheDocument();
-    expect(screen.queryByText("我的回答")).not.toBeInTheDocument();
-    expect(screen.queryByText("访谈会逐步从事件进入感受，再进入为什么重要。页面左侧负责专注表达，右侧负责让结构慢慢显形。")).not.toBeInTheDocument();
-    expect(screen.queryByText("建议先写具体事件，再补充为什么开心。")).not.toBeInTheDocument();
-    expect(screen.queryByText("把这一轮想到的内容直接写下来，先说具体发生了什么，再补充当时为什么会开心。")).not.toBeInTheDocument();
-    expect(screen.queryByText("访谈收束后可整理成日志草稿。")).not.toBeInTheDocument();
-
-    expect(await screen.findByText(openingMessage.content)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "重新开始" })).toBeInTheDocument();
-    expect(screen.getAllByText("第 0 轮")).toHaveLength(1);
-    expect(screen.getByTestId("interview-message-scroll")).toHaveClass("overflow-y-auto");
-  });
-
-  it("shows the finalize action after restoring a completed interview without a draft", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-completed" }));
 
     render(<InterviewShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "打开日志" }));
+    await screen.findByText("日志整理工作区");
+
+    fireEvent.click(screen.getByRole("button", { name: "继续补充访谈" }));
+
+    const textarea = await screen.findByPlaceholderText(
+      "例如：今天和同事一起把一个棘手问题解决了，我真的松了一口气。"
+    );
+    fireEvent.change(textarea, { target: { value: "我还想补充，那一刻我也觉得被接住了。" } });
+    fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
+
+    expect(
+      await screen.findByText("当前日志草稿基于更早的访谈内容，如需同步最新补充，请重新生成。")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("你正在补充访谈，当前日志可能已过期。")).not.toBeInTheDocument();
+    expect(screen.queryByText("你正在补充访谈，右侧日志会继续保留。")).not.toBeInTheDocument();
+    expect(screen.queryByText("关联访谈 1 条")).not.toBeInTheDocument();
+  });
+
+  it("shows a retryable error state when draft generation fails", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/draft/generate")) {
+        return new Response(
+          JSON.stringify({
+            error: "DRAFT_GENERATE_UPSTREAM_ERROR",
+            retryable: true,
+            message: "AI 暂时没能完成整理，请稍后重试。"
+          }),
+          {
+            status: 502,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/interview/session/")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-ready",
+              status: "active",
+              stage: "wrap_up",
+              turnCount: 2,
+              messages: promptMessages,
+              snapshot: baseSnapshot
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    render(<InterviewShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+
+    expect(await screen.findByText("这次没能成功生成日志")).toBeInTheDocument();
+    expect(screen.getByText("AI 暂时没能完成整理，请稍后重试。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "重试生成" })).toBeInTheDocument();
+  });
+
+  it("sends on Enter and preserves newline on Shift+Enter", async () => {
+    const streamedSession = buildSession({
+      turnCount: 2,
+      messages: [
+        openingMessage,
+        {
+          id: "user-enter",
+          role: "user",
+          content: "第一行",
+          sequence: 1,
+          createdAt: "2026-04-21T00:01:00.000Z"
+        },
+        {
+          id: "assistant-enter",
+          role: "assistant",
+          content: "收到，我继续问下一个细节。",
+          sequence: 2,
+          createdAt: "2026-04-21T00:02:00.000Z"
+        }
+      ]
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          'event: phase\ndata: {"state":"streaming"}\n\n',
+          'event: delta\ndata: {"text":"收到，我继续问下一个细节。"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: streamedSession })}\n\n`
+        ]);
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<InterviewShell />);
+
+    const textarea = await screen.findByRole("textbox");
+
+    fireEvent.change(textarea, { target: { value: "第一行" } });
+    fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
     await waitFor(() => {
-      expect(screen.getByText("第 4 轮")).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interview/session/respond/stream",
+        expect.objectContaining({
+          method: "POST"
+        })
+      );
     });
-    expect(screen.getByRole("button", { name: "整理成日志" })).toBeInTheDocument();
-    expect(screen.queryByText("访谈收束后可整理成日志草稿。")).not.toBeInTheDocument();
-    expect(screen.queryByText("访谈者")).not.toBeInTheDocument();
-    expect(screen.queryByText("我的回答")).not.toBeInTheDocument();
-  });
 
-  it("starts a fresh session instead of auto-restoring a completed draft session", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-draft" }));
+    const sendCallsAfterEnter = vi
+      .mocked(global.fetch)
+      .mock.calls.filter(([input]) => String(input).endsWith("/api/interview/session/respond/stream")).length;
 
-    render(<InterviewShell />);
+    fireEvent.change(textarea, { target: { value: "第二行\n第三行" } });
+    fireEvent.keyDown(textarea, { key: "Enter", code: "Enter", shiftKey: true });
 
-    expect(await screen.findByText(openingMessage.content)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "整理成日志" })).not.toBeInTheDocument();
-    expect(screen.queryByText(baseDraft.title)).not.toBeInTheDocument();
-    expect(screen.queryByText(baseDraft.content)).not.toBeInTheDocument();
+    const sendCallsAfterShiftEnter = vi
+      .mocked(global.fetch)
+      .mock.calls.filter(([input]) => String(input).endsWith("/api/interview/session/respond/stream")).length;
+
+    expect(sendCallsAfterShiftEnter).toBe(sendCallsAfterEnter);
+    expect(textarea).toHaveValue("第二行\n第三行");
   });
 });

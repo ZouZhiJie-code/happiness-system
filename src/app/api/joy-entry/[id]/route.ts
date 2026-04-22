@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import { updateJoyEntryRequestSchema } from "@/features/joy-interview/schema/joy-interview.schema";
+import {
+  updateJoyEntryRequestSchema,
+  updateJoyEntryResponseSchema
+} from "@/features/joy-interview/schema/joy-interview.schema";
 import { updateJoyEntry } from "@/server/repositories/joy-interview.repository";
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -16,7 +19,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   try {
     const updated = await updateJoyEntry(id, parsed.data);
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updateJoyEntryResponseSchema.parse(updated));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       return NextResponse.json({ error: "JOY_ENTRY_NOT_FOUND" }, { status: 404 });

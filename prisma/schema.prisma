@@ -45,6 +45,11 @@ enum JoyEntrySource {
   ai_draft_edited
 }
 
+enum JoyEntryStatus {
+  draft
+  saved
+}
+
 enum AIRequestStage {
   transcribe
   extract
@@ -127,7 +132,7 @@ model JoyInterviewSnapshot {
 model JoyEntry {
   id              String         @id @default(cuid())
   userId          String
-  sessionId       String   @unique
+  sessionId       String         @unique
   date            DateTime
   title           String
   content         String
@@ -138,8 +143,11 @@ model JoyEntry {
   selfPattern     String?
   tags            String[]
   source          JoyEntrySource
+  status          JoyEntryStatus @default(draft)
+  linkedSessionIds String[]      @default([])
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  savedAt         DateTime?
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
 }

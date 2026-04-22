@@ -6,7 +6,7 @@ import type {
   InterviewDimension,
   InterviewMessage,
   InterviewSessionRecord,
-  JoyEntryDraft,
+  JournalEntryRecord,
   JoySnapshot
 } from "@/types/interview";
 
@@ -18,11 +18,11 @@ interface InterviewState {
   turnCount: number;
   messages: InterviewMessage[];
   snapshot: JoySnapshot | null;
-  draft: JoyEntryDraft | null;
+  journalEntry: JournalEntryRecord | null;
   setDimension: (dimension: InterviewDimension) => void;
   setSession: (session: InterviewSessionRecord) => void;
   hydrate: (session: InterviewSessionRecord) => void;
-  setDraft: (draft: JoyEntryDraft) => void;
+  setJournalEntry: (entry: JournalEntryRecord | null) => void;
   reset: (nextDimension?: InterviewDimension) => void;
 }
 
@@ -34,7 +34,7 @@ const initialState = {
   turnCount: 0,
   messages: [] as InterviewMessage[],
   snapshot: null,
-  draft: null
+  journalEntry: null
 };
 
 export const useInterviewStore = create<InterviewState>((set) => ({
@@ -49,7 +49,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       turnCount: session.turnCount,
       messages: session.messages,
       snapshot: session.snapshot,
-      draft: session.finalEntry
+      journalEntry: session.journalEntry
     }),
   hydrate: (session) =>
     set({
@@ -60,8 +60,8 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       turnCount: session.turnCount,
       messages: session.messages,
       snapshot: session.snapshot,
-      draft: session.finalEntry
+      journalEntry: session.journalEntry
     }),
-  setDraft: (draft) => set({ draft }),
+  setJournalEntry: (journalEntry) => set({ journalEntry }),
   reset: (nextDimension) => set({ ...initialState, dimension: nextDimension ?? initialState.dimension })
 }));

@@ -33,6 +33,14 @@ const joyEntryDraftSchema = z.object({
   source: z.enum(["ai_draft_direct", "ai_draft_edited"])
 });
 
+const journalEntrySchema = joyEntryDraftSchema.extend({
+  id: z.string(),
+  status: z.enum(["draft", "saved"]),
+  linkedSessionIds: z.array(z.string()),
+  updatedAt: z.string(),
+  savedAt: z.string().nullable()
+});
+
 export const interviewSessionSchema = z.object({
   id: z.string(),
   dimension: interviewDimensionSchema,
@@ -45,7 +53,7 @@ export const interviewSessionSchema = z.object({
   snapshot: joySnapshotSchema,
   startedAt: z.string(),
   completedAt: z.string().nullable(),
-  finalEntry: joyEntryDraftSchema.nullable()
+  journalEntry: journalEntrySchema.nullable()
 });
 
 export const startInterviewRequestSchema = z.object({
@@ -69,23 +77,42 @@ export const respondInterviewResponseSchema = z.object({
   sessionStatus: z.enum(["active", "completed", "abandoned"]),
   turnCount: z.number().int().nonnegative(),
   snapshot: joySnapshotSchema,
-  isComplete: z.boolean(),
+  isReadyForDraft: z.boolean(),
   session: interviewSessionSchema
 });
 
-export const finalizeInterviewRequestSchema = z.object({
+export const generateDraftRequestSchema = z.object({
+  sessionIds: z.array(z.string()).min(1).max(4)
+});
+
+export const generateDraftResponseSchema = z.object({
+  draftEntry: journalEntrySchema,
+  session: interviewSessionSchema
+});
+
+export const saveDraftRequestSchema = z.object({
   sessionId: z.string()
 });
 
-export const finalizeInterviewResponseSchema = z.object({
-  draftEntry: joyEntryDraftSchema,
+export const saveDraftResponseSchema = z.object({
+  draftEntry: journalEntrySchema,
+  session: interviewSessionSchema
+});
+
+export const reopenInterviewRequestSchema = z.object({
+  sessionId: z.string()
+});
+
+export const reopenInterviewResponseSchema = z.object({
   session: interviewSessionSchema
 });
 
 export const updateJoyEntryRequestSchema = joyEntryDraftSchema.extend({
-  title: z.string().min(1).max(80),
-  content: z.string().min(1).max(3000)
+  title: z.string().max(80),
+  content: z.string().max(3000)
 });
+
+export const updateJoyEntryResponseSchema = journalEntrySchema;
 
 export const settingsFormSchema = z.object({
   memoryEnabled: z.boolean(),
@@ -94,6 +121,8 @@ export const settingsFormSchema = z.object({
 
 export type StartInterviewRequest = z.infer<typeof startInterviewRequestSchema>;
 export type RespondInterviewRequest = z.infer<typeof respondInterviewRequestSchema>;
-export type FinalizeInterviewRequest = z.infer<typeof finalizeInterviewRequestSchema>;
+export type GenerateDraftRequest = z.infer<typeof generateDraftRequestSchema>;
+export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
+export type ReopenInterviewRequest = z.infer<typeof reopenInterviewRequestSchema>;
 export type UpdateJoyEntryRequest = z.infer<typeof updateJoyEntryRequestSchema>;
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

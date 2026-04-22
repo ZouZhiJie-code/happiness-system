@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/shared/site-header";
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="zh-CN">
       <body className="font-body text-ink antialiased">
         <div className="relative min-h-screen overflow-hidden px-1.5 py-3 md:px-2.5 md:py-4 xl:px-3">
-          <SiteHeader />
+          <Suspense fallback={<div className="mx-auto h-[5.5rem] max-w-[88rem]" />}>
+            <SiteHeader />
+          </Suspense>
           <main className="mx-auto max-w-[88rem] pb-4 pt-4 md:pb-5 md:pt-5">{children}</main>
         </div>
       </body>

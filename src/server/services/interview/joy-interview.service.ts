@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import {
   getCompletedRestartMessage,
   getNextStage,
@@ -7,6 +9,8 @@ import {
   appendJoyInterviewTurn,
   createJoyInterviewSession,
   findJoyInterviewSessionById,
+  markJoyEntrySaved,
+  reopenJoyInterviewSessionRecord,
   saveJoyInterviewDraft
 } from "@/server/repositories/joy-interview.repository";
 import {
@@ -23,6 +27,23 @@ import type {
   JoySnapshot
 } from "@/types/interview";
 
+export class DraftGenerationError extends Error {
+  constructor(
+    readonly code:
+      | "SESSION_BATCH_UNSUPPORTED"
+      | "SESSION_NOT_FOUND"
+      | "DRAFT_GENERATE_UPSTREAM_ERROR"
+      | "DRAFT_GENERATE_DB_ERROR"
+      | "DRAFT_GENERATE_UNKNOWN_ERROR",
+    readonly retryable: boolean,
+    message?: string,
+    readonly cause?: unknown
+  ) {
+    super(message ?? code);
+    this.name = "DraftGenerationError";
+  }
+}
+
 export async function startJoyInterview(dimension: InterviewDimension) {
   const openingQuestion = getOpeningQuestion(dimension);
   const session = await createJoyInterviewSession(dimension, openingQuestion);
@@ -38,12 +59,34 @@ export async function getJoyInterviewSession(sessionId: string) {
   return findJoyInterviewSessionById(sessionId);
 }
 
+export async function reopenJoyInterviewSession(sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (session.status === "active") {
+    return {
+      session
+    };
+  }
+
+  if (!session.journalEntry) {
+    throw new Error("SESSION_REOPEN_UNSUPPORTED");
+  }
+
+  return {
+    session: await reopenJoyInterviewSessionRecord(sessionId)
+  };
+}
+
 interface PreparedInterviewTurn {
   session: InterviewSessionRecord;
   nextSnapshot: JoySnapshot;
   nextTurnCount: number;
   nextStage: JoyInterviewStage;
-  isComplete: boolean;
+  isReadyForDraft: boolean;
 }
 
 async function getActiveInterviewSession(sessionId: string) {
@@ -59,7 +102,7 @@ async function getActiveInterviewSession(sessionId: string) {
       sessionStatus: session.status,
       turnCount: session.turnCount,
       snapshot: session.snapshot,
-      isComplete: session.status === "completed",
+      isReadyForDraft: Boolean(session.journalEntry),
       session
     };
   }
@@ -80,13 +123,13 @@ export async function prepareJoyInterviewResponse(sessionId: string, userMessage
   });
   const nextTurnCount = session.turnCount + 1;
   const nextStage = getNextStage(nextSnapshot, nextTurnCount);
-  const isComplete = nextStage === "wrap_up";
+  const isReadyForDraft = nextStage === "wrap_up";
   return {
     session,
     nextSnapshot,
     nextTurnCount,
     nextStage,
-    isComplete
+    isReadyForDraft
   } satisfies PreparedInterviewTurn;
 }
 
@@ -97,7 +140,7 @@ export async function completeJoyInterviewResponse(input: {
   nextSnapshot: JoySnapshot;
   nextTurnCount: number;
   nextStage: JoyInterviewStage;
-  isComplete: boolean;
+  isReadyForDraft: boolean;
   assistantMessage: string;
 }) {
   const updatedSession = await appendJoyInterviewTurn({
@@ -106,11 +149,11 @@ export async function completeJoyInterviewResponse(input: {
     inputMode: input.inputMode,
     assistantMessage: input.assistantMessage,
     snapshot: input.nextSnapshot,
-    nextStage: input.isComplete ? "finalize" : input.nextStage,
-    nextStatus: input.isComplete ? "completed" : "active",
+    nextStage: input.nextStage,
+    nextStatus: "active",
     nextTurnCount: input.nextTurnCount,
     draftSummary: input.nextSnapshot.whyItMattered ?? input.nextSnapshot.event,
-    completedAt: input.isComplete ? new Date() : null
+    completedAt: null
   });
 
   if (!updatedSession) {
@@ -122,7 +165,7 @@ export async function completeJoyInterviewResponse(input: {
     sessionStatus: updatedSession.status,
     turnCount: updatedSession.turnCount,
     snapshot: updatedSession.snapshot,
-    isComplete: input.isComplete,
+    isReadyForDraft: input.isReadyForDraft,
     session: updatedSession
   };
 }
@@ -151,7 +194,7 @@ export async function respondToJoyInterview(sessionId: string, userMessage: stri
     nextSnapshot: prepared.nextSnapshot,
     nextTurnCount: prepared.nextTurnCount,
     nextStage: prepared.nextStage,
-    isComplete: prepared.isComplete
+    isReadyForDraft: prepared.isReadyForDraft
   });
 }
 
@@ -213,26 +256,60 @@ export async function streamJoyInterviewResponse(
     nextSnapshot: prepared.nextSnapshot,
     nextTurnCount: prepared.nextTurnCount,
     nextStage: prepared.nextStage,
-    isComplete: prepared.isComplete
+    isReadyForDraft: prepared.isReadyForDraft
   });
 }
 
-export async function finalizeJoyInterview(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
-
-  if (!session) {
-    throw new Error("SESSION_NOT_FOUND");
+export async function generateJoyInterviewDraft(sessionIds: string[]) {
+  if (sessionIds.length !== 1) {
+    throw new DraftGenerationError("SESSION_BATCH_UNSUPPORTED", false);
   }
 
-  const draftEntry = await generateJoyDraftWithAI(session);
-  const finalizedSession = await saveJoyInterviewDraft(sessionId, draftEntry);
+  const session = await findJoyInterviewSessionById(sessionIds[0]);
 
-  if (!finalizedSession) {
-    throw new Error("SESSION_NOT_FOUND");
+  if (!session) {
+    throw new DraftGenerationError("SESSION_NOT_FOUND", false);
+  }
+
+  let draftEntry;
+
+  try {
+    draftEntry = await generateJoyDraftWithAI(session);
+  } catch (error) {
+    throw new DraftGenerationError("DRAFT_GENERATE_UPSTREAM_ERROR", true, "Draft generation failed upstream.", error);
+  }
+
+  let draftSession;
+
+  try {
+    draftSession = await saveJoyInterviewDraft(session.id, draftEntry);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError || error instanceof Prisma.PrismaClientInitializationError) {
+      throw new DraftGenerationError("DRAFT_GENERATE_DB_ERROR", true, "Draft persistence failed.", error);
+    }
+
+    throw new DraftGenerationError("DRAFT_GENERATE_UNKNOWN_ERROR", true, "Draft generation failed unexpectedly.", error);
+  }
+
+  if (!draftSession?.journalEntry) {
+    throw new DraftGenerationError("DRAFT_GENERATE_DB_ERROR", true, "Draft record was not created.");
   }
 
   return {
-    draftEntry,
-    session: finalizedSession
+    draftEntry: draftSession.journalEntry,
+    session: draftSession
+  };
+}
+
+export async function saveGeneratedJoyEntry(sessionId: string) {
+  const savedSession = await markJoyEntrySaved(sessionId);
+
+  if (!savedSession?.journalEntry) {
+    throw new Error("DRAFT_NOT_FOUND");
+  }
+
+  return {
+    draftEntry: savedSession.journalEntry,
+    session: savedSession
   };
 }

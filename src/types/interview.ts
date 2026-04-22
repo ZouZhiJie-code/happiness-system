@@ -3,6 +3,7 @@ export type InterviewSessionStatus = "active" | "completed" | "abandoned";
 export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";
 export type JoyEntrySource = "ai_draft_direct" | "ai_draft_edited";
+export type JoyEntryStatus = "draft" | "saved";
 export type JoyInterviewStage =
   | "collect_event"
   | "probe_reason"
@@ -41,6 +42,14 @@ export interface JoyEntryDraft {
   source: JoyEntrySource;
 }
 
+export interface JournalEntryRecord extends JoyEntryDraft {
+  id: string;
+  status: JoyEntryStatus;
+  linkedSessionIds: string[];
+  updatedAt: string;
+  savedAt: string | null;
+}
+
 export interface InterviewSessionRecord {
   id: string;
   dimension: InterviewDimension;
@@ -53,5 +62,5 @@ export interface InterviewSessionRecord {
   snapshot: JoySnapshot;
   startedAt: string;
   completedAt: string | null;
-  finalEntry: JoyEntryDraft | null;
+  journalEntry: JournalEntryRecord | null;
 }

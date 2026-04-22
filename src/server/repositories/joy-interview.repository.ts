@@ -5,12 +5,19 @@ import {
   type InterviewDimension as PrismaInterviewDimension,
   type InputMode,
   type InterviewSessionStatus,
+  type JoyEntryStatus,
   type JoyInterviewStage
 } from "@prisma/client";
 
 import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
-import type { InterviewDimension, InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
+import type {
+  InterviewDimension,
+  InterviewSessionRecord,
+  JournalEntryRecord,
+  JoyEntryDraft,
+  JoySnapshot
+} from "@/types/interview";
 
 const DEMO_USER_ID = "local-demo-user";
 const DEMO_TIMEZONE = "Asia/Shanghai";
@@ -53,12 +60,13 @@ function mapSnapshot(snapshot: SnapshotRecord | null | undefined): JoySnapshot {
   };
 }
 
-function mapJoyEntryDraft(entry: JoyEntryRecord | null | undefined): JoyEntryDraft | null {
+function mapJournalEntry(entry: JoyEntryRecord | null | undefined): JournalEntryRecord | null {
   if (!entry) {
     return null;
   }
 
   return {
+    id: entry.id,
     title: entry.title,
     content: entry.content,
     event: entry.event,
@@ -67,7 +75,11 @@ function mapJoyEntryDraft(entry: JoyEntryRecord | null | undefined): JoyEntryDra
     happinessType: entry.happinessType,
     selfPattern: entry.selfPattern,
     tags: entry.tags,
-    source: entry.source
+    source: entry.source,
+    status: entry.status,
+    linkedSessionIds: entry.linkedSessionIds,
+    updatedAt: entry.updatedAt.toISOString(),
+    savedAt: entry.savedAt?.toISOString() ?? null
   };
 }
 
@@ -91,7 +103,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     snapshot: mapSnapshot(session.snapshots[0]),
     startedAt: session.startedAt.toISOString(),
     completedAt: session.completedAt?.toISOString() ?? null,
-    finalEntry: mapJoyEntryDraft(session.joyEntry)
+    journalEntry: mapJournalEntry(session.joyEntry)
   };
 }
 
@@ -274,7 +286,10 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         happinessType: draftEntry.happinessType,
         selfPattern: draftEntry.selfPattern,
         tags: draftEntry.tags,
-        source: draftEntry.source
+        source: draftEntry.source,
+        status: "draft",
+        linkedSessionIds: [sessionId],
+        savedAt: null
       },
       create: {
         userId: existing.userId,
@@ -288,16 +303,15 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         happinessType: draftEntry.happinessType,
         selfPattern: draftEntry.selfPattern,
         tags: draftEntry.tags,
-        source: draftEntry.source
+        source: draftEntry.source,
+        status: "draft",
+        linkedSessionIds: [sessionId]
       }
     });
 
     return tx.interviewSession.update({
       where: { id: sessionId },
       data: {
-        status: "completed",
-        stage: "finalize",
-        completedAt: existing.completedAt ?? new Date(),
         draftSummary: draftEntry.whyItMattered ?? draftEntry.event,
         finalEntryId: draft.id
       },
@@ -308,6 +322,20 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
   if (!session) {
     return null;
   }
+
+  return mapInterviewSession(session);
+}
+
+export async function reopenJoyInterviewSessionRecord(sessionId: string) {
+  const session = await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: {
+      status: "active",
+      stage: "wrap_up",
+      completedAt: null
+    },
+    include: interviewSessionInclude
+  });
 
   return mapInterviewSession(session);
 }
@@ -324,23 +352,55 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
       happinessType: draftEntry.happinessType,
       selfPattern: draftEntry.selfPattern,
       tags: draftEntry.tags,
-      source: "ai_draft_edited"
+      source: "ai_draft_edited",
+      status: "draft",
+      savedAt: null
     }
   });
 
-  return {
-    id: updated.id,
-    title: updated.title,
-    content: updated.content,
-    event: updated.event,
-    feeling: updated.feeling,
-    whyItMattered: updated.whyItMattered,
-    happinessType: updated.happinessType,
-    selfPattern: updated.selfPattern,
-    tags: updated.tags,
-    source: updated.source,
-    updatedAt: updated.updatedAt.toISOString()
-  };
+  return mapJournalEntry(updated);
+}
+
+export async function markJoyEntrySaved(sessionId: string) {
+  const session = await prisma.$transaction(async (tx) => {
+    const existing = await tx.interviewSession.findUnique({
+      where: { id: sessionId },
+      include: interviewSessionInclude
+    });
+
+    if (!existing?.joyEntry) {
+      return null;
+    }
+
+    const savedAt = new Date();
+
+    await tx.joyEntry.update({
+      where: { sessionId },
+      data: {
+        status: "saved" satisfies JoyEntryStatus,
+        savedAt,
+        linkedSessionIds: [sessionId]
+      }
+    });
+
+    return tx.interviewSession.update({
+      where: { id: sessionId },
+      data: {
+        status: "completed",
+        stage: "finalize",
+        completedAt: existing.completedAt ?? savedAt,
+        draftSummary: existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
+        finalEntryId: existing.joyEntry.id
+      },
+      include: interviewSessionInclude
+    });
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  return mapInterviewSession(session);
 }
 
 interface CreateAIRequestLogInput {

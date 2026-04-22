@@ -46,6 +46,17 @@ describe("joy interview engine", () => {
     );
 
     expect(stage).toBe("wrap_up");
+    expect(
+      buildAssistantQuestion("joy", "wrap_up", {
+        event: "我和朋友一起散步聊天",
+        feeling: "温暖被理解",
+        whyItMattered: "因为那让我觉得被看见",
+        happinessType: "关系型开心",
+        selfPattern: null,
+        confidence: 0.8,
+        missingSlots: []
+      })
+    ).toContain("整理成日志");
   });
 
   it("creates a draft after a completed conversation", () => {

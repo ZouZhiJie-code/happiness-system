@@ -1,0 +1,84 @@
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+
+import {
+  generateDraftRequestSchema,
+  generateDraftResponseSchema
+} from "@/features/joy-interview/schema/joy-interview.schema";
+import { logger } from "@/server/lib/logger";
+import {
+  DraftGenerationError,
+  generateJoyInterviewDraft
+} from "@/server/services/interview/joy-interview.service";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const parsed = generateDraftRequestSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "INVALID_GENERATE_DRAFT_REQUEST" }, { status: 400 });
+  }
+
+  try {
+    const result = await generateJoyInterviewDraft(parsed.data.sessionIds);
+    const payload = generateDraftResponseSchema.parse(result);
+
+    return NextResponse.json(payload);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        sessionIds: parsed.data.sessionIds,
+        code: error instanceof DraftGenerationError ? error.code : undefined
+      },
+      "Draft generation failed."
+    );
+
+    if (error instanceof DraftGenerationError) {
+      if (error.code === "SESSION_BATCH_UNSUPPORTED") {
+        return NextResponse.json(
+          { error: error.code, retryable: false, message: "当前只支持基于单个访谈会话生成日志。" },
+          { status: 400 }
+        );
+      }
+
+      if (error.code === "SESSION_NOT_FOUND") {
+        return NextResponse.json(
+          { error: error.code, retryable: false, message: "当前访谈会话不存在或已失效，请刷新后重试。" },
+          { status: 404 }
+        );
+      }
+
+      if (error.code === "DRAFT_GENERATE_UPSTREAM_ERROR") {
+        return NextResponse.json(
+          { error: error.code, retryable: true, message: "AI 暂时没能完成整理，请稍后重试。" },
+          { status: 502 }
+        );
+      }
+
+      if (error.code === "DRAFT_GENERATE_DB_ERROR") {
+        return NextResponse.json(
+          { error: error.code, retryable: true, message: "日志草稿生成后写入失败，请重试。" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: error.code, retryable: error.retryable, message: "日志生成失败，请稍后重试。" },
+        { status: 500 }
+      );
+    }
+
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "DRAFT_GENERATE_SCHEMA_ERROR", retryable: true, message: "日志草稿格式异常，请重试。" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "DRAFT_GENERATE_UNKNOWN_ERROR", retryable: true, message: "日志生成失败，请稍后重试。" },
+      { status: 500 }
+    );
+  }
+}
