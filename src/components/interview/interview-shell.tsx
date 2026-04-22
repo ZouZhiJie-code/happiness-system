@@ -23,6 +23,9 @@ type ToastState = {
   visible: boolean;
 } | null;
 
+const INTERVIEW_INPUT_MIN_HEIGHT = 36;
+const INTERVIEW_INPUT_MAX_HEIGHT = 176;
+
 interface DraftGenerateIssue {
   code: string;
   message: string;
@@ -33,12 +36,15 @@ const interviewBootstrapTasks = new Map<InterviewDimension, Promise<InterviewSes
 
 function MessageBubble({
   message,
-  content
+  content,
+  role
 }: {
   message?: InterviewMessage;
   content?: string;
+  role?: InterviewMessage["role"];
 }) {
-  const isAssistant = message ? message.role === "assistant" : true;
+  const bubbleRole = message?.role ?? role ?? "assistant";
+  const isAssistant = bubbleRole === "assistant";
   const bubbleContent = content ?? message?.content ?? "";
 
   return (
@@ -103,8 +109,7 @@ function ActiveDraftCard({
 }) {
   return (
     <div className="ml-4 w-full max-w-[31rem] rounded-[28px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(250,243,230,0.98),rgba(235,217,187,0.92))] p-4 shadow-[0_18px_42px_rgba(124,83,43,0.12)]">
-      <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">日志草稿已生成</p>
-      <h4 className="mt-2 font-display text-[1.35rem] text-[#2e2319]">右侧草稿已经准备好，访谈仍可继续</h4>
+      <h4 className="font-display text-[1.35rem] text-[#2e2319]">当前可以生成日志，也可以继续访谈</h4>
       <p className="mt-2 text-sm leading-7 text-[#594537]">
         {isDraftStale
           ? "你刚补充了新的访谈内容。需要同步右侧草稿时，直接点击“生成最新日志”。"
@@ -161,7 +166,7 @@ function InterviewMetaActions({
       type="button"
       onClick={onPauseInterview}
       disabled={pauseDisabled}
-      className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded-full border border-[rgba(255,249,241,0.6)] bg-[rgba(255,247,237,0.56)] px-4 py-1.5 text-sm text-[#6a5642] shadow-[0_8px_24px_rgba(123,96,67,0.08),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-md transition hover:bg-[rgba(255,247,237,0.78)] disabled:cursor-not-allowed disabled:opacity-50"
     >
       暂停访谈
     </button>
@@ -402,9 +407,10 @@ export function InterviewShell() {
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const streamCompletedRef = useRef(false);
   const streamResolverRef = useRef<(() => void) | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const isInputComposingRef = useRef(false);
   const autosaveTimerRef = useRef<number | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const draftPersistRequestIdRef = useRef(0);
@@ -540,7 +546,10 @@ export function InterviewShell() {
     }
 
     inputElement.style.height = "0px";
-    inputElement.style.height = `${Math.min(Math.max(inputElement.scrollHeight, 72), 176)}px`;
+    inputElement.style.height = `${Math.min(
+      Math.max(inputElement.scrollHeight, INTERVIEW_INPUT_MIN_HEIGHT),
+      INTERVIEW_INPUT_MAX_HEIGHT
+    )}px`;
   }, [input]);
 
   useEffect(() => {
@@ -760,9 +769,14 @@ export function InterviewShell() {
   }, [clearStreamState, currentDimension, ensureSession, reset, stopDraftAutosave, stopToastTimer]);
 
   useEffect(() => {
-    if (typeof bottomRef.current?.scrollIntoView === "function") {
-      bottomRef.current.scrollIntoView({ block: "end" });
+    const messageScrollElement = messageScrollRef.current;
+
+    if (!messageScrollElement) {
+      return;
     }
+
+    // Keep the chat pinned to the latest message without scrolling the whole document.
+    messageScrollElement.scrollTop = messageScrollElement.scrollHeight;
   }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantText]);
 
   useEffect(() => {
@@ -1066,7 +1080,9 @@ export function InterviewShell() {
   }
 
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== "Enter" || event.shiftKey) {
+    const isComposing = event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || isInputComposingRef.current;
+
+    if (event.key !== "Enter" || event.shiftKey || isComposing) {
       return;
     }
 
@@ -1263,8 +1279,6 @@ export function InterviewShell() {
     setPanelOpen(true);
   }
 
-  const turnLabel = turnCount > 0 ? `第 ${turnCount} 轮` : null;
-
   const canOpenWorkspace = Boolean(journalEntry);
   const workspaceToggleLabel = panelOpen ? "关闭日志" : hasSavedJournal ? "打开日志" : "继续整理日志";
 
@@ -1275,19 +1289,29 @@ export function InterviewShell() {
       style={shellHeight ? { height: `${shellHeight}px` } : undefined}
     >
       <div className="page-shell flex min-h-0 flex-col rounded-[36px] p-4 md:p-5">
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col rounded-[30px] border border-[rgba(119,79,40,0.16)] bg-[linear-gradient(180deg,rgba(251,244,232,0.78),rgba(232,212,178,0.96)),repeating-linear-gradient(90deg,rgba(118,78,37,0.08)_0_2px,rgba(255,249,239,0.05)_2px_12px,rgba(134,92,49,0.07)_12px_20px,transparent_20px_38px)] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]">
-          <div className="border-b border-[rgba(156,114,70,0.12)] pb-2">
-            {turnLabel ? <p className="font-mono text-[0.68rem] tracking-[0.24em] text-ink/58">{turnLabel}</p> : null}
-          </div>
+        {!isInterviewLocked && !showActiveDraftCard ? (
           <div
-            data-testid="interview-message-scroll"
-            className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
+            data-testid="interview-top-bar"
+            className="relative z-10 flex items-start justify-end px-2 pb-3"
           >
-            <div className="flex min-h-full flex-col gap-3 pb-1">
+            <InterviewMetaActions
+              onPauseInterview={handlePauseInterview}
+              pauseDisabled={!canPauseInterview}
+            />
+          </div>
+        ) : null}
+
+        <div className="relative min-h-0 flex-1">
+          <div
+            ref={messageScrollRef}
+            data-testid="interview-message-scroll"
+            className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-2"
+          >
+            <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
               {messages.map((message) => (
                 <MessageBubble key={message.id} message={message} />
               ))}
-              {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} /> : null}
+              {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
               {showStreamingBubble ? (
                 <MessageBubble content={assistantState === "thinking" ? "正在思考中..." : streamedAssistantText || "…"} />
               ) : null}
@@ -1322,70 +1346,71 @@ export function InterviewShell() {
                   isDraftStale={isDraftStale}
                 />
               ) : null}
-              <div ref={bottomRef} />
             </div>
           </div>
-        </div>
 
-        <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
-          {isInterviewLocked ? (
-            <div>
-              <InterviewEndedCard
-                title={isInterviewPaused ? "本轮访谈已暂停" : "访谈已结束"}
-                onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
-                workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
-                onReopen={isInterviewPaused ? handleReopenInterview : undefined}
-                onCompleteInterview={isInterviewPaused ? handleCompleteInterview : undefined}
-                reopenDisabled={
-                  isReopeningInterview || isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview
-                }
-                completeDisabled={
-                  isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isPausingInterview || isCompletingInterview
-                }
-              />
-            </div>
-          ) : (
-            <>
-              <div className="relative overflow-hidden rounded-[26px] border border-[rgba(133,91,47,0.22)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(241,227,202,0.97)),repeating-linear-gradient(90deg,rgba(144,98,52,0.05)_0_1px,transparent_1px_12px,rgba(255,250,241,0.06)_12px_18px,transparent_18px_28px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.58),0_10px_24px_rgba(125,91,47,0.08)] transition focus-within:border-[#9f6838] focus-within:bg-[linear-gradient(180deg,rgba(252,247,239,0.98),rgba(244,231,207,0.98))] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.68),0_0_0_4px_rgba(169,111,61,0.12)]">
-                <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.92),transparent)]" />
+          {!isInterviewLocked ? (
+            <div
+              data-testid="interview-floating-composer"
+              className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"
+            >
+              {error ? <p className="mb-2 px-2 text-sm text-[#9f3a2f]">{error}</p> : null}
+              <div className="liquid-composer rounded-[26px] px-2 py-1.5 md:px-2.5">
                 <textarea
                   ref={inputRef}
                   id="interview-input"
+                  rows={1}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
+                  onCompositionStart={() => {
+                    isInputComposingRef.current = true;
+                  }}
+                  onCompositionEnd={() => {
+                    isInputComposingRef.current = false;
+                  }}
                   onKeyDown={handleInputKeyDown}
                   placeholder={dimensionMeta.inputPlaceholder}
-                  className="max-h-44 min-h-[4.5rem] w-full resize-none bg-transparent px-4 py-3 pr-24 text-sm leading-6 text-[#241d16] outline-none transition placeholder:text-[#8d6b4a]"
+                  className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={!canSendInput}
                   aria-label={assistantState === "idle" ? "发送回答" : "生成中"}
-                  className="absolute bottom-3 right-3 inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-3 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="absolute right-3 top-1/2 inline-flex h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.46)] bg-[linear-gradient(180deg,rgba(244,225,199,0.96),rgba(229,201,169,0.94))] px-3 text-sm text-[#3c2d20] shadow-[0_12px_24px_rgba(120,92,63,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] transition hover:-translate-y-[calc(50%+2px)] hover:bg-[linear-gradient(180deg,rgba(248,230,205,0.98),rgba(233,205,173,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {assistantState === "idle" ? (
                     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3.5 10h9" />
-                      <path d="M9.5 4.5 15 10l-5.5 5.5" />
+                      <path d="M10 15.5v-9" />
+                      <path d="M4.5 9.5 10 4l5.5 5.5" />
                     </svg>
                   ) : (
                     <span className="px-1 text-xs font-medium">生成中</span>
                   )}
                 </button>
               </div>
-              {!showActiveDraftCard ? (
-                <div className="mt-2 flex items-center justify-start">
-                  <InterviewMetaActions
-                    onPauseInterview={handlePauseInterview}
-                    pauseDisabled={!canPauseInterview}
-                  />
-                </div>
-              ) : null}
-            </>
-          )}
-          {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}
+            </div>
+          ) : null}
         </div>
+
+        {isInterviewLocked ? (
+          <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
+            <InterviewEndedCard
+              title={isInterviewPaused ? "本轮访谈已暂停" : "访谈已结束"}
+              onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
+              workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
+              onReopen={isInterviewPaused ? handleReopenInterview : undefined}
+              onCompleteInterview={isInterviewPaused ? handleCompleteInterview : undefined}
+              reopenDisabled={
+                isReopeningInterview || isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview
+              }
+              completeDisabled={
+                isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isPausingInterview || isCompletingInterview
+              }
+            />
+            {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}
+          </div>
+        ) : null}
       </div>
 
       {panelOpen ? (

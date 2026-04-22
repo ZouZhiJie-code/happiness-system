@@ -339,6 +339,39 @@ body::after {
   background-clip: padding-box;
 }
 
+.liquid-composer {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 245, 0.3), rgba(244, 233, 218, 0.11)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 244, 225, 0.02));
+  box-shadow: 0 10px 24px rgba(122, 90, 57, 0.05);
+  backdrop-filter: blur(26px) saturate(158%);
+  -webkit-backdrop-filter: blur(26px) saturate(158%);
+}
+
+.liquid-composer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+  opacity: 0.42;
+}
+
+.liquid-composer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: none;
+}
+
 .archive-label::before {
   content: "";
   display: inline-block;

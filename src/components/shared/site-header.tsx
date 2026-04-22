@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
@@ -23,7 +24,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { dimension, setDimension, messages, reset } = useInterviewStore();
+  const { dimension, setDimension, messages, reset, turnCount } = useInterviewStore();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
   const isInterviewPage = pathname === "/interview";
@@ -38,8 +39,10 @@ export function SiteHeader() {
 
     if (fromUrl) {
       const nextDimension = normalizeInterviewDimension(fromUrl);
-      setDimension(nextDimension);
-      if (typeof window !== "undefined") {
+      if (nextDimension !== dimension) {
+        setDimension(nextDimension);
+      }
+      if (typeof window !== "undefined" && window.localStorage.getItem(interviewDimensionStorageKey) !== nextDimension) {
         window.localStorage.setItem(interviewDimensionStorageKey, nextDimension);
       }
       return;
@@ -48,9 +51,11 @@ export function SiteHeader() {
     if (typeof window === "undefined") return;
 
     const remembered = normalizeInterviewDimension(window.localStorage.getItem(interviewDimensionStorageKey));
-    setDimension(remembered);
+    if (remembered !== dimension) {
+      setDimension(remembered);
+    }
     router.replace(`/interview?dimension=${remembered}`, { scroll: false });
-  }, [isInterviewPage, router, searchParams, setDimension]);
+  }, [dimension, isInterviewPage, router, searchParams, setDimension]);
 
   function handleDimensionChange(nextDimension: string) {
     const normalized = normalizeInterviewDimension(nextDimension);
@@ -83,8 +88,15 @@ export function SiteHeader() {
         <div className="min-h-[2.75rem]">
           {isInterviewPage ? (
             <div className="flex items-center justify-center">
-              <div className="flex w-full max-w-[34rem] items-center gap-2 overflow-x-auto rounded-full border border-[rgba(136,92,50,0.16)] bg-[rgba(252,244,231,0.74)] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
-                <p className="shrink-0 pl-2 font-mono text-[0.63rem] tracking-[0.22em] text-[#6a5e53]">当前维度</p>
+              <div className="flex w-full max-w-[40rem] items-center gap-2 overflow-x-auto rounded-full border border-[rgba(136,92,50,0.16)] bg-[rgba(252,244,231,0.74)] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+                <div className="flex shrink-0 items-center gap-2 pl-2">
+                  <p className="font-mono text-[0.63rem] tracking-[0.22em] text-[#6a5e53]">当前维度</p>
+                  {turnCount > 0 ? (
+                    <span className="rounded-full border border-[rgba(164,122,77,0.16)] bg-[rgba(255,249,240,0.7)] px-2.5 py-1 font-mono text-[0.6rem] tracking-[0.2em] text-[#7f6a54]">
+                      第 {turnCount} 轮
+                    </span>
+                  ) : null}
+                </div>
                 <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
                   {interviewDimensions.map((item) => {
                     const isSelected = item === activeDimension;
