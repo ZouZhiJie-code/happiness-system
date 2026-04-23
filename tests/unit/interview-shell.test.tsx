@@ -80,6 +80,8 @@ const promptMessages: InterviewMessage[] = [
   }
 ];
 
+const joyInputPlaceholder = "例如：今天和同事一起把一个棘手问题解决了，我真的松了一口气。";
+
 const baseJournalEntry: JournalEntryRecord = {
   id: "entry-1",
   title: "今天的开心：和家人一起吃饭聊天",
@@ -777,9 +779,7 @@ describe("InterviewShell", () => {
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
     await screen.findByText("日志整理工作区");
 
-    const textarea = screen.getByPlaceholderText(
-      "例如：今天和同事一起把一个棘手问题解决了，我真的松了一口气。"
-    );
+    const textarea = screen.getByPlaceholderText(joyInputPlaceholder);
     fireEvent.change(textarea, { target: { value: "我还想补充，那一刻我也觉得被接住了。" } });
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
@@ -912,9 +912,7 @@ describe("InterviewShell", () => {
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
     await screen.findByText("日志整理工作区");
 
-    const textarea = screen.getByPlaceholderText(
-      "例如：今天和同事一起把一个棘手问题解决了，我真的松了一口气。"
-    );
+    const textarea = screen.getByPlaceholderText(joyInputPlaceholder);
     fireEvent.change(textarea, { target: { value: "我还想补充，那一刻我也觉得被接住了。" } });
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
@@ -1727,6 +1725,39 @@ describe("InterviewShell", () => {
     await waitFor(() => {
       expect(textarea).toHaveStyle({ height: "36px" });
     });
+  });
+
+  it("hides the composer placeholder after the first focus and keeps it hidden while mounted", async () => {
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    expect(textarea).toHaveAttribute("placeholder", joyInputPlaceholder);
+
+    fireEvent.focus(textarea);
+
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(joyInputPlaceholder)).not.toBeInTheDocument();
+    });
+
+    fireEvent.blur(textarea);
+    expect(textarea).not.toHaveAttribute("placeholder");
+  });
+
+  it("restores the composer placeholder after the page remounts", async () => {
+    const view = renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.focus(textarea);
+
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(joyInputPlaceholder)).not.toBeInTheDocument();
+    });
+
+    view.unmount();
+    renderInterviewPage();
+
+    const remountedTextarea = await screen.findByRole("textbox");
+    expect(remountedTextarea).toHaveAttribute("placeholder", joyInputPlaceholder);
   });
 
   it("does not send on Enter while IME composition is in progress", async () => {

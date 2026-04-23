@@ -412,6 +412,7 @@ export function InterviewShell() {
     status
   } = useInterviewStore();
   const [input, setInput] = useState("");
+  const [hasDismissedInputPlaceholder, setHasDismissedInputPlaceholder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [bootState, setBootState] = useState<BootState>("idle");
@@ -501,6 +502,7 @@ export function InterviewShell() {
       !isInterviewLocked &&
       !showChoiceCard
   );
+  const composerPlaceholder = hasDismissedInputPlaceholder ? undefined : dimensionMeta.inputPlaceholder;
   const panelStatusText = useMemo(() => {
     if (draftGenerateState === "error" && !journalEntry) {
       return null;
@@ -806,6 +808,7 @@ export function InterviewShell() {
 
   useEffect(() => {
     setInput("");
+    setHasDismissedInputPlaceholder(false);
     setError(null);
     setDraftError(null);
     setDraftGenerateIssue(null);
@@ -1382,6 +1385,7 @@ export function InterviewShell() {
                   rows={1}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
+                  onFocus={() => setHasDismissedInputPlaceholder(true)}
                   onCompositionStart={() => {
                     isInputComposingRef.current = true;
                   }}
@@ -1389,7 +1393,7 @@ export function InterviewShell() {
                     isInputComposingRef.current = false;
                   }}
                   onKeyDown={handleInputKeyDown}
-                  placeholder={dimensionMeta.inputPlaceholder}
+                  placeholder={composerPlaceholder}
                   className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
                 />
                 <button
