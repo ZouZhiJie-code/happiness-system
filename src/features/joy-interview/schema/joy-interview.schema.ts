@@ -64,6 +64,7 @@ export const interviewSessionSchema = z.object({
   dimension: interviewDimensionSchema,
   status: z.enum(["active", "paused", "completed", "abandoned"]),
   stage: z.enum(["collect_event", "probe_reason", "probe_pattern", "wrap_up", "finalize"]),
+  draftGenerationUnlocked: z.boolean(),
   turnCount: z.number().int().nonnegative(),
   lastAssistantQuestion: z.string(),
   draftSummary: z.string().nullable(),

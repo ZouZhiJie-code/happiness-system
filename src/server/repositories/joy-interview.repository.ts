@@ -15,6 +15,7 @@ import {
   parseAssistantTurnPayload,
   serializeAssistantTurnPayload
 } from "@/features/joy-interview/assistant-turn";
+import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
 import type {
@@ -91,14 +92,11 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined): JournalEntry
 }
 
 function mapInterviewSession(session: InterviewSessionWithRelations): InterviewSessionRecord {
-  return {
+  const mappedSession = {
     id: session.id,
     dimension: session.dimension,
     status: session.status,
     stage: session.stage,
-    turnCount: session.turnCount,
-    lastAssistantQuestion: session.lastAssistantQuestion ?? "",
-    draftSummary: session.draftSummary,
     messages: session.messages.map((message) => ({
       id: message.id,
       role: message.role,
@@ -112,7 +110,16 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
     completedAt: session.completedAt?.toISOString() ?? null,
-    journalEntry: mapJournalEntry(session.joyEntry)
+    journalEntry: mapJournalEntry(session.joyEntry),
+    turnCount: session.turnCount,
+    lastAssistantQuestion: session.lastAssistantQuestion ?? "",
+    draftSummary: session.draftSummary,
+    draftGenerationUnlocked: false
+  };
+
+  return {
+    ...mappedSession,
+    draftGenerationUnlocked: isDraftGenerationUnlocked(mappedSession)
   };
 }
 
@@ -449,10 +456,10 @@ export async function markJoyEntrySaved(sessionId: string) {
     return tx.interviewSession.update({
       where: { id: sessionId },
       data: {
-        status: "paused",
+        status: "completed",
         stage: "finalize",
-        pausedAt: existing.pausedAt ?? savedAt,
-        completedAt: null,
+        pausedAt: null,
+        completedAt: savedAt,
         draftSummary: existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
         finalEntryId: existing.joyEntry.id
       },

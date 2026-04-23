@@ -73,6 +73,7 @@ export interface InterviewSessionRecord {
   dimension: InterviewDimension;
   status: InterviewSessionStatus;
   stage: JoyInterviewStage;
+  draftGenerationUnlocked: boolean;
   turnCount: number;
   lastAssistantQuestion: string;
   draftSummary: string | null;

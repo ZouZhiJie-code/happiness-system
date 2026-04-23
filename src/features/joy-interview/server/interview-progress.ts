@@ -4,6 +4,7 @@ import type {
   AssistantTurnPayload,
   InterviewMessage,
   InterviewSessionRecord,
+  JoyInterviewStage,
   JoySnapshot
 } from "@/types/interview";
 
@@ -17,6 +18,7 @@ export interface UserTurnAssessment {
 export interface InterviewProgressSummary {
   consecutiveInvalidReplies: number;
   consecutiveNoDepthGain: number;
+  hasOfferedChoice: boolean;
   latestAssistantPayload: AssistantTurnPayload | null;
   latestDepthReached: AssistantDepth[];
   recentQuestions: string[];
@@ -101,6 +103,7 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
   let latestDepthReached: AssistantDepth[] = [];
   let consecutiveNoDepthGain = 0;
   let consecutiveInvalidReplies = 0;
+  let hasOfferedChoice = false;
   let pendingUserMeaningful: boolean | null = null;
   const recentQuestions: string[] = [];
 
@@ -118,6 +121,10 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
 
     if (payload?.question) {
       recentQuestions.push(payload.question);
+    }
+
+    if (payload?.stateUpdate.offerChoice) {
+      hasOfferedChoice = true;
     }
 
     if (pendingUserMeaningful !== null) {
@@ -141,10 +148,31 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
   return {
     consecutiveInvalidReplies,
     consecutiveNoDepthGain,
+    hasOfferedChoice,
     latestAssistantPayload: getLatestAssistantPayload(messages),
     latestDepthReached,
     recentQuestions: recentQuestions.slice(-3)
   };
+}
+
+export function isDraftGenerationUnlocked(input: {
+  messages: InterviewMessage[];
+  stage: JoyInterviewStage;
+  journalEntry: InterviewSessionRecord["journalEntry"];
+}) {
+  return isDraftGenerationUnlockedFromState({
+    hasJournalEntry: Boolean(input.journalEntry),
+    stage: input.stage,
+    hasOfferedChoice: summarizeInterviewProgress(input.messages).hasOfferedChoice
+  });
+}
+
+export function isDraftGenerationUnlockedFromState(input: {
+  hasJournalEntry: boolean;
+  stage: JoyInterviewStage;
+  hasOfferedChoice: boolean;
+}) {
+  return input.hasJournalEntry || input.stage === "wrap_up" || input.stage === "finalize" || input.hasOfferedChoice;
 }
 
 export function canOfferChoice(depthReached: AssistantDepth[]) {

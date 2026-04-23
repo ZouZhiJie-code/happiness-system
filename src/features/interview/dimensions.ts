@@ -2,6 +2,8 @@ import type { InterviewDimension } from "@/types/interview";
 
 export const interviewDimensionStorageKey = "hs-last-interview-dimension";
 export const interviewSessionStorageKey = "hs-interview-session-map";
+export const interviewSessionCacheTtlMs = 24 * 60 * 60 * 1000;
+export const interviewLeaveConfirmMessage = "是否要离开？离开后会保存一段时间对话内容。";
 
 export interface DimensionMeta {
   value: InterviewDimension;
@@ -87,26 +89,71 @@ export function getInterviewDimensionMeta(dimension: InterviewDimension) {
   return dimensionMetaMap[dimension];
 }
 
+interface StoredInterviewSessionCacheEntry {
+  sessionId: string;
+  expiresAt: string;
+}
+
+type StoredInterviewSessionCacheMap = Partial<Record<InterviewDimension, StoredInterviewSessionCacheEntry | string>>;
+
+function buildStoredSessionEntry(sessionId: string, now = Date.now()): StoredInterviewSessionCacheEntry {
+  return {
+    sessionId,
+    expiresAt: new Date(now + interviewSessionCacheTtlMs).toISOString()
+  };
+}
+
+function normalizeStoredSessionEntry(entry: StoredInterviewSessionCacheEntry | string | null | undefined) {
+  if (!entry) {
+    return null;
+  }
+
+  if (typeof entry === "string") {
+    return buildStoredSessionEntry(entry);
+  }
+
+  if (!entry.sessionId || !entry.expiresAt) {
+    return null;
+  }
+
+  return entry;
+}
+
 function readStoredSessionMap() {
   if (typeof window === "undefined") {
-    return {} as Partial<Record<InterviewDimension, string>>;
+    return {} as StoredInterviewSessionCacheMap;
   }
 
   try {
     const raw = window.localStorage.getItem(interviewSessionStorageKey);
 
     if (!raw) {
-      return {} as Partial<Record<InterviewDimension, string>>;
+      return {} as StoredInterviewSessionCacheMap;
     }
 
-    return JSON.parse(raw) as Partial<Record<InterviewDimension, string>>;
+    return JSON.parse(raw) as StoredInterviewSessionCacheMap;
   } catch {
-    return {} as Partial<Record<InterviewDimension, string>>;
+    return {} as StoredInterviewSessionCacheMap;
   }
 }
 
+export function getStoredInterviewSessionEntry(dimension: InterviewDimension) {
+  const normalizedEntry = normalizeStoredSessionEntry(readStoredSessionMap()[dimension]);
+
+  if (!normalizedEntry) {
+    return null;
+  }
+
+  if (new Date(normalizedEntry.expiresAt).getTime() <= Date.now()) {
+    clearStoredInterviewSessionId(dimension);
+    return null;
+  }
+
+  return normalizedEntry;
+}
+
 export function getStoredInterviewSessionId(dimension: InterviewDimension) {
-  return readStoredSessionMap()[dimension] ?? null;
+  return getStoredInterviewSessionEntry(dimension)?.sessionId ?? null;
 }
 
 export function setStoredInterviewSessionId(dimension: InterviewDimension, sessionId: string) {
@@ -114,7 +161,25 @@ export function setStoredInterviewSessionId(dimension: InterviewDimension, sessi
 
   const nextMap = {
     ...readStoredSessionMap(),
-    [dimension]: sessionId
+    [dimension]: buildStoredSessionEntry(sessionId)
+  };
+
+  window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
+}
+
+export function touchStoredInterviewSessionId(dimension: InterviewDimension, sessionId?: string) {
+  if (typeof window === "undefined") return;
+
+  const existingEntry = getStoredInterviewSessionEntry(dimension);
+  const nextSessionId = sessionId ?? existingEntry?.sessionId;
+
+  if (!nextSessionId) {
+    return;
+  }
+
+  const nextMap = {
+    ...readStoredSessionMap(),
+    [dimension]: buildStoredSessionEntry(nextSessionId)
   };
 
   window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));

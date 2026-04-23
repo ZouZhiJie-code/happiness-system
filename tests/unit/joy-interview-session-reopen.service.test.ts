@@ -39,6 +39,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     dimension: "joy",
     status: "paused",
     stage: "finalize",
+    draftGenerationUnlocked: true,
     turnCount: 4,
     lastAssistantQuestion: "现在要不要帮你整理成日志？",
     draftSummary: "因为我被接住了",

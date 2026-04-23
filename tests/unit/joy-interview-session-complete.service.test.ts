@@ -39,6 +39,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     dimension: "joy",
     status: "active",
     stage: "probe_reason",
+    draftGenerationUnlocked: false,
     turnCount: 2,
     lastAssistantQuestion: "这件事为什么会让你这么开心？",
     draftSummary: null,

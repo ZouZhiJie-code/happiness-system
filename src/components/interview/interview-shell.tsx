@@ -7,10 +7,11 @@ import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-tur
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
-  getStoredInterviewSessionId,
+  getStoredInterviewSessionEntry,
+  interviewLeaveConfirmMessage,
   interviewDimensionStorageKey,
   normalizeInterviewDimension,
-  setStoredInterviewSessionId
+  touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
@@ -90,87 +91,6 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
   );
 }
 
-function DraftTransitionCard({
-  onGenerate,
-  disabled,
-  isGenerating
-}: {
-  onGenerate: () => void;
-  disabled: boolean;
-  isGenerating: boolean;
-}) {
-  return (
-    <div className="ml-4 w-full max-w-[31rem] rounded-[28px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(250,243,230,0.98),rgba(235,217,187,0.92))] p-4 shadow-[0_18px_42px_rgba(124,83,43,0.12)]">
-      <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">日志整理阶段</p>
-      <h4 className="mt-2 font-display text-[1.35rem] text-[#2e2319]">把这段访谈整理成一篇日志</h4>
-      <p className="mt-2 text-sm leading-7 text-[#594537]">
-        现在内容已经足够，接下来可以直接生成一份草稿，并在右侧工作区继续编辑、确认和保存。
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={disabled}
-          className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isGenerating ? "正在整理..." : "生成日志"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ActiveDraftCard({
-  onToggleWorkspace,
-  workspaceToggleLabel,
-  onContinueInterview,
-  onPauseInterview,
-  pauseDisabled,
-  isDraftStale
-}: {
-  onToggleWorkspace: () => void;
-  workspaceToggleLabel: string;
-  onContinueInterview: () => void;
-  onPauseInterview: () => void;
-  pauseDisabled: boolean;
-  isDraftStale: boolean;
-}) {
-  return (
-    <div className="ml-4 w-full max-w-[31rem] rounded-[28px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(250,243,230,0.98),rgba(235,217,187,0.92))] p-4 shadow-[0_18px_42px_rgba(124,83,43,0.12)]">
-      <h4 className="font-display text-[1.35rem] text-[#2e2319]">当前可以生成日志，也可以继续访谈</h4>
-      <p className="mt-2 text-sm leading-7 text-[#594537]">
-        {isDraftStale
-          ? "你刚补充了新的访谈内容。需要同步右侧草稿时，直接点击“生成最新日志”。"
-          : "你可以回到右侧继续编辑，也可以直接在这里补充更多内容，稍后再同步到日志。"}
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onToggleWorkspace}
-          className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
-        >
-          {workspaceToggleLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onContinueInterview}
-          className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)]"
-        >
-          继续访谈
-        </button>
-        <button
-          type="button"
-          onClick={onPauseInterview}
-          disabled={pauseDisabled}
-          className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          暂停访谈
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function ChoiceActionCard({
   onContinue,
   onGenerate,
@@ -222,41 +142,14 @@ function SaveToast({ message }: { message: string }) {
   );
 }
 
-function InterviewMetaActions({
-  onPauseInterview,
-  pauseDisabled
-}: {
-  onPauseInterview: () => void;
-  pauseDisabled: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onPauseInterview}
-      disabled={pauseDisabled}
-      className="rounded-full border border-[rgba(255,249,241,0.6)] bg-[rgba(255,247,237,0.56)] px-4 py-1.5 text-sm text-[#6a5642] shadow-[0_8px_24px_rgba(123,96,67,0.08),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-md transition hover:bg-[rgba(255,247,237,0.78)] disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      暂停访谈
-    </button>
-  );
-}
-
 function InterviewEndedCard({
   title,
   onToggleWorkspace,
-  workspaceToggleLabel,
-  onReopen,
-  onCompleteInterview,
-  reopenDisabled,
-  completeDisabled
+  workspaceToggleLabel
 }: {
   title: string;
   onToggleWorkspace?: () => void;
   workspaceToggleLabel?: string;
-  onReopen?: () => void;
-  onCompleteInterview?: () => void;
-  reopenDisabled?: boolean;
-  completeDisabled?: boolean;
 }) {
   return (
     <div className="relative overflow-hidden rounded-[30px] border border-[rgba(137,95,53,0.18)] bg-[linear-gradient(180deg,rgba(251,244,232,0.98),rgba(233,216,190,0.96))] p-4 shadow-[0_22px_54px_rgba(124,83,43,0.14)]">
@@ -270,26 +163,6 @@ function InterviewEndedCard({
             className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
           >
             {workspaceToggleLabel}
-          </button>
-        ) : null}
-        {onReopen ? (
-          <button
-            type="button"
-            onClick={onReopen}
-            disabled={reopenDisabled}
-            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.82)] px-4 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(255,250,242,0.98)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            继续补充访谈
-          </button>
-        ) : null}
-        {onCompleteInterview ? (
-          <button
-            type="button"
-            onClick={onCompleteInterview}
-            disabled={completeDisabled}
-            className="rounded-full border border-[rgba(150,109,66,0.18)] bg-[rgba(244,233,214,0.7)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(244,233,214,0.92)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            结束访谈
           </button>
         ) : null}
       </div>
@@ -361,12 +234,27 @@ async function fetchInterviewSession(sessionId: string) {
   return (await response.json()) as InterviewSessionRecord;
 }
 
+async function reopenInterviewSession(sessionId: string) {
+  const response = await fetch("/api/interview/session/reopen", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId })
+  });
+
+  if (!response.ok) {
+    throw new Error("SESSION_REOPEN_FAILED");
+  }
+
+  const data = (await response.json()) as { session: InterviewSessionRecord };
+  return data.session;
+}
+
 function isRestorableSession(session: InterviewSessionRecord, dimension: InterviewDimension) {
   if (session.dimension !== dimension) {
     return false;
   }
 
-  return session.status !== "abandoned";
+  return session.status === "active" || session.status === "paused";
 }
 
 async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew = false) {
@@ -380,13 +268,18 @@ async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew
 
   const task = (async () => {
     if (!forceNew) {
-      const storedSessionId = getStoredInterviewSessionId(dimension);
+      const storedSessionEntry = getStoredInterviewSessionEntry(dimension);
+      const storedSessionId = storedSessionEntry?.sessionId ?? null;
 
       if (storedSessionId) {
         try {
           const restoredSession = await fetchInterviewSession(storedSessionId);
 
           if (isRestorableSession(restoredSession, dimension)) {
+            if (restoredSession.status === "paused") {
+              return reopenInterviewSession(restoredSession.id);
+            }
+
             return restoredSession;
           }
         } catch {
@@ -434,17 +327,19 @@ function parseSseChunk(chunk: string) {
 export function InterviewShell() {
   const searchParams = useSearchParams();
   const {
+    draftGenerationRequestId,
+    draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
-    sessionId,
-    status,
-    stage,
-    messages,
-    turnCount,
-    journalEntry,
     setDimension,
+    setDraftGenerationControls,
     hydrate,
+    journalEntry,
+    messages,
     reset,
-    setJournalEntry
+    sessionId,
+    setJournalEntry,
+    stage,
+    status
   } = useInterviewStore();
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -458,9 +353,6 @@ export function InterviewShell() {
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
   const [draftGenerateIssue, setDraftGenerateIssue] = useState<DraftGenerateIssue | null>(null);
   const [isSavingJournal, setIsSavingJournal] = useState(false);
-  const [isReopeningInterview, setIsReopeningInterview] = useState(false);
-  const [isPausingInterview, setIsPausingInterview] = useState(false);
-  const [isCompletingInterview, setIsCompletingInterview] = useState(false);
   const [draftSyncState, setDraftSyncState] = useState<DraftSyncState>("idle");
   const [draftError, setDraftError] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
@@ -486,6 +378,7 @@ export function InterviewShell() {
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const streamCompletedRef = useRef(false);
   const streamResolverRef = useRef<(() => void) | null>(null);
+  const lastDraftGenerationRequestRef = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -503,6 +396,7 @@ export function InterviewShell() {
     journalEntry
   });
   const [shellHeight, setShellHeight] = useState<number | null>(null);
+  const hasUserMessages = useMemo(() => messages.some((message) => message.role === "user"), [messages]);
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -511,14 +405,11 @@ export function InterviewShell() {
       !optimisticUserMessage &&
       assistantState === "idle"
   );
-  const showDraftPrompt = Boolean(sessionId && !journalEntry && status === "active" && stage === "wrap_up" && !showChoiceCard);
-  const showActiveDraftCard = Boolean(sessionId && journalEntry && status === "active" && !showChoiceCard);
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantInsight || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
-  const isInterviewPaused = status === "paused";
   const isInterviewCompleted = status === "completed";
-  const isInterviewLocked = isInterviewPaused || isInterviewCompleted;
+  const isInterviewLocked = status === "paused" || isInterviewCompleted;
   const hasUnsavedDraftChanges = Boolean(
     journalEntry && (draftTitle !== journalEntry.title || draftContent !== journalEntry.content)
   );
@@ -530,34 +421,19 @@ export function InterviewShell() {
       !draftTooLong &&
       (journalEntry.status !== "saved" || hasUnsavedDraftChanges)
   );
-  const canPauseInterview = Boolean(
+  const draftGenerationUnlocked = Boolean(sessionId && status === "active" && sessionDraftGenerationUnlocked);
+  const canRequestDraftGeneration = Boolean(
     sessionId &&
       status === "active" &&
       !isBusy &&
       !isGeneratingDraft &&
-      !isSavingJournal &&
-      !isReopeningInterview &&
-      !isPausingInterview &&
-      !isCompletingInterview
-  );
-  const canCompleteInterview = Boolean(
-    sessionId &&
-      status === "paused" &&
-      !isBusy &&
-      !isGeneratingDraft &&
-      !isSavingJournal &&
-      !isReopeningInterview &&
-      !isPausingInterview &&
-      !isCompletingInterview
+      !isSavingJournal
   );
   const canSendInput = Boolean(
     input.trim() &&
       !isBusy &&
       !isGeneratingDraft &&
       !isSavingJournal &&
-      !isReopeningInterview &&
-      !isPausingInterview &&
-      !isCompletingInterview &&
       !isInterviewLocked &&
       !showChoiceCard
   );
@@ -604,11 +480,29 @@ export function InterviewShell() {
 
   useEffect(() => {
     if (!sessionId) {
+      setDraftGenerationControls({
+        unlocked: false,
+        busy: false,
+        disabled: true
+      });
       return;
     }
 
-    setStoredInterviewSessionId(currentDimension, sessionId);
-  }, [currentDimension, sessionId]);
+    if (status === "active") {
+      touchStoredInterviewSessionId(currentDimension, sessionId);
+      return;
+    }
+
+    clearStoredInterviewSessionId(currentDimension);
+  }, [currentDimension, sessionId, setDraftGenerationControls, status]);
+
+  useEffect(() => {
+    setDraftGenerationControls({
+      unlocked: draftGenerationUnlocked,
+      busy: isGeneratingDraft,
+      disabled: !canRequestDraftGeneration
+    });
+  }, [canRequestDraftGeneration, draftGenerationUnlocked, isGeneratingDraft, setDraftGenerationControls]);
 
   useEffect(() => {
     if (!journalEntry) {
@@ -653,6 +547,14 @@ export function InterviewShell() {
       journalEntry
     };
   }, [draftContent, draftTitle, journalEntry]);
+
+  useEffect(() => {
+    if (!sessionId || status !== "active") {
+      return;
+    }
+
+    touchStoredInterviewSessionId(currentDimension, sessionId);
+  }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionId, status]);
 
   const stopStreamPump = useCallback(() => {
     if (streamTimerRef.current) {
@@ -768,7 +670,7 @@ export function InterviewShell() {
     }
 
     const currentBootSequence = ++bootSequenceRef.current;
-    const hasStoredSession = !forceNew && Boolean(getStoredInterviewSessionId(nextDimension));
+    const hasStoredSession = !forceNew && Boolean(getStoredInterviewSessionEntry(nextDimension));
     setBootState(hasStoredSession ? "restoring" : "booting");
 
     try {
@@ -856,8 +758,6 @@ export function InterviewShell() {
     setDraftError(null);
     setDraftGenerateIssue(null);
     setDraftGenerateState("idle");
-    setIsPausingInterview(false);
-    setIsCompletingInterview(false);
     setToastState(null);
     setPanelOpen(false);
     stopDraftAutosave();
@@ -928,24 +828,24 @@ export function InterviewShell() {
     };
   }, [stopDraftAutosave, stopStreamPump, stopToastTimer]);
 
-  async function handleRestart() {
-    setError(null);
-    setDraftError(null);
-    setDraftGenerateIssue(null);
-    setDraftGenerateState("idle");
-    setIsBusy(true);
-    setPanelOpen(false);
-    stopDraftAutosave();
-    clearStoredInterviewSessionId(currentDimension);
-    clearStreamState();
-    reset(currentDimension);
-
-    try {
-      await ensureSession(currentDimension, true);
-    } finally {
-      setIsBusy(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !sessionId || status !== "active" || !hasUserMessages) {
+      return;
     }
-  }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      touchStoredInterviewSessionId(currentDimension, sessionId);
+      event.preventDefault();
+      event.returnValue = interviewLeaveConfirmMessage;
+      return interviewLeaveConfirmMessage;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [currentDimension, hasUserMessages, sessionId, status]);
 
   async function runInterviewAction(
     payload:
@@ -962,12 +862,8 @@ export function InterviewShell() {
       return;
     }
 
-    if (isInterviewLocked || isReopeningInterview) {
-      setError(
-        isInterviewPaused
-          ? "本轮访谈已暂停，如需补充内容，请先点击“继续补充访谈”。"
-          : "本轮访谈已结束，不能继续补充。"
-      );
+    if (isInterviewLocked) {
+      setError(status === "paused" ? "这轮旧访谈正在恢复中，请刷新后重试。" : "本轮访谈已结束，不能继续补充。");
       return;
     }
 
@@ -1130,97 +1026,6 @@ export function InterviewShell() {
     });
   }
 
-  async function handleReopenInterview() {
-    if (
-      !sessionId ||
-      isBusy ||
-      isGeneratingDraft ||
-      isSavingJournal ||
-      isReopeningInterview ||
-      isPausingInterview ||
-      isCompletingInterview
-    ) {
-      return;
-    }
-
-    setError(null);
-    setIsReopeningInterview(true);
-
-    try {
-      const response = await fetch("/api/interview/session/reopen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId })
-      });
-
-      if (!response.ok) {
-        throw new Error("SESSION_REOPEN_FAILED");
-      }
-
-      const data = (await response.json()) as { session: InterviewSessionRecord };
-      hydrate(data.session);
-      window.setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-    } catch {
-      setError("暂时无法恢复访谈，请稍后重试。");
-    } finally {
-      setIsReopeningInterview(false);
-    }
-  }
-
-  async function handlePauseInterview() {
-    if (!sessionId || !canPauseInterview) {
-      return;
-    }
-
-    stopDraftAutosave();
-
-    const confirmed = window.confirm("暂停后你仍然可以继续补充访谈。现在暂停本轮访谈吗？");
-
-    if (!confirmed) {
-      return;
-    }
-
-    if (hasUnsavedDraftChanges) {
-      const synced = await persistDraftEdits();
-
-      if (!synced) {
-        return;
-      }
-    }
-
-    setError(null);
-    setDraftError(null);
-    setIsPausingInterview(true);
-
-    try {
-      const response = await fetch("/api/interview/session/pause", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId })
-      });
-
-      if (!response.ok) {
-        throw new Error("SESSION_PAUSE_FAILED");
-      }
-
-      const data = (await response.json()) as { session: InterviewSessionRecord };
-      hydrate(data.session);
-    } catch {
-      setError("暂时无法暂停访谈，请稍后重试。");
-    } finally {
-      setIsPausingInterview(false);
-    }
-  }
-
-  function handleContinueInterview() {
-    setPanelOpen(false);
-    window.setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
-  }
-
   async function handleContinueChoice() {
     setPanelOpen(false);
     await runInterviewAction({
@@ -1245,9 +1050,19 @@ export function InterviewShell() {
   }
 
   async function handleGenerateDraft() {
-    if (!sessionId || isGeneratingDraft || isBusy) {
+    if (!sessionId || !draftGenerationUnlocked || isGeneratingDraft || isBusy || isSavingJournal) {
       return;
     }
+
+    if (hasUnsavedDraftChanges) {
+      const confirmed = window.confirm("生成日志会覆盖当前未保存的手动修改，是否继续？");
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    stopDraftAutosave();
 
     setError(null);
     setDraftError(null);
@@ -1293,23 +1108,6 @@ export function InterviewShell() {
     } finally {
       setDraftGenerateState((current) => (current === "loading" ? "idle" : current));
     }
-  }
-
-  async function handleRegenerateDraft() {
-    if (!sessionId || isGeneratingDraft) {
-      return;
-    }
-
-    if (hasUnsavedDraftChanges) {
-      const confirmed = window.confirm("生成最新日志会覆盖当前未保存的手动修改，是否继续？");
-
-      if (!confirmed) {
-        return;
-      }
-    }
-
-    stopDraftAutosave();
-    await handleGenerateDraft();
   }
 
   async function handleSaveJournal() {
@@ -1358,51 +1156,6 @@ export function InterviewShell() {
     }
   }
 
-  async function handleCompleteInterview() {
-    if (!sessionId || !canCompleteInterview) {
-      return;
-    }
-
-    stopDraftAutosave();
-
-    const confirmed = window.confirm("结束后将不能继续补充这轮访谈。现在结束访谈吗？");
-
-    if (!confirmed) {
-      return;
-    }
-
-    if (hasUnsavedDraftChanges) {
-      const synced = await persistDraftEdits();
-
-      if (!synced) {
-        return;
-      }
-    }
-
-    setError(null);
-    setDraftError(null);
-    setIsCompletingInterview(true);
-
-    try {
-      const response = await fetch("/api/interview/session/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId })
-      });
-
-      if (!response.ok) {
-        throw new Error("SESSION_COMPLETE_FAILED");
-      }
-
-      const data = (await response.json()) as { session: InterviewSessionRecord };
-      hydrate(data.session);
-    } catch {
-      setError("暂时无法结束访谈，请稍后重试。");
-    } finally {
-      setIsCompletingInterview(false);
-    }
-  }
-
   async function handleClosePanel() {
     if (hasUnsavedDraftChanges) {
       const synced = await persistDraftEdits();
@@ -1431,6 +1184,15 @@ export function InterviewShell() {
   const canOpenWorkspace = Boolean(journalEntry);
   const workspaceToggleLabel = panelOpen ? "关闭日志" : hasSavedJournal ? "打开日志" : "继续整理日志";
 
+  useEffect(() => {
+    if (draftGenerationRequestId === 0 || draftGenerationRequestId === lastDraftGenerationRequestRef.current) {
+      return;
+    }
+
+    lastDraftGenerationRequestRef.current = draftGenerationRequestId;
+    void handleGenerateDraft();
+  }, [draftGenerationRequestId]);
+
   return (
     <section
       ref={shellRef}
@@ -1438,18 +1200,6 @@ export function InterviewShell() {
       style={shellHeight ? { height: `${shellHeight}px` } : undefined}
     >
       <div className="page-shell flex min-h-0 flex-col rounded-[36px] p-4 md:p-5">
-        {!isInterviewLocked && !showActiveDraftCard ? (
-          <div
-            data-testid="interview-top-bar"
-            className="relative z-10 flex items-start justify-end px-2 pb-3"
-          >
-            <InterviewMetaActions
-              onPauseInterview={handlePauseInterview}
-              pauseDisabled={!canPauseInterview}
-            />
-          </div>
-        ) : null}
-
         <div className="relative min-h-0 flex-1">
           <div
             ref={messageScrollRef}
@@ -1486,33 +1236,16 @@ export function InterviewShell() {
                   }
                 />
               ) : null}
-              {showDraftPrompt ? (
-                <DraftTransitionCard
-                  onGenerate={handleGenerateDraft}
-                  disabled={isBusy || isGeneratingDraft}
-                  isGenerating={isGeneratingDraft}
-                />
-              ) : null}
               {showChoiceCard ? (
                 <>
                   <ChoiceActionCard
                     onContinue={() => void handleContinueChoice()}
-                    onGenerate={handleGenerateDraft}
-                    continueDisabled={isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
-                    generateDisabled={isBusy || isGeneratingDraft}
+                    onGenerate={() => void handleGenerateDraft()}
+                    continueDisabled={isBusy || isGeneratingDraft || isSavingJournal}
+                    generateDisabled={!canRequestDraftGeneration}
                   />
                   {error ? <p className="ml-4 text-sm text-[#9f3a2f]">{error}</p> : null}
                 </>
-              ) : null}
-              {showActiveDraftCard ? (
-                <ActiveDraftCard
-                  onToggleWorkspace={() => void handleTogglePanel()}
-                  workspaceToggleLabel={workspaceToggleLabel}
-                  onContinueInterview={handleContinueInterview}
-                  onPauseInterview={handlePauseInterview}
-                  pauseDisabled={!canPauseInterview}
-                  isDraftStale={isDraftStale}
-                />
               ) : null}
             </div>
           </div>
@@ -1564,17 +1297,9 @@ export function InterviewShell() {
         {isInterviewLocked ? (
           <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
             <InterviewEndedCard
-              title={isInterviewPaused ? "本轮访谈已暂停" : "访谈已结束"}
+              title={journalEntry?.status === "saved" ? "日志已保存，访谈已结束" : "访谈已结束"}
               onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
               workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
-              onReopen={isInterviewPaused ? handleReopenInterview : undefined}
-              onCompleteInterview={isInterviewPaused ? handleCompleteInterview : undefined}
-              reopenDisabled={
-                isReopeningInterview || isBusy || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview
-              }
-              completeDisabled={
-                isBusy || isGeneratingDraft || isSavingJournal || isReopeningInterview || isPausingInterview || isCompletingInterview
-              }
             />
             {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}
           </div>
@@ -1643,7 +1368,7 @@ export function InterviewShell() {
             <div className="mt-5 flex min-h-0 flex-1 flex-col">
               {isDraftStale ? (
                 <div className="rounded-[24px] border border-[rgba(181,92,78,0.16)] bg-[linear-gradient(180deg,rgba(253,245,242,0.96),rgba(248,231,224,0.94))] px-4 py-3 text-sm leading-7 text-[#8b5148]">
-                  当前日志草稿基于更早的访谈内容，如需同步最新补充，请生成最新日志。
+                  当前日志草稿基于更早的访谈内容，如需同步最新补充，请点击顶部“生成日志”。
                 </div>
               ) : null}
               <input
@@ -1661,16 +1386,8 @@ export function InterviewShell() {
               <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={handleRegenerateDraft}
-                  disabled={isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
-                  className="rounded-full border border-[rgba(168,124,69,0.24)] bg-[rgba(250,241,225,0.56)] px-4 py-1.5 text-sm text-[#5c452e] transition hover:bg-[rgba(250,241,225,0.86)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  生成最新日志
-                </button>
-                <button
-                  type="button"
                   onClick={handleSaveJournal}
-                  disabled={!canSaveJournal || isGeneratingDraft || isSavingJournal || isPausingInterview || isCompletingInterview}
+                  disabled={!canSaveJournal || isGeneratingDraft || isSavingJournal}
                   className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {hasSavedJournal ? "保存修改" : "保存正式日志"}

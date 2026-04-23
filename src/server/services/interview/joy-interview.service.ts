@@ -5,6 +5,7 @@ import {
   canOfferChoice,
   deriveDepthReachedFromSnapshot,
   getProgressSummaryFromSession,
+  isDraftGenerationUnlockedFromState,
   isDepthReadyForWrapUp,
   mergeDepthReached
 } from "@/features/joy-interview/server/interview-progress";
@@ -81,6 +82,7 @@ interface PreparedInterviewTurn {
   nextDepthReached: AssistantDepth[];
   consecutiveNoDepthGain: number;
   consecutiveInvalidReplies: number;
+  hasOfferedChoice: boolean;
   assistantTurn: AssistantTurnPayload;
 }
 
@@ -139,6 +141,7 @@ function finalizeAssistantTurn(input: {
       : input.prepared.consecutiveInvalidReplies + 1;
   const backendChoice =
     !input.prepared.continueFromChoice &&
+    !input.prepared.hasOfferedChoice &&
     canOfferChoice(finalDepthReached) &&
     (consecutiveInvalidReplies >= 3 || consecutiveNoDepthGain >= 2);
   const backendClosing =
@@ -157,6 +160,11 @@ function finalizeAssistantTurn(input: {
     input.assistantTurn.insight.trim() ||
     (backendChoice ? buildChoiceInsight(input.session, input.prepared.nextSnapshot) : backendClosing ? buildClosingInsight(input.prepared.nextSnapshot) : "")
   ).slice(0, 120);
+  const draftGenerationUnlocked = isDraftGenerationUnlockedFromState({
+    hasJournalEntry: Boolean(input.session.journalEntry),
+    stage: backendClosing ? "wrap_up" : input.prepared.nextStage,
+    hasOfferedChoice: input.prepared.hasOfferedChoice || backendChoice
+  });
 
   return {
     assistantTurn: {
@@ -178,7 +186,7 @@ function finalizeAssistantTurn(input: {
       }
     } satisfies AssistantTurnPayload,
     nextStage,
-    isReadyForDraft: backendChoice || backendClosing || nextStage === "wrap_up"
+    isReadyForDraft: draftGenerationUnlocked
   };
 }
 
@@ -291,7 +299,7 @@ async function getActiveInterviewSession(sessionId: string) {
       sessionStatus: session.status,
       turnCount: session.turnCount,
       snapshot: session.snapshot,
-      isReadyForDraft: Boolean(session.journalEntry),
+      isReadyForDraft: session.draftGenerationUnlocked,
       session
     };
   }
@@ -354,7 +362,8 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
       previousDepthReached: progressSummary.latestDepthReached,
       nextDepthReached,
       consecutiveNoDepthGain: progressSummary.consecutiveNoDepthGain,
-      consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies
+      consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies,
+      hasOfferedChoice: progressSummary.hasOfferedChoice
     },
     assistantTurn
   });
@@ -373,6 +382,7 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
     nextDepthReached,
     consecutiveNoDepthGain: progressSummary.consecutiveNoDepthGain,
     consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies,
+    hasOfferedChoice: progressSummary.hasOfferedChoice,
     assistantTurn: finalized.assistantTurn
   } satisfies PreparedInterviewTurn;
 }
