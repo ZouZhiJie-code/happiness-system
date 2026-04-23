@@ -23,6 +23,7 @@ export type PendingDecisionAction = "continue_current_event" | "next_event" | "g
 
 export interface AssistantTurnPayload {
   insight: string;
+  thinkingSummary: string;
   analysis: string;
   question: string;
   stateUpdate: {

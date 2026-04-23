@@ -17,7 +17,8 @@ const joySnapshotSchema = z.object({
 });
 
 export const assistantTurnPayloadSchema = z.object({
-  insight: z.string().max(120),
+  insight: z.string().max(120).default(""),
+  thinkingSummary: z.string().max(180).default(""),
   analysis: z.string().max(240),
   question: z.string().max(160),
   stateUpdate: z.object({

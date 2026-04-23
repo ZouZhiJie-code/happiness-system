@@ -30,6 +30,7 @@ export function parseAssistantTurnPayload(content: string) {
 export function serializeAssistantTurnPayload(payload: AssistantTurnPayload) {
   return JSON.stringify({
     insight: payload.insight,
+    thinkingSummary: payload.thinkingSummary,
     analysis: payload.analysis,
     question: payload.question,
     stateUpdate: payload.stateUpdate,
@@ -42,6 +43,7 @@ export function serializeAssistantTurnPayload(payload: AssistantTurnPayload) {
 export function createOpeningAssistantTurnPayload(question: string): AssistantTurnPayload {
   return {
     insight: "",
+    thinkingSummary: "",
     analysis: "",
     question,
     stateUpdate: {
@@ -59,17 +61,22 @@ export function createOpeningAssistantTurnPayload(question: string): AssistantTu
 export function getAssistantDisplayParts(payload: AssistantTurnPayload | null | undefined) {
   if (!payload) {
     return {
+      summary: "",
       insight: "",
       question: "",
       combinedText: ""
     };
   }
 
-  const parts = [payload.insight.trim(), payload.question.trim()].filter(Boolean);
+  const question = payload.question.trim();
+  const standaloneInsight = question ? "" : payload.insight.trim();
+  const summary = question ? payload.thinkingSummary.trim() || payload.insight.trim() : "";
+  const parts = [summary || standaloneInsight, question].filter(Boolean);
 
   return {
-    insight: payload.insight.trim(),
-    question: payload.question.trim(),
+    summary,
+    insight: standaloneInsight,
+    question,
     combinedText: parts.join("\n")
   };
 }

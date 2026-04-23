@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   assessUserTurnMessage,
   deriveDepthReachedFromSnapshot
@@ -59,8 +60,8 @@ type InterviewRespondInput =
       sessionId: string;
     };
 
-type StreamingPhase = "thinking" | "insight" | "question";
-type StreamingTarget = "insight" | "question";
+type StreamingPhase = "thinking" | "summary" | "question";
+type StreamingTarget = "summary" | "question";
 type CanonicalInterviewAction = "reply" | "continue_current_event" | "next_event";
 
 export class DraftGenerationError extends Error {
@@ -174,6 +175,7 @@ function buildChoiceReason(round: number) {
 function buildChoiceAssistantTurn(snapshot: JoySnapshot, explorationRound: number): AssistantTurnPayload {
   return {
     insight: buildChoiceInsight(snapshot),
+    thinkingSummary: "",
     analysis: "当前事件已形成完整复盘，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
     question: "",
     stateUpdate: {
@@ -185,6 +187,117 @@ function buildChoiceAssistantTurn(snapshot: JoySnapshot, explorationRound: numbe
     meta: {
       depthReached: deriveDepthReachedFromSnapshot(snapshot)
     }
+  };
+}
+
+function trimSummaryField(value: string | null, maxLength = 40) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.replace(/\s+/g, " ").trim().replace(/[。！？!?,，；;:\s]+$/g, "");
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.slice(0, maxLength);
+}
+
+function buildThinkingSummaryLead(snapshot: JoySnapshot) {
+  const selfPattern = trimSummaryField(snapshot.selfPattern, 32);
+  const happinessType = trimSummaryField(snapshot.happinessType, 18);
+  const whyItMattered = trimSummaryField(snapshot.whyItMattered, 24);
+  const feeling = trimSummaryField(snapshot.feeling, 18);
+  const event = trimSummaryField(snapshot.event, 24);
+
+  if (selfPattern) {
+    return `你已经开始把这件事和“${selfPattern}”这样的自己连起来了`;
+  }
+
+  if (happinessType && whyItMattered) {
+    return `你说到这份开心更像“${happinessType}”，而且已经碰到“${whyItMattered}”这层了`;
+  }
+
+  if (whyItMattered) {
+    return "你已经在慢慢说清，这件事为什么会让你特别在意了";
+  }
+
+  if (feeling && event) {
+    return `你已经抓到“${event}”里那种${feeling}的感觉了`;
+  }
+
+  if (feeling) {
+    return `你已经抓到这件事带给你的那种${feeling}了`;
+  }
+
+  if (event) {
+    return `你已经把“${event}”这个真正有感觉的片段找出来了`;
+  }
+
+  return "你已经抓到一个值得继续往下走的片段了";
+}
+
+function buildThinkingSummaryFocus(input: {
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantAction: "reply" | "continue_current_event";
+}) {
+  if (input.assistantAction === "continue_current_event") {
+    if (input.snapshot.selfPattern) {
+      return "，所以我想换个角度再确认，这是不是你一贯会在意的模式。";
+    }
+
+    if (input.snapshot.whyItMattered) {
+      return "，所以我想换个角度再看看，到底是什么让它这么打动你。";
+    }
+
+    return "，所以我想换个角度把真正打动你的点问具体一点。";
+  }
+
+  switch (input.stage) {
+    case "collect_event":
+      return "，所以我想继续把真正让你有感觉的那一刻问具体一点。";
+    case "probe_reason":
+      return input.snapshot.feeling
+        ? "，所以我想继续确认，这种感觉为什么会在这件事上冒出来。"
+        : "，所以我想继续确认，它为什么会对你这么重要。";
+    case "probe_pattern":
+      if (input.snapshot.selfPattern) {
+        return "，所以我想再确认，这是不是你一贯会反复在意的东西。";
+      }
+
+      if (input.snapshot.happinessType) {
+        return "，所以我想再看看，这背后更稳定的在乎到底是什么。";
+      }
+
+      return "，所以我想再往里问一层，看看这背后更稳定的线索是什么。";
+    case "wrap_up":
+      return "，所以我想再确认你最想留下的那一层是什么。";
+    case "finalize":
+      return "";
+  }
+}
+
+function buildFollowUpThinkingSummary(input: {
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantAction: "reply" | "continue_current_event";
+}) {
+  return `${buildThinkingSummaryLead(input.snapshot)}${buildThinkingSummaryFocus(input)}`
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
+}
+
+function getVisibleAssistantText(assistantTurn: AssistantTurnPayload | null | undefined) {
+  const parts = getAssistantDisplayParts(assistantTurn);
+  const firstBubble = parts.summary || parts.insight;
+
+  return {
+    firstBubble,
+    question: parts.question,
+    combinedText: [firstBubble, parts.question].filter(Boolean).join("\n")
   };
 }
 
@@ -247,9 +360,10 @@ function getNextEventOpeningQuestion(dimension: InterviewDimension) {
 function buildImmediateResponseFromSession(session: InterviewSessionRecord) {
   const latestAssistantMessage = [...session.messages].reverse().find((message) => message.role === "assistant");
   const assistantTurn = latestAssistantMessage?.assistantPayload ?? null;
+  const visibleText = getVisibleAssistantText(assistantTurn);
 
   return {
-    assistantMessage: assistantTurn?.question || assistantTurn?.insight || "",
+    assistantMessage: visibleText.combinedText || latestAssistantMessage?.content || "",
     assistantTurn,
     sessionStatus: session.status,
     turnCount: session.turnCount,
@@ -272,6 +386,46 @@ function applyFallbackQuestion(input: {
   return {
     ...input.assistantTurn,
     question: buildAssistantQuestion(input.dimension, input.stage, input.snapshot)
+  };
+}
+
+function applyAssistantTurnFallbacks(
+  input: PreparedInterviewTurnContext,
+  assistantTurn: AssistantTurnPayload
+) {
+  const withQuestion = applyFallbackQuestion({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantTurn
+  });
+
+  if (!withQuestion.question.trim()) {
+    return withQuestion;
+  }
+
+  if (withQuestion.thinkingSummary.trim()) {
+    return withQuestion;
+  }
+
+  if (withQuestion.insight.trim()) {
+    return {
+      ...withQuestion,
+      thinkingSummary: withQuestion.insight.trim()
+    };
+  }
+
+  if (!input.assistantAction) {
+    return withQuestion;
+  }
+
+  return {
+    ...withQuestion,
+    thinkingSummary: buildFollowUpThinkingSummary({
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      assistantAction: input.assistantAction
+    })
   };
 }
 
@@ -302,12 +456,7 @@ function finalizeAssistantTurn(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
-  const finalizedAssistantTurn = applyFallbackQuestion({
-    dimension: input.session.dimension,
-    stage: input.nextStage,
-    snapshot: input.nextSnapshot,
-    assistantTurn
-  });
+  const finalizedAssistantTurn = applyAssistantTurnFallbacks(input, assistantTurn);
 
   if (input.assistantAction === "continue_current_event") {
     return {
@@ -315,7 +464,6 @@ function finalizeAssistantTurn(
       assistantAction: null,
       assistantTurn: {
         ...finalizedAssistantTurn,
-        insight: finalizedAssistantTurn.question ? "" : finalizedAssistantTurn.insight,
         stateUpdate: {
           ...finalizedAssistantTurn.stateUpdate,
           turnPhase: "digging",
@@ -367,13 +515,7 @@ async function resolvePreparedInterviewTurn(
   });
   const generatedAssistantTurn = callbacks?.onDelta
     ? await streamJoyAssistantTurn(assistantInput, {
-        onDelta: async (delta) => {
-          if (assistantInput.action === "continue_current_event" && delta.target === "insight") {
-            return;
-          }
-
-          await callbacks.onDelta?.(delta);
-        }
+        onDelta: async (delta) => callbacks.onDelta?.(delta)
       })
     : await generateJoyAssistantTurn(assistantInput);
 
@@ -649,8 +791,10 @@ export async function completeJoyInterviewResponse(
     throw new Error("SESSION_NOT_FOUND");
   }
 
+  const visibleText = getVisibleAssistantText(input.assistantTurn);
+
   return {
-    assistantMessage: input.assistantTurn.question || input.assistantTurn.insight,
+    assistantMessage: visibleText.combinedText,
     assistantTurn: input.assistantTurn,
     sessionStatus: updatedSession.status,
     turnCount: updatedSession.turnCount,
@@ -680,19 +824,21 @@ export async function streamJoyInterviewResponse(
   const prepared = await prepareJoyInterviewResponseContext(input);
 
   if ("assistantMessage" in prepared) {
-    if (prepared.assistantTurn?.insight) {
-      await callbacks.onPhase("insight");
+    const visibleText = getVisibleAssistantText(prepared.assistantTurn);
+
+    if (visibleText.firstBubble) {
+      await callbacks.onPhase("summary");
       await callbacks.onDelta({
-        target: "insight",
-        text: prepared.assistantTurn.insight
+        target: "summary",
+        text: visibleText.firstBubble
       });
     }
 
-    if (prepared.assistantTurn?.question || prepared.assistantMessage) {
+    if (visibleText.question || prepared.assistantMessage) {
       await callbacks.onPhase("question");
       await callbacks.onDelta({
         target: "question",
-        text: prepared.assistantTurn?.question || prepared.assistantMessage
+        text: visibleText.question || prepared.assistantMessage
       });
     }
 
@@ -705,20 +851,21 @@ export async function streamJoyInterviewResponse(
       assistantTurn: prepared.assistantTurn,
       assistantAction: null
     };
+    const visibleText = getVisibleAssistantText(resolvedPrepared.assistantTurn);
 
-    if (resolvedPrepared.assistantTurn.insight) {
-      await callbacks.onPhase("insight");
+    if (visibleText.firstBubble) {
+      await callbacks.onPhase("summary");
       await callbacks.onDelta({
-        target: "insight",
-        text: resolvedPrepared.assistantTurn.insight
+        target: "summary",
+        text: visibleText.firstBubble
       });
     }
 
-    if (resolvedPrepared.assistantTurn.question) {
+    if (visibleText.question) {
       await callbacks.onPhase("question");
       await callbacks.onDelta({
         target: "question",
-        text: resolvedPrepared.assistantTurn.question
+        text: visibleText.question
       });
     }
 
@@ -728,7 +875,7 @@ export async function streamJoyInterviewResponse(
   await callbacks.onPhase("thinking");
 
   const streamedText: Record<StreamingTarget, string> = {
-    insight: "",
+    summary: "",
     question: ""
   };
   let activePhase: StreamingPhase | null = "thinking";
@@ -751,28 +898,29 @@ export async function streamJoyInterviewResponse(
       await callbacks.onDelta(delta);
     }
   });
+  const completedVisibleText = getVisibleAssistantText(completed.assistantTurn);
 
   if (
-    completed.assistantTurn.insight &&
-    completed.assistantTurn.insight.startsWith(streamedText.insight) &&
-    streamedText.insight !== completed.assistantTurn.insight
+    completedVisibleText.firstBubble &&
+    completedVisibleText.firstBubble.startsWith(streamedText.summary) &&
+    streamedText.summary !== completedVisibleText.firstBubble
   ) {
-    await emitPhase("insight");
+    await emitPhase("summary");
     await callbacks.onDelta({
-      target: "insight",
-      text: completed.assistantTurn.insight.slice(streamedText.insight.length)
+      target: "summary",
+      text: completedVisibleText.firstBubble.slice(streamedText.summary.length)
     });
   }
 
   if (
-    completed.assistantTurn.question &&
-    completed.assistantTurn.question.startsWith(streamedText.question) &&
-    streamedText.question !== completed.assistantTurn.question
+    completedVisibleText.question &&
+    completedVisibleText.question.startsWith(streamedText.question) &&
+    streamedText.question !== completedVisibleText.question
   ) {
     await emitPhase("question");
     await callbacks.onDelta({
       target: "question",
-      text: completed.assistantTurn.question.slice(streamedText.question.length)
+      text: completedVisibleText.question.slice(streamedText.question.length)
     });
   }
 

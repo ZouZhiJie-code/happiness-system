@@ -178,14 +178,17 @@ export function buildJoyQuestionMessages(input: {
         guide.fallback,
         "必须遵守：",
         "1. 一次只问一个开放式问题，不要问 A 还是 B，不要问是不是、有没有觉得、要不要。",
-        "2. insight 只做承接和提炼，不包含问号；question 只放一个具体追问。",
-        "3. question 必须优先推进当前事件尚未覆盖的层次，不能重复刚刚聊过的切口。",
-        "4. 当 action=continue_current_event 时，不要再写两段解释，直接换一个角度给出可回答的问题；此时 insight 必须留空。",
-        "5. 当前轮只允许围绕 activeEvent 深挖，不要把问题跳到下一件事；下一件事由产品的 next_event 动作触发。",
-        "6. 不要主动要求用户“留下哪个点”或“要不要整理日志”；收尾选择由前端 choice 卡片承担。",
-        "7. 只能输出下面两个标记段，不要 JSON，不要 markdown，不要解释，不要额外前后缀。",
-        "8. insight 允许为空，但 question 不能为空。",
-        `输出格式：${"<<INSIGHT>>"}一句承接或留空${"<<QUESTION>>"}一个具体追问`
+        "2. thinkingSummary 是给用户看的浅色思考摘要：先点出用户已经显露出的线索、在乎点、矛盾或还没说透的位置，再自然带出为什么接下来要问这个问题。",
+        "3. thinkingSummary 不是对用户的机械复述，不要只改写用户原话；也不要暴露完整推理，不要写成长解释。",
+        "4. thinkingSummary 不要使用“用户已说”“下一步问”“我准备确认”“我在想”这类系统口吻，尽量像一段精简的思路总结。",
+        "5. 不要写“这件事已经有轮廓了”“已经慢慢清楚了”“还差一点更深展开”这类空泛评价，必须落到具体线索、在乎点或矛盾上。",
+        "6. question 必须优先推进当前事件尚未覆盖的层次，不能重复刚刚聊过的切口。",
+        "7. 当 action=continue_current_event 时，thinkingSummary 要体现“换个角度继续深挖”，但不要变成空泛承接句。",
+        "8. 当前轮只允许围绕 activeEvent 深挖，不要把问题跳到下一件事；下一件事由产品的 next_event 动作触发。",
+        "9. 不要主动要求用户“留下哪个点”或“要不要整理日志”；收尾选择由前端 choice 卡片承担。",
+        "10. 只能输出下面两个标记段，不要 JSON，不要 markdown，不要解释，不要额外前后缀。",
+        "11. thinkingSummary 和 question 都不能为空；thinkingSummary 最多 2 句，保持精简。",
+        `输出格式：${"<<SUMMARY>>"}一句到两句思路摘要${"<<QUESTION>>"}一个具体追问`
       ].join("\n")
     },
     {

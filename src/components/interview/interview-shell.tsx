@@ -17,8 +17,8 @@ import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
 
 type BootState = "idle" | "booting" | "restoring";
-type AssistantState = "idle" | "thinking" | "insight" | "question";
-type StreamingTarget = "insight" | "question";
+type AssistantState = "idle" | "thinking" | "summary" | "question";
+type StreamingTarget = "summary" | "question";
 type DraftSyncState = "idle" | "saving" | "saved" | "error";
 type DraftGenerateState = "idle" | "loading" | "error";
 type ToastState = {
@@ -85,7 +85,7 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
 
   return (
     <React.Fragment>
-      {parts.insight ? <MessageBubble content={parts.insight} role="assistant" /> : null}
+      {parts.summary || parts.insight ? <MessageBubble content={parts.summary || parts.insight} role="assistant" /> : null}
       {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
     </React.Fragment>
   );
@@ -418,7 +418,7 @@ export function InterviewShell() {
   const [bootState, setBootState] = useState<BootState>("idle");
   const [assistantState, setAssistantState] = useState<AssistantState>("idle");
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
-  const [streamedAssistantInsight, setStreamedAssistantInsight] = useState("");
+  const [streamedAssistantSummary, setStreamedAssistantSummary] = useState("");
   const [streamedAssistantQuestion, setStreamedAssistantQuestion] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
@@ -464,7 +464,7 @@ export function InterviewShell() {
       assistantState === "idle" &&
       (sessionDimension ?? currentDimension) === currentDimension
   );
-  const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantInsight || streamedAssistantQuestion);
+  const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
   const isInterviewCompleted = status === "completed";
@@ -623,7 +623,7 @@ export function InterviewShell() {
   const clearStreamState = useCallback(() => {
     pendingSessionRef.current = null;
     setOptimisticUserMessage(null);
-    setStreamedAssistantInsight("");
+    setStreamedAssistantSummary("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
   }, []);
@@ -655,7 +655,7 @@ export function InterviewShell() {
     hydrate(pendingSessionRef.current);
     pendingSessionRef.current = null;
     setOptimisticUserMessage(null);
-    setStreamedAssistantInsight("");
+    setStreamedAssistantSummary("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
   }
@@ -776,7 +776,7 @@ export function InterviewShell() {
 
     // Keep the chat pinned to the latest message without scrolling the whole document.
     messageScrollElement.scrollTop = messageScrollElement.scrollHeight;
-  }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantInsight, streamedAssistantQuestion]);
+  }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantQuestion, streamedAssistantSummary]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -898,7 +898,7 @@ export function InterviewShell() {
       setOptimisticUserMessage(null);
     }
     setIsBusy(true);
-    setStreamedAssistantInsight("");
+    setStreamedAssistantSummary("");
     setStreamedAssistantQuestion("");
     setAssistantState("thinking");
     pendingSessionRef.current = null;
@@ -955,8 +955,10 @@ export function InterviewShell() {
           if (parsed.event === "phase") {
             const nextState = parsed.data.state;
 
-            if (nextState === "thinking" || nextState === "insight" || nextState === "question") {
+            if (nextState === "thinking" || nextState === "summary" || nextState === "question") {
               setAssistantState(nextState);
+            } else if (nextState === "insight") {
+              setAssistantState("summary");
             }
 
             return;
@@ -965,13 +967,15 @@ export function InterviewShell() {
           if (parsed.event === "delta") {
             const text = typeof parsed.data.text === "string" ? parsed.data.text : "";
             const target =
-              parsed.data.target === "insight" || parsed.data.target === "question"
+              parsed.data.target === "summary" || parsed.data.target === "question"
                 ? (parsed.data.target as StreamingTarget)
+                : parsed.data.target === "insight"
+                  ? "summary"
                 : "question";
 
             if (text) {
-              if (target === "insight") {
-                setStreamedAssistantInsight((current) => current + text);
+              if (target === "summary") {
+                setStreamedAssistantSummary((current) => current + text);
               } else {
                 setStreamedAssistantQuestion((current) => current + text);
               }
@@ -1270,10 +1274,10 @@ export function InterviewShell() {
               {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
               {showStreamingBubble ? (
                 <>
-                  {assistantState === "thinking" && !streamedAssistantInsight && !streamedAssistantQuestion ? (
+                  {assistantState === "thinking" && !streamedAssistantSummary && !streamedAssistantQuestion ? (
                     <MessageBubble content="正在思考中..." />
                   ) : null}
-                  {streamedAssistantInsight ? <MessageBubble content={streamedAssistantInsight} role="assistant" /> : null}
+                  {streamedAssistantSummary ? <MessageBubble content={streamedAssistantSummary} role="assistant" /> : null}
                   {streamedAssistantQuestion ? (
                     <MessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
                   ) : null}

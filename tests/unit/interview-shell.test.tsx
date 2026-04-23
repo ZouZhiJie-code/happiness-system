@@ -39,6 +39,7 @@ const baseSnapshot: JoySnapshot = {
 function buildAssistantPayload(overrides: Partial<AssistantTurnPayload> = {}): AssistantTurnPayload {
   return {
     insight: "",
+    thinkingSummary: "",
     analysis: "",
     question: "今天有没有一个让你真心开心的瞬间？先讲那个具体时刻。",
     stateUpdate: {
@@ -405,7 +406,7 @@ describe("InterviewShell", () => {
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
   });
 
-  it("renders structured assistant messages as separate insight and question bubbles", async () => {
+  it("renders structured assistant messages as separate summary and question bubbles", async () => {
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-structured" }));
 
     const structuredSession = buildSession({
@@ -419,7 +420,8 @@ describe("InterviewShell", () => {
           role: "assistant",
           content: "{\"insight\":\"今天这段轻松感已经有轮廓了。\",\"analysis\":\"用户已说：和家人一起吃饭；下一步问：原因层\",\"question\":\"那一刻为什么会让你这么放松？\",\"stateUpdate\":{\"turnPhase\":\"digging\",\"shouldEndDimension\":false,\"offerChoice\":false,\"choiceReason\":\"\"},\"meta\":{\"depthReached\":[\"event\"]}}",
           assistantPayload: buildAssistantPayload({
-            insight: "今天这段轻松感已经有轮廓了。",
+            insight: "",
+            thinkingSummary: "今天这段轻松感已经有轮廓了。",
             analysis: "用户已说：和家人一起吃饭；下一步问：原因层",
             question: "那一刻为什么会让你这么放松？",
             meta: {
@@ -536,7 +538,8 @@ describe("InterviewShell", () => {
       }
     });
     const continuedPayload = buildAssistantPayload({
-      insight: "我们换个角度，把当时让你松下来的东西再看细一点。",
+      insight: "",
+      thinkingSummary: "你已经抓到那种松下来的感觉了，所以我想换个角度再确认，到底是什么在当时特别打动你。",
       question: "当时周围的环境或者节奏，有什么特别打动你？",
       meta: {
         depthReached: ["event"]
@@ -576,8 +579,8 @@ describe("InterviewShell", () => {
       if (url.endsWith("/api/interview/session/respond/stream")) {
         return buildSseResponse([
           'event: phase\ndata: {"state":"thinking"}\n\n',
-          'event: phase\ndata: {"state":"insight"}\n\n',
-          `event: delta\ndata: ${JSON.stringify({ target: "insight", text: continuedPayload.insight })}\n\n`,
+          'event: phase\ndata: {"state":"summary"}\n\n',
+          `event: delta\ndata: ${JSON.stringify({ target: "summary", text: continuedPayload.thinkingSummary })}\n\n`,
           'event: phase\ndata: {"state":"question"}\n\n',
           `event: delta\ndata: ${JSON.stringify({ target: "question", text: continuedPayload.question })}\n\n`,
           `event: session\ndata: ${JSON.stringify({ session: continuedSession })}\n\n`
@@ -606,7 +609,7 @@ describe("InterviewShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "换个角度继续聊" }));
 
-    expect(await screen.findByText(continuedPayload.insight)).toBeInTheDocument();
+    expect(await screen.findByText(continuedPayload.thinkingSummary)).toBeInTheDocument();
     expect(await screen.findByText(continuedPayload.question)).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
@@ -746,8 +749,8 @@ describe("InterviewShell", () => {
       if (url.endsWith("/api/interview/session/respond/stream")) {
         return buildSseResponse([
           'event: phase\ndata: {"state":"thinking"}\n\n',
-          'event: phase\ndata: {"state":"insight"}\n\n',
-          'event: delta\ndata: {"target":"insight","text":"这份被接住的感觉也很关键。"}\n\n',
+          'event: phase\ndata: {"state":"summary"}\n\n',
+          'event: delta\ndata: {"target":"summary","text":"这份被接住的感觉也很关键。"}\n\n',
           `event: session\ndata: ${JSON.stringify({ session: updatedSession })}\n\n`
         ]);
       }
@@ -879,8 +882,8 @@ describe("InterviewShell", () => {
       if (url.endsWith("/api/interview/session/respond/stream")) {
         return buildSseResponse([
           'event: phase\ndata: {"state":"thinking"}\n\n',
-          'event: phase\ndata: {"state":"insight"}\n\n',
-          'event: delta\ndata: {"target":"insight","text":"这份被接住的感觉也很关键。"}\n\n',
+          'event: phase\ndata: {"state":"summary"}\n\n',
+          'event: delta\ndata: {"target":"summary","text":"这份被接住的感觉也很关键。"}\n\n',
           `event: session\ndata: ${JSON.stringify({ session: updatedSession })}\n\n`
         ]);
       }

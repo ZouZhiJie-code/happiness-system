@@ -37,17 +37,19 @@ import type {
   JoySnapshot
 } from "@/types/interview";
 
-const ASSISTANT_INSIGHT_MARKER = "<<INSIGHT>>";
+const ASSISTANT_SUMMARY_MARKER = "<<SUMMARY>>";
+const ASSISTANT_LEGACY_INSIGHT_MARKER = "<<INSIGHT>>";
 const ASSISTANT_QUESTION_MARKER = "<<QUESTION>>";
 const assistantMarkers = [
-  { marker: ASSISTANT_INSIGHT_MARKER, target: "insight" as const },
+  { marker: ASSISTANT_SUMMARY_MARKER, target: "summary" as const },
+  { marker: ASSISTANT_LEGACY_INSIGHT_MARKER, target: "summary" as const },
   { marker: ASSISTANT_QUESTION_MARKER, target: "question" as const }
 ];
 
-type AssistantStreamingTarget = "insight" | "question";
+type AssistantStreamingTarget = "summary" | "question";
 
 export interface AssistantReplySegments {
-  insight: string;
+  thinkingSummary: string;
   question: string;
 }
 
@@ -147,30 +149,6 @@ export async function extractJoySnapshotWithAI(input: {
   return mergeJoySignals(input.session.snapshot, normalizeExtractedFields(aiResult));
 }
 
-function createFallbackInsight(input: {
-  action: "reply" | "continue_current_event";
-  snapshot: JoySnapshot;
-  stage: JoyInterviewStage;
-}) {
-  if (input.action === "continue_current_event") {
-    return "";
-  }
-
-  if (!input.snapshot.event || input.stage === "collect_event") {
-    return "先把那个具体片段抓稳，我们再往下走。";
-  }
-
-  if (!input.snapshot.whyItMattered || input.stage === "probe_reason") {
-    return "这个片段已经有轮廓了，还差它为什么重要。";
-  }
-
-  if (!input.snapshot.happinessType && !input.snapshot.selfPattern) {
-    return "你已经说到它的重要性了，接下来可以往更深的线索走。";
-  }
-
-  return "这段经历背后的线索已经开始清楚了。";
-}
-
 function createFallbackAssistantTurn(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
@@ -181,11 +159,8 @@ function createFallbackAssistantTurn(input: {
   const question = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
 
   return {
-    insight: createFallbackInsight({
-      action: input.action,
-      snapshot: input.snapshot,
-      stage: input.stage
-    }),
+    insight: "",
+    thinkingSummary: "",
     analysis: "用户已说：已有片段但仍需继续澄清；下一步问：当前阶段对应的未覆盖层次",
     question,
     stateUpdate: {
@@ -214,6 +189,7 @@ function normalizeAssistantTurnPayload(payload: AssistantTurnPayload): Assistant
 
   return {
     insight: trimToLength(payload.insight ?? "", 120),
+    thinkingSummary: trimToLength(payload.thinkingSummary ?? "", 180),
     analysis: trimToLength(payload.analysis ?? "", 240),
     question: trimToLength(payload.question ?? "", 160),
     stateUpdate: {
@@ -250,7 +226,8 @@ function buildAssistantAnalysis(input: AssistantTurnGenerationInput) {
 
 function createAssistantTurnFromSegments(input: AssistantTurnGenerationInput, segments: AssistantReplySegments) {
   return normalizeAssistantTurnPayload({
-    insight: trimToLength(segments.insight, 120),
+    insight: "",
+    thinkingSummary: trimToLength(segments.thinkingSummary, 180),
     analysis: buildAssistantAnalysis(input),
     question: trimToLength(segments.question, 160),
     stateUpdate: {
@@ -337,7 +314,7 @@ export function createAssistantReplySegmentParser(
   let currentTarget: AssistantStreamingTarget | null = null;
   let sawMarker = false;
   const segments: AssistantReplySegments = {
-    insight: "",
+    thinkingSummary: "",
     question: ""
   };
 
@@ -346,7 +323,12 @@ export function createAssistantReplySegmentParser(
       return;
     }
 
-    segments[target] += text;
+    if (target === "summary") {
+      segments.thinkingSummary += text;
+    } else {
+      segments.question += text;
+    }
+
     await onDelta?.({ target, text });
   }
 
@@ -374,11 +356,11 @@ export function createAssistantReplySegmentParser(
         continue;
       }
 
-      if (currentTarget === "insight") {
+      if (currentTarget === "summary") {
         const questionIndex = buffer.indexOf(ASSISTANT_QUESTION_MARKER);
 
         if (questionIndex >= 0) {
-          await emit("insight", buffer.slice(0, questionIndex));
+          await emit("summary", buffer.slice(0, questionIndex));
           buffer = buffer.slice(questionIndex + ASSISTANT_QUESTION_MARKER.length);
           currentTarget = "question";
           sawMarker = true;
@@ -388,7 +370,7 @@ export function createAssistantReplySegmentParser(
         const trailingPrefixLength = getTrailingMarkerPrefixLength(buffer);
         const safeText = trailingPrefixLength ? buffer.slice(0, -trailingPrefixLength) : buffer;
         buffer = trailingPrefixLength ? buffer.slice(-trailingPrefixLength) : "";
-        await emit("insight", safeText);
+        await emit("summary", safeText);
         return;
       }
 
@@ -411,7 +393,7 @@ export function createAssistantReplySegmentParser(
     }
 
     return {
-      insight: trimToLength(segments.insight, 120),
+      thinkingSummary: trimToLength(segments.thinkingSummary, 180),
       question: trimToLength(segments.question, 160)
     } satisfies AssistantReplySegments;
   }
@@ -451,7 +433,7 @@ async function runAssistantQuestionAttempt(input: {
   }
 
   const segments = await parser.finish();
-  const hasMeaningfulOutput = Boolean(segments.insight || segments.question);
+  const hasMeaningfulOutput = Boolean(segments.thinkingSummary || segments.question);
 
   if (!hasMeaningfulOutput) {
     await logAttempt(input.sessionId, {
