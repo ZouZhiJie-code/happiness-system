@@ -1659,8 +1659,8 @@ describe("InterviewShell", () => {
       if (url.endsWith("/api/interview/session/respond/stream")) {
         return buildSseResponse([
           'event: phase\ndata: {"state":"thinking"}\n\n',
-          'event: phase\ndata: {"state":"streaming"}\n\n',
-          'event: delta\ndata: {"text":"收到，我继续问下一个细节。"}\n\n',
+          'event: phase\ndata: {"state":"question"}\n\n',
+          'event: delta\ndata: {"target":"question","text":"收到，我继续问下一个细节。"}\n\n',
           `event: session\ndata: ${JSON.stringify({ session: streamedSession })}\n\n`
         ]);
       }
@@ -1797,8 +1797,8 @@ describe("InterviewShell", () => {
       if (url.endsWith("/api/interview/session/respond/stream")) {
         return buildSseResponse([
           'event: phase\ndata: {"state":"thinking"}\n\n',
-          'event: phase\ndata: {"state":"streaming"}\n\n',
-          'event: delta\ndata: {"text":"收到，我继续问下一个细节。"}\n\n',
+          'event: phase\ndata: {"state":"question"}\n\n',
+          'event: delta\ndata: {"target":"question","text":"收到，我继续问下一个细节。"}\n\n',
           `event: session\ndata: ${JSON.stringify({ session: streamedSession })}\n\n`
         ]);
       }

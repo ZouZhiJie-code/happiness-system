@@ -25,6 +25,7 @@ import {
 import {
   extractJoySnapshotWithAI,
   generateJoyAssistantTurn,
+  streamJoyAssistantTurn,
   generateJoyDraftWithAI
 } from "@/server/services/interview/joy-interview-ai.service";
 import type {
@@ -79,7 +80,7 @@ export class DraftGenerationError extends Error {
   }
 }
 
-interface PreparedInterviewTurn {
+interface PreparedInterviewTurnContext {
   session: InterviewSessionRecord;
   activeEvent: InterviewEventRecord;
   nextSnapshot: JoySnapshot;
@@ -95,8 +96,14 @@ interface PreparedInterviewTurn {
   roundCoveredLenses: InterviewLens[];
   roundMeaningfulReplyCount: number;
   totalMeaningfulReplyCount: number;
-  assistantTurn: AssistantTurnPayload;
+  assistantTurn: AssistantTurnPayload | null;
+  assistantAction: "reply" | "continue_current_event" | null;
 }
+
+type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
+  assistantTurn: AssistantTurnPayload;
+  assistantAction: null;
+};
 
 function getCanonicalAction(action: InterviewRespondInput["action"]): CanonicalInterviewAction {
   if (action === "continue") {
@@ -268,6 +275,111 @@ function applyFallbackQuestion(input: {
   };
 }
 
+function buildAssistantGenerationInput(input: PreparedInterviewTurnContext & {
+  assistantAction: "reply" | "continue_current_event";
+}) {
+  return {
+    dimension: input.session.dimension,
+    sessionId: input.session.id,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    events: input.session.events,
+    activeEvent: input.activeEvent,
+    userMessage: input.userMessage,
+    messages: input.session.messages,
+    nextTurnCount: input.nextTurnCount,
+    nextEventTurnCount: input.nextEventTurnCount,
+    previousDepthReached: deriveDepthReachedFromSnapshot(input.activeEvent.snapshot),
+    nextDepthReached: deriveDepthReachedFromSnapshot(input.nextSnapshot),
+    coveredLenses: input.coveredLenses,
+    roundCoveredLenses: input.roundCoveredLenses,
+    isMeaningfulReply: input.isMeaningfulReply,
+    action: input.assistantAction
+  } as const;
+}
+
+function finalizeAssistantTurn(
+  input: PreparedInterviewTurnContext,
+  assistantTurn: AssistantTurnPayload
+): ResolvedPreparedInterviewTurn {
+  const finalizedAssistantTurn = applyFallbackQuestion({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantTurn
+  });
+
+  if (input.assistantAction === "continue_current_event") {
+    return {
+      ...input,
+      assistantAction: null,
+      assistantTurn: {
+        ...finalizedAssistantTurn,
+        insight: finalizedAssistantTurn.question ? "" : finalizedAssistantTurn.insight,
+        stateUpdate: {
+          ...finalizedAssistantTurn.stateUpdate,
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        }
+      }
+    };
+  }
+
+  return {
+    ...input,
+    assistantAction: null,
+    assistantTurn: {
+      ...finalizedAssistantTurn,
+      stateUpdate: {
+        ...finalizedAssistantTurn.stateUpdate,
+        turnPhase: input.nextStage === "collect_event" ? "opening" : "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      }
+    }
+  };
+}
+
+async function resolvePreparedInterviewTurn(
+  input: PreparedInterviewTurnContext,
+  callbacks?: {
+    onDelta?: (delta: { target: StreamingTarget; text: string }) => Promise<void> | void;
+  }
+) : Promise<ResolvedPreparedInterviewTurn> {
+  if (input.assistantTurn) {
+    return {
+      ...input,
+      assistantTurn: input.assistantTurn,
+      assistantAction: null
+    };
+  }
+
+  if (!input.assistantAction) {
+    throw new Error("ASSISTANT_ACTION_MISSING");
+  }
+
+  const assistantInput = buildAssistantGenerationInput({
+    ...input,
+    assistantAction: input.assistantAction
+  });
+  const generatedAssistantTurn = callbacks?.onDelta
+    ? await streamJoyAssistantTurn(assistantInput, {
+        onDelta: async (delta) => {
+          if (assistantInput.action === "continue_current_event" && delta.target === "insight") {
+            return;
+          }
+
+          await callbacks.onDelta?.(delta);
+        }
+      })
+    : await generateJoyAssistantTurn(assistantInput);
+
+  return finalizeAssistantTurn(input, generatedAssistantTurn);
+}
+
 async function getActiveInterviewSession(sessionId: string) {
   const session = await findJoyInterviewSessionById(sessionId);
 
@@ -385,7 +497,7 @@ export async function completeJoyInterviewSession(sessionId: string) {
   };
 }
 
-export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
+async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) {
   const session = await getActiveInterviewSession(input.sessionId);
 
   if ("assistantMessage" in session) {
@@ -411,32 +523,6 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
       throw new Error("SESSION_NOT_FOUND");
     }
 
-    const previousDepthReached = deriveDepthReachedFromSnapshot(resumedEvent.snapshot);
-    const assistantTurn = await generateJoyAssistantTurn({
-      dimension: resumedSession.dimension,
-      sessionId: resumedSession.id,
-      stage: resumedEvent.stage,
-      snapshot: resumedEvent.snapshot,
-      events: resumedSession.events,
-      activeEvent: resumedEvent,
-      userMessage: null,
-      messages: resumedSession.messages,
-      nextTurnCount: resumedSession.turnCount,
-      nextEventTurnCount: resumedEvent.totalMeaningfulReplyCount,
-      previousDepthReached,
-      nextDepthReached: previousDepthReached,
-      coveredLenses: resumedEvent.coveredLenses,
-      roundCoveredLenses: resumedEvent.roundCoveredLenses,
-      isMeaningfulReply: false,
-      action: "continue_current_event"
-    });
-    const finalizedAssistantTurn = applyFallbackQuestion({
-      dimension: resumedSession.dimension,
-      stage: resumedEvent.stage,
-      snapshot: resumedEvent.snapshot,
-      assistantTurn
-    });
-
     return {
       session: resumedSession,
       activeEvent: resumedEvent,
@@ -452,18 +538,9 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
       roundCoveredLenses: resumedEvent.roundCoveredLenses,
       roundMeaningfulReplyCount: resumedEvent.roundMeaningfulReplyCount,
       totalMeaningfulReplyCount: resumedEvent.totalMeaningfulReplyCount,
-      assistantTurn: {
-        ...finalizedAssistantTurn,
-        insight: finalizedAssistantTurn.question ? "" : finalizedAssistantTurn.insight,
-        stateUpdate: {
-          ...finalizedAssistantTurn.stateUpdate,
-          turnPhase: "digging",
-          shouldEndDimension: false,
-          offerChoice: false,
-          choiceReason: ""
-        }
-      }
-    } satisfies PreparedInterviewTurn;
+      assistantTurn: null,
+      assistantAction: "continue_current_event"
+    } satisfies PreparedInterviewTurnContext;
   }
 
   if (canonicalAction === "next_event") {
@@ -514,34 +591,6 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
     nextStage: derivedNextStage,
     shouldOfferChoiceNow
   });
-  const assistantTurn = shouldOfferChoiceNow
-    ? buildChoiceAssistantTurn(nextSnapshot, activeEvent.explorationRound)
-    : await generateJoyAssistantTurn({
-        dimension: session.dimension,
-        sessionId: session.id,
-        stage: nextStage,
-        snapshot: nextSnapshot,
-        events: session.events,
-        activeEvent,
-        userMessage: input.userMessage,
-        messages: session.messages,
-        nextTurnCount,
-        nextEventTurnCount,
-        previousDepthReached: deriveDepthReachedFromSnapshot(activeEvent.snapshot),
-        nextDepthReached: deriveDepthReachedFromSnapshot(nextSnapshot),
-        coveredLenses,
-        roundCoveredLenses,
-        isMeaningfulReply,
-        action: "reply"
-      });
-  const finalizedAssistantTurn = shouldOfferChoiceNow
-    ? assistantTurn
-    : applyFallbackQuestion({
-        dimension: session.dimension,
-        stage: nextStage,
-        snapshot: nextSnapshot,
-        assistantTurn
-      });
 
   return {
     session,
@@ -559,22 +608,24 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
     roundCoveredLenses,
     roundMeaningfulReplyCount,
     totalMeaningfulReplyCount,
-    assistantTurn: shouldOfferChoiceNow
-      ? finalizedAssistantTurn
-      : {
-          ...finalizedAssistantTurn,
-          stateUpdate: {
-            ...finalizedAssistantTurn.stateUpdate,
-            turnPhase: nextStage === "collect_event" ? "opening" : "digging",
-            shouldEndDimension: false,
-            offerChoice: false,
-            choiceReason: ""
-          }
-        }
-  } satisfies PreparedInterviewTurn;
+    assistantTurn: shouldOfferChoiceNow ? buildChoiceAssistantTurn(nextSnapshot, activeEvent.explorationRound) : null,
+    assistantAction: shouldOfferChoiceNow ? null : "reply"
+  } satisfies PreparedInterviewTurnContext;
 }
 
-export async function completeJoyInterviewResponse(input: PreparedInterviewTurn) {
+export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
+  const prepared = await prepareJoyInterviewResponseContext(input);
+
+  if ("assistantMessage" in prepared) {
+    return prepared;
+  }
+
+  return resolvePreparedInterviewTurn(prepared);
+}
+
+export async function completeJoyInterviewResponse(
+  input: ResolvedPreparedInterviewTurn
+) {
   const updatedSession = await appendJoyInterviewTurn({
     sessionId: input.session.id,
     activeEventId: input.activeEvent.id,
@@ -626,7 +677,7 @@ export async function streamJoyInterviewResponse(
     onDelta: (delta: { target: StreamingTarget; text: string }) => Promise<void> | void;
   }
 ) {
-  const prepared = await prepareJoyInterviewResponse(input);
+  const prepared = await prepareJoyInterviewResponseContext(input);
 
   if ("assistantMessage" in prepared) {
     if (prepared.assistantTurn?.insight) {
@@ -648,25 +699,84 @@ export async function streamJoyInterviewResponse(
     return prepared;
   }
 
+  if (prepared.assistantTurn) {
+    const resolvedPrepared: ResolvedPreparedInterviewTurn = {
+      ...prepared,
+      assistantTurn: prepared.assistantTurn,
+      assistantAction: null
+    };
+
+    if (resolvedPrepared.assistantTurn.insight) {
+      await callbacks.onPhase("insight");
+      await callbacks.onDelta({
+        target: "insight",
+        text: resolvedPrepared.assistantTurn.insight
+      });
+    }
+
+    if (resolvedPrepared.assistantTurn.question) {
+      await callbacks.onPhase("question");
+      await callbacks.onDelta({
+        target: "question",
+        text: resolvedPrepared.assistantTurn.question
+      });
+    }
+
+    return completeJoyInterviewResponse(resolvedPrepared);
+  }
+
   await callbacks.onPhase("thinking");
 
-  if (prepared.assistantTurn.insight) {
-    await callbacks.onPhase("insight");
+  const streamedText: Record<StreamingTarget, string> = {
+    insight: "",
+    question: ""
+  };
+  let activePhase: StreamingPhase | null = "thinking";
+  const emitPhase = async (phase: StreamingPhase) => {
+    if (activePhase === phase) {
+      return;
+    }
+
+    activePhase = phase;
+    await callbacks.onPhase(phase);
+  };
+  const completed = await resolvePreparedInterviewTurn(prepared, {
+    onDelta: async (delta) => {
+      if (!delta.text) {
+        return;
+      }
+
+      streamedText[delta.target] += delta.text;
+      await emitPhase(delta.target);
+      await callbacks.onDelta(delta);
+    }
+  });
+
+  if (
+    completed.assistantTurn.insight &&
+    completed.assistantTurn.insight.startsWith(streamedText.insight) &&
+    streamedText.insight !== completed.assistantTurn.insight
+  ) {
+    await emitPhase("insight");
     await callbacks.onDelta({
       target: "insight",
-      text: prepared.assistantTurn.insight
+      text: completed.assistantTurn.insight.slice(streamedText.insight.length)
     });
   }
 
-  if (prepared.assistantTurn.question) {
-    await callbacks.onPhase("question");
+  if (
+    completed.assistantTurn.question &&
+    completed.assistantTurn.question.startsWith(streamedText.question) &&
+    streamedText.question !== completed.assistantTurn.question
+  ) {
+    await emitPhase("question");
     await callbacks.onDelta({
       target: "question",
-      text: prepared.assistantTurn.question
+      text: completed.assistantTurn.question.slice(streamedText.question.length)
     });
   }
 
-  return completeJoyInterviewResponse(prepared);
+  return completeJoyInterviewResponse(completed);
 }
 
 export async function generateJoyInterviewDraft(sessionIds: string[]) {

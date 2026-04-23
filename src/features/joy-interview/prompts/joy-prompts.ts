@@ -178,13 +178,14 @@ export function buildJoyQuestionMessages(input: {
         guide.fallback,
         "必须遵守：",
         "1. 一次只问一个开放式问题，不要问 A 还是 B，不要问是不是、有没有觉得、要不要。",
-        "2. insight 只做承接和提炼，不包含问号；analysis 只总结“用户已说/下一步问”；question 只放一个具体追问。",
+        "2. insight 只做承接和提炼，不包含问号；question 只放一个具体追问。",
         "3. question 必须优先推进当前事件尚未覆盖的层次，不能重复刚刚聊过的切口。",
-        "4. 当 action=continue_current_event 时，不要再写两段解释，直接换一个角度给出可回答的问题；此时 insight 可以为空。",
+        "4. 当 action=continue_current_event 时，不要再写两段解释，直接换一个角度给出可回答的问题；此时 insight 必须留空。",
         "5. 当前轮只允许围绕 activeEvent 深挖，不要把问题跳到下一件事；下一件事由产品的 next_event 动作触发。",
         "6. 不要主动要求用户“留下哪个点”或“要不要整理日志”；收尾选择由前端 choice 卡片承担。",
-        "7. 返回合法 JSON，不要 markdown，不要解释。",
-        '返回格式：{"insight":"","analysis":"","question":"","stateUpdate":{"turnPhase":"opening|digging|closing|choice","shouldEndDimension":false,"offerChoice":false,"choiceReason":""},"meta":{"depthReached":["event","feeling","reason","clue","pattern"]}}'
+        "7. 只能输出下面两个标记段，不要 JSON，不要 markdown，不要解释，不要额外前后缀。",
+        "8. insight 允许为空，但 question 不能为空。",
+        `输出格式：${"<<INSIGHT>>"}一句承接或留空${"<<QUESTION>>"}一个具体追问`
       ].join("\n")
     },
     {

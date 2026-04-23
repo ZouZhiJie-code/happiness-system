@@ -32,6 +32,7 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
+  streamJoyAssistantTurn: vi.fn(),
   generateJoyDraftWithAI: vi.fn()
 }));
 

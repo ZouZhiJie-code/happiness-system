@@ -435,11 +435,7 @@ export function InterviewShell() {
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
-  const streamQueueRef = useRef<Array<{ target: StreamingTarget; text: string }>>([]);
-  const streamTimerRef = useRef<number | null>(null);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
-  const streamCompletedRef = useRef(false);
-  const streamResolverRef = useRef<(() => void) | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
@@ -610,13 +606,6 @@ export function InterviewShell() {
     touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId);
   }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionDimension, sessionId, status]);
 
-  const stopStreamPump = useCallback(() => {
-    if (streamTimerRef.current) {
-      window.clearInterval(streamTimerRef.current);
-      streamTimerRef.current = null;
-    }
-  }, []);
-
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
       window.clearTimeout(autosaveTimerRef.current);
@@ -632,15 +621,12 @@ export function InterviewShell() {
   }, []);
 
   const clearStreamState = useCallback(() => {
-    stopStreamPump();
-    streamQueueRef.current = [];
     pendingSessionRef.current = null;
-    streamCompletedRef.current = false;
     setOptimisticUserMessage(null);
     setStreamedAssistantInsight("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
-  }, [stopStreamPump]);
+  }, []);
 
   const showToast = useCallback(
     (message: string) => {
@@ -662,58 +648,16 @@ export function InterviewShell() {
       return;
     }
 
-    if (!streamCompletedRef.current || streamQueueRef.current.length > 0 || !pendingSessionRef.current) {
+    if (!pendingSessionRef.current) {
       return;
     }
 
-    stopStreamPump();
     hydrate(pendingSessionRef.current);
     pendingSessionRef.current = null;
-    streamCompletedRef.current = false;
     setOptimisticUserMessage(null);
     setStreamedAssistantInsight("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
-    streamResolverRef.current?.();
-    streamResolverRef.current = null;
-  }
-
-  function enqueueAssistantDelta(target: StreamingTarget, text: string, activeStreamId: number) {
-    streamQueueRef.current.push({ target, text });
-
-    if (streamTimerRef.current) {
-      return;
-    }
-
-    streamTimerRef.current = window.setInterval(() => {
-      if (activeStreamId !== activeStreamIdRef.current) {
-        stopStreamPump();
-        return;
-      }
-
-      if (streamQueueRef.current.length === 0) {
-        maybeFinalizeStream(activeStreamId);
-        return;
-      }
-
-      const nextChunk = streamQueueRef.current[0];
-      const nextChar = nextChunk.text.slice(0, 1);
-      nextChunk.text = nextChunk.text.slice(1);
-
-      if (nextChunk.target === "insight") {
-        setStreamedAssistantInsight((current) => current + nextChar);
-      } else {
-        setStreamedAssistantQuestion((current) => current + nextChar);
-      }
-
-      if (!nextChunk.text) {
-        streamQueueRef.current.shift();
-      }
-
-      if (streamQueueRef.current.length === 0) {
-        maybeFinalizeStream(activeStreamId);
-      }
-    }, 18);
   }
 
   const ensureSession = useCallback(async (nextDimension: InterviewDimension, forceNew = false) => {
@@ -898,9 +842,8 @@ export function InterviewShell() {
     return () => {
       stopDraftAutosave();
       stopToastTimer();
-      stopStreamPump();
     };
-  }, [stopDraftAutosave, stopStreamPump, stopToastTimer]);
+  }, [stopDraftAutosave, stopToastTimer]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !sessionId || status !== "active" || !hasUserMessages) {
@@ -958,9 +901,7 @@ export function InterviewShell() {
     setStreamedAssistantInsight("");
     setStreamedAssistantQuestion("");
     setAssistantState("thinking");
-    streamQueueRef.current = [];
     pendingSessionRef.current = null;
-    streamCompletedRef.current = false;
     const activeStreamId = activeStreamIdRef.current + 1;
     activeStreamIdRef.current = activeStreamId;
 
@@ -996,12 +937,15 @@ export function InterviewShell() {
       const responseBody = response.body;
 
       await new Promise<void>(async (resolve, reject) => {
-        streamResolverRef.current = resolve;
         const reader = responseBody.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
 
         const handleChunk = (rawChunk: string) => {
+          if (activeStreamId !== activeStreamIdRef.current) {
+            return;
+          }
+
           const parsed = parseSseChunk(rawChunk);
 
           if (!parsed) {
@@ -1026,7 +970,11 @@ export function InterviewShell() {
                 : "question";
 
             if (text) {
-              enqueueAssistantDelta(target, text, activeStreamId);
+              if (target === "insight") {
+                setStreamedAssistantInsight((current) => current + text);
+              } else {
+                setStreamedAssistantQuestion((current) => current + text);
+              }
             }
 
             return;
@@ -1037,7 +985,6 @@ export function InterviewShell() {
 
             if (nextSession) {
               pendingSessionRef.current = nextSession;
-              streamCompletedRef.current = true;
               maybeFinalizeStream(activeStreamId);
             }
 
@@ -1072,11 +1019,11 @@ export function InterviewShell() {
             handleChunk(buffer.trim());
           }
 
-          if (!pendingSessionRef.current) {
-            resolve();
-          } else {
+          if (pendingSessionRef.current) {
             maybeFinalizeStream(activeStreamId);
           }
+
+          resolve();
         } catch (streamError) {
           reject(streamError);
         }

@@ -24,9 +24,10 @@ const {
   startNextInterviewEvent: vi.fn()
 }));
 
-const { extractJoySnapshotWithAI, generateJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
+const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
+  streamJoyAssistantTurn: vi.fn(),
   generateJoyDraftWithAI: vi.fn()
 }));
 
@@ -53,6 +54,7 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
   extractJoySnapshotWithAI,
   generateJoyAssistantTurn,
+  streamJoyAssistantTurn,
   generateJoyDraftWithAI
 }));
 
@@ -63,7 +65,7 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getOpeningQuestion
 }));
 
-import { prepareJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
+import { prepareJoyInterviewResponse, streamJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
 
 const baseSnapshot: JoySnapshot = {
   event: "今天和朋友聊了很久",
@@ -151,6 +153,7 @@ describe("prepareJoyInterviewResponse", () => {
     startNextInterviewEvent.mockReset();
     extractJoySnapshotWithAI.mockReset();
     generateJoyAssistantTurn.mockReset();
+    streamJoyAssistantTurn.mockReset();
     generateJoyDraftWithAI.mockReset();
     buildAssistantQuestion.mockReset();
     getInactiveSessionMessage.mockReset();
@@ -425,5 +428,92 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.question).toBe("当你开始主动走近别人时，你最明显感受到的变化是什么？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
+  });
+
+  it("streams assistant deltas before persisting the finalized turn", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        turnCount: 4,
+        stage: "probe_pattern",
+        snapshot: baseSnapshot,
+        lastAssistantQuestion: "你觉得自己在关系里最在乎什么？"
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "insight",
+        text: "这份开心像是来自连接感。"
+      });
+      await onDelta({
+        target: "question",
+        text: "你觉得自己在关系里最在乎什么？"
+      });
+
+      return {
+        insight: "这份开心像是来自连接感。",
+        analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+        question: "你觉得自己在关系里最在乎什么？",
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "clue"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const phases: string[] = [];
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "我想记住那种被朋友真正理解的感觉。",
+        inputMode: "text"
+      },
+      {
+        onPhase: (phase) => {
+          phases.push(phase);
+        },
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(phases).toEqual(["thinking", "insight", "question"]);
+    expect(deltas).toEqual([
+      {
+        target: "insight",
+        text: "这份开心像是来自连接感。"
+      },
+      {
+        target: "question",
+        text: "你觉得自己在关系里最在乎什么？"
+      }
+    ]);
+    expect(streamJoyAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "reply",
+        stage: "probe_pattern"
+      }),
+      expect.any(Object)
+    );
+    expect(appendJoyInterviewTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nextTurnCount: 4,
+        assistantTurn: expect.objectContaining({
+          insight: "这份开心像是来自连接感。",
+          question: "你觉得自己在关系里最在乎什么？"
+        })
+      })
+    );
+    expect(result.assistantTurn?.question).toBe("你觉得自己在关系里最在乎什么？");
   });
 });

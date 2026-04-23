@@ -22,6 +22,8 @@ import {
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
+import type { AIChatMessage, AIProvider } from "@/server/services/ai/ai-provider";
+import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import type {
   AssistantDepth,
@@ -34,6 +36,39 @@ import type {
   JoyInterviewStage,
   JoySnapshot
 } from "@/types/interview";
+
+const ASSISTANT_INSIGHT_MARKER = "<<INSIGHT>>";
+const ASSISTANT_QUESTION_MARKER = "<<QUESTION>>";
+const assistantMarkers = [
+  { marker: ASSISTANT_INSIGHT_MARKER, target: "insight" as const },
+  { marker: ASSISTANT_QUESTION_MARKER, target: "question" as const }
+];
+
+type AssistantStreamingTarget = "insight" | "question";
+
+export interface AssistantReplySegments {
+  insight: string;
+  question: string;
+}
+
+interface AssistantTurnGenerationInput {
+  dimension: InterviewDimension;
+  sessionId: string;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  events: InterviewSessionRecord["events"];
+  activeEvent: InterviewEventRecord;
+  userMessage: string | null;
+  messages: InterviewSessionRecord["messages"];
+  nextTurnCount: number;
+  nextEventTurnCount: number;
+  previousDepthReached: AssistantDepth[];
+  nextDepthReached: AssistantDepth[];
+  coveredLenses: InterviewEventRecord["coveredLenses"];
+  roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
+  isMeaningfulReply: boolean;
+  action: "reply" | "continue_current_event";
+}
 
 function sanitizeNullableString(value: string | null | undefined) {
   if (!value) {
@@ -193,33 +228,45 @@ function normalizeAssistantTurnPayload(payload: AssistantTurnPayload): Assistant
   };
 }
 
-export async function generateJoyAssistantTurn(input: {
-  dimension: InterviewDimension;
-  sessionId: string;
-  stage: JoyInterviewStage;
-  snapshot: JoySnapshot;
-  events: InterviewSessionRecord["events"];
-  activeEvent: InterviewEventRecord;
-  userMessage: string | null;
-  messages: InterviewSessionRecord["messages"];
-  nextTurnCount: number;
-  nextEventTurnCount: number;
-  previousDepthReached: AssistantDepth[];
-  nextDepthReached: AssistantDepth[];
-  coveredLenses: InterviewEventRecord["coveredLenses"];
-  roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
-  isMeaningfulReply: boolean;
-  action: "reply" | "continue_current_event";
-}) {
-  const fallbackTurn = createFallbackAssistantTurn({
-    dimension: input.dimension,
-    stage: input.stage,
-    snapshot: input.snapshot,
-    nextDepthReached: input.nextDepthReached,
-    action: input.action
+function buildAssistantAnalysis(input: AssistantTurnGenerationInput) {
+  if (input.action === "continue_current_event") {
+    return "用户刚刚选择继续深挖当前事件；下一步问：换一个角度继续追问。";
+  }
+
+  if (!input.isMeaningfulReply) {
+    return "用户这轮信息较少；下一步问：继续用当前阶段问题把事件抓稳。";
+  }
+
+  if (input.stage === "collect_event") {
+    return "用户已补充新的开心片段；下一步问：把那个具体画面继续说清。";
+  }
+
+  if (input.stage === "probe_reason") {
+    return "用户已补充事件细节；下一步问：继续确认这件事为什么重要。";
+  }
+
+  return "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。";
+}
+
+function createAssistantTurnFromSegments(input: AssistantTurnGenerationInput, segments: AssistantReplySegments) {
+  return normalizeAssistantTurnPayload({
+    insight: trimToLength(segments.insight, 120),
+    analysis: buildAssistantAnalysis(input),
+    question: trimToLength(segments.question, 160),
+    stateUpdate: {
+      turnPhase: input.stage === "collect_event" ? "opening" : "digging",
+      shouldEndDimension: false,
+      offerChoice: false,
+      choiceReason: ""
+    },
+    meta: {
+      depthReached: input.nextDepthReached
+    }
   });
-  const provider = getAIProvider();
-  const messages = buildJoyQuestionMessages({
+}
+
+function getQuestionMessages(input: AssistantTurnGenerationInput) {
+  return buildJoyQuestionMessages({
     dimension: input.dimension,
     stage: input.stage,
     userMessage: input.userMessage,
@@ -236,26 +283,289 @@ export async function generateJoyAssistantTurn(input: {
     isMeaningfulReply: input.isMeaningfulReply,
     action: input.action
   });
-  const aiResult = await completeStructuredOutput({
-    provider,
+}
+
+function getTrailingMarkerPrefixLength(buffer: string) {
+  const candidates = assistantMarkers.map(({ marker }) => marker);
+
+  return candidates.reduce((maxLength, marker) => {
+    const limit = Math.min(marker.length - 1, buffer.length);
+
+    for (let length = limit; length > maxLength; length -= 1) {
+      if (marker.startsWith(buffer.slice(-length))) {
+        return length;
+      }
+    }
+
+    return maxLength;
+  }, 0);
+}
+
+function findNextAssistantMarker(buffer: string) {
+  let selected:
+    | {
+        index: number;
+        marker: string;
+        target: AssistantStreamingTarget;
+      }
+    | null = null;
+
+  for (const candidate of assistantMarkers) {
+    const index = buffer.indexOf(candidate.marker);
+
+    if (index < 0) {
+      continue;
+    }
+
+    if (!selected || index < selected.index) {
+      selected = {
+        index,
+        marker: candidate.marker,
+        target: candidate.target
+      };
+    }
+  }
+
+  return selected;
+}
+
+export function createAssistantReplySegmentParser(
+  onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void
+) {
+  let buffer = "";
+  let rawText = "";
+  let currentTarget: AssistantStreamingTarget | null = null;
+  let sawMarker = false;
+  const segments: AssistantReplySegments = {
+    insight: "",
+    question: ""
+  };
+
+  async function emit(target: AssistantStreamingTarget, text: string) {
+    if (!text) {
+      return;
+    }
+
+    segments[target] += text;
+    await onDelta?.({ target, text });
+  }
+
+  async function push(chunk: string) {
+    if (!chunk) {
+      return;
+    }
+
+    rawText += chunk;
+    buffer += chunk;
+
+    while (buffer) {
+      if (!currentTarget) {
+        const nextMarker = findNextAssistantMarker(buffer);
+
+        if (!nextMarker) {
+          const trailingPrefixLength = getTrailingMarkerPrefixLength(buffer);
+          buffer = trailingPrefixLength ? buffer.slice(-trailingPrefixLength) : "";
+          return;
+        }
+
+        sawMarker = true;
+        buffer = buffer.slice(nextMarker.index + nextMarker.marker.length);
+        currentTarget = nextMarker.target;
+        continue;
+      }
+
+      if (currentTarget === "insight") {
+        const questionIndex = buffer.indexOf(ASSISTANT_QUESTION_MARKER);
+
+        if (questionIndex >= 0) {
+          await emit("insight", buffer.slice(0, questionIndex));
+          buffer = buffer.slice(questionIndex + ASSISTANT_QUESTION_MARKER.length);
+          currentTarget = "question";
+          sawMarker = true;
+          continue;
+        }
+
+        const trailingPrefixLength = getTrailingMarkerPrefixLength(buffer);
+        const safeText = trailingPrefixLength ? buffer.slice(0, -trailingPrefixLength) : buffer;
+        buffer = trailingPrefixLength ? buffer.slice(-trailingPrefixLength) : "";
+        await emit("insight", safeText);
+        return;
+      }
+
+      await emit("question", buffer);
+      buffer = "";
+    }
+  }
+
+  async function finish() {
+    if (!sawMarker) {
+      await emit("question", rawText);
+      rawText = "";
+      buffer = "";
+    } else if (buffer) {
+      if (currentTarget) {
+        await emit(currentTarget, buffer);
+      }
+
+      buffer = "";
+    }
+
+    return {
+      insight: trimToLength(segments.insight, 120),
+      question: trimToLength(segments.question, 160)
+    } satisfies AssistantReplySegments;
+  }
+
+  return {
+    push,
+    finish
+  };
+}
+
+async function runAssistantQuestionAttempt(input: {
+  provider: AIProvider;
+  sessionId: string;
+  messages: AIChatMessage[];
+  stream: boolean;
+  onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void;
+}) {
+  const parser = createAssistantReplySegmentParser(input.onDelta);
+  const startedAt = Date.now();
+
+  if (input.stream) {
+    for await (const chunk of input.provider.stream!({
+      messages: input.messages,
+      temperature: 0.45,
+      maxTokens: 500
+    })) {
+      await parser.push(chunk);
+    }
+  } else {
+    const result = await input.provider.complete({
+      messages: input.messages,
+      temperature: 0.45,
+      maxTokens: 500
+    });
+
+    await parser.push(result.content);
+  }
+
+  const segments = await parser.finish();
+  const hasMeaningfulOutput = Boolean(segments.insight || segments.question);
+
+  if (!hasMeaningfulOutput) {
+    await logAttempt(input.sessionId, {
+      stage: "generate",
+      provider: input.provider.name,
+      success: false,
+      latencyMs: Date.now() - startedAt,
+      errorCode: "QUESTION_EMPTY_OUTPUT"
+    });
+
+    return null;
+  }
+
+  await logAttempt(input.sessionId, {
     stage: "generate",
-    schema: assistantTurnPayloadSchema,
-    messages,
-    temperature: 0.45,
-    maxTokens: 500,
-    onAttempt: (attempt) =>
-      logAttempt(input.sessionId, {
-        ...attempt,
-        errorCode: attempt.errorCode ? `QUESTION_${attempt.errorCode}` : null
-      })
+    provider: input.provider.name,
+    success: true,
+    latencyMs: Date.now() - startedAt,
+    errorCode: null
   });
 
-  if (!aiResult) {
+  return segments;
+}
+
+async function requestAssistantReplySegments(
+  input: AssistantTurnGenerationInput,
+  onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void
+) {
+  const provider = getAIProvider();
+
+  if (!provider) {
+    await logAttempt(input.sessionId, {
+      stage: "generate",
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "QUESTION_PROVIDER_NOT_CONFIGURED"
+    });
+
+    return null;
+  }
+
+  const messages = getQuestionMessages(input);
+  const attempts: boolean[] = onDelta && provider.stream ? [true, false] : [false];
+
+  for (const useStream of attempts) {
+    try {
+      const result = await runAssistantQuestionAttempt({
+        provider,
+        sessionId: input.sessionId,
+        messages,
+        stream: useStream,
+        onDelta
+      });
+
+      if (result) {
+        return result;
+      }
+    } catch (error) {
+      await logAttempt(input.sessionId, {
+        stage: "generate",
+        provider: provider.name,
+        success: false,
+        latencyMs: null,
+        errorCode:
+          error instanceof AIProviderError ? `QUESTION_${error.code}` : error instanceof Error ? `QUESTION_${error.name}` : "QUESTION_UNKNOWN_ERROR"
+      });
+    }
+  }
+
+  return null;
+}
+
+export async function generateJoyAssistantTurn(input: AssistantTurnGenerationInput) {
+  const fallbackTurn = createFallbackAssistantTurn({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    nextDepthReached: input.nextDepthReached,
+    action: input.action
+  });
+
+  const segments = await requestAssistantReplySegments(input);
+
+  if (!segments) {
     logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");
     return fallbackTurn;
   }
 
-  return normalizeAssistantTurnPayload(aiResult);
+  return createAssistantTurnFromSegments(input, segments);
+}
+
+export async function streamJoyAssistantTurn(
+  input: AssistantTurnGenerationInput,
+  callbacks: {
+    onDelta: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void;
+  }
+) {
+  const fallbackTurn = createFallbackAssistantTurn({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    nextDepthReached: input.nextDepthReached,
+    action: input.action
+  });
+
+  const segments = await requestAssistantReplySegments(input, callbacks.onDelta);
+
+  if (!segments) {
+    logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");
+    return fallbackTurn;
+  }
+
+  return createAssistantTurnFromSegments(input, segments);
 }
 
 function buildEventBlocks(events: InterviewEventRecord[]): JoyEventBlock[] {
