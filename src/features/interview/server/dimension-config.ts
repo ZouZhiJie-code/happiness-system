@@ -7,7 +7,6 @@ export interface InterviewDimensionConfig {
   pausedResumeMessage: string;
   completedMessage: string;
   reasonQuestion: string;
-  wrapUpMessage: string;
   genericPatternQuestion: string;
   draftTitlePrefix: string;
   eventLinePrefix: string;
@@ -24,7 +23,6 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "听起来这件事有分量。它为什么会让你这么开心？",
-    wrapUpMessage: "如果现在把这段开心整理成日志，你最想留下哪个点？",
     genericPatternQuestion: "如果往深一点看，这份开心更像哪一种满足？它好像说明了你怎样的在乎或特质？",
     draftTitlePrefix: "今天的开心",
     eventLinePrefix: "今天让我开心的事情是：",
@@ -39,7 +37,6 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "这段经历为什么会让你觉得踏实、充实，或者有进展感？",
-    wrapUpMessage: "如果现在把这份充实整理成日志，你最想留下哪个点？",
     genericPatternQuestion: "如果往里看一点，这份充实更像来自哪种投入或进展？它说明你重视什么？",
     draftTitlePrefix: "今天的充实",
     eventLinePrefix: "今天让我觉得充实的事情是：",
@@ -54,7 +51,6 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "这个片段为什么会让你停下来多想一层？",
-    wrapUpMessage: "如果现在把这次思考整理成日志，你最想留下哪个点？",
     genericPatternQuestion: "如果往深一点看，这次思考更像一个提醒、疑问还是新的理解？它说明你在意什么？",
     draftTitlePrefix: "今天的思考",
     eventLinePrefix: "今天让我停下来思考的片段是：",
@@ -69,7 +65,6 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "这个情境为什么会让你觉得这里值得调整一下？",
-    wrapUpMessage: "如果现在把这次改进整理成日志，你最想留下哪个点？",
     genericPatternQuestion: "如果往深一点看，你更想调整的是表达、节奏、判断还是协作方式？这说明你在练什么？",
     draftTitlePrefix: "今天的改进",
     eventLinePrefix: "今天让我意识到可以改进的情境是：",
@@ -84,7 +79,6 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "这个片段为什么会让你想表达感谢？",
-    wrapUpMessage: "如果现在把这份感谢整理成日志，你最想留下哪个点？",
     genericPatternQuestion: "如果往深一点看，你最想感谢的是支持、陪伴、体谅还是某种被接住的感觉？",
     draftTitlePrefix: "今天的感谢",
     eventLinePrefix: "今天让我想说谢谢的片段是：",

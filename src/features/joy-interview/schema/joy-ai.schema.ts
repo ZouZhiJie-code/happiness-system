@@ -28,6 +28,21 @@ export const joyDraftResultSchema = z
     happinessType: nullableString,
     selfPattern: nullableString,
     tags: z.array(z.string().min(1).max(24)).max(5)
+    ,
+    eventBlocks: z
+      .array(
+        z.object({
+          eventId: z.string(),
+          sequence: z.number().int().nonnegative(),
+          explorationRound: z.number().int().positive(),
+          event: nullableString,
+          feeling: nullableString,
+          whyItMattered: nullableString,
+          happinessType: nullableString,
+          selfPattern: nullableString
+        })
+      )
+      .default([])
   })
   .strict();
 

@@ -2,12 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import {
   assessUserTurnMessage,
-  canOfferChoice,
-  deriveDepthReachedFromSnapshot,
-  getProgressSummaryFromSession,
-  isDraftGenerationUnlockedFromState,
-  isDepthReadyForWrapUp,
-  mergeDepthReached
+  deriveDepthReachedFromSnapshot
 } from "@/features/joy-interview/server/interview-progress";
 import {
   buildAssistantQuestion,
@@ -23,14 +18,21 @@ import {
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
-  saveJoyInterviewDraft
+  resumeCurrentInterviewEvent,
+  saveJoyInterviewDraft,
+  startNextInterviewEvent
 } from "@/server/repositories/joy-interview.repository";
-import { extractJoySnapshotWithAI, generateJoyAssistantTurn, generateJoyDraftWithAI } from "@/server/services/interview/joy-interview-ai.service";
+import {
+  extractJoySnapshotWithAI,
+  generateJoyAssistantTurn,
+  generateJoyDraftWithAI
+} from "@/server/services/interview/joy-interview-ai.service";
 import type {
-  AssistantDepth,
   AssistantTurnPayload,
   InputMode,
   InterviewDimension,
+  InterviewEventRecord,
+  InterviewLens,
   InterviewSessionRecord,
   JoyInterviewStage,
   JoySnapshot
@@ -46,10 +48,19 @@ type InterviewRespondInput =
   | {
       action: "continue";
       sessionId: string;
+    }
+  | {
+      action: "continue_current_event";
+      sessionId: string;
+    }
+  | {
+      action: "next_event";
+      sessionId: string;
     };
 
 type StreamingPhase = "thinking" | "insight" | "question";
 type StreamingTarget = "insight" | "question";
+type CanonicalInterviewAction = "reply" | "continue_current_event" | "next_event";
 
 export class DraftGenerationError extends Error {
   constructor(
@@ -70,124 +81,213 @@ export class DraftGenerationError extends Error {
 
 interface PreparedInterviewTurn {
   session: InterviewSessionRecord;
+  activeEvent: InterviewEventRecord;
   nextSnapshot: JoySnapshot;
   nextTurnCount: number;
+  nextEventTurnCount: number;
   nextStage: JoyInterviewStage;
+  nextEventStatus: InterviewEventRecord["status"];
   isReadyForDraft: boolean;
   userMessage: string | null;
   inputMode?: InputMode;
-  continueFromChoice: boolean;
   isMeaningfulReply: boolean;
-  previousDepthReached: AssistantDepth[];
-  nextDepthReached: AssistantDepth[];
-  consecutiveNoDepthGain: number;
-  consecutiveInvalidReplies: number;
-  hasOfferedChoice: boolean;
+  coveredLenses: InterviewLens[];
+  roundCoveredLenses: InterviewLens[];
+  roundMeaningfulReplyCount: number;
+  totalMeaningfulReplyCount: number;
   assistantTurn: AssistantTurnPayload;
 }
 
-function buildChoiceInsight(session: InterviewSessionRecord, snapshot: JoySnapshot) {
-  const config = getOpeningQuestion(session.dimension);
-
-  if (snapshot.selfPattern) {
-    return `我们已经聊到了 ${snapshot.event ?? config}，也开始看见这件事和你的模式有关。`;
+function getCanonicalAction(action: InterviewRespondInput["action"]): CanonicalInterviewAction {
+  if (action === "continue") {
+    return "continue_current_event";
   }
 
-  if (snapshot.whyItMattered) {
-    return `我们已经抓到 ${snapshot.event ?? "这个片段"}，也聊到了它为什么重要。`;
-  }
-
-  if (snapshot.event) {
-    return `我们已经抓到 ${snapshot.event} 这个片段，但还差一点更深的展开。`;
-  }
-
-  return "我们已经摸到一点线索了，但还没有完全展开。";
+  return action;
 }
 
-function buildClosingInsight(snapshot: JoySnapshot) {
+function getActiveEvent(session: InterviewSessionRecord) {
+  return (
+    session.events.find((event) => event.id === session.activeEventId) ??
+    session.events.find((event) => event.status !== "completed") ??
+    session.events[session.events.length - 1] ??
+    null
+  );
+}
+
+function uniqueLenses(...groups: InterviewLens[][]) {
+  const order: InterviewLens[] = [
+    "event_detail",
+    "felt_experience",
+    "importance_reason",
+    "meaning_pattern",
+    "self_pattern"
+  ];
+  const values = groups.flat();
+
+  return order.filter((lens) => values.includes(lens));
+}
+
+function deriveInterviewLenses(snapshot: JoySnapshot): InterviewLens[] {
+  return uniqueLenses([
+    snapshot.event ? "event_detail" : null,
+    snapshot.feeling ? "felt_experience" : null,
+    snapshot.whyItMattered ? "importance_reason" : null,
+    snapshot.happinessType ? "meaning_pattern" : null,
+    snapshot.selfPattern ? "self_pattern" : null
+  ].filter(Boolean) as InterviewLens[]);
+}
+
+function isEventCoreComplete(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && snapshot.whyItMattered && (snapshot.happinessType || snapshot.selfPattern));
+}
+
+function buildChoiceInsight(snapshot: JoySnapshot) {
   if (snapshot.selfPattern) {
-    return "你已经不只是在描述这件事，也开始看见它和自己的连接了。";
+    return "这一段已经聊到你的在乎和模式了。";
   }
 
   if (snapshot.happinessType || snapshot.whyItMattered) {
-    return "这段经历为什么重要，已经慢慢清楚起来了。";
+    return "这一段开心的来龙去脉已经比较完整了。";
   }
 
-  return "这段经历已经有了可以留下的轮廓。";
+  if (snapshot.event) {
+    return "这个开心片段已经有了清楚的轮廓。";
+  }
+
+  return "这一段已经聊出一些轮廓了。";
 }
 
-function finalizeAssistantTurn(input: {
-  session: InterviewSessionRecord;
-  prepared: Omit<PreparedInterviewTurn, "assistantTurn" | "isReadyForDraft">;
-  assistantTurn: AssistantTurnPayload;
+function buildChoiceReason(round: number) {
+  return round <= 1
+    ? "当前事件已经完成一轮完整复盘，交给用户决定下一步。"
+    : "当前事件已经完成这一轮新角度复盘，交给用户决定下一步。";
+}
+
+function buildChoiceAssistantTurn(snapshot: JoySnapshot, explorationRound: number): AssistantTurnPayload {
+  return {
+    insight: buildChoiceInsight(snapshot),
+    analysis: "当前事件已形成完整复盘，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+    question: "",
+    stateUpdate: {
+      turnPhase: "choice",
+      shouldEndDimension: false,
+      offerChoice: true,
+      choiceReason: buildChoiceReason(explorationRound)
+    },
+    meta: {
+      depthReached: deriveDepthReachedFromSnapshot(snapshot)
+    }
+  };
+}
+
+function shouldPresentChoice(input: {
+  activeEvent: InterviewEventRecord;
+  nextSnapshot: JoySnapshot;
+  nextStage: JoyInterviewStage;
+  isMeaningfulReply: boolean;
+  nextEventTurnCount: number;
+  nextRoundMeaningfulReplyCount: number;
 }) {
-  const fallbackQuestion = buildAssistantQuestion(
-    input.session.dimension,
-    input.prepared.nextStage,
-    input.prepared.nextSnapshot
-  );
-  const finalDepthReached = mergeDepthReached(input.prepared.nextDepthReached, input.assistantTurn.meta.depthReached);
-  const depthProgressed = finalDepthReached.some((depth) => !input.prepared.previousDepthReached.includes(depth));
-  const consecutiveNoDepthGain =
-    input.prepared.continueFromChoice || !input.prepared.isMeaningfulReply
-      ? 0
-      : depthProgressed
-        ? 0
-        : input.prepared.consecutiveNoDepthGain + 1;
-  const consecutiveInvalidReplies = input.prepared.continueFromChoice
-    ? 0
-    : input.prepared.isMeaningfulReply
-      ? 0
-      : input.prepared.consecutiveInvalidReplies + 1;
-  const backendChoice =
-    !input.prepared.continueFromChoice &&
-    !input.prepared.hasOfferedChoice &&
-    canOfferChoice(finalDepthReached) &&
-    (consecutiveInvalidReplies >= 3 || consecutiveNoDepthGain >= 2);
-  const backendClosing =
-    !backendChoice &&
-    ((input.assistantTurn.stateUpdate.shouldEndDimension &&
-      finalDepthReached.includes("event") &&
-      finalDepthReached.includes("reason")) ||
-      isDepthReadyForWrapUp(finalDepthReached) ||
-      (input.prepared.nextStage === "wrap_up" &&
-        finalDepthReached.includes("event") &&
-        finalDepthReached.includes("reason") &&
-        input.prepared.nextTurnCount >= 5));
-  const nextStage = backendClosing ? "wrap_up" : input.prepared.nextStage;
-  const question = backendChoice ? "" : (input.assistantTurn.question.trim() || fallbackQuestion).slice(0, 160);
-  const insight = (
-    input.assistantTurn.insight.trim() ||
-    (backendChoice ? buildChoiceInsight(input.session, input.prepared.nextSnapshot) : backendClosing ? buildClosingInsight(input.prepared.nextSnapshot) : "")
-  ).slice(0, 120);
-  const draftGenerationUnlocked = isDraftGenerationUnlockedFromState({
-    hasJournalEntry: Boolean(input.session.journalEntry),
-    stage: backendClosing ? "wrap_up" : input.prepared.nextStage,
-    hasOfferedChoice: input.prepared.hasOfferedChoice || backendChoice
-  });
+  if (!input.isMeaningfulReply) {
+    return false;
+  }
+
+  if (input.nextStage !== "wrap_up") {
+    return false;
+  }
+
+  if (!isEventCoreComplete(input.nextSnapshot)) {
+    return false;
+  }
+
+  if (input.activeEvent.explorationRound <= 1) {
+    return input.nextEventTurnCount >= 3;
+  }
+
+  return input.nextRoundMeaningfulReplyCount >= 2;
+}
+
+function normalizeActiveStageBeforeChoice(input: {
+  nextStage: JoyInterviewStage;
+  shouldOfferChoiceNow: boolean;
+}) {
+  if (input.nextStage !== "wrap_up" || input.shouldOfferChoiceNow) {
+    return input.nextStage;
+  }
+
+  // "wrap_up" only exists to hand control to the choice card. If we have not
+  // reached that threshold yet, keep the event in the probing stage so the user
+  // always receives a concrete follow-up instead of getting stuck on a summary.
+  return "probe_pattern" as const;
+}
+
+function getNextEventOpeningQuestion(dimension: InterviewDimension) {
+  switch (dimension) {
+    case "joy":
+      return "如果今天还有另一件让你开心的事，我们就聊那一件。那个瞬间是什么？";
+    case "fulfillment":
+      return "如果今天还有另一段让你觉得充实的经历，我们就聊那一段。那时发生了什么？";
+    case "reflection":
+      return "如果今天还有另一个让你停下来思考的片段，我们就聊那个时刻。它是什么？";
+    case "improvement":
+      return "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？";
+    case "gratitude":
+      return "如果今天还有另一段让你想说谢谢的经历，我们就聊那一段。那个片段是什么？";
+  }
+}
+
+function buildImmediateResponseFromSession(session: InterviewSessionRecord) {
+  const latestAssistantMessage = [...session.messages].reverse().find((message) => message.role === "assistant");
+  const assistantTurn = latestAssistantMessage?.assistantPayload ?? null;
 
   return {
-    assistantTurn: {
-      insight,
-      analysis: input.assistantTurn.analysis.trim().slice(0, 240),
-      question,
-      stateUpdate: {
-        turnPhase: backendChoice ? "choice" : backendClosing ? "closing" : "digging",
-        shouldEndDimension: backendClosing,
-        offerChoice: backendChoice,
-        choiceReason: backendChoice
-          ? consecutiveInvalidReplies >= 3
-            ? "用户连续短答，先让用户决定是否换个角度继续。"
-            : "连续追问没有新增信息，先让用户决定是否继续。"
-          : ""
-      },
-      meta: {
-        depthReached: finalDepthReached
-      }
-    } satisfies AssistantTurnPayload,
-    nextStage,
-    isReadyForDraft: draftGenerationUnlocked
+    assistantMessage: assistantTurn?.question || assistantTurn?.insight || "",
+    assistantTurn,
+    sessionStatus: session.status,
+    turnCount: session.turnCount,
+    snapshot: session.snapshot,
+    isReadyForDraft: session.draftGenerationUnlocked,
+    session
   };
+}
+
+function applyFallbackQuestion(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantTurn: AssistantTurnPayload;
+}) {
+  if (input.assistantTurn.question.trim()) {
+    return input.assistantTurn;
+  }
+
+  return {
+    ...input.assistantTurn,
+    question: buildAssistantQuestion(input.dimension, input.stage, input.snapshot)
+  };
+}
+
+async function getActiveInterviewSession(sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (session.status !== "active") {
+    return {
+      assistantMessage: getInactiveSessionMessage(session.dimension, session.status),
+      assistantTurn: null,
+      sessionStatus: session.status,
+      turnCount: session.turnCount,
+      snapshot: session.snapshot,
+      isReadyForDraft: session.draftGenerationUnlocked,
+      session
+    };
+  }
+
+  return session;
 }
 
 export async function startJoyInterview(dimension: InterviewDimension) {
@@ -285,28 +385,6 @@ export async function completeJoyInterviewSession(sessionId: string) {
   };
 }
 
-async function getActiveInterviewSession(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
-
-  if (!session) {
-    throw new Error("SESSION_NOT_FOUND");
-  }
-
-  if (session.status !== "active") {
-    return {
-      assistantMessage: getInactiveSessionMessage(session.dimension, session.status),
-      assistantTurn: null,
-      sessionStatus: session.status,
-      turnCount: session.turnCount,
-      snapshot: session.snapshot,
-      isReadyForDraft: session.draftGenerationUnlocked,
-      session
-    };
-  }
-
-  return session;
-}
-
 export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
   const session = await getActiveInterviewSession(input.sessionId);
 
@@ -314,89 +392,204 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
     return session;
   }
 
-  const progressSummary = getProgressSummaryFromSession(session);
-  const continueFromChoice = input.action === "continue";
+  const canonicalAction = getCanonicalAction(input.action);
+  const activeEvent = getActiveEvent(session);
 
-  if (continueFromChoice && !progressSummary.latestAssistantPayload?.stateUpdate.offerChoice) {
-    throw new Error("SESSION_CONTINUE_UNAVAILABLE");
+  if (!activeEvent) {
+    throw new Error("SESSION_EVENT_NOT_FOUND");
   }
 
-  const isMeaningfulReply = input.action === "reply" ? assessUserTurnMessage(input.userMessage).isMeaningful : false;
-  const nextSnapshot =
-    input.action === "reply" && isMeaningfulReply
-      ? await extractJoySnapshotWithAI({
-          session,
-          userMessage: input.userMessage
-        })
-      : session.snapshot;
-  const nextTurnCount = session.turnCount + (input.action === "reply" && isMeaningfulReply ? 1 : 0);
-  const nextStage = getNextStage(nextSnapshot, nextTurnCount);
-  const nextDepthReached = mergeDepthReached(progressSummary.latestDepthReached, deriveDepthReachedFromSnapshot(nextSnapshot));
-  const assistantTurn = await generateJoyAssistantTurn({
-    dimension: session.dimension,
-    sessionId: input.sessionId,
-    stage: nextStage,
-    snapshot: nextSnapshot,
-    userMessage: input.action === "reply" ? input.userMessage : null,
-    messages: session.messages,
-    nextTurnCount,
-    previousDepthReached: progressSummary.latestDepthReached,
-    nextDepthReached,
-    recentQuestions: progressSummary.recentQuestions,
-    consecutiveNoDepthGain: progressSummary.consecutiveNoDepthGain,
-    consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies,
+  if (canonicalAction === "continue_current_event") {
+    if (session.pendingDecision?.eventId !== activeEvent.id) {
+      throw new Error("SESSION_CONTINUE_UNAVAILABLE");
+    }
+
+    const resumedSession = await resumeCurrentInterviewEvent(session.id);
+    const resumedEvent = resumedSession ? getActiveEvent(resumedSession) : null;
+
+    if (!resumedSession || !resumedEvent) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    const previousDepthReached = deriveDepthReachedFromSnapshot(resumedEvent.snapshot);
+    const assistantTurn = await generateJoyAssistantTurn({
+      dimension: resumedSession.dimension,
+      sessionId: resumedSession.id,
+      stage: resumedEvent.stage,
+      snapshot: resumedEvent.snapshot,
+      events: resumedSession.events,
+      activeEvent: resumedEvent,
+      userMessage: null,
+      messages: resumedSession.messages,
+      nextTurnCount: resumedSession.turnCount,
+      nextEventTurnCount: resumedEvent.totalMeaningfulReplyCount,
+      previousDepthReached,
+      nextDepthReached: previousDepthReached,
+      coveredLenses: resumedEvent.coveredLenses,
+      roundCoveredLenses: resumedEvent.roundCoveredLenses,
+      isMeaningfulReply: false,
+      action: "continue_current_event"
+    });
+    const finalizedAssistantTurn = applyFallbackQuestion({
+      dimension: resumedSession.dimension,
+      stage: resumedEvent.stage,
+      snapshot: resumedEvent.snapshot,
+      assistantTurn
+    });
+
+    return {
+      session: resumedSession,
+      activeEvent: resumedEvent,
+      nextSnapshot: resumedEvent.snapshot,
+      nextTurnCount: resumedSession.turnCount,
+      nextEventTurnCount: resumedEvent.totalMeaningfulReplyCount,
+      nextStage: resumedEvent.stage,
+      nextEventStatus: "active" as const,
+      isReadyForDraft: false,
+      userMessage: null,
+      isMeaningfulReply: false,
+      coveredLenses: resumedEvent.coveredLenses,
+      roundCoveredLenses: resumedEvent.roundCoveredLenses,
+      roundMeaningfulReplyCount: resumedEvent.roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount: resumedEvent.totalMeaningfulReplyCount,
+      assistantTurn: {
+        ...finalizedAssistantTurn,
+        insight: finalizedAssistantTurn.question ? "" : finalizedAssistantTurn.insight,
+        stateUpdate: {
+          ...finalizedAssistantTurn.stateUpdate,
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        }
+      }
+    } satisfies PreparedInterviewTurn;
+  }
+
+  if (canonicalAction === "next_event") {
+    if (session.pendingDecision?.eventId !== activeEvent.id) {
+      throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
+    }
+
+    const nextSession = await startNextInterviewEvent(session.id, getNextEventOpeningQuestion(session.dimension));
+
+    if (!nextSession) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    return buildImmediateResponseFromSession(nextSession);
+  }
+
+  if (input.action !== "reply") {
+    throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
+  }
+
+  const assessment = assessUserTurnMessage(input.userMessage);
+  const isMeaningfulReply = assessment.isMeaningful;
+  const nextSnapshot = isMeaningfulReply
+    ? await extractJoySnapshotWithAI({
+        session,
+        userMessage: input.userMessage
+      })
+    : activeEvent.snapshot;
+  const nextTurnCount = session.turnCount + (isMeaningfulReply ? 1 : 0);
+  const nextEventTurnCount = activeEvent.totalMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
+  const derivedNextStage = getNextStage(nextSnapshot, nextEventTurnCount);
+  const nextLenses = deriveInterviewLenses(nextSnapshot);
+  const coveredLenses = uniqueLenses(activeEvent.coveredLenses, nextLenses);
+  const roundCoveredLenses = isMeaningfulReply
+    ? uniqueLenses(activeEvent.roundCoveredLenses, nextLenses)
+    : activeEvent.roundCoveredLenses;
+  const roundMeaningfulReplyCount = activeEvent.roundMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
+  const totalMeaningfulReplyCount = nextEventTurnCount;
+  const shouldOfferChoiceNow = shouldPresentChoice({
+    activeEvent,
+    nextSnapshot,
+    nextStage: derivedNextStage,
     isMeaningfulReply,
-    continueFromChoice
+    nextEventTurnCount,
+    nextRoundMeaningfulReplyCount: roundMeaningfulReplyCount
   });
-  const finalized = finalizeAssistantTurn({
-    session,
-    prepared: {
-      session,
-      nextSnapshot,
-      nextTurnCount,
-      nextStage,
-      userMessage: input.action === "reply" ? input.userMessage : null,
-      inputMode: input.action === "reply" ? input.inputMode : undefined,
-      continueFromChoice,
-      isMeaningfulReply,
-      previousDepthReached: progressSummary.latestDepthReached,
-      nextDepthReached,
-      consecutiveNoDepthGain: progressSummary.consecutiveNoDepthGain,
-      consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies,
-      hasOfferedChoice: progressSummary.hasOfferedChoice
-    },
-    assistantTurn
+  const nextStage = normalizeActiveStageBeforeChoice({
+    nextStage: derivedNextStage,
+    shouldOfferChoiceNow
   });
+  const assistantTurn = shouldOfferChoiceNow
+    ? buildChoiceAssistantTurn(nextSnapshot, activeEvent.explorationRound)
+    : await generateJoyAssistantTurn({
+        dimension: session.dimension,
+        sessionId: session.id,
+        stage: nextStage,
+        snapshot: nextSnapshot,
+        events: session.events,
+        activeEvent,
+        userMessage: input.userMessage,
+        messages: session.messages,
+        nextTurnCount,
+        nextEventTurnCount,
+        previousDepthReached: deriveDepthReachedFromSnapshot(activeEvent.snapshot),
+        nextDepthReached: deriveDepthReachedFromSnapshot(nextSnapshot),
+        coveredLenses,
+        roundCoveredLenses,
+        isMeaningfulReply,
+        action: "reply"
+      });
+  const finalizedAssistantTurn = shouldOfferChoiceNow
+    ? assistantTurn
+    : applyFallbackQuestion({
+        dimension: session.dimension,
+        stage: nextStage,
+        snapshot: nextSnapshot,
+        assistantTurn
+      });
 
   return {
     session,
+    activeEvent,
     nextSnapshot,
     nextTurnCount,
-    nextStage: finalized.nextStage,
-    isReadyForDraft: finalized.isReadyForDraft,
-    userMessage: input.action === "reply" ? input.userMessage : null,
-    inputMode: input.action === "reply" ? input.inputMode : undefined,
-    continueFromChoice,
+    nextEventTurnCount,
+    nextStage,
+    nextEventStatus: shouldOfferChoiceNow ? "ready_for_choice" : "active",
+    isReadyForDraft: shouldOfferChoiceNow || Boolean(session.journalEntry),
+    userMessage: input.userMessage,
+    inputMode: input.inputMode,
     isMeaningfulReply,
-    previousDepthReached: progressSummary.latestDepthReached,
-    nextDepthReached,
-    consecutiveNoDepthGain: progressSummary.consecutiveNoDepthGain,
-    consecutiveInvalidReplies: progressSummary.consecutiveInvalidReplies,
-    hasOfferedChoice: progressSummary.hasOfferedChoice,
-    assistantTurn: finalized.assistantTurn
+    coveredLenses,
+    roundCoveredLenses,
+    roundMeaningfulReplyCount,
+    totalMeaningfulReplyCount,
+    assistantTurn: shouldOfferChoiceNow
+      ? finalizedAssistantTurn
+      : {
+          ...finalizedAssistantTurn,
+          stateUpdate: {
+            ...finalizedAssistantTurn.stateUpdate,
+            turnPhase: nextStage === "collect_event" ? "opening" : "digging",
+            shouldEndDimension: false,
+            offerChoice: false,
+            choiceReason: ""
+          }
+        }
   } satisfies PreparedInterviewTurn;
 }
 
 export async function completeJoyInterviewResponse(input: PreparedInterviewTurn) {
   const updatedSession = await appendJoyInterviewTurn({
     sessionId: input.session.id,
+    activeEventId: input.activeEvent.id,
     userMessage: input.userMessage ?? undefined,
     inputMode: input.inputMode,
     assistantTurn: input.assistantTurn,
     snapshot: input.nextSnapshot,
+    eventStatus: input.nextEventStatus,
     nextStage: input.nextStage,
     nextStatus: "active",
     nextTurnCount: input.nextTurnCount,
+    coveredLenses: input.coveredLenses,
+    roundCoveredLenses: input.roundCoveredLenses,
+    roundMeaningfulReplyCount: input.roundMeaningfulReplyCount,
+    totalMeaningfulReplyCount: input.totalMeaningfulReplyCount,
     draftSummary: input.nextSnapshot.whyItMattered ?? input.nextSnapshot.event,
     completedAt: null
   });
@@ -411,7 +604,7 @@ export async function completeJoyInterviewResponse(input: PreparedInterviewTurn)
     sessionStatus: updatedSession.status,
     turnCount: updatedSession.turnCount,
     snapshot: updatedSession.snapshot,
-    isReadyForDraft: input.isReadyForDraft,
+    isReadyForDraft: updatedSession.draftGenerationUnlocked || input.isReadyForDraft,
     session: updatedSession
   };
 }
@@ -436,11 +629,22 @@ export async function streamJoyInterviewResponse(
   const prepared = await prepareJoyInterviewResponse(input);
 
   if ("assistantMessage" in prepared) {
-    await callbacks.onPhase("question");
-    await callbacks.onDelta({
-      target: "question",
-      text: prepared.assistantMessage
-    });
+    if (prepared.assistantTurn?.insight) {
+      await callbacks.onPhase("insight");
+      await callbacks.onDelta({
+        target: "insight",
+        text: prepared.assistantTurn.insight
+      });
+    }
+
+    if (prepared.assistantTurn?.question || prepared.assistantMessage) {
+      await callbacks.onPhase("question");
+      await callbacks.onDelta({
+        target: "question",
+        text: prepared.assistantTurn?.question || prepared.assistantMessage
+      });
+    }
+
     return prepared;
   }
 

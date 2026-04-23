@@ -31,7 +31,7 @@ describe("joy interview engine", () => {
     expect(snapshot.happinessType ?? snapshot.selfPattern).toBeTruthy();
   });
 
-  it("moves into wrap up when key slots are present", () => {
+  it("moves into wrap up without asking another closing question", () => {
     const stage = getNextStage(
       {
         event: "我和朋友一起散步聊天",
@@ -56,7 +56,7 @@ describe("joy interview engine", () => {
         confidence: 0.8,
         missingSlots: []
       })
-    ).toContain("整理成日志");
+    ).toBe("");
   });
 
   it("creates a draft after a completed conversation", () => {

@@ -1,9 +1,24 @@
 import type { AIRequestStage } from "@prisma/client";
 
-import { buildAssistantQuestion, createDraft, extractJoySignals, mergeJoySignals, type JoySignalFields } from "@/features/joy-interview/server/joy-interview-engine";
+import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
+import {
+  buildAssistantQuestion,
+  createDraft,
+  extractJoySignals,
+  mergeJoySignals,
+  type JoySignalFields
+} from "@/features/joy-interview/server/joy-interview-engine";
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
-import { joyDraftResultSchema, joyExtractResultSchema, type JoyDraftResult } from "@/features/joy-interview/schema/joy-ai.schema";
-import { buildJoyDraftMessages, buildJoyExtractMessages, buildJoyQuestionMessages } from "@/features/joy-interview/prompts/joy-prompts";
+import {
+  joyDraftResultSchema,
+  joyExtractResultSchema,
+  type JoyDraftResult
+} from "@/features/joy-interview/schema/joy-ai.schema";
+import {
+  buildJoyDraftMessages,
+  buildJoyExtractMessages,
+  buildJoyQuestionMessages
+} from "@/features/joy-interview/prompts/joy-prompts";
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
@@ -12,8 +27,10 @@ import type {
   AssistantDepth,
   AssistantTurnPayload,
   InterviewDimension,
+  InterviewEventRecord,
   InterviewSessionRecord,
   JoyEntryDraft,
+  JoyEventBlock,
   JoyInterviewStage,
   JoySnapshot
 } from "@/types/interview";
@@ -42,13 +59,16 @@ function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
   };
 }
 
-async function logAttempt(sessionId: string, attempt: {
-  stage: AIRequestStage;
-  provider: string;
-  success: boolean;
-  latencyMs: number | null;
-  errorCode: string | null;
-}) {
+async function logAttempt(
+  sessionId: string,
+  attempt: {
+    stage: AIRequestStage;
+    provider: string;
+    success: boolean;
+    latencyMs: number | null;
+    errorCode: string | null;
+  }
+) {
   await createAIRequestLog({
     sessionId,
     stage: attempt.stage,
@@ -93,12 +113,12 @@ export async function extractJoySnapshotWithAI(input: {
 }
 
 function createFallbackInsight(input: {
-  continueFromChoice: boolean;
+  action: "reply" | "continue_current_event";
   snapshot: JoySnapshot;
   stage: JoyInterviewStage;
 }) {
-  if (input.continueFromChoice) {
-    return "我们换个角度，把这段经历再看清一点。";
+  if (input.action === "continue_current_event") {
+    return "";
   }
 
   if (!input.snapshot.event || input.stage === "collect_event") {
@@ -121,21 +141,21 @@ function createFallbackAssistantTurn(input: {
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
   nextDepthReached: AssistantDepth[];
-  continueFromChoice: boolean;
+  action: "reply" | "continue_current_event";
 }): AssistantTurnPayload {
   const question = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
 
   return {
     insight: createFallbackInsight({
-      continueFromChoice: input.continueFromChoice,
+      action: input.action,
       snapshot: input.snapshot,
       stage: input.stage
     }),
     analysis: "用户已说：已有片段但仍需继续澄清；下一步问：当前阶段对应的未覆盖层次",
     question,
     stateUpdate: {
-      turnPhase: input.stage === "wrap_up" ? "closing" : input.continueFromChoice ? "digging" : "digging",
-      shouldEndDimension: input.stage === "wrap_up",
+      turnPhase: input.stage === "collect_event" ? "opening" : "digging",
+      shouldEndDimension: false,
       offerChoice: false,
       choiceReason: ""
     },
@@ -178,23 +198,25 @@ export async function generateJoyAssistantTurn(input: {
   sessionId: string;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
+  events: InterviewSessionRecord["events"];
+  activeEvent: InterviewEventRecord;
   userMessage: string | null;
   messages: InterviewSessionRecord["messages"];
   nextTurnCount: number;
+  nextEventTurnCount: number;
   previousDepthReached: AssistantDepth[];
   nextDepthReached: AssistantDepth[];
-  recentQuestions: string[];
-  consecutiveNoDepthGain: number;
-  consecutiveInvalidReplies: number;
+  coveredLenses: InterviewEventRecord["coveredLenses"];
+  roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
-  continueFromChoice: boolean;
+  action: "reply" | "continue_current_event";
 }) {
   const fallbackTurn = createFallbackAssistantTurn({
     dimension: input.dimension,
     stage: input.stage,
     snapshot: input.snapshot,
     nextDepthReached: input.nextDepthReached,
-    continueFromChoice: input.continueFromChoice
+    action: input.action
   });
   const provider = getAIProvider();
   const messages = buildJoyQuestionMessages({
@@ -202,15 +224,17 @@ export async function generateJoyAssistantTurn(input: {
     stage: input.stage,
     userMessage: input.userMessage,
     snapshot: input.snapshot,
+    events: input.events,
+    activeEvent: input.activeEvent,
     messages: input.messages,
     nextTurnCount: input.nextTurnCount,
+    nextEventTurnCount: input.nextEventTurnCount,
     previousDepthReached: input.previousDepthReached,
     nextDepthReached: input.nextDepthReached,
-    recentQuestions: input.recentQuestions,
-    consecutiveNoDepthGain: input.consecutiveNoDepthGain,
-    consecutiveInvalidReplies: input.consecutiveInvalidReplies,
+    coveredLenses: input.coveredLenses,
+    roundCoveredLenses: input.roundCoveredLenses,
     isMeaningfulReply: input.isMeaningfulReply,
-    continueFromChoice: input.continueFromChoice
+    action: input.action
   });
   const aiResult = await completeStructuredOutput({
     provider,
@@ -234,7 +258,90 @@ export async function generateJoyAssistantTurn(input: {
   return normalizeAssistantTurnPayload(aiResult);
 }
 
-function normalizeDraftResult(draft: JoyDraftResult): JoyEntryDraft {
+function buildEventBlocks(events: InterviewEventRecord[]): JoyEventBlock[] {
+  return events.map((event) => ({
+    eventId: event.id,
+    sequence: event.sequence,
+    explorationRound: event.explorationRound,
+    event: sanitizeNullableString(event.snapshot.event),
+    feeling: sanitizeNullableString(event.snapshot.feeling),
+    whyItMattered: sanitizeNullableString(event.snapshot.whyItMattered),
+    happinessType: sanitizeNullableString(event.snapshot.happinessType),
+    selfPattern: sanitizeNullableString(event.snapshot.selfPattern)
+  }));
+}
+
+function getActiveSessionEvent(session: InterviewSessionRecord) {
+  return (
+    session.events.find((event) => event.id === session.activeEventId) ??
+    session.events[session.events.length - 1]
+  );
+}
+
+function getDraftSourceEvents(session: InterviewSessionRecord) {
+  const candidates = session.events.filter((event) =>
+    Boolean(
+      event.snapshot.event ||
+        event.snapshot.feeling ||
+        event.snapshot.whyItMattered ||
+        event.snapshot.happinessType ||
+        event.snapshot.selfPattern
+    )
+  );
+
+  const fallbackEvent = getActiveSessionEvent(session);
+
+  return candidates.length ? candidates : fallbackEvent ? [fallbackEvent] : [];
+}
+
+function buildFallbackDraft(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): JoyEntryDraft {
+  if (sourceEvents.length <= 1) {
+    return {
+      ...createDraft(session.dimension, sourceEvents[0]?.snapshot ?? session.snapshot),
+      eventBlocks: buildEventBlocks(sourceEvents)
+    };
+  }
+
+  const config = getInterviewDimensionConfig(session.dimension);
+  const content = sourceEvents
+    .slice(0, 3)
+    .map((event, index) => {
+      const intro = index === 0 ? "今天先有一件事让我很想记住" : index === 1 ? "后来还有一件事让我继续开心" : "另外还有一个片段";
+      const eventText = sanitizeNullableString(event.snapshot.event) ?? "一段让我记住的片段";
+      const reasonText = sanitizeNullableString(event.snapshot.whyItMattered);
+      const feelingText = sanitizeNullableString(event.snapshot.feeling);
+      const tail = reasonText
+        ? `它之所以重要，是因为${reasonText.replace(/^因为/, "")}。`
+        : feelingText
+          ? `当时我的感受是${feelingText}。`
+          : "";
+
+      return `${intro}：${eventText}。${tail}`;
+    })
+    .join("\n");
+
+  return {
+    title: `${config.draftTitlePrefix}：今天的几个瞬间`.slice(0, 20),
+    content,
+    event: null,
+    feeling: null,
+    whyItMattered: null,
+    happinessType: null,
+    selfPattern: null,
+    tags: Array.from(
+      new Set(
+        sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling].filter(Boolean) as string[])
+      )
+    ).slice(0, 5),
+    eventBlocks: buildEventBlocks(sourceEvents),
+    source: "ai_draft_direct"
+  };
+}
+
+function normalizeDraftResult(
+  draft: Omit<JoyDraftResult, "eventBlocks"> & { eventBlocks?: JoyEventBlock[] },
+  fallbackEventBlocks: JoyEventBlock[]
+): JoyEntryDraft {
   return {
     title: draft.title.trim(),
     content: draft.content.trim(),
@@ -244,12 +351,15 @@ function normalizeDraftResult(draft: JoyDraftResult): JoyEntryDraft {
     happinessType: sanitizeNullableString(draft.happinessType),
     selfPattern: sanitizeNullableString(draft.selfPattern),
     tags: Array.from(new Set(draft.tags.map((tag) => tag.trim()).filter(Boolean))).slice(0, 5),
+    eventBlocks: draft.eventBlocks?.length ? draft.eventBlocks : fallbackEventBlocks,
     source: "ai_draft_direct"
   };
 }
 
 export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
-  const fallbackDraft = createDraft(session.dimension, session.snapshot);
+  const sourceEvents = getDraftSourceEvents(session);
+  const fallbackDraft = buildFallbackDraft(session, sourceEvents);
+  const fallbackEventBlocks = buildEventBlocks(sourceEvents);
   const provider = getAIProvider();
   const aiResult = await completeStructuredOutput({
     provider,
@@ -257,7 +367,7 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     schema: joyDraftResultSchema,
     messages: buildJoyDraftMessages({
       dimension: session.dimension,
-      snapshot: session.snapshot,
+      events: sourceEvents,
       messages: session.messages
     }),
     temperature: 0.35,
@@ -275,5 +385,5 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     return fallbackDraft;
   }
 
-  return normalizeDraftResult(aiResult);
+  return normalizeDraftResult(aiResult, fallbackEventBlocks);
 }

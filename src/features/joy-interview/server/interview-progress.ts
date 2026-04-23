@@ -159,20 +159,25 @@ export function isDraftGenerationUnlocked(input: {
   messages: InterviewMessage[];
   stage: JoyInterviewStage;
   journalEntry: InterviewSessionRecord["journalEntry"];
+  pendingDecision?: InterviewSessionRecord["pendingDecision"];
 }) {
+  const hasHistoricalChoice = summarizeInterviewProgress(input.messages).hasOfferedChoice;
+
   return isDraftGenerationUnlockedFromState({
     hasJournalEntry: Boolean(input.journalEntry),
     stage: input.stage,
-    hasOfferedChoice: summarizeInterviewProgress(input.messages).hasOfferedChoice
+    hasPendingDecision: Boolean(input.pendingDecision),
+    hasHistoricalChoice
   });
 }
 
 export function isDraftGenerationUnlockedFromState(input: {
   hasJournalEntry: boolean;
   stage: JoyInterviewStage;
-  hasOfferedChoice: boolean;
+  hasPendingDecision: boolean;
+  hasHistoricalChoice?: boolean;
 }) {
-  return input.hasJournalEntry || input.stage === "wrap_up" || input.stage === "finalize" || input.hasOfferedChoice;
+  return input.hasJournalEntry || input.stage === "finalize" || input.hasPendingDecision || Boolean(input.hasHistoricalChoice);
 }
 
 export function canOfferChoice(depthReached: AssistantDepth[]) {

@@ -24,7 +24,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
     }
 
-    if (error instanceof Error && error.message === "SESSION_CONTINUE_UNAVAILABLE") {
+    if (
+      error instanceof Error &&
+      (error.message === "SESSION_CONTINUE_UNAVAILABLE" || error.message === "SESSION_NEXT_EVENT_UNAVAILABLE")
+    ) {
       return NextResponse.json({ error: "SESSION_CONTINUE_UNAVAILABLE" }, { status: 409 });
     }
 

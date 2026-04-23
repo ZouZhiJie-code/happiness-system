@@ -51,6 +51,12 @@ enum JoyEntryStatus {
   saved
 }
 
+enum InterviewEventStatus {
+  active
+  ready_for_choice
+  completed
+}
+
 enum AIRequestStage {
   transcribe
   extract
@@ -83,6 +89,7 @@ model InterviewSession {
   dimension             InterviewDimension
   status                InterviewSessionStatus @default(active)
   stage                 JoyInterviewStage      @default(collect_event)
+  activeEventId         String?
   turnCount             Int                    @default(0)
   startedAt             DateTime               @default(now())
   pausedAt              DateTime?
@@ -90,6 +97,8 @@ model InterviewSession {
   lastAssistantQuestion String?
   draftSummary          String?
   finalEntryId          String?                @unique
+  activeEvent           InterviewEvent?        @relation("ActiveInterviewEvent", fields: [activeEventId], references: [id], onDelete: SetNull)
+  events                InterviewEvent[]       @relation("SessionInterviewEvents")
   messages              InterviewMessage[]
   snapshots             JoyInterviewSnapshot[]
   aiRequestLogs         AIRequestLog[]
@@ -97,6 +106,35 @@ model InterviewSession {
   joyEntry              JoyEntry?              @relation("SessionJoyEntry")
 
   @@index([userId, status])
+}
+
+model InterviewEvent {
+  id                       String               @id @default(cuid())
+  sessionId                String
+  sequence                 Int
+  status                   InterviewEventStatus @default(active)
+  stage                    JoyInterviewStage    @default(collect_event)
+  explorationRound         Int                  @default(1)
+  coveredLenses            String[]             @default([])
+  roundCoveredLenses       String[]             @default([])
+  roundMeaningfulReplyCount Int                 @default(0)
+  totalMeaningfulReplyCount Int                 @default(0)
+  startMessageSequence     Int                  @default(0)
+  event                    String?
+  feeling                  String?
+  whyItMattered            String?
+  happinessType            String?
+  selfPattern              String?
+  confidence               Float?
+  missingSlots             String[]             @default([])
+  draftSummary             String?
+  startedAt                DateTime             @default(now())
+  completedAt              DateTime?
+  session                  InterviewSession     @relation("SessionInterviewEvents", fields: [sessionId], references: [id], onDelete: Cascade)
+  activeForSession         InterviewSession[]   @relation("ActiveInterviewEvent")
+
+  @@unique([sessionId, sequence])
+  @@index([sessionId, status])
 }
 
 model InterviewMessage {
@@ -144,6 +182,7 @@ model JoyEntry {
   happinessType   String?
   selfPattern     String?
   tags            String[]
+  eventBlocks     Json?
   source          JoyEntrySource
   status          JoyEntryStatus @default(draft)
   linkedSessionIds String[]      @default([])

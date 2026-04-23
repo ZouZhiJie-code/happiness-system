@@ -1,7 +1,14 @@
 import { getInterviewMessageDisplayText } from "@/features/joy-interview/assistant-turn";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import type { AIChatMessage } from "@/server/services/ai/ai-provider";
-import type { AssistantDepth, InterviewDimension, InterviewMessage, JoyInterviewStage, JoySnapshot } from "@/types/interview";
+import type {
+  AssistantDepth,
+  InterviewDimension,
+  InterviewEventRecord,
+  InterviewMessage,
+  JoyInterviewStage,
+  JoySnapshot
+} from "@/types/interview";
 
 const dimensionPromptGuide: Record<
   InterviewDimension,
@@ -40,13 +47,13 @@ const dimensionPromptGuide: Record<
 
 export const joyInterviewPrinciples = [
   "一次只问一个开放式问题，不做并列提问。",
-  "优先推进尚未覆盖的深度层次，避免复述式追问。",
+  "优先推进尚未覆盖的层次，避免复述式追问。",
   "不抢结论，不做心理诊断，不扩展到其他维度。"
 ];
 
 function formatVisibleRecentMessages(messages: InterviewMessage[]) {
   return messages
-    .slice(-6)
+    .slice(-8)
     .map((message) => `${message.role === "assistant" ? "访谈者" : "用户"}: ${getInterviewMessageDisplayText(message)}`)
     .join("\n");
 }
@@ -76,6 +83,34 @@ function formatSnapshot(snapshot: JoySnapshot) {
 
 function formatDepthReached(depthReached: AssistantDepth[]) {
   return depthReached.length ? depthReached.join("、") : "无";
+}
+
+function formatEventSummaries(events: InterviewEventRecord[]) {
+  if (!events.length) {
+    return "无";
+  }
+
+  return events
+    .map((event) =>
+      JSON.stringify(
+        {
+          sequence: event.sequence,
+          status: event.status,
+          stage: event.stage,
+          explorationRound: event.explorationRound,
+          snapshot: {
+            event: event.snapshot.event,
+            feeling: event.snapshot.feeling,
+            whyItMattered: event.snapshot.whyItMattered,
+            happinessType: event.snapshot.happinessType,
+            selfPattern: event.snapshot.selfPattern
+          }
+        },
+        null,
+        2
+      )
+    )
+    .join("\n");
 }
 
 export function buildJoyExtractMessages(input: {
@@ -118,15 +153,17 @@ export function buildJoyQuestionMessages(input: {
   stage: JoyInterviewStage;
   userMessage: string | null;
   snapshot: JoySnapshot;
+  events: InterviewEventRecord[];
+  activeEvent: InterviewEventRecord;
   messages: InterviewMessage[];
   nextTurnCount: number;
+  nextEventTurnCount: number;
   previousDepthReached: AssistantDepth[];
   nextDepthReached: AssistantDepth[];
-  recentQuestions: string[];
-  consecutiveNoDepthGain: number;
-  consecutiveInvalidReplies: number;
+  coveredLenses: InterviewEventRecord["coveredLenses"];
+  roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
-  continueFromChoice: boolean;
+  action: "reply" | "continue_current_event";
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
   const guide = dimensionPromptGuide[input.dimension];
@@ -142,10 +179,10 @@ export function buildJoyQuestionMessages(input: {
         "必须遵守：",
         "1. 一次只问一个开放式问题，不要问 A 还是 B，不要问是不是、有没有觉得、要不要。",
         "2. insight 只做承接和提炼，不包含问号；analysis 只总结“用户已说/下一步问”；question 只放一个具体追问。",
-        "3. question 必须优先推进尚未覆盖的层次，不能重复最近问题的方向，不能复述用户原话再加问号。",
-        "4. 当用户短答、说没有素材或今天很糟时，先降低门槛，不要强行拔高。",
-        "5. 当连续追问没有推进时，可以进入 choice：insight 总结已聊到的内容，question 置空，offerChoice=true。",
-        "6. 如果用户刚刚选择继续聊，必须换一个新角度，不要沿用刚才卡住的问法。",
+        "3. question 必须优先推进当前事件尚未覆盖的层次，不能重复刚刚聊过的切口。",
+        "4. 当 action=continue_current_event 时，不要再写两段解释，直接换一个角度给出可回答的问题；此时 insight 可以为空。",
+        "5. 当前轮只允许围绕 activeEvent 深挖，不要把问题跳到下一件事；下一件事由产品的 next_event 动作触发。",
+        "6. 不要主动要求用户“留下哪个点”或“要不要整理日志”；收尾选择由前端 choice 卡片承担。",
         "7. 返回合法 JSON，不要 markdown，不要解释。",
         '返回格式：{"insight":"","analysis":"","question":"","stateUpdate":{"turnPhase":"opening|digging|closing|choice","shouldEndDimension":false,"offerChoice":false,"choiceReason":""},"meta":{"depthReached":["event","feeling","reason","clue","pattern"]}}'
       ].join("\n")
@@ -154,18 +191,30 @@ export function buildJoyQuestionMessages(input: {
       role: "user",
       content: [
         `当前维度: ${config.label}`,
+        `当前动作: ${input.action}`,
         `目标阶段: ${input.stage}`,
-        `当前快照:\n${formatSnapshot(input.snapshot)}`,
+        `activeEvent:\n${JSON.stringify(
+          {
+            sequence: input.activeEvent.sequence,
+            explorationRound: input.activeEvent.explorationRound,
+            coveredLenses: input.coveredLenses,
+            roundCoveredLenses: input.roundCoveredLenses,
+            snapshot: input.snapshot
+          },
+          null,
+          2
+        )}`,
+        `全部事件摘要:\n${formatEventSummaries(input.events)}`,
         `上一轮已覆盖深度: ${formatDepthReached(input.previousDepthReached)}`,
         `本轮建议覆盖深度: ${formatDepthReached(input.nextDepthReached)}`,
-        `当前有效轮次: ${input.nextTurnCount}`,
+        `会话总有效轮次: ${input.nextTurnCount}`,
+        `当前事件有效轮次: ${input.nextEventTurnCount}`,
         `本轮回复是否有效: ${input.isMeaningfulReply ? "是" : "否"}`,
-        `连续无新增深度轮数: ${input.consecutiveNoDepthGain}`,
-        `连续无效短答数: ${input.consecutiveInvalidReplies}`,
-        `最近问过的问题: ${input.recentQuestions.length ? input.recentQuestions.join("；") : "无"}`,
         `最近可读对话:\n${formatVisibleRecentMessages(input.messages) || "无"}`,
         `最近 assistant 结构化输出:\n${formatStructuredRecentAssistantMessages(input.messages) || "无"}`,
-        input.continueFromChoice ? "用户刚刚选择了继续聊，请从新角度切入。" : `用户本轮输入: ${input.userMessage ?? "无"}`
+        input.action === "continue_current_event"
+          ? "用户刚刚选择继续深挖当前事件，请换一个新角度直接追问。"
+          : `用户本轮输入: ${input.userMessage ?? "无"}`
       ].join("\n\n")
     }
   ];
@@ -173,7 +222,7 @@ export function buildJoyQuestionMessages(input: {
 
 export function buildJoyDraftMessages(input: {
   dimension: InterviewDimension;
-  snapshot: JoySnapshot;
+  events: InterviewEventRecord[];
   messages: InterviewMessage[];
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
@@ -184,16 +233,17 @@ export function buildJoyDraftMessages(input: {
       content: [
         `你是幸福日志产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
-        "内容要简洁，可编辑，像用户自己会保留下来的日记。",
-        '只返回 JSON：{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
+        "如果有多件事件，请合并成一篇自然流动的日志，而不是分条罗列。",
+        "日志必须基于上下文自动生成，不要反问用户要保留什么。",
+        '只返回 JSON：{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}]}'
       ].join("\n")
     },
     {
       role: "user",
       content: [
-        `结构化快照:\n${formatSnapshot(input.snapshot)}`,
+        `事件摘要:\n${formatEventSummaries(input.events)}`,
         `最近对话:\n${formatVisibleRecentMessages(input.messages)}`,
-        "要求: title 20 字内，content 用自然中文分成 2 到 4 句。"
+        "要求: title 20 字内，content 用自然中文分成 2 到 5 句，eventBlocks 需要覆盖输入中的事件。"
       ].join("\n\n")
     }
   ];

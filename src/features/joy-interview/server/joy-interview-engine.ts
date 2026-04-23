@@ -234,7 +234,7 @@ export function buildAssistantQuestion(
 
       return config.genericPatternQuestion;
     case "wrap_up":
-      return config.wrapUpMessage;
+      return "";
     case "finalize":
       return "日志草稿已经准备好了。";
   }
@@ -265,6 +265,7 @@ export function createDraft(dimension: InterviewDimension, snapshot: JoySnapshot
     happinessType: snapshot.happinessType,
     selfPattern: snapshot.selfPattern,
     tags,
+    eventBlocks: [],
     source: "ai_draft_direct"
   };
 }

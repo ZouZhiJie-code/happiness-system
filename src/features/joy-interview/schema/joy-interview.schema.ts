@@ -3,6 +3,8 @@ import { z } from "zod";
 const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
 const assistantDepthSchema = z.enum(["event", "feeling", "reason", "clue", "pattern"]);
 const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
+const interviewEventStatusSchema = z.enum(["active", "ready_for_choice", "completed"]);
+const interviewLensSchema = z.enum(["event_detail", "felt_experience", "importance_reason", "meaning_pattern", "self_pattern"]);
 
 const joySnapshotSchema = z.object({
   event: z.string().nullable(),
@@ -48,6 +50,18 @@ const joyEntryDraftSchema = z.object({
   happinessType: z.string().nullable(),
   selfPattern: z.string().nullable(),
   tags: z.array(z.string()),
+  eventBlocks: z.array(
+    z.object({
+      eventId: z.string(),
+      sequence: z.number().int().nonnegative(),
+      explorationRound: z.number().int().positive(),
+      event: z.string().nullable(),
+      feeling: z.string().nullable(),
+      whyItMattered: z.string().nullable(),
+      happinessType: z.string().nullable(),
+      selfPattern: z.string().nullable()
+    })
+  ),
   source: z.enum(["ai_draft_direct", "ai_draft_edited"])
 });
 
@@ -59,17 +73,44 @@ const journalEntrySchema = joyEntryDraftSchema.extend({
   savedAt: z.string().nullable()
 });
 
+const interviewEventSchema = z.object({
+  id: z.string(),
+  sequence: z.number().int().nonnegative(),
+  status: interviewEventStatusSchema,
+  stage: z.enum(["collect_event", "probe_reason", "probe_pattern", "wrap_up", "finalize"]),
+  explorationRound: z.number().int().positive(),
+  coveredLenses: z.array(interviewLensSchema),
+  roundCoveredLenses: z.array(interviewLensSchema),
+  roundMeaningfulReplyCount: z.number().int().nonnegative(),
+  totalMeaningfulReplyCount: z.number().int().nonnegative(),
+  startMessageSequence: z.number().int().nonnegative(),
+  snapshot: joySnapshotSchema,
+  draftSummary: z.string().nullable(),
+  startedAt: z.string(),
+  completedAt: z.string().nullable()
+});
+
+const pendingDecisionSchema = z.object({
+  kind: z.literal("event_complete"),
+  eventId: z.string(),
+  eventSequence: z.number().int().nonnegative(),
+  actions: z.array(z.enum(["continue_current_event", "next_event", "generate_draft"])).min(1)
+});
+
 export const interviewSessionSchema = z.object({
   id: z.string(),
   dimension: interviewDimensionSchema,
   status: z.enum(["active", "paused", "completed", "abandoned"]),
   stage: z.enum(["collect_event", "probe_reason", "probe_pattern", "wrap_up", "finalize"]),
+  activeEventId: z.string().nullable(),
   draftGenerationUnlocked: z.boolean(),
   turnCount: z.number().int().nonnegative(),
   lastAssistantQuestion: z.string(),
   draftSummary: z.string().nullable(),
   messages: z.array(interviewMessageSchema),
   snapshot: joySnapshotSchema,
+  events: z.array(interviewEventSchema),
+  pendingDecision: pendingDecisionSchema.nullable(),
   startedAt: z.string(),
   pausedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
@@ -95,6 +136,14 @@ export const respondInterviewRequestSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("continue"),
+    sessionId: z.string()
+  }),
+  z.object({
+    action: z.literal("continue_current_event"),
+    sessionId: z.string()
+  }),
+  z.object({
+    action: z.literal("next_event"),
     sessionId: z.string()
   })
 ]);

@@ -4,17 +4,23 @@ import { create } from "zustand";
 
 import type {
   InterviewDimension,
+  InterviewEventRecord,
   InterviewMessage,
   InterviewSessionRecord,
   JournalEntryRecord,
-  JoySnapshot
+  JoySnapshot,
+  PendingDecisionRecord
 } from "@/types/interview";
 
 interface InterviewState {
   dimension: InterviewDimension;
+  sessionDimension: InterviewDimension | null;
   sessionId: string | null;
   status: InterviewSessionRecord["status"] | null;
   stage: InterviewSessionRecord["stage"] | null;
+  activeEventId: string | null;
+  events: InterviewEventRecord[];
+  pendingDecision: PendingDecisionRecord | null;
   draftGenerationUnlocked: boolean;
   draftGenerationBusy: boolean;
   draftGenerationDisabled: boolean;
@@ -38,9 +44,13 @@ interface InterviewState {
 
 const initialState = {
   dimension: "joy" as InterviewDimension,
+  sessionDimension: null,
   sessionId: null,
   status: null,
   stage: null,
+  activeEventId: null,
+  events: [] as InterviewEventRecord[],
+  pendingDecision: null,
   draftGenerationUnlocked: false,
   draftGenerationBusy: false,
   draftGenerationDisabled: true,
@@ -57,9 +67,13 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   setSession: (session) =>
     set({
       dimension: session.dimension,
+      sessionDimension: session.dimension,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,
+      activeEventId: session.activeEventId,
+      events: session.events,
+      pendingDecision: session.pendingDecision,
       draftGenerationUnlocked: session.draftGenerationUnlocked,
       turnCount: session.turnCount,
       messages: session.messages,
@@ -69,9 +83,13 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   hydrate: (session) =>
     set({
       dimension: session.dimension,
+      sessionDimension: session.dimension,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,
+      activeEventId: session.activeEventId,
+      events: session.events,
+      pendingDecision: session.pendingDecision,
       draftGenerationUnlocked: session.draftGenerationUnlocked,
       turnCount: session.turnCount,
       messages: session.messages,

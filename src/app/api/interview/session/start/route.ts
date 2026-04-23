@@ -14,8 +14,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "INVALID_START_REQUEST" }, { status: 400 });
   }
 
-  const result = await startJoyInterview(parsed.data.dimension);
-  const payload = startInterviewResponseSchema.parse(result);
+  try {
+    const result = await startJoyInterview(parsed.data.dimension);
+    const payload = startInterviewResponseSchema.parse(result);
 
-  return NextResponse.json(payload);
+    return NextResponse.json(payload);
+  } catch (error) {
+    console.error("INTERVIEW_START_FAILED", error);
+
+    return NextResponse.json(
+      {
+        error: "INTERVIEW_START_FAILED"
+      },
+      { status: 500 }
+    );
+  }
 }

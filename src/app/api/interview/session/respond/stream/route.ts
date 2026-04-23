@@ -44,10 +44,13 @@ export async function POST(request: Request) {
             code: "SESSION_NOT_FOUND",
             message: "未找到当前访谈会话。"
           });
-        } else if (error instanceof Error && error.message === "SESSION_CONTINUE_UNAVAILABLE") {
+        } else if (
+          error instanceof Error &&
+          (error.message === "SESSION_CONTINUE_UNAVAILABLE" || error.message === "SESSION_NEXT_EVENT_UNAVAILABLE")
+        ) {
           send("error", {
             code: "SESSION_CONTINUE_UNAVAILABLE",
-            message: "当前会话没有可继续追问的选择状态。"
+            message: "当前会话没有可执行的分叉选择。"
           });
         } else {
           send("error", {

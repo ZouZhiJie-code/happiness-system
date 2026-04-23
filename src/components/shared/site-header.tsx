@@ -32,7 +32,9 @@ export function SiteHeader() {
     draftGenerationDisabled,
     draftGenerationUnlocked,
     messages,
+    pendingDecision,
     requestDraftGeneration,
+    sessionDimension,
     sessionId,
     setDimension,
     status,
@@ -45,6 +47,11 @@ export function SiteHeader() {
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
     : dimension;
   const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
+  const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
+  const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
+  const shouldShowDraftGenerateButton = Boolean(
+    isViewingHydratedDimension && status === "active" && draftGenerationUnlocked && !shouldHideDraftGenerateButton
+  );
 
   useEffect(() => {
     if (!isInterviewPage) return;
@@ -79,7 +86,7 @@ export function SiteHeader() {
     const confirmed = window.confirm(interviewLeaveConfirmMessage);
 
     if (confirmed && sessionId) {
-      touchStoredInterviewSessionId(activeDimension, sessionId);
+      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId);
     }
 
     return confirmed;
@@ -134,8 +141,11 @@ export function SiteHeader() {
         <div className="min-h-[2.75rem]">
           {isInterviewPage ? (
             <div className="flex items-center justify-center">
-              <div className="flex w-full max-w-[52rem] flex-col gap-2 md:flex-row md:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto rounded-full border border-[rgba(136,92,50,0.16)] bg-[rgba(252,244,231,0.74)] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+              <div className="w-full max-w-[52rem]">
+                <div
+                  data-testid="interview-dimension-bar"
+                  className="flex min-w-0 items-center gap-2 rounded-full border border-[rgba(136,92,50,0.16)] bg-[rgba(252,244,231,0.74)] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]"
+                >
                   <div className="flex shrink-0 items-center gap-2 pl-2">
                     <p className="font-mono text-[0.63rem] tracking-[0.22em] text-[#6a5e53]">当前维度</p>
                     {turnCount > 0 ? (
@@ -150,35 +160,47 @@ export function SiteHeader() {
                       const meta = getInterviewDimensionMeta(item);
 
                       return (
-                        <button
+                        <div
                           key={item}
-                          type="button"
-                          onClick={() => handleDimensionChange(item)}
                           className={clsx(
-                            "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition duration-300",
-                            isSelected
-                              ? "bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_8px_18px_rgba(118,75,37,0.2)]"
-                              : "text-[#4a4038] hover:bg-[rgba(169,111,61,0.14)] hover:text-[#2f2823]"
+                            "shrink-0",
+                            isSelected &&
+                              "flex min-w-[11.5rem] items-center justify-between gap-1 rounded-full bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] pr-1 shadow-[0_8px_18px_rgba(118,75,37,0.2)]"
                           )}
                         >
-                          {meta.navLabel}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDimensionChange(item)}
+                            className={clsx(
+                              "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition duration-300",
+                              isSelected
+                                ? "text-[#fff8f1]"
+                                : "text-[#4a4038] hover:bg-[rgba(169,111,61,0.14)] hover:text-[#2f2823]"
+                            )}
+                          >
+                            {meta.navLabel}
+                          </button>
+                          {isSelected ? (
+                            <div className="flex min-w-[5.5rem] justify-end">
+                              {shouldShowDraftGenerateButton ? (
+                                <button
+                                  type="button"
+                                  onClick={handleDraftGenerateClick}
+                                  disabled={draftGenerationBusy || draftGenerationDisabled}
+                                  className="rounded-full border border-[rgba(255,244,228,0.32)] bg-[rgba(255,244,228,0.18)] px-3 py-1.5 text-[13px] text-[#fff8f1] transition hover:bg-[rgba(255,244,228,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {draftGenerationBusy ? "正在整理..." : "生成日志"}
+                                </button>
+                              ) : (
+                                <span aria-hidden="true" className="h-8 w-[5.5rem]" />
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
                       );
                     })}
                   </div>
                 </div>
-                {draftGenerationUnlocked ? (
-                  <button
-                    type="button"
-                    onClick={handleDraftGenerateClick}
-                    disabled={draftGenerationBusy || draftGenerationDisabled}
-                    className="shrink-0 rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-5 py-2 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {draftGenerationBusy ? "正在整理..." : "生成日志"}
-                  </button>
-                ) : (
-                  <div aria-hidden="true" className="hidden min-h-10 md:block md:w-[7.5rem]" />
-                )}
               </div>
             </div>
           ) : null}
