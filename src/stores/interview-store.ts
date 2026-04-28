@@ -12,8 +12,11 @@ import type {
   PendingDecisionRecord
 } from "@/types/interview";
 
+export type InterviewBootState = "idle" | "booting" | "restoring";
+
 interface InterviewState {
   dimension: InterviewDimension;
+  bootState: InterviewBootState;
   sessionDimension: InterviewDimension | null;
   sessionId: string | null;
   status: InterviewSessionRecord["status"] | null;
@@ -30,6 +33,7 @@ interface InterviewState {
   snapshot: JoySnapshot | null;
   journalEntry: JournalEntryRecord | null;
   setDimension: (dimension: InterviewDimension) => void;
+  setBootState: (bootState: InterviewBootState) => void;
   setSession: (session: InterviewSessionRecord) => void;
   hydrate: (session: InterviewSessionRecord) => void;
   setJournalEntry: (entry: JournalEntryRecord | null) => void;
@@ -44,6 +48,7 @@ interface InterviewState {
 
 const initialState = {
   dimension: "joy" as InterviewDimension,
+  bootState: "idle" as InterviewBootState,
   sessionDimension: null,
   sessionId: null,
   status: null,
@@ -64,9 +69,11 @@ const initialState = {
 export const useInterviewStore = create<InterviewState>((set) => ({
   ...initialState,
   setDimension: (dimension) => set({ dimension }),
+  setBootState: (bootState) => set({ bootState }),
   setSession: (session) =>
     set({
       dimension: session.dimension,
+      bootState: "idle",
       sessionDimension: session.dimension,
       sessionId: session.id,
       status: session.status,
@@ -83,6 +90,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   hydrate: (session) =>
     set({
       dimension: session.dimension,
+      bootState: "idle",
       sessionDimension: session.dimension,
       sessionId: session.id,
       status: session.status,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 
@@ -18,8 +18,7 @@ import {
 } from "@/features/interview/dimensions";
 import {
   getDimensionProgressSummary,
-  type DimensionProgressSessionLike,
-  type DimensionProgressSummary
+  type DimensionProgressSessionLike
 } from "@/features/interview/dimension-progress";
 import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewSessionRecord } from "@/types/interview";
@@ -30,33 +29,78 @@ const navItems = [
   { href: "/settings", label: "设置" }
 ];
 
-function getProgressFillClass(state: DimensionProgressSummary["state"], isSelected: boolean) {
+function getStatusChipClass(isSelected: boolean, isEmphasized: boolean) {
   if (isSelected) {
-    return "bg-[linear-gradient(90deg,rgba(255,246,230,0.96),rgba(255,237,201,0.92))] shadow-[0_0_18px_rgba(255,241,219,0.35)]";
+    return isEmphasized
+      ? "border-[rgba(255,244,228,0.26)] bg-[rgba(255,244,228,0.14)] text-[rgba(255,248,241,0.88)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+      : "border-[rgba(255,244,228,0.2)] bg-[rgba(255,244,228,0.1)] text-[rgba(255,248,241,0.74)] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]";
   }
 
-  switch (state) {
-    case "completed":
-      return "bg-[linear-gradient(90deg,rgba(150,101,55,0.92),rgba(181,126,68,0.88))]";
-    case "draft":
-      return "bg-[linear-gradient(90deg,rgba(171,117,63,0.92),rgba(210,165,99,0.88))]";
-    case "ready":
-      return "bg-[linear-gradient(90deg,rgba(173,118,62,0.88),rgba(227,189,124,0.84))]";
-    case "active":
-      return "bg-[linear-gradient(90deg,rgba(184,139,86,0.72),rgba(220,187,132,0.78))]";
-    default:
-      return "bg-[rgba(176,131,82,0.28)]";
-  }
+  return isEmphasized
+    ? "border-[rgba(166,114,61,0.18)] bg-[rgba(255,249,240,0.84)] text-[#7a5d40] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
+    : "border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] text-[#8d7257] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]";
+}
+
+function ProgressRing({
+  percentage,
+  label,
+  testId,
+  size = 22
+}: {
+  percentage: number;
+  label: string;
+  testId?: string;
+  size?: number;
+}) {
+  const strokeWidth = 2.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - percentage / 100);
+
+  return (
+    <div
+      data-testid={testId}
+      aria-label={label}
+      title={label}
+      className="relative inline-flex items-center justify-center"
+      style={{ height: size, width: size }}
+    >
+      <svg aria-hidden="true" viewBox={`0 0 ${size} ${size}`} className="h-full w-full -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(143,103,68,0.18)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(168,112,60,0.92)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+        />
+      </svg>
+      <span aria-hidden="true" className="absolute h-1.5 w-1.5 rounded-full bg-[rgba(168,112,60,0.9)]" />
+    </div>
+  );
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hasNormalizedInterviewUrlRef = useRef(false);
   const [cachedDimensionSessions, setCachedDimensionSessions] = useState<
     Partial<Record<InterviewDimension, InterviewSessionRecord | null>>
   >({});
   const {
+    bootState,
     dimension,
     draftGenerationBusy,
     draftGenerationDisabled,
@@ -97,13 +141,18 @@ export function SiteHeader() {
           journalEntry
         }
       : null;
+  const isSelectedDimensionRestoring = isInterviewPage && bootState === "restoring" && !activeProgressSession;
 
   useEffect(() => {
-    if (!isInterviewPage) return;
+    if (!isInterviewPage) {
+      hasNormalizedInterviewUrlRef.current = false;
+      return;
+    }
 
     const fromUrl = searchParams.get("dimension");
 
     if (fromUrl) {
+      hasNormalizedInterviewUrlRef.current = true;
       const nextDimension = normalizeInterviewDimension(fromUrl);
       if (nextDimension !== dimension) {
         setDimension(nextDimension);
@@ -114,8 +163,13 @@ export function SiteHeader() {
       return;
     }
 
+    if (hasNormalizedInterviewUrlRef.current) {
+      return;
+    }
+
     if (typeof window === "undefined") return;
 
+    hasNormalizedInterviewUrlRef.current = true;
     const remembered = normalizeInterviewDimension(window.localStorage.getItem(interviewDimensionStorageKey));
     if (remembered !== dimension) {
       setDimension(remembered);
@@ -192,12 +246,20 @@ export function SiteHeader() {
     };
   }, [activeDimension, isInterviewPage]);
 
-  const dimensionProgressMap = interviewDimensions.reduce<Record<InterviewDimension, DimensionProgressSummary>>((accumulator, item) => {
+  const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
     const sourceSession = item === activeDimension ? activeProgressSession : cachedDimensionSessions[item] ?? null;
     accumulator[item] = getDimensionProgressSummary(sourceSession);
 
     return accumulator;
-  }, {} as Record<InterviewDimension, DimensionProgressSummary>);
+  }, {} as Record<InterviewDimension, ReturnType<typeof getDimensionProgressSummary>>);
+  const selectedProgressSummary = dimensionProgressMap[activeDimension];
+  const selectedProgressLabel =
+    isSelectedDimensionRestoring
+      ? "继续中"
+      : selectedProgressSummary.displayState === "in_progress" && turnCount > 0
+        ? `第 ${turnCount} 轮`
+        : selectedProgressSummary.statusLabel;
+  const shouldShowSelectedProgressPod = selectedProgressSummary.shouldShowRing || isSelectedDimensionRestoring;
 
   function confirmLeaveInterview() {
     if (!shouldProtectInterview) {
@@ -253,110 +315,126 @@ export function SiteHeader() {
   return (
     <header className="page-shell mx-auto max-w-[88rem] rounded-[28px] px-4 py-2.5 backdrop-blur md:px-5 md:py-2.5">
       <div className="relative z-10 flex flex-col gap-2.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4">
-        <Link href="/" onClick={(event) => handleProtectedNavigation(event, "/")} className="flex items-center gap-3">
+        <Link href="/" prefetch={false} onClick={(event) => handleProtectedNavigation(event, "/")} className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-full border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.55)] text-[0.62rem] font-mono uppercase tracking-[0.24em] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
             HS
           </div>
           <p className="font-display text-lg tracking-[0.1em] text-[#2f2823]">幸福系统</p>
         </Link>
-        <div className="min-h-[3.35rem]">
+        <div className="min-h-[3rem]">
           {isInterviewPage ? (
             <div className="flex items-center justify-center">
-              <div className="w-full max-w-[48rem]">
+              <div className="w-full overflow-x-auto pb-0.5">
                 <div
-                  data-testid="interview-dimension-bar"
-                  className="flex min-w-0 items-center gap-2.5 rounded-full border border-[rgba(136,92,50,0.16)] bg-[linear-gradient(180deg,rgba(252,245,233,0.88),rgba(241,226,199,0.9))] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_10px_24px_rgba(118,75,37,0.06)]"
+                  className="mx-auto w-fit min-w-max"
                 >
-                  <div className="shrink-0 px-1">
-                    <p className="font-mono text-[0.58rem] tracking-[0.22em] text-[#6a5e53]">当前维度</p>
-                  </div>
-                  <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5 md:grid md:grid-cols-5 md:overflow-visible md:pb-0">
-                    {interviewDimensions.map((item) => {
-                      const isSelected = item === activeDimension;
-                      const meta = getInterviewDimensionMeta(item);
-                      const progressSummary = dimensionProgressMap[item];
-                      const labelId = `interview-dimension-label-${item}`;
-                      const progressId = `interview-dimension-progress-${item}`;
+                  <div
+                    data-testid="interview-dimension-bar"
+                    className="flex items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.16)] bg-[linear-gradient(180deg,rgba(252,245,233,0.88),rgba(241,226,199,0.9))] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_10px_24px_rgba(118,75,37,0.06)]"
+                  >
+                    <div className="shrink-0 px-1">
+                      <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+                      <div className="flex min-w-0 items-center gap-[0.3125rem]">
+                      {interviewDimensions.map((item) => {
+                        const isSelected = item === activeDimension;
+                        const meta = getInterviewDimensionMeta(item);
+                        const progressSummary = dimensionProgressMap[item];
+                        const labelId = `interview-dimension-label-${item}`;
+                        const progressId = `interview-dimension-status-${item}`;
+                        const isActiveItemRestoring = isSelected && isSelectedDimensionRestoring;
+                        const detailLabel = isSelected ? selectedProgressLabel : progressSummary.statusLabel;
 
-                      return (
-                        <button
-                          key={item}
-                          type="button"
-                          onClick={() => handleDimensionChange(item)}
-                          aria-pressed={isSelected}
-                          aria-current={isSelected ? "step" : undefined}
-                          aria-labelledby={labelId}
-                          aria-describedby={progressId}
-                          className={clsx(
-                            "group relative flex min-w-[6.85rem] shrink-0 flex-col justify-center rounded-[20px] border px-2.5 py-2 text-left transition duration-300 md:min-w-0",
-                            isSelected
-                              ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                              : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                          )}
-                        >
-                          <span
-                            aria-hidden="true"
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => handleDimensionChange(item)}
+                            aria-pressed={isSelected}
+                            aria-current={isSelected ? "step" : undefined}
+                            aria-labelledby={labelId}
+                            aria-describedby={progressId}
                             className={clsx(
-                              "pointer-events-none absolute inset-x-4 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                              !isSelected && "opacity-50"
+                              "group relative flex min-w-[5.1rem] shrink-0 items-center gap-[0.3125rem] rounded-[15px] border px-1.5 py-1.5 text-left transition duration-300",
+                              isSelected
+                                ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
+                                : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
                             )}
-                          />
-                          <div className="flex items-center justify-between gap-1.5">
+                          >
+                            <span
+                              aria-hidden="true"
+                              className={clsx(
+                                "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
+                                !isSelected && "opacity-50"
+                              )}
+                            />
                             <span
                               id={labelId}
                               className={clsx(
-                                "text-[13px] font-medium tracking-[0.01em]",
+                                "shrink-0 text-[12px] font-medium tracking-[0.01em]",
                                 isSelected ? "text-[#fff8f1]" : "text-[#4a4038]"
                               )}
                             >
                               {meta.navLabel}
                             </span>
-                            {isSelected && turnCount > 0 ? (
-                              <span className="rounded-full border border-[rgba(255,244,228,0.26)] bg-[rgba(255,244,228,0.14)] px-1.5 py-0.5 font-mono text-[0.54rem] tracking-[0.16em] text-[rgba(255,248,241,0.86)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
-                                第 {turnCount} 轮
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-2">
-                            <div
-                              aria-hidden="true"
-                              className={clsx(
-                                "relative h-1.5 flex-1 overflow-hidden rounded-full",
-                                isSelected ? "bg-[rgba(255,244,228,0.26)]" : "bg-[rgba(150,105,61,0.12)]"
-                              )}
-                            >
-                              <div
+                            <div className="flex min-w-0 items-center">
+                              <span
+                                id={progressId}
                                 className={clsx(
-                                  "h-full rounded-full transition-[width] duration-500 ease-out",
-                                  getProgressFillClass(progressSummary.state, isSelected)
+                                  "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
+                                  getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
                                 )}
-                                style={{ width: `${progressSummary.percentage}%` }}
-                              />
+                              >
+                                {detailLabel}
+                              </span>
                             </div>
+                          </button>
+                        );
+                      })}
+                      </div>
+                      {shouldShowSelectedProgressPod ? (
+                        <div
+                          data-testid="selected-dimension-progress"
+                          className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
+                        >
+                          {selectedProgressSummary.shouldShowRing ? (
+                            <>
+                              <ProgressRing
+                                percentage={selectedProgressSummary.percentage}
+                                label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressSummary.percentage}%`}
+                                testId={`dimension-progress-ring-${activeDimension}`}
+                                size={22}
+                              />
+                              <span
+                                data-testid="selected-dimension-progress-value"
+                                className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
+                              >
+                                {selectedProgressSummary.percentage}%
+                              </span>
+                            </>
+                          ) : (
                             <span
-                              id={progressId}
-                              className={clsx(
-                                "font-mono text-[0.58rem] tracking-[0.16em]",
-                                isSelected ? "text-[rgba(255,248,241,0.92)]" : "text-[#8a7056]"
-                              )}
+                              data-testid="selected-dimension-progress-value"
+                              className="whitespace-nowrap rounded-[9px] border border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] px-1.5 py-[0.22rem] font-mono text-[0.58rem] tracking-[0.14em] text-[#7f5c38]"
                             >
-                              {progressSummary.percentage}%
+                              继续中
                             </span>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                    {shouldShowDraftGenerateButton ? (
+                      <button
+                        type="button"
+                        onClick={handleDraftGenerateClick}
+                        disabled={draftGenerationBusy || draftGenerationDisabled}
+                        className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {draftGenerationBusy ? "正在整理..." : "生成日志"}
+                      </button>
+                    ) : null}
                   </div>
-                  {shouldShowDraftGenerateButton ? (
-                    <button
-                      type="button"
-                      onClick={handleDraftGenerateClick}
-                      disabled={draftGenerationBusy || draftGenerationDisabled}
-                      className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {draftGenerationBusy ? "正在整理..." : "生成日志"}
-                    </button>
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -367,6 +445,7 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               onClick={(event) => handleProtectedNavigation(event, item.href)}
               aria-current={isActive(item.href) ? "page" : undefined}
               className={clsx(

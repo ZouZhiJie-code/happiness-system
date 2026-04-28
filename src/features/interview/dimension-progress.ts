@@ -20,6 +20,36 @@ export interface DimensionProgressSessionLike {
 export interface DimensionProgressSummary {
   percentage: number;
   state: "empty" | "active" | "ready" | "draft" | "completed";
+  displayState: "not_started" | "in_progress" | "draft_ready" | "completed";
+  statusLabel: "未开始" | "进行中" | "已整理" | "已完成";
+  shouldShowRing: boolean;
+}
+
+function getDisplayState(state: DimensionProgressSummary["state"]): DimensionProgressSummary["displayState"] {
+  switch (state) {
+    case "completed":
+      return "completed";
+    case "draft":
+      return "draft_ready";
+    case "active":
+    case "ready":
+      return "in_progress";
+    default:
+      return "not_started";
+  }
+}
+
+function getStatusLabel(displayState: DimensionProgressSummary["displayState"]): DimensionProgressSummary["statusLabel"] {
+  switch (displayState) {
+    case "completed":
+      return "已完成";
+    case "draft_ready":
+      return "已整理";
+    case "in_progress":
+      return "进行中";
+    default:
+      return "未开始";
+  }
 }
 
 function getSnapshotProgressScore(snapshot: JoySnapshot | null | undefined) {
@@ -84,7 +114,10 @@ export function getDimensionProgressSummary(
   if (!session) {
     return {
       percentage: 0,
-      state: "empty"
+      state: "empty",
+      displayState: "not_started",
+      statusLabel: "未开始",
+      shouldShowRing: false
     };
   }
 
@@ -117,9 +150,14 @@ export function getDimensionProgressSummary(
   }
 
   const roundedPercentage = Math.round(Math.max(0, Math.min(100, percentage)));
+  const state = getProgressState(roundedPercentage);
+  const displayState = getDisplayState(state);
 
   return {
     percentage: roundedPercentage,
-    state: getProgressState(roundedPercentage)
+    state,
+    displayState,
+    statusLabel: getStatusLabel(displayState),
+    shouldShowRing: displayState === "in_progress"
   };
 }

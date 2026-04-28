@@ -16,7 +16,6 @@ import {
 import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
 
-type BootState = "idle" | "booting" | "restoring";
 type AssistantState = "idle" | "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
 type DraftSyncState = "idle" | "saving" | "saved" | "error";
@@ -395,6 +394,7 @@ function parseSseChunk(chunk: string) {
 export function InterviewShell() {
   const searchParams = useSearchParams();
   const {
+    bootState,
     draftGenerationRequestId,
     draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
@@ -407,6 +407,7 @@ export function InterviewShell() {
     pendingDecision,
     reset,
     sessionId,
+    setBootState,
     setJournalEntry,
     stage,
     status
@@ -415,7 +416,6 @@ export function InterviewShell() {
   const [hasDismissedInputPlaceholder, setHasDismissedInputPlaceholder] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [bootState, setBootState] = useState<BootState>("idle");
   const [assistantState, setAssistantState] = useState<AssistantState>("idle");
   const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
   const [streamedAssistantSummary, setStreamedAssistantSummary] = useState("");
@@ -689,7 +689,7 @@ export function InterviewShell() {
 
       return null;
     }
-  }, [hydrate]);
+  }, [hydrate, setBootState]);
 
   const persistDraftEdits = useCallback(async (titleOverride?: string, contentOverride?: string) => {
     const activeDraft = draftStateRef.current;
@@ -763,9 +763,17 @@ export function InterviewShell() {
     stopDraftAutosave();
     stopToastTimer();
     clearStreamState();
+    const activeSession = sessionStateRef.current;
+    const shouldReuseCurrentSession = activeSession.sessionId && activeSession.sessionDimension === currentDimension;
+
+    if (shouldReuseCurrentSession) {
+      setBootState("idle");
+      return;
+    }
+
     reset(currentDimension);
     void ensureSession(currentDimension);
-  }, [clearStreamState, currentDimension, ensureSession, reset, stopDraftAutosave, stopToastTimer]);
+  }, [clearStreamState, currentDimension, ensureSession, reset, setBootState, stopDraftAutosave, stopToastTimer]);
 
   useEffect(() => {
     const messageScrollElement = messageScrollRef.current;

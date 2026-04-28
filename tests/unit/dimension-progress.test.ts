@@ -28,14 +28,20 @@ describe("getDimensionProgressSummary", () => {
   it("returns 0% for dimensions without a session", () => {
     expect(getDimensionProgressSummary(null)).toEqual({
       percentage: 0,
-      state: "empty"
+      state: "empty",
+      displayState: "not_started",
+      statusLabel: "未开始",
+      shouldShowRing: false
     });
   });
 
   it("keeps the dimension at 0% when a session exists but no content has been said yet", () => {
     expect(getDimensionProgressSummary(buildProgressSession())).toEqual({
       percentage: 0,
-      state: "empty"
+      state: "empty",
+      displayState: "not_started",
+      statusLabel: "未开始",
+      shouldShowRing: false
     });
   });
 
@@ -53,6 +59,9 @@ describe("getDimensionProgressSummary", () => {
 
     expect(summary.percentage).toBe(60);
     expect(summary.state).toBe("active");
+    expect(summary.displayState).toBe("in_progress");
+    expect(summary.statusLabel).toBe("进行中");
+    expect(summary.shouldShowRing).toBe(true);
   });
 
   it("reaches 76% once a stable clue or pattern is identified", () => {
@@ -93,6 +102,7 @@ describe("getDimensionProgressSummary", () => {
 
     expect(summary.percentage).toBe(90);
     expect(summary.state).toBe("ready");
+    expect(summary.displayState).toBe("in_progress");
   });
 
   it("keeps the dimension at 90% when a new event starts after a completed one", () => {
@@ -133,6 +143,9 @@ describe("getDimensionProgressSummary", () => {
 
     expect(summary.percentage).toBe(96);
     expect(summary.state).toBe("draft");
+    expect(summary.displayState).toBe("draft_ready");
+    expect(summary.statusLabel).toBe("已整理");
+    expect(summary.shouldShowRing).toBe(false);
   });
 
   it("reaches 100% once the dimension is saved or completed", () => {
@@ -147,5 +160,8 @@ describe("getDimensionProgressSummary", () => {
 
     expect(summary.percentage).toBe(100);
     expect(summary.state).toBe("completed");
+    expect(summary.displayState).toBe("completed");
+    expect(summary.statusLabel).toBe("已完成");
+    expect(summary.shouldShowRing).toBe(false);
   });
 });
