@@ -212,6 +212,14 @@ function getTopGenerateButton() {
   return within(getDimensionBar()).getByRole("button", { name: "生成日志" });
 }
 
+function getDimensionButton(label: string) {
+  return within(getDimensionBar()).getByRole("button", { name: label });
+}
+
+function expectDimensionProgress(label: string, progress: number) {
+  expect(within(getDimensionButton(label)).getByText(`${progress}%`)).toBeInTheDocument();
+}
+
 describe("InterviewShell", () => {
   beforeEach(() => {
     useInterviewStore.getState().reset("joy");
@@ -401,6 +409,12 @@ describe("InterviewShell", () => {
     expect(generateButton).toBeInTheDocument();
     expect(getDimensionBar()).toContainElement(generateButton);
     expect(generateButton.closest(".max-w-2xl")).toBeNull();
+    expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+    expectDimensionProgress("开心", 90);
+    expectDimensionProgress("充实", 0);
+    expectDimensionProgress("思考", 0);
+    expectDimensionProgress("改进", 0);
+    expectDimensionProgress("感谢", 0);
     expect(screen.getByTestId("interview-floating-composer")).toContainElement(screen.getByRole("textbox"));
     expect(screen.queryByTestId("interview-top-bar")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
@@ -1295,6 +1309,10 @@ describe("InterviewShell", () => {
 
     await screen.findByText("第 2 轮");
     expect(getTopGenerateButton()).toBeInTheDocument();
+    await waitFor(() => {
+      expectDimensionProgress("开心", 90);
+      expectDimensionProgress("充实", 36);
+    });
 
     mockSearchDimension.value = "fulfillment";
     view.rerender(
@@ -1323,6 +1341,66 @@ describe("InterviewShell", () => {
       "/api/interview/session/session-fulfillment",
       expect.objectContaining({ cache: "no-store" })
     );
+  });
+
+  it("falls back to 0% when a cached non-active dimension session is missing", async () => {
+    window.localStorage.setItem(
+      interviewSessionStorageKey,
+      JSON.stringify({
+        joy: { sessionId: "session-ready", expiresAt: "2099-04-21T00:00:00.000Z" },
+        fulfillment: { sessionId: "session-missing", expiresAt: "2099-04-21T00:00:00.000Z" }
+      })
+    );
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-ready")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-ready",
+              status: "active",
+              stage: "wrap_up",
+              turnCount: 2,
+              messages: promptMessages,
+              snapshot: baseSnapshot
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/session-missing")) {
+        return new Response(JSON.stringify({ error: "SESSION_NOT_FOUND" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        throw new Error("should not create a new session while a cached joy session is valid");
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    expectDimensionProgress("开心", 90);
+    expectDimensionProgress("充实", 0);
+
+    await waitFor(() => {
+      const storedSessions = JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}") as {
+        fulfillment?: unknown;
+      };
+
+      expect(storedSessions.fulfillment).toBeUndefined();
+    });
   });
 
   it("keeps a saved session restorable for 24 hours after ending the interview", async () => {
