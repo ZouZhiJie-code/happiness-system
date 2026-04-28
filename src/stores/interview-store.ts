@@ -7,6 +7,7 @@ import type {
   InterviewEventRecord,
   InterviewMessage,
   InterviewSessionRecord,
+  InterviewSnapshotData,
   JournalEntryRecord,
   JoySnapshot,
   PendingDecisionRecord
@@ -31,6 +32,7 @@ interface InterviewState {
   turnCount: number;
   messages: InterviewMessage[];
   snapshot: JoySnapshot | null;
+  snapshotData: InterviewSnapshotData | null;
   journalEntry: JournalEntryRecord | null;
   setDimension: (dimension: InterviewDimension) => void;
   setBootState: (bootState: InterviewBootState) => void;
@@ -63,6 +65,7 @@ const initialState = {
   turnCount: 0,
   messages: [] as InterviewMessage[],
   snapshot: null,
+  snapshotData: null,
   journalEntry: null
 };
 
@@ -85,6 +88,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       turnCount: session.turnCount,
       messages: session.messages,
       snapshot: session.snapshot,
+      snapshotData: session.snapshotData,
       journalEntry: session.journalEntry
     }),
   hydrate: (session) =>
@@ -102,6 +106,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       turnCount: session.turnCount,
       messages: session.messages,
       snapshot: session.snapshot,
+      snapshotData: session.snapshotData,
       journalEntry: session.journalEntry
     }),
   setJournalEntry: (journalEntry) => set({ journalEntry }),

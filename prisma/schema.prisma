@@ -125,6 +125,8 @@ model InterviewEvent {
   whyItMattered            String?
   happinessType            String?
   selfPattern              String?
+  snapshotData             Json?
+  progressData             Json?
   confidence               Float?
   missingSlots             String[]             @default([])
   draftSummary             String?
@@ -182,6 +184,7 @@ model JoyEntry {
   happinessType   String?
   selfPattern     String?
   tags            String[]
+  payload         Json?
   eventBlocks     Json?
   source          JoyEntrySource
   status          JoyEntryStatus @default(draft)

@@ -114,6 +114,7 @@ export function SiteHeader() {
     sessionId,
     setDimension,
     snapshot,
+    snapshotData,
     status,
     turnCount
   } = useInterviewStore();
@@ -132,9 +133,11 @@ export function SiteHeader() {
   const activeProgressSession: DimensionProgressSessionLike | null =
     sessionId && sessionDimension === activeDimension && status
       ? {
+          dimension: activeDimension,
           status,
           turnCount,
           snapshot,
+          snapshotData,
           events,
           pendingDecision,
           draftGenerationUnlocked,

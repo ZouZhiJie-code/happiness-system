@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { respondInterviewRequestSchema } from "@/features/joy-interview/schema/joy-interview.schema";
-import { interviewSessionSchema } from "@/features/joy-interview/schema/joy-interview.schema";
-import { streamJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
+import { interviewSessionSchema, respondInterviewRequestSchema } from "@/features/interview/schema/interview.schema";
+import { streamInterviewResponse } from "@/server/services/interview/interview.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
       };
 
       try {
-        const result = await streamJoyInterviewResponse(
+        const result = await streamInterviewResponse(
           parsed.data,
           {
             onPhase: (phase) => send("phase", { state: phase }),

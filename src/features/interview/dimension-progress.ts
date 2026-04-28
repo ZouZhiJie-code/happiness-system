@@ -1,16 +1,20 @@
-import type { InterviewEventRecord, InterviewSessionRecord, JoySnapshot } from "@/types/interview";
+import { getInterviewDimensionDefinition } from "@/features/interview/dimension-definitions";
+import type { InterviewEventRecord, InterviewSessionRecord, InterviewSnapshotData, JoySnapshot } from "@/types/interview";
 
 type DimensionProgressEventLike = {
   status: InterviewEventRecord["status"];
   snapshot: JoySnapshot | null;
+  snapshotData?: InterviewSnapshotData | null;
 };
 type DimensionProgressJournalLike = Pick<NonNullable<InterviewSessionRecord["journalEntry"]>, "status">;
 
 export interface DimensionProgressSessionLike {
+  dimension?: InterviewSessionRecord["dimension"];
   status: InterviewSessionRecord["status"];
   completedAt?: string | null;
   turnCount: number;
   snapshot: JoySnapshot | null;
+  snapshotData?: InterviewSnapshotData | null;
   events: DimensionProgressEventLike[];
   pendingDecision: InterviewSessionRecord["pendingDecision"];
   draftGenerationUnlocked: boolean;
@@ -52,34 +56,16 @@ function getStatusLabel(displayState: DimensionProgressSummary["displayState"]):
   }
 }
 
-function getSnapshotProgressScore(snapshot: JoySnapshot | null | undefined) {
-  let score = 0;
-
-  if (snapshot?.event) {
-    score = Math.max(score, 28);
-  }
-
-  if (snapshot?.feeling) {
-    score = Math.max(score, 36);
-  }
-
-  if (snapshot?.whyItMattered) {
-    score = Math.max(score, 60);
-  }
-
-  if (snapshot?.happinessType || snapshot?.selfPattern) {
-    score = Math.max(score, 76);
-  }
-
-  if (snapshot?.selfPattern) {
-    score = Math.max(score, 82);
-  }
-
-  return score;
+function getSnapshotProgressScore(
+  dimension: InterviewSessionRecord["dimension"],
+  snapshotData: InterviewSnapshotData | null | undefined,
+  snapshot: JoySnapshot | null | undefined
+) {
+  return getInterviewDimensionDefinition(dimension).getSnapshotProgressScore(snapshotData ?? null, snapshot ?? null);
 }
 
-function getEventProgressScore(event: DimensionProgressEventLike) {
-  let score = getSnapshotProgressScore(event.snapshot);
+function getEventProgressScore(dimension: InterviewSessionRecord["dimension"], event: DimensionProgressEventLike) {
+  let score = getSnapshotProgressScore(dimension, event.snapshotData, event.snapshot);
 
   if (event.status === "ready_for_choice" || event.status === "completed") {
     score = Math.max(score, 90);
@@ -127,15 +113,16 @@ export function getDimensionProgressSummary(
     : [
         {
           status: "active" as const,
-          snapshot: session.snapshot
+          snapshot: session.snapshot,
+          snapshotData: session.snapshotData
         }
       ];
 
   for (const event of progressEvents) {
-    percentage = Math.max(percentage, getEventProgressScore(event));
+    percentage = Math.max(percentage, getEventProgressScore(session.dimension ?? "joy", event));
   }
 
-  percentage = Math.max(percentage, getSnapshotProgressScore(session.snapshot));
+  percentage = Math.max(percentage, getSnapshotProgressScore(session.dimension ?? "joy", session.snapshotData, session.snapshot));
 
   if (session.draftGenerationUnlocked || session.pendingDecision) {
     percentage = Math.max(percentage, 90);

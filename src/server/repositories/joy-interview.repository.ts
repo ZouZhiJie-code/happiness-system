@@ -14,6 +14,10 @@ import {
   parseAssistantTurnPayload,
   serializeAssistantTurnPayload
 } from "@/features/joy-interview/assistant-turn";
+import {
+  buildJournalPayloadForDimension,
+  buildSnapshotDataForDimension
+} from "@/features/interview/dimension-definitions";
 import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
@@ -51,7 +55,15 @@ const interviewSessionInclude = {
     },
     take: 1
   },
-  joyEntry: true
+  joyEntry: {
+    include: {
+      session: {
+        select: {
+          dimension: true
+        }
+      }
+    }
+  }
 } as const;
 
 type DatabaseClient = PrismaClient | Prisma.TransactionClient | any;
@@ -59,6 +71,10 @@ type InterviewSessionWithRelations = any;
 type SnapshotRecord = any;
 type EventRecord = any;
 type JoyEntryRecord = any;
+
+function toJsonValue(value: unknown) {
+  return value as Prisma.InputJsonValue;
+}
 
 function mapSnapshot(snapshot: SnapshotRecord | null | undefined): JoySnapshot {
   if (!snapshot) {
@@ -100,7 +116,10 @@ function mapEventSnapshot(event: Pick<EventRecord, "event" | "feeling" | "whyItM
   };
 }
 
-function mapInterviewEvent(event: EventRecord): InterviewEventRecord {
+function mapInterviewEvent(dimension: InterviewDimension, event: EventRecord): InterviewEventRecord {
+  const snapshot = mapEventSnapshot(event);
+  const snapshotData = event.snapshotData ? (event.snapshotData as InterviewEventRecord["snapshotData"]) : buildSnapshotDataForDimension(dimension, snapshot);
+
   return {
     id: event.id,
     sequence: event.sequence,
@@ -112,7 +131,8 @@ function mapInterviewEvent(event: EventRecord): InterviewEventRecord {
     roundMeaningfulReplyCount: event.roundMeaningfulReplyCount,
     totalMeaningfulReplyCount: event.totalMeaningfulReplyCount,
     startMessageSequence: event.startMessageSequence,
-    snapshot: mapEventSnapshot(event),
+    snapshot,
+    snapshotData,
     draftSummary: event.draftSummary,
     startedAt: event.startedAt.toISOString(),
     completedAt: event.completedAt?.toISOString() ?? null
@@ -120,6 +140,9 @@ function mapInterviewEvent(event: EventRecord): InterviewEventRecord {
 }
 
 function buildFallbackEvent(session: InterviewSessionWithRelations): InterviewEventRecord {
+  const snapshot = mapSnapshot(session.snapshots[0]);
+  const snapshotData = buildSnapshotDataForDimension(session.dimension, snapshot);
+
   return {
     id: `legacy-${session.id}`,
     sequence: 1,
@@ -131,7 +154,8 @@ function buildFallbackEvent(session: InterviewSessionWithRelations): InterviewEv
     roundMeaningfulReplyCount: 0,
     totalMeaningfulReplyCount: session.turnCount,
     startMessageSequence: 0,
-    snapshot: mapSnapshot(session.snapshots[0]),
+    snapshot,
+    snapshotData,
     draftSummary: session.draftSummary,
     startedAt: session.startedAt.toISOString(),
     completedAt: session.completedAt?.toISOString() ?? null
@@ -169,10 +193,21 @@ function mapEventBlocks(blocks: Prisma.JsonValue | null | undefined): JoyEventBl
   });
 }
 
-function mapJournalEntry(entry: JoyEntryRecord | null | undefined): JournalEntryRecord | null {
+function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFallback: InterviewDimension = "joy"): JournalEntryRecord | null {
   if (!entry) {
     return null;
   }
+
+  const dimension = entry.session?.dimension ?? dimensionFallback;
+  const payload =
+    entry.payload ? (entry.payload as JournalEntryRecord["payload"]) : buildJournalPayloadForDimension(dimension, {
+      event: entry.event,
+      feeling: entry.feeling,
+      whyItMattered: entry.whyItMattered,
+      happinessType: entry.happinessType,
+      selfPattern: entry.selfPattern,
+      tags: entry.tags
+    });
 
   return {
     id: entry.id,
@@ -185,6 +220,7 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined): JournalEntry
     selfPattern: entry.selfPattern,
     tags: entry.tags,
     eventBlocks: mapEventBlocks(entry.eventBlocks),
+    payload,
     source: entry.source,
     status: entry.status,
     linkedSessionIds: entry.linkedSessionIds,
@@ -194,7 +230,7 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined): JournalEntry
 }
 
 function mapInterviewSession(session: InterviewSessionWithRelations): InterviewSessionRecord {
-  const events = session.events.length ? session.events.map(mapInterviewEvent) : [buildFallbackEvent(session)];
+  const events = session.events.length ? session.events.map((event: EventRecord) => mapInterviewEvent(session.dimension, event)) : [buildFallbackEvent(session)];
   const activeEvent =
     events.find((event: InterviewEventRecord) => event.id === session.activeEventId) ??
     events.find((event: InterviewEventRecord) => event.status !== "completed") ??
@@ -215,6 +251,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
       createdAt: message.createdAt.toISOString()
     })),
     snapshot: activeEvent?.snapshot ?? mapSnapshot(session.snapshots[0]),
+    snapshotData: activeEvent?.snapshotData ?? buildSnapshotDataForDimension(session.dimension, mapSnapshot(session.snapshots[0])),
     events,
     pendingDecision:
       activeEvent?.status === "ready_for_choice"
@@ -228,7 +265,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
     completedAt: session.completedAt?.toISOString() ?? null,
-    journalEntry: mapJournalEntry(session.joyEntry),
+    journalEntry: mapJournalEntry(session.joyEntry, session.dimension),
     turnCount: session.turnCount,
     lastAssistantQuestion: session.lastAssistantQuestion ?? "",
     draftSummary: session.draftSummary,
@@ -326,6 +363,7 @@ export async function createJoyInterviewSession(dimension: InterviewDimension, o
   const userId = await ensureDemoUser(prisma);
   const emptySnapshot = createEmptySnapshot();
   const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
+  const emptySnapshotData = buildSnapshotDataForDimension(dimension, emptySnapshot);
 
   const session = await prisma.$transaction(async (tx) => {
     const createdSession = await tx.interviewSession.create({
@@ -379,6 +417,7 @@ export async function createJoyInterviewSession(dimension: InterviewDimension, o
         whyItMattered: emptySnapshot.whyItMattered,
         happinessType: emptySnapshot.happinessType,
         selfPattern: emptySnapshot.selfPattern,
+        snapshotData: toJsonValue(emptySnapshotData),
         confidence: emptySnapshot.confidence,
         missingSlots: emptySnapshot.missingSlots
       }
@@ -487,6 +526,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         whyItMattered: input.snapshot.whyItMattered,
         happinessType: input.snapshot.happinessType,
         selfPattern: input.snapshot.selfPattern,
+        snapshotData: toJsonValue(buildSnapshotDataForDimension(existing.dimension, input.snapshot)),
         confidence: input.snapshot.confidence,
         missingSlots: input.snapshot.missingSlots,
         draftSummary: input.draftSummary,
@@ -537,6 +577,7 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
         explorationRound: activeEvent.explorationRound + 1,
         roundCoveredLenses: [],
         roundMeaningfulReplyCount: 0,
+        progressData: Prisma.JsonNull,
         completedAt: null
       }
     });
@@ -573,6 +614,7 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
     }
 
     const nextSequence = (existing.events[existing.events.length - 1]?.sequence ?? 0) + 1;
+    const emptySnapshot = createEmptySnapshot();
     const nextEvent = await tx.interviewEvent.create({
       data: {
         sessionId,
@@ -585,13 +627,14 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
         roundMeaningfulReplyCount: 0,
         totalMeaningfulReplyCount: 0,
         startMessageSequence: existing.messages.length,
-        event: null,
-        feeling: null,
-        whyItMattered: null,
-        happinessType: null,
-        selfPattern: null,
-        confidence: 0,
-        missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+        event: emptySnapshot.event,
+        feeling: emptySnapshot.feeling,
+        whyItMattered: emptySnapshot.whyItMattered,
+        happinessType: emptySnapshot.happinessType,
+        selfPattern: emptySnapshot.selfPattern,
+        snapshotData: toJsonValue(buildSnapshotDataForDimension(existing.dimension, emptySnapshot)),
+        confidence: emptySnapshot.confidence,
+        missingSlots: emptySnapshot.missingSlots
       }
     });
 
@@ -640,6 +683,14 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
     }
 
     await ensureDemoUser(tx);
+    const payload = buildJournalPayloadForDimension(existing.dimension, {
+      event: draftEntry.event,
+      feeling: draftEntry.feeling,
+      whyItMattered: draftEntry.whyItMattered,
+      happinessType: draftEntry.happinessType,
+      selfPattern: draftEntry.selfPattern,
+      tags: draftEntry.tags
+    });
 
     const draft = await tx.joyEntry.upsert({
       where: { sessionId },
@@ -652,6 +703,7 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         happinessType: draftEntry.happinessType,
         selfPattern: draftEntry.selfPattern,
         tags: draftEntry.tags,
+        payload: toJsonValue(payload),
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
         source: draftEntry.source,
         status: "draft",
@@ -670,6 +722,7 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         happinessType: draftEntry.happinessType,
         selfPattern: draftEntry.selfPattern,
         tags: draftEntry.tags,
+        payload: toJsonValue(payload),
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
         source: draftEntry.source,
         status: "draft",
@@ -757,6 +810,33 @@ export async function completeJoyInterviewSessionRecord(sessionId: string) {
 }
 
 export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft) {
+  const existing = await prisma.joyEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      session: {
+        select: {
+          dimension: true
+        }
+      }
+    }
+  });
+
+  if (!existing) {
+    throw new Prisma.PrismaClientKnownRequestError("Journal entry not found.", {
+      code: "P2025",
+      clientVersion: Prisma.prismaVersion.client
+    });
+  }
+
+  const payload = buildJournalPayloadForDimension(existing.session?.dimension ?? "joy", {
+    event: draftEntry.event,
+    feeling: draftEntry.feeling,
+    whyItMattered: draftEntry.whyItMattered,
+    happinessType: draftEntry.happinessType,
+    selfPattern: draftEntry.selfPattern,
+    tags: draftEntry.tags
+  });
+
   const updated = await prisma.joyEntry.update({
     where: { id: entryId },
     data: {
@@ -768,10 +848,18 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
       happinessType: draftEntry.happinessType,
       selfPattern: draftEntry.selfPattern,
       tags: draftEntry.tags,
+      payload: toJsonValue(payload),
       eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
       source: "ai_draft_edited",
       status: "draft",
       savedAt: null
+    },
+    include: {
+      session: {
+        select: {
+          dimension: true
+        }
+      }
     }
   });
 

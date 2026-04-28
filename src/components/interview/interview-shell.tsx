@@ -5,6 +5,10 @@ import { useSearchParams } from "next/navigation";
 
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
+  buildDraftViewModelForDimension,
+  buildSummaryViewModelForDimension
+} from "@/features/interview/dimension-definitions";
+import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
   getStoredInterviewSessionEntry,
@@ -14,7 +18,7 @@ import {
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
-import type { InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
+import type { DimensionRendererField, InterviewDimension, InterviewMessage, InterviewSessionRecord } from "@/types/interview";
 
 type AssistantState = "idle" | "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
@@ -91,6 +95,7 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
 }
 
 function ChoiceActionCard({
+  dimensionLabel,
   onContinueCurrentEvent,
   onNextEvent,
   onGenerate,
@@ -98,6 +103,7 @@ function ChoiceActionCard({
   nextEventDisabled,
   generateDisabled
 }: {
+  dimensionLabel: string;
   onContinueCurrentEvent: () => void;
   onNextEvent: () => void;
   onGenerate: () => void;
@@ -110,7 +116,7 @@ function ChoiceActionCard({
       <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">访谈分岔点</p>
       <h4 className="mt-2 font-display text-[1.35rem] text-[#2e2319]">这一件已经复盘完整了，接下来怎么走？</h4>
       <p className="mt-2 text-sm leading-7 text-[#594537]">
-        你可以继续深挖当前这件事，也可以切到今天的下一件开心事件；如果信息已经够了，也可以直接整理成日志。
+        你可以继续深挖当前这件事，也可以切到今天的下一件{dimensionLabel}事件；如果信息已经够了，也可以直接整理成日志。
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
@@ -127,7 +133,7 @@ function ChoiceActionCard({
           disabled={nextEventDisabled}
           className="rounded-full border border-[rgba(168,124,69,0.24)] bg-[rgba(255,250,242,0.82)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          聊下一件开心的事
+          聊下一件{dimensionLabel}的事
         </button>
         <button
           type="button"
@@ -266,6 +272,39 @@ function DraftPanelStateCard({
       </h4>
       <p className={`mt-3 max-w-[28rem] text-sm leading-7 ${isError ? "text-[#8b5148]" : "text-[#5d5042]"}`}>{description}</p>
       {actions ? <div className="mt-5 flex flex-wrap justify-center gap-3">{actions}</div> : null}
+    </div>
+  );
+}
+
+function DimensionStructureCard({
+  title,
+  description,
+  fields
+}: {
+  title: string;
+  description: string;
+  fields: DimensionRendererField[];
+}) {
+  if (!fields.length) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 rounded-[26px] border border-[rgba(160,115,67,0.16)] bg-[linear-gradient(180deg,rgba(255,249,240,0.92),rgba(246,234,212,0.9))] p-4 shadow-[0_14px_34px_rgba(124,83,43,0.08)]">
+      <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">结构化线索</p>
+      <h4 className="mt-2 font-display text-[1.2rem] text-[#2e2319]">{title}</h4>
+      <p className="mt-2 text-sm leading-6 text-[#5d5042]">{description}</p>
+      <dl className="mt-4 grid gap-3">
+        {fields.map((field) => (
+          <div
+            key={`${field.label}-${field.value}`}
+            className="rounded-[20px] border border-[rgba(160,115,67,0.12)] bg-[rgba(255,252,247,0.74)] px-4 py-3"
+          >
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-[#9a734d]">{field.label}</dt>
+            <dd className="mt-1 text-sm leading-6 text-[#2e2319]">{field.value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -409,6 +448,7 @@ export function InterviewShell() {
     sessionId,
     setBootState,
     setJournalEntry,
+    snapshotData,
     stage,
     status
   } = useInterviewStore();
@@ -455,6 +495,22 @@ export function InterviewShell() {
   });
   const [shellHeight, setShellHeight] = useState<number | null>(null);
   const hasUserMessages = useMemo(() => messages.some((message) => message.role === "user"), [messages]);
+  const summaryViewModel = useMemo(() => {
+    if (!snapshotData) {
+      return null;
+    }
+
+    const nextDimension = sessionDimension ?? currentDimension;
+    const viewModel = buildSummaryViewModelForDimension(nextDimension, snapshotData);
+    return viewModel.fields.length ? viewModel : null;
+  }, [currentDimension, sessionDimension, snapshotData]);
+  const draftViewModel = useMemo(() => {
+    if (!journalEntry?.payload) {
+      return null;
+    }
+
+    return buildDraftViewModelForDimension(journalEntry.payload.kind, journalEntry.payload);
+  }, [journalEntry]);
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -713,7 +769,7 @@ export function InterviewShell() {
     draftPersistRequestIdRef.current = requestId;
 
     try {
-      const response = await fetch(`/api/joy-entry/${activeJournalEntry.id}`, {
+      const response = await fetch(`/api/journal-entry/${activeJournalEntry.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1308,6 +1364,7 @@ export function InterviewShell() {
               {showChoiceCard ? (
                 <>
                   <ChoiceActionCard
+                    dimensionLabel={dimensionMeta.label}
                     onContinueCurrentEvent={() => void handleContinueChoice()}
                     onNextEvent={() => void handleNextEventChoice()}
                     onGenerate={() => void handleGenerateDraft()}
@@ -1327,6 +1384,15 @@ export function InterviewShell() {
                   />
                   {error ? <p className="ml-4 text-sm text-[#9f3a2f]">{error}</p> : null}
                 </>
+              ) : null}
+              {!journalEntry && summaryViewModel ? (
+                <div className="ml-4 w-full max-w-[31rem]">
+                  <DimensionStructureCard
+                    title={`${dimensionMeta.label}摘要`}
+                    description="当前这轮访谈已经沉淀出的结构化线索会显示在这里。"
+                    fields={summaryViewModel.fields}
+                  />
+                </div>
               ) : null}
             </div>
           </div>
@@ -1448,6 +1514,13 @@ export function InterviewShell() {
             />
           ) : journalEntry ? (
             <div className="mt-5 flex min-h-0 flex-1 flex-col">
+              {draftViewModel ? (
+                <DimensionStructureCard
+                  title={draftViewModel.title}
+                  description={draftViewModel.description}
+                  fields={draftViewModel.fields}
+                />
+              ) : null}
               <input
                 value={draftTitle}
                 onChange={(event) => setDraftTitle(event.target.value)}

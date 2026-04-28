@@ -339,7 +339,7 @@ describe("InterviewShell", () => {
         );
       }
 
-      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
         const body = JSON.parse(String(init.body)) as JournalEntryRecord;
 
         return new Response(
@@ -1631,7 +1631,7 @@ describe("InterviewShell", () => {
         throw new Error("should not create a new session while cached sessions are valid");
       }
 
-      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
         return new Response(JSON.stringify(baseJournalEntry), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1741,7 +1741,7 @@ describe("InterviewShell", () => {
         );
       }
 
-      if (url.includes("/api/joy-entry/") && init?.method === "PUT") {
+      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
         return new Response(JSON.stringify(editedDraftEntry), {
           status: 200,
           headers: { "Content-Type": "application/json" }
@@ -1810,7 +1810,9 @@ describe("InterviewShell", () => {
     });
 
     const putCalls = vi.mocked(global.fetch).mock.calls.filter(
-      ([input, nextInit]) => String(input).includes("/api/joy-entry/") && nextInit?.method === "PUT"
+      ([input, nextInit]) =>
+        (String(input).includes("/api/journal-entry/") || String(input).includes("/api/joy-entry/")) &&
+        nextInit?.method === "PUT"
     );
     const saveCalls = vi.mocked(global.fetch).mock.calls.filter(
       ([input, nextInit]) => String(input).endsWith("/api/interview/session/draft/save") && nextInit?.method === "POST"

@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import {
   saveDraftRequestSchema,
   saveDraftResponseSchema
-} from "@/features/joy-interview/schema/joy-interview.schema";
-import { saveGeneratedJoyEntry } from "@/server/services/interview/joy-interview.service";
+} from "@/features/interview/schema/interview.schema";
+import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await saveGeneratedJoyEntry(parsed.data.sessionId);
+    const result = await saveGeneratedJournalEntry(parsed.data.sessionId);
     const payload = saveDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);

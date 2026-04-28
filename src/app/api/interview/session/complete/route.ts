@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import {
   completeInterviewRequestSchema,
   completeInterviewResponseSchema
-} from "@/features/joy-interview/schema/joy-interview.schema";
-import { completeJoyInterviewSession } from "@/server/services/interview/joy-interview.service";
+} from "@/features/interview/schema/interview.schema";
+import { completeInterviewSession } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await completeJoyInterviewSession(parsed.data.sessionId);
+    const result = await completeInterviewSession(parsed.data.sessionId);
     const payload = completeInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

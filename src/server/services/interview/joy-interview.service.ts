@@ -368,6 +368,7 @@ function buildImmediateResponseFromSession(session: InterviewSessionRecord) {
     sessionStatus: session.status,
     turnCount: session.turnCount,
     snapshot: session.snapshot,
+    snapshotData: session.snapshotData,
     isReadyForDraft: session.draftGenerationUnlocked,
     session
   };
@@ -536,6 +537,7 @@ async function getActiveInterviewSession(sessionId: string) {
       sessionStatus: session.status,
       turnCount: session.turnCount,
       snapshot: session.snapshot,
+      snapshotData: session.snapshotData,
       isReadyForDraft: session.draftGenerationUnlocked,
       session
     };
@@ -799,6 +801,7 @@ export async function completeJoyInterviewResponse(
     sessionStatus: updatedSession.status,
     turnCount: updatedSession.turnCount,
     snapshot: updatedSession.snapshot,
+    snapshotData: updatedSession.snapshotData,
     isReadyForDraft: updatedSession.draftGenerationUnlocked || input.isReadyForDraft,
     session: updatedSession
   };
