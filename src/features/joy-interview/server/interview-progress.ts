@@ -1,4 +1,13 @@
 import { getLatestAssistantPayload, normalizeAssistantDepthReached } from "@/features/joy-interview/assistant-turn";
+import {
+  getDelightSignature,
+  getJoyMoment,
+  getJoyTrack,
+  getJoySource,
+  getManualClue,
+  getMeaningNeed,
+  getStateShift
+} from "@/features/joy-interview/server/joy-interview-engine";
 import type {
   AssistantDepth,
   AssistantTurnPayload,
@@ -13,6 +22,7 @@ const genericShortReplies = new Set(["嗯", "嗯嗯", "哦", "啊", "好", "好�
 export interface UserTurnAssessment {
   normalizedMessage: string;
   isMeaningful: boolean;
+  intent: "content" | "low_signal" | "boundary_stop" | "hostile_boundary";
 }
 
 export interface InterviewProgressSummary {
@@ -30,25 +40,41 @@ function normalizeMessage(value: string) {
 
 export function assessUserTurnMessage(message: string): UserTurnAssessment {
   const normalizedMessage = normalizeMessage(message);
+  const compactMessage = normalizedMessage.replace(/\s+/g, "");
 
   if (!normalizedMessage) {
     return {
       normalizedMessage,
-      isMeaningful: false
+      isMeaningful: false,
+      intent: "low_signal"
+    };
+  }
+
+  const boundaryPattern =
+    /(不要再(?:追问|问|深挖|纠结)|别(?:再)?(?:追问|问)了|不想(?:再)?(?:继续|深挖|聊了|说了|回答)|已经(?:讲|说)得很具体|这(?:追问|问题|样问)(?:有)?什么意义|你(?:干嘛|为什么|怎么)(?:老|一直|总是)?(?:问|纠结|追问)|先这样|就这样吧|先到这|直接生成|先生成日志|生成一下日志|直接整理|先整理日志|整理成日志|总结日志|总结成日志|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?|不用(?:再)?问|没必要(?:再)?问|够了)/u;
+  const hostilePattern = /(烦不烦|有病|傻逼|滚|闭嘴|废话|神经病|妈的|操)/u;
+
+  if (boundaryPattern.test(compactMessage)) {
+    return {
+      normalizedMessage,
+      isMeaningful: true,
+      intent: hostilePattern.test(compactMessage) ? "hostile_boundary" : "boundary_stop"
     };
   }
 
   if (normalizedMessage.length <= 3) {
     return {
       normalizedMessage,
-      isMeaningful: false
+      isMeaningful: false,
+      intent: "low_signal"
     };
   }
 
   if (genericShortReplies.has(normalizedMessage.toLowerCase())) {
     return {
       normalizedMessage,
-      isMeaningful: false
+      isMeaningful: false,
+      intent: "low_signal"
     };
   }
 
@@ -58,36 +84,39 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
   ) {
     return {
       normalizedMessage,
-      isMeaningful: false
+      isMeaningful: false,
+      intent: "low_signal"
     };
   }
 
   return {
     normalizedMessage,
-    isMeaningful: true
+    isMeaningful: true,
+    intent: "content"
   };
 }
 
 export function deriveDepthReachedFromSnapshot(snapshot: JoySnapshot) {
   const depthReached: AssistantDepth[] = [];
+  const joyTrack = getJoyTrack(snapshot);
 
-  if (snapshot.event) {
+  if (getJoyMoment(snapshot)) {
     depthReached.push("event");
   }
 
-  if (snapshot.feeling) {
+  if (getStateShift(snapshot)) {
     depthReached.push("feeling");
   }
 
-  if (snapshot.whyItMattered) {
+  if (getJoySource(snapshot)) {
     depthReached.push("reason");
   }
 
-  if (snapshot.happinessType || snapshot.selfPattern) {
+  if (getMeaningNeed(snapshot) || (joyTrack === "delight_track" && getDelightSignature(snapshot))) {
     depthReached.push("clue");
   }
 
-  if (snapshot.selfPattern) {
+  if (getManualClue(snapshot) || getDelightSignature(snapshot)) {
     depthReached.push("pattern");
   }
 
@@ -166,7 +195,7 @@ export function isDraftGenerationUnlocked(input: {
   return isDraftGenerationUnlockedFromState({
     hasJournalEntry: Boolean(input.journalEntry),
     stage: input.stage,
-    hasPendingDecision: Boolean(input.pendingDecision),
+    hasPendingDecision: input.pendingDecision?.kind === "event_complete",
     hasHistoricalChoice
   });
 }

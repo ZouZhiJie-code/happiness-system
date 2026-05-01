@@ -109,6 +109,7 @@ export function SiteHeader() {
     journalEntry,
     messages,
     pendingDecision,
+    requestConversationReset,
     requestDraftGeneration,
     sessionDimension,
     sessionId,
@@ -315,6 +316,16 @@ export function SiteHeader() {
     requestDraftGeneration();
   }
 
+  function handleConversationResetClick() {
+    const confirmed = window.confirm("清除当前维度的对话记录并重新开始？这会丢弃当前页面里还没保存的访谈进度。");
+
+    if (!confirmed) {
+      return;
+    }
+
+    requestConversationReset();
+  }
+
   return (
     <header className="page-shell mx-auto max-w-[88rem] rounded-[28px] px-4 py-2.5 backdrop-blur md:px-5 md:py-2.5">
       <div className="relative z-10 flex flex-col gap-2.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4">
@@ -437,6 +448,13 @@ export function SiteHeader() {
                         {draftGenerationBusy ? "正在整理..." : "生成日志"}
                       </button>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={handleConversationResetClick}
+                      className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
+                    >
+                      清除对话记录
+                    </button>
                   </div>
                 </div>
               </div>

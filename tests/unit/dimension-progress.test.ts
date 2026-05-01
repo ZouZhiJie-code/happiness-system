@@ -45,7 +45,7 @@ describe("getDimensionProgressSummary", () => {
     });
   });
 
-  it("reaches 60% once the user has explained why the moment mattered", () => {
+  it("reaches 66% once the user has explained the source and state of the moment", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({
         snapshot: {
@@ -57,14 +57,14 @@ describe("getDimensionProgressSummary", () => {
       })
     );
 
-    expect(summary.percentage).toBe(60);
+    expect(summary.percentage).toBe(66);
     expect(summary.state).toBe("active");
     expect(summary.displayState).toBe("in_progress");
     expect(summary.statusLabel).toBe("进行中");
     expect(summary.shouldShowRing).toBe(true);
   });
 
-  it("reaches 76% once a stable clue or pattern is identified", () => {
+  it("stays at 66% when only optional joy signals exist before a stable closure", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({
         snapshot: {
@@ -72,12 +72,31 @@ describe("getDimensionProgressSummary", () => {
           event: "今天和同事把问题解决了",
           feeling: "松了一口气",
           whyItMattered: "我很在意协作时的推进感",
-          happinessType: "成就型开心"
+          happinessType: "成就型开心",
+          selfPattern: null
         }
       })
     );
 
-    expect(summary.percentage).toBe(76);
+    expect(summary.percentage).toBe(66);
+    expect(summary.state).toBe("active");
+  });
+
+  it("reaches 88% only after a stable closure and extra joy signals both exist", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        snapshot: {
+          ...emptySnapshot,
+          event: "今天和同事把问题解决了",
+          feeling: "松了一口气",
+          whyItMattered: "我很在意协作时的推进感",
+          happinessType: "成就型开心",
+          selfPattern: "当我和靠谱的人一起推进问题时，我会更容易进入状态"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(88);
     expect(summary.state).toBe("active");
   });
 
@@ -130,6 +149,73 @@ describe("getDimensionProgressSummary", () => {
 
     expect(summary.percentage).toBe(90);
     expect(summary.state).toBe("ready");
+  });
+
+  it("keeps fulfillment at 28% when only the scene and feeling exist without progress evidence", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "fulfillment",
+        snapshot: {
+          ...emptySnapshot,
+          event: "今天练了半小时口语",
+          feeling: "踏实"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(28);
+    expect(summary.state).toBe("active");
+  });
+
+  it("reaches 60% for fulfillment once there is concrete progress evidence", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "fulfillment",
+        snapshot: {
+          ...emptySnapshot,
+          event: "今天练了半小时口语",
+          whyItMattered: "我把前几天总卡住的发音顺过了一点"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(60);
+    expect(summary.state).toBe("active");
+  });
+
+  it("reaches 72% for fulfillment when progress evidence is joined by feeling or type", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "fulfillment",
+        snapshot: {
+          ...emptySnapshot,
+          event: "今天练了半小时口语",
+          feeling: "踏实",
+          whyItMattered: "我把前几天总卡住的发音顺过了一点"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(72);
+    expect(summary.state).toBe("active");
+  });
+
+  it("reaches 82% for fulfillment only when a worth-standard signal is also present", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "fulfillment",
+        snapshot: {
+          ...emptySnapshot,
+          event: "今天练了半小时口语",
+          feeling: "踏实",
+          whyItMattered: "我把前几天总卡住的发音顺过了一点",
+          selfPattern: "比起表面忙，我更看重这种一点点练扎实的感觉"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(82);
+    expect(summary.state).toBe("active");
   });
 
   it("reaches 96% when a draft journal already exists", () => {

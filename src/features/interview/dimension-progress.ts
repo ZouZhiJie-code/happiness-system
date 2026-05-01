@@ -124,7 +124,11 @@ export function getDimensionProgressSummary(
 
   percentage = Math.max(percentage, getSnapshotProgressScore(session.dimension ?? "joy", session.snapshotData, session.snapshot));
 
-  if (session.draftGenerationUnlocked || session.pendingDecision) {
+  if (session.pendingDecision?.kind === "dimension_redirect") {
+    percentage = Math.min(percentage, 88);
+  }
+
+  if (session.draftGenerationUnlocked || session.pendingDecision?.kind === "event_complete") {
     percentage = Math.max(percentage, 90);
   }
 

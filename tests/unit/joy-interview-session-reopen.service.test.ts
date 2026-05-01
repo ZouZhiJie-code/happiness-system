@@ -98,7 +98,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     completedAt: null,
     journalEntry: {
       id: "entry-1",
-      title: "今天的开心：和家人一起吃饭聊天",
+      title: "和家人一起吃饭",
       content: "今天让我开心的事情是：今天和家人一起吃饭聊天。",
       event: "今天和家人一起吃饭聊天",
       feeling: "轻松踏实",

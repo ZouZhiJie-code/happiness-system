@@ -19,16 +19,16 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
   joy: {
     dimension: "joy",
     label: "开心",
-    openingQuestion: "今天有没有一个让你真心开心的瞬间？先讲那个具体时刻。",
+    openingQuestion: "今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。",
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
-    reasonQuestion: "听起来这件事有分量。它为什么会让你这么开心？",
-    genericPatternQuestion: "如果往深一点看，这份开心更像哪一种满足？它好像说明了你怎样的在乎或特质？",
+    reasonQuestion: "如果不只讲发生了什么，真正让你一下子有感觉的点是什么？",
+    genericPatternQuestion: "如果回头看，这类开心更像在提醒你什么？",
     draftTitlePrefix: "今天的开心",
-    eventLinePrefix: "今天让我开心的事情是：",
-    reasonLinePrefix: "这件事之所以重要，是因为：",
-    summaryLinePrefix: "如果给这份开心命名，它更像：",
-    selfPatternLinePrefix: "它也让我看见自己的一种模式："
+    eventLinePrefix: "今天让我开心的片段是：",
+    reasonLinePrefix: "真正让我有感觉的点是：",
+    summaryLinePrefix: "如果把这类开心轻轻收成一句，它更像：",
+    selfPatternLinePrefix: "它也让我看见自己更稳定的一条线索："
   },
   fulfillment: {
     dimension: "fulfillment",
@@ -47,21 +47,21 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
   reflection: {
     dimension: "reflection",
     label: "思考",
-    openingQuestion: "今天有没有一个让你停下来想一想的片段？先讲那个时刻。",
+    openingQuestion: "今天有没有一个让你停下来想一想的具体片段？先讲那个时刻发生了什么。",
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
-    reasonQuestion: "这个片段为什么会让你停下来多想一层？",
-    genericPatternQuestion: "如果往深一点看，这次思考更像一个提醒、疑问还是新的理解？它说明你在意什么？",
+    reasonQuestion: "这个片段让你看见了什么新的理解，或者让原来的判断哪里变清楚了？",
+    genericPatternQuestion: "如果以后遇到类似事情，这次思考给你多了一条什么判断线索？",
     draftTitlePrefix: "今天的思考",
     eventLinePrefix: "今天让我停下来思考的片段是：",
-    reasonLinePrefix: "这件事之所以让我反复想，是因为：",
-    summaryLinePrefix: "如果给这次思考命名，它更像：",
-    selfPatternLinePrefix: "它也让我看见自己的一种思考模式："
+    reasonLinePrefix: "这次新的理解是：",
+    summaryLinePrefix: "这次思考更接近：",
+    selfPatternLinePrefix: "以后判断类似事情时，我多了一条线索："
   },
   improvement: {
     dimension: "improvement",
     label: "改进",
-    openingQuestion: "今天有没有一个让你觉得下次可以做得更稳一点的时刻？先讲那个情境。",
+    openingQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。",
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
     reasonQuestion: "这个情境为什么会让你觉得这里值得调整一下？",

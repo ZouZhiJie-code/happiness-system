@@ -1,15 +1,33 @@
 import type { AIRequestStage } from "@prisma/client";
 
-import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
+import {
+  buildDraftBrief,
+  buildDraftWritingProfile,
+  createFallbackDraft,
+  runDraftQualityGate
+} from "@/features/interview/server/draft-policies";
+import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
 import {
   buildAssistantQuestion,
-  createDraft,
   extractJoySignals,
+  getDelightSignature,
+  getDirectionSignal,
+  getDurability,
+  getJoyMoment,
+  getJoyPsychProfile,
+  getJoySource,
+  getJoyTags,
+  getManualClue,
+  getMeaningNeed,
+  getStateShift,
+  getValueImpact,
   mergeJoySignals,
   type JoySignalFields
 } from "@/features/joy-interview/server/joy-interview-engine";
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
 import {
+  fulfillmentExtractResultSchema,
+  improvementExtractResultSchema,
   joyDraftResultSchema,
   joyExtractResultSchema,
   type JoyDraftResult
@@ -47,6 +65,7 @@ const assistantMarkers = [
 ];
 
 type AssistantStreamingTarget = "summary" | "question";
+type DraftGenerationMode = "initial_generate" | "refresh_minor" | "refresh_major";
 
 export interface AssistantReplySegments {
   thinkingSummary: string;
@@ -82,18 +101,189 @@ function sanitizeNullableString(value: string | null | undefined) {
   return trimmed || null;
 }
 
+function trimTrailingPunctuation(value: string) {
+  return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
+}
+
 function trimToLength(value: string, maxLength: number) {
   return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
 
+function normalizeContentUnit(value: string) {
+  return value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:、“”"'（）()【】\[\]《》]/gu, "");
+}
+
+function dedupeDraftParagraphs(content: string) {
+  const paragraphs = content
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const paragraph of paragraphs) {
+    const normalized = normalizeContentUnit(paragraph);
+
+    if (normalized.length >= 12 && seen.has(normalized)) {
+      continue;
+    }
+
+    if (normalized.length >= 12) {
+      seen.add(normalized);
+    }
+
+    const sentenceSeen = new Set<string>();
+    const dedupedSentences = paragraph
+      .split(/(?<=[。！？!?])/u)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean)
+      .filter((sentence) => {
+        const normalizedSentence = normalizeContentUnit(sentence);
+
+        if (normalizedSentence.length < 12) {
+          return true;
+        }
+
+        if (sentenceSeen.has(normalizedSentence)) {
+          return false;
+        }
+
+        sentenceSeen.add(normalizedSentence);
+        return true;
+      })
+      .join("");
+
+    deduped.push(dedupedSentences || paragraph);
+  }
+
+  return deduped.join("\n\n").trim();
+}
+
+function normalizeDraftTitle(title: string, brief: ReturnType<typeof buildDraftBrief>) {
+  return buildSemanticJournalTitle({
+    dimension: brief.dimension,
+    draftBrief: brief,
+    aiTitle: title,
+    fallbackTitle: brief.titleHint ?? brief.anchorScene ?? "今天记下的片刻"
+  });
+}
+
+function cloneExistingDraft(entry: InterviewSessionRecord["journalEntry"]): JoyEntryDraft | null {
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    title: entry.title,
+    content: entry.content,
+    event: entry.event,
+    feeling: entry.feeling,
+    whyItMattered: entry.whyItMattered,
+    happinessType: entry.happinessType,
+    selfPattern: entry.selfPattern,
+    joyMoment: entry.joyMoment,
+    joySource: entry.joySource,
+    stateShift: entry.stateShift,
+    meaningNeed: entry.meaningNeed,
+    manualClue: entry.manualClue,
+    delightSignature: entry.delightSignature,
+    directionSignal: entry.directionSignal,
+    valueImpact: entry.valueImpact,
+    durability: entry.durability,
+    psychProfile: entry.psychProfile,
+    tags: entry.tags,
+    eventBlocks: entry.eventBlocks,
+    source: entry.source
+  };
+}
+
+function resolveDraftGenerationMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftGenerationMode {
+  const existingDraft = session.journalEntry;
+
+  if (!existingDraft) {
+    return "initial_generate";
+  }
+
+  const existingPrimaryEventId = existingDraft.eventBlocks[0]?.eventId ?? null;
+  const nextPrimaryEventId = sourceEvents[0]?.id ?? null;
+  const existingEventCount = existingDraft.eventBlocks.length;
+  const nextEventCount = sourceEvents.length;
+  const existingTrack = existingDraft.payload?.kind === "joy" ? existingDraft.payload.psychProfile?.track ?? null : null;
+  const nextTrack = session.snapshot.psychProfile?.track ?? null;
+
+  if (
+    (existingPrimaryEventId && nextPrimaryEventId && existingPrimaryEventId !== nextPrimaryEventId) ||
+    nextEventCount > existingEventCount ||
+    (existingTrack && nextTrack && existingTrack !== nextTrack)
+  ) {
+    return "refresh_major";
+  }
+
+  return "refresh_minor";
+}
+
+function getDraftGenerationOptions(mode: DraftGenerationMode) {
+  switch (mode) {
+    case "initial_generate":
+      return {
+        timeoutMs: 12_000,
+        maxAttempts: 1,
+        maxTokens: 700,
+        messageWindow: 8,
+        eventWindow: 3
+      };
+    case "refresh_major":
+      return {
+        timeoutMs: 11_000,
+        maxAttempts: 1,
+        maxTokens: 640,
+        messageWindow: 8,
+        eventWindow: 3
+      };
+    case "refresh_minor":
+      return {
+        timeoutMs: 8_000,
+        maxAttempts: 1,
+        maxTokens: 520,
+        messageWindow: 6,
+        eventWindow: 2
+      };
+  }
+}
+
 function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
   return {
-    event: sanitizeNullableString(fields.event),
+    event: sanitizeNullableString(fields.event ?? fields.situation),
     feeling: sanitizeNullableString(fields.feeling),
-    whyItMattered: sanitizeNullableString(fields.whyItMattered),
-    happinessType: sanitizeNullableString(fields.happinessType),
-    selfPattern: sanitizeNullableString(fields.selfPattern)
+    whyItMattered: sanitizeNullableString(fields.whyItMattered ?? fields.frictionPoint ?? fields.repeatCondition),
+    happinessType: sanitizeNullableString(fields.happinessType ?? fields.improvementType),
+    selfPattern: sanitizeNullableString(fields.selfPattern ?? fields.nextAttempt),
+    joyMoment: sanitizeNullableString(fields.joyMoment),
+    joySource: sanitizeNullableString(fields.joySource),
+    stateShift: sanitizeNullableString(fields.stateShift),
+    meaningNeed: sanitizeNullableString(fields.meaningNeed),
+    manualClue: sanitizeNullableString(fields.manualClue),
+    delightSignature: sanitizeNullableString(fields.delightSignature),
+    directionSignal: sanitizeNullableString(fields.directionSignal),
+    valueImpact: sanitizeNullableString(fields.valueImpact),
+    durability: sanitizeNullableString(fields.durability),
+    improvementTrack: fields.improvementTrack ?? null,
+    stateAssessment: sanitizeNullableString(fields.stateAssessment),
+    frictionPoint: sanitizeNullableString(fields.frictionPoint),
+    repeatCondition: sanitizeNullableString(fields.repeatCondition),
+    controllableFactor: sanitizeNullableString(fields.controllableFactor),
+    nextAttempt: sanitizeNullableString(fields.nextAttempt),
+    successSignal: sanitizeNullableString(fields.successSignal),
+    tags: Array.from(new Set((fields.tags ?? []).map((tag) => tag.trim()).filter(Boolean))).slice(0, 6)
   };
+}
+
+function getExtractResultSchema(dimension: InterviewDimension) {
+  if (dimension === "improvement") {
+    return improvementExtractResultSchema;
+  }
+
+  return dimension === "fulfillment" || dimension === "reflection" ? fulfillmentExtractResultSchema : joyExtractResultSchema;
 }
 
 async function logAttempt(
@@ -120,12 +310,15 @@ export async function extractJoySnapshotWithAI(input: {
   session: InterviewSessionRecord;
   userMessage: string;
 }): Promise<JoySnapshot> {
-  const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot);
+  const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
+    allowClosureInference: false,
+    allowOptionalSignalInference: false
+  });
   const provider = getAIProvider();
   const aiResult = await completeStructuredOutput({
     provider,
     stage: "extract",
-    schema: joyExtractResultSchema,
+    schema: getExtractResultSchema(input.session.dimension),
     messages: buildJoyExtractMessages({
       dimension: input.session.dimension,
       stage: input.session.stage,
@@ -211,6 +404,18 @@ function buildAssistantAnalysis(input: AssistantTurnGenerationInput) {
 
   if (!input.isMeaningfulReply) {
     return "用户这轮信息较少；下一步问：继续用当前阶段问题把事件抓稳。";
+  }
+
+  if (input.dimension === "joy") {
+    if (input.stage === "collect_event") {
+      return "用户已补充一个可能的开心片段；下一步问：把真正让他有感觉的点问具体。";
+    }
+
+    if (input.stage === "probe_reason") {
+      return "用户已补充开心来源；下一步问：确认它带来的状态变化或触到的在乎。";
+    }
+
+    return "用户已继续补充当前事件；下一步问：沉淀出更稳定的个人线索。";
   }
 
   if (input.stage === "collect_event") {
@@ -559,7 +764,25 @@ function buildEventBlocks(events: InterviewEventRecord[]): JoyEventBlock[] {
     feeling: sanitizeNullableString(event.snapshot.feeling),
     whyItMattered: sanitizeNullableString(event.snapshot.whyItMattered),
     happinessType: sanitizeNullableString(event.snapshot.happinessType),
-    selfPattern: sanitizeNullableString(event.snapshot.selfPattern)
+    selfPattern: sanitizeNullableString(event.snapshot.selfPattern),
+    joyMoment: sanitizeNullableString(getJoyMoment(event.snapshot)),
+    joySource: sanitizeNullableString(getJoySource(event.snapshot)),
+    stateShift: sanitizeNullableString(getStateShift(event.snapshot)),
+    meaningNeed: sanitizeNullableString(getMeaningNeed(event.snapshot)),
+    manualClue: sanitizeNullableString(getManualClue(event.snapshot)),
+    delightSignature: sanitizeNullableString(getDelightSignature(event.snapshot)),
+    directionSignal: sanitizeNullableString(getDirectionSignal(event.snapshot)),
+    valueImpact: sanitizeNullableString(getValueImpact(event.snapshot)),
+    durability: sanitizeNullableString(getDurability(event.snapshot)),
+    psychProfile: getJoyPsychProfile(event.snapshot),
+    improvementTrack: event.snapshot.improvementTrack ?? null,
+    stateAssessment: sanitizeNullableString(event.snapshot.stateAssessment),
+    frictionPoint: sanitizeNullableString(event.snapshot.frictionPoint ?? event.snapshot.whyItMattered),
+    repeatCondition: sanitizeNullableString(event.snapshot.repeatCondition),
+    controllableFactor: sanitizeNullableString(event.snapshot.controllableFactor),
+    nextAttempt: sanitizeNullableString(event.snapshot.nextAttempt ?? event.snapshot.selfPattern),
+    successSignal: sanitizeNullableString(event.snapshot.successSignal),
+    tags: getJoyTags(event.snapshot)
   }));
 }
 
@@ -573,11 +796,18 @@ function getActiveSessionEvent(session: InterviewSessionRecord) {
 function getDraftSourceEvents(session: InterviewSessionRecord) {
   const candidates = session.events.filter((event) =>
     Boolean(
-      event.snapshot.event ||
-        event.snapshot.feeling ||
-        event.snapshot.whyItMattered ||
-        event.snapshot.happinessType ||
-        event.snapshot.selfPattern
+      getJoyMoment(event.snapshot) ||
+        getJoySource(event.snapshot) ||
+        getStateShift(event.snapshot) ||
+        getMeaningNeed(event.snapshot) ||
+        getManualClue(event.snapshot) ||
+        getDelightSignature(event.snapshot) ||
+        event.snapshot.frictionPoint ||
+        event.snapshot.repeatCondition ||
+        event.snapshot.controllableFactor ||
+        event.snapshot.nextAttempt ||
+        event.snapshot.event ||
+        event.snapshot.whyItMattered
     )
   );
 
@@ -586,63 +816,94 @@ function getDraftSourceEvents(session: InterviewSessionRecord) {
   return candidates.length ? candidates : fallbackEvent ? [fallbackEvent] : [];
 }
 
-function buildFallbackDraft(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): JoyEntryDraft {
-  if (sourceEvents.length <= 1) {
-    return {
-      ...createDraft(session.dimension, sourceEvents[0]?.snapshot ?? session.snapshot),
-      eventBlocks: buildEventBlocks(sourceEvents)
-    };
-  }
-
-  const config = getInterviewDimensionConfig(session.dimension);
-  const content = sourceEvents
-    .slice(0, 3)
-    .map((event, index) => {
-      const intro = index === 0 ? "今天先有一件事让我很想记住" : index === 1 ? "后来还有一件事让我继续开心" : "另外还有一个片段";
-      const eventText = sanitizeNullableString(event.snapshot.event) ?? "一段让我记住的片段";
-      const reasonText = sanitizeNullableString(event.snapshot.whyItMattered);
-      const feelingText = sanitizeNullableString(event.snapshot.feeling);
-      const tail = reasonText
-        ? `它之所以重要，是因为${reasonText.replace(/^因为/, "")}。`
-        : feelingText
-          ? `当时我的感受是${feelingText}。`
-          : "";
-
-      return `${intro}：${eventText}。${tail}`;
-    })
-    .join("\n");
-
-  return {
-    title: `${config.draftTitlePrefix}：今天的几个瞬间`.slice(0, 20),
-    content,
-    event: null,
-    feeling: null,
-    whyItMattered: null,
-    happinessType: null,
-    selfPattern: null,
-    tags: Array.from(
-      new Set(
-        sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling].filter(Boolean) as string[])
-      )
-    ).slice(0, 5),
-    eventBlocks: buildEventBlocks(sourceEvents),
-    source: "ai_draft_direct"
-  };
-}
-
 function normalizeDraftResult(
   draft: Omit<JoyDraftResult, "eventBlocks"> & { eventBlocks?: JoyEventBlock[] },
-  fallbackEventBlocks: JoyEventBlock[]
+  fallbackEventBlocks: JoyEventBlock[],
+  brief: ReturnType<typeof buildDraftBrief>
 ): JoyEntryDraft {
+  const closureTarget = brief.dimension === "joy" ? brief.closureTarget ?? "manual_clue" : null;
+  const normalizedManualClue =
+    brief.dimension !== "joy" || brief.completionMode === "user_override_partial" || closureTarget === "delight_signature"
+      ? null
+      : sanitizeNullableString(draft.manualClue) ?? sanitizeNullableString(brief.closingInsight);
+  const normalizedDelightSignature =
+    brief.dimension === "joy" && brief.completionMode === "complete" && closureTarget === "delight_signature"
+      ? sanitizeNullableString(draft.delightSignature) ?? sanitizeNullableString(brief.closingInsight)
+      : null;
+  const normalizedSelfPattern =
+    brief.dimension === "joy"
+      ? normalizedManualClue
+      : brief.dimension === "improvement"
+        ? brief.completionMode === "complete"
+          ? sanitizeNullableString(draft.selfPattern) ??
+            sanitizeNullableString(draft.nextAttempt) ??
+            sanitizeNullableString(brief.nextAttempt) ??
+            sanitizeNullableString(brief.closingInsight)
+          : null
+      : sanitizeNullableString(draft.selfPattern) ??
+        (brief.completionMode === "complete"
+          ? sanitizeNullableString(brief.valueSignal) ?? sanitizeNullableString(brief.closingInsight)
+          : null);
+  const joySnapshot = {
+    event: sanitizeNullableString(draft.event) ?? sanitizeNullableString(brief.anchorScene),
+    feeling: sanitizeNullableString(draft.feeling) ?? (brief.dimension === "joy" ? null : sanitizeNullableString(brief.stateOrNeed)),
+    whyItMattered: sanitizeNullableString(draft.whyItMattered) ?? sanitizeNullableString(brief.emotionalCore),
+    happinessType: sanitizeNullableString(draft.happinessType) ?? (brief.dimension === "joy" ? null : sanitizeNullableString(brief.directionSignal)),
+    selfPattern: normalizedSelfPattern,
+    joyMoment: brief.dimension === "joy" ? sanitizeNullableString(draft.joyMoment) ?? sanitizeNullableString(brief.anchorScene) : undefined,
+    joySource: brief.dimension === "joy" ? sanitizeNullableString(draft.joySource) ?? sanitizeNullableString(brief.emotionalCore) : undefined,
+    stateShift: brief.dimension === "joy" ? sanitizeNullableString(draft.stateShift) : undefined,
+    meaningNeed: brief.dimension === "joy" ? sanitizeNullableString(draft.meaningNeed) : undefined,
+    manualClue: normalizedManualClue,
+    delightSignature: normalizedDelightSignature,
+    directionSignal: brief.dimension === "joy" ? sanitizeNullableString(draft.directionSignal) : undefined,
+    valueImpact: brief.dimension === "joy" ? sanitizeNullableString(draft.valueImpact) : undefined,
+    durability: brief.dimension === "joy" ? sanitizeNullableString(draft.durability) : undefined,
+    improvementTrack: brief.dimension === "improvement" ? draft.improvementTrack ?? brief.improvementTrack ?? null : undefined,
+    stateAssessment: brief.dimension === "improvement" ? sanitizeNullableString(draft.stateAssessment) ?? sanitizeNullableString(brief.stateOrNeed) : undefined,
+    frictionPoint: brief.dimension === "improvement" ? sanitizeNullableString(draft.frictionPoint) ?? sanitizeNullableString(brief.frictionPoint) : undefined,
+    repeatCondition: brief.dimension === "improvement" ? sanitizeNullableString(draft.repeatCondition) ?? sanitizeNullableString(brief.repeatCondition) : undefined,
+    controllableFactor: brief.dimension === "improvement" ? sanitizeNullableString(draft.controllableFactor) ?? sanitizeNullableString(brief.controllableFactor) : undefined,
+    nextAttempt:
+      brief.dimension === "improvement" && brief.completionMode === "complete"
+        ? sanitizeNullableString(draft.nextAttempt) ?? sanitizeNullableString(brief.nextAttempt) ?? sanitizeNullableString(brief.closingInsight)
+        : undefined,
+    successSignal: brief.dimension === "improvement" ? sanitizeNullableString(draft.successSignal) ?? sanitizeNullableString(brief.successSignal) : undefined,
+    tags: Array.from(
+      new Set([...draft.tags.map((tag) => tag.trim()).filter(Boolean), ...brief.tags].filter(Boolean))
+    ).slice(0, 6),
+    confidence: 0,
+    missingSlots: []
+  } satisfies JoySnapshot;
+  const normalizedTitle = normalizeDraftTitle(draft.title, brief);
+  const normalizedContent = dedupeDraftParagraphs(draft.content);
+
   return {
-    title: draft.title.trim(),
-    content: draft.content.trim(),
-    event: sanitizeNullableString(draft.event),
-    feeling: sanitizeNullableString(draft.feeling),
-    whyItMattered: sanitizeNullableString(draft.whyItMattered),
-    happinessType: sanitizeNullableString(draft.happinessType),
-    selfPattern: sanitizeNullableString(draft.selfPattern),
-    tags: Array.from(new Set(draft.tags.map((tag) => tag.trim()).filter(Boolean))).slice(0, 5),
+    title: normalizedTitle,
+    content: normalizedContent,
+    event: joySnapshot.event,
+    feeling: joySnapshot.feeling,
+    whyItMattered: joySnapshot.whyItMattered,
+    happinessType: joySnapshot.happinessType,
+    selfPattern: joySnapshot.selfPattern,
+    joyMoment: joySnapshot.joyMoment,
+    joySource: joySnapshot.joySource,
+    stateShift: joySnapshot.stateShift,
+    meaningNeed: joySnapshot.meaningNeed,
+    manualClue: joySnapshot.manualClue,
+    delightSignature: joySnapshot.delightSignature,
+    directionSignal: joySnapshot.directionSignal,
+    valueImpact: joySnapshot.valueImpact,
+    durability: joySnapshot.durability,
+    psychProfile: brief.dimension === "joy" ? getJoyPsychProfile(joySnapshot) : undefined,
+    improvementTrack: joySnapshot.improvementTrack,
+    stateAssessment: joySnapshot.stateAssessment,
+    frictionPoint: joySnapshot.frictionPoint,
+    repeatCondition: joySnapshot.repeatCondition,
+    controllableFactor: joySnapshot.controllableFactor,
+    nextAttempt: joySnapshot.nextAttempt,
+    successSignal: joySnapshot.successSignal,
+    tags: joySnapshot.tags ?? [],
     eventBlocks: draft.eventBlocks?.length ? draft.eventBlocks : fallbackEventBlocks,
     source: "ai_draft_direct"
   };
@@ -650,20 +911,58 @@ function normalizeDraftResult(
 
 export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
   const sourceEvents = getDraftSourceEvents(session);
-  const fallbackDraft = buildFallbackDraft(session, sourceEvents);
+  const generationMode = resolveDraftGenerationMode(session, sourceEvents);
+  const generationOptions = getDraftGenerationOptions(generationMode);
+  const promptEvents = sourceEvents.slice(0, generationOptions.eventWindow);
+  const promptMessages = session.messages.slice(-generationOptions.messageWindow);
   const fallbackEventBlocks = buildEventBlocks(sourceEvents);
+  const draftBrief = buildDraftBrief({
+    session,
+    sourceEvents
+  });
+  const draftWritingProfile = buildDraftWritingProfile({
+    brief: draftBrief
+  });
+  const fallbackDraft = createFallbackDraft({
+    session,
+    sourceEvents,
+    eventBlocks: fallbackEventBlocks,
+    brief: draftBrief,
+    completionMode: draftBrief.completionMode
+  });
   const provider = getAIProvider();
+  const startedAt = Date.now();
+  logger.info(
+    {
+      sessionId: session.id,
+      generationMode,
+      sourceEventCount: sourceEvents.length,
+      hasExistingDraft: Boolean(session.journalEntry)
+    },
+    "Starting joy draft generation."
+  );
   const aiResult = await completeStructuredOutput({
     provider,
     stage: "generate",
     schema: joyDraftResultSchema,
     messages: buildJoyDraftMessages({
       dimension: session.dimension,
-      events: sourceEvents,
-      messages: session.messages
+      draftBrief,
+      writingProfile: draftWritingProfile,
+      events: promptEvents,
+      messages: promptMessages,
+      generationMode,
+      existingDraft: session.journalEntry
+        ? {
+            title: session.journalEntry.title,
+            content: session.journalEntry.content
+          }
+        : null
     }),
     temperature: 0.35,
-    maxTokens: 700,
+    maxTokens: generationOptions.maxTokens,
+    maxAttempts: generationOptions.maxAttempts,
+    timeoutMs: generationOptions.timeoutMs,
     onAttempt: (attempt) =>
       logAttempt(session.id, {
         ...attempt,
@@ -672,10 +971,33 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
   });
 
   if (!aiResult) {
-    logger.warn({ sessionId: session.id }, "AI draft generation unavailable, fallback draft will be used.");
+    logger.warn(
+      { sessionId: session.id, generationMode, elapsedMs: Date.now() - startedAt },
+      "AI draft generation unavailable, fallback draft will be used."
+    );
 
     return fallbackDraft;
   }
 
-  return normalizeDraftResult(aiResult, fallbackEventBlocks);
+  const normalizedDraft = normalizeDraftResult(aiResult, fallbackEventBlocks, draftBrief);
+  const qualityGate = runDraftQualityGate({
+    brief: draftBrief,
+    draft: normalizedDraft
+  });
+
+  if (!qualityGate.accepted) {
+    logger.warn(
+      { sessionId: session.id, generationMode, issues: qualityGate.issues, elapsedMs: Date.now() - startedAt },
+      "AI draft did not pass quality gate, fallback draft will be used."
+    );
+
+    return fallbackDraft;
+  }
+
+  logger.info(
+    { sessionId: session.id, generationMode, elapsedMs: Date.now() - startedAt },
+    "Joy draft generation completed."
+  );
+
+  return normalizedDraft;
 }

@@ -19,6 +19,7 @@ interface StructuredOutputOptions<T> {
   temperature?: number;
   maxTokens?: number;
   maxAttempts?: number;
+  timeoutMs?: number;
   onAttempt?: (attempt: StructuredOutputAttempt) => Promise<void> | void;
 }
 
@@ -51,6 +52,7 @@ export async function completeStructuredOutput<T>({
   temperature = 0.2,
   maxTokens = 600,
   maxAttempts = 2,
+  timeoutMs,
   onAttempt
 }: StructuredOutputOptions<T>) {
   if (!provider) {
@@ -70,7 +72,8 @@ export async function completeStructuredOutput<T>({
       const result = await provider.complete({
         messages,
         temperature,
-        maxTokens
+        maxTokens,
+        timeoutMs
       });
       const parsed = schema.safeParse(parseStructuredJson(result.content));
 

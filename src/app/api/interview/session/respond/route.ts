@@ -1,17 +1,63 @@
 import { NextResponse } from "next/server";
 
+import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
 import {
   respondInterviewRequestSchema,
   respondInterviewResponseSchema
 } from "@/features/interview/schema/interview.schema";
+import {
+  createInterviewRequestId,
+  logInterviewRespondError,
+  normalizeInterviewRespondError
+} from "@/server/services/interview/respond-error";
 import { respondToInterview } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const requestId = createInterviewRequestId();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch (error) {
+    const issue = normalizeInterviewRespondError({
+      error: new Error("INVALID_JSON"),
+      requestId
+    });
+
+    logInterviewRespondError({
+      error,
+      issue,
+      route: "respond"
+    });
+
+    return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status: 400 });
+  }
+
   const parsed = respondInterviewRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "INVALID_RESPOND_REQUEST" }, { status: 400 });
+    const isMessageTooLong =
+      body &&
+      typeof body === "object" &&
+      "userMessage" in body &&
+      typeof body.userMessage === "string" &&
+      body.userMessage.length > INTERVIEW_REPLY_MAX_LENGTH;
+    const issue = normalizeInterviewRespondError({
+      error: new Error(isMessageTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
+      requestId
+    });
+
+    logInterviewRespondError({
+      error: parsed.error,
+      issue,
+      route: "respond",
+      sessionId:
+        body && typeof body === "object" && "sessionId" in body && typeof body.sessionId === "string"
+          ? body.sessionId
+          : null
+    });
+
+    return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status: 400 });
   }
 
   try {
@@ -20,17 +66,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json(payload);
   } catch (error) {
-    if (error instanceof Error && error.message === "SESSION_NOT_FOUND") {
-      return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
-    }
+    const issue = normalizeInterviewRespondError({
+      error,
+      requestId
+    });
+    const status =
+      issue.code === "SESSION_NOT_FOUND"
+        ? 404
+        : issue.code === "SESSION_CHOICE_UNAVAILABLE"
+          ? 409
+          : 500;
 
-    if (
-      error instanceof Error &&
-      (error.message === "SESSION_CONTINUE_UNAVAILABLE" || error.message === "SESSION_NEXT_EVENT_UNAVAILABLE")
-    ) {
-      return NextResponse.json({ error: "SESSION_CONTINUE_UNAVAILABLE" }, { status: 409 });
-    }
+    logInterviewRespondError({
+      error,
+      issue,
+      route: "respond",
+      sessionId: parsed.data.sessionId
+    });
 
-    return NextResponse.json({ error: "INTERVIEW_RESPOND_FAILED" }, { status: 500 });
+    return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status });
   }
 }

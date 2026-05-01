@@ -31,11 +31,32 @@ const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTu
   generateJoyDraftWithAI: vi.fn()
 }));
 
-const { buildAssistantQuestion, getInactiveSessionMessage, getNextStage, getOpeningQuestion } = vi.hoisted(() => ({
+const {
+  buildAssistantQuestion,
+  getDelightSignature,
+  getInactiveSessionMessage,
+  getNextStage,
+  getOpeningQuestion,
+  getJoyTrack,
+  getJoyMoment,
+  getJoySource,
+  hasJoyStableClosure,
+  getStateShift,
+  getMeaningNeed,
+  getManualClue
+} = vi.hoisted(() => ({
   buildAssistantQuestion: vi.fn(),
+  getDelightSignature: (snapshot: JoySnapshot) => snapshot.delightSignature ?? null,
   getInactiveSessionMessage: vi.fn(),
   getNextStage: vi.fn(),
-  getOpeningQuestion: vi.fn()
+  getOpeningQuestion: vi.fn(),
+  getJoyTrack: (snapshot: JoySnapshot) => (snapshot.delightSignature ? "delight_track" : "meaning_track"),
+  getJoyMoment: (snapshot: JoySnapshot) => snapshot.joyMoment ?? snapshot.event ?? null,
+  getJoySource: (snapshot: JoySnapshot) => snapshot.joySource ?? snapshot.whyItMattered ?? null,
+  hasJoyStableClosure: (snapshot: JoySnapshot) => Boolean(snapshot.delightSignature ?? snapshot.manualClue ?? snapshot.selfPattern),
+  getStateShift: (snapshot: JoySnapshot) => snapshot.stateShift ?? snapshot.feeling ?? null,
+  getMeaningNeed: (snapshot: JoySnapshot) => snapshot.meaningNeed ?? null,
+  getManualClue: (snapshot: JoySnapshot) => snapshot.manualClue ?? snapshot.selfPattern ?? null
 }));
 
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
@@ -60,9 +81,17 @@ vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
 
 vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   buildAssistantQuestion,
+  getDelightSignature,
   getInactiveSessionMessage,
   getNextStage,
-  getOpeningQuestion
+  getOpeningQuestion,
+  getJoyTrack,
+  getJoyMoment,
+  getJoySource,
+  hasJoyStableClosure,
+  getStateShift,
+  getMeaningNeed,
+  getManualClue
 }));
 
 import { prepareJoyInterviewResponse, streamJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
@@ -72,7 +101,12 @@ const baseSnapshot: JoySnapshot = {
   feeling: "温暖被理解",
   whyItMattered: "因为我感觉自己被接住了",
   happinessType: "关系型开心",
-  selfPattern: null,
+  selfPattern: "只要和重要的人真正聊开，我就更容易进入好状态",
+  joyMoment: "今天和朋友聊了很久",
+  joySource: "被朋友真正接住的感觉",
+  stateShift: "更被理解",
+  meaningNeed: "我在乎被理解和连接",
+  manualClue: "只要和重要的人真正聊开，我就更容易进入好状态",
   confidence: 0.9,
   missingSlots: []
 };
@@ -199,7 +233,775 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.turnPhase).toBe("choice");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
     expect(result.assistantTurn.stateUpdate.shouldEndDimension).toBe(false);
-    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("完整复盘");
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("开心日志线索");
+  });
+
+  it.each(["先这样吧，直接生成日志就行。", "总结日志"])(
+    "offers a partial draft choice when joy core is clear and the user requests wrap-up: %s",
+    async (userMessage) => {
+      const partialSnapshot: JoySnapshot = {
+        ...baseSnapshot,
+        selfPattern: null,
+        manualClue: null,
+        confidence: 0.78,
+        missingSlots: ["manualClue"]
+      };
+
+      findJoyInterviewSessionById.mockResolvedValue(
+        buildSession({
+          stage: "probe_pattern",
+          snapshot: partialSnapshot,
+          events: [
+            {
+              id: "event-1",
+              sequence: 1,
+              status: "active",
+              stage: "probe_pattern",
+              explorationRound: 1,
+              coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+              roundCoveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+              roundMeaningfulReplyCount: 3,
+              totalMeaningfulReplyCount: 3,
+              startMessageSequence: 0,
+              snapshot: partialSnapshot,
+              draftSummary: null,
+              startedAt: "2026-04-21T00:00:00.000Z",
+              completedAt: null
+            }
+          ]
+        })
+      );
+      getNextStage.mockReturnValue("probe_pattern");
+
+      const result = await prepareJoyInterviewResponse({
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage,
+        inputMode: "text"
+      });
+
+      if ("assistantMessage" in result || !result.assistantTurn) {
+        throw new Error("Expected an active interview response with an assistant turn.");
+      }
+
+      expect(result.nextStage).toBe("wrap_up");
+      expect(result.isReadyForDraft).toBe(true);
+      expect(result.nextProgressData).toEqual({
+        kind: "event_complete",
+        completionMode: "user_override_partial"
+      });
+      expect(result.assistantTurn.question).toBe("");
+      expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+      expect(result.assistantTurn.stateUpdate.choiceReason).toContain("当前版本日志");
+      expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    }
+  );
+
+  it("offers a complete fulfillment draft choice once progress evidence and worth standard are clear", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天把一个拖了很久的任务推进完了",
+      feeling: "踏实",
+      whyItMattered: "原本卡住的部分终于收口了",
+      happinessType: "推进完成型",
+      selfPattern: "能把卡住的事情真正往前推进",
+      confidence: 0.86,
+      missingSlots: []
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: {
+          ...fulfillmentSnapshot,
+          selfPattern: null
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: {
+              ...fulfillmentSnapshot,
+              selfPattern: null
+            },
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(fulfillmentSnapshot);
+    getNextStage.mockReturnValue("wrap_up");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "complete"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("充实日志线索");
+  });
+
+  it("offers a partial fulfillment draft choice when progress evidence is clear and the user declines deeper worth-standard probing", async () => {
+    const partialFulfillmentSnapshot: JoySnapshot = {
+      event: "今天练了半小时口语",
+      feeling: "踏实",
+      whyItMattered: "我把前几天总卡住的发音顺过了一点",
+      happinessType: "投入积累型",
+      selfPattern: null,
+      confidence: 0.74,
+      missingSlots: ["valueSignal"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: partialFulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialFulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(partialFulfillmentSnapshot);
+    getNextStage.mockReturnValue("wrap_up");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "先这样吧，直接生成日志就行。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("不算白过");
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("值得感标准");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("offers a partial reflection draft choice when trigger and insight are clear and the user asks to generate", async () => {
+    const partialReflectionSnapshot: JoySnapshot = {
+      event: "今天看完一个项目复盘",
+      feeling: "警醒",
+      whyItMattered: "我意识到自己以前太容易把忙碌当成进展",
+      happinessType: "判断校准型",
+      selfPattern: null,
+      confidence: 0.74,
+      missingSlots: ["viewpointShift"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "reflection",
+        stage: "probe_pattern",
+        snapshot: partialReflectionSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialReflectionSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    getNextStage.mockReturnValue("wrap_up");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "先这样吧，直接生成日志就行。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("当前版本日志");
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("判断线索");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("offers a complete improvement draft choice once cause, controllable factor and next attempt are clear", async () => {
+    const completeImprovementSnapshot: JoySnapshot = {
+      event: "今天开会时对方问题还没说完我就开始解释",
+      feeling: "有点急",
+      whyItMattered: "对方问题还没说完我就开始解释",
+      happinessType: "表达型改进",
+      selfPattern: "下次先复述一遍问题，再开始回答",
+      improvementTrack: "avoid_bad",
+      stateAssessment: "这次有点急，回答前没有确认问题",
+      frictionPoint: "对方问题还没说完我就开始解释",
+      repeatCondition: null,
+      controllableFactor: "回答前先复述或确认问题",
+      nextAttempt: "下次先复述一遍问题，再开始回答",
+      successSignal: "对方确认问题被理解，回答没有跑偏",
+      confidence: 0.86,
+      missingSlots: []
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "probe_pattern",
+        snapshot: {
+          ...completeImprovementSnapshot,
+          controllableFactor: null,
+          nextAttempt: null
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: {
+              ...completeImprovementSnapshot,
+              controllableFactor: null,
+              nextAttempt: null
+            },
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(completeImprovementSnapshot);
+    getNextStage.mockReturnValue("wrap_up");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "下次我先复述一遍问题，再开始回答，这样确认没有跑偏。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "complete"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进尝试线索");
+  });
+
+  it("offers a partial improvement draft choice when cause is clear and the user asks to generate", async () => {
+    const partialImprovementSnapshot: JoySnapshot = {
+      event: "今天上午我先写了三条重点再开工",
+      feeling: "很稳",
+      whyItMattered: "先写三条重点后主线没有被消息带着跑",
+      happinessType: "节奏型改进",
+      selfPattern: null,
+      improvementTrack: "repeat_good",
+      stateAssessment: "这次有一个值得重复的好状态",
+      frictionPoint: null,
+      repeatCondition: "先写三条重点后主线没有被消息带着跑",
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.72,
+      missingSlots: ["controllableFactor", "nextAttempt"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "probe_pattern",
+        snapshot: partialImprovementSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialImprovementSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    getNextStage.mockReturnValue("probe_pattern");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "先这样吧，直接生成日志就行。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进情境和关键原因");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("offers a partial improvement draft choice when the user stops with a concrete avoid-bad cause", async () => {
+    const partialAvoidBadSnapshot: JoySnapshot = {
+      event: "今天沟通有点急",
+      feeling: "有点急",
+      whyItMattered: "沟通时太急，没有听完整",
+      happinessType: "沟通节奏",
+      selfPattern: null,
+      improvementTrack: "avoid_bad",
+      stateAssessment: "沟通时有点急",
+      frictionPoint: "沟通时太急，没有听完整",
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.72,
+      missingSlots: ["controllableFactor", "nextAttempt"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "probe_pattern",
+        snapshot: partialAvoidBadSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialAvoidBadSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天沟通有点急，别追问了，直接整理。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进情境和关键原因");
+    expect(result.nextSnapshot.nextAttempt).toBeNull();
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("keeps improvement in boundary_insufficient when the user stops before a cause exists", async () => {
+    const insufficientImprovementSnapshot: JoySnapshot = {
+      event: "今天很糟",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      improvementTrack: null,
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.3,
+      missingSlots: ["frictionPointOrRepeatCondition"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "probe_reason",
+        snapshot: insufficientImprovementSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_reason",
+            explorationRound: 1,
+            coveredLenses: ["event_detail"],
+            roundCoveredLenses: ["event_detail"],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientImprovementSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "别问了，不想聊了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.nextProgressData).toEqual({
+      kind: "boundary_insufficient",
+      reason: "我不再继续追问细节了。"
+    });
+    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("returns a low-pressure boundary choice for reflection when there is no concrete insight", async () => {
+    const insufficientReflectionSnapshot: JoySnapshot = {
+      event: null,
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      confidence: 0.2,
+      missingSlots: ["trigger", "insight", "viewpointShift"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "reflection",
+        stage: "collect_event",
+        snapshot: insufficientReflectionSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "collect_event",
+            explorationRound: 1,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 0,
+            startMessageSequence: 0,
+            snapshot: insufficientReflectionSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天想了很多，不想聊了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.nextProgressData).toEqual({
+      kind: "boundary_insufficient",
+      reason: "我不再继续追问细节了。"
+    });
+    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.question).toContain("这个片段最关键的一点");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("does not keep probing when the user challenges the repeated follow-up", async () => {
+    const partialFulfillmentSnapshot: JoySnapshot = {
+      event: "今天练了半小时口语",
+      feeling: "踏实",
+      whyItMattered: "我把前几天总卡住的发音顺过了一点",
+      happinessType: "投入积累型",
+      selfPattern: null,
+      confidence: 0.74,
+      missingSlots: ["valueSignal"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: partialFulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialFulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "这追问有什么意义吗？你干嘛老纠结具体步骤。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.question).toBe("");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
+  it("returns a low-pressure boundary choice when the user stops before there is enough material", async () => {
+    const insufficientSnapshot: JoySnapshot = {
+      event: "今天有点累",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      confidence: 0.3,
+      missingSlots: ["whyItMattered"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_reason",
+        snapshot: insufficientSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_reason",
+            explorationRound: 1,
+            coveredLenses: ["event_detail"],
+            roundCoveredLenses: ["event_detail"],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "别问了，先这样。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.nextProgressData).toEqual({
+      kind: "boundary_insufficient",
+      reason: "我不再继续追问细节了。"
+    });
+    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("offers a redirect choice when joy stays empty after repeated no-joy replies", async () => {
+    const emptyJoySnapshot: JoySnapshot = {
+      event: null,
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      joyMoment: null,
+      joySource: null,
+      stateShift: null,
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      confidence: 0.2,
+      missingSlots: ["joyMoment", "joySource", "stateShiftOrMeaningNeed", "manualClue"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        stage: "collect_event",
+        snapshot: emptyJoySnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "collect_event",
+            explorationRound: 1,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: emptyJoySnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    getNextStage.mockReturnValue("collect_event");
+    extractJoySnapshotWithAI.mockResolvedValue(emptyJoySnapshot);
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "没什么开心，想不到。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.nextProgressData).toEqual({
+      kind: "dimension_redirect",
+      targetDimension: "improvement",
+      reason: "已经尝试降低门槛，但这一天仍然没有找到可信的开心片段，更适合转去复盘改进。"
+    });
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.shouldEndDimension).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceReason).toContain("更适合转去复盘改进");
   });
 
   it("asks a real follow-up after continuing from a wrap-up choice instead of looping back to choice", async () => {
@@ -316,7 +1118,9 @@ describe("prepareJoyInterviewResponse", () => {
     );
     expect(result.nextStage).toBe("probe_pattern");
     expect(result.assistantTurn.question).toBe("你觉得自己在关系里最在乎什么？");
-    expect(result.assistantTurn.thinkingSummary).toBe("我们已经碰到这段经历里你很在意的那层了，所以我想换个角度再确认它真正打动你的地方。");
+    expect(result.assistantTurn.thinkingSummary).toBe(
+      "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，换个角度确认这条线索是不是真的稳定成立。"
+    );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
     expect(result.assistantTurn.stateUpdate.turnPhase).toBe("digging");
@@ -449,7 +1253,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.nextStage).toBe("probe_reason");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "你已经抓到“读罗永浩的书”里那种轻松踏实的感觉了，所以我想继续确认，这种感觉为什么会在这件事上冒出来。"
+      "“读罗永浩的书”里明显出现了轻松踏实的状态变化，处理重点是看清这种状态为什么偏偏会在这里冒出来。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.question).toBe("当时是读到了什么，让你觉得开心？");
@@ -660,6 +1464,79 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn?.question).toBe("你觉得自己在关系里最在乎什么？");
   });
 
+  it("normalizes invalid streamed thinking summaries before showing them to the user", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        turnCount: 4,
+        stage: "probe_pattern",
+        snapshot: baseSnapshot,
+        lastAssistantQuestion: "你觉得自己在关系里最在乎什么？"
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "你提到和朋友聊了很久，我想知道这段关系里最让你在意的是什么？"
+      });
+      await onDelta({
+        target: "question",
+        text: "你觉得自己在关系里最在乎什么？"
+      });
+
+      return {
+        insight: "",
+        thinkingSummary: "你提到和朋友聊了很久，我想知道这段关系里最让你在意的是什么？",
+        analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+        question: "你觉得自己在关系里最在乎什么？",
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "clue"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "我想记住那种被朋友真正理解的感觉。",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    const normalizedSummary = "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，再确认这条个人线索是不是真的站得住。";
+    expect(deltas).toEqual([
+      {
+        target: "summary",
+        text: normalizedSummary
+      },
+      {
+        target: "question",
+        text: "你觉得自己在关系里最在乎什么？"
+      }
+    ]);
+    expect(result.assistantTurn?.thinkingSummary).toBe(normalizedSummary);
+    expect(result.assistantMessage).toBe(`${normalizedSummary}\n你觉得自己在关系里最在乎什么？`);
+    expect(result.assistantMessage).not.toContain("你提到");
+    expect(result.assistantMessage).not.toContain("我想知道");
+    expect(result.assistantMessage).not.toContain("？\n");
+  });
+
   it("keeps streaming the summary when continuing the current event from a choice card", async () => {
     const choiceSession = buildSession({
       stage: "wrap_up",
@@ -793,20 +1670,20 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     expect(phases).toEqual(["thinking", "summary", "question"]);
+    const normalizedContinuedSummary =
+      "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，换个角度确认这条线索是不是真的稳定成立。";
     expect(deltas).toEqual([
       {
         target: "summary",
-        text: continuedPayload.thinkingSummary
+        text: normalizedContinuedSummary
       },
       {
         target: "question",
         text: continuedPayload.question
       }
     ]);
-    expect(result.assistantMessage).toBe(
-      "我们已经碰到这段经历里你很在意的那层了，所以我想换个角度再确认它真正打动你的地方。\n你觉得自己在关系里最在乎什么？"
-    );
-    expect(result.assistantTurn?.thinkingSummary).toBe(continuedPayload.thinkingSummary);
+    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n你觉得自己在关系里最在乎什么？`);
+    expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
     expect(result.assistantTurn?.question).toBe(continuedPayload.question);
   });

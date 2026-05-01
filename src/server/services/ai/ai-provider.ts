@@ -9,6 +9,7 @@ export interface AICompletionParams {
   messages: AIChatMessage[];
   temperature?: number;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface AICompletionResult {

@@ -29,6 +29,7 @@ interface InterviewState {
   draftGenerationBusy: boolean;
   draftGenerationDisabled: boolean;
   draftGenerationRequestId: number;
+  conversationResetRequestId: number;
   turnCount: number;
   messages: InterviewMessage[];
   snapshot: JoySnapshot | null;
@@ -45,6 +46,7 @@ interface InterviewState {
     disabled: boolean;
   }) => void;
   requestDraftGeneration: () => void;
+  requestConversationReset: () => void;
   reset: (nextDimension?: InterviewDimension) => void;
 }
 
@@ -62,6 +64,7 @@ const initialState = {
   draftGenerationBusy: false,
   draftGenerationDisabled: true,
   draftGenerationRequestId: 0,
+  conversationResetRequestId: 0,
   turnCount: 0,
   messages: [] as InterviewMessage[],
   snapshot: null,
@@ -119,6 +122,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   requestDraftGeneration: () =>
     set((state) => ({
       draftGenerationRequestId: state.draftGenerationRequestId + 1
+    })),
+  requestConversationReset: () =>
+    set((state) => ({
+      conversationResetRequestId: state.conversationResetRequestId + 1
     })),
   reset: (nextDimension) => set({ ...initialState, dimension: nextDimension ?? initialState.dimension })
 }));

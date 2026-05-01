@@ -42,8 +42,8 @@ export const dimensionMetaMap: Record<InterviewDimension, DimensionMeta> = {
     emptyState: "进入页面后，AI 会先帮你聚焦一个具体片段；你也可以直接从那段让你觉得充实的经历讲起。",
     inputPlaceholder: "例如：今天专心把一个拖了很久的任务推进完了，结束时我觉得特别踏实。",
     draftDescription: "当会话完成后，这里会显示一份可编辑的充实日志草稿，像一张刚刚整理出来的初稿页。",
-    summaryLabel: "充实线索 / 模式",
-    reasonLabel: "为什么充实"
+    summaryLabel: "进展证据 / 值得感标准",
+    reasonLabel: "为什么这件事算数"
   },
   reflection: {
     value: "reflection",

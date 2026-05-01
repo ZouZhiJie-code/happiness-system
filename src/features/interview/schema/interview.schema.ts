@@ -1,11 +1,40 @@
 import { z } from "zod";
 
+import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
+import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+
 const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
+const draftCompletionModeSchema = z.enum(["complete", "user_override_partial"]);
 const assistantDepthSchema = z.enum(["event", "feeling", "reason", "clue", "pattern"]);
 const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
 const interviewEventStatusSchema = z.enum(["active", "ready_for_choice", "completed"]);
 const interviewLensSchema = z.enum(["event_detail", "felt_experience", "importance_reason", "meaning_pattern", "self_pattern"]);
 const interviewStageSchema = z.string().min(1);
+const joyTrackSchema = z.enum(["meaning_track", "delight_track"]);
+const improvementTrackSchema = z.enum(["repeat_good", "avoid_bad"]);
+const joyKindSchema = z.enum(["pure_delight", "restoration", "connection", "value", "direction", "mixed"]);
+const joySignalLevelSchema = z.enum(["none", "hint", "strong"]);
+const joyNeedFamilySchema = z.enum([
+  "connection",
+  "autonomy",
+  "mastery",
+  "expression",
+  "growth",
+  "contribution",
+  "recognition",
+  "restoration",
+  "play"
+]);
+const joyPsychProfileSchema = z.object({
+  track: joyTrackSchema,
+  kind: joyKindSchema,
+  needFamily: joyNeedFamilySchema.nullable(),
+  directionLevel: joySignalLevelSchema,
+  valueLevel: joySignalLevelSchema,
+  durabilityLevel: joySignalLevelSchema,
+  vitalityCue: z.string().nullable(),
+  confidence: z.number().min(0).max(1)
+});
 
 const joySnapshotSchema = z.object({
   event: z.string().nullable(),
@@ -13,17 +42,34 @@ const joySnapshotSchema = z.object({
   whyItMattered: z.string().nullable(),
   happinessType: z.string().nullable(),
   selfPattern: z.string().nullable(),
+  joyMoment: z.string().nullable().optional(),
+  joySource: z.string().nullable().optional(),
+  stateShift: z.string().nullable().optional(),
+  meaningNeed: z.string().nullable().optional(),
+  manualClue: z.string().nullable().optional(),
+  delightSignature: z.string().nullable().optional(),
+  directionSignal: z.string().nullable().optional(),
+  valueImpact: z.string().nullable().optional(),
+  durability: z.string().nullable().optional(),
+  psychProfile: joyPsychProfileSchema.optional(),
+  tags: z.array(z.string()).optional(),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
 
 const joySnapshotDataSchema = z.object({
   kind: z.literal("joy"),
-  moment: z.string().nullable(),
-  feeling: z.string().nullable(),
-  joyType: z.string().nullable(),
-  meaningSource: z.string().nullable(),
-  selfPattern: z.string().nullable(),
+  joyMoment: z.string().nullable(),
+  joySource: z.string().nullable(),
+  stateShift: z.string().nullable(),
+  meaningNeed: z.string().nullable(),
+  manualClue: z.string().nullable(),
+  delightSignature: z.string().nullable().optional(),
+  directionSignal: z.string().nullable(),
+  valueImpact: z.string().nullable(),
+  durability: z.string().nullable(),
+  psychProfile: joyPsychProfileSchema.nullable().optional(),
+  tags: z.array(z.string()),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
@@ -53,10 +99,15 @@ const reflectionSnapshotDataSchema = z.object({
 const improvementSnapshotDataSchema = z.object({
   kind: z.literal("improvement"),
   situation: z.string().nullable(),
+  improvementTrack: improvementTrackSchema.nullable().default(null),
+  stateAssessment: z.string().nullable().default(null),
   feeling: z.string().nullable(),
   improvementType: z.string().nullable(),
   frictionPoint: z.string().nullable(),
+  repeatCondition: z.string().nullable().default(null),
+  controllableFactor: z.string().nullable().default(null),
   nextAttempt: z.string().nullable(),
+  successSignal: z.string().nullable().default(null),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
@@ -82,11 +133,16 @@ export const interviewSnapshotDataSchema = z.discriminatedUnion("kind", [
 
 const joyJournalPayloadSchema = z.object({
   kind: z.literal("joy"),
-  moment: z.string().nullable(),
-  feeling: z.string().nullable(),
-  joyType: z.string().nullable(),
-  meaningSource: z.string().nullable(),
-  selfPattern: z.string().nullable(),
+  joyMoment: z.string().nullable(),
+  joySource: z.string().nullable(),
+  stateShift: z.string().nullable(),
+  meaningNeed: z.string().nullable(),
+  manualClue: z.string().nullable(),
+  delightSignature: z.string().nullable().optional(),
+  directionSignal: z.string().nullable(),
+  valueImpact: z.string().nullable(),
+  durability: z.string().nullable(),
+  psychProfile: joyPsychProfileSchema.nullable().optional(),
   tags: z.array(z.string())
 });
 
@@ -113,10 +169,15 @@ const reflectionJournalPayloadSchema = z.object({
 const improvementJournalPayloadSchema = z.object({
   kind: z.literal("improvement"),
   situation: z.string().nullable(),
+  improvementTrack: improvementTrackSchema.nullable().default(null),
+  stateAssessment: z.string().nullable().default(null),
   feeling: z.string().nullable(),
   improvementType: z.string().nullable(),
   frictionPoint: z.string().nullable(),
+  repeatCondition: z.string().nullable().default(null),
+  controllableFactor: z.string().nullable().default(null),
   nextAttempt: z.string().nullable(),
+  successSignal: z.string().nullable().default(null),
   tags: z.array(z.string())
 });
 
@@ -172,17 +233,52 @@ const joyEventBlockSchema = z.object({
   feeling: z.string().nullable(),
   whyItMattered: z.string().nullable(),
   happinessType: z.string().nullable(),
-  selfPattern: z.string().nullable()
+  selfPattern: z.string().nullable(),
+  joyMoment: z.string().nullable().optional(),
+  joySource: z.string().nullable().optional(),
+  stateShift: z.string().nullable().optional(),
+  meaningNeed: z.string().nullable().optional(),
+  manualClue: z.string().nullable().optional(),
+  delightSignature: z.string().nullable().optional(),
+  directionSignal: z.string().nullable().optional(),
+  valueImpact: z.string().nullable().optional(),
+  durability: z.string().nullable().optional(),
+  psychProfile: joyPsychProfileSchema.optional(),
+  improvementTrack: improvementTrackSchema.nullable().optional(),
+  stateAssessment: z.string().nullable().optional(),
+  frictionPoint: z.string().nullable().optional(),
+  repeatCondition: z.string().nullable().optional(),
+  controllableFactor: z.string().nullable().optional(),
+  nextAttempt: z.string().nullable().optional(),
+  successSignal: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional()
 });
 
 const journalDraftSchema = z.object({
-  title: z.string(),
-  content: z.string(),
+  title: z.string().max(MAX_JOURNAL_TITLE_LENGTH),
+  content: z.string().max(MAX_JOURNAL_CONTENT_LENGTH),
   event: z.string().nullable(),
   feeling: z.string().nullable(),
   whyItMattered: z.string().nullable(),
   happinessType: z.string().nullable(),
   selfPattern: z.string().nullable(),
+  joyMoment: z.string().nullable().optional(),
+  joySource: z.string().nullable().optional(),
+  stateShift: z.string().nullable().optional(),
+  meaningNeed: z.string().nullable().optional(),
+  manualClue: z.string().nullable().optional(),
+  delightSignature: z.string().nullable().optional(),
+  directionSignal: z.string().nullable().optional(),
+  valueImpact: z.string().nullable().optional(),
+  durability: z.string().nullable().optional(),
+  psychProfile: joyPsychProfileSchema.optional(),
+  improvementTrack: improvementTrackSchema.nullable().optional(),
+  stateAssessment: z.string().nullable().optional(),
+  frictionPoint: z.string().nullable().optional(),
+  repeatCondition: z.string().nullable().optional(),
+  controllableFactor: z.string().nullable().optional(),
+  nextAttempt: z.string().nullable().optional(),
+  successSignal: z.string().nullable().optional(),
   tags: z.array(z.string()),
   eventBlocks: z.array(joyEventBlockSchema),
   payload: interviewJournalPayloadSchema,
@@ -215,12 +311,30 @@ const interviewEventSchema = z.object({
   completedAt: z.string().nullable()
 });
 
-const pendingDecisionSchema = z.object({
-  kind: z.literal("event_complete"),
-  eventId: z.string(),
-  eventSequence: z.number().int().nonnegative(),
-  actions: z.array(z.enum(["continue_current_event", "next_event", "generate_draft"])).min(1)
-});
+const pendingDecisionSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("event_complete"),
+    eventId: z.string(),
+    eventSequence: z.number().int().nonnegative(),
+    completionMode: draftCompletionModeSchema.optional(),
+    actions: z.array(z.enum(["continue_current_event", "next_event", "generate_draft"])).min(1)
+  }),
+  z.object({
+    kind: z.literal("dimension_redirect"),
+    eventId: z.string(),
+    eventSequence: z.number().int().nonnegative(),
+    targetDimension: interviewDimensionSchema,
+    reason: z.string().min(1),
+    actions: z.array(z.enum(["continue_current_event", "switch_dimension"])).min(1)
+  }),
+  z.object({
+    kind: z.literal("boundary_insufficient"),
+    eventId: z.string(),
+    eventSequence: z.number().int().nonnegative(),
+    reason: z.string().min(1),
+    actions: z.array(z.enum(["continue_current_event", "next_event", "pause_session"])).min(1)
+  })
+]);
 
 export const interviewSessionSchema = z.object({
   id: z.string(),
@@ -257,7 +371,7 @@ export const respondInterviewRequestSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("reply"),
     sessionId: z.string(),
-    userMessage: z.string().min(1).max(1200),
+    userMessage: z.string().min(1).max(INTERVIEW_REPLY_MAX_LENGTH),
     inputMode: z.enum(["text", "voice"]).default("text")
   }),
   z.object({
@@ -328,8 +442,8 @@ export const completeInterviewResponseSchema = z.object({
 });
 
 export const updateJournalEntryRequestSchema = journalDraftSchema.extend({
-  title: z.string().max(80),
-  content: z.string().max(3000)
+  title: z.string().max(MAX_JOURNAL_TITLE_LENGTH),
+  content: z.string().max(MAX_JOURNAL_CONTENT_LENGTH)
 });
 
 export const updateJournalEntryResponseSchema = journalEntrySchema;

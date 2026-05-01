@@ -5,6 +5,27 @@ export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";
 export type JoyEntrySource = "ai_draft_direct" | "ai_draft_edited";
 export type JoyEntryStatus = "draft" | "saved";
+export type DraftCompletionMode = "complete" | "user_override_partial";
+export type DraftCompositionMode = "single_moment" | "stitched_moments";
+export type DraftEmphasis = "delight" | "meaning" | "mixed";
+export type JoyTrack = "meaning_track" | "delight_track";
+export type ImprovementTrack = "repeat_good" | "avoid_bad";
+export type JoyKind = "pure_delight" | "restoration" | "connection" | "value" | "direction" | "mixed";
+export type JoySignalLevel = "none" | "hint" | "strong";
+export type JoyNeedFamily =
+  | "connection"
+  | "autonomy"
+  | "mastery"
+  | "expression"
+  | "growth"
+  | "contribution"
+  | "recognition"
+  | "restoration"
+  | "play";
+export type JoyClosureTarget = "manual_clue" | "delight_signature";
+export type DraftVoiceMode = "journal";
+export type DraftNarrativeOrder = "scene_core_shift_close";
+export type DraftClosingMode = "stable_clue" | "current_understanding";
 export type AssistantDepth = "event" | "feeling" | "reason" | "clue" | "pattern";
 export type InterviewLens =
   | "event_detail"
@@ -20,7 +41,12 @@ export type JoyInterviewStage =
   | "wrap_up"
   | "finalize";
 export type InterviewStage = JoyInterviewStage;
-export type PendingDecisionAction = "continue_current_event" | "next_event" | "generate_draft";
+export type PendingDecisionAction =
+  | "continue_current_event"
+  | "next_event"
+  | "generate_draft"
+  | "switch_dimension"
+  | "pause_session";
 
 export interface AssistantTurnPayload {
   insight: string;
@@ -48,23 +74,58 @@ export interface InterviewMessage {
   createdAt: string;
 }
 
+export interface JoyPsychProfile {
+  track: JoyTrack;
+  kind: JoyKind;
+  needFamily: JoyNeedFamily | null;
+  directionLevel: JoySignalLevel;
+  valueLevel: JoySignalLevel;
+  durabilityLevel: JoySignalLevel;
+  vitalityCue: string | null;
+  confidence: number;
+}
+
 export interface JoySnapshot {
   event: string | null;
   feeling: string | null;
   whyItMattered: string | null;
   happinessType: string | null;
   selfPattern: string | null;
+  joyMoment?: string | null;
+  joySource?: string | null;
+  stateShift?: string | null;
+  meaningNeed?: string | null;
+  manualClue?: string | null;
+  delightSignature?: string | null;
+  directionSignal?: string | null;
+  valueImpact?: string | null;
+  durability?: string | null;
+  psychProfile?: JoyPsychProfile;
+  tags?: string[];
+  improvementTrack?: ImprovementTrack | null;
+  stateAssessment?: string | null;
+  frictionPoint?: string | null;
+  repeatCondition?: string | null;
+  controllableFactor?: string | null;
+  nextAttempt?: string | null;
+  successSignal?: string | null;
   confidence: number;
   missingSlots: string[];
 }
 
 export interface JoySnapshotData {
   kind: "joy";
-  moment: string | null;
-  feeling: string | null;
-  joyType: string | null;
-  meaningSource: string | null;
-  selfPattern: string | null;
+  joyMoment: string | null;
+  joySource: string | null;
+  stateShift: string | null;
+  meaningNeed: string | null;
+  manualClue: string | null;
+  delightSignature?: string | null;
+  directionSignal: string | null;
+  valueImpact: string | null;
+  durability: string | null;
+  psychProfile?: JoyPsychProfile;
+  tags: string[];
   confidence: number;
   missingSlots: string[];
 }
@@ -94,10 +155,15 @@ export interface ReflectionSnapshotData {
 export interface ImprovementSnapshotData {
   kind: "improvement";
   situation: string | null;
+  improvementTrack: ImprovementTrack | null;
+  stateAssessment: string | null;
   feeling: string | null;
   improvementType: string | null;
   frictionPoint: string | null;
+  repeatCondition: string | null;
+  controllableFactor: string | null;
   nextAttempt: string | null;
+  successSignal: string | null;
   confidence: number;
   missingSlots: string[];
 }
@@ -135,6 +201,39 @@ export interface DimensionDraftViewModel {
   fields: DimensionRendererField[];
 }
 
+export interface DraftBrief {
+  dimension: InterviewDimension;
+  completionMode: DraftCompletionMode;
+  compositionMode: DraftCompositionMode;
+  emphasis: DraftEmphasis;
+  anchorScene: string | null;
+  emotionalCore: string | null;
+  stateOrNeed: string | null;
+  closingInsight: string | null;
+  joyTrack?: JoyTrack;
+  joyKind?: JoyKind;
+  closureTarget?: JoyClosureTarget;
+  improvementTrack?: ImprovementTrack | null;
+  frictionPoint?: string | null;
+  repeatCondition?: string | null;
+  controllableFactor?: string | null;
+  nextAttempt?: string | null;
+  successSignal?: string | null;
+  supportingMoments: string[];
+  directionSignal: string | null;
+  valueSignal: string | null;
+  durabilitySignal: string | null;
+  titleHint: string | null;
+  tags: string[];
+}
+
+export interface DraftWritingProfile {
+  voiceMode: DraftVoiceMode;
+  narrativeOrder: DraftNarrativeOrder;
+  closingMode: DraftClosingMode;
+  toneBanSet: string[];
+}
+
 export interface JoyEntryDraft {
   title: string;
   content: string;
@@ -143,6 +242,23 @@ export interface JoyEntryDraft {
   whyItMattered: string | null;
   happinessType: string | null;
   selfPattern: string | null;
+  joyMoment?: string | null;
+  joySource?: string | null;
+  stateShift?: string | null;
+  meaningNeed?: string | null;
+  manualClue?: string | null;
+  delightSignature?: string | null;
+  directionSignal?: string | null;
+  valueImpact?: string | null;
+  durability?: string | null;
+  psychProfile?: JoyPsychProfile;
+  improvementTrack?: ImprovementTrack | null;
+  stateAssessment?: string | null;
+  frictionPoint?: string | null;
+  repeatCondition?: string | null;
+  controllableFactor?: string | null;
+  nextAttempt?: string | null;
+  successSignal?: string | null;
   tags: string[];
   eventBlocks: JoyEventBlock[];
   source: JoyEntrySource;
@@ -157,15 +273,38 @@ export interface JoyEventBlock {
   whyItMattered: string | null;
   happinessType: string | null;
   selfPattern: string | null;
+  joyMoment?: string | null;
+  joySource?: string | null;
+  stateShift?: string | null;
+  meaningNeed?: string | null;
+  manualClue?: string | null;
+  delightSignature?: string | null;
+  directionSignal?: string | null;
+  valueImpact?: string | null;
+  durability?: string | null;
+  psychProfile?: JoyPsychProfile;
+  improvementTrack?: ImprovementTrack | null;
+  stateAssessment?: string | null;
+  frictionPoint?: string | null;
+  repeatCondition?: string | null;
+  controllableFactor?: string | null;
+  nextAttempt?: string | null;
+  successSignal?: string | null;
+  tags?: string[];
 }
 
 export interface JoyJournalPayload {
   kind: "joy";
-  moment: string | null;
-  feeling: string | null;
-  joyType: string | null;
-  meaningSource: string | null;
-  selfPattern: string | null;
+  joyMoment: string | null;
+  joySource: string | null;
+  stateShift: string | null;
+  meaningNeed: string | null;
+  manualClue: string | null;
+  delightSignature?: string | null;
+  directionSignal: string | null;
+  valueImpact: string | null;
+  durability: string | null;
+  psychProfile?: JoyPsychProfile;
   tags: string[];
 }
 
@@ -192,10 +331,15 @@ export interface ReflectionJournalPayload {
 export interface ImprovementJournalPayload {
   kind: "improvement";
   situation: string | null;
+  improvementTrack: ImprovementTrack | null;
+  stateAssessment: string | null;
   feeling: string | null;
   improvementType: string | null;
   frictionPoint: string | null;
+  repeatCondition: string | null;
+  controllableFactor: string | null;
   nextAttempt: string | null;
+  successSignal: string | null;
   tags: string[];
 }
 
@@ -243,12 +387,35 @@ export interface InterviewEventRecord {
   completedAt: string | null;
 }
 
-export interface PendingDecisionRecord {
+export interface EventCompletePendingDecisionRecord {
   kind: "event_complete";
   eventId: string;
   eventSequence: number;
-  actions: PendingDecisionAction[];
+  completionMode?: DraftCompletionMode;
+  actions: ReadonlyArray<Extract<PendingDecisionAction, "continue_current_event" | "next_event" | "generate_draft">>;
 }
+
+export interface DimensionRedirectPendingDecisionRecord {
+  kind: "dimension_redirect";
+  eventId: string;
+  eventSequence: number;
+  targetDimension: InterviewDimension;
+  reason: string;
+  actions: ReadonlyArray<Extract<PendingDecisionAction, "continue_current_event" | "switch_dimension">>;
+}
+
+export interface BoundaryInsufficientPendingDecisionRecord {
+  kind: "boundary_insufficient";
+  eventId: string;
+  eventSequence: number;
+  reason: string;
+  actions: ReadonlyArray<Extract<PendingDecisionAction, "continue_current_event" | "next_event" | "pause_session">>;
+}
+
+export type PendingDecisionRecord =
+  | EventCompletePendingDecisionRecord
+  | DimensionRedirectPendingDecisionRecord
+  | BoundaryInsufficientPendingDecisionRecord;
 
 export interface InterviewSessionRecord {
   id: string;

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 
+import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
 import { interviewSessionSchema, respondInterviewRequestSchema } from "@/features/interview/schema/interview.schema";
+import {
+  createInterviewRequestId,
+  logInterviewRespondError,
+  normalizeInterviewRespondError
+} from "@/server/services/interview/respond-error";
 import { streamInterviewResponse } from "@/server/services/interview/interview.service";
 
 export const dynamic = "force-dynamic";
@@ -10,11 +16,51 @@ function formatSseEvent(event: string, data: unknown) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const requestId = createInterviewRequestId();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch (error) {
+    const issue = normalizeInterviewRespondError({
+      error: new Error("INVALID_JSON"),
+      requestId
+    });
+
+    logInterviewRespondError({
+      error,
+      issue,
+      route: "respond/stream"
+    });
+
+    return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status: 400 });
+  }
+
   const parsed = respondInterviewRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "INVALID_RESPOND_REQUEST" }, { status: 400 });
+    const isMessageTooLong =
+      body &&
+      typeof body === "object" &&
+      "userMessage" in body &&
+      typeof body.userMessage === "string" &&
+      body.userMessage.length > INTERVIEW_REPLY_MAX_LENGTH;
+    const issue = normalizeInterviewRespondError({
+      error: new Error(isMessageTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
+      requestId
+    });
+
+    logInterviewRespondError({
+      error: parsed.error,
+      issue,
+      route: "respond/stream",
+      sessionId:
+        body && typeof body === "object" && "sessionId" in body && typeof body.sessionId === "string"
+          ? body.sessionId
+          : null
+    });
+
+    return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status: 400 });
   }
 
   const encoder = new TextEncoder();
@@ -38,25 +84,23 @@ export async function POST(request: Request) {
           session: interviewSessionSchema.parse(result.session)
         });
       } catch (error) {
-        if (error instanceof Error && error.message === "SESSION_NOT_FOUND") {
-          send("error", {
-            code: "SESSION_NOT_FOUND",
-            message: "未找到当前访谈会话。"
-          });
-        } else if (
-          error instanceof Error &&
-          (error.message === "SESSION_CONTINUE_UNAVAILABLE" || error.message === "SESSION_NEXT_EVENT_UNAVAILABLE")
-        ) {
-          send("error", {
-            code: "SESSION_CONTINUE_UNAVAILABLE",
-            message: "当前会话没有可执行的分叉选择。"
-          });
-        } else {
-          send("error", {
-            code: "INTERVIEW_RESPOND_FAILED",
-            message: "这一轮提交失败了，请再试一次。"
-          });
-        }
+        const issue = normalizeInterviewRespondError({
+          error,
+          requestId
+        });
+
+        logInterviewRespondError({
+          error,
+          issue,
+          route: "respond/stream",
+          sessionId: parsed.data.sessionId
+        });
+
+        send("error", {
+          code: issue.code,
+          message: issue.message,
+          issue
+        });
       } finally {
         controller.close();
       }

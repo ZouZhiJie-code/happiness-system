@@ -54,10 +54,10 @@ export class VolcengineArkProvider implements AIProvider {
     this.timeoutMs = Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   }
 
-  async complete({ messages, temperature = 0.2, maxTokens = 600 }: AICompletionParams) {
+  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs }: AICompletionParams) {
     const startedAt = Date.now();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.timeoutMs);
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -116,9 +116,9 @@ export class VolcengineArkProvider implements AIProvider {
     }
   }
 
-  async *stream({ messages, temperature = 0.2, maxTokens = 180 }: AICompletionParams): AsyncIterable<string> {
+  async *stream({ messages, temperature = 0.2, maxTokens = 180, timeoutMs }: AICompletionParams): AsyncIterable<string> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.timeoutMs);
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {

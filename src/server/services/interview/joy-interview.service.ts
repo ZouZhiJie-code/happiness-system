@@ -3,13 +3,22 @@ import { Prisma } from "@prisma/client";
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   assessUserTurnMessage,
-  deriveDepthReachedFromSnapshot
+  deriveDepthReachedFromSnapshot,
+  summarizeInterviewProgress
 } from "@/features/joy-interview/server/interview-progress";
 import {
   buildAssistantQuestion,
+  getDelightSignature,
   getInactiveSessionMessage,
+  getJoyTrack,
+  getJoyMoment,
+  getJoySource,
+  hasJoyStableClosure,
+  getManualClue,
+  getMeaningNeed,
   getNextStage,
-  getOpeningQuestion
+  getOpeningQuestion,
+  getStateShift
 } from "@/features/joy-interview/server/joy-interview-engine";
 import {
   appendJoyInterviewTurn,
@@ -31,6 +40,7 @@ import {
 } from "@/server/services/interview/joy-interview-ai.service";
 import type {
   AssistantTurnPayload,
+  DraftCompletionMode,
   InputMode,
   InterviewDimension,
   InterviewEventRecord,
@@ -63,6 +73,20 @@ type InterviewRespondInput =
 type StreamingPhase = "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
 type CanonicalInterviewAction = "reply" | "continue_current_event" | "next_event";
+type InterviewDecisionProgressData =
+  | {
+      kind: "event_complete";
+      completionMode?: DraftCompletionMode;
+    }
+  | {
+      kind: "dimension_redirect";
+      targetDimension: "improvement";
+      reason: string;
+    }
+  | {
+      kind: "boundary_insufficient";
+      reason: string;
+    };
 
 export class DraftGenerationError extends Error {
   constructor(
@@ -89,6 +113,7 @@ interface PreparedInterviewTurnContext {
   nextEventTurnCount: number;
   nextStage: JoyInterviewStage;
   nextEventStatus: InterviewEventRecord["status"];
+  nextProgressData: InterviewDecisionProgressData | null;
   isReadyForDraft: boolean;
   userMessage: string | null;
   inputMode?: InputMode;
@@ -138,51 +163,348 @@ function uniqueLenses(...groups: InterviewLens[][]) {
 
 function deriveInterviewLenses(snapshot: JoySnapshot): InterviewLens[] {
   return uniqueLenses([
-    snapshot.event ? "event_detail" : null,
-    snapshot.feeling ? "felt_experience" : null,
-    snapshot.whyItMattered ? "importance_reason" : null,
-    snapshot.happinessType ? "meaning_pattern" : null,
-    snapshot.selfPattern ? "self_pattern" : null
+    getJoyMoment(snapshot) ? "event_detail" : null,
+    getStateShift(snapshot) ? "felt_experience" : null,
+    getJoySource(snapshot) ? "importance_reason" : null,
+    getMeaningNeed(snapshot) || (getJoyTrack(snapshot) === "delight_track" && getDelightSignature(snapshot)) ? "meaning_pattern" : null,
+    getManualClue(snapshot) || getDelightSignature(snapshot) ? "self_pattern" : null
   ].filter(Boolean) as InterviewLens[]);
 }
 
-function isEventCoreComplete(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && snapshot.whyItMattered && (snapshot.happinessType || snapshot.selfPattern));
+function isJoyCoreReadyForDraft(snapshot: JoySnapshot) {
+  if (getJoyTrack(snapshot) === "delight_track") {
+    return Boolean(getJoyMoment(snapshot) && getJoySource(snapshot) && getStateShift(snapshot));
+  }
+
+  return Boolean(getJoyMoment(snapshot) && getJoySource(snapshot) && (getStateShift(snapshot) || getMeaningNeed(snapshot)));
 }
 
-function buildChoiceInsight(snapshot: JoySnapshot) {
+function isEventCoreComplete(snapshot: JoySnapshot) {
+  return Boolean(isJoyCoreReadyForDraft(snapshot) && hasJoyStableClosure(snapshot));
+}
+
+function isFulfillmentCoreReadyForDraft(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && snapshot.whyItMattered);
+}
+
+function isFulfillmentComplete(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && snapshot.whyItMattered && snapshot.selfPattern);
+}
+
+function isReflectionCoreReadyForDraft(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && snapshot.whyItMattered);
+}
+
+function isReflectionComplete(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && snapshot.whyItMattered && snapshot.selfPattern);
+}
+
+function getImprovementCause(snapshot: JoySnapshot) {
+  return snapshot.improvementTrack === "repeat_good"
+    ? snapshot.repeatCondition
+    : snapshot.improvementTrack === "avoid_bad"
+      ? snapshot.frictionPoint
+      : snapshot.frictionPoint ?? snapshot.repeatCondition ?? snapshot.whyItMattered;
+}
+
+function isImprovementCoreReadyForDraft(snapshot: JoySnapshot) {
+  return Boolean(snapshot.event && getImprovementCause(snapshot));
+}
+
+function isImprovementComplete(snapshot: JoySnapshot) {
+  return Boolean(
+    snapshot.event &&
+      snapshot.improvementTrack &&
+      snapshot.stateAssessment &&
+      getImprovementCause(snapshot) &&
+      snapshot.controllableFactor &&
+      snapshot.nextAttempt
+  );
+}
+
+function isBoundaryIntent(intent: ReturnType<typeof assessUserTurnMessage>["intent"]) {
+  return intent === "boundary_stop" || intent === "hostile_boundary";
+}
+
+function isCoreReadyForBoundaryPartial(dimension: InterviewDimension, snapshot: JoySnapshot) {
+  if (dimension === "joy") {
+    return isJoyCoreReadyForDraft(snapshot);
+  }
+
+  if (dimension === "fulfillment") {
+    return isFulfillmentCoreReadyForDraft(snapshot);
+  }
+
+  if (dimension === "reflection") {
+    return isReflectionCoreReadyForDraft(snapshot);
+  }
+
+  if (dimension === "improvement") {
+    return isImprovementCoreReadyForDraft(snapshot);
+  }
+
+  return Boolean(snapshot.event && snapshot.whyItMattered);
+}
+
+function isJoyDraftOverrideRequested(message: string | null) {
+  if (!message) {
+    return false;
+  }
+
+  const normalized = message.replace(/\s+/g, "");
+
+  return /(先这样|就这样吧|先到这|先记到这|不想再深挖|不想继续深挖|不想提炼|不用提炼|不需要提炼|没必要总结|没有必要总结|不需要总结|不想形成规律|不用形成规律|不想总结规律|不用总结规律|别(?:再)?(?:追问|问)了|直接生成|先生成日志|生成一下日志|直接整理|先整理日志|整理成日志|总结日志|总结成日志|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/.test(
+    normalized
+  );
+}
+
+function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
+  return {
+    insight: "我不再继续追问细节了。",
+    thinkingSummary: "",
+    analysis: "用户明确表达不想继续追问，但当前材料还不足以整理成日志；下一步交给用户选择：只补一句、换一个片段，或先退出。",
+    question:
+      dimension === "fulfillment"
+        ? "如果还愿意补一句，只说这件事为什么让今天不算白过就够了。"
+        : "如果还愿意补一句，只说这个片段最关键的一点就够了。",
+    stateUpdate: {
+      turnPhase: "choice",
+      shouldEndDimension: false,
+      offerChoice: true,
+      choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。",
+    },
+    meta: {
+      depthReached: []
+    }
+  };
+}
+
+function buildChoiceInsight(
+  dimension: InterviewDimension,
+  snapshot: JoySnapshot,
+  completionMode: DraftCompletionMode = "complete"
+) {
+  if (dimension === "joy") {
+    if (completionMode === "user_override_partial") {
+      return "这段开心的核心已经清楚了，如果你现在不想继续往下提炼，也可以先按当前理解整理。";
+    }
+
+    if (getJoyTrack(snapshot) === "delight_track" && getDelightSignature(snapshot)) {
+      return "这一段已经看见一条会把你轻轻带动起来的开心线索了。";
+    }
+
+    if (getManualClue(snapshot)) {
+      return "这一段已经沉淀出一条可继续拿来用的个人线索了。";
+    }
+
+    if (getMeaningNeed(snapshot) || getJoySource(snapshot)) {
+      return "这一段开心背后真正打动你的点已经比较清楚了。";
+    }
+
+    if (getJoyMoment(snapshot)) {
+      return "这个开心片段已经有了清楚的轮廓。";
+    }
+
+    return "这一段已经聊出一些轮廓了。";
+  }
+
+  if (dimension === "fulfillment") {
+    if (completionMode === "user_override_partial") {
+      return "这件事为什么不算白过已经比较清楚了，如果你现在不想继续提炼值得感标准，也可以先按当前理解整理。";
+    }
+
+    if (snapshot.selfPattern) {
+      return "这一段已经聊到什么样的努力对你来说真的算数了。";
+    }
+
+    if (snapshot.whyItMattered) {
+      return "这一段已经说清楚了为什么今天不是空转的一天。";
+    }
+
+    if (snapshot.event) {
+      return "这个充实片段已经有了清楚的轮廓。";
+    }
+
+    return "这一段已经聊出一些轮廓了。";
+  }
+
+  if (dimension === "reflection") {
+    if (completionMode === "user_override_partial") {
+      return "这次思考的触发片段和新理解已经比较清楚了，如果你现在不想继续提炼判断线索，也可以先按当前理解整理。";
+    }
+
+    if (snapshot.selfPattern) {
+      return "这一段已经聊到以后判断类似事情时可以带着的一条线索了。";
+    }
+
+    if (snapshot.whyItMattered) {
+      return "这一段已经说清楚它带来的新理解了。";
+    }
+
+    if (snapshot.event) {
+      return "这个触发思考的片段已经有了清楚的轮廓。";
+    }
+
+    return "这一段已经聊出一些轮廓了。";
+  }
+
+  if (dimension === "improvement") {
+    if (completionMode === "user_override_partial") {
+      return "这个改进情境和关键原因已经比较清楚了，如果你现在不想继续拆动作，也可以先按当前理解整理。";
+    }
+
+    if (snapshot.nextAttempt) {
+      return "这一段已经聊到下次可以先尝试的具体动作了。";
+    }
+
+    if (snapshot.improvementTrack === "repeat_good" && snapshot.repeatCondition) {
+      return "这一段已经看见了一个值得重复的好状态条件。";
+    }
+
+    if (snapshot.frictionPoint) {
+      return "这一段已经说清了下次想避开的关键卡点。";
+    }
+
+    if (snapshot.event) {
+      return "这个改进情境已经有了清楚的轮廓。";
+    }
+
+    return "这一段已经聊出一些轮廓了。";
+  }
+
   if (snapshot.selfPattern) {
     return "这一段已经聊到你的在乎和模式了。";
   }
 
   if (snapshot.happinessType || snapshot.whyItMattered) {
-    return "这一段开心的来龙去脉已经比较完整了。";
+    return "这一段内容的来龙去脉已经比较完整了。";
   }
 
   if (snapshot.event) {
-    return "这个开心片段已经有了清楚的轮廓。";
+    return "这个片段已经有了清楚的轮廓。";
   }
 
   return "这一段已经聊出一些轮廓了。";
 }
 
-function buildChoiceReason(round: number) {
+function buildChoiceReason(
+  dimension: InterviewDimension,
+  snapshot: JoySnapshot,
+  round: number,
+  completionMode: DraftCompletionMode = "complete"
+) {
+  if (dimension === "joy") {
+    if (completionMode === "user_override_partial") {
+      return round <= 1
+        ? "当前事件的核心已经足够整理成一篇当前版本日志；如果用户不想继续提炼规律，也可以先按当前理解收束。"
+        : "当前事件已经补到新的角度；如果用户不想继续提炼规律，也可以先整理成当前版本日志。";
+    }
+
+    if (getJoyTrack(snapshot) === "delight_track") {
+      return round <= 1
+        ? "当前事件已经形成一条可回看的轻快乐线索，交给用户决定下一步。"
+        : "当前事件已经补到新的角度，也已经看见什么会把用户轻轻带动起来，交给用户决定下一步。";
+    }
+
+    return round <= 1
+      ? "当前事件已经形成一条可用的开心日志线索，交给用户决定下一步。"
+      : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
+  }
+
+  if (dimension === "fulfillment") {
+    if (completionMode === "user_override_partial") {
+      return round <= 1
+        ? "当前事件已经说清为什么不算白过；如果用户不想继续提炼值得感标准，也可以先整理成当前版本日志。"
+        : "当前事件已经补到新的角度；如果用户不想继续提炼值得感标准，也可以先整理成当前版本日志。";
+    }
+
+    return round <= 1
+      ? "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+      : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
+  }
+
+  if (dimension === "reflection") {
+    if (completionMode === "user_override_partial") {
+      return round <= 1
+        ? "当前事件已经说清触发片段和新理解；如果用户不想继续提炼判断线索，也可以先整理成当前版本日志。"
+        : "当前事件已经补到新的角度；如果用户不想继续提炼判断线索，也可以先整理成当前版本日志。";
+    }
+
+    return round <= 1
+      ? "当前事件已经形成一条可信的思考日志线索，交给用户决定下一步。"
+      : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
+  }
+
+  if (dimension === "improvement") {
+    if (completionMode === "user_override_partial") {
+      return round <= 1
+        ? "当前事件已经说清改进情境和关键原因；如果用户不想继续拆具体动作，也可以先整理成当前版本日志。"
+        : "当前事件已经补到新的角度；如果用户不想继续拆具体动作，也可以先整理成当前版本日志。";
+    }
+
+    return round <= 1
+      ? "当前事件已经形成一条可信的改进尝试线索，交给用户决定下一步。"
+      : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
+  }
+
   return round <= 1
     ? "当前事件已经完成一轮完整复盘，交给用户决定下一步。"
     : "当前事件已经完成这一轮新角度复盘，交给用户决定下一步。";
 }
 
-function buildChoiceAssistantTurn(snapshot: JoySnapshot, explorationRound: number): AssistantTurnPayload {
+function buildChoiceAssistantTurn(
+  dimension: InterviewDimension,
+  snapshot: JoySnapshot,
+  explorationRound: number,
+  completionMode: DraftCompletionMode = "complete"
+): AssistantTurnPayload {
   return {
-    insight: buildChoiceInsight(snapshot),
+    insight: buildChoiceInsight(dimension, snapshot, completionMode),
     thinkingSummary: "",
-    analysis: "当前事件已形成完整复盘，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+    analysis:
+      dimension === "joy"
+        ? completionMode === "user_override_partial"
+          ? "当前事件的核心已经清楚，用户明确表示可以先不继续提炼规律；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
+          : getJoyTrack(snapshot) === "delight_track"
+            ? "当前事件已经看见一条可回看的轻快乐线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+            : "当前事件已形成可用的开心日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+        : dimension === "fulfillment"
+          ? completionMode === "user_override_partial"
+            ? "当前事件已经说清为什么不算白过，用户明确表示可以先不继续提炼值得感标准；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
+            : "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+          : dimension === "reflection"
+            ? completionMode === "user_override_partial"
+              ? "当前事件已经说清触发片段和新理解，用户明确表示可以先不继续提炼判断线索；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
+              : "当前事件已形成可信的思考日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+            : dimension === "improvement"
+              ? completionMode === "user_override_partial"
+                ? "当前事件已经说清改进情境和关键原因，用户明确表示可以先不继续拆具体动作；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
+                : "当前事件已形成可信的改进尝试线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+          : "当前事件已形成完整复盘，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
     question: "",
     stateUpdate: {
       turnPhase: "choice",
       shouldEndDimension: false,
       offerChoice: true,
-      choiceReason: buildChoiceReason(explorationRound)
+      choiceReason: buildChoiceReason(dimension, snapshot, explorationRound, completionMode)
+    },
+    meta: {
+      depthReached: deriveDepthReachedFromSnapshot(snapshot)
+    }
+  };
+}
+
+function buildRedirectAssistantTurn(reason: string, snapshot: JoySnapshot): AssistantTurnPayload {
+  return {
+    insight: "这一轮开心先停在这里会更合适。",
+    thinkingSummary: "",
+    analysis: `当前轮次还没找到可信的开心片段，建议转去改进维度。原因：${reason}`,
+    question: "",
+    stateUpdate: {
+      turnPhase: "choice",
+      shouldEndDimension: true,
+      offerChoice: true,
+      choiceReason: reason
     },
     meta: {
       depthReached: deriveDepthReachedFromSnapshot(snapshot)
@@ -205,89 +527,260 @@ function trimSummaryField(value: string | null, maxLength = 40) {
 }
 
 function buildThinkingSummaryLead(snapshot: JoySnapshot) {
-  const selfPattern = trimSummaryField(snapshot.selfPattern, 32);
-  const happinessType = trimSummaryField(snapshot.happinessType, 18);
-  const whyItMattered = trimSummaryField(snapshot.whyItMattered, 24);
-  const feeling = trimSummaryField(snapshot.feeling, 18);
-  const event = trimSummaryField(snapshot.event, 24);
+  const joyTrack = getJoyTrack(snapshot);
+  const manualClue = trimSummaryField(getManualClue(snapshot), 42);
+  const delightSignature = trimSummaryField(getDelightSignature(snapshot), 42);
+  const meaningNeed = trimSummaryField(getMeaningNeed(snapshot), 24);
+  const joySource = trimSummaryField(getJoySource(snapshot), 24);
+  const stateShift = trimSummaryField(getStateShift(snapshot), 18);
+  const joyMoment = trimSummaryField(getJoyMoment(snapshot), 24);
 
-  if (selfPattern) {
-    return `你已经开始把这件事和“${selfPattern}”这样的自己连起来了`;
+  if (joyTrack === "delight_track" && delightSignature) {
+    return "这条轻快乐线索开始成形：什么样的内容会把状态带动起来";
   }
 
-  if (happinessType && whyItMattered) {
-    return `你说到这份开心更像“${happinessType}”，而且已经碰到“${whyItMattered}”这层了`;
+  if (manualClue) {
+    return `这类开心正在沉淀成“${manualClue}”这样的个人线索`;
   }
 
-  if (whyItMattered) {
-    return "你已经在慢慢说清，这件事为什么会让你特别在意了";
+  if (meaningNeed && joySource) {
+    return `真正开心点落在“${joySource}”，背后也碰到“${meaningNeed}”这层在乎`;
   }
 
-  if (feeling && event) {
-    return `你已经抓到“${event}”里那种${feeling}的感觉了`;
+  if (joySource) {
+    return joyTrack === "delight_track"
+      ? `这一刻被带活的原因，正在落到“${joySource}”`
+      : `这一刻真正有感觉的地方，正在落到“${joySource}”`;
   }
 
-  if (feeling) {
-    return `你已经抓到这件事带给你的那种${feeling}了`;
+  if (stateShift && joyMoment) {
+    return `“${joyMoment}”里明显出现了${stateShift}的状态变化`;
   }
 
-  if (event) {
-    return `你已经把“${event}”这个真正有感觉的片段找出来了`;
+  if (stateShift) {
+    return `这件事带出的${stateShift}状态已经出现`;
   }
 
-  return "你已经抓到一个值得继续往下走的片段了";
+  if (joyMoment) {
+    return `“${joyMoment}”是当前最有感觉的片段`;
+  }
+
+  return "当前片段有继续展开的价值";
+}
+
+function buildFulfillmentThinkingSummaryLead(snapshot: JoySnapshot) {
+  const experience = trimSummaryField(getJoyMoment(snapshot), 32);
+  const progressEvidence = trimSummaryField(getJoySource(snapshot), 42);
+  const feeling = trimSummaryField(getStateShift(snapshot), 18);
+  const valueSignal = trimSummaryField(getManualClue(snapshot), 42);
+
+  if (progressEvidence && valueSignal) {
+    return `这段经历的分量落在“${progressEvidence}”，也显出了“${valueSignal}”这条值得感标准`;
+  }
+
+  if (progressEvidence && experience) {
+    return `“${experience}”不只是做了什么，真正让今天不算白过的是“${progressEvidence}”`;
+  }
+
+  if (progressEvidence) {
+    return `让今天不算白过的证据已经出现：${progressEvidence}`;
+  }
+
+  if (experience && feeling) {
+    return `“${experience}”带来的${feeling}感已经出现，但还需要落到具体进展证据上`;
+  }
+
+  if (experience) {
+    return `“${experience}”是这段充实感的入口，接下来要把它为什么有分量说实`;
+  }
+
+  return "一个可能让今天不算白过的片段已经出现，接下来要把具体证据抓稳";
+}
+
+function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
+  const trigger = trimSummaryField(snapshot.event, 32);
+  const insight = trimSummaryField(snapshot.whyItMattered, 48);
+  const reflectionType = trimSummaryField(snapshot.happinessType, 18);
+  const viewpointShift = trimSummaryField(snapshot.selfPattern, 48);
+
+  if (insight && viewpointShift) {
+    return `这次思考的核心落在“${insight}”，也开始形成“${viewpointShift}”这条判断线索`;
+  }
+
+  if (insight && trigger) {
+    return `“${trigger}”不只是一个片段，它已经带出“${insight}”这层新理解`;
+  }
+
+  if (insight) {
+    return `这次思考已经出现一个可回看的新理解：${insight}`;
+  }
+
+  if (trigger && reflectionType) {
+    return `“${trigger}”像是一次${reflectionType}的入口，还需要把新的判断说实`;
+  }
+
+  if (trigger) {
+    return `“${trigger}”是这次思考的入口，接下来要看它改变了哪一层判断`;
+  }
+
+  return "一个可能触发思考的片段已经出现，接下来要把具体证据抓稳";
 }
 
 function buildThinkingSummaryFocus(input: {
+  dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
   assistantAction: "reply" | "continue_current_event";
 }) {
+  const joyTrack = getJoyTrack(input.snapshot);
+
+  if (input.dimension === "fulfillment") {
+    if (input.assistantAction === "continue_current_event") {
+      return "，换个角度把这段投入里真正算数的部分说清。";
+    }
+
+    switch (input.stage) {
+      case "collect_event":
+        return "，先把具体画面和投入位置说清。";
+      case "probe_reason":
+        return "，处理重点是找到推进、积累、练到或帮到别人的真实证据。";
+      case "probe_pattern":
+        return "，再把这种证据为什么对你算数收成更稳定的判断。";
+      case "wrap_up":
+        return "，最后确认这篇日志里最该留下的分量。";
+      case "finalize":
+        return "";
+    }
+  }
+
+  if (input.dimension === "reflection") {
+    if (input.assistantAction === "continue_current_event") {
+      return "，换个角度把这次新理解背后的证据和判断变化说清。";
+    }
+
+    switch (input.stage) {
+      case "collect_event":
+        return "，先把触发思考的具体片段说清。";
+      case "probe_reason":
+        return "，处理重点是找到它带来的新发现，而不是停在情绪或想法本身。";
+      case "probe_pattern":
+        return "，再把这层新理解收成以后判断类似事情时可参考的线索。";
+      case "wrap_up":
+        return "，最后确认这篇思考日志里最该留下的判断依据。";
+      case "finalize":
+        return "";
+    }
+  }
+
   if (input.assistantAction === "continue_current_event") {
-    if (input.snapshot.selfPattern) {
-      return "，所以我想换个角度再确认，这是不是你一贯会在意的模式。";
+    if (joyTrack === "delight_track" && getDelightSignature(input.snapshot)) {
+      return "，换个角度确认这条轻快乐线索是不是站得住。";
     }
 
-    if (input.snapshot.whyItMattered) {
-      return "，所以我想换个角度再看看，到底是什么让它这么打动你。";
+    if (getManualClue(input.snapshot)) {
+      return "，换个角度确认这条线索是不是真的稳定成立。";
     }
 
-    return "，所以我想换个角度把真正打动你的点问具体一点。";
+    if (joyTrack === "delight_track") {
+      return "，换个角度看清什么样的内容、节奏或场景最容易把你带进去。";
+    }
+
+    if (getMeaningNeed(input.snapshot) || getJoySource(input.snapshot)) {
+      return "，换个角度把真正打动你的那一层说清。";
+    }
+
+    return "，换个角度把真正打动你的点说具体一点。";
   }
 
   switch (input.stage) {
     case "collect_event":
-      return "，所以我想继续把真正让你有感觉的那一刻问具体一点。";
+      return "，处理重点是把真正让你有感觉的那一刻落具体。";
     case "probe_reason":
-      return input.snapshot.feeling
-        ? "，所以我想继续确认，这种感觉为什么会在这件事上冒出来。"
-        : "，所以我想继续确认，它为什么会对你这么重要。";
+      return getStateShift(input.snapshot)
+        ? "，处理重点是看清这种状态为什么偏偏会在这里冒出来。"
+        : "，处理重点是分辨真正让你开心的点到底是什么。";
     case "probe_pattern":
-      if (input.snapshot.selfPattern) {
-        return "，所以我想再确认，这是不是你一贯会反复在意的东西。";
+      if (joyTrack === "delight_track" && getDelightSignature(input.snapshot)) {
+        return "，再确认这条轻快乐线索是不是已经够稳，可以留下来。";
       }
 
-      if (input.snapshot.happinessType) {
-        return "，所以我想再看看，这背后更稳定的在乎到底是什么。";
+      if (joyTrack === "delight_track") {
+        return "，再看清这类开心通常会被什么样的内容、节奏或场景带出来。";
       }
 
-      return "，所以我想再往里问一层，看看这背后更稳定的线索是什么。";
+      if (getManualClue(input.snapshot)) {
+        return "，再确认这条个人线索是不是真的站得住。";
+      }
+
+      if (getMeaningNeed(input.snapshot)) {
+        return "，再看清这类开心背后更稳定的条件到底是什么。";
+      }
+
+      return "，再往里推进一层，看这类开心能不能沉淀成更稳定的个人线索。";
     case "wrap_up":
-      return "，所以我想再确认你最想留下的那一层是什么。";
+      return "，最后确认你最想留下的那一层。";
     case "finalize":
       return "";
   }
 }
 
 function buildFollowUpThinkingSummary(input: {
+  dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
   assistantAction: "reply" | "continue_current_event";
 }) {
-  return `${buildThinkingSummaryLead(input.snapshot)}${buildThinkingSummaryFocus(input)}`
+  const lead =
+    input.dimension === "fulfillment"
+      ? buildFulfillmentThinkingSummaryLead(input.snapshot)
+      : input.dimension === "reflection"
+        ? buildReflectionThinkingSummaryLead(input.snapshot)
+      : buildThinkingSummaryLead(input.snapshot);
+
+  return `${lead}${buildThinkingSummaryFocus(input)}`
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180);
+}
+
+function hasInvalidThinkingSummaryTone(summary: string) {
+  const normalized = summary.trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    /[?？]/u.test(normalized) ||
+    /(用户|用户已说|你提到|你说|你讲到|你提及|我理解到|我听到|我会|我想|我准备|想知道|下一步|追问|提问|问你|确认一下)/u.test(
+      normalized
+    )
+  );
+}
+
+function normalizeThinkingSummary(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantAction: "reply" | "continue_current_event" | null;
+  summary: string;
+}) {
+  const summary = input.summary.replace(/\s+/g, " ").trim();
+
+  if (!summary) {
+    return summary;
+  }
+
+  if (!hasInvalidThinkingSummaryTone(summary)) {
+    return summary.slice(0, 180);
+  }
+
+  return buildFollowUpThinkingSummary({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    assistantAction: input.assistantAction ?? "reply"
+  });
 }
 
 function getVisibleAssistantText(assistantTurn: AssistantTurnPayload | null | undefined) {
@@ -301,31 +794,173 @@ function getVisibleAssistantText(assistantTurn: AssistantTurnPayload | null | un
   };
 }
 
-function shouldPresentChoice(input: {
+function getChoiceCompletionMode(input: {
+  dimension: InterviewDimension;
   activeEvent: InterviewEventRecord;
   nextSnapshot: JoySnapshot;
   nextStage: JoyInterviewStage;
+  userMessage: string | null;
   isMeaningfulReply: boolean;
   nextEventTurnCount: number;
   nextRoundMeaningfulReplyCount: number;
 }) {
+  if (input.dimension === "joy") {
+    if (hasJoyStableClosure(input.nextSnapshot)) {
+      if (!input.isMeaningfulReply || input.nextStage !== "wrap_up") {
+        return null;
+      }
+
+      if (input.activeEvent.explorationRound <= 1) {
+        return input.nextEventTurnCount >= 4 ? "complete" : null;
+      }
+
+      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+    }
+
+    if (!isJoyCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+      return null;
+    }
+
+    if (input.activeEvent.explorationRound <= 1) {
+      return input.nextEventTurnCount >= 3 ? "user_override_partial" : null;
+    }
+
+    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+  }
+
+  if (input.dimension === "fulfillment") {
+    if (input.isMeaningfulReply && isFulfillmentComplete(input.nextSnapshot)) {
+      if (input.nextStage !== "wrap_up") {
+        return null;
+      }
+
+      if (input.activeEvent.explorationRound <= 1) {
+        return input.nextEventTurnCount >= 3 ? "complete" : null;
+      }
+
+      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+    }
+
+    if (!isFulfillmentCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+      return null;
+    }
+
+    if (input.activeEvent.explorationRound <= 1) {
+      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
+    }
+
+    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+  }
+
+  if (input.dimension === "reflection") {
+    if (input.isMeaningfulReply && isReflectionComplete(input.nextSnapshot)) {
+      if (input.nextStage !== "wrap_up") {
+        return null;
+      }
+
+      if (input.activeEvent.explorationRound <= 1) {
+        return input.nextEventTurnCount >= 3 ? "complete" : null;
+      }
+
+      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+    }
+
+    if (!isReflectionCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+      return null;
+    }
+
+    if (input.activeEvent.explorationRound <= 1) {
+      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
+    }
+
+    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+  }
+
+  if (input.dimension === "improvement") {
+    if (input.isMeaningfulReply && isImprovementComplete(input.nextSnapshot)) {
+      if (input.nextStage !== "wrap_up") {
+        return null;
+      }
+
+      if (input.activeEvent.explorationRound <= 1) {
+        return input.nextEventTurnCount >= 3 ? "complete" : null;
+      }
+
+      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+    }
+
+    if (!isImprovementCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+      return null;
+    }
+
+    if (input.activeEvent.explorationRound <= 1) {
+      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
+    }
+
+    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+  }
+
   if (!input.isMeaningfulReply) {
-    return false;
+    return null;
   }
 
   if (input.nextStage !== "wrap_up") {
-    return false;
+    return null;
   }
 
   if (!isEventCoreComplete(input.nextSnapshot)) {
-    return false;
+    return null;
   }
 
   if (input.activeEvent.explorationRound <= 1) {
-    return input.nextEventTurnCount >= 3;
+    return input.nextEventTurnCount >= 3 ? "complete" : null;
   }
 
-  return input.nextRoundMeaningfulReplyCount >= 2;
+  return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+}
+
+function looksLikeNoJoyMessage(message: string | null) {
+  if (!message) {
+    return false;
+  }
+
+  const normalized = message.replace(/\s+/g, "");
+
+  return /(没什么开心|没有开心|想不出来|想不到|乏善可陈|都在上班|都在上课|糟糕的一天|今天很差|没啥可记)/.test(normalized);
+}
+
+function getImprovementRedirectReason(input: {
+  dimension: InterviewDimension;
+  session: InterviewSessionRecord;
+  nextSnapshot: JoySnapshot;
+  userMessage: string | null;
+  isMeaningfulReply: boolean;
+  nextEventTurnCount: number;
+}) {
+  if (input.dimension !== "joy") {
+    return null;
+  }
+
+  if (getJoyMoment(input.nextSnapshot)) {
+    return null;
+  }
+
+  const progress = summarizeInterviewProgress(input.session.messages);
+  const nextInvalidReplies = progress.consecutiveInvalidReplies + (input.isMeaningfulReply ? 0 : 1);
+
+  if (looksLikeNoJoyMessage(input.userMessage) && input.nextEventTurnCount >= 2) {
+    return "已经尝试降低门槛，但这一天仍然没有找到可信的开心片段，更适合转去复盘改进。";
+  }
+
+  if (input.nextEventTurnCount >= 3) {
+    return "已经聊了几轮，仍然没有形成明确开心片段，继续停在这里容易变成硬找开心。";
+  }
+
+  if (nextInvalidReplies >= 2) {
+    return "连续几轮都没有形成可展开的开心内容，继续追问的收益已经很低。";
+  }
+
+  return null;
 }
 
 function normalizeActiveStageBeforeChoice(input: {
@@ -423,6 +1058,7 @@ function applyAssistantTurnFallbacks(
   return {
     ...withQuestion,
     thinkingSummary: buildFollowUpThinkingSummary({
+      dimension: input.session.dimension,
       stage: input.nextStage,
       snapshot: input.nextSnapshot,
       assistantAction: input.assistantAction
@@ -457,7 +1093,17 @@ function finalizeAssistantTurn(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
-  const finalizedAssistantTurn = applyAssistantTurnFallbacks(input, assistantTurn);
+  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, assistantTurn);
+  const finalizedAssistantTurn = {
+    ...fallbackAssistantTurn,
+    thinkingSummary: normalizeThinkingSummary({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      assistantAction: input.assistantAction,
+      summary: fallbackAssistantTurn.thinkingSummary
+    })
+  };
 
   if (input.assistantAction === "continue_current_event") {
     return {
@@ -675,6 +1321,7 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
       nextEventTurnCount: resumedEvent.totalMeaningfulReplyCount,
       nextStage: resumedEvent.stage,
       nextEventStatus: "active" as const,
+      nextProgressData: null,
       isReadyForDraft: false,
       userMessage: null,
       isMeaningfulReply: false,
@@ -688,7 +1335,7 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   if (canonicalAction === "next_event") {
-    if (session.pendingDecision?.eventId !== activeEvent.id) {
+    if (session.pendingDecision?.kind !== "event_complete" || session.pendingDecision.eventId !== activeEvent.id) {
       throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
     }
 
@@ -706,6 +1353,42 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   const assessment = assessUserTurnMessage(input.userMessage);
+  if (isBoundaryIntent(assessment.intent)) {
+    const isReadyForPartial = isCoreReadyForBoundaryPartial(session.dimension, activeEvent.snapshot);
+    const boundaryAssistantTurn = isReadyForPartial
+      ? buildChoiceAssistantTurn(session.dimension, activeEvent.snapshot, activeEvent.explorationRound, "user_override_partial")
+      : buildBoundaryInsufficientAssistantTurn(session.dimension);
+
+    return {
+      session,
+      activeEvent,
+      nextSnapshot: activeEvent.snapshot,
+      nextTurnCount: session.turnCount,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+      nextStage: "wrap_up",
+      nextEventStatus: "ready_for_choice",
+      nextProgressData: isReadyForPartial
+        ? {
+            kind: "event_complete",
+            completionMode: "user_override_partial"
+          }
+        : {
+            kind: "boundary_insufficient",
+            reason: "我不再继续追问细节了。"
+          },
+      isReadyForDraft: isReadyForPartial || Boolean(session.journalEntry),
+      userMessage: input.userMessage,
+      inputMode: input.inputMode,
+      isMeaningfulReply: false,
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+      assistantTurn: boundaryAssistantTurn,
+      assistantAction: null
+    } satisfies PreparedInterviewTurnContext;
+  }
+
   const isMeaningfulReply = assessment.isMeaningful;
   const nextSnapshot = isMeaningfulReply
     ? await extractJoySnapshotWithAI({
@@ -715,7 +1398,7 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     : activeEvent.snapshot;
   const nextTurnCount = session.turnCount + (isMeaningfulReply ? 1 : 0);
   const nextEventTurnCount = activeEvent.totalMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
-  const derivedNextStage = getNextStage(nextSnapshot, nextEventTurnCount);
+  const derivedNextStage = getNextStage(session.dimension, nextSnapshot, nextEventTurnCount);
   const nextLenses = deriveInterviewLenses(nextSnapshot);
   const coveredLenses = uniqueLenses(activeEvent.coveredLenses, nextLenses);
   const roundCoveredLenses = isMeaningfulReply
@@ -723,17 +1406,29 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     : activeEvent.roundCoveredLenses;
   const roundMeaningfulReplyCount = activeEvent.roundMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
   const totalMeaningfulReplyCount = nextEventTurnCount;
-  const shouldOfferChoiceNow = shouldPresentChoice({
+  const redirectReason = getImprovementRedirectReason({
+    dimension: session.dimension,
+    session,
+    nextSnapshot,
+    userMessage: input.userMessage,
+    isMeaningfulReply,
+    nextEventTurnCount
+  });
+  const choiceCompletionMode = getChoiceCompletionMode({
+    dimension: session.dimension,
     activeEvent,
     nextSnapshot,
     nextStage: derivedNextStage,
+    userMessage: input.userMessage,
     isMeaningfulReply,
     nextEventTurnCount,
     nextRoundMeaningfulReplyCount: roundMeaningfulReplyCount
   });
+  const shouldOfferChoiceNow = Boolean(choiceCompletionMode);
+  const shouldOfferRedirectNow = Boolean(redirectReason) && !shouldOfferChoiceNow;
   const nextStage = normalizeActiveStageBeforeChoice({
-    nextStage: derivedNextStage,
-    shouldOfferChoiceNow
+    nextStage: shouldOfferChoiceNow ? "wrap_up" : derivedNextStage,
+    shouldOfferChoiceNow: shouldOfferChoiceNow || shouldOfferRedirectNow
   });
 
   return {
@@ -743,7 +1438,19 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     nextTurnCount,
     nextEventTurnCount,
     nextStage,
-    nextEventStatus: shouldOfferChoiceNow ? "ready_for_choice" : "active",
+    nextEventStatus: shouldOfferChoiceNow || shouldOfferRedirectNow ? "ready_for_choice" : "active",
+    nextProgressData: shouldOfferChoiceNow
+      ? {
+          kind: "event_complete",
+          completionMode: choiceCompletionMode ?? undefined
+        }
+      : shouldOfferRedirectNow && redirectReason
+        ? {
+            kind: "dimension_redirect",
+            targetDimension: "improvement",
+            reason: redirectReason
+          }
+        : null,
     isReadyForDraft: shouldOfferChoiceNow || Boolean(session.journalEntry),
     userMessage: input.userMessage,
     inputMode: input.inputMode,
@@ -752,8 +1459,12 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     roundCoveredLenses,
     roundMeaningfulReplyCount,
     totalMeaningfulReplyCount,
-    assistantTurn: shouldOfferChoiceNow ? buildChoiceAssistantTurn(nextSnapshot, activeEvent.explorationRound) : null,
-    assistantAction: shouldOfferChoiceNow ? null : "reply"
+    assistantTurn: shouldOfferChoiceNow
+      ? buildChoiceAssistantTurn(session.dimension, nextSnapshot, activeEvent.explorationRound, choiceCompletionMode ?? "complete")
+      : shouldOfferRedirectNow && redirectReason
+        ? buildRedirectAssistantTurn(redirectReason, nextSnapshot)
+        : null,
+    assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply"
   } satisfies PreparedInterviewTurnContext;
 }
 
@@ -778,6 +1489,7 @@ export async function completeJoyInterviewResponse(
     assistantTurn: input.assistantTurn,
     snapshot: input.nextSnapshot,
     eventStatus: input.nextEventStatus,
+    progressData: input.nextProgressData,
     nextStage: input.nextStage,
     nextStatus: "active",
     nextTurnCount: input.nextTurnCount,
@@ -785,7 +1497,11 @@ export async function completeJoyInterviewResponse(
     roundCoveredLenses: input.roundCoveredLenses,
     roundMeaningfulReplyCount: input.roundMeaningfulReplyCount,
     totalMeaningfulReplyCount: input.totalMeaningfulReplyCount,
-    draftSummary: input.nextSnapshot.whyItMattered ?? input.nextSnapshot.event,
+    draftSummary:
+      getManualClue(input.nextSnapshot) ??
+      getDelightSignature(input.nextSnapshot) ??
+      getJoySource(input.nextSnapshot) ??
+      getJoyMoment(input.nextSnapshot),
     completedAt: null
   });
 
@@ -881,6 +1597,7 @@ export async function streamJoyInterviewResponse(
     summary: "",
     question: ""
   };
+  let emittedSummary = "";
   let activePhase: StreamingPhase | null = "thinking";
   const emitPhase = async (phase: StreamingPhase) => {
     if (activePhase === phase) {
@@ -890,6 +1607,19 @@ export async function streamJoyInterviewResponse(
     activePhase = phase;
     await callbacks.onPhase(phase);
   };
+  const emitSummaryOnce = async (summary: string) => {
+    if (!summary || emittedSummary) {
+      return;
+    }
+
+    await emitPhase("summary");
+    await callbacks.onDelta({
+      target: "summary",
+      text: summary
+    });
+    emittedSummary = summary;
+    streamedText.summary = summary;
+  };
   const completed = await resolvePreparedInterviewTurn(prepared, {
     onDelta: async (delta) => {
       if (!delta.text) {
@@ -897,6 +1627,27 @@ export async function streamJoyInterviewResponse(
       }
 
       streamedText[delta.target] += delta.text;
+
+      if (delta.target === "summary") {
+        return;
+      }
+
+      if (streamedText.summary) {
+        const normalizedSummary = normalizeThinkingSummary({
+          dimension: prepared.session.dimension,
+          stage: prepared.nextStage,
+          snapshot: prepared.nextSnapshot,
+          assistantAction: prepared.assistantAction,
+          summary: streamedText.summary
+        });
+
+        if (normalizedSummary) {
+          await emitSummaryOnce(normalizedSummary);
+        }
+
+        streamedText.summary = normalizedSummary;
+      }
+
       await emitPhase(delta.target);
       await callbacks.onDelta(delta);
     }
@@ -905,14 +1656,9 @@ export async function streamJoyInterviewResponse(
 
   if (
     completedVisibleText.firstBubble &&
-    completedVisibleText.firstBubble.startsWith(streamedText.summary) &&
-    streamedText.summary !== completedVisibleText.firstBubble
+    !emittedSummary
   ) {
-    await emitPhase("summary");
-    await callbacks.onDelta({
-      target: "summary",
-      text: completedVisibleText.firstBubble.slice(streamedText.summary.length)
-    });
+    await emitSummaryOnce(completedVisibleText.firstBubble);
   }
 
   if (

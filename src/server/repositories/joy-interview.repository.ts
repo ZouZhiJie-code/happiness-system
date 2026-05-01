@@ -19,7 +19,11 @@ import {
   buildSnapshotDataForDimension
 } from "@/features/interview/dimension-definitions";
 import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
-import { createEmptySnapshot } from "@/features/joy-interview/server/joy-interview-engine";
+import {
+  buildJoySnapshot,
+  createEmptySnapshot,
+  getLegacyJoyProjection
+} from "@/features/joy-interview/server/joy-interview-engine";
 import { prisma } from "@/server/db/prisma";
 import type {
   AssistantTurnPayload,
@@ -30,8 +34,7 @@ import type {
   JournalEntryRecord,
   JoyEntryDraft,
   JoyEventBlock,
-  JoySnapshot,
-  PendingDecisionAction
+  JoySnapshot
 } from "@/types/interview";
 
 const DEMO_USER_ID = "local-demo-user";
@@ -72,6 +75,211 @@ type SnapshotRecord = any;
 type EventRecord = any;
 type JoyEntryRecord = any;
 
+function parseJoySnapshotData(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (data.kind !== "joy") {
+    return null;
+  }
+
+  return {
+    joyMoment:
+      typeof data.joyMoment === "string" ? data.joyMoment : typeof data.moment === "string" ? data.moment : null,
+    joySource:
+      typeof data.joySource === "string" ? data.joySource : typeof data.meaningSource === "string" ? data.meaningSource : null,
+    stateShift:
+      typeof data.stateShift === "string" ? data.stateShift : typeof data.feeling === "string" ? data.feeling : null,
+    meaningNeed: typeof data.meaningNeed === "string" ? data.meaningNeed : null,
+    manualClue:
+      typeof data.manualClue === "string" ? data.manualClue : typeof data.selfPattern === "string" ? data.selfPattern : null,
+    delightSignature: typeof data.delightSignature === "string" ? data.delightSignature : null,
+    directionSignal: typeof data.directionSignal === "string" ? data.directionSignal : null,
+    valueImpact: typeof data.valueImpact === "string" ? data.valueImpact : null,
+    durability: typeof data.durability === "string" ? data.durability : null,
+    psychProfile: data.psychProfile,
+    tags: Array.isArray(data.tags) ? data.tags.filter((tag): tag is string => typeof tag === "string") : []
+  };
+}
+
+function parseImprovementSnapshotData(value: unknown): Pick<
+  JoySnapshot,
+  | "improvementTrack"
+  | "stateAssessment"
+  | "frictionPoint"
+  | "repeatCondition"
+  | "controllableFactor"
+  | "nextAttempt"
+  | "successSignal"
+> | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (data.kind !== "improvement") {
+    return null;
+  }
+
+  return {
+    improvementTrack:
+      data.improvementTrack === "repeat_good" || data.improvementTrack === "avoid_bad" ? data.improvementTrack : null,
+    stateAssessment: typeof data.stateAssessment === "string" ? data.stateAssessment : null,
+    frictionPoint: typeof data.frictionPoint === "string" ? data.frictionPoint : null,
+    repeatCondition: typeof data.repeatCondition === "string" ? data.repeatCondition : null,
+    controllableFactor: typeof data.controllableFactor === "string" ? data.controllableFactor : null,
+    nextAttempt: typeof data.nextAttempt === "string" ? data.nextAttempt : null,
+    successSignal: typeof data.successSignal === "string" ? data.successSignal : null
+  };
+}
+
+function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapshot: JoySnapshot, raw: unknown) {
+  if (dimension !== "joy") {
+    return raw ? (raw as InterviewEventRecord["snapshotData"]) : buildSnapshotDataForDimension(dimension, snapshot);
+  }
+
+  const parsed = parseJoySnapshotData(raw);
+
+  return buildSnapshotDataForDimension(
+    "joy",
+    buildJoySnapshot({
+      event: snapshot.event,
+      feeling: snapshot.feeling,
+      whyItMattered: snapshot.whyItMattered,
+      happinessType: snapshot.happinessType,
+      selfPattern: snapshot.selfPattern,
+      joyMoment: parsed?.joyMoment,
+      joySource: parsed?.joySource,
+      stateShift: parsed?.stateShift,
+      meaningNeed: parsed?.meaningNeed,
+      manualClue: parsed?.manualClue,
+      delightSignature: parsed?.delightSignature,
+      directionSignal: parsed?.directionSignal,
+      valueImpact: parsed?.valueImpact,
+      durability: parsed?.durability,
+      psychProfile: parsed?.psychProfile as any,
+      tags: parsed?.tags
+    })
+  );
+}
+
+function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyEntryRecord) {
+  if (dimension === "improvement" && entry.payload && typeof entry.payload === "object") {
+    const payload = entry.payload as Record<string, unknown>;
+
+    if (payload.kind === "improvement") {
+      return buildJournalPayloadForDimension("improvement", {
+        event: typeof payload.situation === "string" ? payload.situation : entry.event,
+        feeling: typeof payload.feeling === "string" ? payload.feeling : entry.feeling,
+        whyItMattered: typeof payload.frictionPoint === "string" ? payload.frictionPoint : entry.whyItMattered,
+        happinessType: typeof payload.improvementType === "string" ? payload.improvementType : entry.happinessType,
+        selfPattern: typeof payload.nextAttempt === "string" ? payload.nextAttempt : entry.selfPattern,
+        joyMoment: null,
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        improvementTrack:
+          payload.improvementTrack === "repeat_good" || payload.improvementTrack === "avoid_bad" ? payload.improvementTrack : null,
+        stateAssessment: typeof payload.stateAssessment === "string" ? payload.stateAssessment : null,
+        frictionPoint: typeof payload.frictionPoint === "string" ? payload.frictionPoint : null,
+        repeatCondition: typeof payload.repeatCondition === "string" ? payload.repeatCondition : null,
+        controllableFactor: typeof payload.controllableFactor === "string" ? payload.controllableFactor : null,
+        nextAttempt: typeof payload.nextAttempt === "string" ? payload.nextAttempt : null,
+        successSignal: typeof payload.successSignal === "string" ? payload.successSignal : null,
+        tags: Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === "string") : entry.tags
+      });
+    }
+  }
+
+  if (dimension !== "joy" || !entry.payload) {
+    return buildJournalPayloadForDimension(dimension, {
+      event: entry.event,
+      feeling: entry.feeling,
+      whyItMattered: entry.whyItMattered,
+      happinessType: entry.happinessType,
+      selfPattern: entry.selfPattern,
+      joyMoment: null,
+      joySource: null,
+      stateShift: null,
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      directionSignal: null,
+      valueImpact: null,
+      durability: null,
+      tags: entry.tags
+    });
+  }
+
+  const parsed = parseJoySnapshotData(entry.payload);
+
+  return buildJournalPayloadForDimension("joy", {
+    event: entry.event,
+    feeling: entry.feeling,
+    whyItMattered: entry.whyItMattered,
+    happinessType: entry.happinessType,
+    selfPattern: entry.selfPattern,
+    joyMoment: parsed?.joyMoment,
+    joySource: parsed?.joySource,
+    stateShift: parsed?.stateShift,
+    meaningNeed: parsed?.meaningNeed,
+    manualClue: parsed?.manualClue,
+    delightSignature: parsed?.delightSignature,
+    directionSignal: parsed?.directionSignal,
+    valueImpact: parsed?.valueImpact,
+    durability: parsed?.durability,
+    psychProfile: parsed?.psychProfile as any,
+    tags: parsed?.tags.length ? parsed.tags : entry.tags
+  });
+}
+
+function projectLegacyFields(input: {
+  event?: string | null;
+  feeling?: string | null;
+  whyItMattered?: string | null;
+  happinessType?: string | null;
+  selfPattern?: string | null;
+  joyMoment?: string | null;
+  joySource?: string | null;
+  stateShift?: string | null;
+  meaningNeed?: string | null;
+  manualClue?: string | null;
+  delightSignature?: string | null;
+  directionSignal?: string | null;
+  valueImpact?: string | null;
+  durability?: string | null;
+  tags?: string[];
+}) {
+  return getLegacyJoyProjection(
+    buildJoySnapshot({
+      event: input.event,
+      feeling: input.feeling,
+      whyItMattered: input.whyItMattered,
+      happinessType: input.happinessType,
+      selfPattern: input.selfPattern,
+      joyMoment: input.joyMoment,
+      joySource: input.joySource,
+      stateShift: input.stateShift,
+      meaningNeed: input.meaningNeed,
+      manualClue: input.manualClue,
+      delightSignature: input.delightSignature,
+      directionSignal: input.directionSignal,
+      valueImpact: input.valueImpact,
+      durability: input.durability,
+      tags: input.tags
+    })
+  );
+}
+
 function toJsonValue(value: unknown) {
   return value as Prisma.InputJsonValue;
 }
@@ -81,15 +289,14 @@ function mapSnapshot(snapshot: SnapshotRecord | null | undefined): JoySnapshot {
     return createEmptySnapshot();
   }
 
-  return {
+  return buildJoySnapshot({
     event: snapshot.event,
     feeling: snapshot.feeling,
     whyItMattered: snapshot.whyItMattered,
     happinessType: snapshot.happinessType,
     selfPattern: snapshot.selfPattern,
-    confidence: snapshot.confidence ?? 0,
-    missingSlots: snapshot.missingSlots
-  };
+    tags: []
+  });
 }
 
 function normalizeLenses(lenses: string[]): InterviewLens[] {
@@ -104,21 +311,45 @@ function normalizeLenses(lenses: string[]): InterviewLens[] {
   return allowed.filter((lens) => lenses.includes(lens));
 }
 
-function mapEventSnapshot(event: Pick<EventRecord, "event" | "feeling" | "whyItMattered" | "happinessType" | "selfPattern" | "confidence" | "missingSlots">): JoySnapshot {
-  return {
+function mapEventSnapshot(
+  event: Pick<
+    EventRecord,
+    "event" | "feeling" | "whyItMattered" | "happinessType" | "selfPattern" | "confidence" | "missingSlots" | "snapshotData"
+  >
+): JoySnapshot {
+  const snapshotData = parseJoySnapshotData(event.snapshotData);
+  const improvementSnapshotData = parseImprovementSnapshotData(event.snapshotData);
+
+  return buildJoySnapshot({
     event: event.event,
     feeling: event.feeling,
     whyItMattered: event.whyItMattered,
     happinessType: event.happinessType,
     selfPattern: event.selfPattern,
-    confidence: event.confidence ?? 0,
-    missingSlots: event.missingSlots
-  };
+    joyMoment: snapshotData?.joyMoment,
+    joySource: snapshotData?.joySource,
+    stateShift: snapshotData?.stateShift,
+    meaningNeed: snapshotData?.meaningNeed,
+    manualClue: snapshotData?.manualClue,
+    delightSignature: (snapshotData as any)?.delightSignature,
+    directionSignal: snapshotData?.directionSignal,
+    valueImpact: snapshotData?.valueImpact,
+    durability: snapshotData?.durability,
+    psychProfile: (snapshotData as any)?.psychProfile,
+    tags: snapshotData?.tags,
+    improvementTrack: improvementSnapshotData?.improvementTrack,
+    stateAssessment: improvementSnapshotData?.stateAssessment,
+    frictionPoint: improvementSnapshotData?.frictionPoint,
+    repeatCondition: improvementSnapshotData?.repeatCondition,
+    controllableFactor: improvementSnapshotData?.controllableFactor,
+    nextAttempt: improvementSnapshotData?.nextAttempt,
+    successSignal: improvementSnapshotData?.successSignal
+  });
 }
 
 function mapInterviewEvent(dimension: InterviewDimension, event: EventRecord): InterviewEventRecord {
   const snapshot = mapEventSnapshot(event);
-  const snapshotData = event.snapshotData ? (event.snapshotData as InterviewEventRecord["snapshotData"]) : buildSnapshotDataForDimension(dimension, snapshot);
+  const snapshotData = normalizeSnapshotDataForDimension(dimension, snapshot, event.snapshotData);
 
   return {
     id: event.id,
@@ -187,7 +418,18 @@ function mapEventBlocks(blocks: Prisma.JsonValue | null | undefined): JoyEventBl
         feeling: typeof value.feeling === "string" ? value.feeling : null,
         whyItMattered: typeof value.whyItMattered === "string" ? value.whyItMattered : null,
         happinessType: typeof value.happinessType === "string" ? value.happinessType : null,
-        selfPattern: typeof value.selfPattern === "string" ? value.selfPattern : null
+        selfPattern: typeof value.selfPattern === "string" ? value.selfPattern : null,
+        joyMoment: typeof value.joyMoment === "string" ? value.joyMoment : null,
+        joySource: typeof value.joySource === "string" ? value.joySource : null,
+        stateShift: typeof value.stateShift === "string" ? value.stateShift : null,
+        meaningNeed: typeof value.meaningNeed === "string" ? value.meaningNeed : null,
+        manualClue: typeof value.manualClue === "string" ? value.manualClue : null,
+        delightSignature: typeof value.delightSignature === "string" ? value.delightSignature : null,
+        directionSignal: typeof value.directionSignal === "string" ? value.directionSignal : null,
+        valueImpact: typeof value.valueImpact === "string" ? value.valueImpact : null,
+        durability: typeof value.durability === "string" ? value.durability : null,
+        psychProfile: value.psychProfile as any,
+        tags: Array.isArray(value.tags) ? value.tags.filter((tag): tag is string => typeof tag === "string") : []
       }
     ];
   });
@@ -199,15 +441,7 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
   }
 
   const dimension = entry.session?.dimension ?? dimensionFallback;
-  const payload =
-    entry.payload ? (entry.payload as JournalEntryRecord["payload"]) : buildJournalPayloadForDimension(dimension, {
-      event: entry.event,
-      feeling: entry.feeling,
-      whyItMattered: entry.whyItMattered,
-      happinessType: entry.happinessType,
-      selfPattern: entry.selfPattern,
-      tags: entry.tags
-    });
+  const payload = normalizePayloadForDimension(dimension, entry);
 
   return {
     id: entry.id,
@@ -218,6 +452,23 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
     whyItMattered: entry.whyItMattered,
     happinessType: entry.happinessType,
     selfPattern: entry.selfPattern,
+    joyMoment: payload.kind === "joy" ? payload.joyMoment : undefined,
+    joySource: payload.kind === "joy" ? payload.joySource : undefined,
+    stateShift: payload.kind === "joy" ? payload.stateShift : undefined,
+    meaningNeed: payload.kind === "joy" ? payload.meaningNeed : undefined,
+    manualClue: payload.kind === "joy" ? payload.manualClue : undefined,
+    delightSignature: payload.kind === "joy" ? payload.delightSignature : undefined,
+    directionSignal: payload.kind === "joy" ? payload.directionSignal : undefined,
+    valueImpact: payload.kind === "joy" ? payload.valueImpact : undefined,
+    durability: payload.kind === "joy" ? payload.durability : undefined,
+    psychProfile: payload.kind === "joy" ? (payload as any).psychProfile : undefined,
+    improvementTrack: payload.kind === "improvement" ? payload.improvementTrack : undefined,
+    stateAssessment: payload.kind === "improvement" ? payload.stateAssessment : undefined,
+    frictionPoint: payload.kind === "improvement" ? payload.frictionPoint : undefined,
+    repeatCondition: payload.kind === "improvement" ? payload.repeatCondition : undefined,
+    controllableFactor: payload.kind === "improvement" ? payload.controllableFactor : undefined,
+    nextAttempt: payload.kind === "improvement" ? payload.nextAttempt : undefined,
+    successSignal: payload.kind === "improvement" ? payload.successSignal : undefined,
     tags: entry.tags,
     eventBlocks: mapEventBlocks(entry.eventBlocks),
     payload,
@@ -235,6 +486,10 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     events.find((event: InterviewEventRecord) => event.id === session.activeEventId) ??
     events.find((event: InterviewEventRecord) => event.status !== "completed") ??
     events[events.length - 1];
+  const progressData =
+    activeEvent && session.activeEvent
+      ? (session.activeEvent.progressData as Record<string, unknown> | null | undefined)
+      : undefined;
   const mappedSession = {
     id: session.id,
     dimension: session.dimension,
@@ -255,12 +510,39 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     events,
     pendingDecision:
       activeEvent?.status === "ready_for_choice"
-        ? {
-            kind: "event_complete" as const,
-            eventId: activeEvent.id,
-            eventSequence: activeEvent.sequence,
-            actions: ["continue_current_event", "next_event", "generate_draft"] as PendingDecisionAction[]
-          }
+        ? progressData?.kind === "dimension_redirect" && progressData.targetDimension === "improvement"
+          ? {
+              kind: "dimension_redirect" as const,
+              eventId: activeEvent.id,
+              eventSequence: activeEvent.sequence,
+              targetDimension: "improvement" as const,
+              reason:
+                typeof progressData.reason === "string" && progressData.reason
+                  ? progressData.reason
+                  : "这一天暂时更适合去聊改进。",
+              actions: ["continue_current_event", "switch_dimension"] as const
+            }
+          : progressData?.kind === "boundary_insufficient"
+            ? {
+                kind: "boundary_insufficient" as const,
+                eventId: activeEvent.id,
+                eventSequence: activeEvent.sequence,
+                reason:
+                  typeof progressData.reason === "string" && progressData.reason
+                    ? progressData.reason
+                    : "我不再继续追问细节了。",
+                actions: ["continue_current_event", "next_event", "pause_session"] as const
+              }
+          : {
+              kind: "event_complete" as const,
+              eventId: activeEvent.id,
+              eventSequence: activeEvent.sequence,
+              completionMode:
+                progressData?.completionMode === "user_override_partial"
+                  ? ("user_override_partial" as const)
+                  : ("complete" as const),
+              actions: ["continue_current_event", "next_event", "generate_draft"] as const
+            }
         : null,
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
@@ -453,6 +735,7 @@ interface AppendJoyInterviewTurnInput {
   assistantTurn: AssistantTurnPayload;
   snapshot: JoySnapshot;
   eventStatus: InterviewEventRecord["status"];
+  progressData: Record<string, unknown> | null;
   nextStage: JoyInterviewStage;
   nextStatus: InterviewSessionStatus;
   nextTurnCount: number;
@@ -476,6 +759,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
     const nextSnapshotVersion = (existing.snapshots[0]?.version ?? -1) + 1;
     const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
     const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
+    const legacyProjection = projectLegacyFields(input.snapshot);
 
     const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
 
@@ -502,11 +786,11 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
       data: {
         sessionId: input.sessionId,
         version: nextSnapshotVersion,
-        event: input.snapshot.event,
-        feeling: input.snapshot.feeling,
-        whyItMattered: input.snapshot.whyItMattered,
-        happinessType: input.snapshot.happinessType,
-        selfPattern: input.snapshot.selfPattern,
+        event: legacyProjection.event,
+        feeling: legacyProjection.feeling,
+        whyItMattered: legacyProjection.whyItMattered,
+        happinessType: legacyProjection.happinessType,
+        selfPattern: legacyProjection.selfPattern,
         confidence: input.snapshot.confidence,
         missingSlots: input.snapshot.missingSlots
       }
@@ -521,12 +805,13 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         roundCoveredLenses: input.roundCoveredLenses,
         roundMeaningfulReplyCount: input.roundMeaningfulReplyCount,
         totalMeaningfulReplyCount: input.totalMeaningfulReplyCount,
-        event: input.snapshot.event,
-        feeling: input.snapshot.feeling,
-        whyItMattered: input.snapshot.whyItMattered,
-        happinessType: input.snapshot.happinessType,
-        selfPattern: input.snapshot.selfPattern,
+        event: legacyProjection.event,
+        feeling: legacyProjection.feeling,
+        whyItMattered: legacyProjection.whyItMattered,
+        happinessType: legacyProjection.happinessType,
+        selfPattern: legacyProjection.selfPattern,
         snapshotData: toJsonValue(buildSnapshotDataForDimension(existing.dimension, input.snapshot)),
+        progressData: input.progressData ? toJsonValue(input.progressData) : Prisma.JsonNull,
         confidence: input.snapshot.confidence,
         missingSlots: input.snapshot.missingSlots,
         draftSummary: input.draftSummary,
@@ -683,12 +968,30 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
     }
 
     await ensureDemoUser(tx);
+    const legacyProjection = projectLegacyFields(draftEntry);
     const payload = buildJournalPayloadForDimension(existing.dimension, {
-      event: draftEntry.event,
-      feeling: draftEntry.feeling,
-      whyItMattered: draftEntry.whyItMattered,
-      happinessType: draftEntry.happinessType,
-      selfPattern: draftEntry.selfPattern,
+      event: legacyProjection.event,
+      feeling: legacyProjection.feeling,
+      whyItMattered: legacyProjection.whyItMattered,
+      happinessType: legacyProjection.happinessType,
+      selfPattern: legacyProjection.selfPattern,
+      joyMoment: draftEntry.joyMoment ?? null,
+      joySource: draftEntry.joySource ?? null,
+      stateShift: draftEntry.stateShift ?? null,
+      meaningNeed: draftEntry.meaningNeed ?? null,
+      manualClue: draftEntry.manualClue ?? null,
+      delightSignature: draftEntry.delightSignature ?? null,
+      psychProfile: draftEntry.psychProfile ?? undefined,
+      directionSignal: draftEntry.directionSignal ?? null,
+      valueImpact: draftEntry.valueImpact ?? null,
+      durability: draftEntry.durability ?? null,
+      improvementTrack: draftEntry.improvementTrack ?? null,
+      stateAssessment: draftEntry.stateAssessment ?? null,
+      frictionPoint: draftEntry.frictionPoint ?? null,
+      repeatCondition: draftEntry.repeatCondition ?? null,
+      controllableFactor: draftEntry.controllableFactor ?? null,
+      nextAttempt: draftEntry.nextAttempt ?? null,
+      successSignal: draftEntry.successSignal ?? null,
       tags: draftEntry.tags
     });
 
@@ -697,11 +1000,11 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
       update: {
         title: draftEntry.title,
         content: draftEntry.content,
-        event: draftEntry.event,
-        feeling: draftEntry.feeling,
-        whyItMattered: draftEntry.whyItMattered,
-        happinessType: draftEntry.happinessType,
-        selfPattern: draftEntry.selfPattern,
+        event: legacyProjection.event,
+        feeling: legacyProjection.feeling,
+        whyItMattered: legacyProjection.whyItMattered,
+        happinessType: legacyProjection.happinessType,
+        selfPattern: legacyProjection.selfPattern,
         tags: draftEntry.tags,
         payload: toJsonValue(payload),
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
@@ -716,11 +1019,11 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         date: existing.startedAt,
         title: draftEntry.title,
         content: draftEntry.content,
-        event: draftEntry.event,
-        feeling: draftEntry.feeling,
-        whyItMattered: draftEntry.whyItMattered,
-        happinessType: draftEntry.happinessType,
-        selfPattern: draftEntry.selfPattern,
+        event: legacyProjection.event,
+        feeling: legacyProjection.feeling,
+        whyItMattered: legacyProjection.whyItMattered,
+        happinessType: legacyProjection.happinessType,
+        selfPattern: legacyProjection.selfPattern,
         tags: draftEntry.tags,
         payload: toJsonValue(payload),
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
@@ -733,7 +1036,8 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
     return tx.interviewSession.update({
       where: { id: sessionId },
       data: {
-        draftSummary: draftEntry.whyItMattered ?? draftEntry.event,
+        draftSummary:
+          draftEntry.manualClue ?? draftEntry.delightSignature ?? draftEntry.joySource ?? legacyProjection.whyItMattered ?? legacyProjection.event,
         finalEntryId: draft.id
       },
       include: interviewSessionInclude
@@ -828,12 +1132,30 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
     });
   }
 
+  const legacyProjection = projectLegacyFields(draftEntry);
   const payload = buildJournalPayloadForDimension(existing.session?.dimension ?? "joy", {
-    event: draftEntry.event,
-    feeling: draftEntry.feeling,
-    whyItMattered: draftEntry.whyItMattered,
-    happinessType: draftEntry.happinessType,
-    selfPattern: draftEntry.selfPattern,
+    event: legacyProjection.event,
+    feeling: legacyProjection.feeling,
+    whyItMattered: legacyProjection.whyItMattered,
+    happinessType: legacyProjection.happinessType,
+    selfPattern: legacyProjection.selfPattern,
+    joyMoment: draftEntry.joyMoment ?? null,
+    joySource: draftEntry.joySource ?? null,
+    stateShift: draftEntry.stateShift ?? null,
+    meaningNeed: draftEntry.meaningNeed ?? null,
+    manualClue: draftEntry.manualClue ?? null,
+    delightSignature: draftEntry.delightSignature ?? null,
+    psychProfile: draftEntry.psychProfile ?? undefined,
+    directionSignal: draftEntry.directionSignal ?? null,
+    valueImpact: draftEntry.valueImpact ?? null,
+    durability: draftEntry.durability ?? null,
+    improvementTrack: draftEntry.improvementTrack ?? null,
+    stateAssessment: draftEntry.stateAssessment ?? null,
+    frictionPoint: draftEntry.frictionPoint ?? null,
+    repeatCondition: draftEntry.repeatCondition ?? null,
+    controllableFactor: draftEntry.controllableFactor ?? null,
+    nextAttempt: draftEntry.nextAttempt ?? null,
+    successSignal: draftEntry.successSignal ?? null,
     tags: draftEntry.tags
   });
 
@@ -842,11 +1164,11 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
     data: {
       title: draftEntry.title,
       content: draftEntry.content,
-      event: draftEntry.event,
-      feeling: draftEntry.feeling,
-      whyItMattered: draftEntry.whyItMattered,
-      happinessType: draftEntry.happinessType,
-      selfPattern: draftEntry.selfPattern,
+      event: legacyProjection.event,
+      feeling: legacyProjection.feeling,
+      whyItMattered: legacyProjection.whyItMattered,
+      happinessType: legacyProjection.happinessType,
+      selfPattern: legacyProjection.selfPattern,
       tags: draftEntry.tags,
       payload: toJsonValue(payload),
       eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
@@ -905,7 +1227,7 @@ export async function markJoyEntrySaved(sessionId: string) {
         stage: "finalize",
         pausedAt: null,
         completedAt: savedAt,
-        draftSummary: existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
+        draftSummary: existing.joyEntry.selfPattern ?? existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
         finalEntryId: existing.joyEntry.id
       },
       include: interviewSessionInclude

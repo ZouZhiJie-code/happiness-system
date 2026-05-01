@@ -23,7 +23,34 @@ export interface InterviewDimensionDefinition {
   dimension: InterviewDimension;
   label: string;
   buildSnapshotData: (snapshot: JoySnapshot) => InterviewSnapshotData;
-  buildJournalPayload: (entry: Pick<JournalEntryRecord, "event" | "feeling" | "whyItMattered" | "happinessType" | "selfPattern" | "tags">) => InterviewJournalPayload;
+  buildJournalPayload: (
+    entry: Pick<
+      JournalEntryRecord,
+      | "event"
+      | "feeling"
+      | "whyItMattered"
+      | "happinessType"
+      | "selfPattern"
+      | "joyMoment"
+      | "joySource"
+      | "stateShift"
+      | "meaningNeed"
+      | "manualClue"
+      | "delightSignature"
+      | "psychProfile"
+      | "directionSignal"
+      | "valueImpact"
+      | "durability"
+      | "improvementTrack"
+      | "stateAssessment"
+      | "frictionPoint"
+      | "repeatCondition"
+      | "controllableFactor"
+      | "nextAttempt"
+      | "successSignal"
+      | "tags"
+    >
+  ) => InterviewJournalPayload;
   buildSummaryViewModel: (snapshotData: InterviewSnapshotData) => DimensionSummaryViewModel;
   buildDraftViewModel: (payload: InterviewJournalPayload) => DimensionDraftViewModel;
   getSnapshotProgressScore: (snapshotData: InterviewSnapshotData | null, snapshot: JoySnapshot | null) => number;
@@ -33,7 +60,7 @@ export interface InterviewDimensionDefinition {
 function buildCommonProgress(input: DefinitionProgressInput, score: number) {
   let nextScore = score;
 
-  if (input.draftGenerationUnlocked || input.pendingDecision) {
+  if (input.draftGenerationUnlocked || input.pendingDecision?.kind === "event_complete") {
     nextScore = Math.max(nextScore, 90);
   }
 
@@ -60,7 +87,7 @@ function buildEmptySummaryViewModel(): DimensionSummaryViewModel {
 
 function buildSnapshotData(
   kind: InterviewDimension,
-  fields: Record<string, string | null>,
+  fields: Record<string, unknown>,
   snapshot: JoySnapshot
 ): InterviewSnapshotData {
   return {
@@ -73,7 +100,7 @@ function buildSnapshotData(
 
 function buildJournalPayload(
   kind: InterviewDimension,
-  fields: Record<string, string | null>,
+  fields: Record<string, unknown>,
   tags: string[]
 ): InterviewJournalPayload {
   return {
@@ -98,22 +125,37 @@ const joyDefinition: InterviewDimensionDefinition = {
     buildSnapshotData(
       "joy",
       {
-        moment: snapshot.event,
-        feeling: snapshot.feeling,
-        joyType: snapshot.happinessType,
-        meaningSource: snapshot.whyItMattered,
-        selfPattern: snapshot.selfPattern
+        joyMoment: snapshot.joyMoment ?? snapshot.event,
+        joySource: snapshot.joySource ?? snapshot.whyItMattered,
+        stateShift: snapshot.stateShift ?? snapshot.feeling,
+        meaningNeed: snapshot.meaningNeed ?? null,
+        manualClue: snapshot.manualClue ?? snapshot.selfPattern,
+        delightSignature: snapshot.delightSignature ?? null,
+        directionSignal: snapshot.directionSignal ?? snapshot.happinessType,
+        valueImpact: snapshot.valueImpact ?? null,
+        durability: snapshot.durability ?? null,
+        psychProfile: snapshot.psychProfile ?? null,
+        tags: snapshot.tags ?? []
       },
       snapshot
     ),
   buildJournalPayload: (entry) =>
-    buildJournalPayload("joy", {
-      moment: entry.event,
-      feeling: entry.feeling,
-      joyType: entry.happinessType,
-      meaningSource: entry.whyItMattered,
-      selfPattern: entry.selfPattern
-    }, entry.tags),
+    buildJournalPayload(
+      "joy",
+      {
+        joyMoment: entry.joyMoment ?? entry.event,
+        joySource: entry.joySource ?? entry.whyItMattered,
+        stateShift: entry.stateShift ?? entry.feeling,
+        meaningNeed: entry.meaningNeed ?? null,
+        manualClue: entry.manualClue ?? entry.selfPattern,
+        delightSignature: entry.delightSignature ?? null,
+        directionSignal: entry.directionSignal ?? entry.happinessType,
+        valueImpact: entry.valueImpact ?? null,
+        durability: entry.durability ?? null,
+        psychProfile: entry.psychProfile ?? null
+      },
+      entry.tags
+    ),
   buildSummaryViewModel: (snapshotData) => {
     if (snapshotData.kind !== "joy") {
       return buildEmptySummaryViewModel();
@@ -121,9 +163,11 @@ const joyDefinition: InterviewDimensionDefinition = {
 
     return {
       fields: filterFields([
-        { label: "开心类型", value: snapshotData.joyType },
-        { label: "为什么重要", value: snapshotData.meaningSource },
-        { label: "自我模式", value: snapshotData.selfPattern }
+        { label: "开心片段", value: snapshotData.joyMoment },
+        { label: "真正开心点", value: snapshotData.joySource },
+        { label: "状态变化", value: snapshotData.stateShift },
+        { label: "在乎或需要", value: snapshotData.meaningNeed },
+        { label: "使用说明书线索", value: snapshotData.manualClue ?? snapshotData.delightSignature ?? null }
       ])
     };
   },
@@ -132,22 +176,30 @@ const joyDefinition: InterviewDimensionDefinition = {
       return buildDraftViewModel("开心结构", "当前维度结构暂不可展示。", []);
     }
 
-    return buildDraftViewModel("开心结构", "这部分是 AI 为这篇日志整理出的结构化线索。", [
-      { label: "开心片段", value: payload.moment },
-      { label: "当时感受", value: payload.feeling },
-      { label: "开心类型", value: payload.joyType },
-      { label: "为什么重要", value: payload.meaningSource },
-      { label: "自我模式", value: payload.selfPattern }
+    return buildDraftViewModel("开心结构", "这部分帮助你把开心沉淀成可复用的个人使用说明书。", [
+      { label: "开心片段", value: payload.joyMoment },
+      { label: "真正开心点", value: payload.joySource },
+      { label: "状态变化", value: payload.stateShift },
+      { label: "在乎或需要", value: payload.meaningNeed },
+      { label: "使用说明书线索", value: payload.manualClue ?? payload.delightSignature ?? null },
+      { label: "兴趣方向信号", value: payload.directionSignal },
+      { label: "对外价值信号", value: payload.valueImpact },
+      { label: "持续性判断", value: payload.durability }
     ]);
   },
   getSnapshotProgressScore: (snapshotData, snapshot) => {
     if (snapshotData?.kind === "joy") {
       let score = 0;
-      if (snapshotData.moment) score = Math.max(score, 28);
-      if (snapshotData.feeling) score = Math.max(score, 36);
-      if (snapshotData.meaningSource) score = Math.max(score, 60);
-      if (snapshotData.joyType || snapshotData.selfPattern) score = Math.max(score, 76);
-      if (snapshotData.selfPattern) score = Math.max(score, 82);
+      if (snapshotData.joyMoment) score = Math.max(score, 24);
+      if (snapshotData.joySource) score = Math.max(score, 48);
+      if (snapshotData.stateShift || snapshotData.meaningNeed) score = Math.max(score, 66);
+      if (snapshotData.manualClue || snapshotData.delightSignature) score = Math.max(score, 82);
+      if (
+        (snapshotData.manualClue || snapshotData.delightSignature) &&
+        (snapshotData.directionSignal || snapshotData.valueImpact || snapshotData.durability)
+      ) {
+        score = Math.max(score, 88);
+      }
       return score;
     }
 
@@ -156,11 +208,16 @@ const joyDefinition: InterviewDimensionDefinition = {
     }
 
     let score = 0;
-    if (snapshot.event) score = Math.max(score, 28);
-    if (snapshot.feeling) score = Math.max(score, 36);
-    if (snapshot.whyItMattered) score = Math.max(score, 60);
-    if (snapshot.happinessType || snapshot.selfPattern) score = Math.max(score, 76);
-    if (snapshot.selfPattern) score = Math.max(score, 82);
+    if (snapshot.joyMoment ?? snapshot.event) score = Math.max(score, 24);
+    if (snapshot.joySource ?? snapshot.whyItMattered) score = Math.max(score, 48);
+    if (snapshot.stateShift ?? snapshot.feeling ?? snapshot.meaningNeed) score = Math.max(score, 66);
+    if (snapshot.manualClue ?? snapshot.selfPattern ?? snapshot.delightSignature) score = Math.max(score, 82);
+    if (
+      (snapshot.manualClue ?? snapshot.selfPattern ?? snapshot.delightSignature) &&
+      (snapshot.directionSignal ?? snapshot.valueImpact ?? snapshot.durability ?? snapshot.happinessType)
+    ) {
+      score = Math.max(score, 88);
+    }
     return score;
   },
   getDraftHeading: () => "开心结构"
@@ -196,9 +253,9 @@ const fulfillmentDefinition: InterviewDimensionDefinition = {
 
     return {
       fields: filterFields([
-        { label: "充实类型", value: snapshotData.fulfillmentType },
         { label: "进展证据", value: snapshotData.progressEvidence },
-        { label: "投入线索", value: snapshotData.valueSignal }
+        { label: "值得感标准", value: snapshotData.valueSignal },
+        { label: "充实类型", value: snapshotData.fulfillmentType }
       ])
     };
   },
@@ -207,22 +264,23 @@ const fulfillmentDefinition: InterviewDimensionDefinition = {
       return buildDraftViewModel("充实结构", "当前维度结构暂不可展示。", []);
     }
 
-    return buildDraftViewModel("充实结构", "这部分帮助你确认今天的投入、进展和完成感来自哪里。", [
+    return buildDraftViewModel("充实结构", "这部分帮助你确认今天为什么不算白过，以及什么样的努力对你来说算数。", [
       { label: "充实片段", value: payload.experience },
-      { label: "当时感受", value: payload.feeling },
-      { label: "充实类型", value: payload.fulfillmentType },
       { label: "进展证据", value: payload.progressEvidence },
-      { label: "投入线索", value: payload.valueSignal }
+      { label: "值得感标准", value: payload.valueSignal },
+      { label: "当时感受", value: payload.feeling },
+      { label: "充实类型", value: payload.fulfillmentType }
     ]);
   },
   getSnapshotProgressScore: (snapshotData, snapshot) => {
     if (snapshotData?.kind === "fulfillment") {
       let score = 0;
       if (snapshotData.experience) score = Math.max(score, 28);
-      if (snapshotData.feeling) score = Math.max(score, 36);
-      if (snapshotData.progressEvidence) score = Math.max(score, 60);
-      if (snapshotData.fulfillmentType || snapshotData.valueSignal) score = Math.max(score, 76);
-      if (snapshotData.valueSignal) score = Math.max(score, 82);
+      if (snapshotData.experience && snapshotData.progressEvidence) score = Math.max(score, 60);
+      if (snapshotData.experience && snapshotData.progressEvidence && (snapshotData.feeling || snapshotData.fulfillmentType)) {
+        score = Math.max(score, 72);
+      }
+      if (snapshotData.experience && snapshotData.progressEvidence && snapshotData.valueSignal) score = Math.max(score, 82);
       return score;
     }
 
@@ -232,10 +290,9 @@ const fulfillmentDefinition: InterviewDimensionDefinition = {
 
     let score = 0;
     if (snapshot.event) score = Math.max(score, 28);
-    if (snapshot.feeling) score = Math.max(score, 36);
-    if (snapshot.whyItMattered) score = Math.max(score, 60);
-    if (snapshot.happinessType || snapshot.selfPattern) score = Math.max(score, 76);
-    if (snapshot.selfPattern) score = Math.max(score, 82);
+    if (snapshot.event && snapshot.whyItMattered) score = Math.max(score, 60);
+    if (snapshot.event && snapshot.whyItMattered && (snapshot.feeling || snapshot.happinessType)) score = Math.max(score, 72);
+    if (snapshot.event && snapshot.whyItMattered && snapshot.selfPattern) score = Math.max(score, 82);
     return score;
   },
   getDraftHeading: () => "充实结构"
@@ -324,20 +381,30 @@ const improvementDefinition: InterviewDimensionDefinition = {
       "improvement",
       {
         situation: snapshot.event,
+        improvementTrack: snapshot.improvementTrack ?? null,
+        stateAssessment: snapshot.stateAssessment ?? null,
         feeling: snapshot.feeling,
         improvementType: snapshot.happinessType,
-        frictionPoint: snapshot.whyItMattered,
-        nextAttempt: snapshot.selfPattern
+        frictionPoint: snapshot.frictionPoint ?? snapshot.whyItMattered,
+        repeatCondition: snapshot.repeatCondition ?? null,
+        controllableFactor: snapshot.controllableFactor ?? null,
+        nextAttempt: snapshot.nextAttempt ?? snapshot.selfPattern,
+        successSignal: snapshot.successSignal ?? null
       },
       snapshot
     ),
   buildJournalPayload: (entry) =>
     buildJournalPayload("improvement", {
       situation: entry.event,
+      improvementTrack: entry.improvementTrack ?? null,
+      stateAssessment: entry.stateAssessment ?? null,
       feeling: entry.feeling,
       improvementType: entry.happinessType,
-      frictionPoint: entry.whyItMattered,
-      nextAttempt: entry.selfPattern
+      frictionPoint: entry.frictionPoint ?? entry.whyItMattered,
+      repeatCondition: entry.repeatCondition ?? null,
+      controllableFactor: entry.controllableFactor ?? null,
+      nextAttempt: entry.nextAttempt ?? entry.selfPattern,
+      successSignal: entry.successSignal ?? null
     }, entry.tags),
   buildSummaryViewModel: (snapshotData) => {
     if (snapshotData.kind !== "improvement") {
@@ -346,9 +413,14 @@ const improvementDefinition: InterviewDimensionDefinition = {
 
     return {
       fields: filterFields([
+        { label: "改进路径", value: snapshotData.improvementTrack === "repeat_good" ? "重复好状态" : snapshotData.improvementTrack === "avoid_bad" ? "避开坏状态" : null },
+        { label: "状态判断", value: snapshotData.stateAssessment },
+        { label: "可重复条件", value: snapshotData.repeatCondition },
+        { label: "可控因素", value: snapshotData.controllableFactor },
         { label: "改进类型", value: snapshotData.improvementType },
         { label: "核心卡点", value: snapshotData.frictionPoint },
-        { label: "下一次尝试", value: snapshotData.nextAttempt }
+        { label: "下一次尝试", value: snapshotData.nextAttempt },
+        { label: "成功信号", value: snapshotData.successSignal }
       ])
     };
   },
@@ -359,20 +431,26 @@ const improvementDefinition: InterviewDimensionDefinition = {
 
     return buildDraftViewModel("改进结构", "这部分帮助你确认卡点在哪里，以及下次想怎么做得更稳。", [
       { label: "改进情境", value: payload.situation },
+      { label: "改进路径", value: payload.improvementTrack === "repeat_good" ? "重复好状态" : payload.improvementTrack === "avoid_bad" ? "避开坏状态" : null },
+      { label: "状态判断", value: payload.stateAssessment },
       { label: "当时感受", value: payload.feeling },
       { label: "改进类型", value: payload.improvementType },
       { label: "核心卡点", value: payload.frictionPoint },
-      { label: "下一次尝试", value: payload.nextAttempt }
+      { label: "可重复条件", value: payload.repeatCondition },
+      { label: "可控因素", value: payload.controllableFactor },
+      { label: "下一次尝试", value: payload.nextAttempt },
+      { label: "成功信号", value: payload.successSignal }
     ]);
   },
   getSnapshotProgressScore: (snapshotData, snapshot) => {
     if (snapshotData?.kind === "improvement") {
       let score = 0;
       if (snapshotData.situation) score = Math.max(score, 28);
-      if (snapshotData.feeling) score = Math.max(score, 36);
-      if (snapshotData.frictionPoint) score = Math.max(score, 60);
-      if (snapshotData.improvementType || snapshotData.nextAttempt) score = Math.max(score, 76);
-      if (snapshotData.nextAttempt) score = Math.max(score, 82);
+      if (snapshotData.improvementTrack || snapshotData.stateAssessment || snapshotData.feeling) score = Math.max(score, 42);
+      if (snapshotData.frictionPoint || snapshotData.repeatCondition) score = Math.max(score, 60);
+      if (snapshotData.controllableFactor) score = Math.max(score, 76);
+      if (snapshotData.nextAttempt) score = Math.max(score, 84);
+      if (snapshotData.nextAttempt && snapshotData.successSignal) score = Math.max(score, 88);
       return score;
     }
 
@@ -484,7 +562,32 @@ export function buildSnapshotDataForDimension(dimension: InterviewDimension, sna
 
 export function buildJournalPayloadForDimension(
   dimension: InterviewDimension,
-  entry: Pick<JournalEntryRecord, "event" | "feeling" | "whyItMattered" | "happinessType" | "selfPattern" | "tags">
+  entry: Pick<
+    JournalEntryRecord,
+    | "event"
+    | "feeling"
+    | "whyItMattered"
+    | "happinessType"
+    | "selfPattern"
+    | "joyMoment"
+    | "joySource"
+    | "stateShift"
+    | "meaningNeed"
+    | "manualClue"
+    | "delightSignature"
+    | "psychProfile"
+    | "directionSignal"
+    | "valueImpact"
+    | "durability"
+    | "improvementTrack"
+    | "stateAssessment"
+    | "frictionPoint"
+    | "repeatCondition"
+    | "controllableFactor"
+    | "nextAttempt"
+    | "successSignal"
+    | "tags"
+  >
 ) {
   return getInterviewDimensionDefinition(dimension).buildJournalPayload(entry);
 }

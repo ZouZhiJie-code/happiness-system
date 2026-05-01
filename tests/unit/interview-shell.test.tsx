@@ -85,10 +85,24 @@ const promptMessages: InterviewMessage[] = [
 ];
 
 const joyInputPlaceholder = "例如：今天和同事一起把一个棘手问题解决了，我真的松了一口气。";
+const journalBodyPlaceholder = "日志正文会出现在这里，你可以像编辑文章一样继续修改。";
+
+const baseJournalPayload = {
+  kind: "joy" as const,
+  joyMoment: "今天和家人一起吃饭聊天",
+  joySource: "被家人的陪伴接住了，也重新回到轻松状态",
+  stateShift: "从紧绷变回轻松踏实",
+  meaningNeed: "我需要稳定的陪伴感和能放松下来的关系连接",
+  manualClue: "当我能在熟悉关系里放松下来时，我会明显恢复能量",
+  directionSignal: "关系滋养型开心",
+  valueImpact: null,
+  durability: "这种开心在饭后还延续了很久",
+  tags: ["关系型开心", "轻松踏实"]
+};
 
 const baseJournalEntry: JournalEntryRecord = {
   id: "entry-1",
-  title: "今天的开心：和家人一起吃饭聊天",
+  title: "和家人一起吃饭",
   content: "今天让我开心的事情是：今天和家人一起吃饭聊天。\n这件事之所以重要，是因为：因为我最近很久没有这种轻松感了。",
   event: baseSnapshot.event,
   feeling: baseSnapshot.feeling,
@@ -97,6 +111,7 @@ const baseJournalEntry: JournalEntryRecord = {
   selfPattern: baseSnapshot.selfPattern,
   tags: ["关系型开心", "轻松踏实"],
   eventBlocks: [],
+  payload: baseJournalPayload,
   source: "ai_draft_direct",
   status: "draft",
   linkedSessionIds: ["session-ready"],
@@ -441,6 +456,119 @@ describe("InterviewShell", () => {
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
   });
 
+  it("clears the current dimension conversation and starts a fresh session", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    const freshSession = buildSession({
+      id: "session-fresh",
+      status: "active",
+      stage: "collect_event",
+      turnCount: 0,
+      lastAssistantQuestion: "今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。",
+      messages: [
+        {
+          id: "assistant-fresh",
+          role: "assistant",
+          content: "今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。",
+          assistantPayload: buildAssistantPayload({
+            question: "今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。"
+          }),
+          sequence: 0,
+          createdAt: "2026-04-21T00:10:00.000Z"
+        }
+      ],
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+      },
+      events: [
+        {
+          id: "event-fresh",
+          sequence: 1,
+          status: "active",
+          stage: "collect_event",
+          explorationRound: 1,
+          coveredLenses: [],
+          roundCoveredLenses: [],
+          roundMeaningfulReplyCount: 0,
+          totalMeaningfulReplyCount: 0,
+          startMessageSequence: 0,
+          snapshot: {
+            event: null,
+            feeling: null,
+            whyItMattered: null,
+            happinessType: null,
+            selfPattern: null,
+            confidence: 0.2,
+            missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+          },
+          draftSummary: null,
+          startedAt: "2026-04-21T00:10:00.000Z",
+          completedAt: null
+        }
+      ],
+      pendingDecision: null,
+      journalEntry: null,
+      draftGenerationUnlocked: false
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-ready")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-ready",
+              status: "active",
+              stage: "wrap_up",
+              turnCount: 2,
+              messages: promptMessages,
+              snapshot: baseSnapshot
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(JSON.stringify({ session: freshSession, sessionId: freshSession.id, openingQuestion: freshSession.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    expect(screen.getByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "清除对话记录" }));
+
+    expect(await screen.findByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).toBeInTheDocument();
+    expect(screen.queryByText("第 2 轮")).not.toBeInTheDocument();
+    expect(screen.queryByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}")).toMatchObject({
+      joy: expect.objectContaining({
+        sessionId: "session-fresh"
+      })
+    });
+  });
+
   it("renders structured assistant messages as separate summary and question bubbles", async () => {
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-structured" }));
 
@@ -502,6 +630,14 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("今天这段轻松感已经有轮廓了。")).toBeInTheDocument();
     expect(screen.getByText("那一刻为什么会让你这么放松？")).toBeInTheDocument();
+    expect(screen.getByText("今天这段轻松感已经有轮廓了。").closest("[data-message-variant]")).toHaveAttribute(
+      "data-message-variant",
+      "thinking"
+    );
+    expect(screen.getByText("那一刻为什么会让你这么放松？").closest("[data-message-variant]")).toHaveAttribute(
+      "data-message-variant",
+      "question"
+    );
   });
 
   it("shows choice actions and sends the continue action without creating an optimistic user bubble", async () => {
@@ -682,21 +818,414 @@ describe("InterviewShell", () => {
     expect(scrollIntoViewSpy).not.toHaveBeenCalled();
   });
 
+  it("shows a partial-draft choice card when joy is ready to stop without a stable personal rule", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice-partial" }));
+
+    const partialChoicePayload = buildAssistantPayload({
+      insight: "这段开心的核心已经清楚了，如果你现在不想继续往下提炼，也可以先按当前理解整理。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceReason: "当前事件已经补到新的角度；如果用户不想继续提炼规律，也可以先整理成当前版本日志。"
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    });
+    const partialChoiceSession = buildSession({
+      id: "session-choice-partial",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 3,
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        completionMode: "user_override_partial",
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      },
+      messages: [
+        {
+          id: "assistant-choice-partial",
+          role: "assistant",
+          content: JSON.stringify(partialChoicePayload),
+          assistantPayload: partialChoicePayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      snapshot: {
+        ...baseSnapshot,
+        selfPattern: null,
+        joyMoment: "今天和家人一起吃饭聊天",
+        joySource: "重新回到被陪伴接住的轻松里",
+        stateShift: "更轻松",
+        meaningNeed: "我在乎稳定的关系连接",
+        manualClue: null,
+        missingSlots: ["manualClue"]
+      },
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "ready_for_choice",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+          roundCoveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+          roundMeaningfulReplyCount: 3,
+          totalMeaningfulReplyCount: 3,
+          startMessageSequence: 0,
+          snapshot: {
+            ...baseSnapshot,
+            selfPattern: null,
+            joyMoment: "今天和家人一起吃饭聊天",
+            joySource: "重新回到被陪伴接住的轻松里",
+            stateShift: "更轻松",
+            meaningNeed: "我在乎稳定的关系连接",
+            manualClue: null,
+            missingSlots: ["manualClue"]
+          },
+          draftSummary: null,
+          startedAt: "2026-04-21T00:00:00.000Z",
+          completedAt: null
+        }
+      ]
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-choice-partial")) {
+        return new Response(JSON.stringify(partialChoiceSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("button", { name: "继续往下聊" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "先整理当前日志" })).toBeInTheDocument();
+    expect(screen.getByText("这段开心的核心已经聊清楚了。如果你现在不想继续往下提炼，也可以先按当前理解整理成一篇日志。")).toBeInTheDocument();
+  });
+
+  it("shows boundary insufficient actions and pauses through the existing pause endpoint", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-boundary" }));
+    const boundarySession = buildSession({
+      id: "session-boundary",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 1,
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "boundary_insufficient",
+        eventId: "event-1",
+        eventSequence: 1,
+        reason: "我不再继续追问细节了。",
+        actions: ["continue_current_event", "next_event", "pause_session"]
+      },
+      messages: [
+        {
+          id: "assistant-boundary",
+          role: "assistant",
+          content: "我不再继续追问细节了。",
+          assistantPayload: buildAssistantPayload({
+            insight: "我不再继续追问细节了。",
+            question: "如果还愿意补一句，只说这个片段最关键的一点就够了。",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。"
+            }
+          }),
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ]
+    });
+    const pausedSession = {
+      ...boundarySession,
+      status: "paused" as const,
+      pausedAt: "2026-04-21T00:04:00.000Z"
+    };
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-boundary")) {
+        return new Response(JSON.stringify(boundarySession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/pause")) {
+        return new Response(JSON.stringify({ session: pausedSession }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("button", { name: "只补一句" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "换一个片段" })).toBeInTheDocument();
+    const pauseButton = screen.getByRole("button", { name: "先退出" });
+    expect(pauseButton).toBeInTheDocument();
+
+    fireEvent.click(pauseButton);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interview/session/pause",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ sessionId: "session-boundary" })
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(useInterviewStore.getState().status).toBe("paused");
+    });
+  });
+
+  it("keeps structured clues hidden during the interview before a journal is generated", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+
+    expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
+    expect(screen.queryByText("开心片段")).not.toBeInTheDocument();
+    expect(screen.queryByText("使用说明书线索")).not.toBeInTheDocument();
+  });
+
   it("opens the writing workspace and shows the generated journal after clicking the top generate button", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+
+    expect(await screen.findByTestId("journal-editor-card")).toBeInTheDocument();
+    expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
+    expect(screen.queryByText("开心片段")).not.toBeInTheDocument();
+    expect(screen.queryByText("使用说明书线索")).not.toBeInTheDocument();
+    const editorCard = screen.getByTestId("journal-editor-card");
+    expect(within(editorCard).getByDisplayValue(baseJournalEntry.title)).toBeInTheDocument();
+    expect((within(editorCard).getByPlaceholderText(journalBodyPlaceholder) as HTMLTextAreaElement).value).toBe(baseJournalEntry.content);
+    expect(within(editorCard).getByRole("button", { name: "保存正式日志" })).toBeInTheDocument();
+    expect(screen.queryByText("当前可以生成日志，也可以继续访谈")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "生成最新日志" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
+  });
+
+  it("auto sizes the journal body and keeps the editor inside a single card", async () => {
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
 
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
 
-    expect(await screen.findByText("日志整理工作区")).toBeInTheDocument();
-    expect(screen.getByDisplayValue(baseJournalEntry.title)).toBeInTheDocument();
-    expect(screen.getByText(/今天让我开心的事情是：今天和家人一起吃饭聊天/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "保存正式日志" })).toBeInTheDocument();
-    expect(screen.queryByText("当前可以生成日志，也可以继续访谈")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "生成最新日志" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
+    const editorCard = await screen.findByTestId("journal-editor-card");
+    const titleInput = within(editorCard).getByDisplayValue(baseJournalEntry.title) as HTMLInputElement;
+    const bodyTextarea = within(editorCard).getByPlaceholderText(journalBodyPlaceholder) as HTMLTextAreaElement;
+    const saveButton = within(editorCard).getByRole("button", { name: "保存正式日志" });
+
+    expect(titleInput).toBeInTheDocument();
+    expect(bodyTextarea.value).toBe(baseJournalEntry.content);
+    expect(saveButton).toBeInTheDocument();
+    await waitFor(() => {
+      expect(bodyTextarea.style.height).toBe("240px");
+    });
+
+    Object.defineProperty(bodyTextarea, "scrollHeight", {
+      configurable: true,
+      value: 420
+    });
+    fireEvent.change(bodyTextarea, {
+      target: {
+        value: `${baseJournalEntry.content}\n\n新的补充段落：这次我想把那种被接住的感觉再写完整一点。`
+      }
+    });
+
+    await waitFor(() => {
+      expect(bodyTextarea.style.height).toBe("420px");
+    });
+  });
+
+  it("keeps the journal title single-line and capped at 16 characters", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+
+    const editorCard = await screen.findByTestId("journal-editor-card");
+    const titleInput = within(editorCard).getByDisplayValue(baseJournalEntry.title) as HTMLInputElement;
+
+    expect(titleInput.maxLength).toBe(16);
+    expect(titleInput.className).toContain("whitespace-nowrap");
+    expect(titleInput.className).toContain("overflow-hidden");
+  });
+
+  it("re-enables choice actions when the user closes the draft panel while generation is still running", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice-generate" }));
+
+    const choicePayload = buildAssistantPayload({
+      insight: "这一段已经聊得比较完整了。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceReason: "当前信息已经足够，直接让用户决定继续聊还是现在整理。"
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue", "pattern"]
+      }
+    });
+    const choiceSession = buildSession({
+      id: "session-choice-generate",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 2,
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      },
+      messages: [
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: JSON.stringify(choicePayload),
+          assistantPayload: choicePayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "ready_for_choice",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail", "importance_reason", "meaning_pattern", "self_pattern"],
+          roundCoveredLenses: ["event_detail", "importance_reason", "meaning_pattern", "self_pattern"],
+          roundMeaningfulReplyCount: 4,
+          totalMeaningfulReplyCount: 4,
+          startMessageSequence: 0,
+          snapshot: {
+            ...baseSnapshot,
+            joyMoment: "今天和家人一起吃饭聊天",
+            joySource: "被家人的陪伴接住了",
+            stateShift: "更轻松",
+            meaningNeed: "我需要稳定的陪伴感和关系连接",
+            manualClue: "当我和熟悉的人慢下来相处时，我会恢复能量",
+            missingSlots: []
+          },
+          draftSummary: null,
+          startedAt: "2026-04-21T00:00:00.000Z",
+          completedAt: null
+        }
+      ],
+      snapshot: {
+        ...baseSnapshot,
+        joyMoment: "今天和家人一起吃饭聊天",
+        joySource: "被家人的陪伴接住了",
+        stateShift: "更轻松",
+        meaningNeed: "我需要稳定的陪伴感和关系连接",
+        manualClue: "当我和熟悉的人慢下来相处时，我会恢复能量",
+        missingSlots: []
+      }
+    });
+
+    let draftGenerateAborted = false;
+
+    global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-choice-generate")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(choiceSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/draft/generate")) {
+        const signal = init?.signal as AbortSignal | undefined;
+
+        return new Promise<Response>((resolve, reject) => {
+          const onAbort = () => {
+            draftGenerateAborted = true;
+            reject(new DOMException("The user aborted a request.", "AbortError"));
+          };
+
+          signal?.addEventListener("abort", onAbort, { once: true });
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return Promise.resolve(
+          new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("button", { name: "现在整理日志" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "现在整理日志" }));
+
+    expect(await screen.findByText("正在生成日志骨架")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "关闭日志面板" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("正在生成日志骨架")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "换个角度继续聊" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "聊下一件开心的事" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "现在整理日志" })).toBeEnabled();
+    });
+
+    expect(draftGenerateAborted).toBe(true);
   });
 
   it("automatically reopens legacy paused sessions during restore", async () => {
@@ -719,8 +1248,59 @@ describe("InterviewShell", () => {
     expect(screen.getByRole("button", { name: "生成日志" })).toBeInTheDocument();
   });
 
+  it("reopens a saved journal workspace without exposing structured clues", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-with-journal")) {
+        return new Response(
+          JSON.stringify(
+            buildSession({
+              id: "session-with-journal",
+              status: "completed",
+              stage: "finalize",
+              turnCount: 4,
+              messages: promptMessages,
+              snapshot: baseSnapshot,
+              completedAt: "2026-04-21T00:08:00.000Z",
+              journalEntry: savedJournalEntry
+            })
+          ),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        throw new Error("should not create a new session while a saved joy session is being restored");
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "日志已保存，访谈已结束" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "打开日志" })).toBeInTheDocument();
+    });
+    expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "打开日志" }));
+
+    expect(await screen.findByTestId("journal-editor-card")).toBeInTheDocument();
+    expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
+    expect(screen.queryByText("开心片段")).not.toBeInTheDocument();
+    expect(screen.queryByText("使用说明书线索")).not.toBeInTheDocument();
+  });
+
   it("keeps the top generate action available after new interview messages arrive without showing a stale warning", async () => {
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    let draftGenerateCallCount = 0;
 
     const updatedSession = buildSession({
       id: "session-ready",
@@ -761,18 +1341,24 @@ describe("InterviewShell", () => {
       }
 
       if (url.endsWith("/api/interview/session/draft/generate")) {
+        draftGenerateCallCount += 1;
+        const session =
+          draftGenerateCallCount >= 2
+            ? updatedSession
+            : buildSession({
+                id: "session-ready",
+                status: "active",
+                stage: "wrap_up",
+                turnCount: 2,
+                messages: promptMessages,
+                snapshot: baseSnapshot,
+                journalEntry: baseJournalEntry
+              });
+
         return new Response(
           JSON.stringify({
             draftEntry: baseJournalEntry,
-            session: buildSession({
-              id: "session-ready",
-              status: "active",
-              stage: "wrap_up",
-              turnCount: 2,
-              messages: promptMessages,
-              snapshot: baseSnapshot,
-              journalEntry: baseJournalEntry
-            })
+            session
           }),
           {
             status: 200,
@@ -815,20 +1401,19 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     const textarea = screen.getByPlaceholderText(joyInputPlaceholder);
     fireEvent.change(textarea, { target: { value: "我还想补充，那一刻我也觉得被接住了。" } });
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
     await screen.findByText("这份被接住的感觉也很关键。");
-    expect(
-      screen.queryByText("当前日志草稿基于更早的访谈内容，如需同步最新补充，请点击顶部“生成日志”。")
-    ).not.toBeInTheDocument();
+    expect(draftGenerateCallCount).toBe(1);
     expect(screen.getByRole("button", { name: "生成日志" })).toBeInTheDocument();
+    expect(screen.queryByText("正在生成日志骨架")).not.toBeInTheDocument();
   });
 
-  it("regenerates the journal from the latest context when the top generate button is clicked again", async () => {
+  it("regenerates the journal from the latest context only after the user clicks generate again", async () => {
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
     let draftGenerateCallCount = 0;
 
@@ -859,7 +1444,7 @@ describe("InterviewShell", () => {
     });
     const regeneratedEntry: JournalEntryRecord = {
       ...savedJournalEntry,
-      title: "今天的开心：和家人一起吃饭聊天（更新）",
+      title: "和家人一起吃饭更新",
       content: `${savedJournalEntry.content}\n我还想记下那种被接住的感觉。`,
       status: "draft",
       source: "ai_draft_direct",
@@ -901,6 +1486,10 @@ describe("InterviewShell", () => {
                 snapshot: baseSnapshot,
                 journalEntry: baseJournalEntry
               });
+
+        if (draftGenerateCallCount === 2) {
+          await new Promise((resolve) => window.setTimeout(resolve, 80));
+        }
 
         return new Response(
           JSON.stringify({
@@ -948,16 +1537,18 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     const textarea = screen.getByPlaceholderText(joyInputPlaceholder);
     fireEvent.change(textarea, { target: { value: "我还想补充，那一刻我也觉得被接住了。" } });
     fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
+    expect(draftGenerateCallCount).toBe(1);
     await waitFor(() => {
       expect(getTopGenerateButton()).toBeEnabled();
     });
-    fireEvent.click(getTopGenerateButton());
+
+    fireEvent.click(screen.getByRole("button", { name: "生成日志" }));
 
     await waitFor(() => {
       expect(draftGenerateCallCount).toBe(2);
@@ -966,6 +1557,7 @@ describe("InterviewShell", () => {
       expect(screen.getByDisplayValue(regeneratedEntry.title)).toBeInTheDocument();
     });
     expect(screen.getByDisplayValue(/我还想记下那种被接住的感觉/)).toBeInTheDocument();
+    expect(getTopGenerateButton()).toBeEnabled();
   });
 
   it("does not repeat a separate generating badge inside the workspace while the top button is already busy", async () => {
@@ -1032,8 +1624,122 @@ describe("InterviewShell", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
 
-    expect(await screen.findByText("AI 正在整理日志草稿")).toBeInTheDocument();
+    expect(await screen.findByText("正在生成日志骨架")).toBeInTheDocument();
     expect(screen.queryByText(/^生成中$/)).not.toBeInTheDocument();
+  });
+
+  it("reuses the current draft immediately when it already covers the latest interview state", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+    await screen.findByTestId("journal-editor-card");
+
+    const generateCallsAfterFirstOpen = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
+      String(url).endsWith("/api/interview/session/draft/generate")
+    ).length;
+    expect(generateCallsAfterFirstOpen).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "关闭日志面板" }));
+    fireEvent.click(screen.getByRole("button", { name: "生成日志" }));
+
+    await screen.findByTestId("journal-editor-card");
+    expect(await screen.findByText("当前已经是最新版本")).toBeInTheDocument();
+
+    const generateCallsAfterSecondOpen = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
+      String(url).endsWith("/api/interview/session/draft/generate")
+    ).length;
+    expect(generateCallsAfterSecondOpen).toBe(1);
+  });
+
+  it("regenerates after restore when the saved draft is older than the restored interview turns", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-restored-stale" }));
+
+    const restoredSession = buildSession({
+      id: "session-restored-stale",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 3,
+      messages: [
+        ...promptMessages,
+        {
+          id: "user-3",
+          role: "user",
+          content: "我后来又想到，那种被家人接住的感觉特别重要。",
+          sequence: 3,
+          createdAt: "2026-04-21T00:09:00.000Z"
+        },
+        {
+          id: "assistant-4",
+          role: "assistant",
+          content: "这个被接住的感觉值得写进去。",
+          sequence: 4,
+          createdAt: "2026-04-21T00:10:00.000Z"
+        }
+      ],
+      snapshot: baseSnapshot,
+      journalEntry: baseJournalEntry
+    });
+    const regeneratedEntry: JournalEntryRecord = {
+      ...baseJournalEntry,
+      title: "和家人一起吃饭聊天后补了一句",
+      content: `${baseJournalEntry.content}\n我后来又想到，那种被家人接住的感觉特别重要。`,
+      updatedAt: "2026-04-21T00:11:00.000Z"
+    };
+    let generateCalls = 0;
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        throw new Error("should restore the cached session instead of starting a new one");
+      }
+
+      if (url.endsWith("/api/interview/session/draft/generate")) {
+        generateCalls += 1;
+
+        return new Response(
+          JSON.stringify({
+            draftEntry: regeneratedEntry,
+            session: {
+              ...restoredSession,
+              journalEntry: regeneratedEntry
+            }
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/session-restored-stale")) {
+        return new Response(JSON.stringify(restoredSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+
+    await waitFor(() => {
+      expect(generateCalls).toBe(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(regeneratedEntry.title)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect((screen.getByPlaceholderText(journalBodyPlaceholder) as HTMLTextAreaElement).value).toContain(
+        "那种被家人接住的感觉特别重要"
+      );
+    });
+    expect(screen.queryByText("当前已经是最新版本")).not.toBeInTheDocument();
   });
 
   it("shows a retryable error state when draft generation fails", async () => {
@@ -1091,8 +1797,7 @@ describe("InterviewShell", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
 
-    expect(await screen.findByText("这次没能成功生成日志")).toBeInTheDocument();
-    expect(screen.getByText("AI 暂时没能完成整理，请稍后重试。")).toBeInTheDocument();
+    expect(await screen.findByText("AI 暂时没能完成整理，请稍后重试。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "重试生成" })).toBeInTheDocument();
   });
 
@@ -1102,7 +1807,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     fireEvent.click(screen.getByRole("button", { name: "保存正式日志" }));
 
@@ -1213,7 +1918,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     fireEvent.click(screen.getByRole("button", { name: "保存正式日志" }));
     fireEvent.click(screen.getByRole("button", { name: "确定保存" }));
@@ -1646,7 +2351,7 @@ describe("InterviewShell", () => {
     await screen.findByText("第 2 轮");
 
     fireEvent.click(getTopGenerateButton());
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     fireEvent.click(screen.getByRole("button", { name: "保存正式日志" }));
     fireEvent.click(screen.getByRole("button", { name: "确定保存" }));
@@ -1695,7 +2400,7 @@ describe("InterviewShell", () => {
 
     const editedDraftEntry: JournalEntryRecord = {
       ...baseJournalEntry,
-      title: "今天的开心：和家人一起吃饭聊天（补充）",
+      title: "和家人一起吃饭补充",
       status: "draft",
       source: "ai_draft_edited",
       updatedAt: "2026-04-21T00:09:00.000Z",
@@ -1795,7 +2500,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-    await screen.findByText("日志整理工作区");
+    await screen.findByTestId("journal-editor-card");
 
     fireEvent.change(screen.getByDisplayValue(baseJournalEntry.title), {
       target: { value: editedDraftEntry.title }
@@ -2158,5 +2863,133 @@ describe("InterviewShell", () => {
     await waitFor(() => {
       expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
     });
+  });
+
+  it("shows structured SSE errors with a resolution and keeps the reply in the composer", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          `event: error\ndata: ${JSON.stringify({
+            code: "SESSION_NOT_FOUND",
+            message: "本地页面指向的访谈会话已经不存在或无法恢复。",
+            issue: {
+              code: "SESSION_NOT_FOUND",
+              title: "当前访谈已失效",
+              message: "本地页面指向的访谈会话已经不存在或无法恢复。",
+              resolution: "请刷新页面后再试，必要时点击清除对话记录重新开始。",
+              retryable: false,
+              action: "restart_session",
+              requestId: "ir-test"
+            }
+          })}\n\n`
+        ]);
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "这次回复需要保留" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByText("当前访谈已失效")).toBeInTheDocument();
+    expect(screen.getByText("请刷新页面后再试，必要时点击清除对话记录重新开始。")).toBeInTheDocument();
+    expect(screen.getByText(/错误码：SESSION_NOT_FOUND/)).toBeInTheDocument();
+    expect(textarea).toHaveValue("这次回复需要保留");
+  });
+
+  it("shows message-too-long guidance from HTTP validation errors", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return new Response(
+          JSON.stringify({
+            error: "MESSAGE_TOO_LONG",
+            message: "单次回复最多支持 1200 字。",
+            issue: {
+              code: "MESSAGE_TOO_LONG",
+              title: "这段回复太长",
+              message: "单次回复最多支持 1200 字。",
+              resolution: "请把内容拆成两段发送，或删短后重试。",
+              retryable: true,
+              action: "shorten_input",
+              requestId: "ir-long"
+            }
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "很长的一段回复" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByText("这段回复太长")).toBeInTheDocument();
+    expect(screen.getByText("请把内容拆成两段发送，或删短后重试。")).toBeInTheDocument();
+    expect(screen.getByText(/错误码：MESSAGE_TOO_LONG/)).toBeInTheDocument();
+    expect(textarea).toHaveValue("很长的一段回复");
+  });
+
+  it("shows stream protocol guidance when SSE data cannot be parsed", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse(['event: delta\ndata: {"target":"question","text":\n\n']);
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "测试坏掉的流式数据" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByText("回复数据异常")).toBeInTheDocument();
+    expect(screen.getByText("服务端返回的流式数据格式异常。")).toBeInTheDocument();
+    expect(screen.getByText(/错误码：STREAM_PROTOCOL_ERROR/)).toBeInTheDocument();
+    expect(textarea).toHaveValue("测试坏掉的流式数据");
   });
 });
