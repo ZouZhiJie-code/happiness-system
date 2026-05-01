@@ -103,6 +103,26 @@ const repeatGoodImprovementSnapshot: JoySnapshot = {
   missingSlots: []
 };
 
+const gratitudeSnapshot: JoySnapshot = {
+  event: "今天同事看出我快撑不住，帮我先理清优先级",
+  feeling: "被接住",
+  whyItMattered: "它让我觉得自己不是一个人在扛",
+  happinessType: "支持回应型",
+  selfPattern: "这样的关系回应值得我珍惜，也值得我学习",
+  gratitudeMoment: "今天同事看出我快撑不住，帮我先理清优先级",
+  gratitudeTarget: "同事",
+  kindAction: "看出我快撑不住，帮我先理清优先级",
+  seenNeed: "我当时需要有人帮我把混乱的事情理清",
+  innerEffect: "被稳稳接住",
+  gratitudeReason: "它让我觉得自己不是一个人在扛",
+  gratitudeType: "支持回应型",
+  relationshipSignal: "这样的关系回应值得我珍惜，也值得我学习",
+  reciprocityHint: "我也想学习这种先看见别人处境的方式",
+  tags: ["协作", "支持"],
+  confidence: 0.88,
+  missingSlots: []
+};
+
 function buildEvent(snapshot: JoySnapshot): InterviewEventRecord {
   return {
     id: "event-1",
@@ -241,6 +261,52 @@ function buildReflectionSession(snapshot: JoySnapshot): InterviewSessionRecord {
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-04-29T00:00:00.000Z",
+    pausedAt: null,
+    completedAt: null,
+    journalEntry: null
+  };
+}
+
+function buildGratitudeSession(snapshot: JoySnapshot): InterviewSessionRecord {
+  const event = buildEvent(snapshot);
+
+  return {
+    id: "session-gratitude",
+    dimension: "gratitude",
+    status: "active",
+    stage: "wrap_up",
+    activeEventId: event.id,
+    draftGenerationUnlocked: true,
+    turnCount: 3,
+    lastAssistantQuestion: "",
+    draftSummary: null,
+    messages: [],
+    snapshot,
+    snapshotData: {
+      kind: "gratitude",
+      moment: snapshot.gratitudeMoment ?? snapshot.event,
+      gratitudeMoment: snapshot.gratitudeMoment ?? snapshot.event,
+      gratitudeTarget: snapshot.gratitudeTarget ?? null,
+      kindAction: snapshot.kindAction ?? null,
+      seenNeed: snapshot.seenNeed ?? null,
+      innerEffect: snapshot.innerEffect ?? snapshot.feeling,
+      feeling: snapshot.feeling,
+      gratitudeType: snapshot.gratitudeType ?? snapshot.happinessType,
+      gratitudeReason: snapshot.gratitudeReason ?? snapshot.whyItMattered,
+      relationshipSignal: snapshot.relationshipSignal ?? snapshot.selfPattern,
+      reciprocityHint: snapshot.reciprocityHint ?? null,
+      confidence: snapshot.confidence,
+      missingSlots: snapshot.missingSlots
+    },
+    events: [event],
+    pendingDecision: {
+      kind: "event_complete",
+      eventId: event.id,
+      eventSequence: event.sequence,
+      completionMode: snapshot.relationshipSignal || snapshot.selfPattern ? "complete" : "user_override_partial",
+      actions: ["continue_current_event", "next_event", "generate_draft"]
+    },
+    startedAt: "2026-05-01T00:00:00.000Z",
     pausedAt: null,
     completedAt: null,
     journalEntry: null
@@ -410,6 +476,19 @@ describe("draft policies", () => {
     ).toBe("把节奏放稳");
   });
 
+  it("governs gratitude titles with relationship evidence instead of generic labels", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "gratitude",
+      snapshot: gratitudeSnapshot,
+      aiTitle: "今天的感谢"
+    });
+
+    expect(title).toBe("被稳稳接住");
+    expect(title.length).toBeLessThanOrEqual(MAX_JOURNAL_TITLE_LENGTH);
+    expect(title).not.toBe("今天的感谢");
+    expect(title).not.toContain("今天同事看出我快");
+  });
+
   it("builds a fulfillment brief around progress evidence and value signal", () => {
     const session = buildFulfillmentSession(fulfillmentSnapshot);
     const brief = buildDraftBrief({
@@ -531,6 +610,47 @@ describe("draft policies", () => {
     expect(brief.closingInsight).toBeNull();
     expect(brief.nextAttempt).toBeNull();
     expect(brief.controllableFactor).toBe("回答前先复述问题");
+  });
+
+  it("builds a gratitude brief around action, seen need, and relationship signal", () => {
+    const session = buildGratitudeSession(gratitudeSnapshot);
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents: [buildEvent(gratitudeSnapshot)]
+    });
+    const profile = buildDraftWritingProfile({ brief });
+
+    expect(brief).toMatchObject({
+      dimension: "gratitude",
+      completionMode: "complete",
+      anchorScene: gratitudeSnapshot.gratitudeMoment,
+      emotionalCore: gratitudeSnapshot.kindAction,
+      stateOrNeed: gratitudeSnapshot.seenNeed,
+      directionSignal: "支持回应型",
+      valueSignal: "同事",
+      closingInsight: "这样的关系回应值得我珍惜，也值得我学习"
+    });
+    expect(profile.closingMode).toBe("stable_clue");
+    expect(profile.toneBanSet).toContain("感谢信模板");
+    expect(profile.toneBanSet).toContain("道德负债感");
+  });
+
+  it("keeps gratitude drafts partial when relationship signal is not ready", () => {
+    const partialSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      selfPattern: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      missingSlots: ["relationshipSignal"]
+    };
+    const session = buildGratitudeSession(partialSnapshot);
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents: [buildEvent(partialSnapshot)]
+    });
+
+    expect(brief.completionMode).toBe("user_override_partial");
+    expect(brief.closingInsight).toBeNull();
   });
 
   it("builds a stable-clue writing profile for complete joy drafts", () => {
@@ -888,6 +1008,54 @@ describe("draft policies", () => {
     expect(result.issues).toContain("self_blame_tone");
   });
 
+  it("rejects gratitude drafts that become thank-you templates or moral debt", () => {
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(gratitudeSnapshot),
+      sourceEvents: [buildEvent(gratitudeSnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "今天的感谢",
+        content: "亲爱的同事，衷心感谢你的善良，我欠了人情，以后一定要回报你。此致敬礼。",
+        selfPattern: gratitudeSnapshot.relationshipSignal
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("thank_you_template_tone");
+    expect(result.issues).toContain("moral_debt_tone");
+    expect(result.issues).toContain("advice_tone");
+    expect(result.issues).toContain("missing_scene_anchor");
+  });
+
+  it("rejects partial gratitude drafts that invent stable relationship signals", () => {
+    const partialSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      selfPattern: null,
+      relationshipSignal: null,
+      missingSlots: ["relationshipSignal"]
+    };
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(partialSnapshot),
+      sourceEvents: [buildEvent(partialSnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "被稳稳接住",
+        content:
+          "今天同事看出我快撑不住，帮我先理清优先级。这让我知道，值得珍惜的关系就是每次都能稳稳接住我。",
+        selfPattern: "值得珍惜的关系就是每次都能稳稳接住我"
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("partial_fake_relationship_signal");
+  });
+
   it("keeps fallback partial joy drafts in current-log mode", () => {
     const session = buildSession(partialJoySnapshot);
     const sourceEvents = [buildEvent(partialJoySnapshot)];
@@ -1140,5 +1308,58 @@ describe("draft policies", () => {
     expect(draft.content).toContain("回答前先复述问题是一个可以调整的地方");
     expect(draft.content).not.toContain("下次我想先试试");
     expect(draft.content).not.toContain("以后我要");
+  });
+
+  it("creates complete gratitude fallback drafts with a light relationship signal", () => {
+    const session = buildGratitudeSession(gratitudeSnapshot);
+    const sourceEvents = [buildEvent(gratitudeSnapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.relationshipSignal).toBe("这样的关系回应值得我珍惜，也值得我学习");
+    expect(draft.selfPattern).toBe("这样的关系回应值得我珍惜，也值得我学习");
+    expect(draft.title).toBe("被稳稳接住");
+    expect(draft.content).toContain("今天让我想认真记下来的感谢");
+    expect(draft.content).toContain("我感谢的不是一句泛泛的好意");
+    expect(draft.content).toContain("对方像是看见了我当时需要有人帮我把混乱的事情理清");
+    expect(draft.content).not.toContain("感谢片段");
+    expect(draft.content).not.toContain("必须报答");
+  });
+
+  it("creates partial gratitude fallback drafts without forcing relationship signals", () => {
+    const partialSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      selfPattern: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      missingSlots: ["relationshipSignal"]
+    };
+    const session = buildGratitudeSession(partialSnapshot);
+    const sourceEvents = [buildEvent(partialSnapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.selfPattern).toBeNull();
+    expect(draft.relationshipSignal).toBeNull();
+    expect(draft.content).toContain("先停在这里也够了");
+    expect(draft.content).not.toContain("值得我珍惜，也值得我学习");
   });
 });

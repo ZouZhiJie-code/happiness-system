@@ -4,12 +4,12 @@
 
 ## 1. 当前阶段结论
 
-项目已经从“只做 joy 的原型设计稿”进入“多维度通用壳子 + joy / fulfillment / reflection / improvement 四个标品维度”的阶段。
+项目已经从“只做 joy 的原型设计稿”进入“多维度通用壳子 + joy / fulfillment / reflection / improvement / gratitude 五个标品维度”的阶段。
 
 当前最重要的现实：
-- joy / fulfillment / reflection / improvement 已完成理论对齐深化。
+- joy / fulfillment / reflection / improvement / gratitude 已完成理论对齐深化。
 - improvement 已完成理论对齐开发规格、数据结构扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例；仍需要端到端产品验收。
-- gratitude 已经有通用导航、结构化数据面、日志容器和进度框架，但尚未完成理论对齐深化。
+- gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 日志工作区对用户展示的是“日志正文”，结构化线索只保留在系统内部。
 - 日志标题已经做五维统一语义短标题治理，后端不再用长事件句机械截断成标题。
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。
@@ -117,10 +117,36 @@
 - 已落地第 8 阶段：自动化测试覆盖 `avoid_bad` 抽取、`repeat_good` 抽取、track-only 中间态、partial 边界收束、fallback draft 标题和质量门。
 - 尚未落地：端到端产品验收与文风继续打磨
 
+### gratitude 理论对齐
+
+- gratitude 的产品目标已收束为“看见谁回应了我的需要，以及什么样的关系回应值得珍惜”
+- 规格文档：`docs/theory/gratitude-alignment.md`
+- 已有 gratitude 专属结构：
+  - `gratitudeMoment`
+  - `gratitudeTarget`
+  - `kindAction`
+  - `seenNeed`
+  - `innerEffect`
+  - `gratitudeReason`
+  - `gratitudeType`
+  - `relationshipSignal`
+  - `reciprocityHint`
+- `gratitudeType` 当前按五类收束：
+  - `支持回应型`
+  - `理解体谅型`
+  - `陪伴接住型`
+  - `照顾减负型`
+  - `信任机会型`
+- 完整模式需要 `gratitudeMoment + kindAction + seenNeed + gratitudeReason + relationshipSignal`
+- partial 模式需要 `gratitudeMoment + kindAction + seenNeed|gratitudeReason`
+- 已接入专属抽取 schema、fallback 抽取、阶段推进、提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例
+- 标题候选优先收束为 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会`
+- 质量门会拒收感谢信模板、道德负债感、强行回馈任务、缺少具体善意和缺少被回应需要的 draft
+
 ### 技术层
 
 - `snapshotData` 与 `payload` 已成为多维度结构化真相层
-- `DraftWritingProfile` 已进入 joy / fulfillment / reflection / improvement 正文生成链，承担内部写作控制层
+- `DraftWritingProfile` 已进入 joy / fulfillment / reflection / improvement / gratitude 正文生成链，承担内部写作控制层
 - `pendingDecision` 已支持：
   - `event_complete`
   - `dimension_redirect`
@@ -137,7 +163,6 @@
 
 - joy / fulfillment / reflection 日志正文已经从结构卡转向正文优先，但文风和完成度还要继续打磨
 - improvement 已完成理论规格、结构字段、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成收束、日志生成、质量门、fallback draft、标题治理和自动化验收样例，但还没有完成端到端产品验收
-- gratitude 还没有做完理论翻译、槽位设计、完成标准和访谈路径
 - 跨天长期汇总、稳定规律沉淀还没开始做
 
 ### 技术层
@@ -158,6 +183,7 @@
 - `docs/theory/fulfillment-alignment.md`
 - `docs/theory/reflection-alignment.md`
 - `docs/theory/improvement-alignment.md`
+- `docs/theory/gratitude-alignment.md`
 - `docs/theory/dimension-draft-template.md`
 
 `Tech_Design.md` 只保留历史设计背景，不再当成实时事实源。
@@ -189,7 +215,7 @@
 
 测试结果：
 - `14` 个测试文件
-- `170` 个测试全部通过
+- `184` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -203,6 +229,9 @@
 - improvement fallback 抽取、阶段推进、完整 / partial 收束和 boundary insufficient
 - improvement 专属提问策略：开场、分轨、好状态/坏状态、可控点、下次最小动作和禁用建议/计划/归责口吻
 - improvement 正文生成、quality gate、fallback draft、语义短标题治理和第 8 阶段自动化验收样例
+- gratitude AI 抽取 schema 分发、fallback 抽取、阶段推进、完整 / partial 收束和 boundary insufficient
+- gratitude 专属提问策略：具体被照顾/支持的时刻、具体动作、被回应的需要、珍惜原因、关系信号和禁用感谢信/负债口吻
+- gratitude 正文生成、quality gate、fallback draft、语义短标题治理和自动化验收样例
 - draft quality gate
 - 重新生成已有日志
 - 保存正式日志
@@ -233,17 +262,14 @@ reflection 人工 smoke 基线：
 
 如果继续做维度理论深化，最合理的下一步是：
 
-1. 继续按 `docs/theory/improvement-alignment.md` 验收 improvement 维度
-   - 生成、重新生成、保存、刷新恢复和边界收束的端到端产品验收
+1. 继续按 `docs/theory/improvement-alignment.md` 做 improvement 端到端产品验收
+   - 生成、重新生成、保存、刷新恢复和边界收束的整链路人工验收
    - 正文风格继续打磨
 
-2. 用 `docs/theory/dimension-draft-template.md` 作为统一模板，继续落地 gratitude
+2. 对 gratitude 做同等级产品验收
+   - 覆盖支持回应、理解体谅、陪伴接住、照顾减负、信任机会五类材料
+   - 重点看 partial 收束、质量门和标题治理是否稳定
 
-3. 在每个维度里重复 joy 的方法
-   - 理论目标
-   - 最终日志状态
-   - 槽位设计
-   - 完整 / 部分完成标准
-   - 写作控制层
-   - 质量门规则
-   - fallback 原则
+3. 处理多维度通用引擎的历史技术债
+   - 把 `interview.service.ts` 和 joy-first 分支逐步抽成真正的维度无关实现
+   - 减少后续新增维度或继续打磨维度时的重复改动面

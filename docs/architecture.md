@@ -11,7 +11,7 @@
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 
-截至 `2026-05-01`，`joy / fulfillment / reflection / improvement` 是已经完成理论对齐深化的四个标品维度；`gratitude` 仍处在通用壳子阶段。
+截至 `2026-05-01`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
@@ -40,7 +40,7 @@
   - 多维度共用：schema、维度定义、进度算法、前端元信息
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
-  - 当前也承载 fulfillment 与 reflection 的理论对齐分支、improvement 专属抽取 schema，以及多维度提问 / fallback 逻辑
+  - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
 
 ### 服务层
 
@@ -50,7 +50,7 @@
 - `src/server/services/interview/joy-interview.service.ts`
   - 会话编排、分叉决策、draft 生成与保存的主逻辑
 - `src/server/services/interview/joy-interview-ai.service.ts`
-  - joy、fulfillment、reflection 与 improvement 的结构化抽取 schema 分发；同时承载问题生成、日志草稿生成与 fallback
+  - joy、fulfillment、reflection、improvement 与 gratitude 的结构化抽取 schema 分发；同时承载问题生成、日志草稿生成与 fallback
 
 ### 持久化层
 
@@ -247,7 +247,7 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
   - 不改前端日志面板交互
 - 如果用户在前端日志面板里直接关闭工作区，而这次生成仍在进行，前端会主动 abort 当前请求。
 - 这不会删除已有 draft，也不会修改服务端会话状态；只是终止这次前端发起的整理。
-- 五个维度标题都保持 `16` 字上限，但不会再把长事件句直接 `slice` 成不完整标题；`joy / fulfillment / reflection / improvement` 优先使用维度语义候选，`gratitude` 仍使用通用安全短标题。`improvement` 的语义候选会覆盖 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分`，并拦截 `今天开会时我有点急` 这类事件句标题。
+- 五个维度标题都保持 `16` 字上限，但不会再把长事件句直接 `slice` 成不完整标题；`gratitude` 会优先收束为 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会` 这类语义短标题，`improvement` 会优先收束为 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类语义短标题。
 
 ### 5.5 保存正式日志
 
@@ -409,7 +409,68 @@ reflection 已接入统一成稿链路：
 - 人生结论腔
 - partial 模式硬写稳定判断线索
 
-## 9. 前端工作区现状
+## 9. gratitude 维度为什么也是当前标品
+
+gratitude 已经从“通用感谢复盘”收束为“看见谁回应了我的需要”的专属访谈维度。
+
+### 9.1 gratitude 专属槽位
+
+核心槽位：
+- `gratitudeMoment`
+- `gratitudeTarget`
+- `kindAction`
+- `seenNeed`
+- `gratitudeReason`
+- `relationshipSignal`
+
+辅助槽位：
+- `innerEffect`
+- `gratitudeType`
+- `reciprocityHint`
+- `tags`
+
+`gratitudeType` 当前固定为：
+- `支持回应型`
+- `理解体谅型`
+- `陪伴接住型`
+- `照顾减负型`
+- `信任机会型`
+
+### 9.2 完成规则
+
+完整模式成立需要：
+- 找到可信 `gratitudeMoment`
+- 说清可信 `kindAction`
+- 说清可信 `seenNeed`
+- 说清可信 `gratitudeReason`
+- 形成可信 `relationshipSignal`
+
+部分模式成立需要：
+- 找到可信 `gratitudeMoment`
+- 说清可信 `kindAction`
+- 说清 `seenNeed` 或 `gratitudeReason`
+- 用户明确表示不想继续提炼关系线索
+
+partial 模式下，日志只能停在“这份感谢为什么重要”，不能伪装成稳定关系判断，也不能硬写回馈任务。
+
+### 9.3 成稿与质量门
+
+gratitude 已接入统一成稿链路：
+- `DraftBrief`
+- `DraftWritingProfile`
+- AI draft prompt
+- draft quality gate
+- fallback draft
+
+质量门会拒收：
+- 没有具体感谢片段
+- 没有具体善意行为
+- 没有被回应的需要
+- 感谢信模板或表扬稿
+- 道德负债感、还人情、强行回馈任务
+- partial 模式硬写稳定关系线索
+
+## 10. 前端工作区现状
 
 访谈页当前是左右布局：
 - 左侧：对话区
@@ -434,15 +495,15 @@ reflection 已接入统一成稿链路：
 
 对用户来说，右侧的唯一主对象是“日志正文”，不是结构化摘要。
 
-## 10. 已知架构债务
+## 11. 已知架构债务
 
 这些是当前最重要的架构现实：
 
 1. `interview.service.ts` 仍是 joy-first 的导出层  
    多维度看起来已经通用，但后端编排内核还没有真正拆开。
 
-2. `improvement` 已完成正文产品闭环，`gratitude` 仍只是结构通用  
-   `improvement` 已经有专属结构、AI 抽取 guardrails、fallback 抽取、阶段推进、完成标准、正文生成、质量门、fallback draft、标题治理和自动化验收样例，但仍需要端到端产品验收。`gratitude` 仍只有字段和 UI 壳子，缺少像 joy、fulfillment、reflection 与 improvement 这样的完整理论路径。
+2. `improvement` 与 `gratitude` 已完成正文产品闭环，但仍需要端到端产品验收  
+   二者都已经有专属结构、AI 抽取 guardrails、fallback 抽取、阶段推进、完成标准、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 
 3. `JoyEntry` 表名已不再准确  
    它已经承担多维度日志容器角色，但数据库命名仍带有 joy 历史痕迹。
@@ -450,5 +511,5 @@ reflection 已接入统一成稿链路：
 4. 语音转写仍是 stub  
    `/api/transcribe` 只保留了接口与回退位置，没有接真实模型。
 
-5. joy、fulfillment 与 reflection 正文文风仍需继续打磨  
+5. joy、fulfillment、reflection、improvement 与 gratitude 正文文风仍需继续打磨  
    当前已经从结构卡转向正文优先，但“产品完成度”还没有完全到位。

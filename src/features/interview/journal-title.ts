@@ -6,7 +6,7 @@ import type { DraftBrief, InterviewDimension, InterviewJournalPayload, Interview
 const SYSTEM_TITLE_PREFIX_PATTERN =
   /^(?:今天的开心|今天的充实|今天的思考|今天的改进|今天的感谢|开心日志|充实日志|思考日志|改进日志|感谢日志|日志)[：:\s-]*/u;
 const FIELD_NAME_PATTERN =
-  /(joyMoment|joySource|stateShift|meaningNeed|manualClue|delightSignature|experience|progressEvidence|valueSignal|fulfillmentType|trigger|insight|viewpointShift|frictionPoint|nextAttempt|gratitudeReason|relationshipSignal|具体片段|进展证据|值得感标准|充实类型|开心来源|状态变化|核心洞见|改进卡点|感谢原因)/iu;
+  /(joyMoment|joySource|stateShift|meaningNeed|manualClue|delightSignature|experience|progressEvidence|valueSignal|fulfillmentType|trigger|insight|viewpointShift|frictionPoint|nextAttempt|gratitudeMoment|gratitudeTarget|kindAction|seenNeed|innerEffect|gratitudeReason|gratitudeType|relationshipSignal|reciprocityHint|具体片段|进展证据|值得感标准|充实类型|开心来源|状态变化|核心洞见|改进卡点|感谢原因|感谢对象|具体善意|被看见的需要|关系线索)/iu;
 const PROCESS_TITLE_PATTERN =
   /^(?:我|今天|这件事|这个片段)?(?:看了|读了|听了|介绍|了解|有了|然后|之后|接着|后来|因为|通过|当时|做了|完成了|把|在|从)?(?:一本|一个|相关的)?/u;
 const BAD_TITLE_START_PATTERN = /^(?:介绍怎么|有了之后|有了|我就|然后|后来|因为|通过|当时|这件事|今天我|我今天|看了一本|读了一本|做了一个|完成了一个)/u;
@@ -62,6 +62,10 @@ function isBadJournalTitleCandidate(value: string | null | undefined) {
   }
 
   if (/^(?:改进日志|今天的改进|下一次尝试|我要变得更好)$/u.test(candidate)) {
+    return true;
+  }
+
+  if (/^(?:感谢日志|今天的感谢|谢谢|感谢)$/u.test(candidate)) {
     return true;
   }
 
@@ -278,9 +282,60 @@ function buildGenericTitleCandidates(input: SemanticJournalTitleInput) {
     pushCandidate(candidates, shortenNounPhrase(frictionPoint));
     pushCandidate(candidates, shortenNounPhrase(situation));
   } else if (input.dimension === "gratitude") {
-    pushCandidate(candidates, shortenNounPhrase(snapshotData?.kind === "gratitude" ? snapshotData.gratitudeReason : null));
-    pushCandidate(candidates, shortenNounPhrase(payload?.kind === "gratitude" ? payload.gratitudeReason : null));
-    pushCandidate(candidates, shortenNounPhrase(snapshotData?.kind === "gratitude" ? snapshotData.moment : null));
+    const kindAction =
+      input.snapshot?.kindAction ??
+      (snapshotData?.kind === "gratitude" ? snapshotData.kindAction : null) ??
+      (payload?.kind === "gratitude" ? payload.kindAction : null) ??
+      input.draftBrief?.emotionalCore;
+    const seenNeed =
+      input.snapshot?.seenNeed ??
+      (snapshotData?.kind === "gratitude" ? snapshotData.seenNeed : null) ??
+      (payload?.kind === "gratitude" ? payload.seenNeed : null) ??
+      input.draftBrief?.stateOrNeed;
+    const relationshipSignal =
+      input.snapshot?.relationshipSignal ??
+      input.snapshot?.selfPattern ??
+      (snapshotData?.kind === "gratitude" ? snapshotData.relationshipSignal : null) ??
+      (payload?.kind === "gratitude" ? payload.relationshipSignal : null) ??
+      input.draftBrief?.closingInsight;
+    const gratitudeReason =
+      input.snapshot?.gratitudeReason ??
+      input.snapshot?.whyItMattered ??
+      (snapshotData?.kind === "gratitude" ? snapshotData.gratitudeReason : null) ??
+      (payload?.kind === "gratitude" ? payload.gratitudeReason : null);
+    const gratitudeMoment =
+      input.snapshot?.gratitudeMoment ??
+      input.snapshot?.event ??
+      (snapshotData?.kind === "gratitude" ? snapshotData.gratitudeMoment ?? snapshotData.moment : null) ??
+      (payload?.kind === "gratitude" ? payload.gratitudeMoment ?? payload.moment : null) ??
+      input.draftBrief?.anchorScene;
+    const joined = [kindAction, seenNeed, relationshipSignal, gratitudeReason, gratitudeMoment].filter(Boolean).join(" ");
+
+    if (/(接住|撑不住|压力|扛|不孤单)/u.test(joined)) {
+      pushCandidate(candidates, "被稳稳接住");
+    }
+
+    if (/(理解|听我说|认真听|被看见|懂我)/u.test(joined)) {
+      pushCandidate(candidates, "被认真理解");
+    }
+
+    if (/(提醒|吃饭|休息|照顾|关心)/u.test(joined)) {
+      pushCandidate(candidates, "那句及时提醒");
+    }
+
+    if (/(优先级|理清|梳理|分担|帮我处理|帮我收尾)/u.test(joined)) {
+      pushCandidate(candidates, "有人帮我理清");
+    }
+
+    if (/(信任|机会|交给我|让我负责)/u.test(joined)) {
+      pushCandidate(candidates, "被信任的机会");
+    }
+
+    pushCandidate(candidates, shortenNounPhrase(seenNeed));
+    pushCandidate(candidates, shortenNounPhrase(kindAction));
+    pushCandidate(candidates, shortenNounPhrase(relationshipSignal));
+    pushCandidate(candidates, shortenNounPhrase(gratitudeReason));
+    pushCandidate(candidates, shortenNounPhrase(gratitudeMoment));
   }
 
   pushCandidate(candidates, shortenNounPhrase(input.snapshot?.whyItMattered));

@@ -222,6 +222,32 @@ function isImprovementComplete(snapshot: JoySnapshot) {
   );
 }
 
+function getGratitudeMoment(snapshot: JoySnapshot) {
+  return snapshot.gratitudeMoment ?? snapshot.event;
+}
+
+function getGratitudeReason(snapshot: JoySnapshot) {
+  return snapshot.gratitudeReason ?? snapshot.whyItMattered;
+}
+
+function getGratitudeRelationshipSignal(snapshot: JoySnapshot) {
+  return snapshot.relationshipSignal ?? snapshot.selfPattern;
+}
+
+function isGratitudeCoreReadyForDraft(snapshot: JoySnapshot) {
+  return Boolean(getGratitudeMoment(snapshot) && snapshot.kindAction && (snapshot.seenNeed || getGratitudeReason(snapshot)));
+}
+
+function isGratitudeComplete(snapshot: JoySnapshot) {
+  return Boolean(
+    getGratitudeMoment(snapshot) &&
+      snapshot.kindAction &&
+      snapshot.seenNeed &&
+      getGratitudeReason(snapshot) &&
+      getGratitudeRelationshipSignal(snapshot)
+  );
+}
+
 function isBoundaryIntent(intent: ReturnType<typeof assessUserTurnMessage>["intent"]) {
   return intent === "boundary_stop" || intent === "hostile_boundary";
 }
@@ -241,6 +267,10 @@ function isCoreReadyForBoundaryPartial(dimension: InterviewDimension, snapshot: 
 
   if (dimension === "improvement") {
     return isImprovementCoreReadyForDraft(snapshot);
+  }
+
+  if (dimension === "gratitude") {
+    return isGratitudeCoreReadyForDraft(snapshot);
   }
 
   return Boolean(snapshot.event && snapshot.whyItMattered);
@@ -372,6 +402,30 @@ function buildChoiceInsight(
     return "这一段已经聊出一些轮廓了。";
   }
 
+  if (dimension === "gratitude") {
+    if (completionMode === "user_override_partial") {
+      return "这份感谢的具体片段和重要原因已经比较清楚了，如果你现在不想继续提炼关系线索，也可以先按当前理解整理。";
+    }
+
+    if (getGratitudeRelationshipSignal(snapshot)) {
+      return "这一段已经聊到什么样的关系回应对你来说值得珍惜了。";
+    }
+
+    if (snapshot.seenNeed || getGratitudeReason(snapshot)) {
+      return "这一段已经说清楚对方看见并回应了你什么需要。";
+    }
+
+    if (snapshot.kindAction) {
+      return "这份感谢里对方具体做了什么已经比较清楚了。";
+    }
+
+    if (getGratitudeMoment(snapshot)) {
+      return "这个感谢片段已经有了清楚的轮廓。";
+    }
+
+    return "这一段已经聊出一些轮廓了。";
+  }
+
   if (snapshot.selfPattern) {
     return "这一段已经聊到你的在乎和模式了。";
   }
@@ -447,6 +501,18 @@ function buildChoiceReason(
       : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
   }
 
+  if (dimension === "gratitude") {
+    if (completionMode === "user_override_partial") {
+      return round <= 1
+        ? "当前事件已经说清具体感谢片段和重要原因；如果用户不想继续提炼关系线索，也可以先整理成当前版本日志。"
+        : "当前事件已经补到新的角度；如果用户不想继续提炼关系线索，也可以先整理成当前版本日志。";
+    }
+
+    return round <= 1
+      ? "当前事件已经形成一条可信的感谢日志线索，交给用户决定下一步。"
+      : "当前事件已经补到新的角度，交给用户决定是否继续深挖或整理。";
+  }
+
   return round <= 1
     ? "当前事件已经完成一轮完整复盘，交给用户决定下一步。"
     : "当前事件已经完成这一轮新角度复盘，交给用户决定下一步。";
@@ -480,6 +546,10 @@ function buildChoiceAssistantTurn(
               ? completionMode === "user_override_partial"
                 ? "当前事件已经说清改进情境和关键原因，用户明确表示可以先不继续拆具体动作；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
                 : "当前事件已形成可信的改进尝试线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
+              : dimension === "gratitude"
+                ? completionMode === "user_override_partial"
+                  ? "当前事件已经说清具体感谢片段和重要原因，用户明确表示可以先不继续提炼关系线索；下一步交给用户决定：继续深挖、切到下一件事，或直接整理当前日志。"
+                  : "当前事件已形成可信的感谢日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。"
           : "当前事件已形成完整复盘，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
     question: "",
     stateUpdate: {
@@ -626,6 +696,40 @@ function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
   return "一个可能触发思考的片段已经出现，接下来要把具体证据抓稳";
 }
 
+function buildGratitudeThinkingSummaryLead(snapshot: JoySnapshot) {
+  const moment = trimSummaryField(getGratitudeMoment(snapshot), 32);
+  const kindAction = trimSummaryField(snapshot.kindAction ?? null, 44);
+  const seenNeed = trimSummaryField(snapshot.seenNeed ?? null, 42);
+  const reason = trimSummaryField(getGratitudeReason(snapshot), 42);
+  const relationshipSignal = trimSummaryField(getGratitudeRelationshipSignal(snapshot), 42);
+
+  if ((seenNeed || reason) && relationshipSignal) {
+    return `这份感谢落在“${seenNeed ?? reason}”，也开始显出“${relationshipSignal}”这条关系线索`;
+  }
+
+  if (kindAction && seenNeed) {
+    return `对方具体做的是“${kindAction}”，它回应了“${seenNeed}”这层需要`;
+  }
+
+  if (kindAction && moment) {
+    return `“${moment}”里的感谢不是泛泛的，关键在于“${kindAction}”`;
+  }
+
+  if (seenNeed || reason) {
+    return `这份感谢的重要性开始落到“${seenNeed ?? reason}”`;
+  }
+
+  if (kindAction) {
+    return `这份感谢里的具体善意已经出现：${kindAction}`;
+  }
+
+  if (moment) {
+    return `“${moment}”是这次感谢的入口，接下来要看对方回应了什么需要`;
+  }
+
+  return "一个可能值得感谢的片段已经出现，接下来要把具体善意抓稳";
+}
+
 function buildThinkingSummaryFocus(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
@@ -667,6 +771,25 @@ function buildThinkingSummaryFocus(input: {
         return "，再把这层新理解收成以后判断类似事情时可参考的线索。";
       case "wrap_up":
         return "，最后确认这篇思考日志里最该留下的判断依据。";
+      case "finalize":
+        return "";
+    }
+  }
+
+  if (input.dimension === "gratitude") {
+    if (input.assistantAction === "continue_current_event") {
+      return "，换个角度把这份善意回应了什么需要说清。";
+    }
+
+    switch (input.stage) {
+      case "collect_event":
+        return "，先把具体人、具体时刻和对方做了什么说清。";
+      case "probe_reason":
+        return "，处理重点是看见对方回应了你的什么需要或难处。";
+      case "probe_pattern":
+        return "，再把这份感谢收成值得珍惜或学习的关系线索。";
+      case "wrap_up":
+        return "，最后确认这篇感谢日志里最该留下的善意证据。";
       case "finalize":
         return "";
     }
@@ -735,7 +858,9 @@ function buildFollowUpThinkingSummary(input: {
       ? buildFulfillmentThinkingSummaryLead(input.snapshot)
       : input.dimension === "reflection"
         ? buildReflectionThinkingSummaryLead(input.snapshot)
-      : buildThinkingSummaryLead(input.snapshot);
+        : input.dimension === "gratitude"
+          ? buildGratitudeThinkingSummaryLead(input.snapshot)
+          : buildThinkingSummaryLead(input.snapshot);
 
   return `${lead}${buildThinkingSummaryFocus(input)}`
     .replace(/\s+/g, " ")
@@ -890,6 +1015,30 @@ function getChoiceCompletionMode(input: {
     }
 
     if (!isImprovementCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+      return null;
+    }
+
+    if (input.activeEvent.explorationRound <= 1) {
+      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
+    }
+
+    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+  }
+
+  if (input.dimension === "gratitude") {
+    if (input.isMeaningfulReply && isGratitudeComplete(input.nextSnapshot)) {
+      if (input.nextStage !== "wrap_up") {
+        return null;
+      }
+
+      if (input.activeEvent.explorationRound <= 1) {
+        return input.nextEventTurnCount >= 3 ? "complete" : null;
+      }
+
+      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+    }
+
+    if (!isGratitudeCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
       return null;
     }
 

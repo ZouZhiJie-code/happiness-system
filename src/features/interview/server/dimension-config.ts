@@ -78,11 +78,11 @@ const dimensionConfigMap: Record<InterviewDimension, InterviewDimensionConfig> =
     openingQuestion: "今天有没有一个让你想说谢谢的人或时刻？先讲那个具体片段。",
     pausedResumeMessage: "这轮访谈已暂停。如需补充内容，请先点击“继续补充访谈”。",
     completedMessage: "这轮访谈已经结束，不能继续补充了。",
-    reasonQuestion: "这个片段为什么会让你想表达感谢？",
-    genericPatternQuestion: "如果往深一点看，你最想感谢的是支持、陪伴、体谅还是某种被接住的感觉？",
+    reasonQuestion: "对方当时具体做了什么，又像是看见了你什么需要或难处？",
+    genericPatternQuestion: "如果往深一点看，这份感谢让你更想珍惜或学习关系里的哪一点？",
     draftTitlePrefix: "今天的感谢",
     eventLinePrefix: "今天让我想说谢谢的片段是：",
-    reasonLinePrefix: "这份感谢之所以重要，是因为：",
+    reasonLinePrefix: "这份感谢之所以重要，是因为它回应了我当时的需要：",
     summaryLinePrefix: "如果给这份感谢命名，它更像：",
     selfPatternLinePrefix: "它也让我看见自己在关系里的一个在乎："
   }

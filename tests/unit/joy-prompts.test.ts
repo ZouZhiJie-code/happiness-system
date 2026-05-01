@@ -126,6 +126,26 @@ const improvementSnapshot: JoySnapshot = {
   missingSlots: []
 };
 
+const gratitudeSnapshot: JoySnapshot = {
+  event: "今天同事看出我快撑不住，帮我先理清优先级",
+  feeling: "被接住",
+  whyItMattered: "它让我觉得自己不是一个人在扛",
+  happinessType: "支持回应型",
+  selfPattern: "这样的关系回应值得我珍惜，也值得我学习",
+  gratitudeMoment: "今天同事看出我快撑不住，帮我先理清优先级",
+  gratitudeTarget: "同事",
+  kindAction: "看出我快撑不住，帮我先理清优先级",
+  seenNeed: "我当时需要有人帮我把混乱的事情理清",
+  innerEffect: "被稳稳接住",
+  gratitudeReason: "它让我觉得自己不是一个人在扛",
+  gratitudeType: "支持回应型",
+  relationshipSignal: "这样的关系回应值得我珍惜，也值得我学习",
+  reciprocityHint: "我也想学习这种先看见别人处境的方式",
+  tags: ["协作", "支持"],
+  confidence: 0.88,
+  missingSlots: []
+};
+
 function buildBrief(overrides: Partial<DraftBrief> = {}): DraftBrief {
   return {
     dimension: "joy",
@@ -329,6 +349,39 @@ describe("buildJoyDraftMessages", () => {
     expect(messages[1]?.content).toContain('"dimension": "improvement"');
     expect(messages[1]?.content).toContain('"improvementTrack": "avoid_bad"');
   });
+
+  it("guides gratitude drafts around concrete kindness and seen needs", () => {
+    const messages = buildJoyDraftMessages({
+      dimension: "gratitude",
+      draftBrief: buildBrief({
+        dimension: "gratitude",
+        completionMode: "complete",
+        anchorScene: gratitudeSnapshot.gratitudeMoment,
+        emotionalCore: gratitudeSnapshot.kindAction,
+        stateOrNeed: gratitudeSnapshot.seenNeed,
+        closingInsight: gratitudeSnapshot.relationshipSignal,
+        directionSignal: gratitudeSnapshot.gratitudeType,
+        valueSignal: gratitudeSnapshot.gratitudeTarget,
+        durabilitySignal: gratitudeSnapshot.reciprocityHint,
+        titleHint: gratitudeSnapshot.seenNeed,
+        tags: ["协作", "支持"]
+      }),
+      writingProfile: buildWritingProfile({
+        closingMode: "stable_clue",
+        toneBanSet: ["感谢信模板", "道德负债感", "报答任务"]
+      }),
+      events: [{ ...baseEvent, snapshot: gratitudeSnapshot }],
+      messages: baseMessages
+    });
+
+    expect(messages[0]?.content).toContain("具体感谢片段");
+    expect(messages[0]?.content).toContain("对方具体做了什么");
+    expect(messages[0]?.content).toContain("回应了我的什么需要");
+    expect(messages[0]?.content).toContain("不要写成感谢信模板");
+    expect(messages[0]?.content).toContain("报答任务");
+    expect(messages[1]?.content).toContain('"dimension": "gratitude"');
+    expect(messages[1]?.content).toContain('"valueSignal": "同事"');
+  });
 });
 
 describe("fulfillment prompt strategy", () => {
@@ -509,6 +562,56 @@ describe("improvement prompt strategy", () => {
     expect(messages[0]?.content).toContain("不要说“你应该怎么做”“制定一个计划”“你为什么会这样”“以后一定要”");
     expect(messages[1]?.content).toContain('"improvementTrack": "avoid_bad"');
     expect(messages[1]?.content).toContain('"controllableFactor": "回答前先确认理解"');
+    expect(messages[1]?.content).not.toContain("joyTrack");
+  });
+});
+
+describe("gratitude prompt strategy", () => {
+  it("uses dedicated gratitude extraction fields and guardrails", () => {
+    const messages = buildJoyExtractMessages({
+      dimension: "gratitude",
+      stage: "probe_reason",
+      turnCount: 2,
+      lastAssistantQuestion: "对方当时具体做了什么，又像是看见了你什么需要或难处？",
+      userMessage: "同事看出我快撑不住，帮我先理清优先级，让我觉得自己不是一个人在扛。",
+      snapshot: gratitudeSnapshot,
+      messages: baseMessages
+    });
+
+    expect(messages[0]?.content).toContain('"gratitudeMoment":string|null');
+    expect(messages[0]?.content).toContain("kindAction=对方具体做了什么");
+    expect(messages[0]?.content).toContain("seenNeed=对方看见并回应了我的什么需要或难处");
+    expect(messages[0]?.content).toContain("relationshipSignal 只能在用户表达值得珍惜");
+    expect(messages[0]?.content).toContain("不要抽成“我要报答/还人情”");
+    expect(messages[1]?.content).toContain('"gratitudeTarget": "同事"');
+    expect(messages[1]?.content).toContain('"kindAction": "看出我快撑不住，帮我先理清优先级"');
+    expect(messages[1]?.content).toContain('"seenNeed": "我当时需要有人帮我把混乱的事情理清"');
+    expect(messages[1]?.content).not.toContain("joyTrack");
+  });
+
+  it("guides gratitude follow-up questions toward action, seen need, and relationship clues", () => {
+    const messages = buildJoyQuestionMessages({
+      dimension: "gratitude",
+      stage: "probe_pattern",
+      userMessage: "那一刻我觉得自己不是一个人在扛。",
+      snapshot: gratitudeSnapshot,
+      events: [{ ...baseEvent, snapshot: gratitudeSnapshot, stage: "probe_pattern", status: "active" }],
+      activeEvent: { ...baseEvent, snapshot: gratitudeSnapshot, stage: "probe_pattern", status: "active" },
+      messages: baseMessages,
+      nextTurnCount: 3,
+      nextEventTurnCount: 3,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["pattern"],
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"],
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(messages[0]?.content).toContain("谁识别并回应了用户的需要");
+    expect(messages[0]?.content).toContain("最后才问这类关系回应为什么值得珍惜或学习");
+    expect(messages[0]?.content).toContain("不要把感谢问成感谢信、道德负债、报答任务");
+    expect(messages[1]?.content).toContain('"relationshipSignal": "这样的关系回应值得我珍惜，也值得我学习"');
     expect(messages[1]?.content).not.toContain("joyTrack");
   });
 });

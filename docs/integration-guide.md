@@ -10,7 +10,7 @@
 - 主前端访谈链路使用 `respond/stream`
 - 大多数成功响应最终都会返回一份完整 `session`，前端用它做 hydrate
 - 当前“生成日志”只支持单个 `sessionId`
-- `joy / fulfillment / reflection / improvement` 已完成理论对齐深化；`gratitude` 仍主要使用通用壳子
+- `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化
 
 ## 2. 路由清单
 
@@ -142,6 +142,26 @@ data: {
 
 当前 `improvement` 已有专属 AI 抽取 schema、prompt guardrails、fallback 抽取、阶段推进、提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。因此对接时可以依赖字段结构、访谈 choice 触发语义和日志生成闭环存在；提问会按具体情境、改进轨道、关键条件/卡点、可控小调整、下次最小动作推进，并避免建议/计划/归责口吻。仍需补充端到端产品验收后再视为完全验收。
 
+`gratitude` 的当前结构语义：
+- `gratitudeMoment`：感谢片段
+- `gratitudeTarget`：感谢对象或关系来源
+- `kindAction`：对方具体做了什么
+- `seenNeed`：对方看见并回应了我的什么需要或难处
+- `innerEffect`：这份善意带来的内在影响
+- `gratitudeReason`：为什么这份感谢重要
+- `gratitudeType`：`支持回应型 / 理解体谅型 / 陪伴接住型 / 照顾减负型 / 信任机会型`
+- `relationshipSignal`：完整模式下的关系线索，语义为“什么样的关系回应值得珍惜或学习”
+- `reciprocityHint`：可选的自然回馈或学习意愿；不应是“我要报答 / 还人情”这类道德负债
+
+`gratitude` 的 legacy 字段投影：
+- `event = gratitudeMoment`
+- `feeling = innerEffect`
+- `whyItMattered = gratitudeReason`
+- `happinessType = gratitudeType`
+- `selfPattern = relationshipSignal`
+
+如果用户拒绝继续深挖，且 `gratitudeMoment + kindAction + seenNeed|gratitudeReason` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`。如果只有感谢对象但没有具体行为或原因，会返回 `boundary_insufficient`。
+
 ### 3.3 非流式回复
 
 `POST /api/interview/session/respond`
@@ -192,7 +212,9 @@ data: {
 - `reflection` 完整模式才允许轻收“判断线索”；partial 模式不会硬写 `selfPattern`。
 - `improvement` 生成日志时会按“具体情境 -> 好/不理想状态 -> 关键条件或卡点 -> 可控小调整 -> 轻收”组织正文。
 - `improvement` 完整模式才允许轻收用户已经说出的 `nextAttempt`；partial 模式只停在当前看见的改进点，不硬写完整方案。
-- 五个维度的标题都会经过后端语义短标题治理，最大 `16` 字；AI 返回的坏标题、流水句或截断句会被确定性标题替换。`improvement` 应优先落到 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类短标题。
+- `gratitude` 生成日志时会按“具体感谢片段 -> 对方行为 -> 被回应的需要 -> 为什么重要 -> 关系线索轻收”组织正文。
+- `gratitude` 完整模式才允许轻收 `relationshipSignal`；partial 模式只停在当前感谢，不硬写稳定关系判断或回馈任务。
+- 五个维度的标题都会经过后端语义短标题治理，最大 `16` 字；AI 返回的坏标题、流水句或截断句会被确定性标题替换。`improvement` 应优先落到 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类短标题；`gratitude` 应优先落到 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会` 这类短标题。
 
 成功返回：
 
@@ -247,6 +269,26 @@ data: {
   "nextAttempt": "下次先复述一遍问题，再开始回答",
   "successSignal": "对方确认我理解对了",
   "tags": ["沟通"]
+}
+```
+
+`gratitude` payload 示例：
+
+```json
+{
+  "kind": "gratitude",
+  "moment": "今天同事看出我快撑不住，帮我先理清优先级",
+  "gratitudeMoment": "今天同事看出我快撑不住，帮我先理清优先级",
+  "gratitudeTarget": "同事",
+  "kindAction": "看出我快撑不住，帮我先理清优先级",
+  "seenNeed": "我当时需要有人帮我把混乱的事情理清",
+  "innerEffect": "被稳稳接住",
+  "feeling": "被接住",
+  "gratitudeType": "支持回应型",
+  "gratitudeReason": "它让我觉得自己不是一个人在扛",
+  "relationshipSignal": "这样的关系回应值得我珍惜，也值得我学习",
+  "reciprocityHint": "我也想学习这种先看见别人处境的方式",
+  "tags": ["协作", "支持"]
 }
 ```
 

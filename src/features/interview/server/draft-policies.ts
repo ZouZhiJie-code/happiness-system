@@ -76,6 +76,18 @@ export const IMPROVEMENT_TONE_BAN_SET = [
   "我必须",
   "以后一定要"
 ];
+const GRATITUDE_TONE_BAN_SET = [
+  "感谢信模板",
+  "表扬稿",
+  "道德负债感",
+  "报答任务",
+  "还人情",
+  "人际建议腔",
+  "鸡汤式善意",
+  "我应该",
+  "我必须",
+  "以后一定要回报"
+];
 const SYSTEM_TONE_PATTERNS = [
   /这次访谈/u,
   /我已经整理出/u,
@@ -116,6 +128,10 @@ const IMPROVEMENT_PRODUCTIVITY_TONE_PATTERN =
 const IMPROVEMENT_STABLE_PLAN_PATTERN =
   /(完整方案|长期计划|每天都要|必须做到|一定做到|以后一定要|从此以后|彻底改变|全面提升|持续精进)/u;
 const IMPROVEMENT_EXTERNAL_BLAME_PATTERN = /(都是|全是|只能怪|问题在)(?:对方|别人|同事|老板|客户|环境|公司|他们)/u;
+const GRATITUDE_THANK_YOU_TEMPLATE_PATTERN = /(亲爱的|敬爱的|衷心感谢|由衷感谢|感谢信|此致|敬礼|表达我最诚挚的谢意)/u;
+const GRATITUDE_DEBT_PATTERN = /(欠了?人情|必须报答|一定要回报|还人情|亏欠|无以为报|我应该报答|我必须回报)/u;
+const GRATITUDE_ADVICE_PATTERN = /(你应该|你需要|建议你|以后(?:一定)?要|下次(?:一定)?要|我应该|我必须|要学会感恩|做人要懂得感恩)/u;
+const GRATITUDE_EMPTY_KINDNESS_PATTERN = /(人很好|很善良|很温暖|很感动|很感谢)(?:。|$)/u;
 
 export interface DraftQualityGateResult {
   accepted: boolean;
@@ -599,6 +615,66 @@ export function buildImprovementBrief(input: {
   };
 }
 
+function hasGratitudeRelationshipSignal(snapshot: JoySnapshot) {
+  return Boolean(sanitizeNullableString(snapshot.relationshipSignal ?? snapshot.selfPattern));
+}
+
+function resolveGratitudeCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftCompletionMode {
+  if (session.pendingDecision?.kind === "event_complete" && session.pendingDecision.completionMode) {
+    return session.pendingDecision.completionMode;
+  }
+
+  if (sourceEvents.some((event) => hasGratitudeRelationshipSignal(event.snapshot)) || hasGratitudeRelationshipSignal(session.snapshot)) {
+    return "complete";
+  }
+
+  return "user_override_partial";
+}
+
+function buildGratitudeBrief(input: {
+  session: InterviewSessionRecord;
+  sourceEvents: InterviewEventRecord[];
+  completionMode: DraftCompletionMode;
+}): DraftBrief {
+  const primaryEvent = pickPrimaryEvent("gratitude", input.sourceEvents);
+  const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
+  const relatedEvents = input.sourceEvents.filter((event) => event.id !== primaryEvent?.id);
+  const gratitudeMoment = sanitizeNullableString(primarySnapshot.gratitudeMoment ?? primarySnapshot.event);
+  const kindAction = sanitizeNullableString(primarySnapshot.kindAction ?? primarySnapshot.whyItMattered);
+  const seenNeed = sanitizeNullableString(primarySnapshot.seenNeed);
+  const innerEffect = sanitizeNullableString(primarySnapshot.innerEffect ?? primarySnapshot.feeling);
+  const gratitudeReason = sanitizeNullableString(primarySnapshot.gratitudeReason ?? primarySnapshot.whyItMattered);
+  const relationshipSignal = sanitizeNullableString(primarySnapshot.relationshipSignal ?? primarySnapshot.selfPattern);
+  const reciprocityHint = sanitizeNullableString(primarySnapshot.reciprocityHint);
+  const tags = Array.from(
+    new Set(input.sourceEvents.flatMap((event) => [
+      event.snapshot.gratitudeType ?? event.snapshot.happinessType,
+      event.snapshot.innerEffect ?? event.snapshot.feeling,
+      ...(event.snapshot.tags ?? [])
+    ]))
+  ).filter((value): value is string => Boolean(value)).slice(0, 6);
+
+  return {
+    dimension: "gratitude",
+    completionMode: input.completionMode,
+    compositionMode: relatedEvents.length ? "stitched_moments" : "single_moment",
+    emphasis: "meaning",
+    anchorScene: gratitudeMoment,
+    emotionalCore: kindAction ?? gratitudeReason,
+    stateOrNeed: seenNeed ?? innerEffect,
+    closingInsight: input.completionMode === "complete" ? relationshipSignal : null,
+    supportingMoments: relatedEvents
+      .map((event) => sanitizeNullableString(event.snapshot.gratitudeMoment ?? event.snapshot.event))
+      .filter((value): value is string => Boolean(value))
+      .slice(0, 2),
+    directionSignal: sanitizeNullableString(primarySnapshot.gratitudeType ?? primarySnapshot.happinessType),
+    valueSignal: sanitizeNullableString(primarySnapshot.gratitudeTarget),
+    durabilitySignal: reciprocityHint,
+    titleHint: seenNeed ?? kindAction ?? relationshipSignal ?? gratitudeMoment,
+    tags
+  };
+}
+
 export function resolveDraftCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]) {
   if (session.dimension === "joy") {
     return resolveJoyCompletionMode(session, sourceEvents);
@@ -614,6 +690,10 @@ export function resolveDraftCompletionMode(session: InterviewSessionRecord, sour
 
   if (session.dimension === "improvement") {
     return resolveImprovementCompletionMode(session, sourceEvents);
+  }
+
+  if (session.dimension === "gratitude") {
+    return resolveGratitudeCompletionMode(session, sourceEvents);
   }
 
   return "complete" as const;
@@ -658,6 +738,14 @@ export function buildDraftBrief(input: {
     });
   }
 
+  if (input.session.dimension === "gratitude") {
+    return buildGratitudeBrief({
+      session: input.session,
+      sourceEvents: input.sourceEvents,
+      completionMode
+    });
+  }
+
   return buildDefaultBrief({
     session: input.session,
     sourceEvents: input.sourceEvents
@@ -675,7 +763,9 @@ export function buildDraftWritingProfile(input: { brief: DraftBrief }): DraftWri
           ? [...BASE_TONE_BAN_SET, ...REFLECTION_TONE_BAN_SET]
           : input.brief.dimension === "improvement"
             ? [...BASE_TONE_BAN_SET, ...IMPROVEMENT_TONE_BAN_SET]
-        : [...BASE_TONE_BAN_SET];
+            : input.brief.dimension === "gratitude"
+              ? [...BASE_TONE_BAN_SET, ...GRATITUDE_TONE_BAN_SET]
+              : [...BASE_TONE_BAN_SET];
 
   return {
     voiceMode: "journal",
@@ -1180,6 +1270,134 @@ function createImprovementFallbackDraft(input: {
   };
 }
 
+function buildGratitudeOpeningSentence(snapshot: JoySnapshot) {
+  const moment = sanitizeNullableString(snapshot.gratitudeMoment ?? snapshot.event);
+
+  return moment
+    ? `今天让我想认真记下来的感谢，是${trimTrailingPunctuation(moment)}。`
+    : "今天有一个很小的片段，让我想认真说一声谢谢。";
+}
+
+function buildGratitudeActionSentence(snapshot: JoySnapshot) {
+  const target = sanitizeNullableString(snapshot.gratitudeTarget);
+  const kindAction = sanitizeNullableString(snapshot.kindAction);
+
+  if (target && kindAction) {
+    return `我感谢的不是一句泛泛的好意，而是${trimTrailingPunctuation(target)}当时${trimTrailingPunctuation(kindAction)}。`;
+  }
+
+  if (kindAction) {
+    return `我感谢的不是一句泛泛的好意，而是对方当时${trimTrailingPunctuation(kindAction)}。`;
+  }
+
+  return null;
+}
+
+function buildGratitudeNeedSentence(snapshot: JoySnapshot) {
+  const seenNeed = sanitizeNullableString(snapshot.seenNeed);
+  const innerEffect = sanitizeNullableString(snapshot.innerEffect ?? snapshot.feeling);
+  const gratitudeReason = sanitizeNullableString(snapshot.gratitudeReason ?? snapshot.whyItMattered);
+
+  if (seenNeed && innerEffect) {
+    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(seenNeed)}，也让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`;
+  }
+
+  if (seenNeed) {
+    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(seenNeed)}。`;
+  }
+
+  if (gratitudeReason) {
+    return `这份感谢之所以重要，是因为${trimTrailingPunctuation(gratitudeReason)}。`;
+  }
+
+  return null;
+}
+
+function buildGratitudeTypeSentence(snapshot: JoySnapshot) {
+  const gratitudeType = sanitizeNullableString(snapshot.gratitudeType ?? snapshot.happinessType);
+
+  return gratitudeType ? `这份善意更接近${trimTrailingPunctuation(gratitudeType)}。` : null;
+}
+
+function buildGratitudeClosingSentence(input: {
+  brief: DraftBrief;
+  snapshot: JoySnapshot;
+}) {
+  const relationshipSignal = sanitizeNullableString(input.snapshot.relationshipSignal ?? input.snapshot.selfPattern);
+  const gratitudeReason = sanitizeNullableString(input.snapshot.gratitudeReason ?? input.snapshot.whyItMattered);
+
+  if (input.brief.completionMode === "complete" && relationshipSignal) {
+    return `回头看，我也更知道，${trimTrailingPunctuation(relationshipSignal)}。`;
+  }
+
+  if (gratitudeReason) {
+    return "先停在这里也够了：这份感谢已经让我看见，自己当时确实被认真回应过。";
+  }
+
+  return "先停在这里也够了：这件小事让我记得，关系里有些善意值得被看见。";
+}
+
+function buildGratitudeFallbackContent(input: {
+  brief: DraftBrief;
+  snapshot: JoySnapshot;
+}) {
+  const lines = [
+    buildGratitudeOpeningSentence(input.snapshot),
+    buildGratitudeActionSentence(input.snapshot),
+    buildGratitudeNeedSentence(input.snapshot),
+    buildGratitudeTypeSentence(input.snapshot),
+    buildGratitudeClosingSentence(input)
+  ];
+
+  return lines.filter(Boolean).join("\n\n");
+}
+
+function createGratitudeFallbackDraft(input: {
+  session: InterviewSessionRecord;
+  sourceEvents: InterviewEventRecord[];
+  eventBlocks: JoyEventBlock[];
+  brief: DraftBrief;
+}): JoyEntryDraft {
+  const primaryEvent = pickPrimaryEvent("gratitude", input.sourceEvents);
+  const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
+  const config = getInterviewDimensionConfig("gratitude");
+  const relationshipSignal =
+    input.brief.completionMode === "complete"
+      ? sanitizeNullableString(primarySnapshot.relationshipSignal ?? primarySnapshot.selfPattern)
+      : null;
+  const title = buildSemanticJournalTitle({
+    dimension: "gratitude",
+    snapshot: primarySnapshot,
+    draftBrief: input.brief,
+    fallbackTitle: config.draftTitlePrefix
+  });
+
+  return {
+    title,
+    content: buildGratitudeFallbackContent({
+      brief: input.brief,
+      snapshot: primarySnapshot
+    }),
+    event: sanitizeNullableString(primarySnapshot.gratitudeMoment ?? primarySnapshot.event),
+    feeling: sanitizeNullableString(primarySnapshot.innerEffect ?? primarySnapshot.feeling),
+    whyItMattered: sanitizeNullableString(primarySnapshot.gratitudeReason ?? primarySnapshot.whyItMattered),
+    happinessType: sanitizeNullableString(primarySnapshot.gratitudeType ?? primarySnapshot.happinessType),
+    selfPattern: relationshipSignal,
+    gratitudeMoment: sanitizeNullableString(primarySnapshot.gratitudeMoment ?? primarySnapshot.event),
+    gratitudeTarget: sanitizeNullableString(primarySnapshot.gratitudeTarget),
+    kindAction: sanitizeNullableString(primarySnapshot.kindAction),
+    seenNeed: sanitizeNullableString(primarySnapshot.seenNeed),
+    innerEffect: sanitizeNullableString(primarySnapshot.innerEffect ?? primarySnapshot.feeling),
+    gratitudeReason: sanitizeNullableString(primarySnapshot.gratitudeReason ?? primarySnapshot.whyItMattered),
+    gratitudeType: sanitizeNullableString(primarySnapshot.gratitudeType ?? primarySnapshot.happinessType),
+    relationshipSignal,
+    reciprocityHint: sanitizeNullableString(primarySnapshot.reciprocityHint),
+    tags: input.brief.tags,
+    eventBlocks: input.eventBlocks,
+    source: "ai_draft_direct"
+  };
+}
+
 export function createFallbackDraft(input: {
   session: InterviewSessionRecord;
   sourceEvents: InterviewEventRecord[];
@@ -1213,6 +1431,15 @@ export function createFallbackDraft(input: {
 
   if (input.session.dimension === "improvement") {
     return createImprovementFallbackDraft({
+      session: input.session,
+      sourceEvents: input.sourceEvents,
+      eventBlocks: input.eventBlocks,
+      brief
+    });
+  }
+
+  if (input.session.dimension === "gratitude") {
+    return createGratitudeFallbackDraft({
       session: input.session,
       sourceEvents: input.sourceEvents,
       eventBlocks: input.eventBlocks,
@@ -1324,7 +1551,24 @@ export function runDraftQualityGate(input: {
     "可重复条件",
     "可控因素",
     "下一次尝试",
-    "成功信号"
+    "成功信号",
+    "gratitudeMoment",
+    "gratitudeTarget",
+    "kindAction",
+    "seenNeed",
+    "innerEffect",
+    "gratitudeReason",
+    "gratitudeType",
+    "relationshipSignal",
+    "reciprocityHint",
+    "感谢片段",
+    "感谢对象",
+    "具体善意",
+    "被看见的需要",
+    "内在影响",
+    "感谢类型",
+    "关系线索",
+    "回馈线索"
   ];
 
   if (!title.trim() || !content.trim()) {
@@ -1347,7 +1591,7 @@ export function runDraftQualityGate(input: {
     issues.push("structured_terms");
   }
 
-  if (/(开心片段|真正开心点|状态变化|在乎或需要|使用说明书线索|充实片段|进展证据|值得感标准|触发片段|新发现|核心洞见|视角变化|判断线索|思考类型|改进情境|改进路径|状态判断|核心卡点|可重复条件|可控因素|下一次尝试|成功信号)\s*[:：]/.test(content)) {
+  if (/(开心片段|真正开心点|状态变化|在乎或需要|使用说明书线索|充实片段|进展证据|值得感标准|触发片段|新发现|核心洞见|视角变化|判断线索|思考类型|改进情境|改进路径|状态判断|核心卡点|可重复条件|可控因素|下一次尝试|成功信号|感谢片段|感谢对象|具体善意|被看见的需要|内在影响|感谢类型|关系线索|回馈线索)\s*[:：]/.test(content)) {
     issues.push("field_labels");
   }
 
@@ -1374,7 +1618,7 @@ export function runDraftQualityGate(input: {
   const sceneCandidates = [input.brief.anchorScene, ...input.brief.supportingMoments].filter(Boolean);
 
   if (
-    (input.brief.dimension === "joy" || input.brief.dimension === "fulfillment" || input.brief.dimension === "improvement") &&
+    (input.brief.dimension === "joy" || input.brief.dimension === "fulfillment" || input.brief.dimension === "improvement" || input.brief.dimension === "gratitude") &&
     sceneCandidates.length > 0 &&
     !hasSceneAnchor(content, sceneCandidates)
   ) {
@@ -1516,6 +1760,41 @@ export function runDraftQualityGate(input: {
       /(这次之所以比较顺|值得重复|可重复条件|继续保持)/u.test(content)
     ) {
       issues.push("track_mismatch");
+    }
+  }
+
+  if (input.brief.dimension === "gratitude") {
+    const hasAction = Boolean(input.brief.emotionalCore || input.draft.content.match(/(帮我|提醒我|陪我|听我|理解|照顾|接住|看见|回应|支持)/u));
+    const hasSeenNeed = Boolean(input.brief.stateOrNeed || /(需要|难处|压力|撑不住|被理解|被看见|被接住|不孤单|有人陪|省力|松了一口气)/u.test(content));
+
+    if (!hasAction) {
+      issues.push("missing_gratitude_action");
+    }
+
+    if (!hasSeenNeed) {
+      issues.push("missing_seen_need");
+    }
+
+    if (GRATITUDE_THANK_YOU_TEMPLATE_PATTERN.test(content)) {
+      issues.push("thank_you_template_tone");
+    }
+
+    if (GRATITUDE_DEBT_PATTERN.test(content)) {
+      issues.push("moral_debt_tone");
+    }
+
+    if (GRATITUDE_ADVICE_PATTERN.test(content)) {
+      issues.push("advice_tone");
+    }
+
+    if (GRATITUDE_EMPTY_KINDNESS_PATTERN.test(content) && !hasAction) {
+      issues.push("empty_kindness_tone");
+    }
+
+    if (input.brief.completionMode === "user_override_partial") {
+      if (input.draft.selfPattern || STABLE_RULE_PATTERN.test(content) || /值得珍惜的关系|我更知道.*关系/u.test(content)) {
+        issues.push("partial_fake_relationship_signal");
+      }
     }
   }
 

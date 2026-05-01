@@ -48,6 +48,15 @@ export interface InterviewDimensionDefinition {
       | "controllableFactor"
       | "nextAttempt"
       | "successSignal"
+      | "gratitudeMoment"
+      | "gratitudeTarget"
+      | "kindAction"
+      | "seenNeed"
+      | "innerEffect"
+      | "gratitudeReason"
+      | "gratitudeType"
+      | "relationshipSignal"
+      | "reciprocityHint"
       | "tags"
     >
   ) => InterviewJournalPayload;
@@ -476,21 +485,33 @@ const gratitudeDefinition: InterviewDimensionDefinition = {
     buildSnapshotData(
       "gratitude",
       {
-        moment: snapshot.event,
+        moment: snapshot.gratitudeMoment ?? snapshot.event,
+        gratitudeMoment: snapshot.gratitudeMoment ?? snapshot.event,
+        gratitudeTarget: snapshot.gratitudeTarget ?? null,
+        kindAction: snapshot.kindAction ?? null,
+        seenNeed: snapshot.seenNeed ?? null,
+        innerEffect: snapshot.innerEffect ?? snapshot.feeling,
         feeling: snapshot.feeling,
-        gratitudeType: snapshot.happinessType,
-        gratitudeReason: snapshot.whyItMattered,
-        relationshipSignal: snapshot.selfPattern
+        gratitudeType: snapshot.gratitudeType ?? snapshot.happinessType,
+        gratitudeReason: snapshot.gratitudeReason ?? snapshot.whyItMattered,
+        relationshipSignal: snapshot.relationshipSignal ?? snapshot.selfPattern,
+        reciprocityHint: snapshot.reciprocityHint ?? null
       },
       snapshot
     ),
   buildJournalPayload: (entry) =>
     buildJournalPayload("gratitude", {
-      moment: entry.event,
+      moment: entry.gratitudeMoment ?? entry.event,
+      gratitudeMoment: entry.gratitudeMoment ?? entry.event,
+      gratitudeTarget: entry.gratitudeTarget ?? null,
+      kindAction: entry.kindAction ?? null,
+      seenNeed: entry.seenNeed ?? null,
+      innerEffect: entry.innerEffect ?? entry.feeling,
       feeling: entry.feeling,
-      gratitudeType: entry.happinessType,
-      gratitudeReason: entry.whyItMattered,
-      relationshipSignal: entry.selfPattern
+      gratitudeType: entry.gratitudeType ?? entry.happinessType,
+      gratitudeReason: entry.gratitudeReason ?? entry.whyItMattered,
+      relationshipSignal: entry.relationshipSignal ?? entry.selfPattern,
+      reciprocityHint: entry.reciprocityHint ?? null
     }, entry.tags),
   buildSummaryViewModel: (snapshotData) => {
     if (snapshotData.kind !== "gratitude") {
@@ -499,9 +520,14 @@ const gratitudeDefinition: InterviewDimensionDefinition = {
 
     return {
       fields: filterFields([
+        { label: "感谢对象", value: snapshotData.gratitudeTarget },
+        { label: "具体善意", value: snapshotData.kindAction },
+        { label: "被看见的需要", value: snapshotData.seenNeed },
+        { label: "内在影响", value: snapshotData.innerEffect },
         { label: "感谢类型", value: snapshotData.gratitudeType },
         { label: "为什么感谢", value: snapshotData.gratitudeReason },
-        { label: "关系线索", value: snapshotData.relationshipSignal }
+        { label: "关系线索", value: snapshotData.relationshipSignal },
+        { label: "回馈线索", value: snapshotData.reciprocityHint }
       ])
     };
   },
@@ -510,20 +536,25 @@ const gratitudeDefinition: InterviewDimensionDefinition = {
       return buildDraftViewModel("感谢结构", "当前维度结构暂不可展示。", []);
     }
 
-    return buildDraftViewModel("感谢结构", "这部分帮助你确认那份善意来自哪里，以及它为什么重要。", [
-      { label: "感谢片段", value: payload.moment },
-      { label: "当时感受", value: payload.feeling },
+    return buildDraftViewModel("感谢结构", "这部分帮助你确认谁回应了你的需要，以及这份关系为什么值得珍惜。", [
+      { label: "感谢片段", value: payload.gratitudeMoment ?? payload.moment },
+      { label: "感谢对象", value: payload.gratitudeTarget },
+      { label: "具体善意", value: payload.kindAction },
+      { label: "被看见的需要", value: payload.seenNeed },
+      { label: "内在影响", value: payload.innerEffect ?? payload.feeling },
       { label: "感谢类型", value: payload.gratitudeType },
       { label: "为什么感谢", value: payload.gratitudeReason },
-      { label: "关系线索", value: payload.relationshipSignal }
+      { label: "关系线索", value: payload.relationshipSignal },
+      { label: "回馈线索", value: payload.reciprocityHint }
     ]);
   },
   getSnapshotProgressScore: (snapshotData, snapshot) => {
     if (snapshotData?.kind === "gratitude") {
       let score = 0;
-      if (snapshotData.moment) score = Math.max(score, 28);
-      if (snapshotData.feeling) score = Math.max(score, 36);
-      if (snapshotData.gratitudeReason) score = Math.max(score, 60);
+      if (snapshotData.gratitudeMoment || snapshotData.moment) score = Math.max(score, 28);
+      if (snapshotData.gratitudeTarget || snapshotData.kindAction) score = Math.max(score, 42);
+      if (snapshotData.seenNeed || snapshotData.gratitudeReason) score = Math.max(score, 60);
+      if (snapshotData.innerEffect || snapshotData.feeling || snapshotData.gratitudeType) score = Math.max(score, 68);
       if (snapshotData.gratitudeType || snapshotData.relationshipSignal) score = Math.max(score, 76);
       if (snapshotData.relationshipSignal) score = Math.max(score, 82);
       return score;
@@ -586,6 +617,15 @@ export function buildJournalPayloadForDimension(
     | "controllableFactor"
     | "nextAttempt"
     | "successSignal"
+    | "gratitudeMoment"
+    | "gratitudeTarget"
+    | "kindAction"
+    | "seenNeed"
+    | "innerEffect"
+    | "gratitudeReason"
+    | "gratitudeType"
+    | "relationshipSignal"
+    | "reciprocityHint"
     | "tags"
   >
 ) {

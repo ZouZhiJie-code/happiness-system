@@ -57,9 +57,9 @@ const dimensionPromptGuide: Record<
     fallback: "不要把问题问成空泛决心、建议、计划或自责归因，要把注意力拉回那个具体情境里的可控小调整。"
   },
   gratitude: {
-    goal: "帮助用户识别今天被支持、被理解、被善待的时刻，确认这份感谢为什么重要。",
-    path: "优先顺序：具体事件 -> 对方做了什么 -> 当时感受 -> 为什么想感谢 -> 这份善意说明了什么。",
-    fallback: "如果用户说没有想感谢的人，就从谁让他省力一点、被接住一点的小善意开始找。"
+    goal: "帮助用户识别今天谁看见并回应了他的需要，确认这份善意为什么值得珍惜、学习或回馈。",
+    path: "优先顺序：具体感谢片段 -> 感谢对象 -> 对方具体做了什么 -> 对方回应了我的什么需要或难处 -> 这份感谢为什么重要 -> 关系里值得珍惜或学习的线索。",
+    fallback: "如果用户说没有想感谢的人，就从谁让他省力一点、被理解一点、被接住一点的小善意开始找；不要把感谢问成礼貌模板。"
   }
 };
 
@@ -145,6 +145,21 @@ function getImprovementSnapshotPayload(snapshot: JoySnapshot) {
   };
 }
 
+function getGratitudeSnapshotPayload(snapshot: JoySnapshot) {
+  return {
+    gratitudeMoment: snapshot.gratitudeMoment ?? snapshot.event,
+    gratitudeTarget: snapshot.gratitudeTarget ?? null,
+    kindAction: snapshot.kindAction ?? null,
+    seenNeed: snapshot.seenNeed ?? null,
+    innerEffect: snapshot.innerEffect ?? snapshot.feeling,
+    gratitudeReason: snapshot.gratitudeReason ?? snapshot.whyItMattered,
+    gratitudeType: snapshot.gratitudeType ?? snapshot.happinessType,
+    relationshipSignal: snapshot.relationshipSignal ?? snapshot.selfPattern,
+    reciprocityHint: snapshot.reciprocityHint ?? null,
+    missingSlots: snapshot.missingSlots
+  };
+}
+
 function formatSnapshotForDimension(dimension: InterviewDimension, snapshot: JoySnapshot) {
   if (dimension === "fulfillment") {
     return JSON.stringify(getFulfillmentSnapshotPayload(snapshot), null, 2);
@@ -156,6 +171,10 @@ function formatSnapshotForDimension(dimension: InterviewDimension, snapshot: Joy
 
   if (dimension === "improvement") {
     return JSON.stringify(getImprovementSnapshotPayload(snapshot), null, 2);
+  }
+
+  if (dimension === "gratitude") {
+    return JSON.stringify(getGratitudeSnapshotPayload(snapshot), null, 2);
   }
 
   return formatSnapshot(snapshot);
@@ -185,7 +204,9 @@ function formatEventSummaries(events: InterviewEventRecord[], dimension: Intervi
                   ? getReflectionSnapshotPayload(event.snapshot)
                   : dimension === "improvement"
                     ? getImprovementSnapshotPayload(event.snapshot)
-                    : {
+                    : dimension === "gratitude"
+                      ? getGratitudeSnapshotPayload(event.snapshot)
+                      : {
                     joyMoment: getJoyMoment(event.snapshot),
                     joySource: getJoySource(event.snapshot),
                     stateShift: getStateShift(event.snapshot),
@@ -225,7 +246,9 @@ export function buildJoyExtractMessages(input: {
         ? '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
       : input.dimension === "improvement"
         ? '{"situation":string|null,"improvementTrack":"repeat_good"|"avoid_bad"|null,"stateAssessment":string|null,"frictionPoint":string|null,"repeatCondition":string|null,"controllableFactor":string|null,"nextAttempt":string|null,"successSignal":string|null,"improvementType":string|null,"feeling":string|null,"tags":string[]}'
-      : '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}';
+      : input.dimension === "gratitude"
+        ? '{"gratitudeMoment":string|null,"gratitudeTarget":string|null,"kindAction":string|null,"seenNeed":string|null,"innerEffect":string|null,"gratitudeReason":string|null,"gratitudeType":string|null,"relationshipSignal":string|null,"reciprocityHint":string|null,"tags":string[]}'
+        : '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}';
   const fulfillmentExtractRules =
     input.dimension === "fulfillment"
       ? [
@@ -257,6 +280,17 @@ export function buildJoyExtractMessages(input: {
           "不要输出旧字段名；只输出 situation、improvementTrack、stateAssessment、frictionPoint、repeatCondition、controllableFactor、nextAttempt、successSignal、improvementType、feeling、tags。"
         ]
       : [];
+  const gratitudeExtractRules =
+    input.dimension === "gratitude"
+      ? [
+          "对 gratitude 来说，gratitudeMoment=具体感谢片段，gratitudeTarget=感谢对象，kindAction=对方具体做了什么，seenNeed=对方看见并回应了我的什么需要或难处。",
+          "innerEffect=这份善意带来的内在感受，gratitudeReason=为什么这份感谢重要，relationshipSignal=什么样的关系回应值得珍惜或学习。",
+          "gratitudeType 只能在证据明确时填：支持回应型/理解体谅型/陪伴接住型/照顾减负型/信任机会型。",
+          "不要只因为出现“谢谢/感谢”就填写完整；没有具体行为时 kindAction 返回 null，没有被回应的需要时 seenNeed 返回 null。",
+          "relationshipSignal 只能在用户表达值得珍惜、值得学习、信任、连接或关系意义时填写；否则返回 null。",
+          "reciprocityHint 只在用户自然表达具体回馈或学习意愿时填写；不要抽成“我要报答/还人情”这种道德负债。"
+        ]
+      : [];
 
   return [
     {
@@ -270,6 +304,7 @@ export function buildJoyExtractMessages(input: {
         ...fulfillmentExtractRules,
         ...reflectionExtractRules,
         ...improvementExtractRules,
+        ...gratitudeExtractRules,
         "如果用户没明确说到，就返回 null。",
         `只返回 JSON：${extractShape}`
       ].filter(Boolean).join("\n")
@@ -333,7 +368,13 @@ export function buildJoyQuestionMessages(input: {
                   "improvement 补充规则：repeat_good 要追问“这次好在哪里”和“最关键的条件是什么”；avoid_bad 要追问“真正卡住的地方是什么”，可以用节奏、表达、判断、协作作为轻提示。",
                   "improvement 补充规则：不要说“你应该怎么做”“制定一个计划”“你为什么会这样”“以后一定要”；nextAttempt 只能被追问成具体动作，不能变成空泛决心。"
                 ]
-          : [];
+              : input.dimension === "gratitude"
+                ? [
+                    "gratitude 补充规则：重点不是礼貌表达谢谢，而是看见谁识别并回应了用户的需要。",
+                    "gratitude 补充规则：追问顺序必须贴着关系证据走：先抓具体片段和感谢对象，再问对方具体做了什么，再问对方看见了用户什么需要或难处，最后才问这类关系回应为什么值得珍惜或学习。",
+                    "gratitude 补充规则：不要把感谢问成感谢信、道德负债、报答任务或泛泛善意；不要用“你应该如何回馈”推动用户。"
+                  ]
+                : [];
 
   return [
     {
@@ -377,7 +418,9 @@ export function buildJoyQuestionMessages(input: {
                 ? getFulfillmentSnapshotPayload(input.snapshot)
                 : input.dimension === "reflection"
                   ? getReflectionSnapshotPayload(input.snapshot)
-                  : input.snapshot
+                  : input.dimension === "gratitude"
+                    ? getGratitudeSnapshotPayload(input.snapshot)
+                    : input.snapshot
           },
           null,
           2
@@ -415,6 +458,7 @@ export function buildJoyDraftMessages(input: {
   const isFulfillmentDimension = input.dimension === "fulfillment";
   const isReflectionDimension = input.dimension === "reflection";
   const isImprovementDimension = input.dimension === "improvement";
+  const isGratitudeDimension = input.dimension === "gratitude";
   const joyCompletionInstruction =
     input.writingProfile.closingMode === "stable_clue"
       ? input.draftBrief.closureTarget === "delight_signature"
@@ -435,6 +479,10 @@ export function buildJoyDraftMessages(input: {
     input.writingProfile.closingMode === "stable_clue"
       ? "结尾只能轻轻收束用户已经说出的下一次小尝试，力度到“下次我想先试试这一小步”；不要写成完整计划、长期承诺或效率建议。"
       : "结尾只能停在当前看见的改进点，不要硬写 nextAttempt，不要填写 selfPattern，也不要假装已经形成完整方案。";
+  const gratitudeCompletionInstruction =
+    input.writingProfile.closingMode === "stable_clue"
+      ? "结尾可以轻轻收束已经成立的关系线索，写出什么样的善意回应值得我珍惜或学习；不要写成感谢信模板、报答任务或道德要求。"
+      : "结尾只能停在当前这份感谢为什么重要，不要硬写 relationshipSignal/selfPattern，也不要假装已经形成稳定关系判断。";
   const voiceInstruction =
     input.writingProfile.voiceMode === "journal"
       ? "整篇必须像日志，不像总结；像用户自己写下来的整理，不像系统总结或分析报告。"
@@ -447,9 +495,11 @@ export function buildJoyDraftMessages(input: {
           ? "开头先从触发思考的具体片段进入，不要从“今天想了很多”或抽象感悟起笔。正文默认按“片段进入 -> 当时原来的判断或疑问 -> 今天看到的证据/新理解 -> 视角变化或判断线索”组织。"
         : isImprovementDimension
           ? "开头先从具体改进情境进入，不要从“我需要改进”或抽象决心起笔。正文默认按“情境进入 -> 当时好或不理想的状态 -> 关键条件或卡点 -> 可控的小调整 -> 结尾轻收”组织。"
-        : isJoyDimension
-          ? "开头先从具体片段进入，不要从抽象判断、总的感受或提炼结论起笔。正文默认按“片段进入 -> 真正开心点/核心感受 -> 状态变化或被满足的在乎/被带动的方式 -> 结尾轻收”组织。"
-          : "开头先从具体片段进入，不要从抽象判断、总的感受或提炼结论起笔。正文默认按“片段进入 -> 为什么重要 -> 当时感受 -> 结尾轻收”组织。"
+          : isGratitudeDimension
+            ? "开头先从具体感谢片段进入，不要从“我要感谢某某”或抽象善意起笔。正文默认按“片段进入 -> 对方具体做了什么 -> 对方回应了我的什么需要 -> 这份感谢为什么重要 -> 关系线索轻收”组织。"
+            : isJoyDimension
+              ? "开头先从具体片段进入，不要从抽象判断、总的感受或提炼结论起笔。正文默认按“片段进入 -> 真正开心点/核心感受 -> 状态变化或被满足的在乎/被带动的方式 -> 结尾轻收”组织。"
+              : "开头先从具体片段进入，不要从抽象判断、总的感受或提炼结论起笔。正文默认按“片段进入 -> 为什么重要 -> 当时感受 -> 结尾轻收”组织。"
       : null;
   const toneBanInstruction = input.writingProfile.toneBanSet.length
     ? `输出中明确禁止系统话术、字段词、总结腔、建议腔，尤其不要写这些语气、措辞或元叙述: ${input.writingProfile.toneBanSet.join("、")}。`
@@ -459,7 +509,9 @@ export function buildJoyDraftMessages(input: {
       ? '{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"joyMoment":string|null,"joySource":string|null,"stateShift":string|null,"meaningNeed":string|null,"manualClue":string|null,"delightSignature":string|null,"directionSignal":string|null,"valueImpact":string|null,"durability":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"joyMoment":string|null,"joySource":string|null,"stateShift":string|null,"meaningNeed":string|null,"manualClue":string|null,"delightSignature":string|null,"directionSignal":string|null,"valueImpact":string|null,"durability":string|null,"tags":string[]}]}'
       : isImprovementDimension
         ? '{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"improvementTrack":"repeat_good"|"avoid_bad"|null,"stateAssessment":string|null,"frictionPoint":string|null,"repeatCondition":string|null,"controllableFactor":string|null,"nextAttempt":string|null,"successSignal":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"improvementTrack":"repeat_good"|"avoid_bad"|null,"stateAssessment":string|null,"frictionPoint":string|null,"repeatCondition":string|null,"controllableFactor":string|null,"nextAttempt":string|null,"successSignal":string|null}]}'
-      : '{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}]}';
+        : isGratitudeDimension
+          ? '{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"gratitudeMoment":string|null,"gratitudeTarget":string|null,"kindAction":string|null,"seenNeed":string|null,"innerEffect":string|null,"gratitudeReason":string|null,"gratitudeType":string|null,"relationshipSignal":string|null,"reciprocityHint":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"gratitudeMoment":string|null,"gratitudeTarget":string|null,"kindAction":string|null,"seenNeed":string|null,"innerEffect":string|null,"gratitudeReason":string|null,"gratitudeType":string|null,"relationshipSignal":string|null,"reciprocityHint":string|null}]}'
+          : '{"title":string,"content":string,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[],"eventBlocks":[{"eventId":string,"sequence":number,"explorationRound":number,"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null}]}';
   const dimensionDraftInstruction = isJoyDimension
     ? "对 joy 维度来说，正文不只要写发生了什么，还要自然写出真正开心点，以及状态变化、被满足的在乎，或会被什么样的轻快乐带动。"
     : isFulfillmentDimension
@@ -468,7 +520,9 @@ export function buildJoyDraftMessages(input: {
         ? "对 reflection 维度来说，正文要写清这次片段带来了什么新发现，以及这个发现如何从当天材料里自然推出；不能只写“我想了很多”或空泛人生感悟。"
         : isImprovementDimension
           ? "对 improvement 维度来说，正文要把一次好/坏状态整理成一个下次更容易重复好状态或避免坏状态的具体调整：必须写清关键条件或具体卡点，以及用户能调整的一小处。"
-          : `对 ${config.label} 维度来说，正文要自然写出这件事为什么重要，而不只是复述事件。`;
+          : isGratitudeDimension
+            ? "对 gratitude 维度来说，正文必须写清对方具体做了什么、对方看见并回应了我的什么需要，以及这份善意为什么重要；不能只写“我很感谢/对方很好”。"
+            : `对 ${config.label} 维度来说，正文要自然写出这件事为什么重要，而不只是复述事件。`;
   const completionInstruction = isJoyDimension
     ? joyCompletionInstruction
     : isFulfillmentDimension
@@ -477,7 +531,9 @@ export function buildJoyDraftMessages(input: {
         ? reflectionCompletionInstruction
         : isImprovementDimension
           ? improvementCompletionInstruction
-          : "如果已经有模式或线索，要自然写进结尾，不要单独列成字段说明。";
+          : isGratitudeDimension
+            ? gratitudeCompletionInstruction
+            : "如果已经有模式或线索，要自然写进结尾，不要单独列成字段说明。";
   const dimensionTrackInstruction = isJoyDimension
     ? input.draftBrief.joyTrack === "delight_track"
       ? "当前这篇 joy 更像纯粹开心或恢复型开心。不要硬写价值、方向、人生规律；写清它为什么好玩、解压、上头或能把状态带轻就够了。"
@@ -492,7 +548,9 @@ export function buildJoyDraftMessages(input: {
             : input.draftBrief.improvementTrack === "avoid_bad"
               ? "当前这篇 improvement 是避免坏状态轨道。重点写清具体卡点和可控小调整；不要把全局自责写成原因，也不要强行写可重复条件。"
               : "当前这篇 improvement 必须保持克制。不要写成建议、检讨书、心理诊断、OKR、KPI、待办清单或行动计划。"
-          : null;
+          : isGratitudeDimension
+            ? "当前这篇 gratitude 的核心是关系里的善意回应。不要写成感谢信、表扬稿、道德负债、报答承诺或人际建议；不要把一次善意直接上升成完美关系。"
+            : null;
 
   return [
     {

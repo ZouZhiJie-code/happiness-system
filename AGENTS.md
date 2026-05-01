@@ -5,10 +5,10 @@
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
 当前真实状态以 `2026-05-01` 的代码为准：
-- 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用壳子。
-- `joy / fulfillment / reflection / improvement` 是当前已经完成理论对齐深化的标品维度。
+- 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
+- `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
-- `gratitude` 已经有导航、结构化数据面和草稿容器，但还没有完成理论对齐与访谈策略深化。
+- `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 五个维度的日志标题已经统一经过语义短标题治理，后端不再把长事件句机械截断成标题。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
@@ -32,8 +32,10 @@
 7. `docs/theory/joy-alignment.md`
 8. `docs/theory/fulfillment-alignment.md`
 9. `docs/theory/reflection-alignment.md`
-10. `docs/theory/dimension-draft-template.md`
-11. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
+10. `docs/theory/improvement-alignment.md`
+11. `docs/theory/gratitude-alignment.md`
+12. `docs/theory/dimension-draft-template.md`
+13. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
 
 协作语言：
 - 默认用中文输出，除非用户明确要求使用其他语言，或需要保留代码、命令、错误信息、API 字段等原文。
@@ -49,6 +51,12 @@ fulfillment 理论翻译基线：
 
 reflection 理论翻译基线：
 - `docs/theory/reflection-alignment.md`
+
+improvement 理论翻译基线：
+- `docs/theory/improvement-alignment.md`
+
+gratitude 理论翻译基线：
+- `docs/theory/gratitude-alignment.md`
 
 维度正文生成模板：
 - `docs/theory/dimension-draft-template.md`
@@ -121,8 +129,30 @@ reflection 理论翻译基线：
   - 标题治理优先收束为 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类语义短标题，不能回退到长事件句截断或 `改进日志 / 下一次尝试 / 我要变得更好`。
   - 尚未完成端到端产品验收，文风仍可继续打磨。
 - `gratitude`
-  - 已有维度枚举、前端入口、结构化 `snapshotData/payload`、进度映射和草稿容器。
-  - 当前仍主要复用 joy 系统壳子，尚未完成理论对齐。
+  - 已完成理论对齐开发规格：`docs/theory/gratitude-alignment.md`
+  - 产品目标固定为“看见谁回应了我的需要，以及什么样的关系回应值得珍惜”。
+  - 已扩展结构化 `snapshotData/payload`：
+    - `gratitudeMoment`
+    - `gratitudeTarget`
+    - `kindAction`
+    - `seenNeed`
+    - `innerEffect`
+    - `gratitudeReason`
+    - `gratitudeType`
+    - `relationshipSignal`
+    - `reciprocityHint`
+  - `gratitudeType` 当前按五类收束：
+    - `支持回应型`
+    - `理解体谅型`
+    - `陪伴接住型`
+    - `照顾减负型`
+    - `信任机会型`
+  - 完整模式需要 `gratitudeMoment + kindAction + seenNeed + gratitudeReason + relationshipSignal`。
+  - partial 模式需要 `gratitudeMoment + kindAction + seenNeed|gratitudeReason`，且用户明确不想继续或自然语言要求整理日志。
+  - 已接入专属 AI 抽取 schema、fallback 抽取、阶段推进、专属提问策略和完整 / partial 收束。
+  - 提问策略已固化为“具体被照顾/支持的时刻 -> 对方做了什么 -> 哪个需要被看见 -> 为什么珍惜 -> 关系信号/回应方式”，并避免感谢信模板、道德负债、强行回馈任务和泛泛正能量。
+  - 已完成正文生成、写作控制层、AI draft prompt、质量门、fallback draft、标题治理和自动化验收样例。
+  - 标题治理优先收束为 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会` 这类语义短标题，不能回退到长事件句截断或 `感谢日志 / 谢谢你 / 今天很感恩`。
 
 ### 3.2 用户可见与系统内部的边界
 
@@ -160,7 +190,7 @@ reflection 理论翻译基线：
 - `assessUserTurnMessage` 会识别 `content / low_signal / boundary_stop / hostile_boundary`。
 - 命中 `boundary_stop` 或 `hostile_boundary` 时，服务层会先处理边界，不再继续抽取和生成追问。
 - 材料足够时：
-  - `joy` 已有核心材料，`fulfillment` 已有 `experience + progressEvidence`，`reflection` 已有 `trigger + insight`，或 `improvement` 已有 `situation + frictionPoint|repeatCondition`，会直接进入 `event_complete + user_override_partial`。
+  - `joy` 已有核心材料，`fulfillment` 已有 `experience + progressEvidence`，`reflection` 已有 `trigger + insight`，`improvement` 已有 `situation + frictionPoint|repeatCondition`，或 `gratitude` 已有 `gratitudeMoment + kindAction + seenNeed|gratitudeReason`，会直接进入 `event_complete + user_override_partial`。
   - “总结日志 / 总结成日志 / 整理成日志 / 帮我总结 / 帮我整理 / 生成一下日志”等自然语言整理请求也按同一条边界收束处理，不会继续抽取或追问。
 - 材料不足时：
   - 进入 `boundary_insufficient`
@@ -181,7 +211,7 @@ reflection 理论翻译基线：
   - 多维度通用前端定义、schema、进度与维度元信息。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
-  - 当前也承载 fulfillment 与 reflection 的理论对齐分支。
+  - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
 - `src/server/services/interview`
   - 当前对外暴露的访谈 service 层。
   - 现实情况：`interview.service.ts` 目前主要是 re-export `joy-interview.service.ts`。
@@ -198,7 +228,7 @@ reflection 理论翻译基线：
   - 这已经在多维度框架中通用了，但命名还带有 joy 历史痕迹。
 - 后端主服务仍是 joy-first 架构：
   - 多维度已经有通用 wrapper 和类型分发。
-  - 但维度实现还没有拆成真正独立的通用引擎；fulfillment 与 reflection 当前是在 joy-first 壳子内完成理论分支。
+  - 但维度实现还没有拆成真正独立的通用引擎；fulfillment / reflection / improvement / gratitude 当前是在 joy-first 壳子内完成理论分支。
 
 ## 5. 数据模型要点
 
@@ -285,7 +315,7 @@ reflection 理论翻译基线：
 
 截至 `2026-05-01`，本地测试基线为：
 - `14` 个测试文件
-- `170` 个测试全部通过
+- `184` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点
@@ -308,7 +338,7 @@ reflection 理论翻译基线：
 - fulfillment 日志正文已经完成理论对齐与质量门，但仍需继续优化文风和产品完成度。
 - reflection 日志正文已经完成理论对齐与质量门，但仍需继续优化文风和产品完成度。
 - `improvement` 已完成正文生成、质量门、fallback draft、标题治理和自动化验收样例，但还没有完成端到端产品验收。
-- `gratitude` 还没有完成理论对齐、槽位设计和收尾规则。
+- gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
 

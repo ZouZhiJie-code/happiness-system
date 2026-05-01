@@ -89,6 +89,43 @@ export const improvementExtractResultSchema = z
     }
   });
 
+export const gratitudeExtractResultSchema = z
+  .object({
+    event: nullableString.optional(),
+    gratitudeMoment: nullableString.optional(),
+    gratitudeTarget: nullableString.optional(),
+    kindAction: nullableString.optional(),
+    seenNeed: nullableString.optional(),
+    innerEffect: nullableString.optional(),
+    feeling: nullableString.optional(),
+    gratitudeReason: nullableString.optional(),
+    gratitudeType: nullableString.optional(),
+    relationshipSignal: nullableString.optional(),
+    reciprocityHint: nullableString.optional(),
+    whyItMattered: nullableString.optional(),
+    happinessType: nullableString.optional(),
+    selfPattern: nullableString.optional(),
+    tags: z.array(z.string().min(1).max(24)).max(6).default([])
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.relationshipSignal && !value.seenNeed && !value.gratitudeReason && !value.whyItMattered) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["relationshipSignal"],
+        message: "relationshipSignal needs evidence from seenNeed or gratitudeReason."
+      });
+    }
+
+    if (value.reciprocityHint && /^(我要)?(报答|回报|还人情|感谢别人|对别人好一点)[。.!！]*$/u.test(value.reciprocityHint.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["reciprocityHint"],
+        message: "reciprocityHint must be a concrete, user-expressed learning or return impulse, not moral debt."
+      });
+    }
+  });
+
 export const joyQuestionSchema = z
   .object({
     question: z.string().min(1).max(160)
@@ -120,6 +157,15 @@ export const joyDraftResultSchema = z
     controllableFactor: nullableString.optional(),
     nextAttempt: nullableString.optional(),
     successSignal: nullableString.optional(),
+    gratitudeMoment: nullableString.optional(),
+    gratitudeTarget: nullableString.optional(),
+    kindAction: nullableString.optional(),
+    seenNeed: nullableString.optional(),
+    innerEffect: nullableString.optional(),
+    gratitudeReason: nullableString.optional(),
+    gratitudeType: nullableString.optional(),
+    relationshipSignal: nullableString.optional(),
+    reciprocityHint: nullableString.optional(),
     tags: z.array(z.string().min(1).max(24)).max(6),
     eventBlocks: z
       .array(
@@ -148,6 +194,15 @@ export const joyDraftResultSchema = z
           controllableFactor: nullableString.optional(),
           nextAttempt: nullableString.optional(),
           successSignal: nullableString.optional(),
+          gratitudeMoment: nullableString.optional(),
+          gratitudeTarget: nullableString.optional(),
+          kindAction: nullableString.optional(),
+          seenNeed: nullableString.optional(),
+          innerEffect: nullableString.optional(),
+          gratitudeReason: nullableString.optional(),
+          gratitudeType: nullableString.optional(),
+          relationshipSignal: nullableString.optional(),
+          reciprocityHint: nullableString.optional(),
           tags: z.array(z.string().min(1).max(24)).max(6).optional()
         })
       )
@@ -158,5 +213,6 @@ export const joyDraftResultSchema = z
 export type JoyExtractResult = z.infer<typeof joyExtractResultSchema>;
 export type FulfillmentExtractResult = z.infer<typeof fulfillmentExtractResultSchema>;
 export type ImprovementExtractResult = z.infer<typeof improvementExtractResultSchema>;
+export type GratitudeExtractResult = z.infer<typeof gratitudeExtractResultSchema>;
 export type JoyQuestionResult = z.infer<typeof joyQuestionSchema>;
 export type JoyDraftResult = z.infer<typeof joyDraftResultSchema>;

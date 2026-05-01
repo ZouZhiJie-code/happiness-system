@@ -40,6 +40,15 @@ export interface JoySignalFields {
   controllableFactor?: string | null;
   nextAttempt?: string | null;
   successSignal?: string | null;
+  gratitudeMoment?: string | null;
+  gratitudeTarget?: string | null;
+  kindAction?: string | null;
+  seenNeed?: string | null;
+  innerEffect?: string | null;
+  gratitudeReason?: string | null;
+  gratitudeType?: string | null;
+  relationshipSignal?: string | null;
+  reciprocityHint?: string | null;
 }
 
 interface ExtractJoySignalOptions {
@@ -388,6 +397,15 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
   const controllableFactor = normalizeSlotValue(fields.controllableFactor, 120);
   const nextAttempt = normalizeSlotValue(fields.nextAttempt ?? fields.selfPattern, 120);
   const successSignal = normalizeSlotValue(fields.successSignal, 100);
+  const gratitudeMoment = normalizeSlotValue(fields.gratitudeMoment ?? fields.event, 140);
+  const gratitudeTarget = normalizeSlotValue(fields.gratitudeTarget, 80);
+  const kindAction = normalizeSlotValue(fields.kindAction, 140);
+  const seenNeed = normalizeSlotValue(fields.seenNeed, 120);
+  const innerEffect = normalizeSlotValue(fields.innerEffect ?? fields.feeling, 100);
+  const gratitudeReason = normalizeSlotValue(fields.gratitudeReason ?? fields.whyItMattered, 160);
+  const gratitudeType = normalizeSlotValue(fields.gratitudeType ?? fields.happinessType, 40);
+  const relationshipSignal = normalizeSlotValue(fields.relationshipSignal ?? fields.selfPattern, 120);
+  const reciprocityHint = normalizeSlotValue(fields.reciprocityHint, 120);
   const precomputedProfile = fields.psychProfile ?? null;
   const delightSignature = normalizeSlotValue(fields.delightSignature, 120);
   const psychProfile =
@@ -453,6 +471,15 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
     controllableFactor,
     nextAttempt,
     successSignal,
+    gratitudeMoment,
+    gratitudeTarget,
+    kindAction,
+    seenNeed,
+    innerEffect,
+    gratitudeReason,
+    gratitudeType,
+    relationshipSignal,
+    reciprocityHint,
     confidence: clampConfidence(0.22 + filledCount * 0.17 + optionalCount * 0.05 + (delightSignature ? 0.03 : 0)),
     missingSlots
   };
@@ -491,7 +518,16 @@ export function mergeJoySignals(previous: JoySnapshot, candidate: JoySignalField
     repeatCondition: preferRicherValue(previous.repeatCondition ?? null, normalizeSlotValue(candidate.repeatCondition, 160)),
     controllableFactor: preferRicherValue(previous.controllableFactor ?? null, normalizeSlotValue(candidate.controllableFactor, 120)),
     nextAttempt: preferRicherValue(previous.nextAttempt ?? null, normalizeSlotValue(candidate.nextAttempt, 120)),
-    successSignal: preferRicherValue(previous.successSignal ?? null, normalizeSlotValue(candidate.successSignal, 100))
+    successSignal: preferRicherValue(previous.successSignal ?? null, normalizeSlotValue(candidate.successSignal, 100)),
+    gratitudeMoment: preferRicherValue(previous.gratitudeMoment ?? null, normalizeSlotValue(candidate.gratitudeMoment ?? candidate.event, 140)),
+    gratitudeTarget: preferRicherValue(previous.gratitudeTarget ?? null, normalizeSlotValue(candidate.gratitudeTarget, 80)),
+    kindAction: preferRicherValue(previous.kindAction ?? null, normalizeSlotValue(candidate.kindAction, 140)),
+    seenNeed: preferRicherValue(previous.seenNeed ?? null, normalizeSlotValue(candidate.seenNeed, 120)),
+    innerEffect: preferRicherValue(previous.innerEffect ?? null, normalizeSlotValue(candidate.innerEffect ?? candidate.feeling, 100)),
+    gratitudeReason: preferRicherValue(previous.gratitudeReason ?? null, normalizeSlotValue(candidate.gratitudeReason ?? candidate.whyItMattered, 160)),
+    gratitudeType: preferRicherValue(previous.gratitudeType ?? null, normalizeSlotValue(candidate.gratitudeType ?? candidate.happinessType, 40)),
+    relationshipSignal: preferRicherValue(previous.relationshipSignal ?? null, normalizeSlotValue(candidate.relationshipSignal ?? candidate.selfPattern, 120)),
+    reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(candidate.reciprocityHint, 120))
   });
 }
 
@@ -814,6 +850,113 @@ function inferImprovementSuccessSignal(message: string) {
   return null;
 }
 
+function inferGratitudeTarget(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(/(?:感谢|谢谢|想谢谢|想感谢)(?:一下)?([^，。！？!?]{1,18})/u);
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").replace(/^(那个|这位|一个)/u, "").slice(0, 40) || null;
+  }
+
+  if (/(妈妈|母亲|爸爸|父亲|家人|朋友|同事|伴侣|老师|客户|室友|领导)/u.test(normalized)) {
+    return normalized.match(/(妈妈|母亲|爸爸|父亲|家人|朋友|同事|伴侣|老师|客户|室友|领导)/u)?.[1] ?? null;
+  }
+
+  return null;
+}
+
+function inferGratitudeKindAction(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(
+    /((?:帮我|替我|给我|提醒我|陪我|听我|理解我|照顾我|等我|接住我|看出我|主动)[^。！？!?]{0,90})/u
+  );
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 120) || null;
+  }
+
+  if (/(理清优先级|一起梳理|帮忙收尾|帮我挡|帮我处理)/u.test(normalized)) return "帮我把当时最卡的事情往前推了一步";
+  if (/(听我说|陪我聊|陪着我|一起待着)/u.test(normalized)) return "愿意陪着我，把我的话认真听完";
+  if (/(提醒|关心|问我吃饭|问我累不累)/u.test(normalized)) return "在很细小的地方提醒和关心我";
+  if (/(理解|体谅|包容|没有责怪)/u.test(normalized)) return "没有急着评判，而是理解和体谅我的处境";
+
+  return null;
+}
+
+function inferSeenNeed(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(
+    /(?:看见了?|看出|知道|意识到|回应了?)(?:我)?([^。！？!?]{0,80}(?:需要|撑不住|压力|焦虑|慌|累|难处|不容易|被理解|被支持|有人陪|优先级|休息|吃饭)[^。！？!?]{0,40})/u
+  );
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  if (/(撑不住|快崩|压力很大|太累)/u.test(normalized)) return "我当时其实很需要有人帮我分担一点压力";
+  if (/(混乱|不知道先做什么|优先级)/u.test(normalized)) return "我当时需要有人帮我把混乱的事情理清";
+  if (/(没人懂|被理解|听我说|倾听)/u.test(normalized)) return "我当时很需要被认真听见和理解";
+  if (/(吃饭|休息|睡觉|身体)/u.test(normalized)) return "我当时连照顾自己的基本需要都容易忽略";
+
+  return null;
+}
+
+function inferGratitudeReason(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(/(?:因为|这让我|所以我|重要的是)([^。！？!?]{0,120})/u);
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 140) || null;
+  }
+
+  if (/(被接住|被支持|不孤单|不再一个人)/u.test(normalized)) return "它让我觉得自己不是一个人在扛";
+  if (/(被理解|被看见|有人懂)/u.test(normalized)) return "它让我觉得自己的状态真的被看见了";
+  if (/(省力|轻松|松了一口气)/u.test(normalized)) return "它让我在很紧的时候松了一口气";
+
+  return null;
+}
+
+function inferRelationshipSignal(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(
+    /((?:我更知道|我发现|原来|这让我觉得)[^。！？!?]{0,90}(?:值得珍惜|值得学习|信任|关系|连接|被接住|互相支持)[^。！？!?]{0,30})/u
+  );
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  if (/(值得珍惜|珍惜这样的人|信任)/u.test(normalized)) return "这样的关系让我觉得值得珍惜";
+  if (/(我也想学习|以后也想这样|学着理解别人)/u.test(normalized)) return "我也想学习这种理解和回应别人的方式";
+
+  return null;
+}
+
+function inferReciprocityHint(message: string) {
+  const normalized = normalizeText(message);
+  const directMatch = normalized.match(/((?:我也想|以后我也会|下次我也想|想回馈)[^。！？!?]{0,90})/u);
+
+  if (directMatch) {
+    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  return null;
+}
+
+function inferGratitudeTags(message: string) {
+  const normalized = normalizeText(message);
+  const tags = [
+    /(家人|妈妈|爸爸|父母|伴侣)/u.test(normalized) ? "亲密关系" : null,
+    /(朋友|同学|室友)/u.test(normalized) ? "朋友" : null,
+    /(同事|领导|客户|协作)/u.test(normalized) ? "协作" : null,
+    /(帮助|支持|接住|分担)/u.test(normalized) ? "支持" : null,
+    /(理解|体谅|包容|听我说)/u.test(normalized) ? "理解" : null,
+    /(照顾|关心|提醒|吃饭|休息)/u.test(normalized) ? "照顾" : null
+  ].filter(Boolean) as string[];
+
+  return normalizeTags(tags);
+}
+
 function inferStateShift(message: string) {
   const normalized = normalizeText(message);
 
@@ -951,6 +1094,7 @@ function inferSummaryByDimension(message: string, dimension: InterviewDimension)
       if (/(帮助|支持|提醒|照顾|接住)/.test(normalized)) return "支持型感谢";
       if (/(陪伴|聊天|听我说|一起|等我)/.test(normalized)) return "陪伴型感谢";
       if (/(体谅|理解|包容|关心|善意)/.test(normalized)) return "善意型感谢";
+      if (/(信任|机会|交给我|让我负责)/.test(normalized)) return "信任机会型感谢";
       return null;
   }
 }
@@ -1037,6 +1181,30 @@ export function extractJoySignals(
     });
   }
 
+  if (dimension === "gratitude") {
+    const gratitudeMoment = normalizeSlotValue(inferEvent(normalized), 140);
+    const innerEffect = normalizeSlotValue(inferStateShift(normalized), 100);
+    const gratitudeType = normalizeSlotValue(inferSummaryByDimension(normalized, dimension), 40);
+
+    return buildJoySnapshot({
+      event: preferRicherValue(previous.event, gratitudeMoment),
+      feeling: preferRicherValue(previous.feeling, innerEffect),
+      whyItMattered: preferRicherValue(previous.whyItMattered, normalizeSlotValue(inferGratitudeReason(normalized), 160)),
+      happinessType: previous.happinessType ?? gratitudeType,
+      selfPattern: preferRicherValue(previous.selfPattern, normalizeSlotValue(inferRelationshipSignal(normalized), 120)),
+      gratitudeMoment: preferRicherValue(previous.gratitudeMoment ?? null, gratitudeMoment),
+      gratitudeTarget: preferRicherValue(previous.gratitudeTarget ?? null, normalizeSlotValue(inferGratitudeTarget(normalized), 80)),
+      kindAction: preferRicherValue(previous.kindAction ?? null, normalizeSlotValue(inferGratitudeKindAction(normalized), 140)),
+      seenNeed: preferRicherValue(previous.seenNeed ?? null, normalizeSlotValue(inferSeenNeed(normalized), 120)),
+      innerEffect: preferRicherValue(previous.innerEffect ?? null, innerEffect),
+      gratitudeReason: preferRicherValue(previous.gratitudeReason ?? null, normalizeSlotValue(inferGratitudeReason(normalized), 160)),
+      gratitudeType: previous.gratitudeType ?? gratitudeType,
+      relationshipSignal: preferRicherValue(previous.relationshipSignal ?? null, normalizeSlotValue(inferRelationshipSignal(normalized), 120)),
+      reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(inferReciprocityHint(normalized), 120)),
+      tags: preferMoreSpecificTagSet(previous.tags ?? [], inferGratitudeTags(normalized))
+    });
+  }
+
   return buildJoySnapshot({
     event: preferRicherValue(previous.event, normalizeSlotValue(inferEvent(normalized), 140)),
     feeling: preferRicherValue(previous.feeling, normalizeSlotValue(inferStateShift(normalized), 72)),
@@ -1073,6 +1241,15 @@ export function getNextStage(
       if (!snapshot.whyItMattered) return "probe_reason";
       if (!snapshot.selfPattern && turnCount < 5) return "probe_pattern";
       if (turnCount >= 5 || snapshot.selfPattern) return "wrap_up";
+
+      return "probe_pattern";
+    }
+
+    if (dimension === "gratitude") {
+      if (!snapshot.gratitudeMoment && !snapshot.event) return "collect_event";
+      if (!snapshot.kindAction || (!snapshot.seenNeed && !snapshot.gratitudeReason && !snapshot.whyItMattered)) return "probe_reason";
+      if (!snapshot.relationshipSignal && turnCount < 5) return "probe_pattern";
+      if (turnCount >= 5 || snapshot.relationshipSignal) return "wrap_up";
 
       return "probe_pattern";
     }
@@ -1229,6 +1406,33 @@ export function buildAssistantQuestion(
     }
   }
 
+  if (dimension === "gratitude") {
+    switch (stage) {
+      case "collect_event":
+        return "今天有没有一个让你想说谢谢的人或时刻？先讲那个具体片段。";
+      case "probe_reason":
+        if (!snapshot.kindAction) {
+          return "对方当时具体做了什么，让你觉得这份感谢不是泛泛的？";
+        }
+
+        if (!snapshot.seenNeed) {
+          return "如果往里看一点，对方像是看见了你当时的什么需要或难处？";
+        }
+
+        return "这件事为什么对你重要？它让你心里哪一块被接住了？";
+      case "probe_pattern":
+        if (!snapshot.relationshipSignal) {
+          return "这份感谢让你更想珍惜，或者更想学习关系里的哪一点？";
+        }
+
+        return "这条关系线索里，最值得被写下来的具体证据是什么？";
+      case "wrap_up":
+        return "";
+      case "finalize":
+        return "日志草稿已经准备好了。";
+    }
+  }
+
   switch (stage) {
     case "collect_event":
       return "我先想抓住那个画面。那一刻具体发生了什么？";
@@ -1277,6 +1481,15 @@ export function createDraft(dimension: InterviewDimension, snapshot: JoySnapshot
       whyItMattered: snapshot.whyItMattered,
       happinessType: snapshot.happinessType,
       selfPattern: snapshot.selfPattern,
+      gratitudeMoment: snapshot.gratitudeMoment ?? null,
+      gratitudeTarget: snapshot.gratitudeTarget ?? null,
+      kindAction: snapshot.kindAction ?? null,
+      seenNeed: snapshot.seenNeed ?? null,
+      innerEffect: snapshot.innerEffect ?? null,
+      gratitudeReason: snapshot.gratitudeReason ?? null,
+      gratitudeType: snapshot.gratitudeType ?? null,
+      relationshipSignal: snapshot.relationshipSignal ?? null,
+      reciprocityHint: snapshot.reciprocityHint ?? null,
       tags,
       eventBlocks: [],
       source: "ai_draft_direct"

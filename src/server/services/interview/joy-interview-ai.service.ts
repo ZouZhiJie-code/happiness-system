@@ -27,6 +27,7 @@ import {
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
 import {
   fulfillmentExtractResultSchema,
+  gratitudeExtractResultSchema,
   improvementExtractResultSchema,
   joyDraftResultSchema,
   joyExtractResultSchema,
@@ -191,6 +192,22 @@ function cloneExistingDraft(entry: InterviewSessionRecord["journalEntry"]): JoyE
     valueImpact: entry.valueImpact,
     durability: entry.durability,
     psychProfile: entry.psychProfile,
+    improvementTrack: entry.improvementTrack,
+    stateAssessment: entry.stateAssessment,
+    frictionPoint: entry.frictionPoint,
+    repeatCondition: entry.repeatCondition,
+    controllableFactor: entry.controllableFactor,
+    nextAttempt: entry.nextAttempt,
+    successSignal: entry.successSignal,
+    gratitudeMoment: entry.gratitudeMoment,
+    gratitudeTarget: entry.gratitudeTarget,
+    kindAction: entry.kindAction,
+    seenNeed: entry.seenNeed,
+    innerEffect: entry.innerEffect,
+    gratitudeReason: entry.gratitudeReason,
+    gratitudeType: entry.gratitudeType,
+    relationshipSignal: entry.relationshipSignal,
+    reciprocityHint: entry.reciprocityHint,
     tags: entry.tags,
     eventBlocks: entry.eventBlocks,
     source: entry.source
@@ -274,6 +291,15 @@ function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
     controllableFactor: sanitizeNullableString(fields.controllableFactor),
     nextAttempt: sanitizeNullableString(fields.nextAttempt),
     successSignal: sanitizeNullableString(fields.successSignal),
+    gratitudeMoment: sanitizeNullableString(fields.gratitudeMoment ?? fields.event),
+    gratitudeTarget: sanitizeNullableString(fields.gratitudeTarget),
+    kindAction: sanitizeNullableString(fields.kindAction),
+    seenNeed: sanitizeNullableString(fields.seenNeed),
+    innerEffect: sanitizeNullableString(fields.innerEffect ?? fields.feeling),
+    gratitudeReason: sanitizeNullableString(fields.gratitudeReason ?? fields.whyItMattered),
+    gratitudeType: sanitizeNullableString(fields.gratitudeType ?? fields.happinessType),
+    relationshipSignal: sanitizeNullableString(fields.relationshipSignal ?? fields.selfPattern),
+    reciprocityHint: sanitizeNullableString(fields.reciprocityHint),
     tags: Array.from(new Set((fields.tags ?? []).map((tag) => tag.trim()).filter(Boolean))).slice(0, 6)
   };
 }
@@ -281,6 +307,10 @@ function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
 function getExtractResultSchema(dimension: InterviewDimension) {
   if (dimension === "improvement") {
     return improvementExtractResultSchema;
+  }
+
+  if (dimension === "gratitude") {
+    return gratitudeExtractResultSchema;
   }
 
   return dimension === "fulfillment" || dimension === "reflection" ? fulfillmentExtractResultSchema : joyExtractResultSchema;
@@ -782,6 +812,15 @@ function buildEventBlocks(events: InterviewEventRecord[]): JoyEventBlock[] {
     controllableFactor: sanitizeNullableString(event.snapshot.controllableFactor),
     nextAttempt: sanitizeNullableString(event.snapshot.nextAttempt ?? event.snapshot.selfPattern),
     successSignal: sanitizeNullableString(event.snapshot.successSignal),
+    gratitudeMoment: sanitizeNullableString(event.snapshot.gratitudeMoment ?? event.snapshot.event),
+    gratitudeTarget: sanitizeNullableString(event.snapshot.gratitudeTarget),
+    kindAction: sanitizeNullableString(event.snapshot.kindAction),
+    seenNeed: sanitizeNullableString(event.snapshot.seenNeed),
+    innerEffect: sanitizeNullableString(event.snapshot.innerEffect ?? event.snapshot.feeling),
+    gratitudeReason: sanitizeNullableString(event.snapshot.gratitudeReason ?? event.snapshot.whyItMattered),
+    gratitudeType: sanitizeNullableString(event.snapshot.gratitudeType ?? event.snapshot.happinessType),
+    relationshipSignal: sanitizeNullableString(event.snapshot.relationshipSignal ?? event.snapshot.selfPattern),
+    reciprocityHint: sanitizeNullableString(event.snapshot.reciprocityHint),
     tags: getJoyTags(event.snapshot)
   }));
 }
@@ -806,6 +845,10 @@ function getDraftSourceEvents(session: InterviewSessionRecord) {
         event.snapshot.repeatCondition ||
         event.snapshot.controllableFactor ||
         event.snapshot.nextAttempt ||
+        event.snapshot.kindAction ||
+        event.snapshot.seenNeed ||
+        event.snapshot.gratitudeReason ||
+        event.snapshot.relationshipSignal ||
         event.snapshot.event ||
         event.snapshot.whyItMattered
     )
@@ -840,6 +883,12 @@ function normalizeDraftResult(
             sanitizeNullableString(brief.nextAttempt) ??
             sanitizeNullableString(brief.closingInsight)
           : null
+        : brief.dimension === "gratitude"
+          ? brief.completionMode === "complete"
+            ? sanitizeNullableString(draft.relationshipSignal) ??
+              sanitizeNullableString(draft.selfPattern) ??
+              sanitizeNullableString(brief.closingInsight)
+            : null
       : sanitizeNullableString(draft.selfPattern) ??
         (brief.completionMode === "complete"
           ? sanitizeNullableString(brief.valueSignal) ?? sanitizeNullableString(brief.closingInsight)
@@ -869,6 +918,26 @@ function normalizeDraftResult(
         ? sanitizeNullableString(draft.nextAttempt) ?? sanitizeNullableString(brief.nextAttempt) ?? sanitizeNullableString(brief.closingInsight)
         : undefined,
     successSignal: brief.dimension === "improvement" ? sanitizeNullableString(draft.successSignal) ?? sanitizeNullableString(brief.successSignal) : undefined,
+    gratitudeMoment:
+      brief.dimension === "gratitude"
+        ? sanitizeNullableString(draft.gratitudeMoment) ?? sanitizeNullableString(draft.event) ?? sanitizeNullableString(brief.anchorScene)
+        : undefined,
+    gratitudeTarget:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeTarget) ?? sanitizeNullableString(brief.valueSignal) : undefined,
+    kindAction:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.kindAction) ?? sanitizeNullableString(brief.emotionalCore) : undefined,
+    seenNeed:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.seenNeed) ?? sanitizeNullableString(brief.stateOrNeed) : undefined,
+    innerEffect:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.innerEffect) ?? sanitizeNullableString(draft.feeling) : undefined,
+    gratitudeReason:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeReason) ?? sanitizeNullableString(draft.whyItMattered) : undefined,
+    gratitudeType:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeType) ?? sanitizeNullableString(draft.happinessType) ?? sanitizeNullableString(brief.directionSignal) : undefined,
+    relationshipSignal:
+      brief.dimension === "gratitude" && brief.completionMode === "complete" ? normalizedSelfPattern : undefined,
+    reciprocityHint:
+      brief.dimension === "gratitude" ? sanitizeNullableString(draft.reciprocityHint) ?? sanitizeNullableString(brief.durabilitySignal) : undefined,
     tags: Array.from(
       new Set([...draft.tags.map((tag) => tag.trim()).filter(Boolean), ...brief.tags].filter(Boolean))
     ).slice(0, 6),
@@ -903,6 +972,15 @@ function normalizeDraftResult(
     controllableFactor: joySnapshot.controllableFactor,
     nextAttempt: joySnapshot.nextAttempt,
     successSignal: joySnapshot.successSignal,
+    gratitudeMoment: joySnapshot.gratitudeMoment,
+    gratitudeTarget: joySnapshot.gratitudeTarget,
+    kindAction: joySnapshot.kindAction,
+    seenNeed: joySnapshot.seenNeed,
+    innerEffect: joySnapshot.innerEffect,
+    gratitudeReason: joySnapshot.gratitudeReason,
+    gratitudeType: joySnapshot.gratitudeType,
+    relationshipSignal: joySnapshot.relationshipSignal,
+    reciprocityHint: joySnapshot.reciprocityHint,
     tags: joySnapshot.tags ?? [],
     eventBlocks: draft.eventBlocks?.length ? draft.eventBlocks : fallbackEventBlocks,
     source: "ai_draft_direct"

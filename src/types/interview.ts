@@ -109,6 +109,15 @@ export interface JoySnapshot {
   controllableFactor?: string | null;
   nextAttempt?: string | null;
   successSignal?: string | null;
+  gratitudeMoment?: string | null;
+  gratitudeTarget?: string | null;
+  kindAction?: string | null;
+  seenNeed?: string | null;
+  innerEffect?: string | null;
+  gratitudeReason?: string | null;
+  gratitudeType?: string | null;
+  relationshipSignal?: string | null;
+  reciprocityHint?: string | null;
   confidence: number;
   missingSlots: string[];
 }
@@ -171,10 +180,16 @@ export interface ImprovementSnapshotData {
 export interface GratitudeSnapshotData {
   kind: "gratitude";
   moment: string | null;
+  gratitudeMoment: string | null;
+  gratitudeTarget: string | null;
+  kindAction: string | null;
+  seenNeed: string | null;
+  innerEffect: string | null;
   feeling: string | null;
   gratitudeType: string | null;
   gratitudeReason: string | null;
   relationshipSignal: string | null;
+  reciprocityHint: string | null;
   confidence: number;
   missingSlots: string[];
 }
@@ -259,6 +274,15 @@ export interface JoyEntryDraft {
   controllableFactor?: string | null;
   nextAttempt?: string | null;
   successSignal?: string | null;
+  gratitudeMoment?: string | null;
+  gratitudeTarget?: string | null;
+  kindAction?: string | null;
+  seenNeed?: string | null;
+  innerEffect?: string | null;
+  gratitudeReason?: string | null;
+  gratitudeType?: string | null;
+  relationshipSignal?: string | null;
+  reciprocityHint?: string | null;
   tags: string[];
   eventBlocks: JoyEventBlock[];
   source: JoyEntrySource;
@@ -290,6 +314,15 @@ export interface JoyEventBlock {
   controllableFactor?: string | null;
   nextAttempt?: string | null;
   successSignal?: string | null;
+  gratitudeMoment?: string | null;
+  gratitudeTarget?: string | null;
+  kindAction?: string | null;
+  seenNeed?: string | null;
+  innerEffect?: string | null;
+  gratitudeReason?: string | null;
+  gratitudeType?: string | null;
+  relationshipSignal?: string | null;
+  reciprocityHint?: string | null;
   tags?: string[];
 }
 
@@ -346,10 +379,16 @@ export interface ImprovementJournalPayload {
 export interface GratitudeJournalPayload {
   kind: "gratitude";
   moment: string | null;
+  gratitudeMoment: string | null;
+  gratitudeTarget: string | null;
+  kindAction: string | null;
+  seenNeed: string | null;
+  innerEffect: string | null;
   feeling: string | null;
   gratitudeType: string | null;
   gratitudeReason: string | null;
   relationshipSignal: string | null;
+  reciprocityHint: string | null;
   tags: string[];
 }
 

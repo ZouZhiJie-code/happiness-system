@@ -115,10 +115,16 @@ const improvementSnapshotDataSchema = z.object({
 const gratitudeSnapshotDataSchema = z.object({
   kind: z.literal("gratitude"),
   moment: z.string().nullable(),
+  gratitudeMoment: z.string().nullable().default(null),
+  gratitudeTarget: z.string().nullable().default(null),
+  kindAction: z.string().nullable().default(null),
+  seenNeed: z.string().nullable().default(null),
+  innerEffect: z.string().nullable().default(null),
   feeling: z.string().nullable(),
   gratitudeType: z.string().nullable(),
   gratitudeReason: z.string().nullable(),
   relationshipSignal: z.string().nullable(),
+  reciprocityHint: z.string().nullable().default(null),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
@@ -184,10 +190,16 @@ const improvementJournalPayloadSchema = z.object({
 const gratitudeJournalPayloadSchema = z.object({
   kind: z.literal("gratitude"),
   moment: z.string().nullable(),
+  gratitudeMoment: z.string().nullable().default(null),
+  gratitudeTarget: z.string().nullable().default(null),
+  kindAction: z.string().nullable().default(null),
+  seenNeed: z.string().nullable().default(null),
+  innerEffect: z.string().nullable().default(null),
   feeling: z.string().nullable(),
   gratitudeType: z.string().nullable(),
   gratitudeReason: z.string().nullable(),
   relationshipSignal: z.string().nullable(),
+  reciprocityHint: z.string().nullable().default(null),
   tags: z.array(z.string())
 });
 

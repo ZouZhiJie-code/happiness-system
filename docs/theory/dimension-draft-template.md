@@ -226,11 +226,12 @@
 - `joy` 是第一份完整样板。
 - `fulfillment` 已按同一模板完成理论对齐、完成标准、写作控制、质量门和 fallback，详见 `docs/theory/fulfillment-alignment.md`。
 - `reflection` 已按同一模板完成理论对齐、完成标准、写作控制、质量门和 fallback，详见 `docs/theory/reflection-alignment.md`。
+- `gratitude` 已按同一模板完成理论对齐、完成标准、写作控制、质量门和 fallback，详见 `docs/theory/gratitude-alignment.md`。
 - 五个维度都已接入统一语义短标题治理。
 - 用户边界收束已接入通用访谈服务层，材料不足时走 `boundary_insufficient`。
 
 后续维度仍需按这份模板逐个补齐：
 - `improvement` 已完成理论目标、最终日志状态、槽位、访谈推进、专属提问策略、完整 / 部分完成标准、写作控制层、质量门、fallback draft、标题治理和自动化验收样例，下一步补端到端产品验收与文风打磨。
-- `gratitude` 仍需从理论目标、最终日志状态、槽位与完成标准开始完整补齐。
+- `gratitude` 已完成理论目标、最终日志状态、槽位、访谈推进、专属提问策略、完整 / 部分完成标准、写作控制层、质量门、fallback draft、标题治理和自动化验收样例，下一步补端到端产品验收与文风打磨。
 
 不允许直接从 prompt 开始写。

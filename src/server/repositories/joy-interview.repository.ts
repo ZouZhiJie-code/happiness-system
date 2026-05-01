@@ -137,7 +137,69 @@ function parseImprovementSnapshotData(value: unknown): Pick<
   };
 }
 
+function parseGratitudeSnapshotData(value: unknown): Pick<
+  JoySnapshot,
+  | "gratitudeMoment"
+  | "gratitudeTarget"
+  | "kindAction"
+  | "seenNeed"
+  | "innerEffect"
+  | "gratitudeReason"
+  | "gratitudeType"
+  | "relationshipSignal"
+  | "reciprocityHint"
+> | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (data.kind !== "gratitude") {
+    return null;
+  }
+
+  return {
+    gratitudeMoment:
+      typeof data.gratitudeMoment === "string" ? data.gratitudeMoment : typeof data.moment === "string" ? data.moment : null,
+    gratitudeTarget: typeof data.gratitudeTarget === "string" ? data.gratitudeTarget : null,
+    kindAction: typeof data.kindAction === "string" ? data.kindAction : null,
+    seenNeed: typeof data.seenNeed === "string" ? data.seenNeed : null,
+    innerEffect:
+      typeof data.innerEffect === "string" ? data.innerEffect : typeof data.feeling === "string" ? data.feeling : null,
+    gratitudeReason: typeof data.gratitudeReason === "string" ? data.gratitudeReason : null,
+    gratitudeType: typeof data.gratitudeType === "string" ? data.gratitudeType : null,
+    relationshipSignal: typeof data.relationshipSignal === "string" ? data.relationshipSignal : null,
+    reciprocityHint: typeof data.reciprocityHint === "string" ? data.reciprocityHint : null
+  };
+}
+
 function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapshot: JoySnapshot, raw: unknown) {
+  if (dimension === "gratitude") {
+    const parsed = parseGratitudeSnapshotData(raw);
+
+    return buildSnapshotDataForDimension(
+      "gratitude",
+      buildJoySnapshot({
+        event: snapshot.event,
+        feeling: snapshot.feeling,
+        whyItMattered: snapshot.whyItMattered,
+        happinessType: snapshot.happinessType,
+        selfPattern: snapshot.selfPattern,
+        gratitudeMoment: parsed?.gratitudeMoment ?? snapshot.gratitudeMoment,
+        gratitudeTarget: parsed?.gratitudeTarget ?? snapshot.gratitudeTarget,
+        kindAction: parsed?.kindAction ?? snapshot.kindAction,
+        seenNeed: parsed?.seenNeed ?? snapshot.seenNeed,
+        innerEffect: parsed?.innerEffect ?? snapshot.innerEffect,
+        gratitudeReason: parsed?.gratitudeReason ?? snapshot.gratitudeReason,
+        gratitudeType: parsed?.gratitudeType ?? snapshot.gratitudeType,
+        relationshipSignal: parsed?.relationshipSignal ?? snapshot.relationshipSignal,
+        reciprocityHint: parsed?.reciprocityHint ?? snapshot.reciprocityHint,
+        tags: snapshot.tags
+      })
+    );
+  }
+
   if (dimension !== "joy") {
     return raw ? (raw as InterviewEventRecord["snapshotData"]) : buildSnapshotDataForDimension(dimension, snapshot);
   }
@@ -168,6 +230,39 @@ function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapsh
 }
 
 function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyEntryRecord) {
+  if (dimension === "gratitude" && entry.payload && typeof entry.payload === "object") {
+    const payload = entry.payload as Record<string, unknown>;
+
+    if (payload.kind === "gratitude") {
+      return buildJournalPayloadForDimension("gratitude", {
+        event: typeof payload.gratitudeMoment === "string" ? payload.gratitudeMoment : typeof payload.moment === "string" ? payload.moment : entry.event,
+        feeling: typeof payload.innerEffect === "string" ? payload.innerEffect : entry.feeling,
+        whyItMattered: typeof payload.gratitudeReason === "string" ? payload.gratitudeReason : entry.whyItMattered,
+        happinessType: typeof payload.gratitudeType === "string" ? payload.gratitudeType : entry.happinessType,
+        selfPattern: typeof payload.relationshipSignal === "string" ? payload.relationshipSignal : entry.selfPattern,
+        joyMoment: null,
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        gratitudeMoment: typeof payload.gratitudeMoment === "string" ? payload.gratitudeMoment : typeof payload.moment === "string" ? payload.moment : entry.event,
+        gratitudeTarget: typeof payload.gratitudeTarget === "string" ? payload.gratitudeTarget : null,
+        kindAction: typeof payload.kindAction === "string" ? payload.kindAction : null,
+        seenNeed: typeof payload.seenNeed === "string" ? payload.seenNeed : null,
+        innerEffect: typeof payload.innerEffect === "string" ? payload.innerEffect : entry.feeling,
+        gratitudeReason: typeof payload.gratitudeReason === "string" ? payload.gratitudeReason : entry.whyItMattered,
+        gratitudeType: typeof payload.gratitudeType === "string" ? payload.gratitudeType : entry.happinessType,
+        relationshipSignal: typeof payload.relationshipSignal === "string" ? payload.relationshipSignal : entry.selfPattern,
+        reciprocityHint: typeof payload.reciprocityHint === "string" ? payload.reciprocityHint : null,
+        tags: Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === "string") : entry.tags
+      });
+    }
+  }
+
   if (dimension === "improvement" && entry.payload && typeof entry.payload === "object") {
     const payload = entry.payload as Record<string, unknown>;
 
@@ -187,6 +282,15 @@ function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyE
         directionSignal: null,
         valueImpact: null,
         durability: null,
+        gratitudeMoment: null,
+        gratitudeTarget: null,
+        kindAction: null,
+        seenNeed: null,
+        innerEffect: null,
+        gratitudeReason: null,
+        gratitudeType: null,
+        relationshipSignal: null,
+        reciprocityHint: null,
         improvementTrack:
           payload.improvementTrack === "repeat_good" || payload.improvementTrack === "avoid_bad" ? payload.improvementTrack : null,
         stateAssessment: typeof payload.stateAssessment === "string" ? payload.stateAssessment : null,
@@ -216,6 +320,15 @@ function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyE
       directionSignal: null,
       valueImpact: null,
       durability: null,
+      gratitudeMoment: entry.event,
+      gratitudeTarget: null,
+      kindAction: null,
+      seenNeed: null,
+      innerEffect: entry.feeling,
+      gratitudeReason: entry.whyItMattered,
+      gratitudeType: entry.happinessType,
+      relationshipSignal: entry.selfPattern,
+      reciprocityHint: null,
       tags: entry.tags
     });
   }
@@ -319,6 +432,7 @@ function mapEventSnapshot(
 ): JoySnapshot {
   const snapshotData = parseJoySnapshotData(event.snapshotData);
   const improvementSnapshotData = parseImprovementSnapshotData(event.snapshotData);
+  const gratitudeSnapshotData = parseGratitudeSnapshotData(event.snapshotData);
 
   return buildJoySnapshot({
     event: event.event,
@@ -343,7 +457,16 @@ function mapEventSnapshot(
     repeatCondition: improvementSnapshotData?.repeatCondition,
     controllableFactor: improvementSnapshotData?.controllableFactor,
     nextAttempt: improvementSnapshotData?.nextAttempt,
-    successSignal: improvementSnapshotData?.successSignal
+    successSignal: improvementSnapshotData?.successSignal,
+    gratitudeMoment: gratitudeSnapshotData?.gratitudeMoment,
+    gratitudeTarget: gratitudeSnapshotData?.gratitudeTarget,
+    kindAction: gratitudeSnapshotData?.kindAction,
+    seenNeed: gratitudeSnapshotData?.seenNeed,
+    innerEffect: gratitudeSnapshotData?.innerEffect,
+    gratitudeReason: gratitudeSnapshotData?.gratitudeReason,
+    gratitudeType: gratitudeSnapshotData?.gratitudeType,
+    relationshipSignal: gratitudeSnapshotData?.relationshipSignal,
+    reciprocityHint: gratitudeSnapshotData?.reciprocityHint
   });
 }
 
@@ -429,6 +552,15 @@ function mapEventBlocks(blocks: Prisma.JsonValue | null | undefined): JoyEventBl
         valueImpact: typeof value.valueImpact === "string" ? value.valueImpact : null,
         durability: typeof value.durability === "string" ? value.durability : null,
         psychProfile: value.psychProfile as any,
+        gratitudeMoment: typeof value.gratitudeMoment === "string" ? value.gratitudeMoment : typeof value.event === "string" ? value.event : null,
+        gratitudeTarget: typeof value.gratitudeTarget === "string" ? value.gratitudeTarget : null,
+        kindAction: typeof value.kindAction === "string" ? value.kindAction : null,
+        seenNeed: typeof value.seenNeed === "string" ? value.seenNeed : null,
+        innerEffect: typeof value.innerEffect === "string" ? value.innerEffect : typeof value.feeling === "string" ? value.feeling : null,
+        gratitudeReason: typeof value.gratitudeReason === "string" ? value.gratitudeReason : typeof value.whyItMattered === "string" ? value.whyItMattered : null,
+        gratitudeType: typeof value.gratitudeType === "string" ? value.gratitudeType : typeof value.happinessType === "string" ? value.happinessType : null,
+        relationshipSignal: typeof value.relationshipSignal === "string" ? value.relationshipSignal : typeof value.selfPattern === "string" ? value.selfPattern : null,
+        reciprocityHint: typeof value.reciprocityHint === "string" ? value.reciprocityHint : null,
         tags: Array.isArray(value.tags) ? value.tags.filter((tag): tag is string => typeof tag === "string") : []
       }
     ];
@@ -469,6 +601,15 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
     controllableFactor: payload.kind === "improvement" ? payload.controllableFactor : undefined,
     nextAttempt: payload.kind === "improvement" ? payload.nextAttempt : undefined,
     successSignal: payload.kind === "improvement" ? payload.successSignal : undefined,
+    gratitudeMoment: payload.kind === "gratitude" ? payload.gratitudeMoment : undefined,
+    gratitudeTarget: payload.kind === "gratitude" ? payload.gratitudeTarget : undefined,
+    kindAction: payload.kind === "gratitude" ? payload.kindAction : undefined,
+    seenNeed: payload.kind === "gratitude" ? payload.seenNeed : undefined,
+    innerEffect: payload.kind === "gratitude" ? payload.innerEffect : undefined,
+    gratitudeReason: payload.kind === "gratitude" ? payload.gratitudeReason : undefined,
+    gratitudeType: payload.kind === "gratitude" ? payload.gratitudeType : undefined,
+    relationshipSignal: payload.kind === "gratitude" ? payload.relationshipSignal : undefined,
+    reciprocityHint: payload.kind === "gratitude" ? payload.reciprocityHint : undefined,
     tags: entry.tags,
     eventBlocks: mapEventBlocks(entry.eventBlocks),
     payload,
@@ -992,6 +1133,15 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
       controllableFactor: draftEntry.controllableFactor ?? null,
       nextAttempt: draftEntry.nextAttempt ?? null,
       successSignal: draftEntry.successSignal ?? null,
+      gratitudeMoment: draftEntry.gratitudeMoment ?? null,
+      gratitudeTarget: draftEntry.gratitudeTarget ?? null,
+      kindAction: draftEntry.kindAction ?? null,
+      seenNeed: draftEntry.seenNeed ?? null,
+      innerEffect: draftEntry.innerEffect ?? null,
+      gratitudeReason: draftEntry.gratitudeReason ?? null,
+      gratitudeType: draftEntry.gratitudeType ?? null,
+      relationshipSignal: draftEntry.relationshipSignal ?? null,
+      reciprocityHint: draftEntry.reciprocityHint ?? null,
       tags: draftEntry.tags
     });
 
@@ -1156,6 +1306,15 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
     controllableFactor: draftEntry.controllableFactor ?? null,
     nextAttempt: draftEntry.nextAttempt ?? null,
     successSignal: draftEntry.successSignal ?? null,
+    gratitudeMoment: draftEntry.gratitudeMoment ?? null,
+    gratitudeTarget: draftEntry.gratitudeTarget ?? null,
+    kindAction: draftEntry.kindAction ?? null,
+    seenNeed: draftEntry.seenNeed ?? null,
+    innerEffect: draftEntry.innerEffect ?? null,
+    gratitudeReason: draftEntry.gratitudeReason ?? null,
+    gratitudeType: draftEntry.gratitudeType ?? null,
+    relationshipSignal: draftEntry.relationshipSignal ?? null,
+    reciprocityHint: draftEntry.reciprocityHint ?? null,
     tags: draftEntry.tags
   });
 

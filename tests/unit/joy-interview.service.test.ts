@@ -167,6 +167,89 @@ describe("joy interview engine", () => {
     ).toContain("只调整一小处");
   });
 
+  it("extracts and advances gratitude through action, seen need, and relationship signal", () => {
+    const snapshot = extractJoySignals(
+      "gratitude",
+      "今天想感谢同事，他看出我快撑不住了，帮我先理清优先级。因为这让我觉得自己不是一个人在扛，我也想学习这种先看见别人处境的方式。",
+      {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: []
+      }
+    );
+
+    expect(snapshot.gratitudeTarget).toBe("同事");
+    expect(snapshot.kindAction).toContain("看出我快撑不住");
+    expect(snapshot.seenNeed).toContain("撑不住");
+    expect(snapshot.gratitudeReason).toContain("不是一个人在扛");
+    expect(snapshot.relationshipSignal).toContain("学习");
+    expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
+  });
+
+  it("uses gratitude question strategy without thank-you-template wording", () => {
+    const questions = [
+      buildAssistantQuestion("gratitude", "collect_event", {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: []
+      }),
+      buildAssistantQuestion("gratitude", "probe_reason", {
+        event: "今天家人问我吃饭没",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        gratitudeMoment: "今天家人问我吃饭没",
+        gratitudeTarget: "家人",
+        kindAction: null,
+        confidence: 0.4,
+        missingSlots: ["kindAction"]
+      }),
+      buildAssistantQuestion("gratitude", "probe_reason", {
+        event: "今天家人问我吃饭没",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        gratitudeMoment: "今天家人问我吃饭没",
+        gratitudeTarget: "家人",
+        kindAction: "问我吃饭没，提醒我先照顾自己",
+        seenNeed: null,
+        confidence: 0.5,
+        missingSlots: ["seenNeed"]
+      }),
+      buildAssistantQuestion("gratitude", "probe_pattern", {
+        event: "今天家人问我吃饭没",
+        feeling: "被照顾",
+        whyItMattered: "那一刻我觉得自己被惦记着",
+        happinessType: "照顾减负型",
+        selfPattern: null,
+        gratitudeMoment: "今天家人问我吃饭没",
+        gratitudeTarget: "家人",
+        kindAction: "问我吃饭没，提醒我先照顾自己",
+        seenNeed: "我当时连照顾自己的基本需要都容易忽略",
+        confidence: 0.7,
+        missingSlots: ["relationshipSignal"]
+      })
+    ];
+
+    expect(questions[0]).toContain("想说谢谢");
+    expect(questions[1]).toContain("具体做了什么");
+    expect(questions[2]).toContain("什么需要或难处");
+    expect(questions[3]).toContain("珍惜");
+    for (const question of questions) {
+      expect(question).not.toMatch(/感谢信|报答|欠人情|你应该/u);
+    }
+  });
+
   it("uses improvement question strategy without advice or plan wording", () => {
     const bannedPatterns = /你应该怎么做|制定一个计划|你为什么会这样|以后一定要/u;
 
