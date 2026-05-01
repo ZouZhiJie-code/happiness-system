@@ -1,7 +1,17 @@
 import { z } from "zod";
 
+import { ENTRY_DATE_REGEX, parseEntryDateInput } from "@/features/interview/entry-date";
 import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+
+const entryDateStringSchema = z.string().regex(ENTRY_DATE_REGEX).refine((value) => {
+  try {
+    parseEntryDateInput(value);
+    return true;
+  } catch {
+    return false;
+  }
+}, "Invalid entry date");
 
 const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
 const draftCompletionModeSchema = z.enum(["complete", "user_override_partial"]);
@@ -363,6 +373,7 @@ export const interviewSessionSchema = z.object({
   snapshotData: interviewSnapshotDataSchema,
   events: z.array(interviewEventSchema),
   pendingDecision: pendingDecisionSchema.nullable(),
+  entryDate: entryDateStringSchema,
   startedAt: z.string(),
   pausedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
@@ -370,7 +381,8 @@ export const interviewSessionSchema = z.object({
 });
 
 export const startInterviewRequestSchema = z.object({
-  dimension: interviewDimensionSchema
+  dimension: interviewDimensionSchema,
+  entryDate: entryDateStringSchema.optional()
 });
 
 export const startInterviewResponseSchema = z.object({

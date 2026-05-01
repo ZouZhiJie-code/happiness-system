@@ -471,6 +471,7 @@ export interface InterviewSessionRecord {
   snapshotData?: InterviewSnapshotData;
   events: InterviewEventRecord[];
   pendingDecision: PendingDecisionRecord | null;
+  entryDate: string;
   startedAt: string;
   pausedAt: string | null;
   completedAt: string | null;

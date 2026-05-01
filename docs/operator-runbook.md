@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-01`
+最后更新：`2026-05-02`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -41,6 +41,17 @@ npm install
 ```bash
 npx prisma db push
 ```
+
+如果你是在已有本地数据的数据库上同步到 `2026-05-02` 之后的代码，`db push` 可能会因为新增必填 `InterviewSession.entryDate` 失败。当前可用处理方式：
+
+```bash
+npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260501123000_add_interview_session_entry_date/migration.sql
+```
+
+说明：
+- 这是当前仓库本地已有数据时最稳的同步方式
+- 该 migration 会先补列，再把历史 `entryDate` 回填为 `startedAt`
+- 当前 `prisma migrate dev` 在本仓库的 shadow DB 链路上还有历史 migration 问题，不是这次 `entryDate` 改动单独引起的
 
 ### 2.3 启动开发服务器
 
@@ -128,9 +139,9 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-01`，当前基线是：
-- `14` 个测试文件
-- `184` 个测试全部通过
+截至 `2026-05-02`，当前基线是：
+- `18` 个测试文件
+- `205` 个测试全部通过
 
 ## 5. 高频故障排查
 
@@ -155,6 +166,24 @@ npm run dev
 ```
 
 这是当前最常见的本地环境问题。
+
+### 5.1.1 旧本地库同步后报 `entryDate` 必填列无法新增
+
+症状：
+- `npx prisma db push` 报 required column `entryDate` 无法新增
+- 本地 `InterviewSession` 表里已经有历史数据
+
+处理：
+
+```bash
+npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260501123000_add_interview_session_entry_date/migration.sql
+```
+
+然后确认 dev server 仍在运行；如果之前已经崩掉，再重启：
+
+```bash
+npm run dev
+```
 
 ### 5.2 “生成日志”按钮长时间显示忙碌
 
@@ -308,3 +337,9 @@ npm run dev
 - `transcribe` 是 stub
 - `interview.service.ts` 仍是 joy-first 的导出层
 - joy 正文生成还会继续做风格优化
+- calendar 功能当前只完成了服务端基础：
+  - `InterviewSession.entryDate`
+  - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+  - `calendar.repository.ts`
+  - `calendar.service.ts`
+  - 还没有 `/api/calendar/*` 路由和前端页面

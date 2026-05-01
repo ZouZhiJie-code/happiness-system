@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-01`
+最后更新：`2026-05-02`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -16,7 +16,7 @@
 
 | 方法 | 路径 | 用途 | 备注 |
 |---|---|---|---|
-| `POST` | `/api/interview/session/start` | 启动某个维度的访谈 | 传 `dimension` |
+| `POST` | `/api/interview/session/start` | 启动某个维度的访谈 | 传 `dimension`，可选 `entryDate` |
 | `GET` | `/api/interview/session/[id]` | 拉取某个 session | 页面恢复和维度缓存会用 |
 | `POST` | `/api/interview/session/respond` | 非流式回复接口 | 当前主 UI 不走它 |
 | `POST` | `/api/interview/session/respond/stream` | 流式回复接口 | 当前主 UI 使用 SSE |
@@ -39,9 +39,15 @@
 
 ```json
 {
-  "dimension": "fulfillment"
+  "dimension": "fulfillment",
+  "entryDate": "2026-05-02"
 }
 ```
+
+说明：
+- `entryDate` 可选，格式固定为 `YYYY-MM-DD`
+- 默认按北京时间当天生成
+- `entryDate` 表示这轮访谈和最终日志应归属的日期，不再默认等于 `startedAt`
 
 返回：
 
@@ -52,6 +58,14 @@
   "session": { "...完整 interviewSessionSchema..." }
 }
 ```
+
+`session` 里现在包含：
+- `entryDate: "YYYY-MM-DD"`
+- `startedAt: "ISO datetime"`
+
+两者语义不同：
+- `entryDate` 是记录归属日期
+- `startedAt` 是会话实际创建时间
 
 ### 3.2 流式回复
 
@@ -477,3 +491,18 @@ data: {
 - 完整模式：`situation + improvementTrack + stateAssessment + frictionPoint|repeatCondition + controllableFactor + nextAttempt` 成立后进入 complete choice
 - partial 模式：`situation + frictionPoint|repeatCondition` 成立且用户说“今天沟通有点急，别追问了，直接整理。”时进入 `user_override_partial`，不硬写完整方案
 - 材料不足：用户拒绝继续但缺少可信原因时进入 `boundary_insufficient`
+
+### 5.9 calendar 后端基础
+
+截至 `2026-05-02`，仓库里已经有记录日历的后端基础，但还没有公开 HTTP 路由：
+- `src/features/calendar/aggregate-calendar.ts`
+  - 纯展示层聚合器，负责 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+- `src/server/repositories/calendar.repository.ts`
+  - 把 `InterviewSession / JoyEntry` 标准化成 calendar source
+- `src/server/services/calendar/calendar.service.ts`
+  - 暴露 `getCalendarDay / getCalendarWeek / getCalendarMonth`
+
+这意味着：
+- 当前可以在服务层直接调用 calendar 能力
+- 但 `/api/calendar/month|week|day` 还没有接出
+- 前端记录日历页面也还没有落地

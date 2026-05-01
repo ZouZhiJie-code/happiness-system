@@ -1341,9 +1341,9 @@ async function getActiveInterviewSession(sessionId: string) {
   return session;
 }
 
-export async function startJoyInterview(dimension: InterviewDimension) {
+export async function startJoyInterview(dimension: InterviewDimension, entryDate?: string) {
   const openingQuestion = getOpeningQuestion(dimension);
-  const session = await createJoyInterviewSession(dimension, openingQuestion);
+  const session = await createJoyInterviewSession(dimension, openingQuestion, entryDate);
 
   return {
     sessionId: session.id,

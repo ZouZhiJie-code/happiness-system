@@ -170,6 +170,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
       actions: ["generate_draft"]
     },
     startedAt: "2026-04-21T00:00:00.000Z",
+    entryDate: "2026-04-21",
     pausedAt: null,
     completedAt: null,
     journalEntry: {

@@ -2,24 +2,32 @@ const {
   mockFindUnique,
   mockUpdate,
   mockCreate,
+  mockUpsert,
+  mockTransaction,
   mockUserUpsert,
   mockUserSettingsUpsert
 } = vi.hoisted(() => ({
   mockFindUnique: vi.fn(),
   mockUpdate: vi.fn(),
   mockCreate: vi.fn(),
+  mockUpsert: vi.fn(),
+  mockTransaction: vi.fn(),
   mockUserUpsert: vi.fn(),
   mockUserSettingsUpsert: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
+    $transaction: mockTransaction,
     interviewSession: {
       findUnique: mockFindUnique,
       update: mockUpdate
     },
     interviewEvent: {
       create: mockCreate
+    },
+    joyEntry: {
+      upsert: mockUpsert
     },
     user: {
       upsert: mockUserUpsert
@@ -30,13 +38,15 @@ vi.mock("@/server/db/prisma", () => ({
   }
 }));
 
-import { findJoyInterviewSessionById } from "@/server/repositories/joy-interview.repository";
+import { findJoyInterviewSessionById, saveJoyInterviewDraft } from "@/server/repositories/joy-interview.repository";
 
 describe("findJoyInterviewSessionById", () => {
   beforeEach(() => {
     mockFindUnique.mockReset();
     mockUpdate.mockReset();
     mockCreate.mockReset();
+    mockUpsert.mockReset();
+    mockTransaction.mockReset();
     mockUserUpsert.mockReset();
     mockUserSettingsUpsert.mockReset();
   });
@@ -53,6 +63,7 @@ describe("findJoyInterviewSessionById", () => {
       lastAssistantQuestion: "这类开心通常是被什么触发出来的？",
       draftSummary: null,
       finalEntryId: null,
+      entryDate: new Date("2026-04-20T16:00:00.000Z"),
       startedAt: new Date("2026-04-21T00:00:00.000Z"),
       pausedAt: null,
       completedAt: null,
@@ -120,11 +131,141 @@ describe("findJoyInterviewSessionById", () => {
     const session = await findJoyInterviewSessionById("session-legacy");
 
     expect(session).not.toBeNull();
+    expect(session?.entryDate).toBe("2026-04-21");
     expect(session?.snapshot.directionSignal).toBeNull();
     expect(session?.snapshot.psychProfile?.track).toBe("delight_track");
     expect(session?.events[0]?.snapshotData).toMatchObject({
       kind: "joy",
       directionSignal: null
     });
+  });
+
+  it("writes draft dates from entryDate instead of startedAt", async () => {
+    mockTransaction.mockImplementation(async (callback: (tx: any) => Promise<unknown>) =>
+      callback({
+        interviewSession: {
+          findUnique: mockFindUnique,
+          update: mockUpdate
+        },
+        joyEntry: {
+          upsert: mockUpsert
+        },
+        user: {
+          upsert: mockUserUpsert
+        },
+        userSettings: {
+          upsert: mockUserSettingsUpsert
+        }
+      })
+    );
+
+    mockFindUnique.mockResolvedValue({
+      id: "session-entry-date",
+      userId: "user-1",
+      dimension: "joy",
+      status: "active",
+      stage: "wrap_up",
+      activeEventId: "event-1",
+      turnCount: 3,
+      lastAssistantQuestion: "我已经抓到这段开心的重点了。",
+      draftSummary: null,
+      finalEntryId: null,
+      entryDate: new Date("2026-04-19T16:00:00.000Z"),
+      startedAt: new Date("2026-04-21T00:00:00.000Z"),
+      pausedAt: null,
+      completedAt: null,
+      activeEvent: null,
+      events: [],
+      messages: [],
+      snapshots: [],
+      joyEntry: null
+    });
+
+    mockUpsert.mockResolvedValue({
+      id: "entry-1"
+    });
+
+    mockUpdate.mockResolvedValue({
+      id: "session-entry-date",
+      userId: "user-1",
+      dimension: "joy",
+      status: "active",
+      stage: "wrap_up",
+      activeEventId: "event-1",
+      turnCount: 3,
+      lastAssistantQuestion: "我已经抓到这段开心的重点了。",
+      draftSummary: "被家人的陪伴接住了",
+      finalEntryId: "entry-1",
+      entryDate: new Date("2026-04-19T16:00:00.000Z"),
+      startedAt: new Date("2026-04-21T00:00:00.000Z"),
+      pausedAt: null,
+      completedAt: null,
+      activeEvent: null,
+      events: [],
+      messages: [],
+      snapshots: [],
+      joyEntry: {
+        id: "entry-1",
+        userId: "user-1",
+        sessionId: "session-entry-date",
+        date: new Date("2026-04-19T16:00:00.000Z"),
+        title: "被稳稳接住",
+        content: "今天和家人一起吃饭聊天。",
+        event: "今天和家人一起吃饭聊天",
+        feeling: "轻松踏实",
+        whyItMattered: "被家人的陪伴接住了",
+        happinessType: null,
+        selfPattern: "只要慢下来相处，我就更容易恢复状态",
+        tags: ["关系型开心"],
+        payload: {
+          kind: "joy",
+          joyMoment: "今天和家人一起吃饭聊天",
+          joySource: "被家人的陪伴接住了",
+          stateShift: "从紧绷变得轻松踏实",
+          meaningNeed: null,
+          manualClue: "只要慢下来相处，我就更容易恢复状态",
+          directionSignal: null,
+          valueImpact: null,
+          durability: null,
+          tags: ["关系型开心"]
+        },
+        eventBlocks: [],
+        source: "ai_draft_direct",
+        status: "draft",
+        linkedSessionIds: ["session-entry-date"],
+        createdAt: new Date("2026-04-21T00:02:00.000Z"),
+        updatedAt: new Date("2026-04-21T00:03:00.000Z"),
+        savedAt: null,
+        session: {
+          dimension: "joy"
+        }
+      }
+    });
+
+    await saveJoyInterviewDraft("session-entry-date", {
+      title: "被稳稳接住",
+      content: "今天和家人一起吃饭聊天。",
+      event: "今天和家人一起吃饭聊天",
+      feeling: "轻松踏实",
+      whyItMattered: "被家人的陪伴接住了",
+      happinessType: null,
+      selfPattern: "只要慢下来相处，我就更容易恢复状态",
+      joyMoment: "今天和家人一起吃饭聊天",
+      joySource: "被家人的陪伴接住了",
+      stateShift: "从紧绷变得轻松踏实",
+      meaningNeed: null,
+      manualClue: "只要慢下来相处，我就更容易恢复状态",
+      tags: ["关系型开心"],
+      eventBlocks: [],
+      source: "ai_draft_direct"
+    });
+
+    expect(mockUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          date: new Date("2026-04-19T16:00:00.000Z")
+        })
+      })
+    );
   });
 });

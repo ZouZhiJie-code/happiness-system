@@ -181,6 +181,7 @@ function buildImprovementSession(snapshot: JoySnapshot): InterviewSessionRecord 
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-05-01T00:00:00.000Z",
+    entryDate: "2026-05-01",
     pausedAt: null,
     completedAt: null,
     journalEntry: null
@@ -221,6 +222,7 @@ function buildFulfillmentSession(snapshot: JoySnapshot): InterviewSessionRecord 
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-04-29T00:00:00.000Z",
+    entryDate: "2026-04-29",
     pausedAt: null,
     completedAt: null,
     journalEntry: null
@@ -261,6 +263,7 @@ function buildReflectionSession(snapshot: JoySnapshot): InterviewSessionRecord {
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-04-29T00:00:00.000Z",
+    entryDate: "2026-04-29",
     pausedAt: null,
     completedAt: null,
     journalEntry: null
@@ -307,6 +310,7 @@ function buildGratitudeSession(snapshot: JoySnapshot): InterviewSessionRecord {
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-05-01T00:00:00.000Z",
+    entryDate: "2026-05-01",
     pausedAt: null,
     completedAt: null,
     journalEntry: null
@@ -351,6 +355,7 @@ function buildSession(snapshot: JoySnapshot): InterviewSessionRecord {
       actions: ["continue_current_event", "next_event", "generate_draft"]
     },
     startedAt: "2026-04-29T00:00:00.000Z",
+    entryDate: "2026-04-29",
     pausedAt: null,
     completedAt: null,
     journalEntry: null

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await startInterview(parsed.data.dimension);
+    const result = await startInterview(parsed.data.dimension, parsed.data.entryDate);
     const payload = startInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

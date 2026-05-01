@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-01`
+最后更新：`2026-05-02`
 
 ## 1. 系统概览
 
@@ -11,7 +11,7 @@
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 
-截至 `2026-05-01`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
+截至 `2026-05-02`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
@@ -38,6 +38,9 @@
 
 - `src/features/interview`
   - 多维度共用：schema、维度定义、进度算法、前端元信息
+- `src/features/calendar`
+  - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+  - 以及 `day / week / month` 聚合器，不直接访问数据库
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -51,11 +54,17 @@
   - 会话编排、分叉决策、draft 生成与保存的主逻辑
 - `src/server/services/interview/joy-interview-ai.service.ts`
   - joy、fulfillment、reflection、improvement 与 gratitude 的结构化抽取 schema 分发；同时承载问题生成、日志草稿生成与 fallback
+- `src/server/services/calendar/calendar.service.ts`
+  - 记录日历的 `day / week / month` 服务端查询入口
+  - 只负责参数校验、日期范围计算与调用 calendar 聚合器
 
 ### 持久化层
 
 - `src/server/repositories/joy-interview.repository.ts`
   - 会话、事件、日志、payload、legacy 字段投影映射
+- `src/server/repositories/calendar.repository.ts`
+  - 从 `InterviewSession / JoyEntry` 查询标准化 calendar source
+  - 不直接计算 calendar 状态
 
 ## 3. 领域模型
 
@@ -75,6 +84,7 @@
 核心实体：
 - `InterviewSession`
   - 维度级会话，包含当前状态、当前事件、日志引用
+  - 从 `2026-05-02` 起新增 `entryDate` 作为日志归属日期真相；`startedAt` 只表示会话实际创建时间
 - `InterviewEvent`
   - 单个事件级访谈单元，记录 `snapshotData`、`progressData` 和事件级状态
 - `InterviewMessage`
@@ -116,6 +126,27 @@
 - legacy 字段是兼容投影
 - 多维度真相在 `payload`
 - joy 的更细结构也落在 `payload` 与 `snapshotData`
+- `JoyEntry.date` 现在与 `InterviewSession.entryDate` 对齐，用来承接“补写过去日期”的日志归属
+
+### 3.5 calendar 读模型
+
+当前已经落地但尚未公开出 HTTP 路由的记录日历读模型有：
+- `CalendarDayRecord`
+- `CalendarWeekRecord`
+- `CalendarMonthRecord`
+
+聚合来源固定为：
+- `InterviewSession`
+  - 提供 `active / paused / completed`
+  - 提供 `entryDate`、`draftSummary`
+- `JoyEntry`
+  - 提供 `draft / saved`
+  - 提供标题、正文摘要与更新时间
+
+聚合规则固定为：
+- 同一天同维度优先取最新有效记录
+- 同一天多个维度允许并存
+- 无日志时只允许使用安全摘要，不暴露内部结构字段名
 
 ## 4. 结构化数据面
 
@@ -174,6 +205,7 @@
 做的事：
 - 建 session
 - 建第一个 active event
+- 写入显式 `entryDate`
 - 生成开场问题
 - 返回完整 `session hydrate` 数据
 

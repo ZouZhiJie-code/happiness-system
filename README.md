@@ -2,11 +2,13 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-01`，这个仓库的真实状态是：
+截至 `2026-05-02`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
+- `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
+- 记录日历的后端基础已经落地：calendar 展示层读模型、calendar 聚合器、calendar repository 与 calendar service 已完成，但前端页面和公开 API 还没有接出。
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
 ## 当前产品状态
@@ -29,6 +31,8 @@
 - 日志生成已支持阶段式反馈；如果当前草稿已经是最新版本，再次点击会直接复用，不再重复等待
 - 访谈页开发辅助：可清除“当前维度”的本地对话恢复记录并直接重开一轮
 - `snapshotData` / `payload` 驱动的多维度结构化数据面
+- `entryDate` 驱动的会话日期归属与补写过去日期基础
+- `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord` 读模型与对应服务端聚合链路
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐基线文档：`docs/theory/fulfillment-alignment.md`
 - reflection 理论对齐基线文档：`docs/theory/reflection-alignment.md`
@@ -71,6 +75,7 @@ npx prisma db push
 ```
 
 如果你看到类似 `InterviewEvent.snapshotData does not exist` 的报错，基本也是这一步没做。
+如果你是在已有本地数据的库上同步到 `2026-05-02` 之后的代码，且 `db push` 提示无法新增必填 `entryDate`，请改看 `docs/operator-runbook.md` 里的 `entryDate` 同步说明。
 
 ### 4. 启动开发服务器
 
@@ -116,9 +121,11 @@ npx prisma db push
 ## 关键实现现实
 
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
+- `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 已经存在，负责 `day / week / month` 记录读模型查询，但当前还没有公开 HTTP 路由。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
+- `/api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`，session hydrate 也会返回 `entryDate`。
 
 ## 已知限制
 
@@ -137,3 +144,8 @@ npx prisma db push
 - 如果用户在日志整理过程中直接关闭日志面板，当前这次整理会被取消；这也是当前有意设计。
 - 结构化线索仍然存在于系统内部，用来驱动进度、收尾和日志生成，但不会直接展示给用户。
 - `thinkingSummary` 是用户可见的浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；它不能写成第二个正式追问。
+- calendar 功能当前只完成了服务端基础：
+  - `InterviewSession.entryDate`
+  - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+  - `getCalendarDay / getCalendarWeek / getCalendarMonth`
+  - 还没有 `/api/calendar/*` 路由和前端页面

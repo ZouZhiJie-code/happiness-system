@@ -94,6 +94,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     ],
     pendingDecision: null,
     startedAt: "2026-04-21T00:00:00.000Z",
+    entryDate: "2026-04-21",
     pausedAt: "2026-04-21T00:08:00.000Z",
     completedAt: null,
     journalEntry: {

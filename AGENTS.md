@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-05-01` 的代码为准：
+当前真实状态以 `2026-05-02` 的代码为准：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -12,6 +12,8 @@
 - 五个维度的日志标题已经统一经过语义短标题治理，后端不再把长事件句机械截断成标题。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
+- `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
+- 记录日历的服务端基础已落地：calendar 展示层读模型、calendar 聚合器、calendar repository 与 calendar service 已完成，但还没有公开 API 路由和前端页面。
 
 用户当前在产品里感知到的主线是：
 1. 进入某个维度的访谈页。
@@ -209,6 +211,9 @@ gratitude 理论翻译基线：
   - 纯 UI 组件。
 - `src/features/interview`
   - 多维度通用前端定义、schema、进度与维度元信息。
+- `src/features/calendar`
+  - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+  - 以及 `day / week / month` 聚合器。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -216,8 +221,11 @@ gratitude 理论翻译基线：
   - 当前对外暴露的访谈 service 层。
   - 现实情况：`interview.service.ts` 目前主要是 re-export `joy-interview.service.ts`。
   - `respond-error.ts` 负责把访谈提交错误归一化为用户可展示的 `issue`。
+- `src/server/services/calendar`
+  - 记录日历的 `day / week / month` 服务端查询入口。
 - `src/server/repositories`
   - 会话、事件、日志、payload 映射与数据库读写。
+  - `calendar.repository.ts` 把 `InterviewSession / JoyEntry` 标准化成 calendar source。
 - `prisma`
   - 数据模型与迁移。
 
@@ -235,6 +243,7 @@ gratitude 理论翻译基线：
 当前数据库重点看这几类：
 - `InterviewSession`
   - 维度、状态、当前阶段、当前事件、最终日志引用。
+  - `entryDate` 是日志归属日期真相；`startedAt` 只表示会话创建时间。
 - `InterviewEvent`
   - 事件级状态、轮次、覆盖镜头、`snapshotData`、`progressData`。
 - `InterviewMessage`
@@ -272,9 +281,15 @@ gratitude 理论翻译基线：
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
+- `POST /api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`；session hydrate 也会返回 `entryDate`。
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
 - `transcribe` 现在还是占位 stub，不是真实语音转写。
+- calendar 目前只有服务端内部能力：
+  - `getCalendarDay`
+  - `getCalendarWeek`
+  - `getCalendarMonth`
+  - `/api/calendar/*` 还没接出
 
 ## 7. 本地开发与排障
 
@@ -313,9 +328,9 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-05-01`，本地测试基线为：
-- `14` 个测试文件
-- `184` 个测试全部通过
+截至 `2026-05-02`，本地测试基线为：
+- `18` 个测试文件
+- `205` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

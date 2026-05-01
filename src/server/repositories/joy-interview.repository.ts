@@ -18,6 +18,11 @@ import {
   buildJournalPayloadForDimension,
   buildSnapshotDataForDimension
 } from "@/features/interview/dimension-definitions";
+import {
+  formatEntryDate,
+  getTodayEntryDate,
+  parseEntryDateInput
+} from "@/features/interview/entry-date";
 import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 import {
   buildJoySnapshot,
@@ -685,6 +690,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
               actions: ["continue_current_event", "next_event", "generate_draft"] as const
             }
         : null,
+    entryDate: formatEntryDate(session.entryDate ?? session.startedAt),
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
     completedAt: session.completedAt?.toISOString() ?? null,
@@ -782,11 +788,16 @@ async function ensureInterviewEvents(database: DatabaseClient, sessionId: string
   });
 }
 
-export async function createJoyInterviewSession(dimension: InterviewDimension, openingQuestion: string) {
+export async function createJoyInterviewSession(
+  dimension: InterviewDimension,
+  openingQuestion: string,
+  entryDate?: string
+) {
   const userId = await ensureDemoUser(prisma);
   const emptySnapshot = createEmptySnapshot();
   const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
   const emptySnapshotData = buildSnapshotDataForDimension(dimension, emptySnapshot);
+  const resolvedEntryDate = parseEntryDateInput(entryDate ?? getTodayEntryDate());
 
   const session = await prisma.$transaction(async (tx) => {
     const createdSession = await tx.interviewSession.create({
@@ -795,6 +806,7 @@ export async function createJoyInterviewSession(dimension: InterviewDimension, o
         dimension: dimension as PrismaInterviewDimension,
         status: "active",
         stage: "collect_event",
+        entryDate: resolvedEntryDate,
         lastAssistantQuestion: openingQuestion,
         messages: {
           create: [
@@ -1166,7 +1178,7 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
       create: {
         userId: existing.userId,
         sessionId,
-        date: existing.startedAt,
+        date: existing.entryDate ?? existing.startedAt,
         title: draftEntry.title,
         content: draftEntry.content,
         event: legacyProjection.event,

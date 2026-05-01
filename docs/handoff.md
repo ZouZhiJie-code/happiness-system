@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-01`
+最后更新：`2026-05-02`
 
 ## 1. 当前阶段结论
 
@@ -15,7 +15,7 @@
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
 
-## 2. 截至 2026-05-01 已经落成的东西
+## 2. 截至 2026-05-02 已经落成的东西
 
 ### 产品与交互
 
@@ -146,6 +146,7 @@
 ### 技术层
 
 - `snapshotData` 与 `payload` 已成为多维度结构化真相层
+- `InterviewSession.entryDate` 已落地，日志归属日期不再默认等于 `startedAt`
 - `DraftWritingProfile` 已进入 joy / fulfillment / reflection / improvement / gratitude 正文生成链，承担内部写作控制层
 - `pendingDecision` 已支持：
   - `event_complete`
@@ -156,6 +157,12 @@
 - `respond/stream` 与非流式 `respond` 共享结构化错误语义，错误对象包含 `code / title / message / resolution / retryable / action / requestId`
 - `journal-entry/[id]` 已是日志正文主编辑接口
 - `docs/theory/dimension-draft-template.md` 已成为后续维度正文生成的统一模板入口
+- calendar 读模型基础已落地：
+  - `src/features/calendar/aggregate-calendar.ts`
+  - `src/server/repositories/calendar.repository.ts`
+  - `src/server/services/calendar/calendar.service.ts`
+  - 已有 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
+  - 但还没有 `/api/calendar/*` 路由和前端页面
 
 ## 3. 当前仍然没有完成的事
 
@@ -209,13 +216,13 @@
 
 ## 6. 当前验证基线
 
-截至 `2026-05-01`，本地已验证：
+截至 `2026-05-02`，本地已验证：
 - `npx tsc --noEmit`
 - `npm test`
 
 测试结果：
-- `14` 个测试文件
-- `184` 个测试全部通过
+- `18` 个测试文件
+- `205` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -239,6 +246,10 @@
 - 标题语义压缩和坏标题替换
 - 用户边界 partial 收束与 `boundary_insufficient`
 - 访谈提交结构化错误展示与原输入保留
+- `entryDate` 解析、北京时间日期归属
+- calendar `day / week / month` 聚合器
+- calendar repository 标准化 source
+- calendar service 查询与参数校验
 
 fulfillment 人工 smoke 基线：
 - 推进完成

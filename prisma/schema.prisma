@@ -91,6 +91,7 @@ model InterviewSession {
   stage                 JoyInterviewStage      @default(collect_event)
   activeEventId         String?
   turnCount             Int                    @default(0)
+  entryDate             DateTime
   startedAt             DateTime               @default(now())
   pausedAt              DateTime?
   completedAt           DateTime?
