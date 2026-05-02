@@ -104,8 +104,8 @@ function CalendarDayViewAction({
 function CalendarDayViewSummaryPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="calendar-summary-chip rounded-full px-3 py-1.5">
-      <span className="text-[0.68rem] text-[#64748b]">{label}</span>
-      <span className="ml-2 tabular-nums text-[0.8rem] font-medium text-[#20364a]">{value}</span>
+      <span className="text-[0.68rem] text-[#8a6b4b]">{label}</span>
+      <span className="ml-2 tabular-nums text-[0.8rem] font-medium text-[#604529]">{value}</span>
     </div>
   );
 }
@@ -122,11 +122,11 @@ export function CalendarDayView({
 
   return (
     <section className="space-y-5" data-testid="calendar-day-view">
-      <div className="calendar-card rounded-[28px] p-5 md:p-6">
+      <div className="calendar-card rounded-[28px] p-4.5 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-[42rem]">
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-balance font-display text-[1.85rem] leading-none text-[#17212b]">
+              <h2 className="text-balance font-display text-[1.75rem] leading-none text-[#312419]">
                 {day.primaryTitle ?? "当天记录"}
               </h2>
               <span
@@ -135,8 +135,8 @@ export function CalendarDayView({
                 {calendarDayStatusLabelMap[day.overallStatus]}
               </span>
             </div>
-            <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#475569]">{getDayOverviewSummary(day, today)}</p>
-            <p className="mt-3 text-[0.8rem] text-[#64748b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
+            <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#6a5440]">{getDayOverviewSummary(day, today)}</p>
+            <p className="mt-3 text-[0.8rem] text-[#8a6b4b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -174,7 +174,7 @@ export function CalendarDayView({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <span className={cn("calendar-dimension-badge", visualMeta.softBadgeClass)}>{visualMeta.shortLabel}</span>
-                  <p className="mt-3 text-balance font-display text-[1.3rem] leading-tight text-[#17212b]">
+                  <p className="mt-3 text-balance font-display text-[1.24rem] leading-tight text-[#312419]">
                     {item.title ?? `${meta.label}记录`}
                   </p>
                 </div>
@@ -185,7 +185,7 @@ export function CalendarDayView({
                 </span>
               </div>
 
-              <p className="mt-4 line-clamp-3 text-pretty text-[0.9rem] leading-7 text-[#475569]">{summary}</p>
+              <p className="mt-4 line-clamp-3 text-pretty text-[0.9rem] leading-7 text-[#6a5440]">{summary}</p>
 
               <div className="mt-auto pt-5">
                 <CalendarDayViewAction

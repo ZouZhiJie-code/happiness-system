@@ -10,11 +10,12 @@
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
+- 顶部导航栏当前已经统一成全站固定框体：header 外宽继续对齐 `main` 内容宽度，calendar toolbar 与访谈维度条共用同一套中区高度预算。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
   - 周视图当前是 7 天同屏对比板，主动作会优先直达值得继续的业务链路
   - 日视图当前是五维紧凑操作台，`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
-  - month / week / day 三个视图现在共用独立 calendar 视觉系统：五态状态色、轻量 card 层级，以及固定维度标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+  - month / week / day 三个视图现在共用暖色 calendar 工作台：五态状态色、轻量 card 层级，以及固定维度标识 `开心 / 充实 / 思考 / 改进 / 感谢`
   - calendar 文案当前已经切到工作台短句语气，并补齐 `aria-busy`、焦点态、错误/加载语义和主要 CTA 的可访问名称
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
@@ -117,6 +118,7 @@ npx prisma db push
 ## 文档导航
 
 - 项目级 agent 说明：`AGENTS.md`
+- 设计系统规范：`DESIGN.md`
 - 当前架构：`docs/architecture.md`
 - 当前 API 面：`docs/integration-guide.md`
 - 本地排障与运行手册：`docs/operator-runbook.md`
@@ -170,6 +172,6 @@ npx prisma db push
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，并提供 `查看当天` 日期级入口
   - 周视图当前是 7 天同屏对比板，卡片主动作优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
   - 日视图当前按五维紧凑卡片组织，主按钮稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析；`编辑日志` 只保留为已保存维度的次级轻链接
-  - month / week / day 当前共用独立 calendar 视觉系统：状态 badge、卡片 surface、维度双字标识和主次按钮层级都由前端展示 helper 统一投影
+  - month / week / day 当前共用暖色 calendar 工作台：状态 badge、卡片 surface、维度双字标识和主次按钮层级都由前端展示 helper 统一投影
   - calendar 当前已经删掉英文眉题，统一为短句反馈，并补齐键盘焦点、读屏名称、loading/error inline 语义
   - 日视图不做时间轴，也不内联正文编辑

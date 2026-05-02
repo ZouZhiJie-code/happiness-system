@@ -170,8 +170,9 @@
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 周视图已经升级为 7 天同屏对比板；主动作会优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
   - 日视图已经升级为五维紧凑操作台；`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
-  - month / week / day 三个视图当前已经切到独立 calendar 视觉系统：状态五态、维度双字标识、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一
+  - month / week / day 三个视图当前已经切到暖色 calendar 工作台：状态五态、维度双字标识、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一
   - calendar 文案已经切到工作台短句语气；英文眉题已清掉，`aria-busy`、loading/error inline 语义、焦点态和主要 CTA 的可访问名称已补齐
+  - `SiteHeader` 中区已经统一成固定框体，访谈维度条与 calendar toolbar 共用同一套高度预算
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
 ## 3. 当前仍然没有完成的事

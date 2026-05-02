@@ -1366,10 +1366,11 @@ V1 建议形式：
 本节记录第 8 步已经落地后的最终交付基线。它不新增 public API，而是把 `entryDate`、calendar read model、month/week/day 三视图和 `/calendar -> /interview` 深链固化为稳定契约。
 
 当前视觉层也已经补齐：
-- month / week / day 三个视图共用独立 calendar 视觉系统
+- month / week / day 三个视图共用暖色 calendar 工作台
 - 状态五态 `empty / in_progress / draft / completed / mixed` 的 badge / surface / marker class 由 `src/features/calendar/presentation.ts` 统一投影
 - 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
 - 主按钮、次按钮和禁用态现在有稳定层级，不再由各视图各自拼装
+- `SiteHeader` 中区已统一成固定框体，访谈维度条与 calendar toolbar 共用同一套高度预算与横向 gutter
 
 #### 当前自动化基线
 

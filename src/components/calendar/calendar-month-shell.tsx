@@ -131,7 +131,7 @@ export function CalendarMonthShell() {
 
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-[32px] px-3 py-3 md:px-4 md:py-4"
+      className="calendar-workspace calendar-shell rounded-[32px] px-2.5 py-2.5 md:px-3 md:py-3"
       data-testid="calendar-month-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
@@ -139,30 +139,30 @@ export function CalendarMonthShell() {
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
           <div className="grid min-h-0 h-full min-w-[1100px] grid-cols-[minmax(0,1fr)_22rem] gap-4">
             <div
-              className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-[28px] p-3 md:p-4"
+              className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-[28px] p-2.5 md:p-3"
               data-testid="calendar-month-primary-pane"
             >
               {error ? (
                 <div className="calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center" role="alert">
-                  <p className="font-display text-[1.45rem] text-[#17212b]">{error}</p>
+                  <p className="font-display text-[1.45rem] text-[#312419]">{error}</p>
                   <button
                     type="button"
                     onClick={() => setRefreshNonce((value) => value + 1)}
-                    className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#20364a]"
+                    className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
                   >
                     重新加载
                   </button>
                 </div>
               ) : isLoading ? (
                 <div className="min-h-0 flex-1 rounded-[24px] p-2">
-                  <p role="status" aria-live="polite" className="text-[0.84rem] text-[#64748b]">
+                  <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
                     {getCalendarLoadingLabel("month")}
                   </p>
                   <div className="mt-4 space-y-3" aria-hidden="true">
-                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(226,232,240,0.7)]" />
+                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
                     <div className="grid grid-cols-7 gap-2">
                       {Array.from({ length: 14 }, (_, index) => (
-                        <div key={index} className="h-[8.6rem] animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                        <div key={index} className="h-[8.6rem] animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
                       ))}
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export function CalendarMonthShell() {
               ) : (
                 <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
                   {monthStats?.recordedDayCount === 0 ? (
-                    <div className="calendar-card-muted mb-4 rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#516174]">
+                    <div className="calendar-card-muted mb-4 rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#755d47]">
                       本月还没有记录。
                     </div>
                   ) : null}
@@ -189,9 +189,9 @@ export function CalendarMonthShell() {
               {isLoading ? (
                 <div className="calendar-card h-full min-h-0 rounded-[28px] p-5 md:p-6">
                   <div className="space-y-4" aria-hidden="true">
-                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(226,232,240,0.7)]" />
-                    <div className="h-32 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
-                    <div className="h-48 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
+                    <div className="h-32 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+                    <div className="h-48 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
                   </div>
                 </div>
               ) : null}

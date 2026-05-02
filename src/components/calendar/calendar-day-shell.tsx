@@ -73,7 +73,7 @@ export function CalendarDayShell() {
 
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-[32px] px-3 py-3 md:px-4 md:py-4"
+      className="calendar-workspace calendar-shell rounded-[32px] px-2.5 py-2.5 md:px-3 md:py-3"
       data-testid="calendar-day-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
@@ -84,32 +84,32 @@ export function CalendarDayShell() {
             data-testid="calendar-day-primary-pane"
             role="alert"
           >
-            <p className="font-display text-[1.45rem] text-[#17212b]">{error}</p>
+            <p className="font-display text-[1.45rem] text-[#312419]">{error}</p>
             <button
               type="button"
               onClick={() => setRefreshNonce((value) => value + 1)}
-              className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#20364a]"
+              className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
             >
               重新加载
             </button>
           </div>
         ) : isLoading ? (
-          <div className="calendar-pane calendar-card min-h-0 flex-1 rounded-[28px] p-5 md:p-6" data-testid="calendar-day-primary-pane">
-            <p role="status" aria-live="polite" className="text-[0.84rem] text-[#64748b]">
+          <div className="calendar-pane calendar-card min-h-0 flex-1 rounded-[28px] p-4.5 md:p-5" data-testid="calendar-day-primary-pane">
+            <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
               {getCalendarLoadingLabel("day")}
             </p>
             <div className="mt-4 space-y-4" aria-hidden="true">
-              <div className="h-24 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+              <div className="h-24 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
               </div>
             </div>
           </div>
         ) : dayRecord ? (
           <div
-            className="calendar-pane calendar-panel min-h-0 flex-1 overflow-hidden rounded-[28px] p-3 md:p-4"
+            className="calendar-pane calendar-panel min-h-0 flex-1 overflow-hidden rounded-[28px] p-2.5 md:p-3"
             data-testid="calendar-day-primary-pane"
           >
             <div className="calendar-pane-scroll panel-scroll min-h-0 h-full pr-1">

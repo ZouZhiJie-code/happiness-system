@@ -46,14 +46,14 @@ export function CalendarDayCell({
       className={clsx(
         "calendar-day-button calendar-card group relative flex min-h-[7.8rem] flex-col rounded-[24px] border p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
         getCalendarDaySurfaceClass(day.overallStatus),
-        isSelected && "ring-2 ring-[rgba(32,54,74,0.22)] ring-offset-2 ring-offset-[#eef3f7]",
-        isToday && "before:absolute before:right-3 before:top-3 before:size-2.5 before:rounded-full before:bg-[#20364a] before:content-['']"
+        isSelected && "ring-2 ring-[rgba(169,111,61,0.24)] ring-offset-2 ring-offset-[#f4ead8]",
+        isToday && "before:absolute before:right-3 before:top-3 before:size-2.5 before:rounded-full before:bg-[#a96f3d] before:content-['']"
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="font-display text-[1.35rem] leading-none text-[#17212b]">{Number(day.date.slice(-2))}</span>
+        <span className="font-display text-[1.35rem] leading-none text-[#312419]">{Number(day.date.slice(-2))}</span>
         {isToday ? (
-          <span className="calendar-chip rounded-full px-2 py-1 text-[0.63rem] text-[#20364a]">
+          <span className="calendar-chip rounded-full px-2 py-1 text-[0.63rem] text-[#604529]">
             今天
           </span>
         ) : null}
@@ -69,7 +69,7 @@ export function CalendarDayCell({
         ))}
       </div>
 
-      <p className="mt-3 line-clamp-2 text-pretty text-[0.82rem] leading-5 text-[#475569]">
+      <p className="mt-3 line-clamp-2 text-pretty text-[0.82rem] leading-5 text-[#6a5440]">
         {preview ?? "这一天还没有开始记录。"}
       </p>
     </button>

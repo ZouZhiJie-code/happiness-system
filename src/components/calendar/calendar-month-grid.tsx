@@ -32,7 +32,7 @@ export function CalendarMonthGrid({
     <div className="space-y-3">
       <div className="grid grid-cols-7 gap-2 px-1">
         {weekLabels.map((label) => (
-          <p key={label} className="text-center text-[0.72rem] text-[#64748b]">
+          <p key={label} className="text-center text-[0.72rem] text-[#8a6b4b]">
             {label}
           </p>
         ))}
@@ -58,7 +58,7 @@ export function CalendarMonthGrid({
                 key={cell.key}
                 className="calendar-card-muted min-h-[8.6rem] rounded-[22px] p-3"
               >
-                <span className="font-display text-[1.35rem] leading-none text-[#94a3b8]">{cell.dayNumber}</span>
+                <span className="font-display text-[1.35rem] leading-none text-[#b59b80]">{cell.dayNumber}</span>
               </div>
             );
           }
@@ -89,26 +89,26 @@ export function CalendarMonthGrid({
                 "calendar-day-button group relative flex min-h-[8.6rem] flex-col rounded-[24px] border p-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
                 getCalendarMonthDaySurfaceClass(day.overallStatus, previewState.hasRecords),
                 selectedDate === day.date &&
-                  "ring-2 ring-[rgba(32,54,74,0.22)] ring-offset-2 ring-offset-[#eef3f7] shadow-md",
-                today === day.date && "before:absolute before:right-3 before:top-3 before:size-2.5 before:rounded-full before:bg-[#20364a] before:content-['']"
+                  "ring-2 ring-[rgba(169,111,61,0.24)] ring-offset-2 ring-offset-[#f4ead8] shadow-md",
+                today === day.date && "before:absolute before:right-3 before:top-3 before:size-2.5 before:rounded-full before:bg-[#a96f3d] before:content-['']"
               )}
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="font-display text-[1.35rem] leading-none text-[#17212b]">{Number(day.date.slice(-2))}</span>
+                <span className="font-display text-[1.35rem] leading-none text-[#312419]">{Number(day.date.slice(-2))}</span>
                 {today === day.date ? (
-                  <span className="calendar-chip rounded-full px-2 py-1 text-[0.63rem] text-[#20364a]">
+                  <span className="calendar-chip rounded-full px-2 py-1 text-[0.63rem] text-[#604529]">
                     今天
                   </span>
                 ) : null}
               </div>
 
               <div className="mt-3 flex items-center justify-between gap-2">
-                <span className={clsx("rounded-full border px-2.5 py-1 text-[0.68rem]", "calendar-chip", previewState.hasRecords ? "" : "text-[#64748b]")}>
+                <span className={clsx("rounded-full border px-2.5 py-1 text-[0.68rem]", "calendar-chip", previewState.hasRecords ? "" : "text-[#8a6b4b]")}>
                   {previewState.statusLabel}
                 </span>
               </div>
 
-              <p className="mt-3 line-clamp-2 min-h-[2.6rem] text-pretty text-[0.84rem] leading-5 text-[#475569]">
+              <p className="mt-3 line-clamp-2 min-h-[2.6rem] text-pretty text-[0.84rem] leading-5 text-[#6a5440]">
                 {previewState.preview}
               </p>
 
@@ -131,7 +131,7 @@ export function CalendarMonthGrid({
                   );
                 })}
                 {previewState.extraDimensionCount > 0 ? (
-                  <span className="calendar-chip rounded-full px-2 py-1 text-[0.68rem] leading-none text-[#64748b]">
+                  <span className="calendar-chip rounded-full px-2 py-1 text-[0.68rem] leading-none text-[#8a6b4b]">
                     +{previewState.extraDimensionCount}
                   </span>
                 ) : null}

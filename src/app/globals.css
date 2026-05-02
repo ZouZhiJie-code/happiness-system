@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: light;
+  --site-header-frame-min-height: 4.25rem;
+  --site-header-lane-min-height: 2.75rem;
+  --site-header-viewport-offset: 8.25rem;
   --night-void: #855a34;
   --night-ink: #ddbb8c;
   --night-panel: rgba(247, 233, 205, 0.88);
@@ -360,11 +363,11 @@ body::after {
 .calendar-shell {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(83, 102, 122, 0.14);
+  border: 1px solid rgba(121, 87, 52, 0.14);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.64) 0, transparent 26%),
-    linear-gradient(180deg, rgba(243, 246, 249, 0.96), rgba(233, 238, 243, 0.98));
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    radial-gradient(circle at top left, rgba(255, 252, 245, 0.72) 0, transparent 28%),
+    linear-gradient(180deg, rgba(248, 240, 225, 0.98), rgba(238, 222, 193, 0.98));
+  box-shadow: 0 16px 34px rgba(103, 66, 34, 0.12);
 }
 
 .calendar-shell::before {
@@ -373,12 +376,12 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 24%),
-    radial-gradient(circle at 100% 0, rgba(164, 180, 200, 0.12), transparent 26%);
+    linear-gradient(180deg, rgba(255, 251, 243, 0.4), transparent 24%),
+    radial-gradient(circle at 100% 0, rgba(176, 136, 92, 0.12), transparent 28%);
 }
 
 .calendar-shell .archive-label {
-  color: #64748b;
+  color: #8a6240;
 }
 
 .calendar-shell .archive-label::before {
@@ -387,28 +390,28 @@ body::after {
 }
 
 .calendar-shell .panel-scroll {
-  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+  scrollbar-color: rgba(145, 103, 60, 0.42) transparent;
 }
 
 .calendar-shell .panel-scroll::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.48);
+  background: linear-gradient(180deg, rgba(188, 141, 88, 0.88), rgba(143, 100, 58, 0.94));
 }
 
 .calendar-panel {
   position: relative;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  background: linear-gradient(180deg, rgba(236, 241, 246, 0.96), rgba(232, 237, 242, 0.98));
+  border: 1px solid rgba(151, 115, 80, 0.2);
+  background: linear-gradient(180deg, rgba(245, 236, 219, 0.98), rgba(234, 218, 190, 0.98));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    0 6px 18px rgba(15, 23, 42, 0.05);
+    inset 0 1px 0 rgba(255, 252, 244, 0.78),
+    0 6px 18px rgba(100, 64, 33, 0.06);
 }
 
 .calendar-card {
   position: relative;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(252, 253, 255, 0.96);
-  color: #18212b;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(155, 116, 79, 0.18);
+  background: rgba(255, 249, 240, 0.96);
+  color: #2b2118;
+  box-shadow: 0 10px 22px rgba(108, 69, 36, 0.08);
 }
 
 .calendar-card::after {
@@ -417,19 +420,19 @@ body::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  box-shadow: inset 0 1px 0 rgba(255, 252, 244, 0.72);
 }
 
 .calendar-card-muted {
-  border: 1px dashed rgba(148, 163, 184, 0.34);
-  background: rgba(247, 249, 252, 0.92);
-  color: #607286;
+  border: 1px dashed rgba(153, 119, 86, 0.28);
+  background: rgba(249, 241, 229, 0.92);
+  color: #786451;
 }
 
 .calendar-chip {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(248, 250, 252, 0.94);
-  color: #334155;
+  border: 1px solid rgba(157, 119, 82, 0.2);
+  background: rgba(255, 248, 236, 0.92);
+  color: #6f5339;
 }
 
 .calendar-chip,
@@ -445,18 +448,18 @@ body::after {
 .calendar-action-secondary:focus-visible,
 .calendar-segmented-item:focus-visible,
 .calendar-day-button:focus-visible {
-  outline: 2px solid #20364a;
+  outline: 2px solid #8c6034;
   outline-offset: 2px;
 }
 
 .calendar-segmented {
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(246, 248, 251, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(159, 120, 81, 0.18);
+  background: rgba(250, 242, 229, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 251, 242, 0.66);
 }
 
 .calendar-segmented-item {
-  color: #475569;
+  color: #725840;
   transition:
     transform 160ms ease-out,
     background-color 160ms ease-out,
@@ -465,21 +468,21 @@ body::after {
 }
 
 .calendar-segmented-item:hover {
-  background: rgba(226, 232, 240, 0.82);
-  color: #1f2937;
+  background: rgba(223, 194, 153, 0.3);
+  color: #3e2f23;
 }
 
 .calendar-segmented-item[data-active="true"] {
-  background: #20364a;
-  color: #f8fbff;
-  box-shadow: 0 6px 16px rgba(32, 54, 74, 0.18);
+  background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+  color: #fff8f1;
+  box-shadow: 0 6px 16px rgba(118, 75, 37, 0.18);
 }
 
 .calendar-action-primary {
   border: 1px solid transparent;
-  background: #20364a;
-  color: #f8fbff;
-  box-shadow: 0 8px 18px rgba(32, 54, 74, 0.18);
+  background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+  color: #fff8f1;
+  box-shadow: 0 8px 18px rgba(118, 75, 37, 0.18);
   transition:
     transform 160ms ease-out,
     background-color 160ms ease-out,
@@ -488,34 +491,34 @@ body::after {
 
 .calendar-action-primary:hover {
   transform: translateY(-1px);
-  background: #182a3a;
-  box-shadow: 0 10px 22px rgba(24, 42, 58, 0.2);
+  background: linear-gradient(180deg, rgba(202, 149, 92, 0.96), rgba(171, 118, 64, 0.96));
+  box-shadow: 0 10px 22px rgba(118, 75, 37, 0.22);
 }
 
 .calendar-action-secondary {
-  color: #516174;
+  color: #7b5d43;
   text-decoration: underline;
-  text-decoration-color: rgba(81, 97, 116, 0.34);
+  text-decoration-color: rgba(123, 93, 67, 0.28);
   text-underline-offset: 0.28rem;
   transition: color 160ms ease-out;
 }
 
 .calendar-action-secondary:hover {
-  color: #20364a;
+  color: #5c4229;
 }
 
 .calendar-action-disabled {
   cursor: not-allowed;
   border-style: dashed;
-  background: rgba(245, 247, 250, 0.92);
-  color: #94a3b8;
+  background: rgba(245, 237, 225, 0.92);
+  color: #b79e84;
   box-shadow: none;
   text-decoration: none;
 }
 
 .calendar-action-disabled:hover {
   transform: none;
-  background: rgba(245, 247, 250, 0.92);
+  background: rgba(245, 237, 225, 0.92);
   box-shadow: none;
 }
 
@@ -533,8 +536,8 @@ body::after {
 }
 
 .calendar-summary-chip {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(156, 118, 82, 0.16);
+  background: rgba(252, 245, 234, 0.92);
 }
 
 .liquid-composer {

@@ -16,7 +16,7 @@ import { formatCalendarWeekdayLabel } from "@/features/calendar/view-state";
 
 function SummaryPill({ text }: { text: string }) {
   return (
-    <span className="calendar-summary-chip rounded-full px-2.5 py-1 text-[0.72rem] leading-none text-[#516174]">
+    <span className="calendar-summary-chip rounded-full px-2.5 py-1 text-[0.72rem] leading-none text-[#755d47]">
       {text}
     </span>
   );
@@ -49,9 +49,9 @@ export function CalendarWeekBoard({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-display text-[1.28rem] leading-none text-[#17212b]">{dateLabel}</h3>
+                  <h3 className="font-display text-[1.28rem] leading-none text-[#312419]">{dateLabel}</h3>
                   {today === day.date ? (
-                    <span className="calendar-chip mt-2 inline-flex rounded-full px-2 py-1 text-[0.63rem] text-[#20364a]">
+                    <span className="calendar-chip mt-2 inline-flex rounded-full px-2 py-1 text-[0.63rem] text-[#604529]">
                       今天
                     </span>
                   ) : null}
@@ -91,7 +91,7 @@ export function CalendarWeekBoard({
                 </div>
               ) : null}
 
-              <p className="mt-4 min-h-[5.2rem] text-pretty text-[0.9rem] leading-7 text-[#475569]">{cardState.headline}</p>
+              <p className="mt-4 min-h-[5.2rem] text-pretty text-[0.9rem] leading-7 text-[#6a5440]">{cardState.headline}</p>
 
               <div className="mt-auto pt-4">
                 <Link
@@ -105,7 +105,7 @@ export function CalendarWeekBoard({
                   })}
                   className={clsx(
                     "inline-flex w-full items-center justify-center rounded-full px-3.5 py-2.5 text-[0.84rem] font-medium transition duration-200",
-                    cardState.action.isDirectAction ? "calendar-action-primary" : "calendar-chip text-[#20364a]"
+                    cardState.action.isDirectAction ? "calendar-action-primary" : "calendar-chip text-[#604529]"
                   )}
                 >
                   {cardState.action.label}

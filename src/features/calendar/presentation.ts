@@ -26,67 +26,67 @@ export const calendarDayStatusLabelMap: Record<CalendarDayStatus, string> = {
 
 const calendarStatusVisualMetaMap: Record<CalendarDayStatus, CalendarStatusVisualMeta> = {
   empty: {
-    badgeClass: "border-[#d8dee6] bg-[#f5f7fa] text-[#667085]",
-    surfaceClass: "border-[#dce3ea] bg-[#fcfcfd]",
-    markerClass: "border-[#cbd5e1] bg-[#fcfcfd]",
-    emphasisClass: "text-[#667085]"
+    badgeClass: "border-[#dbcab7] bg-[#f7efe4] text-[#7a6857]",
+    surfaceClass: "border-[#dfcfbb] bg-[#fdf8f1]",
+    markerClass: "border-[#cab69f] bg-[#fdf8f1]",
+    emphasisClass: "text-[#7a6857]"
   },
   in_progress: {
-    badgeClass: "border-[#e5c27f] bg-[#fff5e4] text-[#8a5d17]",
-    surfaceClass: "border-[#ead1a4] bg-[#fffaf1]",
-    markerClass: "border-[#d6a44f] bg-[#f0bf63]",
+    badgeClass: "border-[#e2c188] bg-[#fff3df] text-[#8d5a21]",
+    surfaceClass: "border-[#e6c99c] bg-[#fff8eb]",
+    markerClass: "border-[#ce9849] bg-[#e4b05f]",
     emphasisClass: "text-[#8a5d17]"
   },
   draft: {
-    badgeClass: "border-[#b7cbe0] bg-[#eef4fb] text-[#365f86]",
-    surfaceClass: "border-[#caddf0] bg-[#f7fbff]",
-    markerClass: "border-[#6d98c3] bg-[#8bb2d8]",
-    emphasisClass: "text-[#365f86]"
+    badgeClass: "border-[#d7beca] bg-[#fbf0f5] text-[#7c5568]",
+    surfaceClass: "border-[#e0c9d3] bg-[#fff7fb]",
+    markerClass: "border-[#b9879f] bg-[#c999b0]",
+    emphasisClass: "text-[#7c5568]"
   },
   completed: {
-    badgeClass: "border-[#a8ccb5] bg-[#ecf7ef] text-[#2f6845]",
-    surfaceClass: "border-[#bed9c4] bg-[#f7fcf8]",
-    markerClass: "border-[#4d8b63] bg-[#67a478]",
-    emphasisClass: "text-[#2f6845]"
+    badgeClass: "border-[#bfd0b6] bg-[#edf5ea] text-[#45644a]",
+    surfaceClass: "border-[#cad7c1] bg-[#f8fbf6]",
+    markerClass: "border-[#68866a] bg-[#84a081]",
+    emphasisClass: "text-[#45644a]"
   },
   mixed: {
-    badgeClass: "border-[#d6b091] bg-[#fbf0e7] text-[#8f4f2d]",
-    surfaceClass: "border-[#e1c4ae] bg-[#fff9f5]",
-    markerClass: "border-[#b7754d] bg-[#cd8b61]",
-    emphasisClass: "text-[#8f4f2d]"
+    badgeClass: "border-[#d5b095] bg-[#fbefe5] text-[#8e5638]",
+    surfaceClass: "border-[#dec0aa] bg-[#fff8f2]",
+    markerClass: "border-[#b47656] bg-[#cb8d6d]",
+    emphasisClass: "text-[#8e5638]"
   }
 };
 
 const calendarDimensionVisualMetaMap: Record<CalendarDimensionStatus["dimension"], CalendarDimensionVisualMeta> = {
   joy: {
     shortLabel: "开心",
-    softBadgeClass: "border-[#f0c2ab] bg-[#fff1e8] text-[#9b4e22]",
-    solidBadgeClass: "border-[#e98a59] bg-[#e98a59] text-[#fff8f4]",
-    dotClass: "bg-[#e98a59]"
+    softBadgeClass: "border-[#edc3aa] bg-[#fff1e5] text-[#99522a]",
+    solidBadgeClass: "border-[#d68a5a] bg-[#d68a5a] text-[#fff9f3]",
+    dotClass: "bg-[#d68a5a]"
   },
   fulfillment: {
     shortLabel: "充实",
-    softBadgeClass: "border-[#b7d5d3] bg-[#eef8f7] text-[#256b68]",
-    solidBadgeClass: "border-[#429b95] bg-[#429b95] text-[#f5fffe]",
-    dotClass: "bg-[#429b95]"
+    softBadgeClass: "border-[#c3d6c8] bg-[#f0f7f0] text-[#48644f]",
+    solidBadgeClass: "border-[#74927a] bg-[#74927a] text-[#f8fff8]",
+    dotClass: "bg-[#74927a]"
   },
   reflection: {
     shortLabel: "思考",
-    softBadgeClass: "border-[#c8c8ee] bg-[#f2f1ff] text-[#5257a1]",
-    solidBadgeClass: "border-[#7377c8] bg-[#7377c8] text-[#f7f8ff]",
-    dotClass: "bg-[#7377c8]"
+    softBadgeClass: "border-[#d8c2d5] bg-[#fbf0f7] text-[#76566f]",
+    solidBadgeClass: "border-[#a17a97] bg-[#a17a97] text-[#fff8fd]",
+    dotClass: "bg-[#a17a97]"
   },
   improvement: {
     shortLabel: "改进",
-    softBadgeClass: "border-[#bdd9c4] bg-[#f0faf2] text-[#2f6c43]",
-    solidBadgeClass: "border-[#5b9a71] bg-[#5b9a71] text-[#f6fff8]",
-    dotClass: "bg-[#5b9a71]"
+    softBadgeClass: "border-[#c7d8bf] bg-[#f3f8ef] text-[#4f6948]",
+    solidBadgeClass: "border-[#7d9771] bg-[#7d9771] text-[#fbfff8]",
+    dotClass: "bg-[#7d9771]"
   },
   gratitude: {
     shortLabel: "感谢",
-    softBadgeClass: "border-[#e4bfd1] bg-[#fdf0f6] text-[#8e496d]",
-    solidBadgeClass: "border-[#c06c97] bg-[#c06c97] text-[#fff8fc]",
-    dotClass: "bg-[#c06c97]"
+    softBadgeClass: "border-[#e2c3c9] bg-[#fdf1f2] text-[#8b5860]",
+    solidBadgeClass: "border-[#b8848d] bg-[#b8848d] text-[#fff9fb]",
+    dotClass: "bg-[#b8848d]"
   }
 };
 
@@ -123,11 +123,11 @@ export function getCalendarMonthDimensionPillClass(tone: CalendarMonthDimensionP
     case "active":
       return "opacity-100";
     case "draft":
-      return "opacity-100 ring-1 ring-inset ring-[#b7cbe0]";
+      return "opacity-100 ring-1 ring-inset ring-[#d7beca]";
     case "completed":
-      return "opacity-100 ring-1 ring-inset ring-[#a8ccb5]";
+      return "opacity-100 ring-1 ring-inset ring-[#bfd0b6]";
     case "mixed":
-      return "opacity-100 ring-1 ring-inset ring-[#d6b091]";
+      return "opacity-100 ring-1 ring-inset ring-[#d5b095]";
     default:
       return "opacity-65";
   }

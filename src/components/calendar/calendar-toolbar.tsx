@@ -55,9 +55,9 @@ async function fetchCalendarDay(date: string) {
 
 function ToolbarChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="calendar-summary-chip rounded-full px-3 py-1.5">
-      <span className="text-[0.68rem] text-[#64748b]">{label}</span>
-      <span className="ml-2 tabular-nums text-[0.78rem] font-medium text-[#20364a]">{value}</span>
+    <div className="calendar-summary-chip shrink-0 rounded-full px-2.5 py-1">
+      <span className="text-[0.65rem] text-[#8b6c4d]">{label}</span>
+      <span className="ml-1.5 tabular-nums text-[0.74rem] font-medium text-[#604529]">{value}</span>
     </div>
   );
 }
@@ -164,64 +164,63 @@ export function CalendarToolbar() {
     <div
       data-testid="calendar-toolbar"
       aria-busy={isLoading ? "true" : "false"}
-      className="calendar-card flex w-full flex-col gap-2 rounded-[20px] px-3 py-2"
+      className="calendar-card flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 rounded-[20px] px-2.5 py-1.5 overflow-hidden"
     >
-      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => navigate({ date: toolbarState.previousDate })}
-            className="calendar-chip rounded-full px-2.5 py-1.5 text-[0.78rem] text-[#516174] transition duration-200 hover:text-[#20364a]"
-            aria-label={toolbarState.previousLabel}
-          >
-            <span aria-hidden="true">‹</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate({ date: toolbarState.nextDate })}
-            className="calendar-chip rounded-full px-2.5 py-1.5 text-[0.78rem] text-[#516174] transition duration-200 hover:text-[#20364a]"
-            aria-label={toolbarState.nextLabel}
-          >
-            <span aria-hidden="true">›</span>
-          </button>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-balance text-[0.98rem] font-medium text-[#17212b] md:text-[1.08rem]">
-            {toolbarState.title}
-          </p>
-        </div>
-
+      <div className="flex shrink-0 items-center gap-1.5">
         <button
           type="button"
-          onClick={() => navigate({ date: today })}
-          className="calendar-chip shrink-0 rounded-full px-3 py-1.5 text-[0.76rem] font-medium text-[#20364a] transition duration-200 hover:text-[#17212b]"
-          aria-label="回到今天"
+          onClick={() => navigate({ date: toolbarState.previousDate })}
+          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
+          aria-label={toolbarState.previousLabel}
         >
-          今天
+          <span aria-hidden="true">‹</span>
         </button>
-
-        <CalendarViewSwitcher currentView={normalizedSearch.view} onSelectView={(view) => navigate({ view })} />
+        <button
+          type="button"
+          onClick={() => navigate({ date: toolbarState.nextDate })}
+          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
+          aria-label={toolbarState.nextLabel}
+        >
+          <span aria-hidden="true">›</span>
+        </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
+        <div className="flex min-w-max items-center gap-2">
+          <p className="shrink-0 text-[0.95rem] font-medium text-[#34271c] md:text-[1rem]">
+            {toolbarState.title}
+          </p>
+
         {isLoading ? (
-          <span className="text-[0.72rem] text-[#64748b]" role="status" aria-live="polite">
+          <span className="shrink-0 text-[0.68rem] text-[#8a6b4b]" role="status" aria-live="polite">
             {getCalendarLoadingLabel("toolbar")}
           </span>
         ) : null}
         {hasFetchError ? (
-          <span className="text-[0.72rem] text-[#8f4f2d]" role="alert">
+          <span className="shrink-0 text-[0.68rem] text-[#8f5431]" role="alert">
             {getCalendarErrorLabel("toolbar")}
           </span>
         ) : null}
         {chips.map((chip) => (
           <ToolbarChip key={chip.id} label={chip.label} value={chip.value} />
         ))}
-        <span className="sr-only" aria-live="polite">
-          {isLoading ? getCalendarLoadingLabel("toolbar") : hasFetchError ? getCalendarErrorLabel("toolbar") : "摘要已更新。"}
-        </span>
+        </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate({ date: today })}
+        className="calendar-chip shrink-0 rounded-full px-3 py-1 text-[0.74rem] font-medium text-[#5d4329] transition duration-200 hover:text-[#34271c]"
+        aria-label="回到今天"
+      >
+        今天
+      </button>
+
+      <CalendarViewSwitcher currentView={normalizedSearch.view} onSelectView={(view) => navigate({ view })} />
+
+      <span className="sr-only" aria-live="polite">
+        {isLoading ? getCalendarLoadingLabel("toolbar") : hasFetchError ? getCalendarErrorLabel("toolbar") : "摘要已更新。"}
+      </span>
     </div>
   );
 }

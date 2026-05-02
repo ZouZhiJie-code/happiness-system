@@ -168,6 +168,7 @@
   - 前后翻段
   - 回到今天
   - 3 个实时摘要 chip
+  - calendar toolbar 与访谈维度条现在共用固定 header 中区框体和统一高度预算
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
 
@@ -183,10 +184,11 @@
   - 已升级为“一条总览 + 五维紧凑操作台”
   - 每卡只保留维度身份、状态、标题或摘要、唯一主按钮和少量次级轻链接
   - `mixed` 主动作由前端稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
-- month / week / day 三个视图当前共用独立 calendar 视觉系统：
+- month / week / day 三个视图当前共用暖色 calendar 工作台：
   - 五态状态色固定区分 `empty / in_progress / draft / completed / mixed`
   - 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
   - badge、surface、marker 和主次按钮层级由 `src/features/calendar/presentation.ts` 统一投影，不再由各组件各自拼样式
+  - 色温已经回收到全局暖纸张/墨色系统，不再维持蓝灰后台式分叉
   - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
   - shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
 

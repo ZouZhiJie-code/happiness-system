@@ -332,24 +332,27 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="page-shell mx-auto max-w-[88rem] rounded-[28px] px-4 py-2.5 backdrop-blur md:px-5 md:py-2.5">
-      <div className="relative z-10 flex flex-col gap-2.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4">
-        <Link href="/" prefetch={false} onClick={(event) => handleProtectedNavigation(event, "/")} className="flex items-center gap-3">
+    <header className="page-shell mx-auto w-full max-w-[88rem] rounded-[28px] px-4 py-1.5 backdrop-blur md:px-5 md:py-1.5">
+      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-3">
+        <Link
+          href="/"
+          prefetch={false}
+          onClick={(event) => handleProtectedNavigation(event, "/")}
+          className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-3"
+        >
           <div className="flex size-10 items-center justify-center rounded-full border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.55)] text-[0.62rem] font-mono uppercase tracking-[0.24em] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
             HS
           </div>
           <p className="font-display text-lg tracking-[0.1em] text-[#2f2823]">幸福系统</p>
         </Link>
-        <div className="min-h-[3rem]">
+        <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
-            <div className="flex items-center justify-center">
-              <div className="w-full overflow-x-auto pb-0.5">
-                <div
-                  className="mx-auto w-fit min-w-max"
-                >
+            <div className="w-full">
+              <div className="rounded-[20px] border border-[rgba(136,92,50,0.16)] bg-[linear-gradient(180deg,rgba(252,245,233,0.88),rgba(241,226,199,0.9))] px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_8px_20px_rgba(118,75,37,0.06)]">
+                <div className="w-full overflow-x-auto pb-0.5">
                   <div
                     data-testid="interview-dimension-bar"
-                    className="flex items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.16)] bg-[linear-gradient(180deg,rgba(252,245,233,0.88),rgba(241,226,199,0.9))] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_10px_24px_rgba(118,75,37,0.06)]"
+                    className="flex min-w-max items-center gap-1.5"
                   >
                     <div className="shrink-0 px-1">
                       <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
@@ -467,7 +470,7 @@ export function SiteHeader() {
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
         </div>
-        <nav className="flex items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.22)] bg-[rgba(244,226,194,0.72)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.38)]">
+        <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.22)] bg-[rgba(244,226,194,0.72)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.38)]">
           {navItems.map((item) => (
             <Link
               key={item.matchPath}

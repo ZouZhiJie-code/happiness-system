@@ -28,7 +28,7 @@ const methodSteps = [
 export default function HomePage() {
   return (
     <div className="space-y-4">
-      <section className="page-shell min-h-[calc(100vh-8.25rem)] rounded-[42px] px-4 py-4 md:px-7 md:py-5">
+      <section className="page-shell min-h-[calc(100vh-var(--site-header-viewport-offset))] rounded-[42px] px-4 py-4 md:px-7 md:py-5">
         <div className="relative z-10 grid gap-5 lg:grid-cols-[1.16fr_0.84fr] lg:items-stretch">
           <div className="stagger-rise flex flex-col pt-4 pb-4 md:pt-6 md:pb-5 lg:pt-8 lg:pb-7">
             <h1 className="max-w-none font-display text-[3rem] leading-[1.04] tracking-[0.018em] text-[#2d2014] sm:text-[3.2rem] lg:text-[4.05rem] xl:text-[4.3rem]">
