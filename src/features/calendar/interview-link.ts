@@ -22,18 +22,13 @@ export interface CalendarDimensionDetailItem {
   actions: CalendarDetailActionLink[];
 }
 
-export interface CalendarDimensionActionGroups {
-  primaryActions: CalendarDetailActionLink[];
-  secondaryActions: CalendarDetailActionLink[];
-  disabledActions: CalendarDetailActionLink[];
-}
-
 export interface CalendarDayViewCardItem extends CalendarDimensionDetailItem {
-  actionGroups: CalendarDimensionActionGroups;
+  primaryAction: CalendarDetailActionLink;
+  secondaryActions: CalendarDetailActionLink[];
 }
 
 const actionLabelMap: Record<CalendarAction, string> = {
-  start_interview: "开始访谈",
+  start_interview: "开始记录",
   continue_interview: "继续访谈",
   continue_editing: "继续编辑",
   view_journal: "查看日志",
@@ -154,6 +149,38 @@ function buildActionLink(input: {
   };
 }
 
+function resolvePrimaryDimensionForDay(day: CalendarDayRecord) {
+  const { primaryAction } = day;
+
+  if (!primaryAction) {
+    return null;
+  }
+
+  return day.dimensions.find((dimension) => dimension.actions.includes(primaryAction)) ?? null;
+}
+
+function buildCalendarResolvedActionOrder(dimension: CalendarDimensionStatus): CalendarAction[] {
+  const actions: CalendarAction[] = [];
+
+  if (dimension.hasActiveSession) {
+    actions.push("continue_interview");
+  }
+
+  if (dimension.hasDraftEntry) {
+    actions.push("continue_editing");
+  }
+
+  if (dimension.hasSavedEntry) {
+    actions.push("view_journal", "edit_saved_journal");
+  }
+
+  if (actions.length === 0) {
+    actions.push("start_interview");
+  }
+
+  return actions;
+}
+
 export function buildCalendarDimensionDetailItems(day: CalendarDayRecord, today = getTodayEntryDate()) {
   return day.dimensions.map<CalendarDimensionDetailItem>((dimension) => {
     const dimensionLabel = getInterviewDimensionMeta(dimension.dimension).label;
@@ -188,40 +215,50 @@ export function buildCalendarDimensionDetailItems(day: CalendarDayRecord, today 
   });
 }
 
-function buildCalendarDimensionActionGroups(item: CalendarDimensionDetailItem): CalendarDimensionActionGroups {
-  const enabledActions = item.actions.filter((action) => Boolean(action.href));
-  const disabledActions = item.actions.filter((action) => !action.href);
-
-  if (item.status === "completed") {
-    const primaryActions = enabledActions.filter(
-      (action) => action.action === "view_journal" || action.action === "edit_saved_journal"
-    );
-
-    return {
-      primaryActions,
-      secondaryActions: enabledActions.filter((action) => !primaryActions.includes(action)),
-      disabledActions
-    };
-  }
-
-  if (item.status === "mixed") {
-    return {
-      primaryActions: enabledActions[0] ? [enabledActions[0]] : [],
-      secondaryActions: enabledActions.slice(1),
-      disabledActions
-    };
-  }
-
-  return {
-    primaryActions: enabledActions[0] ? [enabledActions[0]] : [],
-    secondaryActions: [],
-    disabledActions
-  };
+export function resolveCalendarPrimaryAction(dimension: CalendarDimensionStatus): CalendarAction {
+  return buildCalendarResolvedActionOrder(dimension)[0] ?? "start_interview";
 }
 
 export function buildCalendarDayViewCardItems(day: CalendarDayRecord, today = getTodayEntryDate()) {
-  return buildCalendarDimensionDetailItems(day, today).map<CalendarDayViewCardItem>((item) => ({
-    ...item,
-    actionGroups: buildCalendarDimensionActionGroups(item)
-  }));
+  return day.dimensions.map<CalendarDayViewCardItem>((dimension) => {
+    const actions = buildCalendarResolvedActionOrder(dimension).map((action) =>
+      buildActionLink({
+        day,
+        dimension,
+        action,
+        today
+      })
+    );
+    const [primaryAction, ...secondaryActions] = actions;
+
+    return {
+      dimension: dimension.dimension,
+      dimensionLabel: getInterviewDimensionMeta(dimension.dimension).label,
+      status: dimension.status,
+      title: dimension.title,
+      summary: dimension.summary,
+      latestUpdatedAt: dimension.latestUpdatedAt,
+      actions,
+      primaryAction,
+      secondaryActions
+    };
+  });
+}
+
+export function buildCalendarPrimaryActionLink(day: CalendarDayRecord, today = getTodayEntryDate()) {
+  const primaryDimension = resolvePrimaryDimensionForDay(day);
+  const primaryAction = day.primaryAction;
+
+  if (!primaryDimension || !primaryAction) {
+    return null;
+  }
+
+  const actionLink = buildActionLink({
+    day,
+    dimension: primaryDimension,
+    action: primaryAction,
+    today
+  });
+
+  return actionLink.href ? actionLink : null;
 }

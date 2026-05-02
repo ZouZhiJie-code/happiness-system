@@ -187,6 +187,34 @@ function buildMixedMonthRecord(): CalendarMonthRecord {
   return base;
 }
 
+function buildFutureEmptyMonthRecord(): CalendarMonthRecord {
+  return {
+    month: "2099-01",
+    days: Array.from({ length: 31 }, (_, index) => {
+      const date = `2099-01-${String(index + 1).padStart(2, "0")}`;
+
+      return {
+        date,
+        overallStatus: "empty" as const,
+        dimensions: [
+          buildDimensionStatus({ dimension: "joy" }),
+          buildDimensionStatus({ dimension: "fulfillment" }),
+          buildDimensionStatus({ dimension: "reflection" }),
+          buildDimensionStatus({ dimension: "improvement" }),
+          buildDimensionStatus({ dimension: "gratitude" })
+        ],
+        activeCount: 0,
+        draftCount: 0,
+        savedCount: 0,
+        primaryTitle: null,
+        primarySummary: null,
+        latestUpdatedAt: null,
+        primaryAction: null
+      };
+    })
+  };
+}
+
 describe("calendar month shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
@@ -211,7 +239,7 @@ describe("calendar month shell", () => {
     });
   });
 
-  it("renders a full 42-slot grid and exposes five start links for an empty past day", async () => {
+  it("renders a full 42-slot grid and a dedicated day check panel for an empty past day", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarMonthShell />);
@@ -219,57 +247,70 @@ describe("calendar month shell", () => {
     await screen.findByTestId("calendar-month-workspace");
     expect(screen.getByTestId("calendar-month-primary-pane")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-month-secondary-pane")).toBeInTheDocument();
-    const detailPanels = await screen.findAllByTestId("calendar-day-detail");
+    const dayPanel = await screen.findByTestId("calendar-month-day-panel");
 
     expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(42);
-    const startLinks = within(detailPanels[0] as HTMLElement).getAllByRole("link", { name: /开始访谈/ });
-    expect(startLinks).toHaveLength(5);
-    expect(startLinks[0]?.getAttribute("href")).toContain("entryDate=2026-05-02");
-    expect(within(detailPanels[0] as HTMLElement).getByRole("link", { name: "查看当天" })).toHaveAttribute(
+    expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
+    expect(within(dayPanel).getByText("这一天还没有形成标题。")).toBeInTheDocument();
+    expect(within(dayPanel).getByText("还没有记录内容，可以先进入当天查看五个维度。")).toBeInTheDocument();
+    expect(within(dayPanel).queryByRole("link", { name: /开始访谈/ })).not.toBeInTheDocument();
+    expect(within(dayPanel).getByRole("link", { name: "查看当天" })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-02"
     );
   });
 
-  it("updates the url when selecting another day", async () => {
-    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+  it("updates the url and panel immediately when selecting another day without refetching the month", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+    global.fetch = fetchMock;
 
     render(<CalendarMonthShell />);
 
-    await screen.findAllByTestId("calendar-day-detail");
+    const dayPanel = await screen.findByTestId("calendar-month-day-panel");
     fireEvent.click(screen.getByTestId("calendar-day-2026-05-03"));
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=month&date=2026-05-03", { scroll: false });
+    expect(within(dayPanel).getByRole("heading", { name: /5月3日/ })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("shows real mixed split details for a day with active, draft and saved dimensions", async () => {
+  it("shows mixed day summary chips, touched dimensions and the single day-view entry", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMixedMonthRecord()), { status: 200 })) as typeof fetch;
 
     render(<CalendarMonthShell />);
 
-    const detailPanels = await screen.findAllByTestId("calendar-day-detail");
-    const detailPanel = detailPanels[0] as HTMLElement;
+    const detailPanel = await screen.findByTestId("calendar-month-day-panel");
 
     expect(within(detailPanel).getByText("混合状态")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("这一天需要继续分流")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("同一天里既有进行中的访谈，也有草稿和已完成日志。")).toBeInTheDocument();
+    expect(within(detailPanel).getAllByText("1项")).toHaveLength(3);
+    expect(within(detailPanel).getByText("开心")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("充实")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("思考")).toBeInTheDocument();
     expect(within(detailPanel).getByRole("link", { name: "查看当天" })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-02"
     );
-    expect(within(detailPanel).getByRole("link", { name: "开心 · 继续访谈" })).toHaveAttribute(
+    expect(within(detailPanel).queryByRole("link", { name: /继续访谈|继续编辑|查看日志|编辑日志/ })).not.toBeInTheDocument();
+  });
+
+  it("shows future empty messaging while keeping day-view access", async () => {
+    mockSearchParams.value = {
+      view: "month",
+      date: "2099-01-01"
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildFutureEmptyMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+
+    const detailPanel = await screen.findByTestId("calendar-month-day-panel");
+
+    expect(within(detailPanel).getByText("未来日期暂不支持开始记录，但可以先查看当天页。")).toBeInTheDocument();
+    expect(within(detailPanel).getByTestId("calendar-month-day-panel-empty")).toHaveTextContent("这一天还没有进入记录阶段。先保留这格，之后再回来。");
+    expect(within(detailPanel).getByRole("link", { name: "查看当天" })).toHaveAttribute(
       "href",
-      "/interview?dimension=joy&sessionId=session-joy&entryDate=2026-05-02"
-    );
-    expect(within(detailPanel).getByRole("link", { name: "充实 · 继续编辑" })).toHaveAttribute(
-      "href",
-      "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
-    );
-    expect(within(detailPanel).getByRole("link", { name: "思考 · 查看日志" })).toHaveAttribute(
-      "href",
-      "/interview?dimension=reflection&sessionId=session-reflection&panel=journal"
-    );
-    expect(within(detailPanel).getByRole("link", { name: "思考 · 编辑日志" })).toHaveAttribute(
-      "href",
-      "/interview?dimension=reflection&sessionId=session-reflection&panel=journal"
+      "/calendar?view=day&date=2099-01-01"
     );
   });
 });

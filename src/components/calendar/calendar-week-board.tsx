@@ -4,26 +4,17 @@ import React from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
-import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
-import {
-  calendarDayStatusLabelMap,
-  getCalendarDaySurfaceClass,
-  getCalendarDimensionMarkerClass,
-  getCalendarStatusBadgeClass
-} from "@/features/calendar/presentation";
+import { buildCalendarWeekCardState } from "@/features/calendar/week-view";
+import { getCalendarStatusBadgeClass, getCalendarWeekDaySurfaceClass } from "@/features/calendar/presentation";
 import type { CalendarDayRecord } from "@/features/calendar/types";
-import { formatCalendarUpdatedAt, formatCalendarWeekdayLabel } from "@/features/calendar/view-state";
+import { formatCalendarWeekdayLabel } from "@/features/calendar/view-state";
 
-function buildDimensionText(day: CalendarDayRecord, mode: "completed" | "draft") {
-  const matched = day.dimensions.filter((dimension) =>
-    mode === "completed" ? dimension.hasSavedEntry : dimension.hasDraftEntry
+function SummaryPill({ text }: { text: string }) {
+  return (
+    <span className="rounded-full border border-[rgba(153,115,75,0.14)] bg-[rgba(255,251,245,0.84)] px-2.5 py-1 text-[0.72rem] leading-none text-[#6f5640]">
+      {text}
+    </span>
   );
-
-  if (matched.length === 0) {
-    return mode === "completed" ? "无已完成维度" : "无草稿维度";
-  }
-
-  return matched.map((dimension) => getInterviewDimensionMeta(dimension.dimension).label).join(" / ");
 }
 
 export function CalendarWeekBoard({
@@ -34,71 +25,67 @@ export function CalendarWeekBoard({
   today: string;
 }) {
   return (
-    <div className="space-y-3" data-testid="calendar-week-board">
-      {days.map((day) => {
-        const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
+    <div className="overflow-x-auto overflow-y-hidden pb-1">
+      <div className="grid min-w-[1120px] grid-cols-7 gap-3" data-testid="calendar-week-board">
+        {days.map((day) => {
+          const cardState = buildCalendarWeekCardState(day, today);
 
-        return (
-          <Link
-            key={day.date}
-            href={`/calendar?view=day&date=${day.date}`}
-            className={clsx(
-              "group block rounded-[28px] border p-4 shadow-[0_16px_28px_rgba(122,83,43,0.08)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(122,83,43,0.12)]",
-              getCalendarDaySurfaceClass(day.overallStatus)
-            )}
-            data-testid={`calendar-week-day-${day.date}`}
-            aria-label={`${formatCalendarWeekdayLabel(day.date)}，${calendarDayStatusLabelMap[day.overallStatus]}`}
-          >
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-display text-[1.35rem] leading-none text-[#2b2018]">
-                    {formatCalendarWeekdayLabel(day.date)}
-                  </h3>
+          return (
+            <article
+              key={day.date}
+              data-testid={`calendar-week-day-${day.date}`}
+              data-status={day.overallStatus}
+              className={clsx(
+                "flex min-h-[18rem] flex-col rounded-[28px] border p-4 shadow-[0_16px_28px_rgba(122,83,43,0.08)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(122,83,43,0.12)]",
+                getCalendarWeekDaySurfaceClass(day.overallStatus)
+              )}
+              aria-label={`${formatCalendarWeekdayLabel(day.date)}，${cardState.statusLabel}，主动作：${cardState.action.label}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-display text-[1.28rem] leading-none text-[#2b2018]">{formatCalendarWeekdayLabel(day.date)}</h3>
                   {today === day.date ? (
-                    <span className="rounded-full border border-[rgba(143,91,44,0.2)] bg-[rgba(255,249,239,0.82)] px-2 py-1 text-[0.63rem] tracking-[0.18em] text-[#8d6138]">
+                    <span className="mt-2 inline-flex rounded-full border border-[rgba(143,91,44,0.2)] bg-[rgba(255,249,239,0.82)] px-2 py-1 text-[0.63rem] tracking-[0.18em] text-[#8d6138]">
                       今天
                     </span>
                   ) : null}
                 </div>
-                <div className="mt-3 flex items-center gap-1.5">
-                  {day.dimensions.map((dimension) => (
-                    <span
-                      key={`${day.date}-${dimension.dimension}`}
-                      className={clsx("size-2.5 rounded-full border", getCalendarDimensionMarkerClass(dimension.status))}
-                      title={`${getInterviewDimensionMeta(dimension.dimension).label}: ${calendarDayStatusLabelMap[dimension.status]}`}
-                    />
-                  ))}
-                </div>
+
+                <span
+                  className={clsx(
+                    "shrink-0 rounded-full border px-2.5 py-1 text-[0.74rem] tabular-nums",
+                    getCalendarStatusBadgeClass(day.overallStatus)
+                  )}
+                >
+                  {cardState.statusLabel}
+                </span>
               </div>
 
-              <span
-                className={clsx(
-                  "shrink-0 rounded-full border px-3 py-1.5 text-[0.78rem] tabular-nums",
-                  getCalendarStatusBadgeClass(day.overallStatus)
-                )}
-              >
-                {calendarDayStatusLabelMap[day.overallStatus]}
-              </span>
-            </div>
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                <SummaryPill text={cardState.completedCountLabel} />
+                <SummaryPill text={cardState.draftCountLabel} />
+                <SummaryPill text={cardState.activeCountLabel} />
+              </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
-              <div>
-                <p className="text-[0.74rem] tracking-[0.16em] text-[#8f6a46]">已完成维度</p>
-                <p className="mt-1 text-pretty text-[0.92rem] leading-6 text-[#4f3d30]">{buildDimensionText(day, "completed")}</p>
+              <p className="mt-4 min-h-[5.2rem] text-pretty text-[0.9rem] leading-7 text-[#4f3d30]">{cardState.headline}</p>
+
+              <div className="mt-auto pt-4">
+                <Link
+                  href={cardState.action.href}
+                  className={clsx(
+                    "inline-flex w-full items-center justify-center rounded-full border px-3.5 py-2.5 text-[0.84rem] font-medium transition duration-200 hover:-translate-y-0.5",
+                    cardState.action.isDirectAction
+                      ? "border-[rgba(150,101,55,0.18)] bg-[linear-gradient(180deg,#e7c08e,#d49f65)] text-[#332417] shadow-[0_10px_22px_rgba(145,94,48,0.12)]"
+                      : "border-[rgba(150,101,55,0.16)] bg-[rgba(255,249,239,0.88)] text-[#62462d]"
+                  )}
+                >
+                  {cardState.action.label}
+                </Link>
               </div>
-              <div>
-                <p className="text-[0.74rem] tracking-[0.16em] text-[#8f6a46]">草稿维度</p>
-                <p className="mt-1 text-pretty text-[0.92rem] leading-6 text-[#4f3d30]">{buildDimensionText(day, "draft")}</p>
-              </div>
-              <div className="md:text-right">
-                <p className="text-[0.74rem] tracking-[0.16em] text-[#8f6a46]">最后更新</p>
-                <p className="mt-1 text-[0.92rem] leading-6 text-[#4f3d30]">{updatedAtLabel ?? "暂无"}</p>
-              </div>
-            </div>
-          </Link>
-        );
-      })}
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
 }

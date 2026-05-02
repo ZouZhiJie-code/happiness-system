@@ -16,6 +16,8 @@
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - `SiteHeader` 中区现在承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
+- 周视图已经升级为真正的 7 天同屏对比板；每天卡片的主动作会优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时才回退 `查看当天`。
+- 日视图已经升级为五维紧凑操作台；`mixed` 主动作在前端固定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析，`编辑日志` 只保留为已保存维度的次级轻链接。
 
 用户当前在产品里感知到的主线是：
 1. 进入某个维度的访谈页。
@@ -215,10 +217,10 @@ gratitude 理论翻译基线：
   - 多维度通用前端定义、schema、进度与维度元信息。
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器、header toolbar 投影 helper。
+  - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper 与 deep link/action helper。
 - `src/components/calendar`
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
-  - month / week / day shell 当前都已经进入工作区壳层；其中 month 视图是双栏骨架。
+  - month / week / day shell 当前都已经进入工作区壳层；month 是双栏检查面板，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -301,7 +303,8 @@ gratitude 理论翻译基线：
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
   - `SiteHeader` 中区会基于当前 `view/date` 独立请求 month / week / day 数据，用于标题和实时摘要
   - month / week / day 正文已经去掉重复导航，页面优先首屏工作区
-  - 日视图按五维卡片组织，不展示内部槽位、不做时间轴、不内联正文编辑
+  - 周视图当前是 7 天同屏对比板，主动作优先直达业务链路
+  - 日视图按五维紧凑卡片组织，不展示内部槽位、不做时间轴、不内联正文编辑
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 
 ## 7. 本地开发与排障
@@ -342,8 +345,8 @@ gratitude 理论翻译基线：
 - `npx tsc --noEmit`
 
 截至 `2026-05-02`，本地测试基线为：
-- `26` 个测试文件
-- `239` 个测试全部通过
+- `27` 个测试文件
+- `248` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

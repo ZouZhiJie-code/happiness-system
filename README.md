@@ -10,7 +10,10 @@
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
-- calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构；月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口。
+- calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
+  - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
+  - 周视图当前是 7 天同屏对比板，主动作会优先直达值得继续的业务链路
+  - 日视图当前是五维紧凑操作台，`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
 ## 当前产品状态
@@ -98,7 +101,7 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-02`，当前自动化基线为 `27` 个测试文件、全量测试通过。
+截至 `2026-05-02`，当前自动化基线为 `27` 个测试文件、`248` 个测试全部通过。
 
 ## 常用命令
 
@@ -129,7 +132,7 @@ npx prisma db push
 
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
-- `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏骨架、周记录板与日视图主阅读页。
+- `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
@@ -162,4 +165,6 @@ npx prisma db push
   - 顶部导航中区承接 `month / week / day` 切换、前后翻段、回到今天与实时摘要
   - calendar 页面正文已进入首屏工作区；超量信息进入 pane 内局部滚动
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，并提供 `查看当天` 日期级入口
-  - 日视图按五维卡片组织，不做时间轴，也不内联正文编辑
+  - 周视图当前是 7 天同屏对比板，卡片主动作优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
+  - 日视图当前按五维紧凑卡片组织，主按钮稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析；`编辑日志` 只保留为已保存维度的次级轻链接
+  - 日视图不做时间轴，也不内联正文编辑

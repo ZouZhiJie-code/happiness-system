@@ -46,7 +46,7 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影与 deep link helper，不直接访问数据库
 - `src/components/calendar`
-  - 月网格、周记录板、日视图 overview、五维卡片、header toolbar、view switcher 与 month/week/day 工作区容器
+  - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -176,9 +176,13 @@
   - 已进入双栏骨架：月历主体 + 当天检查面板
   - 右栏固定提供 `查看当天` 日期级入口
 - `week`
-  - 保留周记录板 + 周摘要，但已经被收进固定工作区 pane
+  - 已升级为 7 天同屏对比板
+  - 主摘要压缩成轻量 `WEEK SNAPSHOT`，不再保留厚重侧栏
+  - 每天卡片只保留日期、状态、完成/草稿/进行中摘要、短判断文案和唯一主动作
 - `day`
-  - 保留 dedicated reading layout，但正文内容现在在主 pane 内滚动，不再依赖整页长滚动
+  - 已升级为“一条总览 + 五维紧凑操作台”
+  - 每卡只保留维度身份、状态、标题或摘要、唯一主按钮和少量次级轻链接
+  - `mixed` 主动作由前端稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
 
 ## 4. 结构化数据面
 

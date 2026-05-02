@@ -76,7 +76,7 @@ function buildDayRecord(): CalendarDayRecord {
         hasActiveSession: true,
         hasSavedEntry: true,
         sessionId: "session-reflection",
-        actions: ["continue_interview", "view_journal", "edit_saved_journal"]
+        actions: ["edit_saved_journal", "view_journal", "continue_interview"]
       }),
       buildDimensionStatus({
         dimension: "improvement",
@@ -146,7 +146,7 @@ describe("calendar day shell", () => {
     });
   });
 
-  it("renders a dedicated day view with five dimension cards and grouped actions", async () => {
+  it("renders a compact day workspace with stable primary actions", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarDayShell />);
@@ -169,7 +169,12 @@ describe("calendar day shell", () => {
       "calendar-dimension-card-gratitude"
     ]);
 
-    expect(screen.getByRole("link", { name: "继续编辑" })).toHaveAttribute(
+    expect(screen.getAllByText("进行中").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("草稿").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("已完成").length).toBeGreaterThan(0);
+
+    const joyCard = screen.getByTestId("calendar-dimension-card-joy");
+    expect(within(joyCard).getByRole("link", { name: "继续编辑" })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy&panel=journal"
     );
@@ -185,11 +190,15 @@ describe("calendar day shell", () => {
     );
 
     const mixedCard = screen.getByTestId("calendar-dimension-card-reflection");
+    expect(within(mixedCard).getByRole("link", { name: "继续访谈" })).toHaveAttribute(
+      "href",
+      "/interview?dimension=reflection&sessionId=session-reflection&entryDate=2026-05-01"
+    );
     const mixedLinks = within(mixedCard).getAllByRole("link");
     expect(mixedLinks.map((link) => link.textContent)).toEqual(["继续访谈", "查看日志", "编辑日志"]);
 
     const emptyCard = screen.getByTestId("calendar-dimension-card-gratitude");
-    expect(within(emptyCard).getByRole("link", { name: "开始访谈" })).toHaveAttribute(
+    expect(within(emptyCard).getByRole("link", { name: "开始记录" })).toHaveAttribute(
       "href",
       "/interview?dimension=gratitude&entryDate=2026-05-01"
     );
@@ -205,7 +214,7 @@ describe("calendar day shell", () => {
     render(<CalendarDayShell />);
 
     expect(await screen.findByTestId("calendar-day-view")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "开始访谈" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "开始记录" })).not.toBeInTheDocument();
     expect(screen.getAllByText("未来日期暂不支持开始记录")).toHaveLength(5);
   });
 

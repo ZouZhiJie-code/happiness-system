@@ -4,7 +4,7 @@ import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { CalendarDayDetail } from "@/components/calendar/calendar-day-detail";
+import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import { interviewDimensions } from "@/features/interview/dimensions";
@@ -67,6 +67,7 @@ export function CalendarMonthShell() {
   });
   const currentDate = normalizedSearch.date;
   const monthKey = getCalendarMonthKey(currentDate);
+  const [selectedDate, setSelectedDate] = useState(currentDate);
   const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +79,10 @@ export function CalendarMonthShell() {
       router.replace(normalizedSearch.href, { scroll: false });
     }
   }, [normalizedSearch.href, router, searchParams]);
+
+  useEffect(() => {
+    setSelectedDate(currentDate);
+  }, [currentDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,67 +120,65 @@ export function CalendarMonthShell() {
     () => new Map((monthRecord?.days ?? []).map((day) => [day.date, day])),
     [monthRecord]
   );
-  const selectedDay = daysByDate.get(currentDate) ?? buildEmptyCalendarDayRecord(currentDate);
+  const selectedDay = daysByDate.get(selectedDate) ?? buildEmptyCalendarDayRecord(selectedDate);
   const monthStats = monthRecord ? buildCalendarMonthStats(monthRecord) : null;
 
   function handleSelectDate(date: string) {
+    setSelectedDate(date);
     router.replace(buildCalendarHref({ view: "month", date }), { scroll: false });
   }
 
   return (
     <section className="calendar-workspace page-shell rounded-[40px] px-3 py-3 md:px-4 md:py-4" data-testid="calendar-month-workspace">
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1.15fr)_minmax(16rem,0.85fr)] gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)] xl:grid-rows-1 xl:gap-4">
-          <div
-            className="calendar-pane paper-panel flex min-h-0 flex-col rounded-[30px] p-3 md:p-4"
-            data-testid="calendar-month-primary-pane"
-          >
-            {error ? (
-              <div className="paper-sheet flex min-h-0 flex-1 flex-col items-center justify-center rounded-[28px] p-6 text-center">
-                <p className="font-display text-[1.45rem] text-[#2a2017]">这个月的记录暂时没打开</p>
-                <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => setRefreshNonce((value) => value + 1)}
-                  className="mt-4 rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d]"
-                >
-                  重新加载
-                </button>
-              </div>
-            ) : (
-              <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
-                {monthStats?.recordedDayCount === 0 ? (
-                  <div className="mb-4 rounded-[24px] border border-dashed border-[rgba(168,124,69,0.18)] bg-[rgba(255,250,242,0.72)] px-4 py-3 text-[0.9rem] leading-7 text-[#705742]">
-                    这个月还没有开始记录，可以先点开某一天，从一个维度开始写起。
-                  </div>
-                ) : null}
-                <CalendarMonthGrid
-                  cells={monthGrid}
-                  daysByDate={daysByDate}
-                  selectedDate={currentDate}
-                  today={today}
-                  onSelectDate={handleSelectDate}
-                />
-              </div>
-            )}
-          </div>
+        <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+          <div className="grid min-h-0 h-full min-w-[1100px] grid-cols-[minmax(0,1fr)_22rem] gap-4">
+            <div
+              className="calendar-pane paper-panel flex min-h-0 flex-col rounded-[30px] p-3 md:p-4"
+              data-testid="calendar-month-primary-pane"
+            >
+              {error ? (
+                <div className="paper-sheet flex min-h-0 flex-1 flex-col items-center justify-center rounded-[28px] p-6 text-center">
+                  <p className="font-display text-[1.45rem] text-[#2a2017]">这个月的记录暂时没打开</p>
+                  <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => setRefreshNonce((value) => value + 1)}
+                    className="mt-4 rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d]"
+                  >
+                    重新加载
+                  </button>
+                </div>
+              ) : (
+                <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
+                  {monthStats?.recordedDayCount === 0 ? (
+                    <div className="mb-4 rounded-[24px] border border-dashed border-[rgba(168,124,69,0.18)] bg-[rgba(255,250,242,0.72)] px-4 py-3 text-[0.9rem] leading-7 text-[#705742]">
+                      这个月还没有开始记录，可以先点开某一天，再进入当天页看看从哪一维开始。
+                    </div>
+                  ) : null}
+                  <CalendarMonthGrid
+                    cells={monthGrid}
+                    daysByDate={daysByDate}
+                    selectedDate={selectedDate}
+                    today={today}
+                    onSelectDate={handleSelectDate}
+                  />
+                </div>
+              )}
+            </div>
 
-          <div
-            className="calendar-pane min-h-0"
-            data-testid="calendar-month-secondary-pane"
-          >
-            {isLoading ? (
-              <div className="paper-sheet h-full min-h-0 animate-pulse rounded-[30px]" />
-            ) : null}
-            {!isLoading ? (
-              <div className="calendar-pane-scroll panel-scroll h-full pr-1">
-                <CalendarDayDetail
-                  day={selectedDay}
-                  today={today}
-                  dayViewHref={buildCalendarHref({ view: "day", date: selectedDay.date })}
-                />
-              </div>
-            ) : null}
+            <aside className="calendar-pane min-h-0" data-testid="calendar-month-secondary-pane">
+              {isLoading ? <div className="paper-sheet h-full min-h-0 animate-pulse rounded-[30px]" /> : null}
+              {!isLoading ? (
+                <div className="h-full min-h-0">
+                  <CalendarMonthDayPanel
+                    day={selectedDay}
+                    today={today}
+                    dayViewHref={buildCalendarHref({ view: "day", date: selectedDay.date })}
+                  />
+                </div>
+              ) : null}
+            </aside>
           </div>
         </div>
       </div>
