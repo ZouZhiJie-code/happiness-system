@@ -19,6 +19,7 @@ interface InterviewState {
   dimension: InterviewDimension;
   bootState: InterviewBootState;
   sessionDimension: InterviewDimension | null;
+  sessionEntryDate: string | null;
   sessionId: string | null;
   status: InterviewSessionRecord["status"] | null;
   stage: InterviewSessionRecord["stage"] | null;
@@ -54,6 +55,7 @@ const initialState = {
   dimension: "joy" as InterviewDimension,
   bootState: "idle" as InterviewBootState,
   sessionDimension: null,
+  sessionEntryDate: null,
   sessionId: null,
   status: null,
   stage: null,
@@ -81,6 +83,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       dimension: session.dimension,
       bootState: "idle",
       sessionDimension: session.dimension,
+      sessionEntryDate: session.entryDate,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,
@@ -99,6 +102,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       dimension: session.dimension,
       bootState: "idle",
       sessionDimension: session.dimension,
+      sessionEntryDate: session.entryDate,
       sessionId: session.id,
       status: session.status,
       stage: session.stage,

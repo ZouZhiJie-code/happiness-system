@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
@@ -24,10 +25,11 @@ import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewSessionRecord } from "@/types/interview";
 
 const navItems = [
-  { href: "/", label: "首页" },
-  { href: "/interview", label: "访谈" },
-  { href: "/settings", label: "设置" }
-];
+  { href: "/", matchPath: "/", label: "首页" },
+  { href: "/interview", matchPath: "/interview", label: "访谈" },
+  { href: "/calendar", matchPath: "/calendar", label: "记录日历" },
+  { href: "/settings", matchPath: "/settings", label: "设置" }
+] as const;
 
 function getStatusChipClass(isSelected: boolean, isEmphasized: boolean) {
   if (isSelected) {
@@ -121,6 +123,7 @@ export function SiteHeader() {
   } = useInterviewStore();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
   const isInterviewPage = pathname === "/interview";
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
@@ -464,14 +467,14 @@ export function SiteHeader() {
         <nav className="flex items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.22)] bg-[rgba(244,226,194,0.72)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.38)]">
           {navItems.map((item) => (
             <Link
-              key={item.href}
-              href={item.href}
+              key={item.matchPath}
+              href={item.matchPath === "/calendar" ? todayCalendarHref : item.href}
               prefetch={false}
-              onClick={(event) => handleProtectedNavigation(event, item.href)}
-              aria-current={isActive(item.href) ? "page" : undefined}
+              onClick={(event) => handleProtectedNavigation(event, item.matchPath === "/calendar" ? todayCalendarHref : item.href)}
+              aria-current={isActive(item.matchPath) ? "page" : undefined}
               className={clsx(
                 "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition duration-300",
-                isActive(item.href)
+                isActive(item.matchPath)
                   ? "bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_8px_18px_rgba(118,75,37,0.2)]"
                   : "text-[#4a4038] hover:bg-[rgba(169,111,61,0.14)] hover:text-[#2f2823]"
               )}

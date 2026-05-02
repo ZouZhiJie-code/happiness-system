@@ -162,7 +162,11 @@
   - `src/server/repositories/calendar.repository.ts`
   - `src/server/services/calendar/calendar.service.ts`
   - 已有 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 但还没有 `/api/calendar/*` 路由和前端页面
+  - `/api/calendar/day|week|month` 已落地
+  - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
+  - `/calendar` 月视图、月统计、轻详情与 deep link 已落地
+  - `week / day` 视图还没有落地
+  - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
 ## 3. 当前仍然没有完成的事
 
@@ -221,8 +225,8 @@
 - `npm test`
 
 测试结果：
-- `18` 个测试文件
-- `205` 个测试全部通过
+- `23` 个测试文件
+- `225` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -250,6 +254,8 @@
 - calendar `day / week / month` 聚合器
 - calendar repository 标准化 source
 - calendar service 查询与参数校验
+- calendar API `day / week / month` 路由、错误映射与未来日期动作裁剪
+- calendar month view、月统计、轻详情和 `/calendar -> /interview` deep link
 
 fulfillment 人工 smoke 基线：
 - 推进完成
@@ -284,3 +290,8 @@ reflection 人工 smoke 基线：
 3. 处理多维度通用引擎的历史技术债
    - 把 `interview.service.ts` 和 joy-first 分支逐步抽成真正的维度无关实现
    - 减少后续新增维度或继续打磨维度时的重复改动面
+
+如果继续做记录日历这条线，下一步应转到前端视图层：
+- 周视图页面与 URL 驱动联动
+- 日视图详情页或详情抽屉
+- 第 5 步月视图已经落地，后续应转到 week/day 视图与更完整的日志详情流

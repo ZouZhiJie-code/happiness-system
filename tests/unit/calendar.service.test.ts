@@ -19,6 +19,7 @@ describe("calendar.service", () => {
   beforeEach(() => {
     listCalendarSourcesByDate.mockReset();
     listCalendarSourcesByDateRange.mockReset();
+    vi.useRealTimers();
   });
 
   it("returns an empty day record when no sources exist", async () => {
@@ -107,6 +108,68 @@ describe("calendar.service", () => {
     await expect(getCalendarMonth("2026/05")).rejects.toMatchObject({
       code: "INVALID_CALENDAR_MONTH"
     } satisfies Partial<CalendarQueryError>);
+  });
+
+  it("throws a typed error for impossible month input", async () => {
+    await expect(getCalendarMonth("2026-13")).rejects.toMatchObject({
+      code: "INVALID_CALENDAR_MONTH"
+    } satisfies Partial<CalendarQueryError>);
+  });
+
+  it("removes start and continue interview actions for future dates", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-02T04:00:00.000Z"));
+    listCalendarSourcesByDate.mockResolvedValue({
+      sessions: [],
+      entries: []
+    });
+
+    const result = await getCalendarDay("2026-05-03");
+
+    expect(result.primaryAction).toBeNull();
+    expect(result.dimensions.every((dimension) => !dimension.actions.includes("start_interview"))).toBe(true);
+  });
+
+  it("keeps journal actions on future dates while removing continue interview", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-02T04:00:00.000Z"));
+    listCalendarSourcesByDate.mockResolvedValue({
+      sessions: [
+        {
+          kind: "session",
+          id: "session-1",
+          dimension: "joy",
+          date: "2026-05-03",
+          status: "active",
+          updatedAt: "2026-05-02T10:00:00.000Z",
+          startedAt: "2026-05-02T09:00:00.000Z",
+          completedAt: null,
+          pausedAt: null,
+          draftSummary: "先记下来一点线索。",
+          journalEntryId: null
+        }
+      ],
+      entries: [
+        {
+          kind: "entry",
+          id: "entry-1",
+          sessionId: "session-1",
+          dimension: "joy",
+          date: "2026-05-03",
+          status: "draft",
+          title: "先记下来",
+          content: "这是一条未来日期上的草稿。",
+          updatedAt: "2026-05-02T11:00:00.000Z",
+          savedAt: null
+        }
+      ]
+    });
+
+    const result = await getCalendarDay("2026-05-03");
+    const joyDimension = result.dimensions.find((dimension) => dimension.dimension === "joy");
+
+    expect(result.primaryAction).toBe("continue_editing");
+    expect(joyDimension?.actions).toEqual(["continue_editing"]);
   });
 
   it("wraps repository failures in CALENDAR_QUERY_FAILED", async () => {

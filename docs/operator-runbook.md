@@ -140,8 +140,8 @@ npm test
 ```
 
 截至 `2026-05-02`，当前基线是：
-- `18` 个测试文件
-- `205` 个测试全部通过
+- `23` 个测试文件
+- `225` 个测试全部通过
 
 ## 5. 高频故障排查
 
@@ -337,9 +337,11 @@ npm run dev
 - `transcribe` 是 stub
 - `interview.service.ts` 仍是 joy-first 的导出层
 - joy 正文生成还会继续做风格优化
-- calendar 功能当前只完成了服务端基础：
+- calendar 功能当前已完成月视图这一层：
   - `InterviewSession.entryDate`
   - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - `calendar.repository.ts`
   - `calendar.service.ts`
-  - 还没有 `/api/calendar/*` 路由和前端页面
+  - `GET /api/calendar/day|week|month`
+  - `/calendar?view=month&date=YYYY-MM-DD`
+  - `week / day` 视图还没有落地

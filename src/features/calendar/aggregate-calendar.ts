@@ -283,7 +283,7 @@ export function aggregateCalendarDimension(input: {
     title: latestEntry?.title ?? null,
     summary: latestEntry ? summarizeContent(latestEntry.content) : latestSession?.draftSummary ?? null,
     latestUpdatedAt,
-    sessionId: latestSession?.id ?? null,
+    sessionId: latestSession?.id ?? latestEntry?.sessionId ?? null,
     journalEntryId: latestEntry?.id ?? null,
     actions,
     hasActiveSession,

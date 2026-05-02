@@ -13,7 +13,7 @@
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 记录日历的服务端基础已落地：calendar 展示层读模型、calendar 聚合器、calendar repository 与 calendar service 已完成，但还没有公开 API 路由和前端页面。
+- 记录日历的月视图主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、月统计、轻详情，以及回到 `/interview` 的 deep link 都已完成；`week / day` 视图还没有落地。
 
 用户当前在产品里感知到的主线是：
 1. 进入某个维度的访谈页。
@@ -278,6 +278,9 @@ gratitude 理论翻译基线：
 - `PUT /api/journal-entry/[id]`
 - `PUT /api/joy-entry/[id]`（兼容别名）
 - `POST /api/transcribe`
+- `GET /api/calendar/day?date=YYYY-MM-DD`
+- `GET /api/calendar/week?date=YYYY-MM-DD`
+- `GET /api/calendar/month?month=YYYY-MM`
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
@@ -285,11 +288,13 @@ gratitude 理论翻译基线：
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
 - `transcribe` 现在还是占位 stub，不是真实语音转写。
-- calendar 目前只有服务端内部能力：
+- calendar 当前已经有公开只读能力：
   - `getCalendarDay`
   - `getCalendarWeek`
   - `getCalendarMonth`
-  - `/api/calendar/*` 还没接出
+  - `GET /api/calendar/day|week|month`
+  - `/calendar?view=month&date=YYYY-MM-DD`
+  - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 
 ## 7. 本地开发与排障
 
@@ -329,8 +334,8 @@ gratitude 理论翻译基线：
 - `npx tsc --noEmit`
 
 截至 `2026-05-02`，本地测试基线为：
-- `18` 个测试文件
-- `205` 个测试全部通过
+- `23` 个测试文件
+- `225` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

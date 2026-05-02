@@ -494,15 +494,740 @@ data: {
 
 ### 5.9 calendar 后端基础
 
-截至 `2026-05-02`，仓库里已经有记录日历的后端基础，但还没有公开 HTTP 路由：
+截至 `2026-05-02`，仓库里已经有记录日历的后端基础与公开 HTTP 路由：
 - `src/features/calendar/aggregate-calendar.ts`
   - 纯展示层聚合器，负责 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
 - `src/server/repositories/calendar.repository.ts`
   - 把 `InterviewSession / JoyEntry` 标准化成 calendar source
 - `src/server/services/calendar/calendar.service.ts`
   - 暴露 `getCalendarDay / getCalendarWeek / getCalendarMonth`
+- `src/app/api/calendar/day/route.ts`
+- `src/app/api/calendar/week/route.ts`
+- `src/app/api/calendar/month/route.ts`
 
 这意味着：
-- 当前可以在服务层直接调用 calendar 能力
-- 但 `/api/calendar/month|week|day` 还没有接出
-- 前端记录日历页面也还没有落地
+- 当前既可以在服务层直接调用 calendar 能力，也可以通过 HTTP 调用：
+  - `GET /api/calendar/day?date=YYYY-MM-DD`
+  - `GET /api/calendar/week?date=YYYY-MM-DD`
+  - `GET /api/calendar/month?month=YYYY-MM`
+- `/calendar?view=month&date=YYYY-MM-DD` 月视图已经落地
+- `week / day` 视图仍然还没有落地
+
+### 5.10 Step 4: calendar API 可执行规格
+
+本节保留为第 4 步的实现契约回顾。当前代码已经按这份契约落地了稳定的 calendar HTTP API，继续保留是为了后续 `week / day` 视图实现时有同一份边界参考。
+
+#### 目标
+
+- 新增三个只读接口：
+  - `GET /api/calendar/month?month=YYYY-MM`
+  - `GET /api/calendar/week?date=YYYY-MM-DD`
+  - `GET /api/calendar/day?date=YYYY-MM-DD`
+- 响应体直接返回 calendar 读模型，不包一层 `data`，不透出 Prisma / 表名 / 内部结构字段。
+- API 本身就产出三视图所需业务状态，前端不负责再拼“这一天是什么状态、该显示什么动作”。
+- 未来日期可查询，但不可通过 calendar API 暴露“开始记录 / 继续访谈”动作。
+
+#### 实现范围
+
+本步只做 API 面，不做：
+- `/calendar` 页面
+- 月 / 周 / 日视图组件
+- 新的数据库迁移
+- 对 `JoyEntry` / `InterviewSession` 结构做额外重构
+
+#### 依赖与复用
+
+直接复用现有服务层：
+- `getCalendarMonth(month)`
+- `getCalendarWeek(date)`
+- `getCalendarDay(date)`
+
+直接复用现有读模型：
+- `CalendarMonthRecord`
+- `CalendarWeekRecord`
+- `CalendarDayRecord`
+
+如果为实现 API 需要补充参数校验或未来日期动作裁剪，可以修改：
+- `src/server/services/calendar/calendar.service.ts`
+- `src/features/calendar/types.ts`
+- `src/features/calendar/aggregate-calendar.ts`
+
+但不能改变“API 直接返回 calendar 读模型”这个对外契约。
+
+#### 路由文件
+
+需要新增：
+- `src/app/api/calendar/month/route.ts`
+- `src/app/api/calendar/week/route.ts`
+- `src/app/api/calendar/day/route.ts`
+
+如需统一 query 校验与错误映射，可补：
+- `src/features/calendar/schema.ts`
+- 或 `src/features/calendar/api.ts`
+
+目标是避免三个 route 各自手写一套字符串判断。
+
+#### 请求契约
+
+`GET /api/calendar/month`
+- 必填 query: `month`
+- 格式：`YYYY-MM`
+- 语义：查询该自然月的完整日记录数组
+
+`GET /api/calendar/week`
+- 必填 query: `date`
+- 格式：`YYYY-MM-DD`
+- 语义：查询“该日期所在周”的 7 天数据
+- 周起点固定为北京时间语义下的周一，终点为周日
+
+`GET /api/calendar/day`
+- 必填 query: `date`
+- 格式：`YYYY-MM-DD`
+- 语义：查询某一天五维详情
+
+统一规则：
+- 只接受 query string，不接受 body
+- 缺少参数按 `400` 处理
+- 格式错误按 `400` 处理
+- 不合法自然日也按 `400` 处理，例如 `2026-02-30`
+- 不合法自然月也按 `400` 处理，例如 `2026-13`
+- 日期解释、今天判定、未来日期判定全部以 `Asia/Shanghai` 为准
+
+注意：
+- 当前 `calendar.service.ts` 已能拦截非法 `YYYY-MM-DD`
+- 但 `YYYY-MM` 目前只有正则形状校验，第 4 步实现时必须补上“月份范围合法性校验”，不能让 `2026-13` 进入后续逻辑
+
+#### 成功响应契约
+
+`GET /api/calendar/month?month=2026-05`
+
+```json
+{
+  "month": "2026-05",
+  "days": [
+    {
+      "date": "2026-05-01",
+      "overallStatus": "empty",
+      "dimensions": [
+        {
+          "dimension": "joy",
+          "status": "empty",
+          "title": null,
+          "summary": null,
+          "latestUpdatedAt": null,
+          "sessionId": null,
+          "journalEntryId": null,
+          "actions": ["start_interview"],
+          "hasActiveSession": false,
+          "hasDraftEntry": false,
+          "hasSavedEntry": false
+        }
+      ],
+      "activeCount": 0,
+      "draftCount": 0,
+      "savedCount": 0,
+      "primaryTitle": null,
+      "primarySummary": null,
+      "latestUpdatedAt": null,
+      "primaryAction": "start_interview"
+    }
+  ]
+}
+```
+
+`GET /api/calendar/week?date=2026-05-01`
+
+```json
+{
+  "anchorDate": "2026-05-01",
+  "weekStartDate": "2026-04-27",
+  "weekEndDate": "2026-05-03",
+  "days": []
+}
+```
+
+`GET /api/calendar/day?date=2026-05-01`
+
+```json
+{
+  "date": "2026-05-01",
+  "overallStatus": "draft",
+  "dimensions": [
+    {
+      "dimension": "improvement",
+      "status": "draft",
+      "title": "把节奏放稳",
+      "summary": "今天先把事情拆小以后，状态明显稳下来。",
+      "latestUpdatedAt": "2026-05-01T12:00:00.000Z",
+      "sessionId": "session_123",
+      "journalEntryId": "entry_123",
+      "actions": ["continue_editing"],
+      "hasActiveSession": false,
+      "hasDraftEntry": true,
+      "hasSavedEntry": false
+    }
+  ],
+  "activeCount": 0,
+  "draftCount": 1,
+  "savedCount": 0,
+  "primaryTitle": "把节奏放稳",
+  "primarySummary": "今天先把事情拆小以后，状态明显稳下来。",
+  "latestUpdatedAt": "2026-05-01T12:00:00.000Z",
+  "primaryAction": "continue_editing"
+}
+```
+
+说明：
+- 响应直接是 `CalendarMonthRecord / CalendarWeekRecord / CalendarDayRecord`
+- 不再额外包 `success`、`data`、`meta`
+- `dimensions` 仍应返回完整五维状态；上面示例只展开了其中一个维度对象
+- `summary` 必须继续遵守当前安全摘要规则，不暴露内部字段名，如 `snapshotData`、`payload`、`pendingDecision`
+
+#### 错误响应契约
+
+统一返回 JSON：
+
+参数错误：
+
+```json
+{
+  "error": "INVALID_CALENDAR_DATE"
+}
+```
+
+或：
+
+```json
+{
+  "error": "INVALID_CALENDAR_MONTH"
+}
+```
+
+查询失败：
+
+```json
+{
+  "error": "CALENDAR_QUERY_FAILED"
+}
+```
+
+状态码规则：
+- `400`: 缺参、格式错误、自然日错误、自然月错误
+- `500`: repository / service 查询失败，或读模型生成失败
+
+第 4 步不引入 interview 那套 `issue` 结构化错误对象。calendar API 当前只需要稳定、简单的只读错误语义。
+
+#### 未来日期处理
+
+这是第 4 步必须实现的服务端约束，不能只交给前端：
+
+- 未来日期允许查询
+- 未来日期不允许暴露：
+  - `start_interview`
+  - `continue_interview`
+- 如果未来日期是空白日：
+  - `primaryAction = null`
+  - 对应维度的 `actions = []`
+- 如果未来日期存在异常或迁移遗留数据：
+  - 允许继续返回 `draft / completed / mixed` 等状态
+  - 允许保留 `continue_editing / view_journal / edit_saved_journal`
+  - 但必须移除所有“启动或继续访谈”动作
+
+这样做的原因：
+- 服务端先兜底，防止前端漏拦截
+- 前端仍可基于日期再次禁用 CTA，形成双保险
+
+建议实现方式：
+- 在 service 层聚合完成后统一走一层 `sanitizeCalendarActionsForFutureDate`
+- 不要在 route 里逐层手改 `dimensions`，避免三条路由逻辑漂移
+
+#### 与 `/calendar` 页面 URL 的关系
+
+第 4 步虽然不做页面，但需要提前固定 URL 驱动约定：
+- `/calendar?view=month&date=2026-05-01`
+- `/calendar?view=week&date=2026-05-01`
+- `/calendar?view=day&date=2026-05-01`
+
+约定如下：
+- 页面 URL 使用 `view + date`
+- month API 仍然使用 `month=YYYY-MM`
+- 因此前端或共享 helper 需要把 `date=2026-05-01` 派生为 `month=2026-05`
+- 这种派生只属于路由参数转换，不属于业务状态二次拼装
+
+建议在后续 UI 步骤复用同一组 helper：
+- `resolveCalendarViewFromSearchParams`
+- `resolveCalendarMonthKey(date)`
+- `resolveCalendarDateKey(date)`
+
+#### 实现清单
+
+第 4 步落地时，最少应完成：
+
+1. 新增 calendar query schema 或等价参数解析 helper
+2. 为 `month / week / day` 三条路由接入 `calendar.service.ts`
+3. 为非法 `month` 增加自然月合法性校验
+4. 在 service 层新增未来日期动作裁剪
+5. 为三条 API 增加自动化测试
+6. 更新 `README.md`、`docs/architecture.md`、`docs/integration-guide.md`、`docs/handoff.md` 中“calendar 还没有公开 API”的事实表述
+
+#### 自动化验收
+
+至少新增这些测试：
+
+- `GET /api/calendar/day?date=2026-05-02` 在无数据时返回 `200`，且 body 为 `CalendarDayRecord`
+- `GET /api/calendar/week?date=2026-05-07` 返回 `7` 天数据，周范围按周一到周日计算
+- `GET /api/calendar/month?month=2026-02` 返回 `28` 天数据
+- `GET /api/calendar/day?date=2026-02-30` 返回 `400` + `INVALID_CALENDAR_DATE`
+- `GET /api/calendar/month?month=2026-13` 返回 `400` + `INVALID_CALENDAR_MONTH`
+- 查询未来空白日时，返回 `200`，但 `primaryAction = null`，且不包含 `start_interview`
+- 查询未来某周 / 某月时，未来日期仍会出现在数组里，但不暴露启动访谈动作
+- repository 或 service 抛错时，API 返回 `500` + `CALENDAR_QUERY_FAILED`
+
+#### 人工验收
+
+1. 访问 `GET /api/calendar/day?date=2026-05-02`
+   预期：返回单日读模型；没有 `data` 包装层；没有数据库字段名。
+
+2. 访问 `GET /api/calendar/week?date=2026-05-07`
+   预期：`weekStartDate = 2026-05-04`，`weekEndDate = 2026-05-10`。
+
+3. 访问 `GET /api/calendar/month?month=2026-13`
+   预期：`400`，body 为 `{ "error": "INVALID_CALENDAR_MONTH" }`。
+
+4. 访问未来日期，例如北京时间今天之后的 `GET /api/calendar/day?date=2099-01-01`
+   预期：可查询；不会出现 `start_interview` 或 `continue_interview`。
+
+#### 完成标志
+
+满足以下条件，第 4 步才算完成：
+- 三条 API 都可独立返回完整 `month / week / day` 读模型
+- 前端不需要再按 session / entry 自己拼状态
+- 未来日期即使被查询，也无法通过 API 获得“开始记录 / 继续访谈”动作
+- 文档事实同步更新，不再写“calendar 只有服务层、没有公开 API”
+
+### 5.11 Step 5: month view 可执行规格
+
+本节现在既是第 5 步的实现契约回顾，也是当前月视图的对齐基线。`/calendar` 月视图已经按这份规格落地，保留这节是为了后续继续做 `week / day` 视图时不丢掉既定边界。
+
+#### 目标
+
+- 新增 `/calendar` 页面和 header 基础导航入口。
+- 只先做 `month` 视图，不提前铺 `week / day` 页面。
+- 月视图本身要完成：
+  - 当前月份展示
+  - 上月 / 下月切换
+  - 回到今天
+  - 今天高亮
+  - 每日整体状态
+  - 五维轻量标记
+  - 本月统计
+- 点击日期先打开轻详情，不直接跳走。
+- 轻详情必须能把用户带入下一步动作，而不是只做信息展示。
+
+#### 范围
+
+本步应完成：
+- `src/app/calendar/page.tsx`
+- header 导航增加“记录日历”入口
+- 月视图网格
+- 轻详情面板
+- 月视图 URL 驱动
+- 月视图到访谈页的深链规则
+
+本步不做：
+- `week` 页面
+- `day` 独立页面
+- 新的数据库迁移
+- 单独的日志详情页
+
+#### 默认假设
+
+为了让第 5 步能独立闭环，先采用下面这组默认假设：
+
+- `/calendar` 只支持 `view=month`
+- URL 仍保留未来扩展位：
+  - `/calendar?view=month&date=2026-05-01`
+- `date` 既是当前月份 anchor，也是当前选中日期
+- V1 默认进入页面后就以 `date` 对应的当天作为当前选中日期，并展示轻详情
+- 如果后续产品决定“默认不自动展开详情”，可以只改前端局部状态，不需要改 API 或数据契约
+
+#### URL 与导航契约
+
+`/calendar`
+- 无 query 时，前端应归一到：
+  - `/calendar?view=month&date=<北京时间今天>`
+
+`view`
+- 第 5 步只接受 `month`
+- 如果用户手动输入 `week` 或 `day`，第 5 步直接归一回 `month`
+
+`date`
+- 必须是 `YYYY-MM-DD`
+- 非法日期归一到北京时间今天
+- 月视图展示月份由 `date` 派生，不单独维护 `month` query
+
+月份切换规则：
+- 点击“上月 / 下月”时，保留当前“日”部分
+- 如果目标月份没有这一日，则自动 clamp 到该月最后一天
+- 例：
+  - `2026-03-31 -> 上月 => 2026-02-28`
+  - `2026-01-31 -> 下月 => 2026-02-28`
+
+回到今天：
+- 把 URL 归一到 `/calendar?view=month&date=<北京时间今天>`
+
+点击日期：
+- 更新 URL 中的 `date`
+- 不跳去别页
+- 只更新选中态并打开轻详情
+
+#### header 导航
+
+需要在现有 `SiteHeader` 中新增导航项：
+- `记录日历`
+
+建议目标链接：
+- `/calendar?view=month&date=<北京时间今天>`
+
+原因：
+- 进入时立即落在用户最关心的今天
+- 与当前 `view + date` URL 约定一致
+
+#### 页面与组件拆分
+
+建议最小拆分如下：
+
+- `src/app/calendar/page.tsx`
+  - 页面入口
+  - 负责 search params 归一与整体壳子
+- `src/components/calendar/calendar-month-shell.tsx`
+  - 月视图主容器
+  - 负责数据请求、月份切换、统计、详情开关
+- `src/components/calendar/calendar-month-grid.tsx`
+  - 月网格
+- `src/components/calendar/calendar-day-cell.tsx`
+  - 单日格子
+- `src/components/calendar/calendar-day-detail.tsx`
+  - 轻详情
+- `src/features/calendar/view-state.ts`
+  - URL 解析、日期 clamp、month key 推导
+- `src/features/calendar/month-stats.ts`
+  - 本月统计派生逻辑
+- `src/features/calendar/interview-link.ts`
+  - 从 day/dimension 记录生成下一步跳转链接
+
+重点：
+- 第 5 步不要把 month 视图逻辑塞进 `page.tsx`
+- 也不要把“如何从 calendar record 生成访谈入口”散落在多个组件里
+
+#### 数据获取策略
+
+月视图主数据源固定为：
+- `GET /api/calendar/month?month=YYYY-MM`
+
+第 5 步默认不额外请求 day API：
+- 轻详情直接使用 month payload 中对应 day record
+- 这样可以避免点击日期后二次 loading
+
+如果后续 `day` 视图想展示更重的信息，再单独接 `GET /api/calendar/day`
+
+#### 月视图网格规格
+
+基础规则：
+- 一周从周一开始，到周日结束
+- 固定 7 列
+- 固定 6 行
+- 当前月之外的格子用占位空槽补齐，不展示相邻月份真实数据
+- 占位槽不响应点击
+
+为什么先用占位槽而不是相邻月数据：
+- 第 5 步直接复用 month API，不额外请求前后月份
+- 先把“当前月分布 + 当日详情 + 下一步动作”这条主链做稳
+
+每个当月日期格至少展示：
+- 日期数字
+- 今天高亮
+- 整体状态底色/描边
+- 五维轻量标记
+- 主标题或摘要的极短预览（仅在桌面宽度足够时显示一行，可选）
+
+状态视觉要求：
+- `empty`
+  - 低对比、轻边框
+- `in_progress`
+  - 明显提示“还在进行中”
+- `draft`
+  - 比进行中更稳定，但弱于已完成
+- `completed`
+  - 最强调
+- `mixed`
+  - 不伪装成单一状态，要保留“多状态并存”的感觉
+
+今天态与选中态：
+- 今天高亮和选中态必须可同时存在
+- 不能因为今天被选中，就看不出“今天”本身
+
+未来日期：
+- 仍然在月历中展示
+- 视觉上比过去/今天更轻一点
+- 如果 API 返回没有动作，前端不能自己补 `start_interview`
+
+#### 五维轻量标记
+
+每个日期格都要展示五维轻量标记，维度顺序固定为：
+- `joy`
+- `fulfillment`
+- `reflection`
+- `improvement`
+- `gratitude`
+
+V1 建议形式：
+- 五个小圆点或短条
+- 每个标记只表达该维度当前状态，不塞文字
+
+状态映射建议：
+- `empty`：浅色或空心
+- `in_progress`：半强调
+- `draft`：中强调
+- `completed`：高强调
+- `mixed`：单维通常不会出现 mixed；如果未来扩展出 mixed，也按高可见异常态处理
+
+第 5 步不要求在格子里直接写出维度名称，但轻详情里必须写明。
+
+#### 本月统计
+
+V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
+
+- `recordedDayCount`
+  - 当月 `overallStatus !== "empty"` 的天数
+- `completedDayCount`
+  - 当月至少有一个 `saved` 维度的天数
+- `followUpDayCount`
+  - 当月存在 `active` 或 `draft` 维度的天数
+- `dimensionCoverageCount`
+  - 当月五维里，有过非空记录的维度数
+
+展示文案可以更产品化，例如：
+- 有记录的天数
+- 已完成日志
+- 待继续的天数
+- 覆盖维度
+
+第 5 步不做：
+- 连续记录 streak
+- 完成率百分比
+- 跨月趋势图
+
+#### 轻详情规格
+
+交互形式默认采用：
+- 桌面：右侧详情面板，跟月历同屏并列
+- 移动端：底部 sheet / dialog
+
+采用这个默认的原因：
+- 桌面能保持“看分布 + 看详情”同屏
+- 移动端不挤压网格
+
+轻详情只展示：
+- 日期
+- 整体状态
+- 五维完成情况
+- 标题 / 摘要
+- 最后更新时间
+- 入口按钮
+
+轻详情明确不展示：
+- 原始数据库 id
+- `payload / snapshotData / pendingDecision`
+- 多段长正文
+- 访谈消息列表
+
+五维完成情况展示建议：
+- 每个维度一行
+- 展示：
+  - 维度中文名
+  - 该维度状态
+  - 如有标题则显示标题
+  - 如有摘要则显示安全摘要
+
+#### 轻详情动作规则
+
+这里必须按“日期 + 维度”生成动作，不能只看 `primaryAction`。
+
+原因：
+- 同一天可能有多个维度并存
+- 同一天可能是 `mixed`
+- `primaryAction` 只适合月格子的单一预览，不适合详情面板完整决策
+
+动作映射如下：
+
+`empty`
+- 如果是今天或过去日期：
+  - 展示 5 个维度按钮
+  - 每个按钮都指向对应维度的开始访谈
+- 如果是未来日期：
+  - 不展示开始按钮
+  - 展示说明：
+    - `未来日期暂不支持开始记录`
+
+`in_progress`
+- 对所有 `hasActiveSession = true` 的维度展示“继续访谈”
+
+`draft`
+- 对所有 `hasDraftEntry = true` 的维度展示“继续编辑”
+
+`completed`
+- 对所有 `hasSavedEntry = true` 的维度展示：
+  - `查看日志`
+  - `编辑日志`
+
+`mixed`
+- 不做单按钮猜测
+- 分维度列出所有可行动作
+
+#### 从月视图跳到访谈页的深链契约
+
+这是第 5 步必须一起定死的内容，否则月视图按钮无法真正可用。
+
+开始某一维度访谈：
+- `/interview?dimension=<dimension>&entryDate=YYYY-MM-DD`
+
+继续某个会话：
+- `/interview?dimension=<dimension>&sessionId=<sessionId>&entryDate=YYYY-MM-DD`
+
+继续编辑草稿：
+- `/interview?dimension=<dimension>&sessionId=<sessionId>&panel=journal`
+
+查看日志：
+- `/interview?dimension=<dimension>&sessionId=<sessionId>&panel=journal`
+
+编辑日志：
+- `/interview?dimension=<dimension>&sessionId=<sessionId>&panel=journal`
+
+说明：
+- 当前产品还没有独立日志详情页
+- 所以 `查看日志 / 编辑日志` 在第 5 步允许先落到同一个 journaling 工作区
+- 如果实现成本可控，`编辑日志` 可以额外把焦点落到正文编辑器；但这不是第 5 步硬要求
+
+#### 访谈页需要补齐的接缝
+
+为了让第 5 步真正闭环，`/interview` 页至少要补这几个 deep-link 规则：
+
+1. 显式 `sessionId` 优先级最高
+   - 如果 URL 里有 `sessionId`
+   - 先拉这个 session
+   - 不允许本地“按维度缓存恢复”的旧逻辑把它覆盖掉
+
+2. 显式 `entryDate` 其次
+   - 如果没有 `sessionId`，但有 `entryDate`
+   - 新开会话时要把这个日期带给 `POST /api/interview/session/start`
+
+3. 显式 query 高于本地 remembered dimension
+   - `dimension / sessionId / entryDate / panel` 都高于 localStorage fallback
+
+4. `panel=journal`
+   - 进入后默认打开右侧日志工作区
+
+第 5 步不要求把 session 缓存结构从“按维度”彻底重构成“按维度 + 日期”，但显式 deep link 不能再被旧缓存误恢复。
+
+#### 页面状态
+
+至少覆盖这些状态：
+
+加载中：
+- 页面壳子先出来
+- 月统计和月格子使用 skeleton
+- 轻详情也有对应 skeleton
+
+空月：
+- 即整个月 `recordedDayCount = 0`
+- 仍然正常显示日历网格
+- 详情区默认落在当前选中日
+- 给出一句轻提示，例如：
+  - `这个月还没有开始记录，可以从某一天先写起。`
+
+请求失败：
+- 展示错误卡片和重试按钮
+- 不要把整个页面打成空白
+
+未来日期空状态：
+- 页面能展示
+- 详情里不出现开始按钮
+- 需要有明确的不可开始说明
+
+#### 响应式规则
+
+桌面：
+- 月网格 + 详情并列
+- 详情默认常驻右侧
+
+平板：
+- 可仍然并列，但允许收窄详情宽度
+
+手机：
+- 月网格单列
+- 点日期后弹出底部 sheet
+- sheet 内保留相同字段和动作
+
+#### 可访问性与交互底线
+
+- 日期格必须是 button，不是 div
+- 当前选中日期要有 `aria-pressed` 或等价选中语义
+- 今天要有可被读屏识别的文案，例如 `今天`
+- 移动端详情 sheet 要有关闭按钮
+- 键盘可以切换到日期格并打开详情
+
+#### 实现清单
+
+第 5 步落地时，最少应完成：
+
+1. 新增 `/calendar` 页面
+2. `SiteHeader` 增加“记录日历”导航项
+3. 新增 month view 的 URL 解析与日期 helper
+4. 接 `GET /api/calendar/month`
+5. 做 7x6 月网格与五维轻量标记
+6. 做本月统计卡
+7. 做轻详情面板 / 移动端 sheet
+8. 接通从月视图到 `/interview` 的深链规则
+9. 让 `/interview` 正确响应 `sessionId / entryDate / panel`
+10. 更新 `README.md`、`docs/architecture.md`、`docs/integration-guide.md`、`docs/handoff.md` 中的当前事实
+
+#### 自动化验收
+
+至少新增这些测试：
+
+- `/calendar` 无 query 时，会归一到 `view=month + 北京时间今天`
+- `date=2026-03-31` 点击上月后，目标日期会 clamp 到 `2026-02-28`
+- 月网格固定渲染 42 个格位
+- 点击某一天只打开轻详情，不会跳走路由
+- 今天态和选中态可同时存在
+- month API 返回未来空白日时，轻详情不展示开始按钮
+- `empty` 的过去日期会展示 5 个维度开始按钮
+- `mixed` 日期会按维度列出动作，不只显示单个 `primaryAction`
+- 点击“继续访谈”会生成带 `sessionId` 的 interview deep link
+- 点击“开始某维度”会生成带 `entryDate` 的 interview deep link
+
+#### 人工验收
+
+1. 访问 `/calendar`
+   预期：进入当月月视图；能看到今天高亮、本月统计和当天轻详情。
+
+2. 点击某个有记录的日期
+   预期：不跳页；右侧或底部打开轻详情；能看到日期、状态、五维情况、摘要和入口按钮。
+
+3. 点击某个过去但未记录的日期
+   预期：轻详情展示 5 个维度开始按钮；任一点进去都带 `entryDate=该日期`。
+
+4. 点击某个未来日期
+   预期：能打开轻详情，但没有开始访谈按钮，并明确提示未来日期暂不支持开始记录。
+
+5. 点击某个“进行中”日期的继续访谈
+   预期：跳去正确维度的 `/interview`，且带显式 `sessionId`，不会被旧的维度缓存恢复到别的日期。
+
+#### 完成标志
+
+满足以下条件，第 5 步才算完成：
+- `/calendar` 月视图能独立展示当月分布
+- 用户能在月视图内看清某一天的整体状态与五维情况
+- 用户能从轻详情真实进入下一步，而不是停在静态展示
+- 未来日期限制、mixed 多维动作、以及 interview deep link 都按规格跑通

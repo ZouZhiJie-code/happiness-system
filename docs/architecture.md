@@ -25,8 +25,12 @@
 
 - `src/app/interview`
   - 访谈页与日志工作区
+- `src/app/calendar`
+  - 记录日历月视图页面
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
+- `src/app/api/calendar/*`
+  - 记录日历的 `day / week / month` 查询接口
 - `src/app/api/journal-entry/[id]`
   - 当前日志正文编辑主路由
 - `src/app/api/joy-entry/[id]`
@@ -40,7 +44,9 @@
   - 多维度共用：schema、维度定义、进度算法、前端元信息
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器，不直接访问数据库
+  - 以及 `day / week / month` 聚合器、month view URL/helper、月统计与 deep link helper，不直接访问数据库
+- `src/components/calendar`
+  - 月网格、日期格、轻详情与月视图容器
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -130,7 +136,7 @@
 
 ### 3.5 calendar 读模型
 
-当前已经落地但尚未公开出 HTTP 路由的记录日历读模型有：
+当前已经落地并通过 HTTP 路由公开的记录日历读模型有：
 - `CalendarDayRecord`
 - `CalendarWeekRecord`
 - `CalendarMonthRecord`
@@ -147,6 +153,7 @@
 - 同一天同维度优先取最新有效记录
 - 同一天多个维度允许并存
 - 无日志时只允许使用安全摘要，不暴露内部结构字段名
+- 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`，避免前端误开记录入口
 
 ## 4. 结构化数据面
 

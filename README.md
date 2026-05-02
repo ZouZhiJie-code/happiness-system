@@ -8,7 +8,7 @@
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 记录日历的后端基础已经落地：calendar 展示层读模型、calendar 聚合器、calendar repository 与 calendar service 已完成，但前端页面和公开 API 还没有接出。
+- 记录日历的月视图已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月历页、月统计、轻详情与进入访谈/日志的深链都已完成；`week / day` 视图还没有接出。
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
 ## 当前产品状态
@@ -33,6 +33,9 @@
 - `snapshotData` / `payload` 驱动的多维度结构化数据面
 - `entryDate` 驱动的会话日期归属与补写过去日期基础
 - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord` 读模型与对应服务端聚合链路
+- `GET /api/calendar/day|week|month` 公开日历查询接口
+- `/calendar?view=month&date=YYYY-MM-DD` 月视图页面、月统计和轻详情
+- `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐基线文档：`docs/theory/fulfillment-alignment.md`
 - reflection 理论对齐基线文档：`docs/theory/reflection-alignment.md`
@@ -121,7 +124,8 @@ npx prisma db push
 ## 关键实现现实
 
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
-- `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 已经存在，负责 `day / week / month` 记录读模型查询，但当前还没有公开 HTTP 路由。
+- `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
+- `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地月视图页面。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
@@ -144,8 +148,10 @@ npx prisma db push
 - 如果用户在日志整理过程中直接关闭日志面板，当前这次整理会被取消；这也是当前有意设计。
 - 结构化线索仍然存在于系统内部，用来驱动进度、收尾和日志生成，但不会直接展示给用户。
 - `thinkingSummary` 是用户可见的浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；它不能写成第二个正式追问。
-- calendar 功能当前只完成了服务端基础：
+- calendar 功能当前已完成月视图这一层：
   - `InterviewSession.entryDate`
   - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - `getCalendarDay / getCalendarWeek / getCalendarMonth`
-  - 还没有 `/api/calendar/*` 路由和前端页面
+  - `GET /api/calendar/day|week|month`
+  - `/calendar?view=month&date=YYYY-MM-DD`
+  - `week / day` 视图还没有落地

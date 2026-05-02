@@ -18,6 +18,7 @@ import {
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
+import { isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
@@ -96,7 +97,16 @@ function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessa
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
 }
 
-const interviewBootstrapTasks = new Map<InterviewDimension, Promise<InterviewSessionRecord | null>>();
+const interviewBootstrapTasks = new Map<string, Promise<InterviewSessionRecord | null>>();
+
+function buildInterviewBootstrapTaskKey(input: {
+  dimension: InterviewDimension;
+  forceNew?: boolean;
+  explicitSessionId?: string | null;
+  entryDate?: string | null;
+}) {
+  return [input.dimension, input.forceNew ? "force" : "reuse", input.explicitSessionId ?? "", input.entryDate ?? ""].join("::");
+}
 
 function MessageBubble({
   message,
@@ -493,11 +503,14 @@ function DraftGenerationPhaseBanner({
   );
 }
 
-async function requestInterviewSession(dimension: InterviewDimension) {
+async function requestInterviewSession(dimension: InterviewDimension, entryDate?: string | null) {
   const response = await fetch("/api/interview/session/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dimension })
+    body: JSON.stringify({
+      dimension,
+      ...(entryDate ? { entryDate } : {})
+    })
   });
 
   if (!response.ok) {
@@ -547,9 +560,22 @@ function shouldCacheSession(status: InterviewSessionRecord["status"] | null) {
   return status === "active" || status === "paused" || status === "completed";
 }
 
-async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew = false) {
+async function bootstrapInterviewSession(input: {
+  dimension: InterviewDimension;
+  forceNew?: boolean;
+  explicitSessionId?: string | null;
+  entryDate?: string | null;
+}) {
+  const { dimension, forceNew = false, explicitSessionId = null, entryDate = null } = input;
+  const taskKey = buildInterviewBootstrapTaskKey({
+    dimension,
+    forceNew,
+    explicitSessionId,
+    entryDate
+  });
+
   if (!forceNew) {
-    const existingTask = interviewBootstrapTasks.get(dimension);
+    const existingTask = interviewBootstrapTasks.get(taskKey);
 
     if (existingTask) {
       return existingTask;
@@ -557,6 +583,20 @@ async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew
   }
 
   const task = (async () => {
+    if (explicitSessionId) {
+      const explicitSession = await fetchInterviewSession(explicitSessionId);
+
+      if (!isRestorableSession(explicitSession, explicitSession.dimension)) {
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      if (explicitSession.status === "paused") {
+        return reopenInterviewSession(explicitSession.id);
+      }
+
+      return explicitSession;
+    }
+
     if (!forceNew) {
       const storedSessionEntry = getStoredInterviewSessionEntry(dimension);
       const storedSessionId = storedSessionEntry?.sessionId ?? null;
@@ -565,7 +605,7 @@ async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew
         try {
           const restoredSession = await fetchInterviewSession(storedSessionId);
 
-          if (isRestorableSession(restoredSession, dimension)) {
+          if (isRestorableSession(restoredSession, dimension) && (!entryDate || restoredSession.entryDate === entryDate)) {
             if (restoredSession.status === "paused") {
               return reopenInterviewSession(restoredSession.id);
             }
@@ -574,18 +614,23 @@ async function bootstrapInterviewSession(dimension: InterviewDimension, forceNew
           }
         } catch {
           // Ignore restore failures and fall back to creating a new session.
+          if (!entryDate) {
+            clearStoredInterviewSessionId(dimension);
+          }
         }
 
-        clearStoredInterviewSessionId(dimension);
+        if (!entryDate) {
+          clearStoredInterviewSessionId(dimension);
+        }
       }
     }
 
-    return requestInterviewSession(dimension);
+    return requestInterviewSession(dimension, entryDate);
   })().finally(() => {
-    interviewBootstrapTasks.delete(dimension);
+    interviewBootstrapTasks.delete(taskKey);
   });
 
-  interviewBootstrapTasks.set(dimension, task);
+  interviewBootstrapTasks.set(taskKey, task);
   return task;
 }
 
@@ -633,6 +678,7 @@ export function InterviewShell() {
     draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
     sessionDimension,
+    sessionEntryDate,
     setDimension,
     setDraftGenerationControls,
     hydrate,
@@ -669,6 +715,10 @@ export function InterviewShell() {
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
+  const requestedSessionId = searchParams.get("sessionId");
+  const requestedEntryDateRaw = searchParams.get("entryDate");
+  const requestedEntryDate = requestedEntryDateRaw && isEntryDateString(requestedEntryDateRaw) ? requestedEntryDateRaw : null;
+  const shouldOpenJournalPanelFromQuery = searchParams.get("panel") === "journal";
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
@@ -694,7 +744,8 @@ export function InterviewShell() {
   const interviewResponseAbortControllerRef = useRef<AbortController | null>(null);
   const sessionStateRef = useRef({
     sessionId,
-    sessionDimension
+    sessionDimension,
+    sessionEntryDate
   });
   const draftStateRef = useRef({
     draftTitle,
@@ -857,9 +908,10 @@ export function InterviewShell() {
   useEffect(() => {
     sessionStateRef.current = {
       sessionId,
-      sessionDimension
+      sessionDimension,
+      sessionEntryDate
     };
-  }, [sessionDimension, sessionId]);
+  }, [sessionDimension, sessionEntryDate, sessionId]);
 
   useEffect(() => {
     draftStateRef.current = {
@@ -898,6 +950,12 @@ export function InterviewShell() {
 
     touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId);
   }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionDimension, sessionId, status]);
+
+  useEffect(() => {
+    if (shouldOpenJournalPanelFromQuery && journalEntry) {
+      setPanelOpen(true);
+    }
+  }, [journalEntry, shouldOpenJournalPanelFromQuery]);
 
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -1034,42 +1092,74 @@ export function InterviewShell() {
     setAssistantState("idle");
   }
 
-  const ensureSession = useCallback(async (nextDimension: InterviewDimension, forceNew = false) => {
+  const ensureSession = useCallback(
+    async (
+      nextDimension: InterviewDimension,
+      options?: {
+        forceNew?: boolean;
+        explicitSessionId?: string | null;
+        entryDate?: string | null;
+      }
+    ) => {
+      const { forceNew = false, explicitSessionId = null, entryDate = null } = options ?? {};
     const activeSession = sessionStateRef.current;
 
-    if (!forceNew && activeSession.sessionId && activeSession.sessionDimension === nextDimension) {
-      return activeSession.sessionId;
-    }
+      const shouldReuseCurrentSession =
+        !forceNew &&
+        activeSession.sessionId &&
+        activeSession.sessionDimension === nextDimension &&
+        (explicitSessionId
+          ? activeSession.sessionId === explicitSessionId
+          : entryDate
+            ? activeSession.sessionEntryDate === entryDate
+            : true);
 
-    const currentBootSequence = ++bootSequenceRef.current;
-    const hasStoredSession = !forceNew && Boolean(getStoredInterviewSessionEntry(nextDimension));
-    setBootState(hasStoredSession ? "restoring" : "booting");
+      if (shouldReuseCurrentSession) {
+        return activeSession.sessionId;
+      }
 
-    try {
-      const session = await bootstrapInterviewSession(nextDimension, forceNew);
+      const currentBootSequence = ++bootSequenceRef.current;
+      const hasStoredSession = !forceNew && !explicitSessionId && Boolean(getStoredInterviewSessionEntry(nextDimension));
+      setBootState(explicitSessionId || hasStoredSession ? "restoring" : "booting");
 
-      if (!session || currentBootSequence !== bootSequenceRef.current) {
+      try {
+        const session = await bootstrapInterviewSession({
+          dimension: nextDimension,
+          forceNew,
+          explicitSessionId,
+          entryDate
+        });
+
+        if (!session || currentBootSequence !== bootSequenceRef.current) {
+          return null;
+        }
+
+        hydrate(session);
+        setBootState("idle");
+        return session.id;
+      } catch {
+        if (currentBootSequence === bootSequenceRef.current) {
+          setBootState("idle");
+          setInterviewIssue(
+            explicitSessionId
+              ? buildInterviewIssue("SESSION_NOT_FOUND", {
+                  title: "这条访谈暂时打不开",
+                  message: "当前想继续的那条访谈不存在或已经失效。",
+                  resolution: "请回到记录日历重新选择，或直接开始一条新的访谈。"
+                })
+              : buildInterviewIssue("NETWORK_UNAVAILABLE", {
+                  title: "访谈启动失败",
+                  message: "暂时没能启动或恢复当前访谈。",
+                  resolution: "请确认服务正在运行，然后刷新页面再试。"
+                })
+          );
+        }
+
         return null;
       }
-
-      hydrate(session);
-      setBootState("idle");
-      return session.id;
-    } catch {
-      if (currentBootSequence === bootSequenceRef.current) {
-        setBootState("idle");
-        setInterviewIssue(
-          buildInterviewIssue("NETWORK_UNAVAILABLE", {
-            title: "访谈启动失败",
-            message: "暂时没能启动或恢复当前访谈。",
-            resolution: "请确认服务正在运行，然后刷新页面再试。"
-          })
-        );
-      }
-
-      return null;
-    }
-  }, [hydrate, setBootState]);
+    },
+    [hydrate, setBootState]
+  );
 
   const persistDraftEdits = useCallback(async (titleOverride?: string, contentOverride?: string) => {
     const activeDraft = draftStateRef.current;
@@ -1144,7 +1234,15 @@ export function InterviewShell() {
     stopToastTimer();
     clearStreamState();
     const activeSession = sessionStateRef.current;
-    const shouldReuseCurrentSession = activeSession.sessionId && activeSession.sessionDimension === currentDimension;
+    const shouldReuseCurrentSession = Boolean(
+      activeSession.sessionId &&
+        activeSession.sessionDimension === currentDimension &&
+        (requestedSessionId
+          ? activeSession.sessionId === requestedSessionId
+          : requestedEntryDate
+            ? activeSession.sessionEntryDate === requestedEntryDate
+            : true)
+    );
 
     if (shouldReuseCurrentSession) {
       setBootState("idle");
@@ -1152,8 +1250,22 @@ export function InterviewShell() {
     }
 
     reset(currentDimension);
-    void ensureSession(currentDimension);
-  }, [clearStreamState, currentDimension, ensureSession, reset, setBootState, stopDraftAutosave, stopToastTimer]);
+    void ensureSession(currentDimension, {
+      explicitSessionId: requestedSessionId,
+      entryDate: requestedEntryDate
+    });
+  }, [
+    clearStreamState,
+    currentDimension,
+    ensureSession,
+    requestedEntryDate,
+    requestedSessionId,
+    reset,
+    setBootState,
+    shouldOpenJournalPanelFromQuery,
+    stopDraftAutosave,
+    stopToastTimer
+  ]);
 
   useEffect(() => {
     const messageScrollElement = messageScrollRef.current;
@@ -1829,7 +1941,7 @@ export function InterviewShell() {
       setDraftSyncState("idle");
       setHasSavedJournal(false);
       reset(currentDimension);
-      await ensureSession(currentDimension, true);
+      await ensureSession(currentDimension, { forceNew: true });
     };
 
     void runReset();
