@@ -110,7 +110,11 @@ export function getCalendarDimensionMarkerClass(status: CalendarDimensionStatus[
   return getCalendarStatusVisualMeta(status).markerClass;
 }
 
-export function getCalendarMonthDaySurfaceClass(status: CalendarDayStatus, hasRecords: boolean) {
+export function getCalendarMonthDaySurfaceClass(status: CalendarDayStatus, hasRecords: boolean, isFutureEmpty = false) {
+  if (isFutureEmpty) {
+    return "border-[rgba(223,206,183,0.72)] bg-[rgba(253,249,242,0.9)] shadow-none";
+  }
+
   if (!hasRecords || status === "empty") {
     return calendarStatusVisualMetaMap.empty.surfaceClass;
   }

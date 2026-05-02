@@ -41,10 +41,16 @@ describe("calendar view state helpers", () => {
     });
   });
 
-  it("always builds a 42-slot month grid", () => {
-    const grid = buildCalendarMonthGrid("2026-05");
+  it("builds only the visible calendar weeks for each month", () => {
+    const minimumFiveRowGrid = buildCalendarMonthGrid("2027-02");
+    const fiveRowGrid = buildCalendarMonthGrid("2026-05");
+    const sixRowGrid = buildCalendarMonthGrid("2026-08");
 
-    expect(grid).toHaveLength(42);
-    expect(grid.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
+    expect(minimumFiveRowGrid).toHaveLength(35);
+    expect(minimumFiveRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(28);
+    expect(fiveRowGrid).toHaveLength(35);
+    expect(fiveRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
+    expect(sixRowGrid).toHaveLength(42);
+    expect(sixRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
   });
 });

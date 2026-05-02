@@ -2,10 +2,11 @@ export type CalendarLoadingScope = "month" | "week" | "day" | "toolbar";
 
 export function buildCalendarDateButtonAccessibleName(input: {
   dateLabel: string;
-  statusLabel: string;
-  preview: string;
+  statusLabel?: string | null;
+  preview?: string | null;
   isToday: boolean;
   isSelected: boolean;
+  isFuture?: boolean;
   dimensionLabels?: string[];
   extraDimensionCount?: number;
 }) {
@@ -19,8 +20,17 @@ export function buildCalendarDateButtonAccessibleName(input: {
     parts.push("已选中");
   }
 
-  parts.push(input.statusLabel);
-  parts.push(input.preview);
+  if (input.isFuture) {
+    parts.push("未来日期");
+  }
+
+  if (input.statusLabel) {
+    parts.push(input.statusLabel);
+  }
+
+  if (input.preview) {
+    parts.push(input.preview);
+  }
 
   if ((input.dimensionLabels?.length ?? 0) > 0) {
     const labels = input.dimensionLabels ?? [];

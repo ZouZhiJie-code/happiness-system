@@ -31,6 +31,7 @@ export function CalendarDayCell({
       type="button"
       data-testid={`calendar-day-${day.date}`}
       aria-pressed={isSelected}
+      aria-current={isToday ? "date" : undefined}
       aria-label={buildCalendarDateButtonAccessibleName({
         dateLabel: formatCalendarDayLabel(day.date),
         statusLabel: calendarDayStatusLabelMap[day.overallStatus],
@@ -51,12 +52,10 @@ export function CalendarDayCell({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="font-display text-[1.35rem] leading-none text-[#312419]">{Number(day.date.slice(-2))}</span>
-        {isToday ? (
-          <span className="calendar-chip rounded-full px-2 py-1 text-[0.63rem] text-[#604529]">
-            今天
-          </span>
-        ) : null}
+        <span className={clsx("font-display text-[1.35rem] leading-none text-[#312419]", isToday && "text-[#8c6034]")}>
+          {Number(day.date.slice(-2))}
+        </span>
+        {isToday ? <span aria-hidden="true" className="mt-1 size-2 rounded-full bg-[#a96f3d]" /> : null}
       </div>
 
       <div className="mt-3 flex items-center gap-1.5">

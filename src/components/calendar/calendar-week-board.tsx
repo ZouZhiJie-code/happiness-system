@@ -41,6 +41,7 @@ export function CalendarWeekBoard({
               key={day.date}
               data-testid={`calendar-week-day-${day.date}`}
               data-status={day.overallStatus}
+              aria-current={today === day.date ? "date" : undefined}
               className={clsx(
                 "calendar-card flex min-h-[18rem] flex-col rounded-[24px] border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
                 getCalendarWeekDaySurfaceClass(day.overallStatus)
@@ -49,12 +50,12 @@ export function CalendarWeekBoard({
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-display text-[1.28rem] leading-none text-[#312419]">{dateLabel}</h3>
-                  {today === day.date ? (
-                    <span className="calendar-chip mt-2 inline-flex rounded-full px-2 py-1 text-[0.63rem] text-[#604529]">
-                      今天
-                    </span>
-                  ) : null}
+                  <div className="flex items-center gap-2">
+                    <h3 className={clsx("font-display text-[1.28rem] leading-none text-[#312419]", today === day.date && "text-[#8c6034]")}>
+                      {dateLabel}
+                    </h3>
+                    {today === day.date ? <span aria-hidden="true" className="size-2 rounded-full bg-[#a96f3d]" /> : null}
+                  </div>
                 </div>
 
                 <span

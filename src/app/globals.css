@@ -7,6 +7,8 @@
   --site-header-frame-min-height: 4.25rem;
   --site-header-lane-min-height: 2.75rem;
   --site-header-viewport-offset: 8.25rem;
+  --calendar-month-cell-min-height: 5.65rem;
+  --calendar-day-card-min-height: 11.25rem;
   --night-void: #855a34;
   --night-ink: #ddbb8c;
   --night-panel: rgba(247, 233, 205, 0.88);

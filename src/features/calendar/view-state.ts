@@ -102,6 +102,7 @@ export function buildCalendarMonthGrid(month: string): CalendarMonthGridCell[] {
   const firstDayOfWeek = firstDay.getUTCDay();
   const leadingEmptySlots = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   const daysInMonth = getDaysInMonth(year, monthNumber);
+  const totalVisibleSlots = Math.max(35, Math.ceil((leadingEmptySlots + daysInMonth) / 7) * 7);
   const cells: CalendarMonthGridCell[] = [];
 
   for (let index = 0; index < leadingEmptySlots; index += 1) {
@@ -123,7 +124,7 @@ export function buildCalendarMonthGrid(month: string): CalendarMonthGridCell[] {
     });
   }
 
-  while (cells.length < 42) {
+  while (cells.length < totalVisibleSlots) {
     const index = cells.length - (leadingEmptySlots + daysInMonth);
     cells.push({
       key: `trailing-${index}`,

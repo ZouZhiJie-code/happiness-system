@@ -252,7 +252,7 @@ describe("calendar month shell", () => {
     });
   });
 
-  it("renders a full 42-slot grid and a dedicated day check panel for an empty past day", async () => {
+  it("renders only the needed month rows and a dedicated day check panel for an empty past day", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarMonthShell />);
@@ -262,7 +262,7 @@ describe("calendar month shell", () => {
     expect(screen.getByTestId("calendar-month-secondary-pane")).toBeInTheDocument();
     const dayPanel = await screen.findByTestId("calendar-month-day-panel");
 
-    expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(42);
+    expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(35);
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
     expect(screen.queryByText("DAY CHECK")).not.toBeInTheDocument();
     expect(within(dayPanel).getByText("还没有标题。")).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe("calendar month shell", () => {
     expect(within(detailPanel).getByText("充实")).toBeInTheDocument();
     expect(within(detailPanel).getByText("思考")).toBeInTheDocument();
     expect(container.querySelector('[data-testid="calendar-day-2026-05-02"] [data-dimension="joy"]')).not.toBeNull();
-    expect(screen.getByTestId("calendar-day-2026-05-02")).toHaveAccessibleName(/涉及 开心、充实、思考/);
+    expect(screen.getByTestId("calendar-day-2026-05-02")).toHaveAccessibleName(/涉及 开心、充实 等 3 维/);
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute("data-action-tone", "primary");
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute(
       "href",
@@ -324,9 +324,16 @@ describe("calendar month shell", () => {
     render(<CalendarMonthShell />);
 
     const detailPanel = await screen.findByTestId("calendar-month-day-panel");
+    const futureCell = screen.getByTestId("calendar-day-2099-01-01");
 
-    expect(within(detailPanel).getByText("未来日期暂不支持开始记录。")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("这一天还没到，到了当天再记录。")).toBeInTheDocument();
     expect(within(detailPanel).getByTestId("calendar-month-day-panel-empty")).toHaveTextContent("未来日期先保留。");
+    expect(within(detailPanel).queryByText("未记录")).not.toBeInTheDocument();
+    expect(within(detailPanel).queryByText("还没有记录，先看当天。")).not.toBeInTheDocument();
+    expect(futureCell).not.toHaveTextContent("未记录");
+    expect(futureCell).not.toHaveTextContent("还没有记录。");
+    expect(futureCell).toHaveAccessibleName(/未来日期/);
+    expect(futureCell).not.toHaveAccessibleName(/未记录|还没有记录/);
     expect(within(detailPanel).getByRole("link", { name: /1月1日.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2099-01-01"

@@ -137,7 +137,7 @@ export function CalendarMonthShell() {
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="grid min-h-0 h-full min-w-[1100px] grid-cols-[minmax(0,1fr)_22rem] gap-4">
+          <div className="grid min-h-0 h-full min-w-[960px] grid-cols-[minmax(0,1fr)_19.5rem] gap-3">
             <div
               className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-[28px] p-2.5 md:p-3"
               data-testid="calendar-month-primary-pane"
@@ -171,7 +171,7 @@ export function CalendarMonthShell() {
                 <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
                   {monthStats?.recordedDayCount === 0 ? (
                     <div className="calendar-card-muted mb-4 rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#755d47]">
-                      本月还没有记录。
+                      {monthKey > today.slice(0, 7) ? "这个月还没到，先看分布。" : "本月还没有记录。"}
                     </div>
                   ) : null}
                   <CalendarMonthGrid

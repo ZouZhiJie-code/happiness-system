@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarDayShell } from "@/components/calendar/calendar-day-shell";
 import type { CalendarDayRecord, CalendarDimensionStatus } from "@/features/calendar/types";
@@ -201,6 +201,7 @@ describe("calendar day shell", () => {
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
     );
+    fireEvent.click(within(completedCard).getByRole("button", { name: "充实，已完成，今天没有白过，更多操作" }));
     expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，编辑日志" })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
@@ -211,6 +212,9 @@ describe("calendar day shell", () => {
       "href",
       "/interview?dimension=reflection&sessionId=session-reflection&entryDate=2026-05-01"
     );
+    expect(within(mixedCard).queryByRole("link", { name: "思考，混合状态，想法还在发酵，查看日志" })).not.toBeInTheDocument();
+    expect(within(mixedCard).getByRole("button", { name: "思考，混合状态，想法还在发酵，更多操作" })).toBeInTheDocument();
+    fireEvent.click(within(mixedCard).getByRole("button", { name: "思考，混合状态，想法还在发酵，更多操作" }));
     const mixedLinks = within(mixedCard).getAllByRole("link");
     expect(mixedLinks.map((link) => link.textContent)).toEqual(["继续访谈", "查看日志", "编辑日志"]);
 
