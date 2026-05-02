@@ -339,6 +339,24 @@ body::after {
   background-clip: padding-box;
 }
 
+.calendar-workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.calendar-pane {
+  min-height: 0;
+}
+
+.calendar-pane-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .liquid-composer {
   position: relative;
   overflow: hidden;

@@ -44,9 +44,9 @@
   - 多维度共用：schema、维度定义、进度算法、前端元信息
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、日视图投影与 deep link helper，不直接访问数据库
+  - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影与 deep link helper，不直接访问数据库
 - `src/components/calendar`
-  - 月网格、周记录板、日视图 overview、五维卡片、view switcher 与 month/week/day 容器
+  - 月网格、周记录板、日视图 overview、五维卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -141,6 +141,10 @@
 - `CalendarWeekRecord`
 - `CalendarMonthRecord`
 
+前端当前会同时用这些读模型做两类投影：
+- 正文视图本身的 month / week / day 渲染
+- `SiteHeader` 中区的 calendar toolbar 标题、前后翻段和 summary chips
+
 聚合来源固定为：
 - `InterviewSession`
   - 提供 `active / paused / completed`
@@ -155,6 +159,26 @@
 - 同一天多个维度允许并存
 - 无日志时只允许使用安全摘要，不暴露内部结构字段名
 - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`，避免前端误开记录入口
+
+### 3.6 calendar 前端工作区现实
+
+截至 `2026-05-02`，calendar 前端已经不是“每个视图都各自放一套顶部按钮和统计卡”的自然文档流页面，而是：
+- `SiteHeader` 中区承接全局 calendar 导航：
+  - `month / week / day` 切换
+  - 前后翻段
+  - 回到今天
+  - 3 个实时摘要 chip
+- `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
+- 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
+
+当前三个视图的工作区状态：
+- `month`
+  - 已进入双栏骨架：月历主体 + 当天检查面板
+  - 右栏固定提供 `查看当天` 日期级入口
+- `week`
+  - 保留周记录板 + 周摘要，但已经被收进固定工作区 pane
+- `day`
+  - 保留 dedicated reading layout，但正文内容现在在主 pane 内滚动，不再依赖整页长滚动
 
 ## 4. 结构化数据面
 

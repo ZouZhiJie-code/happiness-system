@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 
 import { CalendarWeekShell } from "@/components/calendar/calendar-week-shell";
 import type { CalendarDayRecord, CalendarDimensionStatus, CalendarWeekRecord } from "@/features/calendar/types";
@@ -137,6 +137,9 @@ describe("calendar week shell", () => {
 
     render(<CalendarWeekShell />);
 
+    expect(await screen.findByTestId("calendar-week-workspace")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-week-primary-pane")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-week-secondary-pane")).toBeInTheDocument();
     expect(await screen.findByTestId("calendar-week-board")).toBeInTheDocument();
     expect(screen.getAllByTestId(/calendar-week-day-/)).toHaveLength(7);
     expect(screen.getByRole("link", { name: /5\/4周一，已完成|5月4日周一，已完成|周一/ }).getAttribute("href")).toBe(
@@ -145,14 +148,14 @@ describe("calendar week shell", () => {
     expect(screen.getByText("这周有 2 天留下记录，已经触达 2 个维度。 还有 1 条草稿值得继续补完。")).toBeInTheDocument();
   });
 
-  it("updates the url when switching weeks", async () => {
+  it("moves week navigation responsibility out of the shell body", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildWeekRecord()), { status: 200 })) as typeof fetch;
 
     render(<CalendarWeekShell />);
 
     await screen.findByTestId("calendar-week-board");
-    fireEvent.click(screen.getByRole("button", { name: "下周" }));
-
-    expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-14", { scroll: false });
+    expect(screen.queryByRole("button", { name: "上周" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "下周" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "回到今天" })).not.toBeInTheDocument();
   });
 });

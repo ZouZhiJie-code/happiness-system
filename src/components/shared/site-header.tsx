@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 
+import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
   clearStoredInterviewSessionId,
@@ -125,6 +126,7 @@ export function SiteHeader() {
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
   const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
   const isInterviewPage = pathname === "/interview";
+  const isCalendarPage = pathname === "/calendar";
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
     : dimension;
@@ -463,6 +465,7 @@ export function SiteHeader() {
               </div>
             </div>
           ) : null}
+          {isCalendarPage ? <CalendarToolbar /> : null}
         </div>
         <nav className="flex items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.22)] bg-[rgba(244,226,194,0.72)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.38)]">
           {navItems.map((item) => (

@@ -10,21 +10,6 @@ import type { CalendarDayRecord, CalendarDayStatus } from "@/features/calendar/t
 import { formatCalendarUpdatedAt, isFutureCalendarDate } from "@/features/calendar/view-state";
 import { cn } from "@/lib/utils";
 
-function DayCountPill({
-  label,
-  value
-}: {
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-[22px] border border-[rgba(156,114,70,0.14)] bg-[rgba(255,250,242,0.78)] px-4 py-3">
-      <p className="text-[0.72rem] tracking-[0.18em] text-[#8f6a46]">{label}</p>
-      <p className="mt-2 font-display text-[1.35rem] leading-none tabular-nums text-[#2b2018]">{value}</p>
-    </div>
-  );
-}
-
 function getDimensionFallbackSummary(status: CalendarDayStatus, isFuture: boolean) {
   if (isFuture && status === "empty") {
     return "未来日期暂不支持开始记录。";
@@ -116,28 +101,20 @@ export function CalendarDayView({
   return (
     <section className="space-y-5" data-testid="calendar-day-view">
       <div className="paper-sheet rounded-[32px] p-5 md:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-[42rem]">
-            <p className="archive-label">DAY OVERVIEW</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-balance font-display text-[1.9rem] leading-none text-[#2a2017]">
-                {day.primaryTitle ?? "这一天的记录总览"}
-              </h2>
-              <span
-                className={cn("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}
-              >
-                {calendarDayStatusLabelMap[day.overallStatus]}
-              </span>
-            </div>
-            <p className="mt-3 text-pretty text-[0.96rem] leading-7 text-[#5b4b3e]">{getDayOverviewSummary(day, today)}</p>
-            <p className="mt-3 text-[0.8rem] text-[#8b7258]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
+        <div className="max-w-[42rem]">
+          <p className="archive-label">DAY OVERVIEW</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <h2 className="text-balance font-display text-[1.9rem] leading-none text-[#2a2017]">
+              {day.primaryTitle ?? "这一天的记录总览"}
+            </h2>
+            <span
+              className={cn("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}
+            >
+              {calendarDayStatusLabelMap[day.overallStatus]}
+            </span>
           </div>
-
-          <div className="grid grid-cols-3 gap-3 sm:min-w-[20rem]">
-            <DayCountPill label="进行中" value={day.activeCount} />
-            <DayCountPill label="草稿" value={day.draftCount} />
-            <DayCountPill label="已完成" value={day.savedCount} />
-          </div>
+          <p className="mt-3 text-pretty text-[0.96rem] leading-7 text-[#5b4b3e]">{getDayOverviewSummary(day, today)}</p>
+          <p className="mt-3 text-[0.8rem] text-[#8b7258]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
         </div>
       </div>
 

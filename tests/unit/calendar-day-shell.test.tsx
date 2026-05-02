@@ -1,12 +1,11 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarDayShell } from "@/components/calendar/calendar-day-shell";
 import type { CalendarDayRecord, CalendarDimensionStatus } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
-const { mockRouterPush, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
-  mockRouterPush: vi.fn(),
+const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockRouterReplace: vi.fn(),
   mockSearchParams: {
     value: {
@@ -18,7 +17,6 @@ const { mockRouterPush, mockRouterReplace, mockSearchParams } = vi.hoisted(() =>
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: mockRouterPush,
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
@@ -127,7 +125,6 @@ function buildFutureEmptyDayRecord(): CalendarDayRecord {
 describe("calendar day shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
-    mockRouterPush.mockReset();
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       view: "day",
@@ -154,9 +151,11 @@ describe("calendar day shell", () => {
 
     const { container } = render(<CalendarDayShell />);
 
+    expect(await screen.findByTestId("calendar-day-workspace")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-day-primary-pane")).toBeInTheDocument();
     expect(await screen.findByTestId("calendar-day-view")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "回到本周" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "回到本月" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "回到本周" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "回到本月" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 
@@ -210,20 +209,14 @@ describe("calendar day shell", () => {
     expect(screen.getAllByText("未来日期暂不支持开始记录")).toHaveLength(5);
   });
 
-  it("keeps day navigation url-driven", async () => {
+  it("moves day navigation responsibility out of the shell body", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
 
     render(<CalendarDayShell />);
 
     await screen.findByTestId("calendar-day-view");
-
-    fireEvent.click(screen.getByRole("button", { name: "后一天" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=day&date=2026-05-02", { scroll: false });
-
-    fireEvent.click(screen.getByRole("button", { name: "回到本周" }));
-    expect(mockRouterPush).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-01");
-
-    fireEvent.click(screen.getByRole("button", { name: "回到本月" }));
-    expect(mockRouterPush).toHaveBeenCalledWith("/calendar?view=month&date=2026-05-01");
+    expect(screen.queryByRole("button", { name: "前一天" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "后一天" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "回到今天" })).not.toBeInTheDocument();
   });
 });

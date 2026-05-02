@@ -6,12 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import type { CalendarDayRecord } from "@/features/calendar/types";
-import {
-  buildCalendarHref,
-  formatCalendarDayLabel,
-  normalizeCalendarSearchParams,
-  shiftCalendarDay
-} from "@/features/calendar/view-state";
+import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
 async function fetchCalendarDay(date: string) {
@@ -75,71 +70,14 @@ export function CalendarDayShell() {
     };
   }, [currentDate, refreshNonce]);
 
-  function handleShiftDay(offset: number) {
-    router.replace(
-      buildCalendarHref({
-        view: "day",
-        date: shiftCalendarDay(currentDate, offset)
-      }),
-      { scroll: false }
-    );
-  }
-
   return (
-    <section className="page-shell min-h-[calc(100vh-8.5rem)] rounded-[40px] px-4 py-4 md:px-6 md:py-5">
-      <div className="relative z-10 space-y-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="archive-label">DAY PAGE</p>
-            <h1 className="mt-2 text-balance font-display text-[2.55rem] leading-none text-[#2d2014] md:text-[3rem]">
-              {formatCalendarDayLabel(currentDate)}
-            </h1>
-            <p className="mt-3 max-w-[36rem] text-pretty text-[0.98rem] leading-7 text-[#5d4a3a]">
-              这里按五个维度组织这一天的记录状态，先看清哪里还在进行、哪里已经成稿，再决定进入哪条链路继续。
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => router.push(buildCalendarHref({ view: "week", date: currentDate }))}
-              className="rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d] transition duration-300 hover:-translate-y-0.5"
-            >
-              回到本周
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(buildCalendarHref({ view: "month", date: currentDate }))}
-              className="rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d] transition duration-300 hover:-translate-y-0.5"
-            >
-              回到本月
-            </button>
-            <button
-              type="button"
-              onClick={() => handleShiftDay(-1)}
-              className="rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d] transition duration-300 hover:-translate-y-0.5"
-            >
-              前一天
-            </button>
-            <button
-              type="button"
-              onClick={() => router.replace(buildCalendarHref({ view: "day", date: today }), { scroll: false })}
-              className="rounded-full border border-[rgba(152,105,61,0.18)] bg-[linear-gradient(180deg,#ead2ad,#ddb884)] px-4 py-2 text-[0.88rem] text-[#352519] transition duration-300 hover:-translate-y-0.5"
-            >
-              回到今天
-            </button>
-            <button
-              type="button"
-              onClick={() => handleShiftDay(1)}
-              className="rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d] transition duration-300 hover:-translate-y-0.5"
-            >
-              后一天
-            </button>
-          </div>
-        </div>
-
+    <section className="calendar-workspace page-shell rounded-[40px] px-3 py-3 md:px-4 md:py-4" data-testid="calendar-day-workspace">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {error ? (
-          <div className="paper-sheet rounded-[28px] p-6 text-center">
+          <div
+            className="calendar-pane paper-sheet flex min-h-0 flex-1 flex-col items-center justify-center rounded-[28px] p-6 text-center"
+            data-testid="calendar-day-primary-pane"
+          >
             <p className="font-display text-[1.45rem] text-[#2a2017]">这一天的记录暂时没打开</p>
             <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
             <button
@@ -151,9 +89,16 @@ export function CalendarDayShell() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="paper-sheet min-h-[30rem] animate-pulse rounded-[32px]" />
+          <div className="calendar-pane paper-sheet min-h-0 flex-1 animate-pulse rounded-[30px]" data-testid="calendar-day-primary-pane" />
         ) : dayRecord ? (
-          <CalendarDayView day={dayRecord} today={today} />
+          <div
+            className="calendar-pane paper-panel min-h-0 flex-1 overflow-hidden rounded-[30px] p-3 md:p-4"
+            data-testid="calendar-day-primary-pane"
+          >
+            <div className="calendar-pane-scroll panel-scroll min-h-0 h-full pr-1">
+              <CalendarDayView day={dayRecord} today={today} />
+            </div>
+          </div>
         ) : null}
       </div>
     </section>

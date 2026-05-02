@@ -808,46 +808,45 @@ data: {
 
 ### 5.11 Step 5: month view 可执行规格
 
-本节现在既是第 5 步的实现契约回顾，也是当前月视图的对齐基线。`/calendar` 月视图已经按这份规格落地，保留这节是为了后续继续做 `week / day` 视图时不丢掉既定边界。
+本节现在既是第 5 步的实现契约回顾，也是当前月视图的对齐基线。`/calendar` 月视图已经完成基础功能，并在后续前端迭代里进入“header 中区统一导航 + 首屏工作区 + 双栏骨架”的结构，保留这节是为了后续继续细化内容层级时不丢掉既定边界。
 
 #### 目标
 
-- 新增 `/calendar` 页面和 header 基础导航入口。
-- 只先做 `month` 视图，不提前铺 `week / day` 页面。
-- 月视图本身要完成：
-  - 当前月份展示
-  - 上月 / 下月切换
+- 新增 `/calendar` 页面和 header 导航入口。
+- 当前代码已经支持 `month / week / day` 三层视图，但 month 仍然是默认落点和总入口。
+- calendar 的全局导航已经统一收口到 `SiteHeader` 中区：
+  - `month / week / day` 切换
+  - 前后翻段
   - 回到今天
-  - 今天高亮
-  - 每日整体状态
-  - 五维轻量标记
-  - 本月统计
-- 点击日期先打开轻详情，不直接跳走。
-- 轻详情必须能把用户带入下一步动作，而不是只做信息展示。
+  - 实时摘要 chip
+- 月视图正文当前已经去掉重复 header、重复翻月按钮和统计卡，改成“月历主体 + 当天检查面板”的双栏骨架。
+- 点击日期会更新右侧当天检查面板；点击 `查看当天` 才进入 `view=day`。
 
 #### 范围
 
-本步应完成：
+本步已完成并继续保留为当前基线：
 - `src/app/calendar/page.tsx`
-- header 导航增加“记录日历”入口
+- `SiteHeader` 增加“记录日历”入口
 - 月视图网格
 - 轻详情面板
 - 月视图 URL 驱动
 - 月视图到访谈页的深链规则
+- header 中区的 calendar 控制条
+- 首屏工作区与双栏骨架
 
 本步不做：
-- `week` 页面
-- `day` 独立页面
 - 新的数据库迁移
 - 单独的日志详情页
 
 #### 默认假设
 
-为了让第 5 步能独立闭环，先采用下面这组默认假设：
+第 5 步原始规格里的这些默认假设，当前只有一部分还有效：
 
-- `/calendar` 只支持 `view=month`
-- URL 仍保留未来扩展位：
+- `/calendar` 仍以 `view=month` 作为默认落点
+- URL 现在已经正式支持：
   - `/calendar?view=month&date=2026-05-01`
+  - `/calendar?view=week&date=2026-05-01`
+  - `/calendar?view=day&date=2026-05-01`
 - `date` 既是当前月份 anchor，也是当前选中日期
 - V1 默认进入页面后就以 `date` 对应的当天作为当前选中日期，并展示轻详情
 - 如果后续产品决定“默认不自动展开详情”，可以只改前端局部状态，不需要改 API 或数据契约
@@ -859,8 +858,11 @@ data: {
   - `/calendar?view=month&date=<北京时间今天>`
 
 `view`
-- 第 5 步只接受 `month`
-- 如果用户手动输入 `week` 或 `day`，第 5 步直接归一回 `month`
+- 当前接受：
+  - `month`
+  - `week`
+  - `day`
+- 无效值仍归一回 `month`
 
 `date`
 - 必须是 `YYYY-MM-DD`
@@ -875,24 +877,29 @@ data: {
   - `2026-01-31 -> 下月 => 2026-02-28`
 
 回到今天：
-- 把 URL 归一到 `/calendar?view=month&date=<北京时间今天>`
+- 保留当前 `view`
+- 把 `date` 归一到 `<北京时间今天>`
 
 点击日期：
 - 更新 URL 中的 `date`
-- 不跳去别页
-- 只更新选中态并打开轻详情
+- 不直接跳去别页
+- 只更新选中态并刷新当天检查面板
+- 进入单日阅读页的日期级入口固定为：
+  - `查看当天`
+  - `/calendar?view=day&date=YYYY-MM-DD`
 
 #### header 导航
 
-需要在现有 `SiteHeader` 中新增导航项：
-- `记录日历`
-
-建议目标链接：
-- `/calendar?view=month&date=<北京时间今天>`
-
-原因：
-- 进入时立即落在用户最关心的今天
-- 与当前 `view + date` URL 约定一致
+当前 `SiteHeader` 的真实行为：
+- 顶部导航项里已有 `记录日历`
+- 点击它会进入：
+  - `/calendar?view=month&date=<北京时间今天>`
+- header 中区现在会在 calendar 页面接管：
+  - 当前时间范围标题
+  - `month / week / day` 切换
+  - 前后翻段
+  - 回到今天
+  - 实时 summary chips
 
 #### 页面与组件拆分
 
@@ -910,10 +917,14 @@ data: {
   - 单日格子
 - `src/components/calendar/calendar-day-detail.tsx`
   - 轻详情
+- `src/components/calendar/calendar-toolbar.tsx`
+  - header 中区的 calendar 控制条
 - `src/features/calendar/view-state.ts`
   - URL 解析、日期 clamp、month key 推导
 - `src/features/calendar/month-stats.ts`
   - 本月统计派生逻辑
+- `src/features/calendar/toolbar.ts`
+  - header 标题、前后翻段与 summary chip 的前端投影
 - `src/features/calendar/interview-link.ts`
   - 从 day/dimension 记录生成下一步跳转链接
 
@@ -926,11 +937,11 @@ data: {
 月视图主数据源固定为：
 - `GET /api/calendar/month?month=YYYY-MM`
 
-第 5 步默认不额外请求 day API：
+月视图正文默认不额外请求 day API：
 - 轻详情直接使用 month payload 中对应 day record
 - 这样可以避免点击日期后二次 loading
 
-如果后续 `day` 视图想展示更重的信息，再单独接 `GET /api/calendar/day`
+当前 header 中区会额外按 `view` 请求 month / week / day 数据，用来生成标题和实时摘要 chip；这层请求只服务 toolbar，不改变正文 month view 仍以 month payload 为主的事实。
 
 #### 月视图网格规格
 
@@ -1187,7 +1198,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 3. 新增 month view 的 URL 解析与日期 helper
 4. 接 `GET /api/calendar/month`
 5. 做 7x6 月网格与五维轻量标记
-6. 做本月统计卡
+6. 做本月统计派生与摘要展示
 7. 做轻详情面板 / 移动端 sheet
 8. 接通从月视图到 `/interview` 的深链规则
 9. 让 `/interview` 正确响应 `sessionId / entryDate / panel`
@@ -1211,7 +1222,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 #### 人工验收
 
 1. 访问 `/calendar`
-   预期：进入当月月视图；能看到今天高亮、本月统计和当天轻详情。
+   预期：进入当月月视图；能看到今天高亮、header 中区的实时摘要，以及当天检查面板。
 
 2. 点击某个有记录的日期
    预期：不跳页；右侧或底部打开轻详情；能看到日期、状态、五维情况、摘要和入口按钮。
@@ -1242,9 +1253,9 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 - `/calendar` 已支持 `view=week`
 - 周视图主数据源固定为 `GET /api/calendar/week?date=YYYY-MM-DD`
 - 顶部支持：
-  - `月视图 / 周视图` 切换
-  - `上周 / 下周`
-  - `回到今天`
+  - `month / week / day` 切换
+  - 前后翻段
+  - 回到今天
 - 周主体固定展示 7 天记录板，每天展示：
   - 日期
   - 整体状态
@@ -1258,6 +1269,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
   - 已完成数
   - 五维覆盖概况
   - 基于统计规则生成的周摘要
+- 周视图当前已经被收进首屏工作区；周记录板和周摘要都在 pane 内局部滚动，而不是继续推动整页变长
 - 周视图与月视图共享同一套状态颜色、badge 文案和五维标记样式
 - 点击某一天会跳到：
   - `/calendar?view=day&date=YYYY-MM-DD`
@@ -1275,7 +1287,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
   - 校验 `/calendar?view=week` 缺省日期会归一到北京时间今天
   - 校验周视图固定渲染 7 天记录板
   - 校验点击日卡会进入 `view=day`
-  - 校验周切换会更新 URL
+  - 校验周导航按钮不再出现在正文 shell 内
 - `tests/unit/calendar-day-shell.test.tsx`
   - 校验 `view=day` 缺省日期归一
   - 校验从周视图进入后，单日详情仍能继续进入 `/interview`
@@ -1295,10 +1307,9 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 - `/calendar` 已支持 `view=day`
 - 日视图主数据源固定为 `GET /api/calendar/day?date=YYYY-MM-DD`
 - 顶部支持：
-  - `回到本周`
-  - `回到本月`
-  - `前一天 / 后一天`
-  - `回到今天`
+  - `month / week / day` 切换
+  - 前后翻段
+  - 回到今天
 - 页面总览区固定展示：
   - 日期
   - 当天整体状态
@@ -1325,6 +1336,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 - 日视图继续复用现有 `/interview` 工作区链路：
   - 访谈入口用 `entryDate`
   - 已完成日志继续落到现有 `panel=journal` 工作区
+- 日视图当前已经进入首屏工作区；主阅读内容放进固定主 pane 内滚动，不再依赖整页长滚动
 
 #### 自动化验收
 
@@ -1336,7 +1348,7 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
   - 校验 completed 卡片展示 `查看日志 / 编辑日志`
   - 校验 mixed 卡片保留主动作和其余次入口
   - 校验未来空白卡不会暴露可点击开始访谈入口
-  - 校验 `回到本周 / 回到本月 / 后一天` 仍由 URL 驱动
+  - 校验正文 shell 不再承载旧的日级导航按钮
 
 #### 当前边界
 

@@ -164,7 +164,10 @@
   - 已有 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - `/api/calendar/day|week|month` 已落地
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
-  - `/calendar` 月视图、周视图、日视图、月统计、周侧栏摘要与 deep link 已落地
+  - `/calendar` 月视图、周视图、日视图与 deep link 已落地
+  - `SiteHeader` 中区现在承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要
+  - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
+  - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 日视图已成为某一天五维记录的统一阅读与分发入口
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
@@ -225,8 +228,8 @@
 - `npm test`
 
 测试结果：
-- `26` 个测试文件
-- `239` 个测试全部通过
+- `27` 个测试文件
+- 全量测试通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -257,8 +260,10 @@
 - calendar legacy session 在缺少 `entryDate` 时回退 `startedAt`
 - calendar service 查询与参数校验
 - calendar API `day / week / month` 路由、错误映射与未来日期动作裁剪
-- calendar month view、月统计、mixed 轻详情拆分和 `/calendar -> /interview` deep link
-- calendar week view、周侧栏摘要、day view 主阅读页，以及 month/week/day 共享状态展示层
+- calendar header 中区控制条、month/week/day 共享导航和实时摘要
+- calendar month view 双栏工作区、`查看当天` 日期级入口，以及 `/calendar -> /interview` deep link
+- calendar week view、周侧栏摘要、day view 主阅读页，以及 month/week/day 工作区壳层
+- `tests/unit/site-header-calendar.test.tsx` 覆盖 header 中区的 calendar 标题、翻段、视图切换和摘要 chip
 
 fulfillment 人工 smoke 基线：
 - 推进完成
@@ -295,6 +300,6 @@ reflection 人工 smoke 基线：
    - 减少后续新增维度或继续打磨维度时的重复改动面
 
 如果继续做记录日历这条线，下一步更合理的是：
-- 打磨 day 视图的移动端信息密度和卡片层级
-- 评估是否需要独立 journal 阅读页，而不是始终复用 `/interview?panel=journal`
-- 继续补更完整的日志详情流
+- 继续重排月视图内容层级，把当前双栏骨架收紧成更强判断的工作台
+- 把周视图从“纵向记录板 + 摘要”继续推进到真正的 7 天同屏对比结构
+- 继续压缩 day 视图卡片密度和移动端层级

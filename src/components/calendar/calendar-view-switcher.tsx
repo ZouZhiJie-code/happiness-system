@@ -1,46 +1,50 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import clsx from "clsx";
 
 import type { CalendarView } from "@/features/calendar/view-state";
 
 export function CalendarViewSwitcher({
   currentView,
-  currentDate
+  onSelectView
 }: {
-  currentView: Extract<CalendarView, "month" | "week">;
-  currentDate: string;
+  currentView: CalendarView;
+  onSelectView: (view: CalendarView) => void;
 }) {
   const items = [
     {
       view: "month" as const,
-      label: "月视图"
+      label: "月"
     },
     {
       view: "week" as const,
-      label: "周视图"
+      label: "周"
+    },
+    {
+      view: "day" as const,
+      label: "日"
     }
   ];
 
   return (
     <nav
       aria-label="切换日历视图"
-      className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] p-1"
+      className="inline-flex items-center rounded-full border border-[rgba(146,104,64,0.16)] bg-[rgba(255,248,238,0.82)] p-1"
     >
       {items.map((item) => (
-        <Link
+        <button
           key={item.view}
-          href={`/calendar?view=${item.view}&date=${currentDate}`}
+          type="button"
+          onClick={() => onSelectView(item.view)}
           className={clsx(
-            "rounded-full px-3.5 py-2 text-[0.82rem] text-[#62462d] transition duration-200 hover:-translate-y-0.5",
-            currentView === item.view && "bg-[linear-gradient(180deg,#ead2ad,#ddb884)] text-[#352519]"
+            "rounded-full px-3 py-1.5 text-[0.76rem] font-medium text-[#6d5337] transition duration-200 hover:bg-[rgba(166,114,61,0.12)]",
+            currentView === item.view && "bg-[rgba(166,114,61,0.18)] text-[#3f2e20]"
           )}
           aria-current={currentView === item.view ? "page" : undefined}
         >
           {item.label}
-        </Link>
+        </button>
       ))}
     </nav>
   );

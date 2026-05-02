@@ -216,12 +216,19 @@ describe("calendar month shell", () => {
 
     const { container } = render(<CalendarMonthShell />);
 
+    await screen.findByTestId("calendar-month-workspace");
+    expect(screen.getByTestId("calendar-month-primary-pane")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-month-secondary-pane")).toBeInTheDocument();
     const detailPanels = await screen.findAllByTestId("calendar-day-detail");
 
     expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(42);
     const startLinks = within(detailPanels[0] as HTMLElement).getAllByRole("link", { name: /开始访谈/ });
     expect(startLinks).toHaveLength(5);
     expect(startLinks[0]?.getAttribute("href")).toContain("entryDate=2026-05-02");
+    expect(within(detailPanels[0] as HTMLElement).getByRole("link", { name: "查看当天" })).toHaveAttribute(
+      "href",
+      "/calendar?view=day&date=2026-05-02"
+    );
   });
 
   it("updates the url when selecting another day", async () => {
@@ -244,6 +251,10 @@ describe("calendar month shell", () => {
     const detailPanel = detailPanels[0] as HTMLElement;
 
     expect(within(detailPanel).getByText("混合状态")).toBeInTheDocument();
+    expect(within(detailPanel).getByRole("link", { name: "查看当天" })).toHaveAttribute(
+      "href",
+      "/calendar?view=day&date=2026-05-02"
+    );
     expect(within(detailPanel).getByRole("link", { name: "开心 · 继续访谈" })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy&entryDate=2026-05-02"

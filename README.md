@@ -8,7 +8,9 @@
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月历页、周记录板、日视图主阅读页、月统计、周侧栏摘要，以及进入访谈/日志的深链都已完成。
+- 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
+- `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
+- calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构；月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口。
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
 ## 当前产品状态
@@ -96,7 +98,7 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-02`，当前自动化基线为 `26` 个测试文件、`239` 个测试通过。
+截至 `2026-05-02`，当前自动化基线为 `27` 个测试文件、全量测试通过。
 
 ## 常用命令
 
@@ -127,7 +129,8 @@ npx prisma db push
 
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
-- `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、周记录板与日视图主阅读页。
+- `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏骨架、周记录板与日视图主阅读页。
+- `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
@@ -156,5 +159,7 @@ npx prisma db push
   - `getCalendarDay / getCalendarWeek / getCalendarMonth`
   - `GET /api/calendar/day|week|month`
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
-  - `/calendar?view=day&date=YYYY-MM-DD`
+  - 顶部导航中区承接 `month / week / day` 切换、前后翻段、回到今天与实时摘要
+  - calendar 页面正文已进入首屏工作区；超量信息进入 pane 内局部滚动
+  - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，并提供 `查看当天` 日期级入口
   - 日视图按五维卡片组织，不做时间轴，也不内联正文编辑

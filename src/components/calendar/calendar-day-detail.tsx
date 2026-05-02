@@ -11,25 +11,37 @@ import { formatCalendarDayLabel, formatCalendarUpdatedAt, isFutureCalendarDate }
 
 export function CalendarDayDetail({
   day,
-  today
+  today,
+  dayViewHref
 }: {
   day: CalendarDayRecord;
   today: string;
+  dayViewHref?: string;
 }) {
   const detailItems = buildCalendarDimensionDetailItems(day, today);
   const isFuture = isFutureCalendarDate(day.date, today);
   const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
 
   return (
-    <section className="paper-sheet rounded-[32px] p-5 md:p-6" data-testid="calendar-day-detail">
+    <section className="paper-sheet h-full rounded-[32px] p-5 md:p-6" data-testid="calendar-day-detail">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="archive-label">DAY DETAIL</p>
           <h2 className="mt-2 text-balance font-display text-[1.9rem] leading-none text-[#2a2017]">{formatCalendarDayLabel(day.date)}</h2>
         </div>
-        <span className={clsx("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}>
-          {calendarDayStatusLabelMap[day.overallStatus]}
-        </span>
+        <div className="flex flex-wrap justify-end gap-2">
+          {dayViewHref ? (
+            <Link
+              href={dayViewHref}
+              className="rounded-full border border-[rgba(150,101,55,0.18)] bg-[rgba(255,248,239,0.9)] px-3.5 py-2 text-[0.82rem] text-[#4b3524] transition duration-300 hover:-translate-y-0.5"
+            >
+              查看当天
+            </Link>
+          ) : null}
+          <span className={clsx("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}>
+            {calendarDayStatusLabelMap[day.overallStatus]}
+          </span>
+        </div>
       </div>
 
       <div className="mt-5 rounded-[24px] border border-[rgba(172,126,80,0.18)] bg-[rgba(255,249,239,0.78)] p-4">

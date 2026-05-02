@@ -13,7 +13,9 @@
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图、月统计、周侧栏摘要、轻详情，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
+- 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
+- `SiteHeader` 中区现在承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
+- calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 
 用户当前在产品里感知到的主线是：
 1. 进入某个维度的访谈页。
@@ -213,7 +215,10 @@ gratitude 理论翻译基线：
   - 多维度通用前端定义、schema、进度与维度元信息。
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器。
+  - 以及 `day / week / month` 聚合器、header toolbar 投影 helper。
+- `src/components/calendar`
+  - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
+  - month / week / day shell 当前都已经进入工作区壳层；其中 month 视图是双栏骨架。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -294,6 +299,8 @@ gratitude 理论翻译基线：
   - `getCalendarMonth`
   - `GET /api/calendar/day|week|month`
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
+  - `SiteHeader` 中区会基于当前 `view/date` 独立请求 month / week / day 数据，用于标题和实时摘要
+  - month / week / day 正文已经去掉重复导航，页面优先首屏工作区
   - 日视图按五维卡片组织，不展示内部槽位、不做时间轴、不内联正文编辑
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 
