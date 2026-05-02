@@ -170,6 +170,8 @@
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 周视图已经升级为 7 天同屏对比板；主动作会优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
   - 日视图已经升级为五维紧凑操作台；`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
+  - month / week / day 三个视图当前已经切到独立 calendar 视觉系统：状态五态、维度双字标识、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一
+  - calendar 文案已经切到工作台短句语气；英文眉题已清掉，`aria-busy`、loading/error inline 语义、焦点态和主要 CTA 的可访问名称已补齐
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
 ## 3. 当前仍然没有完成的事
@@ -229,8 +231,8 @@
 - `npm test`
 
 测试结果：
-- `27` 个测试文件
-- `248` 个测试全部通过
+- `28` 个测试文件
+- `257` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -263,7 +265,9 @@
 - calendar API `day / week / month` 路由、错误映射与未来日期动作裁剪
 - calendar header 中区控制条、month/week/day 共享导航和实时摘要
 - calendar month view 双栏工作区、`查看当天` 日期级入口，以及 `/calendar -> /interview` deep link
-- calendar week view 7 天对比板、轻量 `WEEK SNAPSHOT` 摘要、day view 五维紧凑操作台，以及 month/week/day 工作区壳层
+- calendar week view 7 天对比板、轻量周摘要块、day view 五维紧凑操作台，以及 month/week/day 工作区壳层
+- calendar 视觉系统：状态 class、维度双字标识、主次按钮层级和 month/week/day 共享样式投影
+- calendar 可达性与交付收口：短句文案、focus-visible、accessible name、`aria-busy`、loading/error inline state
 - `tests/unit/site-header-calendar.test.tsx` 覆盖 header 中区的 calendar 标题、翻段、视图切换和摘要 chip
 
 fulfillment 人工 smoke 基线：
@@ -301,6 +305,5 @@ reflection 人工 smoke 基线：
    - 减少后续新增维度或继续打磨维度时的重复改动面
 
 如果继续做记录日历这条线，下一步更合理的是：
-- 继续统一 month / week / day 三个视图里的状态 class、badge 密度和动作文案层级
-- 补齐 calendar 的可访问性细节：可访问名称、焦点态、键盘路径和主要 CTA 的读屏语义
-- 继续完善 loading / error / empty / future day 的语义一致性，并补齐中小屏层级收束
+- 优化 1024 以下中小屏的层级收束和横向滚动体验
+- 补一份键盘-only / 读屏人工 smoke checklist，方便后续回归

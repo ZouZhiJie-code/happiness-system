@@ -15,33 +15,37 @@ export function CalendarViewSwitcher({
   const items = [
     {
       view: "month" as const,
-      label: "月"
+      label: "月",
+      ariaLabel: "切换到月视图"
     },
     {
       view: "week" as const,
-      label: "周"
+      label: "周",
+      ariaLabel: "切换到周视图"
     },
     {
       view: "day" as const,
-      label: "日"
+      label: "日",
+      ariaLabel: "切换到日视图"
     }
   ];
 
   return (
     <nav
       aria-label="切换日历视图"
-      className="inline-flex items-center rounded-full border border-[rgba(146,104,64,0.16)] bg-[rgba(255,248,238,0.82)] p-1"
+      className="calendar-segmented inline-flex items-center rounded-full p-1"
     >
       {items.map((item) => (
         <button
           key={item.view}
           type="button"
           onClick={() => onSelectView(item.view)}
+          data-active={currentView === item.view ? "true" : "false"}
           className={clsx(
-            "rounded-full px-3 py-1.5 text-[0.76rem] font-medium text-[#6d5337] transition duration-200 hover:bg-[rgba(166,114,61,0.12)]",
-            currentView === item.view && "bg-[rgba(166,114,61,0.18)] text-[#3f2e20]"
+            "calendar-segmented-item rounded-full px-3 py-1.5 text-[0.76rem] font-medium"
           )}
           aria-current={currentView === item.view ? "page" : undefined}
+          aria-label={item.ariaLabel}
         >
           {item.label}
         </button>

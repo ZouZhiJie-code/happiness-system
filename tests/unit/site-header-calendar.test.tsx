@@ -181,6 +181,19 @@ function buildDayRecord(): CalendarDayRecord {
   };
 }
 
+function createDeferredResponse() {
+  let resolve: (value: Response) => void;
+
+  const promise = new Promise<Response>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return {
+    promise,
+    resolve: resolve!
+  };
+}
+
 describe("site header calendar toolbar", () => {
   beforeEach(() => {
     mockPathname.value = "/calendar";
@@ -203,6 +216,7 @@ describe("site header calendar toolbar", () => {
     expect(within(toolbar).getByText("3天")).toBeInTheDocument();
     expect(within(toolbar).getByText("2天")).toBeInTheDocument();
     expect(within(toolbar).getByText("0维")).toBeInTheDocument();
+    expect(toolbar).toHaveAttribute("aria-busy", "false");
   });
 
   it("switches the active view and keeps the current date", async () => {
@@ -211,7 +225,7 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
-    fireEvent.click(within(toolbar).getByRole("button", { name: "周" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "切换到周视图" }));
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-02", { scroll: false });
   });
@@ -250,7 +264,7 @@ describe("site header calendar toolbar", () => {
     expect(within(toolbar).getAllByText("2项")).toHaveLength(2);
     expect(within(toolbar).getByText("1项")).toBeInTheDocument();
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "今天" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "回到今天" }));
 
     await waitFor(() => {
       expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=day&date=2026-05-02", { scroll: false });
@@ -266,6 +280,23 @@ describe("site header calendar toolbar", () => {
 
     await waitFor(() => {
       expect(within(toolbar).getAllByText("--")).toHaveLength(3);
+    });
+    expect(within(toolbar).getByRole("alert")).toHaveTextContent("摘要暂时不可用。");
+  });
+
+  it("announces toolbar loading while the summary request is pending", async () => {
+    const deferred = createDeferredResponse();
+    global.fetch = vi.fn(() => deferred.promise) as typeof fetch;
+
+    render(<SiteHeader />);
+
+    const toolbar = await screen.findByTestId("calendar-toolbar");
+    expect(toolbar).toHaveAttribute("aria-busy", "true");
+    expect(within(toolbar).getByRole("status")).toHaveTextContent("正在读取摘要。");
+
+    deferred.resolve(new Response(JSON.stringify(buildMonthRecord()), { status: 200 }));
+    await waitFor(() => {
+      expect(toolbar).toHaveAttribute("aria-busy", "false");
     });
   });
 });

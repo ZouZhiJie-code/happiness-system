@@ -1,6 +1,7 @@
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
 import {
   calendarDayStatusLabelMap,
+  getCalendarDimensionVisualMeta,
   type CalendarMonthDimensionPillTone
 } from "@/features/calendar/presentation";
 import type { CalendarDayRecord, CalendarDimensionStatus } from "@/features/calendar/types";
@@ -62,7 +63,7 @@ function getMonthPreviewText(day: CalendarDayRecord) {
     return day.primarySummary;
   }
 
-  return "还没有记录";
+  return "还没有记录。";
 }
 
 function getPanelDescription(day: CalendarDayRecord, today: string) {
@@ -71,14 +72,14 @@ function getPanelDescription(day: CalendarDayRecord, today: string) {
   }
 
   if (day.primaryTitle) {
-    return "这一天已经有一条清晰主线，可以进入当天页继续查看五个维度。";
+    return "已有主线，直接看当天。";
   }
 
   if (isFutureCalendarDate(day.date, today)) {
-    return "未来日期暂不支持开始记录，但可以先查看当天页。";
+    return "未来日期暂不支持开始记录。";
   }
 
-  return "还没有记录内容，可以先进入当天查看五个维度。";
+  return "还没有记录，先看当天。";
 }
 
 export function buildCalendarMonthCellPreview(day: CalendarDayRecord): CalendarMonthCellPreview {
@@ -89,7 +90,7 @@ export function buildCalendarMonthCellPreview(day: CalendarDayRecord): CalendarM
     statusLabel: calendarDayStatusLabelMap[day.overallStatus],
     dimensionPills: touchedDimensions.slice(0, 3).map((dimension) => ({
       dimension: dimension.dimension,
-      label: getInterviewDimensionMeta(dimension.dimension).label,
+      label: getCalendarDimensionVisualMeta(dimension.dimension).shortLabel,
       tone: getDimensionPillTone(dimension.status)
     })),
     extraDimensionCount: Math.max(touchedDimensions.length - 3, 0),
@@ -111,7 +112,7 @@ export function buildCalendarMonthPanelState(day: CalendarDayRecord, today: stri
 
   return {
     statusLabel: calendarDayStatusLabelMap[day.overallStatus],
-    headline: day.primaryTitle ?? "这一天还没有形成标题。",
+    headline: day.primaryTitle ?? "还没有标题。",
     description: getPanelDescription(day, today),
     updatedAtLabel: formatCalendarUpdatedAt(day.latestUpdatedAt),
     dimensionItems,

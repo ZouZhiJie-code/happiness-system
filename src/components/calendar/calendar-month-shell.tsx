@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
+import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import { interviewDimensions } from "@/features/interview/dimensions";
 import type { CalendarDayRecord, CalendarMonthRecord } from "@/features/calendar/types";
@@ -102,7 +103,7 @@ export function CalendarMonthShell() {
           return;
         }
 
-        setError("暂时没能加载这个月的记录，请稍后重试。");
+        setError(getCalendarErrorLabel("month"));
       })
       .finally(() => {
         if (!cancelled) {
@@ -129,31 +130,48 @@ export function CalendarMonthShell() {
   }
 
   return (
-    <section className="calendar-workspace page-shell rounded-[40px] px-3 py-3 md:px-4 md:py-4" data-testid="calendar-month-workspace">
+    <section
+      className="calendar-workspace calendar-shell rounded-[32px] px-3 py-3 md:px-4 md:py-4"
+      data-testid="calendar-month-workspace"
+      aria-busy={isLoading ? "true" : "false"}
+    >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
           <div className="grid min-h-0 h-full min-w-[1100px] grid-cols-[minmax(0,1fr)_22rem] gap-4">
             <div
-              className="calendar-pane paper-panel flex min-h-0 flex-col rounded-[30px] p-3 md:p-4"
+              className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-[28px] p-3 md:p-4"
               data-testid="calendar-month-primary-pane"
             >
               {error ? (
-                <div className="paper-sheet flex min-h-0 flex-1 flex-col items-center justify-center rounded-[28px] p-6 text-center">
-                  <p className="font-display text-[1.45rem] text-[#2a2017]">这个月的记录暂时没打开</p>
-                  <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
+                <div className="calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center" role="alert">
+                  <p className="font-display text-[1.45rem] text-[#17212b]">{error}</p>
                   <button
                     type="button"
                     onClick={() => setRefreshNonce((value) => value + 1)}
-                    className="mt-4 rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d]"
+                    className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#20364a]"
                   >
                     重新加载
                   </button>
                 </div>
+              ) : isLoading ? (
+                <div className="min-h-0 flex-1 rounded-[24px] p-2">
+                  <p role="status" aria-live="polite" className="text-[0.84rem] text-[#64748b]">
+                    {getCalendarLoadingLabel("month")}
+                  </p>
+                  <div className="mt-4 space-y-3" aria-hidden="true">
+                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(226,232,240,0.7)]" />
+                    <div className="grid grid-cols-7 gap-2">
+                      {Array.from({ length: 14 }, (_, index) => (
+                        <div key={index} className="h-[8.6rem] animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
                   {monthStats?.recordedDayCount === 0 ? (
-                    <div className="mb-4 rounded-[24px] border border-dashed border-[rgba(168,124,69,0.18)] bg-[rgba(255,250,242,0.72)] px-4 py-3 text-[0.9rem] leading-7 text-[#705742]">
-                      这个月还没有开始记录，可以先点开某一天，再进入当天页看看从哪一维开始。
+                    <div className="calendar-card-muted mb-4 rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#516174]">
+                      本月还没有记录。
                     </div>
                   ) : null}
                   <CalendarMonthGrid
@@ -168,7 +186,15 @@ export function CalendarMonthShell() {
             </div>
 
             <aside className="calendar-pane min-h-0" data-testid="calendar-month-secondary-pane">
-              {isLoading ? <div className="paper-sheet h-full min-h-0 animate-pulse rounded-[30px]" /> : null}
+              {isLoading ? (
+                <div className="calendar-card h-full min-h-0 rounded-[28px] p-5 md:p-6">
+                  <div className="space-y-4" aria-hidden="true">
+                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(226,232,240,0.7)]" />
+                    <div className="h-32 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                    <div className="h-48 animate-pulse rounded-[22px] bg-[rgba(226,232,240,0.7)]" />
+                  </div>
+                </div>
+              ) : null}
               {!isLoading ? (
                 <div className="h-full min-h-0">
                   <CalendarMonthDayPanel

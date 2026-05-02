@@ -1225,7 +1225,7 @@ V1 建议形式：
   - `继续编辑`
   - `查看日志`
   - 如果没有可直达动作，则回退 `查看当天`
-- 周摘要已经压缩成轻量 `WEEK SNAPSHOT` 顶部辅助块，不再保留厚重侧栏
+- 周摘要已经压缩成轻量顶部辅助块，不再保留厚重侧栏
 - 周视图当前已经被收进首屏工作区；7 天卡片会在一个固定板体内同屏比较，窄屏时通过横向滚动保持列板语义
 - 周视图与月视图、日视图共享同一套状态颜色和 badge 文案，但不复用 month 的当天检查面板结构
 
@@ -1320,17 +1320,64 @@ V1 建议形式：
 - 不做时间轴
 - 不在页面内联正文编辑
 
-### 5.14 Step 8: 回归、文档与交付收口基线
+### 5.14 Step 7: 文案、可达性与验收收口回顾
+
+本节记录同一轮 calendar 收尾里已经补齐的文案和可达性基线。它不改变 `month / week / day` 的信息架构和主动作优先级，只让当前工作台更短句、更可达、更易回归。
+
+#### 当前实现结果
+
+- calendar 内已移除模板化英文眉题，不再保留 `DAY / WEEK` 装饰性标题
+- month / week / day 的 fallback 文案已经压成工作台短句：
+  - `还没有记录。`
+  - `未来日期暂不支持开始记录。`
+  - `本周还没有记录。`
+  - `正在读取本月/本周/当天记录。`
+- `CalendarToolbar`、month shell、week shell、day shell 当前都补了 `aria-busy`
+- loading 当前统一用结构化 skeleton + `role="status"` 短状态文案
+- error 当前统一为卡片内联 `role="alert"` + 单个 `重新加载`
+- month 日期按钮、week/day 主动作、次动作和 `查看当天` 当前都补了更完整的 accessible name
+- view switcher 当前保留原生 button 语义，并给 `月 / 周 / 日` 补了明确切换名称
+- 维度状态当前不再只靠颜色；month / week / day 三层都能从 badge 或 accessible name 读到文本状态
+
+#### 自动化验收
+
+本步新增并已通过：
+
+- `tests/unit/calendar-month-shell.test.tsx`
+  - 校验 month shell loading 期 `aria-busy` 和 `status`
+  - 校验日期按钮 accessible name 包含今天 / 选中 / 状态 / 摘要
+  - 校验 month panel 已移除英文眉题
+- `tests/unit/calendar-week-shell.test.tsx`
+  - 校验 week shell 的 loading/error 语义
+  - 校验周卡主动作的 accessible name 含状态与判断信息
+- `tests/unit/calendar-day-shell.test.tsx`
+  - 校验 day shell 的 loading/error 语义
+  - 校验 future day 禁用态的 accessible name
+  - 校验日视图已移除英文眉题
+- `tests/unit/site-header-calendar.test.tsx`
+  - 校验 toolbar 的 `aria-busy`
+  - 校验 loading `status` 与 error `alert`
+  - 校验 `切换到周视图 / 回到今天` 等更完整按钮名称
+- `tests/unit/calendar-presentation.test.ts`
+  - 校验 accessible name helper 与 loading/error copy helper 的稳定输出
+
+### 5.15 Step 8: 回归、文档与交付收口基线
 
 本节记录第 8 步已经落地后的最终交付基线。它不新增 public API，而是把 `entryDate`、calendar read model、month/week/day 三视图和 `/calendar -> /interview` 深链固化为稳定契约。
+
+当前视觉层也已经补齐：
+- month / week / day 三个视图共用独立 calendar 视觉系统
+- 状态五态 `empty / in_progress / draft / completed / mixed` 的 badge / surface / marker class 由 `src/features/calendar/presentation.ts` 统一投影
+- 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+- 主按钮、次按钮和禁用态现在有稳定层级，不再由各视图各自拼装
 
 #### 当前自动化基线
 
 - `npx tsc --noEmit`
 - `npm test`
 - 截至 `2026-05-02`：
-  - `27` 个测试文件
-  - `248` 个测试全部通过
+  - `28` 个测试文件
+  - `257` 个测试全部通过
 
 #### Step 8 明确补齐的回归面
 
@@ -1341,6 +1388,17 @@ V1 建议形式：
   - 校验 legacy session 缺少 `entryDate` 时，calendar source 会回退到 `startedAt`
 - `tests/unit/calendar-month-shell.test.tsx`
   - 校验月视图双栏工作区、右侧当天检查面板和 `查看当天` 日期级入口
+- `tests/unit/calendar-presentation.test.ts`
+  - 校验状态五态映射为不同 visual meta
+  - 校验五个维度的双字标识与 accent style 稳定
+- `tests/unit/calendar-day-shell.test.tsx`
+  - 额外校验维度卡会暴露稳定 `data-dimension`
+  - 额外校验未来空白卡的禁用动作语义
+- `tests/unit/calendar-week-shell.test.tsx`
+  - 额外校验周卡会展示稳定维度标识
+  - 额外校验 `查看日志 / 查看当天` 的动作层级语义
+- `tests/unit/site-header-calendar.test.tsx`
+  - 额外校验 toolbar 的 `aria-busy`、loading `status` 和 error `alert`
 
 #### 当前人工验收基线
 

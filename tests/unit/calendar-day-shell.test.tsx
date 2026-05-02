@@ -122,6 +122,19 @@ function buildFutureEmptyDayRecord(): CalendarDayRecord {
   };
 }
 
+function createDeferredResponse() {
+  let resolve: (value: Response) => void;
+
+  const promise = new Promise<Response>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return {
+    promise,
+    resolve: resolve!
+  };
+}
+
 describe("calendar day shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
@@ -154,6 +167,7 @@ describe("calendar day shell", () => {
     expect(await screen.findByTestId("calendar-day-workspace")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-day-primary-pane")).toBeInTheDocument();
     expect(await screen.findByTestId("calendar-day-view")).toBeInTheDocument();
+    expect(screen.queryByText("DAY OVERVIEW")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "回到本周" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "回到本月" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
@@ -174,23 +188,26 @@ describe("calendar day shell", () => {
     expect(screen.getAllByText("已完成").length).toBeGreaterThan(0);
 
     const joyCard = screen.getByTestId("calendar-dimension-card-joy");
-    expect(within(joyCard).getByRole("link", { name: "继续编辑" })).toHaveAttribute(
+    expect(joyCard).toHaveAttribute("data-dimension", "joy");
+    expect(within(joyCard).getByRole("link", { name: "开心，有草稿，还在整理的那段，继续编辑" })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy&panel=journal"
     );
+    expect(within(joyCard).getByRole("link", { name: "开心，有草稿，还在整理的那段，继续编辑" })).toHaveAttribute("data-action-tone", "primary");
 
     const completedCard = screen.getByTestId("calendar-dimension-card-fulfillment");
-    expect(within(completedCard).getByRole("link", { name: "查看日志" })).toHaveAttribute(
+    expect(completedCard).toHaveAttribute("data-dimension", "fulfillment");
+    expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，查看日志" })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
     );
-    expect(within(completedCard).getByRole("link", { name: "编辑日志" })).toHaveAttribute(
+    expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，编辑日志" })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
     );
 
     const mixedCard = screen.getByTestId("calendar-dimension-card-reflection");
-    expect(within(mixedCard).getByRole("link", { name: "继续访谈" })).toHaveAttribute(
+    expect(within(mixedCard).getByRole("link", { name: "思考，混合状态，想法还在发酵，继续访谈" })).toHaveAttribute(
       "href",
       "/interview?dimension=reflection&sessionId=session-reflection&entryDate=2026-05-01"
     );
@@ -198,7 +215,8 @@ describe("calendar day shell", () => {
     expect(mixedLinks.map((link) => link.textContent)).toEqual(["继续访谈", "查看日志", "编辑日志"]);
 
     const emptyCard = screen.getByTestId("calendar-dimension-card-gratitude");
-    expect(within(emptyCard).getByRole("link", { name: "开始记录" })).toHaveAttribute(
+    expect(emptyCard).toHaveAttribute("data-dimension", "gratitude");
+    expect(within(emptyCard).getByRole("link", { name: "感谢，未记录，开始记录" })).toHaveAttribute(
       "href",
       "/interview?dimension=gratitude&entryDate=2026-05-01"
     );
@@ -216,6 +234,8 @@ describe("calendar day shell", () => {
     expect(await screen.findByTestId("calendar-day-view")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "开始记录" })).not.toBeInTheDocument();
     expect(screen.getAllByText("未来日期暂不支持开始记录")).toHaveLength(5);
+    expect(screen.getAllByText("未来日期暂不支持开始记录").every((node) => node.getAttribute("data-action-tone")?.startsWith("disabled"))).toBe(true);
+    expect(screen.getAllByText("未来日期暂不支持开始记录")[0]).toHaveAttribute("aria-label", "开心，未记录，未来日期暂不支持开始记录");
   });
 
   it("moves day navigation responsibility out of the shell body", async () => {
@@ -227,5 +247,20 @@ describe("calendar day shell", () => {
     expect(screen.queryByRole("button", { name: "前一天" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "后一天" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "回到今天" })).not.toBeInTheDocument();
+  });
+
+  it("announces loading and error states accessibly", async () => {
+    const deferred = createDeferredResponse();
+    global.fetch = vi.fn(() => deferred.promise) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    expect(screen.getByTestId("calendar-day-workspace")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("status")).toHaveTextContent("正在读取当天记录。");
+
+    deferred.resolve(new Response(null, { status: 500 }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("当天记录暂时没打开。");
+    });
   });
 });

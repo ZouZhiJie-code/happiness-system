@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
+import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import {
   buildCalendarToolbarChips,
@@ -54,9 +55,9 @@ async function fetchCalendarDay(date: string) {
 
 function ToolbarChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-full border border-[rgba(160,113,68,0.14)] bg-[rgba(255,251,245,0.82)] px-3 py-1.5">
-      <span className="text-[0.68rem] text-[#8a6e51]">{label}</span>
-      <span className="ml-2 tabular-nums text-[0.78rem] font-medium text-[#3d2d1f]">{value}</span>
+    <div className="calendar-summary-chip rounded-full px-3 py-1.5">
+      <span className="text-[0.68rem] text-[#64748b]">{label}</span>
+      <span className="ml-2 tabular-nums text-[0.78rem] font-medium text-[#20364a]">{value}</span>
     </div>
   );
 }
@@ -162,14 +163,15 @@ export function CalendarToolbar() {
   return (
     <div
       data-testid="calendar-toolbar"
-      className="flex w-full flex-col gap-2 rounded-[20px] border border-[rgba(136,92,50,0.14)] bg-[linear-gradient(180deg,rgba(252,246,236,0.88),rgba(244,230,204,0.9))] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.46),0_10px_22px_rgba(118,75,37,0.06)]"
+      aria-busy={isLoading ? "true" : "false"}
+      className="calendar-card flex w-full flex-col gap-2 rounded-[20px] px-3 py-2"
     >
       <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={() => navigate({ date: toolbarState.previousDate })}
-            className="rounded-full border border-[rgba(160,113,68,0.14)] bg-[rgba(255,250,243,0.92)] px-2.5 py-1.5 text-[0.78rem] text-[#62462d] transition duration-200 hover:bg-[rgba(255,253,250,0.98)]"
+            className="calendar-chip rounded-full px-2.5 py-1.5 text-[0.78rem] text-[#516174] transition duration-200 hover:text-[#20364a]"
             aria-label={toolbarState.previousLabel}
           >
             <span aria-hidden="true">‹</span>
@@ -177,7 +179,7 @@ export function CalendarToolbar() {
           <button
             type="button"
             onClick={() => navigate({ date: toolbarState.nextDate })}
-            className="rounded-full border border-[rgba(160,113,68,0.14)] bg-[rgba(255,250,243,0.92)] px-2.5 py-1.5 text-[0.78rem] text-[#62462d] transition duration-200 hover:bg-[rgba(255,253,250,0.98)]"
+            className="calendar-chip rounded-full px-2.5 py-1.5 text-[0.78rem] text-[#516174] transition duration-200 hover:text-[#20364a]"
             aria-label={toolbarState.nextLabel}
           >
             <span aria-hidden="true">›</span>
@@ -185,7 +187,7 @@ export function CalendarToolbar() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-balance text-[0.98rem] font-medium text-[#2f241b] md:text-[1.08rem]">
+          <p className="truncate text-balance text-[0.98rem] font-medium text-[#17212b] md:text-[1.08rem]">
             {toolbarState.title}
           </p>
         </div>
@@ -193,7 +195,8 @@ export function CalendarToolbar() {
         <button
           type="button"
           onClick={() => navigate({ date: today })}
-          className="shrink-0 rounded-full border border-[rgba(166,114,61,0.18)] bg-[rgba(255,248,239,0.88)] px-3 py-1.5 text-[0.76rem] font-medium text-[#644830] transition duration-200 hover:bg-[rgba(255,252,247,0.98)]"
+          className="calendar-chip shrink-0 rounded-full px-3 py-1.5 text-[0.76rem] font-medium text-[#20364a] transition duration-200 hover:text-[#17212b]"
+          aria-label="回到今天"
         >
           今天
         </button>
@@ -202,11 +205,21 @@ export function CalendarToolbar() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {isLoading ? (
+          <span className="text-[0.72rem] text-[#64748b]" role="status" aria-live="polite">
+            {getCalendarLoadingLabel("toolbar")}
+          </span>
+        ) : null}
+        {hasFetchError ? (
+          <span className="text-[0.72rem] text-[#8f4f2d]" role="alert">
+            {getCalendarErrorLabel("toolbar")}
+          </span>
+        ) : null}
         {chips.map((chip) => (
           <ToolbarChip key={chip.id} label={chip.label} value={chip.value} />
         ))}
         <span className="sr-only" aria-live="polite">
-          摘要暂时不可用
+          {isLoading ? getCalendarLoadingLabel("toolbar") : hasFetchError ? getCalendarErrorLabel("toolbar") : "摘要已更新。"}
         </span>
       </div>
     </div>

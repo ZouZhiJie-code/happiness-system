@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarWeekBoard } from "@/components/calendar/calendar-week-board";
+import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
 import type { CalendarWeekRecord } from "@/features/calendar/types";
 import { buildCalendarWeekOverviewState } from "@/features/calendar/week-view";
@@ -58,7 +59,7 @@ export function CalendarWeekShell() {
       })
       .catch(() => {
         if (!cancelled) {
-          setError("暂时没能加载这一周的记录，请稍后重试。");
+          setError(getCalendarErrorLabel("week"));
         }
       })
       .finally(() => {
@@ -79,53 +80,58 @@ export function CalendarWeekShell() {
   );
 
   return (
-    <section className="calendar-workspace page-shell rounded-[40px] px-3 py-3 md:px-4 md:py-4" data-testid="calendar-week-workspace">
+    <section
+      className="calendar-workspace calendar-shell rounded-[32px] px-3 py-3 md:px-4 md:py-4"
+      data-testid="calendar-week-workspace"
+      aria-busy={isLoading ? "true" : "false"}
+    >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
-          className="calendar-pane paper-panel flex min-h-0 flex-1 flex-col rounded-[30px] p-3 md:p-4"
+          className="calendar-pane calendar-panel flex min-h-0 flex-1 flex-col rounded-[28px] p-3 md:p-4"
           data-testid="calendar-week-primary-pane"
         >
           {error ? (
-            <div className="paper-sheet flex min-h-0 flex-1 flex-col items-center justify-center rounded-[28px] p-6 text-center">
-              <p className="font-display text-[1.45rem] text-[#2a2017]">这一周的记录暂时没打开</p>
-              <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
+            <div className="calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center" role="alert">
+              <p className="font-display text-[1.45rem] text-[#17212b]">{error}</p>
               <button
                 type="button"
                 onClick={() => setRefreshNonce((value) => value + 1)}
-                className="mt-4 rounded-full border border-[rgba(152,105,61,0.18)] bg-[rgba(255,249,240,0.82)] px-4 py-2 text-[0.88rem] text-[#62462d]"
+                className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#20364a]"
               >
                 重新加载
               </button>
             </div>
           ) : isLoading ? (
             <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 space-y-3 pr-1">
-              <div className="h-28 animate-pulse rounded-[28px] bg-[rgba(255,250,242,0.72)]" />
-              <div className="h-[20rem] animate-pulse rounded-[28px] bg-[rgba(255,250,242,0.72)]" />
+              <p role="status" aria-live="polite" className="text-[0.84rem] text-[#64748b]">
+                {getCalendarLoadingLabel("week")}
+              </p>
+              <div className="calendar-card h-28 animate-pulse rounded-[24px]" aria-hidden="true" />
+              <div className="calendar-card h-[20rem] animate-pulse rounded-[24px]" aria-hidden="true" />
             </div>
           ) : (
             <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 space-y-3 pr-1">
               <div
-                className="paper-sheet rounded-[28px] px-4 py-4 md:px-5"
+                className="calendar-card rounded-[24px] px-4 py-4 md:px-5"
                 data-testid="calendar-week-summary"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="max-w-[42rem]">
-                    <p className="archive-label">WEEK SNAPSHOT</p>
-                    <p className="mt-2 text-pretty text-[1rem] leading-7 text-[#453325]">
-                      {weekOverview?.summary ?? "正在整理这一周的记录概况。"}
+                    <p className="mt-2 text-pretty text-[1rem] leading-7 text-[#334155]">
+                      {weekOverview?.summary ?? "本周还没有记录。"}
                     </p>
-                    <p className="mt-2 text-[0.86rem] leading-6 text-[#7b5f45]">{weekOverview?.focusHint ?? "正在整理下一步。"}</p>
+                    <p className="mt-2 text-[0.86rem] leading-6 text-[#64748b]">{weekOverview?.focusHint ?? "先从今天开始。"}</p>
                   </div>
-                  <div className="rounded-[22px] border border-[rgba(172,126,80,0.18)] bg-[rgba(255,249,239,0.82)] px-4 py-3 text-[0.88rem] text-[#5b4b3e]">
-                    <p className="text-[0.72rem] tracking-[0.18em] text-[#9a744d]">周范围</p>
+                  <div className="calendar-summary-chip rounded-[20px] px-4 py-3 text-[0.88rem] text-[#475569]">
+                    <p className="text-[0.72rem] text-[#64748b]">周范围</p>
                     <p className="mt-1">{weekOverview?.rangeLabel ?? "正在加载"}</p>
                   </div>
                 </div>
               </div>
 
               {weekStats?.recordedDayCount === 0 ? (
-                <div className="rounded-[24px] border border-dashed border-[rgba(168,124,69,0.18)] bg-[rgba(255,250,242,0.72)] px-4 py-3 text-[0.9rem] leading-7 text-[#705742]">
-                  这一周还没有留下记录，可以先从今天开始，再回来看一周节奏。
+                <div className="calendar-card-muted rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#516174]">
+                  本周还没有记录。
                 </div>
               ) : null}
 

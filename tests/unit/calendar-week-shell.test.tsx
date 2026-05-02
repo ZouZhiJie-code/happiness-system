@@ -158,6 +158,19 @@ function buildFutureWeekRecord(): CalendarWeekRecord {
   };
 }
 
+function createDeferredResponse() {
+  let resolve: (value: Response) => void;
+
+  const promise = new Promise<Response>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return {
+    promise,
+    resolve: resolve!
+  };
+}
+
 describe("calendar week shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
@@ -193,35 +206,40 @@ describe("calendar week shell", () => {
     expect(screen.getByTestId("calendar-week-summary")).toBeInTheDocument();
     expect(await screen.findByTestId("calendar-week-board")).toBeInTheDocument();
     expect(screen.getAllByTestId(/calendar-week-day-/)).toHaveLength(7);
+    expect(screen.queryByText("WEEK SNAPSHOT")).not.toBeInTheDocument();
 
-    expect(screen.getByText("这周有 3 天留下记录，已经触达 3 个维度。 还有 1 条草稿值得继续补完。")).toBeInTheDocument();
-    expect(screen.getByText("先补完 1 条草稿，最容易把这周的记录往前推。")).toBeInTheDocument();
+    expect(screen.getByText("本周有 3 天有记录，触达 3 维。 还有 1 条草稿。")).toBeInTheDocument();
+    expect(screen.getByText("先补 1 条草稿。")).toBeInTheDocument();
 
     const completedCard = screen.getByTestId("calendar-week-day-2026-05-04");
     expect(within(completedCard).getByText("已完成 1 项")).toBeInTheDocument();
-    expect(within(completedCard).getByRole("link", { name: "查看日志" })).toHaveAttribute(
+    expect(completedCard.querySelector('[data-dimension="joy"]')).not.toBeNull();
+    expect(within(completedCard).getByRole("link", { name: /已完成.*项目终于收束.*查看日志/ })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy-completed&panel=journal"
     );
+    expect(within(completedCard).getByRole("link", { name: /已完成.*项目终于收束.*查看日志/ })).toHaveAttribute("data-action-tone", "primary");
 
     const draftCard = screen.getByTestId("calendar-week-day-2026-05-05");
     expect(within(draftCard).getByText("草稿 1 项")).toBeInTheDocument();
-    expect(within(draftCard).getByRole("link", { name: "继续编辑" })).toHaveAttribute(
+    expect(draftCard.querySelector('[data-dimension="fulfillment"]')).not.toBeNull();
+    expect(within(draftCard).getByRole("link", { name: /有草稿.*还有一段没整理完。.*继续编辑/ })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment-draft&panel=journal"
     );
 
     const activeCard = screen.getByTestId("calendar-week-day-2026-05-06");
-    expect(within(activeCard).getByRole("link", { name: "继续访谈" })).toHaveAttribute(
+    expect(within(activeCard).getByRole("link", { name: /进行中.*这一天还有访谈线索没收住。.*继续访谈/ })).toHaveAttribute(
       "href",
       "/interview?dimension=reflection&sessionId=session-reflection-active&entryDate=2026-05-06"
     );
 
     const emptyCard = screen.getByTestId("calendar-week-day-2026-05-07");
-    expect(within(emptyCard).getByRole("link", { name: "查看当天" })).toHaveAttribute(
+    expect(within(emptyCard).getByRole("link", { name: /未记录.*未来日期先保留。.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-07"
     );
+    expect(within(emptyCard).getByRole("link", { name: /未记录.*未来日期先保留。.*查看当天/ })).toHaveAttribute("data-action-tone", "secondary");
   });
 
   it("moves week navigation responsibility out of the shell body", async () => {
@@ -245,11 +263,26 @@ describe("calendar week shell", () => {
     render(<CalendarWeekShell />);
 
     const futureCard = await screen.findByTestId("calendar-week-day-2099-01-07");
-    expect(within(futureCard).getByRole("link", { name: "查看当天" })).toHaveAttribute(
+    expect(within(futureCard).getByRole("link", { name: /未记录.*未来日期先保留。.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2099-01-07"
     );
     expect(within(futureCard).queryByRole("link", { name: "开始访谈" })).not.toBeInTheDocument();
     expect(within(futureCard).queryByRole("link", { name: "继续访谈" })).not.toBeInTheDocument();
+  });
+
+  it("announces loading and error states accessibly", async () => {
+    const deferred = createDeferredResponse();
+    global.fetch = vi.fn(() => deferred.promise) as typeof fetch;
+
+    render(<CalendarWeekShell />);
+
+    expect(screen.getByTestId("calendar-week-workspace")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("status")).toHaveTextContent("正在读取本周记录。");
+
+    deferred.resolve(new Response(null, { status: 500 }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("本周记录暂时没打开。");
+    });
   });
 });

@@ -14,6 +14,8 @@
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
   - 周视图当前是 7 天同屏对比板，主动作会优先直达值得继续的业务链路
   - 日视图当前是五维紧凑操作台，`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
+  - month / week / day 三个视图现在共用独立 calendar 视觉系统：五态状态色、轻量 card 层级，以及固定维度标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+  - calendar 文案当前已经切到工作台短句语气，并补齐 `aria-busy`、焦点态、错误/加载语义和主要 CTA 的可访问名称
 - 用户在访谈结束后点击“生成日志”，看到的是可继续编辑的日志正文，而不是结构化槽位。
 
 ## 当前产品状态
@@ -101,7 +103,7 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-02`，当前自动化基线为 `27` 个测试文件、`248` 个测试全部通过。
+截至 `2026-05-02`，当前自动化基线为 `28` 个测试文件、`257` 个测试全部通过。
 
 ## 常用命令
 
@@ -133,6 +135,7 @@ npx prisma db push
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
+- `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
@@ -167,4 +170,6 @@ npx prisma db push
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，并提供 `查看当天` 日期级入口
   - 周视图当前是 7 天同屏对比板，卡片主动作优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
   - 日视图当前按五维紧凑卡片组织，主按钮稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析；`编辑日志` 只保留为已保存维度的次级轻链接
+  - month / week / day 当前共用独立 calendar 视觉系统：状态 badge、卡片 surface、维度双字标识和主次按钮层级都由前端展示 helper 统一投影
+  - calendar 当前已经删掉英文眉题，统一为短句反馈，并补齐键盘焦点、读屏名称、loading/error inline 语义
   - 日视图不做时间轴，也不内联正文编辑

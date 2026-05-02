@@ -16,6 +16,7 @@ export interface CalendarWeekCardState {
   completedCountLabel: string;
   draftCountLabel: string;
   activeCountLabel: string;
+  touchedDimensions: CalendarDayRecord["dimensions"][number]["dimension"][];
   action: CalendarWeekCardAction;
 }
 
@@ -35,20 +36,20 @@ function getWeekCardHeadline(day: CalendarDayRecord, today: string) {
   }
 
   if (isFutureCalendarDate(day.date, today)) {
-    return "这一天暂时还不会开始，先保留这个位置。";
+    return "未来日期先保留。";
   }
 
   switch (day.overallStatus) {
     case "in_progress":
-      return "这一天还有访谈线索没收住，适合先继续补完整。";
+      return "还有线索没收住。";
     case "draft":
-      return "这一天已经有草稿，适合先补成稳定版本。";
+      return "已有草稿，适合补完。";
     case "completed":
-      return "这一天已经有成稿，可以直接查看成果。";
+      return "已有成稿，可直接查看。";
     case "mixed":
-      return "这一天同时有进行中、草稿或成稿线索，最值得先处理。";
+      return "状态混合，优先处理。";
     default:
-      return "这一天还没有记录，可以从这里开始第一条。";
+      return "还没有记录。";
   }
 }
 
@@ -82,22 +83,22 @@ function getWeekFocusHint(week: CalendarWeekRecord) {
   const draftCount = week.days.reduce((total, day) => total + day.draftCount, 0);
 
   if (draftCount > 0) {
-    return `先补完 ${draftCount} 条草稿，最容易把这周的记录往前推。`;
+    return `先补 ${draftCount} 条草稿。`;
   }
 
   const activeCount = sumActiveCount(week);
 
   if (activeCount > 0) {
-    return `这周还有 ${activeCount} 项进行中，优先继续还没收住的那几天。`;
+    return `先继续 ${activeCount} 项进行中。`;
   }
 
   const completedCount = week.days.reduce((total, day) => total + day.savedCount, 0);
 
   if (completedCount > 0) {
-    return `这一周已经完成 ${completedCount} 条日志，可以先查看最完整的那一天。`;
+    return `先看最完整的一天。`;
   }
 
-  return "这一周还没有留下记录，可以先从今天补第一条。";
+  return "先从今天开始。";
 }
 
 export function buildCalendarWeekCardState(day: CalendarDayRecord, today: string): CalendarWeekCardState {
@@ -108,6 +109,7 @@ export function buildCalendarWeekCardState(day: CalendarDayRecord, today: string
     completedCountLabel: `已完成 ${day.savedCount} 项`,
     draftCountLabel: `草稿 ${day.draftCount} 项`,
     activeCountLabel: `进行中 ${day.activeCount} 项`,
+    touchedDimensions: day.dimensions.filter((dimension) => dimension.status !== "empty").slice(0, 3).map((dimension) => dimension.dimension),
     action: resolveWeekCardAction(day, today)
   };
 }

@@ -140,8 +140,8 @@ npm test
 ```
 
 截至 `2026-05-02`，当前基线是：
-- `23` 个测试文件
-- `225` 个测试全部通过
+- `28` 个测试文件
+- `257` 个测试全部通过
 
 ## 5. 高频故障排查
 
@@ -347,4 +347,6 @@ npm run dev
   - `SiteHeader` 中区当前是唯一的全局 calendar 导航入口，承接视图切换、前后翻段、回到今天和实时摘要
   - calendar 正文里已经没有旧的翻月 / 翻周 / 翻日按钮
   - 页面本身默认不应长滚动；超量内容应进入 pane 内局部滚动
+  - calendar 文案已切到工作台短句语气，英文眉题已删除
+  - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维卡片组织，不做时间轴，也不内联正文编辑

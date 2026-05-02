@@ -44,7 +44,7 @@
   - 多维度共用：schema、维度定义、进度算法、前端元信息
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影与 deep link helper，不直接访问数据库
+  - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/features/joy-interview`
@@ -177,12 +177,18 @@
   - 右栏固定提供 `查看当天` 日期级入口
 - `week`
   - 已升级为 7 天同屏对比板
-  - 主摘要压缩成轻量 `WEEK SNAPSHOT`，不再保留厚重侧栏
+  - 主摘要压缩成轻量周摘要块，不再保留厚重侧栏
   - 每天卡片只保留日期、状态、完成/草稿/进行中摘要、短判断文案和唯一主动作
 - `day`
   - 已升级为“一条总览 + 五维紧凑操作台”
   - 每卡只保留维度身份、状态、标题或摘要、唯一主按钮和少量次级轻链接
   - `mixed` 主动作由前端稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
+- month / week / day 三个视图当前共用独立 calendar 视觉系统：
+  - 五态状态色固定区分 `empty / in_progress / draft / completed / mixed`
+  - 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+  - badge、surface、marker 和主次按钮层级由 `src/features/calendar/presentation.ts` 统一投影，不再由各组件各自拼样式
+  - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
+  - shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
 
 ## 4. 结构化数据面
 

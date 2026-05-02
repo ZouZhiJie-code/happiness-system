@@ -52,15 +52,15 @@ export function buildCalendarWeekStats(week: CalendarWeekRecord): CalendarWeekSt
   const completedCount = week.days.reduce((total, day) => total + day.savedCount, 0);
   const dimensionCoverageCount = dimensions.filter((dimension) => dimension.touchedDayCount > 0).length;
 
-  let summary = "这一周还没有开始记录，可以先从今天的一个维度补起。";
+  let summary = "本周还没有记录。";
 
   if (recordedDayCount > 0) {
-    summary = `这周有 ${recordedDayCount} 天留下记录，已经触达 ${dimensionCoverageCount} 个维度。`;
+    summary = `本周有 ${recordedDayCount} 天有记录，触达 ${dimensionCoverageCount} 维。`;
 
     if (draftCount > 0) {
-      summary += ` 还有 ${draftCount} 条草稿值得继续补完。`;
+      summary += ` 还有 ${draftCount} 条草稿。`;
     } else if (completedCount > 0) {
-      summary += ` 已经正式完成 ${completedCount} 条日志。`;
+      summary += ` 已完成 ${completedCount} 条。`;
     }
   }
 

@@ -1,11 +1,13 @@
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { calendarDayStatusLabelMap } from "@/features/calendar/presentation";
 import type { CalendarAction, CalendarDayRecord, CalendarDimensionStatus } from "@/features/calendar/types";
 
 export interface CalendarDetailActionLink {
   id: string;
   dimension: CalendarDimensionStatus["dimension"];
   dimensionLabel: string;
+  statusLabel: string;
   action: CalendarAction;
   label: string;
   href: string | null;
@@ -68,6 +70,7 @@ function buildActionLink(input: {
 }): CalendarDetailActionLink {
   const { day, dimension, action, today } = input;
   const dimensionLabel = getInterviewDimensionMeta(dimension.dimension).label;
+  const statusLabel = calendarDayStatusLabelMap[dimension.status];
 
   if (action === "start_interview") {
     if (day.date > today) {
@@ -75,6 +78,7 @@ function buildActionLink(input: {
         id: `${day.date}-${dimension.dimension}-${action}`,
         dimension: dimension.dimension,
         dimensionLabel,
+        statusLabel,
         action,
         label: actionLabelMap[action],
         href: null,
@@ -82,13 +86,14 @@ function buildActionLink(input: {
       };
     }
 
-    return {
-      id: `${day.date}-${dimension.dimension}-${action}`,
-      dimension: dimension.dimension,
-      dimensionLabel,
-      action,
-      label: actionLabelMap[action],
-      href: buildInterviewHref({
+      return {
+        id: `${day.date}-${dimension.dimension}-${action}`,
+        dimension: dimension.dimension,
+        dimensionLabel,
+        statusLabel,
+        action,
+        label: actionLabelMap[action],
+        href: buildInterviewHref({
         dimension: dimension.dimension,
         entryDate: day.date
       }),
@@ -101,6 +106,7 @@ function buildActionLink(input: {
       id: `${day.date}-${dimension.dimension}-${action}`,
       dimension: dimension.dimension,
       dimensionLabel,
+      statusLabel,
       action,
       label: actionLabelMap[action],
       href: dimension.sessionId
@@ -119,6 +125,7 @@ function buildActionLink(input: {
       id: `${day.date}-${dimension.dimension}-${action}`,
       dimension: dimension.dimension,
       dimensionLabel,
+      statusLabel,
       action,
       label: actionLabelMap[action],
       href: dimension.sessionId
@@ -136,6 +143,7 @@ function buildActionLink(input: {
     id: `${day.date}-${dimension.dimension}-${action}`,
     dimension: dimension.dimension,
     dimensionLabel,
+    statusLabel,
     action,
     label: actionLabelMap[action],
     href: dimension.sessionId
