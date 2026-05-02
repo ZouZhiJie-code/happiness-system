@@ -1,6 +1,9 @@
 import {
   buildCalendarMonthGrid,
+  getCalendarWeekRange,
   normalizeCalendarSearchParams,
+  normalizeCalendarView,
+  shiftCalendarWeek,
   shiftCalendarMonth
 } from "@/features/calendar/view-state";
 
@@ -19,9 +22,23 @@ describe("calendar view state helpers", () => {
     });
   });
 
+  it("accepts week and day views while defaulting unknown values to month", () => {
+    expect(normalizeCalendarView("week")).toBe("week");
+    expect(normalizeCalendarView("day")).toBe("day");
+    expect(normalizeCalendarView("something-else")).toBe("month");
+  });
+
   it("clamps month shifts when the target month has fewer days", () => {
     expect(shiftCalendarMonth("2026-03-31", -1)).toBe("2026-02-28");
     expect(shiftCalendarMonth("2026-01-31", 1)).toBe("2026-02-28");
+  });
+
+  it("shifts week anchors by seven days and keeps monday-sunday ranges", () => {
+    expect(shiftCalendarWeek("2026-05-07", 1)).toBe("2026-05-14");
+    expect(getCalendarWeekRange("2026-05-07")).toEqual({
+      startDate: "2026-05-04",
+      endDate: "2026-05-10"
+    });
   });
 
   it("always builds a 42-slot month grid", () => {

@@ -26,7 +26,7 @@
 - `src/app/interview`
   - 访谈页与日志工作区
 - `src/app/calendar`
-  - 记录日历月视图页面
+  - 记录日历 month/week/day 页面
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
 - `src/app/api/calendar/*`
@@ -44,9 +44,9 @@
   - 多维度共用：schema、维度定义、进度算法、前端元信息
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
-  - 以及 `day / week / month` 聚合器、month view URL/helper、月统计与 deep link helper，不直接访问数据库
+  - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、日视图投影与 deep link helper，不直接访问数据库
 - `src/components/calendar`
-  - 月网格、日期格、轻详情与月视图容器
+  - 月网格、周记录板、日视图 overview、五维卡片、view switcher 与 month/week/day 容器
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -145,6 +145,7 @@
 - `InterviewSession`
   - 提供 `active / paused / completed`
   - 提供 `entryDate`、`draftSummary`
+  - legacy 兼容上，如果历史 session 缺少 `entryDate`，calendar source 会回退到 `startedAt` 做日期归档
 - `JoyEntry`
   - 提供 `draft / saved`
   - 提供标题、正文摘要与更新时间

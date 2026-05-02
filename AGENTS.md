@@ -13,7 +13,7 @@
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 记录日历的月视图主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、月统计、轻详情，以及回到 `/interview` 的 deep link 都已完成；`week / day` 视图还没有落地。
+- 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图、月统计、周侧栏摘要、轻详情，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 
 用户当前在产品里感知到的主线是：
 1. 进入某个维度的访谈页。
@@ -293,7 +293,8 @@ gratitude 理论翻译基线：
   - `getCalendarWeek`
   - `getCalendarMonth`
   - `GET /api/calendar/day|week|month`
-  - `/calendar?view=month&date=YYYY-MM-DD`
+  - `/calendar?view=month|week|day&date=YYYY-MM-DD`
+  - 日视图按五维卡片组织，不展示内部槽位、不做时间轴、不内联正文编辑
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 
 ## 7. 本地开发与排障
@@ -334,8 +335,8 @@ gratitude 理论翻译基线：
 - `npx tsc --noEmit`
 
 截至 `2026-05-02`，本地测试基线为：
-- `23` 个测试文件
-- `225` 个测试全部通过
+- `26` 个测试文件
+- `239` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

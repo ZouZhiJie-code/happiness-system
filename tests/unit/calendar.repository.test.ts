@@ -117,4 +117,42 @@ describe("calendar.repository", () => {
       }
     ]);
   });
+
+  it("falls back to startedAt when a legacy session has no entryDate", async () => {
+    mockInterviewSessionFindMany.mockResolvedValue([
+      {
+        id: "session-legacy",
+        dimension: "reflection",
+        entryDate: null,
+        status: "paused",
+        startedAt: new Date("2026-05-02T09:00:00.000Z"),
+        completedAt: null,
+        pausedAt: new Date("2026-05-02T10:00:00.000Z"),
+        draftSummary: "这条旧会话还没有 entryDate。",
+        finalEntryId: null
+      }
+    ]);
+    mockJoyEntryFindMany.mockResolvedValue([]);
+
+    const result = await listCalendarSourcesByDateRange({
+      startDate: "2026-05-02",
+      endDate: "2026-05-02"
+    });
+
+    expect(result.sessions).toEqual([
+      {
+        kind: "session",
+        id: "session-legacy",
+        dimension: "reflection",
+        date: "2026-05-02",
+        status: "paused",
+        updatedAt: "2026-05-02T10:00:00.000Z",
+        startedAt: "2026-05-02T09:00:00.000Z",
+        completedAt: null,
+        pausedAt: "2026-05-02T10:00:00.000Z",
+        draftSummary: "这条旧会话还没有 entryDate。",
+        journalEntryId: null
+      }
+    ]);
+  });
 });

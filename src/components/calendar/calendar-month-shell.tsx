@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarDayDetail } from "@/components/calendar/calendar-day-detail";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
+import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import type { CalendarMonthRecord } from "@/features/calendar/types";
 import {
@@ -42,8 +43,8 @@ function MonthStatCard({
   return (
     <div className="wood-dialog rounded-[28px] p-4">
       <p className="text-[0.72rem] tracking-[0.18em] text-[#8f6238]">{label}</p>
-      <p className="mt-2 font-display text-[2rem] leading-none text-[#2b2018]">{value}</p>
-      <p className="mt-2 text-[0.82rem] leading-6 text-[#5e4b3c]">{hint}</p>
+      <p className="mt-2 font-display text-[2rem] leading-none tabular-nums text-[#2b2018]">{value}</p>
+      <p className="mt-2 text-pretty text-[0.82rem] leading-6 text-[#5e4b3c]">{hint}</p>
     </div>
   );
 }
@@ -140,15 +141,16 @@ export function CalendarMonthShell() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="archive-label">CALENDAR VIEW</p>
-            <h1 className="mt-2 font-display text-[2.55rem] leading-none text-[#2d2014] md:text-[3rem]">
+            <h1 className="mt-2 text-balance font-display text-[2.55rem] leading-none text-[#2d2014] md:text-[3rem]">
               {formatCalendarMonthLabel(currentDate)}
             </h1>
-            <p className="mt-3 max-w-[36rem] text-[0.98rem] leading-7 text-[#5d4a3a]">
+            <p className="mt-3 max-w-[36rem] text-pretty text-[0.98rem] leading-7 text-[#5d4a3a]">
               先看这个月的分布，再点开某一天，决定是继续访谈、继续编辑，还是回到那天重新开始。
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <CalendarViewSwitcher currentView="month" currentDate={currentDate} />
             <button
               type="button"
               onClick={() => handleShiftMonth(-1)}
@@ -185,7 +187,7 @@ export function CalendarMonthShell() {
             {error ? (
               <div className="paper-sheet rounded-[28px] p-6 text-center">
                 <p className="font-display text-[1.45rem] text-[#2a2017]">这个月的记录暂时没打开</p>
-                <p className="mt-3 text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
+                <p className="mt-3 text-pretty text-[0.95rem] leading-7 text-[#5d4d3f]">{error}</p>
                 <button
                   type="button"
                   onClick={() => setRefreshNonce((value) => value + 1)}

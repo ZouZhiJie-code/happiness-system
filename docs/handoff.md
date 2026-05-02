@@ -164,8 +164,8 @@
   - 已有 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - `/api/calendar/day|week|month` 已落地
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
-  - `/calendar` 月视图、月统计、轻详情与 deep link 已落地
-  - `week / day` 视图还没有落地
+  - `/calendar` 月视图、周视图、日视图、月统计、周侧栏摘要与 deep link 已落地
+  - 日视图已成为某一天五维记录的统一阅读与分发入口
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
 ## 3. 当前仍然没有完成的事
@@ -225,8 +225,8 @@
 - `npm test`
 
 测试结果：
-- `23` 个测试文件
-- `225` 个测试全部通过
+- `26` 个测试文件
+- `239` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -251,11 +251,14 @@
 - 用户边界 partial 收束与 `boundary_insufficient`
 - 访谈提交结构化错误展示与原输入保留
 - `entryDate` 解析、北京时间日期归属
+- `POST /api/interview/session/start` 的 `entryDate` 透传与非法日期校验
 - calendar `day / week / month` 聚合器
 - calendar repository 标准化 source
+- calendar legacy session 在缺少 `entryDate` 时回退 `startedAt`
 - calendar service 查询与参数校验
 - calendar API `day / week / month` 路由、错误映射与未来日期动作裁剪
-- calendar month view、月统计、轻详情和 `/calendar -> /interview` deep link
+- calendar month view、月统计、mixed 轻详情拆分和 `/calendar -> /interview` deep link
+- calendar week view、周侧栏摘要、day view 主阅读页，以及 month/week/day 共享状态展示层
 
 fulfillment 人工 smoke 基线：
 - 推进完成
@@ -291,7 +294,7 @@ reflection 人工 smoke 基线：
    - 把 `interview.service.ts` 和 joy-first 分支逐步抽成真正的维度无关实现
    - 减少后续新增维度或继续打磨维度时的重复改动面
 
-如果继续做记录日历这条线，下一步应转到前端视图层：
-- 周视图页面与 URL 驱动联动
-- 日视图详情页或详情抽屉
-- 第 5 步月视图已经落地，后续应转到 week/day 视图与更完整的日志详情流
+如果继续做记录日历这条线，下一步更合理的是：
+- 打磨 day 视图的移动端信息密度和卡片层级
+- 评估是否需要独立 journal 阅读页，而不是始终复用 `/interview?panel=journal`
+- 继续补更完整的日志详情流

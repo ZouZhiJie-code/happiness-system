@@ -511,7 +511,8 @@ data: {
   - `GET /api/calendar/week?date=YYYY-MM-DD`
   - `GET /api/calendar/month?month=YYYY-MM`
 - `/calendar?view=month&date=YYYY-MM-DD` 月视图已经落地
-- `week / day` 视图仍然还没有落地
+- `/calendar?view=week&date=YYYY-MM-DD` 周视图已经落地
+- `/calendar?view=day&date=YYYY-MM-DD` 日视图已经落地，按五维卡片组织单日阅读与动作分发
 
 ### 5.10 Step 4: calendar API 可执行规格
 
@@ -1231,3 +1232,148 @@ V1 统计只做 4 项，全部由 month payload 前端派生，不新增 API：
 - 用户能在月视图内看清某一天的整体状态与五维情况
 - 用户能从轻详情真实进入下一步，而不是停在静态展示
 - 未来日期限制、mixed 多维动作、以及 interview deep link 都按规格跑通
+
+### 5.12 Step 6: week view 可执行规格回顾
+
+本节记录第 6 步已经落地的基线。当前周视图不是小时级时间轴，而是按周展示 7 天记录节奏的记录板；点击某一天会进入 `view=day` 的基础单日详情页，而不是在周视图内展开轻详情。
+
+#### 当前实现结果
+
+- `/calendar` 已支持 `view=week`
+- 周视图主数据源固定为 `GET /api/calendar/week?date=YYYY-MM-DD`
+- 顶部支持：
+  - `月视图 / 周视图` 切换
+  - `上周 / 下周`
+  - `回到今天`
+- 周主体固定展示 7 天记录板，每天展示：
+  - 日期
+  - 整体状态
+  - 五维轻量标记
+  - 已完成维度
+  - 草稿维度
+  - 最后更新时间
+- 周侧栏固定展示：
+  - 本周记录天数
+  - 草稿数
+  - 已完成数
+  - 五维覆盖概况
+  - 基于统计规则生成的周摘要
+- 周视图与月视图共享同一套状态颜色、badge 文案和五维标记样式
+- 点击某一天会跳到：
+  - `/calendar?view=day&date=YYYY-MM-DD`
+- day 视图现在已经升级为 dedicated reading layout；周视图这里只保留“点击日卡进入 day view”这条衔接语义，不再把它描述成临时承接页
+
+#### 自动化验收
+
+本步新增并已通过：
+
+- `tests/unit/calendar-view-state.test.ts`
+  - 校验 `week / day` view 归一
+  - 校验周范围按周一到周日计算
+  - 校验周切换以 7 天为步长
+- `tests/unit/calendar-week-shell.test.tsx`
+  - 校验 `/calendar?view=week` 缺省日期会归一到北京时间今天
+  - 校验周视图固定渲染 7 天记录板
+  - 校验点击日卡会进入 `view=day`
+  - 校验周切换会更新 URL
+- `tests/unit/calendar-day-shell.test.tsx`
+  - 校验 `view=day` 缺省日期归一
+  - 校验从周视图进入后，单日详情仍能继续进入 `/interview`
+
+#### 当前边界
+
+- 周视图已经能独立完成“看这周记录节奏”和“判断哪天值得继续补”
+- day 视图已经是“某一天五维记录”的统一阅读与动作分发入口
+- day 视图仍然不做时间轴、不展示内部槽位、不内联正文编辑
+
+### 5.13 Step 7: day view 可执行规格回顾
+
+本节记录第 7 步已经落地的基线。当前 `view=day` 不再复用 month 的轻详情整页放大版，而是使用 dedicated day layout，按五维卡片组织某一天的统一阅读与分发。
+
+#### 当前实现结果
+
+- `/calendar` 已支持 `view=day`
+- 日视图主数据源固定为 `GET /api/calendar/day?date=YYYY-MM-DD`
+- 顶部支持：
+  - `回到本周`
+  - `回到本月`
+  - `前一天 / 后一天`
+  - `回到今天`
+- 页面总览区固定展示：
+  - 日期
+  - 当天整体状态
+  - 主标题或主摘要
+  - 最后更新时间
+  - `active / draft / saved` 数量概览
+- 页面主体按固定顺序展示五维卡片：
+  - `joy`
+  - `fulfillment`
+  - `reflection`
+  - `improvement`
+  - `gratitude`
+- 每张卡固定展示：
+  - 当前状态
+  - 标题或摘要
+  - 最后更新时间
+  - 主操作按钮
+- 已完成卡片当前使用双主按钮：
+  - `查看日志`
+  - `编辑日志`
+- mixed 卡片当前使用：
+  - 1 个主按钮
+  - 其余动作作为次入口保留
+- 日视图继续复用现有 `/interview` 工作区链路：
+  - 访谈入口用 `entryDate`
+  - 已完成日志继续落到现有 `panel=journal` 工作区
+
+#### 自动化验收
+
+本步新增并已通过：
+
+- `tests/unit/calendar-day-shell.test.tsx`
+  - 校验 `view=day` 缺省日期归一
+  - 校验 dedicated day view 会固定渲染 5 张维度卡
+  - 校验 completed 卡片展示 `查看日志 / 编辑日志`
+  - 校验 mixed 卡片保留主动作和其余次入口
+  - 校验未来空白卡不会暴露可点击开始访谈入口
+  - 校验 `回到本周 / 回到本月 / 后一天` 仍由 URL 驱动
+
+#### 当前边界
+
+- 日视图是主阅读页，不是编辑页
+- 不展示内部槽位
+- 不做时间轴
+- 不在页面内联正文编辑
+
+### 5.14 Step 8: 回归、文档与交付收口基线
+
+本节记录第 8 步已经落地后的最终交付基线。它不新增 public API，而是把 `entryDate`、calendar read model、month/week/day 三视图和 `/calendar -> /interview` 深链固化为稳定契约。
+
+#### 当前自动化基线
+
+- `npx tsc --noEmit`
+- `npm test`
+- 截至 `2026-05-02`：
+  - `26` 个测试文件
+  - `239` 个测试全部通过
+
+#### Step 8 明确补齐的回归面
+
+- `tests/unit/interview-start.api.test.ts`
+  - 校验 `POST /api/interview/session/start` 会透传 `entryDate`
+  - 校验非法 `entryDate` 返回 `INVALID_START_REQUEST`
+- `tests/unit/calendar.repository.test.ts`
+  - 校验 legacy session 缺少 `entryDate` 时，calendar source 会回退到 `startedAt`
+- `tests/unit/calendar-month-shell.test.tsx`
+  - 校验同一天存在 `active + draft + saved` 时，month 轻详情会按五维真实拆分 mixed 状态，而不是压成单一入口
+
+#### 当前人工验收基线
+
+- 访谈主链路正常
+- 生成日志 / 重新生成已有日志 / 保存日志正常
+- 刷新恢复 session 正常
+- 用户边界表达后的 partial 收束正常
+- 标题不会退回长事件句截断
+- 从 calendar 进入访谈 / 编辑 / 查看的链路正确
+- 过去日期补写以 `entryDate` 为准
+- 未来日期可查询，但不能开始或继续访谈

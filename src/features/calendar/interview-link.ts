@@ -22,6 +22,16 @@ export interface CalendarDimensionDetailItem {
   actions: CalendarDetailActionLink[];
 }
 
+export interface CalendarDimensionActionGroups {
+  primaryActions: CalendarDetailActionLink[];
+  secondaryActions: CalendarDetailActionLink[];
+  disabledActions: CalendarDetailActionLink[];
+}
+
+export interface CalendarDayViewCardItem extends CalendarDimensionDetailItem {
+  actionGroups: CalendarDimensionActionGroups;
+}
+
 const actionLabelMap: Record<CalendarAction, string> = {
   start_interview: "开始访谈",
   continue_interview: "继续访谈",
@@ -176,4 +186,42 @@ export function buildCalendarDimensionDetailItems(day: CalendarDayRecord, today 
       actions
     };
   });
+}
+
+function buildCalendarDimensionActionGroups(item: CalendarDimensionDetailItem): CalendarDimensionActionGroups {
+  const enabledActions = item.actions.filter((action) => Boolean(action.href));
+  const disabledActions = item.actions.filter((action) => !action.href);
+
+  if (item.status === "completed") {
+    const primaryActions = enabledActions.filter(
+      (action) => action.action === "view_journal" || action.action === "edit_saved_journal"
+    );
+
+    return {
+      primaryActions,
+      secondaryActions: enabledActions.filter((action) => !primaryActions.includes(action)),
+      disabledActions
+    };
+  }
+
+  if (item.status === "mixed") {
+    return {
+      primaryActions: enabledActions[0] ? [enabledActions[0]] : [],
+      secondaryActions: enabledActions.slice(1),
+      disabledActions
+    };
+  }
+
+  return {
+    primaryActions: enabledActions[0] ? [enabledActions[0]] : [],
+    secondaryActions: [],
+    disabledActions
+  };
+}
+
+export function buildCalendarDayViewCardItems(day: CalendarDayRecord, today = getTodayEntryDate()) {
+  return buildCalendarDimensionDetailItems(day, today).map<CalendarDayViewCardItem>((item) => ({
+    ...item,
+    actionGroups: buildCalendarDimensionActionGroups(item)
+  }));
 }

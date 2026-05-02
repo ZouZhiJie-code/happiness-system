@@ -337,11 +337,11 @@ npm run dev
 - `transcribe` 是 stub
 - `interview.service.ts` 仍是 joy-first 的导出层
 - joy 正文生成还会继续做风格优化
-- calendar 功能当前已完成月视图这一层：
+- calendar 功能当前已完成 month / week / day 三层：
   - `InterviewSession.entryDate`
   - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - `calendar.repository.ts`
   - `calendar.service.ts`
   - `GET /api/calendar/day|week|month`
-  - `/calendar?view=month&date=YYYY-MM-DD`
-  - `week / day` 视图还没有落地
+  - `/calendar?view=month|week|day&date=YYYY-MM-DD`
+  - 日视图按五维卡片组织，不做时间轴，也不内联正文编辑

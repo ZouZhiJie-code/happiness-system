@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 
-import { CalendarMonthShell } from "@/components/calendar/calendar-month-shell";
+import { CalendarRouterShell } from "@/components/calendar/calendar-router-shell";
 
 export default function CalendarPage() {
   return (
     <Suspense fallback={<div className="page-shell min-h-[36rem] rounded-[36px]" />}>
-      <CalendarMonthShell />
+      <CalendarRouterShell />
     </Suspense>
   );
 }
