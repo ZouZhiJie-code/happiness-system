@@ -4,7 +4,7 @@ import {
   aggregateCalendarMonth,
   aggregateCalendarWeek
 } from "@/features/calendar/aggregate-calendar";
-import type { CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
+import type { CalendarDailyJournalSource, CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
 
 function buildSession(overrides: Partial<CalendarSessionSource> = {}): CalendarSessionSource {
   return {
@@ -35,6 +35,21 @@ function buildEntry(overrides: Partial<CalendarEntrySource> = {}): CalendarEntry
     content: "今天和家人一起吃饭聊天，整个人慢慢放松下来。",
     updatedAt: "2026-05-01T11:00:00.000Z",
     savedAt: null,
+    ...overrides
+  };
+}
+
+function buildDailyJournal(overrides: Partial<CalendarDailyJournalSource> = {}): CalendarDailyJournalSource {
+  return {
+    kind: "daily_journal",
+    id: "daily-1",
+    date: "2026-05-01",
+    status: "saved",
+    title: "今天的记录",
+    updatedAt: "2026-05-01T12:00:00.000Z",
+    savedAt: "2026-05-01T12:00:00.000Z",
+    sourceEntryIds: ["entry-1"],
+    sourceSignature: "entry-1:2026-05-01T11:00:00.000Z",
     ...overrides
   };
 }
@@ -116,6 +131,19 @@ describe("aggregateCalendarDay", () => {
     expect(result.overallStatus).toBe("completed");
     expect(result.savedCount).toBe(1);
     expect(result.primaryAction).toBe("view_journal");
+  });
+
+  it("adds daily journal status and marks it stale when saved sources changed", () => {
+    const result = aggregateCalendarDay({
+      date: "2026-05-01",
+      sessions: [],
+      entries: [buildEntry({ status: "saved", updatedAt: "2026-05-01T11:30:00.000Z" })],
+      dailyJournals: [buildDailyJournal()]
+    });
+
+    expect(result.dailyJournal?.state).toBe("stale");
+    expect(result.dailyJournal?.id).toBe("daily-1");
+    expect(result.dailyJournal?.sourceEntryCount).toBe(1);
   });
 
   it("returns mixed when multiple dimensions carry different non-empty states", () => {

@@ -11,6 +11,7 @@ export interface CalendarStatusVisualMeta {
 
 export interface CalendarDimensionVisualMeta {
   shortLabel: string;
+  monthLabel: string;
   softBadgeClass: string;
   solidBadgeClass: string;
   dotClass: string;
@@ -19,7 +20,7 @@ export interface CalendarDimensionVisualMeta {
 export const calendarDayStatusLabelMap: Record<CalendarDayStatus, string> = {
   empty: "未记录",
   in_progress: "进行中",
-  draft: "有草稿",
+  draft: "草稿",
   completed: "已完成",
   mixed: "混合状态"
 };
@@ -60,30 +61,35 @@ const calendarStatusVisualMetaMap: Record<CalendarDayStatus, CalendarStatusVisua
 const calendarDimensionVisualMetaMap: Record<CalendarDimensionStatus["dimension"], CalendarDimensionVisualMeta> = {
   joy: {
     shortLabel: "开心",
+    monthLabel: "悦",
     softBadgeClass: "border-[#edc3aa] bg-[#fff1e5] text-[#99522a]",
     solidBadgeClass: "border-[#d68a5a] bg-[#d68a5a] text-[#fff9f3]",
     dotClass: "bg-[#d68a5a]"
   },
   fulfillment: {
     shortLabel: "充实",
+    monthLabel: "实",
     softBadgeClass: "border-[#c3d6c8] bg-[#f0f7f0] text-[#48644f]",
     solidBadgeClass: "border-[#74927a] bg-[#74927a] text-[#f8fff8]",
     dotClass: "bg-[#74927a]"
   },
   reflection: {
     shortLabel: "思考",
+    monthLabel: "思",
     softBadgeClass: "border-[#d8c2d5] bg-[#fbf0f7] text-[#76566f]",
     solidBadgeClass: "border-[#a17a97] bg-[#a17a97] text-[#fff8fd]",
     dotClass: "bg-[#a17a97]"
   },
   improvement: {
     shortLabel: "改进",
+    monthLabel: "改",
     softBadgeClass: "border-[#c7d8bf] bg-[#f3f8ef] text-[#4f6948]",
     solidBadgeClass: "border-[#7d9771] bg-[#7d9771] text-[#fbfff8]",
     dotClass: "bg-[#7d9771]"
   },
   gratitude: {
     shortLabel: "感谢",
+    monthLabel: "谢",
     softBadgeClass: "border-[#e2c3c9] bg-[#fdf1f2] text-[#8b5860]",
     solidBadgeClass: "border-[#b8848d] bg-[#b8848d] text-[#fff9fb]",
     dotClass: "bg-[#b8848d]"

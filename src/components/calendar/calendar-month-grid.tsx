@@ -81,12 +81,12 @@ export function CalendarMonthGrid({
               aria-label={buildCalendarDateButtonAccessibleName({
                 dateLabel: formatCalendarDayLabel(day.date),
                 statusLabel: previewState.statusLabel,
-                preview: previewState.preview,
                 isToday: today === day.date,
                 isSelected: selectedDate === day.date,
                 isFuture: previewState.isFutureEmpty,
-                dimensionLabels: previewState.dimensionPills.map((dimension) => dimension.label),
-                extraDimensionCount: previewState.extraDimensionCount
+                dimensionLabels: previewState.ariaDimensionLabels,
+                extraDimensionCount: previewState.extraDimensionCount,
+                dailyJournalLabel: previewState.dailyJournalLabel
               })}
               onClick={() => onSelectDate(day.date)}
               className={clsx(
@@ -97,11 +97,20 @@ export function CalendarMonthGrid({
                 previewState.isFutureEmpty && "hover:shadow-none"
               )}
             >
+              <span
+                aria-hidden="true"
+                className={clsx(
+                  "absolute inset-x-2.5 top-2 h-1 rounded-full opacity-90",
+                  statusVisualMeta.markerClass,
+                  !previewState.hasRecords && !previewState.isFutureEmpty && "opacity-55",
+                  previewState.isFutureEmpty && "opacity-30"
+                )}
+              />
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <span
                     className={clsx(
-                      "font-display text-[1.22rem] leading-none text-[#312419]",
+                      "font-display text-[1.18rem] leading-none text-[#312419]",
                       today === day.date && "text-[#8c6034]",
                       previewState.isFutureEmpty && "text-[#8a7157]"
                     )}
@@ -115,24 +124,33 @@ export function CalendarMonthGrid({
                     />
                   ) : null}
                 </div>
-                {previewState.statusLabel ? (
+                {previewState.visibleStateLabel ? (
                   <span className={clsx("pt-0.5 text-[0.64rem] font-medium", statusVisualMeta.emphasisClass)}>
-                    {previewState.statusLabel}
+                    {previewState.visibleStateLabel}
                   </span>
                 ) : (
-                  <span aria-hidden="true" className="inline-block min-h-[0.875rem] min-w-[1rem]" />
+                  <span
+                    aria-hidden="true"
+                    className={clsx(
+                      "mt-0.5 size-2.5 shrink-0 rounded-full border",
+                      statusVisualMeta.markerClass,
+                      !previewState.hasRecords && !previewState.isFutureEmpty && "opacity-60",
+                      previewState.isFutureEmpty && "opacity-20"
+                    )}
+                  />
                 )}
               </div>
 
-              {previewState.compactPreview ? (
-                <p className="mt-2.5 line-clamp-1 min-h-[1.25rem] text-pretty text-[0.8rem] leading-5 text-[#6a5440]">
-                  {previewState.compactPreview}
-                </p>
-              ) : (
-                <div className="mt-2.5 min-h-[1.25rem]" aria-hidden="true" />
-              )}
+              <div className="mt-4 flex-1" aria-hidden="true" />
 
-              <div className="mt-auto flex flex-nowrap items-center gap-1 overflow-hidden pt-2.5">
+              {previewState.hasDailyJournal ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-2.5 bottom-2.5 size-1.5 rounded-full bg-[#604529] shadow-[0_0_0_3px_rgba(96,69,41,0.12)]"
+                />
+              ) : null}
+
+              <div className="mt-auto flex flex-nowrap items-center gap-1 overflow-hidden pt-1">
                 {previewState.dimensionPills.map((dimension) => {
                   const visualMeta = getCalendarDimensionVisualMeta(dimension.dimension);
 
@@ -141,17 +159,17 @@ export function CalendarMonthGrid({
                       key={`${day.date}-${dimension.dimension}`}
                       data-dimension={dimension.dimension}
                       className={clsx(
-                        "calendar-dimension-badge min-w-[2.6rem] px-1.5 py-0.5 text-[0.64rem]",
+                        "inline-flex min-w-[1.2rem] items-center justify-center rounded-[7px] border px-1 py-0.5 text-[0.62rem] font-semibold leading-none",
                         visualMeta.softBadgeClass,
                         getCalendarMonthDimensionPillClass(dimension.tone)
                       )}
                     >
-                      {dimension.label}
+                      {dimension.token}
                     </span>
                   );
                 })}
                 {previewState.extraDimensionCount > 0 ? (
-                  <span className="calendar-chip rounded-full px-1.5 py-0.5 text-[0.64rem] leading-none text-[#8a6b4b]">
+                  <span className="text-[0.68rem] leading-none text-[#8a6b4b]">
                     +{previewState.extraDimensionCount}
                   </span>
                 ) : null}

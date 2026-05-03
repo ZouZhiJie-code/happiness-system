@@ -156,7 +156,8 @@ export async function getCalendarDay(date: string): Promise<CalendarDayRecord> {
       aggregateCalendarDay({
         date,
         sessions: sources.sessions,
-        entries: sources.entries
+        entries: sources.entries,
+        dailyJournals: sources.dailyJournals
       })
     );
   } catch (error) {
@@ -179,7 +180,8 @@ export async function getCalendarWeek(date: string): Promise<CalendarWeekRecord>
       aggregateCalendarWeek({
         anchorDate: date,
         sessions: sources.sessions,
-        entries: sources.entries
+        entries: sources.entries,
+        dailyJournals: sources.dailyJournals
       })
     );
   } catch (error) {
@@ -202,7 +204,8 @@ export async function getCalendarMonth(month: string): Promise<CalendarMonthReco
       aggregateCalendarMonth({
         month,
         sessions: sources.sessions,
-        entries: sources.entries
+        entries: sources.entries,
+        dailyJournals: sources.dailyJournals
       })
     );
   } catch (error) {

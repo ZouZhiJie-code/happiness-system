@@ -10,7 +10,6 @@ import { buildCalendarDayViewCardItems } from "@/features/calendar/interview-lin
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
 import {
   calendarDayStatusLabelMap,
-  getCalendarDaySurfaceClass,
   getCalendarDimensionVisualMeta,
   getCalendarStatusBadgeClass
 } from "@/features/calendar/presentation";
@@ -20,20 +19,20 @@ import { cn } from "@/lib/utils";
 
 function getDimensionFallbackSummary(status: CalendarDayStatus, isFuture: boolean) {
   if (isFuture && status === "empty") {
-    return "未来日期暂不支持开始记录。";
+    return "未来日期先保留。";
   }
 
   switch (status) {
     case "in_progress":
-      return "还在访谈里，优先继续。";
+      return "还在访谈里，先回到这条线。";
     case "draft":
-      return "已有草稿，优先补完。";
+      return "已经有草稿，适合补完。";
     case "completed":
-      return "已经成稿，可直接查看。";
+      return "已经成稿，可以直接查看。";
     case "mixed":
-      return "状态混合，先按主动作。";
+      return "这维有多个状态，先走主动作。";
     default:
-      return "还没开始，可从这里记录。";
+      return "还没开始，可以从这里进入。";
   }
 }
 
@@ -43,18 +42,18 @@ function getDayOverviewSummary(day: CalendarDayRecord, today: string) {
   }
 
   if (isFutureCalendarDate(day.date, today)) {
-    return "未来日期先看分布。";
+    return "先看分布，到了当天再决定。";
   }
 
   if (day.overallStatus === "empty") {
-    return "还没有记录。";
+    return "这一天还空着，先决定从哪一维开始。";
   }
 
   if (day.overallStatus === "mixed") {
-    return "先选最值得继续的一维。";
+    return "五维状态不同，先锁定最值得继续的那条。";
   }
 
-  return "五维状态都在这里。";
+  return "五维状态已经收在这里。";
 }
 
 function CalendarDayViewAction({
@@ -73,9 +72,8 @@ function CalendarDayViewAction({
   const className = cn(
     "transition duration-200",
     tone === "primary" &&
-      "calendar-action-primary inline-flex w-full items-center justify-center rounded-full px-3.5 py-2 text-[0.82rem]",
-    tone === "secondary" &&
-      "calendar-action-secondary text-[0.84rem]"
+      "calendar-action-primary inline-flex items-center justify-center rounded-full px-3.5 py-2 text-[0.8rem] whitespace-nowrap",
+    tone === "secondary" && "calendar-action-secondary text-[0.78rem]"
   );
 
   if (!href || disabled) {
@@ -112,6 +110,37 @@ function CalendarDayViewSummaryPill({ label, value }: { label: string; value: st
   );
 }
 
+function getDailyJournalAction(day: CalendarDayRecord) {
+  const href = `/interview?dimension=joy&entryDate=${day.date}&mode=daily-journal`;
+
+  switch (day.dailyJournal?.state ?? "none") {
+    case "saved":
+      return {
+        label: "打开当天日志",
+        description: "当天整合日志已保存。",
+        href
+      };
+    case "draft":
+      return {
+        label: "继续编辑",
+        description: "当天整合日志已有草稿。",
+        href
+      };
+    case "stale":
+      return {
+        label: "查看并更新",
+        description: "维度日志有更新，可以重新生成当天日志。",
+        href
+      };
+    default:
+      return {
+        label: day.savedCount > 0 ? "生成当天日志" : "等待保存维度",
+        description: day.savedCount > 0 ? "可把已保存维度整理成当天章节合集。" : "先保存至少一篇维度日志。",
+        href: day.savedCount > 0 ? href : null
+      };
+  }
+}
+
 function CalendarDayViewSecondaryActions({
   actions,
   actionPrefix
@@ -130,22 +159,22 @@ function CalendarDayViewSecondaryActions({
   }
 
   return (
-    <div className="mt-2.5">
+    <div className="flex items-center justify-end">
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="calendar-action-secondary text-[0.78rem]"
+        className="calendar-action-secondary text-[0.76rem]"
         aria-expanded={isOpen ? "true" : "false"}
         aria-label={buildCalendarActionAccessibleName({
           ...actionPrefix,
           actionLabel: "更多操作"
         })}
       >
-        更多操作
+        更多
       </button>
 
       {isOpen ? (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
+        <div className="ml-3 flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
           {actions.map((action) => (
             <CalendarDayViewAction
               key={action.id}
@@ -172,31 +201,27 @@ export function CalendarDayView({
   day: CalendarDayRecord;
   today: string;
 }) {
-  const cardItems = buildCalendarDayViewCardItems(day, today);
+  const rowItems = buildCalendarDayViewCardItems(day, today);
   const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
-  const overviewTitle = day.primaryTitle ? truncateCalendarCopy(day.primaryTitle, 24) : formatCalendarDayLabel(day.date);
-  const overviewDateLabel = day.primaryTitle ? formatCalendarDayLabel(day.date) : "当天记录";
+  const overviewTitle = day.primaryTitle ? truncateCalendarCopy(day.primaryTitle, 26) : formatCalendarDayLabel(day.date);
+  const overviewDateLabel = day.primaryTitle ? formatCalendarDayLabel(day.date) : "当天决策";
+  const dailyJournalAction = getDailyJournalAction(day);
 
   return (
-    <section className="space-y-3.5" data-testid="calendar-day-view">
-      <div className="calendar-card rounded-[26px] p-4 md:p-4.5">
+    <section className="calendar-card overflow-hidden rounded-[26px]" data-testid="calendar-day-view">
+      <div className="border-b border-[rgba(153,119,86,0.16)] px-4 py-4 md:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-[42rem] min-w-0">
             <p className="text-[0.72rem] tracking-[0.02em] text-[#8a6b4b]">{overviewDateLabel}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <h2 className="text-balance font-display text-[1.4rem] leading-none text-[#312419]">
-                {overviewTitle}
-              </h2>
-              <span
-                className={cn("rounded-full border px-2.5 py-1 text-[0.74rem]", getCalendarStatusBadgeClass(day.overallStatus))}
-              >
+              <h2 className="text-balance font-display text-[1.38rem] leading-none text-[#312419]">{overviewTitle}</h2>
+              <span className={cn("rounded-full border px-2.5 py-1 text-[0.74rem]", getCalendarStatusBadgeClass(day.overallStatus))}>
                 {calendarDayStatusLabelMap[day.overallStatus]}
               </span>
             </div>
-            <p className="mt-2 line-clamp-2 text-pretty text-[0.88rem] leading-6 text-[#6a5440]">
-              {truncateCalendarCopy(getDayOverviewSummary(day, today), 42)}
+            <p className="mt-2 text-pretty text-[0.86rem] leading-6 text-[#6a5440]">
+              {truncateCalendarCopy(getDayOverviewSummary(day, today), 52)}
             </p>
-            <p className="mt-2 text-[0.74rem] text-[#8a6b4b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
@@ -205,15 +230,35 @@ export function CalendarDayView({
             <CalendarDayViewSummaryPill label="已完成" value={`${day.savedCount}项`} />
           </div>
         </div>
+        <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[rgba(153,119,86,0.14)] bg-[rgba(255,249,240,0.56)] px-3.5 py-2.5">
+          <div className="min-w-0">
+            <p className="text-[0.8rem] font-medium text-[#403024]">当天日志</p>
+            <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{dailyJournalAction.description}</p>
+          </div>
+          {dailyJournalAction.href ? (
+            <Link
+              href={dailyJournalAction.href}
+              className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
+              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalAction.label}`}
+            >
+              {dailyJournalAction.label}
+            </Link>
+          ) : (
+            <span className="calendar-action-disabled inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem]">
+              {dailyJournalAction.label}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {cardItems.map((item) => {
+      <div className="divide-y divide-[rgba(153,119,86,0.12)]">
+        {rowItems.map((item) => {
           const isFuture = isFutureCalendarDate(day.date, today);
           const summary = buildCalendarCompactCopy(
             [item.summary, item.title],
             getDimensionFallbackSummary(item.status, isFuture),
-            36
+            52
           );
           const meta = getInterviewDimensionMeta(item.dimension);
           const visualMeta = getCalendarDimensionVisualMeta(item.dimension);
@@ -230,39 +275,37 @@ export function CalendarDayView({
               data-testid={`calendar-dimension-card-${item.dimension}`}
               data-dimension={item.dimension}
               data-status={item.status}
-              className={cn(
-                "calendar-card flex min-h-[var(--calendar-day-card-min-height)] flex-col rounded-[24px] p-4",
-                getCalendarDaySurfaceClass(item.status)
-              )}
+              className="px-4 py-3.5 md:px-5"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <span className={cn("calendar-dimension-badge", visualMeta.softBadgeClass)}>{visualMeta.shortLabel}</span>
-                  <p className="mt-2.5 line-clamp-2 text-balance font-display text-[1.02rem] leading-tight text-[#312419]">
-                    {truncateCalendarCopy(item.title ?? `${meta.label}记录`, 18)}
-                  </p>
+              <div className="grid gap-3 xl:grid-cols-[8rem_minmax(0,1fr)_auto] xl:items-center">
+                <div className="flex items-center gap-2.5">
+                  <span className={cn("calendar-dimension-badge shrink-0", visualMeta.softBadgeClass)}>{visualMeta.monthLabel}</span>
+                  <div className="min-w-0">
+                    <p className="font-display text-[1rem] leading-none text-[#312419]">{meta.label}</p>
+                    <p className="mt-1 text-[0.74rem] text-[#8a6b4b]">{calendarDayStatusLabelMap[item.status]}</p>
+                  </div>
                 </div>
-                <span
-                  className={cn("shrink-0 rounded-full border px-2.5 py-1 text-[0.72rem]", getCalendarStatusBadgeClass(item.status))}
-                >
-                  {calendarDayStatusLabelMap[item.status]}
-                </span>
-              </div>
 
-              <p className="mt-3 line-clamp-2 text-pretty text-[0.82rem] leading-6 text-[#6a5440]">{summary}</p>
+                <div className="min-w-0">
+                  <p className="line-clamp-1 text-[0.9rem] leading-6 text-[#403024]">
+                    {truncateCalendarCopy(item.title ?? `${meta.label}记录`, 22)}
+                  </p>
+                  <p className="mt-1 line-clamp-1 text-[0.8rem] leading-6 text-[#6a5440]">{summary}</p>
+                </div>
 
-              <div className="mt-auto pt-4">
-                <CalendarDayViewAction
-                  href={item.primaryAction.href}
-                  label={item.primaryAction.disabledReason ?? item.primaryAction.label}
-                  disabled={primaryActionDisabled}
-                  ariaLabel={buildCalendarActionAccessibleName({
-                    ...actionPrefix,
-                    actionLabel: item.primaryAction.disabledReason ?? item.primaryAction.label
-                  })}
-                />
+                <div className="flex flex-wrap items-center justify-end gap-3 xl:flex-nowrap">
+                  <CalendarDayViewAction
+                    href={item.primaryAction.href}
+                    label={item.primaryAction.disabledReason ?? item.primaryAction.label}
+                    disabled={primaryActionDisabled}
+                    ariaLabel={buildCalendarActionAccessibleName({
+                      ...actionPrefix,
+                      actionLabel: item.primaryAction.disabledReason ?? item.primaryAction.label
+                    })}
+                  />
 
-                <CalendarDayViewSecondaryActions actions={item.secondaryActions} actionPrefix={actionPrefix} />
+                  <CalendarDayViewSecondaryActions actions={item.secondaryActions} actionPrefix={actionPrefix} />
+                </div>
               </div>
             </article>
           );

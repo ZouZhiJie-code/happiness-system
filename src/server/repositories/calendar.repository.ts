@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db/prisma";
 import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
-import type { CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
+import type { CalendarDailyJournalSource, CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
 
 const DEMO_USER_ID = "local-demo-user";
 
@@ -21,7 +21,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
   const startAt = parseEntryDateInput(input.startDate);
   const endAt = parseEntryDateInput(input.endDate);
 
-  const [sessions, entries] = await Promise.all([
+  const [sessions, entries, dailyJournals] = await Promise.all([
     prisma.interviewSession.findMany({
       where: {
         userId: DEMO_USER_ID,
@@ -65,7 +65,26 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
           }
         }
       }
-    })
+    }),
+    (prisma as any).dailyJournalEntry?.findMany?.({
+      where: {
+        userId: DEMO_USER_ID,
+        date: {
+          gte: startAt,
+          lte: endAt
+        }
+      },
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        title: true,
+        updatedAt: true,
+        savedAt: true,
+        sourceEntryIds: true,
+        sourceSignature: true
+      }
+    }) ?? Promise.resolve([])
   ]);
 
   const calendarSessions: CalendarSessionSource[] = sessions
@@ -105,9 +124,22 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
     ];
   });
 
+  const calendarDailyJournals: CalendarDailyJournalSource[] = dailyJournals.map((entry: any) => ({
+    kind: "daily_journal" as const,
+    id: entry.id,
+    date: formatEntryDate(entry.date),
+    status: entry.status,
+    title: entry.title,
+    updatedAt: entry.updatedAt.toISOString(),
+    savedAt: entry.savedAt?.toISOString() ?? null,
+    sourceEntryIds: entry.sourceEntryIds ?? [],
+    sourceSignature: entry.sourceSignature
+  }));
+
   return {
     sessions: calendarSessions,
-    entries: calendarEntries
+    entries: calendarEntries,
+    dailyJournals: calendarDailyJournals
   };
 }
 

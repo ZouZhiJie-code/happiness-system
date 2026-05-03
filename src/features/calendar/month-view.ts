@@ -10,15 +10,17 @@ import { formatCalendarUpdatedAt, isFutureCalendarDate } from "@/features/calend
 
 export interface CalendarMonthCellDimensionPill {
   dimension: CalendarDimensionStatus["dimension"];
-  label: string;
+  token: string;
   tone: CalendarMonthDimensionPillTone;
 }
 
 export interface CalendarMonthCellPreview {
-  preview: string | null;
-  compactPreview: string | null;
   statusLabel: string | null;
+  visibleStateLabel: string | null;
+  dailyJournalLabel: string | null;
+  hasDailyJournal: boolean;
   dimensionPills: CalendarMonthCellDimensionPill[];
+  ariaDimensionLabels: string[];
   extraDimensionCount: number;
   hasRecords: boolean;
   isFutureEmpty: boolean;
@@ -58,20 +60,28 @@ function getDimensionPillTone(status: CalendarDimensionStatus["status"]): Calend
   }
 }
 
-function getMonthPreviewText(day: CalendarDayRecord) {
-  if (day.primaryTitle) {
-    return day.primaryTitle;
-  }
-
-  if (day.primarySummary) {
-    return day.primarySummary;
-  }
-
-  return "还没有记录。";
-}
-
 function isFutureEmptyDay(day: CalendarDayRecord, today: string) {
   return day.overallStatus === "empty" && isFutureCalendarDate(day.date, today);
+}
+
+function getMonthVisibleStateLabel(day: CalendarDayRecord, savedDimensionCount: number, futureEmpty: boolean) {
+  if (futureEmpty) {
+    return null;
+  }
+
+  if (savedDimensionCount >= 5) {
+    return "已完成";
+  }
+
+  if (savedDimensionCount > 0) {
+    return null;
+  }
+
+  if (day.overallStatus === "draft") {
+    return "草稿";
+  }
+
+  return null;
 }
 
 function getDimensionPreviewFallback(dimension: CalendarDimensionStatus) {
@@ -86,6 +96,19 @@ function getDimensionPreviewFallback(dimension: CalendarDimensionStatus) {
       return "先按主动作。";
     default:
       return `${getInterviewDimensionMeta(dimension.dimension).label}还没有记录。`;
+  }
+}
+
+function getDailyJournalLabel(day: CalendarDayRecord) {
+  switch (day.dailyJournal?.state ?? "none") {
+    case "saved":
+      return "当天日志已保存";
+    case "draft":
+      return "当天日志草稿";
+    case "stale":
+      return "当天日志来源已更新";
+    default:
+      return null;
   }
 }
 
@@ -111,18 +134,24 @@ function getPanelDescription(day: CalendarDayRecord, today: string) {
 
 export function buildCalendarMonthCellPreview(day: CalendarDayRecord, today: string): CalendarMonthCellPreview {
   const touchedDimensions = day.dimensions.filter((dimension) => dimension.status !== "empty");
+  const savedDimensions = day.dimensions.filter((dimension) => dimension.hasSavedEntry);
   const futureEmpty = isFutureEmptyDay(day, today);
+  const visibleStateLabel = getMonthVisibleStateLabel(day, savedDimensions.length, futureEmpty);
 
   return {
-    preview: futureEmpty ? null : getMonthPreviewText(day),
-    compactPreview: futureEmpty ? null : buildCalendarCompactCopy([day.primaryTitle, day.primarySummary], "还没有记录。", 18),
     statusLabel: futureEmpty ? null : calendarDayStatusLabelMap[day.overallStatus],
-    dimensionPills: touchedDimensions.slice(0, 2).map((dimension) => ({
+    visibleStateLabel,
+    dailyJournalLabel: getDailyJournalLabel(day),
+    hasDailyJournal: (day.dailyJournal?.state ?? "none") !== "none",
+    dimensionPills: visibleStateLabel === "已完成"
+      ? []
+      : savedDimensions.slice(0, 4).map((dimension) => ({
       dimension: dimension.dimension,
-      label: getCalendarDimensionVisualMeta(dimension.dimension).shortLabel,
-      tone: getDimensionPillTone(dimension.status)
+      token: getCalendarDimensionVisualMeta(dimension.dimension).monthLabel,
+      tone: "completed"
     })),
-    extraDimensionCount: Math.max(touchedDimensions.length - 2, 0),
+    ariaDimensionLabels: touchedDimensions.map((dimension) => getCalendarDimensionVisualMeta(dimension.dimension).shortLabel),
+    extraDimensionCount: 0,
     hasRecords: day.overallStatus !== "empty",
     isFutureEmpty: futureEmpty
   };
@@ -130,28 +159,28 @@ export function buildCalendarMonthCellPreview(day: CalendarDayRecord, today: str
 
 export function buildCalendarMonthPanelState(day: CalendarDayRecord, today: string): CalendarMonthPanelState {
   const futureEmpty = isFutureEmptyDay(day, today);
-  const dimensionItems = day.dimensions
-    .filter((dimension) => dimension.status !== "empty")
-    .map<CalendarMonthPanelDimensionItem>((dimension) => ({
-      dimension: dimension.dimension,
-      label: getInterviewDimensionMeta(dimension.dimension).label,
-      status: dimension.status,
-      statusLabel: calendarDayStatusLabelMap[dimension.status],
-      preview: buildCalendarCompactCopy(
-        [dimension.title, dimension.summary],
-        getDimensionPreviewFallback(dimension),
-        34
-      )
-    }));
+  const dimensionItems = day.dimensions.map<CalendarMonthPanelDimensionItem>((dimension) => ({
+    dimension: dimension.dimension,
+    label: getInterviewDimensionMeta(dimension.dimension).label,
+    status: dimension.status,
+    statusLabel: calendarDayStatusLabelMap[dimension.status],
+    preview: buildCalendarCompactCopy(
+      [dimension.title, dimension.summary],
+      getDimensionPreviewFallback(dimension),
+      34
+    )
+  }));
 
   return {
     statusLabel: futureEmpty ? null : calendarDayStatusLabelMap[day.overallStatus],
-    headline: futureEmpty ? "未来日期先保留。" : truncateCalendarCopy(day.primaryTitle ?? "还没有标题。", 22),
+    headline: futureEmpty
+      ? "这一天还没到。"
+      : truncateCalendarCopy(day.primaryTitle ?? day.primarySummary ?? "这一天还空着。", 22),
     description: truncateCalendarCopy(getPanelDescription(day, today), 42),
     updatedAtLabel: formatCalendarUpdatedAt(day.latestUpdatedAt),
     dimensionItems,
     isFuture: isFutureCalendarDate(day.date, today),
     isFutureEmpty: futureEmpty,
-    emptyMessage: futureEmpty ? "未来日期先保留。" : "还没有记录，先看当天。"
+    emptyMessage: futureEmpty ? "未来日期先保留。" : "五维都还没开始，先决定从哪一维进入。"
   };
 }

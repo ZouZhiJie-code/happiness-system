@@ -14,6 +14,7 @@
 - `docs/theory/fulfillment-alignment.md`
 - `docs/theory/reflection-alignment.md`
 - `docs/theory/improvement-alignment.md`
+- `docs/theory/gratitude-alignment.md`
 - `docs/theory/dimension-draft-template.md`
 
 ## 1. 为什么保留这个文件
@@ -27,7 +28,7 @@
 
 这些原则现在仍然有效，但代码已经明显超出最初草案：
 - 已进入多维度通用框架
-- joy / fulfillment / reflection / improvement 已完成理论对齐深化
+- joy / fulfillment / reflection / improvement / gratitude 已完成理论对齐深化
 - 日志工作区已经从结构摘要转向正文优先
 
 ## 2. 当前与原始设计稿的主要差异
@@ -38,9 +39,8 @@
 
 当前真实代码是：
 - 五个维度枚举和前端壳子都已经存在
-- joy / fulfillment / reflection / improvement 已完成理论对齐深化
-- improvement 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft 和标题治理，但仍需要端到端产品验收
-- gratitude 仍主要是通用访谈壳子，还不是完整产品
+- joy / fulfillment / reflection / improvement / gratitude 已完成理论对齐深化
+- improvement / gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft 和标题治理，但仍需要端到端产品验收与文风打磨
 
 ### 2.2 数据结构
 
@@ -100,9 +100,10 @@
 - 想看本地怎么启动和排障
   去 `docs/operator-runbook.md`
 
-- 想看 joy / fulfillment / reflection / improvement 维度为什么现在这样设计
+- 想看 joy / fulfillment / reflection / improvement / gratitude 维度为什么现在这样设计
   分别看：
   - `docs/theory/joy-alignment.md`
   - `docs/theory/fulfillment-alignment.md`
   - `docs/theory/reflection-alignment.md`
   - `docs/theory/improvement-alignment.md`
+  - `docs/theory/gratitude-alignment.md`

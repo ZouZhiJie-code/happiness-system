@@ -113,7 +113,9 @@ export function SiteHeader() {
     messages,
     pendingDecision,
     requestConversationReset,
+    requestDailyJournalOpen,
     requestDraftGeneration,
+    sessionEntryDate,
     sessionDimension,
     sessionId,
     setDimension,
@@ -309,8 +311,15 @@ export function SiteHeader() {
       window.localStorage.setItem(interviewDimensionStorageKey, normalized);
     }
 
+    const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;
+    const params = new URLSearchParams({ dimension: normalized });
+
+    if (entryDate) {
+      params.set("entryDate", entryDate);
+    }
+
     setDimension(normalized);
-    router.push(`/interview?dimension=${normalized}`, { scroll: false });
+    router.push(`/interview?${params.toString()}`, { scroll: false });
   }
 
   function handleDraftGenerateClick() {
@@ -331,34 +340,36 @@ export function SiteHeader() {
     requestConversationReset();
   }
 
+  function handleDailyJournalClick() {
+    requestDailyJournalOpen();
+  }
+
   return (
-    <header className="page-shell mx-auto w-full max-w-[88rem] rounded-[28px] px-4 py-1.5 backdrop-blur md:px-5 md:py-1.5">
-      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-3">
+    <header className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6">
+      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4">
         <Link
           href="/"
           prefetch={false}
           onClick={(event) => handleProtectedNavigation(event, "/")}
-          className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-3"
+          className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2.5"
         >
-          <div className="flex size-10 items-center justify-center rounded-full border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.55)] text-[0.62rem] font-mono uppercase tracking-[0.24em] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+          <div className="flex size-9 items-center justify-center rounded-[12px] border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.5)] text-[0.62rem] font-mono uppercase tracking-[0.2em] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.54)]">
             HS
           </div>
-          <p className="font-display text-lg tracking-[0.1em] text-[#2f2823]">幸福系统</p>
+          <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">幸福系统</p>
         </Link>
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
-            <div className="w-full">
-              <div className="rounded-[20px] border border-[rgba(136,92,50,0.16)] bg-[linear-gradient(180deg,rgba(252,245,233,0.88),rgba(241,226,199,0.9))] px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_8px_20px_rgba(118,75,37,0.06)]">
-                <div className="w-full overflow-x-auto pb-0.5">
-                  <div
-                    data-testid="interview-dimension-bar"
-                    className="flex min-w-max items-center gap-1.5"
-                  >
-                    <div className="shrink-0 px-1">
-                      <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
-                    </div>
-                    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                      <div className="flex min-w-0 items-center gap-[0.3125rem]">
+            <div className="w-full overflow-x-auto pb-0.5">
+              <div
+                data-testid="interview-dimension-bar"
+                className="flex min-w-max items-center gap-1.5"
+              >
+                <div className="shrink-0 px-1">
+                  <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
+                </div>
+                <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+                  <div className="flex min-w-0 items-center gap-[0.3125rem]">
                       {interviewDimensions.map((item) => {
                         const isSelected = item === activeDimension;
                         const meta = getInterviewDimensionMeta(item);
@@ -414,63 +425,69 @@ export function SiteHeader() {
                           </button>
                         );
                       })}
-                      </div>
-                      {shouldShowSelectedProgressPod ? (
-                        <div
-                          data-testid="selected-dimension-progress"
-                          className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
-                        >
-                          {selectedProgressSummary.shouldShowRing ? (
-                            <>
-                              <ProgressRing
-                                percentage={selectedProgressSummary.percentage}
-                                label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressSummary.percentage}%`}
-                                testId={`dimension-progress-ring-${activeDimension}`}
-                                size={22}
-                              />
-                              <span
-                                data-testid="selected-dimension-progress-value"
-                                className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
-                              >
-                                {selectedProgressSummary.percentage}%
-                              </span>
-                            </>
-                          ) : (
-                            <span
-                              data-testid="selected-dimension-progress-value"
-                              className="whitespace-nowrap rounded-[9px] border border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] px-1.5 py-[0.22rem] font-mono text-[0.58rem] tracking-[0.14em] text-[#7f5c38]"
-                            >
-                              继续中
-                            </span>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                    {shouldShowDraftGenerateButton ? (
-                      <button
-                        type="button"
-                        onClick={handleDraftGenerateClick}
-                        disabled={draftGenerationBusy || draftGenerationDisabled}
-                        className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {draftGenerationBusy ? "正在整理..." : "生成日志"}
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={handleConversationResetClick}
-                      className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
-                    >
-                      清除对话记录
-                    </button>
                   </div>
+                  {shouldShowSelectedProgressPod ? (
+                    <div
+                      data-testid="selected-dimension-progress"
+                      className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
+                    >
+                      {selectedProgressSummary.shouldShowRing ? (
+                        <>
+                          <ProgressRing
+                            percentage={selectedProgressSummary.percentage}
+                            label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressSummary.percentage}%`}
+                            testId={`dimension-progress-ring-${activeDimension}`}
+                            size={22}
+                          />
+                          <span
+                            data-testid="selected-dimension-progress-value"
+                            className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
+                          >
+                            {selectedProgressSummary.percentage}%
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          data-testid="selected-dimension-progress-value"
+                          className="whitespace-nowrap rounded-[9px] border border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] px-1.5 py-[0.22rem] font-mono text-[0.58rem] tracking-[0.14em] text-[#7f5c38]"
+                        >
+                          继续中
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
+                {shouldShowDraftGenerateButton ? (
+                  <button
+                    type="button"
+                    onClick={handleDraftGenerateClick}
+                    disabled={draftGenerationBusy || draftGenerationDisabled}
+                    className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {draftGenerationBusy ? "正在整理..." : "生成日志"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleDailyJournalClick}
+                  className="shrink-0 rounded-full border border-[rgba(171,118,64,0.2)] bg-[rgba(255,249,239,0.88)] px-3 py-1.5 text-[12px] text-[#604529] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.98)]"
+                  aria-label="查看当天整合日志"
+                >
+                  日志
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConversationResetClick}
+                  className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
+                >
+                  清除对话记录
+                </button>
               </div>
             </div>
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
         </div>
-        <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1.5 rounded-full border border-[rgba(136,92,50,0.22)] bg-[rgba(244,226,194,0.72)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.38)]">
+        <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.matchPath}
@@ -479,9 +496,9 @@ export function SiteHeader() {
               onClick={(event) => handleProtectedNavigation(event, item.matchPath === "/calendar" ? todayCalendarHref : item.href)}
               aria-current={isActive(item.matchPath) ? "page" : undefined}
               className={clsx(
-                "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition duration-300",
+                "px-3 py-1.5 text-[13px] font-medium transition duration-300",
                 isActive(item.matchPath)
-                  ? "bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_8px_18px_rgba(118,75,37,0.2)]"
+                  ? "bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_6px_14px_rgba(118,75,37,0.16)]"
                   : "text-[#4a4038] hover:bg-[rgba(169,111,61,0.14)] hover:text-[#2f2823]"
               )}
             >

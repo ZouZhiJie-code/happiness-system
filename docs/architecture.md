@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-02`
+最后更新：`2026-05-03`
 
 ## 1. 系统概览
 
@@ -11,7 +11,7 @@
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 
-截至 `2026-05-02`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
+截至 `2026-05-03`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
@@ -31,6 +31,8 @@
   - 会话 start / respond / stream / pause / complete / reopen / draft
 - `src/app/api/calendar/*`
   - 记录日历的 `day / week / month` 查询接口
+- `src/app/api/daily-journal/*`
+  - 当天整合日志的查询、生成、草稿更新与正式保存接口
 - `src/app/api/journal-entry/[id]`
   - 当前日志正文编辑主路由
 - `src/app/api/joy-entry/[id]`
@@ -63,14 +65,18 @@
 - `src/server/services/calendar/calendar.service.ts`
   - 记录日历的 `day / week / month` 服务端查询入口
   - 只负责参数校验、日期范围计算与调用 calendar 聚合器
+- `src/server/services/daily-journal/daily-journal.service.ts`
+  - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 
 ### 持久化层
 
 - `src/server/repositories/joy-interview.repository.ts`
   - 会话、事件、日志、payload、legacy 字段投影映射
 - `src/server/repositories/calendar.repository.ts`
-  - 从 `InterviewSession / JoyEntry` 查询标准化 calendar source
+  - 从 `InterviewSession / JoyEntry / DailyJournalEntry` 查询标准化 calendar source
   - 不直接计算 calendar 状态
+- `src/server/repositories/daily-journal.repository.ts`
+  - 查询当天已保存维度日志，维护独立日级日志草稿和保存状态
 
 ## 3. 领域模型
 
@@ -120,7 +126,7 @@
 
 ### 3.4 日志实体
 
-`JoyEntry` 仍是当前唯一的日志表，但已经承担多维度日志容器角色：
+`JoyEntry` 是当前维度日志表，已经承担多维度日志容器角色：
 - `title`
 - `content`
 - legacy 字段：`event / feeling / whyItMattered / happinessType / selfPattern`
@@ -133,6 +139,18 @@
 - 多维度真相在 `payload`
 - joy 的更细结构也落在 `payload` 与 `snapshotData`
 - `JoyEntry.date` 现在与 `InterviewSession.entryDate` 对齐，用来承接“补写过去日期”的日志归属
+
+`DailyJournalEntry` 是独立日级整合日志表：
+- `userId + date` 唯一
+- `title / content`
+- 状态：`draft / saved`
+- `sourceEntryIds / sourceSessionIds / sourceSignature / sourceUpdatedAt`
+
+现实上：
+- 当天整合日志只使用同一天 `status = saved` 的维度日志
+- 正文是按已有维度组织的章节合集，不补空维度
+- `sourceSignature` 用于判断维度日志保存后，日级日志是否进入 `stale` 状态
+- 如果来源维度日志后来不再是 `saved`，或保存后的更新时间变化，当前签名都会不一致，日级日志会进入 `stale`
 
 ### 3.5 calendar 读模型
 
@@ -153,6 +171,9 @@
 - `JoyEntry`
   - 提供 `draft / saved`
   - 提供标题、正文摘要与更新时间
+- `DailyJournalEntry`
+  - 提供当天整合日志 `none / draft / saved / stale` 轻量状态
+  - 月/周只消费轻 marker，日视图提供入口条；不在 calendar 内编辑正文
 
 聚合规则固定为：
 - 同一天同维度优先取最新有效记录
@@ -162,34 +183,42 @@
 
 ### 3.6 calendar 前端工作区现实
 
-截至 `2026-05-02`，calendar 前端已经不是“每个视图都各自放一套顶部按钮和统计卡”的自然文档流页面，而是：
+截至 `2026-05-03`，calendar 前端已经不是“每个视图都各自放一套顶部按钮和统计卡”的自然文档流页面，而是：
 - `SiteHeader` 中区承接全局 calendar 导航：
   - `month / week / day` 切换
   - 前后翻段
   - 回到今天
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用固定 header 中区框体和统一高度预算
+- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
+- 根布局不再给页面额外外边距；首页、访谈、设置和 calendar 主体都以平铺 surface 承载内容，减少大圆角外框和卡片嵌套
 
 当前三个视图的工作区状态：
 - `month`
   - 已进入双栏骨架：月历主体 + 当天检查面板
   - 右栏固定提供 `查看当天` 日期级入口
   - 月格当前按实际可见周数收口，只渲染 5 行或 6 行，不再固定补满 42 格
-  - 小格只负责传递日期、主状态、1 行语义钩子和少量维度身份；未来空白日不再显示 `未记录 / 还没有记录。`
-  - today 圆点已回到日期锚点附近，右上角状态区只保留状态文本
+  - 小格当前不再优先解释“还有什么没做完”，而是优先表达“这一天已经沉淀出的已保存维度结果”
+  - 月格可见文字层固定为：
+    - `1-4` 个已保存维度：显示单字 `悦 / 实 / 思 / 改 / 谢`
+    - `5` 个维度都至少保存过一次：显示 `已完成`
+    - 纯草稿且还没有任何已保存维度：显示 `草稿`
+  - `进行中 / 混合状态` 不再作为月格可见文字出现；未完成感主要由状态符号和颜色层承担
+  - today 圆点已回到日期锚点附近，右上角只保留状态词或状态点位
 - `week`
   - 已升级为 7 天同屏对比板
   - 主摘要压缩成轻量周摘要块，不再保留厚重侧栏
   - 每天卡片只保留日期、状态、完成/草稿/进行中摘要、短判断文案和唯一主动作
 - `day`
   - 已升级为“一条总览 + 五维紧凑操作台”
-  - 每卡只保留维度身份、状态、标题或摘要、唯一主按钮和少量次级轻链接
+  - 总览区下方有当天整合日志入口条，进入访谈页 `mode=daily-journal`
+  - 每条只保留维度身份、状态、标题或摘要、唯一主按钮和少量次级轻链接
   - `mixed` 主动作由前端稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
 - month / week / day 三个视图当前共用暖色 calendar 工作台：
   - 五态状态色固定区分 `empty / in_progress / draft / completed / mixed`
-  - 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+  - 五个维度当前在可见 badge 上固定使用单字标识 `悦 / 实 / 思 / 改 / 谢`，辅助技术继续暴露完整维度名 `开心 / 充实 / 思考 / 改进 / 感谢`
   - badge、surface、marker 和主次按钮层级由 `src/features/calendar/presentation.ts` 统一投影，不再由各组件各自拼样式
   - 色温已经回收到全局暖纸张/墨色系统，不再维持蓝灰后台式分叉
   - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
@@ -340,6 +369,31 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 编辑正文时走：
 - `PUT /api/journal-entry/[id]`
 - `PUT /api/joy-entry/[id]`（兼容）
+
+### 5.6 当天整合日志
+
+当天整合日志是独立于维度日志的日级成果物：
+- `GET /api/daily-journal?date=YYYY-MM-DD`
+- `POST /api/daily-journal/generate`
+- `PUT /api/daily-journal/[id]`
+- `POST /api/daily-journal/[id]/save`
+
+生成流程：
+1. 按 `date` 查询当天 `status = saved` 的 `JoyEntry`
+2. 按 `joy / fulfillment / reflection / improvement / gratitude` 顺序整理 source
+3. AI 轻整理为已有维度章节合集；AI 不可用时用确定性 fallback 章节
+4. upsert `DailyJournalEntry` 为 `draft`
+5. 后续编辑自动保存草稿，用户确认后标记为 `saved`
+
+约束：
+- 没有已保存维度日志时返回 `DAILY_JOURNAL_SOURCE_EMPTY`
+- 不读取未保存草稿，不直接读取访谈消息
+- 不生成空章节，不提示缺失维度
+- 访谈页顶部【日志】按钮把主工作区切到当天日志模式，不弹层、不跳转
+- `mode=daily-journal` 深链只打开当天日志主区；如果页面尚未 hydrate 访谈 session，也不会调用 `/api/interview/session/start` 创建新的 joy session
+- 从 `mode=daily-journal` 点击“回到访谈”时，前端会移除 URL 里的 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
+- 从维度日志 pane 切到当天日志主区前，前端会先复用日志 pane 的关闭路径：保存未暂存编辑，或取消正在生成的 draft
+- calendar 只展示轻量状态，不内联编辑
 
 ## 6. joy 维度为什么是当前标品
 
@@ -557,9 +611,9 @@ gratitude 已接入统一成稿链路：
 
 日志工作区行为：
 - 只有在已有 `journalEntry` 时才会打开
-- 第一次生成时显示阶段式 loading card
+- 第一次生成时显示阶段式 loading 状态
 - 当前草稿已经覆盖到最新访谈状态时，再次点击“生成日志”会直接复用，不再重复发起生成
-- 标题、正文和保存动作现在收拢在同一张日志编辑卡片里
+- 标题、正文和保存动作现在收拢在同一个日志编辑 pane 里
 - 标题当前固定单行显示，限制 `16` 字，不再依赖横向滑动查看
 - 面板头部不再显示“日志”标题，只保留关闭按钮，正文整体上移
 - 已有草稿后，新访谈内容不会自动触发刷新；用户手动点击“生成日志”后才会进入阶段式刷新

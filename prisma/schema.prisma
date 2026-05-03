@@ -51,6 +51,11 @@ enum JoyEntryStatus {
   saved
 }
 
+enum DailyJournalStatus {
+  draft
+  saved
+}
+
 enum InterviewEventStatus {
   active
   ready_for_choice
@@ -69,6 +74,7 @@ model User {
   settings    UserSettings?
   sessions    InterviewSession[]
   joyEntries  JoyEntry[]
+  dailyJournalEntries DailyJournalEntry[]
   memoryFacts MemoryFact[]
 }
 
@@ -195,6 +201,26 @@ model JoyEntry {
   savedAt         DateTime?
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model DailyJournalEntry {
+  id               String             @id @default(cuid())
+  userId           String
+  date             DateTime
+  title            String
+  content          String
+  status           DailyJournalStatus @default(draft)
+  sourceEntryIds   String[]
+  sourceSessionIds String[]
+  sourceSignature  String
+  sourceUpdatedAt  DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  savedAt          DateTime?
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, status])
 }
 
 model MemoryFact {

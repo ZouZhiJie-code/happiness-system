@@ -27,47 +27,47 @@ const methodSteps = [
 
 export default function HomePage() {
   return (
-    <div className="space-y-4">
-      <section className="page-shell min-h-[calc(100vh-var(--site-header-viewport-offset))] rounded-[42px] px-4 py-4 md:px-7 md:py-5">
-        <div className="relative z-10 grid gap-5 lg:grid-cols-[1.16fr_0.84fr] lg:items-stretch">
-          <div className="stagger-rise flex flex-col pt-4 pb-4 md:pt-6 md:pb-5 lg:pt-8 lg:pb-7">
-            <h1 className="max-w-none font-display text-[3rem] leading-[1.04] tracking-[0.018em] text-[#2d2014] sm:text-[3.2rem] lg:text-[4.05rem] xl:text-[4.3rem]">
-              <span className="block whitespace-nowrap">把今天的重要片段，</span>
+    <div className="min-h-0 flex-1">
+      <section className="page-shell flex min-h-[calc(100dvh-var(--site-header-viewport-offset))] flex-col justify-center rounded-none border-x-0 border-t-0 px-5 py-7 md:px-8 md:py-9 xl:px-10">
+        <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(24rem,0.92fr)] lg:items-center">
+          <div className="stagger-rise flex flex-col">
+            <h1 className="max-w-[58rem] text-balance font-display text-[2.8rem] leading-[1.03] text-[#2d2014] sm:text-[3.2rem] lg:text-[4.05rem] xl:text-[4.55rem]">
+              <span className="block">把今天的重要片段，</span>
               <span className="block text-[#5b5148]">整理成一份值得留下的日志记录。</span>
             </h1>
-            <p className="mt-4 max-w-[52rem] text-[15px] leading-7 text-[#54402e] md:mt-5 md:text-[16px] md:leading-8">
+            <p className="mt-5 max-w-[54rem] text-pretty text-[15px] leading-7 text-[#54402e] md:text-[16px] md:leading-8">
               你带来一天里的真实片段，系统会用结构化访谈陪你慢慢梳理开心、充实、思考、改进与感谢，
               最后整理成一份清楚、可编辑、可确认的日志草稿。
             </p>
-            <div className="mt-7 grid w-full max-w-[52rem] gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid w-full max-w-[48rem] gap-3 sm:grid-cols-2">
               <StartInterviewLink />
               <Link
                 href="/settings"
-                className="flex min-h-[6rem] w-full items-center justify-center rounded-full border border-[rgba(115,74,37,0.24)] bg-[linear-gradient(180deg,#d8b17d,#c3925b)] px-10 py-5 text-center text-[22px] font-bold leading-none tracking-[0.01em] text-[#2f2823] shadow-[0_18px_34px_rgba(145,94,48,0.16),inset_0_1px_0_rgba(255,247,234,0.34)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb985,#c99862)] md:text-[23px]"
+                className="flex min-h-[5rem] w-full items-center justify-center border border-[rgba(115,74,37,0.24)] bg-[linear-gradient(180deg,#d8b17d,#c3925b)] px-8 py-4 text-center text-[20px] font-bold leading-none text-[#2f2823] shadow-[0_12px_24px_rgba(145,94,48,0.13),inset_0_1px_0_rgba(255,247,234,0.34)] transition duration-200 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb985,#c99862)] md:text-[21px]"
               >
                 查看记录设置
               </Link>
             </div>
           </div>
 
-          <div className="paper-sheet ambient-float flex h-full flex-col rounded-[34px] p-4 md:p-5">
-            <h2 className="font-display text-[2rem] leading-[0.98] text-[#241d16] md:text-[2.45rem]">可以这样聊</h2>
-            <p className="mt-2 font-body text-[1.02rem] leading-[1.34] text-[#5d4d3f] md:text-[1.16rem]">
+          <div className="flex h-full flex-col border-l border-[rgba(123,82,42,0.14)] pl-5 md:pl-7">
+            <h2 className="text-balance font-display text-[2rem] leading-[0.98] text-[#241d16] md:text-[2.45rem]">可以这样聊</h2>
+            <p className="mt-2 text-pretty font-body text-[1.02rem] leading-[1.34] text-[#5d4d3f] md:text-[1.16rem]">
               你不用急着下结论，我们先把那一刻慢慢讲清楚。
             </p>
-            <div className="mt-4 flex flex-1 flex-col justify-between">
+            <div className="mt-5 grid flex-1 content-center gap-2.5">
               {methodSteps.map(({ index, title, description }, idx) => (
                 <div
                   key={index}
-                  className="grid min-h-[6.2rem] grid-cols-[1.95rem_1fr] items-start gap-1.5 rounded-[24px] border border-[rgba(123,82,42,0.14)] bg-[linear-gradient(180deg,rgba(255,250,243,0.92),rgba(245,229,201,0.9))] px-3 py-2.5 shadow-[0_12px_26px_rgba(126,87,47,0.1),inset_0_1px_0_rgba(255,255,255,0.52)] md:min-h-[6.35rem] md:grid-cols-[2.15rem_1fr] md:gap-2 md:px-4 md:py-3"
+                  className="grid min-h-[5.7rem] grid-cols-[2rem_1fr] items-start gap-2 border border-[rgba(123,82,42,0.12)] bg-[rgba(255,250,243,0.44)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] md:grid-cols-[2.2rem_1fr] md:px-4"
                   style={{ animationDelay: `${idx * 120}ms` }}
                 >
-                  <p className="pt-0.5 font-mono text-[1.16rem] tracking-[0.08em] text-[#a26c38] md:text-[1.24rem]">
+                  <p className="pt-0.5 font-mono text-[1.12rem] tracking-[0.06em] text-[#a26c38] md:text-[1.2rem]">
                     {index}
                   </p>
                   <div className="flex h-full flex-col justify-center">
                     <p className="font-display text-[1.3rem] leading-none text-[#231c16] md:text-[1.36rem]">{title}</p>
-                    <p className="mt-1 text-[0.88rem] leading-[1.4] text-[#5a4839] md:text-[0.93rem]">{description}</p>
+                    <p className="mt-1 text-pretty text-[0.88rem] leading-[1.4] text-[#5a4839] md:text-[0.93rem]">{description}</p>
                   </div>
                 </div>
               ))}

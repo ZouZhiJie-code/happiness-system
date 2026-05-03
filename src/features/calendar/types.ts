@@ -1,6 +1,7 @@
 import type { InterviewDimension, InterviewSessionStatus, JoyEntryStatus } from "@/types/interview";
 
 export type CalendarDayStatus = "empty" | "in_progress" | "draft" | "completed" | "mixed";
+export type CalendarDailyJournalState = "none" | "draft" | "saved" | "stale";
 
 export type CalendarAction =
   | "start_interview"
@@ -38,6 +39,27 @@ export interface CalendarEntrySource {
   savedAt: string | null;
 }
 
+export interface CalendarDailyJournalSource {
+  kind: "daily_journal";
+  id: string;
+  date: string;
+  status: "draft" | "saved";
+  title: string;
+  updatedAt: string;
+  savedAt: string | null;
+  sourceEntryIds: string[];
+  sourceSignature: string;
+}
+
+export interface CalendarDailyJournalStatus {
+  state: CalendarDailyJournalState;
+  id: string | null;
+  title: string | null;
+  updatedAt: string | null;
+  savedAt: string | null;
+  sourceEntryCount: number;
+}
+
 export interface CalendarDimensionStatus {
   dimension: CalendarSourceDimension;
   status: CalendarDayStatus;
@@ -55,6 +77,7 @@ export interface CalendarDimensionStatus {
 export interface CalendarDayRecord {
   date: string;
   overallStatus: CalendarDayStatus;
+  dailyJournal?: CalendarDailyJournalStatus;
   dimensions: CalendarDimensionStatus[];
   activeCount: number;
   draftCount: number;

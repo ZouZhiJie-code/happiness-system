@@ -24,10 +24,15 @@ describe("calendar presentation helpers", () => {
 
   it("returns stable short labels and accent styles for every dimension", () => {
     expect(getCalendarDimensionVisualMeta("joy").shortLabel).toBe("开心");
+    expect(getCalendarDimensionVisualMeta("joy").monthLabel).toBe("悦");
     expect(getCalendarDimensionVisualMeta("fulfillment").shortLabel).toBe("充实");
+    expect(getCalendarDimensionVisualMeta("fulfillment").monthLabel).toBe("实");
     expect(getCalendarDimensionVisualMeta("reflection").shortLabel).toBe("思考");
+    expect(getCalendarDimensionVisualMeta("reflection").monthLabel).toBe("思");
     expect(getCalendarDimensionVisualMeta("improvement").shortLabel).toBe("改进");
+    expect(getCalendarDimensionVisualMeta("improvement").monthLabel).toBe("改");
     expect(getCalendarDimensionVisualMeta("gratitude").shortLabel).toBe("感谢");
+    expect(getCalendarDimensionVisualMeta("gratitude").monthLabel).toBe("谢");
 
     expect(getCalendarDimensionVisualMeta("joy").softBadgeClass).not.toBe(getCalendarDimensionVisualMeta("gratitude").softBadgeClass);
     expect(getCalendarDimensionVisualMeta("reflection").solidBadgeClass).not.toBe(
@@ -58,11 +63,11 @@ describe("calendar presentation helpers", () => {
       buildCalendarActionAccessibleName({
         dateLabel: "5月2日",
         dimensionLabel: "开心",
-        statusLabel: "有草稿",
+        statusLabel: "草稿",
         title: "还在整理的那段",
         actionLabel: "继续编辑"
       })
-    ).toBe("5月2日，开心，有草稿，还在整理的那段，继续编辑");
+    ).toBe("5月2日，开心，草稿，还在整理的那段，继续编辑");
   });
 
   it("returns short loading and error labels for every calendar scope", () => {

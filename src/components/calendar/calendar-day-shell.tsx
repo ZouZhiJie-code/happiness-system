@@ -73,14 +73,14 @@ export function CalendarDayShell() {
 
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-[32px] px-2.5 py-2.5 md:px-3 md:py-3"
+      className="calendar-workspace calendar-shell rounded-none border-x-0 border-t-0 px-2 py-2 md:px-2.5 md:py-2.5"
       data-testid="calendar-day-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {error ? (
           <div
-            className="calendar-pane calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center"
+            className="calendar-pane calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-none p-6 text-center"
             data-testid="calendar-day-primary-pane"
             role="alert"
           >
@@ -94,22 +94,22 @@ export function CalendarDayShell() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="calendar-pane calendar-card min-h-0 flex-1 rounded-[28px] p-4.5 md:p-5" data-testid="calendar-day-primary-pane">
+          <div className="calendar-pane calendar-card min-h-0 flex-1 rounded-none p-4 md:p-5" data-testid="calendar-day-primary-pane">
             <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
               {getCalendarLoadingLabel("day")}
             </p>
             <div className="mt-4 space-y-4" aria-hidden="true">
               <div className="h-24 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
-                <div className="h-56 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+              <div className="space-y-2.5">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <div key={index} className="h-[4.8rem] animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
+                ))}
               </div>
             </div>
           </div>
         ) : dayRecord ? (
           <div
-            className="calendar-pane calendar-panel min-h-0 flex-1 overflow-hidden rounded-[28px] p-2.5 md:p-3"
+            className="calendar-pane calendar-panel min-h-0 flex-1 overflow-hidden rounded-none p-2 md:p-2.5"
             data-testid="calendar-day-primary-pane"
           >
             <div className="calendar-pane-scroll panel-scroll min-h-0 h-full pr-1">

@@ -81,13 +81,13 @@ export function CalendarWeekShell() {
 
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-[32px] px-2.5 py-2.5 md:px-3 md:py-3"
+      className="calendar-workspace calendar-shell rounded-none border-x-0 border-t-0 px-2 py-2 md:px-2.5 md:py-2.5"
       data-testid="calendar-week-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
-          className="calendar-pane calendar-panel flex min-h-0 flex-1 flex-col rounded-[28px] p-2.5 md:p-3"
+          className="calendar-pane calendar-panel flex min-h-0 flex-1 flex-col rounded-none p-2 md:p-2.5"
           data-testid="calendar-week-primary-pane"
         >
           {error ? (

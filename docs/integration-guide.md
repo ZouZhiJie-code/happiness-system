@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-02`
+最后更新：`2026-05-03`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -27,6 +27,10 @@
 | `POST` | `/api/interview/session/draft/save` | 保存正式日志 | 将当前 draft 标成 `saved` |
 | `PUT` | `/api/journal-entry/[id]` | 更新日志标题和正文 | 当前 canonical 编辑接口 |
 | `PUT` | `/api/joy-entry/[id]` | 更新日志标题和正文 | 与上面完全等价，保留兼容 |
+| `GET` | `/api/daily-journal?date=YYYY-MM-DD` | 查询当天整合日志 | 返回 `none / draft / saved / stale` |
+| `POST` | `/api/daily-journal/generate` | 生成当天整合日志 | 只使用已保存维度日志 |
+| `PUT` | `/api/daily-journal/[id]` | 更新当天整合日志草稿 | 访谈页当天日志模式自动保存 |
+| `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
 
 ## 3. 请求与返回
@@ -371,6 +375,61 @@ data: {
 }
 ```
 
+### 3.7 当天整合日志
+
+当天整合日志独立于五个维度日志，只使用同一天已保存的维度日志生成。
+
+查询：
+
+```http
+GET /api/daily-journal?date=2026-05-02
+```
+
+返回：
+
+```json
+{
+  "dailyJournal": null,
+  "availableSourceCount": 0,
+  "state": "none"
+}
+```
+
+`state` 取值：
+- `none`：还没有当天整合日志
+- `draft`：已有草稿
+- `saved`：已正式保存
+- `stale`：已有日级日志，但来源维度日志保存后又更新过，或来源维度日志不再是 `saved`
+
+生成：
+
+```json
+{
+  "date": "2026-05-02"
+}
+```
+
+`POST /api/daily-journal/generate` 只收集当天 `JoyEntry.status = saved` 的维度日志。没有来源时返回 `DAILY_JOURNAL_SOURCE_EMPTY`。生成成功会 upsert 一条 `DailyJournalEntry` 草稿。
+
+编辑草稿：
+
+```json
+{
+  "title": "今天的记录",
+  "content": "## 开心\n......"
+}
+```
+
+`PUT /api/daily-journal/[id]` 会把状态保持或改回 `draft`，用于访谈页当天日志模式自动保存。
+
+正式保存：
+
+```http
+POST /api/daily-journal/[id]/save
+```
+
+保存后 `status = saved`，并写入 `savedAt`。
+
 ## 4. 错误语义
 
 ### 4.1 访谈提交错误
@@ -404,6 +463,14 @@ data: {
 | `SESSION_CHOICE_UNAVAILABLE` | 当前没有可执行的继续/下一件分叉 |
 | `SESSION_BATCH_UNSUPPORTED` | draft generate 传了多个 session |
 | `DRAFT_GENERATE_UPSTREAM_ERROR` | AI 生成链路失败 |
+| `INVALID_DAILY_JOURNAL_DATE` | 查询当天整合日志时缺少或传入非法日期 |
+| `INVALID_DAILY_JOURNAL_GENERATE_REQUEST` | 生成当天整合日志请求体不合法 |
+| `INVALID_DAILY_JOURNAL_UPDATE_REQUEST` | 更新当天整合日志请求体不合法 |
+| `DAILY_JOURNAL_SOURCE_EMPTY` | 当天没有已保存的维度日志，不能生成整合日志 |
+| `DAILY_JOURNAL_NOT_FOUND` | 更新或保存当天整合日志时找不到记录 |
+| `DAILY_JOURNAL_GENERATE_FAILED` | 当天整合日志生成或写入失败 |
+| `DAILY_JOURNAL_UPDATE_FAILED` | 当天整合日志草稿保存失败 |
+| `DAILY_JOURNAL_SAVE_FAILED` | 当天整合日志正式保存失败 |
 | `DRAFT_GENERATE_DB_ERROR` | AI 生成成功但写库失败 |
 | `DRAFT_NOT_FOUND` | 保存正式日志时没有 draft |
 | `INVALID_JOURNAL_ENTRY_REQUEST` | 更新日志请求体不合法 |
@@ -455,7 +522,7 @@ data: {
 当前与日志整理相关的真实前端语义是：
 - 继续访谈、切到下一件事件、AI 新追问、用户新回答，都不会自动进入“正在整理中”
 - 日志整理必须由用户显式点击触发
-- 第一次生成时，右侧会显示阶段式 loading card
+- 第一次生成时，右侧日志 pane 会显示阶段式 loading 状态
 - 已有草稿后再生成时，旧稿会先保留可见，再叠加阶段式刷新提示
 - 如果用户在生成过程中关闭日志面板，前端会 abort 这次请求，但不会删除已有草稿
 
@@ -494,7 +561,7 @@ data: {
 
 ### 5.9 calendar 后端基础
 
-截至 `2026-05-02`，仓库里已经有记录日历的后端基础与公开 HTTP 路由：
+截至 `2026-05-03`，仓库里已经有记录日历的后端基础与公开 HTTP 路由：
 - `src/features/calendar/aggregate-calendar.ts`
   - 纯展示层聚合器，负责 `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
 - `src/server/repositories/calendar.repository.ts`
@@ -808,7 +875,7 @@ data: {
 
 ### 5.11 Step 5: month view 可执行规格
 
-本节现在既是第 5 步的实现契约回顾，也是当前月视图的对齐基线。`/calendar` 月视图已经完成基础功能，并在后续前端迭代里进入“header 中区统一导航 + 首屏工作区 + 双栏骨架”的结构，保留这节是为了后续继续细化内容层级时不丢掉既定边界。
+本节现在既是第 5 步的实现契约回顾，也是当前月视图的对齐基线。`/calendar` 月视图已经完成基础功能，并在后续前端迭代里进入“全宽暖色 header + 中区统一导航 + 首屏工作区 + 双栏骨架”的结构，保留这节是为了后续继续细化内容层级时不丢掉既定边界。
 
 #### 目标
 
@@ -819,6 +886,7 @@ data: {
   - 前后翻段
   - 回到今天
   - 实时摘要 chip
+- `SiteHeader` 现在是全宽暖色工具栏，不再用居中大卡片外壳；正文工作区直接贴在 header 下方展开。
 - 月视图正文当前已经去掉重复 header、重复翻月按钮和统计卡，改成“月历主体 + 当天检查面板”的双栏骨架。
 - 点击日期会更新右侧当天检查面板；点击 `查看当天` 才进入 `view=day`。
 
@@ -960,8 +1028,11 @@ data: {
 - 日期数字
 - today / selected 视觉态
 - 整体状态底色/描边
-- 最多 2 个维度身份和 `+N`
-- 1 行语义钩子（`title > summary > fallback`）
+- 月格可见文字层：
+  - `1-4` 个已保存维度：显示单字 `悦 / 实 / 思 / 改 / 谢`
+  - `5` 个维度都至少保存过一次：显示 `已完成`
+  - 纯草稿且没有任何已保存维度：显示 `草稿`
+- 其余状态不再额外占用文字位，由状态符号和颜色层承担
 
 状态视觉要求：
 - `empty`
@@ -982,8 +1053,9 @@ data: {
 
 空白日语义：
 - `过去 / 今天` 的空白日：
-  - 保留 `未记录`
-  - 保留 `还没有记录。`
+  - 不强制显示 `未记录`
+  - 不强制显示 `还没有记录。`
+  - 没有单字结果标签本身就表示尚未形成已保存结果
 - `未来` 的空白日：
   - 不显示 `未记录`
   - 不显示 `还没有记录。`
@@ -1003,18 +1075,15 @@ data: {
 - `improvement`
 - `gratitude`
 
-V1 建议形式：
-- 五个小圆点或短条
-- 每个标记只表达该维度当前状态，不塞文字
+当前形式：
+- 月格把“已保存维度”投影到可见文字层
+- 可见 token 固定为 `悦 / 实 / 思 / 改 / 谢`
+- token 只表示“该维度当天已有保存结果”，不直接表示正在访谈或仅有草稿
 
-状态映射建议：
-- `empty`：浅色或空心
-- `in_progress`：半强调
-- `draft`：中强调
-- `completed`：高强调
-- `mixed`：单维通常不会出现 mixed；如果未来扩展出 mixed，也按高可见异常态处理
-
-第 5 步不要求在格子里直接写出所有维度名称；当前日期格只展示已触达维度的短标签，完整维度动作分发交给 day view。
+辅助语义要求：
+- 可见 token 可以是单字
+- accessible name 仍需保留完整维度名 `开心 / 充实 / 思考 / 改进 / 感谢`
+- 周视图、日视图与月视图右侧检查面板沿用同一套单字 badge 语法，但读屏语义不能退化
 
 #### 顶部摘要 chip
 
@@ -1112,6 +1181,12 @@ V1 建议形式：
 
 4. `panel=journal`
    - 进入后默认打开右侧日志工作区
+
+5. `mode=daily-journal`
+   - 进入后打开当天整合日志主区
+   - 日期优先使用 URL 的 `entryDate`
+   - 这个模式不启动普通维度访谈，不调用 `/api/interview/session/start`，也不会因为 calendar 的当天日志入口创建新的 joy session
+   - 用户点击“回到访谈”时应移除 `mode=daily-journal`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
 
 第 5 步不要求把 session 缓存结构从“按维度”彻底重构成“按维度 + 日期”，但显式 deep link 不能再被旧缓存误恢复。
 
@@ -1240,7 +1315,7 @@ V1 建议形式：
   - 如果没有可直达动作，则回退 `查看当天`
 - 周摘要已经压缩成轻量顶部辅助块，不再保留厚重侧栏
 - 周视图当前已经被收进首屏工作区；7 天卡片会在一个固定板体内同屏比较，窄屏时通过横向滚动保持列板语义
-- 周视图与月视图、日视图共享同一套状态颜色和 badge 文案，但不复用 month 的当天检查面板结构
+- 周视图与月视图、日视图共享同一套状态颜色和单字 badge `悦 / 实 / 思 / 改 / 谢`，但不复用 month 的当天检查面板结构
 
 #### 自动化验收
 
@@ -1287,7 +1362,7 @@ V1 建议形式：
   - `reflection`
   - `improvement`
   - `gratitude`
-- 每张卡固定展示：
+- 每条卡当前固定展示：
   - 维度身份
   - 当前状态
   - 标题或一句摘要
@@ -1308,7 +1383,7 @@ V1 建议形式：
   - 访谈入口用 `entryDate`
   - 已完成日志继续落到现有 `panel=journal` 工作区
 - 日视图当前已经进入首屏工作区；主内容放进固定主 pane 内滚动，不再依赖整页长滚动
-- 日视图卡片当前已经收紧为桌面端首屏优先判断，而不是长篇说明卡集合
+- 日视图当前已经收成固定顺序的五维紧凑操作台；可见维度 badge 统一改成单字 `悦 / 实 / 思 / 改 / 谢`
 
 #### 自动化验收
 
@@ -1381,17 +1456,17 @@ V1 建议形式：
 当前视觉层也已经补齐：
 - month / week / day 三个视图共用暖色 calendar 工作台
 - 状态五态 `empty / in_progress / draft / completed / mixed` 的 badge / surface / marker class 由 `src/features/calendar/presentation.ts` 统一投影
-- 五个维度固定使用双字标识 `开心 / 充实 / 思考 / 改进 / 感谢`
+- 五个维度当前在可见 badge 上统一使用单字 `悦 / 实 / 思 / 改 / 谢`，辅助技术继续暴露完整维度名 `开心 / 充实 / 思考 / 改进 / 感谢`
 - 主按钮、次按钮和禁用态现在有稳定层级，不再由各视图各自拼装
-- `SiteHeader` 中区已统一成固定框体，访谈维度条与 calendar toolbar 共用同一套高度预算与横向 gutter
+- `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算与横向 gutter
 
 #### 当前自动化基线
 
 - `npx tsc --noEmit`
 - `npm test`
-- 截至 `2026-05-02`：
-  - `28` 个测试文件
-  - `257` 个测试全部通过
+- 截至 `2026-05-03`：
+  - `29` 个测试文件
+  - `269` 个测试全部通过
 
 #### Step 8 明确补齐的回归面
 
@@ -1404,7 +1479,7 @@ V1 建议形式：
   - 校验月视图双栏工作区、右侧当天检查面板和 `查看当天` 日期级入口
 - `tests/unit/calendar-presentation.test.ts`
   - 校验状态五态映射为不同 visual meta
-  - 校验五个维度的双字标识与 accent style 稳定
+  - 校验五个维度的单字 badge `悦 / 实 / 思 / 改 / 谢` 与完整语义映射稳定
 - `tests/unit/calendar-day-shell.test.tsx`
   - 额外校验维度卡会暴露稳定 `data-dimension`
   - 额外校验未来空白卡的禁用动作语义

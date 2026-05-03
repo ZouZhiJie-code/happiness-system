@@ -14,13 +14,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="zh-CN">
       <body className="font-body text-ink antialiased">
-        <div className="relative flex min-h-dvh flex-col overflow-hidden px-1.5 py-3 md:px-2.5 md:py-4 xl:px-3">
-          <Suspense fallback={<div className="mx-auto h-[var(--site-header-frame-min-height)] max-w-[88rem]" />}>
+        <div className="relative flex min-h-dvh flex-col">
+          <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
             <SiteHeader />
           </Suspense>
-          <main className="mx-auto flex min-h-0 w-full max-w-[88rem] flex-1 flex-col pb-4 pt-4 md:pb-5 md:pt-5">
-            {children}
-          </main>
+          <main className="flex min-h-0 w-full flex-1 flex-col">{children}</main>
         </div>
       </body>
     </html>

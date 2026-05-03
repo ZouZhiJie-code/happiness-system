@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { DailyJournalWorkspace } from "@/components/interview/daily-journal-workspace";
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -18,7 +19,7 @@ import {
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
-import { isEntryDateString } from "@/features/interview/entry-date";
+import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
@@ -674,6 +675,7 @@ export function InterviewShell() {
   const {
     bootState,
     conversationResetRequestId,
+    dailyJournalOpenRequestId,
     draftGenerationRequestId,
     draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
@@ -681,6 +683,8 @@ export function InterviewShell() {
     sessionEntryDate,
     setDimension,
     setDraftGenerationControls,
+    setWorkspaceMode,
+    workspaceMode,
     hydrate,
     journalEntry,
     messages,
@@ -719,11 +723,16 @@ export function InterviewShell() {
   const requestedEntryDateRaw = searchParams.get("entryDate");
   const requestedEntryDate = requestedEntryDateRaw && isEntryDateString(requestedEntryDateRaw) ? requestedEntryDateRaw : null;
   const shouldOpenJournalPanelFromQuery = searchParams.get("panel") === "journal";
+  const shouldOpenDailyJournalFromQuery = searchParams.get("mode") === "daily-journal";
+  const dailyJournalDate = shouldOpenDailyJournalFromQuery
+    ? requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate()
+    : sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate();
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
+  const lastDailyJournalOpenRequestRef = useRef(0);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -956,6 +965,24 @@ export function InterviewShell() {
       setPanelOpen(true);
     }
   }, [journalEntry, shouldOpenJournalPanelFromQuery]);
+
+  useEffect(() => {
+    if (shouldOpenDailyJournalFromQuery) {
+      void openDailyJournalWorkspace();
+    }
+  }, [bootState, shouldOpenDailyJournalFromQuery]);
+
+  useEffect(() => {
+    if (
+      dailyJournalOpenRequestId === 0 ||
+      dailyJournalOpenRequestId === lastDailyJournalOpenRequestRef.current
+    ) {
+      return;
+    }
+
+    lastDailyJournalOpenRequestRef.current = dailyJournalOpenRequestId;
+    void openDailyJournalWorkspace();
+  }, [dailyJournalOpenRequestId]);
 
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -1249,6 +1276,13 @@ export function InterviewShell() {
       return;
     }
 
+    if (shouldOpenDailyJournalFromQuery) {
+      reset(currentDimension);
+      setWorkspaceMode("daily_journal");
+      setBootState("idle");
+      return;
+    }
+
     reset(currentDimension);
     void ensureSession(currentDimension, {
       explicitSessionId: requestedSessionId,
@@ -1262,6 +1296,8 @@ export function InterviewShell() {
     requestedSessionId,
     reset,
     setBootState,
+    setWorkspaceMode,
+    shouldOpenDailyJournalFromQuery,
     shouldOpenJournalPanelFromQuery,
     stopDraftAutosave,
     stopToastTimer
@@ -1291,7 +1327,7 @@ export function InterviewShell() {
       }
 
       const top = shellElement.getBoundingClientRect().top;
-      const viewportGap = window.innerWidth >= 768 ? 20 : 16;
+      const viewportGap = 0;
       const nextHeight = Math.max(520, Math.floor(window.innerHeight - top - viewportGap));
       setShellHeight(nextHeight);
     };
@@ -1874,18 +1910,53 @@ export function InterviewShell() {
       cancelDraftGeneration();
       setDraftGenerateIssue(null);
       setPanelOpen(false);
-      return;
+      return true;
     }
 
     if (hasUnsavedDraftChanges) {
       const synced = await persistDraftEdits();
 
       if (!synced) {
-        return;
+        return false;
       }
     }
 
     setPanelOpen(false);
+    return true;
+  }
+
+  async function openDailyJournalWorkspace() {
+    if (panelOpen) {
+      const closed = await handleClosePanel();
+
+      if (!closed) {
+        return;
+      }
+    } else {
+      setPanelOpen(false);
+    }
+
+    setWorkspaceMode("daily_journal");
+  }
+
+  function handleBackToInterviewWorkspace() {
+    setWorkspaceMode("interview");
+
+    if (!shouldOpenDailyJournalFromQuery) {
+      return;
+    }
+
+    const params = new URLSearchParams({ dimension: currentDimension });
+
+    if (requestedEntryDate) {
+      params.set("entryDate", requestedEntryDate);
+    }
+
+    if (requestedSessionId) {
+      params.set("sessionId", requestedSessionId);
+    }
+
+    router.replace(`/interview?${params.toString()}`, { scroll: false });
   }
 
   async function handleTogglePanel() {
@@ -1960,15 +2031,22 @@ export function InterviewShell() {
   return (
     <section
       ref={shellRef}
-      className={`grid min-h-0 gap-5 overflow-hidden ${panelOpen ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]" : ""}`}
+      className={`grid min-h-0 gap-0 overflow-hidden ${panelOpen && workspaceMode === "interview" ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]" : ""}`}
       style={shellHeight ? { height: `${shellHeight}px` } : undefined}
     >
-      <div className="page-shell flex min-h-0 flex-col rounded-[36px] p-4 md:p-5">
+      {workspaceMode === "daily_journal" ? (
+        <DailyJournalWorkspace
+          date={dailyJournalDate}
+          openRequestId={dailyJournalOpenRequestId}
+          onBackToInterview={handleBackToInterviewWorkspace}
+        />
+      ) : (
+      <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
         <div className="relative min-h-0 flex-1">
           <div
             ref={messageScrollRef}
             data-testid="interview-message-scroll"
-            className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-2"
+            className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2"
           >
             <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
               {messages.map((message) => (
@@ -2119,9 +2197,10 @@ export function InterviewShell() {
           </div>
         ) : null}
       </div>
+      )}
 
-      {panelOpen ? (
-        <aside className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-[34px] px-5 pb-5 pt-5 md:px-6 md:pb-6 md:pt-6">
+      {panelOpen && workspaceMode === "interview" ? (
+        <aside className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5">
           <button
             type="button"
             aria-label="关闭日志面板"

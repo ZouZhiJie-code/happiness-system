@@ -14,6 +14,7 @@ import type {
 } from "@/types/interview";
 
 export type InterviewBootState = "idle" | "booting" | "restoring";
+export type InterviewWorkspaceMode = "interview" | "daily_journal";
 
 interface InterviewState {
   dimension: InterviewDimension;
@@ -30,6 +31,8 @@ interface InterviewState {
   draftGenerationBusy: boolean;
   draftGenerationDisabled: boolean;
   draftGenerationRequestId: number;
+  workspaceMode: InterviewWorkspaceMode;
+  dailyJournalOpenRequestId: number;
   conversationResetRequestId: number;
   turnCount: number;
   messages: InterviewMessage[];
@@ -47,6 +50,8 @@ interface InterviewState {
     disabled: boolean;
   }) => void;
   requestDraftGeneration: () => void;
+  requestDailyJournalOpen: () => void;
+  setWorkspaceMode: (mode: InterviewWorkspaceMode) => void;
   requestConversationReset: () => void;
   reset: (nextDimension?: InterviewDimension) => void;
 }
@@ -66,6 +71,8 @@ const initialState = {
   draftGenerationBusy: false,
   draftGenerationDisabled: true,
   draftGenerationRequestId: 0,
+  workspaceMode: "interview" as InterviewWorkspaceMode,
+  dailyJournalOpenRequestId: 0,
   conversationResetRequestId: 0,
   turnCount: 0,
   messages: [] as InterviewMessage[],
@@ -127,6 +134,11 @@ export const useInterviewStore = create<InterviewState>((set) => ({
     set((state) => ({
       draftGenerationRequestId: state.draftGenerationRequestId + 1
     })),
+  requestDailyJournalOpen: () =>
+    set((state) => ({
+      dailyJournalOpenRequestId: state.dailyJournalOpenRequestId + 1
+    })),
+  setWorkspaceMode: (workspaceMode) => set({ workspaceMode }),
   requestConversationReset: () =>
     set((state) => ({
       conversationResetRequestId: state.conversationResetRequestId + 1

@@ -9,6 +9,7 @@ export function buildCalendarDateButtonAccessibleName(input: {
   isFuture?: boolean;
   dimensionLabels?: string[];
   extraDimensionCount?: number;
+  dailyJournalLabel?: string | null;
 }) {
   const parts = [input.dateLabel];
 
@@ -40,6 +41,10 @@ export function buildCalendarDateButtonAccessibleName(input: {
         ? `涉及 ${labels.join("、")} 等 ${totalCount} 维`
         : `涉及 ${labels.join("、")}`
     );
+  }
+
+  if (input.dailyJournalLabel) {
+    parts.push(input.dailyJournalLabel);
   }
 
   return parts.join("，");

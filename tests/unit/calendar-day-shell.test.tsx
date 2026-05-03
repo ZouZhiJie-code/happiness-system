@@ -189,14 +189,16 @@ describe("calendar day shell", () => {
 
     const joyCard = screen.getByTestId("calendar-dimension-card-joy");
     expect(joyCard).toHaveAttribute("data-dimension", "joy");
-    expect(within(joyCard).getByRole("link", { name: "开心，有草稿，还在整理的那段，继续编辑" })).toHaveAttribute(
+    expect(within(joyCard).getByText("悦")).toBeInTheDocument();
+    expect(within(joyCard).getByRole("link", { name: "开心，草稿，还在整理的那段，继续编辑" })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy&panel=journal"
     );
-    expect(within(joyCard).getByRole("link", { name: "开心，有草稿，还在整理的那段，继续编辑" })).toHaveAttribute("data-action-tone", "primary");
+    expect(within(joyCard).getByRole("link", { name: "开心，草稿，还在整理的那段，继续编辑" })).toHaveAttribute("data-action-tone", "primary");
 
     const completedCard = screen.getByTestId("calendar-dimension-card-fulfillment");
     expect(completedCard).toHaveAttribute("data-dimension", "fulfillment");
+    expect(within(completedCard).getByText("实")).toBeInTheDocument();
     expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，查看日志" })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
@@ -208,6 +210,7 @@ describe("calendar day shell", () => {
     );
 
     const mixedCard = screen.getByTestId("calendar-dimension-card-reflection");
+    expect(within(mixedCard).getByText("思")).toBeInTheDocument();
     expect(within(mixedCard).getByRole("link", { name: "思考，混合状态，想法还在发酵，继续访谈" })).toHaveAttribute(
       "href",
       "/interview?dimension=reflection&sessionId=session-reflection&entryDate=2026-05-01"
@@ -220,6 +223,7 @@ describe("calendar day shell", () => {
 
     const emptyCard = screen.getByTestId("calendar-dimension-card-gratitude");
     expect(emptyCard).toHaveAttribute("data-dimension", "gratitude");
+    expect(within(emptyCard).getByText("谢")).toBeInTheDocument();
     expect(within(emptyCard).getByRole("link", { name: "感谢，未记录，开始记录" })).toHaveAttribute(
       "href",
       "/interview?dimension=gratitude&entryDate=2026-05-01"

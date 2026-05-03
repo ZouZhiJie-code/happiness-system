@@ -4,11 +4,11 @@
 
 :root {
   color-scheme: light;
-  --site-header-frame-min-height: 4.25rem;
-  --site-header-lane-min-height: 2.75rem;
-  --site-header-viewport-offset: 8.25rem;
-  --calendar-month-cell-min-height: 5.65rem;
-  --calendar-day-card-min-height: 11.25rem;
+  --site-header-frame-min-height: 4rem;
+  --site-header-lane-min-height: 2.5rem;
+  --site-header-viewport-offset: 4rem;
+  --calendar-month-cell-min-height: 4.85rem;
+  --calendar-day-card-min-height: 5.5rem;
   --night-void: #855a34;
   --night-ink: #ddbb8c;
   --night-panel: rgba(247, 233, 205, 0.88);
@@ -133,11 +133,11 @@ body::after {
 .page-shell {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--line-soft);
+  border: 1px solid rgba(110, 73, 38, 0.12);
   background:
-    linear-gradient(180deg, rgba(247, 235, 209, 0.86), rgba(227, 204, 165, 0.94)),
+    linear-gradient(180deg, rgba(249, 238, 216, 0.94), rgba(235, 214, 178, 0.95)),
     var(--wood-grain);
-  box-shadow: var(--shadow-deep);
+  box-shadow: 0 12px 34px rgba(86, 55, 27, 0.1);
 }
 
 .page-shell::before {
@@ -146,8 +146,8 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(135deg, rgba(255, 250, 241, 0.24), transparent 40%),
-    radial-gradient(circle at top left, rgba(255, 245, 228, 0.22), transparent 24%);
+    linear-gradient(135deg, rgba(255, 250, 241, 0.18), transparent 42%),
+    radial-gradient(circle at top left, rgba(255, 245, 228, 0.14), transparent 24%);
 }
 
 .page-shell::after {
@@ -155,7 +155,7 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.16;
+  opacity: 0.08;
   background:
     repeating-linear-gradient(
       90deg,
@@ -208,7 +208,7 @@ body::after {
     linear-gradient(180deg, rgba(252, 245, 231, 0.98), rgba(236, 218, 187, 0.94)),
     radial-gradient(circle at top, rgba(255, 255, 255, 0.42), transparent 34%);
   color: #221d17;
-  box-shadow: 0 22px 60px rgba(130, 93, 48, 0.16);
+  box-shadow: 0 14px 34px rgba(130, 93, 48, 0.12);
 }
 
 .paper-sheet::after {
@@ -238,7 +238,7 @@ body::after {
     var(--wood-grain),
     radial-gradient(circle at top, rgba(255, 249, 239, 0.18), transparent 34%);
   color: #221d17;
-  box-shadow: 0 24px 64px rgba(130, 92, 45, 0.15);
+  box-shadow: 0 14px 36px rgba(130, 92, 45, 0.12);
 }
 
 .wood-dialog::before {
@@ -285,7 +285,7 @@ body::after {
   box-shadow:
     inset 0 1px 0 rgba(255, 245, 229, 0.22),
     inset 0 -1px 0 rgba(94, 61, 30, 0.12),
-    0 20px 48px rgba(74, 44, 20, 0.22);
+    0 12px 28px rgba(74, 44, 20, 0.14);
 }
 
 .wood-board::before {
@@ -369,7 +369,7 @@ body::after {
   background:
     radial-gradient(circle at top left, rgba(255, 252, 245, 0.72) 0, transparent 28%),
     linear-gradient(180deg, rgba(248, 240, 225, 0.98), rgba(238, 222, 193, 0.98));
-  box-shadow: 0 16px 34px rgba(103, 66, 34, 0.12);
+  box-shadow: 0 10px 24px rgba(103, 66, 34, 0.09);
 }
 
 .calendar-shell::before {

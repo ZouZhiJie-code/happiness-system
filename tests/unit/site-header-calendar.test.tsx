@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 
 import { SiteHeader } from "@/components/shared/site-header";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 
 const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
@@ -267,7 +268,7 @@ describe("site header calendar toolbar", () => {
     fireEvent.click(within(toolbar).getByRole("button", { name: "回到今天" }));
 
     await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=day&date=2026-05-02", { scroll: false });
+      expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=day&date=${getTodayEntryDate()}`, { scroll: false });
     });
   });
 

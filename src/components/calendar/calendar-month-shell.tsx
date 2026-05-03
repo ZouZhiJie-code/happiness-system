@@ -131,15 +131,15 @@ export function CalendarMonthShell() {
 
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-[32px] px-2.5 py-2.5 md:px-3 md:py-3"
+      className="calendar-workspace calendar-shell rounded-none border-x-0 border-t-0 px-2 py-2 md:px-2.5 md:py-2.5"
       data-testid="calendar-month-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="grid min-h-0 h-full min-w-[960px] grid-cols-[minmax(0,1fr)_19.5rem] gap-3">
+          <div className="grid min-h-0 h-full min-w-[920px] grid-cols-[minmax(0,1fr)_18rem] gap-2">
             <div
-              className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-[28px] p-2.5 md:p-3"
+              className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-none p-2 md:p-2.5"
               data-testid="calendar-month-primary-pane"
             >
               {error ? (
@@ -162,7 +162,7 @@ export function CalendarMonthShell() {
                     <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
                     <div className="grid grid-cols-7 gap-2">
                       {Array.from({ length: 14 }, (_, index) => (
-                        <div key={index} className="h-[8.6rem] animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+                        <div key={index} className="h-[4.85rem] animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
                       ))}
                     </div>
                   </div>

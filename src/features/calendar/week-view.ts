@@ -49,7 +49,7 @@ function getWeekCardHeadline(day: CalendarDayRecord, today: string) {
     case "mixed":
       return "状态混合，优先处理。";
     default:
-      return "还没有记录。";
+      return "这一天还空着。";
   }
 }
 

@@ -214,6 +214,8 @@ describe("calendar week shell", () => {
     const completedCard = screen.getByTestId("calendar-week-day-2026-05-04");
     expect(within(completedCard).getByText("已完成 1 项")).toBeInTheDocument();
     expect(completedCard.querySelector('[data-dimension="joy"]')).not.toBeNull();
+    expect(within(completedCard).getByText("悦")).toBeInTheDocument();
+    expect(within(completedCard).getByLabelText("开心")).toBeInTheDocument();
     expect(within(completedCard).getByRole("link", { name: /已完成.*项目终于收束.*查看日志/ })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&sessionId=session-joy-completed&panel=journal"
@@ -223,12 +225,14 @@ describe("calendar week shell", () => {
     const draftCard = screen.getByTestId("calendar-week-day-2026-05-05");
     expect(within(draftCard).getByText("草稿 1 项")).toBeInTheDocument();
     expect(draftCard.querySelector('[data-dimension="fulfillment"]')).not.toBeNull();
-    expect(within(draftCard).getByRole("link", { name: /有草稿.*还有一段没整理完。.*继续编辑/ })).toHaveAttribute(
+    expect(within(draftCard).getByText("实")).toBeInTheDocument();
+    expect(within(draftCard).getByRole("link", { name: /草稿.*还有一段没整理完。.*继续编辑/ })).toHaveAttribute(
       "href",
       "/interview?dimension=fulfillment&sessionId=session-fulfillment-draft&panel=journal"
     );
 
     const activeCard = screen.getByTestId("calendar-week-day-2026-05-06");
+    expect(within(activeCard).getByText("思")).toBeInTheDocument();
     expect(within(activeCard).getByRole("link", { name: /进行中.*这一天还有访谈线索没收住。.*继续访谈/ })).toHaveAttribute(
       "href",
       "/interview?dimension=reflection&sessionId=session-reflection-active&entryDate=2026-05-06"

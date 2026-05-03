@@ -5,16 +5,22 @@ import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
 import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
-import type { AssistantTurnPayload, InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
+import type { AssistantTurnPayload, DailyJournalEntryRecord, InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
 
-const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchDimension } = vi.hoisted(() => ({
+const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
     value: "/interview"
   },
   mockRouterPush: vi.fn(),
   mockRouterReplace: vi.fn(),
-  mockSearchDimension: {
-    value: "joy" as string | null
+  mockSearchParams: {
+    value: {
+      dimension: "joy" as string | null,
+      entryDate: null as string | null,
+      mode: null as string | null,
+      panel: null as string | null,
+      sessionId: null as string | null
+    }
   }
 }));
 
@@ -25,7 +31,7 @@ vi.mock("next/navigation", () => ({
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
-    get: (key: string) => (key === "dimension" ? mockSearchDimension.value : null)
+    get: (key: string) => mockSearchParams.value[key as keyof typeof mockSearchParams.value] ?? null
   })
 }));
 
@@ -126,6 +132,20 @@ const savedJournalEntry: JournalEntryRecord = {
   linkedSessionIds: ["session-with-journal"],
   updatedAt: "2026-04-21T00:08:00.000Z",
   savedAt: "2026-04-21T00:08:00.000Z"
+};
+
+const baseDailyJournalEntry: DailyJournalEntryRecord = {
+  id: "daily-1",
+  date: "2026-04-21",
+  title: "今天的记录",
+  content: "## 开心\n今天和家人一起吃饭聊天，整个人慢慢放松下来。",
+  status: "draft",
+  sourceEntryIds: ["entry-saved"],
+  sourceSessionIds: ["session-with-journal"],
+  sourceSignature: "entry-saved:2026-04-21T00:08:00.000Z",
+  sourceUpdatedAt: "2026-04-21T00:08:00.000Z",
+  updatedAt: "2026-04-21T00:09:00.000Z",
+  savedAt: null
 };
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
@@ -262,7 +282,13 @@ describe("InterviewShell", () => {
     mockPathname.value = "/interview";
     mockRouterPush.mockReset();
     mockRouterReplace.mockReset();
-    mockSearchDimension.value = "joy";
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: null,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -347,6 +373,20 @@ describe("InterviewShell", () => {
               pausedAt: "2026-04-21T00:04:00.000Z",
               journalEntry: baseJournalEntry
             })
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.startsWith("/api/daily-journal?")) {
+        return new Response(
+          JSON.stringify({
+            dailyJournal: baseDailyJournalEntry,
+            availableSourceCount: 1,
+            state: "draft"
           }),
           {
             status: 200,
@@ -1043,6 +1083,84 @@ describe("InterviewShell", () => {
     expect(screen.queryByRole("button", { name: "生成最新日志" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
+  });
+
+  it("switches the main workspace to the daily journal from the top log button", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看当天整合日志" }));
+
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+    expect(await screen.findByTestId("daily-journal-editor")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(baseDailyJournalEntry.title)).toBeInTheDocument();
+    expect((screen.getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement).value).toBe(baseDailyJournalEntry.content);
+    expect(global.fetch).toHaveBeenCalledWith("/api/daily-journal?date=2026-04-21", expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it("opens daily-journal deep links without booting a new interview session", async () => {
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: "2026-05-01",
+      mode: "daily-journal",
+      panel: null,
+      sessionId: null
+    };
+
+    renderInterviewPage();
+
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith("/api/daily-journal?date=2026-05-01", expect.objectContaining({ cache: "no-store" }));
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).endsWith("/api/interview/session/start"))).toBe(false);
+  });
+
+  it("removes daily-journal mode when returning from a daily journal deep link", async () => {
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: "2026-05-01",
+      mode: "daily-journal",
+      panel: null,
+      sessionId: null
+    };
+
+    renderInterviewPage();
+
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "回到访谈" }));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=joy&entryDate=2026-05-01", {
+      scroll: false
+    });
+  });
+
+  it("persists unsaved dimension journal edits before switching to the daily journal workspace", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+    const editorCard = await screen.findByTestId("journal-editor-card");
+    const titleInput = within(editorCard).getByDisplayValue(baseJournalEntry.title);
+    fireEvent.change(titleInput, {
+      target: { value: "编辑后的标题" }
+    });
+
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看当天整合日志" }));
+
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+
+    const putCalls = vi.mocked(global.fetch).mock.calls.filter(
+      ([input, nextInit]) =>
+        (String(input).includes("/api/journal-entry/") || String(input).includes("/api/joy-entry/")) &&
+        nextInit?.method === "PUT"
+    );
+
+    expect(putCalls).toHaveLength(1);
+    expect(JSON.parse(String(putCalls[0][1]?.body))).toMatchObject({
+      title: "编辑后的标题"
+    });
   });
 
   it("auto sizes the journal body and keeps the editor inside a single card", async () => {
@@ -1951,7 +2069,7 @@ describe("InterviewShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "思考" }));
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/interview?dimension=reflection", { scroll: false });
+      expect(mockRouterPush).toHaveBeenCalledWith("/interview?dimension=reflection&entryDate=2026-04-21", { scroll: false });
     });
 
     const storedSessions = JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}") as {
@@ -1962,7 +2080,7 @@ describe("InterviewShell", () => {
   });
 
   it("only normalizes a missing interview dimension once instead of repeatedly replacing the route", async () => {
-    mockSearchDimension.value = null;
+    mockSearchParams.value.dimension = null;
     window.localStorage.setItem("hs-last-interview-dimension", "fulfillment");
 
     const view = render(<SiteHeader />);
@@ -1980,7 +2098,7 @@ describe("InterviewShell", () => {
   });
 
   it("does not force the route back to interview while the app is leaving the interview page", async () => {
-    mockSearchDimension.value = null;
+    mockSearchParams.value.dimension = null;
     window.localStorage.setItem("hs-last-interview-dimension", "joy");
 
     const view = render(<SiteHeader />);
@@ -2079,7 +2197,7 @@ describe("InterviewShell", () => {
       expectDimensionStatus("充实", "进行中");
     });
 
-    mockSearchDimension.value = "fulfillment";
+    mockSearchParams.value.dimension = "fulfillment";
     view.rerender(
       <>
         <SiteHeader />
@@ -2090,7 +2208,7 @@ describe("InterviewShell", () => {
     await screen.findByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。");
     expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
 
-    mockSearchDimension.value = "joy";
+    mockSearchParams.value.dimension = "joy";
     view.rerender(
       <>
         <SiteHeader />
@@ -2368,7 +2486,7 @@ describe("InterviewShell", () => {
       expect(storedSessions.joy?.expiresAt).toEqual(expect.any(String));
     });
 
-    mockSearchDimension.value = "fulfillment";
+    mockSearchParams.value.dimension = "fulfillment";
     view.rerender(
       <>
         <SiteHeader />
@@ -2378,7 +2496,7 @@ describe("InterviewShell", () => {
 
     await screen.findByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。");
 
-    mockSearchDimension.value = "joy";
+    mockSearchParams.value.dimension = "joy";
     view.rerender(
       <>
         <SiteHeader />

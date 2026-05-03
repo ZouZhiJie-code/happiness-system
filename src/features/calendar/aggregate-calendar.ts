@@ -1,8 +1,11 @@
 import { interviewDimensions } from "@/features/interview/dimensions";
+import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
 import type {
   CalendarAction,
   CalendarDayRecord,
   CalendarDayStatus,
+  CalendarDailyJournalSource,
+  CalendarDailyJournalStatus,
   CalendarDimensionStatus,
   CalendarEntrySource,
   CalendarMonthRecord,
@@ -34,6 +37,7 @@ interface AggregateDayInput {
   date: string;
   sessions: CalendarSessionSource[];
   entries: CalendarEntrySource[];
+  dailyJournals?: CalendarDailyJournalSource[];
 }
 
 interface AggregateWeekInput {
@@ -41,12 +45,14 @@ interface AggregateWeekInput {
   dates?: string[];
   sessions: CalendarSessionSource[];
   entries: CalendarEntrySource[];
+  dailyJournals?: CalendarDailyJournalSource[];
 }
 
 interface AggregateMonthInput {
   month: string;
   sessions: CalendarSessionSource[];
   entries: CalendarEntrySource[];
+  dailyJournals?: CalendarDailyJournalSource[];
 }
 
 function assertDateString(value: string, fieldName: string) {
@@ -238,6 +244,37 @@ function resolveOverallStatus(dimensions: CalendarDimensionStatus[]) {
   return "mixed" satisfies CalendarDayStatus;
 }
 
+function resolveDailyJournalStatus(input: {
+  date: string;
+  entries: CalendarEntrySource[];
+  dailyJournals?: CalendarDailyJournalSource[];
+}): CalendarDailyJournalStatus {
+  const dailyJournal =
+    sortByLatestUpdated((input.dailyJournals ?? []).filter((entry) => entry.date === input.date))[0] ?? null;
+  const savedEntries = input.entries.filter((entry) => entry.date === input.date && entry.status === "saved");
+  const sourceSignature = buildDailyJournalSourceSignature(savedEntries);
+
+  if (!dailyJournal) {
+    return {
+      state: "none",
+      id: null,
+      title: null,
+      updatedAt: null,
+      savedAt: null,
+      sourceEntryCount: savedEntries.length
+    };
+  }
+
+  return {
+    state: sourceSignature !== dailyJournal.sourceSignature ? "stale" : dailyJournal.status,
+    id: dailyJournal.id,
+    title: dailyJournal.title,
+    updatedAt: dailyJournal.updatedAt,
+    savedAt: dailyJournal.savedAt,
+    sourceEntryCount: savedEntries.length
+  };
+}
+
 export function aggregateCalendarDimension(input: {
   date: string;
   dimension: CalendarSourceDimension;
@@ -308,6 +345,11 @@ export function aggregateCalendarDay(input: AggregateDayInput): CalendarDayRecor
   return {
     date: input.date,
     overallStatus: resolveOverallStatus(dimensions),
+    dailyJournal: resolveDailyJournalStatus({
+      date: input.date,
+      entries: input.entries,
+      dailyJournals: input.dailyJournals
+    }),
     dimensions,
     activeCount: dimensions.filter((dimension) => dimension.hasActiveSession).length,
     draftCount: dimensions.filter((dimension) => dimension.hasDraftEntry).length,
@@ -341,7 +383,8 @@ export function aggregateCalendarWeek(input: AggregateWeekInput): CalendarWeekRe
       aggregateCalendarDay({
         date,
         sessions: input.sessions,
-        entries: input.entries
+        entries: input.entries,
+        dailyJournals: input.dailyJournals
       })
     )
   };
@@ -356,7 +399,8 @@ export function aggregateCalendarMonth(input: AggregateMonthInput): CalendarMont
       aggregateCalendarDay({
         date,
         sessions: input.sessions,
-        entries: input.entries
+        entries: input.entries,
+        dailyJournals: input.dailyJournals
       })
     )
   };

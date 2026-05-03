@@ -215,6 +215,89 @@ function buildFutureEmptyMonthRecord(): CalendarMonthRecord {
   };
 }
 
+function buildDraftOnlyMonthRecord(): CalendarMonthRecord {
+  const base = buildMonthRecord();
+  const draftDay = base.days.find((day) => day.date === "2026-05-04");
+
+  if (!draftDay) {
+    return base;
+  }
+
+  draftDay.overallStatus = "draft";
+  draftDay.draftCount = 1;
+  draftDay.primarySummary = "这一天还有一版草稿。";
+  draftDay.dimensions = [
+    buildDimensionStatus({
+      dimension: "joy",
+      status: "draft",
+      summary: "这一天先停在草稿。",
+      hasDraftEntry: true,
+      sessionId: "session-joy-draft",
+      actions: ["continue_editing"]
+    }),
+    buildDimensionStatus({ dimension: "fulfillment" }),
+    buildDimensionStatus({ dimension: "reflection" }),
+    buildDimensionStatus({ dimension: "improvement" }),
+    buildDimensionStatus({ dimension: "gratitude" })
+  ];
+
+  return base;
+}
+
+function buildAllSavedMonthRecord(): CalendarMonthRecord {
+  const base = buildMonthRecord();
+  const completeDay = base.days.find((day) => day.date === "2026-05-05");
+
+  if (!completeDay) {
+    return base;
+  }
+
+  completeDay.overallStatus = "mixed";
+  completeDay.activeCount = 1;
+  completeDay.savedCount = 5;
+  completeDay.primarySummary = "五维都已经有保存记录，但还有新的线索没收住。";
+  completeDay.dimensions = [
+    buildDimensionStatus({
+      dimension: "joy",
+      status: "completed",
+      hasSavedEntry: true,
+      sessionId: "session-joy-saved",
+      actions: ["view_journal"]
+    }),
+    buildDimensionStatus({
+      dimension: "fulfillment",
+      status: "completed",
+      hasSavedEntry: true,
+      sessionId: "session-fulfillment-saved",
+      actions: ["view_journal"]
+    }),
+    buildDimensionStatus({
+      dimension: "reflection",
+      status: "mixed",
+      hasSavedEntry: true,
+      hasActiveSession: true,
+      sessionId: "session-reflection-mixed",
+      actions: ["continue_interview", "view_journal"]
+    }),
+    buildDimensionStatus({
+      dimension: "improvement",
+      status: "completed",
+      hasSavedEntry: true,
+      sessionId: "session-improvement-saved",
+      actions: ["view_journal"]
+    }),
+    buildDimensionStatus({
+      dimension: "gratitude",
+      status: "completed",
+      hasSavedEntry: true,
+      sessionId: "session-gratitude-saved",
+      actions: ["view_journal"]
+    })
+  ];
+
+  return base;
+}
+
 function createDeferredResponse() {
   let resolve: (value: Response) => void;
 
@@ -265,14 +348,16 @@ describe("calendar month shell", () => {
     expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(35);
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
     expect(screen.queryByText("DAY CHECK")).not.toBeInTheDocument();
-    expect(within(dayPanel).getByText("还没有标题。")).toBeInTheDocument();
-    expect(within(dayPanel).getAllByText("还没有记录，先看当天。")).toHaveLength(2);
+    expect(within(dayPanel).getByText("这一天还空着。")).toBeInTheDocument();
+    expect(within(dayPanel).getByText("还没有记录，先看当天。")).toBeInTheDocument();
+    expect(within(dayPanel).getByText("五维状态")).toBeInTheDocument();
+    expect(within(dayPanel).getByTestId("calendar-month-day-panel-dimensions")).toBeInTheDocument();
     expect(within(dayPanel).queryByRole("link", { name: /开始访谈/ })).not.toBeInTheDocument();
     expect(within(dayPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-02"
     );
-    expect(screen.getByTestId("calendar-day-2026-05-02")).toHaveAccessibleName(/今天，已选中，未记录，还没有记录。/);
+    expect(screen.getByTestId("calendar-day-2026-05-02")).toHaveAccessibleName(/已选中，未记录/);
   });
 
   it("updates the url and panel immediately when selecting another day without refetching the month", async () => {
@@ -290,28 +375,56 @@ describe("calendar month shell", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("shows mixed day summary chips, touched dimensions and the single day-view entry", async () => {
+  it("shows saved-dimension month tokens before unfinished state words", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMixedMonthRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarMonthShell />);
 
     const detailPanel = await screen.findByTestId("calendar-month-day-panel");
+    const mixedCell = screen.getByTestId("calendar-day-2026-05-02");
 
     expect(within(detailPanel).getByText("混合状态")).toBeInTheDocument();
     expect(within(detailPanel).getByText("这一天需要继续分流")).toBeInTheDocument();
     expect(within(detailPanel).getByText("同一天里既有进行中的访谈，也有草稿和已完成日志。")).toBeInTheDocument();
     expect(within(detailPanel).getAllByText("1项")).toHaveLength(3);
-    expect(within(detailPanel).getByText("开心")).toBeInTheDocument();
-    expect(within(detailPanel).getByText("充实")).toBeInTheDocument();
-    expect(within(detailPanel).getByText("思考")).toBeInTheDocument();
-    expect(container.querySelector('[data-testid="calendar-day-2026-05-02"] [data-dimension="joy"]')).not.toBeNull();
-    expect(screen.getByTestId("calendar-day-2026-05-02")).toHaveAccessibleName(/涉及 开心、充实 等 3 维/);
+    expect(within(detailPanel).getByText("悦")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("实")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("思")).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="calendar-day-2026-05-02"] [data-dimension="reflection"]')).not.toBeNull();
+    expect(mixedCell).toHaveAccessibleName(/涉及 开心、充实、思考/);
+    expect(within(mixedCell).getByText("思")).toBeInTheDocument();
+    expect(within(mixedCell).queryByText("草稿")).not.toBeInTheDocument();
+    expect(within(mixedCell).queryByText("混合状态")).not.toBeInTheDocument();
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute("data-action-tone", "primary");
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-02"
     );
     expect(within(detailPanel).queryByRole("link", { name: /继续访谈|继续编辑|查看日志|编辑日志/ })).not.toBeInTheDocument();
+  });
+
+  it("shows 草稿 only when the day has no saved dimensions", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDraftOnlyMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+
+    const draftCell = await screen.findByTestId("calendar-day-2026-05-04");
+    expect(within(draftCell).getByText("草稿")).toBeInTheDocument();
+    expect(within(draftCell).queryByText("悦")).not.toBeInTheDocument();
+    expect(draftCell).toHaveAccessibleName(/草稿/);
+  });
+
+  it("collapses five saved dimensions into 已完成 even when the day is still mixed", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAllSavedMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+
+    const completeCell = await screen.findByTestId("calendar-day-2026-05-05");
+    expect(within(completeCell).getByText("已完成")).toBeInTheDocument();
+    expect(within(completeCell).queryByText("悦")).not.toBeInTheDocument();
+    expect(within(completeCell).queryByText("实")).not.toBeInTheDocument();
+    expect(within(completeCell).queryByText("思")).not.toBeInTheDocument();
+    expect(completeCell).toHaveAccessibleName(/混合状态/);
   });
 
   it("shows future empty messaging while keeping day-view access", async () => {

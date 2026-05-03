@@ -5,6 +5,7 @@ export type InputMode = "text" | "voice";
 export type InterviewRole = "user" | "assistant" | "system";
 export type JoyEntrySource = "ai_draft_direct" | "ai_draft_edited";
 export type JoyEntryStatus = "draft" | "saved";
+export type DailyJournalStatus = "draft" | "saved";
 export type DraftCompletionMode = "complete" | "user_override_partial";
 export type DraftCompositionMode = "single_moment" | "stitched_moments";
 export type DraftEmphasis = "delight" | "meaning" | "mixed";
@@ -404,6 +405,20 @@ export interface JournalEntryRecord extends JoyEntryDraft {
   payload?: InterviewJournalPayload;
   status: JoyEntryStatus;
   linkedSessionIds: string[];
+  updatedAt: string;
+  savedAt: string | null;
+}
+
+export interface DailyJournalEntryRecord {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  status: DailyJournalStatus;
+  sourceEntryIds: string[];
+  sourceSessionIds: string[];
+  sourceSignature: string;
+  sourceUpdatedAt: string | null;
   updatedAt: string;
   savedAt: string | null;
 }

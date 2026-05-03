@@ -164,7 +164,7 @@ export function CalendarToolbar() {
     <div
       data-testid="calendar-toolbar"
       aria-busy={isLoading ? "true" : "false"}
-      className="calendar-card flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 rounded-[20px] px-2.5 py-1.5 overflow-hidden"
+      className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden"
     >
       <div className="flex shrink-0 items-center gap-1.5">
         <button
