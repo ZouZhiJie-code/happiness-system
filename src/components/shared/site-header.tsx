@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 
+import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
@@ -26,7 +27,6 @@ import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewSessionRecord } from "@/types/interview";
 
 const navItems = [
-  { href: "/", matchPath: "/", label: "首页" },
   { href: "/interview", matchPath: "/interview", label: "访谈" },
   { href: "/calendar", matchPath: "/calendar", label: "记录日历" },
   { href: "/analysis", matchPath: "/analysis", label: "分析" },
@@ -106,7 +106,7 @@ function ProgressRing({
   );
 }
 
-export function SiteHeader() {
+function SiteHeaderInner() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -142,12 +142,13 @@ export function SiteHeader() {
   const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
   const isInterviewPage = pathname === "/interview";
   const isCalendarPage = pathname === "/calendar";
+  const isAnalysisPage = pathname === "/analysis";
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
     : dimension;
   const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
-  const hasHeaderWorkspace = isInterviewPage || isCalendarPage;
+  const hasHeaderWorkspace = isInterviewPage || isCalendarPage || isAnalysisPage;
   const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
   const shouldShowDraftGenerateButton = Boolean(
     isViewingHydratedDimension && status === "active" && draftGenerationUnlocked && !shouldHideDraftGenerateButton
@@ -509,6 +510,7 @@ export function SiteHeader() {
             </div>
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
+          {isAnalysisPage ? <AnalysisToolbar /> : null}
         </div>
         {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
         <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">
@@ -543,4 +545,8 @@ export function SiteHeader() {
       </div>
     </header>
   );
+}
+
+export function SiteHeader() {
+  return <SiteHeaderInner />;
 }

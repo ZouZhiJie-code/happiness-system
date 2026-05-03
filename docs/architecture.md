@@ -28,11 +28,13 @@
 - `src/app/calendar`
   - 记录日历 month/week/day 页面
 - `src/app/analysis`
-  - 记录分析月度占位工作台
+  - 记录分析月度页面
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
 - `src/app/api/calendar/*`
   - 记录日历的 `day / week / month` 查询接口
+- `src/app/api/analysis/month`
+  - 月度记录分析查询接口
 - `src/app/api/daily-journal/*`
   - 当天整合日志的查询、生成、草稿更新与正式保存接口
 - `src/app/api/journal-entry/[id]`
@@ -50,11 +52,13 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
-  - `month=YYYY-MM` URL 状态归一化、月份跳转和中文月份标题格式化
+  - `month=YYYY-MM` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
+- `src/features/happiness-score`
+  - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、月份切换控件和分析模块占位骨架
+  - 记录分析页壳、月份切换控件、月度概览、记录分布、五维洞察和幸福 8 要素评分录入面板
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -71,6 +75,9 @@
 - `src/server/services/calendar/calendar.service.ts`
   - 记录日历的 `day / week / month` 服务端查询入口
   - 只负责参数校验、日期范围计算与调用 calendar 聚合器
+- `src/server/services/analysis/analysis.service.ts`
+  - 月度记录分析的服务端查询入口
+  - 负责月份校验、月范围计算和日志分析聚合
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 
@@ -81,6 +88,10 @@
 - `src/server/repositories/calendar.repository.ts`
   - 从 `InterviewSession / JoyEntry / DailyJournalEntry` 查询标准化 calendar source
   - 不直接计算 calendar 状态
+- `src/server/repositories/analysis.repository.ts`
+  - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source
+- `src/server/repositories/daily-happiness-score.repository.ts`
+  - 维护 `DailyHappinessScore` 的日期查询、upsert 与 record 映射
 - `src/server/repositories/daily-journal.repository.ts`
   - 查询当天已保存维度日志，维护独立日级日志草稿和保存状态
 
@@ -158,6 +169,16 @@
 - `sourceSignature` 用于判断维度日志保存后，日级日志是否进入 `stale` 状态
 - 如果来源维度日志后来不再是 `saved`，或保存后的更新时间变化，当前签名都会不一致，日级日志会进入 `stale`
 
+`DailyHappinessScore` 是独立幸福 8 要素日评分表：
+- `userId + date` 唯一
+- `meaning / health / virtue / autonomy / interest / skill / relationship / livingCondition` 8 个显式整数分数字段
+- 只承载评分事实，不复用五维日志或当天整合日志的表结构
+
+现实上：
+- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score` 和 `/analysis` 评分录入面板
+- 保存只允许 Asia/Shanghai 口径下的今天和昨天；8 项必填且必须是 `1..10` 整数
+- 趋势图还没有接线
+
 ### 3.5 calendar 读模型
 
 当前已经落地并通过 HTTP 路由公开的记录日历读模型有：
@@ -232,12 +253,20 @@
 
 ### 3.7 记录分析页现实
 
-截至 `2026-05-03`，`/analysis?month=YYYY-MM` 是月度记录分析的入口骨架：
+截至 `2026-05-03`，`/analysis?month=YYYY-MM` 已进入月度记录分析的第一批真实读模型阶段：
 - `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
 - 缺失或非法 `month` 参数会被归一到当前月
 - 页面内已有上月 / 本月 / 下月切换
-- 正文当前只有 `本月概览 / 记录分布 / 五维洞察` 三个占位模块
-- 真实统计、幸福评分、趋势图、AI 洞察和后端分析 API 仍未接入
+- 已有 `GET /api/analysis/month?month=YYYY-MM`
+- 页面当前已展示：
+  - `本月概览`：有记录天数、已保存记录数、整合日志完成天数
+  - `记录分布`：按天的已保存维度分布，以及五维本月记录重心
+  - `五维洞察`：五张只读卡，展示每维的篇数、覆盖天数、最近记录日期、高频 tags 和最近结构化线索
+  - `幸福 8 要素评分`：本页唯一可编辑模块，只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
+- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreRecords` 与 `editableDates`
+- `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
+- 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
+- 趋势图和 AI 洞察仍未接入
 
 ## 4. 结构化数据面
 

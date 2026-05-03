@@ -16,7 +16,7 @@
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。
-- `/analysis?month=YYYY-MM` 记录分析入口和月度占位工作台已落地，顶部主导航会进入当前月；当前只稳定月份切换和阅读骨架，真实统计、评分和趋势图仍未接入。
+- `/analysis?month=YYYY-MM` 记录分析页当前已落地月份切换、`/api/analysis/month`、月度日志概览、记录分布、五维结构化洞察和“幸福 8 要素评分”录入面板；顶部主导航会进入当前月。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天，趋势图仍未接入。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - 月视图月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致。
@@ -231,14 +231,16 @@ gratitude 理论翻译基线：
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
 - `src/features/analysis`
-  - 月度记录分析入口的 `month=YYYY-MM` URL 归一化、月份跳转和标题格式化。
+  - 月度记录分析的 `month=YYYY-MM` URL 归一化、月份跳转、标题格式化、类型与聚合 helper。
+- `src/features/happiness-score`
+  - 幸福 8 要素日评分的数据类型、`1-10` zod schema、保存请求 schema 与评分 key 定义。
 - `src/features/daily-journal`
   - 当天整合日志 schema、正文长度约束和 source signature helper。
 - `src/components/calendar`
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 是双栏检查面板，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳、月份切换控件和 `本月概览 / 记录分布 / 五维洞察` 占位模块。
+  - 记录分析页壳、月份切换控件、`本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分` 的真实展示。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -282,6 +284,8 @@ gratitude 理论翻译基线：
   - 日志标题、正文、legacy 字段、`payload`、`eventBlocks`、保存状态。
 - `DailyJournalEntry`
   - 日级整合日志，`userId + date` 唯一，记录 `draft / saved`、正文、来源维度日志 ids、session ids、source signature 和 stale 判断所需时间。
+- `DailyHappinessScore`
+  - 幸福 8 要素日评分，`userId + date` 唯一，8 项分数均为 `1..10` 整数；当前只允许通过 `/analysis` 保存今天和昨天。
 - `MemoryFact`
   - 长期记忆摘要，默认功能仍关闭。
 - `AIRequestLog`
@@ -315,6 +319,8 @@ gratitude 理论翻译基线：
 - `GET /api/calendar/day?date=YYYY-MM-DD`
 - `GET /api/calendar/week?date=YYYY-MM-DD`
 - `GET /api/calendar/month?month=YYYY-MM`
+- `GET /api/analysis/month?month=YYYY-MM`
+- `PUT /api/happiness-score`
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
@@ -327,6 +333,7 @@ gratitude 理论翻译基线：
   - `getCalendarWeek`
   - `getCalendarMonth`
   - `GET /api/calendar/day|week|month`
+  - `GET /api/analysis/month?month=YYYY-MM`
   - `GET /api/daily-journal?date=YYYY-MM-DD`
   - `POST /api/daily-journal/generate`
   - `PUT /api/daily-journal/[id]`
@@ -339,6 +346,14 @@ gratitude 理论翻译基线：
   - 当天整合日志状态会进入 day/week/month 读模型，但 calendar 不内联编辑正文
   - `/interview?dimension=joy&entryDate=YYYY-MM-DD&mode=daily-journal` 只打开当天日志主区，不会 bootstrap 或创建新的 joy 访谈 session；点击“回到访谈”会移除 `mode=daily-journal`，让 `/interview?dimension=joy&entryDate=YYYY-MM-DD` 正常 hydrate 或创建对应日期访谈
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
+- analysis 当前已经有公开只读能力：
+  - `GET /api/analysis/month?month=YYYY-MM`
+  - 当前返回 `month / logOverview / dailyCoverage / dimensionBreakdown / dimensions / scoreRecords / editableDates`
+  - 只统计 `saved` 维度日志和 `saved` 当天整合日志
+  - 页面当前已展示 `本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分`
+  - `editableDates` 在当前月返回今天和昨天；如果今天是月初，昨天即使属于上月也会保留为可编辑日期
+  - `PUT /api/happiness-score` 请求体是 `date + scores.{meaning,health,virtue,autonomy,interest,skill,relationship,livingCondition}`，8 项必填且必须是 `1..10` 整数
+  - 幸福评分趋势图尚未接入
 
 ## 7. 本地开发与排障
 
@@ -378,8 +393,8 @@ gratitude 理论翻译基线：
 - `npx tsc --noEmit`
 
 截至 `2026-05-03`，本地测试基线为：
-- `31` 个测试文件
-- `279` 个测试全部通过
+- `38` 个测试文件
+- `314` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

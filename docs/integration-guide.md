@@ -32,9 +32,11 @@
 | `PUT` | `/api/daily-journal/[id]` | 更新当天整合日志草稿 | 访谈页当天日志模式自动保存 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
+| `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、记录分布、五维洞察和评分状态 |
+| `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM` 是当前记录分析入口骨架；它不新增 API，只做月份 URL 归一化、上月 / 本月 / 下月切换和占位阅读区。
+- `/analysis?month=YYYY-MM` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，展示月度日志概览、记录分布、五维洞察和幸福 8 要素评分录入面板。
 
 ## 3. 请求与返回
 
@@ -1468,24 +1470,72 @@ POST /api/daily-journal/[id]/save
 - `npx tsc --noEmit`
 - `npm test`
 
-### 5.14 Analysis 入口骨架
+### 5.14 Analysis 月概览与记录分布
 
-当前 `/analysis?month=YYYY-MM` 只定义页面级 URL 与阅读骨架，不读取 calendar API，也不暴露新的后端接口。
+当前 `/analysis?month=YYYY-MM` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察卡和幸福 8 要素评分录入面板。
 
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month`
-- 页面展示 `本月概览 / 记录分布 / 五维洞察` 三个占位模块
-- 顶部主导航 `分析` 入口默认链接到当前月
+- 已有 `GET /api/analysis/month?month=YYYY-MM`
+- API 当前返回：
+  - `month`
+  - `logOverview`
+  - `dailyCoverage`
+  - `dimensionBreakdown`
+  - `dimensions`
+  - `scoreRecords`
+  - `editableDates`
+- 页面当前已展示：
+  - `本月概览`
+  - `记录分布`
+  - `五维洞察` 五张只读卡
+  - `幸福 8 要素评分` 录入面板
+
+当前聚合规则：
+- 只统计 `JoyEntry.status = saved`
+- 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数
+- `dailyCoverage` 覆盖当月所有自然日
+- `dimensionBreakdown` 固定返回五维顺序
+- `scoreRecords` 返回当前分析月内已有评分记录；如果今天是自然月 1 日，也会额外带上昨天的评分记录
+- `editableDates` 只在当前分析月返回今天和昨天；月初时昨天即使属于上月也会保留
 
 当前未完成：
-- 月度真实统计
-- 幸福评分和趋势图
 - AI 洞察生成
-- 与 calendar / daily journal 数据的正式聚合
-- 截至 `2026-05-03`：
-  - `31` 个测试文件
-  - `279` 个测试全部通过
+- 幸福评分趋势图
+
+#### 5.14.1 保存幸福 8 要素日评分
+
+`PUT /api/happiness-score`
+
+请求体固定为：
+
+```json
+{
+  "date": "2026-05-03",
+  "scores": {
+    "meaning": 8,
+    "health": 7,
+    "virtue": 9,
+    "autonomy": 6,
+    "interest": 8,
+    "skill": 7,
+    "relationship": 9,
+    "livingCondition": 6
+  }
+}
+```
+
+规则：
+- 8 项必填
+- 每项必须是 `1..10` 整数
+- 只允许保存 Asia/Shanghai 口径下的今天和昨天
+- 保存按 `userId + date` upsert，写入前会确保 demo user 存在
+
+错误码：
+- `INVALID_HAPPINESS_SCORE_REQUEST`：请求体缺项、日期非法、分数非整数或越界
+- `HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED`：日期不在今天或昨天
+- `HAPPINESS_SCORE_SAVE_FAILED`：数据库保存失败
 
 #### Step 8 明确补齐的回归面
 
