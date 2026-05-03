@@ -36,7 +36,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，默认进入评分分区，并通过热力分区展示本月记录热力图，通过五维洞察分区展示主线维度与紧凑维度组。
+- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认以评分为当前焦点，但不会强制改写 URL；页面本身已经改成连续月度复盘工作台，顺序展开总览、评分、节奏和五维洞察。`section` 既是 URL 状态，也是区块焦点锚点：首次打开带 `section` 的链接，或翻月后保留 `section` 时，页面会自动滚动到对应分区。热力区支持点选某一天继续回到当天，五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -1477,6 +1477,7 @@ POST /api/daily-journal/[id]/save
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `score`
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
+- 直接打开 `/analysis?...&section=rhythm|insights` 或翻月后保留 `section` 时，页面会自动滚动到对应区块
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`
@@ -1489,15 +1490,19 @@ POST /api/daily-journal/[id]/save
   - `scoreRecords`
   - `editableDates`
 - 页面当前已展示：
-  - `score`：默认分区，展示 `幸福 8 要素评分` 录入面板、总分平均走势和单项切换走势
-  - `rhythm`：本月记录热力图与精简月度摘要
-  - `insights`：主线维度 + 紧凑维度组的五维洞察布局
-  - 空数据月份会出现明确标注的示意填充；示意填充只影响展示，不改变评分保存和 `editableDates`
+  - 顶部月度摘要：先给本月结论和下一步入口
+  - `score`：默认焦点，展示 `幸福 8 要素评分` 录入面板、总分平均走势、8 要素快扫和单项细看
+  - `rhythm`：本月记录热力图、最长连续记录 / 空档与当天 drill-in
+  - `insights`：主线维度、正在浮现和安静维度三层五维洞察布局
+  - 空数据月份直接显示真实空态，不再使用示意填充；这不会影响评分保存和 `editableDates`
+  - 只有评分、没有维度日志的月份不会伪造 `最高密度日` 或 `主线维度`，而是显示空态
+  - 分析页里“回到某维度”的下钻链接会保留对应 `entryDate`，保证历史月份能回到原始记录日期
 
 当前聚合规则：
 - 只统计 `JoyEntry.status = saved`
 - 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数
 - `dailyCoverage` 覆盖当月所有自然日
+- 当前月 `最长空档` 只在已发生的自然日范围内计算，不把未来日期计入空档
 - `dimensionBreakdown` 固定返回五维顺序
 - `scoreTrend.days` 覆盖当月所有自然日，每日总分为 8 项平均分，保留 1 位小数
 - 未评分日期返回 `averageScore: null`、单项分数为 `null`、`hasScore: false`，前端 SVG 断线，不补 0

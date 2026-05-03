@@ -25,19 +25,18 @@ export function AnalysisToolbar() {
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
     month: searchParams.get("month"),
+    section: searchParams.get("section"),
     today: todayMonth
   });
 
   useEffect(() => {
-    const currentHref = `/analysis?month=${searchParams.get("month") ?? ""}`;
-
-    if (currentHref !== normalizedSearch.href) {
+    if (normalizedSearch.shouldReplace) {
       router.replace(normalizedSearch.href, { scroll: false });
     }
-  }, [normalizedSearch.href, router, searchParams]);
+  }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
 
   function navigate(month: string) {
-    router.replace(buildAnalysisHref({ month }), { scroll: false });
+    router.replace(buildAnalysisHref({ month, section: normalizedSearch.section }), { scroll: false });
   }
 
   return (

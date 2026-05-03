@@ -24,7 +24,7 @@
 ### 页面与 API
 
 - `src/app`
-  - 首页：品牌广告页，内容从 `src/content/homepage.ts` 读取，按“认识自己 -> 日志如何起作用 -> 五维入口 -> 长期沉淀”组织叙事；图片位按 section 配置，当前使用占位视觉
+  - 首页：品牌广告页，内容从 `src/content/homepage.ts` 读取，按“认识自己 -> 日志如何起作用 -> 五维入口 -> 长期沉淀”组织叙事；图片位按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一为“单行标题 + 图片本体”的去卡片化布局
 - `src/app/interview`
   - 访谈页与日志工作区
 - `src/app/calendar`
@@ -60,7 +60,7 @@
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、评分 / 热力 / 五维洞察页内分区、月度摘要、本月热力图、五维主线洞察布局、幸福 8 要素评分录入面板和评分趋势图
+  - 记录分析页壳、连续月度复盘工作台、总览摘要、评分走势与 8 要素快扫、本月热力图、当天 drill-in、五维主线 / 浮现 / 安静维度布局，以及幸福 8 要素评分录入面板
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -257,15 +257,20 @@
 
 截至 `2026-05-03`，`/analysis?month=YYYY-MM&section=score|rhythm|insights` 已进入月度记录分析的第一批真实读模型阶段：
 - `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
-- 缺失或非法 `month` 参数会被归一到当前月，缺失或非法 `section` 参数会被归一到 `score`
+- 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认按 `score` 展示，但不会强制改写 URL
 - 页面内已有上月 / 本月 / 下月切换
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - 页面当前已展示：
-  - `score`：幸福 8 要素评分默认入口，展示总分平均走势、单项切换走势，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
-  - `rhythm`：本月记录热力图与精简月度摘要，替代旧的记录页同款分布表
-  - `insights`：主线维度 + 紧凑维度组，避免五张卡按偶数栅格排布时产生留白
+  - 顶部月度摘要区：先回答“这个月先看什么”，给出主线维度、最密的一天和今天的下一步动作
+  - `score`：幸福 8 要素评分默认入口，先展示总分平均走势，再展示 8 要素快扫和单项细看，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
+  - `rhythm`：本月记录热力图、最长连续记录 / 空档和当天 drill-in，替代旧的记录页同款分布表
+  - `insights`：主线维度 + 正在浮现 + 安静维度，避免五张卡按偶数栅格硬排
+- `section` 不只是 URL 状态，还承担区块焦点锚点；首次进入或翻月保留 `section` 时，前端会自动滚动到对应分区
+- 分析页里“回到某维度”的 drill-down 链接会带回对应 `entryDate`，避免历史月份误跳到今天的访谈上下文
+- 当前月 `rhythm` 的 `最长空档` 只统计已经发生的日期，不把未来自然日当成空档
 - `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
-- 当月份没有真实分析数据时，前端只在展示层显示明确标注的示意填充，不改变保存接口和 `editableDates` 规则
+- 当月份没有任何真实分析数据时，前端直接显示真实空态，不再使用示意填充冒充分析结果
+- 当月份只有评分、没有任何已保存维度日志时，`rhythm` 不会伪造最高密度日，`insights` 不会伪造主线维度，而是显示明确空态
 - `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
 - 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
 - 趋势图只做单月查看，不做跨月同比；AI 洞察仍未接入

@@ -1,6 +1,8 @@
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
 const ANALYSIS_MONTH_PATTERN = /^\d{4}-\d{2}$/;
+const ANALYSIS_SECTION_KEYS = ["score", "rhythm", "insights"] as const;
+export type AnalysisSectionKey = (typeof ANALYSIS_SECTION_KEYS)[number];
 
 function parseMonthKey(month: string) {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -39,20 +41,36 @@ export function normalizeAnalysisMonth(month: string | null | undefined, today =
   return month;
 }
 
-export function buildAnalysisHref(input: { month: string }) {
-  return `/analysis?month=${input.month}`;
+export function normalizeAnalysisSection(section: string | null | undefined) {
+  return ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey) ? (section as AnalysisSectionKey) : "score";
+}
+
+export function hasExplicitAnalysisSection(section: string | null | undefined): section is AnalysisSectionKey {
+  return ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey);
+}
+
+export function buildAnalysisHref(input: { month: string; section?: AnalysisSectionKey }) {
+  const section = input.section ?? "score";
+  return `/analysis?month=${input.month}&section=${section}`;
 }
 
 export function normalizeAnalysisSearchParams(input: {
   month?: string | null;
+  section?: string | null;
   today?: string;
 }) {
   const today = input.today ?? getTodayAnalysisMonth();
+  const shouldReplaceMonth = !input.month || !isValidAnalysisMonth(input.month);
   const month = normalizeAnalysisMonth(input.month, today);
+  const section = normalizeAnalysisSection(input.section);
+  const hasExplicitSection = hasExplicitAnalysisSection(input.section);
 
   return {
     month,
-    href: buildAnalysisHref({ month })
+    section,
+    hasExplicitSection,
+    href: buildAnalysisHref({ month, section }),
+    shouldReplace: shouldReplaceMonth
   };
 }
 

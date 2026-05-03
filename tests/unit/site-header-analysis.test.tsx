@@ -13,7 +13,8 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
       dimension: null as string | null,
       view: null as string | null,
       date: null as string | null,
-      month: "2026-05" as string | null
+      month: "2026-05" as string | null,
+      section: "score" as string | null
     }
   }
 }));
@@ -24,7 +25,7 @@ vi.mock("next/navigation", () => ({
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
-    get: (key: string) => mockSearchParams.value[key as "dimension" | "view" | "date" | "month"] ?? null
+    get: (key: string) => mockSearchParams.value[key as "dimension" | "view" | "date" | "month" | "section"] ?? null
   })
 }));
 
@@ -36,7 +37,8 @@ describe("site header analysis toolbar", () => {
       dimension: null,
       view: null,
       date: null,
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
   });
 
@@ -55,13 +57,30 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=score", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看下月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=score", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "回到本月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
+  });
+
+  it("preserves the current analysis section when paging months", async () => {
+    mockSearchParams.value = {
+      dimension: null,
+      view: null,
+      date: null,
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<SiteHeader />);
+
+    const toolbar = await screen.findByTestId("analysis-toolbar");
+
+    fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=rhythm", { scroll: false });
   });
 
   it("normalizes invalid analysis month values in the header toolbar", async () => {
@@ -69,12 +88,13 @@ describe("site header analysis toolbar", () => {
       dimension: null,
       view: null,
       date: null,
-      month: "2026-13"
+      month: "2026-13",
+      section: "score"
     };
 
     render(<SiteHeader />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();
   });
 });

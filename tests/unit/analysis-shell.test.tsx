@@ -8,7 +8,8 @@ const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockRouterReplace: vi.fn(),
   mockSearchParams: {
     value: {
-      month: null as string | null
+      month: null as string | null,
+      section: null as string | null
     }
   }
 }));
@@ -18,11 +19,12 @@ vi.mock("next/navigation", () => ({
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
-    get: (key: string) => mockSearchParams.value[key as "month"] ?? null
+    get: (key: string) => mockSearchParams.value[key as "month" | "section"] ?? null
   })
 }));
 
 describe("analysis shell", () => {
+  let scrollIntoViewMock: ReturnType<typeof vi.fn>;
   const scoreKeys = [
     "meaning",
     "health",
@@ -253,44 +255,67 @@ describe("analysis shell", () => {
   beforeEach(() => {
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
-      month: null
+      month: null,
+      section: null
     };
+    scrollIntoViewMock = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      writable: true,
+      value: scrollIntoViewMock
+    });
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAnalysisMonthRecord()), { status: 200 })) as typeof fetch;
   });
 
   it("normalizes missing month search params to the current month", async () => {
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05", { scroll: false });
-    await screen.findByTestId("analysis-overview-cards");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
+    await screen.findByTestId("happiness-score-panel");
   });
 
-  it("keeps a valid month without rewriting the url", async () => {
+  it("does not auto-scroll past the summary when section is absent", async () => {
     mockSearchParams.value = {
-      month: "2026-04"
+      month: "2026-05",
+      section: null
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-overview-cards");
+
+    expect(scrollIntoViewMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a valid month and section without rewriting the url", async () => {
+    mockSearchParams.value = {
+      month: "2026-04",
+      section: "score"
     };
 
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
-    expect(screen.getByText(/2026年4月先看这个月已经沉淀下来的记录分布、五维线索和幸福评分走势/)).toBeInTheDocument();
-    await screen.findByTestId("analysis-overview-cards");
+    expect(await screen.findByText(/2026年4月先看评分、节奏和五维线索/)).toBeInTheDocument();
+    expect(await screen.findByTestId("analysis-overview-cards")).toBeInTheDocument();
   });
 
   it("falls back invalid month params to the current month", async () => {
     mockSearchParams.value = {
-      month: "2026-13"
+      month: "2026-13",
+      section: "score"
     };
 
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
     await screen.findByTestId("analysis-overview-cards");
   });
 
   it("removes month controls from the page body", async () => {
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -299,9 +324,10 @@ describe("analysis shell", () => {
     expect(screen.queryByTestId("analysis-month-controls")).not.toBeInTheDocument();
   });
 
-  it("renders overview, coverage, and five-dimension insight cards", async () => {
+  it("renders the rhythm heatmap section", async () => {
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "rhythm"
     };
 
     render(<AnalysisShell />);
@@ -310,15 +336,63 @@ describe("analysis shell", () => {
       expect(screen.getByTestId("analysis-overview-cards")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("有记录天数")).toBeInTheDocument();
-    expect(screen.getByText("已保存记录")).toBeInTheDocument();
-    expect(screen.getByText("整合日志完成天数")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-coverage-board")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-coverage-day-2026-05-02")).toHaveTextContent("2维");
-    expect(screen.getByTestId("analysis-dimension-breakdown")).toHaveTextContent("开心");
+    expect(screen.getAllByText("有记录天数").length).toBeGreaterThan(0);
+    expect(screen.getByText("已评分天数")).toBeInTheDocument();
+    expect(screen.getAllByText("主线维度").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-heatmap-day-2026-05-02")).toHaveTextContent("2维");
+  });
+
+  it("renders the five-dimension insight layout without an even card grid", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "insights"
+    };
+
+    render(<AnalysisShell />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("analysis-dimension-featured-joy")).toHaveTextContent("开心");
+    expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("思考");
+    expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("感谢");
+  });
+
+  it("switches sections immediately after clicking the top tabs", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("happiness-score-panel");
+
+    fireEvent.click(screen.getByRole("button", { name: "节奏" }));
+    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
+    expect(screen.getByRole("button", { name: "节奏" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "五维" }));
     expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-dimension-card-joy")).toHaveTextContent("关系型开心");
-    expect(screen.getByTestId("analysis-dimension-card-reflection")).toHaveTextContent("我太容易把忙碌错当进展");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=insights", { scroll: false });
+    expect(screen.getByRole("button", { name: "五维" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("scrolls to the requested section on initial deep-link navigation", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-rhythm-board");
+
+    expect(scrollIntoViewMock).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "节奏" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("renders a stable empty state when the month has no saved records", async () => {
@@ -360,20 +434,168 @@ describe("analysis shell", () => {
     );
 
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "rhythm"
     };
 
     render(<AnalysisShell />);
 
-    expect(await screen.findByTestId("analysis-coverage-empty")).toBeInTheDocument();
+    expect(await screen.findByTestId("analysis-rhythm-board")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("0维");
     expect(screen.getByTestId("analysis-overview-placeholder")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-coverage-placeholder")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-dimension-card-joy")).toHaveTextContent("本月还没有可展示的结构化线索");
+    expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
+    expect(screen.getByText("这个月还没有开始留下分析材料。先补今天评分，或从一个维度开始记录。")).toBeInTheDocument();
+  });
+
+  it("does not offer interview start for future dates from the heatmap drill-down", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    const futureDay = await screen.findByTestId("analysis-heatmap-day-2026-05-31");
+    fireEvent.click(futureDay);
+
+    expect(screen.getByText("这一天还没到来。你可以先查看当天，但未来日期暂不开放开始记录。")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "开始这一天的记录" })).not.toBeInTheDocument();
+  });
+
+  it("does not report a hottest day when the month has scores but no saved entries", async () => {
+    const scoreOnlyRecord = buildAnalysisMonthRecord();
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...scoreOnlyRecord,
+          logOverview: {
+            recordedDayCount: 0,
+            savedEntryCount: 0,
+            dailyJournalSavedDayCount: 0
+          },
+          dailyCoverage: scoreOnlyRecord.dailyCoverage.map((day) => ({
+            ...day,
+            savedDimensionCount: 0,
+            savedDimensions: [],
+            hasDailyJournalSaved: false
+          })),
+          dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0
+          })),
+          dimensions: scoreOnlyRecord.dimensions.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0,
+            lastRecordedDate: null,
+            topTags: [],
+            recentSignals: []
+          }))
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    const board = await screen.findByTestId("analysis-rhythm-board");
+    expect(within(board).getByText("最高密度日")).toBeInTheDocument();
+    expect(within(board).getAllByText("暂无").length).toBeGreaterThan(0);
+  });
+
+  it("shows an empty-state featured panel when the month has scores but no saved entries", async () => {
+    const scoreOnlyRecord = buildAnalysisMonthRecord();
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...scoreOnlyRecord,
+          logOverview: {
+            recordedDayCount: 0,
+            savedEntryCount: 0,
+            dailyJournalSavedDayCount: 0
+          },
+          dailyCoverage: scoreOnlyRecord.dailyCoverage.map((day) => ({
+            ...day,
+            savedDimensionCount: 0,
+            savedDimensions: [],
+            hasDailyJournalSaved: false
+          })),
+          dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0
+          })),
+          dimensions: scoreOnlyRecord.dimensions.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0,
+            lastRecordedDate: null,
+            topTags: [],
+            recentSignals: []
+          }))
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "insights"
+    };
+
+    render(<AnalysisShell />);
+
+    expect(await screen.findByTestId("analysis-dimension-empty-state")).toHaveTextContent("这个月还没有形成文字线索");
+    expect(screen.queryByTestId("analysis-dimension-featured-joy")).not.toBeInTheDocument();
+  });
+
+  it("keeps entryDate context in analysis drill-down interview links", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "insights"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-dimension-cards");
+
+    const links = screen
+      .getAllByRole("link", { name: "回到开心" })
+      .map((link) => link.getAttribute("href"));
+
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((href) => href?.includes("/interview?dimension=joy&entryDate=2026-05-02"))).toBe(true);
+  });
+
+  it("does not count future dates toward the current month's longest quiet streak", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    const board = await screen.findByTestId("analysis-rhythm-board");
+    const quietCard = within(board).getByText("最长空档").closest("div");
+
+    expect(quietCard).not.toBeNull();
+    expect(quietCard).toHaveTextContent("5月1日，1天");
+    expect(quietCard).not.toHaveTextContent("5月8日 - 5月31日");
   });
 
   it("renders the happiness score editor with filled values", async () => {
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -429,7 +651,8 @@ describe("analysis shell", () => {
       )
     );
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -448,7 +671,8 @@ describe("analysis shell", () => {
 
   it("switches the factor score trend without changing the month url", async () => {
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -464,7 +688,8 @@ describe("analysis shell", () => {
 
   it("switches between today and yesterday score records", async () => {
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -490,7 +715,8 @@ describe("analysis shell", () => {
       )
     );
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -518,7 +744,8 @@ describe("analysis shell", () => {
     });
     global.fetch = fetchMock as typeof fetch;
     mockSearchParams.value = {
-      month: "2026-05"
+      month: "2026-05",
+      section: "score"
     };
 
     render(<AnalysisShell />);
@@ -566,7 +793,8 @@ describe("analysis shell", () => {
       )
     );
     mockSearchParams.value = {
-      month: "2026-04"
+      month: "2026-04",
+      section: "score"
     };
 
     render(<AnalysisShell />);

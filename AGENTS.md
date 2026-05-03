@@ -16,8 +16,8 @@
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
-- 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前使用占位视觉。
-- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 记录分析页当前已落地月份切换、`/api/analysis/month`、评分分区、本月热力图、主线维度 + 紧凑维度组的五维洞察、“幸福 8 要素评分”录入面板和轻量 SVG 评分趋势图；顶部主导航会进入当前月 `score` 分区。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天。
+- 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
+- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 记录分析页当前已落地月份切换、`/api/analysis/month`、评分分区、本月热力图、主线维度 + 紧凑维度组的五维洞察、“幸福 8 要素评分”录入面板和轻量 SVG 评分趋势图；顶部主导航会进入当前月 `score` 分区。缺失 `section` 时前端默认按 `score` 展示，但不会强制改写 URL；首次直达或翻月保留 `section` 时会自动滚动到对应区块。分析页内“回到某维度”类 drill-down 链接会保留对应 `entryDate`；只有评分、没有已保存维度日志的月份，`rhythm` 会显示 `最高密度日 = 暂无`，`insights` 会显示空态而不是伪造主线维度；当前月 `最长空档` 会排除未来日期。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - 月视图月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致。
