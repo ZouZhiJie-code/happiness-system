@@ -12,7 +12,7 @@
 - 当天整合日志已经落地：访谈页顶部【日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
 - 顶部导航栏当前已经统一成全宽暖色工具栏：不再作为居中大卡片悬浮，calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 做轻量分隔。
-- `/analysis?month=YYYY-MM` 记录分析页当前已落地月份切换、月度日志概览、记录分布、五维结构化洞察和“幸福 8 要素评分”录入面板；顶部主导航会进入当前月。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天，趋势图仍未接入。
+- `/analysis?month=YYYY-MM` 记录分析页当前已落地月份切换、月度日志概览、记录分布、五维结构化洞察、“幸福 8 要素评分”录入面板和轻量 SVG 评分趋势图；顶部主导航会进入当前月。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
@@ -52,7 +52,7 @@
 - `GET /api/calendar/day|week|month` 公开日历查询接口
 - `/calendar?view=month|week|day&date=YYYY-MM-DD` 月/周/日视图页面
 - `/analysis?month=YYYY-MM` 月度记录分析页面
-- `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口与 `/analysis` 页评分录入面板
+- `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、`/analysis` 页评分录入面板与总分 / 单项评分趋势图
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会移除 `mode` 并恢复所选日期的正常访谈 hydrate
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
@@ -115,7 +115,7 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-03`，当前自动化基线为 `38` 个测试文件、`314` 个测试全部通过。
+截至 `2026-05-03`，当前自动化基线为 `38` 个测试文件、`316` 个测试全部通过。
 
 ## 常用命令
 
@@ -148,7 +148,7 @@ npx prisma db push
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
-- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、月份 URL 归一化、`/api/analysis/month`、月度日志概览、记录分布、五维结构化洞察、`scoreRecords / editableDates` 返回和评分录入面板。
+- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、月份 URL 归一化、`/api/analysis/month`、月度日志概览、记录分布、五维结构化洞察、`scoreOverview / scoreTrend / scoreRecords / editableDates` 返回、评分趋势图和评分录入面板。
 - `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、repository 映射、保存接口、今天/昨天编辑窗口和正式 migration。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。

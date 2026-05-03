@@ -33,6 +33,55 @@ describe("analysis api route", () => {
       dailyCoverage: [],
       dimensionBreakdown: [],
       dimensions: [],
+      scoreOverview: {
+        scoredDayCount: 1,
+        monthAverageScore: 7.5,
+        latestScoredDate: "2026-05-03"
+      },
+      scoreTrend: {
+        days: [
+          {
+            date: "2026-05-01",
+            averageScore: null,
+            scores: {
+              meaning: null,
+              health: null,
+              virtue: null,
+              autonomy: null,
+              interest: null,
+              skill: null,
+              relationship: null,
+              livingCondition: null
+            },
+            hasScore: false
+          },
+          {
+            date: "2026-05-03",
+            averageScore: 7.5,
+            scores: {
+              meaning: 8,
+              health: 7,
+              virtue: 9,
+              autonomy: 6,
+              interest: 8,
+              skill: 7,
+              relationship: 9,
+              livingCondition: 6
+            },
+            hasScore: true
+          }
+        ],
+        factorAverages: {
+          meaning: 8,
+          health: 7,
+          virtue: 9,
+          autonomy: 6,
+          interest: 8,
+          skill: 7,
+          relationship: 9,
+          livingCondition: 6
+        }
+      },
       scoreRecords: [
         {
           id: "score-1",
@@ -59,6 +108,27 @@ describe("analysis api route", () => {
       month: "2026-05",
       logOverview: {
         recordedDayCount: 2
+      },
+      scoreOverview: {
+        scoredDayCount: 1,
+        monthAverageScore: 7.5
+      },
+      scoreTrend: {
+        days: [
+          {
+            date: "2026-05-01",
+            averageScore: null,
+            hasScore: false
+          },
+          {
+            date: "2026-05-03",
+            averageScore: 7.5,
+            hasScore: true
+          }
+        ],
+        factorAverages: {
+          meaning: 8
+        }
       },
       scoreRecords: [{ id: "score-1", date: "2026-05-03" }],
       editableDates: ["2026-05-03", "2026-05-02"]

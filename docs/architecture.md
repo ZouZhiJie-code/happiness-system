@@ -58,7 +58,7 @@
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、月份切换控件、月度概览、记录分布、五维洞察和幸福 8 要素评分录入面板
+  - 记录分析页壳、月份切换控件、月度概览、记录分布、五维洞察、幸福 8 要素评分录入面板和评分趋势图
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -175,9 +175,9 @@
 - 只承载评分事实，不复用五维日志或当天整合日志的表结构
 
 现实上：
-- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score` 和 `/analysis` 评分录入面板
+- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、`/analysis` 评分录入面板和评分趋势图
 - 保存只允许 Asia/Shanghai 口径下的今天和昨天；8 项必填且必须是 `1..10` 整数
-- 趋势图还没有接线
+- `/analysis` 已接入轻量 SVG 趋势图：总分平均走势和 8 要素单项切换走势，未评分日期断线，不补 0
 
 ### 3.5 calendar 读模型
 
@@ -262,11 +262,11 @@
   - `本月概览`：有记录天数、已保存记录数、整合日志完成天数
   - `记录分布`：按天的已保存维度分布，以及五维本月记录重心
   - `五维洞察`：五张只读卡，展示每维的篇数、覆盖天数、最近记录日期、高频 tags 和最近结构化线索
-  - `幸福 8 要素评分`：本页唯一可编辑模块，只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
-- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreRecords` 与 `editableDates`
+  - `幸福 8 要素评分`：展示总分平均走势、单项切换走势，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
+- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
 - `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
 - 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
-- 趋势图和 AI 洞察仍未接入
+- 趋势图只做单月查看，不做跨月同比；AI 洞察仍未接入
 
 ## 4. 结构化数据面
 

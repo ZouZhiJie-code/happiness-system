@@ -24,6 +24,20 @@ export const happinessScoreRequestKeys = [
 
 export type HappinessScoreRequestKey = (typeof happinessScoreRequestKeys)[number];
 
+export const happinessScoreKeyPairs = [
+  { requestKey: "meaning", recordKey: "meaningScore" },
+  { requestKey: "health", recordKey: "healthScore" },
+  { requestKey: "virtue", recordKey: "virtueScore" },
+  { requestKey: "autonomy", recordKey: "autonomyScore" },
+  { requestKey: "interest", recordKey: "interestScore" },
+  { requestKey: "skill", recordKey: "skillScore" },
+  { requestKey: "relationship", recordKey: "relationshipScore" },
+  { requestKey: "livingCondition", recordKey: "livingConditionScore" }
+] as const satisfies readonly {
+  requestKey: HappinessScoreRequestKey;
+  recordKey: DailyHappinessScoreKey;
+}[];
+
 export interface DailyHappinessScoreInput {
   date: string;
   meaningScore: number;

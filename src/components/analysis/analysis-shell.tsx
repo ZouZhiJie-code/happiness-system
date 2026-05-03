@@ -12,9 +12,10 @@ import {
 import { buildCalendarMonthGrid } from "@/features/calendar/view-state";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
-import type {
-  DailyHappinessScoreKey,
-  HappinessScoreRequestKey
+import {
+  happinessScoreKeyPairs,
+  type DailyHappinessScoreKey,
+  type HappinessScoreRequestKey
 } from "@/features/happiness-score/types";
 
 const happinessScoreItems: {
@@ -480,7 +481,7 @@ function buildScoreFormState(record: AnalysisMonthRecord, date: string): ScoreFo
   }
 
   return Object.fromEntries(
-    happinessScoreItems.map((item) => [item.requestKey, existing[item.recordKey]])
+    happinessScoreKeyPairs.map((item) => [item.requestKey, existing[item.recordKey]])
   ) as ScoreFormState;
 }
 
@@ -489,6 +490,257 @@ function isCompleteScoreForm(scores: ScoreFormState): scores is Record<Happiness
     const value = scores[item.requestKey];
     return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 10;
   });
+}
+
+function formatScoreAverage(value: number | null) {
+  return typeof value === "number" ? value.toFixed(1) : "暂无";
+}
+
+function resolveTrendPointLabel(date: string, value: number) {
+  return `${formatScoreDateLabel(date)} ${value.toFixed(1)}分`;
+}
+
+function ScoreLineChart({
+  days,
+  getValue,
+  ariaLabel,
+  emptyText,
+  testId
+}: {
+  days: AnalysisMonthRecord["scoreTrend"]["days"];
+  getValue: (day: AnalysisMonthRecord["scoreTrend"]["days"][number]) => number | null;
+  ariaLabel: string;
+  emptyText: string;
+  testId: string;
+}) {
+  const width = 680;
+  const height = 260;
+  const margin = {
+    top: 20,
+    right: 26,
+    bottom: 34,
+    left: 42
+  };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const yTicks = [10, 7, 4, 1];
+  const xLabelIndexes = [...new Set([0, Math.floor((days.length - 1) / 2), days.length - 1])];
+  const scoredPoints = days
+    .map((day, index) => {
+      const value = getValue(day);
+
+      if (typeof value !== "number") {
+        return null;
+      }
+
+      const x = margin.left + (index / Math.max(days.length - 1, 1)) * plotWidth;
+      const y = margin.top + ((10 - value) / 9) * plotHeight;
+
+      return {
+        date: day.date,
+        value,
+        x,
+        y
+      };
+    })
+    .filter((point): point is NonNullable<typeof point> => Boolean(point));
+  const segments: string[] = [];
+  let currentSegment: string[] = [];
+
+  days.forEach((day, index) => {
+    const value = getValue(day);
+
+    if (typeof value !== "number") {
+      if (currentSegment.length > 0) {
+        segments.push(currentSegment.join(" "));
+        currentSegment = [];
+      }
+      return;
+    }
+
+    const x = margin.left + (index / Math.max(days.length - 1, 1)) * plotWidth;
+    const y = margin.top + ((10 - value) / 9) * plotHeight;
+    currentSegment.push(`${currentSegment.length === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`);
+  });
+
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment.join(" "));
+  }
+
+  return (
+    <div
+      className="min-h-[17rem] rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] p-3.5"
+      data-testid={testId}
+    >
+      {scoredPoints.length === 0 ? (
+        <div
+          className="flex min-h-[14.5rem] items-center justify-center rounded-[14px] border border-dashed border-[rgba(150,105,61,0.16)] bg-[rgba(255,249,239,0.36)] px-4 text-center text-[0.86rem] leading-7 text-[#7a624b]"
+          data-testid={`${testId}-empty`}
+        >
+          {emptyText}
+        </div>
+      ) : (
+        <svg
+          role="img"
+          aria-label={ariaLabel}
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-auto w-full overflow-visible"
+        >
+          {yTicks.map((tick) => {
+            const y = margin.top + ((10 - tick) / 9) * plotHeight;
+
+            return (
+              <g key={tick}>
+                <line
+                  x1={margin.left}
+                  x2={width - margin.right}
+                  y1={y}
+                  y2={y}
+                  stroke="rgba(150,105,61,0.14)"
+                  strokeWidth="1"
+                />
+                <text
+                  x={margin.left - 12}
+                  y={y + 5}
+                  textAnchor="end"
+                  className="fill-[#8a6b4b] font-mono text-[13px] tabular-nums"
+                >
+                  {tick}
+                </text>
+              </g>
+            );
+          })}
+          {xLabelIndexes.map((index) => {
+            const day = days[index];
+
+            if (!day) {
+              return null;
+            }
+
+            const x = margin.left + (index / Math.max(days.length - 1, 1)) * plotWidth;
+
+            return (
+              <text
+                key={day.date}
+                x={x}
+                y={height - 8}
+                textAnchor="middle"
+                className="fill-[#8a6b4b] font-mono text-[13px] tabular-nums"
+              >
+                {formatScoreDateLabel(day.date)}
+              </text>
+            );
+          })}
+          {segments.map((path, index) => (
+            <path
+              key={index}
+              data-testid={`${testId}-segment`}
+              d={path}
+              fill="none"
+              stroke="#6f4a26"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {scoredPoints.map((point) => (
+            <circle
+              key={point.date}
+              cx={point.x}
+              cy={point.y}
+              r="4.5"
+              fill="#fffaf1"
+              stroke="#6f4a26"
+              strokeWidth="2.5"
+              aria-label={resolveTrendPointLabel(point.date, point.value)}
+            />
+          ))}
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
+  const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>("meaning");
+  const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
+  const selectedAverage = record.scoreTrend.factorAverages[selectedFactor];
+
+  return (
+    <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.34)] p-3.5" data-testid="happiness-score-trend-panel">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="archive-label">趋势</p>
+          <h3 className="mt-2 font-display text-[1.45rem] leading-none text-[#302114]">评分走势</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-right">
+          <div className="rounded-[14px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.76)] px-3 py-2">
+            <p className="text-[0.72rem] text-[#8a6b4b]">已评分</p>
+            <p className="mt-1 font-mono text-[1rem] tabular-nums text-[#4b3727]">{record.scoreOverview.scoredDayCount} 天</p>
+          </div>
+          <div className="rounded-[14px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.76)] px-3 py-2">
+            <p className="text-[0.72rem] text-[#8a6b4b]">月均总分</p>
+            <p className="mt-1 font-mono text-[1rem] tabular-nums text-[#4b3727]">{formatScoreAverage(record.scoreOverview.monthAverageScore)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 xl:grid-cols-2">
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[0.86rem] text-[#3a2c1f]">总分平均走势</p>
+            <p className="font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">Y 轴 1-10</p>
+          </div>
+          <ScoreLineChart
+            days={record.scoreTrend.days}
+            getValue={(day) => day.averageScore}
+            ariaLabel="本月每日 8 项平均分走势，未评分日期断线"
+            emptyText="本月还没有可展示的评分走势。"
+            testId="score-average-trend-chart"
+          />
+        </div>
+
+        <div>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[0.86rem] text-[#3a2c1f]">单项走势</p>
+              <p className="font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">{selectedItem.label}月均 {formatScoreAverage(selectedAverage)}</p>
+            </div>
+            <div
+              className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] p-1"
+              data-testid="score-factor-switch"
+              aria-label="切换幸福评分要素"
+            >
+              {happinessScoreItems.map((item) => (
+                <button
+                  key={item.requestKey}
+                  type="button"
+                  onClick={() => setSelectedFactor(item.requestKey)}
+                  className={`shrink-0 rounded-full px-2.5 py-1.5 text-[0.76rem] transition ${
+                    selectedFactor === item.requestKey
+                      ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm"
+                      : "text-[#7a6048] hover:bg-[rgba(255,252,246,0.84)]"
+                  }`}
+                  aria-pressed={selectedFactor === item.requestKey}
+                  data-testid={`score-factor-button-${item.requestKey}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ScoreLineChart
+            days={record.scoreTrend.days}
+            getValue={(day) => day.scores[selectedFactor]}
+            ariaLabel={`本月${selectedItem.label}评分走势，未评分日期断线`}
+            emptyText={`本月还没有${selectedItem.label}评分走势。`}
+            testId="score-factor-trend-chart"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function HappinessScorePanel({
@@ -517,11 +769,14 @@ function HappinessScorePanel({
 
   if (record.editableDates.length === 0 || !selectedDate) {
     return (
-      <div
-        className="rounded-[20px] border border-dashed border-[rgba(150,105,61,0.18)] bg-[rgba(255,249,239,0.32)] px-4 py-5 text-[0.9rem] leading-7 text-[#7a624b]"
-        data-testid="happiness-score-readonly"
-      >
-        这个月份的评分只能查看，不能修改。评分录入只开放今天和昨天。
+      <div className="space-y-3" data-testid="happiness-score-panel">
+        <HappinessScoreTrendPanel record={record} />
+        <div
+          className="rounded-[20px] border border-dashed border-[rgba(150,105,61,0.18)] bg-[rgba(255,249,239,0.32)] px-4 py-5 text-[0.9rem] leading-7 text-[#7a624b]"
+          data-testid="happiness-score-readonly"
+        >
+          这个月份的评分只能查看，不能修改。评分录入只开放今天和昨天。
+        </div>
       </div>
     );
   }
@@ -547,100 +802,104 @@ function HappinessScorePanel({
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1.32fr)]" data-testid="happiness-score-panel">
-      <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[linear-gradient(145deg,rgba(255,252,246,0.9),rgba(246,230,202,0.42))] p-4">
-        <p className="archive-label">日评分</p>
-        <h3 className="mt-3 font-display text-[1.55rem] leading-none text-[#302114]">8 个要素，先给今天一个刻度</h3>
-        <p className="mt-3 text-pretty text-[0.88rem] leading-7 text-[#72583f]">
-          这里不是写总结，只记录当天状态。填完 8 项后保存，页面会立即刷新到最新分数。
-        </p>
+    <div className="space-y-3" data-testid="happiness-score-panel">
+      <HappinessScoreTrendPanel record={record} />
 
-        {record.editableDates.length > 1 ? (
-          <div className="mt-4 flex rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] p-1" data-testid="happiness-score-date-switch">
-            {record.editableDates.map((date) => (
-              <button
-                key={date}
-                type="button"
-                onClick={() => {
-                  setSelectedDate(date);
-                  setScores(buildScoreFormState(record, date));
-                  setSaveError(false);
-                }}
-                className={`flex-1 rounded-full px-3 py-2 text-[0.8rem] transition ${
-                  selectedDate === date
-                    ? "bg-[#6f4a26] text-[#fffaf1] shadow-[0_8px_18px_rgba(86,58,28,0.18)]"
-                    : "text-[#7a6048] hover:bg-[rgba(255,252,246,0.84)]"
-                }`}
-                aria-pressed={selectedDate === date}
-              >
-                {resolveScoreDateShortcut(date, record.editableDates)}
-              </button>
-            ))}
-          </div>
-        ) : null}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1.32fr)]">
+        <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.56)] p-4">
+          <p className="archive-label">日评分</p>
+          <h3 className="mt-3 text-balance font-display text-[1.55rem] leading-none text-[#302114]">8 个要素，先给今天一个刻度</h3>
+          <p className="mt-3 text-pretty text-[0.88rem] leading-7 text-[#72583f]">
+            这里不是写总结，只记录当天状态。填完 8 项后保存，页面会立即刷新到最新分数。
+          </p>
 
-        <p className="mt-3 font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">
-          当前日期：{formatScoreDateLabel(selectedDate)}
-        </p>
-      </aside>
-
-      <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] p-3.5">
-        <div className="space-y-2.5">
-          {happinessScoreItems.map((item) => {
-            const value = scores[item.requestKey];
-            const sliderValue = value ?? 5;
-
-            return (
-              <label
-                key={item.requestKey}
-                className="grid gap-3 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.42)] px-3.5 py-3 md:grid-cols-[8rem_minmax(0,1fr)_3.5rem] md:items-center"
-              >
-                <span className="min-w-0">
-                  <span className="block text-[0.9rem] text-[#3a2c1f]">{item.label}</span>
-                  <span className="mt-1 block text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</span>
-                </span>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  step="1"
-                  value={sliderValue}
-                  onChange={(event) => {
-                    setScores((current) => ({
-                      ...current,
-                      [item.requestKey]: Number(event.target.value)
-                    }));
+          {record.editableDates.length > 1 ? (
+            <div className="mt-4 flex rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] p-1" data-testid="happiness-score-date-switch">
+              {record.editableDates.map((date) => (
+                <button
+                  key={date}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate(date);
+                    setScores(buildScoreFormState(record, date));
                     setSaveError(false);
                   }}
-                  className="h-2 w-full cursor-pointer accent-[#7b4d22]"
-                  aria-label={`${item.label}评分`}
-                />
-                <span className="justify-self-start rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.78)] px-3 py-1.5 font-mono text-[0.82rem] tabular-nums text-[#4b3727] md:justify-self-end">
-                  {value ?? "未填"}
-                </span>
-              </label>
-            );
-          })}
-        </div>
+                  className={`flex-1 rounded-full px-3 py-2 text-[0.8rem] transition ${
+                    selectedDate === date
+                      ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm"
+                      : "text-[#7a6048] hover:bg-[rgba(255,252,246,0.84)]"
+                  }`}
+                  aria-pressed={selectedDate === date}
+                >
+                  {resolveScoreDateShortcut(date, record.editableDates)}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[0.78rem] leading-6 text-[#80634a]">
-            {canSave ? "8 项已填完，可以保存。" : "8 项全部填完后才能保存。"}
+          <p className="mt-3 font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">
+            当前日期：{formatScoreDateLabel(selectedDate)}
           </p>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!canSave}
-            className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.84rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
-          >
-            {isSaving ? "保存中" : "保存评分"}
-          </button>
+        </aside>
+
+        <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] p-3.5">
+          <div className="space-y-2.5">
+            {happinessScoreItems.map((item) => {
+              const value = scores[item.requestKey];
+              const sliderValue = value ?? 5;
+
+              return (
+                <label
+                  key={item.requestKey}
+                  className="grid gap-3 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.42)] px-3.5 py-3 md:grid-cols-[8rem_minmax(0,1fr)_3.5rem] md:items-center"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[0.9rem] text-[#3a2c1f]">{item.label}</span>
+                    <span className="mt-1 block text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</span>
+                  </span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={sliderValue}
+                    onChange={(event) => {
+                      setScores((current) => ({
+                        ...current,
+                        [item.requestKey]: Number(event.target.value)
+                      }));
+                      setSaveError(false);
+                    }}
+                    className="h-2 w-full cursor-pointer accent-[#7b4d22]"
+                    aria-label={`${item.label}评分`}
+                  />
+                  <span className="justify-self-start rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.78)] px-3 py-1.5 font-mono text-[0.82rem] tabular-nums text-[#4b3727] md:justify-self-end">
+                    {value ?? "未填"}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[0.78rem] leading-6 text-[#80634a]">
+              {canSave ? "8 项已填完，可以保存。" : "8 项全部填完后才能保存。"}
+            </p>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!canSave}
+              className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.84rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
+            >
+              {isSaving ? "保存中" : "保存评分"}
+            </button>
+          </div>
+          {saveError ? (
+            <p className="mt-3 rounded-[14px] border border-[rgba(151,74,44,0.18)] bg-[rgba(255,241,232,0.62)] px-3 py-2 text-[0.82rem] text-[#8a3f25]" role="alert">
+              评分保存失败，请稍后再试。
+            </p>
+          ) : null}
         </div>
-        {saveError ? (
-          <p className="mt-3 rounded-[14px] border border-[rgba(151,74,44,0.18)] bg-[rgba(255,241,232,0.62)] px-3 py-2 text-[0.82rem] text-[#8a3f25]" role="alert">
-            评分保存失败，请稍后再试。
-          </p>
-        ) : null}
       </div>
     </div>
   );
@@ -705,7 +964,7 @@ export function AnalysisShell() {
         <div className="max-w-[46rem]">
           <p className="archive-label">月度归档</p>
           <p className="mt-3 text-pretty text-[0.98rem] leading-8 text-[#6f5a44]">
-            {formatAnalysisMonthLabel(normalizedSearch.month)}先看这个月已经沉淀下来的记录分布和五维线索，幸福评分趋势会在后续接入。
+            {formatAnalysisMonthLabel(normalizedSearch.month)}先看这个月已经沉淀下来的记录分布、五维线索和幸福评分走势。
           </p>
         </div>
 
@@ -775,7 +1034,7 @@ export function AnalysisShell() {
               index="04"
               eyebrow="日评分"
               title="幸福 8 要素评分"
-              description="这里是本页唯一可编辑模块。只填写今天和昨天的 1-10 分，旧月份保持只读。"
+              description="先看本月评分趋势，再在今天和昨天的窗口内填写 1-10 分；旧月份保持只读。"
               testId="analysis-score-placeholder"
             >
               {hasFetchError ? (

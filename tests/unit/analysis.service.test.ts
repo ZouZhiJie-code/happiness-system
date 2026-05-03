@@ -258,6 +258,52 @@ describe("analysis.service", () => {
         updatedAt: "2026-05-03T02:00:00.000Z"
       }
     ]);
+    expect(result.scoreOverview).toEqual({
+      scoredDayCount: 1,
+      monthAverageScore: 7.5,
+      latestScoredDate: "2026-05-03"
+    });
+    expect(result.scoreTrend.days).toHaveLength(31);
+    expect(result.scoreTrend.days[0]).toMatchObject({
+      date: "2026-05-01",
+      averageScore: null,
+      hasScore: false,
+      scores: {
+        meaning: null,
+        health: null,
+        virtue: null,
+        autonomy: null,
+        interest: null,
+        skill: null,
+        relationship: null,
+        livingCondition: null
+      }
+    });
+    expect(result.scoreTrend.days[2]).toMatchObject({
+      date: "2026-05-03",
+      averageScore: 7.5,
+      hasScore: true,
+      scores: {
+        meaning: 8,
+        health: 7,
+        virtue: 9,
+        autonomy: 6,
+        interest: 8,
+        skill: 7,
+        relationship: 9,
+        livingCondition: 6
+      }
+    });
+    expect(result.scoreTrend.factorAverages).toEqual({
+      meaning: 8,
+      health: 7,
+      virtue: 9,
+      autonomy: 6,
+      interest: 8,
+      skill: 7,
+      relationship: 9,
+      livingCondition: 6
+    });
     expect(result.editableDates).toEqual(["2026-05-03", "2026-05-02"]);
   });
 
@@ -271,6 +317,13 @@ describe("analysis.service", () => {
 
     expect(result.editableDates).toEqual([]);
     expect(result.scoreRecords).toEqual([]);
+    expect(result.scoreOverview).toEqual({
+      scoredDayCount: 0,
+      monthAverageScore: null,
+      latestScoredDate: null
+    });
+    expect(result.scoreTrend.days).toHaveLength(30);
+    expect(result.scoreTrend.days.every((day) => day.averageScore === null && !day.hasScore)).toBe(true);
   });
 
   it("keeps yesterday editable when today is the first day of the month", async () => {
@@ -330,6 +383,16 @@ describe("analysis.service", () => {
     });
     expect(result.editableDates).toEqual(["2026-05-01", "2026-04-30"]);
     expect(result.scoreRecords.map((record) => record.date)).toEqual(["2026-05-01", "2026-04-30"]);
+    expect(result.scoreOverview).toEqual({
+      scoredDayCount: 1,
+      monthAverageScore: 7.5,
+      latestScoredDate: "2026-05-01"
+    });
+    expect(result.scoreTrend.days.find((day) => day.date === "2026-04-30")).toBeUndefined();
+    expect(result.scoreTrend.days.find((day) => day.date === "2026-05-01")).toMatchObject({
+      averageScore: 7.5,
+      hasScore: true
+    });
   });
 
   it("throws a typed error for invalid month input", async () => {

@@ -4,9 +4,12 @@ import type {
   AnalysisDimensionBreakdownItem,
   AnalysisDimensionInsightCard,
   AnalysisMonthRecord,
+  AnalysisScoreOverview,
+  AnalysisScoreTrend,
   AnalysisSavedDailyJournalSource,
   AnalysisSavedEntrySource
 } from "@/features/analysis/types";
+import { happinessScoreKeyPairs, type DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 import type { InterviewDimension } from "@/types/interview";
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
@@ -232,11 +235,97 @@ function buildDimensionInsights(entries: AnalysisSavedEntrySource[]): AnalysisDi
   });
 }
 
+function roundScoreAverage(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function buildScoreAverage(record: DailyHappinessScoreRecord) {
+  const total = happinessScoreKeyPairs.reduce((sum, item) => sum + record[item.recordKey], 0);
+  return roundScoreAverage(total / happinessScoreKeyPairs.length);
+}
+
+function buildEmptyScoreMap() {
+  return Object.fromEntries(happinessScoreKeyPairs.map((item) => [item.requestKey, null])) as Record<
+    (typeof happinessScoreKeyPairs)[number]["requestKey"],
+    number | null
+  >;
+}
+
+export function buildAnalysisScoreTrend(input: {
+  month: string;
+  scoreRecords: DailyHappinessScoreRecord[];
+}): {
+  scoreOverview: AnalysisScoreOverview;
+  scoreTrend: AnalysisScoreTrend;
+} {
+  const monthDates = buildMonthDates(input.month);
+  const dateSet = new Set(monthDates);
+  const recordsByDate = new Map(
+    input.scoreRecords.filter((record) => dateSet.has(record.date)).map((record) => [record.date, record])
+  );
+
+  const days = monthDates.map((date) => {
+    const record = recordsByDate.get(date);
+
+    if (!record) {
+      return {
+        date,
+        averageScore: null,
+        scores: buildEmptyScoreMap(),
+        hasScore: false
+      };
+    }
+
+    return {
+      date,
+      averageScore: buildScoreAverage(record),
+      scores: Object.fromEntries(
+        happinessScoreKeyPairs.map((item) => [item.requestKey, record[item.recordKey]])
+      ) as Record<(typeof happinessScoreKeyPairs)[number]["requestKey"], number>,
+      hasScore: true
+    };
+  });
+
+  const scoredDays = days.filter((day) => day.hasScore);
+  const factorAverages = Object.fromEntries(
+    happinessScoreKeyPairs.map((item) => {
+      const values = scoredDays
+        .map((day) => day.scores[item.requestKey])
+        .filter((value): value is number => typeof value === "number");
+
+      if (values.length === 0) {
+        return [item.requestKey, null];
+      }
+
+      return [item.requestKey, roundScoreAverage(values.reduce((sum, value) => sum + value, 0) / values.length)];
+    })
+  ) as AnalysisScoreTrend["factorAverages"];
+
+  const monthAverageScore =
+    scoredDays.length > 0
+      ? roundScoreAverage(
+          scoredDays.reduce((sum, day) => sum + (day.averageScore ?? 0), 0) / scoredDays.length
+        )
+      : null;
+
+  return {
+    scoreOverview: {
+      scoredDayCount: scoredDays.length,
+      monthAverageScore,
+      latestScoredDate: scoredDays.at(-1)?.date ?? null
+    },
+    scoreTrend: {
+      days,
+      factorAverages
+    }
+  };
+}
+
 export function aggregateAnalysisMonth(input: {
   month: string;
   entries: AnalysisSavedEntrySource[];
   dailyJournals: AnalysisSavedDailyJournalSource[];
-}): Omit<AnalysisMonthRecord, "scoreRecords" | "editableDates"> {
+}): Omit<AnalysisMonthRecord, "scoreOverview" | "scoreTrend" | "scoreRecords" | "editableDates"> {
   const dailyCoverage = buildDailyCoverage(input);
   const dimensionBreakdown = buildDimensionBreakdown(input.entries);
   const dimensions = buildDimensionInsights(input.entries);

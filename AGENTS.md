@@ -16,7 +16,7 @@
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。
-- `/analysis?month=YYYY-MM` 记录分析页当前已落地月份切换、`/api/analysis/month`、月度日志概览、记录分布、五维结构化洞察和“幸福 8 要素评分”录入面板；顶部主导航会进入当前月。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天，趋势图仍未接入。
+- `/analysis?month=YYYY-MM` 记录分析页当前已落地月份切换、`/api/analysis/month`、月度日志概览、记录分布、五维结构化洞察、“幸福 8 要素评分”录入面板和轻量 SVG 评分趋势图；顶部主导航会进入当前月。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - 月视图月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致。
@@ -240,7 +240,7 @@ gratitude 理论翻译基线：
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 是双栏检查面板，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳、月份切换控件、`本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分` 的真实展示。
+  - 记录分析页壳、月份切换控件、`本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分 / 总分平均走势 / 单项切换走势` 的真实展示。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -348,12 +348,12 @@ gratitude 理论翻译基线：
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 - analysis 当前已经有公开只读能力：
   - `GET /api/analysis/month?month=YYYY-MM`
-  - 当前返回 `month / logOverview / dailyCoverage / dimensionBreakdown / dimensions / scoreRecords / editableDates`
+  - 当前返回 `month / logOverview / dailyCoverage / dimensionBreakdown / dimensions / scoreOverview / scoreTrend / scoreRecords / editableDates`
   - 只统计 `saved` 维度日志和 `saved` 当天整合日志
-  - 页面当前已展示 `本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分`
+  - 页面当前已展示 `本月概览 / 记录分布 / 五维洞察 / 幸福 8 要素评分 / 总分平均走势 / 单项切换走势`
   - `editableDates` 在当前月返回今天和昨天；如果今天是月初，昨天即使属于上月也会保留为可编辑日期
   - `PUT /api/happiness-score` 请求体是 `date + scores.{meaning,health,virtue,autonomy,interest,skill,relationship,livingCondition}`，8 项必填且必须是 `1..10` 整数
-  - 幸福评分趋势图尚未接入
+  - `scoreTrend.days` 覆盖当前分析月自然日；未评分日期返回 `null` 并在图表中断线
 
 ## 7. 本地开发与排障
 
@@ -394,7 +394,7 @@ gratitude 理论翻译基线：
 
 截至 `2026-05-03`，本地测试基线为：
 - `38` 个测试文件
-- `314` 个测试全部通过
+- `316` 个测试全部通过
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

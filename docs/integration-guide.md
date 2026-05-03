@@ -32,11 +32,11 @@
 | `PUT` | `/api/daily-journal/[id]` | 更新当天整合日志草稿 | 访谈页当天日志模式自动保存 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
-| `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、记录分布、五维洞察和评分状态 |
+| `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、记录分布、五维洞察、评分状态和趋势数据 |
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，展示月度日志概览、记录分布、五维洞察和幸福 8 要素评分录入面板。
+- `/analysis?month=YYYY-MM` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，展示月度日志概览、记录分布、五维洞察、总分平均走势、单项切换走势和幸福 8 要素评分录入面板。
 
 ## 3. 请求与返回
 
@@ -1472,7 +1472,7 @@ POST /api/daily-journal/[id]/save
 
 ### 5.14 Analysis 月概览与记录分布
 
-当前 `/analysis?month=YYYY-MM` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察卡和幸福 8 要素评分录入面板。
+当前 `/analysis?month=YYYY-MM` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察卡、幸福 8 要素评分录入面板和轻量 SVG 评分趋势图。
 
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月
@@ -1484,12 +1484,15 @@ POST /api/daily-journal/[id]/save
   - `dailyCoverage`
   - `dimensionBreakdown`
   - `dimensions`
+  - `scoreOverview`
+  - `scoreTrend`
   - `scoreRecords`
   - `editableDates`
 - 页面当前已展示：
   - `本月概览`
   - `记录分布`
   - `五维洞察` 五张只读卡
+  - `总分平均走势 + 单项切换走势`
   - `幸福 8 要素评分` 录入面板
 
 当前聚合规则：
@@ -1497,12 +1500,14 @@ POST /api/daily-journal/[id]/save
 - 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数
 - `dailyCoverage` 覆盖当月所有自然日
 - `dimensionBreakdown` 固定返回五维顺序
+- `scoreTrend.days` 覆盖当月所有自然日，每日总分为 8 项平均分，保留 1 位小数
+- 未评分日期返回 `averageScore: null`、单项分数为 `null`、`hasScore: false`，前端 SVG 断线，不补 0
+- `scoreTrend.factorAverages` 返回 8 要素本月平均分，只统计已评分日期，保留 1 位小数
 - `scoreRecords` 返回当前分析月内已有评分记录；如果今天是自然月 1 日，也会额外带上昨天的评分记录
 - `editableDates` 只在当前分析月返回今天和昨天；月初时昨天即使属于上月也会保留
 
 当前未完成：
 - AI 洞察生成
-- 幸福评分趋势图
 
 #### 5.14.1 保存幸福 8 要素日评分
 

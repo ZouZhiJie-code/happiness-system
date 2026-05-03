@@ -1,5 +1,5 @@
 import type { InterviewDimension, InterviewJournalPayload } from "@/types/interview";
-import type { DailyHappinessScoreRecord } from "@/features/happiness-score/types";
+import type { DailyHappinessScoreRecord, HappinessScoreRequestKey } from "@/features/happiness-score/types";
 
 export interface AnalysisLogOverview {
   recordedDayCount: number;
@@ -41,12 +41,32 @@ export interface AnalysisDimensionInsightCard {
   recentSignals: AnalysisDimensionSignalExcerpt[];
 }
 
+export interface AnalysisScoreOverview {
+  scoredDayCount: number;
+  monthAverageScore: number | null;
+  latestScoredDate: string | null;
+}
+
+export interface AnalysisScoreTrendDay {
+  date: string;
+  averageScore: number | null;
+  scores: Record<HappinessScoreRequestKey, number | null>;
+  hasScore: boolean;
+}
+
+export interface AnalysisScoreTrend {
+  days: AnalysisScoreTrendDay[];
+  factorAverages: Record<HappinessScoreRequestKey, number | null>;
+}
+
 export interface AnalysisMonthRecord {
   month: string;
   logOverview: AnalysisLogOverview;
   dailyCoverage: AnalysisDailyCoverageDay[];
   dimensionBreakdown: AnalysisDimensionBreakdownItem[];
   dimensions: AnalysisDimensionInsightCard[];
+  scoreOverview: AnalysisScoreOverview;
+  scoreTrend: AnalysisScoreTrend;
   scoreRecords: DailyHappinessScoreRecord[];
   editableDates: string[];
 }
