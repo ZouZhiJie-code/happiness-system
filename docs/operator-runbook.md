@@ -186,8 +186,8 @@ npm test
 ```
 
 截至 `2026-05-03`，当前基线是：
-- `29` 个测试文件
-- `269` 个测试全部通过
+- `31` 个测试文件
+- `279` 个测试全部通过
 
 ## 5. 高频故障排查
 
@@ -393,7 +393,7 @@ npm run dev
   - `calendar.service.ts`
   - `GET /api/calendar/day|week|month`
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
-  - `SiteHeader` 当前是全宽暖色工具栏，中区是唯一的全局 calendar 导航入口，承接视图切换、前后翻段、回到今天和实时摘要；calendar toolbar 直接平铺在 header 里，不再套内层方框
+  - `SiteHeader` 当前是全宽暖色工具栏，中区是唯一的全局 calendar 导航入口，承接视图切换、前后翻段、回到今天和实时摘要；calendar toolbar 直接平铺在 header 里，不再套内层方框；主导航当前页使用贴近文字的暖棕实线下划线
   - calendar 正文里已经没有旧的翻月 / 翻周 / 翻日按钮
   - 页面本身默认不应长滚动；超量内容应进入 pane 内局部滚动
   - calendar 文案已切到工作台短句语气，英文眉题已删除
@@ -401,3 +401,4 @@ npm run dev
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
+- `/analysis?month=YYYY-MM` 当前是记录分析入口骨架，只稳定月份切换和占位阅读区；真实统计、评分、趋势图和 AI 洞察仍未接入
