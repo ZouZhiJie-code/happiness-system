@@ -32,11 +32,11 @@
 | `PUT` | `/api/daily-journal/[id]` | 更新当天整合日志草稿 | 访谈页当天日志模式自动保存 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
-| `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、记录分布、五维洞察、评分状态和趋势数据 |
+| `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、日覆盖、五维洞察、评分状态和趋势数据 |
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，展示月度日志概览、记录分布、五维洞察、总分平均走势、单项切换走势和幸福 8 要素评分录入面板。
+- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`，默认进入评分分区，并通过热力分区展示本月记录热力图，通过五维洞察分区展示主线维度与紧凑维度组。
 
 ## 3. 请求与返回
 
@@ -974,7 +974,7 @@ POST /api/daily-journal/[id]/save
   - 回到今天
   - 实时 summary chips
 - 主导航当前页使用贴近文字的暖棕实线下划线，不再使用填充方框；calendar toolbar 内部按“翻段 / 标题摘要 / 今天 / 视图切换”用 `｜` 分隔。
-- 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>`。
+- 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>&section=score`。
 
 #### 页面与组件拆分
 
@@ -1470,13 +1470,13 @@ POST /api/daily-journal/[id]/save
 - `npx tsc --noEmit`
 - `npm test`
 
-### 5.14 Analysis 月概览与记录分布
+### 5.14 Analysis 评分、热力与五维洞察
 
-当前 `/analysis?month=YYYY-MM` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察卡、幸福 8 要素评分录入面板和轻量 SVG 评分趋势图。
+当前 `/analysis?month=YYYY-MM&section=score|rhythm|insights` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察、幸福 8 要素评分录入面板、本月热力图和轻量 SVG 评分趋势图。
 
 已落地行为：
-- 缺失或非法 `month` 参数归一到北京时间当前月
-- `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month`
+- 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `score`
+- `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`
@@ -1489,11 +1489,10 @@ POST /api/daily-journal/[id]/save
   - `scoreRecords`
   - `editableDates`
 - 页面当前已展示：
-  - `本月概览`
-  - `记录分布`
-  - `五维洞察` 五张只读卡
-  - `总分平均走势 + 单项切换走势`
-  - `幸福 8 要素评分` 录入面板
+  - `score`：默认分区，展示 `幸福 8 要素评分` 录入面板、总分平均走势和单项切换走势
+  - `rhythm`：本月记录热力图与精简月度摘要
+  - `insights`：主线维度 + 紧凑维度组的五维洞察布局
+  - 空数据月份会出现明确标注的示意填充；示意填充只影响展示，不改变评分保存和 `editableDates`
 
 当前聚合规则：
 - 只统计 `JoyEntry.status = saved`

@@ -23,6 +23,8 @@
 
 ### 页面与 API
 
+- `src/app`
+  - 首页：品牌广告页，内容从 `src/content/homepage.ts` 读取，按“认识自己 -> 日志如何起作用 -> 五维入口 -> 长期沉淀”组织叙事；图片位按 section 配置，当前使用占位视觉
 - `src/app/interview`
   - 访谈页与日志工作区
 - `src/app/calendar`
@@ -52,13 +54,13 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
-  - `month=YYYY-MM` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
+  - `month=YYYY-MM` 与 `section=score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
 - `src/features/happiness-score`
   - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、月份切换控件、月度概览、记录分布、五维洞察、幸福 8 要素评分录入面板和评分趋势图
+  - 记录分析页壳、评分 / 热力 / 五维洞察页内分区、月度摘要、本月热力图、五维主线洞察布局、幸福 8 要素评分录入面板和评分趋势图
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -217,7 +219,7 @@
   - 回到今天
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
-- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大
+- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大；主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
 - 根布局不再给页面额外外边距；首页、访谈、设置和 calendar 主体都以平铺 surface 承载内容，减少大圆角外框和卡片嵌套
@@ -253,17 +255,17 @@
 
 ### 3.7 记录分析页现实
 
-截至 `2026-05-03`，`/analysis?month=YYYY-MM` 已进入月度记录分析的第一批真实读模型阶段：
+截至 `2026-05-03`，`/analysis?month=YYYY-MM&section=score|rhythm|insights` 已进入月度记录分析的第一批真实读模型阶段：
 - `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
-- 缺失或非法 `month` 参数会被归一到当前月
+- 缺失或非法 `month` 参数会被归一到当前月，缺失或非法 `section` 参数会被归一到 `score`
 - 页面内已有上月 / 本月 / 下月切换
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - 页面当前已展示：
-  - `本月概览`：有记录天数、已保存记录数、整合日志完成天数
-  - `记录分布`：按天的已保存维度分布，以及五维本月记录重心
-  - `五维洞察`：五张只读卡，展示每维的篇数、覆盖天数、最近记录日期、高频 tags 和最近结构化线索
-  - `幸福 8 要素评分`：展示总分平均走势、单项切换走势，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
+  - `score`：幸福 8 要素评分默认入口，展示总分平均走势、单项切换走势，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
+  - `rhythm`：本月记录热力图与精简月度摘要，替代旧的记录页同款分布表
+  - `insights`：主线维度 + 紧凑维度组，避免五张卡按偶数栅格排布时产生留白
 - `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
+- 当月份没有真实分析数据时，前端只在展示层显示明确标注的示意填充，不改变保存接口和 `editableDates` 规则
 - `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
 - 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
 - 趋势图只做单月查看，不做跨月同比；AI 洞察仍未接入

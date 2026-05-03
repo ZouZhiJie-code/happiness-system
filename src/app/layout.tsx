@@ -6,8 +6,8 @@ import { SiteHeader } from "@/components/shared/site-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "幸福系统",
-  description: "用结构化访谈整理每日开心、充实、思考、改进与感谢的记录界面。"
+  title: "幸福系统 | 在日常里照见自己",
+  description: "用 AI 访谈和幸福日志整理每日开心、充实、思考、改进与感谢，帮助你更理解自己的喜悦、牵挂与抉择。"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
