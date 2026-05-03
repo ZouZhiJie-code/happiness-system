@@ -33,6 +33,9 @@
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
 
+页面路由补充：
+- `/analysis?month=YYYY-MM` 是当前记录分析入口骨架；它不新增 API，只做月份 URL 归一化、上月 / 本月 / 下月切换和占位阅读区。
+
 ## 3. 请求与返回
 
 ### 3.1 启动访谈
@@ -886,7 +889,7 @@ POST /api/daily-journal/[id]/save
   - 前后翻段
   - 回到今天
   - 实时摘要 chip
-- `SiteHeader` 现在是全宽暖色工具栏，不再用居中大卡片外壳；calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框。
+- `SiteHeader` 现在是全宽暖色工具栏，不再用居中大卡片外壳；calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大，业务控制组用 `｜` 分隔。
 - 月视图正文当前已经去掉重复 header、重复翻月按钮和统计卡，改成“月历主体 + 当天检查面板”的双栏骨架。
 - 点击日期会更新右侧当天检查面板；点击 `查看当天` 才进入 `view=day`。
 
@@ -968,6 +971,8 @@ POST /api/daily-journal/[id]/save
   - 前后翻段
   - 回到今天
   - 实时 summary chips
+- 主导航当前页使用贴近文字的暖棕实线下划线，不再使用填充方框；calendar toolbar 内部按“翻段 / 标题摘要 / 今天 / 视图切换”用 `｜` 分隔。
+- 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>`。
 
 #### 页面与组件拆分
 
@@ -1014,9 +1019,7 @@ POST /api/daily-journal/[id]/save
 基础规则：
 - 一周从周一开始，到周日结束
 - 固定 7 列
-- 行数按当月实际可见周数收口：
-  - 自然 5 行月份渲染 `35` 格
-  - 自然 6 行月份渲染 `42` 格
+- 固定渲染 6 行 `42` 格，保证每个月份的网格高度一致
 - 当前月之外的格子用占位空槽补齐，不展示相邻月份真实数据
 - 占位槽不响应点击
 
@@ -1258,7 +1261,7 @@ POST /api/daily-journal/[id]/save
 
 - `tests/unit/calendar-month-shell.test.tsx`
   - 校验 `/calendar?view=month` 缺省日期归一到北京时间今天
-  - 校验月视图按实际周数渲染 `35` 或 `42` 个格位
+  - 校验月视图稳定渲染 `42` 个格位
   - 校验有记录日、无记录日、今天、当前选中日具备可区分状态标记
   - 校验点击某一天会更新右侧当天检查面板
   - 校验 `查看当天` 会跳到 `/calendar?view=day&date=YYYY-MM-DD`
@@ -1458,12 +1461,28 @@ POST /api/daily-journal/[id]/save
 - 状态五态 `empty / in_progress / draft / completed / mixed` 的 badge / surface / marker class 由 `src/features/calendar/presentation.ts` 统一投影
 - 五个维度当前在可见 badge 上统一使用单字 `悦 / 实 / 思 / 改 / 谢`，辅助技术继续暴露完整维度名 `开心 / 充实 / 思考 / 改进 / 感谢`
 - 主按钮、次按钮和禁用态现在有稳定层级，不再由各视图各自拼装
-- `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用中区高度预算与横向 gutter，但不再套独立中区外框
+- `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用中区高度预算与横向 gutter，业务组用 `｜` 分隔；主导航当前页使用贴近文字的实线下划线，不再套独立中区外框
 
 #### 当前自动化基线
 
 - `npx tsc --noEmit`
 - `npm test`
+
+### 5.14 Analysis 入口骨架
+
+当前 `/analysis?month=YYYY-MM` 只定义页面级 URL 与阅读骨架，不读取 calendar API，也不暴露新的后端接口。
+
+已落地行为：
+- 缺失或非法 `month` 参数归一到北京时间当前月
+- `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month`
+- 页面展示 `本月概览 / 记录分布 / 五维洞察` 三个占位模块
+- 顶部主导航 `分析` 入口默认链接到当前月
+
+当前未完成：
+- 月度真实统计
+- 幸福评分和趋势图
+- AI 洞察生成
+- 与 calendar / daily journal 数据的正式聚合
 - 截至 `2026-05-03`：
   - `29` 个测试文件
   - `269` 个测试全部通过

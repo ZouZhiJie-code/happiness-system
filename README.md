@@ -11,11 +11,12 @@
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - 当天整合日志已经落地：访谈页顶部【日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
-- 顶部导航栏当前已经统一成全宽暖色工具栏：不再作为居中大卡片悬浮，calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框。
+- 顶部导航栏当前已经统一成全宽暖色工具栏：不再作为居中大卡片悬浮，calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 做轻量分隔。
+- `/analysis?month=YYYY-MM` 记录分析入口和月度占位工作台已落地，顶部主导航会进入当前月；当前只稳定月份切换和阅读骨架，真实统计、评分和趋势图仍未接入。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
-  - 月格当前按实际周数收口，只渲染当月需要的 5 或 6 行；可见文字层优先表达“当天已经沉淀出的已保存维度结果”
+  - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致；可见文字层优先表达“当天已经沉淀出的已保存维度结果”
   - 月格当前使用单字维度标记 `悦 / 实 / 思 / 改 / 谢`；`1-4` 个已保存维度显示对应单字，`5` 个维度都至少保存过一次时收束为 `已完成`
   - 月格当前不再把 `进行中 / 混合状态` 作为可见文字标签；未完成感主要由状态符号和颜色层承担
   - 周视图当前是 7 天同屏对比板，主动作会优先直达值得继续的业务链路
@@ -50,6 +51,7 @@
 - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord` 读模型与对应服务端聚合链路
 - `GET /api/calendar/day|week|month` 公开日历查询接口
 - `/calendar?view=month|week|day&date=YYYY-MM-DD` 月/周/日视图页面
+- `/analysis?month=YYYY-MM` 月度记录分析占位页面
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会移除 `mode` 并恢复所选日期的正常访谈 hydrate
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
@@ -145,6 +147,7 @@ npx prisma db push
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
+- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx` 与 `src/features/analysis/view-state.ts` 已落地记录分析入口、月份 URL 归一化、上月/本月/下月切换和三个占位模块。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。

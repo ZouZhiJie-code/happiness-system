@@ -41,14 +41,14 @@ describe("calendar view state helpers", () => {
     });
   });
 
-  it("builds only the visible calendar weeks for each month", () => {
+  it("builds a stable six-row calendar grid for every month", () => {
     const minimumFiveRowGrid = buildCalendarMonthGrid("2027-02");
     const fiveRowGrid = buildCalendarMonthGrid("2026-05");
     const sixRowGrid = buildCalendarMonthGrid("2026-08");
 
-    expect(minimumFiveRowGrid).toHaveLength(35);
+    expect(minimumFiveRowGrid).toHaveLength(42);
     expect(minimumFiveRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(28);
-    expect(fiveRowGrid).toHaveLength(35);
+    expect(fiveRowGrid).toHaveLength(42);
     expect(fiveRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
     expect(sixRowGrid).toHaveLength(42);
     expect(sixRowGrid.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);

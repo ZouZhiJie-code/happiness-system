@@ -14,7 +14,8 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
     value: {
       dimension: null as string | null,
       view: "month" as string | null,
-      date: "2026-05-02" as string | null
+      date: "2026-05-02" as string | null,
+      month: null as string | null
     }
   }
 }));
@@ -25,7 +26,7 @@ vi.mock("next/navigation", () => ({
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
-    get: (key: string) => mockSearchParams.value[key as "dimension" | "view" | "date"] ?? null
+    get: (key: string) => mockSearchParams.value[key as "dimension" | "view" | "date" | "month"] ?? null
   })
 }));
 
@@ -202,7 +203,8 @@ describe("site header calendar toolbar", () => {
     mockSearchParams.value = {
       dimension: null,
       view: "month",
-      date: "2026-05-02"
+      date: "2026-05-02",
+      month: null
     };
   });
 
@@ -235,7 +237,8 @@ describe("site header calendar toolbar", () => {
     mockSearchParams.value = {
       dimension: null,
       view: "week",
-      date: "2026-05-07"
+      date: "2026-05-07",
+      month: null
     };
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildWeekRecord()), { status: 200 })) as typeof fetch;
 
@@ -254,7 +257,8 @@ describe("site header calendar toolbar", () => {
     mockSearchParams.value = {
       dimension: null,
       view: "day",
-      date: "2026-05-01"
+      date: "2026-05-01",
+      month: null
     };
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
 
@@ -299,5 +303,13 @@ describe("site header calendar toolbar", () => {
     await waitFor(() => {
       expect(toolbar).toHaveAttribute("aria-busy", "false");
     });
+  });
+
+  it("renders an analysis nav item that links to the current month", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<SiteHeader />);
+
+    expect(await screen.findByRole("link", { name: "分析" })).toHaveAttribute("href", "/analysis?month=2026-05");
   });
 });

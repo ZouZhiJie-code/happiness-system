@@ -29,8 +29,20 @@ const navItems = [
   { href: "/", matchPath: "/", label: "首页" },
   { href: "/interview", matchPath: "/interview", label: "访谈" },
   { href: "/calendar", matchPath: "/calendar", label: "记录日历" },
+  { href: "/analysis", matchPath: "/analysis", label: "分析" },
   { href: "/settings", matchPath: "/settings", label: "设置" }
 ] as const;
+
+function HeaderDivider({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={clsx("shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]", className)}
+    >
+      ｜
+    </span>
+  );
+}
 
 function getStatusChipClass(isSelected: boolean, isEmphasized: boolean) {
   if (isSelected) {
@@ -127,6 +139,7 @@ export function SiteHeader() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
   const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
+  const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
   const isInterviewPage = pathname === "/interview";
   const isCalendarPage = pathname === "/calendar";
   const activeDimension = isInterviewPage
@@ -134,6 +147,7 @@ export function SiteHeader() {
     : dimension;
   const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
+  const hasHeaderWorkspace = isInterviewPage || isCalendarPage;
   const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
   const shouldShowDraftGenerateButton = Boolean(
     isViewingHydratedDimension && status === "active" && draftGenerationUnlocked && !shouldHideDraftGenerateButton
@@ -346,7 +360,12 @@ export function SiteHeader() {
 
   return (
     <header className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6">
-      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4">
+      <div
+        className={clsx(
+          "relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:items-center md:gap-3",
+          hasHeaderWorkspace ? "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]" : "md:grid-cols-[auto_minmax(0,1fr)_auto]"
+        )}
+      >
         <Link
           href="/"
           prefetch={false}
@@ -358,6 +377,7 @@ export function SiteHeader() {
           </div>
           <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">幸福系统</p>
         </Link>
+        {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
             <div className="w-full overflow-x-auto pb-0.5">
@@ -368,65 +388,67 @@ export function SiteHeader() {
                 <div className="shrink-0 px-1">
                   <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
                 </div>
-                <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                  <div className="flex min-w-0 items-center gap-[0.3125rem]">
-                      {interviewDimensions.map((item) => {
-                        const isSelected = item === activeDimension;
-                        const meta = getInterviewDimensionMeta(item);
-                        const progressSummary = dimensionProgressMap[item];
-                        const labelId = `interview-dimension-label-${item}`;
-                        const progressId = `interview-dimension-status-${item}`;
-                        const isActiveItemRestoring = isSelected && isSelectedDimensionRestoring;
-                        const detailLabel = isSelected ? selectedProgressLabel : progressSummary.statusLabel;
+                <HeaderDivider />
+                <div className="flex min-w-0 items-center gap-[0.3125rem] overflow-hidden">
+                  {interviewDimensions.map((item) => {
+                    const isSelected = item === activeDimension;
+                    const meta = getInterviewDimensionMeta(item);
+                    const progressSummary = dimensionProgressMap[item];
+                    const labelId = `interview-dimension-label-${item}`;
+                    const progressId = `interview-dimension-status-${item}`;
+                    const isActiveItemRestoring = isSelected && isSelectedDimensionRestoring;
+                    const detailLabel = isSelected ? selectedProgressLabel : progressSummary.statusLabel;
 
-                        return (
-                          <button
-                            key={item}
-                            type="button"
-                            onClick={() => handleDimensionChange(item)}
-                            aria-pressed={isSelected}
-                            aria-current={isSelected ? "step" : undefined}
-                            aria-labelledby={labelId}
-                            aria-describedby={progressId}
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => handleDimensionChange(item)}
+                        aria-pressed={isSelected}
+                        aria-current={isSelected ? "step" : undefined}
+                        aria-labelledby={labelId}
+                        aria-describedby={progressId}
+                        className={clsx(
+                          "group relative flex min-w-[5.1rem] shrink-0 items-center gap-[0.3125rem] rounded-[15px] border px-1.5 py-1.5 text-left transition duration-300",
+                          isSelected
+                            ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
+                            : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={clsx(
+                            "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
+                            !isSelected && "opacity-50"
+                          )}
+                        />
+                        <span
+                          id={labelId}
+                          className={clsx(
+                            "shrink-0 text-[12px] font-medium tracking-[0.01em]",
+                            isSelected ? "text-[#fff8f1]" : "text-[#4a4038]"
+                          )}
+                        >
+                          {meta.navLabel}
+                        </span>
+                        <div className="flex min-w-0 items-center">
+                          <span
+                            id={progressId}
                             className={clsx(
-                              "group relative flex min-w-[5.1rem] shrink-0 items-center gap-[0.3125rem] rounded-[15px] border px-1.5 py-1.5 text-left transition duration-300",
-                              isSelected
-                                ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                                : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
+                              "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
+                              getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
                             )}
                           >
-                            <span
-                              aria-hidden="true"
-                              className={clsx(
-                                "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                                !isSelected && "opacity-50"
-                              )}
-                            />
-                            <span
-                              id={labelId}
-                              className={clsx(
-                                "shrink-0 text-[12px] font-medium tracking-[0.01em]",
-                                isSelected ? "text-[#fff8f1]" : "text-[#4a4038]"
-                              )}
-                            >
-                              {meta.navLabel}
-                            </span>
-                            <div className="flex min-w-0 items-center">
-                              <span
-                                id={progressId}
-                                className={clsx(
-                                  "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
-                                  getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
-                                )}
-                              >
-                                {detailLabel}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                  </div>
-                  {shouldShowSelectedProgressPod ? (
+                            {detailLabel}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {shouldShowSelectedProgressPod ? (
+                  <>
+                    <HeaderDivider />
                     <div
                       data-testid="selected-dimension-progress"
                       className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
@@ -455,8 +477,9 @@ export function SiteHeader() {
                         </span>
                       )}
                     </div>
-                  ) : null}
-                </div>
+                  </>
+                ) : null}
+                <HeaderDivider />
                 {shouldShowDraftGenerateButton ? (
                   <button
                     type="button"
@@ -487,24 +510,35 @@ export function SiteHeader() {
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
         </div>
-        <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.matchPath}
-              href={item.matchPath === "/calendar" ? todayCalendarHref : item.href}
-              prefetch={false}
-              onClick={(event) => handleProtectedNavigation(event, item.matchPath === "/calendar" ? todayCalendarHref : item.href)}
-              aria-current={isActive(item.matchPath) ? "page" : undefined}
-              className={clsx(
-                "px-3 py-1.5 text-[13px] font-medium transition duration-300",
-                isActive(item.matchPath)
-                  ? "bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_6px_14px_rgba(118,75,37,0.16)]"
-                  : "text-[#4a4038] hover:bg-[rgba(169,111,61,0.14)] hover:text-[#2f2823]"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+        {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
+        <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">
+          {navItems.map((item) => {
+            const active = isActive(item.matchPath);
+            const href =
+              item.matchPath === "/calendar"
+                ? todayCalendarHref
+                : item.matchPath === "/analysis"
+                  ? todayAnalysisHref
+                  : item.href;
+
+            return (
+              <Link
+                key={item.matchPath}
+                href={href}
+                prefetch={false}
+                onClick={(event) => handleProtectedNavigation(event, href)}
+                aria-current={active ? "page" : undefined}
+                className={clsx(
+                  "relative px-2.5 py-2 font-medium text-[#4a4038] transition duration-200 after:absolute after:inset-x-2 after:bottom-1.5 after:h-[3px] after:rounded-sm after:bg-[#8a5527] after:transition-opacity after:duration-200 after:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034]",
+                  active
+                    ? "text-[14px] font-semibold text-[#2f2823] after:opacity-100"
+                    : "text-[13px] after:opacity-0 hover:text-[#2f2823] hover:after:opacity-55"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>

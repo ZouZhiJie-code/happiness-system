@@ -15,10 +15,11 @@
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集。
-- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框。
+- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。
+- `/analysis?month=YYYY-MM` 记录分析入口和月度占位工作台已落地，顶部主导航会进入当前月；当前只稳定月份切换和阅读骨架，真实统计、评分和趋势图仍未接入。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
-- 月视图月格当前按实际周数收口，只渲染 5 行或 6 行，不再无条件补满底部整行空白占位。
+- 月视图月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致。
 - 月视图当前已经切到“已保存结果优先”的可见语义：`1-4` 个已保存维度显示单字 `悦 / 实 / 思 / 改 / 谢`，五维都至少保存过一次时收束为 `已完成`；`进行中 / 混合状态` 不再作为月格里的可见文字标签。
 - future 空白日继续改成中性待到来语义，不再按漏记处理；today 圆点也已回到日期锚点附近，避免与右上角状态区冲突。
 - 周视图已经升级为真正的 7 天同屏对比板；每天卡片的主动作会优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时才回退 `查看当天`。
@@ -229,11 +230,15 @@ gratitude 理论翻译基线：
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
+- `src/features/analysis`
+  - 月度记录分析入口的 `month=YYYY-MM` URL 归一化、月份跳转和标题格式化。
 - `src/features/daily-journal`
   - 当天整合日志 schema、正文长度约束和 source signature helper。
 - `src/components/calendar`
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 是双栏检查面板，week 是 7 天对比板，day 是五维紧凑操作台。
+- `src/components/analysis`
+  - 记录分析页壳、月份切换控件和 `本月概览 / 记录分布 / 五维洞察` 占位模块。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。

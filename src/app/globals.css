@@ -7,7 +7,7 @@
   --site-header-frame-min-height: 4rem;
   --site-header-lane-min-height: 2.5rem;
   --site-header-viewport-offset: 4rem;
-  --calendar-month-cell-min-height: 4.85rem;
+  --calendar-month-cell-min-height: 5.95rem;
   --calendar-day-card-min-height: 5.5rem;
   --night-void: #855a34;
   --night-ink: #ddbb8c;
@@ -429,6 +429,72 @@ body::after {
   border: 1px dashed rgba(153, 119, 86, 0.28);
   background: rgba(249, 241, 229, 0.92);
   color: #786451;
+}
+
+.calendar-month-grid-sheet {
+  border: 1px solid rgba(153, 119, 86, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 249, 240, 0.72), rgba(246, 236, 220, 0.7)),
+    rgba(255, 249, 240, 0.84);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 244, 0.78),
+    0 6px 14px rgba(100, 64, 33, 0.05);
+}
+
+.calendar-month-cell {
+  position: relative;
+  border-right: 1px solid rgba(153, 119, 86, 0.2);
+  border-bottom: 1px solid rgba(153, 119, 86, 0.2);
+  color: #786451;
+  box-shadow: none;
+}
+
+.calendar-month-cell:nth-child(7n) {
+  border-right: 0;
+}
+
+.calendar-month-cell:nth-last-child(-n + 7) {
+  border-bottom: 0;
+}
+
+.calendar-month-placeholder {
+  background:
+    repeating-linear-gradient(
+      -35deg,
+      rgba(153, 119, 86, 0.06) 0 1px,
+      transparent 1px 9px
+    ),
+    rgba(249, 241, 229, 0.48);
+}
+
+.calendar-day-button.calendar-month-cell {
+  isolation: isolate;
+}
+
+.calendar-day-button.calendar-month-cell:hover {
+  background-image: linear-gradient(180deg, rgba(255, 251, 244, 0.34), rgba(238, 219, 190, 0.18));
+}
+
+.calendar-day-button.calendar-month-cell[data-selected="true"] {
+  box-shadow:
+    inset 0 0 0 2px rgba(169, 111, 61, 0.38),
+    inset 0 0 0 999px rgba(169, 111, 61, 0.05);
+}
+
+.calendar-day-button.calendar-month-cell[data-today="true"] {
+  box-shadow:
+    inset 0 0 0 1px rgba(169, 111, 61, 0.22),
+    inset 0 0 0 999px rgba(169, 111, 61, 0.035);
+}
+
+.calendar-day-button.calendar-month-cell[data-selected="true"][data-today="true"] {
+  box-shadow:
+    inset 0 0 0 2px rgba(169, 111, 61, 0.42),
+    inset 0 0 0 999px rgba(169, 111, 61, 0.07);
+}
+
+.calendar-day-button.calendar-month-cell.calendar-month-cell-future:hover {
+  background-image: none;
 }
 
 .calendar-chip {

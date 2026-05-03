@@ -27,6 +27,8 @@
   - 访谈页与日志工作区
 - `src/app/calendar`
   - 记录日历 month/week/day 页面
+- `src/app/analysis`
+  - 记录分析月度占位工作台
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
 - `src/app/api/calendar/*`
@@ -47,8 +49,12 @@
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
+- `src/features/analysis`
+  - `month=YYYY-MM` URL 状态归一化、月份跳转和中文月份标题格式化
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
+- `src/components/analysis`
+  - 记录分析页壳、月份切换控件和分析模块占位骨架
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -189,8 +195,8 @@
   - 前后翻段
   - 回到今天
   - 3 个实时摘要 chip
-  - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，但不再套独立中区方框
-- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框
+  - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
+- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
 - 根布局不再给页面额外外边距；首页、访谈、设置和 calendar 主体都以平铺 surface 承载内容，减少大圆角外框和卡片嵌套
@@ -199,7 +205,7 @@
 - `month`
   - 已进入双栏骨架：月历主体 + 当天检查面板
   - 右栏固定提供 `查看当天` 日期级入口
-  - 月格当前按实际可见周数收口，只渲染 5 行或 6 行，不再固定补满 42 格
+  - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致
   - 小格当前不再优先解释“还有什么没做完”，而是优先表达“这一天已经沉淀出的已保存维度结果”
   - 月格可见文字层固定为：
     - `1-4` 个已保存维度：显示单字 `悦 / 实 / 思 / 改 / 谢`
@@ -223,6 +229,15 @@
   - 色温已经回收到全局暖纸张/墨色系统，不再维持蓝灰后台式分叉
   - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
   - shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
+
+### 3.7 记录分析页现实
+
+截至 `2026-05-03`，`/analysis?month=YYYY-MM` 是月度记录分析的入口骨架：
+- `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
+- 缺失或非法 `month` 参数会被归一到当前月
+- 页面内已有上月 / 本月 / 下月切换
+- 正文当前只有 `本月概览 / 记录分布 / 五维洞察` 三个占位模块
+- 真实统计、幸福评分、趋势图、AI 洞察和后端分析 API 仍未接入
 
 ## 4. 结构化数据面
 

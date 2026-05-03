@@ -62,6 +62,14 @@ function ToolbarChip({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ToolbarDivider() {
+  return (
+    <span aria-hidden="true" className="shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]">
+      ｜
+    </span>
+  );
+}
+
 export function CalendarToolbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -185,27 +193,31 @@ export function CalendarToolbar() {
         </button>
       </div>
 
+      <ToolbarDivider />
+
       <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
         <div className="flex min-w-max items-center gap-2">
           <p className="shrink-0 text-[0.95rem] font-medium text-[#34271c] md:text-[1rem]">
             {toolbarState.title}
           </p>
 
-        {isLoading ? (
-          <span className="shrink-0 text-[0.68rem] text-[#8a6b4b]" role="status" aria-live="polite">
-            {getCalendarLoadingLabel("toolbar")}
-          </span>
-        ) : null}
-        {hasFetchError ? (
-          <span className="shrink-0 text-[0.68rem] text-[#8f5431]" role="alert">
-            {getCalendarErrorLabel("toolbar")}
-          </span>
-        ) : null}
-        {chips.map((chip) => (
-          <ToolbarChip key={chip.id} label={chip.label} value={chip.value} />
-        ))}
+          {isLoading ? (
+            <span className="shrink-0 text-[0.68rem] text-[#8a6b4b]" role="status" aria-live="polite">
+              {getCalendarLoadingLabel("toolbar")}
+            </span>
+          ) : null}
+          {hasFetchError ? (
+            <span className="shrink-0 text-[0.68rem] text-[#8f5431]" role="alert">
+              {getCalendarErrorLabel("toolbar")}
+            </span>
+          ) : null}
+          {chips.map((chip) => (
+            <ToolbarChip key={chip.id} label={chip.label} value={chip.value} />
+          ))}
         </div>
       </div>
+
+      <ToolbarDivider />
 
       <button
         type="button"
@@ -215,6 +227,8 @@ export function CalendarToolbar() {
       >
         今天
       </button>
+
+      <ToolbarDivider />
 
       <CalendarViewSwitcher currentView={normalizedSearch.view} onSelectView={(view) => navigate({ view })} />
 

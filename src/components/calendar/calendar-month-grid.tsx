@@ -30,8 +30,8 @@ export function CalendarMonthGrid({
   onSelectDate: (date: string) => void;
 }) {
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-7 gap-1.5 px-0.5">
+    <div className="flex min-h-full flex-1 flex-col gap-2.5">
+      <div className="grid shrink-0 grid-cols-7 px-0.5">
         {weekLabels.map((label) => (
           <p key={label} className="text-center text-[0.69rem] tracking-[0.01em] text-[#8a6b4b]">
             {label}
@@ -39,14 +39,17 @@ export function CalendarMonthGrid({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5" data-testid="calendar-month-grid">
+      <div
+        className="calendar-month-grid-sheet grid min-h-[calc(var(--calendar-month-cell-min-height)*6)] flex-1 grid-cols-7 overflow-hidden rounded-[18px] [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]"
+        data-testid="calendar-month-grid"
+      >
         {cells.map((cell) => {
           if (!cell.date || !cell.isCurrentMonth) {
             return (
               <div
                 key={cell.key}
                 data-testid={`calendar-placeholder-${cell.key}`}
-                className="calendar-card-muted h-[var(--calendar-month-cell-min-height)] rounded-[20px]"
+                className="calendar-month-cell calendar-month-placeholder min-h-[var(--calendar-month-cell-min-height)]"
               />
             );
           }
@@ -57,7 +60,7 @@ export function CalendarMonthGrid({
             return (
               <div
                 key={cell.key}
-                className="calendar-card-muted h-[var(--calendar-month-cell-min-height)] rounded-[20px] p-2.5"
+                className="calendar-month-cell calendar-month-placeholder min-h-[var(--calendar-month-cell-min-height)] p-2.5"
               >
                 <span className="font-display text-[1.2rem] leading-none text-[#b59b80]">{cell.dayNumber}</span>
               </div>
@@ -90,11 +93,9 @@ export function CalendarMonthGrid({
               })}
               onClick={() => onSelectDate(day.date)}
               className={clsx(
-                "calendar-day-button group relative flex h-[var(--calendar-month-cell-min-height)] flex-col rounded-[20px] border px-2.5 py-2.5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                "calendar-day-button calendar-month-cell group relative flex min-h-[var(--calendar-month-cell-min-height)] flex-col px-2.5 py-2.5 text-left transition duration-200",
                 getCalendarMonthDaySurfaceClass(day.overallStatus, previewState.hasRecords, previewState.isFutureEmpty),
-                selectedDate === day.date &&
-                  "ring-2 ring-[rgba(169,111,61,0.24)] ring-offset-2 ring-offset-[#f4ead8] shadow-md",
-                previewState.isFutureEmpty && "hover:shadow-none"
+                previewState.isFutureEmpty && "calendar-month-cell-future"
               )}
             >
               <span

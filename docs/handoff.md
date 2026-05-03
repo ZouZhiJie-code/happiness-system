@@ -170,10 +170,11 @@
   - `/api/daily-journal`、`/api/daily-journal/generate`、`/api/daily-journal/[id]`、`/api/daily-journal/[id]/save` 已落地
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
 - `/calendar` 月视图、周视图、日视图与 deep link 已落地
-- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框
+- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大，访谈和 calendar 业务组用 `｜` 分隔
+  - `/analysis?month=YYYY-MM` 记录分析入口和月度占位工作台已落地；顶部主导航 `分析` 默认进入当前月；真实统计、评分、趋势图和 AI 洞察仍未接入
   - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
-  - 月格当前按实际周数收口，只渲染当月需要的 5 行或 6 行，不再多出底部整行空白占位
+  - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致
   - 月格当前已改成“已保存结果优先”的可见语义：`1-4` 个已保存维度显示单字 `悦 / 实 / 思 / 改 / 谢`，五维都至少保存过一次时收束为 `已完成`
   - 月格当前不再把 `进行中 / 混合状态` 作为可见文字标签；未完成感主要由状态符号和颜色层承担
   - future 空白日继续保留中性待到来语义；today 圆点回到日期锚点附近，避免和右上角状态区冲突
@@ -182,7 +183,7 @@
   - 当天整合日志状态已经进入 calendar 读模型；月/周只显示轻 marker，日视图显示紧凑入口条，正文编辑仍回访谈页
   - month / week / day 三个视图当前已经切到暖色 calendar 工作台：状态五态、维度单字 badge `悦 / 实 / 思 / 改 / 谢`、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一；读屏仍保留完整维度名
   - calendar 文案已经切到工作台短句语气；英文眉题已清掉，`aria-busy`、loading/error inline 语义、焦点态和主要 CTA 的可访问名称已补齐
-  - `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算，但不再套独立中区外框
+  - `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算，业务组用 `｜` 分隔；主导航当前页改用实线下划线，不再套独立中区外框
   - `mode=daily-journal` 深链只打开当天整合日志主区，不会启动或创建新的维度访谈 session；点击“回到访谈”会移除 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 

@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
-import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import { interviewDimensions } from "@/features/interview/dimensions";
 import type { CalendarDayRecord, CalendarMonthRecord } from "@/features/calendar/types";
 import {
@@ -122,7 +121,6 @@ export function CalendarMonthShell() {
     [monthRecord]
   );
   const selectedDay = daysByDate.get(selectedDate) ?? buildEmptyCalendarDayRecord(selectedDate);
-  const monthStats = monthRecord ? buildCalendarMonthStats(monthRecord) : null;
 
   function handleSelectDate(date: string) {
     setSelectedDate(date);
@@ -137,7 +135,7 @@ export function CalendarMonthShell() {
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="grid min-h-0 h-full min-w-[920px] grid-cols-[minmax(0,1fr)_18rem] gap-2">
+          <div className="grid min-h-0 h-full min-w-[1040px] grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)] gap-2">
             <div
               className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-none p-2 md:p-2.5"
               data-testid="calendar-month-primary-pane"
@@ -160,20 +158,15 @@ export function CalendarMonthShell() {
                   </p>
                   <div className="mt-4 space-y-3" aria-hidden="true">
                     <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
-                    <div className="grid grid-cols-7 gap-2">
+                    <div className="calendar-month-grid-sheet grid grid-cols-7 overflow-hidden rounded-[18px] [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]">
                       {Array.from({ length: 14 }, (_, index) => (
-                        <div key={index} className="h-[4.85rem] animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+                        <div key={index} className="calendar-month-cell min-h-[var(--calendar-month-cell-min-height)] animate-pulse bg-[rgba(224,204,174,0.42)]" />
                       ))}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 pr-1">
-                  {monthStats?.recordedDayCount === 0 ? (
-                    <div className="calendar-card-muted mb-4 rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#755d47]">
-                      {monthKey > today.slice(0, 7) ? "这个月还没到，先看分布。" : "本月还没有记录。"}
-                    </div>
-                  ) : null}
+                <div className="calendar-pane-scroll panel-scroll flex min-h-0 flex-1 flex-col pr-1">
                   <CalendarMonthGrid
                     cells={monthGrid}
                     daysByDate={daysByDate}

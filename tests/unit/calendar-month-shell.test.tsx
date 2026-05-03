@@ -335,7 +335,7 @@ describe("calendar month shell", () => {
     });
   });
 
-  it("renders only the needed month rows and a dedicated day check panel for an empty past day", async () => {
+  it("renders a stable six-row month grid and a dedicated day check panel for an empty past day", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarMonthShell />);
@@ -345,7 +345,8 @@ describe("calendar month shell", () => {
     expect(screen.getByTestId("calendar-month-secondary-pane")).toBeInTheDocument();
     const dayPanel = await screen.findByTestId("calendar-month-day-panel");
 
-    expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(35);
+    expect(container.querySelectorAll('[data-testid^="calendar-day-2026-"], [data-testid^="calendar-placeholder-"]')).toHaveLength(42);
+    expect(screen.queryByText("本月还没有记录。")).not.toBeInTheDocument();
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
     expect(screen.queryByText("DAY CHECK")).not.toBeInTheDocument();
     expect(within(dayPanel).getByText("这一天还空着。")).toBeInTheDocument();
@@ -439,6 +440,8 @@ describe("calendar month shell", () => {
     const detailPanel = await screen.findByTestId("calendar-month-day-panel");
     const futureCell = screen.getByTestId("calendar-day-2099-01-01");
 
+    expect(screen.queryByText("本月还没有记录。")).not.toBeInTheDocument();
+    expect(screen.queryByText("这个月还没到，先看分布。")).not.toBeInTheDocument();
     expect(within(detailPanel).getByText("这一天还没到，到了当天再记录。")).toBeInTheDocument();
     expect(within(detailPanel).getByTestId("calendar-month-day-panel-empty")).toHaveTextContent("未来日期先保留。");
     expect(within(detailPanel).queryByText("未记录")).not.toBeInTheDocument();
