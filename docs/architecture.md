@@ -189,8 +189,8 @@
   - 前后翻段
   - 回到今天
   - 3 个实时摘要 chip
-  - calendar toolbar 与访谈维度条现在共用固定 header 中区框体和统一高度预算
-- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳
+  - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，但不再套独立中区方框
+- 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
 - 根布局不再给页面额外外边距；首页、访谈、设置和 calendar 主体都以平铺 surface 承载内容，减少大圆角外框和卡片嵌套

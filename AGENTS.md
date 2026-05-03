@@ -15,7 +15,7 @@
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集。
-- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
+- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；超量信息进入局部 pane 滚动。月视图已经升级为“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - 月视图月格当前按实际周数收口，只渲染 5 行或 6 行，不再无条件补满底部整行空白占位。

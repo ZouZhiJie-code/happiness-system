@@ -79,7 +79,7 @@ components:
 **Key Characteristics**
 
 - 全局界面优先保留温暖、低压、可书写的气质，同时减少整页外框、厚圆角和重复模块间隙。
-- 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮在页面上方。
+- 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮，也不在访谈维度条、calendar toolbar 或主导航外再套内层方框。
 - calendar 优先判断效率，减少装饰性纹理和厚重阴影，并压缩首屏垂直占用。
 - serif 标题贯穿全站，但工作台正文和操作信息更紧凑克制。
 - 状态色负责“这件事现在处于什么阶段”，维度色负责“这是哪一类记录”。
@@ -216,7 +216,7 @@ calendar 中的动作层级不可漂移：
 
 - **View switcher**：月 / 周 / 日切换使用分段控件，当前项使用 `Calendar Ink` 深色填充。
 - **Prev / Next / Today**：作为 header 工作台控件存在，尺寸一致，优先紧凑和快扫，不做视觉主角。
-- **Header middle lane**：访谈维度条与 calendar toolbar 都必须收进同一套中区框体里，共用高度预算、左右 gutter 和圆角节奏。
+- **Header middle lane**：访谈维度条与 calendar toolbar 直接平铺在全宽 header 中区，共用高度预算、横向 gutter 和控件节奏；不要再给中区、calendar toolbar 或主导航补独立外框。
 
 ### Day Cells and Boards
 

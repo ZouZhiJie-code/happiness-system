@@ -886,7 +886,7 @@ POST /api/daily-journal/[id]/save
   - 前后翻段
   - 回到今天
   - 实时摘要 chip
-- `SiteHeader` 现在是全宽暖色工具栏，不再用居中大卡片外壳；正文工作区直接贴在 header 下方展开。
+- `SiteHeader` 现在是全宽暖色工具栏，不再用居中大卡片外壳；calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框。
 - 月视图正文当前已经去掉重复 header、重复翻月按钮和统计卡，改成“月历主体 + 当天检查面板”的双栏骨架。
 - 点击日期会更新右侧当天检查面板；点击 `查看当天` 才进入 `view=day`。
 
@@ -1458,7 +1458,7 @@ POST /api/daily-journal/[id]/save
 - 状态五态 `empty / in_progress / draft / completed / mixed` 的 badge / surface / marker class 由 `src/features/calendar/presentation.ts` 统一投影
 - 五个维度当前在可见 badge 上统一使用单字 `悦 / 实 / 思 / 改 / 谢`，辅助技术继续暴露完整维度名 `开心 / 充实 / 思考 / 改进 / 感谢`
 - 主按钮、次按钮和禁用态现在有稳定层级，不再由各视图各自拼装
-- `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算与横向 gutter
+- `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用中区高度预算与横向 gutter，但不再套独立中区外框
 
 #### 当前自动化基线
 

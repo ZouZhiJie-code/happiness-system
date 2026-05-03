@@ -170,7 +170,7 @@
   - `/api/daily-journal`、`/api/daily-journal/generate`、`/api/daily-journal/[id]`、`/api/daily-journal/[id]/save` 已落地
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
 - `/calendar` 月视图、周视图、日视图与 deep link 已落地
-- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要
+- `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框
   - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 月格当前按实际周数收口，只渲染当月需要的 5 行或 6 行，不再多出底部整行空白占位
@@ -182,7 +182,7 @@
   - 当天整合日志状态已经进入 calendar 读模型；月/周只显示轻 marker，日视图显示紧凑入口条，正文编辑仍回访谈页
   - month / week / day 三个视图当前已经切到暖色 calendar 工作台：状态五态、维度单字 badge `悦 / 实 / 思 / 改 / 谢`、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一；读屏仍保留完整维度名
   - calendar 文案已经切到工作台短句语气；英文眉题已清掉，`aria-busy`、loading/error inline 语义、焦点态和主要 CTA 的可访问名称已补齐
-  - `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算
+  - `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算，但不再套独立中区外框
   - `mode=daily-journal` 深链只打开当天整合日志主区，不会启动或创建新的维度访谈 session；点击“回到访谈”会移除 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 

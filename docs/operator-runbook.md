@@ -381,7 +381,7 @@ npm run dev
   - `calendar.service.ts`
   - `GET /api/calendar/day|week|month`
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
-  - `SiteHeader` 当前是全宽暖色工具栏，中区是唯一的全局 calendar 导航入口，承接视图切换、前后翻段、回到今天和实时摘要
+  - `SiteHeader` 当前是全宽暖色工具栏，中区是唯一的全局 calendar 导航入口，承接视图切换、前后翻段、回到今天和实时摘要；calendar toolbar 直接平铺在 header 里，不再套内层方框
   - calendar 正文里已经没有旧的翻月 / 翻周 / 翻日按钮
   - 页面本身默认不应长滚动；超量内容应进入 pane 内局部滚动
   - calendar 文案已切到工作台短句语气，英文眉题已删除
