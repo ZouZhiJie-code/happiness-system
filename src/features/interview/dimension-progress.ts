@@ -2,6 +2,7 @@ import { getInterviewDimensionDefinition } from "@/features/interview/dimension-
 import type { InterviewEventRecord, InterviewSessionRecord, InterviewSnapshotData, JoySnapshot } from "@/types/interview";
 
 type DimensionProgressEventLike = {
+  id?: InterviewEventRecord["id"];
   status: InterviewEventRecord["status"];
   snapshot: JoySnapshot | null;
   snapshotData?: InterviewSnapshotData | null;
@@ -12,6 +13,7 @@ export interface DimensionProgressSessionLike {
   dimension?: InterviewSessionRecord["dimension"];
   status: InterviewSessionRecord["status"];
   completedAt?: string | null;
+  activeEventId?: InterviewSessionRecord["activeEventId"];
   turnCount: number;
   snapshot: JoySnapshot | null;
   snapshotData?: InterviewSnapshotData | null;
@@ -65,13 +67,7 @@ function getSnapshotProgressScore(
 }
 
 function getEventProgressScore(dimension: InterviewSessionRecord["dimension"], event: DimensionProgressEventLike) {
-  let score = getSnapshotProgressScore(dimension, event.snapshotData, event.snapshot);
-
-  if (event.status === "ready_for_choice" || event.status === "completed") {
-    score = Math.max(score, 90);
-  }
-
-  return score;
+  return getSnapshotProgressScore(dimension, event.snapshotData, event.snapshot);
 }
 
 function getProgressState(percentage: number): DimensionProgressSummary["state"] {
@@ -101,6 +97,22 @@ function isBoundaryPendingDecision(session: Pick<DimensionProgressSessionLike, "
   );
 }
 
+function getCurrentProgressEvent(session: DimensionProgressSessionLike): DimensionProgressEventLike {
+  const activeEvent = session.activeEventId
+    ? session.events.find((event) => event.id === session.activeEventId)
+    : undefined;
+
+  return (
+    activeEvent ??
+    session.events.find((event) => event.status !== "completed") ??
+    session.events[session.events.length - 1] ?? {
+      status: "active" as const,
+      snapshot: session.snapshot,
+      snapshotData: session.snapshotData
+    }
+  );
+}
+
 export function getDimensionProgressSummary(
   session: DimensionProgressSessionLike | null | undefined
 ): DimensionProgressSummary {
@@ -114,26 +126,12 @@ export function getDimensionProgressSummary(
     };
   }
 
-  let percentage = 0;
-  const progressEvents = session.events.length
-    ? session.events
-    : [
-        {
-          status: "active" as const,
-          snapshot: session.snapshot,
-          snapshotData: session.snapshotData
-        }
-      ];
-
-  for (const event of progressEvents) {
-    percentage = Math.max(percentage, getEventProgressScore(session.dimension ?? "joy", event));
-  }
-
-  percentage = Math.max(percentage, getSnapshotProgressScore(session.dimension ?? "joy", session.snapshotData, session.snapshot));
+  const currentEvent = getCurrentProgressEvent(session);
+  let percentage = getEventProgressScore(session.dimension ?? "joy", currentEvent);
 
   const hasBoundaryPendingDecision = isBoundaryPendingDecision(session);
 
-  if (!hasBoundaryPendingDecision && (session.draftGenerationUnlocked || session.pendingDecision?.kind === "event_complete")) {
+  if (!hasBoundaryPendingDecision && currentEvent.status === "ready_for_choice" && session.pendingDecision?.kind === "event_complete") {
     percentage = Math.max(percentage, 90);
   }
 
@@ -144,6 +142,9 @@ export function getDimensionProgressSummary(
   if (session.journalEntry?.status === "saved") {
     percentage = 100;
   } else if (hasBoundaryPendingDecision) {
+    if (currentEvent.status === "ready_for_choice") {
+      percentage = Math.max(percentage, 1);
+    }
     percentage = Math.min(percentage, 88);
   }
 

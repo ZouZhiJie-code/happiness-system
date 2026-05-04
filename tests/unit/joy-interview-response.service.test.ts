@@ -244,7 +244,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("开心日志线索");
   });
 
-  it.each(["先这样吧，直接生成日志就行。", "总结日志"])(
+  it.each(["先这样吧，直接生成日志就行。", "总结日志", "不重要，生成日志吧", "帮我整理日志"])(
     "offers a partial draft choice when joy core is clear and the user requests wrap-up: %s",
     async (userMessage) => {
       const partialSnapshot: JoySnapshot = {
@@ -780,7 +780,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
-  it("returns a low-pressure boundary choice for reflection when there is no concrete insight", async () => {
+  it("returns a low-pressure boundary choice when the user requests a log before reflection has concrete insight", async () => {
     const insufficientReflectionSnapshot: JoySnapshot = {
       event: null,
       feeling: null,
@@ -820,7 +820,7 @@ describe("prepareJoyInterviewResponse", () => {
     const result = await prepareJoyInterviewResponse({
       action: "reply",
       sessionId: "session-ready",
-      userMessage: "今天想了很多，不想聊了。",
+      userMessage: "生成日志吧。",
       inputMode: "text"
     });
 

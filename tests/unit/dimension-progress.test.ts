@@ -104,6 +104,13 @@ describe("getDimensionProgressSummary", () => {
   it("reaches 90% when the current event is ready for the user to choose next steps", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({
+        pendingDecision: {
+          kind: "event_complete",
+          eventId: "event-1",
+          eventSequence: 1,
+          completionMode: "complete",
+          actions: ["continue_current_event", "next_event", "generate_draft"]
+        },
         events: [
           {
             status: "ready_for_choice",
@@ -193,7 +200,7 @@ describe("getDimensionProgressSummary", () => {
     );
 
     expect(summary.percentage).toBeLessThan(90);
-    expect(summary.percentage).toBe(88);
+    expect(summary.percentage).toBe(60);
     expect(summary.state).toBe("active");
   });
 
@@ -226,7 +233,7 @@ describe("getDimensionProgressSummary", () => {
     expect(summary.state).toBe("active");
   });
 
-  it("keeps the dimension at 90% when a new event starts after a completed one", () => {
+  it("resets to the current event score when a new event starts after a completed one", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({
         events: [
@@ -249,8 +256,64 @@ describe("getDimensionProgressSummary", () => {
       })
     );
 
-    expect(summary.percentage).toBe(90);
-    expect(summary.state).toBe("ready");
+    expect(summary.percentage).toBe(0);
+    expect(summary.state).toBe("empty");
+  });
+
+  it("does not promote an active event to 90% from a historical draft choice", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "reflection",
+        draftGenerationUnlocked: true,
+        events: [
+          {
+            status: "active",
+            snapshot: {
+              ...emptySnapshot,
+              event: "面临毕业就业节点的选择",
+              whyItMattered: "意识到看起来合适是外部视角，真正想要的生活需要亲身判断",
+              happinessType: "判断校准型",
+              selfPattern: "过去所有事情都容易依赖外部标准"
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBe(82);
+    expect(summary.state).toBe("active");
+  });
+
+  it("uses activeEventId before falling back to the first non-completed event", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        activeEventId: "event-2",
+        events: [
+          {
+            id: "event-1",
+            status: "ready_for_choice",
+            snapshot: {
+              ...emptySnapshot,
+              event: "旧片段",
+              feeling: "开心",
+              whyItMattered: "旧片段已经可以整理",
+              selfPattern: "旧片段的稳定线索"
+            }
+          },
+          {
+            id: "event-2",
+            status: "active",
+            snapshot: {
+              ...emptySnapshot,
+              event: "当前新片段"
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBe(24);
+    expect(summary.state).toBe("active");
   });
 
   it("keeps fulfillment at 28% when only the scene and feeling exist without progress evidence", () => {

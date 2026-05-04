@@ -167,6 +167,7 @@ function SiteHeaderInner() {
     Partial<Record<InterviewDimension, InterviewSessionRecord | null>>
   >({});
   const {
+    activeEventId,
     bootState,
     dimension,
     draftGenerationBusy,
@@ -214,6 +215,7 @@ function SiteHeaderInner() {
       ? {
           dimension: activeDimension,
           status,
+          activeEventId,
           turnCount,
           snapshot,
           snapshotData,
