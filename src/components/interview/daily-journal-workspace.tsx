@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
+import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
 import { MAX_DAILY_JOURNAL_CONTENT_LENGTH } from "@/features/daily-journal/schema";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import type { DailyJournalEntryRecord } from "@/types/interview";
@@ -107,26 +107,13 @@ function DailyJournalGenerationCard({
   const meta = getDailyJournalGenerationPhaseMeta(phase, mode);
 
   return (
-    <div
-      className="rounded-[26px] border border-[rgba(172,128,83,0.16)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(240,226,202,0.94))] p-6 shadow-[0_20px_46px_rgba(124,83,43,0.1)]"
+    <JournalGenerationStatus
+      label={meta.label}
+      description={meta.description}
+      progress={progress}
+      variant="full"
       data-testid="daily-journal-generation-card"
-    >
-      <JournalGrowthTree progress={progress} />
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
-          <p className="text-[0.78rem] tracking-[0.16em] text-[#8d6540]">{meta.label}</p>
-        </div>
-        <span className="text-[0.74rem] text-[#9f7a54]">{Math.round(progress)}%</span>
-      </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(188,148,103,0.16)]">
-        <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(197,143,87,0.88),rgba(223,184,131,0.98),rgba(197,143,87,0.88))] transition-[width] duration-700 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <p className="mt-4 text-sm leading-7 text-[#5d5042]">{meta.description}</p>
-    </div>
+    />
   );
 }
 

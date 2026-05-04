@@ -18,6 +18,7 @@ import {
   interviewDimensions,
   interviewLeaveConfirmMessage,
   normalizeInterviewDimension,
+  type StoredInterviewSessionCacheEntry,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
 import {
@@ -194,6 +195,7 @@ function SiteHeaderInner() {
   const isInterviewPage = pathname === "/interview";
   const isCalendarPage = pathname === "/calendar";
   const isAnalysisPage = pathname === "/analysis";
+  const todayEntryDate = getTodayEntryDate();
   const explicitEntryDate = searchParams.get("entryDate");
   const headerEntryDate = explicitEntryDate ?? (workspaceMode === "daily_journal" ? sessionEntryDate : null);
   const activeDimension = isInterviewPage
@@ -310,7 +312,11 @@ function SiteHeaderInner() {
     const cachedEntries = interviewDimensions
       .filter((item) => item !== activeDimension)
       .map((item) => [item, getStoredInterviewSessionEntry(item)] as const)
-      .filter((entry): entry is readonly [InterviewDimension, { sessionId: string; expiresAt: string }] => Boolean(entry[1]));
+      .filter(
+        (
+          entry
+        ): entry is readonly [InterviewDimension, StoredInterviewSessionCacheEntry] => Boolean(entry[1])
+      );
 
     if (cachedEntries.length === 0) {
       setCachedDimensionSessions({});
@@ -320,6 +326,12 @@ function SiteHeaderInner() {
     async function loadCachedDimensionSessions() {
       const nextEntries = await Promise.all(
         cachedEntries.map(async ([item, entry]) => {
+          if (entry.entryDate && entry.entryDate !== todayEntryDate) {
+            clearStoredInterviewSessionId(item);
+
+            return [item, null] as const;
+          }
+
           try {
             const response = await fetch(`/api/interview/session/${entry.sessionId}`, {
               cache: "no-store"
@@ -338,6 +350,12 @@ function SiteHeaderInner() {
             const session = (await response.json()) as InterviewSessionRecord;
 
             if (session.dimension !== item) {
+              clearStoredInterviewSessionId(item);
+
+              return [item, null] as const;
+            }
+
+            if (session.entryDate !== todayEntryDate) {
               clearStoredInterviewSessionId(item);
 
               return [item, null] as const;
@@ -367,7 +385,7 @@ function SiteHeaderInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, status]);
+  }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, status, todayEntryDate]);
 
   const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
     if (item === activeDimension && shouldUseLiveSelectedProgress && activeProgressSession) {
@@ -412,7 +430,7 @@ function SiteHeaderInner() {
     const confirmed = window.confirm(interviewLeaveConfirmMessage);
 
     if (confirmed && sessionId) {
-      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId);
+      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId, sessionEntryDate);
     }
 
     return confirmed;

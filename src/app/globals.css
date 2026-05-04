@@ -275,6 +275,116 @@ body::after {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
+.journal-growth-breathe {
+  transform-origin: center;
+  animation: journal-growth-breathe 3.8s ease-in-out infinite;
+}
+
+.journal-growth-bob {
+  animation: journal-growth-bob 3.2s ease-in-out infinite;
+}
+
+.journal-growth-sway {
+  animation: journal-growth-sway 4.8s ease-in-out infinite;
+}
+
+.journal-growth-float {
+  animation: journal-growth-float 4.1s ease-in-out infinite;
+}
+
+.journal-growth-float-slow {
+  animation: journal-growth-float-slow 5.6s ease-in-out infinite;
+}
+
+.journal-growth-sheen {
+  animation: journal-growth-sheen 3s ease-in-out infinite;
+}
+
+@keyframes journal-growth-breathe {
+  0%,
+  100% {
+    transform: scale(0.98);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+@keyframes journal-growth-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes journal-growth-sway {
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+@keyframes journal-growth-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: translate3d(-1px, -4px, 0);
+    opacity: 0.85;
+  }
+}
+
+@keyframes journal-growth-float-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.38;
+  }
+
+  50% {
+    transform: translate3d(1px, -5px, 0);
+    opacity: 0.75;
+  }
+}
+
+@keyframes journal-growth-sheen {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scaleX(0.92);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journal-growth-breathe,
+  .journal-growth-bob,
+  .journal-growth-sway,
+  .journal-growth-float,
+  .journal-growth-float-slow,
+  .journal-growth-sheen {
+    animation: none;
+  }
+}
+
 .wood-board {
   position: relative;
   overflow: hidden;

@@ -7,11 +7,11 @@
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
-- 五个维度的 stitched 多事件日志现在都共用“prompt 输入与质检输入一致”的 supporting-scene 约束：fallback draft 仍会保留主事件外最多 `2` 个 supporting moments，而 `missing_supporting_scene_anchor` 只校验本次 AI prompt 实际看到的 supporting scenes，不再因为窗口外事件把 minor refresh 误打回 fallback。
+- 五个维度的 stitched 多事件日志现在都共用“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 minor refresh 静默丢掉后续来源事件。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
-- 当天整合日志已经落地：访谈页顶部【完整日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集；打开或生成完整日志时会显示与单维度日志一致的阶段进度，并叠加小树从树苗长成大树的动效。
+- 当天整合日志已经落地：访谈页顶部【完整日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集；打开或生成完整日志时会显示与单维度日志一致的共享阶段进度、细进度轨和书页生长动效。
 - 当天整合日志的来源集合现在会随同日新增 `saved` 维度日志或已有来源更新时间变化而进入 `stale`；来源签名按“同一天每个维度最新一篇 `saved` 日志”计算，重新生成后章节数会与当天真实 `saved` 维度集合重新对齐。
 - 完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
@@ -177,7 +177,7 @@ npx prisma db push
 - reflection 现在以 `trigger / insight / viewpointShift` 为核心槽位，完整模式收束“判断线索”，部分模式只停在“这次片段带来的当前理解”。
 - improvement 现在的内部数据结构已扩展为 `situation / improvementTrack / stateAssessment / frictionPoint / repeatCondition / controllableFactor / nextAttempt / successSignal / improvementType / feeling / tags`，AI 抽取和 fallback 抽取都会区分 `repeat_good` 与 `avoid_bad`；如果用户只分清了改进轨道但还没有说清条件或卡点，AI 抽取会先保留 `improvementTrack`，把 `repeatCondition / frictionPoint` 留给下一轮追问，不把中间态误判成可完成材料；访谈提问已按“具体情境 -> 改进轨道 -> 关键条件/卡点 -> 可控小调整 -> 下次最小动作/成功信号”推进，并避免建议、计划和自责归因口吻；日志成稿已接入正文生成、质量门、fallback draft 和标题治理，标题候选会优先收束为 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类语义短标题。
 - gratitude 现在的内部数据结构已扩展为 `gratitudeMoment / gratitudeTarget / kindAction / seenNeed / innerEffect / gratitudeReason / gratitudeType / relationshipSignal / reciprocityHint / tags`，完整模式收束“关系线索”，partial 模式只停在“这份感谢为什么重要”，并禁止感谢信模板、道德负债感和强行回馈任务。
-- 五个维度在多事件 `stitched_moments` 场景下，都共享 supporting-scene 质量门；但校验范围已经收束到本次 AI prompt 实际看到的 `promptEvents`，不会因为窗口外的 `supportingMoments` 把 `refresh_minor` 误判为缺少副事件。若 AI draft 仍被拒收，fallback draft 会保留主事件外最多 `2` 个 supporting moments，而不是退化成只剩主事件。
+- 五个维度在多事件 `stitched_moments` 场景下，都共享 supporting-scene 质量门；当前 `eventWindow` 只裁剪 `events` 与消息窗口，完整 `draftBrief` 里的 supporting moments 不会被截断，因此 `refresh_minor` 不会静默丢掉窗口外来源事件。若 AI draft 仍被拒收，fallback draft 会保留主事件外最多 `2` 个 supporting moments，而不是退化成只剩主事件。
 - 如果用户明确拒绝继续提炼，或用“总结日志 / 整理成日志 / 帮我总结”等自然语言要求收束，五个维度都允许在核心材料成立时先生成当前版本日志。
 - 如果用户拒绝继续但材料不足，系统会停止追问细节，提供“只补一句 / 换一个片段 / 先退出”。
 - 如果访谈提交失败，前端会展示结构化错误原因、处理建议、错误码和 requestId；例如 `MESSAGE_TOO_LONG` 会提示拆成两段发送，服务不可用会提示确认服务运行后刷新。

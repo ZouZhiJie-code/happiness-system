@@ -9,14 +9,15 @@
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
-- 五个维度的 stitched 多事件日志现在都共用 supporting-scene 约束：fallback draft 仍会保留主事件外最多 `2` 个 supporting moments；`missing_supporting_scene_anchor` 会随本次 AI prompt 的 `eventWindow` 缩放，只校验模型实际看到的 supporting scenes，不会因为窗口外事件把 `refresh_minor` 误打回 fallback。
+- 五个维度的 stitched 多事件日志现在都共用“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 `refresh_minor` 静默丢掉后续来源事件。
 - 五个维度的日志标题已经统一经过语义短标题治理，后端不再把长事件句机械截断成标题。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
+- 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；只有当前正在显示的 inline choice card 会替代对应那一条消息，避免重复展示。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
-- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【完整日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集；完整日志打开/生成与单维度日志生成都显示阶段进度条，并叠加小树从树苗长成大树的动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【完整日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集；完整日志打开/生成与单维度日志生成都显示共享阶段进度、细进度轨和书页生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
 - 当天整合日志的来源集合现在会随着同日新增 `saved` 维度日志、来源维度日志更新时间变化或来源不再是 `saved` 进入 `stale`；来源签名按“同一天每个维度最新一篇 `saved` 日志”计算，重新生成后章节集合会与当天真实 `saved` 维度重新对齐。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 `/api/calendar/day` 的 day snapshot 为准。只要某个维度当天已经有 `saved` 日志，胶囊会优先显示 `已完成`，即使同一天还有继续中的 session。

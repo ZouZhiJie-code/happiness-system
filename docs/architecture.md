@@ -456,7 +456,7 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 - 没有已保存维度日志时返回 `DAILY_JOURNAL_SOURCE_EMPTY`
 - 不读取未保存草稿，不直接读取访谈消息
 - 不生成空章节，不提示缺失维度
-- 访谈页顶部【完整日志】按钮把主工作区切到当天日志模式，不弹层、不跳转；打开或生成当天完整日志时显示阶段进度和小树生长动效
+- 访谈页顶部【完整日志】按钮把主工作区切到当天日志模式，不弹层、不跳转；打开或生成当天完整日志时显示共享阶段进度、细进度轨和书页生长动效
 - `mode=daily-journal` 深链只打开当天日志主区；如果页面尚未 hydrate 访谈 session，也不会调用 `/api/interview/session/start` 创建新的 joy session
 - 从 `mode=daily-journal` 点击“回到访谈”时，前端会先通过 `DailyJournalWorkspace.flushPendingEdits()` 保存未触发 autosave 的草稿编辑，再移除 URL 里的 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
 - 从维度日志 pane 切到当天日志主区前，前端会先复用日志 pane 的关闭路径：保存未暂存编辑，或取消正在生成的 draft

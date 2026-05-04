@@ -89,17 +89,19 @@ export function getInterviewDimensionMeta(dimension: InterviewDimension) {
   return dimensionMetaMap[dimension];
 }
 
-interface StoredInterviewSessionCacheEntry {
+export interface StoredInterviewSessionCacheEntry {
   sessionId: string;
   expiresAt: string;
+  entryDate?: string | null;
 }
 
 type StoredInterviewSessionCacheMap = Partial<Record<InterviewDimension, StoredInterviewSessionCacheEntry | string>>;
 
-function buildStoredSessionEntry(sessionId: string, now = Date.now()): StoredInterviewSessionCacheEntry {
+function buildStoredSessionEntry(sessionId: string, entryDate?: string | null, now = Date.now()): StoredInterviewSessionCacheEntry {
   return {
     sessionId,
-    expiresAt: new Date(now + interviewSessionCacheTtlMs).toISOString()
+    expiresAt: new Date(now + interviewSessionCacheTtlMs).toISOString(),
+    entryDate: entryDate ?? null
   };
 }
 
@@ -109,14 +111,17 @@ function normalizeStoredSessionEntry(entry: StoredInterviewSessionCacheEntry | s
   }
 
   if (typeof entry === "string") {
-    return buildStoredSessionEntry(entry);
+    return buildStoredSessionEntry(entry, null);
   }
 
   if (!entry.sessionId || !entry.expiresAt) {
     return null;
   }
 
-  return entry;
+  return {
+    ...entry,
+    entryDate: entry.entryDate ?? null
+  };
 }
 
 function readStoredSessionMap() {
@@ -156,22 +161,23 @@ export function getStoredInterviewSessionId(dimension: InterviewDimension) {
   return getStoredInterviewSessionEntry(dimension)?.sessionId ?? null;
 }
 
-export function setStoredInterviewSessionId(dimension: InterviewDimension, sessionId: string) {
+export function setStoredInterviewSessionId(dimension: InterviewDimension, sessionId: string, entryDate?: string | null) {
   if (typeof window === "undefined") return;
 
   const nextMap = {
     ...readStoredSessionMap(),
-    [dimension]: buildStoredSessionEntry(sessionId)
+    [dimension]: buildStoredSessionEntry(sessionId, entryDate)
   };
 
   window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
 }
 
-export function touchStoredInterviewSessionId(dimension: InterviewDimension, sessionId?: string) {
+export function touchStoredInterviewSessionId(dimension: InterviewDimension, sessionId?: string, entryDate?: string | null) {
   if (typeof window === "undefined") return;
 
   const existingEntry = getStoredInterviewSessionEntry(dimension);
   const nextSessionId = sessionId ?? existingEntry?.sessionId;
+  const nextEntryDate = entryDate ?? existingEntry?.entryDate ?? null;
 
   if (!nextSessionId) {
     return;
@@ -179,7 +185,7 @@ export function touchStoredInterviewSessionId(dimension: InterviewDimension, ses
 
   const nextMap = {
     ...readStoredSessionMap(),
-    [dimension]: buildStoredSessionEntry(nextSessionId)
+    [dimension]: buildStoredSessionEntry(nextSessionId, nextEntryDate)
   };
 
   window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
