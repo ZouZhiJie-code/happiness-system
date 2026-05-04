@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db/prisma";
-import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
+import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { CalendarDailyJournalSource, CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
 
 const DEMO_USER_ID = "local-demo-user";
@@ -18,8 +18,7 @@ function resolveSessionUpdatedAt(session: {
 }
 
 export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesByDateRangeInput) {
-  const startAt = parseEntryDateInput(input.startDate);
-  const endAt = parseEntryDateInput(input.endDate);
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
 
   const [sessions, entries, dailyJournals] = await Promise.all([
     prisma.interviewSession.findMany({
@@ -27,7 +26,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         userId: DEMO_USER_ID,
         entryDate: {
           gte: startAt,
-          lte: endAt
+          lt: endExclusive
         }
       },
       select: {
@@ -47,7 +46,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         userId: DEMO_USER_ID,
         date: {
           gte: startAt,
-          lte: endAt
+          lt: endExclusive
         }
       },
       select: {
@@ -71,7 +70,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         userId: DEMO_USER_ID,
         date: {
           gte: startAt,
-          lte: endAt
+          lt: endExclusive
         }
       },
       select: {

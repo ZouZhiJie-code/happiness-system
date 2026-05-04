@@ -8,6 +8,7 @@ import clsx from "clsx";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
+import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
   clearStoredInterviewSessionId,
@@ -106,11 +107,60 @@ function ProgressRing({
   );
 }
 
+type InterviewDimensionBarStatus = {
+  statusLabel: "未开始" | "进行中" | "已整理" | "已完成";
+  shouldShowRing: boolean;
+  percentage: number;
+};
+
+const emptyInterviewDimensionBarStatus: InterviewDimensionBarStatus = {
+  statusLabel: "未开始",
+  shouldShowRing: false,
+  percentage: 0
+};
+
+function mapCalendarDimensionStatusToHeaderStatus(
+  dimension: CalendarDayRecord["dimensions"][number]
+): InterviewDimensionBarStatus {
+  if (dimension.hasSavedEntry) {
+    return {
+      statusLabel: "已完成",
+      shouldShowRing: false,
+      percentage: 100
+    };
+  }
+
+  if (dimension.hasDraftEntry) {
+    return {
+      statusLabel: "已整理",
+      shouldShowRing: false,
+      percentage: 96
+    };
+  }
+
+  if (dimension.hasActiveSession) {
+    return {
+      statusLabel: "进行中",
+      shouldShowRing: true,
+      percentage: 50
+    };
+  }
+
+  return {
+    statusLabel: "未开始",
+    shouldShowRing: false,
+    percentage: 0
+  };
+}
+
 function SiteHeaderInner() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasNormalizedInterviewUrlRef = useRef(false);
+  const [entryDateDimensionStatuses, setEntryDateDimensionStatuses] = useState<
+    Partial<Record<InterviewDimension, InterviewDimensionBarStatus>> | null
+  >(null);
   const [cachedDimensionSessions, setCachedDimensionSessions] = useState<
     Partial<Record<InterviewDimension, InterviewSessionRecord | null>>
   >({});
@@ -134,7 +184,8 @@ function SiteHeaderInner() {
     snapshot,
     snapshotData,
     status,
-    turnCount
+    turnCount,
+    workspaceMode
   } = useInterviewStore();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -143,6 +194,8 @@ function SiteHeaderInner() {
   const isInterviewPage = pathname === "/interview";
   const isCalendarPage = pathname === "/calendar";
   const isAnalysisPage = pathname === "/analysis";
+  const explicitEntryDate = searchParams.get("entryDate");
+  const headerEntryDate = explicitEntryDate ?? (workspaceMode === "daily_journal" ? sessionEntryDate : null);
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
     : dimension;
@@ -167,6 +220,9 @@ function SiteHeaderInner() {
           journalEntry
         }
       : null;
+  const shouldUseLiveSelectedProgress = Boolean(
+    workspaceMode === "interview" && sessionDimension === activeDimension && activeProgressSession
+  );
   const isSelectedDimensionRestoring = isInterviewPage && bootState === "restoring" && !activeProgressSession;
 
   useEffect(() => {
@@ -205,9 +261,50 @@ function SiteHeaderInner() {
 
   useEffect(() => {
     if (!isInterviewPage) {
+      setEntryDateDimensionStatuses(null);
       setCachedDimensionSessions({});
       return;
     }
+
+    if (headerEntryDate) {
+      let cancelled = false;
+
+      void fetch(`/api/calendar/day?date=${headerEntryDate}`, {
+        cache: "no-store"
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("CALENDAR_DAY_QUERY_FAILED");
+          }
+
+          return (await response.json()) as CalendarDayRecord;
+        })
+        .then((dayRecord) => {
+          if (cancelled) {
+            return;
+          }
+
+          setEntryDateDimensionStatuses(
+            dayRecord.dimensions.reduce<Partial<Record<InterviewDimension, InterviewDimensionBarStatus>>>((accumulator, item) => {
+              accumulator[item.dimension] = mapCalendarDimensionStatusToHeaderStatus(item);
+              return accumulator;
+            }, {})
+          );
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setEntryDateDimensionStatuses(null);
+          }
+        });
+
+      setCachedDimensionSessions({});
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setEntryDateDimensionStatuses(null);
 
     let cancelled = false;
     const cachedEntries = interviewDimensions
@@ -270,19 +367,39 @@ function SiteHeaderInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeDimension, isInterviewPage]);
+  }, [activeDimension, headerEntryDate, isInterviewPage]);
 
   const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
-    const sourceSession = item === activeDimension ? activeProgressSession : cachedDimensionSessions[item] ?? null;
-    accumulator[item] = getDimensionProgressSummary(sourceSession);
+    if (item === activeDimension && shouldUseLiveSelectedProgress && activeProgressSession) {
+      const progressSummary = getDimensionProgressSummary(activeProgressSession);
+      accumulator[item] = {
+        statusLabel: progressSummary.statusLabel,
+        shouldShowRing: progressSummary.shouldShowRing,
+        percentage: progressSummary.percentage
+      };
+      return accumulator;
+    }
+
+    if (headerEntryDate) {
+      accumulator[item] = entryDateDimensionStatuses?.[item] ?? emptyInterviewDimensionBarStatus;
+      return accumulator;
+    }
+
+    const sourceSession = cachedDimensionSessions[item] ?? null;
+    const progressSummary = getDimensionProgressSummary(sourceSession);
+    accumulator[item] = {
+      statusLabel: progressSummary.statusLabel,
+      shouldShowRing: progressSummary.shouldShowRing,
+      percentage: progressSummary.percentage
+    };
 
     return accumulator;
-  }, {} as Record<InterviewDimension, ReturnType<typeof getDimensionProgressSummary>>);
+  }, {} as Record<InterviewDimension, InterviewDimensionBarStatus>);
   const selectedProgressSummary = dimensionProgressMap[activeDimension];
   const selectedProgressLabel =
     isSelectedDimensionRestoring
       ? "继续中"
-      : selectedProgressSummary.displayState === "in_progress" && turnCount > 0
+      : shouldUseLiveSelectedProgress && selectedProgressSummary.shouldShowRing && turnCount > 0
         ? `第 ${turnCount} 轮`
         : selectedProgressSummary.statusLabel;
   const shouldShowSelectedProgressPod = selectedProgressSummary.shouldShowRing || isSelectedDimensionRestoring;
@@ -495,9 +612,9 @@ function SiteHeaderInner() {
                   type="button"
                   onClick={handleDailyJournalClick}
                   className="shrink-0 rounded-full border border-[rgba(171,118,64,0.2)] bg-[rgba(255,249,239,0.88)] px-3 py-1.5 text-[12px] text-[#604529] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.98)]"
-                  aria-label="查看当天整合日志"
+                  aria-label="查看完整日志"
                 >
-                  日志
+                  完整日志
                 </button>
                 <button
                   type="button"

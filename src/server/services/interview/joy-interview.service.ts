@@ -73,6 +73,7 @@ type InterviewRespondInput =
 type StreamingPhase = "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
 type CanonicalInterviewAction = "reply" | "continue_current_event" | "next_event";
+const SUMMARY_STREAM_CHUNK_SIZE = 22;
 type InterviewDecisionProgressData =
   | {
       kind: "event_complete";
@@ -596,6 +597,16 @@ function trimSummaryField(value: string | null, maxLength = 40) {
   return normalized.slice(0, maxLength);
 }
 
+function splitStreamingText(text: string, chunkSize = SUMMARY_STREAM_CHUNK_SIZE) {
+  const chunks: string[] = [];
+
+  for (let index = 0; index < text.length; index += chunkSize) {
+    chunks.push(text.slice(index, index + chunkSize));
+  }
+
+  return chunks;
+}
+
 function buildThinkingSummaryLead(snapshot: JoySnapshot) {
   const joyTrack = getJoyTrack(snapshot);
   const manualClue = trimSummaryField(getManualClue(snapshot), 42);
@@ -606,11 +617,11 @@ function buildThinkingSummaryLead(snapshot: JoySnapshot) {
   const joyMoment = trimSummaryField(getJoyMoment(snapshot), 24);
 
   if (joyTrack === "delight_track" && delightSignature) {
-    return "这条轻快乐线索开始成形：什么样的内容会把状态带动起来";
+    return `这份开心被理解为一种会被“${delightSignature}”带起的轻快乐`;
   }
 
   if (manualClue) {
-    return `这类开心正在沉淀成“${manualClue}”这样的个人线索`;
+    return `这份开心的分量落在“${manualClue}”这条个人线索`;
   }
 
   if (meaningNeed && joySource) {
@@ -619,8 +630,8 @@ function buildThinkingSummaryLead(snapshot: JoySnapshot) {
 
   if (joySource) {
     return joyTrack === "delight_track"
-      ? `这一刻被带活的原因，正在落到“${joySource}”`
-      : `这一刻真正有感觉的地方，正在落到“${joySource}”`;
+      ? `这种开心被理解为由“${joySource}”把状态带轻`
+      : `真正让这件事有开心感的地方落在“${joySource}”`;
   }
 
   if (stateShift && joyMoment) {
@@ -632,10 +643,10 @@ function buildThinkingSummaryLead(snapshot: JoySnapshot) {
   }
 
   if (joyMoment) {
-    return `“${joyMoment}”是当前最有感觉的片段`;
+    return `“${joyMoment}”是当前开心感的入口`;
   }
 
-  return "当前片段有继续展开的价值";
+  return "这个开心片段已经出现，接下来要把状态被带动的原因抓稳";
 }
 
 function buildFulfillmentThinkingSummaryLead(snapshot: JoySnapshot) {
@@ -674,7 +685,7 @@ function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
   const viewpointShift = trimSummaryField(snapshot.selfPattern, 48);
 
   if (insight && viewpointShift) {
-    return `这次思考的核心落在“${insight}”，也开始形成“${viewpointShift}”这条判断线索`;
+    return `这次思考已经从“${insight}”推进到“${viewpointShift}”这条判断线索`;
   }
 
   if (insight && trigger) {
@@ -682,7 +693,7 @@ function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
   }
 
   if (insight) {
-    return `这次思考已经出现一个可回看的新理解：${insight}`;
+    return `这次思考的核心理解落在“${insight}”`;
   }
 
   if (trigger && reflectionType) {
@@ -690,10 +701,52 @@ function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
   }
 
   if (trigger) {
-    return `“${trigger}”是这次思考的入口，接下来要看它改变了哪一层判断`;
+    return `“${trigger}”是触发思考的具体片段`;
   }
 
-  return "一个可能触发思考的片段已经出现，接下来要把具体证据抓稳";
+  return "这次思考已有入口，接下来要把新的理解和证据抓稳";
+}
+
+function buildImprovementThinkingSummaryLead(snapshot: JoySnapshot) {
+  const situation = trimSummaryField(snapshot.event, 34);
+  const repeatCondition = trimSummaryField(snapshot.repeatCondition ?? null, 44);
+  const frictionPoint = trimSummaryField(snapshot.frictionPoint ?? snapshot.whyItMattered, 44);
+  const controllableFactor = trimSummaryField(snapshot.controllableFactor ?? null, 42);
+  const nextAttempt = trimSummaryField(snapshot.nextAttempt ?? snapshot.selfPattern, 42);
+
+  if (nextAttempt && controllableFactor) {
+    return `这次改进已经落到“${controllableFactor}”，下一次小尝试是“${nextAttempt}”`;
+  }
+
+  if (frictionPoint && controllableFactor) {
+    return `卡点落在“${frictionPoint}”，可调整的小处开始指向“${controllableFactor}”`;
+  }
+
+  if (repeatCondition && controllableFactor) {
+    return `值得重复的条件落在“${repeatCondition}”，可控部分开始指向“${controllableFactor}”`;
+  }
+
+  if (snapshot.improvementTrack === "repeat_good" && repeatCondition) {
+    return `这次想重复的好状态，关键条件落在“${repeatCondition}”`;
+  }
+
+  if (snapshot.improvementTrack === "avoid_bad" && frictionPoint) {
+    return `这次想避免的坏状态，卡点落在“${frictionPoint}”`;
+  }
+
+  if (snapshot.improvementTrack === "repeat_good") {
+    return "这次改进更像在找一个值得重复的好状态";
+  }
+
+  if (snapshot.improvementTrack === "avoid_bad") {
+    return "这次改进更像在看一个下次想避开的具体卡点";
+  }
+
+  if (situation) {
+    return `“${situation}”是这次改进的具体情境`;
+  }
+
+  return "一个可复盘的改进情境已经出现，接下来要把关键条件或卡点抓稳";
 }
 
 function buildGratitudeThinkingSummaryLead(snapshot: JoySnapshot) {
@@ -771,6 +824,25 @@ function buildThinkingSummaryFocus(input: {
         return "，再把这层新理解收成以后判断类似事情时可参考的线索。";
       case "wrap_up":
         return "，最后确认这篇思考日志里最该留下的判断依据。";
+      case "finalize":
+        return "";
+    }
+  }
+
+  if (input.dimension === "improvement") {
+    if (input.assistantAction === "continue_current_event") {
+      return "，换个角度把关键条件、具体卡点和可控小调整说清。";
+    }
+
+    switch (input.stage) {
+      case "collect_event":
+        return "，先把需要复盘的具体情境说清。";
+      case "probe_reason":
+        return "，处理重点是分清这是值得重复的好状态，还是下次要避开的具体卡点。";
+      case "probe_pattern":
+        return "，再把它收成用户能调整的一小处和下一次最小动作。";
+      case "wrap_up":
+        return "，最后确认这篇改进日志里最该留下的可控线索。";
       case "finalize":
         return "";
     }
@@ -858,9 +930,11 @@ function buildFollowUpThinkingSummary(input: {
       ? buildFulfillmentThinkingSummaryLead(input.snapshot)
       : input.dimension === "reflection"
         ? buildReflectionThinkingSummaryLead(input.snapshot)
-        : input.dimension === "gratitude"
-          ? buildGratitudeThinkingSummaryLead(input.snapshot)
-          : buildThinkingSummaryLead(input.snapshot);
+        : input.dimension === "improvement"
+          ? buildImprovementThinkingSummaryLead(input.snapshot)
+          : input.dimension === "gratitude"
+            ? buildGratitudeThinkingSummaryLead(input.snapshot)
+            : buildThinkingSummaryLead(input.snapshot);
 
   return `${lead}${buildThinkingSummaryFocus(input)}`
     .replace(/\s+/g, " ")
@@ -1690,24 +1764,32 @@ export async function streamJoyInterviewResponse(
   }
 ) {
   const prepared = await prepareJoyInterviewResponseContext(input);
+  const emitText = async (target: StreamingTarget, text: string, chunkSize = SUMMARY_STREAM_CHUNK_SIZE) => {
+    for (const chunk of splitStreamingText(text, chunkSize)) {
+      await callbacks.onDelta({
+        target,
+        text: chunk
+      });
+    }
+  };
+  const emitRawDelta = async (target: StreamingTarget, text: string) => {
+    await callbacks.onDelta({
+      target,
+      text
+    });
+  };
 
   if ("assistantMessage" in prepared) {
     const visibleText = getVisibleAssistantText(prepared.assistantTurn);
 
     if (visibleText.firstBubble) {
       await callbacks.onPhase("summary");
-      await callbacks.onDelta({
-        target: "summary",
-        text: visibleText.firstBubble
-      });
+      await emitText("summary", visibleText.firstBubble);
     }
 
     if (visibleText.question || prepared.assistantMessage) {
       await callbacks.onPhase("question");
-      await callbacks.onDelta({
-        target: "question",
-        text: visibleText.question || prepared.assistantMessage
-      });
+      await emitText("question", visibleText.question || prepared.assistantMessage, 80);
     }
 
     return prepared;
@@ -1723,18 +1805,12 @@ export async function streamJoyInterviewResponse(
 
     if (visibleText.firstBubble) {
       await callbacks.onPhase("summary");
-      await callbacks.onDelta({
-        target: "summary",
-        text: visibleText.firstBubble
-      });
+      await emitText("summary", visibleText.firstBubble);
     }
 
     if (visibleText.question) {
       await callbacks.onPhase("question");
-      await callbacks.onDelta({
-        target: "question",
-        text: visibleText.question
-      });
+      await emitText("question", visibleText.question, 80);
     }
 
     return completeJoyInterviewResponse(resolvedPrepared);
@@ -1762,10 +1838,7 @@ export async function streamJoyInterviewResponse(
     }
 
     await emitPhase("summary");
-    await callbacks.onDelta({
-      target: "summary",
-      text: summary
-    });
+    await emitText("summary", summary);
     emittedSummary = summary;
     streamedText.summary = summary;
   };
@@ -1798,7 +1871,7 @@ export async function streamJoyInterviewResponse(
       }
 
       await emitPhase(delta.target);
-      await callbacks.onDelta(delta);
+      await emitRawDelta(delta.target, delta.text);
     }
   });
   const completedVisibleText = getVisibleAssistantText(completed.assistantTurn);
@@ -1816,10 +1889,7 @@ export async function streamJoyInterviewResponse(
     streamedText.question !== completedVisibleText.question
   ) {
     await emitPhase("question");
-    await callbacks.onDelta({
-      target: "question",
-      text: completedVisibleText.question.slice(streamedText.question.length)
-    });
+    await emitText("question", completedVisibleText.question.slice(streamedText.question.length), 80);
   }
 
   return completeJoyInterviewResponse(completed);

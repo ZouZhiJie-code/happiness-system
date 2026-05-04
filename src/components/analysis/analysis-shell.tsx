@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type {
@@ -27,6 +27,7 @@ import {
 } from "@/features/happiness-score/types";
 
 const sectionTabs: Array<{ key: AnalysisSectionKey; label: string; description: string }> = [
+  { key: "overview", label: "总览", description: "这个月先看什么" },
   { key: "score", label: "评分", description: "先看走势，再补今天和昨天" },
   { key: "rhythm", label: "节奏", description: "看清这个月密与空的分布" },
   { key: "insights", label: "五维", description: "找到本月最值得继续的一条线" }
@@ -353,9 +354,6 @@ function AnalysisSection({
   description,
   eyebrow,
   testId,
-  sectionKey,
-  active = false,
-  sectionRef,
   children
 }: {
   index: string;
@@ -363,18 +361,11 @@ function AnalysisSection({
   description: string;
   eyebrow: string;
   testId: string;
-  sectionKey?: string;
-  active?: boolean;
-  sectionRef?: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
 }) {
   return (
     <section
-      id={sectionKey ? `analysis-section-${sectionKey}` : undefined}
-      ref={sectionRef}
-      className={`scroll-mt-28 border-t pt-6 first:border-t-0 first:pt-0 ${
-        active ? "border-[rgba(132,88,46,0.28)]" : "border-[rgba(150,105,61,0.12)]"
-      }`}
+      className="border-t pt-6 first:border-t-0 first:pt-0 border-[rgba(150,105,61,0.12)]"
       data-testid={testId}
     >
       <div className="flex items-center gap-3">
@@ -392,11 +383,40 @@ function AnalysisSection({
 
 function SectionAnchorNav({
   currentSection,
-  onChange
+  onChange,
+  record
 }: {
   currentSection: AnalysisSectionKey;
   onChange: (section: AnalysisSectionKey) => void;
+  record: AnalysisMonthRecord | null;
 }) {
+  const todayHasScore = record ? record.scoreRecords.some((s) => s.date === record.editableDates[0]) : null;
+  const activeDayCount = record ? getActiveDays(record).length : null;
+  const featured = record ? getFeaturedDimension(record) : null;
+
+  function getChip(key: AnalysisSectionKey) {
+    if (!record) return null;
+
+    if (key === "score") {
+      if (record.editableDates.length === 0) return null;
+      return todayHasScore
+        ? { text: "已评", dotClass: "bg-[#5a7a56]" }
+        : { text: "今天未评", dotClass: "bg-[#b87a3a]" };
+    }
+
+    if (key === "rhythm") {
+      return activeDayCount !== null ? { text: `${activeDayCount}天`, dotClass: null } : null;
+    }
+
+    if (key === "insights") {
+      return featured
+        ? { text: getInterviewDimensionMeta(featured.dimension).label, dotClass: null }
+        : null;
+    }
+
+    return null;
+  }
+
   return (
     <nav
       className="sticky top-[calc(var(--site-header-viewport-offset)+0.75rem)] z-20 rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(248,233,204,0.92)] px-2 py-2 backdrop-blur-sm"
@@ -406,13 +426,14 @@ function SectionAnchorNav({
       <div className="flex flex-wrap items-center gap-2">
         {sectionTabs.map((tab) => {
           const active = tab.key === currentSection;
+          const chip = getChip(tab.key);
 
           return (
             <button
               key={tab.key}
               type="button"
               onClick={() => onChange(tab.key)}
-              className={`rounded-full px-3.5 py-2 text-[0.8rem] transition ${
+              className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-[0.8rem] transition ${
                 active
                   ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm"
                   : "bg-[rgba(255,252,246,0.78)] text-[#6b533d] hover:bg-[rgba(255,251,244,0.96)]"
@@ -420,6 +441,14 @@ function SectionAnchorNav({
               aria-pressed={active}
             >
               {tab.label}
+              {chip ? (
+                <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.68rem] ${
+                  active ? "bg-[rgba(255,250,241,0.2)] text-[rgba(255,250,241,0.88)]" : "bg-[rgba(111,74,38,0.08)] text-[#8b6c4d]"
+                }`}>
+                  {chip.dotClass ? <span className={`size-1.5 rounded-full ${chip.dotClass}`} /> : null}
+                  {chip.text}
+                </span>
+              ) : null}
             </button>
           );
         })}
@@ -432,72 +461,92 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
   const featured = record ? getFeaturedDimension(record) : null;
   const hottestDay = record ? getHighestDensityDay(record) : null;
   const todayEditableDate = record?.editableDates[0] ?? null;
+  const activeDayCount = record ? getActiveDays(record).length : 0;
+  const longestStreak = record ? buildLongestSpan(record.dailyCoverage, (day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved) : null;
+  const todayHasScore = record ? record.scoreRecords.some((s) => s.date === record.editableDates[0]) : false;
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]" data-testid="analysis-month-hero">
-      <article className="rounded-[28px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.92),rgba(243,228,199,0.82))] px-5 py-5 md:px-6">
-        <p className="archive-label">月度归档</p>
-        <h1 className="mt-3 text-balance font-display text-[2.1rem] leading-[0.94] text-[#2f2419] md:text-[2.6rem]">
+    <div data-testid="analysis-month-hero">
+      <div className="flex flex-wrap items-baseline gap-3">
+        <h1 className="font-display text-[1.8rem] leading-none text-[#2f2419] md:text-[2.2rem]">
           {formatAnalysisMonthLabel(month)}
         </h1>
-        <p className="mt-4 max-w-[44rem] text-pretty text-[0.98rem] leading-8 text-[#6a533c]">
+        <p className="max-w-[38rem] text-pretty text-[0.9rem] leading-7 text-[#6a533c]">
           {record
             ? buildOverviewNarrative(record)
-            : `${formatAnalysisMonthLabel(month)}先看评分、节奏和五维线索，再决定接下来去哪里继续看。`}
+            : "加载中..."}
         </p>
-        <div className="mt-5 flex flex-wrap gap-2.5">
-          <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="先看评分走势" />
-          <ActionLink href={buildAnalysisHref({ month, section: "rhythm" })} label="回到节奏分布" />
-          <ActionLink href={buildAnalysisHref({ month, section: "insights" })} label="查看五维主线" />
-        </div>
-      </article>
+      </div>
 
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.54)] px-4 py-4">
-          <p className="text-[0.75rem] text-[#8b6c4d]">最值得继续的入口</p>
-          <p className="mt-2 text-[0.92rem] leading-7 text-[#3f2f20]">
-            {featured ? `${getInterviewDimensionMeta(featured.dimension).label}是这个月最清晰的主线。` : "先让这个月至少留下一条可回看的记录。"}
+      <div className="mt-4 grid gap-3 sm:grid-cols-3" data-testid="analysis-status-board">
+        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.92),rgba(243,228,199,0.78))] px-4 py-4">
+          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">评分状态</p>
+          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
+            {record ? `已评 ${record.scoreOverview.scoredDayCount} 天` : "—"}
           </p>
-          {featured ? (
-            <div className="mt-3">
+          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
+            {record ? `月均 ${formatScoreAverage(record.scoreOverview.monthAverageScore)}` : ""}
+          </p>
+          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
+            {todayEditableDate
+              ? todayHasScore
+                ? "今天已评分。"
+                : "今天还没评分。"
+              : "本月只读。"}
+          </p>
+          <div className="mt-3">
+            {todayEditableDate && !todayHasScore ? (
+              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="去补评分" variant="primary" />
+            ) : (
+              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="查看走势" />
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.88),rgba(240,225,198,0.72))] px-4 py-4">
+          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">记录节奏</p>
+          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
+            {record ? `${activeDayCount} 天有记录` : "—"}
+          </p>
+          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
+            {longestStreak ? `最长连续 ${longestStreak.length} 天` : "尚无连续"}
+          </p>
+          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
+            {hottestDay ? `最密：${formatAnalysisDateLabel(hottestDay.date)}，${hottestDay.savedDimensionCount} 维` : "还没有明显高点。"}
+          </p>
+          <div className="mt-3">
+            {hottestDay ? (
+              <ActionLink href={buildCalendarHref({ view: "day", date: hottestDay.date })} label="查看最密日" variant="primary" />
+            ) : (
+              <ActionLink href={buildAnalysisHref({ month, section: "rhythm" })} label="查看分布" />
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.88),rgba(237,220,193,0.72))] px-4 py-4">
+          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">主线维度</p>
+          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
+            {featured ? `${getInterviewDimensionMeta(featured.dimension).label} · ${featured.savedEntryCount} 篇` : "尚未形成"}
+          </p>
+          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
+            {featured ? `覆盖 ${featured.recordedDayCount} 天` : ""}
+          </p>
+          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
+            {featured
+              ? `最近：${formatAnalysisDateLabel(featured.lastRecordedDate)}`
+              : "先留下一条可回看的记录。"}
+          </p>
+          <div className="mt-3">
+            {featured ? (
               <ActionLink
                 href={buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate })}
                 label={`回到${getInterviewDimensionMeta(featured.dimension).label}`}
                 variant="primary"
               />
-            </div>
-          ) : (
-            <div className="mt-3">
-              <ActionLink href="/interview?dimension=joy" label="开始一条记录" variant="primary" />
-            </div>
-          )}
-        </article>
-
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.46)] px-4 py-4">
-          <p className="text-[0.75rem] text-[#8b6c4d]">最密的一天</p>
-          <p className="mt-2 font-display text-[1.34rem] leading-none text-[#302114]">
-            {hottestDay ? formatAnalysisDateLabel(hottestDay.date) : "暂无"}
-          </p>
-          <p className="mt-2 text-[0.82rem] leading-6 text-[#765d45]">
-            {hottestDay ? `${hottestDay.savedDimensionCount} 个维度沉淀成文。` : "还没有形成明显的记录高点。"}
-          </p>
-          {hottestDay ? (
-            <div className="mt-3">
-              <ActionLink href={buildCalendarHref({ view: "day", date: hottestDay.date })} label="查看这一天" />
-            </div>
-          ) : null}
-        </article>
-
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.46)] px-4 py-4">
-          <p className="text-[0.75rem] text-[#8b6c4d]">今天的动作</p>
-          <p className="mt-2 text-[0.92rem] leading-7 text-[#3f2f20]">
-            {todayEditableDate ? `今天和昨天的评分都可以直接补。` : "这个月份当前只开放查看，不开放修改。"}
-          </p>
-          {todayEditableDate ? (
-            <div className="mt-3">
-              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="去补今天评分" />
-            </div>
-          ) : null}
+            ) : (
+              <ActionLink href="/interview?dimension=joy" label="开始记录" variant="primary" />
+            )}
+          </div>
         </article>
       </div>
     </div>
@@ -794,8 +843,8 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
                 onClick={() => setSelectedFactor(item.requestKey)}
                 className={`rounded-[18px] border px-3 py-3 text-left transition ${
                   active
-                    ? "border-[rgba(111,74,38,0.26)] bg-[rgba(255,249,239,0.88)] shadow-sm"
-                    : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] hover:bg-[rgba(255,252,246,0.9)]"
+                    ? "border-[rgba(111,74,38,0.26)] border-l-[3px] border-l-[#6f4a26] bg-[rgba(243,228,199,0.72)] shadow-sm"
+                    : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] hover:border-[rgba(150,105,61,0.14)] hover:bg-[rgba(248,237,216,0.62)]"
                 }`}
                 aria-pressed={active}
                 data-testid={`score-factor-button-${item.requestKey}`}
@@ -1002,7 +1051,7 @@ function CoverageHeatmap({ record }: { record: AnalysisMonthRecord }) {
   const isFutureSelectedDate = selectedDate > todayEntryDate;
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]" data-testid="analysis-rhythm-board">
+    <div data-testid="analysis-rhythm-board">
       <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.4)] p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -1086,32 +1135,22 @@ function CoverageHeatmap({ record }: { record: AnalysisMonthRecord }) {
         </div>
       </div>
 
-      <aside className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] px-4 py-4">
-            <p className="text-[0.76rem] text-[#8b6c4d]">最高密度日</p>
-            <p className="mt-2 font-display text-[1.3rem] text-[#302114]">{highestDensityDay ? formatAnalysisDateLabel(highestDensityDay.date) : "暂无"}</p>
-            <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
-              {highestDensityDay ? `${highestDensityDay.savedDimensionCount} 个维度沉淀成文。` : "这个月还没有形成明显高点。"}
-            </p>
-          </div>
-          <div className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] px-4 py-4">
-            <p className="text-[0.76rem] text-[#8b6c4d]">最长连续记录</p>
-            <p className="mt-2 text-[0.92rem] leading-7 text-[#3a2c1f]">{formatSpanLabel(recordingStreak)}</p>
-          </div>
-          <div className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] px-4 py-4">
-            <p className="text-[0.76rem] text-[#8b6c4d]">最长空档</p>
-            <p className="mt-2 text-[0.92rem] leading-7 text-[#3a2c1f]">{formatSpanLabel(quietStreak)}</p>
-          </div>
-          <div className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] px-4 py-4">
-            <p className="text-[0.76rem] text-[#8b6c4d]">当前选中</p>
-            <p className="mt-2 font-display text-[1.3rem] text-[#302114]">{formatAnalysisDateLabel(selectedDate, "暂无")}</p>
-            <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">{selectedCoverage ? `${selectedCoverage.savedDimensionCount} 个维度，${selectedCoverage.hasDailyJournalSaved ? "已完成当天整合日志。" : "还没有当天整合日志。"}`
-              : "这一天还没有数据。"}
-            </p>
-          </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.36)] px-3 py-2.5" data-testid="analysis-rhythm-summary-bar">
+        <div className="text-center">
+          <p className="text-[0.7rem] text-[#8b6c4d]">最高密度</p>
+          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{highestDensityDay ? `${formatAnalysisDateLabel(highestDensityDay.date)} · ${highestDensityDay.savedDimensionCount}维` : "暂无"}</p>
         </div>
+        <div className="border-x border-[rgba(150,105,61,0.1)] text-center">
+          <p className="text-[0.7rem] text-[#8b6c4d]">最长连续</p>
+          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{recordingStreak ? `${recordingStreak.length} 天` : "暂无"}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[0.7rem] text-[#8b6c4d]">最长空档</p>
+          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{quietStreak ? `${quietStreak.length} 天` : "暂无"}</p>
+        </div>
+      </div>
 
+      <aside className="mt-3 max-w-[36rem]">
         <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
           <p className="archive-label">当天追踪</p>
           <h3 className="mt-2 font-display text-[1.35rem] leading-none text-[#302114]">{formatAnalysisDateLabel(selectedDate, "暂无")}</h3>
@@ -1250,6 +1289,16 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
             <p className="mt-1 font-mono text-[0.9rem] tabular-nums text-[#4b3727]">{formatAnalysisDateLabel(featured.lastRecordedDate)}</p>
           </div>
         </div>
+        {featured.topTags.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="text-[0.72rem] text-[#8b6c4d]">高频线索</span>
+            {featured.topTags.slice(0, 3).map((tag) => (
+              <span key={tag.tag} className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.82)] px-2.5 py-1 text-[0.76rem] text-[#5a4230]">
+                {tag.tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div className="mt-4 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-4 py-4">
           <p className="text-[0.76rem] text-[#8b6c4d]">主线说明</p>
           <p className="mt-2 text-[0.92rem] leading-7 text-[#4a3928]">{buildDimensionSummary(featured)}</p>
@@ -1281,6 +1330,15 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
                     </div>
                   </div>
                   <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">{buildDimensionSummary(item)}</p>
+                  {item.topTags.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {item.topTags.slice(0, 3).map((tag) => (
+                        <span key={tag.tag} className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.76)] px-2 py-0.5 text-[0.7rem] text-[#6f5339]">
+                          {tag.tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))
             ) : (
@@ -1328,9 +1386,6 @@ export function AnalysisShell() {
   const [hasFetchError, setHasFetchError] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [activeSection, setActiveSection] = useState<AnalysisSectionKey>(normalizedSearch.section);
-  const scoreSectionRef = useRef<HTMLElement | null>(null);
-  const rhythmSectionRef = useRef<HTMLElement | null>(null);
-  const insightSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
@@ -1341,14 +1396,6 @@ export function AnalysisShell() {
   useEffect(() => {
     setActiveSection(normalizedSearch.section);
   }, [normalizedSearch.section]);
-
-  useEffect(() => {
-    if (!normalizedSearch.hasExplicitSection) {
-      return;
-    }
-
-    scrollToSection(normalizedSearch.section, "auto");
-  }, [normalizedSearch.hasExplicitSection, normalizedSearch.section]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1379,26 +1426,11 @@ export function AnalysisShell() {
     };
   }, [normalizedSearch.month, refreshNonce]);
 
-  function scrollToSection(section: AnalysisSectionKey, behavior: ScrollBehavior = "smooth") {
-    const target =
-      section === "score"
-        ? scoreSectionRef.current
-        : section === "rhythm"
-          ? rhythmSectionRef.current
-          : insightSectionRef.current;
-
-    target?.scrollIntoView?.({
-      behavior,
-      block: "start"
-    });
-  }
-
   function navigateSection(section: AnalysisSectionKey) {
     const href = buildAnalysisHref({ month: normalizedSearch.month, section });
 
     setActiveSection(section);
     router.replace(href, { scroll: false });
-    scrollToSection(section);
   }
 
   return (
@@ -1407,11 +1439,11 @@ export function AnalysisShell() {
         <SummaryHero record={record} month={normalizedSearch.month} />
 
         <div className="mt-5">
-          <SectionAnchorNav currentSection={activeSection} onChange={navigateSection} />
+          <SectionAnchorNav currentSection={activeSection} onChange={navigateSection} record={record} />
         </div>
 
         <div className="mt-5 paper-sheet rounded-[28px] px-5 py-5 md:px-6 md:py-6">
-          <div className="flex min-h-0 flex-col gap-6">
+          {activeSection === "overview" && (
             <AnalysisSection
               index="01"
               eyebrow="总览"
@@ -1427,16 +1459,15 @@ export function AnalysisShell() {
                 <OverviewCards record={record} />
               )}
             </AnalysisSection>
+          )}
 
+          {activeSection === "score" && (
             <AnalysisSection
               index="02"
               eyebrow="评分入口"
               title="幸福 8 要素评分"
               description="先看走势，再补今天和昨天。评分在这里是刻度，不是结论。"
               testId="analysis-score-placeholder"
-              sectionKey="score"
-              active={activeSection === "score"}
-              sectionRef={scoreSectionRef}
             >
               {hasFetchError ? (
                 <AnalysisEmptyBanner title="幸福评分暂时没打开" body="稍后再试，或者刷新页面重新拉取这个月的数据。" />
@@ -1446,16 +1477,15 @@ export function AnalysisShell() {
                 <HappinessScorePanel record={record} onSaved={() => setRefreshNonce((value) => value + 1)} />
               )}
             </AnalysisSection>
+          )}
 
+          {activeSection === "rhythm" && (
             <AnalysisSection
               index="03"
               eyebrow="记录节奏"
               title="记录热力图"
               description="用热力图先看密度，再点进某一天，把分析页和当天记录重新接起来。"
               testId="analysis-coverage-placeholder"
-              sectionKey="rhythm"
-              active={activeSection === "rhythm"}
-              sectionRef={rhythmSectionRef}
             >
               {hasFetchError ? (
                 <AnalysisEmptyBanner title="记录节奏暂时没打开" body="重新加载后再看本月的热力分布。" />
@@ -1465,16 +1495,15 @@ export function AnalysisShell() {
                 <CoverageHeatmap record={record} />
               )}
             </AnalysisSection>
+          )}
 
+          {activeSection === "insights" && (
             <AnalysisSection
               index="04"
               eyebrow="五维线索"
               title="五维洞察"
               description="先抓住本月更成形的一条线，其余维度再分成正在浮现和暂时安静。"
               testId="analysis-dimensions-placeholder"
-              sectionKey="insights"
-              active={activeSection === "insights"}
-              sectionRef={insightSectionRef}
             >
               {hasFetchError ? (
                 <AnalysisEmptyBanner title="五维洞察暂时没打开" body="重新加载后再看这个月的维度线索。" />
@@ -1484,7 +1513,7 @@ export function AnalysisShell() {
                 <DimensionInsights record={record} />
               )}
             </AnalysisSection>
-          </div>
+          )}
         </div>
       </div>
     </section>

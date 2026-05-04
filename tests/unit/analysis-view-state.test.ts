@@ -14,9 +14,8 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "score",
-      hasExplicitSection: false,
-      href: "/analysis?month=2026-05&section=score",
+      section: "overview",
+      href: "/analysis?month=2026-05&section=overview",
       shouldReplace: true
     });
   });
@@ -29,14 +28,13 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "score",
-      hasExplicitSection: false,
-      href: "/analysis?month=2026-05&section=score",
+      section: "overview",
+      href: "/analysis?month=2026-05&section=overview",
       shouldReplace: true
     });
   });
 
-  it("normalizes invalid sections to score", () => {
+  it("normalizes invalid sections to overview", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -45,9 +43,8 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "score",
-      hasExplicitSection: false,
-      href: "/analysis?month=2026-05&section=score",
+      section: "overview",
+      href: "/analysis?month=2026-05&section=overview",
       shouldReplace: false
     });
   });
@@ -62,13 +59,12 @@ describe("analysis view state helpers", () => {
     ).toEqual({
       month: "2026-05",
       section: "rhythm",
-      hasExplicitSection: true,
       href: "/analysis?month=2026-05&section=rhythm",
       shouldReplace: false
     });
   });
 
-  it("defaults missing section to score without forcing a replace", () => {
+  it("defaults missing section to overview without forcing a replace", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -77,9 +73,8 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "score",
-      hasExplicitSection: false,
-      href: "/analysis?month=2026-05&section=score",
+      section: "overview",
+      href: "/analysis?month=2026-05&section=overview",
       shouldReplace: false
     });
   });
@@ -90,7 +85,7 @@ describe("analysis view state helpers", () => {
   });
 
   it("builds stable hrefs and month labels", () => {
-    expect(buildAnalysisHref({ month: "2026-05" })).toBe("/analysis?month=2026-05&section=score");
+    expect(buildAnalysisHref({ month: "2026-05" })).toBe("/analysis?month=2026-05&section=overview");
     expect(buildAnalysisHref({ month: "2026-05", section: "insights" })).toBe("/analysis?month=2026-05&section=insights");
     expect(formatAnalysisMonthLabel("2026-05")).toBe("2026年5月");
   });

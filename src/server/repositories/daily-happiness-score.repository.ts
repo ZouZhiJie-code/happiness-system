@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db/prisma";
-import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
+import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyHappinessScoreInput, DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 
 const DEMO_USER_ID = "local-demo-user";
@@ -51,13 +51,14 @@ export async function findDailyHappinessScoreByDate(date: string) {
 
 export async function listDailyHappinessScoresByDateRange(input: { startDate: string; endDate: string }) {
   const database = prisma as any;
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
   const entries =
     (await database.dailyHappinessScore?.findMany?.({
       where: {
         userId: DEMO_USER_ID,
         date: {
-          gte: parseEntryDateInput(input.startDate),
-          lte: parseEntryDateInput(input.endDate)
+          gte: startAt,
+          lt: endExclusive
         }
       },
       orderBy: {

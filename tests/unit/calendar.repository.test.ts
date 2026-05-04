@@ -83,7 +83,22 @@ describe("calendar.repository", () => {
     expect(mockInterviewSessionFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user"
+          userId: "local-demo-user",
+          entryDate: {
+            gte: new Date("2026-05-01T16:00:00.000Z"),
+            lt: new Date("2026-05-02T16:00:00.000Z")
+          }
+        })
+      })
+    );
+    expect(mockJoyEntryFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: "local-demo-user",
+          date: {
+            gte: new Date("2026-05-01T16:00:00.000Z"),
+            lt: new Date("2026-05-02T16:00:00.000Z")
+          }
         })
       })
     );

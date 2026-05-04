@@ -24,7 +24,6 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("analysis shell", () => {
-  let scrollIntoViewMock: ReturnType<typeof vi.fn>;
   const scoreKeys = [
     "meaning",
     "health",
@@ -258,23 +257,17 @@ describe("analysis shell", () => {
       month: null,
       section: null
     };
-    scrollIntoViewMock = vi.fn();
-    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
-      configurable: true,
-      writable: true,
-      value: scrollIntoViewMock
-    });
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAnalysisMonthRecord()), { status: 200 })) as typeof fetch;
   });
 
   it("normalizes missing month search params to the current month", async () => {
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
-    await screen.findByTestId("happiness-score-panel");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=overview", { scroll: false });
+    await screen.findByTestId("analysis-overview-placeholder");
   });
 
-  it("does not auto-scroll past the summary when section is absent", async () => {
+  it("shows the overview section by default when section param is absent", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: null
@@ -284,7 +277,9 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("analysis-overview-cards");
 
-    expect(scrollIntoViewMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-dimension-cards")).not.toBeInTheDocument();
   });
 
   it("keeps a valid month and section without rewriting the url", async () => {
@@ -296,8 +291,8 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
-    expect(await screen.findByText(/2026年4月先看评分、节奏和五维线索/)).toBeInTheDocument();
-    expect(await screen.findByTestId("analysis-overview-cards")).toBeInTheDocument();
+    expect(await screen.findByText(/加载中/)).toBeInTheDocument();
+    expect(await screen.findByTestId("analysis-score-placeholder")).toBeInTheDocument();
   });
 
   it("falls back invalid month params to the current month", async () => {
@@ -309,7 +304,7 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
-    await screen.findByTestId("analysis-overview-cards");
+    await screen.findByTestId("happiness-score-panel");
   });
 
   it("removes month controls from the page body", async () => {
@@ -320,7 +315,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("analysis-overview-cards");
+    await screen.findByTestId("happiness-score-panel");
     expect(screen.queryByTestId("analysis-month-controls")).not.toBeInTheDocument();
   });
 
@@ -333,14 +328,11 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("analysis-overview-cards")).toBeInTheDocument();
+      expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
     });
 
-    expect(screen.getAllByText("有记录天数").length).toBeGreaterThan(0);
-    expect(screen.getByText("已评分天数")).toBeInTheDocument();
-    expect(screen.getAllByText("主线维度").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-heatmap-day-2026-05-02")).toHaveTextContent("2维");
+    expect(screen.queryByTestId("analysis-overview-cards")).not.toBeInTheDocument();
   });
 
   it("renders the five-dimension insight layout without an even card grid", async () => {
@@ -370,18 +362,18 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("happiness-score-panel");
 
-    fireEvent.click(screen.getByRole("button", { name: "节奏" }));
+    fireEvent.click(screen.getByRole("button", { name: /节奏/ }));
     expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
-    expect(screen.getByRole("button", { name: "节奏" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /节奏/ })).toHaveAttribute("aria-pressed", "true");
 
-    fireEvent.click(screen.getByRole("button", { name: "五维" }));
+    fireEvent.click(screen.getByRole("button", { name: /五维/ }));
     expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=insights", { scroll: false });
-    expect(screen.getByRole("button", { name: "五维" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /五维/ })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("scrolls to the requested section on initial deep-link navigation", async () => {
+  it("renders only the requested section on initial deep-link navigation", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "rhythm"
@@ -391,8 +383,9 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("analysis-rhythm-board");
 
-    expect(scrollIntoViewMock).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "节奏" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /节奏/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
   });
 
   it("renders a stable empty state when the month has no saved records", async () => {
@@ -442,8 +435,8 @@ describe("analysis shell", () => {
 
     expect(await screen.findByTestId("analysis-rhythm-board")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("0维");
-    expect(screen.getByTestId("analysis-overview-placeholder")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-coverage-placeholder")).toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
     expect(screen.getByText("这个月还没有开始留下分析材料。先补今天评分，或从一个维度开始记录。")).toBeInTheDocument();
   });
@@ -507,7 +500,7 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const board = await screen.findByTestId("analysis-rhythm-board");
-    expect(within(board).getByText("最高密度日")).toBeInTheDocument();
+    expect(within(board).getByText("最高密度")).toBeInTheDocument();
     expect(within(board).getAllByText("暂无").length).toBeGreaterThan(0);
   });
 
@@ -588,7 +581,7 @@ describe("analysis shell", () => {
     const quietCard = within(board).getByText("最长空档").closest("div");
 
     expect(quietCard).not.toBeNull();
-    expect(quietCard).toHaveTextContent("5月1日，1天");
+    expect(quietCard).toHaveTextContent("2 天");
     expect(quietCard).not.toHaveTextContent("5月8日 - 5月31日");
   });
 

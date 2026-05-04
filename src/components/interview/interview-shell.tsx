@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { DailyJournalWorkspace } from "@/components/interview/daily-journal-workspace";
+import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
+import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -453,6 +454,7 @@ function DraftGenerationPhaseCard({
 
   return (
     <div className="mt-5 rounded-[30px] border border-[rgba(172,128,83,0.16)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(240,226,202,0.94))] p-6 shadow-[0_20px_46px_rgba(124,83,43,0.1)]">
+      <JournalGrowthTree progress={progress} />
       <div className="flex items-center gap-3">
         <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
         <p className="text-[0.78rem] tracking-[0.18em] text-[#9a734d]">{meta.label}</p>
@@ -487,6 +489,7 @@ function DraftGenerationPhaseBanner({
 
   return (
     <div className="rounded-[24px] border border-[rgba(165,120,74,0.16)] bg-[linear-gradient(180deg,rgba(252,246,236,0.9),rgba(243,230,208,0.84))] px-4 py-3 shadow-[0_12px_30px_rgba(124,83,43,0.08)]">
+      <JournalGrowthTree progress={progress} compact className="-mb-1 -mt-2" />
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
@@ -733,6 +736,8 @@ export function InterviewShell() {
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
+  const previousDimensionRef = useRef(currentDimension);
+  const dailyJournalWorkspaceRef = useRef<DailyJournalWorkspaceHandle | null>(null);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -1925,6 +1930,10 @@ export function InterviewShell() {
     return true;
   }
 
+  const flushDailyJournalWorkspace = useCallback(async () => {
+    return dailyJournalWorkspaceRef.current?.flushPendingEdits() ?? true;
+  }, []);
+
   async function openDailyJournalWorkspace() {
     if (panelOpen) {
       const closed = await handleClosePanel();
@@ -1939,7 +1948,13 @@ export function InterviewShell() {
     setWorkspaceMode("daily_journal");
   }
 
-  function handleBackToInterviewWorkspace() {
+  async function handleBackToInterviewWorkspace() {
+    const synced = await flushDailyJournalWorkspace();
+
+    if (!synced) {
+      return;
+    }
+
     setWorkspaceMode("interview");
 
     if (!shouldOpenDailyJournalFromQuery) {
@@ -1958,6 +1973,41 @@ export function InterviewShell() {
 
     router.replace(`/interview?${params.toString()}`, { scroll: false });
   }
+
+  useEffect(() => {
+    const previousDimension = previousDimensionRef.current;
+    previousDimensionRef.current = currentDimension;
+
+    if (
+      previousDimension === currentDimension ||
+      workspaceMode !== "daily_journal" ||
+      shouldOpenDailyJournalFromQuery
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const leaveDailyJournalForDimensionChange = async () => {
+      const synced = await flushDailyJournalWorkspace();
+
+      if (!cancelled && synced) {
+        setWorkspaceMode("interview");
+      }
+    };
+
+    void leaveDailyJournalForDimensionChange();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentDimension,
+    flushDailyJournalWorkspace,
+    setWorkspaceMode,
+    shouldOpenDailyJournalFromQuery,
+    workspaceMode
+  ]);
 
   async function handleTogglePanel() {
     if (!canOpenWorkspace) {
@@ -2036,6 +2086,7 @@ export function InterviewShell() {
     >
       {workspaceMode === "daily_journal" ? (
         <DailyJournalWorkspace
+          ref={dailyJournalWorkspaceRef}
           date={dailyJournalDate}
           openRequestId={dailyJournalOpenRequestId}
           onBackToInterview={handleBackToInterviewWorkspace}

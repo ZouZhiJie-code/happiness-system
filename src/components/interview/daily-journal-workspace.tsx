@@ -1,18 +1,31 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
+import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
 import { MAX_DAILY_JOURNAL_CONTENT_LENGTH } from "@/features/daily-journal/schema";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import type { DailyJournalEntryRecord } from "@/types/interview";
 
 type DailyJournalState = "none" | "draft" | "saved" | "stale";
 type SyncState = "idle" | "saving" | "saved" | "error";
+type DailyJournalGeneratePhase = "skeleton" | "detail" | "polish";
+type DailyJournalBusyMode = "loading" | "generating";
 
 interface DailyJournalQueryPayload {
   dailyJournal: DailyJournalEntryRecord | null;
   availableSourceCount: number;
   state: DailyJournalState;
+}
+
+export interface DailyJournalWorkspaceHandle {
+  flushPendingEdits: () => Promise<boolean>;
+}
+
+interface DailyJournalWorkspaceProps {
+  date: string;
+  openRequestId: number;
+  onBackToInterview: () => void | Promise<void>;
 }
 
 function getStateLabel(state: DailyJournalState, sourceCount: number) {
@@ -31,6 +44,92 @@ function getStateLabel(state: DailyJournalState, sourceCount: number) {
   return sourceCount > 0 ? "可生成" : "等待维度日志";
 }
 
+const DAILY_JOURNAL_GENERATE_STEPS: ReadonlyArray<{
+  phase: DailyJournalGeneratePhase;
+  start: number;
+  end: number;
+  durationMs: number;
+}> = [
+  { phase: "skeleton", start: 0, end: 35, durationMs: 2200 },
+  { phase: "detail", start: 35, end: 78, durationMs: 2600 },
+  { phase: "polish", start: 78, end: 100, durationMs: 1800 }
+];
+
+function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mode: DailyJournalBusyMode) {
+  if (mode === "loading") {
+    switch (phase) {
+      case "skeleton":
+        return {
+          label: "正在打开完整日志",
+          description: "我正在读取当天已经保存的维度日志和完整日志状态。"
+        };
+      case "detail":
+        return {
+          label: "正在整理当天线索",
+          description: "正在确认今天已有的草稿、正式日志和可用来源。"
+        };
+      case "polish":
+        return {
+          label: "即将进入完整日志",
+          description: "正在把编辑区准备好，稍后就能继续生成或修改。"
+        };
+    }
+  }
+
+  switch (phase) {
+    case "skeleton":
+      return {
+        label: "正在生成完整日志骨架",
+        description: "我会先把今天已保存的维度日志整理成一条完整主线。"
+      };
+    case "detail":
+      return {
+        label: "正在串起五维细节",
+        description: "正在把开心、充实、思考、改进和感谢里的重点自然接起来。"
+      };
+    case "polish":
+      return {
+        label: "最终润色中",
+        description: "正在收束标题、段落顺序和最后读感，让它成为一篇完整日志。"
+      };
+  }
+}
+
+function DailyJournalGenerationCard({
+  phase,
+  progress,
+  mode
+}: {
+  phase: DailyJournalGeneratePhase;
+  progress: number;
+  mode: DailyJournalBusyMode;
+}) {
+  const meta = getDailyJournalGenerationPhaseMeta(phase, mode);
+
+  return (
+    <div
+      className="rounded-[26px] border border-[rgba(172,128,83,0.16)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(240,226,202,0.94))] p-6 shadow-[0_20px_46px_rgba(124,83,43,0.1)]"
+      data-testid="daily-journal-generation-card"
+    >
+      <JournalGrowthTree progress={progress} />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
+          <p className="text-[0.78rem] tracking-[0.16em] text-[#8d6540]">{meta.label}</p>
+        </div>
+        <span className="text-[0.74rem] text-[#9f7a54]">{Math.round(progress)}%</span>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(188,148,103,0.16)]">
+        <div
+          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(197,143,87,0.88),rgba(223,184,131,0.98),rgba(197,143,87,0.88))] transition-[width] duration-700 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <p className="mt-4 text-sm leading-7 text-[#5d5042]">{meta.description}</p>
+    </div>
+  );
+}
+
 async function fetchDailyJournal(date: string): Promise<DailyJournalQueryPayload> {
   const response = await fetch(`/api/daily-journal?date=${date}`, {
     cache: "no-store"
@@ -43,15 +142,10 @@ async function fetchDailyJournal(date: string): Promise<DailyJournalQueryPayload
   return response.json();
 }
 
-export function DailyJournalWorkspace({
-  date,
-  openRequestId,
-  onBackToInterview
-}: {
-  date: string;
-  openRequestId: number;
-  onBackToInterview: () => void;
-}) {
+export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandle, DailyJournalWorkspaceProps>(function DailyJournalWorkspace(
+  { date, openRequestId, onBackToInterview },
+  ref
+) {
   const [dailyJournal, setDailyJournal] = useState<DailyJournalEntryRecord | null>(null);
   const [availableSourceCount, setAvailableSourceCount] = useState(0);
   const [state, setState] = useState<DailyJournalState>("none");
@@ -59,12 +153,15 @@ export function DailyJournalWorkspace({
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatePhase, setGeneratePhase] = useState<DailyJournalGeneratePhase>("skeleton");
+  const [generateProgress, setGenerateProgress] = useState(0);
   const [isSavingFinal, setIsSavingFinal] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>("idle");
   const [error, setError] = useState<string | null>(null);
   const autosaveTimerRef = useRef<number | null>(null);
   const latestPersistRequestRef = useRef(0);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const generateProgressIntervalRef = useRef<number | null>(null);
 
   const hasUnsavedChanges = Boolean(dailyJournal && (title !== dailyJournal.title || content !== dailyJournal.content));
   const tooLong = title.length > MAX_JOURNAL_TITLE_LENGTH || content.length > MAX_DAILY_JOURNAL_CONTENT_LENGTH;
@@ -74,6 +171,13 @@ export function DailyJournalWorkspace({
     if (autosaveTimerRef.current) {
       window.clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
+    }
+  }, []);
+
+  const stopGenerateProgress = useCallback(() => {
+    if (generateProgressIntervalRef.current) {
+      window.clearInterval(generateProgressIntervalRef.current);
+      generateProgressIntervalRef.current = null;
     }
   }, []);
 
@@ -111,8 +215,54 @@ export function DailyJournalWorkspace({
     return () => {
       cancelled = true;
       stopAutosave();
+      stopGenerateProgress();
     };
-  }, [date, hydrate, openRequestId, stopAutosave]);
+  }, [date, hydrate, openRequestId, stopAutosave, stopGenerateProgress]);
+
+  useEffect(() => {
+    stopGenerateProgress();
+
+    const isProgressActive = isLoading || isGenerating;
+
+    if (!isProgressActive) {
+      setGeneratePhase("skeleton");
+      setGenerateProgress(0);
+      return;
+    }
+
+    setGeneratePhase("skeleton");
+    setGenerateProgress(0);
+    const phaseBoundaries = DAILY_JOURNAL_GENERATE_STEPS.reduce<
+      Array<{ phase: DailyJournalGeneratePhase; startMs: number; endMs: number; start: number; end: number }>
+    >((items, step) => {
+      const startMs = items.length ? items[items.length - 1].endMs : 0;
+      const endMs = startMs + step.durationMs;
+
+      items.push({
+        phase: step.phase,
+        startMs,
+        endMs,
+        start: step.start,
+        end: step.end
+      });
+      return items;
+    }, []);
+    const startedAt = Date.now();
+
+    generateProgressIntervalRef.current = window.setInterval(() => {
+      const elapsedMs = Date.now() - startedAt;
+      const currentStep =
+        phaseBoundaries.find((step) => elapsedMs < step.endMs) ?? phaseBoundaries[phaseBoundaries.length - 1];
+      const stepElapsed = Math.min(Math.max(elapsedMs - currentStep.startMs, 0), currentStep.endMs - currentStep.startMs);
+      const ratio = currentStep.endMs === currentStep.startMs ? 1 : stepElapsed / (currentStep.endMs - currentStep.startMs);
+      const nextProgress = currentStep.start + (currentStep.end - currentStep.start) * ratio;
+
+      setGeneratePhase(currentStep.phase);
+      setGenerateProgress(Math.min(100, Math.max(0, nextProgress)));
+    }, 80);
+
+    return stopGenerateProgress;
+  }, [isGenerating, isLoading, stopGenerateProgress]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -126,8 +276,18 @@ export function DailyJournalWorkspace({
   }, [content]);
 
   const persistDraft = useCallback(async () => {
-    if (!dailyJournal || !canPersist || !hasUnsavedChanges) {
+    if (!dailyJournal || !hasUnsavedChanges) {
       return true;
+    }
+
+    if (!canPersist) {
+      setSyncState("error");
+      setError(
+        tooLong
+          ? `标题请控制在 ${MAX_JOURNAL_TITLE_LENGTH} 字内，正文请控制在 ${MAX_DAILY_JOURNAL_CONTENT_LENGTH} 字内。`
+          : "当天日志标题和正文不能为空。"
+      );
+      return false;
     }
 
     const requestId = latestPersistRequestRef.current + 1;
@@ -162,7 +322,18 @@ export function DailyJournalWorkspace({
 
       return false;
     }
-  }, [canPersist, content, dailyJournal, hasUnsavedChanges, title]);
+  }, [canPersist, content, dailyJournal, hasUnsavedChanges, title, tooLong]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      flushPendingEdits: async () => {
+        stopAutosave();
+        return persistDraft();
+      }
+    }),
+    [persistDraft, stopAutosave]
+  );
 
   useEffect(() => {
     if (!hasUnsavedChanges || !canPersist || isGenerating || isSavingFinal) {
@@ -216,6 +387,9 @@ export function DailyJournalWorkspace({
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "当天日志生成失败，请稍后重试。");
     } finally {
+      stopGenerateProgress();
+      setGeneratePhase("polish");
+      setGenerateProgress(100);
       setIsGenerating(false);
     }
   }
@@ -294,9 +468,9 @@ export function DailyJournalWorkspace({
 
       <div className="panel-scroll min-h-0 flex-1 overflow-y-auto pr-1 pt-4">
         {isLoading ? (
-          <div className="rounded-[26px] border border-[rgba(151,108,65,0.12)] bg-[rgba(255,249,239,0.54)] p-5 text-sm text-[#6a5440]">
-            正在加载当天日志...
-          </div>
+          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} mode="loading" />
+        ) : isGenerating ? (
+          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} mode="generating" />
         ) : dailyJournal ? (
           <div data-testid="daily-journal-editor" className="flex flex-col">
             <input
@@ -350,4 +524,4 @@ export function DailyJournalWorkspace({
       </div>
     </section>
   );
-}
+});

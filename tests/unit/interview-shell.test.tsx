@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
+import type { CalendarDayRecord } from "@/features/calendar/types";
 import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { useInterviewStore } from "@/stores/interview-store";
 import type { AssistantTurnPayload, DailyJournalEntryRecord, InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
@@ -234,6 +235,19 @@ function buildSseResponse(chunks: string[]) {
   );
 }
 
+function createDeferredResponse() {
+  let resolve: (value: Response) => void;
+
+  const promise = new Promise<Response>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return {
+    promise,
+    resolve: resolve!
+  };
+}
+
 function renderInterviewPage() {
   return render(
     <>
@@ -257,6 +271,96 @@ function getDimensionButton(label: string) {
 
 function expectDimensionStatus(label: string, status: string) {
   expect(within(getDimensionButton(label)).getByText(status)).toBeInTheDocument();
+}
+
+function buildHeaderDayRecord(overrides: Partial<CalendarDayRecord> = {}): CalendarDayRecord {
+  return {
+    date: "2026-05-01",
+    overallStatus: "mixed",
+    dailyJournal: {
+      state: "none",
+      id: null,
+      title: null,
+      updatedAt: null,
+      savedAt: null,
+      sourceEntryCount: 4
+    },
+    dimensions: [
+      {
+        dimension: "joy",
+        status: "completed",
+        title: "开心",
+        summary: null,
+        latestUpdatedAt: "2026-05-01T10:00:00.000Z",
+        sessionId: "session-joy-0501",
+        journalEntryId: "entry-joy-0501",
+        actions: ["view_journal", "edit_saved_journal"],
+        hasActiveSession: false,
+        hasDraftEntry: false,
+        hasSavedEntry: true
+      },
+      {
+        dimension: "fulfillment",
+        status: "completed",
+        title: "充实",
+        summary: null,
+        latestUpdatedAt: "2026-05-01T10:00:00.000Z",
+        sessionId: "session-fulfillment-0501",
+        journalEntryId: "entry-fulfillment-0501",
+        actions: ["view_journal", "edit_saved_journal"],
+        hasActiveSession: false,
+        hasDraftEntry: false,
+        hasSavedEntry: true
+      },
+      {
+        dimension: "reflection",
+        status: "completed",
+        title: "思考",
+        summary: null,
+        latestUpdatedAt: "2026-05-01T10:00:00.000Z",
+        sessionId: "session-reflection-0501",
+        journalEntryId: "entry-reflection-0501",
+        actions: ["view_journal", "edit_saved_journal"],
+        hasActiveSession: false,
+        hasDraftEntry: false,
+        hasSavedEntry: true
+      },
+      {
+        dimension: "improvement",
+        status: "mixed",
+        title: "改进",
+        summary: null,
+        latestUpdatedAt: "2026-05-01T10:00:00.000Z",
+        sessionId: "session-improvement-0501",
+        journalEntryId: "entry-improvement-0501",
+        actions: ["continue_interview", "view_journal", "edit_saved_journal"],
+        hasActiveSession: true,
+        hasDraftEntry: false,
+        hasSavedEntry: true
+      },
+      {
+        dimension: "gratitude",
+        status: "empty",
+        title: null,
+        summary: null,
+        latestUpdatedAt: null,
+        sessionId: null,
+        journalEntryId: null,
+        actions: ["start_interview"],
+        hasActiveSession: false,
+        hasDraftEntry: false,
+        hasSavedEntry: false
+      }
+    ],
+    activeCount: 0,
+    draftCount: 0,
+    savedCount: 4,
+    primaryTitle: "今天收住了四个维度",
+    primarySummary: null,
+    latestUpdatedAt: "2026-05-01T10:00:00.000Z",
+    primaryAction: "view_journal",
+    ...overrides
+  };
 }
 
 const dimensionRingTestIds = {
@@ -293,8 +397,20 @@ describe("InterviewShell", () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       if (url.endsWith("/api/interview/session/start")) {
-        const session = buildSession();
+        const body = init?.body ? (JSON.parse(String(init.body)) as { dimension?: InterviewSessionRecord["dimension"] }) : {};
+        const requestedDimension = body.dimension ?? "joy";
+        const session = buildSession({
+          id: requestedDimension === "joy" ? "session-joy" : `session-${requestedDimension}`,
+          dimension: requestedDimension
+        });
 
         return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
           status: 200,
@@ -387,6 +503,24 @@ describe("InterviewShell", () => {
             dailyJournal: baseDailyJournalEntry,
             availableSourceCount: 1,
             state: "draft"
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/daily-journal/") && init?.method === "PUT") {
+        const body = JSON.parse(String(init.body)) as Pick<DailyJournalEntryRecord, "title" | "content">;
+
+        return new Response(
+          JSON.stringify({
+            dailyJournal: {
+              ...baseDailyJournalEntry,
+              ...body,
+              updatedAt: "2026-04-21T00:10:00.000Z"
+            }
           }),
           {
             status: 200,
@@ -1091,13 +1225,53 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await screen.findByText("第 2 轮");
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看当天整合日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
     expect(await screen.findByTestId("daily-journal-editor")).toBeInTheDocument();
     expect(screen.getByDisplayValue(baseDailyJournalEntry.title)).toBeInTheDocument();
     expect((screen.getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement).value).toBe(baseDailyJournalEntry.content);
     expect(global.fetch).toHaveBeenCalledWith("/api/daily-journal?date=2026-04-21", expect.objectContaining({ cache: "no-store" }));
+  });
+
+  it("shows the tree growth loader while opening the complete journal workspace", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    const dailyJournalResponse = createDeferredResponse();
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/daily-journal?")) {
+        return dailyJournalResponse.promise;
+      }
+
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+
+    expect(await screen.findByText("正在打开完整日志")).toBeInTheDocument();
+    expect(screen.getByTestId("journal-growth-tree")).toBeInTheDocument();
+
+    dailyJournalResponse.resolve(
+      new Response(
+        JSON.stringify({
+          dailyJournal: baseDailyJournalEntry,
+          availableSourceCount: 1,
+          state: "draft"
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+    );
+
+    expect(await screen.findByTestId("daily-journal-editor")).toBeInTheDocument();
   });
 
   it("opens daily-journal deep links without booting a new interview session", async () => {
@@ -1130,9 +1304,70 @@ describe("InterviewShell", () => {
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "回到访谈" }));
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=joy&entryDate=2026-05-01", {
-      scroll: false
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=joy&entryDate=2026-05-01", {
+        scroll: false
+      });
     });
+  });
+
+  it("persists unsaved daily journal edits before returning to the interview workspace", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+
+    renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+
+    const editor = await screen.findByTestId("daily-journal-editor");
+    const bodyTextarea = within(editor).getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement;
+    const editedContent = `${baseDailyJournalEntry.content}\n\n补上一句还没等自动保存的内容。`;
+
+    fireEvent.change(bodyTextarea, {
+      target: { value: editedContent }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "回到访谈" }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
+    });
+
+    const dailyJournalPutCalls = vi.mocked(global.fetch).mock.calls.filter(
+      ([input, nextInit]) => String(input).includes("/api/daily-journal/daily-1") && nextInit?.method === "PUT"
+    );
+
+    expect(dailyJournalPutCalls).toHaveLength(1);
+    expect(JSON.parse(String(dailyJournalPutCalls[0][1]?.body))).toMatchObject({
+      content: editedContent
+    });
+  });
+
+  it("returns to the interview workspace when the dimension changes from the daily journal workspace", async () => {
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const view = renderInterviewPage();
+
+    await screen.findByText("第 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+
+    fireEvent.click(getDimensionButton("充实"));
+    mockSearchParams.value = {
+      ...mockSearchParams.value,
+      dimension: "fulfillment",
+      mode: null
+    };
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("interview-message-scroll")).toBeInTheDocument();
   });
 
   it("persists unsaved dimension journal edits before switching to the daily journal workspace", async () => {
@@ -1147,7 +1382,7 @@ describe("InterviewShell", () => {
       target: { value: "编辑后的标题" }
     });
 
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看当天整合日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 
@@ -1335,6 +1570,7 @@ describe("InterviewShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "现在整理日志" }));
 
     expect(await screen.findByText("正在生成日志骨架")).toBeInTheDocument();
+    expect(screen.getByTestId("journal-growth-tree")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "关闭日志面板" }));
 
     await waitFor(() => {
@@ -1365,6 +1601,159 @@ describe("InterviewShell", () => {
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.queryByText("本轮访谈已暂停")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "生成日志" })).toBeInTheDocument();
+  });
+
+  it("uses the current entryDate day record for dimension labels instead of cross-day cached sessions", async () => {
+    mockSearchParams.value.entryDate = "2026-05-01";
+    window.localStorage.setItem(
+      interviewSessionStorageKey,
+      JSON.stringify({
+        joy: "session-joy-other-day",
+        fulfillment: "session-fulfillment-other-day",
+        reflection: "session-reflection-other-day",
+        improvement: "session-improvement-other-day",
+        gratitude: "session-gratitude-other-day"
+      })
+    );
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url === "/api/calendar/day?date=2026-05-01") {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession({
+          entryDate: "2026-05-01",
+          status: "active",
+          stage: "wrap_up",
+          turnCount: 2,
+          messages: promptMessages,
+          snapshot: baseSnapshot
+        });
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await waitFor(() => {
+      expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+      expectDimensionStatus("充实", "已完成");
+      expectDimensionStatus("思考", "已完成");
+      expectDimensionStatus("改进", "已完成");
+      expectDimensionStatus("感谢", "未开始");
+    });
+
+    expectDimensionRing("开心");
+    expectSelectedProgressValue("90%");
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/calendar/day?date=2026-05-01")).toBe(true);
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).includes("/api/interview/session/session-gratitude-other-day"))).toBe(
+      false
+    );
+  });
+
+  it("keeps the selected dimension's live progress even when the interview URL includes entryDate", async () => {
+    mockSearchParams.value.entryDate = "2026-05-01";
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url === "/api/calendar/day?date=2026-05-01") {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession({
+          entryDate: "2026-05-01",
+          status: "active",
+          stage: "wrap_up",
+          turnCount: 2,
+          messages: promptMessages,
+          snapshot: baseSnapshot
+        });
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+    });
+
+    expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+    expectDimensionRing("开心");
+    expectSelectedProgressValue("90%");
+    expectDimensionStatus("改进", "已完成");
+    expectDimensionStatus("感谢", "未开始");
+  });
+
+  it("uses the session entryDate day record after switching into the daily journal workspace", async () => {
+    mockSearchParams.value.entryDate = null;
+    window.localStorage.setItem(
+      interviewSessionStorageKey,
+      JSON.stringify({
+        joy: "session-joy-other-day",
+        fulfillment: "session-fulfillment-other-day",
+        reflection: "session-reflection-other-day",
+        improvement: "session-improvement-other-day",
+        gratitude: "session-gratitude-other-day"
+      })
+    );
+
+    useInterviewStore.setState({
+      dimension: "joy",
+      sessionDimension: "joy",
+      sessionEntryDate: "2026-05-01",
+      sessionId: "session-joy-0501",
+      status: "completed",
+      workspaceMode: "daily_journal"
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url === "/api/calendar/day?date=2026-05-01") {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<SiteHeader />);
+
+    await waitFor(() => {
+      expectDimensionStatus("开心", "已完成");
+      expectDimensionStatus("充实", "已完成");
+      expectDimensionStatus("思考", "已完成");
+      expectDimensionStatus("改进", "已完成");
+      expectDimensionStatus("感谢", "未开始");
+    });
+
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/calendar/day?date=2026-05-01")).toBe(true);
   });
 
   it("reopens a saved journal workspace without exposing structured clues", async () => {

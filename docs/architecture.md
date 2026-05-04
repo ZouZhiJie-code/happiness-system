@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-03`
+最后更新：`2026-05-04`
 
 ## 1. 系统概览
 
@@ -54,13 +54,13 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
-  - `month=YYYY-MM` 与 `section=score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
+  - `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
 - `src/features/happiness-score`
   - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、连续月度复盘工作台、总览摘要、评分走势与 8 要素快扫、本月热力图、当天 drill-in、五维主线 / 浮现 / 安静维度布局，以及幸福 8 要素评分录入面板
+  - 记录分析页壳、3 栏状态看板（评分/节奏/主线）、带状态徽章的板块导航、总览摘要、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -158,6 +158,7 @@
 - 多维度真相在 `payload`
 - joy 的更细结构也落在 `payload` 与 `snapshotData`
 - `JoyEntry.date` 现在与 `InterviewSession.entryDate` 对齐，用来承接“补写过去日期”的日志归属
+- repository 层读取 `JoyEntry.date` / `InterviewSession.entryDate` 时，统一按 `Asia/Shanghai` 的整天时间窗口查询（`gte dayStartUtc`、`lt nextDayStartUtc`），而不是按某个归一化时间点精确匹配
 
 `DailyJournalEntry` 是独立日级整合日志表：
 - `userId + date` 唯一
@@ -169,7 +170,7 @@
 - 当天整合日志只使用同一天 `status = saved` 的维度日志
 - 正文是按已有维度组织的章节合集，不补空维度
 - `sourceSignature` 用于判断维度日志保存后，日级日志是否进入 `stale` 状态
-- 如果来源维度日志后来不再是 `saved`，或保存后的更新时间变化，当前签名都会不一致，日级日志会进入 `stale`
+- 如果来源维度日志后来不再是 `saved`、保存后的更新时间变化，或同一天新增了新的 `saved` 维度日志，当前签名都会不一致，日级日志会进入 `stale`
 
 `DailyHappinessScore` 是独立幸福 8 要素日评分表：
 - `userId + date` 唯一
@@ -207,6 +208,7 @@
 聚合规则固定为：
 - 同一天同维度优先取最新有效记录
 - 同一天多个维度允许并存
+- `InterviewSession.entryDate`、`JoyEntry.date` 与 `DailyJournalEntry.date` 的范围查询统一按 `Asia/Shanghai` 整天窗口执行，避免同日非零点时间戳被漏算到前一天或下一天
 - 无日志时只允许使用安全摘要，不暴露内部结构字段名
 - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`，避免前端误开记录入口
 
@@ -219,6 +221,7 @@
   - 回到今天
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
+  - 当页面处于 `entryDate` 访谈上下文时，当前选中维度胶囊优先显示 live session 的实时轮次 / 进度圈；其余维度，以及切到 `daily_journal` 工作区后的胶囊状态，继续使用 `CalendarDayRecord.dimensions`
 - 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大；主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
@@ -255,9 +258,9 @@
 
 ### 3.7 记录分析页现实
 
-截至 `2026-05-03`，`/analysis?month=YYYY-MM&section=score|rhythm|insights` 已进入月度记录分析的第一批真实读模型阶段：
+截至 `2026-05-04`，`/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已进入月度记录分析的 tab 互斥视图阶段：
 - `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
-- 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认按 `score` 展示，但不会强制改写 URL
+- 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认切到 `overview` 总览视图
 - 页面内已有上月 / 本月 / 下月切换
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - 页面当前已展示：
@@ -265,8 +268,9 @@
   - `score`：幸福 8 要素评分默认入口，先展示总分平均走势，再展示 8 要素快扫和单项细看，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
   - `rhythm`：本月记录热力图、最长连续记录 / 空档和当天 drill-in，替代旧的记录页同款分布表
   - `insights`：主线维度 + 正在浮现 + 安静维度，避免五张卡按偶数栅格硬排
-- `section` 不只是 URL 状态，还承担区块焦点锚点；首次进入或翻月保留 `section` 时，前端会自动滚动到对应分区
+- `section` 是视图选择状态：总览 / 评分 / 节奏 / 五维四个 tab 互斥渲染，同一时间只展示一个板块；切换 tab 或翻月后 `section` 保留在 URL 中
 - 分析页里“回到某维度”的 drill-down 链接会带回对应 `entryDate`，避免历史月份误跳到今天的访谈上下文
+- 分析页热力区点到未来日期时，只保留 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
 - 当前月 `rhythm` 的 `最长空档` 只统计已经发生的日期，不把未来自然日当成空档
 - `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
 - 当月份没有任何真实分析数据时，前端直接显示真实空态，不再使用示意填充冒充分析结果
@@ -344,10 +348,14 @@
 SSE 事件：
 - `phase`
 - `delta`
+- `summary`
+- `question`
 - `session`
 - `error`
 
 非流式路由 `respond` 仍存在，但当前主 UI 使用的是 stream 版本。
+
+provider 流式返回的正式追问原始 `delta.text` 会原样透传给前端，不能对单个任意增量做 trim 或空白折叠；系统自己生成的完整文本、fallback 文本、最终补齐文本，以及规范化后的 `summary` 文本才进入内部切块逻辑。
 
 截至 `2026-05-01`，访谈回复错误不再只用一句“提交失败”兜底。`respond/stream` 的 `error` 事件和非流式 `respond` 的错误 JSON 都会携带结构化 `issue`：
 - `code`
@@ -440,10 +448,12 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 - 没有已保存维度日志时返回 `DAILY_JOURNAL_SOURCE_EMPTY`
 - 不读取未保存草稿，不直接读取访谈消息
 - 不生成空章节，不提示缺失维度
-- 访谈页顶部【日志】按钮把主工作区切到当天日志模式，不弹层、不跳转
+- 访谈页顶部【完整日志】按钮把主工作区切到当天日志模式，不弹层、不跳转；打开或生成当天完整日志时显示阶段进度和小树生长动效
 - `mode=daily-journal` 深链只打开当天日志主区；如果页面尚未 hydrate 访谈 session，也不会调用 `/api/interview/session/start` 创建新的 joy session
-- 从 `mode=daily-journal` 点击“回到访谈”时，前端会移除 URL 里的 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
+- 从 `mode=daily-journal` 点击“回到访谈”时，前端会先通过 `DailyJournalWorkspace.flushPendingEdits()` 保存未触发 autosave 的草稿编辑，再移除 URL 里的 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
 - 从维度日志 pane 切到当天日志主区前，前端会先复用日志 pane 的关闭路径：保存未暂存编辑，或取消正在生成的 draft
+- 从当天日志主区返回访谈，或在当天日志主区切换访谈维度时，前端会先通过 `DailyJournalWorkspace.flushPendingEdits()` 保存未触发 autosave 的草稿编辑；保存失败或内容非法时不卸载当天日志主区，避免静默丢稿
+- 当访谈维度变化且 URL 没有 `mode=daily-journal` 时，`InterviewShell` 会把 `workspaceMode` 重置为 `interview`，避免新维度会话被完整日志工作区遮住
 - calendar 只展示轻量状态，不内联编辑
 
 ## 6. joy 维度为什么是当前标品
@@ -484,7 +494,7 @@ joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制
 ### 6.3 用户可见产物
 
 用户现在看到的是：
-- 对话中的浅色 `thinkingSummary` 思路层：呈现 AI 对用户回复的理解和处理焦点，但不能写成第二个正式追问
+- 对话中的浅色 `thinkingSummary` 思路层：呈现 AI 对用户回复的理解和处理焦点，五个维度都会通过 `summary` SSE delta 流式展示；它不能写成第二个正式追问
 - 日志正文初稿
 
 用户不再看到：

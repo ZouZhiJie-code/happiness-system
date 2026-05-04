@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-03`
+最后更新：`2026-05-04`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -11,6 +11,7 @@
 - 大多数成功响应最终都会返回一份完整 `session`，前端用它做 hydrate
 - 当前“生成日志”只支持单个 `sessionId`
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化
+- 所有按 `entryDate / date` 取天级数据的接口，当前统一按 `Asia/Shanghai` 的整天时间窗口查询，不再按某个归一化时间点精确匹配
 
 ## 2. 路由清单
 
@@ -36,7 +37,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认以评分为当前焦点，但不会强制改写 URL；页面本身已经改成连续月度复盘工作台，顺序展开总览、评分、节奏和五维洞察。`section` 既是 URL 状态，也是区块焦点锚点：首次打开带 `section` 的链接，或翻月后保留 `section` 时，页面会自动滚动到对应分区。热力区支持点选某一天继续回到当天，五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏看板始终可见；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -110,6 +111,10 @@ SSE 事件：
 `delta` 里当前会出现：
 - `summary`
 - `question`
+
+`summary` 对应浅色 `thinkingSummary` 思路层，用来呈现 AI 对用户回复的理解和处理焦点。服务端会先按维度规则规范化这段文本，拦截问句、系统口吻和“下一步问”等措辞，再通过 `summary` delta 分段流式发送；`question` delta 才是正式追问。客户端不要把 `summary` 当成第二个问题展示。
+
+`question` 的 provider 流式文本会继续按增量展示；服务端对 provider 原始 `delta.text` 不会单独 trim 或折叠空白，跨 chunk 的空格与换行会原样保留。只有系统自己补发的完整文本才会做内部切块，避免一次性塞入长气泡。
 
 `error` 事件从 `2026-05-01` 起会带结构化 `issue`：
 
@@ -229,6 +234,7 @@ data: {
   - `正在生成日志骨架`
   - `正在打磨日志细节`
   - `最终润色中`
+- 阶段式反馈会保留进度条，并叠加小树从树苗成长为大树的动效；当天完整日志打开/生成也复用同一视觉反馈。
 - `fulfillment` 生成日志时会按“具体片段 -> 进展 / 积累 / 贡献证据 -> 为什么今天不算白过 -> 轻收”组织正文。
 - `fulfillment` 完整模式才允许轻收“值得感标准”；partial 模式不会硬写 `selfPattern`。
 - `reflection` 生成日志时会按“触发片段 -> 原来的疑问或判断 -> 新理解 / 证据 -> 视角变化或判断线索”组织正文。
@@ -404,7 +410,7 @@ GET /api/daily-journal?date=2026-05-02
 - `none`：还没有当天整合日志
 - `draft`：已有草稿
 - `saved`：已正式保存
-- `stale`：已有日级日志，但来源维度日志保存后又更新过，或来源维度日志不再是 `saved`
+- `stale`：已有日级日志，但来源维度日志保存后又更新过、来源维度日志不再是 `saved`，或同一天新增了新的 `saved` 维度日志
 
 生成：
 
@@ -414,7 +420,7 @@ GET /api/daily-journal?date=2026-05-02
 }
 ```
 
-`POST /api/daily-journal/generate` 只收集当天 `JoyEntry.status = saved` 的维度日志。没有来源时返回 `DAILY_JOURNAL_SOURCE_EMPTY`。生成成功会 upsert 一条 `DailyJournalEntry` 草稿。
+`POST /api/daily-journal/generate` 只收集当天 `JoyEntry.status = saved` 的维度日志。这里的“当天”当前按 `Asia/Shanghai` 的整天时间窗口取数，而不是按单个归一化时间点精确匹配。没有来源时返回 `DAILY_JOURNAL_SOURCE_EMPTY`。生成成功会 upsert 一条 `DailyJournalEntry` 草稿。
 
 编辑草稿：
 
@@ -426,6 +432,10 @@ GET /api/daily-journal?date=2026-05-02
 ```
 
 `PUT /api/daily-journal/[id]` 会把状态保持或改回 `draft`，用于访谈页当天日志模式自动保存。
+
+前端离开当天日志主区前也会主动调用同一草稿更新接口：
+- 点击“回到访谈”时，会先保存未等到 700ms autosave 的标题或正文编辑；保存失败或内容非法时继续停留在当天日志主区。
+- 用户在当天日志主区切换访谈维度时，也会先保存 pending 编辑，然后把主工作区切回普通访谈，避免新维度隐藏在当天日志主区背后。
 
 正式保存：
 
@@ -974,7 +984,7 @@ POST /api/daily-journal/[id]/save
   - 回到今天
   - 实时 summary chips
 - 主导航当前页使用贴近文字的暖棕实线下划线，不再使用填充方框；calendar toolbar 内部按“翻段 / 标题摘要 / 今天 / 视图切换”用 `｜` 分隔。
-- 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>&section=score`。
+- 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>`，默认 `section=overview`。
 
 #### 页面与组件拆分
 
@@ -1191,7 +1201,8 @@ POST /api/daily-journal/[id]/save
    - 进入后打开当天整合日志主区
    - 日期优先使用 URL 的 `entryDate`
    - 这个模式不启动普通维度访谈，不调用 `/api/interview/session/start`，也不会因为 calendar 的当天日志入口创建新的 joy session
-   - 用户点击“回到访谈”时应移除 `mode=daily-journal`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
+   - 用户点击“回到访谈”时应先保存当天日志 pending 编辑，再移除 `mode=daily-journal`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
+   - 如果用户在当天日志主区切换维度，且 URL 没有继续携带 `mode=daily-journal`，前端应保存 pending 编辑并回到普通访谈工作区
 
 第 5 步不要求把 session 缓存结构从“按维度”彻底重构成“按维度 + 日期”，但显式 deep link 不能再被旧缓存误恢复。
 
@@ -1472,12 +1483,12 @@ POST /api/daily-journal/[id]/save
 
 ### 5.14 Analysis 评分、热力与五维洞察
 
-当前 `/analysis?month=YYYY-MM&section=score|rhythm|insights` 已完成月份级日志分析的第一批真实读模型与页面接线，并接入五维结构化洞察、幸福 8 要素评分录入面板、本月热力图和轻量 SVG 评分趋势图。
+当前 `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已完成月份级日志分析的 tab 互斥视图与页面接线，并接入五维结构化洞察、幸福 8 要素评分录入面板、本月热力图和轻量 SVG 评分趋势图。
 
 已落地行为：
-- 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `score`
+- 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `overview`
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
-- 直接打开 `/analysis?...&section=rhythm|insights` 或翻月后保留 `section` 时，页面会自动滚动到对应区块
+- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏看板始终可见；切换 tab 或翻月后 `section` 保留在 URL 中
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`
@@ -1491,12 +1502,14 @@ POST /api/daily-journal/[id]/save
   - `editableDates`
 - 页面当前已展示：
   - 顶部月度摘要：先给本月结论和下一步入口
-  - `score`：默认焦点，展示 `幸福 8 要素评分` 录入面板、总分平均走势、8 要素快扫和单项细看
+  - `overview`：默认视图，展示总览摘要
+  - `score`：展示 `幸福 8 要素评分` 录入面板、总分平均走势、8 要素快扫和单项细看
   - `rhythm`：本月记录热力图、最长连续记录 / 空档与当天 drill-in
   - `insights`：主线维度、正在浮现和安静维度三层五维洞察布局
   - 空数据月份直接显示真实空态，不再使用示意填充；这不会影响评分保存和 `editableDates`
   - 只有评分、没有维度日志的月份不会伪造 `最高密度日` 或 `主线维度`，而是显示空态
   - 分析页里“回到某维度”的下钻链接会保留对应 `entryDate`，保证历史月份能回到原始记录日期
+  - 未来日期的热力区 drill-down 只允许 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
 
 当前聚合规则：
 - 只统计 `JoyEntry.status = saved`

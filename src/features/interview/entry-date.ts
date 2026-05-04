@@ -1,6 +1,7 @@
 const ENTRY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SHANGHAI_UTC_OFFSET_HOURS = 8;
 const SHANGHAI_UTC_OFFSET_MS = SHANGHAI_UTC_OFFSET_HOURS * 60 * 60 * 1000;
+const ENTRY_DATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const ENTRY_DATE_TIMEZONE = "Asia/Shanghai";
 export const ENTRY_DATE_REGEX = ENTRY_DATE_PATTERN;
@@ -34,6 +35,16 @@ export function parseEntryDateInput(value: string) {
   }
 
   return parsed;
+}
+
+export function getEntryDateRangeBounds(startDate: string, endDate = startDate) {
+  const startAt = parseEntryDateInput(startDate);
+  const endExclusive = new Date(parseEntryDateInput(endDate).getTime() + ENTRY_DATE_WINDOW_MS);
+
+  return {
+    startAt,
+    endExclusive
+  };
 }
 
 export function formatEntryDate(date: Date) {

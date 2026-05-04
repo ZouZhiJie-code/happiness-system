@@ -136,7 +136,7 @@ export function getDimensionProgressSummary(
     percentage = Math.max(percentage, 96);
   }
 
-  if (session.journalEntry?.status === "saved" || session.status === "completed" || Boolean(session.completedAt)) {
+  if (session.journalEntry?.status === "saved") {
     percentage = 100;
   }
 

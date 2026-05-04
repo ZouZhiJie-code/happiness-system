@@ -234,6 +234,23 @@ describe("getDimensionProgressSummary", () => {
     expect(summary.shouldShowRing).toBe(false);
   });
 
+  it("does not mark the dimension as completed when the session is completed but the journal is only a draft", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        status: "completed",
+        completedAt: "2026-05-02T03:00:00.000Z",
+        journalEntry: {
+          status: "draft"
+        }
+      })
+    );
+
+    expect(summary.percentage).toBe(96);
+    expect(summary.state).toBe("draft");
+    expect(summary.displayState).toBe("draft_ready");
+    expect(summary.statusLabel).toBe("已整理");
+  });
+
   it("reaches 100% once the dimension is saved or completed", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({

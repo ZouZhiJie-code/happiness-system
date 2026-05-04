@@ -77,7 +77,7 @@ function buildCommonProgress(input: DefinitionProgressInput, score: number) {
     nextScore = Math.max(nextScore, 96);
   }
 
-  if (input.journalEntry?.status === "saved" || input.status === "completed" || Boolean(input.completedAt)) {
+  if (input.journalEntry?.status === "saved") {
     return 100;
   }
 

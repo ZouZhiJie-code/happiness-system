@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db/prisma";
 import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
-import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
+import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyJournalEntryRecord, InterviewDimension } from "@/types/interview";
 
 const DEMO_USER_ID = "local-demo-user";
@@ -84,12 +84,15 @@ export function buildDailyJournalSourceMetadata(sourceEntries: DailyJournalSourc
 }
 
 export async function listSavedJournalEntriesForDailyJournal(date: string) {
-  const dateValue = parseEntryDateInput(date);
+  const { startAt, endExclusive } = getEntryDateRangeBounds(date);
   const entries = await prisma.joyEntry.findMany({
     where: {
       userId: DEMO_USER_ID,
-      date: dateValue,
-      status: "saved"
+      status: "saved",
+      date: {
+        gte: startAt,
+        lt: endExclusive
+      }
     },
     select: {
       id: true,
@@ -107,10 +110,23 @@ export async function listSavedJournalEntriesForDailyJournal(date: string) {
     }
   });
 
-  return entries.flatMap((entry) => {
+  const latestEntryByDimension = new Map<InterviewDimension, DailyJournalSourceEntry>();
+
+  for (const entry of entries) {
     const mapped = mapSourceEntry(entry);
-    return mapped ? [mapped] : [];
-  });
+
+    if (!mapped) {
+      continue;
+    }
+
+    const existing = latestEntryByDimension.get(mapped.dimension);
+
+    if (!existing || new Date(mapped.updatedAt).getTime() > new Date(existing.updatedAt).getTime()) {
+      latestEntryByDimension.set(mapped.dimension, mapped);
+    }
+  }
+
+  return Array.from(latestEntryByDimension.values());
 }
 
 export async function findDailyJournalByDate(date: string) {

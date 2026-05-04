@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-03`
+最后更新：`2026-05-04`
 
 ## 1. 当前阶段结论
 
@@ -11,11 +11,14 @@
 - improvement 已完成理论对齐开发规格、数据结构扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例；仍需要端到端产品验收。
 - gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 日志工作区对用户展示的是“日志正文”，结构化线索只保留在系统内部。
-- 当天整合日志已经落地：访谈页顶部【日志】进入当天日志主区，基于当前 `entryDate` 已保存维度日志生成章节合集。
+- 当天整合日志已经落地：访谈页顶部【完整日志】进入当天日志主区，基于当前 `entryDate` 已保存维度日志生成章节合集；单维度日志与完整日志加载/生成时都使用阶段进度叠加小树生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- calendar/day、当天整合日志和分析页的按天归档现在统一按 `Asia/Shanghai` 整天时间窗口查询，不再按单个归一化时间点精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
+- 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 day snapshot 为准。只要某个维度当天已有 `saved` 日志，胶囊会优先显示 `已完成`。
 - 全站前端壳层已经从居中大卡片改为平铺工作台：`SiteHeader` 是全宽暖色工具栏，首页、访谈、设置和 calendar 主体减少外框留白与卡片嵌套。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
 - 日志标题已经做五维统一语义短标题治理，后端不再用长事件句机械截断成标题。
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
+- `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 
@@ -31,11 +34,12 @@
   - joy 场景下建议跳到 `improvement`
 - 右侧日志工作区
 - 日志草稿生成、再生成、编辑、保存
-- 当天整合日志主区：查询、生成、自动保存草稿、正式保存
+- 当天整合日志主区：查询、生成、自动保存草稿、离开前 flush pending 编辑、正式保存
 - 首页已重构为品牌广告页：Hero 主张为“在日常里照见自己”，中段讲“经历很多却少有读懂经历”和“回顾一天显露纹理”，五维段以 `悦 / 实 / 思 / 改 / 谢` 作为认识自己的五条入口，沉淀段收束为“日有所记，心有所归”；图片位按 section 配置，当前已接入 `public/homepage/*` 本地图片，Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深
 - 五维统一语义短标题治理，标题不再由长事件句机械截断
 - 用户边界低压收束：材料足够时 partial，材料不足时“只补一句 / 换一个片段 / 先退出”
 - 开发态 `清除对话记录` 按钮：当前维度可一键重开新访谈
+- 分析页「月度驾驶舱」改版（2026-05-04）：SummaryHero 重构为评分/节奏/主线 3 栏状态看板；SectionAnchorNav 加状态徽章（今天未评/已评、记录天数、主线维度名）；热力图统计栏从右侧 4 卡压缩为底部 3 格 summary bar；五维板块展示 topTags 高频线索 chips；评分快扫选中态强化（左侧竖条色带+底色加深）
 
 ### joy 理论对齐
 
@@ -173,7 +177,7 @@
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
 - `/calendar` 月视图、周视图、日视图与 deep link 已落地
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大，访谈和 calendar 业务组用 `｜` 分隔
-  - `/analysis?month=YYYY-MM&section=score|rhythm|insights` 记录分析页已落地月份切换、`/api/analysis/month`、顶部月度摘要、评分默认入口、本月记录热力图、当天 drill-in、主线维度 / 浮现维度 / 安静维度式五维洞察、幸福 8 要素评分录入面板和轻量 SVG 趋势图；顶部主导航 `分析` 默认进入当前月 `score` 焦点；缺失 `section` 时前端默认按 `score` 聚焦但不强制改写 URL，页面本身已经改成连续复盘工作台而不是互斥 tab 分区；首次进入或翻月保留 `section` 时会自动滚动到对应区块；分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；`PUT /api/happiness-score` 只允许保存今天和昨天；空数据月份现在直接显示真实空态，不再使用示意填充，只有评分没有维度日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月 `最长空档` 会排除未来日期
+  - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页已改为 tab 互斥视图：SummaryHero 3 栏看板始终可见，正文区按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察）；顶部主导航 `分析` 默认进入 `overview` 总览；切换 tab 或翻月后 `section` 保留在 URL 中。分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只保留 `查看当天`，不开放开始/继续访谈；`PUT /api/happiness-score` 只允许保存今天和昨天；空数据月份现在直接显示真实空态，不再使用示意填充，只有评分没有维度日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月 `最长空档` 会排除未来日期
   - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致
@@ -186,7 +190,7 @@
   - month / week / day 三个视图当前已经切到暖色 calendar 工作台：状态五态、维度单字 badge `悦 / 实 / 思 / 改 / 谢`、badge/surface 层级和主次按钮语义都由 `presentation.ts` 统一；读屏仍保留完整维度名
   - calendar 文案已经切到工作台短句语气；英文眉题已清掉，`aria-busy`、loading/error inline 语义、焦点态和主要 CTA 的可访问名称已补齐
   - `SiteHeader` 已统一为全宽暖色工具栏，访谈维度条与 calendar toolbar 共用同一套中区高度预算，业务组用 `｜` 分隔；主导航当前页改用实线下划线，不再套独立中区外框
-  - `mode=daily-journal` 深链只打开当天整合日志主区，不会启动或创建新的维度访谈 session；点击“回到访谈”会移除 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
+  - `mode=daily-journal` 深链只打开当天整合日志主区，不会启动或创建新的维度访谈 session；点击“回到访谈”会先保存当天日志 pending 编辑，再移除 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程；在完整日志主区切换维度时也会先保存 pending 编辑并回到普通访谈工作区
   - 第 4 步的接口契约与验收基线保留在 `docs/integration-guide.md` 的 `5.10 Step 4: calendar API 可执行规格`
 
 ## 3. 当前仍然没有完成的事
@@ -233,7 +237,7 @@
 - 如果当前草稿已经覆盖到最新访谈状态，再次点击“生成日志”会直接复用当前版本，不再重复等待
 - 日志工作区不再展示“正在根据最新访谈重整”或“我已经整理出一版日志”这类解释性文案
 - 如果用户在日志整理过程中关闭面板，这次整理会被取消，访谈分岔点按钮会恢复可点击
-- 对话里的 `thinkingSummary` 已明确为浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点，不再作为第二个正式追问展示
+- 对话里的 `thinkingSummary` 已明确为浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；五个维度都会通过 `summary` SSE delta 流式展示这层内容，不再作为第二个正式追问展示
 - 顶部新增开发辅助按钮 `清除对话记录`，方便重开当前维度的新一轮访谈
 - 标题生成已经改为语义短标题治理；坏 AI 标题和 fallback 标题都会被后端兜底。
 - 用户拒绝继续或用自然语言要求整理日志时，服务层会先处理边界，不再继续抽取和追问。
@@ -241,18 +245,18 @@
 
 ## 6. 当前验证基线
 
-截至 `2026-05-03`，本地已验证：
+截至 `2026-05-04`，本地已验证：
 - `npx tsc --noEmit`
 - `npm test`
 
 测试结果：
-- `38` 个测试文件
-- `321` 个测试全部通过
+- `39` 个测试文件
+- `345` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
 - partial 放行
-- `thinkingSummary` 浅色思路层不会退回第二个正式追问
+- `thinkingSummary` 浅色思路层不会退回第二个正式追问，并覆盖五个维度的 summary 流式输出
 - joy redirect 到 `improvement`
 - fulfillment extract fallback
 - reflection extract fallback
@@ -285,7 +289,7 @@
 - calendar 可达性与交付收口：短句文案、focus-visible、accessible name、`aria-busy`、loading/error inline state
 - `tests/unit/site-header-calendar.test.tsx` 覆盖 header 中区的 calendar 标题、翻段、视图切换和摘要 chip
 - `tests/unit/daily-journal.service.test.ts` 覆盖当天整合日志 stale 判断、无保存来源拒绝生成、fallback 章节生成、草稿更新与正式保存
-- `tests/unit/interview-shell.test.tsx` 覆盖 `mode=daily-journal` deep link 不启动普通访谈，以及“回到访谈”移除 `mode` 后恢复普通访谈 hydrate
+- `tests/unit/interview-shell.test.tsx` 覆盖 `mode=daily-journal` deep link 不启动普通访谈、“回到访谈”先保存当天日志 pending 编辑并移除 `mode`、以及从完整日志主区切换维度后回到普通访谈工作区
 
 fulfillment 人工 smoke 基线：
 - 推进完成

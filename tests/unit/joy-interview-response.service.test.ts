@@ -1120,7 +1120,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.nextStage).toBe("probe_pattern");
     expect(result.assistantTurn.question).toBe("你觉得自己在关系里最在乎什么？");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，换个角度确认这条线索是不是真的稳定成立。"
+      "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，换个角度确认这条线索是不是真的稳定成立。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
@@ -1465,6 +1465,76 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn?.question).toBe("你觉得自己在关系里最在乎什么？");
   });
 
+  it("preserves raw whitespace across streamed question deltas", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        turnCount: 4,
+        stage: "probe_pattern",
+        snapshot: baseSnapshot,
+        lastAssistantQuestion: "What next?"
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "question",
+        text: "What "
+      });
+      await onDelta({
+        target: "question",
+        text: "next?"
+      });
+
+      return {
+        insight: "",
+        thinkingSummary: "",
+        analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+        question: "What next?",
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "clue"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    await streamJoyInterviewResponse(
+      {
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "I want to keep going.",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    const questionDeltas = deltas.filter((delta) => delta.target === "question");
+
+    expect(questionDeltas).toEqual([
+      {
+        target: "question",
+        text: "What "
+      },
+      {
+        target: "question",
+        text: "next?"
+      }
+    ]);
+    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("What next?");
+  });
+
   it("normalizes invalid streamed thinking summaries before showing them to the user", async () => {
     findJoyInterviewSessionById.mockResolvedValue(buildSession());
     extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
@@ -1520,22 +1590,46 @@ describe("prepareJoyInterviewResponse", () => {
       }
     );
 
-    const normalizedSummary = "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，再确认这条个人线索是不是真的站得住。";
-    expect(deltas).toEqual([
-      {
-        target: "summary",
-        text: normalizedSummary
-      },
-      {
-        target: "question",
-        text: "你觉得自己在关系里最在乎什么？"
-      }
-    ]);
+    const normalizedSummary = "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，再确认这条个人线索是不是真的站得住。";
+    const summaryDeltas = deltas.filter((delta) => delta.target === "summary");
+    const questionDeltas = deltas.filter((delta) => delta.target === "question");
+
+    expect(summaryDeltas.length).toBeGreaterThan(1);
+    expect(summaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedSummary);
+    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("你觉得自己在关系里最在乎什么？");
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedSummary);
     expect(result.assistantMessage).toBe(`${normalizedSummary}\n你觉得自己在关系里最在乎什么？`);
     expect(result.assistantMessage).not.toContain("你提到");
     expect(result.assistantMessage).not.toContain("我想知道");
     expect(result.assistantMessage).not.toContain("？\n");
+  });
+
+  it("preserves whitespace when streaming an inactive-session message", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        status: "paused"
+      })
+    );
+    getInactiveSessionMessage.mockReturnValue("foo \n\nbar baz");
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "继续补充",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(deltas.map((delta) => delta.text).join("")).toBe("foo \n\nbar baz");
+    expect(result.assistantMessage).toBe("foo \n\nbar baz");
   });
 
   it("keeps streaming the summary when continuing the current event from a choice card", async () => {
@@ -1672,20 +1766,159 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(phases).toEqual(["thinking", "summary", "question"]);
     const normalizedContinuedSummary =
-      "这类开心正在沉淀成“只要和重要的人真正聊开，我就更容易进入好状态”这样的个人线索，换个角度确认这条线索是不是真的稳定成立。";
-    expect(deltas).toEqual([
-      {
-        target: "summary",
-        text: normalizedContinuedSummary
-      },
-      {
-        target: "question",
-        text: continuedPayload.question
-      }
-    ]);
+      "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，换个角度确认这条线索是不是真的稳定成立。";
+    const continuedSummaryDeltas = deltas.filter((delta) => delta.target === "summary");
+    const continuedQuestionDeltas = deltas.filter((delta) => delta.target === "question");
+
+    expect(continuedSummaryDeltas.length).toBeGreaterThan(1);
+    expect(continuedSummaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedContinuedSummary);
+    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe(continuedPayload.question);
     expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n你觉得自己在关系里最在乎什么？`);
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
     expect(result.assistantTurn?.question).toBe(continuedPayload.question);
+  });
+
+  it.each([
+    {
+      dimension: "joy" as const,
+      snapshot: baseSnapshot,
+      expectedSnippet: "开心的分量"
+    },
+    {
+      dimension: "fulfillment" as const,
+      snapshot: {
+        ...baseSnapshot,
+        event: "今天把拖了很久的方案收口了",
+        joyMoment: "今天把拖了很久的方案收口了",
+        whyItMattered: "卡住的部分终于推进完",
+        joySource: "卡住的部分终于推进完",
+        selfPattern: "把困难处真正收口才算数",
+        manualClue: "把困难处真正收口才算数",
+        feeling: "踏实",
+        stateShift: "踏实"
+      },
+      expectedSnippet: "值得感标准"
+    },
+    {
+      dimension: "reflection" as const,
+      snapshot: {
+        ...baseSnapshot,
+        event: "今天会议里我突然发现自己一直怕提不同意见",
+        whyItMattered: "不同意见不一定会破坏关系",
+        selfPattern: "以后判断表达风险时要看对方是否在讨论事实"
+      },
+      expectedSnippet: "判断线索"
+    },
+    {
+      dimension: "improvement" as const,
+      snapshot: {
+        ...baseSnapshot,
+        event: "今天开会时我急着插话",
+        selfPattern: null,
+        manualClue: null,
+        situation: "今天开会时我急着插话",
+        improvementTrack: "avoid_bad" as const,
+        frictionPoint: "还没听完就急着回应",
+        controllableFactor: "先停一拍确认对方说完"
+      },
+      expectedSnippet: "可调整的小处"
+    },
+    {
+      dimension: "gratitude" as const,
+      snapshot: {
+        ...baseSnapshot,
+        event: "今天同事帮我理清优先级",
+        gratitudeMoment: "今天同事帮我理清优先级",
+        kindAction: "帮我先拆出最急的两件事",
+        seenNeed: "我当时快被任务压住了",
+        gratitudeReason: "我觉得不是一个人在扛",
+        relationshipSignal: "先看见处境再帮忙"
+      },
+      expectedSnippet: "关系线索"
+    }
+  ])("normalizes and streams thinking summaries with %s dimension semantics", async ({ dimension, snapshot, expectedSnippet }) => {
+    const session = buildSession({
+      dimension,
+      snapshot,
+      events: [
+        {
+          ...buildSession().events[0],
+          stage: "probe_pattern",
+          snapshot
+        }
+      ]
+    });
+
+    findJoyInterviewSessionById.mockResolvedValue(session);
+    extractJoySnapshotWithAI.mockResolvedValue(snapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension,
+        snapshot,
+        stage: "probe_pattern",
+        lastAssistantQuestion: "这里最关键的那一层是什么？",
+        events: [
+          {
+            ...buildSession().events[0],
+            stage: "probe_pattern",
+            snapshot
+          }
+        ]
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "你提到这件事，我想知道下一步要问哪里？"
+      });
+      await onDelta({
+        target: "question",
+        text: "这里最关键的那一层是什么？"
+      });
+
+      return {
+        insight: "",
+        thinkingSummary: "你提到这件事，我想知道下一步要问哪里？",
+        analysis: "测试用非法思路层",
+        question: "这里最关键的那一层是什么？",
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "clue"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "我补充一点。",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    const streamedSummary = deltas
+      .filter((delta) => delta.target === "summary")
+      .map((delta) => delta.text)
+      .join("");
+
+    expect(deltas.filter((delta) => delta.target === "summary").length).toBeGreaterThan(1);
+    expect(streamedSummary).toBe(result.assistantTurn?.thinkingSummary);
+    expect(streamedSummary).toContain(expectedSnippet);
+    expect(streamedSummary).not.toMatch(/你提到|我想知道|下一步|[?？]/u);
   });
 });

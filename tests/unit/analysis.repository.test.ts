@@ -73,7 +73,11 @@ describe("analysis.repository", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           userId: "local-demo-user",
-          status: "saved"
+          status: "saved",
+          date: {
+            gte: new Date("2026-05-01T16:00:00.000Z"),
+            lt: new Date("2026-05-04T16:00:00.000Z")
+          }
         })
       })
     );
@@ -81,7 +85,11 @@ describe("analysis.repository", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           userId: "local-demo-user",
-          status: "saved"
+          status: "saved",
+          date: {
+            gte: new Date("2026-05-01T16:00:00.000Z"),
+            lt: new Date("2026-05-04T16:00:00.000Z")
+          }
         })
       })
     );

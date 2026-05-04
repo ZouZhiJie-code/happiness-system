@@ -127,7 +127,7 @@ describe("daily happiness score repository", () => {
         userId: "local-demo-user",
         date: {
           gte: new Date("2026-04-30T16:00:00.000Z"),
-          lte: new Date("2026-05-30T16:00:00.000Z")
+          lt: new Date("2026-05-31T16:00:00.000Z")
         }
       },
       orderBy: {

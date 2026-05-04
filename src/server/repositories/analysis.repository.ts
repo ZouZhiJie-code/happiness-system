@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db/prisma";
-import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
+import { formatEntryDate, getEntryDateRangeBounds } from "@/features/interview/entry-date";
 import { interviewJournalPayloadSchema } from "@/features/interview/schema/interview.schema";
 import type { AnalysisSavedDailyJournalSource, AnalysisSavedEntrySource } from "@/features/analysis/types";
 
@@ -28,8 +28,7 @@ function parseAnalysisEntryPayload(payload: unknown) {
 }
 
 export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesByDateRangeInput) {
-  const startAt = parseEntryDateInput(input.startDate);
-  const endAt = parseEntryDateInput(input.endDate);
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
 
   const [entries, dailyJournals] = await Promise.all([
     prisma.joyEntry.findMany({
@@ -38,7 +37,7 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
         status: "saved",
         date: {
           gte: startAt,
-          lte: endAt
+          lt: endExclusive
         }
       },
       select: {
@@ -61,7 +60,7 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
         status: "saved",
         date: {
           gte: startAt,
-          lte: endAt
+          lt: endExclusive
         }
       },
       select: {
