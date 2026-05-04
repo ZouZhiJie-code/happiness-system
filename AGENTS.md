@@ -27,7 +27,7 @@
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 `/api/calendar/day` 的 day snapshot 为准。只要某个维度当天已经有 `saved` 日志，胶囊会优先显示 `已完成`，即使同一天还有继续中的 session。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 `90% ready`。
 - 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改成 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区承接月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、有记录天数、主线维度名）；正文区按当前 `section` 只渲染对应板块。`overview` 总览首屏先给月度判断、评分可信度、一个“建议先看”的主行动，再给评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条区分维度记录日、成果保存日、待整合日和评分可信度，避免把统计卡作为首屏主角。缺失 `section` 时前端默认切到 `overview` 总览视图；切换 tab 或翻月后当前 `section` 保留在 URL 中。分析页内”回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`；只有评分、没有已保存维度日志的月份，`rhythm` 会显示 `最高密度日 = 暂无`，`insights` 会显示空态而不是伪造主线维度；当前月 `最长空档` 会排除未来日期。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天；当前月评分保存成功后，`AnalysisToolbar` 的 contextual chip 会立即刷新。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改成 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区承接月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分待补状态、节奏待整合/待成文状态、主线维度名）；正文区按当前 `section` 只渲染对应板块。`overview` 总览首屏先给月度判断、评分可信度、一个“建议先看”的主行动，再给评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条区分维度记录日、成果保存日、待整合日和评分可信度，避免把统计卡作为首屏主角。缺失 `section` 时前端默认切到 `overview` 总览视图；切换 tab 或翻月后当前 `section` 保留在 URL 中。评分区当前是补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏才回到总分走势、8 要素快扫和单项细看。只有在至少 `2` 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只保留“仅供参考”的轻提示。`rhythm` 已改成状态优先热力工作台：未来日期保持 `待到来`，只评分未写日志的日期显示 `待成文`，同一天整合日志如果因为来源签名变化而 `stale`，会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`。分析页内”回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来月份的总览首屏不会再把用户送去今天的访谈，而会提示回到当前月份；未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`；只有评分、没有已保存维度日志的月份，`insights` 会显示空态而不是伪造主线维度；未来月份不会把整个月误算成 `最长空档`。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天；当前月评分保存成功后，`AnalysisToolbar` 的 contextual chip 会立即刷新；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会互相打架。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；桌面超量信息进入局部 pane 滚动，小屏月视图改为“月历主体在上 + 当天检查面板在下”的纵向工作台，不再依赖 `1040px` 横向滚动访问右侧面板。桌面月视图仍是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - 月视图月格当前固定渲染 6 行 42 格，loading skeleton 也渲染同样的 42 格，保证加载前后高度一致。
@@ -255,7 +255,7 @@ gratitude 理论翻译基线：
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
 - `src/features/analysis`
-  - 月度记录分析的 `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 归一化、月份跳转、标题格式化、类型与聚合 helper。
+  - 月度记录分析的 `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 归一化、月份跳转、标题格式化、类型与聚合 helper；analysis read model 额外承载 `dailyCoverage / rhythmOverview / insightsOverview` 以及按来源签名判断的当天整合日志 `stale` 语义。
 - `src/content`
   - 首页文案、CTA 和图片位配置；当前首页配置在 `homepage.ts`。
 - `src/features/happiness-score`
@@ -266,7 +266,7 @@ gratitude 理论翻译基线：
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 桌面是双栏检查面板、小屏是上下堆叠工作台，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、三块轻入口和底部证据条、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-down，以及主线维度 / 浮现维度 / 安静维度布局（带 topTags 高频线索 chips）。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新。
+  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、三块轻入口和底部证据条、补录优先的评分工作台（左侧日期状态 / 8 项列表，右侧当前要素 `1..10` 刻度）、样本/差异不足提示、状态优先本月热力图、当天追踪 drill-down，以及主线维度 / 浮现维度 / 安静维度布局（带 topTags 高频线索 chips）。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -376,14 +376,17 @@ gratitude 理论翻译基线：
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 - analysis 当前已经有公开只读能力：
   - `GET /api/analysis/month?month=YYYY-MM`
-  - 当前返回 `month / logOverview / dailyCoverage / dimensionBreakdown / dimensions / scoreOverview / scoreTrend / scoreRecords / editableDates`
-  - 只统计 `saved` 维度日志和 `saved` 当天整合日志
+  - 当前返回 `month / logOverview / dailyCoverage / rhythmOverview / dimensionBreakdown / dimensions / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates`
+  - 只统计 `saved` 维度日志和 `saved` 当天整合日志；但若当天整合日志的 `sourceSignature` 与同日最新 `saved` 维度来源不一致，analysis 会把它标成 `stale`，并在 `rhythm` 中按待更新处理
 - 页面当前已改成 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 chip；正文区按 `section` 只渲染对应板块，`overview` 总览首屏先给月度判断、评分可信度和唯一主行动，再展示评分 / 节奏 / 五维轻入口与证据条；当前月评分保存成功后，toolbar chip 会即时刷新
   - 缺失 `section` 时默认切到 `overview` 总览视图；切换 tab 或翻月后 `section` 保留在 URL 中
   - 热力区点到未来日期时，只提供 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
+  - `rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`，不会误算成 `已整合`
+  - 未来月份不会再把整个月误算成 `最长空档`
   - `editableDates` 在当前月返回今天和昨天；如果今天是月初，昨天即使属于上月也会保留为可编辑日期
   - `PUT /api/happiness-score` 请求体是 `date + scores.{meaning,health,virtue,autonomy,interest,skill,relationship,livingCondition}`，8 项必填且必须是 `1..10` 整数
   - `scoreTrend.days` 覆盖当前分析月自然日；未评分日期返回 `null` 并在图表中断线
+  - 只有在至少 `2` 天评分且确实存在均值/波动差异时，前端才把评分数据投影成 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各项持平时只显示“仅供参考”的提示
 
 ## 7. 本地开发与排障
 

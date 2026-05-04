@@ -60,7 +60,8 @@ describe("analysis.repository", () => {
     mockDailyJournalFindMany.mockResolvedValue([
       {
         id: "daily-journal-saved",
-        date: new Date("2026-05-03T16:00:00.000Z")
+        date: new Date("2026-05-03T16:00:00.000Z"),
+        sourceSignature: "entry-joy:2026-05-02T11:30:00.000Z"
       }
     ]);
 
@@ -119,7 +120,8 @@ describe("analysis.repository", () => {
     expect(result.dailyJournals).toEqual([
       {
         id: "daily-journal-saved",
-        date: "2026-05-04"
+        date: "2026-05-04",
+        sourceSignature: "entry-joy:2026-05-02T11:30:00.000Z"
       }
     ]);
   });

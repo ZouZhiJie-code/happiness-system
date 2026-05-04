@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type {
+  AnalysisDateSpan,
   AnalysisDailyCoverageDay,
   AnalysisDimensionInsightCard,
   AnalysisMonthRecord
@@ -26,6 +27,7 @@ import {
   type DailyHappinessScoreKey,
   type HappinessScoreRequestKey
 } from "@/features/happiness-score/types";
+import { cn } from "@/lib/utils";
 
 const happinessScoreItems: {
   requestKey: HappinessScoreRequestKey;
@@ -37,58 +39,67 @@ const happinessScoreItems: {
     requestKey: "meaning",
     recordKey: "meaningScore",
     label: "意义感",
-    description: "今天做的事是否和我在乎的方向有关"
+    description: "今天做的事，有没有碰到我在乎的方向"
   },
   {
     requestKey: "health",
     recordKey: "healthScore",
-    label: "健康",
-    description: "身体、睡眠和精力是否被照顾到"
+    label: "身体状态",
+    description: "身体、睡眠和精力，有没有被照顾到"
   },
   {
     requestKey: "virtue",
     recordKey: "virtueScore",
-    label: "德行",
-    description: "我是否做出了自己认可的选择"
+    label: "自我认可",
+    description: "今天的选择，有没有让我自己觉得站得住"
   },
   {
     requestKey: "autonomy",
     recordKey: "autonomyScore",
-    label: "自主",
-    description: "我是否保有选择感和掌控感"
+    label: "自主感",
+    description: "我有没有保住一点选择感和掌控感"
   },
   {
     requestKey: "interest",
     recordKey: "interestScore",
-    label: "兴趣",
-    description: "有没有被好奇、喜欢或投入感点亮"
+    label: "投入感",
+    description: "今天有没有被好奇、喜欢或投入感点亮"
   },
   {
     requestKey: "skill",
     recordKey: "skillScore",
-    label: "技能",
-    description: "有没有练到能力或看见进步"
+    label: "成长感",
+    description: "有没有练到能力，或者看见一点进步"
   },
   {
     requestKey: "relationship",
     recordKey: "relationshipScore",
-    label: "关系",
-    description: "是否感到连接、支持或被理解"
+    label: "关系支持",
+    description: "今天有没有感到连接、支持或被理解"
   },
   {
     requestKey: "livingCondition",
     recordKey: "livingConditionScore",
-    label: "生活条件",
-    description: "环境、秩序和现实条件是否托住了我"
+    label: "生活托住",
+    description: "环境、秩序和现实条件，有没有把我托住"
   }
 ];
 
 type ScoreFormState = Partial<Record<HappinessScoreRequestKey, number>>;
+type ScoreSaveErrorCode =
+  | "INVALID_HAPPINESS_SCORE_REQUEST"
+  | "HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED"
+  | "HAPPINESS_SCORE_SAVE_FAILED";
 
-interface DateSpan {
-  startDate: string;
-  endDate: string;
-  length: number;
+interface ScoreTrendHighlight {
+  label: string;
+  title: string;
+  detail: string;
+}
+
+interface ScoreTrendHighlightsResult {
+  highlights: ScoreTrendHighlight[];
+  note: string | null;
 }
 
 interface OverviewAction {
@@ -97,6 +108,10 @@ interface OverviewAction {
   href: string;
   label: string;
 }
+
+type RhythmDayState = "future" | "empty" | "score_only" | "log_only" | "stale" | "complete";
+
+const rhythmWeekdays = ["一", "二", "三", "四", "五", "六", "日"] as const;
 
 async function fetchAnalysisMonth(month: string) {
   const response = await fetch(`/api/analysis/month?month=${month}`, {
@@ -123,7 +138,8 @@ async function saveHappinessScore(date: string, scores: Record<HappinessScoreReq
   });
 
   if (!response.ok) {
-    throw new Error("HAPPINESS_SCORE_SAVE_FAILED");
+    const payload = (await response.json().catch(() => null)) as { error?: ScoreSaveErrorCode } | null;
+    throw new Error(payload?.error ?? "HAPPINESS_SCORE_SAVE_FAILED");
   }
 }
 
@@ -183,6 +199,75 @@ function resolveScoreDateShortcut(date: string, editableDates: string[]) {
   return formatScoreDateLabel(date);
 }
 
+function getScoreRecordByDate(record: AnalysisMonthRecord, date: string) {
+  return record.scoreRecords.find((score) => score.date === date) ?? null;
+}
+
+function hasScoreRecordForDate(record: AnalysisMonthRecord, date: string) {
+  return Boolean(getScoreRecordByDate(record, date));
+}
+
+function getPendingEditableScoreDates(record: AnalysisMonthRecord) {
+  return record.editableDates.filter((date) => !hasScoreRecordForDate(record, date));
+}
+
+function getScoreCompletion(scores: ScoreFormState) {
+  const filledCount = happinessScoreItems.filter((item) => typeof scores[item.requestKey] === "number").length;
+  const nextUnfilledFactor = happinessScoreItems.find((item) => typeof scores[item.requestKey] !== "number")?.requestKey ?? null;
+
+  return {
+    filledCount,
+    remainingCount: happinessScoreItems.length - filledCount,
+    nextUnfilledFactor
+  };
+}
+
+function resolvePreferredScoreFactor(scores: ScoreFormState) {
+  return getScoreCompletion(scores).nextUnfilledFactor ?? happinessScoreItems[0]?.requestKey ?? "meaning";
+}
+
+function formatEditableScoreDateLabel(date: string, editableDates: string[]) {
+  const shortcut = resolveScoreDateShortcut(date, editableDates);
+
+  if (shortcut === "今天") {
+    return `今天 · ${formatScoreDateLabel(date)}`;
+  }
+
+  if (shortcut === "昨天") {
+    return editableDates[0]?.slice(0, 7) === date.slice(0, 7) ? `昨天 · ${formatScoreDateLabel(date)}` : `昨天补录 · ${formatScoreDateLabel(date)}`;
+  }
+
+  return formatScoreDateLabel(date);
+}
+
+function formatScoreLevelCopy(value: number | null) {
+  if (typeof value !== "number") {
+    return {
+      label: "未填",
+      detail: "先凭直觉给一个刻度，不需要追求特别精确。"
+    };
+  }
+
+  if (value <= 3) {
+    return {
+      label: "偏低",
+      detail: "这项今天明显比较弱，后面回看时很容易成为需要解释的低点。"
+    };
+  }
+
+  if (value <= 7) {
+    return {
+      label: "中段",
+      detail: "这项今天大致在中间，更适合结合别的线索一起看。"
+    };
+  }
+
+  return {
+    label: "偏高",
+    detail: "这项今天相对被托住了，后面可以留意它是否稳定出现。"
+  };
+}
+
 function buildScoreFormState(record: AnalysisMonthRecord, date: string): ScoreFormState {
   const existing = record.scoreRecords.find((score) => score.date === date);
 
@@ -204,12 +289,104 @@ function formatScoreAverage(value: number | null) {
   return typeof value === "number" ? value.toFixed(1) : "暂无";
 }
 
-function resolveTrendPointLabel(date: string, value: number) {
-  return `${formatScoreDateLabel(date)} ${value.toFixed(1)}分`;
+function getScoreTrendHighlights(record: AnalysisMonthRecord): ScoreTrendHighlightsResult {
+  const factorStats = happinessScoreItems
+    .map((item) => {
+      const values = record.scoreTrend.days
+        .map((day) => day.scores[item.requestKey])
+        .filter((value): value is number => typeof value === "number");
+      const average = record.scoreTrend.factorAverages[item.requestKey];
+
+      if (typeof average !== "number" || values.length === 0) {
+        return null;
+      }
+
+      const minimum = Math.min(...values);
+      const maximum = Math.max(...values);
+
+      return {
+        item,
+        average,
+        minimum,
+        maximum,
+        spread: maximum - minimum,
+        sampleCount: values.length
+      };
+    })
+    .filter((stat): stat is NonNullable<typeof stat> => Boolean(stat));
+
+  if (record.scoreOverview.scoredDayCount < 2 || factorStats.length < 2) {
+    return {
+      highlights: [],
+      note: "评分样本还不足，先把这里当作刻度参考，以真实体感为准。"
+    };
+  }
+
+  const highestAverage = Math.max(...factorStats.map((stat) => stat.average));
+  const lowestAverage = Math.min(...factorStats.map((stat) => stat.average));
+  const hasAverageSeparation = highestAverage > lowestAverage;
+  const variableStats = factorStats.filter((stat) => stat.sampleCount > 1);
+  const highestSpread = variableStats.length > 0 ? Math.max(...variableStats.map((stat) => stat.spread)) : 0;
+  const lowestSpread = variableStats.length > 0 ? Math.min(...variableStats.map((stat) => stat.spread)) : 0;
+  const hasSpreadSeparation = highestSpread > 0 && highestSpread > lowestSpread;
+
+  if (!hasAverageSeparation && !hasSpreadSeparation) {
+    return {
+      highlights: [],
+      note: "这个月的评分差异还不够明显，先看总分走势，单项排名只作轻参考。"
+    };
+  }
+
+  const highlights: ScoreTrendHighlight[] = [];
+
+  if (hasAverageSeparation) {
+    const highest = [...factorStats].sort((left, right) => right.average - left.average)[0];
+    const lowest = [...factorStats].sort((left, right) => left.average - right.average)[0];
+
+    highlights.push(
+      {
+        label: "长期偏高",
+        title: highest.item.label,
+        detail: `月均 ${formatScoreAverage(highest.average)}`
+      },
+      {
+        label: "最常掉下来",
+        title: lowest.item.label,
+        detail: `月均 ${formatScoreAverage(lowest.average)}`
+      }
+    );
+  }
+
+  if (hasSpreadSeparation) {
+    const mostVariable = [...variableStats].sort((left, right) => right.spread - left.spread)[0];
+
+    highlights.push({
+      label: "波动最大",
+      title: mostVariable.item.label,
+      detail: `${mostVariable.minimum} - ${mostVariable.maximum} 分`
+    });
+  }
+
+  return {
+    highlights,
+    note: hasAverageSeparation ? null : "当前更适合把评分看成体感刻度，不急着读出稳定高低。"
+  };
 }
 
-function getActiveDays(record: AnalysisMonthRecord) {
-  return record.dailyCoverage.filter((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved);
+function resolveScoreSaveErrorCopy(errorCode: string | null) {
+  if (errorCode === "HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED") {
+    return "这个日期已经不在可编辑窗口里了，只能修改今天和昨天。";
+  }
+
+  if (errorCode === "INVALID_HAPPINESS_SCORE_REQUEST") {
+    return "这次评分没有成功提交，先检查是不是还有未填项。";
+  }
+
+  return "评分保存失败，请稍后再试。";
+}
+
+function resolveTrendPointLabel(date: string, value: number) {
+  return `${formatScoreDateLabel(date)} ${value.toFixed(1)}分`;
 }
 
 function getObservedCoverageDays(record: AnalysisMonthRecord) {
@@ -222,81 +399,21 @@ function getObservedCoverageDays(record: AnalysisMonthRecord) {
   return record.dailyCoverage.filter((day) => day.date <= todayEntryDate);
 }
 
-function getActiveObservedDays(record: AnalysisMonthRecord) {
-  return getObservedCoverageDays(record).filter((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved);
-}
-
-function getPendingDailyJournalDays(record: AnalysisMonthRecord) {
-  return getObservedCoverageDays(record)
-    .filter((day) => day.savedDimensionCount > 0 && !day.hasDailyJournalSaved)
-    .sort((left, right) => right.date.localeCompare(left.date));
-}
-
 function getLatestDailyJournalDay(record: AnalysisMonthRecord) {
   return getObservedCoverageDays(record)
-    .filter((day) => day.hasDailyJournalSaved)
+    .filter((day) => day.hasDailyJournalSaved && !day.hasStaleDailyJournal)
     .sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
 }
 
-function getHighestDensityDay(record: AnalysisMonthRecord) {
-  return record.dailyCoverage.reduce<AnalysisDailyCoverageDay | null>((best, day) => {
-    if (day.savedDimensionCount <= 0) {
-      return best;
-    }
-
-    if (!best || day.savedDimensionCount > best.savedDimensionCount || (day.savedDimensionCount === best.savedDimensionCount && day.date > best.date)) {
-      return day;
-    }
-
-    return best;
-  }, null);
-}
-
-function getLatestActiveDay(record: AnalysisMonthRecord) {
-  return [...getActiveDays(record)].sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
-}
-
-function buildLongestSpan(days: AnalysisDailyCoverageDay[], predicate: (day: AnalysisDailyCoverageDay) => boolean): DateSpan | null {
-  let best: DateSpan | null = null;
-  let currentStart: string | null = null;
-  let currentEnd: string | null = null;
-  let currentLength = 0;
-
-  for (const day of days) {
-    if (predicate(day)) {
-      currentStart ??= day.date;
-      currentEnd = day.date;
-      currentLength += 1;
-      continue;
-    }
-
-    if (currentStart && currentEnd) {
-      if (!best || currentLength > best.length) {
-        best = {
-          startDate: currentStart,
-          endDate: currentEnd,
-          length: currentLength
-        };
-      }
-    }
-
-    currentStart = null;
-    currentEnd = null;
-    currentLength = 0;
+function findCoverageDay(record: AnalysisMonthRecord, date: string | null) {
+  if (!date) {
+    return null;
   }
 
-  if (currentStart && currentEnd && (!best || currentLength > best.length)) {
-    best = {
-      startDate: currentStart,
-      endDate: currentEnd,
-      length: currentLength
-    };
-  }
-
-  return best;
+  return record.dailyCoverage.find((day) => day.date === date) ?? null;
 }
 
-function formatSpanLabel(span: DateSpan | null) {
+function formatSpanLabel(span: AnalysisDateSpan | null) {
   if (!span) {
     return "暂无";
   }
@@ -308,26 +425,136 @@ function formatSpanLabel(span: DateSpan | null) {
   return `${formatAnalysisDateLabel(span.startDate)} - ${formatAnalysisDateLabel(span.endDate)}，${span.length}天`;
 }
 
+function getRhythmDayState(day: AnalysisDailyCoverageDay | null, todayEntryDate = getTodayEntryDate()): RhythmDayState {
+  if (!day) {
+    return "empty";
+  }
+
+  if (day.date > todayEntryDate) {
+    return "future";
+  }
+
+  if (day.hasStaleDailyJournal) {
+    return "stale";
+  }
+
+  if (day.hasDailyJournalSaved) {
+    return "complete";
+  }
+
+  if (day.savedDimensionCount > 0) {
+    return "log_only";
+  }
+
+  if (day.hasScore) {
+    return "score_only";
+  }
+
+  return "empty";
+}
+
+function getRhythmPriorityDate(record: AnalysisMonthRecord, todayEntryDate = getTodayEntryDate()) {
+  return (
+    record.rhythmOverview.latestPendingDailyJournalDate ??
+    record.rhythmOverview.latestScoreOnlyDate ??
+    record.rhythmOverview.latestActiveDate ??
+    (record.month === todayEntryDate.slice(0, 7) ? todayEntryDate : record.dailyCoverage.at(-1)?.date) ??
+    `${record.month}-01`
+  );
+}
+
+function buildRhythmNarrative(record: AnalysisMonthRecord, todayEntryDate = getTodayEntryDate()) {
+  if (record.month > todayEntryDate.slice(0, 7)) {
+    return "这个月还没到来，先不把自然未来误读成断档。";
+  }
+
+  if (record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
+    return "这个月还没有留下任何材料，节奏图先保持空白。";
+  }
+
+  if (record.rhythmOverview.pendingDailyJournalCount > 0) {
+    return `这个月已经有 ${record.rhythmOverview.activeObservedDayCount} 天留下材料，其中 ${record.rhythmOverview.pendingDailyJournalCount} 天还需要整理或更新完整日志。`;
+  }
+
+  if (record.rhythmOverview.scoreOnlyDayCount > 0) {
+    return `这个月有 ${record.rhythmOverview.scoreOnlyDayCount} 天先留下了评分，但还没写成具体记录。`;
+  }
+
+  if (record.rhythmOverview.longestStreak) {
+    return `最稳的一段连续记录出现在 ${formatSpanLabel(record.rhythmOverview.longestStreak)}。`;
+  }
+
+  return `这个月一共留下了 ${record.rhythmOverview.activeObservedDayCount} 天材料，节奏还比较零散，可以顺着最近一次继续。`;
+}
+
+function getRhythmDensityLabel(day: AnalysisDailyCoverageDay | null, state: RhythmDayState) {
+  if (!day) {
+    return "空白";
+  }
+
+  if (state === "future") {
+    return "待到来";
+  }
+
+  if (state === "score_only") {
+    return typeof day.averageScore === "number" ? `${day.averageScore.toFixed(1)}分` : "已评分";
+  }
+
+  if (state === "empty") {
+    return "空白";
+  }
+
+  if (day.savedDimensionCount >= 3) {
+    return "3维+";
+  }
+
+  if (day.savedDimensionCount > 0) {
+    return `${day.savedDimensionCount}维`;
+  }
+
+  return "暂无";
+}
+
+function getRhythmStatusLabel(state: RhythmDayState) {
+  if (state === "future") return "未来";
+  if (state === "score_only") return "只评未记";
+  if (state === "log_only") return "待整合";
+  if (state === "stale") return "待更新";
+  if (state === "complete") return "已整合";
+  return "空白";
+}
+
+function isFutureAnalysisMonth(month: string, todayMonth = getTodayAnalysisMonth()) {
+  return month > todayMonth;
+}
+
 function buildOverviewNarrative(record: AnalysisMonthRecord) {
-  const featuredDimension = getFeaturedDimension(record);
-  const hottestDay = getHighestDensityDay(record);
+  const latestPendingDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
+  const latestScoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
+
+  if (isFutureAnalysisMonth(record.month) && record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
+    return "这个月还没到来，先不把未来月份当成空白断档。回到当前月份，更容易看到正在发生的记录和评分。";
+  }
 
   if (record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
     return "这个月还没有开始留下分析材料。先补今天评分，或从一个维度开始记录。";
+  }
+
+  if (latestPendingDay) {
+    return latestPendingDay.hasStaleDailyJournal
+      ? `${formatAnalysisDateLabel(latestPendingDay.date)} 的完整日志已经落后于最新来源。这个月材料还在变化，节奏需要回到那一天重新收束。`
+      : `${formatAnalysisDateLabel(latestPendingDay.date)} 还没收成完整日志。这个月已经有 ${record.rhythmOverview.activeObservedDayCount} 天留下材料，但节奏还停在半成品。`;
+  }
+
+  if (latestScoreOnlyDay) {
+    return `${formatAnalysisDateLabel(latestScoreOnlyDay.date)} 只有评分，还没有写成具体片段。先把刻度补成记录，节奏才会真正成形。`;
   }
 
   if (record.logOverview.savedEntryCount === 0) {
     return `这个月已经有 ${record.scoreOverview.scoredDayCount} 天评分轨迹，但还没有形成可回看的文字线索。`;
   }
 
-  if (!featuredDimension) {
-    return `这个月已经留下 ${record.logOverview.savedEntryCount} 篇记录，可以先顺着热力图找到更密的那几天继续看。`;
-  }
-
-  const featuredLabel = getInterviewDimensionMeta(featuredDimension.dimension).label;
-  const hottestDayLabel = hottestDay ? formatAnalysisDateLabel(hottestDay.date) : "最近几次记录";
-
-  return `${featuredLabel}是这个月最清晰的一条主线，${featuredDimension.recordedDayCount}天留下记录；从${hottestDayLabel}往回看，最容易看见这个月真正成形的内容。`;
+  return record.insightsOverview.summary;
 }
 
 function getScoreConfidenceCopy(record: AnalysisMonthRecord) {
@@ -361,58 +588,72 @@ function getScoreConfidenceCopy(record: AnalysisMonthRecord) {
 }
 
 function buildOverviewNextAction(record: AnalysisMonthRecord): OverviewAction {
-  const todayEditableDate = record.editableDates[0] ?? null;
-  const todayHasScore = todayEditableDate ? record.scoreRecords.some((score) => score.date === todayEditableDate) : true;
-  const featured = getFeaturedDimension(record);
-  const hottestDay = getHighestDensityDay(record);
-  const pendingDailyJournalDay = getPendingDailyJournalDays(record)[0] ?? null;
+  const pendingEditableDates = getPendingEditableScoreDates(record);
+  const nextPendingEditableDate = pendingEditableDates[0] ?? null;
+  const pendingDailyJournalDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
+  const scoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
+  const latestActiveDay = findCoverageDay(record, record.rhythmOverview.latestActiveDate);
 
-  if (record.logOverview.savedEntryCount === 0) {
+  if (isFutureAnalysisMonth(record.month) && record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
     return {
-      title: record.scoreOverview.scoredDayCount > 0 ? "先补一条文字线索" : "先留下今天的第一条记录",
-      body:
-        record.scoreOverview.scoredDayCount > 0
-          ? "这个月已经有评分刻度，但还缺少能回看的生活片段。先从一个维度开始，会让分析有真正的内容。"
-          : "总览还没有材料可读。先从一个维度开始，后面评分、节奏和五维主线才会慢慢长出来。",
+      title: "这个月还没开始",
+      body: "未来月份先不做开始记录的引导。回到当前月份，再看今天正在累积的评分和日志。",
+      href: buildAnalysisHref({ month: getTodayAnalysisMonth(), section: "overview" }),
+      label: "回到本月"
+    };
+  }
+
+  if (record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
+    return {
+      title: "先留下今天的第一条记录",
+      body: "总览还没有材料可读。先从一个维度开始，后面评分、节奏和五维主线才会慢慢长出来。",
       href: "/interview?dimension=joy",
       label: "开始记录"
     };
   }
 
-  if (todayEditableDate && !todayHasScore) {
-    return {
-      title: "先补今天评分",
-      body: "文字线索已经存在，补上今天的幸福 8 要素刻度后，评分走势会更接近真实状态。",
-      href: buildAnalysisHref({ month: record.month, section: "score" }),
-      label: "补今天评分"
-    };
-  }
-
   if (pendingDailyJournalDay) {
     return {
-      title: `整理${formatAnalysisDateLabel(pendingDailyJournalDay.date)}`,
-      body: `${formatAnalysisDateLabel(pendingDailyJournalDay.date)}已经有 ${pendingDailyJournalDay.savedDimensionCount} 个维度，但还没有完整日志。先把那一天收束成日级成果物。`,
+      title: `先收住${formatAnalysisDateLabel(pendingDailyJournalDay.date)}`,
+      body:
+        pendingDailyJournalDay.hasStaleDailyJournal
+          ? `${formatAnalysisDateLabel(pendingDailyJournalDay.date)}的完整日志已经和最新来源不一致，先更新一次。`
+          : pendingDailyJournalDay.savedDimensionCount >= 2
+          ? `${formatAnalysisDateLabel(pendingDailyJournalDay.date)}已经有 ${pendingDailyJournalDay.savedDimensionCount} 个维度，但还没整理成完整日志。`
+          : `${formatAnalysisDateLabel(pendingDailyJournalDay.date)}已经留下记录，但还没有收成当天完整日志。`,
       href: buildDailyJournalHref(pendingDailyJournalDay.date),
-      label: "生成完整日志"
+      label: pendingDailyJournalDay.hasStaleDailyJournal ? "更新完整日志" : "整理完整日志"
     };
   }
 
-  if (featured?.lastRecordedDate) {
-    const featuredLabel = getInterviewDimensionMeta(featured.dimension).label;
-
+  if (scoreOnlyDay) {
     return {
-      title: `回看${featuredLabel}主线`,
-      body: `${featuredLabel}是这个月最稳定的一条线，先回到最近那篇，再决定是否继续扩展这个方向。`,
-      href: buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate }),
-      label: `回到${featuredLabel}`
+      title: `把${formatAnalysisDateLabel(scoreOnlyDay.date)}写成记录`,
+      body: `${formatAnalysisDateLabel(scoreOnlyDay.date)}已经有评分刻度，但还没有任何维度日志。先把那一天写成一个具体片段。`,
+      href: buildCalendarHref({ view: "day", date: scoreOnlyDay.date }),
+      label: "去补记录"
     };
   }
 
-  if (hottestDay) {
+  if (nextPendingEditableDate) {
+    const pendingLabel = resolveScoreDateShortcut(nextPendingEditableDate, record.editableDates);
+
     return {
-      title: `查看${formatAnalysisDateLabel(hottestDay.date)}`,
-      body: "这一天记录最密，适合作为进入本月材料的第一站。",
-      href: buildCalendarHref({ view: "day", date: hottestDay.date }),
+      title: `先补${pendingLabel}评分`,
+      body:
+        pendingLabel === "今天"
+          ? "文字线索已经存在，补上今天的幸福 8 要素刻度后，评分走势会更接近真实状态。"
+          : "趋势已经能看，但昨天的刻度还没补齐。把这一天补上，月内走势会更连贯。",
+      href: buildAnalysisHref({ month: record.month, section: "score" }),
+      label: `补${pendingLabel}评分`
+    };
+  }
+
+  if (latestActiveDay) {
+    return {
+      title: `回到${formatAnalysisDateLabel(latestActiveDay.date)}`,
+      body: "这个月最近一次有材料的日期在这里，先回到当天，再决定要继续哪一条。",
+      href: buildCalendarHref({ view: "day", date: latestActiveDay.date }),
       label: "查看当天"
     };
   }
@@ -426,22 +667,30 @@ function buildOverviewNextAction(record: AnalysisMonthRecord): OverviewAction {
 }
 
 function getFeaturedDimension(record: AnalysisMonthRecord) {
+  if (record.insightsOverview.featuredDimension) {
+    return record.dimensions.find((dimension) => dimension.dimension === record.insightsOverview.featuredDimension) ?? null;
+  }
+
   return [...record.dimensions]
     .filter((dimension) => dimension.savedEntryCount > 0)
-    .sort((left, right) => {
-      if (right.savedEntryCount !== left.savedEntryCount) {
-        return right.savedEntryCount - left.savedEntryCount;
-      }
-
-      if (right.recordedDayCount !== left.recordedDayCount) {
-        return right.recordedDayCount - left.recordedDayCount;
-      }
-
-      return (right.lastRecordedDate ?? "").localeCompare(left.lastRecordedDate ?? "");
-    })[0] ?? null;
+    .sort(compareDimensionInsights)[0] ?? null;
 }
 
 function buildDimensionSummary(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.thesis) {
+    return dimension.thesis;
+  }
+
+  const evidence = dimension.evidence[0];
+
+  if (evidence?.detail) {
+    return `${evidence.summary}。${evidence.detail}`;
+  }
+
+  if (evidence?.summary) {
+    return evidence.summary;
+  }
+
   const recent = dimension.recentSignals[0];
 
   if (recent?.secondarySignal) {
@@ -457,6 +706,100 @@ function buildDimensionSummary(dimension: AnalysisDimensionInsightCard) {
   }
 
   return "这个维度本月还没有形成可展示的线索。";
+}
+
+function compareDimensionInsights(left: AnalysisDimensionInsightCard, right: AnalysisDimensionInsightCard) {
+  const confidenceWeight = {
+    low: 1,
+    medium: 2,
+    high: 3
+  } as const;
+  const continuityWeight = {
+    none: 0,
+    single: 1,
+    intermittent: 2,
+    sustained: 3
+  } as const;
+  const momentumWeight = {
+    quiet: 0,
+    starting: 1,
+    rising: 2,
+    steady: 2
+  } as const;
+
+  if (confidenceWeight[right.confidence] !== confidenceWeight[left.confidence]) {
+    return confidenceWeight[right.confidence] - confidenceWeight[left.confidence];
+  }
+
+  if (continuityWeight[right.continuity] !== continuityWeight[left.continuity]) {
+    return continuityWeight[right.continuity] - continuityWeight[left.continuity];
+  }
+
+  if (right.recordedDayCount !== left.recordedDayCount) {
+    return right.recordedDayCount - left.recordedDayCount;
+  }
+
+  if (momentumWeight[right.momentum] !== momentumWeight[left.momentum]) {
+    return momentumWeight[right.momentum] - momentumWeight[left.momentum];
+  }
+
+  if (right.savedEntryCount !== left.savedEntryCount) {
+    return right.savedEntryCount - left.savedEntryCount;
+  }
+
+  return (right.lastRecordedDate ?? "").localeCompare(left.lastRecordedDate ?? "");
+}
+
+function getDimensionConfidenceLabel(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.savedEntryCount === 0) {
+    return "还没展开";
+  }
+
+  if (dimension.confidence === "high") {
+    return "比较稳定";
+  }
+
+  if (dimension.confidence === "medium") {
+    return "已经成形";
+  }
+
+  return "刚起头";
+}
+
+function getDimensionMomentumLabel(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.savedEntryCount === 0) {
+    return "这月还没落下来";
+  }
+
+  if (dimension.momentum === "steady") {
+    return "这个月比较稳";
+  }
+
+  if (dimension.momentum === "rising") {
+    return "后半月更明显";
+  }
+
+  if (dimension.momentum === "starting") {
+    return "最近刚冒出来";
+  }
+
+  return "前面露过头";
+}
+
+function getDimensionContinuityLabel(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.savedEntryCount === 0 || dimension.continuity === "none") {
+    return "暂无连续感";
+  }
+
+  if (dimension.continuity === "single") {
+    return "先在一天里露出来";
+  }
+
+  if (dimension.continuity === "intermittent") {
+    return "断断续续出现";
+  }
+
+  return "连续感更强";
 }
 
 function ActionLink({
@@ -515,10 +858,10 @@ function AnalysisSection({
 
 function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; month: string }) {
   const featured = record ? getFeaturedDimension(record) : null;
-  const hottestDay = record ? getHighestDensityDay(record) : null;
-  const activeDayCount = record ? getActiveObservedDays(record).length : 0;
-  const longestStreak = record ? buildLongestSpan(record.dailyCoverage, (day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved) : null;
-  const pendingDailyJournalDays = record ? getPendingDailyJournalDays(record) : [];
+  const activeDayCount = record?.rhythmOverview.activeObservedDayCount ?? 0;
+  const longestStreak = record?.rhythmOverview.longestStreak ?? null;
+  const pendingDailyJournalCount = record?.rhythmOverview.pendingDailyJournalCount ?? 0;
+  const scoreOnlyDayCount = record?.rhythmOverview.scoreOnlyDayCount ?? 0;
   const scoreConfidence = record ? getScoreConfidenceCopy(record) : null;
   const nextAction = record ? buildOverviewNextAction(record) : null;
   const featuredSignal = featured?.recentSignals[0] ?? null;
@@ -548,10 +891,10 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
                 {record ? `${activeDayCount} 天有材料` : "材料加载中"}
               </span>
               <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
-                {pendingDailyJournalDays.length > 0 ? `${pendingDailyJournalDays.length} 天待整合` : "完整日志已对齐"}
+                {pendingDailyJournalCount > 0 ? `${pendingDailyJournalCount} 天待整合` : scoreOnlyDayCount > 0 ? `${scoreOnlyDayCount} 天待成文` : "节奏已收住"}
               </span>
               <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
-                {featuredLabel ? `主线：${featuredLabel}` : "主线未形成"}
+                {longestStreak ? `最长连续 ${longestStreak.length} 天` : "连续节奏未形成"}
               </span>
             </div>
           </div>
@@ -587,14 +930,18 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
           <article className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.58)] px-3.5 py-3.5">
             <p className="text-[0.76rem] text-[#8b6c4d]">记录节奏</p>
             <p className="mt-2 font-mono text-[0.95rem] tabular-nums text-[#302114]">
-              {record ? `${activeDayCount} 天有材料` : "—"}
+              {record
+                ? pendingDailyJournalCount > 0
+                  ? `${pendingDailyJournalCount} 天待整合`
+                  : scoreOnlyDayCount > 0
+                    ? `${scoreOnlyDayCount} 天待成文`
+                    : longestStreak
+                      ? `${longestStreak.length} 天连续`
+                      : `${activeDayCount} 天有材料`
+                : "—"}
             </p>
             <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">
-              {hottestDay
-                ? `最密的是${formatAnalysisDateLabel(hottestDay.date)}，共 ${hottestDay.savedDimensionCount} 个维度。`
-                : longestStreak
-                  ? `最长连续 ${longestStreak.length} 天。`
-                  : "还没有明显的记录密度。"}
+              {record ? buildRhythmNarrative(record) : "还没有明显的记录节奏。"}
             </p>
             <div className="mt-2">
               <ActionLink href={buildAnalysisHref({ month, section: "rhythm" })} label="查看节奏" />
@@ -622,39 +969,37 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
 }
 
 function OverviewCards({ record }: { record: AnalysisMonthRecord }) {
-  const scoreConfidence = getScoreConfidenceCopy(record);
-  const activeObservedDays = getActiveObservedDays(record);
-  const pendingDailyJournalDays = getPendingDailyJournalDays(record);
-  const latestDailyJournalDay = getLatestDailyJournalDay(record);
+  const latestPendingDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
+  const latestScoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
   const items = [
     {
-      id: "recorded-days",
-      label: "维度记录日",
-      value: `${record.logOverview.recordedDayCount}天`,
-      detail: `${record.logOverview.savedEntryCount} 篇已保存维度日志`
+      id: "rhythm-streak",
+      label: "最长连续",
+      value: record.rhythmOverview.longestStreak ? `${record.rhythmOverview.longestStreak.length}天` : "暂无",
+      detail: record.rhythmOverview.longestStreak ? formatSpanLabel(record.rhythmOverview.longestStreak) : "还没有形成连续记录段。"
     },
     {
-      id: "material-days",
-      label: "成果保存日",
-      value: `${activeObservedDays.length}天`,
-      detail: `含 ${record.logOverview.dailyJournalSavedDayCount} 天完整日志`
+      id: "rhythm-gap",
+      label: "最长空档",
+      value: record.rhythmOverview.longestGap ? `${record.rhythmOverview.longestGap.length}天` : "暂无",
+      detail: record.rhythmOverview.longestGap ? formatSpanLabel(record.rhythmOverview.longestGap) : "目前没有明确的连续空白段。"
     },
     {
-      id: "daily-journal-pending",
+      id: "rhythm-pending-daily",
       label: "待整合日",
-      value: pendingDailyJournalDays.length > 0 ? `${pendingDailyJournalDays.length}天` : "暂无",
+      value: record.rhythmOverview.pendingDailyJournalCount > 0 ? `${record.rhythmOverview.pendingDailyJournalCount}天` : "暂无",
       detail:
-        pendingDailyJournalDays.length > 0
-          ? `最近 ${formatAnalysisDateLabel(pendingDailyJournalDays[0]?.date ?? null)}`
-          : latestDailyJournalDay
-            ? `最近完整日志 ${formatAnalysisDateLabel(latestDailyJournalDay.date)}`
-            : "还没有可整合的已保存维度"
+        latestPendingDay
+          ? `最近 ${formatAnalysisDateLabel(latestPendingDay.date)}${latestPendingDay.hasStaleDailyJournal ? "（待更新）" : ""}`
+          : getLatestDailyJournalDay(record)
+            ? `最近已整合 ${formatAnalysisDateLabel(getLatestDailyJournalDay(record)?.date ?? null)}`
+            : "还没有已保存材料需要整合。"
     },
     {
-      id: "score-confidence",
-      label: "评分可信度",
-      value: scoreConfidence.label,
-      detail: scoreConfidence.detail
+      id: "rhythm-score-only",
+      label: "待成文日",
+      value: record.rhythmOverview.scoreOnlyDayCount > 0 ? `${record.rhythmOverview.scoreOnlyDayCount}天` : "暂无",
+      detail: latestScoreOnlyDay ? `最近 ${formatAnalysisDateLabel(latestScoreOnlyDay.date)}` : "目前没有只评分未成文的日期。"
     }
   ];
 
@@ -846,29 +1191,72 @@ function ScoreLineChart({
 }
 
 function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
-  const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>("meaning");
+  const defaultFactor = useMemo(() => {
+    return (
+      [...happinessScoreItems]
+        .sort((left, right) => {
+          const rightAverage = record.scoreTrend.factorAverages[right.requestKey] ?? Number.NEGATIVE_INFINITY;
+          const leftAverage = record.scoreTrend.factorAverages[left.requestKey] ?? Number.NEGATIVE_INFINITY;
+          return rightAverage - leftAverage;
+        })[0]?.requestKey ?? "meaning"
+    );
+  }, [record]);
+  const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>(defaultFactor);
+  const trendHighlightState = useMemo(() => getScoreTrendHighlights(record), [record]);
   const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
   const selectedAverage = record.scoreTrend.factorAverages[selectedFactor];
 
+  useEffect(() => {
+    setSelectedFactor(defaultFactor);
+  }, [defaultFactor]);
+
   return (
     <div className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.34)] p-4" data-testid="happiness-score-trend-panel">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="archive-label">趋势</p>
           <h3 className="mt-2 font-display text-[1.45rem] leading-none text-[#302114]">评分走势</h3>
-          <p className="mt-2 text-[0.84rem] leading-6 text-[#765d45]">先看总分起伏，再扫一眼 8 项里哪些长期偏高、哪些经常掉下来。</p>
+          <p className="mt-2 text-pretty text-[0.84rem] leading-6 text-[#765d45]">
+            {trendHighlightState.highlights.length > 0
+              ? "先看总分起伏，再抓住哪几项长期偏高、哪几项经常掉下来，不急着把一条分数读成结论。"
+              : "先看总分起伏。样本或差异还不够时，这里的单项快扫只当参考，不把它读成稳定结论。"}
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-right">
-          <div className="rounded-[14px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.76)] px-3 py-2">
-            <p className="text-[0.72rem] text-[#8a6b4b]">已评分</p>
-            <p className="mt-1 font-mono text-[1rem] tabular-nums text-[#4b3727]">{record.scoreOverview.scoredDayCount} 天</p>
+        <div className="flex flex-wrap justify-end gap-2 text-right">
+          <div className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] px-3 py-1.5">
+            <span className="text-[0.72rem] text-[#8a6b4b]">已评分 </span>
+            <span className="font-mono text-[0.82rem] tabular-nums text-[#4b3727]">{record.scoreOverview.scoredDayCount} 天</span>
           </div>
-          <div className="rounded-[14px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.76)] px-3 py-2">
-            <p className="text-[0.72rem] text-[#8a6b4b]">月均总分</p>
-            <p className="mt-1 font-mono text-[1rem] tabular-nums text-[#4b3727]">{formatScoreAverage(record.scoreOverview.monthAverageScore)}</p>
+          <div className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] px-3 py-1.5">
+            <span className="text-[0.72rem] text-[#8a6b4b]">月均总分 </span>
+            <span className="font-mono text-[0.82rem] tabular-nums text-[#4b3727]">{formatScoreAverage(record.scoreOverview.monthAverageScore)}</span>
           </div>
         </div>
       </div>
+
+      {trendHighlightState.note ? (
+        <div
+          className="mt-4 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.74)] px-3.5 py-3 text-[0.76rem] leading-6 text-[#72583f]"
+          data-testid="score-trend-sample-note"
+        >
+          {trendHighlightState.note}
+        </div>
+      ) : null}
+
+      {trendHighlightState.highlights.length > 0 ? (
+        <div className="mt-4 grid gap-2 lg:grid-cols-3">
+          {trendHighlightState.highlights.map((highlight) => (
+            <div
+              key={highlight.label}
+              className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.74)] px-3.5 py-3"
+            >
+              <p className="text-[0.72rem] text-[#8a6b4b]">{highlight.label}</p>
+              <p className="mt-1 text-[0.95rem] text-[#34271c]">{highlight.title}</p>
+              <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">{highlight.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between gap-2">
@@ -888,11 +1276,11 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
         <div className="mb-2 flex items-end justify-between gap-2">
           <div>
             <p className="text-[0.86rem] text-[#3a2c1f]">8 项快扫</p>
-            <p className="text-[0.76rem] text-[#8a6b4b]">先扫一遍月均，再点开想细看的那一项。</p>
+            <p className="text-[0.76rem] text-[#8a6b4b]">先扫一遍每一项的月均和起伏，再点开想细看的那一项。</p>
           </div>
           <p className="font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">{selectedItem.label}月均 {formatScoreAverage(selectedAverage)}</p>
         </div>
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="score-factor-grid">
+        <div className="grid gap-2 md:grid-cols-2" data-testid="score-factor-grid">
           {happinessScoreItems.map((item) => {
             const active = item.requestKey === selectedFactor;
             const average = record.scoreTrend.factorAverages[item.requestKey];
@@ -902,11 +1290,12 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
                 key={item.requestKey}
                 type="button"
                 onClick={() => setSelectedFactor(item.requestKey)}
-                className={`rounded-[18px] border px-3 py-3 text-left transition ${
+                className={cn(
+                  "rounded-[18px] border px-3 py-3 text-left transition",
                   active
-                    ? "border-[rgba(111,74,38,0.26)] border-l-[3px] border-l-[#6f4a26] bg-[rgba(243,228,199,0.72)] shadow-sm"
+                    ? "border-[rgba(111,74,38,0.22)] bg-[rgba(243,228,199,0.72)] shadow-sm ring-1 ring-[rgba(111,74,38,0.12)]"
                     : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] hover:border-[rgba(150,105,61,0.14)] hover:bg-[rgba(248,237,216,0.62)]"
-                }`}
+                )}
                 aria-pressed={active}
                 data-testid={`score-factor-button-${item.requestKey}`}
               >
@@ -914,6 +1303,7 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
                   <span className="text-[0.84rem] text-[#3a2c1f]">{item.label}</span>
                   <span className="font-mono text-[0.78rem] tabular-nums text-[#6f5339]">{formatScoreAverage(average)}</span>
                 </div>
+                <p className="mt-1 text-pretty text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</p>
                 <div className="mt-2">
                   <ScoreLineChart
                     days={record.scoreTrend.days}
@@ -935,7 +1325,7 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-[0.86rem] text-[#3a2c1f]">单项走势</p>
-            <p className="text-[0.76rem] text-[#8a6b4b]">{selectedItem.description}</p>
+            <p className="text-pretty text-[0.76rem] leading-5 text-[#8a6b4b]">{selectedItem.description}</p>
           </div>
           <p className="font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">已选：{selectedItem.label}</p>
         </div>
@@ -952,17 +1342,25 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
 }
 
 function HappinessScorePanel({ record, onSaved }: { record: AnalysisMonthRecord; onSaved: () => void }) {
-  const [selectedDate, setSelectedDate] = useState(record.editableDates[0] ?? null);
-  const [scores, setScores] = useState<ScoreFormState>(() => (record.editableDates[0] ? buildScoreFormState(record, record.editableDates[0]) : {}));
+  const initialEditableDate = getPendingEditableScoreDates(record)[0] ?? record.editableDates[0] ?? null;
+  const initialScores = initialEditableDate ? buildScoreFormState(record, initialEditableDate) : {};
+  const [selectedDate, setSelectedDate] = useState(initialEditableDate);
+  const [scores, setScores] = useState<ScoreFormState>(initialScores);
+  const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>(resolvePreferredScoreFactor(initialScores));
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveErrorCode, setSaveErrorCode] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    const nextDate = selectedDate && record.editableDates.includes(selectedDate) ? selectedDate : record.editableDates[0] ?? null;
+    const preferredDate = getPendingEditableScoreDates(record)[0] ?? record.editableDates[0] ?? null;
+    const nextDate = selectedDate && record.editableDates.includes(selectedDate) ? selectedDate : preferredDate;
+    const nextScores = nextDate ? buildScoreFormState(record, nextDate) : {};
 
     setSelectedDate(nextDate);
-    setScores(nextDate ? buildScoreFormState(record, nextDate) : {});
-    setSaveError(false);
+    setScores(nextScores);
+    setSelectedFactor(resolvePreferredScoreFactor(nextScores));
+    setSaveErrorCode(null);
+    setSaveNotice((current) => (nextDate === selectedDate ? current : null));
   }, [record, selectedDate]);
 
   if (record.editableDates.length === 0 || !selectedDate) {
@@ -970,13 +1368,270 @@ function HappinessScorePanel({ record, onSaved }: { record: AnalysisMonthRecord;
       <div className="space-y-3" data-testid="happiness-score-panel">
         <HappinessScoreTrendPanel record={record} />
         <div className="rounded-[20px] border border-dashed border-[rgba(150,105,61,0.18)] bg-[rgba(255,249,239,0.32)] px-4 py-5 text-[0.9rem] leading-7 text-[#7a624b]" data-testid="happiness-score-readonly">
-          这个月份的评分只能查看，不能修改。评分录入只开放今天和昨天。
+          这个月份现在只能查看，不能修改。评分录入只开放今天和昨天，历史月份保留为只读回看。
         </div>
       </div>
     );
   }
 
+  const pendingEditableDates = getPendingEditableScoreDates(record);
+  const hasPendingEditableDates = pendingEditableDates.length > 0;
+  const completion = getScoreCompletion(scores);
   const canSave = isCompleteScoreForm(scores) && !isSaving;
+  const selectedDateHasSavedScore = hasScoreRecordForDate(record, selectedDate);
+  const selectedDateShortcut = resolveScoreDateShortcut(selectedDate, record.editableDates);
+  const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
+  const selectedValue = scores[selectedFactor] ?? null;
+  const selectedLevelCopy = formatScoreLevelCopy(selectedValue);
+  const nextSuggestedFactor = completion.nextUnfilledFactor
+    ? happinessScoreItems.find((item) => item.requestKey === completion.nextUnfilledFactor) ?? null
+    : null;
+  const intakeTitle = hasPendingEditableDates
+    ? pendingEditableDates.length > 1
+      ? "先把今天和昨天补齐，再回来看这个月"
+      : `${selectedDateShortcut}还没补评分`
+    : "今天和昨天的刻度都在，可以按需要微调";
+  const intakeDescription = hasPendingEditableDates
+    ? "这里不是写总结，只记录当天状态。把 8 项刻度补齐以后，走势会立刻更接近真实状态。"
+    : "如果你想微调今天或昨天的刻度，直接改动并保存就可以，趋势会随之刷新。";
+  const pendingSummaryText =
+    pendingEditableDates.length === 0
+      ? "今天和昨天都已补齐"
+      : pendingEditableDates.length === 1
+        ? `${resolveScoreDateShortcut(pendingEditableDates[0], record.editableDates)}待补`
+        : `${pendingEditableDates.length} 天待补`;
+  const editor = (
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,1.26fr)]">
+      <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.56)] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="archive-label">补录入口</p>
+          <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.76)] px-2.5 py-1 text-[0.72rem] text-[#7a624b]">
+            {pendingSummaryText}
+          </span>
+        </div>
+        <h3 className="mt-3 text-balance font-display text-[1.55rem] leading-none text-[#302114]">{intakeTitle}</h3>
+        <p className="mt-3 text-pretty text-[0.88rem] leading-7 text-[#72583f]">{intakeDescription}</p>
+
+        <div className="mt-4 grid gap-2" data-testid="happiness-score-date-switch">
+          {record.editableDates.map((date) => {
+            const active = selectedDate === date;
+            const completed = hasScoreRecordForDate(record, date);
+
+            return (
+              <button
+                key={date}
+                type="button"
+                onClick={() => {
+                  setSelectedDate(date);
+                  setSaveErrorCode(null);
+                  setSaveNotice(null);
+                }}
+                className={cn(
+                  "rounded-[16px] border px-3.5 py-3 text-left transition",
+                  active
+                    ? "border-[rgba(111,74,38,0.22)] bg-[rgba(243,228,199,0.78)] shadow-sm ring-1 ring-[rgba(111,74,38,0.12)]"
+                    : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.82)] hover:border-[rgba(150,105,61,0.12)] hover:bg-[rgba(250,242,229,0.86)]"
+                )}
+                aria-pressed={active}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[0.86rem] text-[#3a2c1f]">{formatEditableScoreDateLabel(date, record.editableDates)}</p>
+                    <p className="mt-1 text-[0.72rem] leading-5 text-[#8a6b4b]">{completed ? "这一天已经有完整刻度" : "这一天还没补录评分"}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[0.7rem]",
+                      completed ? "bg-[rgba(85,111,74,0.12)] text-[#486346]" : "bg-[rgba(183,122,58,0.14)] text-[#8a5d17]"
+                    )}
+                  >
+                    {completed ? "已补齐" : "待补录"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.72)] px-3.5 py-3">
+          <p className="text-[0.72rem] text-[#8a6b4b]">当前日期</p>
+          <p className="mt-1 text-[0.95rem] text-[#34271c]">{formatEditableScoreDateLabel(selectedDate, record.editableDates)}</p>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[0.72rem] text-[#8a6b4b]">填写进度</p>
+              <p className="mt-1 font-mono text-[1.1rem] tabular-nums text-[#4b3727]">{completion.filledCount}/8</p>
+            </div>
+            <p className="max-w-[11rem] text-right text-pretty text-[0.72rem] leading-5 text-[#7a624b]">
+              {completion.remainingCount === 0 ? "8 项都在，可以直接保存。" : `还差 ${completion.remainingCount} 项，先把这一天的刻度补齐。`}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[0.8rem] text-[#5d4733]">8 项列表</p>
+            <p className="font-mono text-[0.72rem] tabular-nums text-[#8a6b4b]">{completion.remainingCount} 项未填</p>
+          </div>
+          <div className="space-y-2.5">
+            {happinessScoreItems.map((item) => {
+              const active = item.requestKey === selectedFactor;
+              const value = scores[item.requestKey];
+
+              return (
+                <button
+                  key={item.requestKey}
+                  type="button"
+                  onClick={() => setSelectedFactor(item.requestKey)}
+                  className={cn(
+                    "w-full rounded-[16px] border px-3 py-3 text-left transition",
+                    active
+                      ? "border-[rgba(111,74,38,0.2)] bg-[rgba(243,228,199,0.68)] shadow-sm"
+                      : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] hover:border-[rgba(150,105,61,0.12)] hover:bg-[rgba(250,242,229,0.84)]"
+                  )}
+                  aria-pressed={active}
+                  data-testid={`score-editor-factor-${item.requestKey}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[0.84rem] text-[#3a2c1f]">{item.label}</p>
+                      <p className="mt-1 text-pretty text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 font-mono text-[0.74rem] tabular-nums",
+                        typeof value === "number"
+                          ? "bg-[rgba(111,74,38,0.1)] text-[#5f4328]"
+                          : "bg-[rgba(150,105,61,0.1)] text-[#8a6b4b]"
+                      )}
+                    >
+                      {typeof value === "number" ? value : "待填"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </aside>
+
+      <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.84)] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="archive-label">当前要素</p>
+            <h3 className="mt-2 text-balance font-display text-[1.45rem] leading-none text-[#302114]">{selectedItem.label}</h3>
+            <p className="mt-2 max-w-[42rem] text-pretty text-[0.84rem] leading-6 text-[#72583f]">{selectedItem.description}</p>
+          </div>
+          <div className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.44)] px-3.5 py-3">
+            <p className="text-[0.72rem] text-[#8a6b4b]">{selectedLevelCopy.label}</p>
+            <p className="mt-1 max-w-[14rem] text-pretty text-[0.76rem] leading-5 text-[#6f5339]">{selectedLevelCopy.detail}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-5 gap-2 sm:grid-cols-10">
+          {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => {
+            const active = selectedValue === value;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setScores((current) => ({
+                    ...current,
+                    [selectedFactor]: value
+                  }));
+                  setSaveErrorCode(null);
+                  setSaveNotice(null);
+                }}
+                className={cn(
+                  "h-11 rounded-[14px] border font-mono text-[0.88rem] tabular-nums transition",
+                  active
+                    ? "border-[rgba(111,74,38,0.24)] bg-[#6f4a26] text-[#fffaf1] shadow-sm"
+                    : "border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.86)] text-[#5f4328] hover:border-[rgba(111,74,38,0.18)] hover:bg-[rgba(243,228,199,0.68)]"
+                )}
+                aria-pressed={active}
+                aria-label={`${selectedItem.label}${value}分`}
+              >
+                {value}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2 text-[0.72rem] text-[#8a6b4b]">
+          <span>低</span>
+          <span className="text-center text-pretty">先凭直觉给刻度，不需要在这里写解释。</span>
+          <span>高</span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setScores((current) => {
+                const next = { ...current };
+                delete next[selectedFactor];
+                return next;
+              });
+              setSaveErrorCode(null);
+              setSaveNotice(null);
+            }}
+            disabled={typeof selectedValue !== "number"}
+            className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.86)] px-3 py-1.5 text-[0.76rem] text-[#6f5339] transition hover:bg-[rgba(250,242,229,0.84)] disabled:cursor-not-allowed disabled:text-[#ab937c]"
+          >
+            清空这一项
+          </button>
+          {nextSuggestedFactor ? (
+            <button
+              type="button"
+              onClick={() => setSelectedFactor(nextSuggestedFactor.requestKey)}
+              className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] px-3 py-1.5 text-[0.76rem] text-[#6f5339] transition hover:bg-[rgba(243,228,199,0.58)]"
+            >
+              去填下一项：{nextSuggestedFactor.label}
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mt-5 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.4)] px-3.5 py-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[0.72rem] text-[#8a6b4b]">保存的是哪一天</p>
+              <p className="mt-1 text-[0.92rem] text-[#3a2c1f]">{formatEditableScoreDateLabel(selectedDate, record.editableDates)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[0.72rem] text-[#8a6b4b]">这一天当前状态</p>
+              <p className="mt-1 text-[0.92rem] text-[#3a2c1f]">{selectedDateHasSavedScore ? "已有完整刻度，可继续调整" : "还没保存完整刻度"}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[0.78rem] leading-6 text-[#80634a]">
+              {canSave ? "8 项已填完，可以保存。" : `还差 ${completion.remainingCount} 项，全部填完后才能保存。`}
+            </p>
+            {saveNotice ? (
+              <p className="mt-2 text-[0.76rem] text-[#486346]" role="status">
+                {saveNotice}
+              </p>
+            ) : null}
+            {saveErrorCode ? (
+              <p className="mt-2 rounded-[14px] border border-[rgba(151,74,44,0.18)] bg-[rgba(255,241,232,0.62)] px-3 py-2 text-[0.82rem] text-[#8a3f25]" role="alert">
+                {resolveScoreSaveErrorCopy(saveErrorCode)}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave}
+            className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.84rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
+          >
+            {isSaving ? "保存中" : "保存评分"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   async function handleSave() {
     if (!selectedDate || !isCompleteScoreForm(scores)) {
@@ -984,13 +1639,14 @@ function HappinessScorePanel({ record, onSaved }: { record: AnalysisMonthRecord;
     }
 
     setIsSaving(true);
-    setSaveError(false);
+    setSaveErrorCode(null);
 
     try {
       await saveHappinessScore(selectedDate, scores);
+      setSaveNotice(`${formatEditableScoreDateLabel(selectedDate, record.editableDates)}评分已保存`);
       onSaved();
-    } catch {
-      setSaveError(true);
+    } catch (error) {
+      setSaveErrorCode(error instanceof Error ? error.message : "HAPPINESS_SCORE_SAVE_FAILED");
     } finally {
       setIsSaving(false);
     }
@@ -998,303 +1654,418 @@ function HappinessScorePanel({ record, onSaved }: { record: AnalysisMonthRecord;
 
   return (
     <div className="space-y-3" data-testid="happiness-score-panel">
-      <HappinessScoreTrendPanel record={record} />
-
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1.32fr)]">
-        <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.56)] p-4">
-          <p className="archive-label">补录入口</p>
-          <h3 className="mt-3 text-balance font-display text-[1.55rem] leading-none text-[#302114]">先把刻度补齐，再回来看这个月</h3>
-          <p className="mt-3 text-pretty text-[0.88rem] leading-7 text-[#72583f]">这里不是写总结，只记录当天状态。补完 8 项后保存，趋势会立即刷新。</p>
-
-          {record.editableDates.length > 1 ? (
-            <div className="mt-4 flex rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] p-1" data-testid="happiness-score-date-switch">
-              {record.editableDates.map((date) => (
-                <button
-                  key={date}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(date);
-                    setScores(buildScoreFormState(record, date));
-                    setSaveError(false);
-                  }}
-                  className={`flex-1 rounded-full px-3 py-2 text-[0.8rem] transition ${
-                    selectedDate === date ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm" : "text-[#7a6048] hover:bg-[rgba(255,252,246,0.84)]"
-                  }`}
-                  aria-pressed={selectedDate === date}
-                >
-                  {resolveScoreDateShortcut(date, record.editableDates)}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <p className="mt-3 font-mono text-[0.76rem] tabular-nums text-[#8a6b4b]">当前日期：{formatScoreDateLabel(selectedDate)}</p>
-        </aside>
-
-        <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] p-3.5">
-          <div className="space-y-2.5">
-            {happinessScoreItems.map((item) => {
-              const value = scores[item.requestKey];
-              const sliderValue = value ?? 5;
-
-              return (
-                <label key={item.requestKey} className="grid gap-3 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.42)] px-3.5 py-3 md:grid-cols-[8rem_minmax(0,1fr)_3.5rem] md:items-center">
-                  <span className="min-w-0">
-                    <span className="block text-[0.9rem] text-[#3a2c1f]">{item.label}</span>
-                    <span className="mt-1 block text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</span>
-                  </span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    value={sliderValue}
-                    onChange={(event) => {
-                      setScores((current) => ({
-                        ...current,
-                        [item.requestKey]: Number(event.target.value)
-                      }));
-                      setSaveError(false);
-                    }}
-                    className="h-2 w-full cursor-pointer accent-[#7b4d22]"
-                    aria-label={`${item.label}评分`}
-                  />
-                  <span className="justify-self-start rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.78)] px-3 py-1.5 font-mono text-[0.82rem] tabular-nums text-[#4b3727] md:justify-self-end">
-                    {value ?? "未填"}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[0.78rem] leading-6 text-[#80634a]">{canSave ? "8 项已填完，可以保存。" : "8 项全部填完后才能保存。"}</p>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!canSave}
-              className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.84rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
-            >
-              {isSaving ? "保存中" : "保存评分"}
-            </button>
-          </div>
-          {saveError ? (
-            <p className="mt-3 rounded-[14px] border border-[rgba(151,74,44,0.18)] bg-[rgba(255,241,232,0.62)] px-3 py-2 text-[0.82rem] text-[#8a3f25]" role="alert">
-              评分保存失败，请稍后再试。
-            </p>
-          ) : null}
-        </div>
-      </div>
+      {hasPendingEditableDates ? editor : <HappinessScoreTrendPanel record={record} />}
+      {hasPendingEditableDates ? <HappinessScoreTrendPanel record={record} /> : editor}
     </div>
   );
 }
 
 function CoverageHeatmap({ record }: { record: AnalysisMonthRecord }) {
   const todayEntryDate = getTodayEntryDate();
-  const observedCoverageDays =
-    record.month === todayEntryDate.slice(0, 7) ? record.dailyCoverage.filter((day) => day.date <= todayEntryDate) : record.dailyCoverage;
   const daysByDate = useMemo(() => new Map(record.dailyCoverage.map((day) => [day.date, day])), [record.dailyCoverage]);
   const cells = buildCalendarMonthGrid(record.month);
-  const highestDensityDay = getHighestDensityDay(record);
-  const latestActiveDay = getLatestActiveDay(record);
-  const recordingStreak = buildLongestSpan(record.dailyCoverage, (day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved);
-  const quietStreak = buildLongestSpan(observedCoverageDays, (day) => day.savedDimensionCount === 0 && !day.hasDailyJournalSaved);
-  const [selectedDate, setSelectedDate] = useState<string>(highestDensityDay?.date ?? latestActiveDay?.date ?? record.dailyCoverage[0]?.date ?? `${record.month}-01`);
+  const isFutureMonth = record.month > todayEntryDate.slice(0, 7);
+  const latestPendingDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
+  const latestScoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
+  const [selectedDate, setSelectedDate] = useState<string>(getRhythmPriorityDate(record, todayEntryDate));
 
   useEffect(() => {
-    const fallbackDate = highestDensityDay?.date ?? latestActiveDay?.date ?? record.dailyCoverage[0]?.date ?? `${record.month}-01`;
+    const fallbackDate = getRhythmPriorityDate(record, todayEntryDate);
 
     setSelectedDate((current) => (current && daysByDate.has(current) ? current : fallbackDate));
-  }, [daysByDate, highestDensityDay, latestActiveDay, record.dailyCoverage, record.month]);
+  }, [daysByDate, record, todayEntryDate]);
 
   const selectedCoverage = daysByDate.get(selectedDate) ?? null;
   const selectedDimensions = selectedCoverage?.savedDimensions ?? [];
-  const isFutureSelectedDate = selectedDate > todayEntryDate;
+  const selectedState = getRhythmDayState(selectedCoverage, todayEntryDate);
+  const selectedAverageScore = selectedCoverage?.averageScore ?? null;
+  const rhythmSummaryItems = [
+    {
+      label: "最长连续",
+      value: record.rhythmOverview.longestStreak ? `${record.rhythmOverview.longestStreak.length} 天` : "暂无",
+      detail: record.rhythmOverview.longestStreak ? formatSpanLabel(record.rhythmOverview.longestStreak) : "还没有形成连续记录段。"
+    },
+    {
+      label: "最长空档",
+      value: record.rhythmOverview.longestGap ? `${record.rhythmOverview.longestGap.length} 天` : "暂无",
+      detail: record.rhythmOverview.longestGap ? formatSpanLabel(record.rhythmOverview.longestGap) : "目前没有明确的连续空白段。"
+    },
+    {
+      label: "待整合日",
+      value: record.rhythmOverview.pendingDailyJournalCount > 0 ? `${record.rhythmOverview.pendingDailyJournalCount} 天` : "暂无",
+      detail: latestPendingDay
+        ? `最近 ${formatAnalysisDateLabel(latestPendingDay.date)}${latestPendingDay.hasStaleDailyJournal ? "（待更新）" : ""}`
+        : "已保存材料都已经收成完整日志。"
+    },
+    {
+      label: "待成文日",
+      value: record.rhythmOverview.scoreOnlyDayCount > 0 ? `${record.rhythmOverview.scoreOnlyDayCount} 天` : "暂无",
+      detail: latestScoreOnlyDay ? `最近 ${formatAnalysisDateLabel(latestScoreOnlyDay.date)}` : "目前没有只评分未成文的日期。"
+    }
+  ];
 
   return (
-    <div data-testid="analysis-rhythm-board">
+    <div className="space-y-3" data-testid="analysis-rhythm-board">
       <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.4)] p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="archive-label">记录热力</p>
-            <p className="mt-2 text-[0.9rem] leading-7 text-[#72583f]">先看本月哪里更密，哪里更空，再顺着具体日期回到当天。</p>
+            <p className="archive-label">节奏判断</p>
+            <h3 className="mt-2 font-display text-[1.35rem] leading-none text-[#302114]">
+              {isFutureMonth ? "这个月先不做断档判断" : "先看哪里断，再看哪里该收住"}
+            </h3>
+            <p className="mt-3 max-w-[44rem] text-[0.9rem] leading-7 text-[#72583f]">{buildRhythmNarrative(record, todayEntryDate)}</p>
           </div>
-          <div className="flex items-center gap-2 text-[0.74rem] text-[#7a624b]">
-            <span>少</span>
-            <span className="size-3 rounded-[4px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)]" />
-            <span className="size-3 rounded-[4px] border border-[rgba(150,105,61,0.08)] bg-[rgba(219,200,170,0.72)]" />
-            <span className="size-3 rounded-[4px] border border-[rgba(150,105,61,0.08)] bg-[rgba(193,152,97,0.72)]" />
-            <span className="size-3 rounded-[4px] border border-[rgba(150,105,61,0.08)] bg-[rgba(111,74,38,0.82)]" />
-            <span>多</span>
+          <div className="grid gap-2 text-[0.72rem] text-[#7a624b] sm:grid-cols-2">
+            <div className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5">状态：未来 / 空白 / 只评未记 / 待整合 / 待更新 / 已整合</div>
+            <div className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5">密度：1维 / 2维 / 3维+</div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-7 gap-2" data-testid="analysis-heatmap-grid">
-          {cells.map((cell) => {
-            if (!cell.isCurrentMonth || !cell.date) {
-              return <div key={cell.key} className="h-[4.4rem] rounded-[16px] border border-dashed border-[rgba(150,105,61,0.06)] bg-[rgba(255,249,239,0.18)]" aria-hidden="true" />;
-            }
-
-            const coverage = daysByDate.get(cell.date);
-            const intensity = coverage ? Math.min(coverage.savedDimensionCount, 5) : 0;
-            const isSelected = selectedDate === cell.date;
-            const heatClasses = [
-              "bg-[rgba(255,252,246,0.86)]",
-              "bg-[rgba(240,225,198,0.82)]",
-              "bg-[rgba(220,191,150,0.84)]",
-              "bg-[rgba(191,148,89,0.82)]",
-              "bg-[rgba(128,83,43,0.86)]",
-              "bg-[rgba(95,60,28,0.9)]"
-            ];
-
-            return (
-              <button
-                key={cell.key}
-                type="button"
-                onClick={() => setSelectedDate(cell.date ?? selectedDate)}
-                className={`group flex h-[4.4rem] flex-col rounded-[16px] border px-2.5 py-2 text-left transition hover:-translate-y-[1px] ${
-                  isSelected
-                    ? "border-[rgba(111,74,38,0.28)] ring-2 ring-[rgba(111,74,38,0.12)]"
-                    : "border-[rgba(150,105,61,0.1)]"
-                } ${heatClasses[intensity]}`}
-                data-testid={`analysis-heatmap-day-${cell.date}`}
-                title={coverage ? `${cell.date}，${coverage.savedDimensionCount} 个已保存维度` : `${cell.date}，无记录`}
-                aria-pressed={isSelected}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-[0.72rem] tabular-nums text-[#8e6a46]">{cell.dayNumber}</span>
-                  {coverage?.hasDailyJournalSaved ? (
-                    <span className="size-2.5 rounded-full border border-[rgba(169,111,61,0.24)] bg-[rgba(169,111,61,0.92)]" aria-label="当天整合日志已保存" />
-                  ) : null}
-                </div>
-                <div className="mt-auto">
-                  <p className="font-mono text-[0.74rem] tabular-nums text-[#4b3a2b]">{coverage ? `${coverage.savedDimensionCount}维` : "无"}</p>
-                  <div
-                    className="mt-1 flex flex-wrap gap-1"
-                    aria-label={
-                      coverage ? `涉及维度 ${coverage.savedDimensions.map((dimension) => getInterviewDimensionMeta(dimension).label).join("、")}` : "暂无维度"
-                    }
-                  >
-                    {(coverage?.savedDimensions.slice(0, 5) ?? []).map((dimension) => {
-                      const visualMeta = getCalendarDimensionVisualMeta(dimension);
-
-                      return (
-                        <span
-                          key={dimension}
-                          className={`inline-flex size-5 items-center justify-center rounded-full border text-[0.68rem] font-medium ${visualMeta.softBadgeClass}`}
-                          title={getInterviewDimensionMeta(dimension).label}
-                        >
-                          {visualMeta.monthLabel}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.36)] px-3 py-2.5" data-testid="analysis-rhythm-summary-bar">
-        <div className="text-center">
-          <p className="text-[0.7rem] text-[#8b6c4d]">最高密度</p>
-          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{highestDensityDay ? `${formatAnalysisDateLabel(highestDensityDay.date)} · ${highestDensityDay.savedDimensionCount}维` : "暂无"}</p>
-        </div>
-        <div className="border-x border-[rgba(150,105,61,0.1)] text-center">
-          <p className="text-[0.7rem] text-[#8b6c4d]">最长连续</p>
-          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{recordingStreak ? `${recordingStreak.length} 天` : "暂无"}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-[0.7rem] text-[#8b6c4d]">最长空档</p>
-          <p className="mt-1 font-mono text-[0.82rem] tabular-nums text-[#3a2c1f]">{quietStreak ? `${quietStreak.length} 天` : "暂无"}</p>
-        </div>
-      </div>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.16fr)_minmax(18.5rem,0.84fr)]">
+        <div className="space-y-3">
+          <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="archive-label">记录热力</p>
+                <p className="mt-2 text-[0.88rem] leading-7 text-[#72583f]">状态先于密度，再顺着具体日期回到当天处理最该补的那一步。</p>
+              </div>
+            </div>
 
-      <aside className="mt-3 max-w-[36rem]">
-        <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
-          <p className="archive-label">当天追踪</p>
-          <h3 className="mt-2 font-display text-[1.35rem] leading-none text-[#302114]">{formatAnalysisDateLabel(selectedDate, "暂无")}</h3>
+            <div className="mb-2 grid grid-cols-7 gap-2">
+              {rhythmWeekdays.map((label) => (
+                <p key={label} className="px-1 text-center text-[0.7rem] text-[#8b6c4d]">
+                  {label}
+                </p>
+              ))}
+            </div>
 
-          {selectedCoverage && selectedCoverage.savedDimensionCount > 0 ? (
-            <>
-              <p className="mt-3 text-[0.88rem] leading-7 text-[#72583f]">
-                {isFutureSelectedDate
-                  ? `这一天有 ${selectedCoverage.savedDimensionCount} 个维度，但未来日期不开放继续访谈入口。`
-                  : `这一天一共留下 ${selectedCoverage.savedDimensionCount} 个维度，先回到当天，再决定继续哪一条。`}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedDimensions.map((dimension) => {
-                  const visualMeta = getCalendarDimensionVisualMeta(dimension);
-
+            <div className="grid grid-cols-7 gap-2" data-testid="analysis-heatmap-grid">
+              {cells.map((cell) => {
+                if (!cell.isCurrentMonth || !cell.date) {
                   return (
-                    <span
-                      key={dimension}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.76rem] ${visualMeta.softBadgeClass}`}
-                    >
-                      <span aria-hidden="true">{visualMeta.monthLabel}</span>
-                      <span>{getInterviewDimensionMeta(dimension).label}</span>
-                    </span>
+                    <div
+                      key={cell.key}
+                      className="h-[5.4rem] rounded-[16px] border border-dashed border-[rgba(150,105,61,0.06)] bg-[rgba(255,249,239,0.18)]"
+                      aria-hidden="true"
+                    />
                   );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2.5">
-                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
-                {!isFutureSelectedDate ? (
-                  <ActionLink href={buildInterviewHref({ dimension: selectedDimensions[0] ?? "joy", entryDate: selectedDate })} label="继续当天记录" />
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="mt-3 text-[0.88rem] leading-7 text-[#72583f]">
-                {isFutureSelectedDate
-                  ? "这一天还没到来。你可以先查看当天，但未来日期暂不开放开始记录。"
-                  : "这一天目前还是空的。你可以直接去当天看看，或者从一个维度开始留下第一条记录。"}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2.5">
-                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
-                {!isFutureSelectedDate ? (
-                  <ActionLink href={buildInterviewHref({ dimension: "joy", entryDate: selectedDate })} label="开始这一天的记录" />
-                ) : null}
-              </div>
-            </>
-          )}
+                }
+
+                const coverage = daysByDate.get(cell.date) ?? null;
+                const state = getRhythmDayState(coverage, todayEntryDate);
+                const density = Math.min(coverage?.savedDimensionCount ?? 0, 3);
+                const isSelected = selectedDate === cell.date;
+
+                const surfaceClass =
+                  state === "future"
+                    ? "border-dashed border-[rgba(140,117,92,0.16)] bg-[rgba(255,252,246,0.54)]"
+                    : state === "score_only"
+                      ? "border-[rgba(88,120,88,0.18)] bg-[rgba(238,245,236,0.92)]"
+                      : state === "stale"
+                        ? density >= 3
+                          ? "border-[rgba(124,85,104,0.22)] bg-[rgba(226,210,221,0.94)]"
+                          : density === 2
+                            ? "border-[rgba(124,85,104,0.18)] bg-[rgba(239,227,236,0.94)]"
+                            : "border-[rgba(124,85,104,0.16)] bg-[rgba(247,240,245,0.96)]"
+                      : state === "complete"
+                        ? density >= 3
+                          ? "border-[rgba(69,100,74,0.22)] bg-[rgba(193,214,196,0.92)]"
+                          : density === 2
+                            ? "border-[rgba(69,100,74,0.18)] bg-[rgba(220,234,221,0.92)]"
+                            : "border-[rgba(69,100,74,0.16)] bg-[rgba(237,244,237,0.94)]"
+                        : state === "log_only"
+                          ? density >= 3
+                            ? "border-[rgba(111,74,38,0.22)] bg-[rgba(206,168,120,0.92)]"
+                            : density === 2
+                              ? "border-[rgba(111,74,38,0.18)] bg-[rgba(231,207,174,0.9)]"
+                              : "border-[rgba(111,74,38,0.16)] bg-[rgba(246,231,208,0.94)]"
+                          : "border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.86)]";
+
+                return (
+                  <button
+                    key={cell.key}
+                    type="button"
+                    onClick={() => setSelectedDate(cell.date ?? selectedDate)}
+                    className={cn(
+                      "group flex h-[5.4rem] flex-col rounded-[16px] border px-2.5 py-2 text-left transition hover:-translate-y-[1px]",
+                      surfaceClass,
+                      isSelected ? "border-[rgba(111,74,38,0.28)] ring-2 ring-[rgba(111,74,38,0.12)]" : null
+                    )}
+                    data-testid={`analysis-heatmap-day-${cell.date}`}
+                    title={`${cell.date}，${getRhythmStatusLabel(state)}${coverage?.savedDimensionCount ? `，${coverage.savedDimensionCount} 个维度` : ""}${
+                      coverage?.hasScore && typeof coverage.averageScore === "number" ? `，评分 ${coverage.averageScore.toFixed(1)}` : ""
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-mono text-[0.72rem] tabular-nums text-[#8e6a46]">{cell.dayNumber}</span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-1.5 py-0.5 text-[0.62rem]",
+                          state === "complete"
+                            ? "bg-[rgba(69,100,74,0.12)] text-[#45644a]"
+                            : state === "stale"
+                              ? "bg-[rgba(124,85,104,0.12)] text-[#7c5568]"
+                            : state === "log_only"
+                              ? "bg-[rgba(111,74,38,0.1)] text-[#7b532d]"
+                              : state === "score_only"
+                                ? "bg-[rgba(88,120,88,0.12)] text-[#567256]"
+                                : state === "future"
+                                  ? "bg-[rgba(122,104,87,0.1)] text-[#7a6857]"
+                                  : "bg-[rgba(150,105,61,0.08)] text-[#8b6c4d]"
+                        )}
+                      >
+                        {state === "complete" ? "整" : state === "stale" ? "更" : state === "log_only" ? "待" : state === "score_only" ? "评" : state === "future" ? "未" : "空"}
+                      </span>
+                    </div>
+                    <div className="mt-auto min-w-0">
+                      <p className="font-mono text-[0.74rem] tabular-nums text-[#4b3a2b]">{getRhythmDensityLabel(coverage, state)}</p>
+                      <p className="mt-1 truncate text-[0.68rem] text-[#72583f]">{getRhythmStatusLabel(state)}</p>
+                      {(coverage?.savedDimensions.length ?? 0) > 0 ? (
+                        <div
+                          className="mt-1 flex flex-wrap gap-1"
+                          aria-label={`涉及维度 ${coverage?.savedDimensions.map((dimension) => getInterviewDimensionMeta(dimension).label).join("、")}`}
+                        >
+                          {(coverage?.savedDimensions.slice(0, 3) ?? []).map((dimension) => {
+                            const visualMeta = getCalendarDimensionVisualMeta(dimension);
+
+                            return (
+                              <span
+                                key={dimension}
+                                className={`inline-flex size-5 items-center justify-center rounded-full border text-[0.68rem] font-medium ${visualMeta.softBadgeClass}`}
+                                title={getInterviewDimensionMeta(dimension).label}
+                              >
+                                {visualMeta.monthLabel}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2" data-testid="analysis-rhythm-summary-bar">
+            {rhythmSummaryItems.map((item) => (
+              <article key={item.label} className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.36)] px-3 py-3">
+                <p className="text-[0.7rem] text-[#8b6c4d]">{item.label}</p>
+                <p className="mt-1 font-mono text-[0.88rem] tabular-nums text-[#3a2c1f]">{item.value}</p>
+                <p className="mt-2 text-[0.76rem] leading-6 text-[#72583f]">{item.detail}</p>
+              </article>
+            ))}
+          </div>
         </div>
-      </aside>
+
+        <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="archive-label">当天追踪</p>
+            <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.76)] px-2 py-1 text-[0.68rem] text-[#7a624b]">
+              {getRhythmStatusLabel(selectedState)}
+            </span>
+          </div>
+          <h3 className="mt-2 font-display text-[1.35rem] leading-none text-[#302114]">{formatAnalysisDateLabel(selectedDate, "暂无")}</h3>
+          {selectedCoverage?.hasScore ? (
+            <p className="mt-2 font-mono text-[0.76rem] tabular-nums text-[#876b51]">当天评分：{formatScoreAverage(selectedAverageScore)}</p>
+          ) : null}
+
+          <p className="mt-3 text-[0.88rem] leading-7 text-[#72583f]">
+            {selectedState === "future"
+              ? "这一天还没到来。可以先查看当天，但未来日期不开放开始记录。"
+              : selectedState === "score_only"
+                ? "这一天已经有评分刻度，但还没有任何维度记录。先把这天写成一个具体片段。"
+                : selectedState === "stale"
+                  ? "这一天的完整日志已经落后于最新来源，建议重新整理一次，让当天总结重新对齐。"
+                : selectedState === "log_only"
+                  ? selectedCoverage && selectedCoverage.savedDimensionCount >= 2
+                    ? `这一天已经留下 ${selectedCoverage.savedDimensionCount} 个维度，但还没收成完整日志。`
+                    : "这一天已经有已保存记录，可以回到当天继续补足或整理。"
+                  : selectedState === "complete"
+                    ? "这一天已经整理成完整日志，可以回看正文，也可以回到当天继续细化某个维度。"
+                    : "这一天目前还是空的。可以直接开始这一天的记录，或者先查看当天。"}
+          </p>
+
+          {selectedDimensions.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedDimensions.map((dimension) => {
+                const visualMeta = getCalendarDimensionVisualMeta(dimension);
+
+                return (
+                  <Link
+                    key={dimension}
+                    href={buildInterviewHref({ dimension, entryDate: selectedDate })}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.76rem] ${visualMeta.softBadgeClass}`}
+                  >
+                    <span aria-hidden="true">{visualMeta.monthLabel}</span>
+                    <span>{getInterviewDimensionMeta(dimension).label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap gap-2.5">
+            {selectedState === "future" ? (
+              <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
+            ) : null}
+
+            {selectedState === "empty" ? (
+              <>
+                <ActionLink href={buildInterviewHref({ dimension: "joy", entryDate: selectedDate })} label="开始这一天的记录" variant="primary" />
+                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" />
+              </>
+            ) : null}
+
+            {selectedState === "score_only" ? (
+              <>
+                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="为这一天补一条记录" variant="primary" />
+                <ActionLink href={buildAnalysisHref({ month: record.month, section: "score" })} label="查看评分" />
+              </>
+            ) : null}
+
+            {selectedState === "log_only" ? (
+              <>
+                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
+                {selectedCoverage && selectedCoverage.savedDimensionCount >= 2 ? (
+                  <ActionLink href={buildDailyJournalHref(selectedDate)} label="整理完整日志" />
+                ) : null}
+              </>
+            ) : null}
+
+            {selectedState === "stale" ? (
+              <>
+                <ActionLink href={buildDailyJournalHref(selectedDate)} label="更新完整日志" variant="primary" />
+                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" />
+              </>
+            ) : null}
+
+            {selectedState === "complete" ? (
+              <>
+                <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
+                <ActionLink href={buildDailyJournalHref(selectedDate)} label="打开完整日志" />
+              </>
+            ) : null}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
-  const sortedDimensions = [...record.dimensions].sort((left, right) => {
-    if (right.savedEntryCount !== left.savedEntryCount) {
-      return right.savedEntryCount - left.savedEntryCount;
-    }
+function buildDimensionDrillHref(record: AnalysisMonthRecord, dimension: AnalysisDimensionInsightCard) {
+  if (dimension.lastRecordedDate) {
+    return buildInterviewHref({
+      dimension: dimension.dimension,
+      entryDate: dimension.lastRecordedDate
+    });
+  }
 
-    if (right.recordedDayCount !== left.recordedDayCount) {
-      return right.recordedDayCount - left.recordedDayCount;
-    }
+  if (record.month === getTodayEntryDate().slice(0, 7)) {
+    return buildInterviewHref({
+      dimension: dimension.dimension
+    });
+  }
 
-    return (right.lastRecordedDate ?? "").localeCompare(left.lastRecordedDate ?? "");
+  return buildCalendarHref({
+    view: "month",
+    date: `${record.month}-01`
   });
-  const featured = sortedDimensions.find((dimension) => dimension.savedEntryCount > 0) ?? null;
-  const emerging = sortedDimensions.filter((dimension) => featured && dimension.dimension !== featured.dimension && dimension.savedEntryCount > 0);
-  const quiet = interviewDimensions
+}
+
+function buildDimensionAnchorHref(record: AnalysisMonthRecord, dimension: AnalysisDimensionInsightCard) {
+  const anchorDate = dimension.turningPointDate ?? dimension.lastRecordedDate;
+
+  if (!anchorDate) {
+    return buildCalendarHref({
+      view: "month",
+      date: `${record.month}-01`
+    });
+  }
+
+  return buildCalendarHref({
+    view: "day",
+    date: anchorDate
+  });
+}
+
+function formatRelatedScoreFactorLabels(dimension: AnalysisDimensionInsightCard) {
+  return dimension.relatedScoreFactors
+    .map((factor) => happinessScoreItems.find((item) => item.requestKey === factor)?.label)
+    .filter((label): label is string => Boolean(label));
+}
+
+function getDimensionScoreSummary(dimension: AnalysisDimensionInsightCard) {
+  return dimension.scoreLink.summary;
+}
+
+function buildInsightActionItems(record: AnalysisMonthRecord, featured: AnalysisDimensionInsightCard | null) {
+  const pendingDailyJournalDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
+  const quietDimension = interviewDimensions
     .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    .filter((dimension) => dimension.savedEntryCount === 0);
+    .find((item) => item?.savedEntryCount === 0) ?? null;
+  const actions: Array<{ title: string; body: string; href: string; label: string }> = [];
+
+  if (featured) {
+    actions.push({
+      title: `继续看${getInterviewDimensionMeta(featured.dimension).label}`,
+      body: featured.thesis ?? buildDimensionSummary(featured),
+      href: buildDimensionDrillHref(record, featured),
+      label: "继续这条线"
+    });
+    actions.push({
+      title: `回到${formatAnalysisDateLabel(featured.turningPointDate ?? featured.lastRecordedDate)}`,
+      body: "先回到这一天，再看这条线是怎么慢慢成形的。",
+      href: buildDimensionAnchorHref(record, featured),
+      label: "看那一天"
+    });
+  }
+
+  if (pendingDailyJournalDay) {
+    actions.push({
+      title: `整理${formatAnalysisDateLabel(pendingDailyJournalDay.date)}`,
+      body: pendingDailyJournalDay.hasStaleDailyJournal
+        ? "这一天的完整日志已经落后于最新来源，建议重新整理一次。"
+        : "这一天已经有了几个维度，但还没有收成完整日志。",
+      href: buildDailyJournalHref(pendingDailyJournalDay.date),
+      label: pendingDailyJournalDay.hasStaleDailyJournal ? "更新完整日志" : "整理完整日志"
+    });
+  }
+
+  if (quietDimension) {
+    actions.push({
+      title: `补一补${getInterviewDimensionMeta(quietDimension.dimension).label}`,
+      body:
+        record.month === getTodayEntryDate().slice(0, 7)
+          ? "如果你想把这个月看得更完整，可以从今天先补这一维。"
+          : "如果你想把这个月看得更完整，可以先回到日历里挑一天补这一维。",
+      href: buildDimensionDrillHref(record, quietDimension),
+      label: record.month === getTodayEntryDate().slice(0, 7) ? "去补这一维" : "回到这个月"
+    });
+  }
+
+  return actions.slice(0, 3);
+}
+
+function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
+  const featured = getFeaturedDimension(record);
+  const orderedDimensions = interviewDimensions
+    .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
+    .filter((item): item is AnalysisDimensionInsightCard => Boolean(item));
+  const actionItems = buildInsightActionItems(record, featured);
 
   if (!featured) {
     return (
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]" data-testid="analysis-dimension-cards">
+      <div className="space-y-3" data-testid="analysis-dimension-cards">
         <article className="rounded-[22px] border border-dashed border-[rgba(150,105,61,0.16)] bg-[rgba(255,249,239,0.34)] p-4" data-testid="analysis-dimension-empty-state">
-          <p className="archive-label">五维洞察</p>
+          <p className="archive-label">五维线索</p>
           <h3 className="mt-2 font-display text-[1.45rem] leading-none text-[#302114]">这个月还没有形成文字线索</h3>
           <p className="mt-3 text-[0.9rem] leading-7 text-[#72583f]">
             {record.scoreOverview.scoredDayCount > 0
-              ? "这个月已经有评分轨迹，但还没有已保存的维度日志，所以这里不会伪造主线维度。"
-              : "这个月还没有已保存记录，先从一个维度开始，之后这里才会慢慢长出主线。"}
+              ? "这个月已经有评分起伏，但还没有足够的已保存记录把五维线索说清楚。"
+              : "这个月还没有已保存记录，先从一个维度开始，之后这里才会慢慢长出线索。"}
           </p>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <ActionLink href="/interview?dimension=joy" label="开始一条记录" variant="primary" />
@@ -1302,132 +2073,186 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
           </div>
         </article>
 
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
-          <p className="archive-label">安静维度</p>
-          <div className="mt-3 grid gap-2">
-            {quiet.map((item) => (
-              <div key={item.dimension} className="rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3 py-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {orderedDimensions.map((dimension) => (
+            <article
+              key={dimension.dimension}
+              className="rounded-[20px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] p-4"
+            >
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <span className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(item.dimension).softBadgeClass}`}>
-                    {getCalendarDimensionVisualMeta(item.dimension).monthLabel}
+                  <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(dimension.dimension).softBadgeClass}`}>
+                    {getCalendarDimensionVisualMeta(dimension.dimension).monthLabel}
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-[0.88rem] text-[#3a2c1f]">{getInterviewDimensionMeta(item.dimension).label}</p>
-                    <p className="text-[0.74rem] text-[#876b51]">本月还没有留下记录</p>
-                  </div>
+                  <p className="text-[0.9rem] text-[#3a2c1f]">{getInterviewDimensionMeta(dimension.dimension).label}</p>
                 </div>
+                <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.72)] px-2 py-1 text-[0.68rem] text-[#7b6146]">
+                  还没展开
+                </span>
               </div>
-            ))}
-          </div>
-        </article>
+              <p className="mt-3 text-[0.82rem] leading-6 text-[#72583f]">{dimension.nextQuestion}</p>
+            </article>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]" data-testid="analysis-dimension-cards">
-      <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4" data-testid={`analysis-dimension-featured-${featured.dimension}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="archive-label">主线维度</p>
-            <h3 className="mt-2 font-display text-[1.45rem] leading-none text-[#302114]">{getInterviewDimensionMeta(featured.dimension).label}</h3>
-          </div>
-          <span className={`inline-flex size-10 items-center justify-center rounded-full border text-[0.85rem] font-medium ${getCalendarDimensionVisualMeta(featured.dimension).softBadgeClass}`}>
-            {getCalendarDimensionVisualMeta(featured.dimension).monthLabel}
+    <div className="space-y-4" data-testid="analysis-dimension-cards">
+      <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <p className="archive-label">本月判断</p>
+          <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.82)] px-2.5 py-1 text-[0.72rem] text-[#7a6048]">
+            主线：{getInterviewDimensionMeta(featured.dimension).label}
           </span>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3.5 py-3">
-            <p className="text-[0.74rem] text-[#8b6c4d]">已保存</p>
-            <p className="mt-1 font-mono text-[0.9rem] tabular-nums text-[#4b3727]">{featured.savedEntryCount} 篇</p>
-          </div>
-          <div className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3.5 py-3">
-            <p className="text-[0.74rem] text-[#8b6c4d]">覆盖天数</p>
-            <p className="mt-1 font-mono text-[0.9rem] tabular-nums text-[#4b3727]">{featured.recordedDayCount} 天</p>
-          </div>
-          <div className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3.5 py-3">
-            <p className="text-[0.74rem] text-[#8b6c4d]">最近记录</p>
-            <p className="mt-1 font-mono text-[0.9rem] tabular-nums text-[#4b3727]">{formatAnalysisDateLabel(featured.lastRecordedDate)}</p>
-          </div>
-        </div>
-        {featured.topTags.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-[0.72rem] text-[#8b6c4d]">高频线索</span>
-            {featured.topTags.slice(0, 3).map((tag) => (
-              <span key={tag.tag} className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.82)] px-2.5 py-1 text-[0.76rem] text-[#5a4230]">
-                {tag.tag}
-              </span>
-            ))}
-          </div>
+        <h3 className="mt-3 font-display text-[1.42rem] leading-none text-[#302114]">{record.insightsOverview.headline}</h3>
+        <p className="mt-3 max-w-[48rem] text-pretty text-[0.9rem] leading-7 text-[#72583f]">{record.insightsOverview.summary}</p>
+        {record.insightsOverview.watchpoint ? (
+          <p className="mt-3 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.76)] px-3.5 py-3 text-[0.82rem] leading-6 text-[#72583f]">
+            还值得留意的是：{record.insightsOverview.watchpoint}
+          </p>
         ) : null}
-        <div className="mt-4 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-4 py-4">
-          <p className="text-[0.76rem] text-[#8b6c4d]">主线说明</p>
-          <p className="mt-2 text-[0.92rem] leading-7 text-[#4a3928]">{buildDimensionSummary(featured)}</p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <ActionLink
-              href={buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate })}
-              label={`回到${getInterviewDimensionMeta(featured.dimension).label}`}
-              variant="primary"
-            />
-            {featured.lastRecordedDate ? <ActionLink href={buildCalendarHref({ view: "day", date: featured.lastRecordedDate })} label="查看最近那天" /> : null}
-          </div>
-        </div>
       </article>
 
-      <div className="space-y-3">
-        <div className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
-          <p className="archive-label">正在浮现</p>
-          <div className="mt-3 grid gap-2">
-            {emerging.length > 0 ? (
-              emerging.map((item) => (
-                <div key={item.dimension} className="rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(item.dimension).softBadgeClass}`}>
-                      {getCalendarDimensionVisualMeta(item.dimension).monthLabel}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[0.88rem] text-[#3a2c1f]">{getInterviewDimensionMeta(item.dimension).label}</p>
-                      <p className="text-[0.74rem] text-[#876b51]">{item.savedEntryCount} 篇，最近 {formatAnalysisDateLabel(item.lastRecordedDate)}</p>
-                    </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {orderedDimensions.map((dimension) => {
+          const isFeatured = dimension.dimension === featured.dimension;
+          const relatedScoreFactors = formatRelatedScoreFactorLabels(dimension);
+          const scoreSummary = getDimensionScoreSummary(dimension);
+
+          return (
+            <article
+              key={dimension.dimension}
+              data-testid={isFeatured ? `analysis-dimension-featured-${dimension.dimension}` : undefined}
+              className={cn(
+                "rounded-[20px] border p-4 transition",
+                isFeatured
+                  ? "border-[rgba(111,74,38,0.22)] bg-[rgba(243,228,199,0.54)] ring-1 ring-[rgba(111,74,38,0.12)]"
+                  : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)]"
+              )}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(dimension.dimension).softBadgeClass}`}>
+                    {getCalendarDimensionVisualMeta(dimension.dimension).monthLabel}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[0.92rem] text-[#3a2c1f]">{getInterviewDimensionMeta(dimension.dimension).label}</p>
+                    <p className="text-[0.7rem] text-[#8b6c4d]">
+                      {dimension.recordedDayCount > 0 ? `${dimension.recordedDayCount} 天有记录` : "本月还没有记录"}
+                    </p>
                   </div>
-                  <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">{buildDimensionSummary(item)}</p>
-                  {item.topTags.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {item.topTags.slice(0, 3).map((tag) => (
-                        <span key={tag.tag} className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.76)] px-2 py-0.5 text-[0.7rem] text-[#6f5339]">
-                          {tag.tag}
-                        </span>
-                      ))}
+                </div>
+                <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.72)] px-2 py-1 text-[0.68rem] text-[#7b6146]">
+                  {isFeatured ? "这月更清楚" : getDimensionConfidenceLabel(dimension)}
+                </span>
+              </div>
+
+              <p className="mt-3 min-h-[4.5rem] text-[0.84rem] leading-6 text-[#4a3928]">{buildDimensionSummary(dimension)}</p>
+
+              <div className="mt-3 space-y-1.5 text-[0.72rem] leading-5 text-[#80634a]">
+                <p>{getDimensionMomentumLabel(dimension)}</p>
+                <p>{getDimensionContinuityLabel(dimension)}</p>
+                <p>
+                  {dimension.turningPointDate
+                    ? `更像在 ${formatAnalysisDateLabel(dimension.turningPointDate)} 这天成形`
+                    : "还没有明显的转折点"}
+                </p>
+              </div>
+
+              {dimension.evidence.length > 0 ? (
+                <div className="mt-3 rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.46)] px-3 py-3">
+                  <p className="text-[0.7rem] text-[#8b6c4d]">代表片段</p>
+                  <div className="mt-2 space-y-2">
+                    {dimension.evidence.slice(0, 2).map((evidence) => (
+                      <div key={evidence.entryId}>
+                        <p className="text-[0.76rem] leading-5 text-[#4a3928]">{evidence.summary}</p>
+                        {evidence.detail ? <p className="mt-0.5 text-[0.72rem] leading-5 text-[#7a624b]">{evidence.detail}</p> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 rounded-[16px] border border-dashed border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.34)] px-3 py-3 text-[0.74rem] leading-5 text-[#7a624b]">
+                  这条线还在起笔，先不用急着下结论。
+                </div>
+              )}
+
+              <div className="mt-3 space-y-2">
+                {relatedScoreFactors.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {relatedScoreFactors.map((label) => (
+                      <span key={label} className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.8)] px-2 py-0.5 text-[0.68rem] text-[#6f5339]">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {dimension.relatedDimensions.length > 0 ? (
+                  <p className="text-[0.72rem] leading-5 text-[#7a624b]">
+                    常一起动：{dimension.relatedDimensions.map((related) => getInterviewDimensionMeta(related).label).join("、")}
+                  </p>
+                ) : null}
+                {scoreSummary ? (
+                  <p className="text-[0.72rem] leading-5 text-[#7a624b]">评分里：{scoreSummary}</p>
+                ) : null}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <ActionLink
+                  href={buildDimensionDrillHref(record, dimension)}
+                  label={dimension.savedEntryCount > 0 ? "继续这条线" : "去补这一维"}
+                  variant={isFeatured || dimension.savedEntryCount > 0 ? "primary" : "secondary"}
+                />
+                <ActionLink href={buildDimensionAnchorHref(record, dimension)} label={dimension.savedEntryCount > 0 ? "看那一天" : "回到这个月"} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
+        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
+          <p className="archive-label">维度之间</p>
+          <h3 className="mt-2 font-display text-[1.3rem] leading-none text-[#302114]">别只看哪条写得多，也看它和谁连在一起，和评分怎么接上</h3>
+          {record.insightsOverview.links.length > 0 ? (
+            <div className="mt-4 grid gap-2.5">
+              {record.insightsOverview.links.map((link, index) => (
+                <div key={`${link.type}-${index}`} className="rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] px-3.5 py-3">
+                  <p className="text-[0.74rem] text-[#8b6c4d]">{link.title}</p>
+                  <p className="mt-1 text-[0.84rem] leading-6 text-[#4a3928]">{link.detail}</p>
+                  {link.anchorDate ? (
+                    <div className="mt-3">
+                      <ActionLink href={buildCalendarHref({ view: "day", date: link.anchorDate })} label="回到那一天" />
                     </div>
                   ) : null}
                 </div>
-              ))
-            ) : (
-              <p className="rounded-[18px] border border-dashed border-[rgba(150,105,61,0.14)] bg-[rgba(255,252,246,0.76)] px-3 py-3 text-[0.84rem] leading-6 text-[#72583f]">
-                这个月目前只有一条更清晰的主线，其余维度还没有明显浮现。
-              </p>
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 rounded-[18px] border border-dashed border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.76)] px-3.5 py-3 text-[0.84rem] leading-6 text-[#72583f]">
+              这个月的材料还不够多，先把五条线各自写清楚，关系层才会慢慢出现。
+            </p>
+          )}
+        </article>
 
-        <div className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
-          <p className="archive-label">安静维度</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {quiet.map((item) => (
-              <div key={item.dimension} className="rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.8)] px-3 py-3">
-                <div className="flex items-center gap-2.5">
-                  <span className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(item.dimension).softBadgeClass}`}>
-                    {getCalendarDimensionVisualMeta(item.dimension).monthLabel}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[0.88rem] text-[#3a2c1f]">{getInterviewDimensionMeta(item.dimension).label}</p>
-                    <p className="text-[0.74rem] text-[#876b51]">本月还没有留下记录</p>
-                  </div>
+        <article className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.42)] p-4">
+          <p className="archive-label">下一步</p>
+          <h3 className="mt-2 font-display text-[1.3rem] leading-none text-[#302114]">先做哪一步，最容易把这个月看清楚</h3>
+          <div className="mt-4 grid gap-2.5">
+            {actionItems.map((action) => (
+              <div key={action.title} className="rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] px-3.5 py-3">
+                <p className="text-[0.86rem] text-[#3a2c1f]">{action.title}</p>
+                <p className="mt-1 text-[0.8rem] leading-6 text-[#72583f]">{action.body}</p>
+                <div className="mt-3">
+                  <ActionLink href={action.href} label={action.label} variant="primary" />
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </article>
       </div>
     </div>
   );

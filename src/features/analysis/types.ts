@@ -9,9 +9,13 @@ export interface AnalysisLogOverview {
 
 export interface AnalysisDailyCoverageDay {
   date: string;
+  savedEntryCount: number;
   savedDimensionCount: number;
   savedDimensions: InterviewDimension[];
   hasDailyJournalSaved: boolean;
+  hasStaleDailyJournal: boolean;
+  hasScore: boolean;
+  averageScore: number | null;
 }
 
 export interface AnalysisDimensionBreakdownItem {
@@ -32,13 +36,59 @@ export interface AnalysisDimensionSignalExcerpt {
   secondarySignal: string | null;
 }
 
+export interface AnalysisDimensionEvidenceExcerpt {
+  entryId: string;
+  date: string;
+  summary: string;
+  detail: string | null;
+}
+
+export type AnalysisDimensionInsightConfidence = "low" | "medium" | "high";
+export type AnalysisDimensionInsightMomentum = "starting" | "rising" | "steady" | "quiet";
+export type AnalysisDimensionInsightContinuity = "none" | "single" | "intermittent" | "sustained";
+export type AnalysisDimensionScoreStatus = "unknown" | "supporting" | "lagging" | "missing";
+
+export interface AnalysisDimensionScoreLink {
+  average: number | null;
+  status: AnalysisDimensionScoreStatus;
+  summary: string | null;
+}
+
 export interface AnalysisDimensionInsightCard {
   dimension: InterviewDimension;
   savedEntryCount: number;
   recordedDayCount: number;
   lastRecordedDate: string | null;
+  thesis: string | null;
+  confidence: AnalysisDimensionInsightConfidence;
+  momentum: AnalysisDimensionInsightMomentum;
+  continuity: AnalysisDimensionInsightContinuity;
+  turningPointDate: string | null;
+  representativeDates: string[];
+  relatedScoreFactors: HappinessScoreRequestKey[];
+  relatedDimensions: InterviewDimension[];
+  scoreLink: AnalysisDimensionScoreLink;
+  nextQuestion: string | null;
   topTags: AnalysisDimensionTagStat[];
   recentSignals: AnalysisDimensionSignalExcerpt[];
+  evidence: AnalysisDimensionEvidenceExcerpt[];
+}
+
+export interface AnalysisDimensionRelationship {
+  type: "pairing" | "followup" | "gap" | "score";
+  title: string;
+  detail: string;
+  dimensions: InterviewDimension[];
+  anchorDate: string | null;
+}
+
+export interface AnalysisInsightsOverview {
+  headline: string;
+  summary: string;
+  watchpoint: string | null;
+  featuredDimension: InterviewDimension | null;
+  quietDimensions: InterviewDimension[];
+  links: AnalysisDimensionRelationship[];
 }
 
 export interface AnalysisScoreOverview {
@@ -59,12 +109,31 @@ export interface AnalysisScoreTrend {
   factorAverages: Record<HappinessScoreRequestKey, number | null>;
 }
 
+export interface AnalysisDateSpan {
+  startDate: string;
+  endDate: string;
+  length: number;
+}
+
+export interface AnalysisRhythmOverview {
+  activeObservedDayCount: number;
+  scoreOnlyDayCount: number;
+  pendingDailyJournalCount: number;
+  longestStreak: AnalysisDateSpan | null;
+  longestGap: AnalysisDateSpan | null;
+  latestActiveDate: string | null;
+  latestScoreOnlyDate: string | null;
+  latestPendingDailyJournalDate: string | null;
+}
+
 export interface AnalysisMonthRecord {
   month: string;
   logOverview: AnalysisLogOverview;
   dailyCoverage: AnalysisDailyCoverageDay[];
+  rhythmOverview: AnalysisRhythmOverview;
   dimensionBreakdown: AnalysisDimensionBreakdownItem[];
   dimensions: AnalysisDimensionInsightCard[];
+  insightsOverview: AnalysisInsightsOverview;
   scoreOverview: AnalysisScoreOverview;
   scoreTrend: AnalysisScoreTrend;
   scoreRecords: DailyHappinessScoreRecord[];
@@ -84,4 +153,5 @@ export interface AnalysisSavedEntrySource {
 export interface AnalysisSavedDailyJournalSource {
   id: string;
   date: string;
+  sourceSignature: string;
 }

@@ -30,6 +30,10 @@ function ToolbarDivider() {
   );
 }
 
+function getPendingEditableScoreDates(record: AnalysisMonthRecord) {
+  return record.editableDates.filter((date) => !record.scoreRecords.some((score) => score.date === date));
+}
+
 function getChip(
   key: AnalysisSectionKey,
   record: AnalysisMonthRecord | null
@@ -38,25 +42,43 @@ function getChip(
 
   if (key === "score") {
     if (record.editableDates.length === 0) return null;
-    const todayHasScore = record.scoreRecords.some((s) => s.date === record.editableDates[0]);
-    return todayHasScore
-      ? { text: "已评", dotClass: "bg-[#5a7a56]" }
-      : { text: "今天未评", dotClass: "bg-[#b87a3a]" };
+    const pendingEditableDates = getPendingEditableScoreDates(record);
+
+    if (pendingEditableDates.length === 0) {
+      return { text: "已补齐", dotClass: "bg-[#5a7a56]" };
+    }
+
+    if (pendingEditableDates.length > 1) {
+      return { text: `${pendingEditableDates.length}天待补`, dotClass: "bg-[#b87a3a]" };
+    }
+
+    return pendingEditableDates[0] === record.editableDates[0]
+      ? { text: "今天未评", dotClass: "bg-[#b87a3a]" }
+      : { text: "昨天待补", dotClass: "bg-[#b87a3a]" };
   }
 
   if (key === "rhythm") {
-    const activeDayCount = record.dailyCoverage.filter(
-      (d) => d.savedDimensionCount > 0 || d.hasDailyJournalSaved
-    ).length;
-    return activeDayCount > 0 ? { text: `${activeDayCount}天`, dotClass: null } : null;
+    if (record.rhythmOverview.pendingDailyJournalCount > 0) {
+      return { text: `待整合 ${record.rhythmOverview.pendingDailyJournalCount} 天`, dotClass: "bg-[#8e5638]" };
+    }
+
+    if (record.rhythmOverview.scoreOnlyDayCount > 0) {
+      return { text: `待成文 ${record.rhythmOverview.scoreOnlyDayCount} 天`, dotClass: "bg-[#74927a]" };
+    }
+
+    return record.rhythmOverview.activeObservedDayCount > 0
+      ? { text: `${record.rhythmOverview.activeObservedDayCount}天有材料`, dotClass: null }
+      : null;
   }
 
   if (key === "insights") {
-    const featured = record.dimensionBreakdown
-      .filter((d) => d.savedEntryCount > 0)
-      .sort((a, b) => b.savedEntryCount - a.savedEntryCount || b.recordedDayCount - a.recordedDayCount)[0];
-    return featured
-      ? { text: getInterviewDimensionMeta(featured.dimension as Parameters<typeof getInterviewDimensionMeta>[0]).label, dotClass: null }
+    const featuredDimension =
+      record.insightsOverview.featuredDimension ??
+      record.dimensionBreakdown
+        .filter((d) => d.savedEntryCount > 0)
+        .sort((a, b) => b.savedEntryCount - a.savedEntryCount || b.recordedDayCount - a.recordedDayCount)[0]?.dimension;
+    return featuredDimension
+      ? { text: getInterviewDimensionMeta(featuredDimension as Parameters<typeof getInterviewDimensionMeta>[0]).label, dotClass: null }
       : null;
   }
 

@@ -1,4 +1,4 @@
-import { aggregateAnalysisMonth, buildAnalysisScoreTrend } from "@/features/analysis/aggregate-month";
+import { aggregateAnalysisMonth } from "@/features/analysis/aggregate-month";
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { listAnalysisSourcesByDateRange } from "@/server/repositories/analysis.repository";
@@ -88,11 +88,9 @@ export async function getAnalysisMonth(month: string): Promise<AnalysisMonthReco
       ...aggregateAnalysisMonth({
         month,
         entries: sources.entries,
-        dailyJournals: sources.dailyJournals
-      }),
-      ...buildAnalysisScoreTrend({
-        month,
-        scoreRecords
+        dailyJournals: sources.dailyJournals,
+        scoreRecords,
+        today
       }),
       scoreRecords,
       editableDates

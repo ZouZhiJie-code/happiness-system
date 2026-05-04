@@ -31,8 +31,26 @@ describe("analysis api route", () => {
         dailyJournalSavedDayCount: 1
       },
       dailyCoverage: [],
+      rhythmOverview: {
+        activeObservedDayCount: 1,
+        scoreOnlyDayCount: 1,
+        pendingDailyJournalCount: 0,
+        longestStreak: null,
+        longestGap: null,
+        latestActiveDate: "2026-05-02",
+        latestScoreOnlyDate: "2026-05-03",
+        latestPendingDailyJournalDate: null
+      },
       dimensionBreakdown: [],
       dimensions: [],
+      insightsOverview: {
+        headline: "开心是这个月最清楚的一条线。",
+        summary: "这个月更成形的是开心这条线。",
+        watchpoint: null,
+        featuredDimension: "joy",
+        quietDimensions: ["fulfillment", "improvement"],
+        links: []
+      },
       scoreOverview: {
         scoredDayCount: 1,
         monthAverageScore: 7.5,

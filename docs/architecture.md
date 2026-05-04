@@ -60,7 +60,7 @@
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
+  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、评分走势与 8 要素快扫（左侧色带选中态）、稀疏/持平样本提示、状态优先的本月热力图、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -264,22 +264,24 @@
 ### 3.7 记录分析页现实
 
 截至 `2026-05-04`，`/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已进入月度记录分析的 tab 互斥视图阶段：
-- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、有记录天数、主线维度名）；当前月评分保存成功后，toolbar chip 会即时刷新
+- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分待补状态、节奏待整合/待成文状态、主线维度名）；当前月评分保存成功后，toolbar chip 会即时刷新
 - 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认切到 `overview` 总览视图
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - 页面内已有上月 / 本月 / 下月切换（在 header toolbar 中）
 - 页面当前已展示：
   - `overview`：总览默认先给月度判断、评分可信度和一个“建议先看”的主行动，再提供评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条只做辅助快扫，区分维度记录日、成果保存日、待整合日和评分可信度
-  - `score`：幸福 8 要素评分默认入口，先展示总分平均走势，再展示 8 要素快扫和单项细看，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
-  - `rhythm`：本月记录热力图、最长连续记录 / 空档和当天 drill-in，替代旧的记录页同款分布表
+  - `score`：幸福 8 要素评分默认入口已经改成补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填项不再默认停在 `5` 分；今天和昨天都补齐后，首屏才回到总分平均走势、8 要素快扫和单项细看。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只给轻提示文案
+  - `rhythm`：本月状态优先热力图、最长连续记录 / 空档和当天 drill-in；`saved` 但 `stale` 的当天整合日志会被当成待更新来源，未来月份不会再被误算成整月空档
   - `insights`：主线维度 + 正在浮现 + 安静维度，避免五张卡按偶数栅格硬排
 - `section` 是视图选择状态：总览 / 评分 / 节奏 / 五维四个 tab 互斥渲染，同一时间只展示一个板块；切换 tab 或翻月后 `section` 保留在 URL 中
 - 分析页里“回到某维度”的 drill-down 链接会带回对应 `entryDate`，避免历史月份误跳到今天的访谈上下文
+- 未来月份如果没有任何材料，总览首屏会给中性提示并引导回到当前月份，不会把用户送去今天的访谈
 - 分析页热力区点到未来日期时，只保留 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
-- 当前月 `rhythm` 的 `最长空档` 只统计已经发生的日期，不把未来自然日当成空档
-- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
+- 当前月 `rhythm` 的 `最长空档` 只统计已经发生的日期，不把未来自然日当成空档；未来月份则直接返回 `longestGap = null`
+- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `rhythmOverview`、`insightsOverview`、`scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
 - 当月份没有任何真实分析数据时，前端直接显示真实空态，不再使用示意填充冒充分析结果
-- 当月份只有评分、没有任何已保存维度日志时，`rhythm` 不会伪造最高密度日，`insights` 不会伪造主线维度，而是显示明确空态
+- 当月份只有评分、没有任何已保存维度日志时，`rhythm` 不会伪造 `已整合`、密度结论或整月空档，`insights` 也不会伪造主线维度，而是显示明确空态
+- `insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会出现不同模块各指一个维度的矛盾
 - `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
 - 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
 - 趋势图只做单月查看，不做跨月同比；AI 洞察仍未接入

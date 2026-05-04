@@ -105,6 +105,196 @@ describe("analysis shell", () => {
     };
   }
 
+  function buildDailyCoverage(
+    scoreRecords: AnalysisMonthRecord["scoreRecords"],
+    month = "2026-05"
+  ): AnalysisMonthRecord["dailyCoverage"] {
+    const recordByDate = new Map(scoreRecords.filter((record) => record.date.startsWith(month)).map((record) => [record.date, record]));
+    const daysInMonth = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
+
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = `${month}-${String(index + 1).padStart(2, "0")}`;
+      const scoreRecord = recordByDate.get(date);
+      const averageScore = scoreRecord
+        ? roundScoreAverage(scoreRecordKeys.map((key) => scoreRecord[key]).reduce((sum, value) => sum + value, 0) / scoreRecordKeys.length)
+        : null;
+
+      if (date === "2026-05-02") {
+        return {
+          date,
+          savedEntryCount: 3,
+          savedDimensionCount: 2,
+          savedDimensions: ["joy", "reflection"] as AnalysisMonthRecord["dailyCoverage"][number]["savedDimensions"],
+          hasDailyJournalSaved: true,
+          hasStaleDailyJournal: false,
+          hasScore: Boolean(scoreRecord),
+          averageScore
+        };
+      }
+
+      if (date === "2026-05-07") {
+        return {
+          date,
+          savedEntryCount: 1,
+          savedDimensionCount: 1,
+          savedDimensions: ["gratitude"] as AnalysisMonthRecord["dailyCoverage"][number]["savedDimensions"],
+          hasDailyJournalSaved: false,
+          hasStaleDailyJournal: false,
+          hasScore: Boolean(scoreRecord),
+          averageScore
+        };
+      }
+
+      return {
+        date,
+        savedEntryCount: 0,
+        savedDimensionCount: 0,
+        savedDimensions: [] as AnalysisMonthRecord["dailyCoverage"][number]["savedDimensions"],
+        hasDailyJournalSaved: false,
+        hasStaleDailyJournal: false,
+        hasScore: Boolean(scoreRecord),
+        averageScore
+      };
+    });
+  }
+
+  function buildEmptyDailyCoverage(month = "2026-05"): AnalysisMonthRecord["dailyCoverage"] {
+    return buildDailyCoverage([], month).map((day) => ({
+      ...day,
+      savedEntryCount: 0,
+      savedDimensionCount: 0,
+      savedDimensions: [],
+      hasDailyJournalSaved: false,
+      hasStaleDailyJournal: false
+    }));
+  }
+
+  function buildRhythmOverview(
+    dailyCoverage: AnalysisMonthRecord["dailyCoverage"],
+    month = "2026-05",
+    today = "2026-05-03"
+  ): AnalysisMonthRecord["rhythmOverview"] {
+    const observedDays = month > today.slice(0, 7) ? [] : month === today.slice(0, 7) ? dailyCoverage.filter((day) => day.date <= today) : dailyCoverage;
+    const isPendingDailyJournalDay = (day: AnalysisMonthRecord["dailyCoverage"][number]) =>
+      day.hasStaleDailyJournal || (day.savedDimensionCount > 0 && !day.hasDailyJournalSaved);
+
+    function buildLongestSpan(predicate: (day: AnalysisMonthRecord["dailyCoverage"][number]) => boolean) {
+      let best: { startDate: string; endDate: string; length: number } | null = null;
+      let currentStart: string | null = null;
+      let currentEnd: string | null = null;
+      let currentLength = 0;
+
+      for (const day of observedDays) {
+        if (predicate(day)) {
+          currentStart ??= day.date;
+          currentEnd = day.date;
+          currentLength += 1;
+          continue;
+        }
+
+        if (currentStart && currentEnd && (!best || currentLength > best.length)) {
+          best = {
+            startDate: currentStart,
+            endDate: currentEnd,
+            length: currentLength
+          };
+        }
+
+        currentStart = null;
+        currentEnd = null;
+        currentLength = 0;
+      }
+
+      if (currentStart && currentEnd && (!best || currentLength > best.length)) {
+        best = {
+          startDate: currentStart,
+          endDate: currentEnd,
+          length: currentLength
+        };
+      }
+
+      return best;
+    }
+
+    function findLatest(predicate: (day: AnalysisMonthRecord["dailyCoverage"][number]) => boolean) {
+      return observedDays.filter(predicate).sort((left, right) => right.date.localeCompare(left.date))[0]?.date ?? null;
+    }
+
+    return {
+      activeObservedDayCount: observedDays.filter((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved).length,
+      scoreOnlyDayCount: observedDays.filter((day) => day.hasScore && day.savedDimensionCount === 0 && !day.hasDailyJournalSaved).length,
+      pendingDailyJournalCount: observedDays.filter(isPendingDailyJournalDay).length,
+      longestStreak: buildLongestSpan((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved),
+      longestGap: buildLongestSpan((day) => day.savedDimensionCount === 0 && !day.hasDailyJournalSaved && !day.hasScore),
+      latestActiveDate: findLatest((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved),
+      latestScoreOnlyDate: findLatest((day) => day.hasScore && day.savedDimensionCount === 0 && !day.hasDailyJournalSaved),
+      latestPendingDailyJournalDate: findLatest(isPendingDailyJournalDay)
+    };
+  }
+
+  function buildDimensionInsight(
+    input: Partial<AnalysisMonthRecord["dimensions"][number]> & Pick<AnalysisMonthRecord["dimensions"][number], "dimension">
+  ): AnalysisMonthRecord["dimensions"][number] {
+    return {
+      dimension: input.dimension,
+      savedEntryCount: input.savedEntryCount ?? 0,
+      recordedDayCount: input.recordedDayCount ?? 0,
+      lastRecordedDate: input.lastRecordedDate ?? null,
+      thesis: input.thesis ?? null,
+      confidence: input.confidence ?? "low",
+      momentum: input.momentum ?? "quiet",
+      continuity: input.continuity ?? "none",
+      turningPointDate: input.turningPointDate ?? null,
+      representativeDates: input.representativeDates ?? [],
+      relatedScoreFactors: input.relatedScoreFactors ?? [],
+      relatedDimensions: input.relatedDimensions ?? [],
+      scoreLink: input.scoreLink ?? {
+        average: null,
+        status: "unknown",
+        summary: "评分里暂时还看不出这条线。"
+      },
+      nextQuestion: input.nextQuestion ?? null,
+      topTags: input.topTags ?? [],
+      recentSignals: input.recentSignals ?? [],
+      evidence: input.evidence ?? []
+    };
+  }
+
+  function buildInsightsOverview(
+    featuredDimension: AnalysisMonthRecord["insightsOverview"]["featuredDimension"] = "joy"
+  ): AnalysisMonthRecord["insightsOverview"] {
+    return {
+      headline: "开心是这个月最清楚的一条线，思考也已经开始接上。",
+      summary: "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。",
+      watchpoint: "成长感、自主感、自我认可在评分里还不算稳，这条线也还没有真正展开。",
+      featuredDimension,
+      quietDimensions: ["fulfillment", "improvement"],
+      links: [
+        {
+          type: "score",
+          title: "评分里也在呼应",
+          detail: "投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。",
+          dimensions: ["joy"],
+          anchorDate: "2026-05-02"
+        },
+        {
+          type: "pairing",
+          title: "常常会一起出现",
+          detail: "5月2日这一天，开心和思考一起冒了出来。",
+          dimensions: ["joy", "reflection"],
+          anchorDate: "2026-05-02"
+        },
+        {
+          type: "gap",
+          title: "还没怎么展开的",
+          detail: "充实、改进这几条线，这个月还没有留下已保存记录。",
+          dimensions: ["fulfillment", "improvement"],
+          anchorDate: null
+        }
+      ]
+    };
+  }
+
   function buildAnalysisMonthRecord(): AnalysisMonthRecord {
     const scoreRecords: AnalysisMonthRecord["scoreRecords"] = [
       {
@@ -136,6 +326,7 @@ describe("analysis shell", () => {
         updatedAt: "2026-05-02T02:00:00.000Z"
       }
     ];
+    const dailyCoverage = buildDailyCoverage(scoreRecords);
 
     return {
       month: "2026-05",
@@ -144,34 +335,8 @@ describe("analysis shell", () => {
         savedEntryCount: 4,
         dailyJournalSavedDayCount: 1
       },
-      dailyCoverage: Array.from({ length: 31 }, (_, index) => {
-        const date = `2026-05-${String(index + 1).padStart(2, "0")}`;
-
-        if (date === "2026-05-02") {
-          return {
-            date,
-            savedDimensionCount: 2,
-            savedDimensions: ["joy", "reflection"],
-            hasDailyJournalSaved: true
-          };
-        }
-
-        if (date === "2026-05-07") {
-          return {
-            date,
-            savedDimensionCount: 1,
-            savedDimensions: ["gratitude"],
-            hasDailyJournalSaved: false
-          };
-        }
-
-        return {
-          date,
-          savedDimensionCount: 0,
-          savedDimensions: [],
-          hasDailyJournalSaved: false
-        };
-      }),
+      dailyCoverage,
+      rhythmOverview: buildRhythmOverview(dailyCoverage),
       dimensionBreakdown: [
         { dimension: "joy", savedEntryCount: 2, recordedDayCount: 1 },
         { dimension: "fulfillment", savedEntryCount: 0, recordedDayCount: 0 },
@@ -180,11 +345,25 @@ describe("analysis shell", () => {
         { dimension: "gratitude", savedEntryCount: 1, recordedDayCount: 1 }
       ],
       dimensions: [
-        {
+        buildDimensionInsight({
           dimension: "joy",
           savedEntryCount: 2,
           recordedDayCount: 1,
           lastRecordedDate: "2026-05-02",
+          thesis: "这个月让你更容易亮起来的，多半和那种不用解释也能放松的陪伴有关。",
+          confidence: "medium",
+          momentum: "steady",
+          continuity: "single",
+          turningPointDate: "2026-05-02",
+          representativeDates: ["2026-05-02"],
+          relatedScoreFactors: ["interest", "relationship"],
+          relatedDimensions: ["reflection"],
+          scoreLink: {
+            average: 8.5,
+            status: "supporting",
+            summary: "投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+          },
+          nextQuestion: "这类开心只是偶尔出现，还是已经开始重复出现了？",
           topTags: [
             { tag: "关系型开心", count: 2 },
             { tag: "轻松踏实", count: 1 }
@@ -196,21 +375,45 @@ describe("analysis shell", () => {
               primarySignal: "那种不用解释也能放松的陪伴",
               secondarySignal: "我会被这种没负担的陪伴带回轻松里"
             }
+          ],
+          evidence: [
+            {
+              entryId: "entry-joy-2",
+              date: "2026-05-02",
+              summary: "那种不用解释也能放松的陪伴",
+              detail: "我会被这种没负担的陪伴带回轻松里"
+            }
           ]
-        },
-        {
+        }),
+        buildDimensionInsight({
           dimension: "fulfillment",
-          savedEntryCount: 0,
-          recordedDayCount: 0,
-          lastRecordedDate: null,
-          topTags: [],
-          recentSignals: []
-        },
-        {
+          relatedScoreFactors: ["meaning", "skill", "virtue"],
+          scoreLink: {
+            average: 7.3,
+            status: "missing",
+            summary: "意义感、成长感、自我认可在评分里并不低，但这条线还没写成具体记录。"
+          },
+          nextQuestion: "最近有没有一件事，让你觉得今天不算白过？"
+        }),
+        buildDimensionInsight({
           dimension: "reflection",
           savedEntryCount: 1,
           recordedDayCount: 1,
           lastRecordedDate: "2026-05-02",
+          thesis: "这个月反复冒出来的一条判断，是我太容易把忙碌错当进展。",
+          confidence: "low",
+          momentum: "starting",
+          continuity: "single",
+          turningPointDate: "2026-05-02",
+          representativeDates: ["2026-05-02"],
+          relatedScoreFactors: ["autonomy", "meaning"],
+          relatedDimensions: ["joy"],
+          scoreLink: {
+            average: 7,
+            status: "supporting",
+            summary: "自主感、意义感在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+          },
+          nextQuestion: "这条判断线索，只在一件事里出现，还是已经开始反复冒出来？",
           topTags: [{ tag: "判断校准型", count: 1 }],
           recentSignals: [
             {
@@ -219,21 +422,45 @@ describe("analysis shell", () => {
               primarySignal: "我太容易把忙碌错当进展",
               secondarySignal: "以后判断进展要看依据有没有变清楚"
             }
+          ],
+          evidence: [
+            {
+              entryId: "entry-reflection-1",
+              date: "2026-05-02",
+              summary: "我太容易把忙碌错当进展",
+              detail: "以后判断进展要看依据有没有变清楚"
+            }
           ]
-        },
-        {
+        }),
+        buildDimensionInsight({
           dimension: "improvement",
-          savedEntryCount: 0,
-          recordedDayCount: 0,
-          lastRecordedDate: null,
-          topTags: [],
-          recentSignals: []
-        },
-        {
+          relatedScoreFactors: ["skill", "autonomy", "virtue"],
+          scoreLink: {
+            average: 6.8,
+            status: "lagging",
+            summary: "成长感、自主感、自我认可在评分里还不算稳，这条线也还没有真正展开。"
+          },
+          nextQuestion: "最近有没有一个时刻，让你觉得下次想做得更稳一点？"
+        }),
+        buildDimensionInsight({
           dimension: "gratitude",
           savedEntryCount: 1,
           recordedDayCount: 1,
           lastRecordedDate: "2026-05-07",
+          thesis: "这个月最容易被你记住的回应，多半是看出我快撑不住，先帮我理清优先级。",
+          confidence: "low",
+          momentum: "starting",
+          continuity: "single",
+          turningPointDate: "2026-05-07",
+          representativeDates: ["2026-05-07"],
+          relatedScoreFactors: ["relationship", "livingCondition"],
+          relatedDimensions: [],
+          scoreLink: {
+            average: 7,
+            status: "supporting",
+            summary: "关系支持、生活托住在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+          },
+          nextQuestion: "这类被回应的感觉，是一次例外，还是这段关系里常有的经验？",
           topTags: [{ tag: "支持", count: 1 }],
           recentSignals: [
             {
@@ -242,9 +469,18 @@ describe("analysis shell", () => {
               primarySignal: "看出我快撑不住，先帮我理清优先级",
               secondarySignal: "这种关系回应值得珍惜"
             }
+          ],
+          evidence: [
+            {
+              entryId: "entry-gratitude-1",
+              date: "2026-05-07",
+              summary: "看出我快撑不住，先帮我理清优先级",
+              detail: "这种关系回应值得珍惜"
+            }
           ]
-        }
+        })
       ],
+      insightsOverview: buildInsightsOverview(),
       ...buildScoreFields(scoreRecords),
       scoreRecords,
       editableDates: ["2026-05-03", "2026-05-02"]
@@ -389,12 +625,8 @@ describe("analysis shell", () => {
             savedEntryCount: 0,
             dailyJournalSavedDayCount: 0
           },
-          dailyCoverage: Array.from({ length: 31 }, (_, index) => ({
-            date: `2026-05-${String(index + 1).padStart(2, "0")}`,
-            savedDimensionCount: 0,
-            savedDimensions: [],
-            hasDailyJournalSaved: false
-          })),
+          dailyCoverage: buildEmptyDailyCoverage(),
+          rhythmOverview: buildRhythmOverview(buildEmptyDailyCoverage()),
           dimensionBreakdown: [
             { dimension: "joy", savedEntryCount: 0, recordedDayCount: 0 },
             { dimension: "fulfillment", savedEntryCount: 0, recordedDayCount: 0 },
@@ -403,12 +635,20 @@ describe("analysis shell", () => {
             { dimension: "gratitude", savedEntryCount: 0, recordedDayCount: 0 }
           ],
           dimensions: [
-            { dimension: "joy", savedEntryCount: 0, recordedDayCount: 0, lastRecordedDate: null, topTags: [], recentSignals: [] },
-            { dimension: "fulfillment", savedEntryCount: 0, recordedDayCount: 0, lastRecordedDate: null, topTags: [], recentSignals: [] },
-            { dimension: "reflection", savedEntryCount: 0, recordedDayCount: 0, lastRecordedDate: null, topTags: [], recentSignals: [] },
-            { dimension: "improvement", savedEntryCount: 0, recordedDayCount: 0, lastRecordedDate: null, topTags: [], recentSignals: [] },
-            { dimension: "gratitude", savedEntryCount: 0, recordedDayCount: 0, lastRecordedDate: null, topTags: [], recentSignals: [] }
+            buildDimensionInsight({ dimension: "joy", relatedScoreFactors: ["interest", "relationship"] }),
+            buildDimensionInsight({ dimension: "fulfillment", relatedScoreFactors: ["meaning", "skill", "virtue"] }),
+            buildDimensionInsight({ dimension: "reflection", relatedScoreFactors: ["autonomy", "meaning"] }),
+            buildDimensionInsight({ dimension: "improvement", relatedScoreFactors: ["skill", "autonomy", "virtue"] }),
+            buildDimensionInsight({ dimension: "gratitude", relatedScoreFactors: ["relationship", "livingCondition"] })
           ],
+          insightsOverview: {
+            headline: "这个月先别急着下五维结论。",
+            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+            watchpoint: null,
+            featuredDimension: null,
+            quietDimensions: ["joy", "fulfillment", "reflection", "improvement", "gratitude"],
+            links: []
+          },
           ...buildScoreFields([]),
           scoreRecords: [],
           editableDates: ["2026-05-03", "2026-05-02"]
@@ -425,7 +665,7 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     expect(await screen.findByTestId("analysis-rhythm-board")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("0维");
+    expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("待到来");
     expect(screen.getByTestId("analysis-coverage-placeholder")).toBeInTheDocument();
     expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
@@ -442,12 +682,19 @@ describe("analysis shell", () => {
     const futureDay = await screen.findByTestId("analysis-heatmap-day-2026-05-31");
     fireEvent.click(futureDay);
 
-    expect(screen.getByText("这一天还没到来。你可以先查看当天，但未来日期暂不开放开始记录。")).toBeInTheDocument();
+    expect(screen.getByText("这一天还没到来。可以先查看当天，但未来日期不开放开始记录。")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "开始这一天的记录" })).not.toBeInTheDocument();
   });
 
   it("does not report a hottest day when the month has scores but no saved entries", async () => {
     const scoreOnlyRecord = buildAnalysisMonthRecord();
+    const scoreOnlyCoverage: AnalysisMonthRecord["dailyCoverage"] = scoreOnlyRecord.dailyCoverage.map((day) => ({
+      ...day,
+      savedEntryCount: 0,
+      savedDimensionCount: 0,
+      savedDimensions: [],
+      hasDailyJournalSaved: false
+    }));
 
     (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response(
@@ -458,12 +705,8 @@ describe("analysis shell", () => {
             savedEntryCount: 0,
             dailyJournalSavedDayCount: 0
           },
-          dailyCoverage: scoreOnlyRecord.dailyCoverage.map((day) => ({
-            ...day,
-            savedDimensionCount: 0,
-            savedDimensions: [],
-            hasDailyJournalSaved: false
-          })),
+          dailyCoverage: scoreOnlyCoverage,
+          rhythmOverview: buildRhythmOverview(scoreOnlyCoverage),
           dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
             ...item,
             savedEntryCount: 0,
@@ -474,9 +717,25 @@ describe("analysis shell", () => {
             savedEntryCount: 0,
             recordedDayCount: 0,
             lastRecordedDate: null,
+            thesis: "这个月这条线还没有形成能回看的材料。",
+            confidence: "low",
+            momentum: "quiet",
+            continuity: "none",
+            turningPointDate: null,
+            representativeDates: [],
+            relatedDimensions: [],
+            nextQuestion: item.nextQuestion,
             topTags: [],
-            recentSignals: []
-          }))
+            recentSignals: [],
+            evidence: []
+          })),
+          insightsOverview: {
+            ...scoreOnlyRecord.insightsOverview,
+            headline: "这个月先别急着下五维结论。",
+            featuredDimension: null,
+            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+            watchpoint: "已经有 2 天先留下了评分，但还没写成具体记录。"
+          }
         } satisfies AnalysisMonthRecord),
         { status: 200 }
       )
@@ -490,12 +749,19 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const board = await screen.findByTestId("analysis-rhythm-board");
-    expect(within(board).getByText("最高密度")).toBeInTheDocument();
+    expect(within(board).getByText("待成文日")).toBeInTheDocument();
     expect(within(board).getAllByText("暂无").length).toBeGreaterThan(0);
   });
 
   it("shows an empty-state featured panel when the month has scores but no saved entries", async () => {
     const scoreOnlyRecord = buildAnalysisMonthRecord();
+    const scoreOnlyCoverage: AnalysisMonthRecord["dailyCoverage"] = scoreOnlyRecord.dailyCoverage.map((day) => ({
+      ...day,
+      savedEntryCount: 0,
+      savedDimensionCount: 0,
+      savedDimensions: [],
+      hasDailyJournalSaved: false
+    }));
 
     (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response(
@@ -506,12 +772,8 @@ describe("analysis shell", () => {
             savedEntryCount: 0,
             dailyJournalSavedDayCount: 0
           },
-          dailyCoverage: scoreOnlyRecord.dailyCoverage.map((day) => ({
-            ...day,
-            savedDimensionCount: 0,
-            savedDimensions: [],
-            hasDailyJournalSaved: false
-          })),
+          dailyCoverage: scoreOnlyCoverage,
+          rhythmOverview: buildRhythmOverview(scoreOnlyCoverage),
           dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
             ...item,
             savedEntryCount: 0,
@@ -522,9 +784,25 @@ describe("analysis shell", () => {
             savedEntryCount: 0,
             recordedDayCount: 0,
             lastRecordedDate: null,
+            thesis: "这个月这条线还没有形成能回看的材料。",
+            confidence: "low",
+            momentum: "quiet",
+            continuity: "none",
+            turningPointDate: null,
+            representativeDates: [],
+            relatedDimensions: [],
+            nextQuestion: item.nextQuestion,
             topTags: [],
-            recentSignals: []
-          }))
+            recentSignals: [],
+            evidence: []
+          })),
+          insightsOverview: {
+            ...scoreOnlyRecord.insightsOverview,
+            headline: "这个月先别急着下五维结论。",
+            featuredDimension: null,
+            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+            watchpoint: "已经有 2 天先留下了评分，但还没写成具体记录。"
+          }
         } satisfies AnalysisMonthRecord),
         { status: 200 }
       )
@@ -551,12 +829,12 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("analysis-dimension-cards");
 
-    const links = screen
-      .getAllByRole("link", { name: "回到开心" })
+    const featuredCard = screen.getByTestId("analysis-dimension-featured-joy");
+    const hrefs = within(featuredCard)
+      .getAllByRole("link")
       .map((link) => link.getAttribute("href"));
 
-    expect(links.length).toBeGreaterThan(0);
-    expect(links.every((href) => href?.includes("/interview?dimension=joy&entryDate=2026-05-02"))).toBe(true);
+    expect(hrefs.some((href) => href?.includes("/interview?dimension=joy&entryDate=2026-05-02"))).toBe(true);
   });
 
   it("does not count future dates toward the current month's longest quiet streak", async () => {
@@ -571,7 +849,7 @@ describe("analysis shell", () => {
     const quietCard = within(board).getByText("最长空档").closest("div");
 
     expect(quietCard).not.toBeNull();
-    expect(quietCard).toHaveTextContent("2 天");
+    expect(quietCard).toHaveTextContent("1 天");
     expect(quietCard).not.toHaveTextContent("5月8日 - 5月31日");
   });
 
@@ -586,8 +864,9 @@ describe("analysis shell", () => {
     const panel = await screen.findByTestId("happiness-score-panel");
 
     expect(screen.getByTestId("analysis-score-placeholder")).toHaveTextContent("幸福 8 要素评分");
-    expect(within(panel).getByLabelText("意义感评分")).toHaveValue("8");
-    expect(within(panel).getByLabelText("生活条件评分")).toHaveValue("6");
+    expect(within(panel).getByRole("heading", { name: "意义感" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "意义感8分" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(panel).getByTestId("score-factor-button-livingCondition")).toHaveTextContent("6.0");
     expect(within(panel).getByRole("button", { name: "保存评分" })).toBeEnabled();
   });
 
@@ -652,6 +931,106 @@ describe("analysis shell", () => {
     expect(screen.getAllByTestId("score-average-trend-chart-segment")).toHaveLength(2);
   });
 
+  it("suppresses ranking highlights when there is only one scored day", async () => {
+    const singleScoreRecord: AnalysisMonthRecord["scoreRecords"] = [
+      {
+        id: "score-1",
+        date: "2026-05-03",
+        meaningScore: 8,
+        healthScore: 7,
+        virtueScore: 9,
+        autonomyScore: 6,
+        interestScore: 8,
+        skillScore: 7,
+        relationshipScore: 9,
+        livingConditionScore: 6,
+        createdAt: "2026-05-03T01:00:00.000Z",
+        updatedAt: "2026-05-03T02:00:00.000Z"
+      }
+    ];
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...buildAnalysisMonthRecord(),
+          ...buildScoreFields(singleScoreRecord),
+          scoreRecords: singleScoreRecord
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const panel = await screen.findByTestId("happiness-score-trend-panel");
+
+    expect(within(panel).queryByText("长期偏高")).not.toBeInTheDocument();
+    expect(within(panel).queryByText("最常掉下来")).not.toBeInTheDocument();
+    expect(within(panel).queryByText("波动最大")).not.toBeInTheDocument();
+    expect(within(panel).getByTestId("score-trend-sample-note")).toHaveTextContent("评分样本还不足");
+  });
+
+  it("suppresses ranking highlights when all factors are tied", async () => {
+    const flatScoreRecords: AnalysisMonthRecord["scoreRecords"] = [
+      {
+        id: "score-1",
+        date: "2026-05-01",
+        meaningScore: 6,
+        healthScore: 6,
+        virtueScore: 6,
+        autonomyScore: 6,
+        interestScore: 6,
+        skillScore: 6,
+        relationshipScore: 6,
+        livingConditionScore: 6,
+        createdAt: "2026-05-01T01:00:00.000Z",
+        updatedAt: "2026-05-01T02:00:00.000Z"
+      },
+      {
+        id: "score-2",
+        date: "2026-05-02",
+        meaningScore: 6,
+        healthScore: 6,
+        virtueScore: 6,
+        autonomyScore: 6,
+        interestScore: 6,
+        skillScore: 6,
+        relationshipScore: 6,
+        livingConditionScore: 6,
+        createdAt: "2026-05-02T01:00:00.000Z",
+        updatedAt: "2026-05-02T02:00:00.000Z"
+      }
+    ];
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...buildAnalysisMonthRecord(),
+          ...buildScoreFields(flatScoreRecords),
+          scoreRecords: flatScoreRecords
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const panel = await screen.findByTestId("happiness-score-trend-panel");
+
+    expect(within(panel).queryByText("长期偏高")).not.toBeInTheDocument();
+    expect(within(panel).queryByText("最常掉下来")).not.toBeInTheDocument();
+    expect(within(panel).queryByText("波动最大")).not.toBeInTheDocument();
+    expect(within(panel).getByTestId("score-trend-sample-note")).toHaveTextContent("评分差异还不够明显");
+  });
+
   it("switches the factor score trend without changing the month url", async () => {
     mockSearchParams.value = {
       month: "2026-05",
@@ -662,10 +1041,10 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("happiness-score-trend-panel");
     mockRouterReplace.mockClear();
-    fireEvent.click(screen.getByTestId("score-factor-button-relationship"));
+    fireEvent.click(screen.getByTestId("score-factor-button-autonomy"));
 
-    expect(screen.getByText("关系月均 8.5")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "本月关系评分走势，未评分日期断线" })).toBeInTheDocument();
+    expect(screen.getByText("自主感月均 6.5")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "本月自主感评分走势，未评分日期断线" })).toBeInTheDocument();
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
@@ -679,10 +1058,10 @@ describe("analysis shell", () => {
 
     const panel = await screen.findByTestId("happiness-score-panel");
 
-    expect(within(panel).getByLabelText("意义感评分")).toHaveValue("8");
-    fireEvent.click(within(panel).getByRole("button", { name: "昨天" }));
-    expect(within(panel).getByLabelText("意义感评分")).toHaveValue("6");
-    expect(within(panel).getByText("当前日期：5月2日")).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "意义感8分" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(within(panel).getByRole("button", { name: /昨天/ }));
+    expect(within(panel).getByRole("button", { name: "意义感6分" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(screen.getByTestId("happiness-score-date-switch")).getByText("昨天 · 5月2日")).toBeInTheDocument();
   });
 
   it("keeps save disabled until all eight score items are filled", async () => {
@@ -707,7 +1086,7 @@ describe("analysis shell", () => {
     const panel = await screen.findByTestId("happiness-score-panel");
 
     expect(within(panel).getByRole("button", { name: "保存评分" })).toBeDisabled();
-    fireEvent.change(within(panel).getByLabelText("意义感评分"), { target: { value: "8" } });
+    fireEvent.click(within(panel).getByRole("button", { name: "意义感8分" }));
     expect(within(panel).getByRole("button", { name: "保存评分" })).toBeDisabled();
   });
 
@@ -782,8 +1161,78 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(await screen.findByTestId("happiness-score-readonly")).toHaveTextContent("这个月份的评分只能查看");
+    expect(await screen.findByTestId("happiness-score-readonly")).toHaveTextContent("这个月份现在只能查看，不能修改");
     expect(await screen.findByTestId("score-average-trend-chart-empty")).toHaveTextContent("本月还没有可展示的评分走势");
     expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
+  });
+
+  it("keeps future-month overview CTA neutral instead of sending users into today`s interview", async () => {
+    const futureMonthCoverage = buildEmptyDailyCoverage("2099-12").map((day) => ({
+      ...day,
+      hasScore: false,
+      averageScore: null,
+      hasStaleDailyJournal: false
+    }));
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...buildAnalysisMonthRecord(),
+          month: "2099-12",
+          logOverview: {
+            recordedDayCount: 0,
+            savedEntryCount: 0,
+            dailyJournalSavedDayCount: 0
+          },
+          dailyCoverage: futureMonthCoverage,
+          rhythmOverview: {
+            activeObservedDayCount: 0,
+            scoreOnlyDayCount: 0,
+            pendingDailyJournalCount: 0,
+            longestStreak: null,
+            longestGap: null,
+            latestActiveDate: null,
+            latestScoreOnlyDate: null,
+            latestPendingDailyJournalDate: null
+          },
+          dimensionBreakdown: buildAnalysisMonthRecord().dimensionBreakdown.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0
+          })),
+          dimensions: buildAnalysisMonthRecord().dimensions.map((item) => ({
+            ...item,
+            savedEntryCount: 0,
+            recordedDayCount: 0,
+            lastRecordedDate: null
+          })),
+          insightsOverview: {
+            headline: "这个月先别急着下五维结论。",
+            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+            watchpoint: null,
+            featuredDimension: null,
+            quietDimensions: ["joy", "fulfillment", "reflection", "improvement", "gratitude"],
+            links: []
+          },
+          ...buildScoreFields([], "2099-12"),
+          scoreRecords: [],
+          editableDates: []
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+    mockSearchParams.value = {
+      month: "2099-12",
+      section: "overview"
+    };
+
+    render(<AnalysisShell />);
+
+    const action = await screen.findByTestId("analysis-next-action");
+
+    expect(screen.getByTestId("analysis-month-hero")).toHaveTextContent("这个月还没到来");
+    expect(within(action).getByRole("link", { name: "回到本月" })).toHaveAttribute("href", expect.stringContaining("/analysis?month="));
+    expect(within(action).queryByRole("link", { name: "开始记录" })).not.toBeInTheDocument();
+    expect(screen.queryByText("先补今天评分，或从一个维度开始记录。")).not.toBeInTheDocument();
   });
 });
