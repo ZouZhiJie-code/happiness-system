@@ -91,6 +91,13 @@ interface DateSpan {
   length: number;
 }
 
+interface OverviewAction {
+  title: string;
+  body: string;
+  href: string;
+  label: string;
+}
+
 async function fetchAnalysisMonth(month: string) {
   const response = await fetch(`/api/analysis/month?month=${month}`, {
     cache: "no-store"
@@ -136,6 +143,16 @@ function buildInterviewHref(input: {
   if (input.panel) {
     params.set("panel", input.panel);
   }
+
+  return `/interview?${params.toString()}`;
+}
+
+function buildDailyJournalHref(date: string) {
+  const params = new URLSearchParams({
+    dimension: "joy",
+    entryDate: date,
+    mode: "daily-journal"
+  });
 
   return `/interview?${params.toString()}`;
 }
@@ -193,6 +210,32 @@ function resolveTrendPointLabel(date: string, value: number) {
 
 function getActiveDays(record: AnalysisMonthRecord) {
   return record.dailyCoverage.filter((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved);
+}
+
+function getObservedCoverageDays(record: AnalysisMonthRecord) {
+  const todayEntryDate = getTodayEntryDate();
+
+  if (record.month !== todayEntryDate.slice(0, 7)) {
+    return record.dailyCoverage;
+  }
+
+  return record.dailyCoverage.filter((day) => day.date <= todayEntryDate);
+}
+
+function getActiveObservedDays(record: AnalysisMonthRecord) {
+  return getObservedCoverageDays(record).filter((day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved);
+}
+
+function getPendingDailyJournalDays(record: AnalysisMonthRecord) {
+  return getObservedCoverageDays(record)
+    .filter((day) => day.savedDimensionCount > 0 && !day.hasDailyJournalSaved)
+    .sort((left, right) => right.date.localeCompare(left.date));
+}
+
+function getLatestDailyJournalDay(record: AnalysisMonthRecord) {
+  return getObservedCoverageDays(record)
+    .filter((day) => day.hasDailyJournalSaved)
+    .sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
 }
 
 function getHighestDensityDay(record: AnalysisMonthRecord) {
@@ -287,6 +330,101 @@ function buildOverviewNarrative(record: AnalysisMonthRecord) {
   return `${featuredLabel}是这个月最清晰的一条主线，${featuredDimension.recordedDayCount}天留下记录；从${hottestDayLabel}往回看，最容易看见这个月真正成形的内容。`;
 }
 
+function getScoreConfidenceCopy(record: AnalysisMonthRecord) {
+  const scoredDayCount = record.scoreOverview.scoredDayCount;
+
+  if (scoredDayCount === 0) {
+    return {
+      label: "暂无评分",
+      detail: "还没有幸福 8 要素刻度，先不急着读月均。"
+    };
+  }
+
+  if (scoredDayCount === 1) {
+    return {
+      label: "1天评分",
+      detail: "先当作单日刻度，不把它放大成月度结论。"
+    };
+  }
+
+  if (scoredDayCount < 4) {
+    return {
+      label: `${scoredDayCount}天评分`,
+      detail: "样本还偏少，适合看方向感，不适合下重结论。"
+    };
+  }
+
+  return {
+    label: `基于${scoredDayCount}天`,
+    detail: "评分材料已经能支撑月均和走势的初步判断。"
+  };
+}
+
+function buildOverviewNextAction(record: AnalysisMonthRecord): OverviewAction {
+  const todayEditableDate = record.editableDates[0] ?? null;
+  const todayHasScore = todayEditableDate ? record.scoreRecords.some((score) => score.date === todayEditableDate) : true;
+  const featured = getFeaturedDimension(record);
+  const hottestDay = getHighestDensityDay(record);
+  const pendingDailyJournalDay = getPendingDailyJournalDays(record)[0] ?? null;
+
+  if (record.logOverview.savedEntryCount === 0) {
+    return {
+      title: record.scoreOverview.scoredDayCount > 0 ? "先补一条文字线索" : "先留下今天的第一条记录",
+      body:
+        record.scoreOverview.scoredDayCount > 0
+          ? "这个月已经有评分刻度，但还缺少能回看的生活片段。先从一个维度开始，会让分析有真正的内容。"
+          : "总览还没有材料可读。先从一个维度开始，后面评分、节奏和五维主线才会慢慢长出来。",
+      href: "/interview?dimension=joy",
+      label: "开始记录"
+    };
+  }
+
+  if (todayEditableDate && !todayHasScore) {
+    return {
+      title: "先补今天评分",
+      body: "文字线索已经存在，补上今天的幸福 8 要素刻度后，评分走势会更接近真实状态。",
+      href: buildAnalysisHref({ month: record.month, section: "score" }),
+      label: "补今天评分"
+    };
+  }
+
+  if (pendingDailyJournalDay) {
+    return {
+      title: `整理${formatAnalysisDateLabel(pendingDailyJournalDay.date)}`,
+      body: `${formatAnalysisDateLabel(pendingDailyJournalDay.date)}已经有 ${pendingDailyJournalDay.savedDimensionCount} 个维度，但还没有完整日志。先把那一天收束成日级成果物。`,
+      href: buildDailyJournalHref(pendingDailyJournalDay.date),
+      label: "生成完整日志"
+    };
+  }
+
+  if (featured?.lastRecordedDate) {
+    const featuredLabel = getInterviewDimensionMeta(featured.dimension).label;
+
+    return {
+      title: `回看${featuredLabel}主线`,
+      body: `${featuredLabel}是这个月最稳定的一条线，先回到最近那篇，再决定是否继续扩展这个方向。`,
+      href: buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate }),
+      label: `回到${featuredLabel}`
+    };
+  }
+
+  if (hottestDay) {
+    return {
+      title: `查看${formatAnalysisDateLabel(hottestDay.date)}`,
+      body: "这一天记录最密，适合作为进入本月材料的第一站。",
+      href: buildCalendarHref({ view: "day", date: hottestDay.date }),
+      label: "查看当天"
+    };
+  }
+
+  return {
+    title: "查看评分走势",
+    body: "这个月暂时只有评分材料，先看走势，再补一条文字记录。",
+    href: buildAnalysisHref({ month: record.month, section: "score" }),
+    label: "查看走势"
+  };
+}
+
 function getFeaturedDimension(record: AnalysisMonthRecord) {
   return [...record.dimensions]
     .filter((dimension) => dimension.savedEntryCount > 0)
@@ -332,8 +470,8 @@ function ActionLink({
 }) {
   const className =
     variant === "primary"
-      ? "inline-flex items-center justify-center rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-3.5 py-2 text-[0.8rem] text-[#fffaf1] transition hover:bg-[#4f3319]"
-      : "inline-flex items-center justify-center rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.78)] px-3 py-1.5 text-[0.78rem] text-[#65472a] transition hover:bg-[rgba(255,252,246,0.94)]";
+      ? "calendar-action-primary inline-flex items-center justify-center rounded-full px-3.5 py-2 text-[0.8rem] font-medium"
+      : "calendar-action-secondary inline-flex items-center justify-center rounded-full px-1.5 py-1 text-[0.78rem] font-medium";
 
   return (
     <Link href={href} className={className}>
@@ -378,150 +516,155 @@ function AnalysisSection({
 function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; month: string }) {
   const featured = record ? getFeaturedDimension(record) : null;
   const hottestDay = record ? getHighestDensityDay(record) : null;
-  const todayEditableDate = record?.editableDates[0] ?? null;
-  const activeDayCount = record ? getActiveDays(record).length : 0;
+  const activeDayCount = record ? getActiveObservedDays(record).length : 0;
   const longestStreak = record ? buildLongestSpan(record.dailyCoverage, (day) => day.savedDimensionCount > 0 || day.hasDailyJournalSaved) : null;
-  const todayHasScore = record ? record.scoreRecords.some((s) => s.date === record.editableDates[0]) : false;
+  const pendingDailyJournalDays = record ? getPendingDailyJournalDays(record) : [];
+  const scoreConfidence = record ? getScoreConfidenceCopy(record) : null;
+  const nextAction = record ? buildOverviewNextAction(record) : null;
+  const featuredSignal = featured?.recentSignals[0] ?? null;
+  const featuredLabel = featured ? getInterviewDimensionMeta(featured.dimension).label : null;
 
   return (
     <div data-testid="analysis-month-hero">
-      <div className="flex flex-wrap items-baseline gap-3">
-        <h1 className="font-display text-[1.8rem] leading-none text-[#2f2419] md:text-[2.2rem]">
-          {formatAnalysisMonthLabel(month)}
-        </h1>
-        <p className="max-w-[38rem] text-pretty text-[0.9rem] leading-7 text-[#6a533c]">
-          {record
-            ? buildOverviewNarrative(record)
-            : "加载中..."}
-        </p>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3" data-testid="analysis-status-board">
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.92),rgba(243,228,199,0.78))] px-4 py-4">
-          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">评分状态</p>
-          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
-            {record ? `已评 ${record.scoreOverview.scoredDayCount} 天` : "—"}
-          </p>
-          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
-            {record ? `月均 ${formatScoreAverage(record.scoreOverview.monthAverageScore)}` : ""}
-          </p>
-          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
-            {todayEditableDate
-              ? todayHasScore
-                ? "今天已评分。"
-                : "今天还没评分。"
-              : "本月只读。"}
-          </p>
-          <div className="mt-3">
-            {todayEditableDate && !todayHasScore ? (
-              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="去补评分" variant="primary" />
-            ) : (
-              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="查看走势" />
-            )}
+      <div className="rounded-[24px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.9),rgba(238,219,187,0.72))] p-4 md:p-5">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.32fr)_minmax(18rem,0.68fr)]">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <p className="archive-label">月度判断</p>
+              {scoreConfidence ? (
+                <span className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.7)] px-2.5 py-1 text-[0.72rem] text-[#7a6048]">
+                  {scoreConfidence.label}
+                </span>
+              ) : null}
+            </div>
+            <h1 className="mt-3 font-display text-[1.95rem] leading-none text-[#2f2419] md:text-[2.45rem]">
+              {formatAnalysisMonthLabel(month)}
+            </h1>
+            <p className="mt-3 max-w-[48rem] text-pretty text-[0.95rem] leading-7 text-[#5f4b36]">
+              {record ? buildOverviewNarrative(record) : "加载中..."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
+                {record ? `${activeDayCount} 天有材料` : "材料加载中"}
+              </span>
+              <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
+                {pendingDailyJournalDays.length > 0 ? `${pendingDailyJournalDays.length} 天待整合` : "完整日志已对齐"}
+              </span>
+              <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
+                {featuredLabel ? `主线：${featuredLabel}` : "主线未形成"}
+              </span>
+            </div>
           </div>
-        </article>
 
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.88),rgba(240,225,198,0.72))] px-4 py-4">
-          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">记录节奏</p>
-          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
-            {record ? `${activeDayCount} 天有记录` : "—"}
-          </p>
-          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
-            {longestStreak ? `最长连续 ${longestStreak.length} 天` : "尚无连续"}
-          </p>
-          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
-            {hottestDay ? `最密：${formatAnalysisDateLabel(hottestDay.date)}，${hottestDay.savedDimensionCount} 维` : "还没有明显高点。"}
-          </p>
-          <div className="mt-3">
-            {hottestDay ? (
-              <ActionLink href={buildCalendarHref({ view: "day", date: hottestDay.date })} label="查看最密日" variant="primary" />
-            ) : (
-              <ActionLink href={buildAnalysisHref({ month, section: "rhythm" })} label="查看分布" />
-            )}
-          </div>
-        </article>
+          <aside className="rounded-[20px] border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.72)] p-4" data-testid="analysis-next-action">
+            <p className="archive-label">建议先看</p>
+            <h2 className="mt-3 text-balance font-display text-[1.45rem] leading-none text-[#302114]">
+              {nextAction?.title ?? "正在判断入口"}
+            </h2>
+            <p className="mt-3 text-pretty text-[0.86rem] leading-7 text-[#72583f]">
+              {nextAction?.body ?? "等本月数据加载完，再给出最合适的下一步。"}
+            </p>
+            {nextAction ? (
+              <div className="mt-4">
+                <ActionLink href={nextAction.href} label={nextAction.label} variant="primary" />
+              </div>
+            ) : null}
+          </aside>
+        </div>
 
-        <article className="rounded-[22px] border border-[rgba(150,105,61,0.12)] bg-[linear-gradient(135deg,rgba(255,249,239,0.88),rgba(237,220,193,0.72))] px-4 py-4">
-          <p className="text-[0.72rem] font-medium uppercase tracking-wide text-[#8b6c4d]">主线维度</p>
-          <p className="mt-2 font-mono text-[1.2rem] tabular-nums leading-none text-[#302114]">
-            {featured ? `${getInterviewDimensionMeta(featured.dimension).label} · ${featured.savedEntryCount} 篇` : "尚未形成"}
-          </p>
-          <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">
-            {featured ? `覆盖 ${featured.recordedDayCount} 天` : ""}
-          </p>
-          <p className="mt-2 text-[0.82rem] leading-6 text-[#72583f]">
-            {featured
-              ? `最近：${formatAnalysisDateLabel(featured.lastRecordedDate)}`
-              : "先留下一条可回看的记录。"}
-          </p>
-          <div className="mt-3">
-            {featured ? (
-              <ActionLink
-                href={buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate })}
-                label={`回到${getInterviewDimensionMeta(featured.dimension).label}`}
-                variant="primary"
-              />
-            ) : (
-              <ActionLink href="/interview?dimension=joy" label="开始记录" variant="primary" />
-            )}
-          </div>
-        </article>
+        <div className="mt-4 grid gap-3 md:grid-cols-3" data-testid="analysis-status-board">
+          <article className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.58)] px-3.5 py-3.5">
+            <p className="text-[0.76rem] text-[#8b6c4d]">评分刻度</p>
+            <p className="mt-2 font-mono text-[0.95rem] tabular-nums text-[#302114]">
+              {record ? `已评 ${record.scoreOverview.scoredDayCount} 天，月均 ${formatScoreAverage(record.scoreOverview.monthAverageScore)}` : "—"}
+            </p>
+            <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">{scoreConfidence?.detail ?? "评分材料加载中。"}</p>
+            <div className="mt-2">
+              <ActionLink href={buildAnalysisHref({ month, section: "score" })} label="查看评分" />
+            </div>
+          </article>
+
+          <article className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.58)] px-3.5 py-3.5">
+            <p className="text-[0.76rem] text-[#8b6c4d]">记录节奏</p>
+            <p className="mt-2 font-mono text-[0.95rem] tabular-nums text-[#302114]">
+              {record ? `${activeDayCount} 天有材料` : "—"}
+            </p>
+            <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">
+              {hottestDay
+                ? `最密的是${formatAnalysisDateLabel(hottestDay.date)}，共 ${hottestDay.savedDimensionCount} 个维度。`
+                : longestStreak
+                  ? `最长连续 ${longestStreak.length} 天。`
+                  : "还没有明显的记录密度。"}
+            </p>
+            <div className="mt-2">
+              <ActionLink href={buildAnalysisHref({ month, section: "rhythm" })} label="查看节奏" />
+            </div>
+          </article>
+
+          <article className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.58)] px-3.5 py-3.5">
+            <p className="text-[0.76rem] text-[#8b6c4d]">五维线索</p>
+            <p className="mt-2 font-mono text-[0.95rem] tabular-nums text-[#302114]">
+              {featured ? `${featuredLabel} · ${featured.savedEntryCount} 篇` : "尚未形成"}
+            </p>
+            <p className="mt-2 text-[0.8rem] leading-6 text-[#72583f]">
+              {featuredSignal
+                ? `${formatAnalysisDateLabel(featuredSignal.date)}：${featuredSignal.primarySignal}`
+                : "还没有足够的维度信号可展示。"}
+            </p>
+            <div className="mt-2">
+              <ActionLink href={buildAnalysisHref({ month, section: "insights" })} label="查看五维" />
+            </div>
+          </article>
+        </div>
       </div>
     </div>
   );
 }
 
 function OverviewCards({ record }: { record: AnalysisMonthRecord }) {
-  const featured = getFeaturedDimension(record);
-  const hottestDay = getHighestDensityDay(record);
+  const scoreConfidence = getScoreConfidenceCopy(record);
+  const activeObservedDays = getActiveObservedDays(record);
+  const pendingDailyJournalDays = getPendingDailyJournalDays(record);
+  const latestDailyJournalDay = getLatestDailyJournalDay(record);
   const items = [
     {
       id: "recorded-days",
-      label: "有记录天数",
-      value: `${record.logOverview.recordedDayCount}`,
-      detail: "至少有一篇已保存维度日志的天数",
-      action: hottestDay ? { href: buildCalendarHref({ view: "day", date: hottestDay.date }), label: "查看最密的一天" } : null
+      label: "维度记录日",
+      value: `${record.logOverview.recordedDayCount}天`,
+      detail: `${record.logOverview.savedEntryCount} 篇已保存维度日志`
     },
     {
-      id: "score-days",
-      label: "已评分天数",
-      value: `${record.scoreOverview.scoredDayCount}`,
-      detail: "幸福 8 要素留下刻度的天数",
-      action: { href: buildAnalysisHref({ month: record.month, section: "score" }), label: "回到评分走势" }
+      id: "material-days",
+      label: "成果保存日",
+      value: `${activeObservedDays.length}天`,
+      detail: `含 ${record.logOverview.dailyJournalSavedDayCount} 天完整日志`
     },
     {
-      id: "daily-journals",
-      label: "整合日志完成天数",
-      value: `${record.logOverview.dailyJournalSavedDayCount}`,
-      detail: "当天整合日志已经正式保存的天数",
-      action: null
+      id: "daily-journal-pending",
+      label: "待整合日",
+      value: pendingDailyJournalDays.length > 0 ? `${pendingDailyJournalDays.length}天` : "暂无",
+      detail:
+        pendingDailyJournalDays.length > 0
+          ? `最近 ${formatAnalysisDateLabel(pendingDailyJournalDays[0]?.date ?? null)}`
+          : latestDailyJournalDay
+            ? `最近完整日志 ${formatAnalysisDateLabel(latestDailyJournalDay.date)}`
+            : "还没有可整合的已保存维度"
     },
     {
-      id: "featured-dimension",
-      label: "主线维度",
-      value: featured ? getInterviewDimensionMeta(featured.dimension).label : "暂无",
-      detail: featured ? `${featured.recordedDayCount} 天留下记录` : "这个月还没有形成稳定主线",
-      action: featured
-        ? {
-            href: buildInterviewHref({ dimension: featured.dimension, entryDate: featured.lastRecordedDate }),
-            label: `回到${getInterviewDimensionMeta(featured.dimension).label}`
-          }
-        : null
+      id: "score-confidence",
+      label: "评分可信度",
+      value: scoreConfidence.label,
+      detail: scoreConfidence.detail
     }
   ];
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-testid="analysis-overview-cards">
       {items.map((item) => (
-        <article key={item.id} className="rounded-[20px] border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.44)] px-4 py-4">
+        <article key={item.id} className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.36)] px-4 py-3.5">
           <p className="text-[0.76rem] text-[#8a6b4b]">{item.label}</p>
-          <p className="mt-2 font-display text-[1.9rem] leading-none text-[#302114]">{item.value}</p>
+          <p className="mt-2 font-mono text-[1.05rem] tabular-nums leading-none text-[#302114]">{item.value}</p>
           <p className="mt-2 text-pretty text-[0.82rem] leading-6 text-[#7a624b]">{item.detail}</p>
-          {item.action ? (
-            <div className="mt-3">
-              <ActionLink href={item.action.href} label={item.action.label} />
-            </div>
-          ) : null}
         </article>
       ))}
     </div>
