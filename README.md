@@ -8,6 +8,7 @@
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 五个维度的 stitched 多事件日志现在都共用“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 minor refresh 静默丢掉后续来源事件。
+- 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质检现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 quality gate；`joy` 质量门也开始接受语义等价改写，不再要求必须命中少数固定词。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
@@ -128,7 +129,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-04`，当前自动化基线为 `40` 个测试文件、`374` 个测试全部通过。
+截至 `2026-05-04`，当前自动化现实为：
+- `40` 个测试文件
+- `381` 个测试
+- `npx tsc --noEmit` 通过
+- `npm test` 当前仍有 `16` 个失败，全部集中在 `tests/unit/interview-shell.test.tsx`，主要是旧的 `第 2 轮` / header live progress 断言没有跟上最新访谈页展示
 
 ## 常用命令
 
@@ -191,6 +196,7 @@ npx prisma db push
 - 如果从完整日志主区返回访谈，或在完整日志主区切换访谈维度，前端会先 flush 当天日志的未自动保存编辑；保存失败或内容非法时会留在完整日志工作区并展示错误。
 - 结构化线索仍然存在于系统内部，用来驱动进度、收尾和日志生成，但不会直接展示给用户。
 - `thinkingSummary` 是用户可见的浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；五个维度都会通过 `summary` SSE delta 流式展示这层内容，并且不能写成第二个正式追问。
+- 如果模型给出的 `thinkingSummary` 只是浅复述、语气不对或写成第二个追问，服务端会基于同一层维度语义解释重写它，不会直接把浅复述透传给用户。
 - `respond/stream` 现在会原样透传 provider 的 `delta.text`，不对任意流式增量单独 trim 或折叠空白；只有系统自己生成的完整补发文本才允许内部切块。
 - calendar 功能当前已完成 month/week/day 三层：
   - `InterviewSession.entryDate`

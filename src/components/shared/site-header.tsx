@@ -421,7 +421,7 @@ function SiteHeaderInner() {
     isSelectedDimensionRestoring
       ? "继续中"
       : shouldUseLiveSelectedProgress && selectedProgressSummary.shouldShowRing && turnCount > 0
-        ? `第 ${turnCount} 轮`
+        ? `有效 ${turnCount} 轮`
         : selectedProgressSummary.statusLabel;
   const shouldShowSelectedProgressPod = selectedProgressSummary.shouldShowRing || isSelectedDimensionRestoring;
 

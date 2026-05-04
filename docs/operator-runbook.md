@@ -233,9 +233,23 @@ npm test
 
 截至 `2026-05-04`，当前基线是：
 - `40` 个测试文件
-- `374` 个测试全部通过
+- `381` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `16` 个失败，全部集中在 `tests/unit/interview-shell.test.tsx`，主要是旧的 `第 2 轮` / header live progress 断言没有跟上最新访谈页展示
 
 ## 5. 高频故障排查
+
+### 5.0 `npm run build` 仍然失败
+
+症状：
+- `next build` 能完成编译，但会停在 lint / type checking 阶段
+
+当前已知现实：
+- 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`
+- 这不是本轮语义解释层改动单独引入的问题
+
+处理：
+1. 先确认是不是新改动引起的新增错误
+2. 如果报错仍然集中在 `src/server/repositories/*` 的 `no-explicit-any`，按现有 lint debt 单独收尾，不要误判成当前功能改动造成
+3. 如果还同时看到 `tests/unit/interview-shell.test.tsx` 的 `第 2 轮` / header live progress 断言失败，按当前 UI 真实展示更新对应测试
 
 ### 5.1 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
 

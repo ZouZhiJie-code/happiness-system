@@ -105,6 +105,10 @@ const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
 const FULFILLMENT_BUSY_PATTERN = /(忙|上班|开会|会议|任务很多|事情很多|排满|加班|连轴转|赶工|被任务推着走)/u;
 const FULFILLMENT_REPORT_TONE_PATTERN = /(日报|周报|月报|绩效|KPI|OKR|汇报|工作总结|完成事项|事项清单|项目进展如下)/iu;
 const FULFILLMENT_SLOGAN_PATTERN = /(成长|进步|提升|突破|蜕变|自律|长期主义|变得更好|持续精进)/u;
+const FULFILLMENT_NO_WASTE_PATTERN =
+  /(不算白过|不是空转|算数|有分量|没白费|没有白费|不白费|不是白费|没白忙|没有白忙|不白忙|不是白忙|没白做|没有白做|不白做|不是白做|没白折腾|没有白折腾)/u;
+const FULFILLMENT_CLOSURE_SIGNAL_PATTERN =
+  /(终于|总算|不再|有了着落|落了地|收了口|收住了?|接上了|理顺了|补上了|卡住的地方[^。！？!?]{0,12}(?:松开|松动|推开|过去|落地|收住|收口))/u;
 const FULFILLMENT_FORCED_VALUE_PATTERN =
   /(值得感标准|我(?:真正)?重视|我(?:真正)?看重|对我来说[^。！？!?]{0,40}算数|对我而言[^。！？!?]{0,40}算数|我在意的是)/u;
 const FULFILLMENT_DIRECTION_ESCALATION_PATTERN =
@@ -230,10 +234,14 @@ function hasLooseSceneAnchor(content: string, candidate: string | null | undefin
     return false;
   }
 
-  const overlapCount = fragments.filter((fragment) => normalizedContent.includes(fragment)).length;
+  const matchedIndexes = fragments.flatMap((fragment, index) => (normalizedContent.includes(fragment) ? [index] : []));
+  const overlapCount = matchedIndexes.length;
   const overlapRatio = overlapCount / fragments.length;
+  const hasAdjacentOverlap = matchedIndexes.some(
+    (matchedIndex, position) => position > 0 && matchedIndex === matchedIndexes[position - 1] + 1
+  );
 
-  return overlapCount >= 2 && overlapRatio >= 0.22;
+  return overlapRatio >= 0.34 && (overlapCount >= 4 || (overlapCount >= 3 && hasAdjacentOverlap));
 }
 
 function isSupportingSceneAnchorMissing(content: string, candidate: string | null | undefined) {
@@ -279,6 +287,54 @@ function hasTheorySignalInContent(brief: DraftBrief, content: string) {
   return hasSceneAnchor(content, theoryCandidates);
 }
 
+function expandSemanticCandidates(candidates: Array<string | null | undefined>) {
+  return candidates.flatMap((candidate) => {
+    const normalized = sanitizeNullableString(candidate);
+
+    if (!normalized) {
+      return [];
+    }
+
+    return normalized
+      .split(/[；;，,、]/u)
+      .map((part) => sanitizeNullableString(part))
+      .filter((part): part is string => Boolean(part));
+  });
+}
+
+function hasLooseSemanticSignal(content: string, candidates: Array<string | null | undefined>) {
+  const normalizedContent = normalizeSignature(content);
+
+  return expandSemanticCandidates(candidates).some((candidate) => {
+    const normalizedCandidate = normalizeSignature(candidate);
+
+    if (!normalizedCandidate) {
+      return false;
+    }
+
+    if (normalizedContent.includes(normalizedCandidate)) {
+      return true;
+    }
+
+    if (normalizedCandidate.length <= 4) {
+      const prefix = normalizedCandidate.slice(0, 2);
+      const suffix = normalizedCandidate.slice(-2);
+
+      return normalizedContent.includes(prefix) || normalizedContent.includes(suffix);
+    }
+
+    return hasLooseSceneAnchor(content, candidate);
+  });
+}
+
+function hasFulfillmentTheoryCore(brief: DraftBrief, content: string) {
+  if (hasTheorySignalInContent(brief, content) || FULFILLMENT_NO_WASTE_PATTERN.test(content)) {
+    return true;
+  }
+
+  return FULFILLMENT_PROGRESS_EVIDENCE_PATTERN.test(content) && FULFILLMENT_CLOSURE_SIGNAL_PATTERN.test(content);
+}
+
 function isParaphraseOnlyDraft(brief: DraftBrief, content: string) {
   if (!brief.anchorScene || !hasSceneAnchor(content, [brief.anchorScene])) {
     return false;
@@ -289,6 +345,30 @@ function isParaphraseOnlyDraft(brief: DraftBrief, content: string) {
   }
 
   return content.split(/\n{2,}/).filter(Boolean).length <= 2;
+}
+
+function hasJoyVitalityCore(brief: DraftBrief, content: string) {
+  if (hasTheorySignalInContent(brief, content)) {
+    return true;
+  }
+
+  const semanticCandidates = [
+    brief.emotionalCore,
+    brief.stateOrNeed,
+    brief.closingInsight,
+    brief.titleTheme,
+    ...brief.antiFlatteningTargets
+  ];
+
+  if (hasLooseSemanticSignal(content, semanticCandidates)) {
+    return true;
+  }
+
+  const hasStateCue =
+    /(轻松|松下来|放松|舒展开|更轻|更松|踏实|安心|更稳|更亮|有劲|被看见|被理解|被接住|被回应|进入状态|状态变好)/u.test(content);
+  const hasMeaningCue = /(不只是|而是|真正|打动|触动|让我|会把|整个人|那一下|那一刻|状态)/u.test(content);
+
+  return hasStateCue && hasMeaningCue;
 }
 
 function hasGenericTitleRegression(title: string, brief: DraftBrief) {
@@ -1870,7 +1950,7 @@ export function runDraftQualityGate(input: {
       issues.push("report_tone");
     }
 
-    if (!hasTheorySignalInContent(input.brief, content) && !/不算白过|不是空转|算数|有分量/u.test(content)) {
+    if (!hasFulfillmentTheoryCore(input.brief, content)) {
       issues.push("missing_theory_core");
     }
 
@@ -2064,11 +2144,7 @@ export function runDraftQualityGate(input: {
   }
 
   if (input.brief.dimension === "joy") {
-    const hasVitalityCore =
-      hasTheorySignalInContent(input.brief, content) ||
-      /(被接住|被理解|带轻|带动|松下来|有生命力|真正开心的不是|真正打动|有分量)/u.test(content);
-
-    if (!hasVitalityCore) {
+    if (!hasJoyVitalityCore(input.brief, content)) {
       issues.push("joy_missing_vitality_core");
       issues.push("missing_theory_core");
     }

@@ -46,6 +46,7 @@ import type {
   InterviewDimension,
   InterviewEventRecord,
   InterviewLens,
+  InterviewMessage,
   InterviewSessionRecord,
   JoyInterviewStage,
   JoySnapshot
@@ -148,6 +149,73 @@ function getActiveEvent(session: InterviewSessionRecord) {
     session.events[session.events.length - 1] ??
     null
   );
+}
+
+const REFLECTION_SCENE_QUESTION_PATTERN =
+  /(具体(?:的)?(?:经历|对话|事情|片段)|经历或对话|事情或对话|第一次清晰地感受到|那个时刻具体发生了什么)/u;
+const DIRECT_NEGATION_PATTERN = /^(没有|没|不是|并没有|没有过)(?:[，,。！？!?]|$)/u;
+
+function getAssistantQuestionText(message: InterviewMessage) {
+  if (message.role !== "assistant") {
+    return null;
+  }
+
+  const question = getAssistantDisplayParts(message.assistantPayload).question.trim();
+
+  return question || null;
+}
+
+function normalizeQuestionText(value: string | null | undefined) {
+  return value
+    ? value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:“”"'（）()【】\[\]《》]/gu, "")
+    : "";
+}
+
+function isReflectionSceneQuestion(question: string | null | undefined) {
+  return Boolean(question && REFLECTION_SCENE_QUESTION_PATTERN.test(question));
+}
+
+function areQuestionsEquivalent(left: string | null | undefined, right: string | null | undefined) {
+  const normalizedLeft = normalizeQuestionText(left);
+  const normalizedRight = normalizeQuestionText(right);
+
+  if (!normalizedLeft || !normalizedRight) {
+    return false;
+  }
+
+  if (normalizedLeft === normalizedRight) {
+    return true;
+  }
+
+  return (
+    normalizedLeft.length >= 12 &&
+    normalizedRight.length >= 12 &&
+    (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft))
+  );
+}
+
+function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index > 0; index -= 1) {
+    const message = messages[index];
+    const previousMessage = messages[index - 1];
+
+    if (message.role !== "user" || previousMessage.role !== "assistant") {
+      continue;
+    }
+
+    const previousQuestion = getAssistantQuestionText(previousMessage);
+
+    if (!isReflectionSceneQuestion(previousQuestion) || !DIRECT_NEGATION_PATTERN.test(message.content.trim())) {
+      continue;
+    }
+
+    return {
+      question: previousQuestion,
+      answer: message.content.trim()
+    };
+  }
+
+  return null;
 }
 
 function uniqueLenses(...groups: InterviewLens[][]) {
@@ -1058,6 +1126,84 @@ function normalizeThinkingSummary(input: {
   });
 }
 
+function buildReflectionContinuationFallbackQuestion(snapshot: JoySnapshot) {
+  const anchor = trimSummaryField(snapshot.event, 28);
+
+  if (anchor) {
+    return `如果不是某段具体对话，那在“${anchor}”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？`;
+  }
+
+  return "如果不是某段具体对话，那今天在做这个判断时，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？";
+}
+
+function buildContinuationFallbackQuestion(
+  input: PreparedInterviewTurnContext,
+  repeatedQuestion: string
+) {
+  if (input.session.dimension === "reflection") {
+    const reflectionFallback = buildReflectionContinuationFallbackQuestion(input.nextSnapshot);
+
+    if (!areQuestionsEquivalent(reflectionFallback, repeatedQuestion)) {
+      return reflectionFallback;
+    }
+  }
+
+  const stageFallback = buildAssistantQuestion(input.session.dimension, input.nextStage, input.nextSnapshot).trim();
+
+  if (stageFallback && !areQuestionsEquivalent(stageFallback, repeatedQuestion)) {
+    return stageFallback;
+  }
+
+  return repeatedQuestion;
+}
+
+function applyContinueQuestionGuard(
+  input: PreparedInterviewTurnContext,
+  assistantTurn: AssistantTurnPayload
+) {
+  if (input.assistantAction !== "continue_current_event") {
+    return assistantTurn;
+  }
+
+  const question = assistantTurn.question.trim();
+
+  if (!question) {
+    return assistantTurn;
+  }
+
+  if (input.session.dimension === "reflection") {
+    const deniedSceneQuestion = findLatestReflectionSceneDenial(input.session.messages);
+
+    if (deniedSceneQuestion && isReflectionSceneQuestion(question)) {
+      return {
+        ...assistantTurn,
+        insight: "",
+        thinkingSummary: "",
+        question: buildReflectionContinuationFallbackQuestion(input.nextSnapshot)
+      };
+    }
+  }
+
+  const recentAssistantQuestions = input.session.messages
+    .map((message) => getAssistantQuestionText(message))
+    .filter((value): value is string => Boolean(value))
+    .slice(-4);
+  const hasRepeatedQuestion = recentAssistantQuestions.some((previousQuestion) =>
+    areQuestionsEquivalent(previousQuestion, question)
+  );
+
+  if (!hasRepeatedQuestion) {
+    return assistantTurn;
+  }
+
+  return {
+    ...assistantTurn,
+    insight: "",
+    thinkingSummary: "",
+    question: buildContinuationFallbackQuestion(input, question)
+  };
+}
+
 function getVisibleAssistantText(assistantTurn: AssistantTurnPayload | null | undefined) {
   const parts = getAssistantDisplayParts(assistantTurn);
   const firstBubble = parts.summary || parts.insight;
@@ -1392,7 +1538,8 @@ function finalizeAssistantTurn(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
-  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, assistantTurn);
+  const guardedAssistantTurn = applyContinueQuestionGuard(input, assistantTurn);
+  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, guardedAssistantTurn);
   const finalizedAssistantTurn = {
     ...fallbackAssistantTurn,
     thinkingSummary: normalizeThinkingSummary({
@@ -1901,6 +2048,7 @@ export async function streamJoyInterviewResponse(
     summary: "",
     question: ""
   };
+  const shouldBufferContinuationOutput = prepared.assistantAction === "continue_current_event";
   let emittedSummary = "";
   let activePhase: StreamingPhase | null = "thinking";
   const emitPhase = async (phase: StreamingPhase) => {
@@ -1928,6 +2076,10 @@ export async function streamJoyInterviewResponse(
       }
 
       streamedText[delta.target] += delta.text;
+
+      if (shouldBufferContinuationOutput) {
+        return;
+      }
 
       if (delta.target === "summary") {
         return;
@@ -1963,7 +2115,13 @@ export async function streamJoyInterviewResponse(
     await emitSummaryOnce(completedVisibleText.firstBubble);
   }
 
+  if (shouldBufferContinuationOutput && completedVisibleText.question) {
+    await emitPhase("question");
+    await emitText("question", completedVisibleText.question, 80);
+  }
+
   if (
+    !shouldBufferContinuationOutput &&
     completedVisibleText.question &&
     completedVisibleText.question.startsWith(streamedText.question) &&
     streamedText.question !== completedVisibleText.question

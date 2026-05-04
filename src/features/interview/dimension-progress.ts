@@ -131,7 +131,11 @@ export function getDimensionProgressSummary(
 
   const hasBoundaryPendingDecision = isBoundaryPendingDecision(session);
 
-  if (!hasBoundaryPendingDecision && currentEvent.status === "ready_for_choice" && session.pendingDecision?.kind === "event_complete") {
+  if (
+    !hasBoundaryPendingDecision &&
+    currentEvent.status === "ready_for_choice" &&
+    (session.pendingDecision?.kind === "event_complete" || session.draftGenerationUnlocked)
+  ) {
     percentage = Math.max(percentage, 90);
   }
 

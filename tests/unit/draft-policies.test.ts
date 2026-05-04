@@ -865,6 +865,24 @@ describe("draft policies", () => {
     expect(result.issues).toContain("joy_missing_vitality_core");
   });
 
+  it("accepts joy drafts that paraphrase the vitality core without exact theory keywords", () => {
+    const brief = buildDraftBrief({
+      session: buildSession(partialJoySnapshot),
+      sourceEvents: [buildEvent(partialJoySnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "慢慢松下来",
+        content: "今天和家人一起吃饭聊天，整个人都轻松了很多，像是终于从紧绷里慢慢松了下来。"
+      }
+    });
+
+    expect(result.issues).not.toContain("joy_missing_vitality_core");
+    expect(result.issues).not.toContain("missing_theory_core");
+  });
+
   it("rejects report-like fulfillment drafts", () => {
     const brief = buildDraftBrief({
       session: buildFulfillmentSession(fulfillmentSnapshot),
@@ -901,6 +919,23 @@ describe("draft policies", () => {
     expect(result.accepted).toBe(false);
     expect(result.issues).toContain("paraphrase_only_summary");
     expect(result.issues).toContain("missing_theory_core");
+  });
+
+  it("accepts fulfillment drafts that paraphrase the theory layer naturally", () => {
+    const brief = buildDraftBrief({
+      session: buildFulfillmentSession(fulfillmentSnapshot),
+      sourceEvents: [buildEvent(fulfillmentSnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "终于落了地",
+        content: "那个一直卡着的地方终于落了地，整天的力气也没有白费。做完之后，我心里踏实了不少。"
+      }
+    });
+
+    expect(result.issues).not.toContain("missing_theory_core");
   });
 
   it("rejects busy fulfillment drafts without progress evidence", () => {
@@ -1243,6 +1278,41 @@ describe("draft policies", () => {
         title: "后来陪她去买冰",
         content:
           "今天同事看出我快撑不住，先帮我理清优先级，让我那一下没那么慌。后来赵月说想吃冰，我陪她去买了，但这更多像是顺手一起做了一件事。",
+        selfPattern: gratitudeSnapshot.relationshipSignal
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("missing_supporting_scene_anchor");
+  });
+
+  it("still rejects gratitude supporting-scene rewrites that only preserve generic shell fragments", () => {
+    const primaryEvent = buildEvent(gratitudeSnapshot);
+    const supportingGratitudeSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      event: "同事帮我拿外卖回宿舍",
+      gratitudeMoment: "同事帮我拿外卖回宿舍",
+      kindAction: "帮我拿外卖回宿舍",
+      seenNeed: "我当时累得不想再多走一趟",
+      gratitudeReason: "这种顺手分担一下的照顾，让我明显松下来"
+    };
+    const supportingEvent = {
+      ...buildEvent(supportingGratitudeSnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingGratitudeSnapshot
+    };
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(gratitudeSnapshot),
+      sourceEvents: [primaryEvent, supportingEvent]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "被顺手分担一下",
+        content:
+          "今天同事看出我快撑不住，先帮我理清优先级，让我那一下没那么慌。后来他又帮我拿文件回宿舍，但那更像是临时顺手帮忙，并不是同一份被照顾到的感觉。",
         selfPattern: gratitudeSnapshot.relationshipSignal
       }
     });

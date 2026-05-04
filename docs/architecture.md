@@ -398,12 +398,13 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 流程：
 1. 收集当前 session 的 source events
-2. 先组装维度无关的 `DraftBrief`
-3. 再组装内部写作控制层 `DraftWritingProfile`
-4. 尝试让 AI 基于 `DraftBrief + DraftWritingProfile` 生成结构化 draft
-5. 对生成结果做规则质检，并统一进行语义短标题治理；如果 AI 不可用、schema 不合法或质检失败，则用 fallback draft
-6. upsert `JoyEntry`
-7. 用最新 session hydrate 前端
+2. 先基于 `snapshot + sourceEvents` 生成一层维度语义解释：判断当前片段属于哪个主题、为什么在该维度成立、哪些浅写法需要避免
+3. 再组装维度无关的 `DraftBrief`
+4. 再组装内部写作控制层 `DraftWritingProfile`
+5. 尝试让 AI 基于 `semantic interpretation + DraftBrief + DraftWritingProfile` 生成结构化 draft
+6. 对生成结果做规则质检，并统一进行语义短标题治理；如果 AI 不可用、schema 不合法或质检失败，则用 fallback draft
+7. upsert `JoyEntry`
+8. 用最新 session hydrate 前端
 
 补充：
 - 五个维度在 `stitched_moments` 下都可以对 supporting scene 做额外校验；如果 AI draft 漏掉本次 prompt 里实际提供的副事件，质量门会拒收
@@ -503,6 +504,7 @@ joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制
 
 用户现在看到的是：
 - 对话中的浅色 `thinkingSummary` 思路层：呈现 AI 对用户回复的理解和处理焦点，五个维度都会通过 `summary` SSE delta 流式展示；它不能写成第二个正式追问
+- `thinkingSummary`、日志正文、日志标题和 `joy` 质量门现在共用同一层服务端语义解释；如果模型给出的 summary 只是浅复述、语气不对或写成第二个追问，服务端会先按维度语义重写，再发给前端
 - 日志正文初稿
 
 用户不再看到：

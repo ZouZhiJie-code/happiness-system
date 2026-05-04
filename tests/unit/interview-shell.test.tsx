@@ -218,8 +218,24 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
     ...overrides
   };
 
+  const events = overrides.events ?? nextSession.events.map((event) => ({
+    ...event,
+    status:
+      nextSession.stage === "wrap_up"
+        ? ("ready_for_choice" as const)
+        : nextSession.stage === "finalize"
+          ? ("completed" as const)
+          : event.status,
+    stage: nextSession.stage,
+    roundMeaningfulReplyCount: nextSession.turnCount,
+    totalMeaningfulReplyCount: nextSession.turnCount,
+    snapshot: nextSession.snapshot,
+    completedAt: nextSession.stage === "finalize" ? nextSession.completedAt ?? event.completedAt : event.completedAt
+  }));
+
   return {
     ...nextSession,
+    events,
     draftGenerationUnlocked:
       overrides.draftGenerationUnlocked ??
       Boolean(
@@ -640,7 +656,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await waitFor(() => {
-      expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+      expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     });
 
     expect(screen.queryByText("抽取快照")).not.toBeInTheDocument();
@@ -652,7 +668,7 @@ describe("InterviewShell", () => {
     expect(generateButton).toBeInTheDocument();
     expect(getDimensionBar()).toContainElement(generateButton);
     expect(generateButton.closest(".max-w-2xl")).toBeNull();
-    expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+    expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
     expectDimensionStatus("充实", "未开始");
@@ -662,6 +678,16 @@ describe("InterviewShell", () => {
     expect(screen.getByTestId("interview-floating-composer")).toContainElement(screen.getByRole("textbox"));
     expect(screen.queryByTestId("interview-top-bar")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
+  });
+
+  it("labels the selected count as effective rounds instead of transcript message count", async () => {
+    cacheInterviewSessions({ joy: "session-ready" });
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("有效 2 轮")).toBeInTheDocument();
+    expect(screen.queryByText("有效 3 轮")).not.toBeInTheDocument();
+    expect(screen.queryByText("第 2 轮")).not.toBeInTheDocument();
   });
 
   it("clears the current dimension conversation and starts a fresh session", async () => {
@@ -761,13 +787,13 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     expect(screen.getByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "清除对话记录" }));
 
     expect(await screen.findByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).toBeInTheDocument();
-    expect(screen.queryByText("第 2 轮")).not.toBeInTheDocument();
+    expect(screen.queryByText("有效 2 轮")).not.toBeInTheDocument();
     expect(screen.queryByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}")).toMatchObject({
@@ -1286,7 +1312,7 @@ describe("InterviewShell", () => {
 
     expect(scrollPanel).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+      expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     });
     expect(scrollIntoViewSpy).not.toHaveBeenCalled();
   });
@@ -1491,7 +1517,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
 
     expect(screen.queryByText("结构化线索")).not.toBeInTheDocument();
     expect(screen.queryByText("开心片段")).not.toBeInTheDocument();
@@ -1526,7 +1552,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
@@ -1553,7 +1579,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
 
     expect(await screen.findByText("正在打开完整日志")).toBeInTheDocument();
@@ -1618,7 +1644,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
 
     const editor = await screen.findByTestId("daily-journal-editor");
@@ -1649,7 +1675,7 @@ describe("InterviewShell", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const view = renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 
@@ -1923,6 +1949,25 @@ describe("InterviewShell", () => {
     expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).endsWith("/api/interview/session/start"))).toBe(true);
   });
 
+  it("starts a fresh session instead of reusing an already hydrated session from another day on plain interview", async () => {
+    useInterviewStore.getState().hydrate(
+      buildSession({
+        id: "session-reflection-yesterday",
+        dimension: "reflection",
+        entryDate: "1999-01-01",
+        messages: promptMessages
+      })
+    );
+    mockSearchParams.value.dimension = "reflection";
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("textbox")).toBeInTheDocument();
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).endsWith("/api/interview/session/start"))).toBe(true);
+    expect(useInterviewStore.getState().sessionId).toBe("session-reflection");
+    expect(useInterviewStore.getState().sessionEntryDate).toBe(defaultEntryDate());
+  });
+
   it("uses the current entryDate day record for dimension labels instead of cross-day cached sessions", async () => {
     mockSearchParams.value.entryDate = "2026-05-01";
     window.localStorage.setItem(
@@ -1968,7 +2013,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await waitFor(() => {
-      expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+      expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
       expectDimensionStatus("充实", "已完成");
       expectDimensionStatus("思考", "已完成");
       expectDimensionStatus("改进", "已完成");
@@ -2018,10 +2063,10 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await waitFor(() => {
-      expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+      expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     });
 
-    expect(within(getDimensionButton("开心")).getByText("第 2 轮")).toBeInTheDocument();
+    expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
     expectDimensionStatus("改进", "已完成");
@@ -2769,7 +2814,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
 
     fireEvent.click(screen.getByRole("button", { name: "思考" }));
 
@@ -2901,7 +2946,7 @@ describe("InterviewShell", () => {
 
     const view = renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     expect(getTopGenerateButton()).toBeInTheDocument();
     await waitFor(() => {
       expectDimensionRing("开心");
@@ -2928,7 +2973,7 @@ describe("InterviewShell", () => {
       </>
     );
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     expect(getTopGenerateButton()).toBeInTheDocument();
 
     expect(global.fetch).toHaveBeenCalledWith("/api/interview/session/session-ready", expect.objectContaining({ cache: "no-store" }));
@@ -2989,7 +3034,7 @@ describe("InterviewShell", () => {
       );
     });
 
-    expect(await screen.findByText("第 10 轮")).toBeInTheDocument();
+    expect(await screen.findByText("有效 10 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
   });
@@ -3041,7 +3086,7 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
     expectDimensionStatus("充实", "未开始");
@@ -3179,7 +3224,7 @@ describe("InterviewShell", () => {
 
     const view = renderInterviewPage();
 
-    await screen.findByText("第 2 轮");
+    await screen.findByText("有效 2 轮");
 
     fireEvent.click(getTopGenerateButton());
     await screen.findByTestId("journal-editor-card");
@@ -3535,7 +3580,7 @@ describe("InterviewShell", () => {
 
     const view = renderInterviewPage();
 
-    expect(await screen.findByText("第 2 轮")).toBeInTheDocument();
+    expect(await screen.findByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
     const callCountBeforeRemount = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
@@ -3543,7 +3588,7 @@ describe("InterviewShell", () => {
     view.unmount();
     renderInterviewPage();
 
-    expect(screen.getByText("第 2 轮")).toBeInTheDocument();
+    expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
     expectSelectedProgressValue("90%");
 

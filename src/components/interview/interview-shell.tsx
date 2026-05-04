@@ -1138,7 +1138,8 @@ export function InterviewShell() {
       }
     ) => {
       const { forceNew = false, explicitSessionId = null, entryDate = null } = options ?? {};
-    const activeSession = sessionStateRef.current;
+      const activeSession = sessionStateRef.current;
+      const todayEntryDate = getTodayEntryDate();
 
       const shouldReuseCurrentSession =
         !forceNew &&
@@ -1148,7 +1149,7 @@ export function InterviewShell() {
           ? activeSession.sessionId === explicitSessionId
           : entryDate
             ? activeSession.sessionEntryDate === entryDate
-            : true);
+            : activeSession.sessionEntryDate === todayEntryDate);
 
       if (shouldReuseCurrentSession) {
         return activeSession.sessionId;

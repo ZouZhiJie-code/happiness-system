@@ -10,6 +10,7 @@
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 五个维度的 stitched 多事件日志现在都共用“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 `refresh_minor` 静默丢掉后续来源事件。
+- 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` 质量门现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 draft 质检；`joy` 质量门现在接受语义等价的改写，不再要求固定命中 `被接住 / 被理解 / 有分量` 这类字面词。
 - 五个维度的日志标题已经统一经过语义短标题治理，后端不再把长事件句机械截断成标题。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有当 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
@@ -184,6 +185,7 @@ gratitude 理论翻译基线：
 必须保持这个边界：
 - 用户只看对话和日志正文。
 - 对话中的 `thinkingSummary` 是浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；五个维度都会通过 `summary` SSE delta 流式展示这层内容，且不能写成第二个正式追问。
+- 如果模型给出的 `thinkingSummary` 只是复述用户原话、语气不对或写成第二个追问，服务端会基于同一层维度语义解释重写它，而不是直接把浅复述透传给前端。
 - 访谈提交失败时，用户可以看到结构化错误说明和处理建议，但不能看到内部异常堆栈、数据库细节或原始 provider 错误。
 - `snapshotData`、结构化槽位、进度判断、`pendingDecision` 都属于系统内部状态。
 - 右侧日志面板当前不再显示“日志”标题，只保留关闭按钮与正文编辑区。
@@ -398,6 +400,9 @@ gratitude 理论翻译基线：
 - 如果启动访谈时报 `InterviewEvent.snapshotData does not exist` 或类似列缺失：
   - 先执行 `npx prisma db push`
   - 再重启 `npm run dev`
+- 如果 `npm run build` 失败：
+  - 先区分是不是这次改动引起的
+  - 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`，以及 `tests/unit/interview-shell.test.tsx` 的旧断言漂移；这些问题会让 full build / full test 继续报红，不能误记成“本次改动引入”
 - 如果用户看到结构化访谈提交错误：
   - `NETWORK_UNAVAILABLE`：先确认 `npm run dev` 仍在运行，再刷新页面
   - `MESSAGE_TOO_LONG`：单次回复超过 `1200` 字，拆成两段发送
@@ -418,7 +423,7 @@ gratitude 理论翻译基线：
 
 截至 `2026-05-04`，本地测试基线为：
 - `40` 个测试文件
-- `374` 个测试全部通过
+- `381` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `16` 个失败，全部集中在 `tests/unit/interview-shell.test.tsx`，主要是旧的 `第 2 轮` / header live progress 断言没有跟上最新访谈页展示。
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

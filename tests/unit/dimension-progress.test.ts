@@ -132,6 +132,28 @@ describe("getDimensionProgressSummary", () => {
     expect(summary.displayState).toBe("in_progress");
   });
 
+  it("keeps current ready-for-choice progress at 90% when draft generation is already unlocked", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        draftGenerationUnlocked: true,
+        events: [
+          {
+            status: "ready_for_choice",
+            snapshot: {
+              ...emptySnapshot,
+              event: "今天和朋友聊天",
+              feeling: "被理解",
+              whyItMattered: "我最近很需要这种连接感"
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBe(90);
+    expect(summary.state).toBe("ready");
+  });
+
   it("does not reach 90% when the active choice only reflects boundary-insufficient material", () => {
     const summary = getDimensionProgressSummary(
       buildProgressSession({

@@ -70,11 +70,50 @@ export const joyInterviewPrinciples = [
   "不抢结论，不做心理诊断，不扩展到其他维度。"
 ];
 
+const REFLECTION_SCENE_QUESTION_PATTERN =
+  /(具体(?:的)?(?:经历|对话|事情|片段)|经历或对话|事情或对话|第一次清晰地感受到|那个时刻具体发生了什么)/u;
+const DIRECT_NEGATION_PATTERN = /^(没有|没|不是|并没有|没有过)(?:[，,。！？!?]|$)/u;
+
 function formatVisibleRecentMessages(messages: InterviewMessage[]) {
   return messages
     .slice(-8)
     .map((message) => `${message.role === "assistant" ? "访谈者" : "用户"}: ${getInterviewMessageDisplayText(message)}`)
     .join("\n");
+}
+
+function getAssistantQuestionText(message: InterviewMessage) {
+  if (message.role !== "assistant") {
+    return null;
+  }
+
+  const displayText = getInterviewMessageDisplayText(message);
+  const parts = displayText.split("\n");
+  const question = parts.at(-1)?.trim() ?? "";
+
+  return question || null;
+}
+
+function hasDeniedReflectionSceneQuestion(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index > 0; index -= 1) {
+    const message = messages[index];
+    const previousMessage = messages[index - 1];
+
+    if (message.role !== "user" || previousMessage.role !== "assistant") {
+      continue;
+    }
+
+    const previousQuestion = getAssistantQuestionText(previousMessage);
+
+    if (!previousQuestion || !REFLECTION_SCENE_QUESTION_PATTERN.test(previousQuestion)) {
+      continue;
+    }
+
+    if (DIRECT_NEGATION_PATTERN.test(message.content.trim())) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function formatStructuredRecentAssistantMessages(messages: InterviewMessage[]) {
@@ -369,7 +408,8 @@ export function buildJoyQuestionMessages(input: {
                 "reflection 补充规则：重点不是记录想法，而是从当天具体片段里看见新的规律、方向、优势、盲点或判断依据。",
                 "reflection 补充规则：追问顺序必须贴着证据走：先抓触发片段，再问原来的疑问或判断，再问当天看到的证据，最后才问视角变化或判断线索。",
                 "reflection 补充规则：不要写成行动计划、心理诊断、人生结论或稳定公式；如果用户重点变成“下次怎么做”，提示这更适合改进维度。",
-                "reflection 补充规则：关系相关内容只有在核心是理解规律或校准判断时留在思考；如果核心是感谢、支持或被善待，应提示更适合感谢维度。"
+                "reflection 补充规则：关系相关内容只有在核心是理解规律或校准判断时留在思考；如果核心是感谢、支持或被善待，应提示更适合感谢维度。",
+                "reflection 补充规则：如果用户已经明确说没有某段具体经历或对话，继续深聊时不要再追同一字段，改问更低压的具体锚点，比如某个顾虑、脑中画面、比较时刻或选择瞬间。"
               ]
             : input.dimension === "improvement"
               ? [
@@ -456,7 +496,14 @@ export function buildJoyQuestionMessages(input: {
         `最近可读对话:\n${formatVisibleRecentMessages(input.messages) || "无"}`,
         `最近 assistant 结构化输出:\n${formatStructuredRecentAssistantMessages(input.messages) || "无"}`,
         input.action === "continue_current_event"
-          ? "用户刚刚选择继续深聊当前事件。请优先顺着刚补出来的重点继续追问；只有当前切口收益低时再自然换角度。"
+          ? [
+              "用户刚刚选择继续深聊当前事件。请优先顺着刚补出来的重点继续追问；只有当前切口收益低时再自然换角度。",
+              input.dimension === "reflection" && hasDeniedReflectionSceneQuestion(input.messages)
+                ? "上一轮已经问过具体经历/对话，用户明确回答没有。继续深聊时不能再问同一字段，必须改问更低压的具体锚点。"
+                : null
+            ]
+              .filter(Boolean)
+              .join("\n")
           : `用户本轮输入: ${input.userMessage ?? "无"}`
       ].join("\n\n")
     }

@@ -447,13 +447,13 @@ function buildReflectionInterpretation(input: BuildDimensionSemanticInterpretati
 
   let themeKey = "pattern_seen";
   let themeLabel = "看见一层规律";
-  let theorySummary = insight
+  const theorySummary = insight
     ? `它让我看见，${insight}。这次思考真正重要的，不是想了很多，而是这层理解开始让判断变清楚。`
     : "这次思考真正重要的，不是想了很多，而是开始看见一层新的判断依据。";
-  let thinkingSummaryLead = insight
+  const thinkingSummaryLead = insight
     ? `这次思考的重点，不是情绪本身，而是“${insight}”开始让判断变清楚`
     : "这次思考已经不只是想了很多，而是在形成新的判断依据";
-  let antiFlatteningTargets = ["不要只写我想了很多", "要写新的理解或判断依据"];
+  const antiFlatteningTargets = ["不要只写我想了很多", "要写新的理解或判断依据"];
 
   if (/(判断|依据|标准|校准|分清|区别)/u.test(joined)) {
     themeKey = "judgment_recalibrated";
