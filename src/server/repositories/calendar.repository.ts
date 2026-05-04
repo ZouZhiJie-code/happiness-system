@@ -26,6 +26,10 @@ function resolveSessionUpdatedAt(session: {
   return new Date(latestTimestamp).toISOString();
 }
 
+function resolveSessionMessageCount(session: { _count?: { messages?: number } }) {
+  return typeof session._count?.messages === "number" ? session._count.messages : undefined;
+}
+
 export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesByDateRangeInput) {
   const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
 
@@ -43,6 +47,11 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         dimension: true,
         entryDate: true,
         status: true,
+        _count: {
+          select: {
+            messages: true
+          }
+        },
         startedAt: true,
         completedAt: true,
         pausedAt: true,
@@ -106,19 +115,24 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
 
   const calendarSessions: CalendarSessionSource[] = sessions
     .filter((session) => session.status !== "abandoned")
-    .map((session) => ({
-      kind: "session",
-      id: session.id,
-      dimension: session.dimension,
-      date: formatEntryDate(session.entryDate ?? session.startedAt),
-      status: session.status,
-      updatedAt: resolveSessionUpdatedAt(session),
-      startedAt: session.startedAt.toISOString(),
-      completedAt: session.completedAt?.toISOString() ?? null,
-      pausedAt: session.pausedAt?.toISOString() ?? null,
-      draftSummary: session.draftSummary,
-      journalEntryId: session.finalEntryId
-    }));
+    .map((session) => {
+      const messageCount = resolveSessionMessageCount(session);
+
+      return {
+        kind: "session" as const,
+        id: session.id,
+        dimension: session.dimension,
+        date: formatEntryDate(session.entryDate ?? session.startedAt),
+        status: session.status,
+        ...(typeof messageCount === "number" ? { messageCount } : {}),
+        updatedAt: resolveSessionUpdatedAt(session),
+        startedAt: session.startedAt.toISOString(),
+        completedAt: session.completedAt?.toISOString() ?? null,
+        pausedAt: session.pausedAt?.toISOString() ?? null,
+        draftSummary: session.draftSummary,
+        journalEntryId: session.finalEntryId
+      };
+    });
 
   const calendarEntries: CalendarEntrySource[] = entries.flatMap((entry) => {
     if (!entry.session?.dimension) {

@@ -1,5 +1,5 @@
 import { getInterviewDimensionDefinition } from "@/features/interview/dimension-definitions";
-import type { InterviewEventRecord, InterviewSessionRecord, InterviewSnapshotData, JoySnapshot } from "@/types/interview";
+import type { InterviewEventRecord, InterviewMessage, InterviewSessionRecord, InterviewSnapshotData, JoySnapshot } from "@/types/interview";
 
 type DimensionProgressEventLike = {
   id?: InterviewEventRecord["id"];
@@ -15,6 +15,7 @@ export interface DimensionProgressSessionLike {
   completedAt?: string | null;
   activeEventId?: InterviewSessionRecord["activeEventId"];
   turnCount: number;
+  messages?: Array<Pick<InterviewMessage, "role">>;
   snapshot: JoySnapshot | null;
   snapshotData?: InterviewSnapshotData | null;
   events: DimensionProgressEventLike[];
@@ -113,10 +114,35 @@ function getCurrentProgressEvent(session: DimensionProgressSessionLike): Dimensi
   );
 }
 
+function isOpeningOnlyProgressSession(session: DimensionProgressSessionLike) {
+  const messageCount = session.messages?.length ?? 0;
+  const hasUserMessage = session.messages?.some((message) => message.role === "user") ?? false;
+
+  return (
+    session.status === "active" &&
+    session.turnCount === 0 &&
+    messageCount > 0 &&
+    !hasUserMessage &&
+    messageCount <= 1 &&
+    !session.journalEntry &&
+    !session.pendingDecision
+  );
+}
+
 export function getDimensionProgressSummary(
   session: DimensionProgressSessionLike | null | undefined
 ): DimensionProgressSummary {
   if (!session) {
+    return {
+      percentage: 0,
+      state: "empty",
+      displayState: "not_started",
+      statusLabel: "未开始",
+      shouldShowRing: false
+    };
+  }
+
+  if (isOpeningOnlyProgressSession(session)) {
     return {
       percentage: 0,
       state: "empty",

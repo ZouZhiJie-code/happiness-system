@@ -13,6 +13,7 @@ function buildSession(overrides: Partial<CalendarSessionSource> = {}): CalendarS
     dimension: "joy",
     date: "2026-05-01",
     status: "active",
+    messageCount: 2,
     updatedAt: "2026-05-01T10:00:00.000Z",
     startedAt: "2026-05-01T09:00:00.000Z",
     completedAt: null,
@@ -106,6 +107,18 @@ describe("aggregateCalendarDay", () => {
     expect(result.overallStatus).toBe("in_progress");
     expect(result.activeCount).toBe(1);
     expect(result.primaryAction).toBe("continue_interview");
+  });
+
+  it("keeps an opening-only session out of the in-progress state", () => {
+    const result = aggregateCalendarDay({
+      date: "2026-05-01",
+      sessions: [buildSession({ messageCount: 1, draftSummary: null })],
+      entries: []
+    });
+
+    expect(result.overallStatus).toBe("empty");
+    expect(result.activeCount).toBe(0);
+    expect(result.primaryAction).toBeNull();
   });
 
   it("promotes a single draft entry into a draft day", () => {

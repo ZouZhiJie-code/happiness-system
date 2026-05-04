@@ -133,7 +133,25 @@ function isResumableSession(
   session: CalendarSessionSource,
   entries: CalendarEntrySource[]
 ) {
+  if (isOpeningOnlyCalendarSession(session)) {
+    return false;
+  }
+
   return session.status === "active" || session.status === "paused" || (session.status === "completed" && !entries.length);
+}
+
+function isOpeningOnlyCalendarSession(session: CalendarSessionSource) {
+  if (typeof session.messageCount !== "number") {
+    return false;
+  }
+
+  return (
+    session.status === "active" &&
+    session.messageCount <= 1 &&
+    !session.journalEntryId &&
+    !session.completedAt &&
+    !session.pausedAt
+  );
 }
 
 function uniqueActions(actions: CalendarAction[]) {
@@ -296,20 +314,21 @@ export function aggregateCalendarDimension(input: {
   const sessions = sortByLatestUpdated(
     input.sessions.filter((session) => session.date === input.date && session.dimension === input.dimension)
   );
+  const visibleSessions = sessions.filter((session) => !isOpeningOnlyCalendarSession(session));
   const entries = sortByLatestUpdated(
     input.entries.filter((entry) => entry.date === input.date && entry.dimension === input.dimension)
   );
 
-  const latestSession = sessions[0] ?? null;
-  const latestActiveSession = sessions.find((session) => isResumableSession(session, entries)) ?? null;
+  const latestSession = visibleSessions[0] ?? null;
+  const latestActiveSession = visibleSessions.find((session) => isResumableSession(session, entries)) ?? null;
   const latestDraftEntry = entries.find((entry) => entry.status === "draft") ?? null;
   const latestSavedEntry = entries.find((entry) => entry.status === "saved") ?? null;
   const latestEntry = latestDraftEntry ?? latestSavedEntry ?? null;
-  const hasSession = sessions.length > 0;
+  const hasSession = visibleSessions.length > 0;
   const hasActiveSession = Boolean(latestActiveSession);
   const hasDraftEntry = Boolean(latestDraftEntry);
   const hasSavedEntry = Boolean(latestSavedEntry);
-  const latestUpdatedAt = [...sessions, ...entries]
+  const latestUpdatedAt = [...visibleSessions, ...entries]
     .map((source) => source.updatedAt)
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const status = resolveDimensionStatus({

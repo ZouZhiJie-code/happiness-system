@@ -256,6 +256,7 @@ function SiteHeaderInner() {
           status,
           activeEventId,
           turnCount,
+          messages,
           snapshot,
           snapshotData,
           events,

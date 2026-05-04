@@ -18,6 +18,7 @@ export interface CalendarSessionSource {
   dimension: CalendarSourceDimension;
   date: string;
   status: InterviewSessionStatus;
+  messageCount?: number;
   updatedAt: string;
   startedAt: string;
   completedAt: string | null;
