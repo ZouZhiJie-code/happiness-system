@@ -123,6 +123,26 @@ const gratitudeSnapshot: JoySnapshot = {
   missingSlots: []
 };
 
+const supportingGratitudeSnapshot: JoySnapshot = {
+  event: "出去后看到我拍照拍得有点累，赵月说要请我吃冰淇淋，还顺手问我要不要喝水",
+  feeling: "被惦记着",
+  whyItMattered: "这种顺手照顾让我觉得自己不是一个人在硬撑",
+  happinessType: "照顾减负型",
+  selfPattern: null,
+  gratitudeMoment: "出去后看到我拍照拍得有点累，赵月说要请我吃冰淇淋，还顺手问我要不要喝水",
+  gratitudeTarget: "赵月",
+  kindAction: "说要请我吃冰淇淋，还顺手问我要不要喝水",
+  seenNeed: "看见了我当时已经有点累了，也需要有人顺手照顾一下",
+  innerEffect: "松下来一点",
+  gratitudeReason: "这种顺手照顾让我觉得自己不是一个人在硬撑",
+  gratitudeType: "照顾减负型",
+  relationshipSignal: null,
+  reciprocityHint: null,
+  tags: ["照顾", "轻一点"],
+  confidence: 0.82,
+  missingSlots: ["relationshipSignal"]
+};
+
 function buildEvent(snapshot: JoySnapshot): InterviewEventRecord {
   return {
     id: "event-1",
@@ -1061,6 +1081,66 @@ describe("draft policies", () => {
     expect(result.issues).toContain("partial_fake_relationship_signal");
   });
 
+  it("rejects stitched gratitude drafts that only cover the primary scene", () => {
+    const primaryEvent = buildEvent(gratitudeSnapshot);
+    const supportingEvent = {
+      ...buildEvent(supportingGratitudeSnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingGratitudeSnapshot
+    };
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(gratitudeSnapshot),
+      sourceEvents: [primaryEvent, supportingEvent]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "被稳稳接住",
+        content:
+          "今天同事看出我快撑不住，帮我先理清优先级。我感谢的不是一句泛泛的好意，而是同事当时先看见了我的混乱，也帮我把最急的部分理了一遍。",
+        selfPattern: gratitudeSnapshot.relationshipSignal
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("missing_supporting_scene_anchor");
+  });
+
+  it("does not require supporting scene anchors for stitched non-gratitude drafts", () => {
+    const primaryEvent = buildEvent(partialJoySnapshot);
+    const supportingJoySnapshot: JoySnapshot = {
+      ...partialJoySnapshot,
+      event: "晚上又收到朋友顺手发来的消息",
+      joyMoment: "晚上又收到朋友顺手发来的消息",
+      whyItMattered: "那一下也让我觉得自己没有被忘记",
+      joySource: "那种被惦记着的轻松感"
+    };
+    const supportingEvent = {
+      ...buildEvent(supportingJoySnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingJoySnapshot
+    };
+    const brief = buildDraftBrief({
+      session: buildSession(partialJoySnapshot),
+      sourceEvents: [primaryEvent, supportingEvent]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "被陪伴接住",
+        content:
+          "今天最想记住的开心，是今天和家人一起吃饭聊天。真正让我松下来的，不只是坐在一起，更是那种重新回到被陪伴接住的轻松里。",
+        selfPattern: null
+      }
+    });
+
+    expect(result.issues).not.toContain("missing_supporting_scene_anchor");
+  });
+
   it("keeps fallback partial joy drafts in current-log mode", () => {
     const session = buildSession(partialJoySnapshot);
     const sourceEvents = [buildEvent(partialJoySnapshot)];
@@ -1338,6 +1418,76 @@ describe("draft policies", () => {
     expect(draft.content).toContain("对方像是看见了我当时需要有人帮我把混乱的事情理清");
     expect(draft.content).not.toContain("感谢片段");
     expect(draft.content).not.toContain("必须报答");
+  });
+
+  it("keeps supporting gratitude moments in stitched fallback drafts", () => {
+    const session = buildGratitudeSession(gratitudeSnapshot);
+    const primaryEvent = buildEvent(gratitudeSnapshot);
+    const supportingEvent = {
+      ...buildEvent(supportingGratitudeSnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingGratitudeSnapshot
+    };
+    const sourceEvents = [primaryEvent, supportingEvent];
+    const eventBlocks: JoyEventBlock[] = [
+      {
+        eventId: primaryEvent.id,
+        sequence: primaryEvent.sequence,
+        explorationRound: primaryEvent.explorationRound,
+        event: gratitudeSnapshot.event,
+        feeling: gratitudeSnapshot.feeling,
+        whyItMattered: gratitudeSnapshot.whyItMattered,
+        happinessType: gratitudeSnapshot.happinessType,
+        selfPattern: gratitudeSnapshot.selfPattern,
+        gratitudeMoment: gratitudeSnapshot.gratitudeMoment,
+        gratitudeTarget: gratitudeSnapshot.gratitudeTarget,
+        kindAction: gratitudeSnapshot.kindAction,
+        seenNeed: gratitudeSnapshot.seenNeed,
+        innerEffect: gratitudeSnapshot.innerEffect,
+        gratitudeReason: gratitudeSnapshot.gratitudeReason,
+        gratitudeType: gratitudeSnapshot.gratitudeType,
+        relationshipSignal: gratitudeSnapshot.relationshipSignal,
+        reciprocityHint: gratitudeSnapshot.reciprocityHint
+      },
+      {
+        eventId: supportingEvent.id,
+        sequence: supportingEvent.sequence,
+        explorationRound: supportingEvent.explorationRound,
+        event: supportingGratitudeSnapshot.event,
+        feeling: supportingGratitudeSnapshot.feeling,
+        whyItMattered: supportingGratitudeSnapshot.whyItMattered,
+        happinessType: supportingGratitudeSnapshot.happinessType,
+        selfPattern: supportingGratitudeSnapshot.selfPattern,
+        gratitudeMoment: supportingGratitudeSnapshot.gratitudeMoment,
+        gratitudeTarget: supportingGratitudeSnapshot.gratitudeTarget,
+        kindAction: supportingGratitudeSnapshot.kindAction,
+        seenNeed: supportingGratitudeSnapshot.seenNeed,
+        innerEffect: supportingGratitudeSnapshot.innerEffect,
+        gratitudeReason: supportingGratitudeSnapshot.gratitudeReason,
+        gratitudeType: supportingGratitudeSnapshot.gratitudeType,
+        relationshipSignal: supportingGratitudeSnapshot.relationshipSignal,
+        reciprocityHint: supportingGratitudeSnapshot.reciprocityHint
+      }
+    ];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks,
+      brief
+    });
+
+    expect(draft.content).toContain("今天让我想认真记下来的感谢");
+    expect(draft.content).toContain("另外我也想记下");
+    expect(draft.content).toContain("赵月");
+    expect(draft.content).toContain("冰淇淋");
+    expect(draft.relationshipSignal).toBe("这样的关系回应值得我珍惜，也值得我学习");
+    expect(draft.eventBlocks).toHaveLength(2);
   });
 
   it("creates partial gratitude fallback drafts without forcing relationship signals", () => {

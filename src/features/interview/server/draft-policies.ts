@@ -189,6 +189,14 @@ function hasSceneAnchor(content: string, candidates: Array<string | null | undef
   );
 }
 
+function isSceneAnchorMissing(content: string, candidate: string | null | undefined) {
+  if (!candidate) {
+    return false;
+  }
+
+  return !hasSceneAnchor(content, [candidate]);
+}
+
 function hasSpecificDelightCue(value: string | null | undefined) {
   if (!value) {
     return false;
@@ -1319,6 +1327,36 @@ function buildGratitudeTypeSentence(snapshot: JoySnapshot) {
   return gratitudeType ? `这份善意更接近${trimTrailingPunctuation(gratitudeType)}。` : null;
 }
 
+function buildGratitudeSupportingParagraph(snapshot: JoySnapshot, index: number) {
+  const moment = sanitizeNullableString(snapshot.gratitudeMoment ?? snapshot.event);
+  const target = sanitizeNullableString(snapshot.gratitudeTarget);
+  const kindAction = sanitizeNullableString(snapshot.kindAction);
+  const seenNeed = sanitizeNullableString(snapshot.seenNeed);
+  const innerEffect = sanitizeNullableString(snapshot.innerEffect ?? snapshot.feeling);
+  const gratitudeReason = sanitizeNullableString(snapshot.gratitudeReason ?? snapshot.whyItMattered);
+  const sentences = [
+    moment
+      ? index === 0
+        ? `另外我也想记下，${trimTrailingPunctuation(moment)}。`
+        : `还有一个片段也留在我心里：${trimTrailingPunctuation(moment)}。`
+      : null,
+    target && kindAction
+      ? `那时${trimTrailingPunctuation(target)}${trimTrailingPunctuation(kindAction)}。`
+      : kindAction
+        ? `那时对方${trimTrailingPunctuation(kindAction)}。`
+        : null,
+    seenNeed && innerEffect
+      ? `这份好意也像是看见了${trimTrailingPunctuation(seenNeed)}，让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`
+      : seenNeed
+        ? `这份好意也像是看见了${trimTrailingPunctuation(seenNeed)}。`
+        : gratitudeReason
+          ? `它会留在我心里，也是因为${trimTrailingPunctuation(gratitudeReason)}。`
+          : null
+  ].filter(Boolean);
+
+  return sentences.length ? sentences.join(" ") : null;
+}
+
 function buildGratitudeClosingSentence(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
@@ -1340,12 +1378,14 @@ function buildGratitudeClosingSentence(input: {
 function buildGratitudeFallbackContent(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
+  supportingSnapshots?: JoySnapshot[];
 }) {
   const lines = [
     buildGratitudeOpeningSentence(input.snapshot),
     buildGratitudeActionSentence(input.snapshot),
     buildGratitudeNeedSentence(input.snapshot),
     buildGratitudeTypeSentence(input.snapshot),
+    ...(input.supportingSnapshots ?? []).map((snapshot, index) => buildGratitudeSupportingParagraph(snapshot, index)),
     buildGratitudeClosingSentence(input)
   ];
 
@@ -1360,6 +1400,19 @@ function createGratitudeFallbackDraft(input: {
 }): JoyEntryDraft {
   const primaryEvent = pickPrimaryEvent("gratitude", input.sourceEvents);
   const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
+  const supportingSnapshots = input.sourceEvents
+    .filter((event) => event.id !== primaryEvent?.id)
+    .map((event) => event.snapshot)
+    .filter(
+      (snapshot) =>
+        Boolean(
+          sanitizeNullableString(snapshot.gratitudeMoment ?? snapshot.event) ||
+            sanitizeNullableString(snapshot.kindAction) ||
+            sanitizeNullableString(snapshot.seenNeed) ||
+            sanitizeNullableString(snapshot.gratitudeReason ?? snapshot.whyItMattered)
+        )
+    )
+    .slice(0, 2);
   const config = getInterviewDimensionConfig("gratitude");
   const relationshipSignal =
     input.brief.completionMode === "complete"
@@ -1376,7 +1429,8 @@ function createGratitudeFallbackDraft(input: {
     title,
     content: buildGratitudeFallbackContent({
       brief: input.brief,
-      snapshot: primarySnapshot
+      snapshot: primarySnapshot,
+      supportingSnapshots
     }),
     event: sanitizeNullableString(primarySnapshot.gratitudeMoment ?? primarySnapshot.event),
     feeling: sanitizeNullableString(primarySnapshot.innerEffect ?? primarySnapshot.feeling),
@@ -1615,14 +1669,24 @@ export function runDraftQualityGate(input: {
     issues.push("delight_shaming_tone");
   }
 
-  const sceneCandidates = [input.brief.anchorScene, ...input.brief.supportingMoments].filter(Boolean);
+  const missingPrimarySceneAnchor = isSceneAnchorMissing(content, input.brief.anchorScene);
+  const missingSupportingSceneAnchors =
+    input.brief.dimension === "gratitude" && input.brief.compositionMode === "stitched_moments"
+      ? input.brief.supportingMoments.some((candidate) => isSceneAnchorMissing(content, candidate))
+      : false;
 
   if (
     (input.brief.dimension === "joy" || input.brief.dimension === "fulfillment" || input.brief.dimension === "improvement" || input.brief.dimension === "gratitude") &&
-    sceneCandidates.length > 0 &&
-    !hasSceneAnchor(content, sceneCandidates)
+    missingPrimarySceneAnchor
   ) {
     issues.push("missing_scene_anchor");
+  }
+
+  if (
+    (input.brief.dimension === "joy" || input.brief.dimension === "fulfillment" || input.brief.dimension === "improvement" || input.brief.dimension === "gratitude") &&
+    missingSupportingSceneAnchors
+  ) {
+    issues.push("missing_supporting_scene_anchor");
   }
 
   if (hasGenericCoreRegression(input.brief, content)) {
@@ -1670,8 +1734,12 @@ export function runDraftQualityGate(input: {
   }
 
   if (input.brief.dimension === "reflection") {
-    if (sceneCandidates.length > 0 && !hasSceneAnchor(content, sceneCandidates)) {
+    if (missingPrimarySceneAnchor) {
       issues.push("missing_scene_anchor");
+    }
+
+    if (missingSupportingSceneAnchors) {
+      issues.push("missing_supporting_scene_anchor");
     }
 
     if (!REFLECTION_INSIGHT_PATTERN.test(content)) {

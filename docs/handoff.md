@@ -10,15 +10,18 @@
 - joy / fulfillment / reflection / improvement / gratitude 已完成理论对齐深化。
 - improvement 已完成理论对齐开发规格、数据结构扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例；仍需要端到端产品验收。
 - gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
+- 五个维度的 stitched 多事件日志现在都恢复为“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 `refresh_minor` 静默丢掉后续来源事件。
 - 日志工作区对用户展示的是“日志正文”，结构化线索只保留在系统内部。
-- 当天整合日志已经落地：访谈页顶部【完整日志】进入当天日志主区，基于当前 `entryDate` 已保存维度日志生成章节合集；单维度日志与完整日志加载/生成时都使用阶段进度叠加小树生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- 当天整合日志已经落地：访谈页顶部【完整日志】进入当天日志主区，基于当前 `entryDate` 已保存维度日志生成章节合集；单维度日志与完整日志加载/生成时都使用共享阶段进度、细进度轨和书页生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
 - calendar/day、当天整合日志和分析页的按天归档现在统一按 `Asia/Shanghai` 整天时间窗口查询，不再按单个归一化时间点精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 day snapshot 为准。只要某个维度当天已有 `saved` 日志，胶囊会优先显示 `已完成`。
+- 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 ready。
 - 全站前端壳层已经从居中大卡片改为平铺工作台：`SiteHeader` 是全宽暖色工具栏，首页、访谈、设置和 calendar 主体减少外框留白与卡片嵌套。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
 - 日志标题已经做五维统一语义短标题治理，后端不再用长事件句机械截断成标题。
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
 - `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
+- 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；只有当前正在显示的 inline choice card 会替代对应那一条消息，避免重复展示。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 
@@ -269,7 +272,8 @@
 - gratitude 专属提问策略：具体被照顾/支持的时刻、具体动作、被回应的需要、珍惜原因、关系信号和禁用感谢信/负债口吻
 - gratitude 正文生成、quality gate、fallback draft、语义短标题治理和自动化验收样例
 - draft quality gate
-- stitched 多事件草稿在 `refresh_minor` 下的 prompt 窗口 / quality gate 对齐，不再因为窗口外 supporting scene 被稳定打回 fallback
+- gratitude stitched 多事件 fallback：主事件外最多 `2` 个 supporting moments 会保留在正文里
+- gratitude 专属 `missing_supporting_scene_anchor` 质量门，不再误伤非 gratitude 的 stitched 草稿
 - 重新生成已有日志
 - 保存正式日志
 - 页面刷新后的 session 恢复

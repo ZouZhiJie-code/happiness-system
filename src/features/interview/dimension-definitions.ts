@@ -68,8 +68,10 @@ export interface InterviewDimensionDefinition {
 
 function buildCommonProgress(input: DefinitionProgressInput, score: number) {
   let nextScore = score;
+  const hasBoundaryPendingDecision =
+    input.pendingDecision?.kind === "dimension_redirect" || input.pendingDecision?.kind === "boundary_insufficient";
 
-  if (input.draftGenerationUnlocked || input.pendingDecision?.kind === "event_complete") {
+  if (!hasBoundaryPendingDecision && (input.draftGenerationUnlocked || input.pendingDecision?.kind === "event_complete")) {
     nextScore = Math.max(nextScore, 90);
   }
 
@@ -79,6 +81,10 @@ function buildCommonProgress(input: DefinitionProgressInput, score: number) {
 
   if (input.journalEntry?.status === "saved") {
     return 100;
+  }
+
+  if (hasBoundaryPendingDecision) {
+    nextScore = Math.min(nextScore, 88);
   }
 
   return nextScore;
