@@ -117,7 +117,7 @@ npm run dev
 13. 预期：对应日期显示 `1-5维` 和单字维度标识 `悦 / 实 / 思 / 改 / 谢`
 14. 预期：该日期出现轻量整合标记
 15. 切到 `/analysis?month=<该月>&section=insights`
-16. 预期：`五维洞察` 中至少有对应维度的篇数、覆盖天数和最近结构化线索；有真实数据时不应出现示意样板短句
+16. 预期：`五维洞察` 首屏会显示 `本月判断`，下方是五维全景卡片，以及 `维度之间 / 下一步`；有真实数据时不应出现示意样板短句或旧的“主线维度 + 浮现/安静维度”布局
 17. 点击任一“回到某维度”链接
 18. 预期：跳转到 `/interview?dimension=<维度>&entryDate=YYYY-MM-DD`，日期应对应被分析的那条记录，不应误跳到今天
 19. 如果当前查看的是本月 `rhythm`
@@ -145,8 +145,10 @@ npm run dev
 41. 预期：`overview / score / rhythm / insights` 视图都能稳定打开，并显示真实空态；不应出现示意填充或伪造数据
 42. 切到一个“只有评分、没有已保存维度日志”的月份
 43. 预期：`rhythm` 会把对应日期保留在 `只评未记 / 待成文` 语义，不会伪造 `已整合`、密度结论或整月空档；`insights` 显示空态，不出现伪造的 `主线维度`
-38. 如果某一天先保存了完整日志，再新增或更新同日 `saved` 维度日志
-39. 预期：`rhythm` 会把这一天重新标成 `待更新 / 待整合`，并提供更新完整日志入口，而不是继续显示 `已整合`
+44. 如果某一天先保存了完整日志，再新增或更新同日 `saved` 维度日志
+45. 预期：`rhythm` 会把这一天重新标成 `待更新 / 待整合`，并提供更新完整日志入口，而不是继续显示 `已整合`
+46. 如果同一天所有来源维度日志后来都回到了 `draft`，只剩一篇 `stale` 的当天整合日志
+47. 预期：`rhythm` 仍把这一天算进待处理；切到 `insights` 后，`watchpoint` 会优先提示“完整日志已经过时，需要重新整理”，而不是被安静维度或评分提示盖过去
 
 如果当前是在做 prompt / 访谈质量调试，而不是验恢复逻辑：
 1. 可以直接点顶部 `清除对话记录`
@@ -482,4 +484,4 @@ npm run dev
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，`overview` 只在默认视图内显示月度判断、评分可信度、“建议先看”主行动、轻入口和证据条，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，但热力图未来日期的 drill-down 只保留 `查看当天`，不开放开始/继续访谈；当前月 `最长空档` 会排除未来日期；`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新，AI 洞察仍未接入
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，`overview` 只在默认视图内显示月度判断、评分可信度、“建议先看”主行动、轻入口和证据条，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，但热力图未来日期的 drill-down 只保留 `查看当天`，不开放开始/继续访谈；当前月 `最长空档` 会排除未来日期；`rhythm` 与 `insights` 现在都会把 `stale` 的当天整合日志视为待处理，即使当天已没有任何 `saved` 来源也不会漏掉；`insights` 里的单次早期记录会保持 `starting`，不会被写成“前面露过头”。`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新；生成式 AI 月度洞察仍未接入

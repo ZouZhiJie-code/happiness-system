@@ -37,7 +37,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。总览视图先给月度判断、评分可信度和“建议先看”主行动，再给评分刻度 / 记录节奏 / 五维线索轻入口，底部证据条只做辅助快扫。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`，不会误算成 `已整合`；未来月份不会把整个月误读成 `最长空档`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。总览视图先给月度判断、评分可信度和“建议先看”主行动，再给评分刻度 / 记录节奏 / 五维线索轻入口，底部证据条只做辅助快扫。评分区当前是补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏才回到趋势阅读。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`；即使当天已经没有任何 `saved` 来源，只要这篇整合日志仍然 `stale`，分析里也会继续把它算进待处理，不会静默漏掉。未来月份不会把整个月误读成 `最长空档`，总览首屏也会直接提示回到当前月份，而不是送去今天的访谈。五维洞察现在按“本月判断 + 五维全景 + 维度之间 + 下一步”组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片会共用同一套 quiet lagging 维度排序。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -1542,7 +1542,7 @@ POST /api/daily-journal/[id]/save
   - `overview`：默认视图，展示建议先看主行动、评分 / 节奏 / 五维轻入口，以及维度记录日 / 成果保存日 / 待整合日 / 评分可信度证据条
   - `score`：展示 `幸福 8 要素评分` 录入面板；评分区当前是补录优先的双栏工作台，左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏再回到总分平均走势、8 要素快扫和单项细看。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡
   - `rhythm`：本月状态优先热力图、最长连续记录 / 空档与当天 drill-in；`saved` 但来源签名失配的当天整合日志会显示为 `待更新 / 待整合`
-  - `insights`：主线维度、正在浮现和安静维度三层五维洞察布局
+  - `insights`：本月判断、五维全景、维度之间和下一步四层洞察布局；watchpoint 优先提示 `stale` 的当天整合日志，再退回 quiet lagging / quiet missing 的评分联动提示
   - 空数据月份直接显示真实空态，不再使用示意填充；这不会影响评分保存和 `editableDates`
   - 只有评分、没有维度日志的月份不会伪造 `已整合`、密度结论或 `主线维度`，而是显示空态
   - 未来月份如果没有任何材料，总览首屏会给中性提示并引导回到当前月份，不会把用户送去今天的访谈
@@ -1552,7 +1552,7 @@ POST /api/daily-journal/[id]/save
 
 当前聚合规则：
 - 只统计 `JoyEntry.status = saved`
-- 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数；如果其 `sourceSignature` 与“同一天每个维度最新一篇 `saved` 日志”的签名不一致，analysis 会把它标为 `hasStaleDailyJournal = true`，并在 `rhythm` 中按待更新处理
+- 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数；如果其 `sourceSignature` 与“同一天每个维度最新一篇 `saved` 日志”的签名不一致，analysis 会把它标为 `hasStaleDailyJournal = true`，并在 `rhythm / insights` 中按待更新处理；即使当天已没有任何 `saved` 来源，这个 `stale` 状态也不会被漏掉
 - `dailyCoverage` 覆盖当月所有自然日，并按天返回 `savedEntryCount / savedDimensionCount / hasDailyJournalSaved / hasStaleDailyJournal / hasScore / averageScore`
 - 当前月 `最长空档` 只在已发生的自然日范围内计算，不把未来日期计入空档；未来月份直接返回 `longestGap = null`
 - `dimensionBreakdown` 固定返回五维顺序
@@ -1564,7 +1564,7 @@ POST /api/daily-journal/[id]/save
 - `editableDates` 只在当前分析月返回今天和昨天；月初时昨天即使属于上月也会保留
 
 当前未完成：
-- AI 洞察生成
+- 生成式 AI 月度洞察
 
 #### 5.14.1 保存幸福 8 要素日评分
 
