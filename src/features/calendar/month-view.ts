@@ -18,7 +18,6 @@ export interface CalendarMonthCellPreview {
   statusLabel: string | null;
   visibleStateLabel: string | null;
   dailyJournalLabel: string | null;
-  hasDailyJournal: boolean;
   dimensionPills: CalendarMonthCellDimensionPill[];
   ariaDimensionLabels: string[];
   extraDimensionCount: number;
@@ -49,40 +48,17 @@ export interface CalendarMonthPanelState {
   emptyMessage: string;
 }
 
-function getDimensionPillTone(status: CalendarDimensionStatus["status"]): CalendarMonthDimensionPillTone {
-  switch (status) {
-    case "completed":
-      return "completed";
-    case "draft":
-      return "draft";
-    case "in_progress":
-      return "active";
-    case "mixed":
-      return "mixed";
-    default:
-      return "empty";
-  }
-}
-
 function isFutureEmptyDay(day: CalendarDayRecord, today: string) {
   return day.overallStatus === "empty" && isFutureCalendarDate(day.date, today);
 }
 
-function getMonthVisibleStateLabel(day: CalendarDayRecord, savedDimensionCount: number, futureEmpty: boolean) {
+function getMonthVisibleStateLabel(savedDimensionCount: number, futureEmpty: boolean) {
   if (futureEmpty) {
     return null;
   }
 
   if (savedDimensionCount >= 5) {
     return "已完成";
-  }
-
-  if (savedDimensionCount > 0) {
-    return null;
-  }
-
-  if (day.overallStatus === "draft") {
-    return "草稿";
   }
 
   return null;
@@ -169,13 +145,12 @@ export function buildCalendarMonthCellPreview(day: CalendarDayRecord, today: str
   const touchedDimensions = day.dimensions.filter((dimension) => dimension.status !== "empty");
   const savedDimensions = day.dimensions.filter((dimension) => dimension.hasSavedEntry);
   const futureEmpty = isFutureEmptyDay(day, today);
-  const visibleStateLabel = getMonthVisibleStateLabel(day, savedDimensions.length, futureEmpty);
+  const visibleStateLabel = getMonthVisibleStateLabel(savedDimensions.length, futureEmpty);
 
   return {
     statusLabel: futureEmpty ? null : calendarDayStatusLabelMap[day.overallStatus],
     visibleStateLabel,
     dailyJournalLabel: getDailyJournalLabel(day),
-    hasDailyJournal: (day.dailyJournal?.state ?? "none") !== "none",
     dimensionPills: visibleStateLabel === "已完成"
       ? []
       : savedDimensions.slice(0, 4).map((dimension) => ({

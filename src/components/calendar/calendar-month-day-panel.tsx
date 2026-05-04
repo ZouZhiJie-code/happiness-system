@@ -32,43 +32,49 @@ export function CalendarMonthDayPanel({
 
   return (
     <section
-      className="calendar-card flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] p-4.5 md:p-5"
+      className="calendar-panel calendar-month-day-panel flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 p-0 shadow-none"
       data-testid="calendar-month-day-panel"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[0.72rem] tracking-[0.02em] text-[#8a6b4b]">当天检查</p>
-          <h2 className="mt-1.5 text-balance font-display text-[1.52rem] leading-none text-[#312419]">
-            {formatCalendarDayLabel(day.date)}
-          </h2>
+      <div className="px-5 pb-4 pt-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[0.72rem] tracking-[0.02em] text-[#8a6b4b]">当天检查</p>
+            <h2 className="mt-1.5 text-balance font-display text-[1.52rem] leading-none text-[#312419]">
+              {formatCalendarDayLabel(day.date)}
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {day.date === today ? <span aria-hidden="true" className="size-2 rounded-full bg-[#a96f3d]" /> : null}
+            {panelState.statusLabel ? (
+              <span
+                className={clsx("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}
+              >
+                {panelState.statusLabel}
+              </span>
+            ) : null}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {day.date === today ? <span aria-hidden="true" className="size-2 rounded-full bg-[#a96f3d]" /> : null}
-          {panelState.statusLabel ? (
-            <span className={clsx("rounded-full border px-3 py-1.5 text-[0.78rem]", getCalendarStatusBadgeClass(day.overallStatus))}>
-              {panelState.statusLabel}
-            </span>
+      </div>
+
+      <div className="border-y border-[rgba(153,119,86,0.16)] px-5 py-4">
+        <div className="calendar-card-muted rounded-[18px] p-4">
+          <p className="text-balance font-display text-[1.08rem] leading-tight text-[#312419]">{panelState.headline}</p>
+          <p className="mt-2 line-clamp-2 text-pretty text-[0.86rem] leading-6 text-[#6a5440]">{panelState.description}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5" data-testid="calendar-month-day-panel-summary">
+            <SummaryChip label="待继续" value={panelState.pendingLabel} />
+            <SummaryChip label="已完成" value={`${day.savedCount}项`} />
+            <SummaryChip label="完整日志" value={panelState.dailyJournalLabel} />
+          </div>
+          {panelState.pendingHint ? (
+            <p className="mt-2 text-[0.74rem] text-[#8a6b4b]">{panelState.pendingHint}</p>
           ) : null}
+          <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">
+            {panelState.updatedAtLabel ? `最后更新：${panelState.updatedAtLabel}` : panelState.isFuture ? "这一天还没有更新。" : "这一天还没有开始。"}
+          </p>
         </div>
       </div>
 
-      <div className="calendar-card-muted mt-4 rounded-[22px] p-4">
-        <p className="text-balance font-display text-[1.08rem] leading-tight text-[#312419]">{panelState.headline}</p>
-        <p className="mt-2 line-clamp-2 text-pretty text-[0.86rem] leading-6 text-[#6a5440]">{panelState.description}</p>
-        <div className="mt-3 flex flex-wrap gap-1.5" data-testid="calendar-month-day-panel-summary">
-          <SummaryChip label="待继续" value={panelState.pendingLabel} />
-          <SummaryChip label="已完成" value={`${day.savedCount}项`} />
-          <SummaryChip label="完整日志" value={panelState.dailyJournalLabel} />
-        </div>
-        {panelState.pendingHint ? (
-          <p className="mt-2 text-[0.74rem] text-[#8a6b4b]">{panelState.pendingHint}</p>
-        ) : null}
-        <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">
-          {panelState.updatedAtLabel ? `最后更新：${panelState.updatedAtLabel}` : panelState.isFuture ? "这一天还没有更新。" : "这一天还没有开始。"}
-        </p>
-      </div>
-
-      <div className="mt-4 min-h-0 flex-1 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[0.76rem] text-[#8a6b4b]">五维状态</p>
           {!panelState.isFutureEmpty ? <p className="text-[0.74rem] text-[#8a6b4b]">先锁定哪一维值得进当天</p> : null}
@@ -76,7 +82,7 @@ export function CalendarMonthDayPanel({
 
         {!panelState.shouldShowDimensionItems ? (
           <div
-            className="calendar-card-muted mt-3 rounded-[22px] px-4 py-4 text-[0.9rem] leading-7 text-[#755d47]"
+            className="calendar-card-muted mt-3 rounded-[18px] px-4 py-4 text-[0.9rem] leading-7 text-[#755d47]"
             data-testid="calendar-month-day-panel-empty"
           >
             {panelState.emptyMessage}
@@ -119,7 +125,7 @@ export function CalendarMonthDayPanel({
         )}
       </div>
 
-      <div className="mt-4 border-t border-[rgba(153,119,86,0.2)] pt-3.5">
+      <div className="border-t border-[rgba(153,119,86,0.2)] px-5 pb-3 pt-3">
         <Link
           href={dayViewHref}
           data-action-tone="primary"

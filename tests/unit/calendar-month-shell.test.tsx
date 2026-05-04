@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarMonthShell } from "@/components/calendar/calendar-month-shell";
 import type { CalendarMonthRecord } from "@/features/calendar/types";
@@ -384,7 +384,7 @@ describe("calendar month shell", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("shows saved-dimension month tokens before unfinished state words", async () => {
+  it("shows only saved-dimension badges in the month cell when the day is not fully completed", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMixedMonthRecord()), { status: 200 })) as typeof fetch;
 
     const { container } = render(<CalendarMonthShell />);
@@ -408,6 +408,8 @@ describe("calendar month shell", () => {
     expect(within(mixedCell).getByText("思")).toBeInTheDocument();
     expect(within(mixedCell).queryByText("草稿")).not.toBeInTheDocument();
     expect(within(mixedCell).queryByText("混合状态")).not.toBeInTheDocument();
+    expect(within(mixedCell).queryByText("已完成")).not.toBeInTheDocument();
+    expect(mixedCell.querySelectorAll('span[aria-hidden="true"]')).toHaveLength(0);
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute("data-action-tone", "primary");
     expect(within(detailPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute(
       "href",
@@ -416,18 +418,36 @@ describe("calendar month shell", () => {
     expect(within(detailPanel).queryByRole("link", { name: /继续访谈|继续编辑|查看日志|编辑日志/ })).not.toBeInTheDocument();
   });
 
-  it("shows 草稿 only when the day has no saved dimensions", async () => {
+  it("hides draft copy from the month cell while keeping the status in accessibility text", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDraftOnlyMonthRecord()), { status: 200 })) as typeof fetch;
 
     render(<CalendarMonthShell />);
 
     const draftCell = await screen.findByTestId("calendar-day-2026-05-04");
-    expect(within(draftCell).getByText("草稿")).toBeInTheDocument();
+    expect(within(draftCell).queryByText("草稿")).not.toBeInTheDocument();
     expect(within(draftCell).queryByText("悦")).not.toBeInTheDocument();
+    expect(draftCell.querySelectorAll('span[aria-hidden="true"]')).toHaveLength(0);
     expect(draftCell).toHaveAccessibleName(/草稿/);
   });
 
-  it("collapses five saved dimensions into 已完成 even when the day is still mixed", async () => {
+  it("marks only today with the dedicated month-cell highlight hook", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-04T10:00:00+08:00"));
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    const todayCell = screen.getByTestId("calendar-day-2026-05-04");
+    const otherCell = screen.getByTestId("calendar-day-2026-05-03");
+
+    expect(todayCell).toHaveAttribute("data-today", "true");
+    expect(otherCell).toHaveAttribute("data-today", "false");
+  });
+
+  it("renders a single 已完成 badge in the bottom area when all five dimensions are saved", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAllSavedMonthRecord()), { status: 200 })) as typeof fetch;
 
     render(<CalendarMonthShell />);
@@ -437,6 +457,7 @@ describe("calendar month shell", () => {
     expect(within(completeCell).queryByText("悦")).not.toBeInTheDocument();
     expect(within(completeCell).queryByText("实")).not.toBeInTheDocument();
     expect(within(completeCell).queryByText("思")).not.toBeInTheDocument();
+    expect(completeCell.querySelectorAll('span[aria-hidden="true"]')).toHaveLength(0);
     expect(completeCell).toHaveAccessibleName(/混合状态/);
   });
 

@@ -8,8 +8,7 @@ import { buildCalendarMonthCellPreview } from "@/features/calendar/month-view";
 import {
   getCalendarDimensionVisualMeta,
   getCalendarMonthDaySurfaceClass,
-  getCalendarMonthDimensionPillClass,
-  getCalendarStatusVisualMeta
+  getCalendarMonthDimensionPillClass
 } from "@/features/calendar/presentation";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { formatCalendarDayLabel, type CalendarMonthGridCell } from "@/features/calendar/view-state";
@@ -30,8 +29,8 @@ export function CalendarMonthGrid({
   onSelectDate: (date: string) => void;
 }) {
   return (
-    <div className="flex min-h-full flex-1 flex-col gap-2.5">
-      <div className="grid shrink-0 grid-cols-7 px-0.5">
+    <div className="flex min-h-full flex-1 flex-col gap-1.5 px-4 pb-1 pt-3 md:gap-2 md:px-5 md:pb-1.5 md:pt-4">
+      <div className="grid shrink-0 grid-cols-7 px-1">
         {weekLabels.map((label) => (
           <p key={label} className="text-center text-[0.69rem] tracking-[0.01em] text-[#8a6b4b]">
             {label}
@@ -40,7 +39,7 @@ export function CalendarMonthGrid({
       </div>
 
       <div
-        className="calendar-month-grid-sheet grid min-h-[calc(var(--calendar-month-cell-min-height)*6)] flex-1 grid-cols-7 overflow-hidden rounded-[18px] [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]"
+        className="calendar-month-grid-sheet grid min-h-[calc(var(--calendar-month-cell-min-height)*6)] flex-1 grid-cols-7 overflow-hidden rounded-none [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]"
         data-testid="calendar-month-grid"
       >
         {cells.map((cell) => {
@@ -68,7 +67,6 @@ export function CalendarMonthGrid({
           }
 
           const previewState = buildCalendarMonthCellPreview(day, today);
-          const statusVisualMeta = getCalendarStatusVisualMeta(day.overallStatus);
 
           return (
             <button
@@ -94,86 +92,54 @@ export function CalendarMonthGrid({
               onClick={() => onSelectDate(day.date)}
               className={clsx(
                 "calendar-day-button calendar-month-cell group relative flex min-h-[var(--calendar-month-cell-min-height)] flex-col px-2.5 py-2.5 text-left transition duration-200",
-                getCalendarMonthDaySurfaceClass(day.overallStatus, previewState.hasRecords, previewState.isFutureEmpty),
-                previewState.isFutureEmpty && "calendar-month-cell-future"
+                getCalendarMonthDaySurfaceClass(day.overallStatus, previewState.hasRecords, previewState.isFutureEmpty)
               )}
             >
-              <span
-                aria-hidden="true"
-                className={clsx(
-                  "absolute inset-x-2.5 top-2 h-1 rounded-full opacity-90",
-                  statusVisualMeta.markerClass,
-                  !previewState.hasRecords && !previewState.isFutureEmpty && "opacity-55",
-                  previewState.isFutureEmpty && "opacity-30"
-                )}
-              />
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={clsx(
-                      "font-display text-[1.18rem] leading-none text-[#312419]",
-                      today === day.date && "text-[#8c6034]",
-                      previewState.isFutureEmpty && "text-[#8a7157]"
-                    )}
-                  >
-                    {Number(day.date.slice(-2))}
-                  </span>
-                  {today === day.date ? (
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 size-2 rounded-full bg-[#a96f3d] shadow-[0_0_0_4px_rgba(169,111,61,0.12)]"
-                    />
-                  ) : null}
-                </div>
-                {previewState.visibleStateLabel ? (
-                  <span className={clsx("pt-0.5 text-[0.64rem] font-medium", statusVisualMeta.emphasisClass)}>
-                    {previewState.visibleStateLabel}
-                  </span>
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className={clsx(
-                      "mt-0.5 size-2.5 shrink-0 rounded-full border",
-                      statusVisualMeta.markerClass,
-                      !previewState.hasRecords && !previewState.isFutureEmpty && "opacity-60",
-                      previewState.isFutureEmpty && "opacity-20"
-                    )}
-                  />
-                )}
+                <span className={clsx("font-display text-[1.18rem] leading-none text-[#312419]", today === day.date && "text-[#8c6034]")}>
+                  {Number(day.date.slice(-2))}
+                </span>
               </div>
 
               <div className="mt-4 flex-1" aria-hidden="true" />
 
-              {previewState.hasDailyJournal ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute right-2.5 bottom-2.5 size-1.5 rounded-full bg-[#604529] shadow-[0_0_0_3px_rgba(96,69,41,0.12)]"
-                />
-              ) : null}
-
-              <div className="mt-auto flex flex-nowrap items-center gap-1 overflow-hidden pt-1">
-                {previewState.dimensionPills.map((dimension) => {
-                  const visualMeta = getCalendarDimensionVisualMeta(dimension.dimension);
-
-                  return (
-                    <span
-                      key={`${day.date}-${dimension.dimension}`}
-                      data-dimension={dimension.dimension}
-                      className={clsx(
-                        "inline-flex min-w-[1.2rem] items-center justify-center rounded-[7px] border px-1 py-0.5 text-[0.62rem] font-semibold leading-none",
-                        visualMeta.softBadgeClass,
-                        getCalendarMonthDimensionPillClass(dimension.tone)
-                      )}
-                    >
-                      {dimension.token}
-                    </span>
-                  );
-                })}
-                {previewState.extraDimensionCount > 0 ? (
-                  <span className="text-[0.68rem] leading-none text-[#8a6b4b]">
-                    +{previewState.extraDimensionCount}
+              <div className="mt-auto flex flex-nowrap items-center gap-1.5 overflow-hidden pt-1.5">
+                {previewState.visibleStateLabel ? (
+                  <span
+                    className={clsx(
+                      "inline-flex h-5 min-w-[3.4rem] items-center justify-center rounded-[999px] px-2.5 text-[0.64rem] font-semibold leading-none tracking-[0.04em]",
+                      "bg-[#eef6ec] text-[#45644a] shadow-[inset_0_1px_0_rgba(255,252,247,0.72),0_1px_1.5px_rgba(120,94,66,0.08)]"
+                    )}
+                  >
+                    {previewState.visibleStateLabel}
                   </span>
-                ) : null}
+                ) : (
+                  <>
+                    {previewState.dimensionPills.map((dimension) => {
+                      const visualMeta = getCalendarDimensionVisualMeta(dimension.dimension);
+
+                      return (
+                        <span
+                          key={`${day.date}-${dimension.dimension}`}
+                          data-dimension={dimension.dimension}
+                          className={clsx(
+                            "inline-flex h-5 min-w-[1.45rem] items-center justify-center rounded-[999px] px-1.5 text-[0.6rem] font-semibold leading-none tracking-[0.03em]",
+                            "shadow-[inset_0_1px_0_rgba(255,252,247,0.68),0_1px_1.5px_rgba(120,94,66,0.06)]",
+                            visualMeta.softBadgeClass,
+                            getCalendarMonthDimensionPillClass(dimension.tone)
+                          )}
+                        >
+                          {dimension.token}
+                        </span>
+                      );
+                    })}
+                    {previewState.extraDimensionCount > 0 ? (
+                      <span className="text-[0.68rem] leading-none text-[#8a6b4b]">
+                        +{previewState.extraDimensionCount}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </div>
             </button>
           );
