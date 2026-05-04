@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import Image from "next/image";
 
 import type { HomepageVisualConfig } from "@/content/homepage";
 
@@ -19,7 +20,7 @@ const imageClasses: Record<HomepageVisualVariant, string> = {
 export function HomepageVisual({ visual, variant = "panel", className }: HomepageVisualProps) {
   return (
     <figure className={clsx("relative", className)}>
-      <p className="overflow-hidden text-ellipsis whitespace-nowrap font-display text-[1.12rem] leading-none tracking-[-0.03em] text-[#2d2014] md:text-[1.35rem]">
+      <p className="whitespace-nowrap font-display text-[clamp(1rem,2.4vw,1.16rem)] leading-none text-[#2d2014]">
         {visual.title}
       </p>
 
@@ -30,11 +31,14 @@ export function HomepageVisual({ visual, variant = "panel", className }: Homepag
         )}
       >
         {visual.src ? (
-          <img
+          <Image
             src={visual.src}
             alt={visual.alt}
-            className="h-full w-full object-cover"
+            fill
+            sizes={variant === "hero" ? "(min-width: 1024px) 48vw, 100vw" : "(min-width: 1024px) 52vw, 100vw"}
+            className="object-cover"
             loading={variant === "hero" ? "eager" : "lazy"}
+            priority={variant === "hero"}
             decoding="async"
           />
         ) : (
