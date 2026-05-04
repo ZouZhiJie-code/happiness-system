@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { buildCalendarActionAccessibleName } from "@/features/calendar/accessibility";
 import { buildCalendarCompactCopy, truncateCalendarCopy } from "@/features/calendar/compact-copy";
@@ -110,35 +110,125 @@ function CalendarDayViewSummaryPill({ label, value }: { label: string; value: st
   );
 }
 
-function getDailyJournalAction(day: CalendarDayRecord) {
-  const href = `/interview?dimension=joy&entryDate=${day.date}&mode=daily-journal`;
+function buildDailyJournalHref(day: CalendarDayRecord) {
+  return `/interview?dimension=joy&entryDate=${day.date}&mode=daily-journal`;
+}
 
+function getDailyJournalViewLabel(day: CalendarDayRecord, today: string) {
+  return day.date === today ? "查看今日汇总日志" : "查看当日汇总日志";
+}
+
+function getSavedDimensionLabels(day: CalendarDayRecord) {
+  return day.dimensions
+    .filter((dimension) => dimension.hasSavedEntry)
+    .map((dimension) => getInterviewDimensionMeta(dimension.dimension).label);
+}
+
+function getDailyJournalDescription(day: CalendarDayRecord) {
   switch (day.dailyJournal?.state ?? "none") {
     case "saved":
-      return {
-        label: "打开当天日志",
-        description: "当天整合日志已保存。",
-        href
-      };
+      return "汇总日志已保存，可以直接查看。";
     case "draft":
-      return {
-        label: "继续编辑",
-        description: "当天整合日志已有草稿。",
-        href
-      };
+      return "汇总日志已有草稿，可以继续编辑。";
     case "stale":
-      return {
-        label: "查看并更新",
-        description: "维度日志有更新，可以重新生成当天日志。",
-        href
-      };
+      return "维度日志有更新，可以查看后决定是否重新汇总。";
     default:
-      return {
-        label: day.savedCount > 0 ? "生成当天日志" : "等待保存维度",
-        description: day.savedCount > 0 ? "可把已保存维度整理成当天章节合集。" : "先保存至少一篇维度日志。",
-        href: day.savedCount > 0 ? href : null
-      };
+      return day.savedCount > 0 ? "已有维度日志，可进入访谈页汇总。" : "还没有可查看的汇总日志。";
   }
+}
+
+function getWriteJournalHref(rowItems: ReturnType<typeof buildCalendarDayViewCardItems>) {
+  return rowItems.find((item) => item.primaryAction.href)?.primaryAction.href ?? rowItems[0]?.actions.find((action) => action.href)?.href ?? null;
+}
+
+function DailyJournalPromptDialog({
+  open,
+  mode,
+  date,
+  today,
+  savedDimensionLabels,
+  writeJournalHref,
+  dailyJournalHref,
+  onClose
+}: {
+  open: boolean;
+  mode: "empty" | "sources";
+  date: string;
+  today: string;
+  savedDimensionLabels: string[];
+  writeJournalHref: string | null;
+  dailyJournalHref: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const isToday = date === today;
+  const title = mode === "empty" ? (isToday ? "今天还没有日志" : "这天还没有日志") : "还没有汇总的日志";
+  const description =
+    mode === "empty"
+      ? "可以先从一个维度写起，保存后再回到这里查看汇总。"
+      : `${isToday ? "今日" : "当日"}已有 ${savedDimensionLabels.join("、")} 维度的日志。`;
+  const primaryLabel = mode === "empty" ? "写日志" : "汇总日志";
+  const primaryHref = mode === "empty" ? writeJournalHref : dailyJournalHref;
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.42)] px-4 py-6 md:items-center">
+      <button type="button" aria-label="取消查看汇总日志" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="daily-journal-prompt-title"
+        className="relative w-full max-w-md rounded-[26px] border border-[rgba(153,103,54,0.18)] bg-[#fffaf2] p-5 shadow-xl"
+      >
+        <p className="text-[0.72rem] text-[#8a6b4b]">汇总当天日志</p>
+        <h3 id="daily-journal-prompt-title" className="mt-2 text-balance font-display text-[1.38rem] text-[#312419]">
+          {title}
+        </h3>
+        <p className="mt-3 text-pretty text-sm leading-7 text-[#604529]">{description}</p>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition duration-200 hover:bg-[rgba(255,250,242,0.96)]"
+          >
+            取消
+          </button>
+          {primaryHref ? (
+            <Link
+              href={primaryHref}
+              className="calendar-action-primary inline-flex items-center justify-center rounded-full px-4 py-1.5 text-sm"
+            >
+              {primaryLabel}
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="calendar-action-disabled inline-flex items-center justify-center rounded-full px-4 py-1.5 text-sm"
+            >
+              {primaryLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function CalendarDayViewSecondaryActions({
@@ -202,10 +292,16 @@ export function CalendarDayView({
   today: string;
 }) {
   const rowItems = buildCalendarDayViewCardItems(day, today);
+  const [dailyJournalPromptMode, setDailyJournalPromptMode] = useState<"empty" | "sources" | null>(null);
   const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
   const overviewTitle = day.primaryTitle ? truncateCalendarCopy(day.primaryTitle, 26) : formatCalendarDayLabel(day.date);
   const overviewDateLabel = day.primaryTitle ? formatCalendarDayLabel(day.date) : "当天决策";
-  const dailyJournalAction = getDailyJournalAction(day);
+  const dailyJournalState = day.dailyJournal?.state ?? "none";
+  const dailyJournalHref = buildDailyJournalHref(day);
+  const dailyJournalViewLabel = getDailyJournalViewLabel(day, today);
+  const savedDimensionLabels = getSavedDimensionLabels(day);
+  const writeJournalHref = getWriteJournalHref(rowItems);
+  const shouldLinkDailyJournal = dailyJournalState !== "none";
 
   return (
     <section className="calendar-card overflow-hidden rounded-[26px]" data-testid="calendar-day-view">
@@ -233,21 +329,26 @@ export function CalendarDayView({
         <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[rgba(153,119,86,0.14)] bg-[rgba(255,249,240,0.56)] px-3.5 py-2.5">
           <div className="min-w-0">
-            <p className="text-[0.8rem] font-medium text-[#403024]">当天日志</p>
-            <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{dailyJournalAction.description}</p>
+            <p className="text-[0.8rem] font-medium text-[#403024]">汇总当天日志</p>
+            <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{getDailyJournalDescription(day)}</p>
           </div>
-          {dailyJournalAction.href ? (
+          {shouldLinkDailyJournal ? (
             <Link
-              href={dailyJournalAction.href}
+              href={dailyJournalHref}
               className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
-              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalAction.label}`}
+              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
             >
-              {dailyJournalAction.label}
+              {dailyJournalViewLabel}
             </Link>
           ) : (
-            <span className="calendar-action-disabled inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem]">
-              {dailyJournalAction.label}
-            </span>
+            <button
+              type="button"
+              onClick={() => setDailyJournalPromptMode(savedDimensionLabels.length > 0 ? "sources" : "empty")}
+              className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
+              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
+            >
+              {dailyJournalViewLabel}
+            </button>
           )}
         </div>
       </div>
@@ -311,6 +412,16 @@ export function CalendarDayView({
           );
         })}
       </div>
+      <DailyJournalPromptDialog
+        open={dailyJournalPromptMode !== null}
+        mode={dailyJournalPromptMode ?? "empty"}
+        date={day.date}
+        today={today}
+        savedDimensionLabels={savedDimensionLabels}
+        writeJournalHref={writeJournalHref}
+        dailyJournalHref={dailyJournalHref}
+        onClose={() => setDailyJournalPromptMode(null)}
+      />
     </section>
   );
 }

@@ -1553,7 +1553,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
     expect(await screen.findByTestId("daily-journal-editor")).toBeInTheDocument();
@@ -1580,9 +1580,9 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
-    expect(await screen.findByText("正在打开完整日志")).toBeInTheDocument();
+    expect(await screen.findByText("正在打开汇总当天日志")).toBeInTheDocument();
     expect(screen.getByTestId("journal-growth-tree")).toBeInTheDocument();
 
     dailyJournalResponse.resolve(
@@ -1645,7 +1645,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
     const editor = await screen.findByTestId("daily-journal-editor");
     const bodyTextarea = within(editor).getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement;
@@ -1676,7 +1676,7 @@ describe("InterviewShell", () => {
     const view = renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 
     fireEvent.click(getDimensionButton("充实"));
@@ -1710,7 +1710,7 @@ describe("InterviewShell", () => {
       target: { value: "编辑后的标题" }
     });
 
-    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看完整日志" }));
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 

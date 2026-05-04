@@ -60,8 +60,8 @@ function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mo
     switch (phase) {
       case "skeleton":
         return {
-          label: "正在打开完整日志",
-          description: "我正在读取当天已经保存的维度日志和完整日志状态。"
+          label: "正在打开汇总当天日志",
+          description: "我正在读取当天已经保存的维度日志和汇总日志状态。"
         };
       case "detail":
         return {
@@ -70,7 +70,7 @@ function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mo
         };
       case "polish":
         return {
-          label: "即将进入完整日志",
+          label: "即将进入汇总当天日志",
           description: "正在把编辑区准备好，稍后就能继续生成或修改。"
         };
     }
@@ -79,7 +79,7 @@ function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mo
   switch (phase) {
     case "skeleton":
       return {
-        label: "正在生成完整日志骨架",
+        label: "正在生成汇总日志骨架",
         description: "我会先把今天已保存的维度日志整理成一条完整主线。"
       };
     case "detail":
@@ -90,7 +90,7 @@ function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mo
     case "polish":
       return {
         label: "最终润色中",
-        description: "正在收束标题、段落顺序和最后读感，让它成为一篇完整日志。"
+        description: "正在收束标题、段落顺序和最后读感，让它成为一篇汇总日志。"
       };
   }
 }
@@ -341,7 +341,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
 
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm("生成当天日志会覆盖当前未保存的手动修改，是否继续？");
+      const confirmed = window.confirm("汇总当天日志会覆盖当前未保存的手动修改，是否继续？");
 
       if (!confirmed) {
         return;
@@ -432,7 +432,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
           <p className="mt-1 text-[0.86rem] leading-6 text-[#6a5440]">
             {availableSourceCount > 0
               ? `当前会使用 ${availableSourceCount} 篇已保存的维度日志。`
-              : "先保存至少一篇维度日志，再生成当天日志。"}
+              : "先保存至少一篇维度日志，再汇总当天日志。"}
           </p>
         </div>
 
@@ -498,7 +498,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
           disabled={isLoading || isGenerating || isSavingFinal || availableSourceCount === 0}
           className="rounded-full border border-[rgba(168,124,69,0.3)] bg-[rgba(255,249,239,0.8)] px-4 py-2 text-sm text-[#604529] transition hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isGenerating ? "正在生成..." : dailyJournal ? "重新生成" : "生成当天日志"}
+          {isGenerating ? "正在生成..." : dailyJournal ? "重新生成" : "汇总当天日志"}
         </button>
         <button
           type="button"

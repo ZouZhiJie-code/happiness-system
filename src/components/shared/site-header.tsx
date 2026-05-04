@@ -641,9 +641,9 @@ function SiteHeaderInner() {
                   type="button"
                   onClick={handleDailyJournalClick}
                   className="shrink-0 rounded-full border border-[rgba(171,118,64,0.2)] bg-[rgba(255,249,239,0.88)] px-3 py-1.5 text-[12px] text-[#604529] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.98)]"
-                  aria-label="查看完整日志"
+                  aria-label="查看汇总当天日志"
                 >
-                  完整日志
+                  汇总当天日志
                 </button>
                 <button
                   type="button"

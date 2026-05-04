@@ -135,6 +135,29 @@ function buildFutureEmptyDayRecord(): CalendarDayRecord {
   };
 }
 
+function buildTodayEmptyDayRecord(): CalendarDayRecord {
+  const today = getTodayEntryDate();
+
+  return {
+    date: today,
+    overallStatus: "empty",
+    dimensions: [
+      buildDimensionStatus({ dimension: "joy", actions: ["start_interview"] }),
+      buildDimensionStatus({ dimension: "fulfillment", actions: ["start_interview"] }),
+      buildDimensionStatus({ dimension: "reflection", actions: ["start_interview"] }),
+      buildDimensionStatus({ dimension: "improvement", actions: ["start_interview"] }),
+      buildDimensionStatus({ dimension: "gratitude", actions: ["start_interview"] })
+    ],
+    activeCount: 0,
+    draftCount: 0,
+    savedCount: 0,
+    primaryTitle: null,
+    primarySummary: null,
+    latestUpdatedAt: null,
+    primaryAction: null
+  };
+}
+
 function createDeferredResponse() {
   let resolve: (value: Response) => void;
 
@@ -261,6 +284,67 @@ describe("calendar day shell", () => {
     expect(screen.getAllByText("未来日期暂不支持开始记录")).toHaveLength(5);
     expect(screen.getAllByText("未来日期暂不支持开始记录").every((node) => node.getAttribute("data-action-tone")?.startsWith("disabled"))).toBe(true);
     expect(screen.getAllByText("未来日期暂不支持开始记录")[0]).toHaveAttribute("aria-label", "开心，未记录，未来日期暂不支持开始记录");
+  });
+
+  it("opens an existing daily summary from day view without generating it", async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          ...buildDayRecord(),
+          dailyJournal: {
+            state: "saved",
+            id: "daily-journal-1",
+            title: "五月一日汇总",
+            updatedAt: "2026-05-01T13:00:00.000Z",
+            savedAt: "2026-05-01T13:00:00.000Z",
+            sourceEntryCount: 2
+          }
+        }),
+        { status: 200 }
+      )
+    ) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    expect(await screen.findByRole("link", { name: /查看当日汇总日志/ })).toHaveAttribute(
+      "href",
+      "/interview?dimension=joy&entryDate=2026-05-01&mode=daily-journal"
+    );
+    expect(screen.queryByText("生成当天日志")).not.toBeInTheDocument();
+  });
+
+  it("prompts to summarize real saved dimensions when no daily summary exists", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /查看当日汇总日志/ }));
+
+    const dialog = screen.getByRole("dialog", { name: "还没有汇总的日志" });
+    expect(within(dialog).getByText("当日已有 充实、思考 维度的日志。")).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: "汇总日志" })).toHaveAttribute(
+      "href",
+      "/interview?dimension=joy&entryDate=2026-05-01&mode=daily-journal"
+    );
+    expect(within(dialog).getByRole("button", { name: "取消" })).toBeInTheDocument();
+  });
+
+  it("prompts today's empty day with write journal and cancel actions", async () => {
+    const today = getTodayEntryDate();
+    mockSearchParams.value = {
+      view: "day",
+      date: today
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildTodayEmptyDayRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /查看今日汇总日志/ }));
+
+    const dialog = screen.getByRole("dialog", { name: "今天还没有日志" });
+    expect(within(dialog).getByText("可以先从一个维度写起，保存后再回到这里查看汇总。")).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: "写日志" })).toHaveAttribute("href", `/interview?dimension=joy&entryDate=${today}`);
+    expect(within(dialog).getByRole("button", { name: "取消" })).toBeInTheDocument();
   });
 
   it("moves day navigation responsibility out of the shell body", async () => {
