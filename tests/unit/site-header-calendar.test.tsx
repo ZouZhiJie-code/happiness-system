@@ -20,6 +20,12 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
   }
 }));
 
+const resizeObserverState = vi.hoisted(() => ({
+  callback: null as ResizeObserverCallback | null,
+  observe: vi.fn(),
+  disconnect: vi.fn()
+}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.value,
   useRouter: () => ({
@@ -29,6 +35,16 @@ vi.mock("next/navigation", () => ({
     get: (key: string) => mockSearchParams.value[key as "dimension" | "view" | "date" | "month"] ?? null
   })
 }));
+
+class ResizeObserverMock {
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverState.callback = callback;
+  }
+
+  observe = resizeObserverState.observe;
+
+  disconnect = resizeObserverState.disconnect;
+}
 
 function buildMonthRecord(): CalendarMonthRecord {
   return {
@@ -198,6 +214,11 @@ function createDeferredResponse() {
 
 describe("site header calendar toolbar", () => {
   beforeEach(() => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    resizeObserverState.callback = null;
+    resizeObserverState.observe.mockReset();
+    resizeObserverState.disconnect.mockReset();
+    document.documentElement.style.removeProperty("--site-header-viewport-offset");
     mockPathname.value = "/calendar";
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
@@ -206,6 +227,11 @@ describe("site header calendar toolbar", () => {
       date: "2026-05-02",
       month: null
     };
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.documentElement.style.removeProperty("--site-header-viewport-offset");
   });
 
   it("renders month toolbar state and real summary chips", async () => {
@@ -220,6 +246,33 @@ describe("site header calendar toolbar", () => {
     expect(within(toolbar).getByText("2天")).toBeInTheDocument();
     expect(within(toolbar).getByText("0维")).toBeInTheDocument();
     expect(toolbar).toHaveAttribute("aria-busy", "false");
+  });
+
+  it("syncs the viewport offset css variable to the measured header height", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<SiteHeader />);
+
+    const header = screen.getByRole("banner");
+    vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      bottom: 118,
+      right: 1200,
+      width: 1200,
+      height: 118,
+      toJSON: () => ({})
+    });
+
+    resizeObserverState.callback?.([], {} as ResizeObserver);
+
+    await waitFor(() => {
+      expect(document.documentElement.style.getPropertyValue("--site-header-viewport-offset")).toBe("118px");
+    });
+
+    expect(resizeObserverState.observe).toHaveBeenCalledWith(header);
   });
 
   it("switches the active view and keeps the current date", async () => {

@@ -998,6 +998,7 @@ POST /api/daily-journal/[id]/save
   - 回到今天
   - 实时 summary chips
 - 主导航当前页使用贴近文字的暖棕实线下划线，不再使用填充方框；calendar toolbar 内部按“翻段 / 标题摘要 / 今天 / 视图切换”用 `｜` 分隔。
+- `SiteHeader` 会在客户端测量真实 header 高度，并写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区都按真实 header 高度后的剩余视口布局，不再假设顶部永远只有 `4rem`。
 - 主导航已有 `分析` 项，点击进入 `/analysis?month=<北京时间当前 YYYY-MM>`，默认 `section=overview`。
 
 #### 页面与组件拆分
@@ -1254,7 +1255,8 @@ POST /api/daily-journal/[id]/save
   - `这个月还没有开始记录，可以从某一天先写起。`
 
 请求失败：
-- 展示错误卡片和重试按钮
+- 保留“月历主体 + 当天检查”的 split-pane 方框骨架
+- 主区和右侧 pane 各自展示错误说明与重试按钮
 - 不要把整个页面打成空白
 - 右侧当天检查面板不能 fallback 成当前选中日期的假空白日，应显示“当天检查暂时不可用”并提供重试
 

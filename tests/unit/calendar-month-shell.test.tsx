@@ -508,9 +508,37 @@ describe("calendar month shell", () => {
 
     render(<CalendarMonthShell />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("本月记录暂时没打开。");
+    expect(await screen.findByTestId("calendar-month-primary-error-alert")).toHaveTextContent("本月记录暂时没打开。");
+    expect(screen.getByTestId("calendar-month-primary-error")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-month-secondary-error")).toBeInTheDocument();
     expect(screen.getByText("当天检查暂时不可用。")).toBeInTheDocument();
     expect(screen.queryByTestId("calendar-month-day-panel")).not.toBeInTheDocument();
     expect(screen.queryByText("这一天还空着。")).not.toBeInTheDocument();
+  });
+
+  it("keeps both split panes retryable when the month query fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 500 }))
+      .mockResolvedValueOnce(new Response(null, { status: 500 }))
+      .mockResolvedValueOnce(new Response(null, { status: 500 })) as typeof fetch;
+    global.fetch = fetchMock;
+
+    render(<CalendarMonthShell />);
+
+    const primaryError = await screen.findByTestId("calendar-month-primary-error");
+    const secondaryError = screen.getByTestId("calendar-month-secondary-error");
+
+    fireEvent.click(within(primaryError).getByRole("button", { name: "重新加载" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    fireEvent.click(within(screen.getByTestId("calendar-month-secondary-error")).getByRole("button", { name: "重新加载" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
   });
 });

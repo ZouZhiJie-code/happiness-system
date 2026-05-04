@@ -27,6 +27,8 @@
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口；小屏改为月历主体在上、当天检查面板在下，不再依赖横向滚动访问右侧面板
+  - `SiteHeader` 会把真实 header 高度同步给首屏工作区；calendar / analysis / settings 这类页面会按剩余视口高度布局，小屏、多行 toolbar 或 header 换行时不会再因为顶部 offset 写死而制造底部假留白
+  - 月查询失败时，月视图仍保持“月历主体 + 当天检查”的方框 split-pane 骨架，左右 pane 各自给出错误说明与重试，不会退回旧的圆角浮卡或伪装成空白日
   - 月格当前固定渲染 6 行 42 格，loading skeleton 也保持 42 格，保证加载前后高度一致；可见文字层优先表达“当天已经沉淀出的已保存维度结果”
   - 月格当前使用单字维度标记 `悦 / 实 / 思 / 改 / 谢`；`1-4` 个已保存维度显示对应单字，`5` 个维度都至少保存过一次时收束为 `已完成`
   - 月格当前不再把 `进行中 / 混合状态` 作为可见文字标签；未完成感主要由状态符号和颜色层承担
@@ -132,11 +134,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-04`，当前自动化现实为：
+截至 `2026-05-05`，当前自动化现实为：
 - `40` 个测试文件
-- `399` 个测试
+- `406` 个测试
 - `npx tsc --noEmit` 通过
-- `npm test` 通过
+- `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则
 
 ## 常用命令
 
@@ -169,6 +171,7 @@ npx prisma db push
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
+- `src/components/shared/site-header.tsx` 现在会在客户端测量真实 header 高度，并把结果写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按这个真实高度扣减剩余视口，而不是依赖固定 `4rem`。
 - `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`month + section` URL 归一化、`/api/analysis/month`、总览推荐入口与证据条、评分可信度提示、状态优先的本月热力图、五维主线洞察布局、`dailyCoverage / rhythmOverview / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates` 返回、补录优先的评分工作台、趋势图、样本不足提示和评分录入面板。
 - `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、repository 映射、保存接口、今天/昨天编辑窗口和正式 migration。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。

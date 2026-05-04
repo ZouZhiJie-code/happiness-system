@@ -79,9 +79,12 @@ function CalendarMonthGridSkeleton() {
 
 function CalendarMonthErrorPanel({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="calendar-card flex h-full min-h-[16rem] flex-col items-center justify-center rounded-[28px] p-6 text-center">
+    <div
+      className="flex h-full min-h-[16rem] flex-col items-center justify-center px-5 py-6 text-center"
+      data-testid="calendar-month-secondary-error"
+    >
       <p className="font-display text-[1.32rem] text-[#312419]">当天检查暂时不可用。</p>
-      <p className="mt-2 text-[0.86rem] leading-6 text-[#755d47]">请先重新加载本月记录。</p>
+      <p className="mt-2 text-[0.86rem] leading-6 text-[#755d47]">右侧检查会在本月记录恢复后继续更新。</p>
       <button
         type="button"
         onClick={onRetry}
@@ -89,6 +92,38 @@ function CalendarMonthErrorPanel({ onRetry }: { onRetry: () => void }) {
       >
         重新加载
       </button>
+    </div>
+  );
+}
+
+function CalendarMonthPrimaryErrorPane({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col px-4 pb-1 pt-3 md:px-5 md:pb-1.5 md:pt-4" data-testid="calendar-month-primary-error">
+      <div className="grid shrink-0 grid-cols-7 px-1">
+        {["周一", "周二", "周三", "周四", "周五", "周六", "周日"].map((label) => (
+          <p key={label} className="text-center text-[0.69rem] tracking-[0.01em] text-[#8a6b4b]">
+            {label}
+          </p>
+        ))}
+      </div>
+
+      <div className="mt-3.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border border-[rgba(153,119,86,0.24)] bg-[rgba(255,249,240,0.78)]">
+        <div
+          className="flex min-h-[16rem] flex-1 flex-col items-center justify-center px-6 py-6 text-center"
+          role="alert"
+          data-testid="calendar-month-primary-error-alert"
+        >
+          <p className="font-display text-[1.45rem] text-[#312419]">本月记录暂时没打开。</p>
+          <p className="mt-2 text-[0.86rem] leading-6 text-[#755d47]">月历骨架先保留在这里，重新加载后会回到当天检查。</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
+          >
+            重新加载
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -182,16 +217,7 @@ export function CalendarMonthShell() {
               data-testid="calendar-month-primary-pane"
             >
               {error ? (
-                <div className="calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center" role="alert">
-                  <p className="font-display text-[1.45rem] text-[#312419]">{error}</p>
-                  <button
-                    type="button"
-                    onClick={retryMonthQuery}
-                    className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
-                  >
-                    重新加载
-                  </button>
-                </div>
+                <CalendarMonthPrimaryErrorPane onRetry={retryMonthQuery} />
               ) : isLoading ? (
                 <CalendarMonthGridSkeleton />
               ) : (

@@ -223,6 +223,7 @@
   - 回到今天
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
+  - `SiteHeader` 会在客户端测量真实 header 高度，并把结果同步到 `--site-header-viewport-offset`，让 calendar / analysis / settings 这类首屏工作区按剩余视口真实高度布局，而不是依赖固定 `4rem`
 - 当页面处于 `entryDate` 访谈上下文时，当前选中维度胶囊优先显示 live session 的实时轮次 / 进度圈；其余维度，以及切到 `daily_journal` 工作区后的胶囊状态，继续使用 `CalendarDayRecord.dimensions`
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，live progress 会先被压在 `88%` 以下；这个边界态优先级高于历史 `draftGenerationUnlocked`
 - 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大；主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页
@@ -242,7 +243,7 @@
     - 纯草稿且还没有任何已保存维度：显示 `草稿`
   - `进行中 / 混合状态` 不再作为月格可见文字出现；未完成感主要由状态符号和颜色层承担
   - 当天检查面板当前显示 `待继续 / 已完成 / 完整日志` 三个 summary chip；`待继续` 按 `activeCount + draftCount` 投影，`完整日志` 显示 `未生成 / 可汇总 / 草稿 / 已保存 / 需更新`
-  - 过去空白日只显示轻空态，不再渲染 5 个空维度；月查询失败时右侧不再 fallback 成假空白日，而是显示“当天检查暂时不可用”
+  - 过去空白日只显示轻空态，不再渲染 5 个空维度；月查询失败时仍保留月历主体 + 当天检查的 split-pane 方框骨架，主区与右栏都在各自 pane 内显示错误说明和重试，不再退回旧的浮卡或假空白日
   - today 圆点已回到日期锚点附近，右上角只保留状态词或状态点位
 - `week`
   - 已升级为 7 天同屏对比板

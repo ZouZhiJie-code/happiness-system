@@ -152,6 +152,9 @@ const emptyInterviewDimensionBarStatus: InterviewDimensionBarStatus = {
   percentage: 0
 };
 
+const headerViewportOffsetVarName = "--site-header-viewport-offset";
+const headerViewportOffsetFallback = "4rem";
+
 function mapCalendarDimensionStatusToHeaderStatus(
   dimension: CalendarDayRecord["dimensions"][number]
 ): InterviewDimensionBarStatus {
@@ -186,11 +189,26 @@ function mapCalendarDimensionStatusToHeaderStatus(
   };
 }
 
+function syncSiteHeaderViewportOffset(headerElement: HTMLElement | null) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  if (!headerElement) {
+    document.documentElement.style.setProperty(headerViewportOffsetVarName, headerViewportOffsetFallback);
+    return;
+  }
+
+  const measuredHeight = Math.max(headerElement.offsetHeight, headerElement.getBoundingClientRect().height);
+  document.documentElement.style.setProperty(headerViewportOffsetVarName, `${Math.ceil(measuredHeight)}px`);
+}
+
 function SiteHeaderInner() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasNormalizedInterviewUrlRef = useRef(false);
+  const headerRef = useRef<HTMLElement | null>(null);
   const [entryDateDimensionStatuses, setEntryDateDimensionStatuses] = useState<
     Partial<Record<InterviewDimension, InterviewDimensionBarStatus>> | null
   >(null);
@@ -428,6 +446,29 @@ function SiteHeaderInner() {
     };
   }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, shouldUseLiveSelectedProgress, status, todayEntryDate]);
 
+  useEffect(() => {
+    const headerElement = headerRef.current;
+
+    syncSiteHeaderViewportOffset(headerElement);
+
+    if (typeof window === "undefined" || typeof ResizeObserver === "undefined" || !headerElement) {
+      return () => {
+        syncSiteHeaderViewportOffset(null);
+      };
+    }
+
+    const observer = new ResizeObserver(() => {
+      syncSiteHeaderViewportOffset(headerElement);
+    });
+
+    observer.observe(headerElement);
+
+    return () => {
+      observer.disconnect();
+      syncSiteHeaderViewportOffset(null);
+    };
+  }, []);
+
   const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
     if (item === activeDimension && shouldUseLiveSelectedProgress && activeProgressSession) {
       const progressSummary = getDimensionProgressSummary(activeProgressSession);
@@ -556,7 +597,10 @@ function SiteHeaderInner() {
   }
 
   return (
-    <header className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6">
+    <header
+      ref={headerRef}
+      className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6"
+    >
       <div
         className={clsx(
           "relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:items-center md:gap-3",

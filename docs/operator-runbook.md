@@ -92,11 +92,11 @@ npm run dev
 11. 找一个五维都至少保存过一次的日期
 12. 预期：月格文字层收束为 `已完成`
 13. 在较矮视口打开月视图
-14. 预期：底部日期不会被裁切，父级 pane 可以滚动访问月底日期
+14. 预期：底部日期不会被裁切，父级 pane 可以滚动访问月底日期；如果此时 header 因小屏或内容换行变高，月视图仍应按真实 header 高度后的剩余视口收口，不出现因为顶部 offset 写死而产生的底部假留白或双滚动
 15. 在手机宽度打开月视图
 16. 预期：月历主体在上、当天检查面板在下，不出现必须横向拖动才能看到右侧面板的布局
 17. 让 `/api/calendar/month` 返回失败
-18. 预期：主区出现错误和重试按钮，右侧显示“当天检查暂时不可用”，不显示“这一天还空着”这类假空白状态
+18. 预期：月视图仍保留“月历主体 + 当天检查”的方框 split-pane 骨架；主区与右侧 pane 各自出现错误说明和重试按钮；右侧显示“当天检查暂时不可用”，且两侧都不显示“这一天还空着”这类假空白状态
 
 ### 3.0.1 analysis 入口冒烟场景
 
@@ -250,9 +250,9 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-04`，当前基线是：
+截至 `2026-05-05`，当前基线是：
 - `40` 个测试文件
-- `381` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `16` 个失败，全部集中在 `tests/unit/interview-shell.test.tsx`，主要是旧的 `第 2 轮` / header live progress 断言没有跟上最新访谈页展示
+- `406` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则
 
 ## 5. 高频故障排查
 
@@ -268,7 +268,7 @@ npm test
 处理：
 1. 先确认是不是新改动引起的新增错误
 2. 如果报错仍然集中在 `src/server/repositories/*` 的 `no-explicit-any`，按现有 lint debt 单独收尾，不要误判成当前功能改动造成
-3. 如果还同时看到 `tests/unit/interview-shell.test.tsx` 的 `第 2 轮` / header live progress 断言失败，按当前 UI 真实展示更新对应测试
+3. 如果还同时看到 `tests/unit/calendar-presentation.test.ts` 的 mixed pill 视觉区分断言失败，先确认它是否仍符合当前月格单字 badge 的真实样式语义，再决定是更新断言还是恢复视觉区分
 
 ### 5.1 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
 
