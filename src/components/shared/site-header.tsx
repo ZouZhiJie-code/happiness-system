@@ -31,7 +31,7 @@ import type { InterviewDimension, InterviewSessionRecord } from "@/types/intervi
 
 const navItems = [
   { href: "/interview", matchPath: "/interview", label: "访谈" },
-  { href: "/calendar", matchPath: "/calendar", label: "记录日历" },
+  { href: "/calendar", matchPath: "/calendar", label: "日历" },
   { href: "/analysis", matchPath: "/analysis", label: "分析" },
   { href: "/settings", matchPath: "/settings", label: "设置" }
 ] as const;
@@ -569,12 +569,9 @@ function SiteHeaderInner() {
             <div className="w-full overflow-x-auto pb-0.5">
               <div
                 data-testid="interview-dimension-bar"
+                aria-label="访谈维度切换"
                 className="flex min-w-max items-center gap-1.5"
               >
-                <div className="shrink-0 px-1">
-                  <p className="font-mono text-[0.8rem] tracking-[0.16em] text-[#6a5e53]">当前维度</p>
-                </div>
-                <HeaderDivider />
                 <div className="flex min-w-0 items-center gap-[0.3125rem] overflow-hidden">
                   {interviewDimensions.map((item) => {
                     const isSelected = !isDailyJournalWorkspaceSelected && item === activeDimension;

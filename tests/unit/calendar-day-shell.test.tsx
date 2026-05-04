@@ -329,6 +329,35 @@ describe("calendar day shell", () => {
     expect(within(dialog).getByRole("button", { name: "取消" })).toBeInTheDocument();
   });
 
+  it("traps focus in the daily journal prompt and restores focus on close", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    const trigger = await screen.findByRole("button", { name: /查看当日汇总日志/ });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog", { name: "还没有汇总的日志" });
+    const cancelButton = within(dialog).getByRole("button", { name: "取消" });
+    const summarizeLink = within(dialog).getByRole("link", { name: "汇总日志" });
+
+    expect(dialog).toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(cancelButton).toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(summarizeLink).toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(cancelButton).toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "还没有汇总的日志" })).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
   it("prompts today's empty day with write journal and cancel actions", async () => {
     const today = getTodayEntryDate();
     mockSearchParams.value = {

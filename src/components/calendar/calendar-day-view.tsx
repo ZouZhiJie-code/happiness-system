@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { buildCalendarActionAccessibleName } from "@/features/calendar/accessibility";
 import { buildCalendarCompactCopy, truncateCalendarCopy } from "@/features/calendar/compact-copy";
@@ -149,6 +149,7 @@ function DailyJournalPromptDialog({
   savedDimensionLabels,
   writeJournalHref,
   dailyJournalHref,
+  returnFocusRef,
   onClose
 }: {
   open: boolean;
@@ -158,22 +159,83 @@ function DailyJournalPromptDialog({
   savedDimensionLabels: string[];
   writeJournalHref: string | null;
   dailyJournalHref: string;
+  returnFocusRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    dialogRef.current?.focus({ preventScroll: true });
+
+    function getFocusableElements() {
+      const dialog = dialogRef.current;
+
+      if (!dialog) {
+        return [];
+      }
+
+      return Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute("aria-hidden") && !element.hasAttribute("hidden"));
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusableElements = getFocusableElements();
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialogRef.current?.focus({ preventScroll: true });
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (!event.shiftKey && activeElement === dialogRef.current) {
+        event.preventDefault();
+        firstElement.focus();
+        return;
+      }
+
+      if (event.shiftKey && (activeElement === firstElement || activeElement === dialogRef.current)) {
+        event.preventDefault();
+        lastElement.focus();
+        return;
+      }
+
+      if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, open]);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      returnFocusRef.current?.focus({ preventScroll: true });
+    };
+  }, [open, returnFocusRef]);
 
   if (!open) {
     return null;
@@ -190,11 +252,13 @@ function DailyJournalPromptDialog({
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.42)] px-4 py-6 md:items-center">
-      <button type="button" aria-label="取消查看汇总日志" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <button type="button" tabIndex={-1} aria-label="取消查看汇总日志" className="absolute inset-0 cursor-default" onClick={onClose} />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="daily-journal-prompt-title"
+        tabIndex={-1}
         className="relative w-full max-w-md rounded-[26px] border border-[rgba(153,103,54,0.18)] bg-[#fffaf2] p-5 shadow-xl"
       >
         <p className="text-[0.72rem] text-[#8a6b4b]">汇总当天日志</p>
@@ -293,6 +357,7 @@ export function CalendarDayView({
 }) {
   const rowItems = buildCalendarDayViewCardItems(day, today);
   const [dailyJournalPromptMode, setDailyJournalPromptMode] = useState<"empty" | "sources" | null>(null);
+  const dailyJournalPromptTriggerRef = useRef<HTMLButtonElement | null>(null);
   const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
   const overviewTitle = day.primaryTitle ? truncateCalendarCopy(day.primaryTitle, 26) : formatCalendarDayLabel(day.date);
   const overviewDateLabel = day.primaryTitle ? formatCalendarDayLabel(day.date) : "当天决策";
@@ -342,6 +407,7 @@ export function CalendarDayView({
             </Link>
           ) : (
             <button
+              ref={dailyJournalPromptTriggerRef}
               type="button"
               onClick={() => setDailyJournalPromptMode(savedDimensionLabels.length > 0 ? "sources" : "empty")}
               className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
@@ -420,6 +486,7 @@ export function CalendarDayView({
         savedDimensionLabels={savedDimensionLabels}
         writeJournalHref={writeJournalHref}
         dailyJournalHref={dailyJournalHref}
+        returnFocusRef={dailyJournalPromptTriggerRef}
         onClose={() => setDailyJournalPromptMode(null)}
       />
     </section>

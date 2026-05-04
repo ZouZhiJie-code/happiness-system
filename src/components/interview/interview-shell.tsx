@@ -1249,7 +1249,7 @@ export function InterviewShell() {
               ? buildInterviewIssue("SESSION_NOT_FOUND", {
                   title: "这条访谈暂时打不开",
                   message: "当前想继续的那条访谈不存在或已经失效。",
-                  resolution: "请回到记录日历重新选择，或直接开始一条新的访谈。"
+                  resolution: "请回到日历重新选择，或直接开始一条新的访谈。"
                 })
               : buildInterviewIssue("NETWORK_UNAVAILABLE", {
                   title: "访谈启动失败",
