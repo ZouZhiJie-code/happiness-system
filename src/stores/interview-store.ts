@@ -15,6 +15,18 @@ import type {
 
 export type InterviewBootState = "idle" | "booting" | "restoring";
 export type InterviewWorkspaceMode = "interview" | "daily_journal";
+export type InterviewWorkspaceTransitionState =
+  | null
+  | {
+      kind: "opening_daily_journal";
+    }
+  | {
+      kind: "returning_to_interview";
+    }
+  | {
+      kind: "switching_dimension";
+      targetDimension: InterviewDimension;
+    };
 
 interface InterviewState {
   dimension: InterviewDimension;
@@ -33,6 +45,9 @@ interface InterviewState {
   draftGenerationRequestId: number;
   workspaceMode: InterviewWorkspaceMode;
   dailyJournalOpenRequestId: number;
+  dimensionNavigationRequestId: number;
+  dimensionNavigationTarget: InterviewDimension | null;
+  workspaceTransitionState: InterviewWorkspaceTransitionState;
   conversationResetRequestId: number;
   turnCount: number;
   messages: InterviewMessage[];
@@ -49,8 +64,11 @@ interface InterviewState {
     busy: boolean;
     disabled: boolean;
   }) => void;
+  setWorkspaceTransitionState: (state: InterviewWorkspaceTransitionState) => void;
   requestDraftGeneration: () => void;
   requestDailyJournalOpen: () => void;
+  requestDimensionNavigation: (dimension: InterviewDimension) => void;
+  clearDimensionNavigationRequest: () => void;
   setWorkspaceMode: (mode: InterviewWorkspaceMode) => void;
   requestConversationReset: () => void;
   reset: (nextDimension?: InterviewDimension) => void;
@@ -73,6 +91,9 @@ const initialState = {
   draftGenerationRequestId: 0,
   workspaceMode: "interview" as InterviewWorkspaceMode,
   dailyJournalOpenRequestId: 0,
+  dimensionNavigationRequestId: 0,
+  dimensionNavigationTarget: null as InterviewDimension | null,
+  workspaceTransitionState: null as InterviewWorkspaceTransitionState,
   conversationResetRequestId: 0,
   turnCount: 0,
   messages: [] as InterviewMessage[],
@@ -130,6 +151,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       draftGenerationBusy: busy,
       draftGenerationDisabled: disabled
     }),
+  setWorkspaceTransitionState: (workspaceTransitionState) =>
+    set({
+      workspaceTransitionState
+    }),
   requestDraftGeneration: () =>
     set((state) => ({
       draftGenerationRequestId: state.draftGenerationRequestId + 1
@@ -138,6 +163,15 @@ export const useInterviewStore = create<InterviewState>((set) => ({
     set((state) => ({
       dailyJournalOpenRequestId: state.dailyJournalOpenRequestId + 1
     })),
+  requestDimensionNavigation: (dimension) =>
+    set((state) => ({
+      dimensionNavigationRequestId: state.dimensionNavigationRequestId + 1,
+      dimensionNavigationTarget: dimension
+    })),
+  clearDimensionNavigationRequest: () =>
+    set({
+      dimensionNavigationTarget: null
+    }),
   setWorkspaceMode: (workspaceMode) => set({ workspaceMode }),
   requestConversationReset: () =>
     set((state) => ({

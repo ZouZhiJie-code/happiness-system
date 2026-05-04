@@ -47,22 +47,6 @@ function HeaderDivider({ className }: { className?: string }) {
   );
 }
 
-function getStatusChipClass(isSelected: boolean, isEmphasized: boolean) {
-  if (isSelected) {
-    return isEmphasized
-      ? "border-[rgba(255,244,228,0.26)] bg-[rgba(255,244,228,0.14)] text-[rgba(255,248,241,0.88)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-      : "border-[rgba(255,244,228,0.2)] bg-[rgba(255,244,228,0.1)] text-[rgba(255,248,241,0.74)] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]";
-  }
-
-  return isEmphasized
-    ? "border-[rgba(166,114,61,0.18)] bg-[rgba(255,249,240,0.84)] text-[#7a5d40] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
-    : "border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] text-[#8d7257] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]";
-}
-
-function isHeaderStatusLabel(value: string): value is InterviewDimensionBarStatus["statusLabel"] {
-  return value === "未开始" || value === "进行中" || value === "已整理" || value === "已完成";
-}
-
 function getHeaderStatusDataValue(statusLabel: InterviewDimensionBarStatus["statusLabel"]) {
   switch (statusLabel) {
     case "已完成":
@@ -152,6 +136,16 @@ type InterviewDimensionBarStatus = {
   percentage: number;
 };
 
+type SelectedProgressPodState =
+  | {
+      kind: "hidden";
+    }
+  | {
+      kind: "active";
+      label: string;
+      percentage: number;
+    };
+
 const emptyInterviewDimensionBarStatus: InterviewDimensionBarStatus = {
   statusLabel: "未开始",
   shouldShowRing: false,
@@ -216,6 +210,7 @@ function SiteHeaderInner() {
     pendingDecision,
     requestConversationReset,
     requestDailyJournalOpen,
+    requestDimensionNavigation,
     requestDraftGeneration,
     sessionEntryDate,
     sessionDimension,
@@ -225,6 +220,7 @@ function SiteHeaderInner() {
     snapshotData,
     status,
     turnCount,
+    workspaceTransitionState,
     workspaceMode
   } = useInterviewStore();
   const isActive = (href: string) =>
@@ -249,6 +245,8 @@ function SiteHeaderInner() {
   const shouldShowDraftGenerateButton = Boolean(
     isViewingHydratedDimension && status === "active" && draftGenerationUnlocked && !shouldHideDraftGenerateButton
   );
+  const isWorkspaceTransitioning = Boolean(workspaceTransitionState);
+  const isOpeningDailyJournal = workspaceTransitionState?.kind === "opening_daily_journal";
   const activeProgressSession: DimensionProgressSessionLike | null =
     sessionId && sessionDimension === activeDimension && status
       ? {
@@ -353,7 +351,7 @@ function SiteHeaderInner() {
 
     let cancelled = false;
     const cachedEntries = interviewDimensions
-      .filter((item) => item !== activeDimension)
+      .filter((item) => item !== activeDimension || !shouldUseLiveSelectedProgress)
       .map((item) => [item, getStoredInterviewSessionEntry(item)] as const)
       .filter(
         (
@@ -428,7 +426,7 @@ function SiteHeaderInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, status, todayEntryDate]);
+  }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, shouldUseLiveSelectedProgress, status, todayEntryDate]);
 
   const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
     if (item === activeDimension && shouldUseLiveSelectedProgress && activeProgressSession) {
@@ -457,13 +455,16 @@ function SiteHeaderInner() {
     return accumulator;
   }, {} as Record<InterviewDimension, InterviewDimensionBarStatus>);
   const selectedProgressSummary = dimensionProgressMap[activeDimension];
-  const selectedProgressLabel =
-    isSelectedDimensionRestoring
-      ? "继续中"
-      : shouldUseLiveSelectedProgress && selectedProgressSummary.shouldShowRing && turnCount > 0
-        ? `有效 ${turnCount} 轮`
-        : selectedProgressSummary.statusLabel;
-  const shouldShowSelectedProgressPod = selectedProgressSummary.shouldShowRing || isSelectedDimensionRestoring;
+  const selectedProgressPodState: SelectedProgressPodState =
+    shouldUseLiveSelectedProgress && selectedProgressSummary.shouldShowRing
+      ? {
+          kind: "active",
+          label: turnCount > 0 ? `有效 ${turnCount} 轮` : "继续中",
+          percentage: selectedProgressSummary.percentage
+        }
+      : {
+          kind: "hidden"
+        };
 
   function confirmLeaveInterview() {
     if (!shouldProtectInterview) {
@@ -493,6 +494,19 @@ function SiteHeaderInner() {
 
   function handleDimensionChange(nextDimension: string) {
     const normalized = normalizeInterviewDimension(nextDimension);
+
+    if (isWorkspaceTransitioning) {
+      return;
+    }
+
+    if (isDailyJournalWorkspaceSelected) {
+      if (!confirmLeaveInterview()) {
+        return;
+      }
+
+      requestDimensionNavigation(normalized);
+      return;
+    }
 
     if (normalized === activeDimension) return;
 
@@ -534,6 +548,10 @@ function SiteHeaderInner() {
   }
 
   function handleDailyJournalClick() {
+    if (isWorkspaceTransitioning) {
+      return;
+    }
+
     requestDailyJournalOpen();
   }
 
@@ -580,20 +598,20 @@ function SiteHeaderInner() {
                     const progressSummary = dimensionProgressMap[item];
                     const labelId = `interview-dimension-label-${item}`;
                     const progressId = `interview-dimension-status-${item}`;
-                    const isActiveItemRestoring = isSelected && isSelectedDimensionRestoring;
-                    const detailLabel = isSelected ? selectedProgressLabel : progressSummary.statusLabel;
+                    const detailLabel = progressSummary.statusLabel;
 
                     return (
                       <button
                         key={item}
                         type="button"
                         onClick={() => handleDimensionChange(item)}
+                        disabled={isWorkspaceTransitioning}
                         aria-pressed={isSelected}
                         aria-current={isSelected ? "step" : undefined}
                         aria-labelledby={labelId}
                         aria-describedby={progressId}
                         className={clsx(
-                          "group relative flex shrink-0 items-center rounded-[15px] border py-1.5 pl-3 pr-4 text-left transition duration-300",
+                          "group relative flex shrink-0 items-center rounded-[15px] border py-1.5 pl-3 pr-4 text-left transition duration-300 disabled:cursor-not-allowed disabled:opacity-60",
                           isSelected
                             ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
                             : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
@@ -616,44 +634,30 @@ function SiteHeaderInner() {
                           {meta.navLabel}
                         </span>
                         <div className="flex min-w-0 items-center">
-                          {isHeaderStatusLabel(detailLabel) ? (
-                            <>
-                              <span id={progressId} className="sr-only">
-                                {detailLabel}
-                              </span>
-                              <DimensionStatusDot
-                                statusLabel={detailLabel}
-                                testId={`interview-dimension-status-dot-${item}`}
-                              />
-                            </>
-                          ) : (
-                            <span
-                              id={progressId}
-                              className={clsx(
-                                "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
-                                getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
-                              )}
-                            >
-                              {detailLabel}
-                            </span>
-                          )}
+                          <span id={progressId} className="sr-only">
+                            {detailLabel}
+                          </span>
+                          <DimensionStatusDot
+                            statusLabel={detailLabel}
+                            testId={`interview-dimension-status-dot-${item}`}
+                          />
                         </div>
                       </button>
                     );
                   })}
                 </div>
-                {shouldShowSelectedProgressPod ? (
+                {selectedProgressPodState.kind !== "hidden" ? (
                   <>
                     <HeaderDivider />
                     <div
                       data-testid="selected-dimension-progress"
                       className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
                     >
-                      {selectedProgressSummary.shouldShowRing ? (
+                      {selectedProgressPodState.kind === "active" ? (
                         <>
                           <ProgressRing
-                            percentage={selectedProgressSummary.percentage}
-                            label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressSummary.percentage}%`}
+                            percentage={selectedProgressPodState.percentage}
+                            label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressPodState.percentage}%`}
                             testId={`dimension-progress-ring-${activeDimension}`}
                             size={22}
                           />
@@ -661,17 +665,10 @@ function SiteHeaderInner() {
                             data-testid="selected-dimension-progress-value"
                             className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
                           >
-                            {selectedProgressSummary.percentage}%
+                            {selectedProgressPodState.label}
                           </span>
                         </>
-                      ) : (
-                        <span
-                          data-testid="selected-dimension-progress-value"
-                          className="whitespace-nowrap rounded-[9px] border border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] px-1.5 py-[0.22rem] font-mono text-[0.58rem] tracking-[0.14em] text-[#7f5c38]"
-                        >
-                          继续中
-                        </span>
-                      )}
+                      ) : null}
                     </div>
                   </>
                 ) : null}
@@ -688,10 +685,11 @@ function SiteHeaderInner() {
                 <button
                   type="button"
                   onClick={handleDailyJournalClick}
+                  disabled={isWorkspaceTransitioning}
                   aria-pressed={isDailyJournalWorkspaceSelected}
                   aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
                   className={clsx(
-                    "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034]",
+                    "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
                     isDailyJournalWorkspaceSelected
                       ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
                       : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
@@ -705,7 +703,7 @@ function SiteHeaderInner() {
                       !isDailyJournalWorkspaceSelected && "opacity-50"
                     )}
                   />
-                  汇总当天日志
+                  {isOpeningDailyJournal ? "正在打开..." : "汇总当天日志"}
                 </button>
                 <button
                   type="button"

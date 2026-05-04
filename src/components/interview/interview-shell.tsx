@@ -23,7 +23,7 @@ import {
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import type { CalendarDayRecord } from "@/features/calendar/types";
-import { useInterviewStore } from "@/stores/interview-store";
+import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
   InterviewDimension,
@@ -484,6 +484,58 @@ function DraftGenerationPhaseBanner({
   );
 }
 
+function getWorkspaceTransitionMeta(
+  transitionState: NonNullable<InterviewWorkspaceTransitionState>
+): {
+  label: string;
+  description: string;
+  progress: number;
+} {
+  switch (transitionState.kind) {
+    case "opening_daily_journal":
+      return {
+        label: "正在打开汇总当天日志",
+        description: "我正在先保存当前工作区还没自动暂存的修改，然后切到当天日志工作区。",
+        progress: 24
+      };
+    case "returning_to_interview":
+      return {
+        label: "正在回到访谈",
+        description: "我正在先保存当天日志里还没自动暂存的修改，然后回到当前维度访谈。",
+        progress: 28
+      };
+    case "switching_dimension":
+      return {
+        label: `正在切换到${getInterviewDimensionMeta(transitionState.targetDimension).label}`,
+        description: "我正在先保存当天日志里还没自动暂存的修改，然后再切到对应维度。",
+        progress: 32
+      };
+  }
+}
+
+function WorkspaceTransitionCard({
+  transitionState
+}: {
+  transitionState: NonNullable<InterviewWorkspaceTransitionState>;
+}) {
+  const meta = getWorkspaceTransitionMeta(transitionState);
+
+  return (
+    <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <JournalGenerationStatus
+          label={meta.label}
+          description={meta.description}
+          progress={meta.progress}
+          variant="full"
+          className="w-full max-w-3xl"
+          data-testid="workspace-transition-card"
+        />
+      </div>
+    </div>
+  );
+}
+
 async function requestInterviewSession(dimension: InterviewDimension, entryDate?: string | null) {
   const response = await fetch("/api/interview/session/start", {
     method: "POST",
@@ -729,8 +781,11 @@ export function InterviewShell() {
   const searchParams = useSearchParams();
   const {
     bootState,
+    clearDimensionNavigationRequest,
     conversationResetRequestId,
     dailyJournalOpenRequestId,
+    dimensionNavigationRequestId,
+    dimensionNavigationTarget,
     draftGenerationRequestId,
     draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
@@ -750,7 +805,9 @@ export function InterviewShell() {
     setJournalEntry,
     turnCount,
     stage,
-    status
+    status,
+    setWorkspaceTransitionState,
+    workspaceTransitionState
   } = useInterviewStore();
   const [input, setInput] = useState("");
   const [hasDismissedInputPlaceholder, setHasDismissedInputPlaceholder] = useState(false);
@@ -789,6 +846,7 @@ export function InterviewShell() {
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
+  const lastDimensionNavigationRequestRef = useRef(0);
   const previousDimensionRef = useRef(currentDimension);
   const dailyJournalWorkspaceRef = useRef<DailyJournalWorkspaceHandle | null>(null);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
@@ -885,6 +943,12 @@ export function InterviewShell() {
       !isBusy &&
       !isGeneratingDraft &&
       !isSavingJournal
+  );
+  const isWorkspaceTransitioning = Boolean(workspaceTransitionState);
+  const showWorkspaceTransition = Boolean(
+    workspaceTransitionState &&
+      ((workspaceTransitionState.kind === "opening_daily_journal" && workspaceMode === "interview") ||
+        (workspaceTransitionState.kind !== "opening_daily_journal" && workspaceMode === "daily_journal"))
   );
   const canSendInput = Boolean(
     input.trim() &&
@@ -2015,29 +2079,48 @@ export function InterviewShell() {
   }, []);
 
   async function openDailyJournalWorkspace() {
+    if (workspaceMode === "daily_journal") {
+      return;
+    }
+
+    setWorkspaceTransitionState({
+      kind: "opening_daily_journal"
+    });
+
+    let nextWorkspaceMode: "interview" | "daily_journal" = workspaceMode;
+
     if (panelOpen) {
       const closed = await handleClosePanel();
 
       if (!closed) {
+        setWorkspaceTransitionState(null);
         return;
       }
     } else {
       setPanelOpen(false);
     }
 
-    setWorkspaceMode("daily_journal");
+    nextWorkspaceMode = "daily_journal";
+    setWorkspaceMode(nextWorkspaceMode);
+    setWorkspaceTransitionState(null);
   }
 
   async function handleBackToInterviewWorkspace() {
+    setWorkspaceTransitionState({
+      kind: "returning_to_interview"
+    });
+
     const synced = await flushDailyJournalWorkspace();
 
     if (!synced) {
+      setWorkspaceTransitionState(null);
       return;
     }
 
     setWorkspaceMode("interview");
 
     if (!shouldOpenDailyJournalFromQuery) {
+      setWorkspaceTransitionState(null);
       return;
     }
 
@@ -2052,7 +2135,64 @@ export function InterviewShell() {
     }
 
     router.replace(`/interview?${params.toString()}`, { scroll: false });
+    setWorkspaceTransitionState(null);
   }
+
+  useEffect(() => {
+    if (
+      dimensionNavigationRequestId === 0 ||
+      dimensionNavigationRequestId === lastDimensionNavigationRequestRef.current ||
+      !dimensionNavigationTarget ||
+      workspaceMode !== "daily_journal"
+    ) {
+      return;
+    }
+
+    lastDimensionNavigationRequestRef.current = dimensionNavigationRequestId;
+    const targetDimension = dimensionNavigationTarget;
+
+    const navigateToRequestedDimension = async () => {
+      setWorkspaceTransitionState({
+        kind: "switching_dimension",
+        targetDimension
+      });
+
+      const synced = await flushDailyJournalWorkspace();
+
+      if (!synced) {
+        clearDimensionNavigationRequest();
+        setWorkspaceTransitionState(null);
+        return;
+      }
+
+      const params = new URLSearchParams({ dimension: targetDimension });
+      const entryDate = requestedEntryDate ?? sessionEntryDate;
+
+      if (entryDate) {
+        params.set("entryDate", entryDate);
+      }
+
+      setWorkspaceMode("interview");
+      setDimension(targetDimension);
+      router.push(`/interview?${params.toString()}`, { scroll: false });
+      clearDimensionNavigationRequest();
+      setWorkspaceTransitionState(null);
+    };
+
+    void navigateToRequestedDimension();
+  }, [
+    clearDimensionNavigationRequest,
+    dimensionNavigationRequestId,
+    dimensionNavigationTarget,
+    flushDailyJournalWorkspace,
+    requestedEntryDate,
+    router,
+    sessionEntryDate,
+    setDimension,
+    setWorkspaceMode,
+    setWorkspaceTransitionState,
+    workspaceMode
+  ]);
 
   useEffect(() => {
     const previousDimension = previousDimensionRef.current;
@@ -2069,10 +2209,19 @@ export function InterviewShell() {
     let cancelled = false;
 
     const leaveDailyJournalForDimensionChange = async () => {
+      setWorkspaceTransitionState({
+        kind: "switching_dimension",
+        targetDimension: currentDimension
+      });
+
       const synced = await flushDailyJournalWorkspace();
 
       if (!cancelled && synced) {
         setWorkspaceMode("interview");
+      }
+
+      if (!cancelled) {
+        setWorkspaceTransitionState(null);
       }
     };
 
@@ -2085,6 +2234,7 @@ export function InterviewShell() {
     currentDimension,
     flushDailyJournalWorkspace,
     setWorkspaceMode,
+    setWorkspaceTransitionState,
     shouldOpenDailyJournalFromQuery,
     workspaceMode
   ]);
@@ -2161,7 +2311,7 @@ export function InterviewShell() {
   return (
     <section
       ref={shellRef}
-      className={`grid min-h-0 gap-0 overflow-hidden ${panelOpen && workspaceMode === "interview" ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]" : ""}`}
+      className={`relative grid min-h-0 gap-0 overflow-hidden ${panelOpen && workspaceMode === "interview" ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]" : ""}`}
       style={shellHeight ? { height: `${shellHeight}px` } : undefined}
     >
       {workspaceMode === "daily_journal" ? (
@@ -2333,7 +2483,7 @@ export function InterviewShell() {
       </div>
       )}
 
-      {panelOpen && workspaceMode === "interview" ? (
+      {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
         <aside className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5">
           <button
             type="button"
@@ -2442,6 +2592,11 @@ export function InterviewShell() {
             {journalEntry && draftGenerateIssue ? <p className="mt-4 text-sm text-[#9f3a2f]">{draftGenerateIssue.message}</p> : null}
           </div>
         </aside>
+      ) : null}
+      {showWorkspaceTransition && workspaceTransitionState ? (
+        <div className="absolute inset-0 z-30 bg-[rgba(247,240,229,0.92)] backdrop-blur-[2px]">
+          <WorkspaceTransitionCard transitionState={workspaceTransitionState} />
+        </div>
       ) : null}
       {toastState?.visible ? <SaveToast message={toastState.message} /> : null}
       <SaveJournalConfirmDialog

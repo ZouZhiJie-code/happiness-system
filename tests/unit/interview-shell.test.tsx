@@ -452,6 +452,10 @@ function expectSelectedProgressValue(value: string) {
   expect(within(getDimensionBar()).getByTestId("selected-dimension-progress-value")).toHaveTextContent(value);
 }
 
+function expectSelectedProgressHidden() {
+  expect(within(getDimensionBar()).queryByTestId("selected-dimension-progress")).not.toBeInTheDocument();
+}
+
 describe("InterviewShell", () => {
   beforeEach(() => {
     useInterviewStore.getState().reset("joy");
@@ -693,9 +697,9 @@ describe("InterviewShell", () => {
     expect(generateButton).toBeInTheDocument();
     expect(getDimensionBar()).toContainElement(generateButton);
     expect(generateButton.closest(".max-w-2xl")).toBeNull();
-    expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
+    expect(within(getDimensionButton("开心")).queryByText("有效 2 轮")).not.toBeInTheDocument();
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
     expectDimensionStatus("充实", "未开始");
     expectDimensionStatus("思考", "未开始");
     expectDimensionStatus("改进", "未开始");
@@ -1698,13 +1702,58 @@ describe("InterviewShell", () => {
   it("returns to the interview workspace when the dimension changes from the daily journal workspace", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
     vi.spyOn(window, "confirm").mockReturnValue(true);
+    const dailyJournalPutResponse = createDeferredResponse();
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/daily-journal/daily-1") && init?.method === "PUT") {
+        return dailyJournalPutResponse.promise;
+      }
+
+      return defaultFetch!(input, init);
+    });
+
     const view = renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 
+    const editor = await screen.findByTestId("daily-journal-editor");
+    const bodyTextarea = within(editor).getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement;
+    const editedContent = `${baseDailyJournalEntry.content}\n\n准备切去充实维度前补一行。`;
+
+    fireEvent.change(bodyTextarea, {
+      target: { value: editedContent }
+    });
     fireEvent.click(getDimensionButton("充实"));
+
+    expect(await screen.findByTestId("workspace-transition-card")).toBeInTheDocument();
+    expect(screen.getByText("正在切换到充实")).toBeInTheDocument();
+    expect(mockRouterPush).not.toHaveBeenCalled();
+
+    dailyJournalPutResponse.resolve(
+      new Response(
+        JSON.stringify({
+          dailyJournal: {
+            ...baseDailyJournalEntry,
+            content: editedContent,
+            updatedAt: "2026-04-21T00:10:00.000Z"
+          }
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+    );
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(`/interview?dimension=fulfillment&entryDate=${defaultEntryDate()}`, { scroll: false });
+    });
+
     mockSearchParams.value = {
       ...mockSearchParams.value,
       dimension: "fulfillment",
@@ -1723,8 +1772,85 @@ describe("InterviewShell", () => {
     expect(screen.getByTestId("interview-message-scroll")).toBeInTheDocument();
   });
 
+  it("allows returning from the daily journal workspace by clicking the current dimension pill", async () => {
+    cacheInterviewSessions({ joy: "session-ready" });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const view = renderInterviewPage();
+
+    await screen.findByText("有效 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
+    expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+
+    fireEvent.click(getDimensionButton("开心"));
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(`/interview?dimension=joy&entryDate=${defaultEntryDate()}`, { scroll: false });
+    });
+
+    mockSearchParams.value = {
+      ...mockSearchParams.value,
+      dimension: "joy",
+      mode: null
+    };
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
+    });
+  });
+
+  it("does not get stuck on the same target dimension after a failed daily-journal flush", async () => {
+    cacheInterviewSessions({ joy: "session-ready" });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    renderInterviewPage();
+
+    await screen.findByText("有效 2 轮");
+    fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
+
+    const editor = await screen.findByTestId("daily-journal-editor");
+    const bodyTextarea = within(editor).getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement;
+
+    fireEvent.change(bodyTextarea, {
+      target: { value: "" }
+    });
+    fireEvent.click(getDimensionButton("感谢"));
+
+    await waitFor(() => {
+      expect(screen.getByText("当天日志标题和正文不能为空。")).toBeInTheDocument();
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(screen.getByTestId("daily-journal-workspace")).toBeInTheDocument();
+
+    fireEvent.change(bodyTextarea, {
+      target: { value: `${baseDailyJournalEntry.content}\n\n修好后切去感谢维度。` }
+    });
+    fireEvent.click(getDimensionButton("感谢"));
+
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith(`/interview?dimension=gratitude&entryDate=${defaultEntryDate()}`, { scroll: false });
+    });
+  });
+
   it("persists unsaved dimension journal edits before switching to the daily journal workspace", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
+    const draftPutResponse = createDeferredResponse();
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
+        return draftPutResponse.promise;
+      }
+
+      return defaultFetch!(input, init);
+    });
 
     renderInterviewPage();
 
@@ -1736,6 +1862,27 @@ describe("InterviewShell", () => {
     });
 
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
+
+    expect(await screen.findByTestId("workspace-transition-card")).toBeInTheDocument();
+    expect(screen.getByText("正在打开汇总当天日志")).toBeInTheDocument();
+    expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
+
+    draftPutResponse.resolve(
+      new Response(
+        JSON.stringify({
+          ...baseJournalEntry,
+          title: "编辑后的标题",
+          status: "draft",
+          source: "ai_draft_edited",
+          updatedAt: "2026-04-21T00:09:00.000Z",
+          savedAt: null
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+    );
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
 
@@ -2038,7 +2185,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await waitFor(() => {
-      expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
+      expect(within(getDimensionButton("开心")).queryByText("有效 2 轮")).not.toBeInTheDocument();
       expectDimensionStatus("充实", "已完成");
       expectDimensionStatus("思考", "已完成");
       expectDimensionStatus("改进", "已完成");
@@ -2046,7 +2193,7 @@ describe("InterviewShell", () => {
     });
 
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
     expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/calendar/day?date=2026-05-01")).toBe(true);
     expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).includes("/api/interview/session/session-gratitude-other-day"))).toBe(
       false
@@ -2091,9 +2238,9 @@ describe("InterviewShell", () => {
       expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     });
 
-    expect(within(getDimensionButton("开心")).getByText("有效 2 轮")).toBeInTheDocument();
+    expect(within(getDimensionButton("开心")).queryByText("有效 2 轮")).not.toBeInTheDocument();
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
     expectDimensionStatus("改进", "已完成");
     expectDimensionStatus("感谢", "未开始");
   });
@@ -2978,7 +3125,7 @@ describe("InterviewShell", () => {
     expect(getTopGenerateButton()).toBeInTheDocument();
     await waitFor(() => {
       expectDimensionRing("开心");
-      expectSelectedProgressValue("90%");
+      expectSelectedProgressValue("有效 2 轮");
       expectDimensionStatus("充实", "进行中");
     });
 
@@ -3011,7 +3158,7 @@ describe("InterviewShell", () => {
     );
   });
 
-  it("shows 继续中 in the header while a cached session is restoring, then swaps to the full round label and progress", async () => {
+  it("keeps the header stable while a cached session is restoring, then shows rounds after hydrate", async () => {
     window.localStorage.setItem(
       interviewSessionStorageKey,
       JSON.stringify({
@@ -3049,9 +3196,10 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     await waitFor(() => {
-      expectDimensionStatus("开心", "继续中");
-      expectSelectedProgressValue("继续中");
+      expectDimensionStatus("开心", "未开始");
+      expectSelectedProgressHidden();
     });
+    expect(screen.getByText("我正在把你上一次停下来的访谈接回来。")).toBeInTheDocument();
 
     await act(async () => {
       resolveSessionFetch?.(
@@ -3064,7 +3212,135 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("有效 10 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectDimensionStatus("开心", "进行中");
+    expectSelectedProgressValue("有效 10 轮");
+  });
+
+  it("keeps a completed target dimension stable while its session is restoring", async () => {
+    window.localStorage.setItem(
+      interviewSessionStorageKey,
+      JSON.stringify({
+        joy: { sessionId: "session-joy-completed", expiresAt: "2099-04-21T00:00:00.000Z" },
+        fulfillment: { sessionId: "session-fulfillment-completed", expiresAt: "2099-04-21T00:00:00.000Z" }
+      })
+    );
+
+    const joyCompletedSession = buildSession({
+      id: "session-joy-completed",
+      status: "completed",
+      stage: "finalize",
+      turnCount: 2,
+      messages: promptMessages,
+      snapshot: baseSnapshot,
+      completedAt: "2026-04-21T00:08:00.000Z",
+      journalEntry: {
+        ...savedJournalEntry,
+        linkedSessionIds: ["session-joy-completed"]
+      }
+    });
+    const fulfillmentCompletedSession = buildSession({
+      id: "session-fulfillment-completed",
+      dimension: "fulfillment",
+      status: "completed",
+      stage: "finalize",
+      turnCount: 1,
+      lastAssistantQuestion: "今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。",
+      messages: [
+        {
+          id: "assistant-fulfillment",
+          role: "assistant",
+          content: "今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。",
+          assistantPayload: buildAssistantPayload({
+            question: "今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。"
+          }),
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      snapshot: baseSnapshot,
+      completedAt: "2026-04-21T00:09:00.000Z",
+      journalEntry: {
+        ...savedJournalEntry,
+        id: "entry-fulfillment-saved",
+        linkedSessionIds: ["session-fulfillment-completed"]
+      }
+    });
+
+    const delayedFulfillmentResponses: Array<(value: Response) => void> = [];
+
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-joy-completed")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(joyCompletedSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/session-fulfillment-completed")) {
+        if (mockSearchParams.value.dimension === "fulfillment") {
+          return new Promise<Response>((resolve) => {
+            delayedFulfillmentResponses.push(resolve);
+          });
+        }
+
+        return Promise.resolve(
+          new Response(JSON.stringify(fulfillmentCompletedSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        throw new Error("should not create a new session while cached sessions are valid");
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    const view = renderInterviewPage();
+
+    await waitFor(() => {
+      expectDimensionStatus("开心", "已完成");
+      expectDimensionStatus("充实", "已完成");
+    });
+    expectSelectedProgressHidden();
+
+    mockSearchParams.value.dimension = "fulfillment";
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(delayedFulfillmentResponses.length).toBeGreaterThan(0);
+      expectDimensionStatus("充实", "已完成");
+    });
+    expectSelectedProgressHidden();
+    expect(within(getDimensionButton("充实")).queryByText("继续中")).not.toBeInTheDocument();
+    expect(within(getDimensionButton("充实")).queryByText("有效 1 轮")).not.toBeInTheDocument();
+
+    await act(async () => {
+      delayedFulfillmentResponses.splice(0).forEach((resolve) => {
+        resolve(
+          new Response(JSON.stringify(fulfillmentCompletedSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      });
+    });
+
+    await waitFor(() => {
+      expectDimensionStatus("充实", "已完成");
+    });
+    expectSelectedProgressHidden();
   });
 
   it("falls back to 未开始 when a cached non-active dimension session is missing", async () => {
@@ -3116,7 +3392,7 @@ describe("InterviewShell", () => {
 
     await screen.findByText("有效 2 轮");
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
     expectDimensionStatus("充实", "未开始");
 
     await waitFor(() => {
@@ -3189,15 +3465,13 @@ describe("InterviewShell", () => {
       }
     });
 
-    let joyFetchCount = 0;
+    let hasSavedInterview = false;
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
       if (url.endsWith("/api/interview/session/session-ready")) {
-        joyFetchCount += 1;
-
-        return new Response(JSON.stringify(joyFetchCount === 1 ? activeJoySession : completedJoySession), {
+        return new Response(JSON.stringify(hasSavedInterview ? completedJoySession : activeJoySession), {
           status: 200,
           headers: { "Content-Type": "application/json" }
         });
@@ -3224,6 +3498,7 @@ describe("InterviewShell", () => {
       }
 
       if (url.endsWith("/api/interview/session/draft/save")) {
+        hasSavedInterview = true;
         return new Response(
           JSON.stringify({
             draftEntry: savedJournalEntry,
@@ -3610,7 +3885,7 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
     const callCountBeforeRemount = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
 
     view.unmount();
@@ -3618,7 +3893,7 @@ describe("InterviewShell", () => {
 
     expect(screen.getByText("有效 2 轮")).toBeInTheDocument();
     expectDimensionRing("开心");
-    expectSelectedProgressValue("90%");
+    expectSelectedProgressValue("有效 2 轮");
 
     await waitFor(() => {
       expect((global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(callCountBeforeRemount);
