@@ -268,4 +268,167 @@ describe("findJoyInterviewSessionById", () => {
       })
     );
   });
+
+  it("demotes a saved journal back to draft when regenerating it", async () => {
+    mockTransaction.mockImplementation(async (callback: (tx: any) => Promise<unknown>) =>
+      callback({
+        interviewSession: {
+          findUnique: mockFindUnique,
+          update: mockUpdate
+        },
+        joyEntry: {
+          upsert: mockUpsert
+        },
+        user: {
+          upsert: mockUserUpsert
+        },
+        userSettings: {
+          upsert: mockUserSettingsUpsert
+        }
+      })
+    );
+
+    mockFindUnique.mockResolvedValue({
+      id: "session-saved-entry",
+      userId: "user-1",
+      dimension: "joy",
+      status: "completed",
+      stage: "finalize",
+      activeEventId: null,
+      turnCount: 4,
+      lastAssistantQuestion: "我已经抓到这段开心的重点了。",
+      draftSummary: "被家人的陪伴接住了",
+      finalEntryId: "entry-saved",
+      entryDate: new Date("2026-04-19T16:00:00.000Z"),
+      startedAt: new Date("2026-04-21T00:00:00.000Z"),
+      pausedAt: null,
+      completedAt: new Date("2026-04-21T00:10:00.000Z"),
+      activeEvent: null,
+      events: [],
+      messages: [],
+      snapshots: [],
+      joyEntry: {
+        id: "entry-saved",
+        userId: "user-1",
+        sessionId: "session-saved-entry",
+        date: new Date("2026-04-19T16:00:00.000Z"),
+        title: "被稳稳接住",
+        content: "今天和家人一起吃饭聊天。",
+        event: "今天和家人一起吃饭聊天",
+        feeling: "轻松踏实",
+        whyItMattered: "被家人的陪伴接住了",
+        happinessType: null,
+        selfPattern: "只要慢下来相处，我就更容易恢复状态",
+        tags: ["关系型开心"],
+        payload: {
+          kind: "joy",
+          joyMoment: "今天和家人一起吃饭聊天",
+          joySource: "被家人的陪伴接住了",
+          stateShift: "从紧绷变得轻松踏实",
+          meaningNeed: null,
+          manualClue: "只要慢下来相处，我就更容易恢复状态",
+          directionSignal: null,
+          valueImpact: null,
+          durability: null,
+          tags: ["关系型开心"]
+        },
+        eventBlocks: [],
+        source: "ai_draft_direct",
+        status: "saved",
+        linkedSessionIds: ["session-saved-entry"],
+        createdAt: new Date("2026-04-21T00:02:00.000Z"),
+        updatedAt: new Date("2026-04-21T00:10:00.000Z"),
+        savedAt: new Date("2026-04-21T00:10:00.000Z"),
+        session: {
+          dimension: "joy"
+        }
+      }
+    });
+
+    mockUpsert.mockResolvedValue({
+      id: "entry-saved"
+    });
+
+    mockUpdate.mockResolvedValue({
+      id: "session-saved-entry",
+      userId: "user-1",
+      dimension: "joy",
+      status: "completed",
+      stage: "finalize",
+      activeEventId: null,
+      turnCount: 4,
+      lastAssistantQuestion: "我已经抓到这段开心的重点了。",
+      draftSummary: "被家人的陪伴接住了",
+      finalEntryId: "entry-saved",
+      entryDate: new Date("2026-04-19T16:00:00.000Z"),
+      startedAt: new Date("2026-04-21T00:00:00.000Z"),
+      pausedAt: null,
+      completedAt: new Date("2026-04-21T00:10:00.000Z"),
+      activeEvent: null,
+      events: [],
+      messages: [],
+      snapshots: [],
+      joyEntry: {
+        id: "entry-saved",
+        userId: "user-1",
+        sessionId: "session-saved-entry",
+        date: new Date("2026-04-19T16:00:00.000Z"),
+        title: "被稳稳接住",
+        content: "今天和家人一起吃饭聊天。",
+        event: "今天和家人一起吃饭聊天",
+        feeling: "轻松踏实",
+        whyItMattered: "被家人的陪伴接住了",
+        happinessType: null,
+        selfPattern: "只要慢下来相处，我就更容易恢复状态",
+        tags: ["关系型开心"],
+        payload: {
+          kind: "joy",
+          joyMoment: "今天和家人一起吃饭聊天",
+          joySource: "被家人的陪伴接住了",
+          stateShift: "从紧绷变得轻松踏实",
+          meaningNeed: null,
+          manualClue: "只要慢下来相处，我就更容易恢复状态",
+          directionSignal: null,
+          valueImpact: null,
+          durability: null,
+          tags: ["关系型开心"]
+        },
+        eventBlocks: [],
+        source: "ai_draft_direct",
+        status: "saved",
+        linkedSessionIds: ["session-saved-entry"],
+        createdAt: new Date("2026-04-21T00:02:00.000Z"),
+        updatedAt: new Date("2026-04-21T00:12:00.000Z"),
+        savedAt: new Date("2026-04-21T00:10:00.000Z"),
+        session: {
+          dimension: "joy"
+        }
+      }
+    });
+
+    await saveJoyInterviewDraft("session-saved-entry", {
+      title: "被稳稳接住",
+      content: "今天和家人一起吃饭聊天。",
+      event: "今天和家人一起吃饭聊天",
+      feeling: "轻松踏实",
+      whyItMattered: "被家人的陪伴接住了",
+      happinessType: null,
+      selfPattern: "只要慢下来相处，我就更容易恢复状态",
+      joyMoment: "今天和家人一起吃饭聊天",
+      joySource: "被家人的陪伴接住了",
+      stateShift: "从紧绷变得轻松踏实",
+      meaningNeed: null,
+      manualClue: "只要慢下来相处，我就更容易恢复状态",
+      tags: ["关系型开心"],
+      eventBlocks: [],
+      source: "ai_draft_direct"
+    });
+
+    const upsertInput = mockUpsert.mock.calls[0]?.[0];
+
+    expect(upsertInput?.update).toMatchObject({
+      status: "draft",
+      savedAt: null
+    });
+  });
 });

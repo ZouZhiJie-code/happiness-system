@@ -60,7 +60,7 @@
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、3 栏状态看板（评分/节奏/主线）、带状态徽章的板块导航、总览摘要、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板
+  - 记录分析页壳、3 栏状态看板（评分/节奏/主线）、总览摘要、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -259,12 +259,13 @@
 ### 3.7 记录分析页现实
 
 截至 `2026-05-04`，`/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已进入月度记录分析的 tab 互斥视图阶段：
-- `SiteHeader` 主导航已有 `分析` 项，默认指向北京时间当前月
+- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、有记录天数、主线维度名）
 - 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认切到 `overview` 总览视图
-- 页面内已有上月 / 本月 / 下月切换
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
+- 页面内已有上月 / 本月 / 下月切换（在 header toolbar 中）
 - 页面当前已展示：
-  - 顶部月度摘要区：先回答“这个月先看什么”，给出主线维度、最密的一天和今天的下一步动作
+  - SummaryHero 3 栏状态看板（评分/节奏/主线维度）始终可见于正文区顶部
+  - `overview`：OverviewCards 统计卡
   - `score`：幸福 8 要素评分默认入口，先展示总分平均走势，再展示 8 要素快扫和单项细看，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
   - `rhythm`：本月记录热力图、最长连续记录 / 空档和当天 drill-in，替代旧的记录页同款分布表
   - `insights`：主线维度 + 正在浮现 + 安静维度，避免五张卡按偶数栅格硬排

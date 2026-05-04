@@ -35,6 +35,11 @@ function buildDimensionStatus(
     latestUpdatedAt: overrides.latestUpdatedAt ?? null,
     sessionId: overrides.sessionId ?? null,
     journalEntryId: overrides.journalEntryId ?? null,
+    activeSessionId: overrides.activeSessionId ?? null,
+    draftSessionId: overrides.draftSessionId ?? null,
+    draftJournalEntryId: overrides.draftJournalEntryId ?? null,
+    savedSessionId: overrides.savedSessionId ?? null,
+    savedJournalEntryId: overrides.savedJournalEntryId ?? null,
     actions: overrides.actions ?? [],
     hasActiveSession: overrides.hasActiveSession ?? false,
     hasDraftEntry: overrides.hasDraftEntry ?? false,
@@ -85,6 +90,8 @@ function buildWeekRecord(): CalendarWeekRecord {
             status: "completed",
             hasSavedEntry: true,
             sessionId: "session-joy-completed",
+            savedSessionId: "session-joy-completed",
+            savedJournalEntryId: "entry-joy-completed",
             actions: ["view_journal", "edit_saved_journal"]
           }),
           buildDimensionStatus({ dimension: "fulfillment" }),
@@ -106,6 +113,8 @@ function buildWeekRecord(): CalendarWeekRecord {
             status: "draft",
             hasDraftEntry: true,
             sessionId: "session-fulfillment-draft",
+            draftSessionId: "session-fulfillment-draft",
+            draftJournalEntryId: "entry-fulfillment-draft",
             actions: ["continue_editing"]
           }),
           buildDimensionStatus({ dimension: "reflection" }),
@@ -125,6 +134,7 @@ function buildWeekRecord(): CalendarWeekRecord {
             status: "in_progress",
             hasActiveSession: true,
             sessionId: "session-reflection-active",
+            activeSessionId: "session-reflection-active",
             actions: ["continue_interview"]
           }),
           buildDimensionStatus({ dimension: "joy" }),
@@ -218,7 +228,7 @@ describe("calendar week shell", () => {
     expect(within(completedCard).getByLabelText("开心")).toBeInTheDocument();
     expect(within(completedCard).getByRole("link", { name: /已完成.*项目终于收束.*查看日志/ })).toHaveAttribute(
       "href",
-      "/interview?dimension=joy&sessionId=session-joy-completed&panel=journal"
+      "/interview?dimension=joy&sessionId=session-joy-completed&entryDate=2026-05-04&panel=journal"
     );
     expect(within(completedCard).getByRole("link", { name: /已完成.*项目终于收束.*查看日志/ })).toHaveAttribute("data-action-tone", "primary");
 
@@ -228,7 +238,7 @@ describe("calendar week shell", () => {
     expect(within(draftCard).getByText("实")).toBeInTheDocument();
     expect(within(draftCard).getByRole("link", { name: /草稿.*还有一段没整理完。.*继续编辑/ })).toHaveAttribute(
       "href",
-      "/interview?dimension=fulfillment&sessionId=session-fulfillment-draft&panel=journal"
+      "/interview?dimension=fulfillment&sessionId=session-fulfillment-draft&entryDate=2026-05-05&panel=journal"
     );
 
     const activeCard = screen.getByTestId("calendar-week-day-2026-05-06");

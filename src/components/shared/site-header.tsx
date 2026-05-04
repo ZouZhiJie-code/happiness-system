@@ -367,7 +367,7 @@ function SiteHeaderInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeDimension, headerEntryDate, isInterviewPage]);
+  }, [activeDimension, headerEntryDate, isInterviewPage, journalEntry?.status, status]);
 
   const dimensionProgressMap = interviewDimensions.reduce((accumulator, item) => {
     if (item === activeDimension && shouldUseLiveSelectedProgress && activeProgressSession) {

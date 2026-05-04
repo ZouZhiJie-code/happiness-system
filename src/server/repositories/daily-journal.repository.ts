@@ -1,5 +1,6 @@
 import { prisma } from "@/server/db/prisma";
 import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
+import { pickLatestDailyJournalSourcesByDimension } from "@/features/daily-journal/source-selection";
 import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyJournalEntryRecord, InterviewDimension } from "@/types/interview";
 
@@ -110,23 +111,13 @@ export async function listSavedJournalEntriesForDailyJournal(date: string) {
     }
   });
 
-  const latestEntryByDimension = new Map<InterviewDimension, DailyJournalSourceEntry>();
+  return pickLatestDailyJournalSourcesByDimension(
+    entries.flatMap((entry) => {
+      const mapped = mapSourceEntry(entry);
 
-  for (const entry of entries) {
-    const mapped = mapSourceEntry(entry);
-
-    if (!mapped) {
-      continue;
-    }
-
-    const existing = latestEntryByDimension.get(mapped.dimension);
-
-    if (!existing || new Date(mapped.updatedAt).getTime() > new Date(existing.updatedAt).getTime()) {
-      latestEntryByDimension.set(mapped.dimension, mapped);
-    }
-  }
-
-  return Array.from(latestEntryByDimension.values());
+      return mapped ? [mapped] : [];
+    })
+  );
 }
 
 export async function findDailyJournalByDate(date: string) {

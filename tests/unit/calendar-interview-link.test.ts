@@ -106,6 +106,9 @@ describe("calendar interview links", () => {
       latestUpdatedAt: "2026-05-01T12:00:00.000Z",
       sessionId: "session-reflection",
       journalEntryId: "entry-reflection",
+      activeSessionId: "session-reflection-active",
+      savedSessionId: "session-reflection-saved",
+      savedJournalEntryId: "entry-reflection-saved",
       actions: ["edit_saved_journal", "view_journal", "continue_interview"],
       hasActiveSession: true,
       hasDraftEntry: false,
@@ -122,6 +125,9 @@ describe("calendar interview links", () => {
       status: "mixed",
       sessionId: "session-joy",
       journalEntryId: "entry-joy",
+      activeSessionId: "session-joy-active",
+      savedSessionId: "session-joy-saved",
+      savedJournalEntryId: "entry-joy-saved",
       actions: ["edit_saved_journal", "view_journal", "continue_interview"],
       hasActiveSession: true,
       hasDraftEntry: false,
@@ -132,7 +138,8 @@ describe("calendar interview links", () => {
     const joyCard = items.find((item) => item.dimension === "joy");
 
     expect(joyCard?.primaryAction.label).toBe("继续访谈");
-    expect(joyCard?.primaryAction.href).toContain("sessionId=session-joy");
+    expect(joyCard?.primaryAction.href).toContain("sessionId=session-joy-active");
+    expect(joyCard?.secondaryActions[0]?.href).toContain("sessionId=session-joy-saved");
     expect(joyCard?.secondaryActions.map((action) => action.label)).toEqual(["查看日志", "编辑日志"]);
   });
 });

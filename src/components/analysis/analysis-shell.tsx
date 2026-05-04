@@ -9,6 +9,7 @@ import type {
   AnalysisDimensionInsightCard,
   AnalysisMonthRecord
 } from "@/features/analysis/types";
+import { notifyAnalysisToolbarRefresh } from "@/features/analysis/toolbar-refresh";
 import {
   buildAnalysisHref,
   formatAnalysisMonthLabel,
@@ -25,13 +26,6 @@ import {
   type DailyHappinessScoreKey,
   type HappinessScoreRequestKey
 } from "@/features/happiness-score/types";
-
-const sectionTabs: Array<{ key: AnalysisSectionKey; label: string; description: string }> = [
-  { key: "overview", label: "总览", description: "这个月先看什么" },
-  { key: "score", label: "评分", description: "先看走势，再补今天和昨天" },
-  { key: "rhythm", label: "节奏", description: "看清这个月密与空的分布" },
-  { key: "insights", label: "五维", description: "找到本月最值得继续的一条线" }
-];
 
 const happinessScoreItems: {
   requestKey: HappinessScoreRequestKey;
@@ -378,82 +372,6 @@ function AnalysisSection({
       </div>
       <div className="mt-4">{children}</div>
     </section>
-  );
-}
-
-function SectionAnchorNav({
-  currentSection,
-  onChange,
-  record
-}: {
-  currentSection: AnalysisSectionKey;
-  onChange: (section: AnalysisSectionKey) => void;
-  record: AnalysisMonthRecord | null;
-}) {
-  const todayHasScore = record ? record.scoreRecords.some((s) => s.date === record.editableDates[0]) : null;
-  const activeDayCount = record ? getActiveDays(record).length : null;
-  const featured = record ? getFeaturedDimension(record) : null;
-
-  function getChip(key: AnalysisSectionKey) {
-    if (!record) return null;
-
-    if (key === "score") {
-      if (record.editableDates.length === 0) return null;
-      return todayHasScore
-        ? { text: "已评", dotClass: "bg-[#5a7a56]" }
-        : { text: "今天未评", dotClass: "bg-[#b87a3a]" };
-    }
-
-    if (key === "rhythm") {
-      return activeDayCount !== null ? { text: `${activeDayCount}天`, dotClass: null } : null;
-    }
-
-    if (key === "insights") {
-      return featured
-        ? { text: getInterviewDimensionMeta(featured.dimension).label, dotClass: null }
-        : null;
-    }
-
-    return null;
-  }
-
-  return (
-    <nav
-      className="sticky top-[calc(var(--site-header-viewport-offset)+0.75rem)] z-20 rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(248,233,204,0.92)] px-2 py-2 backdrop-blur-sm"
-      data-testid="analysis-section-nav"
-      aria-label="分析页内导航"
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        {sectionTabs.map((tab) => {
-          const active = tab.key === currentSection;
-          const chip = getChip(tab.key);
-
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => onChange(tab.key)}
-              className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-[0.8rem] transition ${
-                active
-                  ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm"
-                  : "bg-[rgba(255,252,246,0.78)] text-[#6b533d] hover:bg-[rgba(255,251,244,0.96)]"
-              }`}
-              aria-pressed={active}
-            >
-              {tab.label}
-              {chip ? (
-                <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.68rem] ${
-                  active ? "bg-[rgba(255,250,241,0.2)] text-[rgba(255,250,241,0.88)]" : "bg-[rgba(111,74,38,0.08)] text-[#8b6c4d]"
-                }`}>
-                  {chip.dotClass ? <span className={`size-1.5 rounded-full ${chip.dotClass}`} /> : null}
-                  {chip.text}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
   );
 }
 
@@ -1426,23 +1344,10 @@ export function AnalysisShell() {
     };
   }, [normalizedSearch.month, refreshNonce]);
 
-  function navigateSection(section: AnalysisSectionKey) {
-    const href = buildAnalysisHref({ month: normalizedSearch.month, section });
-
-    setActiveSection(section);
-    router.replace(href, { scroll: false });
-  }
-
   return (
     <section className="page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10" data-testid="analysis-workspace">
       <div className="relative z-10">
-        <SummaryHero record={record} month={normalizedSearch.month} />
-
-        <div className="mt-5">
-          <SectionAnchorNav currentSection={activeSection} onChange={navigateSection} record={record} />
-        </div>
-
-        <div className="mt-5 paper-sheet rounded-[28px] px-5 py-5 md:px-6 md:py-6">
+        <div className="paper-sheet rounded-[28px] px-5 py-5 md:px-6 md:py-6">
           {activeSection === "overview" && (
             <AnalysisSection
               index="01"
@@ -1456,7 +1361,12 @@ export function AnalysisShell() {
               ) : isLoading || !record ? (
                 <SectionSkeleton />
               ) : (
-                <OverviewCards record={record} />
+                <>
+                  <OverviewCards record={record} />
+                  <div className="mt-5">
+                    <SummaryHero record={record} month={normalizedSearch.month} />
+                  </div>
+                </>
               )}
             </AnalysisSection>
           )}
@@ -1474,7 +1384,13 @@ export function AnalysisShell() {
               ) : isLoading || !record ? (
                 <SectionSkeleton blocks={3} />
               ) : (
-                <HappinessScorePanel record={record} onSaved={() => setRefreshNonce((value) => value + 1)} />
+                <HappinessScorePanel
+                  record={record}
+                  onSaved={() => {
+                    setRefreshNonce((value) => value + 1);
+                    notifyAnalysisToolbarRefresh(normalizedSearch.month);
+                  }}
+                />
               )}
             </AnalysisSection>
           )}

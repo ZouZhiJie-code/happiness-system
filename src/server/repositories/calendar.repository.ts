@@ -13,8 +13,17 @@ function resolveSessionUpdatedAt(session: {
   completedAt: Date | null;
   pausedAt: Date | null;
   startedAt: Date;
+  messages?: Array<{ createdAt: Date }>;
 }) {
-  return (session.completedAt ?? session.pausedAt ?? session.startedAt).toISOString();
+  const lastMessageAt = session.messages?.[0]?.createdAt ?? null;
+  const latestTimestamp = Math.max(
+    session.startedAt.getTime(),
+    session.pausedAt?.getTime() ?? 0,
+    session.completedAt?.getTime() ?? 0,
+    lastMessageAt?.getTime() ?? 0
+  );
+
+  return new Date(latestTimestamp).toISOString();
 }
 
 export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesByDateRangeInput) {
@@ -38,7 +47,16 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         completedAt: true,
         pausedAt: true,
         draftSummary: true,
-        finalEntryId: true
+        finalEntryId: true,
+        messages: {
+          orderBy: {
+            sequence: "desc"
+          },
+          take: 1,
+          select: {
+            createdAt: true
+          }
+        }
       }
     }),
     prisma.joyEntry.findMany({

@@ -109,14 +109,14 @@ function buildActionLink(input: {
       statusLabel,
       action,
       label: actionLabelMap[action],
-      href: dimension.sessionId
+      href: dimension.activeSessionId
         ? buildInterviewHref({
             dimension: dimension.dimension,
-            sessionId: dimension.sessionId,
+            sessionId: dimension.activeSessionId,
             entryDate: day.date
           })
         : null,
-      disabledReason: dimension.sessionId ? null : "当前没有可继续的访谈会话"
+      disabledReason: dimension.activeSessionId ? null : "当前没有可继续的访谈会话"
     };
   }
 
@@ -128,14 +128,15 @@ function buildActionLink(input: {
       statusLabel,
       action,
       label: actionLabelMap[action],
-      href: dimension.sessionId
+      href: dimension.draftSessionId
         ? buildInterviewHref({
             dimension: dimension.dimension,
-            sessionId: dimension.sessionId,
+            sessionId: dimension.draftSessionId,
+            entryDate: day.date,
             panel: "journal"
           })
         : null,
-      disabledReason: dimension.sessionId ? null : "当前没有可继续编辑的日志会话"
+      disabledReason: dimension.draftSessionId ? null : "当前没有可继续编辑的日志会话"
     };
   }
 
@@ -146,14 +147,15 @@ function buildActionLink(input: {
     statusLabel,
     action,
     label: actionLabelMap[action],
-    href: dimension.sessionId
+    href: dimension.savedSessionId
       ? buildInterviewHref({
           dimension: dimension.dimension,
-          sessionId: dimension.sessionId,
+          sessionId: dimension.savedSessionId,
+          entryDate: day.date,
           panel: "journal"
         })
       : null,
-    disabledReason: dimension.sessionId ? null : "当前没有可打开的日志会话"
+    disabledReason: dimension.savedSessionId ? null : "当前没有可打开的日志会话"
   };
 }
 

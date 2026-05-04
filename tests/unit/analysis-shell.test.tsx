@@ -291,7 +291,6 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
-    expect(await screen.findByText(/加载中/)).toBeInTheDocument();
     expect(await screen.findByTestId("analysis-score-placeholder")).toBeInTheDocument();
   });
 
@@ -335,6 +334,20 @@ describe("analysis shell", () => {
     expect(screen.queryByTestId("analysis-overview-cards")).not.toBeInTheDocument();
   });
 
+  it("keeps the month summary hero exclusive to the overview tab", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("happiness-score-panel");
+
+    expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-status-board")).not.toBeInTheDocument();
+  });
+
   it("renders the five-dimension insight layout without an even card grid", async () => {
     mockSearchParams.value = {
       month: "2026-05",
@@ -352,27 +365,6 @@ describe("analysis shell", () => {
     expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("感谢");
   });
 
-  it("switches sections immediately after clicking the top tabs", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    await screen.findByTestId("happiness-score-panel");
-
-    fireEvent.click(screen.getByRole("button", { name: /节奏/ }));
-    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
-    expect(screen.getByRole("button", { name: /节奏/ })).toHaveAttribute("aria-pressed", "true");
-
-    fireEvent.click(screen.getByRole("button", { name: /五维/ }));
-    expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=insights", { scroll: false });
-    expect(screen.getByRole("button", { name: /五维/ })).toHaveAttribute("aria-pressed", "true");
-  });
-
   it("renders only the requested section on initial deep-link navigation", async () => {
     mockSearchParams.value = {
       month: "2026-05",
@@ -383,7 +375,6 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("analysis-rhythm-board");
 
-    expect(screen.getByRole("button", { name: /节奏/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
     expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
   });
@@ -438,7 +429,6 @@ describe("analysis shell", () => {
     expect(screen.getByTestId("analysis-coverage-placeholder")).toBeInTheDocument();
     expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
-    expect(screen.getByText("这个月还没有开始留下分析材料。先补今天评分，或从一个维度开始记录。")).toBeInTheDocument();
   });
 
   it("does not offer interview start for future dates from the heatmap drill-down", async () => {

@@ -35,6 +35,11 @@ function buildDimensionStatus(
     latestUpdatedAt: overrides.latestUpdatedAt ?? null,
     sessionId: overrides.sessionId ?? null,
     journalEntryId: overrides.journalEntryId ?? null,
+    activeSessionId: overrides.activeSessionId ?? null,
+    draftSessionId: overrides.draftSessionId ?? null,
+    draftJournalEntryId: overrides.draftJournalEntryId ?? null,
+    savedSessionId: overrides.savedSessionId ?? null,
+    savedJournalEntryId: overrides.savedJournalEntryId ?? null,
     actions: overrides.actions ?? [],
     hasActiveSession: overrides.hasActiveSession ?? false,
     hasDraftEntry: overrides.hasDraftEntry ?? false,
@@ -55,6 +60,8 @@ function buildDayRecord(): CalendarDayRecord {
         latestUpdatedAt: "2026-05-01T10:00:00.000Z",
         hasDraftEntry: true,
         sessionId: "session-joy",
+        draftSessionId: "session-joy-draft",
+        draftJournalEntryId: "entry-joy-draft",
         actions: ["continue_editing"]
       }),
       buildDimensionStatus({
@@ -65,6 +72,8 @@ function buildDayRecord(): CalendarDayRecord {
         latestUpdatedAt: "2026-05-01T11:00:00.000Z",
         hasSavedEntry: true,
         sessionId: "session-fulfillment",
+        savedSessionId: "session-fulfillment-saved",
+        savedJournalEntryId: "entry-fulfillment-saved",
         actions: ["view_journal", "edit_saved_journal"]
       }),
       buildDimensionStatus({
@@ -76,6 +85,9 @@ function buildDayRecord(): CalendarDayRecord {
         hasActiveSession: true,
         hasSavedEntry: true,
         sessionId: "session-reflection",
+        activeSessionId: "session-reflection-active",
+        savedSessionId: "session-reflection-saved",
+        savedJournalEntryId: "entry-reflection-saved",
         actions: ["edit_saved_journal", "view_journal", "continue_interview"]
       }),
       buildDimensionStatus({
@@ -85,6 +97,7 @@ function buildDayRecord(): CalendarDayRecord {
         latestUpdatedAt: "2026-05-01T09:00:00.000Z",
         hasActiveSession: true,
         sessionId: "session-improvement",
+        activeSessionId: "session-improvement-active",
         actions: ["continue_interview"]
       }),
       buildDimensionStatus({
@@ -192,7 +205,7 @@ describe("calendar day shell", () => {
     expect(within(joyCard).getByText("悦")).toBeInTheDocument();
     expect(within(joyCard).getByRole("link", { name: "开心，草稿，还在整理的那段，继续编辑" })).toHaveAttribute(
       "href",
-      "/interview?dimension=joy&sessionId=session-joy&panel=journal"
+      "/interview?dimension=joy&sessionId=session-joy-draft&entryDate=2026-05-01&panel=journal"
     );
     expect(within(joyCard).getByRole("link", { name: "开心，草稿，还在整理的那段，继续编辑" })).toHaveAttribute("data-action-tone", "primary");
 
@@ -201,25 +214,29 @@ describe("calendar day shell", () => {
     expect(within(completedCard).getByText("实")).toBeInTheDocument();
     expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，查看日志" })).toHaveAttribute(
       "href",
-      "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
+      "/interview?dimension=fulfillment&sessionId=session-fulfillment-saved&entryDate=2026-05-01&panel=journal"
     );
     fireEvent.click(within(completedCard).getByRole("button", { name: "充实，已完成，今天没有白过，更多操作" }));
     expect(within(completedCard).getByRole("link", { name: "充实，已完成，今天没有白过，编辑日志" })).toHaveAttribute(
       "href",
-      "/interview?dimension=fulfillment&sessionId=session-fulfillment&panel=journal"
+      "/interview?dimension=fulfillment&sessionId=session-fulfillment-saved&entryDate=2026-05-01&panel=journal"
     );
 
     const mixedCard = screen.getByTestId("calendar-dimension-card-reflection");
     expect(within(mixedCard).getByText("思")).toBeInTheDocument();
     expect(within(mixedCard).getByRole("link", { name: "思考，混合状态，想法还在发酵，继续访谈" })).toHaveAttribute(
       "href",
-      "/interview?dimension=reflection&sessionId=session-reflection&entryDate=2026-05-01"
+      "/interview?dimension=reflection&sessionId=session-reflection-active&entryDate=2026-05-01"
     );
     expect(within(mixedCard).queryByRole("link", { name: "思考，混合状态，想法还在发酵，查看日志" })).not.toBeInTheDocument();
     expect(within(mixedCard).getByRole("button", { name: "思考，混合状态，想法还在发酵，更多操作" })).toBeInTheDocument();
     fireEvent.click(within(mixedCard).getByRole("button", { name: "思考，混合状态，想法还在发酵，更多操作" }));
     const mixedLinks = within(mixedCard).getAllByRole("link");
     expect(mixedLinks.map((link) => link.textContent)).toEqual(["继续访谈", "查看日志", "编辑日志"]);
+    expect(mixedLinks[1]).toHaveAttribute(
+      "href",
+      "/interview?dimension=reflection&sessionId=session-reflection-saved&entryDate=2026-05-01&panel=journal"
+    );
 
     const emptyCard = screen.getByTestId("calendar-dimension-card-gratitude");
     expect(emptyCard).toHaveAttribute("data-dimension", "gratitude");

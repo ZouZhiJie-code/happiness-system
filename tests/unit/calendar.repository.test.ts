@@ -33,7 +33,12 @@ describe("calendar.repository", () => {
         completedAt: null,
         pausedAt: null,
         draftSummary: "今天这段开心已经有点成形了。",
-        finalEntryId: null
+        finalEntryId: null,
+        messages: [
+          {
+            createdAt: new Date("2026-05-02T04:00:00.000Z")
+          }
+        ]
       },
       {
         id: "session-abandoned",
@@ -44,7 +49,8 @@ describe("calendar.repository", () => {
         completedAt: null,
         pausedAt: null,
         draftSummary: null,
-        finalEntryId: null
+        finalEntryId: null,
+        messages: []
       }
     ]);
 
@@ -109,7 +115,7 @@ describe("calendar.repository", () => {
         dimension: "joy",
         date: "2026-05-02",
         status: "active",
-        updatedAt: "2026-05-02T01:00:00.000Z",
+        updatedAt: "2026-05-02T04:00:00.000Z",
         startedAt: "2026-05-02T01:00:00.000Z",
         completedAt: null,
         pausedAt: null,
@@ -144,7 +150,8 @@ describe("calendar.repository", () => {
         completedAt: null,
         pausedAt: new Date("2026-05-02T10:00:00.000Z"),
         draftSummary: "这条旧会话还没有 entryDate。",
-        finalEntryId: null
+        finalEntryId: null,
+        messages: []
       }
     ]);
     mockJoyEntryFindMany.mockResolvedValue([]);

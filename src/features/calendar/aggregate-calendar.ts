@@ -1,5 +1,6 @@
 import { interviewDimensions } from "@/features/interview/dimensions";
 import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
+import { pickLatestDailyJournalSourcesByDimension } from "@/features/daily-journal/source-selection";
 import type {
   CalendarAction,
   CalendarDayRecord,
@@ -128,6 +129,13 @@ function summarizeContent(content: string) {
   return collapsed.length > 80 ? `${collapsed.slice(0, 80).trimEnd()}...` : collapsed;
 }
 
+function isResumableSession(
+  session: CalendarSessionSource,
+  entries: CalendarEntrySource[]
+) {
+  return session.status === "active" || session.status === "paused" || (session.status === "completed" && !entries.length);
+}
+
 function uniqueActions(actions: CalendarAction[]) {
   return ACTION_PRIORITY.filter((action) => actions.includes(action));
 }
@@ -251,7 +259,9 @@ function resolveDailyJournalStatus(input: {
 }): CalendarDailyJournalStatus {
   const dailyJournal =
     sortByLatestUpdated((input.dailyJournals ?? []).filter((entry) => entry.date === input.date))[0] ?? null;
-  const savedEntries = input.entries.filter((entry) => entry.date === input.date && entry.status === "saved");
+  const savedEntries = pickLatestDailyJournalSourcesByDimension(
+    input.entries.filter((entry) => entry.date === input.date && entry.status === "saved")
+  );
   const sourceSignature = buildDailyJournalSourceSignature(savedEntries);
 
   if (!dailyJournal) {
@@ -291,11 +301,12 @@ export function aggregateCalendarDimension(input: {
   );
 
   const latestSession = sessions[0] ?? null;
+  const latestActiveSession = sessions.find((session) => isResumableSession(session, entries)) ?? null;
   const latestDraftEntry = entries.find((entry) => entry.status === "draft") ?? null;
   const latestSavedEntry = entries.find((entry) => entry.status === "saved") ?? null;
   const latestEntry = latestDraftEntry ?? latestSavedEntry ?? null;
   const hasSession = sessions.length > 0;
-  const hasActiveSession = sessions.some((session) => session.status === "active" || session.status === "paused" || (session.status === "completed" && !entries.length));
+  const hasActiveSession = Boolean(latestActiveSession);
   const hasDraftEntry = Boolean(latestDraftEntry);
   const hasSavedEntry = Boolean(latestSavedEntry);
   const latestUpdatedAt = [...sessions, ...entries]
@@ -322,6 +333,11 @@ export function aggregateCalendarDimension(input: {
     latestUpdatedAt,
     sessionId: latestSession?.id ?? latestEntry?.sessionId ?? null,
     journalEntryId: latestEntry?.id ?? null,
+    activeSessionId: latestActiveSession?.id ?? null,
+    draftSessionId: latestDraftEntry?.sessionId ?? null,
+    draftJournalEntryId: latestDraftEntry?.id ?? null,
+    savedSessionId: latestSavedEntry?.sessionId ?? null,
+    savedJournalEntryId: latestSavedEntry?.id ?? null,
     actions,
     hasActiveSession,
     hasDraftEntry,

@@ -37,7 +37,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏看板始终可见；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块，SummaryHero 3 栏状态看板始终可见于正文区顶部；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -1190,6 +1190,7 @@ POST /api/daily-journal/[id]/save
 2. 显式 `entryDate` 其次
    - 如果没有 `sessionId`，但有 `entryDate`
    - 新开会话时要把这个日期带给 `POST /api/interview/session/start`
+   - 进入带 `entryDate` 的访谈页后，当前选中维度胶囊应优先反映 live session 的实时轮次 / 进度圈；其余维度继续按 day snapshot 展示
 
 3. 显式 query 高于本地 remembered dimension
    - `dimension / sessionId / entryDate / panel` 都高于 localStorage fallback
@@ -1488,7 +1489,7 @@ POST /api/daily-journal/[id]/save
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `overview`
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
-- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏看板始终可见；切换 tab 或翻月后 `section` 保留在 URL 中
+- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏状态看板始终可见于正文区顶部；切换 tab 或翻月后 `section` 保留在 URL 中
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`

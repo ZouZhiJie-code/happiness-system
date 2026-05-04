@@ -1172,8 +1172,8 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
         source: draftEntry.source,
         status: "draft",
-        linkedSessionIds: [sessionId],
-        savedAt: null
+        savedAt: null,
+        linkedSessionIds: [sessionId]
       },
       create: {
         userId: existing.userId,

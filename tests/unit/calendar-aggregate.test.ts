@@ -146,6 +146,34 @@ describe("aggregateCalendarDay", () => {
     expect(result.dailyJournal?.sourceEntryCount).toBe(1);
   });
 
+  it("uses only the latest saved entry per dimension when checking daily journal staleness", () => {
+    const result = aggregateCalendarDay({
+      date: "2026-05-01",
+      sessions: [],
+      entries: [
+        buildEntry({
+          id: "entry-old",
+          status: "saved",
+          updatedAt: "2026-05-01T10:00:00.000Z"
+        }),
+        buildEntry({
+          id: "entry-new",
+          status: "saved",
+          updatedAt: "2026-05-01T11:30:00.000Z"
+        })
+      ],
+      dailyJournals: [
+        buildDailyJournal({
+          sourceEntryIds: ["entry-new"],
+          sourceSignature: "entry-new:2026-05-01T11:30:00.000Z"
+        })
+      ]
+    });
+
+    expect(result.dailyJournal?.state).toBe("saved");
+    expect(result.dailyJournal?.sourceEntryCount).toBe(1);
+  });
+
   it("returns mixed when multiple dimensions carry different non-empty states", () => {
     const result = aggregateCalendarDay({
       date: "2026-05-01",

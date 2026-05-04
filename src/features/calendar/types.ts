@@ -68,6 +68,11 @@ export interface CalendarDimensionStatus {
   latestUpdatedAt: string | null;
   sessionId: string | null;
   journalEntryId: string | null;
+  activeSessionId?: string | null;
+  draftSessionId?: string | null;
+  draftJournalEntryId?: string | null;
+  savedSessionId?: string | null;
+  savedJournalEntryId?: string | null;
   actions: CalendarAction[];
   hasActiveSession: boolean;
   hasDraftEntry: boolean;
