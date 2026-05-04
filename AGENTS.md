@@ -14,8 +14,11 @@
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
+- calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
 - 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【完整日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集；完整日志打开/生成与单维度日志生成都显示阶段进度条，并叠加小树从树苗长成大树的动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- 当天整合日志的来源集合现在会随着同日新增 `saved` 维度日志、来源维度日志更新时间变化或来源不再是 `saved` 进入 `stale`；重新生成后章节集合会与当天真实 `saved` 维度重新对齐。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
+- 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 `/api/calendar/day` 的 day snapshot 为准。只要某个维度当天已经有 `saved` 日志，胶囊会优先显示 `已完成`，即使同一天还有继续中的 session。
 - 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改成 tab 互斥视图的月度复盘工作台：顶部先给月度摘要与下一步入口（SummaryHero 3 栏看板始终可见），正文区按当前 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察）；顶部主导航会进入当前月默认 `overview`。缺失 `section` 时前端默认切到 `overview` 总览视图；切换 tab 或翻月后当前 `section` 保留在 URL 中。分析页内“回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`；只有评分、没有已保存维度日志的月份，`rhythm` 会显示 `最高密度日 = 暂无`，`insights` 会显示空态而不是伪造主线维度；当前月 `最长空档` 会排除未来日期。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
@@ -301,6 +304,7 @@ gratitude 理论翻译基线：
 - 新的多维度结构主要落在 `snapshotData` 和 `payload` 里。
 - 新增的 `boundary_insufficient` 只存在于 `InterviewEvent.progressData` 到 API response 的映射中，不需要 DB migration。
 - legacy 列仍保留，用于兼容旧代码与旧数据投影。
+- `entryDate` / `date` 的日期范围查询当前统一按 `Asia/Shanghai` 整天窗口执行：`gte dayStartUtc`、`lt nextDayStartUtc`。
 - 当前没有额外的 DB migration 依赖才能理解 joy 结构；但本地数据库必须和 `prisma/schema.prisma` 同步。
 
 ## 6. API 面与调用语义
