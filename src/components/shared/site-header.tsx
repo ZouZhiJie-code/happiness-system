@@ -59,6 +59,43 @@ function getStatusChipClass(isSelected: boolean, isEmphasized: boolean) {
     : "border-[rgba(166,114,61,0.14)] bg-[rgba(255,249,240,0.72)] text-[#8d7257] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]";
 }
 
+function isHeaderStatusLabel(value: string): value is InterviewDimensionBarStatus["statusLabel"] {
+  return value === "未开始" || value === "进行中" || value === "已整理" || value === "已完成";
+}
+
+function getHeaderStatusDataValue(statusLabel: InterviewDimensionBarStatus["statusLabel"]) {
+  switch (statusLabel) {
+    case "已完成":
+      return "completed";
+    case "进行中":
+      return "in_progress";
+    case "已整理":
+      return "draft";
+    case "未开始":
+      return "empty";
+  }
+}
+
+function DimensionStatusDot({
+  statusLabel,
+  testId
+}: {
+  statusLabel: InterviewDimensionBarStatus["statusLabel"];
+  testId?: string;
+}) {
+  const statusValue = getHeaderStatusDataValue(statusLabel);
+
+  return (
+    <span
+      aria-hidden="true"
+      title={statusLabel}
+      data-testid={testId}
+      data-status={statusValue}
+      className={clsx("header-status-dot", `header-status-dot--${statusValue}`)}
+    />
+  );
+}
+
 function ProgressRing({
   percentage,
   label,
@@ -200,6 +237,8 @@ function SiteHeaderInner() {
   const todayEntryDate = getTodayEntryDate();
   const explicitEntryDate = searchParams.get("entryDate");
   const headerEntryDate = explicitEntryDate ?? (workspaceMode === "daily_journal" ? sessionEntryDate : null);
+  const isDailyJournalWorkspaceSelected =
+    isInterviewPage && (workspaceMode === "daily_journal" || searchParams.get("mode") === "daily-journal");
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
     : dimension;
@@ -538,7 +577,7 @@ function SiteHeaderInner() {
                 <HeaderDivider />
                 <div className="flex min-w-0 items-center gap-[0.3125rem] overflow-hidden">
                   {interviewDimensions.map((item) => {
-                    const isSelected = item === activeDimension;
+                    const isSelected = !isDailyJournalWorkspaceSelected && item === activeDimension;
                     const meta = getInterviewDimensionMeta(item);
                     const progressSummary = dimensionProgressMap[item];
                     const labelId = `interview-dimension-label-${item}`;
@@ -556,7 +595,7 @@ function SiteHeaderInner() {
                         aria-labelledby={labelId}
                         aria-describedby={progressId}
                         className={clsx(
-                          "group relative flex min-w-[5.1rem] shrink-0 items-center gap-[0.3125rem] rounded-[15px] border px-1.5 py-1.5 text-left transition duration-300",
+                          "group relative flex shrink-0 items-center rounded-[15px] border py-1.5 pl-3 pr-4 text-left transition duration-300",
                           isSelected
                             ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
                             : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
@@ -579,15 +618,27 @@ function SiteHeaderInner() {
                           {meta.navLabel}
                         </span>
                         <div className="flex min-w-0 items-center">
-                          <span
-                            id={progressId}
-                            className={clsx(
-                              "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
-                              getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
-                            )}
-                          >
-                            {detailLabel}
-                          </span>
+                          {isHeaderStatusLabel(detailLabel) ? (
+                            <>
+                              <span id={progressId} className="sr-only">
+                                {detailLabel}
+                              </span>
+                              <DimensionStatusDot
+                                statusLabel={detailLabel}
+                                testId={`interview-dimension-status-dot-${item}`}
+                              />
+                            </>
+                          ) : (
+                            <span
+                              id={progressId}
+                              className={clsx(
+                                "shrink-0 whitespace-nowrap rounded-[9px] border px-[0.3125rem] py-[0.2rem] font-mono text-[0.53rem] tracking-[0.14em]",
+                                getStatusChipClass(isSelected, isSelected ? selectedProgressSummary.shouldShowRing || isActiveItemRestoring : false)
+                              )}
+                            >
+                              {detailLabel}
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
@@ -626,7 +677,6 @@ function SiteHeaderInner() {
                     </div>
                   </>
                 ) : null}
-                <HeaderDivider />
                 {shouldShowDraftGenerateButton ? (
                   <button
                     type="button"
@@ -640,9 +690,23 @@ function SiteHeaderInner() {
                 <button
                   type="button"
                   onClick={handleDailyJournalClick}
-                  className="shrink-0 rounded-full border border-[rgba(171,118,64,0.2)] bg-[rgba(255,249,239,0.88)] px-3 py-1.5 text-[12px] text-[#604529] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.98)]"
+                  aria-pressed={isDailyJournalWorkspaceSelected}
+                  aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
+                  className={clsx(
+                    "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034]",
+                    isDailyJournalWorkspaceSelected
+                      ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
+                      : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
+                  )}
                   aria-label="查看汇总当天日志"
                 >
+                  <span
+                    aria-hidden="true"
+                    className={clsx(
+                      "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
+                      !isDailyJournalWorkspaceSelected && "opacity-50"
+                    )}
+                  />
                   汇总当天日志
                 </button>
                 <button

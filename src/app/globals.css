@@ -385,6 +385,54 @@ body::after {
   }
 }
 
+.header-status-dot {
+  position: absolute;
+  top: 0.42rem;
+  right: 0.42rem;
+  display: block;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+}
+
+.header-status-dot--completed {
+  background: #22c55e;
+}
+
+.header-status-dot--in_progress {
+  background: #f59e0b;
+  animation: header-status-breathe 1.6s ease-in-out infinite;
+}
+
+.header-status-dot--draft {
+  background: #ef4444;
+}
+
+.header-status-dot--empty {
+  background: #9ca3af;
+}
+
+@keyframes header-status-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-status-dot--in_progress {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .wood-board {
   position: relative;
   overflow: hidden;

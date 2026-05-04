@@ -317,8 +317,33 @@ function getDimensionButton(label: string) {
   return within(getDimensionBar()).getByRole("button", { name: label });
 }
 
+function getExpectedHeaderStatusValue(status: string) {
+  switch (status) {
+    case "已完成":
+      return "completed";
+    case "进行中":
+      return "in_progress";
+    case "已整理":
+      return "draft";
+    case "未开始":
+      return "empty";
+    default:
+      return null;
+  }
+}
+
 function expectDimensionStatus(label: string, status: string) {
-  expect(within(getDimensionButton(label)).getByText(status)).toBeInTheDocument();
+  const button = getDimensionButton(label);
+  const expectedStatusValue = getExpectedHeaderStatusValue(status);
+
+  if (!expectedStatusValue) {
+    expect(within(button).getByText(status)).toBeInTheDocument();
+    return;
+  }
+
+  const statusDot = within(button).getByTitle(status);
+
+  expect(statusDot).toHaveAttribute("data-status", expectedStatusValue);
 }
 
 function buildHeaderDayRecord(overrides: Partial<CalendarDayRecord> = {}): CalendarDayRecord {
@@ -2118,6 +2143,9 @@ describe("InterviewShell", () => {
       expectDimensionStatus("改进", "已完成");
       expectDimensionStatus("感谢", "未开始");
     });
+
+    expect(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" })).toHaveAttribute("aria-pressed", "true");
+    expect(getDimensionButton("开心")).toHaveAttribute("aria-pressed", "false");
 
     expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/calendar/day?date=2026-05-01")).toBe(true);
   });

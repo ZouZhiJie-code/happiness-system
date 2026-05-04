@@ -22,6 +22,7 @@ import {
 } from "@/features/interview/dimensions";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import type { CalendarDayRecord } from "@/features/calendar/types";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
@@ -513,6 +514,44 @@ async function fetchInterviewSession(sessionId: string) {
   return (await response.json()) as InterviewSessionRecord;
 }
 
+async function findPreferredSessionFromDaySnapshot(
+  dimension: InterviewDimension,
+  entryDate: string,
+  excludedSessionId?: string | null
+) {
+  try {
+    const response = await fetch(`/api/calendar/day?date=${entryDate}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const day = (await response.json()) as CalendarDayRecord;
+    const dimensionStatus = day.dimensions.find((item) => item.dimension === dimension);
+    const candidateSessionId =
+      dimensionStatus?.savedSessionId ??
+      dimensionStatus?.draftSessionId ??
+      dimensionStatus?.activeSessionId ??
+      dimensionStatus?.sessionId ??
+      null;
+
+    if (!candidateSessionId || candidateSessionId === excludedSessionId) {
+      return null;
+    }
+
+    const candidateSession = await fetchInterviewSession(candidateSessionId);
+
+    return isRestorableSession(candidateSession, dimension) && candidateSession.entryDate === entryDate
+      ? candidateSession
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 async function reopenInterviewSession(sessionId: string) {
   const response = await fetch("/api/interview/session/reopen", {
     method: "POST",
@@ -534,6 +573,10 @@ function isRestorableSession(session: InterviewSessionRecord, dimension: Intervi
   }
 
   return session.status === "active" || session.status === "paused" || session.status === "completed";
+}
+
+function isOpeningOnlySession(session: InterviewSessionRecord) {
+  return session.status === "active" && session.turnCount === 0 && !session.journalEntry;
 }
 
 function shouldCacheSession(status: InterviewSessionRecord["status"] | null) {
@@ -595,6 +638,20 @@ async function bootstrapInterviewSession(input: {
             isRestorableSession(restoredSession, dimension)
             && restoredSession.entryDate === targetEntryDate
           ) {
+            if (isOpeningOnlySession(restoredSession)) {
+              const preferredSession = await findPreferredSessionFromDaySnapshot(
+                dimension,
+                targetEntryDate,
+                restoredSession.id
+              );
+
+              if (preferredSession) {
+                return preferredSession.status === "paused"
+                  ? reopenInterviewSession(preferredSession.id)
+                  : preferredSession;
+              }
+            }
+
             if (restoredSession.status === "paused") {
               return reopenInterviewSession(restoredSession.id);
             }
@@ -611,6 +668,16 @@ async function bootstrapInterviewSession(input: {
         if (!entryDate) {
           clearStoredInterviewSessionId(dimension);
         }
+      }
+    }
+
+    if (!forceNew && entryDate) {
+      const preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
+
+      if (preferredSession) {
+        return preferredSession.status === "paused"
+          ? reopenInterviewSession(preferredSession.id)
+          : preferredSession;
       }
     }
 
