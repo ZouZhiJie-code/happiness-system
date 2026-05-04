@@ -635,6 +635,7 @@ export function buildJoyDraftMessages(input: {
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
         "content 必须是一篇可直接给用户阅读和继续编辑的日志正文，不要把结构槽位、小标题或字段名直接写出来。",
         "如果有多件事件，把几个片段自然并列写进同一篇日志里，保持一篇日志的连续读感；不要分条罗列，也不要强行写成总结。",
+        "正文按自然段组织，只有语义明显切换时才换段；不要把几句短句机械拆成一行一段，也不要每句话都单独成段。",
         input.draftBrief.theorySummary
           ? `先理解这段材料为什么在${config.label}维度成立，再开始写。当前理论核心：${input.draftBrief.theorySummary}`
           : null,
@@ -667,7 +668,7 @@ export function buildJoyDraftMessages(input: {
           : null,
         `事件摘要:\n${formatEventSummaries(input.events, input.dimension)}`,
         `最近对话:\n${formatVisibleRecentMessages(input.messages)}`,
-        `要求: title ${MAX_JOURNAL_TITLE_LENGTH} 字内，最好 6-12 字，是总结型短语；不要复述事件顺序，不要把长事件句截断成标题，不要使用“介绍怎么/有了之后/我就”等过程表达开头或结尾。content 按材料密度写成一篇完整日志，不硬压缩也不硬拉长；不要使用条目、小标题、字段名；eventBlocks 需要覆盖输入中的事件。`
+        `要求: title ${MAX_JOURNAL_TITLE_LENGTH} 字内，最好 6-12 字，是总结型短语；不要复述事件顺序，不要把长事件句截断成标题，不要使用“介绍怎么/有了之后/我就”等过程表达开头或结尾。content 按材料密度写成一篇完整日志，不硬压缩也不硬拉长；正文默认保持自然段落密度，没有明显语义切换时不要换段，不要把每句话拆成独立段落；不要使用条目、小标题、字段名；eventBlocks 需要覆盖输入中的事件。`
       ].filter(Boolean).join("\n\n")
     }
   ];

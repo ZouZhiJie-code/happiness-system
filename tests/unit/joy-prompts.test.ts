@@ -199,7 +199,11 @@ describe("buildJoyDraftMessages", () => {
     expect(messages[0]?.content).toContain("整篇必须像日志，不像总结");
     expect(messages[0]?.content).toContain("开头先从具体片段进入");
     expect(messages[0]?.content).toContain("先理解这段材料为什么在开心维度成立");
+    expect(messages[0]?.content).toContain("正文按自然段组织");
+    expect(messages[0]?.content).toContain("不要把几句短句机械拆成一行一段");
     expect(messages[1]?.content).toContain("按材料密度写成一篇完整日志");
+    expect(messages[1]?.content).toContain("没有明显语义切换时不要换段");
+    expect(messages[1]?.content).toContain("不要把每句话拆成独立段落");
     expect(messages[1]?.content).toContain("title 16 字内");
   });
 

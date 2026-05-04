@@ -2116,6 +2116,221 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn?.question).toBe(continuedPayload.question);
   });
 
+  it("does not stream a repeated reflection scene question after continue_current_event", async () => {
+    const reflectionSnapshot: JoySnapshot = {
+      event: "面临毕业-就业节点的选择",
+      feeling: null,
+      whyItMattered: "意识到‘看起来合适’是基于外部视角的评判，而‘真正想要的生活’需要基于亲身经历的内部视角来判断",
+      happinessType: "判断校准型",
+      selfPattern: "过去在所有事情上都依赖外部标准",
+      confidence: 0.78,
+      missingSlots: ["stateShiftOrMeaningNeed"]
+    };
+    const repeatedQuestion = "今天有什么具体的经历或对话，让你第一次清晰地感受到这种“局外人”和“局内人”视角的差异？";
+    const fallbackQuestion =
+      "如果不是某段具体对话，那在“面临毕业-就业节点的选择”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？";
+    const choiceSession = buildSession({
+      dimension: "reflection",
+      stage: "wrap_up",
+      draftGenerationUnlocked: true,
+      lastAssistantQuestion: "",
+      snapshot: reflectionSnapshot,
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      },
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "ready_for_choice",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+          roundCoveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+          roundMeaningfulReplyCount: 6,
+          totalMeaningfulReplyCount: 6,
+          startMessageSequence: 0,
+          snapshot: reflectionSnapshot,
+          draftSummary: null,
+          startedAt: "2026-05-04T06:43:00.000Z",
+          completedAt: null
+        }
+      ],
+      messages: [
+        {
+          id: "assistant-scene",
+          role: "assistant",
+          content: JSON.stringify({
+            insight: "",
+            thinkingSummary: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。",
+            analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+            question: repeatedQuestion,
+            stateUpdate: {
+              turnPhase: "digging",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceKind: null,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event", "reason"]
+            }
+          } satisfies AssistantTurnPayload),
+          assistantPayload: {
+            insight: "",
+            thinkingSummary: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。",
+            analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+            question: repeatedQuestion,
+            stateUpdate: {
+              turnPhase: "digging",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceKind: null,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event", "reason"]
+            }
+          },
+          sequence: 0,
+          createdAt: "2026-05-04T06:46:14.409Z"
+        },
+        {
+          id: "user-scene-denial",
+          role: "user",
+          content: "没有，是我今天自发的思考，因为我要选择就业方向了",
+          sequence: 1,
+          createdAt: "2026-05-04T06:46:51.436Z"
+        },
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: JSON.stringify({
+            insight: "这一段已经聊到以后判断类似事情时可以带着的一条线索了，已经够写成一版日志。",
+            thinkingSummary: "",
+            analysis: "当前事件已形成可信的思考日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceKind: "event_complete",
+              choiceReason: "当前事件已经形成一条可信的思考日志线索，交给用户决定下一步。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "pattern"]
+            }
+          } satisfies AssistantTurnPayload),
+          assistantPayload: {
+            insight: "这一段已经聊到以后判断类似事情时可以带着的一条线索了，已经够写成一版日志。",
+            thinkingSummary: "",
+            analysis: "当前事件已形成可信的思考日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceKind: "event_complete",
+              choiceReason: "当前事件已经形成一条可信的思考日志线索，交给用户决定下一步。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "pattern"]
+            }
+          },
+          sequence: 2,
+          createdAt: "2026-05-04T06:47:42.826Z"
+        }
+      ]
+    });
+
+    findJoyInterviewSessionById.mockResolvedValue(choiceSession);
+    resumeCurrentInterviewEvent.mockResolvedValue(
+      buildSession({
+        dimension: "reflection",
+        stage: "probe_pattern",
+        lastAssistantQuestion: "",
+        snapshot: reflectionSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 6,
+            startMessageSequence: 0,
+            snapshot: reflectionSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-04T06:43:00.000Z",
+            completedAt: null
+          }
+        ],
+        pendingDecision: null,
+        messages: choiceSession.messages
+      })
+    );
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "reflection",
+        stage: "probe_pattern",
+        turnCount: 6,
+        lastAssistantQuestion: fallbackQuestion,
+        snapshot: reflectionSnapshot
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。"
+      });
+      await onDelta({
+        target: "question",
+        text: repeatedQuestion
+      });
+      return {
+        insight: "",
+        thinkingSummary: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。",
+        analysis: "用户刚刚选择继续深挖当前事件；下一步问：换一个角度继续追问。",
+        question: repeatedQuestion,
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "pattern"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        action: "continue_current_event",
+        sessionId: "session-ready"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    const streamedQuestion = deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("");
+
+    expect(streamedQuestion).toBe(fallbackQuestion);
+    expect(streamedQuestion).not.toContain("具体的经历或对话");
+    expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+  });
+
   it.each([
     {
       dimension: "joy" as const,

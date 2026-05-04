@@ -157,6 +157,21 @@ function trimTrailingPunctuation(value: string) {
   return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
 }
 
+function buildParagraph(...sentences: Array<string | null | undefined>) {
+  const normalizedSentences = sentences
+    .map((sentence) => sentence?.trim())
+    .filter((sentence): sentence is string => Boolean(sentence));
+
+  return normalizedSentences.length ? normalizedSentences.join(" ") : null;
+}
+
+function buildDraftContent(...paragraphs: Array<string | null | undefined>) {
+  return paragraphs
+    .map((paragraph) => paragraph?.trim())
+    .filter((paragraph): paragraph is string => Boolean(paragraph))
+    .join("\n\n");
+}
+
 function normalizeContentUnit(value: string) {
   return value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:、“”"'（）()【】\[\]《》]/gu, "");
 }
@@ -1151,16 +1166,15 @@ function buildJoyFallbackContent(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
 }) {
-  const lines = [
-    buildJoyOpeningSentence(input),
-    formatTheorySummarySentence(input.brief) ?? buildJoyCoreSentence(input),
-    buildJoyStateSentence(input.snapshot),
-    input.brief.completionMode === "complete"
-      ? buildJoyCompleteClosing(input.snapshot)
-      : buildJoyPartialClosing(input.snapshot)
-  ];
-
-  return lines.filter(Boolean).join("\n\n");
+  return buildDraftContent(
+    buildParagraph(buildJoyOpeningSentence(input), formatTheorySummarySentence(input.brief) ?? buildJoyCoreSentence(input)),
+    buildParagraph(buildJoyStateSentence(input.snapshot)),
+    buildParagraph(
+      input.brief.completionMode === "complete"
+        ? buildJoyCompleteClosing(input.snapshot)
+        : buildJoyPartialClosing(input.snapshot)
+    )
+  );
 }
 
 function buildFulfillmentOpeningSentence(snapshot: JoySnapshot) {
@@ -1220,14 +1234,13 @@ function buildFulfillmentFallbackContent(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
 }) {
-  const lines = [
-    buildFulfillmentOpeningSentence(input.snapshot),
-    formatTheorySummarySentence(input.brief) ?? buildFulfillmentProgressSentence(input.snapshot),
-    buildFulfillmentStateSentence(input.snapshot),
-    buildFulfillmentClosingSentence(input)
-  ];
-
-  return lines.filter(Boolean).join("\n\n");
+  return buildDraftContent(
+    buildParagraph(
+      buildFulfillmentOpeningSentence(input.snapshot),
+      formatTheorySummarySentence(input.brief) ?? buildFulfillmentProgressSentence(input.snapshot)
+    ),
+    buildParagraph(buildFulfillmentStateSentence(input.snapshot), buildFulfillmentClosingSentence(input))
+  );
 }
 
 function createFulfillmentFallbackDraft(input: {
@@ -1321,14 +1334,13 @@ function buildReflectionFallbackContent(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
 }) {
-  const lines = [
-    buildReflectionOpeningSentence(input.snapshot),
-    formatTheorySummarySentence(input.brief) ?? buildReflectionInsightSentence(input.snapshot),
-    buildReflectionStateSentence(input.snapshot),
-    buildReflectionClosingSentence(input)
-  ];
-
-  return lines.filter(Boolean).join("\n\n");
+  return buildDraftContent(
+    buildParagraph(
+      buildReflectionOpeningSentence(input.snapshot),
+      formatTheorySummarySentence(input.brief) ?? buildReflectionInsightSentence(input.snapshot)
+    ),
+    buildParagraph(buildReflectionStateSentence(input.snapshot), buildReflectionClosingSentence(input))
+  );
 }
 
 function createReflectionFallbackDraft(input: {
@@ -1455,15 +1467,14 @@ function buildImprovementFallbackContent(input: {
   brief: DraftBrief;
   snapshot: JoySnapshot;
 }) {
-  const lines = [
-    buildImprovementOpeningSentence(input.snapshot),
-    buildImprovementStateSentence(input.snapshot),
-    formatTheorySummarySentence(input.brief) ?? buildImprovementCoreSentence(input.snapshot),
-    buildImprovementControlSentence(input.snapshot),
-    buildImprovementClosingSentence(input)
-  ];
-
-  return lines.filter(Boolean).join("\n\n");
+  return buildDraftContent(
+    buildParagraph(buildImprovementOpeningSentence(input.snapshot), buildImprovementStateSentence(input.snapshot)),
+    buildParagraph(
+      formatTheorySummarySentence(input.brief) ?? buildImprovementCoreSentence(input.snapshot),
+      buildImprovementControlSentence(input.snapshot)
+    ),
+    buildParagraph(buildImprovementClosingSentence(input))
+  );
 }
 
 function createImprovementFallbackDraft(input: {
@@ -1612,16 +1623,16 @@ function buildGratitudeFallbackContent(input: {
   snapshot: JoySnapshot;
   supportingSnapshots?: JoySnapshot[];
 }) {
-  const lines = [
-    buildGratitudeOpeningSentence(input.snapshot),
-    buildGratitudeActionSentence(input.snapshot),
-    formatTheorySummarySentence(input.brief) ?? buildGratitudeNeedSentence(input.snapshot),
-    buildGratitudeTypeSentence(input.snapshot),
-    ...(input.supportingSnapshots ?? []).map((snapshot, index) => buildGratitudeSupportingParagraph(snapshot, index)),
-    buildGratitudeClosingSentence(input)
-  ];
-
-  return lines.filter(Boolean).join("\n\n");
+  return buildDraftContent(
+    buildParagraph(
+      buildGratitudeOpeningSentence(input.snapshot),
+      buildGratitudeActionSentence(input.snapshot),
+      formatTheorySummarySentence(input.brief) ?? buildGratitudeNeedSentence(input.snapshot)
+    ),
+    buildParagraph(buildGratitudeTypeSentence(input.snapshot)),
+    ...(input.supportingSnapshots ?? []).map((snapshot, index) => buildParagraph(buildGratitudeSupportingParagraph(snapshot, index))),
+    buildParagraph(buildGratitudeClosingSentence(input))
+  );
 }
 
 function createGratitudeFallbackDraft(input: {

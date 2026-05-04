@@ -1148,7 +1148,7 @@ function buildContinuationFallbackQuestion(
     }
   }
 
-  const stageFallback = buildAssistantQuestion(input.session.dimension, input.nextStage, input.nextSnapshot).trim();
+  const stageFallback = buildAssistantQuestion(input.session.dimension, input.nextStage, input.nextSnapshot)?.trim() ?? "";
 
   if (stageFallback && !areQuestionsEquivalent(stageFallback, repeatedQuestion)) {
     return stageFallback;

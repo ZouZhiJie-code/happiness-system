@@ -1271,6 +1271,7 @@ export function InterviewShell() {
     stopToastTimer();
     clearStreamState();
     const activeSession = sessionStateRef.current;
+    const todayEntryDate = getTodayEntryDate();
     const shouldReuseCurrentSession = Boolean(
       activeSession.sessionId &&
         activeSession.sessionDimension === currentDimension &&
@@ -1278,7 +1279,7 @@ export function InterviewShell() {
           ? activeSession.sessionId === requestedSessionId
           : requestedEntryDate
             ? activeSession.sessionEntryDate === requestedEntryDate
-            : true)
+            : activeSession.sessionEntryDate === todayEntryDate)
     );
 
     if (shouldReuseCurrentSession) {
