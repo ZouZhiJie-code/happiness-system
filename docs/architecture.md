@@ -11,7 +11,7 @@
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 
-截至 `2026-05-03`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
+截至 `2026-05-04`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
@@ -116,6 +116,7 @@
 - `InterviewSession`
   - 维度级会话，包含当前状态、当前事件、日志引用
   - 从 `2026-05-02` 起新增 `entryDate` 作为日志归属日期真相；`startedAt` 只表示会话实际创建时间
+  - plain `/interview` 在没有显式 `sessionId` / `entryDate` 时，只允许静默复用 `entryDate === 今天` 的会话；跨天挂载的 live session 也不能继续被默认入口复用
 - `InterviewEvent`
   - 单个事件级访谈单元，记录 `snapshotData`、`progressData` 和事件级状态
 - `InterviewMessage`
@@ -315,6 +316,7 @@
 - `insight`：新发现 / 新理解
 - `reflectionType`：`规律发现型 / 方向优势型 / 判断校准型`
 - `viewpointShift`：视角变化或判断线索
+- `continue_current_event` 的 reflection 续聊现在带有防回卷约束：如果上一轮已经问过“具体经历 / 对话”且用户明确回答没有，系统必须改问更低压的具体锚点，不能重复追同一字段
 
 `improvement` 的当前结构语义已经进入 `snapshotData` 和 `payload`：
 - `situation`：改进情境

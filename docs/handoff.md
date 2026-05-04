@@ -12,6 +12,7 @@
 - gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - 五个维度的 stitched 多事件日志现在都恢复为“完整 stitched brief 不截断”的 supporting-scene 约束：`eventWindow` 只裁剪事件列表与消息窗口，不再重建缩水版 `draftBrief`；AI prompt、质检和 fallback 都会继续保留窗口外 supporting moments，避免 `refresh_minor` 静默丢掉后续来源事件。
 - 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质量门现在都共用一层服务端语义解释：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 draft 质检；`joy` 质量门现在接受语义等价改写，不再要求固定命中 `被接住 / 被理解 / 有分量` 这类字面词。
+- `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` stitched supporting-scene 的 loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - 日志工作区对用户展示的是“日志正文”，结构化线索只保留在系统内部。
 - 当天整合日志已经落地：访谈页顶部【完整日志】进入当天日志主区，基于当前 `entryDate` 已保存维度日志生成章节合集；单维度日志与完整日志加载/生成时都使用共享阶段进度、细进度轨和书页生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
 - calendar/day、当天整合日志和分析页的按天归档现在统一按 `Asia/Shanghai` 整天时间窗口查询，不再按单个归一化时间点精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
@@ -23,7 +24,7 @@
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
 - `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
-- 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
+- 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 
@@ -97,6 +98,7 @@
 - 完整模式需要 `trigger + insight + viewpointShift`
 - 如果用户明确拒绝继续提炼，且 `trigger + insight` 已成立，也允许生成“当前版本日志”
 - 如果没有具体触发片段或新理解，且用户拒绝继续追问，系统会停止硬追问，给“只补一句 / 换一个片段 / 先退出”
+- 如果用户已经明确说没有某段具体经历 / 对话，但又点击了 `继续深聊`，系统不能回卷去追同一字段；会改问更低压的具体锚点，例如某个顾虑、画面、比较时刻或选择瞬间
 - reflection 已接入专属 prompt、extract fallback、提问策略、draft brief、写作控制、quality gate 和 fallback draft
 
 ### improvement 理论对齐开发规格与已落地部分

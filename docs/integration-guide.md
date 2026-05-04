@@ -151,6 +151,7 @@ data: {
 - `whyItMattered` 对应内部 `insight`
 - `happinessType` 对应内部 `reflectionType`，当前为 `规律发现型 / 方向优势型 / 判断校准型`
 - `selfPattern` 对应内部 `viewpointShift`，语义为“视角变化或判断线索”
+- 如果用户已经明确回答“没有某段具体经历 / 对话”，但随后通过 `continue_current_event` 继续深聊，系统不能再重复追同一字段；后续问题必须降压到更容易回答的具体锚点，例如某个顾虑、画面、比较时刻或选择瞬间
 - 如果用户拒绝继续深挖，且 `trigger + insight` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`
 - 如果用户直接输入“总结日志 / 整理成日志 / 生成一下日志”等自然语言整理请求，也按同一条 partial 收束路径处理，不会先继续抽取或追问
 - 如果用户拒绝继续深挖但没有具体触发片段或新理解，会返回 `pendingDecision.kind = "boundary_insufficient"`，actions 固定为 `continue_current_event / next_event / pause_session`
@@ -1208,6 +1209,7 @@ POST /api/daily-journal/[id]/save
 2.5. 普通 `/interview` 默认按“今天”恢复
    - 如果没有显式 `sessionId`，也没有显式 `entryDate`
    - 本地按维度缓存的 session 只有在 `entryDate === 今天` 时才允许自动恢复
+   - 当前页面已经挂载的 live session 也只有在 `entryDate === 今天` 时才允许被 plain `/interview` 静默复用；如果它属于昨天，前端必须新开今天 session
    - 如果缓存里的 session 属于别的日期，前端应清掉该维度缓存并新开今天的 session
    - 访谈页正文区应明确显示“当前记录日期：YYYY-MM-DD”，让用户知道这轮内容会归到哪一天
    - 如果当前正在显示 inline choice card，聊天记录里应隐藏所有 choice turn；只有当 card 消失后、且某条历史 choice 最终停在 transcript 末尾时，它才应重新可见
