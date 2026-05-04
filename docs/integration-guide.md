@@ -37,7 +37,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块，SummaryHero 3 栏状态看板始终可见于正文区顶部；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块，SummaryHero 3 栏状态看板只在 `overview` 渲染；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -349,6 +349,10 @@ data: {
 也兼容：
 - `PUT /api/joy-entry/[id]`
 
+语义补充：
+- 如果当前日志原本已经是 `saved`，这条 `PUT` 会把它重新打回 `draft`，并清空 `savedAt`
+- 因此前端里的“保存修改”仍然是显式动作；自动暂存不会静默发布已保存日志的修改
+
 请求体就是 `updateJournalEntryRequestSchema`：
 
 ```json
@@ -420,7 +424,7 @@ GET /api/daily-journal?date=2026-05-02
 }
 ```
 
-`POST /api/daily-journal/generate` 只收集当天 `JoyEntry.status = saved` 的维度日志。这里的“当天”当前按 `Asia/Shanghai` 的整天时间窗口取数，而不是按单个归一化时间点精确匹配。没有来源时返回 `DAILY_JOURNAL_SOURCE_EMPTY`。生成成功会 upsert 一条 `DailyJournalEntry` 草稿。
+`POST /api/daily-journal/generate` 只收集当天 `JoyEntry.status = saved` 的维度日志。这里的“当天”当前按 `Asia/Shanghai` 的整天时间窗口取数，而不是按单个归一化时间点精确匹配。来源集合按“同一天每个维度最新一篇 `saved` 日志”计算；没有来源时返回 `DAILY_JOURNAL_SOURCE_EMPTY`。生成成功会 upsert 一条 `DailyJournalEntry` 草稿。如果这篇当天日志之前已经 `saved`，重新生成后也会先回到 `draft`，等待用户再次显式保存。
 
 编辑草稿：
 
@@ -431,7 +435,7 @@ GET /api/daily-journal?date=2026-05-02
 }
 ```
 
-`PUT /api/daily-journal/[id]` 会把状态保持或改回 `draft`，用于访谈页当天日志模式自动保存。
+`PUT /api/daily-journal/[id]` 会把状态保持或改回 `draft`，用于访谈页当天日志模式自动保存。已保存的当天日志再次编辑时，也会先回到 `draft`，直到用户点击“保存修改”。
 
 前端离开当天日志主区前也会主动调用同一草稿更新接口：
 - 点击“回到访谈”时，会先保存未等到 700ms autosave 的标题或正文编辑；保存失败或内容非法时继续停留在当天日志主区。
@@ -1489,7 +1493,7 @@ POST /api/daily-journal/[id]/save
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `overview`
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
-- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏状态看板始终可见于正文区顶部；切换 tab 或翻月后 `section` 保留在 URL 中
+- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏状态看板只在 `overview` 视图内渲染；切换 tab 或翻月后 `section` 保留在 URL 中
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`

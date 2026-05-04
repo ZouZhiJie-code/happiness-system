@@ -39,7 +39,7 @@
 - 五维统一语义短标题治理，标题不再由长事件句机械截断
 - 用户边界低压收束：材料足够时 partial，材料不足时“只补一句 / 换一个片段 / 先退出”
 - 开发态 `清除对话记录` 按钮：当前维度可一键重开新访谈
-- 分析页「月度驾驶舱」改版（2026-05-04）：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、记录天数、主线维度名）；SummaryHero 3 栏状态看板移到总览视图内 OverviewCards 下方，其余 tab 不显示；热力图统计栏从右侧 4 卡压缩为底部 3 格 summary bar；五维板块展示 topTags 高频线索 chips；评分快扫选中态强化（左侧竖条色带+底色加深）
+- 分析页「月度驾驶舱」改版（2026-05-04）：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、记录天数、主线维度名）；SummaryHero 3 栏状态看板移到总览视图内 OverviewCards 下方，其余 tab 不显示；当前月评分保存成功后，toolbar chip 会立即刷新；热力图统计栏从右侧 4 卡压缩为底部 3 格 summary bar；五维板块展示 topTags 高频线索 chips；评分快扫选中态强化（左侧竖条色带+底色加深）
 
 ### joy 理论对齐
 
@@ -177,7 +177,7 @@
   - 未来日期允许查询，但服务端会裁掉 `start_interview / continue_interview`
 - `/calendar` 月视图、周视图、日视图与 deep link 已落地
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大，访谈和 calendar 业务组用 `｜` 分隔
-  - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页已改为 tab 互斥视图：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；SummaryHero 3 栏状态看板始终可见于正文区顶部；正文区按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只保留 `查看当天`，不开放开始/继续访谈；`PUT /api/happiness-score` 只允许保存今天和昨天；空数据月份现在直接显示真实空态，不再使用示意填充，只有评分没有维度日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月 `最长空档` 会排除未来日期
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页已改为 tab 互斥视图：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；SummaryHero 3 栏状态看板只在 `overview` 总览视图内渲染；正文区按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只保留 `查看当天`，不开放开始/继续访谈；`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 toolbar chip 会立即刷新；空数据月份现在直接显示真实空态，不再使用示意填充，只有评分没有维度日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月 `最长空档` 会排除未来日期
   - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
   - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧有 `查看当天` 日期级入口
   - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致
@@ -251,7 +251,7 @@
 
 测试结果：
 - `39` 个测试文件
-- `345` 个测试全部通过
+- `351` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进

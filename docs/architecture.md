@@ -60,7 +60,7 @@
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、3 栏状态看板（评分/节奏/主线）、总览摘要、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip
+  - 记录分析页壳、`overview` 视图内的 3 栏状态看板（评分/节奏/主线）、总览摘要、评分走势与 8 要素快扫（左侧色带选中态）、本月热力图与底部 summary bar、当天追踪 drill-in、五维主线 / 浮现 / 安静维度布局（带 topTags 高频线索 chips），以及幸福 8 要素评分录入面板。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -207,6 +207,7 @@
 
 聚合规则固定为：
 - 同一天同维度优先取最新有效记录
+- `continue_interview / continue_editing / view_journal` 会分别指向活动会话、草稿会话和已保存日志对应会话，不再复用同一个模糊目标
 - 同一天多个维度允许并存
 - `InterviewSession.entryDate`、`JoyEntry.date` 与 `DailyJournalEntry.date` 的范围查询统一按 `Asia/Shanghai` 整天窗口执行，避免同日非零点时间戳被漏算到前一天或下一天
 - 无日志时只允许使用安全摘要，不暴露内部结构字段名
@@ -259,13 +260,12 @@
 ### 3.7 记录分析页现实
 
 截至 `2026-05-04`，`/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已进入月度记录分析的 tab 互斥视图阶段：
-- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、有记录天数、主线维度名）
+- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（今天已评/未评、有记录天数、主线维度名）；当前月评分保存成功后，toolbar chip 会即时刷新
 - 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认切到 `overview` 总览视图
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - 页面内已有上月 / 本月 / 下月切换（在 header toolbar 中）
 - 页面当前已展示：
-  - SummaryHero 3 栏状态看板（评分/节奏/主线维度）始终可见于正文区顶部
-  - `overview`：OverviewCards 统计卡
+  - `overview`：OverviewCards 统计卡与 SummaryHero 3 栏状态看板（评分/节奏/主线维度）
   - `score`：幸福 8 要素评分默认入口，先展示总分平均走势，再展示 8 要素快扫和单项细看，并只允许编辑今天和昨天，8 项 slider 全部填写后才能保存
   - `rhythm`：本月记录热力图、最长连续记录 / 空档和当天 drill-in，替代旧的记录页同款分布表
   - `insights`：主线维度 + 正在浮现 + 安静维度，避免五张卡按偶数栅格硬排
@@ -440,10 +440,11 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 生成流程：
 1. 按 `date` 查询当天 `status = saved` 的 `JoyEntry`
-2. 按 `joy / fulfillment / reflection / improvement / gratitude` 顺序整理 source
-3. AI 轻整理为已有维度章节合集；AI 不可用时用确定性 fallback 章节
-4. upsert `DailyJournalEntry` 为 `draft`
-5. 后续编辑自动保存草稿，用户确认后标记为 `saved`
+2. 只保留同一天每个维度最新一篇 `saved` 日志作为日级来源
+3. 按 `joy / fulfillment / reflection / improvement / gratitude` 顺序整理 source
+4. AI 轻整理为已有维度章节合集；AI 不可用时用确定性 fallback 章节
+5. upsert `DailyJournalEntry` 为 `draft`
+6. 后续编辑自动保存草稿，用户确认后标记为 `saved`
 
 约束：
 - 没有已保存维度日志时返回 `DAILY_JOURNAL_SOURCE_EMPTY`

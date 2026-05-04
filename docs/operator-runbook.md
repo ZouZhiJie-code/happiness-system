@@ -103,7 +103,7 @@ npm run dev
 3. 点击 `上月 / 下月 / 本月`
 4. 预期：URL 更新 `month` 并保留当前 `section`，页面标题同步成对应月份
 5. 直接打开 `/analysis?month=<该月>&section=rhythm` 或 `/analysis?month=<该月>&section=insights`
-6. 预期：页面选中对应 tab，只渲染节奏或五维洞察板块，SummaryHero 仍保留在顶部
+6. 预期：页面选中对应 tab，只渲染节奏或五维洞察板块；非 `overview` 视图不显示 SummaryHero
 7. 再直接打开 `/analysis`
 8. 预期：首屏停在顶部月度摘要与总览，不会自动跳到评分区
 9. 预期：总览是默认视图；页内可切到 `评分 / 节奏 / 五维`
@@ -126,7 +126,7 @@ npm run dev
 26. 预期：单项走势切换到对应要素，URL 的 `month` 不变
 27. 预期：今天 / 昨天可切换；已有评分会回填，未填完整时保存按钮禁用
 28. 拖动 8 项 slider 到 `1..10` 内的整数并保存
-29. 预期：请求 `PUT /api/happiness-score` 成功，页面重新拉取 `/api/analysis/month` 并保留最新分数，趋势图同步更新
+29. 预期：请求 `PUT /api/happiness-score` 成功，页面重新拉取 `/api/analysis/month` 并保留最新分数，趋势图同步更新；header toolbar 的 `今天未评 / 已评` contextual chip 会立即刷新
 30. 切到一个没有已保存记录的旧月份
 31. 预期：`overview / score / rhythm / insights` 视图都能稳定打开，并显示真实空态；不应出现示意填充或伪造数据
 32. 切到一个“只有评分、没有已保存维度日志”的月份
@@ -232,7 +232,7 @@ npm test
 
 截至 `2026-05-04`，当前基线是：
 - `39` 个测试文件
-- `345` 个测试全部通过
+- `351` 个测试全部通过
 
 ## 5. 高频故障排查
 
@@ -447,4 +447,4 @@ npm run dev
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，SummaryHero 3 栏看板始终可见，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，但热力图未来日期的 drill-down 只保留 `查看当天`，不开放开始/继续访谈；当前月 `最长空档` 会排除未来日期；`PUT /api/happiness-score` 只允许保存今天和昨天，AI 洞察仍未接入
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，SummaryHero 3 栏看板只在 `overview` 显示，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，但热力图未来日期的 drill-down 只保留 `查看当天`，不开放开始/继续访谈；当前月 `最长空档` 会排除未来日期；`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新，AI 洞察仍未接入
