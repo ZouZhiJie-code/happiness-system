@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
-import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
-import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
+import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
   parseInterviewIssue,
@@ -168,6 +168,23 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
       {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
     </React.Fragment>
   );
+}
+
+function getPendingDecisionChoiceKind(
+  pendingDecision: InterviewSessionRecord["pendingDecision"]
+) {
+  if (!pendingDecision) {
+    return null;
+  }
+
+  switch (pendingDecision.kind) {
+    case "event_complete":
+      return "event_complete" as const;
+    case "boundary_insufficient":
+      return "boundary_insufficient" as const;
+    case "dimension_redirect":
+      return "dimension_redirect" as const;
+  }
 }
 
 function ChoiceActionCard({
@@ -453,20 +470,13 @@ function DraftGenerationPhaseCard({
   });
 
   return (
-    <div className="mt-5 rounded-[30px] border border-[rgba(172,128,83,0.16)] bg-[linear-gradient(180deg,rgba(251,245,235,0.96),rgba(240,226,202,0.94))] p-6 shadow-[0_20px_46px_rgba(124,83,43,0.1)]">
-      <JournalGrowthTree progress={progress} />
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
-        <p className="text-[0.78rem] tracking-[0.18em] text-[#9a734d]">{meta.label}</p>
-      </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(188,148,103,0.16)]">
-        <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(197,143,87,0.88),rgba(223,184,131,0.98),rgba(197,143,87,0.88))] transition-[width] duration-700 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <p className="mt-4 text-sm leading-7 text-[#5d5042]">{meta.description}</p>
-    </div>
+    <JournalGenerationStatus
+      label={meta.label}
+      description={meta.description}
+      progress={progress}
+      variant="full"
+      className="mt-5"
+    />
   );
 }
 
@@ -488,22 +498,7 @@ function DraftGenerationPhaseBanner({
   });
 
   return (
-    <div className="rounded-[24px] border border-[rgba(165,120,74,0.16)] bg-[linear-gradient(180deg,rgba(252,246,236,0.9),rgba(243,230,208,0.84))] px-4 py-3 shadow-[0_12px_30px_rgba(124,83,43,0.08)]">
-      <JournalGrowthTree progress={progress} compact className="-mb-1 -mt-2" />
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#c58f57]" />
-          <p className="text-[0.82rem] tracking-[0.12em] text-[#8d6540]">{meta.label}</p>
-        </div>
-        <span className="text-[0.74rem] text-[#9f7a54]">{Math.round(progress)}%</span>
-      </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[rgba(188,148,103,0.14)]">
-        <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(197,143,87,0.84),rgba(226,192,145,0.98),rgba(197,143,87,0.84))] transition-[width] duration-700 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-    </div>
+    <JournalGenerationStatus label={meta.label} description={meta.description} progress={progress} variant="compact" />
   );
 }
 
@@ -571,6 +566,7 @@ async function bootstrapInterviewSession(input: {
   entryDate?: string | null;
 }) {
   const { dimension, forceNew = false, explicitSessionId = null, entryDate = null } = input;
+  const targetEntryDate = entryDate ?? getTodayEntryDate();
   const taskKey = buildInterviewBootstrapTaskKey({
     dimension,
     forceNew,
@@ -606,10 +602,18 @@ async function bootstrapInterviewSession(input: {
       const storedSessionId = storedSessionEntry?.sessionId ?? null;
 
       if (storedSessionId) {
+        if (!entryDate && storedSessionEntry?.entryDate && storedSessionEntry.entryDate !== targetEntryDate) {
+          clearStoredInterviewSessionId(dimension);
+          return requestInterviewSession(dimension, entryDate);
+        }
+
         try {
           const restoredSession = await fetchInterviewSession(storedSessionId);
 
-          if (isRestorableSession(restoredSession, dimension) && (!entryDate || restoredSession.entryDate === entryDate)) {
+          if (
+            isRestorableSession(restoredSession, dimension)
+            && restoredSession.entryDate === targetEntryDate
+          ) {
             if (restoredSession.status === "paused") {
               return reopenInterviewSession(restoredSession.id);
             }
@@ -730,6 +734,7 @@ export function InterviewShell() {
   const dailyJournalDate = shouldOpenDailyJournalFromQuery
     ? requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate()
     : sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate();
+  const currentRecordDate = requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate();
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
@@ -781,6 +786,42 @@ export function InterviewShell() {
       !optimisticUserMessage &&
       assistantState === "idle" &&
       (sessionDimension ?? currentDimension) === currentDimension
+  );
+  const activeChoiceMessageId = useMemo(() => {
+    const activeChoiceKind = getPendingDecisionChoiceKind(pendingDecision);
+
+    if (!showChoiceCard || !activeChoiceKind) {
+      return null;
+    }
+
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+
+      if (message.role !== "assistant" || getAssistantChoiceKind(message.assistantPayload) !== activeChoiceKind) {
+        continue;
+      }
+
+      return message.id;
+    }
+
+    return null;
+  }, [messages, pendingDecision, showChoiceCard]);
+  const visibleMessages = useMemo(
+    () =>
+      messages.filter((message) => {
+        const choiceKind = message.role === "assistant" ? getAssistantChoiceKind(message.assistantPayload) : null;
+
+        if (!choiceKind) {
+          return true;
+        }
+
+        if (!showChoiceCard) {
+          return true;
+        }
+
+        return message.id !== activeChoiceMessageId;
+      }),
+    [activeChoiceMessageId, messages, showChoiceCard]
   );
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
@@ -864,7 +905,7 @@ export function InterviewShell() {
     const storageDimension = sessionDimension ?? currentDimension;
 
     if (shouldCacheSession(status)) {
-      touchStoredInterviewSessionId(storageDimension, sessionId);
+      touchStoredInterviewSessionId(storageDimension, sessionId, sessionEntryDate);
       return;
     }
 
@@ -962,8 +1003,8 @@ export function InterviewShell() {
       return;
     }
 
-    touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId);
-  }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionDimension, sessionId, status]);
+    touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate);
+  }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionDimension, sessionEntryDate, sessionId, status]);
 
   useEffect(() => {
     if (shouldOpenJournalPanelFromQuery && journalEntry) {
@@ -1317,7 +1358,7 @@ export function InterviewShell() {
 
     // Keep the chat pinned to the latest message without scrolling the whole document.
     messageScrollElement.scrollTop = messageScrollElement.scrollHeight;
-  }, [assistantState, messages.length, optimisticUserMessage, streamedAssistantQuestion, streamedAssistantSummary]);
+  }, [assistantState, optimisticUserMessage, streamedAssistantQuestion, streamedAssistantSummary, visibleMessages.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1396,7 +1437,7 @@ export function InterviewShell() {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId);
+      touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate);
       event.preventDefault();
       event.returnValue = interviewLeaveConfirmMessage;
       return interviewLeaveConfirmMessage;
@@ -1703,9 +1744,16 @@ export function InterviewShell() {
       return;
     }
 
-	    setPanelOpen(false);
-	    setInterviewIssue(null);
-    router.push(`/interview?dimension=${pendingDecision.targetDimension}`);
+    setPanelOpen(false);
+    setInterviewIssue(null);
+    const params = new URLSearchParams({ dimension: pendingDecision.targetDimension });
+    const entryDate = requestedEntryDate ?? sessionEntryDate;
+
+    if (entryDate) {
+      params.set("entryDate", entryDate);
+    }
+
+    router.push(`/interview?${params.toString()}`, { scroll: false });
   }
 
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -2100,7 +2148,10 @@ export function InterviewShell() {
             className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2"
           >
             <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
-              {messages.map((message) => (
+              <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
+                当前记录日期：{currentRecordDate}
+              </div>
+              {visibleMessages.map((message) => (
                 <ConversationMessage key={message.id} message={message} />
               ))}
               {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}

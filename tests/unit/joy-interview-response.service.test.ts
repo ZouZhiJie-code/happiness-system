@@ -233,6 +233,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.turnPhase).toBe("choice");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.shouldEndDimension).toBe(false);
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("开心日志线索");
   });
@@ -293,6 +294,7 @@ describe("prepareJoyInterviewResponse", () => {
       });
       expect(result.assistantTurn.question).toBe("");
       expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+      expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
       expect(result.assistantTurn.stateUpdate.choiceReason).toContain("当前版本日志");
       expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
     }
@@ -363,6 +365,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("充实日志线索");
   });
 
@@ -425,6 +428,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("不算白过");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("值得感标准");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
@@ -488,6 +492,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("当前版本日志");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("判断线索");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
@@ -567,6 +572,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进尝试线索");
   });
 
@@ -698,6 +704,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.assistantTurn.question).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进情境和关键原因");
     expect(result.nextSnapshot.nextAttempt).toBeNull();
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
@@ -763,6 +770,7 @@ describe("prepareJoyInterviewResponse", () => {
       reason: "我不再继续追问细节了。"
     });
     expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
@@ -820,6 +828,7 @@ describe("prepareJoyInterviewResponse", () => {
       reason: "我不再继续追问细节了。"
     });
     expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(result.assistantTurn.question).toContain("这个片段最关键的一点");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
@@ -935,6 +944,7 @@ describe("prepareJoyInterviewResponse", () => {
       reason: "我不再继续追问细节了。"
     });
     expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
@@ -1001,6 +1011,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(result.isReadyForDraft).toBe(false);
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("dimension_redirect");
     expect(result.assistantTurn.stateUpdate.shouldEndDimension).toBe(true);
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("更适合转去复盘改进");
   });

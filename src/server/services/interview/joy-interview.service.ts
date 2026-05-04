@@ -302,6 +302,7 @@ function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): 
       turnPhase: "choice",
       shouldEndDimension: false,
       offerChoice: true,
+      choiceKind: "boundary_insufficient",
       choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。",
     },
     meta: {
@@ -557,6 +558,7 @@ function buildChoiceAssistantTurn(
       turnPhase: "choice",
       shouldEndDimension: false,
       offerChoice: true,
+      choiceKind: "event_complete",
       choiceReason: buildChoiceReason(dimension, snapshot, explorationRound, completionMode)
     },
     meta: {
@@ -575,6 +577,7 @@ function buildRedirectAssistantTurn(reason: string, snapshot: JoySnapshot): Assi
       turnPhase: "choice",
       shouldEndDimension: true,
       offerChoice: true,
+      choiceKind: "dimension_redirect",
       choiceReason: reason
     },
     meta: {
@@ -1339,6 +1342,7 @@ function finalizeAssistantTurn(
           turnPhase: "digging",
           shouldEndDimension: false,
           offerChoice: false,
+          choiceKind: null,
           choiceReason: ""
         }
       }
@@ -1355,6 +1359,7 @@ function finalizeAssistantTurn(
         turnPhase: input.nextStage === "collect_event" ? "opening" : "digging",
         shouldEndDimension: false,
         offerChoice: false,
+        choiceKind: null,
         choiceReason: ""
       }
     }

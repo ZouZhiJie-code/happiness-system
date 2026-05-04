@@ -250,8 +250,8 @@
 - `npm test`
 
 测试结果：
-- `39` 个测试文件
-- `351` 个测试全部通过
+- `40` 个测试文件
+- `365` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进
@@ -269,6 +269,7 @@
 - gratitude 专属提问策略：具体被照顾/支持的时刻、具体动作、被回应的需要、珍惜原因、关系信号和禁用感谢信/负债口吻
 - gratitude 正文生成、quality gate、fallback draft、语义短标题治理和自动化验收样例
 - draft quality gate
+- stitched 多事件草稿在 `refresh_minor` 下的 prompt 窗口 / quality gate 对齐，不再因为窗口外 supporting scene 被稳定打回 fallback
 - 重新生成已有日志
 - 保存正式日志
 - 页面刷新后的 session 恢复

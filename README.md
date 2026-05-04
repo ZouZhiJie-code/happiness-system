@@ -7,6 +7,7 @@
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
 - `gratitude` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
+- 五个维度的 stitched 多事件日志现在都共用“prompt 输入与质检输入一致”的 supporting-scene 约束：fallback draft 仍会保留主事件外最多 `2` 个 supporting moments，而 `missing_supporting_scene_anchor` 只校验本次 AI prompt 实际看到的 supporting scenes，不再因为窗口外事件把 minor refresh 误打回 fallback。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
@@ -16,6 +17,7 @@
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
 - 顶部导航栏当前已经统一成全宽暖色工具栏：不再作为居中大卡片悬浮，calendar toolbar、访谈维度条和主导航都直接平铺在 header 里，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 做轻量分隔。主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页。
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 `/api/calendar/day` 的 day snapshot 为准。只要某个维度当天已经有 `saved` 日志，胶囊会优先显示 `已完成`，即使同一天还有继续中的 session。
+- 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，当前选中维度的 live progress 会被压在 `88%` 以下，不会被历史 `draftGenerationUnlocked` 顶回 ready 状态。
 - 首页已重构为品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记心有所归”；文案与图片配置集中在 `src/content/homepage.ts`，当前已接入 `public/homepage/*` 本地图片，并把 Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化广告片布局，首页木纹背景也已调成上浅下深。
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改为 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；SummaryHero 3 栏状态看板只在 `overview` 总览视图内渲染；正文区按 `section` 只渲染对应板块；缺失 `section` 时默认切到 `overview` 总览视图，切换 tab 或翻月后 `section` 保留在 URL 中。评分区先看总分走势，再看 8 要素快扫和单项细看；热力区支持点选某一天继续回到当天；五维洞察按主线维度、正在浮现和安静维度组织，下钻回访谈时会保留对应 `entryDate`。未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。空数据月份不再用示意填充冒充真实分析，只有评分没有日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月的 `最长空档` 也会排除未来日期。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天，且当前月保存成功后 header toolbar 的 contextual chip 会立即刷新。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
@@ -123,7 +125,7 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-04`，当前自动化基线为 `39` 个测试文件、`351` 个测试全部通过。
+截至 `2026-05-04`，当前自动化基线为 `40` 个测试文件、`365` 个测试全部通过。
 
 ## 常用命令
 
@@ -175,6 +177,7 @@ npx prisma db push
 - reflection 现在以 `trigger / insight / viewpointShift` 为核心槽位，完整模式收束“判断线索”，部分模式只停在“这次片段带来的当前理解”。
 - improvement 现在的内部数据结构已扩展为 `situation / improvementTrack / stateAssessment / frictionPoint / repeatCondition / controllableFactor / nextAttempt / successSignal / improvementType / feeling / tags`，AI 抽取和 fallback 抽取都会区分 `repeat_good` 与 `avoid_bad`；如果用户只分清了改进轨道但还没有说清条件或卡点，AI 抽取会先保留 `improvementTrack`，把 `repeatCondition / frictionPoint` 留给下一轮追问，不把中间态误判成可完成材料；访谈提问已按“具体情境 -> 改进轨道 -> 关键条件/卡点 -> 可控小调整 -> 下次最小动作/成功信号”推进，并避免建议、计划和自责归因口吻；日志成稿已接入正文生成、质量门、fallback draft 和标题治理，标题候选会优先收束为 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类语义短标题。
 - gratitude 现在的内部数据结构已扩展为 `gratitudeMoment / gratitudeTarget / kindAction / seenNeed / innerEffect / gratitudeReason / gratitudeType / relationshipSignal / reciprocityHint / tags`，完整模式收束“关系线索”，partial 模式只停在“这份感谢为什么重要”，并禁止感谢信模板、道德负债感和强行回馈任务。
+- 五个维度在多事件 `stitched_moments` 场景下，都共享 supporting-scene 质量门；但校验范围已经收束到本次 AI prompt 实际看到的 `promptEvents`，不会因为窗口外的 `supportingMoments` 把 `refresh_minor` 误判为缺少副事件。若 AI draft 仍被拒收，fallback draft 会保留主事件外最多 `2` 个 supporting moments，而不是退化成只剩主事件。
 - 如果用户明确拒绝继续提炼，或用“总结日志 / 整理成日志 / 帮我总结”等自然语言要求收束，五个维度都允许在核心材料成立时先生成当前版本日志。
 - 如果用户拒绝继续但材料不足，系统会停止追问细节，提供“只补一句 / 换一个片段 / 先退出”。
 - 如果访谈提交失败，前端会展示结构化错误原因、处理建议、错误码和 requestId；例如 `MESSAGE_TOO_LONG` 会提示拆成两段发送，服务不可用会提示确认服务运行后刷新。

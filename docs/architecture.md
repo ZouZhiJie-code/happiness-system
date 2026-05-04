@@ -222,7 +222,8 @@
   - 回到今天
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
-  - 当页面处于 `entryDate` 访谈上下文时，当前选中维度胶囊优先显示 live session 的实时轮次 / 进度圈；其余维度，以及切到 `daily_journal` 工作区后的胶囊状态，继续使用 `CalendarDayRecord.dimensions`
+- 当页面处于 `entryDate` 访谈上下文时，当前选中维度胶囊优先显示 live session 的实时轮次 / 进度圈；其余维度，以及切到 `daily_journal` 工作区后的胶囊状态，继续使用 `CalendarDayRecord.dimensions`
+- 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，live progress 会先被压在 `88%` 以下；这个边界态优先级高于历史 `draftGenerationUnlocked`
 - 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大；主导航不再包含【首页】项，点击左侧【幸福系统】品牌标识可返回首页
 - `src/app/calendar/page.tsx` 与三个 shell 共同形成首屏工作区
 - 页面本身优先不长滚动，超量内容进入 pane 内局部滚动
@@ -403,6 +404,11 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 5. 对生成结果做规则质检，并统一进行语义短标题治理；如果 AI 不可用、schema 不合法或质检失败，则用 fallback draft
 6. upsert `JoyEntry`
 7. 用最新 session hydrate 前端
+
+补充：
+- 五个维度在 `stitched_moments` 下都可以对 supporting scene 做额外校验；如果 AI draft 漏掉本次 prompt 里实际提供的副事件，质量门会拒收
+- fallback draft 会自然并入主事件外最多 `2` 个 supporting moments，而不只回退到 `primarySnapshot`
+- `generateJoyDraftWithAI()` 会先从全量 `sourceEvents` 里选出 `promptEvents`，再基于 `promptEvents` 生成 `promptScopedBrief`；AI prompt 和 `runDraftQualityGate()` 共用这份 brief，避免 `refresh_minor` 因窗口外副事件触发 `missing_supporting_scene_anchor`
 
 当前只支持单个 `sessionId` 生成，虽然请求体是数组。
 

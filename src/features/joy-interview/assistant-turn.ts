@@ -1,5 +1,5 @@
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
-import type { AssistantDepth, AssistantTurnPayload, InterviewMessage } from "@/types/interview";
+import type { AssistantChoiceKind, AssistantDepth, AssistantTurnPayload, InterviewMessage } from "@/types/interview";
 
 export const assistantDepthOrder: AssistantDepth[] = ["event", "feeling", "reason", "clue", "pattern"];
 
@@ -50,12 +50,33 @@ export function createOpeningAssistantTurnPayload(question: string): AssistantTu
       turnPhase: "opening",
       shouldEndDimension: false,
       offerChoice: false,
+      choiceKind: null,
       choiceReason: ""
     },
     meta: {
       depthReached: []
     }
   };
+}
+
+export function getAssistantChoiceKind(payload: AssistantTurnPayload | null | undefined): AssistantChoiceKind | null {
+  if (!payload?.stateUpdate.offerChoice) {
+    return null;
+  }
+
+  if (payload.stateUpdate.choiceKind) {
+    return payload.stateUpdate.choiceKind;
+  }
+
+  if (payload.stateUpdate.shouldEndDimension) {
+    return "dimension_redirect";
+  }
+
+  if (payload.question.trim()) {
+    return "boundary_insufficient";
+  }
+
+  return "event_complete";
 }
 
 export function getAssistantDisplayParts(payload: AssistantTurnPayload | null | undefined) {

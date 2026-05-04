@@ -17,6 +17,7 @@ const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "im
 const draftCompletionModeSchema = z.enum(["complete", "user_override_partial"]);
 const assistantDepthSchema = z.enum(["event", "feeling", "reason", "clue", "pattern"]);
 const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
+const assistantChoiceKindSchema = z.enum(["event_complete", "dimension_redirect", "boundary_insufficient"]);
 const interviewEventStatusSchema = z.enum(["active", "ready_for_choice", "completed"]);
 const interviewLensSchema = z.enum(["event_detail", "felt_experience", "importance_reason", "meaning_pattern", "self_pattern"]);
 const interviewStageSchema = z.string().min(1);
@@ -230,6 +231,7 @@ export const assistantTurnPayloadSchema = z.object({
     turnPhase: assistantTurnPhaseSchema,
     shouldEndDimension: z.boolean(),
     offerChoice: z.boolean(),
+    choiceKind: assistantChoiceKindSchema.nullable().optional().default(null),
     choiceReason: z.string().max(160)
   }),
   meta: z.object({

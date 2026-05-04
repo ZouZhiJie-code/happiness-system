@@ -190,6 +190,11 @@ data: {
 
 如果用户拒绝继续深挖，且 `gratitudeMoment + kindAction + seenNeed|gratitudeReason` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`。如果只有感谢对象但没有具体行为或原因，会返回 `boundary_insufficient`。
 
+多事件 `stitched_moments` 成稿补充约束：
+- 五个维度都共享 supporting scene 校验，但只校验本次 AI prompt 实际看到的 `promptEvents`，不会因为窗口外 supporting moment 把 `refresh_minor` 误判为缺少副事件
+- 如果 AI draft 漏掉本次 prompt 里实际提供的 supporting moment，质量门会返回 `missing_supporting_scene_anchor`
+- 如果因此退回 fallback draft，正文会保留主事件外最多 `2` 个 supporting moments，而不是退化成只剩主事件
+
 ### 3.3 非流式回复
 
 `POST /api/interview/session/respond`
@@ -243,6 +248,7 @@ data: {
 - `improvement` 完整模式才允许轻收用户已经说出的 `nextAttempt`；partial 模式只停在当前看见的改进点，不硬写完整方案。
 - `gratitude` 生成日志时会按“具体感谢片段 -> 对方行为 -> 被回应的需要 -> 为什么重要 -> 关系线索轻收”组织正文。
 - `gratitude` 完整模式才允许轻收 `relationshipSignal`；partial 模式只停在当前感谢，不硬写稳定关系判断或回馈任务。
+- `gratitude` 在 `stitched_moments` 下如果回退到 fallback draft，正文会自然并入主事件外最多 `2` 个 supporting moments。
 - 五个维度的标题都会经过后端语义短标题治理，最大 `16` 字；AI 返回的坏标题、流水句或截断句会被确定性标题替换。`improvement` 应优先落到 `表达慢下来 / 先听完再回应 / 把节奏放稳 / 提前留出缓冲 / 把边界说清楚 / 让准备更充分` 这类短标题；`gratitude` 应优先落到 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会` 这类短标题。
 
 成功返回：

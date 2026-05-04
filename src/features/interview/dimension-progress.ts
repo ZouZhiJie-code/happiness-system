@@ -94,6 +94,13 @@ function getProgressState(percentage: number): DimensionProgressSummary["state"]
   return "empty";
 }
 
+function isBoundaryPendingDecision(session: Pick<DimensionProgressSessionLike, "pendingDecision">) {
+  return (
+    session.pendingDecision?.kind === "dimension_redirect" ||
+    session.pendingDecision?.kind === "boundary_insufficient"
+  );
+}
+
 export function getDimensionProgressSummary(
   session: DimensionProgressSessionLike | null | undefined
 ): DimensionProgressSummary {
@@ -124,11 +131,9 @@ export function getDimensionProgressSummary(
 
   percentage = Math.max(percentage, getSnapshotProgressScore(session.dimension ?? "joy", session.snapshotData, session.snapshot));
 
-  if (session.pendingDecision?.kind === "dimension_redirect") {
-    percentage = Math.min(percentage, 88);
-  }
+  const hasBoundaryPendingDecision = isBoundaryPendingDecision(session);
 
-  if (session.draftGenerationUnlocked || session.pendingDecision?.kind === "event_complete") {
+  if (!hasBoundaryPendingDecision && (session.draftGenerationUnlocked || session.pendingDecision?.kind === "event_complete")) {
     percentage = Math.max(percentage, 90);
   }
 
@@ -138,6 +143,8 @@ export function getDimensionProgressSummary(
 
   if (session.journalEntry?.status === "saved") {
     percentage = 100;
+  } else if (hasBoundaryPendingDecision) {
+    percentage = Math.min(percentage, 88);
   }
 
   const roundedPercentage = Math.round(Math.max(0, Math.min(100, percentage)));

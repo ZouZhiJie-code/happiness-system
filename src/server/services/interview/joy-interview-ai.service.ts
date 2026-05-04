@@ -390,6 +390,7 @@ function createFallbackAssistantTurn(input: {
       turnPhase: input.stage === "collect_event" ? "opening" : "digging",
       shouldEndDimension: false,
       offerChoice: false,
+      choiceKind: null,
       choiceReason: ""
     },
     meta: {
@@ -419,6 +420,7 @@ function normalizeAssistantTurnPayload(payload: AssistantTurnPayload): Assistant
       turnPhase: payload.stateUpdate?.turnPhase ?? "digging",
       shouldEndDimension: Boolean(payload.stateUpdate?.shouldEndDimension),
       offerChoice: Boolean(payload.stateUpdate?.offerChoice),
+      choiceKind: payload.stateUpdate?.choiceKind ?? null,
       choiceReason: trimToLength(payload.stateUpdate?.choiceReason ?? "", 160)
     },
     meta: {
@@ -469,6 +471,7 @@ function createAssistantTurnFromSegments(input: AssistantTurnGenerationInput, se
       turnPhase: input.stage === "collect_event" ? "opening" : "digging",
       shouldEndDimension: false,
       offerChoice: false,
+      choiceKind: null,
       choiceReason: ""
     },
     meta: {

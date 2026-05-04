@@ -1,4 +1,4 @@
-import { getLatestAssistantPayload, normalizeAssistantDepthReached } from "@/features/joy-interview/assistant-turn";
+import { getAssistantChoiceKind, getLatestAssistantPayload, normalizeAssistantDepthReached } from "@/features/joy-interview/assistant-turn";
 import {
   getDelightSignature,
   getJoyMoment,
@@ -28,7 +28,7 @@ export interface UserTurnAssessment {
 export interface InterviewProgressSummary {
   consecutiveInvalidReplies: number;
   consecutiveNoDepthGain: number;
-  hasOfferedChoice: boolean;
+  hasOfferedDraftChoice: boolean;
   latestAssistantPayload: AssistantTurnPayload | null;
   latestDepthReached: AssistantDepth[];
   recentQuestions: string[];
@@ -132,7 +132,7 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
   let latestDepthReached: AssistantDepth[] = [];
   let consecutiveNoDepthGain = 0;
   let consecutiveInvalidReplies = 0;
-  let hasOfferedChoice = false;
+  let hasOfferedDraftChoice = false;
   let pendingUserMeaningful: boolean | null = null;
   const recentQuestions: string[] = [];
 
@@ -152,8 +152,8 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
       recentQuestions.push(payload.question);
     }
 
-    if (payload?.stateUpdate.offerChoice) {
-      hasOfferedChoice = true;
+    if (getAssistantChoiceKind(payload) === "event_complete") {
+      hasOfferedDraftChoice = true;
     }
 
     if (pendingUserMeaningful !== null) {
@@ -177,7 +177,7 @@ export function summarizeInterviewProgress(messages: InterviewMessage[]): Interv
   return {
     consecutiveInvalidReplies,
     consecutiveNoDepthGain,
-    hasOfferedChoice,
+    hasOfferedDraftChoice,
     latestAssistantPayload: getLatestAssistantPayload(messages),
     latestDepthReached,
     recentQuestions: recentQuestions.slice(-3)
@@ -190,7 +190,7 @@ export function isDraftGenerationUnlocked(input: {
   journalEntry: InterviewSessionRecord["journalEntry"];
   pendingDecision?: InterviewSessionRecord["pendingDecision"];
 }) {
-  const hasHistoricalChoice = summarizeInterviewProgress(input.messages).hasOfferedChoice;
+  const hasHistoricalChoice = summarizeInterviewProgress(input.messages).hasOfferedDraftChoice;
 
   return isDraftGenerationUnlockedFromState({
     hasJournalEntry: Boolean(input.journalEntry),

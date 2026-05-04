@@ -4,9 +4,19 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
 import type { CalendarDayRecord } from "@/features/calendar/types";
+import { getAssistantChoiceKind } from "@/features/joy-interview/assistant-turn";
 import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { useInterviewStore } from "@/stores/interview-store";
-import type { AssistantTurnPayload, DailyJournalEntryRecord, InterviewMessage, InterviewSessionRecord, JournalEntryRecord, JoySnapshot } from "@/types/interview";
+import type {
+  AssistantTurnPayload,
+  DailyJournalEntryRecord,
+  InterviewDimension,
+  InterviewMessage,
+  InterviewSessionRecord,
+  JournalEntryRecord,
+  JoySnapshot
+} from "@/types/interview";
 
 const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
@@ -56,6 +66,7 @@ function buildAssistantPayload(overrides: Partial<AssistantTurnPayload> = {}): A
       turnPhase: "digging",
       shouldEndDimension: false,
       offerChoice: false,
+      choiceKind: null,
       choiceReason: ""
     },
     meta: {
@@ -64,6 +75,8 @@ function buildAssistantPayload(overrides: Partial<AssistantTurnPayload> = {}): A
     ...overrides
   };
 }
+
+const defaultEntryDate = () => getTodayEntryDate();
 
 const openingMessage: InterviewMessage = {
   id: "assistant-opening",
@@ -197,7 +210,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
       }
     ],
     pendingDecision: null,
-    entryDate: "2026-04-21",
+    entryDate: defaultEntryDate(),
     startedAt: "2026-04-21T00:00:00.000Z",
     pausedAt: null,
     completedAt: null,
@@ -213,7 +226,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
         nextSession.journalEntry ||
           nextSession.stage === "wrap_up" ||
           nextSession.stage === "finalize" ||
-          nextSession.messages.some((message) => message.assistantPayload?.stateUpdate.offerChoice)
+          nextSession.messages.some((message) => getAssistantChoiceKind(message.assistantPayload) === "event_complete")
       )
   };
 }
@@ -255,6 +268,25 @@ function renderInterviewPage() {
       <InterviewShell />
     </>
   );
+}
+
+function buildStoredSessionCacheEntry(sessionId: string, entryDate = defaultEntryDate()) {
+  return {
+    sessionId,
+    entryDate,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  };
+}
+
+function cacheInterviewSessions(entries: Partial<Record<InterviewDimension, string | ReturnType<typeof buildStoredSessionCacheEntry>>>) {
+  const normalized = Object.fromEntries(
+    Object.entries(entries).map(([dimension, value]) => [
+      dimension,
+      typeof value === "string" ? buildStoredSessionCacheEntry(value) : value
+    ])
+  );
+
+  window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(normalized));
 }
 
 function getDimensionBar() {
@@ -574,6 +606,7 @@ describe("InterviewShell", () => {
             JSON.stringify(
               buildSession({
                 id: "session-with-journal",
+                entryDate: "2026-04-21",
                 status: "paused",
                 stage: "finalize",
                 turnCount: 4,
@@ -602,7 +635,7 @@ describe("InterviewShell", () => {
   });
 
   it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -632,7 +665,7 @@ describe("InterviewShell", () => {
   });
 
   it("clears the current dimension conversation and starts a fresh session", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     const freshSession = buildSession({
       id: "session-fresh",
@@ -745,7 +778,7 @@ describe("InterviewShell", () => {
   });
 
   it("renders structured assistant messages as separate summary and question bubbles", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-structured" }));
+    cacheInterviewSessions({ joy: "session-structured" });
 
     const structuredSession = buildSession({
       id: "session-structured",
@@ -816,7 +849,7 @@ describe("InterviewShell", () => {
   });
 
   it("shows choice actions and sends the continue action without creating an optimistic user bubble", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice" }));
+    cacheInterviewSessions({ joy: "session-choice" });
 
     const choicePayload = buildAssistantPayload({
       insight: "我们已经抓到和家人一起吃饭这个片段，但还差一点更深的展开。",
@@ -825,6 +858,7 @@ describe("InterviewShell", () => {
         turnPhase: "choice",
         shouldEndDimension: false,
         offerChoice: true,
+        choiceKind: "event_complete",
         choiceReason: "连续追问没有新增信息，先让用户决定是否继续。"
       },
       meta: {
@@ -955,6 +989,9 @@ describe("InterviewShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "换个角度继续聊" }));
 
+    await waitFor(() => {
+      expect(screen.queryByText(choicePayload.insight)).not.toBeInTheDocument();
+    });
     expect(await screen.findByText(continuedPayload.thinkingSummary)).toBeInTheDocument();
     expect(await screen.findByText(continuedPayload.question)).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toBeInTheDocument();
@@ -972,8 +1009,155 @@ describe("InterviewShell", () => {
     });
   });
 
+  it("preserves historical choice turns in restored transcripts when no live choice card is showing", async () => {
+    cacheInterviewSessions({ joy: "session-choice-history" });
+
+    const historicalChoicePayload = buildAssistantPayload({
+      insight: "这段收尾我当时已经帮你停在当前理解，没有再继续追问。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceKind: "event_complete",
+        choiceReason: "当时已经进入收束选择。"
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    });
+    const completedSession = buildSession({
+      id: "session-choice-history",
+      status: "completed",
+      stage: "finalize",
+      messages: [
+        {
+          id: "assistant-choice-history",
+          role: "assistant",
+          content: JSON.stringify(historicalChoicePayload),
+          assistantPayload: historicalChoicePayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: "",
+      pendingDecision: null
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/session-choice-history")) {
+        return new Response(JSON.stringify(completedSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(JSON.stringify({ session: buildSession() }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("这段收尾我当时已经帮你停在当前理解，没有再继续追问。")).toBeInTheDocument();
+  });
+
+  it("keeps entryDate when a dimension redirect sends the user into another interview dimension", async () => {
+    mockSearchParams.value.entryDate = "2026-04-21";
+    cacheInterviewSessions({ joy: "session-choice-redirect" });
+
+    const redirectPayload = buildAssistantPayload({
+      insight: "这一轮还没有形成可信的开心片段，继续停在这里容易变成硬找开心。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceKind: "dimension_redirect",
+        choiceReason: "当前材料更接近改进维度。"
+      },
+      meta: {
+        depthReached: ["event"]
+      }
+    });
+    const redirectSession = buildSession({
+      id: "session-choice-redirect",
+      entryDate: "2026-04-21",
+      status: "active",
+      stage: "wrap_up",
+      messages: [
+        {
+          id: "assistant-redirect",
+          role: "assistant",
+          content: JSON.stringify(redirectPayload),
+          assistantPayload: redirectPayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "dimension_redirect",
+        eventId: "event-1",
+        eventSequence: 1,
+        targetDimension: "improvement",
+        reason: "这一轮还没有形成可信的开心片段，继续停在这里容易变成硬找开心。",
+        actions: ["continue_current_event", "switch_dimension"]
+      }
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/session-choice-redirect")) {
+        return new Response(JSON.stringify(redirectSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "转去聊改进" }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/interview?dimension=improvement&entryDate=2026-04-21", { scroll: false });
+  });
+
   it("keeps auto-scroll inside the interview message panel instead of using scrollIntoView", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
@@ -994,7 +1178,7 @@ describe("InterviewShell", () => {
   });
 
   it("shows a partial-draft choice card when joy is ready to stop without a stable personal rule", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice-partial" }));
+    cacheInterviewSessions({ joy: "session-choice-partial" });
 
     const partialChoicePayload = buildAssistantPayload({
       insight: "这段开心的核心已经清楚了，如果你现在不想继续往下提炼，也可以先按当前理解整理。",
@@ -1003,6 +1187,7 @@ describe("InterviewShell", () => {
         turnPhase: "choice",
         shouldEndDimension: false,
         offerChoice: true,
+        choiceKind: "event_complete",
         choiceReason: "当前事件已经补到新的角度；如果用户不想继续提炼规律，也可以先整理成当前版本日志。"
       },
       meta: {
@@ -1101,7 +1286,7 @@ describe("InterviewShell", () => {
   });
 
   it("shows boundary insufficient actions and pauses through the existing pause endpoint", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-boundary" }));
+    cacheInterviewSessions({ joy: "session-boundary" });
     const boundarySession = buildSession({
       id: "session-boundary",
       status: "active",
@@ -1127,6 +1312,7 @@ describe("InterviewShell", () => {
               turnPhase: "choice",
               shouldEndDimension: false,
               offerChoice: true,
+              choiceKind: "boundary_insufficient",
               choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。"
             }
           }),
@@ -1185,7 +1371,7 @@ describe("InterviewShell", () => {
   });
 
   it("keeps structured clues hidden during the interview before a journal is generated", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1197,7 +1383,7 @@ describe("InterviewShell", () => {
   });
 
   it("opens the writing workspace and shows the generated journal after clicking the top generate button", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1220,7 +1406,7 @@ describe("InterviewShell", () => {
   });
 
   it("switches the main workspace to the daily journal from the top log button", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1231,11 +1417,11 @@ describe("InterviewShell", () => {
     expect(await screen.findByTestId("daily-journal-editor")).toBeInTheDocument();
     expect(screen.getByDisplayValue(baseDailyJournalEntry.title)).toBeInTheDocument();
     expect((screen.getByPlaceholderText("当天日志正文会出现在这里。") as HTMLTextAreaElement).value).toBe(baseDailyJournalEntry.content);
-    expect(global.fetch).toHaveBeenCalledWith("/api/daily-journal?date=2026-04-21", expect.objectContaining({ cache: "no-store" }));
+    expect(global.fetch).toHaveBeenCalledWith(`/api/daily-journal?date=${defaultEntryDate()}`, expect.objectContaining({ cache: "no-store" }));
   });
 
   it("shows the tree growth loader while opening the complete journal workspace", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
     const dailyJournalResponse = createDeferredResponse();
     const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
 
@@ -1312,7 +1498,7 @@ describe("InterviewShell", () => {
   });
 
   it("persists unsaved daily journal edits before returning to the interview workspace", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1343,7 +1529,7 @@ describe("InterviewShell", () => {
   });
 
   it("returns to the interview workspace when the dimension changes from the daily journal workspace", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const view = renderInterviewPage();
 
@@ -1371,7 +1557,7 @@ describe("InterviewShell", () => {
   });
 
   it("persists unsaved dimension journal edits before switching to the daily journal workspace", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1399,7 +1585,7 @@ describe("InterviewShell", () => {
   });
 
   it("auto sizes the journal body and keeps the editor inside a single card", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1433,7 +1619,7 @@ describe("InterviewShell", () => {
   });
 
   it("keeps the journal title single-line and capped at 16 characters", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -1448,7 +1634,7 @@ describe("InterviewShell", () => {
   });
 
   it("re-enables choice actions when the user closes the draft panel while generation is still running", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-choice-generate" }));
+    cacheInterviewSessions({ joy: "session-choice-generate" });
 
     const choicePayload = buildAssistantPayload({
       insight: "这一段已经聊得比较完整了。",
@@ -1457,6 +1643,7 @@ describe("InterviewShell", () => {
         turnPhase: "choice",
         shouldEndDimension: false,
         offerChoice: true,
+        choiceKind: "event_complete",
         choiceReason: "当前信息已经足够，直接让用户决定继续聊还是现在整理。"
       },
       meta: {
@@ -1584,13 +1771,18 @@ describe("InterviewShell", () => {
   });
 
   it("automatically reopens legacy paused sessions during restore", async () => {
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: "2026-04-21",
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
     window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
 
     renderInterviewPage();
 
-    await waitFor(() => {
-      expectDimensionStatus("开心", "已完成");
-    });
+    expect(await screen.findByRole("textbox")).toBeInTheDocument();
 
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/interview/session/reopen",
@@ -1598,9 +1790,21 @@ describe("InterviewShell", () => {
         method: "POST"
       })
     );
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.queryByText("本轮访谈已暂停")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "生成日志" })).toBeInTheDocument();
+  });
+
+  it("starts a fresh session instead of restoring a cached session from another entryDate on plain interview", async () => {
+    cacheInterviewSessions({
+      joy: buildStoredSessionCacheEntry("session-ready", "1999-01-01")
+    });
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByTestId("interview-entry-date-label")).toHaveTextContent(/^当前记录日期：/);
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).endsWith("/api/interview/session/session-ready"))).toBe(false);
+    expect(vi.mocked(global.fetch).mock.calls.some(([input]) => String(input).endsWith("/api/interview/session/start"))).toBe(true);
   });
 
   it("uses the current entryDate day record for dimension labels instead of cross-day cached sessions", async () => {
@@ -1743,6 +1947,7 @@ describe("InterviewShell", () => {
       throw new Error(`Unhandled fetch: ${url}`);
     }) as typeof fetch;
 
+    cleanup();
     render(<SiteHeader />);
 
     await waitFor(() => {
@@ -1757,7 +1962,7 @@ describe("InterviewShell", () => {
   });
 
   it("reopens a saved journal workspace without exposing structured clues", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-with-journal" }));
+    cacheInterviewSessions({ joy: "session-with-journal" });
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -1807,7 +2012,7 @@ describe("InterviewShell", () => {
   });
 
   it("keeps the top generate action available after new interview messages arrive without showing a stale warning", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
     let draftGenerateCallCount = 0;
 
     const updatedSession = buildSession({
@@ -1922,7 +2127,7 @@ describe("InterviewShell", () => {
   });
 
   it("regenerates the journal from the latest context only after the user clicks generate again", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
     let draftGenerateCallCount = 0;
 
     const updatedSession = buildSession({
@@ -2069,7 +2274,7 @@ describe("InterviewShell", () => {
   });
 
   it("does not repeat a separate generating badge inside the workspace while the top button is already busy", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -2137,7 +2342,7 @@ describe("InterviewShell", () => {
   });
 
   it("reuses the current draft immediately when it already covers the latest interview state", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -2162,7 +2367,7 @@ describe("InterviewShell", () => {
   });
 
   it("regenerates after restore when the saved draft is older than the restored interview turns", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-restored-stale" }));
+    cacheInterviewSessions({ joy: "session-restored-stale" });
 
     const restoredSession = buildSession({
       id: "session-restored-stale",
@@ -2251,7 +2456,7 @@ describe("InterviewShell", () => {
   });
 
   it("shows a retryable error state when draft generation fails", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -2310,7 +2515,7 @@ describe("InterviewShell", () => {
   });
 
   it("opens a confirmation dialog before the first formal save and lets the user continue the interview", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
 
@@ -2336,7 +2541,7 @@ describe("InterviewShell", () => {
   });
 
   it("saves the generated journal after confirmation, shows a toast, and ends the interview", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     const savedEntry: JournalEntryRecord = {
       ...baseJournalEntry,
@@ -2443,7 +2648,7 @@ describe("InterviewShell", () => {
   });
 
   it("prompts before switching dimensions and keeps the cached session on confirm", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
 
     renderInterviewPage();
@@ -2458,7 +2663,7 @@ describe("InterviewShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "思考" }));
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/interview?dimension=reflection&entryDate=2026-04-21", { scroll: false });
+      expect(mockRouterPush).toHaveBeenCalledWith(`/interview?dimension=reflection&entryDate=${defaultEntryDate()}`, { scroll: false });
     });
 
     const storedSessions = JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}") as {
@@ -2472,6 +2677,7 @@ describe("InterviewShell", () => {
     mockSearchParams.value.dimension = null;
     window.localStorage.setItem("hs-last-interview-dimension", "fulfillment");
 
+    cleanup();
     const view = render(<SiteHeader />);
 
     await waitFor(() => {
@@ -2490,6 +2696,7 @@ describe("InterviewShell", () => {
     mockSearchParams.value.dimension = null;
     window.localStorage.setItem("hs-last-interview-dimension", "joy");
 
+    cleanup();
     const view = render(<SiteHeader />);
 
     await waitFor(() => {
@@ -2904,7 +3111,7 @@ describe("InterviewShell", () => {
   });
 
   it("cancels the pending autosave timer before explicit save to avoid duplicate draft writes", async () => {
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ joy: "session-ready" }));
+    cacheInterviewSessions({ joy: "session-ready" });
 
     const editedDraftEntry: JournalEntryRecord = {
       ...baseJournalEntry,

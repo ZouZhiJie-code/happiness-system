@@ -35,6 +35,7 @@ export type InterviewLens =
   | "meaning_pattern"
   | "self_pattern";
 export type AssistantTurnPhase = "opening" | "digging" | "closing" | "choice";
+export type AssistantChoiceKind = "event_complete" | "dimension_redirect" | "boundary_insufficient";
 export type JoyInterviewStage =
   | "collect_event"
   | "probe_reason"
@@ -58,6 +59,7 @@ export interface AssistantTurnPayload {
     turnPhase: AssistantTurnPhase;
     shouldEndDimension: boolean;
     offerChoice: boolean;
+    choiceKind?: AssistantChoiceKind | null;
     choiceReason: string;
   };
   meta: {

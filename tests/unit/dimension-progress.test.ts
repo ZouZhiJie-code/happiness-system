@@ -1,4 +1,5 @@
 import { getDimensionProgressSummary, type DimensionProgressSessionLike } from "@/features/interview/dimension-progress";
+import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 
 const emptySnapshot = {
   event: null,
@@ -122,6 +123,107 @@ describe("getDimensionProgressSummary", () => {
     expect(summary.percentage).toBe(90);
     expect(summary.state).toBe("ready");
     expect(summary.displayState).toBe("in_progress");
+  });
+
+  it("does not reach 90% when the active choice only reflects boundary-insufficient material", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "improvement",
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-1",
+          eventSequence: 1,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        },
+        events: [
+          {
+            status: "ready_for_choice",
+            snapshot: {
+              ...emptySnapshot,
+              event: "今天开会时我抢着接话了",
+              whyItMattered: "我知道这会打断别人",
+              confidence: 0.7,
+              missingSlots: []
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBeLessThan(90);
+    expect(summary.state).toBe("active");
+  });
+
+  it("keeps boundary-insufficient progress below 90% even after draft generation was unlocked earlier", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "improvement",
+        draftGenerationUnlocked: true,
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-2",
+          eventSequence: 2,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        },
+        events: [
+          {
+            status: "completed",
+            snapshot: {
+              ...emptySnapshot,
+              event: "前一个片段已经整理过",
+              whyItMattered: "之前那一段已经够写日志了",
+              confidence: 0.8,
+              missingSlots: []
+            }
+          },
+          {
+            status: "ready_for_choice",
+            snapshot: {
+              ...emptySnapshot,
+              event: "今天开会时我抢着接话了",
+              whyItMattered: "我知道这会打断别人",
+              confidence: 0.7,
+              missingSlots: []
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBeLessThan(90);
+    expect(summary.percentage).toBe(88);
+    expect(summary.state).toBe("active");
+  });
+
+  it("does not reach 90% when joy is only waiting on a redirect choice", () => {
+    const summary = getDimensionProgressSummary(
+      buildProgressSession({
+        dimension: "joy",
+        pendingDecision: {
+          kind: "dimension_redirect",
+          eventId: "event-1",
+          eventSequence: 1,
+          targetDimension: "improvement",
+          reason: "已经尝试降低门槛，但这一天仍然没有找到可信的开心片段，更适合转去复盘改进。",
+          actions: ["continue_current_event", "switch_dimension"]
+        },
+        events: [
+          {
+            status: "ready_for_choice",
+            snapshot: {
+              ...emptySnapshot,
+              confidence: 0.2,
+              missingSlots: ["event", "whyItMattered"]
+            }
+          }
+        ]
+      })
+    );
+
+    expect(summary.percentage).toBeLessThan(90);
+    expect(summary.state).toBe("active");
   });
 
   it("keeps the dimension at 90% when a new event starts after a completed one", () => {
@@ -266,5 +368,75 @@ describe("getDimensionProgressSummary", () => {
     expect(summary.displayState).toBe("completed");
     expect(summary.statusLabel).toBe("已完成");
     expect(summary.shouldShowRing).toBe(false);
+  });
+});
+
+describe("isDraftGenerationUnlocked", () => {
+  it("does not unlock draft generation from a historical boundary-insufficient choice", () => {
+    const unlocked = isDraftGenerationUnlocked({
+      messages: [
+        {
+          id: "assistant-boundary",
+          role: "assistant",
+          content: "我不再继续追问细节了。",
+          assistantPayload: {
+            insight: "我不再继续追问细节了。",
+            thinkingSummary: "",
+            analysis: "",
+            question: "如果还愿意补一句，只说这个片段最关键的一点就够了。",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。"
+            },
+            meta: {
+              depthReached: []
+            }
+          },
+          sequence: 0,
+          createdAt: "2026-05-04T00:00:00.000Z"
+        }
+      ],
+      stage: "probe_reason",
+      journalEntry: null,
+      pendingDecision: null
+    });
+
+    expect(unlocked).toBe(false);
+  });
+
+  it("keeps draft generation unlocked from a historical event-complete choice", () => {
+    const unlocked = isDraftGenerationUnlocked({
+      messages: [
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: "这一段已经聊到下次可以先尝试的具体动作了。",
+          assistantPayload: {
+            insight: "这一段已经聊到下次可以先尝试的具体动作了。",
+            thinkingSummary: "",
+            analysis: "",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceReason: "当前事件已经形成一条可信的改进尝试线索，交给用户决定下一步。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "clue"]
+            }
+          },
+          sequence: 0,
+          createdAt: "2026-05-04T00:00:00.000Z"
+        }
+      ],
+      stage: "probe_pattern",
+      journalEntry: null,
+      pendingDecision: null
+    });
+
+    expect(unlocked).toBe(true);
   });
 });

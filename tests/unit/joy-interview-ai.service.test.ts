@@ -695,6 +695,174 @@ describe("generateJoyDraftWithAI", () => {
     expect(result.content).not.toBe(session.journalEntry?.content);
   });
 
+  it("passes stitched gratitude events into the fallback path when draft generation times out", async () => {
+    const primarySnapshot: JoySnapshot = {
+      event: "咨询师听到我的家庭经历时流下眼泪，说很心疼我",
+      feeling: "被稳稳接住",
+      whyItMattered: "我感觉自己终于被认真回应了",
+      happinessType: "理解体谅型",
+      selfPattern: "这样的关系回应值得我珍惜",
+      gratitudeMoment: "咨询师听到我的家庭经历时流下眼泪，说很心疼我",
+      gratitudeTarget: "咨询师",
+      kindAction: "听到我的家庭经历时流下眼泪，说很心疼我",
+      seenNeed: "我很需要被看见和理解",
+      innerEffect: "被稳稳接住",
+      gratitudeReason: "我感觉自己终于被认真回应了",
+      gratitudeType: "理解体谅型",
+      relationshipSignal: "这样的关系回应值得我珍惜",
+      reciprocityHint: null,
+      confidence: 0.86,
+      missingSlots: []
+    };
+    const supportingSnapshot: JoySnapshot = {
+      event: "后来赵月看到我拍照累了，说要请我吃冰淇淋，也问我要不要喝水",
+      feeling: "被惦记着",
+      whyItMattered: "这种顺手照顾让我松下来一点",
+      happinessType: "照顾减负型",
+      selfPattern: null,
+      gratitudeMoment: "后来赵月看到我拍照累了，说要请我吃冰淇淋，也问我要不要喝水",
+      gratitudeTarget: "赵月",
+      kindAction: "说要请我吃冰淇淋，也问我要不要喝水",
+      seenNeed: "看见了我那时候已经有点累了",
+      innerEffect: "松下来一点",
+      gratitudeReason: "这种顺手照顾让我松下来一点",
+      gratitudeType: "照顾减负型",
+      relationshipSignal: null,
+      reciprocityHint: null,
+      confidence: 0.8,
+      missingSlots: ["relationshipSignal"]
+    };
+    const session = buildSession({
+      dimension: "gratitude",
+      snapshot: primarySnapshot,
+      events: [
+        {
+          ...buildSession().events[0]!,
+          id: "event-1",
+          snapshot: primarySnapshot
+        },
+        {
+          ...buildSession().events[0]!,
+          id: "event-2",
+          sequence: 2,
+          snapshot: supportingSnapshot
+        }
+      ],
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        completionMode: "complete",
+        actions: ["generate_draft"]
+      },
+      journalEntry: null
+    });
+
+    buildDraftBrief.mockReturnValue({
+      dimension: "gratitude",
+      completionMode: "complete",
+      compositionMode: "stitched_moments",
+      emphasis: "meaning",
+      anchorScene: primarySnapshot.gratitudeMoment,
+      emotionalCore: primarySnapshot.kindAction,
+      stateOrNeed: primarySnapshot.seenNeed,
+      closingInsight: primarySnapshot.relationshipSignal,
+      supportingMoments: [supportingSnapshot.gratitudeMoment],
+      directionSignal: primarySnapshot.gratitudeType,
+      valueSignal: primarySnapshot.gratitudeTarget,
+      durabilitySignal: null,
+      titleHint: primarySnapshot.innerEffect,
+      tags: ["理解体谅型", "照顾减负型"]
+    });
+    buildDraftWritingProfile.mockReturnValue({
+      voiceMode: "journal",
+      narrativeOrder: "scene_core_shift_close",
+      closingMode: "stable_clue",
+      toneBanSet: ["感谢信模板"]
+    });
+
+    const stitchedFallbackDraft: JoyEntryDraft = {
+      ...fallbackDraft,
+      title: "被稳稳接住",
+      content:
+        "今天让我想认真记下来的感谢，是咨询师听到我的家庭经历时流下眼泪，说很心疼我。\n\n另外我也想记下，后来赵月看到我拍照累了，说要请我吃冰淇淋，也问我要不要喝水。",
+      event: primarySnapshot.event,
+      feeling: primarySnapshot.feeling,
+      whyItMattered: primarySnapshot.whyItMattered,
+      happinessType: primarySnapshot.happinessType,
+      selfPattern: primarySnapshot.relationshipSignal ?? null,
+      gratitudeMoment: primarySnapshot.gratitudeMoment ?? null,
+      gratitudeTarget: primarySnapshot.gratitudeTarget ?? null,
+      kindAction: primarySnapshot.kindAction ?? null,
+      seenNeed: primarySnapshot.seenNeed ?? null,
+      innerEffect: primarySnapshot.innerEffect ?? null,
+      gratitudeReason: primarySnapshot.gratitudeReason ?? null,
+      gratitudeType: primarySnapshot.gratitudeType ?? null,
+      relationshipSignal: primarySnapshot.relationshipSignal ?? null,
+      reciprocityHint: null,
+      eventBlocks: [
+        {
+          eventId: "event-1",
+          sequence: 1,
+          explorationRound: 1,
+          event: primarySnapshot.event,
+          feeling: primarySnapshot.feeling,
+          whyItMattered: primarySnapshot.whyItMattered,
+          happinessType: primarySnapshot.happinessType,
+          selfPattern: primarySnapshot.selfPattern,
+          gratitudeMoment: primarySnapshot.gratitudeMoment,
+          gratitudeTarget: primarySnapshot.gratitudeTarget,
+          kindAction: primarySnapshot.kindAction,
+          seenNeed: primarySnapshot.seenNeed,
+          innerEffect: primarySnapshot.innerEffect,
+          gratitudeReason: primarySnapshot.gratitudeReason,
+          gratitudeType: primarySnapshot.gratitudeType,
+          relationshipSignal: primarySnapshot.relationshipSignal,
+          reciprocityHint: null
+        },
+        {
+          eventId: "event-2",
+          sequence: 2,
+          explorationRound: 1,
+          event: supportingSnapshot.event,
+          feeling: supportingSnapshot.feeling,
+          whyItMattered: supportingSnapshot.whyItMattered,
+          happinessType: supportingSnapshot.happinessType,
+          selfPattern: supportingSnapshot.selfPattern,
+          gratitudeMoment: supportingSnapshot.gratitudeMoment,
+          gratitudeTarget: supportingSnapshot.gratitudeTarget,
+          kindAction: supportingSnapshot.kindAction,
+          seenNeed: supportingSnapshot.seenNeed,
+          innerEffect: supportingSnapshot.innerEffect,
+          gratitudeReason: supportingSnapshot.gratitudeReason,
+          gratitudeType: supportingSnapshot.gratitudeType,
+          relationshipSignal: null,
+          reciprocityHint: null
+        }
+      ],
+      source: "ai_draft_direct"
+    };
+    createFallbackDraft.mockReturnValue(stitchedFallbackDraft);
+    completeStructuredOutput.mockResolvedValue(null);
+
+    const result = await generateJoyDraftWithAI(session);
+
+    expect(result).toEqual(stitchedFallbackDraft);
+    expect(result.content).toContain("赵月");
+    expect(createFallbackDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceEvents: expect.arrayContaining([
+          expect.objectContaining({ id: "event-1" }),
+          expect.objectContaining({ id: "event-2" })
+        ]),
+        eventBlocks: expect.arrayContaining([
+          expect.objectContaining({ eventId: "event-1" }),
+          expect.objectContaining({ eventId: "event-2", gratitudeTarget: "赵月" })
+        ])
+      })
+    );
+  });
+
   it("falls back to the latest reconstructed draft when the AI draft fails the quality gate", async () => {
     const session = buildSession();
     completeStructuredOutput.mockResolvedValue({
@@ -798,6 +966,125 @@ describe("generateJoyDraftWithAI", () => {
         draft: expect.objectContaining({
           selfPattern: "能把卡住的事情真正往前推进"
         })
+      })
+    );
+  });
+
+  it("keeps the full stitched brief while limiting refresh-minor prompt events", async () => {
+    const session = buildSession({
+      events: [
+        {
+          ...buildSession().events[0]!,
+          id: "event-1",
+          sequence: 1
+        },
+        {
+          ...buildSession().events[0]!,
+          id: "event-2",
+          sequence: 2,
+          snapshot: {
+            ...buildSession().snapshot,
+            event: "下班路上又刷到一个反差很强的短片",
+            joyMoment: "下班路上又刷到一个反差很强的短片"
+          }
+        },
+        {
+          ...buildSession().events[0]!,
+          id: "event-3",
+          sequence: 3,
+          snapshot: {
+            ...buildSession().snapshot,
+            event: "晚上朋友转来一个一本正经又突然拐弯的视频",
+            joyMoment: "晚上朋友转来一个一本正经又突然拐弯的视频"
+          }
+        }
+      ],
+      journalEntry: {
+        ...buildSession().journalEntry!,
+        eventBlocks: [
+          ...buildSession().journalEntry!.eventBlocks,
+          {
+            ...buildSession().journalEntry!.eventBlocks[0]!,
+            eventId: "event-2",
+            sequence: 2
+          },
+          {
+            ...buildSession().journalEntry!.eventBlocks[0]!,
+            eventId: "event-3",
+            sequence: 3
+          }
+        ]
+      }
+    });
+    const fullBrief = {
+      dimension: "joy" as const,
+      completionMode: "complete" as const,
+      compositionMode: "stitched_moments" as const,
+      emphasis: "delight" as const,
+      anchorScene: "今天刷到一个特别逗的短片",
+      emotionalCore: "那种突然反转的好笑感",
+      stateOrNeed: "一下子轻松了",
+      closingInsight: "我会被这种突然反转一下的好笑感立刻带起来",
+      joyTrack: "delight_track" as const,
+      joyKind: "pure_delight" as const,
+      closureTarget: "delight_signature" as const,
+      supportingMoments: [
+        "下班路上又刷到一个反差很强的短片",
+        "晚上朋友转来一个一本正经又突然拐弯的视频"
+      ],
+      directionSignal: null,
+      valueSignal: null,
+      durabilitySignal: null,
+      titleHint: "今天刷到一个特别逗的短片",
+      tags: ["好笑", "轻松"]
+    };
+    buildDraftBrief.mockReturnValue(fullBrief);
+    buildDraftWritingProfile.mockReturnValue({
+      voiceMode: "journal",
+      narrativeOrder: "scene_core_shift_close",
+      closingMode: "stable_clue",
+      toneBanSet: []
+    });
+    completeStructuredOutput.mockResolvedValue({
+      title: "反差一下击中我",
+      content:
+        "今天刷到一个特别逗的短片，我一下就笑出来了。后来下班路上又刷到一个反差很强的短片，那种没负担的好笑感又把我重新带松了一点。",
+      event: session.snapshot.event,
+      feeling: session.snapshot.feeling,
+      whyItMattered: session.snapshot.whyItMattered,
+      happinessType: null,
+      selfPattern: null,
+      joyMoment: session.snapshot.joyMoment,
+      joySource: session.snapshot.joySource,
+      stateShift: session.snapshot.stateShift,
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: session.snapshot.delightSignature,
+      directionSignal: null,
+      valueImpact: null,
+      durability: null,
+      tags: ["好笑", "轻松"],
+      eventBlocks: []
+    });
+    runDraftQualityGate.mockReturnValue({
+      accepted: true,
+      issues: []
+    });
+
+    await generateJoyDraftWithAI(session);
+
+    expect(buildJoyDraftMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftBrief: fullBrief,
+        events: expect.arrayContaining([
+          expect.objectContaining({ id: "event-1" }),
+          expect.objectContaining({ id: "event-2" })
+        ])
+      })
+    );
+    expect(runDraftQualityGate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        brief: fullBrief
       })
     );
   });
