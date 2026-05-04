@@ -162,6 +162,10 @@ function buildEvent(snapshot: JoySnapshot): InterviewEventRecord {
   };
 }
 
+function countParagraphs(content: string) {
+  return content.split(/\n{2,}/).filter(Boolean).length;
+}
+
 function buildImprovementSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
@@ -1453,6 +1457,7 @@ describe("draft policies", () => {
     expect(draft.content).toContain("今天最让我觉得不算白过的，是今天把一个拖了很久的任务推进完了。");
     expect(draft.content).toContain("这件事真正有分量的地方，是原本卡住的部分终于收口了。");
     expect(draft.content).toContain("对我来说，能把卡住的事情真正往前推进才会真正算数。");
+    expect(countParagraphs(draft.content)).toBe(2);
     expect(draft.content).not.toContain("当时我的感受是：");
     expect(draft.content).not.toContain("充实片段");
   });
@@ -1506,6 +1511,7 @@ describe("draft policies", () => {
     expect(draft.content).toContain("今天让我停下来想了一下的，是今天看完一个项目复盘。");
     expect(draft.content).toContain("它让我看见，我意识到自己以前太容易把忙碌当成进展。");
     expect(draft.content).toContain("以后再判断类似事情时，我会多带着这条线索");
+    expect(countParagraphs(draft.content)).toBe(2);
     expect(draft.content).not.toContain("触发片段");
     expect(draft.content).not.toContain("行动计划");
   });
@@ -1560,6 +1566,7 @@ describe("draft policies", () => {
     expect(draft.content).toContain("今天最想回头看一眼的，是今天开会时我有点急，对方问题还没说完我就开始解释。");
     expect(draft.content).toContain("真正卡住我的地方，是没有先确认问题就开始解释。");
     expect(draft.content).toContain("下次我想先试试先复述一遍问题，再开始回答。");
+    expect(countParagraphs(draft.content)).toBe(3);
     expect(draft.content).not.toContain("改进情境");
     expect(draft.content).not.toContain("制定一个计划");
   });
@@ -1687,6 +1694,28 @@ describe("draft policies", () => {
     expect(draft.content).toContain("冰淇淋");
     expect(draft.relationshipSignal).toBe("这样的关系回应值得我珍惜，也值得我学习");
     expect(draft.eventBlocks).toHaveLength(2);
+    expect(countParagraphs(draft.content)).toBe(4);
+  });
+
+  it("keeps joy fallback drafts from splitting each sentence into its own paragraph", () => {
+    const session = buildSession(partialJoySnapshot);
+    const sourceEvents = [buildEvent(partialJoySnapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents,
+      completionMode: "complete"
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.content).toContain("今天最想记下来的，是今天和家人一起吃饭聊天。");
+    expect(draft.content).toContain("这份开心真正有分量");
+    expect(countParagraphs(draft.content)).toBe(3);
   });
 
   it("creates partial gratitude fallback drafts without forcing relationship signals", () => {
