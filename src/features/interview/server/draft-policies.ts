@@ -1,5 +1,6 @@
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { buildSemanticJournalTitle, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
   createDraft,
   getDelightSignature,
@@ -197,6 +198,52 @@ function isSceneAnchorMissing(content: string, candidate: string | null | undefi
   return !hasSceneAnchor(content, [candidate]);
 }
 
+function buildLooseSceneAnchorFragments(value: string | null | undefined) {
+  const normalized = normalizeSignature(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  if (normalized.length <= 3) {
+    return [normalized];
+  }
+
+  const fragments = new Set<string>();
+
+  for (let index = 0; index <= normalized.length - 3; index += 1) {
+    fragments.add(normalized.slice(index, index + 3));
+  }
+
+  return Array.from(fragments);
+}
+
+function hasLooseSceneAnchor(content: string, candidate: string | null | undefined) {
+  if (!candidate) {
+    return false;
+  }
+
+  const normalizedContent = normalizeSignature(content);
+  const fragments = buildLooseSceneAnchorFragments(candidate);
+
+  if (fragments.length === 0) {
+    return false;
+  }
+
+  const overlapCount = fragments.filter((fragment) => normalizedContent.includes(fragment)).length;
+  const overlapRatio = overlapCount / fragments.length;
+
+  return overlapCount >= 2 && overlapRatio >= 0.22;
+}
+
+function isSupportingSceneAnchorMissing(content: string, candidate: string | null | undefined) {
+  if (!candidate) {
+    return false;
+  }
+
+  return isSceneAnchorMissing(content, candidate) && !hasLooseSceneAnchor(content, candidate);
+}
+
 function hasSpecificDelightCue(value: string | null | undefined) {
   if (!value) {
     return false;
@@ -211,6 +258,51 @@ function hasGenericCoreRegression(brief: DraftBrief, content: string) {
   }
 
   return /真正让我(?:开心|有感觉|被触动)[^。！？!?]{0,24}(?:是|而是)[^。！？!?]{0,12}(?:搞笑短视频|短视频|视频|段子|内容)/u.test(content);
+}
+
+function formatTheorySummarySentence(brief: DraftBrief) {
+  const theorySummary = sanitizeNullableString(brief.theorySummary);
+
+  return theorySummary ? `${trimTrailingPunctuation(theorySummary)}。` : null;
+}
+
+function hasTheorySignalInContent(brief: DraftBrief, content: string) {
+  const theoryCandidates = [
+    brief.theorySummary,
+    brief.titleTheme,
+    brief.emotionalCore,
+    brief.closingInsight,
+    brief.valueSignal,
+    brief.directionSignal
+  ];
+
+  return hasSceneAnchor(content, theoryCandidates);
+}
+
+function isParaphraseOnlyDraft(brief: DraftBrief, content: string) {
+  if (!brief.anchorScene || !hasSceneAnchor(content, [brief.anchorScene])) {
+    return false;
+  }
+
+  if (hasTheorySignalInContent(brief, content)) {
+    return false;
+  }
+
+  return content.split(/\n{2,}/).filter(Boolean).length <= 2;
+}
+
+function hasGenericTitleRegression(title: string, brief: DraftBrief) {
+  if (!brief.titleTheme) {
+    return false;
+  }
+
+  if (hasSceneAnchor(title, [brief.titleTheme])) {
+    return false;
+  }
+
+  return /^(?:今天的开心|今天没白过|今天的充实|今天的思考|今天的改进|今天的感谢|今天很忙|日志草稿)$/u.test(
+    title.trim()
+  );
 }
 
 function hasDuplicateContent(content: string) {
@@ -384,6 +476,12 @@ function buildJoyBrief(input: {
     input.completionMode === "complete"
       ? sanitizeNullableString(getJoyClosingValue(primarySnapshot))
       : null;
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: "joy",
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
 
   return {
     dimension: "joy",
@@ -407,7 +505,11 @@ function buildJoyBrief(input: {
     directionSignal: sanitizeNullableString(getDirectionSignal(primarySnapshot)),
     valueSignal: sanitizeNullableString(getValueImpact(primarySnapshot)),
     durabilitySignal: sanitizeNullableString(getDurability(primarySnapshot)),
-    titleHint: anchorScene,
+    titleHint: semanticInterpretation.titleTheme ?? anchorScene,
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags: Array.from(new Set(input.sourceEvents.flatMap((event) => getJoyTags(event.snapshot)))).slice(0, 6)
   };
 }
@@ -419,6 +521,12 @@ function buildDefaultBrief(input: {
   const primaryEvent = pickPrimaryEvent(input.session.dimension, input.sourceEvents);
   const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
   const relatedEvents = input.sourceEvents.filter((event) => event.id !== primaryEvent?.id);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: input.session.dimension,
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
 
   return {
     dimension: input.session.dimension,
@@ -436,7 +544,11 @@ function buildDefaultBrief(input: {
     directionSignal: sanitizeNullableString(primarySnapshot.happinessType),
     valueSignal: null,
     durabilitySignal: null,
-    titleHint: sanitizeNullableString(primarySnapshot.event),
+    titleHint: semanticInterpretation.titleTheme ?? sanitizeNullableString(primarySnapshot.event),
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags: Array.from(new Set(input.sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling]))).filter(
       (value): value is string => Boolean(value)
     ).slice(0, 6)
@@ -463,6 +575,12 @@ function buildFulfillmentBrief(input: {
   const primaryEvent = pickPrimaryEvent("fulfillment", input.sourceEvents);
   const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
   const relatedEvents = input.sourceEvents.filter((event) => event.id !== primaryEvent?.id);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: "fulfillment",
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
   const tags = Array.from(
     new Set(input.sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling]))
   ).filter((value): value is string => Boolean(value)).slice(0, 6);
@@ -484,7 +602,11 @@ function buildFulfillmentBrief(input: {
     directionSignal: sanitizeNullableString(primarySnapshot.happinessType),
     valueSignal: sanitizeNullableString(primarySnapshot.selfPattern),
     durabilitySignal: null,
-    titleHint: sanitizeNullableString(primarySnapshot.event),
+    titleHint: semanticInterpretation.titleTheme ?? sanitizeNullableString(primarySnapshot.event),
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags
   };
 }
@@ -509,6 +631,12 @@ function buildReflectionBrief(input: {
   const primaryEvent = pickPrimaryEvent("reflection", input.sourceEvents);
   const primarySnapshot = primaryEvent?.snapshot ?? input.session.snapshot;
   const relatedEvents = input.sourceEvents.filter((event) => event.id !== primaryEvent?.id);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: "reflection",
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
   const tags = Array.from(
     new Set(input.sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling]))
   ).filter((value): value is string => Boolean(value)).slice(0, 6);
@@ -530,7 +658,11 @@ function buildReflectionBrief(input: {
     directionSignal: sanitizeNullableString(primarySnapshot.happinessType),
     valueSignal: sanitizeNullableString(primarySnapshot.selfPattern),
     durabilitySignal: null,
-    titleHint: sanitizeNullableString(primarySnapshot.whyItMattered ?? primarySnapshot.event),
+    titleHint: semanticInterpretation.titleTheme ?? sanitizeNullableString(primarySnapshot.whyItMattered ?? primarySnapshot.event),
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags
   };
 }
@@ -589,6 +721,12 @@ export function buildImprovementBrief(input: {
   const tags = Array.from(
     new Set(input.sourceEvents.flatMap((event) => [event.snapshot.happinessType, event.snapshot.feeling, ...(event.snapshot.tags ?? [])]))
   ).filter((value): value is string => Boolean(value)).slice(0, 6);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: "improvement",
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
   const emotionalCore =
     primarySnapshot.improvementTrack === "repeat_good"
       ? repeatCondition ?? frictionPoint
@@ -618,7 +756,11 @@ export function buildImprovementBrief(input: {
     directionSignal: sanitizeNullableString(primarySnapshot.happinessType),
     valueSignal: controllableFactor,
     durabilitySignal: successSignal,
-    titleHint: controllableFactor ?? nextAttempt ?? emotionalCore ?? sanitizeNullableString(primarySnapshot.event),
+    titleHint: semanticInterpretation.titleTheme ?? controllableFactor ?? nextAttempt ?? emotionalCore ?? sanitizeNullableString(primarySnapshot.event),
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags
   };
 }
@@ -654,6 +796,12 @@ function buildGratitudeBrief(input: {
   const gratitudeReason = sanitizeNullableString(primarySnapshot.gratitudeReason ?? primarySnapshot.whyItMattered);
   const relationshipSignal = sanitizeNullableString(primarySnapshot.relationshipSignal ?? primarySnapshot.selfPattern);
   const reciprocityHint = sanitizeNullableString(primarySnapshot.reciprocityHint);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: "gratitude",
+    snapshot: primarySnapshot,
+    sourceEvents: input.sourceEvents,
+    activeEvent: primaryEvent
+  });
   const tags = Array.from(
     new Set(input.sourceEvents.flatMap((event) => [
       event.snapshot.gratitudeType ?? event.snapshot.happinessType,
@@ -678,7 +826,11 @@ function buildGratitudeBrief(input: {
     directionSignal: sanitizeNullableString(primarySnapshot.gratitudeType ?? primarySnapshot.happinessType),
     valueSignal: sanitizeNullableString(primarySnapshot.gratitudeTarget),
     durabilitySignal: reciprocityHint,
-    titleHint: seenNeed ?? kindAction ?? relationshipSignal ?? gratitudeMoment,
+    titleHint: semanticInterpretation.titleTheme ?? seenNeed ?? kindAction ?? relationshipSignal ?? gratitudeMoment,
+    theorySummary: semanticInterpretation.theorySummary,
+    titleTheme: semanticInterpretation.titleTheme,
+    titleCandidates: semanticInterpretation.titleCandidates,
+    antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags
   };
 }
@@ -921,7 +1073,7 @@ function buildJoyFallbackContent(input: {
 }) {
   const lines = [
     buildJoyOpeningSentence(input),
-    buildJoyCoreSentence(input),
+    formatTheorySummarySentence(input.brief) ?? buildJoyCoreSentence(input),
     buildJoyStateSentence(input.snapshot),
     input.brief.completionMode === "complete"
       ? buildJoyCompleteClosing(input.snapshot)
@@ -974,7 +1126,7 @@ function buildFulfillmentClosingSentence(input: {
   const progressEvidence = sanitizeNullableString(input.snapshot.whyItMattered);
 
   if (input.brief.completionMode === "complete" && valueSignal) {
-    return `回头看，我也更知道，对我来说，${trimTrailingPunctuation(valueSignal)}才会真的算数。`;
+    return `回头看，我也更知道，对我来说，${trimTrailingPunctuation(valueSignal)}才会真正算数。`;
   }
 
   if (progressEvidence) {
@@ -990,7 +1142,7 @@ function buildFulfillmentFallbackContent(input: {
 }) {
   const lines = [
     buildFulfillmentOpeningSentence(input.snapshot),
-    buildFulfillmentProgressSentence(input.snapshot),
+    formatTheorySummarySentence(input.brief) ?? buildFulfillmentProgressSentence(input.snapshot),
     buildFulfillmentStateSentence(input.snapshot),
     buildFulfillmentClosingSentence(input)
   ];
@@ -1091,7 +1243,7 @@ function buildReflectionFallbackContent(input: {
 }) {
   const lines = [
     buildReflectionOpeningSentence(input.snapshot),
-    buildReflectionInsightSentence(input.snapshot),
+    formatTheorySummarySentence(input.brief) ?? buildReflectionInsightSentence(input.snapshot),
     buildReflectionStateSentence(input.snapshot),
     buildReflectionClosingSentence(input)
   ];
@@ -1226,7 +1378,7 @@ function buildImprovementFallbackContent(input: {
   const lines = [
     buildImprovementOpeningSentence(input.snapshot),
     buildImprovementStateSentence(input.snapshot),
-    buildImprovementCoreSentence(input.snapshot),
+    formatTheorySummarySentence(input.brief) ?? buildImprovementCoreSentence(input.snapshot),
     buildImprovementControlSentence(input.snapshot),
     buildImprovementClosingSentence(input)
   ];
@@ -1383,7 +1535,7 @@ function buildGratitudeFallbackContent(input: {
   const lines = [
     buildGratitudeOpeningSentence(input.snapshot),
     buildGratitudeActionSentence(input.snapshot),
-    buildGratitudeNeedSentence(input.snapshot),
+    formatTheorySummarySentence(input.brief) ?? buildGratitudeNeedSentence(input.snapshot),
     buildGratitudeTypeSentence(input.snapshot),
     ...(input.supportingSnapshots ?? []).map((snapshot, index) => buildGratitudeSupportingParagraph(snapshot, index)),
     buildGratitudeClosingSentence(input)
@@ -1633,6 +1785,10 @@ export function runDraftQualityGate(input: {
     issues.push("title_too_long");
   }
 
+  if (hasGenericTitleRegression(title, input.brief)) {
+    issues.push("title_theme_mismatch");
+  }
+
   if (/(?:^|\n)\s*(?:[-*•]|\d+\.)\s/m.test(content)) {
     issues.push("list_format");
   }
@@ -1671,8 +1827,8 @@ export function runDraftQualityGate(input: {
 
   const missingPrimarySceneAnchor = isSceneAnchorMissing(content, input.brief.anchorScene);
   const missingSupportingSceneAnchors =
-    input.brief.dimension === "gratitude" && input.brief.compositionMode === "stitched_moments"
-      ? input.brief.supportingMoments.some((candidate) => isSceneAnchorMissing(content, candidate))
+  input.brief.dimension === "gratitude" && input.brief.compositionMode === "stitched_moments"
+      ? input.brief.supportingMoments.some((candidate) => isSupportingSceneAnchorMissing(content, candidate))
       : false;
 
   if (
@@ -1693,6 +1849,10 @@ export function runDraftQualityGate(input: {
     issues.push("generic_core_regression");
   }
 
+  if (isParaphraseOnlyDraft(input.brief, content)) {
+    issues.push("paraphrase_only_summary");
+  }
+
   if (input.brief.dimension === "joy" && input.brief.joyTrack === "delight_track") {
     if (/(真正热爱|人生方向|说明我最需要|原来我最在意的是|价值观|使命)/u.test(content)) {
       issues.push("false_depth_escalation");
@@ -1710,8 +1870,13 @@ export function runDraftQualityGate(input: {
       issues.push("report_tone");
     }
 
+    if (!hasTheorySignalInContent(input.brief, content) && !/不算白过|不是空转|算数|有分量/u.test(content)) {
+      issues.push("missing_theory_core");
+    }
+
     if (FULFILLMENT_BUSY_PATTERN.test(content) && !hasProgressEvidence) {
       issues.push("busy_without_progress");
+      issues.push("fulfillment_busy_without_meaning");
     }
 
     if (FULFILLMENT_SLOGAN_PATTERN.test(content) && !hasProgressEvidence) {
@@ -1895,6 +2060,17 @@ export function runDraftQualityGate(input: {
 
     if (STABLE_RULE_PATTERN.test(content)) {
       issues.push("fake_rule_tone");
+    }
+  }
+
+  if (input.brief.dimension === "joy") {
+    const hasVitalityCore =
+      hasTheorySignalInContent(input.brief, content) ||
+      /(被接住|被理解|带轻|带动|松下来|有生命力|真正开心的不是|真正打动|有分量)/u.test(content);
+
+    if (!hasVitalityCore) {
+      issues.push("joy_missing_vitality_core");
+      issues.push("missing_theory_core");
     }
   }
 

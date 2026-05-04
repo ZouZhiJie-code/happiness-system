@@ -161,6 +161,10 @@ function buildBrief(overrides: Partial<DraftBrief> = {}): DraftBrief {
     valueSignal: null,
     durabilitySignal: "这种开心在饭后还延续了很久",
     titleHint: "今天和家人一起吃饭聊天",
+    theorySummary: "这份开心真正有分量，不只是一起做了什么，而是重新回到被陪伴接住、能慢慢松下来的感觉。",
+    titleTheme: "被陪伴接住",
+    titleCandidates: ["被陪伴接住", "慢慢松下来"],
+    antiFlatteningTargets: ["不要只写吃饭聊天本身", "要写被陪伴接住之后为什么会松下来"],
     tags: ["关系", "轻松"],
     ...overrides
   };
@@ -187,11 +191,14 @@ describe("buildJoyDraftMessages", () => {
     });
 
     expect(messages[1]?.content).toContain("写作控制");
+    expect(messages[1]?.content).toContain("理论解释层");
+    expect(messages[1]?.content).toContain('"titleTheme": "被陪伴接住"');
     expect(messages[1]?.content).toContain('"voiceMode": "journal"');
     expect(messages[1]?.content).toContain('"narrativeOrder": "scene_core_shift_close"');
     expect(messages[1]?.content).toContain('"closingMode": "stable_clue"');
     expect(messages[0]?.content).toContain("整篇必须像日志，不像总结");
     expect(messages[0]?.content).toContain("开头先从具体片段进入");
+    expect(messages[0]?.content).toContain("先理解这段材料为什么在开心维度成立");
     expect(messages[1]?.content).toContain("按材料密度写成一篇完整日志");
     expect(messages[1]?.content).toContain("title 16 字内");
   });
@@ -408,6 +415,9 @@ describe("fulfillment prompt strategy", () => {
     expect(messages[0]?.content).toContain("直接写出你如何理解用户刚刚回复，以及接下来处理这个问题的焦点");
     expect(messages[0]?.content).toContain("不要使用“我理解到的是”“我会”“我想知道”");
     expect(messages[0]?.content).toContain("thinkingSummary 不能写成问句，不能带问号，不能变成第二个追问");
+    expect(messages[1]?.content).toContain("理论解释层");
+    expect(messages[1]?.content).toContain('"themeLabel"');
+    expect(messages[1]?.content).toContain('"theorySummary"');
   });
 
   it("uses fulfillment field semantics and snapshot shape in extraction prompts", () => {

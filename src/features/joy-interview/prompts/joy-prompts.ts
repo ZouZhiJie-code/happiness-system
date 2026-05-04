@@ -1,6 +1,7 @@
 import { getInterviewMessageDisplayText } from "@/features/joy-interview/assistant-turn";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
+import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
   getDelightSignature,
   getDirectionSignal,
@@ -342,6 +343,15 @@ export function buildJoyQuestionMessages(input: {
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
   const guide = dimensionPromptGuide[input.dimension];
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: input.dimension,
+    snapshot: input.snapshot,
+    stage: input.stage,
+    action: input.action,
+    activeEvent: input.activeEvent,
+    sourceEvents: input.events,
+    messages: input.messages
+  });
   const dimensionSpecificQuestionRules =
     input.dimension === "joy"
       ? [
@@ -392,7 +402,7 @@ export function buildJoyQuestionMessages(input: {
         "5. 不要写“这件事已经有轮廓了”“已经慢慢清楚了”“还差一点更深展开”这类空泛评价，必须落到具体线索、在乎点或矛盾上。",
         "6. thinkingSummary 不能写成问句，不能带问号，不能变成第二个追问；真正的问题只能放在 question。",
         "7. question 必须优先推进当前事件尚未覆盖的层次，不能重复刚刚聊过的切口。",
-        "8. 当 action=continue_current_event 时，thinkingSummary 要体现“换个角度继续深挖”的处理焦点，但不要变成空泛承接句。",
+        "8. 当 action=continue_current_event 时，thinkingSummary 要体现“继续深聊当前事件”的处理焦点；必要时可以自然换角度，但不要把“换角度”本身写成目标。",
         "9. 当前轮只允许围绕 activeEvent 深挖，不要把问题跳到下一件事；下一件事由产品的 next_event 动作触发。",
         "10. 不要主动要求用户“留下哪个点”或“要不要整理日志”；收尾选择由前端 choice 卡片承担。",
         "11. 只能输出下面两个标记段，不要 JSON，不要 markdown，不要解释，不要额外前后缀。",
@@ -431,10 +441,22 @@ export function buildJoyQuestionMessages(input: {
         `会话总有效轮次: ${input.nextTurnCount}`,
         `当前事件有效轮次: ${input.nextEventTurnCount}`,
         `本轮回复是否有效: ${input.isMeaningfulReply ? "是" : "否"}`,
+        `理论解释层:\n${JSON.stringify(
+          {
+            themeKey: semanticInterpretation.themeKey,
+            themeLabel: semanticInterpretation.themeLabel,
+            theorySummary: semanticInterpretation.theorySummary,
+            thinkingSummaryLead: semanticInterpretation.thinkingSummaryLead,
+            followUpFocus: semanticInterpretation.followUpFocus,
+            antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets
+          },
+          null,
+          2
+        )}`,
         `最近可读对话:\n${formatVisibleRecentMessages(input.messages) || "无"}`,
         `最近 assistant 结构化输出:\n${formatStructuredRecentAssistantMessages(input.messages) || "无"}`,
         input.action === "continue_current_event"
-          ? "用户刚刚选择继续深挖当前事件，请换一个新角度直接追问。"
+          ? "用户刚刚选择继续深聊当前事件。请优先顺着刚补出来的重点继续追问；只有当前切口收益低时再自然换角度。"
           : `用户本轮输入: ${input.userMessage ?? "无"}`
       ].join("\n\n")
     }
@@ -550,7 +572,13 @@ export function buildJoyDraftMessages(input: {
               : "当前这篇 improvement 必须保持克制。不要写成建议、检讨书、心理诊断、OKR、KPI、待办清单或行动计划。"
           : isGratitudeDimension
             ? "当前这篇 gratitude 的核心是关系里的善意回应。不要写成感谢信、表扬稿、道德负债、报答承诺或人际建议；不要把一次善意直接上升成完美关系。"
-            : null;
+          : null;
+  const theoryLayer = {
+    theorySummary: input.draftBrief.theorySummary,
+    titleTheme: input.draftBrief.titleTheme,
+    titleCandidates: input.draftBrief.titleCandidates,
+    antiFlatteningTargets: input.draftBrief.antiFlatteningTargets
+  };
 
   return [
     {
@@ -560,6 +588,12 @@ export function buildJoyDraftMessages(input: {
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
         "content 必须是一篇可直接给用户阅读和继续编辑的日志正文，不要把结构槽位、小标题或字段名直接写出来。",
         "如果有多件事件，把几个片段自然并列写进同一篇日志里，保持一篇日志的连续读感；不要分条罗列，也不要强行写成总结。",
+        input.draftBrief.theorySummary
+          ? `先理解这段材料为什么在${config.label}维度成立，再开始写。当前理论核心：${input.draftBrief.theorySummary}`
+          : null,
+        input.draftBrief.antiFlatteningTargets.length
+          ? `不要把内容压扁成这些浅写法：${input.draftBrief.antiFlatteningTargets.join("；")}。`
+          : null,
         voiceInstruction,
         narrativeInstruction,
         dimensionDraftInstruction,
@@ -580,6 +614,7 @@ export function buildJoyDraftMessages(input: {
       content: [
         `成稿蓝图:\n${JSON.stringify(input.draftBrief, null, 2)}`,
         `写作控制:\n${JSON.stringify(input.writingProfile, null, 2)}`,
+        `理论解释层:\n${JSON.stringify(theoryLayer, null, 2)}`,
         input.existingDraft
           ? `当前已有草稿:\n${JSON.stringify(input.existingDraft, null, 2)}`
           : null,

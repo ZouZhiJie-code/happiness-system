@@ -21,7 +21,8 @@
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
 - `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
-- 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；只有当前正在显示的 inline choice card 会替代对应那一条消息，避免重复展示。
+- 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
+- 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 
@@ -154,6 +155,7 @@
 - 已接入专属抽取 schema、fallback 抽取、阶段推进、提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例
 - 标题候选优先收束为 `被稳稳接住 / 被认真理解 / 那句及时提醒 / 有人帮我理清 / 被信任的机会`
 - 质量门会拒收感谢信模板、道德负债感、强行回馈任务、缺少具体善意和缺少被回应需要的 draft
+- `gratitude` 的 `stitched_moments` supporting-scene 质量门现在先走严格锚点，再只接受仍保留明确照顾动作和足够场景锚点的自然压缩；像“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这种语义反转会继续触发 `missing_supporting_scene_anchor`
 
 ### 技术层
 
@@ -254,7 +256,7 @@
 
 测试结果：
 - `40` 个测试文件
-- `365` 个测试全部通过
+- `374` 个测试全部通过
 
 已覆盖的关键回归面：
 - 阶段推进

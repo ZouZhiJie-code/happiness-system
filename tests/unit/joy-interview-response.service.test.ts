@@ -34,6 +34,7 @@ const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTu
 const {
   buildAssistantQuestion,
   getDelightSignature,
+  getDirectionSignal,
   getInactiveSessionMessage,
   getNextStage,
   getOpeningQuestion,
@@ -42,11 +43,13 @@ const {
   getJoySource,
   hasJoyStableClosure,
   getStateShift,
+  getValueImpact,
   getMeaningNeed,
   getManualClue
 } = vi.hoisted(() => ({
   buildAssistantQuestion: vi.fn(),
   getDelightSignature: (snapshot: JoySnapshot) => snapshot.delightSignature ?? null,
+  getDirectionSignal: (snapshot: JoySnapshot) => snapshot.directionSignal ?? snapshot.happinessType ?? null,
   getInactiveSessionMessage: vi.fn(),
   getNextStage: vi.fn(),
   getOpeningQuestion: vi.fn(),
@@ -55,6 +58,7 @@ const {
   getJoySource: (snapshot: JoySnapshot) => snapshot.joySource ?? snapshot.whyItMattered ?? null,
   hasJoyStableClosure: (snapshot: JoySnapshot) => Boolean(snapshot.delightSignature ?? snapshot.manualClue ?? snapshot.selfPattern),
   getStateShift: (snapshot: JoySnapshot) => snapshot.stateShift ?? snapshot.feeling ?? null,
+  getValueImpact: (snapshot: JoySnapshot) => snapshot.valueImpact ?? null,
   getMeaningNeed: (snapshot: JoySnapshot) => snapshot.meaningNeed ?? null,
   getManualClue: (snapshot: JoySnapshot) => snapshot.manualClue ?? snapshot.selfPattern ?? null
 }));
@@ -82,6 +86,7 @@ vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
 vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   buildAssistantQuestion,
   getDelightSignature,
+  getDirectionSignal,
   getInactiveSessionMessage,
   getNextStage,
   getOpeningQuestion,
@@ -90,6 +95,7 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getJoySource,
   hasJoyStableClosure,
   getStateShift,
+  getValueImpact,
   getMeaningNeed,
   getManualClue
 }));
@@ -769,7 +775,7 @@ describe("prepareJoyInterviewResponse", () => {
       kind: "boundary_insufficient",
       reason: "我不再继续追问细节了。"
     });
-    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
@@ -827,7 +833,7 @@ describe("prepareJoyInterviewResponse", () => {
       kind: "boundary_insufficient",
       reason: "我不再继续追问细节了。"
     });
-    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(result.assistantTurn.question).toContain("这个片段最关键的一点");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
@@ -943,7 +949,7 @@ describe("prepareJoyInterviewResponse", () => {
       kind: "boundary_insufficient",
       reason: "我不再继续追问细节了。"
     });
-    expect(result.assistantTurn.insight).toBe("我不再继续追问细节了。");
+    expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
@@ -1099,7 +1105,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
     generateJoyAssistantTurn.mockResolvedValue({
       insight: "",
-      thinkingSummary: "我们已经碰到这段经历里你很在意的那层了，所以我想换个角度再确认它真正打动你的地方。",
+      thinkingSummary: "我们已经碰到这段经历里你很在意的那层了，所以我想顺着它继续确认，它真正打动你的地方到底是什么。",
       analysis: "用户刚刚选择继续聊；下一步问：关系在乎点",
       question: "你觉得自己在关系里最在乎什么？",
       stateUpdate: {
@@ -1131,11 +1137,60 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.nextStage).toBe("probe_pattern");
     expect(result.assistantTurn.question).toBe("你觉得自己在关系里最在乎什么？");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，换个角度确认这条线索是不是真的稳定成立。"
+      "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，顺着这份开心真正有分量的地方，继续说清。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
     expect(result.assistantTurn.stateUpdate.turnPhase).toBe("digging");
+  });
+
+  it("offers a complete choice again after one meaningful follow-up in a continued round", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        stage: "probe_pattern",
+        turnCount: 3,
+        lastAssistantQuestion: "如果顺着这段关系里的在乎继续往下说，你觉得最稳定的一条线索是什么？",
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 3,
+            startMessageSequence: 0,
+            snapshot: baseSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("wrap_up");
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "我发现只要能真正把心里的话说出来，我就会很快放松下来。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with a choice turn.");
+    }
+
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "complete"
+    });
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
+    expect(result.assistantTurn.insight).toContain("已经够写成一版日志");
   });
 
   it("backfills a thinking summary when the model returns only a follow-up question on a new event", async () => {
@@ -1265,7 +1320,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.nextStage).toBe("probe_reason");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "“读罗永浩的书”里明显出现了轻松踏实的状态变化，处理重点是看清这种状态为什么偏偏会在这里冒出来。"
+      "这份开心真正算数的地方，是把自己的状态重新找回来了，处理重点是分辨它为什么偏偏会在这里让人有感觉。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.question).toBe("当时是读到了什么，让你觉得开心？");
@@ -1385,6 +1440,43 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.question).toBe("当你开始主动走近别人时，你最明显感受到的变化是什么？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
+  });
+
+  it("rewrites paraphrase-only thinking summaries into theory-backed summaries", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    buildAssistantQuestion.mockReturnValue("如果再往里看一点，这份关系里的连接感最明显落在什么地方？");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "今天和朋友聊了很久，因为我感觉自己被接住了。",
+      analysis: "用户已说：和朋友深聊；下一步问：关系里的连接感",
+      question: "如果再往里看一点，这份关系里的连接感最明显落在什么地方？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，因为我感觉自己被接住了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toBe("今天和朋友聊了很久，因为我感觉自己被接住了。");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+    expect(result.assistantTurn.thinkingSummary).toContain("更稳定的在乎");
   });
 
   it("streams assistant deltas before persisting the finalized turn", async () => {
@@ -1601,7 +1693,7 @@ describe("prepareJoyInterviewResponse", () => {
       }
     );
 
-    const normalizedSummary = "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，再确认这条个人线索是不是真的站得住。";
+    const normalizedSummary = "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，再把这份开心沉淀成更稳定的在乎、线索或方向感。";
     const summaryDeltas = deltas.filter((delta) => delta.target === "summary");
     const questionDeltas = deltas.filter((delta) => delta.target === "question");
 
@@ -1699,7 +1791,7 @@ describe("prepareJoyInterviewResponse", () => {
     });
     const continuedPayload: AssistantTurnPayload = {
       insight: "",
-      thinkingSummary: "我们已经碰到这段经历里你很在意的那层了，所以我想换个角度再确认它真正打动你的地方。",
+      thinkingSummary: "我们已经碰到这段经历里你很在意的那层了，所以我想顺着它继续确认，它真正打动你的地方到底是什么。",
       analysis: "用户刚刚选择继续聊；下一步问：关系在乎点",
       question: "你觉得自己在关系里最在乎什么？",
       stateUpdate: {
@@ -1777,7 +1869,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(phases).toEqual(["thinking", "summary", "question"]);
     const normalizedContinuedSummary =
-      "这份开心的分量落在“只要和重要的人真正聊开，我就更容易进入好状态”这条个人线索，换个角度确认这条线索是不是真的稳定成立。";
+      "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，顺着这份开心真正有分量的地方，继续说清。";
     const continuedSummaryDeltas = deltas.filter((delta) => delta.target === "summary");
     const continuedQuestionDeltas = deltas.filter((delta) => delta.target === "question");
 
@@ -1794,7 +1886,7 @@ describe("prepareJoyInterviewResponse", () => {
     {
       dimension: "joy" as const,
       snapshot: baseSnapshot,
-      expectedSnippet: "开心的分量"
+      expectedSnippet: "被接住的感觉"
     },
     {
       dimension: "fulfillment" as const,
@@ -1809,7 +1901,7 @@ describe("prepareJoyInterviewResponse", () => {
         feeling: "踏实",
         stateShift: "踏实"
       },
-      expectedSnippet: "值得感标准"
+      expectedSnippet: "为什么对你算数"
     },
     {
       dimension: "reflection" as const,

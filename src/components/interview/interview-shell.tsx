@@ -170,23 +170,6 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
   );
 }
 
-function getPendingDecisionChoiceKind(
-  pendingDecision: InterviewSessionRecord["pendingDecision"]
-) {
-  if (!pendingDecision) {
-    return null;
-  }
-
-  switch (pendingDecision.kind) {
-    case "event_complete":
-      return "event_complete" as const;
-    case "boundary_insufficient":
-      return "boundary_insufficient" as const;
-    case "dimension_redirect":
-      return "dimension_redirect" as const;
-  }
-}
-
 function ChoiceActionCard({
   dimensionLabel,
   mode = "event_complete",
@@ -231,8 +214,8 @@ function ChoiceActionCard({
           : isBoundaryInsufficientMode
             ? "我不再继续追问细节了"
           : isPartialEventComplete
-            ? "这一段已经可以先整理成当前日志了，接下来怎么走？"
-            : "这一件已经复盘完整了，接下来怎么走？"}
+            ? "这一段已经够先写成一版日志了，接下来怎么走？"
+            : "这一段已经够写成一版日志了，接下来怎么走？"}
       </h4>
       <p className="mt-2 text-sm leading-7 text-[#594537]">
         {isRedirectMode
@@ -240,8 +223,8 @@ function ChoiceActionCard({
           : isBoundaryInsufficientMode
             ? "现在材料还不够直接整理成日志。你可以只补一句关键内容，也可以换一个片段，或者先退出，之后再回来接着聊。"
           : isPartialEventComplete
-            ? `这段${dimensionLabel}的核心已经聊清楚了。如果你现在不想继续往下提炼，也可以先按当前理解整理成一篇日志。`
-            : `你可以继续深挖当前这件事，也可以切到今天的下一件${dimensionLabel}事件；如果信息已经够了，也可以直接整理成日志。`}
+            ? `我觉得这段${dimensionLabel}已经够按当前理解整理成一篇日志了。你可以继续深聊当前这件事，也可以切到今天的下一件${dimensionLabel}事件。`
+            : `我觉得这段${dimensionLabel}已经有足够材料写成一篇日志了。你可以继续深聊当前这件事，也可以切到今天的下一件${dimensionLabel}事件；如果现在想收束，也可以直接整理成日志。`}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <button
@@ -254,9 +237,7 @@ function ChoiceActionCard({
             ? "只补一句"
             : isRedirectMode
               ? "继续找开心片段"
-              : isPartialEventComplete
-                ? "继续往下聊"
-                : "换个角度继续聊"}
+              : "继续深聊"}
         </button>
         {isRedirectMode ? (
           <button
@@ -787,25 +768,7 @@ export function InterviewShell() {
       assistantState === "idle" &&
       (sessionDimension ?? currentDimension) === currentDimension
   );
-  const activeChoiceMessageId = useMemo(() => {
-    const activeChoiceKind = getPendingDecisionChoiceKind(pendingDecision);
-
-    if (!showChoiceCard || !activeChoiceKind) {
-      return null;
-    }
-
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
-
-      if (message.role !== "assistant" || getAssistantChoiceKind(message.assistantPayload) !== activeChoiceKind) {
-        continue;
-      }
-
-      return message.id;
-    }
-
-    return null;
-  }, [messages, pendingDecision, showChoiceCard]);
+  const terminalMessageId = messages.at(-1)?.id ?? null;
   const visibleMessages = useMemo(
     () =>
       messages.filter((message) => {
@@ -815,13 +778,13 @@ export function InterviewShell() {
           return true;
         }
 
-        if (!showChoiceCard) {
-          return true;
+        if (showChoiceCard) {
+          return false;
         }
 
-        return message.id !== activeChoiceMessageId;
+        return message.id === terminalMessageId;
       }),
-    [activeChoiceMessageId, messages, showChoiceCard]
+    [messages, showChoiceCard, terminalMessageId]
   );
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";

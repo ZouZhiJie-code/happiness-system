@@ -193,6 +193,7 @@ data: {
 多事件 `stitched_moments` 成稿补充约束：
 - 五个维度都共享 supporting scene 校验，但只校验本次 AI prompt 实际看到的 `promptEvents`，不会因为窗口外 supporting moment 把 `refresh_minor` 误判为缺少副事件
 - 如果 AI draft 漏掉本次 prompt 里实际提供的 supporting moment，质量门会返回 `missing_supporting_scene_anchor`
+- `gratitude` 的 `stitched_moments` supporting-scene 会先走严格锚点，再只接受仍保留明确照顾动作和足够场景锚点的自然压缩；支持事件被压缩写成近义短句时，不应直接误判回退 fallback，但语义反转或只剩少量字面重叠的改写仍应触发 `missing_supporting_scene_anchor`
 - 如果因此退回 fallback draft，正文会保留主事件外最多 `2` 个 supporting moments，而不是退化成只剩主事件
 
 ### 3.3 非流式回复
@@ -1202,6 +1203,13 @@ POST /api/daily-journal/[id]/save
    - 新开会话时要把这个日期带给 `POST /api/interview/session/start`
    - 进入带 `entryDate` 的访谈页后，当前选中维度胶囊应优先反映 live session 的实时轮次 / 进度圈；其余维度继续按 day snapshot 展示
 
+2.5. 普通 `/interview` 默认按“今天”恢复
+   - 如果没有显式 `sessionId`，也没有显式 `entryDate`
+   - 本地按维度缓存的 session 只有在 `entryDate === 今天` 时才允许自动恢复
+   - 如果缓存里的 session 属于别的日期，前端应清掉该维度缓存并新开今天的 session
+   - 访谈页正文区应明确显示“当前记录日期：YYYY-MM-DD”，让用户知道这轮内容会归到哪一天
+   - 如果当前正在显示 inline choice card，聊天记录里应隐藏所有 choice turn；只有当 card 消失后、且某条历史 choice 最终停在 transcript 末尾时，它才应重新可见
+
 3. 显式 query 高于本地 remembered dimension
    - `dimension / sessionId / entryDate / panel` 都高于 localStorage fallback
 
@@ -1215,7 +1223,7 @@ POST /api/daily-journal/[id]/save
    - 用户点击“回到访谈”时应先保存当天日志 pending 编辑，再移除 `mode=daily-journal`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
    - 如果用户在当天日志主区切换维度，且 URL 没有继续携带 `mode=daily-journal`，前端应保存 pending 编辑并回到普通访谈工作区
 
-第 5 步不要求把 session 缓存结构从“按维度”彻底重构成“按维度 + 日期”，但显式 deep link 不能再被旧缓存误恢复。
+第 5 步不要求把 session 缓存结构从“按维度”彻底重构成“按维度 + 日期”，但显式 deep link 不能再被旧缓存误恢复；普通 `/interview` 也不能再跨天误恢复旧 session。
 
 #### 页面状态
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -508,8 +509,16 @@ function SiteHeaderInner() {
           onClick={(event) => handleProtectedNavigation(event, "/")}
           className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2.5"
         >
-          <div className="flex size-9 items-center justify-center rounded-[12px] border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.5)] text-[0.62rem] font-mono uppercase tracking-[0.2em] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.54)]">
-            HS
+          <div className="flex size-9 items-center justify-center overflow-hidden rounded-[12px] border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.62)] shadow-[inset_0_1px_0_rgba(255,255,255,0.54)]">
+            <Image
+              src="/brand/happiness-logo.png"
+              alt=""
+              width={36}
+              height={36}
+              className="size-[2.7rem] max-w-none object-cover"
+              priority
+              aria-hidden="true"
+            />
           </div>
           <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">幸福系统</p>
         </Link>

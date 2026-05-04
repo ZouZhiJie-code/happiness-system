@@ -219,6 +219,21 @@ export interface DimensionDraftViewModel {
   fields: DimensionRendererField[];
 }
 
+export interface DimensionSemanticInterpretation {
+  dimension: InterviewDimension;
+  themeKey: string;
+  themeLabel: string;
+  theorySummary: string;
+  thinkingSummaryLead: string;
+  followUpFocus: string;
+  narrativePremise: string;
+  closurePremise: string;
+  titleTheme: string | null;
+  titleCandidates: string[];
+  antiFlatteningTargets: string[];
+  dimensionMeta?: Record<string, string | null>;
+}
+
 export interface DraftBrief {
   dimension: InterviewDimension;
   completionMode: DraftCompletionMode;
@@ -242,6 +257,10 @@ export interface DraftBrief {
   valueSignal: string | null;
   durabilitySignal: string | null;
   titleHint: string | null;
+  theorySummary: string | null;
+  titleTheme: string | null;
+  titleCandidates: string[];
+  antiFlatteningTargets: string[];
   tags: string[];
 }
 

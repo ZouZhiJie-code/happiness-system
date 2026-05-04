@@ -1,6 +1,7 @@
 export const MAX_JOURNAL_TITLE_LENGTH = 16;
 export const MAX_JOURNAL_CONTENT_LENGTH = 3000;
 
+import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import type { DraftBrief, InterviewDimension, InterviewJournalPayload, InterviewSnapshotData, JoySnapshot } from "@/types/interview";
 
 const SYSTEM_TITLE_PREFIX_PATTERN =
@@ -381,12 +382,31 @@ export interface SemanticJournalTitleInput {
 }
 
 export function buildSemanticJournalTitle(input: SemanticJournalTitleInput) {
-  const candidates =
+  const candidates: string[] = [];
+  const semanticCandidates =
+    input.draftBrief?.titleCandidates?.length
+      ? input.draftBrief.titleCandidates
+      : input.snapshot
+        ? buildDimensionSemanticInterpretation({
+            dimension: input.dimension,
+            snapshot: input.snapshot
+          }).titleCandidates
+        : [];
+
+  for (const candidate of semanticCandidates) {
+    pushCandidate(candidates, candidate);
+  }
+
+  const heuristicCandidates =
     input.dimension === "fulfillment"
       ? buildFulfillmentTitleCandidates(input)
       : input.dimension === "joy"
         ? buildJoyTitleCandidates(input)
         : buildGenericTitleCandidates(input);
+
+  for (const candidate of heuristicCandidates) {
+    pushCandidate(candidates, candidate);
+  }
 
   const normalizedAiTitle = normalizeJournalTitleCandidate(input.aiTitle);
 

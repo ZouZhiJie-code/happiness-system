@@ -529,8 +529,11 @@ describe("draft policies", () => {
       emotionalCore: "原本卡住的部分终于收口了",
       directionSignal: "推进完成型",
       valueSignal: "能把卡住的事情真正往前推进",
-      closingInsight: "能把卡住的事情真正往前推进"
+      closingInsight: "能把卡住的事情真正往前推进",
+      titleTheme: "真的收了个口"
     });
+    expect(brief.theorySummary).toContain("不算白过");
+    expect(brief.antiFlatteningTargets).toContain("不要写成今天很忙");
     expect(profile.closingMode).toBe("stable_clue");
     expect(profile.toneBanSet).toContain("周报腔");
     expect(profile.toneBanSet).toContain("绩效总结");
@@ -843,6 +846,25 @@ describe("draft policies", () => {
     expect(result.issues).toContain("generic_core_regression");
   });
 
+  it("rejects joy drafts that only repeat the scene without the vitality core", () => {
+    const brief = buildDraftBrief({
+      session: buildSession(partialJoySnapshot),
+      sourceEvents: [buildEvent(partialJoySnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "今天的开心",
+        content: "今天和家人一起吃饭聊天。今天和家人一起吃饭聊天。"
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("paraphrase_only_summary");
+    expect(result.issues).toContain("joy_missing_vitality_core");
+  });
+
   it("rejects report-like fulfillment drafts", () => {
     const brief = buildDraftBrief({
       session: buildFulfillmentSession(fulfillmentSnapshot),
@@ -860,6 +882,25 @@ describe("draft policies", () => {
 
     expect(result.accepted).toBe(false);
     expect(result.issues).toContain("report_tone");
+  });
+
+  it("rejects fulfillment drafts that only restate the scene without why it counts", () => {
+    const brief = buildDraftBrief({
+      session: buildFulfillmentSession(fulfillmentSnapshot),
+      sourceEvents: [buildEvent(fulfillmentSnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "今天的充实",
+        content: "今天把一个拖了很久的任务推进完了。我把一个拖了很久的任务推进完了。"
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("paraphrase_only_summary");
+    expect(result.issues).toContain("missing_theory_core");
   });
 
   it("rejects busy fulfillment drafts without progress evidence", () => {
@@ -1141,6 +1182,75 @@ describe("draft policies", () => {
     expect(result.issues).not.toContain("missing_supporting_scene_anchor");
   });
 
+  it("accepts naturally rewritten gratitude supporting scenes when the lexical overlap is still clear", () => {
+    const primaryEvent = buildEvent(gratitudeSnapshot);
+    const supportingGratitudeSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      event: "对方说要请我吃冰淇淋，还顺手问我要不要喝水",
+      gratitudeMoment: "对方说要请我吃冰淇淋，还顺手问我要不要喝水",
+      kindAction: "说要请我吃冰淇淋，还顺手问我要不要喝水",
+      seenNeed: "那一刻我需要被人顺手照顾一下",
+      gratitudeReason: "这种不费力的照顾让我一下松下来"
+    };
+    const supportingEvent = {
+      ...buildEvent(supportingGratitudeSnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingGratitudeSnapshot
+    };
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(gratitudeSnapshot),
+      sourceEvents: [primaryEvent, supportingEvent]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "被顺手照顾到",
+        content:
+          "今天同事看出我快撑不住，先帮我理清优先级，让我那一下没那么慌。后面他又请我吃冰，还顺手问我渴不渴，这种不用我开口就被照顾到的感觉，让我整个人慢慢松下来。",
+        selfPattern: gratitudeSnapshot.relationshipSignal
+      }
+    });
+
+    expect(result.issues).not.toContain("missing_supporting_scene_anchor");
+  });
+
+  it("still rejects gratitude supporting-scene rewrites that remove the caring action", () => {
+    const primaryEvent = buildEvent(gratitudeSnapshot);
+    const supportingGratitudeSnapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      event: "赵月说要请我吃冰淇淋，还顺手问我要不要喝水",
+      gratitudeMoment: "赵月说要请我吃冰淇淋，还顺手问我要不要喝水",
+      kindAction: "请我吃冰淇淋，还顺手问我要不要喝水",
+      seenNeed: "我当时需要被人顺手照顾一下",
+      gratitudeReason: "这种不费力的照顾让我一下松下来"
+    };
+    const supportingEvent = {
+      ...buildEvent(supportingGratitudeSnapshot),
+      id: "event-2",
+      sequence: 2,
+      snapshot: supportingGratitudeSnapshot
+    };
+    const brief = buildDraftBrief({
+      session: buildGratitudeSession(gratitudeSnapshot),
+      sourceEvents: [primaryEvent, supportingEvent]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "后来陪她去买冰",
+        content:
+          "今天同事看出我快撑不住，先帮我理清优先级，让我那一下没那么慌。后来赵月说想吃冰，我陪她去买了，但这更多像是顺手一起做了一件事。",
+        selfPattern: gratitudeSnapshot.relationshipSignal
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("missing_supporting_scene_anchor");
+  });
+
   it("keeps fallback partial joy drafts in current-log mode", () => {
     const session = buildSession(partialJoySnapshot);
     const sourceEvents = [buildEvent(partialJoySnapshot)];
@@ -1181,6 +1291,25 @@ describe("draft policies", () => {
     expect(draft.content).toContain("我现在更知道");
     expect(draft.content).not.toContain("至少到现在");
     expect(draft.content).not.toContain("我也开始更确定");
+  });
+
+  it("keeps fulfillment fallback drafts anchored in why the day was not wasted", () => {
+    const session = buildFulfillmentSession(fulfillmentSnapshot);
+    const sourceEvents = [buildEvent(fulfillmentSnapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(brief.theorySummary).toContain("不算白过");
+    expect(draft.content).toContain("不算白过");
+    expect(draft.content).toContain("真正算数");
   });
 
   it("uses a lighter clue-closing in complete fallback joy drafts", () => {
@@ -1253,7 +1382,7 @@ describe("draft policies", () => {
     expect(draft.title).not.toContain("今天把一个拖了很久");
     expect(draft.content).toContain("今天最让我觉得不算白过的，是今天把一个拖了很久的任务推进完了。");
     expect(draft.content).toContain("这件事真正有分量的地方，是原本卡住的部分终于收口了。");
-    expect(draft.content).toContain("对我来说，能把卡住的事情真正往前推进才会真的算数。");
+    expect(draft.content).toContain("对我来说，能把卡住的事情真正往前推进才会真正算数。");
     expect(draft.content).not.toContain("当时我的感受是：");
     expect(draft.content).not.toContain("充实片段");
   });

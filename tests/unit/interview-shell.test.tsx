@@ -919,7 +919,7 @@ describe("InterviewShell", () => {
     });
     const continuedPayload = buildAssistantPayload({
       insight: "",
-      thinkingSummary: "你已经抓到那种松下来的感觉了，所以我想换个角度再确认，到底是什么在当时特别打动你。",
+      thinkingSummary: "你已经抓到那种松下来的感觉了，所以想顺着它继续确认，到底是什么在当时特别打动你。",
       question: "当时周围的环境或者节奏，有什么特别打动你？",
       meta: {
         depthReached: ["event"]
@@ -981,13 +981,15 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    expect(await screen.findByRole("button", { name: "换个角度继续聊" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "继续深聊" })).toBeInTheDocument();
+    expect(screen.queryByText(choicePayload.insight)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "继续深聊" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "聊下一件开心的事" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "现在整理日志" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "换个角度继续聊" }));
+    fireEvent.click(screen.getByRole("button", { name: "继续深聊" }));
 
     await waitFor(() => {
       expect(screen.queryByText(choicePayload.insight)).not.toBeInTheDocument();
@@ -996,7 +998,7 @@ describe("InterviewShell", () => {
     expect(await screen.findByText(continuedPayload.question)).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
-    expect(screen.queryByText("换个角度继续聊")).not.toBeInTheDocument();
+    expect(screen.queryByText("继续深聊")).not.toBeInTheDocument();
     expect(getTopGenerateButton()).toBeInTheDocument();
 
     const continueCall = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
@@ -1074,6 +1076,118 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     expect(await screen.findByText("这段收尾我当时已经帮你停在当前理解，没有再继续追问。")).toBeInTheDocument();
+  });
+
+  it("keeps earlier handled choice turns hidden when a later live choice card is active", async () => {
+    cacheInterviewSessions({ joy: "session-choice-multi" });
+
+    const olderChoicePayload = buildAssistantPayload({
+      insight: "第一段开心已经先停在当前理解了。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceKind: "event_complete",
+        choiceReason: "第一段已经收束。"
+      },
+      meta: {
+        depthReached: ["event"]
+      }
+    });
+    const currentChoicePayload = buildAssistantPayload({
+      insight: "第二段也已经聊到一个可以先收住的位置。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "choice",
+        shouldEndDimension: false,
+        offerChoice: true,
+        choiceKind: "event_complete",
+        choiceReason: "第二段也进入收束选择。"
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    });
+    const multiChoiceSession = buildSession({
+      id: "session-choice-multi",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 2,
+      messages: [
+        {
+          id: "assistant-choice-old",
+          role: "assistant",
+          content: JSON.stringify(olderChoicePayload),
+          assistantPayload: olderChoicePayload,
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        },
+        {
+          id: "assistant-follow-up",
+          role: "assistant",
+          content: "后来你又补充了第二个片段。",
+          sequence: 1,
+          createdAt: "2026-04-21T00:01:00.000Z"
+        },
+        {
+          id: "user-next-event",
+          role: "user",
+          content: "后来还有第二件开心的事。",
+          sequence: 2,
+          createdAt: "2026-04-21T00:02:00.000Z"
+        },
+        {
+          id: "assistant-choice-current",
+          role: "assistant",
+          content: JSON.stringify(currentChoicePayload),
+          assistantPayload: currentChoicePayload,
+          sequence: 3,
+          createdAt: "2026-04-21T00:03:00.000Z"
+        }
+      ],
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-2",
+        eventSequence: 2,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      }
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/session-choice-multi")) {
+        return new Response(JSON.stringify(multiChoiceSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(JSON.stringify({ session: buildSession() }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("后来你又补充了第二个片段。")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByText("第一段开心已经先停在当前理解了。")).not.toBeInTheDocument();
+    expect(screen.queryByText("第二段也已经聊到一个可以先收住的位置。")).not.toBeInTheDocument();
   });
 
   it("keeps entryDate when a dimension redirect sends the user into another interview dimension", async () => {
@@ -1280,9 +1394,11 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    expect(await screen.findByRole("button", { name: "继续往下聊" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "继续深聊" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "先整理当前日志" })).toBeInTheDocument();
-    expect(screen.getByText("这段开心的核心已经聊清楚了。如果你现在不想继续往下提炼，也可以先按当前理解整理成一篇日志。")).toBeInTheDocument();
+    expect(
+      screen.getByText("我觉得这段开心已经够按当前理解整理成一篇日志了。你可以继续深聊当前这件事，也可以切到今天的下一件开心事件。")
+    ).toBeInTheDocument();
   });
 
   it("shows boundary insufficient actions and pauses through the existing pause endpoint", async () => {
@@ -1762,7 +1878,7 @@ describe("InterviewShell", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("正在生成日志骨架")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "换个角度继续聊" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "继续深聊" })).toBeEnabled();
       expect(screen.getByRole("button", { name: "聊下一件开心的事" })).toBeEnabled();
       expect(screen.getByRole("button", { name: "现在整理日志" })).toBeEnabled();
     });

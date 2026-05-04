@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
+import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
   assessUserTurnMessage,
   deriveDepthReachedFromSnapshot,
@@ -291,7 +292,7 @@ function isJoyDraftOverrideRequested(message: string | null) {
 
 function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
   return {
-    insight: "我不再继续追问细节了。",
+    insight: "你已经把现在的边界说清了，我先停在这里，不再继续追问细节。",
     thinkingSummary: "",
     analysis: "用户明确表达不想继续追问，但当前材料还不足以整理成日志；下一步交给用户选择：只补一句、换一个片段，或先退出。",
     question:
@@ -318,129 +319,129 @@ function buildChoiceInsight(
 ) {
   if (dimension === "joy") {
     if (completionMode === "user_override_partial") {
-      return "这段开心的核心已经清楚了，如果你现在不想继续往下提炼，也可以先按当前理解整理。";
+      return "这段开心的核心已经清楚了，已经够按当前理解写成一版日志；如果你现在不想继续往下提炼，也可以先整理。";
     }
 
     if (getJoyTrack(snapshot) === "delight_track" && getDelightSignature(snapshot)) {
-      return "这一段已经看见一条会把你轻轻带动起来的开心线索了。";
+      return "这一段已经看见一条会把你轻轻带动起来的开心线索了，已经够写成一版日志。";
     }
 
     if (getManualClue(snapshot)) {
-      return "这一段已经沉淀出一条可继续拿来用的个人线索了。";
+      return "这一段已经沉淀出一条可继续拿来用的个人线索了，已经够写成一版日志。";
     }
 
     if (getMeaningNeed(snapshot) || getJoySource(snapshot)) {
-      return "这一段开心背后真正打动你的点已经比较清楚了。";
+      return "这一段开心背后真正打动你的点已经比较清楚了，已经够写成一版日志。";
     }
 
     if (getJoyMoment(snapshot)) {
-      return "这个开心片段已经有了清楚的轮廓。";
+      return "这个开心片段已经有了清楚的轮廓，已经够先写成一版日志。";
     }
 
-    return "这一段已经聊出一些轮廓了。";
+    return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
   }
 
   if (dimension === "fulfillment") {
     if (completionMode === "user_override_partial") {
-      return "这件事为什么不算白过已经比较清楚了，如果你现在不想继续提炼值得感标准，也可以先按当前理解整理。";
+      return "这件事为什么不算白过已经比较清楚了，已经够按当前理解写成一版日志；如果你现在不想继续提炼值得感标准，也可以先整理。";
     }
 
     if (snapshot.selfPattern) {
-      return "这一段已经聊到什么样的努力对你来说真的算数了。";
+      return "这一段已经聊到什么样的努力对你来说真的算数了，已经够写成一版日志。";
     }
 
     if (snapshot.whyItMattered) {
-      return "这一段已经说清楚了为什么今天不是空转的一天。";
+      return "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。";
     }
 
     if (snapshot.event) {
-      return "这个充实片段已经有了清楚的轮廓。";
+      return "这个充实片段已经有了清楚的轮廓，已经够先写成一版日志。";
     }
 
-    return "这一段已经聊出一些轮廓了。";
+    return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
   }
 
   if (dimension === "reflection") {
     if (completionMode === "user_override_partial") {
-      return "这次思考的触发片段和新理解已经比较清楚了，如果你现在不想继续提炼判断线索，也可以先按当前理解整理。";
+      return "这次思考的触发片段和新理解已经比较清楚了，已经够按当前理解写成一版日志；如果你现在不想继续提炼判断线索，也可以先整理。";
     }
 
     if (snapshot.selfPattern) {
-      return "这一段已经聊到以后判断类似事情时可以带着的一条线索了。";
+      return "这一段已经聊到以后判断类似事情时可以带着的一条线索了，已经够写成一版日志。";
     }
 
     if (snapshot.whyItMattered) {
-      return "这一段已经说清楚它带来的新理解了。";
+      return "这一段已经说清楚它带来的新理解了，已经够写成一版日志。";
     }
 
     if (snapshot.event) {
-      return "这个触发思考的片段已经有了清楚的轮廓。";
+      return "这个触发思考的片段已经有了清楚的轮廓，已经够先写成一版日志。";
     }
 
-    return "这一段已经聊出一些轮廓了。";
+    return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
   }
 
   if (dimension === "improvement") {
     if (completionMode === "user_override_partial") {
-      return "这个改进情境和关键原因已经比较清楚了，如果你现在不想继续拆动作，也可以先按当前理解整理。";
+      return "这个改进情境和关键原因已经比较清楚了，已经够按当前理解写成一版日志；如果你现在不想继续拆动作，也可以先整理。";
     }
 
     if (snapshot.nextAttempt) {
-      return "这一段已经聊到下次可以先尝试的具体动作了。";
+      return "这一段已经聊到下次可以先尝试的具体动作了，已经够写成一版日志。";
     }
 
     if (snapshot.improvementTrack === "repeat_good" && snapshot.repeatCondition) {
-      return "这一段已经看见了一个值得重复的好状态条件。";
+      return "这一段已经看见了一个值得重复的好状态条件，已经够写成一版日志。";
     }
 
     if (snapshot.frictionPoint) {
-      return "这一段已经说清了下次想避开的关键卡点。";
+      return "这一段已经说清了下次想避开的关键卡点，已经够写成一版日志。";
     }
 
     if (snapshot.event) {
-      return "这个改进情境已经有了清楚的轮廓。";
+      return "这个改进情境已经有了清楚的轮廓，已经够先写成一版日志。";
     }
 
-    return "这一段已经聊出一些轮廓了。";
+    return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
   }
 
   if (dimension === "gratitude") {
     if (completionMode === "user_override_partial") {
-      return "这份感谢的具体片段和重要原因已经比较清楚了，如果你现在不想继续提炼关系线索，也可以先按当前理解整理。";
+      return "这份感谢的具体片段和重要原因已经比较清楚了，已经够按当前理解写成一版日志；如果你现在不想继续提炼关系线索，也可以先整理。";
     }
 
     if (getGratitudeRelationshipSignal(snapshot)) {
-      return "这一段已经聊到什么样的关系回应对你来说值得珍惜了。";
+      return "这一段已经聊到什么样的关系回应对你来说值得珍惜了，已经够写成一版日志。";
     }
 
     if (snapshot.seenNeed || getGratitudeReason(snapshot)) {
-      return "这一段已经说清楚对方看见并回应了你什么需要。";
+      return "这一段已经说清楚对方看见并回应了你什么需要，已经够写成一版日志。";
     }
 
     if (snapshot.kindAction) {
-      return "这份感谢里对方具体做了什么已经比较清楚了。";
+      return "这份感谢里对方具体做了什么已经比较清楚了，已经够写成一版日志。";
     }
 
     if (getGratitudeMoment(snapshot)) {
-      return "这个感谢片段已经有了清楚的轮廓。";
+      return "这个感谢片段已经有了清楚的轮廓，已经够先写成一版日志。";
     }
 
-    return "这一段已经聊出一些轮廓了。";
+    return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
   }
 
   if (snapshot.selfPattern) {
-    return "这一段已经聊到你的在乎和模式了。";
+    return "这一段已经聊到你的在乎和模式了，已经够写成一版日志。";
   }
 
   if (snapshot.happinessType || snapshot.whyItMattered) {
-    return "这一段内容的来龙去脉已经比较完整了。";
+    return "这一段内容的来龙去脉已经比较完整了，已经够写成一版日志。";
   }
 
   if (snapshot.event) {
-    return "这个片段已经有了清楚的轮廓。";
+    return "这个片段已经有了清楚的轮廓，已经够先写成一版日志。";
   }
 
-  return "这一段已经聊出一些轮廓了。";
+  return "这一段已经聊出一些轮廓了，已经够先写成一版日志。";
 }
 
 function buildChoiceReason(
@@ -569,7 +570,7 @@ function buildChoiceAssistantTurn(
 
 function buildRedirectAssistantTurn(reason: string, snapshot: JoySnapshot): AssistantTurnPayload {
   return {
-    insight: "这一轮开心先停在这里会更合适。",
+    insight: "我先把这一轮停在这里，继续留在开心维度里硬找，收益已经不高了。",
     thinkingSummary: "",
     analysis: `当前轮次还没找到可信的开心片段，建议转去改进维度。原因：${reason}`,
     question: "",
@@ -796,7 +797,7 @@ function buildThinkingSummaryFocus(input: {
 
   if (input.dimension === "fulfillment") {
     if (input.assistantAction === "continue_current_event") {
-      return "，换个角度把这段投入里真正算数的部分说清。";
+      return "，顺着这段投入里真正算数的部分继续说清。";
     }
 
     switch (input.stage) {
@@ -815,7 +816,7 @@ function buildThinkingSummaryFocus(input: {
 
   if (input.dimension === "reflection") {
     if (input.assistantAction === "continue_current_event") {
-      return "，换个角度把这次新理解背后的证据和判断变化说清。";
+      return "，顺着这次新理解背后的证据和判断变化继续说清。";
     }
 
     switch (input.stage) {
@@ -834,7 +835,7 @@ function buildThinkingSummaryFocus(input: {
 
   if (input.dimension === "improvement") {
     if (input.assistantAction === "continue_current_event") {
-      return "，换个角度把关键条件、具体卡点和可控小调整说清。";
+      return "，顺着关键条件、具体卡点和可控小调整继续拆清。";
     }
 
     switch (input.stage) {
@@ -853,7 +854,7 @@ function buildThinkingSummaryFocus(input: {
 
   if (input.dimension === "gratitude") {
     if (input.assistantAction === "continue_current_event") {
-      return "，换个角度把这份善意回应了什么需要说清。";
+      return "，顺着这份善意回应了什么需要继续说清。";
     }
 
     switch (input.stage) {
@@ -872,22 +873,22 @@ function buildThinkingSummaryFocus(input: {
 
   if (input.assistantAction === "continue_current_event") {
     if (joyTrack === "delight_track" && getDelightSignature(input.snapshot)) {
-      return "，换个角度确认这条轻快乐线索是不是站得住。";
+      return "，顺着这条轻快乐线索继续确认它是不是真的站得住。";
     }
 
     if (getManualClue(input.snapshot)) {
-      return "，换个角度确认这条线索是不是真的稳定成立。";
+      return "，顺着这条线索继续确认它是不是真的稳定成立。";
     }
 
     if (joyTrack === "delight_track") {
-      return "，换个角度看清什么样的内容、节奏或场景最容易把你带进去。";
+      return "，顺着这类开心继续看清，什么样的内容、节奏或场景最容易把你带进去。";
     }
 
     if (getMeaningNeed(input.snapshot) || getJoySource(input.snapshot)) {
-      return "，换个角度把真正打动你的那一层说清。";
+      return "，顺着真正打动你的那一层继续说清。";
     }
 
-    return "，换个角度把真正打动你的点说具体一点。";
+    return "，顺着真正打动你的点继续说具体一点。";
   }
 
   switch (input.stage) {
@@ -928,18 +929,14 @@ function buildFollowUpThinkingSummary(input: {
   snapshot: JoySnapshot;
   assistantAction: "reply" | "continue_current_event";
 }) {
-  const lead =
-    input.dimension === "fulfillment"
-      ? buildFulfillmentThinkingSummaryLead(input.snapshot)
-      : input.dimension === "reflection"
-        ? buildReflectionThinkingSummaryLead(input.snapshot)
-        : input.dimension === "improvement"
-          ? buildImprovementThinkingSummaryLead(input.snapshot)
-          : input.dimension === "gratitude"
-            ? buildGratitudeThinkingSummaryLead(input.snapshot)
-            : buildThinkingSummaryLead(input.snapshot);
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: input.dimension,
+    snapshot: input.snapshot,
+    stage: input.stage,
+    action: input.assistantAction
+  });
 
-  return `${lead}${buildThinkingSummaryFocus(input)}`
+  return `${semanticInterpretation.thinkingSummaryLead}${semanticInterpretation.followUpFocus || buildThinkingSummaryFocus(input)}`
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180);
@@ -960,12 +957,74 @@ function hasInvalidThinkingSummaryTone(summary: string) {
   );
 }
 
+function normalizeLooseText(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:“”"'（）()【】\[\]《》]/gu, "");
+}
+
+function containsSemanticCandidate(text: string, candidates: Array<string | null | undefined>) {
+  const normalizedText = normalizeLooseText(text);
+
+  return candidates.some((candidate) => {
+    const normalizedCandidate = normalizeLooseText(candidate);
+
+    if (!normalizedCandidate) {
+      return false;
+    }
+
+    if (normalizedCandidate.length <= 4) {
+      return normalizedText.includes(normalizedCandidate);
+    }
+
+    return normalizedText.includes(normalizedCandidate.slice(0, 4)) || normalizedText.includes(normalizedCandidate.slice(-4));
+  });
+}
+
+function hasParaphraseOnlyThinkingSummary(input: {
+  summary: string;
+  userMessage: string | null;
+  semanticInterpretation: ReturnType<typeof buildDimensionSemanticInterpretation>;
+}) {
+  const normalizedSummary = normalizeLooseText(input.summary);
+  const normalizedUserMessage = normalizeLooseText(input.userMessage);
+
+  if (!normalizedSummary || !normalizedUserMessage) {
+    return false;
+  }
+
+  if (normalizedSummary === normalizedUserMessage) {
+    return true;
+  }
+
+  const summaryCoveredByUser =
+    normalizedUserMessage.includes(normalizedSummary) ||
+    normalizedSummary.length >= 6 && normalizedSummary.split("").filter((char) => normalizedUserMessage.includes(char)).length / normalizedSummary.length >= 0.86;
+
+  if (!summaryCoveredByUser) {
+    return false;
+  }
+
+  const hasSemanticLift =
+    containsSemanticCandidate(input.summary, [
+      input.semanticInterpretation.titleTheme,
+      input.semanticInterpretation.theorySummary,
+      ...(Object.values(input.semanticInterpretation.dimensionMeta ?? {}) as Array<string | null | undefined>)
+    ]) ||
+    /(不算白过|不是空转|算数|有分量|被接住|被理解|带轻|带动|判断依据|具体卡点|回应了.*需要)/u.test(input.summary);
+
+  return !hasSemanticLift;
+}
+
 function normalizeThinkingSummary(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
   assistantAction: "reply" | "continue_current_event" | null;
   summary: string;
+  userMessage?: string | null;
 }) {
   const summary = input.summary.replace(/\s+/g, " ").trim();
 
@@ -973,7 +1032,21 @@ function normalizeThinkingSummary(input: {
     return summary;
   }
 
-  if (!hasInvalidThinkingSummaryTone(summary)) {
+  const semanticInterpretation = buildDimensionSemanticInterpretation({
+    dimension: input.dimension,
+    snapshot: input.snapshot,
+    stage: input.stage,
+    action: input.assistantAction ?? "reply"
+  });
+
+  if (
+    !hasInvalidThinkingSummaryTone(summary) &&
+    !hasParaphraseOnlyThinkingSummary({
+      summary,
+      userMessage: input.userMessage ?? null,
+      semanticInterpretation
+    })
+  ) {
     return summary.slice(0, 180);
   }
 
@@ -1016,7 +1089,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 4 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
     }
 
     if (!isJoyCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1040,7 +1113,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
     }
 
     if (!isFulfillmentCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1064,7 +1137,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
     }
 
     if (!isReflectionCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1088,7 +1161,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
     }
 
     if (!isImprovementCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1112,7 +1185,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
     }
 
     if (!isGratitudeCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1142,7 +1215,7 @@ function getChoiceCompletionMode(input: {
     return input.nextEventTurnCount >= 3 ? "complete" : null;
   }
 
-  return input.nextRoundMeaningfulReplyCount >= 2 ? "complete" : null;
+  return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
 }
 
 function looksLikeNoJoyMessage(message: string | null) {
@@ -1327,7 +1400,8 @@ function finalizeAssistantTurn(
       stage: input.nextStage,
       snapshot: input.nextSnapshot,
       assistantAction: input.assistantAction,
-      summary: fallbackAssistantTurn.thinkingSummary
+      summary: fallbackAssistantTurn.thinkingSummary,
+      userMessage: input.userMessage
     })
   };
 
@@ -1865,7 +1939,8 @@ export async function streamJoyInterviewResponse(
           stage: prepared.nextStage,
           snapshot: prepared.nextSnapshot,
           assistantAction: prepared.assistantAction,
-          summary: streamedText.summary
+          summary: streamedText.summary,
+          userMessage: prepared.userMessage
         });
 
         if (normalizedSummary) {
