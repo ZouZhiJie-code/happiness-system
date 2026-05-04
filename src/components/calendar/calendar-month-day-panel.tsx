@@ -56,10 +56,13 @@ export function CalendarMonthDayPanel({
         <p className="text-balance font-display text-[1.08rem] leading-tight text-[#312419]">{panelState.headline}</p>
         <p className="mt-2 line-clamp-2 text-pretty text-[0.86rem] leading-6 text-[#6a5440]">{panelState.description}</p>
         <div className="mt-3 flex flex-wrap gap-1.5" data-testid="calendar-month-day-panel-summary">
-          <SummaryChip label="进行中" value={`${day.activeCount}项`} />
-          <SummaryChip label="草稿" value={`${day.draftCount}项`} />
+          <SummaryChip label="待继续" value={panelState.pendingLabel} />
           <SummaryChip label="已完成" value={`${day.savedCount}项`} />
+          <SummaryChip label="完整日志" value={panelState.dailyJournalLabel} />
         </div>
+        {panelState.pendingHint ? (
+          <p className="mt-2 text-[0.74rem] text-[#8a6b4b]">{panelState.pendingHint}</p>
+        ) : null}
         <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">
           {panelState.updatedAtLabel ? `最后更新：${panelState.updatedAtLabel}` : panelState.isFuture ? "这一天还没有更新。" : "这一天还没有开始。"}
         </p>
@@ -71,7 +74,7 @@ export function CalendarMonthDayPanel({
           {!panelState.isFutureEmpty ? <p className="text-[0.74rem] text-[#8a6b4b]">先锁定哪一维值得进当天</p> : null}
         </div>
 
-        {panelState.isFutureEmpty ? (
+        {!panelState.shouldShowDimensionItems ? (
           <div
             className="calendar-card-muted mt-3 rounded-[22px] px-4 py-4 text-[0.9rem] leading-7 text-[#755d47]"
             data-testid="calendar-month-day-panel-empty"

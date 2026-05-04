@@ -23,13 +23,14 @@
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 `/api/calendar/day` 的 day snapshot 为准。只要某个维度当天已经有 `saved` 日志，胶囊会优先显示 `已完成`，即使同一天还有继续中的 session。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，当前选中维度的 live progress 会被压在 `88%` 以下，不会被历史 `draftGenerationUnlocked` 顶回 ready 状态。
 - 首页已重构为品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记心有所归”；文案与图片配置集中在 `src/content/homepage.ts`，当前已接入 `public/homepage/*` 本地图片，并把 Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化广告片布局，首页木纹背景也已调成上浅下深。
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改为 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；SummaryHero 3 栏状态看板只在 `overview` 总览视图内渲染；正文区按 `section` 只渲染对应板块；缺失 `section` 时默认切到 `overview` 总览视图，切换 tab 或翻月后 `section` 保留在 URL 中。评分区先看总分走势，再看 8 要素快扫和单项细看；热力区支持点选某一天继续回到当天；五维洞察按主线维度、正在浮现和安静维度组织，下钻回访谈时会保留对应 `entryDate`。未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。空数据月份不再用示意填充冒充真实分析，只有评分没有日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月的 `最长空档` 也会排除未来日期。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天，且当前月保存成功后 header toolbar 的 contextual chip 会立即刷新。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改为 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；正文区按 `section` 只渲染对应板块；缺失 `section` 时默认切到 `overview` 总览视图，切换 tab 或翻月后 `section` 保留在 URL 中。总览首屏现在先给月度判断、评分可信度、一个“建议先看”的主行动，再用评分刻度 / 记录节奏 / 五维线索三块轻入口和底部证据条辅助判断；证据条区分维度记录日、成果保存日、待整合日和评分可信度，不再把统计卡作为首屏主角。评分区先看总分走势，再看 8 要素快扫和单项细看；热力区支持点选某一天继续回到当天；五维洞察按主线维度、正在浮现和安静维度组织，下钻回访谈时会保留对应 `entryDate`。未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。空数据月份不再用示意填充冒充真实分析，只有评分没有日志的月份也不会伪造 `最高密度日` 或 `主线维度`；当前月的 `最长空档` 也会排除未来日期。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天，且当前月保存成功后 header toolbar 的 contextual chip 会立即刷新。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
-  - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口
-  - 月格当前固定渲染 6 行 42 格，保证每个月份的网格高度一致；可见文字层优先表达“当天已经沉淀出的已保存维度结果”
+  - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口；小屏改为月历主体在上、当天检查面板在下，不再依赖横向滚动访问右侧面板
+  - 月格当前固定渲染 6 行 42 格，loading skeleton 也保持 42 格，保证加载前后高度一致；可见文字层优先表达“当天已经沉淀出的已保存维度结果”
   - 月格当前使用单字维度标记 `悦 / 实 / 思 / 改 / 谢`；`1-4` 个已保存维度显示对应单字，`5` 个维度都至少保存过一次时收束为 `已完成`
   - 月格当前不再把 `进行中 / 混合状态` 作为可见文字标签；未完成感主要由状态符号和颜色层承担
+  - 月视图当天检查面板当前汇总 `待继续 / 已完成 / 完整日志`，完整日志状态显示 `未生成 / 可汇总 / 草稿 / 已保存 / 需更新`；过去空白日只显示轻空态，不再列 5 个空维度，月查询失败时右侧不会伪装成空白日
   - 周视图当前是 7 天同屏对比板，主动作会优先直达值得继续的业务链路；`继续访谈 / 继续编辑 / 查看日志` 会分别落到活动会话、草稿会话和已保存日志对应会话
   - 日视图当前是五维紧凑操作台，`mixed` 主动作稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析
   - 日视图顶部会以紧凑入口条暴露当天整合日志；月/周只显示轻量 marker，不抢占月格单字维度语义
@@ -168,7 +169,7 @@ npx prisma db push
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
-- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`month + section` URL 归一化、`/api/analysis/month`、评分优先入口、本月热力图、五维主线洞察布局、`scoreOverview / scoreTrend / scoreRecords / editableDates` 返回、评分趋势图和评分录入面板。
+- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`month + section` URL 归一化、`/api/analysis/month`、总览推荐入口与证据条、评分可信度提示、本月热力图、五维主线洞察布局、`scoreOverview / scoreTrend / scoreRecords / editableDates` 返回、评分趋势图和评分录入面板。
 - `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、repository 映射、保存接口、今天/昨天编辑窗口和正式 migration。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
@@ -208,9 +209,11 @@ npx prisma db push
   - `/calendar?view=month|week|day&date=YYYY-MM-DD`
   - 顶部导航中区承接 `month / week / day` 切换、前后翻段、回到今天与实时摘要
   - calendar 页面正文已进入首屏工作区；超量信息进入 pane 内局部滚动
-  - 月视图当前是“月历主体 + 当天检查面板”的双栏骨架，并提供 `查看当天` 日期级入口
+  - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，小屏是上下堆叠工作台，并提供 `查看当天` 日期级入口
+  - 月格 loading skeleton 与真实月格一样固定为 6 行 42 格；请求失败时右侧当天检查不会回退成假空白日
   - 月格当前按“已保存结果优先”的规则表达：有已保存维度时显示单字 `悦 / 实 / 思 / 改 / 谢`，五维都至少保存过一次时显示 `已完成`
   - 月格当前不再把 `进行中 / 混合状态` 作为可见文字标签；未完成感主要由状态符号和颜色层承担
+  - 月视图当天检查面板汇总 `待继续 / 已完成 / 完整日志`，过去空白日使用轻空态而不是展示 5 个空维度
   - 未来空白日继续改为中性待到来语义，不再制造“漏记”感觉
   - 周视图当前是 7 天同屏对比板，卡片主动作优先直达 `继续访谈 / 继续编辑 / 查看日志`，无可直达动作时回退 `查看当天`
   - 日视图当前按五维紧凑操作台组织，主按钮稳定按 `继续访谈 -> 继续编辑 -> 查看日志 -> 开始记录` 解析；`编辑日志` 只保留为已保存维度的次级轻链接

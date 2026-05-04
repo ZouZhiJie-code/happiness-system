@@ -37,7 +37,7 @@
 | `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块，SummaryHero 3 栏状态看板只在 `overview` 渲染；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。总览视图先给月度判断、评分可信度和“建议先看”主行动，再给评分刻度 / 记录节奏 / 五维线索轻入口，底部证据条只做辅助快扫。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。五维洞察按主线维度、正在浮现和安静维度组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月 `最长空档` 会排除未来日期。当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -1118,8 +1118,8 @@ POST /api/daily-journal/[id]/save
 
 月视图正文不再放 4 张统计卡。当前摘要收口到 header 中区的实时 chip，由 `src/features/calendar/toolbar.ts` 基于当前 `view/date` 请求结果投影：
 
-- 月视图：本月有记录天数、已完成天数、待继续天数
-- 周视图：本周有记录天数、已完成天数、待继续天数
+- 月视图：本月有记录天数、待继续天数、覆盖维度数
+- 周视图：本周有记录天数、草稿条数、完成条数
 - 日视图：当天进行中、草稿、已完成数量
 
 第 5 步不做：
@@ -1130,9 +1130,8 @@ POST /api/daily-journal/[id]/save
 #### 当天检查面板规格
 
 交互形式固定采用：
-- 左侧：月历主体
-- 右侧：常驻当天检查面板
-- 中小屏：保持同一套双栏语义，通过工作区横向滚动保留“月历 + 检查面板”的并列关系，不再生成底部重复详情
+- 桌面：月历主体在左，当天检查面板常驻右侧
+- 中小屏：月历主体在上，当天检查面板在下，同一套选中日期和 `查看当天` 语义不变，不再依赖横向滚动访问右侧面板
 
 采用这个默认的原因：
 - 月视图只回答“先扫月分布，再锁定某一天”
@@ -1143,10 +1142,19 @@ POST /api/daily-journal/[id]/save
 - 日期
 - 整体状态
 - 当日标题 / 摘要
-- 进行中 / 草稿 / 已完成数量
-- 已触达维度的状态、标题和安全摘要
+- `待继续 / 已完成 / 完整日志` summary chip
+- 如果有进行中或草稿，显示一句低压待继续提示
+- 非空日展示已触达维度的状态、标题和安全摘要
+- 过去空白日只展示轻空态，不列 5 个空维度
 - 最后更新时间
 - 日期级入口 `查看当天`
+
+`完整日志` chip 的显示规则：
+- 已保存当天整合日志：`已保存`
+- 当天整合日志草稿：`草稿`
+- 来源维度日志更新后：`需更新`
+- 没有当天整合日志但已有已保存维度日志：`可汇总`
+- 没有可汇总来源：`未生成`
 
 当天检查面板明确不展示：
 - 原始数据库 id
@@ -1235,7 +1243,7 @@ POST /api/daily-journal/[id]/save
 
 加载中：
 - 页面壳子先出来
-- 月格子区域保持工作区结构
+- 月格子区域保持工作区结构，并渲染与真实月格一致的 6 行 `42` 格 skeleton
 - 当天检查面板有对应 skeleton
 
 空月：
@@ -1248,6 +1256,7 @@ POST /api/daily-journal/[id]/save
 请求失败：
 - 展示错误卡片和重试按钮
 - 不要把整个页面打成空白
+- 右侧当天检查面板不能 fallback 成当前选中日期的假空白日，应显示“当天检查暂时不可用”并提供重试
 
 未来日期空状态：
 - 页面能展示
@@ -1261,11 +1270,11 @@ POST /api/daily-journal/[id]/save
 - 当天检查面板默认常驻右侧
 
 平板：
-- 仍然保留双栏工作区，允许整体横向滚动
+- 月网格在上，当天检查面板在下，保留同一套选中日期状态
 
 手机：
 - 不再生成底部重复详情
-- 保留同一套双栏工作区语义，通过横向滚动访问右侧检查面板
+- 月网格在上，当天检查面板在下，不通过 `1040px` 最小宽度制造横向滚动
 
 #### 可访问性与交互底线
 
@@ -1285,7 +1294,7 @@ POST /api/daily-journal/[id]/save
 4. 接 `GET /api/calendar/month`
 5. 做 7x6 月网格、状态强提示、短标题 / 摘要和少量维度标识
 6. 删除正文里的 4 张统计卡，摘要收口到 header chip
-7. 做右侧常驻当天检查面板
+7. 做桌面右侧常驻、小屏下方堆叠的当天检查面板
 8. 点击日期即时更新右侧面板，不直接跳页
 9. `查看当天` 跳转到 `/calendar?view=day&date=YYYY-MM-DD`
 10. 让 `/interview` 正确响应 day/week 产生的 `sessionId / entryDate / panel`
@@ -1302,6 +1311,9 @@ POST /api/daily-journal/[id]/save
   - 校验点击某一天会更新右侧当天检查面板
   - 校验 `查看当天` 会跳到 `/calendar?view=day&date=YYYY-MM-DD`
   - 校验未来空白日不再显示 `未记录 / 还没有记录。`
+  - 校验 loading skeleton 也保持 `42` 个格位
+  - 校验月查询失败时右侧不显示假空白日
+  - 校验过去空白日右侧走轻空态，不渲染 5 个空维度
   - 校验正文 shell 不再承载旧导航和统计卡
 
 #### 人工验收
@@ -1511,7 +1523,7 @@ POST /api/daily-journal/[id]/save
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `overview`
 - `上月 / 本月 / 下月` 控件通过 `router.replace` 更新 `month` 并保留当前 `section`
-- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察），SummaryHero 3 栏状态看板只在 `overview` 视图内渲染；切换 tab 或翻月后 `section` 保留在 URL 中
+- 页面按 `section` 只渲染对应板块（总览 / 评分 / 节奏 / 五维洞察）；`overview` 总览只在默认视图内渲染月度判断、建议先看主行动、轻入口和证据条；切换 tab 或翻月后 `section` 保留在 URL 中
 - 已有 `GET /api/analysis/month?month=YYYY-MM`
 - API 当前返回：
   - `month`
@@ -1524,8 +1536,8 @@ POST /api/daily-journal/[id]/save
   - `scoreRecords`
   - `editableDates`
 - 页面当前已展示：
-  - 顶部月度摘要：先给本月结论和下一步入口
-  - `overview`：默认视图，展示总览摘要
+  - 顶部月度摘要：先给本月结论、评分可信度和下一步入口
+  - `overview`：默认视图，展示建议先看主行动、评分 / 节奏 / 五维轻入口，以及维度记录日 / 成果保存日 / 待整合日 / 评分可信度证据条
   - `score`：展示 `幸福 8 要素评分` 录入面板、总分平均走势、8 要素快扫和单项细看
   - `rhythm`：本月记录热力图、最长连续记录 / 空档与当天 drill-in
   - `insights`：主线维度、正在浮现和安静维度三层五维洞察布局
@@ -1590,7 +1602,7 @@ POST /api/daily-journal/[id]/save
 - `tests/unit/calendar.repository.test.ts`
   - 校验 legacy session 缺少 `entryDate` 时，calendar source 会回退到 `startedAt`
 - `tests/unit/calendar-month-shell.test.tsx`
-  - 校验月视图双栏工作区、右侧当天检查面板和 `查看当天` 日期级入口
+  - 校验月视图桌面双栏语义、小屏上下堆叠约束、当天检查面板和 `查看当天` 日期级入口
 - `tests/unit/calendar-presentation.test.ts`
   - 校验状态五态映射为不同 visual meta
   - 校验五个维度的单字 badge `悦 / 实 / 思 / 改 / 谢` 与完整语义映射稳定

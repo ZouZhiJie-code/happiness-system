@@ -39,9 +39,13 @@ export interface CalendarMonthPanelState {
   headline: string;
   description: string;
   updatedAtLabel: string | null;
+  dailyJournalLabel: string;
+  pendingLabel: string;
+  pendingHint: string | null;
   dimensionItems: CalendarMonthPanelDimensionItem[];
   isFuture: boolean;
   isFutureEmpty: boolean;
+  shouldShowDimensionItems: boolean;
   emptyMessage: string;
 }
 
@@ -112,6 +116,35 @@ function getDailyJournalLabel(day: CalendarDayRecord) {
   }
 }
 
+function getDailyJournalPanelLabel(day: CalendarDayRecord) {
+  switch (day.dailyJournal?.state ?? "none") {
+    case "saved":
+      return "已保存";
+    case "draft":
+      return "草稿";
+    case "stale":
+      return "需更新";
+    default:
+      return day.savedCount > 0 ? "可汇总" : "未生成";
+  }
+}
+
+function getPendingLabel(day: CalendarDayRecord) {
+  const pendingCount = day.activeCount + day.draftCount;
+
+  return pendingCount > 0 ? `${pendingCount}项` : "暂无";
+}
+
+function getPendingHint(day: CalendarDayRecord) {
+  const pendingCount = day.activeCount + day.draftCount;
+
+  if (pendingCount <= 0) {
+    return null;
+  }
+
+  return `有 ${pendingCount} 项还可以回到当天继续。`;
+}
+
 function getPanelDescription(day: CalendarDayRecord, today: string) {
   if (isFutureEmptyDay(day, today)) {
     return "这一天还没到，到了当天再记录。";
@@ -129,7 +162,7 @@ function getPanelDescription(day: CalendarDayRecord, today: string) {
     return "未来日期暂不支持开始记录。";
   }
 
-  return "还没有记录，先看当天。";
+  return "进入当天后，可以从任一维开始。";
 }
 
 export function buildCalendarMonthCellPreview(day: CalendarDayRecord, today: string): CalendarMonthCellPreview {
@@ -159,6 +192,7 @@ export function buildCalendarMonthCellPreview(day: CalendarDayRecord, today: str
 
 export function buildCalendarMonthPanelState(day: CalendarDayRecord, today: string): CalendarMonthPanelState {
   const futureEmpty = isFutureEmptyDay(day, today);
+  const emptyPast = !futureEmpty && day.overallStatus === "empty";
   const dimensionItems = day.dimensions.map<CalendarMonthPanelDimensionItem>((dimension) => ({
     dimension: dimension.dimension,
     label: getInterviewDimensionMeta(dimension.dimension).label,
@@ -178,9 +212,13 @@ export function buildCalendarMonthPanelState(day: CalendarDayRecord, today: stri
       : truncateCalendarCopy(day.primaryTitle ?? day.primarySummary ?? "这一天还空着。", 22),
     description: truncateCalendarCopy(getPanelDescription(day, today), 42),
     updatedAtLabel: formatCalendarUpdatedAt(day.latestUpdatedAt),
+    dailyJournalLabel: getDailyJournalPanelLabel(day),
+    pendingLabel: getPendingLabel(day),
+    pendingHint: getPendingHint(day),
     dimensionItems,
     isFuture: isFutureCalendarDate(day.date, today),
     isFutureEmpty: futureEmpty,
-    emptyMessage: futureEmpty ? "未来日期先保留。" : "五维都还没开始，先决定从哪一维进入。"
+    shouldShowDimensionItems: !futureEmpty && !emptyPast,
+    emptyMessage: futureEmpty ? "未来日期先保留。" : "五维都还没开始，进入当天后可以从任一维开始。"
   };
 }

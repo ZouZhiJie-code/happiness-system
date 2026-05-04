@@ -56,6 +56,43 @@ function buildEmptyCalendarDayRecord(date: string): CalendarDayRecord {
   };
 }
 
+function CalendarMonthGridSkeleton() {
+  return (
+    <div className="min-h-0 flex-1 rounded-[24px] p-2">
+      <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
+        {getCalendarLoadingLabel("month")}
+      </p>
+      <div className="mt-4 space-y-3" aria-hidden="true">
+        <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
+        <div className="calendar-month-grid-sheet grid min-h-[calc(var(--calendar-month-cell-min-height)*6)] grid-cols-7 overflow-hidden rounded-[18px] [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]">
+          {Array.from({ length: 42 }, (_, index) => (
+            <div
+              key={index}
+              className="calendar-month-cell min-h-[var(--calendar-month-cell-min-height)] animate-pulse bg-[rgba(224,204,174,0.42)]"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CalendarMonthErrorPanel({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="calendar-card flex h-full min-h-[16rem] flex-col items-center justify-center rounded-[28px] p-6 text-center">
+      <p className="font-display text-[1.32rem] text-[#312419]">当天检查暂时不可用。</p>
+      <p className="mt-2 text-[0.86rem] leading-6 text-[#755d47]">请先重新加载本月记录。</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
+      >
+        重新加载
+      </button>
+    </div>
+  );
+}
+
 export function CalendarMonthShell() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -127,15 +164,19 @@ export function CalendarMonthShell() {
     router.replace(buildCalendarHref({ view: "month", date }), { scroll: false });
   }
 
+  function retryMonthQuery() {
+    setRefreshNonce((value) => value + 1);
+  }
+
   return (
     <section
-      className="calendar-workspace calendar-shell rounded-none border-x-0 border-t-0 px-2 py-2 md:px-2.5 md:py-2.5"
+      className="calendar-workspace calendar-shell rounded-none border-x-0 border-t-0 px-2 py-2 [--calendar-month-cell-min-height:4.35rem] sm:[--calendar-month-cell-min-height:5rem] md:px-2.5 md:py-2.5 lg:[--calendar-month-cell-min-height:5.95rem]"
       data-testid="calendar-month-workspace"
       aria-busy={isLoading ? "true" : "false"}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="grid min-h-0 h-full min-w-[1040px] grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)] gap-2">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
+          <div className="grid min-h-0 gap-2 lg:h-full lg:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
             <div
               className="calendar-pane calendar-panel flex min-h-0 flex-col rounded-none p-2 md:p-2.5"
               data-testid="calendar-month-primary-pane"
@@ -145,26 +186,14 @@ export function CalendarMonthShell() {
                   <p className="font-display text-[1.45rem] text-[#312419]">{error}</p>
                   <button
                     type="button"
-                    onClick={() => setRefreshNonce((value) => value + 1)}
+                    onClick={retryMonthQuery}
                     className="calendar-chip mt-4 rounded-full px-4 py-2 text-[0.88rem] text-[#604529]"
                   >
                     重新加载
                   </button>
                 </div>
               ) : isLoading ? (
-                <div className="min-h-0 flex-1 rounded-[24px] p-2">
-                  <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
-                    {getCalendarLoadingLabel("month")}
-                  </p>
-                  <div className="mt-4 space-y-3" aria-hidden="true">
-                    <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
-                    <div className="calendar-month-grid-sheet grid grid-cols-7 overflow-hidden rounded-[18px] [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]">
-                      {Array.from({ length: 14 }, (_, index) => (
-                        <div key={index} className="calendar-month-cell min-h-[var(--calendar-month-cell-min-height)] animate-pulse bg-[rgba(224,204,174,0.42)]" />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <CalendarMonthGridSkeleton />
               ) : (
                 <div className="calendar-pane-scroll panel-scroll flex min-h-0 flex-1 flex-col pr-1">
                   <CalendarMonthGrid
@@ -178,8 +207,10 @@ export function CalendarMonthShell() {
               )}
             </div>
 
-            <aside className="calendar-pane min-h-0" data-testid="calendar-month-secondary-pane">
-              {isLoading ? (
+            <aside className="calendar-pane min-h-0 lg:h-full" data-testid="calendar-month-secondary-pane">
+              {error ? (
+                <CalendarMonthErrorPanel onRetry={retryMonthQuery} />
+              ) : isLoading ? (
                 <div className="calendar-card h-full min-h-0 rounded-[28px] p-5 md:p-6">
                   <div className="space-y-4" aria-hidden="true">
                     <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
@@ -188,7 +219,7 @@ export function CalendarMonthShell() {
                   </div>
                 </div>
               ) : null}
-              {!isLoading ? (
+              {!isLoading && !error ? (
                 <div className="h-full min-h-0">
                   <CalendarMonthDayPanel
                     day={selectedDay}

@@ -355,9 +355,12 @@ describe("calendar month shell", () => {
     expect(screen.queryByTestId("calendar-day-detail")).not.toBeInTheDocument();
     expect(screen.queryByText("DAY CHECK")).not.toBeInTheDocument();
     expect(within(dayPanel).getByText("这一天还空着。")).toBeInTheDocument();
-    expect(within(dayPanel).getByText("还没有记录，先看当天。")).toBeInTheDocument();
+    expect(within(dayPanel).getByText("进入当天后，可以从任一维开始。")).toBeInTheDocument();
     expect(within(dayPanel).getByText("五维状态")).toBeInTheDocument();
-    expect(within(dayPanel).getByTestId("calendar-month-day-panel-dimensions")).toBeInTheDocument();
+    expect(within(dayPanel).getByTestId("calendar-month-day-panel-empty")).toHaveTextContent("五维都还没开始");
+    expect(within(dayPanel).queryByTestId("calendar-month-day-panel-dimensions")).not.toBeInTheDocument();
+    expect(within(dayPanel).getByText("完整日志")).toBeInTheDocument();
+    expect(within(dayPanel).getByText("未生成")).toBeInTheDocument();
     expect(within(dayPanel).queryByRole("link", { name: /开始访谈/ })).not.toBeInTheDocument();
     expect(within(dayPanel).getByRole("link", { name: /5月2日.*查看当天/ })).toHaveAttribute(
       "href",
@@ -392,7 +395,11 @@ describe("calendar month shell", () => {
     expect(within(detailPanel).getByText("混合状态")).toBeInTheDocument();
     expect(within(detailPanel).getByText("这一天需要继续分流")).toBeInTheDocument();
     expect(within(detailPanel).getByText("同一天里既有进行中的访谈，也有草稿和已完成日志。")).toBeInTheDocument();
-    expect(within(detailPanel).getAllByText("1项")).toHaveLength(3);
+    expect(within(detailPanel).getByText("2项")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("1项")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("完整日志")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("可汇总")).toBeInTheDocument();
+    expect(within(detailPanel).getByText("有 2 项还可以回到当天继续。")).toBeInTheDocument();
     expect(within(detailPanel).getByText("悦")).toBeInTheDocument();
     expect(within(detailPanel).getByText("实")).toBeInTheDocument();
     expect(within(detailPanel).getByText("思")).toBeInTheDocument();
@@ -450,7 +457,7 @@ describe("calendar month shell", () => {
     expect(within(detailPanel).getByText("这一天还没到，到了当天再记录。")).toBeInTheDocument();
     expect(within(detailPanel).getByTestId("calendar-month-day-panel-empty")).toHaveTextContent("未来日期先保留。");
     expect(within(detailPanel).queryByText("未记录")).not.toBeInTheDocument();
-    expect(within(detailPanel).queryByText("还没有记录，先看当天。")).not.toBeInTheDocument();
+    expect(within(detailPanel).queryByText("进入当天后，可以从任一维开始。")).not.toBeInTheDocument();
     expect(futureCell).not.toHaveTextContent("未记录");
     expect(futureCell).not.toHaveTextContent("还没有记录。");
     expect(futureCell).toHaveAccessibleName(/未来日期/);
@@ -465,12 +472,24 @@ describe("calendar month shell", () => {
     const deferred = createDeferredResponse();
     global.fetch = vi.fn(() => deferred.promise) as typeof fetch;
 
-    render(<CalendarMonthShell />);
+    const { container } = render(<CalendarMonthShell />);
 
     expect(screen.getByTestId("calendar-month-workspace")).toHaveAttribute("aria-busy", "true");
     expect(screen.getByRole("status")).toHaveTextContent("正在读取本月记录。");
+    expect(container.querySelectorAll(".calendar-month-grid-sheet .calendar-month-cell")).toHaveLength(42);
 
     deferred.resolve(new Response(JSON.stringify(buildMonthRecord()), { status: 200 }));
     await screen.findByTestId("calendar-month-day-panel");
+  });
+
+  it("keeps the day panel out of a fake empty state when the month query fails", async () => {
+    global.fetch = vi.fn(async () => new Response(null, { status: 500 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("本月记录暂时没打开。");
+    expect(screen.getByText("当天检查暂时不可用。")).toBeInTheDocument();
+    expect(screen.queryByTestId("calendar-month-day-panel")).not.toBeInTheDocument();
+    expect(screen.queryByText("这一天还空着。")).not.toBeInTheDocument();
   });
 });
