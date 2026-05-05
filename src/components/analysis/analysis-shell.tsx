@@ -584,6 +584,32 @@ function buildOverviewNarrative(record: AnalysisMonthRecord) {
   return record.insightsOverview.summary;
 }
 
+function shouldPreferNarrativeOverview(record: AnalysisMonthRecord) {
+  if (!record.narrative?.overviewNarrative?.trim()) {
+    return false;
+  }
+
+  if (isFutureAnalysisMonth(record.month) && record.logOverview.savedEntryCount === 0 && record.scoreOverview.scoredDayCount === 0) {
+    return false;
+  }
+
+  if (record.logOverview.savedEntryCount === 0) {
+    return false;
+  }
+
+  if (record.rhythmOverview.latestPendingDailyJournalDate || record.rhythmOverview.latestScoreOnlyDate) {
+    return false;
+  }
+
+  return true;
+}
+
+function getOverviewNarrativeCopy(record: AnalysisMonthRecord) {
+  return shouldPreferNarrativeOverview(record)
+    ? record.narrative!.overviewNarrative
+    : buildOverviewNarrative(record);
+}
+
 function getScoreConfidenceCopy(record: AnalysisMonthRecord) {
   const scoredDayCount = record.scoreOverview.scoredDayCount;
 
@@ -917,7 +943,7 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
               {formatAnalysisMonthLabel(month)}
             </h1>
             <p className="mt-3 max-w-[48rem] text-pretty text-[0.95rem] leading-7 text-[#5f4b36]">
-              {record ? (record.narrative?.overviewNarrative || buildOverviewNarrative(record)) : "加载中..."}
+              {record ? getOverviewNarrativeCopy(record) : "加载中..."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
@@ -1200,7 +1226,22 @@ function ScorePointDetailCard({
   const averageLabel = trendDay && typeof trendDay.averageScore === "number"
     ? formatScoreAverage(trendDay.averageScore)
     : null;
-  const hasJournal = Boolean(coverage && (coverage.journalTitle || coverage.contentPreview));
+  const hasDailyJournalPreview = Boolean(
+    coverage &&
+      coverage.hasDailyJournalSaved &&
+      (coverage.journalTitle || coverage.contentPreview)
+  );
+  const hasPendingDimensionLogs = Boolean(
+    coverage &&
+      coverage.savedEntryCount > 0 &&
+      !coverage.hasDailyJournalSaved
+  );
+  const hasSavedDailyJournalWithoutPreview = Boolean(
+    coverage &&
+      coverage.hasDailyJournalSaved &&
+      !coverage.journalTitle &&
+      !coverage.contentPreview
+  );
 
   return (
     <div
@@ -1228,7 +1269,7 @@ function ScorePointDetailCard({
           </button>
         </div>
       </div>
-      {hasJournal ? (
+      {hasDailyJournalPreview ? (
         <div className="mt-2.5">
           {coverage?.journalTitle ? (
             <p className="text-[0.9rem] leading-6 text-[#3a2c1f]">{coverage.journalTitle}</p>
@@ -1241,6 +1282,26 @@ function ScorePointDetailCard({
             className="mt-2 inline-flex items-center gap-1 text-[0.78rem] text-[#6f4a26] underline-offset-2 hover:underline"
           >
             查看完整日志 →
+          </Link>
+        </div>
+      ) : hasPendingDimensionLogs ? (
+        <div className="mt-2.5 text-[0.8rem] leading-6 text-[#7a624b]">
+          这一天已有 {coverage?.savedEntryCount} 条维度记录，但还没有整合成完整日志。
+          <Link
+            href={buildCalendarHref({ date, view: "day" })}
+            className="ml-1 text-[#6f4a26] underline-offset-2 hover:underline"
+          >
+            去日历看这一天 →
+          </Link>
+        </div>
+      ) : hasSavedDailyJournalWithoutPreview ? (
+        <div className="mt-2.5 text-[0.8rem] leading-6 text-[#7a624b]">
+          这一天已经有完整日志了。
+          <Link
+            href={buildCalendarHref({ date, view: "day" })}
+            className="ml-1 text-[#6f4a26] underline-offset-2 hover:underline"
+          >
+            去日历看这一天 →
           </Link>
         </div>
       ) : (

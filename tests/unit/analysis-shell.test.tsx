@@ -1225,7 +1225,12 @@ describe("analysis shell", () => {
           },
           ...buildScoreFields([], "2099-12"),
           scoreRecords: [],
-          editableDates: []
+          editableDates: [],
+          narrative: {
+            overviewNarrative: "本月共记录 0 天，保存 0 条访谈记录。",
+            dimensionTheses: {},
+            insightCards: []
+          }
         } satisfies AnalysisMonthRecord),
         { status: 200 }
       )
@@ -1299,6 +1304,54 @@ describe("analysis shell", () => {
 
     const detailCard = screen.getByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("这一天还没有生成日志");
+    expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("shows pending-daily-journal copy for days with saved dimension logs but no daily journal", async () => {
+    const scoreRecords: AnalysisMonthRecord["scoreRecords"] = [
+      ...buildAnalysisMonthRecord().scoreRecords,
+      {
+        id: "score-3",
+        date: "2026-05-07",
+        meaningScore: 7,
+        healthScore: 6,
+        virtueScore: 7,
+        autonomyScore: 7,
+        interestScore: 6,
+        skillScore: 7,
+        relationshipScore: 8,
+        livingConditionScore: 7,
+        createdAt: "2026-05-07T01:00:00.000Z",
+        updatedAt: "2026-05-07T02:00:00.000Z"
+      }
+    ];
+    const dailyCoverage = buildDailyCoverage(scoreRecords);
+
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...buildAnalysisMonthRecord(),
+          dailyCoverage,
+          rhythmOverview: buildRhythmOverview(dailyCoverage),
+          ...buildScoreFields(scoreRecords),
+          scoreRecords
+        } satisfies AnalysisMonthRecord),
+        { status: 200 }
+      )
+    );
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
+    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-07"));
+
+    const detailCard = screen.getByTestId("score-trend-detail-card");
+    expect(detailCard).toHaveTextContent("这一天已有 1 条维度记录，但还没有整合成完整日志");
+    expect(detailCard).not.toHaveTextContent("这一天还没有生成日志");
     expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
   });
 

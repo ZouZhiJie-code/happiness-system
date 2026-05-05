@@ -81,6 +81,7 @@
   - 月度记录分析的服务端查询入口
   - 负责月份校验、月范围计算和日志分析聚合
   - 调用 `src/features/analysis/narrative-service.ts` 生成 `narrative`（当前为确定性占位，预留 AI 接入口，降级到模板文本）
+  - `narrative-service.ts` 是 `analysis.service.ts` 的真实依赖；提交分析页叙事改动时必须和 service 一起纳入变更集
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 
@@ -90,6 +91,7 @@
   - 会话、事件、日志、payload、legacy 字段投影映射
 - `src/server/repositories/calendar.repository.ts`
   - 从 `InterviewSession / JoyEntry / DailyJournalEntry` 查询标准化 calendar source
+  - 如果 session 拿到了 `messageCount`，聚合层会把“只有 opening assistant、没有任何用户回复”的空开场 session 视为 opening-only，不再算作 `in_progress`
   - 不直接计算 calendar 状态
 - `src/server/repositories/analysis.repository.ts`
   - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source；`DailyJournalEntry` 现在额外返回 `title` 和 `content`，供聚合层生成 `journalTitle` / `contentPreview`
