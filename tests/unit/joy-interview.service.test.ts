@@ -88,6 +88,48 @@ describe("joy interview engine", () => {
     expect(getNextStage(snapshot, 3)).toBe("probe_pattern");
   });
 
+  it("does not treat abstract nouns as a delight closure", () => {
+    for (const delightSignature of ["象征意义", "动作本身带来的确定性", "早起这件事的象征意义"]) {
+      const snapshot = buildJoySnapshot({
+        joyMoment: "早起本身",
+        joySource: "有更多的时间",
+        stateShift: "身体上更清醒，更有准备",
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        tags: []
+      });
+
+      expect(snapshot.delightSignature).toBeNull();
+      expect(hasJoyStableClosure(snapshot)).toBe(false);
+      expect(getNextStage(snapshot, 3)).toBe("probe_pattern");
+    }
+  });
+
+  it("does not treat state-only words as a delight closure", () => {
+    for (const delightSignature of ["清醒", "从容", "有准备", "身体上更清醒"]) {
+      const snapshot = buildJoySnapshot({
+        joyMoment: "早起本身",
+        joySource: "有更多的时间",
+        stateShift: "身体上更清醒，更有准备",
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        tags: []
+      });
+
+      expect(snapshot.delightSignature).toBeNull();
+      expect(hasJoyStableClosure(snapshot)).toBe(false);
+      expect(getNextStage(snapshot, 3)).toBe("probe_pattern");
+    }
+  });
+
   it("keeps fallback joy questions open-ended and free of system wording", () => {
     const delightQuestion = buildAssistantQuestion("joy", "probe_pattern", {
       event: "刷到一个一本正经又突然反转的搞笑片段",

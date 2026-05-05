@@ -50,6 +50,7 @@
 
 - `src/features/interview`
   - 多维度共用：schema、维度定义、进度算法、前端元信息
+  - `server/semantic-interpretation.ts` 与 `server/draft-policies.ts` 承担服务端语义解释和正文策略投影；这层解释只服务 summary、`DraftBrief`、短标题和质量门，不能作为正文句子直接进入用户可见日志
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
@@ -64,6 +65,7 @@
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
+  - `joy` 的 `delight_track` 闭合规则已收紧：`delightSignature` 必须是自然中文、可写入日志的具体线索，不能用长度兜底接受抽象短语或单纯状态词
 
 ### 服务层
 
@@ -74,6 +76,7 @@
   - 会话编排、分叉决策、draft 生成与保存的主逻辑
 - `src/server/services/interview/joy-interview-ai.service.ts`
   - joy、fulfillment、reflection、improvement 与 gratitude 的结构化抽取 schema 分发；同时承载问题生成、日志草稿生成与 fallback
+  - 生成链路会拦截内部理论腔进入用户正文：fallback draft 不直接消费 `theorySummary`，joy 质量门会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类抽象解释句和坏标题
 - `src/server/services/calendar/calendar.service.ts`
   - 记录日历的 `day / week / month` 服务端查询入口
   - 只负责参数校验、日期范围计算与调用 calendar 聚合器
@@ -502,6 +505,7 @@ joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制
 - 说清 `joySource`
 - `meaning_track` 至少确认 `stateShift` 或 `meaningNeed`，最终沉淀出 `manualClue`
 - `delight_track` 必须确认 `stateShift`，最终沉淀出 `delightSignature`
+- `delightSignature` 必须是可直接写进日志的自然中文线索，不能用长度兜底接受抽象短语或单纯状态词
 
 这意味着 joy 不再只有一条“越深越好”的收尾路径。
 

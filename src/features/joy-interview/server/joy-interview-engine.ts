@@ -82,6 +82,32 @@ function normalizeSlotValue(value: string | null | undefined, maxLength: number)
   return normalized.slice(0, maxLength);
 }
 
+const ABSTRACT_DELIGHT_SIGNATURE_PATTERN =
+  /(?:象征意义|动作本身|确定性|简单性|启动信号|仪式感|意义|特质|节奏本身|内容本身|这件事本身)/u;
+const DELIGHT_SIGNATURE_EVIDENCE_PATTERN =
+  /(我会|会被|能把|让我|带动|带起来|带轻|带松|逗|好笑|反差|解压|放松|轻松|没负担|节奏|场景|内容)/u;
+const STATE_ONLY_DELIGHT_SIGNATURE_PATTERN =
+  /^(?:清醒|更清醒|从容|更从容|有准备|更有准备|轻松|更轻松|放松|更放松|身体上更清醒|身体上更清醒更有准备)$/u;
+const DELIGHT_SIGNATURE_RELATION_PATTERN = /(我会|会被|能把|让我|这种|这样的|内容|节奏|场景|时候|一下子|慢慢|带|逗|好笑|反差|没负担)/u;
+
+export function isUsableJoyDelightSignature(value: string | null | undefined) {
+  const normalized = normalizeSlotValue(value, 120);
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (ABSTRACT_DELIGHT_SIGNATURE_PATTERN.test(normalized)) {
+    return false;
+  }
+
+  if (STATE_ONLY_DELIGHT_SIGNATURE_PATTERN.test(normalized)) {
+    return false;
+  }
+
+  return DELIGHT_SIGNATURE_EVIDENCE_PATTERN.test(normalized) && DELIGHT_SIGNATURE_RELATION_PATTERN.test(normalized);
+}
+
 function normalizeTags(values: string[] | null | undefined) {
   return Array.from(
     new Set(
@@ -138,7 +164,9 @@ export function getManualClue(snapshot: JoySnapshot) {
 }
 
 export function getDelightSignature(snapshot: JoySnapshot) {
-  return normalizeSlotValue(snapshot.delightSignature, 120);
+  const normalized = normalizeSlotValue(snapshot.delightSignature, 120);
+
+  return isUsableJoyDelightSignature(normalized) ? normalized : null;
 }
 
 export function getDirectionSignal(snapshot: JoySnapshot) {
@@ -407,7 +435,8 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
   const relationshipSignal = normalizeSlotValue(fields.relationshipSignal ?? fields.selfPattern, 120);
   const reciprocityHint = normalizeSlotValue(fields.reciprocityHint, 120);
   const precomputedProfile = fields.psychProfile ?? null;
-  const delightSignature = normalizeSlotValue(fields.delightSignature, 120);
+  const rawDelightSignature = normalizeSlotValue(fields.delightSignature, 120);
+  const delightSignature = isUsableJoyDelightSignature(rawDelightSignature) ? rawDelightSignature : null;
   const psychProfile =
     precomputedProfile ??
     deriveJoyPsychProfile({
@@ -507,7 +536,10 @@ export function mergeJoySignals(previous: JoySnapshot, candidate: JoySignalField
     stateShift: preferRicherValue(getStateShift(previous), normalizeSlotValue(candidate.stateShift ?? candidate.feeling, 72)),
     meaningNeed: preferRicherValue(getMeaningNeed(previous), normalizeSlotValue(candidate.meaningNeed, 100)),
     manualClue: preferRicherValue(getManualClue(previous), normalizeSlotValue(candidate.manualClue ?? candidate.selfPattern, 120)),
-    delightSignature: preferRicherValue(getDelightSignature(previous), normalizeSlotValue(candidate.delightSignature, 120)),
+    delightSignature: preferRicherValue(
+      getDelightSignature(previous),
+      isUsableJoyDelightSignature(candidate.delightSignature) ? normalizeSlotValue(candidate.delightSignature, 120) : null
+    ),
     directionSignal: preferRicherValue(getDirectionSignal(previous), normalizeSlotValue(candidate.directionSignal ?? candidate.happinessType, 80)),
     valueImpact: preferRicherValue(getValueImpact(previous), normalizeSlotValue(candidate.valueImpact, 80)),
     durability: preferRicherValue(getDurability(previous), normalizeSlotValue(candidate.durability, 64)),

@@ -1,6 +1,6 @@
 # 维度正文生成模板
 
-最后更新：`2026-05-03`
+最后更新：`2026-05-05`
 
 本文用于把“某个维度的日志正文应该怎么生成”沉淀成统一模板，避免后续每个维度都重新从 prompt 硬凑。
 
@@ -88,6 +88,7 @@
 - 缺少具体片段锚点时的拒收
 - 部分模式下的假规律拒收
 - 该维度特有的禁止写法
+- 内部理论解释不能直接出现在用户可见正文或 fallback draft 里
 
 原则：
 - 质量门不是补 prompt 的重复描述。
@@ -141,6 +142,7 @@
 注：
 - `meaning_track` 下，`stateShift` 和 `meaningNeed` 在正文层至少要自然成立一个，`manualClue` 是完整收尾门槛。
 - `delight_track` 下，`stateShift` 必须成立，`delightSignature` 是完整收尾门槛。
+- `delightSignature` 必须是可直接写入日志的自然中文线索，不能是抽象理论词、抽象短语或单纯状态词。
 
 ### 3.4 可选槽位
 
@@ -155,6 +157,7 @@
 - 已说清 `joySource`
 - `meaning_track`：已拿到 `stateShift` 或 `meaningNeed` 至少一个，并沉淀出可信 `manualClue`
 - `delight_track`：已拿到可信 `stateShift`，并沉淀出可信 `delightSignature`
+- `delightSignature` 不能靠长度兜底放行；`象征意义 / 确定性 / 动作本身 / 简单性 / 启动信号 / 仪式感` 这类抽象词，以及 `清醒 / 从容 / 有准备` 这类单纯状态词，都不能让 `delight_track` 完整闭合
 - 完整模式的结尾允许轻收束出这条线索，但不能写成公式、方法总结或操作说明
 
 ### 3.6 部分完成标准
@@ -216,9 +219,15 @@
 - 完整模式 fallback：
   - `meaning_track` 允许用自然体会轻收束 `manualClue`
   - `delight_track` 允许轻收束 `delightSignature`
+  - 不能把内部 `theorySummary` 直接写成正文句子
 - 部分模式 fallback：
   - 只能停在“我现在更知道什么会打动我 / 我更在意什么”
   - 不能写成稳定规律
+
+### 3.10 Joy 标题与理论腔补充
+
+- joy 标题不能使用 `一下被带轻 / 象征意义` 这类伪中文或理论词；早起、多出时间、准备感场景应收束成 `清醒地开始` 这类自然短标题。
+- joy 正文和 fallback draft 不能出现“这份开心更像轻快乐”“关键不是深意义”“这种会把状态轻轻带起来的方式”这类内部理论解释。
 
 ## 4. 后续验收与打磨要求
 

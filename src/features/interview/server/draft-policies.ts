@@ -14,6 +14,7 @@ import {
   getJoyTags,
   getLegacyJoyProjection,
   hasJoyStableClosure,
+  isUsableJoyDelightSignature,
   getManualClue,
   getMeaningNeed,
   getStateShift,
@@ -100,6 +101,16 @@ const SYSTEM_TONE_PATTERNS = [
 const SUMMARY_TONE_PATTERNS = [/总的来说/u, /总结起来/u, /换句话说/u, /说到底/u];
 const ADVICE_TONE_PATTERNS = [/以后可以/u, /下次可以/u, /我应该/u, /要记得/u, /这提醒我要/u];
 const DELIGHT_SHAMING_PATTERNS = [/虽然没什么深意/u, /只是浅层快乐/u, /没什么意义但/u, /只是图一乐/u];
+const INTERNAL_THEORY_DRAFT_PATTERNS = [
+  /更像轻快乐/u,
+  /关键不是(?:深)?意义/u,
+  /理论核心/u,
+  /当前理论/u,
+  /这种会把状态轻轻带起来的方式/u,
+  /会把状态带轻/u
+];
+const ABSTRACT_JOY_CLOSING_PATTERN =
+  /(回头看|我现在|我也)?[^。！？!?]{0,12}(更知道|更清楚)[^。！？!?]{0,8}(象征意义|动作本身|确定性|简单性|启动信号|仪式感)[。！？!?]/u;
 const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
   /(完成|做完|推进|收口|解决|搞定|落地|产出|交付|练到|学会|积累|帮到|支持到|对齐|明确|定下来|改完|写完|整理出|确认了?)/u;
 const FULFILLMENT_BUSY_PATTERN = /(忙|上班|开会|会议|任务很多|事情很多|排满|加班|连轴转|赶工|被任务推着走)/u;
@@ -275,6 +286,12 @@ function hasSpecificDelightCue(value: string | null | undefined) {
   return /(反差|转折|意外|出其不意|不期而遇|小惊喜|一本正经|原本以为|实际上|节奏|冷不丁|突然|上头|停不下来)/u.test(value);
 }
 
+function getUsableDelightSignature(snapshot: JoySnapshot) {
+  const delightSignature = sanitizeNullableString(snapshot.delightSignature);
+
+  return isUsableJoyDelightSignature(delightSignature) ? delightSignature : null;
+}
+
 function hasGenericCoreRegression(brief: DraftBrief, content: string) {
   if (brief.dimension !== "joy" || brief.joyTrack !== "delight_track" || !hasSpecificDelightCue(brief.emotionalCore)) {
     return false;
@@ -387,6 +404,10 @@ function hasJoyVitalityCore(brief: DraftBrief, content: string) {
 }
 
 function hasGenericTitleRegression(title: string, brief: DraftBrief) {
+  if (/^(?:一下被带轻|轻轻被带起来|象征意义|动作本身|启动信号|确定性|简单性|仪式感)$/u.test(title.trim())) {
+    return true;
+  }
+
   if (!brief.titleTheme) {
     return false;
   }
@@ -1094,7 +1115,7 @@ function buildJoyStateSentence(snapshot: JoySnapshot) {
 function buildJoyCompleteClosing(snapshot: JoySnapshot) {
   const joyTrack = getJoyTrack(snapshot);
   const manualClue = sanitizeNullableString(getManualClue(snapshot));
-  const delightSignature = sanitizeNullableString(getDelightSignature(snapshot));
+  const delightSignature = getUsableDelightSignature(snapshot);
   const directionSignal = sanitizeNullableString(getDirectionSignal(snapshot));
   const valueSignal = sanitizeNullableString(getValueImpact(snapshot));
   const durabilitySignal = sanitizeNullableString(getDurability(snapshot));
@@ -1126,7 +1147,7 @@ function buildJoyPartialClosing(snapshot: JoySnapshot) {
   const joyTrack = getJoyTrack(snapshot);
   const meaningNeed = sanitizeNullableString(getMeaningNeed(snapshot));
   const emotionalCore = sanitizeNullableString(getJoySource(snapshot) ?? snapshot.whyItMattered);
-  const delightSignature = sanitizeNullableString(getDelightSignature(snapshot));
+  const delightSignature = getUsableDelightSignature(snapshot);
   const directionSignal = sanitizeNullableString(getDirectionSignal(snapshot));
   const valueSignal = sanitizeNullableString(getValueImpact(snapshot));
   const stateShift = sanitizeNullableString(getStateShift(snapshot));
@@ -1167,7 +1188,7 @@ function buildJoyFallbackContent(input: {
   snapshot: JoySnapshot;
 }) {
   return buildDraftContent(
-    buildParagraph(buildJoyOpeningSentence(input), formatTheorySummarySentence(input.brief) ?? buildJoyCoreSentence(input)),
+    buildParagraph(buildJoyOpeningSentence(input), buildJoyCoreSentence(input)),
     buildParagraph(buildJoyStateSentence(input.snapshot)),
     buildParagraph(
       input.brief.completionMode === "complete"
@@ -1783,7 +1804,7 @@ export function createFallbackDraft(input: {
         : null,
     delightSignature:
       brief.completionMode === "complete" && brief.closureTarget === "delight_signature"
-        ? sanitizeNullableString(getDelightSignature(primarySnapshot))
+        ? getUsableDelightSignature(primarySnapshot)
         : null,
     directionSignal: sanitizeNullableString(getDirectionSignal(primarySnapshot)),
     valueImpact: sanitizeNullableString(getValueImpact(primarySnapshot)),
@@ -1914,6 +1935,14 @@ export function runDraftQualityGate(input: {
 
   if (DELIGHT_SHAMING_PATTERNS.some((pattern) => pattern.test(content))) {
     issues.push("delight_shaming_tone");
+  }
+
+  if (INTERNAL_THEORY_DRAFT_PATTERNS.some((pattern) => pattern.test(content))) {
+    issues.push("internal_theory_tone");
+  }
+
+  if (input.brief.dimension === "joy" && ABSTRACT_JOY_CLOSING_PATTERN.test(content)) {
+    issues.push("abstract_joy_closing");
   }
 
   const missingPrimarySceneAnchor = isSceneAnchorMissing(content, input.brief.anchorScene);

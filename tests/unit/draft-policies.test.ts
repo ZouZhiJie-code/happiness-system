@@ -49,6 +49,26 @@ const pureDelightSnapshot: JoySnapshot = {
   missingSlots: []
 };
 
+const abstractDelightSnapshot: JoySnapshot = {
+  event: "早起本身",
+  feeling: "身体上更清醒，更有准备",
+  whyItMattered: "有更多的时间",
+  happinessType: null,
+  selfPattern: null,
+  joyMoment: "早起本身",
+  joySource: "有更多的时间",
+  stateShift: "身体上更清醒，更有准备",
+  meaningNeed: null,
+  manualClue: null,
+  delightSignature: "象征意义",
+  directionSignal: null,
+  valueImpact: null,
+  durability: null,
+  tags: [],
+  confidence: 0.93,
+  missingSlots: []
+};
+
 const fulfillmentSnapshot: JoySnapshot = {
   event: "今天把一个拖了很久的任务推进完了",
   feeling: "踏实",
@@ -419,6 +439,18 @@ describe("draft policies", () => {
       expect(title).not.toBe(badTitle);
       expect(title).not.toContain("介绍怎么");
     }
+  });
+
+  it("keeps abstract joy theory words out of titles", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "joy",
+      snapshot: abstractDelightSnapshot,
+      aiTitle: "一下被带轻"
+    });
+
+    expect(title).toBe("清醒地开始");
+    expect(title).not.toBe("一下被带轻");
+    expect(title).not.toBe("象征意义");
   });
 
   it("governs improvement titles with semantic candidates instead of event truncation or generic labels", () => {
@@ -1714,8 +1746,57 @@ describe("draft policies", () => {
     });
 
     expect(draft.content).toContain("今天最想记下来的，是今天和家人一起吃饭聊天。");
-    expect(draft.content).toContain("这份开心真正有分量");
+    expect(draft.content).toContain("真正让我开心的");
     expect(countParagraphs(draft.content)).toBe(3);
+  });
+
+  it("keeps abstract delight words out of joy fallback drafts when AI generation times out", () => {
+    const session = buildSession(abstractDelightSnapshot);
+    const sourceEvents = [buildEvent(abstractDelightSnapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents,
+      completionMode: "complete"
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.title).toBe("清醒地开始");
+    expect(draft.delightSignature).toBeNull();
+    expect(draft.content).toContain("今天最想记下来的，是早起本身。");
+    expect(draft.content).toContain("真正让我开心的，不只是事情本身，而是有更多的时间。");
+    expect(draft.content).toContain("那一刻我明显变得身体上更清醒，更有准备。");
+    expect(draft.content).not.toContain("轻快乐");
+    expect(draft.content).not.toContain("深意义");
+    expect(draft.content).not.toContain("象征意义");
+  });
+
+  it("rejects joy drafts that leak internal theory wording or close on abstract nouns", () => {
+    const brief = buildDraftBrief({
+      session: buildSession(abstractDelightSnapshot),
+      sourceEvents: [buildEvent(abstractDelightSnapshot)],
+      completionMode: "complete"
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "一下被带轻",
+        content:
+          "今天最想记下来的，是早起本身。 这份开心更像轻快乐：关键不是深意义，而是“象征意义”这种会把状态轻轻带起来的方式。\n\n那一刻我明显变得身体上更清醒，更有准备。\n\n回头看，我也更知道，象征意义。",
+        delightSignature: "象征意义"
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("internal_theory_tone");
+    expect(result.issues).toContain("abstract_joy_closing");
+    expect(result.issues).toContain("title_theme_mismatch");
   });
 
   it("creates partial gratitude fallback drafts without forcing relationship signals", () => {

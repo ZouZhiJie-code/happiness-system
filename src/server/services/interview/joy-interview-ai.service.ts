@@ -21,6 +21,7 @@ import {
   getMeaningNeed,
   getStateShift,
   getValueImpact,
+  isUsableJoyDelightSignature,
   mergeJoySignals,
   type JoySignalFields
 } from "@/features/joy-interview/server/joy-interview-engine";
@@ -874,7 +875,9 @@ function normalizeDraftResult(
       : sanitizeNullableString(draft.manualClue) ?? sanitizeNullableString(brief.closingInsight);
   const normalizedDelightSignature =
     brief.dimension === "joy" && brief.completionMode === "complete" && closureTarget === "delight_signature"
-      ? sanitizeNullableString(draft.delightSignature) ?? sanitizeNullableString(brief.closingInsight)
+      ? [draft.delightSignature, brief.closingInsight]
+          .map((value) => sanitizeNullableString(value))
+          .find((value) => isUsableJoyDelightSignature(value)) ?? null
       : null;
   const normalizedSelfPattern =
     brief.dimension === "joy"

@@ -62,6 +62,10 @@ function isBadJournalTitleCandidate(value: string | null | undefined) {
     return true;
   }
 
+  if (/^(?:一下被带轻|轻轻被带起来|象征意义|动作本身|启动信号|确定性|简单性|仪式感)$/u.test(candidate)) {
+    return true;
+  }
+
   if (/^(?:改进日志|今天的改进|下一次尝试|我要变得更好)$/u.test(candidate)) {
     return true;
   }
@@ -157,6 +161,20 @@ function buildJoyTitleCandidates(input: SemanticJournalTitleInput) {
   const manualClue = input.snapshot?.manualClue ?? (input.snapshotData?.kind === "joy" ? input.snapshotData.manualClue : null) ?? input.draftBrief?.closingInsight;
   const delightSignature = input.snapshot?.delightSignature ?? (input.snapshotData?.kind === "joy" ? input.snapshotData.delightSignature : null) ?? input.draftBrief?.closingInsight;
   const joyMoment = input.snapshot?.joyMoment ?? (input.snapshotData?.kind === "joy" ? input.snapshotData.joyMoment : null) ?? input.snapshot?.event ?? input.draftBrief?.anchorScene;
+  const joined = [joySource, stateShift, manualClue, delightSignature, joyMoment].filter(Boolean).join(" ");
+
+  if (/(早起|早一点起|起得早)/u.test(joined) && /(清醒|准备|从容|时间|开始|启动)/u.test(joined)) {
+    pushCandidate(candidates, "清醒地开始");
+    pushCandidate(candidates, "早起后的从容");
+  }
+
+  if (/(多了?|更多|留出|空出).{0,8}时间/u.test(joined) && /(从容|清醒|准备|轻松|不慌)/u.test(joined)) {
+    pushCandidate(candidates, "多出一点从容");
+  }
+
+  if (/(放松|轻松|松下来|带轻|带松|舒展)/u.test(joined)) {
+    pushCandidate(candidates, "慢慢松下来");
+  }
 
   pushCandidate(candidates, shortenNounPhrase(delightSignature));
   pushCandidate(candidates, shortenNounPhrase(manualClue));

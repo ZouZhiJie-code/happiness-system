@@ -217,23 +217,40 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
     closurePremise = "结尾收在什么会帮助自己找回状态，不要写成普通完成感。";
     antiFlatteningTargets = ["不要只写事情顺了", "要写状态是怎么重新稳住的"];
     appendUnique(titleCandidates, "把状态找回来", "重新稳住自己");
+  } else if (/(早起|早一点起|起得早)/u.test(joined) && /(清醒|准备|从容|时间|开始)/u.test(joined)) {
+    themeKey = "day_opened";
+    themeLabel = "清醒地开始";
+    theorySummary = stateShift
+      ? `这份开心落在早起之后的状态变化：${stateShift}。`
+      : joySource
+        ? `这份开心落在早起带来的余地：${joySource}。`
+        : "这份开心落在一天被轻轻打开的感觉。";
+    thinkingSummaryLead = stateShift
+      ? `早起真正带来的开心，是身体和节奏变得${stateShift}`
+      : joySource
+        ? `早起真正带来的开心，是多出一点${joySource}之后，状态被打开了`
+        : "早起真正带来的开心，是一天被轻轻打开了";
+    narrativePremise = "正文要写早起之后状态具体怎么变好，不要写成抽象意义解释。";
+    closurePremise = "结尾收在这一天被怎样打开，不要把抽象词当结论。";
+    antiFlatteningTargets = ["不要只写早起本身", "要写早起之后身体或节奏具体怎么变了"];
+    appendUnique(titleCandidates, "清醒地开始", "早起后的从容");
   } else if (joyTrack === "delight_track" || delightSignature) {
     themeKey = "delight_lifted";
-    themeLabel = "一下被带轻";
+    themeLabel = "状态被带起来";
     theorySummary = delightSignature
-      ? `这份开心更像轻快乐：关键不是深意义，而是“${delightSignature}”这种会把状态轻轻带起来的方式。`
+      ? `这份开心落在“${delightSignature}”带来的状态变化。`
       : joySource
-        ? `这份开心更像轻快乐：关键不是深意义，而是“${joySource}”会把状态带轻。`
-        : "这份开心更像轻快乐：重点不是意义，而是那一下真的把状态带轻了。";
+        ? `这份开心落在“${joySource}”带来的那一下松动。`
+        : "这份开心落在那一下状态真的变轻了。";
     thinkingSummaryLead = delightSignature
-      ? `这份开心更像轻快乐，重点落在“${delightSignature}”这种会把状态带起来的方式`
+      ? `这份开心的重点，落在“${delightSignature}”怎样把状态带起来`
       : joySource
-        ? `这份开心更像轻快乐，真正打动人的地方是“${joySource}”会把状态带轻`
+        ? `这份开心真正打动人的地方，是“${joySource}”让状态轻了一点`
         : "这份开心已经不是普通复述，而是在指向那个会把状态带轻的点";
     narrativePremise = "正文要写清是被什么逗到、带轻、带松，而不是硬往价值和规律上拔。";
     closurePremise = "结尾收在这类内容、节奏或场景会怎样把自己带起来，不要写人生规律。";
-    antiFlatteningTargets = ["不要硬写深层意义", "要写会把状态带轻的具体点"];
-    appendUnique(titleCandidates, "一下被带轻", "轻轻被带起来");
+    antiFlatteningTargets = ["不要写成抽象意义解释", "要写会把状态带轻的具体点"];
+    appendUnique(titleCandidates, "状态轻起来", "慢慢松下来");
   }
 
   appendUnique(titleCandidates, manualClue, delightSignature, joySource, stateShift, joyMoment);

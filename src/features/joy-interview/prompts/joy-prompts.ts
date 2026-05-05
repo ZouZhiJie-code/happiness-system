@@ -297,6 +297,14 @@ export function buildJoyExtractMessages(input: {
           "selfPattern 只能在用户明确表达“我在意/我看重/对我来说算数/值得”的同等强证据时填写；否则返回 null。"
         ]
       : [];
+  const joyExtractRules =
+    input.dimension === "joy"
+      ? [
+          "对 joy 来说，delightSignature 必须是一句可直接写进日志的自然中文线索，例如“我会被这种没负担又有反差感的内容带起来”。",
+          "不要把“象征意义 / 动作本身 / 确定性 / 简单性 / 启动信号 / 仪式感”这类短抽象名词直接抽成 delightSignature；如果用户只说了这些词，delightSignature 返回 null，继续保留 joySource 或 stateShift。",
+          "如果用户说早起、清醒、有准备、多出时间，优先抽 joyMoment / joySource / stateShift；只有用户说清“什么样的内容、节奏或场景会反复把我带起来”时才填 delightSignature。"
+        ]
+      : [];
   const reflectionExtractRules =
     input.dimension === "reflection"
       ? [
@@ -341,6 +349,7 @@ export function buildJoyExtractMessages(input: {
         input.dimension === "joy"
           ? "对 joy 来说，纯粹好玩、解压、好笑、沉浸的开心也成立；没有证据时不要硬补深层意义。"
           : null,
+        ...joyExtractRules,
         ...fulfillmentExtractRules,
         ...reflectionExtractRules,
         ...improvementExtractRules,
@@ -395,7 +404,8 @@ export function buildJoyQuestionMessages(input: {
     input.dimension === "joy"
       ? [
           "joy 补充规则：不是所有开心都要升成深规律。纯粹开心、解压、好笑、沉浸感本身也成立，只要能说清什么会把用户带进这种状态。",
-          "joy 补充规则：如果当前材料更像轻快乐，就继续确认被戳中的点、状态变化和会被什么内容/节奏/场景带动；不要硬逼用户解释人生意义。"
+          "joy 补充规则：如果当前材料更像轻快乐，就继续确认被戳中的点、状态变化和会被什么内容/节奏/场景带动；不要硬逼用户解释人生意义。",
+          "joy 补充规则：不要用“象征意义、确定性、简单性、启动信号、仪式感”这类抽象选项诱导用户；如果用户已经说出抽象词，下一问必须落回身体、心里或当天节奏具体怎么变了。"
         ]
         : input.dimension === "fulfillment"
           ? [
