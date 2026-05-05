@@ -489,26 +489,17 @@ function getWorkspaceTransitionMeta(
 ): {
   label: string;
   description: string;
-  progress: number;
 } {
   switch (transitionState.kind) {
     case "opening_daily_journal":
       return {
-        label: "正在打开汇总当天日志",
-        description: "我正在先保存当前工作区还没自动暂存的修改，然后切到当天日志工作区。",
-        progress: 24
-      };
-    case "returning_to_interview":
-      return {
-        label: "正在回到访谈",
-        description: "我正在先保存当天日志里还没自动暂存的修改，然后回到当前维度访谈。",
-        progress: 28
+        label: "正在打开总日志",
+        description: "正在先处理当前工作区还没自动暂存的修改，然后切到当天日志工作区。"
       };
     case "switching_dimension":
       return {
         label: `正在切换到${getInterviewDimensionMeta(transitionState.targetDimension).label}`,
-        description: "我正在先保存当天日志里还没自动暂存的修改，然后再切到对应维度。",
-        progress: 32
+        description: "正在先保存当天日志里还没自动暂存的修改，然后再切到对应维度。"
       };
   }
 }
@@ -523,14 +514,20 @@ function WorkspaceTransitionCard({
   return (
     <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
       <div className="flex min-h-0 flex-1 items-center justify-center">
-        <JournalGenerationStatus
-          label={meta.label}
-          description={meta.description}
-          progress={meta.progress}
-          variant="full"
-          className="w-full max-w-3xl"
+        <div
+          className="w-full max-w-3xl rounded-[24px] border border-[rgba(151,108,65,0.16)] bg-[rgba(255,249,239,0.78)] p-5 text-[#604529] shadow-sm md:p-6"
           data-testid="workspace-transition-card"
-        />
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-start gap-3">
+            <span className="mt-1 size-2.5 shrink-0 rounded-full bg-[#be8550] shadow-sm" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-display text-balance text-[1.35rem] leading-tight text-[#312419]">{meta.label}</p>
+              <p className="mt-2 text-pretty text-sm leading-7 text-[#6a5440]">{meta.description}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2105,39 +2102,6 @@ export function InterviewShell() {
     setWorkspaceTransitionState(null);
   }
 
-  async function handleBackToInterviewWorkspace() {
-    setWorkspaceTransitionState({
-      kind: "returning_to_interview"
-    });
-
-    const synced = await flushDailyJournalWorkspace();
-
-    if (!synced) {
-      setWorkspaceTransitionState(null);
-      return;
-    }
-
-    setWorkspaceMode("interview");
-
-    if (!shouldOpenDailyJournalFromQuery) {
-      setWorkspaceTransitionState(null);
-      return;
-    }
-
-    const params = new URLSearchParams({ dimension: currentDimension });
-
-    if (requestedEntryDate) {
-      params.set("entryDate", requestedEntryDate);
-    }
-
-    if (requestedSessionId) {
-      params.set("sessionId", requestedSessionId);
-    }
-
-    router.replace(`/interview?${params.toString()}`, { scroll: false });
-    setWorkspaceTransitionState(null);
-  }
-
   useEffect(() => {
     if (
       dimensionNavigationRequestId === 0 ||
@@ -2319,7 +2283,6 @@ export function InterviewShell() {
           ref={dailyJournalWorkspaceRef}
           date={dailyJournalDate}
           openRequestId={dailyJournalOpenRequestId}
-          onBackToInterview={handleBackToInterviewWorkspace}
         />
       ) : (
       <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">

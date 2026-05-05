@@ -28,9 +28,19 @@ export const dailyJournalEntrySchema = z.object({
   savedAt: z.string().nullable()
 });
 
+export const dailyJournalSourceSchema = z.object({
+  id: z.string(),
+  sessionId: z.string(),
+  dimension: z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]),
+  title: z.string(),
+  updatedAt: z.string(),
+  savedAt: z.string().nullable()
+});
+
 export const getDailyJournalResponseSchema = z.object({
   dailyJournal: dailyJournalEntrySchema.nullable(),
   availableSourceCount: z.number().int().nonnegative(),
+  sources: z.array(dailyJournalSourceSchema),
   state: z.enum(["none", "draft", "saved", "stale"])
 });
 
@@ -41,6 +51,7 @@ export const generateDailyJournalRequestSchema = z.object({
 export const generateDailyJournalResponseSchema = z.object({
   dailyJournal: dailyJournalEntrySchema,
   availableSourceCount: z.number().int().positive(),
+  sources: z.array(dailyJournalSourceSchema),
   state: z.enum(["draft", "saved", "stale"])
 });
 
@@ -58,3 +69,4 @@ export const saveDailyJournalResponseSchema = z.object({
 });
 
 export type DailyJournalEntryPayload = z.infer<typeof dailyJournalEntrySchema>;
+export type DailyJournalSourcePayload = z.infer<typeof dailyJournalSourceSchema>;

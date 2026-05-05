@@ -3,18 +3,23 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { MAX_DAILY_JOURNAL_CONTENT_LENGTH } from "@/features/daily-journal/schema";
+import {
+  MAX_DAILY_JOURNAL_CONTENT_LENGTH,
+  type DailyJournalSourcePayload
+} from "@/features/daily-journal/schema";
+import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
+import { getInterviewDimensionMeta, interviewDimensions } from "@/features/interview/dimensions";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
-import type { DailyJournalEntryRecord } from "@/types/interview";
+import type { DailyJournalEntryRecord, InterviewDimension } from "@/types/interview";
 
 type DailyJournalState = "none" | "draft" | "saved" | "stale";
 type SyncState = "idle" | "saving" | "saved" | "error";
 type DailyJournalGeneratePhase = "skeleton" | "detail" | "polish";
-type DailyJournalBusyMode = "loading" | "generating";
 
 interface DailyJournalQueryPayload {
   dailyJournal: DailyJournalEntryRecord | null;
   availableSourceCount: number;
+  sources: DailyJournalSourcePayload[];
   state: DailyJournalState;
 }
 
@@ -25,7 +30,6 @@ export interface DailyJournalWorkspaceHandle {
 interface DailyJournalWorkspaceProps {
   date: string;
   openRequestId: number;
-  onBackToInterview: () => void | Promise<void>;
 }
 
 function getStateLabel(state: DailyJournalState, sourceCount: number) {
@@ -41,7 +45,121 @@ function getStateLabel(state: DailyJournalState, sourceCount: number) {
     return "草稿";
   }
 
-  return sourceCount > 0 ? "可生成" : "等待维度日志";
+  return sourceCount > 0 ? "可整理" : "等待维度日志";
+}
+
+function getDailyJournalLeadCopy(state: DailyJournalState, sourceCount: number) {
+  if (sourceCount === 0) {
+    return "先保存至少一篇维度日志，再把这一天收成总日志。";
+  }
+
+  if (state === "stale") {
+    return `当前有 ${sourceCount} 篇已保存的维度日志，已有总日志落后于最新来源。`;
+  }
+
+  return `当前会使用 ${sourceCount} 篇已保存的维度日志，只整理已经正式保存的内容。`;
+}
+
+function getGenerateButtonLabel({
+  isGenerating,
+  hasDailyJournal,
+  state
+}: {
+  isGenerating: boolean;
+  hasDailyJournal: boolean;
+  state: DailyJournalState;
+}) {
+  if (isGenerating) {
+    return "正在生成...";
+  }
+
+  if (state === "stale") {
+    return "更新总日志";
+  }
+
+  return hasDailyJournal ? "重新整理" : "整理总日志";
+}
+
+function truncateSourceTitle(title: string) {
+  const normalized = title.replace(/\s+/g, " ").trim();
+
+  if (normalized.length <= 18) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 17).trimEnd()}…`;
+}
+
+function formatDailyJournalDateLabel(date: string) {
+  const [, month, day] = date.split("-");
+
+  if (!month || !day) {
+    return date;
+  }
+
+  return `${Number(month)}月${Number(day)}日`;
+}
+
+function DailyJournalStaleNotice() {
+  return (
+    <div
+      className="mb-3 border-l-2 border-[#b47656] bg-[rgba(255,246,238,0.58)] px-3 py-2 text-[0.78rem] leading-6 text-[#7c4c32]"
+      role="status"
+    >
+      来源有更新，建议重新整理一次，让总日志对齐今天最新保存的维度内容。
+    </div>
+  );
+}
+
+function DailyJournalSourceItem({
+  dimension,
+  source
+}: {
+  dimension: InterviewDimension;
+  source: DailyJournalSourcePayload | null;
+}) {
+  const meta = getInterviewDimensionMeta(dimension);
+  const visual = getCalendarDimensionVisualMeta(dimension);
+
+  return (
+    <div className="flex min-w-[9.5rem] flex-1 items-center gap-2 border-b border-[rgba(151,108,65,0.1)] py-2 last:border-b-0 sm:flex-none sm:border-b-0 sm:pr-3">
+      <span className={`size-1.5 shrink-0 rounded-full ${source ? visual.dotClass : "bg-[#d9c8b3]"}`} aria-hidden="true" />
+      <span className="shrink-0 text-[0.76rem] font-medium text-[#4a3828]">{meta.navLabel}</span>
+      <span
+        className={`min-w-0 truncate text-[0.76rem] ${source ? "text-[#7a6046]" : "text-[#a58d73]"}`}
+        title={source?.title ?? "未保存"}
+      >
+        {source ? truncateSourceTitle(source.title) : "未保存"}
+      </span>
+    </div>
+  );
+}
+
+function DailyJournalSourceIndex({
+  sources,
+  state
+}: {
+  sources: DailyJournalSourcePayload[];
+  state: DailyJournalState;
+}) {
+  const sourceByDimension = new Map<InterviewDimension, DailyJournalSourcePayload>(
+    sources.map((source) => [source.dimension, source])
+  );
+
+  return (
+    <div className="border-y border-[rgba(151,108,65,0.14)] py-3" aria-label="总日志来源">
+      {state === "stale" ? <DailyJournalStaleNotice /> : null}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-0">
+        {interviewDimensions.map((dimension) => (
+          <DailyJournalSourceItem
+            key={dimension}
+            dimension={dimension}
+            source={sourceByDimension.get(dimension) ?? null}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const DAILY_JOURNAL_GENERATE_STEPS: ReadonlyArray<{
@@ -55,27 +173,7 @@ const DAILY_JOURNAL_GENERATE_STEPS: ReadonlyArray<{
   { phase: "polish", start: 78, end: 100, durationMs: 1800 }
 ];
 
-function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mode: DailyJournalBusyMode) {
-  if (mode === "loading") {
-    switch (phase) {
-      case "skeleton":
-        return {
-          label: "正在打开汇总当天日志",
-          description: "我正在读取当天已经保存的维度日志和汇总日志状态。"
-        };
-      case "detail":
-        return {
-          label: "正在整理当天线索",
-          description: "正在确认今天已有的草稿、正式日志和可用来源。"
-        };
-      case "polish":
-        return {
-          label: "即将进入汇总当天日志",
-          description: "正在把编辑区准备好，稍后就能继续生成或修改。"
-        };
-    }
-  }
-
+function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase) {
   switch (phase) {
     case "skeleton":
       return {
@@ -97,14 +195,12 @@ function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase, mo
 
 function DailyJournalGenerationCard({
   phase,
-  progress,
-  mode
+  progress
 }: {
   phase: DailyJournalGeneratePhase;
   progress: number;
-  mode: DailyJournalBusyMode;
 }) {
-  const meta = getDailyJournalGenerationPhaseMeta(phase, mode);
+  const meta = getDailyJournalGenerationPhaseMeta(phase);
 
   return (
     <JournalGenerationStatus
@@ -114,6 +210,14 @@ function DailyJournalGenerationCard({
       variant="full"
       data-testid="daily-journal-generation-card"
     />
+  );
+}
+
+function DailyJournalLoadingRegion() {
+  return (
+    <div className="min-h-[12rem]" role="status" aria-live="polite" data-testid="daily-journal-loading">
+      <span className="sr-only">正在打开当天日志</span>
+    </div>
   );
 }
 
@@ -130,11 +234,12 @@ async function fetchDailyJournal(date: string): Promise<DailyJournalQueryPayload
 }
 
 export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandle, DailyJournalWorkspaceProps>(function DailyJournalWorkspace(
-  { date, openRequestId, onBackToInterview },
+  { date, openRequestId },
   ref
 ) {
   const [dailyJournal, setDailyJournal] = useState<DailyJournalEntryRecord | null>(null);
   const [availableSourceCount, setAvailableSourceCount] = useState(0);
+  const [sources, setSources] = useState<DailyJournalSourcePayload[]>([]);
   const [state, setState] = useState<DailyJournalState>("none");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -171,6 +276,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   const hydrate = useCallback((payload: DailyJournalQueryPayload) => {
     setDailyJournal(payload.dailyJournal);
     setAvailableSourceCount(payload.availableSourceCount);
+    setSources(payload.sources);
     setState(payload.state);
     setTitle(payload.dailyJournal?.title ?? "");
     setContent(payload.dailyJournal?.content ?? "");
@@ -209,7 +315,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   useEffect(() => {
     stopGenerateProgress();
 
-    const isProgressActive = isLoading || isGenerating;
+    const isProgressActive = isGenerating;
 
     if (!isProgressActive) {
       setGeneratePhase("skeleton");
@@ -341,7 +447,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
 
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm("汇总当天日志会覆盖当前未保存的手动修改，是否继续？");
+      const confirmed = window.confirm("生成总日志会覆盖当前未保存的手动修改，是否继续？");
 
       if (!confirmed) {
         return;
@@ -367,6 +473,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
 
       setDailyJournal(payload.dailyJournal);
       setAvailableSourceCount(payload.availableSourceCount);
+      setSources(payload.sources);
       setState(payload.state);
       setTitle(payload.dailyJournal.title);
       setContent(payload.dailyJournal.content);
@@ -423,41 +530,37 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
   }
 
+  const stateLabel = getStateLabel(state, availableSourceCount);
+  const dateLabel = formatDailyJournalDateLabel(date);
+
   return (
     <section className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4" data-testid="daily-journal-workspace">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[rgba(151,108,65,0.14)] pb-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 pb-4">
         <div className="min-w-0">
-          <p className="text-[0.74rem] tracking-[0.08em] text-[#8a6b4b]">当天日志 · {date}</p>
-          <h2 className="mt-1 font-display text-[1.45rem] leading-tight text-[#2f2823]">把今天收成一篇记录</h2>
-          <p className="mt-1 text-[0.86rem] leading-6 text-[#6a5440]">
-            {availableSourceCount > 0
-              ? `当前会使用 ${availableSourceCount} 篇已保存的维度日志。`
-              : "先保存至少一篇维度日志，再汇总当天日志。"}
-          </p>
+          <p className="text-[0.76rem] text-[#8a6b4b]">{dateLabel} 总日志</p>
+          <h2 className="mt-1 font-display text-[1.45rem] leading-tight text-[#2f2823]">把这一天收成一篇记录</h2>
+          <p className="mt-1 text-[0.86rem] leading-6 text-[#6a5440]">{getDailyJournalLeadCopy(state, availableSourceCount)}</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="rounded-full border border-[rgba(151,108,65,0.18)] bg-[rgba(255,249,239,0.76)] px-3 py-1.5 text-[0.78rem] text-[#604529]">
-            {getStateLabel(state, availableSourceCount)}
-          </span>
+          {stateLabel ? (
+            <span className="rounded-full border border-[rgba(151,108,65,0.18)] bg-[rgba(255,249,239,0.76)] px-3 py-1.5 text-[0.78rem] text-[#604529]">
+              {stateLabel}
+            </span>
+          ) : null}
           {syncState === "saving" ? (
             <span className="text-[0.78rem] text-[#8a6b4b]">保存中</span>
           ) : null}
-          <button
-            type="button"
-            onClick={onBackToInterview}
-            className="rounded-full border border-[rgba(171,118,64,0.2)] bg-[rgba(255,249,239,0.72)] px-3 py-1.5 text-[0.82rem] text-[#604529] transition hover:bg-[rgba(255,252,247,0.96)]"
-          >
-            回到访谈
-          </button>
         </div>
       </div>
 
+      {!isLoading ? <DailyJournalSourceIndex sources={sources} state={state} /> : null}
+
       <div className="panel-scroll min-h-0 flex-1 overflow-y-auto pr-1 pt-4">
         {isLoading ? (
-          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} mode="loading" />
+          <DailyJournalLoadingRegion />
         ) : isGenerating ? (
-          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} mode="generating" />
+          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} />
         ) : dailyJournal ? (
           <div data-testid="daily-journal-editor" className="flex flex-col">
             <input
@@ -480,10 +583,10 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
             />
           </div>
         ) : (
-          <div className="rounded-[26px] border border-dashed border-[rgba(151,108,65,0.22)] bg-[rgba(255,249,239,0.48)] p-6 text-[#604529]">
-            <p className="font-display text-[1.24rem] text-[#312419]">还没有当天日志</p>
+          <div className="border-y border-dashed border-[rgba(151,108,65,0.2)] bg-[rgba(255,249,239,0.34)] px-2 py-6 text-[#604529]">
+            <p className="font-display text-[1.24rem] text-[#312419]">还没有总日志</p>
             <p className="mt-2 text-sm leading-7 text-[#6a5440]">
-              {availableSourceCount > 0 ? "可以把已保存的维度日志整理成当天章节合集。" : "保存维度日志后，这里就能生成当天记录。"}
+              {availableSourceCount > 0 ? "可以把已保存的维度日志整理成一篇当天记录。" : "保存维度日志后，这里就能生成当天记录。"}
             </p>
           </div>
         )}
@@ -498,7 +601,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
           disabled={isLoading || isGenerating || isSavingFinal || availableSourceCount === 0}
           className="rounded-full border border-[rgba(168,124,69,0.3)] bg-[rgba(255,249,239,0.8)] px-4 py-2 text-sm text-[#604529] transition hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isGenerating ? "正在生成..." : dailyJournal ? "重新生成" : "汇总当天日志"}
+          {getGenerateButtonLabel({ isGenerating, hasDailyJournal: Boolean(dailyJournal), state })}
         </button>
         <button
           type="button"

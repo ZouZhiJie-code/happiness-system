@@ -23,6 +23,17 @@ const dailyJournalDraftSchema = z.object({
 
 export type DailyJournalState = "none" | DailyJournalStatus | "stale";
 
+function mapDailyJournalSources(sourceEntries: DailyJournalSourceEntry[]) {
+  return sourceEntries.map((entry) => ({
+    id: entry.id,
+    sessionId: entry.sessionId,
+    dimension: entry.dimension,
+    title: entry.title,
+    updatedAt: entry.updatedAt,
+    savedAt: entry.savedAt
+  }));
+}
+
 export class DailyJournalError extends Error {
   constructor(
     readonly code:
@@ -142,6 +153,7 @@ export async function getDailyJournal(date: string) {
   return {
     dailyJournal,
     availableSourceCount: sourceEntries.length,
+    sources: mapDailyJournalSources(sourceEntries),
     state: resolveDailyJournalState(dailyJournal, sourceEntries)
   };
 }
@@ -179,6 +191,7 @@ export async function generateDailyJournal(date: string) {
     return {
       dailyJournal,
       availableSourceCount: sourceEntries.length,
+      sources: mapDailyJournalSources(sourceEntries),
       state: dailyJournal.status
     };
   } catch (error) {
