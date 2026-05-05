@@ -66,7 +66,9 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
       select: {
         id: true,
         date: true,
-        sourceSignature: true
+        sourceSignature: true,
+        title: true,
+        content: true
       }
     }) ?? Promise.resolve([])
   ]);
@@ -92,7 +94,9 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
   const savedDailyJournals: AnalysisSavedDailyJournalSource[] = dailyJournals.map((entry: any) => ({
     id: entry.id,
     date: formatEntryDate(entry.date),
-    sourceSignature: entry.sourceSignature
+    sourceSignature: entry.sourceSignature,
+    title: entry.title ?? null,
+    content: entry.content ?? null
   }));
 
   return {

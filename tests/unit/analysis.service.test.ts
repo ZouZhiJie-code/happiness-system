@@ -156,7 +156,9 @@ describe("analysis.service", () => {
       hasDailyJournalSaved: true,
       hasStaleDailyJournal: true,
       hasScore: false,
-      averageScore: null
+      averageScore: null,
+      journalTitle: null,
+      contentPreview: null
     });
     expect(result.dailyCoverage.find((day) => day.date === "2026-05-03")).toEqual({
       date: "2026-05-03",
@@ -166,7 +168,9 @@ describe("analysis.service", () => {
       hasDailyJournalSaved: false,
       hasStaleDailyJournal: false,
       hasScore: true,
-      averageScore: 7.5
+      averageScore: 7.5,
+      journalTitle: null,
+      contentPreview: null
     });
     expect(result.dailyCoverage.find((day) => day.date === "2026-05-07")).toEqual({
       date: "2026-05-07",
@@ -176,7 +180,9 @@ describe("analysis.service", () => {
       hasDailyJournalSaved: false,
       hasStaleDailyJournal: false,
       hasScore: false,
-      averageScore: null
+      averageScore: null,
+      journalTitle: null,
+      contentPreview: null
     });
     expect(result.rhythmOverview).toEqual({
       activeObservedDayCount: 1,

@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-05-04` 的代码为准：
+当前真实状态以 `2026-05-05` 的代码为准：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -257,7 +257,7 @@ gratitude 理论翻译基线：
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
 - `src/features/analysis`
-  - 月度记录分析的 `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 归一化、月份跳转、标题格式化、类型与聚合 helper；analysis read model 额外承载 `dailyCoverage / rhythmOverview / insightsOverview` 以及按来源签名判断的当天整合日志 `stale` 语义。
+  - 月度记录分析的 `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 归一化、月份跳转、标题格式化、类型与聚合 helper、`generateMonthNarrative` 占位叙事生成服务（预留 AI 接入口，降级到模板文本）；analysis read model 额外承载 `dailyCoverage / rhythmOverview / insightsOverview / narrative` 以及按来源签名判断的当天整合日志 `stale` 语义；`dailyCoverage` 现在携带 `journalTitle` 和 `contentPreview` 供节奏评分面板展示日志预览。
 - `src/content`
   - 首页文案、CTA 和图片位配置；当前首页配置在 `homepage.ts`。
 - `src/features/happiness-score`
@@ -268,7 +268,7 @@ gratitude 理论翻译基线：
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 桌面是双栏检查面板、小屏是上下堆叠工作台，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、三块轻入口和底部证据条、补录优先的评分工作台（左侧日期状态 / 8 项列表，右侧当前要素 `1..10` 刻度）、样本/差异不足提示、状态优先本月热力图、当天追踪 drill-down，以及“本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新。
+  - 记录分析页壳、`overview` 叙事驱动总览（`SummaryHero` 月度判断 + `NarrativeInsightCard` 洞察卡片 + `OverviewAnchorCTA` 数据锚点）、评分趋势高亮卡（自动关联维度日志上下文）、评分趋势图可点击数据点弹出 `ScorePointDetailCard` 当日日志详情卡、热力图选中日日志预览区与 tooltip 日志整合状态、五维 `dimensionTheses` 优先使用 AI 叙事（降级到模板文本）与证据日历日链接，以及”本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -378,7 +378,7 @@ gratitude 理论翻译基线：
   - 未来日期允许查询，但不允许通过 calendar API 暴露 `start_interview / continue_interview`
 - analysis 当前已经有公开只读能力：
   - `GET /api/analysis/month?month=YYYY-MM`
-  - 当前返回 `month / logOverview / dailyCoverage / rhythmOverview / dimensionBreakdown / dimensions / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates`
+  - 当前返回 `month / logOverview / dailyCoverage / rhythmOverview / dimensionBreakdown / dimensions / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates / narrative`
   - 只统计 `saved` 维度日志和 `saved` 当天整合日志；但若当天整合日志的 `sourceSignature` 与同日最新 `saved` 维度来源不一致，analysis 会把它标成 `stale`，并在 `rhythm / insights` 中都按待更新处理；即使当天已没有任何 `saved` 来源，这个 `stale` 状态也不会被漏掉
 - 页面当前已改成 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 chip；正文区按 `section` 只渲染对应板块，`overview` 总览首屏先给月度判断、评分可信度和唯一主行动，再展示评分 / 节奏 / 五维轻入口与证据条；当前月评分保存成功后，toolbar chip 会即时刷新
   - 缺失 `section` 时默认切到 `overview` 总览视图；切换 tab 或翻月后 `section` 保留在 URL 中
@@ -432,7 +432,7 @@ gratitude 理论翻译基线：
 
 截至 `2026-05-05`，本地测试基线为：
 - `40` 个测试文件
-- `406` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则。
+- `413` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则。
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

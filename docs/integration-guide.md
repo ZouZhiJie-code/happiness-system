@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-04`
+最后更新：`2026-05-05`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -1539,12 +1539,13 @@ POST /api/daily-journal/[id]/save
   - `scoreTrend`
   - `scoreRecords`
   - `editableDates`
+  - `narrative`（当前为确定性占位，预留 AI 接入口；不可用时返回 `null`，前端自动降级到模板文本）
 - 页面当前已展示：
-  - 顶部月度摘要：先给本月结论、评分可信度和下一步入口
-  - `overview`：默认视图，展示建议先看主行动、评分 / 节奏 / 五维轻入口，以及维度记录日 / 成果保存日 / 待整合日 / 评分可信度证据条
-  - `score`：展示 `幸福 8 要素评分` 录入面板；评分区当前是补录优先的双栏工作台，左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏再回到总分平均走势、8 要素快扫和单项细看。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡
-  - `rhythm`：本月状态优先热力图、最长连续记录 / 空档与当天 drill-in；`saved` 但来源签名失配的当天整合日志会显示为 `待更新 / 待整合`
-  - `insights`：本月判断、五维全景、维度之间和下一步四层洞察布局；watchpoint 优先提示 `stale` 的当天整合日志，再退回 quiet lagging / quiet missing 的评分联动提示
+  - 顶部月度摘要：`SummaryHero` 月度判断面板，优先使用 `narrative.overviewNarrative`，降级到模板文本
+  - `overview`：默认视图，展示 `SummaryHero` + 洞察卡片（`narrative.insightCards`，类型 / 标题 / 证据 / 关联日期）+ `OverviewAnchorCTA` 数据锚点
+  - `score`：展示 `幸福 8 要素评分` 录入面板；评分区当前是补录优先的双栏工作台，左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏再回到总分平均走势、8 要素快扫和单项细看。趋势高亮卡自动关联维度日志上下文；总分趋势图数据点可点击弹出当日日志详情卡（均分 + 日志标题 / 预览 + 日历日链接）
+  - `rhythm`：本月状态优先热力图、最长连续记录 / 空档与当天 drill-in；选中日面板新增日志预览区（`journalTitle` / `contentPreview` + 日历日链接），tooltip 显示日志整合状态；`saved` 但来源签名失配的当天整合日志会显示为 `待更新 / 待整合`
+  - `insights`：本月判断、五维全景、维度之间和下一步四层洞察布局；维度主题优先使用 `narrative.dimensionTheses`，降级到模板文本；证据区增加日历日链接；watchpoint 优先提示 `stale` 的当天整合日志，再退回 quiet lagging / quiet missing 的评分联动提示
   - 空数据月份直接显示真实空态，不再使用示意填充；这不会影响评分保存和 `editableDates`
   - 只有评分、没有维度日志的月份不会伪造 `已整合`、密度结论或 `主线维度`，而是显示空态
   - 未来月份如果没有任何材料，总览首屏会给中性提示并引导回到当前月份，不会把用户送去今天的访谈
@@ -1555,7 +1556,7 @@ POST /api/daily-journal/[id]/save
 当前聚合规则：
 - 只统计 `JoyEntry.status = saved`
 - 只把 `DailyJournalEntry.status = saved` 计入整合日志完成天数；如果其 `sourceSignature` 与“同一天每个维度最新一篇 `saved` 日志”的签名不一致，analysis 会把它标为 `hasStaleDailyJournal = true`，并在 `rhythm / insights` 中按待更新处理；即使当天已没有任何 `saved` 来源，这个 `stale` 状态也不会被漏掉
-- `dailyCoverage` 覆盖当月所有自然日，并按天返回 `savedEntryCount / savedDimensionCount / hasDailyJournalSaved / hasStaleDailyJournal / hasScore / averageScore`
+- `dailyCoverage` 覆盖当月所有自然日，并按天返回 `savedEntryCount / savedDimensionCount / hasDailyJournalSaved / hasStaleDailyJournal / hasScore / averageScore / journalTitle / contentPreview`；`journalTitle` 和 `contentPreview` 只在当天有 `saved` 整合日志时有值，`contentPreview` 为正文前 3 行截断（最长 120 字）
 - 当前月 `最长空档` 只在已发生的自然日范围内计算，不把未来日期计入空档；未来月份直接返回 `longestGap = null`
 - `dimensionBreakdown` 固定返回五维顺序
 - `scoreTrend.days` 覆盖当月所有自然日，每日总分为 8 项平均分，保留 1 位小数

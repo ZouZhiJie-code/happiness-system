@@ -1,6 +1,15 @@
 import type { InterviewDimension, InterviewJournalPayload } from "@/types/interview";
 import type { DailyHappinessScoreRecord, HappinessScoreRequestKey } from "@/features/happiness-score/types";
 
+export type { DailyHappinessScoreRecord };
+
+export interface AnalysisMonthInput {
+  month: string;
+  journals: InterviewJournalPayload[];
+  scoreRecords: DailyHappinessScoreRecord[];
+  editableDates: string[];
+}
+
 export interface AnalysisLogOverview {
   recordedDayCount: number;
   savedEntryCount: number;
@@ -16,6 +25,8 @@ export interface AnalysisDailyCoverageDay {
   hasStaleDailyJournal: boolean;
   hasScore: boolean;
   averageScore: number | null;
+  journalTitle: string | null;
+  contentPreview: string | null;
 }
 
 export interface AnalysisDimensionBreakdownItem {
@@ -138,6 +149,24 @@ export interface AnalysisMonthRecord {
   scoreTrend: AnalysisScoreTrend;
   scoreRecords: DailyHappinessScoreRecord[];
   editableDates: string[];
+  narrative: AnalysisNarrative | null;
+}
+
+/* ── AI Narrative types ── */
+
+export type AnalysisInsightCardType = "trend" | "correlation" | "anomaly" | "pattern" | "profile" | "loop";
+
+export interface AnalysisInsightCardItem {
+  type: AnalysisInsightCardType;
+  title: string;
+  evidence: string;
+  linkedDates: string[];
+}
+
+export interface AnalysisNarrative {
+  overviewNarrative: string;
+  dimensionTheses: Record<string, string>;
+  insightCards: AnalysisInsightCardItem[];
 }
 
 export interface AnalysisSavedEntrySource {
@@ -154,4 +183,6 @@ export interface AnalysisSavedDailyJournalSource {
   id: string;
   date: string;
   sourceSignature: string;
+  title: string | null;
+  content: string | null;
 }

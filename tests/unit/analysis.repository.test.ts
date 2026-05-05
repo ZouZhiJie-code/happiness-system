@@ -121,7 +121,9 @@ describe("analysis.repository", () => {
       {
         id: "daily-journal-saved",
         date: "2026-05-04",
-        sourceSignature: "entry-joy:2026-05-02T11:30:00.000Z"
+        sourceSignature: "entry-joy:2026-05-02T11:30:00.000Z",
+        title: null,
+        content: null
       }
     ]);
   });

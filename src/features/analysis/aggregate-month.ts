@@ -68,6 +68,12 @@ function buildMonthDates(month: string) {
   });
 }
 
+function buildContentPreview(content: string, maxLines = 3, maxLength = 120) {
+  const lines = content.split("\n").filter((line) => line.trim().length > 0).slice(0, maxLines);
+  const joined = lines.join(" ");
+  return joined.length > maxLength ? joined.slice(0, maxLength) + "…" : joined;
+}
+
 function buildDailyCoverage(input: {
   month: string;
   entries: AnalysisSavedEntrySource[];
@@ -109,7 +115,9 @@ function buildDailyCoverage(input: {
       hasDailyJournalSaved,
       hasStaleDailyJournal,
       hasScore: Boolean(scoreRecord),
-      averageScore: scoreRecord ? buildScoreAverage(scoreRecord) : null
+      averageScore: scoreRecord ? buildScoreAverage(scoreRecord) : null,
+      journalTitle: dailyJournal?.title ?? null,
+      contentPreview: dailyJournal?.content ? buildContentPreview(dailyJournal.content) : null
     };
   });
 }
@@ -1145,7 +1153,7 @@ export function aggregateAnalysisMonth(input: {
   dailyJournals: AnalysisSavedDailyJournalSource[];
   scoreRecords: DailyHappinessScoreRecord[];
   today: string;
-}): Omit<AnalysisMonthRecord, "scoreRecords" | "editableDates"> {
+}): Omit<AnalysisMonthRecord, "scoreRecords" | "editableDates" | "narrative"> {
   const dailyCoverage = buildDailyCoverage(input);
   const dimensionBreakdown = buildDimensionBreakdown(input.entries);
   const { scoreOverview, scoreTrend } = buildAnalysisScoreTrend({

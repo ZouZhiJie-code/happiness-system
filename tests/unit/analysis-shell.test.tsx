@@ -128,7 +128,9 @@ describe("analysis shell", () => {
           hasDailyJournalSaved: true,
           hasStaleDailyJournal: false,
           hasScore: Boolean(scoreRecord),
-          averageScore
+          averageScore,
+          journalTitle: "五月二日的记录",
+          contentPreview: "今天和朋友聚了一次，聊了很多最近的状态变化。"
         };
       }
 
@@ -141,7 +143,9 @@ describe("analysis shell", () => {
           hasDailyJournalSaved: false,
           hasStaleDailyJournal: false,
           hasScore: Boolean(scoreRecord),
-          averageScore
+          averageScore,
+          journalTitle: null,
+          contentPreview: null
         };
       }
 
@@ -153,7 +157,9 @@ describe("analysis shell", () => {
         hasDailyJournalSaved: false,
         hasStaleDailyJournal: false,
         hasScore: Boolean(scoreRecord),
-        averageScore
+        averageScore,
+        journalTitle: null,
+        contentPreview: null
       };
     });
   }
@@ -483,7 +489,8 @@ describe("analysis shell", () => {
       insightsOverview: buildInsightsOverview(),
       ...buildScoreFields(scoreRecords),
       scoreRecords,
-      editableDates: ["2026-05-03", "2026-05-02"]
+      editableDates: ["2026-05-03", "2026-05-02"],
+      narrative: null
     };
   }
 
@@ -511,7 +518,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("analysis-overview-cards");
+    await screen.findByTestId("analysis-month-hero");
 
     expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
@@ -567,7 +574,7 @@ describe("analysis shell", () => {
     });
 
     expect(screen.getByTestId("analysis-heatmap-day-2026-05-02")).toHaveTextContent("2维");
-    expect(screen.queryByTestId("analysis-overview-cards")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
   });
 
   it("keeps the month summary hero exclusive to the overview tab", async () => {
@@ -651,7 +658,8 @@ describe("analysis shell", () => {
           },
           ...buildScoreFields([]),
           scoreRecords: [],
-          editableDates: ["2026-05-03", "2026-05-02"]
+          editableDates: ["2026-05-03", "2026-05-02"],
+          narrative: null
         } satisfies AnalysisMonthRecord),
         { status: 200 }
       )
@@ -1071,7 +1079,8 @@ describe("analysis shell", () => {
           ...buildAnalysisMonthRecord(),
           ...buildScoreFields([]),
           scoreRecords: [],
-          editableDates: ["2026-05-03", "2026-05-02"]
+          editableDates: ["2026-05-03", "2026-05-02"],
+          narrative: null
         } satisfies AnalysisMonthRecord),
         { status: 200 }
       )
@@ -1234,5 +1243,124 @@ describe("analysis shell", () => {
     expect(within(action).getByRole("link", { name: "回到本月" })).toHaveAttribute("href", expect.stringContaining("/analysis?month="));
     expect(within(action).queryByRole("link", { name: "开始记录" })).not.toBeInTheDocument();
     expect(screen.queryByText("先补今天评分，或从一个维度开始记录。")).not.toBeInTheDocument();
+  });
+
+  it("shows a score trend detail card when a chart data point is clicked", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
+
+    expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
+
+    const point = within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02");
+    fireEvent.click(point);
+
+    const detailCard = screen.getByTestId("score-trend-detail-card");
+    expect(detailCard).toHaveTextContent("5月2日");
+    expect(detailCard).toHaveTextContent("当天均分");
+
+    fireEvent.click(within(detailCard).getByRole("button", { name: "关闭当日详情" }));
+
+    expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
+  });
+
+  it("shows journal preview in score detail card for days with saved journals", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
+    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02"));
+
+    const detailCard = screen.getByTestId("score-trend-detail-card");
+    expect(detailCard).toHaveTextContent("五月二日的记录");
+    expect(detailCard).toHaveTextContent("今天和朋友聚了一次");
+    expect(within(detailCard).getByRole("link", { name: "查看完整日志 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("shows a placeholder for days without journal in score detail card", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
+    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-03"));
+
+    const detailCard = screen.getByTestId("score-trend-detail-card");
+    expect(detailCard).toHaveTextContent("这一天还没有生成日志");
+    expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("shows journal preview in rhythm day detail panel for days with saved journals", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-rhythm-board");
+
+    fireEvent.click(screen.getByTestId("analysis-heatmap-day-2026-05-02"));
+
+    const preview = screen.getByTestId("rhythm-day-journal-preview");
+    expect(preview).toHaveTextContent("五月二日的记录");
+    expect(preview).toHaveTextContent("今天和朋友聚了一次");
+    expect(within(preview).getByRole("link", { name: "查看完整日志 →" })).toBeInTheDocument();
+  });
+
+  it("shows signal preview in rhythm day detail panel for days without journal but with entries", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "rhythm"
+    };
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-rhythm-board");
+
+    fireEvent.click(screen.getByTestId("analysis-heatmap-day-2026-05-07"));
+
+    const preview = screen.getByTestId("rhythm-day-signal-preview");
+    expect(preview).toHaveTextContent("已有 1 条记录，但还没有整合成日志");
+  });
+
+  it("renders evidence date links in dimension insight cards", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "insights"
+    };
+
+    render(<AnalysisShell />);
+
+    const dimensionCards = await screen.findByTestId("analysis-dimension-cards");
+
+    const links = within(dimensionCards).getAllByRole("link", { name: /5月2日 →/ });
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    expect(links[0]).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("shows journal context in score trend highlight cards", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    render(<AnalysisShell />);
+
+    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
+
+    expect(trendPanel).toHaveTextContent("你在「开心」维度记录 1 天，常出现「关系型开心」");
   });
 });

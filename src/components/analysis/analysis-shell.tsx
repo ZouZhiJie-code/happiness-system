@@ -8,6 +8,7 @@ import type {
   AnalysisDateSpan,
   AnalysisDailyCoverageDay,
   AnalysisDimensionInsightCard,
+  AnalysisInsightCardItem,
   AnalysisMonthRecord
 } from "@/features/analysis/types";
 import { notifyAnalysisToolbarRefresh } from "@/features/analysis/toolbar-refresh";
@@ -95,6 +96,7 @@ interface ScoreTrendHighlight {
   label: string;
   title: string;
   detail: string;
+  context: string | null;
 }
 
 interface ScoreTrendHighlightsResult {
@@ -289,6 +291,28 @@ function formatScoreAverage(value: number | null) {
   return typeof value === "number" ? value.toFixed(1) : "暂无";
 }
 
+function buildHighlightJournalContext(
+  factorKey: HappinessScoreRequestKey,
+  record: AnalysisMonthRecord
+): string | null {
+  const linked = record.dimensions
+    .filter((dim) => dim.relatedScoreFactors.includes(factorKey) && dim.recordedDayCount > 0)
+    .sort((left, right) => right.recordedDayCount - left.recordedDayCount)[0];
+
+  if (!linked) {
+    return null;
+  }
+
+  const dimensionLabel = getInterviewDimensionMeta(linked.dimension).label;
+  const topTag = linked.topTags[0];
+
+  if (topTag && topTag.count >= 2) {
+    return `你在「${dimensionLabel}」维度记录 ${linked.recordedDayCount} 天，常出现「${topTag.tag}」`;
+  }
+
+  return `你在「${dimensionLabel}」维度记录 ${linked.recordedDayCount} 天`;
+}
+
 function getScoreTrendHighlights(record: AnalysisMonthRecord): ScoreTrendHighlightsResult {
   const factorStats = happinessScoreItems
     .map((item) => {
@@ -347,12 +371,14 @@ function getScoreTrendHighlights(record: AnalysisMonthRecord): ScoreTrendHighlig
       {
         label: "长期偏高",
         title: highest.item.label,
-        detail: `月均 ${formatScoreAverage(highest.average)}`
+        detail: `月均 ${formatScoreAverage(highest.average)}`,
+        context: buildHighlightJournalContext(highest.item.requestKey, record)
       },
       {
         label: "最常掉下来",
         title: lowest.item.label,
-        detail: `月均 ${formatScoreAverage(lowest.average)}`
+        detail: `月均 ${formatScoreAverage(lowest.average)}`,
+        context: buildHighlightJournalContext(lowest.item.requestKey, record)
       }
     );
   }
@@ -363,7 +389,8 @@ function getScoreTrendHighlights(record: AnalysisMonthRecord): ScoreTrendHighlig
     highlights.push({
       label: "波动最大",
       title: mostVariable.item.label,
-      detail: `${mostVariable.minimum} - ${mostVariable.maximum} 分`
+      detail: `${mostVariable.minimum} - ${mostVariable.maximum} 分`,
+      context: buildHighlightJournalContext(mostVariable.item.requestKey, record)
     });
   }
 
@@ -676,7 +703,13 @@ function getFeaturedDimension(record: AnalysisMonthRecord) {
     .sort(compareDimensionInsights)[0] ?? null;
 }
 
-function buildDimensionSummary(dimension: AnalysisDimensionInsightCard) {
+function buildDimensionSummary(dimension: AnalysisDimensionInsightCard, narrative: AnalysisMonthRecord["narrative"]) {
+  const aiThesis = narrative?.dimensionTheses[dimension.dimension];
+
+  if (aiThesis) {
+    return aiThesis;
+  }
+
   if (dimension.thesis) {
     return dimension.thesis;
   }
@@ -884,7 +917,7 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
               {formatAnalysisMonthLabel(month)}
             </h1>
             <p className="mt-3 max-w-[48rem] text-pretty text-[0.95rem] leading-7 text-[#5f4b36]">
-              {record ? buildOverviewNarrative(record) : "加载中..."}
+              {record ? (record.narrative?.overviewNarrative || buildOverviewNarrative(record)) : "加载中..."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.72)] px-3 py-1.5 text-[0.76rem] text-[#6f5339]">
@@ -968,54 +1001,6 @@ function SummaryHero({ record, month }: { record: AnalysisMonthRecord | null; mo
   );
 }
 
-function OverviewCards({ record }: { record: AnalysisMonthRecord }) {
-  const latestPendingDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
-  const latestScoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
-  const items = [
-    {
-      id: "rhythm-streak",
-      label: "最长连续",
-      value: record.rhythmOverview.longestStreak ? `${record.rhythmOverview.longestStreak.length}天` : "暂无",
-      detail: record.rhythmOverview.longestStreak ? formatSpanLabel(record.rhythmOverview.longestStreak) : "还没有形成连续记录段。"
-    },
-    {
-      id: "rhythm-gap",
-      label: "最长空档",
-      value: record.rhythmOverview.longestGap ? `${record.rhythmOverview.longestGap.length}天` : "暂无",
-      detail: record.rhythmOverview.longestGap ? formatSpanLabel(record.rhythmOverview.longestGap) : "目前没有明确的连续空白段。"
-    },
-    {
-      id: "rhythm-pending-daily",
-      label: "待整合日",
-      value: record.rhythmOverview.pendingDailyJournalCount > 0 ? `${record.rhythmOverview.pendingDailyJournalCount}天` : "暂无",
-      detail:
-        latestPendingDay
-          ? `最近 ${formatAnalysisDateLabel(latestPendingDay.date)}${latestPendingDay.hasStaleDailyJournal ? "（待更新）" : ""}`
-          : getLatestDailyJournalDay(record)
-            ? `最近已整合 ${formatAnalysisDateLabel(getLatestDailyJournalDay(record)?.date ?? null)}`
-            : "还没有已保存材料需要整合。"
-    },
-    {
-      id: "rhythm-score-only",
-      label: "待成文日",
-      value: record.rhythmOverview.scoreOnlyDayCount > 0 ? `${record.rhythmOverview.scoreOnlyDayCount}天` : "暂无",
-      detail: latestScoreOnlyDay ? `最近 ${formatAnalysisDateLabel(latestScoreOnlyDay.date)}` : "目前没有只评分未成文的日期。"
-    }
-  ];
-
-  return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-testid="analysis-overview-cards">
-      {items.map((item) => (
-        <article key={item.id} className="rounded-[18px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.36)] px-4 py-3.5">
-          <p className="text-[0.76rem] text-[#8a6b4b]">{item.label}</p>
-          <p className="mt-2 font-mono text-[1.05rem] tabular-nums leading-none text-[#302114]">{item.value}</p>
-          <p className="mt-2 text-pretty text-[0.82rem] leading-6 text-[#7a624b]">{item.detail}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function AnalysisEmptyBanner({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-[20px] border border-dashed border-[rgba(150,105,61,0.16)] bg-[rgba(255,249,239,0.34)] px-4 py-5">
@@ -1042,7 +1027,9 @@ function ScoreLineChart({
   emptyText,
   testId,
   stroke = "#6f4a26",
-  compact = false
+  compact = false,
+  onPointClick,
+  selectedDate
 }: {
   days: AnalysisMonthRecord["scoreTrend"]["days"];
   getValue: (day: AnalysisMonthRecord["scoreTrend"]["days"][number]) => number | null;
@@ -1051,6 +1038,8 @@ function ScoreLineChart({
   testId: string;
   stroke?: string;
   compact?: boolean;
+  onPointClick?: (date: string) => void;
+  selectedDate?: string | null;
 }) {
   const width = compact ? 160 : 680;
   const height = compact ? 60 : 260;
@@ -1172,19 +1161,98 @@ function ScoreLineChart({
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {scoredPoints.map((point) => (
-            <circle
-              key={point.date}
-              cx={point.x}
-              cy={point.y}
-              r={compact ? "2.6" : "4.5"}
-              fill="#fffaf1"
-              stroke={stroke}
-              strokeWidth={compact ? "1.8" : "2.5"}
-              aria-label={compact ? undefined : resolveTrendPointLabel(point.date, point.value)}
-            />
-          ))}
+          {scoredPoints.map((point) => {
+            const isSelected = selectedDate === point.date;
+            const isInteractive = !compact && typeof onPointClick === "function";
+            return (
+              <circle
+                key={point.date}
+                cx={point.x}
+                cy={point.y}
+                r={compact ? "2.6" : isSelected ? "6" : "4.5"}
+                fill={isSelected ? stroke : "#fffaf1"}
+                stroke={stroke}
+                strokeWidth={compact ? "1.8" : "2.5"}
+                aria-label={compact ? undefined : resolveTrendPointLabel(point.date, point.value)}
+                onClick={isInteractive ? () => onPointClick!(point.date) : undefined}
+                style={isInteractive ? { cursor: "pointer" } : undefined}
+                data-testid={isInteractive ? `${testId}-point-${point.date}` : undefined}
+              />
+            );
+          })}
         </svg>
+      )}
+    </div>
+  );
+}
+
+function ScorePointDetailCard({
+  date,
+  coverage,
+  trendDay,
+  onClose
+}: {
+  date: string;
+  coverage: AnalysisDailyCoverageDay | null;
+  trendDay: AnalysisMonthRecord["scoreTrend"]["days"][number] | null;
+  onClose: () => void;
+}) {
+  const averageLabel = trendDay && typeof trendDay.averageScore === "number"
+    ? formatScoreAverage(trendDay.averageScore)
+    : null;
+  const hasJournal = Boolean(coverage && (coverage.journalTitle || coverage.contentPreview));
+
+  return (
+    <div
+      className="mt-3 rounded-[18px] border border-[rgba(111,74,38,0.14)] bg-[rgba(255,252,246,0.9)] px-4 py-3 shadow-sm"
+      data-testid="score-trend-detail-card"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="archive-label">这一天</p>
+          <p className="mt-1 font-display text-[1.15rem] leading-none text-[#302114]">{formatScoreDateLabel(date)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {averageLabel ? (
+            <span className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.82)] px-3 py-1 text-[0.72rem] text-[#6f5339]">
+              当天均分 <span className="font-mono tabular-nums text-[#4b3727]">{averageLabel}</span>
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.82)] px-2.5 py-1 text-[0.72rem] text-[#7a624b] hover:bg-[rgba(248,237,216,0.82)]"
+            aria-label="关闭当日详情"
+          >
+            收起
+          </button>
+        </div>
+      </div>
+      {hasJournal ? (
+        <div className="mt-2.5">
+          {coverage?.journalTitle ? (
+            <p className="text-[0.9rem] leading-6 text-[#3a2c1f]">{coverage.journalTitle}</p>
+          ) : null}
+          {coverage?.contentPreview ? (
+            <p className="mt-1 text-pretty text-[0.8rem] leading-6 text-[#6f5339]">{coverage.contentPreview}</p>
+          ) : null}
+          <Link
+            href={buildCalendarHref({ date, view: "day" })}
+            className="mt-2 inline-flex items-center gap-1 text-[0.78rem] text-[#6f4a26] underline-offset-2 hover:underline"
+          >
+            查看完整日志 →
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-2.5 text-[0.8rem] leading-6 text-[#7a624b]">
+          这一天还没有生成日志。
+          <Link
+            href={buildCalendarHref({ date, view: "day" })}
+            className="ml-1 text-[#6f4a26] underline-offset-2 hover:underline"
+          >
+            去日历看这一天 →
+          </Link>
+        </div>
       )}
     </div>
   );
@@ -1202,13 +1270,26 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
     );
   }, [record]);
   const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>(defaultFactor);
+  const [inspectedDate, setInspectedDate] = useState<string | null>(null);
   const trendHighlightState = useMemo(() => getScoreTrendHighlights(record), [record]);
   const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
   const selectedAverage = record.scoreTrend.factorAverages[selectedFactor];
+  const inspectedCoverage = useMemo(
+    () => (inspectedDate ? record.dailyCoverage.find((day) => day.date === inspectedDate) ?? null : null),
+    [inspectedDate, record.dailyCoverage]
+  );
+  const inspectedTrendDay = useMemo(
+    () => (inspectedDate ? record.scoreTrend.days.find((day) => day.date === inspectedDate) ?? null : null),
+    [inspectedDate, record.scoreTrend.days]
+  );
 
   useEffect(() => {
     setSelectedFactor(defaultFactor);
   }, [defaultFactor]);
+
+  useEffect(() => {
+    setInspectedDate(null);
+  }, [record.month]);
 
   return (
     <div className="rounded-[22px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.34)] p-4" data-testid="happiness-score-trend-panel">
@@ -1253,6 +1334,9 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
               <p className="text-[0.72rem] text-[#8a6b4b]">{highlight.label}</p>
               <p className="mt-1 text-[0.95rem] text-[#34271c]">{highlight.title}</p>
               <p className="mt-1 font-mono text-[0.78rem] tabular-nums text-[#6f5339]">{highlight.detail}</p>
+              {highlight.context ? (
+                <p className="mt-1.5 text-[0.74rem] leading-5 text-[#7a624b]">{highlight.context}</p>
+              ) : null}
             </div>
           ))}
         </div>
@@ -1269,8 +1353,19 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
           ariaLabel="本月每日 8 项平均分走势，未评分日期断线"
           emptyText="本月还没有可展示的评分走势。"
           testId="score-average-trend-chart"
+          onPointClick={(date) => setInspectedDate((current) => (current === date ? null : date))}
+          selectedDate={inspectedDate}
         />
       </div>
+
+      {inspectedDate ? (
+        <ScorePointDetailCard
+          date={inspectedDate}
+          coverage={inspectedCoverage}
+          trendDay={inspectedTrendDay}
+          onClose={() => setInspectedDate(null)}
+        />
+      ) : null}
 
       <div className="mt-4">
         <div className="mb-2 flex items-end justify-between gap-2">
@@ -1795,7 +1890,7 @@ function CoverageHeatmap({ record }: { record: AnalysisMonthRecord }) {
                     data-testid={`analysis-heatmap-day-${cell.date}`}
                     title={`${cell.date}，${getRhythmStatusLabel(state)}${coverage?.savedDimensionCount ? `，${coverage.savedDimensionCount} 个维度` : ""}${
                       coverage?.hasScore && typeof coverage.averageScore === "number" ? `，评分 ${coverage.averageScore.toFixed(1)}` : ""
-                    }`}
+                    }${coverage?.hasDailyJournalSaved ? "，日志已整合" : ""}`}
                     aria-pressed={isSelected}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -1907,6 +2002,29 @@ function CoverageHeatmap({ record }: { record: AnalysisMonthRecord }) {
             </div>
           ) : null}
 
+          {selectedCoverage?.journalTitle || selectedCoverage?.contentPreview ? (
+            <div className="mt-3 rounded-[14px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.68)] px-3 py-2.5" data-testid="rhythm-day-journal-preview">
+              {selectedCoverage.journalTitle ? (
+                <p className="text-[0.84rem] leading-6 text-[#3a2c1f]">{selectedCoverage.journalTitle}</p>
+              ) : null}
+              {selectedCoverage.contentPreview ? (
+                <p className="mt-1 text-pretty text-[0.76rem] leading-5 text-[#6f5339]">{selectedCoverage.contentPreview}</p>
+              ) : null}
+              <Link
+                href={buildCalendarHref({ date: selectedDate, view: "day" })}
+                className="mt-1.5 inline-flex text-[0.74rem] text-[#6f4a26] underline-offset-2 hover:underline"
+              >
+                查看完整日志 →
+              </Link>
+            </div>
+          ) : selectedCoverage && !selectedCoverage.hasDailyJournalSaved && selectedCoverage.savedEntryCount > 0 ? (
+            <div className="mt-3 rounded-[14px] border border-dashed border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.4)] px-3 py-2.5" data-testid="rhythm-day-signal-preview">
+              <p className="text-[0.76rem] leading-5 text-[#7a624b]">
+                已有 {selectedCoverage.savedEntryCount} 条记录，但还没有整合成日志。
+              </p>
+            </div>
+          ) : null}
+
           <div className="mt-4 flex flex-wrap gap-2.5">
             {selectedState === "future" ? (
               <ActionLink href={buildCalendarHref({ view: "day", date: selectedDate })} label="查看当天" variant="primary" />
@@ -2011,7 +2129,7 @@ function buildInsightActionItems(record: AnalysisMonthRecord, featured: Analysis
   if (featured) {
     actions.push({
       title: `继续看${getInterviewDimensionMeta(featured.dimension).label}`,
-      body: featured.thesis ?? buildDimensionSummary(featured),
+      body: featured.thesis ?? buildDimensionSummary(featured, record.narrative),
       href: buildDimensionDrillHref(record, featured),
       label: "继续这条线"
     });
@@ -2150,7 +2268,7 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
                 </span>
               </div>
 
-              <p className="mt-3 min-h-[4.5rem] text-[0.84rem] leading-6 text-[#4a3928]">{buildDimensionSummary(dimension)}</p>
+              <p className="mt-3 min-h-[4.5rem] text-[0.84rem] leading-6 text-[#4a3928]">{buildDimensionSummary(dimension, record.narrative)}</p>
 
               <div className="mt-3 space-y-1.5 text-[0.72rem] leading-5 text-[#80634a]">
                 <p>{getDimensionMomentumLabel(dimension)}</p>
@@ -2170,6 +2288,14 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
                       <div key={evidence.entryId}>
                         <p className="text-[0.76rem] leading-5 text-[#4a3928]">{evidence.summary}</p>
                         {evidence.detail ? <p className="mt-0.5 text-[0.72rem] leading-5 text-[#7a624b]">{evidence.detail}</p> : null}
+                        {evidence.date ? (
+                          <Link
+                            href={buildCalendarHref({ date: evidence.date, view: "day" })}
+                            className="mt-1 inline-flex text-[0.7rem] text-[#6f4a26] underline-offset-2 hover:underline"
+                          >
+                            {formatScoreDateLabel(evidence.date)} →
+                          </Link>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -2258,6 +2384,53 @@ function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
   );
 }
 
+function NarrativeInsightCard({
+  card
+}: {
+  card: AnalysisInsightCardItem;
+}) {
+  return (
+    <article className="rounded-[18px] border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.4)] p-3.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.78)] px-2.5 py-1 text-[0.7rem] text-[#7a6048]">
+          {card.type}
+        </span>
+        <p className="text-[0.84rem] font-medium text-[#3a2c1f]">{card.title}</p>
+      </div>
+      <p className="mt-2 text-[0.82rem] leading-6 text-[#5f4b36]">{card.evidence}</p>
+      {card.linkedDates.length > 0 ? (
+        <p className="mt-2 text-[0.74rem] text-[#8b6c4d]">
+          关联日期：{card.linkedDates.map((date) => formatAnalysisDateLabel(date)).join("、")}
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
+function OverviewAnchorCTA({ record }: { record: AnalysisMonthRecord }) {
+  const recordedDayCount = record.logOverview.recordedDayCount;
+  const scoredDayCount = record.scoreOverview.scoredDayCount;
+  const featuredLabel = record.insightsOverview.featuredDimension
+    ? getInterviewDimensionMeta(record.insightsOverview.featuredDimension).label
+    : null;
+  const longestStreak = record.rhythmOverview.longestStreak?.length ?? 0;
+
+  if (recordedDayCount === 0 && scoredDayCount === 0) {
+    return null;
+  }
+
+  const parts = [
+    `${recordedDayCount} 天记录`,
+    `${scoredDayCount} 天评分`,
+    featuredLabel ? `主线维度：${featuredLabel}` : null,
+    longestStreak > 0 ? `最长连续 ${longestStreak} 天` : null
+  ].filter((part): part is string => Boolean(part));
+
+  return (
+    <p className="text-[0.78rem] leading-6 text-[#8b6c4d]">{parts.join(" · ")}</p>
+  );
+}
+
 export function AnalysisShell() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2330,9 +2503,16 @@ export function AnalysisShell() {
                 <SectionSkeleton />
               ) : (
                 <>
-                  <OverviewCards record={record} />
-                  <div className="mt-5">
-                    <SummaryHero record={record} month={normalizedSearch.month} />
+                  <SummaryHero record={record} month={normalizedSearch.month} />
+                  {record.narrative?.insightCards && record.narrative.insightCards.length > 0 && (
+                    <div className="mt-5">
+                      {record.narrative.insightCards.map((card, i) => (
+                        <NarrativeInsightCard key={i} card={card} />
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-4">
+                    <OverviewAnchorCTA record={record} />
                   </div>
                 </>
               )}

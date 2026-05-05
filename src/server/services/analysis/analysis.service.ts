@@ -1,4 +1,5 @@
 import { aggregateAnalysisMonth } from "@/features/analysis/aggregate-month";
+import { generateMonthNarrative } from "@/features/analysis/narrative-service";
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { listAnalysisSourcesByDateRange } from "@/server/repositories/analysis.repository";
@@ -84,16 +85,19 @@ export async function getAnalysisMonth(month: string): Promise<AnalysisMonthReco
     ]);
     const scoreRecords = [...new Map(scoreRecordGroups.flat().map((record) => [record.date, record])).values()];
 
-    return {
-      ...aggregateAnalysisMonth({
+    const aggregated = aggregateAnalysisMonth({
         month,
         entries: sources.entries,
         dailyJournals: sources.dailyJournals,
         scoreRecords,
         today
-      }),
+      });
+
+    return {
+      ...aggregated,
       scoreRecords,
-      editableDates
+      editableDates,
+      narrative: generateMonthNarrative(aggregated)
     };
   } catch (error) {
     if (error instanceof AnalysisQueryError) {

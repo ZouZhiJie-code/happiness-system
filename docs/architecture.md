@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-04`
+最后更新：`2026-05-05`
 
 ## 1. 系统概览
 
@@ -80,6 +80,7 @@
 - `src/server/services/analysis/analysis.service.ts`
   - 月度记录分析的服务端查询入口
   - 负责月份校验、月范围计算和日志分析聚合
+  - 调用 `src/features/analysis/narrative-service.ts` 生成 `narrative`（当前为确定性占位，预留 AI 接入口，降级到模板文本）
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 
@@ -91,7 +92,7 @@
   - 从 `InterviewSession / JoyEntry / DailyJournalEntry` 查询标准化 calendar source
   - 不直接计算 calendar 状态
 - `src/server/repositories/analysis.repository.ts`
-  - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source
+  - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source；`DailyJournalEntry` 现在额外返回 `title` 和 `content`，供聚合层生成 `journalTitle` / `contentPreview`
 - `src/server/repositories/daily-happiness-score.repository.ts`
   - 维护 `DailyHappinessScore` 的日期查询、upsert 与 record 映射
 - `src/server/repositories/daily-journal.repository.ts`
