@@ -19,6 +19,9 @@ CREATE TYPE "JoyEntrySource" AS ENUM ('ai_draft_direct', 'ai_draft_edited');
 -- CreateEnum
 CREATE TYPE "AIRequestStage" AS ENUM ('transcribe', 'extract', 'generate');
 
+-- CreateEnum
+CREATE TYPE "InterviewEventStatus" AS ENUM ('active', 'ready_for_choice', 'completed');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -55,6 +58,33 @@ CREATE TABLE "InterviewSession" (
     "finalEntryId" TEXT,
 
     CONSTRAINT "InterviewSession_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "InterviewEvent" (
+    "id" TEXT NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "sequence" INTEGER NOT NULL,
+    "status" "InterviewEventStatus" NOT NULL DEFAULT 'active',
+    "stage" "JoyInterviewStage" NOT NULL DEFAULT 'collect_event',
+    "explorationRound" INTEGER NOT NULL DEFAULT 1,
+    "coveredLenses" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "roundCoveredLenses" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "roundMeaningfulReplyCount" INTEGER NOT NULL DEFAULT 0,
+    "totalMeaningfulReplyCount" INTEGER NOT NULL DEFAULT 0,
+    "startMessageSequence" INTEGER NOT NULL DEFAULT 0,
+    "event" TEXT,
+    "feeling" TEXT,
+    "whyItMattered" TEXT,
+    "happinessType" TEXT,
+    "selfPattern" TEXT,
+    "confidence" DOUBLE PRECISION,
+    "missingSlots" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "draftSummary" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "InterviewEvent_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -148,6 +178,12 @@ CREATE UNIQUE INDEX "InterviewSession_finalEntryId_key" ON "InterviewSession"("f
 CREATE INDEX "InterviewSession_userId_status_idx" ON "InterviewSession"("userId", "status");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "InterviewEvent_sessionId_sequence_key" ON "InterviewEvent"("sessionId", "sequence");
+
+-- CreateIndex
+CREATE INDEX "InterviewEvent_sessionId_status_idx" ON "InterviewEvent"("sessionId", "status");
+
+-- CreateIndex
 CREATE INDEX "InterviewMessage_sessionId_createdAt_idx" ON "InterviewMessage"("sessionId", "createdAt");
 
 -- CreateIndex
@@ -176,6 +212,15 @@ ALTER TABLE "InterviewSession" ADD CONSTRAINT "InterviewSession_userId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "InterviewMessage" ADD CONSTRAINT "InterviewMessage_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "InterviewSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InterviewEvent" ADD CONSTRAINT "InterviewEvent_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "InterviewSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AlterTable
+ALTER TABLE "InterviewSession" ADD COLUMN "activeEventId" TEXT;
+
+-- AddForeignKey
+ALTER TABLE "InterviewSession" ADD CONSTRAINT "InterviewSession_activeEventId_fkey" FOREIGN KEY ("activeEventId") REFERENCES "InterviewEvent"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JoyInterviewSnapshot" ADD CONSTRAINT "JoyInterviewSnapshot_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "InterviewSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
