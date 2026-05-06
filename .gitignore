@@ -11,3 +11,6 @@ coverage
 dist
 *.log
 !.env.example
+
+# Git worktrees
+.worktrees/
