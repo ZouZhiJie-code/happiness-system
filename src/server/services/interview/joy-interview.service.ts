@@ -39,6 +39,7 @@ import {
   streamJoyAssistantTurn,
   generateJoyDraftWithAI
 } from "@/server/services/interview/joy-interview-ai.service";
+import { extractMemoriesFromSession } from "@/server/services/memory/memory-extraction.service";
 import type {
   AssistantTurnPayload,
   DraftCompletionMode,
@@ -2163,6 +2164,16 @@ export async function generateJoyInterviewDraft(sessionIds: string[]) {
 
     throw new DraftGenerationError("DRAFT_GENERATE_UNKNOWN_ERROR", true, "Draft generation failed unexpectedly.", error);
   }
+
+  // Fire-and-forget: extract user memories from this session
+  void extractMemoriesFromSession({
+    userId: session.userId,
+    sessionId: session.id,
+    session,
+    draftEntry
+  }).catch(() => {
+    // Errors are already caught and logged inside extractMemoriesFromSession
+  });
 
   if (!draftSession?.journalEntry) {
     throw new DraftGenerationError("DRAFT_GENERATE_DB_ERROR", true, "Draft record was not created.");
