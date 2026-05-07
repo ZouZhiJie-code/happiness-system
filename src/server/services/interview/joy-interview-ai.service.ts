@@ -91,6 +91,7 @@ interface AssistantTurnGenerationInput {
   roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
   action: "reply" | "continue_current_event";
+  memoryContext?: string | null;
 }
 
 function sanitizeNullableString(value: string | null | undefined) {
@@ -497,7 +498,8 @@ function getQuestionMessages(input: AssistantTurnGenerationInput) {
     coveredLenses: input.coveredLenses,
     roundCoveredLenses: input.roundCoveredLenses,
     isMeaningfulReply: input.isMeaningfulReply,
-    action: input.action
+    action: input.action,
+    memoryContext: input.memoryContext
   });
 }
 

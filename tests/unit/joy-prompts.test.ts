@@ -629,3 +629,55 @@ describe("gratitude prompt strategy", () => {
     expect(messages[1]?.content).not.toContain("joyTrack");
   });
 });
+
+describe("memory context injection", () => {
+  const questionInput = {
+    dimension: "joy" as const,
+    stage: "probe_pattern" as const,
+    userMessage: "今天在公园散步感觉很平静。",
+    snapshot: baseSnapshot,
+    events: [{ ...baseEvent, stage: "probe_pattern" as const, status: "active" as const }],
+    activeEvent: { ...baseEvent, stage: "probe_pattern" as const, status: "active" as const },
+    messages: baseMessages,
+    nextTurnCount: 3,
+    nextEventTurnCount: 3,
+    previousDepthReached: ["event" as const],
+    nextDepthReached: ["feeling" as const],
+    coveredLenses: ["event_detail"],
+    roundCoveredLenses: ["event_detail"],
+    isMeaningfulReply: true,
+    action: "reply" as const
+  };
+
+  it("injects memory context into user message when provided", () => {
+    const memoryContext = [
+      "【用户画像 — 已有认知】",
+      "# 开心维度",
+      "- 用户喜欢在公园跑步时获得平静感 [运动, 独处]",
+      "以上是对此用户的历史认知，仅供参考，不要在对话中直接引用或提及这些记忆。"
+    ].join("\n");
+
+    const messages = buildJoyQuestionMessages({
+      ...questionInput,
+      memoryContext
+    });
+
+    expect(messages[1]?.content).toContain("用户画像");
+    expect(messages[1]?.content).toContain("用户喜欢在公园跑步时获得平静感");
+  });
+
+  it("omits memory section when memoryContext is not provided", () => {
+    const messages = buildJoyQuestionMessages(questionInput);
+
+    expect(messages[1]?.content).not.toContain("用户画像");
+  });
+
+  it("omits memory section when memoryContext is null", () => {
+    const messages = buildJoyQuestionMessages({
+      ...questionInput,
+      memoryContext: null
+    });
+
+    expect(messages[1]?.content).not.toContain("用户画像");
+  });
+});

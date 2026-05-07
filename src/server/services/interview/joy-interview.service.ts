@@ -40,6 +40,7 @@ import {
   generateJoyDraftWithAI
 } from "@/server/services/interview/joy-interview-ai.service";
 import { extractMemoriesFromSession } from "@/server/services/memory/memory-extraction.service";
+import { retrieveRelevantMemories } from "@/server/services/memory/memory-retrieval.service";
 import type {
   AssistantTurnPayload,
   DraftCompletionMode,
@@ -1610,11 +1611,24 @@ async function resolvePreparedInterviewTurn(
     ...input,
     assistantAction: input.assistantAction
   });
+
+  // Fire-and-forget memory retrieval for prompt enrichment
+  const { formattedContext: memoryContext } = await retrieveRelevantMemories({
+    userId: input.session.userId,
+    dimension: input.session.dimension,
+    snapshot: input.nextSnapshot,
+    currentEventText: input.userMessage ?? undefined
+  }).catch(() => ({ formattedContext: null }));
+
+  const enrichedInput = memoryContext
+    ? { ...assistantInput, memoryContext }
+    : assistantInput;
+
   const generatedAssistantTurn = callbacks?.onDelta
-    ? await streamJoyAssistantTurn(assistantInput, {
+    ? await streamJoyAssistantTurn(enrichedInput, {
         onDelta: async (delta) => callbacks.onDelta?.(delta)
       })
-    : await generateJoyAssistantTurn(assistantInput);
+    : await generateJoyAssistantTurn(enrichedInput);
 
   return finalizeAssistantTurn(input, generatedAssistantTurn);
 }
