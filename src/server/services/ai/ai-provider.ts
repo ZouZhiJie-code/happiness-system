@@ -18,10 +18,20 @@ export interface AICompletionResult {
   provider: string;
 }
 
+export interface AIEmbeddingParams {
+  input: string | string[];
+}
+
+export interface AIEmbeddingResult {
+  embeddings: number[][];
+  tokenCount?: number;
+}
+
 export interface AIProvider {
   readonly name: string;
   complete(params: AICompletionParams): Promise<AICompletionResult>;
   stream?(params: AICompletionParams): AsyncIterable<string>;
+  embed?(params: AIEmbeddingParams): Promise<AIEmbeddingResult>;
 }
 
 export class AIProviderError extends Error {

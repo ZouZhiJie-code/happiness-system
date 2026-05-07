@@ -33,6 +33,7 @@ const navItems = [
   { href: "/interview", matchPath: "/interview", label: "访谈" },
   { href: "/calendar", matchPath: "/calendar", label: "日历" },
   { href: "/analysis", matchPath: "/analysis", label: "分析" },
+  { href: "/profile", matchPath: "/profile", label: "画像" },
   { href: "/settings", matchPath: "/settings", label: "设置" }
 ] as const;
 

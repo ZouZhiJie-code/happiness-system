@@ -1,4 +1,4 @@
-import { AIProviderError, type AICompletionParams, type AIProvider } from "@/server/services/ai/ai-provider";
+import { AIProviderError, type AICompletionParams, type AIEmbeddingParams, type AIEmbeddingResult, type AIProvider } from "@/server/services/ai/ai-provider";
 
 const DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
 const DEFAULT_TIMEOUT_MS = 20_000;
@@ -229,6 +229,69 @@ export class VolcengineArkProvider implements AIProvider {
       }
 
       throw new AIProviderError(error instanceof Error ? error.message : "Unknown AI provider error.", "REQUEST_FAILED");
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async embed({ input }: AIEmbeddingParams): Promise<AIEmbeddingResult> {
+    const embeddingEndpointId = process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID;
+
+    if (!embeddingEndpointId) {
+      throw new AIProviderError("Missing Volcengine Ark embedding endpoint id.", "MISSING_EMBEDDING_ENDPOINT_ID");
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: embeddingEndpointId,
+          input: Array.isArray(input) ? input : [input],
+          encoding_format: "float"
+        }),
+        cache: "no-store",
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new AIProviderError(errorText || "Embedding request failed.", "UPSTREAM_HTTP_ERROR", response.status);
+      }
+
+      const payload = (await response.json()) as {
+        data?: Array<{ embedding?: number[] }>;
+        usage?: { total_tokens?: number };
+      };
+
+      const embeddings = (payload.data ?? [])
+        .map((item) => item.embedding)
+        .filter((v): v is number[] => Array.isArray(v));
+
+      if (embeddings.length === 0) {
+        throw new AIProviderError("Embedding model returned empty results.", "EMPTY_EMBEDDINGS");
+      }
+
+      return {
+        embeddings,
+        tokenCount: payload.usage?.total_tokens
+      };
+    } catch (error) {
+      if (error instanceof AIProviderError) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new AIProviderError("Embedding request timed out.", "TIMEOUT");
+      }
+
+      throw new AIProviderError(error instanceof Error ? error.message : "Unknown embedding error.", "REQUEST_FAILED");
     } finally {
       clearTimeout(timeoutId);
     }

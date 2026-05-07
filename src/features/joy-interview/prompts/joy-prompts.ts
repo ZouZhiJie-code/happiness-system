@@ -388,6 +388,7 @@ export function buildJoyQuestionMessages(input: {
   roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
   action: "reply" | "continue_current_event";
+  memoryContext?: string | null;
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
   const guide = dimensionPromptGuide[input.dimension];
@@ -503,6 +504,7 @@ export function buildJoyQuestionMessages(input: {
           null,
           2
         )}`,
+        ...(input.memoryContext ? [input.memoryContext] : []),
         `最近可读对话:\n${formatVisibleRecentMessages(input.messages) || "无"}`,
         `最近 assistant 结构化输出:\n${formatStructuredRecentAssistantMessages(input.messages) || "无"}`,
         input.action === "continue_current_event"
