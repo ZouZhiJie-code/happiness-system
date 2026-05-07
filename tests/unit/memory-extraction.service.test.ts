@@ -7,10 +7,11 @@ const { mockCompleteStructuredOutput, mockGetAIProvider } = vi.hoisted(() => ({
   mockGetAIProvider: vi.fn()
 }));
 
-const { mockCreateMemoryFact, mockFindSimilarBySummary, mockSetMemoryFactEmbedding } = vi.hoisted(() => ({
+const { mockCreateMemoryFact, mockFindSimilarBySummary, mockSetMemoryFactEmbedding, mockUpdateMemoryFact } = vi.hoisted(() => ({
   mockCreateMemoryFact: vi.fn(),
   mockFindSimilarBySummary: vi.fn(),
-  mockSetMemoryFactEmbedding: vi.fn()
+  mockSetMemoryFactEmbedding: vi.fn(),
+  mockUpdateMemoryFact: vi.fn()
 }));
 
 const { mockPrismaUserSettingsFindUnique } = vi.hoisted(() => ({
@@ -28,7 +29,8 @@ vi.mock("@/server/services/ai", () => ({
 vi.mock("@/server/repositories/memory.repository", () => ({
   createMemoryFact: mockCreateMemoryFact,
   findSimilarBySummary: mockFindSimilarBySummary,
-  setMemoryFactEmbedding: mockSetMemoryFactEmbedding
+  setMemoryFactEmbedding: mockSetMemoryFactEmbedding,
+  updateMemoryFact: mockUpdateMemoryFact
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -139,6 +141,7 @@ describe("extractMemoriesFromSession", () => {
       updatedAt: new Date()
     }));
     mockSetMemoryFactEmbedding.mockResolvedValue(undefined);
+    mockUpdateMemoryFact.mockResolvedValue({ id: "existing-mem-1" });
   });
 
   it("creates memory facts when AI returns valid extraction", async () => {
@@ -235,6 +238,7 @@ describe("extractMemoriesFromSession", () => {
       id: "existing-mem-1",
       userId: USER_ID,
       dimension: "joy",
+      summary: "独处时幸福感提升",
       confidence: 0.5,
       evidenceEntryIds: ["old-entry"],
       evidenceSessionIds: ["old-session"]
@@ -249,8 +253,85 @@ describe("extractMemoriesFromSession", () => {
 
     // Should NOT create new memory
     expect(mockCreateMemoryFact).not.toHaveBeenCalled();
+    // Should update existing memory
+    expect(mockUpdateMemoryFact).toHaveBeenCalledTimes(1);
     // Should update existing memory's embedding
     expect(mockSetMemoryFactEmbedding).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates confidence and evidenceSessionIds when merging with existing memory", async () => {
+    mockCompleteStructuredOutput.mockResolvedValue({
+      memories: [
+        { kind: "preference", summary: "独处时幸福感提升", topicTags: ["独处"] }
+      ]
+    });
+    mockFindSimilarBySummary.mockResolvedValue({
+      id: "existing-mem-1",
+      userId: USER_ID,
+      dimension: "joy",
+      summary: "独处时幸福感提升",
+      confidence: 0.5,
+      evidenceEntryIds: ["old-entry"],
+      evidenceSessionIds: ["old-session"]
+    });
+
+    await extractMemoriesFromSession({
+      userId: USER_ID,
+      sessionId: SESSION_ID,
+      session: buildSession(),
+      draftEntry: buildDraft()
+    });
+
+    expect(mockUpdateMemoryFact).toHaveBeenCalledWith(
+      "existing-mem-1",
+      expect.objectContaining({
+        confidence: expect.any(Number),
+        evidenceSessionIds: expect.arrayContaining([SESSION_ID])
+      })
+    );
+    const updateCall = mockUpdateMemoryFact.mock.calls[0][1];
+    expect(updateCall.confidence).toBeGreaterThan(0.5);
+  });
+
+  it("uses existing record summary for embedding when merging", async () => {
+    mockCompleteStructuredOutput.mockResolvedValue({
+      memories: [
+        { kind: "preference", summary: "独处让人充电", topicTags: ["独处"] },
+        { kind: "pattern", summary: "新的独立模式", topicTags: ["新"] }
+      ]
+    });
+
+    // First memory merges (different summary from AI), second is new
+    mockFindSimilarBySummary
+      .mockResolvedValueOnce({
+        id: "existing-mem-1",
+        userId: USER_ID,
+        dimension: "joy",
+        summary: "独处时幸福感提升",  // existing DB summary differs from AI summary
+        confidence: 0.5,
+        evidenceEntryIds: [],
+        evidenceSessionIds: ["old-session"]
+      })
+      .mockResolvedValueOnce(null);
+
+    mockCreateMemoryFact.mockResolvedValue({ id: "new-mem-2" });
+    mockGetAIProvider.mockReturnValue({
+      name: "mock",
+      embed: vi.fn().mockResolvedValue({
+        embeddings: [Array(2048).fill(0.2), Array(2048).fill(0.3)]
+      })
+    });
+
+    await extractMemoriesFromSession({
+      userId: USER_ID,
+      sessionId: SESSION_ID,
+      session: buildSession(),
+      draftEntry: buildDraft()
+    });
+
+    // Embedding should be generated using existing DB summary for merged record,
+    // and AI summary for the new record
+    expect(mockSetMemoryFactEmbedding).toHaveBeenCalledTimes(2);
   });
 
   it("does not throw when embedding generation fails", async () => {

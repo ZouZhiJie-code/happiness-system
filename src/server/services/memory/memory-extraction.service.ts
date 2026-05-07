@@ -8,7 +8,8 @@ import {
 import {
   createMemoryFact,
   findSimilarBySummary,
-  setMemoryFactEmbedding
+  setMemoryFactEmbedding,
+  updateMemoryFact
 } from "@/server/repositories/memory.repository";
 import { prisma } from "@/server/db/prisma";
 import type { InterviewSessionRecord, JoyEntryDraft } from "@/types/interview";
@@ -65,7 +66,7 @@ export async function extractMemoriesFromSession(input: {
     }
 
     // 3. Process each extracted memory
-    const createdIds: string[] = [];
+    const idSummaryPairs: Array<{ id: string; summary: string }> = [];
 
     for (const memory of aiResult.memories) {
       const existing = await findSimilarBySummary(
@@ -75,8 +76,18 @@ export async function extractMemoriesFromSession(input: {
       );
 
       if (existing) {
-        // Merge: update confidence and evidence
-        createdIds.push(existing.id);
+        // Merge: bump confidence and record new session as evidence
+        const mergedConfidence = Math.min(existing.confidence + 0.05, 1.0);
+        const mergedEvidence = existing.evidenceSessionIds.includes(input.session.id)
+          ? existing.evidenceSessionIds
+          : [...existing.evidenceSessionIds, input.session.id];
+
+        await updateMemoryFact(existing.id, {
+          confidence: mergedConfidence,
+          evidenceSessionIds: mergedEvidence
+        });
+
+        idSummaryPairs.push({ id: existing.id, summary: existing.summary });
         logger.info(
           { memoryId: existing.id, summary: memory.summary },
           "memory merged with existing"
@@ -95,21 +106,22 @@ export async function extractMemoriesFromSession(input: {
           evidenceEntryIds: input.draftEntry ? [input.session.finalEntryId ?? input.session.id] : [],
           evidenceSessionIds: [input.session.id]
         });
-        createdIds.push(created.id);
+        idSummaryPairs.push({ id: created.id, summary: memory.summary });
       }
     }
 
-    // 4. Generate embeddings (batch)
-    if (createdIds.length > 0) {
+    // 4. Generate embeddings (batch) using actual stored summaries
+    if (idSummaryPairs.length > 0) {
       await generateAndSetEmbeddings(
-        createdIds,
-        aiResult.memories.map((m) => m.summary),
-        userId
+        idSummaryPairs.map((p) => p.id),
+        idSummaryPairs.map((p) => p.summary),
+        userId,
+        provider
       );
     }
 
     logger.info(
-      { sessionId: input.session.id, memoryCount: createdIds.length },
+      { sessionId: input.session.id, memoryCount: idSummaryPairs.length },
       "memory extraction completed"
     );
   } catch (error) {
@@ -127,11 +139,10 @@ export async function extractMemoriesFromSession(input: {
 async function generateAndSetEmbeddings(
   memoryIds: string[],
   summaries: string[],
-  userId: string
+  userId: string,
+  provider: ReturnType<typeof getAIProvider>
 ): Promise<void> {
   try {
-    const provider = getAIProvider();
-
     if (!provider.embed) {
       logger.warn("embedding not available on provider, skipping");
       return;

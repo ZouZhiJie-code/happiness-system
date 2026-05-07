@@ -96,6 +96,7 @@ export async function updateMemoryFact(
     summary?: string;
     topicTags?: string[];
     confidence?: number;
+    evidenceSessionIds?: string[];
   }
 ): Promise<MemoryFact> {
   return prisma.memoryFact.update({
