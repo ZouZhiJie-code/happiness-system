@@ -32,7 +32,7 @@
 | 1 | 基础设施 + 数据层 | ✅ 完成 | `00e30b4` |
 | 2 | 记忆提取 | ✅ 完成 | `f57bf0e` |
 | 3 | 记忆检索 + Prompt 注入 | ✅ 完成 | `fa7f498` |
-| 4 | 画像页面 + API | ✅ 完成 | — |
+| 4 | 画像页面 + API | ✅ 完成 | `e7fd26c` |
 
 ---
 
@@ -199,13 +199,13 @@
 
 ---
 
-## 批次 4：画像页面 + API ⬜
+## 批次 4：画像页面 + API ✅
 
 ### 目标
 
 用户可在独立 `/profile` 页面查看、编辑、添加、删除自己的画像条目。画像按五维度分组，支持主题标签筛选。
 
-### 待开发任务
+### 完成的任务
 
 **4.1 Profile API**
 - 新建 `src/app/api/profile/route.ts`
@@ -215,8 +215,10 @@
 - `DELETE /api/profile?id=xxx` — 删除画像条目（软删除）
 - Zod schema 验证请求体
 - 手动添加的条目也需要生成 embedding（用于后续检索）
+- 验收: ✅ API 路由就绪，Zod 校验生效
 
-**4.2 Profile Page**
+**4.2 Profile Service + Page**
+- 新建 `src/server/services/memory/profile.service.ts` — `getAllProfiles`、`addProfileFact`、`updateProfileFact`、`deleteProfileFact`
 - 新建 `src/app/profile/page.tsx` — 遵循 Settings 页面 Pattern B（`page-shell` class 两栏布局）
 - 新建 `src/components/profile/profile-content.tsx` — 客户端组件
   1. 顶部概览（一句话总结，可后续接入 AI 生成）
@@ -227,22 +229,26 @@
   6. 每个维度底部"+ 添加"按钮
 - 新建 `src/components/profile/memory-card.tsx` — 单条记忆卡片组件
 - 新建 `src/components/profile/add-memory-dialog.tsx` — 添加记忆弹窗
+- 验收: ✅ 页面渲染正常，11 个 service 单元测试通过
 
 **4.3 导航入口**
 - 修改 `src/components/shared/site-header.tsx` (line 32-37)
 - 在 `navItems` 中添加：`{ href: "/profile", matchPath: "/profile", label: "画像" }`
 - 位置：放在"分析"和"设置"之间
+- 验收: ✅ 导航项已添加
 
 ### 涉及文件
 
 | 操作 | 文件 |
 |------|------|
 | 新建 | `src/app/api/profile/route.ts` |
+| 新建 | `src/server/services/memory/profile.service.ts` |
 | 新建 | `src/app/profile/page.tsx` |
 | 新建 | `src/components/profile/profile-content.tsx` |
 | 新建 | `src/components/profile/memory-card.tsx` |
 | 新建 | `src/components/profile/add-memory-dialog.tsx` |
 | 修改 | `src/components/shared/site-header.tsx` |
+| 新建 | `tests/unit/profile.service.test.ts`（11 tests） |
 
 ### 测试方式
 
