@@ -3,6 +3,7 @@ import type { InterviewDimension, JoySnapshot } from "@/types/interview";
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
 import { findSimilarMemoryFacts, type MemoryFactWithSimilarity } from "@/lib/vector";
+import { findMemoryFactsByDimension, findAllMemoryFacts } from "@/server/repositories/memory.repository";
 import { prisma } from "@/server/db/prisma";
 
 const DEMO_USER_ID = "local-demo-user";
@@ -85,8 +86,38 @@ export async function retrieveRelevantMemories(input: {
       formattedContext: formatMemoryContext(memories)
     };
   } catch (error) {
-    logger.warn({ err: error, userId }, "memory retrieval failed, continuing without context");
-    return emptyResult;
+    logger.warn({ err: error, userId }, "memory retrieval failed, falling back to keyword retrieval");
+    return fallbackKeywordRetrieval(userId, input.dimension, input.crossDimension, input.maxResults ?? 5);
+  }
+}
+
+/**
+ * Fallback when embedding is unavailable: query by dimension ordered by confidence.
+ */
+async function fallbackKeywordRetrieval(
+  userId: string,
+  dimension: InterviewDimension,
+  crossDimension: boolean | undefined,
+  maxResults: number
+): Promise<RetrieveMemoriesResult> {
+  try {
+    const facts = crossDimension
+      ? await findAllMemoryFacts(userId)
+      : await findMemoryFactsByDimension(dimension, userId);
+
+    const limited = facts.slice(0, maxResults).map((f) => ({
+      ...f,
+      similarity: 0
+    })) as RetrievedMemory[];
+
+    if (limited.length === 0) {
+      return { memories: [], formattedContext: null };
+    }
+
+    return { memories: limited, formattedContext: formatMemoryContext(limited) };
+  } catch (fallbackError) {
+    logger.warn({ err: fallbackError, userId }, "keyword fallback also failed");
+    return { memories: [], formattedContext: null };
   }
 }
 

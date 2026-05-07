@@ -10,6 +10,11 @@ const { mockFindSimilarMemoryFacts } = vi.hoisted(() => ({
   mockFindSimilarMemoryFacts: vi.fn()
 }));
 
+const { mockFindMemoryFactsByDimension, mockFindAllMemoryFacts } = vi.hoisted(() => ({
+  mockFindMemoryFactsByDimension: vi.fn(),
+  mockFindAllMemoryFacts: vi.fn()
+}));
+
 const { mockPrismaUserSettingsFindUnique } = vi.hoisted(() => ({
   mockPrismaUserSettingsFindUnique: vi.fn()
 }));
@@ -28,6 +33,11 @@ vi.mock("@/server/db/prisma", () => ({
   prisma: {
     userSettings: { findUnique: mockPrismaUserSettingsFindUnique }
   }
+}));
+
+vi.mock("@/server/repositories/memory.repository", () => ({
+  findMemoryFactsByDimension: mockFindMemoryFactsByDimension,
+  findAllMemoryFacts: mockFindAllMemoryFacts
 }));
 
 // ─── Import after mocks ──────────────────────────────────────────────────
@@ -80,6 +90,8 @@ describe("memory-retrieval.service", () => {
       embed: vi.fn().mockResolvedValue({ embeddings: [[0.1, 0.2, 0.3]] })
     });
     mockPrismaUserSettingsFindUnique.mockResolvedValue({ memoryEnabled: true });
+    mockFindMemoryFactsByDimension.mockResolvedValue([]);
+    mockFindAllMemoryFacts.mockResolvedValue([]);
   });
 
   describe("retrieveRelevantMemories", () => {
@@ -217,12 +229,68 @@ describe("memory-retrieval.service", () => {
       expect(result.formattedContext).toBeNull();
     });
 
-    it("does not throw on vector query failure, returns empty", async () => {
+    it("falls back to keyword retrieval by dimension when embedding fails", async () => {
+      mockGetAIProvider.mockReturnValue({
+        name: "test-provider",
+        embed: vi.fn().mockRejectedValue(new Error("embed failed"))
+      });
+
+      const fallbackFact = {
+        id: "fallback-1",
+        userId: USER_ID,
+        dimension: "joy",
+        kind: "pattern",
+        topicTags: ["散步"],
+        summary: "散步后心情变好",
+        sourceType: "ai_extracted",
+        confidence: 0.9,
+        evidenceEntryIds: [],
+        evidenceSessionIds: []
+      };
+      mockFindMemoryFactsByDimension.mockResolvedValue([fallbackFact]);
+
+      const result = await retrieveRelevantMemories({
+        userId: USER_ID,
+        dimension: "joy",
+        snapshot: buildSnapshot({ event: "散步" }),
+        maxResults: 5
+      });
+
+      expect(mockFindMemoryFactsByDimension).toHaveBeenCalledWith("joy", USER_ID);
+      expect(result.memories).toHaveLength(1);
+      expect(result.memories[0].summary).toBe("散步后心情变好");
+      expect(result.formattedContext).toBeTruthy();
+    });
+
+    it("falls back to all-dimension retrieval when crossDimension is true and embedding fails", async () => {
+      mockGetAIProvider.mockReturnValue({
+        name: "test-provider",
+        embed: vi.fn().mockRejectedValue(new Error("embed failed"))
+      });
+
+      mockFindAllMemoryFacts.mockResolvedValue([
+        { id: "f1", userId: USER_ID, dimension: "joy", kind: "p", topicTags: [], summary: "s1", sourceType: "ai_extracted", confidence: 0.8, evidenceEntryIds: [], evidenceSessionIds: [] },
+        { id: "f2", userId: USER_ID, dimension: "gratitude", kind: "p", topicTags: [], summary: "s2", sourceType: "ai_extracted", confidence: 0.7, evidenceEntryIds: [], evidenceSessionIds: [] }
+      ]);
+
+      const result = await retrieveRelevantMemories({
+        userId: USER_ID,
+        dimension: "joy",
+        snapshot: buildSnapshot(),
+        crossDimension: true
+      });
+
+      expect(mockFindAllMemoryFacts).toHaveBeenCalledWith(USER_ID);
+      expect(result.memories).toHaveLength(2);
+    });
+
+    it("does not throw on vector query failure, falls back to keyword retrieval", async () => {
       mockGetAIProvider.mockReturnValue({
         name: "test-provider",
         embed: vi.fn().mockResolvedValue({ embeddings: [[0.1]] })
       });
       mockFindSimilarMemoryFacts.mockRejectedValue(new Error("query failed"));
+      mockFindMemoryFactsByDimension.mockResolvedValue([]);
 
       const result = await retrieveRelevantMemories({
         userId: USER_ID,
@@ -230,8 +298,8 @@ describe("memory-retrieval.service", () => {
         snapshot: buildSnapshot({ event: "散步" })
       });
 
+      expect(mockFindMemoryFactsByDimension).toHaveBeenCalledWith("joy", USER_ID);
       expect(result.memories).toEqual([]);
-      expect(result.formattedContext).toBeNull();
     });
 
     it("respects cross-dimension option", async () => {
