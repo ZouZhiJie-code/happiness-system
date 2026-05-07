@@ -185,6 +185,35 @@ describe("profile.service", () => {
       });
     });
 
+    it("regenerates embedding after summary update", async () => {
+      mockFindMemoryFactById.mockResolvedValue(buildFact());
+      mockUpdateMemoryFact.mockResolvedValue(buildFact({ summary: "更新后的摘要" }));
+
+      await updateProfileFact({
+        id: "mem-1",
+        userId: USER_ID,
+        summary: "更新后的摘要",
+        topicTags: ["新标签"]
+      });
+
+      // Wait for fire-and-forget embedding
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockSetMemoryFactEmbedding).toHaveBeenCalledWith("mem-1", MOCK_EMBEDDING);
+    });
+
+    it("does not throw when embedding regeneration fails", async () => {
+      mockFindMemoryFactById.mockResolvedValue(buildFact());
+      mockUpdateMemoryFact.mockResolvedValue(buildFact());
+      mockGetAIProvider.mockReturnValue({
+        name: "mock",
+        embed: vi.fn().mockRejectedValue(new Error("embedding failed"))
+      });
+
+      await expect(
+        updateProfileFact({ id: "mem-1", userId: USER_ID, summary: "test", topicTags: [] })
+      ).resolves.toBeDefined();
+    });
+
     it("throws when memory not found", async () => {
       mockFindMemoryFactById.mockResolvedValue(null);
 

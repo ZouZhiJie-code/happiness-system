@@ -1,6 +1,11 @@
 -- CreateEnum
 CREATE TYPE "MemorySourceType" AS ENUM ('ai_extracted', 'user_added');
 
+-- MANUAL STEP (pgvector required):
+--   1. Ensure pgvector extension is installed: CREATE EXTENSION IF NOT EXISTS vector;
+--   2. Add the embedding column: ALTER TABLE "MemoryFact" ADD COLUMN embedding vector(2048);
+--   These must be run before vector search features are used.
+
 -- AlterTable: Add new columns to MemoryFact
 ALTER TABLE "MemoryFact" ADD COLUMN "topicTags" TEXT[] DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE "MemoryFact" ADD COLUMN "sourceType" "MemorySourceType" NOT NULL DEFAULT 'ai_extracted';

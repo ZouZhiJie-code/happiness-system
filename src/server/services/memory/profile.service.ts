@@ -83,10 +83,15 @@ export async function updateProfileFact(input: {
     throw new ProfileError("MEMORY_NOT_FOUND");
   }
 
-  return updateMemoryFact(input.id, {
+  const updated = await updateMemoryFact(input.id, {
     summary: input.summary,
     topicTags: input.topicTags
   });
+
+  // Fire-and-forget: regenerate embedding for updated summary
+  void generateEmbeddingSafe(input.id, input.summary, userId);
+
+  return updated;
 }
 
 /**
