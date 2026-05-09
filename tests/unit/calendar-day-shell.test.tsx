@@ -415,6 +415,23 @@ describe("calendar day shell", () => {
     );
   });
 
+  it("does not allow writing logs from a future empty day through the daily summary prompt", async () => {
+    mockSearchParams.value = {
+      view: "day",
+      date: "2099-01-01"
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildFutureEmptyDayRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarDayShell />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /查看当日汇总日志/ }));
+
+    const dialog = screen.getByRole("dialog", { name: "这天还没有日志" });
+    expect(within(dialog).getByText("可以先从一个维度写起，保存后再回到这里查看汇总。")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("link", { name: "写日志" })).not.toBeInTheDocument();
+    expect(within(dialog).getByText("写日志")).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("moves day navigation responsibility out of the shell body", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
 

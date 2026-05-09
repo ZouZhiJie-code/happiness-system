@@ -138,6 +138,10 @@ function getDailyJournalDescription(day: CalendarDayRecord) {
 }
 
 function buildWriteJournalHref(day: CalendarDayRecord) {
+  if (isFutureCalendarDate(day.date)) {
+    return null;
+  }
+
   return `/interview?dimension=joy&entryDate=${day.date}`;
 }
 
