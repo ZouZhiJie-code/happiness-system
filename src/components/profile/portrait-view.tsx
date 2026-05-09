@@ -17,6 +17,7 @@ export function PortraitView() {
   const [loading, setLoading] = useState(true);
   const [synthesizing, setSynthesizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [expandedDim, setExpandedDim] = useState<InterviewDimension | null>(null);
 
   const fetchPortrait = useCallback(async () => {
@@ -42,10 +43,14 @@ export function PortraitView() {
     try {
       setSynthesizing(true);
       setError(null);
+      setHint(null);
       const res = await fetch("/api/profile/portrait", { method: "POST" });
+      if (res.status === 422) {
+        setHint("认知数据不足。请先通过访谈或手动添加至少 3 条认知，再生成画像。");
+        return;
+      }
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.message ?? "生成失败");
+        throw new Error("生成失败");
       }
       await fetchPortrait();
     } catch (e) {
@@ -108,6 +113,12 @@ export function PortraitView() {
             >
               {synthesizing ? "生成中…" : "生成画像"}
             </button>
+            {hint && (
+              <p className="mt-3 text-xs leading-6 text-[#8a7a68]">{hint}</p>
+            )}
+            {error && (
+              <p className="mt-3 text-xs text-[#a07060]">{error}</p>
+            )}
           </div>
         </div>
 
@@ -128,10 +139,6 @@ export function PortraitView() {
             <p className="mt-3 text-xs text-[#8a7a68]">生成画像后将显示洞察</p>
           </div>
         ))}
-
-        {error && (
-          <p className="text-sm text-[#a07060]">{error}</p>
-        )}
       </div>
     );
   }
