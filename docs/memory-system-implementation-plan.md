@@ -6,7 +6,9 @@
 
 技术选型：pgvector 向量语义检索 + 火山引擎 Ark embedding API。
 
-分支：`feature/memory-vector-extension`
+> **状态：已完成，已合并进 main（PR #1, 2026-05-08）。远程 feature 分支已删除。**
+>
+> **后续演进（2026-05-09）：** 画像页已从 CRUD 列表重构为三视图结构（画像/记忆库/演变），新增 `PortraitSnapshot` 模型和 AI 合成服务。详见 `docs/plans/2026-05-09-profile-page-redesign.md` 和 `docs/handoff.md`。
 
 ---
 

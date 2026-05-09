@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-05`
+最后更新：`2026-05-09`
 
 ## 1. 系统概览
 
@@ -16,7 +16,7 @@
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
 - 后端：Next.js Route Handlers + service layer
-- 数据库：PostgreSQL + Prisma
+- 数据库：PostgreSQL + Prisma + pgvector（记忆系统向量嵌入）
 - AI：provider adapter + structured output 校验
 
 ## 2. 当前分层
@@ -45,6 +45,10 @@
   - 兼容旧 joy 命名的别名路由
 - `src/app/api/transcribe`
   - 当前仍是 stub
+- `src/app/profile`
+  - 用户画像页面，按维度分组展示 MemoryFact，支持查看、编辑、添加、删除
+- `src/app/api/profile`
+  - 画像 API：`GET`（分维度分组）、`POST`（手动添加）、`PATCH`（编辑）、`DELETE`（软删除）
 
 ### 功能层
 
@@ -58,10 +62,12 @@
   - `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
 - `src/features/happiness-score`
   - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
+  - `presentation.ts` 统一维护评分展示顺序与标签（健康→经济→人际→擅长→意志→热爱→美德→意义）
+  - 评分录入入口在访谈页独立 `happiness_score` 工作区，不再在分析页内联编辑
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
 - `src/components/analysis`
-  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、补录优先的评分工作台（左侧日期状态 / 8 项列表，右侧当前要素 `1..10` 刻度）、稀疏/持平样本提示、状态优先的本月热力图、当天追踪 drill-in，以及“本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
+  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、稀疏/持平样本提示、状态优先的本月热力图、当天追踪 drill-in，以及“本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`score` 分区当前是纯趋势阅读，不再内联评分编辑器。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -87,6 +93,16 @@
   - `narrative-service.ts` 是 `analysis.service.ts` 的真实依赖；提交分析页叙事改动时必须和 service 一起纳入变更集
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
+- `src/server/services/memory/memory-extraction.service.ts`
+  - 访谈结束后从会话数据中 AI 提取用户模式，去重后存入 `MemoryFact`，生成 pgvector 向量嵌入；fire-and-forget，失败静默记录日志
+- `src/server/services/memory/memory-retrieval.service.ts`
+  - 访谈问题生成时，从用户历史记忆中语义检索相关条目（pgvector 余弦相似度 Top-K），注入 AI prompt；embedding 不可用时降级为按维度 + confidence 排序
+- `src/server/services/memory/profile.service.ts`
+  - 画像 CRUD：`getAllProfiles`、`addProfileFact`（sourceType: user_added, confidence: 1.0）、`updateProfileFact`、`deleteProfileFact`（软删除）
+- `src/server/services/portrait/portrait-data.service.ts`
+  - 画像数据聚合：并行查询 MemoryFact、日历、分析、幸福分四个数据源，返回 `PortraitData` 结构
+- `src/server/services/portrait/portrait-synthesis.service.ts`
+  - 画像 AI 合成：调用 AI 生成跨维度总述 + 五维度洞察，结果缓存到 `PortraitSnapshot`；最低需 3 条 facts
 
 ### 持久化层
 
@@ -102,6 +118,11 @@
   - 维护 `DailyHappinessScore` 的日期查询、upsert 与 record 映射
 - `src/server/repositories/daily-journal.repository.ts`
   - 查询当天已保存维度日志，维护独立日级日志草稿和保存状态
+- `src/server/repositories/memory.repository.ts`
+  - 维护 `MemoryFact` 的 CRUD、文本去重（关键词重叠率 > 0.6）和向量操作
+  - 维护 `PortraitSnapshot` 的查询和创建（事务内先删旧再插入，只保留最新一条）
+- `src/lib/vector.ts`
+  - `formatVectorForPg()`、`findSimilarMemoryFacts()`（pgvector 余弦相似度查询）、`setMemoryFactEmbedding()`
 
 ## 3. 领域模型
 
@@ -185,11 +206,27 @@
 - 只承载评分事实，不复用五维日志或当天整合日志的表结构
 
 现实上：
-- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、`/analysis` 评分录入面板和评分趋势图
-- 保存只允许 Asia/Shanghai 口径下的今天和昨天；8 项必填且必须是 `1..10` 整数
+- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、访谈页独立评分工作区和分析页评分趋势图
+- 保存允许 Asia/Shanghai 口径下的所有非未来日期；8 项必填且必须是 `1..10` 整数
 - `/analysis` 已接入轻量 SVG 趋势图：总分平均走势和 8 要素单项切换走势，未评分日期断线，不补 0
 
-### 3.5 calendar 读模型
+### 3.5 画像与记忆
+
+`MemoryFact` 是长期记忆条目：
+- `dimension`（五维度之一）、`kind`（preference / pattern / trait / user_note）、`topicTags`、`summary`
+- `sourceType`：`ai_extracted`（访谈后 AI 自动提取）或 `user_added`（用户手动添加，confidence = 1.0）
+- `confidence`：AI 提取时由模型输出，用户添加时为 1.0
+- `embedding`：pgvector `vector(2048)`，fire-and-forget 生成
+- `evidenceEntryIds / evidenceSessionIds`：来源日志和会话引用
+- `deletedAt`：软删除
+
+`PortraitSnapshot` 是画像 AI 合成缓存：
+- `summary`：跨维度总述（AI 生成，100-200 字）
+- `dimensionInsights`：JSON，五维度各一段洞察
+- `factCount`：合成时的 fact 数量
+- 每次重新生成清除旧记录，只保留最新一条
+
+### 3.6 calendar 读模型
 
 当前已经落地并通过 HTTP 路由公开的记录日历读模型有：
 - `CalendarDayRecord`
@@ -277,7 +314,7 @@
 - 页面内已有上月 / 本月 / 下月切换（在 header toolbar 中）
 - 页面当前已展示：
   - `overview`：总览默认先给月度判断、评分可信度和一个“建议先看”的主行动，再提供评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条只做辅助快扫，区分维度记录日、成果保存日、待整合日和评分可信度
-  - `score`：幸福 8 要素评分默认入口已经改成补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填项不再默认停在 `5` 分；今天和昨天都补齐后，首屏才回到总分平均走势、8 要素快扫和单项细看。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只给轻提示文案
+  - `score`：幸福 8 要素评分分区当前是趋势阅读工作台（总分平均走势、8 要素快扫、单项走势）；评分录入迁移到访谈页顶部「当天评分」独立工作区。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只给轻提示文案
   - `rhythm`：本月状态优先热力图、最长连续记录 / 空档和当天 drill-in；`saved` 但 `stale` 的当天整合日志会被当成待更新来源，未来月份不会再被误算成整月空档
   - `insights`：本月判断 + 五维全景 + 维度之间 + 下一步；每个维度卡片同时带自然语言主题句、代表片段、评分联动和 drill-down
 - `section` 是视图选择状态：总览 / 评分 / 节奏 / 五维四个 tab 互斥渲染，同一时间只展示一个板块；切换 tab 或翻月后 `section` 保留在 URL 中
@@ -290,7 +327,7 @@
 - 当月份只有评分、没有任何已保存维度日志时，`rhythm` 不会伪造 `已整合`、密度结论或整月空档，`insights` 也不会伪造主线维度，而是显示明确空态
 - `insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会出现不同模块各指一个维度的矛盾
 - `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
-- 当今天是自然月 1 日时，`editableDates` 仍保留昨天，保证上月最后一天的评分在当前月入口可编辑
+- 当今天是自然月 1 日时，`editableDates` 仍保留昨天用于分析上下文展示，但不再驱动评分录入入口
 - 趋势图只做单月查看，不做跨月同比；生成式 AI 月度洞察仍未接入，当前 `insightsOverview` 仍是规则型解释层
 
 ## 4. 结构化数据面
