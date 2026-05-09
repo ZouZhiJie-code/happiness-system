@@ -2327,7 +2327,6 @@ export function InterviewShell() {
     }
 
     if (workspaceMode === "happiness_score") {
-      void returnToInterviewWorkspace();
       return;
     }
 

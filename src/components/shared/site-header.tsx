@@ -675,7 +675,7 @@ function SiteHeaderInner() {
                         key={item}
                         type="button"
                         onClick={() => handleDimensionChange(item)}
-                        disabled={isWorkspaceTransitioning || isHappinessScoreWorkspaceSelected}
+                        disabled={isWorkspaceTransitioning}
                         aria-pressed={isSelected}
                         aria-current={isSelected ? "step" : undefined}
                         aria-labelledby={labelId}
@@ -802,13 +802,7 @@ function SiteHeaderInner() {
                       ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
                       : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
                   )}
-                  aria-label={
-                    isDailyJournalWorkspaceSelected
-                      ? "当天评分（请先回到访谈）"
-                      : isHappinessScoreWorkspaceSelected
-                        ? "回到访谈"
-                        : "打开当天评分"
-                  }
+                  aria-label={isDailyJournalWorkspaceSelected ? "当天评分（请先回到访谈）" : "打开当天评分"}
                 >
                   <span
                     aria-hidden="true"
@@ -817,7 +811,7 @@ function SiteHeaderInner() {
                       !isHappinessScoreWorkspaceSelected && "opacity-50"
                     )}
                   />
-                  {isHappinessScoreWorkspaceSelected ? "回到访谈" : "当天评分"}
+                  当天评分
                 </button>
                 <button
                   type="button"

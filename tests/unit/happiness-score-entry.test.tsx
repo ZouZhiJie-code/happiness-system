@@ -52,7 +52,7 @@ describe("happiness score entry", () => {
 
     render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
 
-    const saveButton = screen.getByRole("button", { name: "保存评分" });
+    const saveButton = screen.getByRole("button", { name: "保存并退出" });
     expect(saveButton).toBeDisabled();
 
     deferred.resolve(
@@ -68,7 +68,7 @@ describe("happiness score entry", () => {
     );
 
     await waitFor(() => {
-      expect(saveButton).not.toBeDisabled();
+      expect(saveButton).toBeDisabled();
     });
   });
 
@@ -101,16 +101,16 @@ describe("happiness score entry", () => {
     }) as typeof fetch;
 
     const view = render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
-    const saveButton = screen.getByRole("button", { name: "保存评分" });
+    const saveButton = screen.getByRole("button", { name: "保存并退出" });
 
     await waitFor(() => {
-      expect(saveButton).not.toBeDisabled();
+      expect(saveButton).toBeDisabled();
     });
 
     view.rerender(<HappinessScoreEntry entryDate="2026-05-01" open={false} onClose={() => {}} />);
     view.rerender(<HappinessScoreEntry entryDate="2026-05-02" open onClose={() => {}} />);
 
-    expect(screen.getByRole("button", { name: "保存评分" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "保存并退出" })).toBeDisabled();
     expect(screen.getByText("正在读取这一天的已有评分…")).toBeInTheDocument();
   });
 
@@ -195,6 +195,55 @@ describe("happiness score entry", () => {
     fireEvent.click(screen.getByRole("button", { name: "人际5分" }));
     await waitFor(() => {
       expect(screen.getByText("当天评分 · 第 4/8 项 · 擅长")).toBeInTheDocument();
+    });
+  });
+
+  it("enables save-and-exit only after all 8 dimensions are scored", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/analysis/month?month=2026-05")) {
+        return new Response(
+          JSON.stringify({
+            scoreRecords: []
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url === "/api/happiness-score") {
+        return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
+
+    const saveButton = await screen.findByRole("button", { name: "保存并退出" });
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "健康6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 2/8 项 · 经济")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "经济6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 3/8 项 · 人际")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "人际6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 4/8 项 · 擅长")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "擅长6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 5/8 项 · 意志")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "意志6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 6/8 项 · 热爱")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "热爱6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 7/8 项 · 美德")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "美德6分" }));
+    await waitFor(() => expect(screen.getByText("当天评分 · 第 8/8 项 · 意义")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "意义6分" }));
+
+    await waitFor(() => {
+      expect(saveButton).not.toBeDisabled();
     });
   });
 });

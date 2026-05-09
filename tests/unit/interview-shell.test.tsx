@@ -1708,6 +1708,15 @@ describe("InterviewShell", () => {
         );
       }
 
+      if (url === "/api/happiness-score") {
+        return Promise.resolve(
+          new Response("{}", {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
       return defaultFetch!(input, init);
     });
 
@@ -1720,9 +1729,24 @@ describe("InterviewShell", () => {
 
     const scoreEntry = await screen.findByTestId("interview-happiness-score-entry");
     expect(within(scoreEntry).getByText("当天评分 · 第 1/8 项 · 健康")).toBeInTheDocument();
-    expect(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" })).toHaveAttribute("aria-pressed", "false");
+    expect(within(getDimensionBar()).getByRole("button", { name: "打开当天评分" })).toHaveAttribute("aria-pressed", "true");
 
-    fireEvent.click(within(scoreEntry).getByRole("button", { name: "收起" }));
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "健康6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 2/8 项 · 经济")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "经济6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 3/8 项 · 人际")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "人际6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 4/8 项 · 擅长")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "擅长6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 5/8 项 · 意志")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "意志6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 6/8 项 · 热爱")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "热爱6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 7/8 项 · 美德")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "美德6分" }));
+    await waitFor(() => expect(within(scoreEntry).getByText("当天评分 · 第 8/8 项 · 意义")).toBeInTheDocument());
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "意义6分" }));
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "保存并退出" }));
 
     await waitFor(() => {
       expect(screen.queryByTestId("interview-happiness-score-entry")).not.toBeInTheDocument();

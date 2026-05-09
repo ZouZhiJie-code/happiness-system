@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import {
@@ -54,14 +54,12 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const [saveError, setSaveError] = useState<string | null>(null);
   const jumpTimerRef = useRef<number | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
+  const tipDelayTimerRef = useRef<number | null>(null);
   const hasLocalEditsRef = useRef(false);
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
   const currentKey = currentItem.requestKey;
-  const completionCount = useMemo(
-    () => happinessScorePresentationItems.filter((item) => typeof scores[item.requestKey] === "number").length,
-    [scores]
-  );
+  const completionCount = happinessScorePresentationItems.filter((item) => typeof scores[item.requestKey] === "number").length;
 
   useEffect(() => {
     return () => {
@@ -70,6 +68,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       }
       if (noticeTimerRef.current) {
         window.clearTimeout(noticeTimerRef.current);
+      }
+      if (tipDelayTimerRef.current) {
+        window.clearTimeout(tipDelayTimerRef.current);
       }
     };
   }, []);
@@ -88,6 +89,10 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     if (noticeTimerRef.current) {
       window.clearTimeout(noticeTimerRef.current);
       noticeTimerRef.current = null;
+    }
+    if (tipDelayTimerRef.current) {
+      window.clearTimeout(tipDelayTimerRef.current);
+      tipDelayTimerRef.current = null;
     }
     setScores({});
     setTouchedScores({});
@@ -141,12 +146,27 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     };
   }, [entryDate, open]);
 
-  if (!open) {
-    return null;
-  }
-
+  const touchedCount = happinessScorePresentationItems.filter((item) => touchedScores[item.requestKey]).length;
   const selectedValue = touchedScores[currentKey] ? (scores[currentKey] ?? null) : null;
   const levelTip = getHappinessScoreLevelTip(selectedValue);
+  const canSaveAndExit = isCompleteScoreForm(scores) && touchedCount === total && !isLoadingExisting && !isSaving;
+
+  function findNextUnscoredIndex(nextScores: ScoreFormState, fromIndex: number) {
+    for (let offset = 1; offset <= total; offset += 1) {
+      const index = (fromIndex + offset) % total;
+      const key = happinessScorePresentationItems[index]?.requestKey;
+
+      if (!key) {
+        continue;
+      }
+
+      if (typeof nextScores[key] !== "number") {
+        return index;
+      }
+    }
+
+    return null;
+  }
 
   function handleSelectScore(value: number) {
     hasLocalEditsRef.current = true;
@@ -161,33 +181,35 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     }
 
     const currentLabel = currentItem.label;
-    const nextIndex = (currentIndex + 1) % total;
-    const nextLabel = happinessScorePresentationItems[nextIndex]?.label ?? currentLabel;
-    setTransitionNotice(`已记录 ${currentLabel} ${value} 分，进入下一项：${nextLabel}`);
-
-    setScores((current) => {
-      const next = {
-        ...current,
-        [currentKey]: value
-      };
-      return next;
-    });
+    const nextScores = {
+      ...scores,
+      [currentKey]: value
+    };
+    const nextIndex = findNextUnscoredIndex(nextScores, currentIndex);
+    setScores(nextScores);
     setTouchedScores((current) => ({
       ...current,
       [currentKey]: true
     }));
 
-    jumpTimerRef.current = window.setTimeout(() => {
-      setCurrentIndex(nextIndex);
+    if (nextIndex === null) {
+      setTransitionNotice(`已记录 ${currentLabel} ${value} 分，8项已完成，可保存并退出。`);
       setActiveTipValue(null);
-    }, 200);
+    } else {
+      const nextLabel = happinessScorePresentationItems[nextIndex]?.label ?? currentLabel;
+      setTransitionNotice(`已记录 ${currentLabel} ${value} 分，进入下一项：${nextLabel}`);
+      jumpTimerRef.current = window.setTimeout(() => {
+        setCurrentIndex(nextIndex ?? currentIndex);
+        setActiveTipValue(null);
+      }, 200);
+    }
 
     noticeTimerRef.current = window.setTimeout(() => {
       setTransitionNotice(null);
     }, 1200);
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+  function handleKeyDown(event: KeyboardEvent | React.KeyboardEvent<HTMLDivElement>) {
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.repeat) {
       return;
     }
@@ -202,9 +224,41 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     handleSelectScore(key === "0" ? 10 : Number(key));
   }
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function onWindowKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      const isTypingTarget =
+        Boolean(target?.isContentEditable) ||
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select";
+
+      if (isTypingTarget) {
+        return;
+      }
+
+      handleKeyDown(event);
+    }
+
+    window.addEventListener("keydown", onWindowKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onWindowKeyDown);
+    };
+  }, [currentIndex, currentKey, open, scores]);
+
+  if (!open) {
+    return null;
+  }
+
   async function handleSave() {
     if (!isCompleteScoreForm(scores)) {
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -228,39 +282,45 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       }
 
       setSaveNotice("当天评分已保存");
+      return true;
     } catch {
       setSaveError("评分保存失败，请稍后再试。");
+      return false;
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <section
-      className="mt-3 rounded-[20px] border border-[rgba(130,87,46,0.24)] bg-[rgba(255,249,240,0.92)] px-4 py-4 shadow-[0_12px_26px_rgba(114,77,41,0.12)]"
-      data-testid="interview-happiness-score-entry"
-      onKeyDown={handleKeyDown}
-    >
+    <section className="mt-3 rounded-[20px] border border-[rgba(130,87,46,0.24)] bg-[rgba(255,249,240,0.92)] px-4 py-4 shadow-[0_12px_26px_rgba(114,77,41,0.12)]" data-testid="interview-happiness-score-entry">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[0.82rem] font-medium text-[#4a3829]">
           当天评分 · 第 {currentIndex + 1}/{total} 项 · {currentItem.label}
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full border border-[rgba(150,105,61,0.18)] bg-[rgba(255,252,247,0.8)] px-2.5 py-1 text-[0.72rem] text-[#73583e] transition hover:bg-[rgba(255,252,247,0.96)]"
-        >
-          收起
-        </button>
       </div>
       <p aria-live="polite" className="mt-1.5 text-[0.7rem] text-[#7a5d42]">
         {transitionNotice ?? "已进入评分模式。按 1-9 或 0（10分）可快速录入。"}
       </p>
+      <div className="mt-2 rounded-[12px] border border-[rgba(150,105,61,0.16)] bg-[rgba(255,252,247,0.75)] px-2.5 py-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
+          {happinessScorePresentationItems.map((item) => {
+            const scoreValue = scores[item.requestKey];
+            const touched = Boolean(touchedScores[item.requestKey]);
+            const isCurrent = item.requestKey === currentKey;
+
+            return (
+              <p key={item.requestKey} className={cn("text-[0.72rem]", isCurrent ? "font-semibold text-[#4a3829]" : "text-[#7a5d42]")}>
+                {item.label}：{touched && typeof scoreValue === "number" ? `${scoreValue}分` : "未评分"}
+              </p>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="mt-3">
         <div className="mb-2 flex items-center justify-between text-[0.72rem] text-[#83684d]">
           <span>{currentItem.hint}</span>
-          <span className="font-mono tabular-nums">{completionCount}/8</span>
+          <span className="font-mono tabular-nums">{touchedCount}/8 已评分</span>
         </div>
         <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => {
@@ -273,10 +333,36 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
                 key={value}
                 type="button"
                 onClick={() => handleSelectScore(value)}
-                onMouseEnter={() => setActiveTipValue(value)}
-                onMouseLeave={() => setActiveTipValue(null)}
-                onFocus={() => setActiveTipValue(value)}
-                onBlur={() => setActiveTipValue((current) => (current === value ? null : current))}
+                onMouseEnter={() => {
+                  if (tipDelayTimerRef.current) {
+                    window.clearTimeout(tipDelayTimerRef.current);
+                  }
+                  tipDelayTimerRef.current = window.setTimeout(() => {
+                    setActiveTipValue(value);
+                  }, 1000);
+                }}
+                onMouseLeave={() => {
+                  if (tipDelayTimerRef.current) {
+                    window.clearTimeout(tipDelayTimerRef.current);
+                    tipDelayTimerRef.current = null;
+                  }
+                  setActiveTipValue(null);
+                }}
+                onFocus={() => {
+                  if (tipDelayTimerRef.current) {
+                    window.clearTimeout(tipDelayTimerRef.current);
+                  }
+                  tipDelayTimerRef.current = window.setTimeout(() => {
+                    setActiveTipValue(value);
+                  }, 1000);
+                }}
+                onBlur={() => {
+                  if (tipDelayTimerRef.current) {
+                    window.clearTimeout(tipDelayTimerRef.current);
+                    tipDelayTimerRef.current = null;
+                  }
+                  setActiveTipValue((current) => (current === value ? null : current));
+                }}
                 className={cn(
                   "relative h-11 rounded-[12px] border font-mono text-[0.84rem] tabular-nums transition",
                   active
@@ -312,11 +398,16 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         </div>
         <button
           type="button"
-          onClick={() => void handleSave()}
-          disabled={isLoadingExisting || !isCompleteScoreForm(scores) || isSaving}
+          onClick={async () => {
+            const saved = await handleSave();
+            if (saved) {
+              onClose();
+            }
+          }}
+          disabled={!canSaveAndExit}
           className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.8rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
         >
-          {isSaving ? "保存中" : "保存评分"}
+          {isSaving ? "保存中" : "保存并退出"}
         </button>
       </div>
     </section>
