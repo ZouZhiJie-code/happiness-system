@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from "react";
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import {
   getFirstUnfilledHappinessScoreIndex,
-  getHappinessScoreLevelTip,
   happinessScorePresentationItems
 } from "@/features/happiness-score/presentation";
 import type { HappinessScoreRequestKey } from "@/features/happiness-score/types";
@@ -47,14 +46,12 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const [touchedScores, setTouchedScores] = useState<Partial<Record<HappinessScoreRequestKey, true>>>({});
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [activeTipValue, setActiveTipValue] = useState<number | null>(null);
   const [transitionNotice, setTransitionNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const jumpTimerRef = useRef<number | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
-  const tipDelayTimerRef = useRef<number | null>(null);
   const hasLocalEditsRef = useRef(false);
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
@@ -68,9 +65,6 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       }
       if (noticeTimerRef.current) {
         window.clearTimeout(noticeTimerRef.current);
-      }
-      if (tipDelayTimerRef.current) {
-        window.clearTimeout(tipDelayTimerRef.current);
       }
     };
   }, []);
@@ -90,14 +84,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       window.clearTimeout(noticeTimerRef.current);
       noticeTimerRef.current = null;
     }
-    if (tipDelayTimerRef.current) {
-      window.clearTimeout(tipDelayTimerRef.current);
-      tipDelayTimerRef.current = null;
-    }
     setScores({});
     setTouchedScores({});
     setCurrentIndex(0);
-    setActiveTipValue(null);
     setTransitionNotice(null);
     setIsLoadingExisting(true);
     setSaveError(null);
@@ -147,11 +136,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   }, [entryDate, open]);
 
   const touchedCount = happinessScorePresentationItems.filter((item) => touchedScores[item.requestKey]).length;
-  const selectedValue = touchedScores[currentKey] ? (scores[currentKey] ?? null) : null;
-  const levelTip = getHappinessScoreLevelTip(selectedValue);
   const canSaveAndExit = isCompleteScoreForm(scores) && touchedCount === total && !isLoadingExisting && !isSaving;
 
-  function findNextUnscoredIndex(nextScores: ScoreFormState, fromIndex: number) {
+  function findNextUntouchedIndex(nextTouchedScores: Partial<Record<HappinessScoreRequestKey, true>>, fromIndex: number) {
     for (let offset = 1; offset <= total; offset += 1) {
       const index = (fromIndex + offset) % total;
       const key = happinessScorePresentationItems[index]?.requestKey;
@@ -160,7 +147,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         continue;
       }
 
-      if (typeof nextScores[key] !== "number") {
+      if (!nextTouchedScores[key]) {
         return index;
       }
     }
@@ -181,26 +168,25 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     }
 
     const currentLabel = currentItem.label;
-    const nextScores = {
+    const nextScores: ScoreFormState = {
       ...scores,
       [currentKey]: value
     };
-    const nextIndex = findNextUnscoredIndex(nextScores, currentIndex);
-    setScores(nextScores);
-    setTouchedScores((current) => ({
-      ...current,
+    const nextTouchedScores: Partial<Record<HappinessScoreRequestKey, true>> = {
+      ...touchedScores,
       [currentKey]: true
-    }));
+    };
+    const nextIndex = findNextUntouchedIndex(nextTouchedScores, currentIndex);
+    setScores(nextScores);
+    setTouchedScores(nextTouchedScores);
 
     if (nextIndex === null) {
       setTransitionNotice(`已记录 ${currentLabel} ${value} 分，8项已完成，可保存并退出。`);
-      setActiveTipValue(null);
     } else {
       const nextLabel = happinessScorePresentationItems[nextIndex]?.label ?? currentLabel;
       setTransitionNotice(`已记录 ${currentLabel} ${value} 分，进入下一项：${nextLabel}`);
       jumpTimerRef.current = window.setTimeout(() => {
         setCurrentIndex(nextIndex ?? currentIndex);
-        setActiveTipValue(null);
       }, 200);
     }
 
@@ -319,50 +305,18 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
 
       <div className="mt-3">
         <div className="mb-2 flex items-center justify-between text-[0.72rem] text-[#83684d]">
-          <span>{currentItem.hint}</span>
+          <span>{currentItem.label}</span>
           <span className="font-mono tabular-nums">{touchedCount}/8 已评分</span>
         </div>
         <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => {
-            const active = selectedValue === value;
-            const tip = getHappinessScoreLevelTip(value);
-            const tipVisible = activeTipValue === value;
+            const active = touchedScores[currentKey] ? scores[currentKey] === value : false;
 
             return (
               <button
                 key={value}
                 type="button"
                 onClick={() => handleSelectScore(value)}
-                onMouseEnter={() => {
-                  if (tipDelayTimerRef.current) {
-                    window.clearTimeout(tipDelayTimerRef.current);
-                  }
-                  tipDelayTimerRef.current = window.setTimeout(() => {
-                    setActiveTipValue(value);
-                  }, 1000);
-                }}
-                onMouseLeave={() => {
-                  if (tipDelayTimerRef.current) {
-                    window.clearTimeout(tipDelayTimerRef.current);
-                    tipDelayTimerRef.current = null;
-                  }
-                  setActiveTipValue(null);
-                }}
-                onFocus={() => {
-                  if (tipDelayTimerRef.current) {
-                    window.clearTimeout(tipDelayTimerRef.current);
-                  }
-                  tipDelayTimerRef.current = window.setTimeout(() => {
-                    setActiveTipValue(value);
-                  }, 1000);
-                }}
-                onBlur={() => {
-                  if (tipDelayTimerRef.current) {
-                    window.clearTimeout(tipDelayTimerRef.current);
-                    tipDelayTimerRef.current = null;
-                  }
-                  setActiveTipValue((current) => (current === value ? null : current));
-                }}
                 className={cn(
                   "relative h-11 rounded-[12px] border font-mono text-[0.84rem] tabular-nums transition",
                   active
@@ -373,15 +327,6 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
                 aria-pressed={active}
               >
                 {value}
-                {tipVisible ? (
-                  <span
-                    role="tooltip"
-                    className="pointer-events-none absolute -top-11 left-1/2 w-28 -translate-x-1/2 rounded-[10px] border border-[rgba(111,74,38,0.2)] bg-[rgba(255,250,243,0.98)] px-2 py-1 text-[0.64rem] leading-4 text-[#4f3b2b] shadow-[0_8px_20px_rgba(109,72,35,0.16)]"
-                  >
-                    <span className="block font-medium text-[#3f2f22]">{tip.label}</span>
-                    <span className="block text-[#755c43]">{tip.detail}</span>
-                  </span>
-                ) : null}
               </button>
             );
           })}
@@ -390,8 +335,6 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[0.72rem] text-[#7f6247]">{levelTip.label}</p>
-          <p className="text-[0.72rem] text-[#8d7155]">{levelTip.detail}</p>
           {isLoadingExisting ? <p className="text-[0.72rem] text-[#8d7155]">正在读取这一天的已有评分…</p> : null}
           {saveNotice ? <p className="text-[0.72rem] text-[#446243]">{saveNotice}</p> : null}
           {saveError ? <p className="text-[0.72rem] text-[#8a3f25]">{saveError}</p> : null}
