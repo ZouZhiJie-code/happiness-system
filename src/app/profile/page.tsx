@@ -1,5 +1,5 @@
 import { StatusPill } from "@/components/shared/status-pill";
-import { ProfileContent } from "@/components/profile/profile-content";
+import { ProfileShell } from "@/components/profile/profile-shell";
 
 export default function ProfilePage() {
   return (
@@ -16,7 +16,7 @@ export default function ProfilePage() {
               系统从访谈中提取出你的长期模式和偏好，也会记录你主动添加的画像条目。这些认知会在后续访谈中自然融入提问，不会被直接提及。
             </p>
           </div>
-          <ProfileContent />
+          <ProfileShell />
         </div>
       </section>
     </div>

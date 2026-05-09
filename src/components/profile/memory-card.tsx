@@ -20,6 +20,8 @@ export function MemoryCard({ fact, onUpdate, onDelete }: MemoryCardProps) {
   const [editSummary, setEditSummary] = useState(fact.summary);
   const [editTags, setEditTags] = useState(fact.topicTags.join(", "));
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
 
   async function handleSave() {
     setSaving(true);
@@ -98,22 +100,61 @@ export function MemoryCard({ fact, onUpdate, onDelete }: MemoryCardProps) {
           )}
         </div>
 
-        <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#6a5e53] transition-colors hover:bg-[rgba(255,249,239,0.6)]"
-            onClick={() => setEditing(true)}
-          >
-            编辑
-          </button>
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#a07060] transition-colors hover:bg-[rgba(255,230,220,0.4)]"
-            onClick={() => onDelete(fact.id)}
-          >
-            删除
-          </button>
-        </div>
+        {deleting ? (
+          <div className="flex items-center gap-2">
+            {deleteError ? (
+              <span className="text-[0.65rem] text-[#a07060]">删除失败</span>
+            ) : (
+              <span className="text-[0.65rem] text-[#a07060]">确认删除？</span>
+            )}
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#a07060] transition-colors hover:bg-[rgba(255,230,220,0.4)]"
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                setDeleteError(false);
+                try {
+                  await onDelete(fact.id);
+                } catch {
+                  setDeleteError(true);
+                } finally {
+                  setSaving(false);
+                  if (!deleteError) setDeleting(false);
+                }
+              }}
+            >
+              {saving ? "…" : "是"}
+            </button>
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#6a5e53] transition-colors hover:bg-[rgba(255,249,239,0.6)]"
+              disabled={saving}
+              onClick={() => { setDeleting(false); setDeleteError(false); }}
+            >
+              否
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#6a5e53] transition-colors hover:bg-[rgba(255,249,239,0.6)]"
+              onClick={() => setEditing(true)}
+              disabled={saving}
+            >
+              编辑
+            </button>
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#a07060] transition-colors hover:bg-[rgba(255,230,220,0.4)]"
+              onClick={() => setDeleting(true)}
+              disabled={saving}
+            >
+              删除
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
