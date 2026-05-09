@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-05`
+最后更新：`2026-05-09`
 
 ## 1. 当前阶段结论
 
@@ -47,11 +47,13 @@
 - 用户边界低压收束：材料足够时 partial，材料不足时“只补一句 / 换一个片段 / 先退出”
 - 开发态 `清除对话记录` 按钮：当前维度可一键重开新访谈
 - 分析页「月度驾驶舱」改版（2026-05-04）：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分待补状态、节奏待整合/待成文状态、主线维度名）；`overview` 总览首屏改为月度判断、评分可信度和“建议先看”主行动，评分 / 节奏 / 五维只作为轻入口，维度记录日、成果保存日、待整合日和评分可信度收到底部证据条；当前月评分保存成功后，toolbar chip 会立即刷新；`rhythm` 的节奏摘要当前收成底部 `4` 格 summary board；五维板块展示 topTags 高频线索 chips
-- 分析页 `rhythm/score` 跟进（2026-05-04 晚）：`rhythm` 已切到状态优先热力工作台，`saved` 但来源签名失配的当天整合日志会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`；未来月份不会再被误算成整月 `最长空档`。评分区当前改成补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏才回到趋势阅读。只有在至少 2 天评分且确实存在差异时，才显示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或全项持平时只保留“仅供参考”的轻提示。未来月份的总览首屏不会再把用户送去今天的访谈，而会提示回到当前月份；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会互相打架。
+- 分析页 `rhythm/score` 跟进（2026-05-04 晚）：`rhythm` 已切到状态优先热力工作台，`saved` 但来源签名失配的当天整合日志会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`；未来月份不会再被误算成整月 `最长空档`。评分区当前是趋势阅读工作台（总分走势 / 8 要素快扫 / 单项走势），评分录入入口已迁到访谈页顶部「当天评分」独立工作区。只有在至少 2 天评分且确实存在差异时，才显示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或全项持平时只保留“仅供参考”的轻提示。未来月份总览首屏不会再把用户送去今天访谈，而会提示回到当前月份；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片共用同一套 quiet lagging 维度排序。
 - 分析页 `insights` 跟进（2026-05-04 深夜）：`insights` 已从”主线维度 + 浮现/安静维度”改成”本月判断 + 五维全景 + 维度之间 + 下一步”；每个维度卡片都会显示自然语言主题句、代表片段、评分联动和 drill-down。`stale` 的当天整合日志现在会优先进入 `watchpoint`，即使当天已经没有任何 `saved` 来源，也不会从分析里消失；月初只出现一次的维度记录会保持 `starting`，不再被误写成”前面露过头”。
 - 分析页叙事驱动升级（2026-05-05）：分析页从数据展示升级为叙事驱动的结构化报告。`AnalysisNarrative` 类型（`overviewNarrative / dimensionTheses / insightCards`）已落地，`narrative-service.ts` 提供确定性占位叙事生成（预留 AI 接入口，降级到模板文本）。`overview` 总览用 `SummaryHero` 替代统计卡 + `NarrativeInsightCard` 洞察卡片 + `OverviewAnchorCTA` 数据锚点；评分趋势高亮卡自动关联维度日志上下文（如「你在『改进』维度记录 8 天，常出现『睡眠』」），评分趋势图数据点可点击弹出 `ScorePointDetailCard` 当日日志详情卡；`rhythm` 选中日面板新增日志预览区（标题 + 前两行 + 日历日链接），tooltip 显示日志整合状态；`insights` 维度主题优先使用 `narrative.dimensionTheses`，证据区增加日历日链接。`dailyCoverage` 现在携带 `journalTitle` 和 `contentPreview`，`dailyJournal` 的 `title` 和 `content` 已在 repository 层暴露。
 - 分析页叙事驱动补丁（2026-05-05）：`SummaryHero` 不再无条件优先使用 `narrative.overviewNarrative`。只有 narrative 足够表达当前状态时才覆盖模板文案；未来月份空态、待整合日、只有评分未成文、没有已保存日志这些场景会继续保留原有的状态判断和动作导向。`ScorePointDetailCard` 也已拆分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”三种状态，避免把待整合日误报成空白日。`src/features/analysis/narrative-service.ts` 需要和 `analysis.service.ts` 一起提交，干净 checkout 才不会因为模块缺失构建失败。
-- opening-only 会话状态补丁（2026-05-05）：只有 opening assistant、`turnCount = 0` 且没有用户回复的空会话，不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍保留在库里，但不会继续污染当天状态。
+- 分析页评分 chip 与测试边界补丁（2026-05-09）：`AnalysisToolbar` 的评分 contextual chip 文案统一为 `暂无评分 / N天已评分`；Vitest 主仓回归默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**`、`.claude/worktrees/**`，避免历史 worktree 测试噪声污染 `npm test` 结果。
+- opening-only 会话状态补丁（2026-05-05）：只有 opening assistant、`turnCount = 0` 且没有用户回复的空会话，不再把 header 当前维度、calendar 当天状态或相关统计点亮成”进行中”；这类空开场 session 仍保留在库里，但不会继续污染当天状态。
+- 记忆系统（用户画像）合并（2026-05-08）：`feature/memory-vector-extension` 分支已通过 PR #1 合并进 main，远程分支已删除。功能包含：pgvector 向量嵌入（`vector(2048)`）、AI 自动从访谈中提取用户模式（fire-and-forget）、语义检索注入访谈 prompt（Top-K 余弦相似度，降级为关键词排序）、独立 `/profile` 页面（查看/编辑/添加/删除画像，按五维度分组，主题标签筛选）、`GET/POST/PATCH/DELETE /api/profile` API。功能当前由 `memoryEnabled` 设置项控制，默认关闭。新环境变量 `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 已加入 `.env.example`。新测试文件存在类型兼容问题（`JoySnapshot` 的 `confidence` 字段、`JoyEntryDraft` 的 `source` 字段），需要修复后回归才能完全通过。
 
 ### joy 理论对齐
 
@@ -193,7 +195,7 @@
 - `/calendar` 月视图、周视图、日视图与 deep link 已落地
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大，访谈和 calendar 业务组用 `｜` 分隔
 - `SiteHeader` 现在会把真实 header 高度同步到 `--site-header-viewport-offset`；calendar / analysis / settings 的首屏工作区会按实际 header 高度后的剩余视口布局，小屏、多行 toolbar 或 header 换行时不再因为顶部 offset 写死而出现底部假留白或双滚动
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页已改为 tab 互斥视图：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；`overview` 总览首屏先给月度判断、评分可信度和一个“建议先看”的主行动，再展示评分 / 节奏 / 五维轻入口与底部证据条；正文区按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；未来日期的热力区 drill-down 只保留 `查看当天`，不开放开始/继续访谈；`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`，即使当天已没有 `saved` 来源也仍会算进待处理；未来月份不会再把整个月误算成 `最长空档`。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示。`insights` 已改成“本月判断 + 五维全景 + 维度之间 + 下一步”，watchpoint 优先提示 `stale` 整合日志，月初单次记录保持 `starting`，不再被误写成“已经退下去”。`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 toolbar chip 会立即刷新；空数据月份现在直接显示真实空态，不再使用示意填充，只有评分没有维度日志的月份也不会伪造 `已整合`、密度结论或 `主线维度`
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页已改为 tab 互斥视图：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；`overview` 总览首屏先给月度判断、评分可信度和一个“建议先看”的主行动，再展示评分 / 节奏 / 五维轻入口与底部证据条；正文区按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。分析页回到维度访谈的 drill-down 链接会保留对应 `entryDate`；未来日期热力区 drill-down 只保留 `查看当天`；`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`，即使当天已没有 `saved` 来源也仍会算进待处理；未来月份不会再把整个月误算成 `最长空档`。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示。`insights` 已改成“本月判断 + 五维全景 + 维度之间 + 下一步”，watchpoint 优先提示 `stale` 整合日志，月初单次记录保持 `starting`。`PUT /api/happiness-score` 允许保存所有非未来日期，且当前月评分保存成功后 toolbar chip 会立即刷新；空数据月份直接显示真实空态，不再使用示意填充。
   - calendar 页面当前优先首屏工作区；超量内容进入 pane 内局部滚动
   - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，小屏是月历主体在上、当天检查面板在下，右侧/下方面板有 `查看当天` 日期级入口
   - 月格当前固定渲染 6 行 42 格，loading skeleton 也保持 42 格，保证每个月份和加载前后的网格高度一致
@@ -265,13 +267,13 @@
 
 ## 6. 当前验证基线
 
-截至 `2026-05-05`，本地已验证：
+截至 `2026-05-08`，本地已验证：
 - `npx tsc --noEmit`
 - `npm test`
 
 测试结果：
-- `40` 个测试文件
-- `406` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则
+- `44` 个测试文件
+- `473` 个测试；`npx tsc --noEmit` 有 `2` 个类型错误（memory 测试文件中的类型兼容问题），`npm test` 有 `11` 个失败（含 `calendar-presentation.test.ts` 旧规则断言和 memory 相关测试类型问题）
 
 已覆盖的关键回归面：
 - 阶段推进

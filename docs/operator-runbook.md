@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-04`
+最后更新：`2026-05-09`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -16,6 +16,7 @@
 | `VOLCENGINE_ARK_ENDPOINT_ID` | Ark endpoint |
 | `VOLCENGINE_ARK_BASE_URL` | Ark base URL |
 | `APP_URL` | 前端访问地址 |
+| `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
 
 当前默认本地值示例：
 
@@ -53,7 +54,24 @@ npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/202
 - 该 migration 会先补列，再把历史 `entryDate` 回填为 `startedAt`
 - 当前 `prisma migrate dev` 在本仓库的 shadow DB 链路上还有历史 migration 问题，不是这次 `entryDate` 改动单独引起的
 
-### 2.3 启动开发服务器
+### 2.3 记忆系统依赖（可选）
+
+如果需要启用记忆系统（`memoryEnabled = true`），需额外安装 pgvector 扩展：
+
+```bash
+brew install pgvector       # macOS
+CREATE EXTENSION IF NOT EXISTS vector;  # 数据库
+```
+
+并配置 embedding endpoint：
+
+```bash
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="your-embedding-endpoint-id"
+```
+
+> pgvector 向量维度 2048 超过 HNSW 索引的 2000 维限制，当前使用顺序扫描。数据量 < 200 条时性能足够。
+
+### 2.4 启动开发服务器
 
 ```bash
 npm run dev
@@ -137,27 +155,29 @@ npm run dev
 24. 预期：总览首屏会提示“这个月还没到来”并提供 `回到本月`，不会出现 `开始记录`
 25. 在热力图里点一个未来日期
 26. 预期：右侧只保留 `查看当天`，不会出现 `开始这一天的记录 / 继续当天记录`
-27. 在当前月找到 `幸福 8 要素评分` 模块
-28. 预期：左侧先出现今天 / 昨天状态、填写进度和 8 项列表；右侧只编辑当前要素的 `1..10` 刻度，未填项不会默认停在 `5`
-29. 预期：今天 / 昨天可切换；已有评分会回填，未填完整时保存按钮禁用
-30. 点击任一 `1..10` 刻度按钮
-31. 预期：当前要素分数立即更新；保存仍保持禁用，直到 8 项全部填完
-32. 当今天和昨天都补齐后
-33. 预期：评分区首屏回到趋势阅读，能看到 `总分平均走势 / 8 项快扫 / 单项走势`，未评分日期断线，不补 0
-34. 如果当前月只有 `1` 天评分，或多天但 `8` 项评分完全持平
-35. 预期：不显示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，而是显示“样本/差异不足，仅供参考”的提示
-36. 点击任一 8 要素快扫按钮
-37. 预期：单项走势切换到对应要素，URL 的 `month` 不变
-38. 保存完整评分
-39. 预期：请求 `PUT /api/happiness-score` 成功，页面重新拉取 `/api/analysis/month` 并保留最新分数，趋势图同步更新；header toolbar 的评分 contextual chip 会刷新到最新待补状态
-40. 切到一个没有已保存记录的旧月份
-41. 预期：`overview / score / rhythm / insights` 视图都能稳定打开，并显示真实空态；不应出现示意填充或伪造数据
-42. 切到一个“只有评分、没有已保存维度日志”的月份
-43. 预期：`rhythm` 会把对应日期保留在 `只评未记 / 待成文` 语义，不会伪造 `已整合`、密度结论或整月空档；`insights` 显示空态，不出现伪造的 `主线维度`
-44. 如果某一天先保存了完整日志，再新增或更新同日 `saved` 维度日志
-45. 预期：`rhythm` 会把这一天重新标成 `待更新 / 待整合`，并提供更新完整日志入口，而不是继续显示 `已整合`
-46. 如果同一天所有来源维度日志后来都回到了 `draft`，只剩一篇 `stale` 的当天整合日志
-47. 预期：`rhythm` 仍把这一天算进待处理；切到 `insights` 后，`watchpoint` 会优先提示“完整日志已经过时，需要重新整理”，而不是被安静维度或评分提示盖过去
+27. 进入任意日期访谈页，在 header 点击 `当天评分`
+28. 预期：主工作区切到独立评分工作区（不是访谈消息流）；`当天评分` 按钮高亮，维度按钮不被整体置灰
+29. 预期：评分项首次进入无预选，点某个分值后才选中并自动跳到下一个“未评分维度”
+30. 预期：评分区显示 8 项打分总览（每项 `未评分/几分`）
+31. 预期：按键 `1..9` 和 `0`（=10分）可直接打分；悬浮提示延迟约 `1s` 才出现
+32. 在 8 项未全部打完前
+33. 预期：`保存并退出` 按钮置灰
+34. 8 项全部打完后点击 `保存并退出`
+35. 预期：请求 `PUT /api/happiness-score` 成功并返回访谈工作区，`entryDate` 不变
+36. 切回 `/analysis?month=当前月&section=score`
+37. 预期：评分区为趋势阅读（`总分平均走势 / 8 项快扫 / 单项走势`），不再出现评分编辑器
+38. 如果当前月只有 `1` 天评分，或多天但 `8` 项评分完全持平
+39. 预期：不显示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，而是显示“样本/差异不足，仅供参考”的提示
+40. 点击任一 8 要素快扫按钮
+41. 预期：单项走势切换到对应要素，URL 的 `month` 不变
+42. 切到一个没有已保存记录的旧月份
+43. 预期：`overview / score / rhythm / insights` 视图都能稳定打开，并显示真实空态；不应出现示意填充或伪造数据
+44. 切到一个“只有评分、没有已保存维度日志”的月份
+45. 预期：`rhythm` 会把对应日期保留在 `只评未记 / 待成文` 语义，不会伪造 `已整合`、密度结论或整月空档；`insights` 显示空态，不出现伪造的 `主线维度`
+46. 如果某一天先保存了完整日志，再新增或更新同日 `saved` 维度日志
+47. 预期：`rhythm` 会把这一天重新标成 `待更新 / 待整合`，并提供更新完整日志入口，而不是继续显示 `已整合`
+48. 如果同一天所有来源维度日志后来都回到了 `draft`，只剩一篇 `stale` 的当天整合日志
+49. 预期：`rhythm` 仍把这一天算进待处理；切到 `insights` 后，`watchpoint` 会优先提示“完整日志已经过时，需要重新整理”，而不是被安静维度或评分提示盖过去
 
 如果当前是在做 prompt / 访谈质量调试，而不是验恢复逻辑：
 1. 可以直接点顶部 `清除对话记录`
@@ -259,9 +279,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-05`，当前基线是：
-- `40` 个测试文件
-- `406` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则
+截至 `2026-05-09`，当前基线是：
+- `npm test`（Vitest）主仓通过：`47` 个测试文件、`491` 个测试
+- `npx tsc --noEmit` 仍有类型错误（主要集中在 memory / interview 相关类型）
+- `npm run lint` 仍有既有 `no-explicit-any` 等问题（主要集中在 repositories/settings/memory 相关文件）
+- Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 5. 高频故障排查
 
@@ -493,4 +515,4 @@ npm run dev
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，`overview` 只在默认视图内显示月度判断、评分可信度、“建议先看”主行动、轻入口和证据条，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，但热力图未来日期的 drill-down 只保留 `查看当天`，不开放开始/继续访谈；当前月 `最长空档` 会排除未来日期；`rhythm` 与 `insights` 现在都会把 `stale` 的当天整合日志视为待处理，即使当天已没有任何 `saved` 来源也不会漏掉；`insights` 里的单次早期记录会保持 `starting`，不会被写成“前面露过头”。`PUT /api/happiness-score` 只允许保存今天和昨天，且当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新；生成式 AI 月度洞察仍未接入
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，`overview` 只在默认视图内显示月度判断、评分可信度、“建议先看”主行动、轻入口和证据条，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，未来日期热力区 drill-down 只保留 `查看当天`；当前月 `最长空档` 会排除未来日期；`rhythm` 与 `insights` 现在都会把 `stale` 的当天整合日志视为待处理，即使当天已没有任何 `saved` 来源也不会漏掉。`PUT /api/happiness-score` 允许保存所有非未来日期；当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新。评分录入入口已迁移到访谈页顶部「当天评分」独立工作区，分析页评分分区保留趋势阅读。生成式 AI 月度洞察仍未接入

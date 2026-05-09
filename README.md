@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-05`，这个仓库的真实状态是：
+截至 `2026-05-09`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -11,7 +11,8 @@
 - 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质检现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 quality gate；这层内部解释不能直接写进用户可见正文或 fallback draft。`joy` 质量门接受语义等价改写，但会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类内部理论腔和抽象收尾。
 - `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` stitched supporting-scene 的 loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
+- 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
+- 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
@@ -24,7 +25,7 @@
 - opening-only 空会话（只有 opening assistant、`turnCount = 0` 且没有用户回复）不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍会保留在库里，但不会继续污染当天状态。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，当前选中维度的 live progress 会被压在 `88%` 以下，不会被历史 `draftGenerationUnlocked` 顶回 ready 状态。
 - 首页已重构为品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记心有所归”；文案与图片配置集中在 `src/content/homepage.ts`，当前已接入 `public/homepage/*` 本地图片，并把 Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化广告片布局，首页木纹背景也已调成上浅下深。
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改为 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；正文区按 `section` 只渲染对应板块；缺失 `section` 时默认切到 `overview` 总览视图，切换 tab 或翻月后 `section` 保留在 URL 中。分析页从数据展示升级为叙事驱动的结构化报告：`overview` 总览现在用 `SummaryHero` 月度判断面板替代统计卡，AI 叙事生成服务（`narrative-service.ts`）为月度概览、维度主题和洞察卡片提供文本，当前为确定性占位，预留 AI 接入口；只有在 narrative 足够表达当前状态时，`SummaryHero` 才会用它覆盖模板文案，未来月份空态、待整合日、只有评分未成文、没有已保存日志这些场景会继续保留原有状态判断。`overview` 还会展示洞察卡片（趋势/关联/异常类型 + 证据 + 关联日期链接）和底部数据锚点快扫。评分区趋势高亮卡（`长期偏高 / 最常掉下来 / 波动最大`）现在会自动关联维度日志上下文（如「你在『改进』维度记录 8 天，常出现『睡眠』」），评分趋势图的数据点可点击，底部浮出当日详情卡（当天均分 + 日志标题/预览 + 跳转日历日视图链接）；当日详情会区分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”，不再把待整合日误报成空白日。`rhythm` 热力图的选中日面板新增日志预览区（标题 + 前两行 + 查看完整日志链接），无日志但有 entries 的日子显示信号提示；热力图 tooltip 现在也显示日志整合状态。`insights` 的维度主题优先使用 AI 叙事中的 `dimensionTheses`（降级到模板文本），证据区每条增加日历日链接。评分保存接口只允许写入 Asia/Shanghai 口径下的今天和昨天，且当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新；`insights` 的 headline / watchpoint 和”评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会互相打架。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前是 tab 互斥视图的月度复盘工作台；`score` 分区现在是纯趋势阅读（总分走势 / 8 要素快扫 / 单项细看），不再承载评分录入。幸福 8 要素评分录入入口已迁到 `/interview` 顶部「当天评分」，并作为独立 `happiness_score` 工作区展示；分析页继续负责评分趋势解释与 drill-down。`PUT /api/happiness-score` 允许保存所有非未来日期（Asia/Shanghai 口径），当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新；评分 chip 当前文案为 `暂无评分 / N天已评分`。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口；小屏改为月历主体在上、当天检查面板在下，不再依赖横向滚动访问右侧面板
@@ -73,7 +74,7 @@
 - `GET /api/calendar/day|week|month` 公开日历查询接口
 - `/calendar?view=month|week|day&date=YYYY-MM-DD` 月/周/日视图页面
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 月度记录分析页面
-- `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、`/analysis` 页评分录入面板与总分 / 单项评分趋势图
+- `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、访谈页独立评分工作区与分析页总分 / 单项评分趋势图
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会先保存当天日志 pending 编辑，再移除 `mode` 并恢复所选日期的正常访谈 hydrate
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
@@ -107,6 +108,7 @@ VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
 ```
 
 ### 3. 同步数据库 schema
@@ -136,11 +138,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-05`，当前自动化现实为：
-- `40` 个测试文件
-- `413` 个测试
-- `npx tsc --noEmit` 通过
-- `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则
+截至 `2026-05-09`，当前自动化现实为：
+- `npm test`（Vitest）在主仓基线通过：`47` 个测试文件、`491` 个测试
+- `npx tsc --noEmit` 仍有类型错误（主要集中在 memory / interview 相关类型）
+- `npm run lint` 仍有既有 `no-explicit-any` 等问题（主要集中在 repositories/settings/memory 相关文件）
+- Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
 ## 常用命令
 
@@ -166,6 +168,7 @@ npx prisma db push
 - gratitude 理论对齐：`docs/theory/gratitude-alignment.md`
 - 维度正文生成模板：`docs/theory/dimension-draft-template.md`
 - 理论原文：`docs/theory/精简-如何实现幸福.pdf`
+- 记忆系统实施计划：`docs/memory-system-implementation-plan.md`
 - 历史设计稿：`Tech_Design.md`
 
 ## 关键实现现实
@@ -174,8 +177,8 @@ npx prisma db push
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
 - `src/components/shared/site-header.tsx` 现在会在客户端测量真实 header 高度，并把结果写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按这个真实高度扣减剩余视口，而不是依赖固定 `4rem`。
-- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/features/analysis/narrative-service.ts`、`src/features/analysis/aggregate-month.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`month + section` URL 归一化、`/api/analysis/month`、`AnalysisNarrative` 叙事数据结构、`generateMonthNarrative` 占位叙事生成服务（预留 AI 接入口，降级到模板文本）、`dailyCoverage` 中的日志标题与内容预览、总览叙事驱动布局（`SummaryHero` + 洞察卡片 + 数据锚点）、评分趋势高亮卡关联维度日志上下文、评分图数据点可点击弹出当日日志详情卡、热力图选中日日志预览区与 tooltip 日志状态、五维 `dimensionTheses` 优先使用 AI 叙事与证据日历日链接、`dailyCoverage / rhythmOverview / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates / narrative` 返回、补录优先的评分工作台、趋势图、样本不足提示和评分录入面板。
-- `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、repository 映射、保存接口、今天/昨天编辑窗口和正式 migration。
+- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/types.ts`、`src/features/analysis/narrative-service.ts`、`src/features/analysis/aggregate-month.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`month + section` URL 归一化、`/api/analysis/month`、`AnalysisNarrative` 叙事数据结构、`generateMonthNarrative` 占位叙事生成服务（预留 AI 接入口，降级到模板文本）、`dailyCoverage` 中的日志标题与内容预览、总览叙事驱动布局（`SummaryHero` + 洞察卡片 + 数据锚点）、评分趋势高亮卡关联维度日志上下文、评分图数据点可点击弹出当日日志详情卡、热力图选中日日志预览区与 tooltip 日志状态、五维 `dimensionTheses` 优先使用 AI 叙事与证据日历日链接、`dailyCoverage / rhythmOverview / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates / narrative` 返回、评分趋势阅读工作台（录入入口已迁移到访谈页独立评分工作区）与样本不足提示。
+- `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/features/happiness-score/presentation.ts`、`src/components/interview/happiness-score-entry.tsx`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、展示顺序配置、访谈页独立评分工作区与保存接口（非未来日期可保存）。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
