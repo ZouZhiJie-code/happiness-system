@@ -93,12 +93,17 @@ describe("happiness score api route", () => {
     expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-05-02" }));
   });
 
-  it("rejects dates before yesterday", async () => {
+  it("allows saving historical dates before yesterday", async () => {
+    mockUpsertDailyHappinessScore.mockResolvedValue(buildSavedRecord("2026-05-01"));
+
     const response = await putHappinessScoreRoute(buildRequest(buildPayload({ date: "2026-05-01" })));
 
-    expect(response.status).toBe(403);
-    expect(mockUpsertDailyHappinessScore).not.toHaveBeenCalled();
-    await expect(response.json()).resolves.toEqual({ error: "HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED" });
+    expect(response.status).toBe(200);
+    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-05-01" }));
+    await expect(response.json()).resolves.toMatchObject({
+      date: "2026-05-01",
+      meaningScore: 8
+    });
   });
 
   it("rejects future dates", async () => {

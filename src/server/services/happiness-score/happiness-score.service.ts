@@ -25,8 +25,9 @@ export function getPreviousEntryDate(date: string) {
 }
 
 export function isHappinessScoreEditableDate(date: string, today = getTodayEntryDate()) {
-  const yesterday = getPreviousEntryDate(today);
-  return date === today || date === yesterday;
+  const targetDate = parseEntryDateInput(date).getTime();
+  const todayDate = parseEntryDateInput(today).getTime();
+  return targetDate <= todayDate;
 }
 
 export function mapHappinessScoreSaveRequestToInput(
