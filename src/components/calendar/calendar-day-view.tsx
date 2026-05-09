@@ -137,8 +137,12 @@ function getDailyJournalDescription(day: CalendarDayRecord) {
   }
 }
 
-function getWriteJournalHref(rowItems: ReturnType<typeof buildCalendarDayViewCardItems>) {
-  return rowItems.find((item) => item.primaryAction.href)?.primaryAction.href ?? rowItems[0]?.actions.find((action) => action.href)?.href ?? null;
+function buildWriteJournalHref(day: CalendarDayRecord) {
+  if (isFutureCalendarDate(day.date)) {
+    return null;
+  }
+
+  return `/interview?dimension=joy&entryDate=${day.date}`;
 }
 
 function DailyJournalPromptDialog({
@@ -365,7 +369,7 @@ export function CalendarDayView({
   const dailyJournalHref = buildDailyJournalHref(day);
   const dailyJournalViewLabel = getDailyJournalViewLabel(day, today);
   const savedDimensionLabels = getSavedDimensionLabels(day);
-  const writeJournalHref = getWriteJournalHref(rowItems);
+  const writeJournalHref = buildWriteJournalHref(day);
   const shouldLinkDailyJournal = dailyJournalState !== "none";
 
   return (
