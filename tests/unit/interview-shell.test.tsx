@@ -1681,6 +1681,57 @@ describe("InterviewShell", () => {
     });
   });
 
+  it("opens the happiness score workspace from header and keeps entryDate after returning to interview", async () => {
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: "2026-05-01",
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/analysis/month?month=2026-05")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              scoreRecords: []
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
+        );
+      }
+
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+
+    await screen.findByText("当前记录日期：2026-05-01");
+    const scoreTrigger = within(getDimensionBar()).getByRole("button", { name: "打开当天评分" });
+
+    fireEvent.click(scoreTrigger);
+
+    const scoreEntry = await screen.findByTestId("interview-happiness-score-entry");
+    expect(within(scoreEntry).getByText("当天评分 · 第 1/8 项 · 健康")).toBeInTheDocument();
+    expect(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" })).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(within(scoreEntry).getByRole("button", { name: "收起" }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("interview-happiness-score-entry")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("interview-entry-date-label")).toHaveTextContent("当前记录日期：2026-05-01");
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+
   it("persists unsaved daily journal edits before returning to the interview workspace", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 

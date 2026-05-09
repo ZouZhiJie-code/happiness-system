@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 
@@ -113,5 +113,88 @@ describe("happiness score entry", () => {
     expect(screen.getByRole("button", { name: "保存评分" })).toBeDisabled();
     expect(screen.getByText("正在读取这一天的已有评分…")).toBeInTheDocument();
   });
-});
 
+  it("does not preselect any score on first entry and only advances after user selection", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/analysis/month?month=2026-05")) {
+        return new Response(
+          JSON.stringify({
+            scoreRecords: []
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
+
+    await screen.findByText("当天评分 · 第 1/8 项 · 健康");
+    const healthGrid = screen.getByRole("button", { name: "健康1分" }).closest("div");
+    expect(healthGrid).not.toBeNull();
+    const healthButtons = within(healthGrid!).getAllByRole("button");
+
+    healthButtons.forEach((button) => {
+      expect(button).toHaveAttribute("aria-pressed", "false");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "健康6分" }));
+    expect(screen.getByRole("button", { name: "健康6分" })).toHaveAttribute("aria-pressed", "true");
+
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 2/8 项 · 经济")).toBeInTheDocument();
+    });
+    const economyGrid = screen.getByRole("button", { name: "经济1分" }).closest("div");
+    expect(economyGrid).not.toBeNull();
+    const economyButtons = within(economyGrid!).getAllByRole("button");
+
+    economyButtons.forEach((button) => {
+      expect(button).toHaveAttribute("aria-pressed", "false");
+    });
+  });
+
+  it("advances in a stable fixed order after each score selection", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/analysis/month?month=2026-05")) {
+        return new Response(
+          JSON.stringify({
+            scoreRecords: []
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
+
+    await screen.findByText("当天评分 · 第 1/8 项 · 健康");
+
+    fireEvent.click(screen.getByRole("button", { name: "健康6分" }));
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 2/8 项 · 经济")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "经济7分" }));
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 3/8 项 · 人际")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "人际5分" }));
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 4/8 项 · 擅长")).toBeInTheDocument();
+    });
+  });
+});
