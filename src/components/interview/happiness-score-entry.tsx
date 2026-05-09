@@ -76,6 +76,13 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
 
     let cancelled = false;
     hasLocalEditsRef.current = false;
+    if (jumpTimerRef.current) {
+      window.clearTimeout(jumpTimerRef.current);
+      jumpTimerRef.current = null;
+    }
+    setScores({});
+    setCurrentIndex(0);
+    setActiveTipValue(null);
     setIsLoadingExisting(true);
     setSaveError(null);
     setSaveNotice(null);
@@ -104,6 +111,13 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         const firstUnfilledIndex = getFirstUnfilledHappinessScoreIndex(nextScores);
         setScores(nextScores);
         setCurrentIndex(firstUnfilledIndex >= 0 ? firstUnfilledIndex : 0);
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+
+        setSaveError("读取当天评分失败，请稍后再试。");
       })
       .finally(() => {
         if (!cancelled) {
@@ -270,7 +284,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         <button
           type="button"
           onClick={() => void handleSave()}
-          disabled={!isCompleteScoreForm(scores) || isSaving}
+          disabled={isLoadingExisting || !isCompleteScoreForm(scores) || isSaving}
           className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.8rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
         >
           {isSaving ? "保存中" : "保存评分"}
