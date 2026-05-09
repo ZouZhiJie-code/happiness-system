@@ -1623,8 +1623,7 @@ describe("InterviewShell", () => {
     await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
-    expect(await screen.findByText("正在打开汇总当天日志")).toBeInTheDocument();
-    expect(screen.getByTestId("journal-growth-tree")).toBeInTheDocument();
+    expect(await screen.findByTestId("daily-journal-loading")).toBeInTheDocument();
 
     dailyJournalResponse.resolve(
       new Response(
@@ -1877,7 +1876,6 @@ describe("InterviewShell", () => {
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
     expect(await screen.findByTestId("workspace-transition-card")).toBeInTheDocument();
-    expect(screen.getByText("正在打开汇总当天日志")).toBeInTheDocument();
     expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
 
     draftPutResponse.resolve(

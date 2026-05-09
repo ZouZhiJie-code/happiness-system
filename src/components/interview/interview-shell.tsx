@@ -497,6 +497,11 @@ function getWorkspaceTransitionMeta(
         label: "正在打开汇总当天日志",
         description: "正在先处理当前工作区还没自动暂存的修改，然后切到当天日志工作区。"
       };
+    case "returning_to_interview":
+      return {
+        label: "正在回到访谈",
+        description: "正在先保存当天日志里还没自动暂存的修改，然后回到访谈工作区。"
+      };
     case "switching_dimension":
       return {
         label: `正在切换到${getInterviewDimensionMeta(transitionState.targetDimension).label}`,
@@ -1122,8 +1127,22 @@ export function InterviewShell() {
     }
 
     lastDailyJournalOpenRequestRef.current = dailyJournalOpenRequestId;
+
+    if (workspaceMode === "daily_journal") {
+      void returnToInterviewWorkspace();
+      return;
+    }
+
     void openDailyJournalWorkspace();
-  }, [dailyJournalOpenRequestId]);
+  }, [
+    currentDimension,
+    dailyJournalOpenRequestId,
+    requestedEntryDate,
+    router,
+    sessionEntryDate,
+    shouldOpenDailyJournalFromQuery,
+    workspaceMode
+  ]);
 
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -2103,6 +2122,38 @@ export function InterviewShell() {
 
     nextWorkspaceMode = "daily_journal";
     setWorkspaceMode(nextWorkspaceMode);
+    setWorkspaceTransitionState(null);
+  }
+
+  async function returnToInterviewWorkspace() {
+    if (workspaceMode !== "daily_journal") {
+      return;
+    }
+
+    setWorkspaceTransitionState({
+      kind: "returning_to_interview"
+    });
+
+    const synced = await flushDailyJournalWorkspace();
+
+    if (!synced) {
+      setWorkspaceTransitionState(null);
+      return;
+    }
+
+    setWorkspaceMode("interview");
+
+    if (shouldOpenDailyJournalFromQuery) {
+      const params = new URLSearchParams({ dimension: currentDimension });
+      const entryDate = requestedEntryDate ?? sessionEntryDate;
+
+      if (entryDate) {
+        params.set("entryDate", entryDate);
+      }
+
+      router.replace(`/interview?${params.toString()}`, { scroll: false });
+    }
+
     setWorkspaceTransitionState(null);
   }
 
