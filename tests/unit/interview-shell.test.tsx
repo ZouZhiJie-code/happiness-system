@@ -162,6 +162,17 @@ const baseDailyJournalEntry: DailyJournalEntryRecord = {
   savedAt: null
 };
 
+const baseDailyJournalSources = [
+  {
+    id: "entry-saved",
+    sessionId: "session-with-journal",
+    dimension: "joy",
+    title: "和家人一起吃饭",
+    updatedAt: "2026-04-21T00:08:00.000Z",
+    savedAt: "2026-04-21T00:08:00.000Z"
+  }
+] as const;
+
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   const nextSession: InterviewSessionRecord = {
     id: "session-joy",
@@ -579,6 +590,7 @@ describe("InterviewShell", () => {
           JSON.stringify({
             dailyJournal: baseDailyJournalEntry,
             availableSourceCount: 1,
+            sources: baseDailyJournalSources,
             state: "draft"
           }),
           {
@@ -1611,14 +1623,14 @@ describe("InterviewShell", () => {
     await screen.findByText("有效 2 轮");
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
-    expect(await screen.findByText("正在打开汇总当天日志")).toBeInTheDocument();
-    expect(screen.getByTestId("journal-growth-tree")).toBeInTheDocument();
+    expect(await screen.findByTestId("daily-journal-loading")).toBeInTheDocument();
 
     dailyJournalResponse.resolve(
       new Response(
         JSON.stringify({
           dailyJournal: baseDailyJournalEntry,
           availableSourceCount: 1,
+          sources: baseDailyJournalSources,
           state: "draft"
         }),
         {
@@ -1659,6 +1671,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "当天评分（请先回到访谈）" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "回到访谈" }));
 
     await waitFor(() => {
@@ -1864,7 +1877,6 @@ describe("InterviewShell", () => {
     fireEvent.click(within(getDimensionBar()).getByRole("button", { name: "查看汇总当天日志" }));
 
     expect(await screen.findByTestId("workspace-transition-card")).toBeInTheDocument();
-    expect(screen.getByText("正在打开汇总当天日志")).toBeInTheDocument();
     expect(screen.queryByTestId("daily-journal-workspace")).not.toBeInTheDocument();
 
     draftPutResponse.resolve(

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
+import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
@@ -493,8 +494,13 @@ function getWorkspaceTransitionMeta(
   switch (transitionState.kind) {
     case "opening_daily_journal":
       return {
-        label: "正在打开总日志",
+        label: "正在打开汇总当天日志",
         description: "正在先处理当前工作区还没自动暂存的修改，然后切到当天日志工作区。"
+      };
+    case "returning_to_interview":
+      return {
+        label: "正在回到访谈",
+        description: "正在先保存当天日志里还没自动暂存的修改，然后回到访谈工作区。"
       };
     case "switching_dimension":
       return {
@@ -781,6 +787,7 @@ export function InterviewShell() {
     clearDimensionNavigationRequest,
     conversationResetRequestId,
     dailyJournalOpenRequestId,
+    happinessScoreEntryOpenRequestId,
     dimensionNavigationRequestId,
     dimensionNavigationTarget,
     draftGenerationRequestId,
@@ -827,6 +834,7 @@ export function InterviewShell() {
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
+  const [isHappinessScoreEntryOpen, setIsHappinessScoreEntryOpen] = useState(false);
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const requestedSessionId = searchParams.get("sessionId");
   const requestedEntryDateRaw = searchParams.get("entryDate");
@@ -843,6 +851,7 @@ export function InterviewShell() {
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
+  const lastHappinessScoreEntryOpenRequestRef = useRef(0);
   const lastDimensionNavigationRequestRef = useRef(0);
   const previousDimensionRef = useRef(currentDimension);
   const dailyJournalWorkspaceRef = useRef<DailyJournalWorkspaceHandle | null>(null);
@@ -1118,8 +1127,22 @@ export function InterviewShell() {
     }
 
     lastDailyJournalOpenRequestRef.current = dailyJournalOpenRequestId;
+
+    if (workspaceMode === "daily_journal") {
+      void returnToInterviewWorkspace();
+      return;
+    }
+
     void openDailyJournalWorkspace();
-  }, [dailyJournalOpenRequestId]);
+  }, [
+    currentDimension,
+    dailyJournalOpenRequestId,
+    requestedEntryDate,
+    router,
+    sessionEntryDate,
+    shouldOpenDailyJournalFromQuery,
+    workspaceMode
+  ]);
 
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -2102,6 +2125,38 @@ export function InterviewShell() {
     setWorkspaceTransitionState(null);
   }
 
+  async function returnToInterviewWorkspace() {
+    if (workspaceMode !== "daily_journal") {
+      return;
+    }
+
+    setWorkspaceTransitionState({
+      kind: "returning_to_interview"
+    });
+
+    const synced = await flushDailyJournalWorkspace();
+
+    if (!synced) {
+      setWorkspaceTransitionState(null);
+      return;
+    }
+
+    setWorkspaceMode("interview");
+
+    if (shouldOpenDailyJournalFromQuery) {
+      const params = new URLSearchParams({ dimension: currentDimension });
+      const entryDate = requestedEntryDate ?? sessionEntryDate;
+
+      if (entryDate) {
+        params.set("entryDate", entryDate);
+      }
+
+      router.replace(`/interview?${params.toString()}`, { scroll: false });
+    }
+
+    setWorkspaceTransitionState(null);
+  }
+
   useEffect(() => {
     if (
       dimensionNavigationRequestId === 0 ||
@@ -2230,6 +2285,29 @@ export function InterviewShell() {
 
   useEffect(() => {
     if (
+      happinessScoreEntryOpenRequestId === 0 ||
+      happinessScoreEntryOpenRequestId === lastHappinessScoreEntryOpenRequestRef.current
+    ) {
+      return;
+    }
+
+    lastHappinessScoreEntryOpenRequestRef.current = happinessScoreEntryOpenRequestId;
+
+    if (workspaceMode !== "interview") {
+      return;
+    }
+
+    setIsHappinessScoreEntryOpen(true);
+  }, [happinessScoreEntryOpenRequestId, workspaceMode]);
+
+  useEffect(() => {
+    if (workspaceMode !== "interview") {
+      setIsHappinessScoreEntryOpen(false);
+    }
+  }, [workspaceMode]);
+
+  useEffect(() => {
+    if (
       conversationResetRequestId === 0 ||
       conversationResetRequestId === conversationResetHandledRef.current
     ) {
@@ -2296,6 +2374,11 @@ export function InterviewShell() {
               <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
                 当前记录日期：{currentRecordDate}
               </div>
+              <HappinessScoreEntry
+                entryDate={currentRecordDate}
+                open={isHappinessScoreEntryOpen}
+                onClose={() => setIsHappinessScoreEntryOpen(false)}
+              />
               {visibleMessages.map((message) => (
                 <ConversationMessage key={message.id} message={message} />
               ))}

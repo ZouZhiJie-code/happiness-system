@@ -33,14 +33,14 @@ const dimensionRelatedScoreFactorMap: Record<InterviewDimension, HappinessScoreR
 };
 
 const scoreFactorLabelMap: Record<HappinessScoreRequestKey, string> = {
-  meaning: "意义感",
-  health: "身体状态",
-  virtue: "自我认可",
-  autonomy: "自主感",
-  interest: "投入感",
-  skill: "成长感",
-  relationship: "关系支持",
-  livingCondition: "生活托住"
+  meaning: "意义",
+  health: "健康",
+  virtue: "美德",
+  autonomy: "意志",
+  interest: "热爱",
+  skill: "擅长",
+  relationship: "人际",
+  livingCondition: "经济"
 };
 
 function parseMonthKey(month: string) {

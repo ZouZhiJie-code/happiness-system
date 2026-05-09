@@ -1,0 +1,295 @@
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+import type { AnalysisMonthRecord } from "@/features/analysis/types";
+import {
+  getFirstUnfilledHappinessScoreIndex,
+  getHappinessScoreLevelTip,
+  happinessScorePresentationItems,
+  resolveNextHappinessScoreIndex
+} from "@/features/happiness-score/presentation";
+import type { HappinessScoreRequestKey } from "@/features/happiness-score/types";
+import { cn } from "@/lib/utils";
+
+type ScoreFormState = Partial<Record<HappinessScoreRequestKey, number>>;
+
+interface HappinessScoreEntryProps {
+  entryDate: string;
+  open: boolean;
+  onClose: () => void;
+}
+
+function buildScoreFormState(record: AnalysisMonthRecord | null, date: string): ScoreFormState {
+  if (!record) {
+    return {};
+  }
+
+  const existing = record.scoreRecords.find((score) => score.date === date);
+
+  if (!existing) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    happinessScorePresentationItems.map((item) => [item.requestKey, existing[item.recordKey]])
+  ) as ScoreFormState;
+}
+
+function isCompleteScoreForm(scores: ScoreFormState): scores is Record<HappinessScoreRequestKey, number> {
+  return happinessScorePresentationItems.every((item) => {
+    const value = scores[item.requestKey];
+    return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 10;
+  });
+}
+
+export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScoreEntryProps) {
+  const [scores, setScores] = useState<ScoreFormState>({});
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeTipValue, setActiveTipValue] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const jumpTimerRef = useRef<number | null>(null);
+  const hasLocalEditsRef = useRef(false);
+  const total = happinessScorePresentationItems.length;
+  const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
+  const currentKey = currentItem.requestKey;
+  const completionCount = useMemo(
+    () => happinessScorePresentationItems.filter((item) => typeof scores[item.requestKey] === "number").length,
+    [scores]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (jumpTimerRef.current) {
+        window.clearTimeout(jumpTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+    hasLocalEditsRef.current = false;
+    if (jumpTimerRef.current) {
+      window.clearTimeout(jumpTimerRef.current);
+      jumpTimerRef.current = null;
+    }
+    setScores({});
+    setCurrentIndex(0);
+    setActiveTipValue(null);
+    setIsLoadingExisting(true);
+    setSaveError(null);
+    setSaveNotice(null);
+
+    void fetch(`/api/analysis/month?month=${entryDate.slice(0, 7)}`, {
+      cache: "no-store"
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("ANALYSIS_MONTH_QUERY_FAILED");
+        }
+
+        return (await response.json()) as AnalysisMonthRecord;
+      })
+      .then((record) => {
+        if (cancelled) {
+          return;
+        }
+
+        // Do not clobber user input when late fetch responses arrive.
+        if (hasLocalEditsRef.current) {
+          return;
+        }
+
+        const nextScores = buildScoreFormState(record, entryDate);
+        const firstUnfilledIndex = getFirstUnfilledHappinessScoreIndex(nextScores);
+        setScores(nextScores);
+        setCurrentIndex(firstUnfilledIndex >= 0 ? firstUnfilledIndex : 0);
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+
+        setSaveError("读取当天评分失败，请稍后再试。");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingExisting(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entryDate, open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const selectedValue = scores[currentKey] ?? null;
+  const levelTip = getHappinessScoreLevelTip(selectedValue);
+
+  function handleSelectScore(value: number) {
+    hasLocalEditsRef.current = true;
+    setSaveNotice(null);
+    setSaveError(null);
+
+    setScores((current) => {
+      const next = {
+        ...current,
+        [currentKey]: value
+      };
+      const nextIndex = resolveNextHappinessScoreIndex(next, currentIndex);
+
+      if (jumpTimerRef.current) {
+        window.clearTimeout(jumpTimerRef.current);
+      }
+
+      jumpTimerRef.current = window.setTimeout(() => {
+        setCurrentIndex(nextIndex);
+      }, 200);
+
+      return next;
+    });
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.repeat) {
+      return;
+    }
+
+    const key = event.key;
+
+    if (!/^[0-9]$/.test(key)) {
+      return;
+    }
+
+    event.preventDefault();
+    handleSelectScore(key === "0" ? 10 : Number(key));
+  }
+
+  async function handleSave() {
+    if (!isCompleteScoreForm(scores)) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveNotice(null);
+
+    try {
+      const response = await fetch("/api/happiness-score", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          date: entryDate,
+          scores
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("SAVE_FAILED");
+      }
+
+      setSaveNotice("当天评分已保存");
+    } catch {
+      setSaveError("评分保存失败，请稍后再试。");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section
+      className="mt-3 rounded-[20px] border border-[rgba(150,105,61,0.14)] bg-[rgba(255,250,242,0.82)] px-4 py-4 shadow-[0_10px_22px_rgba(114,77,41,0.08)]"
+      data-testid="interview-happiness-score-entry"
+      onKeyDown={handleKeyDown}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[0.82rem] font-medium text-[#4a3829]">
+          当天评分 · 第 {currentIndex + 1}/{total} 项 · {currentItem.label}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-[rgba(150,105,61,0.18)] bg-[rgba(255,252,247,0.8)] px-2.5 py-1 text-[0.72rem] text-[#73583e] transition hover:bg-[rgba(255,252,247,0.96)]"
+        >
+          收起
+        </button>
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-2 flex items-center justify-between text-[0.72rem] text-[#83684d]">
+          <span>{currentItem.hint}</span>
+          <span className="font-mono tabular-nums">{completionCount}/8</span>
+        </div>
+        <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+          {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => {
+            const active = selectedValue === value;
+            const tip = getHappinessScoreLevelTip(value);
+            const tipVisible = activeTipValue === value;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleSelectScore(value)}
+                onMouseEnter={() => setActiveTipValue(value)}
+                onMouseLeave={() => setActiveTipValue(null)}
+                onFocus={() => setActiveTipValue(value)}
+                onBlur={() => setActiveTipValue((current) => (current === value ? null : current))}
+                className={cn(
+                  "relative h-11 rounded-[12px] border font-mono text-[0.84rem] tabular-nums transition",
+                  active
+                    ? "border-[rgba(111,74,38,0.28)] bg-[#6f4a26] text-[#fffaf1]"
+                    : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,252,246,0.9)] text-[#5f4328] hover:border-[rgba(111,74,38,0.2)] hover:bg-[rgba(243,228,199,0.68)]"
+                )}
+                aria-label={`${currentItem.label}${value}分`}
+                aria-pressed={active}
+              >
+                {value}
+                {tipVisible ? (
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none absolute -top-11 left-1/2 w-28 -translate-x-1/2 rounded-[10px] border border-[rgba(111,74,38,0.2)] bg-[rgba(255,250,243,0.98)] px-2 py-1 text-[0.64rem] leading-4 text-[#4f3b2b] shadow-[0_8px_20px_rgba(109,72,35,0.16)]"
+                  >
+                    <span className="block font-medium text-[#3f2f22]">{tip.label}</span>
+                    <span className="block text-[#755c43]">{tip.detail}</span>
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-[0.72rem] text-[#7f6247]">{levelTip.label}</p>
+          <p className="text-[0.72rem] text-[#8d7155]">{levelTip.detail}</p>
+          {isLoadingExisting ? <p className="text-[0.72rem] text-[#8d7155]">正在读取这一天的已有评分…</p> : null}
+          {saveNotice ? <p className="text-[0.72rem] text-[#446243]">{saveNotice}</p> : null}
+          {saveError ? <p className="text-[0.72rem] text-[#8a3f25]">{saveError}</p> : null}
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={isLoadingExisting || !isCompleteScoreForm(scores) || isSaving}
+          className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.8rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
+        >
+          {isSaving ? "保存中" : "保存评分"}
+        </button>
+      </div>
+    </section>
+  );
+}
