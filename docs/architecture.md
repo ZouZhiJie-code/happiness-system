@@ -224,6 +224,7 @@
 - `summary`：跨维度总述（AI 生成，100-200 字）
 - `dimensionInsights`：JSON，五维度各一段洞察
 - `factCount`：合成时的 fact 数量
+- `dataRangeMonths`：数据聚合查询窗口（默认 3 个月）
 - 每次重新生成清除旧记录，只保留最新一条
 
 ### 3.6 calendar 读模型

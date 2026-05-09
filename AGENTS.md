@@ -288,6 +288,11 @@ gratitude 理论翻译基线：
   - `memory-extraction.service.ts`：访谈结束后从会话数据中 AI 提取用户模式，去重后存入 MemoryFact，生成向量嵌入；fire-and-forget，失败静默。
   - `memory-retrieval.service.ts`：访谈问题生成时，从用户历史记忆中语义检索相关条目（pgvector 余弦相似度 Top-K），注入 AI prompt；embedding 不可用时降级为按维度 + confidence 排序。
   - `profile.service.ts`：画像 CRUD，支持手动添加（sourceType: user_added, confidence: 1.0）、编辑摘要/标签、软删除。
+- `src/server/services/portrait`
+  - `portrait-data.service.ts`：画像数据聚合，并行查询 MemoryFact、日历、分析、幸福分四个数据源。
+  - `portrait-synthesis.service.ts`：AI 合成画像，生成跨维度总述 + 五维度洞察，缓存到 PortraitSnapshot。
+- `src/features/portrait/prompts`
+  - `portrait-synthesis.prompts.ts`：画像 AI 合成的 prompt builder（总述 + 分维度洞察）。
 - `src/server/repositories`
   - 会话、事件、日志、payload 映射与数据库读写。
   - `calendar.repository.ts` 把 `InterviewSession / JoyEntry` 标准化成 calendar source。

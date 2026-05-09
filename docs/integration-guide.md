@@ -39,6 +39,8 @@
 | `POST` | `/api/profile` | 手动添加画像条目 | sourceType: user_added, confidence: 1.0 |
 | `PATCH` | `/api/profile` | 更新画像条目 | 编辑摘要、标签 |
 | `DELETE` | `/api/profile?id=xxx` | 删除画像条目 | 软删除（deletedAt） |
+| `GET` | `/api/profile/portrait` | 获取缓存画像快照 | 无快照时返回 `{ snapshot: null }` |
+| `POST` | `/api/profile/portrait` | 触发 AI 画像合成 | 需 ≥3 条 facts，422 表示数据不足 |
 
 页面路由补充：
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它接入 `GET /api/analysis/month?month=YYYY-MM` 并以趋势阅读为主。评分录入入口已迁移到 `/interview` 顶部「当天评分」，以独立 `happiness_score` 工作区呈现；分析页 `score` 分区不再内联编辑评分。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`；即使当天已经没有任何 `saved` 来源，只要这篇整合日志仍然 `stale`，分析里也会继续把它算进待处理，不会静默漏掉。未来月份不会把整个月误读成 `最长空档`，总览首屏也会直接提示回到当前月份，而不是送去今天的访谈。五维洞察现在按“本月判断 + 五维全景 + 维度之间 + 下一步”组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片会共用同一套 quiet lagging 维度排序。空数据月份直接显示真实空态而不是示意填充。
@@ -535,7 +537,7 @@ GET /api/profile/portrait
 }
 ```
 
-若无缓存，返回 `{ "snapshot": null }`。
+若无缓存，返回 `{ "snapshot": null }`。查询失败时返回 `500 + PORTRAIT_QUERY_FAILED`。
 
 触发 AI 合成：
 
