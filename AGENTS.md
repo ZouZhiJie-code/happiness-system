@@ -29,7 +29,7 @@
 - opening-only 空会话（只有 opening assistant、`turnCount = 0` 且没有用户回复）不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍会保留在库里，但不会继续污染当天状态。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 `90% ready`。
 - 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前已改成 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区承接月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分待补状态、节奏待整合/待成文状态、主线维度名）；正文区按当前 `section` 只渲染对应板块。`overview` 总览首屏先给月度判断、评分可信度、一个“建议先看”的主行动，再给评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条区分维度记录日、成果保存日、待整合日和评分可信度，避免把统计卡作为首屏主角。缺失 `section` 时前端默认切到 `overview` 总览视图；切换 tab 或翻月后当前 `section` 保留在 URL 中。评分区当前是补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏才回到总分走势、8 要素快扫和单项细看。只有在至少 `2` 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只保留“仅供参考”的轻提示。`rhythm` 已改成状态优先热力工作台：未来日期保持 `待到来`，只评分未写日志的日期显示 `待成文`，同一天整合日志如果因为来源签名变化而 `stale`，即使当天已经没有任何 `saved` 来源，也仍会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`。`insights` 已改成“本月判断 + 五维全景 + 维度之间 + 下一步”的月度解释工作台；watchpoint 会优先提示 `stale` 的当天整合日志，单次且发生在月初的维度记录会保持 `starting`，不再被误写成“前面露过头”。分析页内”回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来月份的总览首屏不会再把用户送去今天的访谈，而会提示回到当前月份；未来日期的热力区 drill-down 只允许 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`；只有评分、没有已保存维度日志的月份，`insights` 会显示空态而不是伪造主线维度；未来月份不会把整个月误算成 `最长空档`。`PUT /api/happiness-score` 只允许保存 Asia/Shanghai 口径下的今天和昨天；当前月评分保存成功后，`AnalysisToolbar` 的 contextual chip 会立即刷新；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会互相打架。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前是 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区承接月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分覆盖状态、节奏待整合/待成文状态、主线维度名）；正文区按当前 `section` 只渲染对应板块。`overview` 总览首屏先给月度判断、评分可信度、一个“建议先看”的主行动，再给评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条区分维度记录日、成果保存日、待整合日和评分可信度。评分区现在是纯趋势阅读工作台（总分走势 / 8 要素快扫 / 单项细看），不再承担评分录入。幸福 8 要素评分录入入口已迁到 `/interview`，作为独立 `happiness_score` 工作区，通过 header 的「当天评分」进入，和访谈消息区分离。`rhythm` 已改成状态优先热力工作台：未来日期保持 `待到来`，只评分未写日志的日期显示 `待成文`，同一天整合日志如果因为来源签名变化而 `stale`，即使当天已经没有任何 `saved` 来源，也仍会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`。`insights` 已改成“本月判断 + 五维全景 + 维度之间 + 下一步”的月度解释工作台；watchpoint 会优先提示 `stale` 的当天整合日志，单次且发生在月初的维度记录会保持 `starting`。分析页内”回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来月份总览首屏不会再把用户送去今天访谈；未来日期热力区 drill-down 只允许 `查看当天`。`PUT /api/happiness-score` 当前允许保存所有非未来日期（Asia/Shanghai 口径），当前月评分保存成功后，`AnalysisToolbar` 的 contextual chip 会立即刷新。
 - analysis 的 `narrative-service.ts` 当前仍是确定性占位文本，不是最终 AI 叙事。`SummaryHero` 只有在 narrative 足够表达当前状态时才会覆盖模板文案；未来月份空态、待整合日、只有评分未成文、没有已保存日志这些场景会继续保留原有的状态判断和动作导向。评分趋势图点击某天后的详情卡也会区分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”三种状态，避免把待整合日误报成空白日。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
 - calendar 页面当前优先首屏工作区；桌面超量信息进入局部 pane 滚动，小屏月视图改为“月历主体在上 + 当天检查面板在下”的纵向工作台，不再依赖 `1040px` 横向滚动访问右侧面板。桌面月视图仍是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
@@ -284,10 +284,15 @@ gratitude 理论翻译基线：
   - 记录日历的 `day / week / month` 服务端查询入口。
 - `src/server/services/daily-journal`
   - 当天整合日志 source 收集、AI 轻整理、fallback 章节合集、草稿更新与正式保存。
+- `src/server/services/memory`
+  - `memory-extraction.service.ts`：访谈结束后从会话数据中 AI 提取用户模式，去重后存入 MemoryFact，生成向量嵌入；fire-and-forget，失败静默。
+  - `memory-retrieval.service.ts`：访谈问题生成时，从用户历史记忆中语义检索相关条目（pgvector 余弦相似度 Top-K），注入 AI prompt；embedding 不可用时降级为按维度 + confidence 排序。
+  - `profile.service.ts`：画像 CRUD，支持手动添加（sourceType: user_added, confidence: 1.0）、编辑摘要/标签、软删除。
 - `src/server/repositories`
   - 会话、事件、日志、payload 映射与数据库读写。
   - `calendar.repository.ts` 把 `InterviewSession / JoyEntry` 标准化成 calendar source。
   - `daily-journal.repository.ts` 维护 `DailyJournalEntry` 和当天已保存维度日志 source。
+  - `memory.repository.ts` 维护 `MemoryFact` 的 CRUD、文本去重（关键词重叠率 > 0.6）和向量操作。
 - `prisma`
   - 数据模型与迁移。
 
@@ -317,11 +322,17 @@ gratitude 理论翻译基线：
 - `DailyJournalEntry`
   - 日级整合日志，`userId + date` 唯一，记录 `draft / saved`、正文、来源维度日志 ids、session ids、source signature 和 stale 判断所需时间。
 - `DailyHappinessScore`
-  - 幸福 8 要素日评分，`userId + date` 唯一，8 项分数均为 `1..10` 整数；当前只允许通过 `/analysis` 保存今天和昨天。
+  - 幸福 8 要素日评分，`userId + date` 唯一，8 项分数均为 `1..10` 整数；当前通过 `/interview` 顶部「当天评分」进入独立评分工作区录入，API 允许保存所有非未来日期。
 - `MemoryFact`
-  - 长期记忆摘要，默认功能仍关闭。
+  - 长期记忆摘要，当前功能由 `memoryEnabled` 设置项控制，默认关闭。
+  - 已支持 pgvector 向量嵌入（`embedding vector(2048)`）、AI 提取、语义检索与画像页面 `/profile`。
+  - `topicTags / sourceType / confidence / evidenceSessionIds / deletedAt` 等扩展字段已随 `feature/memory-vector-extension` 合并进 main。
+- `PortraitSnapshot`
+  - 画像合成缓存，存储 AI 从多数据源合成的跨维度总述和分维度洞察。
+  - 每次重新合成清除旧记录，只保留最新一条。
+  - 字段：`summary`（总述）、`dimensionInsights`（JSON，五维度洞察）、`factCount`、`generatedAt`。
 - `AIRequestLog`
-  - `transcribe / extract / generate` 三阶段调用日志。
+  - `transcribe / extract / generate / portrait_synthesis` 四阶段调用日志。
 
 关键事实：
 - 新的多维度结构主要落在 `snapshotData` 和 `payload` 里。
@@ -354,6 +365,12 @@ gratitude 理论翻译基线：
 - `GET /api/calendar/month?month=YYYY-MM`
 - `GET /api/analysis/month?month=YYYY-MM`
 - `PUT /api/happiness-score`
+- `GET /api/profile` — 获取全部画像（分维度分组）
+- `POST /api/profile` — 手动添加画像条目（sourceType: user_added, confidence: 1.0）
+- `PATCH /api/profile` — 更新画像条目（编辑摘要、标签）
+- `DELETE /api/profile?id=xxx` — 删除画像条目（软删除）
+- `GET /api/profile/portrait` — 获取缓存的画像快照（PortraitSnapshot）
+- `POST /api/profile/portrait` — 触发 AI 画像合成（需 ≥3 条 facts）
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
@@ -389,8 +406,8 @@ gratitude 理论翻译基线：
   - 热力区点到未来日期时，只提供 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
   - `rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`，不会误算成 `已整合`
   - 未来月份不会再把整个月误算成 `最长空档`
-  - `editableDates` 在当前月返回今天和昨天；如果今天是月初，昨天即使属于上月也会保留为可编辑日期
-  - `PUT /api/happiness-score` 请求体是 `date + scores.{meaning,health,virtue,autonomy,interest,skill,relationship,livingCondition}`，8 项必填且必须是 `1..10` 整数
+  - `editableDates` 仍用于分析页上下文展示（当前月会带今天和昨天），但评分录入主入口不再依赖它
+  - `PUT /api/happiness-score` 请求体是 `date + scores.{meaning,health,virtue,autonomy,interest,skill,relationship,livingCondition}`，8 项必填且必须是 `1..10` 整数；服务端拒绝未来日期
   - `scoreTrend.days` 覆盖当前分析月自然日；未评分日期返回 `null` 并在图表中断线
   - 只有在至少 `2` 天评分且确实存在均值/波动差异时，前端才把评分数据投影成 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各项持平时只显示“仅供参考”的提示
 
@@ -434,9 +451,9 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-05-05`，本地测试基线为：
-- `40` 个测试文件
-- `413` 个测试；当前 `npx tsc --noEmit` 通过，但 `npm test` 仍有 `1` 个失败：`tests/unit/calendar-presentation.test.ts` 里的 mixed month-dimension pill 视觉区分断言还停留在旧规则。
+截至 `2026-05-08`，本地测试基线为：
+- `44` 个测试文件
+- `473` 个测试；`npx tsc --noEmit` 有 `2` 个类型错误（`memory-extraction.service.test.ts` 和 `memory-retrieval.service.test.ts` 中 JoySnapshot/JoyEntryDraft 类型不匹配），`npm test` 有 `11` 个失败（含 `calendar-presentation.test.ts` 的旧规则断言和 memory 相关测试的类型问题）。
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点
@@ -462,6 +479,7 @@ gratitude 理论翻译基线：
 - gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
+- 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索、画像页面 `/profile`；但该功能当前由 `memoryEnabled` 设置项控制，默认关闭，且新测试文件存在类型兼容问题（TS2741 / TS2322），需要修复后才能完全通过回归。
 
 ## 10. 修改文档时的规则
 

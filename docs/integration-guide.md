@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-05`
+最后更新：`2026-05-09`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -34,10 +34,14 @@
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
 | `POST` | `/api/transcribe` | 语音转文字 | 当前是 stub |
 | `GET` | `/api/analysis/month` | 查询月度日志分析 | 返回月概览、日覆盖、五维洞察、评分状态和趋势数据 |
-| `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 只允许保存今天和昨天 |
+| `PUT` | `/api/happiness-score` | 保存幸福 8 要素日评分 | 允许保存所有非未来日期 |
+| `GET` | `/api/profile` | 获取全部画像（分维度分组） | 需 `memoryEnabled` |
+| `POST` | `/api/profile` | 手动添加画像条目 | sourceType: user_added, confidence: 1.0 |
+| `PATCH` | `/api/profile` | 更新画像条目 | 编辑摘要、标签 |
+| `DELETE` | `/api/profile?id=xxx` | 删除画像条目 | 软删除（deletedAt） |
 
 页面路由补充：
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它已接入 `GET /api/analysis/month?month=YYYY-MM` 和 `PUT /api/happiness-score`。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。总览视图先给月度判断、评分可信度和“建议先看”主行动，再给评分刻度 / 记录节奏 / 五维线索轻入口，底部证据条只做辅助快扫。评分区当前是补录优先的双栏工作台：左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏才回到趋势阅读。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`；即使当天已经没有任何 `saved` 来源，只要这篇整合日志仍然 `stale`，分析里也会继续把它算进待处理，不会静默漏掉。未来月份不会把整个月误读成 `最长空档`，总览首屏也会直接提示回到当前月份，而不是送去今天的访谈。五维洞察现在按“本月判断 + 五维全景 + 维度之间 + 下一步”组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片会共用同一套 quiet lagging 维度排序。空数据月份直接显示真实空态而不是示意填充。
+- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它接入 `GET /api/analysis/month?month=YYYY-MM` 并以趋势阅读为主。评分录入入口已迁移到 `/interview` 顶部「当天评分」，以独立 `happiness_score` 工作区呈现；分析页 `score` 分区不再内联编辑评分。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`；即使当天已经没有任何 `saved` 来源，只要这篇整合日志仍然 `stale`，分析里也会继续把它算进待处理，不会静默漏掉。未来月份不会把整个月误读成 `最长空档`，总览首屏也会直接提示回到当前月份，而不是送去今天的访谈。五维洞察现在按“本月判断 + 五维全景 + 维度之间 + 下一步”组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片会共用同一套 quiet lagging 维度排序。空数据月份直接显示真实空态而不是示意填充。
 
 ## 3. 请求与返回
 
@@ -458,6 +462,92 @@ POST /api/daily-journal/[id]/save
 ```
 
 保存后 `status = saved`，并写入 `savedAt`。
+
+### 3.8 画像 API
+
+画像系统基于 `MemoryFact` 表，支持 AI 自动提取和用户手动添加两种来源。
+
+查询全部画像：
+
+```http
+GET /api/profile
+```
+
+返回按维度分组的画像数据，过滤已软删除条目。
+
+手动添加：
+
+```json
+{
+  "dimension": "joy",
+  "summary": "独处时幸福感显著提升",
+  "topicTags": ["独处", "偏好"]
+}
+```
+
+更新：
+
+```json
+{
+  "id": "cuid",
+  "summary": "更新后的摘要",
+  "topicTags": ["新标签"]
+}
+```
+
+删除：
+
+```http
+DELETE /api/profile?id=cuid
+```
+
+软删除，设置 `deletedAt`，数据不丢失。
+
+注意：画像 API 当前不强制要求 `memoryEnabled` 开关，但记忆自动提取和语义检索依赖 `memoryEnabled = true`。
+
+### 3.9 画像合成 API
+
+画像合成基于 `PortraitSnapshot` 表，从多个数据源（MemoryFact、日历、分析、幸福分）聚合后调用 AI 生成洞察。
+
+查询缓存的画像快照：
+
+```http
+GET /api/profile/portrait
+```
+
+返回：
+
+```json
+{
+  "snapshot": {
+    "id": "cuid",
+    "summary": "AI 生成的跨维度总述",
+    "dimensionInsights": {
+      "joy": "开心维度洞察",
+      "fulfillment": "...",
+      "reflection": "...",
+      "improvement": "...",
+      "gratitude": "..."
+    },
+    "factCount": 10,
+    "generatedAt": "2026-05-09T16:00:00.000Z"
+  }
+}
+```
+
+若无缓存，返回 `{ "snapshot": null }`。
+
+触发 AI 合成：
+
+```http
+POST /api/profile/portrait
+```
+
+成功返回 201 + 合成结果。失败时：
+- 422：数据不足（facts < 3）或 AI 服务不可用
+- 500：内部错误
+
+每次合成会清除旧快照，只保留最新一条。
 
 ## 4. 错误语义
 
@@ -1520,7 +1610,7 @@ POST /api/daily-journal/[id]/save
 
 ### 5.14 Analysis 评分、热力与五维洞察
 
-当前 `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已完成月份级日志分析的 tab 互斥视图与页面接线，并接入五维结构化洞察、幸福 8 要素评分录入面板、本月热力图和轻量 SVG 评分趋势图。
+当前 `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已完成月份级日志分析的 tab 互斥视图与页面接线，并接入五维结构化洞察、本月热力图和轻量 SVG 评分趋势图。幸福 8 要素评分录入入口已迁到访谈页顶部「当天评分」独立工作区。
 
 已落地行为：
 - 缺失或非法 `month` 参数归一到北京时间当前月；缺失或非法 `section` 参数归一到 `overview`
@@ -1543,7 +1633,7 @@ POST /api/daily-journal/[id]/save
 - 页面当前已展示：
   - 顶部月度摘要：`SummaryHero` 月度判断面板；只有在 `narrative.overviewNarrative` 足够表达当前状态时才覆盖模板文案。未来月份空态、待整合日、只有评分未成文、没有已保存日志这些场景会继续保留模板侧的状态判断和动作导向
   - `overview`：默认视图，展示 `SummaryHero` + 洞察卡片（`narrative.insightCards`，类型 / 标题 / 证据 / 关联日期）+ `OverviewAnchorCTA` 数据锚点
-  - `score`：展示 `幸福 8 要素评分` 录入面板；评分区当前是补录优先的双栏工作台，左侧先处理今天 / 昨天状态、填写进度和 8 项列表，右侧只编辑当前要素的 `1..10` 刻度，未填不再默认落在 `5` 分；今天和昨天都补齐后，首屏再回到总分平均走势、8 要素快扫和单项细看。趋势高亮卡自动关联维度日志上下文；总分趋势图数据点可点击弹出当日日志详情卡（均分 + 日志标题 / 预览 + 日历日链接），并区分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”
+- `score`：展示 `幸福 8 要素评分` 趋势阅读工作台（总分平均走势、8 要素快扫、单项走势）。评分录入动作已迁移到访谈页顶部「当天评分」独立工作区；趋势高亮卡自动关联维度日志上下文；总分趋势图数据点可点击弹出当日日志详情卡（均分 + 日志标题 / 预览 + 日历日链接），并区分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”
   - `rhythm`：本月状态优先热力图、最长连续记录 / 空档与当天 drill-in；选中日面板新增日志预览区（`journalTitle` / `contentPreview` + 日历日链接），tooltip 显示日志整合状态；`saved` 但来源签名失配的当天整合日志会显示为 `待更新 / 待整合`
   - `insights`：本月判断、五维全景、维度之间和下一步四层洞察布局；维度主题优先使用 `narrative.dimensionTheses`，降级到模板文本；证据区增加日历日链接；watchpoint 优先提示 `stale` 的当天整合日志，再退回 quiet lagging / quiet missing 的评分联动提示
   - 空数据月份直接显示真实空态，不再使用示意填充；这不会影响评分保存和 `editableDates`
@@ -1594,7 +1684,7 @@ POST /api/daily-journal/[id]/save
 规则：
 - 8 项必填
 - 每项必须是 `1..10` 整数
-- 只允许保存 Asia/Shanghai 口径下的今天和昨天
+- 允许保存 Asia/Shanghai 口径下的所有非未来日期
 - 保存按 `userId + date` upsert，写入前会确保 demo user 存在
 
 错误码：
