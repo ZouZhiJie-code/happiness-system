@@ -861,7 +861,7 @@ describe("analysis shell", () => {
     expect(quietCard).not.toHaveTextContent("5月8日 - 5月31日");
   });
 
-  it("renders the happiness score editor with filled values", async () => {
+  it("renders the score trend panel in read-only mode", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "score"
@@ -872,10 +872,9 @@ describe("analysis shell", () => {
     const panel = await screen.findByTestId("happiness-score-panel");
 
     expect(screen.getByTestId("analysis-score-placeholder")).toHaveTextContent("幸福 8 要素评分");
-    expect(within(panel).getByRole("heading", { name: "意义感" })).toBeInTheDocument();
-    expect(within(panel).getByRole("button", { name: "意义感8分" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(panel).getByRole("heading", { name: "评分走势" })).toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
     expect(within(panel).getByTestId("score-factor-button-livingCondition")).toHaveTextContent("6.0");
-    expect(within(panel).getByRole("button", { name: "保存评分" })).toBeEnabled();
   });
 
   it("renders average and factor score trends with gaps for unscored days", async () => {
@@ -1051,12 +1050,12 @@ describe("analysis shell", () => {
     mockRouterReplace.mockClear();
     fireEvent.click(screen.getByTestId("score-factor-button-autonomy"));
 
-    expect(screen.getByText("自主感月均 6.5")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "本月自主感评分走势，未评分日期断线" })).toBeInTheDocument();
+    expect(screen.getByText("意志月均 6.5")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "本月意志评分走势，未评分日期断线" })).toBeInTheDocument();
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it("switches between today and yesterday score records", async () => {
+  it("does not render score entry controls in analysis score section", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "score"
@@ -1064,42 +1063,12 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    const panel = await screen.findByTestId("happiness-score-panel");
-
-    expect(within(panel).getByRole("button", { name: "意义感8分" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(within(panel).getByRole("button", { name: /昨天/ }));
-    expect(within(panel).getByRole("button", { name: "意义感6分" })).toHaveAttribute("aria-pressed", "true");
-    expect(within(screen.getByTestId("happiness-score-date-switch")).getByText("昨天 · 5月2日")).toBeInTheDocument();
+    await screen.findByTestId("happiness-score-panel");
+    expect(screen.queryByTestId("happiness-score-date-switch")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
   });
 
-  it("keeps save disabled until all eight score items are filled", async () => {
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          ...buildScoreFields([]),
-          scoreRecords: [],
-          editableDates: ["2026-05-03", "2026-05-02"],
-          narrative: null
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const panel = await screen.findByTestId("happiness-score-panel");
-
-    expect(within(panel).getByRole("button", { name: "保存评分" })).toBeDisabled();
-    fireEvent.click(within(panel).getByRole("button", { name: "意义感8分" }));
-    expect(within(panel).getByRole("button", { name: "保存评分" })).toBeDisabled();
-  });
-
-  it("saves a complete happiness score and refreshes the month analysis", async () => {
+  it("does not call happiness-score save api from analysis score section", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
@@ -1121,36 +1090,11 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    const panel = await screen.findByTestId("happiness-score-panel");
-    fireEvent.click(within(panel).getByRole("button", { name: "保存评分" }));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/happiness-score",
-        expect.objectContaining({
-          method: "PUT",
-          body: JSON.stringify({
-            date: "2026-05-03",
-            scores: {
-              meaning: 8,
-              health: 7,
-              virtue: 9,
-              autonomy: 6,
-              interest: 8,
-              skill: 7,
-              relationship: 9,
-              livingCondition: 6
-            }
-          })
-        })
-      );
-    });
-    await waitFor(() => {
-      expect(fetchMock.mock.calls.filter(([url]) => String(url).startsWith("/api/analysis/month"))).toHaveLength(2);
-    });
+    await screen.findByTestId("happiness-score-panel");
+    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/happiness-score")).toBe(false);
   });
 
-  it("shows a read-only score note for months outside the edit window", async () => {
+  it("shows score trend empty state for months outside the edit window", async () => {
     (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -1170,7 +1114,6 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(await screen.findByTestId("happiness-score-readonly")).toHaveTextContent("这个月份现在只能查看，不能修改");
     expect(await screen.findByTestId("score-average-trend-chart-empty")).toHaveTextContent("本月还没有可展示的评分走势");
     expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
   });

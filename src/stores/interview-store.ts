@@ -45,6 +45,7 @@ interface InterviewState {
   draftGenerationRequestId: number;
   workspaceMode: InterviewWorkspaceMode;
   dailyJournalOpenRequestId: number;
+  happinessScoreEntryOpenRequestId: number;
   dimensionNavigationRequestId: number;
   dimensionNavigationTarget: InterviewDimension | null;
   workspaceTransitionState: InterviewWorkspaceTransitionState;
@@ -67,6 +68,7 @@ interface InterviewState {
   setWorkspaceTransitionState: (state: InterviewWorkspaceTransitionState) => void;
   requestDraftGeneration: () => void;
   requestDailyJournalOpen: () => void;
+  requestHappinessScoreEntryOpen: () => void;
   requestDimensionNavigation: (dimension: InterviewDimension) => void;
   clearDimensionNavigationRequest: () => void;
   setWorkspaceMode: (mode: InterviewWorkspaceMode) => void;
@@ -91,6 +93,7 @@ const initialState = {
   draftGenerationRequestId: 0,
   workspaceMode: "interview" as InterviewWorkspaceMode,
   dailyJournalOpenRequestId: 0,
+  happinessScoreEntryOpenRequestId: 0,
   dimensionNavigationRequestId: 0,
   dimensionNavigationTarget: null as InterviewDimension | null,
   workspaceTransitionState: null as InterviewWorkspaceTransitionState,
@@ -162,6 +165,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   requestDailyJournalOpen: () =>
     set((state) => ({
       dailyJournalOpenRequestId: state.dailyJournalOpenRequestId + 1
+    })),
+  requestHappinessScoreEntryOpen: () =>
+    set((state) => ({
+      happinessScoreEntryOpenRequestId: state.happinessScoreEntryOpenRequestId + 1
     })),
   requestDimensionNavigation: (dimension) =>
     set((state) => ({

@@ -23,74 +23,19 @@ import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation
 import { buildCalendarHref, buildCalendarMonthGrid } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { getInterviewDimensionMeta, interviewDimensions } from "@/features/interview/dimensions";
-import {
-  happinessScoreKeyPairs,
-  type DailyHappinessScoreKey,
-  type HappinessScoreRequestKey
-} from "@/features/happiness-score/types";
+import { happinessScorePresentationItems } from "@/features/happiness-score/presentation";
+import type { HappinessScoreRequestKey } from "@/features/happiness-score/types";
 import { cn } from "@/lib/utils";
 
 const happinessScoreItems: {
   requestKey: HappinessScoreRequestKey;
-  recordKey: DailyHappinessScoreKey;
   label: string;
   description: string;
-}[] = [
-  {
-    requestKey: "meaning",
-    recordKey: "meaningScore",
-    label: "意义感",
-    description: "今天做的事，有没有碰到我在乎的方向"
-  },
-  {
-    requestKey: "health",
-    recordKey: "healthScore",
-    label: "身体状态",
-    description: "身体、睡眠和精力，有没有被照顾到"
-  },
-  {
-    requestKey: "virtue",
-    recordKey: "virtueScore",
-    label: "自我认可",
-    description: "今天的选择，有没有让我自己觉得站得住"
-  },
-  {
-    requestKey: "autonomy",
-    recordKey: "autonomyScore",
-    label: "自主感",
-    description: "我有没有保住一点选择感和掌控感"
-  },
-  {
-    requestKey: "interest",
-    recordKey: "interestScore",
-    label: "投入感",
-    description: "今天有没有被好奇、喜欢或投入感点亮"
-  },
-  {
-    requestKey: "skill",
-    recordKey: "skillScore",
-    label: "成长感",
-    description: "有没有练到能力，或者看见一点进步"
-  },
-  {
-    requestKey: "relationship",
-    recordKey: "relationshipScore",
-    label: "关系支持",
-    description: "今天有没有感到连接、支持或被理解"
-  },
-  {
-    requestKey: "livingCondition",
-    recordKey: "livingConditionScore",
-    label: "生活托住",
-    description: "环境、秩序和现实条件，有没有把我托住"
-  }
-];
-
-type ScoreFormState = Partial<Record<HappinessScoreRequestKey, number>>;
-type ScoreSaveErrorCode =
-  | "INVALID_HAPPINESS_SCORE_REQUEST"
-  | "HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED"
-  | "HAPPINESS_SCORE_SAVE_FAILED";
+}[] = happinessScorePresentationItems.map((item) => ({
+  requestKey: item.requestKey,
+  label: item.label,
+  description: item.hint
+}));
 
 interface ScoreTrendHighlight {
   label: string;
@@ -125,24 +70,6 @@ async function fetchAnalysisMonth(month: string) {
   }
 
   return (await response.json()) as AnalysisMonthRecord;
-}
-
-async function saveHappinessScore(date: string, scores: Record<HappinessScoreRequestKey, number>) {
-  const response = await fetch("/api/happiness-score", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      date,
-      scores
-    })
-  });
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { error?: ScoreSaveErrorCode } | null;
-    throw new Error(payload?.error ?? "HAPPINESS_SCORE_SAVE_FAILED");
-  }
 }
 
 function buildInterviewHref(input: {
@@ -187,104 +114,6 @@ function formatAnalysisDateLabel(date: string | null, fallback = "暂无") {
 function formatScoreDateLabel(date: string) {
   const [, month, day] = date.split("-");
   return `${Number(month)}月${Number(day)}日`;
-}
-
-function resolveScoreDateShortcut(date: string, editableDates: string[]) {
-  if (date === editableDates[0]) {
-    return "今天";
-  }
-
-  if (date === editableDates[1]) {
-    return "昨天";
-  }
-
-  return formatScoreDateLabel(date);
-}
-
-function getScoreRecordByDate(record: AnalysisMonthRecord, date: string) {
-  return record.scoreRecords.find((score) => score.date === date) ?? null;
-}
-
-function hasScoreRecordForDate(record: AnalysisMonthRecord, date: string) {
-  return Boolean(getScoreRecordByDate(record, date));
-}
-
-function getPendingEditableScoreDates(record: AnalysisMonthRecord) {
-  return record.editableDates.filter((date) => !hasScoreRecordForDate(record, date));
-}
-
-function getScoreCompletion(scores: ScoreFormState) {
-  const filledCount = happinessScoreItems.filter((item) => typeof scores[item.requestKey] === "number").length;
-  const nextUnfilledFactor = happinessScoreItems.find((item) => typeof scores[item.requestKey] !== "number")?.requestKey ?? null;
-
-  return {
-    filledCount,
-    remainingCount: happinessScoreItems.length - filledCount,
-    nextUnfilledFactor
-  };
-}
-
-function resolvePreferredScoreFactor(scores: ScoreFormState) {
-  return getScoreCompletion(scores).nextUnfilledFactor ?? happinessScoreItems[0]?.requestKey ?? "meaning";
-}
-
-function formatEditableScoreDateLabel(date: string, editableDates: string[]) {
-  const shortcut = resolveScoreDateShortcut(date, editableDates);
-
-  if (shortcut === "今天") {
-    return `今天 · ${formatScoreDateLabel(date)}`;
-  }
-
-  if (shortcut === "昨天") {
-    return editableDates[0]?.slice(0, 7) === date.slice(0, 7) ? `昨天 · ${formatScoreDateLabel(date)}` : `昨天补录 · ${formatScoreDateLabel(date)}`;
-  }
-
-  return formatScoreDateLabel(date);
-}
-
-function formatScoreLevelCopy(value: number | null) {
-  if (typeof value !== "number") {
-    return {
-      label: "未填",
-      detail: "先凭直觉给一个刻度，不需要追求特别精确。"
-    };
-  }
-
-  if (value <= 3) {
-    return {
-      label: "偏低",
-      detail: "这项今天明显比较弱，后面回看时很容易成为需要解释的低点。"
-    };
-  }
-
-  if (value <= 7) {
-    return {
-      label: "中段",
-      detail: "这项今天大致在中间，更适合结合别的线索一起看。"
-    };
-  }
-
-  return {
-    label: "偏高",
-    detail: "这项今天相对被托住了，后面可以留意它是否稳定出现。"
-  };
-}
-
-function buildScoreFormState(record: AnalysisMonthRecord, date: string): ScoreFormState {
-  const existing = record.scoreRecords.find((score) => score.date === date);
-
-  if (!existing) {
-    return {};
-  }
-
-  return Object.fromEntries(happinessScoreKeyPairs.map((item) => [item.requestKey, existing[item.recordKey]])) as ScoreFormState;
-}
-
-function isCompleteScoreForm(scores: ScoreFormState): scores is Record<HappinessScoreRequestKey, number> {
-  return happinessScoreItems.every((item) => {
-    const value = scores[item.requestKey];
-    return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 10;
-  });
 }
 
 function formatScoreAverage(value: number | null) {
@@ -398,18 +227,6 @@ function getScoreTrendHighlights(record: AnalysisMonthRecord): ScoreTrendHighlig
     highlights,
     note: hasAverageSeparation ? null : "当前更适合把评分看成体感刻度，不急着读出稳定高低。"
   };
-}
-
-function resolveScoreSaveErrorCopy(errorCode: string | null) {
-  if (errorCode === "HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED") {
-    return "这个日期已经不在可编辑窗口里了，只能修改今天和昨天。";
-  }
-
-  if (errorCode === "INVALID_HAPPINESS_SCORE_REQUEST") {
-    return "这次评分没有成功提交，先检查是不是还有未填项。";
-  }
-
-  return "评分保存失败，请稍后再试。";
 }
 
 function resolveTrendPointLabel(date: string, value: number) {
@@ -641,8 +458,6 @@ function getScoreConfidenceCopy(record: AnalysisMonthRecord) {
 }
 
 function buildOverviewNextAction(record: AnalysisMonthRecord): OverviewAction {
-  const pendingEditableDates = getPendingEditableScoreDates(record);
-  const nextPendingEditableDate = pendingEditableDates[0] ?? null;
   const pendingDailyJournalDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
   const scoreOnlyDay = findCoverageDay(record, record.rhythmOverview.latestScoreOnlyDate);
   const latestActiveDay = findCoverageDay(record, record.rhythmOverview.latestActiveDate);
@@ -685,20 +500,6 @@ function buildOverviewNextAction(record: AnalysisMonthRecord): OverviewAction {
       body: `${formatAnalysisDateLabel(scoreOnlyDay.date)}已经有评分刻度，但还没有任何维度日志。先把那一天写成一个具体片段。`,
       href: buildCalendarHref({ view: "day", date: scoreOnlyDay.date }),
       label: "去补记录"
-    };
-  }
-
-  if (nextPendingEditableDate) {
-    const pendingLabel = resolveScoreDateShortcut(nextPendingEditableDate, record.editableDates);
-
-    return {
-      title: `先补${pendingLabel}评分`,
-      body:
-        pendingLabel === "今天"
-          ? "文字线索已经存在，补上今天的幸福 8 要素刻度后，评分走势会更接近真实状态。"
-          : "趋势已经能看，但昨天的刻度还没补齐。把这一天补上，月内走势会更连贯。",
-      href: buildAnalysisHref({ month: record.month, section: "score" }),
-      label: `补${pendingLabel}评分`
     };
   }
 
@@ -1498,320 +1299,10 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
 }
 
 function HappinessScorePanel({ record, onSaved }: { record: AnalysisMonthRecord; onSaved: () => void }) {
-  const initialEditableDate = getPendingEditableScoreDates(record)[0] ?? record.editableDates[0] ?? null;
-  const initialScores = initialEditableDate ? buildScoreFormState(record, initialEditableDate) : {};
-  const [selectedDate, setSelectedDate] = useState(initialEditableDate);
-  const [scores, setScores] = useState<ScoreFormState>(initialScores);
-  const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>(resolvePreferredScoreFactor(initialScores));
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveErrorCode, setSaveErrorCode] = useState<string | null>(null);
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    const preferredDate = getPendingEditableScoreDates(record)[0] ?? record.editableDates[0] ?? null;
-    const nextDate = selectedDate && record.editableDates.includes(selectedDate) ? selectedDate : preferredDate;
-    const nextScores = nextDate ? buildScoreFormState(record, nextDate) : {};
-
-    setSelectedDate(nextDate);
-    setScores(nextScores);
-    setSelectedFactor(resolvePreferredScoreFactor(nextScores));
-    setSaveErrorCode(null);
-    setSaveNotice((current) => (nextDate === selectedDate ? current : null));
-  }, [record, selectedDate]);
-
-  if (record.editableDates.length === 0 || !selectedDate) {
-    return (
-      <div className="space-y-3" data-testid="happiness-score-panel">
-        <HappinessScoreTrendPanel record={record} />
-        <div className="rounded-[20px] border border-dashed border-[rgba(150,105,61,0.18)] bg-[rgba(255,249,239,0.32)] px-4 py-5 text-[0.9rem] leading-7 text-[#7a624b]" data-testid="happiness-score-readonly">
-          这个月份现在只能查看，不能修改。评分录入只开放今天和昨天，历史月份保留为只读回看。
-        </div>
-      </div>
-    );
-  }
-
-  const pendingEditableDates = getPendingEditableScoreDates(record);
-  const hasPendingEditableDates = pendingEditableDates.length > 0;
-  const completion = getScoreCompletion(scores);
-  const canSave = isCompleteScoreForm(scores) && !isSaving;
-  const selectedDateHasSavedScore = hasScoreRecordForDate(record, selectedDate);
-  const selectedDateShortcut = resolveScoreDateShortcut(selectedDate, record.editableDates);
-  const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
-  const selectedValue = scores[selectedFactor] ?? null;
-  const selectedLevelCopy = formatScoreLevelCopy(selectedValue);
-  const nextSuggestedFactor = completion.nextUnfilledFactor
-    ? happinessScoreItems.find((item) => item.requestKey === completion.nextUnfilledFactor) ?? null
-    : null;
-  const intakeTitle = hasPendingEditableDates
-    ? pendingEditableDates.length > 1
-      ? "先把今天和昨天补齐，再回来看这个月"
-      : `${selectedDateShortcut}还没补评分`
-    : "今天和昨天的刻度都在，可以按需要微调";
-  const intakeDescription = hasPendingEditableDates
-    ? "这里不是写总结，只记录当天状态。把 8 项刻度补齐以后，走势会立刻更接近真实状态。"
-    : "如果你想微调今天或昨天的刻度，直接改动并保存就可以，趋势会随之刷新。";
-  const pendingSummaryText =
-    pendingEditableDates.length === 0
-      ? "今天和昨天都已补齐"
-      : pendingEditableDates.length === 1
-        ? `${resolveScoreDateShortcut(pendingEditableDates[0], record.editableDates)}待补`
-        : `${pendingEditableDates.length} 天待补`;
-  const editor = (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,1.26fr)]">
-      <aside className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,249,239,0.56)] p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="archive-label">补录入口</p>
-          <span className="rounded-full border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.76)] px-2.5 py-1 text-[0.72rem] text-[#7a624b]">
-            {pendingSummaryText}
-          </span>
-        </div>
-        <h3 className="mt-3 text-balance font-display text-[1.55rem] leading-none text-[#302114]">{intakeTitle}</h3>
-        <p className="mt-3 text-pretty text-[0.88rem] leading-7 text-[#72583f]">{intakeDescription}</p>
-
-        <div className="mt-4 grid gap-2" data-testid="happiness-score-date-switch">
-          {record.editableDates.map((date) => {
-            const active = selectedDate === date;
-            const completed = hasScoreRecordForDate(record, date);
-
-            return (
-              <button
-                key={date}
-                type="button"
-                onClick={() => {
-                  setSelectedDate(date);
-                  setSaveErrorCode(null);
-                  setSaveNotice(null);
-                }}
-                className={cn(
-                  "rounded-[16px] border px-3.5 py-3 text-left transition",
-                  active
-                    ? "border-[rgba(111,74,38,0.22)] bg-[rgba(243,228,199,0.78)] shadow-sm ring-1 ring-[rgba(111,74,38,0.12)]"
-                    : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.82)] hover:border-[rgba(150,105,61,0.12)] hover:bg-[rgba(250,242,229,0.86)]"
-                )}
-                aria-pressed={active}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[0.86rem] text-[#3a2c1f]">{formatEditableScoreDateLabel(date, record.editableDates)}</p>
-                    <p className="mt-1 text-[0.72rem] leading-5 text-[#8a6b4b]">{completed ? "这一天已经有完整刻度" : "这一天还没补录评分"}</p>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-[0.7rem]",
-                      completed ? "bg-[rgba(85,111,74,0.12)] text-[#486346]" : "bg-[rgba(183,122,58,0.14)] text-[#8a5d17]"
-                    )}
-                  >
-                    {completed ? "已补齐" : "待补录"}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.72)] px-3.5 py-3">
-          <p className="text-[0.72rem] text-[#8a6b4b]">当前日期</p>
-          <p className="mt-1 text-[0.95rem] text-[#34271c]">{formatEditableScoreDateLabel(selectedDate, record.editableDates)}</p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-[0.72rem] text-[#8a6b4b]">填写进度</p>
-              <p className="mt-1 font-mono text-[1.1rem] tabular-nums text-[#4b3727]">{completion.filledCount}/8</p>
-            </div>
-            <p className="max-w-[11rem] text-right text-pretty text-[0.72rem] leading-5 text-[#7a624b]">
-              {completion.remainingCount === 0 ? "8 项都在，可以直接保存。" : `还差 ${completion.remainingCount} 项，先把这一天的刻度补齐。`}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-[0.8rem] text-[#5d4733]">8 项列表</p>
-            <p className="font-mono text-[0.72rem] tabular-nums text-[#8a6b4b]">{completion.remainingCount} 项未填</p>
-          </div>
-          <div className="space-y-2.5">
-            {happinessScoreItems.map((item) => {
-              const active = item.requestKey === selectedFactor;
-              const value = scores[item.requestKey];
-
-              return (
-                <button
-                  key={item.requestKey}
-                  type="button"
-                  onClick={() => setSelectedFactor(item.requestKey)}
-                  className={cn(
-                    "w-full rounded-[16px] border px-3 py-3 text-left transition",
-                    active
-                      ? "border-[rgba(111,74,38,0.2)] bg-[rgba(243,228,199,0.68)] shadow-sm"
-                      : "border-[rgba(150,105,61,0.08)] bg-[rgba(255,252,246,0.78)] hover:border-[rgba(150,105,61,0.12)] hover:bg-[rgba(250,242,229,0.84)]"
-                  )}
-                  aria-pressed={active}
-                  data-testid={`score-editor-factor-${item.requestKey}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[0.84rem] text-[#3a2c1f]">{item.label}</p>
-                      <p className="mt-1 text-pretty text-[0.72rem] leading-5 text-[#8a6b4b]">{item.description}</p>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2.5 py-1 font-mono text-[0.74rem] tabular-nums",
-                        typeof value === "number"
-                          ? "bg-[rgba(111,74,38,0.1)] text-[#5f4328]"
-                          : "bg-[rgba(150,105,61,0.1)] text-[#8a6b4b]"
-                      )}
-                    >
-                      {typeof value === "number" ? value : "待填"}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </aside>
-
-      <div className="rounded-[20px] border border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.84)] p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="archive-label">当前要素</p>
-            <h3 className="mt-2 text-balance font-display text-[1.45rem] leading-none text-[#302114]">{selectedItem.label}</h3>
-            <p className="mt-2 max-w-[42rem] text-pretty text-[0.84rem] leading-6 text-[#72583f]">{selectedItem.description}</p>
-          </div>
-          <div className="rounded-[16px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.44)] px-3.5 py-3">
-            <p className="text-[0.72rem] text-[#8a6b4b]">{selectedLevelCopy.label}</p>
-            <p className="mt-1 max-w-[14rem] text-pretty text-[0.76rem] leading-5 text-[#6f5339]">{selectedLevelCopy.detail}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-5 gap-2 sm:grid-cols-10">
-          {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => {
-            const active = selectedValue === value;
-
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setScores((current) => ({
-                    ...current,
-                    [selectedFactor]: value
-                  }));
-                  setSaveErrorCode(null);
-                  setSaveNotice(null);
-                }}
-                className={cn(
-                  "h-11 rounded-[14px] border font-mono text-[0.88rem] tabular-nums transition",
-                  active
-                    ? "border-[rgba(111,74,38,0.24)] bg-[#6f4a26] text-[#fffaf1] shadow-sm"
-                    : "border-[rgba(150,105,61,0.1)] bg-[rgba(255,252,246,0.86)] text-[#5f4328] hover:border-[rgba(111,74,38,0.18)] hover:bg-[rgba(243,228,199,0.68)]"
-                )}
-                aria-pressed={active}
-                aria-label={`${selectedItem.label}${value}分`}
-              >
-                {value}
-              </button>
-            );
-          })}
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-2 text-[0.72rem] text-[#8a6b4b]">
-          <span>低</span>
-          <span className="text-center text-pretty">先凭直觉给刻度，不需要在这里写解释。</span>
-          <span>高</span>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setScores((current) => {
-                const next = { ...current };
-                delete next[selectedFactor];
-                return next;
-              });
-              setSaveErrorCode(null);
-              setSaveNotice(null);
-            }}
-            disabled={typeof selectedValue !== "number"}
-            className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,252,246,0.86)] px-3 py-1.5 text-[0.76rem] text-[#6f5339] transition hover:bg-[rgba(250,242,229,0.84)] disabled:cursor-not-allowed disabled:text-[#ab937c]"
-          >
-            清空这一项
-          </button>
-          {nextSuggestedFactor ? (
-            <button
-              type="button"
-              onClick={() => setSelectedFactor(nextSuggestedFactor.requestKey)}
-              className="rounded-full border border-[rgba(150,105,61,0.12)] bg-[rgba(255,249,239,0.62)] px-3 py-1.5 text-[0.76rem] text-[#6f5339] transition hover:bg-[rgba(243,228,199,0.58)]"
-            >
-              去填下一项：{nextSuggestedFactor.label}
-            </button>
-          ) : null}
-        </div>
-
-        <div className="mt-5 rounded-[18px] border border-[rgba(150,105,61,0.08)] bg-[rgba(255,249,239,0.4)] px-3.5 py-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[0.72rem] text-[#8a6b4b]">保存的是哪一天</p>
-              <p className="mt-1 text-[0.92rem] text-[#3a2c1f]">{formatEditableScoreDateLabel(selectedDate, record.editableDates)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[0.72rem] text-[#8a6b4b]">这一天当前状态</p>
-              <p className="mt-1 text-[0.92rem] text-[#3a2c1f]">{selectedDateHasSavedScore ? "已有完整刻度，可继续调整" : "还没保存完整刻度"}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[0.78rem] leading-6 text-[#80634a]">
-              {canSave ? "8 项已填完，可以保存。" : `还差 ${completion.remainingCount} 项，全部填完后才能保存。`}
-            </p>
-            {saveNotice ? (
-              <p className="mt-2 text-[0.76rem] text-[#486346]" role="status">
-                {saveNotice}
-              </p>
-            ) : null}
-            {saveErrorCode ? (
-              <p className="mt-2 rounded-[14px] border border-[rgba(151,74,44,0.18)] bg-[rgba(255,241,232,0.62)] px-3 py-2 text-[0.82rem] text-[#8a3f25]" role="alert">
-                {resolveScoreSaveErrorCopy(saveErrorCode)}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!canSave}
-            className="rounded-full border border-[rgba(98,66,31,0.18)] bg-[#5f3e1f] px-4 py-2 text-[0.84rem] text-[#fffaf1] transition hover:bg-[#4f3319] disabled:cursor-not-allowed disabled:border-[rgba(150,105,61,0.1)] disabled:bg-[rgba(188,163,130,0.44)] disabled:text-[#8c735b]"
-          >
-            {isSaving ? "保存中" : "保存评分"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  async function handleSave() {
-    if (!selectedDate || !isCompleteScoreForm(scores)) {
-      return;
-    }
-
-    setIsSaving(true);
-    setSaveErrorCode(null);
-
-    try {
-      await saveHappinessScore(selectedDate, scores);
-      setSaveNotice(`${formatEditableScoreDateLabel(selectedDate, record.editableDates)}评分已保存`);
-      onSaved();
-    } catch (error) {
-      setSaveErrorCode(error instanceof Error ? error.message : "HAPPINESS_SCORE_SAVE_FAILED");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
+  void onSaved;
   return (
     <div className="space-y-3" data-testid="happiness-score-panel">
-      {hasPendingEditableDates ? editor : <HappinessScoreTrendPanel record={record} />}
-      {hasPendingEditableDates ? <HappinessScoreTrendPanel record={record} /> : editor}
+      <HappinessScoreTrendPanel record={record} />
     </div>
   );
 }

@@ -162,6 +162,17 @@ const baseDailyJournalEntry: DailyJournalEntryRecord = {
   savedAt: null
 };
 
+const baseDailyJournalSources = [
+  {
+    id: "entry-saved",
+    sessionId: "session-with-journal",
+    dimension: "joy",
+    title: "和家人一起吃饭",
+    updatedAt: "2026-04-21T00:08:00.000Z",
+    savedAt: "2026-04-21T00:08:00.000Z"
+  }
+] as const;
+
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   const nextSession: InterviewSessionRecord = {
     id: "session-joy",
@@ -579,6 +590,7 @@ describe("InterviewShell", () => {
           JSON.stringify({
             dailyJournal: baseDailyJournalEntry,
             availableSourceCount: 1,
+            sources: baseDailyJournalSources,
             state: "draft"
           }),
           {
@@ -1619,6 +1631,7 @@ describe("InterviewShell", () => {
         JSON.stringify({
           dailyJournal: baseDailyJournalEntry,
           availableSourceCount: 1,
+          sources: baseDailyJournalSources,
           state: "draft"
         }),
         {

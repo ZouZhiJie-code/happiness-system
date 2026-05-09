@@ -30,10 +30,6 @@ function ToolbarDivider() {
   );
 }
 
-function getPendingEditableScoreDates(record: AnalysisMonthRecord) {
-  return record.editableDates.filter((date) => !record.scoreRecords.some((score) => score.date === date));
-}
-
 function getChip(
   key: AnalysisSectionKey,
   record: AnalysisMonthRecord | null
@@ -41,20 +37,10 @@ function getChip(
   if (!record) return null;
 
   if (key === "score") {
-    if (record.editableDates.length === 0) return null;
-    const pendingEditableDates = getPendingEditableScoreDates(record);
-
-    if (pendingEditableDates.length === 0) {
-      return { text: "已补齐", dotClass: "bg-[#5a7a56]" };
-    }
-
-    if (pendingEditableDates.length > 1) {
-      return { text: `${pendingEditableDates.length}天待补`, dotClass: "bg-[#b87a3a]" };
-    }
-
-    return pendingEditableDates[0] === record.editableDates[0]
-      ? { text: "今天未评", dotClass: "bg-[#b87a3a]" }
-      : { text: "昨天待补", dotClass: "bg-[#b87a3a]" };
+    const scoredDayCount = record.scoreOverview.scoredDayCount;
+    if (scoredDayCount === 0) return { text: "暂无评分", dotClass: "bg-[#9a8a78]" };
+    if (scoredDayCount === 1) return { text: "1天评分", dotClass: "bg-[#8e6a41]" };
+    return { text: `${scoredDayCount}天评分`, dotClass: "bg-[#5a7a56]" };
   }
 
   if (key === "rhythm") {
