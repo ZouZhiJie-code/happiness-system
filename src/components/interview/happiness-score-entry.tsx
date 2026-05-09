@@ -6,8 +6,7 @@ import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import {
   getFirstUnfilledHappinessScoreIndex,
   getHappinessScoreLevelTip,
-  happinessScorePresentationItems,
-  resolveNextHappinessScoreIndex
+  happinessScorePresentationItems
 } from "@/features/happiness-score/presentation";
 import type { HappinessScoreRequestKey } from "@/features/happiness-score/types";
 import { cn } from "@/lib/utils";
@@ -45,13 +44,16 @@ function isCompleteScoreForm(scores: ScoreFormState): scores is Record<Happiness
 
 export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScoreEntryProps) {
   const [scores, setScores] = useState<ScoreFormState>({});
+  const [touchedScores, setTouchedScores] = useState<Partial<Record<HappinessScoreRequestKey, true>>>({});
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTipValue, setActiveTipValue] = useState<number | null>(null);
+  const [transitionNotice, setTransitionNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const jumpTimerRef = useRef<number | null>(null);
+  const noticeTimerRef = useRef<number | null>(null);
   const hasLocalEditsRef = useRef(false);
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
@@ -65,6 +67,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     return () => {
       if (jumpTimerRef.current) {
         window.clearTimeout(jumpTimerRef.current);
+      }
+      if (noticeTimerRef.current) {
+        window.clearTimeout(noticeTimerRef.current);
       }
     };
   }, []);
@@ -80,9 +85,15 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       window.clearTimeout(jumpTimerRef.current);
       jumpTimerRef.current = null;
     }
+    if (noticeTimerRef.current) {
+      window.clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
+    }
     setScores({});
+    setTouchedScores({});
     setCurrentIndex(0);
     setActiveTipValue(null);
+    setTransitionNotice(null);
     setIsLoadingExisting(true);
     setSaveError(null);
     setSaveNotice(null);
@@ -134,7 +145,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     return null;
   }
 
-  const selectedValue = scores[currentKey] ?? null;
+  const selectedValue = touchedScores[currentKey] ? (scores[currentKey] ?? null) : null;
   const levelTip = getHappinessScoreLevelTip(selectedValue);
 
   function handleSelectScore(value: number) {
@@ -142,23 +153,38 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     setSaveNotice(null);
     setSaveError(null);
 
+    if (jumpTimerRef.current) {
+      window.clearTimeout(jumpTimerRef.current);
+    }
+    if (noticeTimerRef.current) {
+      window.clearTimeout(noticeTimerRef.current);
+    }
+
+    const currentLabel = currentItem.label;
+    const nextIndex = (currentIndex + 1) % total;
+    const nextLabel = happinessScorePresentationItems[nextIndex]?.label ?? currentLabel;
+    setTransitionNotice(`已记录 ${currentLabel} ${value} 分，进入下一项：${nextLabel}`);
+
     setScores((current) => {
       const next = {
         ...current,
         [currentKey]: value
       };
-      const nextIndex = resolveNextHappinessScoreIndex(next, currentIndex);
-
-      if (jumpTimerRef.current) {
-        window.clearTimeout(jumpTimerRef.current);
-      }
-
-      jumpTimerRef.current = window.setTimeout(() => {
-        setCurrentIndex(nextIndex);
-      }, 200);
-
       return next;
     });
+    setTouchedScores((current) => ({
+      ...current,
+      [currentKey]: true
+    }));
+
+    jumpTimerRef.current = window.setTimeout(() => {
+      setCurrentIndex(nextIndex);
+      setActiveTipValue(null);
+    }, 200);
+
+    noticeTimerRef.current = window.setTimeout(() => {
+      setTransitionNotice(null);
+    }, 1200);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -211,7 +237,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
 
   return (
     <section
-      className="mt-3 rounded-[20px] border border-[rgba(150,105,61,0.14)] bg-[rgba(255,250,242,0.82)] px-4 py-4 shadow-[0_10px_22px_rgba(114,77,41,0.08)]"
+      className="mt-3 rounded-[20px] border border-[rgba(130,87,46,0.24)] bg-[rgba(255,249,240,0.92)] px-4 py-4 shadow-[0_12px_26px_rgba(114,77,41,0.12)]"
       data-testid="interview-happiness-score-entry"
       onKeyDown={handleKeyDown}
     >
@@ -227,6 +253,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
           收起
         </button>
       </div>
+      <p aria-live="polite" className="mt-1.5 text-[0.7rem] text-[#7a5d42]">
+        {transitionNotice ?? "已进入评分模式。按 1-9 或 0（10分）可快速录入。"}
+      </p>
 
       <div className="mt-3">
         <div className="mb-2 flex items-center justify-between text-[0.72rem] text-[#83684d]">
