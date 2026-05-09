@@ -89,9 +89,19 @@ model User {
 model UserSettings {
   id                            String   @id @default(cuid())
   userId                        String   @unique
+  // 个人资料
+  nickname                      String?
+  avatar                        String?
+  bio                           String?
+  // 访谈偏好（保留原有字段兼容）
   memoryEnabled                 Boolean  @default(false)
   transcriptAutoFallbackEnabled Boolean  @default(true)
   timezone                      String   @default("Asia/Shanghai")
+  // 扩展配置（JSON 字段）
+  interview                     Json      @default("{}")  // 追问深度、引导语开关等
+  notification                  Json      @default("{}")  // 邮件提醒、系统通知
+  reminder                      Json      @default("{}")  // 访谈提醒、月度回顾
+  dataManagement                Json      @default("{}")  // 导出格式等
   createdAt                     DateTime @default(now())
   updatedAt                     DateTime @updatedAt
   user                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/shared/site-header";
+import { ReminderProvider } from "@/components/shared/reminder-provider";
 
 import "./globals.css";
 
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="zh-CN">
       <body className="font-body text-ink antialiased">
+        <ReminderProvider />
         <div className="relative flex min-h-dvh flex-col">
           <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
             <SiteHeader />
