@@ -88,6 +88,7 @@ describe("calendar interview links", () => {
 
     expect(items).toHaveLength(5);
     expect(items.every((item) => item.actions[0]?.href?.includes("entryDate=2026-05-01"))).toBe(true);
+    expect(items[0]?.actions[0]?.href).toBe("/interview?dimension=joy&entryDate=2026-05-01");
   });
 
   it("disables start links for future days", () => {
