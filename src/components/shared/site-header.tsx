@@ -747,7 +747,7 @@ function SiteHeaderInner() {
                 <button
                   type="button"
                   onClick={handleDailyJournalClick}
-                  disabled={isWorkspaceTransitioning}
+                  disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
                   aria-pressed={isDailyJournalWorkspaceSelected}
                   aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
                   className={clsx(

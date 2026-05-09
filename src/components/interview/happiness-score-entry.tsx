@@ -92,7 +92,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     })
       .then(async (response) => {
         if (!response.ok) {
-          return null;
+          throw new Error("ANALYSIS_MONTH_QUERY_FAILED");
         }
 
         return (await response.json()) as AnalysisMonthRecord;
