@@ -14,11 +14,14 @@ import type {
 } from "@/types/interview";
 
 export type InterviewBootState = "idle" | "booting" | "restoring";
-export type InterviewWorkspaceMode = "interview" | "daily_journal";
+export type InterviewWorkspaceMode = "interview" | "daily_journal" | "happiness_score";
 export type InterviewWorkspaceTransitionState =
   | null
   | {
       kind: "opening_daily_journal";
+    }
+  | {
+      kind: "opening_happiness_score";
     }
   | {
       kind: "returning_to_interview";
