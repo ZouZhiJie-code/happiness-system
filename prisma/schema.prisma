@@ -66,6 +66,7 @@ enum AIRequestStage {
   transcribe
   extract
   generate
+  portrait_synthesis
 }
 
 enum MemorySourceType {
@@ -82,6 +83,7 @@ model User {
   dailyJournalEntries DailyJournalEntry[]
   dailyHappinessScores DailyHappinessScore[]
   memoryFacts MemoryFact[]
+  portraitSnapshots PortraitSnapshot[]
 }
 
 model UserSettings {
@@ -282,4 +284,18 @@ model AIRequestLog {
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, stage])
+}
+
+model PortraitSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  summary          String
+  dimensionInsights Json
+  factCount        Int
+  dataRangeMonths  Int      @default(3)
+  generatedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
