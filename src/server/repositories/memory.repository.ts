@@ -1,4 +1,4 @@
-import type { InterviewDimension, MemoryFact, MemorySourceType } from "@prisma/client";
+import type { InterviewDimension, MemoryFact, MemorySourceType, PortraitSnapshot } from "@prisma/client";
 
 import { prisma } from "@/server/db/prisma";
 import { setMemoryFactEmbedding } from "@/lib/vector";
@@ -185,3 +185,30 @@ function keywordOverlap(a: Set<string>, b: Set<string>): number {
 // ─── Re-export vector operations ─────────────────────────────────────────
 
 export { setMemoryFactEmbedding };
+
+// ─── Portrait Snapshot Operations ─────────────────────────────────────────
+
+export async function findLatestPortraitSnapshot(userId?: string): Promise<PortraitSnapshot | null> {
+  return prisma.portraitSnapshot.findFirst({
+    where: { userId: userId ?? DEMO_USER_ID },
+    orderBy: { generatedAt: "desc" }
+  });
+}
+
+export async function createPortraitSnapshot(data: {
+  userId?: string;
+  summary: string;
+  dimensionInsights: Record<string, string>;
+  factCount: number;
+  dataRangeMonths?: number;
+}): Promise<PortraitSnapshot> {
+  return prisma.portraitSnapshot.create({
+    data: {
+      userId: data.userId ?? DEMO_USER_ID,
+      summary: data.summary,
+      dimensionInsights: data.dimensionInsights,
+      factCount: data.factCount,
+      dataRangeMonths: data.dataRangeMonths ?? 3
+    }
+  });
+}
