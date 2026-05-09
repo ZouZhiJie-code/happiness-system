@@ -785,9 +785,9 @@ function SiteHeaderInner() {
                 <button
                   type="button"
                   onClick={handleHappinessScoreEntryClick}
-                  disabled={isWorkspaceTransitioning}
+                  disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
                   className="group relative flex shrink-0 items-center justify-center rounded-[15px] border border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] px-3 py-1.5 text-left text-[12px] font-medium text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60"
-                  aria-label="打开当天评分"
+                  aria-label={isDailyJournalWorkspaceSelected ? "当天评分（请先回到访谈）" : "打开当天评分"}
                 >
                   <span
                     aria-hidden="true"

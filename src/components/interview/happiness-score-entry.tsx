@@ -52,6 +52,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const jumpTimerRef = useRef<number | null>(null);
+  const hasLocalEditsRef = useRef(false);
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
   const currentKey = currentItem.requestKey;
@@ -74,6 +75,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     }
 
     let cancelled = false;
+    hasLocalEditsRef.current = false;
     setIsLoadingExisting(true);
     setSaveError(null);
     setSaveNotice(null);
@@ -90,6 +92,11 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       })
       .then((record) => {
         if (cancelled) {
+          return;
+        }
+
+        // Do not clobber user input when late fetch responses arrive.
+        if (hasLocalEditsRef.current) {
           return;
         }
 
@@ -117,6 +124,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const levelTip = getHappinessScoreLevelTip(selectedValue);
 
   function handleSelectScore(value: number) {
+    hasLocalEditsRef.current = true;
     setSaveNotice(null);
     setSaveError(null);
 

@@ -1671,6 +1671,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     expect(await screen.findByTestId("daily-journal-workspace")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "当天评分（请先回到访谈）" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "回到访谈" }));
 
     await waitFor(() => {
