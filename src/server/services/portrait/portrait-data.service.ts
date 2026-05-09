@@ -145,9 +145,9 @@ export async function gatherPortraitData(userId?: string): Promise<PortraitData>
     const firstHalf = scoreRecords.slice(0, mid);
     const secondHalf = scoreRecords.slice(mid);
     const avgFirst =
-      firstHalf.reduce((sum, r) => sum + averageScoreOf(r), 0) / firstHalf.length;
+      firstHalf.reduce((sum: number, r: DailyHappinessScoreRecord) => sum + averageScoreOf(r), 0) / firstHalf.length;
     const avgSecond =
-      secondHalf.reduce((sum, r) => sum + averageScoreOf(r), 0) / secondHalf.length;
+      secondHalf.reduce((sum: number, r: DailyHappinessScoreRecord) => sum + averageScoreOf(r), 0) / secondHalf.length;
     const diff = avgSecond - avgFirst;
     trend = diff > 0.3 ? "rising" : diff < -0.3 ? "declining" : "stable";
   }

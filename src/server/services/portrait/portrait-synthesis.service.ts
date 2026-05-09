@@ -106,7 +106,7 @@ export async function synthesizePortrait(userId?: string): Promise<{
       factCount: result.factCount
     });
   } catch (err) {
-    logger.error("[portrait-synthesis] Failed to cache snapshot", err);
+    logger.error({ err }, "[portrait-synthesis] Failed to cache snapshot");
   }
 
   return result;
