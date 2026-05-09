@@ -81,14 +81,15 @@ export async function synthesizePortrait(userId?: string): Promise<{
     )
   );
 
-  // Check if any dimension failed
+  // Collect insights, fallback on failure
   const dimensionInsights: Partial<Record<InterviewDimension, string>> = {};
   for (let i = 0; i < ALL_DIMENSIONS.length; i++) {
     if (!insightResults[i]) {
-      logger.error(`[portrait-synthesis] Failed to generate insight for ${ALL_DIMENSIONS[i]}`);
-      return null;
+      logger.warn(`[portrait-synthesis] Insight fallback for ${ALL_DIMENSIONS[i]}`);
+      dimensionInsights[ALL_DIMENSIONS[i]] = "该维度洞察暂不可用，请稍后重试。";
+    } else {
+      dimensionInsights[ALL_DIMENSIONS[i]] = insightResults[i]!.insight;
     }
-    dimensionInsights[ALL_DIMENSIONS[i]] = insightResults[i]!.insight;
   }
 
   const result = {

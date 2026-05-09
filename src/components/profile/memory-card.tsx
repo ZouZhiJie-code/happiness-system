@@ -22,13 +22,17 @@ export function MemoryCard({ fact, onUpdate, onDelete }: MemoryCardProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   async function handleSave() {
     setSaving(true);
+    setSaveError(false);
     try {
       const tags = editTags.split(/[,，]/).map((t) => t.trim()).filter(Boolean);
       await onUpdate(fact.id, editSummary, tags);
       setEditing(false);
+    } catch {
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -72,6 +76,9 @@ export function MemoryCard({ fact, onUpdate, onDelete }: MemoryCardProps) {
             取消
           </button>
         </div>
+        {saveError && (
+          <p className="mt-2 text-xs text-[#a07060]">保存失败，请重试</p>
+        )}
       </div>
     );
   }
@@ -112,15 +119,17 @@ export function MemoryCard({ fact, onUpdate, onDelete }: MemoryCardProps) {
               className="rounded px-2 py-1 text-[0.65rem] tracking-[0.1em] text-[#a07060] transition-colors hover:bg-[rgba(255,230,220,0.4)]"
               disabled={saving}
               onClick={async () => {
+                let failed = false;
                 setSaving(true);
                 setDeleteError(false);
                 try {
                   await onDelete(fact.id);
                 } catch {
+                  failed = true;
                   setDeleteError(true);
                 } finally {
                   setSaving(false);
-                  if (!deleteError) setDeleting(false);
+                  if (!failed) setDeleting(false);
                 }
               }}
             >

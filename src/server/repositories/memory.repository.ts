@@ -202,13 +202,17 @@ export async function createPortraitSnapshot(data: {
   factCount: number;
   dataRangeMonths?: number;
 }): Promise<PortraitSnapshot> {
-  return prisma.portraitSnapshot.create({
-    data: {
-      userId: data.userId ?? DEMO_USER_ID,
-      summary: data.summary,
-      dimensionInsights: data.dimensionInsights,
-      factCount: data.factCount,
-      dataRangeMonths: data.dataRangeMonths ?? 3
-    }
+  const uid = data.userId ?? DEMO_USER_ID;
+  return prisma.$transaction(async (tx) => {
+    await tx.portraitSnapshot.deleteMany({ where: { userId: uid } });
+    return tx.portraitSnapshot.create({
+      data: {
+        userId: uid,
+        summary: data.summary,
+        dimensionInsights: data.dimensionInsights,
+        factCount: data.factCount,
+        dataRangeMonths: data.dataRangeMonths ?? 3
+      }
+    });
   });
 }

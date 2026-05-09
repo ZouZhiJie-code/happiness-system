@@ -18,16 +18,31 @@ export function PortraitView() {
   const [synthesizing, setSynthesizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
+  const [stale, setStale] = useState(false);
   const [expandedDim, setExpandedDim] = useState<InterviewDimension | null>(null);
 
   const fetchPortrait = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/profile/portrait");
-      if (!res.ok) throw new Error("fetch failed");
-      const json: PortraitApiResponse = await res.json();
+      const [portraitRes, profileRes] = await Promise.all([
+        fetch("/api/profile/portrait"),
+        fetch("/api/profile")
+      ]);
+      if (!portraitRes.ok) throw new Error("fetch failed");
+      const json: PortraitApiResponse = await portraitRes.json();
       setSnapshot(json.snapshot);
       setError(null);
+
+      // Check if snapshot is stale
+      if (json.snapshot && profileRes.ok) {
+        const profileData = await profileRes.json();
+        const currentCount = Object.values(profileData as Record<string, unknown[]>).reduce(
+          (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0
+        );
+        setStale(currentCount !== json.snapshot.factCount);
+      } else {
+        setStale(false);
+      }
     } catch {
       setError("加载画像失败");
     } finally {
@@ -168,6 +183,11 @@ export function PortraitView() {
             {synthesizing ? "生成中…" : "重新生成"}
           </button>
         </div>
+        {stale && (
+          <p className="mt-3 text-xs text-[#8a7a68]">
+            认知数据已更新，建议重新生成画像以反映最新变化。
+          </p>
+        )}
       </div>
 
       {error && (
@@ -176,7 +196,7 @@ export function PortraitView() {
 
       {/* Dimension cards */}
       {DIMENSION_ORDER.map((dim) => {
-        const insight = snapshot.dimensionInsights[dim];
+        const insight = snapshot.dimensionInsights[dim] ?? "暂无洞察";
         const meta = DIMENSION_META[dim];
         const isExpanded = expandedDim === dim;
 
