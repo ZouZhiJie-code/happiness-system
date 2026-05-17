@@ -47,6 +47,7 @@ import { pauseJoyInterviewSession } from "@/server/services/interview/joy-interv
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
+    userId: "user-1",
     id: "session-1",
     dimension: "joy",
     status: "active",
@@ -113,7 +114,7 @@ describe("pauseJoyInterviewSession", () => {
   it("throws when the session does not exist", async () => {
     findJoyInterviewSessionById.mockResolvedValue(null);
 
-    await expect(pauseJoyInterviewSession("missing")).rejects.toThrow("SESSION_NOT_FOUND");
+    await expect(pauseJoyInterviewSession("user-1", "missing")).rejects.toThrow("SESSION_NOT_FOUND");
   });
 
   it("returns paused sessions as-is without pausing again", async () => {
@@ -123,7 +124,7 @@ describe("pauseJoyInterviewSession", () => {
     });
     findJoyInterviewSessionById.mockResolvedValue(session);
 
-    await expect(pauseJoyInterviewSession(session.id)).resolves.toEqual({ session });
+    await expect(pauseJoyInterviewSession("user-1", session.id)).resolves.toEqual({ session });
     expect(pauseJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 
@@ -136,7 +137,7 @@ describe("pauseJoyInterviewSession", () => {
     findJoyInterviewSessionById.mockResolvedValue(activeSession);
     pauseJoyInterviewSessionRecord.mockResolvedValue(pausedSession);
 
-    await expect(pauseJoyInterviewSession(activeSession.id)).resolves.toEqual({ session: pausedSession });
+    await expect(pauseJoyInterviewSession("user-1", activeSession.id)).resolves.toEqual({ session: pausedSession });
     expect(pauseJoyInterviewSessionRecord).toHaveBeenCalledWith(activeSession.id);
   });
 
@@ -148,7 +149,7 @@ describe("pauseJoyInterviewSession", () => {
       })
     );
 
-    await expect(pauseJoyInterviewSession("session-1")).rejects.toThrow("SESSION_ALREADY_COMPLETED");
+    await expect(pauseJoyInterviewSession("user-1", "session-1")).rejects.toThrow("SESSION_ALREADY_COMPLETED");
     expect(pauseJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 });

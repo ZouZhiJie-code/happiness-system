@@ -7,6 +7,7 @@ import {
   logInterviewRespondError,
   normalizeInterviewRespondError
 } from "@/server/services/interview/respond-error";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { streamInterviewResponse } from "@/server/services/interview/interview.service";
 
 export const dynamic = "force-dynamic";
@@ -67,13 +68,17 @@ export async function POST(request: Request) {
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const user = await requireCurrentUserFromRequest(request);
       const send = (event: string, data: unknown) => {
         controller.enqueue(encoder.encode(formatSseEvent(event, data)));
       };
 
       try {
         const result = await streamInterviewResponse(
-          parsed.data,
+          {
+            ...parsed.data,
+            userId: user.id
+          },
           {
             onPhase: (phase) => send("phase", { state: phase }),
             onDelta: (delta) => send("delta", delta)

@@ -73,15 +73,15 @@ function getScoreRangesForAnalysisMonth(month: string, today = getTodayEntryDate
   return { ranges, editableDates };
 }
 
-export async function getAnalysisMonth(month: string): Promise<AnalysisMonthRecord> {
+export async function getAnalysisMonth(userId: string, month: string): Promise<AnalysisMonthRecord> {
   assertAnalysisMonth(month);
   const today = getTodayEntryDate();
   const { ranges, editableDates } = getScoreRangesForAnalysisMonth(month, today);
 
   try {
     const [sources, ...scoreRecordGroups] = await Promise.all([
-      listAnalysisSourcesByDateRange(getMonthDateRange(month)),
-      ...ranges.map((range) => listDailyHappinessScoresByDateRange(range))
+      listAnalysisSourcesByDateRange({ userId, ...getMonthDateRange(month) }),
+      ...ranges.map((range) => listDailyHappinessScoresByDateRange(userId, range))
     ]);
     const scoreRecords = [...new Map(scoreRecordGroups.flat().map((record) => [record.date, record])).values()];
 

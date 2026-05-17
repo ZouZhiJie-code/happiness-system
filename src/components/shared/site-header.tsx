@@ -9,6 +9,7 @@ import clsx from "clsx";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
+import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
@@ -311,8 +312,11 @@ function SiteHeaderInner() {
       if (nextDimension !== dimension) {
         setDimension(nextDimension);
       }
-      if (typeof window !== "undefined" && window.localStorage.getItem(interviewDimensionStorageKey) !== nextDimension) {
-        window.localStorage.setItem(interviewDimensionStorageKey, nextDimension);
+      if (typeof window !== "undefined") {
+        const scopedDimensionStorageKey = getScopedLocalStorageKey(interviewDimensionStorageKey);
+        if (window.localStorage.getItem(scopedDimensionStorageKey) !== nextDimension) {
+          window.localStorage.setItem(scopedDimensionStorageKey, nextDimension);
+        }
       }
       return;
     }
@@ -324,7 +328,10 @@ function SiteHeaderInner() {
     if (typeof window === "undefined") return;
 
     hasNormalizedInterviewUrlRef.current = true;
-    const remembered = normalizeInterviewDimension(window.localStorage.getItem(interviewDimensionStorageKey));
+    const scopedDimensionStorageKey = getScopedLocalStorageKey(interviewDimensionStorageKey);
+    const remembered = normalizeInterviewDimension(
+      window.localStorage.getItem(scopedDimensionStorageKey) ?? window.localStorage.getItem(interviewDimensionStorageKey)
+    );
     if (remembered !== dimension) {
       setDimension(remembered);
     }
@@ -567,7 +574,7 @@ function SiteHeaderInner() {
     }
 
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(interviewDimensionStorageKey, normalized);
+      window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), normalized);
     }
 
     const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;

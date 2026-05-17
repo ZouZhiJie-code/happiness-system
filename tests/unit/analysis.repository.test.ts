@@ -66,6 +66,7 @@ describe("analysis.repository", () => {
     ]);
 
     const result = await listAnalysisSourcesByDateRange({
+      userId: "user-1",
       startDate: "2026-05-02",
       endDate: "2026-05-04"
     });
@@ -73,7 +74,7 @@ describe("analysis.repository", () => {
     expect(mockJoyEntryFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           status: "saved",
           date: {
             gte: new Date("2026-05-01T16:00:00.000Z"),
@@ -85,7 +86,7 @@ describe("analysis.repository", () => {
     expect(mockDailyJournalFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           status: "saved",
           date: {
             gte: new Date("2026-05-01T16:00:00.000Z"),

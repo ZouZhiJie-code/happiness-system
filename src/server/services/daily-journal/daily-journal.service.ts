@@ -144,10 +144,10 @@ function normalizeGeneratedDraft(
   };
 }
 
-export async function getDailyJournal(date: string) {
+export async function getDailyJournal(userId: string, date: string) {
   const [dailyJournal, sourceEntries] = await Promise.all([
-    findDailyJournalByDate(date),
-    listSavedJournalEntriesForDailyJournal(date)
+    findDailyJournalByDate(userId, date),
+    listSavedJournalEntriesForDailyJournal(userId, date)
   ]);
 
   return {
@@ -158,8 +158,8 @@ export async function getDailyJournal(date: string) {
   };
 }
 
-export async function generateDailyJournal(date: string) {
-  const sourceEntries = await listSavedJournalEntriesForDailyJournal(date);
+export async function generateDailyJournal(userId: string, date: string) {
+  const sourceEntries = await listSavedJournalEntriesForDailyJournal(userId, date);
 
   if (!sourceEntries.length) {
     throw new DailyJournalError("DAILY_JOURNAL_SOURCE_EMPTY", "当天还没有已保存的维度日志。");
@@ -178,6 +178,7 @@ export async function generateDailyJournal(date: string) {
 
   try {
     const dailyJournal = await upsertDailyJournalDraft({
+      userId,
       date,
       title: draft.title,
       content: draft.content,

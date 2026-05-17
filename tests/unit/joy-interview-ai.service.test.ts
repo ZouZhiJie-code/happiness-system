@@ -109,6 +109,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
   };
 
   return {
+    userId: "user-1",
     id: "session-1",
     dimension: "joy",
     status: "active",
@@ -883,7 +884,8 @@ describe("generateJoyDraftWithAI", () => {
       valueImpact: null,
       durability: null,
       tags: ["好笑", "轻松"],
-      eventBlocks: []
+      eventBlocks: [],
+    source: "ai_draft_direct"
     });
     runDraftQualityGate.mockReturnValue({
       accepted: false,
@@ -949,7 +951,8 @@ describe("generateJoyDraftWithAI", () => {
       happinessType: fulfillmentSnapshot.happinessType,
       selfPattern: fulfillmentSnapshot.selfPattern,
       tags: ["推进完成型", "踏实"],
-      eventBlocks: []
+      eventBlocks: [],
+    source: "ai_draft_direct"
     });
     runDraftQualityGate.mockReturnValue({
       accepted: true,
@@ -1064,7 +1067,8 @@ describe("generateJoyDraftWithAI", () => {
       valueImpact: null,
       durability: null,
       tags: ["好笑", "轻松"],
-      eventBlocks: []
+      eventBlocks: [],
+    source: "ai_draft_direct"
     });
     runDraftQualityGate.mockReturnValue({
       accepted: true,

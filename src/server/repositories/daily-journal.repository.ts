@@ -4,8 +4,6 @@ import { pickLatestDailyJournalSourcesByDimension } from "@/features/daily-journ
 import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyJournalEntryRecord, InterviewDimension } from "@/types/interview";
 
-const DEMO_USER_ID = "local-demo-user";
-
 export interface DailyJournalSourceEntry {
   id: string;
   sessionId: string;
@@ -17,7 +15,19 @@ export interface DailyJournalSourceEntry {
   savedAt: string | null;
 }
 
-function mapDailyJournalEntry(entry: any): DailyJournalEntryRecord | null {
+type DailyJournalEntry = Awaited<ReturnType<typeof prisma.dailyJournalEntry.findUnique>>;
+type SavedJoyEntryForDailyJournal = Awaited<ReturnType<typeof prisma.joyEntry.findMany>>[number];
+type DailyJournalMappedEntry = NonNullable<DailyJournalEntry>;
+type SavedJoyEntryForDailyJournalListItem = Pick<
+  NonNullable<SavedJoyEntryForDailyJournal>,
+  "id" | "sessionId" | "date" | "title" | "content" | "updatedAt" | "savedAt"
+> & {
+  session: {
+    dimension: InterviewDimension;
+  } | null;
+};
+
+function mapDailyJournalEntry(entry: DailyJournalMappedEntry | null): DailyJournalEntryRecord | null {
   if (!entry) {
     return null;
   }
@@ -37,7 +47,7 @@ function mapDailyJournalEntry(entry: any): DailyJournalEntryRecord | null {
   };
 }
 
-function mapSourceEntry(entry: any): DailyJournalSourceEntry | null {
+function mapSourceEntry(entry: SavedJoyEntryForDailyJournalListItem): DailyJournalSourceEntry | null {
   if (!entry.session?.dimension) {
     return null;
   }
@@ -84,11 +94,11 @@ export function buildDailyJournalSourceMetadata(sourceEntries: DailyJournalSourc
   };
 }
 
-export async function listSavedJournalEntriesForDailyJournal(date: string) {
+export async function listSavedJournalEntriesForDailyJournal(userId: string, date: string) {
   const { startAt, endExclusive } = getEntryDateRangeBounds(date);
   const entries = await prisma.joyEntry.findMany({
     where: {
-      userId: DEMO_USER_ID,
+      userId,
       status: "saved",
       date: {
         gte: startAt,
@@ -120,12 +130,11 @@ export async function listSavedJournalEntriesForDailyJournal(date: string) {
   );
 }
 
-export async function findDailyJournalByDate(date: string) {
-  const database = prisma as any;
-  const entry = await database.dailyJournalEntry?.findUnique?.({
+export async function findDailyJournalByDate(userId: string, date: string) {
+  const entry = await prisma.dailyJournalEntry.findUnique({
     where: {
       userId_date: {
-        userId: DEMO_USER_ID,
+        userId,
         date: parseEntryDateInput(date)
       }
     }
@@ -135,19 +144,19 @@ export async function findDailyJournalByDate(date: string) {
 }
 
 export async function upsertDailyJournalDraft(input: {
+  userId: string;
   date: string;
   title: string;
   content: string;
   sourceEntries: DailyJournalSourceEntry[];
 }) {
-  const database = prisma as any;
   const dateValue = parseEntryDateInput(input.date);
   const sourceMetadata = buildDailyJournalSourceMetadata(input.sourceEntries);
 
-  const entry = await database.dailyJournalEntry.upsert({
+  const entry = await prisma.dailyJournalEntry.upsert({
     where: {
       userId_date: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         date: dateValue
       }
     },
@@ -162,7 +171,7 @@ export async function upsertDailyJournalDraft(input: {
       savedAt: null
     },
     create: {
-      userId: DEMO_USER_ID,
+      userId: input.userId,
       date: dateValue,
       title: input.title,
       content: input.content,
@@ -182,8 +191,7 @@ export async function updateDailyJournalDraft(input: {
   title: string;
   content: string;
 }) {
-  const database = prisma as any;
-  const entry = await database.dailyJournalEntry.update({
+  const entry = await prisma.dailyJournalEntry.update({
     where: {
       id: input.entryId
     },
@@ -199,9 +207,8 @@ export async function updateDailyJournalDraft(input: {
 }
 
 export async function markDailyJournalSaved(entryId: string) {
-  const database = prisma as any;
   const savedAt = new Date();
-  const entry = await database.dailyJournalEntry.update({
+  const entry = await prisma.dailyJournalEntry.update({
     where: {
       id: entryId
     },

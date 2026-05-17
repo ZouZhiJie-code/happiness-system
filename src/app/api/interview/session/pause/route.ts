@@ -4,6 +4,7 @@ import {
   pauseInterviewRequestSchema,
   pauseInterviewResponseSchema
 } from "@/features/interview/schema/interview.schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { pauseInterviewSession } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await pauseInterviewSession(parsed.data.sessionId);
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await pauseInterviewSession(user.id, parsed.data.sessionId);
     const payload = pauseInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

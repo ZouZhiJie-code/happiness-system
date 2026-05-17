@@ -47,6 +47,7 @@ import { completeJoyInterviewSession } from "@/server/services/interview/joy-int
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
+    userId: "user-1",
     id: "session-1",
     dimension: "joy",
     status: "active",
@@ -113,7 +114,7 @@ describe("completeJoyInterviewSession", () => {
   it("throws when the session does not exist", async () => {
     findJoyInterviewSessionById.mockResolvedValue(null);
 
-    await expect(completeJoyInterviewSession("missing")).rejects.toThrow("SESSION_NOT_FOUND");
+    await expect(completeJoyInterviewSession("user-1", "missing")).rejects.toThrow("SESSION_NOT_FOUND");
   });
 
   it("returns completed sessions as-is without completing again", async () => {
@@ -123,7 +124,7 @@ describe("completeJoyInterviewSession", () => {
     });
     findJoyInterviewSessionById.mockResolvedValue(session);
 
-    await expect(completeJoyInterviewSession(session.id)).resolves.toEqual({ session });
+    await expect(completeJoyInterviewSession("user-1", session.id)).resolves.toEqual({ session });
     expect(completeJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 
@@ -136,7 +137,7 @@ describe("completeJoyInterviewSession", () => {
     findJoyInterviewSessionById.mockResolvedValue(activeSession);
     completeJoyInterviewSessionRecord.mockResolvedValue(completedSession);
 
-    await expect(completeJoyInterviewSession(activeSession.id)).resolves.toEqual({ session: completedSession });
+    await expect(completeJoyInterviewSession("user-1", activeSession.id)).resolves.toEqual({ session: completedSession });
     expect(completeJoyInterviewSessionRecord).toHaveBeenCalledWith(activeSession.id);
   });
 });

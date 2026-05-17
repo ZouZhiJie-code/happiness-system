@@ -57,7 +57,7 @@ describe("daily-journal.repository", () => {
       }
     ]);
 
-    const result = await listSavedJournalEntriesForDailyJournal("2026-05-02");
+    const result = await listSavedJournalEntriesForDailyJournal("user-1", "2026-05-02");
 
     expect(result).toEqual([
       {
@@ -86,12 +86,12 @@ describe("daily-journal.repository", () => {
   it("queries a full Shanghai day window instead of matching one exact timestamp", async () => {
     mockJoyEntryFindMany.mockResolvedValue([]);
 
-    await listSavedJournalEntriesForDailyJournal("2026-05-01");
+    await listSavedJournalEntriesForDailyJournal("user-1", "2026-05-01");
 
     expect(mockJoyEntryFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           status: "saved",
           date: {
             gte: new Date("2026-04-30T16:00:00.000Z"),

@@ -1,6 +1,7 @@
-const { mockInterviewSessionFindMany, mockJoyEntryFindMany } = vi.hoisted(() => ({
+const { mockInterviewSessionFindMany, mockJoyEntryFindMany, mockDailyJournalFindMany } = vi.hoisted(() => ({
   mockInterviewSessionFindMany: vi.fn(),
-  mockJoyEntryFindMany: vi.fn()
+  mockJoyEntryFindMany: vi.fn(),
+  mockDailyJournalFindMany: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -10,6 +11,9 @@ vi.mock("@/server/db/prisma", () => ({
     },
     joyEntry: {
       findMany: mockJoyEntryFindMany
+    },
+    dailyJournalEntry: {
+      findMany: mockDailyJournalFindMany
     }
   }
 }));
@@ -20,6 +24,7 @@ describe("calendar.repository", () => {
   beforeEach(() => {
     mockInterviewSessionFindMany.mockReset();
     mockJoyEntryFindMany.mockReset();
+    mockDailyJournalFindMany.mockReset();
   });
 
   it("maps sessions and entries into calendar sources", async () => {
@@ -53,6 +58,7 @@ describe("calendar.repository", () => {
         messages: []
       }
     ]);
+    mockDailyJournalFindMany.mockResolvedValue([]);
 
     mockJoyEntryFindMany.mockResolvedValue([
       {
@@ -82,6 +88,7 @@ describe("calendar.repository", () => {
     ]);
 
     const result = await listCalendarSourcesByDateRange({
+      userId: "user-1",
       startDate: "2026-05-02",
       endDate: "2026-05-02"
     });
@@ -89,7 +96,7 @@ describe("calendar.repository", () => {
     expect(mockInterviewSessionFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           entryDate: {
             gte: new Date("2026-05-01T16:00:00.000Z"),
             lt: new Date("2026-05-02T16:00:00.000Z")
@@ -100,7 +107,7 @@ describe("calendar.repository", () => {
     expect(mockJoyEntryFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           date: {
             gte: new Date("2026-05-01T16:00:00.000Z"),
             lt: new Date("2026-05-02T16:00:00.000Z")
@@ -155,8 +162,10 @@ describe("calendar.repository", () => {
       }
     ]);
     mockJoyEntryFindMany.mockResolvedValue([]);
+    mockDailyJournalFindMany.mockResolvedValue([]);
 
     const result = await listCalendarSourcesByDateRange({
+      userId: "user-1",
       startDate: "2026-05-02",
       endDate: "2026-05-02"
     });

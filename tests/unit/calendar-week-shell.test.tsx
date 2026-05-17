@@ -249,11 +249,11 @@ describe("calendar week shell", () => {
     );
 
     const emptyCard = screen.getByTestId("calendar-week-day-2026-05-07");
-    expect(within(emptyCard).getByRole("link", { name: /未记录.*未来日期先保留。.*查看当天/ })).toHaveAttribute(
+    expect(within(emptyCard).getByRole("link", { name: /未记录.*这一天还空着。.*查看当天/ })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-05-07"
     );
-    expect(within(emptyCard).getByRole("link", { name: /未记录.*未来日期先保留。.*查看当天/ })).toHaveAttribute("data-action-tone", "secondary");
+    expect(within(emptyCard).getByRole("link", { name: /未记录.*这一天还空着。.*查看当天/ })).toHaveAttribute("data-action-tone", "secondary");
   });
 
   it("moves week navigation responsibility out of the shell body", async () => {

@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 
 import { AnalysisApiRequestError, parseAnalysisMonthQuery } from "@/features/analysis/api";
 import { AnalysisQueryError, getAnalysisMonth } from "@/server/services/analysis/analysis.service";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 
 export async function GET(request: Request) {
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const month = parseAnalysisMonthQuery(request);
-    const payload = await getAnalysisMonth(month);
+    const payload = await getAnalysisMonth(user.id, month);
 
     return NextResponse.json(payload);
   } catch (error) {

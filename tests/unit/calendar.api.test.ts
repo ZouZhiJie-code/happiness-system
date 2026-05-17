@@ -12,11 +12,19 @@ const { getCalendarDay, getCalendarWeek, getCalendarMonth, CalendarQueryError } 
   }
 }));
 
+const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
+  mockRequireCurrentUserFromRequest: vi.fn()
+}));
+
 vi.mock("@/server/services/calendar/calendar.service", () => ({
   getCalendarDay,
   getCalendarWeek,
   getCalendarMonth,
   CalendarQueryError
+}));
+
+vi.mock("@/server/services/auth/current-user.service", () => ({
+  requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
 import { GET as getCalendarDayRoute } from "@/app/api/calendar/day/route";
@@ -28,6 +36,8 @@ describe("calendar api routes", () => {
     getCalendarDay.mockReset();
     getCalendarWeek.mockReset();
     getCalendarMonth.mockReset();
+    mockRequireCurrentUserFromRequest.mockReset();
+    mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
   });
 
   it("returns calendar day payload directly", async () => {
@@ -47,6 +57,7 @@ describe("calendar api routes", () => {
     const response = await getCalendarDayRoute(new Request("http://localhost/api/calendar/day?date=2026-05-02"));
 
     expect(response.status).toBe(200);
+    expect(getCalendarDay).toHaveBeenCalledWith("user-1", "2026-05-02");
     await expect(response.json()).resolves.toMatchObject({
       date: "2026-05-02",
       overallStatus: "empty"
@@ -76,6 +87,7 @@ describe("calendar api routes", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(getCalendarWeek).toHaveBeenCalledWith("user-1", "2026-05-07");
     expect(payload.weekStartDate).toBe("2026-05-04");
     expect(payload.weekEndDate).toBe("2026-05-10");
     expect(payload.days).toHaveLength(7);
@@ -102,6 +114,7 @@ describe("calendar api routes", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(getCalendarMonth).toHaveBeenCalledWith("user-1", "2026-02");
     expect(payload.month).toBe("2026-02");
     expect(payload.days).toHaveLength(28);
   });

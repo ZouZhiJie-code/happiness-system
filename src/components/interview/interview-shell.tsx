@@ -7,6 +7,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -998,7 +999,7 @@ export function InterviewShell() {
   useEffect(() => {
     setDimension(currentDimension);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(interviewDimensionStorageKey, currentDimension);
+      window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), currentDimension);
     }
   }, [currentDimension, setDimension]);
 

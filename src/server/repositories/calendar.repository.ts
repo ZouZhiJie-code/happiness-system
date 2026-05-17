@@ -1,13 +1,18 @@
 import { prisma } from "@/server/db/prisma";
-import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
+import { formatEntryDate, getEntryDateRangeBounds } from "@/features/interview/entry-date";
 import type { CalendarDailyJournalSource, CalendarEntrySource, CalendarSessionSource } from "@/features/calendar/types";
 
-const DEMO_USER_ID = "local-demo-user";
-
 interface ListCalendarSourcesByDateRangeInput {
+  userId: string;
   startDate: string;
   endDate: string;
 }
+
+type CalendarDailyJournalEntry = Awaited<ReturnType<typeof prisma.dailyJournalEntry.findMany>>[number];
+type CalendarDailyJournalListItem = Pick<
+  CalendarDailyJournalEntry,
+  "id" | "date" | "status" | "title" | "updatedAt" | "savedAt" | "sourceEntryIds" | "sourceSignature"
+>;
 
 function resolveSessionUpdatedAt(session: {
   completedAt: Date | null;
@@ -36,7 +41,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
   const [sessions, entries, dailyJournals] = await Promise.all([
     prisma.interviewSession.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         entryDate: {
           gte: startAt,
           lt: endExclusive
@@ -70,7 +75,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
     }),
     prisma.joyEntry.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         date: {
           gte: startAt,
           lt: endExclusive
@@ -92,9 +97,9 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         }
       }
     }),
-    (prisma as any).dailyJournalEntry?.findMany?.({
+    prisma.dailyJournalEntry.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         date: {
           gte: startAt,
           lt: endExclusive
@@ -110,7 +115,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
         sourceEntryIds: true,
         sourceSignature: true
       }
-    }) ?? Promise.resolve([])
+    })
   ]);
 
   const calendarSessions: CalendarSessionSource[] = sessions
@@ -155,7 +160,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
     ];
   });
 
-  const calendarDailyJournals: CalendarDailyJournalSource[] = dailyJournals.map((entry: any) => ({
+  const calendarDailyJournals: CalendarDailyJournalSource[] = dailyJournals.map((entry: CalendarDailyJournalListItem) => ({
     kind: "daily_journal" as const,
     id: entry.id,
     date: formatEntryDate(entry.date),
@@ -174,8 +179,9 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
   };
 }
 
-export async function listCalendarSourcesByDate(date: string) {
+export async function listCalendarSourcesByDate(userId: string, date: string) {
   return listCalendarSourcesByDateRange({
+    userId,
     startDate: date,
     endDate: date
   });

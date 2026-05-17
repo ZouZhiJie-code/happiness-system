@@ -35,7 +35,7 @@ const MIN_FACTS = 3;
 
 export { findLatestPortraitSnapshot as getPortraitSnapshot };
 
-export async function synthesizePortrait(userId?: string): Promise<{
+export async function synthesizePortrait(userId: string): Promise<{
   summary: string;
   dimensionInsights: Record<InterviewDimension, string>;
   factCount: number;

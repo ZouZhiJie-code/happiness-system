@@ -47,6 +47,7 @@ import { reopenJoyInterviewSession } from "@/server/services/interview/joy-inter
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
+    userId: "user-1",
     id: "session-1",
     dimension: "joy",
     status: "paused",
@@ -129,14 +130,14 @@ describe("reopenJoyInterviewSession", () => {
   it("throws when the session does not exist", async () => {
     findJoyInterviewSessionById.mockResolvedValue(null);
 
-    await expect(reopenJoyInterviewSession("missing")).rejects.toThrow("SESSION_NOT_FOUND");
+    await expect(reopenJoyInterviewSession("user-1", "missing")).rejects.toThrow("SESSION_NOT_FOUND");
   });
 
   it("returns an active session without reopening it again", async () => {
     const session = buildSession({ status: "active", stage: "wrap_up", pausedAt: null, completedAt: null });
     findJoyInterviewSessionById.mockResolvedValue(session);
 
-    await expect(reopenJoyInterviewSession(session.id)).resolves.toEqual({ session });
+    await expect(reopenJoyInterviewSession("user-1", session.id)).resolves.toEqual({ session });
     expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 
@@ -151,7 +152,7 @@ describe("reopenJoyInterviewSession", () => {
     findJoyInterviewSessionById.mockResolvedValue(pausedSession);
     reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
-    await expect(reopenJoyInterviewSession(pausedSession.id)).resolves.toEqual({ session: reopenedSession });
+    await expect(reopenJoyInterviewSession("user-1", pausedSession.id)).resolves.toEqual({ session: reopenedSession });
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith(pausedSession.id);
   });
 
@@ -167,7 +168,7 @@ describe("reopenJoyInterviewSession", () => {
     findJoyInterviewSessionById.mockResolvedValue(pausedSession);
     reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
-    await expect(reopenJoyInterviewSession("session-1")).resolves.toEqual({ session: reopenedSession });
+    await expect(reopenJoyInterviewSession("user-1", "session-1")).resolves.toEqual({ session: reopenedSession });
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith("session-1");
   });
 
@@ -180,7 +181,7 @@ describe("reopenJoyInterviewSession", () => {
       })
     );
 
-    await expect(reopenJoyInterviewSession("session-1")).rejects.toThrow("SESSION_NOT_REOPENABLE");
+    await expect(reopenJoyInterviewSession("user-1", "session-1")).rejects.toThrow("SESSION_NOT_REOPENABLE");
     expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
   });
 });

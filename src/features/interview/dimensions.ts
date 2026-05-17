@@ -1,3 +1,4 @@
+import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { InterviewDimension } from "@/types/interview";
 
 export const interviewDimensionStorageKey = "hs-last-interview-dimension";
@@ -130,7 +131,8 @@ function readStoredSessionMap() {
   }
 
   try {
-    const raw = window.localStorage.getItem(interviewSessionStorageKey);
+    const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
+    const raw = window.localStorage.getItem(scopedKey) ?? window.localStorage.getItem(interviewSessionStorageKey);
 
     if (!raw) {
       return {} as StoredInterviewSessionCacheMap;
@@ -164,17 +166,22 @@ export function getStoredInterviewSessionId(dimension: InterviewDimension) {
 export function setStoredInterviewSessionId(dimension: InterviewDimension, sessionId: string, entryDate?: string | null) {
   if (typeof window === "undefined") return;
 
+  const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
   const nextMap = {
     ...readStoredSessionMap(),
     [dimension]: buildStoredSessionEntry(sessionId, entryDate)
   };
 
-  window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
+  window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
+  if (scopedKey !== interviewSessionStorageKey) {
+    window.localStorage.removeItem(interviewSessionStorageKey);
+  }
 }
 
 export function touchStoredInterviewSessionId(dimension: InterviewDimension, sessionId?: string, entryDate?: string | null) {
   if (typeof window === "undefined") return;
 
+  const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
   const existingEntry = getStoredInterviewSessionEntry(dimension);
   const nextSessionId = sessionId ?? existingEntry?.sessionId;
   const nextEntryDate = entryDate ?? existingEntry?.entryDate ?? null;
@@ -188,16 +195,23 @@ export function touchStoredInterviewSessionId(dimension: InterviewDimension, ses
     [dimension]: buildStoredSessionEntry(nextSessionId, nextEntryDate)
   };
 
-  window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
+  window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
+  if (scopedKey !== interviewSessionStorageKey) {
+    window.localStorage.removeItem(interviewSessionStorageKey);
+  }
 }
 
 export function clearStoredInterviewSessionId(dimension: InterviewDimension) {
   if (typeof window === "undefined") return;
 
+  const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
   const nextMap = {
     ...readStoredSessionMap()
   };
 
   delete nextMap[dimension];
-  window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify(nextMap));
+  window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
+  if (scopedKey !== interviewSessionStorageKey) {
+    window.localStorage.removeItem(interviewSessionStorageKey);
+  }
 }

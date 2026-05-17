@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import {
   getPortraitSnapshot,
   synthesizePortrait
 } from "@/server/services/portrait/portrait-synthesis.service";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const snapshot = await getPortraitSnapshot();
+    const user = await requireCurrentUserFromRequest(request);
+    const snapshot = await getPortraitSnapshot(user.id);
 
     if (!snapshot) {
       return NextResponse.json({ snapshot: null });
@@ -27,9 +29,10 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const result = await synthesizePortrait();
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await synthesizePortrait(user.id);
 
     if (!result) {
       return NextResponse.json(

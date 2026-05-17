@@ -1,7 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { AuthLocalBootstrap } from "@/components/auth/auth-local-bootstrap";
 import { SiteHeader } from "@/components/shared/site-header";
+import { cookies } from "next/headers";
+import { AUTH_COOKIE_NAME } from "@/features/auth/auth.constants";
+import { getCurrentUserFromSessionToken } from "@/server/services/auth/current-user.service";
 
 import "./globals.css";
 
@@ -14,11 +18,15 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const currentUser = await getCurrentUserFromSessionToken(cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null);
+
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body className="font-body text-ink antialiased">
         <div className="relative flex min-h-dvh flex-col">
+          <AuthLocalBootstrap userId={currentUser?.id ?? null} />
           <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
             <SiteHeader />
           </Suspense>

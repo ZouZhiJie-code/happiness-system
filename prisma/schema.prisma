@@ -75,15 +75,35 @@ enum MemorySourceType {
 }
 
 model User {
-  id          String             @id @default(cuid())
-  createdAt   DateTime           @default(now())
-  settings    UserSettings?
-  sessions    InterviewSession[]
-  joyEntries  JoyEntry[]
+  id                String               @id @default(cuid())
+  username          String               @unique
+  passwordHash      String
+  agreedToTermsAt   DateTime
+  agreedToPrivacyAt DateTime
+  createdAt         DateTime             @default(now())
+  settings          UserSettings?
+  sessions          InterviewSession[]
+  joyEntries        JoyEntry[]
   dailyJournalEntries DailyJournalEntry[]
   dailyHappinessScores DailyHappinessScore[]
-  memoryFacts MemoryFact[]
+  memoryFacts       MemoryFact[]
   portraitSnapshots PortraitSnapshot[]
+  authSessions      AuthSession[]
+}
+
+model AuthSession {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+  userAgent  String?
+  ipAddress  String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model UserSettings {
