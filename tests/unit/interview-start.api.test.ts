@@ -3,8 +3,16 @@ const { mockStartInterview, mockResponseParse } = vi.hoisted(() => ({
   mockResponseParse: vi.fn((input: unknown) => input)
 }));
 
+const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
+  mockRequireCurrentUserFromRequest: vi.fn()
+}));
+
 vi.mock("@/server/services/interview/interview.service", () => ({
   startInterview: mockStartInterview
+}));
+
+vi.mock("@/server/services/auth/current-user.service", () => ({
+  requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
 vi.mock("@/features/interview/schema/interview.schema", async () => {
@@ -110,6 +118,8 @@ describe("interview start api route", () => {
   beforeEach(() => {
     mockStartInterview.mockReset();
     mockResponseParse.mockClear();
+    mockRequireCurrentUserFromRequest.mockReset();
+    mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -131,7 +141,7 @@ describe("interview start api route", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockStartInterview).toHaveBeenCalledWith("joy", "2026-04-21");
+    expect(mockStartInterview).toHaveBeenCalledWith("user-1", "joy", "2026-04-21");
     expect(mockResponseParse).toHaveBeenCalledTimes(1);
   });
 

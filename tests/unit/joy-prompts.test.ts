@@ -643,8 +643,8 @@ describe("memory context injection", () => {
     nextEventTurnCount: 3,
     previousDepthReached: ["event" as const],
     nextDepthReached: ["feeling" as const],
-    coveredLenses: ["event_detail"],
-    roundCoveredLenses: ["event_detail"],
+    coveredLenses: ["event_detail" as const],
+    roundCoveredLenses: ["event_detail" as const],
     isMeaningfulReply: true,
     action: "reply" as const
   };

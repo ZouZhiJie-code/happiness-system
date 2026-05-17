@@ -4,6 +4,7 @@ import {
   reopenInterviewRequestSchema,
   reopenInterviewResponseSchema
 } from "@/features/interview/schema/interview.schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { reopenInterviewSession } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await reopenInterviewSession(parsed.data.sessionId);
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await reopenInterviewSession(user.id, parsed.data.sessionId);
     const payload = reopenInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

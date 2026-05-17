@@ -8,6 +8,7 @@ import {
   deleteProfileFact,
   ProfileError
 } from "@/server/services/memory/profile.service";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────
 
@@ -29,9 +30,10 @@ const deleteProfileSchema = z.object({
 
 // ─── Handlers ────────────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await getAllProfiles();
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await getAllProfiles(user.id);
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "PROFILE_QUERY_FAILED" }, { status: 500 });
@@ -40,12 +42,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const body = addProfileSchema.safeParse(await request.json());
     if (!body.success) {
       return NextResponse.json({ error: "INVALID_PROFILE_INPUT", details: body.error.flatten() }, { status: 400 });
     }
 
-    const created = await addProfileFact(body.data);
+    const created = await addProfileFact({
+      userId: user.id,
+      ...body.data
+    });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     if (error instanceof ProfileError) {
@@ -57,12 +63,16 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const body = updateProfileSchema.safeParse(await request.json());
     if (!body.success) {
       return NextResponse.json({ error: "INVALID_PROFILE_INPUT", details: body.error.flatten() }, { status: 400 });
     }
 
-    const updated = await updateProfileFact(body.data);
+    const updated = await updateProfileFact({
+      userId: user.id,
+      ...body.data
+    });
     return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof ProfileError) {
@@ -75,13 +85,14 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const { searchParams } = new URL(request.url);
     const body = deleteProfileSchema.safeParse({ id: searchParams.get("id") });
     if (!body.success) {
       return NextResponse.json({ error: "INVALID_PROFILE_INPUT" }, { status: 400 });
     }
 
-    await deleteProfileFact(body.data.id);
+    await deleteProfileFact(body.data.id, user.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ProfileError) {

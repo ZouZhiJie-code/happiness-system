@@ -190,6 +190,7 @@ function buildImprovementSession(snapshot: JoySnapshot): InterviewSessionRecord 
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-improvement",
     dimension: "improvement",
     status: "active",
@@ -236,6 +237,7 @@ function buildFulfillmentSession(snapshot: JoySnapshot): InterviewSessionRecord 
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-fulfillment",
     dimension: "fulfillment",
     status: "active",
@@ -277,6 +279,7 @@ function buildReflectionSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-reflection",
     dimension: "reflection",
     status: "active",
@@ -318,6 +321,7 @@ function buildGratitudeSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-gratitude",
     dimension: "gratitude",
     status: "active",
@@ -365,6 +369,7 @@ function buildSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-joy",
     dimension: "joy",
     status: "active",

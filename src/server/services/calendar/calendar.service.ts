@@ -146,11 +146,11 @@ function sanitizeCalendarMonth(month: CalendarMonthRecord, today = getTodayEntry
   };
 }
 
-export async function getCalendarDay(date: string): Promise<CalendarDayRecord> {
+export async function getCalendarDay(userId: string, date: string): Promise<CalendarDayRecord> {
   assertCalendarDate(date);
 
   try {
-    const sources = await listCalendarSourcesByDate(date);
+    const sources = await listCalendarSourcesByDate(userId, date);
 
     return sanitizeCalendarDay(
       aggregateCalendarDay({
@@ -169,12 +169,12 @@ export async function getCalendarDay(date: string): Promise<CalendarDayRecord> {
   }
 }
 
-export async function getCalendarWeek(date: string): Promise<CalendarWeekRecord> {
+export async function getCalendarWeek(userId: string, date: string): Promise<CalendarWeekRecord> {
   assertCalendarDate(date);
   const range = getWeekDateRange(date);
 
   try {
-    const sources = await listCalendarSourcesByDateRange(range);
+    const sources = await listCalendarSourcesByDateRange({ userId, ...range });
 
     return sanitizeCalendarWeek(
       aggregateCalendarWeek({
@@ -193,12 +193,12 @@ export async function getCalendarWeek(date: string): Promise<CalendarWeekRecord>
   }
 }
 
-export async function getCalendarMonth(month: string): Promise<CalendarMonthRecord> {
+export async function getCalendarMonth(userId: string, month: string): Promise<CalendarMonthRecord> {
   assertCalendarMonth(month);
   const range = getMonthDateRange(month);
 
   try {
-    const sources = await listCalendarSourcesByDateRange(range);
+    const sources = await listCalendarSourcesByDateRange({ userId, ...range });
 
     return sanitizeCalendarMonth(
       aggregateCalendarMonth({

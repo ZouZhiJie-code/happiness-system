@@ -1,7 +1,13 @@
+import React from "react";
+
+import { SettingsAccountPanel } from "@/components/auth/settings-account-panel";
 import { SettingsForm } from "@/components/joy/settings-form";
 import { StatusPill } from "@/components/shared/status-pill";
+import { requireAuthenticatedPage } from "@/server/services/auth/auth-page-guard";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await requireAuthenticatedPage("/settings");
+
   return (
     <div className="min-h-0 flex-1">
       <section className="page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10">
@@ -17,7 +23,10 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <SettingsForm />
+          <div className="grid gap-4">
+            <SettingsForm />
+            <SettingsAccountPanel user={user} />
+          </div>
         </div>
       </section>
     </div>

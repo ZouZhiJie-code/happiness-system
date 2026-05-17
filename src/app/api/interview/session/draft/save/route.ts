@@ -4,9 +4,11 @@ import {
   saveDraftRequestSchema,
   saveDraftResponseSchema
 } from "@/features/interview/schema/interview.schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
+  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = saveDraftRequestSchema.safeParse(body);
 
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await saveGeneratedJournalEntry(parsed.data.sessionId);
+    const result = await saveGeneratedJournalEntry(user.id, parsed.data.sessionId);
     const payload = saveDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);

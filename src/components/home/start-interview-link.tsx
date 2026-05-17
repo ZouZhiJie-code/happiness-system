@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 
+import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import {
   interviewDimensionStorageKey,
   normalizeInterviewDimension
@@ -21,7 +22,10 @@ export function StartInterviewLink({ className, children = "开始今天的记�
   const [dimension, setDimension] = useState<InterviewDimension>("joy");
 
   useEffect(() => {
-    const remembered = normalizeInterviewDimension(window.localStorage.getItem(interviewDimensionStorageKey));
+    const scopedDimensionStorageKey = getScopedLocalStorageKey(interviewDimensionStorageKey);
+    const remembered = normalizeInterviewDimension(
+      window.localStorage.getItem(scopedDimensionStorageKey) ?? window.localStorage.getItem(interviewDimensionStorageKey)
+    );
     setDimension(remembered);
   }, []);
 

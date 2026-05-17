@@ -3,12 +3,14 @@ import { formatEntryDate, getEntryDateRangeBounds } from "@/features/interview/e
 import { interviewJournalPayloadSchema } from "@/features/interview/schema/interview.schema";
 import type { AnalysisSavedDailyJournalSource, AnalysisSavedEntrySource } from "@/features/analysis/types";
 
-const DEMO_USER_ID = "local-demo-user";
-
 interface ListAnalysisSourcesByDateRangeInput {
+  userId: string;
   startDate: string;
   endDate: string;
 }
+
+type AnalysisDailyJournalEntry = Awaited<ReturnType<typeof prisma.dailyJournalEntry.findMany>>[number];
+type AnalysisDailyJournalListItem = Pick<AnalysisDailyJournalEntry, "id" | "date" | "sourceSignature" | "title" | "content">;
 
 function parseAnalysisEntryPayload(payload: unknown) {
   const parsed = interviewJournalPayloadSchema.safeParse(payload);
@@ -33,7 +35,7 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
   const [entries, dailyJournals] = await Promise.all([
     prisma.joyEntry.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         status: "saved",
         date: {
           gte: startAt,
@@ -54,9 +56,9 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
         }
       }
     }),
-    (prisma as any).dailyJournalEntry?.findMany?.({
+    prisma.dailyJournalEntry.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId: input.userId,
         status: "saved",
         date: {
           gte: startAt,
@@ -70,7 +72,7 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
         title: true,
         content: true
       }
-    }) ?? Promise.resolve([])
+    })
   ]);
 
   const savedEntries: AnalysisSavedEntrySource[] = entries.flatMap((entry) => {
@@ -91,7 +93,7 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
     ];
   });
 
-  const savedDailyJournals: AnalysisSavedDailyJournalSource[] = dailyJournals.map((entry: any) => ({
+  const savedDailyJournals: AnalysisSavedDailyJournalSource[] = dailyJournals.map((entry: AnalysisDailyJournalListItem) => ({
     id: entry.id,
     date: formatEntryDate(entry.date),
     sourceSignature: entry.sourceSignature,

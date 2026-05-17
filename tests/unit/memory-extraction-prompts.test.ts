@@ -75,7 +75,6 @@ const mockSnapshot: JoySnapshot = {
 const mockEvents: InterviewEventRecord[] = [
   {
     id: "evt-1",
-    sessionId: "session-1",
     sequence: 1,
     status: "completed",
     stage: "collect_event",
@@ -85,18 +84,18 @@ const mockEvents: InterviewEventRecord[] = [
     roundMeaningfulReplyCount: 1,
     totalMeaningfulReplyCount: 1,
     startMessageSequence: 0,
-    event: "和朋友一起看了电影",
-    feeling: "开心",
-    whyItMattered: "社交",
-    happinessType: "delight",
-    selfPattern: null,
-    snapshotData: null,
-    progressData: null,
-    confidence: 0.8,
-    missingSlots: [],
+    snapshot: {
+      event: "和朋友一起看了电影",
+      feeling: "开心",
+      whyItMattered: "社交",
+      happinessType: "delight",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: []
+    },
     draftSummary: null,
-    startedAt: new Date(),
-    completedAt: new Date()
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString()
   }
 ];
 

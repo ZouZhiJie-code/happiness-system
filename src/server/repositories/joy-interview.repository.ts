@@ -39,11 +39,9 @@ import type {
   JournalEntryRecord,
   JoyEntryDraft,
   JoyEventBlock,
+  JoyPsychProfile,
   JoySnapshot
 } from "@/types/interview";
-
-const DEMO_USER_ID = "local-demo-user";
-const DEMO_TIMEZONE = "Asia/Shanghai";
 
 const interviewSessionInclude = {
   activeEvent: true,
@@ -74,11 +72,13 @@ const interviewSessionInclude = {
   }
 } as const;
 
-type DatabaseClient = PrismaClient | Prisma.TransactionClient | any;
-type InterviewSessionWithRelations = any;
-type SnapshotRecord = any;
-type EventRecord = any;
-type JoyEntryRecord = any;
+type DatabaseClient = PrismaClient | Prisma.TransactionClient;
+type InterviewSessionWithRelations = Prisma.InterviewSessionGetPayload<{
+  include: typeof interviewSessionInclude;
+}>;
+type SnapshotRecord = NonNullable<InterviewSessionWithRelations["snapshots"][number]>;
+type EventRecord = NonNullable<InterviewSessionWithRelations["events"][number]>;
+type JoyEntryRecord = NonNullable<InterviewSessionWithRelations["joyEntry"]>;
 
 function parseJoySnapshotData(value: unknown) {
   if (!value || typeof value !== "object") {
@@ -105,7 +105,7 @@ function parseJoySnapshotData(value: unknown) {
     directionSignal: typeof data.directionSignal === "string" ? data.directionSignal : null,
     valueImpact: typeof data.valueImpact === "string" ? data.valueImpact : null,
     durability: typeof data.durability === "string" ? data.durability : null,
-    psychProfile: data.psychProfile,
+    psychProfile: data.psychProfile as JoyPsychProfile | undefined,
     tags: Array.isArray(data.tags) ? data.tags.filter((tag): tag is string => typeof tag === "string") : []
   };
 }
@@ -228,7 +228,7 @@ function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapsh
       directionSignal: parsed?.directionSignal,
       valueImpact: parsed?.valueImpact,
       durability: parsed?.durability,
-      psychProfile: parsed?.psychProfile as any,
+      psychProfile: parsed?.psychProfile,
       tags: parsed?.tags
     })
   );
@@ -355,7 +355,7 @@ function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyE
     directionSignal: parsed?.directionSignal,
     valueImpact: parsed?.valueImpact,
     durability: parsed?.durability,
-    psychProfile: parsed?.psychProfile as any,
+    psychProfile: parsed?.psychProfile,
     tags: parsed?.tags.length ? parsed.tags : entry.tags
   });
 }
@@ -450,11 +450,11 @@ function mapEventSnapshot(
     stateShift: snapshotData?.stateShift,
     meaningNeed: snapshotData?.meaningNeed,
     manualClue: snapshotData?.manualClue,
-    delightSignature: (snapshotData as any)?.delightSignature,
+    delightSignature: snapshotData?.delightSignature,
     directionSignal: snapshotData?.directionSignal,
     valueImpact: snapshotData?.valueImpact,
     durability: snapshotData?.durability,
-    psychProfile: (snapshotData as any)?.psychProfile,
+    psychProfile: snapshotData?.psychProfile,
     tags: snapshotData?.tags,
     improvementTrack: improvementSnapshotData?.improvementTrack,
     stateAssessment: improvementSnapshotData?.stateAssessment,
@@ -556,7 +556,7 @@ function mapEventBlocks(blocks: Prisma.JsonValue | null | undefined): JoyEventBl
         directionSignal: typeof value.directionSignal === "string" ? value.directionSignal : null,
         valueImpact: typeof value.valueImpact === "string" ? value.valueImpact : null,
         durability: typeof value.durability === "string" ? value.durability : null,
-        psychProfile: value.psychProfile as any,
+        psychProfile: value.psychProfile as JoyPsychProfile | undefined,
         gratitudeMoment: typeof value.gratitudeMoment === "string" ? value.gratitudeMoment : typeof value.event === "string" ? value.event : null,
         gratitudeTarget: typeof value.gratitudeTarget === "string" ? value.gratitudeTarget : null,
         kindAction: typeof value.kindAction === "string" ? value.kindAction : null,
@@ -598,7 +598,7 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
     directionSignal: payload.kind === "joy" ? payload.directionSignal : undefined,
     valueImpact: payload.kind === "joy" ? payload.valueImpact : undefined,
     durability: payload.kind === "joy" ? payload.durability : undefined,
-    psychProfile: payload.kind === "joy" ? (payload as any).psychProfile : undefined,
+    psychProfile: payload.kind === "joy" ? payload.psychProfile : undefined,
     improvementTrack: payload.kind === "improvement" ? payload.improvementTrack : undefined,
     stateAssessment: payload.kind === "improvement" ? payload.stateAssessment : undefined,
     frictionPoint: payload.kind === "improvement" ? payload.frictionPoint : undefined,
@@ -638,11 +638,12 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
       : undefined;
   const mappedSession = {
     id: session.id,
+    userId: session.userId,
     dimension: session.dimension,
     status: session.status,
     stage: activeEvent?.stage ?? session.stage,
     activeEventId: activeEvent?.id ?? null,
-    messages: session.messages.map((message: any) => ({
+    messages: session.messages.map((message) => ({
       id: message.id,
       role: message.role,
       inputMode: message.inputMode ?? undefined,
@@ -712,27 +713,6 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
   };
 }
 
-async function ensureDemoUser(database: DatabaseClient) {
-  await database.user.upsert({
-    where: { id: DEMO_USER_ID },
-    update: {},
-    create: {
-      id: DEMO_USER_ID
-    }
-  });
-
-  await database.userSettings.upsert({
-    where: { userId: DEMO_USER_ID },
-    update: {},
-    create: {
-      userId: DEMO_USER_ID,
-      timezone: DEMO_TIMEZONE
-    }
-  });
-
-  return DEMO_USER_ID;
-}
-
 async function ensureInterviewEvents(database: DatabaseClient, sessionId: string) {
   const existing = await database.interviewSession.findUnique({
     where: { id: sessionId },
@@ -789,11 +769,11 @@ async function ensureInterviewEvents(database: DatabaseClient, sessionId: string
 }
 
 export async function createJoyInterviewSession(
+  userId: string,
   dimension: InterviewDimension,
   openingQuestion: string,
   entryDate?: string
 ) {
-  const userId = await ensureDemoUser(prisma);
   const emptySnapshot = createEmptySnapshot();
   const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
   const emptySnapshotData = buildSnapshotDataForDimension(dimension, emptySnapshot);
@@ -870,10 +850,14 @@ export async function createJoyInterviewSession(
   return mapInterviewSession(session);
 }
 
-export async function findJoyInterviewSessionById(sessionId: string) {
+export async function findJoyInterviewSessionById(sessionId: string, userId?: string) {
   const session = await ensureInterviewEvents(prisma, sessionId);
 
   if (!session) {
+    return null;
+  }
+
+  if (userId && session.userId !== userId) {
     return null;
   }
 
@@ -1001,7 +985,7 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
       return null;
     }
 
-    const activeEvent = existing.events.find((event: any) => event.id === existing.activeEventId);
+    const activeEvent = existing.events.find((event) => event.id === existing.activeEventId);
 
     if (!activeEvent) {
       return null;
@@ -1120,7 +1104,6 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
       return null;
     }
 
-    await ensureDemoUser(tx);
     const legacyProjection = projectLegacyFields(draftEntry);
     const payload = buildJournalPayloadForDimension(existing.dimension, {
       event: legacyProjection.event,

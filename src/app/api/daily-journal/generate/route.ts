@@ -4,9 +4,11 @@ import {
   generateDailyJournalRequestSchema,
   generateDailyJournalResponseSchema
 } from "@/features/daily-journal/schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { generateDailyJournal, DailyJournalError } from "@/server/services/daily-journal/daily-journal.service";
 
 export async function POST(request: Request) {
+  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = generateDailyJournalRequestSchema.safeParse(body);
 
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateDailyJournal(parsed.data.date);
+    const result = await generateDailyJournal(user.id, parsed.data.date);
 
     return NextResponse.json(generateDailyJournalResponseSchema.parse(result));
   } catch (error) {

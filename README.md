@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-09`，这个仓库的真实状态是：
+截至 `2026-05-17`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -11,6 +11,14 @@
 - 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质检现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 quality gate；这层内部解释不能直接写进用户可见正文或 fallback draft。`joy` 质量门接受语义等价改写，但会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类内部理论腔和抽象收尾。
 - `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` stitched supporting-scene 的 loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
+- 首版账户体系已经接入：
+  - 支持用户名 + 密码注册与登录
+  - 登录态使用 `httpOnly` cookie `dl_session`
+  - 注册时必须勾选《用户协议》《隐私政策》
+  - 私有页面 `/interview /calendar /analysis /profile /settings /settings/account` 未登录会跳转到 `/login?next=...`
+  - 已登录访问 `/login` 或 `/register` 会优先回到 `next`，否则回到 `/interview`
+  - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
+  - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
 - 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
@@ -121,6 +129,13 @@ npx prisma db push
 
 如果你看到类似 `InterviewEvent.snapshotData does not exist` 的报错，基本也是这一步没做。
 如果你是在已有本地数据的库上同步到 `2026-05-02` 之后的代码，且 `db push` 提示无法新增必填 `entryDate`，请改看 `docs/operator-runbook.md` 里的 `entryDate` 同步说明。
+如果你是在已有本地数据的库上首次同步账户体系，且注册时报 `User.username does not exist` 或 `db push` 无法为 `User` 新增必填认证字段，请先执行：
+
+```bash
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
+```
+
+执行完这条 migration 后，再继续 `npx prisma db push` 或直接启动开发服务器。
 
 ### 4. 启动开发服务器
 
@@ -131,6 +146,14 @@ npm run dev
 默认地址：
 - `http://localhost:3000`
 
+### 4.1 首版账户体系说明
+
+- 首版账户标识是 `username`，不是邮箱，也不是手机号
+- 首版不支持找回密码，UI 只提示用户妥善保管密码，不提供伪入口
+- 核心认证页面与接口：
+  - 页面：`/login`、`/register`、`/settings/account`、`/legal/terms`、`/legal/privacy`
+  - API：`/api/auth/register`、`/api/auth/login`、`/api/auth/logout`、`/api/auth/session`、`/api/auth/delete-account`
+
 ### 5. 回归检查
 
 ```bash
@@ -138,10 +161,10 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-09`，当前自动化现实为：
-- `npm test`（Vitest）在主仓基线通过：`47` 个测试文件、`491` 个测试
-- `npx tsc --noEmit` 仍有类型错误（主要集中在 memory / interview 相关类型）
-- `npm run lint` 仍有既有 `no-explicit-any` 等问题（主要集中在 repositories/settings/memory 相关文件）
+截至 `2026-05-17`，当前自动化现实为：
+- `npm test`（Vitest）在当前 worktree 通过：`65` 个测试文件、`554` 个测试
+- `npx tsc --noEmit` 通过
+- `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
 ## 常用命令

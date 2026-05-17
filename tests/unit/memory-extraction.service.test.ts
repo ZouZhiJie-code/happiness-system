@@ -111,7 +111,8 @@ function buildDraft(): JoyEntryDraft {
     happinessType: "delight",
     selfPattern: "独处时恢复能量最快",
     tags: ["独处", "放松"],
-    eventBlocks: []
+    eventBlocks: [],
+    source: "ai_draft_direct"
   };
 }
 

@@ -1,20 +1,15 @@
 const {
   mockDailyHappinessScoreFindMany,
   mockDailyHappinessScoreFindUnique,
-  mockDailyHappinessScoreUpsert,
-  mockUserUpsert
+  mockDailyHappinessScoreUpsert
 } = vi.hoisted(() => ({
   mockDailyHappinessScoreFindMany: vi.fn(),
   mockDailyHappinessScoreFindUnique: vi.fn(),
-  mockDailyHappinessScoreUpsert: vi.fn(),
-  mockUserUpsert: vi.fn()
+  mockDailyHappinessScoreUpsert: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
-    user: {
-      upsert: mockUserUpsert
-    },
     dailyHappinessScore: {
       findMany: mockDailyHappinessScoreFindMany,
       findUnique: mockDailyHappinessScoreFindUnique,
@@ -32,7 +27,6 @@ import {
 
 describe("daily happiness score repository", () => {
   beforeEach(() => {
-    mockUserUpsert.mockReset();
     mockDailyHappinessScoreFindMany.mockReset();
     mockDailyHappinessScoreFindUnique.mockReset();
     mockDailyHappinessScoreUpsert.mockReset();
@@ -86,12 +80,12 @@ describe("daily happiness score repository", () => {
       updatedAt: new Date("2026-05-03T02:00:00.000Z")
     });
 
-    const result = await findDailyHappinessScoreByDate("2026-05-03");
+    const result = await findDailyHappinessScoreByDate("user-1", "2026-05-03");
 
     expect(mockDailyHappinessScoreFindUnique).toHaveBeenCalledWith({
       where: {
         userId_date: {
-          userId: "local-demo-user",
+          userId: "user-1",
           date: new Date("2026-05-02T16:00:00.000Z")
         }
       }
@@ -117,14 +111,14 @@ describe("daily happiness score repository", () => {
       }
     ]);
 
-    const result = await listDailyHappinessScoresByDateRange({
+    const result = await listDailyHappinessScoresByDateRange("user-1", {
       startDate: "2026-05-01",
       endDate: "2026-05-31"
     });
 
     expect(mockDailyHappinessScoreFindMany).toHaveBeenCalledWith({
       where: {
-        userId: "local-demo-user",
+        userId: "user-1",
         date: {
           gte: new Date("2026-04-30T16:00:00.000Z"),
           lt: new Date("2026-05-31T16:00:00.000Z")
@@ -154,7 +148,7 @@ describe("daily happiness score repository", () => {
       updatedAt: new Date("2026-05-04T02:00:00.000Z")
     });
 
-    const result = await upsertDailyHappinessScore({
+    const result = await upsertDailyHappinessScore("user-1", {
       date: "2026-05-04",
       meaningScore: 9,
       healthScore: 8,
@@ -170,7 +164,7 @@ describe("daily happiness score repository", () => {
       expect.objectContaining({
         where: {
           userId_date: {
-            userId: "local-demo-user",
+            userId: "user-1",
             date: new Date("2026-05-03T16:00:00.000Z")
           }
         },
@@ -179,17 +173,12 @@ describe("daily happiness score repository", () => {
           relationshipScore: 9
         }),
         create: expect.objectContaining({
-          userId: "local-demo-user",
+          userId: "user-1",
           skillScore: 8,
           livingConditionScore: 7
         })
       })
     );
-    expect(mockUserUpsert).toHaveBeenCalledWith({
-      where: { id: "local-demo-user" },
-      update: {},
-      create: { id: "local-demo-user" }
-    });
     expect(result?.date).toBe("2026-05-04");
   });
 });

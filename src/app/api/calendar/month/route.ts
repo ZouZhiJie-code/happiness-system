@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 
 import { CalendarApiRequestError, parseCalendarMonthQuery } from "@/features/calendar/api";
 import { CalendarQueryError, getCalendarMonth } from "@/server/services/calendar/calendar.service";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 
 export async function GET(request: Request) {
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const month = parseCalendarMonthQuery(request);
-    const payload = await getCalendarMonth(month);
+    const payload = await getCalendarMonth(user.id, month);
 
     return NextResponse.json(payload);
   } catch (error) {

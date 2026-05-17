@@ -4,6 +4,7 @@ import {
   completeInterviewRequestSchema,
   completeInterviewResponseSchema
 } from "@/features/interview/schema/interview.schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { completeInterviewSession } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
@@ -15,7 +16,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await completeInterviewSession(parsed.data.sessionId);
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await completeInterviewSession(user.id, parsed.data.sessionId);
     const payload = completeInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

@@ -1,11 +1,13 @@
 # Integration Guide
 
-最后更新：`2026-05-09`
+最后更新：`2026-05-17`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
 ## 1. 总体说明
 
+- 当前仓库已经接入首版账户体系。除认证接口和公开页面外，业务接口默认都要求已登录用户访问。
+- 服务端通过 `httpOnly` cookie `dl_session` 识别当前用户；业务数据按 `userId` 读写和隔离。
 - 所有会话相关接口都在 `src/app/api/interview/session/*`
 - 主前端访谈链路使用 `respond/stream`
 - 大多数成功响应最终都会返回一份完整 `session`，前端用它做 hydrate
@@ -41,6 +43,16 @@
 | `DELETE` | `/api/profile?id=xxx` | 删除画像条目 | 软删除（deletedAt） |
 | `GET` | `/api/profile/portrait` | 获取缓存画像快照 | 无快照时返回 `{ snapshot: null }` |
 | `POST` | `/api/profile/portrait` | 触发 AI 画像合成 | 需 ≥3 条 facts，422 表示数据不足 |
+
+认证相关接口：
+
+| 方法 | 路径 | 用途 | 备注 |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | 注册并建立登录态 | 必须勾选两份协议 |
+| `POST` | `/api/auth/login` | 登录并建立登录态 | 用户名 + 密码 |
+| `POST` | `/api/auth/logout` | 退出当前设备会话 | 清 `dl_session` cookie |
+| `GET` | `/api/auth/session` | 获取当前登录态 | 返回最小用户信息 |
+| `POST` | `/api/auth/delete-account` | 删除当前账号 | 需当前密码二次确认 |
 
 页面路由补充：
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 是当前记录分析页面；它接入 `GET /api/analysis/month?month=YYYY-MM` 并以趋势阅读为主。评分录入入口已迁移到 `/interview` 顶部「当天评分」，以独立 `happiness_score` 工作区呈现；分析页 `score` 分区不再内联编辑评分。缺失 `section` 时前端默认切到 `overview` 总览视图。`SiteHeader` 中区的 `AnalysisToolbar` 独立获取月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip；页面正文按 `section` 只渲染对应板块；切换 tab 或翻月后 `section` 保留在 URL 中。热力区支持点选某一天继续回到当天，但未来日期的 drill-down 只开放 `查看当天`，不开放 `开始这一天的记录 / 继续当天记录`。`rhythm` 会把 `saved` 但来源签名失配的当天整合日志重新标成 `待更新 / 待整合`；即使当天已经没有任何 `saved` 来源，只要这篇整合日志仍然 `stale`，分析里也会继续把它算进待处理，不会静默漏掉。未来月份不会把整个月误读成 `最长空档`，总览首屏也会直接提示回到当前月份，而不是送去今天的访谈。五维洞察现在按“本月判断 + 五维全景 + 维度之间 + 下一步”组织，回到维度访谈的 drill-down 链接会保留对应 `entryDate`；当前月评分保存成功后，toolbar 的 contextual chip 会立即刷新。评分区只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡；样本不足或各要素持平时只保留“仅供参考”的轻提示；`insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片会共用同一套 quiet lagging 维度排序。空数据月份直接显示真实空态而不是示意填充。
@@ -1687,7 +1699,7 @@ POST /api/profile/portrait
 - 8 项必填
 - 每项必须是 `1..10` 整数
 - 允许保存 Asia/Shanghai 口径下的所有非未来日期
-- 保存按 `userId + date` upsert，写入前会确保 demo user 存在
+- 保存按 `userId + date` upsert，要求当前请求已经携带有效登录态
 
 错误码：
 - `INVALID_HAPPINESS_SCORE_REQUEST`：请求体缺项、日期非法、分数非整数或越界

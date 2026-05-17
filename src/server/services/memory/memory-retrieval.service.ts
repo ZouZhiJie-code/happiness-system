@@ -6,8 +6,6 @@ import { findSimilarMemoryFacts, type MemoryFactWithSimilarity } from "@/lib/vec
 import { findMemoryFactsByDimension, findAllMemoryFacts } from "@/server/repositories/memory.repository";
 import { prisma } from "@/server/db/prisma";
 
-const DEMO_USER_ID = "local-demo-user";
-
 const DIMENSION_LABEL: Record<InterviewDimension, string> = {
   joy: "开心",
   fulfillment: "充实",
@@ -40,7 +38,7 @@ export async function retrieveRelevantMemories(input: {
   minSimilarity?: number;
   crossDimension?: boolean;
 }): Promise<RetrieveMemoriesResult> {
-  const userId = input.userId || DEMO_USER_ID;
+  const userId = input.userId;
   const emptyResult: RetrieveMemoriesResult = { memories: [], formattedContext: null };
 
   try {
@@ -55,7 +53,7 @@ export async function retrieveRelevantMemories(input: {
 
     // 2. Check provider has embed
     const provider = getAIProvider();
-    if (!provider.embed) {
+    if (!provider?.embed) {
       return emptyResult;
     }
 

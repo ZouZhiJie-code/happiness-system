@@ -46,13 +46,13 @@ export function mapHappinessScoreSaveRequestToInput(
   };
 }
 
-export async function saveDailyHappinessScore(payload: DailyHappinessScoreSaveRequestPayload) {
+export async function saveDailyHappinessScore(userId: string, payload: DailyHappinessScoreSaveRequestPayload) {
   if (!isHappinessScoreEditableDate(payload.date)) {
     throw new HappinessScoreSaveError("HAPPINESS_SCORE_EDIT_WINDOW_EXCEEDED");
   }
 
   try {
-    return await upsertDailyHappinessScore(mapHappinessScoreSaveRequestToInput(payload));
+    return await upsertDailyHappinessScore(userId, mapHappinessScoreSaveRequestToInput(payload));
   } catch (error) {
     throw new HappinessScoreSaveError("HAPPINESS_SCORE_SAVE_FAILED", "Happiness score save failed.", error);
   }
