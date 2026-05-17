@@ -248,6 +248,7 @@ function SiteHeaderInner() {
   const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
   const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
   const isInterviewPage = pathname === "/interview";
+  const shouldReserveHeaderSpace = false;
   const isCalendarPage = pathname === "/calendar";
   const isAnalysisPage = pathname === "/analysis";
   const todayEntryDate = getTodayEntryDate();
@@ -623,10 +624,17 @@ function SiteHeaderInner() {
   }
 
   return (
-    <header
-      ref={headerRef}
-      className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6"
-    >
+    <>
+      {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
+      <header
+        ref={headerRef}
+        className={clsx(
+          "w-full px-3 md:px-6",
+          isInterviewPage
+            ? "site-header-frosted fixed inset-x-0 top-0 z-50 border-b border-[rgba(101,67,34,0.08)] shadow-[0_8px_16px_rgba(77,47,21,0.04)]"
+            : "relative z-30 border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
+        )}
+      >
       <div
         className={clsx(
           "relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:items-center md:gap-3",
@@ -650,7 +658,7 @@ function SiteHeaderInner() {
               aria-hidden="true"
             />
           </div>
-          <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">幸福系统</p>
+          <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">Daily Light</p>
         </Link>
         {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
@@ -857,7 +865,8 @@ function SiteHeaderInner() {
           })}
         </nav>
       </div>
-    </header>
+      </header>
+    </>
   );
 }
 

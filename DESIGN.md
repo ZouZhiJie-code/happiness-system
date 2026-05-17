@@ -1,5 +1,5 @@
 ---
-name: 幸福系统
+name: Daily Light
 description: 用结构化访谈与记录日历组织每日开心、充实、思考、改进与感谢的记录界面。
 colors:
   warm-wood-base: "#855a34"
@@ -66,7 +66,7 @@ components:
     padding: "6px 12px"
 ---
 
-# Design System: 幸福系统
+# Design System: Daily Light
 
 ## Overview
 

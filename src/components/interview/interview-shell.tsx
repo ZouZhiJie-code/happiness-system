@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
+import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
@@ -830,6 +831,8 @@ export function InterviewShell() {
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
   const [draftGeneratePhase, setDraftGeneratePhase] = useState<DraftGeneratePhase>("skeleton");
   const [draftGenerateProgress, setDraftGenerateProgress] = useState(0);
+  const [draftGenerationOverlayActive, setDraftGenerationOverlayActive] = useState(false);
+  const [draftGenerationOverlayComplete, setDraftGenerationOverlayComplete] = useState(false);
   const [draftGenerateIssue, setDraftGenerateIssue] = useState<DraftGenerateIssue | null>(null);
   const [isSavingJournal, setIsSavingJournal] = useState(false);
   const [draftSyncState, setDraftSyncState] = useState<DraftSyncState>("idle");
@@ -860,6 +863,7 @@ export function InterviewShell() {
   const previousDimensionRef = useRef(currentDimension);
   const dailyJournalWorkspaceRef = useRef<DailyJournalWorkspaceHandle | null>(null);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
+  const journalPanelRef = useRef<HTMLElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const draftContentRef = useRef<HTMLTextAreaElement | null>(null);
@@ -1227,6 +1231,8 @@ export function InterviewShell() {
     stopDraftPhaseTimers();
     setDraftGeneratePhase("skeleton");
     setDraftGenerateProgress(0);
+    setDraftGenerationOverlayActive(false);
+    setDraftGenerationOverlayComplete(false);
     setDraftGenerateState("idle");
   }, [stopDraftPhaseTimers]);
 
@@ -1523,6 +1529,26 @@ export function InterviewShell() {
       stopDraftAutosave();
     };
   }, [draftContent, draftTitle, hasUnsavedDraftChanges, journalEntry, panelOpen, persistDraftEdits, saveConfirmOpen, stopDraftAutosave]);
+
+  useEffect(() => {
+    if (!panelOpen || workspaceMode !== "interview") {
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const canMatchMedia = typeof window.matchMedia === "function";
+    if (canMatchMedia && window.matchMedia("(min-width: 1280px)").matches) {
+      return;
+    }
+
+    journalPanelRef.current?.scrollIntoView?.({
+      block: "start",
+      behavior: "smooth"
+    });
+  }, [draftGenerationOverlayActive, panelOpen, workspaceMode]);
 
   useEffect(() => {
     if (!saveConfirmOpen) {
@@ -1937,6 +1963,8 @@ export function InterviewShell() {
     }
     setDraftGeneratePhase("skeleton");
     setDraftGenerateState("loading");
+    setDraftGenerationOverlayComplete(false);
+    setDraftGenerationOverlayActive(true);
     const requestRunId = draftGenerateRunIdRef.current + 1;
     draftGenerateRunIdRef.current = requestRunId;
     const abortController = new AbortController();
@@ -1979,6 +2007,8 @@ export function InterviewShell() {
         signature: buildDraftCoverageSignature(data.session.turnCount, data.session.messages)
       };
       hydrate(data.session);
+      setDraftGenerationOverlayComplete(true);
+      setDraftGenerationOverlayActive(false);
       setDraftSyncState("saved");
       setDraftGenerateState("idle");
     } catch (error) {
@@ -2003,6 +2033,8 @@ export function InterviewShell() {
             };
 
       setDraftGenerateIssue(issue);
+      setDraftGenerationOverlayComplete(false);
+      setDraftGenerationOverlayActive(false);
       setDraftGenerateState("error");
     } finally {
       if (draftGenerateAbortControllerRef.current === abortController) {
@@ -2377,6 +2409,12 @@ export function InterviewShell() {
     stopToastTimer
   ]);
 
+  const draftGenerationOverlayMeta = getDraftGenerationPhaseMeta({
+    phase: draftGeneratePhase,
+    hasExistingDraft: Boolean(journalEntry),
+    isPartialJoyDraft: isGeneratingPartialJoyDraft
+  });
+
   return (
     <section
       ref={shellRef}
@@ -2563,7 +2601,21 @@ export function InterviewShell() {
       )}
 
       {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
-        <aside className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5">
+        <aside
+          ref={journalPanelRef}
+          className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5"
+        >
+          <JournalGenerationOverlay
+            active={draftGenerationOverlayActive}
+            complete={draftGenerationOverlayComplete}
+            label={draftGenerationOverlayMeta.label}
+            description={draftGenerationOverlayMeta.description}
+            progress={draftGenerateProgress}
+            mode="dimension"
+            animationId="plant_story"
+            minVisibleMs={1000}
+            onExited={() => setDraftGenerationOverlayComplete(false)}
+          />
           <button
             type="button"
             aria-label="关闭日志面板"
@@ -2585,7 +2637,7 @@ export function InterviewShell() {
             </div>
           ) : null}
 
-          {isGeneratingDraft && journalEntry ? (
+          {!draftGenerationOverlayActive && isGeneratingDraft && journalEntry ? (
             <div className={`${panelStatusText ? "mt-3" : "pr-14"} ${journalEntry ? "mb-4" : ""}`}>
               <DraftGenerationPhaseBanner
                 phase={draftGeneratePhase}
@@ -2596,8 +2648,8 @@ export function InterviewShell() {
             </div>
           ) : null}
 
-          <div className={`${panelStatusText || (isGeneratingDraft && journalEntry) ? "mt-3" : ""} min-h-0 flex-1 overflow-y-auto pr-1`}>
-            {isGeneratingDraft && !journalEntry ? (
+          <div className={`${panelStatusText || (!draftGenerationOverlayActive && isGeneratingDraft && journalEntry) ? "mt-3" : ""} min-h-0 flex-1 overflow-y-auto pr-1`}>
+            {isGeneratingDraft && !journalEntry && !draftGenerationOverlayActive ? (
               <DraftGenerationPhaseCard
                 phase={draftGeneratePhase}
                 progress={draftGenerateProgress}

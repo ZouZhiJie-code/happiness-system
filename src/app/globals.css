@@ -7,6 +7,10 @@
   --site-header-frame-min-height: 4rem;
   --site-header-lane-min-height: 2.5rem;
   --site-header-viewport-offset: 4rem;
+  --site-header-frosted-bg: rgba(255, 255, 255, 0.01);
+  --site-header-frosted-overlay: linear-gradient(180deg, rgba(247, 232, 204, 0.2), rgba(230, 202, 163, 0.12));
+  --site-header-frosted-filter: blur(28px) saturate(185%);
+  --site-header-frosted-fallback-bg: linear-gradient(180deg, rgba(247, 232, 204, 0.36), rgba(230, 202, 163, 0.28));
   --calendar-month-cell-min-height: 5.95rem;
   --calendar-day-card-min-height: 5.5rem;
   --night-void: #855a34;
@@ -30,15 +34,7 @@
     radial-gradient(circle at 18% 14%, rgba(255, 250, 241, 0.24) 0, transparent 22%),
     radial-gradient(circle at 82% 8%, rgba(117, 76, 37, 0.12) 0, transparent 28%),
     radial-gradient(circle at 50% 100%, rgba(160, 126, 82, 0.08) 0, transparent 24%);
-  --wood-grain:
-    repeating-linear-gradient(
-      90deg,
-      rgba(113, 73, 34, 0.1) 0 2px,
-      rgba(244, 227, 198, 0.06) 2px 9px,
-      rgba(140, 95, 52, 0.08) 9px 16px,
-      rgba(255, 248, 236, 0.04) 16px 24px,
-      rgba(122, 83, 42, 0.08) 24px 40px
-    );
+  --wood-grain: none;
   --wood-sheen:
     linear-gradient(
       110deg,
@@ -87,6 +83,33 @@ a {
   text-decoration: none;
 }
 
+.site-header-frosted {
+  position: relative;
+  isolation: isolate;
+  background: var(--site-header-frosted-bg);
+  -webkit-backdrop-filter: var(--site-header-frosted-filter);
+  backdrop-filter: var(--site-header-frosted-filter);
+}
+
+.site-header-frosted::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--site-header-frosted-overlay);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .site-header-frosted {
+    background: var(--site-header-frosted-fallback-bg);
+  }
+
+  .site-header-frosted::before {
+    display: none;
+  }
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -104,21 +127,8 @@ body::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.16;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(87, 56, 28, 0.08) 0 1px,
-      transparent 1px 12px,
-      rgba(255, 249, 238, 0.04) 12px 19px,
-      transparent 19px 32px
-    ),
-    repeating-linear-gradient(
-      180deg,
-      transparent 0 18px,
-      rgba(98, 64, 32, 0.03) 18px 19px,
-      transparent 19px 38px
-    );
+  opacity: 0.06;
+  background: radial-gradient(circle at center, rgba(127, 82, 41, 0.08), transparent 70%);
   mask-image: radial-gradient(circle at center, black 20%, transparent 78%);
 }
 
@@ -155,15 +165,8 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.08;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(111, 73, 35, 0.08) 0 2px,
-      transparent 2px 14px,
-      rgba(255, 249, 238, 0.05) 14px 22px,
-      transparent 22px 40px
-    );
+  opacity: 0.04;
+  background: linear-gradient(180deg, rgba(255, 250, 241, 0.08), transparent 36%);
 }
 
 .paper-panel {
@@ -190,15 +193,8 @@ body::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: 0.14;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(108, 71, 35, 0.09) 0 2px,
-      transparent 2px 11px,
-      rgba(255, 248, 238, 0.05) 11px 17px,
-      transparent 17px 32px
-    );
+  opacity: 0.08;
+  background: linear-gradient(180deg, rgba(255, 248, 236, 0.1), transparent 30%);
 }
 
 .paper-sheet {
@@ -217,17 +213,8 @@ body::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: 0.26;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(137, 92, 48, 0.08) 0 1px,
-      transparent 1px 14px,
-      rgba(255, 251, 244, 0.08) 14px 20px,
-      transparent 20px 34px
-    ),
-    linear-gradient(transparent 96%, rgba(63, 48, 29, 0.08) 96%);
-  background-size: 100% 100%, 100% 36px;
+  opacity: 0.16;
+  background: linear-gradient(180deg, rgba(255, 251, 244, 0.14), transparent 28%);
 }
 
 .wood-dialog {
@@ -247,30 +234,13 @@ body::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: 0.28;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(118, 78, 37, 0.16) 0 2px,
-      transparent 2px 13px,
-      rgba(255, 247, 233, 0.06) 13px 20px,
-      transparent 20px 34px
-    ),
-    linear-gradient(180deg, transparent 96%, rgba(63, 48, 29, 0.08) 96%);
-  background-size: 100% 100%, 100% 36px;
+  opacity: 0.14;
+  background: linear-gradient(180deg, rgba(255, 247, 233, 0.16), transparent 30%);
 }
 
 .wood-chip {
   border: 1px solid rgba(168, 124, 69, 0.22);
-  background:
-    linear-gradient(180deg, rgba(255, 248, 237, 0.62), rgba(246, 232, 206, 0.58)),
-    repeating-linear-gradient(
-      90deg,
-      rgba(132, 91, 47, 0.06) 0 1px,
-      transparent 1px 10px,
-      rgba(255, 250, 241, 0.08) 10px 15px,
-      transparent 15px 24px
-    );
+  background: linear-gradient(180deg, rgba(255, 248, 237, 0.62), rgba(246, 232, 206, 0.58));
   color: #6a4f33;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
@@ -298,6 +268,121 @@ body::after {
 
 .journal-growth-sheen {
   animation: journal-growth-sheen 3s ease-in-out infinite;
+}
+
+.journal-generation-overlay {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(251, 246, 235, 0.95), rgba(233, 214, 184, 0.95) 44%, rgba(216, 190, 152, 0.9) 75%),
+    linear-gradient(180deg, rgba(248, 237, 218, 0.97), rgba(220, 194, 157, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, 0.78),
+    inset 0 -28px 64px rgba(123, 86, 44, 0.18);
+  isolation: isolate;
+  backdrop-filter: blur(1.2px);
+}
+
+.journal-generation-overlay[data-state="reveal"] {
+  animation: journal-generation-circle-reveal 700ms cubic-bezier(0.22, 0.74, 0.2, 1) forwards;
+}
+
+.journal-generation-overlay[data-state="fade"] {
+  animation: journal-generation-fade-out 260ms ease-out forwards;
+}
+
+.journal-generation-overlay__grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background:
+    linear-gradient(90deg, rgba(104, 73, 42, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 25% 18%, rgba(255, 248, 234, 0.35), transparent 44%);
+  background-size: 30px 100%, 100% 100%;
+  mix-blend-mode: multiply;
+}
+
+.journal-generation-overlay__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(34rem, 100%);
+  justify-items: center;
+  gap: 1.05rem;
+  text-align: center;
+}
+
+.journal-generation-overlay__mark {
+  position: relative;
+  width: min(16rem, 62vw);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 22px 34px rgba(93, 64, 32, 0.22));
+  transform: translate3d(0, 0, 0);
+}
+
+.journal-generation-overlay__mark::before {
+  content: "";
+  position: absolute;
+  inset: 9%;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 224, 168, 0.52), rgba(255, 224, 168, 0) 72%);
+  animation: journal-generation-mark-pulse 3s ease-in-out infinite;
+}
+
+.journal-generation-overlay__eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: #835a33;
+}
+
+.journal-generation-overlay__title {
+  margin-top: 0.3rem;
+  font-family: theme("fontFamily.display");
+  font-size: clamp(1.5rem, 3.6vw, 2.3rem);
+  line-height: 1.04;
+  color: #2b1e13;
+  text-wrap: balance;
+}
+
+.journal-generation-overlay__description {
+  margin: 0.58rem auto 0;
+  max-width: 30rem;
+  font-size: 0.92rem;
+  line-height: 1.82;
+  color: #5f4732;
+}
+
+.journal-generation-overlay__meter {
+  display: flex;
+  width: min(25rem, 100%);
+  align-items: center;
+  gap: 0.8rem;
+  padding-top: 0.28rem;
+}
+
+.journal-generation-overlay__track {
+  height: 0.46rem;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(116, 82, 44, 0.18);
+  box-shadow: inset 0 1px 2px rgba(63, 40, 16, 0.15);
+}
+
+.journal-generation-overlay__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7e5832 0%, #c49755 46%, #7aa763 100%);
+  transition: width 600ms cubic-bezier(0.2, 0.72, 0.2, 1);
+}
+
+.journal-generation-overlay__percent {
+  min-width: 3.1rem;
+  text-align: right;
+  font-family: theme("fontFamily.mono");
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: #775434;
 }
 
 @keyframes journal-growth-breathe {
@@ -374,14 +459,59 @@ body::after {
   }
 }
 
+@keyframes journal-generation-mark-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 0.84;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes journal-generation-circle-reveal {
+  from {
+    clip-path: circle(150vmax at 50% 50%);
+    opacity: 1;
+  }
+
+  to {
+    clip-path: circle(0 at 50% 50%);
+    opacity: 1;
+  }
+}
+
+@keyframes journal-generation-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .journal-growth-breathe,
   .journal-growth-bob,
   .journal-growth-sway,
   .journal-growth-float,
   .journal-growth-float-slow,
-  .journal-growth-sheen {
+  .journal-growth-sheen,
+  .journal-generation-overlay__mark::before {
     animation: none;
+  }
+
+  .journal-generation-overlay[data-state="reveal"],
+  .journal-generation-overlay[data-state="fade"] {
+    animation: journal-generation-fade-out 180ms ease-out forwards;
+  }
+
+  .journal-generation-overlay__bar {
+    transition: none;
   }
 }
 
@@ -451,16 +581,8 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.18;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(131, 87, 45, 0.16) 0 2px,
-      transparent 2px 14px,
-      rgba(255, 246, 231, 0.08) 14px 21px,
-      transparent 21px 36px
-    ),
-    linear-gradient(135deg, rgba(255, 249, 237, 0.12), transparent 36%);
+  opacity: 0.12;
+  background: linear-gradient(135deg, rgba(255, 249, 237, 0.12), transparent 36%);
 }
 
 .wood-board::after {

@@ -248,6 +248,35 @@ describe("site header calendar toolbar", () => {
     expect(toolbar).toHaveAttribute("aria-busy", "false");
   });
 
+  it("keeps calendar header as non-fixed solid bar with spacer", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<SiteHeader />);
+    const header = screen.getByRole("banner");
+
+    expect(header).toHaveClass("relative");
+    expect(header.className).not.toContain("site-header-frosted");
+    expect(header.className).not.toContain("fixed");
+    expect(header.previousElementSibling).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("uses fixed frosted header without spacer on interview page", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<SiteHeader />);
+    const header = screen.getByRole("banner");
+
+    expect(header).toHaveClass("fixed", "site-header-frosted");
+    expect(header.previousElementSibling).toBeNull();
+  });
+
   it("syncs the viewport offset css variable to the measured header height", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 

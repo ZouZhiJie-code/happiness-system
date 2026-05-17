@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
+import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
 import {
   MAX_DAILY_JOURNAL_CONTENT_LENGTH,
@@ -247,6 +248,8 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatePhase, setGeneratePhase] = useState<DailyJournalGeneratePhase>("skeleton");
   const [generateProgress, setGenerateProgress] = useState(0);
+  const [generationOverlayActive, setGenerationOverlayActive] = useState(false);
+  const [generationOverlayComplete, setGenerationOverlayComplete] = useState(false);
   const [isSavingFinal, setIsSavingFinal] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -456,6 +459,8 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
 
     stopAutosave();
     setIsGenerating(true);
+    setGenerationOverlayComplete(false);
+    setGenerationOverlayActive(true);
     setError(null);
 
     try {
@@ -478,8 +483,12 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
       setTitle(payload.dailyJournal.title);
       setContent(payload.dailyJournal.content);
       setSyncState("saved");
+      setGenerationOverlayComplete(true);
+      setGenerationOverlayActive(false);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "当天日志生成失败，请稍后重试。");
+      setGenerationOverlayComplete(false);
+      setGenerationOverlayActive(false);
     } finally {
       stopGenerateProgress();
       setGeneratePhase("polish");
@@ -532,9 +541,21 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
 
   const stateLabel = getStateLabel(state, availableSourceCount);
   const dateLabel = formatDailyJournalDateLabel(date);
+  const generationOverlayMeta = getDailyJournalGenerationPhaseMeta(generatePhase);
 
   return (
-    <section className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4" data-testid="daily-journal-workspace">
+    <section className="page-shell relative flex min-h-0 flex-col overflow-hidden rounded-none border-x-0 border-t-0 p-3 md:p-4" data-testid="daily-journal-workspace">
+      <JournalGenerationOverlay
+        active={generationOverlayActive}
+        complete={generationOverlayComplete}
+        label={generationOverlayMeta.label}
+        description={generationOverlayMeta.description}
+        progress={generateProgress}
+        mode="daily"
+        animationId="plant_realistic"
+        minVisibleMs={1000}
+        onExited={() => setGenerationOverlayComplete(false)}
+      />
       <div className="flex flex-wrap items-start justify-between gap-3 pb-4">
         <div className="min-w-0">
           <p className="text-[0.76rem] text-[#8a6b4b]">{dateLabel} 总日志</p>
@@ -560,7 +581,13 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
         {isLoading ? (
           <DailyJournalLoadingRegion />
         ) : isGenerating ? (
-          <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} />
+          generationOverlayActive ? (
+            <div className="min-h-[12rem]" role="status" aria-live="polite">
+              <span className="sr-only">正在整理当天总日志</span>
+            </div>
+          ) : (
+            <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} />
+          )
         ) : dailyJournal ? (
           <div data-testid="daily-journal-editor" className="flex flex-col">
             <input

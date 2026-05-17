@@ -344,7 +344,7 @@ export function buildJoyExtractMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品中的结构化抽取器，只负责从用户这轮表达中抽取${config.label}维度信息。`,
+        `你是 Daily Light 产品中的结构化抽取器，只负责从用户这轮表达中抽取${config.label}维度信息。`,
         "你不能决定流程，不写安慰，不提建议，不扩写没有证据的信息。",
         input.dimension === "joy"
           ? "对 joy 来说，纯粹好玩、解压、好笑、沉浸的开心也成立；没有证据时不要硬补深层意义。"
@@ -441,7 +441,7 @@ export function buildJoyQuestionMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品里的${config.label}维度访谈者。`,
+        `你是 Daily Light 产品里的${config.label}维度访谈者。`,
         guide.goal,
         guide.path,
         guide.fallback,
@@ -643,7 +643,7 @@ export function buildJoyDraftMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
+        `你是 Daily Light 产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
         "content 必须是一篇可直接给用户阅读和继续编辑的日志正文，不要把结构槽位、小标题或字段名直接写出来。",
         "如果有多件事件，把几个片段自然并列写进同一篇日志里，保持一篇日志的连续读感；不要分条罗列，也不要强行写成总结。",
