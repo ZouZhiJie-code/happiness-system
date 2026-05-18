@@ -243,13 +243,13 @@ EOF
 ## Batch 2 Evidence
 
 - `npm run typecheck` 通过
-- `npm test` 通过：`71` 个 test files，`595` 个测试全部通过
+- `npm test` 通过：`76` 个 test files，`609` 个测试全部通过
 - `npm run build` 通过，`Next.js inferred your workspace root` warning 已消失
-- `npm run lint` 通过，当前只剩 `32` 条 warning，`0` 个 error
+- `npm run lint` 通过，当前只剩 `31` 条 warning，`0` 个 error
 - `.github/workflows/ci.yml` 已扩到 `npm ci + typecheck + test + build + lint`
 
 ## Batch 2 Residual Risks
 
 - GitHub Actions 上 Node 20 action runtime deprecation warning 仍待后续处理
 - 测试日志里的 `DATABASE_URL` fallback 日志与 `act(...)` warning 仍未清理
-- 当前 lint 基线仍保留 `32` 条 warning，后续如果要把 warning 收紧为 gate，还需要单独清理
+- 当前 lint 基线仍保留 `31` 条 warning，后续如果要把 warning 收紧为 gate，还需要单独清理
