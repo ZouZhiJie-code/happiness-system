@@ -242,8 +242,8 @@ model DailyJournalEntry {
   title            String
   content          String
   status           DailyJournalStatus @default(draft)
-  sourceEntryIds   String[]
-  sourceSessionIds String[]
+  sourceEntryIds   String[]           @default([])
+  sourceSessionIds String[]           @default([])
   sourceSignature  String
   sourceUpdatedAt  DateTime?
   createdAt        DateTime           @default(now())
