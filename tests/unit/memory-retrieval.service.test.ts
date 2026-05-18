@@ -304,6 +304,27 @@ describe("memory-retrieval.service", () => {
       expect(result.memories).toEqual([]);
     });
 
+    it("falls back to keyword retrieval when vector search throws", async () => {
+      mockGetAIProvider.mockReturnValue({
+        name: "test-provider",
+        embed: vi.fn().mockResolvedValue({ embeddings: [[0.1, 0.2, 0.3]] })
+      });
+      mockFindSimilarMemoryFacts.mockRejectedValue(new Error("vector index missing"));
+      mockFindMemoryFactsByDimension.mockResolvedValue([
+        buildMemoryFact({ id: "fallback-memory", similarity: 0.4 })
+      ]);
+
+      const result = await retrieveRelevantMemories({
+        userId: USER_ID,
+        dimension: "joy",
+        snapshot: buildSnapshot({ event: "公园散步" })
+      });
+
+      expect(result.memories).toHaveLength(1);
+      expect(result.memories[0]?.id).toBe("fallback-memory");
+      expect(mockFindMemoryFactsByDimension).toHaveBeenCalledWith("joy", USER_ID);
+    });
+
     it("respects cross-dimension option", async () => {
       mockGetAIProvider.mockReturnValue({
         name: "test-provider",

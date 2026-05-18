@@ -283,6 +283,7 @@ model MemoryFact {
   kind               String
   topicTags          String[]           @default([])
   summary            String
+  /// Provisioned by pgvector migration; runtime paths must tolerate it being unavailable.
   embedding          Unsupported("vector(2048)")?
   sourceType         MemorySourceType   @default(ai_extracted)
   confidence         Float              @default(0)

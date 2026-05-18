@@ -25,7 +25,8 @@ export interface MemoryFactWithSimilarity {
 
 /**
  * Find memory facts similar to a query embedding using cosine distance.
- * Returns results ordered by similarity (descending), filtered by deletedAt IS NULL.
+ * Requires the pgvector extension plus the embedding column/index provisioned by migration.
+ * Callers must tolerate query failure and fall back when vector search is unavailable.
  */
 export async function findSimilarMemoryFacts(
   userId: string,
