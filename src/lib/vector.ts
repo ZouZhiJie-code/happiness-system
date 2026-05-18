@@ -25,8 +25,9 @@ export interface MemoryFactWithSimilarity {
 
 /**
  * Find memory facts similar to a query embedding using cosine distance.
- * Requires the pgvector extension plus the embedding column/index provisioned by migration.
- * Callers must tolerate query failure and fall back when vector search is unavailable.
+ * Requires the pgvector extension plus the embedding column provisioned by migration.
+ * The current 2048-dimension shape does not get an ANN index, so callers must
+ * tolerate sequential scan performance and fall back when vector search is unavailable.
  */
 export async function findSimilarMemoryFacts(
   userId: string,

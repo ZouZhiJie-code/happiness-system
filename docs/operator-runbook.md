@@ -132,7 +132,7 @@ psql "$DIRECT_URL" -c '\d "DailyHappinessScore"'
 - `JoyEntry_userId_status_date_idx`
 - `DailyJournalEntry_userId_date_idx`
 - `DailyHappinessScore_userId_date_idx`
-- `MemoryFact_embedding_cosine_idx`（如果 pgvector rollout 已完成）
+- `MemoryFact.embedding` 列存在，且 `\dx` 能看到 `vector` extension
 
 如果需要直接确认 auth session 生命周期逻辑，可执行：
 
@@ -154,6 +154,7 @@ npx prisma migrate deploy
 ```
 
 如果 `vector` extension 无法创建，保持 `memoryEnabled=false`，先完成数据库能力开通，再继续 rollout。
+当前 `2048` 维 embedding 不要再尝试补 `ivfflat / hnsw` 索引；这两个索引在这个维度下都不是 deployable contract。
 
 ### 2.3.2 回滚与恢复
 
