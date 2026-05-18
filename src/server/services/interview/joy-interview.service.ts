@@ -56,20 +56,24 @@ import type {
 
 type InterviewRespondInput =
   | {
+      userId: string;
       action: "reply";
       sessionId: string;
       userMessage: string;
       inputMode: InputMode;
     }
   | {
+      userId: string;
       action: "continue";
       sessionId: string;
     }
   | {
+      userId: string;
       action: "continue_current_event";
       sessionId: string;
     }
   | {
+      userId: string;
       action: "next_event";
       sessionId: string;
     };
@@ -98,6 +102,7 @@ export class DraftGenerationError extends Error {
     readonly code:
       | "SESSION_BATCH_UNSUPPORTED"
       | "SESSION_NOT_FOUND"
+      | "DRAFT_GENERATE_NOT_READY"
       | "DRAFT_GENERATE_UPSTREAM_ERROR"
       | "DRAFT_GENERATE_DB_ERROR"
       | "DRAFT_GENERATE_UNKNOWN_ERROR",
@@ -1633,8 +1638,8 @@ async function resolvePreparedInterviewTurn(
   return finalizeAssistantTurn(input, generatedAssistantTurn);
 }
 
-async function getActiveInterviewSession(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
+async function getActiveInterviewSession(userId: string, sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId, userId);
 
   if (!session) {
     throw new Error("SESSION_NOT_FOUND");
@@ -1656,9 +1661,9 @@ async function getActiveInterviewSession(sessionId: string) {
   return session;
 }
 
-export async function startJoyInterview(dimension: InterviewDimension, entryDate?: string) {
+export async function startJoyInterview(userId: string, dimension: InterviewDimension, entryDate?: string) {
   const openingQuestion = getOpeningQuestion(dimension);
-  const session = await createJoyInterviewSession(dimension, openingQuestion, entryDate);
+  const session = await createJoyInterviewSession(userId, dimension, openingQuestion, entryDate);
 
   return {
     sessionId: session.id,
@@ -1667,12 +1672,12 @@ export async function startJoyInterview(dimension: InterviewDimension, entryDate
   };
 }
 
-export async function getJoyInterviewSession(sessionId: string) {
-  return findJoyInterviewSessionById(sessionId);
+export async function getJoyInterviewSession(userId: string, sessionId: string) {
+  return findJoyInterviewSessionById(sessionId, userId);
 }
 
-export async function reopenJoyInterviewSession(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
+export async function reopenJoyInterviewSession(userId: string, sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId, userId);
 
   if (!session) {
     throw new Error("SESSION_NOT_FOUND");
@@ -1699,8 +1704,8 @@ export async function reopenJoyInterviewSession(sessionId: string) {
   };
 }
 
-export async function pauseJoyInterviewSession(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
+export async function pauseJoyInterviewSession(userId: string, sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId, userId);
 
   if (!session) {
     throw new Error("SESSION_NOT_FOUND");
@@ -1727,8 +1732,8 @@ export async function pauseJoyInterviewSession(sessionId: string) {
   };
 }
 
-export async function completeJoyInterviewSession(sessionId: string) {
-  const session = await findJoyInterviewSessionById(sessionId);
+export async function completeJoyInterviewSession(userId: string, sessionId: string) {
+  const session = await findJoyInterviewSessionById(sessionId, userId);
 
   if (!session) {
     throw new Error("SESSION_NOT_FOUND");
@@ -1752,7 +1757,7 @@ export async function completeJoyInterviewSession(sessionId: string) {
 }
 
 async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) {
-  const session = await getActiveInterviewSession(input.sessionId);
+  const session = await getActiveInterviewSession(input.userId, input.sessionId);
 
   if ("assistantMessage" in session) {
     return session;
@@ -1799,7 +1804,14 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   if (canonicalAction === "next_event") {
-    if (session.pendingDecision?.kind !== "event_complete" || session.pendingDecision.eventId !== activeEvent.id) {
+    const pendingDecision = session.pendingDecision;
+
+    if (
+      !pendingDecision ||
+      pendingDecision.kind === "dimension_redirect" ||
+      !pendingDecision.actions.includes("next_event") ||
+      pendingDecision.eventId !== activeEvent.id
+    ) {
       throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
     }
 
@@ -2148,15 +2160,19 @@ export async function streamJoyInterviewResponse(
   return completeJoyInterviewResponse(completed);
 }
 
-export async function generateJoyInterviewDraft(sessionIds: string[]) {
+export async function generateJoyInterviewDraft(userId: string, sessionIds: string[]) {
   if (sessionIds.length !== 1) {
     throw new DraftGenerationError("SESSION_BATCH_UNSUPPORTED", false);
   }
 
-  const session = await findJoyInterviewSessionById(sessionIds[0]);
+  const session = await findJoyInterviewSessionById(sessionIds[0], userId);
 
   if (!session) {
     throw new DraftGenerationError("SESSION_NOT_FOUND", false);
+  }
+
+  if (session.pendingDecision?.kind === "boundary_insufficient" || !session.draftGenerationUnlocked) {
+    throw new DraftGenerationError("DRAFT_GENERATE_NOT_READY", false, "Draft generation is not available yet.");
   }
 
   let draftEntry;
@@ -2199,7 +2215,13 @@ export async function generateJoyInterviewDraft(sessionIds: string[]) {
   };
 }
 
-export async function saveGeneratedJoyEntry(sessionId: string) {
+export async function saveGeneratedJoyEntry(userId: string, sessionId: string) {
+  const existingSession = await findJoyInterviewSessionById(sessionId, userId);
+
+  if (!existingSession) {
+    throw new Error("DRAFT_NOT_FOUND");
+  }
+
   const savedSession = await markJoyEntrySaved(sessionId);
 
   if (!savedSession?.journalEntry) {

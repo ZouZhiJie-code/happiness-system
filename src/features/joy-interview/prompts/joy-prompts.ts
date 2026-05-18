@@ -281,7 +281,7 @@ export function buildJoyExtractMessages(input: {
     input.dimension === "joy"
       ? '{"joyMoment":string|null,"joySource":string|null,"stateShift":string|null,"meaningNeed":string|null,"manualClue":string|null,"delightSignature":string|null,"directionSignal":string|null,"valueImpact":string|null,"durability":string|null,"tags":string[]}'
       : input.dimension === "fulfillment"
-        ? '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
+        ? '{"experience":string|null,"feeling":string|null,"progressEvidence":string|null,"fulfillmentType":string|null,"valueSignal":string|null,"tags":string[]}'
       : input.dimension === "reflection"
         ? '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
       : input.dimension === "improvement"
@@ -292,9 +292,10 @@ export function buildJoyExtractMessages(input: {
   const fulfillmentExtractRules =
     input.dimension === "fulfillment"
       ? [
-          "对 fulfillment 来说，event=具体充实片段，whyItMattered=没有白过的进展证据，happinessType=推进完成型/投入积累型/协作贡献型，selfPattern=值得感标准。",
+          "对 fulfillment 来说，experience=具体充实片段，progressEvidence=没有白过的进展证据，fulfillmentType=推进完成型/投入积累型/协作贡献型，valueSignal=值得感标准。",
           "不要把普通忙碌、任务很多、踏实情绪直接抽成进展证据；必须看到完成、推进、练到、积累或帮到别人的证据。",
-          "selfPattern 只能在用户明确表达“我在意/我看重/对我来说算数/值得”的同等强证据时填写；否则返回 null。"
+          "valueSignal 只能在用户明确表达“我在意/我看重/对我来说算数/值得”的同等强证据时填写；否则返回 null。",
+          "不要输出旧字段名；只输出 experience、feeling、progressEvidence、fulfillmentType、valueSignal、tags。"
         ]
       : [];
   const joyExtractRules =
@@ -344,7 +345,7 @@ export function buildJoyExtractMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品中的结构化抽取器，只负责从用户这轮表达中抽取${config.label}维度信息。`,
+        `你是 Daily Light 产品中的结构化抽取器，只负责从用户这轮表达中抽取${config.label}维度信息。`,
         "你不能决定流程，不写安慰，不提建议，不扩写没有证据的信息。",
         input.dimension === "joy"
           ? "对 joy 来说，纯粹好玩、解压、好笑、沉浸的开心也成立；没有证据时不要硬补深层意义。"
@@ -441,7 +442,7 @@ export function buildJoyQuestionMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品里的${config.label}维度访谈者。`,
+        `你是 Daily Light 产品里的${config.label}维度访谈者。`,
         guide.goal,
         guide.path,
         guide.fallback,
@@ -643,7 +644,7 @@ export function buildJoyDraftMessages(input: {
     {
       role: "system",
       content: [
-        `你是幸福日志产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
+        `你是 Daily Light 产品中的中文写作助手，要把${config.label}访谈整理成一份忠于用户原意的日志草稿。`,
         "不要写鸡汤，不做建议，不夸张，不补充用户没表达过的情节。",
         "content 必须是一篇可直接给用户阅读和继续编辑的日志正文，不要把结构槽位、小标题或字段名直接写出来。",
         "如果有多件事件，把几个片段自然并列写进同一篇日志里，保持一篇日志的连续读感；不要分条罗列，也不要强行写成总结。",

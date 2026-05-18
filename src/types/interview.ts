@@ -494,6 +494,7 @@ export type PendingDecisionRecord =
 
 export interface InterviewSessionRecord {
   id: string;
+  userId: string;
   dimension: InterviewDimension;
   status: InterviewSessionStatus;
   stage: InterviewStage;
@@ -502,6 +503,7 @@ export interface InterviewSessionRecord {
   turnCount: number;
   lastAssistantQuestion: string;
   draftSummary: string | null;
+  finalEntryId?: string | null;
   messages: InterviewMessage[];
   snapshot: JoySnapshot;
   snapshotData?: InterviewSnapshotData;

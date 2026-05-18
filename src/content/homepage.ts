@@ -14,8 +14,8 @@ export interface HomepageDimensionStory {
 
 export const homepageContent = {
   hero: {
-    eyebrow: "AI 幸福日志",
-    title: "幸福系统",
+    eyebrow: "AI Daily Journal",
+    title: "Daily Light 点亮你的每一天。",
     lead: "不用想格式，也不用总结自己。说出今天的一个片段，系统会顺着你的话追问必要细节，再整理成你可以确认、编辑和保存的日志。",
     signals: ["一句话开始", "AI 只追问必要细节", "草稿由你确认后保存"],
     visual: {
@@ -28,7 +28,7 @@ export const homepageContent = {
   },
   pain: {
     title: "很多经历不是没有意义，只是当时来不及读懂",
-    lead: "忙了一天却说不清哪里算数，想感谢却不想写成客套话，想改进又不想被说教。幸福系统把这些细小片段留在合适的位置。",
+    lead: "忙了一天却说不清哪里算数，想感谢却不想写成客套话，想改进又不想被说教。Daily Light 把这些细小片段留在合适的位置。",
     bullets: [
       "开心来得快，离开得也快，常常还没来得及看清自己为什么被点亮。",
       "忙碌很满，分量却未必说得清，结束时只剩一句“今天好累”。",

@@ -11,8 +11,6 @@ import {
   setMemoryFactEmbedding
 } from "@/server/repositories/memory.repository";
 
-const DEMO_USER_ID = "local-demo-user";
-
 const ALL_DIMENSIONS: InterviewDimension[] = ["joy", "fulfillment", "reflection", "improvement", "gratitude"];
 
 export type ProfileGroupedResult = Record<InterviewDimension, MemoryFact[]>;
@@ -20,9 +18,8 @@ export type ProfileGroupedResult = Record<InterviewDimension, MemoryFact[]>;
 /**
  * Get all memory facts grouped by dimension.
  */
-export async function getAllProfiles(userId?: string): Promise<ProfileGroupedResult> {
-  const uid = userId || DEMO_USER_ID;
-  const facts = await findAllMemoryFacts(uid);
+export async function getAllProfiles(userId: string): Promise<ProfileGroupedResult> {
+  const facts = await findAllMemoryFacts(userId);
 
   const grouped: ProfileGroupedResult = {} as ProfileGroupedResult;
   for (const dim of ALL_DIMENSIONS) {
@@ -41,15 +38,13 @@ export async function getAllProfiles(userId?: string): Promise<ProfileGroupedRes
  * Generates embedding fire-and-forget.
  */
 export async function addProfileFact(input: {
-  userId?: string;
+  userId: string;
   dimension: InterviewDimension;
   summary: string;
   topicTags: string[];
 }): Promise<MemoryFact> {
-  const userId = input.userId || DEMO_USER_ID;
-
   const created = await createMemoryFact({
-    userId,
+    userId: input.userId,
     dimension: input.dimension,
     kind: "user_note",
     topicTags: input.topicTags,
@@ -61,7 +56,7 @@ export async function addProfileFact(input: {
   });
 
   // Fire-and-forget embedding generation
-  void generateEmbeddingSafe(created.id, input.summary, userId);
+  void generateEmbeddingSafe(created.id, input.summary, input.userId);
 
   return created;
 }
@@ -72,14 +67,12 @@ export async function addProfileFact(input: {
  */
 export async function updateProfileFact(input: {
   id: string;
-  userId?: string;
+  userId: string;
   summary: string;
   topicTags: string[];
 }): Promise<MemoryFact> {
-  const userId = input.userId || DEMO_USER_ID;
-
   const existing = await findMemoryFactById(input.id);
-  if (!existing || existing.userId !== userId) {
+  if (!existing || existing.userId !== input.userId) {
     throw new ProfileError("MEMORY_NOT_FOUND");
   }
 
@@ -89,7 +82,7 @@ export async function updateProfileFact(input: {
   });
 
   // Fire-and-forget: regenerate embedding for updated summary
-  void generateEmbeddingSafe(input.id, input.summary, userId);
+  void generateEmbeddingSafe(input.id, input.summary, input.userId);
 
   return updated;
 }
@@ -98,11 +91,9 @@ export async function updateProfileFact(input: {
  * Soft-delete a memory fact.
  * Verifies ownership before deleting.
  */
-export async function deleteProfileFact(id: string, userId?: string): Promise<void> {
-  const uid = userId || DEMO_USER_ID;
-
+export async function deleteProfileFact(id: string, userId: string): Promise<void> {
   const existing = await findMemoryFactById(id);
-  if (!existing || existing.userId !== uid) {
+  if (!existing || existing.userId !== userId) {
     throw new ProfileError("MEMORY_NOT_FOUND");
   }
 

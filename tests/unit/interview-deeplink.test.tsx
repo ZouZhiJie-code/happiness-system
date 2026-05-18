@@ -64,6 +64,7 @@ const journalEntry: JournalEntryRecord = {
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
+    userId: "user-1",
     id: "session-from-calendar",
     dimension: "joy",
     status: "completed",

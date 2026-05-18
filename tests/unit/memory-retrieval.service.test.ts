@@ -59,6 +59,8 @@ function buildSnapshot(overrides?: Partial<JoySnapshot>): JoySnapshot {
     whyItMattered: null,
     happinessType: null,
     selfPattern: null,
+    confidence: 0.8,
+    missingSlots: [],
     ...overrides
   };
 }

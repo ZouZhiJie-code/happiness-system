@@ -22,6 +22,10 @@ export interface JoySignalFields {
   happinessType?: string | null;
   improvementType?: string | null;
   selfPattern?: string | null;
+  experience?: string | null;
+  progressEvidence?: string | null;
+  valueSignal?: string | null;
+  fulfillmentType?: string | null;
   joyMoment?: string | null;
   joySource?: string | null;
   stateShift?: string | null;
@@ -62,6 +66,36 @@ function normalizeText(value: string) {
 
 function trimTrailingPunctuation(value: string) {
   return value.replace(/[。！？!?,，；;:\s]+$/g, "").trim();
+}
+
+function normalizeGratitudeNeedText(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const cleaned = trimTrailingPunctuation(normalizeText(value))
+    .replace(/^(这让我觉得|让我觉得|我觉得|觉得|感觉到?|感到)/u, "")
+    .replace(/^(自己|我自己)/u, "我")
+    .trim();
+  const seenAndReliefMatch = cleaned.match(
+    /^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)[，,]?(不用硬撑着一边听一边记)$/u
+  );
+
+  if (seenAndReliefMatch) {
+    return `${seenAndReliefMatch[1]}，以及${seenAndReliefMatch[2]}的难处`;
+  }
+
+  const needAndReliefMatch = cleaned.match(/^(我当时的[^，。！？!?]{0,60}?)[，,](不用硬撑着一边听一边记)$/u);
+
+  if (needAndReliefMatch) {
+    return `${needAndReliefMatch[1]}，以及${needAndReliefMatch[2]}的难处`;
+  }
+
+  return (
+    cleaned
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
+      .trim() || null
+  );
 }
 
 function clampConfidence(value: number) {
@@ -616,12 +650,28 @@ function inferFulfillmentProgressEvidence(message: string) {
     return null;
   }
 
+  const anchoredEvidenceMatch = normalized.match(
+    /((?:最有分量的是|真正有分量的是|关键是|最重要的是)?[^。！？!?]{0,32}(?:串成了一条主线|串成主线|收住了|落了地|接手时一眼就能看懂|一眼就能看懂|真正往前推进|事情真的往前走了|把事情收住)[^。！？!?]{0,48})/u
+  );
+
+  if (anchoredEvidenceMatch) {
+    return trimTrailingPunctuation(anchoredEvidenceMatch[1] ?? "").slice(0, 140) || null;
+  }
+
   const progressMatch = normalized.match(
     /((?:把|终于|实际|具体|至少|原本|之前|今天)?[^。！？!?]{0,28}(?:完成|推进|收口|交付|解决|学到|练到|积累|帮到|支持|配合|变顺|更熟)[^。！？!?]{0,48})/u
   );
 
   if (progressMatch) {
     return trimTrailingPunctuation(progressMatch[1] ?? "").slice(0, 140) || null;
+  }
+
+  const worthMatch = normalized.match(
+    /((?:这件事|这一步|这次|这种)(?:[^。！？!?]{0,24})(?:算数|没白过|不算白忙|不算空转|有分量)[^。！？!?]{0,60})/u
+  );
+
+  if (worthMatch) {
+    return trimTrailingPunctuation(worthMatch[1] ?? "").slice(0, 140) || null;
   }
 
   const reasonMatch = normalized.match(/(?:因为|所以|这让我觉得|让我踏实的是|它算数是因为)(.+)$/u);
@@ -648,11 +698,19 @@ function inferFulfillmentType(message: string) {
 function inferFulfillmentValueSignal(message: string) {
   const normalized = normalizeText(message);
   const directMatch = normalized.match(
-    /((?:我(?:会|更|其实)?(?:在意|看重|重视)|对我来说(?:重要|算数|值得)|让我觉得(?:算数|值得)|比起[^。！？!?]{0,24}我更看重|真正让我踏实的是)[^。！？!?]{0,80})/u
+    /((?:我(?:会|更|其实)?(?:在意|看重|重视)|对我来说[^。！？!?]{0,16}(?:重要|算数|值得)|让我觉得(?:算数|值得)|比起[^。！？!?]{0,24}我更看重|真正让我踏实的是)[^。！？!?]{0,80})/u
   );
 
   if (directMatch) {
     return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  const standardMatch = normalized.match(
+    /((?:对我来说|让我觉得(?:今天)?(?:算数|没白过|不算白忙|不算空转|有分量)的(?:是|标准是)?|真正算数的(?:是|标准是)?)[^。！？!?]{0,100}(?:才会觉得(?:今天|这一天)?(?:算数|没白过|不算白忙|不算空转|有分量)|(?:算数|没白过|不算白忙|不算空转|有分量)))/u
+  );
+
+  if (standardMatch) {
+    return trimTrailingPunctuation(standardMatch[1] ?? "").slice(0, 100) || null;
   }
 
   return null;
@@ -749,7 +807,12 @@ function isVagueImprovementAttempt(value: string | null) {
 function inferImprovementTrack(message: string): "repeat_good" | "avoid_bad" | null {
   const normalized = normalizeText(message);
 
-  if (/(继续|保持|复用|重复|下次还|以后还|延续|沿用|做得不错|很稳|顺了|有效|状态好|好状态)/u.test(normalized)) {
+  if (
+    /(继续|保持|复用|重复|下次还|以后还|延续|沿用|做得不错|很稳|顺了|有效|状态好|好状态|关键是|主要是|先写|先定|主线|重点|没被消息带跑|守住主线|没掉进零碎)/u.test(
+      normalized
+    ) &&
+    !/(下次不|避免|别再|不要再|少一点|改掉|失误|打断|着急|没确认|没准备|太快|冲动|反应过快|场面失控)/u.test(normalized)
+  ) {
     return "repeat_good";
   }
 
@@ -763,15 +826,19 @@ function inferImprovementTrack(message: string): "repeat_good" | "avoid_bad" | n
 function inferImprovementStateAssessment(message: string) {
   const normalized = normalizeText(message);
   const directMatch = normalized.match(
-    /((?:这次|今天|当时|那一刻)?[^。！？!?]{0,36}(?:做得不错|很稳|顺了|有效|状态好|有点急|太快|没确认|没准备|卡住|乱了|跑偏|没接住)[^。！？!?]{0,60})/u
+    /((?:这次|今天|当时|那一刻|后面才发现)?[^。！？!?]{0,40}(?:做得不错|很稳|顺了|有效|状态好|有点急|太快|没确认|没准备|卡住|乱了|跑偏|没接住|理解偏了|理解错了|误解了)[^。！？!?]{0,70})/u
   );
 
   if (directMatch) {
     return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 140) || null;
   }
 
-  if (/(做得不错|很稳|顺了|有效|状态好)/u.test(normalized)) return "这次有一个值得重复的好状态";
-  if (/(有点急|太快|没确认|没准备|卡住|乱了|跑偏|没接住)/u.test(normalized)) return "这次有一个下次想避开的状态";
+  if (/(做得不错|很稳|顺了|有效|状态好|没(?:怎么)?被消息带跑|守住主线|没掉进零碎|节奏更稳)/u.test(normalized)) {
+    return "这次有一个值得重复的好状态";
+  }
+  if (/(有点急|太快|没确认|没准备|卡住|乱了|跑偏|没接住|理解偏了|理解错了|误解了)/u.test(normalized)) {
+    return "这次有一个下次想避开的状态";
+  }
 
   return null;
 }
@@ -784,7 +851,7 @@ function inferImprovementFrictionPoint(message: string) {
   }
 
   const directMatch = normalized.match(
-    /((?:卡点|问题|关键是|主要是|当时|这次)[^。！？!?]{0,36}(?:没确认|没听完|打断|太快|有点急|没准备|拖延|跑偏|卡住|没接住|没有复述|没有先问)[^。！？!?]{0,70})/u
+    /((?:卡点|问题|关键是|主要是|当时|这次|真正的卡点是)[^。！？!?]{0,48}(?:没确认|没听完|打断|太快|有点急|没准备|拖延|跑偏|卡住|没接住|没有复述|没有先问|立刻澄清|场面失控|不同意见)[^。！？!?]{0,90})/u
   );
 
   if (directMatch) {
@@ -793,7 +860,7 @@ function inferImprovementFrictionPoint(message: string) {
   }
 
   const behaviorMatch = normalized.match(
-    /([^。！？!?]{0,28}(?:没确认|没听完|打断|太快|有点急|没准备|拖延|跑偏|卡住|没接住|没有复述|没有先问)[^。！？!?]{0,60})/u
+    /([^。！？!?]{0,40}(?:没确认|没听完|打断|太快|有点急|没准备|拖延|跑偏|卡住|没接住|没有复述|没有先问|立刻澄清|场面失控|不同意见)[^。！？!?]{0,80})/u
   );
 
   if (behaviorMatch) {
@@ -884,14 +951,40 @@ function inferImprovementSuccessSignal(message: string) {
 
 function inferGratitudeTarget(message: string) {
   const normalized = normalizeText(message);
+  const focusMatch = normalized.match(/(?:感谢的是|想感谢的是|最想感谢的是)(她|他|对方|同事|朋友|家人|老师|伴侣)/u);
+
+  if (focusMatch) {
+    return focusMatch[1] ?? null;
+  }
+
+  const directRoleMatch = normalized.match(/(?:感谢|谢谢|想谢谢|想感谢)(?:一下)?(她|他|对方|同事|朋友|家人|老师|伴侣)/u);
+
+  if (directRoleMatch) {
+    return directRoleMatch[1] ?? null;
+  }
+
   const directMatch = normalized.match(/(?:感谢|谢谢|想谢谢|想感谢)(?:一下)?([^，。！？!?]{1,18})/u);
 
   if (directMatch) {
-    return trimTrailingPunctuation(directMatch[1] ?? "").replace(/^(那个|这位|一个)/u, "").slice(0, 40) || null;
+    const candidate =
+      trimTrailingPunctuation(directMatch[1] ?? "")
+        .replace(/^(的是|是|那个|这位|一个)/u, "")
+        .trim() || null;
+
+    if (
+      candidate &&
+      !/(没有只说|而是|帮我|替我|看见|回应|辛苦|减了负担|请我|问我|列好|标出来)/u.test(candidate)
+    ) {
+      return candidate.slice(0, 40) || null;
+    }
   }
 
   if (/(妈妈|母亲|爸爸|父亲|家人|朋友|同事|伴侣|老师|客户|室友|领导)/u.test(normalized)) {
     return normalized.match(/(妈妈|母亲|爸爸|父亲|家人|朋友|同事|伴侣|老师|客户|室友|领导)/u)?.[1] ?? null;
+  }
+
+  if (/(她|他|对方)/u.test(normalized)) {
+    return normalized.match(/(她|他|对方)/u)?.[1] ?? null;
   }
 
   return null;
@@ -922,7 +1015,15 @@ function inferSeenNeed(message: string) {
   );
 
   if (directMatch) {
-    return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+    return normalizeGratitudeNeedText(directMatch[1])?.slice(0, 100) || null;
+  }
+
+  const supportMatch = normalized.match(
+    /((?:我当时|那时|那一下)?[^。！？!?]{0,32}(?:慌|虚弱|撑不住|快崩|压力很大|太累|乱|不知道先做什么|需要有人帮我理清|需要被理解)[^。！？!?]{0,36})/u
+  );
+
+  if (supportMatch) {
+    return normalizeGratitudeNeedText(supportMatch[1])?.slice(0, 100) || null;
   }
 
   if (/(撑不住|快崩|压力很大|太累)/u.test(normalized)) return "我当时其实很需要有人帮我分担一点压力";

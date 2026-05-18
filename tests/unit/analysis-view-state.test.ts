@@ -45,7 +45,7 @@ describe("analysis view state helpers", () => {
       month: "2026-05",
       section: "overview",
       href: "/analysis?month=2026-05&section=overview",
-      shouldReplace: false
+      shouldReplace: true
     });
   });
 
@@ -64,7 +64,7 @@ describe("analysis view state helpers", () => {
     });
   });
 
-  it("defaults missing section to overview without forcing a replace", () => {
+  it("defaults missing section to overview and normalizes the url", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -75,7 +75,7 @@ describe("analysis view state helpers", () => {
       month: "2026-05",
       section: "overview",
       href: "/analysis?month=2026-05&section=overview",
-      shouldReplace: false
+      shouldReplace: true
     });
   });
 

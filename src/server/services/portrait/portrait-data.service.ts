@@ -7,7 +7,6 @@ import { listDailyHappinessScoresByDateRange } from "@/server/repositories/daily
 import type { CalendarSessionSource } from "@/features/calendar/types";
 import type { DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 
-const DEMO_USER_ID = "local-demo-user";
 const ALL_DIMENSIONS: InterviewDimension[] = [
   "joy",
   "fulfillment",
@@ -70,9 +69,7 @@ function averageScoreOf(record: DailyHappinessScoreRecord): number {
   return sum / SCORE_KEYS.length;
 }
 
-export async function gatherPortraitData(userId?: string): Promise<PortraitData> {
-  const uid = userId || DEMO_USER_ID;
-
+export async function gatherPortraitData(userId: string): Promise<PortraitData> {
   const now = new Date();
   const threeMonthsAgo = new Date(now);
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -80,10 +77,10 @@ export async function gatherPortraitData(userId?: string): Promise<PortraitData>
   const endDate = now.toISOString().slice(0, 10);
 
   const [facts, calendarSources, analysisSources, scoreRecords] = await Promise.all([
-    findAllMemoryFacts(uid),
-    listCalendarSourcesByDateRange({ startDate, endDate }),
-    listAnalysisSourcesByDateRange({ startDate, endDate }),
-    listDailyHappinessScoresByDateRange({ startDate, endDate })
+    findAllMemoryFacts(userId),
+    listCalendarSourcesByDateRange({ userId, startDate, endDate }),
+    listAnalysisSourcesByDateRange({ userId, startDate, endDate }),
+    listDailyHappinessScoresByDateRange(userId, { startDate, endDate })
   ]);
 
   // Calendar summary: dimension frequency and record days

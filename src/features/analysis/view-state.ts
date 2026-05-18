@@ -29,6 +29,10 @@ function isValidAnalysisMonth(month: string) {
   return formatMonthKey(parseMonthKey(month)) === month;
 }
 
+function isValidAnalysisSection(section: string | null | undefined) {
+  return ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey);
+}
+
 export function getTodayAnalysisMonth(today = getTodayEntryDate()) {
   return today.slice(0, 7);
 }
@@ -42,7 +46,7 @@ export function normalizeAnalysisMonth(month: string | null | undefined, today =
 }
 
 export function normalizeAnalysisSection(section: string | null | undefined) {
-  return ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey) ? (section as AnalysisSectionKey) : "overview";
+  return isValidAnalysisSection(section) ? (section as AnalysisSectionKey) : "overview";
 }
 
 export function buildAnalysisHref(input: { month: string; section?: AnalysisSectionKey }) {
@@ -57,13 +61,14 @@ export function normalizeAnalysisSearchParams(input: {
 }) {
   const today = input.today ?? getTodayAnalysisMonth();
   const shouldReplaceMonth = !input.month || !isValidAnalysisMonth(input.month);
+  const shouldReplaceSection = !isValidAnalysisSection(input.section);
   const month = normalizeAnalysisMonth(input.month, today);
   const section = normalizeAnalysisSection(input.section);
   return {
     month,
     section,
     href: buildAnalysisHref({ month, section }),
-    shouldReplace: shouldReplaceMonth
+    shouldReplace: shouldReplaceMonth || shouldReplaceSection
   };
 }
 

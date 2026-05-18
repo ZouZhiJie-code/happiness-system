@@ -28,10 +28,14 @@ export const joyExtractResultSchema = z
 export const fulfillmentExtractResultSchema = z
   .object({
     event: nullableString.optional(),
+    experience: nullableString.optional(),
     feeling: nullableString.optional(),
     whyItMattered: nullableString.optional(),
+    progressEvidence: nullableString.optional(),
     happinessType: nullableString.optional(),
+    fulfillmentType: nullableString.optional(),
     selfPattern: nullableString.optional(),
+    valueSignal: nullableString.optional(),
     tags: z.array(z.string().min(1).max(24)).max(6).default([])
   })
   .strict();

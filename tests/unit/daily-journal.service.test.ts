@@ -73,7 +73,7 @@ describe("daily journal service", () => {
     });
     mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([sourceEntry]);
 
-    const result = await getDailyJournal("2026-05-02");
+    const result = await getDailyJournal("user-1", "2026-05-02");
 
     expect(result.state).toBe("stale");
     expect(result.availableSourceCount).toBe(1);
@@ -83,7 +83,7 @@ describe("daily journal service", () => {
     mockFindDailyJournalByDate.mockResolvedValue(dailyJournal);
     mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([]);
 
-    const result = await getDailyJournal("2026-05-02");
+    const result = await getDailyJournal("user-1", "2026-05-02");
 
     expect(result.state).toBe("stale");
     expect(result.availableSourceCount).toBe(0);
@@ -92,7 +92,7 @@ describe("daily journal service", () => {
   it("rejects generation when there are no saved dimension journals", async () => {
     mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([]);
 
-    await expect(generateDailyJournal("2026-05-02")).rejects.toMatchObject({
+    await expect(generateDailyJournal("user-1", "2026-05-02")).rejects.toMatchObject({
       code: "DAILY_JOURNAL_SOURCE_EMPTY"
     } satisfies Partial<DailyJournalError>);
   });
@@ -101,11 +101,12 @@ describe("daily journal service", () => {
     mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([sourceEntry]);
     mockUpsertDailyJournalDraft.mockResolvedValue(dailyJournal);
 
-    const result = await generateDailyJournal("2026-05-02");
+    const result = await generateDailyJournal("user-1", "2026-05-02");
 
     expect(mockUpsertDailyJournalDraft).toHaveBeenCalledWith(
       expect.objectContaining({
         date: "2026-05-02",
+        userId: "user-1",
         title: "今天的记录",
         content: expect.stringContaining("## 开心"),
         sourceEntries: [sourceEntry]

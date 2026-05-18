@@ -10,6 +10,7 @@ import {
   logInterviewRespondError,
   normalizeInterviewRespondError
 } from "@/server/services/interview/respond-error";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { respondToInterview } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
@@ -61,7 +62,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await respondToInterview(parsed.data);
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await respondToInterview({
+      ...parsed.data,
+      userId: user.id
+    });
     const payload = respondInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

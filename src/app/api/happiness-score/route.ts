@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { dailyHappinessScoreSaveRequestSchema } from "@/features/happiness-score/schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import {
   HappinessScoreSaveError,
   saveDailyHappinessScore
 } from "@/server/services/happiness-score/happiness-score.service";
 
 export async function PUT(request: Request) {
+  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = dailyHappinessScoreSaveRequestSchema.safeParse(body);
 
@@ -15,7 +17,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const result = await saveDailyHappinessScore(parsed.data);
+    const result = await saveDailyHappinessScore(user.id, parsed.data);
 
     return NextResponse.json(result);
   } catch (error) {

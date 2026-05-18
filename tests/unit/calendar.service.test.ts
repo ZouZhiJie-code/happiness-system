@@ -28,12 +28,12 @@ describe("calendar.service", () => {
       entries: []
     });
 
-    const result = await getCalendarDay("2026-05-02");
+    const result = await getCalendarDay("user-1", "2026-05-02");
 
     expect(result.date).toBe("2026-05-02");
     expect(result.overallStatus).toBe("empty");
     expect(result.dimensions).toHaveLength(5);
-    expect(listCalendarSourcesByDate).toHaveBeenCalledWith("2026-05-02");
+    expect(listCalendarSourcesByDate).toHaveBeenCalledWith("user-1", "2026-05-02");
   });
 
   it("returns a full week model using the repository range query", async () => {
@@ -69,9 +69,10 @@ describe("calendar.service", () => {
       ]
     });
 
-    const result = await getCalendarWeek("2026-05-07");
+    const result = await getCalendarWeek("user-1", "2026-05-07");
 
     expect(listCalendarSourcesByDateRange).toHaveBeenCalledWith({
+      userId: "user-1",
       startDate: "2026-05-04",
       endDate: "2026-05-10"
     });
@@ -88,9 +89,10 @@ describe("calendar.service", () => {
       entries: []
     });
 
-    const result = await getCalendarMonth("2026-02");
+    const result = await getCalendarMonth("user-1", "2026-02");
 
     expect(listCalendarSourcesByDateRange).toHaveBeenCalledWith({
+      userId: "user-1",
       startDate: "2026-02-01",
       endDate: "2026-02-28"
     });
@@ -99,19 +101,19 @@ describe("calendar.service", () => {
   });
 
   it("throws a typed error for invalid day input", async () => {
-    await expect(getCalendarDay("2026/05/02")).rejects.toMatchObject({
+    await expect(getCalendarDay("user-1", "2026/05/02")).rejects.toMatchObject({
       code: "INVALID_CALENDAR_DATE"
     } satisfies Partial<CalendarQueryError>);
   });
 
   it("throws a typed error for invalid month input", async () => {
-    await expect(getCalendarMonth("2026/05")).rejects.toMatchObject({
+    await expect(getCalendarMonth("user-1", "2026/05")).rejects.toMatchObject({
       code: "INVALID_CALENDAR_MONTH"
     } satisfies Partial<CalendarQueryError>);
   });
 
   it("throws a typed error for impossible month input", async () => {
-    await expect(getCalendarMonth("2026-13")).rejects.toMatchObject({
+    await expect(getCalendarMonth("user-1", "2026-13")).rejects.toMatchObject({
       code: "INVALID_CALENDAR_MONTH"
     } satisfies Partial<CalendarQueryError>);
   });
@@ -124,7 +126,7 @@ describe("calendar.service", () => {
       entries: []
     });
 
-    const result = await getCalendarDay("2026-05-03");
+    const result = await getCalendarDay("user-1", "2026-05-03");
 
     expect(result.primaryAction).toBeNull();
     expect(result.dimensions.every((dimension) => !dimension.actions.includes("start_interview"))).toBe(true);
@@ -165,7 +167,7 @@ describe("calendar.service", () => {
       ]
     });
 
-    const result = await getCalendarDay("2026-05-03");
+    const result = await getCalendarDay("user-1", "2026-05-03");
     const joyDimension = result.dimensions.find((dimension) => dimension.dimension === "joy");
 
     expect(result.primaryAction).toBe("continue_editing");
@@ -175,7 +177,7 @@ describe("calendar.service", () => {
   it("wraps repository failures in CALENDAR_QUERY_FAILED", async () => {
     listCalendarSourcesByDate.mockRejectedValue(new Error("db unavailable"));
 
-    await expect(getCalendarDay("2026-05-02")).rejects.toMatchObject({
+    await expect(getCalendarDay("user-1", "2026-05-02")).rejects.toMatchObject({
       code: "CALENDAR_QUERY_FAILED"
     } satisfies Partial<CalendarQueryError>);
   });

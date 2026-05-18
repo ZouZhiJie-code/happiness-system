@@ -190,6 +190,7 @@ function buildImprovementSession(snapshot: JoySnapshot): InterviewSessionRecord 
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-improvement",
     dimension: "improvement",
     status: "active",
@@ -236,6 +237,7 @@ function buildFulfillmentSession(snapshot: JoySnapshot): InterviewSessionRecord 
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-fulfillment",
     dimension: "fulfillment",
     status: "active",
@@ -277,6 +279,7 @@ function buildReflectionSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-reflection",
     dimension: "reflection",
     status: "active",
@@ -318,6 +321,7 @@ function buildGratitudeSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-gratitude",
     dimension: "gratitude",
     status: "active",
@@ -365,6 +369,7 @@ function buildSession(snapshot: JoySnapshot): InterviewSessionRecord {
   const event = buildEvent(snapshot);
 
   return {
+    userId: "user-1",
     id: "session-joy",
     dimension: "joy",
     status: "active",
@@ -421,6 +426,37 @@ describe("draft policies", () => {
 
     expect(title).toBe("从结构到落地");
     expect(title.length).toBeLessThanOrEqual(MAX_JOURNAL_TITLE_LENGTH);
+  });
+
+  it("keeps fulfillment titles on closure or structure themes before generic blocker language", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "fulfillment",
+      snapshot: {
+        ...fulfillmentSnapshot,
+        event: "今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了",
+        whyItMattered: "我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂",
+        selfPattern: "能把卡住的事情真正往前推进，才会觉得这一天算数"
+      },
+      aiTitle: "把卡点推开"
+    });
+
+    expect(title).toBe("主线终于理顺");
+  });
+
+  it("keeps fulfillment partial titles in fulfillment semantics when AI falls back to blocker language", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "fulfillment",
+      snapshot: {
+        ...fulfillmentSnapshot,
+        event: "今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了",
+        whyItMattered: "至少这件事是真的往前推进了",
+        selfPattern: null,
+        missingSlots: ["valueSignal"]
+      },
+      aiTitle: "把卡点推开"
+    });
+
+    expect(title).toBe("把事情往前推");
   });
 
   it("keeps bad AI titles out across all dimensions", () => {
@@ -1656,6 +1692,87 @@ describe("draft policies", () => {
     expect(draft.content).toContain("对方像是看见了我当时需要有人帮我把混乱的事情理清");
     expect(draft.content).not.toContain("感谢片段");
     expect(draft.content).not.toContain("必须报答");
+  });
+
+  it("normalizes gratitude target wording before composing fallback action sentences", () => {
+    const snapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      gratitudeTarget: "的是她",
+      kindAction: "帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      gratitudeReason: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      relationshipSignal: null,
+      selfPattern: null
+    };
+    const session = buildGratitudeSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.content).toContain("而是她当时帮我把会议记录框架列好了");
+    expect(draft.content).not.toContain("而是的是她");
+  });
+
+  it("normalizes gratitude need wording before composing fallback need sentences", () => {
+    const snapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      gratitudeTarget: "同事",
+      kindAction: "帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      seenNeed: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeReason: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      innerEffect: null,
+      relationshipSignal: null,
+      selfPattern: null
+    };
+    const session = buildGratitudeSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.content).toContain("对方像是看见了我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
+    expect(draft.content).not.toContain("也让我不用硬撑着一边听一边记");
+    expect(draft.content).not.toContain("我当时的慌和虚弱被看见了，不用硬撑着一边听一边记");
+  });
+
+  it("deduplicates improvement closing prefixes when nextAttempt already starts with 下次", () => {
+    const snapshot: JoySnapshot = {
+      ...improvementSnapshot,
+      nextAttempt: "下次我想先复述一遍问题，再开始回答",
+      selfPattern: "下次我想先复述一遍问题，再开始回答"
+    };
+    const session = buildImprovementSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.content).toContain("下次我想先试试复述一遍问题，再开始回答");
+    expect(draft.content).not.toContain("下次我想先试试下次我想");
   });
 
   it("keeps supporting gratitude moments in stitched fallback drafts", () => {

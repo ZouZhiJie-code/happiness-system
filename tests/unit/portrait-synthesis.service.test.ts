@@ -203,22 +203,60 @@ describe("portrait-synthesis.service", () => {
       );
     });
 
-    it("returns null when AI fails", async () => {
+    it("uses readable deterministic insight when a dimension AI insight fails", async () => {
+      mockCompleteStructuredOutput
+        .mockResolvedValueOnce({ summary: "cross-dimensional summary" })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ insight: "fulfillment insight" })
+        .mockResolvedValueOnce({ insight: "reflection insight" })
+        .mockResolvedValueOnce({ insight: "improvement insight" })
+        .mockResolvedValueOnce({ insight: "gratitude insight" });
+
+      const result = await synthesizePortrait(USER_ID);
+
+      expect(result).not.toBeNull();
+      expect(result!.summary).toBe("cross-dimensional summary");
+      expect(result!.dimensionInsights.joy).toContain("你在开心维度反复出现「test」这些线索");
+      expect(result!.dimensionInsights.joy).not.toContain("暂不可用");
+      expect(result!.dimensionInsights.fulfillment).toBe("fulfillment insight");
+    });
+
+    it("falls back and caches a deterministic portrait when AI fails", async () => {
       mockCompleteStructuredOutput.mockResolvedValue(null);
 
       const result = await synthesizePortrait(USER_ID);
 
-      expect(result).toBeNull();
-      // Should not attempt dimension calls after summary fails
-      expect(mockCreatePortraitSnapshot).not.toHaveBeenCalled();
+      expect(result).not.toBeNull();
+      expect(result!.summary).toContain("目前已经从 5 条认知里看见一些关于你的稳定线索");
+      expect(result!.summary).toContain("一时状态和长期模式");
+      expect(result!.dimensionInsights.joy).toContain("你在开心维度反复出现「test」这些线索");
+      expect(result!.dimensionInsights.joy).toContain("最近较清晰的一条是：fact 0");
+      expect(result!.factCount).toBe(5);
+      expect(mockCreatePortraitSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: USER_ID,
+          summary: expect.stringContaining("目前已经从 5 条认知里看见一些关于你的稳定线索"),
+          factCount: 5
+        })
+      );
     });
 
-    it("returns null when no AI provider is available", async () => {
+    it("falls back when no AI provider is available", async () => {
       mockGetAIProvider.mockReturnValue(null);
 
       const result = await synthesizePortrait(USER_ID);
 
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.summary).toContain("目前已经从 5 条认知里看见一些关于你的稳定线索");
+      expect(result!.dimensionInsights.joy).not.toBe("fact 0");
+      expect(result!.factCount).toBe(5);
+      expect(mockCompleteStructuredOutput).not.toHaveBeenCalled();
+      expect(mockCreatePortraitSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: USER_ID,
+          factCount: 5
+        })
+      );
     });
   });
 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getDailyJournalResponseSchema } from "@/features/daily-journal/schema";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { getDailyJournal, DailyJournalError } from "@/server/services/daily-journal/daily-journal.service";
 
 export async function GET(request: Request) {
@@ -12,7 +13,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await getDailyJournal(date);
+    const user = await requireCurrentUserFromRequest(request);
+    const result = await getDailyJournal(user.id, date);
 
     return NextResponse.json(getDailyJournalResponseSchema.parse(result));
   } catch (error) {

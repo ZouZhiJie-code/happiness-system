@@ -131,13 +131,14 @@ describe("analysis.service", () => {
       }
     ]);
 
-    const result = await getAnalysisMonth("2026-05");
+    const result = await getAnalysisMonth("user-1", "2026-05");
 
     expect(listAnalysisSourcesByDateRange).toHaveBeenCalledWith({
+      userId: "user-1",
       startDate: "2026-05-01",
       endDate: "2026-05-31"
     });
-    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith({
+    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith("user-1", {
       startDate: "2026-05-01",
       endDate: "2026-05-31"
     });
@@ -222,7 +223,7 @@ describe("analysis.service", () => {
       scoreLink: {
         average: 8.5,
         status: "supporting",
-        summary: "投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+        summary: "热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。"
       }
     });
     expect(joyDimension?.topTags).toEqual([
@@ -242,7 +243,7 @@ describe("analysis.service", () => {
       scoreLink: {
         average: 8,
         status: "missing",
-        summary: "意义感、成长感、自我认可在评分里并不低，但这条线还没写成具体记录。"
+        summary: "意义、擅长、美德在评分里并不低，但这条线还没写成具体记录。"
       }
     });
     expect(fulfillmentDimension?.topTags).toEqual([]);
@@ -254,7 +255,7 @@ describe("analysis.service", () => {
       scoreLink: {
         average: 7,
         status: "supporting",
-        summary: "自主感、意义感在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+        summary: "意志、意义在评分里也不低，这条线不只是写出来了，分数里也能看见。"
       }
     });
     expect(reflectionDimension?.topTags).toEqual([{ tag: "判断校准型", count: 1 }]);
@@ -271,7 +272,7 @@ describe("analysis.service", () => {
       scoreLink: {
         average: 7.3,
         status: "missing",
-        summary: "成长感、自主感、自我认可在评分里并不低，但这条线还没写成具体记录。"
+        summary: "擅长、意志、美德在评分里并不低，但这条线还没写成具体记录。"
       }
     });
     expect(improvementDimension?.topTags).toEqual([]);
@@ -283,7 +284,7 @@ describe("analysis.service", () => {
       scoreLink: {
         average: 7.5,
         status: "supporting",
-        summary: "关系支持、生活托住在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+        summary: "人际、经济在评分里也不低，这条线不只是写出来了，分数里也能看见。"
       }
     });
     expect(gratitudeDimension?.topTags).toEqual([
@@ -300,7 +301,7 @@ describe("analysis.service", () => {
       headline: "开心是这个月最清楚的一条线，思考也已经开始接上。",
       featuredDimension: "joy",
       summary:
-        "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。",
+        "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。",
       watchpoint: "还有 1 天的完整日志已经过时，需要重新整理。"
     });
     expect(result.scoreRecords).toEqual([
@@ -374,7 +375,7 @@ describe("analysis.service", () => {
       dailyJournals: []
     });
 
-    const result = await getAnalysisMonth("2026-04");
+    const result = await getAnalysisMonth("user-1", "2026-04");
 
     expect(result.editableDates).toEqual([]);
     expect(result.scoreRecords).toEqual([]);
@@ -393,7 +394,7 @@ describe("analysis.service", () => {
       dailyJournals: []
     });
 
-    const result = await getAnalysisMonth("2026-06");
+    const result = await getAnalysisMonth("user-1", "2026-06");
 
     expect(result.rhythmOverview).toMatchObject({
       activeObservedDayCount: 0,
@@ -474,16 +475,16 @@ describe("analysis.service", () => {
       }
     ]);
 
-    const result = await getAnalysisMonth("2026-05");
+    const result = await getAnalysisMonth("user-1", "2026-05");
     const scoreLink = result.insightsOverview.links.find((link) => link.type === "score");
 
     expect(result.insightsOverview.headline).toContain("改进");
-    expect(result.insightsOverview.watchpoint).toContain("成长感、自主感、自我认可在评分里也偏弱");
-    expect(result.insightsOverview.summary).toContain("成长感、自主感、自我认可在评分里也偏弱");
+    expect(result.insightsOverview.watchpoint).toContain("擅长、意志、美德在评分里也偏弱");
+    expect(result.insightsOverview.summary).toContain("擅长、意志、美德在评分里也偏弱");
     expect(scoreLink).toMatchObject({
       type: "score",
       dimensions: ["improvement"],
-      detail: "成长感、自主感、自我认可在评分里也偏弱，这条线还没有真正展开。"
+      detail: "擅长、意志、美德在评分里也偏弱，这条线还没有真正展开。"
     });
   });
 
@@ -500,7 +501,7 @@ describe("analysis.service", () => {
     });
     listDailyHappinessScoresByDateRange.mockResolvedValue([]);
 
-    const result = await getAnalysisMonth("2026-05");
+    const result = await getAnalysisMonth("user-1", "2026-05");
 
     expect(result.dailyCoverage.find((day) => day.date === "2026-05-02")).toMatchObject({
       savedEntryCount: 0,
@@ -544,7 +545,7 @@ describe("analysis.service", () => {
     });
     listDailyHappinessScoresByDateRange.mockResolvedValue([]);
 
-    const result = await getAnalysisMonth("2026-05");
+    const result = await getAnalysisMonth("user-1", "2026-05");
     const joyDimension = result.dimensions.find((dimension) => dimension.dimension === "joy");
 
     expect(joyDimension).toMatchObject({
@@ -560,7 +561,7 @@ describe("analysis.service", () => {
       entries: [],
       dailyJournals: []
     });
-    listDailyHappinessScoresByDateRange.mockImplementation(async (range: { startDate: string; endDate: string }) => {
+    listDailyHappinessScoresByDateRange.mockImplementation(async (_userId: string, range: { startDate: string; endDate: string }) => {
       if (range.startDate === "2026-05-01") {
         return [
           {
@@ -598,13 +599,13 @@ describe("analysis.service", () => {
       ];
     });
 
-    const result = await getAnalysisMonth("2026-05");
+    const result = await getAnalysisMonth("user-1", "2026-05");
 
-    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith({
+    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith("user-1", {
       startDate: "2026-05-01",
       endDate: "2026-05-31"
     });
-    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith({
+    expect(listDailyHappinessScoresByDateRange).toHaveBeenCalledWith("user-1", {
       startDate: "2026-04-30",
       endDate: "2026-04-30"
     });
@@ -623,7 +624,7 @@ describe("analysis.service", () => {
   });
 
   it("throws a typed error for invalid month input", async () => {
-    await expect(getAnalysisMonth("2026-13")).rejects.toMatchObject({
+    await expect(getAnalysisMonth("user-1", "2026-13")).rejects.toMatchObject({
       code: "INVALID_ANALYSIS_MONTH"
     } satisfies Partial<AnalysisQueryError>);
   });
@@ -631,7 +632,7 @@ describe("analysis.service", () => {
   it("wraps repository failures in ANALYSIS_QUERY_FAILED", async () => {
     listAnalysisSourcesByDateRange.mockRejectedValue(new Error("db unavailable"));
 
-    await expect(getAnalysisMonth("2026-05")).rejects.toMatchObject({
+    await expect(getAnalysisMonth("user-1", "2026-05")).rejects.toMatchObject({
       code: "ANALYSIS_QUERY_FAILED"
     } satisfies Partial<AnalysisQueryError>);
   });

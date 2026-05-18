@@ -12,9 +12,7 @@ import {
   updateMemoryFact
 } from "@/server/repositories/memory.repository";
 import { prisma } from "@/server/db/prisma";
-import type { InterviewSessionRecord, JoyEntryDraft } from "@/types/interview";
-
-const DEMO_USER_ID = "local-demo-user";
+import type { InterviewEventRecord, InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
 
 /**
  * Extract user patterns from a completed interview session and store as memory facts.
@@ -28,7 +26,7 @@ export async function extractMemoriesFromSession(input: {
   session: InterviewSessionRecord;
   draftEntry: JoyEntryDraft;
 }): Promise<void> {
-  const userId = input.userId || DEMO_USER_ID;
+  const userId = input.userId;
 
   try {
     // 1. Check memoryEnabled
@@ -46,7 +44,15 @@ export async function extractMemoriesFromSession(input: {
       dimension: input.session.dimension,
       snapshot: input.session.events[0]?.snapshotData
         ? buildSnapshotFromEvent(input.session.events[0])
-        : { event: null, feeling: null, whyItMattered: null, happinessType: null, selfPattern: null },
+        : {
+            event: null,
+            feeling: null,
+            whyItMattered: null,
+            happinessType: null,
+            selfPattern: null,
+            confidence: 0,
+            missingSlots: []
+          },
       events: input.session.events,
       draftContent: input.draftEntry.content
     });
@@ -116,7 +122,7 @@ export async function extractMemoriesFromSession(input: {
         idSummaryPairs.map((p) => p.id),
         idSummaryPairs.map((p) => p.summary),
         userId,
-        provider
+        provider as NonNullable<ReturnType<typeof getAIProvider>>
       );
     }
 
@@ -140,7 +146,7 @@ async function generateAndSetEmbeddings(
   memoryIds: string[],
   summaries: string[],
   userId: string,
-  provider: ReturnType<typeof getAIProvider>
+  provider: NonNullable<ReturnType<typeof getAIProvider>>
 ): Promise<void> {
   try {
     if (!provider.embed) {
@@ -176,19 +182,14 @@ function computeConfidence(session: InterviewSessionRecord): number {
 /**
  * Build a JoySnapshot from an InterviewEventRecord's raw fields.
  */
-function buildSnapshotFromEvent(event: {
-  event: string | null;
-  feeling: string | null;
-  whyItMattered: string | null;
-  happinessType: string | null;
-  selfPattern: string | null;
-  snapshotData: unknown;
-}) {
+function buildSnapshotFromEvent(event: InterviewEventRecord): JoySnapshot {
   return {
-    event: event.event,
-    feeling: event.feeling,
-    whyItMattered: event.whyItMattered,
-    happinessType: event.happinessType,
-    selfPattern: event.selfPattern
+    event: event.snapshot.event,
+    feeling: event.snapshot.feeling,
+    whyItMattered: event.snapshot.whyItMattered,
+    happinessType: event.snapshot.happinessType,
+    selfPattern: event.snapshot.selfPattern,
+    confidence: event.snapshot.confidence,
+    missingSlots: event.snapshot.missingSlots
   };
 }

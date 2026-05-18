@@ -3,12 +3,10 @@ import type { InterviewDimension, MemoryFact, MemorySourceType, PortraitSnapshot
 import { prisma } from "@/server/db/prisma";
 import { setMemoryFactEmbedding } from "@/lib/vector";
 
-const DEMO_USER_ID = "local-demo-user";
-
 // ─── ORM Operations (画像页面用，不涉及 embedding) ─────────────────────────
 
 export async function createMemoryFact(data: {
-  userId?: string;
+  userId: string;
   dimension: InterviewDimension;
   kind: string;
   topicTags: string[];
@@ -20,7 +18,7 @@ export async function createMemoryFact(data: {
 }): Promise<MemoryFact> {
   return prisma.memoryFact.create({
     data: {
-      userId: data.userId ?? DEMO_USER_ID,
+      userId: data.userId,
       dimension: data.dimension,
       kind: data.kind,
       topicTags: data.topicTags,
@@ -35,7 +33,7 @@ export async function createMemoryFact(data: {
 
 export async function createManyMemoryFacts(
   facts: Array<{
-    userId?: string;
+    userId: string;
     dimension: InterviewDimension;
     kind: string;
     topicTags: string[];
@@ -48,7 +46,7 @@ export async function createManyMemoryFacts(
 ): Promise<number> {
   const result = await prisma.memoryFact.createMany({
     data: facts.map((f) => ({
-      userId: f.userId ?? DEMO_USER_ID,
+      userId: f.userId,
       dimension: f.dimension,
       kind: f.kind,
       topicTags: f.topicTags,
@@ -62,10 +60,10 @@ export async function createManyMemoryFacts(
   return result.count;
 }
 
-export async function findAllMemoryFacts(userId?: string): Promise<MemoryFact[]> {
+export async function findAllMemoryFacts(userId: string): Promise<MemoryFact[]> {
   return prisma.memoryFact.findMany({
     where: {
-      userId: userId ?? DEMO_USER_ID,
+      userId,
       deletedAt: null
     },
     orderBy: { confidence: "desc" }
@@ -74,11 +72,11 @@ export async function findAllMemoryFacts(userId?: string): Promise<MemoryFact[]>
 
 export async function findMemoryFactsByDimension(
   dimension: InterviewDimension,
-  userId?: string
+  userId: string
 ): Promise<MemoryFact[]> {
   return prisma.memoryFact.findMany({
     where: {
-      userId: userId ?? DEMO_USER_ID,
+      userId,
       dimension,
       deletedAt: null
     },
@@ -136,11 +134,11 @@ export async function touchMemoryFacts(ids: string[]): Promise<void> {
 export async function findSimilarBySummary(
   summary: string,
   dimension: InterviewDimension,
-  userId?: string
+  userId: string
 ): Promise<MemoryFact | null> {
   const candidates = await prisma.memoryFact.findMany({
     where: {
-      userId: userId ?? DEMO_USER_ID,
+      userId,
       dimension,
       deletedAt: null
     }
@@ -188,21 +186,21 @@ export { setMemoryFactEmbedding };
 
 // ─── Portrait Snapshot Operations ─────────────────────────────────────────
 
-export async function findLatestPortraitSnapshot(userId?: string): Promise<PortraitSnapshot | null> {
+export async function findLatestPortraitSnapshot(userId: string): Promise<PortraitSnapshot | null> {
   return prisma.portraitSnapshot.findFirst({
-    where: { userId: userId ?? DEMO_USER_ID },
+    where: { userId },
     orderBy: { generatedAt: "desc" }
   });
 }
 
 export async function createPortraitSnapshot(data: {
-  userId?: string;
+  userId: string;
   summary: string;
   dimensionInsights: Record<string, string>;
   factCount: number;
   dataRangeMonths?: number;
 }): Promise<PortraitSnapshot> {
-  const uid = data.userId ?? DEMO_USER_ID;
+  const uid = data.userId;
   return prisma.$transaction(async (tx) => {
     await tx.portraitSnapshot.deleteMany({ where: { userId: uid } });
     return tx.portraitSnapshot.create({

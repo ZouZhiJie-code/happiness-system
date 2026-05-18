@@ -6,12 +6,14 @@ import {
   generateDraftResponseSchema
 } from "@/features/interview/schema/interview.schema";
 import { logger } from "@/server/lib/logger";
+import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import {
   DraftGenerationError,
   generateInterviewDraft
 } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
+  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = generateDraftRequestSchema.safeParse(body);
 
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateInterviewDraft(parsed.data.sessionIds);
+    const result = await generateInterviewDraft(user.id, parsed.data.sessionIds);
     const payload = generateDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);
@@ -46,6 +48,13 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: error.code, retryable: false, message: "当前访谈会话不存在或已失效，请刷新后重试。" },
           { status: 404 }
+        );
+      }
+
+      if (error.code === "DRAFT_GENERATE_NOT_READY") {
+        return NextResponse.json(
+          { error: error.code, retryable: false, message: "当前材料还不够生成日志，请先补充当前片段或换一个片段。" },
+          { status: 409 }
         );
       }
 

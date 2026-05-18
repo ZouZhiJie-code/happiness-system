@@ -86,7 +86,7 @@ function buildMinimalRecord() {
         scoreLink: {
           average: 8.5,
           status: "supporting",
-          summary: "投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。"
+          summary: "热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。"
         },
         nextQuestion: "这类开心只是偶尔出现，还是已经开始重复出现了？",
         topTags: [],
@@ -96,15 +96,15 @@ function buildMinimalRecord() {
     ],
     insightsOverview: {
       headline: "开心是这个月最清楚的一条线，思考也已经开始接上。",
-      summary: "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。",
-      watchpoint: "成长感、自主感、自我认可在评分里还不算稳，这条线也还没有真正展开。",
+      summary: "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。",
+      watchpoint: "擅长、意志、美德在评分里还不算稳，这条线也还没有真正展开。",
       featuredDimension: "joy",
       quietDimensions: ["fulfillment", "improvement", "gratitude"],
       links: [
         {
           type: "score",
           title: "评分里也在呼应",
-          detail: "投入感、关系支持在评分里也不低，这条线不只是写出来了，分数里也能看见。",
+          detail: "热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。",
           dimensions: ["joy"],
           anchorDate: "2026-05-02"
         }
@@ -169,7 +169,7 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     await waitFor(() => {
-      expect(within(toolbar).getByText("昨天待补")).toBeInTheDocument();
+      expect(within(toolbar).getByText("1天评分")).toBeInTheDocument();
     });
     expect(within(toolbar).getByText("待整合 1 天")).toBeInTheDocument();
     expect(within(toolbar).getByText("开心")).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     await waitFor(() => {
-      expect(within(toolbar).getByText("2天待补")).toBeInTheDocument();
+      expect(within(toolbar).getByText("暂无评分")).toBeInTheDocument();
     });
 
     mockSearchParams.value = {
@@ -214,7 +214,7 @@ describe("site header analysis toolbar", () => {
     });
 
     await waitFor(() => {
-      expect(within(toolbar).getByText("昨天待补")).toBeInTheDocument();
+      expect(within(toolbar).getByText("1天评分")).toBeInTheDocument();
     });
   });
 

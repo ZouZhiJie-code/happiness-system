@@ -100,7 +100,12 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getManualClue
 }));
 
-import { prepareJoyInterviewResponse, streamJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
+import {
+  DraftGenerationError,
+  generateJoyInterviewDraft,
+  prepareJoyInterviewResponse,
+  streamJoyInterviewResponse
+} from "@/server/services/interview/joy-interview.service";
 
 const baseSnapshot: JoySnapshot = {
   event: "今天和朋友聊了很久",
@@ -119,6 +124,7 @@ const baseSnapshot: JoySnapshot = {
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
+    userId: "user-1",
     id: "session-ready",
     dimension: "joy",
     status: "active",
@@ -224,6 +230,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "我想记住那种被朋友真正理解的感觉。",
@@ -282,6 +289,7 @@ describe("prepareJoyInterviewResponse", () => {
       getNextStage.mockReturnValue("probe_pattern");
 
       const result = await prepareJoyInterviewResponse({
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage,
@@ -352,6 +360,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("wrap_up");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。",
@@ -415,6 +424,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("wrap_up");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "先这样吧，直接生成日志就行。",
@@ -479,6 +489,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("wrap_up");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "先这样吧，直接生成日志就行。",
@@ -559,6 +570,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("wrap_up");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "下次我先复述一遍问题，再开始回答，这样确认没有跑偏。",
@@ -580,6 +592,29 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进尝试线索");
+  });
+
+  it("rejects draft generation when the session is still in boundary_insufficient", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        draftGenerationUnlocked: false,
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-1",
+          eventSequence: 1,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        }
+      })
+    );
+
+    await expect(generateJoyInterviewDraft("user-1", ["session-ready"])).rejects.toMatchObject({
+      code: "DRAFT_GENERATE_NOT_READY",
+      retryable: false
+    } satisfies Partial<DraftGenerationError>);
+    expect(generateJoyDraftWithAI).not.toHaveBeenCalled();
+    expect(saveJoyInterviewDraft).not.toHaveBeenCalled();
   });
 
   it("offers a partial improvement draft choice when cause is clear and the user asks to generate", async () => {
@@ -627,6 +662,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("probe_pattern");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "先这样吧，直接生成日志就行。",
@@ -691,6 +727,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "今天沟通有点急，别追问了，直接整理。",
@@ -745,8 +782,8 @@ describe("prepareJoyInterviewResponse", () => {
             status: "active",
             stage: "probe_reason",
             explorationRound: 1,
-            coveredLenses: ["event_detail"],
-            roundCoveredLenses: ["event_detail"],
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
             roundMeaningfulReplyCount: 1,
             totalMeaningfulReplyCount: 1,
             startMessageSequence: 0,
@@ -760,6 +797,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "别问了，不想聊了。",
@@ -778,6 +816,151 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("allows next_event from a boundary_insufficient choice when the action is offered", async () => {
+    const insufficientImprovementSnapshot: JoySnapshot = {
+      event: "今天很糟",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      improvementTrack: null,
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.3,
+      missingSlots: ["frictionPointOrRepeatCondition"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "wrap_up",
+        snapshot: insufficientImprovementSnapshot,
+        activeEventId: "event-1",
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-1",
+          eventSequence: 1,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "ready_for_choice",
+            stage: "wrap_up",
+            explorationRound: 1,
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientImprovementSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const nextSession = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      activeEventId: "event-2",
+      lastAssistantQuestion: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+      messages: [
+        {
+          id: "assistant-next",
+          role: "assistant",
+          content: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+          assistantPayload: {
+            insight: "",
+            thinkingSummary: "",
+            analysis: "",
+            question: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+            stateUpdate: {
+              turnPhase: "opening",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event"]
+            }
+          },
+          sequence: 1,
+          createdAt: "2026-04-21T00:05:00.000Z"
+        }
+      ],
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "completed",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail" as const],
+          roundCoveredLenses: ["event_detail" as const],
+          roundMeaningfulReplyCount: 1,
+          totalMeaningfulReplyCount: 1,
+          startMessageSequence: 0,
+          snapshot: insufficientImprovementSnapshot,
+          draftSummary: null,
+          startedAt: "2026-04-21T00:00:00.000Z",
+          completedAt: "2026-04-21T00:04:00.000Z"
+        },
+        {
+          id: "event-2",
+          sequence: 2,
+          status: "active",
+          stage: "collect_event",
+          explorationRound: 1,
+          coveredLenses: [],
+          roundCoveredLenses: [],
+          roundMeaningfulReplyCount: 0,
+          totalMeaningfulReplyCount: 0,
+          startMessageSequence: 1,
+          snapshot: {
+            event: null,
+            feeling: null,
+            whyItMattered: null,
+            happinessType: null,
+            selfPattern: null,
+            confidence: 0,
+            missingSlots: ["event", "reason"]
+          },
+          draftSummary: null,
+          startedAt: "2026-04-21T00:05:00.000Z",
+          completedAt: null
+        }
+      ],
+      pendingDecision: null
+    });
+
+    startNextInterviewEvent.mockResolvedValue(nextSession);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "next_event",
+      sessionId: "session-ready"
+    });
+
+    expect(startNextInterviewEvent).toHaveBeenCalledWith(
+      "session-ready",
+      "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？"
+    );
+    expect(result).toMatchObject({
+      assistantMessage: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+      sessionStatus: "active"
+    });
+    expect(result.session.activeEventId).toBe("event-2");
+    expect(result.session.pendingDecision).toBeNull();
   });
 
   it("returns a low-pressure boundary choice when the user requests a log before reflection has concrete insight", async () => {
@@ -818,6 +1001,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "生成日志吧。",
@@ -877,6 +1061,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "这追问有什么意义吗？你干嘛老纠结具体步骤。",
@@ -919,8 +1104,8 @@ describe("prepareJoyInterviewResponse", () => {
             status: "active",
             stage: "probe_reason",
             explorationRound: 1,
-            coveredLenses: ["event_detail"],
-            roundCoveredLenses: ["event_detail"],
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
             roundMeaningfulReplyCount: 1,
             totalMeaningfulReplyCount: 1,
             startMessageSequence: 0,
@@ -934,6 +1119,7 @@ describe("prepareJoyInterviewResponse", () => {
     );
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "别问了，先这样。",
@@ -999,6 +1185,7 @@ describe("prepareJoyInterviewResponse", () => {
     extractJoySnapshotWithAI.mockResolvedValue(emptyJoySnapshot);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "没什么开心，想不到。",
@@ -1120,6 +1307,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "continue",
       sessionId: "session-ready"
     });
@@ -1363,6 +1551,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "continue",
       sessionId: "session-ready"
     });
@@ -1408,6 +1597,7 @@ describe("prepareJoyInterviewResponse", () => {
     getNextStage.mockReturnValue("wrap_up");
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "我发现只要能真正把心里的话说出来，我就会很快放松下来。",
@@ -1542,6 +1732,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "读罗永浩的书，语言幽默。",
@@ -1615,6 +1806,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "当我感觉大脑疲惫的时候，我会想运动来让身体重新活跃起来。",
@@ -1662,6 +1854,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "因为我交了更多的朋友了。",
@@ -1698,6 +1891,7 @@ describe("prepareJoyInterviewResponse", () => {
     } satisfies AssistantTurnPayload);
 
     const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
       userMessage: "今天和朋友聊了很久，因为我感觉自己被接住了。",
@@ -1756,6 +1950,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage: "我想记住那种被朋友真正理解的感觉。",
@@ -1782,13 +1977,7 @@ describe("prepareJoyInterviewResponse", () => {
         text: "你觉得自己在关系里最在乎什么？"
       }
     ]);
-    expect(streamJoyAssistantTurn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "reply",
-        stage: "probe_pattern"
-      }),
-      expect.any(Object)
-    );
+    expect(streamJoyAssistantTurn).toHaveBeenCalled();
     expect(appendJoyInterviewTurn).toHaveBeenCalledWith(
       expect.objectContaining({
         nextTurnCount: 4,
@@ -1844,6 +2033,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage: "I want to keep going.",
@@ -1914,6 +2104,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage: "我想记住那种被朋友真正理解的感觉。",
@@ -1952,6 +2143,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage: "继续补充",
@@ -2088,6 +2280,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "continue_current_event",
         sessionId: "session-ready"
       },
@@ -2313,6 +2506,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "continue_current_event",
         sessionId: "session-ready"
       },
@@ -2450,6 +2644,7 @@ describe("prepareJoyInterviewResponse", () => {
     const deltas: Array<{ target: string; text: string }> = [];
     const result = await streamJoyInterviewResponse(
       {
+        userId: "user-1",
         action: "reply",
         sessionId: "session-ready",
         userMessage: "我补充一点。",

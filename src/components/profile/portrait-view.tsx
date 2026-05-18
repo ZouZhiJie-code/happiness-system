@@ -1,15 +1,27 @@
 "use client";
 
+import React from "react";
 import { useCallback, useEffect, useState } from "react";
 
 import type { InterviewDimension } from "@prisma/client";
 
 import type { PortraitSnapshotView, PortraitApiResponse } from "@/features/portrait/types";
 import { DIMENSION_META, DIMENSION_ORDER } from "@/features/portrait/types";
+import type { GroupedProfile } from "@/features/portrait/types";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function isSnapshotStale(snapshot: PortraitSnapshotView, profileData: GroupedProfile) {
+  const facts = Object.values(profileData).flat();
+  if (facts.length !== snapshot.factCount) {
+    return true;
+  }
+
+  const snapshotGeneratedAt = new Date(snapshot.generatedAt).getTime();
+  return facts.some((fact) => new Date(fact.updatedAt).getTime() > snapshotGeneratedAt);
 }
 
 export function PortraitView() {
@@ -35,11 +47,8 @@ export function PortraitView() {
 
       // Check if snapshot is stale
       if (json.snapshot && profileRes.ok) {
-        const profileData = await profileRes.json();
-        const currentCount = Object.values(profileData as Record<string, unknown[]>).reduce(
-          (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0
-        );
-        setStale(currentCount !== json.snapshot.factCount);
+        const profileData = (await profileRes.json()) as GroupedProfile;
+        setStale(isSnapshotStale(json.snapshot, profileData));
       } else {
         setStale(false);
       }

@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { StartInterviewLink } from "@/components/home/start-interview-link";
 import { homepageContent, type HomepageVisualConfig } from "@/content/homepage";
@@ -15,6 +15,31 @@ const dimensionCardLayout = [
   "xl:col-span-3",
   "xl:col-span-3"
 ] as const;
+
+function TypewriterTitle({ text }: { text: string }) {
+  const characters = Array.from(text);
+
+  return (
+    <span className="typewriter-title">
+      <span aria-hidden="true">
+        {characters.map((character, index) => (
+          <span
+            key={`${character}-${index}`}
+            className="typewriter-char"
+            style={{ "--typewriter-index": index } as CSSProperties}
+          >
+            {character}
+          </span>
+        ))}
+      </span>
+      <span
+        className="typewriter-cursor"
+        style={{ "--typewriter-cursor-delay": `${characters.length * 72 + 180}ms` } as CSSProperties}
+        aria-hidden="true"
+      />
+    </span>
+  );
+}
 
 function SecondaryAction({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -137,8 +162,11 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(244,225,192,0.42),rgba(232,195,142,0.38)_48%,rgba(170,111,58,0.3))]" aria-hidden="true" />
         <div className="mx-auto w-full max-w-[82rem]">
           <div className="max-w-[72rem]">
-            <h1 className="text-balance font-display text-[clamp(4rem,8vw,8rem)] leading-[0.9] tracking-[-0.045em] text-[#26190f]">
-              {hero.title}
+            <h1
+              className="max-w-[78rem] text-balance font-display text-[clamp(3.35rem,7vw,7.45rem)] leading-[0.95] tracking-[-0.035em] text-[#26190f]"
+              aria-label={hero.title}
+            >
+              <TypewriterTitle text={hero.title} />
             </h1>
             <p className="mt-7 text-[1rem] leading-8 text-[#4b3828] md:text-[1.08rem] md:leading-9 xl:whitespace-nowrap">
               {hero.lead}

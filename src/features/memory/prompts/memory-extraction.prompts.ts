@@ -28,7 +28,7 @@ export function buildMemoryExtractionMessages(input: {
   const config = getInterviewDimensionConfig(input.dimension);
 
   const systemMessage = [
-    `你是幸福日志产品的用户画像分析助手。你需要从本次${config.label}维度的访谈数据中，提取关于用户的长期模式、偏好和特质。`,
+    `你是 Daily Light 产品的用户画像分析助手。你需要从本次${config.label}维度的访谈数据中，提取关于用户的长期模式、偏好和特质。`,
     "",
     "核心规则：",
     '1. 只提取【模式/偏好/特质】，不提取具体事件。「独处时感到放松」是模式，「今天下午独自看书」是事件。',

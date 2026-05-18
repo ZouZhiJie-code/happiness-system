@@ -307,7 +307,7 @@ function buildFulfillmentInterpretation(input: BuildDimensionSemanticInterpretat
     appendUnique(titleCandidates, "从结构到落地");
   }
 
-  if (/主线|脉络/u.test(joined) && /理顺|清楚|明确/u.test(joined)) {
+  if (/主线|脉络/u.test(joined) && /理顺|顺了|顺起来|清楚|明确|看懂/u.test(joined)) {
     appendUnique(titleCandidates, "主线终于理顺");
   }
 
@@ -394,19 +394,19 @@ function buildFulfillmentInterpretation(input: BuildDimensionSemanticInterpretat
     closurePremise = "结尾收在什么样的收口会让自己踏实，不要上升成效率哲学。";
     antiFlatteningTargets = ["不要只写终于做完了", "要写哪里真的收口了"];
     appendUnique(titleCandidates, "真的收了个口", "把事情落下去");
-  } else if (/(卡住|推进|往前|推开|打通|终于动了)/u.test(joined)) {
+  } else if (/(卡住|推进|往前|推开|打通|终于动了)/u.test(joined) && !/(主线|脉络|理顺|清楚|明确|交接|协作|接手时一眼就能看懂|一眼就能看懂|收口|收尾|落地)/u.test(joined)) {
     themeKey = "blocker_moved";
-    themeLabel = "把卡点推开";
+    themeLabel = "把事情往前推";
     theorySummary = progressEvidence
       ? `这件事真正有分量的地方，是${progressEvidence}。也因为这样，今天不算白过。`
       : "这件事真正有分量的地方，不是做了很多，而是原本卡住的地方真的被推开了。";
     thinkingSummaryLead = progressEvidence
-      ? `这段充实真正算数的地方，不在忙，而在“${progressEvidence}”把卡点推开了`
+      ? `这段充实真正算数的地方，不在忙，而在“${progressEvidence}”真的把事情往前推了一步`
       : "这段充实的分量，不在忙，而在原本卡住的地方真的被推开了";
     narrativePremise = "正文要写出原本卡在哪里、今天哪里真的动了，不要写成做了很多。";
     closurePremise = "结尾收在什么样的推进会让自己觉得算数，不要写成总任务观。";
     antiFlatteningTargets = ["不要只写做了很多", "要写原本卡住的地方是怎么被推开的"];
-    appendUnique(titleCandidates, "把卡点推开", "今天不是空转");
+    appendUnique(titleCandidates, "把事情往前推", "今天不是空转");
   }
 
   if (!antiFlatteningTargets.includes("不要写成今天很忙")) {

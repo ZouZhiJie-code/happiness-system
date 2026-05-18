@@ -10,9 +10,17 @@ const { getAnalysisMonth, AnalysisQueryError } = vi.hoisted(() => ({
   }
 }));
 
+const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
+  mockRequireCurrentUserFromRequest: vi.fn()
+}));
+
 vi.mock("@/server/services/analysis/analysis.service", () => ({
   getAnalysisMonth,
   AnalysisQueryError
+}));
+
+vi.mock("@/server/services/auth/current-user.service", () => ({
+  requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
 import { GET as getAnalysisMonthRoute } from "@/app/api/analysis/month/route";
@@ -20,6 +28,8 @@ import { GET as getAnalysisMonthRoute } from "@/app/api/analysis/month/route";
 describe("analysis api route", () => {
   beforeEach(() => {
     getAnalysisMonth.mockReset();
+    mockRequireCurrentUserFromRequest.mockReset();
+    mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
   });
 
   it("returns a full month analysis payload", async () => {
@@ -122,6 +132,7 @@ describe("analysis api route", () => {
     const response = await getAnalysisMonthRoute(new Request("http://localhost/api/analysis/month?month=2026-05"));
 
     expect(response.status).toBe(200);
+    expect(getAnalysisMonth).toHaveBeenCalledWith("user-1", "2026-05");
     await expect(response.json()).resolves.toMatchObject({
       month: "2026-05",
       logOverview: {

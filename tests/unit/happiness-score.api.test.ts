@@ -2,8 +2,16 @@ const { mockUpsertDailyHappinessScore } = vi.hoisted(() => ({
   mockUpsertDailyHappinessScore: vi.fn()
 }));
 
+const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
+  mockRequireCurrentUserFromRequest: vi.fn()
+}));
+
 vi.mock("@/server/repositories/daily-happiness-score.repository", () => ({
   upsertDailyHappinessScore: mockUpsertDailyHappinessScore
+}));
+
+vi.mock("@/server/services/auth/current-user.service", () => ({
+  requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
 import { PUT as putHappinessScoreRoute } from "@/app/api/happiness-score/route";
@@ -54,6 +62,8 @@ describe("happiness score api route", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-03T04:00:00.000Z"));
     mockUpsertDailyHappinessScore.mockReset();
+    mockRequireCurrentUserFromRequest.mockReset();
+    mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
   });
 
   afterEach(() => {
@@ -66,7 +76,7 @@ describe("happiness score api route", () => {
     const response = await putHappinessScoreRoute(buildRequest(buildPayload()));
 
     expect(response.status).toBe(200);
-    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith({
+    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith("user-1", {
       date: "2026-05-03",
       meaningScore: 8,
       healthScore: 7,
@@ -90,7 +100,7 @@ describe("happiness score api route", () => {
     const response = await putHappinessScoreRoute(buildRequest(buildPayload({ date: "2026-05-02" })));
 
     expect(response.status).toBe(200);
-    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-05-02" }));
+    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith("user-1", expect.objectContaining({ date: "2026-05-02" }));
   });
 
   it("allows saving historical dates before yesterday", async () => {
@@ -99,7 +109,7 @@ describe("happiness score api route", () => {
     const response = await putHappinessScoreRoute(buildRequest(buildPayload({ date: "2026-05-01" })));
 
     expect(response.status).toBe(200);
-    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-05-01" }));
+    expect(mockUpsertDailyHappinessScore).toHaveBeenCalledWith("user-1", expect.objectContaining({ date: "2026-05-01" }));
     await expect(response.json()).resolves.toMatchObject({
       date: "2026-05-01",
       meaningScore: 8

@@ -175,6 +175,7 @@ const baseDailyJournalSources = [
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   const nextSession: InterviewSessionRecord = {
+    userId: "user-1",
     id: "session-joy",
     dimension: "joy",
     status: "active",
@@ -961,8 +962,8 @@ describe("InterviewShell", () => {
           status: "ready_for_choice",
           stage: "wrap_up",
           explorationRound: 1,
-          coveredLenses: ["event_detail"],
-          roundCoveredLenses: ["event_detail"],
+          coveredLenses: ["event_detail" as const],
+          roundCoveredLenses: ["event_detail" as const],
           roundMeaningfulReplyCount: 1,
           totalMeaningfulReplyCount: 1,
           startMessageSequence: 0,

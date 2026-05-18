@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-09`
+最后更新：`2026-05-17`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -17,6 +17,13 @@
 | `VOLCENGINE_ARK_BASE_URL` | Ark base URL |
 | `APP_URL` | 前端访问地址 |
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
+
+账户体系补充说明：
+
+- 当前登录态使用 `httpOnly` cookie `dl_session`
+- 当前不要求额外 `AUTH_SESSION_SECRET`
+- session token 明文只下发到浏览器 cookie，数据库只保存其 SHA-256 hash
+- 首版不支持找回密码
 
 当前默认本地值示例：
 
@@ -54,6 +61,24 @@ npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/202
 - 该 migration 会先补列，再把历史 `entryDate` 回填为 `startedAt`
 - 当前 `prisma migrate dev` 在本仓库的 shadow DB 链路上还有历史 migration 问题，不是这次 `entryDate` 改动单独引起的
 
+如果你是在已有本地数据的库上首次同步账户体系，并看到以下任一现象：
+
+- `/api/auth/register` 500
+- Prisma 报 `The column User.username does not exist`
+- `npx prisma db push` 提示无法为 `User` 新增必填字段
+
+先执行：
+
+```bash
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
+```
+
+然后再执行：
+
+```bash
+npx prisma db push
+```
+
 ### 2.3 记忆系统依赖（可选）
 
 如果需要启用记忆系统（`memoryEnabled = true`），需额外安装 pgvector 扩展：
@@ -79,6 +104,18 @@ npm run dev
 
 默认地址：
 - `http://localhost:3000`
+
+### 2.5 首版账户冒烟
+
+建议至少覆盖一次：
+
+1. 打开 `/register`
+2. 不勾协议直接尝试注册，确认不能提交
+3. 注册一个新用户并自动进入 `/interview`
+4. 打开 `/settings/account`，确认能看到当前用户名
+5. 退出登录后，再访问 `/interview`，确认被带回 `/login?next=%2Finterview`
+6. 用同一账号重新登录，确认能回到私有页
+7. 如要验删号，再进入 `/settings/account`，输入当前密码删除账号，确认会回到 `/register`
 
 ## 3. 最小冒烟路径
 

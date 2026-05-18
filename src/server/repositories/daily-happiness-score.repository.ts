@@ -2,19 +2,25 @@ import { prisma } from "@/server/db/prisma";
 import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyHappinessScoreInput, DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 
-const DEMO_USER_ID = "local-demo-user";
+type DailyHappinessScoreEntry = Awaited<ReturnType<typeof prisma.dailyHappinessScore.findUnique>>;
+type DailyHappinessScoreListItem = NonNullable<Awaited<ReturnType<typeof prisma.dailyHappinessScore.findMany>>[number]>;
+type DailyHappinessScoreMappedEntry = Pick<
+  DailyHappinessScoreListItem,
+  | "id"
+  | "date"
+  | "meaningScore"
+  | "healthScore"
+  | "virtueScore"
+  | "autonomyScore"
+  | "interestScore"
+  | "skillScore"
+  | "relationshipScore"
+  | "livingConditionScore"
+  | "createdAt"
+  | "updatedAt"
+>;
 
-async function ensureDemoUser(database: any) {
-  await database.user.upsert({
-    where: { id: DEMO_USER_ID },
-    update: {},
-    create: {
-      id: DEMO_USER_ID
-    }
-  });
-}
-
-export function mapDailyHappinessScore(entry: any): DailyHappinessScoreRecord | null {
+export function mapDailyHappinessScore(entry: DailyHappinessScoreMappedEntry | null): DailyHappinessScoreRecord | null {
   if (!entry) {
     return null;
   }
@@ -35,12 +41,11 @@ export function mapDailyHappinessScore(entry: any): DailyHappinessScoreRecord | 
   };
 }
 
-export async function findDailyHappinessScoreByDate(date: string) {
-  const database = prisma as any;
-  const entry = await database.dailyHappinessScore?.findUnique?.({
+export async function findDailyHappinessScoreByDate(userId: string, date: string) {
+  const entry = await prisma.dailyHappinessScore.findUnique({
     where: {
       userId_date: {
-        userId: DEMO_USER_ID,
+        userId,
         date: parseEntryDateInput(date)
       }
     }
@@ -49,37 +54,33 @@ export async function findDailyHappinessScoreByDate(date: string) {
   return mapDailyHappinessScore(entry);
 }
 
-export async function listDailyHappinessScoresByDateRange(input: { startDate: string; endDate: string }) {
-  const database = prisma as any;
+export async function listDailyHappinessScoresByDateRange(userId: string, input: { startDate: string; endDate: string }) {
   const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
-  const entries =
-    (await database.dailyHappinessScore?.findMany?.({
-      where: {
-        userId: DEMO_USER_ID,
-        date: {
-          gte: startAt,
-          lt: endExclusive
-        }
-      },
-      orderBy: {
-        date: "asc"
+  const entries = await prisma.dailyHappinessScore.findMany({
+    where: {
+      userId,
+      date: {
+        gte: startAt,
+        lt: endExclusive
       }
-    })) ?? [];
+    },
+    orderBy: {
+      date: "asc"
+    }
+  });
 
-  return entries.flatMap((entry: any) => {
+  return entries.flatMap((entry) => {
     const record = mapDailyHappinessScore(entry);
     return record ? [record] : [];
   });
 }
 
-export async function upsertDailyHappinessScore(input: DailyHappinessScoreInput) {
-  const database = prisma as any;
+export async function upsertDailyHappinessScore(userId: string, input: DailyHappinessScoreInput) {
   const dateValue = parseEntryDateInput(input.date);
-  await ensureDemoUser(database);
-  const entry = await database.dailyHappinessScore.upsert({
+  const entry = await prisma.dailyHappinessScore.upsert({
     where: {
       userId_date: {
-        userId: DEMO_USER_ID,
+        userId,
         date: dateValue
       }
     },
@@ -94,7 +95,7 @@ export async function upsertDailyHappinessScore(input: DailyHappinessScoreInput)
       livingConditionScore: input.livingConditionScore
     },
     create: {
-      userId: DEMO_USER_ID,
+      userId,
       date: dateValue,
       meaningScore: input.meaningScore,
       healthScore: input.healthScore,

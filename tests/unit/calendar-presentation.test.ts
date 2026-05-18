@@ -40,9 +40,7 @@ describe("calendar presentation helpers", () => {
     );
   });
 
-  it("keeps mixed month-dimension pills visually distinct from other tones", () => {
-    expect(getCalendarMonthDimensionPillClass("mixed")).not.toBe(getCalendarMonthDimensionPillClass("completed"));
-    expect(getCalendarMonthDimensionPillClass("mixed")).not.toBe(getCalendarMonthDimensionPillClass("draft"));
+  it("keeps empty month-dimension pills visually distinct from active tone", () => {
     expect(getCalendarMonthDimensionPillClass("empty")).not.toBe(getCalendarMonthDimensionPillClass("active"));
   });
 
