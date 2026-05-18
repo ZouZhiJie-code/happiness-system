@@ -913,7 +913,7 @@
 |---|---|---|---|
 | `typecheck` | `通过` | `npm run typecheck` 已通过，此前 `next_event` action 类型收窄问题和 `toMatchObject` 泛型用法问题已修复。 | 修复文件：`src/server/services/interview/joy-interview.service.ts`、`tests/unit/joy-interview-response.service.test.ts`。 |
 | `targeted-regression-tests` | `通过` | `npm test -- tests/unit/joy-interview-response.service.test.ts tests/unit/analysis-view-state.test.ts tests/unit/analysis-shell.test.tsx tests/unit/portrait-synthesis.service.test.ts tests/unit/portrait-view.test.tsx` 通过，`5` 个测试文件、`83` 个测试通过。 | 测试日志仍有缺少 `DATABASE_URL` 导致的 Prisma warning，但相关用例最终通过，属于当前测试环境噪声。 |
-| `full-unit-tests` | `通过` | `npm test` 全量通过，`70` 个测试文件、`590` 个测试通过。 | 首轮全量测试发现 `joy-prompts.test.ts` 仍断言 fulfillment 旧字段名；已更新为 `experience / progressEvidence / valueSignal` 后重跑通过。 |
+| `full-unit-tests` | `通过` | `npm test` 全量通过，`70` 个测试文件、`592` 个测试通过。 | 首轮全量测试发现 `joy-prompts.test.ts` 仍断言 fulfillment 旧字段名；已更新为 `experience / progressEvidence / valueSignal` 后重跑通过。 |
 
 ---
 
