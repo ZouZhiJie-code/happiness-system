@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import Image from "next/image";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { StartInterviewLink } from "@/components/home/start-interview-link";
 import { homepageContent, type HomepageVisualConfig } from "@/content/homepage";
@@ -15,31 +15,6 @@ const dimensionCardLayout = [
   "xl:col-span-3",
   "xl:col-span-3"
 ] as const;
-
-function TypewriterTitle({ text }: { text: string }) {
-  const characters = Array.from(text);
-
-  return (
-    <span className="typewriter-title">
-      <span aria-hidden="true">
-        {characters.map((character, index) => (
-          <span
-            key={`${character}-${index}`}
-            className="typewriter-char"
-            style={{ "--typewriter-index": index } as CSSProperties}
-          >
-            {character}
-          </span>
-        ))}
-      </span>
-      <span
-        className="typewriter-cursor"
-        style={{ "--typewriter-cursor-delay": `${characters.length * 72 + 180}ms` } as CSSProperties}
-        aria-hidden="true"
-      />
-    </span>
-  );
-}
 
 function SecondaryAction({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -162,11 +137,8 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(244,225,192,0.42),rgba(232,195,142,0.38)_48%,rgba(170,111,58,0.3))]" aria-hidden="true" />
         <div className="mx-auto w-full max-w-[82rem]">
           <div className="max-w-[72rem]">
-            <h1
-              className="max-w-[78rem] text-balance font-display text-[clamp(3.35rem,7vw,7.45rem)] leading-[0.95] tracking-[-0.035em] text-[#26190f]"
-              aria-label={hero.title}
-            >
-              <TypewriterTitle text={hero.title} />
+            <h1 className="text-balance font-display text-[clamp(4rem,8vw,8rem)] leading-[0.9] tracking-[-0.045em] text-[#26190f]">
+              {hero.title}
             </h1>
             <p className="mt-7 text-[1rem] leading-8 text-[#4b3828] md:text-[1.08rem] md:leading-9 xl:whitespace-nowrap">
               {hero.lead}
@@ -182,7 +154,6 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <StartInterviewLink className="w-full sm:w-auto">{hero.primaryCta}</StartInterviewLink>
-              <SecondaryAction href="/calendar">{hero.secondaryCta}</SecondaryAction>
             </div>
           </div>
 
@@ -248,7 +219,7 @@ export default function HomePage() {
                 <h2 className="font-display text-[clamp(2.35rem,4.2vw,4.9rem)] leading-[0.96] tracking-[-0.035em] text-[#2d2014]">
                   {dimensions.title}
                 </h2>
-                <p className="mt-7 text-[1rem] leading-8 text-[#5b4431] md:text-[1.08rem] md:leading-9">{dimensions.lead}</p>
+                <p className="mt-7 text-[1rem] leading-8 text-[#5b4431] md:text-[1.08rem] md:leading-9 xl:whitespace-nowrap">{dimensions.lead}</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6 xl:gap-4">
@@ -257,14 +228,12 @@ export default function HomePage() {
                   const layoutClassName = dimensionCardLayout[index] ?? "xl:col-span-2";
 
                   return (
-                    <Link
+                    <div
                       key={item.dimension}
-                      href={`/interview?dimension=${item.dimension}`}
                       className={clsx(
-                        "group rounded-[20px] border border-[rgba(111,74,38,0.12)] bg-[rgba(255,249,240,0.42)] p-5 shadow-[0_14px_28px_rgba(97,63,31,0.06)] backdrop-blur-[0.5px] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,249,240,0.6)] hover:shadow-[0_18px_36px_rgba(97,63,31,0.1)]",
+                        "rounded-[20px] border border-[rgba(111,74,38,0.12)] bg-[rgba(255,249,240,0.42)] p-5 shadow-[0_14px_28px_rgba(97,63,31,0.06)] backdrop-blur-[0.5px]",
                         layoutClassName
                       )}
-                      aria-label={`开始${item.title}记录：${item.example}`}
                     >
                       <div className="flex items-start gap-3">
                         <span
@@ -280,7 +249,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <p className="mt-6 text-[1.02rem] leading-8 text-[#604935]">{item.body}</p>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
@@ -297,23 +266,20 @@ export default function HomePage() {
                 <h2 className="font-display text-[clamp(2.25rem,3.8vw,4.2rem)] leading-[0.98] tracking-[-0.03em] text-[#2d2014]">
                   {summary.title}
                 </h2>
-                <p className="mt-6 text-[1rem] leading-8 text-[#5b4431] md:text-[1.08rem] md:leading-9">{summary.lead}</p>
+                <p className="mt-6 text-[1rem] leading-8 text-[#5b4431] md:text-[1.08rem] md:leading-9 xl:whitespace-nowrap">{summary.lead}</p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-[18px] border border-[rgba(111,74,38,0.1)] bg-[rgba(255,249,240,0.34)] px-5 py-5 shadow-[0_12px_24px_rgba(97,63,31,0.04)] backdrop-blur-[0.5px]">
-                  <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[#9b744f]">CALENDAR</p>
-                  <p className="mt-3 font-display text-[1.2rem] leading-none text-[#2d2014]">回到某一天</p>
+                  <p className="font-display text-[1.2rem] leading-none text-[#2d2014]">回到某一天</p>
                   <p className="mt-3 text-[0.95rem] leading-7 text-[#624b37]">从月、周、日视图回看当天留下了什么。</p>
                 </div>
                 <div className="rounded-[18px] border border-[rgba(111,74,38,0.1)] bg-[rgba(255,249,240,0.34)] px-5 py-5 shadow-[0_12px_24px_rgba(97,63,31,0.04)] backdrop-blur-[0.5px]">
-                  <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[#9b744f]">DAILY</p>
-                  <p className="mt-3 font-display text-[1.2rem] leading-none text-[#2d2014]">收束成完整日志</p>
+                  <p className="font-display text-[1.2rem] leading-none text-[#2d2014]">收束成完整日志</p>
                   <p className="mt-3 text-[0.95rem] leading-7 text-[#624b37]">把当天已保存的维度片段整理成一篇完整记录。</p>
                 </div>
                 <div className="rounded-[18px] border border-[rgba(111,74,38,0.1)] bg-[rgba(255,249,240,0.34)] px-5 py-5 shadow-[0_12px_24px_rgba(97,63,31,0.04)] backdrop-blur-[0.5px]">
-                  <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[#9b744f]">ANALYSIS</p>
-                  <p className="mt-3 font-display text-[1.2rem] leading-none text-[#2d2014]">看见长期变化</p>
+                  <p className="font-display text-[1.2rem] leading-none text-[#2d2014]">看见长期变化</p>
                   <p className="mt-3 text-[0.95rem] leading-7 text-[#624b37]">让月度分析和幸福评分把零散片段连成主线。</p>
                 </div>
               </div>
