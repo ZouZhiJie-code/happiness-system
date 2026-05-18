@@ -25,6 +25,10 @@ vi.mock("@/server/services/auth/current-user.service", () => ({
   getCurrentUserFromSessionToken: mockGetCurrentUserFromSessionToken
 }));
 
+vi.mock("@/components/joy/settings-form", () => ({
+  SettingsForm: () => <div data-testid="settings-form-stub">settings form stub</div>
+}));
+
 import SettingsPage from "@/app/settings/page";
 
 describe("settings page", () => {
@@ -45,6 +49,7 @@ describe("settings page", () => {
 
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(screen.getByText("daily_light_01")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-form-stub")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "退出当前账号" })).toBeInTheDocument();
   });
 });

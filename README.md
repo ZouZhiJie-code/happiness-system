@@ -162,10 +162,10 @@ npm test
 ```
 
 截至 `2026-05-17`，当前自动化现实为：
-- `npm test`（Vitest）在当前 worktree 通过：`65` 个测试文件、`554` 个测试
+- `npm test`（Vitest）在当前 worktree 通过：`71` 个测试文件、`595` 个测试
 - `npx tsc --noEmit` 通过
 - `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
-- Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
+- Vitest 现在由 `vitest.config.ts` 显式限定只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
 ## 常用命令
 

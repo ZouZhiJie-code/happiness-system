@@ -336,10 +336,10 @@ npm test
 ```
 
 截至 `2026-05-09`，当前基线是：
-- `npm test`（Vitest）主仓通过：`47` 个测试文件、`491` 个测试
+- `npm test`（Vitest）在当前基线通过：`71` 个测试文件、`595` 个测试
 - `npx tsc --noEmit` 仍有类型错误（主要集中在 memory / interview 相关类型）
 - `npm run lint` 仍有既有 `no-explicit-any` 等问题（主要集中在 repositories/settings/memory 相关文件）
-- Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
+- Vitest 当前通过 `vitest.config.ts` 显式只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 5. 高频故障排查
 
