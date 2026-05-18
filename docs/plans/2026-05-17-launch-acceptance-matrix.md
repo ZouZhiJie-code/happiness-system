@@ -307,7 +307,7 @@
 
 ## 批次 2B：AI 访谈效果验收
 
-> 本批不再只看“能不能生成日志”，而是验证当前 AI 访谈是否符合各维度理论目标、partial / boundary 收束、标题治理和质量门约束。  
+> 本批不再只看“能不能生成日志”，而是验证当前 AI 访谈是否符合各维度理论目标、partial / boundary 收束、标题治理和质量门约束。
 > 当前标准来自：`docs/operator-runbook.md`、`docs/integration-guide.md`、`docs/theory/*-alignment.md`。
 
 ### AI-01 joy 访谈效果
