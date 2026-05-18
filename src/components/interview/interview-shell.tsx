@@ -104,6 +104,10 @@ function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessa
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
 }
 
+function sessionHasUserMessages(session: Pick<InterviewSessionRecord, "messages">) {
+  return session.messages.some((message) => message.role === "user");
+}
+
 const interviewBootstrapTasks = new Map<string, Promise<InterviewSessionRecord | null>>();
 
 function buildInterviewBootstrapTaskKey(input: {
@@ -813,6 +817,7 @@ export function InterviewShell() {
     pendingDecision,
     reset,
     sessionId,
+    setPendingUrlDimension,
     setBootState,
     setJournalEntry,
     turnCount,
@@ -857,6 +862,7 @@ export function InterviewShell() {
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
   const dimensionConfig = getInterviewDimensionConfig(currentDimension);
   const bootSequenceRef = useRef(0);
+  const restoreHasUserMessagesRef = useRef(false);
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const lastDraftGenerationRequestRef = useRef(0);
@@ -901,6 +907,7 @@ export function InterviewShell() {
   const showBoundaryInsufficientChoice = pendingDecision?.kind === "boundary_insufficient";
   const eventChoiceCompletionMode =
     pendingDecision?.kind === "event_complete" ? pendingDecision.completionMode ?? "complete" : "complete";
+  const isSessionHydratedForCurrentDimension = sessionDimension === currentDimension;
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -908,7 +915,7 @@ export function InterviewShell() {
       pendingDecision &&
       !optimisticUserMessage &&
       assistantState === "idle" &&
-      (sessionDimension ?? currentDimension) === currentDimension
+      isSessionHydratedForCurrentDimension
   );
   const terminalMessageId = messages.at(-1)?.id ?? null;
   const visibleMessages = useMemo(
@@ -931,8 +938,8 @@ export function InterviewShell() {
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
-  const isInterviewCompleted = status === "completed";
-  const isInterviewLocked = status === "paused" || isInterviewCompleted;
+  const isInterviewCompleted = isSessionHydratedForCurrentDimension && status === "completed";
+  const isInterviewLocked = isSessionHydratedForCurrentDimension && (status === "paused" || isInterviewCompleted);
   const hasUnsavedDraftChanges = Boolean(
     journalEntry && (draftTitle !== journalEntry.title || draftContent !== journalEntry.content)
   );
@@ -952,10 +959,11 @@ export function InterviewShell() {
   );
   const isChoiceDraftActionBlocked = Boolean(panelOpen && isGeneratingDraft);
   const draftGenerationUnlocked = Boolean(
-    sessionId && status === "active" && sessionDraftGenerationUnlocked && (sessionDimension ?? currentDimension) === currentDimension
+    sessionId && status === "active" && sessionDraftGenerationUnlocked && isSessionHydratedForCurrentDimension
   );
   const canRequestDraftGeneration = Boolean(
     sessionId &&
+      isSessionHydratedForCurrentDimension &&
       status === "active" &&
       !isBusy &&
       !isGeneratingDraft &&
@@ -971,6 +979,7 @@ export function InterviewShell() {
   );
   const canSendInput = Boolean(
     input.trim() &&
+      isSessionHydratedForCurrentDimension &&
       !isBusy &&
       !isGeneratingDraft &&
       !isSavingJournal &&
@@ -997,13 +1006,18 @@ export function InterviewShell() {
 
     return null;
   }, [draftGenerateState, draftSyncState, isSavingJournal, journalEntry]);
+  const bootBubbleContent =
+    bootState === "restoring" && restoreHasUserMessagesRef.current
+      ? "我正在把你上一次停下来的访谈接回来。"
+      : dimensionConfig.openingQuestion;
 
   useEffect(() => {
     setDimension(currentDimension);
+    setPendingUrlDimension(null);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), currentDimension);
     }
-  }, [currentDimension, setDimension]);
+  }, [currentDimension, setDimension, setPendingUrlDimension]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -1018,12 +1032,12 @@ export function InterviewShell() {
     const storageDimension = sessionDimension ?? currentDimension;
 
     if (shouldCacheSession(status)) {
-      touchStoredInterviewSessionId(storageDimension, sessionId, sessionEntryDate);
+      touchStoredInterviewSessionId(storageDimension, sessionId, sessionEntryDate, hasUserMessages);
       return;
     }
 
     clearStoredInterviewSessionId(storageDimension);
-  }, [currentDimension, sessionDimension, sessionId, setDraftGenerationControls, status]);
+  }, [currentDimension, hasUserMessages, sessionDimension, sessionId, setDraftGenerationControls, status]);
 
   useEffect(() => {
     setDraftGenerationControls({
@@ -1116,8 +1130,18 @@ export function InterviewShell() {
       return;
     }
 
-    touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate);
-  }, [currentDimension, draftGenerateState, journalEntry?.updatedAt, messages.length, sessionDimension, sessionEntryDate, sessionId, status]);
+    touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate, hasUserMessages);
+  }, [
+    currentDimension,
+    draftGenerateState,
+    hasUserMessages,
+    journalEntry?.updatedAt,
+    messages.length,
+    sessionDimension,
+    sessionEntryDate,
+    sessionId,
+    status
+  ]);
 
   useEffect(() => {
     if (shouldOpenJournalPanelFromQuery && journalEntry) {
@@ -1286,7 +1310,9 @@ export function InterviewShell() {
       return;
     }
 
-    hydrate(pendingSessionRef.current);
+    const nextSession = pendingSessionRef.current;
+    touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
+    hydrate(nextSession);
     pendingSessionRef.current = null;
     setOptimisticUserMessage(null);
     setStreamedAssistantSummary("");
@@ -1322,7 +1348,9 @@ export function InterviewShell() {
       }
 
       const currentBootSequence = ++bootSequenceRef.current;
-      const hasStoredSession = !forceNew && !explicitSessionId && Boolean(getStoredInterviewSessionEntry(nextDimension));
+      const storedSessionEntry = !forceNew && !explicitSessionId ? getStoredInterviewSessionEntry(nextDimension) : null;
+      const hasStoredSession = Boolean(storedSessionEntry);
+      restoreHasUserMessagesRef.current = Boolean(explicitSessionId || storedSessionEntry?.hasUserMessages);
       setBootState(explicitSessionId || hasStoredSession ? "restoring" : "booting");
 
       try {
@@ -1338,10 +1366,12 @@ export function InterviewShell() {
         }
 
         hydrate(session);
+        restoreHasUserMessagesRef.current = false;
         setBootState("idle");
         return session.id;
       } catch {
         if (currentBootSequence === bootSequenceRef.current) {
+          restoreHasUserMessagesRef.current = false;
           setBootState("idle");
           setInterviewIssue(
             explicitSessionId
@@ -1588,7 +1618,7 @@ export function InterviewShell() {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate);
+      touchStoredInterviewSessionId(sessionDimension ?? currentDimension, sessionId, sessionEntryDate, hasUserMessages);
       event.preventDefault();
       event.returnValue = interviewLeaveConfirmMessage;
       return interviewLeaveConfirmMessage;
@@ -1599,7 +1629,7 @@ export function InterviewShell() {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [currentDimension, hasUserMessages, sessionDimension, sessionId, status]);
+  }, [currentDimension, hasUserMessages, sessionDimension, sessionEntryDate, sessionId, status]);
 
   async function runInterviewAction(
     payload:
@@ -1655,6 +1685,16 @@ export function InterviewShell() {
 
       if (!resolvedSessionId) {
         throw new Error("INTERVIEW_START_FAILED");
+      }
+
+      if (payload.action === "reply") {
+        const activeSession = sessionStateRef.current;
+        touchStoredInterviewSessionId(
+          currentDimension,
+          resolvedSessionId,
+          activeSession.sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate(),
+          true
+        );
       }
 
       const response = await fetch("/api/interview/session/respond/stream", {
@@ -2453,9 +2493,11 @@ export function InterviewShell() {
               <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
                 当前记录日期：{currentRecordDate}
               </div>
-              {visibleMessages.map((message) => (
-                <ConversationMessage key={message.id} message={message} />
-              ))}
+              {isSessionHydratedForCurrentDimension
+                ? visibleMessages.map((message) => (
+                    <ConversationMessage key={message.id} message={message} />
+                  ))
+                : null}
               {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
               {showStreamingBubble ? (
                 <>
@@ -2470,19 +2512,13 @@ export function InterviewShell() {
                   ) : null}
                 </>
               ) : null}
-              {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
+              {(messages.length === 0 || !isSessionHydratedForCurrentDimension) && !showBootBubble && !showStreamingBubble ? (
                 <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
                   {dimensionMeta.emptyState}
                 </div>
               ) : null}
               {showBootBubble ? (
-                <MessageBubble
-                  content={
-                    bootState === "restoring"
-                      ? "我正在把你上一次停下来的访谈接回来。"
-                      : dimensionConfig.openingQuestion
-                  }
-                />
+                <MessageBubble content={bootBubbleContent} />
               ) : null}
               {showChoiceCard ? (
                 <>

@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { AUTH_SESSION_TTL_SECONDS } from "@/features/auth/auth.constants";
 import {
   createAuthSession,
-  createUser,
+  createUserWithInitialSession,
   deleteAuthSessionByTokenHash,
   deleteUserById,
   findAuthSessionByTokenHash,
@@ -52,16 +52,12 @@ export async function registerUser(input: RegisterUserInput) {
     }
 
     const passwordHash = await hashPassword(input.password);
-    const user = await createUser({
+    const token = await createSessionToken();
+    const user = await createUserWithInitialSession({
       username: input.username,
       passwordHash,
       agreedToTermsAt: new Date(),
-      agreedToPrivacyAt: new Date()
-    });
-    const token = await createSessionToken();
-
-    await createAuthSession({
-      userId: user.id,
+      agreedToPrivacyAt: new Date(),
       tokenHash: token.hash,
       expiresAt: new Date(Date.now() + AUTH_SESSION_TTL_SECONDS * 1000)
     });

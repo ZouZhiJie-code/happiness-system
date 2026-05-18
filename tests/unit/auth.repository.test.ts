@@ -2,22 +2,32 @@ const {
   mockAuthSessionCreate,
   mockAuthSessionDeleteMany,
   mockAuthSessionFindUnique,
+  mockAuthSessionUpdateMany,
+  mockPrismaTransaction,
+  mockTxAuthSessionCreate,
+  mockTxUserCreate,
   mockUserCreate,
   mockUserFindUnique
 } = vi.hoisted(() => ({
   mockAuthSessionCreate: vi.fn(),
   mockAuthSessionDeleteMany: vi.fn(),
   mockAuthSessionFindUnique: vi.fn(),
+  mockAuthSessionUpdateMany: vi.fn(),
+  mockPrismaTransaction: vi.fn(),
+  mockTxAuthSessionCreate: vi.fn(),
+  mockTxUserCreate: vi.fn(),
   mockUserCreate: vi.fn(),
   mockUserFindUnique: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
+    $transaction: mockPrismaTransaction,
     authSession: {
       create: mockAuthSessionCreate,
       deleteMany: mockAuthSessionDeleteMany,
-      findUnique: mockAuthSessionFindUnique
+      findUnique: mockAuthSessionFindUnique,
+      updateMany: mockAuthSessionUpdateMany
     },
     user: {
       create: mockUserCreate,
@@ -27,11 +37,13 @@ vi.mock("@/server/db/prisma", () => ({
 }));
 
 import {
+  createUserWithInitialSession,
   createAuthSession,
   createUser,
   deleteAuthSessionByTokenHash,
   findAuthSessionByTokenHash,
-  findUserByUsername
+  findUserByUsername,
+  touchAuthSessionByTokenHash
 } from "@/server/repositories/auth.repository";
 
 describe("auth.repository", () => {
@@ -127,6 +139,50 @@ describe("auth.repository", () => {
 
     expect(mockAuthSessionDeleteMany).toHaveBeenCalledWith({
       where: { tokenHash: "hashed-token" }
+    });
+  });
+
+  it("touches an auth session by token hash", async () => {
+    mockAuthSessionUpdateMany.mockResolvedValue({ count: 1 });
+
+    await touchAuthSessionByTokenHash("hashed-token");
+
+    expect(mockAuthSessionUpdateMany).toHaveBeenCalledWith({
+      where: { tokenHash: "hashed-token" },
+      data: { lastUsedAt: expect.any(Date) }
+    });
+  });
+
+  it("creates a user and initial session in one transaction", async () => {
+    mockTxUserCreate.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
+    mockTxAuthSessionCreate.mockResolvedValue({ id: "session-1" });
+    mockPrismaTransaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback({
+        user: { create: mockTxUserCreate },
+        authSession: { create: mockTxAuthSessionCreate }
+      })
+    );
+
+    const result = await createUserWithInitialSession({
+      username: "daily_light_01",
+      passwordHash: "hash",
+      agreedToTermsAt: new Date("2026-05-16T00:00:00.000Z"),
+      agreedToPrivacyAt: new Date("2026-05-16T00:00:00.000Z"),
+      tokenHash: "hashed-token",
+      expiresAt: new Date("2026-06-16T00:00:00.000Z")
+    });
+
+    expect(mockPrismaTransaction).toHaveBeenCalled();
+    expect(mockTxUserCreate).toHaveBeenCalled();
+    expect(mockTxAuthSessionCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "user-1",
+        tokenHash: "hashed-token"
+      })
+    });
+    expect(result).toEqual({
+      id: "user-1",
+      username: "daily_light_01"
     });
   });
 });
