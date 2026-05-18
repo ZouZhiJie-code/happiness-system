@@ -7,10 +7,6 @@
   --site-header-frame-min-height: 4rem;
   --site-header-lane-min-height: 2.5rem;
   --site-header-viewport-offset: 4rem;
-  --site-header-frosted-bg: rgba(255, 255, 255, 0.01);
-  --site-header-frosted-overlay: linear-gradient(180deg, rgba(247, 232, 204, 0.2), rgba(230, 202, 163, 0.12));
-  --site-header-frosted-filter: blur(28px) saturate(185%);
-  --site-header-frosted-fallback-bg: linear-gradient(180deg, rgba(247, 232, 204, 0.36), rgba(230, 202, 163, 0.28));
   --calendar-month-cell-min-height: 5.95rem;
   --calendar-day-card-min-height: 5.5rem;
   --night-void: #855a34;
@@ -81,33 +77,6 @@ button {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-.site-header-frosted {
-  position: relative;
-  isolation: isolate;
-  background: var(--site-header-frosted-bg);
-  -webkit-backdrop-filter: var(--site-header-frosted-filter);
-  backdrop-filter: var(--site-header-frosted-filter);
-}
-
-.site-header-frosted::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: var(--site-header-frosted-overlay);
-}
-
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .site-header-frosted {
-    background: var(--site-header-frosted-fallback-bg);
-  }
-
-  .site-header-frosted::before {
-    display: none;
-  }
 }
 
 body::before {

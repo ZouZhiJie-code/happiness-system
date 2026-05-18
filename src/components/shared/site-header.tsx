@@ -635,12 +635,7 @@ function SiteHeaderInner() {
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
       <header
         ref={headerRef}
-        className={clsx(
-          "w-full px-3 md:px-6",
-          isInterviewPage
-            ? "site-header-frosted fixed inset-x-0 top-0 z-50 border-b border-[rgba(101,67,34,0.08)] shadow-[0_8px_16px_rgba(77,47,21,0.04)]"
-            : "relative z-30 border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
-        )}
+        className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6"
       >
       <div
         className={clsx(
