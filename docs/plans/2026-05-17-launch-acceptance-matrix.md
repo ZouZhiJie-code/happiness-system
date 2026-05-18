@@ -810,13 +810,13 @@
 | `F-01` | `通过（修复后回归）` | 初次验收时，Safari 真实直接打开 `http://127.0.0.1:3001/analysis` 后，页面会渲染 `2026-05` 的 `overview` 内容，但地址栏实际停留在 `/analysis?month=2026-05`，没有补齐 `section=overview`；修复后再次真实打开 `/analysis`，地址栏已归一为 `/analysis?month=2026-05&section=overview`。 | `ISSUE-009` 已回归通过。 |
 | `F-02` | `通过` | Safari 真实打开 `/analysis?month=2026-04&section=overview` 后，页面显示“这个月还没有开始留下分析材料。先补今天评分，或从一个维度开始记录。”、“先留下今天的第一条记录”、“0 天有材料 / 尚未形成”等真实空态；打开 `/analysis?month=2026-05&section=overview` 时，则显示“先收住5月18日”、证据条和分流入口。 | 已覆盖无数据月与有数据月两类首屏。 |
 | `F-03` | `通过` | Safari 真实在 `/interview?dimension=joy&entryDate=2026-05-18` 打开“当天评分”后，初始 `保存并退出` 按钮禁用；按键录入 8 项分数后，页面提示“8项已完成，可保存并退出”，按钮解锁；点击保存后返回访谈工作区。随后打开 `/analysis?month=2026-05&section=score`，页面显示 `已评分 1 天`、`月均总分 7.0`。接口 `GET /api/analysis/month?month=2026-05` 也返回 `scoredDayCount=1`、`latestScoredDate=2026-05-18`，且 8 项分数均为 `7`。 | 本轮真实写入了 `2026-05-18` 的评分数据。 |
-| `F-04` | `通过` | Safari 真实打开 `/analysis?month=2026-05&section=rhythm` 后，toolbar chip 显示 `待整合 1 天`；热力图中的 `2026-05-18` 被标记为 `待整合 / 1维`；当天追踪区显示“已有 1 条记录，但还没有整合成日志”。接口 `GET /api/analysis/month?month=2026-05` 同时返回 `rhythmOverview.pendingDailyJournalCount=1`、`latestPendingDailyJournalDate=2026-05-18`。 | 当前月没有“只评分无日志”样本，因此本轮页面级覆盖的是 `待整合` 主场景。 |
+| `F-04` | `通过` | 主账号 Safari 真实打开 `/analysis?month=2026-05&section=rhythm` 后，toolbar chip 显示 `待整合 1 天`；热力图中的 `2026-05-18` 被标记为 `待整合 / 1维`；当天追踪区显示“已有 1 条记录，但还没有整合成日志”。补充纯评分样本：隔离账号 `f04_9085317058` 只在 `2026-05-16` 保存 8 项评分，没有创建任何维度日志；接口 `GET /api/analysis/month?month=2026-05` 返回 `rhythmOverview.scoreOnlyDayCount=1`、`latestScoreOnlyDate=2026-05-16`，对应 `dailyCoverage` 为 `hasScore=true / savedDimensionCount=0 / savedEntryCount=0`。页面级 Playwright 打开 `/analysis?month=2026-05&section=rhythm` 后显示 `待成文 1 天`、`只评未记`、`待成文日 1 天 / 最近 5月16日`，且不误显示 `待整合 1 天`。 | `待整合` 主场景和“只评分无日志 -> 待成文”子场景均已覆盖。 |
 | `F-05` | `通过` | Safari 真实打开 `/analysis?month=2026-05&section=insights` 后，`gratitude` 维度卡片上的“继续这条线”真实指向 `/interview?dimension=gratitude&entryDate=2026-05-18`；页面下方“整理完整日志”真实指向 `/interview?dimension=joy&entryDate=2026-05-18&mode=daily-journal`；全程没有误跳回今天默认入口。 | 已覆盖维度 drill-down 和当天整合日志 drill-down 两类链接。 |
 
 批次 6 当前结论：
 - `F-01`、`F-02`、`F-03`、`F-04`、`F-05` 已完成并通过。
 - `F-01` 初次验收发现的 URL 规范化问题已修复并回归通过。
-- `F-04` 的“只评分无日志 -> 待成文”子场景，本轮还缺少现成真实样本；当前已有待整合主场景页面证据，若上线前追求更完整覆盖，可再补一个纯评分账号样本。
+- `F-04` 的“只评分无日志 -> 待成文”子场景已用隔离账号补齐真实 API 与页面级证据。
 
 ---
 
