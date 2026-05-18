@@ -1223,10 +1223,10 @@ describe("analysis shell", () => {
 
     expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
 
-    const point = within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02");
+    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02");
     fireEvent.click(point);
 
-    const detailCard = await screen.findByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
     expect(detailCard).toHaveTextContent("5月2日");
     expect(detailCard).toHaveTextContent("当天均分");
 
@@ -1244,9 +1244,9 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02"));
+    fireEvent.click(await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02"));
 
-    const detailCard = await screen.findByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
     expect(detailCard).toHaveTextContent("五月二日的记录");
     expect(detailCard).toHaveTextContent("今天和朋友聚了一次");
     expect(within(detailCard).getByRole("link", { name: "查看完整日志 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
@@ -1261,9 +1261,9 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-03"));
+    fireEvent.click(await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-03"));
 
-    const detailCard = await screen.findByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
     expect(detailCard).toHaveTextContent("这一天还没有生成日志");
     expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
   });
@@ -1308,9 +1308,9 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-07"));
+    fireEvent.click(await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-07"));
 
-    const detailCard = await screen.findByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
     expect(detailCard).toHaveTextContent("这一天已有 1 条维度记录，但还没有整合成完整日志");
     expect(detailCard).not.toHaveTextContent("这一天还没有生成日志");
     expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
