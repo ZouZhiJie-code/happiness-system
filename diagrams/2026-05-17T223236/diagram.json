@@ -1,0 +1,1752 @@
+{
+  "code": 0,
+  "data": {
+    "to": "openapi",
+    "result": {
+      "nodes": [
+        {
+          "id": "o001:1",
+          "type": "composite_shape",
+          "x": 0,
+          "y": 0,
+          "width": 2200,
+          "height": 1420,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#fbf8f1",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          }
+        },
+        {
+          "id": "d001:1",
+          "type": "svg",
+          "x": 110,
+          "y": 72,
+          "width": 1980,
+          "height": 148,
+          "style": {
+            "border_style": "none"
+          },
+          "svg": {
+            "svg_code": "<svg viewBox=\"110 72 1980 148\" width=\"1980\" height=\"148\" xmlns=\"http://www.w3.org/2000/svg\"><defs><filter id=\"shadow\" x=\"0\" y=\"0\" width=\"2200\" height=\"1420\" filterUnits=\"userSpaceOnUse\" color-interpolation-filters=\"sRGB\"><feDropShadow dx=\"0\" dy=\"14\" stdDeviation=\"18\" flood-color=\"#89664A\" flood-opacity=\"0.16\" /></filter></defs><g filter=\"url(#shadow)\" fill=\"none\"><rect x=\"110\" y=\"72\" width=\"1980\" height=\"148\" rx=\"34\" fill=\"#5A3E2C\" /></g></svg>"
+          }
+        },
+        {
+          "id": "a001:1",
+          "type": "text_shape",
+          "x": 170,
+          "y": 86.23400318622589,
+          "width": 971,
+          "height": 63.71199607849121,
+          "text": {
+            "text": "并行推进版：产品、部署、备案三条主线",
+            "font_weight": "bold",
+            "font_size": 44,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff5eb",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          }
+        },
+        {
+          "id": "a001:2",
+          "type": "text_shape",
+          "x": 170,
+          "y": 158.94050163030624,
+          "width": 935,
+          "height": 33.30399799346924,
+          "text": {
+            "text": "核心原则：功能完善、部署准备、备案与法务不要串行做，应并行推进并在关键节点汇合",
+            "font_weight": "regular",
+            "font_size": 23,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#f7e4cf",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          }
+        },
+        {
+          "id": "n001:1",
+          "type": "group",
+          "x": 118.5,
+          "y": 270.5,
+          "width": 1823,
+          "height": 81
+        },
+        {
+          "id": "o001:2",
+          "type": "composite_shape",
+          "x": 118.5,
+          "y": 270.5,
+          "width": 423,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#f8ebdb",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 0
+        },
+        {
+          "id": "n001:2",
+          "type": "group",
+          "x": 118.5,
+          "y": 388.5,
+          "width": 1671.5,
+          "height": 241.5
+        },
+        {
+          "id": "o001:8",
+          "type": "composite_shape",
+          "x": 118.5,
+          "y": 388.5,
+          "width": 423,
+          "height": 211,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d2af89",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff8f0",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:2",
+          "z_index": 0
+        },
+        {
+          "id": "n001:3",
+          "type": "group",
+          "x": 118.5,
+          "y": 654.5,
+          "width": 1728.5,
+          "height": 241.5
+        },
+        {
+          "id": "o001:12",
+          "type": "composite_shape",
+          "x": 118.5,
+          "y": 654.5,
+          "width": 423,
+          "height": 211,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#afc993",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#f8fbf3",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:3",
+          "z_index": 0
+        },
+        {
+          "id": "n001:4",
+          "type": "group",
+          "x": 118.5,
+          "y": 920.5,
+          "width": 1991.5,
+          "height": 241.5
+        },
+        {
+          "id": "o001:16",
+          "type": "composite_shape",
+          "x": 118.5,
+          "y": 920.5,
+          "width": 423,
+          "height": 211,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#c4a5dd",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#f7f1fb",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:4",
+          "z_index": 0
+        },
+        {
+          "id": "n001:5",
+          "type": "group",
+          "x": 1649.5,
+          "y": 601,
+          "width": 204.5,
+          "height": 185.5
+        },
+        {
+          "id": "c001:1",
+          "type": "connector",
+          "x": 1660,
+          "y": 601,
+          "width": 0,
+          "height": 169,
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#7a5a42",
+            "border_color_type": 1,
+            "border_style": "solid"
+          },
+          "connector": {
+            "start": {
+              "position": {
+                "x": 1660,
+                "y": 601
+              },
+              "arrow_style": "none"
+            },
+            "end": {
+              "position": {
+                "x": 1660,
+                "y": 770
+              },
+              "arrow_style": "none"
+            },
+            "shape": "curve",
+            "turning_points": [],
+            "caption_auto_direction": false,
+            "specified_coordinate": true
+          },
+          "parent_id": "n001:5",
+          "z_index": 0
+        },
+        {
+          "id": "n001:6",
+          "type": "group",
+          "x": 1649.5,
+          "y": 864,
+          "width": 272.5,
+          "height": 185.5
+        },
+        {
+          "id": "c001:2",
+          "type": "connector",
+          "x": 1660,
+          "y": 864,
+          "width": 0,
+          "height": 169,
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#7a5a42",
+            "border_color_type": 1,
+            "border_style": "solid"
+          },
+          "connector": {
+            "start": {
+              "position": {
+                "x": 1660,
+                "y": 864
+              },
+              "arrow_style": "none"
+            },
+            "end": {
+              "position": {
+                "x": 1660,
+                "y": 1033
+              },
+              "arrow_style": "none"
+            },
+            "shape": "curve",
+            "turning_points": [],
+            "caption_auto_direction": false,
+            "specified_coordinate": true
+          },
+          "parent_id": "n001:6",
+          "z_index": 0
+        },
+        {
+          "id": "n001:7",
+          "type": "group",
+          "x": 118.5,
+          "y": 1184.5,
+          "width": 1823,
+          "height": 167
+        },
+        {
+          "id": "o001:20",
+          "type": "composite_shape",
+          "x": 118.5,
+          "y": 1184.5,
+          "width": 1823,
+          "height": 167,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d2af89",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff8f0",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:7",
+          "z_index": 0
+        },
+        {
+          "id": "a001:3",
+          "type": "text_shape",
+          "x": 150,
+          "y": 285.70500111579895,
+          "width": 182,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "主线 / 周次",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 1
+        },
+        {
+          "id": "a001:9",
+          "type": "text_shape",
+          "x": 154,
+          "y": 401.99900126457214,
+          "width": 253,
+          "height": 49.231998443603516,
+          "text": {
+            "text": "产品与工程线",
+            "font_weight": "bold",
+            "font_size": 34,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5b3d2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 1
+        },
+        {
+          "id": "a001:15",
+          "type": "text_shape",
+          "x": 154,
+          "y": 667.9990012645721,
+          "width": 336,
+          "height": 49.231998443603516,
+          "text": {
+            "text": "部署与基础设施线",
+            "font_weight": "bold",
+            "font_size": 34,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#425932",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 1
+        },
+        {
+          "id": "a001:21",
+          "type": "text_shape",
+          "x": 154,
+          "y": 933.9990012645721,
+          "width": 253,
+          "height": 49.231998443603516,
+          "text": {
+            "text": "合规与备案线",
+            "font_weight": "bold",
+            "font_size": 34,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5e3f7a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 1
+        },
+        {
+          "id": "d001:2",
+          "type": "svg",
+          "x": 1649.5,
+          "y": 753.5,
+          "width": 39,
+          "height": 33,
+          "style": {
+            "border_style": "none"
+          },
+          "svg": {
+            "svg_code": "<svg viewBox=\"1649.5 753.5 39 33\" width=\"39\" height=\"33\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"1652,756 1686,770 1652,784\" fill=\"#7A5A42\" /></svg>"
+          },
+          "parent_id": "n001:5",
+          "z_index": 1
+        },
+        {
+          "id": "d001:3",
+          "type": "svg",
+          "x": 1649.5,
+          "y": 1016.5,
+          "width": 39,
+          "height": 33,
+          "style": {
+            "border_style": "none"
+          },
+          "svg": {
+            "svg_code": "<svg viewBox=\"1649.5 1016.5 39 33\" width=\"39\" height=\"33\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"1652,1019 1686,1033 1652,1047\" fill=\"#7A5A42\" /></svg>"
+          },
+          "parent_id": "n001:6",
+          "z_index": 1
+        },
+        {
+          "id": "a001:31",
+          "type": "text_shape",
+          "x": 162,
+          "y": 1201.9990012645721,
+          "width": 170,
+          "height": 49.231998443603516,
+          "text": {
+            "text": "关键结论",
+            "font_weight": "bold",
+            "font_size": 34,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5b3d2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:7",
+          "z_index": 1
+        },
+        {
+          "id": "o001:3",
+          "type": "composite_shape",
+          "x": 568.5,
+          "y": 270.5,
+          "width": 253,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff7ed",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 2
+        },
+        {
+          "id": "a001:10",
+          "type": "text_shape",
+          "x": 154,
+          "y": 459.7640001177788,
+          "width": 477,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "目标：功能稳定、主链路完成、工程可发布",
+            "font_weight": "regular",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4b36",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 2
+        },
+        {
+          "id": "a001:16",
+          "type": "text_shape",
+          "x": 154,
+          "y": 725.7640001177788,
+          "width": 527,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "目标：真实域名可访问，服务与数据库稳定运行",
+            "font_weight": "regular",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#536a43",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 2
+        },
+        {
+          "id": "a001:22",
+          "type": "text_shape",
+          "x": 154,
+          "y": 991.7640001177788,
+          "width": 377,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "目标：中国正式公开上线条件齐备",
+            "font_weight": "regular",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#705286",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 2
+        },
+        {
+          "id": "a001:27",
+          "type": "text_shape",
+          "x": 1714,
+          "y": 664.117001593113,
+          "width": 140,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "产品线稳定后",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4c38",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:5",
+          "z_index": 2
+        },
+        {
+          "id": "a001:29",
+          "type": "text_shape",
+          "x": 1714,
+          "y": 926.117001593113,
+          "width": 208,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "云资源与域名就绪后",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4c38",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:6",
+          "z_index": 2
+        },
+        {
+          "id": "a001:32",
+          "type": "text_shape",
+          "x": 162,
+          "y": 1260.587500154972,
+          "width": 682,
+          "height": 36.19999980926514,
+          "text": {
+            "text": "1) 第 1 周最适合三线并行启动，避免把备案等待期浪费掉。",
+            "font_weight": "regular",
+            "font_size": 25,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4b36",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:7",
+          "z_index": 2
+        },
+        {
+          "id": "a001:4",
+          "type": "text_shape",
+          "x": 660,
+          "y": 285.70500111579895,
+          "width": 116,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "第 1 周",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 3
+        },
+        {
+          "id": "a001:11",
+          "type": "text_shape",
+          "x": 154,
+          "y": 502.11700159311295,
+          "width": 437,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "范围：功能收口、测试、迁移、限流、监控",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4b36",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 3
+        },
+        {
+          "id": "a001:17",
+          "type": "text_shape",
+          "x": 154,
+          "y": 768.117001593113,
+          "width": 494,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "范围：域名、服务器、DB、HTTPS、预发与发布",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#536a43",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 3
+        },
+        {
+          "id": "a001:23",
+          "type": "text_shape",
+          "x": 154,
+          "y": 1034.117001593113,
+          "width": 404,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "范围：主体、法务文本、ICP、公安备案",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#705286",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 3
+        },
+        {
+          "id": "a001:28",
+          "type": "text_shape",
+          "x": 1714,
+          "y": 696.117001593113,
+          "width": 140,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "进入部署灰度",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4c38",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:5",
+          "z_index": 3
+        },
+        {
+          "id": "a001:30",
+          "type": "text_shape",
+          "x": 1714,
+          "y": 958.117001593113,
+          "width": 163,
+          "height": 31.855998039245605,
+          "text": {
+            "text": "备案线全面推进",
+            "font_weight": "regular",
+            "font_size": 22,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4c38",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:6",
+          "z_index": 3
+        },
+        {
+          "id": "a001:33",
+          "type": "text_shape",
+          "x": 162,
+          "y": 1298.587500154972,
+          "width": 994,
+          "height": 36.19999980926514,
+          "text": {
+            "text": "2) 真正拖慢总周期的通常是备案审核时间，以及上线前才暴露出的稳定性与回滚问题。",
+            "font_weight": "regular",
+            "font_size": 25,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#6c4b36",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:7",
+          "z_index": 3
+        },
+        {
+          "id": "o001:4",
+          "type": "composite_shape",
+          "x": 848.5,
+          "y": 270.5,
+          "width": 253,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff7ed",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 4
+        },
+        {
+          "id": "o001:9",
+          "type": "composite_shape",
+          "x": 570,
+          "y": 416,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#c88e57",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:2",
+          "z_index": 4
+        },
+        {
+          "id": "o001:13",
+          "type": "composite_shape",
+          "x": 570,
+          "y": 682,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#8eb46d",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:3",
+          "z_index": 4
+        },
+        {
+          "id": "o001:17",
+          "type": "composite_shape",
+          "x": 570,
+          "y": 948,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#a176c0",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:4",
+          "z_index": 4
+        },
+        {
+          "id": "a001:5",
+          "type": "text_shape",
+          "x": 940,
+          "y": 285.70500111579895,
+          "width": 116,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "第 2 周",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 5
+        },
+        {
+          "id": "a001:12",
+          "type": "text_shape",
+          "x": 596,
+          "y": 424.7640001177788,
+          "width": 576,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "首发范围冻结 + 五维主链路回归 + 关掉 stub",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff9f1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 5
+        },
+        {
+          "id": "a001:18",
+          "type": "text_shape",
+          "x": 596,
+          "y": 690.7640001177788,
+          "width": 716,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "买域名、开云资源、定 Node + Nginx + Postgres 方案",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#f6fff1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 5
+        },
+        {
+          "id": "a001:24",
+          "type": "text_shape",
+          "x": 596,
+          "y": 956.7640001177788,
+          "width": 534,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "确定主体 + 法务文本定稿 + 备案材料整理",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff7ff",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 5
+        },
+        {
+          "id": "o001:5",
+          "type": "composite_shape",
+          "x": 1128.5,
+          "y": 270.5,
+          "width": 253,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff7ed",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 6
+        },
+        {
+          "id": "o001:10",
+          "type": "composite_shape",
+          "x": 570,
+          "y": 494,
+          "width": 810,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#b77846",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:2",
+          "z_index": 6
+        },
+        {
+          "id": "o001:14",
+          "type": "composite_shape",
+          "x": 850,
+          "y": 760,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#77a15a",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:3",
+          "z_index": 6
+        },
+        {
+          "id": "o001:18",
+          "type": "composite_shape",
+          "x": 850,
+          "y": 1026,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#ffffff",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#8f63b2",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:4",
+          "z_index": 6
+        },
+        {
+          "id": "a001:6",
+          "type": "text_shape",
+          "x": 1220,
+          "y": 285.70500111579895,
+          "width": 116,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "第 3 周",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 7
+        },
+        {
+          "id": "a001:13",
+          "type": "text_shape",
+          "x": 596,
+          "y": 502.7640001177788,
+          "width": 908,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "修日志工作区 / calendar / analysis 问题 + 跑 typecheck/build/test",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff9f1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 7
+        },
+        {
+          "id": "a001:19",
+          "type": "text_shape",
+          "x": 876,
+          "y": 768.7640001177788,
+          "width": 693,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "配置 HTTPS、环境变量、预发环境，做首次部署演练",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#f6fff1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 7
+        },
+        {
+          "id": "a001:25",
+          "type": "text_shape",
+          "x": 876,
+          "y": 1034.7640001177788,
+          "width": 704,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "域名实名完成后提交 ICP，审核期间继续做产品与部署",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff7ff",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 7
+        },
+        {
+          "id": "o001:6",
+          "type": "composite_shape",
+          "x": 1408.5,
+          "y": 270.5,
+          "width": 253,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff7ed",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 8
+        },
+        {
+          "id": "o001:11",
+          "type": "composite_shape",
+          "x": 850,
+          "y": 572,
+          "width": 810,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#ffffff",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#a8613b",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:2",
+          "z_index": 8
+        },
+        {
+          "id": "o001:15",
+          "type": "composite_shape",
+          "x": 1130,
+          "y": 838,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#628b49",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:3",
+          "z_index": 8
+        },
+        {
+          "id": "o001:19",
+          "type": "composite_shape",
+          "x": 1410,
+          "y": 1104,
+          "width": 530,
+          "height": 58,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#ffffff",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_style": "none",
+            "fill_opacity": 100,
+            "fill_color": "#7c52a1",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:4",
+          "z_index": 8
+        },
+        {
+          "id": "a001:7",
+          "type": "text_shape",
+          "x": 1500,
+          "y": 285.70500111579895,
+          "width": 116,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "第 4 周",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 9
+        },
+        {
+          "id": "a001:14",
+          "type": "text_shape",
+          "x": 876,
+          "y": 580.7640001177788,
+          "width": 914,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "补 migration、health/ready、监控告警、rate limit，完成预发回归",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff9f1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:2",
+          "z_index": 9
+        },
+        {
+          "id": "a001:20",
+          "type": "text_shape",
+          "x": 1156,
+          "y": 846.7640001177788,
+          "width": 691,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "完善备份恢复与正式发布 runbook，准备灰度与切流",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#f6fff1",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:3",
+          "z_index": 9
+        },
+        {
+          "id": "a001:26",
+          "type": "text_shape",
+          "x": 1436,
+          "y": 1112.7640001177788,
+          "width": 674,
+          "height": 34.751999855041504,
+          "text": {
+            "text": "ICP 后做公安备案，挂备案信息，准备正式公开发布",
+            "font_weight": "bold",
+            "font_size": 24,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#fff7ff",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:4",
+          "z_index": 9
+        },
+        {
+          "id": "o001:7",
+          "type": "composite_shape",
+          "x": 1688.5,
+          "y": 270.5,
+          "width": 253,
+          "height": 81,
+          "text": {
+            "text": "",
+            "font_weight": "regular",
+            "font_size": 14,
+            "horizontal_align": "center",
+            "vertical_align": "mid",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#1f2329",
+            "text_color_type": 0,
+            "text_background_color_type": 0,
+            "theme_text_color_code": -1,
+            "theme_text_background_color_code": -1
+          },
+          "style": {
+            "border_opacity": 100,
+            "border_width": "narrow",
+            "border_color": "#d1ae8a",
+            "border_color_type": 1,
+            "border_style": "solid",
+            "fill_opacity": 100,
+            "fill_color": "#fff7ed",
+            "fill_color_type": 1
+          },
+          "composite_shape": {
+            "type": "round_rect"
+          },
+          "parent_id": "n001:1",
+          "z_index": 10
+        },
+        {
+          "id": "a001:8",
+          "type": "text_shape",
+          "x": 1780,
+          "y": 285.70500111579895,
+          "width": 138,
+          "height": 43.439998626708984,
+          "text": {
+            "text": "第 5 周+",
+            "font_weight": "bold",
+            "font_size": 30,
+            "horizontal_align": "left",
+            "vertical_align": "top",
+            "line_through": false,
+            "underline": false,
+            "italic": false,
+            "angle": 0,
+            "text_color": "#5c3e2a",
+            "text_color_type": 1,
+            "text_background_color_type": 0,
+            "theme_text_background_color_code": -1
+          },
+          "parent_id": "n001:1",
+          "z_index": 11
+        }
+      ]
+    },
+    "metadata": {
+      "width": 0,
+      "height": 0,
+      "nodeCount": 11,
+      "connectorCount": 0
+    }
+  },
+  "error": ""
+}

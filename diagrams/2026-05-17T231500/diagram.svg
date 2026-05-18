@@ -1,0 +1,248 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1180" viewBox="0 0 1600 1180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF9F3"/>
+      <stop offset="100%" stop-color="#F6EFE4"/>
+    </linearGradient>
+    <linearGradient id="panelGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F7D9B5" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#E9C8A7" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="stageHead" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5B4332"/>
+      <stop offset="100%" stop-color="#73543B"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#5C4634" flood-opacity="0.14"/>
+    </filter>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#5C4634" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .font { font-family: Noto Sans SC, PingFang SC, Microsoft YaHei, sans-serif; }
+      .title { font-size: 36px; font-weight: 800; fill: #2d2118; }
+      .sub { font-size: 16px; fill: #6a5a4b; }
+      .head { font-size: 18px; font-weight: 800; fill: #1f1610; }
+      .small { font-size: 12px; fill: #6f6255; }
+      .cardTitle { font-size: 18px; font-weight: 800; fill: #2f231a; }
+      .cardSub { font-size: 12px; fill: #594c40; }
+      .pillText { font-size: 11px; font-weight: 700; fill: #2b2119; }
+      .stageNum { font-size: 20px; font-weight: 800; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1180" fill="url(#bg)"/>
+  <circle cx="1420" cy="120" r="150" fill="url(#panelGlow)" opacity="0.9"/>
+  <circle cx="170" cy="1040" r="190" fill="#EEDDC9" opacity="0.26"/>
+
+  <g filter="url(#shadow)">
+    <rect x="34" y="24" width="1532" height="1128" rx="32" fill="#FFFDF9"/>
+  </g>
+
+  <text x="78" y="86" class="font title">V3 阶段 × 角色矩阵</text>
+  <text x="78" y="120" class="font sub">左看阶段，横看角色；每格同时写动作、prompt 和边界，图内只承载角色责任，不承载完整技能细节。</text>
+
+  <g class="font" transform="translate(70,160)">
+    <!-- headers -->
+    <rect x="0" y="0" width="260" height="78" rx="18" fill="url(#stageHead)"/>
+    <text x="130" y="34" text-anchor="middle" class="head" fill="#fff8ee">阶段</text>
+    <text x="130" y="58" text-anchor="middle" class="small" fill="#f3e7d7">左侧阶段栏</text>
+
+    <g>
+      <rect x="260" y="0" width="210" height="78" fill="#8B674C"/>
+      <rect x="470" y="0" width="210" height="78" fill="#8B674C"/>
+      <rect x="680" y="0" width="210" height="78" fill="#8B674C"/>
+      <rect x="890" y="0" width="210" height="78" fill="#8B674C"/>
+      <rect x="1100" y="0" width="210" height="78" fill="#8B674C"/>
+      <rect x="1310" y="0" width="210" height="78" fill="#8B674C"/>
+    </g>
+
+    <g fill="#FFF8EE">
+      <text x="365" y="30" class="head" text-anchor="middle">你</text>
+      <text x="365" y="55" class="small" text-anchor="middle" fill="#F4E8D8">需求入口</text>
+
+      <text x="575" y="28" class="head" text-anchor="middle">主对话</text>
+      <text x="575" y="49" class="head" text-anchor="middle">总控会话</text>
+      <text x="575" y="68" class="small" text-anchor="middle" fill="#F4E8D8">收敛 / 编排 / 收尾</text>
+
+      <text x="785" y="28" class="head" text-anchor="middle">计划</text>
+      <text x="785" y="49" class="head" text-anchor="middle">交接记录</text>
+      <text x="785" y="68" class="small" text-anchor="middle" fill="#F4E8D8">Plan / Handoff</text>
+
+      <text x="995" y="28" class="head" text-anchor="middle">功能分支</text>
+      <text x="995" y="49" class="head" text-anchor="middle">会话</text>
+      <text x="995" y="68" class="small" text-anchor="middle" fill="#F4E8D8">真正干活</text>
+
+      <text x="1205" y="28" class="head" text-anchor="middle">审查</text>
+      <text x="1205" y="49" class="head" text-anchor="middle">子代理</text>
+      <text x="1205" y="68" class="small" text-anchor="middle" fill="#F4E8D8">只看质量</text>
+
+      <text x="1415" y="28" class="head" text-anchor="middle">主仓库</text>
+      <text x="1415" y="49" class="head" text-anchor="middle">main 分支</text>
+      <text x="1415" y="68" class="small" text-anchor="middle" fill="#F4E8D8">集成收尾</text>
+    </g>
+
+    <!-- stage spine -->
+    <g>
+      <line x1="90" y1="120" x2="90" y2="760" stroke="#D8B38B" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+
+      <g transform="translate(24,104)">
+        <circle cx="66" cy="16" r="18" fill="#D59A61"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">1</text>
+        <text x="122" y="18" class="head">需求收敛</text>
+        <text x="122" y="44" class="small">把需求收成可写计划</text>
+      </g>
+      <g transform="translate(24,228)">
+        <circle cx="66" cy="16" r="18" fill="#6F907B"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">2</text>
+        <text x="122" y="18" class="head">计划落库</text>
+        <text x="122" y="44" class="small">写成 Plan File</text>
+      </g>
+      <g transform="translate(24,352)">
+        <circle cx="66" cy="16" r="18" fill="#5E7FA7"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">3</text>
+        <text x="122" y="18" class="head">隔离执行</text>
+        <text x="122" y="44" class="small">切 feature session</text>
+      </g>
+      <g transform="translate(24,476)">
+        <circle cx="66" cy="16" r="18" fill="#8D73B9"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">4</text>
+        <text x="122" y="18" class="head">实现与验证闭环</text>
+        <text x="122" y="44" class="small">TDD → debug → verify → review</text>
+      </g>
+      <g transform="translate(24,600)">
+        <circle cx="66" cy="16" r="18" fill="#7AA86F"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">5</text>
+        <text x="122" y="18" class="head">用户验收</text>
+        <text x="122" y="44" class="small">真实使用路径验收</text>
+      </g>
+      <g transform="translate(24,724)">
+        <circle cx="66" cy="16" r="18" fill="#C76E72"/>
+        <text x="66" y="22" text-anchor="middle" class="stageNum">6</text>
+        <text x="122" y="18" class="head">集成收尾</text>
+        <text x="122" y="44" class="small">merge / push / sync</text>
+      </g>
+    </g>
+
+    <!-- Row 1 -->
+    <g filter="url(#cardShadow)">
+      <rect x="276" y="102" width="182" height="80" rx="16" fill="#FFF4E3" stroke="#D9A866"/>
+      <rect x="486" y="102" width="182" height="80" rx="16" fill="#EEF5F1" stroke="#A3C0B0"/>
+      <text x="294" y="128" class="pillText">你</text>
+      <text x="294" y="152" class="cardTitle">提出需求</text>
+      <text x="294" y="170" class="cardSub">给目标，不先拆解</text>
+      <text x="504" y="128" class="pillText">using-superpowers</text>
+      <text x="504" y="152" class="cardTitle">主对话先收敛</text>
+      <text x="504" y="170" class="cardSub">prompt: 先按 superpowers 流程来</text>
+    </g>
+
+    <!-- Row 2 -->
+    <g filter="url(#cardShadow)">
+      <rect x="276" y="226" width="182" height="80" rx="16" fill="#FFF4E3" stroke="#D9A866"/>
+      <rect x="486" y="226" width="182" height="80" rx="16" fill="#EEF5F1" stroke="#A3C0B0"/>
+      <rect x="696" y="226" width="182" height="80" rx="16" fill="#EAF1FA" stroke="#A7B9D6"/>
+      <text x="294" y="252" class="pillText">你</text>
+      <text x="294" y="276" class="cardTitle">确认计划</text>
+      <text x="294" y="294" class="cardSub">看边界和验收</text>
+      <text x="504" y="252" class="pillText">writing-plans</text>
+      <text x="504" y="276" class="cardTitle">计划落库</text>
+      <text x="504" y="294" class="cardSub">prompt: 把需求拆成可执行计划</text>
+      <text x="714" y="252" class="pillText">Plan File</text>
+      <text x="714" y="276" class="cardTitle">落 Plan File</text>
+      <text x="714" y="294" class="cardSub">记录步骤 / 依赖 / 风险</text>
+    </g>
+
+    <!-- Row 3 -->
+    <g filter="url(#cardShadow)">
+      <rect x="276" y="350" width="182" height="80" rx="16" fill="#FFF4E3" stroke="#D9A866"/>
+      <rect x="486" y="350" width="182" height="80" rx="16" fill="#EEF5F1" stroke="#A3C0B0"/>
+      <rect x="696" y="350" width="182" height="80" rx="16" fill="#EAF1FA" stroke="#A7B9D6"/>
+      <rect x="906" y="350" width="182" height="80" rx="16" fill="#F0EAFB" stroke="#B49ED7"/>
+      <text x="294" y="376" class="pillText">你</text>
+      <text x="294" y="400" class="cardTitle">要求独立 worktree</text>
+      <text x="294" y="418" class="cardSub">main 不直接写功能</text>
+      <text x="504" y="376" class="pillText">using-git-worktrees</text>
+      <text x="504" y="400" class="cardTitle">隔离执行</text>
+      <text x="504" y="418" class="cardSub">只负责工作区分离</text>
+      <text x="714" y="376" class="pillText">handoff</text>
+      <text x="714" y="400" class="cardTitle">读 Plan File</text>
+      <text x="714" y="418" class="cardSub">必要时先补 handoff</text>
+      <text x="924" y="376" class="pillText">feature session</text>
+      <text x="924" y="400" class="cardTitle">并行 or 顺序执行</text>
+      <text x="924" y="418" class="cardSub">subagent-driven-development / executing-plans</text>
+    </g>
+
+    <!-- Row 4 -->
+    <g filter="url(#cardShadow)">
+      <rect x="696" y="474" width="182" height="80" rx="16" fill="#EAF1FA" stroke="#A7B9D6"/>
+      <rect x="906" y="474" width="182" height="80" rx="16" fill="#F0EAFB" stroke="#B49ED7"/>
+      <rect x="1116" y="474" width="182" height="80" rx="16" fill="#EEF7EE" stroke="#9DC29A"/>
+      <text x="714" y="500" class="pillText">handoff</text>
+      <text x="714" y="524" class="cardTitle">阶段交接更新</text>
+      <text x="714" y="542" class="cardSub">记录进度 / 风险 / 下一条验证</text>
+      <text x="924" y="500" class="pillText">TDD / verify</text>
+      <text x="924" y="524" class="cardTitle">TDD / debug / verify</text>
+      <text x="924" y="542" class="cardSub">bug → 系统排查 / 并行调查</text>
+      <text x="1134" y="500" class="pillText">review</text>
+      <text x="1134" y="524" class="cardTitle">只做 review</text>
+      <text x="1134" y="542" class="cardSub">返回 findings，不展开实现</text>
+    </g>
+
+    <!-- Row 5 -->
+    <g filter="url(#cardShadow)">
+      <rect x="276" y="598" width="182" height="80" rx="16" fill="#FFF4E3" stroke="#D9A866"/>
+      <rect x="486" y="598" width="182" height="80" rx="16" fill="#EEF5F1" stroke="#A3C0B0"/>
+      <rect x="696" y="598" width="182" height="80" rx="16" fill="#EAF1FA" stroke="#A7B9D6"/>
+      <rect x="906" y="598" width="182" height="80" rx="16" fill="#F0EAFB" stroke="#B49ED7"/>
+      <text x="294" y="624" class="pillText">你</text>
+      <text x="294" y="648" class="cardTitle">最终验收测试</text>
+      <text x="294" y="666" class="cardSub">按用户视角跑一遍</text>
+      <text x="504" y="624" class="pillText">主对话</text>
+      <text x="504" y="648" class="cardTitle">接管最终交接</text>
+      <text x="504" y="666" class="cardSub">通过后才切回 main</text>
+      <text x="714" y="624" class="pillText">handoff</text>
+      <text x="714" y="648" class="cardTitle">验收问题交接</text>
+      <text x="714" y="666" class="cardSub">把问题写清楚再回修</text>
+      <text x="924" y="624" class="pillText">feature session</text>
+      <text x="924" y="648" class="cardTitle">回 TDD / 验证闭环</text>
+      <text x="924" y="666" class="cardSub">验收不过直接修</text>
+    </g>
+
+    <!-- Row 6 -->
+    <g filter="url(#cardShadow)">
+      <rect x="486" y="722" width="182" height="80" rx="16" fill="#EEF5F1" stroke="#A3C0B0"/>
+      <rect x="696" y="722" width="182" height="80" rx="16" fill="#EAF1FA" stroke="#A7B9D6"/>
+      <rect x="1316" y="722" width="182" height="80" rx="16" fill="#F8EDEE" stroke="#D0A1A3"/>
+      <rect x="276" y="722" width="182" height="80" rx="16" fill="#FFF4E3" stroke="#D9A866"/>
+      <text x="504" y="748" class="pillText">主对话</text>
+      <text x="504" y="772" class="cardTitle">收尾主控</text>
+      <text x="504" y="790" class="cardSub">neat-freak / 同步 docs 和记忆</text>
+      <text x="714" y="748" class="pillText">handoff</text>
+      <text x="714" y="772" class="cardTitle">知识同步完成</text>
+      <text x="714" y="790" class="cardSub">docs / handoff / memory 对齐</text>
+      <text x="1334" y="748" class="pillText">main 分支</text>
+      <text x="1334" y="772" class="cardTitle">检查 main 干净</text>
+      <text x="1334" y="790" class="cardSub">脏了先清理或提交，再 merge / push</text>
+      <text x="294" y="748" class="pillText">你</text>
+      <text x="294" y="772" class="cardTitle">确认闭环完成</text>
+      <text x="294" y="790" class="cardSub">看最终结果</text>
+    </g>
+
+    <!-- legend -->
+    <g transform="translate(0,870)" filter="url(#cardShadow)">
+      <rect x="0" y="0" width="1520" height="92" rx="20" fill="#FFF8F0" stroke="#E7D7C2"/>
+      <rect x="22" y="26" width="170" height="28" rx="14" fill="#F2E1C8"/>
+      <text x="107" y="45" text-anchor="middle" class="pillText">黑字 = 主动作</text>
+      <rect x="206" y="26" width="230" height="28" rx="14" fill="#E4F0EB"/>
+      <text x="321" y="45" text-anchor="middle" class="pillText">小字 = prompt / 边界 / 输出</text>
+      <rect x="450" y="26" width="210" height="28" rx="14" fill="#E9EEF7"/>
+      <text x="555" y="45" text-anchor="middle" class="pillText">阶段条 = 进入下一阶段的门</text>
+      <rect x="674" y="26" width="230" height="28" rx="14" fill="#F2E5F7"/>
+      <text x="789" y="45" text-anchor="middle" class="pillText">空白 = 该阶段该角色无主动作</text>
+      <rect x="918" y="26" width="236" height="28" rx="14" fill="#EEF7EE"/>
+      <text x="1036" y="45" text-anchor="middle" class="pillText">feature 只在实现 / 验证闭环里干活</text>
+      <rect x="1166" y="26" width="328" height="28" rx="14" fill="#F4E9EA"/>
+      <text x="1330" y="45" text-anchor="middle" class="pillText">main 只做总控、集成和收尾</text>
+    </g>
+  </g>
+</svg>
