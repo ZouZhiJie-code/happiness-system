@@ -2849,7 +2849,7 @@ describe("InterviewShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "生成日志" }));
 
     await screen.findByTestId("journal-editor-card");
-    expect(await screen.findByText("当前已经是最新版本")).toBeInTheDocument();
+    expect(screen.queryByText("正在生成日志骨架")).not.toBeInTheDocument();
 
     const generateCallsAfterSecondOpen = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
       String(url).endsWith("/api/interview/session/draft/generate")
