@@ -1001,6 +1001,10 @@ export function InterviewShell() {
 
     return null;
   }, [draftGenerateState, draftSyncState, isSavingJournal, journalEntry]);
+  const bootBubbleContent =
+    bootState === "restoring" && isSessionHydratedForCurrentDimension && hasUserMessages
+      ? "我正在把你上一次停下来的访谈接回来。"
+      : dimensionConfig.openingQuestion;
 
   useEffect(() => {
     setDimension(currentDimension);
@@ -2483,13 +2487,7 @@ export function InterviewShell() {
                 </div>
               ) : null}
               {showBootBubble ? (
-                <MessageBubble
-                  content={
-                    bootState === "restoring"
-                      ? "我正在把你上一次停下来的访谈接回来。"
-                      : dimensionConfig.openingQuestion
-                  }
-                />
+                <MessageBubble content={bootBubbleContent} />
               ) : null}
               {showChoiceCard ? (
                 <>

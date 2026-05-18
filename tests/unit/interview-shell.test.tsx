@@ -3388,7 +3388,8 @@ describe("InterviewShell", () => {
     await waitFor(() => {
       expect(screen.queryByText("今天和家人一起吃饭聊天，因为我最近很少这么放松。")).not.toBeInTheDocument();
     });
-    expect(screen.getByText("我正在把你上一次停下来的访谈接回来。")).toBeInTheDocument();
+    expect(screen.getByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。")).toBeInTheDocument();
+    expect(screen.queryByText("我正在把你上一次停下来的访谈接回来。")).not.toBeInTheDocument();
     expect(getDimensionButton("充实")).toHaveAttribute("aria-current", "step");
 
     await act(async () => {
@@ -3446,7 +3447,8 @@ describe("InterviewShell", () => {
       expectDimensionStatus("开心", "未开始");
       expectSelectedProgressHidden();
     });
-    expect(screen.getByText("我正在把你上一次停下来的访谈接回来。")).toBeInTheDocument();
+    expect(screen.getByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).toBeInTheDocument();
+    expect(screen.queryByText("我正在把你上一次停下来的访谈接回来。")).not.toBeInTheDocument();
 
     await act(async () => {
       resolveSessionFetch?.(
