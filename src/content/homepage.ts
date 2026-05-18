@@ -15,20 +15,19 @@ export interface HomepageDimensionStory {
 export const homepageContent = {
   hero: {
     eyebrow: "AI Daily Journal",
-    title: "Daily Light 点亮你的每一天。",
-    lead: "不用想格式，也不用总结自己。说出今天的一个片段，系统会顺着你的话追问必要细节，再整理成你可以确认、编辑和保存的日志。",
-    signals: ["一句话开始", "AI 只追问必要细节", "草稿由你确认后保存"],
+    title: "Daily Light",
+    lead: "不用想格式，也不用总结自己。说出今天的一个片段，Daily Light 会顺着你的话追问必要细节，再整理成你可以确认、编辑和保存的日志。",
+    signals: ["一句话开始", "AI 访谈你的一天", "自动生成日志"],
     visual: {
       title: "一张写给日常的纸",
       alt: "一张在暖色光线中展开的日志页面示意图",
       src: "/homepage/hero.png"
     },
-    primaryCta: "开始今天的记录",
-    secondaryCta: "查看日历"
+    primaryCta: "开始今天的记录"
   },
   pain: {
     title: "很多经历不是没有意义，只是当时来不及读懂",
-    lead: "忙了一天却说不清哪里算数，想感谢却不想写成客套话，想改进又不想被说教。Daily Light 把这些细小片段留在合适的位置。",
+    lead: "忙了一天却很难写下回忆，想感谢却不想写成客套话，想改进又不想被说教。Daily Light 把这些细小片段留在合适的位置。",
     bullets: [
       "开心来得快，离开得也快，常常还没来得及看清自己为什么被点亮。",
       "忙碌很满，分量却未必说得清，结束时只剩一句“今天好累”。",
@@ -77,7 +76,7 @@ export const homepageContent = {
         badge: "悦",
         title: "开心",
         body: "看见自己会被什么点亮。",
-        example: "今天哪一下让你真的亮了一点？"
+        example: "今天什么时候让你感到很开心？"
       },
       {
         dimension: "fulfillment",
@@ -98,7 +97,7 @@ export const homepageContent = {
         badge: "改",
         title: "改进",
         body: "找到下一次可以轻轻动一下的地方。",
-        example: "下次想在哪个小地方调一下？"
+        example: "之后怎么做可以变得更好？"
       },
       {
         dimension: "gratitude",
