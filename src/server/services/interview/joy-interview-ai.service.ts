@@ -131,13 +131,29 @@ function normalizeSeenNeed(value: string | null | undefined) {
     return null;
   }
 
-  return (
+  const cleaned = trimTrailingPunctuation(
     normalized
       .replace(/^(这让我觉得|让我觉得|我觉得)/u, "")
       .replace(/^(自己|我自己)/u, "我")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被看见了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被接住了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被理解了，?不用/u, "$1，也不用")
+      .trim()
+  );
+
+  const seenAndReliefMatch = cleaned.match(
+    /^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)[，,]?(不用硬撑着一边听一边记)$/u
+  );
+
+  if (seenAndReliefMatch) {
+    return `${seenAndReliefMatch[1]}，以及${seenAndReliefMatch[2]}的难处`;
+  }
+
+  const needAndReliefMatch = cleaned.match(/^(我当时的[^，。！？!?]{0,60}?)[，,](不用硬撑着一边听一边记)$/u);
+
+  if (needAndReliefMatch) {
+    return `${needAndReliefMatch[1]}，以及${needAndReliefMatch[2]}的难处`;
+  }
+
+  return (
+    cleaned
       .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
       .trim() || null
   );
@@ -165,23 +181,46 @@ function normalizeGratitudeReason(value: string | null | undefined) {
     return null;
   }
 
-  return (
-    normalized
-      .replace(/^(?:这让我觉得|让我觉得)/u, "")
-      .replace(/^(?:觉得|感觉到?|感到)/u, "")
-      .replace(/^(?:自己|我自己)/u, "我")
-      .replace(/被看见了，被看见了/u, "被看见了")
-      .trim() || null
+  const cleaned =
+    trimTrailingPunctuation(
+      normalized
+        .replace(/^(?:这让我觉得|让我觉得)/u, "")
+        .replace(/^(?:觉得|感觉到?|感到)/u, "")
+        .replace(/^(?:自己|我自己)/u, "我")
+        .replace(/被看见了，被看见了/u, "被看见了")
+        .trim()
+    ) || null;
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const seenAndReliefMatch = cleaned.match(
+    /^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)[，,]?(不用硬撑着一边听一边记)$/u
   );
+
+  if (seenAndReliefMatch) {
+    return `${seenAndReliefMatch[1]}，以及${seenAndReliefMatch[2]}的难处`;
+  }
+
+  const needAndReliefMatch = cleaned.match(/^(我当时的[^，。！？!?]{0,60}?)[，,](不用硬撑着一边听一边记)$/u);
+
+  return needAndReliefMatch ? `${needAndReliefMatch[1]}，以及${needAndReliefMatch[2]}的难处` : cleaned;
 }
 
 function normalizeGratitudeDraftContent(content: string) {
   return content
     .replace(/而是她没有只说辛苦了当时/g, "而是她当时")
     .replace(/对方像是看见了自己当时的/g, "对方像是看见了我当时的")
+    .replace(
+      /对方像是看见了我当时的([^，。！？!?]{0,60})被看见了[，,]?不用硬撑着一边听一边记/g,
+      "对方像是看见了我当时的$1，以及不用硬撑着一边听一边记的难处"
+    )
     .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})被看见了/g, "对方像是看见了我当时的$1")
-    .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})，也不用/g, "对方像是看见了我当时的$1，也让我不用")
-    .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})，?不用/g, "对方像是看见了我当时的$1，也让我不用")
+    .replace(
+      /对方像是看见了我当时的([^，。！？!?]{0,60})，?不用硬撑着一边听一边记/g,
+      "对方像是看见了我当时的$1，以及不用硬撑着一边听一边记的难处"
+    )
     .replace(/被看见了，不用硬撑着一边听一边记被看见了/g, "被看见了，不用硬撑着一边听一边记");
 }
 

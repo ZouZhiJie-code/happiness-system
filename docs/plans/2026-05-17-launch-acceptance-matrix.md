@@ -445,7 +445,7 @@
 - 当样本只有 `gratitudeMoment + kindAction`，还没说清 `seenNeed / gratitudeReason` 时，当前会进入 `boundary_insufficient`；修复 `ISSUE-004` 后，接口已不能再直接生成并保存 draft。
 - 材料不足样本即使出现合理标题，也不作为 gratitude 质量通过证据。
 - 本轮真实回归确认：支持回应型样本可走到 `event_complete + user_override_partial`，`draft/generate` 与 `draft/save` 均返回 `200`，标题为 `被认真理解`；`gratitudeTarget` 已收敛为 `同事`，正文已去除“的是她没有只说辛苦了 / 被看见了被看见了”类病句。
-- 当前问题池中 `ISSUE-008` 已回归通过；剩余只有一处轻微文风生硬表达“也让我不用硬撑着一边听一边记”，可归入上线后打磨，不再构成阻断。
+- 补充优化回归：同一 AI-05 样本在 `127.0.0.1:3001` 上重新跑完整 API 链路，标题为 `被稳稳接住`；`seenNeed / gratitudeReason` 统一归一为“我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处”，正文不再出现“也让我不用硬撑着一边听一边记 / 也不用硬撑着一边听一边记”等生硬表达。
 - 本条当前判定：`AI-05 通过`。
 
 ---

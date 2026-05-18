@@ -1410,7 +1410,7 @@ describe("generateJoyDraftWithAI", () => {
     const result = await generateJoyDraftWithAI(session);
 
     expect(result.gratitudeTarget).toBe("她");
-    expect(result.seenNeed).toBe("我当时的慌和虚弱，也不用硬撑着一边听一边记");
+    expect(result.seenNeed).toBe("我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
   });
 
   it("keeps a gratitude AI draft when corruption is fully cleaned into a natural sentence", async () => {
@@ -1494,9 +1494,10 @@ describe("generateJoyDraftWithAI", () => {
 
     expect(result.gratitudeTarget).toBe("她");
     expect(result.kindAction).toBe("帮我把会议记录框架列好了");
-    expect(result.seenNeed).toBe("我当时的慌和虚弱，也不用硬撑着一边听一边记");
+    expect(result.seenNeed).toBe("我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
     expect(result.content).toContain("而是她当时帮我把会议记录框架列好了");
-    expect(result.content).toContain("对方像是看见了我当时的慌和虚弱，也让我不用硬撑着一边听一边记");
+    expect(result.content).toContain("对方像是看见了我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
+    expect(result.content).not.toContain("也让我不用硬撑着一边听一边记");
   });
 
   it("preserves fulfillment value signals before the draft quality gate", async () => {

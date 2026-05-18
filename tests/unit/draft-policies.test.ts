@@ -1721,6 +1721,36 @@ describe("draft policies", () => {
     expect(draft.content).not.toContain("而是的是她");
   });
 
+  it("normalizes gratitude need wording before composing fallback need sentences", () => {
+    const snapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      gratitudeTarget: "同事",
+      kindAction: "帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      seenNeed: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeReason: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      innerEffect: null,
+      relationshipSignal: null,
+      selfPattern: null
+    };
+    const session = buildGratitudeSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({
+      session,
+      sourceEvents
+    });
+
+    const draft = createFallbackDraft({
+      session,
+      sourceEvents,
+      eventBlocks: [],
+      brief
+    });
+
+    expect(draft.content).toContain("对方像是看见了我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
+    expect(draft.content).not.toContain("也让我不用硬撑着一边听一边记");
+    expect(draft.content).not.toContain("我当时的慌和虚弱被看见了，不用硬撑着一边听一边记");
+  });
+
   it("deduplicates improvement closing prefixes when nextAttempt already starts with 下次", () => {
     const snapshot: JoySnapshot = {
       ...improvementSnapshot,

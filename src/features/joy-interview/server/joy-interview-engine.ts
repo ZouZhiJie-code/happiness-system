@@ -68,6 +68,36 @@ function trimTrailingPunctuation(value: string) {
   return value.replace(/[。！？!?,，；;:\s]+$/g, "").trim();
 }
 
+function normalizeGratitudeNeedText(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const cleaned = trimTrailingPunctuation(normalizeText(value))
+    .replace(/^(这让我觉得|让我觉得|我觉得|觉得|感觉到?|感到)/u, "")
+    .replace(/^(自己|我自己)/u, "我")
+    .trim();
+  const seenAndReliefMatch = cleaned.match(
+    /^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)[，,]?(不用硬撑着一边听一边记)$/u
+  );
+
+  if (seenAndReliefMatch) {
+    return `${seenAndReliefMatch[1]}，以及${seenAndReliefMatch[2]}的难处`;
+  }
+
+  const needAndReliefMatch = cleaned.match(/^(我当时的[^，。！？!?]{0,60}?)[，,](不用硬撑着一边听一边记)$/u);
+
+  if (needAndReliefMatch) {
+    return `${needAndReliefMatch[1]}，以及${needAndReliefMatch[2]}的难处`;
+  }
+
+  return (
+    cleaned
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
+      .trim() || null
+  );
+}
+
 function clampConfidence(value: number) {
   return Math.max(0, Math.min(0.96, value));
 }
@@ -985,15 +1015,7 @@ function inferSeenNeed(message: string) {
   );
 
   if (directMatch) {
-    const cleaned = trimTrailingPunctuation(directMatch[1] ?? "")
-      .replace(/^(这让我觉得|让我觉得|我觉得)/u, "")
-      .replace(/^(自己|我自己)/u, "我")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被看见了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被接住了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被理解了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
-      .trim();
-    return cleaned.slice(0, 100) || null;
+    return normalizeGratitudeNeedText(directMatch[1])?.slice(0, 100) || null;
   }
 
   const supportMatch = normalized.match(
@@ -1001,15 +1023,7 @@ function inferSeenNeed(message: string) {
   );
 
   if (supportMatch) {
-    const cleaned = trimTrailingPunctuation(supportMatch[1] ?? "")
-      .replace(/^(这让我觉得|让我觉得|我觉得)/u, "")
-      .replace(/^(自己|我自己)/u, "我")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被看见了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被接住了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)被理解了，?不用/u, "$1，也不用")
-      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
-      .trim();
-    return cleaned.slice(0, 100) || null;
+    return normalizeGratitudeNeedText(supportMatch[1])?.slice(0, 100) || null;
   }
 
   if (/(撑不住|快崩|压力很大|太累)/u.test(normalized)) return "我当时其实很需要有人帮我分担一点压力";

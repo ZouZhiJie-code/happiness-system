@@ -168,6 +168,42 @@ function trimTrailingPunctuation(value: string) {
   return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
 }
 
+function normalizeGratitudeNeedText(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const cleaned = trimTrailingPunctuation(
+    normalized
+      .replace(/^(这让我觉得|让我觉得|我觉得|觉得|感觉到?|感到)/u, "")
+      .replace(/^这件事之所以重要，?不是礼貌地谢谢，?而是对方像是看见了/u, "")
+      .replace(/^对方像是看见了/u, "")
+      .replace(/^(自己|我自己)/u, "我")
+      .trim()
+  );
+  const seenAndReliefMatch = cleaned.match(
+    /^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)[，,]?(不用硬撑着一边听一边记)$/u
+  );
+
+  if (seenAndReliefMatch) {
+    return `${seenAndReliefMatch[1]}，以及${seenAndReliefMatch[2]}的难处`;
+  }
+
+  const needAndReliefMatch = cleaned.match(/^(我当时的[^，。！？!?]{0,60}?)[，,](不用硬撑着一边听一边记)$/u);
+
+  if (needAndReliefMatch) {
+    return `${needAndReliefMatch[1]}，以及${needAndReliefMatch[2]}的难处`;
+  }
+
+  return (
+    cleaned
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
+      .trim() || null
+  );
+}
+
 function buildParagraph(...sentences: Array<string | null | undefined>) {
   const normalizedSentences = sentences
     .map((sentence) => sentence?.trim())
@@ -302,6 +338,13 @@ function hasGenericCoreRegression(brief: DraftBrief, content: string) {
 
 function formatTheorySummarySentence(brief: DraftBrief) {
   const theorySummary = sanitizeNullableString(brief.theorySummary);
+
+  if (brief.dimension === "gratitude") {
+    const normalizedTheorySummary = normalizeGratitudeNeedText(theorySummary);
+    return normalizedTheorySummary
+      ? `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedTheorySummary)}。`
+      : null;
+  }
 
   return theorySummary ? `${trimTrailingPunctuation(theorySummary)}。` : null;
 }
@@ -1577,17 +1620,19 @@ function buildGratitudeNeedSentence(snapshot: JoySnapshot) {
   const seenNeed = sanitizeNullableString(snapshot.seenNeed);
   const innerEffect = sanitizeNullableString(snapshot.innerEffect ?? snapshot.feeling);
   const gratitudeReason = sanitizeNullableString(snapshot.gratitudeReason ?? snapshot.whyItMattered);
+  const normalizedNeed = normalizeGratitudeNeedText(seenNeed);
+  const normalizedReason = normalizeGratitudeNeedText(gratitudeReason);
 
-  if (seenNeed && innerEffect) {
-    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(seenNeed)}，也让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`;
+  if (normalizedNeed && innerEffect) {
+    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedNeed)}，也让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`;
   }
 
-  if (seenNeed) {
-    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(seenNeed)}。`;
+  if (normalizedNeed) {
+    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedNeed)}。`;
   }
 
-  if (gratitudeReason) {
-    return `这份感谢之所以重要，是因为${trimTrailingPunctuation(gratitudeReason)}。`;
+  if (normalizedReason) {
+    return `这份感谢之所以重要，是因为${trimTrailingPunctuation(normalizedReason)}。`;
   }
 
   return null;
@@ -1606,6 +1651,8 @@ function buildGratitudeSupportingParagraph(snapshot: JoySnapshot, index: number)
   const seenNeed = sanitizeNullableString(snapshot.seenNeed);
   const innerEffect = sanitizeNullableString(snapshot.innerEffect ?? snapshot.feeling);
   const gratitudeReason = sanitizeNullableString(snapshot.gratitudeReason ?? snapshot.whyItMattered);
+  const normalizedNeed = normalizeGratitudeNeedText(seenNeed);
+  const normalizedReason = normalizeGratitudeNeedText(gratitudeReason);
   const sentences = [
     moment
       ? index === 0
@@ -1617,12 +1664,12 @@ function buildGratitudeSupportingParagraph(snapshot: JoySnapshot, index: number)
       : kindAction
         ? `那时对方${trimTrailingPunctuation(kindAction)}。`
         : null,
-    seenNeed && innerEffect
-      ? `这份好意也像是看见了${trimTrailingPunctuation(seenNeed)}，让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`
-      : seenNeed
-        ? `这份好意也像是看见了${trimTrailingPunctuation(seenNeed)}。`
-        : gratitudeReason
-          ? `它会留在我心里，也是因为${trimTrailingPunctuation(gratitudeReason)}。`
+    normalizedNeed && innerEffect
+      ? `这份好意也像是看见了${trimTrailingPunctuation(normalizedNeed)}，让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`
+      : normalizedNeed
+        ? `这份好意也像是看见了${trimTrailingPunctuation(normalizedNeed)}。`
+        : normalizedReason
+          ? `它会留在我心里，也是因为${trimTrailingPunctuation(normalizedReason)}。`
           : null
   ].filter(Boolean);
 
