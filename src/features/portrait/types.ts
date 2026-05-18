@@ -1,5 +1,18 @@
 import type { InterviewDimension } from "@prisma/client";
 
+export interface ProfileFactView {
+  id: string;
+  dimension: InterviewDimension;
+  summary: string;
+  topicTags: string[];
+  sourceType: string;
+  confidence: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type GroupedProfile = Record<InterviewDimension, ProfileFactView[]>;
+
 // ─── Portrait Snapshot (from GET /api/profile/portrait) ────────────────────
 
 export interface PortraitSnapshotView {

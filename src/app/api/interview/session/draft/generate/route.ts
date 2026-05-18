@@ -51,6 +51,13 @@ export async function POST(request: Request) {
         );
       }
 
+      if (error.code === "DRAFT_GENERATE_NOT_READY") {
+        return NextResponse.json(
+          { error: error.code, retryable: false, message: "当前材料还不够生成日志，请先补充当前片段或换一个片段。" },
+          { status: 409 }
+        );
+      }
+
       if (error.code === "DRAFT_GENERATE_UPSTREAM_ERROR") {
         return NextResponse.json(
           { error: error.code, retryable: true, message: "AI 暂时没能完成整理，请稍后重试。" },

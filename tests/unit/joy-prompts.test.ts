@@ -435,9 +435,9 @@ describe("fulfillment prompt strategy", () => {
       messages: baseMessages
     });
 
-    expect(messages[0]?.content).toContain("event=具体充实片段");
-    expect(messages[0]?.content).toContain("whyItMattered=没有白过的进展证据");
-    expect(messages[0]?.content).toContain("selfPattern=值得感标准");
+    expect(messages[0]?.content).toContain("experience=具体充实片段");
+    expect(messages[0]?.content).toContain("progressEvidence=没有白过的进展证据");
+    expect(messages[0]?.content).toContain("valueSignal=值得感标准");
     expect(messages[0]?.content).toContain("不要把普通忙碌、任务很多、踏实情绪直接抽成进展证据");
     expect(messages[1]?.content).toContain('"experience": "今天把一个拖了很久的任务推进完了"');
     expect(messages[1]?.content).toContain('"progressEvidence": "原本卡住的部分终于收口了"');

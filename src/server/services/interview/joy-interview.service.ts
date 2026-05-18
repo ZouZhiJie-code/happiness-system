@@ -102,6 +102,7 @@ export class DraftGenerationError extends Error {
     readonly code:
       | "SESSION_BATCH_UNSUPPORTED"
       | "SESSION_NOT_FOUND"
+      | "DRAFT_GENERATE_NOT_READY"
       | "DRAFT_GENERATE_UPSTREAM_ERROR"
       | "DRAFT_GENERATE_DB_ERROR"
       | "DRAFT_GENERATE_UNKNOWN_ERROR",
@@ -1803,7 +1804,14 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   if (canonicalAction === "next_event") {
-    if (session.pendingDecision?.kind !== "event_complete" || session.pendingDecision.eventId !== activeEvent.id) {
+    const pendingDecision = session.pendingDecision;
+
+    if (
+      !pendingDecision ||
+      pendingDecision.kind === "dimension_redirect" ||
+      !pendingDecision.actions.includes("next_event") ||
+      pendingDecision.eventId !== activeEvent.id
+    ) {
       throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
     }
 
@@ -2161,6 +2169,10 @@ export async function generateJoyInterviewDraft(userId: string, sessionIds: stri
 
   if (!session) {
     throw new DraftGenerationError("SESSION_NOT_FOUND", false);
+  }
+
+  if (session.pendingDecision?.kind === "boundary_insufficient" || !session.draftGenerationUnlocked) {
+    throw new DraftGenerationError("DRAFT_GENERATE_NOT_READY", false, "Draft generation is not available yet.");
   }
 
   let draftEntry;

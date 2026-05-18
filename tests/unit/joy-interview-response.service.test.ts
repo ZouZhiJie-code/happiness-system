@@ -100,7 +100,12 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getManualClue
 }));
 
-import { prepareJoyInterviewResponse, streamJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
+import {
+  DraftGenerationError,
+  generateJoyInterviewDraft,
+  prepareJoyInterviewResponse,
+  streamJoyInterviewResponse
+} from "@/server/services/interview/joy-interview.service";
 
 const baseSnapshot: JoySnapshot = {
   event: "今天和朋友聊了很久",
@@ -589,6 +594,29 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("改进尝试线索");
   });
 
+  it("rejects draft generation when the session is still in boundary_insufficient", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        draftGenerationUnlocked: false,
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-1",
+          eventSequence: 1,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        }
+      })
+    );
+
+    await expect(generateJoyInterviewDraft("user-1", ["session-ready"])).rejects.toMatchObject({
+      code: "DRAFT_GENERATE_NOT_READY",
+      retryable: false
+    } satisfies Partial<DraftGenerationError>);
+    expect(generateJoyDraftWithAI).not.toHaveBeenCalled();
+    expect(saveJoyInterviewDraft).not.toHaveBeenCalled();
+  });
+
   it("offers a partial improvement draft choice when cause is clear and the user asks to generate", async () => {
     const partialImprovementSnapshot: JoySnapshot = {
       event: "今天上午我先写了三条重点再开工",
@@ -788,6 +816,151 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("allows next_event from a boundary_insufficient choice when the action is offered", async () => {
+    const insufficientImprovementSnapshot: JoySnapshot = {
+      event: "今天很糟",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      improvementTrack: null,
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.3,
+      missingSlots: ["frictionPointOrRepeatCondition"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "wrap_up",
+        snapshot: insufficientImprovementSnapshot,
+        activeEventId: "event-1",
+        pendingDecision: {
+          kind: "boundary_insufficient",
+          eventId: "event-1",
+          eventSequence: 1,
+          reason: "我不再继续追问细节了。",
+          actions: ["continue_current_event", "next_event", "pause_session"]
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "ready_for_choice",
+            stage: "wrap_up",
+            explorationRound: 1,
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientImprovementSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const nextSession = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      activeEventId: "event-2",
+      lastAssistantQuestion: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+      messages: [
+        {
+          id: "assistant-next",
+          role: "assistant",
+          content: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+          assistantPayload: {
+            insight: "",
+            thinkingSummary: "",
+            analysis: "",
+            question: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+            stateUpdate: {
+              turnPhase: "opening",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event"]
+            }
+          },
+          sequence: 1,
+          createdAt: "2026-04-21T00:05:00.000Z"
+        }
+      ],
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "completed",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail" as const],
+          roundCoveredLenses: ["event_detail" as const],
+          roundMeaningfulReplyCount: 1,
+          totalMeaningfulReplyCount: 1,
+          startMessageSequence: 0,
+          snapshot: insufficientImprovementSnapshot,
+          draftSummary: null,
+          startedAt: "2026-04-21T00:00:00.000Z",
+          completedAt: "2026-04-21T00:04:00.000Z"
+        },
+        {
+          id: "event-2",
+          sequence: 2,
+          status: "active",
+          stage: "collect_event",
+          explorationRound: 1,
+          coveredLenses: [],
+          roundCoveredLenses: [],
+          roundMeaningfulReplyCount: 0,
+          totalMeaningfulReplyCount: 0,
+          startMessageSequence: 1,
+          snapshot: {
+            event: null,
+            feeling: null,
+            whyItMattered: null,
+            happinessType: null,
+            selfPattern: null,
+            confidence: 0,
+            missingSlots: ["event", "reason"]
+          },
+          draftSummary: null,
+          startedAt: "2026-04-21T00:05:00.000Z",
+          completedAt: null
+        }
+      ],
+      pendingDecision: null
+    });
+
+    startNextInterviewEvent.mockResolvedValue(nextSession);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "next_event",
+      sessionId: "session-ready"
+    });
+
+    expect(startNextInterviewEvent).toHaveBeenCalledWith(
+      "session-ready",
+      "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？"
+    );
+    expect(result).toMatchObject({
+      assistantMessage: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
+      sessionStatus: "active"
+    });
+    expect(result.session.activeEventId).toBe("event-2");
+    expect(result.session.pendingDecision).toBeNull();
   });
 
   it("returns a low-pressure boundary choice when the user requests a log before reflection has concrete insight", async () => {

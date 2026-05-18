@@ -1241,7 +1241,13 @@ function buildFulfillmentClosingSentence(input: {
   const progressEvidence = sanitizeNullableString(input.snapshot.whyItMattered);
 
   if (input.brief.completionMode === "complete" && valueSignal) {
-    return `回头看，我也更知道，对我来说，${trimTrailingPunctuation(valueSignal)}才会真正算数。`;
+    const normalizedValueSignal = trimTrailingPunctuation(valueSignal);
+
+    if (/(算数|没白过|不算白忙|不算空转|有分量)/u.test(normalizedValueSignal)) {
+      return `回头看，我也更知道，${normalizedValueSignal}。`;
+    }
+
+    return `回头看，我也更知道，对我来说，${normalizedValueSignal}才会真正算数。`;
   }
 
   if (progressEvidence) {
@@ -1466,11 +1472,12 @@ function buildImprovementClosingSentence(input: {
   const successSignal = sanitizeNullableString(input.snapshot.successSignal);
   const controllableFactor = sanitizeNullableString(input.snapshot.controllableFactor);
   const core = getImprovementCore(input.snapshot);
+  const cleanedNextAttempt = nextAttempt?.replace(/^(?:下次|以后|下一次)(?:我)?(?:想)?(?:先|会|要)?/u, "").trim() ?? null;
 
   if (input.brief.completionMode === "complete" && nextAttempt) {
     return successSignal
-      ? `下次我想先试试${trimTrailingPunctuation(nextAttempt)}。如果${trimTrailingPunctuation(successSignal)}，就说明比这次稳了一点。`
-      : `下次我想先试试${trimTrailingPunctuation(nextAttempt)}，先把这一小步做出来。`;
+      ? `下次我想先试试${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}。如果${trimTrailingPunctuation(successSignal)}，就说明比这次稳了一点。`
+      : `下次我想先试试${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}，先把这一小步做出来。`;
   }
 
   if (controllableFactor) {
@@ -1553,9 +1560,10 @@ function buildGratitudeOpeningSentence(snapshot: JoySnapshot) {
 function buildGratitudeActionSentence(snapshot: JoySnapshot) {
   const target = sanitizeNullableString(snapshot.gratitudeTarget);
   const kindAction = sanitizeNullableString(snapshot.kindAction);
+  const normalizedTarget = target?.replace(/^(的是|是|那个|这位)/u, "").trim() ?? null;
 
-  if (target && kindAction) {
-    return `我感谢的不是一句泛泛的好意，而是${trimTrailingPunctuation(target)}当时${trimTrailingPunctuation(kindAction)}。`;
+  if (normalizedTarget && kindAction) {
+    return `我感谢的不是一句泛泛的好意，而是${trimTrailingPunctuation(normalizedTarget)}当时${trimTrailingPunctuation(kindAction)}。`;
   }
 
   if (kindAction) {
@@ -2142,6 +2150,10 @@ export function runDraftQualityGate(input: {
 
     if (GRATITUDE_EMPTY_KINDNESS_PATTERN.test(content) && !hasAction) {
       issues.push("empty_kindness_tone");
+    }
+
+    if (/而是她没有只说辛苦了当时|的是她没有只说辛苦了|对方像是看见了自己当时的/u.test(content)) {
+      issues.push("gratitude_corrupted_phrase");
     }
 
     if (input.brief.completionMode === "user_override_partial") {

@@ -518,6 +518,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=overview", { scroll: false });
     await screen.findByTestId("analysis-month-hero");
 
     expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();

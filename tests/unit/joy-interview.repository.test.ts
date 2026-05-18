@@ -2,12 +2,14 @@ const {
   mockFindUnique,
   mockUpdate,
   mockCreate,
+  mockSessionCreate,
   mockUpsert,
   mockTransaction
 } = vi.hoisted(() => ({
   mockFindUnique: vi.fn(),
   mockUpdate: vi.fn(),
   mockCreate: vi.fn(),
+  mockSessionCreate: vi.fn(),
   mockUpsert: vi.fn(),
   mockTransaction: vi.fn()
 }));
@@ -16,6 +18,7 @@ vi.mock("@/server/db/prisma", () => ({
   prisma: {
     $transaction: mockTransaction,
     interviewSession: {
+      create: mockSessionCreate,
       findUnique: mockFindUnique,
       update: mockUpdate
     },
@@ -35,6 +38,7 @@ describe("findJoyInterviewSessionById", () => {
     mockFindUnique.mockReset();
     mockUpdate.mockReset();
     mockCreate.mockReset();
+    mockSessionCreate.mockReset();
     mockUpsert.mockReset();
     mockTransaction.mockReset();
   });
@@ -160,17 +164,7 @@ describe("findJoyInterviewSessionById", () => {
   });
 
   it("writes draft dates from entryDate instead of startedAt", async () => {
-    mockTransaction.mockImplementation(async (callback: (tx: any) => Promise<unknown>) =>
-      callback({
-        interviewSession: {
-          findUnique: mockFindUnique,
-          update: mockUpdate
-        },
-        joyEntry: {
-          upsert: mockUpsert
-        }
-      })
-    );
+    mockTransaction.mockResolvedValue([]);
 
     mockFindUnique.mockResolvedValue({
       id: "session-entry-date",
@@ -280,20 +274,11 @@ describe("findJoyInterviewSessionById", () => {
         })
       })
     );
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
   });
 
   it("demotes a saved journal back to draft when regenerating it", async () => {
-    mockTransaction.mockImplementation(async (callback: (tx: any) => Promise<unknown>) =>
-      callback({
-        interviewSession: {
-          findUnique: mockFindUnique,
-          update: mockUpdate
-        },
-        joyEntry: {
-          upsert: mockUpsert
-        }
-      })
-    );
+    mockTransaction.mockResolvedValue([]);
 
     mockFindUnique.mockResolvedValue({
       id: "session-saved-entry",
@@ -437,16 +422,18 @@ describe("findJoyInterviewSessionById", () => {
       status: "draft",
       savedAt: null
     });
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
   });
 
   it("creates a new interview session for the explicit user id without demo-user setup", async () => {
-    const mockSessionCreate = vi.fn().mockResolvedValue({
+    mockTransaction.mockResolvedValue([]);
+    mockFindUnique.mockResolvedValue({
       id: "session-new",
       userId: "user-1",
       dimension: "joy",
       status: "active",
       stage: "collect_event",
-      activeEventId: null,
+      activeEventId: "event-1",
       turnCount: 0,
       lastAssistantQuestion: "今天有没有一个让你真心开心的瞬间？",
       draftSummary: null,
@@ -455,33 +442,80 @@ describe("findJoyInterviewSessionById", () => {
       startedAt: new Date("2026-05-16T00:00:00.000Z"),
       pausedAt: null,
       completedAt: null,
-      activeEvent: null,
-      events: [],
-      messages: [],
-      snapshots: [],
+      activeEvent: {
+        id: "event-1",
+        progressData: null
+      },
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "active",
+          stage: "collect_event",
+          explorationRound: 1,
+          coveredLenses: [],
+          roundCoveredLenses: [],
+          roundMeaningfulReplyCount: 0,
+          totalMeaningfulReplyCount: 0,
+          startMessageSequence: 0,
+          event: null,
+          feeling: null,
+          whyItMattered: null,
+          happinessType: null,
+          selfPattern: null,
+          snapshotData: {
+            kind: "joy"
+          },
+          draftSummary: null,
+          confidence: null,
+          missingSlots: [],
+          startedAt: new Date("2026-05-16T00:00:00.000Z"),
+          completedAt: null
+        }
+      ],
+      messages: [
+        {
+          id: "assistant-1",
+          role: "assistant",
+          inputMode: null,
+          content: "今天有没有一个让你真心开心的瞬间？",
+          sequence: 0,
+          createdAt: new Date("2026-05-16T00:00:00.000Z")
+        }
+      ],
+      snapshots: [
+        {
+          version: 0,
+          event: null,
+          feeling: null,
+          whyItMattered: null,
+          happinessType: null,
+          selfPattern: null,
+          confidence: null,
+          missingSlots: []
+        }
+      ],
       joyEntry: null
     });
 
-    mockTransaction.mockImplementation(async (callback: (tx: any) => Promise<unknown>) =>
-      callback({
-        interviewSession: {
-          create: mockSessionCreate,
-          findUnique: mockFindUnique,
-          update: mockUpdate
-        },
-        interviewEvent: {
-          create: mockCreate.mockResolvedValue({ id: "event-1" })
-        }
-      })
+    const session = await createJoyInterviewSession(
+      "user-1",
+      "joy",
+      "今天有没有一个让你真心开心的瞬间？",
+      "2026-05-16"
     );
 
-    await expect(createJoyInterviewSession("user-1", "joy", "今天有没有一个让你真心开心的瞬间？", "2026-05-16")).rejects.toThrow();
-    expect(mockSessionCreate).toHaveBeenCalledWith(
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    const txCalls = mockTransaction.mock.calls[0]?.[0];
+    expect(Array.isArray(txCalls)).toBe(true);
+    expect(txCalls).toHaveLength(3);
+    expect(mockFindUnique).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          userId: "user-1"
+        where: expect.objectContaining({
+          id: expect.any(String)
         })
       })
     );
+    expect(session.userId).toBe("user-1");
   });
 });

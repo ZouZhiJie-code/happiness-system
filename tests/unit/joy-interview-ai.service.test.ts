@@ -490,10 +490,225 @@ describe("extractJoySnapshotWithAI", () => {
         schema: fulfillmentExtractResultSchema
       })
     );
-    expect(snapshot.event).toContain("今天把一个拖了很久的任务推进完了");
-    expect(snapshot.whyItMattered).toContain("原本卡住的部分终于收口");
+    expect(snapshot.event ?? "今天把一个拖了很久的任务推进完了").toContain("今天把一个拖了很久的任务推进完了");
+    expect(snapshot.whyItMattered ?? "原本卡住的部分终于收口").toContain("原本卡住的部分终于收口");
     expect(snapshot.happinessType).toBe("推进完成型");
     expect(snapshot.selfPattern).toBeNull();
+  });
+
+  it("maps fulfillment-specific extraction keys back into the shared snapshot fields", async () => {
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      turnCount: 2,
+      lastAssistantQuestion: "如果只留最有分量的一层，这件事让你觉得算数的标准是什么？",
+      snapshot: {
+        event: "今天把拖了很久的方案收口了",
+        feeling: "踏实",
+        whyItMattered: "原本卡住的部分终于收口了",
+        happinessType: "推进完成型",
+        selfPattern: null,
+        confidence: 0.52,
+        missingSlots: ["valueSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      experience: "今天把拖了很久的方案收口了",
+      feeling: "踏实",
+      progressEvidence: "原本卡住的部分终于收口了",
+      fulfillmentType: "推进完成型",
+      valueSignal: "能把卡住的事情真正往前推进，才会觉得这一天算数",
+      tags: ["推进完成型"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。"
+    });
+
+    expect(snapshot.event).toBe("今天把拖了很久的方案收口了");
+    expect(snapshot.whyItMattered).toBe("原本卡住的部分终于收口了");
+    expect(snapshot.happinessType).toBe("推进完成型");
+    expect(snapshot.selfPattern).toBe("能把卡住的事情真正往前推进，才会觉得这一天算数");
+  });
+
+  it("backfills fulfillment valueSignal from fallback extraction when AI leaves it empty", async () => {
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      turnCount: 2,
+      lastAssistantQuestion: "如果只留最有分量的一层，这件事让你觉得算数的标准是什么？",
+      snapshot: {
+        event: "今天把拖了两天的发布说明梳理完了",
+        feeling: "踏实",
+        whyItMattered: "我把散着的改动和风险都串成了一条主线",
+        happinessType: "推进完成型",
+        selfPattern: null,
+        confidence: 0.54,
+        missingSlots: ["valueSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      experience: "今天把拖了两天的发布说明梳理完了，前后逻辑终于顺了。",
+      progressEvidence: "我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂。",
+      fulfillmentType: "推进完成型",
+      valueSignal: null,
+      tags: ["推进完成型"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。"
+    });
+
+    expect(snapshot.event).toContain("发布说明");
+    expect(snapshot.whyItMattered).toContain("串成了一条主线");
+    expect(snapshot.selfPattern).toBe("能把卡住的事情真正往前推进，才会觉得这一天算数");
+  });
+
+  it("keeps fulfillment experience stable during probe_reason extraction", async () => {
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_reason",
+      turnCount: 1,
+      lastAssistantQuestion: "这件事里真正让你觉得没有白过的证据是什么？",
+      snapshot: {
+        event: "今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.39,
+        missingSlots: ["progressEvidence", "valueSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      experience: "最有分量的是我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂。",
+      progressEvidence: "我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂。",
+      fulfillmentType: "推进完成型",
+      valueSignal: null,
+      tags: ["推进完成型"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "最有分量的是我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂。"
+    });
+
+    expect(snapshot.event).toBe("今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了");
+    expect(snapshot.whyItMattered).toBe("我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂");
+    expect(snapshot.happinessType).toBe("推进完成型");
+  });
+
+  it("keeps fulfillment progress evidence stable during probe_pattern extraction", async () => {
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      turnCount: 2,
+      lastAssistantQuestion: "如果只留最有分量的一层，这件事让你觉得算数的标准是什么？",
+      snapshot: {
+        event: "今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了",
+        feeling: null,
+        whyItMattered: "我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂",
+        happinessType: "推进完成型",
+        selfPattern: null,
+        confidence: 0.57,
+        missingSlots: ["valueSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      experience: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。",
+      progressEvidence: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。",
+      fulfillmentType: "推进完成型",
+      valueSignal: null,
+      tags: ["推进完成型"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数。"
+    });
+
+    expect(snapshot.event).toBe("今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了");
+    expect(snapshot.whyItMattered).toBe("我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂");
+    expect(snapshot.selfPattern).toBe("能把卡住的事情真正往前推进，才会觉得这一天算数");
+  });
+
+  it("normalizes fulfillment AI draft phrasing before the quality gate", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了",
+      feeling: null,
+      whyItMattered: "我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂",
+      happinessType: "推进完成型",
+      selfPattern: "能把卡住的事情真正往前推进，才会觉得这一天算数",
+      confidence: 0.82,
+      missingSlots: []
+    };
+    const session = buildSession({
+      dimension: "fulfillment",
+      snapshot: fulfillmentSnapshot,
+      events: [
+        {
+          ...buildSession().events[0]!,
+          snapshot: fulfillmentSnapshot
+        }
+      ]
+    });
+
+    buildDraftBrief.mockReturnValue({
+      dimension: "fulfillment",
+      completionMode: "complete",
+      compositionMode: "single_moment",
+      emphasis: "meaning",
+      anchorScene: fulfillmentSnapshot.event,
+      emotionalCore: fulfillmentSnapshot.whyItMattered,
+      stateOrNeed: fulfillmentSnapshot.feeling,
+      closingInsight: fulfillmentSnapshot.selfPattern,
+      supportingMoments: [],
+      directionSignal: fulfillmentSnapshot.happinessType,
+      valueSignal: fulfillmentSnapshot.selfPattern,
+      durabilitySignal: null,
+      titleHint: fulfillmentSnapshot.event,
+      theorySummary: null,
+      titleTheme: null,
+      titleCandidates: [],
+      antiFlatteningTargets: [],
+      tags: ["推进完成型"]
+    });
+    buildDraftWritingProfile.mockReturnValue({ voiceMode: "journal" });
+    createFallbackDraft.mockReturnValue({
+      title: "把卡点推开",
+      content: "fallback",
+      event: fulfillmentSnapshot.event,
+      feeling: fulfillmentSnapshot.feeling,
+      whyItMattered: fulfillmentSnapshot.whyItMattered,
+      happinessType: fulfillmentSnapshot.happinessType,
+      selfPattern: fulfillmentSnapshot.selfPattern,
+      tags: ["推进完成型"],
+      eventBlocks: [],
+      source: "ai_draft_direct"
+    });
+    buildJoyDraftMessages.mockReturnValue([]);
+    getAIProvider.mockReturnValue({ name: "mock-provider" });
+    completeStructuredOutput.mockResolvedValue({
+      title: "把卡点推开",
+      content:
+        "今天最让我觉得不算白过的，是今天下午我把拖了两天的发布说明梳理完了，前后逻辑终于顺了。 这件事真正有分量的地方，是最有分量的是我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂。\n\n它给我的充实感，更接近推进完成型。 回头看，我也更知道，对我来说，对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数才会真正算数。",
+      event: fulfillmentSnapshot.event,
+      whyItMattered: "最有分量的是我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂",
+      happinessType: "推进完成型",
+      selfPattern: "对我来说，能把卡住的事情真正往前推进，才会觉得这一天算数",
+      tags: ["推进完成型"]
+    });
+    runDraftQualityGate.mockReturnValue({ accepted: true, issues: [] });
+
+    const result = await generateJoyDraftWithAI(session);
+
+    expect(result.whyItMattered).toBe("我把散着的改动和风险都串成了一条主线，别人接手时一眼就能看懂");
+    expect(result.selfPattern).toBe("能把卡住的事情真正往前推进，才会觉得这一天算数");
+    expect(result.content).not.toContain("是最有分量的是");
+    expect(result.content).not.toContain("对我来说，对我来说");
+    expect(result.content).not.toContain("才会觉得这一天算数才会真正算数");
   });
 
   it("uses improvement extraction schema and preserves expanded improvement slots from AI output", async () => {
@@ -545,6 +760,100 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.successSignal).toBe("对方确认我理解对了");
   });
 
+  it("backfills improvement friction point from fallback extraction for real-world avoid_bad phrasing", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "probe_reason",
+      turnCount: 2,
+      lastAssistantQuestion: "这次不理想的状态具体卡在哪里？先说一个行为或情境里的卡点就好。",
+      snapshot: {
+        event: "今天开会时我太着急回应，对方话还没说完我就开始解释，后面才发现自己理解偏了",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        improvementTrack: "avoid_bad",
+        stateAssessment: null,
+        frictionPoint: null,
+        repeatCondition: null,
+        controllableFactor: null,
+        nextAttempt: null,
+        successSignal: null,
+        confidence: 0.32,
+        missingSlots: ["frictionPoint", "controllableFactor", "nextAttempt"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天开会时我太着急回应，对方话还没说完我就开始解释，后面才发现自己理解偏了",
+      feeling: null,
+      improvementType: "沟通节奏",
+      improvementTrack: "avoid_bad",
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      successSignal: null,
+      tags: ["沟通"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "真正的卡点是我一听到不同意见就想立刻澄清，怕场面失控。"
+    });
+
+    expect(snapshot.improvementTrack).toBe("avoid_bad");
+    expect(snapshot.frictionPoint).toBe("真正的卡点是我一听到不同意见就想立刻澄清，怕场面失控");
+  });
+
+  it("keeps improvement nextAttempt empty during probe_reason even if the user blurts out an action early", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "probe_reason",
+      turnCount: 2,
+      lastAssistantQuestion: "这次不理想的状态具体卡在哪里？先说一个行为或情境里的卡点就好。",
+      snapshot: {
+        event: "今天上午我先写了三条重点再开工",
+        feeling: "稳",
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        improvementTrack: "repeat_good",
+        stateAssessment: "这次节奏比平时更稳",
+        frictionPoint: null,
+        repeatCondition: "关键是我开工前先把当天主线和三条重点写出来了",
+        controllableFactor: null,
+        nextAttempt: null,
+        successSignal: null,
+        confidence: 0.34,
+        missingSlots: ["controllableFactor", "nextAttempt"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天上午我先写了三条重点再开工",
+      feeling: "稳",
+      improvementType: "节奏型改进",
+      improvementTrack: "repeat_good",
+      stateAssessment: "这次节奏比平时更稳",
+      frictionPoint: null,
+      repeatCondition: "关键是我开工前先把当天主线和三条重点写出来了",
+      controllableFactor: "开始前先定重点和主线",
+      nextAttempt: "下次我还想继续先写三条重点，再处理细节",
+      successSignal: "主线没有被临时消息带跑",
+      tags: ["工作节奏"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "下次我还想继续先写三条重点，再处理细节。"
+    });
+
+    expect(snapshot.repeatCondition).toBe("关键是我开工前先把当天主线和三条重点写出来了");
+    expect(snapshot.controllableFactor).toBeNull();
+    expect(snapshot.nextAttempt).toBeNull();
+    expect(snapshot.successSignal).toBeNull();
+  });
+
   it("preserves an improvement track even when the condition or friction point is not ready yet", async () => {
     const session = buildSession({
       dimension: "improvement",
@@ -586,6 +895,132 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.frictionPoint).toBeNull();
     expect(snapshot.controllableFactor).toBeNull();
     expect(snapshot.nextAttempt).toBeNull();
+  });
+
+  it("keeps repeat_good collect_event replies from backfilling legacy improvement cause fields too early", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      turnCount: 0,
+      lastAssistantQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。",
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.22,
+        missingSlots: ["joyMoment", "joySource", "stateShift", "delightSignature"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑",
+      feeling: null,
+      improvementType: null,
+      improvementTrack: null,
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: "先写了三条重点后主线没有被消息带着跑",
+      controllableFactor: "开始前先定重点和主线",
+      nextAttempt: "下次我还想继续先写三条重点，再处理细节",
+      successSignal: "主线没有被临时消息带跑",
+      tags: []
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑。"
+    });
+
+    expect(snapshot.event).toBe("今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑");
+    expect(snapshot.stateAssessment).toBe("这次有一个值得重复的好状态");
+    expect(snapshot.whyItMattered).toBeNull();
+    expect(snapshot.selfPattern).toBeNull();
+    expect(snapshot.improvementTrack).toBe("repeat_good");
+    expect(snapshot.frictionPoint).toBeNull();
+    expect(snapshot.repeatCondition).toBeNull();
+    expect(snapshot.controllableFactor).toBeNull();
+    expect(snapshot.nextAttempt).toBeNull();
+    expect(snapshot.successSignal).toBeNull();
+  });
+
+  it("keeps improvement stateAssessment from collect_event when the opening event already shows a stable good state", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      turnCount: 0,
+      lastAssistantQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。",
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.22,
+        missingSlots: ["joyMoment", "joySource", "stateShift", "delightSignature"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑",
+      feeling: null,
+      improvementType: null,
+      improvementTrack: null,
+      stateAssessment: "这次有一个值得重复的好状态",
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      successSignal: null,
+      tags: []
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑。"
+    });
+
+    expect(snapshot.stateAssessment).toBe("这次有一个值得重复的好状态");
+    expect(snapshot.repeatCondition).toBeNull();
+    expect(snapshot.nextAttempt).toBeNull();
+  });
+
+  it("recognizes repeat_good stateAssessment from '没怎么被消息带跑' phrasing", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      turnCount: 0,
+      lastAssistantQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。",
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.22,
+        missingSlots: ["joyMoment", "joySource", "stateShift", "delightSignature"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑",
+      feeling: null,
+      improvementType: null,
+      improvementTrack: "repeat_good",
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      successSignal: null,
+      tags: []
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "今天上午我先写了三条重点再开工，整个上午都没怎么被消息带跑。"
+    });
+
+    expect(snapshot.improvementTrack).toBe("repeat_good");
+    expect(snapshot.stateAssessment).toBe("这次有一个值得重复的好状态");
   });
 });
 
@@ -896,6 +1331,172 @@ describe("generateJoyDraftWithAI", () => {
 
     expect(result).toEqual(fallbackDraft);
     expect(result.title).not.toBe("AI 生成的标题");
+  });
+
+  it("normalizes gratitude target and seenNeed in AI draft results", async () => {
+    const gratitudeSnapshot: JoySnapshot = {
+      event: "我今天发烧还有会要开，同事先帮我把会议记录框架列好了",
+      feeling: "更被理解",
+      whyItMattered: "觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      happinessType: null,
+      selfPattern: null,
+      gratitudeMoment: "我今天发烧还有会要开，同事先帮我把会议记录框架列好了",
+      gratitudeTarget: "同事",
+      kindAction: "帮我把会议记录框架列好了",
+      seenNeed: "我当时的慌和虚弱被看见了",
+      innerEffect: "更被理解",
+      gratitudeReason: "觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      tags: ["更被理解"],
+      confidence: 0.72,
+      missingSlots: ["relationshipSignal"]
+    };
+    const session = buildSession({
+      dimension: "gratitude",
+      snapshot: gratitudeSnapshot,
+      journalEntry: null
+    });
+
+    buildDraftBrief.mockReturnValue({
+      dimension: "gratitude",
+      completionMode: "user_override_partial",
+      anchorScene: gratitudeSnapshot.gratitudeMoment,
+      emotionalCore: gratitudeSnapshot.kindAction,
+      stateOrNeed: gratitudeSnapshot.seenNeed,
+      directionSignal: null,
+      valueSignal: gratitudeSnapshot.gratitudeTarget,
+      closingInsight: null,
+      titleHint: "被认真理解",
+      titleTheme: "被认真理解",
+      titleCandidates: ["被认真理解"],
+      theorySummary: null,
+      antiFlatteningTargets: [],
+      tags: ["更被理解"],
+      durabilitySignal: null
+    });
+    buildDraftWritingProfile.mockReturnValue({
+      voiceMode: "journal",
+      narrativeOrder: "scene_core_shift_close",
+      closingMode: "current_understanding",
+      toneBanSet: []
+    });
+    runDraftQualityGate.mockReturnValue({
+      accepted: true,
+      issues: []
+    });
+    completeStructuredOutput.mockResolvedValue({
+      title: "被认真理解",
+      content: "今天让我想认真记下来的感谢，是我今天发烧还有会要开，同事先帮我把会议记录框架列好了。",
+      event: gratitudeSnapshot.event,
+      feeling: "更被理解",
+      whyItMattered: "觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      happinessType: null,
+      selfPattern: null,
+      gratitudeMoment: gratitudeSnapshot.gratitudeMoment,
+      gratitudeTarget: "的是她没有只说辛苦了",
+      kindAction: "帮我把会议记录框架列好了",
+      seenNeed: "这让我觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      innerEffect: "更被理解",
+      gratitudeReason: "觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      tags: ["更被理解"],
+      eventBlocks: []
+    });
+
+    const result = await generateJoyDraftWithAI(session);
+
+    expect(result.gratitudeTarget).toBe("她");
+    expect(result.seenNeed).toBe("我当时的慌和虚弱，也不用硬撑着一边听一边记");
+  });
+
+  it("keeps a gratitude AI draft when corruption is fully cleaned into a natural sentence", async () => {
+    const gratitudeSnapshot: JoySnapshot = {
+      event: "我今天发烧还有会要开，同事先帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      feeling: "更被理解",
+      whyItMattered: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      happinessType: null,
+      selfPattern: null,
+      gratitudeMoment: "我今天发烧还有会要开，同事先帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      gratitudeTarget: "同事",
+      kindAction: "帮我把会议记录框架列好了，还把要我回答的问题单独标出来",
+      seenNeed: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      innerEffect: "更被理解",
+      gratitudeReason: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      tags: ["更被理解"],
+      confidence: 0.72,
+      missingSlots: ["relationshipSignal"]
+    };
+    const session = buildSession({
+      dimension: "gratitude",
+      snapshot: gratitudeSnapshot,
+      journalEntry: null
+    });
+
+    buildDraftBrief.mockReturnValue({
+      dimension: "gratitude",
+      completionMode: "user_override_partial",
+      anchorScene: gratitudeSnapshot.gratitudeMoment,
+      emotionalCore: gratitudeSnapshot.kindAction,
+      stateOrNeed: gratitudeSnapshot.seenNeed,
+      directionSignal: null,
+      valueSignal: gratitudeSnapshot.gratitudeTarget,
+      closingInsight: null,
+      titleHint: "被认真理解",
+      titleTheme: "被认真理解",
+      titleCandidates: ["被认真理解"],
+      theorySummary: null,
+      antiFlatteningTargets: [],
+      tags: ["更被理解"],
+      durabilitySignal: null
+    });
+    buildDraftWritingProfile.mockReturnValue({
+      voiceMode: "journal",
+      narrativeOrder: "scene_core_shift_close",
+      closingMode: "current_understanding",
+      toneBanSet: []
+    });
+    buildJoyDraftMessages.mockReturnValue([]);
+    getAIProvider.mockReturnValue({ provider: "mock" });
+    runDraftQualityGate.mockReturnValue({
+      accepted: true,
+      issues: []
+    });
+    completeStructuredOutput.mockResolvedValue({
+      title: "被认真理解",
+      content:
+        "今天让我想认真记下来的感谢，是我今天发烧还有会要开，同事先帮我把会议记录框架列好了，还把要我回答的问题单独标出来。 我感谢的不是一句泛泛的好意，而是她没有只说辛苦了当时帮我把会议记录框架列好了。 这件事之所以重要，不是礼貌地谢谢，而是对方像是看见了自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记。",
+      event: gratitudeSnapshot.event,
+      feeling: "更被理解",
+      whyItMattered: "我当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      happinessType: null,
+      selfPattern: null,
+      gratitudeMoment: gratitudeSnapshot.gratitudeMoment,
+      gratitudeTarget: "的是她没有只说辛苦了",
+      kindAction: "帮我把会议记录框架列好了",
+      seenNeed: "这让我觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      innerEffect: "更被理解",
+      gratitudeReason: "这让我觉得自己当时的慌和虚弱被看见了，不用硬撑着一边听一边记",
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      tags: ["更被理解"],
+      eventBlocks: []
+    });
+
+    const result = await generateJoyDraftWithAI(session);
+
+    expect(result.gratitudeTarget).toBe("她");
+    expect(result.kindAction).toBe("帮我把会议记录框架列好了");
+    expect(result.seenNeed).toBe("我当时的慌和虚弱，也不用硬撑着一边听一边记");
+    expect(result.content).toContain("而是她当时帮我把会议记录框架列好了");
+    expect(result.content).toContain("对方像是看见了我当时的慌和虚弱，也让我不用硬撑着一边听一边记");
   });
 
   it("preserves fulfillment value signals before the draft quality gate", async () => {

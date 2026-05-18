@@ -248,7 +248,7 @@ describe("site header calendar toolbar", () => {
     expect(toolbar).toHaveAttribute("aria-busy", "false");
   });
 
-  it("keeps calendar header as non-fixed solid bar with spacer", async () => {
+  it("keeps calendar header as a non-fixed solid bar without spacer", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
     render(<SiteHeader />);
@@ -257,7 +257,7 @@ describe("site header calendar toolbar", () => {
     expect(header).toHaveClass("relative");
     expect(header.className).not.toContain("site-header-frosted");
     expect(header.className).not.toContain("fixed");
-    expect(header.previousElementSibling).toHaveAttribute("aria-hidden", "true");
+    expect(header.previousElementSibling).toBeNull();
   });
 
   it("uses fixed frosted header without spacer on interview page", async () => {

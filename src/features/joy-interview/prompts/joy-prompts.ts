@@ -281,7 +281,7 @@ export function buildJoyExtractMessages(input: {
     input.dimension === "joy"
       ? '{"joyMoment":string|null,"joySource":string|null,"stateShift":string|null,"meaningNeed":string|null,"manualClue":string|null,"delightSignature":string|null,"directionSignal":string|null,"valueImpact":string|null,"durability":string|null,"tags":string[]}'
       : input.dimension === "fulfillment"
-        ? '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
+        ? '{"experience":string|null,"feeling":string|null,"progressEvidence":string|null,"fulfillmentType":string|null,"valueSignal":string|null,"tags":string[]}'
       : input.dimension === "reflection"
         ? '{"event":string|null,"feeling":string|null,"whyItMattered":string|null,"happinessType":string|null,"selfPattern":string|null,"tags":string[]}'
       : input.dimension === "improvement"
@@ -292,9 +292,10 @@ export function buildJoyExtractMessages(input: {
   const fulfillmentExtractRules =
     input.dimension === "fulfillment"
       ? [
-          "对 fulfillment 来说，event=具体充实片段，whyItMattered=没有白过的进展证据，happinessType=推进完成型/投入积累型/协作贡献型，selfPattern=值得感标准。",
+          "对 fulfillment 来说，experience=具体充实片段，progressEvidence=没有白过的进展证据，fulfillmentType=推进完成型/投入积累型/协作贡献型，valueSignal=值得感标准。",
           "不要把普通忙碌、任务很多、踏实情绪直接抽成进展证据；必须看到完成、推进、练到、积累或帮到别人的证据。",
-          "selfPattern 只能在用户明确表达“我在意/我看重/对我来说算数/值得”的同等强证据时填写；否则返回 null。"
+          "valueSignal 只能在用户明确表达“我在意/我看重/对我来说算数/值得”的同等强证据时填写；否则返回 null。",
+          "不要输出旧字段名；只输出 experience、feeling、progressEvidence、fulfillmentType、valueSignal、tags。"
         ]
       : [];
   const joyExtractRules =

@@ -108,6 +108,131 @@ function trimTrailingPunctuation(value: string) {
   return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
 }
 
+function normalizeGratitudeTarget(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const directRoleMatch = normalized.match(/(她|他|对方|同事|朋友|家人|老师|伴侣)/u);
+
+  if (directRoleMatch) {
+    return directRoleMatch[1] ?? normalized;
+  }
+
+  return normalized.replace(/^(的是|是|那个|这位)/u, "").trim() || null;
+}
+
+function normalizeSeenNeed(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return (
+    normalized
+      .replace(/^(这让我觉得|让我觉得|我觉得)/u, "")
+      .replace(/^(自己|我自己)/u, "我")
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)被看见了，?不用/u, "$1，也不用")
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)被接住了，?不用/u, "$1，也不用")
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)被理解了，?不用/u, "$1，也不用")
+      .replace(/^(我当时的[^，。！？!?]{0,60}?)(?:被看见了|被接住了|被理解了)(?=[，。！？!?]|$)/u, "$1")
+      .trim() || null
+  );
+}
+
+function normalizeGratitudeKindAction(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return (
+    normalized
+      .replace(/^(?:而是|不是|是真的|真的是)/u, "")
+      .replace(/^她没有只说辛苦了[，,]?而是/u, "")
+      .trim() || null
+  );
+}
+
+function normalizeGratitudeReason(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return (
+    normalized
+      .replace(/^(?:这让我觉得|让我觉得)/u, "")
+      .replace(/^(?:觉得|感觉到?|感到)/u, "")
+      .replace(/^(?:自己|我自己)/u, "我")
+      .replace(/被看见了，被看见了/u, "被看见了")
+      .trim() || null
+  );
+}
+
+function normalizeGratitudeDraftContent(content: string) {
+  return content
+    .replace(/而是她没有只说辛苦了当时/g, "而是她当时")
+    .replace(/对方像是看见了自己当时的/g, "对方像是看见了我当时的")
+    .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})被看见了/g, "对方像是看见了我当时的$1")
+    .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})，也不用/g, "对方像是看见了我当时的$1，也让我不用")
+    .replace(/对方像是看见了我当时的([^，。！？!?]{0,60})，?不用/g, "对方像是看见了我当时的$1，也让我不用")
+    .replace(/被看见了，不用硬撑着一边听一边记被看见了/g, "被看见了，不用硬撑着一边听一边记");
+}
+
+function hasGratitudeDraftCorruption(content: string) {
+  return /而是她没有只说辛苦了当时|的是她没有只说辛苦了|对方像是看见了自己当时的|对方像是看见了我当时的[^，。！？!?]{0,60}被看见了|被看见了，不用硬撑着一边听一边记被看见了/u.test(
+    content
+  );
+}
+
+function hasCorruptedGratitudeFields(draft: JoyEntryDraft) {
+  return Boolean(
+    /的是她没有只说辛苦了/u.test(draft.gratitudeTarget ?? "") ||
+      /自己当时的慌和虚弱被看见了/u.test(draft.seenNeed ?? "") ||
+      /自己当时的慌和虚弱被看见了/u.test(draft.gratitudeReason ?? "") ||
+      /她没有只说辛苦了/u.test(draft.content)
+  );
+}
+
+function normalizeFulfillmentProgressEvidence(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return (
+    normalized
+      .replace(/^(?:最有分量的是|真正有分量的是|关键是|最重要的是)[，,]?/u, "")
+      .trim() || null
+  );
+}
+
+function normalizeFulfillmentValueSignal(value: string | null | undefined) {
+  const normalized = sanitizeNullableString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.replace(/^对我来说[，,]?/u, "").trim() || null;
+}
+
+function normalizeFulfillmentDraftContent(content: string) {
+  return content
+    .replace(/是最有分量的是/g, "是")
+    .replace(/这件事真正有分量的地方，是最有分量的是/g, "这件事真正有分量的地方，是")
+    .replace(/回头看，我也更知道，对我来说，对我来说，/g, "回头看，我也更知道，对我来说，")
+    .replace(/对我来说，对我来说，/g, "对我来说，")
+    .replace(/才会觉得这一天算数才会真正算数/g, "才会觉得这一天算数");
+}
+
 function trimToLength(value: string, maxLength: number) {
   return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
@@ -272,11 +397,11 @@ function getDraftGenerationOptions(mode: DraftGenerationMode) {
 
 function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
   return {
-    event: sanitizeNullableString(fields.event ?? fields.situation),
+    event: sanitizeNullableString(fields.event ?? fields.experience ?? fields.situation),
     feeling: sanitizeNullableString(fields.feeling),
-    whyItMattered: sanitizeNullableString(fields.whyItMattered ?? fields.frictionPoint ?? fields.repeatCondition),
-    happinessType: sanitizeNullableString(fields.happinessType ?? fields.improvementType),
-    selfPattern: sanitizeNullableString(fields.selfPattern ?? fields.nextAttempt),
+    whyItMattered: sanitizeNullableString(fields.whyItMattered ?? fields.progressEvidence ?? fields.frictionPoint ?? fields.repeatCondition),
+    happinessType: sanitizeNullableString(fields.happinessType ?? fields.fulfillmentType ?? fields.improvementType),
+    selfPattern: sanitizeNullableString(fields.selfPattern ?? fields.valueSignal ?? fields.nextAttempt),
     joyMoment: sanitizeNullableString(fields.joyMoment),
     joySource: sanitizeNullableString(fields.joySource),
     stateShift: sanitizeNullableString(fields.stateShift),
@@ -304,6 +429,170 @@ function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
     reciprocityHint: sanitizeNullableString(fields.reciprocityHint),
     tags: Array.from(new Set((fields.tags ?? []).map((tag) => tag.trim()).filter(Boolean))).slice(0, 6)
   };
+}
+
+function normalizeExtractedFieldsForSession(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  fields: JoySignalFields;
+  existingSnapshot?: JoySnapshot | null;
+  userMessage?: string;
+}): JoySignalFields {
+  const normalized = normalizeExtractedFields(input.fields);
+
+  if (input.dimension === "gratitude") {
+    const gratitudeNormalized: JoySignalFields = {
+      ...normalized,
+      gratitudeTarget: normalizeGratitudeTarget(normalized.gratitudeTarget),
+      kindAction: normalizeGratitudeKindAction(normalized.kindAction),
+      seenNeed: normalizeSeenNeed(normalized.seenNeed),
+      gratitudeReason: normalizeGratitudeReason(normalized.gratitudeReason ?? normalized.whyItMattered),
+      relationshipSignal: sanitizeNullableString(normalized.relationshipSignal),
+      reciprocityHint: sanitizeNullableString(normalized.reciprocityHint),
+      joyMoment: null,
+      joySource: null,
+      stateShift: null,
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      directionSignal: null,
+      valueImpact: null,
+      durability: null
+    };
+
+    if (input.stage === "collect_event") {
+      return {
+        ...gratitudeNormalized,
+        seenNeed: null,
+        gratitudeReason: null,
+        relationshipSignal: null,
+        reciprocityHint: null
+      };
+    }
+
+    if (input.stage === "probe_reason") {
+      return {
+        ...gratitudeNormalized,
+        event: input.existingSnapshot?.event ? null : gratitudeNormalized.event,
+        gratitudeMoment: input.existingSnapshot?.gratitudeMoment ? null : gratitudeNormalized.gratitudeMoment,
+        relationshipSignal: null,
+        reciprocityHint: null
+      };
+    }
+
+    if (input.stage === "probe_pattern") {
+      return {
+        ...gratitudeNormalized,
+        event: input.existingSnapshot?.event ? null : gratitudeNormalized.event,
+        gratitudeMoment: input.existingSnapshot?.gratitudeMoment ? null : gratitudeNormalized.gratitudeMoment,
+        kindAction: input.existingSnapshot?.kindAction ? null : gratitudeNormalized.kindAction,
+        gratitudeTarget: input.existingSnapshot?.gratitudeTarget ? null : gratitudeNormalized.gratitudeTarget
+      };
+    }
+
+    return gratitudeNormalized;
+  }
+
+  if (input.dimension === "improvement") {
+    const improvementActionCue = /(?:下次|以后|再遇到|下一次|如果下次|我会|我想|可以先|准备先)/u.test(
+      input.userMessage ?? ""
+    );
+    const improvementTrack = input.existingSnapshot?.improvementTrack ?? normalized.improvementTrack ?? null;
+    const improvementNormalized: JoySignalFields = {
+      ...normalized,
+      whyItMattered: null,
+      selfPattern: null,
+      joyMoment: null,
+      joySource: null,
+      stateShift: null,
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      directionSignal: null,
+      valueImpact: null,
+      durability: null
+    };
+
+    if (input.stage === "collect_event") {
+      return {
+        ...improvementNormalized,
+        frictionPoint: null,
+        repeatCondition: null,
+        controllableFactor: null,
+        nextAttempt: null,
+        successSignal: null
+      };
+    }
+
+    if (input.stage === "probe_reason") {
+      const shouldKeepImprovementActionFields =
+        improvementTrack === "avoid_bad" && improvementActionCue;
+
+      return {
+        ...improvementNormalized,
+        event: input.existingSnapshot?.event ? null : improvementNormalized.event,
+        controllableFactor: shouldKeepImprovementActionFields ? improvementNormalized.controllableFactor : null,
+        nextAttempt: shouldKeepImprovementActionFields ? improvementNormalized.nextAttempt : null,
+        successSignal: shouldKeepImprovementActionFields ? improvementNormalized.successSignal : null
+      };
+    }
+
+    if (input.stage === "probe_pattern") {
+      return {
+        ...improvementNormalized,
+        event: input.existingSnapshot?.event ? null : improvementNormalized.event,
+        frictionPoint: input.existingSnapshot?.frictionPoint ? null : improvementNormalized.frictionPoint,
+        repeatCondition: input.existingSnapshot?.repeatCondition ? null : improvementNormalized.repeatCondition
+      };
+    }
+
+    return improvementNormalized;
+  }
+
+  if (input.dimension !== "fulfillment") {
+    return normalized;
+  }
+
+  const fulfillmentNormalized: JoySignalFields = {
+    ...normalized,
+    whyItMattered: normalizeFulfillmentProgressEvidence(normalized.whyItMattered),
+    selfPattern: normalizeFulfillmentValueSignal(normalized.selfPattern),
+    joyMoment: null,
+    joySource: null,
+    stateShift: null,
+    meaningNeed: null,
+    manualClue: null,
+    delightSignature: null,
+    directionSignal: null,
+    valueImpact: null,
+    durability: null
+  };
+
+  if (input.stage === "collect_event") {
+    return {
+      ...fulfillmentNormalized,
+      whyItMattered: null,
+      selfPattern: null
+    };
+  }
+
+  if (input.stage === "probe_reason") {
+    return {
+      ...fulfillmentNormalized,
+      event: input.existingSnapshot?.event ? null : fulfillmentNormalized.event,
+      selfPattern: null
+    };
+  }
+
+  if (input.stage === "probe_pattern") {
+    return {
+      ...fulfillmentNormalized,
+      event: input.existingSnapshot?.event ? null : fulfillmentNormalized.event,
+      whyItMattered: input.existingSnapshot?.whyItMattered ? null : fulfillmentNormalized.whyItMattered
+    };
+  }
+
+  return fulfillmentNormalized;
 }
 
 function getExtractResultSchema(dimension: InterviewDimension) {
@@ -346,6 +635,16 @@ export async function extractJoySnapshotWithAI(input: {
     allowClosureInference: false,
     allowOptionalSignalInference: false
   });
+  const stageAwareFallbackSnapshot = mergeJoySignals(
+    input.session.snapshot,
+    normalizeExtractedFieldsForSession({
+      dimension: input.session.dimension,
+      stage: input.session.stage,
+      fields: fallbackSnapshot,
+      existingSnapshot: input.session.snapshot,
+      userMessage: input.userMessage
+    })
+  );
   const provider = getAIProvider();
   const aiResult = await completeStructuredOutput({
     provider,
@@ -368,10 +667,55 @@ export async function extractJoySnapshotWithAI(input: {
   if (!aiResult) {
     logger.warn({ sessionId: input.session.id }, "AI extraction unavailable, fallback snapshot will be used.");
 
-    return fallbackSnapshot;
+    return stageAwareFallbackSnapshot;
   }
 
-  return mergeJoySignals(input.session.snapshot, normalizeExtractedFields(aiResult));
+  const aiSnapshot = mergeJoySignals(
+    input.session.snapshot,
+    normalizeExtractedFieldsForSession({
+      dimension: input.session.dimension,
+      stage: input.session.stage,
+      fields: aiResult,
+      existingSnapshot: input.session.snapshot,
+      userMessage: input.userMessage
+    })
+  );
+
+  // Keep AI extraction authoritative, but backfill holes with the conservative rule-based extractor
+  // so real-world "对我来说……才算数" style fulfillment replies can still close the loop.
+  return mergeJoySignals(aiSnapshot, {
+    event: aiSnapshot.event ? null : stageAwareFallbackSnapshot.event,
+    feeling: aiSnapshot.feeling ? null : stageAwareFallbackSnapshot.feeling,
+    whyItMattered: aiSnapshot.whyItMattered ? null : stageAwareFallbackSnapshot.whyItMattered,
+    happinessType: aiSnapshot.happinessType ? null : stageAwareFallbackSnapshot.happinessType,
+    selfPattern: aiSnapshot.selfPattern ? null : stageAwareFallbackSnapshot.selfPattern,
+    joyMoment: aiSnapshot.joyMoment ? null : stageAwareFallbackSnapshot.joyMoment,
+    joySource: aiSnapshot.joySource ? null : stageAwareFallbackSnapshot.joySource,
+    stateShift: aiSnapshot.stateShift ? null : stageAwareFallbackSnapshot.stateShift,
+    meaningNeed: aiSnapshot.meaningNeed ? null : stageAwareFallbackSnapshot.meaningNeed,
+    manualClue: aiSnapshot.manualClue ? null : stageAwareFallbackSnapshot.manualClue,
+    delightSignature: aiSnapshot.delightSignature ? null : stageAwareFallbackSnapshot.delightSignature,
+    directionSignal: aiSnapshot.directionSignal ? null : stageAwareFallbackSnapshot.directionSignal,
+    valueImpact: aiSnapshot.valueImpact ? null : stageAwareFallbackSnapshot.valueImpact,
+    durability: aiSnapshot.durability ? null : stageAwareFallbackSnapshot.durability,
+    improvementTrack: aiSnapshot.improvementTrack ? null : stageAwareFallbackSnapshot.improvementTrack,
+    stateAssessment: aiSnapshot.stateAssessment ? null : stageAwareFallbackSnapshot.stateAssessment,
+    frictionPoint: aiSnapshot.frictionPoint ? null : stageAwareFallbackSnapshot.frictionPoint,
+    repeatCondition: aiSnapshot.repeatCondition ? null : stageAwareFallbackSnapshot.repeatCondition,
+    controllableFactor: aiSnapshot.controllableFactor ? null : stageAwareFallbackSnapshot.controllableFactor,
+    nextAttempt: aiSnapshot.nextAttempt ? null : stageAwareFallbackSnapshot.nextAttempt,
+    successSignal: aiSnapshot.successSignal ? null : stageAwareFallbackSnapshot.successSignal,
+    gratitudeMoment: aiSnapshot.gratitudeMoment ? null : stageAwareFallbackSnapshot.gratitudeMoment,
+    gratitudeTarget: aiSnapshot.gratitudeTarget ? null : stageAwareFallbackSnapshot.gratitudeTarget,
+    kindAction: aiSnapshot.kindAction ? null : stageAwareFallbackSnapshot.kindAction,
+    seenNeed: aiSnapshot.seenNeed ? null : stageAwareFallbackSnapshot.seenNeed,
+    innerEffect: aiSnapshot.innerEffect ? null : stageAwareFallbackSnapshot.innerEffect,
+    gratitudeReason: aiSnapshot.gratitudeReason ? null : stageAwareFallbackSnapshot.gratitudeReason,
+    gratitudeType: aiSnapshot.gratitudeType ? null : stageAwareFallbackSnapshot.gratitudeType,
+    relationshipSignal: aiSnapshot.relationshipSignal ? null : stageAwareFallbackSnapshot.relationshipSignal,
+    reciprocityHint: aiSnapshot.reciprocityHint ? null : stageAwareFallbackSnapshot.reciprocityHint,
+    tags: stageAwareFallbackSnapshot.tags
+  });
 }
 
 function createFallbackAssistantTurn(input: {
@@ -897,14 +1241,22 @@ function normalizeDraftResult(
               sanitizeNullableString(draft.selfPattern) ??
               sanitizeNullableString(brief.closingInsight)
             : null
-      : sanitizeNullableString(draft.selfPattern) ??
-        (brief.completionMode === "complete"
-          ? sanitizeNullableString(brief.valueSignal) ?? sanitizeNullableString(brief.closingInsight)
-          : null);
+      : brief.dimension === "fulfillment"
+        ? normalizeFulfillmentValueSignal(draft.selfPattern) ??
+          (brief.completionMode === "complete"
+            ? normalizeFulfillmentValueSignal(brief.valueSignal) ?? normalizeFulfillmentValueSignal(brief.closingInsight)
+            : null)
+        : sanitizeNullableString(draft.selfPattern) ??
+          (brief.completionMode === "complete"
+            ? sanitizeNullableString(brief.valueSignal) ?? sanitizeNullableString(brief.closingInsight)
+            : null);
   const joySnapshot = {
     event: sanitizeNullableString(draft.event) ?? sanitizeNullableString(brief.anchorScene),
     feeling: sanitizeNullableString(draft.feeling) ?? (brief.dimension === "joy" ? null : sanitizeNullableString(brief.stateOrNeed)),
-    whyItMattered: sanitizeNullableString(draft.whyItMattered) ?? sanitizeNullableString(brief.emotionalCore),
+    whyItMattered:
+      brief.dimension === "fulfillment"
+        ? normalizeFulfillmentProgressEvidence(draft.whyItMattered) ?? normalizeFulfillmentProgressEvidence(brief.emotionalCore)
+        : sanitizeNullableString(draft.whyItMattered) ?? sanitizeNullableString(brief.emotionalCore),
     happinessType: sanitizeNullableString(draft.happinessType) ?? (brief.dimension === "joy" ? null : sanitizeNullableString(brief.directionSignal)),
     selfPattern: normalizedSelfPattern,
     joyMoment: brief.dimension === "joy" ? sanitizeNullableString(draft.joyMoment) ?? sanitizeNullableString(brief.anchorScene) : undefined,
@@ -931,15 +1283,21 @@ function normalizeDraftResult(
         ? sanitizeNullableString(draft.gratitudeMoment) ?? sanitizeNullableString(draft.event) ?? sanitizeNullableString(brief.anchorScene)
         : undefined,
     gratitudeTarget:
-      brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeTarget) ?? sanitizeNullableString(brief.valueSignal) : undefined,
+      brief.dimension === "gratitude"
+        ? normalizeGratitudeTarget(draft.gratitudeTarget) ?? normalizeGratitudeTarget(brief.valueSignal)
+        : undefined,
     kindAction:
-      brief.dimension === "gratitude" ? sanitizeNullableString(draft.kindAction) ?? sanitizeNullableString(brief.emotionalCore) : undefined,
+      brief.dimension === "gratitude"
+        ? normalizeGratitudeKindAction(draft.kindAction) ?? normalizeGratitudeKindAction(brief.emotionalCore)
+        : undefined,
     seenNeed:
-      brief.dimension === "gratitude" ? sanitizeNullableString(draft.seenNeed) ?? sanitizeNullableString(brief.stateOrNeed) : undefined,
+      brief.dimension === "gratitude" ? normalizeSeenNeed(draft.seenNeed) ?? normalizeSeenNeed(brief.stateOrNeed) : undefined,
     innerEffect:
       brief.dimension === "gratitude" ? sanitizeNullableString(draft.innerEffect) ?? sanitizeNullableString(draft.feeling) : undefined,
     gratitudeReason:
-      brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeReason) ?? sanitizeNullableString(draft.whyItMattered) : undefined,
+      brief.dimension === "gratitude"
+        ? normalizeGratitudeReason(draft.gratitudeReason) ?? normalizeGratitudeReason(draft.whyItMattered)
+        : undefined,
     gratitudeType:
       brief.dimension === "gratitude" ? sanitizeNullableString(draft.gratitudeType) ?? sanitizeNullableString(draft.happinessType) ?? sanitizeNullableString(brief.directionSignal) : undefined,
     relationshipSignal:
@@ -953,7 +1311,13 @@ function normalizeDraftResult(
     missingSlots: []
   } satisfies JoySnapshot;
   const normalizedTitle = normalizeDraftTitle(draft.title, brief);
-  const normalizedContent = dedupeDraftParagraphs(draft.content);
+  const normalizedContent = dedupeDraftParagraphs(
+    brief.dimension === "fulfillment"
+      ? normalizeFulfillmentDraftContent(draft.content)
+      : brief.dimension === "gratitude"
+        ? normalizeGratitudeDraftContent(draft.content)
+        : draft.content
+  );
 
   return {
     title: normalizedTitle,
@@ -1071,9 +1435,18 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     draft: normalizedDraft
   });
 
-  if (!qualityGate.accepted) {
+  if (
+    !qualityGate.accepted ||
+    (draftBrief.dimension === "gratitude" &&
+      (hasGratitudeDraftCorruption(normalizedDraft.content) || hasCorruptedGratitudeFields(normalizedDraft)))
+  ) {
     logger.warn(
-      { sessionId: session.id, generationMode, issues: qualityGate.issues, elapsedMs: Date.now() - startedAt },
+      {
+        sessionId: session.id,
+        generationMode,
+        issues: qualityGate.accepted ? [...qualityGate.issues, "gratitude_corrupted_draft"] : qualityGate.issues,
+        elapsedMs: Date.now() - startedAt
+      },
       "AI draft did not pass quality gate, fallback draft will be used."
     );
 

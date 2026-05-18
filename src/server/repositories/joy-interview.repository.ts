@@ -7,6 +7,7 @@ import {
   type InterviewSessionStatus,
   type JoyInterviewStage
 } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
 import {
   createOpeningAssistantTurnPayload,
@@ -778,10 +779,13 @@ export async function createJoyInterviewSession(
   const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
   const emptySnapshotData = buildSnapshotDataForDimension(dimension, emptySnapshot);
   const resolvedEntryDate = parseEntryDateInput(entryDate ?? getTodayEntryDate());
+  const sessionId = randomUUID();
+  const activeEventId = randomUUID();
 
-  const session = await prisma.$transaction(async (tx) => {
-    const createdSession = await tx.interviewSession.create({
+  await prisma.$transaction([
+    prisma.interviewSession.create({
       data: {
+        id: sessionId,
         userId,
         dimension: dimension as PrismaInterviewDimension,
         status: "active",
@@ -811,13 +815,12 @@ export async function createJoyInterviewSession(
             }
           ]
         }
-      },
-      include: interviewSessionInclude
-    });
-
-    const activeEvent = await tx.interviewEvent.create({
+      }
+    }),
+    prisma.interviewEvent.create({
       data: {
-        sessionId: createdSession.id,
+        id: activeEventId,
+        sessionId,
         sequence: 1,
         status: "active",
         stage: "collect_event",
@@ -836,16 +839,23 @@ export async function createJoyInterviewSession(
         confidence: emptySnapshot.confidence,
         missingSlots: emptySnapshot.missingSlots
       }
-    });
-
-    return tx.interviewSession.update({
-      where: { id: createdSession.id },
+    }),
+    prisma.interviewSession.update({
+      where: { id: sessionId },
       data: {
-        activeEventId: activeEvent.id
-      },
-      include: interviewSessionInclude
-    });
+        activeEventId
+      }
+    })
+  ]);
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
+
+  if (!session) {
+    throw new Error("SESSION_CREATE_FAILED");
+  }
 
   return mapInterviewSession(session);
 }
@@ -885,41 +895,40 @@ interface AppendJoyInterviewTurnInput {
 }
 
 export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await ensureInterviewEvents(tx, input.sessionId);
+  const existing = await ensureInterviewEvents(prisma, input.sessionId);
 
-    if (!existing) {
-      return null;
-    }
+  if (!existing) {
+    return null;
+  }
 
-    const nextSequence = existing.messages.length;
-    const nextSnapshotVersion = (existing.snapshots[0]?.version ?? -1) + 1;
-    const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
-    const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
-    const legacyProjection = projectLegacyFields(input.snapshot);
+  const nextSequence = existing.messages.length;
+  const nextSnapshotVersion = (existing.snapshots[0]?.version ?? -1) + 1;
+  const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
+  const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
+  const legacyProjection = projectLegacyFields(input.snapshot);
 
-    const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
+  const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
 
-    if (input.userMessage) {
-      messagesToCreate.push({
-        sessionId: input.sessionId,
-        role: "user",
-        inputMode: input.inputMode,
-        content: input.userMessage,
-        sequence: nextSequence
-      });
-    }
-
+  if (input.userMessage) {
     messagesToCreate.push({
       sessionId: input.sessionId,
-      role: "assistant",
-      content: serializedAssistantTurn,
-      sequence: nextSequence + (input.userMessage ? 1 : 0)
+      role: "user",
+      inputMode: input.inputMode,
+      content: input.userMessage,
+      sequence: nextSequence
     });
+  }
 
-    await tx.interviewMessage.createMany({ data: messagesToCreate });
+  messagesToCreate.push({
+    sessionId: input.sessionId,
+    role: "assistant",
+    content: serializedAssistantTurn,
+    sequence: nextSequence + (input.userMessage ? 1 : 0)
+  });
 
-    await tx.joyInterviewSnapshot.create({
+  await prisma.$transaction([
+    prisma.interviewMessage.createMany({ data: messagesToCreate }),
+    prisma.joyInterviewSnapshot.create({
       data: {
         sessionId: input.sessionId,
         version: nextSnapshotVersion,
@@ -931,9 +940,8 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         confidence: input.snapshot.confidence,
         missingSlots: input.snapshot.missingSlots
       }
-    });
-
-    await tx.interviewEvent.update({
+    }),
+    prisma.interviewEvent.update({
       where: { id: input.activeEventId },
       data: {
         status: input.eventStatus,
@@ -954,9 +962,8 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         draftSummary: input.draftSummary,
         completedAt: input.eventStatus === "completed" ? (input.completedAt ?? new Date()) : null
       }
-    });
-
-    return tx.interviewSession.update({
+    }),
+    prisma.interviewSession.update({
       where: { id: input.sessionId },
       data: {
         turnCount: input.nextTurnCount,
@@ -965,9 +972,13 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         lastAssistantQuestion: assistantQuestion,
         draftSummary: input.draftSummary,
         completedAt: input.completedAt
-      },
-      include: interviewSessionInclude
-    });
+      }
+    })
+  ]);
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: input.sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {
@@ -978,36 +989,34 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
 }
 
 export async function resumeCurrentInterviewEvent(sessionId: string) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await ensureInterviewEvents(tx, sessionId);
+  const existing = await ensureInterviewEvents(prisma, sessionId);
 
-    if (!existing?.activeEventId) {
-      return null;
+  if (!existing?.activeEventId) {
+    return null;
+  }
+
+  const activeEvent = existing.events.find((event) => event.id === existing.activeEventId);
+
+  if (!activeEvent) {
+    return null;
+  }
+
+  await prisma.interviewEvent.update({
+    where: { id: activeEvent.id },
+    data: {
+      status: "active",
+      stage: activeEvent.stage === "wrap_up" ? "probe_pattern" : activeEvent.stage,
+      explorationRound: activeEvent.explorationRound + 1,
+      roundCoveredLenses: [],
+      roundMeaningfulReplyCount: 0,
+      progressData: Prisma.JsonNull,
+      completedAt: null
     }
+  });
 
-    const activeEvent = existing.events.find((event) => event.id === existing.activeEventId);
-
-    if (!activeEvent) {
-      return null;
-    }
-
-    await tx.interviewEvent.update({
-      where: { id: activeEvent.id },
-      data: {
-        status: "active",
-        stage: activeEvent.stage === "wrap_up" ? "probe_pattern" : activeEvent.stage,
-        explorationRound: activeEvent.explorationRound + 1,
-        roundCoveredLenses: [],
-        roundMeaningfulReplyCount: 0,
-        progressData: Prisma.JsonNull,
-        completedAt: null
-      }
-    });
-
-    return tx.interviewSession.findUnique({
-      where: { id: sessionId },
-      include: interviewSessionInclude
-    });
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {
@@ -1018,27 +1027,35 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
 }
 
 export async function startNextInterviewEvent(sessionId: string, openingQuestion: string) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await ensureInterviewEvents(tx, sessionId);
+  const existing = await ensureInterviewEvents(prisma, sessionId);
 
-    if (!existing) {
-      return null;
-    }
+  if (!existing) {
+    return null;
+  }
 
-    if (existing.activeEventId) {
-      await tx.interviewEvent.update({
+  const nextSequence = (existing.events[existing.events.length - 1]?.sequence ?? 0) + 1;
+  const emptySnapshot = createEmptySnapshot();
+  const nextEventId = randomUUID();
+  const assistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
+
+  const writes: Prisma.PrismaPromise<unknown>[] = [];
+
+  if (existing.activeEventId) {
+    writes.push(
+      prisma.interviewEvent.update({
         where: { id: existing.activeEventId },
         data: {
           status: "completed",
           completedAt: new Date()
         }
-      });
-    }
+      })
+    );
+  }
 
-    const nextSequence = (existing.events[existing.events.length - 1]?.sequence ?? 0) + 1;
-    const emptySnapshot = createEmptySnapshot();
-    const nextEvent = await tx.interviewEvent.create({
+  writes.push(
+    prisma.interviewEvent.create({
       data: {
+        id: nextEventId,
         sessionId,
         sequence: nextSequence,
         status: "active",
@@ -1058,32 +1075,30 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
         confidence: emptySnapshot.confidence,
         missingSlots: emptySnapshot.missingSlots
       }
-    });
-
-    const assistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
-
-    await tx.interviewMessage.create({
+    }),
+    prisma.interviewMessage.create({
       data: {
         sessionId,
         role: "assistant",
         content: serializeAssistantTurnPayload(assistantTurn),
         sequence: existing.messages.length
       }
-    });
-
-    await tx.interviewSession.update({
+    }),
+    prisma.interviewSession.update({
       where: { id: sessionId },
       data: {
-        activeEventId: nextEvent.id,
+        activeEventId: nextEventId,
         stage: "collect_event",
         lastAssistantQuestion: openingQuestion
       }
-    });
+    })
+  );
 
-    return tx.interviewSession.findUnique({
-      where: { id: sessionId },
-      include: interviewSessionInclude
-    });
+  await prisma.$transaction(writes);
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {
@@ -1094,53 +1109,54 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
 }
 
 export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEntryDraft) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await tx.interviewSession.findUnique({
-      where: { id: sessionId },
-      include: interviewSessionInclude
-    });
+  const existing = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
+  });
 
-    if (!existing) {
-      return null;
-    }
+  if (!existing) {
+    return null;
+  }
 
-    const legacyProjection = projectLegacyFields(draftEntry);
-    const payload = buildJournalPayloadForDimension(existing.dimension, {
-      event: legacyProjection.event,
-      feeling: legacyProjection.feeling,
-      whyItMattered: legacyProjection.whyItMattered,
-      happinessType: legacyProjection.happinessType,
-      selfPattern: legacyProjection.selfPattern,
-      joyMoment: draftEntry.joyMoment ?? null,
-      joySource: draftEntry.joySource ?? null,
-      stateShift: draftEntry.stateShift ?? null,
-      meaningNeed: draftEntry.meaningNeed ?? null,
-      manualClue: draftEntry.manualClue ?? null,
-      delightSignature: draftEntry.delightSignature ?? null,
-      psychProfile: draftEntry.psychProfile ?? undefined,
-      directionSignal: draftEntry.directionSignal ?? null,
-      valueImpact: draftEntry.valueImpact ?? null,
-      durability: draftEntry.durability ?? null,
-      improvementTrack: draftEntry.improvementTrack ?? null,
-      stateAssessment: draftEntry.stateAssessment ?? null,
-      frictionPoint: draftEntry.frictionPoint ?? null,
-      repeatCondition: draftEntry.repeatCondition ?? null,
-      controllableFactor: draftEntry.controllableFactor ?? null,
-      nextAttempt: draftEntry.nextAttempt ?? null,
-      successSignal: draftEntry.successSignal ?? null,
-      gratitudeMoment: draftEntry.gratitudeMoment ?? null,
-      gratitudeTarget: draftEntry.gratitudeTarget ?? null,
-      kindAction: draftEntry.kindAction ?? null,
-      seenNeed: draftEntry.seenNeed ?? null,
-      innerEffect: draftEntry.innerEffect ?? null,
-      gratitudeReason: draftEntry.gratitudeReason ?? null,
-      gratitudeType: draftEntry.gratitudeType ?? null,
-      relationshipSignal: draftEntry.relationshipSignal ?? null,
-      reciprocityHint: draftEntry.reciprocityHint ?? null,
-      tags: draftEntry.tags
-    });
+  const legacyProjection = projectLegacyFields(draftEntry);
+  const payload = buildJournalPayloadForDimension(existing.dimension, {
+    event: legacyProjection.event,
+    feeling: legacyProjection.feeling,
+    whyItMattered: legacyProjection.whyItMattered,
+    happinessType: legacyProjection.happinessType,
+    selfPattern: legacyProjection.selfPattern,
+    joyMoment: draftEntry.joyMoment ?? null,
+    joySource: draftEntry.joySource ?? null,
+    stateShift: draftEntry.stateShift ?? null,
+    meaningNeed: draftEntry.meaningNeed ?? null,
+    manualClue: draftEntry.manualClue ?? null,
+    delightSignature: draftEntry.delightSignature ?? null,
+    psychProfile: draftEntry.psychProfile ?? undefined,
+    directionSignal: draftEntry.directionSignal ?? null,
+    valueImpact: draftEntry.valueImpact ?? null,
+    durability: draftEntry.durability ?? null,
+    improvementTrack: draftEntry.improvementTrack ?? null,
+    stateAssessment: draftEntry.stateAssessment ?? null,
+    frictionPoint: draftEntry.frictionPoint ?? null,
+    repeatCondition: draftEntry.repeatCondition ?? null,
+    controllableFactor: draftEntry.controllableFactor ?? null,
+    nextAttempt: draftEntry.nextAttempt ?? null,
+    successSignal: draftEntry.successSignal ?? null,
+    gratitudeMoment: draftEntry.gratitudeMoment ?? null,
+    gratitudeTarget: draftEntry.gratitudeTarget ?? null,
+    kindAction: draftEntry.kindAction ?? null,
+    seenNeed: draftEntry.seenNeed ?? null,
+    innerEffect: draftEntry.innerEffect ?? null,
+    gratitudeReason: draftEntry.gratitudeReason ?? null,
+    gratitudeType: draftEntry.gratitudeType ?? null,
+    relationshipSignal: draftEntry.relationshipSignal ?? null,
+    reciprocityHint: draftEntry.reciprocityHint ?? null,
+    tags: draftEntry.tags
+  });
+  const finalEntryId = existing.joyEntry?.id ?? randomUUID();
 
-    const draft = await tx.joyEntry.upsert({
+  await prisma.$transaction([
+    prisma.joyEntry.upsert({
       where: { sessionId },
       update: {
         title: draftEntry.title,
@@ -1159,6 +1175,7 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         linkedSessionIds: [sessionId]
       },
       create: {
+        id: finalEntryId,
         userId: existing.userId,
         sessionId,
         date: existing.entryDate ?? existing.startedAt,
@@ -1176,17 +1193,20 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         status: "draft",
         linkedSessionIds: [sessionId]
       }
-    });
-
-    return tx.interviewSession.update({
+    }),
+    prisma.interviewSession.update({
       where: { id: sessionId },
       data: {
         draftSummary:
           draftEntry.manualClue ?? draftEntry.delightSignature ?? draftEntry.joySource ?? legacyProjection.whyItMattered ?? legacyProjection.event,
-        finalEntryId: draft.id
-      },
-      include: interviewSessionInclude
-    });
+        finalEntryId
+      }
+    })
+  ]);
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {
@@ -1197,26 +1217,28 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
 }
 
 export async function reopenJoyInterviewSessionRecord(sessionId: string) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await tx.interviewSession.findUnique({
-      where: { id: sessionId },
-      include: interviewSessionInclude
-    });
+  const existing = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
+  });
 
-    if (!existing) {
-      return null;
+  if (!existing) {
+    return null;
+  }
+
+  await prisma.interviewSession.update({
+    where: { id: sessionId },
+    data: {
+      status: "active",
+      stage: existing.stage === "finalize" ? "wrap_up" : existing.stage,
+      pausedAt: null,
+      completedAt: null
     }
+  });
 
-    return tx.interviewSession.update({
-      where: { id: sessionId },
-      data: {
-        status: "active",
-        stage: existing.stage === "finalize" ? "wrap_up" : existing.stage,
-        pausedAt: null,
-        completedAt: null
-      },
-      include: interviewSessionInclude
-    });
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {
@@ -1343,38 +1365,26 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
 }
 
 export async function markJoyEntrySaved(sessionId: string) {
-  const session = await prisma.$transaction(async (tx) => {
-    const existing = await tx.interviewSession.findUnique({
-      where: { id: sessionId },
-      include: interviewSessionInclude
-    });
+  const existing = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
+  });
 
-    if (!existing?.joyEntry) {
-      return null;
-    }
+  if (!existing?.joyEntry) {
+    return null;
+  }
 
-    const savedAt = new Date();
-
-    await tx.joyEntry.update({
+  const savedAt = new Date();
+  const writes: Prisma.PrismaPromise<unknown>[] = [
+    prisma.joyEntry.update({
       where: { sessionId },
       data: {
         status: "saved",
         savedAt,
         linkedSessionIds: [sessionId]
       }
-    });
-
-    if (existing.activeEventId) {
-      await tx.interviewEvent.update({
-        where: { id: existing.activeEventId },
-        data: {
-          status: "completed",
-          completedAt: savedAt
-        }
-      });
-    }
-
-    return tx.interviewSession.update({
+    }),
+    prisma.interviewSession.update({
       where: { id: sessionId },
       data: {
         status: "completed",
@@ -1383,9 +1393,27 @@ export async function markJoyEntrySaved(sessionId: string) {
         completedAt: savedAt,
         draftSummary: existing.joyEntry.selfPattern ?? existing.joyEntry.whyItMattered ?? existing.joyEntry.event,
         finalEntryId: existing.joyEntry.id
-      },
-      include: interviewSessionInclude
-    });
+      }
+    })
+  ];
+
+  if (existing.activeEventId) {
+    writes.push(
+      prisma.interviewEvent.update({
+        where: { id: existing.activeEventId },
+        data: {
+          status: "completed",
+          completedAt: savedAt
+        }
+      })
+    );
+  }
+
+  await prisma.$transaction(writes);
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: interviewSessionInclude
   });
 
   if (!session) {

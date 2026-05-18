@@ -28,6 +28,7 @@ vi.mock("@/server/services/auth/current-user.service", () => ({
 
 import { POST as generateDraftRoute } from "@/app/api/interview/session/draft/generate/route";
 import { POST as saveDraftRoute } from "@/app/api/interview/session/draft/save/route";
+import { DraftGenerationError } from "@/server/services/interview/interview.service";
 
 function buildDraftResponse() {
   return {
@@ -128,6 +129,24 @@ describe("interview draft api auth", () => {
 
     expect(response.status).toBe(200);
     expect(mockGenerateInterviewDraft).toHaveBeenCalledWith("user-1", ["session-1"]);
+  });
+
+  it("returns a stable error when draft generation is not ready yet", async () => {
+    mockGenerateInterviewDraft.mockRejectedValue(new DraftGenerationError("DRAFT_GENERATE_NOT_READY", false));
+
+    const response = await generateDraftRoute(
+      new Request("http://localhost/api/interview/session/draft/generate", {
+        method: "POST",
+        body: JSON.stringify({ sessionIds: ["session-1"] })
+      })
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "DRAFT_GENERATE_NOT_READY",
+      retryable: false,
+      message: "当前材料还不够生成日志，请先补充当前片段或换一个片段。"
+    });
   });
 
   it("passes the authenticated user into draft save", async () => {
