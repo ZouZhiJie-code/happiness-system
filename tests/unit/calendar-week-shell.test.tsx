@@ -211,10 +211,10 @@ describe("calendar week shell", () => {
     render(<CalendarWeekShell />);
 
     expect(await screen.findByTestId("calendar-week-workspace")).toBeInTheDocument();
+    expect(await screen.findByTestId("calendar-week-summary")).toBeInTheDocument();
+    expect(await screen.findByTestId("calendar-week-board")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-week-primary-pane")).toBeInTheDocument();
     expect(screen.queryByTestId("calendar-week-secondary-pane")).not.toBeInTheDocument();
-    expect(screen.getByTestId("calendar-week-summary")).toBeInTheDocument();
-    expect(await screen.findByTestId("calendar-week-board")).toBeInTheDocument();
     expect(screen.getAllByTestId(/calendar-week-day-/)).toHaveLength(7);
     expect(screen.queryByText("WEEK SNAPSHOT")).not.toBeInTheDocument();
 
