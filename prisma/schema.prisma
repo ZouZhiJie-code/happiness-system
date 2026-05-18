@@ -141,6 +141,7 @@ model InterviewSession {
   joyEntry              JoyEntry?              @relation("SessionJoyEntry")
 
   @@index([userId, status])
+  @@index([userId, entryDate])
 }
 
 model InterviewEvent {
@@ -229,6 +230,9 @@ model JoyEntry {
   savedAt         DateTime?
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, status, date])
 }
 
 model DailyJournalEntry {
@@ -249,6 +253,7 @@ model DailyJournalEntry {
 
   @@unique([userId, date])
   @@index([userId, status])
+  @@index([userId, date])
 }
 
 model DailyHappinessScore {
@@ -268,6 +273,7 @@ model DailyHappinessScore {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model MemoryFact {
