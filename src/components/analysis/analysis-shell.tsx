@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type {
@@ -1131,8 +1131,19 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
         })[0]?.requestKey ?? "meaning"
     );
   }, [record]);
+  const scoreTrendSignature = useMemo(
+    () =>
+      [
+        record.month,
+        record.scoreOverview.scoredDayCount,
+        record.scoreOverview.latestScoredDate ?? "",
+        ...happinessScoreItems.map((item) => record.scoreTrend.factorAverages[item.requestKey] ?? "null")
+      ].join("|"),
+    [record]
+  );
   const [selectedFactor, setSelectedFactor] = useState<HappinessScoreRequestKey>(defaultFactor);
   const [inspectedDate, setInspectedDate] = useState<string | null>(null);
+  const previousScoreTrendSignature = useRef(scoreTrendSignature);
   const trendHighlightState = useMemo(() => getScoreTrendHighlights(record), [record]);
   const selectedItem = happinessScoreItems.find((item) => item.requestKey === selectedFactor) ?? happinessScoreItems[0];
   const selectedAverage = record.scoreTrend.factorAverages[selectedFactor];
@@ -1146,8 +1157,13 @@ function HappinessScoreTrendPanel({ record }: { record: AnalysisMonthRecord }) {
   );
 
   useEffect(() => {
+    if (previousScoreTrendSignature.current === scoreTrendSignature) {
+      return;
+    }
+
+    previousScoreTrendSignature.current = scoreTrendSignature;
     setSelectedFactor(defaultFactor);
-  }, [defaultFactor]);
+  }, [defaultFactor, scoreTrendSignature]);
 
   useEffect(() => {
     setInspectedDate(null);

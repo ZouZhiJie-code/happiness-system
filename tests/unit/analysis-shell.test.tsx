@@ -1056,6 +1056,23 @@ describe("analysis shell", () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
+  it("keeps the selected factor when the same score data re-renders", async () => {
+    mockSearchParams.value = {
+      month: "2026-05",
+      section: "score"
+    };
+
+    const { rerender } = render(<AnalysisShell />);
+
+    await screen.findByTestId("happiness-score-trend-panel");
+    fireEvent.click(screen.getByTestId("score-factor-button-autonomy"));
+
+    rerender(<AnalysisShell />);
+
+    expect(await screen.findByText("意志月均 6.5")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "本月意志评分走势，未评分日期断线" })).toBeInTheDocument();
+  });
+
   it("does not render score entry controls in analysis score section", async () => {
     mockSearchParams.value = {
       month: "2026-05",
@@ -1209,7 +1226,7 @@ describe("analysis shell", () => {
     const point = within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02");
     fireEvent.click(point);
 
-    const detailCard = screen.getByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("5月2日");
     expect(detailCard).toHaveTextContent("当天均分");
 
@@ -1229,7 +1246,7 @@ describe("analysis shell", () => {
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
     fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02"));
 
-    const detailCard = screen.getByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("五月二日的记录");
     expect(detailCard).toHaveTextContent("今天和朋友聚了一次");
     expect(within(detailCard).getByRole("link", { name: "查看完整日志 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
@@ -1246,7 +1263,7 @@ describe("analysis shell", () => {
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
     fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-03"));
 
-    const detailCard = screen.getByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("这一天还没有生成日志");
     expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
   });
@@ -1293,7 +1310,7 @@ describe("analysis shell", () => {
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
     fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-07"));
 
-    const detailCard = screen.getByTestId("score-trend-detail-card");
+    const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("这一天已有 1 条维度记录，但还没有整合成完整日志");
     expect(detailCard).not.toHaveTextContent("这一天还没有生成日志");
     expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
