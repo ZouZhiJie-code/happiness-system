@@ -15,7 +15,7 @@ export interface HomepageDimensionStory {
 export const homepageContent = {
   hero: {
     eyebrow: "AI Daily Journal",
-    title: "Daily Light",
+    title: "Daily Light 点亮你的每一天。",
     lead: "不用想格式，也不用总结自己。说出今天的一个片段，系统会顺着你的话追问必要细节，再整理成你可以确认、编辑和保存的日志。",
     signals: ["一句话开始", "AI 只追问必要细节", "草稿由你确认后保存"],
     visual: {

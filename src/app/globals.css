@@ -140,6 +140,66 @@ body::after {
   background: rgba(191, 133, 73, 0.24);
 }
 
+.typewriter-title {
+  display: inline;
+}
+
+.typewriter-char {
+  opacity: 0;
+  animation: typewriter-char-reveal 0.01s linear forwards;
+  animation-delay: calc(180ms + var(--typewriter-index) * 72ms);
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 0.075em;
+  height: 0.78em;
+  margin-left: 0.08em;
+  transform: translateY(0.08em);
+  background: currentColor;
+  opacity: 0;
+  animation:
+    typewriter-cursor-show 0.01s linear forwards,
+    typewriter-cursor-blink 0.92s steps(1, end) infinite;
+  animation-delay: var(--typewriter-cursor-delay), calc(var(--typewriter-cursor-delay) + 0.01s);
+}
+
+@keyframes typewriter-char-reveal {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes typewriter-cursor-show {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes typewriter-cursor-blink {
+  0%,
+  46% {
+    opacity: 1;
+  }
+
+  47%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-char {
+    opacity: 1;
+    animation: none;
+  }
+
+  .typewriter-cursor {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 .page-shell {
   position: relative;
   overflow: hidden;
