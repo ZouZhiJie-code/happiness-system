@@ -256,6 +256,7 @@ model DailyJournalEntry {
   @@index([userId, date])
 }
 
+/// Score ranges are enforced at both Zod layer and DB layer via SQL migration checks.
 model DailyHappinessScore {
   id                   String   @id @default(cuid())
   userId               String
