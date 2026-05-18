@@ -892,20 +892,20 @@
 | 用例 ID | 结果 | 证据摘要 | 备注 |
 |---|---|---|---|
 | `G-01` | `通过` | 使用隔离账号 `g01_0904549385` 验收。API 证据：`GET /api/profile` 返回五维 facts 均为空，`GET /api/profile/portrait` 返回 `snapshot:null`，`POST /api/profile/portrait` 返回 `422 PORTRAIT_SYNTHESIS_FAILED`。Safari 真实打开 `/profile` 后，画像 tab 显示“还没有生成画像”；点击“生成画像”后出现“认知数据不足。请先通过访谈或手动添加至少 3 条认知，再生成画像。”，五维卡片仍停留在“生成画像后将显示洞察”。 | 已覆盖 facts 少于 3 条时的数据不足提示与“不伪生成画像”。 |
-| `G-02` | `通过（修复后回归）` | 同一隔离账号下已通过 `/api/profile` 新增 3 条手动 facts，分别属于 `joy / fulfillment / reflection`；Safari 真实的“记忆库”tab 显示 `共 3 条`、标签云、三条用户添加的事实和编辑入口；API 编辑其中一条后，记忆库可见摘要与标签已更新。修复后，在 `.env.local` 仍缺少 `VOLCENGINE_ARK_ENDPOINT_ID` 的环境里，`POST /api/profile/portrait` 返回 `201`，生成 `factCount=3` 的 fallback snapshot；Safari 真实回到“画像”tab 后可见画像摘要和五维洞察。再次编辑其中一条 fact 后，画像页显示“认知数据已更新，建议重新生成画像以反映最新变化。” | `ISSUE-010` 已回归通过。画像 AI 直出质量仍需在真实 endpoint 配置后单独做效果验收；当前回归覆盖的是“补充能力不因 AI endpoint 缺失拖垮主流程”。 |
+| `G-02` | `通过（修复后回归 + 补充优化）` | 同一隔离账号下已通过 `/api/profile` 新增 3 条手动 facts，分别属于 `joy / fulfillment / reflection`；Safari 真实的“记忆库”tab 显示 `共 3 条`、标签云、三条用户添加的事实和编辑入口；API 编辑其中一条后，记忆库可见摘要与标签已更新。修复后，在 `.env.local` 仍缺少 `VOLCENGINE_ARK_ENDPOINT_ID` 的环境里，`POST /api/profile/portrait` 返回 `201`，生成 `factCount=3` 的 fallback snapshot；Safari 真实回到“画像”tab 后可见画像摘要和五维洞察。再次编辑其中一条 fact 后，画像页显示“认知数据已更新，建议重新生成画像以反映最新变化。”补充优化后，新隔离账号 `g02opt_1779086324` 真实 API 回归确认：3 条 facts 生成的 fallback 画像摘要会说明“稳定线索 / 维度分布 / 后续访谈入口 / 区分一时状态和长期模式”，维度洞察会合成“你在开心维度反复出现……”这类可读画像句，不再直接裸露最新 fact。 | `ISSUE-010` 已回归通过。画像 AI 直出质量仍需在真实 endpoint 配置后单独做效果验收；当前回归覆盖的是“补充能力不因 AI endpoint 缺失拖垮主流程”，并补强了 endpoint 缺失时用户实际看到的 fallback 画像质量。 |
 | `G-03` | `通过` | Safari 真实在 `/profile` 切到“演变”tab 后，页面显示“认知演变”、“共 3 条认知 · 跨越 1 个月”、“2026年5月 3 条”，并按 `思 / 实 / 悦` 展示三条事实、标签和 `2026/5/18` 日期；页面不报错、不空白卡死。 | 演变视图依赖记忆 facts，当前不依赖画像 snapshot。 |
 | `G-04` | `通过` | Safari 真实打开 `/settings`，页面显示“启用历史记忆”“转写失败自动回退”和“当前配置摘要”；点击“启用历史记忆”后摘要从“记忆功能：关闭”更新为“记忆功能：开启”。`/settings/account` 可访问并显示当前账号与退出/删除入口。API 直查 `/settings`、`/settings/account`、`/interview?dimension=joy`、`/calendar?view=month&date=2026-05-18`、`/analysis?month=2026-05&section=overview` 均返回 `200`。 | 设置页的可选能力没有拖垮访谈、日历、分析主流程。 |
 
 批次 7 当前结论：
 - `G-01`、`G-03`、`G-04` 已完成并通过。
-- `G-02` 初次验收发现的画像生成阻断已修复并回归通过：少于 3 条 facts 仍保留门槛，3 条 facts 后即使 AI provider 不可用也能生成 fallback snapshot，facts 编辑后能提示画像数据已更新。
+- `G-02` 初次验收发现的画像生成阻断已修复并回归通过：少于 3 条 facts 仍保留门槛，3 条 facts 后即使 AI provider 不可用也能生成 fallback snapshot，facts 编辑后能提示画像数据已更新；fallback 画像已补充优化为可读摘要和维度洞察，不再把最新 fact 原样当作洞察展示。
 
 ### 修复回归记录（2026-05-18）
 
 | 问题 ID | 关联用例 | 回归结果 | 证据摘要 |
 |---|---|---|---|
 | `ISSUE-009` | `F-01` | `通过` | Safari 真实直接打开 `/analysis` 后，地址栏归一为 `/analysis?month=2026-05&section=overview`；针对性单测 `analysis-view-state / analysis-shell / site-header-analysis` 共覆盖 URL normalize 与 toolbar 跳转。 |
-| `ISSUE-010` | `G-02` | `通过` | API `POST /api/profile/portrait` 在 AI endpoint 缺失环境中对 3 条 facts 返回 `201` 和 fallback snapshot；Safari `/profile` 能展示画像，编辑 fact 后显示 stale 提示；针对性单测 `portrait-synthesis.service / portrait-view` 已覆盖 fallback 与 stale 判断。 |
+| `ISSUE-010` | `G-02` | `通过` | API `POST /api/profile/portrait` 在 AI endpoint 缺失环境中对 3 条 facts 返回 `201` 和 fallback snapshot；Safari `/profile` 能展示画像，编辑 fact 后显示 stale 提示；补充优化后真实 API 样本 `g02opt_1779086324` 返回可读 fallback 摘要和维度洞察；针对性单测 `portrait-synthesis.service / portrait-view` 已覆盖 fallback、维度洞察失败降级与 stale 判断。 |
 
 ### 收尾门禁记录（2026-05-18）
 

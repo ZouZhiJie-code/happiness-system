@@ -38,9 +38,54 @@ const DIMENSION_LABELS: Record<InterviewDimension, string> = {
   gratitude: "感谢"
 };
 
+const DIMENSION_EMPTY_INSIGHTS: Record<InterviewDimension, string> = {
+  joy: "这个维度还没有形成足够稳定的愉悦线索。",
+  fulfillment: "这个维度还没有形成足够稳定的价值感线索。",
+  reflection: "这个维度还没有形成足够稳定的反思线索。",
+  improvement: "这个维度还没有形成足够稳定的改进线索。",
+  gratitude: "这个维度还没有形成足够稳定的感谢线索。"
+};
+
 // ─── Exports ─────────────────────────────────────────────────────────────
 
 export { findLatestPortraitSnapshot as getPortraitSnapshot };
+
+function trimTrailingPunctuation(value: string) {
+  return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
+}
+
+function summarizeTags(tags: Map<string, number>) {
+  return [...tags.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3)
+    .map(([tag]) => tag);
+}
+
+function buildDeterministicDimensionInsight(
+  dimension: InterviewDimension,
+  facts: Awaited<ReturnType<typeof gatherPortraitData>>["facts"]
+) {
+  if (facts.length === 0) {
+    return DIMENSION_EMPTY_INSIGHTS[dimension];
+  }
+
+  const latest = [...facts].sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())[0];
+  const tagCounts = new Map<string, number>();
+  for (const fact of facts) {
+    for (const tag of fact.topicTags) {
+      tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+    }
+  }
+
+  const tagText = summarizeTags(tagCounts)
+    .map((tag) => `「${tag}」`)
+    .join("、");
+  const pattern = trimTrailingPunctuation(latest.summary);
+
+  return tagText
+    ? `你在${DIMENSION_LABELS[dimension]}维度反复出现${tagText}这些线索；最近较清晰的一条是：${pattern}。`
+    : `你在${DIMENSION_LABELS[dimension]}维度已经留下 ${facts.length} 条线索；最近较清晰的一条是：${pattern}。`;
+}
 
 function buildFallbackPortrait(data: Awaited<ReturnType<typeof gatherPortraitData>>) {
   const topTags = new Map<string, number>();
@@ -50,10 +95,8 @@ function buildFallbackPortrait(data: Awaited<ReturnType<typeof gatherPortraitDat
     }
   }
 
-  const topTagText = [...topTags.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 3)
-    .map(([tag]) => `「${tag}」`)
+  const topTagText = summarizeTags(topTags)
+    .map((tag) => `「${tag}」`)
     .join("、");
 
   const coveredDimensions = [...new Set(data.facts.map((fact) => fact.dimension))]
@@ -61,20 +104,17 @@ function buildFallbackPortrait(data: Awaited<ReturnType<typeof gatherPortraitDat
     .join("、");
 
   const summaryParts = [
-    `目前已经从 ${data.facts.length} 条认知里看见一些稳定线索。`,
-    coveredDimensions ? `这些线索主要分布在${coveredDimensions}维度。` : "",
-    topTagText ? `反复出现的主题包括${topTagText}。` : "",
-    "后续访谈继续积累后，画像会变得更细。"
+    `目前已经从 ${data.facts.length} 条认知里看见一些关于你的稳定线索。`,
+    coveredDimensions ? `它们主要分布在${coveredDimensions}维度，说明你已经开始从不同角度记录自己。` : "",
+    topTagText ? `反复出现的主题包括${topTagText}，这些更适合作为后续访谈继续靠近的入口。` : "",
+    "这份画像仍是初版，后续记录越多，它会越能区分一时状态和长期模式。"
   ].filter(Boolean);
 
   const dimensionInsights = {} as Record<InterviewDimension, string>;
 
   for (const dimension of ALL_DIMENSIONS) {
     const facts = data.facts.filter((fact) => fact.dimension === dimension);
-    const latest = [...facts].sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())[0];
-    dimensionInsights[dimension] = latest
-      ? latest.summary
-      : "这个维度还没有形成足够稳定的认知线索。";
+    dimensionInsights[dimension] = buildDeterministicDimensionInsight(dimension, facts);
   }
 
   return {
@@ -149,12 +189,15 @@ export async function synthesizePortrait(userId: string): Promise<{
 
   // Collect insights, fallback on failure
   const dimensionInsights: Partial<Record<InterviewDimension, string>> = {};
+  const fallbackInsights = buildFallbackPortrait(data).dimensionInsights;
   for (let i = 0; i < ALL_DIMENSIONS.length; i++) {
-    if (!insightResults[i]) {
-      logger.warn(`[portrait-synthesis] Insight fallback for ${ALL_DIMENSIONS[i]}`);
-      dimensionInsights[ALL_DIMENSIONS[i]] = "该维度洞察暂不可用，请稍后重试。";
+    const dimension = ALL_DIMENSIONS[i];
+    const insight = insightResults[i]?.insight?.trim();
+    if (!insight) {
+      logger.warn(`[portrait-synthesis] Insight fallback for ${dimension}`);
+      dimensionInsights[dimension] = fallbackInsights[dimension];
     } else {
-      dimensionInsights[ALL_DIMENSIONS[i]] = insightResults[i]!.insight;
+      dimensionInsights[dimension] = insight;
     }
   }
 
