@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import type {
   AnalysisDateSpan,
@@ -11,12 +11,14 @@ import type {
   AnalysisInsightCardItem,
   AnalysisMonthRecord
 } from "@/features/analysis/types";
+import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
 import { notifyAnalysisToolbarRefresh } from "@/features/analysis/toolbar-refresh";
 import {
   buildAnalysisHref,
   formatAnalysisMonthLabel,
   getTodayAnalysisMonth,
   normalizeAnalysisSearchParams,
+  replaceAnalysisHistoryState,
   type AnalysisSectionKey
 } from "@/features/analysis/view-state";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
@@ -59,18 +61,6 @@ interface OverviewAction {
 type RhythmDayState = "future" | "empty" | "score_only" | "log_only" | "stale" | "complete";
 
 const rhythmWeekdays = ["一", "二", "三", "四", "五", "六", "日"] as const;
-
-async function fetchAnalysisMonth(month: string) {
-  const response = await fetch(`/api/analysis/month?month=${month}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("ANALYSIS_MONTH_QUERY_FAILED");
-  }
-
-  return (await response.json()) as AnalysisMonthRecord;
-}
 
 function buildInterviewHref(input: {
   dimension: (typeof interviewDimensions)[number];
@@ -2000,7 +1990,6 @@ function OverviewAnchorCTA({ record }: { record: AnalysisMonthRecord }) {
 }
 
 export function AnalysisShell() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
@@ -2016,9 +2005,9 @@ export function AnalysisShell() {
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
-      router.replace(normalizedSearch.href, { scroll: false });
+      replaceAnalysisHistoryState(normalizedSearch.href);
     }
-  }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
+  }, [normalizedSearch.href, normalizedSearch.shouldReplace]);
 
   useEffect(() => {
     setActiveSection(normalizedSearch.section);
@@ -2031,7 +2020,7 @@ export function AnalysisShell() {
     setHasFetchError(false);
     setRecord(null);
 
-    void fetchAnalysisMonth(normalizedSearch.month)
+    void fetchAnalysisMonthRecord(normalizedSearch.month)
       .then((nextRecord) => {
         if (!cancelled) {
           setRecord(nextRecord);

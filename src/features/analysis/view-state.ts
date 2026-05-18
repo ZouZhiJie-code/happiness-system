@@ -54,6 +54,14 @@ export function buildAnalysisHref(input: { month: string; section?: AnalysisSect
   return `/analysis?month=${input.month}&section=${section}`;
 }
 
+export function replaceAnalysisHistoryState(href: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.history.replaceState(null, "", href);
+}
+
 export function normalizeAnalysisSearchParams(input: {
   month?: string | null;
   section?: string | null;

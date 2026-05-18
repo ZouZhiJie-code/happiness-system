@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
+import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
 import { analysisToolbarRefreshEventName } from "@/features/analysis/toolbar-refresh";
 import type { AnalysisSectionKey } from "@/features/analysis/view-state";
 import {
@@ -11,6 +12,7 @@ import {
   formatAnalysisMonthLabel,
   getTodayAnalysisMonth,
   normalizeAnalysisSearchParams,
+  replaceAnalysisHistoryState,
   shiftAnalysisMonth
 } from "@/features/analysis/view-state";
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
@@ -71,20 +73,7 @@ function getChip(
   return null;
 }
 
-async function fetchAnalysisMonth(month: string) {
-  const response = await fetch(`/api/analysis/month?month=${month}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("ANALYSIS_TOOLBAR_MONTH_QUERY_FAILED");
-  }
-
-  return (await response.json()) as AnalysisMonthRecord;
-}
-
 export function AnalysisToolbar() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
@@ -99,9 +88,9 @@ export function AnalysisToolbar() {
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
-      router.replace(normalizedSearch.href, { scroll: false });
+      replaceAnalysisHistoryState(normalizedSearch.href);
     }
-  }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
+  }, [normalizedSearch.href, normalizedSearch.shouldReplace]);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,7 +98,7 @@ export function AnalysisToolbar() {
     setIsLoading(true);
     setRecord(null);
 
-    fetchAnalysisMonth(normalizedSearch.month)
+    fetchAnalysisMonthRecord(normalizedSearch.month)
       .then((nextRecord) => {
         if (!cancelled) {
           setRecord(nextRecord);
@@ -155,11 +144,11 @@ export function AnalysisToolbar() {
   }, [record]);
 
   function navigateMonth(month: string) {
-    router.replace(buildAnalysisHref({ month, section: normalizedSearch.section }), { scroll: false });
+    replaceAnalysisHistoryState(buildAnalysisHref({ month, section: normalizedSearch.section }));
   }
 
   function navigateSection(section: AnalysisSectionKey) {
-    router.replace(buildAnalysisHref({ month: normalizedSearch.month, section }), { scroll: false });
+    replaceAnalysisHistoryState(buildAnalysisHref({ month: normalizedSearch.month, section }));
   }
 
   return (

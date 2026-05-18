@@ -24,6 +24,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("analysis shell", () => {
+  let historyReplaceStateSpy: ReturnType<typeof vi.spyOn>;
+
   const scoreKeys = [
     "meaning",
     "health",
@@ -495,6 +497,7 @@ describe("analysis shell", () => {
   }
 
   beforeEach(() => {
+    historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       month: null,
@@ -503,10 +506,14 @@ describe("analysis shell", () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAnalysisMonthRecord()), { status: 200 })) as typeof fetch;
   });
 
+  afterEach(() => {
+    historyReplaceStateSpy.mockRestore();
+  });
+
   it("normalizes missing month search params to the current month", async () => {
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=overview", { scroll: false });
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=overview");
     await screen.findByTestId("analysis-overview-placeholder");
   });
 
@@ -518,7 +525,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=overview", { scroll: false });
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=overview");
     await screen.findByTestId("analysis-month-hero");
 
     expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
@@ -535,6 +542,7 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(historyReplaceStateSpy).not.toHaveBeenCalled();
     expect(await screen.findByTestId("analysis-score-placeholder")).toBeInTheDocument();
   });
 
@@ -546,7 +554,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=score");
     await screen.findByTestId("happiness-score-panel");
   });
 
