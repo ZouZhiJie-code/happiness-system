@@ -329,6 +329,9 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
+    await waitFor(() => {
+      expect(toolbar).toHaveAttribute("aria-busy", "false");
+    });
     expect(within(toolbar).getByText("5月4日 - 10日")).toBeInTheDocument();
     expect(within(toolbar).getByText("2天")).toBeInTheDocument();
     expect(within(toolbar).getAllByText("1条")).toHaveLength(2);
@@ -349,6 +352,9 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
+    await waitFor(() => {
+      expect(toolbar).toHaveAttribute("aria-busy", "false");
+    });
     expect(within(toolbar).getByText(/5月1日.*周/)).toBeInTheDocument();
     expect(within(toolbar).getAllByText("2项")).toHaveLength(2);
     expect(within(toolbar).getByText("1项")).toBeInTheDocument();
