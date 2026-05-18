@@ -298,11 +298,12 @@ function renderInterviewPage() {
   );
 }
 
-function buildStoredSessionCacheEntry(sessionId: string, entryDate = defaultEntryDate()) {
+function buildStoredSessionCacheEntry(sessionId: string, entryDate = defaultEntryDate(), hasUserMessages = false) {
   return {
     sessionId,
     entryDate,
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    hasUserMessages
   };
 }
 
@@ -3463,6 +3464,59 @@ describe("InterviewShell", () => {
     expectDimensionRing("开心");
     expectDimensionStatus("开心", "进行中");
     expectSelectedProgressValue("有效 10 轮");
+  });
+
+  it("shows restore copy while a cached session with user turns is restoring", async () => {
+    window.localStorage.setItem(
+      interviewSessionStorageKey,
+      JSON.stringify({
+        joy: buildStoredSessionCacheEntry("session-restoring-with-user", defaultEntryDate(), true)
+      })
+    );
+
+    const restoringSession = buildSession({
+      id: "session-restoring-with-user",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 10,
+      messages: promptMessages,
+      snapshot: baseSnapshot
+    });
+
+    let resolveSessionFetch: ((value: Response) => void) | null = null;
+
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-restoring-with-user")) {
+        return new Promise<Response>((resolve) => {
+          resolveSessionFetch = resolve;
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        throw new Error("should not create a new session while a cached session is restoring");
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("我正在把你上一次停下来的访谈接回来。")).toBeInTheDocument();
+    expect(screen.queryByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveSessionFetch?.(
+        new Response(JSON.stringify(restoringSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        })
+      );
+    });
+
+    expect(await screen.findByText("有效 10 轮")).toBeInTheDocument();
+    expect(screen.queryByText("我正在把你上一次停下来的访谈接回来。")).not.toBeInTheDocument();
   });
 
   it("keeps a completed target dimension stable while its session is restoring", async () => {

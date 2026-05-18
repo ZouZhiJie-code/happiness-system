@@ -266,7 +266,8 @@ function SiteHeaderInner() {
   const activeDimension = isInterviewPage
     ? normalizeInterviewDimension(pendingUrlDimension ?? searchParams.get("dimension") ?? dimension)
     : dimension;
-  const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
+  const hasUserMessages = messages.some((message) => message.role === "user");
+  const shouldProtectInterview = isInterviewPage && status === "active" && hasUserMessages;
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
   const hasHeaderWorkspace = isInterviewPage || isCalendarPage || isAnalysisPage;
   const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
@@ -538,7 +539,7 @@ function SiteHeaderInner() {
     const confirmed = window.confirm(interviewLeaveConfirmMessage);
 
     if (confirmed && sessionId) {
-      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId, sessionEntryDate);
+      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId, sessionEntryDate, hasUserMessages);
     }
 
     return confirmed;
