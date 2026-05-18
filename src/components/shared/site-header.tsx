@@ -228,6 +228,7 @@ function SiteHeaderInner() {
     journalEntry,
     messages,
     pendingDecision,
+    pendingUrlDimension,
     requestConversationReset,
     requestDailyJournalOpen,
     requestHappinessScoreEntryOpen,
@@ -237,6 +238,7 @@ function SiteHeaderInner() {
     sessionDimension,
     sessionId,
     setDimension,
+    setPendingUrlDimension,
     snapshot,
     snapshotData,
     status,
@@ -262,9 +264,10 @@ function SiteHeaderInner() {
   const isHappinessScoreWorkspaceSelected = isInterviewPage && workspaceMode === "happiness_score";
   const isInterviewWorkspaceSelected = isInterviewPage && workspaceMode === "interview";
   const activeDimension = isInterviewPage
-    ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
+    ? normalizeInterviewDimension(pendingUrlDimension ?? searchParams.get("dimension") ?? dimension)
     : dimension;
-  const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
+  const hasUserMessages = messages.some((message) => message.role === "user");
+  const shouldProtectInterview = isInterviewPage && status === "active" && hasUserMessages;
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
   const hasHeaderWorkspace = isInterviewPage || isCalendarPage || isAnalysisPage;
   const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
@@ -309,6 +312,9 @@ function SiteHeaderInner() {
     if (fromUrl) {
       hasNormalizedInterviewUrlRef.current = true;
       const nextDimension = normalizeInterviewDimension(fromUrl);
+      if (pendingUrlDimension === nextDimension) {
+        setPendingUrlDimension(null);
+      }
       if (nextDimension !== dimension) {
         setDimension(nextDimension);
       }
@@ -336,7 +342,7 @@ function SiteHeaderInner() {
       setDimension(remembered);
     }
     router.replace(`/interview?dimension=${remembered}`, { scroll: false });
-  }, [dimension, isInterviewPage, router, searchParams, setDimension]);
+  }, [dimension, isInterviewPage, pendingUrlDimension, router, searchParams, setDimension, setPendingUrlDimension]);
 
   useEffect(() => {
     if (!isInterviewPage) {
@@ -533,7 +539,7 @@ function SiteHeaderInner() {
     const confirmed = window.confirm(interviewLeaveConfirmMessage);
 
     if (confirmed && sessionId) {
-      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId, sessionEntryDate);
+      touchStoredInterviewSessionId(sessionDimension ?? activeDimension, sessionId, sessionEntryDate, hasUserMessages);
     }
 
     return confirmed;
@@ -585,6 +591,7 @@ function SiteHeaderInner() {
     }
 
     setDimension(normalized);
+    setPendingUrlDimension(normalized);
     router.push(`/interview?${params.toString()}`, { scroll: false });
   }
 
@@ -635,7 +642,12 @@ function SiteHeaderInner() {
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
       <header
         ref={headerRef}
-        className="relative z-30 w-full border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.12)] md:px-6"
+        className={clsx(
+          "w-full px-3 md:px-6",
+          isInterviewPage
+            ? "fixed inset-x-0 top-0 z-50 isolate border-b border-[rgba(101,67,34,0.1)] bg-[linear-gradient(180deg,rgba(249,238,216,0.98),rgba(235,214,178,0.97))] shadow-[0_8px_22px_rgba(77,47,21,0.08)]"
+            : "relative z-30 border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
+        )}
       >
       <div
         className={clsx(

@@ -141,6 +141,7 @@ model InterviewSession {
   joyEntry              JoyEntry?              @relation("SessionJoyEntry")
 
   @@index([userId, status])
+  @@index([userId, entryDate])
 }
 
 model InterviewEvent {
@@ -229,6 +230,9 @@ model JoyEntry {
   savedAt         DateTime?
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, status, date])
 }
 
 model DailyJournalEntry {
@@ -238,8 +242,8 @@ model DailyJournalEntry {
   title            String
   content          String
   status           DailyJournalStatus @default(draft)
-  sourceEntryIds   String[]
-  sourceSessionIds String[]
+  sourceEntryIds   String[]           @default([])
+  sourceSessionIds String[]           @default([])
   sourceSignature  String
   sourceUpdatedAt  DateTime?
   createdAt        DateTime           @default(now())
@@ -249,8 +253,10 @@ model DailyJournalEntry {
 
   @@unique([userId, date])
   @@index([userId, status])
+  @@index([userId, date])
 }
 
+/// Score ranges are enforced at both Zod layer and DB layer via SQL migration checks.
 model DailyHappinessScore {
   id                   String   @id @default(cuid())
   userId               String
@@ -268,6 +274,7 @@ model DailyHappinessScore {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model MemoryFact {
@@ -277,6 +284,7 @@ model MemoryFact {
   kind               String
   topicTags          String[]           @default([])
   summary            String
+  /// Provisioned by pgvector migration; runtime paths must tolerate it being unavailable.
   embedding          Unsupported("vector(2048)")?
   sourceType         MemorySourceType   @default(ai_extracted)
   confidence         Float              @default(0)

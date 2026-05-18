@@ -1,12 +1,12 @@
 const {
   mockCreateAuthSession,
-  mockCreateUser,
+  mockCreateUserWithInitialSession,
   mockDeleteAuthSessionByTokenHash,
   mockFindAuthSessionByTokenHash,
   mockFindUserByUsername
 } = vi.hoisted(() => ({
   mockCreateAuthSession: vi.fn(),
-  mockCreateUser: vi.fn(),
+  mockCreateUserWithInitialSession: vi.fn(),
   mockDeleteAuthSessionByTokenHash: vi.fn(),
   mockFindAuthSessionByTokenHash: vi.fn(),
   mockFindUserByUsername: vi.fn()
@@ -23,7 +23,7 @@ const { mockCreateSessionToken } = vi.hoisted(() => ({
 
 vi.mock("@/server/repositories/auth.repository", () => ({
   createAuthSession: mockCreateAuthSession,
-  createUser: mockCreateUser,
+  createUserWithInitialSession: mockCreateUserWithInitialSession,
   deleteAuthSessionByTokenHash: mockDeleteAuthSessionByTokenHash,
   findAuthSessionByTokenHash: mockFindAuthSessionByTokenHash,
   findUserByUsername: mockFindUserByUsername
@@ -48,16 +48,13 @@ describe("auth.service", () => {
   it("registers a user and creates a session", async () => {
     mockFindUserByUsername.mockResolvedValue(null);
     mockHashPassword.mockResolvedValue("salted-hash");
-    mockCreateUser.mockResolvedValue({
+    mockCreateUserWithInitialSession.mockResolvedValue({
       id: "user-1",
       username: "daily_light_01"
     });
     mockCreateSessionToken.mockResolvedValue({
       value: "raw-session-token",
       hash: "hashed-session-token"
-    });
-    mockCreateAuthSession.mockResolvedValue({
-      id: "session-1"
     });
 
     const result = await registerUser({
@@ -67,15 +64,10 @@ describe("auth.service", () => {
       acceptedPrivacy: true
     });
 
-    expect(mockCreateUser).toHaveBeenCalledWith(
+    expect(mockCreateUserWithInitialSession).toHaveBeenCalledWith(
       expect.objectContaining({
         username: "daily_light_01",
-        passwordHash: "salted-hash"
-      })
-    );
-    expect(mockCreateAuthSession).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: "user-1",
+        passwordHash: "salted-hash",
         tokenHash: "hashed-session-token"
       })
     );
@@ -102,6 +94,25 @@ describe("auth.service", () => {
         acceptedPrivacy: true
       })
     ).rejects.toThrow(AuthenticationError);
+  });
+
+  it("does not leave a half-created account when initial session creation fails", async () => {
+    mockFindUserByUsername.mockResolvedValue(null);
+    mockHashPassword.mockResolvedValue("salted-hash");
+    mockCreateSessionToken.mockResolvedValue({
+      value: "raw-session-token",
+      hash: "hashed-session-token"
+    });
+    mockCreateUserWithInitialSession.mockRejectedValue(new Error("write failed"));
+
+    await expect(
+      registerUser({
+        username: "daily_light_01",
+        password: "supersecret1",
+        acceptedTerms: true,
+        acceptedPrivacy: true
+      })
+    ).rejects.toThrow("write failed");
   });
 
   it("logs in an existing user with a valid password", async () => {

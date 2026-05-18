@@ -260,7 +260,7 @@ describe("site header calendar toolbar", () => {
     expect(header.previousElementSibling).toBeNull();
   });
 
-  it("keeps the interview header as the same non-fixed solid bar without spacer", async () => {
+  it("uses fixed interview-toned header without spacer on interview page", async () => {
     mockPathname.value = "/interview";
     mockSearchParams.value = {
       dimension: "joy",
@@ -273,9 +273,9 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
     const header = screen.getByRole("banner");
 
-    expect(header).toHaveClass("relative");
+    expect(header).toHaveClass("fixed", "isolate");
+    expect(header.className).toContain("bg-[linear-gradient");
     expect(header.className).not.toContain("site-header-frosted");
-    expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
   });
 

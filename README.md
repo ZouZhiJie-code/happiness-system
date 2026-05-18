@@ -119,6 +119,14 @@ APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
 ```
 
+### 2.1 数据库环境约定
+
+- 本地开发默认继续使用 `DATABASE_URL` + `npx prisma db push`，适合快速同步 schema。
+- 共享开发、staging、production 不再使用 `db push`，统一执行 `npx prisma migrate deploy`。
+- 应用运行时连接使用 `DATABASE_URL`；如果目标环境接了 pooler，`DATABASE_URL` 应指向 pooler URL。
+- Prisma migration 和需要直连的运维动作使用 `DIRECT_URL`；如果目标环境接了 pooler，`DIRECT_URL` 应指向 direct URL。
+- 启用记忆系统前，先确认 pgvector migration 已成功执行；`MemoryFact.embedding` 列和 extension 没准备好时，不要打开 `memoryEnabled`。当前 `2048` 维 embedding 不提供 ANN 向量索引，运行时会接受顺序扫描或降级检索。
+
 ### 3. 同步数据库 schema
 
 首次启动或拉到最新代码后，先执行：
@@ -136,6 +144,12 @@ psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migra
 ```
 
 执行完这条 migration 后，再继续 `npx prisma db push` 或直接启动开发服务器。
+
+如果你是在共享环境或准备上线，请改用：
+
+```bash
+npx prisma migrate deploy
+```
 
 ### 4. 启动开发服务器
 
@@ -174,6 +188,7 @@ npm run dev
 npm test
 npx tsc --noEmit
 npx prisma db push
+npx prisma migrate deploy
 ```
 
 ## 文档导航

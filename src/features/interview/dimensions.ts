@@ -94,15 +94,22 @@ export interface StoredInterviewSessionCacheEntry {
   sessionId: string;
   expiresAt: string;
   entryDate?: string | null;
+  hasUserMessages?: boolean;
 }
 
 type StoredInterviewSessionCacheMap = Partial<Record<InterviewDimension, StoredInterviewSessionCacheEntry | string>>;
 
-function buildStoredSessionEntry(sessionId: string, entryDate?: string | null, now = Date.now()): StoredInterviewSessionCacheEntry {
+function buildStoredSessionEntry(
+  sessionId: string,
+  entryDate?: string | null,
+  now = Date.now(),
+  hasUserMessages = false
+): StoredInterviewSessionCacheEntry {
   return {
     sessionId,
     expiresAt: new Date(now + interviewSessionCacheTtlMs).toISOString(),
-    entryDate: entryDate ?? null
+    entryDate: entryDate ?? null,
+    hasUserMessages
   };
 }
 
@@ -121,7 +128,8 @@ function normalizeStoredSessionEntry(entry: StoredInterviewSessionCacheEntry | s
 
   return {
     ...entry,
-    entryDate: entry.entryDate ?? null
+    entryDate: entry.entryDate ?? null,
+    hasUserMessages: Boolean(entry.hasUserMessages)
   };
 }
 
@@ -163,13 +171,18 @@ export function getStoredInterviewSessionId(dimension: InterviewDimension) {
   return getStoredInterviewSessionEntry(dimension)?.sessionId ?? null;
 }
 
-export function setStoredInterviewSessionId(dimension: InterviewDimension, sessionId: string, entryDate?: string | null) {
+export function setStoredInterviewSessionId(
+  dimension: InterviewDimension,
+  sessionId: string,
+  entryDate?: string | null,
+  hasUserMessages = false
+) {
   if (typeof window === "undefined") return;
 
   const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
   const nextMap = {
     ...readStoredSessionMap(),
-    [dimension]: buildStoredSessionEntry(sessionId, entryDate)
+    [dimension]: buildStoredSessionEntry(sessionId, entryDate, Date.now(), hasUserMessages)
   };
 
   window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
@@ -178,13 +191,19 @@ export function setStoredInterviewSessionId(dimension: InterviewDimension, sessi
   }
 }
 
-export function touchStoredInterviewSessionId(dimension: InterviewDimension, sessionId?: string, entryDate?: string | null) {
+export function touchStoredInterviewSessionId(
+  dimension: InterviewDimension,
+  sessionId?: string,
+  entryDate?: string | null,
+  hasUserMessages?: boolean
+) {
   if (typeof window === "undefined") return;
 
   const scopedKey = getScopedLocalStorageKey(interviewSessionStorageKey);
   const existingEntry = getStoredInterviewSessionEntry(dimension);
   const nextSessionId = sessionId ?? existingEntry?.sessionId;
   const nextEntryDate = entryDate ?? existingEntry?.entryDate ?? null;
+  const nextHasUserMessages = hasUserMessages ?? existingEntry?.hasUserMessages ?? false;
 
   if (!nextSessionId) {
     return;
@@ -192,7 +211,7 @@ export function touchStoredInterviewSessionId(dimension: InterviewDimension, ses
 
   const nextMap = {
     ...readStoredSessionMap(),
-    [dimension]: buildStoredSessionEntry(nextSessionId, nextEntryDate)
+    [dimension]: buildStoredSessionEntry(nextSessionId, nextEntryDate, Date.now(), nextHasUserMessages)
   };
 
   window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));

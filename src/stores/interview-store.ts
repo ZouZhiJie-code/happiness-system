@@ -51,6 +51,7 @@ interface InterviewState {
   happinessScoreEntryOpenRequestId: number;
   dimensionNavigationRequestId: number;
   dimensionNavigationTarget: InterviewDimension | null;
+  pendingUrlDimension: InterviewDimension | null;
   workspaceTransitionState: InterviewWorkspaceTransitionState;
   conversationResetRequestId: number;
   turnCount: number;
@@ -74,6 +75,7 @@ interface InterviewState {
   requestHappinessScoreEntryOpen: () => void;
   requestDimensionNavigation: (dimension: InterviewDimension) => void;
   clearDimensionNavigationRequest: () => void;
+  setPendingUrlDimension: (dimension: InterviewDimension | null) => void;
   setWorkspaceMode: (mode: InterviewWorkspaceMode) => void;
   requestConversationReset: () => void;
   reset: (nextDimension?: InterviewDimension) => void;
@@ -99,6 +101,7 @@ const initialState = {
   happinessScoreEntryOpenRequestId: 0,
   dimensionNavigationRequestId: 0,
   dimensionNavigationTarget: null as InterviewDimension | null,
+  pendingUrlDimension: null as InterviewDimension | null,
   workspaceTransitionState: null as InterviewWorkspaceTransitionState,
   conversationResetRequestId: 0,
   turnCount: 0,
@@ -181,6 +184,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   clearDimensionNavigationRequest: () =>
     set({
       dimensionNavigationTarget: null
+    }),
+  setPendingUrlDimension: (pendingUrlDimension) =>
+    set({
+      pendingUrlDimension
     }),
   setWorkspaceMode: (workspaceMode) => set({ workspaceMode }),
   requestConversationReset: () =>
