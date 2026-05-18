@@ -228,6 +228,7 @@ function SiteHeaderInner() {
     journalEntry,
     messages,
     pendingDecision,
+    pendingUrlDimension,
     requestConversationReset,
     requestDailyJournalOpen,
     requestHappinessScoreEntryOpen,
@@ -237,6 +238,7 @@ function SiteHeaderInner() {
     sessionDimension,
     sessionId,
     setDimension,
+    setPendingUrlDimension,
     snapshot,
     snapshotData,
     status,
@@ -262,7 +264,7 @@ function SiteHeaderInner() {
   const isHappinessScoreWorkspaceSelected = isInterviewPage && workspaceMode === "happiness_score";
   const isInterviewWorkspaceSelected = isInterviewPage && workspaceMode === "interview";
   const activeDimension = isInterviewPage
-    ? normalizeInterviewDimension(searchParams.get("dimension") ?? dimension)
+    ? normalizeInterviewDimension(pendingUrlDimension ?? searchParams.get("dimension") ?? dimension)
     : dimension;
   const shouldProtectInterview = isInterviewPage && status === "active" && messages.some((message) => message.role === "user");
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
@@ -309,6 +311,9 @@ function SiteHeaderInner() {
     if (fromUrl) {
       hasNormalizedInterviewUrlRef.current = true;
       const nextDimension = normalizeInterviewDimension(fromUrl);
+      if (pendingUrlDimension === nextDimension) {
+        setPendingUrlDimension(null);
+      }
       if (nextDimension !== dimension) {
         setDimension(nextDimension);
       }
@@ -336,7 +341,7 @@ function SiteHeaderInner() {
       setDimension(remembered);
     }
     router.replace(`/interview?dimension=${remembered}`, { scroll: false });
-  }, [dimension, isInterviewPage, router, searchParams, setDimension]);
+  }, [dimension, isInterviewPage, pendingUrlDimension, router, searchParams, setDimension, setPendingUrlDimension]);
 
   useEffect(() => {
     if (!isInterviewPage) {
@@ -585,6 +590,7 @@ function SiteHeaderInner() {
     }
 
     setDimension(normalized);
+    setPendingUrlDimension(normalized);
     router.push(`/interview?${params.toString()}`, { scroll: false });
   }
 

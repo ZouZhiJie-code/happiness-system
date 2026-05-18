@@ -813,6 +813,7 @@ export function InterviewShell() {
     pendingDecision,
     reset,
     sessionId,
+    setPendingUrlDimension,
     setBootState,
     setJournalEntry,
     turnCount,
@@ -901,6 +902,7 @@ export function InterviewShell() {
   const showBoundaryInsufficientChoice = pendingDecision?.kind === "boundary_insufficient";
   const eventChoiceCompletionMode =
     pendingDecision?.kind === "event_complete" ? pendingDecision.completionMode ?? "complete" : "complete";
+  const isSessionHydratedForCurrentDimension = sessionDimension === currentDimension;
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -908,7 +910,7 @@ export function InterviewShell() {
       pendingDecision &&
       !optimisticUserMessage &&
       assistantState === "idle" &&
-      (sessionDimension ?? currentDimension) === currentDimension
+      isSessionHydratedForCurrentDimension
   );
   const terminalMessageId = messages.at(-1)?.id ?? null;
   const visibleMessages = useMemo(
@@ -931,8 +933,8 @@ export function InterviewShell() {
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
-  const isInterviewCompleted = status === "completed";
-  const isInterviewLocked = status === "paused" || isInterviewCompleted;
+  const isInterviewCompleted = isSessionHydratedForCurrentDimension && status === "completed";
+  const isInterviewLocked = isSessionHydratedForCurrentDimension && (status === "paused" || isInterviewCompleted);
   const hasUnsavedDraftChanges = Boolean(
     journalEntry && (draftTitle !== journalEntry.title || draftContent !== journalEntry.content)
   );
@@ -952,10 +954,11 @@ export function InterviewShell() {
   );
   const isChoiceDraftActionBlocked = Boolean(panelOpen && isGeneratingDraft);
   const draftGenerationUnlocked = Boolean(
-    sessionId && status === "active" && sessionDraftGenerationUnlocked && (sessionDimension ?? currentDimension) === currentDimension
+    sessionId && status === "active" && sessionDraftGenerationUnlocked && isSessionHydratedForCurrentDimension
   );
   const canRequestDraftGeneration = Boolean(
     sessionId &&
+      isSessionHydratedForCurrentDimension &&
       status === "active" &&
       !isBusy &&
       !isGeneratingDraft &&
@@ -971,6 +974,7 @@ export function InterviewShell() {
   );
   const canSendInput = Boolean(
     input.trim() &&
+      isSessionHydratedForCurrentDimension &&
       !isBusy &&
       !isGeneratingDraft &&
       !isSavingJournal &&
@@ -1000,10 +1004,11 @@ export function InterviewShell() {
 
   useEffect(() => {
     setDimension(currentDimension);
+    setPendingUrlDimension(null);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), currentDimension);
     }
-  }, [currentDimension, setDimension]);
+  }, [currentDimension, setDimension, setPendingUrlDimension]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -2453,9 +2458,11 @@ export function InterviewShell() {
               <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
                 当前记录日期：{currentRecordDate}
               </div>
-              {visibleMessages.map((message) => (
-                <ConversationMessage key={message.id} message={message} />
-              ))}
+              {isSessionHydratedForCurrentDimension
+                ? visibleMessages.map((message) => (
+                    <ConversationMessage key={message.id} message={message} />
+                  ))
+                : null}
               {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
               {showStreamingBubble ? (
                 <>
@@ -2470,7 +2477,7 @@ export function InterviewShell() {
                   ) : null}
                 </>
               ) : null}
-              {messages.length === 0 && !showBootBubble && !showStreamingBubble ? (
+              {(messages.length === 0 || !isSessionHydratedForCurrentDimension) && !showBootBubble && !showStreamingBubble ? (
                 <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
                   {dimensionMeta.emptyState}
                 </div>

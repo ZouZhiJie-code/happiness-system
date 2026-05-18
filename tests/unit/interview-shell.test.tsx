@@ -3313,6 +3313,98 @@ describe("InterviewShell", () => {
     );
   });
 
+  it("shows the target dimension immediately while its session request is still pending", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    cacheInterviewSessions({
+      joy: "session-ready",
+      fulfillment: "session-fulfillment"
+    });
+
+    const joySession = buildSession({
+      id: "session-ready",
+      dimension: "joy",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 2,
+      messages: promptMessages,
+      snapshot: baseSnapshot
+    });
+    const fulfillmentSession = buildSession({
+      id: "session-fulfillment",
+      dimension: "fulfillment",
+      status: "active",
+      stage: "collect_event",
+      turnCount: 0,
+      messages: [
+        {
+          ...openingMessage,
+          id: "assistant-fulfillment-opening",
+          content: "今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。"
+        }
+      ],
+      snapshot: baseSnapshot
+    });
+    const resolveFulfillmentFetches: Array<(value: Response) => void> = [];
+
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-ready")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(joySession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/session-fulfillment")) {
+        return new Promise<Response>((resolve) => {
+          resolveFulfillmentFetches.push(resolve);
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    const view = renderInterviewPage();
+
+    await screen.findByText("有效 2 轮");
+    fireEvent.click(getDimensionButton("充实"));
+
+    await waitFor(() => {
+      expect(getDimensionButton("充实")).toHaveAttribute("aria-current", "step");
+      expect(getDimensionButton("开心")).not.toHaveAttribute("aria-current");
+    });
+
+    mockSearchParams.value.dimension = "fulfillment";
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("今天和家人一起吃饭聊天，因为我最近很少这么放松。")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("我正在把你上一次停下来的访谈接回来。")).toBeInTheDocument();
+    expect(getDimensionButton("充实")).toHaveAttribute("aria-current", "step");
+
+    await act(async () => {
+      resolveFulfillmentFetches.forEach((resolve) =>
+        resolve(
+          new Response(JSON.stringify(fulfillmentSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        )
+      );
+    });
+
+    expect(await screen.findByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。")).toBeInTheDocument();
+  });
+
   it("keeps the header stable while a cached session is restoring, then shows rounds after hydrate", async () => {
     window.localStorage.setItem(
       interviewSessionStorageKey,
