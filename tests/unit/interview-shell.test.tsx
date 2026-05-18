@@ -692,6 +692,66 @@ describe("InterviewShell", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows the selected dimension opening question while the first session is starting", async () => {
+    const deferredStart = createDeferredResponse();
+
+    mockSearchParams.value = {
+      dimension: "improvement",
+      entryDate: null,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return deferredStart.promise;
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    });
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。")).toBeInTheDocument();
+    expect(screen.queryByText("我正在准备这一轮访谈的第一句提问。")).not.toBeInTheDocument();
+
+    deferredStart.resolve(
+      new Response(
+        JSON.stringify({
+          session: buildSession({
+            id: "session-improvement",
+            dimension: "improvement",
+            messages: [
+              {
+                id: "assistant-opening-improvement",
+                role: "assistant",
+                content: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。",
+                sequence: 0,
+                createdAt: "2026-04-21T00:00:00.000Z"
+              }
+            ],
+            lastAssistantQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。"
+          }),
+          sessionId: "session-improvement",
+          openingQuestion: "今天有没有一个让你觉得“下次可以更好一点”的具体时刻？先讲那个情境。"
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+    );
+  });
+
   it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
@@ -834,7 +894,14 @@ describe("InterviewShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "清除对话记录" }));
 
-    expect(await screen.findByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}")).toMatchObject({
+        joy: expect.objectContaining({
+          sessionId: "session-fresh"
+        })
+      });
+    });
+    expect(screen.getByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。")).toBeInTheDocument();
     expect(screen.queryByText("有效 2 轮")).not.toBeInTheDocument();
     expect(screen.queryByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();

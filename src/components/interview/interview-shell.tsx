@@ -23,6 +23,7 @@ import {
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
+import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import type { CalendarDayRecord } from "@/features/calendar/types";
@@ -854,6 +855,7 @@ export function InterviewShell() {
     : sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate();
   const currentRecordDate = requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate();
   const dimensionMeta = getInterviewDimensionMeta(currentDimension);
+  const dimensionConfig = getInterviewDimensionConfig(currentDimension);
   const bootSequenceRef = useRef(0);
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
@@ -2478,7 +2480,7 @@ export function InterviewShell() {
                   content={
                     bootState === "restoring"
                       ? "我正在把你上一次停下来的访谈接回来。"
-                      : "我正在准备这一轮访谈的第一句提问。"
+                      : dimensionConfig.openingQuestion
                   }
                 />
               ) : null}
