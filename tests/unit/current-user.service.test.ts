@@ -1,21 +1,60 @@
-const { mockFindAuthSessionByTokenHash } = vi.hoisted(() => ({
-  mockFindAuthSessionByTokenHash: vi.fn()
+const {
+  mockDeleteAuthSessionByTokenHash,
+  mockFindAuthSessionByTokenHash,
+  mockTouchAuthSessionByTokenHash
+} = vi.hoisted(() => ({
+  mockDeleteAuthSessionByTokenHash: vi.fn(),
+  mockFindAuthSessionByTokenHash: vi.fn(),
+  mockTouchAuthSessionByTokenHash: vi.fn()
 }));
 
 vi.mock("@/server/repositories/auth.repository", () => ({
-  findAuthSessionByTokenHash: mockFindAuthSessionByTokenHash
+  deleteAuthSessionByTokenHash: mockDeleteAuthSessionByTokenHash,
+  findAuthSessionByTokenHash: mockFindAuthSessionByTokenHash,
+  touchAuthSessionByTokenHash: mockTouchAuthSessionByTokenHash
 }));
 
-import { AuthenticationError, getCurrentUserFromRequest, requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
+import { getCurrentUserFromSessionToken } from "@/server/services/auth/current-user.service";
+import {
+  AuthenticationError,
+  getCurrentUserFromRequest,
+  requireCurrentUserFromRequest
+} from "@/server/services/auth/current-user.service";
 
 describe("current-user.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  it("returns null and deletes expired sessions", async () => {
+    mockFindAuthSessionByTokenHash.mockResolvedValue({
+      tokenHash: "hashed",
+      expiresAt: new Date("2000-01-01T00:00:00.000Z"),
+      user: { id: "user-1", username: "demo" }
+    });
+
+    const result = await getCurrentUserFromSessionToken("raw-token");
+
+    expect(result).toBeNull();
+    expect(mockDeleteAuthSessionByTokenHash).toHaveBeenCalled();
+  });
+
+  it("touches lastUsedAt for a valid session", async () => {
+    mockFindAuthSessionByTokenHash.mockResolvedValue({
+      tokenHash: "hashed",
+      expiresAt: new Date("2099-01-01T00:00:00.000Z"),
+      user: { id: "user-1", username: "demo" }
+    });
+
+    await getCurrentUserFromSessionToken("raw-token");
+
+    expect(mockTouchAuthSessionByTokenHash).toHaveBeenCalledWith(expect.any(String));
+  });
+
   it("returns the current user from a request cookie", async () => {
     mockFindAuthSessionByTokenHash.mockResolvedValue({
       id: "session-1",
+      tokenHash: "hashed",
       expiresAt: new Date("2099-01-01T00:00:00.000Z"),
       user: {
         id: "user-1",

@@ -17,6 +17,7 @@
 | `VOLCENGINE_ARK_BASE_URL` | Ark base URL |
 | `APP_URL` | 前端访问地址 |
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
+| `DIRECT_URL` | Prisma migration / 运维直连数据库 URL；共享环境建议配置 |
 
 账户体系补充说明：
 
@@ -29,12 +30,19 @@
 
 ```bash
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 ```
+
+数据库连接约定：
+
+- `DATABASE_URL` 给应用运行时使用；如果部署环境有 pooler，这里填 pooler URL。
+- `DIRECT_URL` 给 Prisma migration、数据修复和运维排障使用；如果部署环境有 pooler，这里填直连库的 URL。
+- 共享环境上线前先确认这两个 URL 都已配置，避免把 `migrate deploy` 跑在 pooler 上。
 
 ## 2. 本地启动
 
@@ -95,6 +103,66 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="your-embedding-endpoint-id"
 ```
 
 > pgvector 向量维度 2048 超过 HNSW 索引的 2000 维限制，当前使用顺序扫描。数据量 < 200 条时性能足够。
+
+### 2.3.1 共享环境数据库补强清单
+
+上线前按下面顺序执行：
+
+1. 先做 backup，至少确认最近一次全库 backup 可恢复。
+2. 校验部署配置：应用使用 `DATABASE_URL`，migration 使用 `DIRECT_URL`。
+3. 执行 `npx prisma migrate deploy`，不要在共享环境继续用 `npx prisma db push`。
+4. 如果要启用记忆系统，确认 pgvector migration 已执行完成，再打开 `memoryEnabled`。
+5. 验证关键索引、向量 extension 和认证会话清理都已生效。
+
+建议检查命令：
+
+```bash
+npx prisma migrate status
+psql "$DIRECT_URL" -c '\dx'
+psql "$DIRECT_URL" -c '\d "InterviewSession"'
+psql "$DIRECT_URL" -c '\d "JoyEntry"'
+psql "$DIRECT_URL" -c '\d "DailyJournalEntry"'
+psql "$DIRECT_URL" -c '\d "DailyHappinessScore"'
+```
+
+你应看到这些索引已经存在：
+
+- `InterviewSession_userId_entryDate_idx`
+- `JoyEntry_userId_date_idx`
+- `JoyEntry_userId_status_date_idx`
+- `DailyJournalEntry_userId_date_idx`
+- `DailyHappinessScore_userId_date_idx`
+- `MemoryFact.embedding` 列存在，且 `\dx` 能看到 `vector` extension
+
+如果需要直接确认 auth session 生命周期逻辑，可执行：
+
+```bash
+psql "$DIRECT_URL" -c 'select count(*) as expired_sessions from "AuthSession" where "expiresAt" < now();'
+psql "$DIRECT_URL" -c 'select "tokenHash", "lastUsedAt", "expiresAt" from "AuthSession" order by "lastUsedAt" desc nulls last limit 10;'
+```
+
+期望：
+
+- 过期会话在读取路径上会被清理，不会长期堆积。
+- 活跃登录的 `lastUsedAt` 会随会话读取被回写。
+
+如果 `\dx` 中没有 `vector`：
+
+```bash
+psql "$DIRECT_URL" -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+npx prisma migrate deploy
+```
+
+如果 `vector` extension 无法创建，保持 `memoryEnabled=false`，先完成数据库能力开通，再继续 rollout。
+当前 `2048` 维 embedding 不要再尝试补 `ivfflat / hnsw` 索引；这两个索引在这个维度下都不是 deployable contract。
+
+### 2.3.2 回滚与恢复
+
+- `migrate deploy` 前先做 backup；没有可验证的 backup 时不要继续。
+- 如果 migration 在共享环境失败，先停止继续 rollout，保留失败日志和 `prisma migrate status` 输出。
+- 如果是 pgvector 缺失导致失败，先补 extension，再重跑 `npx prisma migrate deploy`。
+- 如果需要数据库级回退，优先使用最近一次 backup restore 到临时库验证，再按环境规范执行 restore。
+- 不要手工删除 Prisma migration 记录来伪造回滚状态。
 
 ### 2.4 启动开发服务器
 

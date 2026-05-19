@@ -358,3 +358,17 @@ Tested: git status --short
 Not-tested: 下一批 CI 扩容后的远端表现
 EOF
 ```
+---
+
+## Execution Evidence
+
+- `npx vitest run tests/unit/settings-page.test.tsx tests/unit/auth.api.test.ts` 通过：`2` 个测试文件，`7` 个测试通过
+- `npm run typecheck` 通过
+- `npm test` 通过：`71` 个测试文件，`595` 个测试通过
+- `.github/workflows/ci.yml` 已创建，并已本地读取确认步骤顺序为 `checkout -> setup-node -> npm ci -> npm run typecheck -> npm test`
+
+## Remaining Gaps
+
+- CI 还没覆盖 `npm run build`
+- CI 还没覆盖 `npm run lint`
+- 测试过程里的 warning / 日志噪声仍存在，包括 `DATABASE_URL` 缺失相关 Prisma warning 和 `act(...)` warning

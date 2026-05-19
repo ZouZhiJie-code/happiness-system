@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
 import { AUTH_COOKIE_NAME } from "@/features/auth/auth.constants";
-import { findAuthSessionByTokenHash } from "@/server/repositories/auth.repository";
+import {
+  deleteAuthSessionByTokenHash,
+  findAuthSessionByTokenHash,
+  touchAuthSessionByTokenHash
+} from "@/server/repositories/auth.repository";
 
 export class AuthenticationError extends Error {}
 
@@ -28,16 +32,19 @@ export async function getCurrentUserFromSessionToken(rawToken: string | null) {
     return null;
   }
 
-  const session = await findAuthSessionByTokenHash(hashSessionToken(rawToken));
+  const tokenHash = hashSessionToken(rawToken);
+  const session = await findAuthSessionByTokenHash(tokenHash);
 
   if (!session) {
     return null;
   }
 
   if (session.expiresAt instanceof Date && session.expiresAt.getTime() <= Date.now()) {
+    await deleteAuthSessionByTokenHash(tokenHash);
     return null;
   }
 
+  await touchAuthSessionByTokenHash(tokenHash);
   return session.user ?? null;
 }
 

@@ -1,0 +1,2 @@
+ALTER TABLE "JoyEntry"
+ADD COLUMN IF NOT EXISTS "eventBlocks" JSONB;
