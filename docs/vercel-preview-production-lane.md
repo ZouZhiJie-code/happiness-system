@@ -53,8 +53,8 @@
 - Production URL 合同可由显式 `APP_URL` 或暴露后的 Vercel system env 满足
 - 如果依赖 Vercel system env，生产指向应来自 `https://${VERCEL_PROJECT_PRODUCTION_URL}`；该变量在 Vercel 文档中定义为项目生产域名，即使在 preview deployment 中也会提供生产域语义
 - 如果项目未暴露 system env，才要求手工维护 `APP_URL`
-- 当前还没有直接证据证明 `xingfuxitong` 已在目标生产环境里直接暴露出 `VERCEL_PROJECT_PRODUCTION_URL`，也还没有拿到显式 `APP_URL` readback
-- 因此，production URL 合同当前只能写成 `partially unverified`，不能写成已闭环；上线前仍需补做一次项目设置与运行时 readback，确认 `Automatically expose System Environment Variables` 已开启，并直接拿到 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL`
+- 当前仓库已经拿到一条可接受的 direct runtime readback 证据：`2026-05-19` 在手动 preview deployment `https://xingfuxitong-nd5yfetul-zouzhijies-projects.vercel.app` 上，通过受保护的 `GET /api/debug/runtime-env` 返回了 `VERCEL_PROJECT_PRODUCTION_URL=xingfuxitong.vercel.app`
+- 因为 Vercel 官方定义这个变量“即使在 preview deployment 中也总是会被设置”，所以当前 production URL 合同可以按 system env 路径视为已闭环；显式 `APP_URL` 仍可作为替代路径，但不再是当前 launch gate 的阻断项
 - 生产库和 preview 库必须隔离
 - 如果记忆系统暂时不开，`VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以先留空
 
@@ -103,8 +103,9 @@ SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
   2. 依赖 Vercel system env，在运行时拼出 `https://${VERCEL_URL}` / `https://${VERCEL_BRANCH_URL}` / `https://${VERCEL_PROJECT_PRODUCTION_URL}`
 - 只要选择第 2 条路径，就不能只看 `vercel env ls`。`vercel env ls` 只能证明用户自定义变量现状，不能单独证明 system env 是否已向 deployment 暴露。
 - 因此，任何把 Preview / Production 判定为“URL 合同已满足”的结论，都必须附带一条额外证据：项目设置中 `Automatically expose System Environment Variables` 已开启，且部署构建或运行时能读到 `VERCEL=1`
-- 当前最小已到位证据只足以支撑 preview deployment URL 语义：`VERCEL=1` + `VERCEL_URL`
-- 生产 URL 语义仍需 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL` 的直接 readback；在拿到前，不应把 production URL contract 写成已满足
+- 当前已经到位的证据分两层：
+  - `vercel env pull` 只足以作为 preview deployment URL 的旁证：`VERCEL=1` + `VERCEL_URL`
+  - 真正关闭 production URL 合同的是 direct runtime readback：在 preview runtime 上直接读到 `VERCEL_PROJECT_PRODUCTION_URL`
 - 当前仓库用于这条 direct readback 的最小验证面是：
   - route：`GET /api/debug/runtime-env`
   - script：`node scripts/runtime-env-readback.mjs`
@@ -183,10 +184,10 @@ vercel env ls --scope zouzhijies-projects
   - `VERCEL_URL`
 - 这说明当前项目至少已经暴露出一条可直接用于 deployment URL 语义的 system env 路径；到这一步，`APP_URL` 不再是当前 launch lane 的直接阻断项
 
-仍未直接证实的部分：
+仍未直接通过 `env pull` 证实的部分：
 - 本轮拉取结果里没有直接看到 `VERCEL_BRANCH_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL`
-- 因此，当前能被直接确认的 system env URL 证据只有 `VERCEL_URL`
-- 这足以支撑 preview 的最小 deployment URL 语义，但不足以单独关闭 production URL contract
+- `VERCEL_URL` 在 pulled env 文件里还是空字符串
+- 但这不再阻断 URL 合同收口，因为后续 direct runtime readback 已经补上了更高优先级证据
 
 本机验证边界与重试结果：
 - 先前 shell 侧的 `fetch failed` / `UND_ERR_CONNECT_TIMEOUT` 不能直接作为 preview 不可用证据：同机系统代理当时已经启用并指向 `127.0.0.1:7897`，且 `verge-mih` 正在监听，但执行命令的 shell 没有显式带上 `HTTP_PROXY` / `HTTPS_PROXY`
@@ -213,12 +214,18 @@ vercel env ls --scope zouzhijies-projects
 当前结论：
 - 已被直接证实的 AI 环境变量阻断已解除
 - preview URL 合同在当前仓库接受的最小证据面上可视为已满足：system env 路径至少已通过 `VERCEL=1` + `VERCEL_URL` 得到证据支持
-- production URL 合同尚未闭环：当前既没有直接读到 `APP_URL`，也没有直接读到 `VERCEL_PROJECT_PRODUCTION_URL`，所以只能标记为 `partially unverified / not closed`
+- production URL 合同现在也已闭环：`APP_URL` 仍为空，但手动 preview deployment `https://xingfuxitong-nd5yfetul-zouzhijies-projects.vercel.app` 的 guarded runtime readback 返回了
+  - `VERCEL_TARGET_ENV=preview`
+  - `VERCEL_URL=xingfuxitong-nd5yfetul-zouzhijies-projects.vercel.app`
+  - `VERCEL_PROJECT_PRODUCTION_URL=xingfuxitong.vercel.app`
+  - `APP_URL=null`
+- 这条证据符合官方对 `VERCEL_PROJECT_PRODUCTION_URL` 的定义：它是项目 production 域名，且即使在 preview deployment 中也会设置
 - 当前剩余 blocker 已不再是“平台缺少 AI 变量”，也不再是“可用代理路径上的网络 / DNS 不通”
 - 受保护 preview 的自动化 smoke auth path 已固定为 `vercel-curl`：匿名 raw preview root 仍是 `401`，但最小自动化 smoke 已不再被 Deployment Protection 卡住
 - 当前自动化脚本证据与 controller 手工补证必须分开读：
   - `product-smoke.mjs` 自动化：只覆盖最小 auth/session/start/invalid_entry_date
   - controller 手工 deep-chain：补到 `joy -> draft generate -> draft save`
+  - `runtime-env-readback.mjs` 自动化：用于 guarded runtime env 直读，不属于公开 smoke 面
 
 ## 当前刻意不开放的能力
 
