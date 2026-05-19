@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "audit:vercel-env": "node scripts/vercel-env-audit.mjs",
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",

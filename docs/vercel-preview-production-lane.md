@@ -102,6 +102,32 @@ SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 - `/api/auth/session` 的 JSON 里存在 `authenticated: boolean`
 - 如果设置了 `SMOKE_BYPASS_SECRET` 或 `VERCEL_AUTOMATION_BYPASS_SECRET`，脚本会先走一次 Vercel bypass cookie 流，再检查上述路由；当前受保护 preview 的仓库基线以这条路径为准
 
+## 2026-05-19 审计快照
+
+审计命令：
+
+```bash
+vercel env ls --scope zouzhijies-projects
+```
+
+审计对象：
+- Vercel team：`zouzhijies-projects`
+- project：`xingfuxitong`
+
+当前真实结果：
+- `Development / Preview / Production` 三套环境都只看到了 `DATABASE_URL` 与 `DIRECT_URL`
+- 没有看到 `AI_PROVIDER`
+- 没有看到 `VOLCENGINE_ARK_API_KEY`
+- 没有看到 `VOLCENGINE_ARK_ENDPOINT_ID`
+- 没有看到 `VOLCENGINE_ARK_BASE_URL`
+- 没有看到 `APP_URL`
+- 也没有看到可选的 `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID`
+
+结论：
+- 当前平台环境状态低于本文件定义的 Preview / Production 合同
+- 在这批变量没有补齐前，无法把 Preview / Production 视为“可验证真实 AI 主链”的环境
+- 产品主链 smoke 仍可以先覆盖公开页和无 AI 前置的 API，但涉及访谈、日志生成、画像 AI 直出和依赖 `APP_URL` 的完整部署语义时，当前平台配置不满足上线 readiness
+
 ## 当前刻意不开放的能力
 
 - `/api/transcribe` 继续视为关闭态，不纳入 preview smoke

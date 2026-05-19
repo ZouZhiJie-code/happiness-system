@@ -624,6 +624,23 @@
   - 要么被列为上线前必须补齐
 - `失败归类`：`缺失功能 / 上线阻断`
 
+### D-05 Vercel Preview / Production AI 环境合同
+
+- `用例 ID`：`D-05`
+- `模块`：异常、空态与上线阻断项
+- `优先级`：`P0`
+- `入口`：Vercel 项目环境变量
+- `前置条件`：项目已 link 到 `zouzhijies-projects/xingfuxitong`
+- `操作步骤`：
+  1. 对照 `.env.preview.example` 与 `.env.production.example` 确认合同变量
+  2. 执行 `vercel env ls --scope zouzhijies-projects`
+  3. 检查 `Preview / Production` 是否具备 AI 变量与正确的 `APP_URL` 语义
+- `预期结果`：
+  - `Preview / Production` 至少具备 `DATABASE_URL`、`AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL`、`APP_URL`
+  - `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以按当前策略留空，但必须被显式判定为可选
+  - `APP_URL` 必须分别指向当前 preview 域名和正式域名
+- `失败归类`：`数据风险 / 上线阻断`
+
 ### 批次 4 当前执行记录（2026-05-18）
 
 | 用例 ID | 结果 | 证据摘要 | 备注 |
@@ -632,11 +649,12 @@
 | `D-02` | `通过` | Safari 真实页面实测：`/calendar?view=month&date=2026-05-02` 的过去空白日当天检查区显示“这一天还空着。进入当天后，可以从任一维开始。”；切到 `/calendar?view=month&date=2026-05-19` 的未来日后，页面显示“这一天还没到。到了当天再记录。”以及“五维状态：未来日期先保留。” | 过去空白日与未来日都保持中性工作台语义，没有“漏记”指责感。 |
 | `D-03` | `通过（实现+测试级）` | 代码与测试联合验证：`src/features/calendar/aggregate-calendar.ts` 里的 `isOpeningOnlyCalendarSession` 会把 `status=active && messageCount<=1 && !journalEntryId && !completedAt && !pausedAt` 的空开场 session 排除出 `in_progress`；`tests/unit/calendar-aggregate.test.ts` 已显式断言 opening-only day 的 `overallStatus=empty`、`activeCount=0`、`primaryAction=null`。 | 本轮尝试为新账号现场造 opening-only 页面证据时，临时 cookie 抽取脚本未带上有效会话，没有形成额外页面截图；现有实现和单测已足以支撑本条通过。 |
 | `D-04` | `通过（判定为上线前需隐藏/不走用户主链）` | 仓库检索确认没有任何前端代码调用 `/api/transcribe`，唯一实现只有 [src/app/api/transcribe/route.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/.worktrees/launch-acceptance/src/app/api/transcribe/route.ts:1) 这个 stub route；无文件上传时不会进入真实转写，有文件上传时只返回“当前版本先保留接口与回退链路，下一步接入真实转写模型。”。文档 `docs/integration-guide.md`、`docs/operator-runbook.md` 也明确标注当前是 stub。 | 当前判断：它不在用户可触达主链里，因此不构成当前上线阻断；若后续开放语音入口，必须先补真实模型再重做验收。 |
+| `D-05` | `未通过` | 2026-05-19 真实执行 `vercel env ls --scope zouzhijies-projects`，`zouzhijies-projects/xingfuxitong` 在 `Development / Preview / Production` 三套环境里都只返回 `DATABASE_URL` 与 `DIRECT_URL`；没有看到 `AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL`、`APP_URL`，也没有看到可选的 `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID`。 | 当前结论：平台环境状态低于仓库合同，无法把 Preview / Production 视为“可验证真实 AI 主链”的环境；已登记为 `ISSUE-012`。 |
 
 批次 4 当前结论：
 - `D-02`、`D-03`、`D-04` 已完成并通过。
 - `D-01` 已通过真实失效会话 deep link 补齐页面级错误卡证据。
-- 本批当前未新增需要写入问题池的 `P0 / P1` 缺陷。
+- `D-05` 未通过：Vercel 真实环境缺少 AI 变量与 `APP_URL`，已写入 `ISSUE-012`。
 
 ---
 
