@@ -105,6 +105,10 @@ SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 - 因此，任何把 Preview / Production 判定为“URL 合同已满足”的结论，都必须附带一条额外证据：项目设置中 `Automatically expose System Environment Variables` 已开启，且部署构建或运行时能读到 `VERCEL=1`
 - 当前最小已到位证据只足以支撑 preview deployment URL 语义：`VERCEL=1` + `VERCEL_URL`
 - 生产 URL 语义仍需 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL` 的直接 readback；在拿到前，不应把 production URL contract 写成已满足
+- 当前仓库用于这条 direct readback 的最小验证面是：
+  - route：`GET /api/debug/runtime-env`
+  - script：`node scripts/runtime-env-readback.mjs`
+  - guardrails：登录态 + `ENABLE_RUNTIME_ENV_READBACK=1` + `RUNTIME_ENV_READBACK_TOKEN` + 只读白名单字段
 
 ## 当前仓库的构建注意事项
 

@@ -422,6 +422,7 @@ npm test
 - 部署说明与最新 smoke 口径：`docs/vercel-preview-production-lane.md`
 - 最小 smoke 脚本：`scripts/http-smoke.mjs`
 - protected preview 自动化 smoke 脚本：`scripts/product-smoke.mjs`
+- production / preview URL 合同 runtime 直读脚本：`scripts/runtime-env-readback.mjs`
 
 ### 5.1 Preview 部署后最小检查
 
@@ -461,6 +462,42 @@ ALL_PROXY=http://127.0.0.1:7897
 - `invalid_entry_date` 拒绝路径
 
 它当前不自动覆盖更深的 `joy -> respond -> wrap_up -> draft generate -> draft save`。这条更深链路如果需要证据，仍由 controller 手工 deep-chain 补证。
+
+### 5.1.1 Production URL contract direct readback
+
+当 launch gate 需要直接验证 `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` / `APP_URL` 的运行时值时，不要继续依赖 `vercel env pull`。当前仓库的最小直读面是：
+
+- route：`GET /api/debug/runtime-env`
+- script：`scripts/runtime-env-readback.mjs`
+
+这个面只在同时满足下列条件时可用：
+
+- `ENABLE_RUNTIME_ENV_READBACK=1`
+- `RUNTIME_ENV_READBACK_TOKEN` 已配置
+- 请求方已登录
+- 请求头带 `x-runtime-readback-token`
+
+最小执行方式：
+
+```bash
+RUNTIME_ENV_READBACK_TOKEN="your-readback-token" \
+ACCEPTANCE_TRANSPORT=vercel-curl \
+ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
+ACCEPTANCE_BASE_URL="https://your-target-host" \
+node scripts/runtime-env-readback.mjs "https://your-target-host" runtime
+```
+
+返回只允许读取这些白名单字段：
+
+- `VERCEL`
+- `VERCEL_TARGET_ENV`
+- `VERCEL_URL`
+- `VERCEL_BRANCH_URL`
+- `VERCEL_PROJECT_PRODUCTION_URL`
+- `VERCEL_DEPLOYMENT_ID`
+- `APP_URL`
+
+不要把这个 route 当成公开 smoke 面，也不要向其中加入任何数据库、AI key 或其他敏感 env。
 
 `smoke:public` 当前检查：
 

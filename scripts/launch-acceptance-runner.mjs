@@ -20,8 +20,8 @@ function normalizeUsername(prefix) {
 }
 
 export function createHttp({ baseUrl = BASE_URL } = {}) {
-  return async function http(path, { method = "GET", body, cookie } = {}) {
-    const headers = {};
+  return async function http(path, { method = "GET", body, cookie, headers: extraHeaders = {} } = {}) {
+    const headers = { ...extraHeaders };
     if (body !== undefined) headers["content-type"] = "application/json";
     if (cookie) headers.cookie = cookie;
 
@@ -90,7 +90,11 @@ function resolveVercelCommandCwd({
   return currentCwd;
 }
 
-function buildVercelCurlArgs(baseUrl, path, { method = "GET", body, cookie, vercelScope }) {
+function buildVercelCurlArgs(
+  baseUrl,
+  path,
+  { method = "GET", body, cookie, headers: extraHeaders = {}, vercelScope }
+) {
   const requestUrl = new URL(path, baseUrl);
   const requestPath = `${requestUrl.pathname}${requestUrl.search}`;
   const args = ["curl", requestPath, "--deployment", baseUrl, "--yes"];
@@ -107,6 +111,10 @@ function buildVercelCurlArgs(baseUrl, path, { method = "GET", body, cookie, verc
 
   if (cookie) {
     args.push("--header", `cookie: ${cookie}`);
+  }
+
+  for (const [headerName, headerValue] of Object.entries(extraHeaders)) {
+    args.push("--header", `${headerName}: ${headerValue}`);
   }
 
   if (body !== undefined) {
@@ -170,13 +178,14 @@ function createVercelCurlHttp({
   vercelCwd = process.cwd(),
   execFile = execFileSync
 } = {}) {
-  return async function http(path, { method = "GET", body, cookie } = {}) {
+  return async function http(path, { method = "GET", body, cookie, headers } = {}) {
     const output = execFile(
       "vercel",
       buildVercelCurlArgs(baseUrl, path, {
         method,
         body,
         cookie,
+        headers,
         vercelScope
       }),
       {
