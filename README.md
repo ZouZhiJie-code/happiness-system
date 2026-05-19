@@ -188,16 +188,12 @@ npm test
 
 - preview 环境变量合同：`.env.preview.example`
 - production 环境变量合同：`.env.production.example`
-- 部署与 smoke 入口：`docs/vercel-preview-production-lane.md`
-- preview 部署完成后，执行：
-
-```bash
-VERCEL_AUTOMATION_BYPASS_SECRET="your-bypass-secret" \
-SMOKE_BASE_URL="https://your-preview-url.vercel.app" \
-npm run smoke:public
-```
-
-- 如果当前 preview 没有开启 Vercel Deployment Protection，可以省略 `VERCEL_AUTOMATION_BYPASS_SECRET`
+- 部署与 smoke source of truth：`docs/vercel-preview-production-lane.md`
+- preview 部署后的分流：
+  - protected preview：按 `docs/vercel-preview-production-lane.md` 里的 `vercel-curl + product-smoke.mjs` 路径执行
+  - non-protected preview：可继续走 `SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public`
+- 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
+- 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
 ## 常用命令
@@ -207,6 +203,7 @@ npm run dev
 npm test
 npm run lint
 npm run smoke:public -- http://127.0.0.1:3000
+node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
 npx tsc --noEmit
 npx prisma db push
 npx prisma migrate deploy

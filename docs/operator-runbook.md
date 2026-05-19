@@ -419,20 +419,32 @@ npm test
 - 根环境样板：`.env.example`
 - preview 环境合同：`.env.preview.example`
 - production 环境合同：`.env.production.example`
-- 部署说明：`docs/vercel-preview-production-lane.md`
+- 部署说明与最新 smoke 口径：`docs/vercel-preview-production-lane.md`
 - 最小 smoke 脚本：`scripts/http-smoke.mjs`
+- protected preview 自动化 smoke 脚本：`scripts/product-smoke.mjs`
 
 ### 5.1 Preview 部署后最小检查
 
+以 `docs/vercel-preview-production-lane.md` 为 source of truth，按 preview 是否受保护分流：
+
+1. protected preview：
+
 ```bash
-VERCEL_AUTOMATION_BYPASS_SECRET="your-bypass-secret" \
-SMOKE_BASE_URL="https://your-preview-url.vercel.app" \
-npm run smoke:public
+ACCEPTANCE_TRANSPORT=vercel-curl \
+ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
+ACCEPTANCE_BASE_URL="https://your-preview-url.vercel.app" \
+node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
+```
+
+2. non-protected preview：
+
+```bash
+SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 ```
 
 说明：
-- 如果当前 preview 没开 Vercel Deployment Protection，可以省略 `VERCEL_AUTOMATION_BYPASS_SECRET`
-- 在这台机器上，如果 shell 走 Clash/Verge 系统代理，预览 smoke 需要额外带上：
+- 如果当前 preview 没开 Vercel Deployment Protection，可以继续用 `smoke:public`
+- 在这台机器上，如果 shell 走 Clash/Verge 系统代理，preview smoke 可能需要额外带上：
 
 ```bash
 NODE_USE_ENV_PROXY=1 \
@@ -441,7 +453,16 @@ HTTP_PROXY=http://127.0.0.1:7897 \
 ALL_PROXY=http://127.0.0.1:7897
 ```
 
-脚本会检查：
+`product-smoke.mjs` 当前自动化只覆盖：
+
+- 注册
+- 登录 / session 建立
+- `POST /api/interview/session/start`
+- `invalid_entry_date` 拒绝路径
+
+它当前不自动覆盖更深的 `joy -> respond -> wrap_up -> draft generate -> draft save`。这条更深链路如果需要证据，仍由 controller 手工 deep-chain 补证。
+
+`smoke:public` 当前检查：
 
 - `/`
 - `/login`

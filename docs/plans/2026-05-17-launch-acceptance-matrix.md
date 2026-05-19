@@ -624,19 +624,42 @@
   - 要么被列为上线前必须补齐
 - `失败归类`：`缺失功能 / 上线阻断`
 
-### 批次 4 当前执行记录（2026-05-18）
+### D-05 Vercel Preview / Production AI 环境合同
+
+- `用例 ID`：`D-05`
+- `模块`：异常、空态与上线阻断项
+- `优先级`：`P0`
+- `入口`：Vercel 项目环境变量
+- `前置条件`：项目已 link 到 `zouzhijies-projects/xingfuxitong`
+- `操作步骤`：
+  1. 对照 `.env.preview.example` 与 `.env.production.example` 确认合同变量
+  2. 在已 link 到 `zouzhijies-projects/xingfuxitong` 的仓库根目录执行 `vercel env ls --scope zouzhijies-projects`；如果不在该项目根目录，就必须先切到该目录，或用其他方式把命令固定到 `xingfuxitong`
+  3. 检查 `Preview / Production` 是否具备 AI 变量，并确认部署 URL 合同是否可由显式 `APP_URL` 或 Vercel system env 满足
+- `预期结果`：
+  - `Preview / Production` 至少具备 `DATABASE_URL`、`AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL`
+  - `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以按当前策略留空，但必须被显式判定为可选
+  - URL 合同可由两条路径满足：显式 `APP_URL`，或暴露后的 Vercel system env
+  - 如果依赖 Vercel system env，至少要拿到一条直接可验证的 deployment URL 证据；当前最小可接受证据是 `VERCEL=1` 与 `VERCEL_URL` 出现在目标环境的 pulled env 里。只有在项目明确依赖它们时，才继续把 `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` 当作必须核对项
+- `失败归类`：`数据风险 / 上线阻断`
+
+### 批次 4 当前执行记录（截至 2026-05-19，含 2026-05-18 基线与 2026-05-19 D-05 平台审计）
 
 | 用例 ID | 结果 | 证据摘要 | 备注 |
 |---|---|---|---|
 | `D-01` | `通过` | 接口级与页面级联合验证：直调 `POST /api/interview/session/respond` 并传入失效 `sessionId` 后，返回 `issue.code=SESSION_NOT_FOUND`，且结构化对象完整包含 `title/message/resolution/retryable/action/requestId`。Safari 真实页面打开 `http://127.0.0.1:3001/interview?dimension=joy&sessionId=does-not-exist` 后，访谈区稳定显示结构化错误卡：“这条访谈暂时打不开 / 当前想继续的那条访谈不存在或已经失效。/ 请回到日历重新选择，或直接开始一条新的访谈。/ 错误码：SESSION_NOT_FOUND”。 | 页面级错误 notice 已补齐，结构化错误闭环成立。 |
 | `D-02` | `通过` | Safari 真实页面实测：`/calendar?view=month&date=2026-05-02` 的过去空白日当天检查区显示“这一天还空着。进入当天后，可以从任一维开始。”；切到 `/calendar?view=month&date=2026-05-19` 的未来日后，页面显示“这一天还没到。到了当天再记录。”以及“五维状态：未来日期先保留。” | 过去空白日与未来日都保持中性工作台语义，没有“漏记”指责感。 |
 | `D-03` | `通过（实现+测试级）` | 代码与测试联合验证：`src/features/calendar/aggregate-calendar.ts` 里的 `isOpeningOnlyCalendarSession` 会把 `status=active && messageCount<=1 && !journalEntryId && !completedAt && !pausedAt` 的空开场 session 排除出 `in_progress`；`tests/unit/calendar-aggregate.test.ts` 已显式断言 opening-only day 的 `overallStatus=empty`、`activeCount=0`、`primaryAction=null`。 | 本轮尝试为新账号现场造 opening-only 页面证据时，临时 cookie 抽取脚本未带上有效会话，没有形成额外页面截图；现有实现和单测已足以支撑本条通过。 |
-| `D-04` | `通过（判定为上线前需隐藏/不走用户主链）` | 仓库检索确认没有任何前端代码调用 `/api/transcribe`，唯一实现只有 [src/app/api/transcribe/route.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/.worktrees/launch-acceptance/src/app/api/transcribe/route.ts:1) 这个 stub route；无文件上传时不会进入真实转写，有文件上传时只返回“当前版本先保留接口与回退链路，下一步接入真实转写模型。”。文档 `docs/integration-guide.md`、`docs/operator-runbook.md` 也明确标注当前是 stub。 | 当前判断：它不在用户可触达主链里，因此不构成当前上线阻断；若后续开放语音入口，必须先补真实模型再重做验收。 |
+| `D-04` | `通过（判定为上线前需隐藏/不走用户主链）` | 仓库检索确认没有任何前端代码调用 `/api/transcribe`，唯一实现只有当前仓库代码路径 `src/app/api/transcribe/route.ts` 这个 stub route；无文件上传时不会进入真实转写，有文件上传时只返回“当前版本先保留接口与回退链路，下一步接入真实转写模型。”。文档 `docs/integration-guide.md`、`docs/operator-runbook.md` 也明确标注当前是 stub。 | 当前判断：它不在用户可触达主链里，因此不构成当前上线阻断；若后续开放语音入口，必须先补真实模型再重做验收。 |
+| `D-05` | `部分通过（AI 变量已补齐；preview 最小 URL 证据到位；production URL contract 未闭环）` | 2026-05-19 后续复查里，`vercel env ls --scope zouzhijies-projects` 已显示 `AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL` 全部出现在 `Development / Preview / Production`。同一轮 `vercel env pull --environment=preview` 与 `--environment=production` 的结果都出现了 `VERCEL=1`、`VERCEL_TARGET_ENV`、`VERCEL_URL`，因此 preview deployment URL 的最小 system-env 证据已到位，但这还不足以单独关闭 production URL contract，因为本轮没有直接读到 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL`。控制侧重试进一步确认：此前 shell `curl/fetch` 不带显式代理，不是有效反证，因为当时系统代理已启用到 `127.0.0.1:7897` 且 `verge-mih` 在监听，但 shell 没有 `HTTP_PROXY/HTTPS_PROXY`；补上显式代理后，`curl https://google.com` 与 `curl https://*.vercel.app` 均成功。对 preview root 的匿名 raw 请求返回 `Vercel Authentication Required (401)`；而在显式代理加 `vercel curl` 的请求下，`GET /api/auth/session` 返回 `200 {authenticated:false,user:null}`，`GET /login`、`GET /register`、`GET /legal/terms` 均返回 `200`，未登录访问 `/interview` 返回 `307 /login?next=%2Finterview`。同批自动化脚本证据：`scripts/launch-acceptance-runner.mjs` 已支持 `ACCEPTANCE_TRANSPORT=vercel-curl`、`ACCEPTANCE_VERCEL_SCOPE`，且在 `.worktrees/...` 内执行时会自动回退到父 repo 根目录作为 Vercel cwd；对应单测 `tests/unit/launch-acceptance-runner.test.ts` 与 `tests/unit/product-smoke-script.test.ts` 已通过。真实 live run 也已用 `HTTP_PROXY=http://127.0.0.1:7897 HTTPS_PROXY=http://127.0.0.1:7897 ALL_PROXY=socks5://127.0.0.1:7897 ACCEPTANCE_TRANSPORT=vercel-curl ACCEPTANCE_VERCEL_SCOPE=zouzhijies-projects ACCEPTANCE_BASE_URL='https://xingfuxitong-8w6xmyh95-zouzhijies-projects.vercel.app' node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke` 返回 `ok: true`，其中自动化仅覆盖 `register/login/session/start/invalid_entry_date`。更深的 `joy -> respond -> wrap_up -> draft generate -> draft save` 链路目前来自 controller 手工 deep-chain 补证，不应混写成 `product-smoke` 的自动化覆盖。 | 当前结论：AI 变量缺失已解除，protected preview 的自动化 smoke auth path 已固定为 `vercel-curl`；匿名 raw preview root 仍是 `401`，但 preview 最小自动化 smoke 已解除阻断。剩余未闭环点是 production URL contract：仍需直接拿到 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL` 读数。 |
 
 批次 4 当前结论：
 - `D-02`、`D-03`、`D-04` 已完成并通过。
 - `D-01` 已通过真实失效会话 deep link 补齐页面级错误卡证据。
-- 本批当前未新增需要写入问题池的 `P0 / P1` 缺陷。
+- `D-05` 的 AI 变量缺口与 protected-preview 最小自动化 smoke 已收口：AI 变量已补齐，且 `VERCEL=1` + `VERCEL_URL` 已作为 preview 的最小 system-env 证据到位。
+- 控制侧重试后，先前 shell 不带显式代理的 `fetch failed` 已降级为无效反证；在 `127.0.0.1:7897` 代理路径上，基础网络与 preview app-layer 返回都已拿到正向证据。
+- 匿名 raw preview root 仍是 `401 Vercel Authentication Required`，但这不再构成当前自动化 preview smoke blocker；显式代理加 `vercel curl` 的 `product-smoke` 已固定走这条路径。
+- `product-smoke.mjs` 当前只覆盖最小 `auth/session/start/invalid_entry_date`；更深的登录态 `joy -> draft save` 证据来自 controller 手工 deep-chain，不应混写成脚本自动化结论。
+- 因此本批不再把问题收口成 network / DNS blocker，也不把它收口成 app failure；但 production URL contract 仍未闭环，需 controller 再补一次 `APP_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL` 的直接读数。
 
 ---
 
