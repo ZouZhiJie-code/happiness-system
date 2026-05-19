@@ -2830,6 +2830,7 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("正在生成日志骨架")).toBeInTheDocument();
     expect(screen.queryByText(/^生成中$/)).not.toBeInTheDocument();
+    await screen.findByTestId("journal-editor-card");
   });
 
   it("reuses the current draft immediately when it already covers the latest interview state", async () => {
