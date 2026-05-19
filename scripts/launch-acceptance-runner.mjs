@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve as resolvePath } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const BASE_URL = process.env.ACCEPTANCE_BASE_URL ?? "http://127.0.0.1:3001";
+const DEFAULT_TRANSPORT = "fetch";
+const VERCEL_CURL_MAX_BUFFER = 10 * 1024 * 1024;
 
 function randomSuffix() {
   return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -47,13 +52,156 @@ export function createHttp({ baseUrl = BASE_URL } = {}) {
   };
 }
 
+function normalizeTransportName(transport) {
+  return transport === "vercel-curl" ? "vercel-curl" : DEFAULT_TRANSPORT;
+}
+
+function resolveTransportConfig() {
+  return {
+    transport: normalizeTransportName(process.env.ACCEPTANCE_TRANSPORT),
+    vercelScope: process.env.ACCEPTANCE_VERCEL_SCOPE ?? null,
+    vercelCwd: resolveVercelCommandCwd()
+  };
+}
+
+function hasVercelProjectLink(targetCwd, fileExists = existsSync) {
+  return fileExists(resolvePath(targetCwd, ".vercel/project.json"));
+}
+
+function resolveVercelCommandCwd({
+  currentCwd = process.cwd(),
+  env = process.env,
+  fileExists = existsSync
+} = {}) {
+  if (env.ACCEPTANCE_VERCEL_CWD) {
+    return env.ACCEPTANCE_VERCEL_CWD;
+  }
+
+  const worktreeMarker = `${resolvePath("/")}.worktrees${resolvePath("/")}`;
+  const markerIndex = currentCwd.indexOf(worktreeMarker);
+
+  if (markerIndex >= 0) {
+    const parentRepoRoot = currentCwd.slice(0, markerIndex);
+    if (parentRepoRoot && hasVercelProjectLink(parentRepoRoot, fileExists)) {
+      return parentRepoRoot;
+    }
+  }
+
+  return currentCwd;
+}
+
+function buildVercelCurlArgs(baseUrl, path, { method = "GET", body, cookie, vercelScope }) {
+  const requestUrl = new URL(path, baseUrl);
+  const requestPath = `${requestUrl.pathname}${requestUrl.search}`;
+  const args = ["curl", requestPath, "--deployment", baseUrl, "--yes"];
+
+  if (vercelScope) {
+    args.push("--scope", vercelScope);
+  }
+
+  args.push("--", "-i");
+
+  if (method !== "GET") {
+    args.push("--request", method);
+  }
+
+  if (cookie) {
+    args.push("--header", `cookie: ${cookie}`);
+  }
+
+  if (body !== undefined) {
+    args.push("--header", "content-type: application/json");
+    args.push("--data", JSON.stringify(body));
+  }
+
+  return args;
+}
+
+function parseVercelCurlResponse(output) {
+  const normalizedOutput = String(output).replace(/\r\n/g, "\n");
+  const statusLinePattern = /^HTTP\/\d(?:\.\d)?\s+\d{3}.*$/gm;
+  let statusMatchEntry = null;
+
+  for (const match of normalizedOutput.matchAll(statusLinePattern)) {
+    statusMatchEntry = match;
+  }
+
+  const blockStart = statusMatchEntry?.index ?? 0;
+  const separator = "\n\n";
+  const headerEnd = normalizedOutput.indexOf(separator, blockStart);
+  const headerText =
+    headerEnd >= 0
+      ? normalizedOutput.slice(blockStart, headerEnd)
+      : normalizedOutput.slice(blockStart);
+  const text =
+    headerEnd >= 0 ? normalizedOutput.slice(headerEnd + separator.length) : "";
+  const headerLines = headerText ? headerText.split("\n") : [];
+  const statusLine = headerLines.shift() ?? "";
+  const statusMatch = /^HTTP\/\d(?:\.\d)?\s+(\d{3})/.exec(statusLine);
+  const headers = {};
+
+  for (const line of headerLines) {
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex <= 0) continue;
+    const headerName = line.slice(0, separatorIndex).trim().toLowerCase();
+    const headerValue = line.slice(separatorIndex + 1).trim();
+    headers[headerName] = headerValue;
+  }
+
+  let json = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = null;
+  }
+
+  return {
+    status: statusMatch ? Number(statusMatch[1]) : 200,
+    headers,
+    setCookie: headers["set-cookie"] ?? null,
+    text,
+    json
+  };
+}
+
+function createVercelCurlHttp({
+  baseUrl = BASE_URL,
+  vercelScope = null,
+  vercelCwd = process.cwd(),
+  execFile = execFileSync
+} = {}) {
+  return async function http(path, { method = "GET", body, cookie } = {}) {
+    const output = execFile(
+      "vercel",
+      buildVercelCurlArgs(baseUrl, path, {
+        method,
+        body,
+        cookie,
+        vercelScope
+      }),
+      {
+        cwd: vercelCwd,
+        encoding: "utf8",
+        input: undefined,
+        maxBuffer: VERCEL_CURL_MAX_BUFFER
+      }
+    );
+
+    return parseVercelCurlResponse(output);
+  };
+}
+
 export function extractCookie(setCookie) {
   if (!setCookie) return null;
   return setCookie.split(";")[0];
 }
 
 export function createAcceptanceClient({ baseUrl = BASE_URL } = {}) {
-  const http = createHttp({ baseUrl });
+  const { transport, vercelScope, vercelCwd } = resolveTransportConfig();
+  const http =
+    transport === "vercel-curl"
+      ? createVercelCurlHttp({ baseUrl, vercelScope, vercelCwd })
+      : createHttp({ baseUrl });
 
   async function registerAccount(prefix = "acc") {
     const username = normalizeUsername(prefix);

@@ -66,13 +66,16 @@
 5. 确认 Vercel 的默认 build 命令保持 `next build`
 6. 首次部署前确认 `.vercelignore` 已排除 `.worktrees`、`.claude`、`.omx`
 7. 等首个 preview 部署完成后：
-   如果当前 preview 开启了 Deployment Protection，先在项目设置里创建或复用 automation bypass secret，再执行：
+   如果当前 preview 开启了 Deployment Protection，当前已验证通过的 CLI smoke 路径是 `vercel-curl` transport；在任意 `.worktrees/...` 目录执行时，`scripts/launch-acceptance-runner.mjs` 也会自动把 Vercel cwd 回退到父 repo 根目录。执行：
 
 ```bash
-VERCEL_AUTOMATION_BYPASS_SECRET="your-bypass-secret" \
-SMOKE_BASE_URL="https://your-preview-url.vercel.app" \
-npm run smoke:public
+ACCEPTANCE_TRANSPORT=vercel-curl \
+ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
+ACCEPTANCE_BASE_URL="https://your-preview-url.vercel.app" \
+node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
 ```
+
+   匿名 raw preview root 仍可能返回 `401 Vercel Authentication Required`；这不再阻断 controller / CLI smoke。
 
    如果 preview 没有开启保护，仍可直接执行：
 
@@ -168,18 +171,33 @@ vercel env ls --scope zouzhijies-projects
 - 本轮拉取结果里没有直接看到 `VERCEL_BRANCH_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL`
 - 因此，当前能被直接确认的 system env URL 证据只有 `VERCEL_URL`
 
-本机验证限制：
-- 在这台机器上，对新 preview URL 执行
-  - `npm run smoke:public`
-  - `ACCEPTANCE_BASE_URL=... node scripts/product-smoke.mjs ...`
-  都在第一跳失败，报的是 `fetch failed`
-- 进一步用裸 `node fetch(...)` 探测，错误收口为 `UND_ERR_CONNECT_TIMEOUT`
-- 这意味着本轮 shell 验证没有拿到任何应用层 `2xx/4xx/5xx` 响应；当前看到的是“本机到 `vercel.app:443` 的直连超时”，不是已被确认的应用逻辑错误
+本机验证边界与重试结果：
+- 先前 shell 侧的 `fetch failed` / `UND_ERR_CONNECT_TIMEOUT` 不能直接作为 preview 不可用证据：同机系统代理当时已经启用并指向 `127.0.0.1:7897`，且 `verge-mih` 正在监听，但执行命令的 shell 没有显式带上 `HTTP_PROXY` / `HTTPS_PROXY`
+- 在显式代理条件下，`curl` 访问 `https://google.com` 与 `https://*.vercel.app` 已可成功返回，因此当前可用代理路径上的基础网络 / DNS 不再构成 blocker
+- 匿名直打 preview root 的 raw 响应是 `Vercel Authentication Required (401)`，说明 public/anonymous 路径当前受 Deployment Protection 或鉴权策略约束
+- 在显式代理加 `vercel curl` 的控制侧重试里：
+  - `GET /api/auth/session` 返回 `200`，body 为 `{\"authenticated\":false,\"user\":null}`
+  - `GET /login`、`GET /register`、`GET /legal/terms` 均返回 `200`
+  - `GET /interview` 在未登录态下返回 `307` 并跳转到 `/login?next=%2Finterview`
+  - `GET /` 返回 `401 Vercel Authentication Required` 以外的真实首页 HTML，而不是 Vercel 认证拦截页
+- 在同一条显式代理加 `vercel curl` 路径上，受保护 preview 的主 controller smoke 已被正向证明可用：
+  - 测试账号 `smoke_1779197755` 执行注册返回 `200`，并建立 `dl_session` cookie
+  - 带 cookie 请求 `GET /api/auth/session` 返回 `200`，且 `authenticated=true`
+  - 带 cookie 请求 `GET /login?next=/calendar` 返回 `307` 到 `/calendar`
+  - `POST /api/interview/session/start` 以 `dimension=joy`、`entryDate=2026-05-19` 返回 `200`，`status=collect_event`，并给出开场问题
+  - 第一次 `respond` 后 `turnCount=1`，阶段推进到 `probe_pattern`
+  - 第二次 `respond` 后 `missingSlots=[]`
+  - 用户发送“先这样，直接整理成日志。”后，session 进入 `wrap_up`，且 `draftGenerationUnlocked=true`，`pendingDecision.kind=event_complete`，`completionMode=user_override_partial`
+  - `draft generate` 返回标题为“状态轻起来”的 `draftEntry`，状态为 `draft`
+  - `draft save` 返回同一条 `draftEntry`，状态为 `saved`
+  - session 最终状态为 `completed`
+- 这组重试证据表明：当前已不再是“这台机器到 `vercel.app` 没有可用网络路径”，也不是“应用已经无法返回页面 / API 响应”；匿名 raw preview root 的 `401` 与 smoke gate 更一致地指向 Deployment Protection / auth strategy
 
 当前结论：
 - 已被直接证实的 AI 环境变量阻断已解除
 - URL 合同在当前仓库接受的最小证据面上可视为已满足：显式 `APP_URL` 仍可选，而 system env 路径至少已通过 `VERCEL=1` + `VERCEL_URL` 得到证据支持
-- 当前剩余问题不是“平台缺少 AI 变量”，而是“这台机器的 shell 无法直连 `vercel.app:443`，因此还没有拿到可归因于应用本身的 live smoke 结果”
+- 当前剩余 blocker 已不再是“平台缺少 AI 变量”，也不再是“可用代理路径上的网络 / DNS 不通”
+- 受保护 preview 的 CLI smoke auth path 已固定为 `vercel-curl`：匿名 raw preview root 仍是 `401`，但 controller / CLI 验收已不再被 Deployment Protection 卡住
 
 ## 当前刻意不开放的能力
 
