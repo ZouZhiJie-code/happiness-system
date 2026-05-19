@@ -24,14 +24,13 @@
 
 使用 [`.env.preview.example`](../.env.preview.example) 作为平台环境变量清单来源。
 
-至少要填：
+至少要填的用户自定义变量：
 
 - `DATABASE_URL`
 - `AI_PROVIDER`
 - `VOLCENGINE_ARK_API_KEY`
 - `VOLCENGINE_ARK_ENDPOINT_ID`
 - `VOLCENGINE_ARK_BASE_URL`
-- `APP_URL`
 
 可选：
 
@@ -39,7 +38,10 @@
 
 规则：
 
-- `APP_URL` 必须指向当前 preview 域名
+- Preview URL 合同不再要求一律手填 `APP_URL`
+- 如果项目启用了 Vercel 的 system environment variables 暴露，可优先使用 `https://${VERCEL_URL}` 作为当前 deployment URL，或按需要使用 `https://${VERCEL_BRANCH_URL}` 作为 branch 级 preview URL
+- 如果项目没有暴露上述 system env，才回退为手工维护 `APP_URL`
+- 当前批次还没有直接证据证明 `xingfuxitong` 已启用该能力；依赖这条路径前，必须额外验证项目设置里的 `Automatically expose System Environment Variables` 开关，以及部署运行时是否能读到 `VERCEL=1`
 - preview 数据库必须和本地库、生产库隔离
 
 ### Production
@@ -48,14 +50,17 @@
 
 规则：
 
-- `APP_URL` 必须改成正式域名
+- Production URL 合同可由显式 `APP_URL` 或暴露后的 Vercel system env 满足
+- 如果依赖 Vercel system env，生产指向应来自 `https://${VERCEL_PROJECT_PRODUCTION_URL}`；该变量在 Vercel 文档中定义为项目生产域名，即使在 preview deployment 中也会提供生产域语义
+- 如果项目未暴露 system env，才要求手工维护 `APP_URL`
+- 当前还没有直接证据证明 `xingfuxitong` 已启用这条设置；上线前仍需补做一次项目设置与运行时 readback，确认 `Automatically expose System Environment Variables` 已开启
 - 生产库和 preview 库必须隔离
 - 如果记忆系统暂时不开，`VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以先留空
 
 ## 最小发布步骤
 
 1. 在 Vercel 创建项目并连接当前仓库
-2. 把 preview 环境变量按 [`.env.preview.example`](../.env.preview.example) 填入平台
+2. 把 preview 环境变量按 [`.env.preview.example`](../.env.preview.example) 填入平台；这里指 AI / 数据库类用户自定义变量，不再把 `APP_URL` 作为“无条件必须手填”的第一选择
 3. 确认 [package.json](../package.json) 保留 `postinstall: prisma generate`
 4. 确认根目录 [vercel.json](../vercel.json) 保留 `framework: "nextjs"`，避免项目后台残留 `Other` preset 时 preview 域名落到 `404`
 5. 确认 Vercel 的默认 build 命令保持 `next build`
@@ -76,6 +81,15 @@ SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 ```
 
 8. smoke 通过后，再决定要不要开放给真实试用
+
+## URL 合同补充说明
+
+- 相关平台文档路径：`Vercel -> Environment Variables -> System Environment Variables`
+- 当前这条 launch lane 认可两种 URL 合同实现：
+  1. 显式维护 `APP_URL`
+  2. 依赖 Vercel system env，在运行时拼出 `https://${VERCEL_URL}` / `https://${VERCEL_BRANCH_URL}` / `https://${VERCEL_PROJECT_PRODUCTION_URL}`
+- 只要选择第 2 条路径，就不能只看 `vercel env ls`。`vercel env ls` 只能证明用户自定义变量现状，不能单独证明 system env 是否已向 deployment 暴露。
+- 因此，任何把 Preview / Production 判定为“URL 合同已满足”的结论，都必须附带一条额外证据：项目设置中 `Automatically expose System Environment Variables` 已开启，且部署构建或运行时能读到 `VERCEL=1`
 
 ## 当前仓库的构建注意事项
 
@@ -107,8 +121,13 @@ SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 审计命令：
 
 ```bash
+# run from the linked xingfuxitong project root
 vercel env ls --scope zouzhijies-projects
 ```
+
+执行前提：
+- 当前 shell 必须位于已 link 到 `zouzhijies-projects/xingfuxitong` 的仓库根目录
+- 如果不在这个项目根目录执行，就必须先显式切到该目录，或用其他方式把命令固定到 `xingfuxitong`，否则这条审计结果不具备可复现性
 
 审计对象：
 - Vercel team：`zouzhijies-projects`
@@ -120,13 +139,14 @@ vercel env ls --scope zouzhijies-projects
 - 没有看到 `VOLCENGINE_ARK_API_KEY`
 - 没有看到 `VOLCENGINE_ARK_ENDPOINT_ID`
 - 没有看到 `VOLCENGINE_ARK_BASE_URL`
-- 没有看到 `APP_URL`
+- 没有看到用户自定义 `APP_URL`
 - 也没有看到可选的 `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID`
 
 结论：
 - 当前平台环境状态低于本文件定义的 Preview / Production 合同
-- 在这批变量没有补齐前，无法把 Preview / Production 视为“可验证真实 AI 主链”的环境
-- 产品主链 smoke 仍可以先覆盖公开页和无 AI 前置的 API，但涉及访谈、日志生成、画像 AI 直出和依赖 `APP_URL` 的完整部署语义时，当前平台配置不满足上线 readiness
+- 这里能被直接确认的阻断项仍然是 AI 变量缺失；仅凭这次 `vercel env ls` 结果，不能把“没有看到 APP_URL”单独等同于 URL 合同必然失败，因为系统环境变量不会通过这条命令显式列出
+- 当前仍然不能把 Preview / Production 视为“可验证真实 AI 主链”的环境：一方面 AI 变量明确缺失；另一方面如果要依赖 Vercel system env，还缺少 `Automatically expose System Environment Variables` 已开启的直接证据
+- 产品主链 smoke 仍可以先覆盖公开页和无 AI 前置的 API，但涉及访谈、日志生成、画像 AI 直出和完整部署 URL 语义时，当前平台配置仍不满足上线 readiness
 
 ## 当前刻意不开放的能力
 

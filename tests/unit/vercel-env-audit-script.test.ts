@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,8 +10,8 @@ AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional
-APP_URL="https://your-project-git-branch-your-team.vercel.app"
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+APP_URL="https://your-project-git-branch-your-team.vercel.app" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
 const productionContract = `# Vercel production environment contract
@@ -20,8 +20,8 @@ AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional
-APP_URL="https://your-domain.example.com"
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+APP_URL="https://your-domain.example.com" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
 const vercelEnvLsTable = `Vercel CLI 39.1.0
@@ -38,8 +38,16 @@ const tempDirs: string[] = [];
 type AuditResult = {
   project: string | null;
   contract: {
-    preview: { required: string[]; optional: string[] };
-    production: { required: string[]; optional: string[] };
+    preview: {
+      required: string[];
+      optional: string[];
+      conditionalOptional: Array<{ name: string; reason: string }>;
+    };
+    production: {
+      required: string[];
+      optional: string[];
+      conditionalOptional: Array<{ name: string; reason: string }>;
+    };
   };
   live: Record<string, string[]>;
   audit: {
@@ -48,12 +56,14 @@ type AuditResult = {
       missingRequired: string[];
       presentOptional: string[];
       missingOptional: string[];
+      unverifiedConditionalOptional: Array<{ name: string; reason: string }>;
     };
     Production: {
       presentRequired: string[];
       missingRequired: string[];
       presentOptional: string[];
       missingOptional: string[];
+      unverifiedConditionalOptional: Array<{ name: string; reason: string }>;
     };
   };
 };
@@ -64,6 +74,7 @@ type AuditModule = {
     productionContractText: string;
     vercelEnvLsText: string;
   }): AuditResult;
+  buildEnvironmentContract(input: string): AuditResult["contract"]["preview"];
   parseVercelEnvLsTable(input: string): Record<string, string[]>;
 };
 
@@ -104,39 +115,66 @@ describe("vercel env audit script", () => {
       "AI_PROVIDER",
       "VOLCENGINE_ARK_API_KEY",
       "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL",
+      "VOLCENGINE_ARK_BASE_URL"
+    ]);
+    expect(result.contract.preview.optional).toEqual([
+      "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
     ]);
-    expect(result.contract.preview.optional).toEqual(["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"]);
+    expect(result.contract.preview.conditionalOptional).toEqual([
+      {
+        name: "APP_URL",
+        reason:
+          "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+      }
+    ]);
     expect(result.audit.Preview.missingRequired).toEqual([
       "AI_PROVIDER",
       "VOLCENGINE_ARK_API_KEY",
       "VOLCENGINE_ARK_ENDPOINT_ID",
       "VOLCENGINE_ARK_BASE_URL"
     ]);
-    expect(result.audit.Preview.presentRequired).toEqual(["DATABASE_URL", "APP_URL"]);
+    expect(result.audit.Preview.presentRequired).toEqual(["DATABASE_URL"]);
+    expect(result.audit.Preview.presentOptional).toEqual(["APP_URL"]);
     expect(result.audit.Preview.missingOptional).toEqual(["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"]);
+    expect(result.audit.Preview.unverifiedConditionalOptional).toEqual([
+      {
+        name: "APP_URL",
+        reason:
+          "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+      }
+    ]);
     expect(result.audit.Production.presentRequired).toEqual(["DATABASE_URL"]);
     expect(result.audit.Production.missingRequired).toEqual([
       "AI_PROVIDER",
       "VOLCENGINE_ARK_API_KEY",
       "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL",
+      "VOLCENGINE_ARK_BASE_URL"
+    ]);
+    expect(result.audit.Production.missingOptional).toEqual([
+      "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
+    ]);
+    expect(result.audit.Production.unverifiedConditionalOptional).toEqual([
+      {
+        name: "APP_URL",
+        reason:
+          "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+      }
     ]);
     expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
   });
 
-  it("classifies optional variables from contract annotations instead of a hardcoded variable name list", async () => {
+  it("classifies optional variables from explanatory contract annotations instead of a hardcoded variable name list", async () => {
     const { auditVercelEnvText } = await loadModule();
 
     const result = auditVercelEnvText({
       previewContractText: `DATABASE_URL=""
-APP_URL="https://preview.example.com" # optional
+APP_URL="https://preview.example.com" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
 `,
       productionContractText: `DATABASE_URL=""
-APP_URL="https://prod.example.com" # optional
+APP_URL="https://prod.example.com" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
 `,
       vercelEnvLsText: vercelEnvLsTable
@@ -146,6 +184,13 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     expect(result.contract.preview.required).toEqual([
       "DATABASE_URL",
       "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"
+    ]);
+    expect(result.contract.preview.conditionalOptional).toEqual([
+      {
+        name: "APP_URL",
+        reason:
+          "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+      }
     ]);
   });
 
@@ -180,11 +225,86 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
 
     const parsed = JSON.parse(output) as {
       project: string;
-      audit: { Preview: { missingRequired: string[] } };
+      contract: {
+        preview: {
+          conditionalOptional: Array<{ name: string; reason: string }>;
+        };
+      };
+      audit: {
+        Preview: {
+          missingRequired: string[];
+          presentOptional: string[];
+          unverifiedConditionalOptional: Array<{ name: string; reason: string }>;
+        };
+        Production: {
+          missingRequired: string[];
+          unverifiedConditionalOptional: Array<{ name: string; reason: string }>;
+        };
+      };
     };
 
     expect(parsed.project).toBe("zouzhijies-projects/xingfuxitong");
     expect(parsed.audit.Preview.missingRequired).toContain("AI_PROVIDER");
+    expect(parsed.audit.Preview.missingRequired).not.toContain("APP_URL");
+    expect(parsed.audit.Preview.presentOptional).toContain("APP_URL");
+    expect(parsed.audit.Production.missingRequired).not.toContain("APP_URL");
+    expect(parsed.contract.preview.conditionalOptional).toContainEqual({
+      name: "APP_URL",
+      reason:
+        "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+    });
+    expect(parsed.audit.Preview.unverifiedConditionalOptional).toContainEqual({
+      name: "APP_URL",
+      reason:
+        "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+    });
+    expect(parsed.audit.Production.unverifiedConditionalOptional).toContainEqual({
+      name: "APP_URL",
+      reason:
+        "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+    });
+  });
+
+  it("locks the checked-in contract split from the real example files", async () => {
+    const { buildEnvironmentContract } = await loadModule();
+    const repoRoot = resolve(__dirname, "../..");
+    const previewFile = readFileSync(resolve(repoRoot, ".env.preview.example"), "utf8");
+    const productionFile = readFileSync(resolve(repoRoot, ".env.production.example"), "utf8");
+
+    expect(buildEnvironmentContract(previewFile)).toEqual({
+      required: [
+        "DATABASE_URL",
+        "AI_PROVIDER",
+        "VOLCENGINE_ARK_API_KEY",
+        "VOLCENGINE_ARK_ENDPOINT_ID",
+        "VOLCENGINE_ARK_BASE_URL"
+      ],
+      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
+      conditionalOptional: [
+        {
+          name: "APP_URL",
+          reason:
+            "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+        }
+      ]
+    });
+    expect(buildEnvironmentContract(productionFile)).toEqual({
+      required: [
+        "DATABASE_URL",
+        "AI_PROVIDER",
+        "VOLCENGINE_ARK_API_KEY",
+        "VOLCENGINE_ARK_ENDPOINT_ID",
+        "VOLCENGINE_ARK_BASE_URL"
+      ],
+      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
+      conditionalOptional: [
+        {
+          name: "APP_URL",
+          reason:
+            "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
+        }
+      ]
+    });
   });
 
   it("rejects the unsupported --project flag instead of pretending to target a project", () => {

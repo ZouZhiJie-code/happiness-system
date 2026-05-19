@@ -19,8 +19,9 @@ export function parseContractVariables(contractText) {
   const variables = [];
 
   for (const line of contractText.split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Z0-9_]+)\s*=.*?(?:#\s*(optional))?\s*$/i);
+    const match = line.match(/^\s*([A-Z0-9_]+)\s*=.*?(?:#\s*(optional)(?:\s*:\s*(.*))?)?\s*$/i);
     const variable = match?.[1];
+    const annotation = match?.[3]?.trim() ?? null;
 
     if (!variable || seen.has(variable)) {
       continue;
@@ -29,7 +30,10 @@ export function parseContractVariables(contractText) {
     seen.add(variable);
     variables.push({
       name: variable,
-      optional: match?.[2]?.toLowerCase() === "optional"
+      optional: match?.[2]?.toLowerCase() === "optional",
+      annotation,
+      requiresExternalVerification:
+        match?.[2]?.toLowerCase() === "optional" && /verified elsewhere/i.test(annotation ?? "")
     });
   }
 
@@ -41,7 +45,13 @@ export function buildEnvironmentContract(contractText) {
 
   return {
     required: variables.filter((variable) => !variable.optional).map((variable) => variable.name),
-    optional: variables.filter((variable) => variable.optional).map((variable) => variable.name)
+    optional: variables.filter((variable) => variable.optional).map((variable) => variable.name),
+    conditionalOptional: variables
+      .filter((variable) => variable.requiresExternalVerification)
+      .map((variable) => ({
+        name: variable.name,
+        reason: variable.annotation
+      }))
   };
 }
 
@@ -87,7 +97,8 @@ function summarizeEnvironment(contract, liveVariables) {
     presentRequired: contract.required.filter((variable) => liveVariables.includes(variable)),
     missingRequired: contract.required.filter((variable) => !liveVariables.includes(variable)),
     presentOptional: contract.optional.filter((variable) => liveVariables.includes(variable)),
-    missingOptional: contract.optional.filter((variable) => !liveVariables.includes(variable))
+    missingOptional: contract.optional.filter((variable) => !liveVariables.includes(variable)),
+    unverifiedConditionalOptional: contract.conditionalOptional
   };
 }
 
