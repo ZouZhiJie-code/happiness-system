@@ -54,6 +54,38 @@ describe("launch acceptance runner transport selection", () => {
     });
   });
 
+  it("merges custom headers for fetch transport requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { createAcceptanceClient } = await loadRunnerModule();
+    const client = createAcceptanceClient({ baseUrl: "http://127.0.0.1:4010" });
+
+    await client.http("/api/debug/runtime-env", {
+      cookie: "dl_session=test-cookie",
+      headers: {
+        "x-runtime-readback-token": "secret-token"
+      }
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:4010/api/debug/runtime-env", {
+      method: "GET",
+      headers: {
+        cookie: "dl_session=test-cookie",
+        "x-runtime-readback-token": "secret-token"
+      },
+      body: undefined,
+      redirect: "manual"
+    });
+  });
+
   it("uses vercel curl transport when ACCEPTANCE_TRANSPORT=vercel-curl", async () => {
     vi.stubEnv("ACCEPTANCE_TRANSPORT", "vercel-curl");
     vi.stubEnv("ACCEPTANCE_VERCEL_SCOPE", "zouzhijies-projects");
@@ -229,6 +261,61 @@ content-type: application/json
       expect.objectContaining({
         cwd: repoRoot
       })
+    );
+  });
+
+  it("passes custom headers through the vercel curl transport", async () => {
+    vi.stubEnv("ACCEPTANCE_TRANSPORT", "vercel-curl");
+    vi.stubEnv("ACCEPTANCE_VERCEL_CWD", "/repo/root");
+
+    const execFileSync = vi.fn().mockReturnValue(`HTTP/2 200
+content-type: application/json
+
+{"ok":true}`);
+    vi.doMock("node:child_process", () => ({
+      default: {
+        execFileSync
+      },
+      execFileSync
+    }));
+    vi.doMock("node:fs", () => ({
+      default: {
+        existsSync: vi.fn().mockReturnValue(true)
+      },
+      existsSync: vi.fn().mockReturnValue(true)
+    }));
+
+    const { createAcceptanceClient } = await loadRunnerModule();
+    const client = createAcceptanceClient({ baseUrl: "https://preview.example.vercel.app" });
+
+    await client.http("/api/debug/runtime-env", {
+      cookie: "dl_session=preview-cookie",
+      headers: {
+        "x-runtime-readback-token": "secret-token"
+      }
+    });
+
+    expect(execFileSync).toHaveBeenCalledWith(
+      "vercel",
+      [
+        "curl",
+        "/api/debug/runtime-env",
+        "--deployment",
+        "https://preview.example.vercel.app",
+        "--yes",
+        "--",
+        "-i",
+        "--header",
+        "cookie: dl_session=preview-cookie",
+        "--header",
+        "x-runtime-readback-token: secret-token"
+      ],
+      {
+        cwd: "/repo/root",
+        encoding: "utf8",
+        input: undefined,
+        maxBuffer: 10485760
+      }
     );
   });
 });

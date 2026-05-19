@@ -194,6 +194,7 @@ npm test
   - non-protected preview：可继续走 `SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public`
 - 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
 - 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
+- production URL contract 的 direct readback lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`，它和公开 smoke 分开
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
 ## 常用命令
@@ -204,6 +205,7 @@ npm test
 npm run lint
 npm run smoke:public -- http://127.0.0.1:3000
 node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
+node scripts/runtime-env-readback.mjs https://your-target-host runtime
 npx tsc --noEmit
 npx prisma db push
 npx prisma migrate deploy
