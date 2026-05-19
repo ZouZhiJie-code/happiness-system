@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>测试自动化与 Git 协作评审</title>
+    <style>
+      body { margin: 0; font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: #f6f1e7; color: #241d17; }
+      main { max-width: 1080px; margin: 0 auto; padding: 36px 24px 72px; }
+      .panel { background: #fffaf2; border: 1px solid #dbcdbd; border-radius: 22px; padding: 24px; margin-top: 18px; }
+      h1, h2, h3 { line-height: 1.25; }
+      .good { color: #2f6b4f; } .warn { color: #a76a11; } .bad { color: #9d3a2f; }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 8px; }
+      code { background: #f2e8da; padding: 1px 5px; border-radius: 6px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+      th, td { border: 1px solid #dbcdbd; padding: 10px; vertical-align: top; text-align: left; }
+      th { background: #f0e5d6; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>测试自动化与 Git 协作评审</h1>
+
+      <section class="panel">
+        <p><strong>外部章节基线：</strong>09 testing automation、11 git collaboration</p>
+        <p><strong>对 Daily Light 的结论：</strong><span class="warn">有测试意识，也有大量测试资产，但默认入口和机器门禁还没真正收口。</span></p>
+      </section>
+
+      <section class="panel">
+        <h2>高信号事实</h2>
+        <ul>
+          <li>仓库当前 tracked 测试文件数为 <strong>71</strong>，说明测试资产并不少。</li>
+          <li>`npm run typecheck` 当前可过。</li>
+          <li>显式执行 <code>npx vitest run --exclude '.worktrees/**' --exclude '.claude/worktrees/**' ...</code> 后，主仓这组核心 API / 鉴权 / calendar / analysis / draft 测试可通过。</li>
+          <li>但直接跑 <code>npm test</code> 会把历史 `.worktrees/*` 测试一起扫进来，出现大量无关失败，说明默认入口不可靠。</li>
+          <li>`README.md` 明写“Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}` 并排除 `.worktrees/**`”，但真实 `vitest.config.ts` 里没有任何 `include/exclude` 配置。</li>
+          <li>Git 侧已有远端 `origin` 和 `main` 主分支，也有 worktree 与上线文档习惯，但仓库里没有 `.github/workflows/*`、没有 CI 配置实体。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>为什么这组只能算部分完成</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>教程能力</th>
+              <th>Daily Light 当前状态</th>
+              <th>判断</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>API 优先回归</td>
+              <td>这部分做得不错，核心业务 API 都有单测。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>默认测试入口可信</td>
+              <td>文档承诺与配置不一致，`npm test` 默认入口会被 `.worktrees/*` 噪声污染。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>提交前 / 远端自动门禁</td>
+              <td>没看到 Husky、pre-commit、GitHub Actions 等实体配置。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>主线与远端协作</td>
+              <td>有远端、有主分支、也有 worktree 使用习惯。</td>
+              <td class="warn">部分完成</td>
+            </tr>
+            <tr>
+              <td>PR / Review / CI 一体化</td>
+              <td>流程意识在文档里，但机器不执行。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>敏感信息边界</td>
+              <td>文档意识强，但仓库层没看到额外自动检查。</td>
+              <td class="warn">部分完成</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>对产品路线的意义</h2>
+        <ul>
+          <li>这不是“测试少”的问题，核心问题是<strong>默认入口不可信</strong>。当团队说“`npm test` 绿了”，现在这句话并不稳定成立。</li>
+          <li>这不是“不会用 Git”的问题，核心问题是<strong>协作门槛没有机器化</strong>。现在更多依赖自觉和文档，而不是仓库自动执行。</li>
+          <li>因此教程第 9、11 章对 Daily Light 的最大启发，不是再补几十个测试，而是先把“主仓边界、默认命令、远端门禁”锁实。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>强决策</h2>
+        <ul>
+          <li><strong>现在必须做：</strong>修 `vitest.config.ts`，把 README 承诺的 `include/exclude` 真正落进去；同时补最小 CI，至少跑 `typecheck + test`。</li>
+          <li><strong>可以后置：</strong>E2E 大规模扩面、复杂 preview matrix、测试覆盖率 KPI。</li>
+          <li><strong>现阶段不建议：</strong>一上来就追求重流程 GitFlow。先把 `main + feature branch + PR + CI` 这条最短主线跑顺。</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

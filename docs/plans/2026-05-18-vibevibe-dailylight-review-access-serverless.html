@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>公网访问 / Serverless / CI-CD 评审</title>
+    <style>
+      body { margin: 0; font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: #f6f0e6; color: #231c16; }
+      main { max-width: 1080px; margin: 0 auto; padding: 36px 24px 72px; }
+      .panel { background: #fffaf2; border: 1px solid #dbcdbd; border-radius: 22px; padding: 24px; margin-top: 18px; }
+      h1, h2 { line-height: 1.25; }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 8px; }
+      .warn { color: #a76a11; } .bad { color: #9d3a2f; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+      th, td { border: 1px solid #dbcdbd; padding: 10px; vertical-align: top; text-align: left; }
+      th { background: #f0e5d6; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>公网访问 / Serverless / CI-CD 评审</h1>
+
+      <section class="panel">
+        <p><strong>外部章节基线：</strong>10 localhost public access、12 serverless deploy cicd</p>
+        <p><strong>对 Daily Light 的结论：</strong><span class="bad">这组目前更多停留在认知层和计划层，还没有形成仓库内的部署实体。</span></p>
+      </section>
+
+      <section class="panel">
+        <h2>证据</h2>
+        <ul>
+          <li>仓库里没有发现 <code>vercel.json</code>、没有部署平台配置、没有 `.github/workflows/*`、没有 preview / production 自动化配置。</li>
+          <li>README 和 launch 文档说明了“如何本地跑、如何手动验收、如何判断上线”，但没有把平台部署主线固化成机器可执行资产。</li>
+          <li>`/api/transcribe` 当前仍是 stub，这说明“开放哪些能力进公网环境”本身还处在收口阶段。</li>
+          <li>小范围可用所需的最小动作，如平台环境变量、preview 链接、部署日志入口、生产 smoke check，在仓库里都没有实体化痕迹。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>为什么这组不能按完成算</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>教程能力</th>
+              <th>Daily Light 当前状态</th>
+              <th>判断</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>本地到公网的过渡意识</td>
+              <td>有，团队显然理解本地运行、launch 验收和试用的区别。</td>
+              <td>部分完成</td>
+            </tr>
+            <tr>
+              <td>正式部署主线</td>
+              <td>未看到平台配置实体。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>preview / production 分离</td>
+              <td>文档有上线计划，但没有部署环境配置。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>自动化部署 / webhook / CI</td>
+              <td>未看到任何实际工作流文件。</td>
+              <td class="bad">未完成</td>
+            </tr>
+            <tr>
+              <td>部署日志与成本面板</td>
+              <td>暂无仓库证据。</td>
+              <td class="bad">未完成</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>强决策</h2>
+        <ul>
+          <li><strong>现在必须做：</strong>选定一条托管平台主线，把 build 命令、环境变量、preview / production、最小 smoke test 固化到仓库。</li>
+          <li><strong>可以后置：</strong>复杂的成本优化、灰度矩阵、跨平台多云冗余。</li>
+          <li><strong>现阶段不建议：</strong>一边没有平台主线，一边先去搭 VPS。当前应该先让“每次提交都能稳定发布到一个正式可访问环境”。</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

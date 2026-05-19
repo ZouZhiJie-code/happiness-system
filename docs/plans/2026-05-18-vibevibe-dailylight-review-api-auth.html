@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>后端 API 与认证安全评审</title>
+    <style>
+      body { margin: 0; font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: #f7f1e8; color: #241d17; }
+      main { max-width: 1080px; margin: 0 auto; padding: 36px 24px 72px; }
+      h1, h2, h3 { line-height: 1.25; }
+      .panel { background: #fffaf3; border: 1px solid #dbcdbd; border-radius: 22px; padding: 24px; margin-top: 18px; }
+      .chip { display: inline-block; padding: 5px 10px; border-radius: 999px; border: 1px solid #d8c9b7; margin-right: 8px; margin-top: 8px; font-size: 13px; }
+      .good { color: #2f6b4f; }
+      .warn { color: #a76a11; }
+      .bad { color: #9d3a2f; }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 8px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+      th, td { border: 1px solid #dbcdbd; padding: 10px; vertical-align: top; text-align: left; }
+      th { background: #f0e5d6; }
+      a { color: #9d5c2f; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>后端 API 与认证安全评审</h1>
+      <div class="panel">
+        <p><strong>外部章节基线：</strong>07 backend api、08 auth security</p>
+        <p><strong>对 Daily Light 的结论：</strong><span class="good">这一组是当前仓库最接近“真实闭环”的部分。</span></p>
+        <div>
+          <span class="chip">判断：已完成到首版产品可用</span>
+          <span class="chip">本地稳定开发：强</span>
+          <span class="chip">小范围真实用户：可用</span>
+          <span class="chip">正式上线运营：还需补环境与监控</span>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2>为什么判为已完成</h2>
+        <ul>
+          <li>仓库里存在完整业务 API 面：`src/app/api/*` 下已落地 interview、draft、daily-journal、calendar、analysis、profile、auth、happiness-score 等 28 条路由。</li>
+          <li>API 不是薄壳摆设，对应服务层和 repository 真实存在，例如 `src/server/services/auth/*`、`src/server/services/calendar/*`、`src/server/services/analysis/*`、`src/server/services/daily-journal/*`。</li>
+          <li>认证基础面完整：`User`、`AuthSession`、`passwordHash`、`tokenHash`、`httpOnly` `dl_session` cookie、页面守卫、请求鉴权、删号级联都在 Prisma schema 和服务层里真实落地。</li>
+          <li>私有页面守卫不是前端假跳转，`/interview`、`/calendar`、`/analysis`、`/profile`、`/settings` 都通过 `requireAuthenticatedPage()` 做服务端拦截。</li>
+          <li>账号删除不是 UI 假动作，`POST /api/auth/delete-account` 会要求当前密码，后端调用 `deleteUserById`，依赖 Prisma 级联删除用户相关数据。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>与教程基线的对照</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>教程能力</th>
+              <th>Daily Light 当前状态</th>
+              <th>判断</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>业务 API 分层</td>
+              <td>路由、service、repository、Prisma 模型都存在，calendar / analysis / profile / auth / interview 分层清晰。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>输入校验与错误语义</td>
+              <td>大量 API 使用 zod schema；访谈提交错误已结构化为 `issue`，包含 `code/title/message/resolution/requestId`。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>登录态与会话管理</td>
+              <td>用户名+密码、`httpOnly` cookie、会话表、TTL、logout 删除 token hash 都已落地。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>私有页面守卫</td>
+              <td>服务端守卫已接入主要私有页面，未登录跳 `/login?next=...`。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>注册协议与删号链路</td>
+              <td>注册要求勾选《用户协议》《隐私政策》；删号要求密码二次确认并级联删除。</td>
+              <td class="good">已完成</td>
+            </tr>
+            <tr>
+              <td>密码找回、邮件验证、风控</td>
+              <td>首版明确不支持找回密码，也没看到邮件验证、设备管理、登录限流等生产级扩展。</td>
+              <td class="warn">现阶段可接受，但正式上线前要看风险模型</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>还没做到哪一步</h2>
+        <ul>
+          <li>这组能力完成的是“首版账号体系 + 私有产品闭环”，不是“成熟互联网账号体系”。没有找回密码、没有邮箱/手机号验证、没有明显的登录限流与设备管理。</li>
+          <li>安全配置更多停留在应用层，正式上线前还应补充生产环境 cookie 策略复核、域名级 HTTPS、日志脱敏、异常监控与基础审计。</li>
+          <li>`/api/transcribe` 仍是 stub，说明“需要鉴权的业务 API”与“真正对用户开放的能力面”之间仍有一块故意关闭的区域。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>强决策</h2>
+        <ul>
+          <li><strong>现在必须做：</strong>保持 auth/API 主链稳定，不要重构大框架；把生产环境变量、日志和部署入口补上，让这套已存在的业务 API 真能被外部环境承载。</li>
+          <li><strong>可以后置：</strong>密码找回、邮箱验证、多设备会话管理，这些在首版小范围试用前不是最高优先级。</li>
+          <li><strong>现阶段不建议：</strong>为了“看起来更安全”先大改认证模型。当前更缺的是发布与运维闭环，不是账号体系推倒重来。</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

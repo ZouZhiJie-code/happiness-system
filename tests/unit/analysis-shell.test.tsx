@@ -23,6 +23,10 @@ vi.mock("next/navigation", () => ({
   })
 }));
 
+vi.mock("@/features/interview/entry-date", () => ({
+  getTodayEntryDate: () => "2026-05-03"
+}));
+
 describe("analysis shell", () => {
   let historyReplaceStateSpy: ReturnType<typeof vi.spyOn>;
 

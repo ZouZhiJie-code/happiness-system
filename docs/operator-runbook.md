@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-17`
+最后更新：`2026-05-19`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -335,13 +335,65 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-09`，当前基线是：
-- `npm test`（Vitest）主仓通过：`47` 个测试文件、`491` 个测试
-- `npx tsc --noEmit` 仍有类型错误（主要集中在 memory / interview 相关类型）
-- `npm run lint` 仍有既有 `no-explicit-any` 等问题（主要集中在 repositories/settings/memory 相关文件）
+截至 `2026-05-19`，当前基线是：
+- `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
+- `npx tsc --noEmit` 以最近一次回归结果为准
+- `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
+- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npx tsc --noEmit` 通过；`npm run build` 通过；`npm run lint` = `0 error / 31 warnings`
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
-## 5. 高频故障排查
+## 5. 托管平台主线
+
+当前默认托管平台路线固定为 `Vercel`。
+
+相关文件：
+
+- 根环境样板：`.env.example`
+- preview 环境合同：`.env.preview.example`
+- production 环境合同：`.env.production.example`
+- 部署说明：`docs/vercel-preview-production-lane.md`
+- 最小 smoke 脚本：`scripts/http-smoke.mjs`
+
+### 5.1 Preview 部署后最小检查
+
+```bash
+VERCEL_AUTOMATION_BYPASS_SECRET="your-bypass-secret" \
+SMOKE_BASE_URL="https://your-preview-url.vercel.app" \
+npm run smoke:public
+```
+
+说明：
+- 如果当前 preview 没开 Vercel Deployment Protection，可以省略 `VERCEL_AUTOMATION_BYPASS_SECRET`
+- 在这台机器上，如果 shell 走 Clash/Verge 系统代理，预览 smoke 需要额外带上：
+
+```bash
+NODE_USE_ENV_PROXY=1 \
+HTTPS_PROXY=http://127.0.0.1:7897 \
+HTTP_PROXY=http://127.0.0.1:7897 \
+ALL_PROXY=http://127.0.0.1:7897
+```
+
+脚本会检查：
+
+- `/`
+- `/login`
+- `/register`
+- `/legal/terms`
+- `/legal/privacy`
+- `/api/auth/session`
+
+通过标准：
+
+- 页面路由返回 `200`
+- `/api/auth/session` 返回 `200`
+- session JSON 里存在 `authenticated: boolean`
+
+### 5.2 当前不开放的能力
+
+- `/api/transcribe` 仍是 stub，不纳入 preview / production smoke
+- 没有真实转写模型前，不开放语音入口
+
+## 6. 高频故障排查
 
 ### 5.0 `npm run build` 仍然失败
 
@@ -515,7 +567,7 @@ npm run dev
 - `src/server/services/interview/joy-interview.service.ts` 的 `normalizeThinkingSummary`
 - `src/components/interview/interview-shell.tsx` 的 `MessageBubble` variant
 
-## 6. 关键日志与定位点
+## 7. 关键日志与定位点
 
 优先看：
 - `npm run dev` 终端输出
@@ -541,7 +593,7 @@ npm run dev
 - `InterviewEvent`
 - `JoyEntry`
 
-## 7. 当前已知非故障现实
+## 8. 当前已知非故障现实
 
 这些现象当前属于产品或架构现状，不是立即修的故障：
 

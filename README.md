@@ -161,17 +161,38 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-17`，当前自动化现实为：
-- `npm test`（Vitest）在当前 worktree 通过：`65` 个测试文件、`554` 个测试
+截至 `2026-05-19`，当前自动化现实为：
+- `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 通过
 - `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
+- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npm run lint` = `0 error / 31 warnings`
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
+
+### 6. 首条托管平台主线
+
+当前默认托管平台路线固定为 `Vercel`。
+
+- preview 环境变量合同：`.env.preview.example`
+- production 环境变量合同：`.env.production.example`
+- 部署与 smoke 入口：`docs/vercel-preview-production-lane.md`
+- preview 部署完成后，执行：
+
+```bash
+VERCEL_AUTOMATION_BYPASS_SECRET="your-bypass-secret" \
+SMOKE_BASE_URL="https://your-preview-url.vercel.app" \
+npm run smoke:public
+```
+
+- 如果当前 preview 没有开启 Vercel Deployment Protection，可以省略 `VERCEL_AUTOMATION_BYPASS_SECRET`
+- `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
 ## 常用命令
 
 ```bash
 npm run dev
 npm test
+npm run lint
+npm run smoke:public -- http://127.0.0.1:3000
 npx tsc --noEmit
 npx prisma db push
 ```
@@ -183,6 +204,7 @@ npx prisma db push
 - 当前架构：`docs/architecture.md`
 - 当前 API 面：`docs/integration-guide.md`
 - 本地排障与运行手册：`docs/operator-runbook.md`
+- 托管平台部署主线：`docs/vercel-preview-production-lane.md`
 - 当前阶段 handoff：`docs/handoff.md`
 - joy 理论对齐：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐：`docs/theory/fulfillment-alignment.md`

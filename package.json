@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "smoke:public": "node scripts/http-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -15,6 +17,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.22.0",
     "clsx": "^2.1.1",
+    "lottie-react": "^2.4.1",
     "next": "^15.0.0",
     "pino": "^9.5.0",
     "react": "^19.0.0",
