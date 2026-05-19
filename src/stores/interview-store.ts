@@ -108,28 +108,12 @@ const initialState = {
   journalEntry: null
 };
 
-function resolveHydratedJournalEntry(
-  currentSessionId: string | null,
-  currentJournalEntry: JournalEntryRecord | null,
-  nextSession: InterviewSessionRecord
-) {
-  if (nextSession.journalEntry) {
-    return nextSession.journalEntry;
-  }
-
-  if (currentSessionId === nextSession.id) {
-    return currentJournalEntry;
-  }
-
-  return null;
-}
-
 export const useInterviewStore = create<InterviewState>((set) => ({
   ...initialState,
   setDimension: (dimension) => set({ dimension }),
   setBootState: (bootState) => set({ bootState }),
   setSession: (session) =>
-    set((state) => ({
+    set({
       dimension: session.dimension,
       bootState: "idle",
       sessionDimension: session.dimension,
@@ -145,10 +129,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       messages: session.messages,
       snapshot: session.snapshot,
       snapshotData: session.snapshotData,
-      journalEntry: resolveHydratedJournalEntry(state.sessionId, state.journalEntry, session)
-    })),
+      journalEntry: session.journalEntry
+    }),
   hydrate: (session) =>
-    set((state) => ({
+    set({
       dimension: session.dimension,
       bootState: "idle",
       sessionDimension: session.dimension,
@@ -164,8 +148,8 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       messages: session.messages,
       snapshot: session.snapshot,
       snapshotData: session.snapshotData,
-      journalEntry: resolveHydratedJournalEntry(state.sessionId, state.journalEntry, session)
-    })),
+      journalEntry: session.journalEntry
+    }),
   setJournalEntry: (journalEntry) => set({ journalEntry }),
   setDraftGenerationControls: ({ unlocked, busy, disabled }) =>
     set({
