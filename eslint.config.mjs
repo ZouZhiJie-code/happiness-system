@@ -12,7 +12,14 @@ const nextLintCompat = compat.extends("next/core-web-vitals", "next/typescript")
 
 export default [
   {
-    ignores: [".next/**", "next-env.d.ts", "node_modules/**"]
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.next/**",
+      "**/.worktrees/**",
+      "**/.claude/worktrees/**",
+      "next-env.d.ts"
+    ]
   },
   ...nextLintCompat
 ];

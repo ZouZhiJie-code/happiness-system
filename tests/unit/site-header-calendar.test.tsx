@@ -240,6 +240,9 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
+    await waitFor(() => {
+      expect(toolbar).toHaveAttribute("aria-busy", "false");
+    });
 
     expect(within(toolbar).getByText("2026年5月")).toBeInTheDocument();
     expect(within(toolbar).getByText("3天")).toBeInTheDocument();

@@ -2831,6 +2831,7 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("正在生成日志骨架")).toBeInTheDocument();
     expect(screen.queryByText(/^生成中$/)).not.toBeInTheDocument();
+    await screen.findByTestId("journal-editor-card");
   });
 
   it("reuses the current draft immediately when it already covers the latest interview state", async () => {
@@ -2850,10 +2851,18 @@ describe("InterviewShell", () => {
     expect(generateCallsAfterFirstOpen).toBe(1);
 
     fireEvent.click(screen.getByRole("button", { name: "关闭日志面板" }));
+    await waitFor(() => {
+      expect(screen.queryByTestId("journal-editor-card")).not.toBeInTheDocument();
+    });
     fireEvent.click(screen.getByRole("button", { name: "生成日志" }));
 
     await screen.findByTestId("journal-editor-card");
     expect(screen.getByDisplayValue(baseJournalEntry.title)).toBeInTheDocument();
+
+    const generateCallsAfterSecondOpen = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) =>
+      String(url).endsWith("/api/interview/session/draft/generate")
+    ).length;
+    expect(generateCallsAfterSecondOpen).toBe(1);
   });
 
   it("regenerates after restore when the saved draft is older than the restored interview turns", async () => {

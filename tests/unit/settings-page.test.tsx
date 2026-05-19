@@ -48,6 +48,7 @@ describe("settings page", () => {
     render(await SettingsPage());
 
     expect(mockRedirect).not.toHaveBeenCalled();
+    expect(screen.getByTestId("settings-form-stub")).toBeInTheDocument();
     expect(screen.getByText("daily_light_01")).toBeInTheDocument();
     expect(screen.getByTestId("settings-form-stub")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "退出当前账号" })).toBeInTheDocument();

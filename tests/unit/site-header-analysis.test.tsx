@@ -118,7 +118,10 @@ function buildMinimalRecord() {
 }
 
 describe("site header analysis toolbar", () => {
+  let historyReplaceStateSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
+    historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
     mockPathname.value = "/analysis";
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
@@ -131,6 +134,10 @@ describe("site header analysis toolbar", () => {
     global.fetch = vi.fn(async () =>
       new Response(JSON.stringify(buildMinimalRecord()), { status: 200 })
     ) as typeof fetch;
+  });
+
+  afterEach(() => {
+    historyReplaceStateSpy.mockRestore();
   });
 
   it("renders section tabs in the toolbar with month label", async () => {
@@ -161,6 +168,7 @@ describe("site header analysis toolbar", () => {
 
     fireEvent.click(within(toolbar).getByRole("button", { name: /节奏/ }));
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
+    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=rhythm");
   });
 
   it("shows contextual chips after data loads", async () => {
@@ -261,7 +269,7 @@ describe("site header analysis toolbar", () => {
 
     render(<SiteHeader />);
 
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=score");
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();
   });
 });

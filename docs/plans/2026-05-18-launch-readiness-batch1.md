@@ -358,7 +358,6 @@ Tested: git status --short
 Not-tested: 下一批 CI 扩容后的远端表现
 EOF
 ```
-
 ---
 
 ## Execution Evidence

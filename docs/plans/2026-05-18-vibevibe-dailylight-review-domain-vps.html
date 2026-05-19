@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>域名 DNS 与 VPS 运维评审</title>
+    <style>
+      body { margin: 0; font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: #f6f0e6; color: #231c16; }
+      main { max-width: 1080px; margin: 0 auto; padding: 36px 24px 72px; }
+      .panel { background: #fffaf2; border: 1px solid #dbcdbd; border-radius: 22px; padding: 24px; margin-top: 18px; }
+      h1, h2 { line-height: 1.25; }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 8px; }
+      .bad { color: #9d3a2f; } .warn { color: #a76a11; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>域名 DNS 与 VPS 运维评审</h1>
+
+      <section class="panel">
+        <p><strong>外部章节基线：</strong>13 domain dns、14 vps ops deploy</p>
+        <p><strong>对 Daily Light 的结论：</strong><span class="bad">这组当前基本没有仓库内实物闭环。</span></p>
+      </section>
+
+      <section class="panel">
+        <h2>为什么当前不能算完成</h2>
+        <ul>
+          <li>没有看到域名绑定、DNS 记录、HTTPS 证书、根域 / www 统一、备案路径、地域策略等任何仓库级配置或记录。</li>
+          <li>没有看到 Dockerfile、compose、Nginx/OpenResty、Caddy、PM2、1Panel、数据库备份、监控与告警配置。</li>
+          <li>这说明第 13、14 章的能力对 Daily Light 来说目前只是“知道后面要面对什么”，还不是“仓库已经准备好这样上线”。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>产品视角下的取舍</h2>
+        <ul>
+          <li>第 13 章里的域名 / DNS / HTTPS 在正式上线前是刚需，但它依附于“你已经选定部署平台”。当前 Daily Light 还没把平台部署主线固定，因此这块暂时不应单独冲刺。</li>
+          <li>第 14 章里的 VPS 运维更重，它要求你承担安全、反向代理、数据库、备份、监控、成本和事故恢复责任。对 Daily Light 当前阶段，这不是性价比最高的第一步。</li>
+          <li>也就是说：<strong>域名要做，但应该接在托管平台主线之后；VPS 现在不该先做。</strong></li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>强决策</h2>
+        <ul>
+          <li><strong>现在必须做：</strong>没有。当前更优先的是先把平台部署和 CI 补起来。</li>
+          <li><strong>可以后置：</strong>域名绑定、HTTPS、DNS 入口统一，等平台部署主线确定后立刻补。</li>
+          <li><strong>现阶段不建议：</strong>直接开 VPS 运维主线。除非后面明确出现托管平台无法满足的技术约束，否则先不要把运维复杂度抬高。</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

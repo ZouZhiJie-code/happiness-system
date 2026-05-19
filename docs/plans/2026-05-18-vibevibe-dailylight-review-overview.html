@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daily Light 体系化评审总览</title>
+    <style>
+      :root {
+        --bg: #f6f1e8;
+        --panel: #fffaf2;
+        --ink: #221b16;
+        --muted: #6d5c4d;
+        --line: #dbcdbd;
+        --accent: #9d5c2f;
+        --good: #2f6b4f;
+        --warn: #a76a11;
+        --bad: #9d3a2f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        background: linear-gradient(180deg, #f9f4eb 0%, #efe4d1 100%);
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      h1, h2, h3 { line-height: 1.25; margin: 0; }
+      h1 { font-size: 36px; }
+      h2 { font-size: 24px; margin-bottom: 16px; }
+      h3 { font-size: 18px; margin-bottom: 10px; }
+      p { margin: 0; }
+      .hero, .section, .card {
+        background: rgba(255, 250, 242, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 18px 50px rgba(73, 49, 28, 0.08);
+      }
+      .hero {
+        padding: 32px;
+        margin-bottom: 24px;
+      }
+      .hero p {
+        margin-top: 14px;
+        color: var(--muted);
+        max-width: 920px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .tag {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      .section {
+        padding: 28px;
+        margin-top: 20px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .card {
+        padding: 20px;
+        background: var(--panel);
+      }
+      .score {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .good { color: var(--good); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--bad); }
+      ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+      li + li { margin-top: 8px; }
+      .matrix {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 14px;
+      }
+      .matrix th, .matrix td {
+        border: 1px solid var(--line);
+        padding: 12px 10px;
+        vertical-align: top;
+        text-align: left;
+      }
+      .matrix th {
+        background: #f2e8da;
+      }
+      .links a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .links a:hover { text-decoration: underline; }
+      .note {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      @media (max-width: 920px) {
+        .grid.two, .grid.three { grid-template-columns: 1fr; }
+        h1 { font-size: 30px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <h1>Daily Light 体系化评审总览</h1>
+        <p>
+          评审口径按你定义的版本执行：以 Daily Light 自身产品路线为主轴，覆盖
+          <strong>本地稳定开发 / 小范围真实用户可用 / 可正式上线运营</strong> 三层目标；只有仓库里已经有
+          <strong>代码、配置、验证链路</strong> 才算完成。外部参考来自 vibevibe 的 8 个高级章节，但不会机械按教程补作业。
+        </p>
+        <div class="meta">
+          <span class="tag">日期：2026-05-18</span>
+          <span class="tag">分支：main</span>
+          <span class="tag">远端：git@github.com:ZouZhiJie-code/happiness-system.git</span>
+          <span class="tag">判断口径：代码闭环优先</span>
+          <span class="tag">结论力度：强决策版</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>一句话结论</h2>
+        <div class="grid three">
+          <article class="card">
+            <div class="score good">本地开发：偏强</div>
+            <p>产品主链、鉴权、日历、分析、画像等主要业务面都有真实代码和大量单测覆盖，`typecheck` 当前可过。</p>
+          </article>
+          <article class="card">
+            <div class="score warn">小范围试用：可做，但要补两刀</div>
+            <p>账号体系与私有页守卫已经成立，但默认测试入口不稳定、部署配置尚未实体化，试用前需要补测试边界和最小发布面。</p>
+          </article>
+          <article class="card">
+            <div class="score bad">正式上线：还不能算完成</div>
+            <p>域名、CI/CD、Serverless/VPS 部署、监控、日志、备份、证书、生产环境配置目前缺少仓库内实物闭环。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>总判断</h2>
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>能力面</th>
+              <th>当前判断</th>
+              <th>为什么</th>
+              <th>决策</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>后端 API</td>
+              <td class="good">已完成到产品主链可用</td>
+              <td>仓库里存在 28 个业务/API 路由，calendar / analysis / interview / draft / profile / auth / happiness-score / daily-journal 都有服务层和测试。</td>
+              <td>现在必须保住，不用重做架构。</td>
+            </tr>
+            <tr>
+              <td>认证与安全基础</td>
+              <td class="good">已完成到首版可用</td>
+              <td>`User`、`AuthSession`、密码 hash、`httpOnly` cookie、私有页守卫、删号级联、注册协议链路都真实存在。</td>
+              <td>现在必须保住，后续只补生产安全项。</td>
+            </tr>
+            <tr>
+              <td>测试与自动化</td>
+              <td class="warn">部分完成</td>
+              <td>主仓有 71 个 tracked test 文件，定向排除 `.worktrees/**` 后核心 API/鉴权测试可过；但 `vitest.config.ts` 本身没有写 exclude，`npm test` 默认入口会被历史 worktree 噪声污染。</td>
+              <td>现在必须修到默认入口可信。</td>
+            </tr>
+            <tr>
+              <td>Git 协作</td>
+              <td class="warn">部分完成</td>
+              <td>远端仓库、主分支、worktree 习惯、上线文档都存在；但仓库里没有 PR/CI 配置实体，更多是流程意识而不是自动门禁。</td>
+              <td>现在必须补最小协作门槛，避免“文档有、机器不执行”。</td>
+            </tr>
+            <tr>
+              <td>公网访问 / 临时分享</td>
+              <td class="warn">认知有，实物弱</td>
+              <td>仓库里没有 tunnel、preview、公开访问配置；更接近“知道该怎么做”，还不是“仓库已具备”。</td>
+              <td>可后置到试用前一批完成。</td>
+            </tr>
+            <tr>
+              <td>Serverless 部署 / CI-CD</td>
+              <td class="bad">未完成</td>
+              <td>未发现 `vercel.json`、`.github/workflows/*`、平台部署配置、preview/production 分环境脚手架。</td>
+              <td>正式上线前必须补。</td>
+            </tr>
+            <tr>
+              <td>域名 / DNS / HTTPS</td>
+              <td class="bad">未完成</td>
+              <td>仓库内没有域名绑定、DNS、证书、入口统一、备案/地域策略等可执行配置或操作记录。</td>
+              <td>正式上线前必须补。</td>
+            </tr>
+            <tr>
+              <td>VPS / 运维</td>
+              <td class="bad">现阶段不建议投入</td>
+              <td>仓库没有 Dockerfile、compose、Nginx/OpenResty、1Panel、备份与监控配置；对当前单产品阶段，先上托管平台更符合性价比。</td>
+              <td>现阶段不建议先走 VPS 主线。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>现在必须做</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>1. 修默认测试入口</h3>
+            <ul>
+              <li>`vitest.config.ts` 只有 `environment / globals / setupFiles`，没有任何 `include/exclude`。</li>
+              <li>README 明写“默认排除 `.worktrees/**`”，但真实配置没有落进去，导致 `npm test` 与文档承诺不一致。</li>
+              <li>这会直接削弱“改完代码能不能信”的判断基础。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>2. 固化一条真实部署主线</h3>
+            <ul>
+              <li>先选托管平台路线，不要同时开 Serverless 和 VPS 两条线。</li>
+              <li>把 build 命令、环境变量、preview / production 区分、最小 smoke check 固化到仓库。</li>
+              <li>否则试用只能靠“本机能跑”和口头步骤维持。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>3. 补生产环境变量与发布清单</h3>
+            <ul>
+              <li>数据库、AI provider endpoint、APP URL、cookie 安全项都要形成正式部署清单。</li>
+              <li>现在有 `.env` 认知，但没有生产部署配置闭环。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>4. 把语音转写继续留在关闭态</h3>
+            <ul>
+              <li>`/api/transcribe` 当前明确是 stub，只返回占位 transcript。</li>
+              <li>它不在当前主链里，可以继续隐藏；一旦开放给真实用户，就必须先接真实模型。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>可以后置</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>公网临时分享</h3>
+            <p>如果近期只是小范围验证，可以先用 preview URL 或 tunnel 做演示，但不要把这当正式交付面。</p>
+          </article>
+          <article class="card">
+            <h3>PR 自动门禁</h3>
+            <p>协作自动门禁可以和部署主线一起补，不必先追完整 GitHub Flow 套餐。</p>
+          </article>
+          <article class="card">
+            <h3>完整监控与成本面板</h3>
+            <p>正式上线前要有，试用期可以先从平台日志、错误统计和简单健康检查开始。</p>
+          </article>
+          <article class="card">
+            <h3>画像 / 记忆增强</h3>
+            <p>这块已有实现，但 `memoryEnabled` 默认关闭；它不是上线阻断项，应排在主链稳定之后。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>现阶段不建议投入</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>先上 VPS 再说</h3>
+            <p>教程第 14 章要求的是完整运维责任。对 Daily Light 当前阶段，先走托管平台更符合资源效率，也更贴近现在缺的是“发布闭环”而不是“服务器控制权”。</p>
+          </article>
+          <article class="card">
+            <h3>追求测试全覆盖</h3>
+            <p>现阶段问题不是测试数量不够，而是默认入口不可靠、主仓与历史 worktree 边界没封好。优先修测试边界，再谈扩面。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section links">
+        <h2>分组报告</h2>
+        <ul>
+          <li><a href="./2026-05-18-vibevibe-dailylight-review-api-auth.html">后端 API / 认证安全</a></li>
+          <li><a href="./2026-05-18-vibevibe-dailylight-review-testing-git.html">测试自动化 / Git 协作</a></li>
+          <li><a href="./2026-05-18-vibevibe-dailylight-review-access-serverless.html">公网访问 / Serverless / CI-CD</a></li>
+          <li><a href="./2026-05-18-vibevibe-dailylight-review-domain-vps.html">域名 DNS / VPS 运维</a></li>
+        </ul>
+        <p class="note">
+          证据源包括：vibevibe 8 个章节全文、仓库源码、README、`docs/integration-guide.md`、
+          `docs/operator-runbook.md`、`docs/plans/2026-05-17-launch-*`，以及本轮实际执行的
+          `typecheck` / `vitest` 验证。
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
