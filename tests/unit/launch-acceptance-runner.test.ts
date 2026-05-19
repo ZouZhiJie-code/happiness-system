@@ -3,8 +3,9 @@ import { pathToFileURL } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const repoRoot = resolve(import.meta.dirname, "../..");
 const runnerModuleHref = pathToFileURL(
-  resolve(import.meta.dirname, "../../scripts/launch-acceptance-runner.mjs")
+  resolve(repoRoot, "scripts/launch-acceptance-runner.mjs")
 ).href;
 
 async function loadRunnerModule() {
@@ -135,9 +136,7 @@ content-type: application/json
       },
       execFileSync
     }));
-    const existsSync = vi.fn((targetPath) =>
-      targetPath === "/Users/zouzhijie/Desktop/Happiness-system-codex/.vercel/project.json"
-    );
+    const existsSync = vi.fn((targetPath) => targetPath === resolve(repoRoot, ".vercel/project.json"));
     vi.doMock("node:fs", () => ({
       default: {
         existsSync
@@ -173,7 +172,7 @@ content-type: application/json
         })
       ],
       {
-        cwd: "/Users/zouzhijie/Desktop/Happiness-system-codex",
+        cwd: repoRoot,
         encoding: "utf8",
         input: undefined,
         maxBuffer: 10485760
@@ -211,9 +210,7 @@ content-type: application/json
       execFileSync
     }));
 
-    const existsSync = vi.fn((targetPath) =>
-      targetPath === "/Users/zouzhijie/Desktop/Happiness-system-codex/.vercel/project.json"
-    );
+    const existsSync = vi.fn((targetPath) => targetPath === resolve(repoRoot, ".vercel/project.json"));
     vi.doMock("node:fs", () => ({
       default: {
         existsSync
@@ -230,7 +227,7 @@ content-type: application/json
       "vercel",
       expect.any(Array),
       expect.objectContaining({
-        cwd: "/Users/zouzhijie/Desktop/Happiness-system-codex"
+        cwd: repoRoot
       })
     );
   });
