@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const CONTRACT_FILES = {
@@ -92,6 +92,32 @@ export function parseVercelEnvLsTable(vercelEnvLsText) {
   );
 }
 
+function hasVercelProjectLink(targetCwd, fileExists = existsSync) {
+  return fileExists(resolve(targetCwd, ".vercel/project.json"));
+}
+
+export function resolveVercelCommandCwd({
+  currentCwd = process.cwd(),
+  env = process.env,
+  fileExists = existsSync
+} = {}) {
+  if (env.VERCEL_ENV_AUDIT_CWD) {
+    return env.VERCEL_ENV_AUDIT_CWD;
+  }
+
+  const worktreeMarker = `${resolve("/")}.worktrees${resolve("/")}`;
+  const markerIndex = currentCwd.indexOf(worktreeMarker);
+
+  if (markerIndex >= 0) {
+    const parentRepoRoot = currentCwd.slice(0, markerIndex);
+    if (parentRepoRoot && hasVercelProjectLink(parentRepoRoot, fileExists)) {
+      return parentRepoRoot;
+    }
+  }
+
+  return currentCwd;
+}
+
 function summarizeEnvironment(contract, liveVariables) {
   return {
     presentRequired: contract.required.filter((variable) => liveVariables.includes(variable)),
@@ -127,7 +153,8 @@ export function auditVercelEnvText({
 function parseArgs(argv) {
   const parsed = {
     inputFile: null,
-    scope: null
+    scope: null,
+    expectedProject: null
   };
 
   function readOptionValue(optionName, value) {
@@ -149,7 +176,9 @@ function parseArgs(argv) {
     }
 
     if (arg === "--project") {
-      throw new Error("unsupported option: --project");
+      parsed.expectedProject = readOptionValue("--project", value);
+      index += 1;
+      continue;
     }
 
     if (arg === "--scope") {
@@ -186,10 +215,38 @@ function readVercelEnvText({ inputFile, scope }) {
     args.push("--scope", scope);
   }
 
-  return execFileSync("vercel", args, {
-    cwd: process.cwd(),
+  const command = spawnSync("vercel", args, {
+    cwd: resolveVercelCommandCwd(),
     encoding: "utf8"
   });
+
+  if (command.error) {
+    throw command.error;
+  }
+
+  if (command.status !== 0) {
+    const stderr = command.stderr?.trim();
+    const stdout = command.stdout?.trim();
+    throw new Error(stderr || stdout || `vercel env ls failed with status ${command.status}`);
+  }
+
+  return [command.stdout, command.stderr].filter(Boolean).join("\n");
+}
+
+function assertExpectedProject(expectedProject, auditedProject) {
+  if (!expectedProject) {
+    return;
+  }
+
+  if (!auditedProject) {
+    throw new Error(
+      `expected project ${expectedProject} but could not determine audited project from vercel env ls output`
+    );
+  }
+
+  if (auditedProject !== expectedProject) {
+    throw new Error(`expected project ${expectedProject} but audited project was ${auditedProject}`);
+  }
 }
 
 function main() {
@@ -200,6 +257,7 @@ function main() {
     ...contracts,
     vercelEnvLsText
   });
+  assertExpectedProject(args.expectedProject, result.project);
 
   console.log(JSON.stringify(result, null, 2));
 }

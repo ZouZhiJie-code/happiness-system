@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const previewContract = `# Vercel preview environment contract
 DATABASE_URL=""
@@ -76,9 +76,15 @@ type AuditModule = {
   }): AuditResult;
   buildEnvironmentContract(input: string): AuditResult["contract"]["preview"];
   parseVercelEnvLsTable(input: string): Record<string, string[]>;
+  resolveVercelCommandCwd(input?: {
+    currentCwd?: string;
+    env?: NodeJS.ProcessEnv;
+    fileExists?: (path: string) => boolean;
+  }): string;
 };
 
 async function loadModule(): Promise<AuditModule> {
+  vi.resetModules();
   // @ts-expect-error Vitest imports the runtime-authored .mjs script directly in this lane.
   return import("../../scripts/vercel-env-audit.mjs");
 }
@@ -307,18 +313,70 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     });
   });
 
-  it("rejects the unsupported --project flag instead of pretending to target a project", () => {
+  it("prefers the parent repo root for vercel cwd when running inside a .worktrees checkout", async () => {
+    const { resolveVercelCommandCwd } = await loadModule();
+
+    const cwd = resolveVercelCommandCwd({
+      currentCwd:
+        "/Users/zouzhijie/Desktop/Happiness-system-codex/.worktrees/launch-ai-env-and-product-smoke",
+      env: { ...process.env },
+      fileExists: (targetPath) =>
+        targetPath === "/Users/zouzhijie/Desktop/Happiness-system-codex/.vercel/project.json"
+    });
+
+    expect(cwd).toBe("/Users/zouzhijie/Desktop/Happiness-system-codex");
+  });
+
+  it("fails fast when --project does not match the audited project", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "vercel-env-audit-"));
     tempDirs.push(tempDir);
 
     const inputPath = join(tempDir, "env-ls.txt");
     writeFileSync(inputPath, vercelEnvLsTable);
 
-    const result = runCli(["--input-file", inputPath, "--project", "zouzhijies-projects/xingfuxitong"]);
+    const result = runCli([
+      "--input-file",
+      inputPath,
+      "--project",
+      "zouzhijies-projects/some-other-project"
+    ]);
 
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toMatch(/unsupported option: --project/i);
+    expect(result.stderr).toMatch(/expected project .*some-other-project/i);
+    expect(result.stderr).toMatch(/audited project .*zouzhijies-projects\/xingfuxitong/i);
+  });
+
+  it("supports --input-file project validation without touching the network path", async () => {
+    vi.resetModules();
+
+    const mockedExecFileSync = vi.fn(() => {
+      throw new Error("network path should not run");
+    });
+    vi.doMock("node:child_process", async () => {
+      const actual = await vi.importActual<typeof import("node:child_process")>("node:child_process");
+      return {
+        ...actual,
+        execFileSync: mockedExecFileSync
+      };
+    });
+
+    const tempDir = mkdtempSync(join(tmpdir(), "vercel-env-audit-"));
+    tempDirs.push(tempDir);
+
+    const inputPath = join(tempDir, "env-ls.txt");
+    writeFileSync(inputPath, vercelEnvLsTable);
+
+    const { auditVercelEnvText } = await loadModule();
+    const result = auditVercelEnvText({
+      previewContractText: previewContract,
+      productionContractText: productionContract,
+      vercelEnvLsText: readFileSync(inputPath, "utf8")
+    });
+
+    expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
+    vi.doUnmock("node:child_process");
   });
 
   it("fails fast when --input-file or --scope is missing a usable value", () => {
