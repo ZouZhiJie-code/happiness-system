@@ -148,6 +148,39 @@ vercel env ls --scope zouzhijies-projects
 - 当前仍然不能把 Preview / Production 视为“可验证真实 AI 主链”的环境：一方面 AI 变量明确缺失；另一方面如果要依赖 Vercel system env，还缺少 `Automatically expose System Environment Variables` 已开启的直接证据
 - 产品主链 smoke 仍可以先覆盖公开页和无 AI 前置的 API，但涉及访谈、日志生成、画像 AI 直出和完整部署 URL 语义时，当前平台配置仍不满足上线 readiness
 
+## 2026-05-19 跟进结果
+
+后续动作：
+- 已把 `AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL` 写入 `Development / Preview / Production`
+- 已触发一版新的 preview redeploy：
+  - `https://xingfuxitong-8w6xmyh95-zouzhijies-projects.vercel.app`
+  - `vercel inspect` 返回 `Ready`
+
+新增证据：
+- 复查 `vercel env ls --scope zouzhijies-projects` 后，四个 AI 必填变量已经出现在 `Development / Preview / Production`
+- `vercel env pull --environment=preview` 与 `vercel env pull --environment=production` 的拉取结果里都出现了：
+  - `VERCEL=1`
+  - `VERCEL_TARGET_ENV`
+  - `VERCEL_URL`
+- 这说明当前项目至少已经暴露出一条可直接用于 deployment URL 语义的 system env 路径；到这一步，`APP_URL` 不再是当前 launch lane 的直接阻断项
+
+仍未直接证实的部分：
+- 本轮拉取结果里没有直接看到 `VERCEL_BRANCH_URL` 或 `VERCEL_PROJECT_PRODUCTION_URL`
+- 因此，当前能被直接确认的 system env URL 证据只有 `VERCEL_URL`
+
+本机验证限制：
+- 在这台机器上，对新 preview URL 执行
+  - `npm run smoke:public`
+  - `ACCEPTANCE_BASE_URL=... node scripts/product-smoke.mjs ...`
+  都在第一跳失败，报的是 `fetch failed`
+- 进一步用裸 `node fetch(...)` 探测，错误收口为 `UND_ERR_CONNECT_TIMEOUT`
+- 这意味着本轮 shell 验证没有拿到任何应用层 `2xx/4xx/5xx` 响应；当前看到的是“本机到 `vercel.app:443` 的直连超时”，不是已被确认的应用逻辑错误
+
+当前结论：
+- 已被直接证实的 AI 环境变量阻断已解除
+- URL 合同在当前仓库接受的最小证据面上可视为已满足：显式 `APP_URL` 仍可选，而 system env 路径至少已通过 `VERCEL=1` + `VERCEL_URL` 得到证据支持
+- 当前剩余问题不是“平台缺少 AI 变量”，而是“这台机器的 shell 无法直连 `vercel.app:443`，因此还没有拿到可归因于应用本身的 live smoke 结果”
+
 ## 当前刻意不开放的能力
 
 - `/api/transcribe` 继续视为关闭态，不纳入 preview smoke

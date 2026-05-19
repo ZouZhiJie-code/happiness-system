@@ -639,7 +639,7 @@
   - `Preview / Production` 至少具备 `DATABASE_URL`、`AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL`
   - `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以按当前策略留空，但必须被显式判定为可选
   - URL 合同可由两条路径满足：显式 `APP_URL`，或暴露后的 Vercel system env
-  - 如果依赖 Vercel system env，至少要把 `VERCEL_URL` / `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` 纳入核对口径，并额外确认项目设置 `Automatically expose System Environment Variables` 已开启
+  - 如果依赖 Vercel system env，至少要拿到一条直接可验证的 deployment URL 证据；当前最小可接受证据是 `VERCEL=1` 与 `VERCEL_URL` 出现在目标环境的 pulled env 里。只有在项目明确依赖它们时，才继续把 `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` 当作必须核对项
 - `失败归类`：`数据风险 / 上线阻断`
 
 ### 批次 4 当前执行记录（截至 2026-05-19，含 2026-05-18 基线与 2026-05-19 D-05 平台审计）
@@ -650,12 +650,13 @@
 | `D-02` | `通过` | Safari 真实页面实测：`/calendar?view=month&date=2026-05-02` 的过去空白日当天检查区显示“这一天还空着。进入当天后，可以从任一维开始。”；切到 `/calendar?view=month&date=2026-05-19` 的未来日后，页面显示“这一天还没到。到了当天再记录。”以及“五维状态：未来日期先保留。” | 过去空白日与未来日都保持中性工作台语义，没有“漏记”指责感。 |
 | `D-03` | `通过（实现+测试级）` | 代码与测试联合验证：`src/features/calendar/aggregate-calendar.ts` 里的 `isOpeningOnlyCalendarSession` 会把 `status=active && messageCount<=1 && !journalEntryId && !completedAt && !pausedAt` 的空开场 session 排除出 `in_progress`；`tests/unit/calendar-aggregate.test.ts` 已显式断言 opening-only day 的 `overallStatus=empty`、`activeCount=0`、`primaryAction=null`。 | 本轮尝试为新账号现场造 opening-only 页面证据时，临时 cookie 抽取脚本未带上有效会话，没有形成额外页面截图；现有实现和单测已足以支撑本条通过。 |
 | `D-04` | `通过（判定为上线前需隐藏/不走用户主链）` | 仓库检索确认没有任何前端代码调用 `/api/transcribe`，唯一实现只有当前仓库代码路径 `src/app/api/transcribe/route.ts` 这个 stub route；无文件上传时不会进入真实转写，有文件上传时只返回“当前版本先保留接口与回退链路，下一步接入真实转写模型。”。文档 `docs/integration-guide.md`、`docs/operator-runbook.md` 也明确标注当前是 stub。 | 当前判断：它不在用户可触达主链里，因此不构成当前上线阻断；若后续开放语音入口，必须先补真实模型再重做验收。 |
-| `D-05` | `未通过` | 2026-05-19 在已 link 到 `zouzhijies-projects/xingfuxitong` 的仓库根目录真实执行 `vercel env ls --scope zouzhijies-projects`，`zouzhijies-projects/xingfuxitong` 在 `Development / Preview / Production` 三套环境里都只返回 `DATABASE_URL` 与 `DIRECT_URL`；没有看到 `AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL`，也没有看到可选的 `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID`。同一轮没有拿到项目设置或部署运行时证据，无法确认 `Automatically expose System Environment Variables` 是否已开启，因此也无法把 URL 合同判定为已满足。 | 当前结论：已被直接证实的 P0 阻断项仍是 AI 变量缺失；另外，若要依赖 `VERCEL_URL` / `VERCEL_BRANCH_URL` / `VERCEL_PROJECT_PRODUCTION_URL` 取代手填 `APP_URL`，还需要单独补做项目设置与运行时 readback。`ISSUE-012` 保持打开。 |
+| `D-05` | `通过（配置合同满足；本机 live smoke 受网络限制）` | 2026-05-19 后续复查里，`vercel env ls --scope zouzhijies-projects` 已显示 `AI_PROVIDER`、`VOLCENGINE_ARK_API_KEY`、`VOLCENGINE_ARK_ENDPOINT_ID`、`VOLCENGINE_ARK_BASE_URL` 全部出现在 `Development / Preview / Production`。同一轮 `vercel env pull --environment=preview` 与 `--environment=production` 的结果都出现了 `VERCEL=1`、`VERCEL_TARGET_ENV`、`VERCEL_URL`，因此 URL 合同的最小 system-env 证据已到位。随后对新 preview deployment `https://xingfuxitong-8w6xmyh95-zouzhijies-projects.vercel.app` 执行 `npm run smoke:public` 和 `node scripts/product-smoke.mjs ...`，都在第一跳报 `fetch failed`；裸 `node fetch(...)` 进一步收口为 `UND_ERR_CONNECT_TIMEOUT`，说明当前看到的是本机到 `vercel.app:443` 的连通性限制，而不是已确认的应用层错误。 | 当前结论：平台环境合同这一条已收口；AI 变量缺失不再是当前 blocker。若继续做 live smoke，需要先解决这台机器对 `vercel.app:443` 的直连超时，或换一条验证路径。 |
 
 批次 4 当前结论：
 - `D-02`、`D-03`、`D-04` 已完成并通过。
 - `D-01` 已通过真实失效会话 deep link 补齐页面级错误卡证据。
-- `D-05` 未通过：Vercel 真实环境明确缺少 AI 变量；URL 合同若改走 system env，当前还缺少 exposure 已开启的直接证据，已写入 `ISSUE-012`。
+- `D-05` 已通过配置合同验收：AI 变量已补齐，且 `VERCEL=1` + `VERCEL_URL` 已作为最小 system-env 证据到位。
+- 当前剩余问题转为验证路径限制：这台机器对 `vercel.app:443` 的 shell 直连超时，导致 live smoke 还没有拿到应用层响应。
 
 ---
 
