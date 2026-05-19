@@ -8,7 +8,21 @@ describe("daily happiness score constraints", () => {
       "utf8"
     );
 
-    expect(sql).toContain('"meaningScore" >= 1');
-    expect(sql).toContain('"livingConditionScore" <= 10');
+    const scoreColumns = [
+      "meaningScore",
+      "healthScore",
+      "virtueScore",
+      "autonomyScore",
+      "interestScore",
+      "skillScore",
+      "relationshipScore",
+      "livingConditionScore"
+    ];
+
+    for (const column of scoreColumns) {
+      expect(sql).toContain(`"DailyHappinessScore_${column}_check"`);
+      expect(sql).toContain(`"${column}" >= 1`);
+      expect(sql).toContain(`"${column}" <= 10`);
+    }
   });
 });
