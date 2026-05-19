@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
@@ -74,6 +74,7 @@ function getChip(
 }
 
 export function AnalysisToolbar() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
@@ -144,11 +145,11 @@ export function AnalysisToolbar() {
   }, [record]);
 
   function navigateMonth(month: string) {
-    replaceAnalysisHistoryState(buildAnalysisHref({ month, section: normalizedSearch.section }));
+    router.replace(buildAnalysisHref({ month, section: normalizedSearch.section }), { scroll: false });
   }
 
   function navigateSection(section: AnalysisSectionKey) {
-    replaceAnalysisHistoryState(buildAnalysisHref({ month: normalizedSearch.month, section }));
+    router.replace(buildAnalysisHref({ month: normalizedSearch.month, section }), { scroll: false });
   }
 
   return (

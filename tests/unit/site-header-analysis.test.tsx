@@ -167,7 +167,8 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: /节奏/ }));
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=rhythm");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
+    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=rhythm");
   });
 
   it("shows contextual chips after data loads", async () => {
@@ -231,13 +232,13 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-04&section=score");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=score", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看下月分析" }));
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-06&section=score");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=score", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "回到本月分析" }));
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=score");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
   });
 
   it("preserves the current analysis section when paging months", async () => {
@@ -254,7 +255,7 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-04&section=rhythm");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=rhythm", { scroll: false });
   });
 
   it("normalizes invalid analysis month values in the header toolbar", async () => {
