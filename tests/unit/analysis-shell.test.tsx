@@ -1235,7 +1235,7 @@ describe("analysis shell", () => {
 
     expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
 
-    const point = within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02");
+    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02");
     fireEvent.click(point);
 
     const detailCard = await screen.findByTestId("score-trend-detail-card");
@@ -1256,7 +1256,8 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-02"));
+    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02");
+    fireEvent.click(point);
 
     const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("五月二日的记录");
@@ -1273,7 +1274,8 @@ describe("analysis shell", () => {
     render(<AnalysisShell />);
 
     const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(within(trendPanel).getByTestId("score-average-trend-chart-point-2026-05-03"));
+    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-03");
+    fireEvent.click(point);
 
     const detailCard = await screen.findByTestId("score-trend-detail-card");
     expect(detailCard).toHaveTextContent("这一天还没有生成日志");
