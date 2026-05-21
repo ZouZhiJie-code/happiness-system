@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-17`，这个仓库的真实状态是：
+截至 `2026-05-21`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -19,6 +19,8 @@
   - 已登录访问 `/login` 或 `/register` 会优先回到 `next`，否则回到 `/interview`
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
+  - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
+  - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
@@ -111,12 +113,14 @@ npm install
 
 ```bash
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
+ADMIN_USERNAMES=""                       # 逗号分隔的管理员用户名白名单，例如 "alice,bob"
 ```
 
 ### 2.1 数据库环境约定
@@ -164,9 +168,12 @@ npm run dev
 
 - 首版账户标识是 `username`，不是邮箱，也不是手机号
 - 首版不支持找回密码，UI 只提示用户妥善保管密码，不提供伪入口
+- 管理员权限当前也基于 `username` 白名单判断，环境变量名为 `ADMIN_USERNAMES`
 - 核心认证页面与接口：
   - 页面：`/login`、`/register`、`/settings/account`、`/legal/terms`、`/legal/privacy`
   - API：`/api/auth/register`、`/api/auth/login`、`/api/auth/logout`、`/api/auth/session`、`/api/auth/delete-account`
+  - 管理员页面：`/admin/analytics`
+  - 管理员 API：`/api/admin/analytics/*`
 
 ### 5. 回归检查
 
@@ -233,6 +240,9 @@ npx prisma migrate deploy
 ## 关键实现现实
 
 - `src/server/services/interview/interview.service.ts` 目前主要是对 `joy-interview.service.ts` 的导出壳子。
+- `src/server/services/auth/admin-access.ts` 负责管理员白名单鉴权；`src/app/settings/page.tsx` 与 `src/components/auth/settings-account-panel.tsx` 负责设置页管理员入口显隐。
+- `src/app/admin/analytics/page.tsx`、`src/components/admin/admin-analytics-shell.tsx`、`src/features/admin-analytics/*`、`src/server/services/admin-analytics/admin-analytics.service.ts` 与 `src/server/repositories/admin-analytics.repository.ts` 已落地管理员数据分析工作台、筛查/下钻 URL 状态、真实读模型查询和管理员审计日志。
+- `src/app/api/admin/analytics/*` 已公开管理员分析接口：总览、漏斗、留存、质量、候选用户和内容级下钻；所有接口都要求已登录且命中 `ADMIN_USERNAMES`。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
 - `src/components/shared/site-header.tsx` 现在会在客户端测量真实 header 高度，并把结果写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按这个真实高度扣减剩余视口，而不是依赖固定 `4rem`。

@@ -3,6 +3,7 @@ import React from "react";
 import { SettingsAccountPanel } from "@/components/auth/settings-account-panel";
 import { SettingsForm } from "@/components/joy/settings-form";
 import { StatusPill } from "@/components/shared/status-pill";
+import { isAdminUsername } from "@/server/services/auth/admin-access";
 import { requireAuthenticatedPage } from "@/server/services/auth/auth-page-guard";
 
 export default async function SettingsPage() {
@@ -25,7 +26,10 @@ export default async function SettingsPage() {
 
           <div className="grid gap-4">
             <SettingsForm />
-            <SettingsAccountPanel user={user} />
+            <SettingsAccountPanel
+              user={user}
+              showAdminAnalyticsEntry={Boolean(user?.username && isAdminUsername(user.username))}
+            />
           </div>
         </div>
       </section>

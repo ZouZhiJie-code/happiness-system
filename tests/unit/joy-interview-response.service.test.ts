@@ -24,6 +24,10 @@ const {
   startNextInterviewEvent: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
@@ -74,6 +78,10 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -199,6 +207,7 @@ describe("prepareJoyInterviewResponse", () => {
     resumeCurrentInterviewEvent.mockReset();
     saveJoyInterviewDraft.mockReset();
     startNextInterviewEvent.mockReset();
+    mockRecordAnalyticsEvent.mockReset();
     extractJoySnapshotWithAI.mockReset();
     generateJoyAssistantTurn.mockReset();
     streamJoyAssistantTurn.mockReset();
@@ -313,6 +322,195 @@ describe("prepareJoyInterviewResponse", () => {
       expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
     }
   );
+
+  it("records boundary_insufficient analytics when the user stops before enough material exists", async () => {
+    const insufficientImprovementSnapshot: JoySnapshot = {
+      event: "今天很糟",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      improvementTrack: null,
+      stateAssessment: null,
+      frictionPoint: null,
+      repeatCondition: null,
+      controllableFactor: null,
+      nextAttempt: null,
+      confidence: 0.3,
+      missingSlots: ["frictionPointOrRepeatCondition"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "improvement",
+        stage: "probe_reason",
+        snapshot: insufficientImprovementSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_reason",
+            explorationRound: 1,
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientImprovementSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "别问了，不想聊了。",
+      inputMode: "text"
+    });
+
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_boundary_insufficient_shown",
+        userId: "user-1",
+        sessionId: "session-ready",
+        dedupeKey: "interview_boundary_insufficient_shown:session-ready:event-1"
+      })
+    );
+  });
+
+  it("records dimension_redirect analytics when joy cannot find a credible moment", async () => {
+    const emptyJoySnapshot: JoySnapshot = {
+      event: null,
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      joyMoment: null,
+      joySource: null,
+      stateShift: null,
+      meaningNeed: null,
+      manualClue: null,
+      confidence: 0.2,
+      missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "joy",
+        stage: "collect_event",
+        draftGenerationUnlocked: false,
+        snapshot: emptyJoySnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "collect_event",
+            explorationRound: 1,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: emptyJoySnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    getNextStage.mockReturnValue("collect_event");
+    extractJoySnapshotWithAI.mockResolvedValue(emptyJoySnapshot);
+
+    await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "没什么开心，想不到。",
+      inputMode: "text"
+    });
+
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_dimension_redirect_shown",
+        userId: "user-1",
+        sessionId: "session-ready",
+        dedupeKey: "interview_dimension_redirect_shown:session-ready:event-1"
+      })
+    );
+  });
+
+  it("records first user reply analytics on the first meaningful reply", async () => {
+    const firstReplySnapshot: JoySnapshot = {
+      ...baseSnapshot,
+      confidence: 0.72
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        turnCount: 0,
+        events: [
+          {
+            ...buildSession().events[0],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 0,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            snapshot: {
+              event: null,
+              feeling: null,
+              whyItMattered: null,
+              happinessType: null,
+              selfPattern: null,
+              confidence: 0.2,
+              missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+            }
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(firstReplySnapshot);
+    getNextStage.mockReturnValue("probe_reason");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这段开心已经开始成形。",
+      analysis: "",
+      question: "那一刻为什么会让你这么在意？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我一下轻松很多。",
+      inputMode: "text"
+    });
+
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_first_user_reply",
+        userId: "user-1",
+        sessionId: "session-ready",
+        dedupeKey: "interview_first_user_reply:session-ready"
+      })
+    );
+  });
 
   it("offers a complete fulfillment draft choice once progress evidence and worth standard are clear", async () => {
     const fulfillmentSnapshot: JoySnapshot = {
@@ -2667,5 +2865,129 @@ describe("prepareJoyInterviewResponse", () => {
     expect(streamedSummary).toBe(result.assistantTurn?.thinkingSummary);
     expect(streamedSummary).toContain(expectedSnippet);
     expect(streamedSummary).not.toMatch(/你提到|我想知道|下一步|[?？]/u);
+  });
+
+  it("records interview session start analytics when a session is created", async () => {
+    getOpeningQuestion.mockReturnValue("今天有没有一个让你真心开心的瞬间？");
+    createJoyInterviewSession.mockResolvedValue(buildSession());
+
+    const { startJoyInterview } = await import("@/server/services/interview/joy-interview.service");
+
+    const result = await startJoyInterview("user-1", "joy", "2026-04-21");
+
+    expect(result.sessionId).toBe("session-ready");
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_session_started",
+        userId: "user-1",
+        sessionId: "session-ready",
+        dedupeKey: "interview_session_started:session-ready"
+      })
+    );
+  });
+
+  it("records draft generation analytics after a draft is persisted", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        draftGenerationUnlocked: true
+      })
+    );
+    generateJoyDraftWithAI.mockResolvedValue({
+      title: "被稳稳接住",
+      content: "今天和朋友聊了很久。",
+      event: "今天和朋友聊了很久",
+      feeling: "温暖被理解",
+      whyItMattered: "被接住了",
+      happinessType: "关系型开心",
+      selfPattern: "只要真正聊开，我就更容易恢复状态",
+      joyMoment: "今天和朋友聊了很久",
+      joySource: "被朋友真正接住的感觉",
+      stateShift: "更被理解",
+      meaningNeed: "我在乎被理解和连接",
+      manualClue: "只要真正聊开，我就更容易恢复状态",
+      tags: ["关系型开心"],
+      eventBlocks: [],
+      source: "ai_draft_direct"
+    });
+    saveJoyInterviewDraft.mockResolvedValue({
+      ...buildSession({
+        draftGenerationUnlocked: true
+      }),
+      journalEntry: {
+        id: "entry-1",
+        title: "被稳稳接住",
+        content: "今天和朋友聊了很久。",
+        event: "今天和朋友聊了很久",
+        feeling: "温暖被理解",
+        whyItMattered: "被接住了",
+        happinessType: "关系型开心",
+        selfPattern: "只要真正聊开，我就更容易恢复状态",
+        tags: ["关系型开心"],
+        eventBlocks: [],
+        source: "ai_draft_direct",
+        status: "draft",
+        linkedSessionIds: ["session-ready"],
+        updatedAt: "2026-04-21T00:10:00.000Z",
+        savedAt: null
+      }
+    });
+
+    await expect(generateJoyInterviewDraft("user-1", ["session-ready"])).resolves.toMatchObject({
+      draftEntry: expect.objectContaining({ id: "entry-1" })
+    });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_draft_generated",
+        userId: "user-1",
+        sessionId: "session-ready",
+        entryId: "entry-1",
+        dedupeKey: "interview_draft_generated:session-ready:entry-1"
+      })
+    );
+  });
+
+  it("records draft save analytics after the generated entry is saved", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        draftGenerationUnlocked: true
+      })
+    );
+    markJoyEntrySaved.mockResolvedValue({
+      ...buildSession({
+        draftGenerationUnlocked: true
+      }),
+      journalEntry: {
+        id: "entry-1",
+        title: "被稳稳接住",
+        content: "今天和朋友聊了很久。",
+        event: "今天和朋友聊了很久",
+        feeling: "温暖被理解",
+        whyItMattered: "被接住了",
+        happinessType: "关系型开心",
+        selfPattern: "只要真正聊开，我就更容易恢复状态",
+        tags: ["关系型开心"],
+        eventBlocks: [],
+        source: "ai_draft_direct",
+        status: "saved",
+        linkedSessionIds: ["session-ready"],
+        updatedAt: "2026-04-21T00:10:00.000Z",
+        savedAt: "2026-04-21T00:12:00.000Z"
+      }
+    });
+
+    const { saveGeneratedJoyEntry } = await import("@/server/services/interview/joy-interview.service");
+
+    await expect(saveGeneratedJoyEntry("user-1", "session-ready")).resolves.toMatchObject({
+      draftEntry: expect.objectContaining({ status: "saved" })
+    });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_draft_saved",
+        userId: "user-1",
+        sessionId: "session-ready",
+        entryId: "entry-1",
+        dedupeKey: "interview_draft_saved:session-ready:entry-1"
+      })
+    );
   });
 });

@@ -257,6 +257,35 @@ model DailyJournalEntry {
   @@index([userId, date])
 }
 
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventName  String
+  occurredAt DateTime @default(now())
+  userId     String?
+  sessionId  String?
+  entryId    String?
+  requestId  String?
+  dedupeKey  String?  @unique
+  properties Json
+
+  @@index([eventName, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([sessionId, occurredAt])
+}
+
+model AdminAuditLog {
+  id            String   @id @default(cuid())
+  adminUsername String
+  targetUserId  String?
+  resourceType  String
+  resourceId    String
+  action        String
+  createdAt     DateTime @default(now())
+
+  @@index([adminUsername, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
 /// Score ranges are enforced at both Zod layer and DB layer via SQL migration checks.
 model DailyHappinessScore {
   id                   String   @id @default(cuid())

@@ -9,12 +9,13 @@ import { completeStructuredOutput } from "@/server/services/ai/structured-output
 import {
   findDailyJournalByDate,
   listSavedJournalEntriesForDailyJournal,
-  markDailyJournalSaved,
+  markDailyJournalSavedWithMeta,
   updateDailyJournalDraft,
   upsertDailyJournalDraft,
   type DailyJournalSourceEntry
 } from "@/server/repositories/daily-journal.repository";
-import type { DailyJournalEntryRecord, DailyJournalStatus, InterviewDimension } from "@/types/interview";
+import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
+import type { DailyJournalEntryRecord, DailyJournalStatus } from "@/types/interview";
 
 const dailyJournalDraftSchema = z.object({
   title: z.string().min(1).max(MAX_JOURNAL_TITLE_LENGTH),
@@ -189,6 +190,17 @@ export async function generateDailyJournal(userId: string, date: string) {
       throw new DailyJournalError("DAILY_JOURNAL_GENERATE_FAILED", "当天日志写入失败。", true);
     }
 
+    await recordAnalyticsEvent({
+      eventName: "daily_journal_generated",
+      userId,
+      entryId: dailyJournal.id,
+      dedupeKey: `daily_journal_generated:${userId}:${date}`,
+      properties: {
+        date,
+        sourceCount: sourceEntries.length
+      }
+    });
+
     return {
       dailyJournal,
       availableSourceCount: sourceEntries.length,
@@ -230,11 +242,22 @@ export async function updateDailyJournal(entryId: string, input: { title: string
 
 export async function saveDailyJournal(entryId: string) {
   try {
-    const dailyJournal = await markDailyJournalSaved(entryId);
+    const saved = await markDailyJournalSavedWithMeta(entryId);
+    const dailyJournal = saved.dailyJournal;
 
     if (!dailyJournal) {
       throw new DailyJournalError("DAILY_JOURNAL_NOT_FOUND");
     }
+
+    await recordAnalyticsEvent({
+      eventName: "daily_journal_saved",
+      userId: saved.userId,
+      entryId: dailyJournal.id,
+      dedupeKey: `daily_journal_saved:${saved.userId}:${dailyJournal.id}`,
+      properties: {
+        date: dailyJournal.date
+      }
+    });
 
     return {
       dailyJournal
