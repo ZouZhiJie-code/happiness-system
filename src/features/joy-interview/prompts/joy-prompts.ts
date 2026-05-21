@@ -23,6 +23,7 @@ import {
 import type { AIChatMessage } from "@/server/services/ai/ai-provider";
 import type {
   AssistantDepth,
+  AssistantQuestionSpec,
   DraftBrief,
   DraftWritingProfile,
   InterviewDimension,
@@ -430,6 +431,7 @@ export function buildJoyQuestionMessages(input: {
   roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
   action: "reply" | "continue_current_event";
+  questionSpec?: AssistantQuestionSpec | null;
   memoryContext?: string | null;
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
@@ -554,6 +556,7 @@ export function buildJoyQuestionMessages(input: {
           null,
           2
         )}`,
+        input.questionSpec ? `questionSpec:\n${JSON.stringify(input.questionSpec, null, 2)}` : null,
         fulfillmentQuestionContract
           ? `fulfillment question contract:\n${JSON.stringify(fulfillmentQuestionContract, null, 2)}`
           : null,

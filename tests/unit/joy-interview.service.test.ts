@@ -314,6 +314,36 @@ describe("joy interview engine", () => {
     expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
   });
 
+  it("wraps up gratitude immediately after relationship-signal denial", () => {
+    const snapshot = buildJoySnapshot({
+      event: "同事先帮我把最急的两件事拆出来",
+      feeling: "松了一口气",
+      whyItMattered: "至少那一下没有继续乱下去",
+      happinessType: "支持型感谢",
+      selfPattern: null,
+      gratitudeMoment: "同事先帮我把最急的两件事拆出来",
+      gratitudeTarget: "同事",
+      kindAction: "先帮我把最急的两件事拆出来",
+      seenNeed: null,
+      innerEffect: "松了一口气",
+      gratitudeReason: "至少那一下没有继续乱下去",
+      gratitudeType: "支持回应型",
+      relationshipSignal: null,
+      reciprocityHint: null,
+      evidenceState: {
+        targets: {
+          kind_action: "confirmed",
+          gratitude_reason: "confirmed"
+        },
+        deniedTargets: ["relationship_signal"],
+        deniedHypotheses: ["relationship_signal"],
+        blockedTransitions: ["relationship_signal"]
+      }
+    });
+
+    expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
+  });
+
   it("uses gratitude question strategy without thank-you-template wording", () => {
     const questions = [
       buildAssistantQuestion("gratitude", "collect_event", {

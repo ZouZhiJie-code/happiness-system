@@ -628,11 +628,14 @@ function buildImprovementInterpretation(input: BuildDimensionSemanticInterpretat
 }
 
 function buildGratitudeInterpretation(input: BuildDimensionSemanticInterpretationInput): DimensionSemanticInterpretation {
+  const deniedTargets = new Set(input.snapshot.evidenceState?.deniedTargets ?? []);
   const gratitudeMoment = shorten(input.snapshot.gratitudeMoment ?? input.snapshot.event, 34);
   const kindAction = shorten(input.snapshot.kindAction, 42);
-  const seenNeed = shorten(input.snapshot.seenNeed, 42);
+  const seenNeed = deniedTargets.has("seen_need") ? null : shorten(input.snapshot.seenNeed, 42);
   const gratitudeReason = shorten(input.snapshot.gratitudeReason ?? input.snapshot.whyItMattered, 42);
-  const relationshipSignal = shorten(input.snapshot.relationshipSignal ?? input.snapshot.selfPattern, 42);
+  const relationshipSignal = deniedTargets.has("relationship_signal")
+    ? null
+    : shorten(input.snapshot.relationshipSignal ?? input.snapshot.selfPattern, 42);
   const joined = [gratitudeMoment, kindAction, seenNeed, gratitudeReason, relationshipSignal].filter(Boolean).join(" ");
   const titleCandidates: string[] = [];
 

@@ -1,6 +1,7 @@
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
 import type {
+  InferenceEvidenceState,
   InterviewDimension,
   InterviewSessionStatus,
   JoyClosureTarget,
@@ -53,6 +54,7 @@ export interface JoySignalFields {
   gratitudeType?: string | null;
   relationshipSignal?: string | null;
   reciprocityHint?: string | null;
+  evidenceState?: InferenceEvidenceState | null;
 }
 
 export type FulfillmentQuestionTarget = "event_detail" | "progress_evidence" | "value_signal";
@@ -545,6 +547,7 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
   const gratitudeType = normalizeSlotValue(fields.gratitudeType ?? fields.happinessType, 40);
   const relationshipSignal = normalizeSlotValue(fields.relationshipSignal ?? fields.selfPattern, 120);
   const reciprocityHint = normalizeSlotValue(fields.reciprocityHint, 120);
+  const evidenceState = fields.evidenceState ?? null;
   const precomputedProfile = fields.psychProfile ?? null;
   const rawDelightSignature = normalizeSlotValue(fields.delightSignature, 120);
   const delightSignature = isUsableJoyDelightSignature(rawDelightSignature) ? rawDelightSignature : null;
@@ -620,6 +623,7 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
     gratitudeType,
     relationshipSignal,
     reciprocityHint,
+    evidenceState,
     confidence: clampConfidence(0.22 + filledCount * 0.17 + optionalCount * 0.05 + (delightSignature ? 0.03 : 0)),
     missingSlots
   };
@@ -670,7 +674,8 @@ export function mergeJoySignals(previous: JoySnapshot, candidate: JoySignalField
     gratitudeReason: preferRicherValue(previous.gratitudeReason ?? null, normalizeSlotValue(candidate.gratitudeReason ?? candidate.whyItMattered, 160)),
     gratitudeType: preferRicherValue(previous.gratitudeType ?? null, normalizeSlotValue(candidate.gratitudeType ?? candidate.happinessType, 40)),
     relationshipSignal: preferRicherValue(previous.relationshipSignal ?? null, normalizeSlotValue(candidate.relationshipSignal ?? candidate.selfPattern, 120)),
-    reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(candidate.reciprocityHint, 120))
+    reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(candidate.reciprocityHint, 120)),
+    evidenceState: candidate.evidenceState ?? previous.evidenceState ?? null
   });
 }
 
@@ -1513,8 +1518,11 @@ export function getNextStage(
     }
 
     if (dimension === "gratitude") {
+      const deniedTargets = new Set(snapshot.evidenceState?.deniedTargets ?? []);
+
       if (!snapshot.gratitudeMoment && !snapshot.event) return "collect_event";
       if (!snapshot.kindAction || (!snapshot.seenNeed && !snapshot.gratitudeReason && !snapshot.whyItMattered)) return "probe_reason";
+      if (deniedTargets.has("relationship_signal")) return "wrap_up";
       if (!snapshot.relationshipSignal && turnCount < 5) return "probe_pattern";
       if (turnCount >= 5 || snapshot.relationshipSignal) return "wrap_up";
 

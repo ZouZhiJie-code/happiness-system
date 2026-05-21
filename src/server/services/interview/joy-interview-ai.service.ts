@@ -8,6 +8,11 @@ import {
 } from "@/features/interview/server/draft-policies";
 import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
 import {
+  applyQuestionSurfaceProtocol,
+  createQuestionSpec,
+  inferQuestionSpecFromQuestion
+} from "@/features/joy-interview/server/question-protocol";
+import {
   buildAssistantQuestion,
   extractJoySignals,
   getDelightSignature,
@@ -47,6 +52,7 @@ import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import type {
   AssistantDepth,
+  AssistantQuestionSpec,
   AssistantTurnPayload,
   InterviewDimension,
   InterviewEventRecord,
@@ -91,6 +97,7 @@ interface AssistantTurnGenerationInput {
   roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
   action: "reply" | "continue_current_event";
+  questionSpec?: AssistantQuestionSpec | null;
   memoryContext?: string | null;
 }
 
@@ -763,6 +770,7 @@ function createFallbackAssistantTurn(input: {
   snapshot: JoySnapshot;
   nextDepthReached: AssistantDepth[];
   action: "reply" | "continue_current_event";
+  questionSpec?: AssistantQuestionSpec | null;
 }): AssistantTurnPayload {
   const question = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
 
@@ -771,6 +779,13 @@ function createFallbackAssistantTurn(input: {
     thinkingSummary: "",
     analysis: "用户已说：已有片段但仍需继续澄清；下一步问：当前阶段对应的未覆盖层次",
     question,
+    questionSpec: createQuestionSpec({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      stageIntent: input.action === "continue_current_event" ? "resume" : "advance",
+      previousSpec: input.questionSpec ?? null
+    }),
     stateUpdate: {
       turnPhase: input.stage === "collect_event" ? "opening" : "digging",
       shouldEndDimension: false,
@@ -801,6 +816,7 @@ function normalizeAssistantTurnPayload(payload: AssistantTurnPayload): Assistant
     thinkingSummary: trimToLength(payload.thinkingSummary ?? "", 180),
     analysis: trimToLength(payload.analysis ?? "", 240),
     question: trimToLength(payload.question ?? "", 160),
+    questionSpec: payload.questionSpec ?? null,
     stateUpdate: {
       turnPhase: payload.stateUpdate?.turnPhase ?? "digging",
       shouldEndDimension: Boolean(payload.stateUpdate?.shouldEndDimension),
@@ -847,11 +863,28 @@ function buildAssistantAnalysis(input: AssistantTurnGenerationInput) {
 }
 
 function createAssistantTurnFromSegments(input: AssistantTurnGenerationInput, segments: AssistantReplySegments) {
+  const baseQuestionSpec =
+    input.questionSpec ??
+    inferQuestionSpecFromQuestion({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      question: segments.question
+    });
+  const surfaced = applyQuestionSurfaceProtocol({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    spec: baseQuestionSpec,
+    candidateQuestion: segments.question
+  });
+
   return normalizeAssistantTurnPayload({
     insight: "",
     thinkingSummary: trimToLength(segments.thinkingSummary, 180),
     analysis: buildAssistantAnalysis(input),
-    question: trimToLength(segments.question, 160),
+    question: trimToLength(surfaced.question, 160),
+    questionSpec: surfaced.questionSpec,
     stateUpdate: {
       turnPhase: input.stage === "collect_event" ? "opening" : "digging",
       shouldEndDimension: false,
@@ -882,6 +915,7 @@ function getQuestionMessages(input: AssistantTurnGenerationInput) {
     roundCoveredLenses: input.roundCoveredLenses,
     isMeaningfulReply: input.isMeaningfulReply,
     action: input.action,
+    questionSpec: input.questionSpec ?? null,
     memoryContext: input.memoryContext
   });
 }

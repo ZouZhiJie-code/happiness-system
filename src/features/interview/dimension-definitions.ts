@@ -57,6 +57,7 @@ export interface InterviewDimensionDefinition {
       | "gratitudeType"
       | "relationshipSignal"
       | "reciprocityHint"
+      | "evidenceState"
       | "tags"
     >
   ) => InterviewJournalPayload;
@@ -494,17 +495,18 @@ const gratitudeDefinition: InterviewDimensionDefinition = {
         moment: snapshot.gratitudeMoment ?? snapshot.event,
         gratitudeMoment: snapshot.gratitudeMoment ?? snapshot.event,
         gratitudeTarget: snapshot.gratitudeTarget ?? null,
-        kindAction: snapshot.kindAction ?? null,
-        seenNeed: snapshot.seenNeed ?? null,
-        innerEffect: snapshot.innerEffect ?? snapshot.feeling,
-        feeling: snapshot.feeling,
-        gratitudeType: snapshot.gratitudeType ?? snapshot.happinessType,
-        gratitudeReason: snapshot.gratitudeReason ?? snapshot.whyItMattered,
-        relationshipSignal: snapshot.relationshipSignal ?? snapshot.selfPattern,
-        reciprocityHint: snapshot.reciprocityHint ?? null
-      },
-      snapshot
-    ),
+      kindAction: snapshot.kindAction ?? null,
+      seenNeed: snapshot.seenNeed ?? null,
+      innerEffect: snapshot.innerEffect ?? snapshot.feeling,
+      feeling: snapshot.feeling,
+      gratitudeType: snapshot.gratitudeType ?? snapshot.happinessType,
+      gratitudeReason: snapshot.gratitudeReason ?? snapshot.whyItMattered,
+      relationshipSignal: snapshot.relationshipSignal ?? snapshot.selfPattern,
+      reciprocityHint: snapshot.reciprocityHint ?? null,
+      evidenceState: snapshot.evidenceState ?? null
+    },
+    snapshot
+  ),
   buildJournalPayload: (entry) =>
     buildJournalPayload("gratitude", {
       moment: entry.gratitudeMoment ?? entry.event,
@@ -517,7 +519,8 @@ const gratitudeDefinition: InterviewDimensionDefinition = {
       gratitudeType: entry.gratitudeType ?? entry.happinessType,
       gratitudeReason: entry.gratitudeReason ?? entry.whyItMattered,
       relationshipSignal: entry.relationshipSignal ?? entry.selfPattern,
-      reciprocityHint: entry.reciprocityHint ?? null
+      reciprocityHint: entry.reciprocityHint ?? null,
+      evidenceState: entry.evidenceState ?? null
     }, entry.tags),
   buildSummaryViewModel: (snapshotData) => {
     if (snapshotData.kind !== "gratitude") {
@@ -632,6 +635,7 @@ export function buildJournalPayloadForDimension(
     | "gratitudeType"
     | "relationshipSignal"
     | "reciprocityHint"
+    | "evidenceState"
     | "tags"
   >
 ) {

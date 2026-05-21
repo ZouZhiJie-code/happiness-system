@@ -16,6 +16,22 @@ const entryDateStringSchema = z.string().regex(ENTRY_DATE_REGEX).refine((value) 
 const interviewDimensionSchema = z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]);
 const draftCompletionModeSchema = z.enum(["complete", "user_override_partial"]);
 const assistantDepthSchema = z.enum(["event", "feeling", "reason", "clue", "pattern"]);
+const assistantQuestionTargetSchema = z.enum([
+  "event_anchor",
+  "prior_assumption",
+  "reaction_evidence",
+  "insight_evidence",
+  "judgment_clue"
+]);
+const gratitudeQuestionSubTargetSchema = z.enum([
+  "kind_action",
+  "seen_need",
+  "gratitude_reason",
+  "relationship_signal"
+]);
+const inferenceHypothesisKeySchema = z.enum(["seen_need", "gratitude_reason", "relationship_signal"]);
+const assistantQuestionStageIntentSchema = z.enum(["advance", "resume", "repair"]);
+const assistantQuestionSurfaceLevelSchema = z.enum(["default", "simplified", "concrete_anchor"]);
 const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
 const assistantChoiceKindSchema = z.enum(["event_complete", "dimension_redirect", "boundary_insufficient"]);
 const interviewEventStatusSchema = z.enum(["active", "ready_for_choice", "completed"]);
@@ -47,6 +63,13 @@ const joyPsychProfileSchema = z.object({
   confidence: z.number().min(0).max(1)
 });
 
+const inferenceEvidenceStateSchema = z.object({
+  targets: z.record(z.string(), z.enum(["confirmed", "weak"])).default({}),
+  deniedTargets: z.array(gratitudeQuestionSubTargetSchema).default([]),
+  deniedHypotheses: z.array(inferenceHypothesisKeySchema).default([]),
+  blockedTransitions: z.array(z.string()).default([])
+});
+
 const joySnapshotSchema = z.object({
   event: z.string().nullable(),
   feeling: z.string().nullable(),
@@ -64,6 +87,7 @@ const joySnapshotSchema = z.object({
   durability: z.string().nullable().optional(),
   psychProfile: joyPsychProfileSchema.optional(),
   tags: z.array(z.string()).optional(),
+  evidenceState: inferenceEvidenceStateSchema.nullable().optional(),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
@@ -136,6 +160,7 @@ const gratitudeSnapshotDataSchema = z.object({
   gratitudeReason: z.string().nullable(),
   relationshipSignal: z.string().nullable(),
   reciprocityHint: z.string().nullable().default(null),
+  evidenceState: inferenceEvidenceStateSchema.nullable().optional(),
   confidence: z.number().min(0).max(1),
   missingSlots: z.array(z.string())
 });
@@ -211,6 +236,7 @@ const gratitudeJournalPayloadSchema = z.object({
   gratitudeReason: z.string().nullable(),
   relationshipSignal: z.string().nullable(),
   reciprocityHint: z.string().nullable().default(null),
+  evidenceState: inferenceEvidenceStateSchema.nullable().optional(),
   tags: z.array(z.string())
 });
 
@@ -227,6 +253,19 @@ export const assistantTurnPayloadSchema = z.object({
   thinkingSummary: z.string().max(180).default(""),
   analysis: z.string().max(240),
   question: z.string().max(160),
+  questionSpec: z
+    .object({
+      target: assistantQuestionTargetSchema,
+      subTarget: gratitudeQuestionSubTargetSchema.nullable().optional().default(null),
+      hypothesisKey: inferenceHypothesisKeySchema.nullable().optional().default(null),
+      stageIntent: assistantQuestionStageIntentSchema,
+      surfaceLevel: assistantQuestionSurfaceLevelSchema,
+      anchorText: z.string().nullable().optional().default(null),
+      repairCount: z.number().int().nonnegative()
+    })
+    .nullable()
+    .optional()
+    .default(null),
   stateUpdate: z.object({
     turnPhase: assistantTurnPhaseSchema,
     shouldEndDimension: z.boolean(),

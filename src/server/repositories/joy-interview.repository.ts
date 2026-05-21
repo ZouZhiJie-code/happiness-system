@@ -154,6 +154,7 @@ function parseGratitudeSnapshotData(value: unknown): Pick<
   | "gratitudeType"
   | "relationshipSignal"
   | "reciprocityHint"
+  | "evidenceState"
 > | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -176,7 +177,9 @@ function parseGratitudeSnapshotData(value: unknown): Pick<
     gratitudeReason: typeof data.gratitudeReason === "string" ? data.gratitudeReason : null,
     gratitudeType: typeof data.gratitudeType === "string" ? data.gratitudeType : null,
     relationshipSignal: typeof data.relationshipSignal === "string" ? data.relationshipSignal : null,
-    reciprocityHint: typeof data.reciprocityHint === "string" ? data.reciprocityHint : null
+    reciprocityHint: typeof data.reciprocityHint === "string" ? data.reciprocityHint : null,
+    evidenceState:
+      data.evidenceState && typeof data.evidenceState === "object" ? (data.evidenceState as JoySnapshot["evidenceState"]) : null
   };
 }
 
@@ -201,6 +204,7 @@ function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapsh
         gratitudeType: parsed?.gratitudeType ?? snapshot.gratitudeType,
         relationshipSignal: parsed?.relationshipSignal ?? snapshot.relationshipSignal,
         reciprocityHint: parsed?.reciprocityHint ?? snapshot.reciprocityHint,
+        evidenceState: parsed?.evidenceState ?? snapshot.evidenceState,
         tags: snapshot.tags
       })
     );
@@ -469,11 +473,12 @@ function mapEventSnapshot(
     kindAction: gratitudeSnapshotData?.kindAction,
     seenNeed: gratitudeSnapshotData?.seenNeed,
     innerEffect: gratitudeSnapshotData?.innerEffect,
-    gratitudeReason: gratitudeSnapshotData?.gratitudeReason,
-    gratitudeType: gratitudeSnapshotData?.gratitudeType,
-    relationshipSignal: gratitudeSnapshotData?.relationshipSignal,
-    reciprocityHint: gratitudeSnapshotData?.reciprocityHint
-  });
+        gratitudeReason: gratitudeSnapshotData?.gratitudeReason,
+        gratitudeType: gratitudeSnapshotData?.gratitudeType,
+        relationshipSignal: gratitudeSnapshotData?.relationshipSignal,
+        reciprocityHint: gratitudeSnapshotData?.reciprocityHint,
+        evidenceState: gratitudeSnapshotData?.evidenceState
+      });
 }
 
 function mapInterviewEvent(dimension: InterviewDimension, event: EventRecord): InterviewEventRecord {

@@ -33,6 +33,7 @@ export function serializeAssistantTurnPayload(payload: AssistantTurnPayload) {
     thinkingSummary: payload.thinkingSummary,
     analysis: payload.analysis,
     question: payload.question,
+    questionSpec: payload.questionSpec ?? null,
     stateUpdate: payload.stateUpdate,
     meta: {
       depthReached: normalizeAssistantDepthReached(payload.meta.depthReached)
@@ -46,6 +47,7 @@ export function createOpeningAssistantTurnPayload(question: string): AssistantTu
     thinkingSummary: "",
     analysis: "",
     question,
+    questionSpec: null,
     stateUpdate: {
       turnPhase: "opening",
       shouldEndDimension: false,
