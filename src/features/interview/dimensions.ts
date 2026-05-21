@@ -3,6 +3,7 @@ import type { InterviewDimension } from "@/types/interview";
 
 export const interviewDimensionStorageKey = "hs-last-interview-dimension";
 export const interviewSessionStorageKey = "hs-interview-session-map";
+export const interviewSessionFreshStartStorageKey = "hs-interview-session-fresh-start-map";
 export const interviewSessionCacheTtlMs = 24 * 60 * 60 * 1000;
 export const interviewLeaveConfirmMessage = "是否要离开？离开后会保存一段时间对话内容。";
 
@@ -98,6 +99,13 @@ export interface StoredInterviewSessionCacheEntry {
 }
 
 type StoredInterviewSessionCacheMap = Partial<Record<InterviewDimension, StoredInterviewSessionCacheEntry | string>>;
+type StoredInterviewSessionFreshStartMap = Partial<Record<InterviewDimension, StoredInterviewSessionFreshStartEntry>>;
+
+interface StoredInterviewSessionFreshStartEntry {
+  entryDate: string | null;
+  expiresAt: string;
+  markedAt: string;
+}
 
 function buildStoredSessionEntry(
   sessionId: string,
@@ -133,6 +141,25 @@ function normalizeStoredSessionEntry(entry: StoredInterviewSessionCacheEntry | s
   };
 }
 
+function buildStoredFreshStartEntry(entryDate?: string | null, now = Date.now()): StoredInterviewSessionFreshStartEntry {
+  return {
+    entryDate: entryDate ?? null,
+    expiresAt: new Date(now + interviewSessionCacheTtlMs).toISOString(),
+    markedAt: new Date(now).toISOString()
+  };
+}
+
+function normalizeStoredFreshStartEntry(entry: StoredInterviewSessionFreshStartEntry | null | undefined) {
+  if (!entry || !entry.expiresAt || !entry.markedAt) {
+    return null;
+  }
+
+  return {
+    ...entry,
+    entryDate: entry.entryDate ?? null
+  };
+}
+
 function readStoredSessionMap() {
   if (typeof window === "undefined") {
     return {} as StoredInterviewSessionCacheMap;
@@ -150,6 +177,71 @@ function readStoredSessionMap() {
   } catch {
     return {} as StoredInterviewSessionCacheMap;
   }
+}
+
+function readStoredFreshStartMap() {
+  if (typeof window === "undefined") {
+    return {} as StoredInterviewSessionFreshStartMap;
+  }
+
+  try {
+    const scopedKey = getScopedLocalStorageKey(interviewSessionFreshStartStorageKey);
+    const raw = window.localStorage.getItem(scopedKey) ?? window.localStorage.getItem(interviewSessionFreshStartStorageKey);
+
+    if (!raw) {
+      return {} as StoredInterviewSessionFreshStartMap;
+    }
+
+    return JSON.parse(raw) as StoredInterviewSessionFreshStartMap;
+  } catch {
+    return {} as StoredInterviewSessionFreshStartMap;
+  }
+}
+
+function writeStoredFreshStartMap(nextMap: StoredInterviewSessionFreshStartMap) {
+  const scopedKey = getScopedLocalStorageKey(interviewSessionFreshStartStorageKey);
+
+  window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
+  if (scopedKey !== interviewSessionFreshStartStorageKey) {
+    window.localStorage.removeItem(interviewSessionFreshStartStorageKey);
+  }
+}
+
+export function getStoredInterviewFreshStartEntry(dimension: InterviewDimension) {
+  const normalizedEntry = normalizeStoredFreshStartEntry(readStoredFreshStartMap()[dimension]);
+
+  if (!normalizedEntry) {
+    return null;
+  }
+
+  if (new Date(normalizedEntry.expiresAt).getTime() <= Date.now()) {
+    clearStoredInterviewFreshStartMarker(dimension);
+    return null;
+  }
+
+  return normalizedEntry;
+}
+
+export function markStoredInterviewSessionFreshStart(dimension: InterviewDimension, entryDate?: string | null) {
+  if (typeof window === "undefined") return;
+
+  const nextMap = {
+    ...readStoredFreshStartMap(),
+    [dimension]: buildStoredFreshStartEntry(entryDate, Date.now())
+  };
+
+  writeStoredFreshStartMap(nextMap);
+}
+
+export function clearStoredInterviewFreshStartMarker(dimension: InterviewDimension) {
+  if (typeof window === "undefined") return;
+
+  const nextMap = {
+    ...readStoredFreshStartMap()
+  };
+
+  delete nextMap[dimension];
+  writeStoredFreshStartMap(nextMap);
 }
 
 export function getStoredInterviewSessionEntry(dimension: InterviewDimension) {
@@ -189,6 +281,10 @@ export function setStoredInterviewSessionId(
   if (scopedKey !== interviewSessionStorageKey) {
     window.localStorage.removeItem(interviewSessionStorageKey);
   }
+
+  if (hasUserMessages) {
+    clearStoredInterviewFreshStartMarker(dimension);
+  }
 }
 
 export function touchStoredInterviewSessionId(
@@ -217,6 +313,10 @@ export function touchStoredInterviewSessionId(
   window.localStorage.setItem(scopedKey, JSON.stringify(nextMap));
   if (scopedKey !== interviewSessionStorageKey) {
     window.localStorage.removeItem(interviewSessionStorageKey);
+  }
+
+  if (nextHasUserMessages) {
+    clearStoredInterviewFreshStartMarker(dimension);
   }
 }
 

@@ -15,6 +15,7 @@ import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
+  getStoredInterviewFreshStartEntry,
   getStoredInterviewSessionEntry,
   interviewDimensionStorageKey,
   interviewDimensions,
@@ -501,6 +502,13 @@ function SiteHeaderInner() {
         shouldShowRing: progressSummary.shouldShowRing,
         percentage: progressSummary.percentage
       };
+      return accumulator;
+    }
+
+    const freshStartEntry = getStoredInterviewFreshStartEntry(item);
+
+    if (freshStartEntry && (!headerEntryDate || freshStartEntry.entryDate === headerEntryDate)) {
+      accumulator[item] = emptyInterviewDimensionBarStatus;
       return accumulator;
     }
 
