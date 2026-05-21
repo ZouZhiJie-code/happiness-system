@@ -33,6 +33,8 @@ const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTu
 
 const {
   buildAssistantQuestion,
+  hasCredibleFulfillmentProgressEvidence,
+  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getDirectionSignal,
   getInactiveSessionMessage,
@@ -47,9 +49,14 @@ const {
   getStateShift,
   getValueImpact,
   getMeaningNeed,
-  getManualClue
+  getManualClue,
+  resolveFulfillmentQuestionTarget
 } = vi.hoisted(() => ({
   buildAssistantQuestion: vi.fn(),
+  hasCredibleFulfillmentProgressEvidence: (snapshot: JoySnapshot, recentUserMessage?: string | null) =>
+    Boolean(snapshot.whyItMattered || recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u)),
+  hasCredibleFulfillmentValueSignal: (snapshot: JoySnapshot, recentUserMessage?: string | null) =>
+    Boolean(snapshot.selfPattern || recentUserMessage?.match(/对我来说|什么样的努力|力气花得值|算数/u)),
   getDelightSignature: (snapshot: JoySnapshot) => snapshot.delightSignature ?? null,
   getDirectionSignal: (snapshot: JoySnapshot) => snapshot.directionSignal ?? snapshot.happinessType ?? null,
   getInactiveSessionMessage: vi.fn(),
@@ -64,7 +71,17 @@ const {
   getStateShift: (snapshot: JoySnapshot) => snapshot.stateShift ?? snapshot.feeling ?? null,
   getValueImpact: (snapshot: JoySnapshot) => snapshot.valueImpact ?? null,
   getMeaningNeed: (snapshot: JoySnapshot) => snapshot.meaningNeed ?? null,
-  getManualClue: (snapshot: JoySnapshot) => snapshot.manualClue ?? snapshot.selfPattern ?? null
+  getManualClue: (snapshot: JoySnapshot) => snapshot.manualClue ?? snapshot.selfPattern ?? null,
+  resolveFulfillmentQuestionTarget: (input: { snapshot: JoySnapshot; recentUserMessage?: string | null }) => {
+    if (!input.snapshot.event) return "event_detail";
+    if (!(input.snapshot.whyItMattered || input.recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u))) {
+      return "progress_evidence";
+    }
+    if (!(input.snapshot.selfPattern || input.recentUserMessage?.match(/对我来说|什么样的努力|力气花得值|算数/u))) {
+      return "value_signal";
+    }
+    return null;
+  }
 }));
 
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
@@ -89,6 +106,8 @@ vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
 
 vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   buildAssistantQuestion,
+  hasCredibleFulfillmentProgressEvidence,
+  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getDirectionSignal,
   getInactiveSessionMessage,
@@ -103,7 +122,8 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
   getStateShift,
   getValueImpact,
   getMeaningNeed,
-  getManualClue
+  getManualClue,
+  resolveFulfillmentQuestionTarget
 }));
 
 import {
@@ -2529,6 +2549,826 @@ describe("prepareJoyInterviewResponse", () => {
     expect(streamedQuestion).toBe(fallbackQuestion);
     expect(streamedQuestion).not.toContain("具体的经历或对话");
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+  });
+
+  it("does not stream a fulfillment question that semantically repeats progress evidence after that layer is already covered", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天围绕目标岗位开始改简历",
+      feeling: "很充实",
+      whyItMattered: "原本模糊的求职目标被具体拆解并推进了",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const repeatedQuestion = "在简历优化完成的那个时刻，你看到或感受到什么，让你觉得今天没有白过？";
+    const fallbackQuestion = "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+    const choiceSession = buildSession({
+      dimension: "fulfillment",
+      stage: "wrap_up",
+      draftGenerationUnlocked: true,
+      lastAssistantQuestion: "",
+      snapshot: fulfillmentSnapshot,
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      },
+      events: [
+        {
+          id: "event-1",
+          sequence: 1,
+          status: "ready_for_choice",
+          stage: "wrap_up",
+          explorationRound: 1,
+          coveredLenses: ["event_detail", "importance_reason"],
+          roundCoveredLenses: ["event_detail", "importance_reason"],
+          roundMeaningfulReplyCount: 4,
+          totalMeaningfulReplyCount: 4,
+          startMessageSequence: 0,
+          snapshot: fulfillmentSnapshot,
+          draftSummary: null,
+          startedAt: "2026-05-20T06:43:00.000Z",
+          completedAt: null
+        }
+      ],
+      messages: [
+        {
+          id: "assistant-progress",
+          role: "assistant",
+          content: JSON.stringify({
+            insight: "",
+            thinkingSummary: "这件事的分量在于，原本模糊的求职目标被具体拆解并推进了。",
+            analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+            question: repeatedQuestion,
+            stateUpdate: {
+              turnPhase: "digging",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceKind: null,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event", "reason"]
+            }
+          } satisfies AssistantTurnPayload),
+          assistantPayload: {
+            insight: "",
+            thinkingSummary: "这件事的分量在于，原本模糊的求职目标被具体拆解并推进了。",
+            analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+            question: repeatedQuestion,
+            stateUpdate: {
+              turnPhase: "digging",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceKind: null,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event", "reason"]
+            }
+          },
+          sequence: 0,
+          createdAt: "2026-05-20T06:46:14.409Z"
+        },
+        {
+          id: "user-progress-answer",
+          role: "user",
+          content: "我感受到自己一点一点地在达成，去朝自己想要的方向前进吧，感觉到没有停滞不前。",
+          sequence: 1,
+          createdAt: "2026-05-20T06:46:51.436Z"
+        },
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: JSON.stringify({
+            insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+            thinkingSummary: "",
+            analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceKind: "event_complete",
+              choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "pattern"]
+            }
+          } satisfies AssistantTurnPayload),
+          assistantPayload: {
+            insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+            thinkingSummary: "",
+            analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceKind: "event_complete",
+              choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "pattern"]
+            }
+          },
+          sequence: 2,
+          createdAt: "2026-05-20T06:47:42.826Z"
+        }
+      ]
+    });
+
+    findJoyInterviewSessionById.mockResolvedValue(choiceSession);
+    resumeCurrentInterviewEvent.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        lastAssistantQuestion: "",
+        snapshot: fulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 4,
+            startMessageSequence: 0,
+            snapshot: fulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-20T06:43:00.000Z",
+            completedAt: null
+          }
+        ],
+        pendingDecision: null,
+        messages: choiceSession.messages
+      })
+    );
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        turnCount: 4,
+        lastAssistantQuestion: fallbackQuestion,
+        snapshot: fulfillmentSnapshot
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "这件事真正有分量的地方，是原本模糊的求职目标被具体拆解并推进了。"
+      });
+      await onDelta({
+        target: "question",
+        text: repeatedQuestion
+      });
+      return {
+        insight: "",
+        thinkingSummary: "这件事真正有分量的地方，是原本模糊的求职目标被具体拆解并推进了。",
+        analysis: "用户刚刚选择继续深挖当前事件；下一步问：继续推进尚未覆盖的层次。",
+        question: repeatedQuestion,
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "pattern"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        userId: "user-1",
+        action: "continue_current_event",
+        sessionId: "session-ready"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.thinkingSummary).toContain("真正算数的地方");
+    expect(result.assistantTurn?.thinkingSummary).toContain("把事情往前推了一步");
+  });
+
+  it("does not stream an unnatural fulfillment value-signal question after continue_current_event", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天把简历一点点改顺了",
+      feeling: "踏实",
+      whyItMattered: "原本散的经历被重新整理成能投递的版本",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      confidence: 0.78,
+      missingSlots: ["valueSignal"]
+    };
+    const unnaturalQuestion = "简历优化完成，对你来说，意味着什么样的努力算数了？";
+    const fallbackQuestion = "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "wrap_up",
+        snapshot: fulfillmentSnapshot,
+        pendingDecision: {
+          kind: "event_complete",
+          eventId: "event-1",
+          eventSequence: 1,
+          actions: ["continue_current_event", "next_event", "generate_draft"]
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "ready_for_choice",
+            stage: "wrap_up",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 3,
+            startMessageSequence: 0,
+            snapshot: fulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-20T06:43:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    resumeCurrentInterviewEvent.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        lastAssistantQuestion: "",
+        snapshot: fulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 3,
+            startMessageSequence: 0,
+            snapshot: fulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-20T06:43:00.000Z",
+            completedAt: null
+          }
+        ],
+        pendingDecision: null,
+        messages: [
+          {
+            id: "assistant-value-question",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: unnaturalQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: unnaturalQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-20T06:46:14.409Z"
+          },
+          {
+            id: "user-answer",
+            role: "user",
+            content: "我觉得那种能一点点把想投岗位需要的东西理顺的投入，就会让我觉得很值。",
+            sequence: 1,
+            createdAt: "2026-05-20T06:46:51.436Z"
+          },
+          {
+            id: "assistant-choice",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 2,
+            createdAt: "2026-05-20T06:47:42.826Z"
+          }
+        ]
+      })
+    );
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        turnCount: 4,
+        lastAssistantQuestion: fallbackQuestion,
+        snapshot: fulfillmentSnapshot
+      })
+    );
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "这件事真正有分量的地方，是原本散的经历被重新整理成能投递的版本。"
+      });
+      await onDelta({
+        target: "question",
+        text: unnaturalQuestion
+      });
+      return {
+        insight: "",
+        thinkingSummary: "这件事真正有分量的地方，是原本散的经历被重新整理成能投递的版本。",
+        analysis: "用户刚刚继续补充当前事件；下一步问：追问值得感标准。",
+        question: unnaturalQuestion,
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "pattern"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        userId: "user-1",
+        action: "continue_current_event",
+        sessionId: "session-ready"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).not.toContain("意味着什么样的努力算数了");
+  });
+
+  it("does not repeat the same fulfillment value-signal ask after the previous turn already asked it", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天在围绕目标岗位改简历",
+      feeling: "踏实",
+      whyItMattered: "一点一点地在达成，去朝自己想要的方向前进，没有停滞不前",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const repeatedValueQuestion = "回头看简历优化这件事，什么样的投入会让你觉得自己的力气花得值？";
+    const fallbackQuestion = "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "wrap_up",
+        snapshot: fulfillmentSnapshot,
+        pendingDecision: {
+          kind: "event_complete",
+          eventId: "event-1",
+          eventSequence: 1,
+          actions: ["continue_current_event", "next_event", "generate_draft"]
+        },
+        messages: [
+          {
+            id: "assistant-value-question",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: repeatedValueQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: repeatedValueQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-20T06:46:14.409Z"
+          },
+          {
+            id: "user-answer",
+            role: "user",
+            content: "我觉得那种能一点点把想投岗位需要的东西理顺的投入，就会让我觉得很值。",
+            sequence: 1,
+            createdAt: "2026-05-20T06:46:51.436Z"
+          },
+          {
+            id: "assistant-choice",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 2,
+            createdAt: "2026-05-20T06:47:42.826Z"
+          }
+        ],
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "ready_for_choice",
+            stage: "wrap_up",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 4,
+            totalMeaningfulReplyCount: 4,
+            startMessageSequence: 0,
+            snapshot: fulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-20T06:43:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    resumeCurrentInterviewEvent.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        lastAssistantQuestion: "",
+        snapshot: fulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 4,
+            startMessageSequence: 0,
+            snapshot: fulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-20T06:43:00.000Z",
+            completedAt: null
+          }
+        ],
+        pendingDecision: null,
+        messages: [
+          {
+            id: "assistant-value-question",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: repeatedValueQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，去朝自己想要的方向前进，没有停滞不前。",
+              analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+              question: repeatedValueQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceKind: null,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-20T06:46:14.409Z"
+          },
+          {
+            id: "user-answer",
+            role: "user",
+            content: "我觉得那种能一点点把想投岗位需要的东西理顺的投入，就会让我觉得很值。",
+            sequence: 1,
+            createdAt: "2026-05-20T06:46:51.436Z"
+          },
+          {
+            id: "assistant-choice",
+            role: "assistant",
+            content: JSON.stringify({
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            } satisfies AssistantTurnPayload),
+            assistantPayload: {
+              insight: "这一段已经说清楚了为什么今天不是空转的一天，已经够写成一版日志。",
+              thinkingSummary: "",
+              analysis: "当前事件已形成可信的充实日志线索，下一步交给用户决定：继续深挖、切到下一件事，或直接生成日志。",
+              question: "",
+              stateUpdate: {
+                turnPhase: "choice",
+                shouldEndDimension: false,
+                offerChoice: true,
+                choiceKind: "event_complete",
+                choiceReason: "当前事件已经形成一条可信的充实日志线索，交给用户决定下一步。"
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 2,
+            createdAt: "2026-05-20T06:47:42.826Z"
+          }
+        ]
+      })
+    );
+
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        turnCount: 4,
+        lastAssistantQuestion: fallbackQuestion,
+        snapshot: fulfillmentSnapshot
+      })
+    );
+
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "这件事真正有分量的地方，是一点点把想投岗位需要的东西理顺了。"
+      });
+      await onDelta({
+        target: "question",
+        text: repeatedValueQuestion
+      });
+      return {
+        insight: "",
+        thinkingSummary: "这件事真正有分量的地方，是一点点把想投岗位需要的东西理顺了。",
+        analysis: "用户刚刚选择继续深挖当前事件；下一步问：继续推进尚未覆盖的层次。",
+        question: repeatedValueQuestion,
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "pattern"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        userId: "user-1",
+        action: "continue_current_event",
+        sessionId: "session-ready"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).not.toBe(repeatedValueQuestion);
+  });
+
+  it("does not let fulfillment progress-evidence follow-ups drift into abstract contrast wording", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天在围绕目标岗位改简历",
+      feeling: "我感受到自己一点一点地在达成，去朝自己想要的方向前进吧，感觉到没有停滞不前",
+      whyItMattered: "一点一点地在达成，朝自己想要的方向前进，没有停滞不前",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      joyMoment: "今天在围绕目标岗位改简历",
+      joySource: "一点一点地在达成，朝自己想要的方向前进，没有停滞不前",
+      stateShift: "我感受到自己一点一点地在达成，去朝自己想要的方向前进吧，感觉到没有停滞不前",
+      confidence: 0.78,
+      missingSlots: ["valueSignal"]
+    };
+    const abstractContrastQuestion = "这种“没有停滞不前”的感觉，和你之前卡住时有什么不同？";
+    const fallbackQuestion = "哪一步最让你感觉到，简历这件事终于不是原地打转了？";
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: fulfillmentSnapshot,
+        pendingDecision: null,
+        events: [
+          {
+            ...buildSession().events[0],
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            snapshot: fulfillmentSnapshot,
+          }
+        ]
+      })
+    );
+
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        turnCount: 2,
+        lastAssistantQuestion: fallbackQuestion,
+        snapshot: fulfillmentSnapshot
+      })
+    );
+
+    streamJoyAssistantTurn.mockImplementation(async (_input, { onDelta }) => {
+      await onDelta({
+        target: "summary",
+        text: "这件事真正有分量的地方，是一点一点地在达成，朝自己想要的方向前进，没有停滞不前。"
+      });
+      await onDelta({
+        target: "question",
+        text: abstractContrastQuestion
+      });
+      return {
+        insight: "",
+        thinkingSummary: "这件事真正有分量的地方，是一点一点地在达成，朝自己想要的方向前进，没有停滞不前。",
+        analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
+        question: abstractContrastQuestion,
+        stateUpdate: {
+          turnPhase: "digging",
+          shouldEndDimension: false,
+          offerChoice: false,
+          choiceReason: ""
+        },
+        meta: {
+          depthReached: ["event", "reason", "pattern"]
+        }
+      } satisfies AssistantTurnPayload;
+    });
+
+    const deltas: Array<{ target: string; text: string }> = [];
+    const result = await streamJoyInterviewResponse(
+      {
+        userId: "user-1",
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "我感受到自己一点一点地在达成，去朝自己想要的方向前进吧，感觉到没有停滞不前。",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: (delta) => {
+          deltas.push(delta);
+        }
+      }
+    );
+
+    expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.question).not.toBe(abstractContrastQuestion);
   });
 
   it.each([

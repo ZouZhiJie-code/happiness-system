@@ -9,6 +9,8 @@ import {
 } from "@/features/joy-interview/server/interview-progress";
 import {
   buildAssistantQuestion,
+  hasCredibleFulfillmentProgressEvidence,
+  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getInactiveSessionMessage,
   getJoyTrack,
@@ -19,6 +21,7 @@ import {
   getMeaningNeed,
   getNextStage,
   getOpeningQuestion,
+  resolveFulfillmentQuestionTarget,
   getStateShift
 } from "@/features/joy-interview/server/joy-interview-engine";
 import {
@@ -172,6 +175,19 @@ function getAssistantQuestionText(message: InterviewMessage) {
   return question || null;
 }
 
+function getLatestUserMessageText(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (message.role === "user") {
+      const content = message.content.trim();
+      return content || null;
+    }
+  }
+
+  return null;
+}
+
 function normalizeQuestionText(value: string | null | undefined) {
   return value
     ? value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:“”"'（）()【】\[\]《》]/gu, "")
@@ -199,6 +215,212 @@ function areQuestionsEquivalent(left: string | null | undefined, right: string |
     normalizedRight.length >= 12 &&
     (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft))
   );
+}
+
+type FulfillmentQuestionValidationCode =
+  | "target_mismatch"
+  | "semantic_duplicate"
+  | "unnatural_phrasing"
+  | "too_abstract";
+
+type FulfillmentQuestionIntent = "event_detail" | "progress_evidence" | "value_signal" | "unknown";
+
+function classifyFulfillmentQuestionTarget(question: string): FulfillmentQuestionIntent {
+  const normalized = question.replace(/\s+/g, "");
+
+  if (/(算数的标准|什么样的努力|什么样的投入|力气花得值|对你来说算数|对你来说值得)/u.test(normalized)) {
+    return "value_signal";
+  }
+
+  if (/(没有白过|不算白过|推进了什么|完成了什么|积累了什么|帮到了什么|有分量的地方)/u.test(normalized)) {
+    return "progress_evidence";
+  }
+
+  if (/(具体在做什么|那一刻你在做什么|发生了什么)/u.test(normalized)) {
+    return "event_detail";
+  }
+
+  return "unknown";
+}
+
+function isAbstractFulfillmentProgressQuestion(question: string) {
+  const normalized = question.replace(/\s+/g, "");
+
+  return /(有什么不同|哪里不一样|这种感觉|这种状态|这种没有停滞不前的感觉)/u.test(normalized);
+}
+
+function buildFulfillmentQuestionFallback(input: {
+  target: "progress_evidence" | "value_signal";
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+  recentUserMessage: string | null;
+  validationCode: FulfillmentQuestionValidationCode;
+}) {
+  if (input.target === "progress_evidence") {
+    const experience = input.snapshot.event?.trim();
+
+    if (input.validationCode === "too_abstract" && experience && /(简历)/u.test(experience)) {
+      return "哪一步最让你感觉到，简历这件事终于不是原地打转了？";
+    }
+
+    if (experience && /(简历)/u.test(experience)) {
+      return "简历里哪一部分真的被你推进了，才让你觉得今天没有白过？";
+    }
+
+    return "这件事里，哪一步真的被你推进了，才让你觉得今天没有白过？";
+  }
+
+  if (input.validationCode === "unnatural_phrasing") {
+    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  }
+
+  const normalizedMessage = (input.userMessage ?? input.recentUserMessage ?? "").trim();
+
+  if (normalizedMessage && /(朝自己想要的方向前进|一点点地在达成|没有停滞不前)/u.test(normalizedMessage)) {
+    return "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+  }
+
+  if (input.validationCode === "semantic_duplicate") {
+    const experience = input.snapshot.event?.trim();
+
+    if (experience && /(简历)/u.test(experience)) {
+      return "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+    }
+  }
+
+  if (normalizedMessage && /(花得值|值得|算数)/u.test(normalizedMessage)) {
+    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  }
+
+  const progressEvidence = input.snapshot.whyItMattered?.trim();
+
+  if (progressEvidence) {
+    return `回头看“${progressEvidence}”这层进展，什么样的投入会让你觉得自己的力气花得值？`;
+  }
+
+  return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+}
+
+function validateFulfillmentQuestion(input: {
+  question: string;
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+  recentAssistantQuestions: string[];
+}) {
+  const target = resolveFulfillmentQuestionTarget({
+    snapshot: input.snapshot,
+    recentUserMessage: input.userMessage
+  });
+
+  if (!target) {
+    return null;
+  }
+
+  const classifiedTarget = classifyFulfillmentQuestionTarget(input.question);
+  const normalizedQuestion = input.question.replace(/\s+/g, "");
+
+  if (
+    /(意味着什么样的努力算数了|值得感标准|价值判断|什么才算有效努力|这对你意味着什么|这说明了什么|你如何理解这种充实)/u.test(
+      normalizedQuestion
+    )
+  ) {
+    return "unnatural_phrasing" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && classifiedTarget !== "value_signal") {
+    return "target_mismatch" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "progress_evidence" && classifiedTarget === "event_detail") {
+    return "target_mismatch" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "progress_evidence" && isAbstractFulfillmentProgressQuestion(input.question)) {
+    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (
+    target === "value_signal" &&
+    input.recentAssistantQuestions.some((question) => /没有白过|不算白过/u.test(question)) &&
+    /没有白过|不算白过/u.test(input.question)
+  ) {
+    return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && input.userMessage && hasCredibleFulfillmentProgressEvidence(input.snapshot, input.userMessage)) {
+    if (classifiedTarget === "progress_evidence") {
+      return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+    }
+  }
+
+  if (
+    target === "value_signal" &&
+    classifiedTarget === "value_signal" &&
+    input.recentAssistantQuestions.some((question) => classifyFulfillmentQuestionTarget(question) === "value_signal")
+  ) {
+    return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && !hasCredibleFulfillmentValueSignal(input.snapshot, input.userMessage) && classifiedTarget === "unknown") {
+    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  return null;
+}
+
+function applyFulfillmentQuestionGuard(
+  input: PreparedInterviewTurnContext,
+  assistantTurn: AssistantTurnPayload
+) {
+  if (input.session.dimension !== "fulfillment") {
+    return assistantTurn;
+  }
+
+  const question = assistantTurn.question.trim();
+
+  if (!question) {
+    return assistantTurn;
+  }
+
+  const recentAssistantQuestions = input.session.messages
+    .map((message) => getAssistantQuestionText(message))
+    .filter((value): value is string => Boolean(value))
+    .slice(-4);
+  const recentUserMessage = getLatestUserMessageText(input.session.messages);
+  const validationCode = validateFulfillmentQuestion({
+    question,
+    snapshot: input.nextSnapshot,
+    userMessage: input.userMessage ?? recentUserMessage,
+    recentAssistantQuestions
+  });
+
+  if (!validationCode) {
+    return assistantTurn;
+  }
+
+  const target = resolveFulfillmentQuestionTarget({
+    snapshot: input.nextSnapshot,
+    recentUserMessage: input.userMessage ?? recentUserMessage
+  });
+
+  if (!target || target === "event_detail") {
+    return assistantTurn;
+  }
+
+  const fallbackQuestion = buildFulfillmentQuestionFallback({
+    target,
+    snapshot: input.nextSnapshot,
+    userMessage: input.userMessage,
+    recentUserMessage,
+    validationCode
+  });
+
+  return {
+    ...assistantTurn,
+    insight: "",
+    thinkingSummary: assistantTurn.thinkingSummary,
+    question: fallbackQuestion
+  };
 }
 
 function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
@@ -1546,7 +1768,8 @@ function finalizeAssistantTurn(
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
   const guardedAssistantTurn = applyContinueQuestionGuard(input, assistantTurn);
-  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, guardedAssistantTurn);
+  const fulfillmentGuardedAssistantTurn = applyFulfillmentQuestionGuard(input, guardedAssistantTurn);
+  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, fulfillmentGuardedAssistantTurn);
   const finalizedAssistantTurn = {
     ...fallbackAssistantTurn,
     thinkingSummary: normalizeThinkingSummary({
@@ -2075,7 +2298,8 @@ export async function streamJoyInterviewResponse(
     summary: "",
     question: ""
   };
-  const shouldBufferContinuationOutput = prepared.assistantAction === "continue_current_event";
+  const shouldBufferContinuationOutput =
+    prepared.assistantAction === "continue_current_event" || prepared.session.dimension === "fulfillment";
   let emittedSummary = "";
   let activePhase: StreamingPhase | null = "thinking";
   const emitPhase = async (phase: StreamingPhase) => {

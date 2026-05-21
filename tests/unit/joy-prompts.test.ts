@@ -531,6 +531,45 @@ describe("fulfillment prompt strategy", () => {
     expect(messages[1]?.content).toContain('"experience": "今天把一个拖了很久的任务推进完了"');
     expect(messages[1]?.content).not.toContain("joyTrack");
   });
+
+  it("injects an explicit fulfillment target contract when only value-signal is still missing", () => {
+    const snapshotWithoutValueSignal: JoySnapshot = {
+      ...fulfillmentSnapshot,
+      selfPattern: null,
+      confidence: 0.76,
+      missingSlots: ["valueSignal"]
+    };
+    const activeEventWithoutValueSignal: InterviewEventRecord = {
+      ...fulfillmentEvent,
+      snapshot: snapshotWithoutValueSignal,
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"]
+    };
+
+    const messages = buildJoyQuestionMessages({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      userMessage: "我感受到自己一点一点地在达成，朝自己想要的方向前进，没有停滞不前。",
+      snapshot: snapshotWithoutValueSignal,
+      events: [activeEventWithoutValueSignal],
+      activeEvent: activeEventWithoutValueSignal,
+      messages: baseMessages,
+      nextTurnCount: 3,
+      nextEventTurnCount: 3,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["pattern"],
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"],
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(messages[1]?.content).toContain('"requiredQuestionTarget": "value_signal"');
+    expect(messages[1]?.content).toContain('"disallowedQuestionTargets": [');
+    expect(messages[1]?.content).toContain('"event_detail"');
+    expect(messages[1]?.content).toContain('"progress_evidence"');
+    expect(messages[1]?.content).toContain("不能再追问为什么不算白过");
+  });
 });
 
 describe("reflection prompt strategy", () => {

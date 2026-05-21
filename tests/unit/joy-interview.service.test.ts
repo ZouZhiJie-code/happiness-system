@@ -686,6 +686,24 @@ describe("joy interview engine", () => {
     ).toBe("wrap_up");
   });
 
+  it("does not treat raw process wording as credible fulfillment progress evidence too early", () => {
+    expect(
+      getNextStage(
+        "fulfillment",
+        {
+          event: "今天在确定了自己想投的公司之后，围绕它的 JD 开始自己做简历，然后一点一点拆解，先根据我之前的日记整理出一些大纲，然后再把它逐渐地变成缩短的，然后再把它放到简历上，最后再优化简历",
+          feeling: "很有目标感，就很充实",
+          whyItMattered: null,
+          happinessType: "推进完成型",
+          selfPattern: null,
+          confidence: 0.61,
+          missingSlots: ["progressEvidence", "valueSignal"]
+        },
+        1
+      )
+    ).toBe("probe_reason");
+  });
+
   it("classifies fulfillment fallback extraction into completion, accumulation and contribution without treating empty busyness as progress", () => {
     const empty = {
       event: null,

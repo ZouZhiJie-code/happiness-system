@@ -55,6 +55,8 @@ export interface JoySignalFields {
   reciprocityHint?: string | null;
 }
 
+export type FulfillmentQuestionTarget = "event_detail" | "progress_evidence" | "value_signal";
+
 interface ExtractJoySignalOptions {
   allowClosureInference?: boolean;
   allowOptionalSignalInference?: boolean;
@@ -67,6 +69,13 @@ function normalizeText(value: string) {
 function trimTrailingPunctuation(value: string) {
   return value.replace(/[。！？!?,，；;:\s]+$/g, "").trim();
 }
+
+const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
+  /(完成|推进|收口|落地|交付|解决|学到|练到|积累|帮到|支持|配合|变顺|更熟|整理成(?:能投递|一版简历)?|卡住的部分|收住了|落了地|往前推了一步|真的被推开)/u;
+const FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN =
+  /^(?:很)?(?:充实|踏实|有目标感|有意义|开心|满足|值得|算数|没白过|不算白过)(?:了|吧|啊|呀)?$/u;
+const FULFILLMENT_VALUE_SIGNAL_PATTERN =
+  /(对我来说|我(?:更)?(?:在意|看重|重视)|才会觉得(?:这一天|今天)?(?:算数|没白过|不算白忙|不算空转)|什么样的(?:努力|投入)|力气花得值|真正算数的)/u;
 
 function normalizeGratitudeNeedText(value: string | null | undefined) {
   if (!value) {
@@ -787,6 +796,53 @@ function inferFulfillmentValueSignal(message: string) {
 
   if (standardMatch) {
     return trimTrailingPunctuation(standardMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  return null;
+}
+
+export function hasCredibleFulfillmentProgressEvidence(
+  snapshot: Pick<JoySnapshot, "whyItMattered">,
+  recentUserMessage?: string | null
+) {
+  const candidates = [snapshot.whyItMattered, recentUserMessage]
+    .map((value) => normalizeSlotValue(value, 160))
+    .filter((value): value is string => Boolean(value));
+
+  return candidates.some((value) => {
+    if (FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN.test(value)) {
+      return false;
+    }
+
+    return FULFILLMENT_PROGRESS_EVIDENCE_PATTERN.test(value);
+  });
+}
+
+export function hasCredibleFulfillmentValueSignal(
+  snapshot: Pick<JoySnapshot, "selfPattern">,
+  recentUserMessage?: string | null
+) {
+  const candidates = [snapshot.selfPattern, recentUserMessage]
+    .map((value) => normalizeSlotValue(value, 120))
+    .filter((value): value is string => Boolean(value));
+
+  return candidates.some((value) => FULFILLMENT_VALUE_SIGNAL_PATTERN.test(value));
+}
+
+export function resolveFulfillmentQuestionTarget(input: {
+  snapshot: Pick<JoySnapshot, "event" | "whyItMattered" | "selfPattern">;
+  recentUserMessage?: string | null;
+}) {
+  if (!normalizeSlotValue(input.snapshot.event, 160)) {
+    return "event_detail" as const;
+  }
+
+  if (!hasCredibleFulfillmentProgressEvidence(input.snapshot, input.recentUserMessage)) {
+    return "progress_evidence" as const;
+  }
+
+  if (!hasCredibleFulfillmentValueSignal(input.snapshot, input.recentUserMessage)) {
+    return "value_signal" as const;
   }
 
   return null;
