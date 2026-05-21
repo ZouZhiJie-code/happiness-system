@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-09`
+最后更新：`2026-05-21`
 
 ## 1. 系统概览
 
@@ -366,6 +366,9 @@
 - `reflectionType`：`规律发现型 / 方向优势型 / 判断校准型`
 - `viewpointShift`：视角变化或判断线索
 - `continue_current_event` 的 reflection 续聊现在带有防回卷约束：如果上一轮已经问过“具体经历 / 对话”且用户明确回答没有，系统必须改问更低压的具体锚点，不能重复追同一字段
+- `question_repair` 现在与正常 `advance` 链路分离：当用户表达“看不懂 / 太抽象 / 换一个 / 说简单点”时，服务端会直接按 `questionSpec` 做确定性 repair，不请求模型、不重算 `getNextStage`、不刷新 `coveredLenses`、不推进 `turnCount / roundMeaningfulReplyCount / progressData`
+- `reflection` repair 当前固定支持 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 五类 target；如果已命中过“没有具体经历 / 对话” guard，repair 不允许再回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点
+- repair 第 1 次默认简化重问，第 2 次收紧到 concrete anchor，第 3 次直接进入低压 choice，不再继续换问法
 
 `improvement` 的当前结构语义已经进入 `snapshotData` 和 `payload`：
 - `situation`：改进情境
@@ -404,6 +407,7 @@ SSE 事件：
 - `summary`
 - `question`
 - `session`
+- repair 模式下不再走模型流式输出；服务端会直接发完整 `summary -> question -> session`，不会出现 provider `thinking` phase
 - `error`
 
 非流式路由 `respond` 仍存在，但当前主 UI 使用的是 stream 版本。

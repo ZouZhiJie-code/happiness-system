@@ -22,6 +22,7 @@
 - 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
+- 访谈 repair 协议已升级成稳定的服务端闭环：当用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等修问题表达时，系统会识别 `question_repair`，直接在服务端对当前问题做确定性重问，不再请求模型；repair 轮不会增加 `turnCount`、不会改写 snapshot、不会推进 round，也不会贡献新的完成进度。`reflection` 维度现在有专属 repair 模板，并且在用户已明确说“没有某段具体经历 / 对话”后，不会再回卷到 scene question。连续第 `3` 次 repair 会进入低压 choice，让用户改为“只补一句 / 换一个片段 / 先退出”。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
 - 当天整合日志已经落地：访谈页顶部【完整日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集；打开或生成完整日志时会显示与单维度日志一致的共享阶段进度、细进度轨和书页生长动效。
@@ -53,6 +54,7 @@
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有卡片结束后，最终停在 transcript 末尾的历史 choice 才会继续可见。
 - `gratitude` 的 `stitched_moments` supporting-scene 质量门现在只接受仍保留明确照顾动作和足够场景锚点的自然压缩：把“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这类语义反转会继续被拦住。
 - `respond/stream` 会原样透传 provider 的 `delta.text` 空白字符，不再在 SSE chunk 边界折叠空格或吞掉换行；用户流式阶段看到的文本与最终保存的助手消息保持一致。
+- `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
 
 ## 当前产品状态
 
