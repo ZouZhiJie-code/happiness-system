@@ -793,7 +793,7 @@ describe("InterviewShell", () => {
     expect(screen.queryByText("第 2 轮")).not.toBeInTheDocument();
   });
 
-  it("clears the current dimension conversation and starts a fresh session", async () => {
+  it("clears the current dimension conversation and prevents the old history from coming back", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
     const freshSession = buildSession({
@@ -877,7 +877,39 @@ describe("InterviewShell", () => {
       }
 
       if (url.endsWith("/api/interview/session/start")) {
-        return new Response(JSON.stringify({ session: freshSession, sessionId: freshSession.id, openingQuestion: freshSession.lastAssistantQuestion }), {
+        const body = init?.body ? (JSON.parse(String(init.body)) as { dimension?: InterviewDimension }) : {};
+        const requestedDimension = body.dimension ?? "joy";
+        const session =
+          requestedDimension === "reflection"
+            ? buildSession({
+                id: "session-reflection",
+                dimension: "reflection",
+                lastAssistantQuestion: "今天有没有一个让你停下来想一想的具体片段？先讲那个时刻发生了什么。",
+                messages: [
+                  {
+                    id: "assistant-reflection",
+                    role: "assistant",
+                    content: "今天有没有一个让你停下来想一想的具体片段？先讲那个时刻发生了什么。",
+                    assistantPayload: buildAssistantPayload({
+                      question: "今天有没有一个让你停下来想一想的具体片段？先讲那个时刻发生了什么。"
+                    }),
+                    sequence: 0,
+                    createdAt: "2026-04-21T00:00:00.000Z"
+                  }
+                ],
+                snapshot: {
+                  event: null,
+                  feeling: null,
+                  whyItMattered: null,
+                  happinessType: null,
+                  selfPattern: null,
+                  confidence: 0.2,
+                  missingSlots: ["event", "whyItMattered", "happinessTypeOrSelfPattern"]
+                }
+              })
+            : freshSession;
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
           status: 200,
           headers: { "Content-Type": "application/json" }
         });
@@ -888,7 +920,7 @@ describe("InterviewShell", () => {
 
     vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    renderInterviewPage();
+    const view = renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
     expect(screen.getByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).toBeInTheDocument();
@@ -906,11 +938,43 @@ describe("InterviewShell", () => {
     expect(screen.queryByText("有效 2 轮")).not.toBeInTheDocument();
     expect(screen.queryByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
+    expectDimensionStatus("开心", "未开始");
     expect(JSON.parse(window.localStorage.getItem(interviewSessionStorageKey) ?? "{}")).toMatchObject({
       joy: expect.objectContaining({
         sessionId: "session-fresh"
       })
     });
+
+    const sessionReadyFetchCountAfterReset = vi
+      .mocked(global.fetch)
+      .mock.calls.filter(([input]) => String(input).endsWith("/api/interview/session/session-ready")).length;
+
+    mockSearchParams.value.dimension = "reflection";
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await screen.findByText("今天有没有一个让你停下来想一想的具体片段？先讲那个时刻发生了什么。");
+
+    mockSearchParams.value.dimension = "joy";
+    view.rerender(
+      <>
+        <SiteHeader />
+        <InterviewShell />
+      </>
+    );
+
+    await screen.findByText("今天有没有一个哪怕很小、但确实让你状态变好一点的开心片段？先讲那个瞬间。");
+    expect(screen.queryByText("我已经抓到这段开心的重点了。现在要不要帮你整理成日志？")).not.toBeInTheDocument();
+    expectDimensionStatus("开心", "未开始");
+    expect(
+      vi
+        .mocked(global.fetch)
+        .mock.calls.filter(([input]) => String(input).endsWith("/api/interview/session/session-ready")).length
+    ).toBe(sessionReadyFetchCountAfterReset);
   });
 
   it("renders structured assistant messages as separate summary and question bubbles", async () => {

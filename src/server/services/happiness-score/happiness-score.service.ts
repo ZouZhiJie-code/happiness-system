@@ -1,6 +1,7 @@
 import { formatEntryDate, getTodayEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyHappinessScoreSaveRequestPayload } from "@/features/happiness-score/schema";
 import type { DailyHappinessScoreInput } from "@/features/happiness-score/types";
+import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import { upsertDailyHappinessScore } from "@/server/repositories/daily-happiness-score.repository";
 
 export type HappinessScoreSaveErrorCode =
@@ -52,7 +53,19 @@ export async function saveDailyHappinessScore(userId: string, payload: DailyHapp
   }
 
   try {
-    return await upsertDailyHappinessScore(userId, mapHappinessScoreSaveRequestToInput(payload));
+    const result = await upsertDailyHappinessScore(userId, mapHappinessScoreSaveRequestToInput(payload));
+
+    await recordAnalyticsEvent({
+      eventName: "happiness_score_saved",
+      userId,
+      entryId: result?.id ?? null,
+      dedupeKey: `happiness_score_saved:${userId}:${payload.date}`,
+      properties: {
+        date: payload.date
+      }
+    });
+
+    return result;
   } catch (error) {
     throw new HappinessScoreSaveError("HAPPINESS_SCORE_SAVE_FAILED", "Happiness score save failed.", error);
   }

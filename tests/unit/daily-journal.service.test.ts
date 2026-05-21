@@ -2,14 +2,20 @@ const {
   mockFindDailyJournalByDate,
   mockListSavedJournalEntriesForDailyJournal,
   mockMarkDailyJournalSaved,
+  mockMarkDailyJournalSavedWithMeta,
   mockUpdateDailyJournalDraft,
   mockUpsertDailyJournalDraft
 } = vi.hoisted(() => ({
   mockFindDailyJournalByDate: vi.fn(),
   mockListSavedJournalEntriesForDailyJournal: vi.fn(),
   mockMarkDailyJournalSaved: vi.fn(),
+  mockMarkDailyJournalSavedWithMeta: vi.fn(),
   mockUpdateDailyJournalDraft: vi.fn(),
   mockUpsertDailyJournalDraft: vi.fn()
+}));
+
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
 }));
 
 vi.mock("@/server/services/ai", () => ({
@@ -20,8 +26,13 @@ vi.mock("@/server/repositories/daily-journal.repository", () => ({
   findDailyJournalByDate: mockFindDailyJournalByDate,
   listSavedJournalEntriesForDailyJournal: mockListSavedJournalEntriesForDailyJournal,
   markDailyJournalSaved: mockMarkDailyJournalSaved,
+  markDailyJournalSavedWithMeta: mockMarkDailyJournalSavedWithMeta,
   updateDailyJournalDraft: mockUpdateDailyJournalDraft,
   upsertDailyJournalDraft: mockUpsertDailyJournalDraft
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 import {
@@ -62,8 +73,10 @@ describe("daily journal service", () => {
     mockFindDailyJournalByDate.mockReset();
     mockListSavedJournalEntriesForDailyJournal.mockReset();
     mockMarkDailyJournalSaved.mockReset();
+    mockMarkDailyJournalSavedWithMeta.mockReset();
     mockUpdateDailyJournalDraft.mockReset();
     mockUpsertDailyJournalDraft.mockReset();
+    mockRecordAnalyticsEvent.mockReset();
   });
 
   it("reports stale when saved source entries changed after generation", async () => {
@@ -114,6 +127,14 @@ describe("daily journal service", () => {
     );
     expect(result.dailyJournal).toEqual(dailyJournal);
     expect(result.state).toBe("draft");
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "daily_journal_generated",
+        userId: "user-1",
+        entryId: "daily-1",
+        dedupeKey: "daily_journal_generated:user-1:2026-05-02"
+      })
+    );
   });
 
   it("updates draft edits and saves final status", async () => {
@@ -126,6 +147,14 @@ describe("daily journal service", () => {
       status: "saved",
       savedAt: "2026-05-02T03:20:00.000Z"
     });
+    mockMarkDailyJournalSavedWithMeta.mockResolvedValue({
+      userId: "user-1",
+      dailyJournal: {
+        ...dailyJournal,
+        status: "saved",
+        savedAt: "2026-05-02T03:20:00.000Z"
+      }
+    });
 
     await expect(updateDailyJournal("daily-1", { title: "今天的记录", content: dailyJournal.content })).resolves.toMatchObject({
       dailyJournal: expect.objectContaining({ id: "daily-1" })
@@ -133,5 +162,13 @@ describe("daily journal service", () => {
     await expect(saveDailyJournal("daily-1")).resolves.toMatchObject({
       dailyJournal: expect.objectContaining({ status: "saved" })
     });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "daily_journal_saved",
+        userId: "user-1",
+        entryId: "daily-1",
+        dedupeKey: "daily_journal_saved:user-1:daily-1"
+      })
+    );
   });
 });

@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-05-05` 的代码为准：
+当前真实状态以 `2026-05-21` 的代码为准：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -14,6 +14,9 @@
 - `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` 的 stitched supporting-scene loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - 五个维度的日志标题已经统一经过语义短标题治理，后端不再把长事件句机械截断成标题。
 - `joy` 标题治理会拦截 `一下被带轻 / 象征意义` 这类伪中文或理论词标题；早起、多出时间、准备感这类轻快乐场景应落到 `清醒地开始` 这类自然短标题。
+- 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
+- 管理员分析权限当前由 `ADMIN_USERNAMES` 控制；非管理员访问页面时走 `notFound()`，管理员接口走 `requireAdminRequest()`。
+- 仓库当前已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：`AnalyticsEvent` 承接注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；`AdminAuditLog` 记录管理员查看会话 / 日志正文的审计日志。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有当 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
@@ -294,6 +297,10 @@ gratitude 理论翻译基线：
   - 记录日历的 `day / week / month` 服务端查询入口。
 - `src/server/services/daily-journal`
   - 当天整合日志 source 收集、AI 轻整理、fallback 章节合集、草稿更新与正式保存。
+- `src/server/services/auth`
+  - `admin-access.ts`：管理员白名单解析、页面鉴权和接口鉴权。
+- `src/server/services/admin-analytics`
+  - 管理员分析工作台的总览、候选用户、单人详情和内容级下钻服务。
 - `src/server/services/memory`
   - `memory-extraction.service.ts`：访谈结束后从会话数据中 AI 提取用户模式，去重后存入 MemoryFact，生成向量嵌入；fire-and-forget，失败静默。
   - `memory-retrieval.service.ts`：访谈问题生成时，从用户历史记忆中语义检索相关条目（pgvector 余弦相似度 Top-K），注入 AI prompt；embedding 不可用时降级为按维度 + confidence 排序。
@@ -338,6 +345,10 @@ gratitude 理论翻译基线：
   - 日级整合日志，`userId + date` 唯一，记录 `draft / saved`、正文、来源维度日志 ids、session ids、source signature 和 stale 判断所需时间。
 - `DailyHappinessScore`
   - 幸福 8 要素日评分，`userId + date` 唯一，8 项分数均为 `1..10` 整数；当前通过 `/interview` 顶部「当天评分」进入独立评分工作区录入，API 允许保存所有非未来日期。
+- `AnalyticsEvent`
+  - 管理员分析埋点表，`dedupeKey` 唯一；用于漏斗、质量和候选用户筛查。
+- `AdminAuditLog`
+  - 管理员内容查看审计表，记录管理员查看会话 / 维度日志 / 完整日志正文的行为。
 - `MemoryFact`
   - 长期记忆摘要，当前功能由 `memoryEnabled` 设置项控制，默认关闭。
   - 已支持 pgvector 向量嵌入（`embedding vector(2048)`）、AI 提取、语义检索与画像页面 `/profile`。
@@ -386,12 +397,22 @@ gratitude 理论翻译基线：
 - `DELETE /api/profile?id=xxx` — 删除画像条目（软删除）
 - `GET /api/profile/portrait` — 获取缓存的画像快照（PortraitSnapshot）
 - `POST /api/profile/portrait` — 触发 AI 画像合成（需 ≥3 条 facts）
+- `GET /api/admin/analytics/overview?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+- `GET /api/admin/analytics/funnel?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+- `GET /api/admin/analytics/retention?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+- `GET /api/admin/analytics/quality?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+- `GET /api/admin/analytics/users?...`
+- `GET /api/admin/analytics/users/[userId]`
+- `GET /api/admin/analytics/sessions/[sessionId]`
+- `GET /api/admin/analytics/entries/[entryId]`
+- `GET /api/admin/analytics/daily-journals/[id]`
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
 - `POST /api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`；session hydrate 也会返回 `entryDate`。
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `respond/stream` 的 provider 原始 `delta.text` 会原样透传给前端，不对任意流式增量单独 trim 或折叠空白；只有完整文本或系统生成的补发文本才允许分块。
+- `/admin/analytics` 当前是管理员工作台，不向普通用户暴露；筛查和下钻主要通过 URL 查询参数驱动页面重新取数。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
 - `transcribe` 现在还是占位 stub，不是真实语音转写。
 - calendar 当前已经有公开只读能力：

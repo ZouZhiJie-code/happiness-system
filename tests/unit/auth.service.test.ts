@@ -21,6 +21,10 @@ const { mockCreateSessionToken } = vi.hoisted(() => ({
   mockCreateSessionToken: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 vi.mock("@/server/repositories/auth.repository", () => ({
   createAuthSession: mockCreateAuthSession,
   createUserWithInitialSession: mockCreateUserWithInitialSession,
@@ -36,6 +40,10 @@ vi.mock("@/server/services/auth/password.service", () => ({
 
 vi.mock("@/server/services/auth/session-token.service", () => ({
   createSessionToken: mockCreateSessionToken
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 import { AuthenticationError, getCurrentUser, loginUser, logoutUser, registerUser } from "@/server/services/auth/auth.service";
@@ -78,6 +86,13 @@ describe("auth.service", () => {
         username: "daily_light_01"
       }
     });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "auth_register_succeeded",
+        userId: "user-1",
+        dedupeKey: "auth_register_succeeded:user-1"
+      })
+    );
   });
 
   it("rejects duplicate usernames during registration", async () => {
@@ -143,6 +158,13 @@ describe("auth.service", () => {
         username: "daily_light_01"
       }
     });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "auth_login_succeeded",
+        userId: "user-1",
+        dedupeKey: "auth_login_succeeded:user-1"
+      })
+    );
   });
 
   it("rejects login when the password is invalid", async () => {

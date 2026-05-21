@@ -220,3 +220,36 @@ export async function markDailyJournalSaved(entryId: string) {
 
   return mapDailyJournalEntry(entry);
 }
+
+export async function markDailyJournalSavedWithMeta(entryId: string) {
+  const savedAt = new Date();
+  const entry = await prisma.dailyJournalEntry.update({
+    where: {
+      id: entryId
+    },
+    data: {
+      status: "saved",
+      savedAt
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      userId: true,
+      date: true,
+      title: true,
+      content: true,
+      status: true,
+      sourceEntryIds: true,
+      sourceSessionIds: true,
+      sourceSignature: true,
+      sourceUpdatedAt: true,
+      updatedAt: true,
+      savedAt: true
+    }
+  });
+
+  return {
+    userId: entry.userId,
+    dailyJournal: mapDailyJournalEntry(entry)
+  };
+}

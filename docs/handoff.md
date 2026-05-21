@@ -27,6 +27,9 @@
 - 访谈 repair 协议已升级为纯服务端确定性链路：识别到 `question_repair`（如“看不懂 / 太抽象 / 换一个 / 说简单点”）后，不再请求模型，而是根据 `questionSpec` 直接生成新的 `thinkingSummary + question`；repair 轮不会抽取 snapshot、不会增加 `turnCount`、不会推进 `roundMeaningfulReplyCount`、不会触发新的 `event_complete`。`reflection` repair 当前有专属模板族，且已命中过“没有具体经历 / 对话” guard 时不能回到 scene question。连续第 `3` 次 repair 会直接进入低压 choice。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
+- 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
+- 管理员分析能力当前基于 `ADMIN_USERNAMES` 白名单控制；非管理员访问页面走 `notFound()`，管理员 API 走 `requireAdminRequest()`。
+- 仓库已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：前者承接注册、登录、私有页访问、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；后者记录管理员查看会话 / 日志正文的审计日志。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 

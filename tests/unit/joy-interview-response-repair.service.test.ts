@@ -26,6 +26,10 @@ const {
   startNextInterviewEvent: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
@@ -101,6 +105,10 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
