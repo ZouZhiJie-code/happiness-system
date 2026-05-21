@@ -15,8 +15,10 @@ import {
   type InterviewIssue
 } from "@/features/interview/interview-issue";
 import {
+  markStoredInterviewSessionFreshStart,
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
+  getStoredInterviewFreshStartEntry,
   getStoredInterviewSessionEntry,
   interviewLeaveConfirmMessage,
   interviewDimensionStorageKey,
@@ -686,6 +688,12 @@ async function bootstrapInterviewSession(input: {
       }
 
       return explicitSession;
+    }
+
+    const freshStartEntry = getStoredInterviewFreshStartEntry(dimension);
+
+    if (freshStartEntry && (!entryDate || freshStartEntry.entryDate === targetEntryDate)) {
+      return requestInterviewSession(dimension, entryDate);
     }
 
     if (!forceNew) {
@@ -2420,12 +2428,15 @@ export function InterviewShell() {
 
     const runReset = async () => {
       const dimensionsToClear = new Set([currentDimension, sessionDimension].filter(Boolean) as InterviewDimension[]);
+      const entryDateForFreshStart = sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate();
 
       bootSequenceRef.current += 1;
       stopDraftAutosave();
       stopToastTimer();
       cancelDraftGeneration();
       cancelInterviewResponse();
+      dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
+      dimensionsToClear.forEach((dimensionToClear) => markStoredInterviewSessionFreshStart(dimensionToClear, entryDateForFreshStart));
       dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
       setInterviewIssue(null);
       setDraftError(null);
