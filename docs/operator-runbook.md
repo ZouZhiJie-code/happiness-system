@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-19`
+最后更新：`2026-05-21`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -18,6 +18,7 @@
 | `APP_URL` | 前端访问地址 |
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
 | `DIRECT_URL` | Prisma migration / 运维直连数据库 URL；共享环境建议配置 |
+| `ADMIN_USERNAMES` | 逗号分隔的管理员用户名白名单，用于 `/admin/analytics` 页面与 `/api/admin/analytics/*` 接口鉴权 |
 
 账户体系补充说明：
 
@@ -36,6 +37,7 @@ VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
+ADMIN_USERNAMES=""
 ```
 
 数据库连接约定：
@@ -79,6 +81,24 @@ npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/202
 
 ```bash
 psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
+```
+
+然后再执行：
+
+```bash
+npx prisma db push
+```
+
+如果你是在已有本地数据的库上同步管理员分析能力，并看到以下任一现象：
+
+- `/admin/analytics` 页面可访问但相关查询报 Prisma 表不存在
+- Prisma 报 `AnalyticsEvent` 或 `AdminAuditLog` 不存在
+- 管理员分析相关测试提示缺少埋点 / 审计表
+
+先执行：
+
+```bash
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260521120000_add_admin_analytics_tables/migration.sql
 ```
 
 然后再执行：
@@ -184,6 +204,20 @@ npm run dev
 5. 退出登录后，再访问 `/interview`，确认被带回 `/login?next=%2Finterview`
 6. 用同一账号重新登录，确认能回到私有页
 7. 如要验删号，再进入 `/settings/account`，输入当前密码删除账号，确认会回到 `/register`
+
+### 2.6 管理员分析冒烟
+
+建议至少覆盖一次：
+
+1. 在 `.env.local` 中配置 `ADMIN_USERNAMES="你的管理员用户名"`
+2. 用该用户名登录
+3. 打开 `/settings`，确认能看到“管理员数据分析”入口
+4. 打开 `/admin/analytics`
+5. 切换 `复盘视角 / 监控视角`
+6. 切换 `最近 7 天 / 最近 30 天 / 本月`
+7. 输入用户名或启用一个筛选条件，确认候选用户列表出现
+8. 进入某个候选用户详情，确认会话 / 维度日志 / 完整日志可下钻
+9. 切到非管理员账号访问 `/admin/analytics`，确认页面返回 404
 
 ## 3. 最小冒烟路径
 

@@ -33,6 +33,7 @@ import {
   saveJoyInterviewDraft,
   startNextInterviewEvent
 } from "@/server/repositories/joy-interview.repository";
+import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import {
   extractJoySnapshotWithAI,
   generateJoyAssistantTurn,
@@ -1665,6 +1666,17 @@ export async function startJoyInterview(userId: string, dimension: InterviewDime
   const openingQuestion = getOpeningQuestion(dimension);
   const session = await createJoyInterviewSession(userId, dimension, openingQuestion, entryDate);
 
+  await recordAnalyticsEvent({
+    eventName: "interview_session_started",
+    userId,
+    sessionId: session.id,
+    dedupeKey: `interview_session_started:${session.id}`,
+    properties: {
+      dimension,
+      entryDate: session.entryDate
+    }
+  });
+
   return {
     sessionId: session.id,
     openingQuestion,
@@ -1699,6 +1711,16 @@ export async function reopenJoyInterviewSession(userId: string, sessionId: strin
     throw new Error("SESSION_NOT_FOUND");
   }
 
+  await recordAnalyticsEvent({
+    eventName: "interview_session_reopened",
+    userId,
+    sessionId,
+    dedupeKey: `interview_session_reopened:${sessionId}`,
+    properties: {
+      dimension: reopenedSession.dimension
+    }
+  });
+
   return {
     session: reopenedSession
   };
@@ -1726,6 +1748,16 @@ export async function pauseJoyInterviewSession(userId: string, sessionId: string
   }
 
   const pausedSession = await pauseJoyInterviewSessionRecord(sessionId);
+
+  await recordAnalyticsEvent({
+    eventName: "interview_session_paused",
+    userId,
+    sessionId,
+    dedupeKey: `interview_session_paused:${sessionId}`,
+    properties: {
+      dimension: pausedSession.dimension
+    }
+  });
 
   return {
     session: pausedSession
@@ -1947,6 +1979,68 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
 export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
   const prepared = await prepareJoyInterviewResponseContext(input);
 
+  if (!("assistantMessage" in prepared)) {
+    const progressData = prepared.nextProgressData;
+
+    if (
+      input.action === "reply" &&
+      prepared.isMeaningfulReply &&
+      prepared.activeEvent.totalMeaningfulReplyCount === 0 &&
+      prepared.totalMeaningfulReplyCount > 0
+    ) {
+      await recordAnalyticsEvent({
+        eventName: "interview_first_user_reply",
+        userId: prepared.session.userId,
+        sessionId: prepared.session.id,
+        dedupeKey: `interview_first_user_reply:${prepared.session.id}`,
+        properties: {
+          dimension: prepared.session.dimension
+        }
+      });
+    }
+
+    if (progressData?.kind === "boundary_insufficient") {
+      await recordAnalyticsEvent({
+        eventName: "interview_boundary_insufficient_shown",
+        userId: prepared.session.userId,
+        sessionId: prepared.session.id,
+        dedupeKey: `interview_boundary_insufficient_shown:${prepared.session.id}:${prepared.activeEvent.id}`,
+        properties: {
+          dimension: prepared.session.dimension
+        }
+      });
+    }
+
+    if (progressData?.kind === "dimension_redirect") {
+      await recordAnalyticsEvent({
+        eventName: "interview_dimension_redirect_shown",
+        userId: prepared.session.userId,
+        sessionId: prepared.session.id,
+        dedupeKey: `interview_dimension_redirect_shown:${prepared.session.id}:${prepared.activeEvent.id}`,
+        properties: {
+          dimension: prepared.session.dimension,
+          targetDimension: progressData.targetDimension
+        }
+      });
+    }
+
+    if (input.action === "reply" && prepared.userMessage) {
+      const assessment = assessUserTurnMessage(prepared.userMessage);
+
+      if (assessment.intent === "boundary_stop" || assessment.intent === "hostile_boundary") {
+        await recordAnalyticsEvent({
+          eventName: "interview_boundary_stop_triggered",
+          userId: prepared.session.userId,
+          sessionId: prepared.session.id,
+          dedupeKey: `interview_boundary_stop_triggered:${prepared.session.id}:${prepared.activeEvent.id}`,
+          properties: {
+            dimension: prepared.session.dimension
+          }
+        });
+      }
+    }
+  }
+
   if ("assistantMessage" in prepared) {
     return prepared;
   }
@@ -1983,6 +2077,19 @@ export async function completeJoyInterviewResponse(
 
   if (!updatedSession) {
     throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (input.userMessage) {
+    await recordAnalyticsEvent({
+      eventName: "interview_response_submitted",
+      userId: updatedSession.userId,
+      sessionId: updatedSession.id,
+      dedupeKey: `interview_response_submitted:${updatedSession.id}:${updatedSession.turnCount}`,
+      properties: {
+        dimension: updatedSession.dimension,
+        inputMode: input.inputMode ?? null
+      }
+    });
   }
 
   const visibleText = getVisibleAssistantText(input.assistantTurn);
@@ -2209,6 +2316,17 @@ export async function generateJoyInterviewDraft(userId: string, sessionIds: stri
     throw new DraftGenerationError("DRAFT_GENERATE_DB_ERROR", true, "Draft record was not created.");
   }
 
+  await recordAnalyticsEvent({
+    eventName: "interview_draft_generated",
+    userId: session.userId,
+    sessionId: session.id,
+    entryId: draftSession.journalEntry.id,
+    dedupeKey: `interview_draft_generated:${session.id}:${draftSession.journalEntry.id}`,
+    properties: {
+      dimension: session.dimension
+    }
+  });
+
   return {
     draftEntry: draftSession.journalEntry,
     session: draftSession
@@ -2227,6 +2345,17 @@ export async function saveGeneratedJoyEntry(userId: string, sessionId: string) {
   if (!savedSession?.journalEntry) {
     throw new Error("DRAFT_NOT_FOUND");
   }
+
+  await recordAnalyticsEvent({
+    eventName: "interview_draft_saved",
+    userId,
+    sessionId,
+    entryId: savedSession.journalEntry.id,
+    dedupeKey: `interview_draft_saved:${sessionId}:${savedSession.journalEntry.id}`,
+    properties: {
+      dimension: savedSession.dimension
+    }
+  });
 
   return {
     draftEntry: savedSession.journalEntry,

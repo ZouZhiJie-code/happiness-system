@@ -6,12 +6,20 @@ const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
   mockRequireCurrentUserFromRequest: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 vi.mock("@/server/repositories/daily-happiness-score.repository", () => ({
   upsertDailyHappinessScore: mockUpsertDailyHappinessScore
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 import { PUT as putHappinessScoreRoute } from "@/app/api/happiness-score/route";
@@ -63,6 +71,7 @@ describe("happiness score api route", () => {
     vi.setSystemTime(new Date("2026-05-03T04:00:00.000Z"));
     mockUpsertDailyHappinessScore.mockReset();
     mockRequireCurrentUserFromRequest.mockReset();
+    mockRecordAnalyticsEvent.mockReset();
     mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
   });
 
@@ -92,6 +101,13 @@ describe("happiness score api route", () => {
       meaningScore: 8,
       livingConditionScore: 6
     });
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "happiness_score_saved",
+        userId: "user-1",
+        dedupeKey: "happiness_score_saved:user-1:2026-05-03"
+      })
+    );
   });
 
   it("saves yesterday's score payload", async () => {

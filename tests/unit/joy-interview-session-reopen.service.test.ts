@@ -16,6 +16,10 @@ const {
   startNextInterviewEvent: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
   appendJoyInterviewTurn: vi.fn(),
   completeJoyInterviewSessionRecord,
@@ -27,6 +31,10 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft: vi.fn(),
   startNextInterviewEvent
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -125,6 +133,7 @@ describe("reopenJoyInterviewSession", () => {
     findJoyInterviewSessionById.mockReset();
     pauseJoyInterviewSessionRecord.mockReset();
     reopenJoyInterviewSessionRecord.mockReset();
+    mockRecordAnalyticsEvent.mockReset();
   });
 
   it("throws when the session does not exist", async () => {
@@ -154,6 +163,14 @@ describe("reopenJoyInterviewSession", () => {
 
     await expect(reopenJoyInterviewSession("user-1", pausedSession.id)).resolves.toEqual({ session: reopenedSession });
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith(pausedSession.id);
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "interview_session_reopened",
+        userId: "user-1",
+        sessionId: "session-1",
+        dedupeKey: "interview_session_reopened:session-1"
+      })
+    );
   });
 
   it("reopens paused sessions even when no journal entry exists yet", async () => {

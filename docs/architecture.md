@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-05-09`
+最后更新：`2026-05-21`
 
 ## 1. 系统概览
 
@@ -31,8 +31,12 @@
   - 记录日历 month/week/day 页面
 - `src/app/analysis`
   - 记录分析月度页面
+- `src/app/admin/analytics`
+  - 管理员数据分析工作台页面
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
+- `src/app/api/admin/analytics/*`
+  - 管理员分析总览、漏斗、留存、质量、候选用户与内容级下钻接口
 - `src/app/api/calendar/*`
   - 记录日历的 `day / week / month` 查询接口
 - `src/app/api/analysis/month`
@@ -60,12 +64,16 @@
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
   - `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
+- `src/features/admin-analytics`
+  - 管理员分析页 URL 状态、类型和接口约定；负责把 `view / range / user drilldown` 投影成同页工作台状态
 - `src/features/happiness-score`
   - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
   - `presentation.ts` 统一维护评分展示顺序与标签（健康→经济→人际→擅长→意志→热爱→美德→意义）
   - 评分录入入口在访谈页独立 `happiness_score` 工作区，不再在分析页内联编辑
 - `src/components/calendar`
   - 月网格、月检查面板、周视图 7 天对比板、日视图 overview、五维紧凑卡片、header toolbar、view switcher 与 month/week/day 工作区容器
+- `src/components/admin`
+  - 管理员数据分析工作台壳层；当前采用“总览 -> 候选用户 -> 单人证据”的调查式结构
 - `src/components/analysis`
   - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、稀疏/持平样本提示、状态优先的本月热力图、当天追踪 drill-in，以及“本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`score` 分区当前是纯趋势阅读，不再内联评分编辑器。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
 - `src/features/joy-interview`
@@ -91,6 +99,10 @@
   - 负责月份校验、月范围计算和日志分析聚合
   - 调用 `src/features/analysis/narrative-service.ts` 生成 `narrative`（当前为确定性占位，预留 AI 接入口，降级到模板文本）
   - `narrative-service.ts` 是 `analysis.service.ts` 的真实依赖；提交分析页叙事改动时必须和 service 一起纳入变更集
+- `src/server/services/auth/admin-access.ts`
+  - 管理员白名单鉴权；页面侧使用 `requireAdminPage()`，接口侧使用 `requireAdminRequest()`
+- `src/server/services/admin-analytics/admin-analytics.service.ts`
+  - 管理员分析的服务端查询入口；负责总览、漏斗、留存、质量、候选用户、单人详情与内容级下钻
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 - `src/server/services/memory/memory-extraction.service.ts`
@@ -114,6 +126,8 @@
   - 不直接计算 calendar 状态
 - `src/server/repositories/analysis.repository.ts`
   - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source；`DailyJournalEntry` 现在额外返回 `title` 和 `content`，供聚合层生成 `journalTitle` / `contentPreview`
+- `src/server/repositories/admin-analytics.repository.ts`
+  - 维护分析埋点、管理员审计日志，以及管理员工作台所需的用户列表 / 单人详情 / 内容级下钻读模型
 - `src/server/repositories/daily-happiness-score.repository.ts`
   - 维护 `DailyHappinessScore` 的日期查询、upsert 与 record 映射
 - `src/server/repositories/daily-journal.repository.ts`
@@ -209,6 +223,16 @@
 - 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、访谈页独立评分工作区和分析页评分趋势图
 - 保存允许 Asia/Shanghai 口径下的所有非未来日期；8 项必填且必须是 `1..10` 整数
 - `/analysis` 已接入轻量 SVG 趋势图：总分平均走势和 8 要素单项切换走势，未评分日期断线，不补 0
+
+`AnalyticsEvent` 是管理员分析埋点表：
+- 记录注册、登录、进入私有页、访谈开始、首次有效回复、边界不足展示、跳维提示、暂停、重开、日志生成/保存、完整日志生成/保存、评分保存等事件
+- `dedupeKey` 唯一，用于对幂等事件去重
+- 当前管理员总览、漏斗、质量与候选用户筛查主要依赖这张表
+
+`AdminAuditLog` 是管理员内容查看审计表：
+- 记录管理员查看会话正文、维度日志正文和完整日志正文的行为
+- 字段包括 `adminUsername / targetUserId / resourceType / resourceId / action / createdAt`
+- 当前只在管理员 drilldown 读取正文时写入，不参与普通用户业务链路
 
 ### 3.5 画像与记忆
 

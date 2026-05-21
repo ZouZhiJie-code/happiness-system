@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-09`
+最后更新：`2026-05-21`
 
 ## 1. 当前阶段结论
 
@@ -26,6 +26,9 @@
 - `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
+- 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
+- 管理员分析能力当前基于 `ADMIN_USERNAMES` 白名单控制；非管理员访问页面走 `notFound()`，管理员 API 走 `requireAdminRequest()`。
+- 仓库已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：前者承接注册、登录、私有页访问、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；后者记录管理员查看会话 / 日志正文的审计日志。
 
 ## 2. 截至 2026-05-03 已经落成的东西
 

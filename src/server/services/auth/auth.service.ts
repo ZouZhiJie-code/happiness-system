@@ -10,6 +10,7 @@ import {
   findAuthSessionByTokenHash,
   findUserByUsername
 } from "@/server/repositories/auth.repository";
+import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import { hashPassword, verifyPassword } from "@/server/services/auth/password.service";
 import { createSessionToken } from "@/server/services/auth/session-token.service";
 
@@ -62,13 +63,24 @@ export async function registerUser(input: RegisterUserInput) {
       expiresAt: new Date(Date.now() + AUTH_SESSION_TTL_SECONDS * 1000)
     });
 
-    return {
+    const result = {
       token: token.value,
       user: {
         id: user.id,
         username: user.username
       }
     };
+
+    await recordAnalyticsEvent({
+      eventName: "auth_register_succeeded",
+      userId: user.id,
+      dedupeKey: `auth_register_succeeded:${user.id}`,
+      properties: {
+        username: user.username
+      }
+    });
+
+    return result;
   } catch (error) {
     if (isAuthStorageNotReadyError(error)) {
       throw new AuthenticationError("AUTH_STORAGE_NOT_READY");
@@ -100,13 +112,24 @@ export async function loginUser(input: LoginUserInput) {
       expiresAt: new Date(Date.now() + AUTH_SESSION_TTL_SECONDS * 1000)
     });
 
-    return {
+    const result = {
       token: token.value,
       user: {
         id: user.id,
         username: user.username
       }
     };
+
+    await recordAnalyticsEvent({
+      eventName: "auth_login_succeeded",
+      userId: user.id,
+      dedupeKey: `auth_login_succeeded:${user.id}`,
+      properties: {
+        username: user.username
+      }
+    });
+
+    return result;
   } catch (error) {
     if (isAuthStorageNotReadyError(error)) {
       throw new AuthenticationError("AUTH_STORAGE_NOT_READY");

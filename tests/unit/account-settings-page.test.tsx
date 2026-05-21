@@ -1,5 +1,3 @@
-import React from "react";
-
 const { mockCookies } = vi.hoisted(() => ({
   mockCookies: vi.fn()
 }));
@@ -12,6 +10,10 @@ const { mockRedirect } = vi.hoisted(() => ({
   mockRedirect: vi.fn()
 }));
 
+const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
+  mockRecordAnalyticsEvent: vi.fn()
+}));
+
 vi.mock("next/headers", () => ({
   cookies: mockCookies
 }));
@@ -22,6 +24,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
   getCurrentUserFromSessionToken: mockGetCurrentUserFromSessionToken
+}));
+
+vi.mock("@/server/repositories/admin-analytics.repository", () => ({
+  recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
 import AccountSettingsPage from "@/app/settings/account/page";

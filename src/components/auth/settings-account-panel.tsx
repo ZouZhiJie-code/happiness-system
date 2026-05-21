@@ -21,6 +21,7 @@ type SessionUser = {
 
 interface SettingsAccountPanelProps {
   user: SessionUser;
+  showAdminAnalyticsEntry?: boolean;
 }
 
 function clearInterviewClientState() {
@@ -41,7 +42,7 @@ function clearInterviewClientState() {
   clearLocalAuthUserId();
 }
 
-export function SettingsAccountPanel({ user }: SettingsAccountPanelProps) {
+export function SettingsAccountPanel({ user, showAdminAnalyticsEntry = false }: SettingsAccountPanelProps) {
   const [loggingOut, setLoggingOut] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -105,6 +106,14 @@ export function SettingsAccountPanel({ user }: SettingsAccountPanelProps) {
         >
           管理注销与高风险操作
         </a>
+        {showAdminAnalyticsEntry ? (
+          <a
+            href="/admin/analytics"
+            className="inline-flex min-h-11 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)]"
+          >
+            管理员数据分析
+          </a>
+        ) : null}
       </div>
     </aside>
   );

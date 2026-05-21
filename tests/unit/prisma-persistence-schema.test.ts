@@ -8,5 +8,9 @@ describe("prisma persistence indexes", () => {
     expect(schema).toContain("@@index([userId, entryDate])");
     expect(schema).toContain("@@index([userId, date])");
     expect(schema).toContain("@@index([userId, status, date])");
+    expect(schema).toContain("model AnalyticsEvent");
+    expect(schema).toContain("model AdminAuditLog");
+    expect(schema).toContain("@@index([eventName, occurredAt])");
+    expect(schema).toContain("@@index([adminUsername, createdAt])");
   });
 });
