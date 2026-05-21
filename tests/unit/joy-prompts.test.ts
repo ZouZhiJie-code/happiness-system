@@ -44,6 +44,26 @@ const delightSnapshot: JoySnapshot = {
   missingSlots: []
 };
 
+const guardedDelightSnapshot: JoySnapshot = {
+  event: "本来被对方惹得有点生气，后来他送了一朵花",
+  feeling: "更愉悦",
+  whyItMattered: "因为前面的低落让后面的惊喜更强",
+  happinessType: "轻快乐",
+  selfPattern: null,
+  joyMoment: "本来被对方惹得有点生气，后来他送了一朵花",
+  joySource: "被重新在意和安抚到的惊喜",
+  stateShift: "更愉悦",
+  meaningNeed: null,
+  manualClue: null,
+  delightSignature: null,
+  directionSignal: null,
+  valueImpact: null,
+  durability: null,
+  tags: ["关系"],
+  confidence: 0.78,
+  missingSlots: ["delightSignature"]
+};
+
 const baseEvent: InterviewEventRecord = {
   id: "event-1",
   sequence: 1,
@@ -205,6 +225,47 @@ describe("buildJoyDraftMessages", () => {
     expect(messages[1]?.content).toContain("没有明显语义切换时不要换段");
     expect(messages[1]?.content).toContain("不要把每句话拆成独立段落");
     expect(messages[1]?.content).toContain("title 16 字内");
+  });
+
+  it("injects a guarded follow-up hint when delight material contains a negative setup", () => {
+    const messages = buildJoyQuestionMessages({
+      dimension: "joy",
+      stage: "probe_pattern",
+      userMessage: "我觉得还是因为前面情绪太低，后面收到花才特别惊喜。",
+      snapshot: guardedDelightSnapshot,
+      events: [
+        {
+          ...baseEvent,
+          snapshot: guardedDelightSnapshot,
+          stage: "probe_pattern",
+          status: "active",
+          coveredLenses: ["event_detail", "importance_reason"],
+          roundCoveredLenses: ["event_detail", "importance_reason"]
+        }
+      ],
+      activeEvent: {
+        ...baseEvent,
+        snapshot: guardedDelightSnapshot,
+        stage: "probe_pattern",
+        status: "active",
+        coveredLenses: ["event_detail", "importance_reason"],
+        roundCoveredLenses: ["event_detail", "importance_reason"]
+      },
+      messages: baseMessages,
+      nextTurnCount: 3,
+      nextEventTurnCount: 3,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "reason", "clue"],
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"],
+      isMeaningfulReply: true,
+      action: "reply",
+      memoryContext: null
+    });
+
+    expect(messages[1]?.content).toContain('"followUpQuestionHint": "如果把前面的情绪起伏先放在旁边，真正最打动你的，是被送花重新在意到的惊喜里的哪一层？"');
+    expect(messages[1]?.content).not.toContain("低落多久");
+    expect(messages[1]?.content).not.toContain("内容、节奏或场景最容易把你带进去");
   });
 
   it("switches the joy closing instruction when the writing profile is in current-understanding mode", () => {
@@ -469,6 +530,45 @@ describe("fulfillment prompt strategy", () => {
     expect(messages[0]?.content).toContain("不要直接问抽象价值观");
     expect(messages[1]?.content).toContain('"experience": "今天把一个拖了很久的任务推进完了"');
     expect(messages[1]?.content).not.toContain("joyTrack");
+  });
+
+  it("injects an explicit fulfillment target contract when only value-signal is still missing", () => {
+    const snapshotWithoutValueSignal: JoySnapshot = {
+      ...fulfillmentSnapshot,
+      selfPattern: null,
+      confidence: 0.76,
+      missingSlots: ["valueSignal"]
+    };
+    const activeEventWithoutValueSignal: InterviewEventRecord = {
+      ...fulfillmentEvent,
+      snapshot: snapshotWithoutValueSignal,
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"]
+    };
+
+    const messages = buildJoyQuestionMessages({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      userMessage: "我感受到自己一点一点地在达成，朝自己想要的方向前进，没有停滞不前。",
+      snapshot: snapshotWithoutValueSignal,
+      events: [activeEventWithoutValueSignal],
+      activeEvent: activeEventWithoutValueSignal,
+      messages: baseMessages,
+      nextTurnCount: 3,
+      nextEventTurnCount: 3,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["pattern"],
+      coveredLenses: ["event_detail", "importance_reason"],
+      roundCoveredLenses: ["event_detail", "importance_reason"],
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(messages[1]?.content).toContain('"requiredQuestionTarget": "value_signal"');
+    expect(messages[1]?.content).toContain('"disallowedQuestionTargets": [');
+    expect(messages[1]?.content).toContain('"event_detail"');
+    expect(messages[1]?.content).toContain('"progress_evidence"');
+    expect(messages[1]?.content).toContain("不能再追问为什么不算白过");
   });
 });
 

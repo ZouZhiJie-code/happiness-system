@@ -4464,6 +4464,93 @@ describe("InterviewShell", () => {
     expect(textarea).toHaveValue("这次回复需要保留");
   });
 
+  it("submits only one streaming request when Enter is pressed twice quickly", async () => {
+    const deferredStream = createDeferredResponse();
+    const respondCalls: string[] = [];
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(JSON.stringify({ session, sessionId: session.id, openingQuestion: session.lastAssistantQuestion }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        respondCalls.push(url);
+        return deferredStream.promise;
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+
+    fireEvent.change(textarea, { target: { value: "今天同事突然请我喝咖啡，我一下轻松很多。" } });
+    fireEvent.keyDown(textarea, { key: "Enter", code: "Enter", charCode: 13 });
+    fireEvent.keyDown(textarea, { key: "Enter", code: "Enter", charCode: 13 });
+
+    await waitFor(() => {
+      expect(respondCalls).toHaveLength(1);
+    });
+
+    deferredStream.resolve(
+      buildSseResponse([
+        'event: phase\ndata: {"state":"summary"}\n\n',
+        'event: delta\ndata: {"target":"summary","text":"这份开心像是突然被在意了一下。"}\n\n',
+        'event: phase\ndata: {"state":"question"}\n\n',
+        'event: delta\ndata: {"target":"question","text":"那一刻最打动你的是什么？"}\n\n',
+        `event: session\ndata: ${JSON.stringify({
+          session: buildSession({
+            id: "session-joy",
+            status: "active",
+            stage: "probe_reason",
+            turnCount: 1,
+            messages: [
+              openingMessage,
+              {
+                id: "user-new",
+                role: "user",
+                content: "今天同事突然请我喝咖啡，我一下轻松很多。",
+                sequence: 1,
+                createdAt: "2026-04-21T00:01:00.000Z"
+              },
+              {
+                id: "assistant-new",
+                role: "assistant",
+                content: "这份开心像是突然被在意了一下。那一刻最打动你的是什么？",
+                assistantPayload: buildAssistantPayload({
+                  thinkingSummary: "这份开心像是突然被在意了一下。",
+                  question: "那一刻最打动你的是什么？"
+                }),
+                sequence: 2,
+                createdAt: "2026-04-21T00:01:30.000Z"
+              }
+            ],
+            lastAssistantQuestion: "那一刻最打动你的是什么？",
+            snapshot: {
+              ...baseSnapshot,
+              event: "今天同事突然请我喝咖啡",
+              feeling: "一下轻松很多",
+              whyItMattered: null,
+              happinessType: null,
+              selfPattern: null,
+              missingSlots: ["whyItMattered", "happinessTypeOrSelfPattern"]
+            }
+          })
+        })}\n\n`
+      ])
+    );
+
+    expect(await screen.findByText("那一刻最打动你的是什么？")).toBeInTheDocument();
+  });
+
   it("shows message-too-long guidance from HTTP validation errors", async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);

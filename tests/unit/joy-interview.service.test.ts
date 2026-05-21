@@ -33,6 +33,47 @@ describe("joy interview engine", () => {
     expect(snapshot.meaningNeed ?? snapshot.manualClue ?? snapshot.joySource).toBeTruthy();
   });
 
+  it("keeps joy fallback extraction moving on short follow-up answers about being re-noticed", () => {
+    const afterReason = extractJoySignals(
+      "joy",
+      "被重新在意到。",
+      {
+        event: "他先让我有点生气，后来送了我一朵花",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        joyMoment: "他先让我有点生气，后来送了我一朵花",
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        confidence: 0.39,
+        missingSlots: ["joySource", "stateShift", "delightSignature"]
+      }
+    );
+
+    expect(afterReason.joySource).toContain("重新在意");
+
+    const afterStateShift = extractJoySignals(
+      "joy",
+      "那一下会觉得自己被放在心上。",
+      afterReason,
+      {
+        allowClosureInference: false,
+        allowOptionalSignalInference: false
+      }
+    );
+
+    expect(afterStateShift.stateShift).toBeTruthy();
+    expect(afterStateShift.meaningNeed).toBeTruthy();
+    expect(getNextStage("joy", afterStateShift, 4)).toBe("probe_pattern");
+    expect(buildAssistantQuestion("joy", "probe_pattern", afterStateShift)).not.toBe(
+      "那一刻最直接的变化是什么？它是怎么把你慢慢带进那个状态的？"
+    );
+  });
+
   it("keeps probing until a manual clue is formed", () => {
     const stage = getNextStage(
       {
@@ -168,6 +209,47 @@ describe("joy interview engine", () => {
     expect(meaningQuestion).not.toContain("使用说明书");
   });
 
+  it("does not treat a negative setup as a reusable delight cue", () => {
+    const snapshot = buildJoySnapshot({
+      joyMoment: "本来在生气，后来对方突然送了一朵花",
+      joySource: "前面情绪很低，后来突然被送花安抚到的惊喜",
+      stateShift: "更愉悦",
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: "我会被这种先低落再被安抚的落差一下子带起来",
+      directionSignal: null,
+      valueImpact: null,
+      durability: null,
+      tags: ["关系"]
+    });
+
+    expect(snapshot.delightSignature).toBeNull();
+    expect(hasJoyStableClosure(snapshot)).toBe(false);
+    expect(getNextStage(snapshot, 3)).toBe("probe_pattern");
+  });
+
+  it("keeps joy follow-up focused on the positive driver instead of recreating the negative setup", () => {
+    const question = buildAssistantQuestion("joy", "probe_pattern", {
+      event: "本来被对方惹得有点生气，后来他送了一朵花",
+      feeling: "更愉悦",
+      whyItMattered: "因为前面的低落让后面的惊喜更强",
+      happinessType: null,
+      selfPattern: null,
+      joyMoment: "本来被对方惹得有点生气，后来他送了一朵花",
+      joySource: "被重新在意和安抚到的惊喜",
+      stateShift: "更愉悦",
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      confidence: 0.76,
+      missingSlots: ["delightSignature"]
+    });
+
+    expect(question).toContain("被送花");
+    expect(question).not.toMatch(/低落|铺垫|落差/u);
+    expect(question).not.toContain("内容、节奏或场景");
+  });
+
   it("creates a draft after a completed conversation", () => {
     const finalized = createDraft("joy", {
       event: "今天和家人一起吃饭聊天",
@@ -229,6 +311,36 @@ describe("joy interview engine", () => {
     expect(snapshot.seenNeed).toContain("撑不住");
     expect(snapshot.gratitudeReason).toContain("不是一个人在扛");
     expect(snapshot.relationshipSignal).toContain("学习");
+    expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
+  });
+
+  it("wraps up gratitude immediately after relationship-signal denial", () => {
+    const snapshot = buildJoySnapshot({
+      event: "同事先帮我把最急的两件事拆出来",
+      feeling: "松了一口气",
+      whyItMattered: "至少那一下没有继续乱下去",
+      happinessType: "支持型感谢",
+      selfPattern: null,
+      gratitudeMoment: "同事先帮我把最急的两件事拆出来",
+      gratitudeTarget: "同事",
+      kindAction: "先帮我把最急的两件事拆出来",
+      seenNeed: null,
+      innerEffect: "松了一口气",
+      gratitudeReason: "至少那一下没有继续乱下去",
+      gratitudeType: "支持回应型",
+      relationshipSignal: null,
+      reciprocityHint: null,
+      evidenceState: {
+        targets: {
+          kind_action: "confirmed",
+          gratitude_reason: "confirmed"
+        },
+        deniedTargets: ["relationship_signal"],
+        deniedHypotheses: ["relationship_signal"],
+        blockedTransitions: ["relationship_signal"]
+      }
+    });
+
     expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
   });
 
@@ -602,6 +714,24 @@ describe("joy interview engine", () => {
         3
       )
     ).toBe("wrap_up");
+  });
+
+  it("does not treat raw process wording as credible fulfillment progress evidence too early", () => {
+    expect(
+      getNextStage(
+        "fulfillment",
+        {
+          event: "今天在确定了自己想投的公司之后，围绕它的 JD 开始自己做简历，然后一点一点拆解，先根据我之前的日记整理出一些大纲，然后再把它逐渐地变成缩短的，然后再把它放到简历上，最后再优化简历",
+          feeling: "很有目标感，就很充实",
+          whyItMattered: null,
+          happinessType: "推进完成型",
+          selfPattern: null,
+          confidence: 0.61,
+          missingSlots: ["progressEvidence", "valueSignal"]
+        },
+        1
+      )
+    ).toBe("probe_reason");
   });
 
   it("classifies fulfillment fallback extraction into completion, accumulation and contribution without treating empty busyness as progress", () => {

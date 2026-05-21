@@ -28,6 +28,20 @@ export type DraftVoiceMode = "journal";
 export type DraftNarrativeOrder = "scene_core_shift_close";
 export type DraftClosingMode = "stable_clue" | "current_understanding";
 export type AssistantDepth = "event" | "feeling" | "reason" | "clue" | "pattern";
+export type AssistantQuestionTarget =
+  | "event_anchor"
+  | "prior_assumption"
+  | "reaction_evidence"
+  | "insight_evidence"
+  | "judgment_clue";
+export type GratitudeQuestionSubTarget =
+  | "kind_action"
+  | "seen_need"
+  | "gratitude_reason"
+  | "relationship_signal";
+export type InferenceHypothesisKey = "seen_need" | "gratitude_reason" | "relationship_signal";
+export type AssistantQuestionStageIntent = "advance" | "resume" | "repair";
+export type AssistantQuestionSurfaceLevel = "default" | "simplified" | "concrete_anchor";
 export type InterviewLens =
   | "event_detail"
   | "felt_experience"
@@ -45,16 +59,35 @@ export type JoyInterviewStage =
 export type InterviewStage = JoyInterviewStage;
 export type PendingDecisionAction =
   | "continue_current_event"
+  | "repair_current_question"
   | "next_event"
   | "generate_draft"
   | "switch_dimension"
   | "pause_session";
+
+export interface AssistantQuestionSpec {
+  target: AssistantQuestionTarget;
+  subTarget?: GratitudeQuestionSubTarget | null;
+  hypothesisKey?: InferenceHypothesisKey | null;
+  stageIntent: AssistantQuestionStageIntent;
+  surfaceLevel: AssistantQuestionSurfaceLevel;
+  anchorText?: string | null;
+  repairCount: number;
+}
+
+export interface InferenceEvidenceState {
+  targets: Partial<Record<GratitudeQuestionSubTarget, "confirmed" | "weak">>;
+  deniedTargets: GratitudeQuestionSubTarget[];
+  deniedHypotheses: InferenceHypothesisKey[];
+  blockedTransitions: string[];
+}
 
 export interface AssistantTurnPayload {
   insight: string;
   thinkingSummary: string;
   analysis: string;
   question: string;
+  questionSpec?: AssistantQuestionSpec | null;
   stateUpdate: {
     turnPhase: AssistantTurnPhase;
     shouldEndDimension: boolean;
@@ -121,6 +154,7 @@ export interface JoySnapshot {
   gratitudeType?: string | null;
   relationshipSignal?: string | null;
   reciprocityHint?: string | null;
+  evidenceState?: InferenceEvidenceState | null;
   confidence: number;
   missingSlots: string[];
 }
@@ -193,6 +227,7 @@ export interface GratitudeSnapshotData {
   gratitudeReason: string | null;
   relationshipSignal: string | null;
   reciprocityHint: string | null;
+  evidenceState?: InferenceEvidenceState | null;
   confidence: number;
   missingSlots: string[];
 }
@@ -232,6 +267,7 @@ export interface DimensionSemanticInterpretation {
   titleCandidates: string[];
   antiFlatteningTargets: string[];
   dimensionMeta?: Record<string, string | null>;
+  followUpQuestionHint?: string | null;
 }
 
 export interface DraftBrief {
@@ -305,6 +341,7 @@ export interface JoyEntryDraft {
   gratitudeType?: string | null;
   relationshipSignal?: string | null;
   reciprocityHint?: string | null;
+  evidenceState?: InferenceEvidenceState | null;
   tags: string[];
   eventBlocks: JoyEventBlock[];
   source: JoyEntrySource;
@@ -411,6 +448,7 @@ export interface GratitudeJournalPayload {
   gratitudeReason: string | null;
   relationshipSignal: string | null;
   reciprocityHint: string | null;
+  evidenceState?: InferenceEvidenceState | null;
   tags: string[];
 }
 

@@ -3,6 +3,8 @@ import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
+  hasCredibleFulfillmentProgressEvidence,
+  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getDirectionSignal,
   getDurability,
@@ -14,12 +16,14 @@ import {
   getJoyTags,
   getManualClue,
   getMeaningNeed,
+  resolveFulfillmentQuestionTarget,
   getStateShift,
   getValueImpact
 } from "@/features/joy-interview/server/joy-interview-engine";
 import type { AIChatMessage } from "@/server/services/ai/ai-provider";
 import type {
   AssistantDepth,
+  AssistantQuestionSpec,
   DraftBrief,
   DraftWritingProfile,
   InterviewDimension,
@@ -220,6 +224,44 @@ function formatSnapshotForDimension(dimension: InterviewDimension, snapshot: Joy
   return formatSnapshot(snapshot);
 }
 
+function buildFulfillmentQuestionContract(input: {
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+}) {
+  const target = resolveFulfillmentQuestionTarget({
+    snapshot: input.snapshot,
+    recentUserMessage: input.userMessage
+  });
+
+  if (!target) {
+    return null;
+  }
+
+  if (target === "progress_evidence") {
+    return {
+      requiredQuestionTarget: "progress_evidence",
+      disallowedQuestionTargets: ["event_detail"],
+      questionIntentContract:
+        "必须问清这件事具体推进了什么、完成了什么、积累了什么或帮到了什么；不能停在抽象充实感。"
+    };
+  }
+
+  if (target === "value_signal") {
+    return {
+      requiredQuestionTarget: "value_signal",
+      disallowedQuestionTargets: ["event_detail", "progress_evidence"],
+      questionIntentContract:
+        "必须从已成立的不算白过证据里，继续追问什么样的努力会让用户觉得算数；不能再追问为什么不算白过。"
+    };
+  }
+
+  return {
+    requiredQuestionTarget: "event_detail",
+    disallowedQuestionTargets: [],
+    questionIntentContract: "必须先问清具体在做什么，再继续往后推进。"
+  };
+}
+
 function formatDepthReached(depthReached: AssistantDepth[]) {
   return depthReached.length ? depthReached.join("、") : "无";
 }
@@ -389,6 +431,7 @@ export function buildJoyQuestionMessages(input: {
   roundCoveredLenses: InterviewEventRecord["roundCoveredLenses"];
   isMeaningfulReply: boolean;
   action: "reply" | "continue_current_event";
+  questionSpec?: AssistantQuestionSpec | null;
   memoryContext?: string | null;
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
@@ -402,6 +445,13 @@ export function buildJoyQuestionMessages(input: {
     sourceEvents: input.events,
     messages: input.messages
   });
+  const fulfillmentQuestionContract =
+    input.dimension === "fulfillment"
+      ? buildFulfillmentQuestionContract({
+          snapshot: input.snapshot,
+          userMessage: input.userMessage
+        })
+      : null;
   const dimensionSpecificQuestionRules =
     input.dimension === "joy"
       ? [
@@ -500,11 +550,16 @@ export function buildJoyQuestionMessages(input: {
             theorySummary: semanticInterpretation.theorySummary,
             thinkingSummaryLead: semanticInterpretation.thinkingSummaryLead,
             followUpFocus: semanticInterpretation.followUpFocus,
+            followUpQuestionHint: semanticInterpretation.followUpQuestionHint,
             antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets
           },
           null,
           2
         )}`,
+        input.questionSpec ? `questionSpec:\n${JSON.stringify(input.questionSpec, null, 2)}` : null,
+        fulfillmentQuestionContract
+          ? `fulfillment question contract:\n${JSON.stringify(fulfillmentQuestionContract, null, 2)}`
+          : null,
         ...(input.memoryContext ? [input.memoryContext] : []),
         `最近可读对话:\n${formatVisibleRecentMessages(input.messages) || "无"}`,
         `最近 assistant 结构化输出:\n${formatStructuredRecentAssistantMessages(input.messages) || "无"}`,

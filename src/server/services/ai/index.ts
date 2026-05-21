@@ -19,7 +19,12 @@ export function getAIProvider(): AIProvider | null {
         logger.info(
           {
             provider: aiProvider.name,
-            endpointConfigured: Boolean(process.env.VOLCENGINE_ARK_ENDPOINT_ID ?? process.env.ARK_ENDPOINT_ID)
+            modelConfigured: Boolean(
+              process.env.VOLCENGINE_ARK_MODEL ??
+                process.env.ARK_MODEL ??
+                process.env.VOLCENGINE_ARK_ENDPOINT_ID ??
+                process.env.ARK_ENDPOINT_ID
+            )
           },
           "AI provider initialized successfully."
         );

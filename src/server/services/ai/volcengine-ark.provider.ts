@@ -32,24 +32,28 @@ export class VolcengineArkProvider implements AIProvider {
   readonly name = "volcengine-ark";
 
   private readonly apiKey: string;
-  private readonly endpointId: string;
+  private readonly model: string;
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
 
   constructor() {
     const apiKey = process.env.VOLCENGINE_ARK_API_KEY ?? process.env.ARK_API_KEY;
-    const endpointId = process.env.VOLCENGINE_ARK_ENDPOINT_ID ?? process.env.ARK_ENDPOINT_ID;
+    const model =
+      process.env.VOLCENGINE_ARK_MODEL ??
+      process.env.ARK_MODEL ??
+      process.env.VOLCENGINE_ARK_ENDPOINT_ID ??
+      process.env.ARK_ENDPOINT_ID;
 
     if (!apiKey) {
       throw new AIProviderError("Missing Volcengine Ark API key.", "MISSING_API_KEY");
     }
 
-    if (!endpointId) {
-      throw new AIProviderError("Missing Volcengine Ark endpoint id.", "MISSING_ENDPOINT_ID");
+    if (!model) {
+      throw new AIProviderError("Missing Volcengine Ark model.", "MISSING_MODEL");
     }
 
     this.apiKey = apiKey;
-    this.endpointId = endpointId;
+    this.model = model;
     this.baseUrl = process.env.VOLCENGINE_ARK_BASE_URL ?? process.env.ARK_BASE_URL ?? DEFAULT_BASE_URL;
     this.timeoutMs = Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   }
@@ -67,7 +71,7 @@ export class VolcengineArkProvider implements AIProvider {
           Authorization: `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: this.endpointId,
+          model: this.model,
           messages,
           temperature,
           max_tokens: maxTokens
@@ -128,7 +132,7 @@ export class VolcengineArkProvider implements AIProvider {
           Authorization: `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: this.endpointId,
+          model: this.model,
           messages,
           temperature,
           max_tokens: maxTokens,

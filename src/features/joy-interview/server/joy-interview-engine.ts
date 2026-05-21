@@ -1,6 +1,7 @@
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
 import type {
+  InferenceEvidenceState,
   InterviewDimension,
   InterviewSessionStatus,
   JoyClosureTarget,
@@ -53,7 +54,10 @@ export interface JoySignalFields {
   gratitudeType?: string | null;
   relationshipSignal?: string | null;
   reciprocityHint?: string | null;
+  evidenceState?: InferenceEvidenceState | null;
 }
+
+export type FulfillmentQuestionTarget = "event_detail" | "progress_evidence" | "value_signal";
 
 interface ExtractJoySignalOptions {
   allowClosureInference?: boolean;
@@ -67,6 +71,13 @@ function normalizeText(value: string) {
 function trimTrailingPunctuation(value: string) {
   return value.replace(/[。！？!?,，；;:\s]+$/g, "").trim();
 }
+
+const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
+  /(完成|推进|收口|落地|交付|解决|学到|练到|积累|帮到|支持|配合|变顺|更熟|整理成(?:能投递|一版简历)?|卡住的部分|收住了|落了地|往前推了一步|真的被推开)/u;
+const FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN =
+  /^(?:很)?(?:充实|踏实|有目标感|有意义|开心|满足|值得|算数|没白过|不算白过)(?:了|吧|啊|呀)?$/u;
+const FULFILLMENT_VALUE_SIGNAL_PATTERN =
+  /(对我来说|我(?:更)?(?:在意|看重|重视)|才会觉得(?:这一天|今天)?(?:算数|没白过|不算白忙|不算空转)|什么样的(?:努力|投入)|力气花得值|真正算数的)/u;
 
 function normalizeGratitudeNeedText(value: string | null | undefined) {
   if (!value) {
@@ -123,6 +134,16 @@ const DELIGHT_SIGNATURE_EVIDENCE_PATTERN =
 const STATE_ONLY_DELIGHT_SIGNATURE_PATTERN =
   /^(?:清醒|更清醒|从容|更从容|有准备|更有准备|轻松|更轻松|放松|更放松|身体上更清醒|身体上更清醒更有准备)$/u;
 const DELIGHT_SIGNATURE_RELATION_PATTERN = /(我会|会被|能把|让我|这种|这样的|内容|节奏|场景|时候|一下子|慢慢|带|逗|好笑|反差|没负担)/u;
+const NEGATIVE_SETUP_DELIGHT_PATTERN =
+  /(?:先|前面|之前|本来|原本)[^。！？!?]{0,24}(?:低落|难过|委屈|生气|沮丧|受挫|被惹毛|被冒犯|吵架|崩|糟糕|不开心)|(?:低落|难过|委屈|生气|沮丧|受挫|被惹毛|被冒犯|吵架|崩|糟糕|不开心)[^。！？!?]{0,24}(?:以后|之后|再|然后)[^。！？!?]{0,24}(?:被安抚|被哄|被安慰|被接住|带起来|带动|惊喜|落差)/u;
+
+function containsNegativeSetup(value: string | null | undefined) {
+  if (!value) {
+    return false;
+  }
+
+  return NEGATIVE_SETUP_DELIGHT_PATTERN.test(value);
+}
 
 export function isUsableJoyDelightSignature(value: string | null | undefined) {
   const normalized = normalizeSlotValue(value, 120);
@@ -139,7 +160,65 @@ export function isUsableJoyDelightSignature(value: string | null | undefined) {
     return false;
   }
 
+  if (containsNegativeSetup(normalized)) {
+    return false;
+  }
+
   return DELIGHT_SIGNATURE_EVIDENCE_PATTERN.test(normalized) && DELIGHT_SIGNATURE_RELATION_PATTERN.test(normalized);
+}
+
+export function getJoyPositiveCoreDriver(snapshot: JoySnapshot) {
+  const joySource = getJoySource(snapshot);
+  const joyMoment = getJoyMoment(snapshot);
+  const meaningNeed = getMeaningNeed(snapshot);
+  const whyItMattered = normalizeSlotValue(snapshot.whyItMattered, 160);
+
+  if (!joySource) {
+    return null;
+  }
+
+  if (containsNegativeSetup(joySource)) {
+    if (/(送花|花|礼物|重新在意|被在意|安抚|被安抚|被哄|关系缓和|和好|修复)/u.test(joyMoment ?? "")) {
+      return normalizeSlotValue("被送花重新在意到的惊喜", 120);
+    }
+
+    if (/(送花|花|礼物)/u.test(joySource)) {
+      return normalizeSlotValue("收到花时被重新在意到的惊喜", 120);
+    }
+
+    if (/(被在意|被安抚|被哄|被接住|和好|修复)/u.test(joySource)) {
+      return normalizeSlotValue(joySource.replace(/(?:前面|之前|本来|原本)[^，。！？!?]{0,24}(?:低落|难过|委屈|生气|沮丧|受挫|被惹毛|被冒犯|吵架|崩|糟糕|不开心)[，,]?\s*/gu, ""), 120);
+    }
+
+    return meaningNeed ?? null;
+  }
+
+  if (
+    /(送花|花|礼物)/u.test(joyMoment ?? "") &&
+    /(低落|难过|委屈|生气|沮丧|受挫|被惹毛|被冒犯|吵架|崩|糟糕|不开心)/u.test(`${joyMoment ?? ""} ${whyItMattered ?? ""}`)
+  ) {
+    return normalizeSlotValue("被送花重新在意到的惊喜", 120);
+  }
+
+  return joySource;
+}
+
+export function getJoyReuseSafety(snapshot: JoySnapshot) {
+  const joySource = getJoySource(snapshot);
+  const delightSignature = getDelightSignature(snapshot);
+  const joyMoment = getJoyMoment(snapshot);
+  const whyItMattered = normalizeSlotValue(snapshot.whyItMattered, 160);
+
+  if (
+    containsNegativeSetup(delightSignature) ||
+    containsNegativeSetup(joySource) ||
+    containsNegativeSetup(joyMoment) ||
+    containsNegativeSetup(whyItMattered)
+  ) {
+    return "needs_guard" as const;
+  }
+
+  return "safe" as const;
 }
 
 function normalizeTags(values: string[] | null | undefined) {
@@ -468,6 +547,7 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
   const gratitudeType = normalizeSlotValue(fields.gratitudeType ?? fields.happinessType, 40);
   const relationshipSignal = normalizeSlotValue(fields.relationshipSignal ?? fields.selfPattern, 120);
   const reciprocityHint = normalizeSlotValue(fields.reciprocityHint, 120);
+  const evidenceState = fields.evidenceState ?? null;
   const precomputedProfile = fields.psychProfile ?? null;
   const rawDelightSignature = normalizeSlotValue(fields.delightSignature, 120);
   const delightSignature = isUsableJoyDelightSignature(rawDelightSignature) ? rawDelightSignature : null;
@@ -543,6 +623,7 @@ export function buildJoySnapshot(fields: JoySignalFields): JoySnapshot {
     gratitudeType,
     relationshipSignal,
     reciprocityHint,
+    evidenceState,
     confidence: clampConfidence(0.22 + filledCount * 0.17 + optionalCount * 0.05 + (delightSignature ? 0.03 : 0)),
     missingSlots
   };
@@ -593,7 +674,8 @@ export function mergeJoySignals(previous: JoySnapshot, candidate: JoySignalField
     gratitudeReason: preferRicherValue(previous.gratitudeReason ?? null, normalizeSlotValue(candidate.gratitudeReason ?? candidate.whyItMattered, 160)),
     gratitudeType: preferRicherValue(previous.gratitudeType ?? null, normalizeSlotValue(candidate.gratitudeType ?? candidate.happinessType, 40)),
     relationshipSignal: preferRicherValue(previous.relationshipSignal ?? null, normalizeSlotValue(candidate.relationshipSignal ?? candidate.selfPattern, 120)),
-    reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(candidate.reciprocityHint, 120))
+    reciprocityHint: preferRicherValue(previous.reciprocityHint ?? null, normalizeSlotValue(candidate.reciprocityHint, 120)),
+    evidenceState: candidate.evidenceState ?? previous.evidenceState ?? null
   });
 }
 
@@ -620,6 +702,14 @@ function inferJoySource(message: string) {
 
   if (directMatch) {
     return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 140) || null;
+  }
+
+  const anchoredSourceMatch = normalized.match(
+    /((?:被重新在意到|重新被在意到|被在意到|被放在心上|被惦记着?|被重视了?)[^。！？!?]{0,40})/u
+  );
+
+  if (anchoredSourceMatch) {
+    return trimTrailingPunctuation(anchoredSourceMatch[1] ?? "").slice(0, 140) || null;
   }
 
   const reasonMatch = normalized.match(/(?:因为|所以|这让我|让我觉得|也让我)(.+)$/);
@@ -711,6 +801,53 @@ function inferFulfillmentValueSignal(message: string) {
 
   if (standardMatch) {
     return trimTrailingPunctuation(standardMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  return null;
+}
+
+export function hasCredibleFulfillmentProgressEvidence(
+  snapshot: Pick<JoySnapshot, "whyItMattered">,
+  recentUserMessage?: string | null
+) {
+  const candidates = [snapshot.whyItMattered, recentUserMessage]
+    .map((value) => normalizeSlotValue(value, 160))
+    .filter((value): value is string => Boolean(value));
+
+  return candidates.some((value) => {
+    if (FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN.test(value)) {
+      return false;
+    }
+
+    return FULFILLMENT_PROGRESS_EVIDENCE_PATTERN.test(value);
+  });
+}
+
+export function hasCredibleFulfillmentValueSignal(
+  snapshot: Pick<JoySnapshot, "selfPattern">,
+  recentUserMessage?: string | null
+) {
+  const candidates = [snapshot.selfPattern, recentUserMessage]
+    .map((value) => normalizeSlotValue(value, 120))
+    .filter((value): value is string => Boolean(value));
+
+  return candidates.some((value) => FULFILLMENT_VALUE_SIGNAL_PATTERN.test(value));
+}
+
+export function resolveFulfillmentQuestionTarget(input: {
+  snapshot: Pick<JoySnapshot, "event" | "whyItMattered" | "selfPattern">;
+  recentUserMessage?: string | null;
+}) {
+  if (!normalizeSlotValue(input.snapshot.event, 160)) {
+    return "event_detail" as const;
+  }
+
+  if (!hasCredibleFulfillmentProgressEvidence(input.snapshot, input.recentUserMessage)) {
+    return "progress_evidence" as const;
+  }
+
+  if (!hasCredibleFulfillmentValueSignal(input.snapshot, input.recentUserMessage)) {
+    return "value_signal" as const;
   }
 
   return null;
@@ -1096,6 +1233,7 @@ function inferStateShift(message: string) {
   if (/(更有活力|有劲|振奋|提起劲)/.test(normalized)) return "更有活力";
   if (/(轻松|松了一口气|放松|舒展开)/.test(normalized)) return "更轻松";
   if (/(被理解|被看见|被接住|被回应)/.test(normalized)) return "更被理解";
+  if (/(被放在心上|被在意|被惦记|被重视)/.test(normalized)) return "更被在意";
   if (/(专注|投入|沉浸|进入状态)/.test(normalized)) return "更专注";
   if (/(踏实|稳定|安心|笃定)/.test(normalized)) return "更踏实";
   if (/(愉悦|开心|高兴|雀跃)/.test(normalized)) return "更愉悦";
@@ -1107,6 +1245,7 @@ function inferMeaningNeed(message: string) {
   const normalized = normalizeText(message);
 
   if (/(被理解|被看见|被回应|连接感|陪伴)/.test(normalized)) return "我在乎被理解和连接";
+  if (/(被放在心上|被在意|被惦记|被重视)/.test(normalized)) return "我在乎被在意和被重视";
   if (/(掌控|推进|做成|搞定|完成)/.test(normalized)) return "我在乎掌控感和推进感";
   if (/(自由|放松|慢下来|喘口气|松弛)/.test(normalized)) return "我在乎自由和松弛感";
   if (/(创作|表达|写|做东西|输出)/.test(normalized)) return "我在乎表达和创造";
@@ -1379,8 +1518,11 @@ export function getNextStage(
     }
 
     if (dimension === "gratitude") {
+      const deniedTargets = new Set(snapshot.evidenceState?.deniedTargets ?? []);
+
       if (!snapshot.gratitudeMoment && !snapshot.event) return "collect_event";
       if (!snapshot.kindAction || (!snapshot.seenNeed && !snapshot.gratitudeReason && !snapshot.whyItMattered)) return "probe_reason";
+      if (deniedTargets.has("relationship_signal")) return "wrap_up";
       if (!snapshot.relationshipSignal && turnCount < 5) return "probe_pattern";
       if (turnCount >= 5 || snapshot.relationshipSignal) return "wrap_up";
 
@@ -1451,6 +1593,11 @@ export function buildAssistantQuestion(
         }
 
         if (getJoyTrack(snapshot) === "delight_track" && !getDelightSignature(snapshot)) {
+          const positiveDriver = getJoyPositiveCoreDriver(snapshot);
+          if (getJoyReuseSafety(snapshot) !== "safe" && positiveDriver) {
+            return `如果把前面的情绪起伏先放在旁边，真正最打动你的，是${trimTrailingPunctuation(positiveDriver)}里的哪一层？`;
+          }
+
           return "如果以后想给自己一点这种开心，你觉得什么样的内容、节奏或场景最容易把你带进去？";
         }
 

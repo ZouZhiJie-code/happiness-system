@@ -8,7 +8,15 @@ import {
   summarizeInterviewProgress
 } from "@/features/joy-interview/server/interview-progress";
 import {
+  applyQuestionSurfaceProtocol,
+  createQuestionSpec,
+  inferQuestionSpecFromQuestion,
+  renderDeterministicRepairTurn
+} from "@/features/joy-interview/server/question-protocol";
+import {
   buildAssistantQuestion,
+  hasCredibleFulfillmentProgressEvidence,
+  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getInactiveSessionMessage,
   getJoyTrack,
@@ -19,6 +27,7 @@ import {
   getMeaningNeed,
   getNextStage,
   getOpeningQuestion,
+  resolveFulfillmentQuestionTarget,
   getStateShift
 } from "@/features/joy-interview/server/joy-interview-engine";
 import {
@@ -43,9 +52,12 @@ import {
 import { extractMemoriesFromSession } from "@/server/services/memory/memory-extraction.service";
 import { retrieveRelevantMemories } from "@/server/services/memory/memory-retrieval.service";
 import type {
+  AssistantQuestionSpec,
   AssistantTurnPayload,
   DraftCompletionMode,
+  GratitudeQuestionSubTarget,
   InputMode,
+  InferenceEvidenceState,
   InterviewDimension,
   InterviewEventRecord,
   InterviewLens,
@@ -81,7 +93,7 @@ type InterviewRespondInput =
 
 type StreamingPhase = "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
-type CanonicalInterviewAction = "reply" | "continue_current_event" | "next_event";
+type CanonicalInterviewAction = "reply" | "continue_current_event" | "repair_current_question" | "next_event";
 const SUMMARY_STREAM_CHUNK_SIZE = 22;
 type InterviewDecisionProgressData =
   | {
@@ -134,7 +146,8 @@ interface PreparedInterviewTurnContext {
   roundMeaningfulReplyCount: number;
   totalMeaningfulReplyCount: number;
   assistantTurn: AssistantTurnPayload | null;
-  assistantAction: "reply" | "continue_current_event" | null;
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question" | null;
+  questionSpec: AssistantQuestionSpec | null;
 }
 
 type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
@@ -163,6 +176,104 @@ const REFLECTION_SCENE_QUESTION_PATTERN =
   /(具体(?:的)?(?:经历|对话|事情|片段)|经历或对话|事情或对话|第一次清晰地感受到|那个时刻具体发生了什么)/u;
 const DIRECT_NEGATION_PATTERN = /^(没有|没|不是|并没有|没有过)(?:[，,。！？!?]|$)/u;
 
+function createEmptyEvidenceState(): InferenceEvidenceState {
+  return {
+    targets: {},
+    deniedTargets: [],
+    deniedHypotheses: [],
+    blockedTransitions: []
+  };
+}
+
+function mergeUniqueStrings(values: Array<string | null | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+}
+
+function getEvidenceState(snapshot: JoySnapshot) {
+  return snapshot.evidenceState ?? createEmptyEvidenceState();
+}
+
+function withEvidenceState(snapshot: JoySnapshot, evidenceState: InferenceEvidenceState): JoySnapshot {
+  return {
+    ...snapshot,
+    evidenceState
+  };
+}
+
+function markConfirmedTarget(
+  state: InferenceEvidenceState,
+  target: GratitudeQuestionSubTarget,
+  strength: "confirmed" | "weak"
+): InferenceEvidenceState {
+  return {
+    ...state,
+    targets: {
+      ...state.targets,
+      [target]: state.targets[target] === "confirmed" ? "confirmed" : strength
+    }
+  };
+}
+
+function applyGratitudeEvidenceState(input: {
+  previous: JoySnapshot;
+  next: JoySnapshot;
+  questionSpec: AssistantQuestionSpec | null;
+  assessment: ReturnType<typeof assessUserTurnMessage>;
+}) {
+  if (input.questionSpec?.subTarget == null && input.questionSpec?.hypothesisKey == null && !input.next.evidenceState) {
+    return input.next;
+  }
+
+  const previousState = getEvidenceState(input.previous);
+  let nextState = {
+    ...previousState,
+    targets: { ...previousState.targets },
+    deniedTargets: [...previousState.deniedTargets],
+    deniedHypotheses: [...previousState.deniedHypotheses],
+    blockedTransitions: [...previousState.blockedTransitions]
+  };
+
+  if (input.assessment.intent === "hypothesis_denial") {
+    if (input.questionSpec?.subTarget) {
+      nextState.deniedTargets = mergeUniqueStrings([...nextState.deniedTargets, input.questionSpec.subTarget]) as GratitudeQuestionSubTarget[];
+    }
+
+    if (input.questionSpec?.hypothesisKey) {
+      nextState.deniedHypotheses = mergeUniqueStrings([...nextState.deniedHypotheses, input.questionSpec.hypothesisKey]) as InferenceEvidenceState["deniedHypotheses"];
+    }
+
+    if (input.questionSpec?.subTarget === "relationship_signal") {
+      nextState.blockedTransitions = mergeUniqueStrings([...nextState.blockedTransitions, "relationship_signal"]);
+    }
+  }
+
+  if (input.next.kindAction) {
+    nextState = markConfirmedTarget(nextState, "kind_action", "confirmed");
+  }
+
+  if (input.next.seenNeed && !nextState.deniedTargets.includes("seen_need")) {
+    nextState = markConfirmedTarget(nextState, "seen_need", "confirmed");
+  }
+
+  if ((input.next.gratitudeReason ?? input.next.whyItMattered) && !nextState.deniedTargets.includes("gratitude_reason")) {
+    nextState = markConfirmedTarget(nextState, "gratitude_reason", "confirmed");
+  }
+
+  if ((input.next.relationshipSignal ?? input.next.selfPattern) && !nextState.deniedTargets.includes("relationship_signal")) {
+    nextState = markConfirmedTarget(nextState, "relationship_signal", "confirmed");
+  }
+
+  const adjustedSnapshot: JoySnapshot = {
+    ...input.next,
+    seenNeed: nextState.deniedTargets.includes("seen_need") ? null : input.next.seenNeed,
+    relationshipSignal: nextState.deniedTargets.includes("relationship_signal") ? null : input.next.relationshipSignal,
+    selfPattern: nextState.deniedTargets.includes("relationship_signal") ? null : input.next.selfPattern,
+    evidenceState: nextState
+  };
+
+  return adjustedSnapshot;
+}
+
 function getAssistantQuestionText(message: InterviewMessage) {
   if (message.role !== "assistant") {
     return null;
@@ -171,6 +282,58 @@ function getAssistantQuestionText(message: InterviewMessage) {
   const question = getAssistantDisplayParts(message.assistantPayload).question.trim();
 
   return question || null;
+}
+
+function getLatestUserMessageText(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (message.role === "user") {
+      const content = message.content.trim();
+      return content || null;
+    }
+  }
+
+  return null;
+}
+
+function getLatestAssistantQuestionSpec(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (message.role !== "assistant") {
+      continue;
+    }
+
+    const payload = message.assistantPayload;
+
+    if (payload?.questionSpec) {
+      return payload.questionSpec;
+    }
+
+    const question = getAssistantQuestionText(message);
+
+    if (!question) {
+      continue;
+    }
+
+    return inferQuestionSpecFromQuestion({
+      dimension: "reflection",
+      stage: "probe_pattern",
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0,
+        missingSlots: []
+      },
+      question
+    });
+  }
+
+  return null;
 }
 
 function normalizeQuestionText(value: string | null | undefined) {
@@ -202,6 +365,212 @@ function areQuestionsEquivalent(left: string | null | undefined, right: string |
   );
 }
 
+type FulfillmentQuestionValidationCode =
+  | "target_mismatch"
+  | "semantic_duplicate"
+  | "unnatural_phrasing"
+  | "too_abstract";
+
+type FulfillmentQuestionIntent = "event_detail" | "progress_evidence" | "value_signal" | "unknown";
+
+function classifyFulfillmentQuestionTarget(question: string): FulfillmentQuestionIntent {
+  const normalized = question.replace(/\s+/g, "");
+
+  if (/(算数的标准|什么样的努力|什么样的投入|力气花得值|对你来说算数|对你来说值得)/u.test(normalized)) {
+    return "value_signal";
+  }
+
+  if (/(没有白过|不算白过|推进了什么|完成了什么|积累了什么|帮到了什么|有分量的地方)/u.test(normalized)) {
+    return "progress_evidence";
+  }
+
+  if (/(具体在做什么|那一刻你在做什么|发生了什么)/u.test(normalized)) {
+    return "event_detail";
+  }
+
+  return "unknown";
+}
+
+function isAbstractFulfillmentProgressQuestion(question: string) {
+  const normalized = question.replace(/\s+/g, "");
+
+  return /(有什么不同|哪里不一样|这种感觉|这种状态|这种没有停滞不前的感觉)/u.test(normalized);
+}
+
+function buildFulfillmentQuestionFallback(input: {
+  target: "progress_evidence" | "value_signal";
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+  recentUserMessage: string | null;
+  validationCode: FulfillmentQuestionValidationCode;
+}) {
+  if (input.target === "progress_evidence") {
+    const experience = input.snapshot.event?.trim();
+
+    if (input.validationCode === "too_abstract" && experience && /(简历)/u.test(experience)) {
+      return "哪一步最让你感觉到，简历这件事终于不是原地打转了？";
+    }
+
+    if (experience && /(简历)/u.test(experience)) {
+      return "简历里哪一部分真的被你推进了，才让你觉得今天没有白过？";
+    }
+
+    return "这件事里，哪一步真的被你推进了，才让你觉得今天没有白过？";
+  }
+
+  if (input.validationCode === "unnatural_phrasing") {
+    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  }
+
+  const normalizedMessage = (input.userMessage ?? input.recentUserMessage ?? "").trim();
+
+  if (normalizedMessage && /(朝自己想要的方向前进|一点点地在达成|没有停滞不前)/u.test(normalizedMessage)) {
+    return "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+  }
+
+  if (input.validationCode === "semantic_duplicate") {
+    const experience = input.snapshot.event?.trim();
+
+    if (experience && /(简历)/u.test(experience)) {
+      return "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+    }
+  }
+
+  if (normalizedMessage && /(花得值|值得|算数)/u.test(normalizedMessage)) {
+    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  }
+
+  const progressEvidence = input.snapshot.whyItMattered?.trim();
+
+  if (progressEvidence) {
+    return `回头看“${progressEvidence}”这层进展，什么样的投入会让你觉得自己的力气花得值？`;
+  }
+
+  return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+}
+
+function validateFulfillmentQuestion(input: {
+  question: string;
+  snapshot: JoySnapshot;
+  userMessage: string | null;
+  recentAssistantQuestions: string[];
+}) {
+  const target = resolveFulfillmentQuestionTarget({
+    snapshot: input.snapshot,
+    recentUserMessage: input.userMessage
+  });
+
+  if (!target) {
+    return null;
+  }
+
+  const classifiedTarget = classifyFulfillmentQuestionTarget(input.question);
+  const normalizedQuestion = input.question.replace(/\s+/g, "");
+
+  if (
+    /(意味着什么样的努力算数了|值得感标准|价值判断|什么才算有效努力|这对你意味着什么|这说明了什么|你如何理解这种充实)/u.test(
+      normalizedQuestion
+    )
+  ) {
+    return "unnatural_phrasing" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && classifiedTarget !== "value_signal") {
+    return "target_mismatch" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "progress_evidence" && classifiedTarget === "event_detail") {
+    return "target_mismatch" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "progress_evidence" && isAbstractFulfillmentProgressQuestion(input.question)) {
+    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (
+    target === "value_signal" &&
+    input.recentAssistantQuestions.some((question) => /没有白过|不算白过/u.test(question)) &&
+    /没有白过|不算白过/u.test(input.question)
+  ) {
+    return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && input.userMessage && hasCredibleFulfillmentProgressEvidence(input.snapshot, input.userMessage)) {
+    if (classifiedTarget === "progress_evidence") {
+      return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+    }
+  }
+
+  if (
+    target === "value_signal" &&
+    classifiedTarget === "value_signal" &&
+    input.recentAssistantQuestions.some((question) => classifyFulfillmentQuestionTarget(question) === "value_signal")
+  ) {
+    return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  if (target === "value_signal" && !hasCredibleFulfillmentValueSignal(input.snapshot, input.userMessage) && classifiedTarget === "unknown") {
+    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
+  return null;
+}
+
+function applyFulfillmentQuestionGuard(
+  input: PreparedInterviewTurnContext,
+  assistantTurn: AssistantTurnPayload
+) {
+  if (input.session.dimension !== "fulfillment") {
+    return assistantTurn;
+  }
+
+  const question = assistantTurn.question.trim();
+
+  if (!question) {
+    return assistantTurn;
+  }
+
+  const recentAssistantQuestions = input.session.messages
+    .map((message) => getAssistantQuestionText(message))
+    .filter((value): value is string => Boolean(value))
+    .slice(-4);
+  const recentUserMessage = getLatestUserMessageText(input.session.messages);
+  const validationCode = validateFulfillmentQuestion({
+    question,
+    snapshot: input.nextSnapshot,
+    userMessage: input.userMessage ?? recentUserMessage,
+    recentAssistantQuestions
+  });
+
+  if (!validationCode) {
+    return assistantTurn;
+  }
+
+  const target = resolveFulfillmentQuestionTarget({
+    snapshot: input.nextSnapshot,
+    recentUserMessage: input.userMessage ?? recentUserMessage
+  });
+
+  if (!target || target === "event_detail") {
+    return assistantTurn;
+  }
+
+  const fallbackQuestion = buildFulfillmentQuestionFallback({
+    target,
+    snapshot: input.nextSnapshot,
+    userMessage: input.userMessage,
+    recentUserMessage,
+    validationCode
+  });
+
+  return {
+    ...assistantTurn,
+    insight: "",
+    thinkingSummary: assistantTurn.thinkingSummary,
+    question: fallbackQuestion
+  };
+}
+
 function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
   for (let index = messages.length - 1; index > 0; index -= 1) {
     const message = messages[index];
@@ -221,6 +590,70 @@ function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
       question: previousQuestion,
       answer: message.content.trim()
     };
+  }
+
+  return null;
+}
+
+function questionTouchesGratitudeTarget(question: string, target: GratitudeQuestionSubTarget) {
+  const normalized = question.replace(/\s+/g, "");
+
+  switch (target) {
+    case "seen_need":
+      return /(看见|需要|撑不住|压力|压住|难处|慌|虚弱)/u.test(normalized);
+    case "gratitude_reason":
+      return /(为什么感谢|为什么重要|才会这么感谢|重要的是|感谢的原因)/u.test(normalized);
+    case "relationship_signal":
+      return /(关系|值得珍惜|提醒|以后也想|这类回应)/u.test(normalized);
+    case "kind_action":
+      return /(具体做了哪一下|帮到你的哪一下|做了什么)/u.test(normalized);
+  }
+}
+
+function createGratitudeActionFallbackQuestionSpec(previousSpec: AssistantQuestionSpec | null | undefined): AssistantQuestionSpec {
+  return {
+    target: "insight_evidence",
+    subTarget: "kind_action",
+    hypothesisKey: null,
+    stageIntent: previousSpec?.stageIntent ?? "advance",
+    surfaceLevel: "concrete_anchor",
+    anchorText: previousSpec?.anchorText ?? null,
+    repairCount: previousSpec?.repairCount ?? 0
+  };
+}
+
+function findLatestGratitudeHypothesisDenial(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index > 0; index -= 1) {
+    const message = messages[index];
+    const previousMessage = messages[index - 1];
+
+    if (message.role !== "user" || previousMessage.role !== "assistant") {
+      continue;
+    }
+
+    const assessment = assessUserTurnMessage(message.content);
+    const subTarget = previousMessage.assistantPayload?.questionSpec?.subTarget;
+
+    if (assessment.intent !== "hypothesis_denial" || !subTarget) {
+      continue;
+    }
+
+    return {
+      subTarget,
+      question: previousMessage.assistantPayload?.question ?? previousMessage.content
+    };
+  }
+
+  return null;
+}
+
+function getLatestAssistantQuestion(messages: InterviewMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const question = getAssistantQuestionText(messages[index]!);
+
+    if (question) {
+      return question;
+    }
   }
 
   return null;
@@ -247,6 +680,67 @@ function deriveInterviewLenses(snapshot: JoySnapshot): InterviewLens[] {
     getMeaningNeed(snapshot) || (getJoyTrack(snapshot) === "delight_track" && getDelightSignature(snapshot)) ? "meaning_pattern" : null,
     getManualClue(snapshot) || getDelightSignature(snapshot) ? "self_pattern" : null
   ].filter(Boolean) as InterviewLens[]);
+}
+
+function countSnapshotSignals(snapshot: JoySnapshot) {
+  return [
+    snapshot.event,
+    snapshot.feeling,
+    snapshot.whyItMattered,
+    snapshot.selfPattern,
+    snapshot.joyMoment,
+    snapshot.joySource,
+    snapshot.stateShift,
+    snapshot.meaningNeed,
+    snapshot.manualClue,
+    snapshot.delightSignature,
+    snapshot.frictionPoint,
+    snapshot.repeatCondition,
+    snapshot.controllableFactor,
+    snapshot.nextAttempt,
+    snapshot.kindAction,
+    snapshot.seenNeed,
+    snapshot.gratitudeReason,
+    snapshot.relationshipSignal
+  ].filter(Boolean).length;
+}
+
+function hasNewProgressAchieved(input: {
+  activeEvent: InterviewEventRecord;
+  nextSnapshot: JoySnapshot;
+  nextLenses: InterviewLens[];
+  questionSpec: AssistantQuestionSpec | null;
+  isMeaningfulReply: boolean;
+}) {
+  if (!input.isMeaningfulReply) {
+    return false;
+  }
+
+  if (input.nextLenses.some((lens) => !input.activeEvent.coveredLenses.includes(lens))) {
+    return true;
+  }
+
+  if (countSnapshotSignals(input.nextSnapshot) > countSnapshotSignals(input.activeEvent.snapshot)) {
+    return true;
+  }
+
+  switch (input.questionSpec?.target) {
+    case "event_anchor":
+      return Boolean(input.nextSnapshot.event && !input.activeEvent.snapshot.event);
+    case "reaction_evidence":
+      return Boolean(
+        (input.nextSnapshot.feeling || input.nextSnapshot.stateShift) &&
+          !(input.activeEvent.snapshot.feeling || input.activeEvent.snapshot.stateShift)
+      );
+    case "insight_evidence":
+      return Boolean(input.nextSnapshot.whyItMattered && !input.activeEvent.snapshot.whyItMattered);
+    case "judgment_clue":
+      return Boolean(input.nextSnapshot.selfPattern && !input.activeEvent.snapshot.selfPattern);
+    case "prior_assumption":
+      return Boolean(input.nextSnapshot.happinessType && !input.activeEvent.snapshot.happinessType);
+    default:
+      return false;
+  }
 }
 
 function isJoyCoreReadyForDraft(snapshot: JoySnapshot) {
@@ -310,6 +804,20 @@ function getGratitudeReason(snapshot: JoySnapshot) {
 
 function getGratitudeRelationshipSignal(snapshot: JoySnapshot) {
   return snapshot.relationshipSignal ?? snapshot.selfPattern;
+}
+
+function isGratitudeEvidencePartial(snapshot: JoySnapshot) {
+  const evidenceState = getEvidenceState(snapshot);
+  const hasMoment = Boolean(getGratitudeMoment(snapshot));
+  const hasAction = Boolean(snapshot.kindAction);
+  const hasConfirmedReason = evidenceState.targets.gratitude_reason === "confirmed";
+  const hasConfirmedNeed = evidenceState.targets.seen_need === "confirmed";
+  const deniedDeeper =
+    evidenceState.deniedTargets.includes("seen_need") ||
+    evidenceState.deniedTargets.includes("gratitude_reason") ||
+    evidenceState.deniedTargets.includes("relationship_signal");
+
+  return hasMoment && hasAction && (hasConfirmedReason || hasConfirmedNeed || Boolean(snapshot.gratitudeReason)) && deniedDeeper;
 }
 
 function isGratitudeCoreReadyForDraft(snapshot: JoySnapshot) {
@@ -381,6 +889,25 @@ function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): 
       offerChoice: true,
       choiceKind: "boundary_insufficient",
       choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。",
+    },
+    meta: {
+      depthReached: []
+    }
+  };
+}
+
+function buildRepairEscalationAssistantTurn(): AssistantTurnPayload {
+  return {
+    insight: "我先不继续换问法了，免得这轮对话一直卡在理解题目上。",
+    thinkingSummary: "",
+    analysis: "同一问题连续 repair 已到第 3 次；不再继续重问，改为低压 choice。",
+    question: "如果你愿意，我们可以只补一句关键内容；也可以换个片段，或者先整理当前版本。",
+    stateUpdate: {
+      turnPhase: "choice",
+      shouldEndDimension: false,
+      offerChoice: true,
+      choiceKind: "boundary_insufficient",
+      choiceReason: "连续几次都在修同一道问题，继续换问法的收益已经很低。"
     },
     meta: {
       depthReached: []
@@ -867,12 +1394,14 @@ function buildThinkingSummaryFocus(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
-  assistantAction: "reply" | "continue_current_event";
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question";
 }) {
   const joyTrack = getJoyTrack(input.snapshot);
+  const assistantAction =
+    input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction;
 
   if (input.dimension === "fulfillment") {
-    if (input.assistantAction === "continue_current_event") {
+    if (assistantAction === "continue_current_event") {
       return "，顺着这段投入里真正算数的部分继续说清。";
     }
 
@@ -891,7 +1420,7 @@ function buildThinkingSummaryFocus(input: {
   }
 
   if (input.dimension === "reflection") {
-    if (input.assistantAction === "continue_current_event") {
+    if (assistantAction === "continue_current_event") {
       return "，顺着这次新理解背后的证据和判断变化继续说清。";
     }
 
@@ -910,7 +1439,7 @@ function buildThinkingSummaryFocus(input: {
   }
 
   if (input.dimension === "improvement") {
-    if (input.assistantAction === "continue_current_event") {
+    if (assistantAction === "continue_current_event") {
       return "，顺着关键条件、具体卡点和可控小调整继续拆清。";
     }
 
@@ -929,7 +1458,7 @@ function buildThinkingSummaryFocus(input: {
   }
 
   if (input.dimension === "gratitude") {
-    if (input.assistantAction === "continue_current_event") {
+    if (assistantAction === "continue_current_event") {
       return "，顺着这份善意回应了什么需要继续说清。";
     }
 
@@ -947,7 +1476,7 @@ function buildThinkingSummaryFocus(input: {
     }
   }
 
-  if (input.assistantAction === "continue_current_event") {
+  if (assistantAction === "continue_current_event") {
     if (joyTrack === "delight_track" && getDelightSignature(input.snapshot)) {
       return "，顺着这条轻快乐线索继续确认它是不是真的站得住。";
     }
@@ -1003,13 +1532,13 @@ function buildFollowUpThinkingSummary(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
-  assistantAction: "reply" | "continue_current_event";
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question";
 }) {
   const semanticInterpretation = buildDimensionSemanticInterpretation({
     dimension: input.dimension,
     snapshot: input.snapshot,
     stage: input.stage,
-    action: input.assistantAction
+    action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction
   });
 
   return `${semanticInterpretation.thinkingSummaryLead}${semanticInterpretation.followUpFocus || buildThinkingSummaryFocus(input)}`
@@ -1098,7 +1627,7 @@ function normalizeThinkingSummary(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
-  assistantAction: "reply" | "continue_current_event" | null;
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question" | null;
   summary: string;
   userMessage?: string | null;
 }) {
@@ -1112,7 +1641,7 @@ function normalizeThinkingSummary(input: {
     dimension: input.dimension,
     snapshot: input.snapshot,
     stage: input.stage,
-    action: input.assistantAction ?? "reply"
+    action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction ?? "reply"
   });
 
   if (
@@ -1130,7 +1659,8 @@ function normalizeThinkingSummary(input: {
     dimension: input.dimension,
     stage: input.stage,
     snapshot: input.snapshot,
-    assistantAction: input.assistantAction ?? "reply"
+    assistantAction:
+      input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction ?? "reply"
   });
 }
 
@@ -1192,6 +1722,26 @@ function applyContinueQuestionGuard(
     }
   }
 
+  if (input.session.dimension === "gratitude") {
+    const deniedTargets = new Set(input.nextSnapshot.evidenceState?.deniedTargets ?? []);
+    const latestDenial = findLatestGratitudeHypothesisDenial(input.session.messages);
+
+    if (
+      (assistantTurn.questionSpec?.subTarget && deniedTargets.has(assistantTurn.questionSpec.subTarget)) ||
+      (assistantTurn.questionSpec?.hypothesisKey &&
+        input.nextSnapshot.evidenceState?.deniedHypotheses.includes(assistantTurn.questionSpec.hypothesisKey))
+      || (latestDenial && questionTouchesGratitudeTarget(question, latestDenial.subTarget))
+    ) {
+      return {
+        ...assistantTurn,
+        insight: "",
+        thinkingSummary: "",
+        question: "撇开原因判断不说，最让你想记住的还是他具体帮到你的哪一下？",
+        questionSpec: createGratitudeActionFallbackQuestionSpec(assistantTurn.questionSpec ?? input.questionSpec)
+      };
+    }
+  }
+
   const recentAssistantQuestions = input.session.messages
     .map((message) => getAssistantQuestionText(message))
     .filter((value): value is string => Boolean(value))
@@ -1232,7 +1782,20 @@ function getChoiceCompletionMode(input: {
   isMeaningfulReply: boolean;
   nextEventTurnCount: number;
   nextRoundMeaningfulReplyCount: number;
+  nextLenses: InterviewLens[];
+  questionSpec: AssistantQuestionSpec | null;
 }) {
+  const newProgressAchieved =
+    input.activeEvent.explorationRound <= 1
+      ? true
+      : hasNewProgressAchieved({
+          activeEvent: input.activeEvent,
+          nextSnapshot: input.nextSnapshot,
+          nextLenses: input.nextLenses,
+          questionSpec: input.questionSpec,
+          isMeaningfulReply: input.isMeaningfulReply
+        });
+
   if (input.dimension === "joy") {
     if (hasJoyStableClosure(input.nextSnapshot)) {
       if (!input.isMeaningfulReply || input.nextStage !== "wrap_up") {
@@ -1243,7 +1806,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 4 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+      return newProgressAchieved ? "complete" : null;
     }
 
     if (!isJoyCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1254,7 +1817,7 @@ function getChoiceCompletionMode(input: {
       return input.nextEventTurnCount >= 3 ? "user_override_partial" : null;
     }
 
-    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+    return newProgressAchieved ? "user_override_partial" : null;
   }
 
   if (input.dimension === "fulfillment") {
@@ -1267,7 +1830,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+      return newProgressAchieved ? "complete" : null;
     }
 
     if (!isFulfillmentCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1278,7 +1841,7 @@ function getChoiceCompletionMode(input: {
       return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
     }
 
-    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+    return newProgressAchieved ? "user_override_partial" : null;
   }
 
   if (input.dimension === "reflection") {
@@ -1291,7 +1854,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+      return newProgressAchieved ? "complete" : null;
     }
 
     if (!isReflectionCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1302,7 +1865,7 @@ function getChoiceCompletionMode(input: {
       return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
     }
 
-    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+    return newProgressAchieved ? "user_override_partial" : null;
   }
 
   if (input.dimension === "improvement") {
@@ -1315,7 +1878,7 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+      return newProgressAchieved ? "complete" : null;
     }
 
     if (!isImprovementCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1326,7 +1889,7 @@ function getChoiceCompletionMode(input: {
       return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
     }
 
-    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+    return newProgressAchieved ? "user_override_partial" : null;
   }
 
   if (input.dimension === "gratitude") {
@@ -1339,7 +1902,11 @@ function getChoiceCompletionMode(input: {
         return input.nextEventTurnCount >= 3 ? "complete" : null;
       }
 
-      return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+      return newProgressAchieved ? "complete" : null;
+    }
+
+    if (input.nextStage === "wrap_up" && isGratitudeEvidencePartial(input.nextSnapshot)) {
+      return "user_override_partial";
     }
 
     if (!isGratitudeCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
@@ -1350,7 +1917,7 @@ function getChoiceCompletionMode(input: {
       return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
     }
 
-    return input.nextRoundMeaningfulReplyCount >= 1 ? "user_override_partial" : null;
+    return newProgressAchieved ? "user_override_partial" : null;
   }
 
   if (!input.isMeaningfulReply) {
@@ -1369,7 +1936,7 @@ function getChoiceCompletionMode(input: {
     return input.nextEventTurnCount >= 3 ? "complete" : null;
   }
 
-  return input.nextRoundMeaningfulReplyCount >= 1 ? "complete" : null;
+  return newProgressAchieved ? "complete" : null;
 }
 
 function looksLikeNoJoyMessage(message: string | null) {
@@ -1520,7 +2087,7 @@ function applyAssistantTurnFallbacks(
 }
 
 function buildAssistantGenerationInput(input: PreparedInterviewTurnContext & {
-  assistantAction: "reply" | "continue_current_event";
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question";
 }) {
   return {
     dimension: input.session.dimension,
@@ -1538,7 +2105,8 @@ function buildAssistantGenerationInput(input: PreparedInterviewTurnContext & {
     coveredLenses: input.coveredLenses,
     roundCoveredLenses: input.roundCoveredLenses,
     isMeaningfulReply: input.isMeaningfulReply,
-    action: input.assistantAction
+    action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction,
+    questionSpec: input.questionSpec
   } as const;
 }
 
@@ -1547,9 +2115,11 @@ function finalizeAssistantTurn(
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
   const guardedAssistantTurn = applyContinueQuestionGuard(input, assistantTurn);
-  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, guardedAssistantTurn);
+  const fulfillmentGuardedAssistantTurn = applyFulfillmentQuestionGuard(input, guardedAssistantTurn);
+  const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, fulfillmentGuardedAssistantTurn);
   const finalizedAssistantTurn = {
     ...fallbackAssistantTurn,
+    questionSpec: fallbackAssistantTurn.questionSpec ?? input.questionSpec ?? null,
     thinkingSummary: normalizeThinkingSummary({
       dimension: input.session.dimension,
       stage: input.nextStage,
@@ -1560,7 +2130,7 @@ function finalizeAssistantTurn(
     })
   };
 
-  if (input.assistantAction === "continue_current_event") {
+  if (input.assistantAction === "continue_current_event" || input.assistantAction === "repair_current_question") {
     return {
       ...input,
       assistantAction: null,
@@ -1831,7 +2401,14 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
       roundMeaningfulReplyCount: resumedEvent.roundMeaningfulReplyCount,
       totalMeaningfulReplyCount: resumedEvent.totalMeaningfulReplyCount,
       assistantTurn: null,
-      assistantAction: "continue_current_event"
+      assistantAction: "continue_current_event",
+      questionSpec: createQuestionSpec({
+        dimension: resumedSession.dimension,
+        stage: resumedEvent.stage,
+        snapshot: resumedEvent.snapshot,
+        stageIntent: "resume",
+        previousSpec: getLatestAssistantQuestionSpec(resumedSession.messages)
+      })
     } satisfies PreparedInterviewTurnContext;
   }
 
@@ -1893,26 +2470,89 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
       roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
       totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
       assistantTurn: boundaryAssistantTurn,
-      assistantAction: null
+      assistantAction: null,
+      questionSpec: null
+    } satisfies PreparedInterviewTurnContext;
+  }
+
+  if (assessment.intent === "question_repair") {
+    const repairSpec = createQuestionSpec({
+      dimension: session.dimension,
+      stage: activeEvent.stage,
+      snapshot: activeEvent.snapshot,
+      stageIntent: "repair",
+      previousSpec: getLatestAssistantQuestionSpec(session.messages),
+      surfaceLevel:
+        assessment.repairSignal === "simplify"
+          ? "simplified"
+          : assessment.repairSignal === "switch_angle"
+            ? "concrete_anchor"
+            : undefined
+    });
+    const shouldEscalateRepair = repairSpec.repairCount >= 3;
+
+    return {
+      session,
+      activeEvent,
+      nextSnapshot: activeEvent.snapshot,
+      nextTurnCount: session.turnCount,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+      nextStage: activeEvent.stage,
+      nextEventStatus: shouldEscalateRepair ? "ready_for_choice" : "active",
+      nextProgressData: shouldEscalateRepair
+        ? {
+            kind: "boundary_insufficient",
+            reason: "我先不继续换问法了。你可以只补一句关键内容，也可以换个片段，或者先整理当前版本。"
+          }
+        : null,
+      isReadyForDraft: Boolean(session.journalEntry),
+      userMessage: input.userMessage,
+      inputMode: input.inputMode,
+      isMeaningfulReply: false,
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+      assistantTurn: shouldEscalateRepair
+        ? buildRepairEscalationAssistantTurn()
+        : renderDeterministicRepairTurn({
+            dimension: session.dimension,
+            stage: activeEvent.stage,
+            snapshot: activeEvent.snapshot,
+            spec: repairSpec,
+            previousQuestion: getLatestAssistantQuestion(session.messages),
+            hadReflectionSceneDenial: session.dimension === "reflection" && Boolean(findLatestReflectionSceneDenial(session.messages))
+          }),
+      assistantAction: null,
+      questionSpec: shouldEscalateRepair ? null : repairSpec
     } satisfies PreparedInterviewTurnContext;
   }
 
   const isMeaningfulReply = assessment.isMeaningful;
-  const nextSnapshot = isMeaningfulReply
+  const rawNextSnapshot = assessment.shouldExtractSnapshot
     ? await extractJoySnapshotWithAI({
         session,
         userMessage: input.userMessage
       })
     : activeEvent.snapshot;
-  const nextTurnCount = session.turnCount + (isMeaningfulReply ? 1 : 0);
-  const nextEventTurnCount = activeEvent.totalMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
+  const nextSnapshot =
+    session.dimension === "gratitude"
+      ? applyGratitudeEvidenceState({
+          previous: activeEvent.snapshot,
+          next: rawNextSnapshot,
+          questionSpec: getLatestAssistantQuestionSpec(session.messages),
+          assessment
+        })
+      : rawNextSnapshot;
+  const nextTurnCount = session.turnCount + (assessment.shouldAdvanceTurn ? 1 : 0);
+  const nextEventTurnCount = activeEvent.totalMeaningfulReplyCount + (assessment.shouldAdvanceRound ? 1 : 0);
   const derivedNextStage = getNextStage(session.dimension, nextSnapshot, nextEventTurnCount);
   const nextLenses = deriveInterviewLenses(nextSnapshot);
   const coveredLenses = uniqueLenses(activeEvent.coveredLenses, nextLenses);
   const roundCoveredLenses = isMeaningfulReply
     ? uniqueLenses(activeEvent.roundCoveredLenses, nextLenses)
     : activeEvent.roundCoveredLenses;
-  const roundMeaningfulReplyCount = activeEvent.roundMeaningfulReplyCount + (isMeaningfulReply ? 1 : 0);
+  const roundMeaningfulReplyCount = activeEvent.roundMeaningfulReplyCount + (assessment.shouldAdvanceRound ? 1 : 0);
   const totalMeaningfulReplyCount = nextEventTurnCount;
   const redirectReason = getImprovementRedirectReason({
     dimension: session.dimension,
@@ -1930,7 +2570,14 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     userMessage: input.userMessage,
     isMeaningfulReply,
     nextEventTurnCount,
-    nextRoundMeaningfulReplyCount: roundMeaningfulReplyCount
+    nextRoundMeaningfulReplyCount: roundMeaningfulReplyCount,
+    nextLenses,
+    questionSpec: createQuestionSpec({
+      dimension: session.dimension,
+      stage: derivedNextStage,
+      snapshot: nextSnapshot,
+      stageIntent: "advance"
+    })
   });
   const shouldOfferChoiceNow = Boolean(choiceCompletionMode);
   const shouldOfferRedirectNow = Boolean(redirectReason) && !shouldOfferChoiceNow;
@@ -1972,7 +2619,15 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
       : shouldOfferRedirectNow && redirectReason
         ? buildRedirectAssistantTurn(redirectReason, nextSnapshot)
         : null,
-    assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply"
+    assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply",
+    questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
+      ? null
+      : createQuestionSpec({
+          dimension: session.dimension,
+          stage: nextStage,
+          snapshot: nextSnapshot,
+          stageIntent: "advance"
+        })
   } satisfies PreparedInterviewTurnContext;
 }
 
@@ -2182,7 +2837,8 @@ export async function streamJoyInterviewResponse(
     summary: "",
     question: ""
   };
-  const shouldBufferContinuationOutput = prepared.assistantAction === "continue_current_event";
+  const shouldBufferContinuationOutput =
+    prepared.assistantAction === "continue_current_event" || prepared.session.dimension === "fulfillment";
   let emittedSummary = "";
   let activePhase: StreamingPhase | null = "thinking";
   const emitPhase = async (phase: StreamingPhase) => {

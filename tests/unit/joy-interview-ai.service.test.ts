@@ -12,8 +12,9 @@ const {
   runDraftQualityGate: vi.fn()
 }));
 
-const { buildJoyDraftMessages } = vi.hoisted(() => ({
-  buildJoyDraftMessages: vi.fn()
+const { buildJoyDraftMessages, buildJoyQuestionMessages } = vi.hoisted(() => ({
+  buildJoyDraftMessages: vi.fn(),
+  buildJoyQuestionMessages: vi.fn()
 }));
 
 const { createAIRequestLog } = vi.hoisted(() => ({
@@ -44,7 +45,7 @@ vi.mock("@/features/interview/server/draft-policies", () => ({
 vi.mock("@/features/joy-interview/prompts/joy-prompts", () => ({
   buildJoyDraftMessages,
   buildJoyExtractMessages: vi.fn(),
-  buildJoyQuestionMessages: vi.fn()
+  buildJoyQuestionMessages
 }));
 
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
@@ -70,6 +71,7 @@ vi.mock("@/server/services/ai/structured-output", () => ({
 import {
   createAssistantReplySegmentParser,
   extractJoySnapshotWithAI,
+  generateJoyAssistantTurn,
   generateJoyDraftWithAI
 } from "@/server/services/interview/joy-interview-ai.service";
 import {
@@ -293,6 +295,89 @@ describe("createAssistantReplySegmentParser", () => {
     await expect(parser.finish()).resolves.toEqual({
       thinkingSummary: "",
       question: "你觉得自己在关系里最在乎什么？"
+    });
+  });
+});
+
+describe("generateJoyAssistantTurn", () => {
+  beforeEach(() => {
+    buildDraftBrief.mockReset();
+    buildDraftWritingProfile.mockReset();
+    createFallbackDraft.mockReset();
+    runDraftQualityGate.mockReset();
+    buildJoyDraftMessages.mockReset();
+    buildJoyQuestionMessages.mockReset();
+    createAIRequestLog.mockReset();
+    info.mockReset();
+    warn.mockReset();
+    error.mockReset();
+    getAIProvider.mockReset();
+    completeStructuredOutput.mockReset();
+  });
+
+  it("rewrites theory-laden reflection questions into concrete natural Chinese and preserves repair spec", async () => {
+    const provider = {
+      name: "mock-provider",
+      complete: vi.fn().mockResolvedValue({
+        content:
+          "<<SUMMARY>>这次思考开始碰到你判断进展的方式。<<QUESTION>>你现在多了一条什么判断依据？"
+      })
+    };
+    getAIProvider.mockReturnValue(provider);
+
+    const session = buildSession({
+      dimension: "reflection",
+      stage: "probe_pattern",
+      snapshot: {
+        event: "今天看完一个项目复盘",
+        feeling: "警醒",
+        whyItMattered: "我意识到自己以前太容易把忙碌当成进展",
+        happinessType: "判断校准型",
+        selfPattern: null,
+        confidence: 0.74,
+        missingSlots: ["viewpointShift"]
+      }
+    });
+    const activeEvent = session.events[0]!;
+
+    const turn = await generateJoyAssistantTurn({
+      dimension: "reflection",
+      sessionId: session.id,
+      stage: "probe_pattern",
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "这个问题看不懂，换一个",
+      messages: session.messages,
+      nextTurnCount: session.turnCount,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "reason"],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: false,
+      action: "continue_current_event",
+      questionSpec: {
+        target: "judgment_clue",
+        stageIntent: "repair",
+        surfaceLevel: "simplified",
+        anchorText: "今天看完一个项目复盘",
+        repairCount: 1
+      }
+    });
+
+    expect(turn.question).toBe(
+      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
+    );
+    expect(turn.question).not.toContain("判断依据");
+    expect(turn.questionSpec).toEqual({
+      target: "judgment_clue",
+      subTarget: null,
+      hypothesisKey: null,
+      stageIntent: "repair",
+      surfaceLevel: "simplified",
+      anchorText: "今天看完一个项目复盘",
+      repairCount: 1
     });
   });
 });

@@ -22,7 +22,11 @@ const genericShortReplies = new Set(["嗯", "嗯嗯", "哦", "啊", "好", "好�
 export interface UserTurnAssessment {
   normalizedMessage: string;
   isMeaningful: boolean;
-  intent: "content" | "low_signal" | "boundary_stop" | "hostile_boundary";
+  intent: "content" | "low_signal" | "question_repair" | "hypothesis_denial" | "boundary_stop" | "hostile_boundary";
+  shouldExtractSnapshot: boolean;
+  shouldAdvanceTurn: boolean;
+  shouldAdvanceRound: boolean;
+  repairSignal: "rephrase" | "simplify" | "switch_angle" | null;
 }
 
 export interface InterviewProgressSummary {
@@ -41,12 +45,20 @@ function normalizeMessage(value: string) {
 export function assessUserTurnMessage(message: string): UserTurnAssessment {
   const normalizedMessage = normalizeMessage(message);
   const compactMessage = normalizedMessage.replace(/\s+/g, "");
+  const repairPattern =
+    /(看不懂|没看懂|什么意思|啥意思|太抽象|太绕|换一个|换个问法|换种说法|换个说法|说简单点|简单点说|说白一点|说直白点|听不太懂|听不懂|问题太抽象|这个问题太抽象)/u;
+  const hypothesisDenialPattern =
+    /(没有关联|不是因为这个|不会是因为这个|我怎么知道|他只是(?:简单|顺手|刚好|单纯)|只是顺手|只是简单推荐|只是想让我看真实情况|不是这个意思|不是这层|不是因为这个原因)/u;
 
   if (!normalizedMessage) {
     return {
       normalizedMessage,
       isMeaningful: false,
-      intent: "low_signal"
+      intent: "low_signal",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
     };
   }
 
@@ -58,7 +70,41 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     return {
       normalizedMessage,
       isMeaningful: true,
-      intent: hostilePattern.test(compactMessage) ? "hostile_boundary" : "boundary_stop"
+      intent: hostilePattern.test(compactMessage) ? "hostile_boundary" : "boundary_stop",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
+    };
+  }
+
+  if (repairPattern.test(normalizedMessage)) {
+    const repairSignal = /(换一个|换个问法|换种说法|换个说法)/u.test(normalizedMessage)
+      ? "switch_angle"
+      : /(简单点|直白点|说白一点|看不懂|没看懂|听不懂)/u.test(normalizedMessage)
+        ? "simplify"
+        : "rephrase";
+
+    return {
+      normalizedMessage,
+      isMeaningful: false,
+      intent: "question_repair",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal
+    };
+  }
+
+  if (hypothesisDenialPattern.test(normalizedMessage)) {
+    return {
+      normalizedMessage,
+      isMeaningful: true,
+      intent: "hypothesis_denial",
+      shouldExtractSnapshot: true,
+      shouldAdvanceTurn: true,
+      shouldAdvanceRound: true,
+      repairSignal: null
     };
   }
 
@@ -66,7 +112,11 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     return {
       normalizedMessage,
       isMeaningful: false,
-      intent: "low_signal"
+      intent: "low_signal",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
     };
   }
 
@@ -74,7 +124,11 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     return {
       normalizedMessage,
       isMeaningful: false,
-      intent: "low_signal"
+      intent: "low_signal",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
     };
   }
 
@@ -85,14 +139,22 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     return {
       normalizedMessage,
       isMeaningful: false,
-      intent: "low_signal"
+      intent: "low_signal",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
     };
   }
 
   return {
     normalizedMessage,
     isMeaningful: true,
-    intent: "content"
+    intent: "content",
+    shouldExtractSnapshot: true,
+    shouldAdvanceTurn: true,
+    shouldAdvanceRound: true,
+    repairSignal: null
   };
 }
 

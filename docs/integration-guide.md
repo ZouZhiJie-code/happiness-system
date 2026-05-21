@@ -186,6 +186,9 @@ data: {
 - `happinessType` 对应内部 `reflectionType`，当前为 `规律发现型 / 方向优势型 / 判断校准型`
 - `selfPattern` 对应内部 `viewpointShift`，语义为“视角变化或判断线索”
 - 如果用户已经明确回答“没有某段具体经历 / 对话”，但随后通过 `continue_current_event` 继续深聊，系统不能再重复追同一字段；后续问题必须降压到更容易回答的具体锚点，例如某个顾虑、画面、比较时刻或选择瞬间
+- 如果用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等 repair 表达，服务端会识别 `question_repair` 并直接确定性重问当前 target；这轮不会增加 `turnCount`，也不会推进 snapshot、round 或完成进度
+- `reflection` repair 当前按 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 五类 target 渲染模板；如果已命中过“没有具体经历 / 对话”的 guard，repair 不会再回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点
+- 同一问题连续第 `3` 次 repair 时，系统不再继续换问法，而会返回 `pendingDecision.kind = "boundary_insufficient"`，actions 仍为 `continue_current_event / next_event / pause_session`
 - 如果用户拒绝继续深挖，且 `trigger + insight` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`
 - 如果用户直接输入“总结日志 / 整理成日志 / 生成一下日志”等自然语言整理请求，也按同一条 partial 收束路径处理，不会先继续抽取或追问
 - 如果用户拒绝继续深挖但没有具体触发片段或新理解，会返回 `pendingDecision.kind = "boundary_insufficient"`，actions 固定为 `continue_current_event / next_event / pause_session`
@@ -692,6 +695,8 @@ POST /api/profile/portrait
 - 方向优势：能识别“更适合 / 更擅长 / 更有方向”的判断资产
 - 判断校准：能识别“原来误判，现在判断依据变清楚”的视角变化
 - 空泛想法：只有“今天想了很多 / 有点焦虑”时，不应硬写触发片段或判断线索
+- repair：当用户回复“这个问题看不懂，换一个”时，返回新的确定性问题，而不是原句重问；这轮 `turnCount`、snapshot 和 round 进度都不变化
+- repair escalation：连续第 `3` 次 repair 时，应进入低压 choice，而不是继续机械追问
 - 用户拒绝继续深挖或自然语言要求整理日志：已有 `trigger + insight` 后，应允许 `user_override_partial` 生成当前版本日志
 - 用户拒绝继续且材料不足：不再硬追问，应展示“只补一句 / 换一个片段 / 先退出”
 

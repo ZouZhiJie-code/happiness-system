@@ -1,6 +1,8 @@
 import {
   getDelightSignature,
   getJoyMoment,
+  getJoyPositiveCoreDriver,
+  getJoyReuseSafety,
   getJoySource,
   getJoyTrack,
   getMeaningNeed,
@@ -115,6 +117,8 @@ function buildGenericStageFocus(input: {
 function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput): DimensionSemanticInterpretation {
   const joyMoment = shorten(getJoyMoment(input.snapshot), 30);
   const joySource = shorten(getJoySource(input.snapshot), 42);
+  const positiveCoreDriver = shorten(getJoyPositiveCoreDriver(input.snapshot), 42);
+  const joyReuseSafety = getJoyReuseSafety(input.snapshot);
   const stateShift = shorten(getStateShift(input.snapshot), 20);
   const meaningNeed = shorten(getMeaningNeed(input.snapshot), 28);
   const manualClue = shorten(getManualClue(input.snapshot), 42);
@@ -129,15 +133,23 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
 
   let themeKey = "delight_lifted";
   let themeLabel = "被轻轻带起来";
-  let theorySummary = joySource
-    ? `这份开心的重点，不是事情本身，而是“${joySource}”会把状态轻轻带起来。`
+  let theorySummary = positiveCoreDriver
+    ? `这份开心真正有分量的核心，不是前面的情绪起伏，而是“${positiveCoreDriver}”这一层真的打动了人。`
+    : joySource
+      ? `这份开心的重点，不是事情本身，而是“${joySource}”会把状态轻轻带起来。`
     : "这份开心成立，不是因为事情大，而是因为它真的把状态带轻了一点。";
-  let thinkingSummaryLead = joySource
-    ? `真正有分量的，不是事情本身，而是“${joySource}”会把状态带起来`
+  let thinkingSummaryLead = positiveCoreDriver
+    ? `真正有分量的，不是前面的起伏，而是“${positiveCoreDriver}”这一层真的把人打动了`
+    : joySource
+      ? `真正有分量的，不是事情本身，而是“${joySource}”会把状态带起来`
     : "这份开心已经不是简单复述事件，而是在指向那个真正会把状态带轻的点";
   let narrativePremise = "正文要写清楚：发生了什么只是入口，真正该留下的是它为什么会把状态带轻。";
-  let closurePremise = "结尾优先收在这类开心会怎么把人带进状态，不要硬拔成人生意义。";
+  let closurePremise =
+    joyReuseSafety === "safe"
+      ? "结尾优先收在这类开心会怎么把人带进状态，不要硬拔成人生意义。"
+      : "结尾先收在真正打动人的正向核心，不要把前面的低落、冒犯或情绪起伏写成可复用条件。";
   let antiFlatteningTargets = ["不要只写发生了什么", "要写真正把状态带轻的点"];
+  let followUpQuestionHint: string | null = null;
 
   if (/(陪伴|家人|朋友|一起|聊天|相处|接住|有人在)/u.test(joined) && /(连接|陪伴|接住|关系|安心|稳定)/u.test(joined)) {
     themeKey = "being_received";
@@ -253,6 +265,10 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
     appendUnique(titleCandidates, "状态轻起来", "慢慢松下来");
   }
 
+  if (joyReuseSafety !== "safe" && positiveCoreDriver) {
+    followUpQuestionHint = `如果把前面的情绪起伏先放在旁边，真正最打动你的，是${positiveCoreDriver}里的哪一层？`;
+  }
+
   appendUnique(titleCandidates, manualClue, delightSignature, joySource, stateShift, joyMoment);
 
   const followUpFocus = buildGenericStageFocus({
@@ -269,7 +285,9 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
     probeReasonFocus: "，处理重点是分辨它为什么偏偏会在这里让人有感觉。",
     probePatternFocus:
       joyTrack === "delight_track"
-        ? "，再看清这类开心通常会被什么样的内容、节奏或场景带出来。"
+        ? joyReuseSafety === "safe"
+          ? "，再看清这类开心通常会被什么样的内容、节奏或场景带出来。"
+          : "，先分清真正值得靠近的正向核心是什么，不把前面的低落或落差当成要复用的条件。"
         : "，再把这份开心沉淀成更稳定的在乎、线索或方向感。",
     wrapUpFocus: "，最后确认这篇开心日志最该留下的那一层。"
   });
@@ -286,6 +304,7 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
     titleTheme: titleCandidates[0] ?? themeLabel,
     titleCandidates,
     antiFlatteningTargets,
+    followUpQuestionHint,
     dimensionMeta: {
       joyMoment: joyMoment ?? null,
       joySource: joySource ?? null,
@@ -609,11 +628,14 @@ function buildImprovementInterpretation(input: BuildDimensionSemanticInterpretat
 }
 
 function buildGratitudeInterpretation(input: BuildDimensionSemanticInterpretationInput): DimensionSemanticInterpretation {
+  const deniedTargets = new Set(input.snapshot.evidenceState?.deniedTargets ?? []);
   const gratitudeMoment = shorten(input.snapshot.gratitudeMoment ?? input.snapshot.event, 34);
   const kindAction = shorten(input.snapshot.kindAction, 42);
-  const seenNeed = shorten(input.snapshot.seenNeed, 42);
+  const seenNeed = deniedTargets.has("seen_need") ? null : shorten(input.snapshot.seenNeed, 42);
   const gratitudeReason = shorten(input.snapshot.gratitudeReason ?? input.snapshot.whyItMattered, 42);
-  const relationshipSignal = shorten(input.snapshot.relationshipSignal ?? input.snapshot.selfPattern, 42);
+  const relationshipSignal = deniedTargets.has("relationship_signal")
+    ? null
+    : shorten(input.snapshot.relationshipSignal ?? input.snapshot.selfPattern, 42);
   const joined = [gratitudeMoment, kindAction, seenNeed, gratitudeReason, relationshipSignal].filter(Boolean).join(" ");
   const titleCandidates: string[] = [];
 

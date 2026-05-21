@@ -898,6 +898,7 @@ export function InterviewShell() {
   });
   const conversationResetHandledRef = useRef(0);
   const interviewResponseAbortControllerRef = useRef<AbortController | null>(null);
+  const interviewSubmitLockRef = useRef(false);
   const sessionStateRef = useRef({
     sessionId,
     sessionDimension,
@@ -1282,6 +1283,7 @@ export function InterviewShell() {
   const cancelInterviewResponse = useCallback(() => {
     interviewResponseAbortControllerRef.current?.abort();
     interviewResponseAbortControllerRef.current = null;
+    interviewSubmitLockRef.current = false;
     activeStreamIdRef.current += 1;
     clearStreamState();
     setIsBusy(false);
@@ -1650,7 +1652,7 @@ export function InterviewShell() {
           action: "continue_current_event" | "next_event";
         }
   ) {
-    if (isBusy) {
+    if (isBusy || interviewSubmitLockRef.current) {
       return;
     }
 
@@ -1671,6 +1673,7 @@ export function InterviewShell() {
       return;
     }
 
+    interviewSubmitLockRef.current = true;
     setInterviewIssue(null);
     if (payload.action === "reply") {
       setInput("");
@@ -1870,6 +1873,7 @@ export function InterviewShell() {
 
       setInterviewIssue(actionSpecificIssue);
     } finally {
+      interviewSubmitLockRef.current = false;
       if (interviewResponseAbortControllerRef.current === abortController) {
         interviewResponseAbortControllerRef.current = null;
       }
