@@ -113,7 +113,7 @@ npm install
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_ENDPOINT_ID=""
+VOLCENGINE_ARK_MODEL=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入

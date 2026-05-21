@@ -500,6 +500,7 @@ export function buildJoyQuestionMessages(input: {
             theorySummary: semanticInterpretation.theorySummary,
             thinkingSummaryLead: semanticInterpretation.thinkingSummaryLead,
             followUpFocus: semanticInterpretation.followUpFocus,
+            followUpQuestionHint: semanticInterpretation.followUpQuestionHint,
             antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets
           },
           null,

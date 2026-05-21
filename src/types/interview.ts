@@ -232,6 +232,7 @@ export interface DimensionSemanticInterpretation {
   titleCandidates: string[];
   antiFlatteningTargets: string[];
   dimensionMeta?: Record<string, string | null>;
+  followUpQuestionHint?: string | null;
 }
 
 export interface DraftBrief {

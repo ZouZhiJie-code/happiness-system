@@ -33,6 +33,47 @@ describe("joy interview engine", () => {
     expect(snapshot.meaningNeed ?? snapshot.manualClue ?? snapshot.joySource).toBeTruthy();
   });
 
+  it("keeps joy fallback extraction moving on short follow-up answers about being re-noticed", () => {
+    const afterReason = extractJoySignals(
+      "joy",
+      "被重新在意到。",
+      {
+        event: "他先让我有点生气，后来送了我一朵花",
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        joyMoment: "他先让我有点生气，后来送了我一朵花",
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        confidence: 0.39,
+        missingSlots: ["joySource", "stateShift", "delightSignature"]
+      }
+    );
+
+    expect(afterReason.joySource).toContain("重新在意");
+
+    const afterStateShift = extractJoySignals(
+      "joy",
+      "那一下会觉得自己被放在心上。",
+      afterReason,
+      {
+        allowClosureInference: false,
+        allowOptionalSignalInference: false
+      }
+    );
+
+    expect(afterStateShift.stateShift).toBeTruthy();
+    expect(afterStateShift.meaningNeed).toBeTruthy();
+    expect(getNextStage("joy", afterStateShift, 4)).toBe("probe_pattern");
+    expect(buildAssistantQuestion("joy", "probe_pattern", afterStateShift)).not.toBe(
+      "那一刻最直接的变化是什么？它是怎么把你慢慢带进那个状态的？"
+    );
+  });
+
   it("keeps probing until a manual clue is formed", () => {
     const stage = getNextStage(
       {
@@ -166,6 +207,47 @@ describe("joy interview engine", () => {
     expect(delightQuestion).not.toContain("还是");
     expect(meaningQuestion).toBe("如果回头看，这类开心更像在提醒你什么？");
     expect(meaningQuestion).not.toContain("使用说明书");
+  });
+
+  it("does not treat a negative setup as a reusable delight cue", () => {
+    const snapshot = buildJoySnapshot({
+      joyMoment: "本来在生气，后来对方突然送了一朵花",
+      joySource: "前面情绪很低，后来突然被送花安抚到的惊喜",
+      stateShift: "更愉悦",
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: "我会被这种先低落再被安抚的落差一下子带起来",
+      directionSignal: null,
+      valueImpact: null,
+      durability: null,
+      tags: ["关系"]
+    });
+
+    expect(snapshot.delightSignature).toBeNull();
+    expect(hasJoyStableClosure(snapshot)).toBe(false);
+    expect(getNextStage(snapshot, 3)).toBe("probe_pattern");
+  });
+
+  it("keeps joy follow-up focused on the positive driver instead of recreating the negative setup", () => {
+    const question = buildAssistantQuestion("joy", "probe_pattern", {
+      event: "本来被对方惹得有点生气，后来他送了一朵花",
+      feeling: "更愉悦",
+      whyItMattered: "因为前面的低落让后面的惊喜更强",
+      happinessType: null,
+      selfPattern: null,
+      joyMoment: "本来被对方惹得有点生气，后来他送了一朵花",
+      joySource: "被重新在意和安抚到的惊喜",
+      stateShift: "更愉悦",
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      confidence: 0.76,
+      missingSlots: ["delightSignature"]
+    });
+
+    expect(question).toContain("被送花");
+    expect(question).not.toMatch(/低落|铺垫|落差/u);
+    expect(question).not.toContain("内容、节奏或场景");
   });
 
   it("creates a draft after a completed conversation", () => {
