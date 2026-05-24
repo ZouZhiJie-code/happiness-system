@@ -2,10 +2,23 @@ const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
   mockRequireCurrentUserFromRequest: vi.fn()
 }));
 
+const { mockProbeAIProvider } = vi.hoisted(() => ({
+  mockProbeAIProvider: vi.fn()
+}));
+
 vi.mock("@/server/services/auth/current-user.service", () => ({
   AuthenticationError: class AuthenticationError extends Error {},
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
+
+vi.mock("@/server/services/ai", async () => {
+  const actual = await vi.importActual<typeof import("@/server/services/ai")>("@/server/services/ai");
+
+  return {
+    ...actual,
+    probeAIProvider: mockProbeAIProvider
+  };
+});
 
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +28,7 @@ describe("runtime env readback api", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    mockProbeAIProvider.mockReset();
     mockRequireCurrentUserFromRequest.mockResolvedValue({
       id: "user-1",
       username: "daily_light_01"
@@ -102,6 +116,10 @@ describe("runtime env readback api", () => {
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "dailylight.example.com");
     vi.stubEnv("VERCEL_DEPLOYMENT_ID", "dpl_123");
     vi.stubEnv("APP_URL", "https://dailylight.example.com");
+    vi.stubEnv("AI_PROVIDER", "volcengine-ark");
+    vi.stubEnv("VOLCENGINE_ARK_API_KEY", "ark-api-key");
+    vi.stubEnv("VOLCENGINE_ARK_ENDPOINT_ID", "ep-live-ready");
+    vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
 
     const response = await GET(
       new Request("https://preview.example.vercel.app/api/debug/runtime-env", {
@@ -130,6 +148,65 @@ describe("runtime env readback api", () => {
         branchUrl: "https://project-git-feature.example.vercel.app",
         projectProductionUrl: "https://dailylight.example.com",
         appUrl: "https://dailylight.example.com"
+      },
+      ai: {
+        provider: "volcengine-ark",
+        available: true,
+        state: "ready",
+        code: "READY",
+        issues: [],
+        configSummary: {
+          hasApiKey: true,
+          hasModel: true,
+          hasBaseUrl: true,
+          modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+          baseUrlHost: "ark.cn-beijing.volces.com"
+        },
+        probe: null
+      }
+    });
+  });
+
+  it("returns AI config diagnostics and an optional probe result", async () => {
+    vi.stubEnv("ENABLE_RUNTIME_ENV_READBACK", "1");
+    vi.stubEnv("RUNTIME_ENV_READBACK_TOKEN", "secret-token");
+    vi.stubEnv("AI_PROVIDER", "volcengine-ark");
+    vi.stubEnv("VOLCENGINE_ARK_API_KEY", "$VOLCENGINE_ARK_API_KEY\\n");
+    vi.stubEnv("VOLCENGINE_ARK_ENDPOINT_ID", "ep-live-ready");
+    vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "$VOLCENGINE_ARK_BASE_URL\\n");
+    mockProbeAIProvider.mockResolvedValueOnce({
+      ok: false,
+      attempted: false,
+      provider: "volcengine-ark",
+      code: "PLACEHOLDER_API_KEY",
+      status: null,
+      latencyMs: null
+    });
+
+    const response = await GET(
+      new Request("https://preview.example.vercel.app/api/debug/runtime-env?probe=1", {
+        headers: {
+          "x-runtime-readback-token": "secret-token",
+          cookie: "dl_session=valid-session"
+        }
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockProbeAIProvider).toHaveBeenCalledTimes(1);
+    expect(await response.json()).toMatchObject({
+      ai: {
+        provider: "volcengine-ark",
+        available: false,
+        state: "config_invalid",
+        code: "PLACEHOLDER_API_KEY",
+        issues: ["PLACEHOLDER_API_KEY", "PLACEHOLDER_BASE_URL"],
+        probe: {
+          ok: false,
+          attempted: false,
+          provider: "volcengine-ark",
+          code: "PLACEHOLDER_API_KEY"
+        }
       }
     });
   });
