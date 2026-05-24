@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-21`，这个仓库的真实状态是：
+截至 `2026-05-25`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -57,6 +57,13 @@
 - `gratitude` 的 `stitched_moments` supporting-scene 质量门现在只接受仍保留明确照顾动作和足够场景锚点的自然压缩：把“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这类语义反转会继续被拦住。
 - `respond/stream` 会原样透传 provider 的 `delta.text` 空白字符，不再在 SSE chunk 边界折叠空格或吞掉换行；用户流式阶段看到的文本与最终保存的助手消息保持一致。
 - `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
+- 发布主线当前已经收口到首批邀请制内测可放行状态：
+  - 正式域名：`https://dlight.cc.cd`
+  - `2026-05-25` 已在 fresh preview `https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app` 上补齐完整 protected-preview smoke 与 `register -> login -> session -> start -> reply -> draft generate -> draft save` 正向证据
+  - 当前 release source of truth：
+    - `docs/plans/2026-05-24-launch-overview.md`
+    - `docs/plans/2026-05-24-launch-final-checklist.md`
+    - `docs/plans/2026-05-24-env-runtime-audit.md`
 
 ## 当前产品状态
 
@@ -184,11 +191,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-19`，当前自动化现实为：
+截至 `2026-05-25`，当前自动化现实为：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 通过
 - `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
-- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npm run lint` = `0 error / 31 warnings`
+- 当前最新验证快照：`npm test` = `94` 个测试文件、`718` 个测试通过；`npm run build` 通过；`npm run lint` = `0 error / 34 warnings`
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
 ### 6. 首条托管平台主线

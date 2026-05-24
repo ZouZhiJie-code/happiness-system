@@ -1,6 +1,6 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-05-19`
+最后更新：`2026-05-25`
 
 ## 目标
 

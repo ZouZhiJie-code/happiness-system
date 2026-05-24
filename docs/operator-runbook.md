@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-21`
+最后更新：`2026-05-25`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -437,11 +437,11 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-19`，当前基线是：
+截至 `2026-05-25`，当前基线是：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 以最近一次回归结果为准
 - `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
-- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npx tsc --noEmit` 通过；`npm run build` 通过；`npm run lint` = `0 error / 31 warnings`
+- 当前最新验证快照：`npm test` = `94` 个测试文件、`718` 个测试通过；`npx tsc --noEmit` 通过；`npm run build` 通过；`npm run lint` = `0 error / 34 warnings`
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 5. 托管平台主线
@@ -457,6 +457,12 @@ npm test
 - 最小 smoke 脚本：`scripts/http-smoke.mjs`
 - protected preview 自动化 smoke 脚本：`scripts/product-smoke.mjs`
 - production / preview URL 合同 runtime 直读脚本：`scripts/runtime-env-readback.mjs`
+
+当前 release 文档结论已经收口为 `Go`：
+
+- 正式域名：`https://dlight.cc.cd`
+- 最新 preview 闭环证据：`https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app`
+- source of truth：`docs/plans/2026-05-24-launch-overview.md`、`docs/plans/2026-05-24-launch-final-checklist.md`、`docs/plans/2026-05-24-env-runtime-audit.md`
 
 ### 5.1 Preview 部署后最小检查
 
@@ -555,19 +561,19 @@ node scripts/runtime-env-readback.mjs "https://your-target-host" runtime
 
 ## 6. 高频故障排查
 
-### 5.0 `npm run build` 仍然失败
+### 5.0 `npm run build` 失败时怎么判断
 
 症状：
 - `next build` 能完成编译，但会停在 lint / type checking 阶段
 
 当前已知现实：
-- 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`
-- 这不是本轮语义解释层改动单独引入的问题
+- 截至 `2026-05-25`，主仓 `npm run build` 已通过
+- 如果后续再次失败，优先按当次真实报错定位，而不是沿用旧的“仓库本来就 build 不过”判断
 
 处理：
 1. 先确认是不是新改动引起的新增错误
-2. 如果报错仍然集中在 `src/server/repositories/*` 的 `no-explicit-any`，按现有 lint debt 单独收尾，不要误判成当前功能改动造成
-3. 如果还同时看到 `tests/unit/calendar-presentation.test.ts` 的 mixed pill 视觉区分断言失败，先确认它是否仍符合当前月格单字 badge 的真实样式语义，再决定是更新断言还是恢复视觉区分
+2. 如果报错仍然集中在 lint debt 或断言漂移，按当前失败文件逐条修，不要误判成“历史已知且无需处理”
+3. 如果同时涉及 worktree 或旧快照里的历史日志，先确认你跑的是主仓测试集，而不是历史 worktree 噪声
 
 ### 5.1 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
 

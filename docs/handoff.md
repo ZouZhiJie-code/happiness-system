@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-21`
+最后更新：`2026-05-25`
 
 ## 1. 当前阶段结论
 
@@ -30,6 +30,11 @@
 - 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
 - 管理员分析能力当前基于 `ADMIN_USERNAMES` 白名单控制；非管理员访问页面走 `notFound()`，管理员 API 走 `requireAdminRequest()`。
 - 仓库已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：前者承接注册、登录、私有页访问、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；后者记录管理员查看会话 / 日志正文的审计日志。
+- 发布主线当前已经收口到首批邀请制内测 `Go` 状态：
+  - 正式域名：`https://dlight.cc.cd`
+  - 国内用户实测已确认“可正常访问”，满足本轮邀请制内测口径
+  - `2026-05-25` fresh preview `https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app` 已补齐完整 protected-preview smoke 与 `draft save` 深链证据
+  - 当前 release source of truth 以 `docs/plans/2026-05-24-launch-overview.md`、`docs/plans/2026-05-24-launch-final-checklist.md`、`docs/plans/2026-05-24-env-runtime-audit.md` 为准
 
 ## 2. 截至 2026-05-03 已经落成的东西
 
@@ -223,7 +228,7 @@
 
 - joy / fulfillment / reflection 日志正文已经从结构卡转向正文优先，但文风和完成度还要继续打磨
 
-## 4. 2026-05-21 当前可直接接续的交接点
+## 4. 2026-05-25 当前可直接接续的交接点
 
 - 已完成代码改动：
   - `src/features/joy-interview/server/question-protocol.ts`
@@ -245,13 +250,14 @@
   - 当用户措辞更像“换一个 / 换种说法”时，repair 的 `questionSpec.surfaceLevel` 可能直接落到 `concrete_anchor`；这是当前协议的一部分，不是回归
 - improvement 已完成理论规格、结构字段、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成收束、日志生成、质量门、fallback draft、标题治理和自动化验收样例，但还没有完成端到端产品验收
 - 跨天长期汇总、稳定规律沉淀还没开始做
+- 发布文档已经并入 `main`；如果后续还要继续推进发布相关工作，优先新开 worktree 承接，不要复用已完成的 `launch-lane-b-env`
 
 ### 技术层
 
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的多维度引擎
 - `JoyEntry` 已经承担多维度容器角色，但数据库命名还是 joy 历史命名
 - `/api/transcribe` 仍是 stub，没有真实转写模型
-- `npm run build` 当前仍会停在既有 ESLint `no-explicit-any` 错误（集中在 `src/server/repositories/*`）上；这不是本轮语义解释层改动引入的新问题，但在继续交付前需要单独收尾
+- 主仓 `npm run build` 当前已通过；如果后续再次失败，按当次真实报错排查，不要继续沿用旧的“仓库本来就 build 不过”判断
 
 ## 4. 当前代码与文档的 canonical 关系
 

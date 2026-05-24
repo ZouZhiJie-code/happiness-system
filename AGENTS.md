@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-05-21` 的代码为准：
+当前真实状态以 `2026-05-25` 的代码为准：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -412,6 +412,13 @@ gratitude 理论翻译基线：
 - `POST /api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`；session hydrate 也会返回 `entryDate`。
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `respond/stream` 的 provider 原始 `delta.text` 会原样透传给前端，不对任意流式增量单独 trim 或折叠空白；只有完整文本或系统生成的补发文本才允许分块。
+- 发布主线当前已经收口到首批邀请制内测可放行状态：
+  - 正式域名：`https://dlight.cc.cd`
+  - 最新 release docs source of truth：
+    - `docs/plans/2026-05-24-launch-overview.md`
+    - `docs/plans/2026-05-24-launch-final-checklist.md`
+    - `docs/plans/2026-05-24-env-runtime-audit.md`
+  - `2026-05-25` fresh preview `https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app` 已补齐完整 protected-preview smoke 与 `draft save` 深链证据
 - `/admin/analytics` 当前是管理员工作台，不向普通用户暴露；筛查和下钻主要通过 URL 查询参数驱动页面重新取数。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
 - `transcribe` 现在还是占位 stub，不是真实语音转写。
@@ -468,7 +475,7 @@ gratitude 理论翻译基线：
   - 再重启 `npm run dev`
 - 如果 `npm run build` 失败：
   - 先区分是不是这次改动引起的
-  - 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`，以及 `tests/unit/interview-shell.test.tsx` 的旧断言漂移；这些问题会让 full build / full test 继续报红，不能误记成“本次改动引入”
+  - 截至 `2026-05-25`，主仓 `npm run build` 已通过；如再次失败，先按当前报错定位，不要套用这条旧的 lint debt 判断
 - 如果用户看到结构化访谈提交错误：
   - `NETWORK_UNAVAILABLE`：先确认 `npm run dev` 仍在运行，再刷新页面
   - `MESSAGE_TOO_LONG`：单次回复超过 `1200` 字，拆成两段发送
@@ -487,9 +494,9 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-05-08`，本地测试基线为：
-- `44` 个测试文件
-- `473` 个测试；`npx tsc --noEmit` 有 `2` 个类型错误（`memory-extraction.service.test.ts` 和 `memory-retrieval.service.test.ts` 中 JoySnapshot/JoyEntryDraft 类型不匹配），`npm test` 有 `11` 个失败（含 `calendar-presentation.test.ts` 的旧规则断言和 memory 相关测试的类型问题）。
+截至 `2026-05-25`，本地测试基线为：
+- `94` 个测试文件
+- `718` 个测试；`npm test` 通过，`npm run build` 通过，`npm run lint` 为 `0 error / 34 warnings`。
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点
