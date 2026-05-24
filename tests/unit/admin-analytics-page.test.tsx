@@ -75,6 +75,8 @@ import AdminAnalyticsPage from "@/app/admin/analytics/page";
 describe("admin analytics page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-21T04:00:00.000Z"));
 
     mockRequireAdminPage.mockResolvedValue({
       id: "user-1",
@@ -229,6 +231,10 @@ describe("admin analytics page", () => {
       title: "今天的记录",
       content: "## 开心\n今天和家人一起吃饭聊天。"
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("keeps in-page navigation links from scrolling back to the top", async () => {
