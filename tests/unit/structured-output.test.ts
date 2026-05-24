@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { completeStructuredOutput, parseStructuredJson } from "@/server/services/ai/structured-output";
-import type { AIProvider } from "@/server/services/ai/ai-provider";
+import { AIProviderError, type AIProvider } from "@/server/services/ai/ai-provider";
 
 const responseSchema = z.object({
   value: z.string()
@@ -62,5 +62,33 @@ describe("structured output", () => {
 
     expect(result).toBeNull();
     expect(attempts).toEqual(["mock-provider:false:INVALID_SCHEMA", "mock-provider:false:INVALID_SCHEMA"]);
+  });
+
+  it("surfaces the upstream provider error code when the provider returns a structured http failure", async () => {
+    const attempts: string[] = [];
+    const provider: AIProvider = {
+      name: "mock-provider",
+      async complete() {
+        throw new AIProviderError(
+          '{"error":{"code":"AccountOverdueError","message":"billing overdue"}}',
+          "UPSTREAM_HTTP_ERROR",
+          403
+        );
+      }
+    };
+
+    const result = await completeStructuredOutput({
+      provider,
+      stage: "extract",
+      schema: responseSchema,
+      messages: [],
+      maxAttempts: 1,
+      onAttempt: (attempt) => {
+        attempts.push(`${attempt.provider}:${attempt.success}:${attempt.errorCode}`);
+      }
+    });
+
+    expect(result).toBeNull();
+    expect(attempts).toEqual(["mock-provider:false:ACCOUNTOVERDUEERROR"]);
   });
 });

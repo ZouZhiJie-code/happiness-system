@@ -1,6 +1,5 @@
 import { AIProviderError, type AICompletionParams, type AIEmbeddingParams, type AIEmbeddingResult, type AIProvider } from "@/server/services/ai/ai-provider";
-
-const DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
+import { DEFAULT_BASE_URL, readVolcengineArkConfig } from "@/server/services/ai/provider-config";
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 function extractMessageContent(content: unknown) {
@@ -37,24 +36,31 @@ export class VolcengineArkProvider implements AIProvider {
   private readonly timeoutMs: number;
 
   constructor() {
-    const apiKey = process.env.VOLCENGINE_ARK_API_KEY ?? process.env.ARK_API_KEY;
-    const model =
-      process.env.VOLCENGINE_ARK_MODEL ??
-      process.env.ARK_MODEL ??
-      process.env.VOLCENGINE_ARK_ENDPOINT_ID ??
-      process.env.ARK_ENDPOINT_ID;
+    const config = readVolcengineArkConfig();
 
-    if (!apiKey) {
+    if (config.issues.includes("MISSING_API_KEY")) {
       throw new AIProviderError("Missing Volcengine Ark API key.", "MISSING_API_KEY");
     }
 
-    if (!model) {
+    if (config.issues.includes("PLACEHOLDER_API_KEY")) {
+      throw new AIProviderError("Volcengine Ark API key still looks like an env placeholder.", "INVALID_API_KEY");
+    }
+
+    if (config.issues.includes("MISSING_MODEL")) {
       throw new AIProviderError("Missing Volcengine Ark model.", "MISSING_MODEL");
     }
 
-    this.apiKey = apiKey;
-    this.model = model;
-    this.baseUrl = process.env.VOLCENGINE_ARK_BASE_URL ?? process.env.ARK_BASE_URL ?? DEFAULT_BASE_URL;
+    if (config.issues.includes("PLACEHOLDER_MODEL")) {
+      throw new AIProviderError("Volcengine Ark model still looks like an env placeholder.", "INVALID_MODEL");
+    }
+
+    if (config.issues.includes("PLACEHOLDER_BASE_URL") || config.issues.includes("INVALID_BASE_URL")) {
+      throw new AIProviderError("Volcengine Ark base URL is invalid.", "INVALID_BASE_URL");
+    }
+
+    this.apiKey = config.apiKey!;
+    this.model = config.model!;
+    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     this.timeoutMs = Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   }
 
