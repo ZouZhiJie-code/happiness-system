@@ -53,7 +53,7 @@
 | Profile / Memory / Settings | `绿` | 画像门槛、fallback portrait、设置页不拖主流程已验收 |
 | 部署 / 数据库 / 环境变量 | `绿` | Vercel lane、共享环境数据库 readiness 和 runtime readback 证据已收口 |
 | CI / 工具链 | `绿` | `typecheck + test + build + lint` 已纳入 CI |
-| AI 访谈质量结论完整性 | `黄` | `AI-02 / AI-04 / AI-05` 已显式写为通过；`AI-01 / AI-03` 仍缺正式结论回填 |
+| AI 访谈质量结论完整性 | `绿` | `AI-01 ~ AI-05` 已在验收矩阵中显式写出当前判定 |
 | 最终发布环境回归 | `黄` | 现有强证据主要来自 `2026-05-18 ~ 2026-05-20`，还缺发版前最新一轮放行回归 |
 | 中国大陆访问验证 | `黄` | 尚未使用正式自定义域名完成中国大陆网络实测 |
 | 内测运营准备 | `黄` | 还缺种子用户名单、反馈群 SOP、暂停发放规则 |
@@ -74,6 +74,7 @@
 - `package.json` 已固定 `typecheck / test / build / lint` 脚本
 - GitHub Actions 已纳入 `npm ci -> typecheck -> test -> build -> lint`
 - `Vitest` 和 `ESLint` 已收敛到当前仓库主基线
+- `2026-05-24 10:50 CST` 已在主目录 `main` 上重新跑过 `typecheck / test / build / lint`；四条命令均成功退出，`build / lint` 仅保留既有 warning
 
 ### 4.4 部署与数据库基线
 
@@ -83,20 +84,23 @@
 - protected preview 的 `vercel-curl` smoke 路径已验证
 - runtime env readback 已拿到 production URL contract 的直接证据
 
+### 4.5 工作区拓扑
+
+- 主目录已经恢复为 `main`
+- `wip/main-snapshot-2026-05-20` 已转为辅助 worktree，只保留为历史参考，不再承担发布推进
+
 ## 5. 当前剩余缺口
 
 ### 5.1 文档与放行面缺口
 
-1. `AI-01 joy` 还没有在验收矩阵中写出正式“当前判定：通过”
-2. `AI-03 reflection` 还没有在验收矩阵中写出正式“当前判定：通过”
-3. 还缺发版前最终放行 checklist 文档
+1. 最终放行 checklist 已建，但还没有回填自动化结果、人工回归结果和 `Go / No-Go` 结论
 
 ### 5.2 回归缺口
 
 1. 还缺基于准备发布环境的一轮最新全量人工回归
 2. 还缺基于自定义域名的一轮外部访问验证
 3. `product-smoke.mjs` 当前只覆盖最小 `auth/session/start/invalid_entry_date`
-4. 更深的 `respond -> draft generate -> draft save` 仍主要依赖 controller 手工补证
+4. 更深的 `respond -> draft generate -> draft save` 仍主要依赖准备发布环境上的 controller 手工补证
 
 ### 5.3 发布运营缺口
 
@@ -122,18 +126,14 @@
 
 ### 7.1 文档回填
 
-- 回填 `AI-01 joy` 最终结论
-- 回填 `AI-03 reflection` 最终结论
-- 写出最终放行 checklist
+- 持续回填最终放行 checklist
+- 最终人工回归完成后写出 `Go / No-Go` 结论
 
 ### 7.2 技术回归
 
 - 重新跑一轮全量人工验收
-- 再跑一次 `npm run typecheck`
-- 再跑一次 `npm test`
-- 再跑一次 `npm run build`
-- 再跑一次 `npm run lint`
 - 再跑一次 preview / production smoke
+- 把最终人工回归与 smoke 结果写回 checklist
 
 ### 7.3 域名与外部访问
 
@@ -183,10 +183,8 @@
 
 当前执行顺序固定为：
 
-1. 发布总览落库并作为单一真相源
-2. 域名 `dlight.cc.cd` 接入 Vercel + DNSHE
-3. 回填 `AI-01 / AI-03` 正式结论
-4. 写最终放行 checklist
-5. 用准备发布环境跑最终回归
-6. 建立反馈群 SOP 和种子用户清单
-7. 发出首批邀请
+1. 域名 `dlight.cc.cd` 接入 Vercel + DNSHE
+2. 用准备发布环境跑最终人工回归与 preview / production smoke
+3. 把人工回归结果和 `Go / No-Go` 结论写回最终 checklist
+4. 建立反馈群 SOP 和种子用户清单
+5. 发出首批邀请

@@ -329,6 +329,13 @@
   - 正文和 fallback draft 不应出现“更像轻快乐 / 关键不是深意义”这类内部理论腔
 - `失败归类`：`Bug / 数据风险 / 上线阻断`
 
+当前补充观察（2026-05-24）：
+- `B-07` 已补齐 joy 的真实 API 闭环，partial 样本标题收束为 `清醒地开始`，符合早起、多出时间、准备感场景的短标题治理预期。
+- runbook、integration guide 和当前实现口径已经对齐：当 `joyMoment + joySource + stateShift|meaningNeed` 成立，用户说“别追问了，直接整理”时，当前会进入 `event_complete(user_override_partial)`，生成当前版本日志，不硬写稳定规律。
+- `delight_track` 的闭合线索已被收紧；`清醒 / 从容 / 有准备 / 象征意义 / 确定性 / 动作本身` 这类抽象候选不能单独充当可信 `delightSignature`，不会提前放行为生成日志。
+- joy 的 AI draft、fallback draft 和标题治理都已加上内部理论腔拦截，当前约束明确拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类解释层表达进入用户可见正文。
+- 本条当前判定：`AI-01 通过`。
+
 ### AI-02 fulfillment 访谈效果
 
 - `用例 ID`：`AI-02`
@@ -381,6 +388,13 @@
   - 已明确说“没有具体经历 / 对话”后，再次深聊时不能重复追同一字段
   - 标题应收成“忙碌不等于进展”“判断依据变清楚”这类短标题，而不是长句截断
 - `失败归类`：`Bug / 数据风险 / 上线阻断`
+
+当前补充观察（2026-05-24）：
+- `B-07` 已补齐 reflection 的真实 API 闭环，保存标题收束为 `忙碌不等于进展`，说明判断校准类样本的短标题治理已经落到当前主线。
+- runbook 与 integration guide 已对齐 partial 收束协议：当 `trigger + insight` 已成立，用户说“先这样，直接生成日志”或同义整理请求时，当前会进入 `event_complete(user_override_partial)`。
+- 只有“今天想了很多 / 有点焦虑”这类空泛样本时，当前仍会停在 `boundary_insufficient`，不会硬写触发片段、核心洞见或判断线索。
+- `reflection` 的继续深聊与 repair 约束已经收紧：如果上一轮明确回答“没有具体经历 / 对话”，后续不能回卷到同一 scene question，而要改问更低压的具体锚点，例如顾虑、画面、比较时刻或选择瞬间。
+- 本条当前判定：`AI-03 通过`。
 
 ### AI-04 improvement 访谈效果
 
