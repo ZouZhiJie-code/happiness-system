@@ -342,6 +342,47 @@ function normalizeQuestionText(value: string | null | undefined) {
     : "";
 }
 
+function stripQuestionFraming(value: string | null | undefined) {
+  let current = value?.trim() ?? "";
+  let previous = "";
+
+  while (current && current !== previous) {
+    previous = current;
+    current = current
+      .replace(
+        /^(?:如果只(?:留|看|说|收)(?:一个|这一)?点|只(?:留|看|说|收)(?:一个|这一)?点|如果再往里看一点|再往里看一点|先不说别的|先只看这一层|换句话说)[，,、：:\s]*/u,
+        ""
+      )
+      .replace(/[，,、：:\s]*(?:的话|呢|吗|呀|啊)$/u, "")
+      .trim();
+  }
+
+  return current;
+}
+
+function isQuestionFramingOnly(value: string) {
+  if (!value) {
+    return true;
+  }
+
+  return /^(?:如果只(?:留|看|说|收)(?:一个|这一)?点|只(?:留|看|说|收)(?:一个|这一)?点|如果再往里看一点|再往里看一点|先不说别的|先只看这一层|换句话说|的话|呢|吗|呀|啊)+$/u.test(
+    value
+  );
+}
+
+function hasQuestionContainmentWithFramingOnly(longer: string, shorter: string) {
+  const startIndex = longer.indexOf(shorter);
+
+  if (startIndex === -1) {
+    return false;
+  }
+
+  const before = longer.slice(0, startIndex);
+  const after = longer.slice(startIndex + shorter.length);
+
+  return isQuestionFramingOnly(before) && isQuestionFramingOnly(after);
+}
+
 function isReflectionSceneQuestion(question: string | null | undefined) {
   return Boolean(question && REFLECTION_SCENE_QUESTION_PATTERN.test(question));
 }
@@ -358,10 +399,16 @@ function areQuestionsEquivalent(left: string | null | undefined, right: string |
     return true;
   }
 
+  const strippedLeft = normalizeQuestionText(stripQuestionFraming(left));
+  const strippedRight = normalizeQuestionText(stripQuestionFraming(right));
+
+  if (strippedLeft && strippedRight && strippedLeft === strippedRight) {
+    return true;
+  }
+
   return (
-    normalizedLeft.length >= 12 &&
-    normalizedRight.length >= 12 &&
-    (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft))
+    hasQuestionContainmentWithFramingOnly(normalizedLeft, normalizedRight) ||
+    hasQuestionContainmentWithFramingOnly(normalizedRight, normalizedLeft)
   );
 }
 
@@ -376,7 +423,11 @@ type FulfillmentQuestionIntent = "event_detail" | "progress_evidence" | "value_s
 function classifyFulfillmentQuestionTarget(question: string): FulfillmentQuestionIntent {
   const normalized = question.replace(/\s+/g, "");
 
-  if (/(算数的标准|什么样的努力|什么样的投入|力气花得值|对你来说算数|对你来说值得)/u.test(normalized)) {
+  if (
+    /(算数的标准|什么样的努力|什么样的投入|力气花得值|对你来说算数|对你来说值得|值得继续|愿意继续|还想继续|继续这样做|继续做下去)/u.test(
+      normalized
+    )
+  ) {
     return "value_signal";
   }
 
@@ -475,7 +526,7 @@ function validateFulfillmentQuestion(input: {
     return "unnatural_phrasing" as const satisfies FulfillmentQuestionValidationCode;
   }
 
-  if (target === "value_signal" && classifiedTarget !== "value_signal") {
+  if (target === "value_signal" && classifiedTarget === "event_detail") {
     return "target_mismatch" as const satisfies FulfillmentQuestionValidationCode;
   }
 
@@ -501,16 +552,19 @@ function validateFulfillmentQuestion(input: {
     }
   }
 
+  if (target === "value_signal" && classifiedTarget === "unknown" && isAbstractFulfillmentProgressQuestion(input.question)) {
+    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
+  }
+
   if (
     target === "value_signal" &&
     classifiedTarget === "value_signal" &&
-    input.recentAssistantQuestions.some((question) => classifyFulfillmentQuestionTarget(question) === "value_signal")
+    input.recentAssistantQuestions.some(
+      (question) =>
+        classifyFulfillmentQuestionTarget(question) === "value_signal" && areQuestionsEquivalent(question, input.question)
+    )
   ) {
     return "semantic_duplicate" as const satisfies FulfillmentQuestionValidationCode;
-  }
-
-  if (target === "value_signal" && !hasCredibleFulfillmentValueSignal(input.snapshot, input.userMessage) && classifiedTarget === "unknown") {
-    return "too_abstract" as const satisfies FulfillmentQuestionValidationCode;
   }
 
   return null;
@@ -1547,18 +1601,38 @@ function buildFollowUpThinkingSummary(input: {
     .slice(0, 180);
 }
 
-function hasInvalidThinkingSummaryTone(summary: string) {
+function extractFirstPersonIntentPhrases(value: string) {
+  return Array.from(value.matchAll(/我想[^，。！？!?；;：:\n”"’'」》】]{1,40}/gu), (match) => match[0]);
+}
+
+function isUserAnchoredFirstPersonIntent(phrase: string, userMessage: string | null | undefined) {
+  const normalizedUserMessage = normalizeLooseText(userMessage);
+
+  if (!normalizedUserMessage) {
+    return false;
+  }
+
+  const normalizedPhrase = normalizeLooseText(phrase);
+
+  return Boolean(normalizedPhrase && normalizedUserMessage.includes(normalizedPhrase));
+}
+
+function hasInvalidThinkingSummaryTone(summary: string, userMessage: string | null | undefined) {
   const normalized = summary.trim();
 
   if (!normalized) {
     return false;
   }
 
+  const firstPersonIntentPhrases = extractFirstPersonIntentPhrases(normalized);
+  const hasUnanchoredFirstPersonIntent = firstPersonIntentPhrases.some(
+    (phrase) => !isUserAnchoredFirstPersonIntent(phrase, userMessage)
+  );
+
   return (
     /[?？]/u.test(normalized) ||
-    /(用户|用户已说|你提到|你说|你讲到|你提及|我理解到|我听到|我会|我想|我准备|想知道|下一步|追问|提问|问你|确认一下)/u.test(
-      normalized
-    )
+    hasUnanchoredFirstPersonIntent ||
+    /(用户|用户已说|你提到|你说|你讲到|你提及|我理解到|我听到|我会(?:继续|先|再|追问|确认)|我准备(?:继续|确认|追问)|我在想|想知道|下一步|追问|提问|问你|确认一下)/u.test(normalized)
   );
 }
 
@@ -1645,7 +1719,7 @@ function normalizeThinkingSummary(input: {
   });
 
   if (
-    !hasInvalidThinkingSummaryTone(summary) &&
+    !hasInvalidThinkingSummaryTone(summary, input.userMessage ?? null) &&
     !hasParaphraseOnlyThinkingSummary({
       summary,
       userMessage: input.userMessage ?? null,
