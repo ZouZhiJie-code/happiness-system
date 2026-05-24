@@ -1,6 +1,6 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-05-19`
+最后更新：`2026-05-25`
 
 ## 目标
 
@@ -29,7 +29,7 @@
 - `DATABASE_URL`
 - `AI_PROVIDER`
 - `VOLCENGINE_ARK_API_KEY`
-- `VOLCENGINE_ARK_ENDPOINT_ID`
+- `VOLCENGINE_ARK_MODEL` 或 `VOLCENGINE_ARK_ENDPOINT_ID`
 - `VOLCENGINE_ARK_BASE_URL`
 
 可选：
@@ -225,7 +225,7 @@ vercel env ls --scope zouzhijies-projects
 - 当前自动化脚本证据与 controller 手工补证必须分开读：
   - `product-smoke.mjs` 自动化：只覆盖最小 auth/session/start/invalid_entry_date
   - controller 手工 deep-chain：补到 `joy -> draft generate -> draft save`
-  - `runtime-env-readback.mjs` 自动化：用于 guarded runtime env 直读，不属于公开 smoke 面
+- `runtime-env-readback.mjs` 自动化：用于 guarded runtime env 直读，不属于公开 smoke 面
 
 ## 当前刻意不开放的能力
 
@@ -237,3 +237,41 @@ vercel env ls --scope zouzhijies-projects
 - 不先上 VPS
 - 不先做多环境矩阵
 - 不先做复杂灰度发布
+
+## 2026-05-25 生产 AI 恢复收口
+
+这轮 production 真实问题已经从“域名是否可用”收敛成两层：
+
+1. 生产 AI env 曾被写成 `$VOLCENGINE_...` 占位字面值
+2. production 库缺少 `20260521120000_add_admin_analytics_tables`，注册链路会在 `AnalyticsEvent` 处失败
+
+处理结果：
+
+- 已把 production 的 Ark 配置修回真实字面值
+- 生产 AI 路径不再依赖原先那个跨项目不可访问的 `endpoint`
+- 改为优先使用直连模型：
+
+```bash
+AI_PROVIDER=volcengine-ark
+VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201
+VOLCENGINE_ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+```
+
+- `VOLCENGINE_ARK_ENDPOINT_ID` 仍可保留为兼容 fallback，但当前 production 不再依赖它
+- 已在 production 执行 `npx prisma migrate deploy`，补齐 `20260521120000_add_admin_analytics_tables`
+
+直接证据：
+
+- guarded runtime readback 在短时验证窗口内对 `https://dlight.cc.cd` 返回：
+  - `ai.available=true`
+  - `ai.state=ready`
+  - `ai.configSummary.modelSource=VOLCENGINE_ARK_MODEL`
+  - `ai.probe.status=200`
+- 这说明 production runtime 已能真实打到 Ark，而不是只停在 fallback
+- 验证完成后，`ENABLE_RUNTIME_ENV_READBACK` 已重新改回关闭态；当前 `GET /api/debug/runtime-env` 在 production 返回 `404 RUNTIME_ENV_READBACK_DISABLED`
+
+当前结论：
+
+- `dlight.cc.cd` 已接入 `zouzhijies-projects/xingfuxitong`
+- public 站点可用，生产 AI provider 可用，production 数据库基线可用
+- 剩余 launch 风险已不再是 Vercel AI env 合同，而是独立的中国大陆样本与最终人工回归

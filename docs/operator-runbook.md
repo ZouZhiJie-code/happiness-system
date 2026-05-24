@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-21`
+最后更新：`2026-05-25`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -13,7 +13,8 @@
 | `DATABASE_URL` | PostgreSQL 连接串 |
 | `AI_PROVIDER` | 当前默认是 `volcengine-ark` |
 | `VOLCENGINE_ARK_API_KEY` | Ark API Key |
-| `VOLCENGINE_ARK_ENDPOINT_ID` | Ark endpoint |
+| `VOLCENGINE_ARK_MODEL` | Ark chat completions 的首选模型 ID；当前 production 已切到直连模型路径 |
+| `VOLCENGINE_ARK_ENDPOINT_ID` | 兼容旧路径：项目绑定 endpoint，只有在 key 能访问该 endpoint 时再用 |
 | `VOLCENGINE_ARK_BASE_URL` | Ark base URL |
 | `APP_URL` | 前端访问地址 |
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
@@ -34,6 +35,7 @@ DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schem
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
+VOLCENGINE_ARK_MODEL=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
@@ -106,6 +108,10 @@ psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migra
 ```bash
 npx prisma db push
 ```
+
+补充：
+- `2026-05-25` 的真实 production 排障里，缺失 `20260521120000_add_admin_analytics_tables` 会直接导致 live `POST /api/auth/register` 在 `analyticsEvent.upsert()` 阶段失败，表现为 `REGISTER_FAILED`。
+- 共享环境只要出现 `The table public.AnalyticsEvent does not exist`，优先补这条 migration，而不是继续怀疑认证逻辑或前端表单。
 
 ### 2.3 记忆系统依赖（可选）
 
@@ -669,6 +675,47 @@ npm run dev
 - 只有写库失败或严重上游错误，才会真正返回失败状态
 
 如果看到“日志草稿风格太机械”，不一定是 bug，也可能是触发了 fallback。
+
+### 5.4.1 AI provider 排障顺序
+
+当 production / preview 看起来“像没接大模型”时，优先按下面顺序排：
+
+1. 先查配置形态
+2. 再查 provider 最小探针
+3. 最后才看访谈主链日志
+
+当前代码事实：
+
+- `VOLCENGINE_ARK_MODEL` 是首选路径，`VOLCENGINE_ARK_ENDPOINT_ID` 只作为兼容旧路径的 fallback
+- provider 初始化阶段会识别：
+  - 缺少 key / model
+  - `$VOLCENGINE_...` 这类占位串
+  - 非法 `VOLCENGINE_ARK_BASE_URL`
+- guarded `GET /api/debug/runtime-env?probe=1` 会返回：
+  - `ai.state`
+  - `ai.code`
+  - `ai.issues`
+  - `ai.probe.status`
+  - `ai.probe.code`
+- 这条 route 在 production 默认应保持关闭；只在短时验证窗口中临时开启，验证结束后立即恢复 `ENABLE_RUNTIME_ENV_READBACK=0`
+
+排障判断：
+
+- `ai.state=config_invalid`
+  - 说明问题还在 env 值形态层，例如把 `$VOLCENGINE_ARK_API_KEY` 当作字面值写进平台
+- `ai.state=ready` 且 `ai.probe.status=200`
+  - 说明 provider 真实可用；如果用户仍觉得“像 fallback”，再去看访谈 prompt / 追问质量
+- `ai.probe.code=ACCOUNTOVERDUEERROR`
+  - 说明 key 已生效，但账户额度 / 计费状态阻断了上游调用
+- `ai.probe.code=ACCESSDENIED`
+  - 常见于 key 无权访问当前 `endpoint`；优先切换到直连 `VOLCENGINE_ARK_MODEL`
+
+当前 production 已验证过的一条可用模型路径：
+
+```bash
+VOLCENGINE_ARK_MODEL="deepseek-v3-2-251201"
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
+```
 
 ### 5.5 标题看起来像半截句子
 
