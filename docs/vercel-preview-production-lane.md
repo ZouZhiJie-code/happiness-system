@@ -219,6 +219,11 @@ vercel env ls --scope zouzhijies-projects
   - `VERCEL_URL=xingfuxitong-nd5yfetul-zouzhijies-projects.vercel.app`
   - `VERCEL_PROJECT_PRODUCTION_URL=xingfuxitong.vercel.app`
   - `APP_URL=null`
+- `2026-05-24` 的 Chrome 侧 fresh runtime readback 又把 production URL contract 更新到了最新口径：
+  - preview host：`https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app`
+  - `GET /api/debug/runtime-env = 200`
+  - `VERCEL_PROJECT_PRODUCTION_URL=dlight.cc.cd`
+  - `APP_URL=null`
 - 这条证据符合官方对 `VERCEL_PROJECT_PRODUCTION_URL` 的定义：它是项目 production 域名，且即使在 preview deployment 中也会设置
 - 当前剩余 blocker 已不再是“平台缺少 AI 变量”，也不再是“可用代理路径上的网络 / DNS 不通”
 - 受保护 preview 的自动化 smoke auth path 已固定为 `vercel-curl`：匿名 raw preview root 仍是 `401`，但最小自动化 smoke 已不再被 Deployment Protection 卡住
@@ -226,6 +231,46 @@ vercel env ls --scope zouzhijies-projects
   - `product-smoke.mjs` 自动化：只覆盖最小 auth/session/start/invalid_entry_date
   - controller 手工 deep-chain：补到 `joy -> draft generate -> draft save`
   - `runtime-env-readback.mjs` 自动化：用于 guarded runtime env 直读，不属于公开 smoke 面
+
+## 2026-05-25 fresh preview smoke 补证
+
+fresh preview：
+
+- `https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app`
+
+最小 smoke：
+
+- `NODE_USE_ENV_PROXY=1 HTTP_PROXY=http://127.0.0.1:7897 HTTPS_PROXY=http://127.0.0.1:7897 ALL_PROXY=http://127.0.0.1:7897 ACCEPTANCE_TRANSPORT=vercel-curl ACCEPTANCE_VERCEL_SCOPE=zouzhijies-projects ACCEPTANCE_BASE_URL='https://xingfuxitong-q5m1gzgif-zouzhijies-projects.vercel.app' node scripts/product-smoke.mjs joy 2026-05-25 previewsmoke`
+- 返回：
+  - `register=200`
+  - `login=200`
+  - `session=200`
+  - `start=200`
+  - `invalid_entry_date=400`
+  - 汇总结论：`ok=true`
+
+完整 deep-chain：
+
+- 在同一 preview、同一 `vercel-curl` 路径上，补了 `fulfillment` 正向样本的完整链路：
+  - `register=200`
+  - `login=200`
+  - `GET /api/auth/session = 200`
+  - `POST /api/interview/session/start = 200`
+  - 第 `1` 轮 `reply=200`，阶段进到 `probe_reason`
+  - 第 `2` 轮 `reply=200`，阶段进到 `probe_pattern`
+  - 第 `3` 轮 `reply=200`，阶段进到 `wrap_up`
+  - 此时 `draftGenerationUnlocked=true`
+  - `pendingDecision.kind=event_complete`
+  - `POST /api/interview/session/draft/generate = 200`
+  - 生成标题：`主线终于理顺`
+  - 生成状态：`draft`
+  - `POST /api/interview/session/draft/save = 200`
+  - 同一条日志最终状态：`saved`
+
+补证后的 lane 结论：
+
+- protected-preview 的 fresh 证据已不再只是页面可达或 runtime readback。
+- 当前仓库已经拥有 fresh preview 上的完整内容链闭环证据。
 
 ## 当前刻意不开放的能力
 
