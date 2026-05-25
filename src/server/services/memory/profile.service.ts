@@ -112,7 +112,7 @@ export class ProfileError extends Error {
 
 async function generateEmbeddingSafe(memoryId: string, summary: string, userId: string): Promise<void> {
   try {
-    const provider = getAIProvider();
+    const provider = await getAIProvider("embedding");
     if (!provider?.embed) return;
 
     const result = await provider.embed({ input: summary });

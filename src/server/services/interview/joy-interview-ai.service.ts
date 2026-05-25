@@ -646,8 +646,8 @@ export async function extractJoySnapshotWithAI(input: {
       userMessage: input.userMessage
     })
   );
-  const provider = getAIProvider();
-  const providerStatus = getAIProviderStatus();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
   const aiResult = await completeStructuredOutput({
     provider,
     providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
@@ -1083,8 +1083,8 @@ async function requestAssistantReplySegments(
   input: AssistantTurnGenerationInput,
   onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void
 ) {
-  const provider = getAIProvider();
-  const providerStatus = getAIProviderStatus();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
 
   if (!provider) {
     await logAttempt(input.sessionId, {
@@ -1416,8 +1416,8 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     brief: draftBrief,
     completionMode: draftBrief.completionMode
   });
-  const provider = getAIProvider();
-  const providerStatus = getAIProviderStatus();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
   const startedAt = Date.now();
   logger.info(
     {

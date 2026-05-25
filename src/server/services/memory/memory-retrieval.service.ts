@@ -52,7 +52,7 @@ export async function retrieveRelevantMemories(input: {
     }
 
     // 2. Check provider has embed
-    const provider = getAIProvider();
+    const provider = await getAIProvider("embedding");
     if (!provider?.embed) {
       return emptyResult;
     }

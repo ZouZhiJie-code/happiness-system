@@ -8,6 +8,7 @@ import { requireAuthenticatedPage } from "@/server/services/auth/auth-page-guard
 
 export default async function SettingsPage() {
   const user = await requireAuthenticatedPage("/settings");
+  const isAdmin = Boolean(user?.username && isAdminUsername(user.username));
 
   return (
     <div className="min-h-0 flex-1">
@@ -28,7 +29,8 @@ export default async function SettingsPage() {
             <SettingsForm />
             <SettingsAccountPanel
               user={user}
-              showAdminAnalyticsEntry={Boolean(user?.username && isAdminUsername(user.username))}
+              showAdminAnalyticsEntry={isAdmin}
+              showAdminAIRuntimeEntry={isAdmin}
             />
           </div>
         </div>

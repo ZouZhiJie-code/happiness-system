@@ -11,6 +11,7 @@
 | 变量 | 说明 |
 |---|---|
 | `DATABASE_URL` | PostgreSQL 连接串 |
+| `AI_RUNTIME_CONFIG_SECRET` | 用于加密数据库里 AI provider API Key 的主密钥；推荐用 `openssl rand -base64 32` 生成 |
 | `AI_PROVIDER` | 当前默认是 `volcengine-ark` |
 | `VOLCENGINE_ARK_API_KEY` | Ark API Key |
 | `VOLCENGINE_ARK_MODEL` | Ark chat completions 的首选模型 ID；当前 production 已切到直连模型路径 |
@@ -33,6 +34,7 @@
 ```bash
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+AI_RUNTIME_CONFIG_SECRET=""
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_MODEL=""
@@ -41,6 +43,14 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 ADMIN_USERNAMES=""
 ```
+
+`AI_RUNTIME_CONFIG_SECRET` 说明：
+
+- 这是本系统自己的加密主密钥，不是 OpenAI、Anthropic 或 Ark 的 API Key。
+- 推荐生成命令：`openssl rand -base64 32`
+- 同一个部署环境内的所有实例必须使用完全相同的值。
+- 不能提交到 git，不能从任何 provider API Key 推导生成。
+- 如果修改这个值，旧密文会解不开；恢复办法只有两种：改回原值，或让管理员重新录入所有 provider API Key。
 
 数据库连接约定：
 
@@ -218,6 +228,82 @@ npm run dev
 1. 在 `.env.local` 中配置 `ADMIN_USERNAMES="你的管理员用户名"`
 2. 用该用户名登录
 3. 打开 `/settings`，确认能看到“管理员数据分析”入口
+
+### 2.7 AI 运行配置中心冒烟
+
+建议至少覆盖一次：
+
+1. 在 `.env.local` 中配置 `ADMIN_USERNAMES="你的管理员用户名"` 和 `AI_RUNTIME_CONFIG_SECRET`
+2. 用管理员账号登录，打开 `/settings`，确认能看到“AI 运行配置中心”入口
+3. 进入 `/settings/ai-runtime`，确认 chat 与 embedding 状态卡都能显示当前来源、provider、模型或 endpoint 摘要
+4. 先保存一份草稿，再执行连通性测试，确认测试记录写入
+5. 发布草稿，确认提示“发布后，从下一次 AI 请求开始生效”
+6. 打开历史版本表，执行一次回滚，确认新版本重新发布成功
+7. 如需排查当前来源，临时启用 `/api/debug/runtime-env?probe=1`，检查 `ai.chat.source` 和 `ai.embedding.source`
+
+## 3. AI 运行配置中心
+
+### 3.1 这个后台做什么
+
+- 管理员在产品后台维护聊天能力和向量嵌入能力两条独立的运行时配置。
+- 每条能力线都支持保存草稿、执行连通性测试、发布、查看历史版本和回滚。
+- 运行时优先使用数据库里当前已发布配置；如果数据库配置不可用，系统会自动回退到现有环境变量配置。
+
+### 3.2 发布与回滚规则
+
+- 发布流程固定为：保存草稿 -> 执行连通性测试 -> 发布。
+- 修改草稿后，旧测试结果立即失效，必须重新执行连通性测试。
+- 发布后，从下一次 AI 请求开始生效，不需要重新部署。
+- 回滚不会原地修改历史记录；系统会复制目标历史版本并重新发布。
+
+### 3.3 当前支持的 provider
+
+- chat：`openai`、`anthropic`、`volcengine_ark`
+- embedding：`openai`、`volcengine_ark`
+- `anthropic` 不进入 embedding 选项，本次没有 Anthropic embedding 合同。
+
+### 3.4 如何确认当前在用数据库配置还是环境变量配置
+
+- 管理员后台 `/settings/ai-runtime` 的状态卡会直接显示“当前使用数据库配置”或“当前使用环境变量配置”。
+- 受保护的诊断接口 `/api/debug/runtime-env?probe=1` 会返回：
+  - `ai.chat.source`
+  - `ai.embedding.source`
+  - 当前 provider
+  - 当前模型或 endpoint 摘要
+- 诊断接口不会返回任何明文 API Key。
+
+### 3.5 如何批量采集最终交付证据
+
+配置下面这些变量后，可以直接运行：
+
+```bash
+node scripts/admin-ai-runtime-smoke.mjs
+```
+
+脚本会依次执行：
+
+1. 管理员登录
+2. 保存草稿
+3. 执行连通性测试
+4. 发布
+5. 再发布一个变体版本
+6. 读取历史并执行一次回滚
+7. 可选读取 `/api/debug/runtime-env?probe=1`
+
+常用变量：
+
+- `ADMIN_AI_RUNTIME_USERNAME`
+- `ADMIN_AI_RUNTIME_PASSWORD`
+- `RUNTIME_ENV_READBACK_TOKEN`
+- `ADMIN_AI_RUNTIME_OPENAI_API_KEY`
+- `ADMIN_AI_RUNTIME_OPENAI_CHAT_MODEL`
+- `ADMIN_AI_RUNTIME_OPENAI_EMBEDDING_MODEL`
+- `ADMIN_AI_RUNTIME_ANTHROPIC_API_KEY`
+- `ADMIN_AI_RUNTIME_ANTHROPIC_CHAT_MODEL`
+- `ADMIN_AI_RUNTIME_ARK_API_KEY`
+- `ADMIN_AI_RUNTIME_ARK_CHAT_MODEL_ID`
+- `ADMIN_AI_RUNTIME_ARK_CHAT_ENDPOINT_ID`
+- `ADMIN_AI_RUNTIME_ARK_EMBEDDING_ENDPOINT_ID`
 4. 打开 `/admin/analytics`
 5. 切换 `复盘视角 / 监控视角`
 6. 切换 `最近 7 天 / 最近 30 天 / 本月`
