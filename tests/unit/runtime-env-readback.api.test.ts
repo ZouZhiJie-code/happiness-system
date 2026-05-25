@@ -6,6 +6,10 @@ const { mockProbeAIProvider } = vi.hoisted(() => ({
   mockProbeAIProvider: vi.fn()
 }));
 
+const { mockGetAIProviderStatus } = vi.hoisted(() => ({
+  mockGetAIProviderStatus: vi.fn()
+}));
+
 vi.mock("@/server/services/auth/current-user.service", () => ({
   AuthenticationError: class AuthenticationError extends Error {},
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
@@ -16,6 +20,7 @@ vi.mock("@/server/services/ai", async () => {
 
   return {
     ...actual,
+    getAIProviderStatus: mockGetAIProviderStatus,
     probeAIProvider: mockProbeAIProvider
   };
 });
@@ -28,11 +33,51 @@ describe("runtime env readback api", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    mockGetAIProviderStatus.mockReset();
     mockProbeAIProvider.mockReset();
     mockRequireCurrentUserFromRequest.mockResolvedValue({
       id: "user-1",
       username: "daily_light_01"
     });
+    mockGetAIProviderStatus
+      .mockResolvedValueOnce({
+        capability: "chat",
+        provider: "volcengine_ark",
+        available: true,
+        state: "ready",
+        source: "environment",
+        code: "READY",
+        issues: [],
+        fallbackReason: null,
+        configSummary: {
+          hasApiKey: true,
+          hasModel: true,
+          hasBaseUrl: true,
+          modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+          modelOrEndpoint: "ep-live-ready",
+          baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+          baseUrlHost: "ark.cn-beijing.volces.com"
+        }
+      })
+      .mockResolvedValueOnce({
+        capability: "embedding",
+        provider: "volcengine_ark",
+        available: true,
+        state: "ready",
+        source: "environment",
+        code: "READY",
+        issues: [],
+        fallbackReason: null,
+        configSummary: {
+          hasApiKey: true,
+          hasModel: true,
+          hasBaseUrl: true,
+          modelSource: "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+          modelOrEndpoint: "ep-embedding-live",
+          baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+          baseUrlHost: "ark.cn-beijing.volces.com"
+        }
+      });
   });
 
   afterEach(() => {
@@ -150,19 +195,46 @@ describe("runtime env readback api", () => {
         appUrl: "https://dailylight.example.com"
       },
       ai: {
-        provider: "volcengine-ark",
-        available: true,
-        state: "ready",
-        code: "READY",
-        issues: [],
-        configSummary: {
-          hasApiKey: true,
-          hasModel: true,
-          hasBaseUrl: true,
-          modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
-          baseUrlHost: "ark.cn-beijing.volces.com"
+        chat: {
+          capability: "chat",
+          provider: "volcengine_ark",
+          available: true,
+          state: "ready",
+          source: "environment",
+          code: "READY",
+          issues: [],
+          fallbackReason: null,
+          configSummary: {
+            hasApiKey: true,
+            hasModel: true,
+            hasBaseUrl: true,
+            modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+            modelOrEndpoint: "ep-live-ready",
+            baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+            baseUrlHost: "ark.cn-beijing.volces.com"
+          },
+          probe: null
         },
-        probe: null
+        embedding: {
+          capability: "embedding",
+          provider: "volcengine_ark",
+          available: true,
+          state: "ready",
+          source: "environment",
+          code: "READY",
+          issues: [],
+          fallbackReason: null,
+          configSummary: {
+            hasApiKey: true,
+            hasModel: true,
+            hasBaseUrl: true,
+            modelSource: "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+            modelOrEndpoint: "ep-embedding-live",
+            baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+            baseUrlHost: "ark.cn-beijing.volces.com"
+          },
+          probe: null
+        },
       }
     });
   });
@@ -174,14 +246,63 @@ describe("runtime env readback api", () => {
     vi.stubEnv("VOLCENGINE_ARK_API_KEY", "$VOLCENGINE_ARK_API_KEY\\n");
     vi.stubEnv("VOLCENGINE_ARK_ENDPOINT_ID", "ep-live-ready");
     vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "$VOLCENGINE_ARK_BASE_URL\\n");
-    mockProbeAIProvider.mockResolvedValueOnce({
-      ok: false,
-      attempted: false,
-      provider: "volcengine-ark",
-      code: "PLACEHOLDER_API_KEY",
-      status: null,
-      latencyMs: null
-    });
+    mockGetAIProviderStatus.mockReset();
+    mockGetAIProviderStatus
+      .mockResolvedValueOnce({
+        capability: "chat",
+        provider: "volcengine_ark",
+        available: false,
+        state: "config_invalid",
+        source: null,
+        code: "PLACEHOLDER_API_KEY",
+        issues: ["PLACEHOLDER_API_KEY", "PLACEHOLDER_BASE_URL"],
+        fallbackReason: null,
+        configSummary: {
+          hasApiKey: true,
+          hasModel: true,
+          hasBaseUrl: true,
+          modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+          modelOrEndpoint: null,
+          baseUrl: null,
+          baseUrlHost: null
+        }
+      })
+      .mockResolvedValueOnce({
+        capability: "embedding",
+        provider: "volcengine_ark",
+        available: false,
+        state: "config_invalid",
+        source: null,
+        code: "MISSING_EMBEDDING_ENDPOINT_ID",
+        issues: ["MISSING_EMBEDDING_ENDPOINT_ID"],
+        fallbackReason: null,
+        configSummary: {
+          hasApiKey: true,
+          hasModel: false,
+          hasBaseUrl: true,
+          modelSource: null,
+          modelOrEndpoint: null,
+          baseUrl: null,
+          baseUrlHost: null
+        }
+      });
+    mockProbeAIProvider
+      .mockResolvedValueOnce({
+        ok: false,
+        attempted: false,
+        provider: "volcengine_ark",
+        code: "PLACEHOLDER_API_KEY",
+        status: null,
+        latencyMs: null
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        attempted: false,
+        provider: "volcengine_ark",
+        code: "MISSING_EMBEDDING_ENDPOINT_ID",
+        status: null,
+        latencyMs: null
+      });
 
     const response = await GET(
       new Request("https://preview.example.vercel.app/api/debug/runtime-env?probe=1", {
@@ -193,19 +314,34 @@ describe("runtime env readback api", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockProbeAIProvider).toHaveBeenCalledTimes(1);
+    expect(mockProbeAIProvider).toHaveBeenCalledTimes(2);
     expect(await response.json()).toMatchObject({
       ai: {
-        provider: "volcengine-ark",
-        available: false,
-        state: "config_invalid",
-        code: "PLACEHOLDER_API_KEY",
-        issues: ["PLACEHOLDER_API_KEY", "PLACEHOLDER_BASE_URL"],
-        probe: {
-          ok: false,
-          attempted: false,
-          provider: "volcengine-ark",
-          code: "PLACEHOLDER_API_KEY"
+        chat: {
+          capability: "chat",
+          available: false,
+          state: "config_invalid",
+          code: "PLACEHOLDER_API_KEY",
+          issues: ["PLACEHOLDER_API_KEY", "PLACEHOLDER_BASE_URL"],
+          probe: {
+            ok: false,
+            attempted: false,
+            provider: "volcengine_ark",
+            code: "PLACEHOLDER_API_KEY"
+          }
+        },
+        embedding: {
+          capability: "embedding",
+          available: false,
+          state: "config_invalid",
+          code: "MISSING_EMBEDDING_ENDPOINT_ID",
+          issues: ["MISSING_EMBEDDING_ENDPOINT_ID"],
+          probe: {
+            ok: false,
+            attempted: false,
+            provider: "volcengine_ark",
+            code: "MISSING_EMBEDDING_ENDPOINT_ID"
+          }
         }
       }
     });

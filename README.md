@@ -118,6 +118,7 @@ npm install
 ```bash
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+AI_RUNTIME_CONFIG_SECRET=""            # 用 openssl rand -base64 32 生成；用于加密数据库里的 provider API Key
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_MODEL=""                # 首选：直接模型 ID；当前 production 使用 deepseek-v3-2-251201
@@ -126,6 +127,32 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
 ADMIN_USERNAMES=""                       # 逗号分隔的管理员用户名白名单，例如 "alice,bob"
+```
+
+### 2.2 AI 运行配置中心
+
+- 管理员入口是 `/settings/ai-runtime`，用于维护聊天能力和向量嵌入能力两条独立运行线的草稿、测试、发布和历史回滚。
+- 当前运行时优先级固定为：数据库已发布配置 > 环境变量回退配置。
+- 发布流程固定为：保存草稿 -> 执行连通性测试 -> 发布。修改草稿后，旧测试结果立即失效。
+- 发布后，从下一次 AI 请求开始生效；不需要重新部署。
+- 如果数据库配置不可用，系统会改用环境变量配置。
+
+`AI_RUNTIME_CONFIG_SECRET` 的约束：
+
+- 它是本系统自己的加密主密钥，不是 OpenAI、Anthropic 或 Ark 的 API Key。
+- 生成命令：`openssl rand -base64 32`
+- 部署要求：同一个环境的所有实例必须使用完全相同的值，且不能提交到 git。
+- 如果修改了这个值，旧密文会解不开。恢复方式只有两种：把密钥改回原值，或让管理员重新录入所有 provider API Key。
+
+管理员操作要点：
+
+- 保存后不会再次明文显示 API Key。
+- 回滚入口在历史版本表；回滚会复制历史版本并重新发布，不会原地改旧记录。
+- 当前正在使用数据库配置还是环境变量配置，可以在 `/settings/ai-runtime` 状态卡里确认，也可以在启用受保护的 `/api/debug/runtime-env?probe=1` 后查看 `ai.chat.source` 与 `ai.embedding.source`。
+- 如果要批量采集“保存草稿 / 测试 / 发布 / 回滚 / runtime readback”证据，可以配置管理员与 provider 环境变量后运行：
+
+```bash
+node scripts/admin-ai-runtime-smoke.mjs
 ```
 
 ### 2.1 数据库环境约定

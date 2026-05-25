@@ -167,7 +167,7 @@ export async function generateDailyJournal(userId: string, date: string) {
   }
 
   const generated = await completeStructuredOutput({
-    provider: getAIProvider(),
+    provider: await getAIProvider("chat"),
     stage: "generate",
     schema: dailyJournalDraftSchema,
     messages: buildGenerationMessages(sourceEntries),

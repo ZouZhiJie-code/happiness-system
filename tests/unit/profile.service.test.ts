@@ -146,6 +146,8 @@ describe("profile.service", () => {
         topicTags: ["独处"]
       });
 
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockGetAIProvider).toHaveBeenCalledWith("embedding");
       expect(mockSetMemoryFactEmbedding).toHaveBeenCalledWith("new-mem", MOCK_EMBEDDING);
     });
 
@@ -198,6 +200,7 @@ describe("profile.service", () => {
 
       // Wait for fire-and-forget embedding
       await new Promise((r) => setTimeout(r, 10));
+      expect(mockGetAIProvider).toHaveBeenCalledWith("embedding");
       expect(mockSetMemoryFactEmbedding).toHaveBeenCalledWith("mem-1", MOCK_EMBEDDING);
     });
 
