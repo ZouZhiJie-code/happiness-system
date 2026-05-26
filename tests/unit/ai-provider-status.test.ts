@@ -1,10 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { mockGetPublishedAIRuntimeConfigRecord } = vi.hoisted(() => ({
+  mockGetPublishedAIRuntimeConfigRecord: vi.fn()
+}));
 
 vi.mock("@/server/repositories/admin-ai-runtime.repository", () => ({
-  getPublishedAIRuntimeConfigRecord: vi.fn().mockResolvedValue(null)
+  getPublishedAIRuntimeConfigRecord: mockGetPublishedAIRuntimeConfigRecord
 }));
 
 import { getAIProviderStatus } from "@/server/services/ai";
+import { encryptAIRuntimeApiKey } from "@/server/services/admin-ai-runtime/admin-ai-runtime-crypto";
 
 const ENV_KEYS = [
   "AI_PROVIDER",
@@ -22,6 +27,11 @@ const ENV_KEYS = [
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));
 
 describe("getAIProviderStatus", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetPublishedAIRuntimeConfigRecord.mockResolvedValue(null);
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
 
@@ -92,6 +102,48 @@ describe("getAIProviderStatus", () => {
       state: "config_invalid",
       code: "MISSING_EMBEDDING_ENDPOINT_ID",
       issues: ["MISSING_EMBEDDING_ENDPOINT_ID"]
+    });
+  });
+
+  it("uses a published database embedding endpoint without requiring the legacy env endpoint", async () => {
+    vi.stubEnv("AI_RUNTIME_CONFIG_SECRET", Buffer.alloc(32, 15).toString("base64"));
+    delete process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID;
+    const encrypted = encryptAIRuntimeApiKey("ark-db-key");
+
+    mockGetPublishedAIRuntimeConfigRecord.mockImplementation(async (capability: string) =>
+      capability === "embedding"
+        ? {
+            id: "published-embedding-1",
+            capability: "embedding",
+            provider: "volcengine_ark",
+            enabled: true,
+            apiKeyCiphertext: encrypted.ciphertext,
+            apiKeyMask: encrypted.mask,
+            configJson: {
+              embeddingEndpointId: "ep-db-embedding",
+              baseUrl: "https://ark.cn-beijing.volces.com/api/v3"
+            }
+          }
+        : null
+    );
+
+    const status = await getAIProviderStatus("embedding");
+
+    expect(status).toMatchObject({
+      available: true,
+      state: "ready",
+      code: "READY",
+      source: "database",
+      issues: [],
+      configSummary: {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+        modelOrEndpoint: "ep-db-embedding",
+        baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+        baseUrlHost: "ark.cn-beijing.volces.com"
+      }
     });
   });
 });
