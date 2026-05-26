@@ -4,11 +4,10 @@ import {
   saveDraftRequestSchema,
   saveDraftResponseSchema
 } from "@/features/interview/schema/interview.schema";
-import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
+import { isAuthenticationRequiredError, requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
-  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = saveDraftRequestSchema.safeParse(body);
 
@@ -17,11 +16,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const result = await saveGeneratedJournalEntry(user.id, parsed.data.sessionId);
     const payload = saveDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);
   } catch (error) {
+    if (isAuthenticationRequiredError(error)) {
+      return NextResponse.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
+    }
+
     if (error instanceof Error && error.message === "DRAFT_NOT_FOUND") {
       return NextResponse.json({ error: "DRAFT_NOT_FOUND" }, { status: 404 });
     }

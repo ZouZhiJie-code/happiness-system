@@ -76,7 +76,9 @@ export async function POST(request: Request) {
       requestId
     });
     const status =
-      issue.code === "SESSION_NOT_FOUND"
+      issue.code === "AUTHENTICATION_REQUIRED"
+        ? 401
+        : issue.code === "SESSION_NOT_FOUND"
         ? 404
         : issue.code === "SESSION_CHOICE_UNAVAILABLE"
           ? 409

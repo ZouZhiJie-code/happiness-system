@@ -5,9 +5,11 @@ export type InterviewIssueAction =
   | "refresh"
   | "shorten_input"
   | "restart_session"
+  | "login"
   | "none";
 
 export type InterviewIssueCode =
+  | "AUTHENTICATION_REQUIRED"
   | "NETWORK_UNAVAILABLE"
   | "INVALID_RESPOND_REQUEST"
   | "MESSAGE_TOO_LONG"
@@ -34,6 +36,13 @@ export interface InterviewIssue {
 type InterviewIssuePreset = Omit<InterviewIssue, "code" | "requestId">;
 
 const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
+  AUTHENTICATION_REQUIRED: {
+    title: "登录状态已失效",
+    message: "当前设备上的登录状态已经失效，访谈暂时不能继续。",
+    resolution: "请重新登录后回到当前页面继续。",
+    retryable: false,
+    action: "login"
+  },
   NETWORK_UNAVAILABLE: {
     title: "网络连接异常",
     message: "这一轮回复没有连上服务端。",

@@ -25,6 +25,17 @@ describe("interview respond error normalization", () => {
       code: "SESSION_CHOICE_UNAVAILABLE",
       action: "refresh"
     });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("AUTHENTICATION_REQUIRED"),
+        requestId: "request-auth"
+      })
+    ).toMatchObject({
+      code: "AUTHENTICATION_REQUIRED",
+      action: "login",
+      requestId: "request-auth"
+    });
   });
 
   it("maps validation, schema, and write failures without exposing raw errors", () => {

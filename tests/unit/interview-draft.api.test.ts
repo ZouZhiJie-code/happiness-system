@@ -23,6 +23,8 @@ vi.mock("@/server/services/interview/interview.service", () => ({
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
+  isAuthenticationRequiredError: (error: unknown) =>
+    error instanceof Error && error.message === "AUTHENTICATION_REQUIRED",
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
@@ -161,5 +163,35 @@ describe("interview draft api auth", () => {
 
     expect(response.status).toBe(200);
     expect(mockSaveGeneratedJournalEntry).toHaveBeenCalledWith("user-1", "session-1");
+  });
+
+  it("returns 401 for draft generation when authentication is required", async () => {
+    mockRequireCurrentUserFromRequest.mockRejectedValueOnce(new Error("AUTHENTICATION_REQUIRED"));
+
+    const response = await generateDraftRoute(
+      new Request("http://localhost/api/interview/session/draft/generate", {
+        method: "POST",
+        body: JSON.stringify({ sessionIds: ["session-1"] })
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: "AUTHENTICATION_REQUIRED" });
+    expect(mockGenerateInterviewDraft).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for draft save when authentication is required", async () => {
+    mockRequireCurrentUserFromRequest.mockRejectedValueOnce(new Error("AUTHENTICATION_REQUIRED"));
+
+    const response = await saveDraftRoute(
+      new Request("http://localhost/api/interview/session/draft/save", {
+        method: "POST",
+        body: JSON.stringify({ sessionId: "session-1" })
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: "AUTHENTICATION_REQUIRED" });
+    expect(mockSaveGeneratedJournalEntry).not.toHaveBeenCalled();
   });
 });

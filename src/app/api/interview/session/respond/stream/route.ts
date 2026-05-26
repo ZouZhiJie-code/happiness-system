@@ -64,59 +64,78 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: issue.code, message: issue.message, issue }, { status: 400 });
   }
 
-  const encoder = new TextEncoder();
+  try {
+    const user = await requireCurrentUserFromRequest(request);
+    const encoder = new TextEncoder();
 
-  const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const user = await requireCurrentUserFromRequest(request);
-      const send = (event: string, data: unknown) => {
-        controller.enqueue(encoder.encode(formatSseEvent(event, data)));
-      };
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (event: string, data: unknown) => {
+          controller.enqueue(encoder.encode(formatSseEvent(event, data)));
+        };
 
-      try {
-        const result = await streamInterviewResponse(
-          {
-            ...parsed.data,
-            userId: user.id
-          },
-          {
-            onPhase: (phase) => send("phase", { state: phase }),
-            onDelta: (delta) => send("delta", delta)
-          }
-        );
+        try {
+          const result = await streamInterviewResponse(
+            {
+              ...parsed.data,
+              userId: user.id
+            },
+            {
+              onPhase: (phase) => send("phase", { state: phase }),
+              onDelta: (delta) => send("delta", delta)
+            }
+          );
 
-        send("session", {
-          session: interviewSessionSchema.parse(result.session)
-        });
-      } catch (error) {
-        const issue = normalizeInterviewRespondError({
-          error,
-          requestId
-        });
+          send("session", {
+            session: interviewSessionSchema.parse(result.session)
+          });
+        } catch (error) {
+          const issue = normalizeInterviewRespondError({
+            error,
+            requestId
+          });
 
-        logInterviewRespondError({
-          error,
-          issue,
-          route: "respond/stream",
-          sessionId: parsed.data.sessionId
-        });
+          logInterviewRespondError({
+            error,
+            issue,
+            route: "respond/stream",
+            sessionId: parsed.data.sessionId
+          });
 
-        send("error", {
-          code: issue.code,
-          message: issue.message,
-          issue
-        });
-      } finally {
-        controller.close();
+          send("error", {
+            code: issue.code,
+            message: issue.message,
+            issue
+          });
+        } finally {
+          controller.close();
+        }
       }
-    }
-  });
+    });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive"
-    }
-  });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive"
+      }
+    });
+  } catch (error) {
+    const issue = normalizeInterviewRespondError({
+      error,
+      requestId
+    });
+
+    logInterviewRespondError({
+      error,
+      issue,
+      route: "respond/stream",
+      sessionId: parsed.data.sessionId
+    });
+
+    return NextResponse.json(
+      { error: issue.code, message: issue.message, issue },
+      { status: issue.code === "AUTHENTICATION_REQUIRED" ? 401 : 500 }
+    );
+  }
 }

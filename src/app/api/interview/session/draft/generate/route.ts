@@ -6,14 +6,13 @@ import {
   generateDraftResponseSchema
 } from "@/features/interview/schema/interview.schema";
 import { logger } from "@/server/lib/logger";
-import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
+import { isAuthenticationRequiredError, requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import {
   DraftGenerationError,
   generateInterviewDraft
 } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
-  const user = await requireCurrentUserFromRequest(request);
   const body = await request.json();
   const parsed = generateDraftRequestSchema.safeParse(body);
 
@@ -22,11 +21,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const user = await requireCurrentUserFromRequest(request);
     const result = await generateInterviewDraft(user.id, parsed.data.sessionIds);
     const payload = generateDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);
   } catch (error) {
+    if (isAuthenticationRequiredError(error)) {
+      return NextResponse.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
+    }
+
     logger.error(
       {
         err: error,

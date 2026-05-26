@@ -9,6 +9,13 @@ import {
 
 export class AuthenticationError extends Error {}
 
+export function isAuthenticationRequiredError(error: unknown): error is AuthenticationError | Error {
+  return (
+    error instanceof AuthenticationError ||
+    (error instanceof Error && error.message === "AUTHENTICATION_REQUIRED")
+  );
+}
+
 function readCookie(request: Request, name: string) {
   const cookieHeader = request.headers.get("cookie") ?? "";
   const segment = cookieHeader
