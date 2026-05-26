@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { AnthropicProvider } from "@/server/services/ai/anthropic.provider";
 
 function createAnthropicEventStream(chunks: string[]) {

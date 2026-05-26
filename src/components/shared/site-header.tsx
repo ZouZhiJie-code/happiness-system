@@ -220,7 +220,6 @@ function SiteHeaderInner() {
   >({});
   const {
     activeEventId,
-    bootState,
     dimension,
     draftGenerationBusy,
     draftGenerationDisabled,
@@ -300,8 +299,6 @@ function SiteHeaderInner() {
   const shouldUseLiveSelectedProgress = Boolean(
     workspaceMode === "interview" && sessionDimension === activeDimension && activeProgressSession
   );
-  const isSelectedDimensionRestoring = isInterviewPage && bootState === "restoring" && !activeProgressSession;
-
   useEffect(() => {
     if (!isInterviewPage) {
       hasNormalizedInterviewUrlRef.current = false;

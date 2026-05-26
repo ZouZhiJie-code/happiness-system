@@ -271,7 +271,8 @@ export class AnthropicProvider implements AIProvider {
     }
   }
 
-  async embed(_params: AIEmbeddingParams): Promise<never> {
+  async embed(params: AIEmbeddingParams): Promise<never> {
+    void params;
     throw new AIProviderError("Anthropic embeddings are not supported.", "UNSUPPORTED_CAPABILITY");
   }
 }

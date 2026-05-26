@@ -3,8 +3,6 @@ import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
-  hasCredibleFulfillmentProgressEvidence,
-  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getDirectionSignal,
   getDurability,

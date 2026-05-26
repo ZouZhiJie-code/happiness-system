@@ -527,7 +527,6 @@ describe("calendar month shell", () => {
     render(<CalendarMonthShell />);
 
     const primaryError = await screen.findByTestId("calendar-month-primary-error");
-    const secondaryError = screen.getByTestId("calendar-month-secondary-error");
 
     fireEvent.click(within(primaryError).getByRole("button", { name: "重新加载" }));
 

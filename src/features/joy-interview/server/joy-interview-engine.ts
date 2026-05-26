@@ -332,42 +332,6 @@ function resolveSignalLevel(value: string | null, strongPattern?: RegExp): JoySi
   return "hint";
 }
 
-function buildAutoDelightSignature(input: {
-  joySource: string | null;
-  stateShift: string | null;
-  joyMoment: string | null;
-  kind: JoyKind;
-  tags: string[];
-}) {
-  const source = input.joySource ? trimTrailingPunctuation(input.joySource) : null;
-  const stateShift = input.stateShift ? trimTrailingPunctuation(input.stateShift) : null;
-  const moment = input.joyMoment ? trimTrailingPunctuation(input.joyMoment) : null;
-  const cue = source ?? moment;
-  const cueText = [cue, ...input.tags].filter(Boolean).join(" ");
-
-  if (!cue) {
-    return null;
-  }
-
-  if (/(好笑|逗|段子|梗|反差|短视频|有趣|好玩)/u.test(cueText)) {
-    return normalizeSlotValue(`我会被这种${cue}一下子逗得更开心`, 120);
-  }
-
-  if (/(上头|停不下来|沉浸|刷下去|看下去|专注)/u.test(cueText)) {
-    return normalizeSlotValue(`我会被这种${cue}很快带进状态`, 120);
-  }
-
-  if (input.kind === "restoration" || /(轻松|放松|松开|舒展开|慢下来|散步|听歌)/u.test(cueText)) {
-    return normalizeSlotValue(`我会被这种${cue}慢慢带松下来`, 120);
-  }
-
-  if (stateShift) {
-    return normalizeSlotValue(`我会被这种${cue}带得${stateShift}`, 120);
-  }
-
-  return normalizeSlotValue(`我会被这种${cue}轻轻带动起来`, 120);
-}
-
 function deriveJoyPsychProfile(input: {
   joyMoment: string | null;
   joySource: string | null;
