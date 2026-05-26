@@ -275,3 +275,65 @@ VOLCENGINE_ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 - `dlight.cc.cd` 已接入 `zouzhijies-projects/xingfuxitong`
 - public 站点可用，生产 AI provider 可用，production 数据库基线可用
 - 剩余 launch 风险已不再是 Vercel AI env 合同，而是独立的中国大陆样本与最终人工回归
+
+## 2026-05-26 生产 auth 错误发布收口
+
+这轮 production 问题表现为：感谢维度访谈继续提交时，用户看到类似网络不可用的失败；线上无登录直打 `respond/stream` 一度返回 Vercel HTML `500`。
+
+根因收敛：
+
+1. 已过期或缺失的登录状态没有在 stream 路由进入 SSE 前被统一识别。
+2. 旧 production deployment 仍停在修复前版本；PR 合并和 CI 通过后，`dlight.cc.cd` 仍指向 5 小时前的 Vercel deployment。
+
+发布前先确认代码与线上不是同一层问题：
+
+```bash
+gh pr view 20 --json state,mergedAt,mergeCommit,url
+gh run view 26437689871 --json status,conclusion,headSha,workflowName,url
+vercel ls --scope zouzhijies-projects
+vercel inspect https://<current-production-deployment>.vercel.app --scope zouzhijies-projects
+```
+
+如果 `vercel ls` 最新 production deployment 创建时间早于合并提交，说明代码已合并但线上仍是旧版本。此时应从干净的 `origin/main` worktree 部署，避免把本地主目录的未提交改动带到 production：
+
+```bash
+git fetch origin main
+git worktree add /private/tmp/happiness-prod-deploy origin/main
+mkdir -p /private/tmp/happiness-prod-deploy/.vercel
+cp .vercel/project.json /private/tmp/happiness-prod-deploy/.vercel/project.json
+cd /private/tmp/happiness-prod-deploy
+vercel --prod --scope zouzhijies-projects
+```
+
+生产验证口径：
+
+```bash
+curl -I https://dlight.cc.cd
+
+curl -m 25 -i -H 'Content-Type: application/json' \
+  -d '{"dimension":"gratitude"}' \
+  https://dlight.cc.cd/api/interview/session/start
+
+curl -m 25 -i -H 'Content-Type: application/json' \
+  -d '{"action":"reply","sessionId":"session-1","userMessage":"hi","inputMode":"text"}' \
+  https://dlight.cc.cd/api/interview/session/respond
+
+curl -m 25 -i -H 'Content-Type: application/json' \
+  -d '{"action":"reply","sessionId":"session-1","userMessage":"hi","inputMode":"text"}' \
+  https://dlight.cc.cd/api/interview/session/respond/stream
+```
+
+本次发布证据：
+
+- Production deployment: `https://xingfuxitong-p0aqce49d-zouzhijies-projects.vercel.app`
+- Alias: `https://dlight.cc.cd`
+- Vercel deployment id: `dpl_gmxvc6SEyf9Qo1TLQzZkuyQ8o2Zz`
+- `GET /` 返回 `HTTP/2 200`
+- `POST /api/interview/session/respond` 无登录返回 `HTTP/2 401` 和结构化 `AUTHENTICATION_REQUIRED`
+- `POST /api/interview/session/respond/stream` 无登录返回 `HTTP/2 401` 和结构化 `AUTHENTICATION_REQUIRED`
+
+当前结论：
+
+- 这类问题应先区分三层：代码是否已合并、CI 是否通过、production alias 是否已经指向包含修复的 deployment。
+- 对用户可见的正确行为是提示“登录状态已失效，请重新登录后回到当前页面继续”，不能再暴露 `NETWORK_UNAVAILABLE` 或 Vercel HTML `500`。
+- stream 路由的 auth 检查必须发生在创建 SSE 响应前；否则错误容易绕过普通 JSON 错误处理。
