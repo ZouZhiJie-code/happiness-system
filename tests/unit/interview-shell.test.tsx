@@ -289,11 +289,11 @@ function createDeferredResponse() {
   };
 }
 
-function renderInterviewPage() {
+function renderInterviewPage(options: { showAIRuntimeSummary?: boolean } = {}) {
   return render(
     <>
       <SiteHeader />
-      <InterviewShell />
+      <InterviewShell showAIRuntimeSummary={options.showAIRuntimeSummary} />
     </>
   );
 }
@@ -1719,6 +1719,20 @@ describe("InterviewShell", () => {
     expect(screen.queryByRole("button", { name: "生成最新日志" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
+  });
+
+  it("does not request admin AI runtime status when the runtime summary is not enabled", async () => {
+    cacheInterviewSessions({ joy: "session-ready" });
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
+
+    expect(await screen.findByTestId("journal-editor-card")).toBeInTheDocument();
+    expect(
+      vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/admin/ai-runtime/status")
+    ).toBe(false);
+    expect(screen.queryByText("当前 AI 配置")).not.toBeInTheDocument();
   });
 
   it("switches the main workspace to the daily journal from the top log button", async () => {

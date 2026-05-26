@@ -18,6 +18,10 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
+const { mockInterviewShell } = vi.hoisted(() => ({
+  mockInterviewShell: vi.fn(() => null)
+}));
+
 const {
   mockGetAdminAnalyticsFunnel,
   mockGetAdminAnalyticsOverview,
@@ -57,6 +61,10 @@ vi.mock("@/server/services/admin-analytics/admin-analytics.service", () => ({
   listAdminAnalyticsUsers: mockListAdminAnalyticsUsers
 }));
 
+vi.mock("@/components/interview/interview-shell", () => ({
+  InterviewShell: mockInterviewShell
+}));
+
 import AnalysisPage from "@/app/analysis/page";
 import AdminAnalyticsPage from "@/app/admin/analytics/page";
 import CalendarPage from "@/app/calendar/page";
@@ -66,6 +74,32 @@ import ProfilePage from "@/app/profile/page";
 import RegisterPage from "@/app/register/page";
 import SettingsPage from "@/app/settings/page";
 import AccountSettingsPage from "@/app/settings/account/page";
+
+function findPropInReactTree(node: unknown, propName: string): unknown {
+  if (!node || typeof node !== "object") {
+    return undefined;
+  }
+
+  const record = node as { props?: Record<string, unknown> };
+
+  if (record.props && propName in record.props) {
+    return record.props[propName];
+  }
+
+  const children = record.props?.children;
+
+  if (Array.isArray(children)) {
+    for (const child of children) {
+      const found = findPropInReactTree(child, propName);
+
+      if (found !== undefined) {
+        return found;
+      }
+    }
+  }
+
+  return findPropInReactTree(children, propName);
+}
 
 function mockCookieStore(token?: string) {
   return {
@@ -163,6 +197,7 @@ describe("auth page guards", () => {
     expect(mockGetCurrentUserFromSessionToken).toHaveBeenCalledWith("session-token");
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(page).toBeTruthy();
+    expect(findPropInReactTree(page, "showAIRuntimeSummary")).toBe(false);
     expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventName: "private_page_viewed",
@@ -217,6 +252,20 @@ describe("auth page guards", () => {
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(mockNotFound).not.toHaveBeenCalled();
     expect(page).toBeTruthy();
+  });
+
+  it("enables the interview AI runtime summary for authenticated admins", async () => {
+    vi.stubEnv("ADMIN_USERNAMES", "admin_user");
+    mockCookies.mockResolvedValue(mockCookieStore("session-token"));
+    mockGetCurrentUserFromSessionToken.mockResolvedValue({
+      id: "user-1",
+      username: "admin_user"
+    });
+
+    const page = await InterviewPage();
+
+    expect(page).toBeTruthy();
+    expect(findPropInReactTree(page, "showAIRuntimeSummary")).toBe(true);
   });
 
   it("redirects authenticated visitors away from login and register using next when provided", async () => {

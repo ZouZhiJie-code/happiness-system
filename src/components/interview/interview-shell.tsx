@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
+import { AIRuntimeConfigSummaryCard } from "@/components/interview/ai-runtime-config-summary-card";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
@@ -799,7 +800,7 @@ function parseSseChunk(chunk: string) {
   }
 }
 
-export function InterviewShell() {
+export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntimeSummary?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
@@ -2738,6 +2739,7 @@ export function InterviewShell() {
               />
             ) : journalEntry ? (
               <div data-testid="journal-editor-card" className="flex flex-col pb-2">
+                {showAIRuntimeSummary ? <AIRuntimeConfigSummaryCard /> : null}
                 <input
                   value={draftTitle}
                   onChange={(event) => setDraftTitle(event.target.value)}
