@@ -148,7 +148,7 @@ describe("interview deep link behavior", () => {
       entryDate: "2026-05-01",
       panel: null
     };
-    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "/api/interview/session/start") {
         return new Response(JSON.stringify({ session: buildSession({ status: "active" }) }), { status: 200 });

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import {
@@ -56,7 +56,6 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
   const currentKey = currentItem.requestKey;
-  const completionCount = happinessScorePresentationItems.filter((item) => typeof scores[item.requestKey] === "number").length;
 
   useEffect(() => {
     return () => {
@@ -138,7 +137,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const touchedCount = happinessScorePresentationItems.filter((item) => touchedScores[item.requestKey]).length;
   const canSaveAndExit = isCompleteScoreForm(scores) && touchedCount === total && !isLoadingExisting && !isSaving;
 
-  function findNextUntouchedIndex(nextTouchedScores: Partial<Record<HappinessScoreRequestKey, true>>, fromIndex: number) {
+  const findNextUntouchedIndex = useCallback((nextTouchedScores: Partial<Record<HappinessScoreRequestKey, true>>, fromIndex: number) => {
     for (let offset = 1; offset <= total; offset += 1) {
       const index = (fromIndex + offset) % total;
       const key = happinessScorePresentationItems[index]?.requestKey;
@@ -153,9 +152,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     }
 
     return null;
-  }
+  }, [total]);
 
-  function handleSelectScore(value: number) {
+  const handleSelectScore = useCallback((value: number) => {
     hasLocalEditsRef.current = true;
     setSaveNotice(null);
     setSaveError(null);
@@ -193,22 +192,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     noticeTimerRef.current = window.setTimeout(() => {
       setTransitionNotice(null);
     }, 1200);
-  }
-
-  function handleKeyDown(event: KeyboardEvent | React.KeyboardEvent<HTMLDivElement>) {
-    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.repeat) {
-      return;
-    }
-
-    const key = event.key;
-
-    if (!/^[0-9]$/.test(key)) {
-      return;
-    }
-
-    event.preventDefault();
-    handleSelectScore(key === "0" ? 10 : Number(key));
-  }
+  }, [currentIndex, currentItem.label, currentKey, findNextUntouchedIndex, scores, touchedScores]);
 
   useEffect(() => {
     if (!open) {
@@ -228,7 +212,16 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         return;
       }
 
-      handleKeyDown(event);
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.repeat) {
+        return;
+      }
+
+      if (!/^[0-9]$/.test(event.key)) {
+        return;
+      }
+
+      event.preventDefault();
+      handleSelectScore(event.key === "0" ? 10 : Number(event.key));
     }
 
     window.addEventListener("keydown", onWindowKeyDown);
@@ -236,7 +229,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     return () => {
       window.removeEventListener("keydown", onWindowKeyDown);
     };
-  }, [currentIndex, currentKey, open, scores]);
+  }, [currentIndex, currentKey, handleSelectScore, open, scores, touchedScores]);
 
   if (!open) {
     return null;

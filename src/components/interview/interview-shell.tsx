@@ -905,7 +905,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     setBootState,
     setJournalEntry,
     turnCount,
-    stage,
     status,
     setWorkspaceTransitionState,
     workspaceTransitionState
@@ -1055,7 +1054,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       !isGeneratingDraft &&
       !isSavingJournal
   );
-  const isWorkspaceTransitioning = Boolean(workspaceTransitionState);
   const showWorkspaceTransition = Boolean(
     workspaceTransitionState &&
       ((workspaceTransitionState.kind === "opening_daily_journal" && workspaceMode === "interview") ||
@@ -1123,7 +1121,15 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     }
 
     clearStoredInterviewSessionId(storageDimension);
-  }, [currentDimension, hasUserMessages, sessionDimension, sessionId, setDraftGenerationControls, status]);
+  }, [
+    currentDimension,
+    hasUserMessages,
+    sessionDimension,
+    sessionEntryDate,
+    sessionId,
+    setDraftGenerationControls,
+    status
+  ]);
 
   useEffect(() => {
     setDraftGenerationControls({
@@ -1234,38 +1240,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       setPanelOpen(true);
     }
   }, [journalEntry, shouldOpenJournalPanelFromQuery]);
-
-  useEffect(() => {
-    if (shouldOpenDailyJournalFromQuery) {
-      void openDailyJournalWorkspace();
-    }
-  }, [bootState, shouldOpenDailyJournalFromQuery]);
-
-  useEffect(() => {
-    if (
-      dailyJournalOpenRequestId === 0 ||
-      dailyJournalOpenRequestId === lastDailyJournalOpenRequestRef.current
-    ) {
-      return;
-    }
-
-    lastDailyJournalOpenRequestRef.current = dailyJournalOpenRequestId;
-
-    if (workspaceMode === "daily_journal") {
-      void returnToInterviewWorkspace();
-      return;
-    }
-
-    void openDailyJournalWorkspace();
-  }, [
-    currentDimension,
-    dailyJournalOpenRequestId,
-    requestedEntryDate,
-    router,
-    sessionEntryDate,
-    shouldOpenDailyJournalFromQuery,
-    workspaceMode
-  ]);
 
   const stopDraftAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -2077,10 +2051,10 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     void handleSend();
   }
 
-  async function handleGenerateDraft(options?: {
+  const handleGenerateDraft = useCallback(async (options?: {
     openPanel?: boolean;
     confirmOnOverwrite?: boolean;
-  }) {
+  }) => {
     const { openPanel = true, confirmOnOverwrite = true } = options ?? {};
 
     if (!sessionId || !draftGenerationUnlocked || isGeneratingDraft || isBusy || isSavingJournal) {
@@ -2207,7 +2181,21 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         draftGenerateAbortControllerRef.current = null;
       }
     }
-  }
+  }, [
+    currentDraftCoverageSignature,
+    draftGenerationUnlocked,
+    finalizeDraftGenerationVisuals,
+    hasUnsavedDraftChanges,
+    hydrate,
+    isBusy,
+    isGeneratingDraft,
+    isSavingJournal,
+    journalEntry,
+    redirectToLogin,
+    sessionId,
+    showToast,
+    stopDraftAutosave
+  ]);
 
   async function performSaveJournal() {
     if (!sessionId || !journalEntry || isSavingJournal) {
@@ -2283,7 +2271,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     void performSaveJournal();
   }
 
-  async function handleClosePanel() {
+  const handleClosePanel = useCallback(async () => {
     if (isGeneratingDraft) {
       cancelDraftGeneration();
       setDraftGenerateIssue(null);
@@ -2301,13 +2289,13 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
 
     setPanelOpen(false);
     return true;
-  }
+  }, [cancelDraftGeneration, hasUnsavedDraftChanges, isGeneratingDraft, persistDraftEdits]);
 
   const flushDailyJournalWorkspace = useCallback(async () => {
     return dailyJournalWorkspaceRef.current?.flushPendingEdits() ?? true;
   }, []);
 
-  async function openDailyJournalWorkspace() {
+  const openDailyJournalWorkspace = useCallback(async () => {
     if (workspaceMode === "daily_journal") {
       return;
     }
@@ -2329,9 +2317,9 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
 
     setWorkspaceMode("daily_journal");
     setWorkspaceTransitionState(null);
-  }
+  }, [handleClosePanel, panelOpen, setWorkspaceMode, setWorkspaceTransitionState, workspaceMode]);
 
-  async function openHappinessScoreWorkspace() {
+  const openHappinessScoreWorkspace = useCallback(async () => {
     if (workspaceMode === "happiness_score") {
       return;
     }
@@ -2353,9 +2341,9 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
 
     setWorkspaceMode("happiness_score");
     setWorkspaceTransitionState(null);
-  }
+  }, [handleClosePanel, panelOpen, setWorkspaceMode, setWorkspaceTransitionState, workspaceMode]);
 
-  async function returnToInterviewWorkspace() {
+  const returnToInterviewWorkspace = useCallback(async () => {
     if (workspaceMode === "interview") {
       return;
     }
@@ -2387,7 +2375,41 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     }
 
     setWorkspaceTransitionState(null);
-  }
+  }, [
+    currentDimension,
+    flushDailyJournalWorkspace,
+    requestedEntryDate,
+    router,
+    sessionEntryDate,
+    setWorkspaceMode,
+    setWorkspaceTransitionState,
+    shouldOpenDailyJournalFromQuery,
+    workspaceMode
+  ]);
+
+  useEffect(() => {
+    if (shouldOpenDailyJournalFromQuery) {
+      void openDailyJournalWorkspace();
+    }
+  }, [bootState, openDailyJournalWorkspace, shouldOpenDailyJournalFromQuery]);
+
+  useEffect(() => {
+    if (
+      dailyJournalOpenRequestId === 0 ||
+      dailyJournalOpenRequestId === lastDailyJournalOpenRequestRef.current
+    ) {
+      return;
+    }
+
+    lastDailyJournalOpenRequestRef.current = dailyJournalOpenRequestId;
+
+    if (workspaceMode === "daily_journal") {
+      void returnToInterviewWorkspace();
+      return;
+    }
+
+    void openDailyJournalWorkspace();
+  }, [dailyJournalOpenRequestId, openDailyJournalWorkspace, returnToInterviewWorkspace, workspaceMode]);
 
   useEffect(() => {
     if (
@@ -2513,7 +2535,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
 
     lastDraftGenerationRequestRef.current = draftGenerationRequestId;
     void handleGenerateDraft();
-  }, [draftGenerationRequestId]);
+  }, [draftGenerationRequestId, handleGenerateDraft]);
 
   useEffect(() => {
     if (
@@ -2534,7 +2556,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     }
 
     void openHappinessScoreWorkspace();
-  }, [happinessScoreEntryOpenRequestId, workspaceMode]);
+  }, [happinessScoreEntryOpenRequestId, openHappinessScoreWorkspace, workspaceMode]);
 
   useEffect(() => {
     if (
@@ -2578,6 +2600,8 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     currentDimension,
     ensureSession,
     reset,
+    requestedEntryDate,
+    sessionEntryDate,
     sessionDimension,
     stopDraftAutosave,
     stopToastTimer

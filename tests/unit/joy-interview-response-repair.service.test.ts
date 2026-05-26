@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import type { AssistantTurnPayload, InterviewSessionRecord, JoySnapshot } from "@/types/interview";
+import type { InterviewSessionRecord, JoySnapshot } from "@/types/interview";
 
 const {
   appendJoyInterviewTurn,

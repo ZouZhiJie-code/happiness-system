@@ -8,7 +8,6 @@ import {
   summarizeInterviewProgress
 } from "@/features/joy-interview/server/interview-progress";
 import {
-  applyQuestionSurfaceProtocol,
   createQuestionSpec,
   inferQuestionSpecFromQuestion,
   renderDeterministicRepairTurn
@@ -16,7 +15,6 @@ import {
 import {
   buildAssistantQuestion,
   hasCredibleFulfillmentProgressEvidence,
-  hasCredibleFulfillmentValueSignal,
   getDelightSignature,
   getInactiveSessionMessage,
   getJoyTrack,
@@ -191,13 +189,6 @@ function mergeUniqueStrings(values: Array<string | null | undefined>) {
 
 function getEvidenceState(snapshot: JoySnapshot) {
   return snapshot.evidenceState ?? createEmptyEvidenceState();
-}
-
-function withEvidenceState(snapshot: JoySnapshot, evidenceState: InferenceEvidenceState): JoySnapshot {
-  return {
-    ...snapshot,
-    evidenceState
-  };
 }
 
 function markConfirmedTarget(
@@ -1266,182 +1257,6 @@ function splitStreamingText(text: string, chunkSize = SUMMARY_STREAM_CHUNK_SIZE)
   }
 
   return chunks;
-}
-
-function buildThinkingSummaryLead(snapshot: JoySnapshot) {
-  const joyTrack = getJoyTrack(snapshot);
-  const manualClue = trimSummaryField(getManualClue(snapshot), 42);
-  const delightSignature = trimSummaryField(getDelightSignature(snapshot), 42);
-  const meaningNeed = trimSummaryField(getMeaningNeed(snapshot), 24);
-  const joySource = trimSummaryField(getJoySource(snapshot), 24);
-  const stateShift = trimSummaryField(getStateShift(snapshot), 18);
-  const joyMoment = trimSummaryField(getJoyMoment(snapshot), 24);
-
-  if (joyTrack === "delight_track" && delightSignature) {
-    return `这份开心被理解为一种会被“${delightSignature}”带起的轻快乐`;
-  }
-
-  if (manualClue) {
-    return `这份开心的分量落在“${manualClue}”这条个人线索`;
-  }
-
-  if (meaningNeed && joySource) {
-    return `真正开心点落在“${joySource}”，背后也碰到“${meaningNeed}”这层在乎`;
-  }
-
-  if (joySource) {
-    return joyTrack === "delight_track"
-      ? `这种开心被理解为由“${joySource}”把状态带轻`
-      : `真正让这件事有开心感的地方落在“${joySource}”`;
-  }
-
-  if (stateShift && joyMoment) {
-    return `“${joyMoment}”里明显出现了${stateShift}的状态变化`;
-  }
-
-  if (stateShift) {
-    return `这件事带出的${stateShift}状态已经出现`;
-  }
-
-  if (joyMoment) {
-    return `“${joyMoment}”是当前开心感的入口`;
-  }
-
-  return "这个开心片段已经出现，接下来要把状态被带动的原因抓稳";
-}
-
-function buildFulfillmentThinkingSummaryLead(snapshot: JoySnapshot) {
-  const experience = trimSummaryField(getJoyMoment(snapshot), 32);
-  const progressEvidence = trimSummaryField(getJoySource(snapshot), 42);
-  const feeling = trimSummaryField(getStateShift(snapshot), 18);
-  const valueSignal = trimSummaryField(getManualClue(snapshot), 42);
-
-  if (progressEvidence && valueSignal) {
-    return `这段经历的分量落在“${progressEvidence}”，也显出了“${valueSignal}”这条值得感标准`;
-  }
-
-  if (progressEvidence && experience) {
-    return `“${experience}”不只是做了什么，真正让今天不算白过的是“${progressEvidence}”`;
-  }
-
-  if (progressEvidence) {
-    return `让今天不算白过的证据已经出现：${progressEvidence}`;
-  }
-
-  if (experience && feeling) {
-    return `“${experience}”带来的${feeling}感已经出现，但还需要落到具体进展证据上`;
-  }
-
-  if (experience) {
-    return `“${experience}”是这段充实感的入口，接下来要把它为什么有分量说实`;
-  }
-
-  return "一个可能让今天不算白过的片段已经出现，接下来要把具体证据抓稳";
-}
-
-function buildReflectionThinkingSummaryLead(snapshot: JoySnapshot) {
-  const trigger = trimSummaryField(snapshot.event, 32);
-  const insight = trimSummaryField(snapshot.whyItMattered, 48);
-  const reflectionType = trimSummaryField(snapshot.happinessType, 18);
-  const viewpointShift = trimSummaryField(snapshot.selfPattern, 48);
-
-  if (insight && viewpointShift) {
-    return `这次思考已经从“${insight}”推进到“${viewpointShift}”这条判断线索`;
-  }
-
-  if (insight && trigger) {
-    return `“${trigger}”不只是一个片段，它已经带出“${insight}”这层新理解`;
-  }
-
-  if (insight) {
-    return `这次思考的核心理解落在“${insight}”`;
-  }
-
-  if (trigger && reflectionType) {
-    return `“${trigger}”像是一次${reflectionType}的入口，还需要把新的判断说实`;
-  }
-
-  if (trigger) {
-    return `“${trigger}”是触发思考的具体片段`;
-  }
-
-  return "这次思考已有入口，接下来要把新的理解和证据抓稳";
-}
-
-function buildImprovementThinkingSummaryLead(snapshot: JoySnapshot) {
-  const situation = trimSummaryField(snapshot.event, 34);
-  const repeatCondition = trimSummaryField(snapshot.repeatCondition ?? null, 44);
-  const frictionPoint = trimSummaryField(snapshot.frictionPoint ?? snapshot.whyItMattered, 44);
-  const controllableFactor = trimSummaryField(snapshot.controllableFactor ?? null, 42);
-  const nextAttempt = trimSummaryField(snapshot.nextAttempt ?? snapshot.selfPattern, 42);
-
-  if (nextAttempt && controllableFactor) {
-    return `这次改进已经落到“${controllableFactor}”，下一次小尝试是“${nextAttempt}”`;
-  }
-
-  if (frictionPoint && controllableFactor) {
-    return `卡点落在“${frictionPoint}”，可调整的小处开始指向“${controllableFactor}”`;
-  }
-
-  if (repeatCondition && controllableFactor) {
-    return `值得重复的条件落在“${repeatCondition}”，可控部分开始指向“${controllableFactor}”`;
-  }
-
-  if (snapshot.improvementTrack === "repeat_good" && repeatCondition) {
-    return `这次想重复的好状态，关键条件落在“${repeatCondition}”`;
-  }
-
-  if (snapshot.improvementTrack === "avoid_bad" && frictionPoint) {
-    return `这次想避免的坏状态，卡点落在“${frictionPoint}”`;
-  }
-
-  if (snapshot.improvementTrack === "repeat_good") {
-    return "这次改进更像在找一个值得重复的好状态";
-  }
-
-  if (snapshot.improvementTrack === "avoid_bad") {
-    return "这次改进更像在看一个下次想避开的具体卡点";
-  }
-
-  if (situation) {
-    return `“${situation}”是这次改进的具体情境`;
-  }
-
-  return "一个可复盘的改进情境已经出现，接下来要把关键条件或卡点抓稳";
-}
-
-function buildGratitudeThinkingSummaryLead(snapshot: JoySnapshot) {
-  const moment = trimSummaryField(getGratitudeMoment(snapshot), 32);
-  const kindAction = trimSummaryField(snapshot.kindAction ?? null, 44);
-  const seenNeed = trimSummaryField(snapshot.seenNeed ?? null, 42);
-  const reason = trimSummaryField(getGratitudeReason(snapshot), 42);
-  const relationshipSignal = trimSummaryField(getGratitudeRelationshipSignal(snapshot), 42);
-
-  if ((seenNeed || reason) && relationshipSignal) {
-    return `这份感谢落在“${seenNeed ?? reason}”，也开始显出“${relationshipSignal}”这条关系线索`;
-  }
-
-  if (kindAction && seenNeed) {
-    return `对方具体做的是“${kindAction}”，它回应了“${seenNeed}”这层需要`;
-  }
-
-  if (kindAction && moment) {
-    return `“${moment}”里的感谢不是泛泛的，关键在于“${kindAction}”`;
-  }
-
-  if (seenNeed || reason) {
-    return `这份感谢的重要性开始落到“${seenNeed ?? reason}”`;
-  }
-
-  if (kindAction) {
-    return `这份感谢里的具体善意已经出现：${kindAction}`;
-  }
-
-  if (moment) {
-    return `“${moment}”是这次感谢的入口，接下来要看对方回应了什么需要`;
-  }
-
-  return "一个可能值得感谢的片段已经出现，接下来要把具体善意抓稳";
 }
 
 function buildThinkingSummaryFocus(input: {

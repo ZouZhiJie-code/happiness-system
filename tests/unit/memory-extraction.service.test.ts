@@ -1,4 +1,4 @@
-import type { InterviewDimension, InterviewEventRecord, JoyEntryDraft, InterviewSessionRecord } from "@/types/interview";
+import type { InterviewDimension, JoyEntryDraft, InterviewSessionRecord } from "@/types/interview";
 
 // ─── Mocks (vi.hoisted) ──────────────────────────────────────────────────
 

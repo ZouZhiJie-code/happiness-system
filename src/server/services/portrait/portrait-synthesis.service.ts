@@ -1,4 +1,4 @@
-import type { InterviewDimension, PortraitSnapshot } from "@prisma/client";
+import type { InterviewDimension } from "@prisma/client";
 import { z } from "zod";
 
 import { getAIProvider } from "@/server/services/ai";

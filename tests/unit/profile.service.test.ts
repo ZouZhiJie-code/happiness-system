@@ -174,7 +174,7 @@ describe("profile.service", () => {
       mockFindMemoryFactById.mockResolvedValue(buildFact());
       mockUpdateMemoryFact.mockResolvedValue(buildFact({ summary: "更新后的摘要" }));
 
-      const result = await updateProfileFact({
+      await updateProfileFact({
         id: "mem-1",
         userId: USER_ID,
         summary: "更新后的摘要",

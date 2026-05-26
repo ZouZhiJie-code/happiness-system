@@ -4,7 +4,6 @@ import { findAllMemoryFacts } from "@/server/repositories/memory.repository";
 import { listCalendarSourcesByDateRange } from "@/server/repositories/calendar.repository";
 import { listAnalysisSourcesByDateRange } from "@/server/repositories/analysis.repository";
 import { listDailyHappinessScoresByDateRange } from "@/server/repositories/daily-happiness-score.repository";
-import type { CalendarSessionSource } from "@/features/calendar/types";
 import type { DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 
 const ALL_DIMENSIONS: InterviewDimension[] = [

@@ -1,4 +1,4 @@
-import type { InterviewDimension, JoySnapshot } from "@/types/interview";
+import type { JoySnapshot } from "@/types/interview";
 
 // ─── Mocks (vi.hoisted) ──────────────────────────────────────────────────
 

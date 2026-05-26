@@ -223,22 +223,6 @@ function resolveTrendPointLabel(date: string, value: number) {
   return `${formatScoreDateLabel(date)} ${value.toFixed(1)}分`;
 }
 
-function getObservedCoverageDays(record: AnalysisMonthRecord) {
-  const todayEntryDate = getTodayEntryDate();
-
-  if (record.month !== todayEntryDate.slice(0, 7)) {
-    return record.dailyCoverage;
-  }
-
-  return record.dailyCoverage.filter((day) => day.date <= todayEntryDate);
-}
-
-function getLatestDailyJournalDay(record: AnalysisMonthRecord) {
-  return getObservedCoverageDays(record)
-    .filter((day) => day.hasDailyJournalSaved && !day.hasStaleDailyJournal)
-    .sort((left, right) => right.date.localeCompare(left.date))[0] ?? null;
-}
-
 function findCoverageDay(record: AnalysisMonthRecord, date: string | null) {
   if (!date) {
     return null;

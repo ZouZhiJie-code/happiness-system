@@ -235,9 +235,11 @@ function DailyJournalPromptDialog({
     }
 
     window.addEventListener("keydown", handleKeyDown);
+    const returnFocusElement = returnFocusRef.current;
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      returnFocusRef.current?.focus({ preventScroll: true });
+      returnFocusElement?.focus({ preventScroll: true });
     };
   }, [open, returnFocusRef]);
 
