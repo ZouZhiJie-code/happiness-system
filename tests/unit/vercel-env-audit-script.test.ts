@@ -280,6 +280,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     expect(buildEnvironmentContract(previewFile)).toEqual({
       required: [
         "DATABASE_URL",
+        "AI_RUNTIME_CONFIG_SECRET",
         "AI_PROVIDER",
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_MODEL",
@@ -297,6 +298,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     expect(buildEnvironmentContract(productionFile)).toEqual({
       required: [
         "DATABASE_URL",
+        "AI_RUNTIME_CONFIG_SECRET",
         "AI_PROVIDER",
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_MODEL",

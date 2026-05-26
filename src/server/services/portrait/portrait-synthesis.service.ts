@@ -150,7 +150,7 @@ export async function synthesizePortrait(userId: string): Promise<{
   }
 
   // 2. Check AI provider after the data threshold so profile can still fall back.
-  const provider = getAIProvider();
+  const provider = await getAIProvider("chat");
   if (!provider) {
     logger.warn("[portrait-synthesis] No AI provider available, using fallback portrait");
     const fallback = buildFallbackPortrait(data);

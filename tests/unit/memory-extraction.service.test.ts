@@ -159,6 +159,7 @@ describe("extractMemoriesFromSession", () => {
       draftEntry: buildDraft()
     });
 
+    expect(mockGetAIProvider).toHaveBeenCalledWith("embedding");
     expect(mockCreateMemoryFact).toHaveBeenCalledTimes(1);
     expect(mockCreateMemoryFact).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -186,6 +187,7 @@ describe("extractMemoriesFromSession", () => {
       draftEntry: buildDraft()
     });
 
+    expect(mockGetAIProvider).toHaveBeenCalledWith("embedding");
     expect(mockSetMemoryFactEmbedding).toHaveBeenCalledTimes(1);
   });
 

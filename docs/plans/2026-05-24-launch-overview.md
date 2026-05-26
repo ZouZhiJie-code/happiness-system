@@ -1,6 +1,6 @@
 # 发布总览
 
-最后更新：`2026-05-24`
+最后更新：`2026-05-25`
 
 ## 1. 本轮发布目标
 
@@ -51,10 +51,10 @@
 | Calendar 回看链路 | `绿` | 月 / 周 / 日视图和 deep link 已验收 |
 | Analysis 与评分回流 | `绿` | 评分闭环、`rhythm`、`insights` drill-down 已验收 |
 | Profile / Memory / Settings | `绿` | 画像门槛、fallback portrait、设置页不拖主流程已验收 |
-| 部署 / 数据库 / 环境变量 | `绿` | Vercel lane、共享环境数据库 readiness 和 runtime readback 证据已收口 |
+| 部署 / 数据库 / 环境变量 | `绿` | `dlight.cc.cd` 已接入 Vercel；production 已补齐 `AnalyticsEvent / AdminAuditLog` migration；production AI runtime 已通过真实 provider probe（`status=200`） |
 | CI / 工具链 | `绿` | `typecheck + test + build + lint` 已纳入 CI |
 | AI 访谈质量结论完整性 | `绿` | `AI-01 ~ AI-05` 已在验收矩阵中显式写出当前判定 |
-| 最终发布环境回归 | `黄` | 现有强证据主要来自 `2026-05-18 ~ 2026-05-20`，还缺发版前最新一轮放行回归 |
+| 最终发布环境回归 | `黄` | production AI 与数据库基线已在 `2026-05-25` 收口，但还缺发版前最新一轮人工业务回归 |
 | 中国大陆访问验证 | `黄` | 尚未使用正式自定义域名完成中国大陆网络实测 |
 | 内测运营准备 | `黄` | 还缺种子用户名单、反馈群 SOP、暂停发放规则 |
 
@@ -93,12 +93,12 @@
 
 ### 5.1 文档与放行面缺口
 
-1. 最终放行 checklist 已建，但还没有回填自动化结果、人工回归结果和 `Go / No-Go` 结论
+1. 最终放行 checklist 已建，但还没有写出最终人工回归结果和 `Go / No-Go` 结论
 
 ### 5.2 回归缺口
 
 1. 还缺基于准备发布环境的一轮最新全量人工回归
-2. 还缺基于自定义域名的一轮外部访问验证
+2. 还缺基于自定义域名的一轮中国大陆样本验证
 3. `product-smoke.mjs` 当前只覆盖最小 `auth/session/start/invalid_entry_date`
 4. 更深的 `respond -> draft generate -> draft save` 仍主要依赖准备发布环境上的 controller 手工补证
 
@@ -111,7 +111,7 @@
 
 ### 5.4 中国大陆访问缺口
 
-1. 当前尚未完成 `dlight.cc.cd` 的正式接入
+1. `dlight.cc.cd` 已接入并指向当前 production deployment
 2. 当前还没有基于自定义域名的中国大陆网络实测证据
 3. 本轮可以接受“熟人小范围可用”，不能把当前 Vercel 线路表述成“中国大陆稳定可达”的正式方案
 
@@ -137,9 +137,6 @@
 
 ### 7.3 域名与外部访问
 
-- 在 Vercel 项目中接入 `dlight.cc.cd`
-- 在 DNSHE 中完成对应 `A / CNAME / TXT` 记录
-- 等待 DNS 生效
 - 用中国大陆网络完成最少一轮实测
 
 ### 7.4 内测准备
@@ -183,8 +180,8 @@
 
 当前执行顺序固定为：
 
-1. 域名 `dlight.cc.cd` 接入 Vercel + DNSHE
-2. 用准备发布环境跑最终人工回归与 preview / production smoke
+1. 用准备发布环境跑最终人工回归与 preview / production smoke
+2. 用中国大陆网络补一条可引用样本
 3. 把人工回归结果和 `Go / No-Go` 结论写回最终 checklist
 4. 建立反馈群 SOP 和种子用户清单
 5. 发出首批邀请

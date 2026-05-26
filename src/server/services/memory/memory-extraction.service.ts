@@ -1,5 +1,6 @@
 import { logger } from "@/server/lib/logger";
 import { getAIProvider } from "@/server/services/ai";
+import type { AIProvider } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import {
   buildMemoryExtractionMessages,
@@ -39,7 +40,7 @@ export async function extractMemoriesFromSession(input: {
     }
 
     // 2. Build prompt and call AI
-    const provider = getAIProvider();
+    const provider = await getAIProvider("embedding");
     const messages = buildMemoryExtractionMessages({
       dimension: input.session.dimension,
       snapshot: input.session.events[0]?.snapshotData
@@ -117,12 +118,12 @@ export async function extractMemoriesFromSession(input: {
     }
 
     // 4. Generate embeddings (batch) using actual stored summaries
-    if (idSummaryPairs.length > 0) {
+    if (provider && idSummaryPairs.length > 0) {
       await generateAndSetEmbeddings(
         idSummaryPairs.map((p) => p.id),
         idSummaryPairs.map((p) => p.summary),
         userId,
-        provider as NonNullable<ReturnType<typeof getAIProvider>>
+        provider
       );
     }
 
@@ -146,7 +147,7 @@ async function generateAndSetEmbeddings(
   memoryIds: string[],
   summaries: string[],
   userId: string,
-  provider: NonNullable<ReturnType<typeof getAIProvider>>
+  provider: AIProvider
 ): Promise<void> {
   try {
     if (!provider.embed) {

@@ -1,6 +1,6 @@
 # Final Launch Checklist
 
-最后更新：`2026-05-24`
+最后更新：`2026-05-25`
 
 ## 1. 文档回填
 
@@ -11,9 +11,9 @@
 
 ## 2. 环境与域名
 
-- [ ] `dlight.cc.cd` 已接入 Vercel
-- [ ] DNSHE 记录已生效
-- [ ] preview / production 环境变量核对完成
+- [x] `dlight.cc.cd` 已接入 Vercel
+- [x] DNSHE 记录已生效
+- [x] preview / production 环境变量核对完成
 
 ## 3. 自动化
 
@@ -40,8 +40,8 @@
 ## 当前结论
 
 - 当前状态：`Pending final sign-off`
-- 当前已完成：主目录恢复为 `main`，`wip/main-snapshot-2026-05-20` 转为辅助 worktree，`AI-01 ~ AI-05` 已全部有正式结论，自动化四件套已在主目录 `main` 上补跑
-- 当前待完成：域名接入、中国大陆访问验证、最终人工回归、`Go / No-Go`
+- 当前已完成：主目录恢复为 `main`，`wip/main-snapshot-2026-05-20` 转为辅助 worktree，`AI-01 ~ AI-05` 已全部有正式结论，自动化四件套已在主目录 `main` 上补跑；`dlight.cc.cd` 已接入 Vercel；production 数据库缺失的管理员分析 migration 已补齐；production AI provider 已通过真实 runtime probe
+- 当前待完成：中国大陆访问验证、最终人工回归、`Go / No-Go`
 
 ## 自动化结果
 
@@ -53,5 +53,5 @@
 ## Launch Decision
 
 - Decision：`Pending`
-- Basis：等待 `dlight.cc.cd` 接入、准备发布环境最终人工回归、中国大陆访问验证
+- Basis：域名与 production AI / DB 基线已经收口；仍缺中国大陆真实网络样本与一轮最终人工回归
 - Remaining accepted limits：当前仅接受既有 lint / build warning，不接受新的 `P0`

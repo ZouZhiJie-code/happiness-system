@@ -75,6 +75,23 @@ enum MemorySourceType {
   user_added
 }
 
+enum AIRuntimeCapability {
+  chat
+  embedding
+}
+
+enum AIRuntimeProvider {
+  openai
+  anthropic
+  volcengine_ark
+}
+
+enum AIRuntimeConfigStatus {
+  draft
+  published
+  archived
+}
+
 model User {
   id                String               @id @default(cuid())
   username          String               @unique
@@ -284,6 +301,51 @@ model AdminAuditLog {
 
   @@index([adminUsername, createdAt])
   @@index([targetUserId, createdAt])
+}
+
+model AIRuntimeConfig {
+  id               String                @id @default(cuid())
+  capability       AIRuntimeCapability
+  provider         AIRuntimeProvider
+  status           AIRuntimeConfigStatus
+  enabled          Boolean               @default(true)
+  displayName      String
+  apiKeyCiphertext String?
+  apiKeyMask       String?
+  configJson       Json
+  configChecksum   String
+  version          Int
+  createdBy        String
+  publishedBy      String?
+  publishedAt      DateTime?
+  archivedAt       DateTime?
+  rollbackFromId   String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  probes           AIRuntimeProbe[]
+
+  @@unique([capability, version])
+  @@index([capability, status, updatedAt])
+  @@index([status, publishedAt])
+}
+
+model AIRuntimeProbe {
+  id             String              @id @default(cuid())
+  configId       String
+  capability     AIRuntimeCapability
+  provider       AIRuntimeProvider
+  configChecksum String
+  success        Boolean
+  httpStatus     Int?
+  errorCode      String?
+  latencyMs      Int?
+  summary        String
+  testedBy       String
+  createdAt      DateTime            @default(now())
+  config         AIRuntimeConfig     @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId, createdAt])
+  @@index([capability, createdAt])
 }
 
 /// Score ranges are enforced at both Zod layer and DB layer via SQL migration checks.

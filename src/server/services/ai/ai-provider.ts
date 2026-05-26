@@ -44,3 +44,25 @@ export class AIProviderError extends Error {
     this.name = "AIProviderError";
   }
 }
+
+export function getAIProviderFailureCode(error: unknown) {
+  if (!(error instanceof AIProviderError)) {
+    return error instanceof Error ? error.name : "UNKNOWN_ERROR";
+  }
+
+  if (error.code !== "UPSTREAM_HTTP_ERROR") {
+    return error.code;
+  }
+
+  try {
+    const payload = JSON.parse(error.message) as {
+      error?: {
+        code?: string;
+      };
+    };
+
+    return payload.error?.code ? String(payload.error.code).toUpperCase() : error.code;
+  } catch {
+    return error.code;
+  }
+}

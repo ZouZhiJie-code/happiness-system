@@ -46,9 +46,9 @@ import {
 } from "@/features/joy-interview/prompts/joy-prompts";
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
-import { getAIProvider } from "@/server/services/ai";
+import { formatAIProviderUnavailableCode, getAIProvider, getAIProviderStatus } from "@/server/services/ai";
 import type { AIChatMessage, AIProvider } from "@/server/services/ai/ai-provider";
-import { AIProviderError } from "@/server/services/ai/ai-provider";
+import { getAIProviderFailureCode } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import type {
   AssistantDepth,
@@ -340,51 +340,6 @@ function normalizeDraftTitle(title: string, brief: ReturnType<typeof buildDraftB
     aiTitle: title,
     fallbackTitle: brief.titleHint ?? brief.anchorScene ?? "今天记下的片刻"
   });
-}
-
-function cloneExistingDraft(entry: InterviewSessionRecord["journalEntry"]): JoyEntryDraft | null {
-  if (!entry) {
-    return null;
-  }
-
-  return {
-    title: entry.title,
-    content: entry.content,
-    event: entry.event,
-    feeling: entry.feeling,
-    whyItMattered: entry.whyItMattered,
-    happinessType: entry.happinessType,
-    selfPattern: entry.selfPattern,
-    joyMoment: entry.joyMoment,
-    joySource: entry.joySource,
-    stateShift: entry.stateShift,
-    meaningNeed: entry.meaningNeed,
-    manualClue: entry.manualClue,
-    delightSignature: entry.delightSignature,
-    directionSignal: entry.directionSignal,
-    valueImpact: entry.valueImpact,
-    durability: entry.durability,
-    psychProfile: entry.psychProfile,
-    improvementTrack: entry.improvementTrack,
-    stateAssessment: entry.stateAssessment,
-    frictionPoint: entry.frictionPoint,
-    repeatCondition: entry.repeatCondition,
-    controllableFactor: entry.controllableFactor,
-    nextAttempt: entry.nextAttempt,
-    successSignal: entry.successSignal,
-    gratitudeMoment: entry.gratitudeMoment,
-    gratitudeTarget: entry.gratitudeTarget,
-    kindAction: entry.kindAction,
-    seenNeed: entry.seenNeed,
-    innerEffect: entry.innerEffect,
-    gratitudeReason: entry.gratitudeReason,
-    gratitudeType: entry.gratitudeType,
-    relationshipSignal: entry.relationshipSignal,
-    reciprocityHint: entry.reciprocityHint,
-    tags: entry.tags,
-    eventBlocks: entry.eventBlocks,
-    source: entry.source
-  };
 }
 
 function resolveDraftGenerationMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftGenerationMode {
@@ -691,9 +646,11 @@ export async function extractJoySnapshotWithAI(input: {
       userMessage: input.userMessage
     })
   );
-  const provider = getAIProvider();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
   const aiResult = await completeStructuredOutput({
     provider,
+    providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
     stage: "extract",
     schema: getExtractResultSchema(input.session.dimension),
     messages: buildJoyExtractMessages({
@@ -711,7 +668,13 @@ export async function extractJoySnapshotWithAI(input: {
   });
 
   if (!aiResult) {
-    logger.warn({ sessionId: input.session.id }, "AI extraction unavailable, fallback snapshot will be used.");
+    logger.warn(
+      {
+        sessionId: input.session.id,
+        providerStatus: provider ? "ready" : providerStatus.code
+      },
+      "AI extraction unavailable, fallback snapshot will be used."
+    );
 
     return stageAwareFallbackSnapshot;
   }
@@ -1120,7 +1083,8 @@ async function requestAssistantReplySegments(
   input: AssistantTurnGenerationInput,
   onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void
 ) {
-  const provider = getAIProvider();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
 
   if (!provider) {
     await logAttempt(input.sessionId, {
@@ -1128,7 +1092,7 @@ async function requestAssistantReplySegments(
       provider: "disabled",
       success: false,
       latencyMs: null,
-      errorCode: "QUESTION_PROVIDER_NOT_CONFIGURED"
+      errorCode: formatAIProviderUnavailableCode("QUESTION_PROVIDER", providerStatus)
     });
 
     return null;
@@ -1156,8 +1120,7 @@ async function requestAssistantReplySegments(
         provider: provider.name,
         success: false,
         latencyMs: null,
-        errorCode:
-          error instanceof AIProviderError ? `QUESTION_${error.code}` : error instanceof Error ? `QUESTION_${error.name}` : "QUESTION_UNKNOWN_ERROR"
+        errorCode: `QUESTION_${getAIProviderFailureCode(error)}`
       });
     }
   }
@@ -1453,7 +1416,8 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     brief: draftBrief,
     completionMode: draftBrief.completionMode
   });
-  const provider = getAIProvider();
+  const provider = await getAIProvider("chat");
+  const providerStatus = await getAIProviderStatus("chat");
   const startedAt = Date.now();
   logger.info(
     {
@@ -1466,6 +1430,7 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
   );
   const aiResult = await completeStructuredOutput({
     provider,
+    providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("DRAFT_PROVIDER", providerStatus),
     stage: "generate",
     schema: joyDraftResultSchema,
     messages: buildJoyDraftMessages({
@@ -1495,7 +1460,12 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
 
   if (!aiResult) {
     logger.warn(
-      { sessionId: session.id, generationMode, elapsedMs: Date.now() - startedAt },
+      {
+        sessionId: session.id,
+        generationMode,
+        elapsedMs: Date.now() - startedAt,
+        providerStatus: provider ? "ready" : providerStatus.code
+      },
       "AI draft generation unavailable, fallback draft will be used."
     );
 

@@ -54,6 +54,43 @@ describe("launch acceptance runner transport selection", () => {
     });
   });
 
+  it("registers an explicitly provided username without random normalization when password is supplied", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ authenticated: true, user: { id: "user-1", username: "admin_seed" } }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "set-cookie": "dl_session=admin-cookie; Path=/; HttpOnly"
+        }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { createAcceptanceClient } = await loadRunnerModule();
+    const client = createAcceptanceClient({ baseUrl: "http://127.0.0.1:4010" });
+
+    const result = await client.registerAccount("admin_seed", "testpass123");
+
+    expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:4010/api/auth/register", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        username: "admin_seed",
+        password: "testpass123",
+        acceptedTerms: true,
+        acceptedPrivacy: true
+      }),
+      redirect: "manual"
+    });
+    expect(result).toMatchObject({
+      username: "admin_seed",
+      password: "testpass123",
+      cookie: "dl_session=admin-cookie"
+    });
+  });
+
   it("merges custom headers for fetch transport requests", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {

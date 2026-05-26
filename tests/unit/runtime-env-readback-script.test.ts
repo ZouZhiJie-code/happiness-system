@@ -61,6 +61,28 @@ describe("runtime env readback script", () => {
           branchUrl: null,
           projectProductionUrl: "https://prod.example.com",
           appUrl: "https://prod.example.com"
+        },
+        ai: {
+          provider: "volcengine-ark",
+          available: false,
+          state: "config_invalid",
+          code: "PLACEHOLDER_API_KEY",
+          issues: ["PLACEHOLDER_API_KEY"],
+          configSummary: {
+            hasApiKey: true,
+            hasModel: true,
+            hasBaseUrl: false,
+            modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+            baseUrlHost: null
+          },
+          probe: {
+            ok: false,
+            attempted: false,
+            provider: "volcengine-ark",
+            code: "PLACEHOLDER_API_KEY",
+            status: null,
+            latencyMs: null
+          }
         }
       }
     });
@@ -107,6 +129,93 @@ describe("runtime env readback script", () => {
         branchUrl: null,
         projectProductionUrl: "https://prod.example.com",
         appUrl: "https://prod.example.com"
+      },
+      ai: {
+        provider: "volcengine-ark",
+        available: false,
+        state: "config_invalid",
+        code: "PLACEHOLDER_API_KEY",
+        issues: ["PLACEHOLDER_API_KEY"],
+        configSummary: {
+          hasApiKey: true,
+          hasModel: true,
+          hasBaseUrl: false,
+          modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+          baseUrlHost: null
+        },
+        probe: {
+          ok: false,
+          attempted: false,
+          provider: "volcengine-ark",
+          code: "PLACEHOLDER_API_KEY",
+          status: null,
+          latencyMs: null
+        }
+      }
+    });
+  });
+
+  it("requests the probe path when probe mode is enabled", async () => {
+    const { runRuntimeEnvReadback } = await loadRuntimeReadbackModule();
+    const http = vi.fn().mockResolvedValue({
+      status: 200,
+      json: {
+        env: {},
+        resolved: {},
+        ai: {
+          provider: "volcengine-ark",
+          available: true,
+          state: "ready",
+          code: "READY",
+          issues: [],
+          configSummary: {
+            hasApiKey: true,
+            hasModel: true,
+            hasBaseUrl: true,
+            modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+            baseUrlHost: "ark.cn-beijing.volces.com"
+          },
+          probe: {
+            ok: true,
+            attempted: true,
+            provider: "volcengine-ark",
+            code: "READY",
+            status: 200,
+            latencyMs: 42
+          }
+        }
+      }
+    });
+
+    await runRuntimeEnvReadback(
+      {
+        baseUrl: "https://prod.example.com",
+        prefix: "runtime",
+        token: "secret-token",
+        probe: true
+      },
+      {
+        registerAccount: vi.fn().mockResolvedValue({
+          username: "runtime_user",
+          password: "custom-secret-42"
+        }),
+        loginAccount: vi.fn().mockResolvedValue({
+          cookie: "dl_session=login-cookie"
+        }),
+        getSession: vi.fn().mockResolvedValue({
+          json: {
+            authenticated: true,
+            user: { id: "user-1", username: "runtime_user" }
+          }
+        }),
+        http
+      }
+    );
+
+    expect(http).toHaveBeenCalledWith("/api/debug/runtime-env?probe=1", {
+      cookie: "dl_session=login-cookie",
+      headers: {
+        "x-runtime-readback-token": "secret-token"
       }
     });
   });

@@ -77,5 +77,6 @@ describe("settings page", () => {
     render(await SettingsPage());
 
     expect(screen.getByRole("link", { name: "管理员数据分析" })).toHaveAttribute("href", "/admin/analytics");
+    expect(screen.getByRole("link", { name: "AI 运行配置中心" })).toHaveAttribute("href", "/settings/ai-runtime");
   });
 });

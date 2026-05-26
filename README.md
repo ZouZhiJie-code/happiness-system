@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-05-21`，这个仓库的真实状态是：
+截至 `2026-05-25`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -19,8 +19,10 @@
   - 已登录访问 `/login` 或 `/register` 会优先回到 `next`，否则回到 `/interview`
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
-  - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
-  - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
+- 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
+- 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
+- `2026-05-25` 已完成一次真实 production AI 恢复：`dlight.cc.cd` 当前 production runtime 走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded runtime probe 在恢复窗口中返回过 `ai.probe.status=200`，随后 `ENABLE_RUNTIME_ENV_READBACK` 已重新关闭。
+- 同一轮 production 排障中，已补齐 `20260521120000_add_admin_analytics_tables` migration，修复了 live 注册路径因 `AnalyticsEvent` 表缺失而出现的 `REGISTER_FAILED`。
 - 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
@@ -116,13 +118,41 @@ npm install
 ```bash
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+AI_RUNTIME_CONFIG_SECRET=""            # 用 openssl rand -base64 32 生成；用于加密数据库里的 provider API Key
 AI_PROVIDER="volcengine-ark"
 VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_MODEL=""
+VOLCENGINE_ARK_MODEL=""                # 首选：直接模型 ID；当前 production 使用 deepseek-v3-2-251201
+VOLCENGINE_ARK_ENDPOINT_ID=""          # 兼容旧路径：项目绑定 endpoint；只有确认 key 能访问该 endpoint 时再用
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
 ADMIN_USERNAMES=""                       # 逗号分隔的管理员用户名白名单，例如 "alice,bob"
+```
+
+### 2.2 AI 运行配置中心
+
+- 管理员入口是 `/settings/ai-runtime`，用于维护聊天能力和向量嵌入能力两条独立运行线的草稿、测试、发布和历史回滚。
+- 当前运行时优先级固定为：数据库已发布配置 > 环境变量回退配置。
+- 发布流程固定为：保存草稿 -> 执行连通性测试 -> 发布。修改草稿后，旧测试结果立即失效。
+- 发布后，从下一次 AI 请求开始生效；不需要重新部署。
+- 如果数据库配置不可用，系统会改用环境变量配置。
+
+`AI_RUNTIME_CONFIG_SECRET` 的约束：
+
+- 它是本系统自己的加密主密钥，不是 OpenAI、Anthropic 或 Ark 的 API Key。
+- 生成命令：`openssl rand -base64 32`
+- 部署要求：同一个环境的所有实例必须使用完全相同的值，且不能提交到 git。
+- 如果修改了这个值，旧密文会解不开。恢复方式只有两种：把密钥改回原值，或让管理员重新录入所有 provider API Key。
+
+管理员操作要点：
+
+- 保存后不会再次明文显示 API Key。
+- 回滚入口在历史版本表；回滚会复制历史版本并重新发布，不会原地改旧记录。
+- 当前正在使用数据库配置还是环境变量配置，可以在 `/settings/ai-runtime` 状态卡里确认，也可以在启用受保护的 `/api/debug/runtime-env?probe=1` 后查看 `ai.chat.source` 与 `ai.embedding.source`。
+- 如果要批量采集“保存草稿 / 测试 / 发布 / 回滚 / runtime readback”证据，可以配置管理员与 provider 环境变量后运行：
+
+```bash
+node scripts/admin-ai-runtime-smoke.mjs
 ```
 
 ### 2.1 数据库环境约定
@@ -203,7 +233,7 @@ npm test
   - non-protected preview：可继续走 `SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public`
 - 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
 - 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
-- production URL contract 的 direct readback lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`，它和公开 smoke 分开
+- production URL contract 与 AI provider 诊断 lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`；它和公开 smoke 分开，默认保持关闭，只在短时验证窗口中临时打开
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
 ## 常用命令

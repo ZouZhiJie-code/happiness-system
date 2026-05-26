@@ -212,9 +212,12 @@ export function createAcceptanceClient({ baseUrl = BASE_URL } = {}) {
       ? createVercelCurlHttp({ baseUrl, vercelScope, vercelCwd })
       : createHttp({ baseUrl });
 
-  async function registerAccount(prefix = "acc") {
-    const username = normalizeUsername(prefix);
-    const password = "accept123";
+  async function registerAccount(prefix = "acc", explicitPassword = "accept123") {
+    const username =
+      typeof prefix === "string" && prefix.includes("_")
+        ? prefix
+        : normalizeUsername(prefix);
+    const password = explicitPassword;
     const register = await http("/api/auth/register", {
       method: "POST",
       body: {

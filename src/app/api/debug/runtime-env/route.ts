@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getAIProviderStatus, probeAIProvider } from "@/server/services/ai";
 import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
     }
 
     await requireCurrentUserFromRequest(request);
+    const shouldProbe = new URL(request.url).searchParams.get("probe") === "1";
 
     const env = {
       VERCEL: readEnvValue("VERCEL"),
@@ -42,6 +44,12 @@ export async function GET(request: Request) {
       VERCEL_DEPLOYMENT_ID: readEnvValue("VERCEL_DEPLOYMENT_ID"),
       APP_URL: readEnvValue("APP_URL")
     };
+    const [chatStatus, embeddingStatus, chatProbe, embeddingProbe] = await Promise.all([
+      getAIProviderStatus("chat"),
+      getAIProviderStatus("embedding"),
+      shouldProbe ? probeAIProvider("chat") : Promise.resolve(null),
+      shouldProbe ? probeAIProvider("embedding") : Promise.resolve(null)
+    ]);
 
     return NextResponse.json({
       requestHost: new URL(request.url).host,
@@ -51,6 +59,16 @@ export async function GET(request: Request) {
         branchUrl: toHttpsUrl(env.VERCEL_BRANCH_URL),
         projectProductionUrl: toHttpsUrl(env.VERCEL_PROJECT_PRODUCTION_URL),
         appUrl: env.APP_URL
+      },
+      ai: {
+        chat: {
+          ...chatStatus,
+          probe: chatProbe
+        },
+        embedding: {
+          ...embeddingStatus,
+          probe: embeddingProbe
+        }
       }
     });
   } catch (error) {

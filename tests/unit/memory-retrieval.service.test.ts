@@ -150,6 +150,7 @@ describe("memory-retrieval.service", () => {
       expect(mockEmbed).toHaveBeenCalledWith({
         input: expect.stringContaining("在公园散步")
       });
+      expect(mockGetAIProvider).toHaveBeenCalledWith("embedding");
       expect(mockFindSimilarMemoryFacts).toHaveBeenCalledWith(
         USER_ID,
         [0.1, 0.2, 0.3],

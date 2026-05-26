@@ -1,7 +1,7 @@
 import type { AIRequestStage } from "@prisma/client";
 import type { ZodSchema } from "zod";
 
-import { AIProviderError, type AIChatMessage, type AIProvider } from "@/server/services/ai/ai-provider";
+import { getAIProviderFailureCode, type AIChatMessage, type AIProvider } from "@/server/services/ai/ai-provider";
 
 export interface StructuredOutputAttempt {
   stage: AIRequestStage;
@@ -20,6 +20,7 @@ interface StructuredOutputOptions<T> {
   maxTokens?: number;
   maxAttempts?: number;
   timeoutMs?: number;
+  providerUnavailableCode?: string;
   onAttempt?: (attempt: StructuredOutputAttempt) => Promise<void> | void;
 }
 
@@ -53,6 +54,7 @@ export async function completeStructuredOutput<T>({
   maxTokens = 600,
   maxAttempts = 2,
   timeoutMs,
+  providerUnavailableCode,
   onAttempt
 }: StructuredOutputOptions<T>) {
   if (!provider) {
@@ -61,7 +63,7 @@ export async function completeStructuredOutput<T>({
       provider: "disabled",
       success: false,
       latencyMs: null,
-      errorCode: "PROVIDER_NOT_CONFIGURED"
+      errorCode: providerUnavailableCode ?? "PROVIDER_NOT_CONFIGURED"
     });
 
     return null;
@@ -103,8 +105,7 @@ export async function completeStructuredOutput<T>({
         provider: provider.name,
         success: false,
         latencyMs: null,
-        errorCode:
-          error instanceof AIProviderError ? error.code : error instanceof Error ? error.name : "UNKNOWN_ERROR"
+        errorCode: getAIProviderFailureCode(error)
       });
     }
   }

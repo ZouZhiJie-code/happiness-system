@@ -12,7 +12,8 @@ export async function runRuntimeEnvReadback(
   {
     baseUrl = BASE_URL,
     prefix = "runtime",
-    token = process.env.RUNTIME_ENV_READBACK_TOKEN ?? ""
+    token = process.env.RUNTIME_ENV_READBACK_TOKEN ?? "",
+    probe = false
   } = {},
   {
     registerAccount,
@@ -32,7 +33,8 @@ export async function runRuntimeEnvReadback(
     baseUrl,
     account: null,
     env: null,
-    resolved: null
+    resolved: null,
+    ai: null
   };
 
   const registration = await activeRegisterAccount(prefix);
@@ -49,7 +51,7 @@ export async function runRuntimeEnvReadback(
     throw new Error("SESSION_NOT_AUTHENTICATED");
   }
 
-  const response = await activeHttp("/api/debug/runtime-env", {
+  const response = await activeHttp(probe ? "/api/debug/runtime-env?probe=1" : "/api/debug/runtime-env", {
     cookie: login.cookie,
     headers: {
       "x-runtime-readback-token": token
@@ -65,6 +67,7 @@ export async function runRuntimeEnvReadback(
   summary.ok = true;
   summary.env = response.json.env ?? null;
   summary.resolved = response.json.resolved ?? null;
+  summary.ai = response.json.ai ?? null;
 
   return summary;
 }
@@ -83,6 +86,7 @@ export async function main(argv = process.argv.slice(2)) {
       account: null,
       env: null,
       resolved: null,
+      ai: null,
       error: inferErrorCode(error)
     };
     process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
@@ -103,6 +107,7 @@ if (isDirectRun) {
           account: null,
           env: null,
           resolved: null,
+          ai: null,
           error: inferErrorCode(error)
         },
         null,

@@ -2340,6 +2340,121 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.thinkingSummary).toContain("更稳定的在乎");
   });
 
+  it("keeps a natural thinking summary when '我想' appears inside the user's own felt signal", async () => {
+    const naturalSummary = "被朋友稳稳接住之后，“我想把这种能放心聊开的关系留住”这层心意更清楚了。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: naturalSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我想把这种能放心聊开的关系留住。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).toBe(naturalSummary);
+  });
+
+  it("rewrites a sentence-initial '我想' thinking summary when it is only process talk from the assistant side", async () => {
+    const rawSummary = "我想我们已经接近重点了。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: rawSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我感觉自己被接住了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
+    expect(result.assistantTurn.thinkingSummary).not.toMatch(/^我想/u);
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+  });
+
+  it("rewrites an in-sentence '我想' thinking summary when it is only process talk from the assistant side", async () => {
+    const rawSummary = "这段被理解的感觉已经出来了，我想再看看它为什么这么重要。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: rawSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我感觉自己被接住了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
+    expect(result.assistantTurn.thinkingSummary).not.toContain("我想再看看");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+  });
+
   it("streams assistant deltas before persisting the finalized turn", async () => {
     findJoyInterviewSessionById.mockResolvedValue(buildSession());
     extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
@@ -2740,6 +2855,129 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
     expect(result.assistantTurn?.question).toBe(continuedPayload.question);
+  });
+
+  it("does not let continue_current_event re-ask the same question with only a framing prefix", async () => {
+    const previousQuestion = "你觉得自己在关系里最在乎什么？";
+    const continuedQuestion = "如果只留一个点，你觉得自己在关系里最在乎什么？";
+    const fallbackQuestion = "如果再往里看一点，这份关系里的连接感最明显落在什么地方？";
+    const continuedSummary = "被朋友真正接住之后，最想留下的那层关系感觉已经更清楚了。";
+
+    const choiceSession = buildSession({
+      stage: "wrap_up",
+      draftGenerationUnlocked: true,
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "event_complete",
+        eventId: "event-1",
+        eventSequence: 1,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      },
+      messages: [
+        {
+          id: "assistant-previous",
+          role: "assistant",
+          content: previousQuestion,
+          assistantPayload: {
+            insight: "",
+            thinkingSummary: "这份开心像是来自连接感。",
+            analysis: "用户已说：关系里的被理解；下一步：关系在乎点",
+            question: previousQuestion,
+            stateUpdate: {
+              turnPhase: "digging",
+              shouldEndDimension: false,
+              offerChoice: false,
+              choiceReason: ""
+            },
+            meta: {
+              depthReached: ["event", "reason", "clue"]
+            }
+          },
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        },
+        {
+          id: "assistant-choice",
+          role: "assistant",
+          content: "这段经历为什么重要，已经慢慢清楚起来了。",
+          assistantPayload: {
+            insight: "这段经历为什么重要，已经慢慢清楚起来了。",
+            thinkingSummary: "",
+            analysis: "用户已说：关系里的被理解；下一步：由用户决定是否继续",
+            question: "",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceReason: "当前信息已经足够，直接让用户决定继续聊还是现在整理。"
+            },
+            meta: {
+              depthReached: ["event", "reason", "clue"]
+            }
+          },
+          sequence: 1,
+          createdAt: "2026-04-21T00:01:00.000Z"
+        }
+      ]
+    });
+
+    findJoyInterviewSessionById.mockResolvedValue(choiceSession);
+    resumeCurrentInterviewEvent.mockResolvedValue(
+      buildSession({
+        stage: "probe_pattern",
+        lastAssistantQuestion: "",
+        messages: choiceSession.messages,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason", "meaning_pattern"],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 3,
+            startMessageSequence: 0,
+            snapshot: baseSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ],
+        pendingDecision: null
+      })
+    );
+    buildAssistantQuestion.mockReturnValue(fallbackQuestion);
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: continuedSummary,
+      analysis: "用户刚刚选择继续聊；下一步问：关系在乎点",
+      question: continuedQuestion,
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "continue",
+      sessionId: "session-ready"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn.question).not.toBe(continuedQuestion);
+    expect(result.assistantTurn.thinkingSummary).not.toBe(continuedSummary);
   });
 
   it("does not stream a repeated reflection scene question after continue_current_event", async () => {
@@ -3381,6 +3619,166 @@ describe("prepareJoyInterviewResponse", () => {
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).not.toContain("意味着什么样的努力算数了");
+  });
+
+  it("keeps a natural fulfillment worth-standard question even when it does not use the fixed '算数/值不值' template", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天把散着的简历经历重新理顺了",
+      feeling: "踏实",
+      whyItMattered: "原本散的经历被重新整理成能投递的版本",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const naturalQuestion = "回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: fulfillmentSnapshot,
+        events: [
+          {
+            ...buildSession().events[0],
+            stage: "probe_pattern",
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            snapshot: fulfillmentSnapshot
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(fulfillmentSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这件事真正有分量的地方，是原本散的经历被重新整理成能投递的版本。",
+      analysis: "用户已说：简历被理顺；下一步问：什么投入值得继续",
+      question: naturalQuestion,
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "pattern"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天终于把散的经历整理成能投递的版本了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.question).toBe(naturalQuestion);
+  });
+
+  it("treats a fulfillment value-signal question with only a framing prefix as a semantic duplicate", async () => {
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "今天把散着的简历经历重新理顺了",
+      feeling: "踏实",
+      whyItMattered: "原本散的经历被重新整理成能投递的版本",
+      happinessType: "推进完成型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const previousValueQuestion = "回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
+    const wrappedDuplicateQuestion = "如果只留一个点，回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
+    const fallbackQuestion = "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        snapshot: fulfillmentSnapshot,
+        messages: [
+          {
+            id: "assistant-value-question",
+            role: "assistant",
+            content: previousValueQuestion,
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "这件事真正有分量的地方，是原本散的经历被重新整理成能投递的版本。",
+              analysis: "用户已说：简历被理顺；下一步问：什么投入值得继续",
+              question: previousValueQuestion,
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason", "pattern"]
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-20T06:46:14.409Z"
+          },
+          {
+            id: "user-value-answer",
+            role: "user",
+            content: "我会想继续那种能把散的经历理顺、慢慢变成能投出去的投入。",
+            sequence: 1,
+            createdAt: "2026-05-20T06:46:51.436Z"
+          }
+        ],
+        events: [
+          {
+            ...buildSession().events[0],
+            stage: "probe_pattern",
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            snapshot: fulfillmentSnapshot
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(fulfillmentSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这件事真正有分量的地方，是原本散的经历被重新整理成能投递的版本。",
+      analysis: "用户已说：简历被理顺；下一步问：什么投入值得继续",
+      question: wrappedDuplicateQuestion,
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "pattern"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "我会想继续那种能把散的经历理顺、慢慢变成能投出去的投入。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn.question).not.toBe(wrappedDuplicateQuestion);
   });
 
   it("does not repeat the same fulfillment value-signal ask after the previous turn already asked it", async () => {

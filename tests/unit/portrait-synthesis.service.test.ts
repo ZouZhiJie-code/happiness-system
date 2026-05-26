@@ -171,6 +171,7 @@ describe("portrait-synthesis.service", () => {
       const result = await synthesizePortrait(USER_ID);
 
       expect(result).not.toBeNull();
+      expect(mockGetAIProvider).toHaveBeenCalledWith("chat");
       expect(result!.summary).toBe("cross-dimensional summary");
       expect(result!.dimensionInsights.joy).toBe("joy insight");
       expect(result!.dimensionInsights.fulfillment).toBe("fulfillment insight");
@@ -247,6 +248,7 @@ describe("portrait-synthesis.service", () => {
       const result = await synthesizePortrait(USER_ID);
 
       expect(result).not.toBeNull();
+      expect(mockGetAIProvider).toHaveBeenCalledWith("chat");
       expect(result!.summary).toContain("目前已经从 5 条认知里看见一些关于你的稳定线索");
       expect(result!.dimensionInsights.joy).not.toBe("fact 0");
       expect(result!.factCount).toBe(5);
