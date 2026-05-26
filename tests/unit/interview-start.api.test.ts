@@ -12,6 +12,8 @@ vi.mock("@/server/services/interview/interview.service", () => ({
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
+  isAuthenticationRequiredError: (error: unknown) =>
+    error instanceof Error && error.message === "AUTHENTICATION_REQUIRED",
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
@@ -176,5 +178,23 @@ describe("interview start api route", () => {
 
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({ error: "INTERVIEW_START_FAILED" });
+  });
+
+  it("returns 401 when authentication is required", async () => {
+    mockRequireCurrentUserFromRequest.mockRejectedValueOnce(new Error("AUTHENTICATION_REQUIRED"));
+
+    const response = await startInterviewRoute(
+      new Request("http://localhost/api/interview/session/start", {
+        method: "POST",
+        body: JSON.stringify({
+          dimension: "gratitude",
+          entryDate: "2026-04-21"
+        })
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: "AUTHENTICATION_REQUIRED" });
+    expect(mockStartInterview).not.toHaveBeenCalled();
   });
 });

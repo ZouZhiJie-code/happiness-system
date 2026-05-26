@@ -42,6 +42,10 @@ export function normalizeInterviewRespondError({
 
   const errorMessage = getErrorMessage(error);
 
+  if (errorMessage === "AUTHENTICATION_REQUIRED") {
+    return buildInterviewIssue("AUTHENTICATION_REQUIRED", { requestId });
+  }
+
   if (errorMessage === "INVALID_JSON") {
     return buildInterviewIssue("INVALID_RESPOND_REQUEST", { requestId });
   }

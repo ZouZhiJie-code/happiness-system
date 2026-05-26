@@ -4,7 +4,7 @@ import {
   reopenInterviewRequestSchema,
   reopenInterviewResponseSchema
 } from "@/features/interview/schema/interview.schema";
-import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
+import { isAuthenticationRequiredError, requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { reopenInterviewSession } from "@/server/services/interview/interview.service";
 
 export async function POST(request: Request) {
@@ -22,6 +22,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(payload);
   } catch (error) {
+    if (isAuthenticationRequiredError(error)) {
+      return NextResponse.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
+    }
+
     if (error instanceof Error && error.message === "SESSION_NOT_FOUND") {
       return NextResponse.json({ error: "SESSION_NOT_FOUND" }, { status: 404 });
     }

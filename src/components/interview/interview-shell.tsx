@@ -7,7 +7,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
+import { clearLocalAuthUserId, getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -22,6 +22,8 @@ import {
   getStoredInterviewSessionEntry,
   interviewLeaveConfirmMessage,
   interviewDimensionStorageKey,
+  interviewSessionFreshStartStorageKey,
+  interviewSessionStorageKey,
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
@@ -68,9 +70,61 @@ interface DraftGenerateIssue {
 }
 
 function buildFallbackInterviewIssue(code: string, message?: string): InterviewIssue {
-  return buildInterviewIssue(code, {
-    message: message || undefined
-  });
+  return message ? buildInterviewIssue(code, { message }) : buildInterviewIssue(code);
+}
+
+function isAuthenticationRequiredIssue(error: unknown) {
+  return (
+    parseInterviewIssue(error)?.code === "AUTHENTICATION_REQUIRED" ||
+    (error instanceof Error && error.message === "AUTHENTICATION_REQUIRED") ||
+    (typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "AUTHENTICATION_REQUIRED")
+  );
+}
+
+function isSessionNotFoundIssue(error: unknown) {
+  return (
+    error instanceof Error && error.message === "SESSION_NOT_FOUND"
+  ) || parseInterviewIssue(error)?.code === "SESSION_NOT_FOUND";
+}
+
+async function buildInterviewIssueFromResponse(response: Response, fallbackCode: string) {
+  const payload = (await response.json().catch(() => null)) as
+    | { issue?: unknown; error?: string; message?: string }
+    | null;
+
+  return (
+    parseInterviewIssue(payload?.issue) ??
+    buildFallbackInterviewIssue(response.status === 401 ? "AUTHENTICATION_REQUIRED" : payload?.error ?? fallbackCode, payload?.message)
+  );
+}
+
+function clearInterviewAuthBoundState() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const keysToRemove = new Set([
+    getScopedLocalStorageKey(interviewSessionStorageKey),
+    getScopedLocalStorageKey(interviewDimensionStorageKey),
+    getScopedLocalStorageKey(interviewSessionFreshStartStorageKey),
+    interviewSessionStorageKey,
+    interviewDimensionStorageKey,
+    interviewSessionFreshStartStorageKey
+  ]);
+
+  keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+  clearLocalAuthUserId();
+}
+
+function getCurrentLoginRedirectUrl() {
+  if (typeof window === "undefined") {
+    return "/login?next=%2Finterview";
+  }
+
+  return `/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
 }
 
 function getDraftGenerationPhaseMeta(input: {
@@ -564,7 +618,7 @@ async function requestInterviewSession(dimension: InterviewDimension, entryDate?
   });
 
   if (!response.ok) {
-    throw new Error("INTERVIEW_START_FAILED");
+    throw await buildInterviewIssueFromResponse(response, "INTERVIEW_START_FAILED");
   }
 
   const data = (await response.json()) as { session: InterviewSessionRecord };
@@ -577,7 +631,7 @@ async function fetchInterviewSession(sessionId: string) {
   });
 
   if (!response.ok) {
-    throw new Error("SESSION_NOT_FOUND");
+    throw await buildInterviewIssueFromResponse(response, "SESSION_NOT_FOUND");
   }
 
   return (await response.json()) as InterviewSessionRecord;
@@ -616,7 +670,11 @@ async function findPreferredSessionFromDaySnapshot(
     return isRestorableSession(candidateSession, dimension) && candidateSession.entryDate === entryDate
       ? candidateSession
       : null;
-  } catch {
+  } catch (error) {
+    if (isAuthenticationRequiredIssue(error)) {
+      throw error;
+    }
+
     return null;
   }
 }
@@ -629,7 +687,7 @@ async function reopenInterviewSession(sessionId: string) {
   });
 
   if (!response.ok) {
-    throw new Error("SESSION_REOPEN_FAILED");
+    throw await buildInterviewIssueFromResponse(response, "SESSION_REOPEN_FAILED");
   }
 
   const data = (await response.json()) as { session: InterviewSessionRecord };
@@ -680,7 +738,7 @@ async function bootstrapInterviewSession(input: {
       const explicitSession = await fetchInterviewSession(explicitSessionId);
 
       if (!isRestorableSession(explicitSession, explicitSession.dimension)) {
-        throw new Error("SESSION_NOT_FOUND");
+        throw buildInterviewIssue("SESSION_NOT_FOUND");
       }
 
       if (explicitSession.status === "paused") {
@@ -733,7 +791,11 @@ async function bootstrapInterviewSession(input: {
 
             return restoredSession;
           }
-        } catch {
+        } catch (error) {
+          if (isAuthenticationRequiredIssue(error)) {
+            throw error;
+          }
+
           // Ignore restore failures and fall back to creating a new session.
           if (!entryDate) {
             clearStoredInterviewSessionId(dimension);
@@ -747,7 +809,19 @@ async function bootstrapInterviewSession(input: {
     }
 
     if (!forceNew && entryDate) {
-      const preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
+      let preferredSession: InterviewSessionRecord | null = null;
+
+      try {
+        preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
+      } catch (error) {
+        if (isAuthenticationRequiredIssue(error)) {
+          throw error;
+        }
+
+        if (!isSessionNotFoundIssue(error)) {
+          throw error;
+        }
+      }
 
       if (preferredSession) {
         return preferredSession.status === "paused"
@@ -801,6 +875,7 @@ function parseSseChunk(chunk: string) {
 
 export function InterviewShell() {
   const router = useRouter();
+  const routerRef = useRef(router);
   const searchParams = useSearchParams();
   const {
     bootState,
@@ -857,6 +932,7 @@ export function InterviewShell() {
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
+  routerRef.current = router;
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const requestedSessionId = searchParams.get("sessionId");
   const requestedEntryDateRaw = searchParams.get("entryDate");
@@ -1304,6 +1380,15 @@ export function InterviewShell() {
     [stopToastTimer]
   );
 
+  const redirectToLogin = useCallback(() => {
+    stopDraftAutosave();
+    stopToastTimer();
+    cancelDraftGeneration();
+    cancelInterviewResponse();
+    clearInterviewAuthBoundState();
+    routerRef.current.replace(getCurrentLoginRedirectUrl());
+  }, [cancelDraftGeneration, cancelInterviewResponse, stopDraftAutosave, stopToastTimer]);
+
   const finalizeDraftGenerationVisuals = useCallback(async () => {
     stopDraftPhaseTimers();
     setDraftGeneratePhase("polish");
@@ -1379,7 +1464,12 @@ export function InterviewShell() {
         restoreHasUserMessagesRef.current = false;
         setBootState("idle");
         return session.id;
-      } catch {
+      } catch (error) {
+        if (isAuthenticationRequiredIssue(error)) {
+          redirectToLogin();
+          return null;
+        }
+
         if (currentBootSequence === bootSequenceRef.current) {
           restoreHasUserMessagesRef.current = false;
           setBootState("idle");
@@ -1401,7 +1491,7 @@ export function InterviewShell() {
         return null;
       }
     },
-    [hydrate, setBootState]
+    [hydrate, redirectToLogin, setBootState]
   );
 
   const persistDraftEdits = useCallback(async (titleOverride?: string, contentOverride?: string) => {
@@ -1856,6 +1946,12 @@ export function InterviewShell() {
         ?? (error instanceof TypeError
           ? buildInterviewIssue("NETWORK_UNAVAILABLE")
           : buildInterviewIssue("INTERVIEW_RESPOND_FAILED"));
+
+      if (issue.code === "AUTHENTICATION_REQUIRED") {
+        redirectToLogin();
+        return;
+      }
+
       const actionSpecificIssue =
         issue.code === "INTERVIEW_RESPOND_FAILED" && payload.action === "continue_current_event"
           ? buildInterviewIssue("INTERVIEW_RESPOND_FAILED", {
@@ -1921,7 +2017,7 @@ export function InterviewShell() {
       });
 
       if (!response.ok) {
-        throw new Error("INTERVIEW_PAUSE_FAILED");
+        throw await buildInterviewIssueFromResponse(response, "INTERVIEW_PAUSE_FAILED");
       }
 
       const data = (await response.json()) as { session?: InterviewSessionRecord };
@@ -1929,7 +2025,12 @@ export function InterviewShell() {
       if (data.session) {
         hydrate(data.session);
       }
-	    } catch {
+	    } catch (error) {
+      if (isAuthenticationRequiredIssue(error)) {
+        redirectToLogin();
+        return;
+      }
+
 	      setInterviewIssue(
 	        buildInterviewIssue("INTERVIEW_RESPOND_FAILED", {
 	          title: "暂时无法退出当前访谈",
@@ -2042,6 +2143,10 @@ export function InterviewShell() {
           | { error?: string; message?: string; retryable?: boolean }
           | null;
 
+        if (response.status === 401 || payload?.error === "AUTHENTICATION_REQUIRED") {
+          throw buildInterviewIssue("AUTHENTICATION_REQUIRED");
+        }
+
         throw {
           code: payload?.error ?? "DRAFT_GENERATE_UNKNOWN_ERROR",
           message: payload?.message ?? "日志生成失败，请稍后重试。",
@@ -2087,6 +2192,11 @@ export function InterviewShell() {
               retryable: true
             };
 
+      if (issue.code === "AUTHENTICATION_REQUIRED") {
+        redirectToLogin();
+        return;
+      }
+
       setDraftGenerateIssue(issue);
       setDraftGenerationOverlayComplete(false);
       setDraftGenerationOverlayActive(false);
@@ -2129,7 +2239,7 @@ export function InterviewShell() {
       });
 
       if (!response.ok) {
-        throw new Error("DRAFT_SAVE_FAILED");
+        throw await buildInterviewIssueFromResponse(response, "DRAFT_SAVE_FAILED");
       }
 
       const data = await response.json();
@@ -2137,7 +2247,12 @@ export function InterviewShell() {
       setDraftSyncState("saved");
       setHasSavedJournal(true);
       showToast("当前日志已保存");
-    } catch {
+    } catch (error) {
+      if (isAuthenticationRequiredIssue(error)) {
+        redirectToLogin();
+        return;
+      }
+
       setDraftError("保存日志失败，请稍后重试。");
     } finally {
       setIsSavingJournal(false);

@@ -3,9 +3,15 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
+import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getAssistantChoiceKind } from "@/features/joy-interview/assistant-turn";
-import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
+import {
+  interviewDimensionStorageKey,
+  interviewLeaveConfirmMessage,
+  interviewSessionFreshStartStorageKey,
+  interviewSessionStorageKey
+} from "@/features/interview/dimensions";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
@@ -751,6 +757,101 @@ describe("InterviewShell", () => {
         }
       )
     );
+  });
+
+  it("redirects to login when starting the interview returns authentication required", async () => {
+    window.history.replaceState({}, "", "/interview?dimension=gratitude");
+    mockSearchParams.value = {
+      dimension: "gratitude",
+      entryDate: null,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    });
+
+    renderInterviewPage();
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interview/session/start",
+        expect.objectContaining({
+          method: "POST"
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Dgratitude");
+    });
+  });
+
+  it("clears scoped interview caches before redirecting to login", async () => {
+    window.history.replaceState({}, "", "/interview?dimension=gratitude");
+    window.localStorage.setItem(authLocalUserIdStorageKey, "user-old");
+    window.localStorage.setItem(`${interviewSessionStorageKey}::user-old`, JSON.stringify({ gratitude: "session-old" }));
+    window.localStorage.setItem(`${interviewDimensionStorageKey}::user-old`, "gratitude");
+    window.localStorage.setItem(`${interviewSessionFreshStartStorageKey}::user-old`, JSON.stringify({ gratitude: { entryDate: "2026-05-26" } }));
+    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ gratitude: "legacy-session" }));
+
+    mockSearchParams.value = {
+      dimension: "gratitude",
+      entryDate: null,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    });
+
+    renderInterviewPage();
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Dgratitude");
+    });
+
+    expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
+    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-old`)).toBeNull();
+    expect(window.localStorage.getItem(`${interviewDimensionStorageKey}::user-old`)).toBeNull();
+    expect(window.localStorage.getItem(`${interviewSessionFreshStartStorageKey}::user-old`)).toBeNull();
+    expect(window.localStorage.getItem(interviewSessionStorageKey)).toBeNull();
   });
 
   it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {
@@ -1683,6 +1784,73 @@ describe("InterviewShell", () => {
     });
     await waitFor(() => {
       expect(useInterviewStore.getState().status).toBe("paused");
+    });
+  });
+
+  it("redirects to login when pausing the interview returns authentication required", async () => {
+    window.history.replaceState({}, "", "/interview?dimension=joy");
+    cacheInterviewSessions({ joy: "session-boundary" });
+    const boundarySession = buildSession({
+      id: "session-boundary",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 1,
+      lastAssistantQuestion: "",
+      pendingDecision: {
+        kind: "boundary_insufficient",
+        eventId: "event-1",
+        eventSequence: 1,
+        reason: "我不再继续追问细节了。",
+        actions: ["continue_current_event", "next_event", "pause_session"]
+      },
+      messages: [
+        {
+          id: "assistant-boundary",
+          role: "assistant",
+          content: "我不再继续追问细节了。",
+          assistantPayload: buildAssistantPayload({
+            insight: "我不再继续追问细节了。",
+            question: "如果还愿意补一句，只说这个片段最关键的一点就够了。",
+            stateUpdate: {
+              turnPhase: "choice",
+              shouldEndDimension: false,
+              offerChoice: true,
+              choiceKind: "boundary_insufficient",
+              choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。"
+            }
+          }),
+          sequence: 0,
+          createdAt: "2026-04-21T00:00:00.000Z"
+        }
+      ]
+    });
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-boundary")) {
+        return new Response(JSON.stringify(boundarySession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/pause")) {
+        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "先退出" }));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Djoy");
     });
   });
 

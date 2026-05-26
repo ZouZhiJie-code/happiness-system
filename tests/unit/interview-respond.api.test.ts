@@ -169,4 +169,49 @@ describe("interview respond api auth", () => {
       expect.any(Object)
     );
   });
+
+  it("returns a structured error when stream auth fails before streaming starts", async () => {
+    mockRequireCurrentUserFromRequest.mockRejectedValueOnce(new Error("AUTHENTICATION_REQUIRED"));
+
+    const response = await respondStreamRoute(
+      new Request("http://localhost/api/interview/session/respond/stream", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          userMessage: "我想记住被接住的感觉。",
+          inputMode: "text"
+        })
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({ error: "AUTHENTICATION_REQUIRED" });
+    expect(mockStreamInterviewResponse).not.toHaveBeenCalled();
+  });
+
+  it("returns a structured error when non-stream auth fails", async () => {
+    mockRequireCurrentUserFromRequest.mockRejectedValueOnce(new Error("AUTHENTICATION_REQUIRED"));
+
+    const response = await respondRoute(
+      new Request("http://localhost/api/interview/session/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          userMessage: "我想记住被接住的感觉。",
+          inputMode: "text"
+        })
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "AUTHENTICATION_REQUIRED",
+      issue: {
+        code: "AUTHENTICATION_REQUIRED"
+      }
+    });
+    expect(mockRespondToInterview).not.toHaveBeenCalled();
+  });
 });
