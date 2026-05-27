@@ -807,7 +807,11 @@ function parseSseChunk(chunk: string) {
   }
 }
 
-export function InterviewShell() {
+export function InterviewShell({
+  showAIRuntimeSummary: _showAIRuntimeSummary = false
+}: {
+  showAIRuntimeSummary?: boolean;
+} = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
