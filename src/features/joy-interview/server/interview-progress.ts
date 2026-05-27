@@ -42,6 +42,36 @@ function normalizeMessage(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+const TURN_END_MARKERS = ["本轮访谈", "这轮访谈", "这一轮访谈", "本轮", "这轮", "这一轮"] as const;
+const TURN_END_VERBS = ["结束", "先结束", "到这", "先到这"] as const;
+const TURN_END_PATTERNS = TURN_END_MARKERS.flatMap((marker) => TURN_END_VERBS.map((verb) => `${verb}${marker}`));
+const TURN_END_SUFFIX_PATTERNS = TURN_END_MARKERS.map((marker) => `${marker}先到这`);
+const GENERIC_BOUNDARY_PATTERN =
+  /(不要再(?:追问|问|深挖|纠结)|别(?:再)?(?:追问|问)了|不想(?:再)?(?:继续|深挖|聊了|说了|回答)|已经(?:讲|说)得很具体|这(?:追问|问题|样问)(?:有)?什么意义|你(?:干嘛|为什么|怎么)(?:老|一直|总是)?(?:问|纠结|追问)|先这样|就这样吧|先到这|直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?|不用(?:再)?问|没必要(?:再)?问|够了)/u;
+
+function isTurnEndingBoundary(compactMessage: string) {
+  return TURN_END_PATTERNS.some((pattern) => compactMessage.includes(pattern))
+    || TURN_END_SUFFIX_PATTERNS.some((pattern) => compactMessage.includes(pattern));
+}
+
+export function isBoundaryStopRequested(message: string) {
+  const compactMessage = normalizeMessage(message).replace(/\s+/g, "");
+  return Boolean(compactMessage) && (GENERIC_BOUNDARY_PATTERN.test(compactMessage) || isTurnEndingBoundary(compactMessage));
+}
+
+export function isDraftOverrideRequestedFromBoundary(message: string | null) {
+  if (!message) {
+    return false;
+  }
+
+  const compactMessage = normalizeMessage(message).replace(/\s+/g, "");
+  return Boolean(compactMessage) && (
+    /(直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/.test(
+      compactMessage
+    )
+  );
+}
+
 export function assessUserTurnMessage(message: string): UserTurnAssessment {
   const normalizedMessage = normalizeMessage(message);
   const compactMessage = normalizedMessage.replace(/\s+/g, "");
@@ -62,11 +92,9 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     };
   }
 
-  const boundaryPattern =
-    /(不要再(?:追问|问|深挖|纠结)|别(?:再)?(?:追问|问)了|不想(?:再)?(?:继续|深挖|聊了|说了|回答)|已经(?:讲|说)得很具体|这(?:追问|问题|样问)(?:有)?什么意义|你(?:干嘛|为什么|怎么)(?:老|一直|总是)?(?:问|纠结|追问)|先这样|就这样吧|先到这|直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?|不用(?:再)?问|没必要(?:再)?问|够了)/u;
   const hostilePattern = /(烦不烦|有病|傻逼|滚|闭嘴|废话|神经病|妈的|操)/u;
 
-  if (boundaryPattern.test(compactMessage)) {
+  if (isBoundaryStopRequested(compactMessage)) {
     return {
       normalizedMessage,
       isMeaningful: true,

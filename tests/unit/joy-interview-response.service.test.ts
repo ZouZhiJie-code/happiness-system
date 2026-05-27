@@ -299,7 +299,12 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("开心日志线索");
   });
 
-  it.each(["先这样吧，直接生成日志就行。", "总结日志", "不重要，生成日志吧", "帮我整理日志"])(
+  it.each([
+    "先这样吧，直接生成日志就行。",
+    "总结日志",
+    "不重要，生成日志吧",
+    "帮我整理日志"
+  ])(
     "offers a partial draft choice when joy core is clear and the user requests wrap-up: %s",
     async (userMessage) => {
       const partialSnapshot: JoySnapshot = {
@@ -1375,6 +1380,65 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("routes 先结束这一轮 into boundary_insufficient when material is still insufficient", async () => {
+    const insufficientSnapshot: JoySnapshot = {
+      event: "今天有点累",
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      confidence: 0.3,
+      missingSlots: ["whyItMattered"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_reason",
+        snapshot: insufficientSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_reason",
+            explorationRound: 1,
+            coveredLenses: ["event_detail" as const],
+            roundCoveredLenses: ["event_detail" as const],
+            roundMeaningfulReplyCount: 1,
+            totalMeaningfulReplyCount: 1,
+            startMessageSequence: 0,
+            snapshot: insufficientSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "先结束这一轮",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.nextProgressData).toEqual({
+      kind: "boundary_insufficient",
+      reason: "我不再继续追问细节了。"
+    });
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
   });
 
   it("offers a redirect choice when joy stays empty after repeated no-joy replies", async () => {
