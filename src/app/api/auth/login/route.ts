@@ -4,8 +4,36 @@ import { authSessionResponseSchema, loginRequestSchema } from "@/features/auth/a
 import { AuthenticationError, loginUser } from "@/server/services/auth/auth.service";
 import { buildAuthCookieOptions } from "@/server/services/auth/auth-cookie";
 
+async function parseLoginRequestBody(request: Request) {
+  const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
+
+  if (contentType.includes("application/json")) {
+    return request.json();
+  }
+
+  if (
+    contentType.includes("application/x-www-form-urlencoded")
+    || contentType.includes("multipart/form-data")
+  ) {
+    const formData = await request.formData();
+    return {
+      username: formData.get("username"),
+      password: formData.get("password")
+    };
+  }
+
+  return request.json();
+}
+
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await parseLoginRequestBody(request);
+  } catch {
+    return NextResponse.json({ error: "INVALID_LOGIN_REQUEST" }, { status: 400 });
+  }
+
   const parsed = loginRequestSchema.safeParse(body);
 
   if (!parsed.success) {
