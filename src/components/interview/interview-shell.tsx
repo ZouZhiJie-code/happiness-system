@@ -851,7 +851,7 @@ function parseSseChunk(chunk: string) {
   }
 }
 
-export function InterviewShell() {
+export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
