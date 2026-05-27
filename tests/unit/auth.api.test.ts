@@ -123,7 +123,7 @@ describe("auth api routes", () => {
     expect(response.headers.get("set-cookie")).toContain("dl_session=session-token");
   });
 
-  it("accepts form-encoded fallback login submissions", async () => {
+  it("accepts form-encoded fallback login submissions and redirects to the default page", async () => {
     mockLoginUser.mockResolvedValue({
       token: "session-token",
       user: {
@@ -147,18 +147,43 @@ describe("auth api routes", () => {
       })
     );
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      authenticated: true,
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("http://localhost/interview");
+    expect(response.headers.get("set-cookie")).toContain("dl_session=session-token");
+    expect(mockLoginUser).toHaveBeenCalledWith({
+      username: "daily_light_01",
+      password: "supersecret1"
+    });
+  });
+
+  it("redirects form fallback logins to the provided next path after setting the session cookie", async () => {
+    mockLoginUser.mockResolvedValue({
+      token: "session-token",
       user: {
         id: "user-1",
         username: "daily_light_01"
       }
     });
-    expect(mockLoginUser).toHaveBeenCalledWith({
+
+    const formBody = new URLSearchParams({
       username: "daily_light_01",
-      password: "supersecret1"
+      password: "supersecret1",
+      next: "/calendar?view=day"
     });
+
+    const response = await loginRoute(
+      new Request("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: formBody.toString()
+      })
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("http://localhost/calendar?view=day");
+    expect(response.headers.get("set-cookie")).toContain("dl_session=session-token");
   });
 
   it("clears the session cookie on logout", async () => {

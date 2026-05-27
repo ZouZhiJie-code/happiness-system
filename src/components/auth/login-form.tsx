@@ -12,9 +12,10 @@ interface LoginFormValues {
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
   onInteraction?: () => void;
+  nextPath?: string | null;
 }
 
-export function LoginForm({ onSubmit, onInteraction }: LoginFormProps) {
+export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +38,7 @@ export function LoginForm({ onSubmit, onInteraction }: LoginFormProps) {
 
   return (
     <form className="grid gap-5" method="post" action="/api/auth/login" onSubmit={handleSubmit}>
+      {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
       <div className="grid gap-2">
         <label htmlFor="login-username" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
           用户名
