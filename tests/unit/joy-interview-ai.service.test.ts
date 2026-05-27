@@ -432,6 +432,65 @@ describe("generateJoyAssistantTurn", () => {
       repairCount: 0
     });
   });
+
+  it("preserves the low-burden reflection questionSpec on AI-unavailable fallback turns after example-first repair", async () => {
+    getAIProvider.mockReturnValue(null);
+
+    const reflectionSnapshot: JoySnapshot = {
+      event: "今天下午改一份材料",
+      feeling: "一下子发现自己其实没回答到问题",
+      whyItMattered: "我发现自己以为理清楚了，其实只是在重复同样的话",
+      happinessType: "判断校准型",
+      selfPattern: null,
+      confidence: 0.76,
+      missingSlots: ["viewpointShift"]
+    };
+    const session = buildSession({
+      dimension: "reflection",
+      stage: "probe_pattern",
+      snapshot: reflectionSnapshot
+    });
+    const activeEvent = {
+      ...session.events[0]!,
+      stage: "probe_pattern" as const,
+      snapshot: reflectionSnapshot
+    };
+
+    const turn = await generateJoyAssistantTurn({
+      dimension: "reflection",
+      sessionId: session.id,
+      stage: "probe_pattern",
+      snapshot: reflectionSnapshot,
+      events: [{ ...activeEvent }],
+      activeEvent,
+      userMessage: "比如我写到第三段的时候，发现每一段都在重复同样的话，没有真正回答要解决的问题。",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "feeling", "reason"],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply",
+      questionSpec: {
+        target: "insight_evidence",
+        stageIntent: "advance",
+        surfaceLevel: "concrete_anchor",
+        anchorText: "今天下午改一份材料",
+        repairCount: 0
+      }
+    });
+
+    expect(turn.question).toBe("回到“今天下午改一份材料”这件事，最先让你意识到不一样的，是哪个具体细节？");
+    expect(turn.questionSpec).toEqual({
+      target: "insight_evidence",
+      stageIntent: "advance",
+      surfaceLevel: "concrete_anchor",
+      anchorText: "今天下午改一份材料",
+      repairCount: 0
+    });
+  });
 });
 
 describe("extractJoySnapshotWithAI", () => {

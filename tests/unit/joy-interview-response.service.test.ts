@@ -1626,7 +1626,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.nextStage).toBe("probe_pattern");
     expect(result.assistantTurn.question).toBe("你觉得自己在关系里最在乎什么？");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，顺着这份开心真正有分量的地方，继续说清。"
+      "你已经碰到这段开心里最打动你的那层了，我们就顺着这份被接住的感觉继续往下聊。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
@@ -1680,7 +1680,7 @@ describe("prepareJoyInterviewResponse", () => {
           role: "assistant",
           content: JSON.stringify({
             insight: "",
-            thinkingSummary: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。",
+            thinkingSummary: "你已经慢慢看清，这里面真正卡住你的，不是别人怎么看，而是自己到底想过什么样的生活。",
             analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
             question: "今天有什么具体的经历或对话，让你第一次清晰地感受到这种“局外人”和“局内人”视角的差异？",
             stateUpdate: {
@@ -1696,7 +1696,7 @@ describe("prepareJoyInterviewResponse", () => {
           } satisfies AssistantTurnPayload),
           assistantPayload: {
             insight: "",
-            thinkingSummary: "这次思考的核心，是区分了“看起来合适”的外部评判和“真正想要”的内部体验，这正在成为你判断未来方向的新依据。",
+            thinkingSummary: "你已经慢慢看清，这里面真正卡住你的，不是别人怎么看，而是自己到底想过什么样的生活。",
             analysis: "用户已继续补充当前事件；下一步问：推进当前阶段尚未覆盖的层次。",
             question: "今天有什么具体的经历或对话，让你第一次清晰地感受到这种“局外人”和“局内人”视角的差异？",
             stateUpdate: {
@@ -1991,6 +1991,166 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.question).toContain("不用先总结");
     expect(result.assistantTurn.question).toContain("最具体的例子");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
+  });
+
+  it("keeps reflection on a concrete insight follow-up after an example-first repair answer instead of bouncing back to judgment clue", async () => {
+    const reflectionSnapshot: JoySnapshot = {
+      event: "今天下午改一份材料",
+      feeling: "卡住",
+      whyItMattered: "我发现自己以为理清楚了，其实只是在重复同样的话",
+      happinessType: "判断校准型",
+      selfPattern: null,
+      confidence: 0.76,
+      missingSlots: ["viewpointShift"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "reflection",
+        stage: "probe_pattern",
+        turnCount: 4,
+        snapshot: reflectionSnapshot,
+        messages: [
+          {
+            id: "assistant-reflection-1",
+            role: "assistant",
+            content: "回到“今天下午改一份材料”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？",
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "这次思考已经开始碰到你判断事情的方式了。",
+              analysis: "用户已说：以为理清楚；下一步问：判断线索",
+              question: "回到“今天下午改一份材料”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？",
+              questionSpec: {
+                target: "judgment_clue",
+                stageIntent: "advance",
+                surfaceLevel: "default",
+                anchorText: "今天下午改一份材料",
+                repairCount: 0
+              },
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason"]
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-27T00:00:00.000Z"
+          },
+          {
+            id: "user-repair-request",
+            role: "user",
+            content: "这个问题有点看不懂，换一个。",
+            sequence: 1,
+            createdAt: "2026-05-27T00:01:00.000Z"
+          },
+          {
+            id: "assistant-reflection-repair",
+            role: "assistant",
+            content: "回到“今天下午改一份材料”这件事，不用先总结，只说一个最具体的例子，会是哪一下？",
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "我先把问题收窄到一个具体例子。",
+              analysis: "用户反馈问题太抽象；下一步问：先举一个具体例子。",
+              question: "回到“今天下午改一份材料”这件事，不用先总结，只说一个最具体的例子，会是哪一下？",
+              questionSpec: {
+                target: "judgment_clue",
+                stageIntent: "repair",
+                surfaceLevel: "concrete_anchor",
+                anchorText: "今天下午改一份材料",
+                repairCount: 1
+              },
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: ["event", "reason"]
+              }
+            },
+            sequence: 2,
+            createdAt: "2026-05-27T00:02:00.000Z"
+          }
+        ],
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 2,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 4,
+            startMessageSequence: 0,
+            snapshot: reflectionSnapshot,
+            draftSummary: null,
+            startedAt: "2026-05-27T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue({
+      ...reflectionSnapshot,
+      feeling: "一下子发现自己其实没回答到问题"
+    });
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这次思考开始碰到你怎么辨认自己是真的想清楚了。",
+      analysis: "用户给了具体例子；下一步继续问判断线索。",
+      question: "",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "比如我写到第三段的时候，发现每一段都在重复同样的话，没有真正回答要解决的问题。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(generateJoyAssistantTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "reply",
+        questionSpec: expect.objectContaining({
+          target: "insight_evidence",
+          surfaceLevel: "concrete_anchor",
+          stageIntent: "advance",
+          anchorText: "今天下午改一份材料"
+        })
+      })
+    );
+    expect(result.assistantTurn.questionSpec).toMatchObject({
+      target: "insight_evidence",
+      surfaceLevel: "concrete_anchor",
+      stageIntent: "advance",
+      anchorText: "今天下午改一份材料"
+    });
+    expect(result.assistantTurn.question).toBe(
+      "回到“今天下午改一份材料”这件事，最先让你意识到不一样的，是哪个具体细节？"
+    );
+    expect(result.assistantTurn.question).not.toContain("下次再遇到类似情况");
   });
 
   it("does not re-complete a reopened reflection round when the reply only repairs the previous question", async () => {
@@ -2403,9 +2563,9 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.assistantTurn.thinkingSummary).not.toBe("今天和朋友聊了很久，因为我感觉自己被接住了。");
-    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
-    expect(result.assistantTurn.thinkingSummary).toContain("更稳定的在乎");
+    expect(result.assistantTurn.thinkingSummary).not.toMatch(/这份开心的重点|真正有分量|处理重点是|不是.+而是/u);
+    expect(result.assistantTurn.thinkingSummary).toContain("你已经碰到这段开心里最打动你的那层了");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住");
   });
 
   it("keeps a natural thinking summary when '我想' appears inside the user's own felt signal", async () => {
@@ -2521,6 +2681,68 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
     expect(result.assistantTurn.thinkingSummary).not.toContain("我想再看看");
     expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+  });
+
+  it("rewrites gratitude thinking summaries away from theory-explanation tone", async () => {
+    const gratitudeSnapshot: JoySnapshot = {
+      event: "同事先帮我把最急的两件事拆出来",
+      feeling: "松了一口气",
+      whyItMattered: "至少那一下没有继续乱下去",
+      happinessType: "支持型感谢",
+      selfPattern: null,
+      gratitudeMoment: "同事先帮我把最急的两件事拆出来",
+      gratitudeTarget: "同事",
+      kindAction: "先帮我把最急的两件事拆出来",
+      seenNeed: "我当时快被任务压住了",
+      innerEffect: "松了一口气",
+      gratitudeReason: "至少那一下没有继续乱下去",
+      gratitudeType: "支持回应型",
+      relationshipSignal: null,
+      reciprocityHint: null,
+      confidence: 0.82,
+      missingSlots: ["relationshipSignal"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "gratitude",
+        stage: "probe_reason",
+        snapshot: gratitudeSnapshot
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(gratitudeSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这份感谢已经不是泛泛说谢谢，而是在看见谁回应了当时那层需要。",
+      analysis: "用户已说：同事帮忙拆任务；下一步问：被照顾到的点",
+      question: "回到“同事先帮我把最急的两件事拆出来”这件事，最让你觉得被照顾到的是哪一点？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "那一下我真的松了一口气，至少没有继续乱下去。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toMatch(/不是泛泛|处理重点是|回应了.+这层需要/u);
+    expect(result.assistantTurn.thinkingSummary).toContain("你会记得这一下");
+    expect(result.assistantTurn.thinkingSummary).toContain("接住了");
   });
 
   it("streams assistant deltas before persisting the finalized turn", async () => {
@@ -2734,7 +2956,7 @@ describe("prepareJoyInterviewResponse", () => {
       }
     );
 
-    const normalizedSummary = "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，再把这份开心沉淀成更稳定的在乎、线索或方向感。";
+    const normalizedSummary = "你已经碰到这段开心里最打动你的那层了，这份被朋友真正接住也慢慢清楚了，再看看它为什么会一直留在你心里。";
     const summaryDeltas = deltas.filter((delta) => delta.target === "summary");
     const questionDeltas = deltas.filter((delta) => delta.target === "question");
 
@@ -2912,7 +3134,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(phases).toEqual(["thinking", "summary", "question"]);
     const normalizedContinuedSummary =
-      "这份开心的重点，不是表面上的片段，而是“被朋友真正接住的感觉”这种被接住的感觉，顺着这份开心真正有分量的地方，继续说清。";
+      "你已经碰到这段开心里最打动你的那层了，我们就顺着这份被朋友真正接住的感觉继续往下聊。";
     const continuedSummaryDeltas = deltas.filter((delta) => delta.target === "summary");
     const continuedQuestionDeltas = deltas.filter((delta) => delta.target === "question");
 
@@ -3478,8 +3700,9 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
-    expect(result.assistantTurn?.thinkingSummary).toContain("真正算数的地方");
-    expect(result.assistantTurn?.thinkingSummary).toContain("把事情往前推了一步");
+    expect(result.assistantTurn?.thinkingSummary).toBe(
+      "这件事对你来说是算数的，因为原本卡着的求职目标，今天真的被往前推了一步。"
+    );
   });
 
   it("does not stream an unnatural fulfillment value-signal question after continue_current_event", async () => {
@@ -4280,7 +4503,7 @@ describe("prepareJoyInterviewResponse", () => {
         whyItMattered: "不同意见不一定会破坏关系",
         selfPattern: "以后判断表达风险时要看对方是否在讨论事实"
       },
-      expectedSnippet: "判断线索"
+      expectedSnippet: "判断哪里不一样"
     },
     {
       dimension: "improvement" as const,
@@ -4427,7 +4650,7 @@ describe("prepareJoyInterviewResponse", () => {
             content: "你会觉得被照顾到，是因为对方看见了你当时快被任务压住了吗？",
             assistantPayload: {
               insight: "",
-              thinkingSummary: "这份感谢的重点，不是泛泛感谢，而是对方回应了“我当时快被任务压住了”这层需要。",
+              thinkingSummary: "你会一直记得这一下，是因为他先帮你把最乱的地方稳住了。",
               analysis: "测试问题",
               question: "你会觉得被照顾到，是因为对方看见了你当时快被任务压住了吗？",
               questionSpec: {

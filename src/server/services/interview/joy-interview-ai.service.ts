@@ -773,13 +773,15 @@ function createFallbackAssistantTurn(input: {
   action: "reply" | "continue_current_event";
   questionSpec?: AssistantQuestionSpec | null;
 }): AssistantTurnPayload {
-  const fallbackSpec = createQuestionSpec({
-    dimension: input.dimension,
-    stage: input.stage,
-    snapshot: input.snapshot,
-    stageIntent: input.action === "continue_current_event" ? "resume" : "advance",
-    previousSpec: input.questionSpec ?? null
-  });
+  const fallbackSpec =
+    input.questionSpec ??
+    createQuestionSpec({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      stageIntent: input.action === "continue_current_event" ? "resume" : "advance",
+      previousSpec: null
+    });
   const surfaced = resolveQuestionFromSpec({
     dimension: input.dimension,
     stage: input.stage,
@@ -1178,7 +1180,8 @@ export async function generateJoyAssistantTurn(input: AssistantTurnGenerationInp
     stage: input.stage,
     snapshot: input.snapshot,
     nextDepthReached: input.nextDepthReached,
-    action: input.action
+    action: input.action,
+    questionSpec: input.questionSpec
   });
 
   const segments = await requestAssistantReplySegments(input);
@@ -1202,7 +1205,8 @@ export async function streamJoyAssistantTurn(
     stage: input.stage,
     snapshot: input.snapshot,
     nextDepthReached: input.nextDepthReached,
-    action: input.action
+    action: input.action,
+    questionSpec: input.questionSpec
   });
 
   const segments = await requestAssistantReplySegments(input, callbacks.onDelta);
