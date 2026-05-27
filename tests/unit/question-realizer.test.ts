@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { AskIntentEnvelope } from "@/features/joy-interview/server/ask-intent";
-import { applyQuestionSurfaceProtocol } from "@/features/joy-interview/server/question-protocol";
+import { applyQuestionSurfaceProtocol, createQuestionSpec } from "@/features/joy-interview/server/question-protocol";
 import { realizeQuestion } from "@/features/joy-interview/server/question-realizer";
 import type { JoySnapshot } from "@/types/interview";
 
@@ -110,6 +110,36 @@ describe("realizeQuestion", () => {
     });
 
     expect(question).toBe("回到“收到扎根工程的赠礼”这件事，当时最具体的一下是什么？");
+  });
+
+  it("keeps long anchors from truncating mid-phrase in surfaced questions", () => {
+    const reflectionSnapshot: JoySnapshot = {
+      event: "今天下午改一份材料的时候，我本来以为自己已经理清楚了，结果写着写着发现其实只是把几个点堆在一起",
+      feeling: "有点愣住",
+      whyItMattered: "我发现自己以为想清楚了，其实还只是堆点",
+      happinessType: "判断校准型",
+      selfPattern: null,
+      confidence: 0.74,
+      missingSlots: ["viewpointShift"]
+    };
+
+    const result = applyQuestionSurfaceProtocol({
+      dimension: "reflection",
+      stage: "probe_pattern",
+      snapshot: reflectionSnapshot,
+      spec: createQuestionSpec({
+        dimension: "reflection",
+        stage: "probe_pattern",
+        snapshot: reflectionSnapshot,
+        stageIntent: "advance",
+        target: "judgment_clue"
+      }),
+      candidateQuestion:
+        "回到“今天下午改一份材料的时候，我本来以为自己已经理清楚了，结果写着写着发现其实只是把几个点堆在一起”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？"
+    });
+
+    expect(result.question).toContain("回到“今天下午改一份材料的时候，我本来以为自己已经理清楚了”这件事");
+    expect(result.question).not.toContain("理清楚了，结");
   });
 
   it("provides initial question families for all five dimensions", () => {

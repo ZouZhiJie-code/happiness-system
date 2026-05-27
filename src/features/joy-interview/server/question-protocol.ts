@@ -24,10 +24,37 @@ function normalizeText(value: string | null | undefined) {
   return value?.replace(/\s+/g, " ").trim() ?? "";
 }
 
+function findPhraseSafeTruncationBoundary(value: string, maxLength: number) {
+  const boundaryChars = /[，。！？!?,；;：:、]/u;
+  const minBoundaryIndex = Math.floor(maxLength * 0.6);
+
+  for (let index = Math.min(maxLength, value.length) - 1; index >= minBoundaryIndex; index -= 1) {
+    if (boundaryChars.test(value[index] ?? "")) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
 function trimField(value: string | null | undefined, maxLength = 28) {
   const normalized = normalizeText(value).replace(/[。！？!?,，；;:\s]+$/gu, "");
 
-  return normalized ? normalized.slice(0, maxLength) : null;
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const boundaryIndex = findPhraseSafeTruncationBoundary(normalized, maxLength);
+
+  if (boundaryIndex >= 0) {
+    return normalized.slice(0, boundaryIndex).replace(/[，。！？!?,；;：:\s]+$/gu, "") || normalized.slice(0, maxLength);
+  }
+
+  return normalized.slice(0, maxLength);
 }
 
 function normalizeQuestionText(value: string | null | undefined) {

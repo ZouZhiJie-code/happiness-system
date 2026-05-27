@@ -500,10 +500,18 @@ function resolveFallbackQuestionFromSpec(input: {
   candidateQuestion?: string | null;
   preserveStructuredCandidateQuestion?: boolean;
 }) {
+  const shouldPreserveReflectionConcreteInsight =
+    input.dimension === "reflection" &&
+    input.stage === "probe_pattern" &&
+    input.existingSpec?.stageIntent === "advance" &&
+    input.existingSpec.target === "insight_evidence" &&
+    input.existingSpec.surfaceLevel === "concrete_anchor" &&
+    !input.snapshot.selfPattern;
   const shouldInferTargetFromCurrentStage =
     input.target == null &&
     input.stage === "probe_pattern" &&
-    input.existingSpec?.stageIntent !== "repair";
+    input.existingSpec?.stageIntent !== "repair" &&
+    !shouldPreserveReflectionConcreteInsight;
   const spec = createQuestionSpec({
     dimension: input.dimension,
     stage: input.stage,
@@ -514,7 +522,9 @@ function resolveFallbackQuestionFromSpec(input: {
     }),
     previousSpec: shouldInferTargetFromCurrentStage ? null : (input.existingSpec ?? null),
     target: input.target,
-    surfaceLevel: input.surfaceLevel
+    surfaceLevel:
+      input.surfaceLevel ??
+      (shouldPreserveReflectionConcreteInsight ? input.existingSpec?.surfaceLevel : undefined)
   });
 
   if (input.candidateQuestion != null) {
@@ -694,6 +704,38 @@ function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
   }
 
   return null;
+}
+
+function shouldPreserveReflectionConcreteInsightAfterRepair(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  messages: InterviewMessage[];
+  userMessage: string | null;
+  isMeaningfulReply: boolean;
+}) {
+  if (input.dimension !== "reflection" || input.stage !== "probe_pattern" || !input.isMeaningfulReply) {
+    return false;
+  }
+
+  if (input.snapshot.selfPattern) {
+    return false;
+  }
+
+  const latestAssistantSpec = getLatestAssistantQuestionSpec(input.messages);
+  const latestAssistantQuestion = getLatestAssistantQuestion(input.messages);
+
+  if (
+    latestAssistantSpec?.stageIntent !== "repair" ||
+    latestAssistantSpec.target !== "judgment_clue" ||
+    latestAssistantSpec.surfaceLevel !== "concrete_anchor" ||
+    !latestAssistantQuestion?.includes("不用先总结") ||
+    !latestAssistantQuestion.includes("最具体的例子")
+  ) {
+    return false;
+  }
+
+  return Boolean(input.userMessage?.trim());
 }
 
 function questionTouchesGratitudeTarget(question: string, target: GratitudeQuestionSubTarget) {
@@ -1661,10 +1703,154 @@ function buildFollowUpThinkingSummary(input: {
     action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction
   });
 
-  return `${semanticInterpretation.thinkingSummaryLead}${semanticInterpretation.followUpFocus || buildThinkingSummaryFocus(input)}`
+  return buildNaturalThinkingSummary({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    semanticInterpretation
+  })
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180);
+}
+
+function buildNaturalThinkingSummary(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  semanticInterpretation: ReturnType<typeof buildDimensionSemanticInterpretation>;
+}) {
+  const lead = buildNaturalThinkingSummaryLead(input);
+  const focus = buildNaturalThinkingSummaryFocus(input);
+
+  return `${lead}${focus}`;
+}
+
+function buildNaturalThinkingSummaryLead(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  semanticInterpretation: ReturnType<typeof buildDimensionSemanticInterpretation>;
+}) {
+  switch (input.dimension) {
+    case "joy": {
+      const joySource =
+        input.semanticInterpretation.dimensionMeta?.joySource ??
+        input.semanticInterpretation.dimensionMeta?.manualClue ??
+        input.semanticInterpretation.dimensionMeta?.delightSignature;
+
+      if (joySource) {
+        const normalizedJoySource = joySource.replace(/的感觉$/u, "");
+        return `你已经碰到这段开心里最打动你的那层了，这份${normalizedJoySource}也慢慢清楚了`;
+      }
+
+      return "你已经碰到这段开心里最打动你的那层了";
+    }
+    case "fulfillment": {
+      const progressEvidence = input.semanticInterpretation.dimensionMeta?.progressEvidence;
+
+      if (progressEvidence) {
+        return `这件事对你来说是算数的，因为${progressEvidence}`;
+      }
+
+      return "这件事对你来说已经不只是忙过了";
+    }
+    case "reflection": {
+      const insight = input.semanticInterpretation.dimensionMeta?.insight;
+
+      if (insight) {
+        return `你已经慢慢看清，${insight}`;
+      }
+
+      return "你已经慢慢碰到这次思考里新的那层了";
+    }
+    case "improvement": {
+      const controllableFactor = input.semanticInterpretation.dimensionMeta?.controllableFactor;
+      const nextAttempt = input.semanticInterpretation.dimensionMeta?.nextAttempt;
+
+      if (controllableFactor) {
+        return `你已经碰到这次最能动手调整的一小处了，${controllableFactor}`;
+      }
+
+      if (nextAttempt) {
+        return `你已经开始摸到下次能怎么试了，${nextAttempt}`;
+      }
+
+      return "你已经碰到这次最值得继续拆开的那个卡点了";
+    }
+    case "gratitude": {
+      const seenNeed = input.semanticInterpretation.dimensionMeta?.seenNeed;
+      const kindAction = input.semanticInterpretation.dimensionMeta?.kindAction;
+
+      if (seenNeed) {
+        return `你会记得这一下，是因为对方接住了“${seenNeed}”这层需要`;
+      }
+
+      if (kindAction) {
+        return `你会记得这一下，是因为对方真的做了“${kindAction}”这件事`;
+      }
+
+      return "你会记得这一下，是因为有人真的接住了你当时那层需要";
+    }
+    default:
+      return input.semanticInterpretation.thinkingSummaryLead;
+  }
+}
+
+function buildNaturalThinkingSummaryFocus(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+}) {
+  switch (input.stage) {
+    case "collect_event":
+      return "，先把那个具体片段说清一点。";
+    case "probe_reason":
+      switch (input.dimension) {
+        case "joy":
+          return "，再把到底是什么让你有感觉说清一点。";
+        case "fulfillment":
+          return "，再把这件事到底算数在哪儿说清一点。";
+        case "reflection":
+          return "，再把这层新发现是怎么冒出来的说清一点。";
+        case "improvement":
+          return "，再把那个具体卡点或关键条件看清一点。";
+        case "gratitude":
+          return "，再把对方到底接住了你哪一层说清一点。";
+      }
+      break;
+    case "probe_pattern":
+      switch (input.dimension) {
+        case "joy":
+          return "，再看看它为什么会一直留在你心里。";
+        case "fulfillment":
+          return "，再看看这件事为什么会变成你想记住的一点。";
+        case "reflection":
+          return "，再看看这层发现之后，你的判断哪里不一样了。";
+        case "improvement":
+          return "，再看看下次最想先动的一小步是什么。";
+        case "gratitude":
+          return "，再看看这份感谢里你最想留下的是哪一点。";
+      }
+      break;
+    case "wrap_up":
+      return "，最后把今天最想留下的那一层收一下。";
+    case "finalize":
+      return "";
+  }
+
+  switch (input.dimension) {
+    case "joy":
+      return "，我们就顺着这份感觉继续往下聊。";
+    case "fulfillment":
+      return "，我们就顺着这件事为什么对你算数继续往下聊。";
+    case "reflection":
+      return "，我们就顺着这层新发现继续往下聊。";
+    case "improvement":
+      return "，我们就顺着这个卡点继续拆开看看。";
+    case "gratitude":
+      return "，我们就顺着这一下为什么让你记住继续往下聊。";
+    default:
+      return "";
+  }
 }
 
 function extractFirstPersonIntentPhrases(value: string) {
@@ -1699,6 +1885,12 @@ function hasInvalidThinkingSummaryTone(summary: string, userMessage: string | nu
     /[?？]/u.test(normalized) ||
     hasUnanchoredFirstPersonIntent ||
     /(用户|用户已说|你提到|你说|你讲到|你提及|我理解到|我听到|我会(?:继续|先|再|追问|确认)|我准备(?:继续|确认|追问)|我在想|想知道|下一步|追问|提问|问你|确认一下)/u.test(normalized)
+  );
+}
+
+function hasTheoryExplanationThinkingSummaryTone(summary: string) {
+  return /(这份.+(?:(?:重点|核心).*(?:不是.+而是|回应了.+这层需要)|已经不是泛泛说谢谢)|这次.+(?:重点|核心).*(?:不是.+而是|判断变清楚)|这件事真正有分量的地方|这次改进的重点，不是|处理重点是|真正重要的，不是)/u.test(
+    summary
   );
 }
 
@@ -1785,6 +1977,7 @@ function normalizeThinkingSummary(input: {
   });
 
   if (
+    !hasTheoryExplanationThinkingSummaryTone(summary) &&
     !hasInvalidThinkingSummaryTone(summary, input.userMessage ?? null) &&
     !hasParaphraseOnlyThinkingSummary({
       summary,
@@ -2867,12 +3060,28 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply",
     questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
       ? null
-      : createQuestionSpec({
-          dimension: session.dimension,
-          stage: nextStage,
-          snapshot: nextSnapshot,
-          stageIntent: "advance"
-        })
+      : shouldPreserveReflectionConcreteInsightAfterRepair({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            messages: session.messages,
+            userMessage: input.userMessage,
+            isMeaningfulReply
+          })
+        ? createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance",
+            target: "insight_evidence",
+            surfaceLevel: "concrete_anchor"
+          })
+        : createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance"
+          })
   } satisfies PreparedInterviewTurnContext;
 }
 
