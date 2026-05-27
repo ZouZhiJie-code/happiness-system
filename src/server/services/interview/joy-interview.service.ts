@@ -12,6 +12,7 @@ import {
   applyQuestionSurfaceProtocol,
   createQuestionSpec,
   inferQuestionSpecFromQuestion,
+  resolveQuestionFromSpec,
   renderDeterministicRepairTurn
 } from "@/features/joy-interview/server/question-protocol";
 import {
@@ -456,6 +457,10 @@ function buildFulfillmentQuestionFallback(input: {
   recentUserMessage: string | null;
   validationCode: FulfillmentQuestionValidationCode;
 }) {
+  if (input.target === "value_signal") {
+    return null;
+  }
+
   if (input.target === "progress_evidence") {
     const experience = input.snapshot.event?.trim();
 
@@ -470,35 +475,66 @@ function buildFulfillmentQuestionFallback(input: {
     return "这件事里，哪一步真的被你推进了，才让你觉得今天没有白过？";
   }
 
-  if (input.validationCode === "unnatural_phrasing") {
-    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  return null;
+}
+
+function resolveQuestionStageIntent(input: {
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  existingSpec?: AssistantQuestionSpec | null;
+}) {
+  if (input.existingSpec?.stageIntent) {
+    return input.existingSpec.stageIntent;
   }
 
-  const normalizedMessage = (input.userMessage ?? input.recentUserMessage ?? "").trim();
+  return input.assistantAction === "continue_current_event" ? "resume" : "advance";
+}
 
-  if (normalizedMessage && /(朝自己想要的方向前进|一点点地在达成|没有停滞不前)/u.test(normalizedMessage)) {
-    return "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+function resolveFallbackQuestionFromSpec(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  existingSpec?: AssistantQuestionSpec | null;
+  target?: AssistantQuestionSpec["target"];
+  surfaceLevel?: AssistantQuestionSpec["surfaceLevel"];
+  candidateQuestion?: string | null;
+  preserveStructuredCandidateQuestion?: boolean;
+}) {
+  const shouldInferTargetFromCurrentStage =
+    input.target == null &&
+    input.stage === "probe_pattern" &&
+    input.existingSpec?.stageIntent !== "repair";
+  const spec = createQuestionSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    stageIntent: resolveQuestionStageIntent({
+      assistantAction: input.assistantAction,
+      existingSpec: input.existingSpec
+    }),
+    previousSpec: shouldInferTargetFromCurrentStage ? null : (input.existingSpec ?? null),
+    target: input.target,
+    surfaceLevel: input.surfaceLevel
+  });
+
+  if (input.candidateQuestion != null) {
+    return applyQuestionSurfaceProtocol({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      spec,
+      candidateQuestion: input.candidateQuestion,
+      preserveStructuredCandidateQuestion: input.preserveStructuredCandidateQuestion
+    });
   }
 
-  if (input.validationCode === "semantic_duplicate") {
-    const experience = input.snapshot.event?.trim();
-
-    if (experience && /(简历)/u.test(experience)) {
-      return "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
-    }
-  }
-
-  if (normalizedMessage && /(花得值|值得|算数)/u.test(normalizedMessage)) {
-    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
-  }
-
-  const progressEvidence = input.snapshot.whyItMattered?.trim();
-
-  if (progressEvidence) {
-    return `回头看“${progressEvidence}”这层进展，什么样的投入会让你觉得自己的力气花得值？`;
-  }
-
-  return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  return resolveQuestionFromSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    spec,
+    preserveStructuredCandidateQuestion: input.preserveStructuredCandidateQuestion
+  });
 }
 
 function validateFulfillmentQuestion(input: {
@@ -617,12 +653,22 @@ function applyFulfillmentQuestionGuard(
     recentUserMessage,
     validationCode
   });
+  const surfaced = resolveFallbackQuestionFromSpec({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    existingSpec: assistantTurn.questionSpec ?? input.questionSpec,
+    target: target === "value_signal" ? "judgment_clue" : "insight_evidence",
+    candidateQuestion: fallbackQuestion
+  });
 
   return {
     ...assistantTurn,
     insight: "",
     thinkingSummary: assistantTurn.thinkingSummary,
-    question: fallbackQuestion
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec
   };
 }
 
@@ -1743,23 +1789,43 @@ function buildReflectionContinuationFallbackQuestion(snapshot: JoySnapshot) {
 
 function buildContinuationFallbackQuestion(
   input: PreparedInterviewTurnContext,
-  repeatedQuestion: string
+  repeatedQuestion: string,
+  existingSpec: AssistantQuestionSpec | null
 ) {
   if (input.session.dimension === "reflection") {
-    const reflectionFallback = buildReflectionContinuationFallbackQuestion(input.nextSnapshot);
+    const reflectionFallback = resolveFallbackQuestionFromSpec({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      assistantAction: input.assistantAction,
+      existingSpec,
+      target: "insight_evidence",
+      surfaceLevel: "concrete_anchor",
+      candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+      preserveStructuredCandidateQuestion: true
+    });
 
-    if (!areQuestionsEquivalent(reflectionFallback, repeatedQuestion)) {
+    if (!areQuestionsEquivalent(reflectionFallback.question, repeatedQuestion)) {
       return reflectionFallback;
     }
   }
 
-  const stageFallback = buildAssistantQuestion(input.session.dimension, input.nextStage, input.nextSnapshot)?.trim() ?? "";
+  const stageFallback = resolveFallbackQuestionFromSpec({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    existingSpec
+  });
 
-  if (stageFallback && !areQuestionsEquivalent(stageFallback, repeatedQuestion)) {
+  if (stageFallback.question && !areQuestionsEquivalent(stageFallback.question, repeatedQuestion)) {
     return stageFallback;
   }
 
-  return repeatedQuestion;
+  return {
+    question: repeatedQuestion,
+    questionSpec: existingSpec
+  };
 }
 
 function applyContinueQuestionGuard(
@@ -1784,7 +1850,17 @@ function applyContinueQuestionGuard(
         ...assistantTurn,
         insight: "",
         thinkingSummary: "",
-        question: buildReflectionContinuationFallbackQuestion(input.nextSnapshot)
+        ...resolveFallbackQuestionFromSpec({
+          dimension: input.session.dimension,
+          stage: input.nextStage,
+          snapshot: input.nextSnapshot,
+          assistantAction: input.assistantAction,
+          existingSpec: assistantTurn.questionSpec ?? input.questionSpec,
+          target: "insight_evidence",
+          surfaceLevel: "concrete_anchor",
+          candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+          preserveStructuredCandidateQuestion: true
+        })
       };
     }
   }
@@ -1809,6 +1885,7 @@ function applyContinueQuestionGuard(
     }
   }
 
+  const existingSpec = assistantTurn.questionSpec ?? input.questionSpec;
   const recentAssistantQuestions = input.session.messages
     .map((message) => getAssistantQuestionText(message))
     .filter((value): value is string => Boolean(value))
@@ -1825,7 +1902,7 @@ function applyContinueQuestionGuard(
     ...assistantTurn,
     insight: "",
     thinkingSummary: "",
-    question: buildContinuationFallbackQuestion(input, question)
+    ...buildContinuationFallbackQuestion(input, question, existingSpec)
   };
 }
 
@@ -2100,15 +2177,26 @@ function applyFallbackQuestion(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  questionSpec: AssistantQuestionSpec | null;
   assistantTurn: AssistantTurnPayload;
 }) {
   if (input.assistantTurn.question.trim()) {
     return input.assistantTurn;
   }
 
+  const surfaced = resolveFallbackQuestionFromSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    assistantAction: input.assistantAction,
+    existingSpec: input.assistantTurn.questionSpec ?? input.questionSpec
+  });
+
   return {
     ...input.assistantTurn,
-    question: buildAssistantQuestion(input.dimension, input.stage, input.snapshot)
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec
   };
 }
 
@@ -2120,6 +2208,8 @@ function applyAssistantTurnFallbacks(
     dimension: input.session.dimension,
     stage: input.nextStage,
     snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    questionSpec: input.questionSpec,
     assistantTurn
   });
 
@@ -2543,18 +2633,21 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   if (assessment.intent === "question_repair") {
+    const previousSpec = getLatestAssistantQuestionSpec(session.messages);
+    const nextRepairCount = (previousSpec?.repairCount ?? 0) + 1;
+    const requestedSurfaceLevel =
+      nextRepairCount >= 2
+        ? "concrete_anchor"
+        : assessment.repairSignal === "switch_angle"
+          ? "concrete_anchor"
+          : "simplified";
     const repairSpec = createQuestionSpec({
       dimension: session.dimension,
       stage: activeEvent.stage,
       snapshot: activeEvent.snapshot,
       stageIntent: "repair",
-      previousSpec: getLatestAssistantQuestionSpec(session.messages),
-      surfaceLevel:
-        assessment.repairSignal === "simplify"
-          ? "simplified"
-          : assessment.repairSignal === "switch_angle"
-            ? "concrete_anchor"
-            : undefined
+      previousSpec,
+      surfaceLevel: requestedSurfaceLevel
     });
     const shouldEscalateRepair = repairSpec.repairCount >= 3;
 

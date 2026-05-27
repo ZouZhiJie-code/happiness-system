@@ -380,6 +380,58 @@ describe("generateJoyAssistantTurn", () => {
       repairCount: 1
     });
   });
+
+  it("uses the structured judgment-clue path for fulfillment fallback turns when AI generation is unavailable", async () => {
+    getAIProvider.mockReturnValue(null);
+
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "回顾过去问问大象的经历",
+      feeling: "充实",
+      whyItMattered: "我重新梳理之后，看见以前的积累没有白费",
+      happinessType: "投入积累型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      snapshot: fulfillmentSnapshot
+    });
+    const activeEvent = {
+      ...session.events[0]!,
+      stage: "probe_pattern" as const,
+      snapshot: fulfillmentSnapshot
+    };
+
+    const turn = await generateJoyAssistantTurn({
+      dimension: "fulfillment",
+      sessionId: session.id,
+      stage: "probe_pattern",
+      snapshot: fulfillmentSnapshot,
+      events: [{ ...activeEvent }],
+      activeEvent,
+      userMessage: "我回头看这些记录，感觉这样梳理真的很有用。",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "reason"],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(turn.question).toBe("回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？");
+    expect(turn.questionSpec).toEqual({
+      target: "judgment_clue",
+      stageIntent: "advance",
+      surfaceLevel: "default",
+      anchorText: "回顾过去问问大象的经历",
+      repairCount: 0
+    });
+  });
 });
 
 describe("extractJoySnapshotWithAI", () => {
