@@ -106,6 +106,14 @@ function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessa
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
 }
 
+function isAutoDraftRequestMessage(message: string) {
+  const normalized = message.replace(/\s+/g, "");
+
+  return /(?:直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/u.test(
+    normalized
+  );
+}
+
 function sessionHasUserMessages(session: Pick<InterviewSessionRecord, "messages">) {
   return session.messages.some((message) => message.role === "user");
 }
@@ -358,58 +366,6 @@ function SaveJournalConfirmDialog({
             className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             确定保存
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DraftRegenerateConfirmDialog({
-  open,
-  onCancel,
-  onConfirm,
-  confirmDisabled
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-  confirmDisabled: boolean;
-}) {
-  if (!open) {
-    return null;
-  }
-
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.48)] px-4 py-6 backdrop-blur-[2px] md:items-center">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="draft-regenerate-confirm-title"
-        className="w-full max-w-md rounded-[30px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(252,246,236,0.98),rgba(235,217,187,0.96))] p-5 shadow-[0_24px_60px_rgba(46,35,25,0.22)]"
-      >
-        <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">生成确认</p>
-        <h3 id="draft-regenerate-confirm-title" className="mt-2 font-display text-[1.5rem] text-[#2e2319]">
-          继续生成最新日志吗？
-        </h3>
-        <p className="mt-3 text-sm leading-7 text-[#594537]">
-          点击继续后，系统会先保存你刚才手动修改的内容，再结合新的访谈对话生成最新日志。
-        </p>
-        <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)]"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            继续
           </button>
         </div>
       </div>
@@ -851,7 +807,11 @@ function parseSseChunk(chunk: string) {
   }
 }
 
-export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
+export function InterviewShell({
+  showAIRuntimeSummary: _showAIRuntimeSummary = false
+}: {
+  showAIRuntimeSummary?: boolean;
+} = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
@@ -908,7 +868,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
   const [draftContent, setDraftContent] = useState("");
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
-  const [draftRegenerateConfirmOpen, setDraftRegenerateConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const requestedSessionId = searchParams.get("sessionId");
@@ -927,10 +886,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
   const pendingAutoDraftRequestRef = useRef(false);
-  const pendingDraftRegenerateRequestRef = useRef<{
-    shouldOpenPanel: boolean;
-  } | null>(null);
-  const preserveUnsavedDraftRef = useRef(false);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
   const lastHappinessScoreEntryOpenRequestRef = useRef(0);
@@ -1116,20 +1071,10 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
 
   useEffect(() => {
     if (!journalEntry) {
-      if (preserveUnsavedDraftRef.current) {
-        return;
-      }
       setDraftTitle("");
       setDraftContent("");
       setDraftSyncState("idle");
       setHasSavedJournal(false);
-      return;
-    }
-
-    if (preserveUnsavedDraftRef.current) {
-      preserveUnsavedDraftRef.current = false;
-      setDraftSyncState("saved");
-      setHasSavedJournal((current) => current || journalEntry.status === "saved" || Boolean(journalEntry.savedAt));
       return;
     }
 
@@ -1379,13 +1324,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
     await new Promise((resolve) => window.setTimeout(resolve, 350));
   }, [stopDraftPhaseTimers]);
 
-  const openDraftRegenerateConfirm = useCallback((options?: { shouldOpenPanel?: boolean }) => {
-    pendingDraftRegenerateRequestRef.current = {
-      shouldOpenPanel: options?.shouldOpenPanel ?? true
-    };
-    setDraftRegenerateConfirmOpen(true);
-  }, []);
-
   function maybeFinalizeStream(activeStreamId: number) {
     if (activeStreamId !== activeStreamIdRef.current) {
       return;
@@ -1396,13 +1334,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
     }
 
     const nextSession = pendingSessionRef.current;
-    const shouldPreserveUnsavedDraft =
-      pendingAutoDraftRequestRef.current &&
-      hasUnsavedDraftChanges &&
-      nextSession.pendingDecision?.kind === "event_complete" &&
-      nextSession.pendingDecision.actions.includes("generate_draft") &&
-      nextSession.draftGenerationUnlocked;
-    preserveUnsavedDraftRef.current = shouldPreserveUnsavedDraft;
     touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
     hydrate(nextSession);
     pendingSessionRef.current = null;
@@ -1418,16 +1349,11 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
     setAssistantState("idle");
 
     if (shouldAutoGenerateDraft) {
-      if (hasUnsavedDraftChanges) {
-        openDraftRegenerateConfirm({
-          shouldOpenPanel: true
-        });
-      } else {
-        void handleGenerateDraft({
-          openPanel: true,
-          confirmOnOverwrite: false
-        });
-      }
+      void handleGenerateDraft({
+        openPanel: true,
+        sessionOverride: nextSession,
+        bypassBusyLock: true
+      });
     }
   }
 
@@ -1572,7 +1498,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
     setDraftGenerateIssue(null);
     setDraftGenerateState("idle");
     setSaveConfirmOpen(false);
-    setDraftRegenerateConfirmOpen(false);
     setToastState(null);
     setPanelOpen(false);
     stopDraftAutosave();
@@ -1776,10 +1701,7 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
     }
 
     pendingAutoDraftRequestRef.current =
-      payload.action === "reply" &&
-      /(?:直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/u.test(
-        optimisticMessage ?? ""
-      );
+      payload.action === "reply" && isAutoDraftRequestMessage(optimisticMessage ?? "");
 
     interviewSubmitLockRef.current = true;
     setInterviewIssue(null);
@@ -2087,16 +2009,26 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
   async function handleGenerateDraft(options?: {
     openPanel?: boolean;
     confirmOnOverwrite?: boolean;
+    sessionOverride?: Pick<InterviewSessionRecord, "id" | "draftGenerationUnlocked"> | null;
+    bypassBusyLock?: boolean;
   }) {
-    const { openPanel = true, confirmOnOverwrite = true } = options ?? {};
+    const {
+      openPanel = true,
+      confirmOnOverwrite = true,
+      sessionOverride = null,
+      bypassBusyLock = false
+    } = options ?? {};
+    const targetSessionId = sessionOverride?.id ?? sessionId;
+    const targetDraftGenerationUnlocked = sessionOverride?.draftGenerationUnlocked ?? draftGenerationUnlocked;
+    const blockedByBusyState = bypassBusyLock ? false : isBusy;
 
-    if (!sessionId || !draftGenerationUnlocked || isGeneratingDraft || isBusy || isSavingJournal) {
+    if (!targetSessionId || !targetDraftGenerationUnlocked || isGeneratingDraft || blockedByBusyState || isSavingJournal) {
       return;
     }
 
     const draftAlreadyCurrent =
       Boolean(journalEntry) &&
-      draftCoverageRef.current.sessionId === sessionId &&
+      draftCoverageRef.current.sessionId === targetSessionId &&
       draftCoverageRef.current.signature === currentDraftCoverageSignature;
 
     if (draftAlreadyCurrent) {
@@ -2138,7 +2070,7 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
       const response = await fetch("/api/interview/session/draft/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionIds: [sessionId] }),
+        body: JSON.stringify({ sessionIds: [targetSessionId] }),
         signal: abortController.signal
       });
 
@@ -2205,33 +2137,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
         draftGenerateAbortControllerRef.current = null;
       }
     }
-  }
-
-  function handleCancelDraftRegenerate() {
-    pendingDraftRegenerateRequestRef.current = null;
-    setDraftRegenerateConfirmOpen(false);
-  }
-
-  async function handleConfirmDraftRegenerate() {
-    const pendingRequest = pendingDraftRegenerateRequestRef.current;
-
-    if (!pendingRequest) {
-      setDraftRegenerateConfirmOpen(false);
-      return;
-    }
-
-    const synced = hasUnsavedDraftChanges ? await persistDraftEdits() : true;
-
-    if (!synced) {
-      return;
-    }
-
-    pendingDraftRegenerateRequestRef.current = null;
-    setDraftRegenerateConfirmOpen(false);
-    await handleGenerateDraft({
-      openPanel: pendingRequest.shouldOpenPanel,
-      confirmOnOverwrite: false
-    });
   }
 
   async function performSaveJournal() {
@@ -2920,12 +2825,6 @@ export function InterviewShell(_props?: { showAIRuntimeSummary?: boolean }) {
         </div>
       ) : null}
       {toastState?.visible ? <SaveToast message={toastState.message} /> : null}
-      <DraftRegenerateConfirmDialog
-        open={draftRegenerateConfirmOpen}
-        onCancel={handleCancelDraftRegenerate}
-        onConfirm={handleConfirmDraftRegenerate}
-        confirmDisabled={draftSyncState === "saving" || isGeneratingDraft || isSavingJournal}
-      />
       <SaveJournalConfirmDialog
         open={saveConfirmOpen}
         onContinue={handleContinueInterview}
