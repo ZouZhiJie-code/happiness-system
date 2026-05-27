@@ -76,6 +76,18 @@ describe("auth ui", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("uses a post form action fallback so credentials do not fall back to a GET querystring", () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(<LoginForm onSubmit={onSubmit} />);
+
+    const form = screen.getByRole("button", { name: "登录并继续" }).closest("form");
+
+    expect(form).not.toBeNull();
+    expect(form).toHaveAttribute("method", "post");
+    expect(form).toHaveAttribute("action", "/api/auth/login");
+  });
+
   it("renders register agreement checkboxes in one group instead of split stacked notices", async () => {
     render(<RegisterForm onSubmit={vi.fn().mockResolvedValue(undefined)} />);
 
