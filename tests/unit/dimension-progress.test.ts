@@ -1,5 +1,5 @@
 import { getDimensionProgressSummary, type DimensionProgressSessionLike } from "@/features/interview/dimension-progress";
-import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
+import { assessUserTurnMessage, isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 
 const emptySnapshot = {
   event: null,
@@ -26,6 +26,16 @@ function buildProgressSession(overrides: Partial<DimensionProgressSessionLike> =
 }
 
 describe("getDimensionProgressSummary", () => {
+  it.each(["结束本轮访谈", "结束这轮访谈", "先结束这一轮"])("treats %s as a boundary stop", (message) => {
+    expect(assessUserTurnMessage(message)).toMatchObject({
+      intent: "boundary_stop",
+      isMeaningful: true,
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false
+    });
+  });
+
   it("returns 0% for dimensions without a session", () => {
     expect(getDimensionProgressSummary(null)).toEqual({
       percentage: 0,

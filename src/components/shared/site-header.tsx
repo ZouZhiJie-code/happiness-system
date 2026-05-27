@@ -158,6 +158,10 @@ const emptyInterviewDimensionBarStatus: InterviewDimensionBarStatus = {
 const headerViewportOffsetVarName = "--site-header-viewport-offset";
 const headerViewportOffsetFallback = "4rem";
 
+type SiteHeaderProps = {
+  isAdmin?: boolean;
+};
+
 function mapCalendarDimensionStatusToHeaderStatus(
   dimension: CalendarDayRecord["dimensions"][number]
 ): InterviewDimensionBarStatus {
@@ -206,7 +210,7 @@ function syncSiteHeaderViewportOffset(headerElement: HTMLElement | null) {
   document.documentElement.style.setProperty(headerViewportOffsetVarName, `${Math.ceil(measuredHeight)}px`);
 }
 
-function SiteHeaderInner() {
+function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -843,13 +847,15 @@ function SiteHeaderInner() {
                   />
                   当天评分
                 </button>
-                <button
-                  type="button"
-                  onClick={handleConversationResetClick}
-                  className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
-                >
-                  清除对话记录
-                </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={handleConversationResetClick}
+                    className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
+                  >
+                    清除对话记录
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -892,6 +898,6 @@ function SiteHeaderInner() {
   );
 }
 
-export function SiteHeader() {
-  return <SiteHeaderInner />;
+export function SiteHeader({ isAdmin = false }: SiteHeaderProps) {
+  return <SiteHeaderInner isAdmin={isAdmin} />;
 }

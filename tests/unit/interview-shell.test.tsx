@@ -292,7 +292,7 @@ function createDeferredResponse() {
 function renderInterviewPage() {
   return render(
     <>
-      <SiteHeader />
+      <SiteHeader isAdmin />
       <InterviewShell />
     </>
   );
@@ -2501,7 +2501,7 @@ describe("InterviewShell", () => {
     }) as typeof fetch;
 
     cleanup();
-    render(<SiteHeader />);
+    render(<SiteHeader isAdmin={false} />);
 
     await waitFor(() => {
       expectDimensionStatus("开心", "已完成");
@@ -3241,14 +3241,14 @@ describe("InterviewShell", () => {
     window.localStorage.setItem("hs-last-interview-dimension", "fulfillment");
 
     cleanup();
-    const view = render(<SiteHeader />);
+    const view = render(<SiteHeader isAdmin={false} />);
 
     await waitFor(() => {
       expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=fulfillment", { scroll: false });
     });
 
     mockRouterReplace.mockClear();
-    view.rerender(<SiteHeader />);
+    view.rerender(<SiteHeader isAdmin={false} />);
 
     await waitFor(() => {
       expect(mockRouterReplace).not.toHaveBeenCalled();
@@ -3260,7 +3260,7 @@ describe("InterviewShell", () => {
     window.localStorage.setItem("hs-last-interview-dimension", "joy");
 
     cleanup();
-    const view = render(<SiteHeader />);
+    const view = render(<SiteHeader isAdmin={false} />);
 
     await waitFor(() => {
       expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=joy", { scroll: false });
@@ -3268,11 +3268,23 @@ describe("InterviewShell", () => {
 
     mockRouterReplace.mockClear();
     mockPathname.value = "/";
-    view.rerender(<SiteHeader />);
+    view.rerender(<SiteHeader isAdmin={false} />);
 
     await waitFor(() => {
       expect(mockRouterReplace).not.toHaveBeenCalled();
     });
+  });
+
+  it("hides the conversation reset button for non-admin users", () => {
+    render(<SiteHeader isAdmin={false} />);
+
+    expect(screen.queryByRole("button", { name: "清除对话记录" })).toBeNull();
+  });
+
+  it("shows the conversation reset button for admin users", () => {
+    render(<SiteHeader isAdmin />);
+
+    expect(screen.getByRole("button", { name: "清除对话记录" })).toBeInTheDocument();
   });
 
   it("restores the cached session when switching back to a previous dimension within 24 hours", async () => {

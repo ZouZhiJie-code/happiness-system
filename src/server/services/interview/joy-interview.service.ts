@@ -5,6 +5,7 @@ import { buildDimensionSemanticInterpretation } from "@/features/interview/serve
 import {
   assessUserTurnMessage,
   deriveDepthReachedFromSnapshot,
+  isDraftOverrideRequestedFromBoundary,
   summarizeInterviewProgress
 } from "@/features/joy-interview/server/interview-progress";
 import {
@@ -917,15 +918,7 @@ function isCoreReadyForBoundaryPartial(dimension: InterviewDimension, snapshot: 
 }
 
 function isJoyDraftOverrideRequested(message: string | null) {
-  if (!message) {
-    return false;
-  }
-
-  const normalized = message.replace(/\s+/g, "");
-
-  return /(先这样|就这样吧|先到这|先记到这|不想再深挖|不想继续深挖|不想提炼|不用提炼|不需要提炼|没必要总结|没有必要总结|不需要总结|不想形成规律|不用形成规律|不想总结规律|不用总结规律|别(?:再)?(?:追问|问)了|直接生成|先生成日志|生成一下日志|直接整理|先整理日志|整理成日志|总结日志|总结成日志|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/.test(
-    normalized
-  );
+  return isDraftOverrideRequestedFromBoundary(message);
 }
 
 function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
