@@ -123,6 +123,44 @@ describe("auth api routes", () => {
     expect(response.headers.get("set-cookie")).toContain("dl_session=session-token");
   });
 
+  it("accepts form-encoded fallback login submissions", async () => {
+    mockLoginUser.mockResolvedValue({
+      token: "session-token",
+      user: {
+        id: "user-1",
+        username: "daily_light_01"
+      }
+    });
+
+    const formBody = new URLSearchParams({
+      username: "daily_light_01",
+      password: "supersecret1"
+    });
+
+    const response = await loginRoute(
+      new Request("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: formBody.toString()
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      authenticated: true,
+      user: {
+        id: "user-1",
+        username: "daily_light_01"
+      }
+    });
+    expect(mockLoginUser).toHaveBeenCalledWith({
+      username: "daily_light_01",
+      password: "supersecret1"
+    });
+  });
+
   it("clears the session cookie on logout", async () => {
     const response = await logoutRoute(
       new Request("http://localhost/api/auth/logout", {
