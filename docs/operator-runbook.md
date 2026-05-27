@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-25`
+最后更新：`2026-05-27`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -323,6 +323,22 @@ node scripts/admin-ai-runtime-smoke.mjs
 6. 编辑标题或正文
 7. 点击“保存正式日志”
 8. 刷新页面，确认 session 和日志可恢复
+
+### 提问链路专项验证
+
+如果改动涉及访谈问题生成、repair、follow-up fallback 或文案回归，最少补跑：
+
+```bash
+npm run typecheck
+npm test -- tests/unit/interview/question-clarity.badcase.test.ts
+npm test -- tests/unit/question-copy-guard.test.ts
+```
+
+说明：
+
+- `question-clarity.badcase` 锁的是真实 badcase 行为边界
+- `question-copy-guard` 锁的是高风险坏问法和关键 intent 的推荐问法族
+- 这两组测试当前是提问链路回归的最低门槛，不能只跑纯函数单测就宣称“问题自然了”
 
 ### 3.0 joy 日志质量冒烟场景
 

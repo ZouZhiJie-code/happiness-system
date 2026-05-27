@@ -2007,6 +2007,10 @@ describe("prepareJoyInterviewResponse", () => {
       "如果不是某段具体对话，那在“面临毕业-就业节点的选择”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？"
     );
     expect(result.assistantTurn.question).not.toContain("具体的经历或对话");
+    expect(result.assistantTurn.questionSpec).toMatchObject({
+      target: "insight_evidence",
+      surfaceLevel: "concrete_anchor"
+    });
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -2126,7 +2130,8 @@ describe("prepareJoyInterviewResponse", () => {
       anchorText: "今天看完一个项目复盘",
       repairCount: 1
     });
-    expect(result.assistantTurn.question).toContain("更具体的反应或信号");
+    expect(result.assistantTurn.question).toContain("不用先总结");
+    expect(result.assistantTurn.question).toContain("最具体的例子");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -2461,10 +2466,9 @@ describe("prepareJoyInterviewResponse", () => {
         stage: "probe_pattern"
       })
     );
-    expect(buildAssistantQuestion).toHaveBeenCalledWith("joy", "probe_pattern", baseSnapshot);
     expect(result.nextStage).toBe("probe_pattern");
     expect(result.nextEventStatus).toBe("active");
-    expect(result.assistantTurn.question).toBe("如果再往里看一点，这份开心更像满足了你什么？");
+    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -2504,7 +2508,7 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.assistantTurn.question).toBe("当你开始主动走近别人时，你最明显感受到的变化是什么？");
+    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -3400,6 +3404,10 @@ describe("prepareJoyInterviewResponse", () => {
     expect(streamedQuestion).toBe(fallbackQuestion);
     expect(streamedQuestion).not.toContain("具体的经历或对话");
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
+    expect(result.assistantTurn?.questionSpec).toMatchObject({
+      target: "insight_evidence",
+      surfaceLevel: "concrete_anchor"
+    });
   });
 
   it("does not stream a fulfillment question that semantically repeats progress evidence after that layer is already covered", async () => {
@@ -3627,7 +3635,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const unnaturalQuestion = "简历优化完成，对你来说，意味着什么样的努力算数了？";
-    const fallbackQuestion = "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+    const fallbackQuestion = "回到“今天把简历一点点改顺了”这件事，如果只留一句，你最想记住哪句？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -3902,7 +3910,7 @@ describe("prepareJoyInterviewResponse", () => {
     };
     const previousValueQuestion = "回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
     const wrappedDuplicateQuestion = "如果只留一个点，回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
-    const fallbackQuestion = "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+    const fallbackQuestion = "回到“今天把散着的简历经历重新理顺了”这件事，如果只留一句，你最想记住哪句？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -3998,7 +4006,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const repeatedValueQuestion = "回头看简历优化这件事，什么样的投入会让你觉得自己的力气花得值？";
-    const fallbackQuestion = "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
+    const fallbackQuestion = "回到“今天在围绕目标岗位改简历”这件事，如果只留一句，你最想记住哪句？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
