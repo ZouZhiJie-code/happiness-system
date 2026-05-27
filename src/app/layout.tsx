@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/shared/site-header";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME } from "@/features/auth/auth.constants";
 import { getCurrentUserFromSessionToken } from "@/server/services/auth/current-user.service";
+import { isAdminUsername } from "@/server/services/auth/admin-access";
 
 import "./globals.css";
 
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const currentUser = await getCurrentUserFromSessionToken(cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null);
+  const isAdmin = Boolean(currentUser?.username && isAdminUsername(currentUser.username));
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
@@ -28,7 +30,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div className="relative flex min-h-dvh flex-col">
           <AuthLocalBootstrap userId={currentUser?.id ?? null} />
           <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
-            <SiteHeader />
+            <SiteHeader isAdmin={isAdmin} />
           </Suspense>
           <main className="flex min-h-0 w-full flex-1 flex-col">{children}</main>
         </div>
