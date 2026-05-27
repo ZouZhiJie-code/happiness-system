@@ -36,6 +36,16 @@ describe("getDimensionProgressSummary", () => {
     });
   });
 
+  it.each(["直接生成日志", "总结日志", "整理成日志"])("treats %s as a draft request", (message) => {
+    expect(assessUserTurnMessage(message)).toMatchObject({
+      intent: "draft_request",
+      isMeaningful: true,
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false
+    });
+  });
+
   it("returns 0% for dimensions without a session", () => {
     expect(getDimensionProgressSummary(null)).toEqual({
       percentage: 0,

@@ -5,10 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
-import { AIRuntimeConfigSummaryCard } from "@/components/interview/ai-runtime-config-summary-card";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { clearLocalAuthUserId, getScopedLocalStorageKey } from "@/features/auth/auth-local";
+import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -23,8 +22,6 @@ import {
   getStoredInterviewSessionEntry,
   interviewLeaveConfirmMessage,
   interviewDimensionStorageKey,
-  interviewSessionFreshStartStorageKey,
-  interviewSessionStorageKey,
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
@@ -71,61 +68,9 @@ interface DraftGenerateIssue {
 }
 
 function buildFallbackInterviewIssue(code: string, message?: string): InterviewIssue {
-  return message ? buildInterviewIssue(code, { message }) : buildInterviewIssue(code);
-}
-
-function isAuthenticationRequiredIssue(error: unknown) {
-  return (
-    parseInterviewIssue(error)?.code === "AUTHENTICATION_REQUIRED" ||
-    (error instanceof Error && error.message === "AUTHENTICATION_REQUIRED") ||
-    (typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      (error as { code?: unknown }).code === "AUTHENTICATION_REQUIRED")
-  );
-}
-
-function isSessionNotFoundIssue(error: unknown) {
-  return (
-    error instanceof Error && error.message === "SESSION_NOT_FOUND"
-  ) || parseInterviewIssue(error)?.code === "SESSION_NOT_FOUND";
-}
-
-async function buildInterviewIssueFromResponse(response: Response, fallbackCode: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { issue?: unknown; error?: string; message?: string }
-    | null;
-
-  return (
-    parseInterviewIssue(payload?.issue) ??
-    buildFallbackInterviewIssue(response.status === 401 ? "AUTHENTICATION_REQUIRED" : payload?.error ?? fallbackCode, payload?.message)
-  );
-}
-
-function clearInterviewAuthBoundState() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const keysToRemove = new Set([
-    getScopedLocalStorageKey(interviewSessionStorageKey),
-    getScopedLocalStorageKey(interviewDimensionStorageKey),
-    getScopedLocalStorageKey(interviewSessionFreshStartStorageKey),
-    interviewSessionStorageKey,
-    interviewDimensionStorageKey,
-    interviewSessionFreshStartStorageKey
-  ]);
-
-  keysToRemove.forEach((key) => window.localStorage.removeItem(key));
-  clearLocalAuthUserId();
-}
-
-function getCurrentLoginRedirectUrl() {
-  if (typeof window === "undefined") {
-    return "/login?next=%2Finterview";
-  }
-
-  return `/login?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
+  return buildInterviewIssue(code, {
+    message: message || undefined
+  });
 }
 
 function getDraftGenerationPhaseMeta(input: {
@@ -420,6 +365,58 @@ function SaveJournalConfirmDialog({
   );
 }
 
+function DraftRegenerateConfirmDialog({
+  open,
+  onCancel,
+  onConfirm,
+  confirmDisabled
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  confirmDisabled: boolean;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.48)] px-4 py-6 backdrop-blur-[2px] md:items-center">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="draft-regenerate-confirm-title"
+        className="w-full max-w-md rounded-[30px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(252,246,236,0.98),rgba(235,217,187,0.96))] p-5 shadow-[0_24px_60px_rgba(46,35,25,0.22)]"
+      >
+        <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">生成确认</p>
+        <h3 id="draft-regenerate-confirm-title" className="mt-2 font-display text-[1.5rem] text-[#2e2319]">
+          继续生成最新日志吗？
+        </h3>
+        <p className="mt-3 text-sm leading-7 text-[#594537]">
+          点击继续后，系统会先保存你刚才手动修改的内容，再结合新的访谈对话生成最新日志。
+        </p>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)]"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            继续
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InterviewEndedCard({
   title,
   onToggleWorkspace,
@@ -619,7 +616,7 @@ async function requestInterviewSession(dimension: InterviewDimension, entryDate?
   });
 
   if (!response.ok) {
-    throw await buildInterviewIssueFromResponse(response, "INTERVIEW_START_FAILED");
+    throw new Error("INTERVIEW_START_FAILED");
   }
 
   const data = (await response.json()) as { session: InterviewSessionRecord };
@@ -632,7 +629,7 @@ async function fetchInterviewSession(sessionId: string) {
   });
 
   if (!response.ok) {
-    throw await buildInterviewIssueFromResponse(response, "SESSION_NOT_FOUND");
+    throw new Error("SESSION_NOT_FOUND");
   }
 
   return (await response.json()) as InterviewSessionRecord;
@@ -671,11 +668,7 @@ async function findPreferredSessionFromDaySnapshot(
     return isRestorableSession(candidateSession, dimension) && candidateSession.entryDate === entryDate
       ? candidateSession
       : null;
-  } catch (error) {
-    if (isAuthenticationRequiredIssue(error)) {
-      throw error;
-    }
-
+  } catch {
     return null;
   }
 }
@@ -688,7 +681,7 @@ async function reopenInterviewSession(sessionId: string) {
   });
 
   if (!response.ok) {
-    throw await buildInterviewIssueFromResponse(response, "SESSION_REOPEN_FAILED");
+    throw new Error("SESSION_REOPEN_FAILED");
   }
 
   const data = (await response.json()) as { session: InterviewSessionRecord };
@@ -739,7 +732,7 @@ async function bootstrapInterviewSession(input: {
       const explicitSession = await fetchInterviewSession(explicitSessionId);
 
       if (!isRestorableSession(explicitSession, explicitSession.dimension)) {
-        throw buildInterviewIssue("SESSION_NOT_FOUND");
+        throw new Error("SESSION_NOT_FOUND");
       }
 
       if (explicitSession.status === "paused") {
@@ -792,11 +785,7 @@ async function bootstrapInterviewSession(input: {
 
             return restoredSession;
           }
-        } catch (error) {
-          if (isAuthenticationRequiredIssue(error)) {
-            throw error;
-          }
-
+        } catch {
           // Ignore restore failures and fall back to creating a new session.
           if (!entryDate) {
             clearStoredInterviewSessionId(dimension);
@@ -810,19 +799,7 @@ async function bootstrapInterviewSession(input: {
     }
 
     if (!forceNew && entryDate) {
-      let preferredSession: InterviewSessionRecord | null = null;
-
-      try {
-        preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
-      } catch (error) {
-        if (isAuthenticationRequiredIssue(error)) {
-          throw error;
-        }
-
-        if (!isSessionNotFoundIssue(error)) {
-          throw error;
-        }
-      }
+      const preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
 
       if (preferredSession) {
         return preferredSession.status === "paused"
@@ -874,9 +851,8 @@ function parseSseChunk(chunk: string) {
   }
 }
 
-export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntimeSummary?: boolean }) {
+export function InterviewShell() {
   const router = useRouter();
-  const routerRef = useRef(router);
   const searchParams = useSearchParams();
   const {
     bootState,
@@ -932,8 +908,8 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
   const [draftContent, setDraftContent] = useState("");
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [draftRegenerateConfirmOpen, setDraftRegenerateConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
-  routerRef.current = router;
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const requestedSessionId = searchParams.get("sessionId");
   const requestedEntryDateRaw = searchParams.get("entryDate");
@@ -950,6 +926,11 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
   const restoreHasUserMessagesRef = useRef(false);
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
+  const pendingAutoDraftRequestRef = useRef(false);
+  const pendingDraftRegenerateRequestRef = useRef<{
+    shouldOpenPanel: boolean;
+  } | null>(null);
+  const preserveUnsavedDraftRef = useRef(false);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
   const lastHappinessScoreEntryOpenRequestRef = useRef(0);
@@ -1135,10 +1116,20 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
 
   useEffect(() => {
     if (!journalEntry) {
+      if (preserveUnsavedDraftRef.current) {
+        return;
+      }
       setDraftTitle("");
       setDraftContent("");
       setDraftSyncState("idle");
       setHasSavedJournal(false);
+      return;
+    }
+
+    if (preserveUnsavedDraftRef.current) {
+      preserveUnsavedDraftRef.current = false;
+      setDraftSyncState("saved");
+      setHasSavedJournal((current) => current || journalEntry.status === "saved" || Boolean(journalEntry.savedAt));
       return;
     }
 
@@ -1381,21 +1372,19 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     [stopToastTimer]
   );
 
-  const redirectToLogin = useCallback(() => {
-    stopDraftAutosave();
-    stopToastTimer();
-    cancelDraftGeneration();
-    cancelInterviewResponse();
-    clearInterviewAuthBoundState();
-    routerRef.current.replace(getCurrentLoginRedirectUrl());
-  }, [cancelDraftGeneration, cancelInterviewResponse, stopDraftAutosave, stopToastTimer]);
-
   const finalizeDraftGenerationVisuals = useCallback(async () => {
     stopDraftPhaseTimers();
     setDraftGeneratePhase("polish");
     setDraftGenerateProgress(100);
     await new Promise((resolve) => window.setTimeout(resolve, 350));
   }, [stopDraftPhaseTimers]);
+
+  const openDraftRegenerateConfirm = useCallback((options?: { shouldOpenPanel?: boolean }) => {
+    pendingDraftRegenerateRequestRef.current = {
+      shouldOpenPanel: options?.shouldOpenPanel ?? true
+    };
+    setDraftRegenerateConfirmOpen(true);
+  }, []);
 
   function maybeFinalizeStream(activeStreamId: number) {
     if (activeStreamId !== activeStreamIdRef.current) {
@@ -1407,13 +1396,39 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     }
 
     const nextSession = pendingSessionRef.current;
+    const shouldPreserveUnsavedDraft =
+      pendingAutoDraftRequestRef.current &&
+      hasUnsavedDraftChanges &&
+      nextSession.pendingDecision?.kind === "event_complete" &&
+      nextSession.pendingDecision.actions.includes("generate_draft") &&
+      nextSession.draftGenerationUnlocked;
+    preserveUnsavedDraftRef.current = shouldPreserveUnsavedDraft;
     touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
     hydrate(nextSession);
     pendingSessionRef.current = null;
+    const shouldAutoGenerateDraft =
+      pendingAutoDraftRequestRef.current &&
+      nextSession.pendingDecision?.kind === "event_complete" &&
+      nextSession.pendingDecision.actions.includes("generate_draft") &&
+      nextSession.draftGenerationUnlocked;
+    pendingAutoDraftRequestRef.current = false;
     setOptimisticUserMessage(null);
     setStreamedAssistantSummary("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
+
+    if (shouldAutoGenerateDraft) {
+      if (hasUnsavedDraftChanges) {
+        openDraftRegenerateConfirm({
+          shouldOpenPanel: true
+        });
+      } else {
+        void handleGenerateDraft({
+          openPanel: true,
+          confirmOnOverwrite: false
+        });
+      }
+    }
   }
 
   const ensureSession = useCallback(
@@ -1465,12 +1480,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         restoreHasUserMessagesRef.current = false;
         setBootState("idle");
         return session.id;
-      } catch (error) {
-        if (isAuthenticationRequiredIssue(error)) {
-          redirectToLogin();
-          return null;
-        }
-
+      } catch {
         if (currentBootSequence === bootSequenceRef.current) {
           restoreHasUserMessagesRef.current = false;
           setBootState("idle");
@@ -1492,7 +1502,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         return null;
       }
     },
-    [hydrate, redirectToLogin, setBootState]
+    [hydrate, setBootState]
   );
 
   const persistDraftEdits = useCallback(async (titleOverride?: string, contentOverride?: string) => {
@@ -1562,6 +1572,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
     setDraftGenerateIssue(null);
     setDraftGenerateState("idle");
     setSaveConfirmOpen(false);
+    setDraftRegenerateConfirmOpen(false);
     setToastState(null);
     setPanelOpen(false);
     stopDraftAutosave();
@@ -1764,6 +1775,12 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       return;
     }
 
+    pendingAutoDraftRequestRef.current =
+      payload.action === "reply" &&
+      /(?:直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/u.test(
+        optimisticMessage ?? ""
+      );
+
     interviewSubmitLockRef.current = true;
     setInterviewIssue(null);
     if (payload.action === "reply") {
@@ -1939,6 +1956,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         return;
       }
 
+      pendingAutoDraftRequestRef.current = false;
       clearStreamState();
       if (payload.action === "reply" && optimisticMessage) {
         setInput(optimisticMessage);
@@ -1947,12 +1965,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         ?? (error instanceof TypeError
           ? buildInterviewIssue("NETWORK_UNAVAILABLE")
           : buildInterviewIssue("INTERVIEW_RESPOND_FAILED"));
-
-      if (issue.code === "AUTHENTICATION_REQUIRED") {
-        redirectToLogin();
-        return;
-      }
-
       const actionSpecificIssue =
         issue.code === "INTERVIEW_RESPOND_FAILED" && payload.action === "continue_current_event"
           ? buildInterviewIssue("INTERVIEW_RESPOND_FAILED", {
@@ -2018,7 +2030,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       });
 
       if (!response.ok) {
-        throw await buildInterviewIssueFromResponse(response, "INTERVIEW_PAUSE_FAILED");
+        throw new Error("INTERVIEW_PAUSE_FAILED");
       }
 
       const data = (await response.json()) as { session?: InterviewSessionRecord };
@@ -2026,12 +2038,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       if (data.session) {
         hydrate(data.session);
       }
-	    } catch (error) {
-      if (isAuthenticationRequiredIssue(error)) {
-        redirectToLogin();
-        return;
-      }
-
+	    } catch {
 	      setInterviewIssue(
 	        buildInterviewIssue("INTERVIEW_RESPOND_FAILED", {
 	          title: "暂时无法退出当前访谈",
@@ -2144,10 +2151,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
           | { error?: string; message?: string; retryable?: boolean }
           | null;
 
-        if (response.status === 401 || payload?.error === "AUTHENTICATION_REQUIRED") {
-          throw buildInterviewIssue("AUTHENTICATION_REQUIRED");
-        }
-
         throw {
           code: payload?.error ?? "DRAFT_GENERATE_UNKNOWN_ERROR",
           message: payload?.message ?? "日志生成失败，请稍后重试。",
@@ -2193,11 +2196,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
               retryable: true
             };
 
-      if (issue.code === "AUTHENTICATION_REQUIRED") {
-        redirectToLogin();
-        return;
-      }
-
       setDraftGenerateIssue(issue);
       setDraftGenerationOverlayComplete(false);
       setDraftGenerationOverlayActive(false);
@@ -2207,6 +2205,33 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         draftGenerateAbortControllerRef.current = null;
       }
     }
+  }
+
+  function handleCancelDraftRegenerate() {
+    pendingDraftRegenerateRequestRef.current = null;
+    setDraftRegenerateConfirmOpen(false);
+  }
+
+  async function handleConfirmDraftRegenerate() {
+    const pendingRequest = pendingDraftRegenerateRequestRef.current;
+
+    if (!pendingRequest) {
+      setDraftRegenerateConfirmOpen(false);
+      return;
+    }
+
+    const synced = hasUnsavedDraftChanges ? await persistDraftEdits() : true;
+
+    if (!synced) {
+      return;
+    }
+
+    pendingDraftRegenerateRequestRef.current = null;
+    setDraftRegenerateConfirmOpen(false);
+    await handleGenerateDraft({
+      openPanel: pendingRequest.shouldOpenPanel,
+      confirmOnOverwrite: false
+    });
   }
 
   async function performSaveJournal() {
@@ -2240,7 +2265,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       });
 
       if (!response.ok) {
-        throw await buildInterviewIssueFromResponse(response, "DRAFT_SAVE_FAILED");
+        throw new Error("DRAFT_SAVE_FAILED");
       }
 
       const data = await response.json();
@@ -2248,12 +2273,7 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
       setDraftSyncState("saved");
       setHasSavedJournal(true);
       showToast("当前日志已保存");
-    } catch (error) {
-      if (isAuthenticationRequiredIssue(error)) {
-        redirectToLogin();
-        return;
-      }
-
+    } catch {
       setDraftError("保存日志失败，请稍后重试。");
     } finally {
       setIsSavingJournal(false);
@@ -2854,7 +2874,6 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
               />
             ) : journalEntry ? (
               <div data-testid="journal-editor-card" className="flex flex-col pb-2">
-                {showAIRuntimeSummary ? <AIRuntimeConfigSummaryCard /> : null}
                 <input
                   value={draftTitle}
                   onChange={(event) => setDraftTitle(event.target.value)}
@@ -2901,6 +2920,12 @@ export function InterviewShell({ showAIRuntimeSummary = false }: { showAIRuntime
         </div>
       ) : null}
       {toastState?.visible ? <SaveToast message={toastState.message} /> : null}
+      <DraftRegenerateConfirmDialog
+        open={draftRegenerateConfirmOpen}
+        onCancel={handleCancelDraftRegenerate}
+        onConfirm={handleConfirmDraftRegenerate}
+        confirmDisabled={draftSyncState === "saving" || isGeneratingDraft || isSavingJournal}
+      />
       <SaveJournalConfirmDialog
         open={saveConfirmOpen}
         onContinue={handleContinueInterview}
