@@ -36,7 +36,7 @@ export function LoginForm({ onSubmit, onInteraction }: LoginFormProps) {
   }
 
   return (
-    <form className="grid gap-5" onSubmit={handleSubmit}>
+    <form className="grid gap-5" method="post" action="/api/auth/login" onSubmit={handleSubmit}>
       <div className="grid gap-2">
         <label htmlFor="login-username" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
           用户名
