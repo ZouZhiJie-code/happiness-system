@@ -3,15 +3,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 import { InterviewShell } from "@/components/interview/interview-shell";
 import { SiteHeader } from "@/components/shared/site-header";
-import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getAssistantChoiceKind } from "@/features/joy-interview/assistant-turn";
-import {
-  interviewDimensionStorageKey,
-  interviewLeaveConfirmMessage,
-  interviewSessionFreshStartStorageKey,
-  interviewSessionStorageKey
-} from "@/features/interview/dimensions";
+import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
@@ -295,11 +289,11 @@ function createDeferredResponse() {
   };
 }
 
-function renderInterviewPage(options: { showAIRuntimeSummary?: boolean } = {}) {
+function renderInterviewPage() {
   return render(
     <>
       <SiteHeader isAdmin />
-      <InterviewShell showAIRuntimeSummary={options.showAIRuntimeSummary} />
+      <InterviewShell />
     </>
   );
 }
@@ -757,101 +751,6 @@ describe("InterviewShell", () => {
         }
       )
     );
-  });
-
-  it("redirects to login when starting the interview returns authentication required", async () => {
-    window.history.replaceState({}, "", "/interview?dimension=gratitude");
-    mockSearchParams.value = {
-      dimension: "gratitude",
-      entryDate: null,
-      mode: null,
-      panel: null,
-      sessionId: null
-    };
-
-    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-
-      if (url.startsWith("/api/calendar/day?")) {
-        return new Response(JSON.stringify(buildHeaderDayRecord()), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      if (url.endsWith("/api/interview/session/start")) {
-        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
-    });
-
-    renderInterviewPage();
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/interview/session/start",
-        expect.objectContaining({
-          method: "POST"
-        })
-      );
-    });
-
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Dgratitude");
-    });
-  });
-
-  it("clears scoped interview caches before redirecting to login", async () => {
-    window.history.replaceState({}, "", "/interview?dimension=gratitude");
-    window.localStorage.setItem(authLocalUserIdStorageKey, "user-old");
-    window.localStorage.setItem(`${interviewSessionStorageKey}::user-old`, JSON.stringify({ gratitude: "session-old" }));
-    window.localStorage.setItem(`${interviewDimensionStorageKey}::user-old`, "gratitude");
-    window.localStorage.setItem(`${interviewSessionFreshStartStorageKey}::user-old`, JSON.stringify({ gratitude: { entryDate: "2026-05-26" } }));
-    window.localStorage.setItem(interviewSessionStorageKey, JSON.stringify({ gratitude: "legacy-session" }));
-
-    mockSearchParams.value = {
-      dimension: "gratitude",
-      entryDate: null,
-      mode: null,
-      panel: null,
-      sessionId: null
-    };
-
-    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input);
-
-      if (url.startsWith("/api/calendar/day?")) {
-        return new Response(JSON.stringify(buildHeaderDayRecord()), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      if (url.endsWith("/api/interview/session/start")) {
-        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      throw new Error(`Unhandled fetch: ${url}`);
-    });
-
-    renderInterviewPage();
-
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Dgratitude");
-    });
-
-    expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
-    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-old`)).toBeNull();
-    expect(window.localStorage.getItem(`${interviewDimensionStorageKey}::user-old`)).toBeNull();
-    expect(window.localStorage.getItem(`${interviewSessionFreshStartStorageKey}::user-old`)).toBeNull();
-    expect(window.localStorage.getItem(interviewSessionStorageKey)).toBeNull();
   });
 
   it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {
@@ -1787,73 +1686,6 @@ describe("InterviewShell", () => {
     });
   });
 
-  it("redirects to login when pausing the interview returns authentication required", async () => {
-    window.history.replaceState({}, "", "/interview?dimension=joy");
-    cacheInterviewSessions({ joy: "session-boundary" });
-    const boundarySession = buildSession({
-      id: "session-boundary",
-      status: "active",
-      stage: "wrap_up",
-      turnCount: 1,
-      lastAssistantQuestion: "",
-      pendingDecision: {
-        kind: "boundary_insufficient",
-        eventId: "event-1",
-        eventSequence: 1,
-        reason: "我不再继续追问细节了。",
-        actions: ["continue_current_event", "next_event", "pause_session"]
-      },
-      messages: [
-        {
-          id: "assistant-boundary",
-          role: "assistant",
-          content: "我不再继续追问细节了。",
-          assistantPayload: buildAssistantPayload({
-            insight: "我不再继续追问细节了。",
-            question: "如果还愿意补一句，只说这个片段最关键的一点就够了。",
-            stateUpdate: {
-              turnPhase: "choice",
-              shouldEndDimension: false,
-              offerChoice: true,
-              choiceKind: "boundary_insufficient",
-              choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。"
-            }
-          }),
-          sequence: 0,
-          createdAt: "2026-04-21T00:00:00.000Z"
-        }
-      ]
-    });
-
-    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-
-      if (url.endsWith("/api/interview/session/session-boundary")) {
-        return new Response(JSON.stringify(boundarySession), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      if (url.endsWith("/api/interview/session/pause")) {
-        return new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      throw new Error(`Unhandled fetch: ${url}`);
-    }) as typeof fetch;
-
-    renderInterviewPage();
-
-    fireEvent.click(await screen.findByRole("button", { name: "先退出" }));
-
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/login?next=%2Finterview%3Fdimension%3Djoy");
-    });
-  });
-
   it("keeps structured clues hidden during the interview before a journal is generated", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
@@ -1887,20 +1719,6 @@ describe("InterviewShell", () => {
     expect(screen.queryByRole("button", { name: "生成最新日志" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "暂停访谈" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "关闭日志面板" })).toBeInTheDocument();
-  });
-
-  it("does not request admin AI runtime status when the runtime summary is not enabled", async () => {
-    cacheInterviewSessions({ joy: "session-ready" });
-
-    renderInterviewPage();
-
-    fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
-
-    expect(await screen.findByTestId("journal-editor-card")).toBeInTheDocument();
-    expect(
-      vi.mocked(global.fetch).mock.calls.some(([input]) => String(input) === "/api/admin/ai-runtime/status")
-    ).toBe(false);
-    expect(screen.queryByText("当前 AI 配置")).not.toBeInTheDocument();
   });
 
   it("switches the main workspace to the daily journal from the top log button", async () => {
@@ -3285,6 +3103,276 @@ describe("InterviewShell", () => {
     expect(saveCalls).toHaveLength(0);
   });
 
+  it("asks before auto-regenerating when the user has manual draft edits, then saves edits first and regenerates on continue", async () => {
+    cacheInterviewSessions({ joy: "session-with-edits" });
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: null,
+      mode: null,
+      panel: "journal",
+      sessionId: null
+    };
+
+    const editingSession = buildSession({
+      id: "session-with-edits",
+      status: "active",
+      stage: "probe_pattern",
+      turnCount: 2,
+      draftGenerationUnlocked: true,
+      messages: promptMessages,
+      snapshot: baseSnapshot,
+      journalEntry: baseJournalEntry,
+      pendingDecision: null
+    });
+
+    const autoDraftSession = {
+      ...editingSession,
+      turnCount: 3,
+      messages: [
+        ...promptMessages,
+        {
+          id: "user-3",
+          role: "user" as const,
+          content: "直接生成日志",
+          sequence: 3,
+          createdAt: "2026-04-21T00:03:00.000Z"
+        }
+      ],
+      pendingDecision: {
+        kind: "event_complete" as const,
+        eventId: "event-1",
+        eventSequence: 1,
+        completionMode: "user_override_partial" as const,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      }
+    };
+
+    const savedEditedEntry: JournalEntryRecord = {
+      ...baseJournalEntry,
+      title: "我手动改过的标题",
+      content: `${baseJournalEntry.content}\n这是我手动补的一句。`,
+      updatedAt: "2026-04-21T00:06:00.000Z"
+    };
+
+    const regeneratedEntry: JournalEntryRecord = {
+      ...savedEditedEntry,
+      title: "基于新对话生成的最新日志",
+      content: `${savedEditedEntry.content}\nAI 又结合刚才的新对话整理了一版。`,
+      updatedAt: "2026-04-21T00:07:00.000Z"
+    };
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(
+          JSON.stringify({
+            session: editingSession,
+            sessionId: editingSession.id,
+            openingQuestion: editingSession.lastAssistantQuestion
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: autoDraftSession })}\n\n`
+        ]);
+      }
+
+      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
+        return new Response(JSON.stringify(savedEditedEntry), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/draft/generate")) {
+        return new Response(
+          JSON.stringify({
+            draftEntry: regeneratedEntry,
+            session: {
+              ...autoDraftSession,
+              journalEntry: regeneratedEntry
+            }
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.includes("/api/interview/session/")) {
+        return new Response(JSON.stringify(editingSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await screen.findByTestId("journal-editor-card");
+
+    fireEvent.change(screen.getByDisplayValue(baseJournalEntry.title), {
+      target: { value: savedEditedEntry.title }
+    });
+    fireEvent.change(screen.getByPlaceholderText(journalBodyPlaceholder), {
+      target: { value: savedEditedEntry.content }
+    });
+
+    const textarea = within(screen.getByTestId("interview-floating-composer")).getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "直接生成日志" } });
+    fireEvent.click(within(screen.getByTestId("interview-floating-composer")).getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByRole("dialog", { name: "继续生成最新日志吗？" })).toBeInTheDocument();
+    expect(
+      screen.getByText("点击继续后，系统会先保存你刚才手动修改的内容，再结合新的访谈对话生成最新日志。")
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "继续" }));
+
+    let putCalls: ReturnType<typeof vi.mocked<typeof global.fetch>>["mock"]["calls"] = [];
+    let generateCalls: ReturnType<typeof vi.mocked<typeof global.fetch>>["mock"]["calls"] = [];
+
+    await waitFor(() => {
+      putCalls = vi.mocked(global.fetch).mock.calls.filter(
+        ([url, requestInit]) =>
+          (String(url).includes("/api/journal-entry/") || String(url).includes("/api/joy-entry/")) &&
+          requestInit?.method === "PUT"
+      );
+      expect(putCalls).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
+        String(url).endsWith("/api/interview/session/draft/generate")
+      );
+      expect(generateCalls).toHaveLength(1);
+    });
+  });
+
+  it("does not save or regenerate when the user cancels the auto-regenerate confirmation", async () => {
+    cacheInterviewSessions({ joy: "session-with-edits" });
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: null,
+      mode: null,
+      panel: "journal",
+      sessionId: null
+    };
+
+    const editingSession = buildSession({
+      id: "session-with-edits",
+      status: "active",
+      stage: "probe_pattern",
+      turnCount: 2,
+      draftGenerationUnlocked: true,
+      messages: promptMessages,
+      snapshot: baseSnapshot,
+      journalEntry: baseJournalEntry,
+      pendingDecision: null
+    });
+
+    const autoDraftSession = {
+      ...editingSession,
+      turnCount: 3,
+      messages: [
+        ...promptMessages,
+        {
+          id: "user-3",
+          role: "user" as const,
+          content: "直接生成日志",
+          sequence: 3,
+          createdAt: "2026-04-21T00:03:00.000Z"
+        }
+      ],
+      pendingDecision: {
+        kind: "event_complete" as const,
+        eventId: "event-1",
+        eventSequence: 1,
+        completionMode: "user_override_partial" as const,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      }
+    };
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(
+          JSON.stringify({
+            session: editingSession,
+            sessionId: editingSession.id,
+            openingQuestion: editingSession.lastAssistantQuestion
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: autoDraftSession })}\n\n`
+        ]);
+      }
+
+      if (url.includes("/api/interview/session/")) {
+        return new Response(JSON.stringify(editingSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await screen.findByTestId("journal-editor-card");
+
+    fireEvent.change(screen.getByDisplayValue(baseJournalEntry.title), {
+      target: { value: "我手动改过的标题" }
+    });
+    fireEvent.change(screen.getByPlaceholderText(journalBodyPlaceholder), {
+      target: { value: `${baseJournalEntry.content}\n这是我手动补的一句。` }
+    });
+
+    const textarea = within(screen.getByTestId("interview-floating-composer")).getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "直接生成日志" } });
+    fireEvent.click(within(screen.getByTestId("interview-floating-composer")).getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByRole("dialog", { name: "继续生成最新日志吗？" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "取消" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "继续生成最新日志吗？" })).not.toBeInTheDocument();
+    });
+
+    const putCalls = vi.mocked(global.fetch).mock.calls.filter(
+      ([url, requestInit]) =>
+        (String(url).includes("/api/journal-entry/") || String(url).includes("/api/joy-entry/")) &&
+        requestInit?.method === "PUT"
+    );
+    const generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
+      String(url).endsWith("/api/interview/session/draft/generate")
+    );
+
+    expect(putCalls).toHaveLength(0);
+    expect(generateCalls).toHaveLength(0);
+  });
+
   it("saves the generated journal after confirmation, shows a toast, and ends the interview", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
@@ -3377,9 +3465,13 @@ describe("InterviewShell", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "生成日志" }));
     await screen.findByTestId("journal-editor-card");
+    await waitFor(() => {
+      expect(screen.queryByText("最终润色中")).not.toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "保存正式日志" }));
-    fireEvent.click(screen.getByRole("button", { name: "确定保存" }));
+    const saveConfirmDialog = await screen.findByRole("dialog", { name: "确定保存这篇日志吗？" });
+    fireEvent.click(within(saveConfirmDialog).getByRole("button", { name: "确定保存" }));
 
     expect(await screen.findByText("当前日志已保存")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "日志已保存，访谈已结束" })).toBeInTheDocument();

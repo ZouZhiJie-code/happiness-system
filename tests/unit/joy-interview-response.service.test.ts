@@ -692,6 +692,146 @@ describe("prepareJoyInterviewResponse", () => {
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
+  it("returns an immediate draft choice when the user requests generation after already sending content", async () => {
+    const partialFulfillmentSnapshot: JoySnapshot = {
+      event: "今天练了半小时口语",
+      feeling: "踏实",
+      whyItMattered: "我把前几天总卡住的发音顺过了一点",
+      happinessType: "投入积累型",
+      selfPattern: null,
+      confidence: 0.74,
+      missingSlots: ["valueSignal"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "probe_pattern",
+        messages: [
+          ...buildSession().messages,
+          {
+            id: "user-1",
+            role: "user",
+            content: "我今天练了半小时口语，把前几天卡住的发音顺过了一点。",
+            sequence: 1,
+            createdAt: "2026-04-21T00:01:00.000Z"
+          }
+        ],
+        snapshot: partialFulfillmentSnapshot,
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "probe_pattern",
+            explorationRound: 1,
+            coveredLenses: ["event_detail", "importance_reason"],
+            roundCoveredLenses: ["event_detail", "importance_reason"],
+            roundMeaningfulReplyCount: 2,
+            totalMeaningfulReplyCount: 2,
+            startMessageSequence: 0,
+            snapshot: partialFulfillmentSnapshot,
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "直接生成日志",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.isReadyForDraft).toBe(true);
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "user_override_partial"
+    });
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
+  it("shows a direct prompt instead of boundary choice when draft generation is requested before any user reply", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "fulfillment",
+        stage: "collect_event",
+        turnCount: 0,
+        messages: [buildSession().messages[0]],
+        snapshot: {
+          event: null,
+          feeling: null,
+          whyItMattered: null,
+          happinessType: null,
+          selfPattern: null,
+          confidence: 0.2,
+          missingSlots: ["event", "whyItMattered"]
+        },
+        events: [
+          {
+            id: "event-1",
+            sequence: 1,
+            status: "active",
+            stage: "collect_event",
+            explorationRound: 1,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 0,
+            startMessageSequence: 0,
+            snapshot: {
+              event: null,
+              feeling: null,
+              whyItMattered: null,
+              happinessType: null,
+              selfPattern: null,
+              confidence: 0.2,
+              missingSlots: ["event", "whyItMattered"]
+            },
+            draftSummary: null,
+            startedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "直接生成日志",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.nextStage).toBe("collect_event");
+    expect(result.nextEventStatus).toBe("active");
+    expect(result.isReadyForDraft).toBe(false);
+    expect(result.nextProgressData).toBeNull();
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
+    expect(result.assistantTurn.stateUpdate.choiceKind ?? null).toBeNull();
+    expect(result.assistantTurn.question).toContain("当前还没有对话内容");
+    expect(result.assistantTurn.question).toContain("无法生成日志");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
   it("offers a partial reflection draft choice when trigger and insight are clear and the user asks to generate", async () => {
     const partialReflectionSnapshot: JoySnapshot = {
       event: "今天看完一个项目复盘",
@@ -1205,7 +1345,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.session.pendingDecision).toBeNull();
   });
 
-  it("returns a low-pressure boundary choice when the user requests a log before reflection has concrete insight", async () => {
+  it("shows a direct prompt when the user requests a log before any reflection dialogue exists", async () => {
     const insufficientReflectionSnapshot: JoySnapshot = {
       event: null,
       feeling: null,
@@ -1220,6 +1360,8 @@ describe("prepareJoyInterviewResponse", () => {
       buildSession({
         dimension: "reflection",
         stage: "collect_event",
+        turnCount: 0,
+        messages: [buildSession().messages[0]],
         snapshot: insufficientReflectionSnapshot,
         events: [
           {
@@ -1254,14 +1396,14 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
+    expect(result.nextStage).toBe("collect_event");
+    expect(result.nextEventStatus).toBe("active");
     expect(result.isReadyForDraft).toBe(false);
-    expect(result.nextProgressData).toEqual({
-      kind: "boundary_insufficient",
-      reason: "我不再继续追问细节了。"
-    });
-    expect(result.assistantTurn.insight).toBe("你已经把现在的边界说清了，我先停在这里，不再继续追问细节。");
-    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
-    expect(result.assistantTurn.question).toContain("这个片段最关键的一点");
+    expect(result.nextProgressData).toBeNull();
+    expect(result.assistantTurn.insight).toBe("现在还没有可整理的材料，我先不替你硬生成日志。");
+    expect(result.assistantTurn.stateUpdate.choiceKind ?? null).toBeNull();
+    expect(result.assistantTurn.question).toContain("当前还没有对话内容");
+    expect(result.assistantTurn.question).toContain("无法生成日志");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
