@@ -3103,31 +3103,136 @@ describe("InterviewShell", () => {
     expect(saveCalls).toHaveLength(0);
   });
 
-  it("asks before auto-regenerating when the user has manual draft edits, then saves edits first and regenerates on continue", async () => {
-    cacheInterviewSessions({ joy: "session-with-edits" });
+  it("renders the streamed choice card after a stop phrase instead of continuing with another question", async () => {
+    cacheInterviewSessions({ joy: "session-stop-phrase" });
     mockSearchParams.value = {
       dimension: "joy",
       entryDate: null,
       mode: null,
-      panel: "journal",
+      panel: null,
       sessionId: null
     };
 
-    const editingSession = buildSession({
-      id: "session-with-edits",
+    const stopPhraseSession = buildSession({
+      id: "session-stop-phrase",
       status: "active",
       stage: "probe_pattern",
       turnCount: 2,
-      draftGenerationUnlocked: true,
+      draftGenerationUnlocked: false,
       messages: promptMessages,
-      snapshot: baseSnapshot,
-      journalEntry: baseJournalEntry,
+      snapshot: {
+        ...baseSnapshot,
+        selfPattern: null
+      },
       pendingDecision: null
     });
 
-    const autoDraftSession = {
-      ...editingSession,
+    const readyForChoiceSession = {
+      ...stopPhraseSession,
       turnCount: 3,
+      draftGenerationUnlocked: true,
+      messages: [
+        ...promptMessages,
+        {
+          id: "user-3",
+          role: "user" as const,
+          content: "结束这轮访谈",
+          sequence: 3,
+          createdAt: "2026-04-21T00:03:00.000Z"
+        }
+      ],
+      pendingDecision: {
+        kind: "event_complete" as const,
+        eventId: "event-1",
+        eventSequence: 1,
+        completionMode: "user_override_partial" as const,
+        actions: ["continue_current_event", "next_event", "generate_draft"]
+      }
+    };
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        return new Response(
+          JSON.stringify({
+            session: stopPhraseSession,
+            sessionId: stopPhraseSession.id,
+            openingQuestion: stopPhraseSession.lastAssistantQuestion
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: readyForChoiceSession })}\n\n`
+        ]);
+      }
+
+      if (url.includes("/api/interview/session/")) {
+        return new Response(JSON.stringify(stopPhraseSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    await screen.findByText("有效 2 轮");
+
+    const textarea = within(screen.getByTestId("interview-floating-composer")).getByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "结束这轮访谈" } });
+    fireEvent.click(within(screen.getByTestId("interview-floating-composer")).getByRole("button", { name: "发送回答" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "这一段已经够先写成一版日志了，接下来怎么走？" })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: "先整理当前日志" })).toBeInTheDocument();
+    expect(screen.queryByTestId("interview-floating-composer")).not.toBeInTheDocument();
+
+    const generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
+      String(url).endsWith("/api/interview/session/draft/generate")
+    );
+    expect(generateCalls).toHaveLength(0);
+  });
+
+  it("auto-generates from the streamed next session before the old render state clears busy and unlock flags", async () => {
+    cacheInterviewSessions({ joy: "session-stream-window" });
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: null,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+
+    const initialSession = buildSession({
+      id: "session-stream-window",
+      status: "active",
+      stage: "probe_pattern",
+      turnCount: 2,
+      draftGenerationUnlocked: false,
+      messages: promptMessages,
+      snapshot: {
+        ...baseSnapshot,
+        selfPattern: null
+      },
+      pendingDecision: null
+    });
+
+    const streamedReadySession = {
+      ...initialSession,
+      turnCount: 3,
+      draftGenerationUnlocked: true,
       messages: [
         ...promptMessages,
         {
@@ -3147,230 +3252,91 @@ describe("InterviewShell", () => {
       }
     };
 
-    const savedEditedEntry: JournalEntryRecord = {
+    const generatedEntry: JournalEntryRecord = {
       ...baseJournalEntry,
-      title: "我手动改过的标题",
-      content: `${baseJournalEntry.content}\n这是我手动补的一句。`,
-      updatedAt: "2026-04-21T00:06:00.000Z"
-    };
-
-    const regeneratedEntry: JournalEntryRecord = {
-      ...savedEditedEntry,
-      title: "基于新对话生成的最新日志",
-      content: `${savedEditedEntry.content}\nAI 又结合刚才的新对话整理了一版。`,
+      linkedSessionIds: ["session-stream-window"],
       updatedAt: "2026-04-21T00:07:00.000Z"
     };
 
-    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const respondDeferred = createDeferredResponse();
+
+    global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
       if (url.endsWith("/api/interview/session/start")) {
-        return new Response(
-          JSON.stringify({
-            session: editingSession,
-            sessionId: editingSession.id,
-            openingQuestion: editingSession.lastAssistantQuestion
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-          }
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              session: initialSession,
+              sessionId: initialSession.id,
+              openingQuestion: initialSession.lastAssistantQuestion
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            }
+          )
         );
       }
 
       if (url.endsWith("/api/interview/session/respond/stream")) {
-        return buildSseResponse([
-          'event: phase\ndata: {"state":"thinking"}\n\n',
-          `event: session\ndata: ${JSON.stringify({ session: autoDraftSession })}\n\n`
-        ]);
-      }
-
-      if ((url.includes("/api/journal-entry/") || url.includes("/api/joy-entry/")) && init?.method === "PUT") {
-        return new Response(JSON.stringify(savedEditedEntry), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
+        return respondDeferred.promise;
       }
 
       if (url.endsWith("/api/interview/session/draft/generate")) {
-        return new Response(
-          JSON.stringify({
-            draftEntry: regeneratedEntry,
-            session: {
-              ...autoDraftSession,
-              journalEntry: regeneratedEntry
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              draftEntry: generatedEntry,
+              session: {
+                ...streamedReadySession,
+                journalEntry: generatedEntry
+              }
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
             }
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-          }
+          )
         );
       }
 
       if (url.includes("/api/interview/session/")) {
-        return new Response(JSON.stringify(editingSession), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
+        return Promise.resolve(
+          new Response(JSON.stringify(initialSession), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          })
+        );
       }
 
-      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+      return Promise.reject(new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`));
     }) as typeof fetch;
 
     renderInterviewPage();
 
-    await screen.findByTestId("journal-editor-card");
-
-    fireEvent.change(screen.getByDisplayValue(baseJournalEntry.title), {
-      target: { value: savedEditedEntry.title }
-    });
-    fireEvent.change(screen.getByPlaceholderText(journalBodyPlaceholder), {
-      target: { value: savedEditedEntry.content }
-    });
+    await screen.findByText("有效 2 轮");
 
     const textarea = within(screen.getByTestId("interview-floating-composer")).getByRole("textbox");
     fireEvent.change(textarea, { target: { value: "直接生成日志" } });
     fireEvent.click(within(screen.getByTestId("interview-floating-composer")).getByRole("button", { name: "发送回答" }));
 
-    expect(await screen.findByRole("dialog", { name: "继续生成最新日志吗？" })).toBeInTheDocument();
-    expect(
-      screen.getByText("点击继续后，系统会先保存你刚才手动修改的内容，再结合新的访谈对话生成最新日志。")
-    ).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole("button", { name: "继续" }));
-
-    let putCalls: ReturnType<typeof vi.mocked<typeof global.fetch>>["mock"]["calls"] = [];
-    let generateCalls: ReturnType<typeof vi.mocked<typeof global.fetch>>["mock"]["calls"] = [];
-
-    await waitFor(() => {
-      putCalls = vi.mocked(global.fetch).mock.calls.filter(
-        ([url, requestInit]) =>
-          (String(url).includes("/api/journal-entry/") || String(url).includes("/api/joy-entry/")) &&
-          requestInit?.method === "PUT"
+    await act(async () => {
+      respondDeferred.resolve(
+        buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: streamedReadySession })}\n\n`
+        ])
       );
-      expect(putCalls).toHaveLength(1);
+      await Promise.resolve();
     });
 
     await waitFor(() => {
-      generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
+      const generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
         String(url).endsWith("/api/interview/session/draft/generate")
       );
       expect(generateCalls).toHaveLength(1);
     });
-  });
-
-  it("does not save or regenerate when the user cancels the auto-regenerate confirmation", async () => {
-    cacheInterviewSessions({ joy: "session-with-edits" });
-    mockSearchParams.value = {
-      dimension: "joy",
-      entryDate: null,
-      mode: null,
-      panel: "journal",
-      sessionId: null
-    };
-
-    const editingSession = buildSession({
-      id: "session-with-edits",
-      status: "active",
-      stage: "probe_pattern",
-      turnCount: 2,
-      draftGenerationUnlocked: true,
-      messages: promptMessages,
-      snapshot: baseSnapshot,
-      journalEntry: baseJournalEntry,
-      pendingDecision: null
-    });
-
-    const autoDraftSession = {
-      ...editingSession,
-      turnCount: 3,
-      messages: [
-        ...promptMessages,
-        {
-          id: "user-3",
-          role: "user" as const,
-          content: "直接生成日志",
-          sequence: 3,
-          createdAt: "2026-04-21T00:03:00.000Z"
-        }
-      ],
-      pendingDecision: {
-        kind: "event_complete" as const,
-        eventId: "event-1",
-        eventSequence: 1,
-        completionMode: "user_override_partial" as const,
-        actions: ["continue_current_event", "next_event", "generate_draft"]
-      }
-    };
-
-    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-
-      if (url.endsWith("/api/interview/session/start")) {
-        return new Response(
-          JSON.stringify({
-            session: editingSession,
-            sessionId: editingSession.id,
-            openingQuestion: editingSession.lastAssistantQuestion
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-          }
-        );
-      }
-
-      if (url.endsWith("/api/interview/session/respond/stream")) {
-        return buildSseResponse([
-          'event: phase\ndata: {"state":"thinking"}\n\n',
-          `event: session\ndata: ${JSON.stringify({ session: autoDraftSession })}\n\n`
-        ]);
-      }
-
-      if (url.includes("/api/interview/session/")) {
-        return new Response(JSON.stringify(editingSession), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
-    }) as typeof fetch;
-
-    renderInterviewPage();
-
-    await screen.findByTestId("journal-editor-card");
-
-    fireEvent.change(screen.getByDisplayValue(baseJournalEntry.title), {
-      target: { value: "我手动改过的标题" }
-    });
-    fireEvent.change(screen.getByPlaceholderText(journalBodyPlaceholder), {
-      target: { value: `${baseJournalEntry.content}\n这是我手动补的一句。` }
-    });
-
-    const textarea = within(screen.getByTestId("interview-floating-composer")).getByRole("textbox");
-    fireEvent.change(textarea, { target: { value: "直接生成日志" } });
-    fireEvent.click(within(screen.getByTestId("interview-floating-composer")).getByRole("button", { name: "发送回答" }));
-
-    expect(await screen.findByRole("dialog", { name: "继续生成最新日志吗？" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "取消" }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: "继续生成最新日志吗？" })).not.toBeInTheDocument();
-    });
-
-    const putCalls = vi.mocked(global.fetch).mock.calls.filter(
-      ([url, requestInit]) =>
-        (String(url).includes("/api/journal-entry/") || String(url).includes("/api/joy-entry/")) &&
-        requestInit?.method === "PUT"
-    );
-    const generateCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) =>
-      String(url).endsWith("/api/interview/session/draft/generate")
-    );
-
-    expect(putCalls).toHaveLength(0);
-    expect(generateCalls).toHaveLength(0);
   });
 
   it("saves the generated journal after confirmation, shows a toast, and ends the interview", async () => {
