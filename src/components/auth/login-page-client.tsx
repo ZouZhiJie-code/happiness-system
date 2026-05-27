@@ -24,6 +24,7 @@ export function LoginPageClient({ nextPath = null }: LoginPageClientProps) {
       footer="首版账户体系先提供用户名与密码登录，后续再补找回密码和更多绑定能力。"
     >
       <LoginForm
+        nextPath={nextPath}
         onInteraction={() => {
           if (error) {
             setError(null);

@@ -88,6 +88,17 @@ describe("auth ui", () => {
     expect(form).toHaveAttribute("action", "/api/auth/login");
   });
 
+  it("includes the next path in the fallback form payload", () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    render(<LoginForm onSubmit={onSubmit} nextPath="/calendar?view=day" />);
+
+    const nextInput = screen.getByDisplayValue("/calendar?view=day");
+
+    expect(nextInput).toHaveAttribute("type", "hidden");
+    expect(nextInput).toHaveAttribute("name", "next");
+  });
+
   it("renders register agreement checkboxes in one group instead of split stacked notices", async () => {
     render(<RegisterForm onSubmit={vi.fn().mockResolvedValue(undefined)} />);
 

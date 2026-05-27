@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { authSessionResponseSchema, loginRequestSchema } from "@/features/auth/auth.schema";
+import { normalizeAuthRedirectPath } from "@/features/auth/auth-local";
 import { AuthenticationError, loginUser } from "@/server/services/auth/auth.service";
 import { buildAuthCookieOptions } from "@/server/services/auth/auth-cookie";
 
@@ -8,7 +9,10 @@ async function parseLoginRequestBody(request: Request) {
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
 
   if (contentType.includes("application/json")) {
-    return request.json();
+    return {
+      submissionKind: "json" as const,
+      body: await request.json()
+    };
   }
 
   if (
@@ -17,24 +21,40 @@ async function parseLoginRequestBody(request: Request) {
   ) {
     const formData = await request.formData();
     return {
-      username: formData.get("username"),
-      password: formData.get("password")
+      submissionKind: "form" as const,
+      body: {
+        username: formData.get("username"),
+        password: formData.get("password")
+      },
+      nextPath: formData.get("next")
     };
   }
 
-  return request.json();
+  return {
+    submissionKind: "json" as const,
+    body: await request.json()
+  };
 }
 
 export async function POST(request: Request) {
-  let body: unknown;
+  let payload:
+    | {
+        submissionKind: "json";
+        body: unknown;
+      }
+    | {
+        submissionKind: "form";
+        body: unknown;
+        nextPath: FormDataEntryValue | null;
+      };
 
   try {
-    body = await parseLoginRequestBody(request);
+    payload = await parseLoginRequestBody(request);
   } catch {
     return NextResponse.json({ error: "INVALID_LOGIN_REQUEST" }, { status: 400 });
   }
 
-  const parsed = loginRequestSchema.safeParse(body);
+  const parsed = loginRequestSchema.safeParse(payload.body);
 
   if (!parsed.success) {
     return NextResponse.json({ error: "INVALID_LOGIN_REQUEST" }, { status: 400 });
@@ -42,12 +62,23 @@ export async function POST(request: Request) {
 
   try {
     const result = await loginUser(parsed.data);
-    const response = NextResponse.json(
-      authSessionResponseSchema.parse({
-        authenticated: true,
-        user: result.user
-      })
-    );
+    const response =
+      payload.submissionKind === "form"
+        ? NextResponse.redirect(
+            new URL(
+              normalizeAuthRedirectPath(
+                typeof payload.nextPath === "string" ? payload.nextPath : null
+              ),
+              request.url
+            ),
+            303
+          )
+        : NextResponse.json(
+            authSessionResponseSchema.parse({
+              authenticated: true,
+              user: result.user
+            })
+          );
 
     response.cookies.set("dl_session", result.token, buildAuthCookieOptions());
 
