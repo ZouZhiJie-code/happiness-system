@@ -343,51 +343,6 @@ function normalizeDraftTitle(title: string, brief: ReturnType<typeof buildDraftB
   });
 }
 
-function cloneExistingDraft(entry: InterviewSessionRecord["journalEntry"]): JoyEntryDraft | null {
-  if (!entry) {
-    return null;
-  }
-
-  return {
-    title: entry.title,
-    content: entry.content,
-    event: entry.event,
-    feeling: entry.feeling,
-    whyItMattered: entry.whyItMattered,
-    happinessType: entry.happinessType,
-    selfPattern: entry.selfPattern,
-    joyMoment: entry.joyMoment,
-    joySource: entry.joySource,
-    stateShift: entry.stateShift,
-    meaningNeed: entry.meaningNeed,
-    manualClue: entry.manualClue,
-    delightSignature: entry.delightSignature,
-    directionSignal: entry.directionSignal,
-    valueImpact: entry.valueImpact,
-    durability: entry.durability,
-    psychProfile: entry.psychProfile,
-    improvementTrack: entry.improvementTrack,
-    stateAssessment: entry.stateAssessment,
-    frictionPoint: entry.frictionPoint,
-    repeatCondition: entry.repeatCondition,
-    controllableFactor: entry.controllableFactor,
-    nextAttempt: entry.nextAttempt,
-    successSignal: entry.successSignal,
-    gratitudeMoment: entry.gratitudeMoment,
-    gratitudeTarget: entry.gratitudeTarget,
-    kindAction: entry.kindAction,
-    seenNeed: entry.seenNeed,
-    innerEffect: entry.innerEffect,
-    gratitudeReason: entry.gratitudeReason,
-    gratitudeType: entry.gratitudeType,
-    relationshipSignal: entry.relationshipSignal,
-    reciprocityHint: entry.reciprocityHint,
-    tags: entry.tags,
-    eventBlocks: entry.eventBlocks,
-    source: entry.source
-  };
-}
-
 function resolveDraftGenerationMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftGenerationMode {
   const existingDraft = session.journalEntry;
 
@@ -712,7 +667,12 @@ export async function extractJoySnapshotWithAI(input: {
   });
 
   if (!aiResult) {
-    logger.warn({ sessionId: input.session.id }, "AI extraction unavailable, fallback snapshot will be used.");
+    logger.warn(
+      {
+        sessionId: input.session.id,
+      },
+      "AI extraction unavailable, fallback snapshot will be used."
+    );
 
     return stageAwareFallbackSnapshot;
   }
@@ -1506,7 +1466,11 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
 
   if (!aiResult) {
     logger.warn(
-      { sessionId: session.id, generationMode, elapsedMs: Date.now() - startedAt },
+      {
+        sessionId: session.id,
+        generationMode,
+        elapsedMs: Date.now() - startedAt,
+      },
       "AI draft generation unavailable, fallback draft will be used."
     );
 

@@ -1,4 +1,5 @@
 import type { InterviewSessionRecord, JoyEntryDraft, JoySnapshot } from "@/types/interview";
+import { AIProviderError } from "@/server/services/ai/ai-provider";
 
 const {
   buildDraftBrief,
@@ -31,6 +32,14 @@ const { getAIProvider } = vi.hoisted(() => ({
   getAIProvider: vi.fn()
 }));
 
+const { getAIProviderStatus } = vi.hoisted(() => ({
+  getAIProviderStatus: vi.fn()
+}));
+
+const { formatAIProviderUnavailableCode } = vi.hoisted(() => ({
+  formatAIProviderUnavailableCode: vi.fn((prefix: string, status?: { code?: string }) => `${prefix}_${status?.code ?? "PROVIDER_NOT_CONFIGURED"}`)
+}));
+
 const { completeStructuredOutput } = vi.hoisted(() => ({
   completeStructuredOutput: vi.fn()
 }));
@@ -61,7 +70,9 @@ vi.mock("@/server/lib/logger", () => ({
 }));
 
 vi.mock("@/server/services/ai", () => ({
-  getAIProvider
+  getAIProvider,
+  getAIProviderStatus,
+  formatAIProviderUnavailableCode
 }));
 
 vi.mock("@/server/services/ai/structured-output", () => ({
@@ -312,7 +323,23 @@ describe("generateJoyAssistantTurn", () => {
     warn.mockReset();
     error.mockReset();
     getAIProvider.mockReset();
+    getAIProviderStatus.mockReset();
+    formatAIProviderUnavailableCode.mockClear();
     completeStructuredOutput.mockReset();
+    getAIProviderStatus.mockReturnValue({
+      provider: "volcengine-ark",
+      available: true,
+      state: "ready",
+      code: "READY",
+      issues: [],
+      configSummary: {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+        baseUrlHost: "ark.cn-beijing.volces.com"
+      }
+    });
   });
 
   it("rewrites theory-laden reflection questions into concrete natural Chinese and preserves repair spec", async () => {
@@ -490,6 +517,99 @@ describe("generateJoyAssistantTurn", () => {
       anchorText: "今天下午改一份材料",
       repairCount: 0
     });
+  });
+
+  it("records a specific provider config reason when question generation falls back", async () => {
+    getAIProvider.mockReturnValue(null);
+    getAIProviderStatus.mockReturnValue({
+      provider: "volcengine-ark",
+      available: false,
+      state: "config_invalid",
+      code: "PLACEHOLDER_BASE_URL",
+      issues: ["PLACEHOLDER_BASE_URL"],
+      configSummary: {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+        baseUrlHost: null
+      }
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "disabled",
+        success: false,
+        errorCode: "QUESTION_PROVIDER_PLACEHOLDER_BASE_URL"
+      })
+    );
+  });
+
+  it("records the upstream provider error code when question generation hits an Ark billing failure", async () => {
+    getAIProvider.mockReturnValue({
+      name: "mock-provider",
+      complete: vi.fn().mockRejectedValue(
+        new AIProviderError(
+          '{"error":{"code":"AccountOverdueError","message":"billing overdue"}}',
+          "UPSTREAM_HTTP_ERROR",
+          403
+        )
+      )
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "mock-provider",
+        success: false,
+        errorCode: "QUESTION_ACCOUNTOVERDUEERROR"
+      })
+    );
   });
 });
 

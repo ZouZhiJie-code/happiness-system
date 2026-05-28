@@ -981,6 +981,12 @@ function isBoundaryIntent(intent: ReturnType<typeof assessUserTurnMessage>["inte
   return intent === "boundary_stop" || intent === "hostile_boundary";
 }
 
+function sessionHasUserReplies(session: InterviewSessionRecord) {
+  return session.messages.some((message) => message.role === "user")
+    || session.turnCount > 0
+    || session.events.some((event) => event.totalMeaningfulReplyCount > 0 || event.roundMeaningfulReplyCount > 0);
+}
+
 function isCoreReadyForBoundaryPartial(dimension: InterviewDimension, snapshot: JoySnapshot) {
   if (dimension === "joy") {
     return isJoyCoreReadyForDraft(snapshot);
@@ -1024,6 +1030,27 @@ function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): 
       offerChoice: true,
       choiceKind: "boundary_insufficient",
       choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。",
+    },
+    meta: {
+      depthReached: []
+    }
+  };
+}
+
+function buildEmptyDraftRequestAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
+  return {
+    insight: "现在还没有可整理的材料，我先不替你硬生成日志。",
+    thinkingSummary: "",
+    analysis: "用户表达了生成日志意图，但当前 session 里还没有任何用户输入；先明确说明原因，并把用户带回首个有效回答。",
+    question:
+      dimension === "fulfillment"
+        ? "当前还没有对话内容，无法生成日志。请先说一点今天让你觉得不算白过的片段。"
+        : "当前还没有对话内容，无法生成日志。请先说一点今天的具体片段。",
+    stateUpdate: {
+      turnPhase: "opening",
+      shouldEndDimension: false,
+      offerChoice: false,
+      choiceReason: ""
     },
     meta: {
       depthReached: []
@@ -1825,7 +1852,6 @@ function buildNaturalThinkingSummaryFocus(input: {
       return "";
   }
 }
-
 function extractFirstPersonIntentPhrases(value: string) {
   return Array.from(value.matchAll(/我想[^，。！？!?；;：:\n”"’'」》】]{1,40}/gu), (match) => match[0]);
 }
@@ -2788,6 +2814,64 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   const assessment = assessUserTurnMessage(input.userMessage);
+  if (assessment.intent === "draft_request") {
+    const hasUserReplies = sessionHasUserReplies(session);
+
+    if (!hasUserReplies) {
+      return {
+        session,
+        activeEvent,
+        nextSnapshot: activeEvent.snapshot,
+        nextTurnCount: session.turnCount,
+        nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+        nextStage: activeEvent.stage,
+        nextEventStatus: activeEvent.status,
+        nextProgressData: null,
+        isReadyForDraft: false,
+        userMessage: input.userMessage,
+        inputMode: input.inputMode,
+        isMeaningfulReply: false,
+        coveredLenses: activeEvent.coveredLenses,
+        roundCoveredLenses: activeEvent.roundCoveredLenses,
+        roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+        totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+        assistantTurn: buildEmptyDraftRequestAssistantTurn(session.dimension),
+        assistantAction: null,
+        questionSpec: null
+      } satisfies PreparedInterviewTurnContext;
+    }
+
+    return {
+      session,
+      activeEvent,
+      nextSnapshot: activeEvent.snapshot,
+      nextTurnCount: session.turnCount,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+      nextStage: "wrap_up",
+      nextEventStatus: "ready_for_choice",
+      nextProgressData: {
+        kind: "event_complete",
+        completionMode: "user_override_partial"
+      },
+      isReadyForDraft: true,
+      userMessage: input.userMessage,
+      inputMode: input.inputMode,
+      isMeaningfulReply: false,
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+      assistantTurn: buildChoiceAssistantTurn(
+        session.dimension,
+        activeEvent.snapshot,
+        activeEvent.explorationRound,
+        "user_override_partial"
+      ),
+      assistantAction: null,
+      questionSpec: null
+    } satisfies PreparedInterviewTurnContext;
+  }
+
   if (isBoundaryIntent(assessment.intent)) {
     const isReadyForPartial = isCoreReadyForBoundaryPartial(session.dimension, activeEvent.snapshot);
     const boundaryAssistantTurn = isReadyForPartial
