@@ -1852,7 +1852,6 @@ function buildNaturalThinkingSummaryFocus(input: {
       return "";
   }
 }
-
 function extractFirstPersonIntentPhrases(value: string) {
   return Array.from(value.matchAll(/我想[^，。！？!?；;：:\n”"’'」》】]{1,40}/gu), (match) => match[0]);
 }

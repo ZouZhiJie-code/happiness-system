@@ -45,7 +45,6 @@ describe("getDimensionProgressSummary", () => {
       shouldAdvanceRound: false
     });
   });
-
   it("returns 0% for dimensions without a session", () => {
     expect(getDimensionProgressSummary(null)).toEqual({
       percentage: 0,

@@ -2887,6 +2887,121 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.thinkingSummary).toContain("接住了");
   });
 
+  it("keeps a natural thinking summary when '我想' appears inside the user's own felt signal", async () => {
+    const naturalSummary = "被朋友稳稳接住之后，“我想把这种能放心聊开的关系留住”这层心意更清楚了。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: naturalSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我想把这种能放心聊开的关系留住。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).toBe(naturalSummary);
+  });
+
+  it("rewrites a sentence-initial '我想' thinking summary when it is only process talk from the assistant side", async () => {
+    const rawSummary = "我想我们已经接近重点了。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: rawSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我感觉自己被接住了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
+    expect(result.assistantTurn.thinkingSummary).not.toMatch(/^我想/u);
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+  });
+
+  it("rewrites an in-sentence '我想' thinking summary when it is only process talk from the assistant side", async () => {
+    const rawSummary = "这段被理解的感觉已经出来了，我想再看看它为什么这么重要。";
+
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
+    getNextStage.mockReturnValue("probe_pattern");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: rawSummary,
+      analysis: "用户已说：被朋友接住；下一步问：更想留下哪一层关系感",
+      question: "如果只留一个点，你最想把这段关系里的什么感觉写下来？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason", "clue"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "今天和朋友聊了很久，我感觉自己被接住了。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active interview response with an assistant turn.");
+    }
+
+    expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
+    expect(result.assistantTurn.thinkingSummary).not.toContain("我想再看看");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+  });
+
   it("streams assistant deltas before persisting the finalized turn", async () => {
     findJoyInterviewSessionById.mockResolvedValue(buildSession());
     extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);

@@ -611,6 +611,99 @@ describe("generateJoyAssistantTurn", () => {
       repairCount: 0
     });
   });
+
+  it("records a specific provider config reason when question generation falls back", async () => {
+    getAIProvider.mockReturnValue(null);
+    getAIProviderStatus.mockReturnValue({
+      provider: "volcengine-ark",
+      available: false,
+      state: "config_invalid",
+      code: "PLACEHOLDER_BASE_URL",
+      issues: ["PLACEHOLDER_BASE_URL"],
+      configSummary: {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+        baseUrlHost: null
+      }
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "disabled",
+        success: false,
+        errorCode: "QUESTION_PROVIDER_PLACEHOLDER_BASE_URL"
+      })
+    );
+  });
+
+  it("records the upstream provider error code when question generation hits an Ark billing failure", async () => {
+    getAIProvider.mockReturnValue({
+      name: "mock-provider",
+      complete: vi.fn().mockRejectedValue(
+        new AIProviderError(
+          '{"error":{"code":"AccountOverdueError","message":"billing overdue"}}',
+          "UPSTREAM_HTTP_ERROR",
+          403
+        )
+      )
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "mock-provider",
+        success: false,
+        errorCode: "QUESTION_ACCOUNTOVERDUEERROR"
+      })
+    );
+  });
 });
 
 describe("extractJoySnapshotWithAI", () => {
