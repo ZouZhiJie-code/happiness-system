@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
+import {
+  fetchCalendarDayRecord,
+  fetchCalendarMonthRecord,
+  fetchCalendarWeekRecord
+} from "@/features/calendar/calendar-client";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import {
   buildCalendarToolbarChips,
@@ -16,42 +21,6 @@ import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from 
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
 import { buildCalendarHref, normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-
-async function fetchCalendarMonth(month: string) {
-  const response = await fetch(`/api/calendar/month?month=${month}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_TOOLBAR_MONTH_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarMonthRecord;
-}
-
-async function fetchCalendarWeek(date: string) {
-  const response = await fetch(`/api/calendar/week?date=${date}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_TOOLBAR_WEEK_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarWeekRecord;
-}
-
-async function fetchCalendarDay(date: string) {
-  const response = await fetch(`/api/calendar/day?date=${date}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_TOOLBAR_DAY_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarDayRecord;
-}
 
 function ToolbarChip({ label, value }: { label: string; value: string }) {
   return (
@@ -111,18 +80,18 @@ export function CalendarToolbar() {
 
     const request =
       normalizedSearch.view === "month"
-        ? fetchCalendarMonth(normalizedSearch.date.slice(0, 7)).then((record) => {
+        ? fetchCalendarMonthRecord(normalizedSearch.date.slice(0, 7)).then((record) => {
             if (!cancelled) {
               setMonthRecord(record);
             }
           })
         : normalizedSearch.view === "week"
-          ? fetchCalendarWeek(normalizedSearch.date).then((record) => {
+          ? fetchCalendarWeekRecord(normalizedSearch.date).then((record) => {
               if (!cancelled) {
                 setWeekRecord(record);
               }
             })
-          : fetchCalendarDay(normalizedSearch.date).then((record) => {
+          : fetchCalendarDayRecord(normalizedSearch.date).then((record) => {
               if (!cancelled) {
                 setDayRecord(record);
               }

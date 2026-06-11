@@ -669,7 +669,6 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       >
         <Link
           href="/"
-          prefetch={false}
           onClick={(event) => handleProtectedNavigation(event, "/")}
           className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2.5"
         >
@@ -877,7 +876,6 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
               <Link
                 key={item.matchPath}
                 href={href}
-                prefetch={false}
                 onClick={(event) => handleProtectedNavigation(event, href)}
                 aria-current={active ? "page" : undefined}
                 className={clsx(

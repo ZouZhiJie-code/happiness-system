@@ -16,6 +16,8 @@ export function isAuthenticationRequiredError(error: unknown): error is Authenti
   );
 }
 
+const SESSION_TOUCH_THROTTLE_MS = 5 * 60 * 1000;
+
 function readCookie(request: Request, name: string) {
   const cookieHeader = request.headers.get("cookie") ?? "";
   const segment = cookieHeader
@@ -51,7 +53,12 @@ export async function getCurrentUserFromSessionToken(rawToken: string | null) {
     return null;
   }
 
-  await touchAuthSessionByTokenHash(tokenHash);
+  const lastUsedAt = session.lastUsedAt instanceof Date ? session.lastUsedAt.getTime() : 0;
+
+  if (Date.now() - lastUsedAt >= SESSION_TOUCH_THROTTLE_MS) {
+    await touchAuthSessionByTokenHash(tokenHash);
+  }
+
   return session.user ?? null;
 }
 

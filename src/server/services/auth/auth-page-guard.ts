@@ -32,7 +32,7 @@ export async function requireAuthenticatedPage(nextPath: string) {
     return null as never;
   }
 
-  await recordPrivatePageViewedBestEffort(user.id, nextPath);
+  void recordPrivatePageViewedBestEffort(user.id, nextPath);
 
   return user;
 }

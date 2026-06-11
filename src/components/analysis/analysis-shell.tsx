@@ -2020,7 +2020,7 @@ export function AnalysisShell() {
     setHasFetchError(false);
     setRecord(null);
 
-    void fetchAnalysisMonthRecord(normalizedSearch.month)
+    void fetchAnalysisMonthRecord(normalizedSearch.month, { force: refreshNonce > 0 })
       .then((nextRecord) => {
         if (!cancelled) {
           setRecord(nextRecord);
