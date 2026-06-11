@@ -99,7 +99,7 @@ export function AnalysisToolbar() {
     setIsLoading(true);
     setRecord(null);
 
-    fetchAnalysisMonthRecord(normalizedSearch.month)
+    fetchAnalysisMonthRecord(normalizedSearch.month, { force: refreshNonce > 0 })
       .then((nextRecord) => {
         if (!cancelled) {
           setRecord(nextRecord);

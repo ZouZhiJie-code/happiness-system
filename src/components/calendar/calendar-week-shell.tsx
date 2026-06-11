@@ -6,23 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarWeekBoard } from "@/components/calendar/calendar-week-board";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
+import { fetchCalendarWeekRecord } from "@/features/calendar/calendar-client";
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
 import type { CalendarWeekRecord } from "@/features/calendar/types";
 import { buildCalendarWeekOverviewState } from "@/features/calendar/week-view";
 import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-
-async function fetchCalendarWeek(date: string) {
-  const response = await fetch(`/api/calendar/week?date=${date}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_WEEK_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarWeekRecord;
-}
 
 export function CalendarWeekShell() {
   const router = useRouter();
@@ -51,7 +40,7 @@ export function CalendarWeekShell() {
     setIsLoading(true);
     setError(null);
 
-    void fetchCalendarWeek(currentDate)
+    void fetchCalendarWeekRecord(currentDate, { force: refreshNonce > 0 })
       .then((record) => {
         if (!cancelled) {
           setWeekRecord(record);

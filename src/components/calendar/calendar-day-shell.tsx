@@ -6,21 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
+import { fetchCalendarDayRecord } from "@/features/calendar/calendar-client";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-
-async function fetchCalendarDay(date: string) {
-  const response = await fetch(`/api/calendar/day?date=${date}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_DAY_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarDayRecord;
-}
 
 export function CalendarDayShell() {
   const router = useRouter();
@@ -49,7 +38,7 @@ export function CalendarDayShell() {
     setIsLoading(true);
     setError(null);
 
-    void fetchCalendarDay(currentDate)
+    void fetchCalendarDayRecord(currentDate, { force: refreshNonce > 0 })
       .then((record) => {
         if (!cancelled) {
           setDayRecord(record);

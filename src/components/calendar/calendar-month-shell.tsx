@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
+import { fetchCalendarMonthRecord } from "@/features/calendar/calendar-client";
 import { interviewDimensions } from "@/features/interview/dimensions";
 import type { CalendarDayRecord, CalendarMonthRecord } from "@/features/calendar/types";
 import {
@@ -16,18 +17,6 @@ import {
   normalizeCalendarSearchParams
 } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-
-async function fetchCalendarMonth(month: string) {
-  const response = await fetch(`/api/calendar/month?month=${month}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("CALENDAR_MONTH_QUERY_FAILED");
-  }
-
-  return (await response.json()) as CalendarMonthRecord;
-}
 
 function buildEmptyCalendarDayRecord(date: string): CalendarDayRecord {
   return {
@@ -161,7 +150,7 @@ export function CalendarMonthShell() {
     setIsLoading(true);
     setError(null);
 
-    void fetchCalendarMonth(monthKey)
+    void fetchCalendarMonthRecord(monthKey, { force: refreshNonce > 0 })
       .then((record) => {
         if (cancelled) {
           return;
