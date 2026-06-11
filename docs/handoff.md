@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-21`
+最后更新：`2026-05-27`
 
 ## 1. 当前阶段结论
 
@@ -25,6 +25,10 @@
 - 访谈提交失败已经结构化为 `issue`，用户能看到原因、解决方案、错误码和 requestId，不再只看到泛化“提交失败”。
 - `respond/stream` 会原样透传 provider 原始 `delta.text`，不对任意流式增量单独 trim 或折叠空白，避免实时问题文本在 chunk 边界丢空格或吞掉换行。
 - 访谈 repair 协议已升级为纯服务端确定性链路：识别到 `question_repair`（如“看不懂 / 太抽象 / 换一个 / 说简单点”）后，不再请求模型，而是根据 `questionSpec` 直接生成新的 `thinkingSummary + question`；repair 轮不会抽取 snapshot、不会增加 `turnCount`、不会推进 `roundMeaningfulReplyCount`、不会触发新的 `event_complete`。`reflection` repair 当前有专属模板族，且已命中过“没有具体经历 / 对话” guard 时不能回到 scene question。连续第 `3` 次 repair 会直接进入低压 choice。
+- 提问链路已经在 `2026-05-27` 完成第一轮结构化重构：`AskIntent -> Question Realizer -> Comprehension Gate -> question-protocol` 已落地，`judgment_clue / insight_evidence / reaction_evidence` 会优先走受控中文问法，不再默认信任自由生成的追问文本。
+- 高风险 fallback 链路已经切流：AI 不可用 fallback、空 follow-up fallback、repeated-question fallback、`fulfillment` value-signal guard fallback 都会先收成 `questionSpec`，再统一走 `resolveQuestionFromSpec()`，避免直接把旧抽象问法发给用户。
+- repair 当前已经改成降认知负担链路：第 `1` 次 repair 收窄范围，第 `2` 次 repair 改成“先给一个最具体的例子”，如果与上一题语义近重复则退到 `one_sentence_fallback`；连续第 `3` 次 repair 进入低压 choice。
+- 新增坏例回归资产与文案保护样本：`docs/plans/2026-05-27-interview-question-clarity-badcase-pack.md`、`tests/unit/interview/question-clarity.badcase.test.ts`、`tests/unit/question-copy-guard.test.ts`
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 - 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
@@ -223,26 +227,38 @@
 
 - joy / fulfillment / reflection 日志正文已经从结构卡转向正文优先，但文风和完成度还要继续打磨
 
-## 4. 2026-05-21 当前可直接接续的交接点
+## 4. 2026-05-27 当前可直接接续的交接点
 
 - 已完成代码改动：
   - `src/features/joy-interview/server/question-protocol.ts`
-    - 新增 deterministic repair renderer
-    - 新增 repair equivalence gate
-    - 新增 `reflection` repair 强模板与 scene-denial 降级
+    - 新增 `AskIntent` 接入点与结构化问法 dispatcher
+    - 新增 `Comprehension Gate` 接入与 surface downgrade 收口
+    - `judgment_clue / insight_evidence / reaction_evidence` 已切到受控问法主链
+    - repair 已改成 `narrow / example_first / one_sentence_fallback`
   - `src/server/services/interview/joy-interview.service.ts`
     - `question_repair` 直接在服务端分流
-    - repair 不再走 `generateJoyAssistantTurn / streamJoyAssistantTurn`
+    - fallback 问题生成统一走 `resolveFallbackQuestionFromSpec()`
+    - repeated-question / empty-question / fulfillment guard fallback 已切到新链路
     - 第 `3` 次 repair 进入低压 choice
-- 已完成自动化验证：
-  - `npx vitest run tests/unit/question-repair-protocol.test.ts tests/unit/joy-interview-response-repair.service.test.ts tests/unit/joy-interview-ai.service.test.ts tests/unit/joy-interview-response.service.test.ts`
-  - `npm run typecheck`
-- 已完成手动验收：
-  - 本地 `next dev` + 真实 HTTP 路径验收 `reflection`
-  - 非流式 `respond`：第 1、2 次 repair 返回新问题且不推进进度；第 3 次进入低压 choice
-  - 流式 `respond/stream`：repair 模式直接发 `summary -> question -> session`，没有 provider `thinking`
-- 当前已知小约定：
-  - 当用户措辞更像“换一个 / 换种说法”时，repair 的 `questionSpec.surfaceLevel` 可能直接落到 `concrete_anchor`；这是当前协议的一部分，不是回归
+  - `src/server/services/interview/joy-interview-ai.service.ts`
+    - AI 不可用 fallback turn 已统一走 `resolveQuestionFromSpec()`
+- 本轮文档与测试资产：
+  - 设计方案：`docs/plans/2026-05-27-interview-question-clarity-design.md`
+  - 实施计划：`docs/plans/2026-05-27-interview-question-clarity-implementation-plan.md`
+  - badcase 包：`docs/plans/2026-05-27-interview-question-clarity-badcase-pack.md`
+  - 回归测试：
+    - `tests/unit/interview/question-clarity.badcase.test.ts`
+    - `tests/unit/question-copy-guard.test.ts`
+    - `tests/unit/question-realizer.test.ts`
+    - `tests/unit/comprehension-gate.test.ts`
+    - `tests/unit/question-repair-deescalation.test.ts`
+- 当前已知约定：
+  - 当用户措辞更像“换一个 / 换种说法”时，repair 的 `questionSpec.surfaceLevel` 仍可能直接落到 `concrete_anchor`；这是当前协议的一部分
+  - `judgment_clue` 的 repair 会优先降到更具体的 `point_out_key_part / leave_one_sentence`，不会继续追抽象“标准 / 信号 / 值得感”
+- 当前残余风险：
+  - `judgment_clue / insight_evidence / reaction_evidence` 已统一切到结构化主链；后续新增入口时仍需继续经过 dispatcher，不要旁路回 legacy renderer
+  - `question-copy-guard` 目前是测试层 guard，不是运行时模块
+  - `reaction_evidence` 已完成 protocol / realizer 切流，但 service 级回归仍弱于 `judgment_clue`
 - improvement 已完成理论规格、结构字段、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成收束、日志生成、质量门、fallback draft、标题治理和自动化验收样例，但还没有完成端到端产品验收
 - 跨天长期汇总、稳定规律沉淀还没开始做
 

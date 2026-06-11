@@ -110,7 +110,6 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
       repairSignal: null
     };
   }
-
   if (isBoundaryStopRequested(compactMessage)) {
     return {
       normalizedMessage,

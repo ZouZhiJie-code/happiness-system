@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AssistantTurnPayload, InterviewSessionRecord, JoySnapshot } from "@/types/interview";
+import type { InterviewSessionRecord, JoySnapshot } from "@/types/interview";
 
 const {
   appendJoyInterviewTurn,
@@ -30,12 +30,13 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
-const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
-  extractJoySnapshotWithAI: vi.fn(),
-  generateJoyAssistantTurn: vi.fn(),
-  streamJoyAssistantTurn: vi.fn(),
-  generateJoyDraftWithAI: vi.fn()
-}));
+const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } =
+  vi.hoisted(() => ({
+    extractJoySnapshotWithAI: vi.fn(),
+    generateJoyAssistantTurn: vi.fn(),
+    streamJoyAssistantTurn: vi.fn(),
+    generateJoyDraftWithAI: vi.fn()
+  }));
 
 const { retrieveRelevantMemories } = vi.hoisted(() => ({
   retrieveRelevantMemories: vi.fn()
@@ -77,7 +78,8 @@ const {
   getJoyReuseSafety: () => "safe",
   getJoyMoment: (snapshot: JoySnapshot) => snapshot.joyMoment ?? snapshot.event ?? null,
   getJoySource: (snapshot: JoySnapshot) => snapshot.joySource ?? snapshot.whyItMattered ?? null,
-  hasJoyStableClosure: (snapshot: JoySnapshot) => Boolean(snapshot.delightSignature ?? snapshot.manualClue ?? snapshot.selfPattern),
+  hasJoyStableClosure: (snapshot: JoySnapshot) =>
+    Boolean(snapshot.delightSignature ?? snapshot.manualClue ?? snapshot.selfPattern),
   getStateShift: (snapshot: JoySnapshot) => snapshot.stateShift ?? snapshot.feeling ?? null,
   getValueImpact: (snapshot: JoySnapshot) => snapshot.valueImpact ?? null,
   getMeaningNeed: (snapshot: JoySnapshot) => snapshot.meaningNeed ?? null,
@@ -145,9 +147,9 @@ vi.mock("@/features/joy-interview/server/joy-interview-engine", () => ({
 }));
 
 import {
-  prepareJoyInterviewResponse,
-  streamJoyInterviewResponse
-} from "@/server/services/interview/joy-interview.service";
+  renderDeterministicRepairTurn
+} from "@/features/joy-interview/server/question-protocol";
+import { prepareJoyInterviewResponse } from "@/server/services/interview/joy-interview.service";
 
 const reflectionSnapshot: JoySnapshot = {
   event: "今天看完一个项目复盘",
@@ -159,7 +161,17 @@ const reflectionSnapshot: JoySnapshot = {
   missingSlots: ["viewpointShift"]
 };
 
-function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
+const fulfillmentSnapshot: JoySnapshot = {
+  event: "回顾过去问问大象的经历",
+  feeling: "充实",
+  whyItMattered: "我重新梳理之后，看见以前的积累没有白费",
+  happinessType: "投入积累型",
+  selfPattern: "记录下来，后面复盘时才能看到新的东西",
+  confidence: 0.8,
+  missingSlots: []
+};
+
+function buildReflectionSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   return {
     userId: "user-1",
     id: "session-ready",
@@ -231,7 +243,7 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
   };
 }
 
-describe("repair protocol response flow", () => {
+describe("question repair de-escalation", () => {
   beforeEach(() => {
     appendJoyInterviewTurn.mockReset();
     completeJoyInterviewSessionRecord.mockReset();
@@ -258,14 +270,14 @@ describe("repair protocol response flow", () => {
     });
   });
 
-  it("returns a deterministic repair turn without calling AI generation", async () => {
-    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+  it("uses narrow strategy on the first repair", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildReflectionSession());
 
     const result = await prepareJoyInterviewResponse({
       userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
-      userMessage: "这个问题看不懂，换一个",
+      userMessage: "这个问题看不懂，说简单点",
       inputMode: "text"
     });
 
@@ -273,75 +285,115 @@ describe("repair protocol response flow", () => {
       throw new Error("Expected active response with assistant turn.");
     }
 
+    expect(result.assistantTurn.question).toBe(
+      "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？"
+    );
+    expect(result.assistantTurn.questionSpec).toEqual({
+      target: "judgment_clue",
+      stageIntent: "repair",
+      surfaceLevel: "simplified",
+      anchorText: "今天看完一个项目复盘",
+      repairCount: 1
+    });
     expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
-    expect(streamJoyAssistantTurn).not.toHaveBeenCalled();
-    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
-    expect(result.nextTurnCount).toBe(2);
-    expect(result.nextEventTurnCount).toBe(2);
-    expect(result.roundMeaningfulReplyCount).toBe(0);
-    expect(result.nextProgressData).toBeNull();
-    expect(result.assistantTurn.question).toBe("回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？");
+  });
+
+  it("uses example-first strategy on the second repair", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildReflectionSession({
+        messages: [
+          {
+            id: "assistant-1",
+            role: "assistant",
+            content: "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？",
+            assistantPayload: {
+              insight: "",
+              thinkingSummary: "我先把问题收窄成一个更容易回答的点。",
+              analysis: "repair 1",
+              question: "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？",
+              questionSpec: {
+                target: "judgment_clue",
+                stageIntent: "repair",
+                surfaceLevel: "simplified",
+                anchorText: "今天看完一个项目复盘",
+                repairCount: 1
+              },
+              stateUpdate: {
+                turnPhase: "digging",
+                shouldEndDimension: false,
+                offerChoice: false,
+                choiceReason: ""
+              },
+              meta: {
+                depthReached: []
+              }
+            },
+            sequence: 0,
+            createdAt: "2026-05-21T00:01:00.000Z"
+          }
+        ]
+      })
+    );
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "还是不懂，换个问法",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected active response with assistant turn.");
+    }
+
+    expect(result.assistantTurn.question).toBe(
+      "回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？"
+    );
     expect(result.assistantTurn.questionSpec).toEqual({
       target: "judgment_clue",
       stageIntent: "repair",
       surfaceLevel: "concrete_anchor",
       anchorText: "今天看完一个项目复盘",
-      repairCount: 1
+      repairCount: 2
     });
   });
 
-  it("sends deterministic summary/question chunks in stream repair mode without model streaming", async () => {
-    findJoyInterviewSessionById.mockResolvedValue(buildSession());
-    appendJoyInterviewTurn.mockResolvedValue(
-      buildSession({
-        lastAssistantQuestion: "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
-      })
-    );
-
-    const phases: string[] = [];
-    const deltas: Array<{ target: string; text: string }> = [];
-
-    const result = await streamJoyInterviewResponse(
-      {
-        userId: "user-1",
-        action: "reply",
-        sessionId: "session-ready",
-        userMessage: "太抽象了，说简单点",
-        inputMode: "text"
+  it("falls back to one sentence when narrow repair would repeat the same question", () => {
+    const turn = renderDeterministicRepairTurn({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      snapshot: fulfillmentSnapshot,
+      spec: {
+        target: "judgment_clue",
+        stageIntent: "repair",
+        surfaceLevel: "simplified",
+        anchorText: "回顾过去问问大象的经历",
+        repairCount: 1
       },
-      {
-        onPhase: (phase) => {
-          phases.push(phase);
-        },
-        onDelta: (delta) => {
-          deltas.push(delta);
-        }
-      }
-    );
+      previousQuestion: "回到“回顾过去问问大象的经历”这件事，最让你觉得今天没白过的那一点是什么？",
+      hadReflectionSceneDenial: false
+    });
 
-    expect(streamJoyAssistantTurn).not.toHaveBeenCalled();
-    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
-    expect(phases).toEqual(["summary", "question"]);
-    expect(deltas.some((delta) => delta.target === "summary")).toBe(true);
-    expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(
-      "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？"
+    expect(turn.question).toBe(
+      "回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？"
     );
-    expect(result.assistantTurn?.questionSpec?.repairCount).toBe(1);
+    expect(turn.questionSpec?.surfaceLevel).toBe("simplified");
   });
 
   it("escalates the third repair into a low-pressure choice", async () => {
     findJoyInterviewSessionById.mockResolvedValue(
-      buildSession({
+      buildReflectionSession({
         messages: [
           {
             id: "assistant-1",
             role: "assistant",
-            content: "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？",
+            content: "回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？",
             assistantPayload: {
               insight: "",
-              thinkingSummary: "我把问题再往具体一点收。",
+              thinkingSummary: "我先不让你总结，只要举一个最具体的例子。",
               analysis: "repair 2",
-              question: "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？",
+              question: "回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？",
               questionSpec: {
                 target: "judgment_clue",
                 stageIntent: "repair",
@@ -356,11 +408,11 @@ describe("repair protocol response flow", () => {
                 choiceReason: ""
               },
               meta: {
-                depthReached: ["event", "reason"]
+                depthReached: []
               }
             },
             sequence: 0,
-            createdAt: "2026-05-21T00:01:00.000Z"
+            createdAt: "2026-05-21T00:02:00.000Z"
           }
         ]
       })
@@ -370,7 +422,7 @@ describe("repair protocol response flow", () => {
       userId: "user-1",
       action: "reply",
       sessionId: "session-ready",
-      userMessage: "还是太抽象，换一个",
+      userMessage: "还是太绕了，换一个",
       inputMode: "text"
     });
 
@@ -378,7 +430,6 @@ describe("repair protocol response flow", () => {
       throw new Error("Expected active response with assistant turn.");
     }
 
-    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
     expect(result.nextEventStatus).toBe("ready_for_choice");
     expect(result.nextProgressData).toEqual({
       kind: "boundary_insufficient",

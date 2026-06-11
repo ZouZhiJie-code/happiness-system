@@ -12,6 +12,7 @@ import {
   applyQuestionSurfaceProtocol,
   createQuestionSpec,
   inferQuestionSpecFromQuestion,
+  resolveQuestionFromSpec,
   renderDeterministicRepairTurn
 } from "@/features/joy-interview/server/question-protocol";
 import {
@@ -456,6 +457,10 @@ function buildFulfillmentQuestionFallback(input: {
   recentUserMessage: string | null;
   validationCode: FulfillmentQuestionValidationCode;
 }) {
+  if (input.target === "value_signal") {
+    return null;
+  }
+
   if (input.target === "progress_evidence") {
     const experience = input.snapshot.event?.trim();
 
@@ -470,35 +475,76 @@ function buildFulfillmentQuestionFallback(input: {
     return "这件事里，哪一步真的被你推进了，才让你觉得今天没有白过？";
   }
 
-  if (input.validationCode === "unnatural_phrasing") {
-    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  return null;
+}
+
+function resolveQuestionStageIntent(input: {
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  existingSpec?: AssistantQuestionSpec | null;
+}) {
+  if (input.existingSpec?.stageIntent) {
+    return input.existingSpec.stageIntent;
   }
 
-  const normalizedMessage = (input.userMessage ?? input.recentUserMessage ?? "").trim();
+  return input.assistantAction === "continue_current_event" ? "resume" : "advance";
+}
 
-  if (normalizedMessage && /(朝自己想要的方向前进|一点点地在达成|没有停滞不前)/u.test(normalizedMessage)) {
-    return "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+function resolveFallbackQuestionFromSpec(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  existingSpec?: AssistantQuestionSpec | null;
+  target?: AssistantQuestionSpec["target"];
+  surfaceLevel?: AssistantQuestionSpec["surfaceLevel"];
+  candidateQuestion?: string | null;
+  preserveStructuredCandidateQuestion?: boolean;
+}) {
+  const shouldPreserveReflectionConcreteInsight =
+    input.dimension === "reflection" &&
+    input.stage === "probe_pattern" &&
+    input.existingSpec?.stageIntent === "advance" &&
+    input.existingSpec.target === "insight_evidence" &&
+    input.existingSpec.surfaceLevel === "concrete_anchor" &&
+    !input.snapshot.selfPattern;
+  const shouldInferTargetFromCurrentStage =
+    input.target == null &&
+    input.stage === "probe_pattern" &&
+    input.existingSpec?.stageIntent !== "repair" &&
+    !shouldPreserveReflectionConcreteInsight;
+  const spec = createQuestionSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    stageIntent: resolveQuestionStageIntent({
+      assistantAction: input.assistantAction,
+      existingSpec: input.existingSpec
+    }),
+    previousSpec: shouldInferTargetFromCurrentStage ? null : (input.existingSpec ?? null),
+    target: input.target,
+    surfaceLevel:
+      input.surfaceLevel ??
+      (shouldPreserveReflectionConcreteInsight ? input.existingSpec?.surfaceLevel : undefined)
+  });
+
+  if (input.candidateQuestion != null) {
+    return applyQuestionSurfaceProtocol({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      spec,
+      candidateQuestion: input.candidateQuestion,
+      preserveStructuredCandidateQuestion: input.preserveStructuredCandidateQuestion
+    });
   }
 
-  if (input.validationCode === "semantic_duplicate") {
-    const experience = input.snapshot.event?.trim();
-
-    if (experience && /(简历)/u.test(experience)) {
-      return "如果把这段简历优化再收紧一点，哪一种投入最让你觉得今天没有白费？";
-    }
-  }
-
-  if (normalizedMessage && /(花得值|值得|算数)/u.test(normalizedMessage)) {
-    return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
-  }
-
-  const progressEvidence = input.snapshot.whyItMattered?.trim();
-
-  if (progressEvidence) {
-    return `回头看“${progressEvidence}”这层进展，什么样的投入会让你觉得自己的力气花得值？`;
-  }
-
-  return "回头看这件事，什么样的投入会让你觉得自己的力气花得值？";
+  return resolveQuestionFromSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    spec,
+    preserveStructuredCandidateQuestion: input.preserveStructuredCandidateQuestion
+  });
 }
 
 function validateFulfillmentQuestion(input: {
@@ -617,12 +663,22 @@ function applyFulfillmentQuestionGuard(
     recentUserMessage,
     validationCode
   });
+  const surfaced = resolveFallbackQuestionFromSpec({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    existingSpec: assistantTurn.questionSpec ?? input.questionSpec,
+    target: target === "value_signal" ? "judgment_clue" : "insight_evidence",
+    candidateQuestion: fallbackQuestion
+  });
 
   return {
     ...assistantTurn,
     insight: "",
     thinkingSummary: assistantTurn.thinkingSummary,
-    question: fallbackQuestion
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec
   };
 }
 
@@ -648,6 +704,38 @@ function findLatestReflectionSceneDenial(messages: InterviewMessage[]) {
   }
 
   return null;
+}
+
+function shouldPreserveReflectionConcreteInsightAfterRepair(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  messages: InterviewMessage[];
+  userMessage: string | null;
+  isMeaningfulReply: boolean;
+}) {
+  if (input.dimension !== "reflection" || input.stage !== "probe_pattern" || !input.isMeaningfulReply) {
+    return false;
+  }
+
+  if (input.snapshot.selfPattern) {
+    return false;
+  }
+
+  const latestAssistantSpec = getLatestAssistantQuestionSpec(input.messages);
+  const latestAssistantQuestion = getLatestAssistantQuestion(input.messages);
+
+  if (
+    latestAssistantSpec?.stageIntent !== "repair" ||
+    latestAssistantSpec.target !== "judgment_clue" ||
+    latestAssistantSpec.surfaceLevel !== "concrete_anchor" ||
+    !latestAssistantQuestion?.includes("不用先总结") ||
+    !latestAssistantQuestion.includes("最具体的例子")
+  ) {
+    return false;
+  }
+
+  return Boolean(input.userMessage?.trim());
 }
 
 function questionTouchesGratitudeTarget(question: string, target: GratitudeQuestionSubTarget) {
@@ -1615,12 +1703,155 @@ function buildFollowUpThinkingSummary(input: {
     action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction
   });
 
-  return `${semanticInterpretation.thinkingSummaryLead}${semanticInterpretation.followUpFocus || buildThinkingSummaryFocus(input)}`
+  return buildNaturalThinkingSummary({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    semanticInterpretation
+  })
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180);
 }
 
+function buildNaturalThinkingSummary(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  semanticInterpretation: ReturnType<typeof buildDimensionSemanticInterpretation>;
+}) {
+  const lead = buildNaturalThinkingSummaryLead(input);
+  const focus = buildNaturalThinkingSummaryFocus(input);
+
+  return `${lead}${focus}`;
+}
+
+function buildNaturalThinkingSummaryLead(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  semanticInterpretation: ReturnType<typeof buildDimensionSemanticInterpretation>;
+}) {
+  switch (input.dimension) {
+    case "joy": {
+      const joySource =
+        input.semanticInterpretation.dimensionMeta?.joySource ??
+        input.semanticInterpretation.dimensionMeta?.manualClue ??
+        input.semanticInterpretation.dimensionMeta?.delightSignature;
+
+      if (joySource) {
+        const normalizedJoySource = joySource.replace(/的感觉$/u, "");
+        return `你已经碰到这段开心里最打动你的那层了，这份${normalizedJoySource}也慢慢清楚了`;
+      }
+
+      return "你已经碰到这段开心里最打动你的那层了";
+    }
+    case "fulfillment": {
+      const progressEvidence = input.semanticInterpretation.dimensionMeta?.progressEvidence;
+
+      if (progressEvidence) {
+        return `这件事对你来说是算数的，因为${progressEvidence}`;
+      }
+
+      return "这件事对你来说已经不只是忙过了";
+    }
+    case "reflection": {
+      const insight = input.semanticInterpretation.dimensionMeta?.insight;
+
+      if (insight) {
+        return `你已经慢慢看清，${insight}`;
+      }
+
+      return "你已经慢慢碰到这次思考里新的那层了";
+    }
+    case "improvement": {
+      const controllableFactor = input.semanticInterpretation.dimensionMeta?.controllableFactor;
+      const nextAttempt = input.semanticInterpretation.dimensionMeta?.nextAttempt;
+
+      if (controllableFactor) {
+        return `你已经碰到这次最能动手调整的一小处了，${controllableFactor}`;
+      }
+
+      if (nextAttempt) {
+        return `你已经开始摸到下次能怎么试了，${nextAttempt}`;
+      }
+
+      return "你已经碰到这次最值得继续拆开的那个卡点了";
+    }
+    case "gratitude": {
+      const seenNeed = input.semanticInterpretation.dimensionMeta?.seenNeed;
+      const kindAction = input.semanticInterpretation.dimensionMeta?.kindAction;
+
+      if (seenNeed) {
+        return `你会记得这一下，是因为对方接住了“${seenNeed}”这层需要`;
+      }
+
+      if (kindAction) {
+        return `你会记得这一下，是因为对方真的做了“${kindAction}”这件事`;
+      }
+
+      return "你会记得这一下，是因为有人真的接住了你当时那层需要";
+    }
+    default:
+      return input.semanticInterpretation.thinkingSummaryLead;
+  }
+}
+
+function buildNaturalThinkingSummaryFocus(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+}) {
+  switch (input.stage) {
+    case "collect_event":
+      return "，先把那个具体片段说清一点。";
+    case "probe_reason":
+      switch (input.dimension) {
+        case "joy":
+          return "，再把到底是什么让你有感觉说清一点。";
+        case "fulfillment":
+          return "，再把这件事到底算数在哪儿说清一点。";
+        case "reflection":
+          return "，再把这层新发现是怎么冒出来的说清一点。";
+        case "improvement":
+          return "，再把那个具体卡点或关键条件看清一点。";
+        case "gratitude":
+          return "，再把对方到底接住了你哪一层说清一点。";
+      }
+      break;
+    case "probe_pattern":
+      switch (input.dimension) {
+        case "joy":
+          return "，再看看它为什么会一直留在你心里。";
+        case "fulfillment":
+          return "，再看看这件事为什么会变成你想记住的一点。";
+        case "reflection":
+          return "，再看看这层发现之后，你的判断哪里不一样了。";
+        case "improvement":
+          return "，再看看下次最想先动的一小步是什么。";
+        case "gratitude":
+          return "，再看看这份感谢里你最想留下的是哪一点。";
+      }
+      break;
+    case "wrap_up":
+      return "，最后把今天最想留下的那一层收一下。";
+    case "finalize":
+      return "";
+  }
+
+  switch (input.dimension) {
+    case "joy":
+      return "，我们就顺着这份感觉继续往下聊。";
+    case "fulfillment":
+      return "，我们就顺着这件事为什么对你算数继续往下聊。";
+    case "reflection":
+      return "，我们就顺着这层新发现继续往下聊。";
+    case "improvement":
+      return "，我们就顺着这个卡点继续拆开看看。";
+    case "gratitude":
+      return "，我们就顺着这一下为什么让你记住继续往下聊。";
+    default:
+      return "";
+  }
+}
 function extractFirstPersonIntentPhrases(value: string) {
   return Array.from(value.matchAll(/我想[^，。！？!?；;：:\n”"’'」》】]{1,40}/gu), (match) => match[0]);
 }
@@ -1653,6 +1884,12 @@ function hasInvalidThinkingSummaryTone(summary: string, userMessage: string | nu
     /[?？]/u.test(normalized) ||
     hasUnanchoredFirstPersonIntent ||
     /(用户|用户已说|你提到|你说|你讲到|你提及|我理解到|我听到|我会(?:继续|先|再|追问|确认)|我准备(?:继续|确认|追问)|我在想|想知道|下一步|追问|提问|问你|确认一下)/u.test(normalized)
+  );
+}
+
+function hasTheoryExplanationThinkingSummaryTone(summary: string) {
+  return /(这份.+(?:(?:重点|核心).*(?:不是.+而是|回应了.+这层需要)|已经不是泛泛说谢谢)|这次.+(?:重点|核心).*(?:不是.+而是|判断变清楚)|这件事真正有分量的地方|这次改进的重点，不是|处理重点是|真正重要的，不是)/u.test(
+    summary
   );
 }
 
@@ -1739,6 +1976,7 @@ function normalizeThinkingSummary(input: {
   });
 
   if (
+    !hasTheoryExplanationThinkingSummaryTone(summary) &&
     !hasInvalidThinkingSummaryTone(summary, input.userMessage ?? null) &&
     !hasParaphraseOnlyThinkingSummary({
       summary,
@@ -1770,23 +2008,43 @@ function buildReflectionContinuationFallbackQuestion(snapshot: JoySnapshot) {
 
 function buildContinuationFallbackQuestion(
   input: PreparedInterviewTurnContext,
-  repeatedQuestion: string
+  repeatedQuestion: string,
+  existingSpec: AssistantQuestionSpec | null
 ) {
   if (input.session.dimension === "reflection") {
-    const reflectionFallback = buildReflectionContinuationFallbackQuestion(input.nextSnapshot);
+    const reflectionFallback = resolveFallbackQuestionFromSpec({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      assistantAction: input.assistantAction,
+      existingSpec,
+      target: "insight_evidence",
+      surfaceLevel: "concrete_anchor",
+      candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+      preserveStructuredCandidateQuestion: true
+    });
 
-    if (!areQuestionsEquivalent(reflectionFallback, repeatedQuestion)) {
+    if (!areQuestionsEquivalent(reflectionFallback.question, repeatedQuestion)) {
       return reflectionFallback;
     }
   }
 
-  const stageFallback = buildAssistantQuestion(input.session.dimension, input.nextStage, input.nextSnapshot)?.trim() ?? "";
+  const stageFallback = resolveFallbackQuestionFromSpec({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    existingSpec
+  });
 
-  if (stageFallback && !areQuestionsEquivalent(stageFallback, repeatedQuestion)) {
+  if (stageFallback.question && !areQuestionsEquivalent(stageFallback.question, repeatedQuestion)) {
     return stageFallback;
   }
 
-  return repeatedQuestion;
+  return {
+    question: repeatedQuestion,
+    questionSpec: existingSpec
+  };
 }
 
 function applyContinueQuestionGuard(
@@ -1811,7 +2069,17 @@ function applyContinueQuestionGuard(
         ...assistantTurn,
         insight: "",
         thinkingSummary: "",
-        question: buildReflectionContinuationFallbackQuestion(input.nextSnapshot)
+        ...resolveFallbackQuestionFromSpec({
+          dimension: input.session.dimension,
+          stage: input.nextStage,
+          snapshot: input.nextSnapshot,
+          assistantAction: input.assistantAction,
+          existingSpec: assistantTurn.questionSpec ?? input.questionSpec,
+          target: "insight_evidence",
+          surfaceLevel: "concrete_anchor",
+          candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+          preserveStructuredCandidateQuestion: true
+        })
       };
     }
   }
@@ -1836,6 +2104,7 @@ function applyContinueQuestionGuard(
     }
   }
 
+  const existingSpec = assistantTurn.questionSpec ?? input.questionSpec;
   const recentAssistantQuestions = input.session.messages
     .map((message) => getAssistantQuestionText(message))
     .filter((value): value is string => Boolean(value))
@@ -1852,7 +2121,7 @@ function applyContinueQuestionGuard(
     ...assistantTurn,
     insight: "",
     thinkingSummary: "",
-    question: buildContinuationFallbackQuestion(input, question)
+    ...buildContinuationFallbackQuestion(input, question, existingSpec)
   };
 }
 
@@ -2127,15 +2396,26 @@ function applyFallbackQuestion(input: {
   dimension: InterviewDimension;
   stage: JoyInterviewStage;
   snapshot: JoySnapshot;
+  assistantAction: PreparedInterviewTurnContext["assistantAction"];
+  questionSpec: AssistantQuestionSpec | null;
   assistantTurn: AssistantTurnPayload;
 }) {
   if (input.assistantTurn.question.trim()) {
     return input.assistantTurn;
   }
 
+  const surfaced = resolveFallbackQuestionFromSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    assistantAction: input.assistantAction,
+    existingSpec: input.assistantTurn.questionSpec ?? input.questionSpec
+  });
+
   return {
     ...input.assistantTurn,
-    question: buildAssistantQuestion(input.dimension, input.stage, input.snapshot)
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec
   };
 }
 
@@ -2147,6 +2427,8 @@ function applyAssistantTurnFallbacks(
     dimension: input.session.dimension,
     stage: input.nextStage,
     snapshot: input.nextSnapshot,
+    assistantAction: input.assistantAction,
+    questionSpec: input.questionSpec,
     assistantTurn
   });
 
@@ -2628,18 +2910,21 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   }
 
   if (assessment.intent === "question_repair") {
+    const previousSpec = getLatestAssistantQuestionSpec(session.messages);
+    const nextRepairCount = (previousSpec?.repairCount ?? 0) + 1;
+    const requestedSurfaceLevel =
+      nextRepairCount >= 2
+        ? "concrete_anchor"
+        : assessment.repairSignal === "switch_angle"
+          ? "concrete_anchor"
+          : "simplified";
     const repairSpec = createQuestionSpec({
       dimension: session.dimension,
       stage: activeEvent.stage,
       snapshot: activeEvent.snapshot,
       stageIntent: "repair",
-      previousSpec: getLatestAssistantQuestionSpec(session.messages),
-      surfaceLevel:
-        assessment.repairSignal === "simplify"
-          ? "simplified"
-          : assessment.repairSignal === "switch_angle"
-            ? "concrete_anchor"
-            : undefined
+      previousSpec,
+      surfaceLevel: requestedSurfaceLevel
     });
     const shouldEscalateRepair = repairSpec.repairCount >= 3;
 
@@ -2774,12 +3059,28 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
     assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply",
     questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
       ? null
-      : createQuestionSpec({
-          dimension: session.dimension,
-          stage: nextStage,
-          snapshot: nextSnapshot,
-          stageIntent: "advance"
-        })
+      : shouldPreserveReflectionConcreteInsightAfterRepair({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            messages: session.messages,
+            userMessage: input.userMessage,
+            isMeaningfulReply
+          })
+        ? createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance",
+            target: "insight_evidence",
+            surfaceLevel: "concrete_anchor"
+          })
+        : createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance"
+          })
   } satisfies PreparedInterviewTurnContext;
 }
 

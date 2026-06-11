@@ -10,7 +10,8 @@ import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
 import {
   applyQuestionSurfaceProtocol,
   createQuestionSpec,
-  inferQuestionSpecFromQuestion
+  inferQuestionSpecFromQuestion,
+  resolveQuestionFromSpec
 } from "@/features/joy-interview/server/question-protocol";
 import {
   buildAssistantQuestion,
@@ -735,20 +736,28 @@ function createFallbackAssistantTurn(input: {
   action: "reply" | "continue_current_event";
   questionSpec?: AssistantQuestionSpec | null;
 }): AssistantTurnPayload {
-  const question = buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
+  const fallbackSpec =
+    input.questionSpec ??
+    createQuestionSpec({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      stageIntent: input.action === "continue_current_event" ? "resume" : "advance",
+      previousSpec: null
+    });
+  const surfaced = resolveQuestionFromSpec({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    spec: fallbackSpec
+  });
 
   return {
     insight: "",
     thinkingSummary: "",
     analysis: "用户已说：已有片段但仍需继续澄清；下一步问：当前阶段对应的未覆盖层次",
-    question,
-    questionSpec: createQuestionSpec({
-      dimension: input.dimension,
-      stage: input.stage,
-      snapshot: input.snapshot,
-      stageIntent: input.action === "continue_current_event" ? "resume" : "advance",
-      previousSpec: input.questionSpec ?? null
-    }),
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec,
     stateUpdate: {
       turnPhase: input.stage === "collect_event" ? "opening" : "digging",
       shouldEndDimension: false,
@@ -1134,7 +1143,8 @@ export async function generateJoyAssistantTurn(input: AssistantTurnGenerationInp
     stage: input.stage,
     snapshot: input.snapshot,
     nextDepthReached: input.nextDepthReached,
-    action: input.action
+    action: input.action,
+    questionSpec: input.questionSpec
   });
 
   const segments = await requestAssistantReplySegments(input);
@@ -1158,7 +1168,8 @@ export async function streamJoyAssistantTurn(
     stage: input.stage,
     snapshot: input.snapshot,
     nextDepthReached: input.nextDepthReached,
-    action: input.action
+    action: input.action,
+    questionSpec: input.questionSpec
   });
 
   const segments = await requestAssistantReplySegments(input, callbacks.onDelta);

@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-05-21`
+最后更新：`2026-05-27`
 
 本文记录当前仓库真实存在的访谈与日志接口，供前端联调、测试脚本和后续接手者使用。
 
@@ -171,6 +171,50 @@ data: {
 
 前端应优先读取 `issue`；`code/message` 只作为兼容字段。
 
+### 3.2.1 当前提问生成链路
+
+自 `2026-05-27` 起，用户可见追问已经拆成四层：
+
+- `AskIntent`：把内部 `questionSpec.target` 翻成用户视角的提问意图，定义在 `src/features/joy-interview/server/ask-intent.ts`
+- `Question Realizer`：把提问意图编排成受控自然中文问法，定义在 `src/features/joy-interview/server/question-realizer.ts`
+- `Comprehension Gate`：在问题发出前校验“可理解 / 可答 / 锚点是否足够”，定义在 `src/features/joy-interview/server/comprehension-gate.ts`
+- `question-protocol`：负责把上述三层接入现有 `questionSpec`、surface downgrade 和最后兜底
+
+当前已切到结构化问法链路的 target：
+
+- `judgment_clue`
+- `insight_evidence`
+- `reaction_evidence`
+
+这三个 target 会优先忽略外部自由生成的 `candidateQuestion`，改走 `AskIntent + Question Realizer + Comprehension Gate`。旧模板仍保留给其他 target，以及 gate 降级后的最后兜底。
+
+当前已切到新链路的高风险入口：
+
+- AI 不可用时的 fallback assistant turn
+- 空 follow-up fallback
+- repeated-question fallback
+- `fulfillment` value-signal guard fallback
+
+这些入口都会先生成 `questionSpec`，再统一走 `resolveQuestionFromSpec()`，避免把旧的抽象问法直接发给用户。
+
+`Comprehension Gate` 当前会拦截这些高风险模式：
+
+- `forbidden_theory_term`
+- `cross_category_compare`
+- `multi_hop_reasoning`
+- `reflection_missing_concrete_anchor`
+- `abstract_lead_phrasing`
+- `multi_cognitive_actions`
+- `weak_anchor`
+- `not_example_answerable`
+
+gate 失败后的降级建议当前只有四类：
+
+- `rewrite_with_user_words`
+- `narrow_to_single_action`
+- `add_concrete_anchor`
+- `rewrite_as_example_first`
+
 `fulfillment` 的主链路语义：
 - `event` 对应内部 `experience`
 - `whyItMattered` 对应内部 `progressEvidence`
@@ -187,7 +231,8 @@ data: {
 - `selfPattern` 对应内部 `viewpointShift`，语义为“视角变化或判断线索”
 - 如果用户已经明确回答“没有某段具体经历 / 对话”，但随后通过 `continue_current_event` 继续深聊，系统不能再重复追同一字段；后续问题必须降压到更容易回答的具体锚点，例如某个顾虑、画面、比较时刻或选择瞬间
 - 如果用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等 repair 表达，服务端会识别 `question_repair` 并直接确定性重问当前 target；这轮不会增加 `turnCount`，也不会推进 snapshot、round 或完成进度
-- `reflection` repair 当前按 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 五类 target 渲染模板；如果已命中过“没有具体经历 / 对话”的 guard，repair 不会再回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点
+- repair 当前是降认知负担链路，不再只是换壳重问。第 `1` 次 repair 走 `narrow`，把问题收窄成一个更容易回答的点；第 `2` 次 repair 走 `example_first`，明确改成“先给一个最具体的例子”；若 `narrow` 与上一题语义近重复，会退到 `one_sentence_fallback`
+- `reflection` repair 仍保留 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 的 target 感知；如果已命中过“没有具体经历 / 对话”的 guard，repair 不会再回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点
 - 同一问题连续第 `3` 次 repair 时，系统不再继续换问法，而会返回 `pendingDecision.kind = "boundary_insufficient"`，actions 仍为 `continue_current_event / next_event / pause_session`
 - 如果用户拒绝继续深挖，且 `trigger + insight` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`
 - 如果用户直接输入“总结日志 / 整理成日志 / 生成一下日志”等自然语言整理请求，也按同一条 partial 收束路径处理，不会先继续抽取或追问
@@ -227,6 +272,12 @@ data: {
 - `selfPattern = relationshipSignal`
 
 如果用户拒绝继续深挖，且 `gratitudeMoment + kindAction + seenNeed|gratitudeReason` 已成立，会返回 `pendingDecision.kind = "event_complete"` 与 `completionMode = "user_override_partial"`。如果只有感谢对象但没有具体行为或原因，会返回 `boundary_insufficient`。
+
+### 3.2.2 当前提问链路的已知残余风险
+
+- `judgment_clue / insight_evidence / reaction_evidence` 当前已经统一优先走 `AskIntent + Question Realizer + Comprehension Gate`；对应旧模板分支已不再是当前结构化 target 的活动风险面。后续新增 target 或新增入口时，仍应继续通过 dispatcher 接入，而不要旁路到 legacy renderer。
+- `question-copy-guard` 目前只存在于测试层，不是运行时独立文案 guard。它能防回归，不能替代源码里的 copy policy。
+- `reaction_evidence` 当前已有 protocol / realizer 层切流，但 service 级回归样本仍少于 `judgment_clue` 与部分 `insight_evidence` 路径；后续补样时优先覆盖真实服务入口，而不是只补纯函数测试。
 
 多事件 `stitched_moments` 成稿补充约束：
 - 五个维度都共享 supporting scene 校验，但只校验本次 AI prompt 实际看到的 `promptEvents`，不会因为窗口外 supporting moment 把 `refresh_minor` 误判为缺少副事件

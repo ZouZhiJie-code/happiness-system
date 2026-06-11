@@ -1,4 +1,10 @@
+import { planAskIntentEnvelope, type AskIntentEnvelope } from "@/features/joy-interview/server/ask-intent";
+import {
+  evaluateQuestionComprehension,
+  type ComprehensionGateDowngradeRecommendation
+} from "@/features/joy-interview/server/comprehension-gate";
 import { buildAssistantQuestion } from "@/features/joy-interview/server/joy-interview-engine";
+import { realizeQuestion } from "@/features/joy-interview/server/question-realizer";
 import type {
   AssistantQuestionSpec,
   AssistantQuestionTarget,
@@ -12,21 +18,43 @@ import type {
   JoySnapshot
 } from "@/types/interview";
 
-const FORBIDDEN_THEORY_TERMS = /(判断依据|判断线索|视角变化|稳定公式|方法论)/u;
-const CROSS_CATEGORY_COMPARE_PATTERN =
-  /(?:(?:冲动|状态).{0,12}(?:同一种|一样|同一类)|(?:感受|动作结果).{0,12}(?:同一种|一样|同一类)|(?:冲动.{0,8}状态|状态.{0,8}冲动|感受.{0,8}动作结果|动作结果.{0,8}感受))/u;
-const MULTI_HOP_PATTERN =
-  /(?:(?:怎么理解|为什么).{0,24}(?:所以|因此|又|还)|(?:是不是|算不算).{0,18}(?:同一种|一样|同一类))/u;
 const CONCRETE_ANCHOR_CUES = /(具体|反应|念头|画面|细节|瞬间|哪一下|哪一幕|信号)/u;
 
 function normalizeText(value: string | null | undefined) {
   return value?.replace(/\s+/g, " ").trim() ?? "";
 }
 
+function findPhraseSafeTruncationBoundary(value: string, maxLength: number) {
+  const boundaryChars = /[，。！？!?,；;：:、]/u;
+  const minBoundaryIndex = Math.floor(maxLength * 0.6);
+
+  for (let index = Math.min(maxLength, value.length) - 1; index >= minBoundaryIndex; index -= 1) {
+    if (boundaryChars.test(value[index] ?? "")) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
 function trimField(value: string | null | undefined, maxLength = 28) {
   const normalized = normalizeText(value).replace(/[。！？!?,，；;:\s]+$/gu, "");
 
-  return normalized ? normalized.slice(0, maxLength) : null;
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const boundaryIndex = findPhraseSafeTruncationBoundary(normalized, maxLength);
+
+  if (boundaryIndex >= 0) {
+    return normalized.slice(0, boundaryIndex).replace(/[，。！？!?,；;：:\s]+$/gu, "") || normalized.slice(0, maxLength);
+  }
+
+  return normalized.slice(0, maxLength);
 }
 
 function normalizeQuestionText(value: string | null | undefined) {
@@ -249,12 +277,11 @@ export function createQuestionSpec(input: {
   const repairCount =
     input.stageIntent === "repair" ? (input.previousSpec?.repairCount ?? 0) + 1 : 0;
   const surfaceLevel =
-    input.surfaceLevel ??
-    (input.stageIntent === "repair"
+    input.stageIntent === "repair"
       ? repairCount >= 2
         ? "concrete_anchor"
-        : "simplified"
-      : "default");
+        : input.surfaceLevel ?? "simplified"
+      : input.surfaceLevel ?? "default";
 
   return {
     target:
@@ -279,6 +306,40 @@ export function createQuestionSpec(input: {
     anchorText: buildQuestionAnchor(input.snapshot, input.dimension),
     repairCount
   };
+}
+
+export function createAskIntentEnvelope(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+}): AskIntentEnvelope {
+  return planAskIntentEnvelope(input);
+}
+
+const STRUCTURED_QUESTION_REALIZER_TARGETS = new Set<AssistantQuestionTarget>([
+  "judgment_clue",
+  "insight_evidence",
+  "reaction_evidence"
+]);
+
+function shouldUseStructuredQuestionRealizer(target: AssistantQuestionTarget) {
+  return STRUCTURED_QUESTION_REALIZER_TARGETS.has(target);
+}
+
+function realizeStructuredQuestion(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+}) {
+  const askIntentEnvelope = createAskIntentEnvelope({
+    dimension: input.dimension,
+    snapshot: input.snapshot,
+    spec: input.spec
+  });
+
+  return realizeQuestion({
+    envelope: askIntentEnvelope
+  });
 }
 
 function isDeniedTarget(state: InferenceEvidenceState | null | undefined, target: GratitudeQuestionSubTarget) {
@@ -346,32 +407,6 @@ function renderReflectionQuestion(input: {
       return anchor
         ? `回到“${anchor}”这件事，在你开始转过来之前，你原来更容易怎么想？`
         : "在你开始转过来之前，你原来更容易怎么想这件事？";
-    case "reaction_evidence":
-      if (isConcrete) {
-        return anchor
-          ? `回到“${anchor}”这件事，哪个具体念头、画面或身体反应，最早说明你开始不一样了？`
-          : "哪个具体念头、画面或身体反应，最早说明你开始不一样了？";
-      }
-
-      return anchor
-        ? `在“${anchor}”这件事里，哪个反应、念头或画面，最说明你已经开始不一样了？`
-        : "哪个反应、念头或画面，最说明你已经开始不一样了？";
-    case "insight_evidence":
-      if (isConcrete) {
-        return anchor
-          ? `如果不是某段具体对话，那在“${anchor}”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？`
-          : "如果不是某段具体对话，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？";
-      }
-
-      return anchor
-        ? `说到“${anchor}”这件事，你现在看到的不一样，最早是被哪个细节提醒出来的？`
-        : "你现在看到的不一样，最早是被哪个细节提醒出来的？";
-    case "judgment_clue":
-      if (isConcrete && anchor && input.spec.repairCount >= 2) {
-        return `回到“${anchor}”这件事，如果下次再遇到类似情况，你会先看哪个具体信号，提醒自己别只看“看起来合适”？`;
-      }
-
-      return "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？";
     default:
       return anchor
         ? `回到“${anchor}”这件事，最先让你停下来多想一下的那个瞬间是什么？`
@@ -385,10 +420,11 @@ function renderGenericQuestion(input: {
   snapshot: JoySnapshot;
   spec: AssistantQuestionSpec;
 }) {
+  const target = input.spec.target as AssistantQuestionTarget;
   const anchor = input.spec.anchorText;
   const isConcrete = input.spec.surfaceLevel === "concrete_anchor";
 
-  if (input.spec.target === "event_anchor") {
+  if (target === "event_anchor") {
     return anchor
       ? isConcrete
         ? `回到“${anchor}”这件事，当时最具体的画面或细节是哪一下？`
@@ -396,82 +432,6 @@ function renderGenericQuestion(input: {
       : isConcrete
         ? "当时最具体的画面或细节是哪一下？"
         : "当时最具体的一幕是什么？";
-  }
-
-  if (input.spec.target === "reaction_evidence") {
-    return anchor
-      ? isConcrete
-        ? `回到“${anchor}”这件事，当时最直接冒出来的反应、念头或感觉是什么？`
-        : `在“${anchor}”这件事里，当时最直接的反应是什么？`
-      : isConcrete
-        ? "当时最直接冒出来的反应、念头或感觉是什么？"
-        : "当时最直接的反应是什么？";
-  }
-
-  if (input.spec.target === "insight_evidence") {
-    if (input.dimension === "joy") {
-      return anchor
-        ? isConcrete
-          ? `回到“${anchor}”这件事，最先把你状态带起来的具体点是哪一下？`
-          : `回到“${anchor}”这件事，到底是哪一点先把你的状态带起来了？`
-        : isConcrete
-          ? "最先把你状态带起来的具体点是哪一下？"
-          : "到底是哪一点先把你的状态带起来了？";
-    }
-
-    if (input.dimension === "fulfillment") {
-      return anchor
-        ? isConcrete
-          ? `回到“${anchor}”这件事，哪一个具体进展最能说明今天不算白过？`
-          : `说到“${anchor}”这件事，哪一点最能说明它让今天不算白过？`
-        : isConcrete
-          ? "哪一个具体进展最能说明今天不算白过？"
-          : "哪一点最能说明它让今天不算白过？";
-    }
-
-    if (input.dimension === "improvement") {
-      if (normalizeText(input.snapshot.improvementTrack) === "repeat_good") {
-        return anchor
-          ? isConcrete
-            ? `回到“${anchor}”这件事，最让这次状态稳住的那个具体条件是什么？`
-            : `回到“${anchor}”这件事，最让这次状态稳住的那个条件是什么？`
-          : isConcrete
-            ? "最让这次状态稳住的那个具体条件是什么？"
-            : "最让这次状态稳住的那个条件是什么？";
-      }
-
-      return anchor
-        ? isConcrete
-          ? `回到“${anchor}”这件事，最卡住你的那个具体点是什么？`
-          : `回到“${anchor}”这件事，最卡住你的那个点是什么？`
-        : isConcrete
-          ? "最卡住你的那个具体点是什么？"
-          : "最卡住你的那个点是什么？";
-    }
-
-    if (input.dimension === "gratitude") {
-      return anchor
-        ? `回到“${anchor}”这件事，对方具体做了哪一下，最让你觉得被照顾到了？`
-        : "对方具体做了哪一下，最让你觉得被照顾到了？";
-    }
-  }
-
-  if (input.spec.target === "judgment_clue") {
-    if (input.dimension === "joy") {
-      return "如果把这份开心再往里看一点，你最想留下的那条更具体的线索是什么？";
-    }
-
-    if (input.dimension === "fulfillment") {
-      return "如果只留一句最算数的标准，你会怎么说？";
-    }
-
-    if (input.dimension === "improvement") {
-      return "下次再遇到类似情况，你最想先试的那一步是什么？";
-    }
-
-    if (input.dimension === "gratitude") {
-      return "如果把这份感谢再往里看一点，你最想留下的关系提醒是什么？";
-    }
   }
 
   return buildAssistantQuestion(input.dimension, input.stage, input.snapshot);
@@ -483,6 +443,10 @@ function renderQuestion(input: {
   snapshot: JoySnapshot;
   spec: AssistantQuestionSpec;
 }) {
+  if (shouldUseStructuredQuestionRealizer(input.spec.target)) {
+    return realizeStructuredQuestion(input);
+  }
+
   if (input.dimension === "reflection") {
     return renderReflectionQuestion({
       spec: input.spec,
@@ -496,7 +460,17 @@ function renderQuestion(input: {
 function buildRepairThinkingSummary(input: {
   dimension: InterviewDimension;
   spec: AssistantQuestionSpec;
+  strategy?: RepairDeescalationStrategy;
 }) {
+  switch (input.strategy) {
+    case "narrow":
+      return "我先把问题收窄，只问一个现在最容易回答的点。";
+    case "example_first":
+      return "我先不让你总结，只要举一个最具体的例子。";
+    case "one_sentence_fallback":
+      return "我先不展开，只留一句你现在最想记住的话就够了。";
+  }
+
   if (input.dimension === "reflection") {
     switch (input.spec.target) {
       case "event_anchor":
@@ -525,6 +499,111 @@ function buildRepairThinkingSummary(input: {
       return "我把问题改成更直白的说法，先看你原来最自然会怎么想。";
     default:
       return "我把问题换成更容易回答的说法，先抓住最具体的一点。";
+  }
+}
+
+type RepairDeescalationStrategy = "narrow" | "example_first" | "one_sentence_fallback";
+
+function mapSurfaceLevelToRepairStrategy(surfaceLevel: AssistantQuestionSurfaceLevel): RepairDeescalationStrategy {
+  if (surfaceLevel === "concrete_anchor") {
+    return "example_first";
+  }
+
+  return "narrow";
+}
+
+function realizeRepairIntentQuestion(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+  intent: AskIntentEnvelope["intent"];
+}) {
+  return realizeQuestion({
+    envelope: {
+      ...createAskIntentEnvelope({
+        dimension: input.dimension,
+        snapshot: input.snapshot,
+        spec: input.spec
+      }),
+      intent: input.intent
+    }
+  });
+}
+
+function renderExampleFirstQuestion(input: {
+  dimension: InterviewDimension;
+  spec: AssistantQuestionSpec;
+}) {
+  const anchor = input.spec.anchorText;
+  const prefix = anchor ? `回到“${anchor}”这件事，` : "";
+
+  switch (input.dimension) {
+    case "joy":
+      return `${prefix}不用先总结，只说一个最具体的例子，最先把你带动起来的是哪一下？`;
+    case "fulfillment":
+      return `${prefix}不用先总结，只说一个最具体的例子，哪一下最能说明今天没白过？`;
+    case "reflection":
+      return `${prefix}不用先总结，只说一个最具体的例子，会是哪一下？`;
+    case "improvement":
+      return `${prefix}不用先总结，只说一个最具体的例子，最卡住你的是哪一下？`;
+    case "gratitude":
+      return `${prefix}不用先总结，只说一个最具体的例子，对方最让你记住的是哪一下？`;
+  }
+}
+
+function renderRepairDeescalatedQuestion(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+  strategy: RepairDeescalationStrategy;
+}) {
+  switch (input.strategy) {
+    case "narrow":
+      if (input.spec.target === "judgment_clue") {
+        return realizeRepairIntentQuestion({
+          dimension: input.dimension,
+          snapshot: input.snapshot,
+          spec: input.spec,
+          intent: "point_out_key_part"
+        });
+      }
+
+      return normalizeText(
+        renderQuestion({
+          dimension: input.dimension,
+          stage: input.stage,
+          snapshot: input.snapshot,
+          spec: {
+            ...input.spec,
+            surfaceLevel: "simplified"
+          }
+        })
+      );
+    case "example_first":
+      if (input.spec.target === "judgment_clue") {
+        return renderExampleFirstQuestion({
+          dimension: input.dimension,
+          spec: input.spec
+        });
+      }
+
+      return input.spec.anchorText
+        ? `回到“${input.spec.anchorText}”这件事，不用先总结，只说一个最具体的例子，会是哪一下？`
+        : "不用先总结，只说一个最具体的例子，会是哪一下？";
+    case "one_sentence_fallback":
+      if (input.spec.target === "judgment_clue") {
+        return realizeRepairIntentQuestion({
+          dimension: input.dimension,
+          snapshot: input.snapshot,
+          spec: input.spec,
+          intent: "leave_one_sentence"
+        });
+      }
+
+      return input.spec.anchorText
+        ? `回到“${input.spec.anchorText}”这件事，如果只留一句，你最想记住哪句？`
+        : "如果只留一句，你最想记住哪句？";
   }
 }
 
@@ -577,6 +656,7 @@ export function renderDeterministicRepairTurn(input: {
   hadReflectionSceneDenial: boolean;
 }): AssistantTurnPayload {
   let effectiveSpec = input.spec;
+  let appliedStrategy = mapSurfaceLevelToRepairStrategy(effectiveSpec.surfaceLevel);
 
   if (input.dimension === "gratitude") {
     effectiveSpec = resolveGratitudeFallbackSpec(effectiveSpec, input.snapshot.evidenceState);
@@ -595,11 +675,12 @@ export function renderDeterministicRepairTurn(input: {
   }
 
   let question = normalizeText(
-    renderQuestion({
+    renderRepairDeescalatedQuestion({
       dimension: input.dimension,
       stage: input.stage,
       snapshot: input.snapshot,
-      spec: effectiveSpec
+      spec: effectiveSpec,
+      strategy: appliedStrategy
     })
   );
 
@@ -607,25 +688,49 @@ export function renderDeterministicRepairTurn(input: {
     !isQuestionSurfaceValid({
       dimension: input.dimension,
       question,
-      spec: effectiveSpec
+      spec: effectiveSpec,
+      snapshot: input.snapshot
     }) ||
     isQuestionEquivalent(input.previousQuestion, question)
   ) {
-    const variantSpec = createRepairVariantSpec(effectiveSpec);
-    const variantQuestion = normalizeText(
-      renderQuestion({
+    const oneSentenceQuestion = normalizeText(
+      renderRepairDeescalatedQuestion({
         dimension: input.dimension,
         stage: input.stage,
         snapshot: input.snapshot,
-        spec: variantSpec
+        spec: effectiveSpec,
+        strategy: "one_sentence_fallback"
       })
     );
+
+    if (
+      isQuestionSurfaceValid({
+        dimension: input.dimension,
+        question: oneSentenceQuestion,
+        spec: effectiveSpec,
+        snapshot: input.snapshot
+      }) &&
+      !isQuestionEquivalent(input.previousQuestion, oneSentenceQuestion)
+    ) {
+      appliedStrategy = "one_sentence_fallback";
+      question = oneSentenceQuestion;
+    } else {
+      const variantSpec = createRepairVariantSpec(effectiveSpec);
+      const variantQuestion = normalizeText(
+        renderQuestion({
+          dimension: input.dimension,
+          stage: input.stage,
+          snapshot: input.snapshot,
+          spec: variantSpec
+        })
+      );
 
       if (
         isQuestionSurfaceValid({
           dimension: input.dimension,
           question: variantQuestion,
-          spec: variantSpec
+          spec: variantSpec,
+          snapshot: input.snapshot
         }) &&
         !isQuestionEquivalent(input.previousQuestion, variantQuestion) &&
         !(input.dimension === "reflection" && effectiveSpec.target === "judgment_clue" && effectiveSpec.repairCount <= 1)
@@ -648,6 +753,7 @@ export function renderDeterministicRepairTurn(input: {
 
       effectiveSpec = fallbackSpec;
       question = fallbackQuestion;
+      }
     }
   }
 
@@ -655,7 +761,8 @@ export function renderDeterministicRepairTurn(input: {
     insight: "",
     thinkingSummary: buildRepairThinkingSummary({
       dimension: input.dimension,
-      spec: effectiveSpec
+      spec: effectiveSpec,
+      strategy: appliedStrategy
     }),
     analysis: "用户反馈上一题不够好答；本轮改为服务端确定性重问同一目标，不推进进度。",
     question,
@@ -677,35 +784,110 @@ function isQuestionSurfaceValid(input: {
   dimension: InterviewDimension;
   question: string;
   spec: AssistantQuestionSpec;
+  snapshot: JoySnapshot;
 }) {
-  const normalized = normalizeText(input.question);
+  return evaluateQuestionComprehension({
+    dimension: input.dimension,
+    question: input.question,
+    spec: input.spec,
+    snapshot: input.snapshot
+  }).pass;
+}
 
-  if (!normalized) {
-    return false;
+function createSurfaceDowngradeSpec(input: {
+  spec: AssistantQuestionSpec;
+  recommendation: ComprehensionGateDowngradeRecommendation | null;
+}) {
+  if (input.recommendation === "narrow_to_single_action") {
+    if (input.spec.target === "judgment_clue") {
+      return {
+        ...input.spec,
+        target: "insight_evidence" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
+
+    if (input.spec.target === "insight_evidence") {
+      return {
+        ...input.spec,
+        target: "event_anchor" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
   }
 
-  if (FORBIDDEN_THEORY_TERMS.test(normalized)) {
-    return false;
+  if (input.recommendation === "add_concrete_anchor") {
+    if (input.spec.target === "judgment_clue") {
+      return {
+        ...input.spec,
+        target: "insight_evidence" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
+
+    return {
+      ...input.spec,
+      surfaceLevel: "concrete_anchor" as const
+    };
   }
 
-  if (CROSS_CATEGORY_COMPARE_PATTERN.test(normalized)) {
-    return false;
+  if (input.recommendation === "rewrite_as_example_first") {
+    if (input.spec.target === "judgment_clue") {
+      return {
+        ...input.spec,
+        target: "insight_evidence" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
+
+    if (input.spec.target === "insight_evidence") {
+      return {
+        ...input.spec,
+        target: "event_anchor" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
+
+    return {
+      ...input.spec,
+      surfaceLevel: "concrete_anchor" as const
+    };
   }
 
-  if (MULTI_HOP_PATTERN.test(normalized)) {
-    return false;
+  if (input.recommendation === "rewrite_with_user_words") {
+    if (input.spec.target === "judgment_clue") {
+      return {
+        ...input.spec,
+        target: "insight_evidence" as const,
+        surfaceLevel: "concrete_anchor" as const
+      };
+    }
+
+    return {
+      ...input.spec,
+      surfaceLevel: "concrete_anchor" as const
+    };
   }
 
-  if (
-    input.dimension === "reflection" &&
-    input.spec.target !== "prior_assumption" &&
-    input.spec.target !== "judgment_clue" &&
-    !CONCRETE_ANCHOR_CUES.test(normalized)
-  ) {
-    return false;
+  return {
+    ...input.spec,
+    surfaceLevel: "concrete_anchor" as const
+  };
+}
+
+function createLastResortSurfaceSpec(spec: AssistantQuestionSpec) {
+  if (spec.target === "event_anchor") {
+    return {
+      ...spec,
+      surfaceLevel: "concrete_anchor" as const
+    };
   }
 
-  return true;
+  return {
+    ...spec,
+    target: "event_anchor" as const,
+    surfaceLevel: "concrete_anchor" as const
+  };
 }
 
 export function applyQuestionSurfaceProtocol(input: {
@@ -714,35 +896,102 @@ export function applyQuestionSurfaceProtocol(input: {
   snapshot: JoySnapshot;
   spec: AssistantQuestionSpec;
   candidateQuestion: string | null | undefined;
+  preserveStructuredCandidateQuestion?: boolean;
 }) {
-  const candidateQuestion = normalizeText(input.candidateQuestion);
+  const shouldPreferDedicatedCandidate =
+    input.preserveStructuredCandidateQuestion === true &&
+    Boolean(normalizeText(input.candidateQuestion)) &&
+    shouldUseStructuredQuestionRealizer(input.spec.target);
+  const primaryQuestion = normalizeText(
+    shouldPreferDedicatedCandidate
+      ? input.candidateQuestion
+      : shouldUseStructuredQuestionRealizer(input.spec.target)
+      ? realizeStructuredQuestion({
+          dimension: input.dimension,
+          snapshot: input.snapshot,
+          spec: input.spec
+        })
+      : input.candidateQuestion
+  );
 
-  if (isQuestionSurfaceValid({
+  const primaryGate = evaluateQuestionComprehension({
     dimension: input.dimension,
-    question: candidateQuestion,
-    spec: input.spec
-  })) {
+    question: primaryQuestion,
+    spec: input.spec,
+    snapshot: input.snapshot
+  });
+
+  if (primaryGate.pass) {
     return {
-      question: candidateQuestion,
+      question: primaryQuestion,
       questionSpec: input.spec
     };
   }
 
-  const rewrittenQuestion = normalizeText(
+  const downgradedSpec = createSurfaceDowngradeSpec({
+    spec: input.spec,
+    recommendation: primaryGate.downgradeRecommendation
+  });
+  const downgradedQuestion = normalizeText(
     renderQuestion({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      spec: downgradedSpec
+    })
+  );
+  const downgradedGate = evaluateQuestionComprehension({
+    dimension: input.dimension,
+    question: downgradedQuestion,
+    spec: downgradedSpec,
+    snapshot: input.snapshot
+  });
+
+  if (downgradedGate.pass) {
+    return {
+      question: downgradedQuestion,
+      questionSpec: downgradedSpec
+    };
+  }
+
+  const lastResortSpec = createLastResortSurfaceSpec(downgradedSpec);
+  const lastResortQuestion = normalizeText(
+    renderQuestion({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      spec: lastResortSpec
+    })
+  );
+
+  return {
+    question: lastResortQuestion,
+    questionSpec: {
+      ...lastResortSpec,
+      surfaceLevel:
+        input.spec.stageIntent === "repair" ? input.spec.surfaceLevel : "concrete_anchor"
+    } satisfies AssistantQuestionSpec
+  };
+}
+
+export function resolveQuestionFromSpec(input: {
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+  preserveStructuredCandidateQuestion?: boolean;
+}) {
+  return applyQuestionSurfaceProtocol({
+    dimension: input.dimension,
+    stage: input.stage,
+    snapshot: input.snapshot,
+    spec: input.spec,
+    preserveStructuredCandidateQuestion: input.preserveStructuredCandidateQuestion,
+    candidateQuestion: renderQuestion({
       dimension: input.dimension,
       stage: input.stage,
       snapshot: input.snapshot,
       spec: input.spec
     })
-  );
-
-  return {
-    question: rewrittenQuestion,
-    questionSpec: {
-      ...input.spec,
-      surfaceLevel:
-        input.spec.stageIntent === "repair" ? input.spec.surfaceLevel : "concrete_anchor"
-    } satisfies AssistantQuestionSpec
-  };
+  });
 }

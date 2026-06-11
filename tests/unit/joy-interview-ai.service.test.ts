@@ -393,9 +393,7 @@ describe("generateJoyAssistantTurn", () => {
       }
     });
 
-    expect(turn.question).toBe(
-      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
-    );
+    expect(turn.question).toBe("回到“今天看完一个项目复盘”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？");
     expect(turn.question).not.toContain("判断依据");
     expect(turn.questionSpec).toEqual({
       target: "judgment_clue",
@@ -405,6 +403,210 @@ describe("generateJoyAssistantTurn", () => {
       surfaceLevel: "simplified",
       anchorText: "今天看完一个项目复盘",
       repairCount: 1
+    });
+  });
+
+  it("uses the structured judgment-clue path for fulfillment fallback turns when AI generation is unavailable", async () => {
+    getAIProvider.mockReturnValue(null);
+
+    const fulfillmentSnapshot: JoySnapshot = {
+      event: "回顾过去问问大象的经历",
+      feeling: "充实",
+      whyItMattered: "我重新梳理之后，看见以前的积累没有白费",
+      happinessType: "投入积累型",
+      selfPattern: null,
+      confidence: 0.8,
+      missingSlots: ["valueSignal"]
+    };
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_pattern",
+      snapshot: fulfillmentSnapshot
+    });
+    const activeEvent = {
+      ...session.events[0]!,
+      stage: "probe_pattern" as const,
+      snapshot: fulfillmentSnapshot
+    };
+
+    const turn = await generateJoyAssistantTurn({
+      dimension: "fulfillment",
+      sessionId: session.id,
+      stage: "probe_pattern",
+      snapshot: fulfillmentSnapshot,
+      events: [{ ...activeEvent }],
+      activeEvent,
+      userMessage: "我回头看这些记录，感觉这样梳理真的很有用。",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "reason"],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(turn.question).toBe("回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？");
+    expect(turn.questionSpec).toEqual({
+      target: "judgment_clue",
+      stageIntent: "advance",
+      surfaceLevel: "default",
+      anchorText: "回顾过去问问大象的经历",
+      repairCount: 0
+    });
+  });
+
+  it("records a specific provider config reason when question generation falls back", async () => {
+    getAIProvider.mockReturnValue(null);
+    getAIProviderStatus.mockReturnValue({
+      provider: "volcengine-ark",
+      available: false,
+      state: "config_invalid",
+      code: "PLACEHOLDER_BASE_URL",
+      issues: ["PLACEHOLDER_BASE_URL"],
+      configSummary: {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: "VOLCENGINE_ARK_ENDPOINT_ID",
+        baseUrlHost: null
+      }
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "disabled",
+        success: false,
+        errorCode: "QUESTION_PROVIDER_PLACEHOLDER_BASE_URL"
+      })
+    );
+  });
+
+  it("records the upstream provider error code when question generation hits an Ark billing failure", async () => {
+    getAIProvider.mockReturnValue({
+      name: "mock-provider",
+      complete: vi.fn().mockRejectedValue(
+        new AIProviderError(
+          '{"error":{"code":"AccountOverdueError","message":"billing overdue"}}',
+          "UPSTREAM_HTTP_ERROR",
+          403
+        )
+      )
+    });
+
+    const session = buildSession();
+    const activeEvent = session.events[0]!;
+
+    await generateJoyAssistantTurn({
+      dimension: "joy",
+      sessionId: session.id,
+      stage: session.stage,
+      snapshot: session.snapshot,
+      events: session.events,
+      activeEvent,
+      userMessage: "就是那个短片",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: [],
+      nextDepthReached: [],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply"
+    });
+
+    expect(createAIRequestLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "generate",
+        provider: "mock-provider",
+        success: false,
+        errorCode: "QUESTION_ACCOUNTOVERDUEERROR"
+      })
+    );
+  });
+
+  it("preserves the low-burden reflection questionSpec on AI-unavailable fallback turns after example-first repair", async () => {
+    getAIProvider.mockReturnValue(null);
+
+    const reflectionSnapshot: JoySnapshot = {
+      event: "今天下午改一份材料",
+      feeling: "一下子发现自己其实没回答到问题",
+      whyItMattered: "我发现自己以为理清楚了，其实只是在重复同样的话",
+      happinessType: "判断校准型",
+      selfPattern: null,
+      confidence: 0.76,
+      missingSlots: ["viewpointShift"]
+    };
+    const session = buildSession({
+      dimension: "reflection",
+      stage: "probe_pattern",
+      snapshot: reflectionSnapshot
+    });
+    const activeEvent = {
+      ...session.events[0]!,
+      stage: "probe_pattern" as const,
+      snapshot: reflectionSnapshot
+    };
+
+    const turn = await generateJoyAssistantTurn({
+      dimension: "reflection",
+      sessionId: session.id,
+      stage: "probe_pattern",
+      snapshot: reflectionSnapshot,
+      events: [{ ...activeEvent }],
+      activeEvent,
+      userMessage: "比如我写到第三段的时候，发现每一段都在重复同样的话，没有真正回答要解决的问题。",
+      messages: session.messages,
+      nextTurnCount: session.turnCount + 1,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount + 1,
+      previousDepthReached: ["event", "reason"],
+      nextDepthReached: ["event", "feeling", "reason"],
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      isMeaningfulReply: true,
+      action: "reply",
+      questionSpec: {
+        target: "insight_evidence",
+        stageIntent: "advance",
+        surfaceLevel: "concrete_anchor",
+        anchorText: "今天下午改一份材料",
+        repairCount: 0
+      }
+    });
+
+    expect(turn.question).toBe("回到“今天下午改一份材料”这件事，最先让你意识到不一样的，是哪个具体细节？");
+    expect(turn.questionSpec).toEqual({
+      target: "insight_evidence",
+      stageIntent: "advance",
+      surfaceLevel: "concrete_anchor",
+      anchorText: "今天下午改一份材料",
+      repairCount: 0
     });
   });
 

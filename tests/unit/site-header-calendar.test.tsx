@@ -5,6 +5,12 @@ import { SiteHeader } from "@/components/shared/site-header";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
+const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit"
+}).format(new Date());
+
 const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
     value: "/calendar"
@@ -403,6 +409,6 @@ describe("site header calendar toolbar", () => {
 
     render(<SiteHeader />);
 
-    expect(await screen.findByRole("link", { name: "分析" })).toHaveAttribute("href", "/analysis?month=2026-05");
+    expect(await screen.findByRole("link", { name: "分析" })).toHaveAttribute("href", `/analysis?month=${CURRENT_MONTH}`);
   });
 });

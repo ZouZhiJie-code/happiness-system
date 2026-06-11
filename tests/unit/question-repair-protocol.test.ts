@@ -39,9 +39,7 @@ describe("question repair protocol", () => {
       hadReflectionSceneDenial: false
     });
 
-    expect(turn.question).toBe(
-      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
-    );
+    expect(turn.question).toBe("回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？");
     expect(turn.question).not.toMatch(/判断依据|判断线索|视角变化|方法论/u);
     expect(turn.questionSpec?.repairCount).toBe(1);
   });
@@ -66,7 +64,7 @@ describe("question repair protocol", () => {
       hadReflectionSceneDenial: true
     });
 
-    expect(turn.question).toContain("具体顾虑、画面或念头");
+    expect(turn.question).toContain("不用先总结，只说一个最具体的例子");
     expect(turn.question).not.toContain("具体的经历或对话");
     expect(turn.questionSpec?.target).toBe("insight_evidence");
   });
