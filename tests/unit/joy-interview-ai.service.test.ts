@@ -393,9 +393,7 @@ describe("generateJoyAssistantTurn", () => {
       }
     });
 
-    expect(turn.question).toBe(
-      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
-    );
+    expect(turn.question).toBe("回到“今天看完一个项目复盘”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？");
     expect(turn.question).not.toContain("判断依据");
     expect(turn.questionSpec).toEqual({
       target: "judgment_clue",

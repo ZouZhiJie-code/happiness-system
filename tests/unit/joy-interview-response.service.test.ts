@@ -1766,9 +1766,9 @@ describe("prepareJoyInterviewResponse", () => {
       })
     );
     expect(result.nextStage).toBe("probe_pattern");
-    expect(result.assistantTurn.question).toBe("你觉得自己在关系里最在乎什么？");
+    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "你已经碰到这段开心里最打动你的那层了，我们就顺着这份被接住的感觉继续往下聊。"
+      "你已经碰到这段开心里最打动你的那层了，这份被朋友真正接住也慢慢清楚了，再看看它为什么会一直留在你心里。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
@@ -2549,7 +2549,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.nextStage).toBe("probe_reason");
     expect(result.assistantTurn.thinkingSummary).toBe(
-      "这份开心真正算数的地方，是把自己的状态重新找回来了，处理重点是分辨它为什么偏偏会在这里让人有感觉。"
+      "你已经碰到这段开心里最打动你的那层了，再把到底是什么让你有感觉说清一点。"
     );
     expect(result.assistantTurn.insight).toBe("");
     expect(result.assistantTurn.question).toBe("当时是读到了什么，让你觉得开心？");
@@ -2783,7 +2783,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
     expect(result.assistantTurn.thinkingSummary).not.toMatch(/^我想/u);
-    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住");
   });
 
   it("rewrites an in-sentence '我想' thinking summary when it is only process talk from the assistant side", async () => {
@@ -2822,7 +2822,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
     expect(result.assistantTurn.thinkingSummary).not.toContain("我想再看看");
-    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住");
   });
 
   it("rewrites gratitude thinking summaries away from theory-explanation tone", async () => {
@@ -2960,7 +2960,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
     expect(result.assistantTurn.thinkingSummary).not.toMatch(/^我想/u);
-    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住");
   });
 
   it("rewrites an in-sentence '我想' thinking summary when it is only process talk from the assistant side", async () => {
@@ -2999,7 +2999,7 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(result.assistantTurn.thinkingSummary).not.toBe(rawSummary);
     expect(result.assistantTurn.thinkingSummary).not.toContain("我想再看看");
-    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住的感觉");
+    expect(result.assistantTurn.thinkingSummary).toContain("被朋友真正接住");
   });
 
   it("streams assistant deltas before persisting the finalized turn", async () => {
@@ -3391,23 +3391,23 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(phases).toEqual(["thinking", "summary", "question"]);
     const normalizedContinuedSummary =
-      "你已经碰到这段开心里最打动你的那层了，我们就顺着这份被朋友真正接住的感觉继续往下聊。";
+      "你已经碰到这段开心里最打动你的那层了，这份被朋友真正接住也慢慢清楚了，再看看它为什么会一直留在你心里。";
     const continuedSummaryDeltas = deltas.filter((delta) => delta.target === "summary");
     const continuedQuestionDeltas = deltas.filter((delta) => delta.target === "question");
 
     expect(continuedSummaryDeltas.length).toBeGreaterThan(1);
     expect(continuedSummaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedContinuedSummary);
-    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe(continuedPayload.question);
-    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n你觉得自己在关系里最在乎什么？`);
+    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
+    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？`);
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
-    expect(result.assistantTurn?.question).toBe(continuedPayload.question);
+    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
   });
 
   it("does not let continue_current_event re-ask the same question with only a framing prefix", async () => {
     const previousQuestion = "你觉得自己在关系里最在乎什么？";
     const continuedQuestion = "如果只留一个点，你觉得自己在关系里最在乎什么？";
-    const fallbackQuestion = "如果再往里看一点，这份关系里的连接感最明显落在什么地方？";
+    const fallbackQuestion = "回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？";
     const continuedSummary = "被朋友真正接住之后，最想留下的那层关系感觉已经更清楚了。";
 
     const choiceSession = buildSession({
@@ -3758,7 +3758,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const repeatedQuestion = "在简历优化完成的那个时刻，你看到或感受到什么，让你觉得今天没有白过？";
-    const fallbackQuestion = "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+    const fallbackQuestion = "回到“今天围绕目标岗位开始改简历”这件事，如果只留一句，你最想记住哪句？";
     const choiceSession = buildSession({
       dimension: "fulfillment",
       stage: "wrap_up",
@@ -3958,7 +3958,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
     expect(result.assistantTurn?.thinkingSummary).toBe(
-      "这件事对你来说是算数的，因为原本卡着的求职目标，今天真的被往前推了一步。"
+      "这件事对你来说是算数的，因为原本模糊的求职目标被具体拆解并推进了，再看看这件事为什么会变成你想记住的一点。"
     );
   });
 
@@ -4647,7 +4647,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const abstractContrastQuestion = "这种“没有停滞不前”的感觉，和你之前卡住时有什么不同？";
-    const fallbackQuestion = "当你说自己在一点点朝想要的方向前进时，什么样的努力会让你觉得这一天真的算数？";
+    const fallbackQuestion = "回到“今天在围绕目标岗位改简历”这件事，如果只留一句，你最想记住哪句？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -4728,14 +4728,14 @@ describe("prepareJoyInterviewResponse", () => {
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).not.toBe(abstractContrastQuestion);
-    expect(result.assistantTurn?.question).toContain("真的算数");
+    expect(result.assistantTurn?.question).toContain("如果只留一句");
   });
 
   it.each([
     {
       dimension: "joy" as const,
       snapshot: baseSnapshot,
-      expectedSnippet: "被接住的感觉"
+      expectedSnippet: "被朋友真正接住"
     },
     {
       dimension: "fulfillment" as const,
@@ -4750,7 +4750,7 @@ describe("prepareJoyInterviewResponse", () => {
         feeling: "踏实",
         stateShift: "踏实"
       },
-      expectedSnippet: "为什么对你算数"
+      expectedSnippet: "变成你想记住的一点"
     },
     {
       dimension: "reflection" as const,
@@ -4774,7 +4774,7 @@ describe("prepareJoyInterviewResponse", () => {
         frictionPoint: "还没听完就急着回应",
         controllableFactor: "先停一拍确认对方说完"
       },
-      expectedSnippet: "可调整的小处"
+      expectedSnippet: "最能动手调整的一小处"
     },
     {
       dimension: "gratitude" as const,
@@ -4787,7 +4787,7 @@ describe("prepareJoyInterviewResponse", () => {
         gratitudeReason: "我觉得不是一个人在扛",
         relationshipSignal: "先看见处境再帮忙"
       },
-      expectedSnippet: "关系线索"
+      expectedSnippet: "你最想留下的是哪一点"
     }
   ])("normalizes and streams thinking summaries with %s dimension semantics", async ({ dimension, snapshot, expectedSnippet }) => {
     const session = buildSession({

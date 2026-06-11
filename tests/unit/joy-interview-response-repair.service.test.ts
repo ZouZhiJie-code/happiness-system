@@ -280,9 +280,7 @@ describe("repair protocol response flow", () => {
     expect(result.nextEventTurnCount).toBe(2);
     expect(result.roundMeaningfulReplyCount).toBe(0);
     expect(result.nextProgressData).toBeNull();
-    expect(result.assistantTurn.question).toBe(
-      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
-    );
+    expect(result.assistantTurn.question).toBe("回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？");
     expect(result.assistantTurn.questionSpec).toEqual({
       target: "judgment_clue",
       stageIntent: "repair",
@@ -326,7 +324,7 @@ describe("repair protocol response flow", () => {
     expect(phases).toEqual(["summary", "question"]);
     expect(deltas.some((delta) => delta.target === "summary")).toBe(true);
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(
-      "以后再遇到类似情况，你会先看哪个更具体的反应或信号，提醒自己别只看“看起来合适”？"
+      "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？"
     );
     expect(result.assistantTurn?.questionSpec?.repairCount).toBe(1);
   });

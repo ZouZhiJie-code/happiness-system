@@ -4,6 +4,12 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { SiteHeader } from "@/components/shared/site-header";
 import { analysisToolbarRefreshEventName } from "@/features/analysis/toolbar-refresh";
 
+const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit"
+}).format(new Date());
+
 const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
     value: "/analysis"
@@ -238,7 +244,7 @@ describe("site header analysis toolbar", () => {
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=score", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "回到本月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=score", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith(`/analysis?month=${CURRENT_MONTH}&section=score`, { scroll: false });
   });
 
   it("preserves the current analysis section when paging months", async () => {
@@ -269,7 +275,7 @@ describe("site header analysis toolbar", () => {
 
     render(<SiteHeader />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=score");
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", `/analysis?month=${CURRENT_MONTH}&section=score`);
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();
   });
 });
