@@ -655,10 +655,10 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       <header
         ref={headerRef}
         className={clsx(
-          "w-full px-3 md:px-6",
+          "site-header-frosted sticky top-0 z-50 isolate w-full px-3 backdrop-blur-md md:px-6",
           isInterviewPage
-            ? "fixed inset-x-0 top-0 z-50 isolate border-b border-[rgba(101,67,34,0.1)] bg-[linear-gradient(180deg,rgba(249,238,216,0.98),rgba(235,214,178,0.97))] shadow-[0_8px_22px_rgba(77,47,21,0.08)]"
-            : "relative z-30 border-b border-[rgba(101,67,34,0.18)] bg-[linear-gradient(180deg,rgba(247,232,204,0.96),rgba(230,202,163,0.94))] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
+            ? "border-b border-[rgba(101,67,34,0.1)] shadow-[0_8px_22px_rgba(77,47,21,0.08)]"
+            : "border-b border-[rgba(101,67,34,0.18)] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
         )}
       >
       <div
