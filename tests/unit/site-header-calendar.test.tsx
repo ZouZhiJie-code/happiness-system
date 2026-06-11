@@ -257,19 +257,18 @@ describe("site header calendar toolbar", () => {
     expect(toolbar).toHaveAttribute("aria-busy", "false");
   });
 
-  it("keeps calendar header as a non-fixed solid bar without spacer", async () => {
+  it("keeps calendar header sticky frosted without spacer", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
     render(<SiteHeader />);
     const header = screen.getByRole("banner");
 
-    expect(header).toHaveClass("relative");
-    expect(header.className).not.toContain("site-header-frosted");
+    expect(header).toHaveClass("sticky", "top-0", "backdrop-blur-md", "site-header-frosted");
     expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
   });
 
-  it("uses fixed interview-toned header without spacer on interview page", async () => {
+  it("uses sticky frosted header without spacer on interview page", async () => {
     mockPathname.value = "/interview";
     mockSearchParams.value = {
       dimension: "joy",
@@ -282,9 +281,8 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
     const header = screen.getByRole("banner");
 
-    expect(header).toHaveClass("fixed", "isolate");
-    expect(header.className).toContain("bg-[linear-gradient");
-    expect(header.className).not.toContain("site-header-frosted");
+    expect(header).toHaveClass("sticky", "top-0", "backdrop-blur-md", "site-header-frosted", "isolate");
+    expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
   });
 

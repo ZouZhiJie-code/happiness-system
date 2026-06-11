@@ -544,6 +544,16 @@ body::after {
   }
 }
 
+.site-header-frosted {
+  background: linear-gradient(180deg, rgba(249, 238, 216, 0.78), rgba(235, 214, 178, 0.72));
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-header-frosted {
+    background: linear-gradient(180deg, rgba(249, 238, 216, 0.96), rgba(235, 214, 178, 0.94));
+  }
+}
+
 .header-status-dot {
   position: absolute;
   top: 0.42rem;
