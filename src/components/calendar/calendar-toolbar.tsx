@@ -5,7 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
-import { HeaderToolbarNavGroup } from "@/components/shared/header-toolbar-nav";
+import { HeaderToolbarPeriodStepper } from "@/components/shared/header-toolbar-nav";
+import {
+  HeaderPeriodDisplay,
+  HeaderSummaryChipRow,
+  HeaderToolbarDivider,
+  HeaderToolbarStatus
+} from "@/components/shared/header-toolbar-primitives";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import {
   fetchCalendarDayRecord,
@@ -26,23 +32,6 @@ import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from 
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
 import { buildCalendarHref, normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-
-function ToolbarChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="calendar-summary-chip shrink-0 rounded-full px-2.5 py-1">
-      <span className="text-[0.65rem] text-[#8b6c4d]">{label}</span>
-      <span className="ml-1.5 tabular-nums text-[0.74rem] font-medium text-[#604529]">{value}</span>
-    </div>
-  );
-}
-
-function ToolbarDivider() {
-  return (
-    <span aria-hidden="true" className="shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]">
-      ｜
-    </span>
-  );
-}
 
 function hasCachedToolbarRecord(view: ReturnType<typeof normalizeCalendarSearchParams>["view"], date: string) {
   switch (view) {
@@ -208,61 +197,65 @@ export function CalendarToolbar() {
     );
   }
 
+  const periodLoadingLabel = isLoading ? getCalendarLoadingLabel("toolbar") : null;
+
   return (
     <div
       data-testid="calendar-toolbar"
       aria-busy={isLoading ? "true" : "false"}
       className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden"
     >
-      <HeaderToolbarNavGroup
-        previousLabel={toolbarState.previousLabel}
-        nextLabel={toolbarState.nextLabel}
-        onPrevious={() => navigate({ date: toolbarState.previousDate })}
-        onNext={() => navigate({ date: toolbarState.nextDate })}
-      />
+      <div className="header-ws-template flex w-full min-w-0 items-center gap-1.5">
+        <div className="header-ws-slot header-ws-slot--time shrink-0">
+          <HeaderToolbarPeriodStepper
+            testId="calendar-period-stepper"
+            busy={isLoading}
+            statusLabel={periodLoadingLabel}
+            previousLabel={toolbarState.previousLabel}
+            nextLabel={toolbarState.nextLabel}
+            onPrevious={() => navigate({ date: toolbarState.previousDate })}
+            onNext={() => navigate({ date: toolbarState.nextDate })}
+          >
+            <HeaderPeriodDisplay testId="calendar-period-display">{toolbarState.title}</HeaderPeriodDisplay>
+          </HeaderToolbarPeriodStepper>
+        </div>
 
-      <ToolbarDivider />
+        <HeaderToolbarDivider />
 
-      <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
-        <div className="flex min-w-max items-center gap-2">
-          <p className="shrink-0 text-[0.95rem] font-medium text-[#34271c] md:text-[1rem]">
-            {toolbarState.title}
-          </p>
+        <div className="header-ws-slot header-ws-slot--context header-ws-slot--context--chips shrink-0">
+          <div className="flex min-w-0 flex-col gap-1">
+            {hasFetchError ? (
+              <HeaderToolbarStatus tone="error" role="alert">
+                {getCalendarErrorLabel("toolbar")}
+              </HeaderToolbarStatus>
+            ) : null}
+            <HeaderSummaryChipRow chips={chips} />
+          </div>
+        </div>
 
-          {isLoading ? (
-            <span className="shrink-0 text-[0.68rem] text-[#8a6b4b]" role="status" aria-live="polite">
-              {getCalendarLoadingLabel("toolbar")}
-            </span>
-          ) : null}
-          {hasFetchError ? (
-            <span className="shrink-0 text-[0.68rem] text-[#8f5431]" role="alert">
-              {getCalendarErrorLabel("toolbar")}
-            </span>
-          ) : null}
-          {chips.map((chip) => (
-            <ToolbarChip key={chip.id} label={chip.label} value={chip.value} />
-          ))}
+        <HeaderToolbarDivider />
+
+        <div className="header-ws-slot header-ws-slot--view shrink-0">
+          <CalendarViewSwitcher
+            currentView={normalizedSearch.view}
+            currentDate={normalizedSearch.date}
+            onSelectView={(view) => navigate({ view })}
+          />
+        </div>
+
+        <HeaderToolbarDivider />
+
+        <div className="header-ws-slot header-ws-slot--action shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate({ date: today })}
+            className="calendar-chip header-text-action shrink-0 rounded-full px-3 py-1 transition duration-200 hover:text-[#34271c]"
+            aria-label="回到今天"
+          >
+            今天
+          </button>
         </div>
       </div>
-
-      <ToolbarDivider />
-
-      <button
-        type="button"
-        onClick={() => navigate({ date: today })}
-        className="calendar-chip shrink-0 rounded-full px-3 py-1 text-[0.74rem] font-medium text-[#5d4329] transition duration-200 hover:text-[#34271c]"
-        aria-label="回到今天"
-      >
-        今天
-      </button>
-
-      <ToolbarDivider />
-
-      <CalendarViewSwitcher
-        currentView={normalizedSearch.view}
-        currentDate={normalizedSearch.date}
-        onSelectView={(view) => navigate({ view })}
-      />
 
       <span className="sr-only" aria-live="polite">
         {isLoading ? getCalendarLoadingLabel("toolbar") : hasFetchError ? getCalendarErrorLabel("toolbar") : "摘要已更新。"}

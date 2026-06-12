@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>顶部导航 · 统一性改进预览（P0–P3）</title>
+  <style>
+    :root {
+      --line-soft: rgba(110, 73, 38, 0.16);
+      --line-strong: rgba(110, 73, 38, 0.3);
+      --text-main: #302114;
+      --text-dim: rgba(48, 33, 20, 0.7);
+      --radius-control: 12px;
+      --radius-card: 20px;
+      --radius-shell: 28px;
+      --header-frame-min: 4rem;
+      --header-lane-min: 2.5rem;
+      --nav-underline: #8a5527;
+      --header-frost-top: rgba(249, 238, 216, 0.78);
+      --header-frost-bottom: rgba(235, 214, 178, 0.72);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+      background: linear-gradient(180deg, #8b5f38 0%, #b37b47 24%, #d3a36c 58%, #e5c08f 100%);
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 18% 14%, rgba(255,250,241,.24) 0, transparent 22%),
+                  radial-gradient(circle at 82% 8%, rgba(117,76,37,.12) 0, transparent 28%);
+    }
+    .site-header {
+      position: sticky; top: 0; z-index: 30; isolation: isolate; width: 100%;
+      padding: 0 .75rem; border-bottom: 1px solid rgba(101,67,34,.18);
+      box-shadow: 0 8px 24px rgba(77,47,21,.12);
+      background: linear-gradient(180deg, var(--header-frost-top), var(--header-frost-bottom));
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+    }
+    @media (min-width:768px){ .site-header{padding:0 1.5rem} }
+    .header-grid {
+      position:relative; z-index:1; display:flex; flex-direction:column; gap:.35rem;
+      min-height:var(--header-frame-min); padding:.35rem 0;
+    }
+    @media (min-width:768px){
+      .header-grid{display:grid;align-items:center;gap:.75rem;padding:0}
+      .header-grid.improved{grid-template-columns:auto auto minmax(0,1fr) auto auto}
+      .header-grid.legacy.plain-page{grid-template-columns:auto minmax(0,1fr) auto}
+      .header-grid.legacy.workspace-page{grid-template-columns:auto auto minmax(0,1fr) auto auto}
+      .header-grid .divider{display:flex}
+      .header-grid.legacy.plain-page .divider{display:none}
+    }
+    .divider{display:none;align-items:center;color:rgba(101,67,34,.58);font-family:ui-monospace,monospace;font-weight:600;font-size:1rem;user-select:none}
+    .brand{display:flex;align-items:center;gap:.55rem;min-height:var(--header-lane-min);text-decoration:none;color:#2f2823;font-size:1.08rem;font-weight:700;white-space:nowrap}
+    .brand-mark{width:2.25rem;height:2.25rem;border-radius:12px;border:1px solid rgba(166,121,74,.18);background:rgba(255,250,242,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.54);display:grid;place-items:center;font-size:.72rem;color:#8a5527}
+    .center-lane{display:flex;min-height:var(--header-lane-min);min-width:0;align-items:center}
+    .center-toolbar{display:flex;width:100%;min-width:0;align-items:center;gap:.35rem;overflow:hidden}
+    .center-toolbar.scroll-x{overflow-x:auto;padding-bottom:2px}
+    .ws-template{display:flex;width:100%;min-width:0;align-items:center;gap:.35rem}
+    .ws-slot{display:flex;align-items:center;gap:.35rem;min-width:0}
+    .ws-slot--time{flex:0 0 auto}.ws-slot--context{flex:1 1 auto;min-width:0;overflow:hidden}.ws-slot--view,.ws-slot--action{flex:0 0 auto}
+    .plain-context{font-size:.82rem;color:rgba(74,64,56,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .plain-context strong{color:#34271c;font-weight:600}
+    .main-nav{display:flex;min-height:var(--header-lane-min);align-items:center;gap:.15rem;flex-wrap:wrap}
+    .main-nav a{position:relative;padding:.5rem .625rem;font-weight:500;color:#4a4038;text-decoration:none;font-size:.8125rem}
+    .main-nav.legacy a.active{font-size:.875rem;font-weight:600;color:#2f2823}
+    .main-nav.improved a.active{font-weight:600;color:#2f2823}
+    .main-nav a.active::after{content:"";position:absolute;left:.5rem;right:.5rem;bottom:.35rem;height:3px;border-radius:2px;background:var(--nav-underline)}
+    .main-nav a:not(.active)::after{content:"";position:absolute;left:.5rem;right:.5rem;bottom:.35rem;height:3px;border-radius:2px;background:var(--nav-underline);opacity:0;transition:opacity .2s}
+    .main-nav a:not(.active):hover::after{opacity:.55}
+    .segmented{display:inline-flex;padding:2px;border-radius:999px;border:1px solid rgba(150,105,61,.14);background:rgba(255,249,239,.56);gap:2px}
+    .segmented.compact .seg-btn{padding:.22rem .55rem;font-size:.72rem}
+    .seg-btn{border:none;background:transparent;border-radius:999px;padding:.28rem .65rem;font:inherit;font-size:.74rem;color:rgba(74,64,56,.82);cursor:pointer;white-space:nowrap}
+    .seg-btn.active{background:linear-gradient(180deg,rgba(191,138,81,.95),rgba(160,106,54,.96));color:#fff8f1;box-shadow:0 6px 14px rgba(118,75,37,.14);font-weight:600}
+    .seg-btn .dot{display:inline-block;width:.42rem;height:.42rem;border-radius:999px;margin-left:.25rem;vertical-align:.05em}
+    .dot--done{background:#22c55e}.dot--active{background:#f59e0b}
+    .underline-tabs{display:inline-flex;gap:.15rem}
+    .utab{border:none;background:transparent;padding:.25rem .5rem;font:inherit;font-size:.78rem;color:rgba(74,64,56,.82);cursor:pointer;white-space:nowrap}
+    .utab.active{font-weight:600;color:#2f2823;text-decoration:underline;text-decoration-color:var(--nav-underline);text-decoration-thickness:2px;text-underline-offset:4px}
+    .nav-arrows{display:inline-flex;align-items:center}
+    .nav-arrow{border:none;background:transparent;padding:.25rem;color:rgba(74,64,56,.82);cursor:pointer;line-height:0}
+    .period-label{font-size:.76rem;font-weight:500;color:rgba(48,33,20,.72);padding:0 .25rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .toolbar-title{font-size:.95rem;font-weight:600;color:#34271c;white-space:nowrap}
+    .summary-chip{display:inline-flex;align-items:center;padding:.22rem .55rem;border-radius:999px;border:1px solid rgba(150,105,61,.12);background:rgba(255,249,239,.72);font-size:.68rem;white-space:nowrap}
+    .summary-chip span{color:#8b6c4d;margin-right:.35rem}.summary-chip b{color:#604529;font-weight:600}
+    .chip-btn,.action-btn{border-radius:15px;border:1px solid rgba(150,105,61,.14);background:rgba(255,249,239,.56);padding:.35rem .75rem;font:inherit;font-size:.75rem;font-weight:500;color:#4a4038;cursor:pointer;white-space:nowrap}
+    .chip-btn{border-radius:999px;padding:.28rem .75rem;font-size:.74rem;color:#5d4329}
+    .action-btn.primary{border-color:rgba(171,118,64,.24);background:linear-gradient(180deg,rgba(190,137,80,.96),rgba(160,106,54,.96));color:#fff8f1;box-shadow:0 8px 16px rgba(118,75,37,.16)}
+    .action-btn.selected{border-color:rgba(166,114,61,.24);background:linear-gradient(180deg,rgba(191,138,81,.95),rgba(160,106,54,.96));color:#fff8f1}
+    .interview-slots{display:flex;align-items:center;gap:.35rem;min-width:0}
+    .slot-progress{display:flex;align-items:center;gap:.35rem;min-width:5.5rem}
+    .legacy .slot-progress:not(.filled),.legacy .slot-cta:not(.filled) .action-btn.primary,.legacy .slot-mode:not(.filled) .action-btn{display:none}
+    .improved .slot-progress:not(.filled){opacity:0}
+    .slot-cta,.slot-mode{min-width:4.5rem;display:flex;justify-content:center}
+    .progress-ring{width:22px;height:22px;border-radius:999px;border:2.5px solid rgba(143,103,68,.18);border-top-color:rgba(168,112,60,.92);transform:rotate(-45deg)}
+    .progress-text{font-family:ui-monospace,monospace;font-size:.68rem;letter-spacing:.12em;color:#7f5c38;white-space:nowrap}
+    .date-input{border:1px solid var(--line-soft);border-radius:10px;background:transparent;padding:.15rem .35rem;font:inherit;font-size:.72rem;color:#5d4329}
+    .page-wrap{position:relative;z-index:1;max-width:72rem;margin:0 auto;padding:1rem 1rem 11rem}
+    .page-shell{border-radius:var(--radius-shell);border:1px solid var(--line-soft);background:linear-gradient(180deg,rgba(255,248,237,.62),rgba(246,232,206,.58));box-shadow:0 28px 92px rgba(86,55,27,.18);padding:1.25rem;min-height:60vh}
+    .hint{margin-bottom:1rem;padding:.75rem .9rem;border-radius:var(--radius-control);border:1px dashed var(--line-strong);background:rgba(169,111,61,.12);font-size:.8rem;line-height:1.6;color:var(--text-dim)}
+    .hint strong{color:var(--text-main)}
+    .change-list{display:grid;gap:.65rem;margin-top:1rem}@media(min-width:720px){.change-list{grid-template-columns:1fr 1fr}}
+    .change-card{border-radius:var(--radius-card);border:1px solid var(--line-soft);background:rgba(255,252,246,.72);padding:.85rem 1rem}
+    .change-card h3{margin:0 0 .35rem;font-size:.82rem;display:flex;align-items:center;gap:.4rem}
+    .badge{font-size:.62rem;font-weight:700;letter-spacing:.06em;padding:.12rem .4rem;border-radius:999px;background:rgba(138,85,39,.12);color:#8a5527}
+    .change-card p{margin:0;font-size:.76rem;color:var(--text-dim);line-height:1.55}
+    .anchor-ruler{margin-top:1rem;padding:.65rem;border-radius:var(--radius-control);background:rgba(0,0,0,.04);font-size:.72rem;font-family:ui-monospace,monospace;color:rgba(48,33,20,.65)}
+    .anchor-ruler span{color:#8a5527;font-weight:600}
+    .control-dock{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:.65rem .85rem calc(.65rem + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(48,33,20,.04),rgba(48,33,20,.92));backdrop-filter:blur(16px);color:#fff8f1;font-size:.74rem}
+    .dock-inner{max-width:72rem;margin:0 auto;display:grid;gap:.55rem}
+    .dock-row{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
+    .dock-label{font-weight:600;color:rgba(255,248,241,.72);margin-right:.15rem;white-space:nowrap}
+    .dock-btn{border:1px solid rgba(255,248,241,.22);background:rgba(255,248,241,.08);color:#fff8f1;border-radius:999px;padding:.28rem .65rem;font:inherit;font-size:.72rem;cursor:pointer}
+    .dock-btn.active{border-color:rgba(255,200,140,.55);background:rgba(191,138,81,.55);font-weight:600}
+    .dock-btn.improved-toggle.active{background:rgba(34,197,94,.35);border-color:rgba(134,239,172,.45)}
+    .dock-btn.legacy-toggle.active{background:rgba(239,68,68,.35);border-color:rgba(252,165,165,.45)}
+    .status-line{font-size:.68rem;color:rgba(255,248,241,.78);line-height:1.45}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-grid improved workspace-page" id="headerGrid">
+      <a class="brand" href="#"><span class="brand-mark">DL</span>Daily Light</a>
+      <span class="divider">｜</span>
+      <div class="center-lane" id="centerLane"></div>
+      <span class="divider">｜</span>
+      <nav class="main-nav improved" id="mainNav"></nav>
+    </div>
+  </header>
+  <main class="page-wrap"><section class="page-shell">
+    <div class="hint"><strong>用法：</strong>底部切换「改进前/改进后」，点主导航和子状态感受 P0–P3。建议改进后依次点 访谈→日历→分析→设置；访谈再切四个子状态看按钮是否还会挤动。</div>
+    <div class="change-list" id="changeCards"></div>
+    <div class="anchor-ruler">当前模式：<span id="modeLabel">改进后</span></div>
+  </section></main>
+  <div class="control-dock"><div class="dock-inner">
+    <div class="dock-row"><span class="dock-label">版本</span>
+      <button type="button" class="dock-btn improved-toggle active" data-version="improved">改进后（P0–P3）</button>
+      <button type="button" class="dock-btn legacy-toggle" data-version="legacy">改进前（当前线上）</button>
+    </div>
+    <div class="dock-row"><span class="dock-label">主导航</span>
+      <button type="button" class="dock-btn active" data-page="interview">访谈</button>
+      <button type="button" class="dock-btn" data-page="calendar">日历</button>
+      <button type="button" class="dock-btn" data-page="analysis">分析</button>
+      <button type="button" class="dock-btn" data-page="settings">设置</button>
+      <button type="button" class="dock-btn" data-page="profile">画像</button>
+    </div>
+    <div class="dock-row" id="subStateRow"></div>
+    <p class="status-line" id="statusLine"></p>
+  </div></div>
+  <script>
+    const MAIN_NAV=[{id:"interview",label:"访谈"},{id:"calendar",label:"日历"},{id:"analysis",label:"分析"},{id:"profile",label:"画像"},{id:"settings",label:"设置"}];
+    const DIMS=[{id:"joy",label:"开心",dot:"done"},{id:"fulfillment",label:"充实",dot:"active"},{id:"reflection",label:"思考"},{id:"improvement",label:"改进"},{id:"gratitude",label:"感谢"}];
+    const CARDS={P0:{t:"P0 · 稳住锚点",i:"五列骨架统一；设置/画像有轻标题；主导航同字号。",l:"设置/画像 3 列塌陷；主导航 14/13px 微跳。"},P1:{t:"P1 · 选中态",i:"wayfinding=下划线；view=segmented。",l:"underline 与 segmented 混用。"},P2:{t:"P2 · 访谈防抖",i:"进度/CTA/回到访谈固定槽位。",l:"条件控件插入 reflow。"},P3:{t:"P3 · IA 模板",i:"时间｜摘要｜视图｜动作 四槽。",l:"三页三套 IA。"}};
+    const S={version:"improved",page:"interview",iv:"normal",cal:"week",pre:"month",sec:"trends"};
+    const $=id=>document.getElementById(id);
+    const el=(t,c,h)=>{const n=document.createElement(t);if(c)n.className=c;if(h!=null)n.innerHTML=h;return n};
+    const div=()=>el("span","divider","｜");
+    function seg(items,active,compact){const w=el("div","segmented"+(compact?" compact":""));items.forEach(it=>{const b=el("button","seg-btn"+(it.id===active?" active":""));b.type="button";b.textContent=it.label;if(it.dot)b.appendChild(el("span","dot dot--"+it.dot));w.appendChild(b);});return w;}
+    function utabs(items,active,cb){const w=el("div","underline-tabs");items.forEach(it=>{const b=el("button","utab"+(it.id===active?" active":""),it.label);b.type="button";if(cb)b.onclick=()=>{cb(it.id);render();};w.appendChild(b);});return w;}
+    function arrows(){const w=el("div","nav-arrows");w.innerHTML='<button type="button" class="nav-arrow">◀</button><button type="button" class="nav-arrow">▶</button>';return w;}
+    function interview(){const r=el("div","center-toolbar scroll-x");const pf=["progress","draft","daily"].includes(S.iv),cf=S.iv==="draft",mf=S.iv==="daily";if(S.version==="improved"){const t=el("div","ws-template");t.appendChild(el("div","ws-slot ws-slot--time")).appendChild(seg(DIMS,"fulfillment"));const slots=el("div","interview-slots");const ps=el("div","slot-progress"+(pf?" filled":""));ps.innerHTML='<span class="progress-ring"></span><span class="progress-text">有效 3 轮</span>';const cs=el("div","slot-cta"+(cf?" filled":""));cs.appendChild(el("button","action-btn primary","生成日志"));const acts=el("div","ws-slot ws-slot--action");acts.appendChild(el("button","action-btn"+(S.iv==="daily"?" selected":""),"完整日志"));acts.appendChild(el("button","action-btn","当天评分"));const ms=el("div","slot-mode"+(mf?" filled":""));ms.appendChild(el("button","action-btn selected","回到访谈"));[ps,div(),cs,div(),acts,div(),ms].forEach(n=>slots.appendChild(n));const ctx=el("div","ws-slot ws-slot--context");ctx.appendChild(slots);t.appendChild(div());t.appendChild(ctx);r.appendChild(t);return r;}
+    r.appendChild(seg(DIMS,"fulfillment"));if(pf){r.appendChild(div());const p=el("div","slot-progress filled");p.innerHTML='<span class="progress-ring"></span><span class="progress-text">有效 3 轮</span>';r.appendChild(p);}if(cf)r.appendChild(el("button","action-btn primary","生成日志"));r.appendChild(el("button","action-btn"+(S.iv==="daily"?" selected":""),"查看汇总当天日志"));if(mf)r.appendChild(el("button","action-btn selected","回到访谈"));r.appendChild(el("button","action-btn","当天评分"));return r;}
+    function calendar(){const r=el("div","center-toolbar");const views=[{id:"month",label:"月"},{id:"week",label:"周"},{id:"day",label:"日"}];if(S.version==="improved"){const t=el("div","ws-template");const time=el("div","ws-slot ws-slot--time");time.appendChild(arrows());const ctx=el("div","ws-slot ws-slot--context");const inner=el("div");inner.style.cssText="display:flex;gap:.5rem;align-items:center;min-width:0;overflow:hidden";inner.appendChild(el("span","toolbar-title","2026 年 6 月 第 2 周"));inner.appendChild(el("span","summary-chip","<span>待继续</span><b>2</b>"));ctx.appendChild(inner);const view=el("div","ws-slot ws-slot--view");view.appendChild(seg(views,S.cal));const act=el("div","ws-slot ws-slot--action");act.appendChild(el("button","chip-btn","今天"));[time,div(),ctx,div(),view,div(),act].forEach(n=>t.appendChild(n));r.appendChild(t);return r;}
+    r.appendChild(arrows());r.appendChild(div());r.appendChild(el("span","toolbar-title","2026 年 6 月 第 2 周"));r.appendChild(div());r.appendChild(el("button","chip-btn","今天"));r.appendChild(div());r.appendChild(seg(views,S.cal));return r;}
+    function analysis(){const r=el("div","center-toolbar scroll-x");const presets=[{id:"week",label:"本周"},{id:"month",label:"本月"},{id:"custom",label:"自定义"}];const sections=[{id:"trends",label:"量化趋势"},{id:"dimensions",label:"五维记录"},{id:"correlation",label:"关联"},{id:"review",label:"复盘"}];const period=()=>{const s=el("div","nav-arrows");s.innerHTML='<button type="button" class="nav-arrow">◀</button>'+(S.pre==="custom"?'<input type="date" class="date-input" value="2026-06-01"><span class="period-label">—</span><input type="date" class="date-input" value="2026-06-12">':'<span class="period-label">2026 年 6 月</span>')+'<button type="button" class="nav-arrow">▶</button>';return s;};
+    if(S.version==="improved"){const t=el("div","ws-template");const time=el("div","ws-slot ws-slot--time");time.appendChild(seg(presets,S.pre,true));time.appendChild(div());time.appendChild(period());const ctx=el("div","ws-slot ws-slot--context");ctx.appendChild(utabs(sections,S.sec,id=>{S.sec=id;}));t.appendChild(time);t.appendChild(div());t.appendChild(ctx);r.appendChild(t);return r;}
+    const row=el("div");row.style.cssText="display:flex;gap:.35rem;align-items:center";row.appendChild(utabs(presets,S.pre,id=>{S.pre=id;}));row.appendChild(div());row.appendChild(period());row.appendChild(div());row.appendChild(utabs(sections,S.sec,id=>{S.sec=id;}));r.appendChild(row);return r;}
+    function plain(title,sub){const r=el("div","center-toolbar");if(S.version==="improved")r.appendChild(el("span","plain-context",`<strong>${title}</strong> · ${sub}`));return r;}
+    function render(){const ws=["interview","calendar","analysis"].includes(S.page);$("headerGrid").className=`header-grid ${S.version} ${ws?"workspace-page":"plain-page"}`;$("mainNav").className=`main-nav ${S.version}`;$("mainNav").innerHTML="";MAIN_NAV.forEach(n=>{const a=el("a",S.page===n.id?"active":"",n.label);a.href="#";a.onclick=e=>{e.preventDefault();S.page=n.id;document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===n.id));render();};$("mainNav").appendChild(a);});
+    $("centerLane").innerHTML="";$("centerLane").appendChild(S.page==="interview"?interview():S.page==="calendar"?calendar():S.page==="analysis"?analysis():S.page==="settings"?plain("设置","账号与偏好"):plain("画像","长期记忆与洞察"));
+    $("changeCards").innerHTML="";Object.entries(CARDS).forEach(([k,c])=>{const n=el("article","change-card");n.innerHTML=`<h3><span class="badge">${k}</span>${c.t}</h3><p>${S.version==="improved"?c.i:c.l}</p>`;$("changeCards").appendChild(n);});
+    $("subStateRow").innerHTML="";$("subStateRow").appendChild(el("span","dock-label","子状态"));
+    if(S.page==="interview")[["normal","默认"],["progress","有进度"],["draft","可生成日志"],["daily","完整日志"]].forEach(([id,l])=>{const b=el("button","dock-btn"+(S.iv===id?" active":""),l);b.onclick=()=>{S.iv=id;render();};$("subStateRow").appendChild(b);});
+    else if(S.page==="calendar")["month","week","day"].forEach(v=>{const b=el("button","dock-btn"+(S.cal===v?" active":""),v==="month"?"月":v==="week"?"周":"日");b.onclick=()=>{S.cal=v;render();};$("subStateRow").appendChild(b);});
+    else if(S.page==="analysis")["week","month","custom"].forEach(p=>{const b=el("button","dock-btn"+(S.pre===p?" active":""),p==="week"?"本周":p==="month"?"本月":"自定义");b.onclick=()=>{S.pre=p;render();};$("subStateRow").appendChild(b);});
+    else $("subStateRow").appendChild(el("span",null,"此页重点感受 P0 五列骨架"));
+    $("modeLabel").textContent=S.version==="improved"?"改进后":"改进前";$("statusLine").textContent=`${$("modeLabel").textContent} · 建议对比：改进后切 访谈→设置，主导航应基本不动；改进前切到设置会去掉两条｜。`;}
+    document.querySelectorAll("[data-version]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-version]").forEach(x=>x.classList.remove("active"));b.classList.add("active");S.version=b.dataset.version;render();});
+    document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-page]").forEach(x=>x.classList.remove("active"));b.classList.add("active");S.page=b.dataset.page;render();});
+    render();
+  </script>
+</body>
+</html>

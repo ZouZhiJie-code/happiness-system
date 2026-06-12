@@ -24,6 +24,12 @@ import {
 } from "@/features/analysis/view-state";
 import { prefetchAnalysisPeriodByOffset } from "@/components/analysis/use-analysis-period-prefetch";
 import { HeaderToolbarPeriodStepper } from "@/components/shared/header-toolbar-nav";
+import {
+  HeaderPeriodDisplay,
+  HeaderPeriodInputFrame,
+  HeaderToolbarDivider
+} from "@/components/shared/header-toolbar-primitives";
+import { SlidingSegmentedControl } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
@@ -38,37 +44,6 @@ const presetTabs: ReadonlyArray<{ key: AnalysisRangePreset; label: string }> = [
   { key: "month", label: "本月" },
   { key: "custom", label: "自定义" }
 ];
-
-function ToolbarDivider() {
-  return (
-    <span aria-hidden="true" className="shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]">
-      ｜
-    </span>
-  );
-}
-
-function HeaderTextButton({
-  active,
-  children,
-  onClick,
-  className,
-  ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "shrink-0 border-none bg-transparent px-1.5 py-1 text-[0.78rem] text-[rgba(74,64,56,0.82)] transition hover:text-[#2f2823]",
-        active && "font-semibold text-[#2f2823] underline decoration-[#8a5527] decoration-2 underline-offset-4",
-        className
-      )}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
 
 export function AnalysisToolbar() {
   const router = useRouter();
@@ -240,15 +215,24 @@ export function AnalysisToolbar() {
 
   return (
     <div data-testid="analysis-toolbar" className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
-        <div className="flex min-w-max items-center gap-1.5">
-          {presetTabs.map((tab) => (
-            <HeaderTextButton key={tab.key} active={activePeriod.preset === tab.key} onClick={() => navigatePreset(tab.key)}>
-              {tab.label}
-            </HeaderTextButton>
-          ))}
+      <div className="header-ws-template flex w-full min-w-0 items-center gap-1.5">
+        <div className="header-ws-slot header-ws-slot--time flex shrink-0 items-center gap-1.5">
+          <SlidingSegmentedControl
+            variant="calendar"
+            ariaLabel="分析周期"
+            value={activePeriod.preset}
+            onChange={navigatePreset}
+            items={presetTabs.map((tab) => ({
+              value: tab.key,
+              label: tab.label,
+              ariaLabel: tab.label,
+              buttonProps: {
+                "aria-current": activePeriod.preset === tab.key ? ("page" as const) : undefined
+              }
+            }))}
+          />
 
-          <ToolbarDivider />
+          <HeaderToolbarDivider />
 
           <HeaderToolbarPeriodStepper
             testId="analysis-period-stepper"
@@ -263,7 +247,7 @@ export function AnalysisToolbar() {
             onPrefetchNext={() => prefetchAdjacent(1)}
           >
             {activePeriod.preset === "custom" ? (
-              <div className="flex items-center gap-1">
+              <HeaderPeriodInputFrame>
                 <input
                   type="date"
                   value={activePeriod.startDate}
@@ -275,10 +259,10 @@ export function AnalysisToolbar() {
                       optimistic: true
                     })
                   }
-                  className="shrink-0 rounded-[10px] border border-[var(--line-soft)] bg-transparent px-1.5 py-0.5 text-[0.72rem] text-[#5d4329]"
+                  className="header-text-period-input shrink-0"
                   aria-label="自定义开始日期"
                 />
-                <span className="text-[0.72rem] text-[rgba(48,33,20,0.45)]">—</span>
+                <span className="header-text-period-separator">—</span>
                 <input
                   type="date"
                   value={activePeriod.endDate}
@@ -290,42 +274,38 @@ export function AnalysisToolbar() {
                       optimistic: true
                     })
                   }
-                  className="shrink-0 rounded-[10px] border border-[var(--line-soft)] bg-transparent px-1.5 py-0.5 text-[0.72rem] text-[#5d4329]"
+                  className="header-text-period-input shrink-0"
                   aria-label="自定义结束日期"
                 />
-              </div>
+              </HeaderPeriodInputFrame>
             ) : (
-              <span
-                data-testid="analysis-period-display"
-                className="shrink-0 whitespace-nowrap text-[0.76rem] font-medium tabular-nums text-[rgba(48,33,20,0.72)]"
-              >
-                {periodDisplayLabel}
-              </span>
+              <HeaderPeriodDisplay testId="analysis-period-display">{periodDisplayLabel}</HeaderPeriodDisplay>
             )}
           </HeaderToolbarPeriodStepper>
 
-          <ToolbarDivider />
+        </div>
+        <HeaderToolbarDivider />
+        <div className="header-ws-slot header-ws-slot--context min-w-0 flex-1 overflow-x-auto pb-0.5">
+          <div className="flex min-w-max items-center gap-1.5">
+            {sectionTabs.map((tab) => {
+              const active = tab.key === activeSection;
 
-          {sectionTabs.map((tab) => {
-            const active = tab.key === activeSection;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => navigateSection(tab.key)}
-                className={cn(
-                  "shrink-0 px-1.5 py-1 text-[0.78rem] transition duration-200",
-                  active
-                    ? "font-semibold text-[#2f2823] underline decoration-[#8a5527] decoration-2 underline-offset-4"
-                    : "text-[rgba(74,64,56,0.82)] hover:text-[#2f2823]"
-                )}
-                aria-pressed={active}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => navigateSection(tab.key)}
+                  className={cn(
+                    "header-text-tab shrink-0 px-1.5 py-1 transition duration-200 hover:text-[#2f2823]",
+                    active && "header-text-tab--active"
+                  )}
+                  aria-pressed={active}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

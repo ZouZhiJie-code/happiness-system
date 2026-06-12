@@ -471,6 +471,10 @@ function expectSelectedProgressHidden() {
   expect(within(getDimensionBar()).queryByTestId("selected-dimension-progress")).not.toBeInTheDocument();
 }
 
+function expectNoConsecutiveHeaderDividers() {
+  expect(getDimensionBar().textContent?.includes("｜｜")).toBe(false);
+}
+
 describe("InterviewShell", () => {
   beforeEach(() => {
     useInterviewStore.getState().reset("joy");
@@ -755,6 +759,15 @@ describe("InterviewShell", () => {
         }
       )
     );
+  });
+
+  it("does not render empty header dividers before progress or generate controls appear", async () => {
+    renderInterviewPage();
+
+    expect(await screen.findByText(openingMessage.content)).toBeInTheDocument();
+    expectSelectedProgressHidden();
+    expect(screen.queryByRole("button", { name: "生成日志" })).not.toBeInTheDocument();
+    expectNoConsecutiveHeaderDividers();
   });
 
   it("removes the old right-side modules and shows a generate CTA when the interview is ready", async () => {

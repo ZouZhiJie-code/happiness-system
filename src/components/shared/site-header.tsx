@@ -55,6 +55,35 @@ function HeaderDivider({ className }: { className?: string }) {
   );
 }
 
+const headerPlainContextByPath: Partial<Record<string, { title: string; subtitle: string }>> = {
+  "/settings": { title: "设置", subtitle: "账号与偏好" },
+  "/profile": { title: "画像", subtitle: "长期记忆与洞察" }
+};
+
+function resolveHeaderPlainContext(pathname: string) {
+  for (const [matchPath, context] of Object.entries(headerPlainContextByPath)) {
+    if (pathname === matchPath || pathname.startsWith(`${matchPath}/`)) {
+      return context;
+    }
+  }
+
+  return null;
+}
+
+function HeaderPlainContext({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <p className="min-w-0 truncate text-[0.82rem] text-[rgba(74,64,56,0.72)]">
+      <span className="font-semibold text-[#34271c]">{title}</span>
+      <span aria-hidden="true"> · </span>
+      <span>{subtitle}</span>
+    </p>
+  );
+}
+
+function HeaderWorkspaceTemplate({ children }: { children: React.ReactNode }) {
+  return <div className="header-ws-template flex w-full min-w-0 items-center gap-1.5">{children}</div>;
+}
+
 function ProgressRing({
   percentage,
   label,
@@ -179,6 +208,12 @@ function syncSiteHeaderViewportOffset(headerElement: HTMLElement | null) {
   }
 
   const measuredHeight = Math.max(headerElement.offsetHeight, headerElement.getBoundingClientRect().height);
+
+  if (measuredHeight <= 0) {
+    document.documentElement.style.setProperty(headerViewportOffsetVarName, headerViewportOffsetFallback);
+    return;
+  }
+
   document.documentElement.style.setProperty(headerViewportOffsetVarName, `${Math.ceil(measuredHeight)}px`);
 }
 
@@ -246,7 +281,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
   const hasUserMessages = messages.some((message) => message.role === "user");
   const shouldProtectInterview = isInterviewPage && status === "active" && hasUserMessages;
   const isViewingHydratedDimension = (sessionDimension ?? activeDimension) === activeDimension;
-  const hasHeaderWorkspace = isInterviewPage || isCalendarPage || isAnalysisPage;
+  const headerPlainContext = resolveHeaderPlainContext(pathname);
   const shouldHideDraftGenerateButton = Boolean(isViewingHydratedDimension && status === "active" && pendingDecision);
   const shouldShowDraftGenerateButton = Boolean(
     isInterviewWorkspaceSelected &&
@@ -555,6 +590,8 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       : {
           kind: "hidden"
         };
+  const showSelectedProgressPod = selectedProgressPodState.kind === "active";
+  const showReturnToInterviewButton = isDailyJournalWorkspaceSelected;
 
   function confirmLeaveInterview() {
     if (!shouldProtectInterview) {
@@ -671,12 +708,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
         ref={headerRef}
         className="site-header-frosted sticky top-0 z-50 isolate w-full border-b border-[rgba(101,67,34,0.06)] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.2)] md:px-6"
       >
-      <div
-        className={clsx(
-          "relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:items-center md:gap-3",
-          hasHeaderWorkspace ? "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]" : "md:grid-cols-[auto_minmax(0,1fr)_auto]"
-        )}
-      >
+      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] md:items-center md:gap-3">
         <Link
           href="/"
           onClick={(event) => handleProtectedNavigation(event, "/")}
@@ -695,170 +727,187 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
           </div>
           <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">Daily Light</p>
         </Link>
-        {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
+        <HeaderDivider className="hidden md:flex" />
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
             <div
               data-testid="interview-dimension-bar"
-              className="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto pb-0.5"
+              className="flex w-full min-w-0 overflow-x-auto pb-0.5"
             >
-              <div className="min-w-0 shrink-0">
-                <SlidingSegmentedControl
-                  variant="admin"
-                  scrollable
-                  highlightSelection={isInterviewWorkspaceSelected}
-                  ariaLabel="访谈维度切换"
-                  value={activeDimension}
-                  onChange={handleDimensionChange}
-                  items={interviewDimensions.map((item) => {
-                    const meta = getInterviewDimensionMeta(item);
-                    const progressSummary = dimensionProgressMap[item];
-                    const progressId = `interview-dimension-status-${item}`;
+              <HeaderWorkspaceTemplate>
+                <div className="header-ws-slot header-ws-slot--time shrink-0 min-w-0">
+                  <SlidingSegmentedControl
+                    variant="admin"
+                    scrollable
+                    highlightSelection={isInterviewWorkspaceSelected}
+                    ariaLabel="访谈维度切换"
+                    value={activeDimension}
+                    onChange={handleDimensionChange}
+                    items={interviewDimensions.map((item) => {
+                      const meta = getInterviewDimensionMeta(item);
+                      const progressSummary = dimensionProgressMap[item];
+                      const progressId = `interview-dimension-status-${item}`;
 
-                    return {
-                      value: item,
-                      label: (
-                        <>
-                          {meta.navLabel}
-                          <span id={progressId} className="sr-only">
-                            {progressSummary.statusLabel}
-                          </span>
-                        </>
-                      ),
-                      disabled: isWorkspaceTransitioning,
-                      ariaLabel: `${meta.navLabel}，${progressSummary.statusLabel}`,
-                      adornment: (
-                        <DimensionStatusDot
-                          statusLabel={progressSummary.statusLabel}
-                          testId={`interview-dimension-status-dot-${item}`}
-                        />
-                      ),
-                      buttonProps: {
-                        "aria-describedby": progressId,
-                        "aria-pressed": isInterviewWorkspaceSelected && item === activeDimension,
-                        "aria-current": isInterviewWorkspaceSelected && item === activeDimension ? ("step" as const) : undefined,
-                        onPointerEnter: () => {
-                          if (item !== activeDimension) {
-                            prefetchDimensionSession(item);
+                      return {
+                        value: item,
+                        label: (
+                          <>
+                            {meta.navLabel}
+                            <span id={progressId} className="sr-only">
+                              {progressSummary.statusLabel}
+                            </span>
+                          </>
+                        ),
+                        disabled: isWorkspaceTransitioning,
+                        ariaLabel: `${meta.navLabel}，${progressSummary.statusLabel}`,
+                        adornment: (
+                          <DimensionStatusDot
+                            statusLabel={progressSummary.statusLabel}
+                            testId={`interview-dimension-status-dot-${item}`}
+                          />
+                        ),
+                        buttonProps: {
+                          "aria-describedby": progressId,
+                          "aria-pressed": isInterviewWorkspaceSelected && item === activeDimension,
+                          "aria-current": isInterviewWorkspaceSelected && item === activeDimension ? ("step" as const) : undefined,
+                          onPointerEnter: () => {
+                            if (item !== activeDimension) {
+                              prefetchDimensionSession(item);
+                            }
                           }
                         }
-                      }
-                    };
-                  })}
-                />
-              </div>
-                {selectedProgressPodState.kind !== "hidden" ? (
-                  <>
-                    <HeaderDivider />
-                    <div
-                      data-testid="selected-dimension-progress"
-                      className="flex shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
+                      };
+                    })}
+                  />
+                </div>
+                <HeaderDivider />
+                <div className="header-ws-slot header-ws-slot--context flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+                  {showSelectedProgressPod ? (
+                    <>
+                      <div
+                        data-testid="selected-dimension-progress"
+                        className="flex min-w-[5.5rem] shrink-0 items-center gap-1 pr-0.5 text-[#6d5338]"
+                      >
+                        <ProgressRing
+                          percentage={selectedProgressPodState.percentage}
+                          label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressPodState.percentage}%`}
+                          testId={`dimension-progress-ring-${activeDimension}`}
+                          size={22}
+                        />
+                        <span
+                          data-testid="selected-dimension-progress-value"
+                          className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
+                        >
+                          {selectedProgressPodState.label}
+                        </span>
+                      </div>
+                      {shouldShowDraftGenerateButton ? <HeaderDivider /> : null}
+                    </>
+                  ) : null}
+                  {shouldShowDraftGenerateButton ? (
+                    <>
+                      <div className="flex min-w-[4.75rem] shrink-0 justify-center">
+                        <button
+                          type="button"
+                          onClick={handleDraftGenerateClick}
+                          disabled={draftGenerationBusy || draftGenerationDisabled}
+                          className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {draftGenerationBusy ? "正在整理..." : "生成日志"}
+                        </button>
+                      </div>
+                      <HeaderDivider />
+                    </>
+                  ) : null}
+                  {showSelectedProgressPod && !shouldShowDraftGenerateButton ? <HeaderDivider /> : null}
+                  <div className="header-ws-slot header-ws-slot--action flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleDailyJournalClick}
+                      disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
+                      aria-pressed={isDailyJournalWorkspaceSelected}
+                      aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
+                      className={clsx(
+                        "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
+                        isDailyJournalWorkspaceSelected
+                          ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
+                          : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
+                      )}
+                      aria-label="查看汇总当天日志"
                     >
-                      {selectedProgressPodState.kind === "active" ? (
-                        <>
-                          <ProgressRing
-                            percentage={selectedProgressPodState.percentage}
-                            label={`${getInterviewDimensionMeta(activeDimension).navLabel} 当前进度 ${selectedProgressPodState.percentage}%`}
-                            testId={`dimension-progress-ring-${activeDimension}`}
-                            size={22}
-                          />
+                      <span
+                        aria-hidden="true"
+                        className={clsx(
+                          "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
+                          !isDailyJournalWorkspaceSelected && "opacity-50"
+                        )}
+                      />
+                      {isOpeningDailyJournal ? "正在打开完整日志" : "完整日志"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleHappinessScoreEntryClick}
+                      disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
+                      aria-pressed={isHappinessScoreWorkspaceSelected}
+                      aria-current={isHappinessScoreWorkspaceSelected ? "step" : undefined}
+                      className={clsx(
+                        "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
+                        isHappinessScoreWorkspaceSelected
+                          ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
+                          : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
+                      )}
+                      aria-label={isDailyJournalWorkspaceSelected ? "当天评分（请先回到访谈）" : "打开当天评分"}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={clsx(
+                          "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
+                          !isHappinessScoreWorkspaceSelected && "opacity-50"
+                        )}
+                      />
+                      当天评分
+                    </button>
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={handleConversationResetClick}
+                        className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
+                      >
+                        清除对话记录
+                      </button>
+                    ) : null}
+                  </div>
+                  {showReturnToInterviewButton ? (
+                    <>
+                      <HeaderDivider />
+                      <div className="header-ws-slot header-ws-slot--mode flex min-w-[4.75rem] shrink-0 justify-center">
+                        <button
+                          type="button"
+                          onClick={handleReturnToInterviewClick}
+                          disabled={isWorkspaceTransitioning}
+                          className="group relative flex shrink-0 items-center justify-center rounded-[15px] border border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] px-3 py-1.5 text-left text-[12px] font-medium text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label="回到访谈"
+                        >
                           <span
-                            data-testid="selected-dimension-progress-value"
-                            className="whitespace-nowrap font-mono text-[0.68rem] tracking-[0.14em] text-[#7f5c38]"
-                          >
-                            {selectedProgressPodState.label}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-                  </>
-                ) : null}
-                {shouldShowDraftGenerateButton ? (
-                  <button
-                    type="button"
-                    onClick={handleDraftGenerateClick}
-                    disabled={draftGenerationBusy || draftGenerationDisabled}
-                    className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {draftGenerationBusy ? "正在整理..." : "生成日志"}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={handleDailyJournalClick}
-                  disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
-                  aria-pressed={isDailyJournalWorkspaceSelected}
-                  aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
-                  className={clsx(
-                    "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
-                    isDailyJournalWorkspaceSelected
-                      ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                      : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                  )}
-                  aria-label="查看汇总当天日志"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={clsx(
-                      "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                      !isDailyJournalWorkspaceSelected && "opacity-50"
-                    )}
-                  />
-                  {isOpeningDailyJournal ? "正在打开汇总当天日志" : "查看汇总当天日志"}
-                </button>
-                {isDailyJournalWorkspaceSelected ? (
-                  <button
-                    type="button"
-                    onClick={handleReturnToInterviewClick}
-                    disabled={isWorkspaceTransitioning}
-                    className="group relative flex shrink-0 items-center justify-center rounded-[15px] border border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] px-3 py-1.5 text-left text-[12px] font-medium text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60"
-                    aria-label="回到访谈"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]"
-                    />
-                    回到访谈
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={handleHappinessScoreEntryClick}
-                  disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
-                  aria-pressed={isHappinessScoreWorkspaceSelected}
-                  aria-current={isHappinessScoreWorkspaceSelected ? "step" : undefined}
-                  className={clsx(
-                    "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
-                    isHappinessScoreWorkspaceSelected
-                      ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                      : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                  )}
-                  aria-label={isDailyJournalWorkspaceSelected ? "当天评分（请先回到访谈）" : "打开当天评分"}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={clsx(
-                      "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                      !isHappinessScoreWorkspaceSelected && "opacity-50"
-                    )}
-                  />
-                  当天评分
-                </button>
-                {isAdmin ? (
-                  <button
-                    type="button"
-                    onClick={handleConversationResetClick}
-                    className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
-                  >
-                    清除对话记录
-                  </button>
-                ) : null}
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]"
+                          />
+                          回到访谈
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </HeaderWorkspaceTemplate>
             </div>
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
           {isAnalysisPage ? <AnalysisToolbar /> : null}
+          {headerPlainContext ? (
+            <HeaderPlainContext title={headerPlainContext.title} subtitle={headerPlainContext.subtitle} />
+          ) : null}
         </div>
-        {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
+        <HeaderDivider className="hidden md:flex" />
         <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">
           {navItems.map((item) => {
             const active = isActive(item.matchPath);
@@ -878,7 +927,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
                 className={clsx(
                   "relative px-2.5 py-2 font-medium text-[#4a4038] transition duration-200 after:absolute after:inset-x-2 after:bottom-1.5 after:h-[3px] after:rounded-sm after:bg-[#8a5527] after:transition-opacity after:duration-200 after:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034]",
                   active
-                    ? "text-[14px] font-semibold text-[#2f2823] after:opacity-100"
+                    ? "text-[13px] font-semibold text-[#2f2823] after:opacity-100"
                     : "text-[13px] after:opacity-0 hover:text-[#2f2823] hover:after:opacity-55"
                 )}
               >

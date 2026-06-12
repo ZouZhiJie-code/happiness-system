@@ -28,7 +28,7 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
 }));
 
 const resizeObserverState = vi.hoisted(() => ({
-  callback: null as ResizeObserverCallback | null,
+  instances: [] as Array<{ callback: ResizeObserverCallback; element: Element | null }>,
   observe: vi.fn(),
   disconnect: vi.fn()
 }));
@@ -44,11 +44,17 @@ vi.mock("next/navigation", () => ({
 }));
 
 class ResizeObserverMock {
+  private instance: { callback: ResizeObserverCallback; element: Element | null };
+
   constructor(callback: ResizeObserverCallback) {
-    resizeObserverState.callback = callback;
+    this.instance = { callback, element: null };
+    resizeObserverState.instances.push(this.instance);
   }
 
-  observe = resizeObserverState.observe;
+  observe = (element: Element) => {
+    this.instance.element = element;
+    resizeObserverState.observe(element);
+  };
 
   disconnect = resizeObserverState.disconnect;
 }
@@ -244,7 +250,7 @@ describe("site header calendar toolbar", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
     clearAllCalendarRecordCache();
     mockAllCalendarFetch();
-    resizeObserverState.callback = null;
+    resizeObserverState.instances = [];
     resizeObserverState.observe.mockReset();
     resizeObserverState.disconnect.mockReset();
     document.documentElement.style.removeProperty("--site-header-viewport-offset");
@@ -274,6 +280,8 @@ describe("site header calendar toolbar", () => {
     });
 
     expect(within(toolbar).getByText("2026年5月")).toBeInTheDocument();
+    expect(within(toolbar).getByTestId("calendar-period-stepper")).toBeInTheDocument();
+    expect(within(toolbar).getByTestId("calendar-period-display")).toHaveTextContent("2026年5月");
     expect(within(toolbar).getByText("3天")).toBeInTheDocument();
     expect(within(toolbar).getByText("2天")).toBeInTheDocument();
     expect(within(toolbar).getByText("0维")).toBeInTheDocument();
@@ -314,8 +322,15 @@ describe("site header calendar toolbar", () => {
 
     render(<SiteHeader />);
 
-    const header = screen.getByRole("banner");
-    vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+    await screen.findByTestId("calendar-toolbar");
+    const observedHeader = screen.getByRole("banner");
+    const headerObserver = resizeObserverState.instances.find((instance) => instance.element === observedHeader);
+    expect(headerObserver).toBeTruthy();
+    Object.defineProperty(observedHeader, "offsetHeight", {
+      configurable: true,
+      value: 118
+    });
+    vi.spyOn(observedHeader, "getBoundingClientRect").mockReturnValue({
       x: 0,
       y: 0,
       top: 0,
@@ -327,13 +342,13 @@ describe("site header calendar toolbar", () => {
       toJSON: () => ({})
     });
 
-    resizeObserverState.callback?.([], {} as ResizeObserver);
+    headerObserver?.callback([], {} as ResizeObserver);
 
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue("--site-header-viewport-offset")).toBe("118px");
     });
 
-    expect(resizeObserverState.observe).toHaveBeenCalledWith(header);
+    expect(resizeObserverState.observe).toHaveBeenCalledWith(observedHeader);
   });
 
   it("switches the active view and keeps the current date", async () => {
@@ -461,7 +476,10 @@ describe("site header calendar toolbar", () => {
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     expect(toolbar).toHaveAttribute("aria-busy", "true");
-    expect(within(toolbar).getByRole("status")).toHaveTextContent("正在读取摘要。");
+    expect(within(toolbar).getByTestId("calendar-period-stepper")).toHaveAttribute("aria-busy", "true");
+    expect(within(toolbar).getByTestId("calendar-period-stepper").querySelector(".sr-only")).toHaveTextContent(
+      "正在读取摘要。"
+    );
 
     deferred.resolve(new Response(JSON.stringify(buildMonthRecord()), { status: 200 }));
     await waitFor(() => {
