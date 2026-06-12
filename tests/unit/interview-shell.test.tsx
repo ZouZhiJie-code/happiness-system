@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/shared/site-header";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getAssistantChoiceKind } from "@/features/joy-interview/assistant-turn";
 import { interviewLeaveConfirmMessage, interviewSessionStorageKey } from "@/features/interview/dimensions";
+import { clearAllDimensionSessionCache } from "@/features/interview/dimension-session-cache";
+import { clearInterviewBootstrapTasks } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
@@ -327,7 +329,7 @@ function getTopGenerateButton() {
 }
 
 function getDimensionButton(label: string) {
-  return within(getDimensionBar()).getByRole("button", { name: label });
+  return within(getDimensionBar()).getByRole("button", { name: new RegExp(`^${label}(，|$)`) });
 }
 
 function getExpectedHeaderStatusValue(status: string) {
@@ -472,6 +474,8 @@ function expectSelectedProgressHidden() {
 describe("InterviewShell", () => {
   beforeEach(() => {
     useInterviewStore.getState().reset("joy");
+    clearAllDimensionSessionCache();
+    clearInterviewBootstrapTasks();
     window.localStorage.clear();
     mockPathname.value = "/interview";
     mockRouterPush.mockReset();
@@ -1855,7 +1859,8 @@ describe("InterviewShell", () => {
 
     renderInterviewPage();
 
-    await screen.findByText("当前记录日期：2026-05-01");
+    await screen.findByTestId("interview-entry-date-label");
+    expect(screen.getByTestId("interview-entry-date-label")).toHaveTextContent("当前记录日期：2026-05-01");
     const scoreTrigger = within(getDimensionBar()).getByRole("button", { name: "打开当天评分" });
 
     fireEvent.click(scoreTrigger);
@@ -3458,12 +3463,12 @@ describe("InterviewShell", () => {
 
     await screen.findByText("有效 2 轮");
 
-    fireEvent.click(screen.getByRole("button", { name: "思考" }));
+    fireEvent.click(getDimensionButton("思考"));
 
     expect(confirmSpy).toHaveBeenCalledWith(interviewLeaveConfirmMessage);
     expect(mockRouterPush).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "思考" }));
+    fireEvent.click(getDimensionButton("思考"));
 
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith(`/interview?dimension=reflection&entryDate=${defaultEntryDate()}`, { scroll: false });
@@ -3637,6 +3642,90 @@ describe("InterviewShell", () => {
     );
   });
 
+  it("restores a previously visited dimension instantly without blocking on session fetch", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    cacheInterviewSessions({
+      joy: "session-ready",
+      fulfillment: "session-fulfillment"
+    });
+
+    const joySession = buildSession({
+      id: "session-ready",
+      dimension: "joy",
+      status: "active",
+      stage: "wrap_up",
+      turnCount: 2,
+      messages: promptMessages,
+      snapshot: baseSnapshot
+    });
+    const fulfillmentSession = buildSession({
+      id: "session-fulfillment",
+      dimension: "fulfillment",
+      status: "active",
+      stage: "collect_event",
+      turnCount: 0,
+      messages: [
+        {
+          ...openingMessage,
+          id: "assistant-fulfillment-opening",
+          content: "今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。"
+        }
+      ],
+      snapshot: baseSnapshot
+    });
+
+    const sessionReadyFetchCount = vi.fn();
+    const sessionFulfillmentFetchCount = vi.fn();
+    const deferredJoyReturnFetches: Array<(value: Response) => void> = [];
+    let shouldDeferJoyRevalidate = false;
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-ready")) {
+        sessionReadyFetchCount();
+
+        if (shouldDeferJoyRevalidate && sessionReadyFetchCount.mock.calls.length > 1) {
+          return new Promise<Response>((resolve) => {
+            deferredJoyReturnFetches.push(resolve);
+          });
+        }
+
+        return new Response(JSON.stringify(joySession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/session-fulfillment")) {
+        sessionFulfillmentFetchCount();
+        return new Response(JSON.stringify(fulfillmentSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+
+    await screen.findByText("今天和家人一起吃饭聊天，因为我最近很少这么放松。");
+
+    fireEvent.click(getDimensionButton("充实"));
+    await screen.findByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。");
+    expect(sessionFulfillmentFetchCount).toHaveBeenCalled();
+
+    shouldDeferJoyRevalidate = true;
+    fireEvent.click(getDimensionButton("开心"));
+
+    await waitFor(() => {
+      expect(screen.getByText("今天和家人一起吃饭聊天，因为我最近很少这么放松。")).toBeInTheDocument();
+    });
+    expect(deferredJoyReturnFetches.length).toBeGreaterThanOrEqual(1);
+  });
+
   it("shows the target dimension immediately while its session request is still pending", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     cacheInterviewSessions({
@@ -3669,8 +3758,9 @@ describe("InterviewShell", () => {
       snapshot: baseSnapshot
     });
     const resolveFulfillmentFetches: Array<(value: Response) => void> = [];
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
 
-    global.fetch = vi.fn((input: RequestInfo | URL) => {
+    vi.mocked(global.fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
       if (url.endsWith("/api/interview/session/session-ready")) {
@@ -3688,10 +3778,10 @@ describe("InterviewShell", () => {
         });
       }
 
-      throw new Error(`Unhandled fetch: ${url}`);
-    }) as typeof fetch;
+      return defaultFetch!(input, init);
+    });
 
-    const view = renderInterviewPage();
+    renderInterviewPage();
 
     await screen.findByText("有效 2 轮");
     fireEvent.click(getDimensionButton("充实"));
@@ -3700,14 +3790,6 @@ describe("InterviewShell", () => {
       expect(getDimensionButton("充实")).toHaveAttribute("aria-current", "step");
       expect(getDimensionButton("开心")).not.toHaveAttribute("aria-current");
     });
-
-    mockSearchParams.value.dimension = "fulfillment";
-    view.rerender(
-      <>
-        <SiteHeader />
-        <InterviewShell />
-      </>
-    );
 
     await waitFor(() => {
       expect(screen.queryByText("今天和家人一起吃饭聊天，因为我最近很少这么放松。")).not.toBeInTheDocument();
@@ -3728,6 +3810,10 @@ describe("InterviewShell", () => {
     });
 
     expect(await screen.findByText("今天有没有一个让你觉得充实的片段？先讲讲那时你在做什么。")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(useInterviewStore.getState().bootState).toBe("idle");
+    });
   });
 
   it("keeps the header stable while a cached session is restoring, then shows rounds after hydrate", async () => {

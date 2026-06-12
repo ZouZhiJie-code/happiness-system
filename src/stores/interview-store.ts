@@ -78,7 +78,7 @@ interface InterviewState {
   setPendingUrlDimension: (dimension: InterviewDimension | null) => void;
   setWorkspaceMode: (mode: InterviewWorkspaceMode) => void;
   requestConversationReset: () => void;
-  reset: (nextDimension?: InterviewDimension) => void;
+  reset: (nextDimension?: InterviewDimension, options?: { preservePendingUrlDimension?: boolean }) => void;
 }
 
 const initialState = {
@@ -194,5 +194,10 @@ export const useInterviewStore = create<InterviewState>((set) => ({
     set((state) => ({
       conversationResetRequestId: state.conversationResetRequestId + 1
     })),
-  reset: (nextDimension) => set({ ...initialState, dimension: nextDimension ?? initialState.dimension })
+  reset: (nextDimension, options) =>
+    set((state) => ({
+      ...initialState,
+      dimension: nextDimension ?? initialState.dimension,
+      pendingUrlDimension: options?.preservePendingUrlDimension ? state.pendingUrlDimension : null
+    }))
 }));

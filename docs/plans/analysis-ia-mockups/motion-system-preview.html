@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>滑块 / 横向分页 · 全场景体验</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .page-inner { max-width: 56rem; margin: 0 auto; padding-bottom: 3rem; }
+
+    .hero-banner {
+      margin-bottom: 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-control);
+      border: 1px dashed var(--line-strong);
+      background: var(--amber-soft);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .hero-banner strong { color: var(--text-main); }
+    .hero-banner a { color: var(--amber); font-weight: 600; }
+
+    .toc {
+      margin-bottom: 1.25rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.82);
+      font-size: 0.78rem;
+    }
+
+    .toc h2 {
+      margin: 0 0 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 650;
+      color: var(--text-main);
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 1.15rem;
+      line-height: 1.85;
+      color: var(--text-dim);
+    }
+
+    .toc a { color: var(--amber); font-weight: 600; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    .scenario {
+      scroll-margin-top: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .scenario-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .scenario-head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 650;
+      color: var(--text-main);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.12rem 0.45rem;
+      font-size: 0.62rem;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+    }
+
+    .badge--p0 { background: rgba(90, 122, 86, 0.18); color: #3d5238; }
+    .badge--p1 { background: rgba(169, 111, 61, 0.16); color: #6f4420; }
+    .badge--p2 { background: rgba(110, 73, 38, 0.1); color: #6f5339; }
+    .badge--skip { background: rgba(48, 33, 20, 0.06); color: var(--text-faint); }
+
+    .scenario-desc {
+      margin: 0 0 0.75rem;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+
+    .compare-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 820px) {
+      .compare-grid--2 { grid-template-columns: 1fr 1fr; }
+    }
+
+    .demo-card {
+      background: linear-gradient(165deg, rgba(255, 252, 246, 0.96) 0%, rgba(248, 233, 204, 0.4) 100%);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      box-shadow: 0 8px 28px rgba(86, 55, 27, 0.06);
+      padding: 0.75rem 0.9rem;
+    }
+
+    .demo-label {
+      margin: 0 0 0.55rem;
+      font-size: 0.7rem;
+      font-weight: 650;
+      color: var(--text-dim);
+    }
+
+    .demo-note {
+      margin: 0.55rem 0 0;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      color: var(--text-faint);
+    }
+
+    .pane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .pane-head h3 {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--text-main);
+    }
+
+    /* —— Segmented: soft (分析页) —— */
+    .seg-soft {
+      position: relative;
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.6);
+      isolation: isolate;
+    }
+
+    .seg-soft button {
+      position: relative;
+      z-index: 1;
+      border: none;
+      border-radius: 999px;
+      padding: 0.22rem 0.5rem;
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      background: transparent;
+      cursor: pointer;
+      transition: color 220ms ease-out;
+    }
+
+    .seg-soft button.on {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .seg-soft .thumb {
+      position: absolute;
+      top: 3px;
+      left: 0;
+      height: calc(100% - 6px);
+      border-radius: 999px;
+      background: var(--paper-soft);
+      box-shadow: 0 1px 4px rgba(86, 55, 27, 0.08);
+      z-index: 0;
+      pointer-events: none;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .seg-soft--instant button.on {
+      background: var(--paper-soft);
+      box-shadow: 0 1px 4px rgba(86, 55, 27, 0.08);
+    }
+
+    /* —— Segmented: calendar（暖棕渐变） —— */
+    .seg-calendar {
+      position: relative;
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(159, 120, 81, 0.18);
+      background: rgba(250, 242, 229, 0.9);
+      box-shadow: inset 0 1px 0 rgba(255, 251, 242, 0.66);
+      isolation: isolate;
+    }
+
+    .seg-calendar button {
+      position: relative;
+      z-index: 1;
+      border: none;
+      border-radius: 999px;
+      padding: 0.38rem 0.75rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: #725840;
+      background: transparent;
+      cursor: pointer;
+      transition: color 220ms ease-out;
+    }
+
+    .seg-calendar button.on { color: #fff8f1; font-weight: 600; }
+
+    .seg-calendar .thumb {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      height: calc(100% - 8px);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+      box-shadow: 0 6px 16px rgba(118, 75, 37, 0.18);
+      z-index: 0;
+      pointer-events: none;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .seg-calendar--instant button.on {
+      background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+      box-shadow: 0 6px 16px rgba(118, 75, 37, 0.18);
+    }
+
+    /* —— Admin chip → segmented —— */
+    .seg-admin {
+      position: relative;
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.72);
+      isolation: isolate;
+    }
+
+    .seg-admin button {
+      position: relative;
+      z-index: 1;
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 1rem;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: transparent;
+      cursor: pointer;
+      transition: color 220ms ease-out;
+    }
+
+    .seg-admin button.on { color: var(--text-main); font-weight: 600; }
+
+    .seg-admin .thumb {
+      position: absolute;
+      top: 3px;
+      left: 0;
+      height: calc(100% - 6px);
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 250, 242, 0.95);
+      box-shadow: 0 4px 12px rgba(86, 55, 27, 0.08);
+      z-index: 0;
+      pointer-events: none;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+    .chip-idle {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .chip-idle.on {
+      border-color: var(--line-strong);
+      background: rgba(255, 250, 242, 0.95);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* —— Horizontal pager —— */
+    .pager-slot { overflow: hidden; width: 100%; }
+    .pager-slot--13 { height: 13rem; }
+    .pager-slot--10 { height: 10rem; }
+
+    .pager-track {
+      display: flex;
+      height: 100%;
+      will-change: transform;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .pager-page {
+      flex-shrink: 0;
+      height: 100%;
+    }
+
+    .pager-page--radar { display: flex; align-items: center; }
+    .pager-page--lollipop {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .mock-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      border-radius: var(--radius-control);
+      border: 1px dashed rgba(110, 73, 38, 0.2);
+      background: rgba(255, 252, 246, 0.5);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 1rem;
+      line-height: 1.55;
+    }
+
+    .mock-body strong { color: var(--text-main); display: block; margin-bottom: 0.25rem; font-size: 0.85rem; }
+
+    /* Profile tabs */
+    .profile-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid rgba(115, 77, 39, 0.12);
+      margin-bottom: 0.65rem;
+    }
+
+    .profile-tabs button {
+      position: relative;
+      border: none;
+      background: transparent;
+      padding: 0.55rem 1rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: #8a7a68;
+      cursor: pointer;
+      transition: color 160ms ease-out;
+    }
+
+    .profile-tabs button.on { color: #2c2117; }
+
+    .profile-tabs button .underline {
+      position: absolute;
+      inset: auto 1rem -1px;
+      height: 1px;
+      background: #2c2117;
+    }
+
+    .profile-tabs--slide { position: relative; }
+
+    .profile-tabs--slide .tab-thumb {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      height: 1px;
+      background: #2c2117;
+      pointer-events: none;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .profile-tabs--slide button .underline { display: none; }
+
+    .profile-panel-instant { display: none; }
+    .profile-panel-instant.active { display: block; }
+
+    .profile-content-box {
+      padding: 0.75rem;
+      border-radius: var(--radius-control);
+      background: rgba(255, 252, 246, 0.55);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--text-dim);
+    }
+
+    .profile-content-box h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+
+    /* Radar / lollipop mini */
+    .radar-wrap svg { display: block; width: 100%; height: 100%; }
+    .radar-grid { fill: none; stroke: rgba(150, 105, 61, 0.15); stroke-width: 1; }
+    .radar-area { fill: rgba(169, 111, 61, 0.2); stroke: #8b5a2b; stroke-width: 1.8; stroke-linejoin: round; }
+    .radar-label { fill: rgba(48, 33, 20, 0.7); font-size: 9px; text-anchor: middle; }
+
+    .lollipop-row {
+      display: grid;
+      grid-template-columns: 3.5rem 1fr 1.75rem;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+    }
+
+    .lollipop-row .track { position: relative; height: 1px; background: rgba(110, 73, 38, 0.15); }
+    .lollipop-row .stem { position: absolute; top: 50%; height: 2px; background: rgba(122, 82, 48, 0.35); transform: translateY(-50%); }
+    .lollipop-row .dot {
+      position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%;
+      background: #fffaf1; border: 2px solid #8b5a2b; transform: translate(-50%, -50%);
+    }
+
+    .skip-card {
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.45);
+      font-size: 0.74rem;
+      line-height: 1.55;
+      color: var(--text-faint);
+    }
+
+    .skip-card ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+
+    .toolbar-mock {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0;
+      font-size: 0.78rem;
+      color: rgba(74, 64, 56, 0.82);
+    }
+
+    .toolbar-mock .link {
+      border: none;
+      background: transparent;
+      padding: 0.25rem 0.4rem;
+      font-size: inherit;
+      color: inherit;
+      cursor: default;
+    }
+
+    .toolbar-mock .link.on {
+      font-weight: 600;
+      color: #2f2823;
+      text-decoration: underline;
+      text-decoration-color: #8a5527;
+      text-underline-offset: 4px;
+      text-decoration-thickness: 2px;
+    }
+
+    .center-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3.5rem;
+      padding: 0.5rem 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .thumb, .tab-thumb, .pager-track { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="hero-banner">
+        <strong>动效系统 · 全场景体验页</strong><br />
+        覆盖开发计划里会改（P0–P2）与明确不改（Skip）的场景。320ms · cubic-bezier(0.32, 0.72, 0, 1)。<br />
+        Cursor 内：<kbd>Cmd+Shift+P</kbd> → Simple Browser → <code>http://localhost:8766/motion-system-preview.html</code>
+      </div>
+
+      <nav class="toc" aria-label="场景目录">
+        <h2>场景目录</h2>
+        <ol>
+          <li><a href="#p0-analysis">P0 · 分析页 8 要素（滑块 + 分页 combo）</a></li>
+          <li><a href="#p1-calendar">P1 · 日历 月/周/日（仅滑块）</a></li>
+          <li><a href="#p1-profile">P1 · 画像页三 tab（分页 ± 下划线滑块）</a></li>
+          <li><a href="#p2-admin">P2 · 管理员 复盘/监控（chip → 滑块 segmented）</a></li>
+          <li><a href="#p1-interview">P1 · 访谈五维（admin 风 segmented + 对话区分页）</a> — <a href="interview-dimension-slide-preview.html">独立体验页</a></li>
+          <li><a href="#skip">Skip · 明确不接入的场景</a></li>
+        </ol>
+      </nav>
+
+      <!-- P0 -->
+      <section id="p0-analysis" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--p0">P0 本轮必做</span>
+          <h2>分析页 · 幸福 8 要素评分</h2>
+        </div>
+        <p class="scenario-desc">原语组合：<strong>SlidingSegmentedControl (soft)</strong> + <strong>HorizontalPager</strong>。对应 <code>analysis-trends-section.tsx</code>。</p>
+        <div class="compare-grid compare-grid--2">
+          <div class="demo-card">
+            <p class="demo-label">当前 · 高亮跳变 + 内容硬切</p>
+            <div class="pane-head">
+              <h3>幸福 8 要素评分</h3>
+              <div class="seg-soft seg-soft--instant" data-demo="p0-instant-toggle">
+                <button type="button" class="on" data-view="radar">雷达图</button>
+                <button type="button" data-view="lollipop">棒棒糖</button>
+              </div>
+            </div>
+            <div class="pager-slot pager-slot--13" data-demo="p0-instant-body">
+              <div class="pager-page-instant active" data-view="radar" style="height:100%">
+                <div class="pager-page--radar" style="height:100%"><div class="radar-wrap" style="height:100%"><svg viewBox="0 0 260 200"><polygon class="radar-grid" points="130,50 178,88 152,148 98,148 72,88"/><polygon class="radar-area" points="130,40 192,80 160,158 88,154 58,86"/><text class="radar-label" x="130" y="24">意义感</text><text class="radar-label" x="200" y="88">健康</text><text class="radar-label" x="170" y="168">美德</text></svg></div></div>
+              </div>
+              <div class="pager-page-instant" data-view="lollipop" style="height:100%;display:none">
+                <div class="pager-page--lollipop" style="height:100%;padding:0 0.25rem">
+                  <div class="lollipop-row"><span>意义感</span><div class="track"><div class="stem" style="left:8%;width:70%"></div><div class="dot" style="left:78%"></div></div><span>7.8</span></div>
+                  <div class="lollipop-row"><span>健康</span><div class="track"><div class="stem" style="left:8%;width:54%"></div><div class="dot" style="left:62%"></div></div><span>6.2</span></div>
+                  <div class="lollipop-row"><span>美德</span><div class="track"><div class="stem" style="left:8%;width:63%"></div><div class="dot" style="left:71%"></div></div><span>7.1</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="demo-card">
+            <p class="demo-label">拟上线 · 滑块 + 横向分页</p>
+            <div class="pane-head">
+              <h3>幸福 8 要素评分</h3>
+              <div class="seg-soft" data-demo="p0-slide-toggle">
+                <span class="thumb" aria-hidden="true"></span>
+                <button type="button" class="on" data-view="radar">雷达图</button>
+                <button type="button" data-view="lollipop">棒棒糖</button>
+              </div>
+            </div>
+            <div class="pager-slot pager-slot--13">
+              <div class="pager-track" data-demo="p0-slide-body" data-active="radar" style="width:200%">
+                <div class="pager-page pager-page--radar" style="width:50%"><div class="radar-wrap" style="height:100%"><svg viewBox="0 0 260 200"><polygon class="radar-grid" points="130,50 178,88 152,148 98,148 72,88"/><polygon class="radar-area" points="130,40 192,80 160,158 88,154 58,86"/><text class="radar-label" x="130" y="24">意义感</text><text class="radar-label" x="200" y="88">健康</text><text class="radar-label" x="170" y="168">美德</text></svg></div></div>
+                <div class="pager-page pager-page--lollipop" style="width:50%;padding:0 0.25rem">
+                  <div class="lollipop-row"><span>意义感</span><div class="track"><div class="stem" style="left:8%;width:70%"></div><div class="dot" style="left:78%"></div></div><span>7.8</span></div>
+                  <div class="lollipop-row"><span>健康</span><div class="track"><div class="stem" style="left:8%;width:54%"></div><div class="dot" style="left:62%"></div></div><span>6.2</span></div>
+                  <div class="lollipop-row"><span>美德</span><div class="track"><div class="stem" style="left:8%;width:63%"></div><div class="dot" style="left:71%"></div></div><span>7.1</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- P1 Calendar -->
+      <section id="p1-calendar" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--p1">P1 阶段 2</span>
+          <h2>日历 · 月 / 周 / 日 switcher</h2>
+        </div>
+        <p class="scenario-desc">仅 <strong>SlidingSegmentedControl (calendar variant)</strong>。正文仍走 URL 整页切换，<em>不做</em> HorizontalPager。</p>
+        <div class="compare-grid compare-grid--2">
+          <div class="demo-card">
+            <p class="demo-label">当前 · 选中项背景即时跳变</p>
+            <div class="center-stage">
+              <div class="seg-calendar seg-calendar--instant" data-demo="cal-instant">
+                <button type="button" class="on" data-view="month">月</button>
+                <button type="button" data-view="week">周</button>
+                <button type="button" data-view="day">日</button>
+              </div>
+            </div>
+            <div class="mock-body" data-demo="cal-instant-body"><strong>月视图</strong>切换时整页 remount（模拟）</div>
+          </div>
+          <div class="demo-card">
+            <p class="demo-label">拟上线 · 渐变滑块跟随</p>
+            <div class="center-stage">
+              <div class="seg-calendar" data-demo="cal-slide">
+                <span class="thumb" aria-hidden="true"></span>
+                <button type="button" class="on" data-view="month">月</button>
+                <button type="button" data-view="week">周</button>
+                <button type="button" data-view="day">日</button>
+              </div>
+            </div>
+            <div class="mock-body" data-demo="cal-slide-body"><strong>月视图</strong>Header 滑块先动，正文仍 remount</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- P1 Profile -->
+      <section id="p1-profile" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--p1">P1 阶段 3</span>
+          <h2>画像页 · 画像 / 记忆库 / 演变</h2>
+        </div>
+        <p class="scenario-desc">推荐 <strong>HorizontalPager</strong> 消除内容硬切；tab 栏可选「下划线滑块」或保持现状只动内容。</p>
+        <div class="compare-grid compare-grid--2">
+          <div class="demo-card">
+            <p class="demo-label">当前 · tab 下划线跳变 + 内容硬切</p>
+            <div class="profile-tabs" data-demo="prof-instant-tabs">
+              <button type="button" class="on" data-view="portrait">画像<span class="underline"></span></button>
+              <button type="button" data-view="memories">记忆库</button>
+              <button type="button" data-view="evolution">演变</button>
+            </div>
+            <div data-demo="prof-instant-body">
+              <div class="profile-panel-instant active" data-view="portrait">
+                <div class="profile-content-box"><h4>跨维度总述</h4>你最近在「充实」和「改进」上记录更稳定，思考维度偶有深聊。</div>
+              </div>
+              <div class="profile-panel-instant" data-view="memories">
+                <div class="profile-content-box"><h4>记忆库</h4>12 条有效记忆 · 按维度分组展示。</div>
+              </div>
+              <div class="profile-panel-instant" data-view="evolution">
+                <div class="profile-content-box"><h4>演变</h4>时间轴占位 · 跨月变化趋势。</div>
+              </div>
+            </div>
+          </div>
+          <div class="demo-card">
+            <p class="demo-label">拟上线 · 下划线滑块 + 内容横向分页</p>
+            <div class="profile-tabs profile-tabs--slide" data-demo="prof-slide-tabs">
+              <span class="tab-thumb" aria-hidden="true"></span>
+              <button type="button" class="on" data-view="portrait">画像</button>
+              <button type="button" data-view="memories">记忆库</button>
+              <button type="button" data-view="evolution">演变</button>
+            </div>
+            <div class="pager-slot pager-slot--10">
+              <div class="pager-track" data-demo="prof-slide-body" data-active="portrait" style="width:300%">
+                <div class="pager-page" style="width:33.333%"><div class="profile-content-box"><h4>跨维度总述</h4>你最近在「充实」和「改进」上记录更稳定，思考维度偶有深聊。</div></div>
+                <div class="pager-page" style="width:33.333%"><div class="profile-content-box"><h4>记忆库</h4>12 条有效记忆 · 按维度分组展示。</div></div>
+                <div class="pager-page" style="width:33.333%"><div class="profile-content-box"><h4>演变</h4>时间轴占位 · 跨月变化趋势。</div></div>
+              </div>
+            </div>
+            <p class="demo-note">若担心三页常驻 mount 性能，可退化为「仅分页」或「仅下划线滑块」。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- P2 Admin -->
+      <section id="p2-admin" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--p2">P2 可选</span>
+          <h2>管理员 · 复盘 / 监控视角</h2>
+        </div>
+        <p class="scenario-desc">将独立 chip 收成 <strong>SlidingSegmentedControl</strong>；仍走 URL 导航，只统一 header 动效语言。</p>
+        <div class="compare-grid compare-grid--2">
+          <div class="demo-card">
+            <p class="demo-label">当前 · 独立 chip 即时切换</p>
+            <div class="chip-row" data-demo="admin-instant">
+              <button type="button" class="chip-idle on" data-view="review">复盘视角</button>
+              <button type="button" class="chip-idle" data-view="monitor">监控视角</button>
+            </div>
+            <p class="demo-note" style="margin-top:0.75rem">下方内容区随 URL 整页刷新。</p>
+          </div>
+          <div class="demo-card">
+            <p class="demo-label">拟上线 · 双项 segmented 滑块</p>
+            <div class="seg-admin" data-demo="admin-slide">
+              <span class="thumb" aria-hidden="true"></span>
+              <button type="button" class="on" data-view="review">复盘视角</button>
+              <button type="button" data-view="monitor">监控视角</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Skip -->
+      <section id="p1-interview" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--p1">P1 · 用户新增</span>
+          <h2>访谈 · 开心 / 充实 / 思考 / 改进 / 感谢</h2>
+        </div>
+        <p class="scenario-desc">
+          <strong>SlidingSegmentedControl (admin/chip variant)</strong> + <strong>HorizontalPager</strong> 同步。
+          五维 header 收成管理员风 segmented；下方访谈主区五页横向分页（非工作区切换）。
+          完整左右对照见独立页 → <a href="interview-dimension-slide-preview.html">interview-dimension-slide-preview.html</a>
+        </p>
+        <div class="demo-card" style="padding:0.85rem 1rem">
+          <p class="demo-note" style="margin:0">
+            拟上线：点「充实 / 思考…」时，header 滑块与对话轨道同时横向滑动；五维会话可常驻 mount，切换时保留各维进度与消息（实现时需接现有 session hydrate 逻辑）。
+          </p>
+        </div>
+      </section>
+
+      <section id="skip" class="scenario">
+        <div class="scenario-head">
+          <span class="badge badge--skip">Skip</span>
+          <h2>明确不接入的场景</h2>
+        </div>
+        <div class="skip-card">
+          <ul>
+            <li><strong>分析页四段 tab</strong>（量化趋势 / 五维 / 关联 / 复盘）— 纵向 scroll + anchor，四段同页共存，不是同槽互斥视图。</li>
+            <li><strong>分析周期 preset</strong>（本周 / 本月 / 自定义）— Header 下划线文字，改 pill 滑块等于改 IA。</li>
+            <li><strong>日历月/周/日正文</strong> — 三 shell 按 URL 只 mount 一个；pager 需三视图同时挂载 + 预取，成本高。</li>
+            <li><strong>访谈工作区切换</strong>（访谈 ↔ 完整日志 ↔ 当天评分）— 已有过渡卡 + autosave 边界；与<strong>五维切换</strong>不同，仍不接入 pager。</li>
+            <li><strong>8 项快扫网格</strong> — 8 卡就地更新 sparkline，非两页互斥，ROI 低。</li>
+          </ul>
+          <div class="toolbar-mock" style="margin-top:0.75rem;opacity:0.7" aria-hidden="true">
+            <span style="color:var(--text-faint);font-size:0.68rem">示意 · 不改：</span>
+            <button type="button" class="link on">量化趋势</button>
+            <button type="button" class="link">五维记录</button>
+            <button type="button" class="link">关联</button>
+            <button type="button" class="link">复盘</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const PAGER_OFFSET = {
+      radar: "0%",
+      lollipop: "-50%",
+      portrait: "0%",
+      memories: "-33.333%",
+      evolution: "-66.666%",
+      month: "0%",
+      week: "0%",
+      day: "0%"
+    };
+
+    const CAL_LABELS = { month: "月视图", week: "周视图", day: "日视图" };
+
+    function positionThumb(container, activeButton, thumbSelector) {
+      const thumb = container.querySelector(thumbSelector || ".thumb");
+      if (!thumb || !activeButton) return;
+      const cRect = container.getBoundingClientRect();
+      const bRect = activeButton.getBoundingClientRect();
+      const x = bRect.left - cRect.left;
+      thumb.style.width = bRect.width + "px";
+      thumb.style.transform = "translateX(" + x + "px)";
+    }
+
+    function positionTabThumb(container, activeButton) {
+      const thumb = container.querySelector(".tab-thumb");
+      if (!thumb || !activeButton) return;
+      const cRect = container.getBoundingClientRect();
+      const bRect = activeButton.getBoundingClientRect();
+      const x = bRect.left - cRect.left + 16;
+      const w = bRect.width - 32;
+      thumb.style.width = Math.max(w, 0) + "px";
+      thumb.style.transform = "translateX(" + x + "px)";
+    }
+
+    function bindSegmented(container, options) {
+      const { onChange, thumbSelector, useTabThumb } = options || {};
+      const buttons = container.querySelectorAll("button[data-view]");
+
+      function activate(view) {
+        let activeBtn = null;
+        buttons.forEach((btn) => {
+          const on = btn.dataset.view === view;
+          btn.classList.toggle("on", on);
+          if (on) activeBtn = btn;
+        });
+        if (useTabThumb) {
+          positionTabThumb(container, activeBtn);
+        } else if (container.querySelector(thumbSelector || ".thumb")) {
+          positionThumb(container, activeBtn, thumbSelector);
+        }
+        if (onChange) onChange(view);
+      }
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => activate(btn.dataset.view));
+      });
+
+      const initial = container.querySelector("button.on") || buttons[0];
+      if (initial) activate(initial.dataset.view);
+    }
+
+    function bindInstantPanels(container, bodyContainer) {
+      const buttons = container.querySelectorAll("button[data-view]");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const view = btn.dataset.view;
+          buttons.forEach((b) => b.classList.toggle("on", b === btn));
+          if (!bodyContainer) return;
+          bodyContainer.querySelectorAll("[data-view]").forEach((panel) => {
+            const match = panel.dataset.view === view;
+            if (panel.classList.contains("profile-panel-instant")) {
+              panel.classList.toggle("active", match);
+            } else {
+              panel.style.display = match ? "" : "none";
+            }
+          });
+        });
+      });
+    }
+
+    function bindPagerToggle(toggle, track, viewMap) {
+      bindSegmented(toggle, {
+        onChange(view) {
+          track.dataset.active = view;
+          track.style.transform = "translateX(" + (viewMap[view] || "0%") + ")";
+        }
+      });
+    }
+
+    // P0 instant
+    bindInstantPanels(
+      document.querySelector('[data-demo="p0-instant-toggle"]'),
+      document.querySelector('[data-demo="p0-instant-body"]')
+    );
+
+    // P0 slide combo
+    const p0Toggle = document.querySelector('[data-demo="p0-slide-toggle"]');
+    const p0Track = document.querySelector('[data-demo="p0-slide-body"]');
+    bindPagerToggle(p0Toggle, p0Track, { radar: "0%", lollipop: "-50%" });
+
+    // P1 calendar
+    bindSegmented(document.querySelector('[data-demo="cal-instant"]'), {
+      onChange(view) {
+        document.querySelector('[data-demo="cal-instant-body"]').innerHTML =
+          "<strong>" + CAL_LABELS[view] + "</strong>切换时整页 remount（模拟）";
+      }
+    });
+
+    bindSegmented(document.querySelector('[data-demo="cal-slide"]'), {
+      onChange(view) {
+        document.querySelector('[data-demo="cal-slide-body"]').innerHTML =
+          "<strong>" + CAL_LABELS[view] + "</strong>Header 滑块先动，正文仍 remount";
+      }
+    });
+
+    // P1 profile instant
+    bindInstantPanels(
+      document.querySelector('[data-demo="prof-instant-tabs"]'),
+      document.querySelector('[data-demo="prof-instant-body"]')
+    );
+
+    // P1 profile slide
+    const profTabs = document.querySelector('[data-demo="prof-slide-tabs"]');
+    const profTrack = document.querySelector('[data-demo="prof-slide-body"]');
+    bindSegmented(profTabs, {
+      useTabThumb: true,
+      onChange(view) {
+        profTrack.dataset.active = view;
+        const offsets = { portrait: "0%", memories: "-33.333%", evolution: "-66.666%" };
+        profTrack.style.transform = "translateX(" + offsets[view] + ")";
+      }
+    });
+
+    // P2 admin instant
+    document.querySelector('[data-demo="admin-instant"]').querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll('[data-demo="admin-instant"] button').forEach((b) => {
+          b.classList.toggle("on", b === btn);
+        });
+      });
+    });
+
+    // P2 admin slide
+    bindSegmented(document.querySelector('[data-demo="admin-slide"]'));
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".seg-soft, .seg-calendar, .seg-admin").forEach((el) => {
+        if (el.querySelector(".thumb")) {
+          positionThumb(el, el.querySelector("button.on"));
+        }
+      });
+      const pt = document.querySelector('[data-demo="prof-slide-tabs"]');
+      if (pt) positionTabThumb(pt, pt.querySelector("button.on"));
+    });
+  </script>
+</body>
+</html>

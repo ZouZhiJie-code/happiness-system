@@ -1,9 +1,14 @@
 "use client";
 
-import React from "react";
-import clsx from "clsx";
+import { SlidingSegmentedControl } from "@/components/ui";
 
 import type { CalendarView } from "@/features/calendar/view-state";
+
+const CALENDAR_VIEW_ITEMS: Array<{ value: CalendarView; label: string; ariaLabel: string }> = [
+  { value: "month", label: "月", ariaLabel: "切换到月视图" },
+  { value: "week", label: "周", ariaLabel: "切换到周视图" },
+  { value: "day", label: "日", ariaLabel: "切换到日视图" }
+];
 
 export function CalendarViewSwitcher({
   currentView,
@@ -12,44 +17,22 @@ export function CalendarViewSwitcher({
   currentView: CalendarView;
   onSelectView: (view: CalendarView) => void;
 }) {
-  const items = [
-    {
-      view: "month" as const,
-      label: "月",
-      ariaLabel: "切换到月视图"
-    },
-    {
-      view: "week" as const,
-      label: "周",
-      ariaLabel: "切换到周视图"
-    },
-    {
-      view: "day" as const,
-      label: "日",
-      ariaLabel: "切换到日视图"
-    }
-  ];
-
   return (
-    <nav
-      aria-label="切换日历视图"
-      className="calendar-segmented inline-flex items-center rounded-full p-1"
-    >
-      {items.map((item) => (
-        <button
-          key={item.view}
-          type="button"
-          onClick={() => onSelectView(item.view)}
-          data-active={currentView === item.view ? "true" : "false"}
-          className={clsx(
-            "calendar-segmented-item rounded-full px-3 py-1.5 text-[0.76rem] font-medium"
-          )}
-          aria-current={currentView === item.view ? "page" : undefined}
-          aria-label={item.ariaLabel}
-        >
-          {item.label}
-        </button>
-      ))}
-    </nav>
+    <SlidingSegmentedControl
+      variant="calendar"
+      ariaLabel="切换日历视图"
+      value={currentView}
+      onChange={onSelectView}
+      items={CALENDAR_VIEW_ITEMS.map((item) => ({
+        value: item.value,
+        label: item.label,
+        ariaLabel: item.ariaLabel,
+        buttonProps: {
+          "aria-current": currentView === item.value ? ("page" as const) : undefined,
+          className: "calendar-segmented-item"
+        }
+      }))}
+      className="calendar-segmented"
+    />
   );
 }

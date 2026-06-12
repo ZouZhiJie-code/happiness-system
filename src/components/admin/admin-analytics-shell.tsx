@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { ActionButton, SectionHeading, Surface, actionButtonClass } from "@/components/ui";
+import { ActionButton, SectionHeading, SlidingSegmentedControl, Surface, actionButtonClass } from "@/components/ui";
 import {
   buildAdminAnalyticsDrilldownHref,
   buildAdminAnalyticsRangePresetHrefs,
@@ -1142,6 +1142,7 @@ export function AdminAnalyticsShell({
   entryDetail,
   dailyJournalDetail
 }: AdminAnalyticsShellProps) {
+  const router = useRouter();
   const context: SearchContext = {
     username,
     hasSavedJournal,
@@ -1150,33 +1151,9 @@ export function AdminAnalyticsShell({
     selectedUserId
   };
 
-  const viewLinks = [
-    {
-      label: "复盘视角",
-      href: buildAdminAnalyticsViewHref({
-        view: "review",
-        range,
-        username,
-        hasSavedJournal,
-        hasBoundaryInsufficient,
-        hasReopenedSession,
-        userId: selectedUserId
-      }),
-      active: view === "review"
-    },
-    {
-      label: "监控视角",
-      href: buildAdminAnalyticsViewHref({
-        view: "monitor",
-        range,
-        username,
-        hasSavedJournal,
-        hasBoundaryInsufficient,
-        hasReopenedSession,
-        userId: selectedUserId
-      }),
-      active: view === "monitor"
-    }
+  const viewPresets: Array<{ value: AdminAnalyticsView; label: string }> = [
+    { value: "review", label: "复盘视角" },
+    { value: "monitor", label: "监控视角" }
   ];
 
   const rangePresets = buildAdminAnalyticsRangePresetHrefs({
@@ -1202,20 +1179,29 @@ export function AdminAnalyticsShell({
         </header>
 
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-3">
-            {viewLinks.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                scroll={false}
-                className={`inline-flex min-h-11 items-center rounded-full border px-5 py-3 text-sm ${
-                  item.active ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+          <SlidingSegmentedControl
+            variant="admin"
+            ariaLabel="分析视角"
+            value={view}
+            onChange={(nextView) => {
+              router.replace(
+                buildAdminAnalyticsViewHref({
+                  view: nextView,
+                  range,
+                  username,
+                  hasSavedJournal,
+                  hasBoundaryInsufficient,
+                  hasReopenedSession,
+                  userId: selectedUserId
+                }),
+                { scroll: false }
+              );
+            }}
+            items={viewPresets.map((item) => ({
+              value: item.value,
+              label: item.label
+            }))}
+          />
 
           <div className="flex flex-wrap items-center gap-3">
             {rangePresets.map((preset) => (

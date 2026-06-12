@@ -246,8 +246,8 @@ describe("admin analytics page", () => {
       })
     );
 
-    expect(screen.getByRole("link", { name: "复盘视角" })).toHaveAttribute("data-scroll", "false");
-    expect(screen.getByRole("link", { name: "监控视角" })).toHaveAttribute("data-scroll", "false");
+    expect(screen.getByRole("button", { name: "复盘视角" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "监控视角" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("link", { name: "最近 7 天" })).toHaveAttribute("data-scroll", "false");
     expect(screen.getByRole("link", { name: "boundary insufficient" })).toHaveAttribute("data-scroll", "false");
     expect(screen.getByRole("link", { name: "查看详情" })).toHaveAttribute("data-scroll", "false");

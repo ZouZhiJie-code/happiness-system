@@ -7,7 +7,16 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { HorizontalPager, type HorizontalPagerMotion } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
+import {
+  buildInterviewSessionRecordFromStore,
+  clearAllDimensionSessionCache,
+  deleteDimensionSessionCache,
+  getDimensionSessionCache,
+  saveDimensionSessionCache,
+  setDimensionSessionCacheEntryDateWindow
+} from "@/features/interview/dimension-session-cache";
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
@@ -18,17 +27,17 @@ import {
   markStoredInterviewSessionFreshStart,
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
-  getStoredInterviewFreshStartEntry,
   getStoredInterviewSessionEntry,
   interviewLeaveConfirmMessage,
   interviewDimensionStorageKey,
+  interviewDimensions,
   normalizeInterviewDimension,
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
+import { bootstrapInterviewSession, prefetchStoredInterviewSessions } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
-import type { CalendarDayRecord } from "@/features/calendar/types";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
@@ -118,15 +127,8 @@ function sessionHasUserMessages(session: Pick<InterviewSessionRecord, "messages"
   return session.messages.some((message) => message.role === "user");
 }
 
-const interviewBootstrapTasks = new Map<string, Promise<InterviewSessionRecord | null>>();
-
-function buildInterviewBootstrapTaskKey(input: {
-  dimension: InterviewDimension;
-  forceNew?: boolean;
-  explicitSessionId?: string | null;
-  entryDate?: string | null;
-}) {
-  return [input.dimension, input.forceNew ? "force" : "reuse", input.explicitSessionId ?? "", input.entryDate ?? ""].join("::");
+function shouldCacheSession(status: InterviewSessionRecord["status"] | null) {
+  return status === "active" || status === "paused" || status === "completed";
 }
 
 function MessageBubble({
@@ -561,218 +563,6 @@ function WorkspaceTransitionCard({
   );
 }
 
-async function requestInterviewSession(dimension: InterviewDimension, entryDate?: string | null) {
-  const response = await fetch("/api/interview/session/start", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      dimension,
-      ...(entryDate ? { entryDate } : {})
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error("INTERVIEW_START_FAILED");
-  }
-
-  const data = (await response.json()) as { session: InterviewSessionRecord };
-  return data.session;
-}
-
-async function fetchInterviewSession(sessionId: string) {
-  const response = await fetch(`/api/interview/session/${sessionId}`, {
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("SESSION_NOT_FOUND");
-  }
-
-  return (await response.json()) as InterviewSessionRecord;
-}
-
-async function findPreferredSessionFromDaySnapshot(
-  dimension: InterviewDimension,
-  entryDate: string,
-  excludedSessionId?: string | null
-) {
-  try {
-    const response = await fetch(`/api/calendar/day?date=${entryDate}`, {
-      method: "GET",
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const day = (await response.json()) as CalendarDayRecord;
-    const dimensionStatus = day.dimensions.find((item) => item.dimension === dimension);
-    const candidateSessionId =
-      dimensionStatus?.savedSessionId ??
-      dimensionStatus?.draftSessionId ??
-      dimensionStatus?.activeSessionId ??
-      dimensionStatus?.sessionId ??
-      null;
-
-    if (!candidateSessionId || candidateSessionId === excludedSessionId) {
-      return null;
-    }
-
-    const candidateSession = await fetchInterviewSession(candidateSessionId);
-
-    return isRestorableSession(candidateSession, dimension) && candidateSession.entryDate === entryDate
-      ? candidateSession
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-async function reopenInterviewSession(sessionId: string) {
-  const response = await fetch("/api/interview/session/reopen", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sessionId })
-  });
-
-  if (!response.ok) {
-    throw new Error("SESSION_REOPEN_FAILED");
-  }
-
-  const data = (await response.json()) as { session: InterviewSessionRecord };
-  return data.session;
-}
-
-function isRestorableSession(session: InterviewSessionRecord, dimension: InterviewDimension) {
-  if (session.dimension !== dimension) {
-    return false;
-  }
-
-  return session.status === "active" || session.status === "paused" || session.status === "completed";
-}
-
-function isOpeningOnlySession(session: InterviewSessionRecord) {
-  return session.status === "active" && session.turnCount === 0 && !session.journalEntry;
-}
-
-function shouldCacheSession(status: InterviewSessionRecord["status"] | null) {
-  return status === "active" || status === "paused" || status === "completed";
-}
-
-async function bootstrapInterviewSession(input: {
-  dimension: InterviewDimension;
-  forceNew?: boolean;
-  explicitSessionId?: string | null;
-  entryDate?: string | null;
-}) {
-  const { dimension, forceNew = false, explicitSessionId = null, entryDate = null } = input;
-  const targetEntryDate = entryDate ?? getTodayEntryDate();
-  const taskKey = buildInterviewBootstrapTaskKey({
-    dimension,
-    forceNew,
-    explicitSessionId,
-    entryDate
-  });
-
-  if (!forceNew) {
-    const existingTask = interviewBootstrapTasks.get(taskKey);
-
-    if (existingTask) {
-      return existingTask;
-    }
-  }
-
-  const task = (async () => {
-    if (explicitSessionId) {
-      const explicitSession = await fetchInterviewSession(explicitSessionId);
-
-      if (!isRestorableSession(explicitSession, explicitSession.dimension)) {
-        throw new Error("SESSION_NOT_FOUND");
-      }
-
-      if (explicitSession.status === "paused") {
-        return reopenInterviewSession(explicitSession.id);
-      }
-
-      return explicitSession;
-    }
-
-    const freshStartEntry = getStoredInterviewFreshStartEntry(dimension);
-
-    if (freshStartEntry && (!entryDate || freshStartEntry.entryDate === targetEntryDate)) {
-      return requestInterviewSession(dimension, entryDate);
-    }
-
-    if (!forceNew) {
-      const storedSessionEntry = getStoredInterviewSessionEntry(dimension);
-      const storedSessionId = storedSessionEntry?.sessionId ?? null;
-
-      if (storedSessionId) {
-        if (!entryDate && storedSessionEntry?.entryDate && storedSessionEntry.entryDate !== targetEntryDate) {
-          clearStoredInterviewSessionId(dimension);
-          return requestInterviewSession(dimension, entryDate);
-        }
-
-        try {
-          const restoredSession = await fetchInterviewSession(storedSessionId);
-
-          if (
-            isRestorableSession(restoredSession, dimension)
-            && restoredSession.entryDate === targetEntryDate
-          ) {
-            if (isOpeningOnlySession(restoredSession)) {
-              const preferredSession = await findPreferredSessionFromDaySnapshot(
-                dimension,
-                targetEntryDate,
-                restoredSession.id
-              );
-
-              if (preferredSession) {
-                return preferredSession.status === "paused"
-                  ? reopenInterviewSession(preferredSession.id)
-                  : preferredSession;
-              }
-            }
-
-            if (restoredSession.status === "paused") {
-              return reopenInterviewSession(restoredSession.id);
-            }
-
-            return restoredSession;
-          }
-        } catch {
-          // Ignore restore failures and fall back to creating a new session.
-          if (!entryDate) {
-            clearStoredInterviewSessionId(dimension);
-          }
-        }
-
-        if (!entryDate) {
-          clearStoredInterviewSessionId(dimension);
-        }
-      }
-    }
-
-    if (!forceNew && entryDate) {
-      const preferredSession = await findPreferredSessionFromDaySnapshot(dimension, targetEntryDate);
-
-      if (preferredSession) {
-        return preferredSession.status === "paused"
-          ? reopenInterviewSession(preferredSession.id)
-          : preferredSession;
-      }
-    }
-
-    return requestInterviewSession(dimension, entryDate);
-  })().finally(() => {
-    interviewBootstrapTasks.delete(taskKey);
-  });
-
-  interviewBootstrapTasks.set(taskKey, task);
-  return task;
-}
-
 function parseSseChunk(chunk: string) {
   const lines = chunk.split(/\r?\n/);
   let event = "message";
@@ -825,8 +615,13 @@ export function InterviewShell({
     draftGenerationRequestId,
     draftGenerationUnlocked: sessionDraftGenerationUnlocked,
     dimension,
+    pendingUrlDimension,
     sessionDimension,
     sessionEntryDate,
+    activeEventId,
+    events,
+    snapshot,
+    snapshotData,
     setDimension,
     setDraftGenerationControls,
     setWorkspaceMode,
@@ -869,7 +664,10 @@ export function InterviewShell({
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
+  const [pagerMotion, setPagerMotion] = useState<HorizontalPagerMotion>("slide");
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
+  const activeTargetDimension = normalizeInterviewDimension(pendingUrlDimension ?? currentDimension);
+  const displayDimension = activeTargetDimension;
   const requestedSessionId = searchParams.get("sessionId");
   const requestedEntryDateRaw = searchParams.get("entryDate");
   const requestedEntryDate = requestedEntryDateRaw && isEntryDateString(requestedEntryDateRaw) ? requestedEntryDateRaw : null;
@@ -879,8 +677,9 @@ export function InterviewShell({
     ? requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate()
     : sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate();
   const currentRecordDate = requestedEntryDate ?? sessionEntryDate ?? getTodayEntryDate();
-  const dimensionMeta = getInterviewDimensionMeta(currentDimension);
-  const dimensionConfig = getInterviewDimensionConfig(currentDimension);
+  const resolvedEntryDate = currentRecordDate;
+  const dimensionMeta = getInterviewDimensionMeta(displayDimension);
+  const dimensionConfig = getInterviewDimensionConfig(displayDimension);
   const bootSequenceRef = useRef(0);
   const restoreHasUserMessagesRef = useRef(false);
   const activeStreamIdRef = useRef(0);
@@ -890,7 +689,11 @@ export function InterviewShell({
   const lastDailyJournalOpenRequestRef = useRef(0);
   const lastHappinessScoreEntryOpenRequestRef = useRef(0);
   const lastDimensionNavigationRequestRef = useRef(0);
-  const previousDimensionRef = useRef(currentDimension);
+  const previousTargetDimensionRef = useRef(activeTargetDimension);
+  const previousCurrentDimensionForDailyJournalRef = useRef(currentDimension);
+  const lastDeepLinkBootstrapRef = useRef<{ sessionId: string | null; entryDate: string | null } | null>(null);
+  const panelOpenRef = useRef(false);
+  const hasSavedJournalRef = useRef(false);
   const dailyJournalWorkspaceRef = useRef<DailyJournalWorkspaceHandle | null>(null);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const journalPanelRef = useRef<HTMLElement | null>(null);
@@ -929,7 +732,7 @@ export function InterviewShell({
   const showBoundaryInsufficientChoice = pendingDecision?.kind === "boundary_insufficient";
   const eventChoiceCompletionMode =
     pendingDecision?.kind === "event_complete" ? pendingDecision.completionMode ?? "complete" : "complete";
-  const isSessionHydratedForCurrentDimension = sessionDimension === currentDimension;
+  const isSessionHydratedForCurrentDimension = sessionDimension === displayDimension;
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -1364,9 +1167,10 @@ export function InterviewShell({
         forceNew?: boolean;
         explicitSessionId?: string | null;
         entryDate?: string | null;
+        background?: boolean;
       }
     ) => {
-      const { forceNew = false, explicitSessionId = null, entryDate = null } = options ?? {};
+      const { forceNew = false, explicitSessionId = null, entryDate = null, background = false } = options ?? {};
       const activeSession = sessionStateRef.current;
       const todayEntryDate = getTodayEntryDate();
 
@@ -1384,11 +1188,14 @@ export function InterviewShell({
         return activeSession.sessionId;
       }
 
-      const currentBootSequence = ++bootSequenceRef.current;
-      const storedSessionEntry = !forceNew && !explicitSessionId ? getStoredInterviewSessionEntry(nextDimension) : null;
-      const hasStoredSession = Boolean(storedSessionEntry);
-      restoreHasUserMessagesRef.current = Boolean(explicitSessionId || storedSessionEntry?.hasUserMessages);
-      setBootState(explicitSessionId || hasStoredSession ? "restoring" : "booting");
+      const currentBootSequence = background ? bootSequenceRef.current : ++bootSequenceRef.current;
+
+      if (!background) {
+        const storedSessionEntry = !forceNew && !explicitSessionId ? getStoredInterviewSessionEntry(nextDimension) : null;
+        const hasStoredSession = Boolean(storedSessionEntry);
+        restoreHasUserMessagesRef.current = Boolean(explicitSessionId || storedSessionEntry?.hasUserMessages);
+        setBootState(explicitSessionId || hasStoredSession ? "restoring" : "booting");
+      }
 
       try {
         const session = await bootstrapInterviewSession({
@@ -1398,7 +1205,20 @@ export function InterviewShell({
           entryDate
         });
 
-        if (!session || currentBootSequence !== bootSequenceRef.current) {
+        if (!session) {
+          return null;
+        }
+
+        if (background) {
+          if (sessionStateRef.current.sessionDimension !== nextDimension) {
+            return session.id;
+          }
+
+          hydrate(session);
+          return session.id;
+        }
+
+        if (currentBootSequence !== bootSequenceRef.current) {
           return null;
         }
 
@@ -1407,6 +1227,18 @@ export function InterviewShell({
         setBootState("idle");
         return session.id;
       } catch {
+        if (background) {
+          if (sessionStateRef.current.sessionDimension === nextDimension) {
+            deleteDimensionSessionCache(nextDimension, entryDate ?? sessionStateRef.current.sessionEntryDate ?? todayEntryDate);
+            reset(nextDimension, { preservePendingUrlDimension: true });
+            restoreHasUserMessagesRef.current = false;
+            setBootState("booting");
+            void ensureSession(nextDimension, { entryDate, forceNew: forceNew || Boolean(explicitSessionId) });
+          }
+
+          return null;
+        }
+
         if (currentBootSequence === bootSequenceRef.current) {
           restoreHasUserMessagesRef.current = false;
           setBootState("idle");
@@ -1428,7 +1260,84 @@ export function InterviewShell({
         return null;
       }
     },
-    [hydrate, setBootState]
+    [hydrate, reset, setBootState]
+  );
+
+  const clearDimensionSwitchUiState = useCallback(() => {
+    setInput("");
+    setHasDismissedInputPlaceholder(false);
+    setInterviewIssue(null);
+    setDraftError(null);
+    setDraftGenerateIssue(null);
+    setDraftGenerateState("idle");
+    setSaveConfirmOpen(false);
+    setToastState(null);
+    stopDraftAutosave();
+    stopToastTimer();
+    clearStreamState();
+    setOptimisticUserMessage(null);
+    setStreamedAssistantSummary("");
+    setStreamedAssistantQuestion("");
+    setAssistantState("idle");
+  }, [clearStreamState, stopDraftAutosave, stopToastTimer]);
+
+  const saveLeavingDimensionToCache = useCallback(
+    (leavingDimension: InterviewDimension) => {
+      if (!sessionId || !status || !stage || sessionDimension !== leavingDimension || !snapshot) {
+        return;
+      }
+
+      const cachedSession = buildInterviewSessionRecordFromStore({
+        sessionId,
+        sessionDimension,
+        sessionEntryDate: sessionEntryDate ?? resolvedEntryDate,
+        status,
+        stage,
+        activeEventId,
+        events,
+        pendingDecision,
+        draftGenerationUnlocked: sessionDraftGenerationUnlocked,
+        turnCount,
+        messages,
+        snapshot,
+        snapshotData: snapshotData ?? undefined,
+        journalEntry
+      });
+
+      if (!cachedSession) {
+        return;
+      }
+
+      saveDimensionSessionCache({
+        dimension: leavingDimension,
+        entryDate: resolvedEntryDate,
+        session: cachedSession,
+        draftGenerationUnlocked: sessionDraftGenerationUnlocked,
+        ui: {
+          draftTitle: draftStateRef.current.draftTitle,
+          draftContent: draftStateRef.current.draftContent,
+          panelOpen: panelOpenRef.current,
+          hasSavedJournal: hasSavedJournalRef.current
+        }
+      });
+    },
+    [
+      activeEventId,
+      events,
+      journalEntry,
+      messages,
+      pendingDecision,
+      resolvedEntryDate,
+      sessionDimension,
+      sessionDraftGenerationUnlocked,
+      sessionEntryDate,
+      sessionId,
+      snapshot,
+      snapshotData,
+      stage,
+      status,
+      turnCount
+    ]
   );
 
   const persistDraftEdits = useCallback(async (titleOverride?: string, contentOverride?: string) => {
@@ -1491,6 +1400,79 @@ export function InterviewShell({
   }, [setJournalEntry]);
 
   useEffect(() => {
+    panelOpenRef.current = panelOpen;
+  }, [panelOpen]);
+
+  useEffect(() => {
+    hasSavedJournalRef.current = hasSavedJournal;
+  }, [hasSavedJournal]);
+
+  useEffect(() => {
+    draftStateRef.current = {
+      draftTitle,
+      draftContent,
+      journalEntry
+    };
+  }, [draftContent, draftTitle, journalEntry]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (shouldOpenDailyJournalFromQuery || workspaceMode !== "interview") {
+      return;
+    }
+
+    const todayEntryDate = getTodayEntryDate();
+    if (requestedEntryDate && requestedEntryDate !== todayEntryDate) {
+      return;
+    }
+
+    const scheduleIdle =
+      window.requestIdleCallback ??
+      ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1));
+    const cancelIdle =
+      window.cancelIdleCallback ??
+      ((handle: number) => {
+        window.clearTimeout(handle);
+      });
+
+    const idleHandle = scheduleIdle(() => {
+      prefetchStoredInterviewSessions(requestedEntryDate);
+    });
+
+    return () => {
+      cancelIdle(idleHandle);
+    };
+  }, [requestedEntryDate, shouldOpenDailyJournalFromQuery, workspaceMode]);
+
+  useEffect(() => {
+    setDimensionSessionCacheEntryDateWindow(resolvedEntryDate);
+  }, [resolvedEntryDate]);
+
+  useEffect(() => {
+    if (shouldOpenDailyJournalFromQuery) {
+      return;
+    }
+
+    const activeSession = sessionStateRef.current;
+    const deepLinkChanged =
+      lastDeepLinkBootstrapRef.current === null ||
+      lastDeepLinkBootstrapRef.current.sessionId !== requestedSessionId ||
+      lastDeepLinkBootstrapRef.current.entryDate !== requestedEntryDate;
+
+    if (!deepLinkChanged && activeSession.sessionId) {
+      return;
+    }
+
+    lastDeepLinkBootstrapRef.current = {
+      sessionId: requestedSessionId,
+      entryDate: requestedEntryDate
+    };
+
+    const bootstrapDimension = currentDimension;
+
     setInput("");
     setHasDismissedInputPlaceholder(false);
     setInterviewIssue(null);
@@ -1503,11 +1485,10 @@ export function InterviewShell({
     stopDraftAutosave();
     stopToastTimer();
     clearStreamState();
-    const activeSession = sessionStateRef.current;
     const todayEntryDate = getTodayEntryDate();
     const shouldReuseCurrentSession = Boolean(
       activeSession.sessionId &&
-        activeSession.sessionDimension === currentDimension &&
+        activeSession.sessionDimension === bootstrapDimension &&
         (requestedSessionId
           ? activeSession.sessionId === requestedSessionId
           : requestedEntryDate
@@ -1520,15 +1501,8 @@ export function InterviewShell({
       return;
     }
 
-    if (shouldOpenDailyJournalFromQuery) {
-      reset(currentDimension);
-      setWorkspaceMode("daily_journal");
-      setBootState("idle");
-      return;
-    }
-
-    reset(currentDimension);
-    void ensureSession(currentDimension, {
+    reset(bootstrapDimension);
+    void ensureSession(bootstrapDimension, {
       explicitSessionId: requestedSessionId,
       entryDate: requestedEntryDate
     });
@@ -1540,9 +1514,95 @@ export function InterviewShell({
     requestedSessionId,
     reset,
     setBootState,
+    shouldOpenDailyJournalFromQuery,
+    stopDraftAutosave,
+    stopToastTimer
+  ]);
+
+  useEffect(() => {
+    if (shouldOpenDailyJournalFromQuery || workspaceMode !== "interview") {
+      previousTargetDimensionRef.current = activeTargetDimension;
+      return;
+    }
+
+    const previousTarget = previousTargetDimensionRef.current;
+    previousTargetDimensionRef.current = activeTargetDimension;
+
+    if (previousTarget === activeTargetDimension) {
+      return;
+    }
+
+    bootSequenceRef.current += 1;
+    saveLeavingDimensionToCache(previousTarget);
+    clearDimensionSwitchUiState();
+
+    const cachedEntry = getDimensionSessionCache(activeTargetDimension, resolvedEntryDate);
+
+    if (cachedEntry) {
+      setPagerMotion("instant");
+      hydrate(cachedEntry.session);
+      setDraftTitle(cachedEntry.ui.draftTitle);
+      setDraftContent(cachedEntry.ui.draftContent);
+      setPanelOpen(cachedEntry.ui.panelOpen);
+      setHasSavedJournal(cachedEntry.ui.hasSavedJournal);
+      setDraftSyncState(cachedEntry.ui.draftTitle || cachedEntry.ui.draftContent ? "saved" : "idle");
+      restoreHasUserMessagesRef.current = false;
+      setBootState("idle");
+      void ensureSession(activeTargetDimension, {
+        entryDate: requestedEntryDate,
+        background: true
+      });
+      return;
+    }
+
+    setPagerMotion("slide");
+    setPanelOpen(false);
+    setHasSavedJournal(false);
+    reset(activeTargetDimension, { preservePendingUrlDimension: true });
+    void ensureSession(activeTargetDimension, {
+      entryDate: requestedEntryDate
+    });
+  }, [
+    activeTargetDimension,
+    clearDimensionSwitchUiState,
+    ensureSession,
+    hydrate,
+    requestedEntryDate,
+    reset,
+    resolvedEntryDate,
+    saveLeavingDimensionToCache,
+    setBootState,
+    shouldOpenDailyJournalFromQuery,
+    workspaceMode
+  ]);
+
+  useEffect(() => {
+    if (!shouldOpenDailyJournalFromQuery) {
+      return;
+    }
+
+    setInput("");
+    setHasDismissedInputPlaceholder(false);
+    setInterviewIssue(null);
+    setDraftError(null);
+    setDraftGenerateIssue(null);
+    setDraftGenerateState("idle");
+    setSaveConfirmOpen(false);
+    setToastState(null);
+    setPanelOpen(false);
+    stopDraftAutosave();
+    stopToastTimer();
+    clearStreamState();
+    reset(currentDimension);
+    setWorkspaceMode("daily_journal");
+    setBootState("idle");
+  }, [
+    clearStreamState,
+    currentDimension,
+    reset,
+    setBootState,
     setWorkspaceMode,
     shouldOpenDailyJournalFromQuery,
-    shouldOpenJournalPanelFromQuery,
     stopDraftAutosave,
     stopToastTimer
   ]);
@@ -2371,8 +2431,8 @@ export function InterviewShell({
   ]);
 
   useEffect(() => {
-    const previousDimension = previousDimensionRef.current;
-    previousDimensionRef.current = currentDimension;
+    const previousDimension = previousCurrentDimensionForDailyJournalRef.current;
+    previousCurrentDimensionForDailyJournalRef.current = currentDimension;
 
     if (
       previousDimension === currentDimension ||
@@ -2480,6 +2540,7 @@ export function InterviewShell({
       stopToastTimer();
       cancelDraftGeneration();
       cancelInterviewResponse();
+      clearAllDimensionSessionCache();
       dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
       dimensionsToClear.forEach((dimensionToClear) => markStoredInterviewSessionFreshStart(dimensionToClear, entryDateForFreshStart));
       dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
@@ -2539,159 +2600,189 @@ export function InterviewShell({
         </div>
       ) : (
       <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
-        <div className="relative min-h-0 flex-1">
-          <div
-            ref={messageScrollRef}
-            data-testid="interview-message-scroll"
-            className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2"
-          >
-            <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
-              <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
-                当前记录日期：{currentRecordDate}
-              </div>
-              {isSessionHydratedForCurrentDimension
-                ? visibleMessages.map((message) => (
-                    <ConversationMessage key={message.id} message={message} />
-                  ))
-                : null}
-              {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
-              {showStreamingBubble ? (
+        <HorizontalPager
+          activeKey={displayDimension}
+          ariaLabel="访谈维度内容"
+          className="relative min-h-0 flex-1"
+          motion={pagerMotion}
+          pages={interviewDimensions.map((pageDimension) => {
+            const pageMeta = getInterviewDimensionMeta(pageDimension);
+            const isActivePage = pageDimension === displayDimension;
+
+            return {
+              key: pageDimension,
+              className: "flex min-h-0 flex-col",
+              children: isActivePage ? (
                 <>
-                  {assistantState === "thinking" && !streamedAssistantSummary && !streamedAssistantQuestion ? (
-                    <MessageBubble content="正在思考中..." />
-                  ) : null}
-                  {streamedAssistantSummary ? (
-                    <MessageBubble content={streamedAssistantSummary} role="assistant" variant="thinking" />
-                  ) : null}
-                  {streamedAssistantQuestion ? (
-                    <MessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
+                  <div className="relative min-h-0 flex-1">
+                    <div
+                      ref={messageScrollRef}
+                      data-testid="interview-message-scroll"
+                      className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2"
+                    >
+                      <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
+                        <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
+                          当前记录日期：{currentRecordDate}
+                        </div>
+                        {isSessionHydratedForCurrentDimension
+                          ? visibleMessages.map((message) => (
+                              <ConversationMessage key={message.id} message={message} />
+                            ))
+                          : null}
+                        {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
+                        {showStreamingBubble ? (
+                          <>
+                            {assistantState === "thinking" && !streamedAssistantSummary && !streamedAssistantQuestion ? (
+                              <MessageBubble content="正在思考中..." />
+                            ) : null}
+                            {streamedAssistantSummary ? (
+                              <MessageBubble content={streamedAssistantSummary} role="assistant" variant="thinking" />
+                            ) : null}
+                            {streamedAssistantQuestion ? (
+                              <MessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
+                            ) : null}
+                          </>
+                        ) : null}
+                        {(messages.length === 0 || !isSessionHydratedForCurrentDimension) && !showBootBubble && !showStreamingBubble ? (
+                          <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
+                            {dimensionMeta.emptyState}
+                          </div>
+                        ) : null}
+                        {showBootBubble ? (
+                          <MessageBubble content={bootBubbleContent} />
+                        ) : null}
+                        {showChoiceCard ? (
+                          <>
+                            <ChoiceActionCard
+                              dimensionLabel={dimensionMeta.label}
+                              mode={
+                                showRedirectChoice
+                                  ? "dimension_redirect"
+                                  : showBoundaryInsufficientChoice
+                                    ? "boundary_insufficient"
+                                    : "event_complete"
+                              }
+                              completionMode={eventChoiceCompletionMode}
+                              redirectReason={pendingDecision?.kind === "dimension_redirect" ? pendingDecision.reason : undefined}
+                              onContinueCurrentEvent={() => void handleContinueChoice()}
+                              onNextEvent={() => void handleNextEventChoice()}
+                              onSwitchDimension={showRedirectChoice ? handleSwitchDimensionChoice : undefined}
+                              onPauseSession={showBoundaryInsufficientChoice ? () => void handlePauseSessionChoice() : undefined}
+                              onGenerate={() => void handleGenerateDraft()}
+                              continueDisabled={
+                                isBusy ||
+                                isChoiceDraftActionBlocked ||
+                                isSavingJournal ||
+                                !pendingDecision?.actions.includes("continue_current_event")
+                              }
+                              nextEventDisabled={
+                                showRedirectChoice ||
+                                isBusy ||
+                                isChoiceDraftActionBlocked ||
+                                isSavingJournal ||
+                                !(
+                                  (pendingDecision?.kind === "event_complete" ||
+                                    pendingDecision?.kind === "boundary_insufficient") &&
+                                  pendingDecision.actions.includes("next_event")
+                                )
+                              }
+                              switchDimensionDisabled={
+                                !showRedirectChoice ||
+                                isBusy ||
+                                isChoiceDraftActionBlocked ||
+                                isSavingJournal ||
+                                !(pendingDecision?.kind === "dimension_redirect" && pendingDecision.actions.includes("switch_dimension"))
+                              }
+                              pauseDisabled={
+                                !showBoundaryInsufficientChoice ||
+                                isBusy ||
+                                isSavingJournal ||
+                                !(pendingDecision?.kind === "boundary_insufficient" && pendingDecision.actions.includes("pause_session"))
+                              }
+                              generateDisabled={
+                                isBusy ||
+                                isChoiceDraftActionBlocked ||
+                                isSavingJournal ||
+                                !(pendingDecision?.kind === "event_complete" && pendingDecision.actions.includes("generate_draft"))
+                              }
+                            />
+                            {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="ml-4 mt-3" /> : null}
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {!isInterviewLocked && !showChoiceCard ? (
+                      <div
+                        data-testid="interview-floating-composer"
+                        className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"
+                      >
+                        {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mb-2" /> : null}
+                        <div className="liquid-composer rounded-[26px] px-2 py-1.5 md:px-2.5">
+                          <textarea
+                            ref={inputRef}
+                            id="interview-input"
+                            rows={1}
+                            value={input}
+                            onChange={(event) => setInput(event.target.value)}
+                            onFocus={() => setHasDismissedInputPlaceholder(true)}
+                            onCompositionStart={() => {
+                              isInputComposingRef.current = true;
+                            }}
+                            onCompositionEnd={() => {
+                              isInputComposingRef.current = false;
+                            }}
+                            onKeyDown={handleInputKeyDown}
+                            placeholder={composerPlaceholder}
+                            className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSend}
+                            disabled={!canSendInput}
+                            aria-label={assistantState === "idle" ? "发送回答" : "生成中"}
+                            className="absolute right-3 top-1/2 inline-flex h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.46)] bg-[linear-gradient(180deg,rgba(244,225,199,0.96),rgba(229,201,169,0.94))] px-3 text-sm text-[#3c2d20] shadow-[0_12px_24px_rgba(120,92,63,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] transition hover:-translate-y-[calc(50%+2px)] hover:bg-[linear-gradient(180deg,rgba(248,230,205,0.98),rgba(233,205,173,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {assistantState === "idle" ? (
+                              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10 15.5v-9" />
+                                <path d="M4.5 9.5 10 4l5.5 5.5" />
+                              </svg>
+                            ) : (
+                              <span className="px-1 text-xs font-medium">生成中</span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {isInterviewLocked ? (
+                    <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
+                      <InterviewEndedCard
+                        title={journalEntry?.status === "saved" ? "日志已保存，访谈已结束" : "访谈已结束"}
+                        onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
+                        workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
+                      />
+                      {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mt-3" /> : null}
+                    </div>
                   ) : null}
                 </>
-              ) : null}
-              {(messages.length === 0 || !isSessionHydratedForCurrentDimension) && !showBootBubble && !showStreamingBubble ? (
-                <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
-                  {dimensionMeta.emptyState}
+              ) : (
+                <div className="relative min-h-0 flex-1">
+                  <div className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2">
+                    <div className="flex min-h-full flex-col gap-3 pb-4 pt-1">
+                      <div className="px-1 text-[0.74rem] text-[#8a6b4b]">当前记录日期：{currentRecordDate}</div>
+                      <div className="flex flex-1 items-center justify-center rounded-[26px] border border-dashed border-[rgba(206,179,142,0.34)] bg-[linear-gradient(180deg,rgba(243,231,211,0.94),rgba(231,215,188,0.9))] p-5 text-center text-sm leading-6 text-[#5c4e41] shadow-[0_18px_40px_rgba(5,8,17,0.16)]">
+                        {pageMeta.emptyState}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ) : null}
-              {showBootBubble ? (
-                <MessageBubble content={bootBubbleContent} />
-              ) : null}
-              {showChoiceCard ? (
-                <>
-                  <ChoiceActionCard
-                    dimensionLabel={dimensionMeta.label}
-                    mode={
-                      showRedirectChoice
-                        ? "dimension_redirect"
-                        : showBoundaryInsufficientChoice
-                          ? "boundary_insufficient"
-                          : "event_complete"
-                    }
-                    completionMode={eventChoiceCompletionMode}
-                    redirectReason={pendingDecision?.kind === "dimension_redirect" ? pendingDecision.reason : undefined}
-                    onContinueCurrentEvent={() => void handleContinueChoice()}
-                    onNextEvent={() => void handleNextEventChoice()}
-                    onSwitchDimension={showRedirectChoice ? handleSwitchDimensionChoice : undefined}
-                    onPauseSession={showBoundaryInsufficientChoice ? () => void handlePauseSessionChoice() : undefined}
-                    onGenerate={() => void handleGenerateDraft()}
-                    continueDisabled={
-                      isBusy ||
-                      isChoiceDraftActionBlocked ||
-                      isSavingJournal ||
-                      !pendingDecision?.actions.includes("continue_current_event")
-                    }
-                    nextEventDisabled={
-                      showRedirectChoice ||
-                      isBusy ||
-                      isChoiceDraftActionBlocked ||
-                      isSavingJournal ||
-                      !(
-                        (pendingDecision?.kind === "event_complete" ||
-                          pendingDecision?.kind === "boundary_insufficient") &&
-                        pendingDecision.actions.includes("next_event")
-                      )
-                    }
-                    switchDimensionDisabled={
-                      !showRedirectChoice ||
-                      isBusy ||
-                      isChoiceDraftActionBlocked ||
-                      isSavingJournal ||
-                      !(pendingDecision?.kind === "dimension_redirect" && pendingDecision.actions.includes("switch_dimension"))
-                    }
-                    pauseDisabled={
-                      !showBoundaryInsufficientChoice ||
-                      isBusy ||
-                      isSavingJournal ||
-                      !(pendingDecision?.kind === "boundary_insufficient" && pendingDecision.actions.includes("pause_session"))
-                    }
-                    generateDisabled={
-                      isBusy ||
-                      isChoiceDraftActionBlocked ||
-                      isSavingJournal ||
-                      !(pendingDecision?.kind === "event_complete" && pendingDecision.actions.includes("generate_draft"))
-                    }
-                  />
-	                  {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="ml-4 mt-3" /> : null}
-                </>
-              ) : null}
-            </div>
-          </div>
-
-          {!isInterviewLocked && !showChoiceCard ? (
-            <div
-              data-testid="interview-floating-composer"
-              className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"
-            >
-	              {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mb-2" /> : null}
-              <div className="liquid-composer rounded-[26px] px-2 py-1.5 md:px-2.5">
-                <textarea
-                  ref={inputRef}
-                  id="interview-input"
-                  rows={1}
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onFocus={() => setHasDismissedInputPlaceholder(true)}
-                  onCompositionStart={() => {
-                    isInputComposingRef.current = true;
-                  }}
-                  onCompositionEnd={() => {
-                    isInputComposingRef.current = false;
-                  }}
-                  onKeyDown={handleInputKeyDown}
-                  placeholder={composerPlaceholder}
-                  className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
-                />
-                <button
-                  type="button"
-                  onClick={handleSend}
-                  disabled={!canSendInput}
-                  aria-label={assistantState === "idle" ? "发送回答" : "生成中"}
-                  className="absolute right-3 top-1/2 inline-flex h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.46)] bg-[linear-gradient(180deg,rgba(244,225,199,0.96),rgba(229,201,169,0.94))] px-3 text-sm text-[#3c2d20] shadow-[0_12px_24px_rgba(120,92,63,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] transition hover:-translate-y-[calc(50%+2px)] hover:bg-[linear-gradient(180deg,rgba(248,230,205,0.98),rgba(233,205,173,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {assistantState === "idle" ? (
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10 15.5v-9" />
-                      <path d="M4.5 9.5 10 4l5.5 5.5" />
-                    </svg>
-                  ) : (
-                    <span className="px-1 text-xs font-medium">生成中</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        {isInterviewLocked ? (
-          <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
-            <InterviewEndedCard
-              title={journalEntry?.status === "saved" ? "日志已保存，访谈已结束" : "访谈已结束"}
-              onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
-              workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
-            />
-	            {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mt-3" /> : null}
-          </div>
-        ) : null}
+              )
+            };
+          })}
+        />
       </div>
       )}
 

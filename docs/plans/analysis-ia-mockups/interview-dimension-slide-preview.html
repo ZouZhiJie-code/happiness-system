@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>访谈 · 五维切换横向分页预览</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .page-inner { max-width: 52rem; margin: 0 auto; padding-bottom: 2.5rem; }
+
+    .preview-banner {
+      margin-bottom: 1rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: var(--radius-control);
+      border: 1px dashed var(--line-strong);
+      background: var(--amber-soft);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .preview-banner strong { color: var(--text-main); }
+    .preview-banner a { color: var(--amber); font-weight: 600; }
+
+    .compare-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 960px) {
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .demo-card {
+      background: linear-gradient(165deg, rgba(255, 252, 246, 0.96) 0%, rgba(248, 233, 204, 0.38) 100%);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      box-shadow: 0 8px 28px rgba(86, 55, 27, 0.06);
+      overflow: hidden;
+    }
+
+    .demo-label {
+      margin: 0;
+      padding: 0.65rem 0.85rem 0;
+      font-size: 0.7rem;
+      font-weight: 650;
+      color: var(--text-dim);
+    }
+
+    .demo-body { padding: 0.65rem 0.85rem 0.85rem; }
+
+    .demo-note {
+      margin: 0.55rem 0 0;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      color: var(--text-faint);
+    }
+
+    /* —— 当前：五个独立 pill 按钮 —— */
+    .dim-bar-current {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.35rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .dim-pill {
+      position: relative;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border-radius: 15px;
+      border: 1px solid rgba(150, 105, 61, 0.14);
+      background: rgba(255, 249, 239, 0.56);
+      padding: 0.35rem 0.85rem 0.35rem 0.75rem;
+      font-size: 12px;
+      font-weight: 500;
+      color: #4a4038;
+      cursor: pointer;
+      transition: background 160ms, border-color 160ms, color 160ms, box-shadow 160ms;
+    }
+
+    .dim-pill.on {
+      border-color: rgba(166, 114, 61, 0.24);
+      background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+      color: #fff8f1;
+      box-shadow: 0 10px 18px rgba(118, 75, 37, 0.16);
+    }
+
+    .dim-dot {
+      position: absolute;
+      top: 0.42rem;
+      right: 0.42rem;
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 50%;
+    }
+
+    .dim-dot--completed { background: #22c55e; }
+    .dim-dot--in_progress { background: #f59e0b; animation: header-status-breathe 1.6s ease-in-out infinite; }
+    .dim-dot--draft { background: #ef4444; }
+    .dim-dot--empty { background: #9ca3af; }
+
+    @keyframes header-status-breathe {
+      0%, 100% { opacity: 0.72; transform: scale(0.86); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    .dim-pill.on .dim-dot--in_progress,
+    .dim-pill.on .dim-dot--completed,
+    .dim-pill.on .dim-dot--draft,
+    .dim-pill.on .dim-dot--empty {
+      /* 选中 pill 仍保留语义色，与线上一致 */
+    }
+
+    .seg-interview .dim-dot {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.45rem;
+    }
+
+    .seg-interview button {
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 999px;
+      padding: 0.42rem 1.15rem 0.42rem 0.72rem;
+      font-size: 0.76rem;
+      white-space: nowrap;
+      color: var(--text-dim);
+      background: transparent;
+      cursor: pointer;
+      transition: color 220ms ease-out;
+    }
+
+    .seg-interview {
+      position: relative;
+      display: inline-flex;
+      max-width: 100%;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.72);
+      isolation: isolate;
+      margin-bottom: 0.65rem;
+    }
+
+    .seg-interview-scroll {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .seg-interview-scroll::-webkit-scrollbar { display: none; }
+
+    .progress-pod {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: 0.5rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.68rem;
+      color: #7f5c38;
+    }
+
+    .progress-ring {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(143, 103, 68, 0.18);
+      border-top-color: rgba(168, 112, 60, 0.92);
+      transform: rotate(-90deg);
+    }
+
+    .dim-bar-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.65rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dim-dot--in_progress { animation: none; opacity: 1; transform: none; }
+    }
+
+    /* seg-interview button.on */
+    .seg-interview button.on {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .seg-interview .thumb {
+      position: absolute;
+      top: 3px;
+      left: 0;
+      height: calc(100% - 6px);
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 250, 242, 0.95);
+      box-shadow: 0 4px 12px rgba(86, 55, 27, 0.08);
+      z-index: 0;
+      pointer-events: none;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1), width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.68rem;
+      color: var(--text-faint);
+    }
+
+    .meta-row .date { font-family: ui-monospace, monospace; color: #7f5c38; }
+
+    /* —— 访谈内容区 —— */
+    .chat-slot {
+      height: 14.5rem;
+      overflow: hidden;
+      border-radius: var(--radius-control);
+      border: 1px solid rgba(150, 105, 61, 0.12);
+      background: rgba(255, 252, 246, 0.45);
+    }
+
+    .chat-track {
+      display: flex;
+      height: 100%;
+      will-change: transform;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .chat-page {
+      flex-shrink: 0;
+      height: 100%;
+      padding: 0.65rem 0.7rem;
+      overflow-y: auto;
+    }
+
+    .chat-page-instant { display: none; height: 14.5rem; padding: 0.65rem 0.7rem; overflow-y: auto; }
+    .chat-page-instant.active { display: block; }
+
+    .bubble-ai {
+      max-width: 92%;
+      margin-bottom: 0.55rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 14px 14px 14px 4px;
+      background: rgba(255, 249, 239, 0.92);
+      border: 1px solid rgba(150, 105, 61, 0.1);
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: #3a2c1f;
+    }
+
+    .bubble-think {
+      margin-bottom: 0.45rem;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      color: rgba(48, 33, 20, 0.52);
+    }
+
+    .bubble-user {
+      max-width: 88%;
+      margin-left: auto;
+      margin-bottom: 0.55rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 14px 14px 4px 14px;
+      background: rgba(191, 138, 81, 0.14);
+      font-size: 0.76rem;
+      line-height: 1.5;
+      color: #3a2c1f;
+    }
+
+    .composer-mock {
+      margin-top: 0.55rem;
+      height: 2.25rem;
+      border-radius: 999px;
+      border: 1px dashed rgba(110, 73, 38, 0.18);
+      background: rgba(255, 252, 246, 0.35);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .thumb, .chat-track { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="preview-banner">
+        <strong>访谈 · 五维切换预览</strong><br />
+        左侧为当前 header 五个独立 pill；右侧为拟上线的<strong>管理员风格 segmented 滑块</strong> + <strong>下方访谈内容横向分页</strong>（维度按钮与内容同步滑动）。<br />
+        <a href="motion-system-preview.html">← 全场景体验</a>
+        ·
+        <a href="motion-system-preview.html#p2-admin">管理员 segmented 参考</a>
+      </div>
+
+      <div class="compare-grid">
+        <!-- 当前 -->
+        <section class="demo-card" aria-label="当前访谈维度切换">
+          <p class="demo-label">当前 · 五个独立 pill + 内容硬切</p>
+          <div class="demo-body">
+            <div class="dim-bar-current" data-demo="current-bar">
+              <button type="button" class="dim-pill on" data-dim="joy" title="进行中"><span class="dim-dot dim-dot--in_progress"></span>开心</button>
+              <button type="button" class="dim-pill" data-dim="fulfillment" title="已完成"><span class="dim-dot dim-dot--completed"></span>充实</button>
+              <button type="button" class="dim-pill" data-dim="reflection" title="已整理"><span class="dim-dot dim-dot--draft"></span>思考</button>
+              <button type="button" class="dim-pill" data-dim="improvement" title="未开始"><span class="dim-dot dim-dot--empty"></span>改进</button>
+              <button type="button" class="dim-pill" data-dim="gratitude" title="未开始"><span class="dim-dot dim-dot--empty"></span>感谢</button>
+            </div>
+            <div class="meta-row"><span>当前记录日期</span><span class="date">2026-06-12</span></div>
+            <div class="dim-bar-row" data-demo="current-ring">
+              <span style="font-size:0.68rem;color:var(--text-faint)">选中维进度</span>
+              <span class="progress-pod"><span class="progress-ring" aria-hidden="true"></span>有效 3 轮</span>
+            </div>
+            <div data-demo="current-chat">
+              <div class="chat-page-instant active" data-dim="joy">
+                <div class="bubble-think">先从今天一个具体的开心片段问起</div>
+                <div class="bubble-ai">今天有没有哪一个瞬间，让你明显觉得「嗯，这个挺好的」？</div>
+                <div class="bubble-user">早上比平时早醒半小时，先把窗推开，让风进来。</div>
+              </div>
+              <div class="chat-page-instant" data-dim="fulfillment">
+                <div class="bubble-think">聚焦「今天为什么不算白过」</div>
+                <div class="bubble-ai">今天哪一段经历，让你觉得时间没有白白流走？</div>
+                <div class="bubble-user">把一个拖了两周的小需求终于推上线了。</div>
+              </div>
+              <div class="chat-page-instant" data-dim="reflection">
+                <div class="bubble-think">从触发思考的片段切入</div>
+                <div class="bubble-ai">今天有没有哪一刻，让你对某件事的看法有了变化？</div>
+              </div>
+              <div class="chat-page-instant" data-dim="improvement">
+                <div class="bubble-think">聚焦想做得更稳的情境</div>
+                <div class="bubble-ai">今天有没有哪个时刻，你事后觉得「下次可以换一种做法」？</div>
+              </div>
+              <div class="chat-page-instant" data-dim="gratitude">
+                <div class="bubble-think">从被照顾/被支持的瞬间写起</div>
+                <div class="bubble-ai">今天有没有谁做了什么，让你想说一声谢谢？</div>
+              </div>
+            </div>
+            <div class="composer-mock" aria-hidden="true"></div>
+            <p class="demo-note">点维度按钮时，选中态即时跳变，对话区直接替换。</p>
+          </div>
+        </section>
+
+        <!-- 拟上线 -->
+        <section class="demo-card" aria-label="拟上线访谈维度切换">
+          <p class="demo-label">拟上线 · segmented 滑块 + 内容横向分页</p>
+          <div class="demo-body">
+            <div class="dim-bar-row">
+              <div class="seg-interview" data-demo="slide-bar">
+                <div class="seg-interview-scroll">
+                  <span class="thumb" aria-hidden="true"></span>
+                  <button type="button" class="on" data-dim="joy" title="进行中">开心<span class="dim-dot dim-dot--in_progress"></span></button>
+                  <button type="button" data-dim="fulfillment" title="已完成">充实<span class="dim-dot dim-dot--completed"></span></button>
+                  <button type="button" data-dim="reflection" title="已整理">思考<span class="dim-dot dim-dot--draft"></span></button>
+                  <button type="button" data-dim="improvement" title="未开始">改进<span class="dim-dot dim-dot--empty"></span></button>
+                  <button type="button" data-dim="gratitude" title="未开始">感谢<span class="dim-dot dim-dot--empty"></span></button>
+                </div>
+              </div>
+              <span class="progress-pod" data-demo="slide-ring"><span class="progress-ring" aria-hidden="true"></span>有效 3 轮</span>
+            </div>
+            <div class="meta-row"><span>当前记录日期</span><span class="date">2026-06-12</span></div>
+            <div class="chat-slot">
+              <div class="chat-track" data-demo="slide-chat" style="width:500%" data-active="joy">
+                <div class="chat-page" style="width:20%" data-dim="joy">
+                  <div class="bubble-think">先从今天一个具体的开心片段问起</div>
+                  <div class="bubble-ai">今天有没有哪一个瞬间，让你明显觉得「嗯，这个挺好的」？</div>
+                  <div class="bubble-user">早上比平时早醒半小时，先把窗推开，让风进来。</div>
+                </div>
+                <div class="chat-page" style="width:20%" data-dim="fulfillment">
+                  <div class="bubble-think">聚焦「今天为什么不算白过」</div>
+                  <div class="bubble-ai">今天哪一段经历，让你觉得时间没有白白流走？</div>
+                  <div class="bubble-user">把一个拖了两周的小需求终于推上线了。</div>
+                </div>
+                <div class="chat-page" style="width:20%" data-dim="reflection">
+                  <div class="bubble-think">从触发思考的片段切入</div>
+                  <div class="bubble-ai">今天有没有哪一刻，让你对某件事的看法有了变化？</div>
+                  <div class="bubble-user">开会时同事一句话，让我重新想是不是该先对齐再动手。</div>
+                </div>
+                <div class="chat-page" style="width:20%" data-dim="improvement">
+                  <div class="bubble-think">聚焦想做得更稳的情境</div>
+                  <div class="bubble-ai">今天有没有哪个时刻，你事后觉得「下次可以换一种做法」？</div>
+                  <div class="bubble-user">回复消息时太急，下次想先读完再回。</div>
+                </div>
+                <div class="chat-page" style="width:20%" data-dim="gratitude">
+                  <div class="bubble-think">从被照顾/被支持的瞬间写起</div>
+                  <div class="bubble-ai">今天有没有谁做了什么，让你想说一声谢谢？</div>
+                  <div class="bubble-user">同事帮我顶了临时会议，让我能按时下班。</div>
+                </div>
+              </div>
+            </div>
+            <div class="composer-mock" aria-hidden="true"></div>
+            <p class="demo-note">状态灯语义与线上一致：灰=未开始 · 黄呼吸=进行中 · 红=已整理 · 绿=已完成。仅「进行中」选中项显示右侧进度环。</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var RING_DIMS = { joy: true, fulfillment: false, reflection: false, improvement: false, gratitude: false };
+    var STATUS_TITLE = { joy: "进行中", fulfillment: "已完成", reflection: "已整理", improvement: "未开始", gratitude: "未开始" };
+
+    function toggleProgressRing(dim, ringEl) {
+      if (!ringEl) return;
+      ringEl.style.display = RING_DIMS[dim] ? "inline-flex" : "none";
+    }
+    var OFFSETS = { joy: "0%", fulfillment: "-20%", reflection: "-40%", improvement: "-60%", gratitude: "-80%" };
+
+    function positionThumb(container, activeButton) {
+      var scroll = container.querySelector(".seg-interview-scroll") || container;
+      var thumb = container.querySelector(".thumb");
+      if (!thumb || !activeButton) return;
+      var cRect = scroll.getBoundingClientRect();
+      var bRect = activeButton.getBoundingClientRect();
+      var x = bRect.left - cRect.left + scroll.scrollLeft;
+      thumb.style.width = bRect.width + "px";
+      thumb.style.transform = "translateX(" + x + "px)";
+    }
+
+    function bindCurrent() {
+      var bar = document.querySelector('[data-demo="current-bar"]');
+      var chat = document.querySelector('[data-demo="current-chat"]');
+      var ring = document.querySelector('[data-demo="current-ring"] .progress-pod');
+      bar.querySelectorAll("button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var dim = btn.dataset.dim;
+          bar.querySelectorAll("button").forEach(function (b) {
+            b.classList.toggle("on", b === btn);
+          });
+          chat.querySelectorAll(".chat-page-instant").forEach(function (page) {
+            page.classList.toggle("active", page.dataset.dim === dim);
+          });
+          toggleProgressRing(dim, ring);
+        });
+      });
+    }
+
+    function bindSlide() {
+      var bar = document.querySelector('[data-demo="slide-bar"]');
+      var scroll = bar.querySelector(".seg-interview-scroll");
+      var track = document.querySelector('[data-demo="slide-chat"]');
+      var buttons = bar.querySelectorAll("button[data-dim]");
+
+      var ring = document.querySelector('[data-demo="slide-ring"]');
+
+      function activate(dim, btn) {
+        buttons.forEach(function (b) { b.classList.toggle("on", b === btn); });
+        track.dataset.active = dim;
+        track.style.transform = "translateX(" + (OFFSETS[dim] || "0%") + ")";
+        positionThumb(bar, btn);
+        toggleProgressRing(dim, ring);
+        btn.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener("click", function () { activate(btn.dataset.dim, btn); });
+      });
+
+      activate("joy", bar.querySelector("button.on"));
+
+      window.addEventListener("resize", function () {
+        positionThumb(bar, bar.querySelector("button.on"));
+      });
+
+      scroll.addEventListener("scroll", function () {
+        positionThumb(bar, bar.querySelector("button.on"));
+      });
+    }
+
+    bindCurrent();
+    bindSlide();
+  </script>
+</body>
+</html>

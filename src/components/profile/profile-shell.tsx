@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { HorizontalPager, SlidingSegmentedControl } from "@/components/ui";
 import type { ProfileViewTab } from "@/features/portrait/types";
 import { PortraitView } from "@/components/profile/portrait-view";
 import { MemoriesView } from "@/components/profile/memories-view";
@@ -18,32 +19,37 @@ export function ProfileShell() {
 
   return (
     <div className="grid min-h-0 gap-4">
-      <nav className="flex items-center gap-0 border-b border-[rgba(115,77,39,0.12)]" role="tablist">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.key}
-            className={`relative px-4 py-2.5 font-mono text-[0.72rem] tracking-[0.18em] transition-colors ${
-              tab === t.key
-                ? "text-[#2c2117]"
-                : "text-[#8a7a68] hover:text-[#5a4632]"
-            }`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-            {tab === t.key && (
-              <span className="absolute inset-x-4 -bottom-px h-px bg-[#2c2117]" />
-            )}
-          </button>
-        ))}
-      </nav>
+      <SlidingSegmentedControl
+        variant="underline"
+        ariaLabel="画像页视图"
+        value={tab}
+        onChange={setTab}
+        items={TABS.map((item) => ({
+          value: item.key,
+          label: item.label,
+          buttonProps: {
+            role: "tab",
+            "aria-selected": tab === item.key
+          }
+        }))}
+      />
 
-      <div role="tabpanel">
-        {tab === "portrait" && <PortraitView />}
-        {tab === "memories" && <MemoriesView />}
-        {tab === "evolution" && <EvolutionContainer />}
+      <div role="tabpanel" className="min-h-[12rem]">
+        <HorizontalPager
+          activeKey={tab}
+          ariaLabel="画像页内容"
+          pages={TABS.map((item) => ({
+            key: item.key,
+            children:
+              item.key === "portrait" ? (
+                <PortraitView />
+              ) : item.key === "memories" ? (
+                <MemoriesView />
+              ) : (
+                <EvolutionContainer />
+              )
+          }))}
+        />
       </div>
     </div>
   );

@@ -9,9 +9,14 @@ import clsx from "clsx";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
+import { DimensionStatusDot, SlidingSegmentedControl } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import {
+  prefetchInterviewSession,
+  prefetchStoredInterviewSessions
+} from "@/features/interview/session-bootstrap";
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
@@ -47,39 +52,6 @@ function HeaderDivider({ className }: { className?: string }) {
     >
       ｜
     </span>
-  );
-}
-
-function getHeaderStatusDataValue(statusLabel: InterviewDimensionBarStatus["statusLabel"]) {
-  switch (statusLabel) {
-    case "已完成":
-      return "completed";
-    case "进行中":
-      return "in_progress";
-    case "已整理":
-      return "draft";
-    case "未开始":
-      return "empty";
-  }
-}
-
-function DimensionStatusDot({
-  statusLabel,
-  testId
-}: {
-  statusLabel: InterviewDimensionBarStatus["statusLabel"];
-  testId?: string;
-}) {
-  const statusValue = getHeaderStatusDataValue(statusLabel);
-
-  return (
-    <span
-      aria-hidden="true"
-      title={statusLabel}
-      data-testid={testId}
-      data-status={statusValue}
-      className={clsx("header-status-dot", `header-status-dot--${statusValue}`)}
-    />
   );
 }
 
@@ -350,6 +322,47 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
   }, [dimension, isInterviewPage, pendingUrlDimension, router, searchParams, setDimension, setPendingUrlDimension]);
 
   useEffect(() => {
+    if (!isInterviewPage || typeof window === "undefined") {
+      return;
+    }
+
+    if (searchParams.get("mode") === "daily-journal") {
+      return;
+    }
+
+    const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;
+    const todayEntryDate = getTodayEntryDate();
+    if (entryDate && entryDate !== todayEntryDate) {
+      return;
+    }
+
+    const scheduleIdle =
+      window.requestIdleCallback ??
+      ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1));
+    const cancelIdle =
+      window.cancelIdleCallback ??
+      ((handle: number) => {
+        window.clearTimeout(handle);
+      });
+
+    const idleHandle = scheduleIdle(() => {
+      prefetchStoredInterviewSessions(entryDate);
+    });
+
+    return () => {
+      cancelIdle(idleHandle);
+    };
+  }, [isInterviewPage, searchParams, sessionEntryDate]);
+
+  function prefetchDimensionSession(nextDimension: InterviewDimension) {
+    const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;
+    prefetchInterviewSession({
+      dimension: nextDimension,
+      entryDate
+    });
+  }
+
+  useEffect(() => {
     if (!isInterviewPage) {
       setEntryDateDimensionStatuses(null);
       setCachedDimensionSessions({});
@@ -591,6 +604,8 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       return;
     }
 
+    prefetchDimensionSession(normalized);
+
     if (typeof window !== "undefined") {
       window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), normalized);
     }
@@ -683,67 +698,55 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
         {hasHeaderWorkspace ? <HeaderDivider className="hidden md:flex" /> : null}
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
-            <div className="w-full overflow-x-auto pb-0.5">
-              <div
-                data-testid="interview-dimension-bar"
-                aria-label="访谈维度切换"
-                className="flex min-w-max items-center gap-1.5"
-              >
-                <div className="flex min-w-0 items-center gap-[0.3125rem] overflow-hidden">
-                  {interviewDimensions.map((item) => {
-                    const isSelected = isInterviewWorkspaceSelected && item === activeDimension;
+            <div
+              data-testid="interview-dimension-bar"
+              className="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto pb-0.5"
+            >
+              <div className="min-w-0 shrink-0">
+                <SlidingSegmentedControl
+                  variant="admin"
+                  scrollable
+                  highlightSelection={isInterviewWorkspaceSelected}
+                  ariaLabel="访谈维度切换"
+                  value={activeDimension}
+                  onChange={handleDimensionChange}
+                  items={interviewDimensions.map((item) => {
                     const meta = getInterviewDimensionMeta(item);
                     const progressSummary = dimensionProgressMap[item];
-                    const labelId = `interview-dimension-label-${item}`;
                     const progressId = `interview-dimension-status-${item}`;
-                    const detailLabel = progressSummary.statusLabel;
 
-                    return (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => handleDimensionChange(item)}
-                        disabled={isWorkspaceTransitioning}
-                        aria-pressed={isSelected}
-                        aria-current={isSelected ? "step" : undefined}
-                        aria-labelledby={labelId}
-                        aria-describedby={progressId}
-                        className={clsx(
-                          "group relative flex shrink-0 items-center rounded-[15px] border py-1.5 pl-3 pr-4 text-left transition duration-300 disabled:cursor-not-allowed disabled:opacity-60",
-                          isSelected
-                            ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                            : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                        )}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={clsx(
-                            "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                            !isSelected && "opacity-50"
-                          )}
-                        />
-                        <span
-                          id={labelId}
-                          className={clsx(
-                            "shrink-0 text-[12px] font-medium tracking-[0.01em]",
-                            isSelected ? "text-[#fff8f1]" : "text-[#4a4038]"
-                          )}
-                        >
+                    return {
+                      value: item,
+                      label: (
+                        <>
                           {meta.navLabel}
-                        </span>
-                        <div className="flex min-w-0 items-center">
                           <span id={progressId} className="sr-only">
-                            {detailLabel}
+                            {progressSummary.statusLabel}
                           </span>
-                          <DimensionStatusDot
-                            statusLabel={detailLabel}
-                            testId={`interview-dimension-status-dot-${item}`}
-                          />
-                        </div>
-                      </button>
-                    );
+                        </>
+                      ),
+                      disabled: isWorkspaceTransitioning,
+                      ariaLabel: `${meta.navLabel}，${progressSummary.statusLabel}`,
+                      adornment: (
+                        <DimensionStatusDot
+                          statusLabel={progressSummary.statusLabel}
+                          testId={`interview-dimension-status-dot-${item}`}
+                        />
+                      ),
+                      buttonProps: {
+                        "aria-describedby": progressId,
+                        "aria-pressed": isInterviewWorkspaceSelected && item === activeDimension,
+                        "aria-current": isInterviewWorkspaceSelected && item === activeDimension ? ("step" as const) : undefined,
+                        onPointerEnter: () => {
+                          if (item !== activeDimension) {
+                            prefetchDimensionSession(item);
+                          }
+                        }
+                      }
+                    };
                   })}
-                </div>
+                />
+              </div>
                 {selectedProgressPodState.kind !== "hidden" ? (
                   <>
                     <HeaderDivider />
@@ -850,7 +853,6 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
                     清除对话记录
                   </button>
                 ) : null}
-              </div>
             </div>
           ) : null}
           {isCalendarPage ? <CalendarToolbar /> : null}

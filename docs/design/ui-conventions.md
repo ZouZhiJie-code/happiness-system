@@ -61,8 +61,25 @@ chip、pill、按钮继续使用 `rounded-full`，不占档位。禁止新增 `r
 | `SectionHeading` | 眉题式分组标题（替代手写 `archive-label` 组合） |
 | `Divider` | hairline 分隔线，横/竖两向 |
 | `ActionButton` | primary / secondary / ghost 三态按钮 |
+| `SlidingSegmentedControl` | 带滑块的 segmented 切换；变体 `soft / calendar / admin / underline` |
+| `HorizontalPager` | 横向分页内容轨，与 segmented 联动 |
+| `DimensionStatusDot` | 访谈维度状态灯（灰 / 黄呼吸 / 红 / 绿） |
 
 页面组件不再手写卡片样式；需要新形态时先扩展原语，再使用。
+
+## 8. 动效原语（2026-06-12）
+
+滑块与分页动效统一走共享原语，禁止各页手写 thumb / track transition。
+
+| 场景 | 控件 | 内容区 |
+| --- | --- | --- |
+| 分析页 8 要素雷达/棒棒糖 | `SlidingSegmentedControl` soft | `HorizontalPager` |
+| 日历 月/周/日 | `SlidingSegmentedControl` calendar | URL 整页切换（不做 pager） |
+| 画像 三 tab | `SlidingSegmentedControl` underline | `HorizontalPager` |
+| 访谈五维 | `SlidingSegmentedControl` admin + `DimensionStatusDot` | `HorizontalPager` |
+| 管理员 复盘/监控 | `SlidingSegmentedControl` admin | URL replace（不做 pager） |
+
+动效参数：`320ms` · `cubic-bezier(0.32, 0.72, 0, 1)`；`prefers-reduced-motion: reduce` 时关闭 transition。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
 
 ## 7. 例外
 

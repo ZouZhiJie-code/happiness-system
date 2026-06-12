@@ -6,7 +6,7 @@ import type { AnalysisDailyCoverageDay, AnalysisTrendsRangeRecord } from "@/feat
 import type { AnalysisRangePreset } from "@/features/analysis/date-range";
 import { buildCalendarMonthGrid } from "@/features/calendar/view-state";
 import { happinessScorePresentationItems } from "@/features/happiness-score/presentation";
-import { Card } from "@/components/ui";
+import { Card, HorizontalPager, SlidingSegmentedControl } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatScoreAverage } from "./analysis-shared";
 
@@ -268,20 +268,20 @@ function LogDaysHeatmap({ record, preset }: { record: AnalysisTrendsRangeRecord;
   );
 }
 
+const FACTOR_VIEW_ITEMS = [
+  { value: "radar" as const, label: "雷达图" },
+  { value: "lollipop" as const, label: "棒棒糖" }
+];
+
 function FactorToggle({ view, onChange }: { view: FactorView; onChange: (view: FactorView) => void }) {
   return (
-    <div className="analysis-trends-style-toggle" role="group" aria-label="幸福8要素图表样式">
-      {(["radar", "lollipop"] as const).map((item) => (
-        <button
-          key={item}
-          type="button"
-          data-active={view === item}
-          onClick={() => onChange(item)}
-        >
-          {item === "radar" ? "雷达图" : "棒棒糖"}
-        </button>
-      ))}
-    </div>
+    <SlidingSegmentedControl
+      variant="soft"
+      ariaLabel="幸福8要素图表样式"
+      value={view}
+      onChange={onChange}
+      items={FACTOR_VIEW_ITEMS}
+    />
   );
 }
 
@@ -373,77 +373,89 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
         <p className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex items-center justify-center text-[0.88rem] text-[var(--text-dim)]")}>
           这个周期还没有足够的评分样本。
         </p>
-      ) : view === "radar" ? (
-        <div className={TRENDS_BOTTOM_PANE_SLOT}>
-          <svg
-            viewBox={`${radarGeometry.viewBox.x} ${radarGeometry.viewBox.y} ${radarGeometry.viewBox.width} ${radarGeometry.viewBox.height}`}
-            className="block h-full w-full"
-            preserveAspectRatio="xMidYMid meet"
-            aria-label="幸福8要素雷达图"
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--amber)" stopOpacity="0.24" />
-                <stop offset="100%" stopColor="var(--amber)" stopOpacity="0.05" />
-              </linearGradient>
-            </defs>
-            {radarGeometry.grids.map((gridPoints, index) => (
-              <polygon
-                key={index}
-                points={gridPoints}
-                className={cn(
-                  "fill-none",
-                  index === radarGeometry.grids.length - 1 ? "stroke-ember/20" : "stroke-ember/15"
-                )}
-                strokeWidth={1}
-              />
-            ))}
-            <polygon
-              points={radarGeometry.points.map((point) => `${point.x},${point.y}`).join(" ")}
-              fill={`url(#${gradientId})`}
-              className="stroke-clay"
-              strokeWidth={1.8}
-              strokeLinejoin="round"
-            />
-            {radarGeometry.points.map((point) => (
-              <text
-                key={point.item.requestKey}
-                x={point.labelX}
-                y={point.labelY}
-                textAnchor={point.textAnchor}
-                dominantBaseline="middle"
-                className="fill-[var(--text-dim)] text-[10px]"
-              >
-                {point.item.label}
-              </text>
-            ))}
-          </svg>
-        </div>
       ) : (
-        <div className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex flex-col justify-center gap-[0.43rem]")}>
-          {items.map((item) => {
-            const value = record.scoreTrend.factorAverages[item.requestKey];
-            const ratio = typeof value === "number" ? ((value - 2) / 8) * 100 : 0;
-            return (
-              <div key={item.requestKey} className="grid grid-cols-[3.85rem_1fr_1.95rem] items-center gap-[0.43rem]">
-                <span className="text-[0.88rem] text-[var(--text-main)]">{item.label}</span>
-                <div className="relative h-px bg-line/15">
-                  <div
-                    className="absolute top-1/2 h-[2.5px] -translate-y-1/2 bg-clay/35"
-                    style={{ left: "8%", width: `${Math.max(ratio, 4)}%` }}
+        <HorizontalPager
+          activeKey={view}
+          ariaLabel="幸福8要素图表视图"
+          className={TRENDS_BOTTOM_PANE_SLOT}
+          pages={[
+            {
+              key: "radar",
+              className: "h-full",
+              children: (
+                <svg
+                  viewBox={`${radarGeometry.viewBox.x} ${radarGeometry.viewBox.y} ${radarGeometry.viewBox.width} ${radarGeometry.viewBox.height}`}
+                  className="block h-full w-full"
+                  preserveAspectRatio="xMidYMid meet"
+                  aria-label="幸福8要素雷达图"
+                >
+                  <defs>
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--amber)" stopOpacity="0.24" />
+                      <stop offset="100%" stopColor="var(--amber)" stopOpacity="0.05" />
+                    </linearGradient>
+                  </defs>
+                  {radarGeometry.grids.map((gridPoints, index) => (
+                    <polygon
+                      key={index}
+                      points={gridPoints}
+                      className={cn(
+                        "fill-none",
+                        index === radarGeometry.grids.length - 1 ? "stroke-ember/20" : "stroke-ember/15"
+                      )}
+                      strokeWidth={1}
+                    />
+                  ))}
+                  <polygon
+                    points={radarGeometry.points.map((point) => `${point.x},${point.y}`).join(" ")}
+                    fill={`url(#${gradientId})`}
+                    className="stroke-clay"
+                    strokeWidth={1.8}
+                    strokeLinejoin="round"
                   />
-                  <div
-                    className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-clay bg-paper"
-                    style={{ left: `${8 + Math.max(ratio, 4)}%` }}
-                  />
-                </div>
-                <span className="text-right font-mono text-[0.88rem] text-[var(--text-dim)]">
-                  {typeof value === "number" ? value.toFixed(1) : "—"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                  {radarGeometry.points.map((point) => (
+                    <text
+                      key={point.item.requestKey}
+                      x={point.labelX}
+                      y={point.labelY}
+                      textAnchor={point.textAnchor}
+                      dominantBaseline="middle"
+                      className="fill-[var(--text-dim)] text-[10px]"
+                    >
+                      {point.item.label}
+                    </text>
+                  ))}
+                </svg>
+              )
+            },
+            {
+              key: "lollipop",
+              className: "flex h-full flex-col justify-center gap-[0.43rem]",
+              children: items.map((item) => {
+                const value = record.scoreTrend.factorAverages[item.requestKey];
+                const ratio = typeof value === "number" ? ((value - 2) / 8) * 100 : 0;
+                return (
+                  <div key={item.requestKey} className="grid grid-cols-[3.85rem_1fr_1.95rem] items-center gap-[0.43rem]">
+                    <span className="text-[0.88rem] text-[var(--text-main)]">{item.label}</span>
+                    <div className="relative h-px bg-line/15">
+                      <div
+                        className="absolute top-1/2 h-[2.5px] -translate-y-1/2 bg-clay/35"
+                        style={{ left: "8%", width: `${Math.max(ratio, 4)}%` }}
+                      />
+                      <div
+                        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-clay bg-paper"
+                        style={{ left: `${8 + Math.max(ratio, 4)}%` }}
+                      />
+                    </div>
+                    <span className="text-right font-mono text-[0.88rem] text-[var(--text-dim)]">
+                      {typeof value === "number" ? value.toFixed(1) : "—"}
+                    </span>
+                  </div>
+                );
+              })
+            }
+          ]}
+        />
       )}
     </TrendsVizCard>
   );

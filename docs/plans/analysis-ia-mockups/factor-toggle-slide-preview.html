@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>8 要素 · Toggle 滑块预览</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .preview-banner {
+      margin-bottom: 1rem;
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-control);
+      border: 1px dashed var(--line-strong);
+      background: var(--amber-soft);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .preview-banner strong { color: var(--text-main); }
+    .preview-banner a { color: var(--amber); font-weight: 600; }
+
+    .compare-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .compare-grid--triple {
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .compare-grid--triple { grid-template-columns: 1fr; }
+    }
+
+    .demo-card {
+      background: linear-gradient(165deg, rgba(255, 252, 246, 0.96) 0%, rgba(248, 233, 204, 0.4) 100%);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      box-shadow: 0 8px 28px rgba(86, 55, 27, 0.06);
+      padding: 0.85rem 1rem;
+    }
+
+    .demo-label {
+      margin: 0 0 0.65rem;
+      font-size: 0.72rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      color: var(--text-dim);
+    }
+
+    .demo-note {
+      margin: 0.65rem 0 0;
+      font-size: 0.72rem;
+      color: var(--text-faint);
+      line-height: 1.5;
+    }
+
+    .toggle-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 4.5rem;
+      padding: 0.75rem 0;
+    }
+
+    /* —— 当前：每个按钮各自变背景 —— */
+    .style-toggle {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.6);
+    }
+
+    .style-toggle button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.22rem 0.5rem;
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      background: transparent;
+      cursor: pointer;
+      transition:
+        color 160ms ease-out,
+        background-color 160ms ease-out,
+        box-shadow 160ms ease-out;
+    }
+
+    .style-toggle button.on {
+      background: var(--paper-soft);
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(86, 55, 27, 0.08);
+    }
+
+    /* —— 拟上线：单一滑块在选项间移动（iOS Segmented Control） —— */
+    .style-toggle--slide {
+      position: relative;
+      isolation: isolate;
+    }
+
+    .style-toggle--slide button {
+      position: relative;
+      z-index: 1;
+      background: transparent;
+      box-shadow: none;
+      transition: color 220ms ease-out;
+    }
+
+    .style-toggle--slide button.on {
+      background: transparent;
+      box-shadow: none;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .style-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 0;
+      height: calc(100% - 6px);
+      border-radius: 999px;
+      background: var(--paper-soft);
+      box-shadow: 0 1px 4px rgba(86, 55, 27, 0.08);
+      z-index: 0;
+      pointer-events: none;
+      will-change: transform, width;
+      transition:
+        transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+        width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    /* 组合演示：toggle 滑块 + 图表横向滑入 */
+    .combo-card .pane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      gap: 0.5rem;
+    }
+
+    .combo-card .pane-head h3 {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--text-main);
+    }
+
+    .chart-slot {
+      height: 13rem;
+      width: 100%;
+    }
+
+    .factor-pager {
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .factor-track {
+      display: flex;
+      width: 200%;
+      height: 100%;
+      will-change: transform;
+      transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .factor-track[data-active="lollipop"] {
+      transform: translateX(-50%);
+    }
+
+    .factor-page {
+      width: 50%;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    .factor-page--radar {
+      display: flex;
+      align-items: center;
+    }
+
+    .factor-page--lollipop {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.43rem;
+    }
+
+    .radar-wrap svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .radar-grid { fill: none; stroke: rgba(150, 105, 61, 0.15); stroke-width: 1; }
+    .radar-area {
+      fill: rgba(169, 111, 61, 0.2);
+      stroke: #8b5a2b;
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+    }
+
+    .radar-label { fill: rgba(48, 33, 20, 0.7); font-size: 10px; text-anchor: middle; }
+
+    .lollipop-row {
+      display: grid;
+      grid-template-columns: 3.85rem 1fr 1.95rem;
+      align-items: center;
+      gap: 0.43rem;
+    }
+
+    .lollipop-row .lbl { font-size: 0.88rem; color: var(--text-main); }
+
+    .lollipop-row .track {
+      position: relative;
+      height: 1px;
+      background: rgba(110, 73, 38, 0.15);
+    }
+
+    .lollipop-row .stem {
+      position: absolute;
+      top: 50%;
+      height: 2.5px;
+      background: rgba(122, 82, 48, 0.35);
+      transform: translateY(-50%);
+    }
+
+    .lollipop-row .dot {
+      position: absolute;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fffaf1;
+      border: 2px solid #8b5a2b;
+      transform: translate(-50%, -50%);
+    }
+
+    .lollipop-row .val {
+      text-align: right;
+      font-family: ui-monospace, monospace;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .style-toggle-thumb,
+      .factor-track {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="page-inner" style="max-width: 56rem">
+      <div class="preview-banner">
+        <strong>交互预览 · Toggle 滑块</strong><br />
+        对比「雷达图 / 棒棒糖」切换时，顶部 pill 高亮是<strong>即时跳变</strong>还是<strong>滑块跟随</strong>（类似 iPhone 分段控件）。下方第三块为 toggle 滑块 + 图表横向滑入的组合效果。<br />
+        <a href="factor-slide-preview.html">← 图表滑入预览</a>
+        ·
+        <a href="trends-final-preview.html">定稿预览</a>
+      </div>
+
+      <div class="compare-grid">
+        <section class="demo-card" aria-label="当前 toggle 即时切换">
+          <p class="demo-label">当前 · 高亮即时跳变</p>
+          <div class="toggle-stage">
+            <div class="style-toggle" role="group" aria-label="幸福8要素图表样式" data-kind="instant">
+              <button type="button" class="on" data-view="radar">雷达图</button>
+              <button type="button" data-view="lollipop">棒棒糖</button>
+            </div>
+          </div>
+          <p class="demo-note">每个按钮各自出现背景色，没有共享滑块。</p>
+        </section>
+
+        <section class="demo-card" aria-label="拟上线 toggle 滑块">
+          <p class="demo-label">拟上线 · 滑块在选项间滑动</p>
+          <div class="toggle-stage">
+            <div class="style-toggle style-toggle--slide" role="group" aria-label="幸福8要素图表样式" data-kind="slide">
+              <span class="style-toggle-thumb" aria-hidden="true"></span>
+              <button type="button" class="on" data-view="radar">雷达图</button>
+              <button type="button" data-view="lollipop">棒棒糖</button>
+            </div>
+          </div>
+          <p class="demo-note">单一高亮块随选中项平移；文案宽度不同时滑块宽度也会跟着变。</p>
+        </section>
+      </div>
+
+      <div class="compare-grid compare-grid--triple">
+        <section class="demo-card combo-card" aria-label="组合效果">
+          <p class="demo-label">组合 · Toggle 滑块 + 图表横向滑入（拟上线完整体验）</p>
+          <div class="pane-head">
+            <h3>幸福 8 要素评分</h3>
+            <div class="style-toggle style-toggle--slide" role="group" aria-label="幸福8要素图表样式" data-kind="combo">
+              <span class="style-toggle-thumb" aria-hidden="true"></span>
+              <button type="button" class="on" data-view="radar">雷达图</button>
+              <button type="button" data-view="lollipop">棒棒糖</button>
+            </div>
+          </div>
+          <div class="chart-slot">
+            <div class="factor-pager" aria-label="幸福8要素图表视图">
+              <div class="factor-track" data-active="radar">
+                <div class="factor-page factor-page--radar">
+                  <div class="radar-wrap" style="height:100%;width:100%">
+                    <svg viewBox="0 0 260 200" aria-label="幸福8要素雷达图">
+                      <polygon class="radar-grid" points="130,30 200,78 170,168 90,168 60,78"/>
+                      <polygon class="radar-grid" points="130,50 178,88 152,148 98,148 72,88"/>
+                      <polygon class="radar-grid" points="130,70 156,98 134,128 106,128 84,98"/>
+                      <polygon class="radar-area" points="130,40 192,80 160,158 88,154 58,86 104,52 150,48 178,116"/>
+                      <text class="radar-label" x="130" y="20">意义感</text>
+                      <text class="radar-label" x="210" y="78">健康</text>
+                      <text class="radar-label" x="176" y="182">美德</text>
+                      <text class="radar-label" x="64" y="182">自主性</text>
+                      <text class="radar-label" x="42" y="78">兴趣</text>
+                      <text class="radar-label" x="88" y="40">技能</text>
+                      <text class="radar-label" x="162" y="38">关系</text>
+                      <text class="radar-label" x="202" y="132">生活条件</text>
+                    </svg>
+                  </div>
+                </div>
+                <div class="factor-page factor-page--lollipop">
+                  <div class="lollipop-row"><span class="lbl">意义感</span><div class="track"><div class="stem" style="left:8%;width:70%"></div><div class="dot" style="left:78%"></div></div><span class="val">7.8</span></div>
+                  <div class="lollipop-row"><span class="lbl">健康</span><div class="track"><div class="stem" style="left:8%;width:54%"></div><div class="dot" style="left:62%"></div></div><span class="val">6.2</span></div>
+                  <div class="lollipop-row"><span class="lbl">美德</span><div class="track"><div class="stem" style="left:8%;width:63%"></div><div class="dot" style="left:71%"></div></div><span class="val">7.1</span></div>
+                  <div class="lollipop-row"><span class="lbl">自主性</span><div class="track"><div class="stem" style="left:8%;width:47%"></div><div class="dot" style="left:55%"></div></div><span class="val">5.5</span></div>
+                  <div class="lollipop-row"><span class="lbl">兴趣</span><div class="track"><div class="stem" style="left:8%;width:60%"></div><div class="dot" style="left:68%"></div></div><span class="val">6.8</span></div>
+                  <div class="lollipop-row"><span class="lbl">技能</span><div class="track"><div class="stem" style="left:8%;width:56%"></div><div class="dot" style="left:64%"></div></div><span class="val">6.4</span></div>
+                  <div class="lollipop-row"><span class="lbl">关系</span><div class="track"><div class="stem" style="left:8%;width:65%"></div><div class="dot" style="left:73%"></div></div><span class="val">7.3</span></div>
+                  <div class="lollipop-row"><span class="lbl">生活条件</span><div class="track"><div class="stem" style="left:8%;width:51%"></div><div class="dot" style="left:59%"></div></div><span class="val">5.9</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="demo-note">320ms · cubic-bezier(0.32, 0.72, 0, 1) — toggle 滑块与图表轨道同步。</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function positionThumb(toggle, activeButton) {
+      const thumb = toggle.querySelector(".style-toggle-thumb");
+      if (!thumb || !activeButton) return;
+
+      const toggleRect = toggle.getBoundingClientRect();
+      const buttonRect = activeButton.getBoundingClientRect();
+      const x = buttonRect.left - toggleRect.left;
+
+      thumb.style.width = `${buttonRect.width}px`;
+      thumb.style.transform = `translateX(${x}px)`;
+    }
+
+    function syncSlideToggle(toggle, view) {
+      const buttons = toggle.querySelectorAll("button");
+      let activeButton = null;
+
+      buttons.forEach((button) => {
+        const isActive = button.dataset.view === view;
+        button.classList.toggle("on", isActive);
+        if (isActive) activeButton = button;
+      });
+
+      if (toggle.classList.contains("style-toggle--slide")) {
+        positionThumb(toggle, activeButton);
+      }
+    }
+
+    function bindToggle(toggle) {
+      const kind = toggle.dataset.kind;
+      const chartTrack = kind === "combo"
+        ? toggle.closest(".combo-card")?.querySelector(".factor-track")
+        : null;
+
+      toggle.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const view = button.dataset.view;
+          syncSlideToggle(toggle, view);
+          if (chartTrack) {
+            chartTrack.dataset.active = view;
+          }
+        });
+      });
+
+      const initial = toggle.querySelector("button.on") || toggle.querySelector("button");
+      if (initial) {
+        syncSlideToggle(toggle, initial.dataset.view);
+      }
+    }
+
+    document.querySelectorAll(".style-toggle").forEach(bindToggle);
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".style-toggle--slide").forEach((toggle) => {
+        const active = toggle.querySelector("button.on");
+        positionThumb(toggle, active);
+      });
+    });
+  </script>
+</body>
+</html>
