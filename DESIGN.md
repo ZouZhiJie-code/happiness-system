@@ -30,9 +30,9 @@ typography:
   mono:
     fontFamily: "IBM Plex Mono, SFMono-Regular, Menlo, monospace"
 rounded:
-  card-xl: "32px"
-  card-lg: "28px"
-  card-md: "24px"
+  shell: "28px"
+  card: "20px"
+  control: "12px"
   pill: "999px"
 spacing:
   xs: "8px"
@@ -44,15 +44,15 @@ components:
   page-shell:
     backgroundColor: "{colors.warm-paper-main}"
     textColor: "{colors.text-ink}"
-    rounded: "{rounded.card-xl}"
+    rounded: "{rounded.shell}"
   calendar-shell:
     backgroundColor: "{colors.calendar-panel}"
     textColor: "{colors.calendar-ink}"
-    rounded: "{rounded.card-xl}"
+    rounded: "{rounded.shell}"
   calendar-card:
     backgroundColor: "{colors.calendar-surface}"
     textColor: "{colors.calendar-ink}"
-    rounded: "{rounded.card-md}"
+    rounded: "{rounded.card}"
     padding: "20px"
   button-primary:
     backgroundColor: "{colors.calendar-ink}"
@@ -68,23 +68,42 @@ components:
 
 # Design System: Daily Light
 
+## Document Map
+
+| 文档 | 职责 |
+| --- | --- |
+| **本文件 `DESIGN.md`** | 创意方向、页面形态、组件语义、Do/Don't |
+| **[docs/design/ui-conventions.md](docs/design/ui-conventions.md)** | 容器层级、圆角/边框 token、共享原语清单（工程必遵） |
+| **`docs/plans/`** | 历史决策过程；若与 DESIGN 或代码冲突，以 DESIGN + 代码为准 |
+
+### Changelog 2026-06-12
+
+1. **全站单层卡片制**：每页最多 Surface 底板 + 一层 Card；卡片内用眉题 / hairline / 留白分区，禁止再嵌套 border+bg 子容器。
+2. **分析页 IA**：单页四段纵向 scroll + 顶部锚点 tab + scroll spy；section keys 为 `trends / dimensions / correlation / review`。
+3. **量化趋势段**：只读读数台（`GET /api/analysis/range`），无评分录入、无热力点选、无补漏 CTA。
+
+视觉参考 mockup：[`docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html`](docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html)、[`trends-final-preview.html`](docs/plans/analysis-ia-mockups/trends-final-preview.html)。
+
+---
+
 ## Overview
 
 **Creative North Star: "温暖档案室里的紧凑工作台"**
 
 这个产品不是通用 SaaS，也不是极简效率工具。全局母系统服务的是“记录、整理、回看”这件事本身，所以主界面保留木纹、纸张、暖色墨迹和书卷体标题，但页面组织已经从“大卡套大卡”改为更平铺的暖色工作台。它应该像一张被摊开认真整理的记录纸，而不是一块匿名后台。
 
-记录日历是这套母系统里的明确子系统。它不是再讲一遍产品氛围，而是承担判断、分发、下一步动作，所以它应当切到更紧凑的工作台 register：保留暖纸张和墨色基调，同时显著降低纹理密度、阴影厚度和冗余高度。这里的目标不是脱离品牌，而是在同一产品里给出一块更高效率的暖色操作区。
+记录日历是这套母系统里的明确子系统。它不是再讲一遍产品氛围，而是承担判断、分发、下一步动作，所以它应当切到更紧凑的工作台 register：保留暖纸张和墨色基调，同时显著降低纹理密度、阴影厚度和冗余高度。
 
 **Key Characteristics**
 
 - 全局界面优先保留温暖、低压、可书写的气质，同时减少整页外框、厚圆角和重复模块间隙。
-- 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮，也不在访谈维度条、calendar toolbar 或主导航外再套内层方框；主导航当前页使用贴近文字的暖棕实线下划线，选中项字号略大，不使用填充胶囊。
-- 首页、设置页、分析页这类母系统页面优先采用“连续工作台”而不是 dashboard 式模块堆叠：内容顺着一张主纸面展开，段落之间用轻分段、轻边界和紧凑留白区分，而不是每段都包成独立大卡。
-- calendar 优先判断效率，减少装饰性纹理和厚重阴影，并压缩首屏垂直占用。
-- serif 标题贯穿全站，但工作台正文和操作信息更紧凑克制。
-- 状态色负责“这件事现在处于什么阶段”，维度色负责“这是哪一类记录”。
-- 所有动作都应当先表达“下一步去哪里”，再表达“页面说明”。
+- **单层卡片制（2026-06-12）**：section 用眉题 + hairline + 留白分区；只有可点击单元或需边界感的数据块才配 Card，纯信息分组不配卡片外壳。
+- 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮；主导航当前页使用贴近文字的暖棕实线下划线，选中项字号略大。
+- 首页、设置页、管理员页优先采用连续工作台：内容顺着一张主纸面展开。
+- **分析页**是纵向 scroll 报告体：四段同屏 + 锚点 tab，不是互斥 tab 仪表盘，也不是冷色 SaaS dashboard；职责是读数、理解与后续手动 AI 复盘，不承担补漏推进。
+- calendar 优先判断效率，减少装饰性纹理和厚重阴影。
+- serif 标题贯穿全站，工作台正文和操作信息更紧凑克制。
+- 状态色回答“现在是什么阶段”，维度色回答“这是哪一类记录”。
 
 ## Colors
 
@@ -97,162 +116,145 @@ components:
 
 全局母系统的颜色目标不是“高对比科技感”，而是“可长期停留的记录感”。中性色必须带暖调，不使用纯黑白，不把冷蓝灰扩散到首页、访谈和设置等主叙事页面。
 
+新代码禁止手写 `border-[rgba(...)]` / `bg-[rgba(...)]` 任意值；统一引用 CSS 变量（见 `globals.css :root`）或 Tailwind 命名色（`ink / sand / clay / paper / ember / line`）。
+
 ### Calendar Workspace Override
 
 - **Calendar Ink** (`#604529`)：calendar 主动作、活动 segmented、焦点描边和高优先级文字的统一暖墨色。
-- **Calendar Panel** (`#f5ecdb`) 与 **Calendar Surface** (`#fff9f0`)：calendar shell、panel、card 的浅暖工作台表面，用来让信息先于装饰被看见。
+- **Calendar Panel** (`#f5ecdb`) 与 **Calendar Surface** (`#fff9f0`)：calendar shell、panel、card 的浅暖工作台表面。
 
 #### Status Palette
 
 - **Empty** (`#7a6857`)：未记录或无结果，必须安静、退后。
-- **In Progress** (`#8a5d17`)：仍在访谈中，带轻暖感，但不能混同全局强调色。
-- **Draft** (`#7c5568`)：已有草稿、待编辑，使用偏梅紫的中强度状态色。
-- **Completed** (`#45644a`)：已保存可查看，使用稳定苔绿色。
-- **Mixed** (`#8e5638`)：同一天或同一组信息混有多种状态，使用偏陶土色，避免和 completed / draft 混淆。
+- **In Progress** (`#8a5d17`)：仍在访谈中。
+- **Draft** (`#7c5568`)：已有草稿、待编辑。
+- **Completed** (`#45644a`)：已保存可查看。
+- **Mixed** (`#8e5638`)：同一天混有多种状态。
 
 #### Dimension Identity
 
-- **Joy** (`#d68a5a`)：开心
-- **Fulfillment** (`#74927a`)：充实
-- **Reflection** (`#a17a97`)：思考
-- **Improvement** (`#7d9771`)：改进
-- **Gratitude** (`#b8848d`)：感谢
+- **Joy** (`#d68a5a`)：开心 · **Fulfillment** (`#74927a`)：充实 · **Reflection** (`#a17a97`)：思考 · **Improvement** (`#7d9771`)：改进 · **Gratitude** (`#b8848d`)：感谢
 
-**The Two-Layer Rule.** 状态色永远先回答“现在是什么状态”，维度色永远只回答“这是哪个维度”。两套语义不能互相替代，不能让某个维度天生看起来像某种完成状态。
+**The Two-Layer Rule.** 状态色与维度色各司其职，不能互相替代。
 
-**The Warm Workspace Rule.** calendar 可以从全局暖色母系统里继承圆角、serif 标题和整体产品气质，但它的默认表面必须收束成更浅、更平、更紧凑的暖色工作台，不能重新长回木纹叠纸页面，也不能再分叉成蓝灰后台。
+**The Warm Workspace Rule.** calendar 收束成更浅、更平、更紧凑的暖色工作台，不能重新长回木纹叠纸页，也不能分叉成蓝灰后台。
 
 ## Typography
 
 ### Global Foundation
 
-- **Display Font:** `Baskerville, Iowan Old Style, Times New Roman, Songti SC, serif`
-- **Body Font:** `Charter, Georgia, PingFang SC, Hiragino Sans GB, serif`
-- **Mono Font:** `IBM Plex Mono, SFMono-Regular, Menlo, monospace`
-
-这套字体不是为了做“现代 UI 中性化”，而是保留书写、纸本、回望一天的情绪。标题承担节奏和气质，正文承担阅读和叙述，二者都避开无差别的系统 sans。
-
-### Hierarchy
-
-- **Display**：用于首页主标题、访谈关键标题、calendar 日期和维度标题。行高紧，字重不靠极粗取胜，而靠字形气质和留白建立层级。
-- **Body**：用于正文、摘要、状态说明、空态和错误态。默认应该易读、舒展，不追求极窄行高。
-- **Mono**：仅用于程序化数据或技术辅助信息，不进入产品主体表达。
+- **Display:** `Baskerville, Iowan Old Style, Times New Roman, Songti SC, serif`
+- **Body:** `Charter, Georgia, PingFang SC, Hiragino Sans GB, serif`
+- **Mono:** `IBM Plex Mono, SFMono-Regular, Menlo, monospace`（仅程序化数据）
 
 ### Calendar Workspace Override
 
-- calendar 保留 serif 标题体系，但尺寸和节奏要明显更紧凑。
-- 日期数字、维度标题、面板 headline 可以继续用 display。
-- 摘要、动作标签、状态说明、辅助统计统一回到更克制的 body 信息层。
-- 任何工作台短句都优先“扫描可读”，不写成长篇说明卡。
+- calendar 保留 serif 标题，尺寸和节奏更紧凑；摘要、动作、统计统一回到 body 信息层。
 
-**The Scannable Sentence Rule.** 在 calendar 里，文案首先是判断辅助，不是产品介绍。标题短、摘要短、按钮短，所有句子优先服务扫读。
+**The Scannable Sentence Rule.** 工作台文案优先服务扫读，标题短、按钮短。
 
-## Elevation
+## Elevation & Radius
 
-### Global Foundation
+### Radius（2026-06-12 三档，与 `globals.css` 一致）
 
-全局母系统用纹理、渐变、内高光和浅阴影制造实体感。`page-shell`、`paper-panel`、`paper-sheet`、`wood-dialog` 都不是纯平面色块，但它们现在优先作为铺底 surface 或局部编辑 pane，不再默认承担“整页大卡片”的角色。默认装饰密度要让内容先被看见，而不是让壳层先被看见。
+| 档位 | 值 | CSS 变量 | 用途 |
+| --- | --- | --- | --- |
+| shell | 28px | `--radius-shell` | 页面底板、对话框 |
+| card | 20px | `--radius-card` | 唯一卡片层 |
+| control | 12px | `--radius-control` | 输入件、小型 tile、图表容器 |
+| pill | 999px | — | chip / 胶囊按钮 |
 
-常见层级语言包括：
+新代码禁止新增 `14/16/18/22/24/26/30/32px` 等中间圆角。calendar 遗留 class 若仍用更大圆角，逐步迁移，不得在新页面复制。
 
-- 深阴影，例如 `0 28px 92px rgba(86, 55, 27, 0.18)`
-- 暖色环境光，例如 `0 16px 44px rgba(146, 92, 47, 0.16)`
-- 顶部高光、重复纹理、固定背景颗粒
+### Shadows & Borders
 
-### Calendar Workspace Override
+- 边框两档：`--line-soft`（默认）/ `--line-strong`（选中、强调）。
+- 底板保留全局类自带阴影；卡片只允许 `shadow-sm` 或无阴影；hover 最多 `shadow-md`。
+- calendar 降级装饰：轻边框 + 浅暖表面 + 低强度阴影（shell `0 16px 34px rgba(103,66,34,0.12)` 等）。
 
-calendar 明确降级装饰性层次，改用轻边框、浅暖表面和低强度阴影：
-
-- shell：`0 16px 34px rgba(103, 66, 34, 0.12)`
-- card：`0 10px 22px rgba(108, 69, 36, 0.08)`
-- panel：以内高光加很浅的外阴影表达分层
-
-交互层级依赖更克制的位移和描边，而不是更厚的材质感：
-
-- hover 位移通常只到 `-1px` 或 `-0.5` 级别
-- focus-visible 统一使用 `2px` 暖墨描边，颜色跟 `Calendar Ink` 对齐
-- disabled 状态取消阴影、取消强调、降低对比
-
-**The Flat-Enough Rule.** calendar 需要可读的层级，但不需要额外戏剧性。任何新增面板如果已经能靠边框、背景和留白成立，就不要再叠木纹、纸纹和重阴影。
+**The Flat-Enough Rule.** 能靠边框、背景和留白成立的，不再叠木纹、纸纹和重阴影。
 
 ## Components
 
+### Shared UI Primitives
+
+新页面禁止手写卡片样式；先扩展原语再使用。实现见 [`src/components/ui/`](src/components/ui/)，工程规则见 [ui-conventions.md](docs/design/ui-conventions.md)。
+
+| 原语 | 职责 |
+| --- | --- |
+| `Surface` | 页面底板（吸收 `page-shell` / `calendar-shell`） |
+| `Card` | 唯一卡片层，`interactive` 自带 hover/focus |
+| `SectionHeading` | 眉题式分组标题 |
+| `Divider` | hairline 分隔线 |
+| `ActionButton` | primary / secondary / ghost 三态按钮 |
+
 ### Shells
 
-- **Global shells**：`page-shell / paper-panel / paper-sheet / wood-dialog` 组成主产品母系统。它们允许有纹理、暖色和实体感，但整页层级应优先平铺，避免大卡套大卡。
-- **Calendar shell**：`calendar-shell` 是工作台壳层，必须保持浅暖背景、轻阴影和大圆角，不再套用木纹或厚纸面效果。
-- **Settings / Home shell**：优先使用一张连续的主纸面承载页面内容。控制区、摘要区和正文区可以分栏，但不应各自再长成多个彼此独立漂浮的大卡。
-- **Analysis shell**：分析页是用户定期收到的"分析报告"，不是连续工作台。采用结构化卡片布局：叙事区、洞察卡片区、数据可视化区、数据锚点区之间用明确的视觉层级和间距区分。保持暖色纸本气质，但用卡片边界和留白建立信息层级，让用户一眼抓住重点。
+- **Global shells**：`page-shell / paper-panel / paper-sheet / wood-dialog` 允许纹理与暖色，但整页层级优先平铺，避免大卡套大卡。
+- **Calendar shell**：浅暖背景、轻阴影，不套木纹。
+- **Settings / Home / Admin shell**：一张连续主纸面；控制区用 Divider 分行，不再各自漂浮成大卡。
+- **Analysis shell（2026-06-12）**：
+  - 单页四段同屏：`trends` / `dimensions` / `correlation` / `review`
+  - `SiteHeader` 中区：周期 preset（本周/本月/自定义）+ 四段锚点 tab + contextual chip
+  - 导航：tab 点击 → 锚点滚动；用户滚动 → scroll spy 更新 URL `section`
+  - 段间：`Divider` + 留白；段内眉题用 `AnalysisSection` / `SectionHeading`
+  - **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；数据来自 `GET /api/analysis/range`
+  - **五维全景**：按月聚合（`GET /api/analysis/month`）；**关联 / 复盘**：占位，手动 AI 后续接入
+  - 旧 URL `overview|score|rhythm|insights` 自动映射到新 section keys
 
 ### Panels and Cards
 
-- **Calendar panel**：作为月/周/日视图的内容容器，承担布局分区，不承担额外叙事。
-- **Calendar card**：承载单日、单维度或单块摘要，默认浅面、轻边框、柔和阴影。
-- **Calendar muted card**：用于空态、占位、次要说明块，必须明显退后，不能抢主卡片。
-- **Global content sections**：在首页、设置页里，section 优先是”连续内容段落”而不是”独立功能卡”。如果一个 section 已经能靠标题、边界和留白成立，就不要再给它完整卡片外壳。
-- **Analysis cards**：分析页的每个信息区块（叙事、洞察卡片、趋势图、维度卡）是独立的结构化卡片，使用浅暖面、轻阴影和统一圆角。卡片之间有明确间距，不连续平铺。
+- **Calendar card**：单日、单维度或摘要块；浅面、轻边框。
+- **Global content sections**：纯文案分组、设置行、管理员表格——用眉题 + Divider，**不配** Card。
+- **Analysis data blocks**：图表、可点 tile 等需要边界感的块可用一层 Card；段标题区不用 Card。
+- **层级预算**：每页最多 Surface + 一层 Card；Card 内禁止再嵌套 border+bg 容器。
 
-所有 calendar 卡片都应遵守统一圆角带：
-
-- workspace 外壳：`32px`
-- pane / 大卡：`28px`
-- 单元卡 / day card：`24px` 到 `26px`
+calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三档 token。
 
 ### Chips and Badges
 
-- **Calendar chip**：轻量信息和次级动作基底，承担“今天”“统计摘要”“轻链接按钮”等角色。
-- **Calendar summary chip**：统计类 capsule，不做强强调，只做快扫。
-- **Calendar status badge**：回答完成状态，必须用状态色，不可滥用维度色。
-- **Calendar dimension badge**：calendar 当前的可见 badge 使用单字 `悦 / 实 / 思 / 改 / 谢`，位置稳定、视觉稳定；辅助技术仍需暴露完整维度名，不因为状态不同而改语义。
+- **Calendar chip / summary chip / status badge / dimension badge**：规则不变；维度 badge 单字 `悦/实/思/改/谢`。
 
 ### Actions
 
-- **Primary action**：深色实心胶囊按钮，表示最直接的下一步，例如 `查看当天`、`继续访谈`、`继续编辑`。
-- **Secondary action**：轻链接或轻按钮，表示补充操作，不抢主决策。
-- **Disabled action**：必须一眼看出不可推进，使用低对比、虚线边框、去阴影处理，并保留清楚的不可用文案。
+- **Primary**：最直接下一步（calendar：`查看当天`、`继续访谈`）。
+- **Secondary / ghost**：补充或只读跳转。
+- **Disabled**：低对比、去阴影，一眼不可点。
 
-calendar 中的动作层级不可漂移：
-
-- 主按钮是推进
-- 次按钮是补充
-- disabled 不是“弱主按钮”，而是“当前不能做”
+分析页趋势段：**不做**补漏 primary CTA；若保留链接，只用 ghost 级只读「查看来源」。
 
 ### Segmented and Navigation Controls
 
-- **View switcher**：月 / 周 / 日切换使用分段控件，当前项使用 `Calendar Ink` 深色填充。
-- **Prev / Next / Today**：作为 header 工作台控件存在，尺寸一致，优先紧凑和快扫，不做视觉主角。
-- **Header middle lane**：访谈维度条与 calendar toolbar 直接平铺在全宽 header 中区，共用高度预算、横向 gutter 和控件节奏；业务控制组之间用 `｜` 轻量分隔；不要再给中区、calendar toolbar 或主导航补独立外框。
-- **Page-level controls**：像分析页月份切换、设置页确认摘要这类页面内控制，应当像工具带或轻量控制组，而不是独立高卡或次级仪表盘面板。
+- **View switcher**：月/周/日 segmented，当前项 `Calendar Ink` 填充。
+- **Header middle lane**：维度条、calendar toolbar、analysis toolbar 平铺在中区，用 `｜` 分隔，不套独立外框。
+- **Analysis anchor tabs**：四段 tab 与 scroll spy 双向联动；不是互斥渲染切换。
 
 ### Day Cells and Boards
 
-- **Month day cell**：只保留日期、状态符号，以及“已保存结果优先”的单字维度 token 或 `已完成`。它是入口，不是详情页。
-- **Week board card**：七天等权比较，统一高度，统一结构，统一主动作出口。
-- **Day dimension card**：五维紧凑操作台，统一高度、统一按钮尺寸、统一 badge 语法。
+- **Month day cell**：入口，不是详情页。
+- **Week board card**：七天等权比较。
+- **Day dimension card**：五维紧凑操作台。
 
-**The One Surface, One Job Rule.** 一个容器只承担一个主任务。月格子负责扫分布，周卡负责横向比较，日卡负责分发动作。不要在同一表面里同时塞说明、统计、正文和操作。
+**The One Surface, One Job Rule.** 一个容器只承担一个主任务。
 
 ## Do's and Don'ts
 
 ### Do
 
-- 保留“温暖记录产品”的母系统基调，让首页、访谈和设置仍然像可停留的书写空间。
-- 让首页、设置页优先呈现连续阅读与连续扫读节奏，减少 section 之间不必要的断层和大缝隙。
-- 让分析页用结构化卡片呈现信息层级，叙事、洞察、数据各区块之间有明确的视觉分隔和节奏感。
-- 在 calendar 中优先工作台判断效率，让用户先看到状态、入口和下一步。
-- 让状态色和维度色各司其职，状态优先级高于装饰。
-- 让标题保留 serif 气质，但让摘要、操作、统计全部服务快速扫描。
-- 统一主按钮、次按钮、禁用态和 focus-visible，不允许每个视图各写一套规则。
-- 使用短句文案，尤其在 empty / loading / error / fallback 场景里保持工作台语气。
+- 保留“温暖记录产品”母系统基调。
+- 遵循单层卡片制：Surface + 最多一层 Card + hairline 分区。
+- 分析页用单页 scroll + 锚点 tab；趋势段只陈述数据。
+- calendar 优先工作台判断效率。
+- 状态色与维度色各司其职。
+- 标题保留 serif，摘要与操作服务快速扫描。
+- 统一按钮三态与 focus-visible。
 
 ### Don't
 
-- 不把 calendar 再做回木纹、纸纹、厚阴影堆叠页。
-- 不让 calendar 再分叉成蓝灰后台产品。
-- 不把分析页做成冷色 SaaS dashboard（蓝灰色调、右侧重复次面板），也不做成无层级的连续平铺。分析页应是有节奏的结构化报告：卡片之间有间距，但整体保持暖色纸本气质。
-- 不把设置页做成 dashboard：多个大模块、明显断层、大块留白都不符合当前风格。
-- 不使用纯黑、纯白或高饱和科技蓝替换现有母系统。
-- 不让维度色承担完成状态语义，也不让状态色反向充当维度身份。
-- 不新增仓库里从未出现过的视觉家族，例如玻璃拟态 dashboard、霓虹深色台、通用 SaaS 渐变页。
-- 不把 disabled 做成“看起来还能点”的弱可点击态。
-- 不回到大段说明型文案，尤其不能让工作台页面重新长出解释产品用途的厚重导语。
+- 不做大卡套大卡、panel 套 panel。
+- 不把 calendar 做回木纹厚阴影页或蓝灰后台。
+- **分析页**：不做互斥 tab 只渲染一块；不做「建议先看 / 待整合 / 待成文」补漏导向；不做 narrative + 数据 + 证据条三层 dashboard；不用冷色 SaaS 蓝灰。
+- 不把设置页做成 dashboard 式多模块堆叠。
+- 不用纯黑、纯白或高饱和科技蓝。
+- 不手写 rgba 任意值或中间圆角。
+- 不新增玻璃拟态、霓虹深色台、通用 SaaS 渐变页等未出现过的视觉家族。

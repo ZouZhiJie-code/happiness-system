@@ -2,7 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { AnalysisShell } from "@/components/analysis/analysis-shell";
-import type { AnalysisMonthRecord } from "@/features/analysis/types";
+import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
 
 const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockRouterReplace: vi.fn(),
@@ -500,6 +500,45 @@ describe("analysis shell", () => {
     };
   }
 
+  function buildAnalysisTrendsRangeRecord(monthRecord = buildAnalysisMonthRecord()): AnalysisTrendsRangeRecord {
+    const month = monthRecord.month;
+    const startDate = `${month}-01`;
+    const endDate = "2026-05-03";
+
+    return {
+      preset: "month",
+      startDate,
+      endDate,
+      logOverview: monthRecord.logOverview,
+      dailyCoverage: monthRecord.dailyCoverage.filter((day) => day.date <= endDate),
+      scoreOverview: monthRecord.scoreOverview,
+      scoreTrend: {
+        days: monthRecord.scoreTrend.days.filter((day) => day.date <= endDate),
+        factorAverages: monthRecord.scoreTrend.factorAverages
+      }
+    };
+  }
+
+  function createAnalysisFetchMock(monthRecord = buildAnalysisMonthRecord()) {
+    return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/analysis/month")) {
+        return new Response(JSON.stringify(monthRecord), { status: 200 });
+      }
+
+      if (url.includes("/api/analysis/range")) {
+        return new Response(JSON.stringify(buildAnalysisTrendsRangeRecord(monthRecord)), { status: 200 });
+      }
+
+      if (url === "/api/happiness-score" && init?.method === "PUT") {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+
+      return new Response(null, { status: 404 });
+    });
+  }
+
   beforeEach(() => {
     historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
     mockRouterReplace.mockReset();
@@ -507,7 +546,7 @@ describe("analysis shell", () => {
       month: null,
       section: null
     };
-    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildAnalysisMonthRecord()), { status: 200 })) as typeof fetch;
+    global.fetch = createAnalysisFetchMock() as typeof fetch;
   });
 
   afterEach(() => {
@@ -517,8 +556,8 @@ describe("analysis shell", () => {
   it("normalizes missing month search params to the current month", async () => {
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
-    await screen.findByTestId("analysis-trends-placeholder");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
+    await screen.findByTestId("analysis-trends-section");
   });
 
   it("renders all analysis sections on a single scroll page by default", async () => {
@@ -529,10 +568,10 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
-    await screen.findByTestId("analysis-trends-placeholder");
-    await screen.findByTestId("happiness-score-panel");
-    await screen.findByTestId("analysis-rhythm-board");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
+    await screen.findByTestId("analysis-trends-section");
+    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
     await screen.findByTestId("analysis-dimension-cards");
 
     expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
@@ -562,11 +601,11 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
-    await screen.findByTestId("happiness-score-panel");
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
+    await screen.findByTestId("analysis-trends-section");
   });
 
-  it("removes month controls from the page body", async () => {
+  it("does not render month controls in the page body", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "score"
@@ -574,24 +613,8 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("happiness-score-panel");
+    await screen.findByTestId("analysis-trends-section");
     expect(screen.queryByTestId("analysis-month-controls")).not.toBeInTheDocument();
-  });
-
-  it("renders the rhythm heatmap section", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
-    });
-
-    expect(screen.getByTestId("analysis-heatmap-day-2026-05-02")).toHaveTextContent("2维");
-    expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
   });
 
   it("does not render the legacy overview hero on the single-page layout", async () => {
@@ -602,7 +625,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("happiness-score-panel");
+    await screen.findByTestId("analysis-trends-section");
 
     expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-status-board")).not.toBeInTheDocument();
@@ -633,148 +656,23 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("analysis-rhythm-board");
-
-    expect(screen.getByTestId("analysis-trends-placeholder")).toBeInTheDocument();
-    expect(screen.getByTestId("happiness-score-panel")).toBeInTheDocument();
+    await screen.findByTestId("analysis-trends-section");
+    expect(screen.getByRole("heading", { name: "8 要素 · 周期均分" })).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
   });
 
-  it("renders a stable empty state when the month has no saved records", async () => {
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          month: "2026-05",
-          logOverview: {
-            recordedDayCount: 0,
-            savedEntryCount: 0,
-            dailyJournalSavedDayCount: 0
-          },
-          dailyCoverage: buildEmptyDailyCoverage(),
-          rhythmOverview: buildRhythmOverview(buildEmptyDailyCoverage()),
-          dimensionBreakdown: [
-            { dimension: "joy", savedEntryCount: 0, recordedDayCount: 0 },
-            { dimension: "fulfillment", savedEntryCount: 0, recordedDayCount: 0 },
-            { dimension: "reflection", savedEntryCount: 0, recordedDayCount: 0 },
-            { dimension: "improvement", savedEntryCount: 0, recordedDayCount: 0 },
-            { dimension: "gratitude", savedEntryCount: 0, recordedDayCount: 0 }
-          ],
-          dimensions: [
-            buildDimensionInsight({ dimension: "joy", relatedScoreFactors: ["interest", "relationship"] }),
-            buildDimensionInsight({ dimension: "fulfillment", relatedScoreFactors: ["meaning", "skill", "virtue"] }),
-            buildDimensionInsight({ dimension: "reflection", relatedScoreFactors: ["autonomy", "meaning"] }),
-            buildDimensionInsight({ dimension: "improvement", relatedScoreFactors: ["skill", "autonomy", "virtue"] }),
-            buildDimensionInsight({ dimension: "gratitude", relatedScoreFactors: ["relationship", "livingCondition"] })
-          ],
-          insightsOverview: {
-            headline: "这个月先别急着下五维结论。",
-            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
-            watchpoint: null,
-            featuredDimension: null,
-            quietDimensions: ["joy", "fulfillment", "reflection", "improvement", "gratitude"],
-            links: []
-          },
-          ...buildScoreFields([]),
-          scoreRecords: [],
-          editableDates: ["2026-05-03", "2026-05-02"],
-          narrative: null
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-
+  it("renders a read-only log-days heatmap without drill-down actions", async () => {
     mockSearchParams.value = {
       month: "2026-05",
-      section: "rhythm"
+      section: "trends"
     };
 
     render(<AnalysisShell />);
 
-    expect(await screen.findByTestId("analysis-rhythm-board")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("待到来");
-    expect(screen.getByTestId("analysis-trends-placeholder")).toBeInTheDocument();
-    expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
-  });
-
-  it("does not offer interview start for future dates from the heatmap drill-down", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    const futureDay = await screen.findByTestId("analysis-heatmap-day-2026-05-31");
-    fireEvent.click(futureDay);
-
-    expect(screen.getByText("这一天还没到来。可以先查看当天，但未来日期不开放开始记录。")).toBeInTheDocument();
+    await screen.findByTestId("analysis-trends-section");
+    expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "开始这一天的记录" })).not.toBeInTheDocument();
-  });
-
-  it("does not report a hottest day when the month has scores but no saved entries", async () => {
-    const scoreOnlyRecord = buildAnalysisMonthRecord();
-    const scoreOnlyCoverage: AnalysisMonthRecord["dailyCoverage"] = scoreOnlyRecord.dailyCoverage.map((day) => ({
-      ...day,
-      savedEntryCount: 0,
-      savedDimensionCount: 0,
-      savedDimensions: [],
-      hasDailyJournalSaved: false
-    }));
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...scoreOnlyRecord,
-          logOverview: {
-            recordedDayCount: 0,
-            savedEntryCount: 0,
-            dailyJournalSavedDayCount: 0
-          },
-          dailyCoverage: scoreOnlyCoverage,
-          rhythmOverview: buildRhythmOverview(scoreOnlyCoverage),
-          dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0
-          })),
-          dimensions: scoreOnlyRecord.dimensions.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0,
-            lastRecordedDate: null,
-            thesis: "这个月这条线还没有形成能回看的材料。",
-            confidence: "low",
-            momentum: "quiet",
-            continuity: "none",
-            turningPointDate: null,
-            representativeDates: [],
-            relatedDimensions: [],
-            nextQuestion: item.nextQuestion,
-            topTags: [],
-            recentSignals: [],
-            evidence: []
-          })),
-          insightsOverview: {
-            ...scoreOnlyRecord.insightsOverview,
-            headline: "这个月先别急着下五维结论。",
-            featuredDimension: null,
-            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
-            watchpoint: "已经有 2 天先留下了评分，但还没写成具体记录。"
-          }
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    const board = await screen.findByTestId("analysis-rhythm-board");
-    expect(within(board).getByText("待成文日")).toBeInTheDocument();
-    expect(within(board).getAllByText("暂无").length).toBeGreaterThan(0);
   });
 
   it("shows an empty-state featured panel when the month has scores but no saved entries", async () => {
@@ -787,50 +685,45 @@ describe("analysis shell", () => {
       hasDailyJournalSaved: false
     }));
 
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...scoreOnlyRecord,
-          logOverview: {
-            recordedDayCount: 0,
-            savedEntryCount: 0,
-            dailyJournalSavedDayCount: 0
-          },
-          dailyCoverage: scoreOnlyCoverage,
-          rhythmOverview: buildRhythmOverview(scoreOnlyCoverage),
-          dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0
-          })),
-          dimensions: scoreOnlyRecord.dimensions.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0,
-            lastRecordedDate: null,
-            thesis: "这个月这条线还没有形成能回看的材料。",
-            confidence: "low",
-            momentum: "quiet",
-            continuity: "none",
-            turningPointDate: null,
-            representativeDates: [],
-            relatedDimensions: [],
-            nextQuestion: item.nextQuestion,
-            topTags: [],
-            recentSignals: [],
-            evidence: []
-          })),
-          insightsOverview: {
-            ...scoreOnlyRecord.insightsOverview,
-            headline: "这个月先别急着下五维结论。",
-            featuredDimension: null,
-            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
-            watchpoint: "已经有 2 天先留下了评分，但还没写成具体记录。"
-          }
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
+    global.fetch = createAnalysisFetchMock({
+      ...scoreOnlyRecord,
+      logOverview: {
+        recordedDayCount: 0,
+        savedEntryCount: 0,
+        dailyJournalSavedDayCount: 0
+      },
+      dailyCoverage: scoreOnlyCoverage,
+      rhythmOverview: buildRhythmOverview(scoreOnlyCoverage),
+      dimensionBreakdown: scoreOnlyRecord.dimensionBreakdown.map((item) => ({
+        ...item,
+        savedEntryCount: 0,
+        recordedDayCount: 0
+      })),
+      dimensions: scoreOnlyRecord.dimensions.map((item) => ({
+        ...item,
+        savedEntryCount: 0,
+        recordedDayCount: 0,
+        lastRecordedDate: null,
+        thesis: "这个月这条线还没有形成能回看的材料。",
+        confidence: "low",
+        momentum: "quiet",
+        continuity: "none",
+        turningPointDate: null,
+        representativeDates: [],
+        relatedDimensions: [],
+        nextQuestion: item.nextQuestion,
+        topTags: [],
+        recentSignals: [],
+        evidence: []
+      })),
+      insightsOverview: {
+        ...scoreOnlyRecord.insightsOverview,
+        headline: "这个月先别急着下五维结论。",
+        featuredDimension: null,
+        summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+        watchpoint: "已经有 2 天先留下了评分，但还没写成具体记录。"
+      }
+    }) as typeof fetch;
 
     mockSearchParams.value = {
       month: "2026-05",
@@ -861,23 +754,7 @@ describe("analysis shell", () => {
     expect(hrefs.some((href) => href?.includes("/interview?dimension=joy&entryDate=2026-05-02"))).toBe(true);
   });
 
-  it("does not count future dates toward the current month's longest quiet streak", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    const board = await screen.findByTestId("analysis-rhythm-board");
-    const quietCard = within(board).getByText("最长空档").closest("div");
-
-    expect(quietCard).not.toBeNull();
-    expect(quietCard).toHaveTextContent("1 天");
-    expect(quietCard).not.toHaveTextContent("5月8日 - 5月31日");
-  });
-
-  it("renders the score trend panel in read-only mode", async () => {
+  it("renders the trends section in read-only mode", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "trends"
@@ -885,411 +762,32 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    const panel = await screen.findByTestId("happiness-score-panel");
+    await screen.findByTestId("analysis-trends-section");
 
-    expect(screen.getByTestId("analysis-trends-placeholder")).toHaveTextContent("评分与记录趋势");
-    expect(within(panel).getByRole("heading", { name: "评分走势" })).toBeInTheDocument();
-    expect(within(panel).queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
-    expect(within(panel).getByTestId("score-factor-button-livingCondition")).toHaveTextContent("6.0");
-  });
-
-  it("renders average and factor score trends with gaps for unscored days", async () => {
-    const gapScoreRecords: AnalysisMonthRecord["scoreRecords"] = [
-      {
-        id: "score-1",
-        date: "2026-05-01",
-        meaningScore: 5,
-        healthScore: 5,
-        virtueScore: 5,
-        autonomyScore: 5,
-        interestScore: 5,
-        skillScore: 5,
-        relationshipScore: 5,
-        livingConditionScore: 5,
-        createdAt: "2026-05-01T01:00:00.000Z",
-        updatedAt: "2026-05-01T02:00:00.000Z"
-      },
-      {
-        id: "score-3",
-        date: "2026-05-03",
-        meaningScore: 8,
-        healthScore: 7,
-        virtueScore: 9,
-        autonomyScore: 6,
-        interestScore: 8,
-        skillScore: 7,
-        relationshipScore: 9,
-        livingConditionScore: 6,
-        createdAt: "2026-05-03T01:00:00.000Z",
-        updatedAt: "2026-05-03T02:00:00.000Z"
-      }
-    ];
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          ...buildScoreFields(gapScoreRecords),
-          scoreRecords: gapScoreRecords
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const panel = await screen.findByTestId("happiness-score-trend-panel");
-
-    expect(within(panel).getByText("总分平均走势")).toBeInTheDocument();
-    expect(within(panel).getByText("单项走势")).toBeInTheDocument();
-    expect(within(panel).getByText("已评分")).toBeInTheDocument();
-    expect(within(panel).getByText("2 天")).toBeInTheDocument();
-    expect(within(panel).getByText("月均总分")).toBeInTheDocument();
-    expect(within(panel).getByText("6.3")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "本月每日 8 项平均分走势，未评分日期断线" })).toBeInTheDocument();
-    expect(screen.getAllByTestId("score-average-trend-chart-segment")).toHaveLength(2);
-  });
-
-  it("suppresses ranking highlights when there is only one scored day", async () => {
-    const singleScoreRecord: AnalysisMonthRecord["scoreRecords"] = [
-      {
-        id: "score-1",
-        date: "2026-05-03",
-        meaningScore: 8,
-        healthScore: 7,
-        virtueScore: 9,
-        autonomyScore: 6,
-        interestScore: 8,
-        skillScore: 7,
-        relationshipScore: 9,
-        livingConditionScore: 6,
-        createdAt: "2026-05-03T01:00:00.000Z",
-        updatedAt: "2026-05-03T02:00:00.000Z"
-      }
-    ];
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          ...buildScoreFields(singleScoreRecord),
-          scoreRecords: singleScoreRecord
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const panel = await screen.findByTestId("happiness-score-trend-panel");
-
-    expect(within(panel).queryByText("长期偏高")).not.toBeInTheDocument();
-    expect(within(panel).queryByText("最常掉下来")).not.toBeInTheDocument();
-    expect(within(panel).queryByText("波动最大")).not.toBeInTheDocument();
-    expect(within(panel).getByTestId("score-trend-sample-note")).toHaveTextContent("评分样本还不足");
-  });
-
-  it("suppresses ranking highlights when all factors are tied", async () => {
-    const flatScoreRecords: AnalysisMonthRecord["scoreRecords"] = [
-      {
-        id: "score-1",
-        date: "2026-05-01",
-        meaningScore: 6,
-        healthScore: 6,
-        virtueScore: 6,
-        autonomyScore: 6,
-        interestScore: 6,
-        skillScore: 6,
-        relationshipScore: 6,
-        livingConditionScore: 6,
-        createdAt: "2026-05-01T01:00:00.000Z",
-        updatedAt: "2026-05-01T02:00:00.000Z"
-      },
-      {
-        id: "score-2",
-        date: "2026-05-02",
-        meaningScore: 6,
-        healthScore: 6,
-        virtueScore: 6,
-        autonomyScore: 6,
-        interestScore: 6,
-        skillScore: 6,
-        relationshipScore: 6,
-        livingConditionScore: 6,
-        createdAt: "2026-05-02T01:00:00.000Z",
-        updatedAt: "2026-05-02T02:00:00.000Z"
-      }
-    ];
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          ...buildScoreFields(flatScoreRecords),
-          scoreRecords: flatScoreRecords
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const panel = await screen.findByTestId("happiness-score-trend-panel");
-
-    expect(within(panel).queryByText("长期偏高")).not.toBeInTheDocument();
-    expect(within(panel).queryByText("最常掉下来")).not.toBeInTheDocument();
-    expect(within(panel).queryByText("波动最大")).not.toBeInTheDocument();
-    expect(within(panel).getByTestId("score-trend-sample-note")).toHaveTextContent("评分差异还不够明显");
-  });
-
-  it("switches the factor score trend without changing the month url", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    await screen.findByTestId("happiness-score-trend-panel");
-    mockRouterReplace.mockClear();
-    fireEvent.click(screen.getByTestId("score-factor-button-autonomy"));
-
-    expect(screen.getByText("意志月均 6.5")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "本月意志评分走势，未评分日期断线" })).toBeInTheDocument();
-    expect(mockRouterReplace).not.toHaveBeenCalled();
-  });
-
-  it("keeps the selected factor when the same score data re-renders", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    const { rerender } = render(<AnalysisShell />);
-
-    await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(screen.getByTestId("score-factor-button-autonomy"));
-
-    rerender(<AnalysisShell />);
-
-    expect(await screen.findByText("意志月均 6.5")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "本月意志评分走势，未评分日期断线" })).toBeInTheDocument();
-  });
-
-  it("does not render score entry controls in analysis score section", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    await screen.findByTestId("happiness-score-panel");
-    expect(screen.queryByTestId("happiness-score-date-switch")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "8 要素 · 周期均分" })).toBeInTheDocument();
+    expect(screen.getByLabelText("总分柱线走势")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
   });
 
-  it("does not call happiness-score save api from analysis score section", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
+  it("shows an empty score chart state when the range has no scores", async () => {
+    const emptyRecord = {
+      ...buildAnalysisMonthRecord(),
+      ...buildScoreFields([]),
+      scoreRecords: []
+    };
 
-      if (url.startsWith("/api/analysis/month")) {
-        return new Response(JSON.stringify(buildAnalysisMonthRecord()), { status: 200 });
-      }
-
-      if (url === "/api/happiness-score" && init?.method === "PUT") {
-        return new Response(JSON.stringify({ ok: true }), { status: 200 });
-      }
-
-      return new Response(null, { status: 404 });
-    });
-    global.fetch = fetchMock as typeof fetch;
+    global.fetch = createAnalysisFetchMock(emptyRecord) as typeof fetch;
     mockSearchParams.value = {
       month: "2026-05",
-      section: "score"
+      section: "trends"
     };
 
     render(<AnalysisShell />);
 
-    await screen.findByTestId("happiness-score-panel");
-    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/happiness-score")).toBe(false);
-  });
-
-  it("shows score trend empty state for months outside the edit window", async () => {
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          month: "2026-04",
-          ...buildScoreFields([], "2026-04"),
-          scoreRecords: [],
-          editableDates: []
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-04",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    expect(await screen.findByTestId("score-average-trend-chart-empty")).toHaveTextContent("本月还没有可展示的评分走势");
-    expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
-  });
-
-  it("shows a score trend detail card when a chart data point is clicked", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-
-    expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
-
-    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02");
-    fireEvent.click(point);
-
-    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
-    expect(detailCard).toHaveTextContent("5月2日");
-    expect(detailCard).toHaveTextContent("当天均分");
-
-    fireEvent.click(within(detailCard).getByRole("button", { name: "关闭当日详情" }));
-
-    expect(screen.queryByTestId("score-trend-detail-card")).not.toBeInTheDocument();
-  });
-
-  it("shows journal preview in score detail card for days with saved journals", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-02");
-    fireEvent.click(point);
-
-    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
-    expect(detailCard).toHaveTextContent("五月二日的记录");
-    expect(detailCard).toHaveTextContent("今天和朋友聚了一次");
-    expect(within(detailCard).getByRole("link", { name: "查看完整日志 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
-  });
-
-  it("shows a placeholder for days without journal in score detail card", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    const point = await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-03");
-    fireEvent.click(point);
-
-    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
-    expect(detailCard).toHaveTextContent("这一天还没有生成日志");
-    expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
-  });
-
-  it("shows pending-daily-journal copy for days with saved dimension logs but no daily journal", async () => {
-    const scoreRecords: AnalysisMonthRecord["scoreRecords"] = [
-      ...buildAnalysisMonthRecord().scoreRecords,
-      {
-        id: "score-3",
-        date: "2026-05-07",
-        meaningScore: 7,
-        healthScore: 6,
-        virtueScore: 7,
-        autonomyScore: 7,
-        interestScore: 6,
-        skillScore: 7,
-        relationshipScore: 8,
-        livingConditionScore: 7,
-        createdAt: "2026-05-07T01:00:00.000Z",
-        updatedAt: "2026-05-07T02:00:00.000Z"
-      }
-    ];
-    const dailyCoverage = buildDailyCoverage(scoreRecords);
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          dailyCoverage,
-          rhythmOverview: buildRhythmOverview(dailyCoverage),
-          ...buildScoreFields(scoreRecords),
-          scoreRecords
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-    fireEvent.click(await within(trendPanel).findByTestId("score-average-trend-chart-point-2026-05-07"));
-
-    const detailCard = await screen.findByTestId("score-trend-detail-card", undefined, { timeout: 3000 });
-    expect(detailCard).toHaveTextContent("这一天已有 1 条维度记录，但还没有整合成完整日志");
-    expect(detailCard).not.toHaveTextContent("这一天还没有生成日志");
-    expect(within(detailCard).getByRole("link", { name: "去日历看这一天 →" })).toHaveAttribute("href", expect.stringContaining("/calendar?"));
-  });
-
-  it("shows journal preview in rhythm day detail panel for days with saved journals", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    await screen.findByTestId("analysis-rhythm-board");
-
-    fireEvent.click(screen.getByTestId("analysis-heatmap-day-2026-05-02"));
-
-    const preview = screen.getByTestId("rhythm-day-journal-preview");
-    expect(preview).toHaveTextContent("五月二日的记录");
-    expect(preview).toHaveTextContent("今天和朋友聚了一次");
-    expect(within(preview).getByRole("link", { name: "查看完整日志 →" })).toBeInTheDocument();
-  });
-
-  it("shows signal preview in rhythm day detail panel for days without journal but with entries", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "rhythm"
-    };
-
-    render(<AnalysisShell />);
-
-    await screen.findByTestId("analysis-rhythm-board");
-
-    fireEvent.click(screen.getByTestId("analysis-heatmap-day-2026-05-07"));
-
-    const preview = screen.getByTestId("rhythm-day-signal-preview");
-    expect(preview).toHaveTextContent("已有 1 条记录，但还没有整合成日志");
+    expect(await screen.findByText("这个周期还没有评分记录。")).toBeInTheDocument();
   });
 
   it("renders evidence date links in dimension insight cards", async () => {
@@ -1307,16 +805,4 @@ describe("analysis shell", () => {
     expect(links[0]).toHaveAttribute("href", expect.stringContaining("/calendar?"));
   });
 
-  it("shows journal context in score trend highlight cards", async () => {
-    mockSearchParams.value = {
-      month: "2026-05",
-      section: "score"
-    };
-
-    render(<AnalysisShell />);
-
-    const trendPanel = await screen.findByTestId("happiness-score-trend-panel");
-
-    expect(trendPanel).toHaveTextContent("你在「开心」维度记录 1 天，常出现「关系型开心」");
-  });
 });

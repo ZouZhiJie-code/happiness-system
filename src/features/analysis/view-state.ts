@@ -1,4 +1,14 @@
-import { getTodayEntryDate } from "@/features/interview/entry-date";
+import {
+  addEntryDays,
+  buildEntryDateRange,
+  formatAnalysisDateRangeLabel,
+  getMonthDateRangeForAnalysis,
+  getWeekDateRange,
+  normalizeAnalysisRangePreset,
+  shiftWeekDateRange,
+  type AnalysisRangePreset
+} from "@/features/analysis/date-range";
+import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 
 const ANALYSIS_MONTH_PATTERN = /^\d{4}-\d{2}$/;
 export const ANALYSIS_SECTION_KEYS = ["trends", "dimensions", "correlation", "review"] as const;
@@ -68,9 +78,67 @@ export function getAnalysisSectionElementId(section: AnalysisSectionKey) {
   return `analysis-${section}`;
 }
 
-export function buildAnalysisHref(input: { month: string; section?: AnalysisSectionKey }) {
+export function resolveAnalysisTrendsRange(input: {
+  preset?: AnalysisRangePreset;
+  month: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  today?: string;
+}) {
+  const today = input.today ?? getTodayEntryDate();
+  const preset = input.preset ?? "month";
+
+  if (preset === "week") {
+    if (
+      input.startDate &&
+      input.endDate &&
+      isEntryDateString(input.startDate) &&
+      isEntryDateString(input.endDate) &&
+      input.startDate <= input.endDate
+    ) {
+      return {
+        startDate: input.startDate,
+        endDate: input.endDate
+      };
+    }
+
+    return getWeekDateRange(today);
+  }
+
+  if (preset === "custom" && input.startDate && input.endDate && isEntryDateString(input.startDate) && isEntryDateString(input.endDate) && input.startDate <= input.endDate) {
+    return {
+      startDate: input.startDate,
+      endDate: input.endDate
+    };
+  }
+
+  return getMonthDateRangeForAnalysis(input.month, today);
+}
+
+export function buildAnalysisHref(input: {
+  month: string;
+  section?: AnalysisSectionKey;
+  preset?: AnalysisRangePreset;
+  startDate?: string;
+  endDate?: string;
+}) {
   const section = input.section ?? "trends";
-  return `/analysis?month=${input.month}&section=${section}`;
+  const preset = input.preset ?? "month";
+  const params = new URLSearchParams({
+    month: input.month,
+    section
+  });
+
+  if (preset !== "month") {
+    params.set("preset", preset);
+  }
+
+  if ((preset === "custom" || preset === "week") && input.startDate && input.endDate) {
+    params.set("start", input.startDate);
+    params.set("end", input.endDate);
+  }
+
+  return `/analysis?${params.toString()}`;
 }
 
 export function replaceAnalysisHistoryState(href: string) {
@@ -84,20 +152,103 @@ export function replaceAnalysisHistoryState(href: string) {
 export function normalizeAnalysisSearchParams(input: {
   month?: string | null;
   section?: string | null;
+  preset?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  /** @deprecated use todayEntryDate */
   today?: string;
+  todayEntryDate?: string;
 }) {
-  const today = input.today ?? getTodayAnalysisMonth();
+  const todayEntryDate = input.todayEntryDate ?? getTodayEntryDate();
+  const todayMonth = input.today && /^\d{4}-\d{2}$/.test(input.today) ? input.today : getTodayAnalysisMonth(todayEntryDate);
   const shouldReplaceMonth = !input.month || !isValidAnalysisMonth(input.month);
   const shouldReplaceSection = !isCanonicalAnalysisSection(input.section);
-  const month = normalizeAnalysisMonth(input.month, today);
+  const month = normalizeAnalysisMonth(input.month, todayMonth);
   const section = normalizeAnalysisSection(input.section);
-  const href = buildAnalysisHref({ month, section });
+  const preset = normalizeAnalysisRangePreset(input.preset);
+  const resolvedRange = resolveAnalysisTrendsRange({
+    preset,
+    month,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    today: todayEntryDate
+  });
+  const shouldReplacePreset = input.preset !== preset && input.preset != null;
+  const shouldReplaceCustomRange =
+    preset === "custom" &&
+    (input.startDate !== resolvedRange.startDate ||
+      input.endDate !== resolvedRange.endDate ||
+      !input.startDate ||
+      !input.endDate ||
+      !isEntryDateString(input.startDate ?? "") ||
+      !isEntryDateString(input.endDate ?? "") ||
+      (input.startDate ?? "") > (input.endDate ?? ""));
+  const shouldReplaceWeekRange =
+    preset === "week" &&
+    (input.startDate !== resolvedRange.startDate ||
+      input.endDate !== resolvedRange.endDate ||
+      !input.startDate ||
+      !input.endDate);
+  const href = buildAnalysisHref({
+    month,
+    section,
+    preset,
+    startDate: preset !== "month" ? resolvedRange.startDate : undefined,
+    endDate: preset !== "month" ? resolvedRange.endDate : undefined
+  });
 
   return {
     month,
     section,
+    preset,
+    startDate: resolvedRange.startDate,
+    endDate: resolvedRange.endDate,
+    rangeLabel: formatAnalysisDateRangeLabel(resolvedRange.startDate, resolvedRange.endDate),
     href,
-    shouldReplace: shouldReplaceMonth || shouldReplaceSection || input.section !== section
+    shouldReplace:
+      shouldReplaceMonth ||
+      shouldReplaceSection ||
+      shouldReplacePreset ||
+      shouldReplaceCustomRange ||
+      shouldReplaceWeekRange ||
+      input.section !== section ||
+      (preset === "month" && input.preset != null && input.preset !== "month")
+  };
+}
+
+export function shiftAnalysisTrendsRange(input: {
+  preset: AnalysisRangePreset;
+  month: string;
+  startDate: string;
+  endDate: string;
+  offset: -1 | 1;
+}) {
+  if (input.preset === "month") {
+    return {
+      month: shiftAnalysisMonth(input.month, input.offset),
+      preset: "month" as const
+    };
+  }
+
+  if (input.preset === "week") {
+    const nextRange = shiftWeekDateRange(input.startDate, input.offset);
+    return {
+      month: nextRange.startDate.slice(0, 7),
+      preset: "week" as const,
+      startDate: nextRange.startDate,
+      endDate: nextRange.endDate
+    };
+  }
+
+  const spanDays = buildEntryDateRange(input.startDate, input.endDate).length;
+  const shiftedStart = addEntryDays(input.startDate, input.offset * spanDays);
+  const shiftedEnd = addEntryDays(input.endDate, input.offset * spanDays);
+
+  return {
+    month: shiftedStart.slice(0, 7),
+    preset: "custom" as const,
+    startDate: shiftedStart,
+    endDate: shiftedEnd
   };
 }
 

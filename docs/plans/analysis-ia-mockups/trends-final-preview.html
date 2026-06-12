@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>量化趋势 · 定稿预览</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .section-block { scroll-margin-top: calc(var(--header-h) + 0.5rem); }
+
+    .period-bar {
+      padding: 0.55rem 0.85rem; margin-bottom: 0.85rem;
+      border-radius: var(--radius-control); border: 1px solid var(--line-soft);
+      background: rgba(255,252,246,0.72); font-size: 0.8rem; color: var(--text-dim);
+    }
+    .period-bar b { color: var(--text-main); font-weight: 600; }
+    .period-bar .up { color: #45644a; font-size: 0.74rem; }
+
+    .viz-premium {
+      background: linear-gradient(165deg, rgba(255,252,246,0.96) 0%, rgba(248,233,204,0.4) 100%);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      box-shadow: 0 8px 28px rgba(86,55,27,0.06);
+    }
+
+    .chart-hero { padding: 1rem 1.1rem 0.9rem; margin-bottom: 0.75rem; }
+    .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; }
+    .chart-head h3 { margin: 0; font-size: 0.82rem; font-weight: 650; color: var(--text-main); }
+    .chart-head .hint { font-family: ui-monospace, monospace; font-size: 0.66rem; color: #9a7d62; }
+
+    .chart-large { min-height: 16.5rem; }
+    .chart-large svg { width: 100%; height: auto; display: block; }
+    .ref-zone { fill: rgba(125,141,99,0.07); }
+    .grid-fine { stroke: rgba(150,105,61,0.07); stroke-width: 0.8; }
+    .bar-day { fill: rgba(169,111,61,0.2); }
+    .bar-day.hi { fill: rgba(90,122,86,0.34); }
+    .bar-day.lo { fill: rgba(169,111,61,0.12); }
+    .curve-smooth { fill: none; stroke: #7a5230; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .axis-dense { fill: #b5a08a; font-family: ui-monospace, monospace; font-size: 7px; }
+    .axis-dense.date { font-size: 6.5px; }
+    .dot-fine { fill: #fffaf1; stroke: #7a5230; stroke-width: 1.5; }
+
+    .bottom-row { display: grid; gap: 0.75rem; }
+    @media (min-width: 720px) { .bottom-row { grid-template-columns: 1fr 1fr; } }
+    .bottom-pane { padding: 0.65rem 0.85rem; }
+
+    .pane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
+    .pane-head h3 { margin: 0; font-size: 0.8rem; font-weight: 650; color: var(--text-main); }
+
+    .style-toggle {
+      display: inline-flex; padding: 3px; border-radius: 999px;
+      border: 1px solid var(--line-soft); background: rgba(255,252,246,0.6);
+    }
+    .style-toggle button {
+      padding: 0.22rem 0.5rem; border: none; border-radius: 999px;
+      font-size: 0.66rem; color: var(--text-dim); background: transparent; cursor: pointer;
+    }
+    .style-toggle button.on {
+      background: var(--paper-soft); color: var(--text-main); font-weight: 600;
+      box-shadow: 0 1px 4px rgba(86,55,27,0.08);
+    }
+
+    .factor-panel { display: none; }
+    .factor-panel.active { display: block; }
+
+    .radar-wrap svg { width: 100%; max-height: 158px; }
+    .radar-grid { fill: none; stroke: rgba(150,105,61,0.12); stroke-width: 1; }
+    .radar-axis { stroke: rgba(150,105,61,0.1); stroke-width: 1; }
+    .radar-area { fill: rgba(169,111,61,0.16); stroke: #8b5a2b; stroke-width: 1.8; stroke-linejoin: round; }
+    .radar-label { fill: #6f5339; font-size: 8px; text-anchor: middle; }
+
+    .lollipop-list { display: flex; flex-direction: column; gap: 0.26rem; }
+    .lollipop-row { display: grid; grid-template-columns: 3rem 1fr 1.5rem; align-items: center; gap: 0.35rem; }
+    .lollipop-row .lbl { font-size: 0.68rem; color: #3a2c1f; }
+    .lollipop-row .track { position: relative; height: 1px; background: rgba(110,73,38,0.12); }
+    .lollipop-row .stem { position: absolute; top: 50%; height: 1.5px; background: rgba(111,74,38,0.32); transform: translateY(-50%); }
+    .lollipop-row .dot {
+      position: absolute; top: 50%; transform: translate(-50%,-50%);
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #f8e9cc; border: 2px solid #8b5a2b;
+    }
+    .lollipop-row .val { text-align: right; font-family: ui-monospace, monospace; font-size: 0.68rem; color: #6f5339; }
+
+    .heat-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; max-width: 100%; }
+    .heat-grid .c { aspect-ratio: 1; border-radius: 2px; background: rgba(110,73,38,0.06); }
+    .heat-grid .c.pad { background: transparent; }
+    .heat-grid .c.d1 { background: rgba(169,111,61,0.2); }
+    .heat-grid .c.d2 { background: rgba(169,111,61,0.38); }
+    .heat-grid .c.d3 { background: rgba(169,111,61,0.55); }
+    .heat-grid .c.d4 { background: rgba(111,74,38,0.78); }
+
+    .preview-banner {
+      margin-bottom: 1rem; padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-control);
+      border: 1px dashed var(--line-strong);
+      background: var(--amber-soft);
+      font-size: 0.78rem; color: var(--text-dim);
+    }
+    .preview-banner a { color: var(--amber); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#">Daily Light</a>
+      <span class="header-divider" aria-hidden="true">｜</span>
+      <div class="header-center" aria-label="分析页控制">
+        <button type="button" class="header-text-btn">◀ 5月</button>
+        <span class="header-divider" aria-hidden="true">｜</span>
+        <button type="button" class="header-link">本周</button>
+        <button type="button" class="header-link active">本月</button>
+        <button type="button" class="header-link">自定义</button>
+        <span class="header-divider" aria-hidden="true">｜</span>
+        <span class="header-meta">2026-06-01 — 2026-06-12</span>
+        <span class="header-divider" aria-hidden="true">｜</span>
+        <button type="button" class="header-link active">量化趋势</button>
+        <button type="button" class="header-link">五维全景</button>
+        <button type="button" class="header-link">关联</button>
+        <button type="button" class="header-link">复盘</button>
+      </div>
+      <span class="header-divider header-divider--edge" aria-hidden="true">｜</span>
+      <nav class="header-nav" aria-label="主导航">
+        <a href="#">日历</a>
+        <a href="#" class="active">分析</a>
+        <a href="#">画像</a>
+        <a href="#">设置</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-inner" style="max-width:52rem">
+      <div class="preview-banner">
+        <strong>定稿预览</strong> · 仅「量化趋势」段 · <a href="trends-viz-v3.html">← 返回 v3 全集</a>
+      </div>
+
+      <section id="analysis-trends" class="section-block">
+        <div class="section-heading">
+          <div class="eyebrow">01 · 量化趋势</div>
+          <h2>评分与记录趋势</h2>
+        </div>
+        <p class="stat-line" style="margin-bottom:1rem">先看评分走势、8 要素周期均分，以及本周期内的日志天数。</p>
+
+        <div class="period-bar">
+          本周期 <b>8 天有评分</b>、<b>10 天有记录</b> · 均分 <b>6.8</b> <span class="up">↑0.3</span>
+        </div>
+
+        <!-- ① 总分柱线大图 -->
+        <div class="viz-premium chart-hero">
+          <div class="chart-head">
+            <h3>总分走势</h3>
+            <span class="hint">柱+线 · 舒适区 6–8</span>
+          </div>
+          <div class="chart-large">
+            <svg viewBox="0 0 640 200" aria-label="总分柱线走势">
+              <defs>
+                <linearGradient id="fillG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#a96f3d" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#a96f3d" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <rect class="ref-zone" x="38" y="38" width="586" height="44" rx="2"/>
+              <text class="axis-dense" x="40" y="36" fill="#a8b89a">6–8</text>
+              <line class="grid-fine" x1="38" x2="624" y1="158" y2="158"/>
+              <line class="grid-fine" x1="38" x2="624" y1="133" y2="133"/>
+              <line class="grid-fine" x1="38" x2="624" y1="108" y2="108"/>
+              <line class="grid-fine" x1="38" x2="624" y1="83" y2="83"/>
+              <line class="grid-fine" x1="38" x2="624" y1="58" y2="58"/>
+              <text class="axis-dense" x="32" y="161" text-anchor="end">2</text>
+              <text class="axis-dense" x="32" y="136" text-anchor="end">4</text>
+              <text class="axis-dense" x="32" y="111" text-anchor="end">6</text>
+              <text class="axis-dense" x="32" y="86" text-anchor="end">8</text>
+              <text class="axis-dense" x="32" y="61" text-anchor="end">10</text>
+              <!-- 12 天柱 -->
+              <rect class="bar-day" x="50" y="118" width="9" height="40"/>
+              <rect class="bar-day hi" x="68" y="78" width="9" height="80"/>
+              <rect class="bar-day" x="86" y="108" width="9" height="50"/>
+              <rect class="bar-day hi" x="104" y="58" width="9" height="100"/>
+              <rect class="bar-day lo" x="122" y="128" width="9" height="30"/>
+              <rect class="bar-day" x="140" y="110" width="9" height="48"/>
+              <rect class="bar-day hi" x="158" y="48" width="9" height="110"/>
+              <rect class="bar-day hi" x="176" y="64" width="9" height="94"/>
+              <rect class="bar-day" x="194" y="116" width="9" height="42"/>
+              <rect class="bar-day hi" x="212" y="52" width="9" height="106"/>
+              <rect class="bar-day" x="230" y="100" width="9" height="58"/>
+              <rect class="bar-day hi" x="248" y="62" width="9" height="96"/>
+              <path fill="url(#fillG)" d="M 54 138 Q 92 98 116 118 Q 156 68 196 128 Q 236 78 272 98 L 272 168 L 54 168 Z"/>
+              <path class="curve-smooth" d="M 54 138 Q 92 98 116 118 Q 156 68 196 128 Q 236 78 272 98"/>
+              <circle class="dot-fine" cx="156" cy="68" r="2.5"/>
+              <circle class="dot-fine" cx="236" cy="78" r="2.5"/>
+              <text class="axis-dense date" x="54" y="178" text-anchor="middle">1</text>
+              <text class="axis-dense date" x="86" y="178" text-anchor="middle">2</text>
+              <text class="axis-dense date" x="118" y="178" text-anchor="middle">3</text>
+              <text class="axis-dense date" x="150" y="178" text-anchor="middle">4</text>
+              <text class="axis-dense date" x="182" y="178" text-anchor="middle">5</text>
+              <text class="axis-dense date" x="214" y="178" text-anchor="middle">6</text>
+              <text class="axis-dense date" x="246" y="178" text-anchor="middle">7</text>
+              <text class="axis-dense date" x="278" y="178" text-anchor="middle">8</text>
+              <text class="axis-dense date" x="310" y="178" text-anchor="middle">9</text>
+              <text class="axis-dense date" x="342" y="178" text-anchor="middle">10</text>
+              <text class="axis-dense date" x="374" y="178" text-anchor="middle">11</text>
+              <text class="axis-dense date" x="406" y="178" text-anchor="middle">12</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ② 日志天数 | 8要素 同行（左热右雷达） -->
+        <div class="bottom-row">
+          <div class="viz-premium bottom-pane">
+            <div class="pane-head">
+              <h3>日志天数</h3>
+            </div>
+            <div class="heat-grid">
+              <div class="c pad"></div><div class="c pad"></div><div class="c pad"></div><div class="c pad"></div><div class="c pad"></div><div class="c d1"></div><div class="c d2"></div>
+              <div class="c d3"></div><div class="c"></div><div class="c d2"></div><div class="c d4"></div><div class="c d1"></div><div class="c d3"></div><div class="c"></div>
+              <div class="c d2"></div><div class="c d1"></div><div class="c"></div><div class="c d3"></div><div class="c d2"></div><div class="c d4"></div><div class="c d1"></div>
+              <div class="c d2"></div><div class="c d3"></div><div class="c d1"></div><div class="c"></div><div class="c d2"></div><div class="c d1"></div><div class="c d3"></div>
+              <div class="c d2"></div><div class="c d1"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div>
+              <div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div><div class="c"></div>
+            </div>
+          </div>
+
+          <div class="viz-premium bottom-pane">
+            <div class="pane-head">
+              <h3>8 要素 · 周期均分</h3>
+              <div class="style-toggle">
+                <button type="button" class="on" id="btn-radar" onclick="setView('radar')">雷达图</button>
+                <button type="button" id="btn-lollipop" onclick="setView('lollipop')">棒棒糖</button>
+              </div>
+            </div>
+
+            <div id="view-radar" class="factor-panel active">
+              <div class="radar-wrap">
+                <svg viewBox="0 0 260 200" aria-label="8要素雷达图">
+                  <polygon class="radar-grid" points="130,30 200,78 170,168 90,168 60,78"/>
+                  <polygon class="radar-grid" points="130,50 178,88 152,148 98,148 72,88"/>
+                  <polygon class="radar-grid" points="130,70 156,98 134,128 106,128 84,98"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="130" y2="30"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="200" y2="78"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="170" y2="168"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="90" y2="168"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="60" y2="78"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="96" y2="50"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="164" y2="50"/>
+                  <line class="radar-axis" x1="130" y1="130" x2="190" y2="130"/>
+                  <polygon class="radar-area" points="130,40 192,80 160,158 88,154 58,86 104,52 150,48 178,116"/>
+                  <text class="radar-label" x="130" y="20">意义感</text>
+                  <text class="radar-label" x="210" y="78">健康</text>
+                  <text class="radar-label" x="176" y="182">美德</text>
+                  <text class="radar-label" x="64" y="182">自主性</text>
+                  <text class="radar-label" x="42" y="78">兴趣</text>
+                  <text class="radar-label" x="88" y="40">技能</text>
+                  <text class="radar-label" x="162" y="38">关系</text>
+                  <text class="radar-label" x="202" y="132">生活条件</text>
+                </svg>
+              </div>
+            </div>
+
+            <div id="view-lollipop" class="factor-panel">
+              <div class="lollipop-list">
+                <div class="lollipop-row"><span class="lbl">意义感</span><div class="track"><div class="stem" style="left:8%;width:70%"></div><div class="dot" style="left:78%"></div></div><span class="val">7.8</span></div>
+                <div class="lollipop-row"><span class="lbl">健康</span><div class="track"><div class="stem" style="left:8%;width:54%"></div><div class="dot" style="left:62%"></div></div><span class="val">6.2</span></div>
+                <div class="lollipop-row"><span class="lbl">美德</span><div class="track"><div class="stem" style="left:8%;width:63%"></div><div class="dot" style="left:71%"></div></div><span class="val">7.1</span></div>
+                <div class="lollipop-row"><span class="lbl">自主性</span><div class="track"><div class="stem" style="left:8%;width:47%"></div><div class="dot" style="left:55%"></div></div><span class="val">5.5</span></div>
+                <div class="lollipop-row"><span class="lbl">兴趣</span><div class="track"><div class="stem" style="left:8%;width:60%"></div><div class="dot" style="left:68%"></div></div><span class="val">6.8</span></div>
+                <div class="lollipop-row"><span class="lbl">技能</span><div class="track"><div class="stem" style="left:8%;width:56%"></div><div class="dot" style="left:64%"></div></div><span class="val">6.4</span></div>
+                <div class="lollipop-row"><span class="lbl">关系</span><div class="track"><div class="stem" style="left:8%;width:65%"></div><div class="dot" style="left:73%"></div></div><span class="val">7.3</span></div>
+                <div class="lollipop-row"><span class="lbl">生活条件</span><div class="track"><div class="stem" style="left:8%;width:51%"></div><div class="dot" style="left:59%"></div></div><span class="val">5.9</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    function setView(v) {
+      document.getElementById('view-radar').classList.toggle('active', v === 'radar');
+      document.getElementById('view-lollipop').classList.toggle('active', v === 'lollipop');
+      document.getElementById('btn-radar').classList.toggle('on', v === 'radar');
+      document.getElementById('btn-lollipop').classList.toggle('on', v === 'lollipop');
+    }
+  </script>
+</body>
+</html>

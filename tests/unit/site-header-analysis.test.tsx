@@ -26,6 +26,10 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
   }
 }));
 
+vi.mock("@/features/interview/entry-date", () => ({
+  getTodayEntryDate: () => "2026-05-03"
+}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.value,
   useRouter: () => ({
@@ -154,7 +158,9 @@ describe("SiteHeader analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    expect(within(toolbar).getByText("2026年5月")).toBeInTheDocument();
+    expect(within(toolbar).getByText("2026-05-01 — 2026-05-03")).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: "本周" })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: "本月" })).toBeInTheDocument();
     expect(within(toolbar).getByRole("button", { name: /量化趋势/ })).toBeInTheDocument();
     expect(within(toolbar).getByRole("button", { name: /五维全景/ })).toBeInTheDocument();
     expect(within(toolbar).getByRole("button", { name: /关联/ })).toBeInTheDocument();
@@ -240,13 +246,13 @@ describe("SiteHeader analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "查看上一2026年5月" }));
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=trends", { scroll: false });
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "查看下月分析" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "查看下一2026年5月" }));
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=trends", { scroll: false });
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "回到本月分析" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "本月" }));
     expect(mockRouterReplace).toHaveBeenCalledWith(`/analysis?month=${CURRENT_MONTH}&section=trends`, { scroll: false });
   });
 
@@ -263,7 +269,7 @@ describe("SiteHeader analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "查看上一2026年5月" }));
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=review", { scroll: false });
   });
 
@@ -278,7 +284,7 @@ describe("SiteHeader analysis toolbar", () => {
 
     render(<SiteHeader />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", `/analysis?month=${CURRENT_MONTH}&section=trends`);
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();
   });
 });

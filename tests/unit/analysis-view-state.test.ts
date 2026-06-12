@@ -5,6 +5,10 @@ import {
   shiftAnalysisMonth
 } from "@/features/analysis/view-state";
 
+vi.mock("@/features/interview/entry-date", () => ({
+  getTodayEntryDate: () => "2026-05-03"
+}));
+
 describe("analysis view state helpers", () => {
   it("normalizes empty month params to the current month", () => {
     expect(
@@ -12,9 +16,10 @@ describe("analysis view state helpers", () => {
         month: null,
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
+      preset: "month",
       href: "/analysis?month=2026-05&section=trends",
       shouldReplace: true
     });
@@ -26,7 +31,7 @@ describe("analysis view state helpers", () => {
         month: "2026-13",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
       href: "/analysis?month=2026-05&section=trends",
@@ -41,7 +46,7 @@ describe("analysis view state helpers", () => {
         section: "unknown",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
       href: "/analysis?month=2026-05&section=trends",
@@ -56,7 +61,7 @@ describe("analysis view state helpers", () => {
         section: "score",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
       href: "/analysis?month=2026-05&section=trends",
@@ -69,7 +74,7 @@ describe("analysis view state helpers", () => {
         section: "rhythm",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
       href: "/analysis?month=2026-05&section=trends",
@@ -84,7 +89,7 @@ describe("analysis view state helpers", () => {
         section: "insights",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "dimensions",
       href: "/analysis?month=2026-05&section=dimensions",
@@ -99,7 +104,7 @@ describe("analysis view state helpers", () => {
         section: "correlation",
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "correlation",
       href: "/analysis?month=2026-05&section=correlation",
@@ -114,10 +119,12 @@ describe("analysis view state helpers", () => {
         section: null,
         today: "2026-05"
       })
-    ).toEqual({
+    ).toMatchObject({
       month: "2026-05",
       section: "trends",
       href: "/analysis?month=2026-05&section=trends",
+      startDate: "2026-05-01",
+      endDate: "2026-05-03",
       shouldReplace: true
     });
   });

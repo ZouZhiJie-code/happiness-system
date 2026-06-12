@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>量化趋势区 · 样式对比稿</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .mock-nav {
+      position: sticky;
+      top: var(--header-h);
+      z-index: 15;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.65rem 1.25rem;
+      background: rgba(248, 233, 204, 0.96);
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-nav a {
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      text-decoration: none;
+    }
+    .mock-nav a:hover, .mock-nav a.active { background: var(--amber-soft); color: var(--text-main); font-weight: 600; }
+
+    .variant-block {
+      scroll-margin-top: calc(var(--header-h) + 3.5rem);
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px dashed var(--line-soft);
+    }
+    .variant-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      margin-right: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: var(--amber-soft);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--amber);
+    }
+    .variant-desc {
+      margin: 0 0 1rem;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--text-dim);
+      max-width: 44rem;
+    }
+    .variant-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
+    .variant-tag {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+      background: rgba(110, 73, 38, 0.07);
+      color: var(--text-faint);
+    }
+    .variant-tag.good { background: rgba(90, 122, 86, 0.14); color: #45644a; }
+
+    .section-desc {
+      margin: 0 0 1rem;
+      font-size: 0.84rem;
+      line-height: 1.65;
+      color: var(--text-dim);
+      max-width: 40rem;
+    }
+
+    .period-summary-bar {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.72);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+    .period-summary-bar strong { color: var(--text-main); font-weight: 650; }
+
+    .stat-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.28rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.6);
+      font-size: 0.74rem;
+      color: #8a6b4b;
+    }
+    .stat-chip .num { font-family: ui-monospace, monospace; font-size: 0.78rem; color: #4b3727; font-weight: 600; }
+
+    .chart-card {
+      background: rgba(255, 250, 241, 0.8);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-control);
+      padding: 0.85rem 0.9rem;
+    }
+    .chart-card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.84rem;
+      color: #3a2c1f;
+    }
+    .chart-card-sub { font-size: 0.72rem; color: #8a6b4b; font-family: ui-monospace, monospace; }
+
+    .line-chart { width: 100%; height: auto; display: block; overflow: visible; }
+    .line-chart .grid-line { stroke: rgba(150, 105, 61, 0.14); stroke-width: 1; }
+    .line-chart .axis-label { fill: #8a6b4b; font-family: ui-monospace, monospace; font-size: 11px; }
+    .line-chart .trend-line { fill: none; stroke: #6f4a26; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .line-chart .data-point { fill: #fffaf1; stroke: #6f4a26; stroke-width: 2; cursor: pointer; }
+    .line-chart .data-point:hover { r: 6; fill: #6f4a26; }
+    .line-chart .data-point.selected { fill: #6f4a26; r: 6; }
+
+    .inline-detail {
+      margin-top: 0.65rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--line-soft);
+      background: var(--paper-soft);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: #72583f;
+    }
+    .inline-detail .link { color: #6f4a26; text-decoration: underline; text-underline-offset: 2px; font-size: 0.76rem; }
+
+    .factor-grid { display: grid; gap: 0.5rem; }
+    @media (min-width: 640px) { .factor-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+
+    .factor-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.45rem 0.55rem;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.55);
+      cursor: default;
+    }
+    .factor-row.active { border-color: var(--line-strong); background: rgba(237, 216, 181, 0.55); }
+    .factor-row .name { flex: 0 0 4.5rem; font-size: 0.8rem; color: #3a2c1f; }
+    .factor-row .bar-wrap { flex: 1; height: 6px; border-radius: 999px; background: rgba(110, 73, 38, 0.1); overflow: hidden; }
+    .factor-row .bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #9e7b57, #6f4a26); }
+    .factor-row .avg { flex: 0 0 2.2rem; text-align: right; font-family: ui-monospace, monospace; font-size: 0.76rem; color: #6f5339; }
+
+    .factor-strip {
+      display: flex;
+      gap: 0.45rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+      scrollbar-width: thin;
+    }
+    .factor-strip-item {
+      flex: 0 0 5.5rem;
+      padding: 0.45rem 0.4rem;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.55);
+      text-align: center;
+    }
+    .factor-strip-item.active { border-color: var(--line-strong); background: rgba(237, 216, 181, 0.55); }
+    .factor-strip-item .lbl { font-size: 0.68rem; color: #3a2c1f; }
+    .factor-strip-item .val { font-family: ui-monospace, monospace; font-size: 0.76rem; color: #6f5339; margin-top: 0.15rem; }
+
+    .collapse-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.55rem 0;
+      border: none;
+      background: none;
+      font-size: 0.84rem;
+      color: #3a2c1f;
+      cursor: pointer;
+      text-align: left;
+    }
+    .collapse-body { display: none; margin-top: 0.5rem; }
+    .collapse-body.open { display: block; }
+
+    .heatmap-readonly { margin-top: 0.75rem; }
+    .heatmap-legend { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.65rem; }
+    .heatmap-legend span {
+      font-size: 0.66rem;
+      padding: 0.12rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+    }
+    .leg-future { background: rgba(255,252,246,0.54); color: #7a6857; border-style: dashed; }
+    .leg-empty { background: rgba(248,233,204,0.85); color: #8b6c4d; }
+    .leg-score { background: rgba(238,245,236,0.92); color: #567256; border-color: rgba(88,120,88,0.18); }
+    .leg-pending { background: rgba(246,231,208,0.94); color: #7b532d; }
+    .leg-stale { background: rgba(247,240,245,0.96); color: #7c5568; }
+    .leg-done { background: rgba(237,244,237,0.94); color: #45644a; }
+
+    .heat-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 4px; }
+    .heat-weekdays span { text-align: center; font-size: 0.68rem; color: #8b6c4d; }
+    .heat-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .heat-day {
+      aspect-ratio: 0.85;
+      border-radius: var(--radius-control);
+      border: 1px solid var(--line-soft);
+      padding: 0.35rem 0.3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: default;
+      position: relative;
+    }
+    .heat-day .d { font-family: ui-monospace, monospace; font-size: 0.68rem; color: #8e6a46; }
+    .heat-day .badge {
+      align-self: flex-end;
+      font-size: 0.58rem;
+      padding: 0.1rem 0.3rem;
+      border-radius: 999px;
+    }
+    .heat-day .dens { font-family: ui-monospace, monospace; font-size: 0.66rem; color: #4b3a2b; }
+    .heat-day.future { border-style: dashed; background: rgba(255,252,246,0.54); opacity: 0.7; }
+    .heat-day.empty { background: rgba(248,233,204,0.85); }
+    .heat-day.score { background: rgba(238,245,236,0.92); border-color: rgba(88,120,88,0.18); }
+    .heat-day.pending { background: rgba(246,231,208,0.94); border-color: rgba(111,74,38,0.16); }
+    .heat-day.stale { background: rgba(247,240,245,0.96); border-color: rgba(124,85,104,0.16); }
+    .heat-day.done { background: rgba(220,234,221,0.92); border-color: rgba(69,100,74,0.18); }
+    .heat-day .badge.b-future { background: rgba(122,104,87,0.1); color: #7a6857; }
+    .heat-day .badge.b-empty { background: rgba(150,105,61,0.08); color: #8b6c4d; }
+    .heat-day .badge.b-score { background: rgba(88,120,88,0.12); color: #567256; }
+    .heat-day .badge.b-pending { background: rgba(111,74,38,0.1); color: #7b532d; }
+    .heat-day .badge.b-stale { background: rgba(124,85,104,0.12); color: #7c5568; }
+    .heat-day .badge.b-done { background: rgba(69,100,74,0.12); color: #45644a; }
+
+    .rhythm-stats { display: grid; gap: 0.5rem; margin-top: 0.85rem; }
+    @media (min-width: 640px) { .rhythm-stats { grid-template-columns: 1fr 1fr; } }
+    .rhythm-stat { padding-top: 0.55rem; border-top: 1px solid var(--line-soft); }
+    .rhythm-stat .lbl { font-size: 0.68rem; color: #8b6c4d; }
+    .rhythm-stat .val { font-family: ui-monospace, monospace; font-size: 0.88rem; color: #3a2c1f; margin-top: 0.15rem; }
+    .rhythm-stat .det { font-size: 0.74rem; color: #72583f; margin-top: 0.2rem; line-height: 1.5; }
+
+    .tooltip-demo {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.25rem 0.45rem;
+      border-radius: 6px;
+      background: #3a2c1f;
+      color: #fffaf1;
+      font-size: 0.62rem;
+      white-space: nowrap;
+      pointer-events: none;
+      display: none;
+    }
+    .heat-day.has-tip:hover .tooltip-demo { display: block; }
+
+    .compare-note {
+      margin-top: 1rem;
+      padding: 0.65rem 0.85rem;
+      border-left: 3px solid var(--amber);
+      background: rgba(169, 111, 61, 0.06);
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav">
+      <span>日历</span>
+      <span class="active">分析</span>
+      <span>画像</span>
+      <span>设置</span>
+    </nav>
+  </header>
+
+  <nav class="mock-nav" aria-label="方案跳转">
+    <a href="#toolbar">工具栏</a>
+    <a href="#l1-i1">L1 双栏 · 纯读数</a>
+    <a href="#l1-i2">L1 双栏 · 轻下探</a>
+    <a href="#l2-i1">L2 压缩 · 纯读数</a>
+    <a href="#l2-i2">L2 压缩 · 轻下探</a>
+    <a href="#l3">L3 摘要优先</a>
+    <a href="#heatmap">只读热力</a>
+  </nav>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>量化趋势区打磨</strong> · 仅本次改动相关区块 · 非最终实现</span>
+        <a href="scheme-d-scroll-tabs.html">← 方案 D 总览</a>
+      </div>
+
+      <p class="stat-line" style="margin-bottom:1.5rem">
+        下方每块都是「量化趋势」段内的样式草稿。五维 / 关联 / 复盘未画出。请重点看：周期摘要、评分区布局、折线交互、只读热力。
+      </p>
+
+      <div id="toolbar" class="variant-block" style="border-bottom:none">
+        <span class="variant-label">共用 · Header 周期控制</span>
+        <p class="variant-desc">Toolbar 扩展示意（与 section tab 并列）。本月翻页保留；选「本周」时范围跨月也允许。</p>
+        <div class="analysis-toolbar" style="border-radius:var(--radius-control);margin-bottom:0">
+          <button type="button" class="preset-btn">◀ 5月</button>
+          <button type="button" class="preset-btn">本周</button>
+          <button type="button" class="preset-btn active">本月</button>
+          <button type="button" class="preset-btn">自定义</button>
+          <span class="toolbar-divider">｜</span>
+          <span class="date-range">2026-06-01 — 2026-06-12</span>
+          <span class="toolbar-divider">｜</span>
+          <div class="tab-bar" style="margin:0">
+            <span class="tab active">量化趋势</span>
+            <span class="tab">五维全景</span>
+            <span class="tab">关联</span>
+            <span class="tab">复盘</span>
+          </div>
+        </div>
+        <div class="compare-note">自定义选中后会出现起止日期选择器（此处未画）。长周期（如 120 天）折线图旁会出现「按周均值」小 chip。</div>
+      </div>
+
+      <section id="l1-i1" class="variant-block">
+        <span class="variant-label">L1 · 双栏桌面布局</span>
+        <span class="variant-label" style="background:rgba(90,122,86,0.14);color:#45644a">I1 · 纯读数（hover tooltip）</span>
+        <p class="variant-desc">左：总分走势 + 周期均分。右：8 要素均分条。桌面并排，小屏纵向叠。折线无点选详情卡。</p>
+        <div class="variant-tags">
+          <span class="variant-tag good">读数台契合</span>
+          <span class="variant-tag">滚动较短</span>
+          <span class="variant-tag">接近 mockup D</span>
+        </div>
+
+        <div class="section-heading"><div class="eyebrow">01 · 量化趋势</div><h2>评分与记录趋势</h2></div>
+        <div class="period-summary-bar">
+          本周期 <strong>8 天有评分</strong>、<strong>10 天有记录</strong>、<strong>4 天已整合</strong>；幸福均分 <strong>6.8</strong>。
+        </div>
+        <div class="stat-chips">
+          <span class="stat-chip">已评分 <span class="num">8 天</span></span>
+          <span class="stat-chip">周期均分 <span class="num">6.8</span></span>
+        </div>
+
+        <div class="grid-2">
+          <div class="ui-card">
+            <div class="chart-card" style="border:none;background:transparent;padding:0">
+              <div class="chart-card-title">
+                <span>总分平均走势</span>
+                <span class="chart-card-sub">Y 1–10</span>
+              </div>
+              <svg class="line-chart" viewBox="0 0 320 140" aria-label="总分走势示意">
+                <line class="grid-line" x1="36" x2="300" y1="20" y2="20"/>
+                <line class="grid-line" x1="36" x2="300" y1="55" y2="55"/>
+                <line class="grid-line" x1="36" x2="300" y1="90" y2="90"/>
+                <text class="axis-label" x="28" y="24" text-anchor="end">10</text>
+                <text class="axis-label" x="28" y="59" text-anchor="end">7</text>
+                <text class="axis-label" x="28" y="94" text-anchor="end">4</text>
+                <text class="axis-label" x="70" y="128" text-anchor="middle">6/3</text>
+                <text class="axis-label" x="170" y="128" text-anchor="middle">6/9</text>
+                <text class="axis-label" x="270" y="128" text-anchor="middle">6/12</text>
+                <path class="trend-line" d="M 70 72 L 100 58 L 130 65 L 190 48 L 220 70 L 250 52 L 270 60"/>
+                <circle class="data-point" cx="70" cy="72" r="4.5"/><circle class="data-point" cx="100" cy="58" r="4.5"/>
+                <circle class="data-point" cx="190" cy="48" r="4.5"/><circle class="data-point" cx="270" cy="60" r="4.5"/>
+              </svg>
+              <p style="margin:0.35rem 0 0;font-size:0.72rem;color:#8a6b4b">悬停数据点显示「6/9 · 7.2 分」，不展开详情卡</p>
+            </div>
+          </div>
+          <div class="ui-card">
+            <div class="chart-card-title" style="margin-bottom:0.65rem">
+              <span>8 要素 · 周期均分</span>
+              <span class="chart-card-sub">点击高亮</span>
+            </div>
+            <div class="factor-grid">
+              <div class="factor-row active"><span class="name">意义感</span><div class="bar-wrap"><div class="bar" style="width:78%"></div></div><span class="avg">7.8</span></div>
+              <div class="factor-row"><span class="name">健康</span><div class="bar-wrap"><div class="bar" style="width:62%"></div></div><span class="avg">6.2</span></div>
+              <div class="factor-row"><span class="name">美德</span><div class="bar-wrap"><div class="bar" style="width:71%"></div></div><span class="avg">7.1</span></div>
+              <div class="factor-row"><span class="name">自主性</span><div class="bar-wrap"><div class="bar" style="width:55%"></div></div><span class="avg">5.5</span></div>
+              <div class="factor-row"><span class="name">兴趣</span><div class="bar-wrap"><div class="bar" style="width:68%"></div></div><span class="avg">6.8</span></div>
+              <div class="factor-row"><span class="name">技能</span><div class="bar-wrap"><div class="bar" style="width:64%"></div></div><span class="avg">6.4</span></div>
+              <div class="factor-row"><span class="name">关系</span><div class="bar-wrap"><div class="bar" style="width:73%"></div></div><span class="avg">7.3</span></div>
+              <div class="factor-row"><span class="name">生活条件</span><div class="bar-wrap"><div class="bar" style="width:59%"></div></div><span class="avg">5.9</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="compare-note">去掉「长期偏高/最常掉下来」三列排名；8 项不再各画一张全宽折线。</div>
+      </section>
+
+      <section id="l1-i2" class="variant-block">
+        <span class="variant-label">L1 · 双栏桌面布局</span>
+        <span class="variant-label" style="background:rgba(169,111,61,0.2);color:#8b5320">I2 · 轻下探（inline 摘要）</span>
+        <p class="variant-desc">布局同 L1。点击折线数据点后，在图下方 inline 展开只读摘要 +「查看当天」轻链接。无侧栏、无强 CTA。</p>
+
+        <div class="section-heading"><div class="eyebrow">01 · 量化趋势</div><h2>评分与记录趋势</h2></div>
+        <div class="period-summary-bar">本周期 <strong>8 天有评分</strong>、<strong>10 天有记录</strong>、<strong>4 天已整合</strong>；幸福均分 <strong>6.8</strong>。</div>
+
+        <div class="grid-2">
+          <div class="ui-card">
+            <div class="chart-card" style="border:none;background:transparent;padding:0">
+              <div class="chart-card-title"><span>总分平均走势</span><span class="chart-card-sub">Y 1–10</span></div>
+              <svg class="line-chart" viewBox="0 0 320 140">
+                <line class="grid-line" x1="36" x2="300" y1="55" y2="55"/>
+                <path class="trend-line" d="M 70 72 L 100 58 L 130 65 L 190 48 L 220 70 L 250 52 L 270 60"/>
+                <circle class="data-point selected" cx="190" cy="48" r="6"/>
+                <circle class="data-point" cx="100" cy="58" r="4.5"/>
+                <circle class="data-point" cx="270" cy="60" r="4.5"/>
+              </svg>
+              <div class="inline-detail">
+                <strong style="color:#302114">6 月 9 日</strong> · 当天均分 <span style="font-family:monospace">7.4</span><br/>
+                已有完整日志：《把节奏放稳》<br/>
+                <span class="link">查看当天 →</span>
+              </div>
+            </div>
+          </div>
+          <div class="ui-card">
+            <div class="chart-card-title" style="margin-bottom:0.65rem"><span>8 要素 · 周期均分</span></div>
+            <div class="factor-grid">
+              <div class="factor-row active"><span class="name">意义感</span><div class="bar-wrap"><div class="bar" style="width:78%"></div></div><span class="avg">7.8</span></div>
+              <div class="factor-row"><span class="name">健康</span><div class="bar-wrap"><div class="bar" style="width:62%"></div></div><span class="avg">6.2</span></div>
+              <div class="factor-row"><span class="name">关系</span><div class="bar-wrap"><div class="bar" style="width:73%"></div></div><span class="avg">7.3</span></div>
+              <div class="factor-row"><span class="name">自主性</span><div class="bar-wrap"><div class="bar" style="width:55%"></div></div><span class="avg">5.5</span></div>
+            </div>
+            <p style="margin:0.5rem 0 0;font-size:0.72rem;color:#8a6b4b">其余 4 项可滚动或折叠</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="l2-i1" class="variant-block">
+        <span class="variant-label">L2 · 单栏压缩</span>
+        <span class="variant-label" style="background:rgba(90,122,86,0.14);color:#45644a">I1 · 纯读数</span>
+        <p class="variant-desc">总分走势占满宽；8 项收成横向 scroll 条。去掉第二张「单项大图」，滚动高度最短。</p>
+        <div class="variant-tags">
+          <span class="variant-tag good">移动端友好</span>
+          <span class="variant-tag good">最省纵向空间</span>
+        </div>
+
+        <div class="section-heading"><div class="eyebrow">01 · 量化趋势</div><h2>评分与记录趋势</h2></div>
+        <div class="period-summary-bar">本周期 <strong>8 天有评分</strong>、<strong>10 天有记录</strong>；幸福均分 <strong>6.8</strong>。</div>
+
+        <div class="ui-card">
+          <div class="chart-card" style="border:none;background:transparent;padding:0">
+            <div class="chart-card-title"><span>总分平均走势</span><span class="stat-chip" style="margin:0">已评分 <span class="num">8天</span></span></div>
+            <svg class="line-chart" viewBox="0 0 600 160">
+              <line class="grid-line" x1="42" x2="580" y1="30" y2="30"/><line class="grid-line" x1="42" x2="580" y1="80" y2="80"/><line class="grid-line" x1="42" x2="580" y1="130" y2="130"/>
+              <path class="trend-line" d="M 80 95 L 140 70 L 200 85 L 320 55 L 400 100 L 480 65 L 540 78"/>
+              <circle class="data-point" cx="320" cy="55" r="4.5"/><circle class="data-point" cx="480" cy="65" r="4.5"/>
+            </svg>
+          </div>
+          <p style="margin:0.75rem 0 0.35rem;font-size:0.82rem;color:#3a2c1f">8 项快扫</p>
+          <div class="factor-strip">
+            <div class="factor-strip-item active"><div class="lbl">意义感</div><div class="val">7.8</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 14 L18 8 L34 11 L58 6" fill="none" stroke="#6f4a26" stroke-width="2"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">健康</div><div class="val">6.2</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 10 L20 12 L40 8 L58 14" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">美德</div><div class="val">7.1</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 12 L30 10 L58 8" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">自主性</div><div class="val">5.5</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 8 L20 14 L40 12 L58 16" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">兴趣</div><div class="val">6.8</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 11 L58 9" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">技能</div><div class="val">6.4</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 13 L30 7 L58 11" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">关系</div><div class="val">7.3</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 15 L25 9 L50 6 L58 8" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+            <div class="factor-strip-item"><div class="lbl">生活条件</div><div class="val">5.9</div><svg viewBox="0 0 60 20" style="width:100%;height:1.2rem;margin-top:0.2rem"><path d="M2 9 L40 13 L58 11" fill="none" stroke="#9e7b57" stroke-width="1.8"/></svg></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="l2-i2" class="variant-block">
+        <span class="variant-label">L2 · 单栏压缩</span>
+        <span class="variant-label" style="background:rgba(169,111,61,0.2);color:#8b5320">I2 · 轻下探</span>
+        <p class="variant-desc">布局同 L2。点选折线后在图下展开 inline 摘要。</p>
+
+        <div class="ui-card">
+          <div class="chart-card" style="border:none;background:transparent;padding:0">
+            <div class="chart-card-title"><span>总分平均走势</span></div>
+            <svg class="line-chart" viewBox="0 0 600 120">
+              <path class="trend-line" d="M 80 70 L 200 45 L 320 60 L 480 50 L 540 65"/>
+              <circle class="data-point selected" cx="200" cy="45" r="6"/>
+            </svg>
+            <div class="inline-detail">
+              <strong style="color:#302114">6 月 5 日</strong> · 均分 6.9 · 有 2 条维度记录，未整合<br/>
+              <span class="link">查看当天 →</span>
+            </div>
+          </div>
+          <div class="factor-strip" style="margin-top:0.75rem">
+            <div class="factor-strip-item active"><div class="lbl">意义感</div><div class="val">7.8</div></div>
+            <div class="factor-strip-item"><div class="lbl">健康</div><div class="val">6.2</div></div>
+            <div class="factor-strip-item"><div class="lbl">关系</div><div class="val">7.3</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="l3" class="variant-block">
+        <span class="variant-label">L3 · 摘要优先（折叠 8 项）</span>
+        <p class="variant-desc">首屏只给：周期摘要 + 均分 chip + 一条简折线。8 要素默认折叠。适合「3 秒读懂」最强的读数台。</p>
+        <div class="variant-tags">
+          <span class="variant-tag good">首屏最轻</span>
+          <span class="variant-tag">8 项细节藏得较深</span>
+        </div>
+
+        <div class="period-summary-bar">本周期 <strong>8 天有评分</strong>、<strong>10 天有记录</strong>；幸福均分 <strong>6.8</strong>。</div>
+        <div class="stat-chips">
+          <span class="stat-chip">已评分 <span class="num">8 天</span></span>
+          <span class="stat-chip">周期均分 <span class="num">6.8</span></span>
+          <span class="stat-chip">较上周 <span class="num">+0.3</span></span>
+        </div>
+        <div class="ui-card">
+          <svg class="line-chart" viewBox="0 0 600 100">
+            <path class="trend-line" d="M 60 60 L 180 40 L 300 55 L 420 35 L 540 50" stroke-width="3"/>
+          </svg>
+          <button type="button" class="collapse-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.arr').textContent=this.nextElementSibling.classList.contains('open')?'▾':'▸'">
+            <span>展开 8 要素均分</span><span class="arr">▸</span>
+          </button>
+          <div class="collapse-body">
+            <div class="factor-grid cols-2" style="margin-top:0.25rem">
+              <div class="factor-row"><span class="name">意义感</span><div class="bar-wrap"><div class="bar" style="width:78%"></div></div><span class="avg">7.8</span></div>
+              <div class="factor-row"><span class="name">健康</span><div class="bar-wrap"><div class="bar" style="width:62%"></div></div><span class="avg">6.2</span></div>
+              <div class="factor-row"><span class="name">美德</span><div class="bar-wrap"><div class="bar" style="width:71%"></div></div><span class="avg">7.1</span></div>
+              <div class="factor-row"><span class="name">自主性</span><div class="bar-wrap"><div class="bar" style="width:55%"></div></div><span class="avg">5.5</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="compare-note">「较上周」chip 仅在有本周 preset 且数据足够时显示。点击「展开 8 要素均分」可试用折叠交互。</div>
+      </section>
+
+      <section id="heatmap" class="variant-block" style="border-bottom:none">
+        <span class="variant-label">共用 · 只读记录热力</span>
+        <p class="variant-desc">去掉日格点选、右侧「当天追踪」、所有行动按钮。颜色 + legend 即语义；hover 仅 tooltip。</p>
+
+        <div class="ui-card heatmap-readonly">
+          <p style="font-size:0.68rem;color:#8a6b4b;letter-spacing:0.06em;margin:0 0 0.35rem">记录热力</p>
+          <p style="margin:0 0 0.65rem;font-size:0.84rem;color:#72583f">状态先于密度。本视图只读，不下探到当天操作。</p>
+
+          <div class="heatmap-legend">
+            <span class="leg-future">未来</span>
+            <span class="leg-empty">空白</span>
+            <span class="leg-score">只评未记</span>
+            <span class="leg-pending">待整合</span>
+            <span class="leg-stale">待更新</span>
+            <span class="leg-done">已整合</span>
+          </div>
+
+          <div class="heat-weekdays">
+            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="heat-grid">
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day empty" style="opacity:0.35"><span class="d"></span></div>
+            <div class="heat-day score"><span class="d">1</span><span class="badge b-score">评</span><span class="dens">6.5分</span></div>
+            <div class="heat-day done"><span class="d">2</span><span class="badge b-done">整</span><span class="dens">3维+</span></div>
+            <div class="heat-day pending"><span class="d">3</span><span class="badge b-pending">待</span><span class="dens">2维</span></div>
+            <div class="heat-day empty"><span class="d">4</span><span class="badge b-empty">空</span><span class="dens">空白</span></div>
+            <div class="heat-day done"><span class="d">5</span><span class="badge b-done">整</span><span class="dens">已完成</span></div>
+            <div class="heat-day score"><span class="d">6</span><span class="badge b-score">评</span><span class="dens">7.1分</span></div>
+            <div class="heat-day pending"><span class="d">7</span><span class="badge b-pending">待</span><span class="dens">1维</span></div>
+            <div class="heat-day stale"><span class="d">8</span><span class="badge b-stale">更</span><span class="dens">3维+</span></div>
+            <div class="heat-day done has-tip"><span class="d">9</span><span class="badge b-done">整</span><span class="dens">2维</span><span class="tooltip-demo">6/9 · 已整合 · 均分 7.4</span></div>
+            <div class="heat-day pending"><span class="d">10</span><span class="badge b-pending">待</span><span class="dens">2维</span></div>
+            <div class="heat-day score"><span class="d">11</span><span class="badge b-score">评</span><span class="dens">6.8分</span></div>
+            <div class="heat-day future"><span class="d">12</span><span class="badge b-future">未</span><span class="dens">待到来</span></div>
+            <div class="heat-day future"><span class="d">13</span><span class="badge b-future">未</span></div>
+            <div class="heat-day future"><span class="d">14</span><span class="badge b-future">未</span></div>
+          </div>
+
+          <div class="rhythm-stats">
+            <div class="rhythm-stat"><div class="lbl">最长连续</div><div class="val">4 天</div><div class="det">6/2 — 6/5 有记录或评分</div></div>
+            <div class="rhythm-stat"><div class="lbl">最长空档</div><div class="val">2 天</div><div class="det">6/6 — 6/7 完全空白</div></div>
+            <div class="rhythm-stat"><div class="lbl">待整合日</div><div class="val">3 天</div><div class="det">最近 6/10</div></div>
+            <div class="rhythm-stat"><div class="lbl">只评未记</div><div class="val">2 天</div><div class="det">最近 6/11</div></div>
+          </div>
+        </div>
+
+        <div class="compare-note" style="margin-top:1rem">
+          <strong>与现网差异：</strong>去掉选中描边、右侧 Card、开始记录/整理日志按钮。<br/>
+          <strong>待你拍板：</strong>自定义跨 2 个月时，热力用连续网格（如上）还是按月分段标题。
+        </div>
+      </section>
+
+      <p class="stat-line" style="margin-top:2rem;text-align:center">
+        看完请反馈：偏好哪套 <strong>布局（L1/L2/L3）</strong> + <strong>折线交互（I1/I2）</strong>，以及热力跨月形态。
+      </p>
+    </div>
+  </main>
+</body>
+</html>

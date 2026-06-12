@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>量化趋势 · 可视化方案 v2</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .mock-nav {
+      position: sticky; top: var(--header-h); z-index: 15;
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+      padding: 0.65rem 1.25rem;
+      background: rgba(248,233,204,0.96);
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .mock-nav a {
+      padding: 0.3rem 0.65rem; border-radius: 999px;
+      border: 1px solid var(--line-soft); font-size: 0.74rem;
+      color: var(--text-dim); text-decoration: none;
+    }
+    .mock-nav a:hover { background: var(--amber-soft); color: var(--text-main); font-weight: 600; }
+
+    .block { scroll-margin-top: calc(var(--header-h) + 3.5rem); margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 2px dashed var(--line-soft); }
+    .tag { display: inline-block; margin: 0 0.35rem 0.35rem 0; padding: 0.22rem 0.6rem; border-radius: 999px; background: var(--amber-soft); font-size: 0.7rem; font-weight: 700; color: var(--amber); }
+    .tag.rec { background: rgba(90,122,86,0.14); color: #45644a; }
+    .lead { margin: 0 0 1rem; font-size: 0.84rem; line-height: 1.65; color: var(--text-dim); max-width: 46rem; }
+    .note { margin-top: 0.85rem; padding: 0.65rem 0.85rem; border-left: 3px solid var(--amber); background: rgba(169,111,61,0.06); font-size: 0.78rem; line-height: 1.55; color: var(--text-dim); }
+
+    .period-bar {
+      padding: 0.7rem 1rem; margin-bottom: 1rem;
+      border-radius: var(--radius-control); border: 1px solid var(--line-soft);
+      background: rgba(255,252,246,0.72); font-size: 0.86rem; color: var(--text-dim);
+    }
+    .period-bar b { color: var(--text-main); }
+
+    /* ── 极简记录热力（GitHub 式） ── */
+    .mini-heat-wrap { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+    .mini-heat { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; width: min(100%, 280px); }
+    .mini-heat .c {
+      aspect-ratio: 1; border-radius: 3px;
+      background: rgba(110,73,38,0.07);
+    }
+    .mini-heat .c.d1 { background: rgba(169,111,61,0.22); }
+    .mini-heat .c.d2 { background: rgba(169,111,61,0.42); }
+    .mini-heat .c.d3 { background: rgba(169,111,61,0.62); }
+    .mini-heat .c.d4 { background: rgba(111,74,38,0.82); }
+    .mini-heat-legend { font-size: 0.68rem; color: var(--text-faint); line-height: 1.5; }
+    .mini-heat-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 3px; }
+    .mini-heat-title { font-size: 0.78rem; color: #72583f; margin: 0 0 0.4rem; }
+
+    /* ── 图表共用：精致容器 ── */
+    .viz-card {
+      background: var(--paper-soft);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      padding: 1.1rem 1.15rem 1rem;
+    }
+    .viz-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .viz-head h4 { margin: 0; font-size: 0.92rem; font-weight: 650; color: var(--text-main); }
+    .viz-head .meta { font-family: ui-monospace, "SF Mono", monospace; font-size: 0.74rem; color: #8a6b4b; }
+    .viz-caption { margin: 0.55rem 0 0; font-size: 0.72rem; color: var(--text-faint); }
+
+    /* A · 面积图 */
+    .area-chart svg { width: 100%; height: auto; display: block; }
+    .area-fill { fill: url(#areaGrad); opacity: 0.55; }
+    .area-line { fill: none; stroke: #8b5a2b; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .area-grid { stroke: rgba(150,105,61,0.1); stroke-width: 1; }
+    .area-axis { fill: #9a7d62; font-family: ui-monospace, monospace; font-size: 10px; }
+    .area-dot { fill: #fffaf1; stroke: #8b5a2b; stroke-width: 1.8; }
+
+    /* B · 评分色块日历 */
+    .score-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; max-width: 320px; }
+    .score-cal .sc {
+      aspect-ratio: 1; border-radius: 4px;
+      background: rgba(110,73,38,0.06);
+    }
+    .score-cal .sc.s1 { background: rgba(125,141,99,0.18); }
+    .score-cal .sc.s2 { background: rgba(125,141,99,0.32); }
+    .score-cal .sc.s3 { background: rgba(125,141,99,0.48); }
+    .score-cal .sc.s4 { background: rgba(90,122,86,0.62); }
+    .score-cal .sc.s5 { background: rgba(69,100,74,0.78); }
+
+    /* C · 轨道点图 */
+    .rail-chart { position: relative; padding: 1.2rem 0 0.5rem; }
+    .rail-track {
+      position: relative; height: 8px; border-radius: 999px;
+      background: linear-gradient(90deg, rgba(169,111,61,0.12) 0%, rgba(90,122,86,0.22) 100%);
+    }
+    .rail-ticks { display: flex; justify-content: space-between; margin-top: 0.35rem; }
+    .rail-ticks span { font-family: ui-monospace, monospace; font-size: 0.62rem; color: #9a7d62; }
+    .rail-dots { position: absolute; inset: 0; }
+    .rail-dot {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #fffaf1; border: 2px solid #7a5230;
+      box-shadow: 0 1px 3px rgba(86,55,27,0.12);
+    }
+    .rail-dot.hi { background: #6f4a26; border-color: #6f4a26; width: 11px; height: 11px; }
+    .rail-connect {
+      position: absolute; top: 50%; height: 1.5px;
+      background: rgba(111,74,38,0.25); transform: translateY(-50%);
+    }
+
+    /* D · 棒棒糖图（8 要素） */
+    .lollipop-list { display: flex; flex-direction: column; gap: 0.55rem; }
+    .lollipop-row { display: grid; grid-template-columns: 4.2rem 1fr 2rem; align-items: center; gap: 0.5rem; }
+    .lollipop-row .lbl { font-size: 0.78rem; color: #3a2c1f; }
+    .lollipop-row .track {
+      position: relative; height: 1px;
+      background: rgba(110,73,38,0.14);
+    }
+    .lollipop-row .track::before {
+      content: ""; position: absolute; left: 0; right: 0; top: -3px; height: 7px;
+      background: linear-gradient(90deg, transparent 0%, rgba(169,111,61,0.06) 15%, rgba(90,122,86,0.08) 85%, transparent 100%);
+      border-radius: 999px;
+    }
+    .lollipop-row .stem {
+      position: absolute; top: 50%; height: 1px; background: rgba(111,74,38,0.35);
+      transform: translateY(-50%);
+    }
+    .lollipop-row .dot {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #f8e9cc; border: 2px solid #8b5a2b;
+      box-shadow: 0 1px 4px rgba(86,55,27,0.15);
+    }
+    .lollipop-row .dot.accent { background: #6f4a26; border-color: #6f4a26; width: 12px; height: 12px; }
+    .lollipop-row .val { text-align: right; font-family: ui-monospace, monospace; font-size: 0.76rem; color: #6f5339; }
+
+    /* E · 统一色块语言（评分 + 记录并排小条） */
+    .dual-strip { display: flex; flex-direction: column; gap: 0.65rem; }
+    .strip-row { display: flex; align-items: center; gap: 0.65rem; }
+    .strip-row .strip-label { flex: 0 0 3.5rem; font-size: 0.72rem; color: #8a6b4b; }
+    .strip-row .strip-cells { display: flex; gap: 3px; flex: 1; }
+    .strip-row .strip-cells .cell { flex: 1; height: 14px; border-radius: 3px; background: rgba(110,73,38,0.07); max-width: 18px; }
+
+    .combo-layout { display: grid; gap: 0.85rem; }
+    @media (min-width: 720px) { .combo-layout { grid-template-columns: 1.2fr 0.8fr; align-items: start; } }
+
+    .pros-cons { display: grid; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.74rem; color: var(--text-dim); }
+    @media (min-width: 520px) { .pros-cons { grid-template-columns: 1fr 1fr; } }
+    .pros-cons div { padding: 0.5rem 0.65rem; border-radius: var(--radius-control); background: rgba(255,252,246,0.5); }
+    .pros-cons strong { font-size: 0.68rem; color: var(--text-faint); display: block; margin-bottom: 0.2rem; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav"><span>日历</span><span class="active">分析</span><span>画像</span><span>设置</span></nav>
+  </header>
+
+  <nav class="mock-nav">
+    <a href="#heatmap-mini">极简热力</a>
+    <a href="#viz-a">A 面积图</a>
+    <a href="#viz-b">B 评分色块</a>
+    <a href="#viz-c">C 轨道点图</a>
+    <a href="#viz-d">D 棒棒糖图</a>
+    <a href="#viz-e">E 双条色块（推荐组合）</a>
+  </nav>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>v2 · 可视化修订</strong> · 回应热力简化 + 图表选型 + 条形图丑陋</span>
+        <a href="trends-polish-comparison.html">← v1 布局对比</a>
+      </div>
+
+      <p class="lead">
+        记录热力改为<strong>最朴素色块</strong>：有无记录 + 维度深浅，占用面积极小。评分侧提供 5 种更适合「读数台」的图表语言，避免简笔画折线/粗条形。
+      </p>
+
+      <!-- 极简热力 -->
+      <section id="heatmap-mini" class="block">
+        <span class="tag">记录热力 · 极简版</span>
+        <span class="tag rec">推荐</span>
+        <p class="lead">不写字、不 badge、不统计四格。GitHub 贡献图式：灰=无记录，暖棕深浅=1–4+ 维。整段高度约 60px。</p>
+
+        <div class="ui-card" style="padding:0.85rem 1rem;max-width:22rem">
+          <p class="mini-heat-title">本周期记录密度</p>
+          <div class="mini-heat-wrap">
+            <div class="mini-heat" aria-label="14天记录密度示意">
+              <div class="c"></div><div class="c d1"></div><div class="c d2"></div><div class="c"></div>
+              <div class="c d3"></div><div class="c d1"></div><div class="c d4"></div><div class="c d2"></div>
+              <div class="c"></div><div class="c d3"></div><div class="c d1"></div><div class="c d2"></div>
+              <div class="c d1"></div><div class="c"></div>
+            </div>
+            <div class="mini-heat-legend">
+              <span class="sw" style="background:rgba(110,73,38,0.07)"></span>无记录<br/>
+              <span class="sw" style="background:rgba(169,111,61,0.42)"></span>有记录（越深维度越多）
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          本月视图可渲染 28–31 格小方块（仍很矮）；本周 7 格。自定义长周期可横向 scroll 或压缩格宽。与评分图并排放，不当主视觉。
+        </div>
+      </section>
+
+      <!-- A 面积图 -->
+      <section id="viz-a" class="block">
+        <span class="tag">A · 面积图 Area</span>
+        <p class="lead">Apple Health / 情绪类 App 常用。曲线下方柔和填充，比裸折线「完成度高」，适合表达总分起伏。</p>
+
+        <div class="viz-card area-chart">
+          <div class="viz-head">
+            <h4>幸福总分走势</h4>
+            <span class="meta">均分 6.8 · 8天</span>
+          </div>
+          <svg viewBox="0 0 400 120" aria-hidden="true">
+            <defs>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#a96f3d" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#a96f3d" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+            <line class="area-grid" x1="32" x2="380" y1="24" y2="24"/>
+            <line class="area-grid" x1="32" x2="380" y1="60" y2="60"/>
+            <line class="area-grid" x1="32" x2="380" y1="96" y2="96"/>
+            <text class="area-axis" x="26" y="28" text-anchor="end">10</text>
+            <text class="area-axis" x="26" y="64" text-anchor="end">6</text>
+            <text class="area-axis" x="26" y="100" text-anchor="end">2</text>
+            <path class="area-fill" d="M 48 72 L 88 52 L 128 64 L 188 38 L 248 70 L 308 48 L 352 58 L 352 110 L 48 110 Z"/>
+            <path class="area-line" d="M 48 72 L 88 52 L 128 64 L 188 38 L 248 70 L 308 48 L 352 58"/>
+            <circle class="area-dot" cx="188" cy="38" r="4"/><circle class="area-dot" cx="308" cy="48" r="4"/>
+            <text class="area-axis" x="88" y="116" text-anchor="middle">6/3</text>
+            <text class="area-axis" x="248" y="116" text-anchor="middle">6/9</text>
+            <text class="area-axis" x="352" y="116" text-anchor="middle">6/12</text>
+          </svg>
+          <p class="viz-caption">交互：hover 显示日期+分数即可（读数台）。长周期自动按周/月聚合后仍可用面积图。</p>
+        </div>
+        <div class="pros-cons">
+          <div><strong>适合</strong>看整体起伏、周期对比；视觉成熟。</div>
+          <div><strong>注意</strong>8 项分项若各画一张会重复，宜只用于总分。</div>
+        </div>
+      </section>
+
+      <!-- B 评分色块 -->
+      <section id="viz-b" class="block">
+        <span class="tag">B · 评分日历色块</span>
+        <span class="tag rec">与记录热力同语言</span>
+        <p class="lead">和记录热力同一套「小色块」语法：灰=未评分，绿色深浅=分数高低。一眼扫完，没有「图表感」的廉价折线。</p>
+
+        <div class="viz-card">
+          <div class="viz-head">
+            <h4>评分密度</h4>
+            <span class="meta">1–10 分 · 色越深越高</span>
+          </div>
+          <div class="score-cal">
+            <div class="sc"></div><div class="sc s2"></div><div class="sc s4"></div><div class="sc"></div>
+            <div class="sc s3"></div><div class="sc s1"></div><div class="sc s5"></div><div class="sc s3"></div>
+            <div class="sc"></div><div class="sc s4"></div><div class="sc s2"></div><div class="sc s3"></div>
+            <div class="sc s2"></div><div class="sc"></div><div class="sc s4"></div><div class="sc s1"></div>
+            <div class="sc s3"></div><div class="sc"></div><div class="sc s5"></div><div class="sc s2"></div>
+            <div class="sc s4"></div><div class="sc s3"></div><div class="sc"></div><div class="sc s2"></div>
+            <div class="sc s1"></div><div class="sc"></div><div class="sc"></div><div class="sc"></div>
+          </div>
+          <p class="viz-caption">本周/本月同尺寸网格；与右侧「记录热力」可上下叠或左右并，都是色块语言。</p>
+        </div>
+        <div class="pros-cons">
+          <div><strong>适合</strong>读数台、与记录热力视觉统一；占用面积小。</div>
+          <div><strong>注意</strong>看「连续趋势」不如面积图直观，适合「哪天高/低」。</div>
+        </div>
+      </section>
+
+      <!-- C 轨道点图 -->
+      <section id="viz-c" class="block">
+        <span class="tag">C · 轨道点图 Dot on Rail</span>
+        <p class="lead">1–10 刻度只有一条渐变轨，每天一个圆点落位。比折线更轻，比条形图精致。Exist / Gyroscope 类生活数据产品常见。</p>
+
+        <div class="viz-card">
+          <div class="viz-head">
+            <h4>总分 · 日点分布</h4>
+            <span class="meta">圆点纵向位置 = 分数</span>
+          </div>
+          <div class="rail-chart" style="height:100px">
+            <svg width="100%" height="90" viewBox="0 0 360 90" preserveAspectRatio="none" style="display:block">
+              <line x1="20" x2="340" y1="75" y2="75" stroke="rgba(150,105,61,0.12)" stroke-width="1"/>
+              <line x1="20" x2="340" y1="45" y2="45" stroke="rgba(150,105,61,0.12)" stroke-width="1"/>
+              <line x1="20" x2="340" y1="15" y2="15" stroke="rgba(150,105,61,0.12)" stroke-width="1"/>
+              <text x="12" y="78" font-size="9" fill="#9a7d62" font-family="monospace">4</text>
+              <text x="12" y="48" font-size="9" fill="#9a7d62" font-family="monospace">7</text>
+              <text x="12" y="18" font-size="9" fill="#9a7d62" font-family="monospace">10</text>
+              <path d="M 50 58 L 100 35 L 150 50 L 210 22 L 270 55 L 320 40" fill="none" stroke="rgba(111,74,38,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
+              <circle cx="50" cy="58" r="5" fill="#fffaf1" stroke="#8b5a2b" stroke-width="2"/>
+              <circle cx="100" cy="35" r="5" fill="#fffaf1" stroke="#8b5a2b" stroke-width="2"/>
+              <circle cx="210" cy="22" r="6" fill="#6f4a26" stroke="#6f4a26"/>
+              <circle cx="320" cy="40" r="5" fill="#fffaf1" stroke="#8b5a2b" stroke-width="2"/>
+            </svg>
+          </div>
+          <p class="viz-caption">虚线仅辅助读趋势，可去掉变成纯散点。点可 hover。</p>
+        </div>
+      </section>
+
+      <!-- D 棒棒糖图 -->
+      <section id="viz-d" class="block">
+        <span class="tag">D · 棒棒糖图 Lollipop</span>
+        <span class="tag rec">替代丑陋条形图</span>
+        <p class="lead">8 要素周期均分：细线 + 圆点落位在 1–10 刻度上。信息同条形图，视觉更干净，不像简笔画粗条。</p>
+
+        <div class="viz-card">
+          <div class="viz-head">
+            <h4>8 要素 · 周期均分</h4>
+            <span class="meta">点位置 = 分数</span>
+          </div>
+          <div class="lollipop-list">
+            <div class="lollipop-row">
+              <span class="lbl">意义感</span>
+              <div class="track"><div class="stem" style="left:10%;width:68%"></div><div class="dot accent" style="left:78%"></div></div>
+              <span class="val">7.8</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">健康</span>
+              <div class="track"><div class="stem" style="left:10%;width:52%"></div><div class="dot" style="left:62%"></div></div>
+              <span class="val">6.2</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">美德</span>
+              <div class="track"><div class="stem" style="left:10%;width:61%"></div><div class="dot" style="left:71%"></div></div>
+              <span class="val">7.1</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">自主性</span>
+              <div class="track"><div class="stem" style="left:10%;width:45%"></div><div class="dot" style="left:55%"></div></div>
+              <span class="val">5.5</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">兴趣</span>
+              <div class="track"><div class="stem" style="left:10%;width:58%"></div><div class="dot" style="left:68%"></div></div>
+              <span class="val">6.8</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">技能</span>
+              <div class="track"><div class="stem" style="left:10%;width:54%"></div><div class="dot" style="left:64%"></div></div>
+              <span class="val">6.4</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">关系</span>
+              <div class="track"><div class="stem" style="left:10%;width:63%"></div><div class="dot" style="left:73%"></div></div>
+              <span class="val">7.3</span>
+            </div>
+            <div class="lollipop-row">
+              <span class="lbl">生活条件</span>
+              <div class="track"><div class="stem" style="left:10%;width:49%"></div><div class="dot" style="left:59%"></div></div>
+              <span class="val">5.9</span>
+            </div>
+          </div>
+        </div>
+        <div class="pros-cons">
+          <div><strong>适合</strong>8 项对比、读周期快照；比粗 progress bar 精致。</div>
+          <div><strong>注意</strong>不表达「每天变化」，仅周期均分；日级变化交给 A/B/C。</div>
+        </div>
+      </section>
+
+      <!-- E 推荐组合 -->
+      <section id="viz-e" class="block" style="border-bottom:none">
+        <span class="tag">E · 推荐组合（整段量化趋势）</span>
+        <span class="tag rec">建议先看这块</span>
+        <p class="lead">读数台整段：周期摘要 + 面积图（总分趋势）+ 棒棒糖（8项）+ 双行极简色块（评分+记录）。热力不再占大块。</p>
+
+        <div class="period-bar">本周期 <b>8 天有评分</b>、<b>10 天有记录</b>；均分 <b>6.8</b></div>
+
+        <div class="combo-layout">
+          <div class="viz-card area-chart">
+            <div class="viz-head"><h4>总分走势</h4><span class="meta">面积图</span></div>
+            <svg viewBox="0 0 360 100" style="width:100%;height:auto">
+              <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a96f3d" stop-opacity="0.3"/><stop offset="100%" stop-color="#a96f3d" stop-opacity="0"/></linearGradient></defs>
+              <path fill="url(#g2)" d="M 30 65 L 80 42 L 130 58 L 200 30 L 260 62 L 320 45 L 320 95 L 30 95 Z"/>
+              <path fill="none" stroke="#8b5a2b" stroke-width="2" d="M 30 65 L 80 42 L 130 58 L 200 30 L 260 62 L 320 45"/>
+            </svg>
+          </div>
+          <div class="viz-card">
+            <div class="viz-head"><h4>8 要素均分</h4><span class="meta">棒棒糖</span></div>
+            <div class="lollipop-list" style="gap:0.4rem">
+              <div class="lollipop-row" style="grid-template-columns:3.5rem 1fr 1.8rem"><span class="lbl">意义感</span><div class="track"><div class="stem" style="left:8%;width:70%"></div><div class="dot accent" style="left:78%"></div></div><span class="val">7.8</span></div>
+              <div class="lollipop-row" style="grid-template-columns:3.5rem 1fr 1.8rem"><span class="lbl">健康</span><div class="track"><div class="stem" style="left:8%;width:54%"></div><div class="dot" style="left:62%"></div></div><span class="val">6.2</span></div>
+              <div class="lollipop-row" style="grid-template-columns:3.5rem 1fr 1.8rem"><span class="lbl">关系</span><div class="track"><div class="stem" style="left:8%;width:65%"></div><div class="dot" style="left:73%"></div></div><span class="val">7.3</span></div>
+              <div class="lollipop-row" style="grid-template-columns:3.5rem 1fr 1.8rem"><span class="lbl">自主性</span><div class="track"><div class="stem" style="left:8%;width:47%"></div><div class="dot" style="left:55%"></div></div><span class="val">5.5</span></div>
+            </div>
+            <p class="viz-caption" style="margin-top:0.5rem">其余 4 项默认可折叠</p>
+          </div>
+        </div>
+
+        <div class="ui-card" style="margin-top:0.85rem;padding:0.75rem 1rem">
+          <div class="dual-strip">
+            <div class="strip-row">
+              <span class="strip-label">评分</span>
+              <div class="strip-cells">
+                <div class="cell" style="background:rgba(110,73,38,0.06)"></div>
+                <div class="cell" style="background:rgba(125,141,99,0.35)"></div>
+                <div class="cell" style="background:rgba(90,122,86,0.65)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.06)"></div>
+                <div class="cell" style="background:rgba(125,141,99,0.5)"></div>
+                <div class="cell" style="background:rgba(69,100,74,0.75)"></div>
+                <div class="cell" style="background:rgba(125,141,99,0.4)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.06)"></div>
+                <div class="cell" style="background:rgba(90,122,86,0.6)"></div>
+                <div class="cell" style="background:rgba(125,141,99,0.3)"></div>
+                <div class="cell" style="background:rgba(125,141,99,0.45)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.06)"></div>
+              </div>
+              <span style="font-size:0.65rem;color:#9a7d62">绿深浅</span>
+            </div>
+            <div class="strip-row">
+              <span class="strip-label">记录</span>
+              <div class="strip-cells">
+                <div class="cell" style="background:rgba(110,73,38,0.07)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.25)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.55)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.07)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.4)"></div>
+                <div class="cell" style="background:rgba(111,74,38,0.75)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.3)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.07)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.5)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.35)"></div>
+                <div class="cell" style="background:rgba(169,111,61,0.45)"></div>
+                <div class="cell" style="background:rgba(110,73,38,0.07)"></div>
+              </div>
+              <span style="font-size:0.65rem;color:#9a7d62">棕深浅</span>
+            </div>
+          </div>
+          <p class="viz-caption">两行色条替代大热力月历；整段高度 &lt; 80px。</p>
+        </div>
+
+        <div class="note" style="margin-top:1rem">
+          <strong>我的建议：</strong>总分用 <strong>A 面积图</strong>（看起伏），8 项用 <strong>D 棒棒糖</strong>（替代条形图），记录用 <strong>极简色块条</strong>（不占主面积）。若你更想「全站一种语法」，可把总分也改成 <strong>B 评分色块</strong>，与记录条上下对齐，完全去掉折线感。<br/><br/>
+          请反馈：E 组合是否接近你要的？总分倾向 A 还是 B？8 项是否认可棒棒糖？
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

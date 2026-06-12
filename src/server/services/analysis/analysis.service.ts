@@ -1,7 +1,16 @@
 import { aggregateAnalysisMonth } from "@/features/analysis/aggregate-month";
+import { aggregateAnalysisTrendsRange } from "@/features/analysis/aggregate-trends-range";
+import {
+  buildEntryDateRange,
+  getMonthDateRangeForAnalysis,
+  getWeekDateRange,
+  isValidAnalysisMonthKey,
+  normalizeAnalysisRangePreset,
+  type AnalysisRangePreset
+} from "@/features/analysis/date-range";
 import { generateMonthNarrative } from "@/features/analysis/narrative-service";
-import type { AnalysisMonthRecord } from "@/features/analysis/types";
-import { getTodayEntryDate } from "@/features/interview/entry-date";
+import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
+import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { listAnalysisSourcesByDateRange } from "@/server/repositories/analysis.repository";
 import { listDailyHappinessScoresByDateRange } from "@/server/repositories/daily-happiness-score.repository";
 import { getPreviousEntryDate } from "@/server/services/happiness-score/happiness-score.service";
@@ -10,7 +19,7 @@ const MONTH_PATTERN = /^\d{4}-\d{2}$/;
 
 export class AnalysisQueryError extends Error {
   constructor(
-    readonly code: "INVALID_ANALYSIS_MONTH" | "ANALYSIS_QUERY_FAILED",
+    readonly code: "INVALID_ANALYSIS_MONTH" | "INVALID_ANALYSIS_RANGE" | "ANALYSIS_QUERY_FAILED",
     message?: string,
     readonly cause?: unknown
   ) {
@@ -71,6 +80,102 @@ function getScoreRangesForAnalysisMonth(month: string, today = getTodayEntryDate
   }
 
   return { ranges, editableDates };
+}
+
+function resolveAnalysisTrendsDateRange(input: {
+  preset: AnalysisRangePreset;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+  today?: string;
+}) {
+  const today = input.today ?? getTodayEntryDate();
+  const preset = input.preset;
+
+  if (preset === "week") {
+    if (
+      input.startDate &&
+      input.endDate &&
+      isEntryDateString(input.startDate) &&
+      isEntryDateString(input.endDate) &&
+      input.startDate <= input.endDate
+    ) {
+      return {
+        startDate: input.startDate,
+        endDate: input.endDate
+      };
+    }
+
+    const anchorDate = input.endDate && isEntryDateString(input.endDate) ? input.endDate : today;
+    return getWeekDateRange(anchorDate);
+  }
+
+  if (preset === "month") {
+    const month = input.month && isValidAnalysisMonthKey(input.month) ? input.month : today.slice(0, 7);
+    return getMonthDateRangeForAnalysis(month, today);
+  }
+
+  if (!input.startDate || !input.endDate || !isEntryDateString(input.startDate) || !isEntryDateString(input.endDate)) {
+    throw new AnalysisQueryError("INVALID_ANALYSIS_RANGE");
+  }
+
+  if (input.startDate > input.endDate) {
+    throw new AnalysisQueryError("INVALID_ANALYSIS_RANGE");
+  }
+
+  try {
+    buildEntryDateRange(input.startDate, input.endDate);
+  } catch {
+    throw new AnalysisQueryError("INVALID_ANALYSIS_RANGE");
+  }
+
+  return {
+    startDate: input.startDate,
+    endDate: input.endDate
+  };
+}
+
+export async function getAnalysisTrendsRange(
+  userId: string,
+  input: {
+    preset?: string | null;
+    month?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+  }
+): Promise<AnalysisTrendsRangeRecord> {
+  const preset = normalizeAnalysisRangePreset(input.preset);
+  const today = getTodayEntryDate();
+
+  try {
+    const { startDate, endDate } = resolveAnalysisTrendsDateRange({
+      preset,
+      month: input.month ?? undefined,
+      startDate: input.startDate ?? undefined,
+      endDate: input.endDate ?? undefined,
+      today
+    });
+
+    const [sources, scoreRecords] = await Promise.all([
+      listAnalysisSourcesByDateRange({ userId, startDate, endDate }),
+      listDailyHappinessScoresByDateRange(userId, { startDate, endDate })
+    ]);
+
+    return aggregateAnalysisTrendsRange({
+      preset,
+      startDate,
+      endDate,
+      entries: sources.entries,
+      dailyJournals: sources.dailyJournals,
+      scoreRecords
+    });
+  } catch (error) {
+    if (error instanceof AnalysisQueryError) {
+      throw error;
+    }
+
+    throw new AnalysisQueryError("ANALYSIS_QUERY_FAILED", undefined, error);
+  }
 }
 
 export async function getAnalysisMonth(userId: string, month: string): Promise<AnalysisMonthRecord> {

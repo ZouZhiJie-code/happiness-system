@@ -1048,6 +1048,48 @@ body::after {
   box-shadow: 0 1px 2px rgba(108, 69, 36, 0.05);
 }
 
+/* 分析页 · 量化趋势读数台图表卡（对齐 trends-final-preview viz-premium） */
+.analysis-trends-viz {
+  background: linear-gradient(165deg, rgba(255, 252, 246, 0.96) 0%, rgba(248, 233, 204, 0.4) 100%);
+  box-shadow: 0 8px 28px rgba(86, 55, 27, 0.06);
+}
+
+.analysis-trends-period-bar {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: rgba(255, 252, 246, 0.72);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.analysis-trends-style-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 252, 246, 0.6);
+}
+
+.analysis-trends-style-toggle button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  background: transparent;
+  transition:
+    color 160ms ease-out,
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.analysis-trends-style-toggle button[data-active="true"] {
+  background: var(--paper-soft);
+  color: var(--text-main);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(86, 55, 27, 0.08);
+}
+
 .ui-card--interactive {
   outline: none;
   transition:

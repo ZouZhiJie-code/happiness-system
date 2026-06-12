@@ -63,7 +63,7 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
-  - `month=YYYY-MM` 与 `section=overview|score|rhythm|insights` URL 状态归一化、月份跳转、中文月份标题格式化、月分析类型与纯聚合器
+  - `section=trends|dimensions|correlation|review` 与 `preset=week|month|custom`、`start/end` URL 归一化；`date-range.ts`、`aggregate-trends-range.ts`；`GET /api/analysis/range` 服务量化趋势；`GET /api/analysis/month` 服务五维全景
 - `src/features/admin-analytics`
   - 管理员分析页 URL 状态、类型和接口约定；负责把 `view / range / user drilldown` 投影成同页工作台状态
 - `src/features/happiness-score`
@@ -75,7 +75,7 @@
 - `src/components/admin`
   - 管理员数据分析工作台壳层；当前采用“总览 -> 候选用户 -> 单人证据”的调查式结构
 - `src/components/analysis`
-  - 记录分析页壳、`overview` 总览的月度判断、评分可信度、建议先看主行动、评分 / 节奏 / 五维轻入口和底部证据条、稀疏/持平样本提示、状态优先的本月热力图、当天追踪 drill-in，以及“本月判断 + 五维全景 + 维度之间 + 下一步”的 `insights` 布局。`score` 分区当前是纯趋势阅读，不再内联评分编辑器。`analysis-toolbar.tsx` 独立获取月分析数据，在 `SiteHeader` 中区渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖 contextual chip，并会在当前月评分保存成功后即时刷新
+  - 单页四段 scroll 壳（`analysis-shell.tsx` + section 组件 + scroll spy）；`analysis-toolbar.tsx` 在 header 渲染周期 preset、锚点 tab 与 chip；量化趋势为只读读数台，五维仍按月阅读，关联/复盘占位
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -220,7 +220,7 @@
 - 只承载评分事实，不复用五维日志或当天整合日志的表结构
 
 现实上：
-- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、访谈页独立评分工作区和分析页评分趋势图
+- 当前已落数据模型、zod schema、repository、Prisma migration、`PUT /api/happiness-score`、访谈页独立评分工作区；分析页趋势段为只读读数台
 - 保存允许 Asia/Shanghai 口径下的所有非未来日期；8 项必填且必须是 `1..10` 整数
 - `/analysis` 已接入轻量 SVG 趋势图：总分平均走势和 8 要素单项切换走势，未评分日期断线，不补 0
 
@@ -332,28 +332,15 @@
 
 ### 3.7 记录分析页现实
 
-截至 `2026-05-04`，`/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 已进入月度记录分析的 tab 互斥视图阶段：
-- `SiteHeader` 中区的 `AnalysisToolbar` 独立获取 `/api/analysis/month` 月分析数据，渲染月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分待补状态、节奏待整合/待成文状态、主线维度名）；当前月评分保存成功后，toolbar chip 会即时刷新
-- 缺失或非法 `month` 参数会被归一到当前月；缺失 `section` 时前端默认切到 `overview` 总览视图
-- 已有 `GET /api/analysis/month?month=YYYY-MM`
-- 页面内已有上月 / 本月 / 下月切换（在 header toolbar 中）
-- 页面当前已展示：
-  - `overview`：总览默认先给月度判断、评分可信度和一个“建议先看”的主行动，再提供评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条只做辅助快扫，区分维度记录日、成果保存日、待整合日和评分可信度
-  - `score`：幸福 8 要素评分分区当前是趋势阅读工作台（总分平均走势、8 要素快扫、单项走势）；评分录入迁移到访谈页顶部「当天评分」独立工作区。只有在至少 2 天评分且确实存在差异时，才展示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，否则只给轻提示文案
-  - `rhythm`：本月状态优先热力图、最长连续记录 / 空档和当天 drill-in；`saved` 但 `stale` 的当天整合日志会被当成待更新来源，未来月份不会再被误算成整月空档
-  - `insights`：本月判断 + 五维全景 + 维度之间 + 下一步；每个维度卡片同时带自然语言主题句、代表片段、评分联动和 drill-down
-- `section` 是视图选择状态：总览 / 评分 / 节奏 / 五维四个 tab 互斥渲染，同一时间只展示一个板块；切换 tab 或翻月后 `section` 保留在 URL 中
-- 分析页里“回到某维度”的 drill-down 链接会带回对应 `entryDate`，避免历史月份误跳到今天的访谈上下文
-- 未来月份如果没有任何材料，总览首屏会给中性提示并引导回到当前月份，不会把用户送去今天的访谈
-- 分析页热力区点到未来日期时，只保留 `查看当天`，不暴露 `开始这一天的记录 / 继续当天记录`
-- 当前月 `rhythm` 的 `最长空档` 只统计已经发生的日期，不把未来自然日当成空档；未来月份则直接返回 `longestGap = null`
-- `GET /api/analysis/month?month=YYYY-MM` 当前额外返回 `rhythmOverview`、`insightsOverview`、`scoreOverview`、`scoreTrend`、`scoreRecords` 与 `editableDates`
-- 当月份没有任何真实分析数据时，前端直接显示真实空态，不再使用示意填充冒充分析结果
-- 当月份只有评分、没有任何已保存维度日志时，`rhythm` 不会伪造 `已整合`、密度结论或整月空档，`insights` 也不会伪造主线维度，而是显示明确空态
-- `insights` 的 headline / watchpoint 和“评分低点还没写出来”卡片现在共用同一套 quiet lagging 维度排序，不会出现不同模块各指一个维度的矛盾
-- `PUT /api/happiness-score` 按 `userId + date` upsert `DailyHappinessScore`，保存前会确保 demo user 存在
-- 当今天是自然月 1 日时，`editableDates` 仍保留昨天用于分析上下文展示，但不再驱动评分录入入口
-- 趋势图只做单月查看，不做跨月同比；生成式 AI 月度洞察仍未接入，当前 `insightsOverview` 仍是规则型解释层
+截至 `2026-06-12`，`/analysis` 为单页四段纵向 scroll + 顶部锚点 tab：
+
+- URL：`section=trends|dimensions|correlation|review`；旧 `overview|score|rhythm|insights` 自动映射到新 keys；缺省 `section=trends`
+- 周期：`preset=week|month|custom` + 可选 `start/end`；量化趋势段走 `GET /api/analysis/range`
+- `SiteHeader` 中区 `AnalysisToolbar`：周期 preset、日期范围、四段 tab、contextual chip；tab 点击锚点跳转，scroll spy 更新 URL
+- **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；无评分录入、无热力点选、无补漏 CTA
+- **五维全景**：`GET /api/analysis/month`；**关联 / 复盘**：占位，手动 AI 后续接入
+- 幸福 8 要素评分录入在 `/interview`「当天评分」工作区，不在分析页
+- 设计规范见根目录 `DESIGN.md` 与 `docs/design/ui-conventions.md`
 
 ## 4. 结构化数据面
 

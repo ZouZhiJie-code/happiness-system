@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
+import type { AnalysisRangePreset } from "@/features/analysis/date-range";
 import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
 import { analysisSectionChangeEventName } from "@/features/analysis/section-nav";
 import { analysisToolbarRefreshEventName } from "@/features/analysis/toolbar-refresh";
@@ -13,10 +14,11 @@ import {
   formatAnalysisMonthLabel,
   getTodayAnalysisMonth,
   normalizeAnalysisSearchParams,
-  replaceAnalysisHistoryState,
-  shiftAnalysisMonth
+  resolveAnalysisTrendsRange,
+  shiftAnalysisTrendsRange
 } from "@/features/analysis/view-state";
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
+import { cn } from "@/lib/utils";
 
 const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
   { key: "trends", label: "量化趋势" },
@@ -25,11 +27,40 @@ const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
   { key: "review", label: "复盘" }
 ];
 
+const presetTabs: ReadonlyArray<{ key: AnalysisRangePreset; label: string }> = [
+  { key: "week", label: "本周" },
+  { key: "month", label: "本月" },
+  { key: "custom", label: "自定义" }
+];
+
 function ToolbarDivider() {
   return (
     <span aria-hidden="true" className="shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]">
       ｜
     </span>
+  );
+}
+
+function HeaderTextButton({
+  active,
+  children,
+  onClick,
+  className,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 border-none bg-transparent px-1.5 py-1 text-[0.78rem] text-[rgba(74,64,56,0.82)] transition hover:text-[#2f2823]",
+        active && "font-semibold text-[#2f2823] underline decoration-[#8a5527] decoration-2 underline-offset-4",
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -69,6 +100,9 @@ export function AnalysisToolbar() {
   const normalizedSearch = normalizeAnalysisSearchParams({
     month: searchParams.get("month"),
     section: searchParams.get("section"),
+    preset: searchParams.get("preset"),
+    startDate: searchParams.get("start"),
+    endDate: searchParams.get("end"),
     today: todayMonth
   });
   const [record, setRecord] = useState<AnalysisMonthRecord | null>(null);
@@ -78,9 +112,9 @@ export function AnalysisToolbar() {
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
-      replaceAnalysisHistoryState(normalizedSearch.href);
+      router.replace(normalizedSearch.href, { scroll: false });
     }
-  }, [normalizedSearch.href, normalizedSearch.shouldReplace]);
+  }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
 
   useEffect(() => {
     setActiveSection(normalizedSearch.section);
@@ -148,19 +182,75 @@ export function AnalysisToolbar() {
 
   const chips = useMemo(() => {
     if (!record) return {};
-    return Object.fromEntries(
-      sectionTabs.map((tab) => [tab.key, getChip(tab.key, record)])
-    ) as Partial<Record<AnalysisSectionKey, ReturnType<typeof getChip>>>;
+    return Object.fromEntries(sectionTabs.map((tab) => [tab.key, getChip(tab.key, record)])) as Partial<
+      Record<AnalysisSectionKey, ReturnType<typeof getChip>>
+    >;
   }, [record]);
 
-  function navigateMonth(month: string) {
-    router.replace(buildAnalysisHref({ month, section: activeSection }), { scroll: false });
+  function navigateHref(input: {
+    month?: string;
+    section?: AnalysisSectionKey;
+    preset?: AnalysisRangePreset;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const preset = input.preset ?? normalizedSearch.preset;
+
+    router.replace(
+      buildAnalysisHref({
+        month: input.month ?? normalizedSearch.month,
+        section: input.section ?? activeSection,
+        preset,
+        startDate: preset !== "month" ? input.startDate ?? normalizedSearch.startDate : undefined,
+        endDate: preset !== "month" ? input.endDate ?? normalizedSearch.endDate : undefined
+      }),
+      { scroll: false }
+    );
   }
 
   function navigateSection(section: AnalysisSectionKey) {
     setActiveSection(section);
-    router.replace(buildAnalysisHref({ month: normalizedSearch.month, section }), { scroll: false });
+    navigateHref({ section });
   }
+
+  function navigatePreset(preset: AnalysisRangePreset) {
+    const resolvedRange = resolveAnalysisTrendsRange({
+      preset,
+      month: normalizedSearch.month,
+      startDate: normalizedSearch.startDate,
+      endDate: normalizedSearch.endDate
+    });
+
+    navigateHref({
+      preset,
+      startDate: preset !== "month" ? resolvedRange.startDate : undefined,
+      endDate: preset !== "month" ? resolvedRange.endDate : undefined
+    });
+  }
+
+  function navigatePeriod(offset: -1 | 1) {
+    const shifted = shiftAnalysisTrendsRange({
+      preset: normalizedSearch.preset,
+      month: normalizedSearch.month,
+      startDate: normalizedSearch.startDate,
+      endDate: normalizedSearch.endDate,
+      offset
+    });
+
+    navigateHref({
+      month: shifted.month,
+      preset: shifted.preset,
+      startDate: "startDate" in shifted ? shifted.startDate : undefined,
+      endDate: "endDate" in shifted ? shifted.endDate : undefined
+    });
+  }
+
+  const periodNavLabel =
+    normalizedSearch.preset === "month"
+      ? formatAnalysisMonthLabel(normalizedSearch.month)
+      : normalizedSearch.preset === "week"
+        ? "本周"
+        : "区间";
 
   return (
     <div
@@ -168,20 +258,20 @@ export function AnalysisToolbar() {
       aria-busy={isLoading ? "true" : "false"}
       className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden"
     >
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          onClick={() => navigateMonth(shiftAnalysisMonth(normalizedSearch.month, -1))}
+          onClick={() => navigatePeriod(-1)}
           className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label="查看上月分析"
+          aria-label={`查看上一${periodNavLabel}`}
         >
           <span aria-hidden="true">‹</span>
         </button>
         <button
           type="button"
-          onClick={() => navigateMonth(shiftAnalysisMonth(normalizedSearch.month, 1))}
+          onClick={() => navigatePeriod(1)}
           className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label="查看下月分析"
+          aria-label={`查看下一${periodNavLabel}`}
         >
           <span aria-hidden="true">›</span>
         </button>
@@ -190,10 +280,38 @@ export function AnalysisToolbar() {
       <ToolbarDivider />
 
       <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
-        <div className="flex min-w-max items-center gap-2">
-          <p className="shrink-0 text-[0.95rem] font-medium text-[#34271c] md:text-[1rem]">
-            {formatAnalysisMonthLabel(normalizedSearch.month)}
-          </p>
+        <div className="flex min-w-max items-center gap-1.5">
+          {presetTabs.map((tab) => (
+            <HeaderTextButton key={tab.key} active={normalizedSearch.preset === tab.key} onClick={() => navigatePreset(tab.key)}>
+              {tab.label}
+            </HeaderTextButton>
+          ))}
+
+          <ToolbarDivider />
+
+          <span className="shrink-0 text-[0.76rem] text-[rgba(48,33,20,0.62)]">{normalizedSearch.rangeLabel}</span>
+
+          {normalizedSearch.preset === "custom" ? (
+            <>
+              <input
+                type="date"
+                value={normalizedSearch.startDate}
+                onChange={(event) => navigateHref({ preset: "custom", startDate: event.target.value, endDate: normalizedSearch.endDate })}
+                className="shrink-0 rounded-[10px] border border-[var(--line-soft)] bg-transparent px-1.5 py-0.5 text-[0.72rem] text-[#5d4329]"
+                aria-label="自定义开始日期"
+              />
+              <span className="text-[0.72rem] text-[rgba(48,33,20,0.45)]">—</span>
+              <input
+                type="date"
+                value={normalizedSearch.endDate}
+                onChange={(event) => navigateHref({ preset: "custom", startDate: normalizedSearch.startDate, endDate: event.target.value })}
+                className="shrink-0 rounded-[10px] border border-[var(--line-soft)] bg-transparent px-1.5 py-0.5 text-[0.72rem] text-[#5d4329]"
+                aria-label="自定义结束日期"
+              />
+            </>
+          ) : null}
+
+          <ToolbarDivider />
 
           {sectionTabs.map((tab) => {
             const active = tab.key === activeSection;
@@ -204,19 +322,18 @@ export function AnalysisToolbar() {
                 key={tab.key}
                 type="button"
                 onClick={() => navigateSection(tab.key)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[0.76rem] transition duration-200 ${
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 px-1.5 py-1 text-[0.78rem] transition duration-200",
                   active
-                    ? "bg-[#6f4a26] text-[#fffaf1] shadow-sm"
-                    : "calendar-chip text-[#6b533d] hover:bg-[rgba(255,251,244,0.96)]"
-                }`}
+                    ? "font-semibold text-[#2f2823] underline decoration-[#8a5527] decoration-2 underline-offset-4"
+                    : "text-[rgba(74,64,56,0.82)] hover:text-[#2f2823]"
+                )}
                 aria-pressed={active}
               >
                 {tab.label}
                 {chip ? (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.62rem] ${
-                    active ? "bg-[rgba(255,250,241,0.2)] text-[rgba(255,250,241,0.88)]" : "bg-[rgba(111,74,38,0.08)] text-[#8b6c4d]"
-                  }`}>
-                    {chip.dotClass ? <span className={`size-1.5 rounded-full ${chip.dotClass}`} /> : null}
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--line-soft)] bg-paper/70 px-1.5 py-0.5 text-[0.62rem] text-[#8b6c4d]">
+                    {chip.dotClass ? <span className={cn("size-1.5 rounded-full", chip.dotClass)} /> : null}
                     {chip.text}
                   </span>
                 ) : null}
@@ -225,17 +342,6 @@ export function AnalysisToolbar() {
           })}
         </div>
       </div>
-
-      <ToolbarDivider />
-
-      <button
-        type="button"
-        onClick={() => navigateMonth(todayMonth)}
-        className="calendar-chip shrink-0 rounded-full px-3 py-1 text-[0.74rem] font-medium text-[#5d4329] transition duration-200 hover:text-[#34271c]"
-        aria-label="回到本月分析"
-      >
-        本月
-      </button>
     </div>
   );
 }

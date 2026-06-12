@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import type { AnalysisMonthRecord } from "@/features/analysis/types";
+import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
 import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
-import { notifyAnalysisToolbarRefresh } from "@/features/analysis/toolbar-refresh";
+import { projectAnalysisTrendsRangeFromMonth } from "@/features/analysis/project-trends-range";
+import { fetchAnalysisTrendsRange } from "@/features/analysis/range-client";
 import {
   getAnalysisSectionElementId,
   getTodayAnalysisMonth,
-  normalizeAnalysisSearchParams,
-  replaceAnalysisHistoryState
+  normalizeAnalysisSearchParams
 } from "@/features/analysis/view-state";
 import { Divider, Surface } from "@/components/ui";
 import { AnalysisCorrelationSection } from "./analysis-correlation-section";
 import { AnalysisReviewSection } from "./analysis-review-section";
 import { AnalysisEmptyBanner, AnalysisSection, SectionSkeleton } from "./analysis-shared";
-import { HappinessScorePanel } from "./analysis-score-section";
-import { CoverageHeatmap } from "./analysis-rhythm-section";
+import { AnalysisTrendsSection } from "./analysis-trends-section";
 import { DimensionInsights } from "./analysis-insights-section";
 import { useAnalysisSectionSpy } from "./use-analysis-section-spy";
 
@@ -41,16 +40,23 @@ function renderSectionBody(input: {
 }
 
 export function AnalysisShell() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
     month: searchParams.get("month"),
     section: searchParams.get("section"),
+    preset: searchParams.get("preset"),
+    startDate: searchParams.get("start"),
+    endDate: searchParams.get("end"),
     today: todayMonth
   });
   const [record, setRecord] = useState<AnalysisMonthRecord | null>(null);
+  const [trendsRecord, setTrendsRecord] = useState<AnalysisTrendsRangeRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTrendsLoading, setIsTrendsLoading] = useState(true);
   const [hasFetchError, setHasFetchError] = useState(false);
+  const [hasTrendsFetchError, setHasTrendsFetchError] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   useAnalysisSectionSpy({
@@ -60,43 +66,75 @@ export function AnalysisShell() {
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
-      replaceAnalysisHistoryState(normalizedSearch.href);
+      router.replace(normalizedSearch.href, { scroll: false });
     }
-  }, [normalizedSearch.href, normalizedSearch.shouldReplace]);
+  }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
 
   useEffect(() => {
     let cancelled = false;
 
     setIsLoading(true);
+    setIsTrendsLoading(true);
     setHasFetchError(false);
+    setHasTrendsFetchError(false);
     setRecord(null);
+    setTrendsRecord(null);
+
+    const rangeInput = {
+      preset: normalizedSearch.preset,
+      startDate: normalizedSearch.startDate,
+      endDate: normalizedSearch.endDate
+    };
 
     void fetchAnalysisMonthRecord(normalizedSearch.month, { force: refreshNonce > 0 })
-      .then((nextRecord) => {
-        if (!cancelled) {
-          setRecord(nextRecord);
+      .then(async (monthRecord) => {
+        if (cancelled) {
+          return;
+        }
+
+        setRecord(monthRecord);
+
+        try {
+          const rangeRecord = await fetchAnalysisTrendsRange({
+            preset: normalizedSearch.preset,
+            month: normalizedSearch.month,
+            startDate: normalizedSearch.preset !== "month" ? normalizedSearch.startDate : undefined,
+            endDate: normalizedSearch.preset !== "month" ? normalizedSearch.endDate : undefined,
+            force: refreshNonce > 0
+          });
+
+          if (!cancelled) {
+            setTrendsRecord(rangeRecord);
+          }
+        } catch {
+          if (!cancelled) {
+            setTrendsRecord(projectAnalysisTrendsRangeFromMonth(monthRecord, rangeInput));
+          }
         }
       })
       .catch(() => {
         if (!cancelled) {
           setHasFetchError(true);
+          setHasTrendsFetchError(true);
         }
       })
       .finally(() => {
         if (!cancelled) {
           setIsLoading(false);
+          setIsTrendsLoading(false);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [normalizedSearch.month, refreshNonce]);
-
-  const handleScoreSaved = () => {
-    setRefreshNonce((value) => value + 1);
-    notifyAnalysisToolbarRefresh(normalizedSearch.month);
-  };
+  }, [
+    normalizedSearch.endDate,
+    normalizedSearch.month,
+    normalizedSearch.preset,
+    normalizedSearch.startDate,
+    refreshNonce
+  ]);
 
   return (
     <Surface
@@ -113,21 +151,16 @@ export function AnalysisShell() {
             index="01"
             eyebrow="量化趋势"
             title="评分与记录趋势"
-            description="先看评分走势、8 要素变化，以及本周期内的记录密度。"
-            testId="analysis-trends-placeholder"
+            description="先看评分走势、8 要素周期均分，以及本周期内的日志天数。"
+            testId="analysis-trends-section"
           >
-            {renderSectionBody({
-              hasFetchError,
-              isLoading,
-              record,
-              children: (loadedRecord) => (
-                <div className="space-y-8">
-                  <HappinessScorePanel record={loadedRecord} onSaved={handleScoreSaved} />
-                  <Divider />
-                  <CoverageHeatmap record={loadedRecord} />
-                </div>
-              )
-            })}
+            {hasTrendsFetchError ? (
+              <AnalysisEmptyBanner title="这部分暂时没打开" body="稍后再试，或者刷新页面重新拉取这个周期的数据。" />
+            ) : isTrendsLoading || !trendsRecord ? (
+              <SectionSkeleton />
+            ) : (
+              <AnalysisTrendsSection record={trendsRecord} preset={normalizedSearch.preset} />
+            )}
           </AnalysisSection>
         </section>
 

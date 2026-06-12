@@ -1,5 +1,6 @@
-const { getAnalysisMonth, AnalysisQueryError } = vi.hoisted(() => ({
+const { getAnalysisMonth, getAnalysisTrendsRange, AnalysisQueryError } = vi.hoisted(() => ({
   getAnalysisMonth: vi.fn(),
+  getAnalysisTrendsRange: vi.fn(),
   AnalysisQueryError: class extends Error {
     code: string;
 
@@ -16,18 +17,22 @@ const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
 
 vi.mock("@/server/services/analysis/analysis.service", () => ({
   getAnalysisMonth,
+  getAnalysisTrendsRange,
   AnalysisQueryError
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
+  AuthenticationError: class AuthenticationError extends Error {},
   requireCurrentUserFromRequest: mockRequireCurrentUserFromRequest
 }));
 
 import { GET as getAnalysisMonthRoute } from "@/app/api/analysis/month/route";
+import { GET as getAnalysisRangeRoute } from "@/app/api/analysis/range/route";
 
 describe("analysis api route", () => {
   beforeEach(() => {
     getAnalysisMonth.mockReset();
+    getAnalysisTrendsRange.mockReset();
     mockRequireCurrentUserFromRequest.mockReset();
     mockRequireCurrentUserFromRequest.mockResolvedValue({ id: "user-1", username: "daily_light_01" });
   });
@@ -187,5 +192,40 @@ describe("analysis api route", () => {
 
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({ error: "ANALYSIS_QUERY_FAILED" });
+  });
+
+  it("returns a trends range payload", async () => {
+    getAnalysisTrendsRange.mockResolvedValue({
+      preset: "month",
+      startDate: "2026-05-01",
+      endDate: "2026-05-31",
+      logOverview: { recordedDayCount: 1, savedEntryCount: 1, dailyJournalSavedDayCount: 0 },
+      dailyCoverage: [],
+      scoreOverview: { scoredDayCount: 1, monthAverageScore: 7.5, latestScoredDate: "2026-05-03" },
+      scoreTrend: { days: [], factorAverages: {} }
+    });
+
+    const response = await getAnalysisRangeRoute(
+      new Request("http://localhost/api/analysis/range?preset=month&month=2026-05")
+    );
+
+    expect(response.status).toBe(200);
+    expect(getAnalysisTrendsRange).toHaveBeenCalledWith("user-1", {
+      preset: "month",
+      month: "2026-05",
+      startDate: "",
+      endDate: ""
+    });
+  });
+
+  it("returns 400 for invalid range query", async () => {
+    getAnalysisTrendsRange.mockRejectedValue(new AnalysisQueryError("INVALID_ANALYSIS_RANGE"));
+
+    const response = await getAnalysisRangeRoute(
+      new Request("http://localhost/api/analysis/range?preset=custom&start=2026-05-10&end=2026-05-01")
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "INVALID_ANALYSIS_RANGE" });
   });
 });

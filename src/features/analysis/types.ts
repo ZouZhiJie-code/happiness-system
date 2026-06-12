@@ -137,6 +137,16 @@ export interface AnalysisRhythmOverview {
   latestPendingDailyJournalDate: string | null;
 }
 
+export interface AnalysisTrendsRangeRecord {
+  preset: "week" | "month" | "custom";
+  startDate: string;
+  endDate: string;
+  logOverview: AnalysisLogOverview;
+  dailyCoverage: AnalysisDailyCoverageDay[];
+  scoreOverview: AnalysisScoreOverview;
+  scoreTrend: AnalysisScoreTrend;
+}
+
 export interface AnalysisMonthRecord {
   month: string;
   logOverview: AnalysisLogOverview;
