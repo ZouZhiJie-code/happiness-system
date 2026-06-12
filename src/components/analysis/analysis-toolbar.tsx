@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
+import { analysisSectionChangeEventName } from "@/features/analysis/section-nav";
 import { analysisToolbarRefreshEventName } from "@/features/analysis/toolbar-refresh";
 import type { AnalysisSectionKey } from "@/features/analysis/view-state";
 import {
@@ -18,10 +19,10 @@ import {
 import { getInterviewDimensionMeta } from "@/features/interview/dimensions";
 
 const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
-  { key: "overview", label: "总览" },
-  { key: "score", label: "评分" },
-  { key: "rhythm", label: "节奏" },
-  { key: "insights", label: "五维" }
+  { key: "trends", label: "量化趋势" },
+  { key: "dimensions", label: "五维全景" },
+  { key: "correlation", label: "关联" },
+  { key: "review", label: "复盘" }
 ];
 
 function ToolbarDivider() {
@@ -38,28 +39,16 @@ function getChip(
 ): { text: string; dotClass: string | null } | null {
   if (!record) return null;
 
-  if (key === "score") {
+  if (key === "trends") {
     const scoredDayCount = record.scoreOverview.scoredDayCount;
     if (scoredDayCount === 0) return { text: "暂无评分", dotClass: "bg-[#9a8a78]" };
     if (scoredDayCount === 1) return { text: "1天评分", dotClass: "bg-[#8e6a41]" };
     return { text: `${scoredDayCount}天评分`, dotClass: "bg-[#5a7a56]" };
   }
 
-  if (key === "rhythm") {
-    if (record.rhythmOverview.pendingDailyJournalCount > 0) {
-      return { text: `待整合 ${record.rhythmOverview.pendingDailyJournalCount} 天`, dotClass: "bg-[#8e5638]" };
-    }
-
-    if (record.rhythmOverview.scoreOnlyDayCount > 0) {
-      return { text: `待成文 ${record.rhythmOverview.scoreOnlyDayCount} 天`, dotClass: "bg-[#74927a]" };
-    }
-
-    return record.rhythmOverview.activeObservedDayCount > 0
-      ? { text: `${record.rhythmOverview.activeObservedDayCount}天有材料`, dotClass: null }
-      : null;
-  }
-
-  if (key === "insights") {
+  if (key === "dimensions") {
+    const savedDimensions = record.dimensionBreakdown.filter((item) => item.savedEntryCount > 0).length;
+    if (savedDimensions === 0) return null;
     const featuredDimension =
       record.insightsOverview.featuredDimension ??
       record.dimensionBreakdown
@@ -67,7 +56,7 @@ function getChip(
         .sort((a, b) => b.savedEntryCount - a.savedEntryCount || b.recordedDayCount - a.recordedDayCount)[0]?.dimension;
     return featuredDimension
       ? { text: getInterviewDimensionMeta(featuredDimension as Parameters<typeof getInterviewDimensionMeta>[0]).label, dotClass: null }
-      : null;
+      : { text: `${savedDimensions}维有记录`, dotClass: null };
   }
 
   return null;
@@ -82,16 +71,36 @@ export function AnalysisToolbar() {
     section: searchParams.get("section"),
     today: todayMonth
   });
-
   const [record, setRecord] = useState<AnalysisMonthRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [activeSection, setActiveSection] = useState<AnalysisSectionKey>(normalizedSearch.section);
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
       replaceAnalysisHistoryState(normalizedSearch.href);
     }
   }, [normalizedSearch.href, normalizedSearch.shouldReplace]);
+
+  useEffect(() => {
+    setActiveSection(normalizedSearch.section);
+  }, [normalizedSearch.section]);
+
+  useEffect(() => {
+    const handleSectionChange = (event: Event) => {
+      const detail = event instanceof CustomEvent ? (event.detail as { section?: AnalysisSectionKey } | null) : null;
+
+      if (detail?.section) {
+        setActiveSection(detail.section);
+      }
+    };
+
+    window.addEventListener(analysisSectionChangeEventName, handleSectionChange);
+
+    return () => {
+      window.removeEventListener(analysisSectionChangeEventName, handleSectionChange);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,10 +154,11 @@ export function AnalysisToolbar() {
   }, [record]);
 
   function navigateMonth(month: string) {
-    router.replace(buildAnalysisHref({ month, section: normalizedSearch.section }), { scroll: false });
+    router.replace(buildAnalysisHref({ month, section: activeSection }), { scroll: false });
   }
 
   function navigateSection(section: AnalysisSectionKey) {
+    setActiveSection(section);
     router.replace(buildAnalysisHref({ month: normalizedSearch.month, section }), { scroll: false });
   }
 
@@ -186,7 +196,7 @@ export function AnalysisToolbar() {
           </p>
 
           {sectionTabs.map((tab) => {
-            const active = tab.key === normalizedSearch.section;
+            const active = tab.key === activeSection;
             const chip = chips[tab.key] ?? null;
 
             return (

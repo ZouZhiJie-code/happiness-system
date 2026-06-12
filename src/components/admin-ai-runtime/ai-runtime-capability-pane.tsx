@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { Divider } from "@/components/ui";
 import type { AIRuntimeCapability } from "@/features/admin-ai-runtime/types";
 import type { AIRuntimeConfigPayload } from "@/features/admin-ai-runtime/api";
 import { AIRuntimeDraftForm } from "@/components/admin-ai-runtime/ai-runtime-draft-form";
@@ -29,7 +30,7 @@ export function AIRuntimeCapabilityPane({
   onRollback: (rollbackFromId: string) => Promise<void> | void;
 }) {
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-5">
       <AIRuntimeDraftForm
         capability={capability}
         draft={draft}
@@ -38,6 +39,7 @@ export function AIRuntimeCapabilityPane({
         onProbe={onProbe}
         onPublish={onPublish}
       />
+      <Divider />
       <AIRuntimeHistoryTable
         capability={capability}
         history={history}

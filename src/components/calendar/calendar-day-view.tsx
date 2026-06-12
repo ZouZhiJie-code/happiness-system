@@ -263,7 +263,7 @@ function DailyJournalPromptDialog({
         aria-modal="true"
         aria-labelledby="daily-journal-prompt-title"
         tabIndex={-1}
-        className="relative w-full max-w-md rounded-[26px] border border-[rgba(153,103,54,0.18)] bg-[#fffaf2] p-5 shadow-xl"
+        className="relative w-full max-w-md rounded-[var(--radius-shell)] border border-[var(--line-soft)] bg-[#fffaf2] p-5 shadow-xl"
       >
         <p className="text-[0.72rem] text-[#8a6b4b]">汇总当天日志</p>
         <h3 id="daily-journal-prompt-title" className="mt-2 text-balance font-display text-[1.38rem] text-[#312419]">
@@ -274,7 +274,7 @@ function DailyJournalPromptDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition duration-200 hover:bg-[rgba(255,250,242,0.96)]"
+            className="calendar-chip rounded-full px-4 py-1.5 text-sm text-[#6a5642] transition duration-200"
           >
             取消
           </button>
@@ -373,8 +373,8 @@ export function CalendarDayView({
   const shouldLinkDailyJournal = dailyJournalState !== "none";
 
   return (
-    <section className="calendar-card overflow-hidden rounded-[26px]" data-testid="calendar-day-view">
-      <div className="border-b border-[rgba(153,119,86,0.16)] px-4 py-4 md:px-5">
+    <section className="ui-card overflow-hidden" data-testid="calendar-day-view">
+      <div className="px-4 py-4 md:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-[42rem] min-w-0">
             <p className="text-[0.72rem] tracking-[0.02em] text-[#8a6b4b]">{overviewDateLabel}</p>
@@ -396,7 +396,8 @@ export function CalendarDayView({
           </div>
         </div>
         <p className="mt-3 text-[0.74rem] text-[#8a6b4b]">{updatedAtLabel ? `最后更新：${updatedAtLabel}` : "最后更新：暂无"}</p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-[rgba(153,119,86,0.14)] bg-[rgba(255,249,240,0.56)] px-3.5 py-2.5">
+        <hr className="ui-hairline mt-3.5" />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.8rem] font-medium text-[#403024]">汇总当天日志</p>
             <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{getDailyJournalDescription(day)}</p>
@@ -423,7 +424,8 @@ export function CalendarDayView({
         </div>
       </div>
 
-      <div className="divide-y divide-[rgba(153,119,86,0.12)]">
+      <hr className="ui-hairline" />
+      <div className="divide-y divide-[var(--line-soft)]">
         {rowItems.map((item) => {
           const isFuture = isFutureCalendarDate(day.date, today);
           const summary = buildCalendarCompactCopy(

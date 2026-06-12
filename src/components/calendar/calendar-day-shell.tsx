@@ -69,7 +69,7 @@ export function CalendarDayShell() {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {error ? (
           <div
-            className="calendar-pane calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-none p-6 text-center"
+            className="flex min-h-0 flex-1 flex-col items-center justify-center p-6 text-center"
             data-testid="calendar-day-primary-pane"
             role="alert"
           >
@@ -83,22 +83,22 @@ export function CalendarDayShell() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="calendar-pane calendar-card min-h-0 flex-1 rounded-none p-4 md:p-5" data-testid="calendar-day-primary-pane">
+          <div className="min-h-0 flex-1 p-4 md:p-5" data-testid="calendar-day-primary-pane">
             <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
               {getCalendarLoadingLabel("day")}
             </p>
             <div className="mt-4 space-y-4" aria-hidden="true">
-              <div className="h-24 animate-pulse rounded-[22px] bg-[rgba(224,204,174,0.56)]" />
+              <div className="ui-card h-24 animate-pulse" />
               <div className="space-y-2.5">
                 {Array.from({ length: 5 }, (_, index) => (
-                  <div key={index} className="h-[4.8rem] animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
+                  <div key={index} className="h-[4.8rem] animate-pulse rounded-[var(--radius-control)] bg-[var(--amber-soft)]" />
                 ))}
               </div>
             </div>
           </div>
         ) : dayRecord ? (
           <div
-            className="calendar-pane calendar-panel min-h-0 flex-1 overflow-hidden rounded-none p-2 md:p-2.5"
+            className="min-h-0 flex-1 overflow-hidden p-2 md:p-2.5"
             data-testid="calendar-day-primary-pane"
           >
             <div className="calendar-pane-scroll panel-scroll min-h-0 h-full pr-1">

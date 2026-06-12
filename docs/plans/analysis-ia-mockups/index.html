@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>分析页信息架构 · 三方案对比</title>
+  <style>
+    :root {
+      --paper-main: #f8e9cc;
+      --amber: #a96f3d;
+      --line-soft: rgba(110, 73, 38, 0.16);
+      --line-strong: rgba(110, 73, 38, 0.3);
+      --text-main: #302114;
+      --text-dim: rgba(48, 33, 20, 0.7);
+      --radius-card: 20px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #b37b47 0%, #e5c08f 100%);
+      color: var(--text-main);
+      padding: 2rem 1.5rem 3rem;
+    }
+    .wrap { max-width: 52rem; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+    .lead { color: var(--text-dim); margin: 0 0 2rem; line-height: 1.6; }
+    .grid { display: grid; gap: 1rem; }
+    @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--paper-main);
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      padding: 1.25rem 1.35rem;
+      box-shadow: 0 12px 40px rgba(86, 55, 27, 0.12);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    a.card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 48px rgba(86, 55, 27, 0.18);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--amber);
+      margin-bottom: 0.5rem;
+    }
+    .card h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+    .card p { font-size: 0.88rem; color: var(--text-dim); margin: 0; line-height: 1.55; }
+    .note {
+      margin-top: 2rem;
+      padding: 1rem 1.2rem;
+      background: rgba(248, 233, 204, 0.72);
+      border-radius: var(--radius-card);
+      border: 1px dashed var(--line-strong);
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>分析页信息架构 · 方案对比</h1>
+    <p class="lead">简化样式 mockup。方案 D 为当前实现参照。</p>
+
+    <div class="grid">
+      <a class="card" href="scheme-a-single-report.html" target="_blank">
+        <span class="badge">方案 A</span>
+        <h2>单一报告流</h2>
+        <p>一屏向下滚：趋势 → 五维 → 关联 → 复盘。适合「读一份报告」心智。</p>
+      </a>
+      <a class="card" href="scheme-b-four-tabs.html" target="_blank">
+        <span class="badge">方案 B</span>
+        <h2>演进四 Tab</h2>
+        <p>趋势 / 五维 / 关联 / 复盘 互斥 tab，共用顶部时间范围。</p>
+      </a>
+      <a class="card" href="scheme-c-dashboard-sidebar.html" target="_blank">
+        <span class="badge">方案 C</span>
+        <h2>量化主屏 + AI 侧栏</h2>
+        <p>左侧固定图表 dashboard，右侧抽屉承载 AI 关联与复盘。</p>
+      </a>
+      <a class="card" href="scheme-d-scroll-tabs.html" target="_blank">
+        <span class="badge">方案 D · 已选定</span>
+        <h2>单页 scroll + 顶部 Tab</h2>
+        <p>A 纵向四段 + B 顶部 tab；滚动 spy 与锚点跳转双向联动。</p>
+      </a>
+    </div>
+
+    <p class="note">方案 D（单页 scroll + 顶部 tab）已落地到代码。A/B/C 保留作历史对比参照。</p>
+  </div>
+</body>
+</html>

@@ -517,11 +517,11 @@ describe("analysis shell", () => {
   it("normalizes missing month search params to the current month", async () => {
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=overview");
-    await screen.findByTestId("analysis-overview-placeholder");
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
+    await screen.findByTestId("analysis-trends-placeholder");
   });
 
-  it("shows the overview section by default when section param is absent", async () => {
+  it("renders all analysis sections on a single scroll page by default", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: null
@@ -529,25 +529,28 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=overview");
-    await screen.findByTestId("analysis-month-hero");
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
+    await screen.findByTestId("analysis-trends-placeholder");
 
-    expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("analysis-dimension-cards")).not.toBeInTheDocument();
+    expect(screen.getByTestId("happiness-score-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-correlation-placeholder")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-review-placeholder")).toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
   });
 
-  it("keeps a valid month and section without rewriting the url", async () => {
+  it("keeps a valid month and canonical section without rewriting the url", async () => {
     mockSearchParams.value = {
       month: "2026-04",
-      section: "score"
+      section: "correlation"
     };
 
     render(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(historyReplaceStateSpy).not.toHaveBeenCalled();
-    expect(await screen.findByTestId("analysis-score-placeholder")).toBeInTheDocument();
+    expect(await screen.findByTestId("analysis-correlation-placeholder")).toBeInTheDocument();
   });
 
   it("falls back invalid month params to the current month", async () => {
@@ -558,7 +561,7 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=score");
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
     await screen.findByTestId("happiness-score-panel");
   });
 
@@ -590,10 +593,10 @@ describe("analysis shell", () => {
     expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
   });
 
-  it("keeps the month summary hero exclusive to the overview tab", async () => {
+  it("does not render the legacy overview hero on the single-page layout", async () => {
     mockSearchParams.value = {
       month: "2026-05",
-      section: "score"
+      section: "trends"
     };
 
     render(<AnalysisShell />);
@@ -621,7 +624,7 @@ describe("analysis shell", () => {
     expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("感谢");
   });
 
-  it("renders only the requested section on initial deep-link navigation", async () => {
+  it("renders all sections together even when deep-linking to a legacy rhythm section", async () => {
     mockSearchParams.value = {
       month: "2026-05",
       section: "rhythm"
@@ -631,8 +634,8 @@ describe("analysis shell", () => {
 
     await screen.findByTestId("analysis-rhythm-board");
 
-    expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("happiness-score-panel")).not.toBeInTheDocument();
+    expect(screen.getByTestId("analysis-trends-placeholder")).toBeInTheDocument();
+    expect(screen.getByTestId("happiness-score-panel")).toBeInTheDocument();
   });
 
   it("renders a stable empty state when the month has no saved records", async () => {
@@ -687,8 +690,7 @@ describe("analysis shell", () => {
 
     expect(await screen.findByTestId("analysis-rhythm-board")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-heatmap-day-2026-05-19")).toHaveTextContent("待到来");
-    expect(screen.getByTestId("analysis-coverage-placeholder")).toBeInTheDocument();
-    expect(screen.queryByTestId("analysis-overview-placeholder")).not.toBeInTheDocument();
+    expect(screen.getByTestId("analysis-trends-placeholder")).toBeInTheDocument();
     expect(screen.queryByTestId("analysis-demo-data-notice")).not.toBeInTheDocument();
   });
 
@@ -877,14 +879,14 @@ describe("analysis shell", () => {
   it("renders the score trend panel in read-only mode", async () => {
     mockSearchParams.value = {
       month: "2026-05",
-      section: "score"
+      section: "trends"
     };
 
     render(<AnalysisShell />);
 
     const panel = await screen.findByTestId("happiness-score-panel");
 
-    expect(screen.getByTestId("analysis-score-placeholder")).toHaveTextContent("幸福 8 要素评分");
+    expect(screen.getByTestId("analysis-trends-placeholder")).toHaveTextContent("评分与记录趋势");
     expect(within(panel).getByRole("heading", { name: "评分走势" })).toBeInTheDocument();
     expect(within(panel).queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
     expect(within(panel).getByTestId("score-factor-button-livingCondition")).toHaveTextContent("6.0");
@@ -1146,81 +1148,6 @@ describe("analysis shell", () => {
 
     expect(await screen.findByTestId("score-average-trend-chart-empty")).toHaveTextContent("本月还没有可展示的评分走势");
     expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
-  });
-
-  it("keeps future-month overview CTA neutral instead of sending users into today`s interview", async () => {
-    const futureMonthCoverage = buildEmptyDailyCoverage("2099-12").map((day) => ({
-      ...day,
-      hasScore: false,
-      averageScore: null,
-      hasStaleDailyJournal: false
-    }));
-
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...buildAnalysisMonthRecord(),
-          month: "2099-12",
-          logOverview: {
-            recordedDayCount: 0,
-            savedEntryCount: 0,
-            dailyJournalSavedDayCount: 0
-          },
-          dailyCoverage: futureMonthCoverage,
-          rhythmOverview: {
-            activeObservedDayCount: 0,
-            scoreOnlyDayCount: 0,
-            pendingDailyJournalCount: 0,
-            longestStreak: null,
-            longestGap: null,
-            latestActiveDate: null,
-            latestScoreOnlyDate: null,
-            latestPendingDailyJournalDate: null
-          },
-          dimensionBreakdown: buildAnalysisMonthRecord().dimensionBreakdown.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0
-          })),
-          dimensions: buildAnalysisMonthRecord().dimensions.map((item) => ({
-            ...item,
-            savedEntryCount: 0,
-            recordedDayCount: 0,
-            lastRecordedDate: null
-          })),
-          insightsOverview: {
-            headline: "这个月先别急着下五维结论。",
-            summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
-            watchpoint: null,
-            featuredDimension: null,
-            quietDimensions: ["joy", "fulfillment", "reflection", "improvement", "gratitude"],
-            links: []
-          },
-          ...buildScoreFields([], "2099-12"),
-          scoreRecords: [],
-          editableDates: [],
-          narrative: {
-            overviewNarrative: "本月共记录 0 天，保存 0 条访谈记录。",
-            dimensionTheses: {},
-            insightCards: []
-          }
-        } satisfies AnalysisMonthRecord),
-        { status: 200 }
-      )
-    );
-    mockSearchParams.value = {
-      month: "2099-12",
-      section: "overview"
-    };
-
-    render(<AnalysisShell />);
-
-    const action = await screen.findByTestId("analysis-next-action");
-
-    expect(screen.getByTestId("analysis-month-hero")).toHaveTextContent("这个月还没到来");
-    expect(within(action).getByRole("link", { name: "回到本月" })).toHaveAttribute("href", expect.stringContaining("/analysis?month="));
-    expect(within(action).queryByRole("link", { name: "开始记录" })).not.toBeInTheDocument();
-    expect(screen.queryByText("先补今天评分，或从一个维度开始记录。")).not.toBeInTheDocument();
   });
 
   it("shows a score trend detail card when a chart data point is clicked", async () => {

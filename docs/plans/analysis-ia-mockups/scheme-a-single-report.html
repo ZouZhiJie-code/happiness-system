@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方案 A · 单一报告流</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .scroll-hint {
+      font-size: 0.78rem;
+      color: var(--text-faint);
+      text-align: center;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .anchor-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+    }
+    .anchor-nav a {
+      font-size: 0.75rem;
+      color: var(--amber);
+      text-decoration: none;
+      padding: 0.25rem 0.55rem;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav">
+      <span>日历</span>
+      <span class="active">分析</span>
+      <span>画像</span>
+      <span>设置</span>
+    </nav>
+  </header>
+
+  <div class="analysis-toolbar">
+    <button class="preset-btn">本周</button>
+    <button class="preset-btn active">本月</button>
+    <button class="preset-btn">自定义</button>
+    <span class="toolbar-divider">｜</span>
+    <span class="date-range">2026-06-01 — 2026-06-12</span>
+  </div>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>方案 A</strong> · 单一报告流 · 无 tab，纵向 scroll 读完</span>
+        <a href="index.html">← 返回对比</a>
+      </div>
+
+      <p class="period-summary">本周期共 8 天有记录、10 天有评分。下方按顺序阅读：先看量化趋势，再看五维线索，再按需生成 AI 关联与复盘。</p>
+
+      <nav class="anchor-nav" aria-label="章节跳转">
+        <a href="#trends">趋势</a>
+        <a href="#dims">五维</a>
+        <a href="#link">关联</a>
+        <a href="#review">复盘</a>
+      </nav>
+
+      <p class="scroll-hint">↓ 模拟长页面，继续向下滚动</p>
+
+      <!-- 趋势 -->
+      <section id="trends">
+        <div class="section-heading">
+          <div class="eyebrow">SECTION 1</div>
+          <h2>量化趋势</h2>
+        </div>
+        <div class="grid-2">
+          <div class="ui-card">
+            <p class="stat-line" style="margin-bottom:0.75rem">幸福总分走势 · 月均 6.8</p>
+            <div class="chart-placeholder">折线图占位</div>
+          </div>
+          <div class="ui-card">
+            <p class="stat-line" style="margin-bottom:0.75rem">8 要素快扫</p>
+            <div class="chart-placeholder">雷达 / 条形占位</div>
+          </div>
+        </div>
+        <div class="ui-card" style="margin-top:0.75rem">
+          <p class="stat-line" style="margin-bottom:0.75rem">记录密度 · 12 天</p>
+          <div class="heatmap">
+            <div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+            <div class="heat-cell"></div><div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+            <div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+            <div class="heat-cell on"></div><div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <!-- 五维 -->
+      <section id="dims">
+        <div class="section-heading">
+          <div class="eyebrow">SECTION 2</div>
+          <h2>五维全景</h2>
+        </div>
+        <div class="ui-card">
+          <div class="dim-row">
+            <span class="dim-badge">改</span>
+            <div>
+              <strong>改进</strong> · 5 条 · 主题：把节奏放稳
+              <div style="margin-top:0.35rem"><span class="chip">睡眠</span><span class="chip">边界</span></div>
+            </div>
+          </div>
+          <div class="dim-row">
+            <span class="dim-badge">实</span>
+            <div><strong>充实</strong> · 3 条 · 主题：推进有落地感</div>
+          </div>
+          <div class="dim-row">
+            <span class="dim-badge">悦</span>
+            <div><strong>开心</strong> · 2 条 · 主题：清醒地开始</div>
+          </div>
+          <div class="dim-row">
+            <span class="dim-badge">思</span>
+            <div><strong>思考</strong> · 1 条</div>
+          </div>
+          <div class="dim-row">
+            <span class="dim-badge">谢</span>
+            <div><strong>感谢</strong> · 1 条</div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <!-- 关联 -->
+      <section id="link">
+        <div class="section-heading">
+          <div class="eyebrow">SECTION 3</div>
+          <h2>评分与五维关联</h2>
+        </div>
+        <div class="ui-card">
+          <p class="stat-line" style="margin-bottom:1rem">统计层：健康、生活条件的低点日与「改进」记录重叠 3 天。</p>
+          <div class="empty-ai">
+            <p>尚未生成 AI 关联分析</p>
+            <p style="margin-top:0.75rem"><span class="btn-primary">生成关联分析</span></p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <!-- 复盘 -->
+      <section id="review">
+        <div class="section-heading">
+          <div class="eyebrow">SECTION 4</div>
+          <h2>周期复盘</h2>
+        </div>
+        <div class="ui-card">
+          <div class="empty-ai">
+            <p>基于本周期材料，手动生成本月复盘总结</p>
+            <p style="margin-top:0.75rem"><span class="btn-primary">生成本月复盘</span></p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+      <p class="stat-line" style="text-align:center;color:var(--text-faint)">— 报告结束 —</p>
+    </div>
+  </main>
+</body>
+</html>

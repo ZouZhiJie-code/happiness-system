@@ -1,6 +1,6 @@
 # Handoff
 
-最后更新：`2026-05-27`
+最后更新：`2026-06-12`
 
 ## 1. 当前阶段结论
 
@@ -19,6 +19,8 @@
 - 带 `entryDate` 的访谈页里，header 当前选中维度会优先显示 live session 的实时轮次和进度圈；其余维度，以及切到当天整合日志工作区后的胶囊状态，继续以 day snapshot 为准。只要某个维度当天已有 `saved` 日志，胶囊会优先显示 `已完成`。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 ready。
 - 全站前端壳层已经从居中大卡片改为平铺工作台：`SiteHeader` 是全宽暖色工具栏，首页、访谈、设置和 calendar 主体减少外框留白与卡片嵌套。主导航不再包含【首页】项，点击左侧【Daily Light】品牌标识可返回首页。
+- `2026-06-12` 完成全站「单层卡片制」设计重构：设计规范固化在 `docs/design/ui-conventions.md`（层级预算 = 每页 1 个底板 + 最多 1 层卡片；卡片内禁再嵌套 border+bg 容器；圆角收敛为 `12/20/28px` 三档；边框收敛为 `--line-soft / --line-strong` 两档；新代码禁手写 rgba 任意值）。共享原语落在 `src/components/ui/`：`Surface / Card / SectionHeading / Divider / ActionButton`，对应 `globals.css` 的 `.ui-card / .ui-hairline / .ui-quote / .ui-btn--*` 语义类。本轮重构覆盖：分析页 4 个子视图（`analysis-shell.tsx` 拆成 shell + 4 个 section 文件 + 共享 helper）、日历周/日视图（去 `calendar-pane calendar-panel` 中间层）、设置主页/账号页（压平为 Divider 分隔的行式布局）、管理员 ai-runtime 5 组件与 admin-analytics 工作台（统计块改无框平铺 + hairline 行分隔）。访谈页与日历月视图已是目标形态，本轮未动；`vitest.config.ts` 增加 `esbuild.jsx = "automatic"` 以支持不显式 import React 的 ui 原语。回归：`npm test` 113 文件 861 用例全过、`npx tsc --noEmit` 0 错误、`npm run lint` 0 error。
+- `2026-06-12` 分析页 IA 框架改版（方案 D：单页 scroll + 顶部 tab）：`/analysis` 正文改为四段同屏纵向排列（量化趋势 / 五维全景 / 关联 / 复盘），Header `AnalysisToolbar` tab 与 scroll spy 双向联动（滚动更新 URL `section`，点 tab 锚点跳转）。新 section keys 为 `trends|dimensions|correlation|review`，旧 `overview|score|rhythm|insights` URL 自动映射。趋势区临时复用评分+热力组件，五维区复用 `DimensionInsights`，关联/复盘为占位壳；设计说明见 `docs/plans/2026-06-12-analysis-scroll-anchor-design.md`。
 - 日志标题已经做五维统一语义短标题治理，后端不再用长事件句机械截断成标题。
 - joy 标题治理会拦截 `一下被带轻 / 象征意义` 这类伪中文或理论词标题，早起、多出时间、准备感场景应收束为 `清醒地开始` 这类自然短标题。
 - 用户边界和自然语言日志整理意图优先级高于槽位完整度；用户拒绝继续或输入“总结日志 / 整理成日志”等表达时，材料足够则 partial 收束，材料不足则给低压选择。

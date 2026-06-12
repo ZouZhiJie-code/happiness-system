@@ -9,6 +9,9 @@
   --site-header-viewport-offset: 4rem;
   --calendar-month-cell-min-height: 5.95rem;
   --calendar-day-card-min-height: 5.5rem;
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-shell: 28px;
   --night-void: #855a34;
   --night-ink: #ddbb8c;
   --night-panel: rgba(247, 233, 205, 0.88);
@@ -1032,4 +1035,123 @@ body::after {
   50% {
     transform: translateY(-4px);
   }
+}
+
+/* ===== 单层卡片制原语（见 docs/design/ui-conventions.md） ===== */
+
+.ui-card {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-card);
+  background: rgba(255, 249, 240, 0.92);
+  color: #2b2118;
+  box-shadow: 0 1px 2px rgba(108, 69, 36, 0.05);
+}
+
+.ui-card--interactive {
+  outline: none;
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.ui-card--interactive:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 10px 22px rgba(108, 69, 36, 0.1);
+}
+
+.ui-card--interactive:focus-visible {
+  outline: 2px solid #8c6034;
+  outline-offset: 2px;
+}
+
+.ui-hairline {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  margin: 0;
+}
+
+.ui-hairline--vertical {
+  border: 0;
+  border-left: 1px solid var(--line-soft);
+  align-self: stretch;
+  width: 0;
+  margin: 0;
+}
+
+.ui-quote {
+  border-left: 2px solid rgba(110, 73, 38, 0.24);
+  padding-left: 0.85rem;
+  color: var(--text-dim);
+}
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0.55rem 1rem;
+  outline: none;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.ui-btn:focus-visible {
+  outline: 2px solid #8c6034;
+  outline-offset: 2px;
+}
+
+.ui-btn:disabled,
+.ui-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.ui-btn--primary {
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+  color: #fff8f1;
+  box-shadow: 0 8px 18px rgba(118, 75, 37, 0.18);
+}
+
+.ui-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(202, 149, 92, 0.96), rgba(171, 118, 64, 0.96));
+  box-shadow: 0 10px 22px rgba(118, 75, 37, 0.22);
+}
+
+.ui-btn--secondary {
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 250, 242, 0.78);
+  color: #6f5339;
+}
+
+.ui-btn--secondary:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: rgba(255, 248, 236, 0.95);
+  color: #3e2f23;
+}
+
+.ui-btn--ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #7b5d43;
+  text-decoration: underline;
+  text-decoration-color: rgba(123, 93, 67, 0.28);
+  text-underline-offset: 0.28rem;
+}
+
+.ui-btn--ghost:hover:not(:disabled) {
+  color: #5c4229;
 }

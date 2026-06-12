@@ -1,8 +1,15 @@
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
 const ANALYSIS_MONTH_PATTERN = /^\d{4}-\d{2}$/;
-const ANALYSIS_SECTION_KEYS = ["overview", "score", "rhythm", "insights"] as const;
+export const ANALYSIS_SECTION_KEYS = ["trends", "dimensions", "correlation", "review"] as const;
 export type AnalysisSectionKey = (typeof ANALYSIS_SECTION_KEYS)[number];
+
+const LEGACY_ANALYSIS_SECTION_MAP: Record<string, AnalysisSectionKey> = {
+  overview: "trends",
+  score: "trends",
+  rhythm: "trends",
+  insights: "dimensions"
+};
 
 function parseMonthKey(month: string) {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -29,8 +36,8 @@ function isValidAnalysisMonth(month: string) {
   return formatMonthKey(parseMonthKey(month)) === month;
 }
 
-function isValidAnalysisSection(section: string | null | undefined) {
-  return ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey);
+function isCanonicalAnalysisSection(section: string | null | undefined): section is AnalysisSectionKey {
+  return !!section && ANALYSIS_SECTION_KEYS.includes(section as AnalysisSectionKey);
 }
 
 export function getTodayAnalysisMonth(today = getTodayEntryDate()) {
@@ -45,12 +52,24 @@ export function normalizeAnalysisMonth(month: string | null | undefined, today =
   return month;
 }
 
-export function normalizeAnalysisSection(section: string | null | undefined) {
-  return isValidAnalysisSection(section) ? (section as AnalysisSectionKey) : "overview";
+export function normalizeAnalysisSection(section: string | null | undefined): AnalysisSectionKey {
+  if (isCanonicalAnalysisSection(section)) {
+    return section;
+  }
+
+  if (section && section in LEGACY_ANALYSIS_SECTION_MAP) {
+    return LEGACY_ANALYSIS_SECTION_MAP[section];
+  }
+
+  return "trends";
+}
+
+export function getAnalysisSectionElementId(section: AnalysisSectionKey) {
+  return `analysis-${section}`;
 }
 
 export function buildAnalysisHref(input: { month: string; section?: AnalysisSectionKey }) {
-  const section = input.section ?? "overview";
+  const section = input.section ?? "trends";
   return `/analysis?month=${input.month}&section=${section}`;
 }
 
@@ -69,14 +88,16 @@ export function normalizeAnalysisSearchParams(input: {
 }) {
   const today = input.today ?? getTodayAnalysisMonth();
   const shouldReplaceMonth = !input.month || !isValidAnalysisMonth(input.month);
-  const shouldReplaceSection = !isValidAnalysisSection(input.section);
+  const shouldReplaceSection = !isCanonicalAnalysisSection(input.section);
   const month = normalizeAnalysisMonth(input.month, today);
   const section = normalizeAnalysisSection(input.section);
+  const href = buildAnalysisHref({ month, section });
+
   return {
     month,
     section,
-    href: buildAnalysisHref({ month, section }),
-    shouldReplace: shouldReplaceMonth || shouldReplaceSection
+    href,
+    shouldReplace: shouldReplaceMonth || shouldReplaceSection || input.section !== section
   };
 }
 

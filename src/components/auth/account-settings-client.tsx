@@ -5,6 +5,7 @@ import React from "react";
 import { AccountDangerZone } from "@/components/auth/account-danger-zone";
 import { clearLocalAuthUserId, getLocalAuthUserId } from "@/features/auth/auth-local";
 import { StatusPill } from "@/components/shared/status-pill";
+import { Surface } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import { clearStoredInterviewSessionId, interviewDimensionStorageKey, interviewDimensions, interviewSessionStorageKey } from "@/features/interview/dimensions";
 
@@ -67,7 +68,10 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
 
   return (
     <div className="min-h-0 flex-1">
-      <section className="page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10">
+      <Surface
+        as="section"
+        className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10"
+      >
         <div className="relative z-10 grid min-h-0 gap-7 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-start">
           <div className="max-w-[38rem]">
             <StatusPill label="账户设置" tone="warm" />
@@ -86,7 +90,7 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
             onDeleteAccount={handleDeleteAccount}
           />
         </div>
-      </section>
+      </Surface>
     </div>
   );
 }

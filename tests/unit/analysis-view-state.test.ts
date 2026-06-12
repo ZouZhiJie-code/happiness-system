@@ -14,8 +14,8 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "overview",
-      href: "/analysis?month=2026-05&section=overview",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
       shouldReplace: true
     });
   });
@@ -28,13 +28,13 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "overview",
-      href: "/analysis?month=2026-05&section=overview",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
       shouldReplace: true
     });
   });
 
-  it("normalizes invalid sections to overview", () => {
+  it("normalizes invalid sections to trends", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -43,13 +43,26 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "overview",
-      href: "/analysis?month=2026-05&section=overview",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
       shouldReplace: true
     });
   });
 
-  it("keeps valid analysis sections", () => {
+  it("maps legacy score and rhythm sections to trends", () => {
+    expect(
+      normalizeAnalysisSearchParams({
+        month: "2026-05",
+        section: "score",
+        today: "2026-05"
+      })
+    ).toEqual({
+      month: "2026-05",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
+      shouldReplace: true
+    });
+
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -58,13 +71,43 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "rhythm",
-      href: "/analysis?month=2026-05&section=rhythm",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
+      shouldReplace: true
+    });
+  });
+
+  it("maps legacy insights section to dimensions", () => {
+    expect(
+      normalizeAnalysisSearchParams({
+        month: "2026-05",
+        section: "insights",
+        today: "2026-05"
+      })
+    ).toEqual({
+      month: "2026-05",
+      section: "dimensions",
+      href: "/analysis?month=2026-05&section=dimensions",
+      shouldReplace: true
+    });
+  });
+
+  it("keeps valid analysis sections", () => {
+    expect(
+      normalizeAnalysisSearchParams({
+        month: "2026-05",
+        section: "correlation",
+        today: "2026-05"
+      })
+    ).toEqual({
+      month: "2026-05",
+      section: "correlation",
+      href: "/analysis?month=2026-05&section=correlation",
       shouldReplace: false
     });
   });
 
-  it("defaults missing section to overview and normalizes the url", () => {
+  it("defaults missing section to trends and normalizes the url", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -73,8 +116,8 @@ describe("analysis view state helpers", () => {
       })
     ).toEqual({
       month: "2026-05",
-      section: "overview",
-      href: "/analysis?month=2026-05&section=overview",
+      section: "trends",
+      href: "/analysis?month=2026-05&section=trends",
       shouldReplace: true
     });
   });
@@ -85,8 +128,8 @@ describe("analysis view state helpers", () => {
   });
 
   it("builds stable hrefs and month labels", () => {
-    expect(buildAnalysisHref({ month: "2026-05" })).toBe("/analysis?month=2026-05&section=overview");
-    expect(buildAnalysisHref({ month: "2026-05", section: "insights" })).toBe("/analysis?month=2026-05&section=insights");
+    expect(buildAnalysisHref({ month: "2026-05" })).toBe("/analysis?month=2026-05&section=trends");
+    expect(buildAnalysisHref({ month: "2026-05", section: "dimensions" })).toBe("/analysis?month=2026-05&section=dimensions");
     expect(formatAnalysisMonthLabel("2026-05")).toBe("2026年5月");
   });
 });

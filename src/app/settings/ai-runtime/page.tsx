@@ -2,6 +2,7 @@ import React from "react";
 
 import { AIRuntimePageClient } from "@/components/admin-ai-runtime/ai-runtime-page-client";
 import { StatusPill } from "@/components/shared/status-pill";
+import { Surface } from "@/components/ui";
 import type { AIRuntimeStatusPayload } from "@/features/admin-ai-runtime/api";
 import { sanitizeAIRuntimeConfig, sanitizeAIRuntimeStatusPayload } from "@/app/api/admin/ai-runtime/_shared";
 import { requireAdminPage } from "@/server/services/auth/admin-access";
@@ -26,7 +27,10 @@ export default async function AdminAIRuntimePage() {
 
   return (
     <div className="min-h-0 flex-1">
-      <section className="page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10">
+      <Surface
+        as="section"
+        className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10"
+      >
         <div className="relative z-10 grid min-h-0 gap-7 xl:grid-cols-[minmax(20rem,0.68fr)_minmax(0,1.32fr)] xl:items-start">
           <div className="max-w-[38rem]">
             <StatusPill label="管理员后台" tone="neutral" />
@@ -55,7 +59,7 @@ export default async function AdminAIRuntimePage() {
             }}
           />
         </div>
-      </section>
+      </Surface>
     </div>
   );
 }

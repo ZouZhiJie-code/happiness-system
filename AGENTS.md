@@ -38,6 +38,7 @@
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前是 tab 互斥视图的月度复盘工作台：`SiteHeader` 中区承接月份翻页和 4 个 section tab（总览/评分/节奏/五维），tab 带数据依赖的 contextual chip（评分覆盖状态、节奏待整合/待成文状态、主线维度名）；正文区按当前 `section` 只渲染对应板块。`overview` 总览首屏先给月度判断、评分可信度、一个“建议先看”的主行动，再给评分刻度 / 记录节奏 / 五维线索三块轻入口；底部证据条区分维度记录日、成果保存日、待整合日和评分可信度。评分区现在是纯趋势阅读工作台（总分走势 / 8 要素快扫 / 单项细看），不再承担评分录入。幸福 8 要素评分录入入口已迁到 `/interview`，作为独立 `happiness_score` 工作区，通过 header 的「当天评分」进入，和访谈消息区分离。`rhythm` 已改成状态优先热力工作台：未来日期保持 `待到来`，只评分未写日志的日期显示 `待成文`，同一天整合日志如果因为来源签名变化而 `stale`，即使当天已经没有任何 `saved` 来源，也仍会在分析里按 `待更新 / 待整合` 处理，不再误标成 `已整合`。`insights` 已改成“本月判断 + 五维全景 + 维度之间 + 下一步”的月度解释工作台；watchpoint 会优先提示 `stale` 的当天整合日志，单次且发生在月初的维度记录会保持 `starting`。分析页内”回到某维度”类 drill-down 链接会保留对应 `entryDate`；未来月份总览首屏不会再把用户送去今天访谈；未来日期热力区 drill-down 只允许 `查看当天`。`PUT /api/happiness-score` 当前允许保存所有非未来日期（Asia/Shanghai 口径），当前月评分保存成功后，`AnalysisToolbar` 的 contextual chip 会立即刷新。
 - analysis 的 `narrative-service.ts` 当前仍是确定性占位文本，不是最终 AI 叙事。`SummaryHero` 只有在 narrative 足够表达当前状态时才会覆盖模板文案；未来月份空态、待整合日、只有评分未成文、没有已保存日志这些场景会继续保留原有的状态判断和动作导向。评分趋势图点击某天后的详情卡也会区分“已有完整日志”“已有维度记录但未整合”“完全没生成日志”三种状态，避免把待整合日误报成空白日。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
+- `2026-06-12` 起全站执行「单层卡片制」设计规范（`docs/design/ui-conventions.md`）：每页最多“1 个底板 + 1 层卡片”，卡片内禁再嵌套 border+bg 容器，分区用标题 / hairline 分隔线 / 留白；圆角三档 `12/20/28px`（`--radius-control / --radius-card / --radius-shell`）、边框两档 `--line-soft / --line-strong`，新代码禁手写 `border-[rgba(...)]` 等任意值。共享原语在 `src/components/ui/`（`Surface / Card / SectionHeading / Divider / ActionButton`）。分析页 4 个子视图（`analysis-shell.tsx` 已拆为 shell + 4 个 section 文件）、日历周/日视图、设置全家桶和管理员页面均已按此重构；访谈页与日历月视图本就是目标形态，未改动。
 - calendar 页面当前优先首屏工作区；桌面超量信息进入局部 pane 滚动，小屏月视图改为“月历主体在上 + 当天检查面板在下”的纵向工作台，不再依赖 `1040px` 横向滚动访问右侧面板。桌面月视图仍是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - `SiteHeader` 现在会把真实 header 高度同步到 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按“实际 header 高度之后的剩余视口”计算可用高度，不再假设顶部永远只有 `4rem`，因此小屏、多行 toolbar 或 header 换行时不会再因为 offset 写死而出现底部假留白或双滚动。
 - 月视图月格当前固定渲染 6 行 42 格，loading skeleton 也渲染同样的 42 格，保证加载前后高度一致。
@@ -269,7 +270,9 @@ gratitude 理论翻译基线：
 - `src/app`
   - 页面与 API 入口。
 - `src/components`
-  - 纯 UI 组件。
+ - 纯 UI 组件。
+- `src/components/ui`
+ - 单层卡片制共享原语：`Surface`（页面底板）、`Card`（唯一卡片层）、`SectionHeading`、`Divider`、`ActionButton`；新页面禁止手写卡片样式，先扩展原语再使用。
 - `src/features/interview`
   - 多维度通用前端定义、schema、进度与维度元信息。
 - `src/features/calendar`

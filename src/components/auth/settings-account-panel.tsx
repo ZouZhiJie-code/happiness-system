@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { ActionButton, Divider, actionButtonClass } from "@/components/ui";
 import {
   clearLocalAuthUserId,
   getLocalAuthUserId,
@@ -74,60 +75,66 @@ export function SettingsAccountPanel({
   }
 
   return (
-    <aside className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.44)] p-4 md:p-5">
+    <aside className="grid gap-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[#6a5e53]">账户状态</p>
-          <h3 className="mt-3 font-display text-2xl text-[#231d17]">退出当前账号</h3>
+          <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[var(--text-faint)]">账户状态</p>
+          <h3 className="mt-3 font-display text-2xl text-ink">退出当前账号</h3>
         </div>
         <span className="wood-chip rounded-full px-4 py-2 text-xs tracking-[0.16em]">已登录</span>
       </div>
 
-      <p className="mt-3 text-pretty text-sm leading-8 text-[#524436]">
-        当前账号：<span className="font-medium text-[#2f2217]">{user?.username ?? "未登录"}</span>。退出后会结束当前设备会话，并清掉这台设备上的本地恢复记录。
+      <p className="text-pretty text-sm leading-8 text-[var(--text-dim)]">
+        当前账号：<span className="font-medium text-ink">{user?.username ?? "未登录"}</span>。退出后会结束当前设备会话，并清掉这台设备上的本地恢复记录。
       </p>
 
       {error ? (
-        <p
-          role="alert"
-          className="mt-4 rounded-[18px] border border-[rgba(160,112,96,0.26)] bg-[rgba(255,245,241,0.8)] px-4 py-3 text-sm text-[#8a5440]"
-        >
+        <p role="alert" className="text-sm leading-7 text-[#8a5440]">
           {error}
         </p>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        <button
+      <Divider />
+
+      <div className="flex items-center">
+        <ActionButton
           type="button"
-          className="min-h-11 rounded-full border border-[rgba(115,77,39,0.16)] bg-[rgba(255,249,239,0.7)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.92)] disabled:cursor-not-allowed disabled:opacity-60"
+          variant="secondary"
+          className="min-h-11"
           onClick={handleLogout}
           disabled={loggingOut}
         >
           {loggingOut ? "退出中…" : "退出当前账号"}
-        </button>
-        <a
-          href="/settings/account"
-          className="inline-flex min-h-11 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)]"
-        >
+        </ActionButton>
+      </div>
+
+      <Divider />
+
+      <div className="flex items-center">
+        <a href="/settings/account" className={actionButtonClass("ghost", "min-h-11")}>
           管理注销与高风险操作
         </a>
-        {showAdminAIRuntimeEntry ? (
-          <a
-            href="/settings/ai-runtime"
-            className="inline-flex min-h-11 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)]"
-          >
-            AI 运行配置中心
-          </a>
-        ) : null}
-        {showAdminAnalyticsEntry ? (
-          <a
-            href="/admin/analytics"
-            className="inline-flex min-h-11 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)]"
-          >
-            管理员数据分析
-          </a>
-        ) : null}
       </div>
+      {showAdminAIRuntimeEntry ? (
+        <>
+          <Divider />
+          <div className="flex items-center">
+            <a href="/settings/ai-runtime" className={actionButtonClass("ghost", "min-h-11")}>
+              AI 运行配置中心
+            </a>
+          </div>
+        </>
+      ) : null}
+      {showAdminAnalyticsEntry ? (
+        <>
+          <Divider />
+          <div className="flex items-center">
+            <a href="/admin/analytics" className={actionButtonClass("ghost", "min-h-11")}>
+              管理员数据分析
+            </a>
+          </div>
+        </>
+      ) : null}
     </aside>
   );
 }

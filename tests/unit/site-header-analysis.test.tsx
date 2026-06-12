@@ -21,7 +21,7 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
       view: null as string | null,
       date: null as string | null,
       month: "2026-05" as string | null,
-      section: "score" as string | null
+      section: "trends" as string | null
     }
   }
 }));
@@ -101,61 +101,64 @@ function buildMinimalRecord() {
       }
     ],
     insightsOverview: {
-      headline: "开心是这个月最清楚的一条线，思考也已经开始接上。",
-      summary: "这个月更成形的是开心这条线，旁边陪着它一起动的，多半是思考。热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。",
-      watchpoint: "擅长、意志、美德在评分里还不算稳，这条线也还没有真正展开。",
+      headline: "这个月先别急着下五维结论。",
+      summary: "这个月已经有了一些起伏，但还没有足够的文字材料把五维线索说清楚。",
+      watchpoint: null,
       featuredDimension: "joy",
       quietDimensions: ["fulfillment", "improvement", "gratitude"],
-      links: [
-        {
-          type: "score",
-          title: "评分里也在呼应",
-          detail: "热爱、人际在评分里也不低，这条线不只是写出来了，分数里也能看见。",
-          dimensions: ["joy"],
-          anchorDate: "2026-05-02"
-        }
-      ]
+      links: []
     },
     scoreOverview: { scoredDayCount: 1, monthAverageScore: 7.5, latestScoredDate: "2026-05-03" },
-    scoreTrend: { days: [], factorAverages: {} },
-    scoreRecords: [{ id: "s1", date: "2026-05-03", meaningScore: 8, healthScore: 7, virtueScore: 9, autonomyScore: 6, interestScore: 8, skillScore: 7, relationshipScore: 9, livingConditionScore: 6, createdAt: "", updatedAt: "" }],
-    editableDates: ["2026-05-03", "2026-05-02"]
+    scoreTrend: {
+      days: [],
+      factorAverages: {
+        meaning: null,
+        health: null,
+        virtue: null,
+        autonomy: null,
+        interest: null,
+        skill: null,
+        relationship: null,
+        livingCondition: null
+      }
+    },
+    scoreRecords: [],
+    editableDates: ["2026-05-03", "2026-05-02"],
+    narrative: null
   };
 }
 
-describe("site header analysis toolbar", () => {
+describe("SiteHeader analysis toolbar", () => {
   let historyReplaceStateSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
-    mockPathname.value = "/analysis";
     mockRouterReplace.mockReset();
+    mockPathname.value = "/analysis";
     mockSearchParams.value = {
       dimension: null,
       view: null,
       date: null,
       month: "2026-05",
-      section: "score"
+      section: "trends"
     };
-    global.fetch = vi.fn(async () =>
-      new Response(JSON.stringify(buildMinimalRecord()), { status: 200 })
-    ) as typeof fetch;
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMinimalRecord()), { status: 200 })) as typeof fetch;
   });
 
   afterEach(() => {
     historyReplaceStateSpy.mockRestore();
   });
 
-  it("renders section tabs in the toolbar with month label", async () => {
+  it("renders analysis month navigation and section tabs in the header", async () => {
     render(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     expect(within(toolbar).getByText("2026年5月")).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: /总览/ })).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: /评分/ })).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: /节奏/ })).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: /五维/ })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: /量化趋势/ })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: /五维全景/ })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: /关联/ })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: /复盘/ })).toBeInTheDocument();
   });
 
   it("highlights the active section tab", async () => {
@@ -163,8 +166,8 @@ describe("site header analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    expect(within(toolbar).getByRole("button", { name: /评分/ })).toHaveAttribute("aria-pressed", "true");
-    expect(within(toolbar).getByRole("button", { name: /总览/ })).toHaveAttribute("aria-pressed", "false");
+    expect(within(toolbar).getByRole("button", { name: /量化趋势/ })).toHaveAttribute("aria-pressed", "true");
+    expect(within(toolbar).getByRole("button", { name: /五维全景/ })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("navigates to a section when clicking a tab", async () => {
@@ -172,9 +175,9 @@ describe("site header analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: /节奏/ }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=rhythm", { scroll: false });
-    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=rhythm");
+    fireEvent.click(within(toolbar).getByRole("button", { name: /^关联/ }));
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=correlation", { scroll: false });
+    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=correlation");
   });
 
   it("shows contextual chips after data loads", async () => {
@@ -185,8 +188,8 @@ describe("site header analysis toolbar", () => {
     await waitFor(() => {
       expect(within(toolbar).getByText("1天评分")).toBeInTheDocument();
     });
-    expect(within(toolbar).getByText("待整合 1 天")).toBeInTheDocument();
     expect(within(toolbar).getByText("开心")).toBeInTheDocument();
+    expect(within(toolbar).queryByText(/待整合/)).not.toBeInTheDocument();
   });
 
   it("refreshes the score chip after the current month is updated", async () => {
@@ -216,7 +219,7 @@ describe("site header analysis toolbar", () => {
     mockSearchParams.value = {
       ...mockSearchParams.value,
       month: "2026-05",
-      section: "score"
+      section: "trends"
     };
 
     await act(async () => {
@@ -238,13 +241,13 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=score", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=trends", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看下月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=score", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=trends", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "回到本月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith(`/analysis?month=${CURRENT_MONTH}&section=score`, { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith(`/analysis?month=${CURRENT_MONTH}&section=trends`, { scroll: false });
   });
 
   it("preserves the current analysis section when paging months", async () => {
@@ -253,7 +256,7 @@ describe("site header analysis toolbar", () => {
       view: null,
       date: null,
       month: "2026-05",
-      section: "rhythm"
+      section: "review"
     };
 
     render(<SiteHeader />);
@@ -261,7 +264,7 @@ describe("site header analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上月分析" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=rhythm", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=review", { scroll: false });
   });
 
   it("normalizes invalid analysis month values in the header toolbar", async () => {
@@ -270,12 +273,12 @@ describe("site header analysis toolbar", () => {
       view: null,
       date: null,
       month: "2026-13",
-      section: "score"
+      section: "trends"
     };
 
     render(<SiteHeader />);
 
-    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", `/analysis?month=${CURRENT_MONTH}&section=score`);
+    expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", `/analysis?month=${CURRENT_MONTH}&section=trends`);
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();
   });
 });

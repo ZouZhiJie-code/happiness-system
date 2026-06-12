@@ -76,11 +76,11 @@ export function CalendarWeekShell() {
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
-          className="calendar-pane calendar-panel flex min-h-0 flex-1 flex-col rounded-none p-2 md:p-2.5"
+          className="flex min-h-0 flex-1 flex-col p-2 md:p-2.5"
           data-testid="calendar-week-primary-pane"
         >
           {error ? (
-            <div className="calendar-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-[24px] p-6 text-center" role="alert">
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-6 text-center" role="alert">
               <p className="font-display text-[1.45rem] text-[#312419]">{error}</p>
               <button
                 type="button"
@@ -95,15 +95,12 @@ export function CalendarWeekShell() {
               <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
                 {getCalendarLoadingLabel("week")}
               </p>
-              <div className="calendar-card h-28 animate-pulse rounded-[24px] bg-[rgba(224,204,174,0.4)]" aria-hidden="true" />
-              <div className="calendar-card h-[20rem] animate-pulse rounded-[24px] bg-[rgba(224,204,174,0.4)]" aria-hidden="true" />
+              <div className="ui-card h-28 animate-pulse" aria-hidden="true" />
+              <div className="ui-card h-[20rem] animate-pulse" aria-hidden="true" />
             </div>
           ) : (
             <div className="calendar-pane-scroll panel-scroll min-h-0 flex-1 space-y-3 pr-1">
-              <div
-                className="calendar-card rounded-[24px] px-4 py-3.5 md:px-5"
-                data-testid="calendar-week-summary"
-              >
+              <div className="px-1" data-testid="calendar-week-summary">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="max-w-[42rem]">
                     <p className="mt-1 text-pretty text-[0.96rem] leading-7 text-[#654f3a]">
@@ -111,17 +108,16 @@ export function CalendarWeekShell() {
                     </p>
                     <p className="mt-1.5 text-[0.84rem] leading-6 text-[#8a6b4b]">{weekOverview?.focusHint ?? "先从今天开始。"}</p>
                   </div>
-                  <div className="calendar-summary-chip rounded-[20px] px-4 py-2.5 text-[0.85rem] text-[#6c553f]">
-                    <p className="text-[0.7rem] text-[#8a6b4b]">周范围</p>
-                    <p className="mt-1">{weekOverview?.rangeLabel ?? "正在加载"}</p>
-                  </div>
+                  <span className="calendar-summary-chip inline-flex items-baseline gap-2 rounded-full px-4 py-2 text-[0.85rem] text-[#6c553f]">
+                    <span className="text-[0.7rem] text-[#8a6b4b]">周范围</span>
+                    <span>{weekOverview?.rangeLabel ?? "正在加载"}</span>
+                  </span>
                 </div>
+                <hr className="ui-hairline mt-3" />
               </div>
 
               {weekStats?.recordedDayCount === 0 ? (
-                <div className="calendar-card-muted rounded-[22px] px-4 py-3 text-[0.9rem] leading-7 text-[#755d47]">
-                  本周还没有记录。
-                </div>
+                <p className="px-1 text-[0.9rem] leading-7 text-[var(--text-dim)]">本周还没有记录。</p>
               ) : null}
 
               <CalendarWeekBoard days={weekRecord?.days ?? []} today={today} />

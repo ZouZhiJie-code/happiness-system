@@ -40,6 +40,7 @@
 - 首页已重构为品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记心有所归”；文案与图片配置集中在 `src/content/homepage.ts`，当前已接入 `public/homepage/*` 本地图片，并把 Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化广告片布局，首页木纹背景也已调成上浅下深。
 - `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 记录分析页当前是 tab 互斥视图的月度复盘工作台；`score` 分区现在是纯趋势阅读（总分走势 / 8 要素快扫 / 单项细看），不再承载评分录入。幸福 8 要素评分录入入口已迁到 `/interview` 顶部「当天评分」，并作为独立 `happiness_score` 工作区展示；分析页继续负责评分趋势解释与 drill-down。`PUT /api/happiness-score` 允许保存所有非未来日期（Asia/Shanghai 口径），当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新；评分 chip 当前文案为 `暂无评分 / N天已评分`。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片套卡片。
+- 全站视觉已在 `2026-06-12` 收敛为「单层卡片制」：每页最多“1 个底板 + 1 层卡片”，卡片内部分区只用标题、hairline 分隔线和留白；圆角三档（`12/20/28px`）、边框两档（`--line-soft / --line-strong`）；规范见 `docs/design/ui-conventions.md`，共享原语（`Surface / Card / SectionHeading / Divider / ActionButton`）在 `src/components/ui/`。分析页 4 个子视图、日历周/日视图、设置全家桶和管理员页面已按此重构，访谈页与日历月视图保持原有目标形态。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口；小屏改为月历主体在上、当天检查面板在下，不再依赖横向滚动访问右侧面板
   - `SiteHeader` 会把真实 header 高度同步给首屏工作区；calendar / analysis / settings 这类页面会按剩余视口高度布局，小屏、多行 toolbar 或 header 换行时不会再因为顶部 offset 写死而制造底部假留白

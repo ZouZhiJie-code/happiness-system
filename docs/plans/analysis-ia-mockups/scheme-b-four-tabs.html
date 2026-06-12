@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方案 B · 演进四 Tab</title>
+  <link rel="stylesheet" href="_shared.css" />
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav">
+      <span>日历</span>
+      <span class="active">分析</span>
+      <span>画像</span>
+      <span>设置</span>
+    </nav>
+  </header>
+
+  <div class="analysis-toolbar">
+    <button class="preset-btn">本周</button>
+    <button class="preset-btn active">本月</button>
+    <button class="preset-btn">自定义</button>
+    <span class="toolbar-divider">｜</span>
+    <span class="date-range">2026-06-01 — 2026-06-12</span>
+    <span class="toolbar-divider">｜</span>
+    <div class="tab-bar" style="margin:0">
+      <button class="tab active">趋势</button>
+      <button class="tab">五维</button>
+      <button class="tab">关联</button>
+      <button class="tab">复盘</button>
+    </div>
+  </div>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>方案 B</strong> · 演进四 Tab · 当前展示「趋势」tab</span>
+        <a href="index.html">← 返回对比</a>
+      </div>
+
+      <p class="period-summary">8 天有记录 · 10 天有评分 · 切换 tab 时时间范围保持不变。</p>
+
+      <!-- 趋势 tab 内容 -->
+      <div class="section-heading">
+        <div class="eyebrow">TRENDS</div>
+        <h2>评分与记录趋势</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="ui-card">
+          <p class="stat-line" style="margin-bottom:0.75rem">总分走势 · 月均 6.8 · 基于 10 天</p>
+          <div class="chart-placeholder">折线图 · 可点击某天查看摘要</div>
+        </div>
+        <div class="ui-card">
+          <p class="stat-line" style="margin-bottom:0.75rem">8 要素变化</p>
+          <div class="chart-placeholder">要素条形 / 雷达</div>
+        </div>
+      </div>
+
+      <div class="ui-card" style="margin-top:0.75rem">
+        <p class="stat-line" style="margin-bottom:0.75rem">记录密度热力</p>
+        <div class="heatmap">
+          <div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+          <div class="heat-cell"></div><div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+          <div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+          <div class="heat-cell on"></div><div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+        </div>
+        <p class="stat-line" style="margin-top:0.75rem;font-size:0.78rem">■ 有记录 ■ 有评分 · 只读，无补漏引导</p>
+      </div>
+
+      <hr class="hairline" />
+
+      <p class="stat-line" style="font-size:0.82rem;color:var(--text-faint)">
+        其他 tab 示意：<br />
+        <strong>五维</strong> — 维度全景卡片 + 代表片段 + tag<br />
+        <strong>关联</strong> — 统计摘要 + 「生成关联分析」按钮 + AI 输出<br />
+        <strong>复盘</strong> — 空态 + 「生成本周期复盘」+ 复盘正文
+      </p>
+
+      <div style="margin-top:1rem;display:grid;gap:0.75rem">
+        <div class="ui-card" style="opacity:0.55">
+          <div class="section-heading"><h2 style="font-size:0.92rem">五维 tab（折叠示意）</h2></div>
+          <div class="dim-row">
+            <span class="dim-badge">改</span>
+            <span>改进 · 5 条 · 把节奏放稳</span>
+          </div>
+        </div>
+        <div class="ui-card" style="opacity:0.55">
+          <div class="section-heading"><h2 style="font-size:0.92rem">关联 tab（折叠示意）</h2></div>
+          <span class="btn-primary" style="font-size:0.78rem;padding:0.4rem 0.85rem">生成关联分析</span>
+        </div>
+        <div class="ui-card" style="opacity:0.55">
+          <div class="section-heading"><h2 style="font-size:0.92rem">复盘 tab（折叠示意）</h2></div>
+          <span class="btn-primary" style="font-size:0.78rem;padding:0.4rem 0.85rem">生成本月复盘</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

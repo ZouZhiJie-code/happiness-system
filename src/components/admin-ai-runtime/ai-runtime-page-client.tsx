@@ -118,32 +118,28 @@ export function AIRuntimePageClient({
         ))}
       </div>
 
-      <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.44)] p-4 md:p-5">
-        <div className="flex flex-wrap gap-3">
-          {(["chat", "embedding"] as AIRuntimeCapability[]).map((capability) => (
-            <button
-              key={capability}
-              type="button"
-              className={`rounded-full border px-5 py-3 text-sm transition-colors ${
-                capability === selectedCapability
-                  ? "border-[rgba(115,77,39,0.28)] bg-[rgba(255,249,239,0.88)] text-[#2f2217]"
-                  : "border-[rgba(115,77,39,0.14)] text-[#5a4632] hover:bg-[rgba(255,249,239,0.55)]"
-              }`}
-              onClick={() => setSelectedCapability(capability)}
-            >
-              {getCapabilityLabel(capability)}
-            </button>
-          ))}
-        </div>
-      </section>
+      <div className="flex flex-wrap gap-3">
+        {(["chat", "embedding"] as AIRuntimeCapability[]).map((capability) => (
+          <button
+            key={capability}
+            type="button"
+            className={`rounded-full border px-5 py-3 text-sm transition-colors ${
+              capability === selectedCapability
+                ? "border-[var(--line-strong)] bg-[var(--amber-soft)] text-ink"
+                : "border-[var(--line-soft)] text-[var(--text-dim)] hover:border-[var(--line-strong)]"
+            }`}
+            onClick={() => setSelectedCapability(capability)}
+          >
+            {getCapabilityLabel(capability)}
+          </button>
+        ))}
+      </div>
 
       {notice ? (
         <p
           role="status"
-          className={`rounded-[18px] border px-4 py-3 text-sm ${
-            notice.tone === "success"
-              ? "border-[rgba(115,77,39,0.18)] bg-[rgba(255,249,239,0.8)] text-[#5a4632]"
-              : "border-[rgba(160,112,96,0.22)] bg-[rgba(255,245,241,0.84)] text-[#8a5440]"
+          className={`border-l-2 border-[var(--line-strong)] pl-3 text-sm leading-6 ${
+            notice.tone === "success" ? "text-[var(--text-dim)]" : "text-[#8a5440]"
           }`}
         >
           {notice.text}

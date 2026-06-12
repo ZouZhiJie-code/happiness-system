@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { ActionButton, SectionHeading, Surface, actionButtonClass } from "@/components/ui";
 import {
   buildAdminAnalyticsDrilldownHref,
   buildAdminAnalyticsRangePresetHrefs,
@@ -245,6 +246,9 @@ function getCandidateSummary(user: {
   return "还没有已保存结果";
 }
 
+const CHIP_ACTIVE_CLASS = "border-[var(--line-strong)] bg-[var(--amber-soft)] text-ink";
+const CHIP_IDLE_CLASS = "border-[var(--line-soft)] text-[var(--text-dim)] transition-colors hover:border-[var(--line-strong)] hover:text-ink";
+
 function MetricTile({
   label,
   value,
@@ -260,16 +264,12 @@ function MetricTile({
   };
 }) {
   return (
-    <article className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.72)] p-4">
-      <p className="text-xs tracking-[0.16em] text-[#6a5e53]">{label}</p>
-      <p className="mt-3 text-2xl text-[#231d17]">{value}</p>
-      {hint ? <p className="mt-2 text-xs leading-6 text-[#6a5e53]">{hint}</p> : null}
+    <article>
+      <p className="text-xs tracking-[0.16em] text-[var(--text-faint)]">{label}</p>
+      <p className="mt-2 text-2xl text-ink">{value}</p>
+      {hint ? <p className="mt-1 text-xs leading-6 text-[var(--text-dim)]">{hint}</p> : null}
       {action ? (
-        <Link
-          href={action.href}
-          scroll={false}
-          className="mt-4 inline-flex min-h-10 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-4 py-2 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,252,247,0.82)]"
-        >
+        <Link href={action.href} scroll={false} className={actionButtonClass("ghost", "mt-2 px-0")}>
           {action.label}
         </Link>
       ) : null}
@@ -287,11 +287,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.78)] p-5 md:p-6">
-      <div className="max-w-3xl">
-        <h3 className="font-display text-2xl text-[#231d17]">{title}</h3>
-        {description ? <p className="mt-2 text-sm leading-7 text-[#524436]">{description}</p> : null}
-      </div>
+    <section className="border-t border-[var(--line-soft)] pt-5">
+      <SectionHeading title={title} description={description} />
       <div className="mt-5">{children}</div>
     </section>
   );
@@ -307,10 +304,10 @@ function StepBlock({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section className="space-y-5 border-t border-[var(--line-strong)] pt-6">
       <div className="max-w-4xl">
-        <h2 className="font-display text-3xl text-[#231d17]">{title}</h2>
-        <p className="mt-3 text-sm leading-8 text-[#524436]">{description}</p>
+        <h2 className="font-display text-3xl text-ink">{title}</h2>
+        <p className="mt-3 text-sm leading-8 text-[var(--text-dim)]">{description}</p>
       </div>
       {children}
     </section>
@@ -325,9 +322,11 @@ function DetailDisclosure({
   children: React.ReactNode;
 }) {
   return (
-    <details className="border border-[rgba(115,77,39,0.12)] bg-[rgba(255,252,247,0.72)] p-4">
-      <summary className="cursor-pointer list-none text-sm font-medium text-[#2f2217]">{summary}</summary>
-      <div className="mt-3 text-sm leading-7 text-[#524436]">{children}</div>
+    <details>
+      <summary className="cursor-pointer list-none text-sm font-medium text-ink underline decoration-1 underline-offset-4">
+        {summary}
+      </summary>
+      <div className="mt-3 text-sm leading-7 text-[var(--text-dim)]">{children}</div>
     </details>
   );
 }
@@ -375,37 +374,86 @@ function InvestigationPath({
   const activeSearch = hasActiveAdminAnalyticsUserSearch(context);
 
   return (
-    <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.68)] p-5 md:p-6">
-      <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[#6d6156]">当前调查路径</p>
-      <div className="mt-4 grid gap-3 text-sm text-[#524436] md:grid-cols-2 xl:grid-cols-3">
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">当前视角：{view === "review" ? "复盘" : "监控"}</p>
+    <section className="border-t border-[var(--line-soft)] pt-5">
+      <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[var(--text-faint)]">当前调查路径</p>
+      <div className="mt-4 grid gap-x-6 gap-y-4 text-sm text-[var(--text-dim)] md:grid-cols-2 xl:grid-cols-3">
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">当前视角：{view === "review" ? "复盘" : "监控"}</p>
           <p className="mt-1">{view === "review" ? "先看沉淀与转化，再进入人群。" : "先看链路健康与异常，再定位受影响的人。"}</p>
         </div>
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">当前时间范围</p>
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">当前时间范围</p>
           <p className="mt-1">{`${getRangeLabel(range)} · ${range.startDate} 至 ${range.endDate}`}</p>
         </div>
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">当前关注点</p>
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">当前关注点</p>
           <p className="mt-1">
             {activeSearch ? "已经进入候选集合筛查，准备判断哪些人值得继续看。" : "先判断最近发生了什么，再决定要看哪类人。"}
           </p>
         </div>
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">启用的筛选条件</p>
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">启用的筛选条件</p>
           <p className="mt-1">{filterSummary.length ? filterSummary.join("、") : "当前未启用筛选条件"}</p>
         </div>
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">搜索词</p>
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">搜索词</p>
           <p className="mt-1">{context.username ? `用户名包含“${context.username}”` : "当前没有搜索词"}</p>
         </div>
-        <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] px-4 py-3">
-          <p className="text-xs tracking-[0.14em] text-[#6a5e53]">单人上下文</p>
+        <div>
+          <p className="text-xs tracking-[0.14em] text-[var(--text-faint)]">单人上下文</p>
           <p className="mt-1">{context.selectedUserId ? "已选中 1 位候选用户，正在查看单人证据。" : "尚未选中具体用户"}</p>
         </div>
       </div>
     </section>
+  );
+}
+
+function FunnelStepRows({ title, steps }: { title: string; steps: Array<{ key: string; label: string; conversion: string; count: number }> }) {
+  return (
+    <div>
+      <h4 className="text-sm font-medium text-ink">{title}</h4>
+      <div className="mt-2 divide-y divide-[var(--line-soft)]">
+        {steps.map((step) => (
+          <div key={step.key} className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm text-ink">{step.label}</p>
+              <p className="text-xs text-[var(--text-faint)]">对上一环转化 {step.conversion}</p>
+            </div>
+            <p className="text-lg text-ink">{step.count}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DimensionSaveRows({ items }: { items: Array<{ dimension: InterviewDimension; savedEntryCount: number }> }) {
+  return (
+    <div className="divide-y divide-[var(--line-soft)] text-sm text-[var(--text-dim)]">
+      {items.map((item) => (
+        <div key={item.dimension} className="flex items-center justify-between py-3">
+          <span>{getAdminAnalyticsDimensionLabel(item.dimension)}</span>
+          <span>{item.savedEntryCount}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ErrorCodeRows({ items }: { items: Array<{ errorCode: string; count: number }> }) {
+  if (!items.length) {
+    return <p className="text-sm text-[var(--text-dim)]">当前范围没有错误码记录。</p>;
+  }
+
+  return (
+    <div className="divide-y divide-[var(--line-soft)] text-sm text-[var(--text-dim)]">
+      {items.map((item) => (
+        <div key={item.errorCode} className="flex items-center justify-between py-3">
+          <span>{item.errorCode}</span>
+          <span>{`当前范围记录到 ${item.count} 次。`}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -435,7 +483,7 @@ function ReviewWorkspace({
   return (
     <>
       <SectionCard title="本期速览" description="先判断这段时间有没有形成持续记录与结果沉淀，再决定往哪类人群下看。">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-3">
           <MetricTile label="MRU-7" value={overview.northStar.value} hint="最近 7 天内至少活跃一次的记录用户数" />
           <MetricTile
             label="结果沉淀"
@@ -459,36 +507,14 @@ function ReviewWorkspace({
       </SectionCard>
 
       <SectionCard title="转化路径" description="用同一份数据看主链路和完整日志补充链路，先定位掉点，再决定下一步看哪类人。">
-        <div className="grid gap-5 xl:grid-cols-2">
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-[#2f2217]">主链路</h4>
-            {mainFunnel.map((step) => (
-              <div key={step.key} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3">
-                <div>
-                  <p className="text-sm text-[#231d17]">{step.label}</p>
-                  <p className="text-xs text-[#6a5e53]">对上一环转化 {step.conversion}</p>
-                </div>
-                <p className="text-lg text-[#231d17]">{step.count}</p>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-[#2f2217]">完整日志补充链路</h4>
-            {secondaryFunnel.map((step) => (
-              <div key={step.key} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3">
-                <div>
-                  <p className="text-sm text-[#231d17]">{step.label}</p>
-                  <p className="text-xs text-[#6a5e53]">对上一环转化 {step.conversion}</p>
-                </div>
-                <p className="text-lg text-[#231d17]">{step.count}</p>
-              </div>
-            ))}
-          </div>
+        <div className="grid gap-x-10 gap-y-6 xl:grid-cols-2">
+          <FunnelStepRows title="主链路" steps={mainFunnel} />
+          <FunnelStepRows title="完整日志补充链路" steps={secondaryFunnel} />
         </div>
       </SectionCard>
 
       <SectionCard title="留存与回访" description="确认用户会不会回来记录，以及回来之后是否还会留下结果。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-5">
           <MetricTile label="D1 回访" value={formatPercent(retention.d1ReturnToRecordRate)} />
           <MetricTile
             label="D7 回访"
@@ -513,8 +539,8 @@ function ReviewWorkspace({
       </SectionCard>
 
       <SectionCard title="内容与质量" description="把草稿改写、异常边界、时延和错误码放在一起读，更容易判断体验摩擦。">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
             <MetricTile
               label="草稿编辑率"
               value={formatPercent(quality.draftEditRate)}
@@ -567,28 +593,17 @@ function ReviewWorkspace({
             <MetricTile label="AI p50" value={formatLatency(quality.ai.p50LatencyMs)} />
             <MetricTile label="AI p95" value={formatLatency(quality.ai.p95LatencyMs)} />
           </div>
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
-              <h4 className="text-sm font-medium text-[#2f2217]">维度保存分布</h4>
-              <div className="mt-3 space-y-2 text-sm text-[#524436]">
-                {quality.dimensionSaveBreakdown.map((item) => (
-                  <div key={item.dimension} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3">
-                    <span>{getAdminAnalyticsDimensionLabel(item.dimension)}</span>
-                    <span>{item.savedEntryCount}</span>
-                  </div>
-                ))}
+              <h4 className="text-sm font-medium text-ink">维度保存分布</h4>
+              <div className="mt-2">
+                <DimensionSaveRows items={quality.dimensionSaveBreakdown} />
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-[#2f2217]">错误码分布</h4>
-              <div className="mt-3 space-y-2 text-sm text-[#524436]">
-                {quality.ai.errorCodeBreakdown.length ? quality.ai.errorCodeBreakdown.map((item) => (
-                  <div key={item.errorCode} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3">
-                    <span>{item.errorCode}</span>
-                    <span>{`当前范围记录到 ${item.count} 次。`}</span>
-                  </div>
-                ))
-                : <p>当前范围没有错误码记录。</p>}
+              <h4 className="text-sm font-medium text-ink">错误码分布</h4>
+              <div className="mt-2">
+                <ErrorCodeRows items={quality.ai.errorCodeBreakdown} />
               </div>
             </div>
           </div>
@@ -619,7 +634,7 @@ function MonitorWorkspace({
   return (
     <>
       <SectionCard title="链路健康" description="先判断服务是否稳定、主链路是否持续有人走到关键节点。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-5">
           <MetricTile label="AI 成功率" value={formatPercent(quality.ai.successRate)} />
           <MetricTile label="AI p50" value={formatLatency(quality.ai.p50LatencyMs)} />
           <MetricTile label="AI p95" value={formatLatency(quality.ai.p95LatencyMs)} />
@@ -629,7 +644,7 @@ function MonitorWorkspace({
       </SectionCard>
 
       <SectionCard title="异常信号" description="把暂停、重开、边界不足和跳维提示并列放置，便于快速扫出异常。">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
           <MetricTile label="暂停会话" value={funnel.qualitySignals.pausedCount} />
           <MetricTile label="重开会话" value={funnel.qualitySignals.reopenedCount} />
           <MetricTile
@@ -650,34 +665,27 @@ function MonitorWorkspace({
           />
           <MetricTile label="dimension redirect" value={funnel.qualitySignals.dimensionRedirectCount} />
         </div>
-        <div className="mt-5 space-y-2 text-sm text-[#524436]">
-          <h4 className="font-medium text-[#2f2217]">错误码分布</h4>
-          {quality.ai.errorCodeBreakdown.length ? quality.ai.errorCodeBreakdown.map((item) => (
-            <div key={item.errorCode} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3">
-              <span>{item.errorCode}</span>
-              <span>{`当前范围记录到 ${item.count} 次。`}</span>
-            </div>
-          ))
-          : <p>当前范围没有错误码记录。</p>}
+        <div className="mt-6">
+          <h4 className="text-sm font-medium text-ink">错误码分布</h4>
+          <div className="mt-2">
+            <ErrorCodeRows items={quality.ai.errorCodeBreakdown} />
+          </div>
         </div>
       </SectionCard>
 
       <SectionCard title="质量风险" description="不扩新口径，直接把需要盯的风险项集中展示，再进入候选用户。">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
             <MetricTile label="stale rate" value={formatPercent(quality.staleRate)} />
             <MetricTile label="草稿编辑率" value={formatPercent(quality.draftEditRate)} />
             <MetricTile label="MRU-7" value={overview.northStar.value} />
             <MetricTile label="完整日志保存" value={funnel.secondaryFunnel.find((item) => item.key === "dailyJournalSaved")?.count ?? 0} />
           </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-[#2f2217]">维度保存分布</h4>
-            {quality.dimensionSaveBreakdown.map((item) => (
-              <div key={item.dimension} className="flex items-center justify-between border border-[rgba(115,77,39,0.1)] px-4 py-3 text-sm text-[#524436]">
-                <span>{getAdminAnalyticsDimensionLabel(item.dimension)}</span>
-                <span>{item.savedEntryCount}</span>
-              </div>
-            ))}
+          <div>
+            <h4 className="text-sm font-medium text-ink">维度保存分布</h4>
+            <div className="mt-2">
+              <DimensionSaveRows items={quality.dimensionSaveBreakdown} />
+            </div>
           </div>
         </div>
       </SectionCard>
@@ -762,10 +770,10 @@ function CandidateSearchPanel({
 
   return (
     <SectionCard title="当前调查对象" description={getSearchNarrative(context, getRangeLabel(range))}>
-      <div className="space-y-4">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.9fr)]">
-          <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] p-4">
-            <p className="text-sm font-medium text-[#2f2217]">搜索输入框</p>
+      <div className="space-y-5">
+        <div className="grid gap-x-10 gap-y-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.9fr)]">
+          <div>
+            <p className="text-sm font-medium text-ink">搜索输入框</p>
             <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3 sm:flex-row">
               <input type="hidden" name="view" value={view} />
               <input type="hidden" name="startDate" value={range.startDate} />
@@ -778,27 +786,24 @@ function CandidateSearchPanel({
                 name="username"
                 defaultValue={context.username ?? ""}
                 placeholder="按用户名定位候选用户"
-                className="min-h-11 flex-1 border border-[rgba(115,77,39,0.16)] bg-white px-4 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.3)]"
+                className="min-h-11 flex-1 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-white px-4 text-sm text-ink outline-none transition-colors focus:border-[var(--line-strong)]"
               />
-              <button
-                type="submit"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#6f4b2d] px-5 text-sm text-[#fff8ef]"
-              >
+              <ActionButton type="submit" variant="primary" className="min-h-11 px-5 text-sm">
                 开始筛查
-              </button>
+              </ActionButton>
             </form>
-            <p className="mt-3 text-sm leading-7 text-[#6a5e53]">先输入用户名或启用一个筛选条件，候选用户才会出现。</p>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-faint)]">先输入用户名或启用一个筛选条件，候选用户才会出现。</p>
           </div>
 
-          <div className="border border-[rgba(115,77,39,0.1)] bg-[rgba(255,252,247,0.72)] p-4">
-            <p className="text-sm font-medium text-[#2f2217]">调查说明</p>
-            <p className="mt-3 text-sm leading-7 text-[#524436]">
+          <div>
+            <p className="text-sm font-medium text-ink">调查说明</p>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-dim)]">
               {hasActiveAdminAnalyticsUserSearch(context)
                 ? "这批候选用户适合回答：最近哪类人发生了问题、留下了结果，或者值得继续追踪。"
                 : "这里先不直接铺全量用户。先明确目标，再把候选集合缩到足够可判断的范围。"}
             </p>
             {getFilterSummary(context).length ? (
-              <p className="mt-3 text-sm leading-7 text-[#524436]">已启用筛选：{getFilterSummary(context).join("、")}。</p>
+              <p className="mt-3 text-sm leading-7 text-[var(--text-dim)]">已启用筛选：{getFilterSummary(context).join("、")}。</p>
             ) : null}
           </div>
         </div>
@@ -809,10 +814,8 @@ function CandidateSearchPanel({
               key={chip.label}
               href={chip.href}
               scroll={false}
-              className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm transition-colors ${
-                chip.active
-                  ? "border-[rgba(115,77,39,0.2)] bg-[#6f4b2d] text-[#fff8ef]"
-                  : "border-[rgba(115,77,39,0.16)] text-[#5a4632] hover:bg-[rgba(255,252,247,0.82)]"
+              className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm ${
+                chip.active ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS
               }`}
             >
               {chip.label}
@@ -852,19 +855,19 @@ function CandidateResults({
   }
 
   return (
-    <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.78)] p-5 md:p-6">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h3 className="font-display text-2xl text-[#231d17]">候选用户</h3>
-          <p className="mt-2 text-sm leading-7 text-[#524436]">先看轻量概览，再决定是否进入单人上下文。</p>
-        </div>
-        <p className="text-sm text-[#6a5e53]">{users.length ? `共 ${users.length} 位候选用户` : "当前没有候选用户"}</p>
-      </div>
+    <section className="border-t border-[var(--line-soft)] pt-5">
+      <SectionHeading
+        title="候选用户"
+        description="先看轻量概览，再决定是否进入单人上下文。"
+        actions={
+          <p className="text-sm text-[var(--text-faint)]">{users.length ? `共 ${users.length} 位候选用户` : "当前没有候选用户"}</p>
+        }
+      />
       {users.length ? (
         <div className="mt-5 overflow-x-auto">
-          <table aria-label="候选用户结果" className="min-w-full border-collapse text-left text-sm text-[#524436]">
+          <table aria-label="候选用户结果" className="min-w-full border-collapse text-left text-sm text-[var(--text-dim)]">
             <thead>
-              <tr className="border-b border-[rgba(115,77,39,0.14)] text-xs tracking-[0.14em] text-[#6a5e53]">
+              <tr className="border-b border-[var(--line-strong)] text-xs tracking-[0.14em] text-[var(--text-faint)]">
                 <th className="px-3 py-3 font-medium">用户名</th>
                 <th className="px-3 py-3 font-medium">最近活跃</th>
                 <th className="px-3 py-3 font-medium">当前漏斗阶段</th>
@@ -875,8 +878,8 @@ function CandidateResults({
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-b border-[rgba(115,77,39,0.1)]">
-                  <td className="px-3 py-4 text-[#231d17]">{user.username}</td>
+                <tr key={user.id} className="border-b border-[var(--line-soft)]">
+                  <td className="px-3 py-4 text-ink">{user.username}</td>
                   <td className="px-3 py-4">{formatEntryDateLike(user.latestActiveAt ?? user.createdAt)}</td>
                   <td className="px-3 py-4">{getAdminAnalyticsUserFunnelStepLabel(user.funnelStep)}</td>
                   <td className="px-3 py-4">{getCandidateSummary(user)}</td>
@@ -886,7 +889,7 @@ function CandidateResults({
                         {user.riskTags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex min-h-8 items-center rounded-full border border-[rgba(115,77,39,0.14)] bg-[rgba(255,252,247,0.82)] px-3 text-xs tracking-[0.08em] text-[#5a4632]"
+                            className="inline-flex min-h-8 items-center rounded-full border border-[var(--line-soft)] px-3 text-xs tracking-[0.08em] text-[var(--text-dim)]"
                           >
                             {getCandidateRiskLabel(tag)}
                           </span>
@@ -905,7 +908,7 @@ function CandidateResults({
                         }
                       })}
                       scroll={false}
-                      className="inline-flex min-h-10 items-center rounded-full border border-[rgba(115,77,39,0.16)] px-4 py-2 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,252,247,0.82)]"
+                      className={actionButtonClass("secondary", "min-h-10 px-4 text-sm")}
                     >
                       查看详情
                     </Link>
@@ -916,7 +919,7 @@ function CandidateResults({
           </table>
         </div>
       ) : (
-        <p className="mt-4 text-sm leading-7 text-[#6a5e53]">当前筛查条件下还没有候选用户，建议调整搜索词或切换筛选条件。</p>
+        <p className="mt-4 text-sm leading-7 text-[var(--text-faint)]">当前筛查条件下还没有候选用户，建议调整搜索词或切换筛选条件。</p>
       )}
     </section>
   );
@@ -924,9 +927,9 @@ function CandidateResults({
 
 function EmptyUserContext() {
   return (
-    <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-      <h3 className="font-display text-2xl text-[#231d17]">第三步：进入单人上下文</h3>
-      <p className="mt-3 text-sm leading-8 text-[#524436]">只有明确选中某个候选用户后，这里才会展开单人证据。当前先停留在候选集合层，避免总览和个人详情并排混在同一决策层。</p>
+    <section className="border-t border-[var(--line-strong)] pt-6">
+      <h3 className="font-display text-2xl text-ink">第三步：进入单人上下文</h3>
+      <p className="mt-3 text-sm leading-8 text-[var(--text-dim)]">只有明确选中某个候选用户后，这里才会展开单人证据。当前先停留在候选集合层，避免总览和个人详情并排混在同一决策层。</p>
     </section>
   );
 }
@@ -958,26 +961,26 @@ function UserContextDetail({
   const whyVisible = getSelectedUserReason(context);
 
   return (
-    <section className="space-y-4">
-      <div className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-        <h3 className="font-display text-2xl text-[#231d17]">第三步：进入单人上下文</h3>
-        <p className="mt-3 text-sm leading-8 text-[#524436]">现在开始回答：这个人为什么值得看，以及最近具体发生了什么。</p>
+    <section className="space-y-6 border-t border-[var(--line-strong)] pt-6">
+      <div>
+        <h3 className="font-display text-2xl text-ink">第三步：进入单人上下文</h3>
+        <p className="mt-3 text-sm leading-8 text-[var(--text-dim)]">现在开始回答：这个人为什么值得看，以及最近具体发生了什么。</p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <p className="font-mono text-[0.68rem] tracking-[0.18em] text-[#6a5e53]">为什么看到这个人</p>
-          <ul className="mt-4 space-y-2 text-sm leading-7 text-[#524436]">
+      <div className="grid gap-x-10 gap-y-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <section>
+          <p className="font-mono text-[0.68rem] tracking-[0.18em] text-[var(--text-faint)]">为什么看到这个人</p>
+          <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-dim)]">
             {whyVisible.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}
           </ul>
         </section>
 
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <p className="font-mono text-[0.68rem] tracking-[0.18em] text-[#6a5e53]">用户摘要</p>
-          <h4 className="mt-3 font-display text-2xl text-[#231d17]">{userDetail.user.username}</h4>
-          <dl className="mt-4 grid gap-3 text-sm text-[#524436]">
+        <section>
+          <p className="font-mono text-[0.68rem] tracking-[0.18em] text-[var(--text-faint)]">用户摘要</p>
+          <h4 className="mt-3 font-display text-2xl text-ink">{userDetail.user.username}</h4>
+          <dl className="mt-4 grid gap-3 text-sm text-[var(--text-dim)]">
             <div className="flex items-center justify-between gap-4">
               <dt>注册时间</dt>
               <dd>{formatEntryDateLike(userDetail.user.createdAt)}</dd>
@@ -998,10 +1001,10 @@ function UserContextDetail({
         </section>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">最近会话</h4>
-          <div className="mt-3 space-y-2">
+      <div className="grid gap-x-10 gap-y-6 xl:grid-cols-3">
+        <section>
+          <h4 className="text-sm font-medium text-ink">最近会话</h4>
+          <div className="mt-2 divide-y divide-[var(--line-soft)]">
             {userDetail.sessions.map((session) => (
               <Link
                 key={session.id}
@@ -1016,7 +1019,7 @@ function UserContextDetail({
                   sessionId: session.id
                 })}
                 scroll={false}
-                className="block border border-[rgba(115,77,39,0.1)] px-4 py-3 text-sm text-[#524436] transition-colors hover:bg-[rgba(255,252,247,0.82)]"
+                className="block py-3 text-sm text-[var(--text-dim)] transition-colors hover:text-ink"
               >
                 {`${getAdminAnalyticsDimensionLabel(session.dimension)} · ${formatEntryDateLike(session.entryDate)} · ${getAdminAnalyticsSessionStatusLabel(session.status)} · ${session.turnCount} 轮`}
               </Link>
@@ -1024,9 +1027,9 @@ function UserContextDetail({
           </div>
         </section>
 
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">最近维度日志</h4>
-          <div className="mt-3 space-y-2">
+        <section>
+          <h4 className="text-sm font-medium text-ink">最近维度日志</h4>
+          <div className="mt-2 divide-y divide-[var(--line-soft)]">
             {userDetail.joyEntries.map((entry) => (
               <Link
                 key={entry.id}
@@ -1041,7 +1044,7 @@ function UserContextDetail({
                   entryId: entry.id
                 })}
                 scroll={false}
-                className="block border border-[rgba(115,77,39,0.1)] px-4 py-3 text-sm text-[#524436] transition-colors hover:bg-[rgba(255,252,247,0.82)]"
+                className="block py-3 text-sm text-[var(--text-dim)] transition-colors hover:text-ink"
               >
                 {`${entry.title} · ${getAdminAnalyticsEntryStatusLabel(entry.status)} · ${formatEntryDateLike(entry.updatedAt)}`}
               </Link>
@@ -1049,9 +1052,9 @@ function UserContextDetail({
           </div>
         </section>
 
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">最近完整日志</h4>
-          <div className="mt-3 space-y-2">
+        <section>
+          <h4 className="text-sm font-medium text-ink">最近完整日志</h4>
+          <div className="mt-2 divide-y divide-[var(--line-soft)]">
             {userDetail.dailyJournals.map((entry) => (
               <Link
                 key={entry.id}
@@ -1066,7 +1069,7 @@ function UserContextDetail({
                   dailyJournalId: entry.id
                 })}
                 scroll={false}
-                className="block border border-[rgba(115,77,39,0.1)] px-4 py-3 text-sm text-[#524436] transition-colors hover:bg-[rgba(255,252,247,0.82)]"
+                className="block py-3 text-sm text-[var(--text-dim)] transition-colors hover:text-ink"
               >
                 {`${entry.title} · ${getAdminAnalyticsEntryStatusLabel(entry.status)} · ${formatEntryDateLike(entry.date)}`}
               </Link>
@@ -1076,15 +1079,15 @@ function UserContextDetail({
       </div>
 
       {sessionDetail ? (
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">会话详情</h4>
-          <p className="mt-2 text-xs text-[#6a5e53]">状态：{getAdminAnalyticsSessionStatusLabel(sessionDetail.status ?? "completed")}</p>
+        <section className="border-t border-[var(--line-soft)] pt-5">
+          <h4 className="text-sm font-medium text-ink">会话详情</h4>
+          <p className="mt-2 text-xs text-[var(--text-faint)]">状态：{getAdminAnalyticsSessionStatusLabel(sessionDetail.status ?? "completed")}</p>
           <div className="mt-4">
             <DetailDisclosure summary="展开对话原文">
               <div className="space-y-3">
                 {sessionDetail.messages.map((message) => (
-                  <div key={message.id} className="border-l border-[rgba(115,77,39,0.14)] pl-3">
-                    <p className="text-xs tracking-[0.16em] text-[#6a5e53]">{message.role === "user" ? "用户" : "AI"}</p>
+                  <div key={message.id} className="border-l border-[var(--line-soft)] pl-3">
+                    <p className="text-xs tracking-[0.16em] text-[var(--text-faint)]">{message.role === "user" ? "用户" : "AI"}</p>
                     <p className="mt-1 whitespace-pre-wrap">{message.content}</p>
                   </div>
                 ))}
@@ -1095,9 +1098,9 @@ function UserContextDetail({
       ) : null}
 
       {entryDetail ? (
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">维度日志详情</h4>
-          <p className="mt-3 text-sm text-[#231d17]">{entryDetail.title}</p>
+        <section className="border-t border-[var(--line-soft)] pt-5">
+          <h4 className="text-sm font-medium text-ink">维度日志详情</h4>
+          <p className="mt-3 text-sm text-ink">{entryDetail.title}</p>
           <div className="mt-4">
             <DetailDisclosure summary="展开维度日志正文">
               <p className="whitespace-pre-wrap">{entryDetail.content}</p>
@@ -1107,9 +1110,9 @@ function UserContextDetail({
       ) : null}
 
       {dailyJournalDetail ? (
-        <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.82)] p-5 md:p-6">
-          <h4 className="text-sm font-medium text-[#2f2217]">完整日志详情</h4>
-          <p className="mt-3 text-sm text-[#231d17]">{dailyJournalDetail.title}</p>
+        <section className="border-t border-[var(--line-soft)] pt-5">
+          <h4 className="text-sm font-medium text-ink">完整日志详情</h4>
+          <p className="mt-3 text-sm text-ink">{dailyJournalDetail.title}</p>
           <div className="mt-4">
             <DetailDisclosure summary="展开完整日志正文">
               <p className="whitespace-pre-wrap">{dailyJournalDetail.content}</p>
@@ -1187,25 +1190,26 @@ export function AdminAnalyticsShell({
   });
 
   return (
-    <section className="page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10">
+    <Surface
+      as="section"
+      className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10"
+    >
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="max-w-[56rem]">
-          <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[#6d6156]">Admin Analytics</p>
-          <h1 className="mt-4 font-display text-4xl leading-tight text-[#231d17] md:text-5xl">管理员数据分析</h1>
-          <p className="mt-4 text-sm leading-8 text-[#524436]">把总览、人群筛查和单人证据拆成三层推进，先判断最近发生了什么，再进入候选集合和个人上下文。</p>
+          <p className="font-mono text-[0.72rem] tracking-[0.22em] text-[var(--text-faint)]">Admin Analytics</p>
+          <h1 className="mt-4 font-display text-4xl leading-tight text-ink md:text-5xl">管理员数据分析</h1>
+          <p className="mt-4 text-sm leading-8 text-[var(--text-dim)]">把总览、人群筛查和单人证据拆成三层推进，先判断最近发生了什么，再进入候选集合和个人上下文。</p>
         </header>
 
-        <section className="flex flex-col gap-4 border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.68)] p-5 md:p-6">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-3">
             {viewLinks.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 scroll={false}
-                className={`inline-flex min-h-11 items-center rounded-full border px-5 py-3 text-sm transition-colors ${
-                  item.active
-                    ? "border-[rgba(115,77,39,0.2)] bg-[#6f4b2d] text-[#fff8ef]"
-                    : "border-[rgba(115,77,39,0.16)] text-[#5a4632] hover:bg-[rgba(255,249,239,0.82)]"
+                className={`inline-flex min-h-11 items-center rounded-full border px-5 py-3 text-sm ${
+                  item.active ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS
                 }`}
               >
                 {item.label}
@@ -1219,18 +1223,16 @@ export function AdminAnalyticsShell({
                 key={preset.key}
                 href={preset.href}
                 scroll={false}
-                className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm transition-colors ${
-                  preset.label === getRangeLabel(range)
-                    ? "border-[rgba(115,77,39,0.2)] bg-[rgba(111,75,45,0.08)] text-[#5a4632]"
-                    : "border-[rgba(115,77,39,0.16)] text-[#5a4632] hover:bg-[rgba(255,249,239,0.82)]"
+                className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm ${
+                  preset.label === getRangeLabel(range) ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS
                 }`}
               >
                 {preset.label}
               </Link>
             ))}
-            <span className="text-sm text-[#6a5e53]">{`${range.startDate} 至 ${range.endDate}`}</span>
+            <span className="text-sm text-[var(--text-faint)]">{`${range.startDate} 至 ${range.endDate}`}</span>
           </div>
-        </section>
+        </div>
 
         <InvestigationPath view={view} range={range} context={context} />
 
@@ -1274,6 +1276,6 @@ export function AdminAnalyticsShell({
           context={context}
         />
       </div>
-    </section>
+    </Surface>
   );
 }

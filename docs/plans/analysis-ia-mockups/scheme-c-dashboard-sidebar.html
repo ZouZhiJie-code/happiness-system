@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方案 C · 量化主屏 + AI 侧栏</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    @media (max-width: 899px) {
+      .sidebar-order { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav">
+      <span>日历</span>
+      <span class="active">分析</span>
+      <span>画像</span>
+      <span>设置</span>
+    </nav>
+  </header>
+
+  <div class="analysis-toolbar">
+    <button class="preset-btn">本周</button>
+    <button class="preset-btn active">本月</button>
+    <button class="preset-btn">自定义</button>
+    <span class="toolbar-divider">｜</span>
+    <span class="date-range">2026-06-01 — 2026-06-12</span>
+  </div>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>方案 C</strong> · 左侧量化 dashboard + 右侧 AI 面板</span>
+        <a href="index.html">← 返回对比</a>
+      </div>
+
+      <div class="layout-split">
+        <!-- 主区：量化 dashboard -->
+        <div>
+          <p class="period-summary">主屏始终展示图表与五维摘要；AI 输出在右侧面板按需展开。</p>
+
+          <div class="section-heading">
+            <div class="eyebrow">DASHBOARD</div>
+            <h2>量化总览</h2>
+          </div>
+
+          <div class="grid-2">
+            <div class="ui-card">
+              <p class="stat-line" style="margin-bottom:0.75rem">总分 · 6.8</p>
+              <div class="chart-placeholder">走势</div>
+            </div>
+            <div class="ui-card">
+              <p class="stat-line" style="margin-bottom:0.75rem">8 要素</p>
+              <div class="chart-placeholder">要素</div>
+            </div>
+          </div>
+
+          <div class="ui-card" style="margin-top:0.75rem">
+            <p class="stat-line" style="margin-bottom:0.75rem">记录热力</p>
+            <div class="heatmap">
+              <div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+              <div class="heat-cell"></div><div class="heat-cell on"></div><div class="heat-cell score"></div><div class="heat-cell on"></div>
+              <div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+              <div class="heat-cell on"></div><div class="heat-cell on"></div><div class="heat-cell"></div><div class="heat-cell score"></div>
+            </div>
+          </div>
+
+          <hr class="hairline" />
+
+          <div class="section-heading">
+            <div class="eyebrow">DIMENSIONS</div>
+            <h2>五维快览</h2>
+          </div>
+          <div class="ui-card">
+            <div class="dim-row">
+              <span class="dim-badge">改</span>
+              <span>5 条 · 把节奏放稳</span>
+            </div>
+            <div class="dim-row">
+              <span class="dim-badge">实</span>
+              <span>3 条 · 推进有落地感</span>
+            </div>
+            <div class="dim-row">
+              <span class="dim-badge">悦</span>
+              <span>2 条</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 侧栏：AI 面板 -->
+        <aside class="sidebar sidebar-sticky sidebar-order">
+          <div class="section-heading">
+            <div class="eyebrow">AI PANEL</div>
+            <h2 style="font-size:0.95rem">洞察与复盘</h2>
+          </div>
+
+          <div class="sidebar-tab">
+            <button class="active">关联</button>
+            <button>复盘</button>
+          </div>
+
+          <div class="empty-ai" style="padding:1.25rem 0.5rem">
+            <p style="font-size:0.82rem">选择「关联」或「复盘」后手动生成</p>
+          </div>
+
+          <p style="margin:1rem 0 0.5rem;font-size:0.78rem;color:var(--text-faint)">生成后示意：</p>
+
+          <div class="ai-block">
+            <div class="ai-label">AI 关联 · 基于 10 天材料</div>
+            健康评分偏低的几天，「改进」维度多次提到睡眠与边界。6 月 8 日总分 5.2，同日记录了「提前留出缓冲」。
+            <p style="margin:0.75rem 0 0"><span class="btn-ghost">查看 6-08</span></p>
+          </div>
+
+          <p style="margin:1rem 0 0.5rem;font-size:0.78rem;color:var(--text-faint)">切换「复盘」tab 后：</p>
+
+          <div class="ai-block" style="margin-top:0.5rem;opacity:0.7">
+            <div class="ai-label">AI 复盘 · 手动生成</div>
+            <span class="btn-primary" style="font-size:0.78rem;padding:0.4rem 0.85rem;margin-top:0.25rem;display:inline-block">生成本月复盘</span>
+          </div>
+        </aside>
+      </div>
+
+      <p class="stat-line" style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-faint);text-align:center">
+        小屏时 AI 面板会移到主区上方或改为底部抽屉（实现时需额外设计）
+      </p>
+    </div>
+  </main>
+</body>
+</html>

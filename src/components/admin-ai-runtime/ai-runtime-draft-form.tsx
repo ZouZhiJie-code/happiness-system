@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { ActionButton, Card, Divider } from "@/components/ui";
 import type { AIRuntimeCapability } from "@/features/admin-ai-runtime/types";
 import type { AIRuntimeConfigPayload } from "@/features/admin-ai-runtime/api";
 
@@ -17,6 +18,9 @@ type DraftFormState = {
   endpointId: string;
   embeddingEndpointId: string;
 };
+
+const FIELD_INPUT_CLASS =
+  "min-h-11 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-white/70 px-4 text-ink outline-none transition-colors focus:border-[var(--line-strong)]";
 
 function getProviderOptions(capability: AIRuntimeCapability) {
   return capability === "chat"
@@ -146,11 +150,11 @@ export function AIRuntimeDraftForm({
   }
 
   return (
-    <section className="border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.44)] p-4 md:p-5">
+    <Card as="section" className="p-4 md:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[#6a5e53]">草稿编辑区</p>
-          <h3 className="mt-3 font-display text-2xl text-[#231d17]">
+          <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[var(--text-faint)]">草稿编辑区</p>
+          <h3 className="mt-3 font-display text-2xl text-ink">
             {capability === "chat" ? "聊天能力草稿" : "向量嵌入草稿"}
           </h3>
         </div>
@@ -159,17 +163,19 @@ export function AIRuntimeDraftForm({
         </span>
       </div>
 
+      <Divider className="mt-4" />
+
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm text-[#5a4632]">
+        <label className="grid gap-2 text-sm text-[var(--text-dim)]">
           <span>草稿名称</span>
           <input
             value={formState.displayName}
             onChange={(event) => updateField("displayName", event.target.value)}
-            className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+            className={FIELD_INPUT_CLASS}
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-[#5a4632]">
+        <label className="grid gap-2 text-sm text-[var(--text-dim)]">
           <span>Provider</span>
           <select
             value={formState.provider}
@@ -181,7 +187,7 @@ export function AIRuntimeDraftForm({
                 baseUrl: getDefaultBaseUrl(nextProvider)
               }));
             }}
-            className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+            className={FIELD_INPUT_CLASS}
           >
             {getProviderOptions(capability).map((option) => (
               <option key={option.value} value={option.value}>
@@ -191,53 +197,53 @@ export function AIRuntimeDraftForm({
           </select>
         </label>
 
-        <label className="grid gap-2 text-sm text-[#5a4632] md:col-span-2">
+        <label className="grid gap-2 text-sm text-[var(--text-dim)] md:col-span-2">
           <span>API Key</span>
           <input
             type="password"
             value={formState.apiKey}
             onChange={(event) => updateField("apiKey", event.target.value)}
             placeholder={draft?.apiKeyMask ? `当前已保存：${draft.apiKeyMask}` : "输入新的 API Key"}
-            className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+            className={FIELD_INPUT_CLASS}
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-[#5a4632] md:col-span-2">
+        <label className="grid gap-2 text-sm text-[var(--text-dim)] md:col-span-2">
           <span>Base URL</span>
           <input
             value={formState.baseUrl}
             onChange={(event) => updateField("baseUrl", event.target.value)}
-            className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+            className={FIELD_INPUT_CLASS}
           />
         </label>
 
         {formState.provider === "openai" ? (
-          <label className="grid gap-2 text-sm text-[#5a4632] md:col-span-2">
+          <label className="grid gap-2 text-sm text-[var(--text-dim)] md:col-span-2">
             <span>{capability === "chat" ? "聊天模型" : "Embedding 模型"}</span>
             <input
               value={formState.model}
               onChange={(event) => updateField("model", event.target.value)}
-              className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+              className={FIELD_INPUT_CLASS}
             />
           </label>
         ) : null}
 
         {formState.provider === "anthropic" ? (
           <>
-            <label className="grid gap-2 text-sm text-[#5a4632]">
+            <label className="grid gap-2 text-sm text-[var(--text-dim)]">
               <span>Messages 模型</span>
               <input
                 value={formState.model}
                 onChange={(event) => updateField("model", event.target.value)}
-                className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+                className={FIELD_INPUT_CLASS}
               />
             </label>
-            <label className="grid gap-2 text-sm text-[#5a4632]">
+            <label className="grid gap-2 text-sm text-[var(--text-dim)]">
               <span>Anthropic Version</span>
               <input
                 value={formState.anthropicVersion}
                 onChange={(event) => updateField("anthropicVersion", event.target.value)}
-                className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+                className={FIELD_INPUT_CLASS}
               />
             </label>
           </>
@@ -245,38 +251,38 @@ export function AIRuntimeDraftForm({
 
         {formState.provider === "volcengine_ark" && capability === "chat" ? (
           <>
-            <label className="grid gap-2 text-sm text-[#5a4632]">
+            <label className="grid gap-2 text-sm text-[var(--text-dim)]">
               <span>模型 ID</span>
               <input
                 value={formState.modelId}
                 onChange={(event) => updateField("modelId", event.target.value)}
-                className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+                className={FIELD_INPUT_CLASS}
               />
             </label>
-            <label className="grid gap-2 text-sm text-[#5a4632]">
+            <label className="grid gap-2 text-sm text-[var(--text-dim)]">
               <span>Endpoint ID</span>
               <input
                 value={formState.endpointId}
                 onChange={(event) => updateField("endpointId", event.target.value)}
-                className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+                className={FIELD_INPUT_CLASS}
               />
             </label>
           </>
         ) : null}
 
         {formState.provider === "volcengine_ark" && capability === "embedding" ? (
-          <label className="grid gap-2 text-sm text-[#5a4632] md:col-span-2">
+          <label className="grid gap-2 text-sm text-[var(--text-dim)] md:col-span-2">
             <span>Embedding Endpoint ID</span>
             <input
               value={formState.embeddingEndpointId}
               onChange={(event) => updateField("embeddingEndpointId", event.target.value)}
-              className="min-h-11 border border-[rgba(115,77,39,0.16)] bg-white/70 px-4 text-[#2f2217] outline-none transition-colors focus:border-[rgba(115,77,39,0.4)]"
+              className={FIELD_INPUT_CLASS}
             />
           </label>
         ) : null}
       </div>
 
-      <label className="mt-4 inline-flex items-center gap-3 text-sm text-[#5a4632]">
+      <label className="mt-4 inline-flex items-center gap-3 text-sm text-[var(--text-dim)]">
         <input
           type="checkbox"
           checked={formState.enabled}
@@ -285,7 +291,9 @@ export function AIRuntimeDraftForm({
         <span>启用数据库配置接管运行时。关闭后会继续使用环境变量回退配置。</span>
       </label>
 
-      <div className="mt-4 space-y-2 text-sm leading-7 text-[#5a4632]">
+      <Divider className="mt-4" />
+
+      <div className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-dim)]">
         <p>发布后，从下一次 AI 请求开始生效</p>
         <p>保存后不会再次明文显示 API Key</p>
         <p>如果数据库配置不可用，系统会改用环境变量配置</p>
@@ -293,31 +301,34 @@ export function AIRuntimeDraftForm({
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <button
+        <ActionButton
           type="button"
-          className="min-h-11 rounded-full border border-[rgba(115,77,39,0.16)] bg-[rgba(255,249,239,0.7)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.92)] disabled:cursor-not-allowed disabled:opacity-60"
+          variant="primary"
+          className="min-h-11 px-5 text-sm"
           onClick={() => void onSave(buildPayload(capability, formState))}
           disabled={pendingAction !== null}
         >
           {pendingAction === "save" ? "保存中…" : "保存草稿"}
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
-          className="min-h-11 rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
+          variant="secondary"
+          className="min-h-11 px-5 text-sm"
           onClick={() => void onProbe()}
           disabled={pendingAction !== null || !draft}
         >
           {pendingAction === "probe" ? "测试中…" : "执行连通性测试"}
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
-          className="min-h-11 rounded-full border border-[rgba(115,77,39,0.16)] px-5 py-3 text-sm text-[#5a4632] transition-colors hover:bg-[rgba(255,249,239,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
+          variant="secondary"
+          className="min-h-11 px-5 text-sm"
           onClick={() => void onPublish()}
           disabled={pendingAction !== null || !draft}
         >
           {pendingAction === "publish" ? "发布中…" : "发布配置"}
-        </button>
+        </ActionButton>
       </div>
-    </section>
+    </Card>
   );
 }

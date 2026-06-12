@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>方案 D · 单页 scroll + 顶部 Tab</title>
+  <link rel="stylesheet" href="_shared.css" />
+  <style>
+    .section-block { scroll-margin-top: calc(var(--header-h) + 0.5rem); }
+    .tab-sticky-hint {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      margin: -0.5rem 0 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">Daily Light</span>
+    <nav class="nav">
+      <span>日历</span>
+      <span class="active">分析</span>
+      <span>画像</span>
+      <span>设置</span>
+    </nav>
+  </header>
+
+  <div class="analysis-toolbar">
+    <button class="preset-btn">本周</button>
+    <button class="preset-btn active">本月</button>
+    <button class="preset-btn">自定义</button>
+    <span class="toolbar-divider">｜</span>
+    <span class="date-range">2026-06-01 — 2026-06-12</span>
+    <span class="toolbar-divider">｜</span>
+    <div class="tab-bar" style="margin:0">
+      <a class="tab active" href="#analysis-trends">量化趋势</a>
+      <a class="tab" href="#analysis-dimensions">五维全景</a>
+      <a class="tab" href="#analysis-correlation">关联</a>
+      <a class="tab" href="#analysis-review">复盘</a>
+    </div>
+  </div>
+
+  <main class="page-shell">
+    <div class="page-inner">
+      <div class="scheme-banner">
+        <span><strong>方案 D · 已选定</strong> · A 单页纵向 + B 顶部 Tab · scroll spy 联动</span>
+        <a href="index.html">← 返回对比</a>
+      </div>
+
+      <p class="tab-sticky-hint">滚动时 tab 高亮随当前区块变化；点击 tab 跳转到对应锚点。四段始终同屏 mount。</p>
+
+      <section id="analysis-trends" data-analysis-section="trends" class="section-block">
+        <div class="section-heading"><div class="eyebrow">01 · 量化趋势</div><h2>评分与记录趋势</h2></div>
+        <div class="grid-2">
+          <div class="ui-card"><div class="chart-placeholder">总分走势</div></div>
+          <div class="ui-card"><div class="chart-placeholder">8 要素</div></div>
+        </div>
+        <div class="ui-card" style="margin-top:0.75rem"><div class="chart-placeholder">记录热力</div></div>
+      </section>
+
+      <hr class="hairline" />
+
+      <section id="analysis-dimensions" data-analysis-section="dimensions" class="section-block">
+        <div class="section-heading"><div class="eyebrow">02 · 五维全景</div><h2>五维记录线索</h2></div>
+        <div class="ui-card">
+          <div class="dim-row"><span class="dim-badge">改</span><span>5 条 · 把节奏放稳</span></div>
+          <div class="dim-row"><span class="dim-badge">实</span><span>3 条</span></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <section id="analysis-correlation" data-analysis-section="correlation" class="section-block">
+        <div class="section-heading"><div class="eyebrow">03 · 关联</div><h2>评分与五维关联</h2></div>
+        <div class="ui-card empty-ai">
+          <p>框架占位</p>
+          <span class="btn-primary" style="font-size:0.78rem;padding:0.4rem 0.85rem;opacity:0.5">生成关联分析</span>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <section id="analysis-review" data-analysis-section="review" class="section-block">
+        <div class="section-heading"><div class="eyebrow">04 · 复盘</div><h2>周期复盘</h2></div>
+        <div class="ui-card empty-ai">
+          <p>框架占位</p>
+          <span class="btn-primary" style="font-size:0.78rem;padding:0.4rem 0.85rem;opacity:0.5">生成本周期复盘</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

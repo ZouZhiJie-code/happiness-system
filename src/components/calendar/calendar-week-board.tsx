@@ -51,7 +51,7 @@ export function CalendarWeekBoard({
               data-status={day.overallStatus}
               aria-current={today === day.date ? "date" : undefined}
               className={clsx(
-                "calendar-card flex min-h-[13.75rem] flex-col rounded-[22px] border p-3.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                "ui-card flex min-h-[13.75rem] flex-col p-3.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md",
                 getCalendarWeekDaySurfaceClass(day.overallStatus)
               )}
               aria-label={`${dateLabel}，${cardState.statusLabel}${dailyJournalLabel ? `，${dailyJournalLabel}` : ""}，主动作：${cardState.action.label}`}
@@ -77,7 +77,7 @@ export function CalendarWeekBoard({
                 {dailyJournalLabel ? (
                   <span
                     aria-hidden="true"
-                    className="mt-1 size-1.5 shrink-0 rounded-full bg-[#604529] shadow-[0_0_0_3px_rgba(96,69,41,0.12)]"
+                    className="mt-1 size-1.5 shrink-0 rounded-full bg-[#604529] ring-[3px] ring-[var(--amber-soft)]"
                   />
                 ) : null}
               </div>
