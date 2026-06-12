@@ -591,7 +591,7 @@ describe("analysis shell", () => {
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     await screen.findByTestId("analysis-trends-section");
-    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "总分走势" });
     expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
     await screen.findByTestId("analysis-dimension-cards");
 
@@ -681,7 +681,7 @@ describe("analysis shell", () => {
     renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
-    expect(screen.getByRole("heading", { name: "幸福 8 要素评分" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "幸福 8 要素评分" });
     expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
   });
 
@@ -694,7 +694,7 @@ describe("analysis shell", () => {
     renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
-    expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "日志天数" });
     expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "开始这一天的记录" })).not.toBeInTheDocument();
   });
@@ -788,8 +788,7 @@ describe("analysis shell", () => {
     renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
-
-    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "总分走势" });
     expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "幸福 8 要素评分" })).toBeInTheDocument();
     expect(screen.getByLabelText("总分柱线走势")).toBeInTheDocument();
@@ -880,7 +879,7 @@ describe("analysis shell", () => {
 
     renderWithAnalysisChrome(<AnalysisShell />);
 
-    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "总分走势" });
     await screen.findByTestId("analysis-dimension-cards");
   });
 
