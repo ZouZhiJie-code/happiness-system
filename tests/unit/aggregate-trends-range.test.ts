@@ -11,6 +11,8 @@ describe("aggregateAnalysisTrendsRange", () => {
           id: "entry-1",
           date: "2026-06-02",
           dimension: "joy",
+          title: "清醒地开始",
+          content: "那天早上比平时早醒半小时，没有急着看手机。",
           tags: [],
           payload: null,
           savedAt: "2026-06-02T01:00:00.000Z",

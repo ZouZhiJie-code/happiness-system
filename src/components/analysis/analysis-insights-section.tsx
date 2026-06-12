@@ -164,7 +164,7 @@ export function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
   return (
     <div data-testid="analysis-dimension-cards">
       <p className="text-[0.84rem] leading-6 text-[#72583f]">
-        本月共 {record.logOverview.recordedDayCount} 天有记录 · {record.logOverview.savedEntryCount} 条已保存日志
+        {Number(record.month.slice(5, 7))} 月共 {record.logOverview.recordedDayCount} 天有记录 · {record.logOverview.savedEntryCount} 条已保存日志
       </p>
 
       <Card className="mt-4 overflow-hidden p-0">

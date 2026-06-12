@@ -14,16 +14,15 @@ type FactorView = "radar" | "lollipop";
 
 const TRENDS_VIZ_CLASS = "analysis-trends-viz";
 const TRENDS_PANE_PAD = "px-[0.85rem] py-[0.65rem]";
-const TRENDS_CHART_SLOT = "min-h-[8rem] w-full";
-// 8 行棒棒糖（圆点 10px + 边框）+ 7 段行间距，与棒棒糖自然高度对齐
-const FACTOR_VIEW_SLOT = "h-[calc(8*0.875rem+7*0.35rem)] w-full";
+// 底部三列（日志天数 / 8要素 / 敬请期待）统一图表槽；高度按放大后的 8 行棒棒糖内容兜住。
+const TRENDS_BOTTOM_PANE_SLOT = "h-[13rem] w-full";
 
 const RADAR_LAYOUT = {
   cx: 100,
   cy: 100,
   radius: 72,
   labelRadius: 88,
-  labelFontSize: 8,
+  labelFontSize: 10,
   padding: 4
 } as const;
 
@@ -213,6 +212,7 @@ function TotalScoreComboChart({ record }: { record: AnalysisTrendsRangeRecord })
 
 function LogDaysHeatmap({ record, preset }: { record: AnalysisTrendsRangeRecord; preset: AnalysisRangePreset }) {
   const coverageByDate = useMemo(() => buildCoverageMap(record.dailyCoverage), [record.dailyCoverage]);
+  const isFullMonthGrid = preset === "month" && record.startDate.endsWith("-01");
 
   const cells = useMemo(() => {
     if (preset === "week") {
@@ -224,7 +224,7 @@ function LogDaysHeatmap({ record, preset }: { record: AnalysisTrendsRangeRecord;
     }
 
     const monthKey = record.startDate.slice(0, 7);
-    if (preset === "month" && record.startDate.endsWith("-01")) {
+    if (isFullMonthGrid) {
       return buildCalendarMonthGrid(monthKey).map((cell) => ({
         key: cell.key,
         count: cell.date ? (coverageByDate.get(cell.date)?.savedDimensionCount ?? 0) : 0,
@@ -237,18 +237,20 @@ function LogDaysHeatmap({ record, preset }: { record: AnalysisTrendsRangeRecord;
       count: day.savedDimensionCount,
       pad: false
     }));
-  }, [coverageByDate, preset, record.dailyCoverage, record.startDate]);
+  }, [coverageByDate, isFullMonthGrid, preset, record.dailyCoverage, record.startDate]);
 
   return (
     <TrendsVizCard className={TRENDS_PANE_PAD}>
       <TrendsPaneHead title="日志天数" />
-      <div className={cn(TRENDS_CHART_SLOT, "flex items-center")}>
+      <div className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex items-center")}>
         <div
           className={cn(
-            "mx-auto grid w-full gap-[2px]",
-            (preset === "month" && record.startDate.endsWith("-01")) || preset === "week"
-              ? "grid-cols-7"
-              : "grid-cols-[repeat(auto-fill,minmax(1.25rem,1fr))]"
+            "mx-auto grid w-full gap-[3px]",
+            isFullMonthGrid
+              ? "max-w-[15.125rem] grid-cols-7"
+              : preset === "week"
+                ? "w-full grid-cols-7"
+              : "grid-cols-[repeat(auto-fill,minmax(1.5rem,1fr))]"
           )}
           role="img"
           aria-label="本周期日志记录密度"
@@ -368,11 +370,11 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
       <TrendsPaneHead title="幸福 8 要素评分" action={<FactorToggle view={view} onChange={setView} />} />
 
       {!hasAnyAverage ? (
-        <p className={cn(FACTOR_VIEW_SLOT, "flex items-center justify-center text-[0.82rem] text-[var(--text-dim)]")}>
+        <p className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex items-center justify-center text-[0.88rem] text-[var(--text-dim)]")}>
           这个周期还没有足够的评分样本。
         </p>
       ) : view === "radar" ? (
-        <div className={FACTOR_VIEW_SLOT}>
+        <div className={TRENDS_BOTTOM_PANE_SLOT}>
           <svg
             viewBox={`${radarGeometry.viewBox.x} ${radarGeometry.viewBox.y} ${radarGeometry.viewBox.width} ${radarGeometry.viewBox.height}`}
             className="block h-full w-full"
@@ -410,7 +412,7 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
                 y={point.labelY}
                 textAnchor={point.textAnchor}
                 dominantBaseline="middle"
-                className="fill-[var(--text-dim)] text-[8px]"
+                className="fill-[var(--text-dim)] text-[10px]"
               >
                 {point.item.label}
               </text>
@@ -418,24 +420,24 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
           </svg>
         </div>
       ) : (
-        <div className={cn(FACTOR_VIEW_SLOT, "flex flex-col justify-center gap-[0.35rem]")}>
+        <div className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex flex-col justify-center gap-[0.43rem]")}>
           {items.map((item) => {
             const value = record.scoreTrend.factorAverages[item.requestKey];
             const ratio = typeof value === "number" ? ((value - 2) / 8) * 100 : 0;
             return (
-              <div key={item.requestKey} className="grid grid-cols-[3.2rem_1fr_1.6rem] items-center gap-[0.35rem]">
-                <span className="text-[0.72rem] text-[var(--text-main)]">{item.label}</span>
+              <div key={item.requestKey} className="grid grid-cols-[3.85rem_1fr_1.95rem] items-center gap-[0.43rem]">
+                <span className="text-[0.88rem] text-[var(--text-main)]">{item.label}</span>
                 <div className="relative h-px bg-line/15">
                   <div
-                    className="absolute top-1/2 h-[2px] -translate-y-1/2 bg-clay/35"
+                    className="absolute top-1/2 h-[2.5px] -translate-y-1/2 bg-clay/35"
                     style={{ left: "8%", width: `${Math.max(ratio, 4)}%` }}
                   />
                   <div
-                    className="absolute top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-clay bg-paper"
+                    className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-clay bg-paper"
                     style={{ left: `${8 + Math.max(ratio, 4)}%` }}
                   />
                 </div>
-                <span className="text-right font-mono text-[0.72rem] text-[var(--text-dim)]">
+                <span className="text-right font-mono text-[0.88rem] text-[var(--text-dim)]">
                   {typeof value === "number" ? value.toFixed(1) : "—"}
                 </span>
               </div>
@@ -451,7 +453,7 @@ function TrendsPlaceholderPanel() {
   return (
     <TrendsVizCard className={TRENDS_PANE_PAD}>
       <TrendsPaneHead title="敬请期待" />
-      <div className={cn(TRENDS_CHART_SLOT, "flex items-center justify-center text-[0.82rem] text-[var(--text-dim)]")}>
+      <div className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex items-center justify-center text-[0.88rem] text-[var(--text-dim)]")}>
         更多图表即将上线
       </div>
     </TrendsVizCard>

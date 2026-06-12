@@ -552,7 +552,7 @@ function buildDimensionThesis(input: {
 
   if (lead) {
     if (input.dimension === "joy") {
-      return `这个月让你更容易亮起来的，多半和${lead}有关。`;
+      return `这个月让你开心的，多半和${lead}有关。`;
     }
 
     if (input.dimension === "fulfillment") {
@@ -560,18 +560,18 @@ function buildDimensionThesis(input: {
     }
 
     if (input.dimension === "reflection") {
-      return `这个月反复冒出来的一条判断，是${lead}。`;
+      return `这个月你反复想到的一点，是${lead}。`;
     }
 
     if (input.dimension === "improvement") {
-      return `这个月你最常想调一调的，多半是${lead}。`;
+      return `这个月你最想做点调整的，多半是${lead}。`;
     }
 
-    return `这个月最容易被你记住的回应，多半是${lead}。`;
+    return `这个月最让你记得的一份回应，多半是${lead}。`;
   }
 
   if (tags.length > 0) {
-    return `这个月的${getInterviewDimensionMeta(input.dimension).label}线索，多半围着${tags.join("、")}这类片段在展开。`;
+    return `这个月的${getInterviewDimensionMeta(input.dimension).label}记录，多半围绕${tags.join("、")}这类事。`;
   }
 
   return `这个月的${getInterviewDimensionMeta(input.dimension).label}线索已经有了起点，但还没有完全说清楚。`;
@@ -580,7 +580,7 @@ function buildDimensionThesis(input: {
 function buildNextQuestion(dimension: InterviewDimension, hasEntries: boolean) {
   if (!hasEntries) {
     if (dimension === "joy") {
-      return "最近有没有一个让你一下松下来，或者亮起来的片段？";
+      return "最近有没有一件让你觉得开心或放松的小事？";
     }
 
     if (dimension === "fulfillment") {
@@ -630,19 +630,27 @@ function buildDimensionInsights(input: {
     const lastRecordedDate = [...recordedDates].sort((left, right) => compareDateDesc(left, right))[0] ?? null;
     const topTags = buildTopTags(dimensionEntries);
     const recentSignals = buildRecentSignals(dimensionEntries);
-    const evidence = recentSignals.map((signal) => {
-      const entry = dimensionEntries.find((item) => item.id === signal.entryId);
+    const sortedEntries = [...dimensionEntries].sort((left, right) => {
+      const dateDiff = compareDateDesc(left.date, right.date);
+
+      if (dateDiff !== 0) {
+        return dateDiff;
+      }
+
+      return compareDateDesc(left.savedAt ?? left.updatedAt, right.savedAt ?? right.updatedAt);
+    });
+    const evidence = sortedEntries.slice(0, 3).map((entry) => {
+      const signals = resolveDimensionSignals(entry);
+      const primary = signals ? normalizeSignalValue(signals.primarySignal) : null;
+      const secondary = signals ? normalizeSignalValue(signals.secondarySignal) : null;
 
       return {
-        entryId: signal.entryId,
-        date: signal.date,
-        title: entry?.title ?? null,
-        summary: signal.primarySignal,
-        detail: signal.secondarySignal,
-        excerpt: buildBodyExcerpt(
-          entry?.content,
-          signal.secondarySignal ? `${signal.primarySignal}。${signal.secondarySignal}` : signal.primarySignal
-        )
+        entryId: entry.id,
+        date: entry.date,
+        title: entry.title,
+        summary: primary ?? entry.title,
+        detail: secondary,
+        excerpt: buildBodyExcerpt(entry.content, primary ? `${primary}。${secondary ?? ""}` : entry.title)
       };
     });
 
