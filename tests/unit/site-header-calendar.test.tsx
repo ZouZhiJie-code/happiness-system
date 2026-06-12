@@ -263,7 +263,7 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
     const header = screen.getByRole("banner");
 
-    expect(header).toHaveClass("sticky", "top-0", "backdrop-blur-md", "site-header-frosted");
+    expect(header).toHaveClass("sticky", "top-0", "site-header-frosted");
     expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
   });
@@ -281,7 +281,7 @@ describe("site header calendar toolbar", () => {
     render(<SiteHeader />);
     const header = screen.getByRole("banner");
 
-    expect(header).toHaveClass("sticky", "top-0", "backdrop-blur-md", "site-header-frosted", "isolate");
+    expect(header).toHaveClass("sticky", "top-0", "site-header-frosted", "isolate");
     expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
   });

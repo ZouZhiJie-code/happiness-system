@@ -654,12 +654,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
       <header
         ref={headerRef}
-        className={clsx(
-          "site-header-frosted sticky top-0 z-50 isolate w-full px-3 backdrop-blur-md md:px-6",
-          isInterviewPage
-            ? "border-b border-[rgba(101,67,34,0.1)] shadow-[0_8px_22px_rgba(77,47,21,0.08)]"
-            : "border-b border-[rgba(101,67,34,0.18)] shadow-[0_8px_24px_rgba(77,47,21,0.12)]"
-        )}
+        className="site-header-frosted sticky top-0 z-50 isolate w-full border-b border-[rgba(101,67,34,0.06)] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.2)] md:px-6"
       >
       <div
         className={clsx(
