@@ -116,7 +116,7 @@ function buildDailyJournalHref(day: CalendarDayRecord) {
 }
 
 function getDailyJournalViewLabel(day: CalendarDayRecord, today: string) {
-  return day.date === today ? "查看今日汇总日志" : "查看当日汇总日志";
+  return day.date === today ? "查看今日完整日志" : "查看当日完整日志";
 }
 
 function getSavedDimensionLabels(day: CalendarDayRecord) {
@@ -128,13 +128,13 @@ function getSavedDimensionLabels(day: CalendarDayRecord) {
 function getDailyJournalDescription(day: CalendarDayRecord) {
   switch (day.dailyJournal?.state ?? "none") {
     case "saved":
-      return "汇总日志已保存，可以直接查看。";
+      return "完整日志已保存，可以直接查看。";
     case "draft":
-      return "汇总日志已有草稿，可以继续编辑。";
+      return "完整日志已有草稿，可以继续编辑。";
     case "stale":
-      return "维度日志有更新，可以查看后决定是否重新汇总。";
+      return "维度日志有更新，可以查看后决定是否重新整理。";
     default:
-      return day.savedCount > 0 ? "已有维度日志，可进入访谈页汇总。" : "还没有可查看的汇总日志。";
+      return day.savedCount > 0 ? "已有维度日志，可进入访谈页汇总。" : "还没有可查看的完整日志。";
   }
 }
 
@@ -252,12 +252,12 @@ function DailyJournalPromptDialog({
     mode === "empty"
       ? "可以先从一个维度写起，保存后再回到这里查看汇总。"
       : `${isToday ? "今日" : "当日"}已有 ${savedDimensionLabels.join("、")} 维度的日志。`;
-  const primaryLabel = mode === "empty" ? "写日志" : "汇总日志";
+  const primaryLabel = mode === "empty" ? "写日志" : "完整日志";
   const primaryHref = mode === "empty" ? writeJournalHref : dailyJournalHref;
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.42)] px-4 py-6 md:items-center">
-      <button type="button" tabIndex={-1} aria-label="取消查看汇总日志" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <button type="button" tabIndex={-1} aria-label="取消查看完整日志" className="absolute inset-0 cursor-default" onClick={onClose} />
       <div
         ref={dialogRef}
         role="dialog"
@@ -266,7 +266,7 @@ function DailyJournalPromptDialog({
         tabIndex={-1}
         className="relative w-full max-w-md rounded-[var(--radius-shell)] border border-[var(--line-soft)] bg-[#fffaf2] p-5 shadow-xl"
       >
-        <p className="text-[0.72rem] text-[#8a6b4b]">汇总当天日志</p>
+        <p className="text-[0.72rem] text-[#8a6b4b]">完整日志</p>
         <h3 id="daily-journal-prompt-title" className="mt-2 text-balance font-display text-[1.38rem] text-[#312419]">
           {title}
         </h3>
@@ -401,7 +401,7 @@ export function CalendarDayView({
         <hr className="ui-hairline mt-3.5" />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[0.8rem] font-medium text-[#403024]">汇总当天日志</p>
+            <p className="text-[0.8rem] font-medium text-[#403024]">完整日志</p>
             <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{getDailyJournalDescription(day)}</p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">

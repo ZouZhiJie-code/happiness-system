@@ -1,26 +1,34 @@
 "use client";
 
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 import { DailyJournalExportMenu } from "@/components/daily-journal/daily-journal-export-menu";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { ActionButton } from "@/components/ui";
+import { ActionButton, useConfirmDialog } from "@/components/ui";
 import {
   MAX_DAILY_JOURNAL_CONTENT_LENGTH,
   type DailyJournalSourcePayload
 } from "@/features/daily-journal/schema";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { getInterviewDimensionMeta, interviewDimensions } from "@/features/interview/dimensions";
+import {
+  getJournalGenerationPhaseDescription,
+  getJournalGenerationTitle
+} from "@/features/interview/journal-generation-copy";
+import {
+  computeJournalGenerationProgressPercent,
+  JOURNAL_GENERATION_PROGRESS_TICK_MS
+} from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import type { DailyJournalEntryRecord, InterviewDimension } from "@/types/interview";
 
 type DailyJournalState = "none" | "draft" | "saved" | "stale";
 type SyncState = "idle" | "saving" | "saved" | "error";
-type DailyJournalGeneratePhase = "skeleton" | "detail" | "polish";
 
 interface DailyJournalQueryPayload {
   dailyJournal: DailyJournalEntryRecord | null;
+  draftSourceCount?: number;
   availableSourceCount: number;
   sources: DailyJournalSourcePayload[];
   state: DailyJournalState;
@@ -37,7 +45,7 @@ interface DailyJournalWorkspaceProps {
 
 function getStateLabel(state: DailyJournalState, sourceCount: number) {
   if (state === "stale") {
-    return "来源已更新";
+    return "需更新";
   }
 
   if (state === "saved") {
@@ -53,11 +61,11 @@ function getStateLabel(state: DailyJournalState, sourceCount: number) {
 
 function getDailyJournalLeadCopy(state: DailyJournalState, sourceCount: number) {
   if (sourceCount === 0) {
-    return "先保存至少一篇维度日志，再把这一天收成总日志。";
+    return "先保存至少一篇维度日志，再把这一天收成完整日志。";
   }
 
   if (state === "stale") {
-    return `当前有 ${sourceCount} 篇已保存的维度日志，已有总日志落后于最新来源。`;
+    return `当前有 ${sourceCount} 篇已保存的维度日志，已有完整日志落后于最新来源。`;
   }
 
   return `当前会使用 ${sourceCount} 篇已保存的维度日志，只整理已经正式保存的内容。`;
@@ -77,10 +85,10 @@ function getGenerateButtonLabel({
   }
 
   if (state === "stale") {
-    return "更新总日志";
+    return "更新完整日志";
   }
 
-  return hasDailyJournal ? "重新整理" : "整理总日志";
+  return hasDailyJournal ? "重新整理" : "整理完整日志";
 }
 
 function truncateSourceTitle(title: string) {
@@ -109,7 +117,7 @@ function DailyJournalStaleNotice() {
       className="mb-3 border-l-2 border-[#b47656] bg-[rgba(255,246,238,0.58)] px-3 py-2 text-[0.78rem] leading-6 text-[#7c4c32]"
       role="status"
     >
-      来源有更新，建议重新整理一次，让总日志对齐今天最新保存的维度内容。
+      今天的维度日志又有更新。重新整理一下，这篇完整日志就能跟上最新内容。
     </div>
   );
 }
@@ -150,7 +158,7 @@ function DailyJournalSourceIndex({
   );
 
   return (
-    <div className="border-y border-[rgba(151,108,65,0.14)] py-3" aria-label="总日志来源">
+    <div className="border-y border-[rgba(151,108,65,0.14)] py-3" aria-label="完整日志来源">
       {state === "stale" ? <DailyJournalStaleNotice /> : null}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-0">
         {interviewDimensions.map((dimension) => (
@@ -165,50 +173,13 @@ function DailyJournalSourceIndex({
   );
 }
 
-const DAILY_JOURNAL_GENERATE_STEPS: ReadonlyArray<{
-  phase: DailyJournalGeneratePhase;
-  start: number;
-  end: number;
-  durationMs: number;
-}> = [
-  { phase: "skeleton", start: 0, end: 35, durationMs: 2200 },
-  { phase: "detail", start: 35, end: 78, durationMs: 2600 },
-  { phase: "polish", start: 78, end: 100, durationMs: 1800 }
-];
+const DAILY_JOURNAL_GENERATION_SCOPE = "daily" as const;
 
-function getDailyJournalGenerationPhaseMeta(phase: DailyJournalGeneratePhase) {
-  switch (phase) {
-    case "skeleton":
-      return {
-        label: "正在生成汇总日志骨架",
-        description: "我会先把今天已保存的维度日志整理成一条完整主线。"
-      };
-    case "detail":
-      return {
-        label: "正在串起五维细节",
-        description: "正在把开心、充实、思考、改进和感谢里的重点自然接起来。"
-      };
-    case "polish":
-      return {
-        label: "最终润色中",
-        description: "正在收束标题、段落顺序和最后读感，让它成为一篇汇总日志。"
-      };
-  }
-}
-
-function DailyJournalGenerationCard({
-  phase,
-  progress
-}: {
-  phase: DailyJournalGeneratePhase;
-  progress: number;
-}) {
-  const meta = getDailyJournalGenerationPhaseMeta(phase);
-
+function DailyJournalGenerationCard({ progress }: { progress: number }) {
   return (
     <JournalGenerationStatus
-      label={meta.label}
-      description={meta.description}
+      label={getJournalGenerationTitle(DAILY_JOURNAL_GENERATION_SCOPE)}
+      description={getJournalGenerationPhaseDescription(DAILY_JOURNAL_GENERATION_SCOPE, progress)}
       progress={progress}
       variant="full"
       data-testid="daily-journal-generation-card"
@@ -242,13 +213,15 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
 ) {
   const [dailyJournal, setDailyJournal] = useState<DailyJournalEntryRecord | null>(null);
   const [availableSourceCount, setAvailableSourceCount] = useState(0);
+  const [draftSourceCount, setDraftSourceCount] = useState(0);
   const [sources, setSources] = useState<DailyJournalSourcePayload[]>([]);
   const [state, setState] = useState<DailyJournalState>("none");
+  const [isHarvesting, setIsHarvesting] = useState(false);
+  const [harvestNotice, setHarvestNotice] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatePhase, setGeneratePhase] = useState<DailyJournalGeneratePhase>("skeleton");
   const [generateProgress, setGenerateProgress] = useState(0);
   const [generationOverlayActive, setGenerationOverlayActive] = useState(false);
   const [generationOverlayComplete, setGenerationOverlayComplete] = useState(false);
@@ -259,6 +232,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   const latestPersistRequestRef = useRef(0);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const generateProgressIntervalRef = useRef<number | null>(null);
+  const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
 
   const hasUnsavedChanges = Boolean(dailyJournal && (title !== dailyJournal.title || content !== dailyJournal.content));
   const tooLong = title.length > MAX_JOURNAL_TITLE_LENGTH || content.length > MAX_DAILY_JOURNAL_CONTENT_LENGTH;
@@ -281,6 +255,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   const hydrate = useCallback((payload: DailyJournalQueryPayload) => {
     setDailyJournal(payload.dailyJournal);
     setAvailableSourceCount(payload.availableSourceCount);
+    setDraftSourceCount(payload.draftSourceCount ?? 0);
     setSources(payload.sources);
     setState(payload.state);
     setTitle(payload.dailyJournal?.title ?? "");
@@ -323,41 +298,17 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     const isProgressActive = isGenerating;
 
     if (!isProgressActive) {
-      setGeneratePhase("skeleton");
       setGenerateProgress(0);
       return;
     }
 
-    setGeneratePhase("skeleton");
     setGenerateProgress(0);
-    const phaseBoundaries = DAILY_JOURNAL_GENERATE_STEPS.reduce<
-      Array<{ phase: DailyJournalGeneratePhase; startMs: number; endMs: number; start: number; end: number }>
-    >((items, step) => {
-      const startMs = items.length ? items[items.length - 1].endMs : 0;
-      const endMs = startMs + step.durationMs;
-
-      items.push({
-        phase: step.phase,
-        startMs,
-        endMs,
-        start: step.start,
-        end: step.end
-      });
-      return items;
-    }, []);
     const startedAt = Date.now();
 
     generateProgressIntervalRef.current = window.setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
-      const currentStep =
-        phaseBoundaries.find((step) => elapsedMs < step.endMs) ?? phaseBoundaries[phaseBoundaries.length - 1];
-      const stepElapsed = Math.min(Math.max(elapsedMs - currentStep.startMs, 0), currentStep.endMs - currentStep.startMs);
-      const ratio = currentStep.endMs === currentStep.startMs ? 1 : stepElapsed / (currentStep.endMs - currentStep.startMs);
-      const nextProgress = currentStep.start + (currentStep.end - currentStep.start) * ratio;
-
-      setGeneratePhase(currentStep.phase);
-      setGenerateProgress(Math.min(100, Math.max(0, nextProgress)));
-    }, 80);
+      setGenerateProgress(computeJournalGenerationProgressPercent(elapsedMs));
+    }, JOURNAL_GENERATION_PROGRESS_TICK_MS);
 
     return stopGenerateProgress;
   }, [isGenerating, isLoading, stopGenerateProgress]);
@@ -452,7 +403,14 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
 
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm("生成总日志会覆盖当前未保存的手动修改，是否继续？");
+      const confirmed = await confirmAction({
+        eyebrow: "重新整理确认",
+        title: "重新整理会覆盖未保存的修改",
+        description: "完整日志里还有没保存的手动改动。重新整理会用最新的维度日志覆盖它们，确定继续吗？",
+        confirmLabel: "覆盖并重新整理",
+        cancelLabel: "先不要",
+        tone: "danger"
+      });
 
       if (!confirmed) {
         return;
@@ -493,7 +451,6 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
       setGenerationOverlayActive(false);
     } finally {
       stopGenerateProgress();
-      setGeneratePhase("polish");
       setGenerateProgress(100);
       setIsGenerating(false);
     }
@@ -504,7 +461,13 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
       return;
     }
 
-    const confirmed = window.confirm("确定保存这篇当天日志吗？保存后仍然可以继续修改。");
+    const confirmed = await confirmAction({
+      eyebrow: "保存确认",
+      title: "保存这篇完整日志？",
+      description: "保存后仍然可以继续修改。",
+      confirmLabel: "确定保存",
+      cancelLabel: "取消"
+    });
 
     if (!confirmed) {
       return;
@@ -541,9 +504,88 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
   }
 
+  async function handleSaveAll() {
+    if (isHarvesting || isGenerating || isSavingFinal) {
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      const confirmed = await confirmAction({
+        eyebrow: "收成确认",
+        title: "用最新维度日志收成完整日志？",
+        description: "会先把今天有草稿但还没保存的维度日志保存下来，再汇编并保存完整日志。当前未保存的手动改动会被覆盖。",
+        confirmLabel: "收成并保存",
+        cancelLabel: "取消",
+        tone: "danger"
+      });
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    stopAutosave();
+    setIsHarvesting(true);
+    setIsGenerating(true);
+    setGenerationOverlayComplete(false);
+    setGenerationOverlayActive(true);
+    setError(null);
+    setHarvestNotice(null);
+
+    try {
+      const response = await fetch("/api/daily-journal/save-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date })
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "收成完整日志失败，请稍后重试。");
+      }
+
+      setDailyJournal(payload.dailyJournal);
+      setAvailableSourceCount(payload.availableSourceCount);
+      setDraftSourceCount(0);
+      setSources(payload.sources);
+      setState(payload.state);
+      setTitle(payload.dailyJournal.title);
+      setContent(payload.dailyJournal.content);
+      setSyncState("saved");
+      setGenerationOverlayComplete(true);
+      setGenerationOverlayActive(false);
+
+      const promoted = ((payload.promotedDimensions ?? []) as InterviewDimension[]).map(
+        (dimension) => getInterviewDimensionMeta(dimension).navLabel
+      );
+      setHarvestNotice(
+        promoted.length
+          ? `已收成并保存完整日志，顺手保存了：${promoted.join("、")}`
+          : "已收成并保存完整日志"
+      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "收成完整日志失败，请稍后重试。");
+      setGenerationOverlayComplete(false);
+      setGenerationOverlayActive(false);
+    } finally {
+      stopGenerateProgress();
+      setGenerateProgress(100);
+      setIsGenerating(false);
+      setIsHarvesting(false);
+    }
+  }
+
+  const harvestableCount = availableSourceCount + draftSourceCount;
   const stateLabel = getStateLabel(state, availableSourceCount);
   const dateLabel = formatDailyJournalDateLabel(date);
-  const generationOverlayMeta = getDailyJournalGenerationPhaseMeta(generatePhase);
+  const generationOverlayMeta = useMemo(
+    () => ({
+      label: getJournalGenerationTitle(DAILY_JOURNAL_GENERATION_SCOPE),
+      description: getJournalGenerationPhaseDescription(DAILY_JOURNAL_GENERATION_SCOPE, generateProgress)
+    }),
+    [generateProgress]
+  );
 
   return (
     <section className="page-shell relative flex min-h-0 flex-col overflow-hidden rounded-none border-x-0 border-t-0 p-3 md:p-4" data-testid="daily-journal-workspace">
@@ -554,13 +596,12 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
         description={generationOverlayMeta.description}
         progress={generateProgress}
         mode="daily"
-        animationId="plant_realistic"
         minVisibleMs={1000}
         onExited={() => setGenerationOverlayComplete(false)}
       />
       <div className="flex flex-wrap items-start justify-between gap-3 pb-4">
         <div className="min-w-0">
-          <p className="text-[0.76rem] text-[#8a6b4b]">{dateLabel} 总日志</p>
+          <p className="text-[0.76rem] text-[#8a6b4b]">{dateLabel} 完整日志</p>
           <h2 className="mt-1 font-display text-[1.45rem] leading-tight text-[#2f2823]">把这一天收成一篇记录</h2>
           <p className="mt-1 text-[0.86rem] leading-6 text-[#6a5440]">{getDailyJournalLeadCopy(state, availableSourceCount)}</p>
         </div>
@@ -585,10 +626,10 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
         ) : isGenerating ? (
           generationOverlayActive ? (
             <div className="min-h-[12rem]" role="status" aria-live="polite">
-              <span className="sr-only">正在整理当天总日志</span>
+              <span className="sr-only">正在整理当天完整日志</span>
             </div>
           ) : (
-            <DailyJournalGenerationCard phase={generatePhase} progress={generateProgress} />
+            <DailyJournalGenerationCard progress={generateProgress} />
           )
         ) : dailyJournal ? (
           <div data-testid="daily-journal-editor" className="flex flex-col">
@@ -613,7 +654,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
           </div>
         ) : (
           <div className="border-y border-dashed border-[rgba(151,108,65,0.2)] bg-[rgba(255,249,239,0.34)] px-2 py-6 text-[#604529]">
-            <p className="font-display text-[1.24rem] text-[#312419]">还没有总日志</p>
+            <p className="font-display text-[1.24rem] text-[#312419]">还没有完整日志</p>
             <p className="mt-2 text-sm leading-7 text-[#6a5440]">
               {availableSourceCount > 0 ? "可以把已保存的维度日志整理成一篇当天记录。" : "保存维度日志后，这里就能生成当天记录。"}
             </p>
@@ -621,37 +662,56 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
         )}
       </div>
 
+      {harvestNotice ? (
+        <p className="mt-3 text-sm text-[#566b3c]" data-testid="daily-journal-harvest-notice">
+          {harvestNotice}
+        </p>
+      ) : null}
       {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-[rgba(151,108,65,0.14)] pt-4">
         {dailyJournal ? (
-          <DailyJournalExportMenu
-            resolveExportPayload={() => ({
-              date,
-              title,
-              content
-            })}
-            disabled={state === "draft" || !canPersist}
-            disabledReason={state === "draft" ? "请先保存完整日志" : null}
-          />
+          <div className="flex items-center gap-2">
+            {state === "draft" ? (
+              <span className="text-[0.72rem] text-[#9a7b56]">保存后可导出</span>
+            ) : null}
+            <DailyJournalExportMenu
+              resolveExportPayload={() => ({
+                date,
+                title,
+                content
+              })}
+              disabled={state === "draft" || !canPersist}
+              disabledReason={state === "draft" ? "请先保存完整日志" : null}
+            />
+          </div>
         ) : null}
         <ActionButton
           type="button"
           variant="secondary"
           onClick={handleGenerate}
-          disabled={isLoading || isGenerating || isSavingFinal || availableSourceCount === 0}
+          disabled={isLoading || isGenerating || isSavingFinal || isHarvesting || availableSourceCount === 0}
         >
           {getGenerateButtonLabel({ isGenerating, hasDailyJournal: Boolean(dailyJournal), state })}
         </ActionButton>
         <ActionButton
           type="button"
-          variant="primary"
+          variant="secondary"
           onClick={handleSaveFinal}
-          disabled={!canPersist || isGenerating || isSavingFinal}
+          disabled={!canPersist || isGenerating || isSavingFinal || isHarvesting}
         >
           {isSavingFinal ? "保存中..." : state === "saved" ? "保存修改" : "保存正式日志"}
         </ActionButton>
+        <ActionButton
+          type="button"
+          variant="primary"
+          onClick={handleSaveAll}
+          disabled={isLoading || isGenerating || isSavingFinal || isHarvesting || harvestableCount === 0}
+        >
+          {isHarvesting ? "正在收成…" : "收成并保存完整日志"}
+        </ActionButton>
       </div>
+      {confirmDialog}
     </section>
   );
 });

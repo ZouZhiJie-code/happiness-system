@@ -8,6 +8,7 @@ import { getAIProvider } from "@/server/services/ai";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
 import {
   findDailyJournalByDate,
+  listDraftJournalEntriesForDate,
   listSavedJournalEntriesForDailyJournal,
   markDailyJournalSavedWithMeta,
   updateDailyJournalDraft,
@@ -15,7 +16,8 @@ import {
   type DailyJournalSourceEntry
 } from "@/server/repositories/daily-journal.repository";
 import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
-import type { DailyJournalEntryRecord, DailyJournalStatus } from "@/types/interview";
+import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
+import type { DailyJournalEntryRecord, DailyJournalStatus, InterviewDimension } from "@/types/interview";
 
 const dailyJournalDraftSchema = z.object({
   title: z.string().min(1).max(MAX_JOURNAL_TITLE_LENGTH),
@@ -146,14 +148,16 @@ function normalizeGeneratedDraft(
 }
 
 export async function getDailyJournal(userId: string, date: string) {
-  const [dailyJournal, sourceEntries] = await Promise.all([
+  const [dailyJournal, sourceEntries, draftEntries] = await Promise.all([
     findDailyJournalByDate(userId, date),
-    listSavedJournalEntriesForDailyJournal(userId, date)
+    listSavedJournalEntriesForDailyJournal(userId, date),
+    listDraftJournalEntriesForDate(userId, date)
   ]);
 
   return {
     dailyJournal,
     availableSourceCount: sourceEntries.length,
+    draftSourceCount: draftEntries.length,
     sources: mapDailyJournalSources(sourceEntries),
     state: resolveDailyJournalState(dailyJournal, sourceEntries)
   };
@@ -214,6 +218,50 @@ export async function generateDailyJournal(userId: string, date: string) {
 
     throw new DailyJournalError("DAILY_JOURNAL_GENERATE_FAILED", "当天日志生成失败。", true, error);
   }
+}
+
+/**
+ * 一键「收成今天」(Level A)：
+ * 1. 把当天「已生成 draft 但未保存」的维度日志逐个落库；
+ * 2. 汇编完整日志；
+ * 3. 保存完整日志。
+ * 不会自动触发 AI 维度日志生成：进行中但还没草稿的维度会被跳过（由前端 sources 投影）。
+ */
+export async function saveAllAndGenerateDailyJournal(userId: string, date: string) {
+  const draftEntries = await listDraftJournalEntriesForDate(userId, date);
+
+  const promotedDimensions: InterviewDimension[] = [];
+
+  const promotions = await Promise.allSettled(
+    draftEntries.map(async (entry) => {
+      await saveGeneratedJournalEntry(userId, entry.sessionId);
+      return entry.dimension;
+    })
+  );
+
+  for (const result of promotions) {
+    if (result.status === "fulfilled") {
+      promotedDimensions.push(result.value);
+    }
+  }
+
+  const sourceEntries = await listSavedJournalEntriesForDailyJournal(userId, date);
+
+  if (!sourceEntries.length) {
+    throw new DailyJournalError("DAILY_JOURNAL_SOURCE_EMPTY", "当天还没有可收成的维度日志。");
+  }
+
+  const generated = await generateDailyJournal(userId, date);
+  const saved = await saveDailyJournal(generated.dailyJournal.id);
+  const latest = await getDailyJournal(userId, date);
+
+  return {
+    dailyJournal: saved.dailyJournal,
+    promotedDimensions,
+    availableSourceCount: latest.availableSourceCount,
+    sources: latest.sources,
+    state: "saved" as const
+  };
 }
 
 export async function updateDailyJournal(entryId: string, input: { title: string; content: string }) {

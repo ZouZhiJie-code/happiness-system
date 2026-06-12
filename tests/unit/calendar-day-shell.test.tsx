@@ -329,7 +329,7 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    expect(await screen.findByRole("link", { name: /查看当日汇总日志/ })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: /查看当日完整日志/ })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&entryDate=2026-05-01&mode=daily-journal"
     );
@@ -341,11 +341,11 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /查看当日汇总日志/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /查看当日完整日志/ }));
 
     const dialog = screen.getByRole("dialog", { name: "还没有汇总的日志" });
     expect(within(dialog).getByText("当日已有 充实、思考 维度的日志。")).toBeInTheDocument();
-    expect(within(dialog).getByRole("link", { name: "汇总日志" })).toHaveAttribute(
+    expect(within(dialog).getByRole("link", { name: "完整日志" })).toHaveAttribute(
       "href",
       "/interview?dimension=joy&entryDate=2026-05-01&mode=daily-journal"
     );
@@ -357,13 +357,13 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    const trigger = await screen.findByRole("button", { name: /查看当日汇总日志/ });
+    const trigger = await screen.findByRole("button", { name: /查看当日完整日志/ });
     trigger.focus();
     fireEvent.click(trigger);
 
     const dialog = screen.getByRole("dialog", { name: "还没有汇总的日志" });
     const cancelButton = within(dialog).getByRole("button", { name: "取消" });
-    const summarizeLink = within(dialog).getByRole("link", { name: "汇总日志" });
+    const summarizeLink = within(dialog).getByRole("link", { name: "完整日志" });
 
     expect(dialog).toHaveFocus();
 
@@ -391,7 +391,7 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /查看今日汇总日志/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /查看今日完整日志/ }));
 
     const dialog = screen.getByRole("dialog", { name: "今天还没有日志" });
     expect(within(dialog).getByText("可以先从一个维度写起，保存后再回到这里查看汇总。")).toBeInTheDocument();
@@ -408,7 +408,7 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /查看当日汇总日志/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /查看当日完整日志/ }));
 
     const dialog = screen.getByRole("dialog", { name: "这天还没有日志" });
     expect(within(dialog).getByRole("link", { name: "写日志" })).toHaveAttribute(
@@ -426,7 +426,7 @@ describe("calendar day shell", () => {
 
     render(<CalendarDayShell />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /查看当日汇总日志/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /查看当日完整日志/ }));
 
     const dialog = screen.getByRole("dialog", { name: "这天还没有日志" });
     expect(within(dialog).getByText("可以先从一个维度写起，保存后再回到这里查看汇总。")).toBeInTheDocument();

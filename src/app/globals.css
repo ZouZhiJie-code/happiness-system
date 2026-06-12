@@ -291,29 +291,53 @@ body::after {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-.journal-growth-breathe {
-  transform-origin: center;
-  animation: journal-growth-breathe 3.8s ease-in-out infinite;
+.journal-skeleton-sheen {
+  animation: journal-skeleton-sheen 3s ease-in-out infinite;
 }
 
-.journal-growth-bob {
-  animation: journal-growth-bob 3.2s ease-in-out infinite;
+.journal-skeleton-lines {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 
-.journal-growth-sway {
-  animation: journal-growth-sway 4.8s ease-in-out infinite;
+.journal-skeleton-lines--compact {
+  gap: 0.65rem;
 }
 
-.journal-growth-float {
-  animation: journal-growth-float 4.1s ease-in-out infinite;
+.journal-skeleton-line {
+  position: relative;
+  height: 0.78rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(116, 82, 44, 0.16);
+  opacity: 0;
+  animation: journal-skeleton-line-enter 520ms ease forwards;
 }
 
-.journal-growth-float-slow {
-  animation: journal-growth-float-slow 5.6s ease-in-out infinite;
+.journal-skeleton-line--title {
+  height: 1.15rem;
+  margin-bottom: 0.15rem;
 }
 
-.journal-growth-sheen {
-  animation: journal-growth-sheen 3s ease-in-out infinite;
+.journal-skeleton-line--gap {
+  margin-top: 0.35rem;
+}
+
+.journal-skeleton-line__sheen {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 248, 238, 0.25) 35%,
+    rgba(255, 248, 238, 0.85) 50%,
+    rgba(255, 248, 238, 0.25) 65%,
+    transparent 100%
+  );
+  animation: journal-skeleton-sheen-pass 1.9s ease-in-out infinite;
 }
 
 .journal-generation-overlay {
@@ -359,8 +383,7 @@ body::after {
 
 .journal-generation-overlay__mark {
   position: relative;
-  width: min(16rem, 62vw);
-  aspect-ratio: 1;
+  width: min(22rem, 88%);
   filter: drop-shadow(0 22px 34px rgba(93, 64, 32, 0.22));
   transform: translate3d(0, 0, 0);
 }
@@ -419,7 +442,7 @@ body::after {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #7e5832 0%, #c49755 46%, #7aa763 100%);
-  transition: width 600ms cubic-bezier(0.2, 0.72, 0.2, 1);
+  transition: width 220ms linear;
 }
 
 .journal-generation-overlay__percent {
@@ -431,68 +454,30 @@ body::after {
   color: #775434;
 }
 
-@keyframes journal-growth-breathe {
-  0%,
-  100% {
-    transform: scale(0.98);
-    opacity: 0.82;
+@keyframes journal-skeleton-line-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 
-  50% {
-    transform: scale(1.02);
+  to {
     opacity: 1;
-  }
-}
-
-@keyframes journal-growth-bob {
-  0%,
-  100% {
     transform: translateY(0);
   }
-
-  50% {
-    transform: translateY(-1.5px);
-  }
 }
 
-@keyframes journal-growth-sway {
-  0%,
+@keyframes journal-skeleton-sheen-pass {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  60%,
   100% {
-    transform: rotate(-1deg);
-  }
-
-  50% {
-    transform: rotate(1deg);
+    transform: translateX(120%);
   }
 }
 
-@keyframes journal-growth-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.45;
-  }
-
-  50% {
-    transform: translate3d(-1px, -4px, 0);
-    opacity: 0.85;
-  }
-}
-
-@keyframes journal-growth-float-slow {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.38;
-  }
-
-  50% {
-    transform: translate3d(1px, -5px, 0);
-    opacity: 0.75;
-  }
-}
-
-@keyframes journal-growth-sheen {
+@keyframes journal-skeleton-sheen {
   0%,
   100% {
     opacity: 0.32;
@@ -541,14 +526,19 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .journal-growth-breathe,
-  .journal-growth-bob,
-  .journal-growth-sway,
-  .journal-growth-float,
-  .journal-growth-float-slow,
-  .journal-growth-sheen,
+  .journal-skeleton-line,
+  .journal-skeleton-line__sheen,
+  .journal-skeleton-sheen,
   .journal-generation-overlay__mark::before {
     animation: none;
+  }
+
+  .journal-skeleton-line {
+    opacity: 1;
+  }
+
+  .journal-skeleton-line__sheen {
+    display: none;
   }
 
   .journal-generation-overlay[data-state="reveal"],

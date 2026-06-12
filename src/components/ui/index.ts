@@ -1,5 +1,11 @@
 export { Surface } from "./surface";
 export { Card } from "./card";
+export {
+  ConfirmDialog,
+  useConfirmDialog,
+  type ConfirmDialogOptions,
+  type ConfirmTone
+} from "./confirm-dialog";
 export { SectionHeading } from "./section-heading";
 export { Divider } from "./divider";
 export { ActionButton, actionButtonClass, type ActionButtonVariant } from "./action-button";

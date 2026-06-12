@@ -2647,7 +2647,7 @@ export async function reopenJoyInterviewSession(userId: string, sessionId: strin
     };
   }
 
-  if (session.status !== "paused") {
+  if (session.status !== "paused" && session.status !== "completed") {
     throw new Error("SESSION_NOT_REOPENABLE");
   }
 

@@ -189,16 +189,22 @@ describe("reopenJoyInterviewSession", () => {
     expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith("session-1");
   });
 
-  it("rejects completed sessions because they are no longer reopenable", async () => {
-    findJoyInterviewSessionById.mockResolvedValue(
-      buildSession({
-        status: "completed",
-        pausedAt: null,
-        completedAt: "2026-04-21T00:10:00.000Z"
-      })
-    );
+  it("reopens a completed session after the journal has been saved", async () => {
+    const completedSession = buildSession({
+      status: "completed",
+      pausedAt: null,
+      completedAt: "2026-04-21T00:10:00.000Z"
+    });
+    const reopenedSession = buildSession({
+      status: "active",
+      stage: "wrap_up",
+      pausedAt: null,
+      completedAt: null
+    });
+    findJoyInterviewSessionById.mockResolvedValue(completedSession);
+    reopenJoyInterviewSessionRecord.mockResolvedValue(reopenedSession);
 
-    await expect(reopenJoyInterviewSession("user-1", "session-1")).rejects.toThrow("SESSION_NOT_REOPENABLE");
-    expect(reopenJoyInterviewSessionRecord).not.toHaveBeenCalled();
+    await expect(reopenJoyInterviewSession("user-1", "session-1")).resolves.toEqual({ session: reopenedSession });
+    expect(reopenJoyInterviewSessionRecord).toHaveBeenCalledWith("session-1");
   });
 });

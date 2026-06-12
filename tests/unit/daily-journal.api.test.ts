@@ -1,6 +1,7 @@
-const { mockGetDailyJournal, mockGenerateDailyJournal } = vi.hoisted(() => ({
+const { mockGetDailyJournal, mockGenerateDailyJournal, mockSaveAllAndGenerateDailyJournal } = vi.hoisted(() => ({
   mockGetDailyJournal: vi.fn(),
-  mockGenerateDailyJournal: vi.fn()
+  mockGenerateDailyJournal: vi.fn(),
+  mockSaveAllAndGenerateDailyJournal: vi.fn()
 }));
 
 const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
@@ -19,7 +20,8 @@ vi.mock("@/server/services/daily-journal/daily-journal.service", () => ({
     }
   },
   getDailyJournal: mockGetDailyJournal,
-  generateDailyJournal: mockGenerateDailyJournal
+  generateDailyJournal: mockGenerateDailyJournal,
+  saveAllAndGenerateDailyJournal: mockSaveAllAndGenerateDailyJournal
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
@@ -28,6 +30,7 @@ vi.mock("@/server/services/auth/current-user.service", () => ({
 
 import { GET as getDailyJournalRoute } from "@/app/api/daily-journal/route";
 import { POST as generateDailyJournalRoute } from "@/app/api/daily-journal/generate/route";
+import { POST as saveAllDailyJournalRoute } from "@/app/api/daily-journal/save-all/route";
 
 describe("daily journal api auth", () => {
   beforeEach(() => {
@@ -81,5 +84,40 @@ describe("daily journal api auth", () => {
 
     expect(response.status).toBe(200);
     expect(mockGenerateDailyJournal).toHaveBeenCalledWith("user-1", "2026-05-02");
+  });
+
+  it("promotes drafts and saves the daily journal via save-all", async () => {
+    mockSaveAllAndGenerateDailyJournal.mockResolvedValue({
+      dailyJournal: {
+        id: "daily-1",
+        date: "2026-05-02",
+        title: "今天的记录",
+        content: "## 开心\n今天和家人一起吃饭聊天。",
+        status: "saved",
+        sourceEntryIds: ["entry-joy"],
+        sourceSessionIds: ["session-joy"],
+        sourceSignature: "sig",
+        sourceUpdatedAt: "2026-05-02T03:00:00.000Z",
+        updatedAt: "2026-05-02T03:00:00.000Z",
+        savedAt: "2026-05-02T03:00:00.000Z"
+      },
+      promotedDimensions: ["fulfillment"],
+      availableSourceCount: 2,
+      sources: [],
+      state: "saved"
+    });
+
+    const response = await saveAllDailyJournalRoute(
+      new Request("http://localhost/api/daily-journal/save-all", {
+        method: "POST",
+        body: JSON.stringify({ date: "2026-05-02" })
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockSaveAllAndGenerateDailyJournal).toHaveBeenCalledWith("user-1", "2026-05-02");
+    expect(payload.promotedDimensions).toEqual(["fulfillment"]);
+    expect(payload.dailyJournal.status).toBe("saved");
   });
 });

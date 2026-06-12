@@ -130,6 +130,42 @@ export async function listSavedJournalEntriesForDailyJournal(userId: string, dat
   );
 }
 
+export async function listDraftJournalEntriesForDate(userId: string, date: string) {
+  const { startAt, endExclusive } = getEntryDateRangeBounds(date);
+  const entries = await prisma.joyEntry.findMany({
+    where: {
+      userId,
+      status: "draft",
+      date: {
+        gte: startAt,
+        lt: endExclusive
+      }
+    },
+    select: {
+      id: true,
+      sessionId: true,
+      date: true,
+      title: true,
+      content: true,
+      updatedAt: true,
+      savedAt: true,
+      session: {
+        select: {
+          dimension: true
+        }
+      }
+    }
+  });
+
+  return pickLatestDailyJournalSourcesByDimension(
+    entries.flatMap((entry) => {
+      const mapped = mapSourceEntry(entry);
+
+      return mapped ? [mapped] : [];
+    })
+  );
+}
+
 export async function findDailyJournalByDate(userId: string, date: string) {
   const entry = await prisma.dailyJournalEntry.findUnique({
     where: {

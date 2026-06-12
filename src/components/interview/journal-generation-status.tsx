@@ -2,7 +2,8 @@
 
 import React from "react";
 
-import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
+import { JournalSkeletonLines } from "@/components/interview/journal-skeleton-lines";
+import { formatJournalGenerationProgress } from "@/features/interview/journal-generation-progress";
 import { cn } from "@/lib/utils";
 
 interface JournalGenerationStatusProps {
@@ -14,14 +15,6 @@ interface JournalGenerationStatusProps {
   "data-testid"?: string;
 }
 
-function formatProgress(progress: number) {
-  if (!Number.isFinite(progress)) {
-    return "0%";
-  }
-
-  return `${Math.round(Math.min(100, Math.max(0, progress)))}%`;
-}
-
 export function JournalGenerationStatus({
   label,
   description,
@@ -30,7 +23,7 @@ export function JournalGenerationStatus({
   className,
   "data-testid": dataTestId
 }: JournalGenerationStatusProps) {
-  const progressLabel = formatProgress(progress);
+  const progressLabel = formatJournalGenerationProgress(progress);
   const compact = variant === "compact";
 
   return (
@@ -48,7 +41,7 @@ export function JournalGenerationStatus({
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-6 top-0 h-24 rounded-full bg-[radial-gradient(circle,rgba(255,250,242,0.78),transparent_72%)] opacity-80 blur-2xl" />
-        <div className="journal-growth-sheen absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,248,238,0.75),transparent)]" />
+        <div className="journal-skeleton-sheen absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,248,238,0.75),transparent)]" />
         <div className="absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(180deg,transparent,rgba(168,122,70,0.08))]" />
       </div>
 
@@ -63,8 +56,8 @@ export function JournalGenerationStatus({
             </div>
             <p
               className={cn(
-                "mt-2 font-display leading-[1.02] text-[#2f2216]",
-                compact ? "text-[1.18rem]" : "max-w-[24rem] text-[1.5rem] md:text-[1.68rem]"
+                "mt-2 font-display leading-[1.08] text-[#2f2216]",
+                compact ? "text-[1.05rem]" : "max-w-[24rem] text-[1.35rem] md:text-[1.5rem]"
               )}
             >
               {label}
@@ -82,7 +75,7 @@ export function JournalGenerationStatus({
           )}
         >
           <div className="pointer-events-none absolute inset-x-5 top-3 h-14 rounded-full bg-[radial-gradient(circle,rgba(241,218,178,0.36),transparent_74%)] blur-xl" />
-          <JournalGrowthTree progress={progress} compact={compact} className={compact ? "h-[5.25rem] w-[9.25rem]" : "h-[10rem] w-[16rem] md:h-[11rem] md:w-[18rem]"} />
+          <JournalSkeletonLines compact={compact} />
         </div>
 
         <div className="space-y-3">

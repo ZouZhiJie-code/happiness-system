@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Lottie from "lottie-react";
+import React, { useEffect, useState } from "react";
 
-import {
-  resolveGenerationAnimation,
-  type GenerationAnimationId,
-  type GenerationAnimationMode
-} from "@/components/interview/generation-animation-catalog";
-import { JournalGrowthTree } from "@/components/interview/journal-growth-tree";
+import { JournalSkeletonLines } from "@/components/interview/journal-skeleton-lines";
+import { formatJournalGenerationProgress } from "@/features/interview/journal-generation-progress";
 import { cn } from "@/lib/utils";
 
 type OverlayState = "active" | "hold" | "reveal" | "fade";
+export type JournalGenerationOverlayMode = "dimension" | "daily";
 
 export interface JournalGenerationOverlayProps {
   active: boolean;
@@ -19,8 +15,7 @@ export interface JournalGenerationOverlayProps {
   label: string;
   description?: string;
   progress: number;
-  mode: GenerationAnimationMode;
-  animationId?: GenerationAnimationId;
+  mode: JournalGenerationOverlayMode;
   minVisibleMs?: number;
   onExited?: () => void;
 }
@@ -33,10 +28,6 @@ function clampProgress(progress: number) {
   return Math.min(100, Math.max(0, progress));
 }
 
-function formatProgress(progress: number) {
-  return `${Math.round(clampProgress(progress))}%`;
-}
-
 export function JournalGenerationOverlay({
   active,
   complete = false,
@@ -44,37 +35,23 @@ export function JournalGenerationOverlay({
   description,
   progress,
   mode,
-  animationId,
   minVisibleMs = 0,
   onExited
 }: JournalGenerationOverlayProps) {
   const [mounted, setMounted] = useState(active);
   const [overlayState, setOverlayState] = useState<OverlayState>(active ? "active" : "fade");
-  const [lottieReady, setLottieReady] = useState(false);
-  const [lottieFailed, setLottieFailed] = useState(false);
   const exitRequestedRef = React.useRef(false);
   const activatedAtRef = React.useRef<number | null>(active ? Date.now() : null);
   const normalizedProgress = clampProgress(progress);
-  const progressLabel = formatProgress(normalizedProgress);
+  const progressLabel = formatJournalGenerationProgress(normalizedProgress);
   const showMark = overlayState === "active" || overlayState === "hold";
   const showLiveContent = overlayState === "active" && active;
-  const showFallbackTree = showMark && (!lottieReady || lottieFailed);
   const exitDurationMs = complete ? 680 : 260;
-  const selectedAnimation = resolveGenerationAnimation({ mode, id: animationId });
-  const lottieStyle = useMemo(
-    () => ({
-      height: "100%",
-      width: "100%"
-    }),
-    []
-  );
 
   useEffect(() => {
     if (active) {
       exitRequestedRef.current = false;
       activatedAtRef.current = Date.now();
-      setLottieReady(false);
-      setLottieFailed(false);
       setMounted(true);
       setOverlayState("active");
       return;
@@ -121,18 +98,6 @@ export function JournalGenerationOverlay({
     };
   }, [active, complete, exitDurationMs, minVisibleMs, mounted, onExited]);
 
-  useEffect(() => {
-    if (!showMark || lottieReady || lottieFailed) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setLottieFailed(true);
-    }, 1600);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [lottieReady, lottieFailed, showMark, selectedAnimation.id]);
-
   if (!mounted) {
     return null;
   }
@@ -146,7 +111,6 @@ export function JournalGenerationOverlay({
       data-testid="journal-generation-overlay"
       data-mode={mode}
       data-state={overlayState}
-      data-animation-id={selectedAnimation.id}
       role="status"
       aria-live="polite"
       onAnimationEnd={() => {
@@ -166,29 +130,7 @@ export function JournalGenerationOverlay({
       <div className="journal-generation-overlay__grain" aria-hidden="true" />
       <div className="journal-generation-overlay__content">
         <div className="journal-generation-overlay__mark" aria-hidden="true">
-          {!showMark ? null : (
-            <React.Fragment>
-              {showFallbackTree ? (
-                <JournalGrowthTree progress={normalizedProgress} className="h-full w-full" />
-              ) : null}
-              {!lottieFailed ? (
-                <div className="pointer-events-none absolute inset-0 opacity-90">
-                  <Lottie
-                    key={selectedAnimation.id}
-                    animationData={selectedAnimation.animationData}
-                    autoplay
-                    loop
-                    style={lottieStyle}
-                    rendererSettings={{ preserveAspectRatio: "xMidYMid meet" }}
-                    data-testid="journal-generation-lottie"
-                    onDataReady={() => setLottieReady(true)}
-                    onDOMLoaded={() => setLottieReady(true)}
-                    onDataFailed={() => setLottieFailed(true)}
-                  />
-                </div>
-              ) : null}
-            </React.Fragment>
-          )}
+          {!showMark ? null : <JournalSkeletonLines className="w-full" />}
         </div>
 
         {!showLiveContent ? null : (

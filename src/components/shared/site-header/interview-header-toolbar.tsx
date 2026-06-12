@@ -9,7 +9,7 @@ import {
   HeaderToolbarGhostButton,
   HeaderToolbarPrimaryButton
 } from "@/components/shared/header-toolbar-primitives";
-import { DimensionStatusDot, SlidingSegmentedControl } from "@/components/ui";
+import { DimensionStatusDot, SlidingSegmentedControl, useConfirmDialog } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
@@ -139,6 +139,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     workspaceMode
   } = useInterviewStore();
   const { confirmLeaveInterview } = useInterviewLeaveGuard();
+  const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
   const todayEntryDate = getTodayEntryDate();
   const explicitEntryDate = searchParams.get("entryDate");
   const headerEntryDate =
@@ -468,8 +469,15 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     requestDraftGeneration();
   }
 
-  function handleConversationResetClick() {
-    const confirmed = window.confirm("清除当前维度的对话记录并重新开始？这会丢弃当前页面里还没保存的访谈进度。");
+  async function handleConversationResetClick() {
+    const confirmed = await confirmAction({
+      eyebrow: "清除确认",
+      title: "清除当前维度的对话记录？",
+      description: "这会丢弃当前页面里还没保存的访谈进度，并重新开始一轮。",
+      confirmLabel: "清除并重新开始",
+      cancelLabel: "取消",
+      tone: "danger"
+    });
 
     if (!confirmed) {
       return;
@@ -595,7 +603,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
               selected={isDailyJournalWorkspaceSelected}
               aria-pressed={isDailyJournalWorkspaceSelected}
               aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
-              aria-label="查看汇总当天日志"
+              aria-label="查看完整日志"
             >
               {isOpeningDailyJournal ? "正在打开完整日志" : "完整日志"}
             </HeaderToolbarActionButton>
@@ -632,6 +640,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
           ) : null}
         </div>
       </HeaderWorkspaceTemplate>
+      {confirmDialog}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { HorizontalPager, type HorizontalPagerMotion } from "@/components/ui";
+import { ConfirmDialog, HorizontalPager, useConfirmDialog, type HorizontalPagerMotion } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import {
   buildInterviewSessionRecordFromStore,
@@ -37,6 +37,14 @@ import {
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import { bootstrapInterviewSession, prefetchStoredInterviewSessions } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
+import {
+  getJournalGenerationPhaseDescription,
+  getJournalGenerationTitle
+} from "@/features/interview/journal-generation-copy";
+import {
+  computeJournalGenerationProgressPercent,
+  JOURNAL_GENERATION_PROGRESS_TICK_MS
+} from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { cancelIdleTask, scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
@@ -51,7 +59,6 @@ type AssistantState = "idle" | "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
 type DraftSyncState = "idle" | "saving" | "saved" | "error";
 type DraftGenerateState = "idle" | "loading" | "error";
-type DraftGeneratePhase = "skeleton" | "detail" | "polish";
 type ToastState = {
   message: string;
   visible: boolean;
@@ -60,16 +67,6 @@ type ToastState = {
 const INTERVIEW_INPUT_MIN_HEIGHT = 36;
 const INTERVIEW_INPUT_MAX_HEIGHT = 176;
 const JOURNAL_BODY_MIN_HEIGHT = 240;
-const DRAFT_PHASE_STEPS: ReadonlyArray<{
-  phase: DraftGeneratePhase;
-  start: number;
-  end: number;
-  durationMs: number;
-}> = [
-  { phase: "skeleton", start: 0, end: 35, durationMs: 2200 },
-  { phase: "detail", start: 35, end: 78, durationMs: 2600 },
-  { phase: "polish", start: 78, end: 100, durationMs: 1800 }
-];
 
 interface DraftGenerateIssue {
   code: string;
@@ -83,32 +80,18 @@ function buildFallbackInterviewIssue(code: string, message?: string): InterviewI
   });
 }
 
-function getDraftGenerationPhaseMeta(input: {
-  phase: DraftGeneratePhase;
-  hasExistingDraft: boolean;
-  isPartialJoyDraft: boolean;
-}) {
-  switch (input.phase) {
-    case "skeleton":
-      return {
-        label: "正在生成日志骨架",
-        description: input.hasExistingDraft
-          ? "我会先保留当前这篇里已经成立的表达，再把最新访谈内容挂上去。"
-          : input.isPartialJoyDraft
-            ? "我会先按当前已经聊清楚的部分搭起一版日志，不会硬把它写成已经成熟的固定规律。"
-            : "我会先把当前访谈里最重要的片段、主线和基本结构立起来。",
-      };
-    case "detail":
-      return {
-        label: "正在打磨日志细节",
-        description: "正在把真正打动你的点、状态变化和自然表达压实，避免写成空泛总结。"
-      };
-    case "polish":
-      return {
-        label: "最终润色中",
-        description: "正在收束标题、正文连贯性和最后读感，尽量让它更像一篇已经整理好的日志。"
-      };
+function formatClockLabel(iso: string | null | undefined) {
+  if (!iso) {
+    return "";
   }
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
 function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessage[]) {
@@ -149,6 +132,24 @@ function MessageBubble({
   const isThinking = variant === "thinking";
   const isQuestion = variant === "question";
 
+  // 思考层：轻旁注（淡色文字 + 小圆点），不做成气泡，方便和正式问题一眼区分。
+  if (isThinking) {
+    return (
+      <div className="flex justify-start">
+        <div
+          data-message-variant="thinking"
+          className="relative max-w-2xl py-0.5 pl-4 pr-2 text-[0.82rem] leading-6 text-[rgba(48,33,20,0.5)]"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute left-0 top-[0.62rem] h-1.5 w-1.5 rounded-full bg-[rgba(169,111,61,0.55)]"
+          />
+          <p className="whitespace-pre-wrap">{bubbleContent}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}>
       <div
@@ -157,9 +158,7 @@ function MessageBubble({
           isAssistant
             ? isQuestion
               ? "border-[rgba(166,111,59,0.24)] bg-[linear-gradient(180deg,rgba(255,246,234,0.98),rgba(243,226,199,0.96))] text-[#2b2118]"
-              : isThinking
-                ? "border-[rgba(156,114,70,0.1)] bg-[rgba(255,250,243,0.32)] text-[rgba(48,33,20,0.56)] shadow-[0_14px_36px_rgba(126,88,45,0.07)]"
-                : "border-[rgba(156,114,70,0.14)] bg-[rgba(255,248,238,0.44)] text-ink shadow-soft"
+              : "border-[rgba(156,114,70,0.14)] bg-[rgba(255,248,238,0.44)] text-ink shadow-soft"
             : "border-[rgba(133,91,47,0.2)] bg-[linear-gradient(180deg,rgba(221,185,133,0.96),rgba(195,152,97,0.96))] text-[#2f2823] shadow-soft"
         }`}
       >
@@ -335,53 +334,33 @@ function SaveJournalConfirmDialog({
   onConfirm: () => void;
   confirmDisabled: boolean;
 }) {
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[rgba(32,24,17,0.48)] px-4 py-6 backdrop-blur-[2px] md:items-center">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="save-journal-confirm-title"
-        className="w-full max-w-md rounded-[30px] border border-[rgba(153,103,54,0.16)] bg-[linear-gradient(180deg,rgba(252,246,236,0.98),rgba(235,217,187,0.96))] p-5 shadow-[0_24px_60px_rgba(46,35,25,0.22)]"
-      >
-        <p className="font-mono text-[0.65rem] tracking-[0.22em] text-[#9a734d]">保存确认</p>
-        <h3 id="save-journal-confirm-title" className="mt-2 font-display text-[1.5rem] text-[#2e2319]">
-          确定保存这篇日志吗？
-        </h3>
-        <p className="mt-3 text-sm leading-7 text-[#594537]">
-          确定保存后，会结束当前访谈。结束后你仍然可以打开日志继续修改内容。
-        </p>
-        <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onContinue}
-            className="rounded-full border border-[rgba(168,124,69,0.2)] bg-[rgba(255,250,242,0.72)] px-4 py-1.5 text-sm text-[#6a5642] transition hover:bg-[rgba(255,250,242,0.96)]"
-          >
-            继续访谈
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            确定保存
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      open={open}
+      eyebrow="保存确认"
+      title="确定保存这篇日志吗？"
+      description="确定保存后，会结束当前访谈。结束后你仍然可以打开日志继续修改内容。"
+      cancelLabel="继续访谈"
+      confirmLabel="确定保存"
+      confirmDisabled={confirmDisabled}
+      onCancel={onContinue}
+      onConfirm={onConfirm}
+    />
   );
 }
 
 function InterviewEndedCard({
   title,
+  description,
+  onContinueInterview,
+  continueDisabled = false,
   onToggleWorkspace,
   workspaceToggleLabel
 }: {
   title: string;
+  description?: string;
+  onContinueInterview?: () => void;
+  continueDisabled?: boolean;
   onToggleWorkspace?: () => void;
   workspaceToggleLabel?: string;
 }) {
@@ -389,12 +368,27 @@ function InterviewEndedCard({
     <div className="relative overflow-hidden rounded-[30px] border border-[rgba(137,95,53,0.18)] bg-[linear-gradient(180deg,rgba(251,244,232,0.98),rgba(233,216,190,0.96))] p-4 shadow-[0_22px_54px_rgba(124,83,43,0.14)]">
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)]" />
       <h4 className="font-display text-[1.35rem] text-[#2e2319]">{title}</h4>
+      {description ? <p className="mt-2 text-sm leading-7 text-[#594537]">{description}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
+        {onContinueInterview ? (
+          <button
+            type="button"
+            onClick={onContinueInterview}
+            disabled={continueDisabled}
+            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            继续聊这件事
+          </button>
+        ) : null}
         {onToggleWorkspace && workspaceToggleLabel ? (
           <button
             type="button"
             onClick={onToggleWorkspace}
-            className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-1.5 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
+            className={`rounded-full border px-4 py-1.5 text-sm transition ${
+              onContinueInterview
+                ? "border-[rgba(168,124,69,0.24)] bg-[rgba(255,250,242,0.82)] text-[#6a5642] hover:bg-[rgba(255,250,242,0.96)]"
+                : "border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)]"
+            }`}
           >
             {workspaceToggleLabel}
           </button>
@@ -455,27 +449,17 @@ function InterviewIssueNotice({ issue, className = "" }: { issue: InterviewIssue
   );
 }
 
-function DraftGenerationPhaseCard({
-  phase,
-  progress,
-  hasExistingDraft,
-  isPartialJoyDraft
+function DraftGenerationStatusCard({
+  dimension,
+  progress
 }: {
-  phase: DraftGeneratePhase;
+  dimension: InterviewDimension;
   progress: number;
-  hasExistingDraft: boolean;
-  isPartialJoyDraft: boolean;
 }) {
-  const meta = getDraftGenerationPhaseMeta({
-    phase,
-    hasExistingDraft,
-    isPartialJoyDraft
-  });
-
   return (
     <JournalGenerationStatus
-      label={meta.label}
-      description={meta.description}
+      label={getJournalGenerationTitle(dimension)}
+      description={getJournalGenerationPhaseDescription(dimension, progress)}
       progress={progress}
       variant="full"
       className="mt-5"
@@ -483,25 +467,20 @@ function DraftGenerationPhaseCard({
   );
 }
 
-function DraftGenerationPhaseBanner({
-  phase,
-  progress,
-  hasExistingDraft,
-  isPartialJoyDraft
+function DraftGenerationStatusBanner({
+  dimension,
+  progress
 }: {
-  phase: DraftGeneratePhase;
+  dimension: InterviewDimension;
   progress: number;
-  hasExistingDraft: boolean;
-  isPartialJoyDraft: boolean;
 }) {
-  const meta = getDraftGenerationPhaseMeta({
-    phase,
-    hasExistingDraft,
-    isPartialJoyDraft
-  });
-
   return (
-    <JournalGenerationStatus label={meta.label} description={meta.description} progress={progress} variant="compact" />
+    <JournalGenerationStatus
+      label={getJournalGenerationTitle(dimension)}
+      description={getJournalGenerationPhaseDescription(dimension, progress)}
+      progress={progress}
+      variant="compact"
+    />
   );
 }
 
@@ -514,8 +493,8 @@ function getWorkspaceTransitionMeta(
   switch (transitionState.kind) {
     case "opening_daily_journal":
       return {
-        label: "正在打开汇总当天日志",
-        description: "正在先处理当前工作区还没自动暂存的修改，然后切到当天日志工作区。"
+        label: "正在打开完整日志",
+        description: "正在先处理当前工作区还没自动暂存的修改，然后切到完整日志工作区。"
       };
     case "opening_happiness_score":
       return {
@@ -652,7 +631,6 @@ export function InterviewShell({
   const [streamedAssistantQuestion, setStreamedAssistantQuestion] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
-  const [draftGeneratePhase, setDraftGeneratePhase] = useState<DraftGeneratePhase>("skeleton");
   const [draftGenerateProgress, setDraftGenerateProgress] = useState(0);
   const [draftGenerationOverlayActive, setDraftGenerationOverlayActive] = useState(false);
   const [draftGenerationOverlayComplete, setDraftGenerationOverlayComplete] = useState(false);
@@ -664,8 +642,10 @@ export function InterviewShell({
   const [draftContent, setDraftContent] = useState("");
   const [hasSavedJournal, setHasSavedJournal] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [isReopeningInterview, setIsReopeningInterview] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
   const [pagerMotion, setPagerMotion] = useState<HorizontalPagerMotion>("slide");
+  const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const activeTargetDimension = normalizeInterviewDimension(pendingUrlDimension ?? currentDimension);
   const displayDimension = activeTargetDimension;
@@ -778,11 +758,6 @@ export function InterviewShell({
       (journalEntry.status !== "saved" || hasUnsavedDraftChanges)
   );
   const isRefreshingExistingDraft = Boolean(isGeneratingDraft && journalEntry);
-  const isGeneratingPartialJoyDraft = Boolean(
-    (sessionDimension ?? currentDimension) === "joy" &&
-      pendingDecision?.kind === "event_complete" &&
-      pendingDecision.completionMode === "user_override_partial"
-  );
   const isChoiceDraftActionBlocked = Boolean(panelOpen && isGeneratingDraft);
   const draftGenerationUnlocked = Boolean(
     sessionId && status === "active" && sessionDraftGenerationUnlocked && isSessionHydratedForCurrentDimension
@@ -813,25 +788,35 @@ export function InterviewShell({
       !showChoiceCard
   );
   const composerPlaceholder = hasDismissedInputPlaceholder ? undefined : dimensionMeta.inputPlaceholder;
-  const panelStatusText = useMemo(() => {
-    if (draftGenerateState === "error" && !journalEntry) {
+  const panelStatusText = useMemo<{ label: string; tone: "neutral" | "dirty" | "saved" | "error" } | null>(() => {
+    if (!journalEntry) {
       return null;
     }
 
     if (isSavingJournal) {
-      return "保存中";
+      return { label: "保存中…", tone: "neutral" };
     }
 
     if (draftSyncState === "saving") {
-      return "暂存中";
+      return { label: "暂存中…", tone: "neutral" };
     }
 
     if (draftSyncState === "error") {
-      return "暂存失败";
+      return { label: "暂存失败，请重试", tone: "error" };
     }
 
-    return null;
-  }, [draftGenerateState, draftSyncState, isSavingJournal, journalEntry]);
+    if (hasUnsavedDraftChanges) {
+      return { label: "未保存的修改", tone: "dirty" };
+    }
+
+    if (journalEntry.status === "saved") {
+      return { label: "已保存", tone: "saved" };
+    }
+
+    const savedAtLabel = formatClockLabel(journalEntry.updatedAt);
+
+    return { label: savedAtLabel ? `草稿 · 已暂存 ${savedAtLabel}` : "草稿 · 已暂存", tone: "neutral" };
+  }, [draftSyncState, hasUnsavedDraftChanges, isSavingJournal, journalEntry]);
   const bootBubbleContent =
     bootState === "restoring" && restoreHasUserMessagesRef.current
       ? "我正在把你上一次停下来的访谈接回来。"
@@ -1035,42 +1020,17 @@ export function InterviewShell({
     stopDraftPhaseTimers();
 
     if (!isGeneratingDraft) {
-      setDraftGeneratePhase("skeleton");
       setDraftGenerateProgress(0);
       return;
     }
 
-    setDraftGeneratePhase("skeleton");
     setDraftGenerateProgress(0);
-    const phaseBoundaries = DRAFT_PHASE_STEPS.reduce<Array<{ phase: DraftGeneratePhase; startMs: number; endMs: number; start: number; end: number }>>(
-      (items, step) => {
-        const startMs = items.length ? items[items.length - 1].endMs : 0;
-        const endMs = startMs + step.durationMs;
-
-        items.push({
-          phase: step.phase,
-          startMs,
-          endMs,
-          start: step.start,
-          end: step.end
-        });
-        return items;
-      },
-      []
-    );
     const startedAt = Date.now();
 
     draftProgressIntervalRef.current = window.setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
-      const currentStep =
-        phaseBoundaries.find((step) => elapsedMs < step.endMs) ?? phaseBoundaries[phaseBoundaries.length - 1];
-      const stepElapsed = Math.min(Math.max(elapsedMs - currentStep.startMs, 0), currentStep.endMs - currentStep.startMs);
-      const ratio = currentStep.endMs === currentStep.startMs ? 1 : stepElapsed / (currentStep.endMs - currentStep.startMs);
-      const nextProgress = currentStep.start + (currentStep.end - currentStep.start) * ratio;
-
-      setDraftGeneratePhase(currentStep.phase);
-      setDraftGenerateProgress(Math.min(100, Math.max(0, nextProgress)));
-    }, 80);
+      setDraftGenerateProgress(computeJournalGenerationProgressPercent(elapsedMs));
+    }, JOURNAL_GENERATION_PROGRESS_TICK_MS);
 
     return () => {
       stopDraftPhaseTimers();
@@ -1082,7 +1042,6 @@ export function InterviewShell({
     draftGenerateAbortControllerRef.current = null;
     draftGenerateRunIdRef.current += 1;
     stopDraftPhaseTimers();
-    setDraftGeneratePhase("skeleton");
     setDraftGenerateProgress(0);
     setDraftGenerationOverlayActive(false);
     setDraftGenerationOverlayComplete(false);
@@ -1123,7 +1082,6 @@ export function InterviewShell({
 
   const finalizeDraftGenerationVisuals = useCallback(async () => {
     stopDraftPhaseTimers();
-    setDraftGeneratePhase("polish");
     setDraftGenerateProgress(100);
     await new Promise((resolve) => window.setTimeout(resolve, 350));
   }, [stopDraftPhaseTimers]);
@@ -2094,7 +2052,14 @@ export function InterviewShell({
     }
 
     if (confirmOnOverwrite && hasUnsavedDraftChanges) {
-      const confirmed = window.confirm("生成日志会覆盖当前未保存的手动修改，是否继续？");
+      const confirmed = await confirmAction({
+        eyebrow: "重新生成确认",
+        title: "重新生成会覆盖未保存的修改",
+        description: "你在这篇日志里还有没保存的手动改动。重新生成会用最新访谈内容覆盖它们，确定继续吗？",
+        confirmLabel: "覆盖并重新生成",
+        cancelLabel: "先不要",
+        tone: "danger"
+      });
 
       if (!confirmed) {
         return;
@@ -2109,7 +2074,6 @@ export function InterviewShell({
     if (openPanel) {
       setPanelOpen(true);
     }
-    setDraftGeneratePhase("skeleton");
     setDraftGenerateState("loading");
     setDraftGenerationOverlayComplete(false);
     setDraftGenerationOverlayActive(true);
@@ -2260,6 +2224,41 @@ export function InterviewShell({
     void performSaveJournal();
   }
 
+  async function handleReopenInterview() {
+    if (!sessionId || isReopeningInterview || isBusy || isSavingJournal) {
+      return;
+    }
+
+    setInterviewIssue(null);
+    setIsReopeningInterview(true);
+
+    try {
+      const response = await fetch("/api/interview/session/reopen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId })
+      });
+
+      if (!response.ok) {
+        throw new Error("SESSION_REOPEN_FAILED");
+      }
+
+      const data = await response.json();
+      hydrate(data.session);
+      touchStoredInterviewSessionId(
+        data.session.dimension,
+        data.session.id,
+        data.session.entryDate,
+        sessionHasUserMessages(data.session)
+      );
+      showToast("已回到访谈，继续说就好");
+    } catch {
+      setInterviewIssue(buildFallbackInterviewIssue("INTERVIEW_RESPOND_FAILED", "没能回到访谈，请稍后重试。"));
+    } finally {
+      setIsReopeningInterview(false);
+    }
+  }
+
   async function handleClosePanel() {
     if (isGeneratingDraft) {
       cancelDraftGeneration();
@@ -2278,6 +2277,15 @@ export function InterviewShell({
 
     setPanelOpen(false);
     return true;
+  }
+
+  async function handleCloseButtonClick() {
+    const hadUnsavedEdits = hasUnsavedDraftChanges && !isGeneratingDraft && !isSavingJournal;
+    const closed = await handleClosePanel();
+
+    if (closed && hadUnsavedEdits) {
+      showToast("已暂存这篇日志");
+    }
   }
 
   const flushDailyJournalWorkspace = useCallback(async () => {
@@ -2561,11 +2569,13 @@ export function InterviewShell({
     stopToastTimer
   ]);
 
-  const draftGenerationOverlayMeta = getDraftGenerationPhaseMeta({
-    phase: draftGeneratePhase,
-    hasExistingDraft: Boolean(journalEntry),
-    isPartialJoyDraft: isGeneratingPartialJoyDraft
-  });
+  const draftGenerationOverlayMeta = useMemo(
+    () => ({
+      label: getJournalGenerationTitle(currentDimension),
+      description: getJournalGenerationPhaseDescription(currentDimension, draftGenerateProgress)
+    }),
+    [currentDimension, draftGenerateProgress]
+  );
 
   return (
     <section
@@ -2730,9 +2740,9 @@ export function InterviewShell({
                           />
                           <button
                             type="button"
-                            onClick={handleSend}
-                            disabled={!canSendInput}
-                            aria-label={assistantState === "idle" ? "发送回答" : "生成中"}
+                            onClick={assistantState === "idle" ? handleSend : cancelInterviewResponse}
+                            disabled={assistantState === "idle" ? !canSendInput : false}
+                            aria-label={assistantState === "idle" ? "发送回答" : "停止生成"}
                             className="absolute right-3 top-1/2 inline-flex h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.46)] bg-[linear-gradient(180deg,rgba(244,225,199,0.96),rgba(229,201,169,0.94))] px-3 text-sm text-[#3c2d20] shadow-[0_12px_24px_rgba(120,92,63,0.18),inset_0_1px_0_rgba(255,255,255,0.5)] transition hover:-translate-y-[calc(50%+2px)] hover:bg-[linear-gradient(180deg,rgba(248,230,205,0.98),rgba(233,205,173,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {assistantState === "idle" ? (
@@ -2741,7 +2751,12 @@ export function InterviewShell({
                                 <path d="M4.5 9.5 10 4l5.5 5.5" />
                               </svg>
                             ) : (
-                              <span className="px-1 text-xs font-medium">生成中</span>
+                              <span className="inline-flex items-center gap-1 px-1 text-xs font-medium">
+                                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor">
+                                  <rect x="5" y="5" width="10" height="10" rx="2.5" />
+                                </svg>
+                                停止
+                              </span>
                             )}
                           </button>
                         </div>
@@ -2752,7 +2767,14 @@ export function InterviewShell({
                   {isInterviewLocked ? (
                     <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
                       <InterviewEndedCard
-                        title={journalEntry?.status === "saved" ? "日志已保存，访谈已结束" : "访谈已结束"}
+                        title={journalEntry?.status === "saved" ? "这篇日志已记下，访谈先收住了" : "访谈先收住了"}
+                        description={
+                          isInterviewCompleted
+                            ? "想再多说一点也可以——继续聊之后，这篇日志随时能用最新对话更新。"
+                            : undefined
+                        }
+                        onContinueInterview={isInterviewCompleted ? () => void handleReopenInterview() : undefined}
+                        continueDisabled={isReopeningInterview || isBusy || isSavingJournal}
                         onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
                         workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
                       />
@@ -2779,9 +2801,18 @@ export function InterviewShell({
       )}
 
       {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
+        <div
+          aria-hidden="true"
+          data-testid="journal-panel-scrim"
+          onClick={() => void handleCloseButtonClick()}
+          className="absolute inset-0 z-20 bg-[rgba(32,24,17,0.32)] backdrop-blur-[1px] xl:hidden"
+        />
+      ) : null}
+
+      {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
         <aside
           ref={journalPanelRef}
-          className="paper-sheet relative flex min-h-0 flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5"
+          className="paper-sheet absolute inset-y-0 right-0 z-30 flex min-h-0 w-full max-w-[30rem] flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 shadow-[-24px_0_60px_-20px_rgba(74,44,18,0.45)] md:px-5 md:pb-5 md:pt-5 xl:static xl:z-auto xl:w-auto xl:max-w-none xl:shadow-none"
         >
           <JournalGenerationOverlay
             active={draftGenerationOverlayActive}
@@ -2790,14 +2821,13 @@ export function InterviewShell({
             description={draftGenerationOverlayMeta.description}
             progress={draftGenerateProgress}
             mode="dimension"
-            animationId="plant_story"
             minVisibleMs={1000}
             onExited={() => setDraftGenerationOverlayComplete(false)}
           />
           <button
             type="button"
             aria-label="关闭日志面板"
-            onClick={handleClosePanel}
+            onClick={handleCloseButtonClick}
             disabled={draftSyncState === "saving" || isSavingJournal}
             className="absolute right-5 top-5 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(150,109,66,0.2)] bg-[rgba(255,249,239,0.72)] text-[#5a4632] transition hover:bg-[rgba(255,249,239,0.94)] disabled:cursor-not-allowed disabled:opacity-50 md:right-6 md:top-6"
           >
@@ -2809,31 +2839,38 @@ export function InterviewShell({
 
           {panelStatusText ? (
             <div className="pr-14">
-              <span className="rounded-full border border-[rgba(161,117,72,0.18)] bg-[rgba(251,242,228,0.84)] px-3 py-1 text-[12px] text-[#7e5d3f]">
-                {panelStatusText}
+              <span
+                data-testid="journal-panel-status"
+                data-tone={panelStatusText.tone}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] ${
+                  panelStatusText.tone === "dirty"
+                    ? "border-[rgba(200,137,63,0.4)] bg-[rgba(200,137,63,0.12)] text-[#8a5a24]"
+                    : panelStatusText.tone === "saved"
+                      ? "border-[rgba(123,150,90,0.36)] bg-[rgba(125,141,99,0.16)] text-[#566b3c]"
+                      : panelStatusText.tone === "error"
+                        ? "border-[rgba(159,58,47,0.3)] bg-[rgba(255,246,239,0.88)] text-[#9f3a2f]"
+                        : "border-[rgba(161,117,72,0.18)] bg-[rgba(251,242,228,0.84)] text-[#7e5d3f]"
+                }`}
+              >
+                {panelStatusText.tone === "saved" ? (
+                  <svg aria-hidden="true" viewBox="0 0 14 14" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7.5l2.5 2.5L11 4.5" />
+                  </svg>
+                ) : null}
+                {panelStatusText.label}
               </span>
             </div>
           ) : null}
 
           {!draftGenerationOverlayActive && isGeneratingDraft && journalEntry ? (
             <div className={`${panelStatusText ? "mt-3" : "pr-14"} ${journalEntry ? "mb-4" : ""}`}>
-              <DraftGenerationPhaseBanner
-                phase={draftGeneratePhase}
-                progress={draftGenerateProgress}
-                hasExistingDraft={Boolean(journalEntry)}
-                isPartialJoyDraft={isGeneratingPartialJoyDraft}
-              />
+              <DraftGenerationStatusBanner dimension={currentDimension} progress={draftGenerateProgress} />
             </div>
           ) : null}
 
           <div className={`${panelStatusText || (!draftGenerationOverlayActive && isGeneratingDraft && journalEntry) ? "mt-3" : ""} min-h-0 flex-1 overflow-y-auto pr-1`}>
             {isGeneratingDraft && !journalEntry && !draftGenerationOverlayActive ? (
-              <DraftGenerationPhaseCard
-                phase={draftGeneratePhase}
-                progress={draftGenerateProgress}
-                hasExistingDraft={false}
-                isPartialJoyDraft={isGeneratingPartialJoyDraft}
-              />
+              <DraftGenerationStatusCard dimension={currentDimension} progress={draftGenerateProgress} />
             ) : draftGenerateIssue && !journalEntry ? (
               <DraftPanelStateCard
                 accent="error"
@@ -2902,6 +2939,23 @@ export function InterviewShell({
           </div>
         </aside>
       ) : null}
+      {!showWorkspaceTransition && !panelOpen && journalEntry && workspaceMode === "interview" ? (
+        <button
+          type="button"
+          data-testid="journal-bookmark"
+          aria-label="打开这篇日志"
+          onClick={() => setPanelOpen(true)}
+          className="absolute right-0 top-16 z-20 flex flex-col items-center gap-1 rounded-l-[14px] border border-r-0 border-[rgba(168,124,69,0.4)] bg-[linear-gradient(160deg,#cf9a55,#a86f37)] px-2.5 py-3 text-[#fff8ec] shadow-[-8px_10px_22px_-8px_rgba(110,70,30,0.55)] transition hover:px-3"
+        >
+          <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+            <path d="M4 2.5A1.5 1.5 0 0 1 5.5 1h5A1.5 1.5 0 0 1 12 2.5V15l-4-2.4L4 15V2.5Z" />
+          </svg>
+          <span className="text-[0.6rem] font-semibold tracking-[0.12em] [writing-mode:vertical-rl]">日志</span>
+          {hasUnsavedDraftChanges || journalEntry.status !== "saved" ? (
+            <span aria-hidden="true" className="absolute -left-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#c8893f] ring-2 ring-[#fff9ef]" />
+          ) : null}
+        </button>
+      ) : null}
       {showWorkspaceTransition && workspaceTransitionState ? (
         <div className="absolute inset-0 z-30 bg-[rgba(247,240,229,0.92)] backdrop-blur-[2px]">
           <WorkspaceTransitionCard transitionState={workspaceTransitionState} />
@@ -2914,6 +2968,7 @@ export function InterviewShell({
         onConfirm={handleConfirmSaveJournal}
         confirmDisabled={isSavingJournal}
       />
+      {confirmDialog}
     </section>
   );
 }

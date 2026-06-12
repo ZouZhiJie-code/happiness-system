@@ -1,6 +1,7 @@
 const {
   mockFindDailyJournalByDate,
   mockListSavedJournalEntriesForDailyJournal,
+  mockListDraftJournalEntriesForDate,
   mockMarkDailyJournalSaved,
   mockMarkDailyJournalSavedWithMeta,
   mockUpdateDailyJournalDraft,
@@ -8,6 +9,7 @@ const {
 } = vi.hoisted(() => ({
   mockFindDailyJournalByDate: vi.fn(),
   mockListSavedJournalEntriesForDailyJournal: vi.fn(),
+  mockListDraftJournalEntriesForDate: vi.fn(),
   mockMarkDailyJournalSaved: vi.fn(),
   mockMarkDailyJournalSavedWithMeta: vi.fn(),
   mockUpdateDailyJournalDraft: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock("@/server/services/ai", () => ({
 vi.mock("@/server/repositories/daily-journal.repository", () => ({
   findDailyJournalByDate: mockFindDailyJournalByDate,
   listSavedJournalEntriesForDailyJournal: mockListSavedJournalEntriesForDailyJournal,
+  listDraftJournalEntriesForDate: mockListDraftJournalEntriesForDate,
   markDailyJournalSaved: mockMarkDailyJournalSaved,
   markDailyJournalSavedWithMeta: mockMarkDailyJournalSavedWithMeta,
   updateDailyJournalDraft: mockUpdateDailyJournalDraft,
@@ -72,6 +75,8 @@ describe("daily journal service", () => {
   beforeEach(() => {
     mockFindDailyJournalByDate.mockReset();
     mockListSavedJournalEntriesForDailyJournal.mockReset();
+    mockListDraftJournalEntriesForDate.mockReset();
+    mockListDraftJournalEntriesForDate.mockResolvedValue([]);
     mockMarkDailyJournalSaved.mockReset();
     mockMarkDailyJournalSavedWithMeta.mockReset();
     mockUpdateDailyJournalDraft.mockReset();

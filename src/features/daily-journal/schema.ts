@@ -40,6 +40,7 @@ export const dailyJournalSourceSchema = z.object({
 export const getDailyJournalResponseSchema = z.object({
   dailyJournal: dailyJournalEntrySchema.nullable(),
   availableSourceCount: z.number().int().nonnegative(),
+  draftSourceCount: z.number().int().nonnegative().default(0),
   sources: z.array(dailyJournalSourceSchema),
   state: z.enum(["none", "draft", "saved", "stale"])
 });
@@ -51,6 +52,18 @@ export const generateDailyJournalRequestSchema = z.object({
 export const generateDailyJournalResponseSchema = z.object({
   dailyJournal: dailyJournalEntrySchema,
   availableSourceCount: z.number().int().positive(),
+  sources: z.array(dailyJournalSourceSchema),
+  state: z.enum(["draft", "saved", "stale"])
+});
+
+export const saveAllDailyJournalRequestSchema = z.object({
+  date: entryDateStringSchema
+});
+
+export const saveAllDailyJournalResponseSchema = z.object({
+  dailyJournal: dailyJournalEntrySchema,
+  promotedDimensions: z.array(z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"])),
+  availableSourceCount: z.number().int().nonnegative(),
   sources: z.array(dailyJournalSourceSchema),
   state: z.enum(["draft", "saved", "stale"])
 });
