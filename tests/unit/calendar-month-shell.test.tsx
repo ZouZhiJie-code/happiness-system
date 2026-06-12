@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarMonthShell } from "@/components/calendar/calendar-month-shell";
+import { clearAllCalendarRecordCache, saveCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarMonthRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
@@ -319,6 +320,7 @@ function createDeferredResponse() {
 describe("calendar month shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    clearAllCalendarRecordCache();
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       view: "month",
@@ -487,6 +489,17 @@ describe("calendar month shell", () => {
       "href",
       "/calendar?view=day&date=2099-01-01"
     );
+  });
+
+  it("renders immediately from cache without entering the loading skeleton", async () => {
+    saveCalendarRecordCache("month", "2026-05-02", buildMonthRecord());
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    render(<CalendarMonthShell />);
+
+    expect(screen.getByTestId("calendar-month-workspace")).toHaveAttribute("aria-busy", "false");
+    expect(screen.queryByText("正在读取本月记录。")).not.toBeInTheDocument();
+    await screen.findByTestId("calendar-month-day-panel");
   });
 
   it("announces loading state before the month record arrives", async () => {

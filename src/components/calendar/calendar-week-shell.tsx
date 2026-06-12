@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarWeekBoard } from "@/components/calendar/calendar-week-board";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
-import { fetchCalendarWeekRecord } from "@/features/calendar/calendar-client";
+import { fetchCalendarWeekRecord, getCachedCalendarWeekRecord } from "@/features/calendar/calendar-client";
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
 import type { CalendarWeekRecord } from "@/features/calendar/types";
 import { buildCalendarWeekOverviewState } from "@/features/calendar/week-view";
@@ -23,8 +23,8 @@ export function CalendarWeekShell() {
     today
   });
   const currentDate = normalizedSearch.date;
-  const [weekRecord, setWeekRecord] = useState<CalendarWeekRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [weekRecord, setWeekRecord] = useState<CalendarWeekRecord | null>(() => getCachedCalendarWeekRecord(currentDate));
+  const [isLoading, setIsLoading] = useState(() => !getCachedCalendarWeekRecord(currentDate));
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
@@ -37,10 +37,15 @@ export function CalendarWeekShell() {
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+    const force = refreshNonce > 0;
+    const cachedRecord = force ? null : getCachedCalendarWeekRecord(currentDate);
 
-    void fetchCalendarWeekRecord(currentDate, { force: refreshNonce > 0 })
+    if (!cachedRecord) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    void fetchCalendarWeekRecord(currentDate, { force })
       .then((record) => {
         if (!cancelled) {
           setWeekRecord(record);

@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarWeekShell } from "@/components/calendar/calendar-week-shell";
+import { clearAllCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarDimensionStatus, CalendarWeekRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
@@ -184,6 +185,7 @@ function createDeferredResponse() {
 describe("calendar week shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    clearAllCalendarRecordCache();
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       view: "week",

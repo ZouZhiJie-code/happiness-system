@@ -50,7 +50,10 @@ describe("HorizontalPager", () => {
 
     const track = document.querySelector(".ui-horizontal-pager__track");
 
-    expect(track).toHaveStyle({ transform: "translateX(-33.333333333333336%)" });
+    expect(track).toHaveStyle({
+      display: "flex",
+      transform: "translateX(-33.333333333333336%)"
+    });
     expect(track).toHaveAttribute("data-active", "b");
   });
 });

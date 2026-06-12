@@ -39,12 +39,18 @@ export function HorizontalPager({
   const offsetPercent = (activeIndex * 100) / pageCount;
 
   return (
-    <div className={cn("ui-horizontal-pager", className)} aria-label={ariaLabel}>
+    <div
+      className={cn("ui-horizontal-pager", className)}
+      style={{ overflow: "hidden", width: "100%" }}
+      aria-label={ariaLabel}
+    >
       <div
         className={cn("ui-horizontal-pager__track", trackClassName)}
         data-active={activeKey}
         data-motion={motion}
         style={{
+          display: "flex",
+          height: "100%",
           width: `${pageCount * 100}%`,
           transform: `translateX(-${offsetPercent}%)`
         }}
@@ -56,7 +62,12 @@ export function HorizontalPager({
             <div
               key={page.key}
               className={cn("ui-horizontal-pager__page", page.className)}
-              style={{ width: `${100 / pageCount}%` }}
+              style={{
+                width: `${100 / pageCount}%`,
+                flexShrink: 0,
+                minWidth: 0,
+                height: "100%"
+              }}
               aria-hidden={!isActive}
             >
               {page.children}

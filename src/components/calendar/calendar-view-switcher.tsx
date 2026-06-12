@@ -1,6 +1,7 @@
 "use client";
 
 import { SlidingSegmentedControl } from "@/components/ui";
+import { prefetchCalendarView } from "@/features/calendar/calendar-client";
 
 import type { CalendarView } from "@/features/calendar/view-state";
 
@@ -12,9 +13,11 @@ const CALENDAR_VIEW_ITEMS: Array<{ value: CalendarView; label: string; ariaLabel
 
 export function CalendarViewSwitcher({
   currentView,
+  currentDate,
   onSelectView
 }: {
   currentView: CalendarView;
+  currentDate: string;
   onSelectView: (view: CalendarView) => void;
 }) {
   return (
@@ -29,7 +32,11 @@ export function CalendarViewSwitcher({
         ariaLabel: item.ariaLabel,
         buttonProps: {
           "aria-current": currentView === item.value ? ("page" as const) : undefined,
-          className: "calendar-segmented-item"
+          onPointerEnter: () => {
+            if (item.value !== currentView) {
+              prefetchCalendarView(item.value, currentDate);
+            }
+          }
         }
       }))}
       className="calendar-segmented"

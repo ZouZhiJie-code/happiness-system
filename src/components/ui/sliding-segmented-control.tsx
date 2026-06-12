@@ -68,10 +68,12 @@ export function SlidingSegmentedControl<T extends string>({
     const buttonRect = activeButton.getBoundingClientRect();
     const x = buttonRect.left - containerRect.left + (scrollRef.current?.scrollLeft ?? 0);
 
-    setThumbStyle({
+    const nextThumbStyle = {
       width: buttonRect.width,
       transform: `translateX(${x}px)`
-    });
+    };
+
+    setThumbStyle(nextThumbStyle);
   }, [value]);
 
   useLayoutEffect(() => {
@@ -126,6 +128,7 @@ export function SlidingSegmentedControl<T extends string>({
       />
       {items.map((item) => {
         const isActive = highlightSelection && item.value === value;
+        const { className: itemButtonClassName, ...restButtonProps } = item.buttonProps ?? {};
 
         return (
           <button
@@ -144,8 +147,12 @@ export function SlidingSegmentedControl<T extends string>({
             aria-current={isActive ? "true" : undefined}
             data-active={isActive ? "true" : "false"}
             onClick={() => onChange(item.value)}
-            className={cn("ui-segmented-control__button", isActive && "ui-segmented-control__button--active")}
-            {...item.buttonProps}
+            className={cn(
+              "ui-segmented-control__button",
+              isActive && "ui-segmented-control__button--active",
+              itemButtonClassName
+            )}
+            {...restButtonProps}
           >
             <span className="ui-segmented-control__label">{item.label}</span>
             {item.adornment ? <span className="ui-segmented-control__adornment">{item.adornment}</span> : null}

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
-import { fetchCalendarDayRecord } from "@/features/calendar/calendar-client";
+import { fetchCalendarDayRecord, getCachedCalendarDayRecord } from "@/features/calendar/calendar-client";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
@@ -21,8 +21,8 @@ export function CalendarDayShell() {
     today
   });
   const currentDate = normalizedSearch.date;
-  const [dayRecord, setDayRecord] = useState<CalendarDayRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [dayRecord, setDayRecord] = useState<CalendarDayRecord | null>(() => getCachedCalendarDayRecord(currentDate));
+  const [isLoading, setIsLoading] = useState(() => !getCachedCalendarDayRecord(currentDate));
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
@@ -35,10 +35,15 @@ export function CalendarDayShell() {
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+    const force = refreshNonce > 0;
+    const cachedRecord = force ? null : getCachedCalendarDayRecord(currentDate);
 
-    void fetchCalendarDayRecord(currentDate, { force: refreshNonce > 0 })
+    if (!cachedRecord) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    void fetchCalendarDayRecord(currentDate, { force })
       .then((record) => {
         if (!cancelled) {
           setDayRecord(record);

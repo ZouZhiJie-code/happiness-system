@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
-import { fetchCalendarMonthRecord } from "@/features/calendar/calendar-client";
+import { fetchCalendarMonthRecord, getCachedCalendarMonthRecord } from "@/features/calendar/calendar-client";
 import { interviewDimensions } from "@/features/interview/dimensions";
 import type { CalendarDayRecord, CalendarMonthRecord } from "@/features/calendar/types";
 import {
@@ -129,8 +129,8 @@ export function CalendarMonthShell() {
   const currentDate = normalizedSearch.date;
   const monthKey = getCalendarMonthKey(currentDate);
   const [selectedDate, setSelectedDate] = useState(currentDate);
-  const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(() => getCachedCalendarMonthRecord(currentDate));
+  const [isLoading, setIsLoading] = useState(() => !getCachedCalendarMonthRecord(currentDate));
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
@@ -147,10 +147,15 @@ export function CalendarMonthShell() {
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+    const force = refreshNonce > 0;
+    const cachedRecord = force ? null : getCachedCalendarMonthRecord(currentDate);
 
-    void fetchCalendarMonthRecord(monthKey, { force: refreshNonce > 0 })
+    if (!cachedRecord) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    void fetchCalendarMonthRecord(monthKey, { force })
       .then((record) => {
         if (cancelled) {
           return;
@@ -174,7 +179,7 @@ export function CalendarMonthShell() {
     return () => {
       cancelled = true;
     };
-  }, [monthKey, refreshNonce]);
+  }, [currentDate, monthKey, refreshNonce]);
 
   const monthGrid = useMemo(() => buildCalendarMonthGrid(monthKey), [monthKey]);
   const daysByDate = useMemo(

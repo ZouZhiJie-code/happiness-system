@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CalendarDayShell } from "@/components/calendar/calendar-day-shell";
+import { clearAllCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarDimensionStatus } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
@@ -195,6 +196,7 @@ function createDeferredResponse() {
 describe("calendar day shell", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    clearAllCalendarRecordCache();
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       view: "day",

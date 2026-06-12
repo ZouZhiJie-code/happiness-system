@@ -10,7 +10,11 @@ import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calen
 import {
   fetchCalendarDayRecord,
   fetchCalendarMonthRecord,
-  fetchCalendarWeekRecord
+  fetchCalendarWeekRecord,
+  getCachedCalendarDayRecord,
+  getCachedCalendarMonthRecord,
+  getCachedCalendarWeekRecord,
+  prefetchCalendarView
 } from "@/features/calendar/calendar-client";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import {
@@ -40,6 +44,17 @@ function ToolbarDivider() {
   );
 }
 
+function hasCachedToolbarRecord(view: ReturnType<typeof normalizeCalendarSearchParams>["view"], date: string) {
+  switch (view) {
+    case "month":
+      return Boolean(getCachedCalendarMonthRecord(date));
+    case "week":
+      return Boolean(getCachedCalendarWeekRecord(date));
+    case "day":
+      return Boolean(getCachedCalendarDayRecord(date));
+  }
+}
+
 export function CalendarToolbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,11 +72,19 @@ export function CalendarToolbar() {
       }),
     [normalizedSearch.date, normalizedSearch.view]
   );
-  const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(null);
-  const [weekRecord, setWeekRecord] = useState<CalendarWeekRecord | null>(null);
-  const [dayRecord, setDayRecord] = useState<CalendarDayRecord | null>(null);
+  const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(() =>
+    normalizedSearch.view === "month" ? getCachedCalendarMonthRecord(normalizedSearch.date) : null
+  );
+  const [weekRecord, setWeekRecord] = useState<CalendarWeekRecord | null>(() =>
+    normalizedSearch.view === "week" ? getCachedCalendarWeekRecord(normalizedSearch.date) : null
+  );
+  const [dayRecord, setDayRecord] = useState<CalendarDayRecord | null>(() =>
+    normalizedSearch.view === "day" ? getCachedCalendarDayRecord(normalizedSearch.date) : null
+  );
   const [hasFetchError, setHasFetchError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(
+    () => !hasCachedToolbarRecord(normalizedSearch.view, normalizedSearch.date)
+  );
 
   useEffect(() => {
     const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
@@ -71,28 +94,75 @@ export function CalendarToolbar() {
   }, [normalizedSearch.href, router, searchParams]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (typeof window === "undefined") {
+      return;
+    }
 
-    setIsLoading(true);
-    setHasFetchError(false);
-    setMonthRecord(null);
-    setWeekRecord(null);
-    setDayRecord(null);
+    const scheduleIdle =
+      window.requestIdleCallback ??
+      ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1));
+    const cancelIdle =
+      window.cancelIdleCallback ??
+      ((handle: number) => {
+        window.clearTimeout(handle);
+      });
+
+    const idleHandle = scheduleIdle(() => {
+      (["month", "week", "day"] as const).forEach((view) => {
+        if (view !== normalizedSearch.view) {
+          prefetchCalendarView(view, normalizedSearch.date);
+        }
+      });
+    });
+
+    return () => {
+      cancelIdle(idleHandle);
+    };
+  }, [normalizedSearch.date, normalizedSearch.view]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const { view, date } = normalizedSearch;
+    const cachedRecord =
+      view === "month"
+        ? getCachedCalendarMonthRecord(date)
+        : view === "week"
+          ? getCachedCalendarWeekRecord(date)
+          : getCachedCalendarDayRecord(date);
+
+    if (cachedRecord) {
+      setHasFetchError(false);
+      setIsLoading(false);
+
+      if (view === "month") {
+        setMonthRecord(cachedRecord as CalendarMonthRecord);
+      } else if (view === "week") {
+        setWeekRecord(cachedRecord as CalendarWeekRecord);
+      } else {
+        setDayRecord(cachedRecord as CalendarDayRecord);
+      }
+    } else {
+      setIsLoading(true);
+      setHasFetchError(false);
+      setMonthRecord(null);
+      setWeekRecord(null);
+      setDayRecord(null);
+    }
 
     const request =
-      normalizedSearch.view === "month"
-        ? fetchCalendarMonthRecord(normalizedSearch.date.slice(0, 7)).then((record) => {
+      view === "month"
+        ? fetchCalendarMonthRecord(date.slice(0, 7)).then((record) => {
             if (!cancelled) {
               setMonthRecord(record);
             }
           })
-        : normalizedSearch.view === "week"
-          ? fetchCalendarWeekRecord(normalizedSearch.date).then((record) => {
+        : view === "week"
+          ? fetchCalendarWeekRecord(date).then((record) => {
               if (!cancelled) {
                 setWeekRecord(record);
               }
             })
-          : fetchCalendarDayRecord(normalizedSearch.date).then((record) => {
+          : fetchCalendarDayRecord(date).then((record) => {
               if (!cancelled) {
                 setDayRecord(record);
               }
@@ -188,7 +258,11 @@ export function CalendarToolbar() {
 
       <ToolbarDivider />
 
-      <CalendarViewSwitcher currentView={normalizedSearch.view} onSelectView={(view) => navigate({ view })} />
+      <CalendarViewSwitcher
+        currentView={normalizedSearch.view}
+        currentDate={normalizedSearch.date}
+        onSelectView={(view) => navigate({ view })}
+      />
 
       <span className="sr-only" aria-live="polite">
         {isLoading ? getCalendarLoadingLabel("toolbar") : hasFetchError ? getCalendarErrorLabel("toolbar") : "摘要已更新。"}

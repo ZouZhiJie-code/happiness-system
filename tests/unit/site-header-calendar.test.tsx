@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { SiteHeader } from "@/components/shared/site-header";
+import { clearAllCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
@@ -218,9 +219,31 @@ function createDeferredResponse() {
   };
 }
 
+function mockAllCalendarFetch() {
+  global.fetch = vi.fn(async (input) => {
+    const url = String(input);
+
+    if (url.includes("/api/calendar/month")) {
+      return new Response(JSON.stringify(buildMonthRecord()), { status: 200 });
+    }
+
+    if (url.includes("/api/calendar/week")) {
+      return new Response(JSON.stringify(buildWeekRecord()), { status: 200 });
+    }
+
+    if (url.includes("/api/calendar/day")) {
+      return new Response(JSON.stringify(buildDayRecord()), { status: 200 });
+    }
+
+    return new Response(null, { status: 404 });
+  }) as typeof fetch;
+}
+
 describe("site header calendar toolbar", () => {
   beforeEach(() => {
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+    clearAllCalendarRecordCache();
+    mockAllCalendarFetch();
     resizeObserverState.callback = null;
     resizeObserverState.observe.mockReset();
     resizeObserverState.disconnect.mockReset();
@@ -324,6 +347,34 @@ describe("site header calendar toolbar", () => {
     expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-02", { scroll: false });
   });
 
+  it("prefetches calendar views when hovering the segmented control", async () => {
+    global.fetch = vi.fn(async (input) => {
+      const url = String(input);
+
+      if (url.includes("/api/calendar/week")) {
+        return new Response(JSON.stringify(buildWeekRecord()), { status: 200 });
+      }
+
+      return new Response(JSON.stringify(buildMonthRecord()), { status: 200 });
+    }) as typeof fetch;
+
+    render(<SiteHeader />);
+
+    const toolbar = await screen.findByTestId("calendar-toolbar");
+    await waitFor(() => {
+      expect(toolbar).toHaveAttribute("aria-busy", "false");
+    });
+
+    fireEvent.pointerEnter(within(toolbar).getByRole("button", { name: "切换到周视图" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/calendar/week?date=2026-05-02"),
+        expect.anything()
+      );
+    });
+  });
+
   it("uses week data and navigation labels for week view", async () => {
     mockSearchParams.value = {
       dimension: null,
@@ -388,7 +439,23 @@ describe("site header calendar toolbar", () => {
 
   it("announces toolbar loading while the summary request is pending", async () => {
     const deferred = createDeferredResponse();
-    global.fetch = vi.fn(() => deferred.promise) as typeof fetch;
+    global.fetch = vi.fn((input) => {
+      const url = String(input);
+
+      if (url.includes("/api/calendar/month")) {
+        return deferred.promise;
+      }
+
+      if (url.includes("/api/calendar/week")) {
+        return Promise.resolve(new Response(JSON.stringify(buildWeekRecord()), { status: 200 }));
+      }
+
+      if (url.includes("/api/calendar/day")) {
+        return Promise.resolve(new Response(JSON.stringify(buildDayRecord()), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(null, { status: 404 }));
+    }) as typeof fetch;
 
     render(<SiteHeader />);
 
