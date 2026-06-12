@@ -9,6 +9,7 @@ import { HeaderToolbarPeriodStepper } from "@/components/shared/header-toolbar-n
 import {
   HeaderPeriodDisplay,
   HeaderSummaryChipRow,
+  HeaderToolbarChipButton,
   HeaderToolbarDivider,
   HeaderToolbarStatus
 } from "@/components/shared/header-toolbar-primitives";
@@ -246,14 +247,9 @@ export function CalendarToolbar() {
         <HeaderToolbarDivider />
 
         <div className="header-ws-slot header-ws-slot--action shrink-0">
-          <button
-            type="button"
-            onClick={() => navigate({ date: today })}
-            className="calendar-chip header-text-action shrink-0 rounded-full px-3 py-1 transition duration-200 hover:text-[#34271c]"
-            aria-label="回到今天"
-          >
+          <HeaderToolbarChipButton onClick={() => navigate({ date: today })} aria-label="回到今天">
             今天
-          </button>
+          </HeaderToolbarChipButton>
         </div>
       </div>
 

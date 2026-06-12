@@ -39,7 +39,6 @@ export function CalendarViewSwitcher({
           }
         }
       }))}
-      className="calendar-segmented"
     />
   );
 }

@@ -9,6 +9,12 @@ import clsx from "clsx";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
+import {
+  HeaderToolbarActionButton,
+  HeaderToolbarDivider,
+  HeaderToolbarGhostButton,
+  HeaderToolbarPrimaryButton
+} from "@/components/shared/header-toolbar-primitives";
 import { DimensionStatusDot, SlidingSegmentedControl } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
@@ -43,17 +49,6 @@ const navItems = [
   { href: "/profile", matchPath: "/profile", label: "画像" },
   { href: "/settings", matchPath: "/settings", label: "设置" }
 ] as const;
-
-function HeaderDivider({ className }: { className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={clsx("shrink-0 select-none font-mono text-[1rem] font-semibold text-[rgba(101,67,34,0.58)]", className)}
-    >
-      ｜
-    </span>
-  );
-}
 
 const headerPlainContextByPath: Partial<Record<string, { title: string; subtitle: string }>> = {
   "/settings": { title: "设置", subtitle: "账号与偏好" },
@@ -706,7 +701,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
       <header
         ref={headerRef}
-        className="site-header-frosted sticky top-0 z-50 isolate w-full border-b border-[rgba(101,67,34,0.06)] px-3 shadow-[0_8px_24px_rgba(77,47,21,0.2)] md:px-6"
+        className="site-header-frosted sticky top-0 z-50 isolate w-full px-3 md:px-6"
       >
       <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] md:items-center md:gap-3">
         <Link
@@ -727,7 +722,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
           </div>
           <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">Daily Light</p>
         </Link>
-        <HeaderDivider className="hidden md:flex" />
+        <HeaderToolbarDivider className="hidden md:flex" />
         <div className="flex min-h-[var(--site-header-lane-min-height)] items-center">
           {isInterviewPage ? (
             <div
@@ -780,7 +775,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
                     })}
                   />
                 </div>
-                <HeaderDivider />
+                <HeaderToolbarDivider />
                 <div className="header-ws-slot header-ws-slot--context flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                   {showSelectedProgressPod ? (
                     <>
@@ -801,99 +796,62 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
                           {selectedProgressPodState.label}
                         </span>
                       </div>
-                      {shouldShowDraftGenerateButton ? <HeaderDivider /> : null}
+                      {shouldShowDraftGenerateButton ? <HeaderToolbarDivider /> : null}
                     </>
                   ) : null}
                   {shouldShowDraftGenerateButton ? (
                     <>
                       <div className="flex min-w-[4.75rem] shrink-0 justify-center">
-                        <button
-                          type="button"
+                        <HeaderToolbarPrimaryButton
                           onClick={handleDraftGenerateClick}
                           disabled={draftGenerationBusy || draftGenerationDisabled}
-                          className="shrink-0 rounded-full border border-[rgba(171,118,64,0.24)] bg-[linear-gradient(180deg,rgba(190,137,80,0.96),rgba(160,106,54,0.96))] px-3 py-1.5 text-[12px] text-[#fff8f1] shadow-[0_8px_16px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {draftGenerationBusy ? "正在整理..." : "生成日志"}
-                        </button>
+                        </HeaderToolbarPrimaryButton>
                       </div>
-                      <HeaderDivider />
+                      <HeaderToolbarDivider />
                     </>
                   ) : null}
-                  {showSelectedProgressPod && !shouldShowDraftGenerateButton ? <HeaderDivider /> : null}
+                  {showSelectedProgressPod && !shouldShowDraftGenerateButton ? <HeaderToolbarDivider /> : null}
                   <div className="header-ws-slot header-ws-slot--action flex shrink-0 items-center gap-1.5">
-                    <button
-                      type="button"
+                    <HeaderToolbarActionButton
                       onClick={handleDailyJournalClick}
                       disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
+                      selected={isDailyJournalWorkspaceSelected}
                       aria-pressed={isDailyJournalWorkspaceSelected}
                       aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
-                      className={clsx(
-                        "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
-                        isDailyJournalWorkspaceSelected
-                          ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                          : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                      )}
                       aria-label="查看汇总当天日志"
                     >
-                      <span
-                        aria-hidden="true"
-                        className={clsx(
-                          "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                          !isDailyJournalWorkspaceSelected && "opacity-50"
-                        )}
-                      />
                       {isOpeningDailyJournal ? "正在打开完整日志" : "完整日志"}
-                    </button>
-                    <button
-                      type="button"
+                    </HeaderToolbarActionButton>
+                    <HeaderToolbarActionButton
                       onClick={handleHappinessScoreEntryClick}
                       disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
+                      selected={isHappinessScoreWorkspaceSelected}
                       aria-pressed={isHappinessScoreWorkspaceSelected}
                       aria-current={isHappinessScoreWorkspaceSelected ? "step" : undefined}
-                      className={clsx(
-                        "group relative flex shrink-0 items-center justify-center rounded-[15px] border px-3 py-1.5 text-left text-[12px] font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60",
-                        isHappinessScoreWorkspaceSelected
-                          ? "border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)]"
-                          : "border-[rgba(150,105,61,0.14)] bg-[rgba(255,249,239,0.56)] text-[#4a4038] hover:-translate-y-0.5 hover:border-[rgba(171,118,64,0.22)] hover:bg-[rgba(255,251,245,0.72)]"
-                      )}
                       aria-label={isDailyJournalWorkspaceSelected ? "当天评分（请先回到访谈）" : "打开当天评分"}
                     >
-                      <span
-                        aria-hidden="true"
-                        className={clsx(
-                          "pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]",
-                          !isHappinessScoreWorkspaceSelected && "opacity-50"
-                        )}
-                      />
                       当天评分
-                    </button>
+                    </HeaderToolbarActionButton>
                     {isAdmin ? (
-                      <button
-                        type="button"
-                        onClick={handleConversationResetClick}
-                        className="shrink-0 rounded-full border border-[rgba(171,118,64,0.18)] bg-[rgba(255,249,239,0.82)] px-3 py-1.5 text-[12px] text-[#7b6043] transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)]"
-                      >
+                      <HeaderToolbarGhostButton onClick={handleConversationResetClick}>
                         清除对话记录
-                      </button>
+                      </HeaderToolbarGhostButton>
                     ) : null}
                   </div>
                   {showReturnToInterviewButton ? (
                     <>
-                      <HeaderDivider />
+                      <HeaderToolbarDivider />
                       <div className="header-ws-slot header-ws-slot--mode flex min-w-[4.75rem] shrink-0 justify-center">
-                        <button
-                          type="button"
+                        <HeaderToolbarActionButton
                           onClick={handleReturnToInterviewClick}
                           disabled={isWorkspaceTransitioning}
-                          className="group relative flex shrink-0 items-center justify-center rounded-[15px] border border-[rgba(166,114,61,0.24)] bg-[linear-gradient(180deg,rgba(191,138,81,0.95),rgba(160,106,54,0.96))] px-3 py-1.5 text-left text-[12px] font-medium text-[#fff8f1] shadow-[0_10px_18px_rgba(118,75,37,0.16)] transition duration-300 hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,rgba(201,148,91,0.96),rgba(171,118,64,0.96))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034] disabled:cursor-not-allowed disabled:opacity-60"
+                          selected
                           aria-label="回到访谈"
                         >
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-x-3 top-0 h-px rounded-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.82),transparent)]"
-                          />
                           回到访谈
-                        </button>
+                        </HeaderToolbarActionButton>
                       </div>
                     </>
                   ) : null}
@@ -907,7 +865,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
             <HeaderPlainContext title={headerPlainContext.title} subtitle={headerPlainContext.subtitle} />
           ) : null}
         </div>
-        <HeaderDivider className="hidden md:flex" />
+        <HeaderToolbarDivider className="hidden md:flex" />
         <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">
           {navItems.map((item) => {
             const active = isActive(item.matchPath);

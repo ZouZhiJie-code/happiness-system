@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>顶栏小组件统一 · 改前/改后预览</title>
+  <style>
+    :root {
+      --line-soft: rgba(110, 73, 38, 0.16);
+      --line-strong: rgba(110, 73, 38, 0.3);
+      --text-main: #302114;
+      --text-dim: rgba(48, 33, 20, 0.7);
+      --radius-control: 12px;
+      --radius-card: 20px;
+      --radius-shell: 28px;
+      --header-frame-min: 4rem;
+      --header-lane-min: 2.5rem;
+      --nav-underline: #8a5527;
+
+      --header-frost-top-a: 0.78;
+      --header-frost-bottom-a: 0.72;
+      --header-frost-blur-a: 12px;
+      --header-frost-saturate-a: 140%;
+      --header-frost-border-a: 0.18;
+      --header-frost-shadow-a: 0.12;
+
+      --header-surface: rgba(255, 249, 239, 0.56);
+      --header-surface-strong: rgba(255, 249, 239, 0.72);
+      --header-surface-border: rgba(150, 105, 61, 0.14);
+      --header-surface-border-active: rgba(166, 114, 61, 0.24);
+      --header-accent-gradient: linear-gradient(180deg, rgba(191, 138, 81, 0.95), rgba(160, 106, 54, 0.96));
+      --header-accent-gradient-strong: linear-gradient(180deg, rgba(190, 137, 80, 0.96), rgba(160, 106, 54, 0.96));
+      --header-control-min-height: 2rem;
+      --header-control-font-size: 0.75rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+      background: linear-gradient(180deg, #8b5f38 0%, #b37b47 24%, #d3a36c 58%, #e5c08f 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255, 250, 241, 0.24) 0, transparent 22%),
+        radial-gradient(circle at 82% 8%, rgba(117, 76, 37, 0.12) 0, transparent 28%);
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      isolation: isolate;
+      width: 100%;
+      padding: 0 0.75rem;
+      border-bottom: 1px solid rgba(101, 67, 34, 0.06);
+      box-shadow: 0 8px 24px rgba(77, 47, 21, 0.2);
+      background: linear-gradient(180deg, rgba(249, 238, 216, 0.29), rgba(235, 214, 178, 0.06));
+      backdrop-filter: blur(4px) saturate(100%);
+      -webkit-backdrop-filter: blur(4px) saturate(100%);
+    }
+
+    body[data-scheme="after"] .site-header {
+      border-bottom-color: rgba(101, 67, 34, var(--header-frost-border-a));
+      box-shadow: 0 8px 24px rgba(77, 47, 21, var(--header-frost-shadow-a));
+      background: linear-gradient(
+        180deg,
+        rgba(249, 238, 216, var(--header-frost-top-a)),
+        rgba(235, 214, 178, var(--header-frost-bottom-a))
+      );
+      backdrop-filter: blur(var(--header-frost-blur-a)) saturate(var(--header-frost-saturate-a));
+      -webkit-backdrop-filter: blur(var(--header-frost-blur-a)) saturate(var(--header-frost-saturate-a));
+    }
+
+    @media (min-width: 768px) {
+      .site-header { padding: 0 1.5rem; }
+    }
+
+    .header-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: var(--header-frame-min);
+      grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      color: rgba(101, 67, 34, 0.58);
+      font-family: ui-monospace, monospace;
+      font-weight: 600;
+      font-size: 1rem;
+      user-select: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: var(--header-lane-min);
+      text-decoration: none;
+      color: #2f2823;
+      font-size: 1.08rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 12px;
+      border: 1px solid rgba(166, 121, 74, 0.18);
+      background: rgba(255, 250, 242, 0.62);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      color: #8a5527;
+    }
+
+    .center-lane {
+      display: flex;
+      min-height: var(--header-lane-min);
+      min-width: 0;
+      align-items: center;
+    }
+
+    .ws-template {
+      display: flex;
+      width: 100%;
+      min-width: 0;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .ws-slot {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      min-width: 0;
+    }
+
+    .ws-slot--time { flex: 0 0 auto; }
+    .ws-slot--context { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+    .ws-slot--view,
+    .ws-slot--action { flex: 0 0 auto; }
+
+    .main-nav {
+      display: flex;
+      min-height: var(--header-lane-min);
+      align-items: center;
+      gap: 0.15rem;
+      flex-wrap: wrap;
+    }
+
+    .main-nav a {
+      position: relative;
+      padding: 0.5rem 0.625rem;
+      font-weight: 500;
+      color: #4a4038;
+      text-decoration: none;
+      font-size: 0.8125rem;
+    }
+
+    .main-nav a.active {
+      font-weight: 600;
+      color: #2f2823;
+    }
+
+    .main-nav a.active::after {
+      content: "";
+      position: absolute;
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: 0.35rem;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--nav-underline);
+    }
+
+    .seg-before-track {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.72);
+      gap: 2px;
+    }
+
+    .seg-before-btn {
+      position: relative;
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      padding: 0.42rem 0.72rem;
+      padding-right: 1.15rem;
+      font: inherit;
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: var(--header-control-min-height);
+    }
+
+    .seg-before-btn.active {
+      background: rgba(255, 250, 242, 0.95);
+      border: 1px solid var(--line-strong);
+      box-shadow: 0 4px 12px rgba(86, 55, 27, 0.08);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .seg-cal-before-track {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(159, 120, 81, 0.18);
+      background: rgba(250, 242, 229, 0.9);
+      box-shadow: inset 0 1px 0 rgba(255, 251, 242, 0.66);
+      gap: 2px;
+    }
+
+    .seg-cal-before-btn {
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      padding: 0.38rem 0.75rem;
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: #725840;
+      cursor: pointer;
+      min-height: var(--header-control-min-height);
+    }
+
+    .seg-cal-before-btn.active {
+      background: var(--header-accent-gradient);
+      color: #fff8f1;
+      font-weight: 600;
+      box-shadow: 0 6px 16px rgba(118, 75, 37, 0.18);
+    }
+
+    .seg-unified-track {
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 999px;
+      border: 1px solid var(--header-surface-border);
+      background: var(--header-surface);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+      gap: 2px;
+    }
+
+    .seg-unified-btn {
+      position: relative;
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      padding: 0.375rem 0.75rem;
+      padding-right: 1.05rem;
+      font: inherit;
+      font-size: var(--header-control-font-size);
+      color: rgba(74, 64, 56, 0.82);
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: var(--header-control-min-height);
+    }
+
+    .seg-unified-btn.compact {
+      padding: 0.28rem 0.55rem;
+      font-size: 0.74rem;
+    }
+
+    .seg-unified-btn.active {
+      background: var(--header-accent-gradient);
+      color: #fff8f1;
+      font-weight: 600;
+      box-shadow: 0 6px 14px rgba(118, 75, 37, 0.14);
+    }
+
+    .dim-dot {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.45rem;
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .dim-dot--done { background: #22c55e; }
+    .dim-dot--active { background: #f59e0b; }
+
+    .btn-before-secondary {
+      border-radius: 15px;
+      border: 1px solid rgba(150, 105, 61, 0.14);
+      background: rgba(255, 249, 239, 0.56);
+      padding: 0.375rem 0.75rem;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: #4a4038;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+
+    .btn-before-primary {
+      border-radius: 999px;
+      border: 1px solid rgba(171, 118, 64, 0.24);
+      background: var(--header-accent-gradient-strong);
+      padding: 0.375rem 0.75rem;
+      font: inherit;
+      font-size: 12px;
+      color: #fff8f1;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(118, 75, 37, 0.16);
+    }
+
+    .btn-before-today {
+      border-radius: 999px;
+      border: 1px solid rgba(157, 119, 82, 0.2);
+      background: rgba(255, 248, 236, 0.92);
+      padding: 0.25rem 0.75rem;
+      font: inherit;
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: #5d4329;
+      cursor: pointer;
+    }
+
+    .hw-chip-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--header-control-min-height);
+      border-radius: 999px;
+      border: 1px solid var(--header-surface-border);
+      background: var(--header-surface);
+      padding: 0.28rem 0.75rem;
+      font: inherit;
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: #5d4329;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+
+    .hw-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--header-control-min-height);
+      border-radius: 15px;
+      border: 1px solid var(--header-surface-border);
+      background: var(--header-surface);
+      padding: 0.375rem 0.75rem;
+      font: inherit;
+      font-size: var(--header-control-font-size);
+      font-weight: 500;
+      color: #4a4038;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+
+    .hw-action-btn.selected,
+    .hw-action-btn.primary {
+      border-color: var(--header-surface-border-active);
+      background: var(--header-accent-gradient);
+      color: #fff8f1;
+      box-shadow: 0 10px 18px rgba(118, 75, 37, 0.16);
+    }
+
+    .hw-primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--header-control-min-height);
+      border-radius: 999px;
+      border: 1px solid rgba(171, 118, 64, 0.24);
+      background: var(--header-accent-gradient-strong);
+      padding: 0.375rem 0.75rem;
+      font: inherit;
+      font-size: var(--header-control-font-size);
+      color: #fff8f1;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(118, 75, 37, 0.16);
+    }
+
+    .hw-ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--header-control-min-height);
+      border-radius: 999px;
+      border: 1px solid rgba(171, 118, 64, 0.18);
+      background: rgba(255, 249, 239, 0.82);
+      padding: 0.375rem 0.75rem;
+      font: inherit;
+      font-size: var(--header-control-font-size);
+      color: #7b6043;
+      cursor: pointer;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.375rem;
+      min-width: 15rem;
+    }
+
+    .summary-chip-before {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      border-radius: 999px;
+      border: 1px solid rgba(156, 118, 82, 0.16);
+      background: rgba(252, 245, 234, 0.92);
+      padding: 0.25rem 0.625rem;
+      font-size: 0.68rem;
+      white-space: nowrap;
+    }
+
+    .summary-chip-after {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      min-height: 1.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(150, 105, 61, 0.12);
+      background: var(--header-surface-strong);
+      padding: 0.22rem 0.55rem;
+      font-size: 0.68rem;
+      white-space: nowrap;
+    }
+
+    .chip-label { font-size: 0.65rem; color: #8b6c4d; width: 2.35rem; text-align: center; }
+    .chip-value { font-size: 0.74rem; font-weight: 500; color: #604529; min-width: 1.75rem; text-align: center; }
+
+    .nav-arrows { display: inline-flex; align-items: center; }
+    .nav-arrow {
+      border: none;
+      background: transparent;
+      padding: 0.25rem;
+      color: rgba(74, 64, 56, 0.82);
+      cursor: pointer;
+      line-height: 0;
+    }
+
+    .period-label {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: rgba(48, 33, 20, 0.72);
+      padding: 0 0.25rem;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .utab {
+      border: none;
+      background: transparent;
+      padding: 0.25rem 0.5rem;
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: rgba(74, 64, 56, 0.82);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .utab.active {
+      font-weight: 600;
+      color: #2f2823;
+      text-decoration: underline;
+      text-decoration-color: var(--nav-underline);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+    }
+
+    .progress-ring {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 2.5px solid rgba(143, 103, 68, 0.18);
+      border-top-color: rgba(168, 112, 60, 0.92);
+      transform: rotate(-45deg);
+    }
+
+    .progress-text {
+      font-family: ui-monospace, monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      color: #7f5c38;
+      white-space: nowrap;
+    }
+
+    .plain-context {
+      font-size: 0.82rem;
+      color: rgba(74, 64, 56, 0.72);
+      white-space: nowrap;
+    }
+
+    .plain-context strong { color: #34271c; font-weight: 600; }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 1rem 1rem 11rem;
+    }
+
+    .page-shell {
+      border-radius: var(--radius-shell);
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, rgba(255, 248, 237, 0.62), rgba(246, 232, 206, 0.58));
+      box-shadow: 0 28px 92px rgba(86, 55, 27, 0.18);
+      padding: 1.25rem;
+      min-height: 55vh;
+    }
+
+    .hint {
+      margin-bottom: 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-control);
+      border: 1px dashed var(--line-strong);
+      background: rgba(169, 111, 61, 0.12);
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: var(--text-dim);
+    }
+
+    .hint strong { color: var(--text-main); }
+
+    .compare-grid {
+      display: grid;
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .compare-card {
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 252, 246, 0.72);
+      padding: 0.85rem 1rem;
+    }
+
+    .compare-card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 0.12rem 0.4rem;
+      border-radius: 999px;
+    }
+
+    .badge-before { background: rgba(239, 68, 68, 0.12); color: #b45309; }
+    .badge-after { background: rgba(34, 197, 94, 0.14); color: #15803d; }
+
+    .compare-card p {
+      margin: 0 0 0.65rem;
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .widget-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      padding: 0.65rem;
+      border-radius: var(--radius-control);
+      background: rgba(255, 249, 240, 0.55);
+      border: 1px solid var(--line-soft);
+    }
+
+    .token-readout {
+      margin-top: 1rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: var(--radius-control);
+      background: rgba(0, 0, 0, 0.04);
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      color: rgba(48, 33, 20, 0.72);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .scroll-marker {
+      margin-top: 1.5rem;
+      padding: 1.5rem 1rem;
+      border-radius: var(--radius-card);
+      border: 1px dashed var(--line-soft);
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: rgba(255, 252, 246, 0.45);
+    }
+
+    .control-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(48, 33, 20, 0.04), rgba(48, 33, 20, 0.92));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #fff8f1;
+      font-size: 0.74rem;
+    }
+
+    .dock-inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .dock-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .dock-label {
+      font-weight: 600;
+      color: rgba(255, 248, 241, 0.72);
+      margin-right: 0.15rem;
+      white-space: nowrap;
+    }
+
+    .dock-btn {
+      border: 1px solid rgba(255, 248, 241, 0.22);
+      background: rgba(255, 248, 241, 0.08);
+      color: #fff8f1;
+      border-radius: 999px;
+      padding: 0.28rem 0.65rem;
+      font: inherit;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+
+    .dock-btn.active {
+      border-color: rgba(255, 200, 140, 0.55);
+      background: rgba(191, 138, 81, 0.55);
+      font-weight: 600;
+    }
+
+    .dock-btn.scheme-before.active {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: rgba(252, 165, 165, 0.45);
+    }
+
+    .dock-btn.scheme-after.active {
+      background: rgba(34, 197, 94, 0.35);
+      border-color: rgba(134, 239, 172, 0.45);
+    }
+
+    .status-line {
+      font-size: 0.68rem;
+      color: rgba(255, 248, 241, 0.78);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body data-scheme="after">
+  <header class="site-header">
+    <div class="header-grid">
+      <a class="brand" href="#"><span class="brand-mark">DL</span>Daily Light</a>
+      <span class="divider">｜</span>
+      <div class="center-lane" id="centerLane"></div>
+      <span class="divider">｜</span>
+      <nav class="main-nav" id="mainNav"></nav>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="page-shell">
+      <div class="hint">
+        <strong>用法：</strong>底部切换「改前 / 改后」，再点 访谈 / 日历 / 分析 看顶栏小组件是否统一。
+        改后顶栏背景更实（glass 预设 A：上 0.78 / 下 0.72 / blur 12px），五维条、月周日、本周本月 选中态同色同高。
+        向下滚动，看顶栏叠在木纹背景上的可读性。
+      </div>
+
+      <div class="compare-grid">
+        <article class="compare-card">
+          <h3><span class="badge badge-before">改前</span>当前代码里的不一致</h3>
+          <p>顶栏偏透（上 0.29 / blur 4px）；访谈胶囊选中是浅色块，日历/分析是渐变；「今天」和「完整日志」不是同一套按钮。</p>
+          <div class="widget-strip" id="stripBefore"></div>
+        </article>
+        <article class="compare-card">
+          <h3><span class="badge badge-after">改后</span>计划中的统一 token</h3>
+          <p>顶栏 + 小组件共用半透明暖底与选中渐变；触达高度 2rem；四类按钮原语（Chip / Action / Primary / Ghost）。</p>
+          <div class="widget-strip" id="stripAfter"></div>
+        </article>
+      </div>
+
+      <div class="token-readout" id="tokenReadout"></div>
+
+      <div class="scroll-marker">↓ 继续向下滚，检查顶栏在木纹背景上的对比度 ↓</div>
+      <div class="scroll-marker" style="margin-top: 0.75rem;">↓ 再滚一段，模拟 page-shell 滚出视口 ↓</div>
+    </section>
+  </main>
+
+  <div class="control-dock">
+    <div class="dock-inner">
+      <div class="dock-row">
+        <span class="dock-label">方案</span>
+        <button type="button" class="dock-btn scheme-before" data-scheme="before">改前（当前代码）</button>
+        <button type="button" class="dock-btn scheme-after active" data-scheme="after">改后（计划落地）</button>
+      </div>
+      <div class="dock-row">
+        <span class="dock-label">页面</span>
+        <button type="button" class="dock-btn active" data-page="interview">访谈</button>
+        <button type="button" class="dock-btn" data-page="calendar">日历</button>
+        <button type="button" class="dock-btn" data-page="analysis">分析</button>
+        <button type="button" class="dock-btn" data-page="settings">设置</button>
+      </div>
+      <div class="dock-row" id="subStateRow"></div>
+      <p class="status-line" id="statusLine"></p>
+    </div>
+  </div>
+
+  <script>
+    const MAIN_NAV = [
+      { id: "interview", label: "访谈" },
+      { id: "calendar", label: "日历" },
+      { id: "analysis", label: "分析" },
+      { id: "profile", label: "画像" },
+      { id: "settings", label: "设置" }
+    ];
+
+    const DIMS = [
+      { id: "joy", label: "开心", dot: "done" },
+      { id: "fulfillment", label: "充实", dot: "active" },
+      { id: "reflection", label: "思考" },
+      { id: "improvement", label: "改进" },
+      { id: "gratitude", label: "感谢" }
+    ];
+
+    const S = {
+      scheme: "after",
+      page: "interview",
+      iv: "draft",
+      cal: "week",
+      pre: "month",
+      sec: "trends"
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function el(tag, cls, html) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (html != null) n.innerHTML = html;
+      return n;
+    }
+
+    function divider() {
+      return el("span", "divider", "｜");
+    }
+
+    function segBefore(items, active, withDots) {
+      const track = el("div", "seg-before-track");
+      items.forEach((it) => {
+        const btn = el("button", "seg-before-btn" + (it.id === active ? " active" : ""));
+        btn.type = "button";
+        btn.textContent = it.label;
+        if (withDots && it.dot) {
+          btn.appendChild(el("span", "dim-dot dim-dot--" + it.dot));
+        }
+        track.appendChild(btn);
+      });
+      return track;
+    }
+
+    function segCalBefore(items, active) {
+      const track = el("div", "seg-cal-before-track");
+      items.forEach((it) => {
+        const btn = el("button", "seg-cal-before-btn" + (it.id === active ? " active" : ""));
+        btn.type = "button";
+        btn.textContent = it.label;
+        track.appendChild(btn);
+      });
+      return track;
+    }
+
+    function segUnified(items, active, opts = {}) {
+      const track = el("div", "seg-unified-track");
+      items.forEach((it) => {
+        const cls = "seg-unified-btn" + (opts.compact ? " compact" : "") + (it.id === active ? " active" : "");
+        const btn = el("button", cls);
+        btn.type = "button";
+        btn.textContent = it.label;
+        if (opts.withDots && it.dot) {
+          btn.appendChild(el("span", "dim-dot dim-dot--" + it.dot));
+        }
+        track.appendChild(btn);
+      });
+      return track;
+    }
+
+    function arrows() {
+      const w = el("div", "nav-arrows");
+      w.innerHTML =
+        '<button type="button" class="nav-arrow" aria-label="上一段">◀</button>' +
+        '<button type="button" class="nav-arrow" aria-label="下一段">▶</button>';
+      return w;
+    }
+
+    function summaryChips(scheme) {
+      const row = el("div", "summary-row");
+      const chips = [
+        { label: "待继续", value: "2" },
+        { label: "已完成", value: "1" },
+        { label: "完整日志", value: "草稿" }
+      ];
+      chips.forEach((c) => {
+        const chip = el("div", scheme === "after" ? "summary-chip-after" : "summary-chip-before");
+        chip.appendChild(el("span", "chip-label", c.label));
+        chip.appendChild(el("span", "chip-value", c.value));
+        row.appendChild(chip);
+      });
+      return row;
+    }
+
+    function utabs(items, active, cb) {
+      const w = el("div");
+      w.style.cssText = "display:flex;gap:.15rem;flex-wrap:nowrap";
+      items.forEach((it) => {
+        const b = el("button", "utab" + (it.id === active ? " active" : ""), it.label);
+        b.type = "button";
+        if (cb) b.onclick = () => { cb(it.id); render(); };
+        w.appendChild(b);
+      });
+      return w;
+    }
+
+    function interviewToolbar(scheme) {
+      const t = el("div", "ws-template");
+      const time = el("div", "ws-slot ws-slot--time");
+      time.appendChild(
+        scheme === "after"
+          ? segUnified(DIMS, "fulfillment", { withDots: true })
+          : segBefore(DIMS, "fulfillment", true)
+      );
+
+      const ctx = el("div", "ws-slot ws-slot--context");
+      const slots = el("div");
+      slots.style.cssText = "display:flex;align-items:center;gap:.35rem;min-width:0;overflow-x:auto";
+
+      const progress = el("div");
+      progress.style.cssText = "display:flex;align-items:center;gap:.35rem;min-width:5.5rem";
+      progress.innerHTML = '<span class="progress-ring"></span><span class="progress-text">有效 3 轮</span>';
+
+      slots.appendChild(progress);
+      slots.appendChild(divider());
+
+      if (scheme === "after") {
+        slots.appendChild(el("button", "hw-primary-btn", "生成日志"));
+      } else {
+        slots.appendChild(el("button", "btn-before-primary", "生成日志"));
+      }
+
+      slots.appendChild(divider());
+
+      const acts = el("div", scheme === "after" ? "ws-slot ws-slot--action" : null);
+      if (scheme !== "after") acts.style.cssText = "display:flex;gap:.35rem";
+
+      if (scheme === "after") {
+        acts.appendChild(el("button", "hw-action-btn", "完整日志"));
+        acts.appendChild(el("button", "hw-action-btn", "当天评分"));
+      } else {
+        acts.appendChild(el("button", "btn-before-secondary", "完整日志"));
+        acts.appendChild(el("button", "btn-before-secondary", "当天评分"));
+      }
+      slots.appendChild(acts);
+      ctx.appendChild(slots);
+
+      t.appendChild(time);
+      t.appendChild(divider());
+      t.appendChild(ctx);
+      return t;
+    }
+
+    function calendarToolbar(scheme) {
+      const views = [
+        { id: "month", label: "月" },
+        { id: "week", label: "周" },
+        { id: "day", label: "日" }
+      ];
+      const t = el("div", "ws-template");
+
+      const time = el("div", "ws-slot ws-slot--time");
+      time.appendChild(arrows());
+      time.appendChild(el("span", "period-label", "2026 年 6 月 第 2 周"));
+
+      const ctx = el("div", "ws-slot ws-slot--context");
+      ctx.appendChild(summaryChips(scheme));
+
+      const view = el("div", "ws-slot ws-slot--view");
+      view.appendChild(
+        scheme === "after" ? segUnified(views, S.cal) : segCalBefore(views, S.cal)
+      );
+
+      const act = el("div", "ws-slot ws-slot--action");
+      act.appendChild(
+        scheme === "after"
+          ? el("button", "hw-chip-btn", "今天")
+          : el("button", "btn-before-today", "今天")
+      );
+
+      [time, divider(), ctx, divider(), view, divider(), act].forEach((n) => t.appendChild(n));
+      return t;
+    }
+
+    function analysisToolbar(scheme) {
+      const presets = [
+        { id: "week", label: "本周" },
+        { id: "month", label: "本月" },
+        { id: "custom", label: "自定义" }
+      ];
+      const sections = [
+        { id: "trends", label: "量化趋势" },
+        { id: "dimensions", label: "五维记录" },
+        { id: "correlation", label: "关联" },
+        { id: "review", label: "复盘" }
+      ];
+
+      const t = el("div", "ws-template");
+      const time = el("div", "ws-slot ws-slot--time");
+      time.style.flexWrap = "wrap";
+
+      time.appendChild(
+        scheme === "after"
+          ? segUnified(presets, S.pre, { compact: true })
+          : segCalBefore(presets, S.pre)
+      );
+      time.appendChild(divider());
+
+      const period = el("div", "nav-arrows");
+      period.innerHTML =
+        '<button type="button" class="nav-arrow">◀</button>' +
+        (S.pre === "custom"
+          ? '<span class="period-label">2026-06-01 — 2026-06-12</span>'
+          : '<span class="period-label">2026 年 6 月</span>') +
+        '<button type="button" class="nav-arrow">▶</button>';
+      time.appendChild(period);
+
+      const ctx = el("div", "ws-slot ws-slot--context");
+      ctx.appendChild(utabs(sections, S.sec, (id) => { S.sec = id; }));
+
+      t.appendChild(time);
+      t.appendChild(divider());
+      t.appendChild(ctx);
+      return t;
+    }
+
+    function plainToolbar(title, sub) {
+      const w = el("div");
+      w.appendChild(el("span", "plain-context", `<strong>${title}</strong> · ${sub}`));
+      return w;
+    }
+
+    function renderWidgetStrips() {
+      const before = $("stripBefore");
+      const after = $("stripAfter");
+      before.innerHTML = "";
+      after.innerHTML = "";
+
+      before.appendChild(segBefore(DIMS.slice(0, 3), "fulfillment", true));
+      before.appendChild(segCalBefore([{ id: "month", label: "月" }, { id: "week", label: "周" }], "week"));
+      before.appendChild(el("button", "btn-before-secondary", "完整日志"));
+      before.appendChild(el("button", "btn-before-today", "今天"));
+
+      after.appendChild(segUnified(DIMS.slice(0, 3), "fulfillment", { withDots: true }));
+      after.appendChild(segUnified([{ id: "month", label: "月" }, { id: "week", label: "周" }], "week"));
+      after.appendChild(el("button", "hw-action-btn", "完整日志"));
+      after.appendChild(el("button", "hw-chip-btn", "今天"));
+      after.appendChild(el("button", "hw-primary-btn", "生成日志"));
+      after.appendChild(el("button", "hw-ghost-btn", "清除对话"));
+    }
+
+    function renderTokenReadout() {
+      const isAfter = S.scheme === "after";
+      $("tokenReadout").textContent = isAfter
+        ? `改后顶栏 frost（预设 A）
+background: linear-gradient(180deg, rgba(249,238,216,0.78), rgba(235,214,178,0.72))
+backdrop-filter: blur(12px) saturate(140%)
+border-bottom: rgba(101,67,34,0.18) · shadow: rgba(77,47,21,0.12)
+
+小组件 token
+--header-surface: rgba(255,249,239,0.56)
+--header-surface-strong: rgba(255,249,239,0.72)
+--header-control-min-height: 2rem
+--header-control-font-size: 0.75rem`
+        : `改前顶栏 frost（当前 globals.css）
+background: linear-gradient(180deg, rgba(249,238,216,0.29), rgba(235,214,178,0.06))
+backdrop-filter: blur(4px) saturate(100%)
+border-bottom: rgba(101,67,34,0.06) · shadow: rgba(77,47,21,0.2)
+
+问题摘要
+· 访谈胶囊选中 = 浅色块（admin）
+· 日历/分析胶囊选中 = 暖棕渐变（calendar）
+· 「今天」用 calendar-chip，访谈按钮用另一套 inline 样式`;
+    }
+
+    function renderSubStates() {
+      const row = $("subStateRow");
+      row.innerHTML = "";
+      row.appendChild(el("span", "dock-label", "子状态"));
+
+      if (S.page === "interview") {
+        [
+          ["normal", "默认"],
+          ["progress", "有进度"],
+          ["draft", "可生成日志"],
+          ["daily", "完整日志"]
+        ].forEach(([id, label]) => {
+          const b = el("button", "dock-btn" + (S.iv === id ? " active" : ""), label);
+          b.onclick = () => { S.iv = id; render(); };
+          row.appendChild(b);
+        });
+      } else if (S.page === "calendar") {
+        ["month", "week", "day"].forEach((v) => {
+          const b = el(
+            "button",
+            "dock-btn" + (S.cal === v ? " active" : ""),
+            v === "month" ? "月视图" : v === "week" ? "周视图" : "日视图"
+          );
+          b.onclick = () => { S.cal = v; render(); };
+          row.appendChild(b);
+        });
+      } else if (S.page === "analysis") {
+        ["week", "month", "custom"].forEach((p) => {
+          const b = el(
+            "button",
+            "dock-btn" + (S.pre === p ? " active" : ""),
+            p === "week" ? "本周" : p === "month" ? "本月" : "自定义"
+          );
+          b.onclick = () => { S.pre = p; render(); };
+          row.appendChild(b);
+        });
+      } else {
+        row.appendChild(el("span", null, "设置/画像页只感受顶栏背景变化"));
+      }
+    }
+
+    function render() {
+      document.body.dataset.scheme = S.scheme;
+
+      $("mainNav").innerHTML = "";
+      MAIN_NAV.forEach((n) => {
+        const a = el("a", S.page === n.id ? "active" : "", n.label);
+        a.href = "#";
+        a.onclick = (e) => {
+          e.preventDefault();
+          S.page = n.id;
+          document.querySelectorAll("[data-page]").forEach((b) =>
+            b.classList.toggle("active", b.dataset.page === n.id)
+          );
+          render();
+        };
+        $("mainNav").appendChild(a);
+      });
+
+      $("centerLane").innerHTML = "";
+      const toolbar =
+        S.page === "interview"
+          ? interviewToolbar(S.scheme)
+          : S.page === "calendar"
+            ? calendarToolbar(S.scheme)
+            : S.page === "analysis"
+              ? analysisToolbar(S.scheme)
+              : S.page === "settings"
+                ? plainToolbar("设置", "账号与偏好")
+                : plainToolbar("画像", "长期记忆与洞察");
+      $("centerLane").appendChild(toolbar);
+
+      renderWidgetStrips();
+      renderTokenReadout();
+      renderSubStates();
+
+      $("statusLine").textContent =
+        (S.scheme === "after" ? "改后" : "改前") +
+        " · 当前页：" +
+        ({ interview: "访谈", calendar: "日历", analysis: "分析", settings: "设置", profile: "画像" }[S.page] || S.page) +
+        " · 建议：切到改后，依次点 访谈→日历→分析，看胶囊选中色、按钮高度、「今天」与「完整日志」是否同一套。";
+    }
+
+    document.querySelectorAll("[data-scheme]").forEach((btn) => {
+      btn.onclick = () => {
+        S.scheme = btn.dataset.scheme;
+        document.querySelectorAll("[data-scheme]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      };
+    });
+
+    document.querySelectorAll("[data-page]").forEach((btn) => {
+      btn.onclick = () => {
+        S.page = btn.dataset.page;
+        document.querySelectorAll("[data-page]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      };
+    });
+
+    render();
+  </script>
+</body>
+</html>
