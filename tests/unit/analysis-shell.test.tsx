@@ -531,9 +531,10 @@ describe("analysis shell", () => {
 
     expect(historyReplaceStateSpy).toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=trends");
     await screen.findByTestId("analysis-trends-placeholder");
+    await screen.findByTestId("happiness-score-panel");
+    await screen.findByTestId("analysis-rhythm-board");
+    await screen.findByTestId("analysis-dimension-cards");
 
-    expect(screen.getByTestId("happiness-score-panel")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-rhythm-board")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-correlation-placeholder")).toBeInTheDocument();
     expect(screen.getByTestId("analysis-review-placeholder")).toBeInTheDocument();
