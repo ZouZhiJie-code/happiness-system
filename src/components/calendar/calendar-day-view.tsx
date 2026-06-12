@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { CalendarDailyJournalExportMenu } from "@/components/daily-journal/daily-journal-export-menu";
 import { buildCalendarActionAccessibleName } from "@/features/calendar/accessibility";
 import { buildCalendarCompactCopy, truncateCalendarCopy } from "@/features/calendar/compact-copy";
 import { buildCalendarDayViewCardItems } from "@/features/calendar/interview-link";
@@ -371,6 +372,7 @@ export function CalendarDayView({
   const savedDimensionLabels = getSavedDimensionLabels(day);
   const writeJournalHref = buildWriteJournalHref(day);
   const shouldLinkDailyJournal = dailyJournalState !== "none";
+  const canExportDailyJournal = dailyJournalState === "saved" || dailyJournalState === "stale";
 
   return (
     <section className="ui-card overflow-hidden" data-testid="calendar-day-view">
@@ -402,25 +404,28 @@ export function CalendarDayView({
             <p className="text-[0.8rem] font-medium text-[#403024]">汇总当天日志</p>
             <p className="mt-0.5 text-[0.74rem] text-[#6a5440]">{getDailyJournalDescription(day)}</p>
           </div>
-          {shouldLinkDailyJournal ? (
-            <Link
-              href={dailyJournalHref}
-              className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
-              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
-            >
-              {dailyJournalViewLabel}
-            </Link>
-          ) : (
-            <button
-              ref={dailyJournalPromptTriggerRef}
-              type="button"
-              onClick={() => setDailyJournalPromptMode(savedDimensionLabels.length > 0 ? "sources" : "empty")}
-              className="calendar-action-primary inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
-              aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
-            >
-              {dailyJournalViewLabel}
-            </button>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {shouldLinkDailyJournal ? (
+              <Link
+                href={dailyJournalHref}
+                className="calendar-action-primary inline-flex items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
+                aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
+              >
+                {dailyJournalViewLabel}
+              </Link>
+            ) : (
+              <button
+                ref={dailyJournalPromptTriggerRef}
+                type="button"
+                onClick={() => setDailyJournalPromptMode(savedDimensionLabels.length > 0 ? "sources" : "empty")}
+                className="calendar-action-primary inline-flex items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
+                aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
+              >
+                {dailyJournalViewLabel}
+              </button>
+            )}
+            {canExportDailyJournal ? <CalendarDailyJournalExportMenu date={day.date} /> : null}
+          </div>
         </div>
       </div>
 

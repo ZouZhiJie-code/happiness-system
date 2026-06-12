@@ -3,6 +3,7 @@ export { Card } from "./card";
 export { SectionHeading } from "./section-heading";
 export { Divider } from "./divider";
 export { ActionButton, actionButtonClass, type ActionButtonVariant } from "./action-button";
+export { ActionMenu, type ActionMenuItem, type ActionMenuSurface } from "./action-menu";
 export {
   DimensionStatusDot,
   getDimensionStatusValue,

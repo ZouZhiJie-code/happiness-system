@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
+import { DailyJournalExportMenu } from "@/components/daily-journal/daily-journal-export-menu";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { ActionButton } from "@/components/ui";
 import {
   MAX_DAILY_JOURNAL_CONTENT_LENGTH,
   type DailyJournalSourcePayload
@@ -622,22 +624,33 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
       {error ? <p className="mt-3 text-sm text-[#9f3a2f]">{error}</p> : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-[rgba(151,108,65,0.14)] pt-4">
-        <button
+        {dailyJournal ? (
+          <DailyJournalExportMenu
+            resolveExportPayload={() => ({
+              date,
+              title,
+              content
+            })}
+            disabled={state === "draft" || !canPersist}
+            disabledReason={state === "draft" ? "请先保存完整日志" : null}
+          />
+        ) : null}
+        <ActionButton
           type="button"
+          variant="secondary"
           onClick={handleGenerate}
           disabled={isLoading || isGenerating || isSavingFinal || availableSourceCount === 0}
-          className="rounded-full border border-[rgba(168,124,69,0.3)] bg-[rgba(255,249,239,0.8)] px-4 py-2 text-sm text-[#604529] transition hover:-translate-y-0.5 hover:bg-[rgba(255,252,247,0.96)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {getGenerateButtonLabel({ isGenerating, hasDailyJournal: Boolean(dailyJournal), state })}
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
+          variant="primary"
           onClick={handleSaveFinal}
           disabled={!canPersist || isGenerating || isSavingFinal}
-          className="rounded-full border border-[rgba(168,124,69,0.42)] bg-[linear-gradient(180deg,#d5ae79,#bc8f58)] px-4 py-2 text-sm text-[#2f2823] shadow-[0_10px_24px_rgba(125,91,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#ddb883,#c5965d)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSavingFinal ? "保存中..." : state === "saved" ? "保存修改" : "保存正式日志"}
-        </button>
+        </ActionButton>
       </div>
     </section>
   );
