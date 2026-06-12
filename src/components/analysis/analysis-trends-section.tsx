@@ -15,14 +15,16 @@ type FactorView = "radar" | "lollipop";
 const TRENDS_VIZ_CLASS = "analysis-trends-viz";
 const TRENDS_PANE_PAD = "px-[0.85rem] py-[0.65rem]";
 const TRENDS_CHART_SLOT = "min-h-[8rem] w-full";
+// 8 行棒棒糖（圆点 10px + 边框）+ 7 段行间距，与棒棒糖自然高度对齐
+const FACTOR_VIEW_SLOT = "h-[calc(8*0.875rem+7*0.35rem)] w-full";
 
 const RADAR_LAYOUT = {
-  width: 220,
-  height: 170,
-  cx: 110,
-  cy: 85,
-  radius: 64,
-  labelRadius: 78
+  cx: 100,
+  cy: 100,
+  radius: 72,
+  labelRadius: 88,
+  labelFontSize: 8,
+  padding: 4
 } as const;
 
 function TrendsVizCard({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -266,7 +268,7 @@ function LogDaysHeatmap({ record, preset }: { record: AnalysisTrendsRangeRecord;
 
 function FactorToggle({ view, onChange }: { view: FactorView; onChange: (view: FactorView) => void }) {
   return (
-    <div className="analysis-trends-style-toggle" role="group" aria-label="8要素图表样式">
+    <div className="analysis-trends-style-toggle" role="group" aria-label="幸福8要素图表样式">
       {(["radar", "lollipop"] as const).map((item) => (
         <button
           key={item}
@@ -288,7 +290,8 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
 
   const radarGeometry = useMemo(() => {
     const angleStep = (Math.PI * 2) / items.length;
-    const { cx, cy, radius, labelRadius } = RADAR_LAYOUT;
+    const { cx, cy, radius, labelRadius, labelFontSize, padding } = RADAR_LAYOUT;
+    const labelHalfWidth = labelFontSize * 1.1;
 
     const points = items.map((item, index) => {
       const value = record.scoreTrend.factorAverages[item.requestKey];
@@ -299,15 +302,13 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
       const y = cy + Math.sin(angle) * plotRadius;
       const labelX = cx + Math.cos(angle) * labelRadius;
       const labelY = cy + Math.sin(angle) * labelRadius;
-      const axisX = cx + Math.cos(angle) * radius;
-      const axisY = cy + Math.sin(angle) * radius;
       const textAnchor: "start" | "middle" | "end" =
         labelX > cx + 10 ? "start" : labelX < cx - 10 ? "end" : "middle";
 
-      return { item, x, y, labelX, labelY, axisX, axisY, textAnchor };
+      return { item, x, y, labelX, labelY, textAnchor };
     });
 
-    const gridScales = [0.35, 0.55, 0.75] as const;
+    const gridScales = [0.35, 0.55, 0.75, 1] as const;
     const grids = gridScales.map((scale) =>
       items
         .map((_, index) => {
@@ -320,26 +321,63 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
         .join(" ")
     );
 
-    return { points, grids };
+    let minX: number = cx;
+    let maxX: number = cx;
+    let minY: number = cy;
+    let maxY: number = cy;
+
+    points.forEach((point, index) => {
+      const outerAngle = -Math.PI / 2 + angleStep * index;
+      const outerRingX = cx + Math.cos(outerAngle) * radius;
+      const outerRingY = cy + Math.sin(outerAngle) * radius;
+
+      minX = Math.min(minX, point.x, outerRingX);
+      maxX = Math.max(maxX, point.x, outerRingX);
+      minY = Math.min(minY, point.y, outerRingY);
+      maxY = Math.max(maxY, point.y, outerRingY);
+
+      if (point.textAnchor === "start") {
+        minX = Math.min(minX, point.labelX);
+        maxX = Math.max(maxX, point.labelX + labelHalfWidth * 2);
+      } else if (point.textAnchor === "end") {
+        minX = Math.min(minX, point.labelX - labelHalfWidth * 2);
+        maxX = Math.max(maxX, point.labelX);
+      } else {
+        minX = Math.min(minX, point.labelX - labelHalfWidth);
+        maxX = Math.max(maxX, point.labelX + labelHalfWidth);
+      }
+
+      minY = Math.min(minY, point.labelY - labelFontSize / 2);
+      maxY = Math.max(maxY, point.labelY + labelFontSize / 2);
+    });
+
+    const viewBox = {
+      x: minX - padding,
+      y: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2
+    };
+
+    return { points, grids, viewBox };
   }, [items, record.scoreTrend.factorAverages]);
 
   const hasAnyAverage = Object.values(record.scoreTrend.factorAverages).some((value) => typeof value === "number");
 
   return (
     <TrendsVizCard className={TRENDS_PANE_PAD}>
-      <TrendsPaneHead title="8 要素 · 周期均分" action={<FactorToggle view={view} onChange={setView} />} />
+      <TrendsPaneHead title="幸福 8 要素评分" action={<FactorToggle view={view} onChange={setView} />} />
 
       {!hasAnyAverage ? (
-        <p className={cn(TRENDS_CHART_SLOT, "flex items-center justify-center text-[0.82rem] text-[var(--text-dim)]")}>
+        <p className={cn(FACTOR_VIEW_SLOT, "flex items-center justify-center text-[0.82rem] text-[var(--text-dim)]")}>
           这个周期还没有足够的评分样本。
         </p>
       ) : view === "radar" ? (
-        <div className={TRENDS_CHART_SLOT}>
+        <div className={FACTOR_VIEW_SLOT}>
           <svg
-            viewBox={`0 0 ${RADAR_LAYOUT.width} ${RADAR_LAYOUT.height}`}
-            className="mx-auto block h-full w-full max-h-[8rem]"
+            viewBox={`${radarGeometry.viewBox.x} ${radarGeometry.viewBox.y} ${radarGeometry.viewBox.width} ${radarGeometry.viewBox.height}`}
+            className="block h-full w-full"
             preserveAspectRatio="xMidYMid meet"
-            aria-label="8要素雷达图"
+            aria-label="幸福8要素雷达图"
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -351,18 +389,10 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
               <polygon
                 key={index}
                 points={gridPoints}
-                className="fill-none stroke-ember/15"
-                strokeWidth={1}
-              />
-            ))}
-            {radarGeometry.points.map((point) => (
-              <line
-                key={`axis-${point.item.requestKey}`}
-                x1={RADAR_LAYOUT.cx}
-                y1={RADAR_LAYOUT.cy}
-                x2={point.axisX}
-                y2={point.axisY}
-                className="stroke-ember/10"
+                className={cn(
+                  "fill-none",
+                  index === radarGeometry.grids.length - 1 ? "stroke-ember/20" : "stroke-ember/15"
+                )}
                 strokeWidth={1}
               />
             ))}
@@ -388,7 +418,7 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
           </svg>
         </div>
       ) : (
-        <div className={cn(TRENDS_CHART_SLOT, "flex flex-col justify-center gap-[0.35rem]")}>
+        <div className={cn(FACTOR_VIEW_SLOT, "flex flex-col justify-center gap-[0.35rem]")}>
           {items.map((item) => {
             const value = record.scoreTrend.factorAverages[item.requestKey];
             const ratio = typeof value === "number" ? ((value - 2) / 8) * 100 : 0;

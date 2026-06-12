@@ -45,6 +45,8 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
       select: {
         id: true,
         date: true,
+        title: true,
+        content: true,
         tags: true,
         payload: true,
         savedAt: true,
@@ -85,6 +87,8 @@ export async function listAnalysisSourcesByDateRange(input: ListAnalysisSourcesB
         id: entry.id,
         date: formatEntryDate(entry.date),
         dimension: entry.session.dimension,
+        title: entry.title,
+        content: entry.content,
         tags: entry.tags ?? [],
         payload: parseAnalysisEntryPayload(entry.payload),
         savedAt: entry.savedAt?.toISOString() ?? null,

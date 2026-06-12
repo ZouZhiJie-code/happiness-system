@@ -1,35 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import type { AnalysisDimensionInsightCard, AnalysisMonthRecord } from "@/features/analysis/types";
+import type { AnalysisDimensionEvidenceExcerpt, AnalysisDimensionInsightCard, AnalysisMonthRecord } from "@/features/analysis/types";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { buildCalendarHref } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { getInterviewDimensionMeta, interviewDimensions } from "@/features/interview/dimensions";
+import type { InterviewDimension } from "@/types/interview";
 import { Card, Divider } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
-  ANALYSIS_CHIP_CLASS,
   ActionLink,
-  buildDailyJournalHref,
   buildDimensionSummary,
   buildInterviewHref,
-  findCoverageDay,
-  formatAnalysisDateLabel,
-  formatScoreDateLabel,
-  getDimensionConfidenceLabel,
-  getDimensionContinuityLabel,
-  getDimensionMomentumLabel,
-  getFeaturedDimension,
-  happinessScoreItems
+  formatScoreDateLabel
 } from "./analysis-shared";
 
 function buildDimensionDrillHref(record: AnalysisMonthRecord, dimension: AnalysisDimensionInsightCard) {
   if (dimension.lastRecordedDate) {
     return buildInterviewHref({
       dimension: dimension.dimension,
-      entryDate: dimension.lastRecordedDate
+      entryDate: dimension.lastRecordedDate,
+      panel: "journal"
     });
   }
 
@@ -45,268 +39,231 @@ function buildDimensionDrillHref(record: AnalysisMonthRecord, dimension: Analysi
   });
 }
 
-function buildDimensionAnchorHref(record: AnalysisMonthRecord, dimension: AnalysisDimensionInsightCard) {
-  const anchorDate = dimension.turningPointDate ?? dimension.lastRecordedDate;
-
-  if (!anchorDate) {
-    return buildCalendarHref({
-      view: "month",
-      date: `${record.month}-01`
-    });
+function buildDimensionIndexTheme(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.savedEntryCount === 0) {
+    return null;
   }
 
-  return buildCalendarHref({
-    view: "day",
-    date: anchorDate
-  });
+  const leadTitle = dimension.evidence.find((item) => item.title)?.title;
+
+  if (leadTitle) {
+    return leadTitle;
+  }
+
+  if (dimension.topTags[0]?.tag) {
+    return dimension.topTags[0].tag;
+  }
+
+  return dimension.evidence[0]?.summary ?? null;
 }
 
-function formatRelatedScoreFactorLabels(dimension: AnalysisDimensionInsightCard) {
-  return dimension.relatedScoreFactors
-    .map((factor) => happinessScoreItems.find((item) => item.requestKey === factor)?.label)
-    .filter((label): label is string => Boolean(label));
+function buildDimensionCountLabel(dimension: AnalysisDimensionInsightCard) {
+  if (dimension.savedEntryCount === 0) {
+    return "本月还没有记录";
+  }
+
+  if (dimension.recordedDayCount > 0) {
+    return `${dimension.recordedDayCount} 天有记录`;
+  }
+
+  return `${dimension.savedEntryCount} 条记录`;
 }
 
-function getDimensionScoreSummary(dimension: AnalysisDimensionInsightCard) {
-  return dimension.scoreLink.summary;
+function resolveInitialExpandedDimension(dimensions: AnalysisDimensionInsightCard[]) {
+  const recordedDimensions = dimensions.filter((item) => item.savedEntryCount > 0);
+
+  if (recordedDimensions.length !== 1) {
+    return null;
+  }
+
+  const onlyDimension = recordedDimensions[0];
+
+  if (onlyDimension.savedEntryCount <= 2) {
+    return onlyDimension.dimension;
+  }
+
+  return null;
 }
 
-function buildInsightActionItems(record: AnalysisMonthRecord, featured: AnalysisDimensionInsightCard | null) {
-  const pendingDailyJournalDay = findCoverageDay(record, record.rhythmOverview.latestPendingDailyJournalDate);
-  const quietDimension = interviewDimensions
-    .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
-    .find((item) => item?.savedEntryCount === 0) ?? null;
-  const actions: Array<{ title: string; body: string; href: string; label: string }> = [];
+function DimensionEvidencePreview({
+  evidence,
+  record,
+  dimension
+}: {
+  evidence: AnalysisDimensionEvidenceExcerpt;
+  record: AnalysisMonthRecord;
+  dimension: AnalysisDimensionInsightCard;
+}) {
+  const displayTitle = evidence.title ?? evidence.summary;
 
-  if (featured) {
-    actions.push({
-      title: `继续看${getInterviewDimensionMeta(featured.dimension).label}`,
-      body: featured.thesis ?? buildDimensionSummary(featured, record.narrative),
-      href: buildDimensionDrillHref(record, featured),
-      label: "继续这条线"
-    });
-    actions.push({
-      title: `回到${formatAnalysisDateLabel(featured.turningPointDate ?? featured.lastRecordedDate)}`,
-      body: "先回到这一天，再看这条线是怎么慢慢成形的。",
-      href: buildDimensionAnchorHref(record, featured),
-      label: "看那一天"
-    });
-  }
-
-  if (pendingDailyJournalDay) {
-    actions.push({
-      title: `整理${formatAnalysisDateLabel(pendingDailyJournalDay.date)}`,
-      body: pendingDailyJournalDay.hasStaleDailyJournal
-        ? "这一天的完整日志已经落后于最新来源，建议重新整理一次。"
-        : "这一天已经有了几个维度，但还没有收成完整日志。",
-      href: buildDailyJournalHref(pendingDailyJournalDay.date),
-      label: pendingDailyJournalDay.hasStaleDailyJournal ? "更新完整日志" : "整理完整日志"
-    });
-  }
-
-  if (quietDimension) {
-    actions.push({
-      title: `补一补${getInterviewDimensionMeta(quietDimension.dimension).label}`,
-      body:
-        record.month === getTodayEntryDate().slice(0, 7)
-          ? "如果你想把这个月看得更完整，可以从今天先补这一维。"
-          : "如果你想把这个月看得更完整，可以先回到日历里挑一天补这一维。",
-      href: buildDimensionDrillHref(record, quietDimension),
-      label: record.month === getTodayEntryDate().slice(0, 7) ? "去补这一维" : "回到这个月"
-    });
-  }
-
-  return actions.slice(0, 3);
+  return (
+    <div
+      className="mt-3 border-t border-[var(--line-soft)] pt-3"
+      data-testid={`analysis-evidence-preview-${evidence.entryId}`}
+    >
+      <p className="text-[0.84rem] text-[#3a2c1f]">{displayTitle}</p>
+      {evidence.excerpt ? (
+        <p className="mt-2 text-[0.82rem] leading-6 text-[#4a3928]">{evidence.excerpt}</p>
+      ) : evidence.detail ? (
+        <p className="mt-2 text-[0.82rem] leading-6 text-[#4a3928]">{evidence.detail}</p>
+      ) : null}
+      <div className="mt-3 flex flex-wrap gap-3">
+        <ActionLink href={buildCalendarHref({ view: "day", date: evidence.date })} label="在日历中打开" variant="secondary" />
+        <ActionLink
+          href={buildInterviewHref({
+            dimension: dimension.dimension,
+            entryDate: evidence.date,
+            panel: "journal"
+          })}
+          label="看完整日志"
+          variant="secondary"
+        />
+        {dimension.savedEntryCount > 0 ? (
+          <Link
+            href={buildDimensionDrillHref(record, dimension)}
+            className="inline-flex items-center text-[0.76rem] text-[#6f4a26] underline-offset-2 hover:underline"
+          >
+            继续这条线
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
-  const featured = getFeaturedDimension(record);
   const orderedDimensions = interviewDimensions
     .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
     .filter((item): item is AnalysisDimensionInsightCard => Boolean(item));
-  const actionItems = buildInsightActionItems(record, featured);
+  const [expandedDimension, setExpandedDimension] = useState<InterviewDimension | null>(() =>
+    resolveInitialExpandedDimension(orderedDimensions)
+  );
+  const [activeEvidenceId, setActiveEvidenceId] = useState<string | null>(null);
 
-  if (!featured) {
-    return (
-      <div data-testid="analysis-dimension-cards">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {orderedDimensions.map((dimension) => (
-            <Card as="article" key={dimension.dimension} className="p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(dimension.dimension).softBadgeClass}`}>
-                    {getCalendarDimensionVisualMeta(dimension.dimension).monthLabel}
-                  </span>
-                  <p className="text-[0.9rem] text-[#3a2c1f]">{getInterviewDimensionMeta(dimension.dimension).label}</p>
-                </div>
-                <span className={ANALYSIS_CHIP_CLASS}>还没展开</span>
-              </div>
-              <p className="mt-3 text-[0.82rem] leading-6 text-[#72583f]">{dimension.nextQuestion}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setExpandedDimension(resolveInitialExpandedDimension(orderedDimensions));
+    setActiveEvidenceId(null);
+  }, [record.month]);
+
+  const toggleDimension = (dimensionKey: InterviewDimension) => {
+    setExpandedDimension((current) => {
+      if (current === dimensionKey) {
+        setActiveEvidenceId(null);
+        return null;
+      }
+
+      setActiveEvidenceId(null);
+      return dimensionKey;
+    });
+  };
+
+  const toggleEvidence = (entryId: string) => {
+    setActiveEvidenceId((current) => (current === entryId ? null : entryId));
+  };
 
   return (
     <div data-testid="analysis-dimension-cards">
-      <div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <p className="archive-label">本月判断</p>
-          <span className={ANALYSIS_CHIP_CLASS}>主线：{getInterviewDimensionMeta(featured.dimension).label}</span>
-        </div>
-        <h3 className="mt-3 font-display text-[1.42rem] leading-none text-[#302114]">{record.insightsOverview.headline}</h3>
-        <p className="mt-3 max-w-[48rem] text-pretty text-[0.9rem] leading-7 text-[#72583f]">{record.insightsOverview.summary}</p>
-        {record.insightsOverview.watchpoint ? (
-          <p className="ui-quote mt-3 text-[0.82rem] leading-6">还值得留意的是：{record.insightsOverview.watchpoint}</p>
-        ) : null}
-      </div>
+      <p className="text-[0.84rem] leading-6 text-[#72583f]">
+        本月共 {record.logOverview.recordedDayCount} 天有记录 · {record.logOverview.savedEntryCount} 条已保存日志
+      </p>
 
-      <Divider className="my-5" />
-
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {orderedDimensions.map((dimension) => {
-          const isFeatured = dimension.dimension === featured.dimension;
-          const relatedScoreFactors = formatRelatedScoreFactorLabels(dimension);
-          const scoreSummary = getDimensionScoreSummary(dimension);
+      <Card className="mt-4 overflow-hidden p-0">
+        {orderedDimensions.map((dimension, index) => {
+          const isExpanded = expandedDimension === dimension.dimension;
+          const indexTheme = buildDimensionIndexTheme(dimension);
+          const activeEvidence =
+            dimension.evidence.find((item) => item.entryId === activeEvidenceId) ?? null;
 
           return (
-            <Card
-              as="article"
-              key={dimension.dimension}
-              data-testid={isFeatured ? `analysis-dimension-featured-${dimension.dimension}` : undefined}
-              className={cn("p-4", isFeatured && "border-[var(--line-strong)] bg-sand/40")}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(dimension.dimension).softBadgeClass}`}>
-                    {getCalendarDimensionVisualMeta(dimension.dimension).monthLabel}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-[0.92rem] text-[#3a2c1f]">{getInterviewDimensionMeta(dimension.dimension).label}</p>
-                    <p className="text-[0.7rem] text-[#8b6c4d]">
-                      {dimension.recordedDayCount > 0 ? `${dimension.recordedDayCount} 天有记录` : "本月还没有记录"}
-                    </p>
-                  </div>
-                </div>
-                <span className={ANALYSIS_CHIP_CLASS}>
-                  {isFeatured ? "这月更清楚" : getDimensionConfidenceLabel(dimension)}
+            <div key={dimension.dimension} data-testid={`analysis-dimension-row-${dimension.dimension}`}>
+              {index > 0 ? <Divider /> : null}
+              <button
+                type="button"
+                aria-expanded={isExpanded}
+                className={cn(
+                  "flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-paper/60",
+                  isExpanded && "bg-sand/30"
+                )}
+                onClick={() => toggleDimension(dimension.dimension)}
+              >
+                <span
+                  className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full border text-[0.72rem] font-medium ${getCalendarDimensionVisualMeta(dimension.dimension).softBadgeClass}`}
+                >
+                  {getCalendarDimensionVisualMeta(dimension.dimension).monthLabel}
                 </span>
-              </div>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[0.9rem] text-[#3a2c1f]">{getInterviewDimensionMeta(dimension.dimension).label}</span>
+                    {indexTheme ? (
+                      <span className="truncate text-[0.82rem] text-[#72583f]">{indexTheme}</span>
+                    ) : null}
+                  </span>
+                  <span className="mt-0.5 block text-[0.72rem] text-[#8b6c4d]">{buildDimensionCountLabel(dimension)}</span>
+                </span>
+                <span aria-hidden="true" className="shrink-0 text-[0.72rem] text-[#8b6c4d]">
+                  {isExpanded ? "▼" : "▶"}
+                </span>
+              </button>
 
-              <p className="mt-3 min-h-[4.5rem] text-[0.84rem] leading-6 text-[#4a3928]">{buildDimensionSummary(dimension, record.narrative)}</p>
+              {isExpanded ? (
+                <div className="px-4 pb-4" data-testid={`analysis-dimension-panel-${dimension.dimension}`}>
+                  {dimension.savedEntryCount > 0 ? (
+                    <>
+                      <p className="text-[0.86rem] leading-6 text-[#4a3928]">
+                        {buildDimensionSummary(dimension, record.narrative)}
+                      </p>
 
-              <div className="mt-3 space-y-1.5 text-[0.72rem] leading-5 text-[#80634a]">
-                <p>{getDimensionMomentumLabel(dimension)}</p>
-                <p>{getDimensionContinuityLabel(dimension)}</p>
-                <p>
-                  {dimension.turningPointDate
-                    ? `更像在 ${formatAnalysisDateLabel(dimension.turningPointDate)} 这天成形`
-                    : "还没有明显的转折点"}
-                </p>
-              </div>
+                      {dimension.evidence.length > 0 ? (
+                        <div className="mt-4">
+                          <p className="text-[0.72rem] text-[#8b6c4d]">代表片段</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {dimension.evidence.map((evidence) => {
+                              const isActive = activeEvidenceId === evidence.entryId;
 
-              {dimension.evidence.length > 0 ? (
-                <div className="ui-quote mt-3">
-                  <p className="text-[0.7rem] text-[#8b6c4d]">代表片段</p>
-                  <div className="mt-2 space-y-2">
-                    {dimension.evidence.slice(0, 2).map((evidence) => (
-                      <div key={evidence.entryId}>
-                        <p className="text-[0.76rem] leading-5 text-[#4a3928]">{evidence.summary}</p>
-                        {evidence.detail ? <p className="mt-0.5 text-[0.72rem] leading-5 text-[#7a624b]">{evidence.detail}</p> : null}
-                        {evidence.date ? (
-                          <Link
-                            href={buildCalendarHref({ date: evidence.date, view: "day" })}
-                            className="mt-1 inline-flex text-[0.7rem] text-[#6f4a26] underline-offset-2 hover:underline"
-                          >
-                            {formatScoreDateLabel(evidence.date)} →
-                          </Link>
-                        ) : null}
+                              return (
+                                <button
+                                  key={evidence.entryId}
+                                  type="button"
+                                  aria-pressed={isActive}
+                                  data-testid={`analysis-evidence-chip-${evidence.entryId}`}
+                                  className={cn(
+                                    "inline-flex items-center rounded-full border px-2.5 py-1 text-[0.72rem] transition",
+                                    isActive
+                                      ? "border-[var(--line-strong)] bg-sand/50 text-[#3a2c1f]"
+                                      : "border-[var(--line-soft)] bg-paper/80 text-[#6f5339] hover:bg-paper"
+                                  )}
+                                  onClick={() => toggleEvidence(evidence.entryId)}
+                                >
+                                  {formatScoreDateLabel(evidence.date)}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {activeEvidence ? (
+                            <DimensionEvidencePreview evidence={activeEvidence} record={record} dimension={dimension} />
+                          ) : (
+                            <p className="mt-3 text-[0.74rem] leading-5 text-[#8b6c4d]">点日期查看这一天的正文摘录。</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="ui-quote mt-3 text-[0.74rem] leading-5">这条线已有记录，但还没有足够清晰的片段摘要。</p>
+                      )}
+                    </>
+                  ) : (
+                    <div>
+                      <p className="text-[0.84rem] leading-6 text-[#72583f]">{dimension.nextQuestion}</p>
+                      <div className="mt-3">
+                        <ActionLink href={buildDimensionDrillHref(record, dimension)} label="去记录" variant="primary" />
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="ui-quote mt-3 text-[0.74rem] leading-5">这条线还在起笔，先不用急着下结论。</p>
-              )}
-
-              <div className="mt-3 space-y-2">
-                {relatedScoreFactors.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {relatedScoreFactors.map((label) => (
-                      <span key={label} className="inline-flex items-center rounded-full border border-[var(--line-soft)] bg-paper/80 px-2 py-0.5 text-[0.68rem] text-[#6f5339]">
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                {dimension.relatedDimensions.length > 0 ? (
-                  <p className="text-[0.72rem] leading-5 text-[#7a624b]">
-                    常一起动：{dimension.relatedDimensions.map((related) => getInterviewDimensionMeta(related).label).join("、")}
-                  </p>
-                ) : null}
-                {scoreSummary ? (
-                  <p className="text-[0.72rem] leading-5 text-[#7a624b]">评分里：{scoreSummary}</p>
-                ) : null}
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <ActionLink
-                  href={buildDimensionDrillHref(record, dimension)}
-                  label={dimension.savedEntryCount > 0 ? "继续这条线" : "去补这一维"}
-                  variant={isFeatured || dimension.savedEntryCount > 0 ? "primary" : "secondary"}
-                />
-                <ActionLink href={buildDimensionAnchorHref(record, dimension)} label={dimension.savedEntryCount > 0 ? "看那一天" : "回到这个月"} />
-              </div>
-            </Card>
+              ) : null}
+            </div>
           );
         })}
-      </div>
-
-      <Divider className="my-5" />
-
-      <div className="grid gap-x-8 gap-y-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
-        <section>
-          <p className="archive-label">维度之间</p>
-          <h3 className="mt-2 font-display text-[1.3rem] leading-none text-[#302114]">别只看哪条写得多，也看它和谁连在一起，和评分怎么接上</h3>
-          {record.insightsOverview.links.length > 0 ? (
-            <div className="mt-4">
-              {record.insightsOverview.links.map((link, index) => (
-                <div key={`${link.type}-${index}`} className="border-t border-[var(--line-soft)] py-3 first:border-t-0 first:pt-0">
-                  <p className="text-[0.74rem] text-[#8b6c4d]">{link.title}</p>
-                  <p className="mt-1 text-[0.84rem] leading-6 text-[#4a3928]">{link.detail}</p>
-                  {link.anchorDate ? (
-                    <div className="mt-2 -ml-1.5">
-                      <ActionLink href={buildCalendarHref({ view: "day", date: link.anchorDate })} label="回到那一天" />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="ui-quote mt-4 text-[0.84rem] leading-6">
-              这个月的材料还不够多，先把五条线各自写清楚，关系层才会慢慢出现。
-            </p>
-          )}
-        </section>
-
-        <section>
-          <p className="archive-label">下一步</p>
-          <h3 className="mt-2 font-display text-[1.3rem] leading-none text-[#302114]">先做哪一步，最容易把这个月看清楚</h3>
-          <div className="mt-4">
-            {actionItems.map((action) => (
-              <div key={action.title} className="border-t border-[var(--line-soft)] py-3 first:border-t-0 first:pt-0">
-                <p className="text-[0.86rem] text-[#3a2c1f]">{action.title}</p>
-                <p className="mt-1 text-[0.8rem] leading-6 text-[#72583f]">{action.body}</p>
-                <div className="mt-2.5">
-                  <ActionLink href={action.href} label={action.label} variant="primary" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
+      </Card>
     </div>
   );
 }

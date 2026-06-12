@@ -452,6 +452,28 @@ function shortenInsightText(value: string | null, maxLength = 28) {
   return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
 }
 
+const BODY_EXCERPT_MAX_LENGTH = 180;
+
+function normalizeExcerptSource(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function buildBodyExcerpt(content: string | null | undefined, fallback?: string | null) {
+  const source = normalizeExcerptSource(content) || normalizeExcerptSource(fallback);
+
+  if (!source) {
+    return "";
+  }
+
+  return source.length > BODY_EXCERPT_MAX_LENGTH
+    ? `${source.slice(0, BODY_EXCERPT_MAX_LENGTH)}…`
+    : source;
+}
+
 function formatScoreFactorLabels(factors: HappinessScoreRequestKey[]) {
   return factors.map((factor) => scoreFactorLabelMap[factor]);
 }
@@ -608,12 +630,21 @@ function buildDimensionInsights(input: {
     const lastRecordedDate = [...recordedDates].sort((left, right) => compareDateDesc(left, right))[0] ?? null;
     const topTags = buildTopTags(dimensionEntries);
     const recentSignals = buildRecentSignals(dimensionEntries);
-    const evidence = recentSignals.map((signal) => ({
-      entryId: signal.entryId,
-      date: signal.date,
-      summary: signal.primarySignal,
-      detail: signal.secondarySignal
-    }));
+    const evidence = recentSignals.map((signal) => {
+      const entry = dimensionEntries.find((item) => item.id === signal.entryId);
+
+      return {
+        entryId: signal.entryId,
+        date: signal.date,
+        title: entry?.title ?? null,
+        summary: signal.primarySignal,
+        detail: signal.secondarySignal,
+        excerpt: buildBodyExcerpt(
+          entry?.content,
+          signal.secondarySignal ? `${signal.primarySignal}。${signal.secondarySignal}` : signal.primarySignal
+        )
+      };
+    });
 
     return {
       dimension,

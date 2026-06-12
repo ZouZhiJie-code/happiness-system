@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { AnalysisShell } from "@/components/analysis/analysis-shell";
+import { analysisPeriodLoadingEventName } from "@/features/analysis/period-nav";
 import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
 
 const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
@@ -9,7 +10,10 @@ const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockSearchParams: {
     value: {
       month: null as string | null,
-      section: null as string | null
+      section: null as string | null,
+      preset: null as string | null,
+      start: null as string | null,
+      end: null as string | null
     }
   }
 }));
@@ -19,9 +23,20 @@ vi.mock("next/navigation", () => ({
     replace: mockRouterReplace
   }),
   useSearchParams: () => ({
-    get: (key: string) => mockSearchParams.value[key as "month" | "section"] ?? null
+    get: (key: string) => mockSearchParams.value[key as "month" | "section" | "preset" | "start" | "end"] ?? null
   })
 }));
+
+function setMockSearchParams(overrides: Partial<(typeof mockSearchParams)["value"]>) {
+  mockSearchParams.value = {
+    month: null,
+    section: null,
+    preset: null,
+    start: null,
+    end: null,
+    ...overrides
+  };
+}
 
 vi.mock("@/features/interview/entry-date", () => ({
   getTodayEntryDate: () => "2026-05-03"
@@ -392,8 +407,10 @@ describe("analysis shell", () => {
             {
               entryId: "entry-joy-2",
               date: "2026-05-02",
+              title: "清醒地开始",
               summary: "那种不用解释也能放松的陪伴",
-              detail: "我会被这种没负担的陪伴带回轻松里"
+              detail: "我会被这种没负担的陪伴带回轻松里",
+              excerpt: "那天早上比平时早醒半小时，没有急着看手机，先把窗口推开，让风进来。"
             }
           ]
         }),
@@ -439,8 +456,10 @@ describe("analysis shell", () => {
             {
               entryId: "entry-reflection-1",
               date: "2026-05-02",
+              title: "别把忙碌当进展",
               summary: "我太容易把忙碌错当进展",
-              detail: "以后判断进展要看依据有没有变清楚"
+              detail: "以后判断进展要看依据有没有变清楚",
+              excerpt: "忙了一整天以后，我才意识到真正推进的事情其实只有一件。"
             }
           ]
         }),
@@ -486,8 +505,10 @@ describe("analysis shell", () => {
             {
               entryId: "entry-gratitude-1",
               date: "2026-05-07",
+              title: "有人帮我理清",
               summary: "看出我快撑不住，先帮我理清优先级",
-              detail: "这种关系回应值得珍惜"
+              detail: "这种关系回应值得珍惜",
+              excerpt: "她看出我快撑不住，没有继续催进度，而是先帮我理清优先级。"
             }
           ]
         })
@@ -542,10 +563,7 @@ describe("analysis shell", () => {
   beforeEach(() => {
     historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
     mockRouterReplace.mockReset();
-    mockSearchParams.value = {
-      month: null,
-      section: null
-    };
+    setMockSearchParams({});
     global.fetch = createAnalysisFetchMock() as typeof fetch;
   });
 
@@ -561,10 +579,10 @@ describe("analysis shell", () => {
   });
 
   it("renders all analysis sections on a single scroll page by default", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: null
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -581,10 +599,10 @@ describe("analysis shell", () => {
   });
 
   it("keeps a valid month and canonical section without rewriting the url", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-04",
       section: "correlation"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -594,10 +612,10 @@ describe("analysis shell", () => {
   });
 
   it("falls back invalid month params to the current month", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-13",
       section: "score"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -606,10 +624,10 @@ describe("analysis shell", () => {
   });
 
   it("does not render month controls in the page body", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "score"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -618,10 +636,10 @@ describe("analysis shell", () => {
   });
 
   it("does not render the legacy overview hero on the single-page layout", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "trends"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -631,11 +649,11 @@ describe("analysis shell", () => {
     expect(screen.queryByTestId("analysis-status-board")).not.toBeInTheDocument();
   });
 
-  it("renders the five-dimension insight layout without an even card grid", async () => {
-    mockSearchParams.value = {
+  it("renders the five-dimension accordion layout with equal summary rows", async () => {
+    setMockSearchParams({
       month: "2026-05",
       section: "insights"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -643,29 +661,32 @@ describe("analysis shell", () => {
       expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId("analysis-dimension-featured-joy")).toHaveTextContent("开心");
-    expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("思考");
-    expect(screen.getByTestId("analysis-dimension-cards")).toHaveTextContent("感谢");
+    expect(screen.getByTestId("analysis-dimension-row-joy")).toHaveTextContent("开心");
+    expect(screen.getByTestId("analysis-dimension-row-reflection")).toHaveTextContent("思考");
+    expect(screen.getByTestId("analysis-dimension-row-gratitude")).toHaveTextContent("感谢");
+    expect(screen.queryByText("本月判断")).not.toBeInTheDocument();
+    expect(screen.queryByText("维度之间")).not.toBeInTheDocument();
+    expect(screen.queryByText("下一步")).not.toBeInTheDocument();
   });
 
   it("renders all sections together even when deep-linking to a legacy rhythm section", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "rhythm"
-    };
+    });
 
     render(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
-    expect(screen.getByRole("heading", { name: "8 要素 · 周期均分" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "幸福 8 要素评分" })).toBeInTheDocument();
     expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
   });
 
   it("renders a read-only log-days heatmap without drill-down actions", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "trends"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -675,7 +696,7 @@ describe("analysis shell", () => {
     expect(screen.queryByRole("link", { name: "开始这一天的记录" })).not.toBeInTheDocument();
   });
 
-  it("shows an empty-state featured panel when the month has scores but no saved entries", async () => {
+  it("shows empty-state accordion rows when the month has scores but no saved entries", async () => {
     const scoreOnlyRecord = buildAnalysisMonthRecord();
     const scoreOnlyCoverage: AnalysisMonthRecord["dailyCoverage"] = scoreOnlyRecord.dailyCoverage.map((day) => ({
       ...day,
@@ -725,30 +746,30 @@ describe("analysis shell", () => {
       }
     }) as typeof fetch;
 
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "insights"
-    };
+    });
 
     render(<AnalysisShell />);
 
     expect(await screen.findByTestId("analysis-dimension-cards")).toBeInTheDocument();
-    expect(screen.queryByTestId("analysis-dimension-featured-joy")).not.toBeInTheDocument();
-    expect(screen.getAllByText("还没展开")).toHaveLength(5);
+    expect(screen.getAllByText("本月还没有记录")).toHaveLength(5);
   });
 
   it("keeps entryDate context in analysis drill-down interview links", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "insights"
-    };
+    });
 
     render(<AnalysisShell />);
 
     await screen.findByTestId("analysis-dimension-cards");
-
-    const featuredCard = screen.getByTestId("analysis-dimension-featured-joy");
-    const hrefs = within(featuredCard)
+    fireEvent.click(within(screen.getByTestId("analysis-dimension-row-joy")).getByRole("button"));
+    const panel = await screen.findByTestId("analysis-dimension-panel-joy");
+    fireEvent.click(within(panel).getByTestId("analysis-evidence-chip-entry-joy-2"));
+    const hrefs = within(panel)
       .getAllByRole("link")
       .map((link) => link.getAttribute("href"));
 
@@ -756,10 +777,10 @@ describe("analysis shell", () => {
   });
 
   it("renders the trends section in read-only mode", async () => {
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "trends"
-    };
+    });
 
     render(<AnalysisShell />);
 
@@ -767,7 +788,7 @@ describe("analysis shell", () => {
 
     expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "8 要素 · 周期均分" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "幸福 8 要素评分" })).toBeInTheDocument();
     expect(screen.getByLabelText("总分柱线走势")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "保存评分" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-rhythm-board")).not.toBeInTheDocument();
@@ -781,29 +802,83 @@ describe("analysis shell", () => {
     };
 
     global.fetch = createAnalysisFetchMock(emptyRecord) as typeof fetch;
-    mockSearchParams.value = {
+    setMockSearchParams({
       month: "2026-05",
       section: "trends"
-    };
+    });
 
     render(<AnalysisShell />);
 
     expect(await screen.findByText("这个周期还没有评分记录。")).toBeInTheDocument();
   });
 
-  it("renders evidence date links in dimension insight cards", async () => {
-    mockSearchParams.value = {
+  it("renders inline body excerpts when selecting evidence date chips", async () => {
+    setMockSearchParams({
       month: "2026-05",
       section: "insights"
-    };
+    });
 
     render(<AnalysisShell />);
 
     const dimensionCards = await screen.findByTestId("analysis-dimension-cards");
+    fireEvent.click(within(within(dimensionCards).getByTestId("analysis-dimension-row-joy")).getByRole("button"));
+    const panel = await screen.findByTestId("analysis-dimension-panel-joy");
+    fireEvent.click(within(panel).getByTestId("analysis-evidence-chip-entry-joy-2"));
 
-    const links = within(dimensionCards).getAllByRole("link", { name: /5月2日 →/ });
-    expect(links.length).toBeGreaterThanOrEqual(1);
-    expect(links[0]).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+    expect(screen.getByTestId("analysis-evidence-preview-entry-joy-2")).toHaveTextContent("清醒地开始");
+    expect(screen.getByTestId("analysis-evidence-preview-entry-joy-2")).toHaveTextContent(
+      "那天早上比平时早醒半小时，没有急着看手机，先把窗口推开，让风进来。"
+    );
+
+    const calendarLink = within(screen.getByTestId("analysis-evidence-preview-entry-joy-2")).getByRole("link", {
+      name: "在日历中打开"
+    });
+    expect(calendarLink).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("fetches month and range records in parallel", async () => {
+    const fetchMock = createAnalysisFetchMock();
+    global.fetch = fetchMock as typeof fetch;
+    setMockSearchParams({
+      month: "2026-05",
+      section: "trends"
+    });
+
+    render(<AnalysisShell />);
+
+    await screen.findByTestId("analysis-trends-section");
+
+    const monthCallIndex = fetchMock.mock.calls.findIndex(([input]) => String(input).includes("/api/analysis/month"));
+    const rangeCallIndex = fetchMock.mock.calls.findIndex(([input]) => String(input).includes("/api/analysis/range"));
+
+    expect(monthCallIndex).toBeGreaterThanOrEqual(0);
+    expect(rangeCallIndex).toBeGreaterThanOrEqual(0);
+    expect(Math.abs(monthCallIndex - rangeCallIndex)).toBeLessThanOrEqual(1);
+  });
+
+  it("broadcasts period loading events while fetching", async () => {
+    const loadingEvents: boolean[] = [];
+    const listener = (event: Event) => {
+      const detail = event instanceof CustomEvent ? (event.detail as { loading?: boolean } | null) : null;
+      if (typeof detail?.loading === "boolean") {
+        loadingEvents.push(detail.loading);
+      }
+    };
+
+    window.addEventListener(analysisPeriodLoadingEventName, listener);
+    setMockSearchParams({
+      month: "2026-05",
+      section: "trends"
+    });
+
+    try {
+      render(<AnalysisShell />);
+      await screen.findByTestId("analysis-trends-section");
+      expect(loadingEvents).toContain(true);
+      expect(loadingEvents.at(-1)).toBe(false);
+    } finally {
+      window.removeEventListener(analysisPeriodLoadingEventName, listener);
+    }
   });
 
 });

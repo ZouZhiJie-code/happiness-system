@@ -50,8 +50,10 @@ export interface AnalysisDimensionSignalExcerpt {
 export interface AnalysisDimensionEvidenceExcerpt {
   entryId: string;
   date: string;
+  title: string | null;
   summary: string;
   detail: string | null;
+  excerpt: string;
 }
 
 export type AnalysisDimensionInsightConfidence = "low" | "medium" | "high";
@@ -183,6 +185,8 @@ export interface AnalysisSavedEntrySource {
   id: string;
   date: string;
   dimension: InterviewDimension;
+  title: string;
+  content: string;
   tags: string[];
   payload: InterviewJournalPayload | null;
   savedAt: string | null;

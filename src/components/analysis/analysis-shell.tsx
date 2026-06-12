@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
 import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
+import { buildAnalysisPeriodState } from "@/features/analysis/period-state";
+import { notifyAnalysisPeriodLoading } from "@/features/analysis/period-nav";
 import { projectAnalysisTrendsRangeFromMonth } from "@/features/analysis/project-trends-range";
 import { fetchAnalysisTrendsRange } from "@/features/analysis/range-client";
 import {
@@ -13,6 +15,7 @@ import {
   normalizeAnalysisSearchParams
 } from "@/features/analysis/view-state";
 import { Divider, Surface } from "@/components/ui";
+import { useAnalysisPeriodPrefetch } from "@/components/analysis/use-analysis-period-prefetch";
 import { AnalysisCorrelationSection } from "./analysis-correlation-section";
 import { AnalysisReviewSection } from "./analysis-review-section";
 import { AnalysisEmptyBanner, AnalysisSection, SectionSkeleton } from "./analysis-shared";
@@ -51,6 +54,16 @@ export function AnalysisShell() {
     endDate: searchParams.get("end"),
     today: todayMonth
   });
+  const activePeriod = useMemo(
+    () =>
+      buildAnalysisPeriodState({
+        preset: normalizedSearch.preset,
+        month: normalizedSearch.month,
+        startDate: normalizedSearch.startDate,
+        endDate: normalizedSearch.endDate
+      }),
+    [normalizedSearch.endDate, normalizedSearch.month, normalizedSearch.preset, normalizedSearch.startDate]
+  );
   const [record, setRecord] = useState<AnalysisMonthRecord | null>(null);
   const [trendsRecord, setTrendsRecord] = useState<AnalysisTrendsRangeRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +76,8 @@ export function AnalysisShell() {
     month: normalizedSearch.month,
     section: normalizedSearch.section
   });
+
+  useAnalysisPeriodPrefetch(activePeriod, !isLoading && !isTrendsLoading && !hasFetchError && !hasTrendsFetchError);
 
   useEffect(() => {
     if (normalizedSearch.shouldReplace) {
@@ -79,42 +94,41 @@ export function AnalysisShell() {
     setHasTrendsFetchError(false);
     setRecord(null);
     setTrendsRecord(null);
+    notifyAnalysisPeriodLoading({ loading: true, period: activePeriod });
 
     const rangeInput = {
       preset: normalizedSearch.preset,
       startDate: normalizedSearch.startDate,
       endDate: normalizedSearch.endDate
     };
+    const force = refreshNonce > 0;
 
-    void fetchAnalysisMonthRecord(normalizedSearch.month, { force: refreshNonce > 0 })
-      .then(async (monthRecord) => {
+    const monthPromise = fetchAnalysisMonthRecord(normalizedSearch.month, { force });
+    const rangePromise = fetchAnalysisTrendsRange({
+      preset: normalizedSearch.preset,
+      month: normalizedSearch.month,
+      startDate: normalizedSearch.preset !== "month" ? normalizedSearch.startDate : undefined,
+      endDate: normalizedSearch.preset !== "month" ? normalizedSearch.endDate : undefined,
+      force
+    });
+
+    void Promise.allSettled([monthPromise, rangePromise])
+      .then(([monthResult, rangeResult]) => {
         if (cancelled) {
           return;
         }
 
-        setRecord(monthRecord);
-
-        try {
-          const rangeRecord = await fetchAnalysisTrendsRange({
-            preset: normalizedSearch.preset,
-            month: normalizedSearch.month,
-            startDate: normalizedSearch.preset !== "month" ? normalizedSearch.startDate : undefined,
-            endDate: normalizedSearch.preset !== "month" ? normalizedSearch.endDate : undefined,
-            force: refreshNonce > 0
-          });
-
-          if (!cancelled) {
-            setTrendsRecord(rangeRecord);
-          }
-        } catch {
-          if (!cancelled) {
-            setTrendsRecord(projectAnalysisTrendsRangeFromMonth(monthRecord, rangeInput));
-          }
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
+        if (monthResult.status === "fulfilled") {
+          setRecord(monthResult.value);
+        } else {
           setHasFetchError(true);
+        }
+
+        if (rangeResult.status === "fulfilled") {
+          setTrendsRecord(rangeResult.value);
+        } else if (monthResult.status === "fulfilled") {
+          setTrendsRecord(projectAnalysisTrendsRangeFromMonth(monthResult.value, rangeInput));
+        } else {
           setHasTrendsFetchError(true);
         }
       })
@@ -122,6 +136,7 @@ export function AnalysisShell() {
         if (!cancelled) {
           setIsLoading(false);
           setIsTrendsLoading(false);
+          notifyAnalysisPeriodLoading({ loading: false, period: activePeriod });
         }
       });
 
@@ -129,6 +144,7 @@ export function AnalysisShell() {
       cancelled = true;
     };
   }, [
+    activePeriod,
     normalizedSearch.endDate,
     normalizedSearch.month,
     normalizedSearch.preset,
