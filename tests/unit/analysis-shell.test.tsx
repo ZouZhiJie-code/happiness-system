@@ -732,8 +732,9 @@ describe("analysis shell", () => {
 
     render(<AnalysisShell />);
 
-    expect(await screen.findByTestId("analysis-dimension-empty-state")).toHaveTextContent("这个月还没有形成文字线索");
+    expect(await screen.findByTestId("analysis-dimension-cards")).toBeInTheDocument();
     expect(screen.queryByTestId("analysis-dimension-featured-joy")).not.toBeInTheDocument();
+    expect(screen.getAllByText("还没展开")).toHaveLength(5);
   });
 
   it("keeps entryDate context in analysis drill-down interview links", async () => {

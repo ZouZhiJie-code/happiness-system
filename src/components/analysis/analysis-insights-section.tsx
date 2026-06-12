@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import type { AnalysisDimensionInsightCard, AnalysisMonthRecord } from "@/features/analysis/types";
-import { buildAnalysisHref } from "@/features/analysis/view-state";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { buildCalendarHref } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
@@ -130,22 +129,6 @@ export function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
   if (!featured) {
     return (
       <div data-testid="analysis-dimension-cards">
-        <div data-testid="analysis-dimension-empty-state">
-          <p className="archive-label">五维线索</p>
-          <h3 className="mt-2 font-display text-[1.45rem] leading-none text-[#302114]">这个月还没有形成文字线索</h3>
-          <p className="mt-3 text-[0.9rem] leading-7 text-[#72583f]">
-            {record.scoreOverview.scoredDayCount > 0
-              ? "这个月已经有评分起伏，但还没有足够的已保存记录把五维线索说清楚。"
-              : "这个月还没有已保存记录，先从一个维度开始，之后这里才会慢慢长出线索。"}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            <ActionLink href="/interview?dimension=joy" label="开始一条记录" variant="primary" />
-            <ActionLink href={buildAnalysisHref({ month: record.month, section: "trends" })} label="先去补评分" />
-          </div>
-        </div>
-
-        <Divider className="my-5" />
-
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {orderedDimensions.map((dimension) => (
             <Card as="article" key={dimension.dimension} className="p-4">

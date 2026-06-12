@@ -292,30 +292,17 @@ export function ActionLink({
 }
 
 export function AnalysisSection({
-  index,
   title,
-  description,
-  eyebrow,
   testId,
   children
 }: {
-  index: string;
   title: string;
-  description: string;
-  eyebrow: string;
   testId: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-w-0" data-testid={testId}>
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[0.82rem] text-[#9a6b3d]">{index}</span>
-        <p className="archive-label">{eyebrow}</p>
-      </div>
-      <div className="mt-3 min-w-0">
-        <h2 className="text-balance font-display text-[1.56rem] leading-[0.98] text-[#2f2419] md:text-[1.82rem]">{title}</h2>
-        <p className="mt-2 max-w-[46rem] text-pretty text-[0.94rem] leading-7 text-[#6f5a44]">{description}</p>
-      </div>
+      <h2 className="text-balance font-display text-[1.56rem] leading-[0.98] text-[#2f2419] md:text-[1.82rem]">{title}</h2>
       <div className="mt-5">{children}</div>
     </div>
   );

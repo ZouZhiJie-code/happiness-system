@@ -14,6 +14,7 @@ import {
   resolveAnalysisTrendsRange,
   shiftAnalysisTrendsRange
 } from "@/features/analysis/view-state";
+import { HeaderToolbarNavGroup } from "@/components/shared/header-toolbar-nav";
 import { cn } from "@/lib/utils";
 
 const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
@@ -167,24 +168,12 @@ export function AnalysisToolbar() {
 
   return (
     <div data-testid="analysis-toolbar" className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden">
-      <div className="flex shrink-0 items-center gap-1">
-        <button
-          type="button"
-          onClick={() => navigatePeriod(-1)}
-          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label={`查看上一${periodNavLabel}`}
-        >
-          <span aria-hidden="true">‹</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigatePeriod(1)}
-          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label={`查看下一${periodNavLabel}`}
-        >
-          <span aria-hidden="true">›</span>
-        </button>
-      </div>
+      <HeaderToolbarNavGroup
+        previousLabel={`查看上一${periodNavLabel}`}
+        nextLabel={`查看下一${periodNavLabel}`}
+        onPrevious={() => navigatePeriod(-1)}
+        onNext={() => navigatePeriod(1)}
+      />
 
       <ToolbarDivider />
 

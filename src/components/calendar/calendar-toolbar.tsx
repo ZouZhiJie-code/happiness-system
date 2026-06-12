@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
+import { HeaderToolbarNavGroup } from "@/components/shared/header-toolbar-nav";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import {
   fetchCalendarDayRecord,
@@ -143,24 +144,12 @@ export function CalendarToolbar() {
       aria-busy={isLoading ? "true" : "false"}
       className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden"
     >
-      <div className="flex shrink-0 items-center gap-1.5">
-        <button
-          type="button"
-          onClick={() => navigate({ date: toolbarState.previousDate })}
-          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label={toolbarState.previousLabel}
-        >
-          <span aria-hidden="true">‹</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate({ date: toolbarState.nextDate })}
-          className="calendar-chip rounded-full px-2.5 py-1 text-[0.76rem] text-[#7a5e44] transition duration-200 hover:text-[#5c4229]"
-          aria-label={toolbarState.nextLabel}
-        >
-          <span aria-hidden="true">›</span>
-        </button>
-      </div>
+      <HeaderToolbarNavGroup
+        previousLabel={toolbarState.previousLabel}
+        nextLabel={toolbarState.nextLabel}
+        onPrevious={() => navigate({ date: toolbarState.previousDate })}
+        onNext={() => navigate({ date: toolbarState.nextDate })}
+      />
 
       <ToolbarDivider />
 
