@@ -2,8 +2,9 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { AnalysisShell } from "@/components/analysis/analysis-shell";
-import { analysisPeriodLoadingEventName } from "@/features/analysis/period-nav";
+import { clearAllAnalysisRecordCache } from "@/features/analysis/analysis-record-cache";
 import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
+import { renderWithAnalysisChrome } from "../helpers/render-with-analysis-chrome";
 
 const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockRouterReplace: vi.fn(),
@@ -19,6 +20,7 @@ const { mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/analysis",
   useRouter: () => ({
     replace: mockRouterReplace
   }),
@@ -564,6 +566,7 @@ describe("analysis shell", () => {
     historyReplaceStateSpy = vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
     mockRouterReplace.mockReset();
     setMockSearchParams({});
+    clearAllAnalysisRecordCache();
     global.fetch = createAnalysisFetchMock() as typeof fetch;
   });
 
@@ -572,7 +575,7 @@ describe("analysis shell", () => {
   });
 
   it("normalizes missing month search params to the current month", async () => {
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     await screen.findByTestId("analysis-trends-section");
@@ -584,7 +587,7 @@ describe("analysis shell", () => {
       section: null
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     await screen.findByTestId("analysis-trends-section");
@@ -604,7 +607,7 @@ describe("analysis shell", () => {
       section: "correlation"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(historyReplaceStateSpy).not.toHaveBeenCalled();
@@ -617,7 +620,7 @@ describe("analysis shell", () => {
       section: "score"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     await screen.findByTestId("analysis-trends-section");
@@ -629,7 +632,7 @@ describe("analysis shell", () => {
       section: "score"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
     expect(screen.queryByTestId("analysis-month-controls")).not.toBeInTheDocument();
@@ -641,7 +644,7 @@ describe("analysis shell", () => {
       section: "trends"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
 
@@ -655,7 +658,7 @@ describe("analysis shell", () => {
       section: "insights"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await waitFor(() => {
       expect(screen.getByTestId("analysis-dimension-cards")).toBeInTheDocument();
@@ -675,7 +678,7 @@ describe("analysis shell", () => {
       section: "rhythm"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
     expect(screen.getByRole("heading", { name: "幸福 8 要素评分" })).toBeInTheDocument();
@@ -688,7 +691,7 @@ describe("analysis shell", () => {
       section: "trends"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
     expect(screen.getByRole("heading", { name: "日志天数" })).toBeInTheDocument();
@@ -751,7 +754,7 @@ describe("analysis shell", () => {
       section: "insights"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(await screen.findByTestId("analysis-dimension-cards")).toBeInTheDocument();
     expect(screen.getAllByText("本月还没有记录")).toHaveLength(5);
@@ -763,7 +766,7 @@ describe("analysis shell", () => {
       section: "insights"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-dimension-cards");
     fireEvent.click(within(screen.getByTestId("analysis-dimension-row-joy")).getByRole("button"));
@@ -782,7 +785,7 @@ describe("analysis shell", () => {
       section: "trends"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
 
@@ -807,7 +810,7 @@ describe("analysis shell", () => {
       section: "trends"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(await screen.findByText("这个周期还没有评分记录。")).toBeInTheDocument();
   });
@@ -818,7 +821,7 @@ describe("analysis shell", () => {
       section: "insights"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     const dimensionCards = await screen.findByTestId("analysis-dimension-cards");
     fireEvent.click(within(within(dimensionCards).getByTestId("analysis-dimension-row-joy")).getByRole("button"));
@@ -844,7 +847,7 @@ describe("analysis shell", () => {
       section: "trends"
     });
 
-    render(<AnalysisShell />);
+    renderWithAnalysisChrome(<AnalysisShell />);
 
     await screen.findByTestId("analysis-trends-section");
 
@@ -856,29 +859,29 @@ describe("analysis shell", () => {
     expect(Math.abs(monthCallIndex - rangeCallIndex)).toBeLessThanOrEqual(1);
   });
 
-  it("broadcasts period loading events while fetching", async () => {
-    const loadingEvents: boolean[] = [];
-    const listener = (event: Event) => {
-      const detail = event instanceof CustomEvent ? (event.detail as { loading?: boolean } | null) : null;
-      if (typeof detail?.loading === "boolean") {
-        loadingEvents.push(detail.loading);
-      }
-    };
+  it("uses cached records without waiting for skeleton on revisit", async () => {
+    const { saveAnalysisMonthRecord, saveAnalysisTrendsRange } = await import("@/features/analysis/analysis-record-cache");
+    const { buildAnalysisPeriodState } = await import("@/features/analysis/period-state");
+    const monthRecord = buildAnalysisMonthRecord();
 
-    window.addEventListener(analysisPeriodLoadingEventName, listener);
+    saveAnalysisMonthRecord("2026-05", monthRecord);
+    saveAnalysisTrendsRange(
+      buildAnalysisPeriodState({
+        preset: "month",
+        month: "2026-05"
+      }),
+      buildAnalysisTrendsRangeRecord(monthRecord)
+    );
+
     setMockSearchParams({
       month: "2026-05",
       section: "trends"
     });
 
-    try {
-      render(<AnalysisShell />);
-      await screen.findByTestId("analysis-trends-section");
-      expect(loadingEvents).toContain(true);
-      expect(loadingEvents.at(-1)).toBe(false);
-    } finally {
-      window.removeEventListener(analysisPeriodLoadingEventName, listener);
-    }
+    renderWithAnalysisChrome(<AnalysisShell />);
+
+    expect(screen.getByRole("heading", { name: "总分走势" })).toBeInTheDocument();
+    await screen.findByTestId("analysis-dimension-cards");
   });
 
 });

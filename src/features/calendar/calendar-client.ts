@@ -9,6 +9,7 @@ import {
 } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import type { CalendarView } from "@/features/calendar/view-state";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { dedupedRequest } from "@/features/shared/client-request-cache";
 
 export function getCachedCalendarRecord(view: CalendarView, date: string) {
@@ -116,4 +117,22 @@ export function prefetchCalendarView(view: CalendarView, date: string) {
         : fetchCalendarDayRecord(date);
 
   void task.catch(() => {});
+}
+
+export function prefetchCalendarAdjacentViews(currentView: CalendarView, date: string) {
+  (["month", "week", "day"] as const).forEach((view) => {
+    if (view !== currentView) {
+      prefetchCalendarView(view, date);
+    }
+  });
+}
+
+export function prefetchAllCalendarViews(date: string) {
+  (["month", "week", "day"] as const).forEach((view) => {
+    prefetchCalendarView(view, date);
+  });
+}
+
+export function hasWarmCalendarEntryCache(today = getTodayEntryDate()) {
+  return Boolean(getCachedCalendarMonthRecord(today));
 }

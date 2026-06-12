@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
+import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
 import { SiteHeader } from "@/components/shared/site-header";
 
 const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
@@ -48,6 +49,14 @@ vi.mock("next/navigation", () => ({
   })
 }));
 
+function renderAnalysisHeader() {
+  return render(
+    <AnalysisChromeProvider>
+      <SiteHeader />
+    </AnalysisChromeProvider>
+  );
+}
+
 describe("SiteHeader analysis toolbar", () => {
   let historyReplaceStateSpy: ReturnType<typeof vi.spyOn>;
 
@@ -72,7 +81,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("renders analysis month navigation and section tabs in the header", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -87,7 +96,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("highlights the active section tab", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -96,7 +105,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("navigates to a section when clicking a tab", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -106,7 +115,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("switches months from the header toolbar", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -132,7 +141,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("optimistically updates week range and shows week loading copy", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -157,7 +166,7 @@ describe("SiteHeader analysis toolbar", () => {
   });
 
   it("optimistically updates custom range inputs and shows custom loading copy", async () => {
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -192,7 +201,7 @@ describe("SiteHeader analysis toolbar", () => {
       end: null
     };
 
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
@@ -212,7 +221,7 @@ describe("SiteHeader analysis toolbar", () => {
       end: null
     };
 
-    render(<SiteHeader />);
+    renderAnalysisHeader();
 
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=trends", { scroll: false });
     expect(await screen.findByTestId("analysis-toolbar")).toBeInTheDocument();

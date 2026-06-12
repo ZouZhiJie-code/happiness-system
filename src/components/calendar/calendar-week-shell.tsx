@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarWeekBoard } from "@/components/calendar/calendar-week-board";
+import { useCalendarEntryLoadingNotice } from "@/components/calendar/use-calendar-entry-loading-notice";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import { fetchCalendarWeekRecord, getCachedCalendarWeekRecord } from "@/features/calendar/calendar-client";
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
@@ -28,6 +29,8 @@ export function CalendarWeekShell() {
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
+  useCalendarEntryLoadingNotice(isLoading);
+
   useEffect(() => {
     const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
     if (currentHref !== normalizedSearch.href) {
@@ -40,9 +43,14 @@ export function CalendarWeekShell() {
     const force = refreshNonce > 0;
     const cachedRecord = force ? null : getCachedCalendarWeekRecord(currentDate);
 
-    if (!cachedRecord) {
+    if (cachedRecord) {
+      setWeekRecord(cachedRecord);
+      setError(null);
+      setIsLoading(false);
+    } else {
       setIsLoading(true);
       setError(null);
+      setWeekRecord(null);
     }
 
     void fetchCalendarWeekRecord(currentDate, { force })

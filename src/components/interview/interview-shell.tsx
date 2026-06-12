@@ -38,6 +38,7 @@ import { getInterviewDimensionConfig } from "@/features/interview/server/dimensi
 import { bootstrapInterviewSession, prefetchStoredInterviewSessions } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import { cancelIdleTask, scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
@@ -1429,21 +1430,12 @@ export function InterviewShell({
       return;
     }
 
-    const scheduleIdle =
-      window.requestIdleCallback ??
-      ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1));
-    const cancelIdle =
-      window.cancelIdleCallback ??
-      ((handle: number) => {
-        window.clearTimeout(handle);
-      });
-
-    const idleHandle = scheduleIdle(() => {
+    const idleHandle = scheduleIdleTask(() => {
       prefetchStoredInterviewSessions(requestedEntryDate);
     });
 
     return () => {
-      cancelIdle(idleHandle);
+      cancelIdleTask(idleHandle);
     };
   }, [requestedEntryDate, shouldOpenDailyJournalFromQuery, workspaceMode]);
 

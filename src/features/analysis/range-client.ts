@@ -1,8 +1,15 @@
 "use client";
 
-import { dedupedRequest } from "@/features/shared/client-request-cache";
+import {
+  getCachedAnalysisTrendsRange,
+  saveAnalysisTrendsRange
+} from "@/features/analysis/analysis-record-cache";
 import type { AnalysisRangePreset } from "@/features/analysis/date-range";
+import { buildAnalysisPeriodState } from "@/features/analysis/period-state";
+import { dedupedRequest } from "@/features/shared/client-request-cache";
 import type { AnalysisTrendsRangeRecord } from "@/features/analysis/types";
+
+export { getCachedAnalysisTrendsRange };
 
 export async function fetchAnalysisTrendsRange(input: {
   preset: AnalysisRangePreset;
@@ -11,6 +18,21 @@ export async function fetchAnalysisTrendsRange(input: {
   endDate?: string;
   force?: boolean;
 }) {
+  const period = buildAnalysisPeriodState({
+    preset: input.preset,
+    month: input.month,
+    startDate: input.startDate,
+    endDate: input.endDate
+  });
+
+  if (!input.force) {
+    const cached = getCachedAnalysisTrendsRange(period);
+
+    if (cached) {
+      return cached;
+    }
+  }
+
   const params = new URLSearchParams({
     preset: input.preset,
     month: input.month
@@ -26,7 +48,7 @@ export async function fetchAnalysisTrendsRange(input: {
 
   const cacheKey = `analysis-range:${params.toString()}`;
 
-  return dedupedRequest(
+  const record = await dedupedRequest(
     cacheKey,
     async () => {
       const response = await fetch(`/api/analysis/range?${params.toString()}`, {
@@ -47,4 +69,8 @@ export async function fetchAnalysisTrendsRange(input: {
     },
     { force: input.force }
   );
+
+  saveAnalysisTrendsRange(period, record);
+
+  return record;
 }

@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarMonthDayPanel } from "@/components/calendar/calendar-month-day-panel";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
-import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
+import { CalendarMonthGridSkeleton } from "@/components/calendar/calendar-workspace-fallback";
+import { useCalendarEntryLoadingNotice } from "@/components/calendar/use-calendar-entry-loading-notice";
+import { getCalendarErrorLabel } from "@/features/calendar/accessibility";
 import { fetchCalendarMonthRecord, getCachedCalendarMonthRecord } from "@/features/calendar/calendar-client";
 import { interviewDimensions } from "@/features/interview/dimensions";
 import type { CalendarDayRecord, CalendarMonthRecord } from "@/features/calendar/types";
@@ -43,27 +45,6 @@ function buildEmptyCalendarDayRecord(date: string): CalendarDayRecord {
     latestUpdatedAt: null,
     primaryAction: null
   };
-}
-
-function CalendarMonthGridSkeleton() {
-  return (
-    <div className="min-h-0 flex-1 px-4 pb-1 pt-3 md:px-5 md:pb-1.5 md:pt-4">
-      <p role="status" aria-live="polite" className="text-[0.84rem] text-[#8a6b4b]">
-        {getCalendarLoadingLabel("month")}
-      </p>
-      <div className="mt-3.5 space-y-2.5" aria-hidden="true">
-        <div className="h-8 animate-pulse rounded-[18px] bg-[rgba(224,204,174,0.56)]" />
-        <div className="calendar-month-grid-sheet grid min-h-[calc(var(--calendar-month-cell-min-height)*6)] grid-cols-7 overflow-hidden rounded-none [grid-auto-rows:minmax(var(--calendar-month-cell-min-height),1fr)]">
-          {Array.from({ length: 42 }, (_, index) => (
-            <div
-              key={index}
-              className="calendar-month-cell min-h-[var(--calendar-month-cell-min-height)] animate-pulse bg-[rgba(224,204,174,0.42)]"
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function CalendarMonthErrorPanel({ onRetry }: { onRetry: () => void }) {
@@ -134,6 +115,8 @@ export function CalendarMonthShell() {
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
+  useCalendarEntryLoadingNotice(isLoading);
+
   useEffect(() => {
     const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
     if (currentHref !== normalizedSearch.href) {
@@ -150,9 +133,14 @@ export function CalendarMonthShell() {
     const force = refreshNonce > 0;
     const cachedRecord = force ? null : getCachedCalendarMonthRecord(currentDate);
 
-    if (!cachedRecord) {
+    if (cachedRecord) {
+      setMonthRecord(cachedRecord);
+      setError(null);
+      setIsLoading(false);
+    } else {
       setIsLoading(true);
       setError(null);
+      setMonthRecord(null);
     }
 
     void fetchCalendarMonthRecord(monthKey, { force })

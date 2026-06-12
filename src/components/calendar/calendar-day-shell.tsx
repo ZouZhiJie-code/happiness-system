@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
+import { useCalendarEntryLoadingNotice } from "@/components/calendar/use-calendar-entry-loading-notice";
 import { getCalendarErrorLabel, getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import { fetchCalendarDayRecord, getCachedCalendarDayRecord } from "@/features/calendar/calendar-client";
 import type { CalendarDayRecord } from "@/features/calendar/types";
@@ -26,6 +27,8 @@ export function CalendarDayShell() {
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
+  useCalendarEntryLoadingNotice(isLoading);
+
   useEffect(() => {
     const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
     if (currentHref !== normalizedSearch.href) {
@@ -38,9 +41,14 @@ export function CalendarDayShell() {
     const force = refreshNonce > 0;
     const cachedRecord = force ? null : getCachedCalendarDayRecord(currentDate);
 
-    if (!cachedRecord) {
+    if (cachedRecord) {
+      setDayRecord(cachedRecord);
+      setError(null);
+      setIsLoading(false);
+    } else {
       setIsLoading(true);
       setError(null);
+      setDayRecord(null);
     }
 
     void fetchCalendarDayRecord(currentDate, { force })

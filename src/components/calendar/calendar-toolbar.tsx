@@ -2,8 +2,9 @@
 
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useCalendarChrome } from "@/components/calendar/calendar-chrome-context";
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
 import { HeaderToolbarPeriodStepper } from "@/components/shared/header-toolbar-nav";
 import {
@@ -21,7 +22,7 @@ import {
   getCachedCalendarDayRecord,
   getCachedCalendarMonthRecord,
   getCachedCalendarWeekRecord,
-  prefetchCalendarView
+  prefetchCalendarAdjacentViews
 } from "@/features/calendar/calendar-client";
 import { buildCalendarMonthStats } from "@/features/calendar/month-stats";
 import {
@@ -47,7 +48,10 @@ function hasCachedToolbarRecord(view: ReturnType<typeof normalizeCalendarSearchP
 
 export function CalendarToolbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { activeView, beginCalendarViewChange } = useCalendarChrome();
+  const isCalendarPage = pathname === "/calendar" || pathname.startsWith("/calendar/");
   const today = getTodayEntryDate();
   const normalizedSearch = normalizeCalendarSearchParams({
     view: searchParams.get("view"),
@@ -57,10 +61,10 @@ export function CalendarToolbar() {
   const toolbarState = useMemo(
     () =>
       buildCalendarToolbarState({
-        view: normalizedSearch.view,
+        view: activeView,
         date: normalizedSearch.date
       }),
-    [normalizedSearch.date, normalizedSearch.view]
+    [activeView, normalizedSearch.date]
   );
   const [monthRecord, setMonthRecord] = useState<CalendarMonthRecord | null>(() =>
     normalizedSearch.view === "month" ? getCachedCalendarMonthRecord(normalizedSearch.date) : null
@@ -77,37 +81,18 @@ export function CalendarToolbar() {
   );
 
   useEffect(() => {
+    if (!isCalendarPage) {
+      return;
+    }
+
     const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
     if (currentHref !== normalizedSearch.href) {
       router.replace(normalizedSearch.href, { scroll: false });
     }
-  }, [normalizedSearch.href, router, searchParams]);
+  }, [isCalendarPage, normalizedSearch.href, router, searchParams]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const scheduleIdle =
-      window.requestIdleCallback ??
-      ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1));
-    const cancelIdle =
-      window.cancelIdleCallback ??
-      ((handle: number) => {
-        window.clearTimeout(handle);
-      });
-
-    const idleHandle = scheduleIdle(() => {
-      (["month", "week", "day"] as const).forEach((view) => {
-        if (view !== normalizedSearch.view) {
-          prefetchCalendarView(view, normalizedSearch.date);
-        }
-      });
-    });
-
-    return () => {
-      cancelIdle(idleHandle);
-    };
+    prefetchCalendarAdjacentViews(normalizedSearch.view, normalizedSearch.date);
   }, [normalizedSearch.date, normalizedSearch.view]);
 
   useEffect(() => {
@@ -177,21 +162,27 @@ export function CalendarToolbar() {
 
   const chips = useMemo(() => {
     if (isLoading || hasFetchError) {
-      return buildCalendarToolbarFallbackChips(normalizedSearch.view);
+      return buildCalendarToolbarFallbackChips(activeView);
     }
 
     return buildCalendarToolbarChips({
-      view: normalizedSearch.view,
+      view: activeView,
       monthStats: monthRecord ? buildCalendarMonthStats(monthRecord) : null,
       weekStats: weekRecord ? buildCalendarWeekStats(weekRecord) : null,
       dayRecord
     });
-  }, [dayRecord, hasFetchError, isLoading, monthRecord, normalizedSearch.view, weekRecord]);
+  }, [activeView, dayRecord, hasFetchError, isLoading, monthRecord, weekRecord]);
 
   function navigate(input: { date?: string; view?: typeof normalizedSearch.view }) {
+    const nextView = input.view ?? normalizedSearch.view;
+
+    if (input.view && input.view !== normalizedSearch.view) {
+      beginCalendarViewChange(input.view);
+    }
+
     router.replace(
       buildCalendarHref({
-        view: input.view ?? normalizedSearch.view,
+        view: nextView,
         date: input.date ?? normalizedSearch.date
       }),
       { scroll: false }
@@ -238,7 +229,7 @@ export function CalendarToolbar() {
 
         <div className="header-ws-slot header-ws-slot--view shrink-0">
           <CalendarViewSwitcher
-            currentView={normalizedSearch.view}
+            currentView={activeView}
             currentDate={normalizedSearch.date}
             onSelectView={(view) => navigate({ view })}
           />

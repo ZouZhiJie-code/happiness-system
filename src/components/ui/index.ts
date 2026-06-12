@@ -15,3 +15,4 @@ export {
   type SegmentedControlItem,
   type SegmentedControlVariant
 } from "./sliding-segmented-control";
+export { AppToast } from "./app-toast";

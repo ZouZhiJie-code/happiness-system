@@ -36,6 +36,11 @@ export function CalendarViewSwitcher({
             if (item.value !== currentView) {
               prefetchCalendarView(item.value, currentDate);
             }
+          },
+          onPointerDown: () => {
+            if (item.value !== currentView) {
+              prefetchCalendarView(item.value, currentDate);
+            }
           }
         }
       }))}

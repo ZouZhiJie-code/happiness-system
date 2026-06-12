@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { AuthLocalBootstrap } from "@/components/auth/auth-local-bootstrap";
+import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
+import { CalendarChromeProvider } from "@/components/calendar/calendar-chrome-context";
+import { CalendarMainGate } from "@/components/calendar/calendar-main-gate";
 import { SiteHeader } from "@/components/shared/site-header";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME } from "@/features/auth/auth.constants";
@@ -27,13 +30,21 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="font-body text-ink antialiased">
-        <div className="relative flex min-h-dvh flex-col">
-          <AuthLocalBootstrap userId={currentUser?.id ?? null} />
-          <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
-            <SiteHeader isAdmin={isAdmin} />
-          </Suspense>
-          <main className="flex min-h-0 w-full flex-1 flex-col">{children}</main>
-        </div>
+        <Suspense fallback={null}>
+          <AnalysisChromeProvider>
+            <CalendarChromeProvider>
+              <div className="relative flex min-h-dvh flex-col">
+                <AuthLocalBootstrap userId={currentUser?.id ?? null} />
+                <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
+                  <SiteHeader isAdmin={isAdmin} />
+                </Suspense>
+                <main className="flex min-h-0 w-full flex-1 flex-col">
+                  <CalendarMainGate>{children}</CalendarMainGate>
+                </main>
+              </div>
+            </CalendarChromeProvider>
+          </AnalysisChromeProvider>
+        </Suspense>
       </body>
     </html>
   );

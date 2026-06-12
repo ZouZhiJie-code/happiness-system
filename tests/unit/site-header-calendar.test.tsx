@@ -2,9 +2,12 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { SiteHeader } from "@/components/shared/site-header";
-import { clearAllCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
+import { CalendarMonthShell } from "@/components/calendar/calendar-month-shell";
+import { CALENDAR_ENTRY_LOADING_TOAST_MESSAGE } from "@/components/calendar/calendar-chrome-context";
+import { clearAllCalendarRecordCache, saveCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { renderWithCalendarChrome } from "../helpers/render-with-calendar-chrome";
 
 const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Shanghai",
@@ -272,7 +275,7 @@ describe("site header calendar toolbar", () => {
   it("renders month toolbar state and real summary chips", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     await waitFor(() => {
@@ -291,7 +294,7 @@ describe("site header calendar toolbar", () => {
   it("keeps calendar header sticky frosted without spacer", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
     const header = screen.getByRole("banner");
 
     expect(header).toHaveClass("sticky", "top-0", "site-header-frosted");
@@ -309,7 +312,7 @@ describe("site header calendar toolbar", () => {
     };
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
     const header = screen.getByRole("banner");
 
     expect(header).toHaveClass("sticky", "top-0", "site-header-frosted", "isolate");
@@ -320,7 +323,7 @@ describe("site header calendar toolbar", () => {
   it("syncs the viewport offset css variable to the measured header height", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     await screen.findByTestId("calendar-toolbar");
     const observedHeader = screen.getByRole("banner");
@@ -354,11 +357,14 @@ describe("site header calendar toolbar", () => {
   it("switches the active view and keeps the current date", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
-    fireEvent.click(within(toolbar).getByRole("button", { name: "切换到周视图" }));
+    const weekButton = within(toolbar).getByRole("button", { name: "切换到周视图" });
 
+    fireEvent.click(weekButton);
+
+    expect(weekButton).toHaveAttribute("data-active", "true");
     expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-02", { scroll: false });
   });
 
@@ -373,7 +379,7 @@ describe("site header calendar toolbar", () => {
       return new Response(JSON.stringify(buildMonthRecord()), { status: 200 });
     }) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     await waitFor(() => {
@@ -399,7 +405,7 @@ describe("site header calendar toolbar", () => {
     };
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildWeekRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     await waitFor(() => {
@@ -422,7 +428,7 @@ describe("site header calendar toolbar", () => {
     };
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildDayRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     await waitFor(() => {
@@ -442,7 +448,7 @@ describe("site header calendar toolbar", () => {
   it("falls back to placeholder chips when the toolbar query fails", async () => {
     global.fetch = vi.fn(async () => new Response(null, { status: 500 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
 
@@ -472,7 +478,7 @@ describe("site header calendar toolbar", () => {
       return Promise.resolve(new Response(null, { status: 404 }));
     }) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     const toolbar = await screen.findByTestId("calendar-toolbar");
     expect(toolbar).toHaveAttribute("aria-busy", "true");
@@ -490,8 +496,120 @@ describe("site header calendar toolbar", () => {
   it("renders an analysis nav item that links to the current month", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 
-    render(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader />);
 
     expect(await screen.findByRole("link", { name: "分析" })).toHaveAttribute("href", `/analysis?month=${CURRENT_MONTH}`);
+  });
+
+  it("shows calendar toolbar optimistically when entering from another page", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    expect(screen.queryByTestId("calendar-toolbar")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+
+    expect(await screen.findByTestId("calendar-toolbar")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "日历" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "访谈" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("hides interview toolbar when optimistically entering calendar", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    expect(await screen.findByTestId("interview-dimension-bar")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+
+    expect(await screen.findByTestId("calendar-toolbar")).toBeInTheDocument();
+    expect(screen.queryByTestId("interview-dimension-bar")).not.toBeInTheDocument();
+  });
+
+  it("shows entry loading toast when entering calendar from another page", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+
+    expect(screen.getByTestId("calendar-entry-loading-toast")).toHaveTextContent(CALENDAR_ENTRY_LOADING_TOAST_MESSAGE);
+  });
+
+  it("skips entry loading toast on repeat calendar entry when cache is warm", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    saveCalendarRecordCache("month", getTodayEntryDate(), buildMonthRecord());
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+
+    expect(screen.queryByTestId("calendar-entry-loading-toast")).not.toBeInTheDocument();
+    expect(await screen.findByTestId("calendar-toolbar")).toBeInTheDocument();
+  });
+
+  it("dismisses entry loading toast after calendar shell finishes loading", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    const { rerender } = renderWithCalendarChrome(<SiteHeader />);
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+    expect(screen.getByTestId("calendar-entry-loading-toast")).toBeInTheDocument();
+
+    mockPathname.value = "/calendar";
+    mockSearchParams.value = {
+      dimension: null,
+      view: "month",
+      date: "2026-05-02",
+      month: null
+    };
+
+    rerender(
+      <>
+        <SiteHeader />
+        <CalendarMonthShell />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("calendar-entry-loading-toast")).not.toBeInTheDocument();
+    });
   });
 });

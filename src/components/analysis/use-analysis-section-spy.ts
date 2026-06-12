@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { analysisSectionChangeEventName, replaceAnalysisSectionInUrl } from "@/features/analysis/section-nav";
+import { useAnalysisChrome } from "@/components/analysis/analysis-chrome-context";
+import { replaceAnalysisSectionInUrl } from "@/features/analysis/section-nav";
 import {
   ANALYSIS_SECTION_KEYS,
   getAnalysisSectionElementId,
@@ -27,6 +28,7 @@ function scrollSectionIntoView(element: HTMLElement, behavior: ScrollBehavior) {
 }
 
 export function useAnalysisSectionSpy(input: { month: string; section: AnalysisSectionKey }) {
+  const { setActiveSection } = useAnalysisChrome();
   const scrollLockRef = useRef(false);
   const scrollLockTimerRef = useRef<number | null>(null);
   const lastSectionRef = useRef(input.section);
@@ -109,7 +111,7 @@ export function useAnalysisSectionSpy(input: { month: string; section: AnalysisS
         }
 
         lastSectionRef.current = nextSection;
-        replaceAnalysisSectionInUrl(input.month, nextSection);
+        replaceAnalysisSectionInUrl(input.month, nextSection, setActiveSection);
       },
       {
         root: null,
@@ -121,22 +123,10 @@ export function useAnalysisSectionSpy(input: { month: string; section: AnalysisS
     sections.forEach(({ element }) => observer.observe(element));
 
     return () => observer.disconnect();
-  }, [input.month]);
+  }, [input.month, setActiveSection]);
 
   useEffect(() => {
-    const handleExternalSectionChange = (event: Event) => {
-      const detail = event instanceof CustomEvent ? (event.detail as { section?: AnalysisSectionKey } | null) : null;
-
-      if (detail?.section) {
-        lastSectionRef.current = detail.section;
-      }
-    };
-
-    window.addEventListener(analysisSectionChangeEventName, handleExternalSectionChange);
-
     return () => {
-      window.removeEventListener(analysisSectionChangeEventName, handleExternalSectionChange);
-
       if (scrollLockTimerRef.current) {
         window.clearTimeout(scrollLockTimerRef.current);
       }

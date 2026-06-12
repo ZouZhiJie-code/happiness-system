@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { useAnalysisChrome } from "@/components/analysis/analysis-chrome-context";
 import type { AnalysisRangePreset } from "@/features/analysis/date-range";
 import { getAnalysisPeriodLoadingLabel } from "@/features/analysis/accessibility";
 import {
@@ -13,8 +14,6 @@ import {
   resolvePeriodNavLabel,
   type AnalysisPeriodState
 } from "@/features/analysis/period-state";
-import { subscribeAnalysisPeriodLoading } from "@/features/analysis/period-nav";
-import { analysisSectionChangeEventName } from "@/features/analysis/section-nav";
 import type { AnalysisSectionKey } from "@/features/analysis/view-state";
 import {
   buildAnalysisHref,
@@ -48,6 +47,7 @@ const presetTabs: ReadonlyArray<{ key: AnalysisRangePreset; label: string }> = [
 export function AnalysisToolbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeSection, setActiveSection, isPeriodLoading, setPeriodLoading } = useAnalysisChrome();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
     month: searchParams.get("month"),
@@ -57,9 +57,7 @@ export function AnalysisToolbar() {
     endDate: searchParams.get("end"),
     today: todayMonth
   });
-  const [activeSection, setActiveSection] = useState<AnalysisSectionKey>(normalizedSearch.section);
   const [optimisticPeriod, setOptimisticPeriod] = useState<AnalysisPeriodState | null>(null);
-  const [isPeriodLoading, setIsPeriodLoading] = useState(false);
   const [pressedDirection, setPressedDirection] = useState<"previous" | "next" | null>(null);
 
   const resolvedPeriod = useMemo(
@@ -82,46 +80,23 @@ export function AnalysisToolbar() {
   }, [normalizedSearch.href, normalizedSearch.shouldReplace, router]);
 
   useEffect(() => {
-    setActiveSection(normalizedSearch.section);
-  }, [normalizedSearch.section]);
-
-  useEffect(() => {
     if (optimisticPeriod && periodStatesEqual(optimisticPeriod, resolvedPeriod)) {
       setOptimisticPeriod(null);
     }
   }, [optimisticPeriod, resolvedPeriod]);
 
   useEffect(() => {
-    return subscribeAnalysisPeriodLoading((detail) => {
-      if (!detail.loading) {
-        setIsPeriodLoading(false);
-        setPressedDirection(null);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    const handleSectionChange = (event: Event) => {
-      const detail = event instanceof CustomEvent ? (event.detail as { section?: AnalysisSectionKey } | null) : null;
-
-      if (detail?.section) {
-        setActiveSection(detail.section);
-      }
-    };
-
-    window.addEventListener(analysisSectionChangeEventName, handleSectionChange);
-
-    return () => {
-      window.removeEventListener(analysisSectionChangeEventName, handleSectionChange);
-    };
-  }, []);
+    if (!isPeriodLoading) {
+      setPressedDirection(null);
+    }
+  }, [isPeriodLoading]);
 
   function applyOptimisticPeriodNavigation(
     nextPeriod: AnalysisPeriodState,
     direction?: "previous" | "next"
   ) {
     setOptimisticPeriod(nextPeriod);
-    setIsPeriodLoading(true);
+    setPeriodLoading(true);
     setPressedDirection(direction ?? null);
 
     router.replace(

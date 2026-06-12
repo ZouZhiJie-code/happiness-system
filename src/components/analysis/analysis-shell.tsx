@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { useAnalysisChrome } from "@/components/analysis/analysis-chrome-context";
 import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
-import { fetchAnalysisMonthRecord } from "@/features/analysis/month-client";
+import { fetchAnalysisMonthRecord, getCachedAnalysisMonthRecord } from "@/features/analysis/month-client";
 import { buildAnalysisPeriodState } from "@/features/analysis/period-state";
-import { notifyAnalysisPeriodLoading } from "@/features/analysis/period-nav";
 import { projectAnalysisTrendsRangeFromMonth } from "@/features/analysis/project-trends-range";
-import { fetchAnalysisTrendsRange } from "@/features/analysis/range-client";
+import { fetchAnalysisTrendsRange, getCachedAnalysisTrendsRange } from "@/features/analysis/range-client";
 import {
   getAnalysisSectionElementId,
   getTodayAnalysisMonth,
@@ -45,6 +45,7 @@ function renderSectionBody(input: {
 export function AnalysisShell() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setPeriodLoading } = useAnalysisChrome();
   const todayMonth = getTodayAnalysisMonth();
   const normalizedSearch = normalizeAnalysisSearchParams({
     month: searchParams.get("month"),
@@ -64,13 +65,16 @@ export function AnalysisShell() {
       }),
     [normalizedSearch.endDate, normalizedSearch.month, normalizedSearch.preset, normalizedSearch.startDate]
   );
-  const [record, setRecord] = useState<AnalysisMonthRecord | null>(null);
-  const [trendsRecord, setTrendsRecord] = useState<AnalysisTrendsRangeRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isTrendsLoading, setIsTrendsLoading] = useState(true);
+  const [record, setRecord] = useState<AnalysisMonthRecord | null>(() =>
+    getCachedAnalysisMonthRecord(normalizedSearch.month)
+  );
+  const [trendsRecord, setTrendsRecord] = useState<AnalysisTrendsRangeRecord | null>(() =>
+    getCachedAnalysisTrendsRange(activePeriod)
+  );
+  const [isLoading, setIsLoading] = useState(() => !getCachedAnalysisMonthRecord(normalizedSearch.month));
+  const [isTrendsLoading, setIsTrendsLoading] = useState(() => !getCachedAnalysisTrendsRange(activePeriod));
   const [hasFetchError, setHasFetchError] = useState(false);
   const [hasTrendsFetchError, setHasTrendsFetchError] = useState(false);
-  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useAnalysisSectionSpy({
     month: normalizedSearch.month,
@@ -87,29 +91,45 @@ export function AnalysisShell() {
 
   useEffect(() => {
     let cancelled = false;
+    const cachedMonth = getCachedAnalysisMonthRecord(normalizedSearch.month);
+    const cachedRange = getCachedAnalysisTrendsRange(activePeriod);
 
-    setIsLoading(true);
-    setIsTrendsLoading(true);
-    setHasFetchError(false);
-    setHasTrendsFetchError(false);
-    setRecord(null);
-    setTrendsRecord(null);
-    notifyAnalysisPeriodLoading({ loading: true, period: activePeriod });
+    if (cachedMonth) {
+      setRecord(cachedMonth);
+      setHasFetchError(false);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+      setHasFetchError(false);
+      setRecord(null);
+    }
+
+    if (cachedRange) {
+      setTrendsRecord(cachedRange);
+      setHasTrendsFetchError(false);
+      setIsTrendsLoading(false);
+    } else {
+      setIsTrendsLoading(true);
+      setHasTrendsFetchError(false);
+      setTrendsRecord(null);
+    }
+
+    if (!cachedMonth || !cachedRange) {
+      setPeriodLoading(true);
+    }
 
     const rangeInput = {
       preset: normalizedSearch.preset,
       startDate: normalizedSearch.startDate,
       endDate: normalizedSearch.endDate
     };
-    const force = refreshNonce > 0;
 
-    const monthPromise = fetchAnalysisMonthRecord(normalizedSearch.month, { force });
+    const monthPromise = fetchAnalysisMonthRecord(normalizedSearch.month);
     const rangePromise = fetchAnalysisTrendsRange({
       preset: normalizedSearch.preset,
       month: normalizedSearch.month,
       startDate: normalizedSearch.preset !== "month" ? normalizedSearch.startDate : undefined,
-      endDate: normalizedSearch.preset !== "month" ? normalizedSearch.endDate : undefined,
-      force
+      endDate: normalizedSearch.preset !== "month" ? normalizedSearch.endDate : undefined
     });
 
     void Promise.allSettled([monthPromise, rangePromise])
@@ -120,7 +140,7 @@ export function AnalysisShell() {
 
         if (monthResult.status === "fulfilled") {
           setRecord(monthResult.value);
-        } else {
+        } else if (!cachedMonth) {
           setHasFetchError(true);
         }
 
@@ -128,7 +148,7 @@ export function AnalysisShell() {
           setTrendsRecord(rangeResult.value);
         } else if (monthResult.status === "fulfilled") {
           setTrendsRecord(projectAnalysisTrendsRangeFromMonth(monthResult.value, rangeInput));
-        } else {
+        } else if (!cachedRange) {
           setHasTrendsFetchError(true);
         }
       })
@@ -136,7 +156,7 @@ export function AnalysisShell() {
         if (!cancelled) {
           setIsLoading(false);
           setIsTrendsLoading(false);
-          notifyAnalysisPeriodLoading({ loading: false, period: activePeriod });
+          setPeriodLoading(false);
         }
       });
 
@@ -149,7 +169,7 @@ export function AnalysisShell() {
     normalizedSearch.month,
     normalizedSearch.preset,
     normalizedSearch.startDate,
-    refreshNonce
+    setPeriodLoading
   ]);
 
   return (
