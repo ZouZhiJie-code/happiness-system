@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日志骨架流光加载 · 预览</title>
+    <style>
+      :root {
+        --ink: #2b1e13;
+        --ink-soft: #5f4732;
+        --brown: #835a33;
+        --brown-2: #97724c;
+        --line-base: rgba(116, 82, 44, 0.16);
+        --sheen: rgba(255, 248, 238, 0.85);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 18% 12%, rgba(255, 248, 234, 0.6), transparent 42%),
+          linear-gradient(180deg, #f3e8d2 0%, #e7d2b0 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        padding: 44px 20px 80px;
+      }
+
+      .page-intro {
+        max-width: 720px;
+        text-align: center;
+      }
+
+      .page-intro h1 {
+        margin: 0 0 8px;
+        font-size: 1.45rem;
+      }
+
+      .page-intro p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 0.9rem;
+        line-height: 1.8;
+      }
+
+      .row {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .chip {
+        border: 1px solid rgba(131, 90, 51, 0.3);
+        background: rgba(255, 250, 242, 0.74);
+        color: var(--brown);
+        font-size: 0.82rem;
+        letter-spacing: 0.03em;
+        padding: 8px 15px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 160ms ease, transform 120ms ease, color 160ms ease;
+      }
+
+      .chip:hover {
+        background: rgba(255, 250, 242, 0.98);
+        transform: translateY(-1px);
+      }
+
+      .chip[aria-pressed="true"] {
+        background: linear-gradient(180deg, #b6814e, #94612f);
+        color: #fff6e7;
+        border-color: transparent;
+      }
+
+      .panel {
+        position: relative;
+        width: min(560px, 100%);
+        min-height: 520px;
+        border-radius: 26px;
+        overflow: hidden;
+        border: 1px solid rgba(166, 118, 69, 0.18);
+        background: linear-gradient(180deg, #fdf8f1 0%, #f6ecdc 100%);
+        box-shadow: 0 30px 64px rgba(120, 83, 43, 0.16);
+      }
+
+      .panel__real {
+        position: absolute;
+        inset: 0;
+        padding: 40px 36px;
+        opacity: 0;
+        transition: opacity 520ms ease;
+      }
+
+      .panel.is-revealed .panel__real {
+        opacity: 1;
+        transition-delay: 360ms;
+      }
+
+      .panel__real .doc-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        line-height: 1.25;
+        margin: 0 0 18px;
+      }
+
+      .panel__real p {
+        margin: 0 0 14px;
+        font-size: 1rem;
+        line-height: 1.95;
+        color: #3a2b1c;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 36px 28px;
+        isolation: isolate;
+        background:
+          radial-gradient(
+            circle at 50% 38%,
+            rgba(251, 246, 235, 0.96),
+            rgba(233, 214, 184, 0.95) 46%,
+            rgba(216, 190, 152, 0.92) 78%
+          ),
+          linear-gradient(180deg, rgba(248, 237, 218, 0.98), rgba(220, 194, 157, 0.97));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 253, 248, 0.8),
+          inset 0 -28px 64px rgba(123, 86, 44, 0.18);
+        backdrop-filter: blur(1.2px);
+        transition: clip-path 700ms cubic-bezier(0.22, 0.74, 0.2, 1);
+        clip-path: circle(150% at 50% 50%);
+      }
+
+      .panel.is-revealed .overlay {
+        clip-path: circle(0% at 50% 50%);
+        pointer-events: none;
+      }
+
+      .overlay__grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.26;
+        background:
+          linear-gradient(90deg, rgba(104, 73, 42, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 25% 18%, rgba(255, 248, 234, 0.35), transparent 44%);
+        background-size: 30px 100%, 100% 100%;
+        mix-blend-mode: multiply;
+      }
+
+      .overlay__content {
+        position: relative;
+        z-index: 1;
+        width: min(30rem, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .overlay__eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        color: var(--brown);
+      }
+
+      .overlay__eyebrow .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        background: #be8550;
+        box-shadow: 0 0 0 5px rgba(190, 133, 80, 0.14);
+        animation: dot-pulse 2.6s ease-in-out infinite;
+      }
+
+      .overlay__title {
+        margin: 0;
+        font-size: clamp(1.35rem, 3.4vw, 1.78rem);
+        line-height: 1.18;
+        color: var(--ink);
+        font-weight: 600;
+        transition: opacity 200ms ease;
+      }
+
+      .overlay__phase {
+        margin: -0.35rem 0 0;
+        font-size: 0.86rem;
+        line-height: 1.7;
+        color: var(--ink-soft);
+        min-height: 1.5rem;
+      }
+
+      .skeleton {
+        position: relative;
+        border-radius: 18px;
+        padding: 22px 22px 26px;
+        background: linear-gradient(180deg, rgba(255, 251, 246, 0.66), rgba(244, 232, 212, 0.36));
+        border: 1px solid rgba(176, 130, 78, 0.16);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .sk-line {
+        height: 0.78rem;
+        border-radius: 999px;
+        position: relative;
+        overflow: hidden;
+        background: var(--line-base);
+        opacity: 0;
+        animation: line-enter 520ms ease forwards;
+      }
+
+      .sk-line--title {
+        height: 1.15rem;
+        margin-bottom: 6px;
+      }
+
+      .sk-line::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        transform: translateX(-120%);
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 248, 238, 0.25) 35%,
+          var(--sheen) 50%,
+          rgba(255, 248, 238, 0.25) 65%,
+          transparent 100%
+        );
+        animation: sheen 1.9s ease-in-out infinite;
+      }
+
+      .sk-line:nth-child(1) { animation-delay: 0ms; }
+      .sk-line:nth-child(2) { animation-delay: 90ms; }
+      .sk-line:nth-child(3) { animation-delay: 180ms; }
+      .sk-line:nth-child(4) { animation-delay: 270ms; }
+      .sk-line:nth-child(5) { animation-delay: 360ms; }
+      .sk-line:nth-child(6) { animation-delay: 450ms; }
+      .sk-line:nth-child(7) { animation-delay: 540ms; }
+
+      .sk-line:nth-child(1)::after { animation-delay: 0ms; }
+      .sk-line:nth-child(2)::after { animation-delay: 0.16s; }
+      .sk-line:nth-child(3)::after { animation-delay: 0.32s; }
+      .sk-line:nth-child(4)::after { animation-delay: 0.48s; }
+      .sk-line:nth-child(5)::after { animation-delay: 0.64s; }
+      .sk-line:nth-child(6)::after { animation-delay: 0.8s; }
+      .sk-line:nth-child(7)::after { animation-delay: 0.96s; }
+
+      .w-95 { width: 95%; }
+      .w-88 { width: 88%; }
+      .w-80 { width: 80%; }
+      .w-72 { width: 72%; }
+      .w-60 { width: 60%; }
+      .w-35 { width: 35%; }
+      .sk-line.is-gap { margin-top: 8px; }
+
+      .overlay__meter {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      .overlay__track {
+        height: 0.42rem;
+        flex: 1;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(116, 82, 44, 0.18);
+        box-shadow: inset 0 1px 2px rgba(63, 40, 16, 0.15);
+      }
+
+      .overlay__bar {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #7e5832 0%, #c49755 46%, #7aa763 100%);
+        transition: width 220ms linear;
+      }
+
+      .overlay__percent {
+        min-width: 3.1rem;
+        text-align: right;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        color: var(--brown-2);
+      }
+
+      .compact-note {
+        max-width: 560px;
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+        line-height: 1.8;
+        text-align: center;
+        opacity: 0.85;
+      }
+
+      @keyframes sheen {
+        0% { transform: translateX(-120%); }
+        60%, 100% { transform: translateX(120%); }
+      }
+
+      @keyframes line-enter {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes dot-pulse {
+        0%, 100% { transform: scale(0.9); opacity: 0.7; }
+        50% { transform: scale(1.1); opacity: 1; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .sk-line, .sk-line::after, .overlay__eyebrow .dot {
+          animation: none;
+        }
+        .sk-line { opacity: 1; }
+        .sk-line::after { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-intro">
+      <h1>日志骨架流光加载 · 预览</h1>
+      <p>
+        切换下面的维度看个性化标题。进度条采用"诚实节奏"：~10 秒匀速爬到约 88%，超时只极慢蠕动到约 96%，
+        绝不提前停在 100% 干等；真正写完时点"生成完成"会瞬间补到 100% 并原位浮现正文。
+      </p>
+    </div>
+
+    <div class="row" id="dimension-row">
+      <button class="chip" data-dim="joy" aria-pressed="true">开心</button>
+      <button class="chip" data-dim="fulfillment" aria-pressed="false">充实</button>
+      <button class="chip" data-dim="reflection" aria-pressed="false">思考</button>
+      <button class="chip" data-dim="improvement" aria-pressed="false">改进</button>
+      <button class="chip" data-dim="gratitude" aria-pressed="false">感谢</button>
+      <button class="chip" data-dim="daily" aria-pressed="false">完整日志</button>
+    </div>
+
+    <div class="row">
+      <button class="chip" id="btn-replay">重新播放加载（看节奏）</button>
+      <button class="chip" id="btn-reveal">生成完成 → 浮现正文</button>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="panel__real">
+        <h2 class="doc-title">清醒地开始这一天</h2>
+        <p>今天比闹钟早醒了二十分钟。没有急着抓起手机，而是先把窗帘拉开一条缝，让光一点点铺进来。</p>
+        <p>
+          这段多出来的时间没做什么大事，只是慢慢喝完一杯温水、把今天要做的三件事写在便签上。但正因为不慌，
+          一整天的节奏都被这二十分钟稳住了。
+        </p>
+        <p>原来让我安心的，是"有准备地开始"。明天还想把这条缝留出来。</p>
+      </div>
+
+      <div class="overlay" role="status" aria-live="polite">
+        <div class="overlay__grain" aria-hidden="true"></div>
+        <div class="overlay__content">
+          <div class="overlay__eyebrow"><span class="dot"></span>日志正在整理</div>
+          <h3 class="overlay__title" id="overlay-title">今天真正动到你的那段开心，值得被写成一页</h3>
+          <p class="overlay__phase" id="overlay-phase">先把让你有感觉的那个片段立住</p>
+
+          <div class="skeleton" aria-hidden="true">
+            <div class="sk-line sk-line--title w-60"></div>
+            <div class="sk-line w-95"></div>
+            <div class="sk-line w-88"></div>
+            <div class="sk-line w-72"></div>
+            <div class="sk-line w-80 is-gap"></div>
+            <div class="sk-line w-60"></div>
+            <div class="sk-line w-35"></div>
+          </div>
+
+          <div class="overlay__meter" aria-label="生成进度">
+            <div class="overlay__track"><div class="overlay__bar" id="bar"></div></div>
+            <span class="overlay__percent" id="pct">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="compact-note">
+      内嵌卡片（compact）版会复用同一套骨架行，仅保留 2-3 行流光占位 + 进度条，去掉 grain 与圆形收束。
+    </p>
+
+    <script>
+      // ---- per-dimension personalized titles ----
+      const TITLES = {
+        joy: "今天真正动到你的那段开心，值得被写成一页",
+        fulfillment: "今天让你觉得没白过的那个瞬间，值得被写成一页",
+        reflection: "今天重新看明白的那段经历，整理成可以回看的一页",
+        improvement: "今天想走得更稳的地方，整理成下次用得上的一页",
+        gratitude: "今天谁回应了你的需要，值得被记下来",
+        daily: "悦、实、思、改、谢，汇成今天这一页幸福日志"
+      };
+
+      const PHASES = {
+        joy: [
+          { until: 30, text: "先把让你有感觉的那个片段立住" },
+          { until: 65, text: "再把状态变化和你在乎的点写清楚" },
+          { until: 101, text: "收束标题和读感，让它像你自己的日志" }
+        ],
+        fulfillment: [
+          { until: 30, text: "先把让这一天收住了心安的那段经历留住" },
+          { until: 65, text: "再把推进、积累或帮上忙的地方写实在" },
+          { until: 101, text: "收束标题和读感，让这份值得感留得住" }
+        ],
+        reflection: [
+          { until: 30, text: "先把让你停下来想一想的那个片段留住" },
+          { until: 65, text: "再把新理解和以后怎么判断理清楚" },
+          { until: 101, text: "收束标题和读感，让这条判断线索方便回看" }
+        ],
+        improvement: [
+          { until: 30, text: "先把那个你想调整的具体情境说清楚" },
+          { until: 65, text: "再把可控的小改法和下次第一步写具体" },
+          { until: 101, text: "收束标题和读感，让这页日志下次拿得到" }
+        ],
+        gratitude: [
+          { until: 30, text: "先把被照顾、被支持的那个时刻留住" },
+          { until: 65, text: "再把对方的回应和你被看见的需要写清楚" },
+          { until: 101, text: "收束标题和读感，让这份珍惜留得住" }
+        ],
+        daily: [
+          { until: 30, text: "先把五维记录里的主线串起来" },
+          { until: 65, text: "再把各维重点自然接到同一天里" },
+          { until: 101, text: "收束标题和读感，收成一页幸福日志" }
+        ]
+      };
+
+      // ---- honest trickle progress (mirrors planned real implementation) ----
+      const EXPECTED_MS = 9500; // calibrated to ~10s average generation
+      const CAP = 0.88; // never claim "almost done" before the real draft arrives
+      const TRICKLE_CAP = 0.96; // slow creep ceiling if generation overruns
+      const TRICKLE_TAU = 6000;
+
+      function progressAt(elapsedMs) {
+        if (elapsedMs <= EXPECTED_MS) {
+          // near-linear (constant speed) so the front never sprints
+          return CAP * (elapsedMs / EXPECTED_MS);
+        }
+        const over = elapsedMs - EXPECTED_MS;
+        return CAP + (TRICKLE_CAP - CAP) * (1 - Math.exp(-over / TRICKLE_TAU));
+      }
+
+      const panel = document.getElementById("panel");
+      const bar = document.getElementById("bar");
+      const pct = document.getElementById("pct");
+      const titleEl = document.getElementById("overlay-title");
+      const phaseEl = document.getElementById("overlay-phase");
+
+      let rafId = null;
+      let startedAt = 0;
+      let currentDim = "joy";
+
+      function render(p) {
+        const v = Math.round(p * 100);
+        bar.style.width = v + "%";
+        pct.textContent = v + "%";
+        const dimPhases = PHASES[currentDim] || PHASES.joy;
+        const phase = dimPhases.find((s) => v < s.until) || dimPhases[dimPhases.length - 1];
+        phaseEl.textContent = phase.text;
+      }
+
+      function tick() {
+        const elapsed = Date.now() - startedAt;
+        render(progressAt(elapsed));
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function startLoading() {
+        cancelAnimationFrame(rafId);
+        panel.classList.remove("is-revealed");
+        startedAt = Date.now();
+        tick();
+      }
+
+      function reveal() {
+        cancelAnimationFrame(rafId);
+        render(1); // snap to 100% the instant the real draft arrives
+        panel.classList.add("is-revealed");
+      }
+
+      // dimension switching
+      document.getElementById("dimension-row").addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip");
+        if (!btn) return;
+        currentDim = btn.dataset.dim;
+        document
+          .querySelectorAll("#dimension-row .chip")
+          .forEach((c) => c.setAttribute("aria-pressed", String(c === btn)));
+        titleEl.textContent = TITLES[currentDim];
+        render(progressAt(Date.now() - startedAt));
+      });
+
+      document.getElementById("btn-replay").addEventListener("click", startLoading);
+      document.getElementById("btn-reveal").addEventListener("click", reveal);
+
+      startLoading();
+    </script>
+  </body>
+</html>

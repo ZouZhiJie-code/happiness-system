@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>记录链路 · 交互重构对比（激进版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#2a1d10;
+    --ink-soft:#5a4633;
+    --ink-faint:#8a715a;
+    --paper:#fbf3e4;
+    --paper-2:#f4e7cf;
+    --paper-card:#fffaf0;
+    --line:rgba(110,73,38,.16);
+    --line-2:rgba(110,73,38,.3);
+    --amber:#b06a30;
+    --amber-deep:#8a4f22;
+    --terra:#c0623a;
+    --good:#3f6b49;
+    --bad:#a23a2c;
+    --warn:#9a5e1f;
+    --r-s:12px; --r-m:20px; --r-l:28px;
+    --serif:"Noto Serif SC","Songti SC","STSong",serif;
+    --sans:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --shadow:0 24px 64px rgba(74,44,18,.18);
+    --shadow-soft:0 14px 36px rgba(74,44,18,.1);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--ink);font-family:var(--sans);
+    background:
+      radial-gradient(circle at 12% 6%, rgba(255,251,242,.6) 0, transparent 30%),
+      radial-gradient(circle at 88% 0%, rgba(120,78,38,.12) 0, transparent 26%),
+      linear-gradient(180deg,#e9d6b6 0%,#dcc299 44%,#cba87c 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:40px 20px 100px}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:34px 30px 38px;border-radius:var(--r-l);
+    background:linear-gradient(160deg,rgba(255,250,240,.94),rgba(244,231,207,.9));
+    border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;margin-bottom:40px}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at 90% 10%,rgba(192,98,58,.1),transparent 40%)}
+  .hero .kicker{font-family:var(--sans);font-size:.72rem;letter-spacing:.34em;text-transform:uppercase;color:var(--amber-deep);font-weight:700}
+  .hero h1{font-family:var(--serif);font-weight:900;line-height:1.18;margin:14px 0 0;
+    font-size:clamp(1.7rem,4.4vw,2.9rem);letter-spacing:.01em}
+  .hero h1 em{font-style:normal;color:var(--terra)}
+  .hero p{max-width:680px;margin:16px 0 0;font-size:.96rem;line-height:1.85;color:var(--ink-soft)}
+  .hero .meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{font-size:.72rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,250,242,.7);color:var(--amber-deep)}
+  .tag.excl{border-color:rgba(162,58,44,.26);color:var(--bad);background:rgba(255,244,240,.7)}
+
+  /* ---------- toc ---------- */
+  .toc{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 44px;justify-content:center}
+  .toc a{text-decoration:none;font-size:.8rem;font-weight:500;padding:9px 16px;border-radius:999px;
+    border:1px solid var(--line);background:rgba(255,250,242,.78);color:var(--amber-deep);transition:.16s}
+  .toc a:hover{background:#fff;transform:translateY(-2px);box-shadow:var(--shadow-soft)}
+
+  /* ---------- section ---------- */
+  .sec{margin-bottom:64px;scroll-margin-top:20px}
+  .sec-head{margin-bottom:20px}
+  .sec-head .n{font-family:var(--serif);font-weight:900;font-size:.9rem;color:var(--terra);letter-spacing:.1em}
+  .sec-head h2{font-family:var(--serif);font-weight:700;margin:6px 0 0;font-size:clamp(1.2rem,2.6vw,1.6rem)}
+  .sec-head p{margin:10px 0 0;max-width:760px;font-size:.9rem;line-height:1.8;color:var(--ink-soft)}
+
+  /* ---------- principle reframe (move0) ---------- */
+  .reframe{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
+  @media(max-width:820px){.reframe{grid-template-columns:1fr}}
+  .reframe .arrow{display:grid;place-items:center;font-family:var(--serif);font-size:1.5rem;color:var(--terra)}
+  @media(max-width:820px){.reframe .arrow{transform:rotate(90deg)}}
+  .rcard{border-radius:var(--r-m);padding:22px;border:1px solid var(--line)}
+  .rcard.old{background:rgba(246,238,224,.7)}
+  .rcard.new{background:linear-gradient(170deg,rgba(255,251,243,.96),rgba(247,234,210,.92));box-shadow:var(--shadow-soft)}
+  .rcard h3{margin:0;font-family:var(--serif);font-size:1.05rem}
+  .rcard .lab{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+  .rcard.old .lab{color:var(--bad)}
+  .rcard.new .lab{color:var(--good)}
+  .rcard ul{margin:14px 0 0;padding-left:0;list-style:none}
+  .rcard li{position:relative;padding:7px 0 7px 22px;font-size:.84rem;line-height:1.6;color:var(--ink-soft);border-top:1px solid var(--line)}
+  .rcard li:first-child{border-top:none}
+  .rcard li::before{content:"";position:absolute;left:2px;top:14px;width:8px;height:8px;border-radius:50%}
+  .rcard.old li::before{background:var(--bad);opacity:.5}
+  .rcard.new li::before{background:var(--good)}
+
+  /* ---------- before/after split ---------- */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.ba{grid-template-columns:1fr}}
+  .col .badge{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:12px}
+  .col.b .badge{color:var(--bad);background:rgba(162,58,44,.1)}
+  .col.a .badge{color:var(--good);background:rgba(63,107,73,.12)}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .col.b .dot{background:var(--bad)}
+  .col.a .dot{background:var(--good)}
+
+  /* ---------- device frame ---------- */
+  .device{border-radius:24px;border:1px solid var(--line-2);background:var(--paper-card);
+    box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .device .topbar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,250,242,.92),rgba(244,231,207,.8))}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-weight:700;font-size:.84rem}
+  .brand .mk{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:.62rem;color:#fff;
+    background:linear-gradient(160deg,var(--terra),var(--amber-deep))}
+  .topbar .date{margin-left:auto;font-size:.7rem;color:var(--ink-faint)}
+  .scr{padding:14px;min-height:300px}
+
+  /* old header overflow */
+  .oldhead{display:flex;gap:6px;align-items:center;overflow-x:auto;white-space:nowrap;padding:8px;border:1px solid var(--line);border-radius:var(--r-s);background:rgba(246,238,224,.7);font-size:.66rem}
+  .oldhead .seg{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:#fff7ec;border:1px solid var(--line);flex:0 0 auto}
+  .oldhead .seg span{padding:4px 7px;border-radius:999px;color:var(--ink-faint)}
+  .oldhead .seg span.on{background:linear-gradient(180deg,#d7ad74,#bb8a52);color:#3a2a18;font-weight:600}
+  .oldhead .pill{flex:0 0 auto;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:#fff7ec;color:var(--ink-soft)}
+  .oldhead .pill.pri{background:linear-gradient(180deg,#d7ad74,#bb8a52);color:#3a2a18;font-weight:600;border-color:rgba(168,124,69,.4)}
+  .oldhead .fade{flex:0 0 auto;color:var(--bad);opacity:.7;font-size:.62rem}
+  .vbar{color:var(--line-2)}
+
+  /* NEW: today spine */
+  .spine{display:flex;align-items:center;gap:0;padding:10px 6px 12px}
+  .node{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;text-decoration:none}
+  .node .seg-line{position:absolute;top:17px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .node:first-child .seg-line{display:none}
+  .node .glyph{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--serif);font-weight:700;font-size:.92rem;background:var(--paper-card);border:1.5px solid var(--line-2);color:var(--ink-faint)}
+  .node .cap{font-size:.62rem;color:var(--ink-faint)}
+  .node.done .glyph{background:linear-gradient(160deg,#cf9a55,#a86f37);border-color:transparent;color:#fff;box-shadow:0 6px 14px rgba(150,95,40,.3)}
+  .node.done .seg-line{background:linear-gradient(90deg,#cf9a55,#a86f37)}
+  .node.done .cap{color:var(--amber-deep)}
+  .node.active .glyph{background:#fff;border-color:var(--terra);color:var(--terra);box-shadow:0 0 0 4px rgba(192,98,58,.14)}
+  .node.active .cap{color:var(--terra);font-weight:700}
+  .node.draft .glyph{border-style:dashed;border-color:var(--amber);color:var(--amber)}
+  .node.harvest .glyph{font-size:.66rem;font-family:var(--sans);font-weight:700}
+  .node.harvest.ready .glyph{background:linear-gradient(160deg,var(--terra),var(--amber-deep));color:#fff;border-color:transparent;animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,98,58,.34)}50%{box-shadow:0 0 0 7px rgba(192,98,58,0)}}
+
+  /* chat */
+  .chat{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+  .turn{display:flex;flex-direction:column;gap:4px;max-width:90%}
+  .turn.u{align-self:flex-end;align-items:flex-end}
+  .think{font-size:.7rem;color:var(--ink-faint);padding-left:4px;display:flex;gap:6px;align-items:center}
+  .think::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--amber)}
+  .q{font-family:var(--serif);font-size:.92rem;line-height:1.6;padding:12px 15px;border-radius:16px 16px 16px 4px;
+    background:linear-gradient(180deg,#fff6ea,#f4e3c6);border:1px solid var(--line);font-weight:500}
+  .ub{font-size:.84rem;line-height:1.55;padding:10px 14px;border-radius:16px 16px 4px 16px;
+    background:linear-gradient(180deg,#ddb985,#c39861);color:#2f2823;border:1px solid rgba(133,91,47,.2)}
+  /* old 3 bubbles */
+  .ob{font-size:.78rem;line-height:1.5;padding:9px 12px;border-radius:14px;border:1px solid var(--line);max-width:88%;align-self:flex-start}
+  .ob.t{background:rgba(255,250,243,.6);color:var(--ink-faint);font-size:.72rem}
+  .ob.q{background:linear-gradient(180deg,#fff6ea,#f4e3c6);font-weight:600}
+  .ob.u{align-self:flex-end;background:linear-gradient(180deg,#ddb985,#c39861)}
+
+  /* composer */
+  .composer{margin-top:14px;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 16px;border-radius:16px;
+    border:1px solid var(--line);background:rgba(255,250,242,.8);font-size:.78rem;color:var(--ink-faint)}
+  .composer .send{margin-left:auto;height:32px;min-width:32px;border-radius:999px;display:grid;place-items:center;
+    background:linear-gradient(160deg,#cf9a55,#a86f37);color:#fff;font-size:.7rem;padding:0 12px;border:none}
+  .composer .send.dis{background:#e7d6bb;color:#9c8568}
+  .composer.streaming{border-color:rgba(192,98,58,.4);background:rgba(255,247,242,.9)}
+  .composer .send.stop{background:#fff;color:var(--terra);border:1px solid var(--terra)}
+
+  /* ribbon bookmark — single consistent journal entry */
+  .canvasframe{position:relative}
+  .ribbon{position:absolute;right:0;top:54px;display:flex;align-items:center;gap:6px;
+    padding:9px 12px 9px 14px;border-radius:12px 0 0 12px;font-size:.72rem;font-weight:700;color:#fff;
+    background:linear-gradient(160deg,var(--terra),var(--amber-deep));box-shadow:-6px 8px 18px rgba(120,60,30,.26)}
+  .ribbon::after{content:"";position:absolute;right:0;top:100%;border:6px solid transparent;border-top-color:var(--amber-deep);border-right-color:var(--amber-deep)}
+
+  /* old split panes */
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:10px}
+  .pane{border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper-card);padding:10px;font-size:.74rem}
+  .pane.squeeze{opacity:.92}
+  .pane h6{margin:0 0 6px;font-size:.74rem;color:var(--ink-faint)}
+
+  /* journal sheet (slide-over) */
+  .sheetwrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);min-height:330px;
+    background:linear-gradient(180deg,rgba(120,82,42,.1),rgba(120,82,42,.04))}
+  .sheetwrap .dim-chat{position:absolute;inset:0;padding:14px;filter:blur(1.5px);opacity:.4}
+  .sheet{position:absolute;right:0;top:0;bottom:0;width:74%;background:var(--paper-card);
+    border-left:1px solid var(--line-2);box-shadow:-20px 0 50px rgba(74,44,18,.2);padding:18px 18px 16px;display:flex;flex-direction:column}
+  .sheet .shead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .statepill{font-size:.66rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+  .statepill.saved{color:var(--good);background:rgba(63,107,73,.1);border-color:rgba(63,107,73,.3)}
+  .statepill.draft{color:var(--warn);background:rgba(154,94,31,.1);border-color:rgba(154,94,31,.3)}
+  .statepill.dirty{color:var(--terra);background:rgba(192,98,58,.1);border-color:rgba(192,98,58,.3)}
+  .sheet .autos{margin-left:auto;font-size:.66rem;color:var(--ink-faint)}
+  .sheet .x{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:.66rem;color:var(--ink-soft)}
+  .jtitle{font-family:var(--serif);font-weight:700;font-size:1.18rem;line-height:1.4;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .jbody{font-family:var(--serif);font-size:.86rem;line-height:1.95;color:var(--ink-soft);padding:12px 0;flex:1}
+  .sheet .sfoot{display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--line);padding-top:12px}
+
+  /* buttons */
+  .btn{font-size:.74rem;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff7ec;color:var(--ink-soft)}
+  .btn.pri{border:none;background:linear-gradient(160deg,#cf9a55,#a86f37);color:#fff;box-shadow:0 8px 18px rgba(150,95,40,.26)}
+  .btn.terra{border:none;background:linear-gradient(160deg,var(--terra),var(--amber-deep));color:#fff;box-shadow:0 8px 18px rgba(150,60,30,.26)}
+  .btn.ghost{background:none;border:none;color:var(--amber-deep);text-decoration:underline;text-underline-offset:3px;padding:8px 6px}
+  .btn.big{font-size:.86rem;padding:12px 22px}
+
+  /* native confirm */
+  .native{margin-top:10px;padding:14px;border-radius:7px;background:#efeff1;border:1px solid #c9c9cc;font-family:system-ui,sans-serif;font-size:.78rem;color:#1c1c1e;box-shadow:0 10px 26px rgba(0,0,0,.2)}
+  .native .nb{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .native button{font-size:.74rem;padding:5px 16px;border-radius:6px;border:1px solid #b6b6ba;background:#fff}
+  .native button.d{background:#0a84ff;color:#fff;border-color:#0a84ff}
+
+  /* undo toast */
+  .toast{margin-top:10px;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;
+    background:#2c2114;color:#fbf0dc;font-size:.78rem;box-shadow:var(--shadow)}
+  .toast .undo{margin-left:auto;color:#f2c98a;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+
+  /* harvest */
+  .ingredients{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 14px}
+  @media(max-width:520px){.ingredients{grid-template-columns:repeat(5,1fr)}}
+  .ing{border:1px solid var(--line);border-radius:var(--r-s);padding:9px 6px;text-align:center;background:var(--paper-card)}
+  .ing .gy{font-family:var(--serif);font-weight:700;font-size:1.1rem;display:block;margin-bottom:4px}
+  .ing .st{font-size:.6rem;color:var(--ink-faint)}
+  .ing.saved{border-color:rgba(63,107,73,.34);background:rgba(63,107,73,.07)}
+  .ing.saved .gy{color:var(--good)}.ing.saved .st{color:var(--good)}
+  .ing.draft{border-color:rgba(154,94,31,.36);background:rgba(154,94,31,.07)}
+  .ing.draft .gy{color:var(--warn)}.ing.draft .st{color:var(--warn)}
+  .ing.none{opacity:.55;border-style:dashed}
+  .harvest-cta{display:flex;flex-direction:column;gap:10px;align-items:center;padding:18px;border-radius:var(--r-m);
+    background:linear-gradient(170deg,rgba(255,250,242,.95),rgba(244,231,207,.9));border:1px solid var(--line);text-align:center}
+  .harvest-cta .lead{font-family:var(--serif);font-size:1.05rem;font-weight:700}
+  .harvest-cta .sub{font-size:.74rem;color:var(--ink-soft);line-height:1.6;max-width:380px}
+  .auto-line{font-size:.7rem;color:var(--ink-faint);margin-top:4px}
+  .skip{margin-top:10px;width:100%;padding:9px 12px;border-radius:10px;background:rgba(255,246,238,.8);border:1px dashed rgba(154,94,31,.34);font-size:.72rem;color:var(--warn);display:flex;align-items:center;gap:8px;justify-content:center}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.7rem;margin-top:6px}
+  .flow .step{padding:5px 9px;border-radius:8px;background:#fff7ec;border:1px solid var(--line)}
+  .flow .ar{color:var(--ink-faint)}
+
+  /* callouts */
+  .note{margin-top:12px;padding:10px 13px;border-radius:12px;font-size:.76rem;line-height:1.6}
+  .note.bad{background:rgba(162,58,44,.08);color:#8a3a2d;border-left:3px solid var(--bad)}
+  .note.good{background:rgba(63,107,73,.09);color:#37553f;border-left:3px solid var(--good)}
+
+  /* principles table */
+  .ptable{border-radius:var(--r-m);overflow:hidden;border:1px solid var(--line);background:var(--paper-card)}
+  .prow{display:grid;grid-template-columns:1fr 1.3fr 1.3fr;gap:0}
+  @media(max-width:760px){.prow{grid-template-columns:1fr}}
+  .prow>div{padding:13px 16px;border-top:1px solid var(--line);font-size:.8rem;line-height:1.6}
+  .prow.h>div{background:rgba(244,231,207,.7);font-weight:700;font-size:.74rem;letter-spacing:.06em;color:var(--amber-deep);border-top:none}
+  .prow .old{color:var(--bad)}
+  .prow .new{color:var(--good)}
+  @media(max-width:760px){.prow>div{border-top:1px solid var(--line)}.prow.h{display:none}}
+
+  .legend{margin-top:50px;padding:20px 22px;border-radius:var(--r-m);border:1px solid var(--line);
+    background:rgba(255,250,242,.88);font-size:.82rem;line-height:1.85;color:var(--ink-soft)}
+  .legend strong{color:var(--ink)}
+
+  .reveal{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero reveal">
+    <div class="kicker">Interaction Redesign · 记录链路</div>
+    <h1>从「生成日志」到<br /><em>记录在对话里自然长成</em></h1>
+    <p>不在旧结构上修补，而是重写心智模型：日志不是按下按钮的产物，是对话的自然结晶。对话独占画布，日志以专注书页浮层登场，一条「今日书脊」统一进度与导航，完整日志收敛为「把今天收成」的一次收束。</p>
+    <div class="meta">
+      <span class="tag">对话画布 Conversation-first</span>
+      <span class="tag">今日书脊 Today Spine</span>
+      <span class="tag">书页抽屉 Journal Sheet</span>
+      <span class="tag">一次收成 Harvest</span>
+      <span class="tag excl">进度条改动已排除（你单独处理）</span>
+    </div>
+  </header>
+
+  <nav class="toc reveal" style="animation-delay:.05s">
+    <a href="#m">① 心智模型重构</a>
+    <a href="#s2">② 访谈画布</a>
+    <a href="#s3">③ 日志书页</a>
+    <a href="#s4">④ 把今天收成</a>
+    <a href="#s5">⑤ 交互原则</a>
+  </nav>
+
+  <!-- ① mental model -->
+  <section class="sec reveal" id="m" style="animation-delay:.1s">
+    <div class="sec-head"><div class="n">① 心智模型</div><h2>把「文档装配机」换成「会生长的一天」</h2>
+      <p>旧模型把会话、草稿、双栏、生成、保存这些实现细节全暴露给用户；新模型只暴露一个对象——你的今天。</p></div>
+    <div class="reframe">
+      <div class="rcard old">
+        <div class="lab">改动前 · 文档装配</div>
+        <h3>用户在「操作一台机器」</h3>
+        <ul>
+          <li>在框里聊天 → 找按钮 → 生成草稿</li>
+          <li>草稿落到一个抢空间的小窗里手动改</li>
+          <li>逐个维度重复 5 次</li>
+          <li>再进另一个工作区拼「总日志」</li>
+          <li>用户要理解 session / 草稿 / 暂存 / 保存</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="rcard new">
+        <div class="lab">改动后 · 会生长的一天</div>
+        <h3>用户在「记录自己的一天」</h3>
+        <ul>
+          <li>对话独占画布，专注表达</li>
+          <li>日志随时从书签拉出，在专注书页里读写</li>
+          <li>一条书脊显示五维 + 完整的真实进度</li>
+          <li>「把今天收成」一步收束当天</li>
+          <li>用户只需理解一件事：今天记到哪了</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② conversation canvas -->
+  <section class="sec" id="s2">
+    <div class="sec-head"><div class="n">② 访谈画布</div><h2>对话独占画布 · 书脊导航 · 书签是唯一日志入口</h2>
+      <p>取消左右抢空间的双栏与溢出的工具栏。进度收敛成一条书脊；「整理成日志」永远在同一个位置——右侧书签丝带，不再在 header 与对话卡之间跳。</p></div>
+    <div class="ba">
+      <div class="col b">
+        <div class="badge"><span class="dot"></span>改动前</div>
+        <div class="device">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">6月12日</span></div>
+          <div class="scr">
+            <div class="oldhead">
+              <div class="seg"><span class="on">开心</span><span>充实</span><span>思考</span><span>改进</span><span>感谢</span></div>
+              <span class="vbar">｜</span><span class="pill">◎ 3轮</span><span class="vbar">｜</span>
+              <span class="pill pri">生成日志</span><span class="vbar">｜</span><span class="pill">完整日志</span><span class="pill">当天评分</span>
+              <span class="fade">→ 横滑才看得到</span>
+            </div>
+            <div class="split" style="margin-top:10px">
+              <div class="pane squeeze">
+                <h6>对话（被右栏挤压）</h6>
+                <div class="chat">
+                  <div class="ob u">今天早起很清醒</div>
+                  <div class="ob t">正在思考中…</div>
+                  <div class="ob t">我理解你在说早起的清醒感…</div>
+                  <div class="ob q">那一刻具体是什么感觉？</div>
+                </div>
+              </div>
+              <div class="pane"><h6>日志面板</h6><div style="font-family:var(--serif);font-weight:700">清醒地开始</div><div style="color:var(--ink-faint);font-size:.7rem;margin-top:6px">正文…</div></div>
+            </div>
+            <div class="note bad">三气泡割裂、双栏挤压、生成按钮在 header 与分岔卡间跳，关键操作还会被横滑藏起。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col a">
+        <div class="badge"><span class="dot"></span>改动后</div>
+        <div class="device canvasframe">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">今天 · 6月12日</span></div>
+          <div class="ribbon">日志 ▸</div>
+          <div class="scr">
+            <div class="spine">
+              <a class="node done"><span class="seg-line"></span><span class="glyph">悦</span><span class="cap">已记</span></a>
+              <a class="node active"><span class="seg-line"></span><span class="glyph">实</span><span class="cap">在聊</span></a>
+              <a class="node draft"><span class="seg-line"></span><span class="glyph">思</span><span class="cap">草稿</span></a>
+              <a class="node"><span class="seg-line"></span><span class="glyph">改</span><span class="cap">未开始</span></a>
+              <a class="node"><span class="seg-line"></span><span class="glyph">谢</span><span class="cap">未开始</span></a>
+              <a class="node harvest"><span class="seg-line"></span><span class="glyph">完整</span><span class="cap">待收成</span></a>
+            </div>
+            <div class="chat">
+              <div class="turn u"><div class="ub">今天早起很清醒</div></div>
+              <div class="turn">
+                <div class="think">我读到的是：早起带来的清醒与准备感</div>
+                <div class="q">那份清醒，最先体现在你做的哪件小事上？</div>
+              </div>
+            </div>
+            <div class="composer streaming">
+              <span>AI 正在回应你…</span>
+              <button class="send stop">停止</button>
+            </div>
+            <div class="note good">单条对话只呈现「一句轻理解 + 一个正式问题」；进度走书脊；右侧书签是任何时候整理日志的唯一入口，位置永远不变。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ journal sheet -->
+  <section class="sec" id="s3">
+    <div class="sec-head"><div class="n">③ 日志书页</div><h2>从抢空间的小窗，变成专注的书页浮层</h2>
+      <p>点书签，日志从右侧滑出占满高度，对话在身后变暗。读写日志是一个「专注模式」，不是一根永远在抢宽度的柱子。保存状态显性、自动暂存有声。</p></div>
+    <div class="ba">
+      <div class="col b">
+        <div class="badge"><span class="dot"></span>改动前</div>
+        <div class="device">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">6月12日</span></div>
+          <div class="scr">
+            <div class="split">
+              <div class="pane squeeze"><h6>对话（半屏）</h6>
+                <div class="chat"><div class="ob q" style="font-size:.72rem">那一刻是什么感觉？</div></div>
+              </div>
+              <div class="pane">
+                <div style="font-family:var(--serif);font-weight:700;border-bottom:1px solid var(--line);padding-bottom:6px">清醒地开始</div>
+                <div style="color:var(--ink-faint);font-size:.72rem;line-height:1.7;padding:8px 0">改了一个字……（saved 已被静默打回 draft，界面无任何提示）</div>
+                <div style="display:flex;justify-content:flex-end"><span class="btn pri" style="font-size:.66rem;padding:5px 10px">保存修改</span></div>
+              </div>
+            </div>
+            <div class="note bad">日志被压在半屏窄栏；已保存的日志被编辑后悄悄变草稿，用户以为已保存。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col a">
+        <div class="badge"><span class="dot"></span>改动后</div>
+        <div class="device">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">今天 · 6月12日</span></div>
+          <div class="scr" style="padding:0">
+            <div class="sheetwrap">
+              <div class="dim-chat">
+                <div class="chat"><div class="turn u"><div class="ub" style="font-size:.74rem">今天早起很清醒</div></div>
+                <div class="turn"><div class="q" style="font-size:.78rem">那份清醒体现在哪件小事上？</div></div></div>
+              </div>
+              <div class="sheet">
+                <div class="shead">
+                  <span class="statepill dirty">有未保存修改</span>
+                  <span class="autos">自动暂存于 12:41</span>
+                  <span class="x" style="margin-left:8px">✕</span>
+                </div>
+                <div class="jtitle">清醒地开始</div>
+                <div class="jbody">天还没亮透就醒了，脑子里没有平时那股黏糊。先把水烧上，趁等水的几分钟把今天要紧的事在心里过了一遍——那种「来得及」的从容，是今天最先尝到的甜。</div>
+                <div class="sfoot">
+                  <span class="btn ghost">导出</span>
+                  <span class="btn pri">保存为正式日志</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="note good" style="margin:0 14px 14px">书页占满高度、对话在身后变暗；顶部状态明确「有未保存修改 / 已暂存 / 已保存」三态，自动暂存带时间戳，关闭即留痕不丢字。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ harvest -->
+  <section class="sec" id="s4">
+    <div class="sec-head"><div class="n">④ 把今天收成</div><h2>四步手动拼装 → 一次「收成今天」</h2>
+      <p>完整日志不再是另一个工作区里的二次装配，而是书脊尽头一个收束动作：自动把有草稿的维度落库 → 汇编 → 保存，并透明展示纳入与跳过。</p></div>
+    <div class="ba">
+      <div class="col b">
+        <div class="badge"><span class="dot"></span>改动前</div>
+        <div class="device">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">6月12日 · 总日志</span></div>
+          <div class="scr">
+            <div class="flow">
+              <span class="step">维度A 保存</span><span class="ar">→</span><span class="step">维度B 保存</span><span class="ar">→</span>
+              <span class="step">点完整日志</span><span class="ar">→</span><span class="step">整理总日志</span><span class="ar">→</span><span class="step">再保存</span>
+            </div>
+            <div class="ingredients" style="margin-top:14px">
+              <div class="ing saved"><span class="gy">悦</span><span class="st">已保存</span></div>
+              <div class="ing none"><span class="gy">实</span><span class="st">未保存</span></div>
+              <div class="ing saved"><span class="gy">思</span><span class="st">已保存</span></div>
+              <div class="ing none"><span class="gy">改</span><span class="st">—</span></div>
+              <div class="ing none"><span class="gy">谢</span><span class="st">—</span></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end"><span class="btn">整理总日志</span><span class="btn pri">保存正式日志</span></div>
+            <div class="note bad">命名混用（总日志/汇总日志）；「实」有草稿没保存，汇总时被静默丢弃，用户毫不知情。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col a">
+        <div class="badge"><span class="dot"></span>改动后</div>
+        <div class="device">
+          <div class="topbar"><div class="brand"><span class="mk">DL</span>Daily Light</div><span class="date">今天 · 6月12日</span></div>
+          <div class="scr">
+            <div class="ingredients">
+              <div class="ing saved"><span class="gy">悦</span><span class="st">已记入</span></div>
+              <div class="ing draft"><span class="gy">实</span><span class="st">草稿·将自动保存</span></div>
+              <div class="ing saved"><span class="gy">思</span><span class="st">已记入</span></div>
+              <div class="ing none"><span class="gy">改</span><span class="st">未开始</span></div>
+              <div class="ing none"><span class="gy">谢</span><span class="st">未开始</span></div>
+            </div>
+            <div class="harvest-cta">
+              <div class="lead">把今天收成完整日志</div>
+              <div class="sub">会把「悦・实・思」三段收进来，其中「实」还是草稿，将先帮你保存。</div>
+              <span class="btn terra big">收成今天</span>
+              <div class="auto-line">自动：保存草稿维度 → 汇编完整日志 → 保存完整日志</div>
+              <div class="skip">⚐ 跳过「改・谢」：今天还没开始记，可稍后补</div>
+            </div>
+            <div class="note good">一次点击跑完整条链；命名统一「完整日志」；纳入与跳过一目了然，不再静默丢失草稿。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ principles -->
+  <section class="sec" id="s5">
+    <div class="sec-head"><div class="n">⑤ 交互原则</div><h2>支撑这套体验的底层规则</h2>
+      <p>这些原则贯穿全链路，让激进重构落到每个细节。</p></div>
+    <div class="ptable">
+      <div class="prow h"><div>维度</div><div>改动前</div><div>改动后</div></div>
+      <div class="prow"><div>日志入口</div><div class="old">header / 分岔卡之间跳，叫法漂移</div><div class="new">右侧书签丝带，全程唯一且固定，统一「整理成日志」</div></div>
+      <div class="prow"><div>进度与导航</div><div class="old">5 tab + 进度环 + 多按钮挤一行横滑</div><div class="new">一条今日书脊：悦实思改谢 → 完整，零横滑</div></div>
+      <div class="prow"><div>日志编辑</div><div class="old">半屏窄栏，和对话抢宽度</div><div class="new">专注书页浮层，对话在身后变暗</div></div>
+      <div class="prow"><div>保存状态</div><div class="old">已保存被改后静默变草稿</div><div class="new">三态显性 + 自动暂存时间戳 + 关闭留痕</div></div>
+      <div class="prow"><div>确认 / 撤销</div><div class="old">系统灰框 window.confirm</div><div class="new">可逆操作给「撤销」Toast；破坏性才用暖色弹窗</div></div>
+      <div class="prow"><div>完整日志</div><div class="old">4 步手动；草稿静默丢弃</div><div class="new">「收成今天」一步；自动纳草稿、明示跳过</div></div>
+      <div class="prow"><div>对话呈现</div><div class="old">思考中+思路+问题三气泡</div><div class="new">一句轻理解 + 一个正式问题，单条turn</div></div>
+      <div class="prow"><div>流式控制</div><div class="old">发送键灰掉「生成中」不可中断</div><div class="new">输入框原位变「停止」，可随时打断</div></div>
+      <div class="prow"><div>术语</div><div class="old">总日志 / 汇总日志 / 完整日志混用</div><div class="new">用户可见处统一「完整日志」</div></div>
+    </div>
+
+    <div style="margin-top:24px">
+      <div class="sec-head"><h2 style="font-size:1.1rem">可逆优先：用「撤销」替代大量确认弹窗</h2></div>
+      <div class="ba">
+        <div class="col b"><div class="badge"><span class="dot"></span>改动前</div>
+          <div class="native">即将重新整理，会覆盖未保存的修改，确定吗？
+            <div class="nb"><button>取消</button><button class="d">确定</button></div></div>
+          <div class="note bad">每个动作前都拦一道系统灰框，打断、出戏、阻塞。</div>
+        </div>
+        <div class="col a"><div class="badge"><span class="dot"></span>改动后</div>
+          <div class="toast">已用最新对话重新整理这篇日志 <span class="undo">撤销</span></div>
+          <div class="note good">可逆操作先做、给 5 秒撤销窗口；只有「保存即结束访谈」这类不可逆动作才用暖色弹窗确认。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="legend">
+    <strong>本预览覆盖：</strong> 心智模型重构 · 对话画布（书脊 + 书签）· 日志书页浮层 · 收成今天 · 全链路交互原则。<br />
+    <strong>刻意未画：</strong> 单维 / 完整日志的进度条与阶段文案（你单独处理）。<br />
+    <strong>说明：</strong> 静态高保真示意，用于评估信息架构与交互方向；非最终像素级实现。字体为 Noto Serif SC / Noto Sans SC（离线时回退宋体 / 苹方）。
+  </aside>
+
+</div>
+</body>
+</html>

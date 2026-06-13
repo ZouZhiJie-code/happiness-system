@@ -2,6 +2,18 @@
 
 最后更新：`2026-06-12`
 
+## 0. 紧急交接（访谈 UX 验收失败 — 完整版）
+
+**2026-06-12** 访谈 → 单维日志 → 完整日志 UX 改造：`60db348` 已 commit，**产品验收多次未通过**；工作区 Debug 修补**未 commit**。
+
+| 文档 | 用途 |
+|------|------|
+| **[`docs/handoff/2026-06-12-interview-ux-acceptance-handoff.md`](./handoff/2026-06-12-interview-ux-acceptance-handoff.md)** | **主交接文档**：RD/PERF 全景表、时间线、Debug 证据、代码地图、开场白 |
+| **[`docs/plans/2026-06-12-ux-flow-redesign-plan.md`](./plans/2026-06-12-ux-flow-redesign-plan.md)** | 计划原文（RD-1~10、PERF-1~6、执行顺序、设计交付物） |
+| **`docs/plans/ux-flow-prototype-v3.html`** | 视觉验收真相源（本地浏览器打开） |
+
+---
+
 ## 1. 当前阶段结论
 
 项目已经从“只做 joy 的原型设计稿”进入“多维度通用壳子 + joy / fulfillment / reflection / improvement / gratitude 五个标品维度”的阶段。

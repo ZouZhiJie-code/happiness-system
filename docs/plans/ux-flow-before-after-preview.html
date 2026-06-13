@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>访谈 → 单维日志 → 完整日志 · 改动前后对比</title>
+  <style>
+    :root {
+      --paper-sheet: #fff9ef;
+      --amber-deep: #7a4f28;
+      --line-soft: rgba(110, 73, 38, 0.16);
+      --text-main: #302114;
+      --text-dim: rgba(48, 33, 20, 0.68);
+      --text-muted: #8a6b4b;
+      --radius-card: 20px;
+      --radius-shell: 28px;
+      --good: #3d6b4a;
+      --bad: #9f3a2f;
+      --warn: #8c5a24;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 14% 8%, rgba(255, 250, 241, 0.5) 0, transparent 28%),
+        linear-gradient(180deg, #e8d4b4 0%, #d9bf96 42%, #c9a67a 100%);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.35rem, 3vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 0 auto;
+      max-width: 680px;
+      font-size: 0.92rem;
+      line-height: 1.75;
+      color: var(--text-dim);
+    }
+
+    .hero .note {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--warn);
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .toc a {
+      text-decoration: none;
+      font-size: 0.78rem;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 250, 242, 0.82);
+      color: var(--amber-deep);
+      transition: background 0.15s, transform 0.12s;
+    }
+
+    .toc a:hover {
+      background: rgba(255, 250, 242, 0.98);
+      transform: translateY(-1px);
+    }
+
+    .section {
+      margin-bottom: 42px;
+      scroll-margin-top: 18px;
+    }
+
+    .section-head {
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      margin: 0 0 6px;
+      font-size: 1.15rem;
+    }
+
+    .section-head p {
+      margin: 0;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      color: var(--text-dim);
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .compare { grid-template-columns: 1fr; }
+    }
+
+    .pane {
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 250, 242, 0.9);
+      overflow: hidden;
+      box-shadow: 0 14px 36px rgba(77, 47, 21, 0.1);
+    }
+
+    .pane-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .pane-label.before { background: rgba(159, 58, 47, 0.08); color: var(--bad); }
+    .pane-label.after  { background: rgba(61, 107, 74, 0.1); color: var(--good); }
+
+    .pane-body { padding: 14px; }
+
+    .mini-header {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line-soft);
+      background: rgba(249, 238, 216, 0.7);
+      font-size: 0.68rem;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .mini-header.wrap {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      white-space: normal;
+    }
+
+    .seg {
+      display: inline-flex;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(255, 250, 242, 0.7);
+      border: 1px solid var(--line-soft);
+    }
+
+    .seg span {
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: var(--text-dim);
+    }
+
+    .seg span.on {
+      background: linear-gradient(180deg, #d5ae79, #bc8f58);
+      color: #2f2823;
+      font-weight: 600;
+    }
+
+    .divider { color: rgba(101, 67, 34, 0.45); }
+
+    .btn {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 250, 242, 0.82);
+      color: #6a5642;
+    }
+
+    .btn.primary {
+      border-color: rgba(168, 124, 69, 0.42);
+      background: linear-gradient(180deg, #d5ae79, #bc8f58);
+      color: #2f2823;
+      font-weight: 600;
+    }
+
+    .btn.ghost { opacity: 0.55; }
+
+    .chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      border: 1px solid var(--line-soft);
+      background: rgba(251, 242, 228, 0.84);
+      color: #7e5d3f;
+    }
+
+    .chip.warn {
+      border-color: rgba(180, 118, 86, 0.35);
+      color: #7c4c32;
+      background: rgba(255, 246, 238, 0.7);
+    }
+
+    .chip.ok {
+      border-color: rgba(61, 107, 74, 0.28);
+      color: var(--good);
+      background: rgba(232, 245, 236, 0.7);
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 8px 12px;
+      border-radius: 18px;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      border: 1px solid var(--line-soft);
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: linear-gradient(180deg, rgba(221, 185, 133, 0.96), rgba(195, 152, 97, 0.96));
+    }
+
+    .bubble.thinking {
+      align-self: flex-start;
+      background: rgba(255, 250, 243, 0.5);
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }
+
+    .bubble.question {
+      align-self: flex-start;
+      background: linear-gradient(180deg, rgba(255, 246, 234, 0.98), rgba(243, 226, 199, 0.96));
+      font-weight: 600;
+    }
+
+    .choice-card {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: var(--radius-shell);
+      border: 1px solid rgba(153, 103, 54, 0.16);
+      background: linear-gradient(180deg, rgba(250, 243, 230, 0.98), rgba(235, 217, 187, 0.92));
+      font-size: 0.74rem;
+    }
+
+    .choice-card h4 { margin: 6px 0 4px; font-size: 0.95rem; }
+    .choice-card .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+    .composer {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 18px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 250, 242, 0.75);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .composer .send {
+      margin-left: auto;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, #f4e1c7, #e5c9a9);
+      display: grid;
+      place-items: center;
+      font-size: 0.6rem;
+      padding: 0 10px;
+    }
+
+    .composer .send.disabled {
+      opacity: 0.45;
+      width: 28px;
+      border-radius: 50%;
+    }
+
+    .composer .send.stop {
+      width: auto;
+      border-radius: 999px;
+      font-size: 0.65rem;
+    }
+
+    .hint-bar {
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      background: rgba(255, 246, 239, 0.84);
+      border: 1px solid rgba(159, 58, 47, 0.15);
+      color: #7c4c32;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .workspace.split { grid-template-columns: 1.1fr 0.9fr; }
+
+    @media (max-width: 520px) {
+      .workspace.split { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: var(--paper-sheet);
+      padding: 10px;
+      min-height: 140px;
+      font-size: 0.72rem;
+    }
+
+    .panel.squeezed { min-height: 72px; opacity: 0.85; }
+    .panel h5 { margin: 0 0 6px; font-size: 0.82rem; }
+    .panel .status-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+
+    .editor-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .editor-body { color: var(--text-dim); line-height: 1.6; }
+
+    .footer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .source-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      padding: 8px 0;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+      font-size: 0.68rem;
+      margin: 8px 0;
+    }
+
+    .source-item { display: flex; gap: 4px; align-items: center; }
+    .source-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #be8550; }
+    .source-item.miss .dot { background: #d9c8b3; }
+    .source-item.miss span:last-child { color: #a58d73; }
+
+    .native-confirm {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      color: #222;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .native-confirm .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+    .native-confirm button {
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      background: #fff;
+      font-size: 0.75rem;
+    }
+
+    .styled-dialog {
+      margin-top: 12px;
+      padding: 16px;
+      border-radius: var(--radius-shell);
+      border: 1px solid rgba(153, 103, 54, 0.16);
+      background: linear-gradient(180deg, rgba(252, 246, 236, 0.98), rgba(235, 217, 187, 0.96));
+      box-shadow: 0 24px 60px rgba(46, 35, 25, 0.18);
+    }
+
+    .styled-dialog .eyebrow {
+      font-family: ui-monospace, monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: #9a734d;
+    }
+
+    .styled-dialog h3 { margin: 6px 0 8px; font-size: 1.05rem; }
+    .styled-dialog p { margin: 0; font-size: 0.78rem; line-height: 1.65; color: #594537; }
+    .styled-dialog .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+    .callout {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      line-height: 1.55;
+    }
+
+    .callout.bad  { background: rgba(159, 58, 47, 0.08); color: #8b5148; border-left: 3px solid var(--bad); }
+    .callout.good { background: rgba(61, 107, 74, 0.08); color: #3d5c46; border-left: 3px solid var(--good); }
+
+    .drawer-hint {
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px dashed rgba(151, 108, 65, 0.28);
+      border-radius: var(--radius-card);
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 0.68rem;
+    }
+
+    .flow-steps span {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(255, 250, 242, 0.8);
+      border: 1px solid var(--line-soft);
+    }
+
+    .flow-steps .arrow {
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      padding: 4px 2px;
+    }
+
+    .skip-list {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 246, 238, 0.7);
+      font-size: 0.68rem;
+      color: #7c4c32;
+    }
+
+    .legend {
+      margin-top: 36px;
+      padding: 16px 18px;
+      border-radius: var(--radius-card);
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 250, 242, 0.88);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+
+    .legend strong { color: var(--text-main); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>访谈 → 单维日志 → 完整日志<br />改动前后体感对比</h1>
+      <p>按用户视角走完整链路。左侧/上方为<strong>改动前</strong>，右侧/下方为<strong>改动后</strong>。</p>
+      <p class="note">静态示意，用于感受信息架构、文案、交互节奏的变化。进度条相关改动已排除（你单独处理）。</p>
+    </header>
+
+    <nav class="toc" aria-label="对比章节">
+      <a href="#s1">顶部工具栏</a>
+      <a href="#s2">生成日志入口</a>
+      <a href="#s3">确认弹窗</a>
+      <a href="#s4">单维保存状态</a>
+      <a href="#s5">窄屏日志面板</a>
+      <a href="#s6">完整日志工作区</a>
+      <a href="#s7">一键收成并保存</a>
+      <a href="#s8">对话区细节</a>
+    </nav>
+
+    <section class="section" id="s1">
+      <div class="section-head">
+        <h2>1. 顶部工具栏：关键操作不再被横滑藏起</h2>
+        <p>改动前：五维切换 + 进度 + 生成日志 + 完整日志 + 当天评分挤在一行，小屏要横滑才能点到「生成日志」。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前</div>
+          <div class="pane-body">
+            <div class="mini-header">
+              <div class="seg"><span class="on">开心</span><span>充实</span><span>思考</span><span>改进</span><span>感谢</span></div>
+              <span class="divider">｜</span>
+              <span>◎ 有效 3 轮</span>
+              <span class="divider">｜</span>
+              <span class="btn primary">生成日志</span>
+              <span class="divider">｜</span>
+              <span class="btn">完整日志</span>
+              <span class="btn">当天评分</span>
+              <span style="opacity:0.4">→ 横滑才能看到</span>
+            </div>
+            <div class="callout bad">窄窗口下「生成日志」「完整日志」经常不在首屏，用户不知道去哪点。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后</div>
+          <div class="pane-body">
+            <div class="mini-header wrap">
+              <div class="seg"><span class="on">开心</span><span>充实</span><span>思考</span><span>改进</span><span>感谢</span></div>
+              <span class="divider">｜</span>
+              <span>◎ 有效 3 轮</span>
+              <span class="divider">｜</span>
+              <span class="btn primary">生成日志</span>
+              <span class="btn">完整日志</span>
+              <span class="divider">｜</span>
+              <span class="btn ghost">当天评分</span>
+            </div>
+            <div class="callout good">工具栏允许换行 + 关键 CTA 固定优先级，首屏永远能看到「生成日志」和「完整日志」。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s2">
+      <div class="section-head">
+        <h2>2. 「生成日志」入口与文案统一</h2>
+        <p>改动前：顶部叫「生成日志」，分岔卡里叫「现在整理日志」，三处叫法漂移。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前 · 分岔点</div>
+          <div class="pane-body">
+            <div class="choice-card">
+              <span style="font-family:monospace;font-size:0.62rem;color:#9a734d">访谈分岔点</span>
+              <h4>这一段已经够写成一版日志了</h4>
+              <p style="margin:0;color:#594537">你可以继续深聊，也可以直接整理。</p>
+              <div class="actions">
+                <span class="btn primary">继续深聊</span>
+                <span class="btn">聊下一件开心的事</span>
+                <span class="btn">现在整理日志</span>
+              </div>
+            </div>
+            <div class="callout bad">顶部按钮此时被隐藏；卡片里又叫「整理日志」，和 header 不一致。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后 · 分岔点</div>
+          <div class="pane-body">
+            <div class="choice-card">
+              <span style="font-family:monospace;font-size:0.62rem;color:#9a734d">访谈分岔点</span>
+              <h4>这一段已经够写成一版日志了</h4>
+              <p style="margin:0;color:#594537">你可以继续深聊，也可以生成日志。</p>
+              <div class="actions">
+                <span class="btn primary">继续深聊</span>
+                <span class="btn">聊下一件开心的事</span>
+                <span class="btn primary">生成日志</span>
+              </div>
+            </div>
+            <div class="callout good">全链路统一叫「生成日志」；分岔卡仍是就地入口，但文案与 header 对齐。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s3">
+      <div class="section-head">
+        <h2>3. 确认交互：原生弹窗 → 产品内自绘弹窗</h2>
+        <p>覆盖：保存日志、覆盖生成、保存完整日志、离开访谈、清除对话记录。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前</div>
+          <div class="pane-body">
+            <div class="native-confirm">
+              <div>确定保存这篇日志吗？</div>
+              <div style="margin-top:6px;font-size:0.72rem;color:#555">确定保存后，会结束当前访谈…</div>
+              <div class="btns">
+                <button>取消</button>
+                <button>确定</button>
+              </div>
+            </div>
+            <div class="callout bad">系统灰框，和暖色工作台割裂；无法承载更清楚的后果说明。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后</div>
+          <div class="pane-body">
+            <div class="styled-dialog">
+              <div class="eyebrow">保存确认</div>
+              <h3>确定保存这篇日志吗？</h3>
+              <p>保存后本次访谈会结束。你仍可随时打开日志继续改内容；若之后还想聊，需要新开一轮。</p>
+              <div class="btns">
+                <span class="btn">继续访谈</span>
+                <span class="btn primary">确定保存</span>
+              </div>
+            </div>
+            <div class="callout good">与现有保存确认卡同风格；后果写清楚，减少「保存了还能不能聊」的困惑。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s4">
+      <div class="section-head">
+        <h2>4. 单维日志：保存 / 暂存 / 草稿状态可感知</h2>
+        <p>改动前：已保存日志被编辑后会静默变草稿；暂存成功几乎无反馈；关面板会偷偷暂存。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前 · 右栏编辑区</div>
+          <div class="pane-body">
+            <div class="panel">
+              <div class="status-row">
+                <span class="chip">（无状态）</span>
+              </div>
+              <div class="editor-title">清醒地开始</div>
+              <div class="editor-body">用户改了一个字… 系统已悄悄把 saved 打回 draft，但界面无提示。</div>
+              <div class="footer-actions">
+                <span class="btn primary">保存修改</span>
+              </div>
+            </div>
+            <div class="callout bad">用户以为「已经保存过了」，不知道当前其实是草稿。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后 · 右栏编辑区</div>
+          <div class="pane-body">
+            <div class="panel">
+              <div class="status-row">
+                <span class="chip warn">未保存的修改</span>
+                <span class="chip ok">已暂存</span>
+              </div>
+              <div class="editor-title">清醒地开始</div>
+              <div class="editor-body">编辑后会先自动暂存；状态条明确告诉你：当前是草稿，需要再点保存才成为正式版本。</div>
+              <div class="footer-actions">
+                <span class="btn primary">保存正式日志</span>
+              </div>
+            </div>
+            <div class="callout good">关闭面板时若有暂存，轻 toast 提示「已帮你暂存」；失败则面板不关闭并说明原因。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s5">
+      <div class="section-head">
+        <h2>5. 窄屏日志面板：不再把对话区压扁</h2>
+        <p>改动前：&lt;1280px 时右栏和对话叠在同一高度里。改动后：日志面板改为浮层/抽屉，对话保持全高。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前 · 平板宽度</div>
+          <div class="pane-body">
+            <div class="workspace split">
+              <div class="panel squeezed">
+                <h5>对话区（被挤压）</h5>
+                <div class="chat">
+                  <div class="bubble user">今天早起很清醒</div>
+                  <div class="bubble question">那一刻具体是什么感觉？</div>
+                </div>
+                <div class="composer"><span>输入回答…</span><span class="send disabled">↑</span></div>
+              </div>
+              <div class="panel">
+                <h5>日志面板</h5>
+                <div class="editor-title">清醒地开始</div>
+                <div class="editor-body">…</div>
+              </div>
+            </div>
+            <div class="callout bad">上下/左右争抢空间，边聊边改几乎不可用。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后 · 平板宽度</div>
+          <div class="pane-body">
+            <div class="panel" style="min-height:200px">
+              <h5>对话区（全高）</h5>
+              <div class="chat">
+                <div class="bubble user">今天早起很清醒</div>
+                <div class="bubble question">那一刻具体是什么感觉？</div>
+              </div>
+              <div class="composer"><span>输入回答…</span><span class="send">↑</span></div>
+            </div>
+            <div class="drawer-hint">日志面板以底部抽屉 / 全屏浮层打开 · 右上角可关闭 · 不挤占对话高度</div>
+            <div class="callout good">生成日志时仍可从 header 或分岔卡打开；窄屏优先保证访谈可读可写。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s6">
+      <div class="section-head">
+        <h2>6. 完整日志工作区：术语统一 + 来源更清晰</h2>
+        <p>改动前：header 叫「完整日志」，工作区叫「总日志」，日历叫「汇总日志」。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前</div>
+          <div class="pane-body">
+            <p style="margin:0 0 6px;font-size:0.76rem;color:var(--text-muted)">6月12日 <strong>总日志</strong></p>
+            <p style="margin:0 0 8px;font-size:0.9rem;font-weight:600">把这一天收成一篇记录</p>
+            <div class="source-row">
+              <div class="source-item"><span class="dot"></span><span>开心</span><span>清醒地开始</span></div>
+              <div class="source-item miss"><span class="dot"></span><span>充实</span><span>未保存</span></div>
+              <div class="source-item"><span class="dot"></span><span>思考</span><span>那个瞬间</span></div>
+            </div>
+            <div class="footer-actions">
+              <span class="btn">整理总日志</span>
+              <span class="btn primary">保存正式日志</span>
+            </div>
+            <div class="callout bad">「充实」有草稿但未正式保存 → 汇总时会被静默丢掉，用户未必注意到。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后</div>
+          <div class="pane-body">
+            <p style="margin:0 0 6px;font-size:0.76rem;color:var(--text-muted)">6月12日 <strong>完整日志</strong></p>
+            <p style="margin:0 0 8px;font-size:0.9rem;font-weight:600">把这一天收成一篇完整日志</p>
+            <p style="margin:0 0 8px;font-size:0.72rem;color:var(--text-dim)">只会汇总<strong>已正式保存</strong>的维度日志。</p>
+            <div class="source-row">
+              <div class="source-item"><span class="dot"></span><span>开心</span><span>已保存</span></div>
+              <div class="source-item miss"><span class="dot"></span><span>充实</span><span>有草稿，未保存</span></div>
+              <div class="source-item"><span class="dot"></span><span>思考</span><span>已保存</span></div>
+            </div>
+            <div class="callout good">来源状态口语化；stale 时提示「今天的维度日志有更新，建议重新整理完整日志」。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s7">
+      <div class="section-head">
+        <h2>7. 一键「收成并保存完整日志」（Level A）</h2>
+        <p>改动前：用户要自己逐个维度保存 → 再进完整日志 → 再点整理 → 再点保存。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前 · 用户要走 4 步</div>
+          <div class="pane-body">
+            <div class="flow-steps">
+              <span>维度A 保存正式日志</span><span class="arrow">→</span>
+              <span>维度B 保存正式日志</span><span class="arrow">→</span>
+              <span>点「完整日志」</span><span class="arrow">→</span>
+              <span>整理总日志</span><span class="arrow">→</span>
+              <span>保存正式日志</span>
+            </div>
+            <div class="callout bad">没有「保存所有日志」；有草稿没保存的维度会被汇总静默跳过。</div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后 · 主 CTA 一步收口</div>
+          <div class="pane-body">
+            <div class="footer-actions" style="justify-content:flex-start;border:none;padding:0">
+              <span class="btn primary" style="font-size:0.78rem;padding:8px 16px">收成并保存完整日志</span>
+              <span class="btn" style="font-size:0.72rem">重新整理</span>
+              <span class="btn ghost" style="font-size:0.72rem">导出</span>
+            </div>
+            <p style="margin:10px 0 0;font-size:0.72rem;color:var(--text-dim)">将自动：把「有草稿未保存」的维度先落库 → 生成完整日志 → 保存完整日志。</p>
+            <div class="skip-list">
+              <strong>将跳过（需你手动补）：</strong> 充实（访谈进行中，还没有日志草稿）
+            </div>
+            <div class="callout good">一次点击完成 Level A；跳过的维度明确列出，不再静默丢失。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="s8">
+      <div class="section-head">
+        <h2>8. 对话区细节打磨</h2>
+        <p>输入禁用可解释、流式可停止、气泡层级收敛、重复日期弱化。</p>
+      </div>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane-label before">改动前</div>
+          <div class="pane-body">
+            <p style="font-size:0.68rem;color:var(--text-muted);margin:0 0 8px">当前记录日期：2026-06-12</p>
+            <div class="chat">
+              <div class="bubble thinking">正在思考中…</div>
+              <div class="bubble thinking">我理解你在说早起带来的清醒感…</div>
+              <div class="bubble question">那一刻具体是什么感觉？</div>
+            </div>
+            <div class="composer">
+              <span style="opacity:0.5">（输入框被收起或发送键置灰，无说明）</span>
+              <span class="send disabled">生成中</span>
+            </div>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-label after">改动后</div>
+          <div class="pane-body">
+            <div class="chat">
+              <div class="bubble thinking" style="opacity:0.85">理解：早起带来的清醒与准备感</div>
+              <div class="bubble question">那一刻具体是什么感觉？</div>
+            </div>
+            <div class="hint-bar">AI 正在回复，可点「停止」中断</div>
+            <div class="composer">
+              <span style="opacity:0.45">等待 AI 回复完成…</span>
+              <span class="send stop">停止</span>
+            </div>
+            <div class="callout good" style="margin-top:8px">分岔卡出现时提示「请先选择上方选项」；header 已有日期时正文区不再重复一行日期。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="legend">
+      <strong>本预览覆盖的计划项：</strong> WS-A 术语 · WS-B 确认弹窗 · WS-C 一键收成并保存 · WS-D 生成入口文案 · WS-E 窄屏面板 · WS-F 保存状态 · WS-G header 换行 · WS-H/J/I/K 对话区打磨。<br />
+      <strong>刻意未画：</strong> 单维/完整日志的进度条与阶段文案（你单独处理）。
+    </aside>
+  </div>
+</body>
+</html>
