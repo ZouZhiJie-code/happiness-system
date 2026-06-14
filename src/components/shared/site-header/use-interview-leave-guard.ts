@@ -29,8 +29,18 @@ export function useInterviewLeaveGuard() {
     return confirmed;
   }
 
+  // Switching between interview dimensions is a supported, persisted in-app move:
+  // the active session is restored on return, so it must not trigger the page-leave
+  // confirm. We still persist the leaving session id so the conversation rehydrates.
+  function persistInterviewSessionForDimensionSwitch() {
+    if (shouldProtectInterview && sessionId) {
+      touchStoredInterviewSessionId(sessionDimension ?? dimension, sessionId, sessionEntryDate, hasUserMessages);
+    }
+  }
+
   return {
     confirmLeaveInterview,
+    persistInterviewSessionForDimensionSwitch,
     shouldProtectInterview
   };
 }

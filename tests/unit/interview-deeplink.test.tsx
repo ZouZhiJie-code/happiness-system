@@ -137,7 +137,7 @@ describe("interview deep link behavior", () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith("/api/interview/session/session-from-calendar", expect.objectContaining({ cache: "no-store" }));
     });
-    await screen.findByRole("button", { name: "关闭日志" });
+    await screen.findByRole("button", { name: "关闭日志面板" });
     expect(vi.mocked(global.fetch).mock.calls.some(([url]) => String(url) === "/api/interview/session/start")).toBe(false);
   });
 

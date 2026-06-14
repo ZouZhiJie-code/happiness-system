@@ -3,9 +3,11 @@ import { z } from "zod";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { MAX_DAILY_JOURNAL_CONTENT_LENGTH } from "@/features/daily-journal/schema";
 import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
+import { interviewDimensions } from "@/features/interview/dimensions";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { getAIProvider } from "@/server/services/ai";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
+import { getCalendarDay } from "@/server/services/calendar/calendar.service";
 import {
   findDailyJournalByDate,
   listDraftJournalEntriesForDate,
@@ -18,6 +20,52 @@ import {
 import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
 import type { DailyJournalEntryRecord, DailyJournalStatus, InterviewDimension } from "@/types/interview";
+
+function debugShortId(value: string | null | undefined) {
+  return value ? value.slice(-8) : null;
+}
+
+function debugDailyJournalService(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
+    body: JSON.stringify({
+      sessionId: "7fc210",
+      runId: "pre-fix",
+      hypothesisId,
+      location: "daily-journal.service.ts:debug",
+      message,
+      data,
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
+}
+
+export type TodayJournalDimensionStatus = "none" | "talking" | "journaled";
+
+export interface TodayJournalDimensionCard {
+  dimension: InterviewDimension;
+  status: TodayJournalDimensionStatus;
+  hasNewSinceJournal: boolean;
+  title: string | null;
+  content: string | null;
+  sessionId: string | null;
+  entryId: string | null;
+}
+
+export interface TodayJournalBoard {
+  date: string;
+  dimensions: TodayJournalDimensionCard[];
+  dailyJournal: {
+    state: DailyJournalState;
+    id: string | null;
+    savedCount: number;
+  };
+}
 
 const dailyJournalDraftSchema = z.object({
   title: z.string().min(1).max(MAX_JOURNAL_TITLE_LENGTH),
@@ -160,6 +208,102 @@ export async function getDailyJournal(userId: string, date: string) {
     draftSourceCount: draftEntries.length,
     sources: mapDailyJournalSources(sourceEntries),
     state: resolveDailyJournalState(dailyJournal, sourceEntries)
+  };
+}
+
+/**
+ * 今日日志面板（访谈页右侧常驻）的只读聚合：一次返回五维各自的
+ * 状态 / 标题 / 正文 / sessionId，以及完整日志的总体状态。
+ * 纯组合现有读模型，不新增 DB 查询。
+ */
+export async function getTodayJournalBoard(userId: string, date: string): Promise<TodayJournalBoard> {
+  const [day, savedSources, draftSources, dailyJournalView] = await Promise.all([
+    getCalendarDay(userId, date),
+    listSavedJournalEntriesForDailyJournal(userId, date),
+    listDraftJournalEntriesForDate(userId, date),
+    getDailyJournal(userId, date)
+  ]);
+
+  const savedByDimension = new Map(savedSources.map((source) => [source.dimension, source]));
+  const draftByDimension = new Map(draftSources.map((source) => [source.dimension, source]));
+  const dayDimensionByKey = new Map(day.dimensions.map((dimensionStatus) => [dimensionStatus.dimension, dimensionStatus]));
+
+  const dimensions: TodayJournalDimensionCard[] = interviewDimensions.map((dimension) => {
+    const dayDimension = dayDimensionByKey.get(dimension) ?? null;
+    const saved = savedByDimension.get(dimension) ?? null;
+    const draft = draftByDimension.get(dimension) ?? null;
+
+    const hasSaved = dayDimension?.hasSavedEntry ?? Boolean(saved);
+    const hasDraft = dayDimension?.hasDraftEntry ?? Boolean(draft);
+    const hasActive = dayDimension?.hasActiveSession ?? false;
+
+    let status: TodayJournalDimensionStatus = "none";
+    let title: string | null = null;
+    let content: string | null = null;
+
+    if (hasSaved) {
+      status = "journaled";
+      title = saved?.title ?? dayDimension?.title ?? null;
+      content = saved?.content ?? null;
+    } else if (hasDraft || hasActive) {
+      status = "talking";
+      title = draft?.title ?? null;
+      content = draft?.content ?? null;
+    }
+
+    return {
+      dimension,
+      status,
+      hasNewSinceJournal: hasSaved && (hasActive || hasDraft),
+      title,
+      content,
+      sessionId: dayDimension?.sessionId ?? saved?.sessionId ?? draft?.sessionId ?? null,
+      entryId: saved?.id ?? draft?.id ?? null
+    };
+  });
+
+  // #region agent log
+  debugDailyJournalService("H3", "today journal board composed on server", {
+    date,
+    savedSourceCount: savedSources.length,
+    draftSourceCount: draftSources.length,
+    dailyJournalState: dailyJournalView.state,
+    dayDimensions: day.dimensions.map((dimensionStatus) => ({
+      dimension: dimensionStatus.dimension,
+      status: dimensionStatus.status,
+      hasActiveSession: dimensionStatus.hasActiveSession,
+      hasDraftEntry: dimensionStatus.hasDraftEntry,
+      hasSavedEntry: dimensionStatus.hasSavedEntry,
+      sessionId: debugShortId(dimensionStatus.sessionId)
+    })),
+    savedSources: savedSources.map((source) => ({
+      dimension: source.dimension,
+      entryId: debugShortId(source.id),
+      sessionId: debugShortId(source.sessionId)
+    })),
+    draftSources: draftSources.map((source) => ({
+      dimension: source.dimension,
+      entryId: debugShortId(source.id),
+      sessionId: debugShortId(source.sessionId)
+    })),
+    resultDimensions: dimensions.map((dimensionStatus) => ({
+      dimension: dimensionStatus.dimension,
+      status: dimensionStatus.status,
+      hasContent: Boolean(dimensionStatus.content),
+      hasNewSinceJournal: dimensionStatus.hasNewSinceJournal,
+      sessionId: debugShortId(dimensionStatus.sessionId)
+    }))
+  });
+  // #endregion
+
+  return {
+    date,
+    dimensions,
+    dailyJournal: {
+      state: dailyJournalView.state,
+      id: dailyJournalView.dailyJournal?.id ?? null,
+      savedCount: savedSources.length
+    }
   };
 }
 

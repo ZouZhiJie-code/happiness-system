@@ -263,6 +263,40 @@ body::after {
   background: linear-gradient(180deg, rgba(255, 251, 244, 0.14), transparent 28%);
 }
 
+.journal-panel-sheet {
+  position: absolute;
+  box-shadow: -30px 0 70px -20px rgba(74, 44, 18, 0.5);
+}
+
+.journal-panel-sheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.875rem;
+  width: 1px;
+  background: rgba(169, 111, 61, 0.2);
+  pointer-events: none;
+}
+
+.journal-bookmark {
+  background: linear-gradient(160deg, #b0823f, #83501f);
+  box-shadow: -8px 10px 22px -8px rgba(110, 70, 30, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+  border-radius: 6px 0 0 0;
+}
+
+.journal-bookmark__badge {
+  position: absolute;
+  top: -0.3rem;
+  left: -0.3rem;
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 999px;
+  background: #a96f3d;
+  border: 2px solid #fff9ef;
+}
+
 .wood-dialog {
   position: relative;
   border: 1px solid rgba(178, 129, 73, 0.3);

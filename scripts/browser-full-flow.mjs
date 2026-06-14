@@ -29,13 +29,12 @@ async function waitForTurnSettled(page) {
         document.querySelector('[data-testid="interview-floating-composer"] button[aria-label="发送回答"]')
       );
       const journalVisible = Boolean(document.querySelector('[data-testid="journal-editor-card"]'));
-      const generateVisible = Array.from(document.querySelectorAll("button")).some(
-        (button) => button.textContent?.trim() === "生成日志"
+      const generateVisible = Array.from(document.querySelectorAll("button")).some((button) =>
+        /^生成.+维度日志$/.test(button.textContent?.trim() ?? "")
       );
-      const endedVisible = body.includes("这篇日志已记下，访谈先收住了") || body.includes("访谈先收住了");
       const draftFailedVisible = body.includes("这次没能成功生成日志");
 
-      return !thinking && (composerVisible || journalVisible || generateVisible || endedVisible || draftFailedVisible);
+      return !thinking && (composerVisible || journalVisible || generateVisible || draftFailedVisible);
     },
     null,
     { timeout: 120_000 }
@@ -55,7 +54,7 @@ async function ensureJournalEditor(page) {
     return editor;
   }
 
-  const generateButton = page.getByRole("button", { name: "生成日志" });
+  const generateButton = page.getByRole("button", { name: /^生成.+维度日志$/ });
   if (await generateButton.isVisible().catch(() => false)) {
     await generateButton.click();
     await editor.waitFor({ timeout: 120_000 });
@@ -129,28 +128,33 @@ export async function runBrowserFullFlow({ baseUrl = BASE_URL } = {}) {
     await screenshot(page, "05-journal-editor");
 
     await page.getByRole("button", { name: "关闭日志面板" }).click();
-    await page.getByTestId("journal-bookmark").waitFor();
-    logStep(steps, "browser_journal_bookmark", true);
-    await screenshot(page, "05b-journal-bookmark");
+    await page.getByTestId("today-journal-panel").waitFor();
+    logStep(steps, "browser_today_panel", true);
+    await screenshot(page, "05b-today-panel");
 
-    await page.getByRole("button", { name: "打开这篇日志" }).click();
+    // Reopen the dimension journal from the persistent today panel (the bookmark is gone).
+    await page.getByTestId("today-journal-block-joy-toggle").click();
+    await page.getByTestId("today-journal-open-joy").click();
     await page.getByTestId("journal-editor-card").waitFor();
 
     await page.getByRole("button", { name: "保存正式日志" }).click();
     const saveDialog = page.getByRole("dialog", { name: "确定保存这篇日志吗？" });
     await saveDialog.waitFor();
     await saveDialog.getByRole("button", { name: "确定保存" }).click();
-    await page.getByRole("heading", { name: "这篇日志已记下，访谈先收住了" }).waitFor();
+    // After saving, the journal sheet closes and the conversation stays open: the composer
+    // remains available and the journal stays reachable in the today panel.
+    await page.getByTestId("today-journal-panel").waitFor({ timeout: 30_000 });
+    await page.getByTestId("interview-floating-composer").waitFor({ timeout: 30_000 });
     logStep(steps, "browser_save_journal", true);
-    await screenshot(page, "06-interview-ended");
+    await screenshot(page, "06-interview-after-save");
 
-    await page.getByRole("button", { name: "继续聊这件事" }).click();
+    // Keep talking directly in the composer; sending silently reopens the saved session.
+    const reopenedComposer = page.getByRole("textbox");
+    await reopenedComposer.fill("我还想再补充一句。");
+    await page.getByRole("button", { name: "发送回答" }).click();
+    await waitForTurnSettled(page);
 
-    const reopenedComposer = page.getByTestId("interview-floating-composer");
     const reopenIssue = page.getByText("没能回到访谈");
-
-    await reopenedComposer.waitFor({ timeout: 30_000 });
-
     if (await reopenIssue.isVisible().catch(() => false)) {
       throw new Error("SESSION_NOT_REOPENABLE surfaced in UI");
     }
@@ -159,30 +163,29 @@ export async function runBrowserFullFlow({ baseUrl = BASE_URL } = {}) {
 
     await screenshot(page, "07-reopen-result");
 
-    await page.getByRole("button", { name: "查看完整日志" }).click();
-    await page.getByTestId("daily-journal-workspace").waitFor();
-    logStep(steps, "browser_open_daily_journal", true);
-    await screenshot(page, "08-daily-journal");
-
-    await page.getByText(`${Number(ENTRY_DATE.slice(5, 7))}月${Number(ENTRY_DATE.slice(8, 10))}日`).waitFor();
-    const harvestButton = page.getByRole("button", { name: "收成并保存完整日志" });
-    await harvestButton.waitFor();
+    // The complete journal is generated and saved from the today panel day-action button,
+    // which then lands on the full daily-journal page (no header button, no in-page harvest button).
+    const dayAction = page.getByTestId("today-journal-day-action");
+    await dayAction.waitFor();
     await page
-      .waitForFunction(() => {
-        const button = Array.from(document.querySelectorAll("button")).find((node) =>
-          node.textContent?.includes("收成并保存完整日志")
-        );
-        return Boolean(button && !button.disabled);
-      }, null, { timeout: 30_000 })
+      .waitForFunction(
+        () => {
+          const button = document.querySelector('[data-testid="today-journal-day-action"]');
+          return Boolean(button && !button.disabled);
+        },
+        null,
+        { timeout: 30_000 }
+      )
       .catch(() => {
-        throw new Error("收成并保存完整日志按钮不可用");
+        throw new Error("今日日志日级按钮不可用");
       });
 
-    await harvestButton.click();
-    await page.getByTestId("daily-journal-harvest-notice").waitFor({ timeout: 120_000 });
-    const harvestNotice = await page.getByTestId("daily-journal-harvest-notice").textContent();
-    logStep(steps, "browser_harvest", true, { harvestNotice });
-    await screenshot(page, "09-harvest-done");
+    await dayAction.click();
+    await page.getByTestId("daily-journal-workspace").waitFor({ timeout: 120_000 });
+    await page.getByTestId("daily-journal-editor").waitFor({ timeout: 120_000 });
+    await page.getByText(`${Number(ENTRY_DATE.slice(5, 7))}月${Number(ENTRY_DATE.slice(8, 10))}日`).waitFor();
+    logStep(steps, "browser_generate_daily_journal", true);
+    await screenshot(page, "08-daily-journal");
 
     return {
       ok: steps.every((step) => step.ok),

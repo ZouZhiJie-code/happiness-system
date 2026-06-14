@@ -10,5 +10,6 @@ export {
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft as saveInterviewDraft,
   startNextInterviewEvent,
-  updateJoyEntry as updateJournalEntry
+  updateJoyEntry as updateJournalEntry,
+  updateJournalEntryContent
 } from "@/server/repositories/joy-interview.repository";

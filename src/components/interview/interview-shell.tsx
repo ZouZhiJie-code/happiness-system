@@ -7,6 +7,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { TodayJournalPanel, type TodayDayActionVariant } from "@/components/interview/today-journal-panel";
 import { ConfirmDialog, HorizontalPager, useConfirmDialog, type HorizontalPagerMotion } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import {
@@ -47,6 +48,7 @@ import {
 } from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 import { cancelIdleTask, scheduleIdleTask } from "@/lib/schedule-idle-task";
+import type { TodayJournalBoardPayload, TodayJournalDimensionCardPayload } from "@/features/daily-journal/schema";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
@@ -67,6 +69,10 @@ type ToastState = {
 const INTERVIEW_INPUT_MIN_HEIGHT = 36;
 const INTERVIEW_INPUT_MAX_HEIGHT = 176;
 const JOURNAL_BODY_MIN_HEIGHT = 240;
+const DEFAULT_PANEL_RATIO = 0.72;
+const MIN_PANEL_RATIO = 0.4;
+const MAX_PANEL_RATIO = 0.84;
+const MAX_PANEL_WIDTH_PX = 860;
 
 interface DraftGenerateIssue {
   code: string;
@@ -97,6 +103,30 @@ function formatClockLabel(iso: string | null | undefined) {
 function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessage[]) {
   const lastMessage = messages.at(-1);
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
+}
+
+function debugShortId(value: string | null | undefined) {
+  return value ? value.slice(-8) : null;
+}
+
+function debugInterviewShell(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
+    body: JSON.stringify({
+      sessionId: "7fc210",
+      runId: "post-fix",
+      hypothesisId,
+      location: "interview-shell.tsx:debug",
+      message,
+      data,
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
 }
 
 function isAutoDraftRequestMessage(message: string) {
@@ -645,6 +675,19 @@ export function InterviewShell({
   const [isReopeningInterview, setIsReopeningInterview] = useState(false);
   const [toastState, setToastState] = useState<ToastState>(null);
   const [pagerMotion, setPagerMotion] = useState<HorizontalPagerMotion>("slide");
+  const [todayJournalBoard, setTodayJournalBoard] = useState<TodayJournalBoardPayload | null>(null);
+  const [todayJournalBoardLoading, setTodayJournalBoardLoading] = useState(false);
+  const [todayJournalBoardRefreshKey, setTodayJournalBoardRefreshKey] = useState(0);
+  const [isDayActionBusy, setIsDayActionBusy] = useState(false);
+  const [panelRatio, setPanelRatio] = useState(DEFAULT_PANEL_RATIO);
+  const [isResizingPanel, setIsResizingPanel] = useState(false);
+  const [isJournalPanelCollapsed, setIsJournalPanelCollapsed] = useState(false);
+  const pendingPanelDimensionActionRef = useRef<{ dimension: InterviewDimension; action: "generate" } | null>(null);
+  const panelResizeStateRef = useRef<{ startX: number; startRatio: number } | null>(null);
+  const pendingPanelActionDebugKeyRef = useRef<string | null>(null);
+  const bumpTodayJournalBoard = useCallback(() => {
+    setTodayJournalBoardRefreshKey((current) => current + 1);
+  }, []);
   const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const activeTargetDimension = normalizeInterviewDimension(pendingUrlDimension ?? currentDimension);
@@ -784,7 +827,6 @@ export function InterviewShell({
       !isBusy &&
       !isGeneratingDraft &&
       !isSavingJournal &&
-      !isInterviewLocked &&
       !showChoiceCard
   );
   const composerPlaceholder = hasDismissedInputPlaceholder ? undefined : dimensionMeta.inputPlaceholder;
@@ -1693,17 +1735,6 @@ export function InterviewShell({
       return;
     }
 
-    if (isInterviewLocked) {
-      setInterviewIssue(
-        buildInterviewIssue("SESSION_CHOICE_UNAVAILABLE", {
-          title: status === "paused" ? "旧访谈正在恢复" : "访谈已经结束",
-          message: status === "paused" ? "这轮旧访谈正在恢复中。" : "本轮访谈已结束，不能继续补充。",
-          resolution: status === "paused" ? "请刷新后重试。" : "可以查看或保存已经生成的日志。"
-        })
-      );
-      return;
-    }
-
     const optimisticMessage = payload.action === "reply" ? payload.userMessage.trim() : null;
 
     if (payload.action === "reply" && !optimisticMessage) {
@@ -1924,6 +1955,16 @@ export function InterviewShell({
   }
 
   async function handleSend() {
+    const wasLocked = isInterviewLocked;
+
+    if (wasLocked) {
+      const reopened = await handleReopenInterview();
+
+      if (!reopened) {
+        return;
+      }
+    }
+
     await runInterviewAction({
       action: "reply",
       userMessage: input,
@@ -2123,6 +2164,7 @@ export function InterviewShell({
       setDraftGenerationOverlayActive(false);
       setDraftSyncState("saved");
       setDraftGenerateState("idle");
+      bumpTodayJournalBoard();
     } catch (error) {
       if (
         error instanceof DOMException &&
@@ -2226,7 +2268,7 @@ export function InterviewShell({
 
   async function handleReopenInterview() {
     if (!sessionId || isReopeningInterview || isBusy || isSavingJournal) {
-      return;
+      return false;
     }
 
     setInterviewIssue(null);
@@ -2252,8 +2294,10 @@ export function InterviewShell({
         sessionHasUserMessages(data.session)
       );
       showToast("已回到访谈，继续说就好");
+      return true;
     } catch {
       setInterviewIssue(buildFallbackInterviewIssue("INTERVIEW_RESPOND_FAILED", "没能回到访谈，请稍后重试。"));
+      return false;
     } finally {
       setIsReopeningInterview(false);
     }
@@ -2569,6 +2613,437 @@ export function InterviewShell({
     stopToastTimer
   ]);
 
+  useEffect(() => {
+    if (workspaceMode !== "interview" || !currentRecordDate) {
+      return;
+    }
+
+    let cancelled = false;
+    setTodayJournalBoardLoading(true);
+
+    const loadBoard = async () => {
+      try {
+        const response = await fetch(`/api/daily-journal/board?date=${currentRecordDate}`, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("TODAY_JOURNAL_BOARD_FAILED");
+        }
+
+        const data = (await response.json()) as TodayJournalBoardPayload;
+
+        if (!cancelled) {
+          // #region agent log
+          debugInterviewShell("H3", "loaded today journal board", {
+            date: currentRecordDate,
+            currentDimension,
+            sessionDimension,
+            sessionId: debugShortId(sessionId),
+            dimensions: data.dimensions.map((card) => ({
+              dimension: card.dimension,
+              status: card.status,
+              hasContent: Boolean(card.content),
+              hasNewSinceJournal: card.hasNewSinceJournal,
+              sessionId: debugShortId(card.sessionId)
+            })),
+            dailyJournal: data.dailyJournal
+          });
+          // #endregion
+          setTodayJournalBoard(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setTodayJournalBoard(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setTodayJournalBoardLoading(false);
+        }
+      }
+    };
+
+    void loadBoard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentDimension, currentRecordDate, sessionDimension, sessionId, todayJournalBoardRefreshKey, workspaceMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedRatio = window.localStorage.getItem("happiness-interview-journal-panel-ratio");
+    if (!storedRatio) {
+      return;
+    }
+
+    const nextRatio = Number(storedRatio);
+    if (Number.isFinite(nextRatio)) {
+      setPanelRatio(Math.min(MAX_PANEL_RATIO, Math.max(MIN_PANEL_RATIO, nextRatio)));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem("happiness-interview-journal-panel-ratio", String(panelRatio));
+  }, [panelRatio]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setIsJournalPanelCollapsed(window.localStorage.getItem("happiness-interview-journal-panel-collapsed") === "1");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      "happiness-interview-journal-panel-collapsed",
+      isJournalPanelCollapsed ? "1" : "0"
+    );
+  }, [isJournalPanelCollapsed]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!panelResizeStateRef.current) {
+        return;
+      }
+
+      const shell = shellRef.current;
+      if (!shell) {
+        return;
+      }
+
+      const shellRect = shell.getBoundingClientRect();
+      const availableWidth = shellRect.width;
+      if (availableWidth <= 0) {
+        return;
+      }
+
+      const delta = panelResizeStateRef.current.startX - event.clientX;
+      const nextPanelWidth = Math.max(
+        360,
+        Math.min(MAX_PANEL_WIDTH_PX, availableWidth * (1 - panelResizeStateRef.current.startRatio) + delta)
+      );
+      const nextPanelRatio = Math.min(MAX_PANEL_RATIO, Math.max(MIN_PANEL_RATIO, 1 - nextPanelWidth / availableWidth));
+      setPanelRatio(nextPanelRatio);
+    };
+
+    const handlePointerUp = () => {
+      panelResizeStateRef.current = null;
+      setIsResizingPanel(false);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, []);
+
+  const liveCurrentDimensionCard = useMemo<TodayJournalDimensionCardPayload | null>(() => {
+    if (workspaceMode !== "interview" || !isSessionHydratedForCurrentDimension) {
+      return null;
+    }
+
+    if (journalEntry) {
+      return {
+        dimension: currentDimension,
+        status: journalEntry.status === "saved" ? "journaled" : "talking",
+        hasNewSinceJournal: false,
+        title: journalEntry.title ?? null,
+        content: journalEntry.content ?? null,
+        sessionId: sessionId ?? null,
+        entryId: journalEntry.id ?? null
+      };
+    }
+
+    if (hasUserMessages) {
+      return {
+        dimension: currentDimension,
+        status: "talking",
+        hasNewSinceJournal: false,
+        title: null,
+        content: null,
+        sessionId: sessionId ?? null,
+        entryId: null
+      };
+    }
+
+    return null;
+  }, [currentDimension, hasUserMessages, isSessionHydratedForCurrentDimension, journalEntry, sessionId, workspaceMode]);
+
+  const mergedTodayJournalBoard = useMemo<TodayJournalBoardPayload | null>(() => {
+    if (!todayJournalBoard) {
+      if (!liveCurrentDimensionCard) {
+        return null;
+      }
+
+      return {
+        date: currentRecordDate,
+        dimensions: interviewDimensions.map((dimensionKey) =>
+          dimensionKey === liveCurrentDimensionCard.dimension
+            ? liveCurrentDimensionCard
+            : {
+                dimension: dimensionKey,
+                status: "none" as const,
+                hasNewSinceJournal: false,
+                title: null,
+                content: null,
+                sessionId: null,
+                entryId: null
+              }
+        ),
+        dailyJournal: {
+          state: "none" as const,
+          id: null,
+          savedCount: liveCurrentDimensionCard.status === "journaled" ? 1 : 0
+        }
+      };
+    }
+
+    if (!liveCurrentDimensionCard) {
+      return todayJournalBoard;
+    }
+
+    const statusRank: Record<TodayJournalDimensionCardPayload["status"], number> = {
+      none: 0,
+      talking: 1,
+      journaled: 2
+    };
+
+    return {
+      ...todayJournalBoard,
+      dimensions: todayJournalBoard.dimensions.map((card) => {
+        if (card.dimension !== liveCurrentDimensionCard.dimension) {
+          return card;
+        }
+
+        const useLiveStatus = statusRank[liveCurrentDimensionCard.status] >= statusRank[card.status];
+
+        return {
+          dimension: card.dimension,
+          status: useLiveStatus ? liveCurrentDimensionCard.status : card.status,
+          hasNewSinceJournal:
+            card.hasNewSinceJournal ||
+            (card.status === "journaled" && liveCurrentDimensionCard.hasNewSinceJournal),
+          title: liveCurrentDimensionCard.title ?? card.title,
+          content: liveCurrentDimensionCard.content ?? card.content,
+          sessionId: liveCurrentDimensionCard.sessionId ?? card.sessionId,
+          entryId: liveCurrentDimensionCard.entryId ?? card.entryId
+        };
+      })
+    };
+  }, [currentRecordDate, liveCurrentDimensionCard, todayJournalBoard]);
+
+  function navigateToDimensionFromPanel(targetDimension: InterviewDimension) {
+    if (sessionId) {
+      touchStoredInterviewSessionId(
+        sessionDimension ?? currentDimension,
+        sessionId,
+        sessionEntryDate,
+        hasUserMessages
+      );
+    }
+
+    const params = new URLSearchParams({ dimension: targetDimension });
+    const entryDateForNav = requestedEntryDate ?? sessionEntryDate;
+
+    if (entryDateForNav) {
+      params.set("entryDate", entryDateForNav);
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), targetDimension);
+    }
+
+    setDimension(targetDimension);
+    setPendingUrlDimension(targetDimension);
+    router.push(`/interview?${params.toString()}`, { scroll: false });
+  }
+
+  async function handleSaveDimensionContent(entryId: string, content: string): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/journal-entry/${entryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content })
+      });
+
+      if (!response.ok) {
+        throw new Error("JOURNAL_ENTRY_CONTENT_UPDATE_FAILED");
+      }
+
+      bumpTodayJournalBoard();
+      return true;
+    } catch {
+      showToast("这段修改没保存成功，请稍后再试");
+      return false;
+    }
+  }
+
+  function handleGenerateDimensionFromPanel(targetDimension: InterviewDimension) {
+    const targetCard =
+      mergedTodayJournalBoard?.dimensions.find((card) => card.dimension === targetDimension) ?? null;
+
+    // #region agent log
+    debugInterviewShell("H4", "today journal single dimension generate clicked", {
+      targetDimension,
+      currentDimension,
+      sessionDimension,
+      currentSessionId: debugShortId(sessionId),
+      targetCardStatus: targetCard?.status ?? null,
+      targetCardSessionId: debugShortId(targetCard?.sessionId),
+      targetCardHasContent: Boolean(targetCard?.content),
+      targetCardHasNewSinceJournal: Boolean(targetCard?.hasNewSinceJournal),
+      sameDimension: targetDimension === currentDimension
+    });
+    // #endregion
+
+    if (targetDimension === currentDimension) {
+      void handleGenerateDraft();
+      return;
+    }
+
+    pendingPanelDimensionActionRef.current = { dimension: targetDimension, action: "generate" };
+    navigateToDimensionFromPanel(targetDimension);
+  }
+
+  useEffect(() => {
+    const pending = pendingPanelDimensionActionRef.current;
+    const pendingReadiness = pending
+      ? {
+          action: pending.action,
+          targetDimension: pending.dimension,
+          workspaceMode,
+          currentDimension,
+          sessionDimension,
+          isSessionHydratedForCurrentDimension,
+          bootState,
+          hasJournalEntry: Boolean(journalEntry),
+          sessionId: debugShortId(sessionId),
+          draftGenerationUnlocked
+        }
+      : null;
+
+    if (pendingReadiness) {
+      const debugKey = JSON.stringify(pendingReadiness);
+
+      if (pendingPanelActionDebugKeyRef.current !== debugKey) {
+        pendingPanelActionDebugKeyRef.current = debugKey;
+        // #region agent log
+        debugInterviewShell("H4", "pending panel dimension action readiness", pendingReadiness);
+        // #endregion
+      }
+    } else {
+      pendingPanelActionDebugKeyRef.current = null;
+    }
+
+    if (
+      !pending ||
+      workspaceMode !== "interview" ||
+      currentDimension !== pending.dimension ||
+      sessionDimension !== pending.dimension ||
+      !isSessionHydratedForCurrentDimension ||
+      bootState !== "idle"
+    ) {
+      return;
+    }
+
+    pendingPanelDimensionActionRef.current = null;
+
+    void handleGenerateDraft();
+    // handleGenerateDraft is a stable in-component declaration; deps cover the readiness gate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    workspaceMode,
+    currentDimension,
+    sessionDimension,
+    isSessionHydratedForCurrentDimension,
+    bootState,
+    journalEntry,
+    sessionId,
+    draftGenerationUnlocked
+  ]);
+
+  async function handleDayAction(variant: TodayDayActionVariant) {
+    if (variant === "view") {
+      void openDailyJournalWorkspace();
+      return;
+    }
+
+    if (isDayActionBusy) {
+      return;
+    }
+
+    setIsDayActionBusy(true);
+
+    try {
+      const generateResponse = await fetch("/api/daily-journal/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: currentRecordDate })
+      });
+
+      if (!generateResponse.ok) {
+        throw new Error("DAILY_JOURNAL_GENERATE_FAILED");
+      }
+
+      const generated = (await generateResponse.json()) as { dailyJournal: { id: string } };
+
+      const saveResponse = await fetch(`/api/daily-journal/${generated.dailyJournal.id}/save`, {
+        method: "POST"
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error("DAILY_JOURNAL_SAVE_FAILED");
+      }
+
+      bumpTodayJournalBoard();
+      await openDailyJournalWorkspace();
+    } catch {
+      showToast("完整日志整理失败，请稍后重试");
+    } finally {
+      setIsDayActionBusy(false);
+    }
+  }
+
+  function startResizePanel(event: React.PointerEvent<HTMLButtonElement>) {
+    if (workspaceMode !== "interview" || typeof window === "undefined") {
+      return;
+    }
+
+    const shell = shellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    const shellRect = shell.getBoundingClientRect();
+    if (shellRect.width <= 0) {
+      return;
+    }
+
+    panelResizeStateRef.current = { startX: event.clientX, startRatio: panelRatio };
+    setIsResizingPanel(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
   const draftGenerationOverlayMeta = useMemo(
     () => ({
       label: getJournalGenerationTitle(currentDimension),
@@ -2577,11 +3052,17 @@ export function InterviewShell({
     [currentDimension, draftGenerateProgress]
   );
 
+  const interviewShellStyle = {
+    ...(shellHeight ? { height: `${shellHeight}px` } : {}),
+    "--interview-main-width": `${Math.round(100 * panelRatio)}%`,
+    "--today-journal-width": `${Math.round(100 * (1 - panelRatio))}%`
+  } as React.CSSProperties;
+
   return (
     <section
       ref={shellRef}
-      className={`relative grid min-h-0 gap-0 overflow-hidden ${panelOpen && workspaceMode === "interview" ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]" : ""}`}
-      style={shellHeight ? { height: `${shellHeight}px` } : undefined}
+      className="relative grid min-h-0 gap-0 overflow-hidden h-[calc(100dvh-var(--site-header-viewport-offset))]"
+      style={interviewShellStyle}
     >
       {workspaceMode === "daily_journal" ? (
         <DailyJournalWorkspace
@@ -2601,6 +3082,13 @@ export function InterviewShell({
           />
         </div>
       ) : (
+      <div
+        className={`grid min-h-0 grid-cols-1 ${
+          isJournalPanelCollapsed
+            ? "lg:grid-cols-[minmax(0,1fr)_2.75rem]"
+            : "lg:grid-cols-[minmax(0,var(--interview-main-width,1fr))_minmax(360px,var(--today-journal-width,27rem))]"
+        }`}
+      >
       <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
         <HorizontalPager
           activeKey={displayDimension}
@@ -2622,7 +3110,7 @@ export function InterviewShell({
                       data-testid="interview-message-scroll"
                       className="panel-scroll h-full min-h-0 overflow-y-auto overscroll-contain px-1 md:px-2"
                     >
-                      <div className={`flex min-h-full flex-col gap-3 pt-1 ${isInterviewLocked ? "pb-4" : "pb-24 md:pb-28"}`}>
+                      <div className="flex min-h-full flex-col gap-3 pt-1 pb-24 md:pb-28">
                         <div className="px-1 text-[0.74rem] text-[#8a6b4b]" data-testid="interview-entry-date-label">
                           当前记录日期：{currentRecordDate}
                         </div>
@@ -2714,7 +3202,7 @@ export function InterviewShell({
                       </div>
                     </div>
 
-                    {!isInterviewLocked && !showChoiceCard ? (
+                    {!showChoiceCard ? (
                       <div
                         data-testid="interview-floating-composer"
                         className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"
@@ -2763,24 +3251,6 @@ export function InterviewShell({
                       </div>
                     ) : null}
                   </div>
-
-                  {isInterviewLocked ? (
-                    <div className="wood-dialog relative z-10 mt-3 shrink-0 rounded-[30px] px-3 py-3 shadow-[0_24px_60px_rgba(130,92,45,0.15)] md:px-4">
-                      <InterviewEndedCard
-                        title={journalEntry?.status === "saved" ? "这篇日志已记下，访谈先收住了" : "访谈先收住了"}
-                        description={
-                          isInterviewCompleted
-                            ? "想再多说一点也可以——继续聊之后，这篇日志随时能用最新对话更新。"
-                            : undefined
-                        }
-                        onContinueInterview={isInterviewCompleted ? () => void handleReopenInterview() : undefined}
-                        continueDisabled={isReopeningInterview || isBusy || isSavingJournal}
-                        onToggleWorkspace={journalEntry ? () => void handleTogglePanel() : undefined}
-                        workspaceToggleLabel={journalEntry ? workspaceToggleLabel : undefined}
-                      />
-                      {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mt-3" /> : null}
-                    </div>
-                  ) : null}
                 </>
               ) : (
                 <div className="relative min-h-0 flex-1">
@@ -2798,6 +3268,43 @@ export function InterviewShell({
           })}
         />
       </div>
+      {isJournalPanelCollapsed ? (
+        <div className="hidden min-h-0 lg:flex">
+          <button
+            type="button"
+            data-testid="today-journal-bookmark"
+            onClick={() => setIsJournalPanelCollapsed(false)}
+            aria-label="展开今日日志面板"
+            className="group flex h-full w-full items-center justify-center border-l border-[rgba(110,73,38,0.16)] bg-[linear-gradient(180deg,rgba(244,231,210,0.9),rgba(231,214,184,0.86))] transition hover:bg-[linear-gradient(180deg,rgba(248,237,219,0.96),rgba(236,220,191,0.92))]"
+          >
+            <span className="[writing-mode:vertical-rl] font-display text-[0.92rem] tracking-[0.3em] text-[#6a5642]">
+              日志
+            </span>
+          </button>
+        </div>
+      ) : (
+        <div className="hidden min-h-0 flex-col lg:flex">
+          <TodayJournalPanel
+            className="flex-1"
+            activeDimension={currentDimension}
+            board={mergedTodayJournalBoard}
+            isLoading={todayJournalBoardLoading}
+            isBusy={isDayActionBusy}
+            onGenerateDimension={handleGenerateDimensionFromPanel}
+            onDayAction={handleDayAction}
+            onSaveDimensionContent={handleSaveDimensionContent}
+            onCollapse={() => setIsJournalPanelCollapsed(true)}
+          />
+          <button
+            type="button"
+            aria-label="调整今日日志宽度"
+            onPointerDown={startResizePanel}
+            className={`absolute bottom-0 top-0 z-20 w-3 cursor-col-resize touch-none bg-transparent ${isResizingPanel ? "after:absolute after:inset-y-0 after:left-1/2 after:w-px after:-translate-x-1/2 after:bg-[rgba(168,124,69,0.42)]" : ""}`}
+            style={{ left: `calc(${Math.round(panelRatio * 100)}% - 0.375rem)` }}
+          />
+        </div>
+      )}
+      </div>
       )}
 
       {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
@@ -2805,14 +3312,14 @@ export function InterviewShell({
           aria-hidden="true"
           data-testid="journal-panel-scrim"
           onClick={() => void handleCloseButtonClick()}
-          className="absolute inset-0 z-20 bg-[rgba(32,24,17,0.32)] backdrop-blur-[1px] xl:hidden"
+          className="absolute inset-0 z-20 bg-[rgba(32,24,17,0.32)] backdrop-blur-[1px]"
         />
       ) : null}
 
       {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
         <aside
           ref={journalPanelRef}
-          className="paper-sheet absolute inset-y-0 right-0 z-30 flex min-h-0 w-full max-w-[30rem] flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 shadow-[-24px_0_60px_-20px_rgba(74,44,18,0.45)] md:px-5 md:pb-5 md:pt-5 xl:static xl:z-auto xl:w-auto xl:max-w-none xl:shadow-none"
+          className="paper-sheet journal-panel-sheet absolute inset-y-0 right-0 z-30 flex min-h-0 w-full max-w-[30rem] flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 shadow-[-24px_0_60px_-20px_rgba(74,44,18,0.45)] md:px-5 md:pb-5 md:pt-5"
         >
           <JournalGenerationOverlay
             active={draftGenerationOverlayActive}
@@ -2938,23 +3445,6 @@ export function InterviewShell({
             {journalEntry && draftGenerateIssue ? <p className="mt-4 text-sm text-[#9f3a2f]">{draftGenerateIssue.message}</p> : null}
           </div>
         </aside>
-      ) : null}
-      {!showWorkspaceTransition && !panelOpen && journalEntry && workspaceMode === "interview" ? (
-        <button
-          type="button"
-          data-testid="journal-bookmark"
-          aria-label="打开这篇日志"
-          onClick={() => setPanelOpen(true)}
-          className="absolute right-0 top-16 z-20 flex flex-col items-center gap-1 rounded-l-[14px] border border-r-0 border-[rgba(168,124,69,0.4)] bg-[linear-gradient(160deg,#cf9a55,#a86f37)] px-2.5 py-3 text-[#fff8ec] shadow-[-8px_10px_22px_-8px_rgba(110,70,30,0.55)] transition hover:px-3"
-        >
-          <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
-            <path d="M4 2.5A1.5 1.5 0 0 1 5.5 1h5A1.5 1.5 0 0 1 12 2.5V15l-4-2.4L4 15V2.5Z" />
-          </svg>
-          <span className="text-[0.6rem] font-semibold tracking-[0.12em] [writing-mode:vertical-rl]">日志</span>
-          {hasUnsavedDraftChanges || journalEntry.status !== "saved" ? (
-            <span aria-hidden="true" className="absolute -left-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#c8893f] ring-2 ring-[#fff9ef]" />
-          ) : null}
-        </button>
       ) : null}
       {showWorkspaceTransition && workspaceTransitionState ? (
         <div className="absolute inset-0 z-30 bg-[rgba(247,240,229,0.92)] backdrop-blur-[2px]">

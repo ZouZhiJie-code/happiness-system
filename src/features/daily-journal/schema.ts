@@ -45,6 +45,26 @@ export const getDailyJournalResponseSchema = z.object({
   state: z.enum(["none", "draft", "saved", "stale"])
 });
 
+export const todayJournalDimensionCardSchema = z.object({
+  dimension: z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"]),
+  status: z.enum(["none", "talking", "journaled"]),
+  hasNewSinceJournal: z.boolean(),
+  title: z.string().nullable(),
+  content: z.string().nullable(),
+  sessionId: z.string().nullable(),
+  entryId: z.string().nullable()
+});
+
+export const getTodayJournalBoardResponseSchema = z.object({
+  date: entryDateStringSchema,
+  dimensions: z.array(todayJournalDimensionCardSchema),
+  dailyJournal: z.object({
+    state: z.enum(["none", "draft", "saved", "stale"]),
+    id: z.string().nullable(),
+    savedCount: z.number().int().nonnegative()
+  })
+});
+
 export const generateDailyJournalRequestSchema = z.object({
   date: entryDateStringSchema
 });
@@ -83,3 +103,5 @@ export const saveDailyJournalResponseSchema = z.object({
 
 export type DailyJournalEntryPayload = z.infer<typeof dailyJournalEntrySchema>;
 export type DailyJournalSourcePayload = z.infer<typeof dailyJournalSourceSchema>;
+export type TodayJournalBoardPayload = z.infer<typeof getTodayJournalBoardResponseSchema>;
+export type TodayJournalDimensionCardPayload = z.infer<typeof todayJournalDimensionCardSchema>;

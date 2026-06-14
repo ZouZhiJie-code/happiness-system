@@ -513,6 +513,11 @@ export const updateJournalEntryRequestSchema = journalDraftSchema.extend({
 
 export const updateJournalEntryResponseSchema = journalEntrySchema;
 
+export const updateJournalEntryContentRequestSchema = z.object({
+  title: z.string().max(MAX_JOURNAL_TITLE_LENGTH).optional(),
+  content: z.string().max(MAX_JOURNAL_CONTENT_LENGTH)
+});
+
 export const settingsFormSchema = z.object({
   memoryEnabled: z.boolean(),
   transcriptAutoFallbackEnabled: z.boolean()

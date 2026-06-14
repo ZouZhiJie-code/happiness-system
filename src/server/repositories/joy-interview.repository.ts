@@ -1369,6 +1369,28 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
   return mapJournalEntry(updated);
 }
 
+export async function updateJournalEntryContent(entryId: string, input: { title?: string; content: string }) {
+  const updated = await prisma.joyEntry.update({
+    where: { id: entryId },
+    data: {
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      content: input.content,
+      source: "ai_draft_edited",
+      status: "draft",
+      savedAt: null
+    },
+    include: {
+      session: {
+        select: {
+          dimension: true
+        }
+      }
+    }
+  });
+
+  return mapJournalEntry(updated);
+}
+
 export async function markJoyEntrySaved(sessionId: string) {
   const existing = await prisma.interviewSession.findUnique({
     where: { id: sessionId },

@@ -14,6 +14,8 @@ vi.mock("@/server/repositories/auth.repository", () => ({
   touchAuthSessionByTokenHash: mockTouchAuthSessionByTokenHash
 }));
 
+import { Prisma } from "@prisma/client";
+
 import { getCurrentUserFromSessionToken } from "@/server/services/auth/current-user.service";
 import {
   AuthenticationError,
@@ -37,6 +39,19 @@ describe("current-user.service", () => {
 
     expect(result).toBeNull();
     expect(mockDeleteAuthSessionByTokenHash).toHaveBeenCalled();
+  });
+
+  it("returns null when auth session lookup hits a transient database connectivity error", async () => {
+    mockFindAuthSessionByTokenHash.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Can't reach database server", {
+        code: "P1001",
+        clientVersion: "5.22.0"
+      })
+    );
+
+    const result = await getCurrentUserFromSessionToken("raw-token");
+
+    expect(result).toBeNull();
   });
 
   it("touches lastUsedAt for a valid session", async () => {

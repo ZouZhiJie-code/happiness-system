@@ -1,7 +1,8 @@
-const { mockGetDailyJournal, mockGenerateDailyJournal, mockSaveAllAndGenerateDailyJournal } = vi.hoisted(() => ({
+const { mockGetDailyJournal, mockGenerateDailyJournal, mockSaveAllAndGenerateDailyJournal, mockGetTodayJournalBoard } = vi.hoisted(() => ({
   mockGetDailyJournal: vi.fn(),
   mockGenerateDailyJournal: vi.fn(),
-  mockSaveAllAndGenerateDailyJournal: vi.fn()
+  mockSaveAllAndGenerateDailyJournal: vi.fn(),
+  mockGetTodayJournalBoard: vi.fn()
 }));
 
 const { mockRequireCurrentUserFromRequest } = vi.hoisted(() => ({
@@ -21,7 +22,8 @@ vi.mock("@/server/services/daily-journal/daily-journal.service", () => ({
   },
   getDailyJournal: mockGetDailyJournal,
   generateDailyJournal: mockGenerateDailyJournal,
-  saveAllAndGenerateDailyJournal: mockSaveAllAndGenerateDailyJournal
+  saveAllAndGenerateDailyJournal: mockSaveAllAndGenerateDailyJournal,
+  getTodayJournalBoard: mockGetTodayJournalBoard
 }));
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
@@ -29,6 +31,7 @@ vi.mock("@/server/services/auth/current-user.service", () => ({
 }));
 
 import { GET as getDailyJournalRoute } from "@/app/api/daily-journal/route";
+import { GET as getDailyJournalBoardRoute } from "@/app/api/daily-journal/board/route";
 import { POST as generateDailyJournalRoute } from "@/app/api/daily-journal/generate/route";
 import { POST as saveAllDailyJournalRoute } from "@/app/api/daily-journal/save-all/route";
 
@@ -53,6 +56,28 @@ describe("daily journal api auth", () => {
 
     expect(response.status).toBe(200);
     expect(mockGetDailyJournal).toHaveBeenCalledWith("user-1", "2026-05-02");
+  });
+
+  it("passes the authenticated user into the today journal board GET", async () => {
+    mockGetTodayJournalBoard.mockResolvedValue({
+      date: "2026-05-02",
+      dimensions: [
+        { dimension: "joy", status: "journaled", hasNewSinceJournal: false, title: "被稳稳接住", content: "正文", sessionId: "session-joy", entryId: "entry-joy" },
+        { dimension: "fulfillment", status: "none", hasNewSinceJournal: false, title: null, content: null, sessionId: null, entryId: null },
+        { dimension: "reflection", status: "none", hasNewSinceJournal: false, title: null, content: null, sessionId: null, entryId: null },
+        { dimension: "improvement", status: "none", hasNewSinceJournal: false, title: null, content: null, sessionId: null, entryId: null },
+        { dimension: "gratitude", status: "none", hasNewSinceJournal: false, title: null, content: null, sessionId: null, entryId: null }
+      ],
+      dailyJournal: { state: "none", id: null, savedCount: 1 }
+    });
+
+    const response = await getDailyJournalBoardRoute(new Request("http://localhost/api/daily-journal/board?date=2026-05-02"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockGetTodayJournalBoard).toHaveBeenCalledWith("user-1", "2026-05-02");
+    expect(payload.dailyJournal.savedCount).toBe(1);
+    expect(payload.dimensions).toHaveLength(5);
   });
 
   it("passes the authenticated user into daily journal generation", async () => {

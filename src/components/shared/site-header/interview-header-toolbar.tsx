@@ -122,7 +122,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     pendingDecision,
     pendingUrlDimension,
     requestConversationReset,
-    requestDailyJournalOpen,
     requestHappinessScoreEntryOpen,
     requestDimensionNavigation,
     requestDraftGeneration,
@@ -138,7 +137,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     workspaceTransitionState,
     workspaceMode
   } = useInterviewStore();
-  const { confirmLeaveInterview } = useInterviewLeaveGuard();
+  const { persistInterviewSessionForDimensionSwitch } = useInterviewLeaveGuard();
   const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
   const todayEntryDate = getTodayEntryDate();
   const explicitEntryDate = searchParams.get("entryDate");
@@ -162,7 +161,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
       !shouldHideDraftGenerateButton
   );
   const isWorkspaceTransitioning = Boolean(workspaceTransitionState);
-  const isOpeningDailyJournal = workspaceTransitionState?.kind === "opening_daily_journal";
   const activeProgressSession: DimensionProgressSessionLike | null =
     sessionId && sessionDimension === activeDimension && status
       ? {
@@ -419,7 +417,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
           kind: "hidden"
         };
   const showSelectedProgressPod = selectedProgressPodState.kind === "active";
-  const showReturnToInterviewButton = isDailyJournalWorkspaceSelected;
 
   function handleDimensionChange(nextDimension: string) {
     const normalized = normalizeInterviewDimension(nextDimension);
@@ -429,19 +426,13 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     }
 
     if (isDailyJournalWorkspaceSelected) {
-      if (!confirmLeaveInterview()) {
-        return;
-      }
-
       requestDimensionNavigation(normalized);
       return;
     }
 
     if (normalized === activeDimension) return;
 
-    if (!confirmLeaveInterview()) {
-      return;
-    }
+    persistInterviewSessionForDimensionSwitch();
 
     prefetchDimensionSession(normalized);
 
@@ -484,22 +475,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     }
 
     requestConversationReset();
-  }
-
-  function handleDailyJournalClick() {
-    if (isWorkspaceTransitioning) {
-      return;
-    }
-
-    requestDailyJournalOpen();
-  }
-
-  function handleReturnToInterviewClick() {
-    if (isWorkspaceTransitioning) {
-      return;
-    }
-
-    requestDailyJournalOpen();
   }
 
   function handleHappinessScoreEntryClick() {
@@ -584,12 +559,14 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
           ) : null}
           {shouldShowDraftGenerateButton ? (
             <>
-              <div className="flex min-w-[4.75rem] shrink-0 justify-center">
+              <div className="flex shrink-0 justify-center">
                 <HeaderToolbarPrimaryButton
                   onClick={handleDraftGenerateClick}
                   disabled={draftGenerationBusy || draftGenerationDisabled}
                 >
-                  {draftGenerationBusy ? "正在整理..." : "生成日志"}
+                  {draftGenerationBusy
+                    ? "正在整理..."
+                    : `生成${getInterviewDimensionMeta(activeDimension).navLabel}维度日志`}
                 </HeaderToolbarPrimaryButton>
               </div>
               <HeaderToolbarDivider />
@@ -597,16 +574,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
           ) : null}
           {showSelectedProgressPod && !shouldShowDraftGenerateButton ? <HeaderToolbarDivider /> : null}
           <div className="header-ws-slot header-ws-slot--action flex shrink-0 items-center gap-1.5">
-            <HeaderToolbarActionButton
-              onClick={handleDailyJournalClick}
-              disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
-              selected={isDailyJournalWorkspaceSelected}
-              aria-pressed={isDailyJournalWorkspaceSelected}
-              aria-current={isDailyJournalWorkspaceSelected ? "step" : undefined}
-              aria-label="查看完整日志"
-            >
-              {isOpeningDailyJournal ? "正在打开完整日志" : "完整日志"}
-            </HeaderToolbarActionButton>
             <HeaderToolbarActionButton
               onClick={handleHappinessScoreEntryClick}
               disabled={isWorkspaceTransitioning || isDailyJournalWorkspaceSelected}
@@ -623,21 +590,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
               </HeaderToolbarGhostButton>
             ) : null}
           </div>
-          {showReturnToInterviewButton ? (
-            <>
-              <HeaderToolbarDivider />
-              <div className="header-ws-slot header-ws-slot--mode flex min-w-[4.75rem] shrink-0 justify-center">
-                <HeaderToolbarActionButton
-                  onClick={handleReturnToInterviewClick}
-                  disabled={isWorkspaceTransitioning}
-                  selected
-                  aria-label="回到访谈"
-                >
-                  回到访谈
-                </HeaderToolbarActionButton>
-              </div>
-            </>
-          ) : null}
         </div>
       </HeaderWorkspaceTemplate>
       {confirmDialog}

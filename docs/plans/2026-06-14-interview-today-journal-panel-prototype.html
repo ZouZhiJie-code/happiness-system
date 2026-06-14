@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>访谈页 · 今日日志面板（布局 A · 最终方案原型）</title>
+<style>
+  :root {
+    --paper-main: #f8e9cc;
+    --amber: #a96f3d;
+    --line-soft: rgba(110, 73, 38, 0.16);
+    --line-strong: rgba(110, 73, 38, 0.3);
+    --ink: #2d241c;
+    --ink-soft: #6a5440;
+    --radius-control: 12px;
+    --radius-card: 20px;
+    --radius-shell: 28px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, #7c552f 0%, #a06f40 30%, #c79a63 64%, #ddb682 100%);
+    overflow: hidden;
+  }
+  .display { font-family: "Songti SC", "Noto Serif SC", serif; }
+
+  .stage { height: 100%; display: flex; flex-direction: column; max-width: 1240px; margin: 0 auto; padding: 16px 18px 14px; }
+
+  /* ── Header：维度胶囊导航（无完整日志 / 无回到访谈按钮） ── */
+  .header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px;
+    border-radius: var(--radius-shell);
+    background: linear-gradient(180deg, rgba(255, 250, 241, 0.82), rgba(244, 230, 204, 0.74));
+    border: 1px solid var(--line-soft);
+    box-shadow: 0 10px 28px rgba(90, 60, 30, 0.12);
+  }
+  .caps { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; }
+  .cap {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line-soft);
+    background: rgba(255, 252, 245, 0.6);
+    color: #7c5f42; font-size: 13px; cursor: pointer; white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .cap:hover { border-color: var(--amber); }
+  .cap[data-active="true"] { background: linear-gradient(180deg, #f0d8ad, #e2c79f); color: #3a2b1b; border-color: transparent; box-shadow: 0 6px 14px rgba(131, 80, 31, 0.2); font-weight: 600; }
+  .cap__word { font-family: "Songti SC","Noto Serif SC", serif; font-size: 15px; }
+  .cap__dot { width: 7px; height: 7px; border-radius: 50%; background: #cdbb9f; }
+  .cap[data-state="talking"] .cap__dot { background: var(--amber); box-shadow: 0 0 0 3px rgba(169,111,61,0.16); }
+  .cap[data-state="journaled"] .cap__dot { background: #7d8d63; }
+  .header__score { margin-left: auto; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line-soft); background: rgba(255,250,242,0.7); color: #6a5440; font-size: 13px; white-space: nowrap; }
+
+  /* ── 主体：左对话 + 右今日日志面板（布局 A） ── */
+  .body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 14px; margin-top: 12px; }
+  @media (max-width: 900px) { .body { grid-template-columns: 1fr; } }
+
+  .panel {
+    border-radius: var(--radius-shell);
+    background: linear-gradient(180deg, rgba(255, 250, 242, 0.92), rgba(246, 232, 206, 0.88));
+    border: 1px solid var(--line-soft);
+    box-shadow: 0 18px 44px rgba(90, 60, 30, 0.16);
+    display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+  }
+
+  /* 对话区 */
+  .chat__scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 18px 0; display: flex; flex-direction: column; gap: 13px; }
+  .date-line { font-size: 12px; color: #8a6b4b; }
+  .thinking { position: relative; padding-left: 16px; max-width: 82%; color: rgba(48,33,20,0.5); font-size: 13px; line-height: 1.7; }
+  .thinking::before { content: ""; position: absolute; left: 0; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: rgba(169,111,61,0.55); }
+  .question { align-self: flex-start; max-width: 86%; padding: 12px 16px; border-radius: 22px; border: 1px solid rgba(166,111,59,0.24); background: linear-gradient(180deg, rgba(255,246,234,0.98), rgba(243,226,199,0.96)); font-size: 14px; line-height: 1.75; color: #2b2118; font-weight: 500; }
+  .user { align-self: flex-end; max-width: 82%; padding: 11px 15px; border-radius: 22px; border: 1px solid rgba(133,91,47,0.2); background: linear-gradient(180deg, rgba(221,185,133,0.96), rgba(195,152,97,0.96)); font-size: 14px; line-height: 1.7; color: #2f2823; }
+  .composer { margin: 12px 16px 14px; padding: 8px 10px 8px 16px; border-radius: 24px; border: 1px solid var(--line-soft); background: rgba(255,250,242,0.7); display: flex; align-items: center; gap: 10px; color: #ab9886; font-size: 14px; }
+  .composer__send { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(180deg, #f4e1c7, #e5c9a9); border: 1px solid rgba(255,255,255,0.5); flex-shrink: 0; }
+
+  /* 今日日志面板 */
+  .today__head { padding: 16px 16px 12px; border-bottom: 1px solid var(--line-soft); }
+  .today__title { font-size: 17px; color: var(--ink); }
+  .today__sub { font-size: 12px; color: #8a6b4b; margin-top: 3px; }
+  .acc { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 9px; }
+
+  .block { border: 1px solid var(--line-soft); border-radius: var(--radius-card); background: rgba(255, 252, 246, 0.7); overflow: hidden; transition: border-color 0.2s ease; }
+  .block[data-state="journaled"] { background: linear-gradient(180deg, rgba(255,251,243,0.96), rgba(247,236,215,0.92)); }
+  .block[data-state="none"] { background: rgba(250, 245, 236, 0.5); border-style: dashed; }
+  .block__head { display: flex; align-items: center; gap: 10px; padding: 11px 13px; cursor: pointer; }
+  .block[data-state="none"] .block__head { cursor: default; }
+  .badge-word { width: 26px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; font-family: "Songti SC","Noto Serif SC", serif; font-size: 14px; }
+  .block__main { min-width: 0; flex: 1; }
+  .block__title { font-family: "Songti SC","Noto Serif SC", serif; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block__title--muted { color: #a58d73; font-family: -apple-system, sans-serif; font-size: 13px; }
+  .block__meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .tag-new { font-size: 10px; color: #8a5a24; background: rgba(200,137,63,0.16); border: 1px solid rgba(200,137,63,0.34); border-radius: 999px; padding: 1px 7px; }
+  .tag-included { font-size: 10px; color: #566b3c; }
+  .chev { color: #b39873; font-size: 11px; transition: transform 0.25s ease; flex-shrink: 0; }
+  .block[data-open="true"] .chev { transform: rotate(90deg); }
+  .block__body { display: none; padding: 0 13px 13px; }
+  .block[data-open="true"] .block__body { display: block; animation: fade 0.25s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .body-text { font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .reminder { font-size: 12.5px; line-height: 1.7; color: #8a5a24; background: rgba(255,246,238,0.7); border: 1px solid rgba(200,137,63,0.26); border-radius: 12px; padding: 9px 11px; }
+  .reminder + .integrate { margin-top: 9px; }
+  .integrate { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(168,124,69,0.42); background: linear-gradient(180deg, #d5ae79, #bc8f58); color: #2f2823; font-size: 12.5px; border-radius: 999px; padding: 6px 13px; cursor: pointer; transition: transform 0.15s ease; }
+  .integrate:hover { transform: translateY(-1px); }
+
+  /* 日级按钮 */
+  .day-zone { padding: 12px 14px; border-top: 1px solid var(--line-soft); }
+  .day-btn { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid transparent; background: linear-gradient(160deg, #caa15e, #9a6a2c); color: #fff8ec; font-size: 14.5px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; box-shadow: 0 12px 26px rgba(131,80,31,0.28); transition: transform 0.2s ease, opacity 0.3s ease; }
+  .day-btn:hover { transform: translateY(-2px); }
+  .day-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.4); box-shadow: none; }
+  .day-btn[data-variant="view"] { background: linear-gradient(160deg, #e8d6b4, #cdb084); color: #3a2b1b; }
+  .day-btn[data-variant="update"] { background: linear-gradient(160deg, #d39a5a, #b0701f); }
+  .day-hint { text-align: center; font-size: 11.5px; color: #8a6b4b; margin-top: 7px; }
+
+  /* 完整日志整页（覆盖主体） */
+  .full { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .full[data-open="true"] { display: flex; }
+  .full__inner { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 18px 18px 0; }
+  .full__back { font-size: 12px; color: #8a6b4b; margin-bottom: 6px; }
+  .full__title { width: 100%; border: none; background: transparent; font-family: "Songti SC","Noto Serif SC", serif; font-size: 24px; color: var(--ink); outline: none; padding: 6px 2px; }
+  .full__divider { height: 1px; background: linear-gradient(90deg, rgba(173,131,84,0.08), rgba(173,131,84,0.34), rgba(173,131,84,0.08)); }
+  .full__body { flex: 1; min-height: 0; width: 100%; border: none; background: transparent; resize: none; outline: none; font-size: 14px; line-height: 1.95; color: #302114; padding: 14px 2px; }
+  .full__foot { padding: 12px 18px; display: flex; justify-content: flex-end; min-height: 58px; }
+  .save-edit { border: 1px solid rgba(168,124,69,0.42); background: linear-gradient(180deg, #d5ae79, #bc8f58); color: #2f2823; font-size: 14px; border-radius: 999px; padding: 9px 18px; cursor: pointer; display: none; }
+  .save-edit[data-show="true"] { display: inline-block; animation: fade 0.25s ease; }
+
+  /* loading 覆盖 */
+  .loading { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(247,240,229,0.92); backdrop-filter: blur(2px); z-index: 5; }
+  .loading[data-open="true"] { display: flex; }
+  .loading__card { text-align: center; color: #6a5440; }
+  .spinner { width: 34px; height: 34px; margin: 0 auto 12px; border-radius: 50%; border: 3px solid rgba(169,111,61,0.25); border-top-color: var(--amber); animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 原型操作台 */
+  .console { margin-top: 12px; padding: 11px 14px; border-radius: var(--radius-card); border: 1px dashed var(--line-strong); background: rgba(40,26,16,0.06); }
+  .console__label { font-size: 11px; letter-spacing: 0.14em; color: #7c5a36; margin-bottom: 8px; }
+  .console__row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+  .chip { border: 1px solid var(--line-soft); background: rgba(255,250,242,0.85); border-radius: 10px; padding: 6px 11px; cursor: pointer; font-size: 12px; color: var(--ink); transition: all 0.18s ease; }
+  .chip:hover { border-color: var(--amber); transform: translateY(-1px); }
+  .reset { margin-left: auto; border: none; background: none; color: #9a7b56; text-decoration: underline; cursor: pointer; font-size: 12px; }
+  .note { margin-top: 9px; font-size: 11px; line-height: 1.6; color: rgba(255,249,239,0.85); text-align: center; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <!-- Header：胶囊导航 -->
+    <div class="header">
+      <div class="caps" id="caps"></div>
+      <div class="header__score">当天评分</div>
+    </div>
+
+    <div class="body">
+      <!-- 左：对话区 -->
+      <section class="panel" style="position:relative;">
+        <div class="chat__scroll" id="chatScroll"></div>
+        <div class="composer">继续说说今天的「<span id="composerDim">开心</span>」……<span class="composer__send"></span></div>
+
+        <!-- 完整日志整页（覆盖在对话区上，整页切换感） -->
+        <div class="full" id="fullPage">
+          <div class="full__inner">
+            <div class="full__back">点上方任意维度胶囊，即可回到访谈</div>
+            <input class="full__title" id="fullTitle" value="今天的你" />
+            <div class="full__divider"></div>
+            <textarea class="full__body" id="fullBody"></textarea>
+          </div>
+          <div class="full__foot">
+            <button class="save-edit" id="saveEdit">保存修改</button>
+          </div>
+        </div>
+
+        <!-- loading -->
+        <div class="loading" id="loading">
+          <div class="loading__card"><div class="spinner"></div>正在整理完整日志…</div>
+        </div>
+      </section>
+
+      <!-- 右：今日日志面板 -->
+      <aside class="panel">
+        <div class="today__head">
+          <div class="today__title display">今日日志</div>
+          <div class="today__sub">五维全程在场，可在任一维度回看其他维度</div>
+        </div>
+        <div class="acc" id="acc"></div>
+        <div class="day-zone">
+          <button class="day-btn" id="dayBtn" disabled>生成日志</button>
+          <div class="day-hint" id="dayHint">先把某一维整理纳入，就能生成完整日志</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- 原型操作台 -->
+    <div class="console">
+      <div class="console__label">原型操作台（模拟"在某维聊几句"，触发在聊态）</div>
+      <div class="console__row" id="consoleRow"></div>
+      <div class="console__row" style="margin-top:8px;">
+        <button class="reset" id="resetBtn">重置今天</button>
+      </div>
+    </div>
+    <div class="note">布局 A · 纯单日 · 无连续打卡 ｜ 完整日志只由右侧日级按钮生成/更新，整页只读+编辑，改了才出现保存修改</div>
+  </div>
+
+<script>
+  const DIMS = [
+    { key:"joy", word:"悦", name:"开心", color:"#d9943f",
+      title:"清醒地开始", body:"早起多出来的半小时，让你一整天都更稳。你没有立刻看手机，慢慢喝了杯茶，那种从容好像比事情本身更重要。" },
+    { key:"fulfillment", word:"实", name:"充实", color:"#b9893f",
+      title:"总算落了地", body:"那件拖了很久的事今天推进了一点，落到了实处。不是全部做完，但今天没白过。" },
+    { key:"reflection", word:"思", name:"思考", color:"#7f9a55",
+      title:"看重踏实", body:"你发现自己其实更在意过程里的踏实，而不是结果好不好看。这让你对「值得」有了新的判断。" },
+    { key:"improvement", word:"改", name:"改进", color:"#5d96a8",
+      title:"先听完再回应", body:"先把对方听完再回应，会让一段对话顺很多。下次想在开口前多留半拍。" },
+    { key:"gratitude", word:"谢", name:"感谢", color:"#a86fa0",
+      title:"被稳稳接住", body:"有人中午陪你走了一段，还顺手帮你把那件小事处理了。这种被接住的感觉，今天被你记住了。" },
+  ];
+
+  // 每维状态：none | talking | journaled ；newSinceJournal：已整理后又有新内容
+  const st = {};
+  DIMS.forEach(d => st[d.key] = { status:"none", newSince:false, version:0 });
+  let active = "joy";
+  let generated = false;
+  let genSignature = "";
+
+  const caps = document.getElementById("caps");
+  const acc = document.getElementById("acc");
+  const consoleRow = document.getElementById("consoleRow");
+  const chatScroll = document.getElementById("chatScroll");
+  const composerDim = document.getElementById("composerDim");
+  const dayBtn = document.getElementById("dayBtn");
+  const dayHint = document.getElementById("dayHint");
+  const fullPage = document.getElementById("fullPage");
+  const fullTitle = document.getElementById("fullTitle");
+  const fullBody = document.getElementById("fullBody");
+  const saveEdit = document.getElementById("saveEdit");
+  const loading = document.getElementById("loading");
+
+  function signature() {
+    return DIMS.filter(d => st[d.key].status === "journaled" && !st[d.key].newSince)
+      .map(d => d.key + st[d.key].version).join("|");
+  }
+  function journaledDims() { return DIMS.filter(d => st[d.key].status === "journaled"); }
+
+  // ── 胶囊导航 ──
+  function renderCaps() {
+    caps.innerHTML = "";
+    DIMS.forEach(d => {
+      const c = document.createElement("button");
+      c.className = "cap";
+      c.dataset.state = st[d.key].status;
+      c.dataset.active = String(active === d.key);
+      c.innerHTML = `<span class="cap__word">${d.word}</span>${d.name}<span class="cap__dot"></span>`;
+      c.onclick = () => { active = d.key; closeFull(); renderAll(); };
+      caps.appendChild(c);
+    });
+  }
+
+  // ── 对话区（按当前维度给个静态示意） ──
+  function renderChat() {
+    const d = DIMS.find(x => x.key === active);
+    composerDim.textContent = d.name;
+    const s = st[d.key];
+    let html = `<div class="date-line">当前记录日期：2026-06-14 ｜ 正在记录「${d.name}」</div>`;
+    if (s.status === "none") {
+      html += `<div class="question">今天关于「${d.name}」，有没有哪个具体的瞬间想说说？</div>`;
+    } else {
+      html += `<div class="thinking">我听到的是，你今天在「${d.name}」这件事上有一些具体的感受。</div>`;
+      html += `<div class="question">那个时刻你具体做了什么，当时心里是什么感觉？</div>`;
+      html += `<div class="user">（这里是你和 AI 关于「${d.name}」的对话……）</div>`;
+      if (s.status === "journaled" && !s.newSince) {
+        html += `<div class="thinking">这一维已经整理成日志了，你可以在右侧回看，也可以继续聊。</div>`;
+      }
+    }
+    chatScroll.innerHTML = html;
+  }
+
+  // ── 今日日志折叠面板 ──
+  function renderAcc() {
+    acc.innerHTML = "";
+    DIMS.forEach(d => {
+      const s = st[d.key];
+      const block = document.createElement("div");
+      block.className = "block";
+      block.dataset.state = s.status;
+      block.dataset.open = "false";
+
+      // 头部
+      const head = document.createElement("div");
+      head.className = "block__head";
+      let titleHtml, metaHtml = "";
+      if (s.status === "none") {
+        titleHtml = `<div class="block__title block__title--muted">今天还没聊这个</div>`;
+      } else if (s.status === "talking") {
+        titleHtml = `<div class="block__title block__title--muted">正在聊（还没整理出日志）</div>`;
+      } else {
+        titleHtml = `<div class="block__title">${d.title}</div>`;
+        if (s.newSince) metaHtml = `<div class="block__meta"><span class="tag-new">有新增</span></div>`;
+        else metaHtml = `<div class="block__meta"><span class="tag-included">已纳入完整日志</span></div>`;
+      }
+      head.innerHTML = `
+        <span class="badge-word" style="background:${s.status==="none"?"rgba(205,187,159,0.3)":d.color+"22"};color:${s.status==="none"?"#a58d73":d.color}">${d.word}</span>
+        <div class="block__main">${titleHtml}${metaHtml}</div>
+        ${s.status==="none" ? "" : '<span class="chev">▶</span>'}`;
+      block.appendChild(head);
+
+      // 展开体
+      if (s.status !== "none") {
+        const bodyEl = document.createElement("div");
+        bodyEl.className = "block__body";
+        const needIntegrate = s.status === "talking" || (s.status === "journaled" && s.newSince);
+        let inner = "";
+        if (s.status === "journaled") {
+          inner += `<div class="body-text">${d.body}</div>`;
+        }
+        if (needIntegrate) {
+          inner += `<div class="reminder">这维还在聊，有新内容还没整理进日志，建议再深挖一点。聊够了也可以直接整理纳入。</div>`;
+          inner += `<button class="integrate">生成${d.name}维度日志</button>`;
+        }
+        bodyEl.innerHTML = inner;
+        block.appendChild(bodyEl);
+
+        head.onclick = () => {
+          const open = block.dataset.open === "true";
+          acc.querySelectorAll(".block").forEach(b => b.dataset.open = "false");
+          block.dataset.open = open ? "false" : "true";
+        };
+        const intBtn = bodyEl.querySelector(".integrate");
+        if (intBtn) intBtn.onclick = (e) => { e.stopPropagation(); integrate(d.key); };
+      }
+      acc.appendChild(block);
+    });
+  }
+
+  // ── 日级按钮三态 ──
+  function renderDayBtn() {
+    const jc = journaledDims().filter(d => !st[d.key].newSince).length;
+    if (jc === 0) {
+      dayBtn.textContent = "生成日志"; dayBtn.dataset.variant = "gen"; dayBtn.disabled = true;
+      dayHint.textContent = "先把某一维整理纳入，就能生成完整日志";
+      return;
+    }
+    if (!generated) {
+      dayBtn.textContent = "生成日志"; dayBtn.dataset.variant = "gen"; dayBtn.disabled = false;
+      dayHint.textContent = `已有 ${jc} 维可纳入（也可以继续聊更多维）`;
+    } else if (signature() !== genSignature) {
+      dayBtn.textContent = "更新日志"; dayBtn.dataset.variant = "update"; dayBtn.disabled = false;
+      dayHint.textContent = "有维度更新了，可用最新内容重新整理完整日志";
+    } else {
+      dayBtn.textContent = "查看日志"; dayBtn.dataset.variant = "view"; dayBtn.disabled = false;
+      dayHint.textContent = "今天的完整日志已就绪";
+    }
+  }
+
+  // ── 操作：在某维聊几句 ──
+  function talk(key) {
+    const s = st[key];
+    if (s.status === "none") s.status = "talking";
+    else if (s.status === "journaled") s.newSince = true; // 整理后又聊 → 有新增
+    active = key; closeFull(); renderAll();
+  }
+  // ── 操作：生成X维度日志（= 在聊态的"整理纳入"） ──
+  function integrate(key) {
+    const s = st[key];
+    s.status = "journaled"; s.newSince = false; s.version += 1;
+    renderAll();
+  }
+
+  function renderAll() { renderCaps(); renderChat(); renderAcc(); renderDayBtn(); }
+
+  // ── 日级按钮点击 ──
+  dayBtn.onclick = () => {
+    if (dayBtn.disabled) return;
+    const variant = dayBtn.dataset.variant;
+    if (variant === "view") { openFull(); return; }
+    loading.dataset.open = "true";
+    setTimeout(() => {
+      loading.dataset.open = "false";
+      generated = true; genSignature = signature();
+      buildFullContent();
+      openFull();
+      renderDayBtn();
+    }, 1100);
+  };
+
+  function buildFullContent() {
+    const dones = journaledDims().filter(d => !st[d.key].newSince);
+    fullBody.value = dones.map(d => d.body).join("\n\n");
+    if (!fullTitle.value || fullTitle.dataset.touched !== "true") fullTitle.value = "今天的你";
+    savedSnapshot = fullTitle.value + "\u0000" + fullBody.value;
+    saveEdit.dataset.show = "false";
+  }
+
+  let savedSnapshot = "";
+  function openFull() { fullPage.dataset.open = "true"; }
+  function closeFull() { fullPage.dataset.open = "false"; }
+
+  function checkEdit() {
+    const now = fullTitle.value + "\u0000" + fullBody.value;
+    saveEdit.dataset.show = (now !== savedSnapshot) ? "true" : "false";
+  }
+  fullTitle.addEventListener("input", () => { fullTitle.dataset.touched = "true"; checkEdit(); });
+  fullBody.addEventListener("input", checkEdit);
+  saveEdit.onclick = () => { savedSnapshot = fullTitle.value + "\u0000" + fullBody.value; saveEdit.dataset.show = "false"; };
+
+  // ── 操作台 ──
+  DIMS.forEach(d => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = `在「${d.name}」聊几句`;
+    b.onclick = () => talk(d.key);
+    consoleRow.appendChild(b);
+  });
+  document.getElementById("resetBtn").onclick = () => location.reload();
+
+  renderAll();
+</script>
+</body>
+</html>

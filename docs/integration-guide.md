@@ -32,6 +32,7 @@
 | `PUT` | `/api/journal-entry/[id]` | 更新日志标题和正文 | 当前 canonical 编辑接口 |
 | `PUT` | `/api/joy-entry/[id]` | 更新日志标题和正文 | 与上面完全等价，保留兼容 |
 | `GET` | `/api/daily-journal?date=YYYY-MM-DD` | 查询当天整合日志 | 返回 `none / draft / saved / stale` |
+| `GET` | `/api/daily-journal/board?date=YYYY-MM-DD` | 今日日志面板只读聚合 | 返回五维 `状态/标题/正文/sessionId` + 完整日志状态 |
 | `POST` | `/api/daily-journal/generate` | 生成当天整合日志 | 只使用已保存维度日志 |
 | `PUT` | `/api/daily-journal/[id]` | 更新当天整合日志草稿 | 访谈页当天日志模式自动保存 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存当天整合日志 | 将日级日志标成 `saved` |
@@ -725,9 +726,15 @@ POST /api/profile/portrait
 当前与日志整理相关的真实前端语义是：
 - 继续访谈、切到下一件事件、AI 新追问、用户新回答，都不会自动进入“正在整理中”
 - 日志整理必须由用户显式点击触发
-- 第一次生成时，右侧日志 pane 会显示阶段式 loading 状态
+- 单维度生成入口为今日日志面板每张卡片的 `生成{维}维度日志`（或 header 当前维度的同名按钮）；第一次生成时单维度日志以覆盖式书页显示阶段式 loading 状态，不挤压对话区
 - 已有草稿后再生成时，旧稿会先保留可见，再叠加阶段式刷新提示
 - 如果用户在生成过程中关闭日志面板，前端会 abort 这次请求，但不会删除已有草稿
+- 保存正式日志成功后，书页自动收回，维度日志进入右侧常驻「今日日志」面板（`today-journal-panel`）；前端不再额外弹出“日志已保存”模块
+- 访谈完成后不再渲染结束卡；输入框保持常驻（`interview-floating-composer`），用户继续输入时会先调用 `/api/interview/session/reopen`，成功后再发送该条回复
+- 完整日志由今日日志面板底部日级按钮 `生成日志 / 更新日志 / 查看日志`（testid `today-journal-day-action`）触发；`生成 / 更新` 会先 `POST /api/daily-journal/generate` 再 `POST /api/daily-journal/[id]/save`，成功后整页跳转完整日志页；header 已无【完整日志】【回到访谈】按钮
+- 完整日志整页只读 + 编辑，删掉底部三按钮；用户改了正文才出现 `保存修改`
+- 验收脚本不要再等待“这篇日志已记下，访谈先收住了”这类旧标题，也不要再找 `journal-bookmark`/“收成并保存完整日志”；改为检查 `today-journal-panel`、`today-journal-day-action` 和 `interview-floating-composer`
+- 切换访谈维度时，前端会静默持久化当前维度 session，不再触发原生离开确认；真实离开页面仍保留离开保护
 
 ### 5.6 fulfillment 验收语义
 
