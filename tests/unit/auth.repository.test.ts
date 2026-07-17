@@ -5,6 +5,7 @@ const {
   mockAuthSessionUpdateMany,
   mockPrismaTransaction,
   mockTxAuthSessionCreate,
+  mockTxUserSettingsCreate,
   mockTxUserCreate,
   mockUserCreate,
   mockUserFindUnique
@@ -15,6 +16,7 @@ const {
   mockAuthSessionUpdateMany: vi.fn(),
   mockPrismaTransaction: vi.fn(),
   mockTxAuthSessionCreate: vi.fn(),
+  mockTxUserSettingsCreate: vi.fn(),
   mockTxUserCreate: vi.fn(),
   mockUserCreate: vi.fn(),
   mockUserFindUnique: vi.fn()
@@ -159,7 +161,8 @@ describe("auth.repository", () => {
     mockPrismaTransaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
       callback({
         user: { create: mockTxUserCreate },
-        authSession: { create: mockTxAuthSessionCreate }
+        authSession: { create: mockTxAuthSessionCreate },
+        userSettings: { create: mockTxUserSettingsCreate }
       })
     );
 
@@ -179,6 +182,9 @@ describe("auth.repository", () => {
         userId: "user-1",
         tokenHash: "hashed-token"
       })
+    });
+    expect(mockTxUserSettingsCreate).toHaveBeenCalledWith({
+      data: { userId: "user-1" }
     });
     expect(result).toEqual({
       id: "user-1",

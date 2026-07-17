@@ -27,12 +27,13 @@ function scrollSectionIntoView(element: HTMLElement, behavior: ScrollBehavior) {
   element.scrollIntoView?.({ behavior, block: "start" });
 }
 
-export function useAnalysisSectionSpy(input: { month: string; section: AnalysisSectionKey }) {
+export function useAnalysisSectionSpy(input: { month: string; section: AnalysisSectionKey; ready: boolean }) {
   const { setActiveSection } = useAnalysisChrome();
   const scrollLockRef = useRef(false);
   const scrollLockTimerRef = useRef<number | null>(null);
   const lastSectionRef = useRef(input.section);
   const isFirstRenderRef = useRef(true);
+  const initialTargetPendingRef = useRef(input.section !== "trends");
 
   useEffect(() => {
     const element = document.getElementById(getAnalysisSectionElementId(input.section));
@@ -44,12 +45,29 @@ export function useAnalysisSectionSpy(input: { month: string; section: AnalysisS
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       lastSectionRef.current = input.section;
+    }
 
-      if (input.section !== "trends") {
-        requestAnimationFrame(() => {
-          scrollSectionIntoView(element, "auto");
-        });
+    if (initialTargetPendingRef.current) {
+      if (input.section === "trends") {
+        initialTargetPendingRef.current = false;
+        scrollLockRef.current = false;
+        return;
       }
+
+      lastSectionRef.current = input.section;
+      scrollLockRef.current = true;
+
+      if (!input.ready) {
+        return;
+      }
+
+      initialTargetPendingRef.current = false;
+      requestAnimationFrame(() => {
+        scrollSectionIntoView(element, "auto");
+      });
+      scrollLockTimerRef.current = window.setTimeout(() => {
+        scrollLockRef.current = false;
+      }, SCROLL_LOCK_MS);
 
       return;
     }
@@ -70,7 +88,7 @@ export function useAnalysisSectionSpy(input: { month: string; section: AnalysisS
     scrollLockTimerRef.current = window.setTimeout(() => {
       scrollLockRef.current = false;
     }, SCROLL_LOCK_MS);
-  }, [input.section]);
+  }, [input.ready, input.section]);
 
   useEffect(() => {
     const headerOffset = readHeaderOffsetPx();

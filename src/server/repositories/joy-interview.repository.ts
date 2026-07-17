@@ -585,6 +585,12 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
 
   const dimension = entry.session?.dimension ?? dimensionFallback;
   const payload = normalizePayloadForDimension(dimension, entry);
+  const confirmationState =
+    entry.status === "draft"
+      ? "draft"
+      : !entry.savedAt || entry.updatedAt.getTime() > entry.savedAt.getTime()
+        ? "modified"
+        : "confirmed";
 
   return {
     id: entry.id,
@@ -628,7 +634,8 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
     status: entry.status,
     linkedSessionIds: entry.linkedSessionIds,
     updatedAt: entry.updatedAt.toISOString(),
-    savedAt: entry.savedAt?.toISOString() ?? null
+    savedAt: entry.savedAt?.toISOString() ?? null,
+    confirmationState
   };
 }
 
@@ -1175,8 +1182,8 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         payload: toJsonValue(payload),
         eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
         source: draftEntry.source,
-        status: "draft",
-        savedAt: null,
+        status: existing.joyEntry?.status ?? "draft",
+        savedAt: existing.joyEntry?.savedAt ?? null,
         linkedSessionIds: [sessionId]
       },
       create: {
@@ -1354,8 +1361,8 @@ export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft)
       payload: toJsonValue(payload),
       eventBlocks: draftEntry.eventBlocks as unknown as Prisma.InputJsonValue,
       source: "ai_draft_edited",
-      status: "draft",
-      savedAt: null
+      status: existing.status,
+      savedAt: existing.savedAt
     },
     include: {
       session: {
@@ -1375,9 +1382,7 @@ export async function updateJournalEntryContent(entryId: string, input: { title?
     data: {
       ...(input.title !== undefined ? { title: input.title } : {}),
       content: input.content,
-      source: "ai_draft_edited",
-      status: "draft",
-      savedAt: null
+      source: "ai_draft_edited"
     },
     include: {
       session: {
@@ -1408,6 +1413,7 @@ export async function markJoyEntrySaved(sessionId: string) {
       data: {
         status: "saved",
         savedAt,
+        updatedAt: savedAt,
         linkedSessionIds: [sessionId]
       }
     }),

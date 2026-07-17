@@ -581,7 +581,7 @@ describe("analysis shell", () => {
     await screen.findByTestId("analysis-trends-section");
   });
 
-  it("renders all analysis sections on a single scroll page by default", async () => {
+  it("renders the two available analysis sections on a single scroll page", async () => {
     setMockSearchParams({
       month: "2026-05",
       section: null
@@ -596,22 +596,22 @@ describe("analysis shell", () => {
     await screen.findByTestId("analysis-dimension-cards");
 
     expect(screen.getByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-correlation-placeholder")).toBeInTheDocument();
-    expect(screen.getByTestId("analysis-review-placeholder")).toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-correlation-placeholder")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-review-placeholder")).not.toBeInTheDocument();
     expect(screen.queryByTestId("analysis-month-hero")).not.toBeInTheDocument();
   });
 
   it("keeps a valid month and canonical section without rewriting the url", async () => {
     setMockSearchParams({
       month: "2026-04",
-      section: "correlation"
+      section: "dimensions"
     });
 
     renderWithAnalysisChrome(<AnalysisShell />);
 
     expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(historyReplaceStateSpy).not.toHaveBeenCalled();
-    expect(await screen.findByTestId("analysis-correlation-placeholder")).toBeInTheDocument();
+    expect(await screen.findByTestId("analysis-dimensions-placeholder")).toBeInTheDocument();
   });
 
   it("falls back invalid month params to the current month", async () => {

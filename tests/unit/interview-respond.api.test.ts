@@ -166,7 +166,8 @@ describe("interview respond api auth", () => {
         userMessage: "我想记住被接住的感觉。",
         inputMode: "text"
       },
-      expect.any(Object)
+      expect.any(Object),
+      { signal: expect.any(AbortSignal) }
     );
   });
 

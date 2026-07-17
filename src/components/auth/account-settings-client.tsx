@@ -59,7 +59,14 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
     });
 
     if (!response.ok) {
-      throw new Error("删除账号失败，请重试");
+      const payload = await response.json().catch(() => null);
+      throw new Error(
+        payload?.error === "INVALID_DELETE_ACCOUNT_REQUEST"
+          ? "密码格式有误，请输入 8–72 位密码"
+          : payload?.error === "INVALID_CREDENTIALS"
+            ? "当前密码不正确"
+            : "删除账号失败，请重试"
+      );
     }
 
     clearInterviewClientState();
@@ -80,7 +87,7 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
               管理登录状态与账号删除
             </h1>
             <p className="mt-4 text-pretty text-sm leading-8 text-ink/76">
-              这里已经接入首版账户危险区。你可以退出当前账户，也可以提交密码确认删除账号与关联数据。
+              你可以退出当前账户，也可以提交密码确认删除账号与关联数据。
             </p>
           </div>
 

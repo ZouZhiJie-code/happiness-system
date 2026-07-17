@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 
 import type { AnalysisDailyCoverageDay, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
 import type { AnalysisRangePreset } from "@/features/analysis/date-range";
 import { buildCalendarMonthGrid } from "@/features/calendar/view-state";
 import { happinessScorePresentationItems } from "@/features/happiness-score/presentation";
-import { Card, HorizontalPager, SlidingSegmentedControl } from "@/components/ui";
+import { actionButtonClass, Card, HorizontalPager, SlidingSegmentedControl } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatScoreAverage } from "./analysis-shared";
 
@@ -14,7 +15,7 @@ type FactorView = "radar" | "lollipop";
 
 const TRENDS_VIZ_CLASS = "analysis-trends-viz";
 const TRENDS_PANE_PAD = "px-[0.85rem] py-[0.65rem]";
-// 底部三列（日志天数 / 8要素 / 敬请期待）统一图表槽；高度按放大后的 8 行棒棒糖内容兜住。
+// 底部两列统一图表槽；高度按放大后的 8 行棒棒糖内容兜住。
 const TRENDS_BOTTOM_PANE_SLOT = "h-[13rem] w-full";
 
 const RADAR_LAYOUT = {
@@ -83,7 +84,8 @@ function TotalScoreComboChart({ record }: { record: AnalysisTrendsRangeRecord })
   if (scoredDays.length === 0) {
     return (
       <TrendsVizCard className="px-5 py-8 text-center text-[0.88rem] text-[var(--text-dim)]">
-        这个周期还没有评分记录。
+        <p>这个周期还没有评分记录。</p>
+        <Link href="/interview" className={actionButtonClass("ghost", "mt-3")}>前往当天评分</Link>
       </TrendsVizCard>
     );
   }
@@ -461,17 +463,6 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
   );
 }
 
-function TrendsPlaceholderPanel() {
-  return (
-    <TrendsVizCard className={TRENDS_PANE_PAD}>
-      <TrendsPaneHead title="敬请期待" />
-      <div className={cn(TRENDS_BOTTOM_PANE_SLOT, "flex items-center justify-center text-[0.88rem] text-[var(--text-dim)]")}>
-        更多图表即将上线
-      </div>
-    </TrendsVizCard>
-  );
-}
-
 export function AnalysisTrendsSection({
   record,
   preset
@@ -483,10 +474,9 @@ export function AnalysisTrendsSection({
     <div className="space-y-3">
       <PeriodSummary record={record} />
       <TotalScoreComboChart record={record} />
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <LogDaysHeatmap record={record} preset={preset} />
         <EightFactorsPanel record={record} />
-        <TrendsPlaceholderPanel />
       </div>
     </div>
   );

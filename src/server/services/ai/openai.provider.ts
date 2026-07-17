@@ -1,5 +1,7 @@
 import {
   AIProviderError,
+  createTimedAbortScope,
+  isAbortError,
   type AICompletionParams,
   type AIEmbeddingParams,
   type AIEmbeddingResult,
@@ -82,10 +84,9 @@ export class OpenAIProvider implements AIProvider {
     this.timeoutMs = config.timeoutMs ?? Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   }
 
-  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs }: AICompletionParams) {
+  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs, signal }: AICompletionParams) {
     const startedAt = Date.now();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.timeoutMs);
+    const abortScope = createTimedAbortScope(signal, timeoutMs ?? this.timeoutMs);
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -101,7 +102,7 @@ export class OpenAIProvider implements AIProvider {
           max_tokens: maxTokens
         }),
         cache: "no-store",
-        signal: controller.signal
+        signal: abortScope.signal
       });
       const latencyMs = Date.now() - startedAt;
 
@@ -134,19 +135,21 @@ export class OpenAIProvider implements AIProvider {
         throw error;
       }
 
-      if (error instanceof Error && error.name === "AbortError") {
+      if (isAbortError(error)) {
+        if (abortScope.wasCanceled()) {
+          throw new AIProviderError("AI request canceled.", "CANCELED");
+        }
         throw new AIProviderError("AI request timed out.", "TIMEOUT");
       }
 
       throw new AIProviderError(error instanceof Error ? error.message : "Unknown AI provider error.", "REQUEST_FAILED");
     } finally {
-      clearTimeout(timeoutId);
+      abortScope.cleanup();
     }
   }
 
-  async *stream({ messages, temperature = 0.2, maxTokens = 180, timeoutMs }: AICompletionParams): AsyncIterable<string> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs ?? this.timeoutMs);
+  async *stream({ messages, temperature = 0.2, maxTokens = 180, timeoutMs, signal }: AICompletionParams): AsyncIterable<string> {
+    const abortScope = createTimedAbortScope(signal, timeoutMs ?? this.timeoutMs);
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -163,7 +166,7 @@ export class OpenAIProvider implements AIProvider {
           stream: true
         }),
         cache: "no-store",
-        signal: controller.signal
+        signal: abortScope.signal
       });
 
       if (!response.ok) {
@@ -265,13 +268,16 @@ export class OpenAIProvider implements AIProvider {
         throw error;
       }
 
-      if (error instanceof Error && error.name === "AbortError") {
+      if (isAbortError(error)) {
+        if (abortScope.wasCanceled()) {
+          throw new AIProviderError("AI request canceled.", "CANCELED");
+        }
         throw new AIProviderError("AI request timed out.", "TIMEOUT");
       }
 
       throw new AIProviderError(error instanceof Error ? error.message : "Unknown AI provider error.", "REQUEST_FAILED");
     } finally {
-      clearTimeout(timeoutId);
+      abortScope.cleanup();
     }
   }
 
@@ -322,7 +328,7 @@ export class OpenAIProvider implements AIProvider {
         throw error;
       }
 
-      if (error instanceof Error && error.name === "AbortError") {
+      if (isAbortError(error)) {
         throw new AIProviderError("Embedding request timed out.", "TIMEOUT");
       }
 

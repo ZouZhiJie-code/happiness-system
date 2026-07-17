@@ -6,14 +6,14 @@ import {
 } from "@/features/auth/auth.constants";
 import { z } from "zod";
 
-const usernameSchema = z
+export const usernameSchema = z
   .string()
   .trim()
   .min(AUTH_USERNAME_MIN_LENGTH)
   .max(AUTH_USERNAME_MAX_LENGTH)
   .regex(/^[\p{Script=Han}A-Za-z0-9_]+$/u);
 
-const passwordSchema = z.string().min(AUTH_PASSWORD_MIN_LENGTH).max(AUTH_PASSWORD_MAX_LENGTH);
+export const passwordSchema = z.string().min(AUTH_PASSWORD_MIN_LENGTH).max(AUTH_PASSWORD_MAX_LENGTH);
 
 const acceptedAgreementSchema = z.literal(true);
 

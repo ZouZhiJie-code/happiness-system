@@ -6,7 +6,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
 
 describe("auth ui", () => {
-  it("prevents register submit until both agreements are checked", async () => {
+  it("prevents register submit until the combined agreement is checked", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
     render(<RegisterForm onSubmit={onSubmit} />);
@@ -18,10 +18,7 @@ describe("auth ui", () => {
     const submitButton = screen.getByRole("button", { name: "创建账户" });
     expect(submitButton).toBeDisabled();
 
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    expect(submitButton).toBeDisabled();
-
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.click(screen.getByRole("checkbox"));
     expect(submitButton).toBeEnabled();
 
     fireEvent.click(submitButton);
@@ -45,17 +42,12 @@ describe("auth ui", () => {
     fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "dailylight" } });
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "safe-password" } });
     fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "other-password" } });
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.blur(screen.getByLabelText("确认密码"));
 
-    fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent("两次输入的密码不一致");
+    expect(screen.getByText("两次输入的密码需要保持一致。")).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
 
     fireEvent.focus(screen.getByLabelText("确认密码"));
-
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("submits login form and lets the parent handle failed submit state", async () => {
@@ -99,12 +91,12 @@ describe("auth ui", () => {
     expect(nextInput).toHaveAttribute("name", "next");
   });
 
-  it("renders register agreement checkboxes in one group instead of split stacked notices", async () => {
+  it("renders one agreement control with two legal links", async () => {
     render(<RegisterForm onSubmit={vi.fn().mockResolvedValue(undefined)} />);
 
-    expect(screen.getByLabelText("我已阅读并同意《用户协议》")).toBeInTheDocument();
-    expect(screen.getByLabelText("我已阅读并同意《隐私政策》")).toBeInTheDocument();
-    expect(screen.getByText((content) => content.includes("注册即表示你已阅读并同意"))).toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "《用户协议》" })).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: "《隐私政策》" })).toHaveAttribute("target", "_blank");
   });
 
   it("requires password confirmation before delete-account action", async () => {

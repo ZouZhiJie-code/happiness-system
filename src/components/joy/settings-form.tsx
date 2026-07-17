@@ -1,28 +1,56 @@
 "use client";
 
-import React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useState } from "react";
 
 import { Divider } from "@/components/ui";
-import {
-  type SettingsFormValues,
-  settingsFormSchema
-} from "@/features/joy-interview/schema/joy-interview.schema";
 
 export function SettingsForm() {
-  const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(settingsFormSchema),
-    defaultValues: {
-      memoryEnabled: false,
-      transcriptAutoFallbackEnabled: true
-    }
-  });
+  const [memoryEnabled, setMemoryEnabled] = useState(false);
+  const [state, setState] = useState<"loading" | "idle" | "saving" | "saved" | "error">("loading");
 
-  const values = form.watch();
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetch("/api/settings", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("SETTINGS_QUERY_FAILED");
+        return (await response.json()) as { memoryEnabled: boolean };
+      })
+      .then((settings) => {
+        if (cancelled) return;
+        setMemoryEnabled(settings.memoryEnabled);
+        setState("idle");
+      })
+      .catch(() => {
+        if (!cancelled) setState("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleMemoryChange(nextValue: boolean) {
+    const previousValue = memoryEnabled;
+    setMemoryEnabled(nextValue);
+    setState("saving");
+
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memoryEnabled: nextValue })
+      });
+      if (!response.ok) throw new Error("SETTINGS_UPDATE_FAILED");
+      setState("saved");
+    } catch {
+      setMemoryEnabled(previousValue);
+      setState("error");
+    }
+  }
 
   return (
-    <form className="grid gap-5">
+    <section className="grid gap-5" aria-busy={state === "loading" || state === "saving"}>
       <label className="flex items-start justify-between gap-4">
         <span className="min-w-0">
           <span className="font-mono text-[0.68rem] tracking-[0.24em] text-[var(--text-faint)]">记忆能力</span>
@@ -31,45 +59,29 @@ export function SettingsForm() {
             允许系统在日志访谈中引用有限的历史记录，用来判断重复出现的人、关系或偏好。
           </span>
         </span>
-        <input type="checkbox" className="mt-1 size-5 shrink-0 accent-ember" {...form.register("memoryEnabled")} />
-      </label>
-
-      <Divider />
-
-      <label className="flex items-start justify-between gap-4">
-        <span className="min-w-0">
-          <span className="font-mono text-[0.68rem] tracking-[0.24em] text-[var(--text-faint)]">回退机制</span>
-          <span className="mt-2 block text-lg text-ink">转写失败自动回退</span>
-          <span className="mt-2 block text-pretty text-sm leading-7 text-[var(--text-dim)]">
-            语音转写失败时，提示用户立刻切换到文字输入，避免打断当前访谈节奏。
-          </span>
-        </span>
         <input
           type="checkbox"
-          className="mt-1 size-5 shrink-0 accent-moss"
-          {...form.register("transcriptAutoFallbackEnabled")}
+          className="mt-1 size-5 shrink-0 accent-ember"
+          checked={memoryEnabled}
+          disabled={state === "loading" || state === "saving"}
+          onChange={(event) => void handleMemoryChange(event.target.checked)}
         />
       </label>
 
       <Divider />
-
-      <section>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-[0.68rem] tracking-[0.24em] text-[var(--text-faint)]">配置摘要</p>
-            <h3 className="mt-3 font-display text-2xl text-ink">当前配置摘要</h3>
-          </div>
-          <span className="wood-chip rounded-full px-4 py-2 text-xs tracking-[0.16em]">已选择</span>
-        </div>
-        <p className="mt-3 text-pretty text-sm leading-8 text-[var(--text-dim)]">
-          你可以在开始前快速确认这次访谈会使用哪些能力，避免进入对话后再来回切换。
-        </p>
-        <div className="mt-4 grid gap-1.5 text-sm leading-7 text-[var(--text-dim)]">
-          <p>记忆功能：{values.memoryEnabled ? "开启" : "关闭"}</p>
-          <p>转写回退：{values.transcriptAutoFallbackEnabled ? "开启" : "关闭"}</p>
-          <p>建议状态：确认后即可开始今天的日志访谈。</p>
-        </div>
-      </section>
-    </form>
+      <p role={state === "error" ? "alert" : "status"} className={`text-sm ${state === "error" ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        {state === "loading"
+          ? "正在读取设置…"
+          : state === "saving"
+            ? "正在保存…"
+            : state === "saved"
+              ? "设置已保存"
+              : state === "error"
+                ? "设置保存失败，请重试。"
+                : memoryEnabled
+                  ? "历史记忆已开启"
+                  : "历史记忆当前关闭"}
+      </p>
+    </section>
   );
 }

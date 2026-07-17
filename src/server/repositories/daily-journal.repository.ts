@@ -32,6 +32,13 @@ function mapDailyJournalEntry(entry: DailyJournalMappedEntry | null): DailyJourn
     return null;
   }
 
+  const confirmationState =
+    entry.status === "draft"
+      ? "draft"
+      : !entry.savedAt || entry.updatedAt.getTime() > entry.savedAt.getTime()
+        ? "modified"
+        : "confirmed";
+
   return {
     id: entry.id,
     date: formatEntryDate(entry.date),
@@ -43,7 +50,8 @@ function mapDailyJournalEntry(entry: DailyJournalMappedEntry | null): DailyJourn
     sourceSignature: entry.sourceSignature,
     sourceUpdatedAt: entry.sourceUpdatedAt?.toISOString() ?? null,
     updatedAt: entry.updatedAt.toISOString(),
-    savedAt: entry.savedAt?.toISOString() ?? null
+    savedAt: entry.savedAt?.toISOString() ?? null,
+    confirmationState
   };
 }
 
@@ -199,12 +207,11 @@ export async function upsertDailyJournalDraft(input: {
     update: {
       title: input.title,
       content: input.content,
-      status: "draft",
       sourceEntryIds: sourceMetadata.sourceEntryIds,
       sourceSessionIds: sourceMetadata.sourceSessionIds,
       sourceSignature: sourceMetadata.sourceSignature,
       sourceUpdatedAt: sourceMetadata.sourceUpdatedAt,
-      savedAt: null
+      // Existing saved journals remain available while regenerated content waits for confirmation.
     },
     create: {
       userId: input.userId,
@@ -234,8 +241,7 @@ export async function updateDailyJournalDraft(input: {
     data: {
       title: input.title,
       content: input.content,
-      status: "draft",
-      savedAt: null
+      // Preserve the current saved/draft status while autosaving edits.
     }
   });
 
@@ -250,7 +256,8 @@ export async function markDailyJournalSaved(entryId: string) {
     },
     data: {
       status: "saved",
-      savedAt
+      savedAt,
+      updatedAt: savedAt
     }
   });
 
@@ -265,7 +272,8 @@ export async function markDailyJournalSavedWithMeta(entryId: string) {
     },
     data: {
       status: "saved",
-      savedAt
+      savedAt,
+      updatedAt: savedAt
     },
     select: {
       id: true,

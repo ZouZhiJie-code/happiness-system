@@ -30,7 +30,7 @@ export async function POST(request: Request) {
           retryable: error.retryable,
           message:
             error.code === "DAILY_JOURNAL_SOURCE_EMPTY"
-              ? "当天还没有可收成的维度日志，先聊出至少一篇维度日志草稿。"
+              ? "当天还没有已保存的维度日志，请先保存至少一篇维度日志。"
               : "收成完整日志失败，请稍后重试。"
         },
         { status }

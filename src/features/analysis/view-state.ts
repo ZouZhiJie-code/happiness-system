@@ -11,14 +11,16 @@ import {
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 
 const ANALYSIS_MONTH_PATTERN = /^\d{4}-\d{2}$/;
-export const ANALYSIS_SECTION_KEYS = ["trends", "dimensions", "correlation", "review"] as const;
+export const ANALYSIS_SECTION_KEYS = ["trends", "dimensions"] as const;
 export type AnalysisSectionKey = (typeof ANALYSIS_SECTION_KEYS)[number];
 
 const LEGACY_ANALYSIS_SECTION_MAP: Record<string, AnalysisSectionKey> = {
   overview: "trends",
   score: "trends",
   rhythm: "trends",
-  insights: "dimensions"
+  insights: "dimensions",
+  correlation: "dimensions",
+  review: "dimensions"
 };
 
 function parseMonthKey(month: string) {

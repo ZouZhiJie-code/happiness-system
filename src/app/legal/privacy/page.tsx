@@ -29,7 +29,7 @@ export default function PrivacyPage() {
             <p className="archive-label mt-6">隐私说明</p>
             <h1 className="mt-5 font-display text-5xl leading-[0.96] text-ink md:text-6xl">隐私政策</h1>
             <p className="mt-4 text-sm leading-8 text-ink/76">
-              这是一版配合首版账户体系使用的基础隐私草稿，先明确账号绑定、AI 处理、保存与删除等核心事实，后续再补充更完整的法务文本。
+              本政策说明账号绑定、AI 处理、数据保存与删除方式，帮助你了解个人信息在产品中的使用范围。
             </p>
           </div>
 
@@ -49,4 +49,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-

@@ -20,6 +20,7 @@ interface StructuredOutputOptions<T> {
   maxTokens?: number;
   maxAttempts?: number;
   timeoutMs?: number;
+  signal?: AbortSignal;
   providerUnavailableCode?: string;
   onAttempt?: (attempt: StructuredOutputAttempt) => Promise<void> | void;
 }
@@ -54,6 +55,7 @@ export async function completeStructuredOutput<T>({
   maxTokens = 600,
   maxAttempts = 2,
   timeoutMs,
+  signal,
   providerUnavailableCode,
   onAttempt
 }: StructuredOutputOptions<T>) {
@@ -70,12 +72,15 @@ export async function completeStructuredOutput<T>({
   }
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    signal?.throwIfAborted();
+
     try {
       const result = await provider.complete({
         messages,
         temperature,
         maxTokens,
-        timeoutMs
+        timeoutMs,
+        signal
       });
       const parsed = schema.safeParse(parseStructuredJson(result.content));
 
@@ -100,6 +105,10 @@ export async function completeStructuredOutput<T>({
 
       return parsed.data;
     } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+
       await onAttempt?.({
         stage,
         provider: provider.name,

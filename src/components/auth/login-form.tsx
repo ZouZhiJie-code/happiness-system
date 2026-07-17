@@ -4,6 +4,8 @@ import Link from "next/link";
 import React from "react";
 import { useState } from "react";
 
+import { passwordSchema, usernameSchema } from "@/features/auth/auth.schema";
+
 interface LoginFormValues {
   username: string;
   password: string;
@@ -19,9 +21,20 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched] = useState({ username: false, password: false });
+  const usernameValid = usernameSchema.safeParse(username).success;
+  const passwordValid = passwordSchema.safeParse(password).success;
+  const canSubmit = usernameValid && passwordValid && !submitting;
+  const registerHref = nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : "/register";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setTouched({ username: true, password: true });
+
+    if (!usernameValid || !passwordValid) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -51,7 +64,13 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           value={username}
           onFocus={onInteraction}
           onChange={(event) => setUsername(event.target.value)}
+          onBlur={() => setTouched((current) => ({ ...current, username: true }))}
+          aria-invalid={touched.username && !usernameValid}
+          aria-describedby="login-username-help"
         />
+        <p id="login-username-help" className={`text-xs leading-5 ${touched.username && !usernameValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+          {touched.username && !usernameValid ? "请输入 3–24 位中文、字母、数字或下划线。" : "3–24 位，支持中文、字母、数字和下划线。"}
+        </p>
       </div>
 
       <div className="grid gap-2">
@@ -67,20 +86,26 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           value={password}
           onFocus={onInteraction}
           onChange={(event) => setPassword(event.target.value)}
+          onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+          aria-invalid={touched.password && !passwordValid}
+          aria-describedby="login-password-help"
         />
+        <p id="login-password-help" className={`text-xs leading-5 ${touched.password && !passwordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+          {touched.password && !passwordValid ? "请输入 8–72 位密码。" : "密码长度为 8–72 位。"}
+        </p>
       </div>
 
       <div className="grid gap-3">
         <button
           type="submit"
           className="wood-chip min-h-12 rounded-full px-5 py-3 text-sm tracking-[0.12em] transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={submitting}
+          disabled={!canSubmit}
         >
           {submitting ? "登录中…" : "登录并继续"}
         </button>
         <p className="text-pretty text-sm leading-7 text-[#5a4632]">
-          首版暂不支持找回密码，请妥善保管。还没有账户？
-          <Link href="/register" className="ml-1 underline underline-offset-4">
+          请使用注册时保存的密码。还没有账户？
+          <Link href={registerHref} className="ml-1 underline underline-offset-4">
             去注册
           </Link>
         </p>

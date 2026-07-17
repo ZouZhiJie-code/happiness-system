@@ -4,12 +4,6 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
 import { SiteHeader } from "@/components/shared/site-header";
 
-const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Shanghai",
-  year: "numeric",
-  month: "2-digit"
-}).format(new Date());
-
 const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: {
     value: "/analysis"
@@ -91,8 +85,8 @@ describe("SiteHeader analysis toolbar", () => {
     expect(within(toolbar).getByRole("button", { name: "本月" })).toBeInTheDocument();
     expect(within(toolbar).getByRole("button", { name: "量化趋势" })).toBeInTheDocument();
     expect(within(toolbar).getByRole("button", { name: "五维记录" })).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: "关联" })).toBeInTheDocument();
-    expect(within(toolbar).getByRole("button", { name: "复盘" })).toBeInTheDocument();
+    expect(within(toolbar).queryByRole("button", { name: "关联" })).not.toBeInTheDocument();
+    expect(within(toolbar).queryByRole("button", { name: "复盘" })).not.toBeInTheDocument();
   });
 
   it("highlights the active section tab", async () => {
@@ -109,9 +103,9 @@ describe("SiteHeader analysis toolbar", () => {
 
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "关联" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=correlation", { scroll: false });
-    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=correlation");
+    fireEvent.click(within(toolbar).getByRole("button", { name: "五维记录" }));
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05&section=dimensions", { scroll: false });
+    expect(historyReplaceStateSpy).not.toHaveBeenCalledWith(null, "", "/analysis?month=2026-05&section=dimensions");
   });
 
   it("switches months from the header toolbar", async () => {
@@ -137,7 +131,7 @@ describe("SiteHeader analysis toolbar", () => {
     expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=trends", { scroll: false });
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "本月" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith(`/analysis?month=${CURRENT_MONTH}&section=trends`, { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-06&section=trends", { scroll: false });
   });
 
   it("optimistically updates week range and shows week loading copy", async () => {
@@ -189,7 +183,7 @@ describe("SiteHeader analysis toolbar", () => {
     );
   });
 
-  it("preserves the current analysis section when paging months", async () => {
+  it("normalizes a retired section before paging months", async () => {
     mockSearchParams.value = {
       dimension: null,
       view: null,
@@ -206,7 +200,7 @@ describe("SiteHeader analysis toolbar", () => {
     const toolbar = await screen.findByTestId("analysis-toolbar");
 
     fireEvent.click(within(toolbar).getByRole("button", { name: "查看上一2026年5月" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=review", { scroll: false });
+    expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-04&section=dimensions", { scroll: false });
   });
 
   it("normalizes invalid analysis month values in the header toolbar", async () => {

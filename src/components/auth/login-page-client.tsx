@@ -19,9 +19,9 @@ export function LoginPageClient({ nextPath = null }: LoginPageClientProps) {
   return (
     <AuthFormShell
       eyebrow="登录"
-      title="把今天的记录，重新接回你自己的账户。"
-      description="登录后，访谈、日志、日历和画像都会回到你自己的数据空间里。"
-      footer="首版账户体系先提供用户名与密码登录，后续再补找回密码和更多绑定能力。"
+      title="登录 Daily Light，继续今天的记录。"
+      description="访谈、日志、日历和画像都会保存在你的个人数据空间。"
+      footer="请使用注册时设置的用户名与密码。"
     >
       <LoginForm
         nextPath={nextPath}

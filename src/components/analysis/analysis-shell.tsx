@@ -16,8 +16,6 @@ import {
 } from "@/features/analysis/view-state";
 import { Divider, Surface } from "@/components/ui";
 import { useAnalysisPeriodPrefetch } from "@/components/analysis/use-analysis-period-prefetch";
-import { AnalysisCorrelationSection } from "./analysis-correlation-section";
-import { AnalysisReviewSection } from "./analysis-review-section";
 import { AnalysisEmptyBanner, AnalysisSection, SectionSkeleton } from "./analysis-shared";
 import { AnalysisTrendsSection } from "./analysis-trends-section";
 import { DimensionInsights } from "./analysis-insights-section";
@@ -78,7 +76,8 @@ export function AnalysisShell() {
 
   useAnalysisSectionSpy({
     month: normalizedSearch.month,
-    section: normalizedSearch.section
+    section: normalizedSearch.section,
+    ready: !isLoading && !isTrendsLoading
   });
 
   useAnalysisPeriodPrefetch(activePeriod, !isLoading && !isTrendsLoading && !hasFetchError && !hasTrendsFetchError);
@@ -208,30 +207,6 @@ export function AnalysisShell() {
               record,
               children: (loadedRecord) => <DimensionInsights record={loadedRecord} />
             })}
-          </AnalysisSection>
-        </section>
-
-        <Divider />
-
-        <section
-          id={getAnalysisSectionElementId("correlation")}
-          data-analysis-section="correlation"
-          className={SECTION_SCROLL_CLASS}
-        >
-          <AnalysisSection title="评分与五维关联" testId="analysis-correlation-placeholder">
-            <AnalysisCorrelationSection />
-          </AnalysisSection>
-        </section>
-
-        <Divider />
-
-        <section
-          id={getAnalysisSectionElementId("review")}
-          data-analysis-section="review"
-          className={SECTION_SCROLL_CLASS}
-        >
-          <AnalysisSection title="周期复盘" testId="analysis-review-placeholder">
-            <AnalysisReviewSection />
           </AnalysisSection>
         </section>
       </div>

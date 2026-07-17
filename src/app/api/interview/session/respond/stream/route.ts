@@ -67,11 +67,29 @@ export async function POST(request: Request) {
   try {
     const user = await requireCurrentUserFromRequest(request);
     const encoder = new TextEncoder();
+    const streamAbortController = new AbortController();
+    const abortFromRequest = () => streamAbortController.abort(request.signal.reason);
+
+    if (request.signal.aborted) {
+      abortFromRequest();
+    } else {
+      request.signal.addEventListener("abort", abortFromRequest, { once: true });
+    }
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        let closed = false;
         const send = (event: string, data: unknown) => {
-          controller.enqueue(encoder.encode(formatSseEvent(event, data)));
+          if (closed || streamAbortController.signal.aborted) {
+            return;
+          }
+
+          try {
+            controller.enqueue(encoder.encode(formatSseEvent(event, data)));
+          } catch {
+            closed = true;
+            streamAbortController.abort();
+          }
         };
 
         try {
@@ -83,13 +101,18 @@ export async function POST(request: Request) {
             {
               onPhase: (phase) => send("phase", { state: phase }),
               onDelta: (delta) => send("delta", delta)
-            }
+            },
+            { signal: streamAbortController.signal }
           );
 
           send("session", {
             session: interviewSessionSchema.parse(result.session)
           });
         } catch (error) {
+          if (streamAbortController.signal.aborted) {
+            return;
+          }
+
           const issue = normalizeInterviewRespondError({
             error,
             requestId
@@ -108,8 +131,20 @@ export async function POST(request: Request) {
             issue
           });
         } finally {
-          controller.close();
+          request.signal.removeEventListener("abort", abortFromRequest);
+          if (!closed) {
+            closed = true;
+            try {
+              controller.close();
+            } catch {
+              // The browser may close the stream before the server finishes cleanup.
+            }
+          }
         }
+      },
+      cancel() {
+        streamAbortController.abort();
+        request.signal.removeEventListener("abort", abortFromRequest);
       }
     });
 

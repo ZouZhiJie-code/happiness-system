@@ -3556,16 +3556,14 @@ describe("InterviewShell", () => {
     expect(storedSessions.joy?.expiresAt).toEqual(expect.any(String));
   });
 
-  it("only normalizes a missing interview dimension once instead of repeatedly replacing the route", async () => {
+  it("keeps a missing interview dimension on the generic entry route", async () => {
     mockSearchParams.value.dimension = null;
     window.localStorage.setItem("hs-last-interview-dimension", "fulfillment");
 
     cleanup();
     const view = render(<SiteHeader isAdmin={false} />);
 
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=fulfillment", { scroll: false });
-    });
+    await waitFor(() => expect(mockRouterReplace).not.toHaveBeenCalled());
 
     mockRouterReplace.mockClear();
     view.rerender(<SiteHeader isAdmin={false} />);
@@ -3582,9 +3580,7 @@ describe("InterviewShell", () => {
     cleanup();
     const view = render(<SiteHeader isAdmin={false} />);
 
-    await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith("/interview?dimension=joy", { scroll: false });
-    });
+    await waitFor(() => expect(mockRouterReplace).not.toHaveBeenCalled());
 
     mockRouterReplace.mockClear();
     mockPathname.value = "/";
@@ -5417,6 +5413,8 @@ describe("InterviewShell", () => {
       expect(capturedSignal?.aborted).toBe(true);
       expect(screen.getByRole("button", { name: "发送回答" })).toBeInTheDocument();
       expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
+      expect(textarea).toHaveValue("先停在这里");
     });
+    expect(within(screen.getByTestId("interview-message-scroll")).queryByText("先停在这里")).not.toBeInTheDocument();
   });
 });

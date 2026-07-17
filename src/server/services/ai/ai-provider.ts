@@ -10,6 +10,7 @@ export interface AICompletionParams {
   temperature?: number;
   maxTokens?: number;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 export interface AICompletionResult {
@@ -34,6 +35,32 @@ export interface AIProvider {
   embed?(params: AIEmbeddingParams): Promise<AIEmbeddingResult>;
 }
 
+export function createTimedAbortScope(externalSignal: AbortSignal | undefined, timeoutMs: number) {
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort(externalSignal?.reason);
+
+  if (externalSignal?.aborted) {
+    abortFromCaller();
+  } else {
+    externalSignal?.addEventListener("abort", abortFromCaller, { once: true });
+  }
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  return {
+    signal: controller.signal,
+    wasCanceled: () => Boolean(externalSignal?.aborted) && !timedOut,
+    cleanup: () => {
+      clearTimeout(timeoutId);
+      externalSignal?.removeEventListener("abort", abortFromCaller);
+    }
+  };
+}
+
 export class AIProviderError extends Error {
   constructor(
     message: string,
@@ -43,6 +70,10 @@ export class AIProviderError extends Error {
     super(message);
     this.name = "AIProviderError";
   }
+}
+
+export function isAbortError(error: unknown) {
+  return Boolean(error && typeof error === "object" && "name" in error && error.name === "AbortError");
 }
 
 export function getAIProviderFailureCode(error: unknown) {

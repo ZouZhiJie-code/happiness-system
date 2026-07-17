@@ -277,7 +277,7 @@ describe("findJoyInterviewSessionById", () => {
     expect(mockTransaction).toHaveBeenCalledTimes(1);
   });
 
-  it("demotes a saved journal back to draft when regenerating it", async () => {
+  it("keeps a saved journal confirmed while regenerating it", async () => {
     mockTransaction.mockResolvedValue([]);
 
     mockFindUnique.mockResolvedValue({
@@ -419,8 +419,8 @@ describe("findJoyInterviewSessionById", () => {
     const upsertInput = mockUpsert.mock.calls[0]?.[0];
 
     expect(upsertInput?.update).toMatchObject({
-      status: "draft",
-      savedAt: null
+      status: "saved",
+      savedAt: new Date("2026-04-21T00:10:00.000Z")
     });
     expect(mockTransaction).toHaveBeenCalledTimes(1);
   });

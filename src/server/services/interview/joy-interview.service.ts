@@ -2545,8 +2545,10 @@ async function resolvePreparedInterviewTurn(
   input: PreparedInterviewTurnContext,
   callbacks?: {
     onDelta?: (delta: { target: StreamingTarget; text: string }) => Promise<void> | void;
+    signal?: AbortSignal;
   }
 ) : Promise<ResolvedPreparedInterviewTurn> {
+  callbacks?.signal?.throwIfAborted();
   if (input.assistantTurn) {
     return {
       ...input,
@@ -2571,6 +2573,7 @@ async function resolvePreparedInterviewTurn(
     snapshot: input.nextSnapshot,
     currentEventText: input.userMessage ?? undefined
   }).catch(() => ({ formattedContext: null }));
+  callbacks?.signal?.throwIfAborted();
 
   const enrichedInput = memoryContext
     ? { ...assistantInput, memoryContext }
@@ -2579,8 +2582,10 @@ async function resolvePreparedInterviewTurn(
   const generatedAssistantTurn = callbacks?.onDelta
     ? await streamJoyAssistantTurn(enrichedInput, {
         onDelta: async (delta) => callbacks.onDelta?.(delta)
-      })
+      }, { signal: callbacks.signal })
     : await generateJoyAssistantTurn(enrichedInput);
+
+  callbacks?.signal?.throwIfAborted();
 
   return finalizeAssistantTurn(input, generatedAssistantTurn);
 }
@@ -2734,8 +2739,10 @@ export async function completeJoyInterviewSession(userId: string, sessionId: str
   };
 }
 
-async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) {
+async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, options?: { signal?: AbortSignal }) {
+  options?.signal?.throwIfAborted();
   const session = await getActiveInterviewSession(input.userId, input.sessionId);
+  options?.signal?.throwIfAborted();
 
   if ("assistantMessage" in session) {
     return session;
@@ -2969,9 +2976,11 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput) 
   const rawNextSnapshot = assessment.shouldExtractSnapshot
     ? await extractJoySnapshotWithAI({
         session,
-        userMessage: input.userMessage
+        userMessage: input.userMessage,
+        signal: options?.signal
       })
     : activeEvent.snapshot;
+  options?.signal?.throwIfAborted();
   const nextSnapshot =
     session.dimension === "gratitude"
       ? applyGratitudeEvidenceState({
@@ -3157,8 +3166,10 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
 }
 
 export async function completeJoyInterviewResponse(
-  input: ResolvedPreparedInterviewTurn
+  input: ResolvedPreparedInterviewTurn,
+  options?: { signal?: AbortSignal }
 ) {
+  options?.signal?.throwIfAborted();
   const updatedSession = await appendJoyInterviewTurn({
     sessionId: input.session.id,
     activeEventId: input.activeEvent.id,
@@ -3187,7 +3198,7 @@ export async function completeJoyInterviewResponse(
     throw new Error("SESSION_NOT_FOUND");
   }
 
-  if (input.userMessage) {
+  if (input.userMessage && !options?.signal?.aborted) {
     await recordAnalyticsEvent({
       eventName: "interview_response_submitted",
       userId: updatedSession.userId,
@@ -3229,11 +3240,15 @@ export async function streamJoyInterviewResponse(
   callbacks: {
     onPhase: (phase: StreamingPhase) => Promise<void> | void;
     onDelta: (delta: { target: StreamingTarget; text: string }) => Promise<void> | void;
-  }
+  },
+  options?: { signal?: AbortSignal }
 ) {
-  const prepared = await prepareJoyInterviewResponseContext(input);
+  const signal = options?.signal;
+  signal?.throwIfAborted();
+  const prepared = await prepareJoyInterviewResponseContext(input, { signal });
   const emitText = async (target: StreamingTarget, text: string, chunkSize = SUMMARY_STREAM_CHUNK_SIZE) => {
     for (const chunk of splitStreamingText(text, chunkSize)) {
+      signal?.throwIfAborted();
       await callbacks.onDelta({
         target,
         text: chunk
@@ -3241,6 +3256,7 @@ export async function streamJoyInterviewResponse(
     }
   };
   const emitRawDelta = async (target: StreamingTarget, text: string) => {
+    signal?.throwIfAborted();
     await callbacks.onDelta({
       target,
       text
@@ -3281,7 +3297,7 @@ export async function streamJoyInterviewResponse(
       await emitText("question", visibleText.question, 80);
     }
 
-    return completeJoyInterviewResponse(resolvedPrepared);
+    return completeJoyInterviewResponse(resolvedPrepared, { signal });
   }
 
   await callbacks.onPhase("thinking");
@@ -3313,6 +3329,7 @@ export async function streamJoyInterviewResponse(
     streamedText.summary = summary;
   };
   const completed = await resolvePreparedInterviewTurn(prepared, {
+    signal,
     onDelta: async (delta) => {
       if (!delta.text) {
         return;
@@ -3373,7 +3390,8 @@ export async function streamJoyInterviewResponse(
     await emitText("question", completedVisibleText.question.slice(streamedText.question.length), 80);
   }
 
-  return completeJoyInterviewResponse(completed);
+  signal?.throwIfAborted();
+  return completeJoyInterviewResponse(completed, { signal });
 }
 
 export async function generateJoyInterviewDraft(userId: string, sessionIds: string[]) {

@@ -166,7 +166,7 @@ describe("auth page guards", () => {
     mockCookies.mockResolvedValue(mockCookieStore());
     mockGetCurrentUserFromSessionToken.mockResolvedValue(null);
 
-    await InterviewPage();
+    await InterviewPage({});
     await CalendarPage();
     await AnalysisPage();
     await ProfilePage();
@@ -192,7 +192,9 @@ describe("auth page guards", () => {
       username: "daily_light_01"
     });
 
-    const page = await InterviewPage();
+    const page = await InterviewPage({
+      searchParams: Promise.resolve({ dimension: "joy" })
+    });
 
     expect(mockGetCurrentUserFromSessionToken).toHaveBeenCalledWith("session-token");
     expect(mockRedirect).not.toHaveBeenCalled();
@@ -202,7 +204,7 @@ describe("auth page guards", () => {
       expect.objectContaining({
         eventName: "private_page_viewed",
         userId: "user-1",
-        dedupeKey: "private_page_viewed:user-1:/interview"
+        dedupeKey: "private_page_viewed:user-1:/interview?dimension=joy"
       })
     );
   });
@@ -262,7 +264,9 @@ describe("auth page guards", () => {
       username: "admin_user"
     });
 
-    const page = await InterviewPage();
+    const page = await InterviewPage({
+      searchParams: Promise.resolve({ dimension: "joy" })
+    });
 
     expect(page).toBeTruthy();
     expect(findPropInReactTree(page, "showAIRuntimeSummary")).toBe(true);

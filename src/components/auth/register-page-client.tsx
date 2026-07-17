@@ -21,9 +21,10 @@ export function RegisterPageClient({ nextPath = null }: RegisterPageClientProps)
       eyebrow="注册"
       title="先建立账户，再把每天的记录真正归到自己名下。"
       description="注册完成后，后续的访谈、日志、评分和画像都会和当前账户绑定，支持基础隐私隔离。"
-      footer="注册时需要勾选《用户协议》和《隐私政策》。这一步先把数据归属和使用边界讲清楚。"
+      footer="创建账户即建立独立的数据空间。"
     >
       <RegisterForm
+        nextPath={nextPath}
         error={error}
         onInteraction={() => {
           if (error) {

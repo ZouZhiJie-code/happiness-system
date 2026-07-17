@@ -14,6 +14,7 @@ const navItems = [
 ] as const;
 
 type SiteHeaderNavProps = {
+  authenticated: boolean;
   pathname: string;
   todayCalendarHref: string;
   todayAnalysisHref: string;
@@ -22,6 +23,7 @@ type SiteHeaderNavProps = {
 };
 
 export function SiteHeaderNav({
+  authenticated,
   pathname,
   todayCalendarHref,
   todayAnalysisHref,
@@ -32,6 +34,27 @@ export function SiteHeaderNav({
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
+  if (!authenticated) {
+    return (
+      <nav aria-label="账户入口" className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1.5">
+        <Link
+          href="/login"
+          aria-current={pathname === "/login" ? "page" : undefined}
+          className="rounded-full px-3 py-2 text-[13px] font-medium text-[var(--text-dim)] transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+        >
+          登录
+        </Link>
+        <Link
+          href="/register"
+          aria-current={pathname === "/register" ? "page" : undefined}
+          className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-paper transition hover:opacity-85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+        >
+          创建账户
+        </Link>
+      </nav>
+    );
+  }
 
   return (
     <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">

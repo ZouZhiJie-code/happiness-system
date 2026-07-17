@@ -320,6 +320,20 @@ describe("site header calendar toolbar", () => {
     expect(header.previousElementSibling).toBeNull();
   });
 
+  it("keeps the dimension toolbar hidden on the generic interview picker", () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: null,
+      view: null,
+      date: null,
+      month: null
+    };
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    expect(screen.queryByTestId("interview-dimension-bar")).not.toBeInTheDocument();
+  });
+
   it("syncs the viewport offset css variable to the measured header height", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 

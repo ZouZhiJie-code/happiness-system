@@ -107,8 +107,7 @@ describe("auth page client navigation", () => {
     fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "new_user_01" } });
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
     fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "supersecret1" } });
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
     await waitFor(() => {
@@ -133,8 +132,7 @@ describe("auth page client navigation", () => {
     fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "daily_light_01" } });
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
     fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "supersecret1" } });
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("这个用户名已经被占用");
@@ -161,8 +159,7 @@ describe("auth page client navigation", () => {
     fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "new_user_01" } });
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
     fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "supersecret1" } });
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("用户名仅支持 3-24 位中文、字母、数字或下划线，密码需至少 8 位");
@@ -184,8 +181,7 @@ describe("auth page client navigation", () => {
     fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "邹志杰" } });
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
     fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "supersecret1" } });
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《用户协议》"));
-    fireEvent.click(screen.getByLabelText("我已阅读并同意《隐私政策》"));
+    fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("注册暂时不可用，请先完成数据库初始化");

@@ -29,7 +29,7 @@ export default function TermsPage() {
             <p className="archive-label mt-6">使用说明</p>
             <h1 className="mt-5 font-display text-5xl leading-[0.96] text-ink md:text-6xl">用户协议</h1>
             <p className="mt-4 text-sm leading-8 text-ink/76">
-              这是一版用于首版账户体系上线的基础草稿，先覆盖账号归属、日志使用边界和注销删除等核心说明，后续可继续补充法务细节。
+              本协议说明账户归属、日志内容使用边界和账号注销规则。使用 Daily Light 即表示你同意遵守以下约定。
             </p>
           </div>
 
@@ -49,4 +49,3 @@ export default function TermsPage() {
     </div>
   );
 }
-

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
 import { HeaderToolbarDivider } from "@/components/shared/header-toolbar-primitives";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { isInterviewDimension } from "@/features/interview/dimensions";
 
 import { InterviewHeaderToolbar } from "./site-header/interview-header-toolbar";
 import { SiteHeaderNav } from "./site-header/site-header-nav";
@@ -43,10 +44,12 @@ function HeaderPlainContext({ title, subtitle }: { title: string; subtitle: stri
 
 type SiteHeaderProps = {
   isAdmin?: boolean;
+  authenticated?: boolean;
 };
 
-function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
+function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement | null>(null);
   const { confirmLeaveInterview } = useInterviewLeaveGuard();
   const isActive = (href: string) =>
@@ -56,7 +59,11 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
   const todayEntryDate = getTodayEntryDate();
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
-  const isInterviewPage = pathname === "/interview" && !isEnteringCalendar;
+  const isInterviewWorkspace =
+    isInterviewDimension(searchParams.get("dimension")) ||
+    Boolean(searchParams.get("sessionId")) ||
+    searchParams.get("mode") === "daily-journal";
+  const isInterviewPage = pathname === "/interview" && isInterviewWorkspace && !isEnteringCalendar;
   const shouldReserveHeaderSpace = false;
   const isCalendarPage = pathname === "/calendar" || isEnteringCalendar;
   const isAnalysisPage = pathname === "/analysis";
@@ -113,6 +120,7 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
         </div>
         <HeaderToolbarDivider className="hidden md:flex" />
         <SiteHeaderNav
+          authenticated={authenticated}
           pathname={pathname}
           todayCalendarHref={todayCalendarHref}
           todayAnalysisHref={todayAnalysisHref}
@@ -125,6 +133,6 @@ function SiteHeaderInner({ isAdmin = false }: SiteHeaderProps) {
   );
 }
 
-export function SiteHeader({ isAdmin = false }: SiteHeaderProps) {
-  return <SiteHeaderInner isAdmin={isAdmin} />;
+export function SiteHeader({ isAdmin = false, authenticated = true }: SiteHeaderProps) {
+  return <SiteHeaderInner isAdmin={isAdmin} authenticated={authenticated} />;
 }

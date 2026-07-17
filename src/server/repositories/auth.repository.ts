@@ -75,6 +75,12 @@ export async function createUserWithInitialSession(_input: CreateUserWithInitial
       }
     });
 
+    await tx.userSettings.create({
+      data: {
+        userId: user.id
+      }
+    });
+
     return user;
   });
 }

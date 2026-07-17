@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   HeaderToolbarActionButton,
@@ -13,10 +13,6 @@ import { DimensionStatusDot, SlidingSegmentedControl, useConfirmDialog } from "@
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import type { CalendarDayRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
-import {
-  prefetchInterviewSession,
-  prefetchStoredInterviewSessions
-} from "@/features/interview/session-bootstrap";
 import {
   clearStoredInterviewSessionId,
   getInterviewDimensionMeta,
@@ -31,7 +27,6 @@ import {
   getDimensionProgressSummary,
   type DimensionProgressSessionLike
 } from "@/features/interview/dimension-progress";
-import { cancelIdleTask, scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { useInterviewStore } from "@/stores/interview-store";
 import type { InterviewDimension, InterviewSessionRecord } from "@/types/interview";
 
@@ -99,7 +94,6 @@ export function mapCalendarDimensionStatusToHeaderStatus(
 }
 
 export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean }) {
-  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasNormalizedInterviewUrlRef = useRef(false);
@@ -111,7 +105,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
   >({});
   const {
     activeEventId,
-    bootState,
     dimension,
     draftGenerationBusy,
     draftGenerationDisabled,
@@ -180,8 +173,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
   const shouldUseLiveSelectedProgress = Boolean(
     workspaceMode === "interview" && sessionDimension === activeDimension && activeProgressSession
   );
-  const isSelectedDimensionRestoring = bootState === "restoring" && !activeProgressSession;
-
   useEffect(() => {
     const fromUrl = searchParams.get("dimension");
 
@@ -219,38 +210,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
     }
     router.replace(`/interview?dimension=${remembered}`, { scroll: false });
   }, [dimension, pendingUrlDimension, router, searchParams, setDimension, setPendingUrlDimension]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (searchParams.get("mode") === "daily-journal") {
-      return;
-    }
-
-    const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;
-    const currentTodayEntryDate = getTodayEntryDate();
-    if (entryDate && entryDate !== currentTodayEntryDate) {
-      return;
-    }
-
-    const idleHandle = scheduleIdleTask(() => {
-      prefetchStoredInterviewSessions(entryDate);
-    });
-
-    return () => {
-      cancelIdleTask(idleHandle);
-    };
-  }, [searchParams, sessionEntryDate]);
-
-  function prefetchDimensionSession(nextDimension: InterviewDimension) {
-    const entryDate = searchParams.get("entryDate") ?? sessionEntryDate;
-    prefetchInterviewSession({
-      dimension: nextDimension,
-      entryDate
-    });
-  }
 
   useEffect(() => {
     if (headerEntryDate) {
@@ -434,8 +393,6 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
 
     persistInterviewSessionForDimensionSwitch();
 
-    prefetchDimensionSession(normalized);
-
     if (typeof window !== "undefined") {
       window.localStorage.setItem(getScopedLocalStorageKey(interviewDimensionStorageKey), normalized);
     }
@@ -522,12 +479,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
                 buttonProps: {
                   "aria-describedby": progressId,
                   "aria-pressed": isInterviewWorkspaceSelected && item === activeDimension,
-                  "aria-current": isInterviewWorkspaceSelected && item === activeDimension ? ("step" as const) : undefined,
-                  onPointerEnter: () => {
-                    if (item !== activeDimension) {
-                      prefetchDimensionSession(item);
-                    }
-                  }
+                  "aria-current": isInterviewWorkspaceSelected && item === activeDimension ? ("step" as const) : undefined
                 }
               };
             })}

@@ -8,6 +8,7 @@ import {
   happinessScorePresentationItems
 } from "@/features/happiness-score/presentation";
 import type { HappinessScoreRequestKey } from "@/features/happiness-score/types";
+import { ActionButton, useConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type ScoreFormState = Partial<Record<HappinessScoreRequestKey, number>>;
@@ -53,10 +54,10 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   const jumpTimerRef = useRef<number | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
   const hasLocalEditsRef = useRef(false);
+  const { confirm, confirmDialog } = useConfirmDialog();
   const total = happinessScorePresentationItems.length;
   const currentItem = happinessScorePresentationItems[currentIndex] ?? happinessScorePresentationItems[0];
   const currentKey = currentItem.requestKey;
-  const completionCount = happinessScorePresentationItems.filter((item) => typeof scores[item.requestKey] === "number").length;
 
   useEffect(() => {
     return () => {
@@ -115,6 +116,13 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         const nextScores = buildScoreFormState(record, entryDate);
         const firstUnfilledIndex = getFirstUnfilledHappinessScoreIndex(nextScores);
         setScores(nextScores);
+        setTouchedScores(
+          Object.fromEntries(
+            happinessScorePresentationItems
+              .filter((item) => typeof nextScores[item.requestKey] === "number")
+              .map((item) => [item.requestKey, true])
+          )
+        );
         setCurrentIndex(firstUnfilledIndex >= 0 ? firstUnfilledIndex : 0);
       })
       .catch(() => {
@@ -136,7 +144,26 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
   }, [entryDate, open]);
 
   const touchedCount = happinessScorePresentationItems.filter((item) => touchedScores[item.requestKey]).length;
-  const canSaveAndExit = isCompleteScoreForm(scores) && touchedCount === total && !isLoadingExisting && !isSaving;
+  const canSaveAndExit =
+    isCompleteScoreForm(scores) && hasLocalEditsRef.current && !isLoadingExisting && !isSaving;
+
+  async function handleClose() {
+    if (hasLocalEditsRef.current) {
+      const shouldDiscard = await confirm({
+        eyebrow: "当天评分",
+        title: "放弃这次评分修改？",
+        description: "本次选择还没有保存，返回后会恢复到上一次保存的评分。",
+        confirmLabel: "放弃修改",
+        cancelLabel: "继续评分"
+      });
+
+      if (!shouldDiscard) {
+        return;
+      }
+    }
+
+    onClose();
+  }
 
   function findNextUntouchedIndex(nextTouchedScores: Partial<Record<HappinessScoreRequestKey, true>>, fromIndex: number) {
     for (let offset = 1; offset <= total; offset += 1) {
@@ -268,6 +295,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
       }
 
       setSaveNotice("当天评分已保存");
+      hasLocalEditsRef.current = false;
       return true;
     } catch {
       setSaveError("评分保存失败，请稍后再试。");
@@ -283,6 +311,9 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
         <p className="text-[0.82rem] font-medium text-[#4a3829]">
           当天评分 · 第 {currentIndex + 1}/{total} 项 · {currentItem.label}
         </p>
+        <ActionButton type="button" variant="ghost" onClick={() => void handleClose()} disabled={isSaving}>
+          返回
+        </ActionButton>
       </div>
       <p aria-live="polite" className="mt-1.5 text-[0.7rem] text-[#7a5d42]">
         {transitionNotice ?? "已进入评分模式。按 1-9 或 0（10分）可快速录入。"}
@@ -353,6 +384,7 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
           {isSaving ? "保存中" : "保存并退出"}
         </button>
       </div>
+      {confirmDialog}
     </section>
   );
 }

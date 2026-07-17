@@ -3,11 +3,10 @@ import { z } from "zod";
 import { getCalendarDimensionVisualMeta } from "@/features/calendar/presentation";
 import { MAX_DAILY_JOURNAL_CONTENT_LENGTH } from "@/features/daily-journal/schema";
 import { buildDailyJournalSourceSignature } from "@/features/daily-journal/source-signature";
-import { interviewDimensions } from "@/features/interview/dimensions";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import { interviewDimensions } from "@/features/interview/dimensions";
 import { getAIProvider } from "@/server/services/ai";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
-import { getCalendarDay } from "@/server/services/calendar/calendar.service";
 import {
   findDailyJournalByDate,
   listDraftJournalEntriesForDate,
@@ -18,54 +17,8 @@ import {
   type DailyJournalSourceEntry
 } from "@/server/repositories/daily-journal.repository";
 import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
-import { saveGeneratedJournalEntry } from "@/server/services/interview/interview.service";
+import { getCalendarDay } from "@/server/services/calendar/calendar.service";
 import type { DailyJournalEntryRecord, DailyJournalStatus, InterviewDimension } from "@/types/interview";
-
-function debugShortId(value: string | null | undefined) {
-  return value ? value.slice(-8) : null;
-}
-
-function debugDailyJournalService(hypothesisId: string, message: string, data: Record<string, unknown>) {
-  if (process.env.NODE_ENV === "test") {
-    return;
-  }
-
-  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
-    body: JSON.stringify({
-      sessionId: "7fc210",
-      runId: "pre-fix",
-      hypothesisId,
-      location: "daily-journal.service.ts:debug",
-      message,
-      data,
-      timestamp: Date.now()
-    })
-  }).catch(() => {});
-}
-
-export type TodayJournalDimensionStatus = "none" | "talking" | "journaled";
-
-export interface TodayJournalDimensionCard {
-  dimension: InterviewDimension;
-  status: TodayJournalDimensionStatus;
-  hasNewSinceJournal: boolean;
-  title: string | null;
-  content: string | null;
-  sessionId: string | null;
-  entryId: string | null;
-}
-
-export interface TodayJournalBoard {
-  date: string;
-  dimensions: TodayJournalDimensionCard[];
-  dailyJournal: {
-    state: DailyJournalState;
-    id: string | null;
-    savedCount: number;
-  };
-}
 
 const dailyJournalDraftSchema = z.object({
   title: z.string().min(1).max(MAX_JOURNAL_TITLE_LENGTH),
@@ -211,90 +164,37 @@ export async function getDailyJournal(userId: string, date: string) {
   };
 }
 
-/**
- * 今日日志面板（访谈页右侧常驻）的只读聚合：一次返回五维各自的
- * 状态 / 标题 / 正文 / sessionId，以及完整日志的总体状态。
- * 纯组合现有读模型，不新增 DB 查询。
- */
-export async function getTodayJournalBoard(userId: string, date: string): Promise<TodayJournalBoard> {
+type TodayJournalDimensionStatus = "none" | "talking" | "journaled";
+
+export async function getTodayJournalBoard(userId: string, date: string) {
   const [day, savedSources, draftSources, dailyJournalView] = await Promise.all([
     getCalendarDay(userId, date),
     listSavedJournalEntriesForDailyJournal(userId, date),
     listDraftJournalEntriesForDate(userId, date),
     getDailyJournal(userId, date)
   ]);
-
   const savedByDimension = new Map(savedSources.map((source) => [source.dimension, source]));
   const draftByDimension = new Map(draftSources.map((source) => [source.dimension, source]));
-  const dayDimensionByKey = new Map(day.dimensions.map((dimensionStatus) => [dimensionStatus.dimension, dimensionStatus]));
-
-  const dimensions: TodayJournalDimensionCard[] = interviewDimensions.map((dimension) => {
-    const dayDimension = dayDimensionByKey.get(dimension) ?? null;
-    const saved = savedByDimension.get(dimension) ?? null;
-    const draft = draftByDimension.get(dimension) ?? null;
-
+  const dayByDimension = new Map(day.dimensions.map((item) => [item.dimension, item]));
+  const dimensions = interviewDimensions.map((dimension: InterviewDimension) => {
+    const dayDimension = dayByDimension.get(dimension);
+    const saved = savedByDimension.get(dimension);
+    const draft = draftByDimension.get(dimension);
     const hasSaved = dayDimension?.hasSavedEntry ?? Boolean(saved);
     const hasDraft = dayDimension?.hasDraftEntry ?? Boolean(draft);
     const hasActive = dayDimension?.hasActiveSession ?? false;
-
-    let status: TodayJournalDimensionStatus = "none";
-    let title: string | null = null;
-    let content: string | null = null;
-
-    if (hasSaved) {
-      status = "journaled";
-      title = saved?.title ?? dayDimension?.title ?? null;
-      content = saved?.content ?? null;
-    } else if (hasDraft || hasActive) {
-      status = "talking";
-      title = draft?.title ?? null;
-      content = draft?.content ?? null;
-    }
+    const status: TodayJournalDimensionStatus = hasSaved ? "journaled" : hasDraft || hasActive ? "talking" : "none";
 
     return {
       dimension,
       status,
       hasNewSinceJournal: hasSaved && (hasActive || hasDraft),
-      title,
-      content,
+      title: hasSaved ? saved?.title ?? dayDimension?.title ?? null : draft?.title ?? null,
+      content: hasSaved ? saved?.content ?? null : draft?.content ?? null,
       sessionId: dayDimension?.sessionId ?? saved?.sessionId ?? draft?.sessionId ?? null,
       entryId: saved?.id ?? draft?.id ?? null
     };
   });
-
-  // #region agent log
-  debugDailyJournalService("H3", "today journal board composed on server", {
-    date,
-    savedSourceCount: savedSources.length,
-    draftSourceCount: draftSources.length,
-    dailyJournalState: dailyJournalView.state,
-    dayDimensions: day.dimensions.map((dimensionStatus) => ({
-      dimension: dimensionStatus.dimension,
-      status: dimensionStatus.status,
-      hasActiveSession: dimensionStatus.hasActiveSession,
-      hasDraftEntry: dimensionStatus.hasDraftEntry,
-      hasSavedEntry: dimensionStatus.hasSavedEntry,
-      sessionId: debugShortId(dimensionStatus.sessionId)
-    })),
-    savedSources: savedSources.map((source) => ({
-      dimension: source.dimension,
-      entryId: debugShortId(source.id),
-      sessionId: debugShortId(source.sessionId)
-    })),
-    draftSources: draftSources.map((source) => ({
-      dimension: source.dimension,
-      entryId: debugShortId(source.id),
-      sessionId: debugShortId(source.sessionId)
-    })),
-    resultDimensions: dimensions.map((dimensionStatus) => ({
-      dimension: dimensionStatus.dimension,
-      status: dimensionStatus.status,
-      hasContent: Boolean(dimensionStatus.content),
-      hasNewSinceJournal: dimensionStatus.hasNewSinceJournal,
-      sessionId: debugShortId(dimensionStatus.sessionId)
-    }))
-  });
-  // #endregion
 
   return {
     date,
@@ -364,31 +264,65 @@ export async function generateDailyJournal(userId: string, date: string) {
   }
 }
 
+export interface DailyJournalGenerateStagePayload {
+  dailyJournal: DailyJournalEntryRecord;
+  availableSourceCount: number;
+  sources: ReturnType<typeof mapDailyJournalSources>;
+  state: DailyJournalStatus | "stale";
+}
+
 /**
- * 一键「收成今天」(Level A)：
- * 1. 把当天「已生成 draft 但未保存」的维度日志逐个落库；
- * 2. 汇编完整日志；
- * 3. 保存完整日志。
- * 不会自动触发 AI 维度日志生成：进行中但还没草稿的维度会被跳过（由前端 sources 投影）。
+ * 两段式生成完整日志：
+ * 1. 先用确定性 fallback（直接拼接已保存维度日志）秒出骨架并落库 draft，通过 onSkeleton 回传，让前端立刻看到章节结构；
+ * 2. 再走 AI 轻整理，完成后覆盖同一篇 draft 并返回。
+ * AI 阶段失败时 fallback 骨架已经在库里，不会让用户停在空屏。
  */
-export async function saveAllAndGenerateDailyJournal(userId: string, date: string) {
-  const draftEntries = await listDraftJournalEntriesForDate(userId, date);
+export async function generateDailyJournalWithSkeleton(
+  userId: string,
+  date: string,
+  onSkeleton: (payload: DailyJournalGenerateStagePayload) => void
+): Promise<DailyJournalGenerateStagePayload> {
+  const sourceEntries = await listSavedJournalEntriesForDailyJournal(userId, date);
 
-  const promotedDimensions: InterviewDimension[] = [];
-
-  const promotions = await Promise.allSettled(
-    draftEntries.map(async (entry) => {
-      await saveGeneratedJournalEntry(userId, entry.sessionId);
-      return entry.dimension;
-    })
-  );
-
-  for (const result of promotions) {
-    if (result.status === "fulfilled") {
-      promotedDimensions.push(result.value);
-    }
+  if (!sourceEntries.length) {
+    throw new DailyJournalError("DAILY_JOURNAL_SOURCE_EMPTY", "当天还没有已保存的维度日志。");
   }
 
+  const fallback = buildFallbackDailyJournalDraft(sourceEntries);
+
+  try {
+    const skeleton = await upsertDailyJournalDraft({
+      userId,
+      date,
+      title: fallback.title,
+      content: fallback.content,
+      sourceEntries
+    });
+
+    if (skeleton) {
+      onSkeleton({
+        dailyJournal: skeleton,
+        availableSourceCount: sourceEntries.length,
+        sources: mapDailyJournalSources(sourceEntries),
+        state: skeleton.status
+      });
+    }
+  } catch {
+    // 骨架落库失败不致命：继续走 AI 阶段（generateDailyJournal 会再次 upsert）。
+  }
+
+  const generated = await generateDailyJournal(userId, date);
+
+  return {
+    dailyJournal: generated.dailyJournal,
+    availableSourceCount: generated.availableSourceCount,
+    sources: generated.sources,
+    state: generated.state
+  };
+}
+
+/** 兼容旧入口：只使用已经正式保存的维度日志生成并保存完整日志。 */
+export async function saveAllAndGenerateDailyJournal(userId: string, date: string) {
   const sourceEntries = await listSavedJournalEntriesForDailyJournal(userId, date);
 
   if (!sourceEntries.length) {
@@ -401,7 +335,8 @@ export async function saveAllAndGenerateDailyJournal(userId: string, date: strin
 
   return {
     dailyJournal: saved.dailyJournal,
-    promotedDimensions,
+    promotedDimensions: [],
+    failedDimensions: [],
     availableSourceCount: latest.availableSourceCount,
     sources: latest.sources,
     state: "saved" as const

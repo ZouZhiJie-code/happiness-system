@@ -97,7 +97,7 @@ describe("analysis view state helpers", () => {
     });
   });
 
-  it("keeps valid analysis sections", () => {
+  it("maps retired analysis sections to dimensions", () => {
     expect(
       normalizeAnalysisSearchParams({
         month: "2026-05",
@@ -106,9 +106,9 @@ describe("analysis view state helpers", () => {
       })
     ).toMatchObject({
       month: "2026-05",
-      section: "correlation",
-      href: "/analysis?month=2026-05&section=correlation",
-      shouldReplace: false
+      section: "dimensions",
+      href: "/analysis?month=2026-05&section=dimensions",
+      shouldReplace: true
     });
   });
 

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 
 import type { InterviewDimension } from "@prisma/client";
 
@@ -24,7 +25,7 @@ function isSnapshotStale(snapshot: PortraitSnapshotView, profileData: GroupedPro
   return facts.some((fact) => new Date(fact.updatedAt).getTime() > snapshotGeneratedAt);
 }
 
-export function PortraitView() {
+export function PortraitView({ onOpenMemories }: { onOpenMemories?: () => void }) {
   const [snapshot, setSnapshot] = useState<PortraitSnapshotView | null>(null);
   const [loading, setLoading] = useState(true);
   const [synthesizing, setSynthesizing] = useState(false);
@@ -32,13 +33,16 @@ export function PortraitView() {
   const [hint, setHint] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
   const [expandedDim, setExpandedDim] = useState<InterviewDimension | null>(null);
+  const [factCount, setFactCount] = useState(0);
+  const [memoryEnabled, setMemoryEnabled] = useState(false);
 
   const fetchPortrait = useCallback(async () => {
     try {
       setLoading(true);
-      const [portraitRes, profileRes] = await Promise.all([
+      const [portraitRes, profileRes, settingsRes] = await Promise.all([
         fetch("/api/profile/portrait"),
-        fetch("/api/profile")
+        fetch("/api/profile"),
+        fetch("/api/settings")
       ]);
       if (!portraitRes.ok) throw new Error("fetch failed");
       const json: PortraitApiResponse = await portraitRes.json();
@@ -46,11 +50,17 @@ export function PortraitView() {
       setError(null);
 
       // Check if snapshot is stale
-      if (json.snapshot && profileRes.ok) {
+      if (profileRes.ok) {
         const profileData = (await profileRes.json()) as GroupedProfile;
-        setStale(isSnapshotStale(json.snapshot, profileData));
+        const nextFactCount = Object.values(profileData).flat().length;
+        setFactCount(nextFactCount);
+        setStale(json.snapshot ? isSnapshotStale(json.snapshot, profileData) : false);
       } else {
         setStale(false);
+      }
+      if (settingsRes.ok) {
+        const settings = (await settingsRes.json()) as { memoryEnabled: boolean };
+        setMemoryEnabled(settings.memoryEnabled);
       }
     } catch {
       setError("加载画像失败");
@@ -64,6 +74,11 @@ export function PortraitView() {
   }, [fetchPortrait]);
 
   async function handleSynthesize() {
+    if (factCount < 3) {
+      setHint(`还需要 ${3 - factCount} 条认知，补充后即可生成画像。`);
+      return;
+    }
+
     try {
       setSynthesizing(true);
       setError(null);
@@ -118,6 +133,8 @@ export function PortraitView() {
   // ─── Empty state ──────────────────────────────────────────────────────────
 
   if (!snapshot) {
+    const missingFactCount = Math.max(0, 3 - factCount);
+
     return (
       <div className="space-y-4">
         {/* Summary empty state */}
@@ -126,17 +143,30 @@ export function PortraitView() {
             关于你
           </p>
           <p className="mt-4 text-sm leading-7 text-[#5a4632]">
-            还没有生成画像。完成访谈后，系统会根据你的回答自动生成一份关于你的总结。
+            生成日志时会逐步积累认知；达到 3 条后，你可以主动生成一份关于自己的总结。
           </p>
+          {!memoryEnabled ? (
+            <p className="mt-3 text-xs leading-6 text-[#8a7a68]">
+              历史记忆当前关闭。开启后，新的日志可以继续积累长期认知。
+              <Link href="/settings" className="ml-1 underline underline-offset-4">前往设置</Link>
+            </p>
+          ) : null}
           <div className="mt-4">
             <button
               type="button"
               className="wood-chip rounded-full px-4 py-1.5 text-xs tracking-[0.1em]"
               onClick={handleSynthesize}
-              disabled={synthesizing}
+              disabled={synthesizing || factCount < 3}
             >
               {synthesizing ? "生成中…" : "生成画像"}
             </button>
+            {missingFactCount > 0 ? (
+              <p className="mt-3 text-xs leading-6 text-[#8a7a68]">还需要 {missingFactCount} 条认知。</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-3 text-xs">
+              <Link href="/interview" className="underline underline-offset-4">开始记录</Link>
+              <button type="button" onClick={onOpenMemories} className="underline underline-offset-4">添加认知</button>
+            </div>
             {hint && (
               <p className="mt-3 text-xs leading-6 text-[#8a7a68]">{hint}</p>
             )}

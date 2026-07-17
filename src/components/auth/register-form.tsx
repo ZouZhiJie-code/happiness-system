@@ -4,7 +4,7 @@ import Link from "next/link";
 import React from "react";
 import { useMemo, useState } from "react";
 
-import { LegalConsentLinks } from "@/components/auth/legal-consent-links";
+import { passwordSchema, usernameSchema } from "@/features/auth/auth.schema";
 
 interface RegisterFormValues {
   username: string;
@@ -18,24 +18,37 @@ interface RegisterFormProps {
   onSubmit: (values: RegisterFormValues) => Promise<void>;
   error?: string | null;
   onInteraction?: () => void;
+  nextPath?: string | null;
 }
 
-export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormProps) {
+export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }: RegisterFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedAgreements, setAcceptedAgreements] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [touched, setTouched] = useState({ username: false, password: false, confirmPassword: false });
   const mergedError = localError ?? error ?? null;
+  const usernameValid = usernameSchema.safeParse(username).success;
+  const passwordValid = passwordSchema.safeParse(password).success;
+  const confirmPasswordValid = confirmPassword.length > 0 && password === confirmPassword;
+  const loginHref = nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login";
 
   const canSubmit = useMemo(() => {
-    return acceptedTerms && acceptedPrivacy && username.trim().length > 0 && password.length > 0 && confirmPassword.length > 0;
-  }, [acceptedPrivacy, acceptedTerms, confirmPassword.length, password.length, username]);
+    return acceptedAgreements && usernameValid && passwordValid && confirmPasswordValid;
+  }, [acceptedAgreements, confirmPasswordValid, passwordValid, usernameValid]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setTouched({ username: true, password: true, confirmPassword: true });
+
+    if (!usernameValid || !passwordValid || !confirmPasswordValid || !acceptedAgreements) {
+      if (password !== confirmPassword && confirmPassword.length > 0) {
+        setLocalError("两次输入的密码不一致");
+      }
+      return;
+    }
 
     if (password !== confirmPassword) {
       setLocalError("两次输入的密码不一致");
@@ -50,8 +63,8 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
         username: username.trim(),
         password,
         confirmPassword,
-        acceptedTerms,
-        acceptedPrivacy
+        acceptedTerms: acceptedAgreements,
+        acceptedPrivacy: acceptedAgreements
       });
     } catch {
       // The parent owns request error presentation.
@@ -77,7 +90,13 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
             onInteraction?.();
           }}
           onChange={(event) => setUsername(event.target.value)}
+          onBlur={() => setTouched((current) => ({ ...current, username: true }))}
+          aria-invalid={touched.username && !usernameValid}
+          aria-describedby="register-username-help"
         />
+        <p id="register-username-help" className={`text-xs leading-5 ${touched.username && !usernameValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+          {touched.username && !usernameValid ? "请输入 3–24 位中文、字母、数字或下划线。" : "3–24 位，支持中文、字母、数字和下划线。"}
+        </p>
       </div>
 
       <div className="grid gap-2">
@@ -96,7 +115,13 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
             onInteraction?.();
           }}
           onChange={(event) => setPassword(event.target.value)}
+          onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+          aria-invalid={touched.password && !passwordValid}
+          aria-describedby="register-password-help"
         />
+        <p id="register-password-help" className={`text-xs leading-5 ${touched.password && !passwordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+          {touched.password && !passwordValid ? "请输入 8–72 位密码。" : "8–72 位。当前账户使用用户名与密码登录，请妥善保存。"}
+        </p>
       </div>
 
       <div className="grid gap-2">
@@ -115,7 +140,13 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
             onInteraction?.();
           }}
           onChange={(event) => setConfirmPassword(event.target.value)}
+          onBlur={() => setTouched((current) => ({ ...current, confirmPassword: true }))}
+          aria-invalid={touched.confirmPassword && !confirmPasswordValid}
+          aria-describedby="register-confirm-password-help"
         />
+        <p id="register-confirm-password-help" className={`text-xs leading-5 ${touched.confirmPassword && !confirmPasswordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+          {touched.confirmPassword && !confirmPasswordValid ? "两次输入的密码需要保持一致。" : "再次输入密码，确认内容一致。"}
+        </p>
       </div>
 
       <div className="rounded-[22px] border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.44)] p-4">
@@ -124,35 +155,22 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
             <input
               type="checkbox"
               className="size-4 accent-[#d89d59]"
-              checked={acceptedTerms}
-              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              checked={acceptedAgreements}
+              onChange={(event) => setAcceptedAgreements(event.target.checked)}
             />
             <span>
               我已阅读并同意
-              <Link href="/legal/terms" className="ml-1 underline underline-offset-4">
+              <Link href="/legal/terms" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
                 《用户协议》
               </Link>
-            </span>
-          </label>
-
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              className="size-4 accent-[#d89d59]"
-              checked={acceptedPrivacy}
-              onChange={(event) => setAcceptedPrivacy(event.target.checked)}
-            />
-            <span>
-              我已阅读并同意
-              <Link href="/legal/privacy" className="ml-1 underline underline-offset-4">
+              和
+              <Link href="/legal/privacy" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
                 《隐私政策》
               </Link>
             </span>
           </label>
         </div>
       </div>
-
-      <LegalConsentLinks />
 
       <div className="grid gap-3">
         <button
@@ -164,7 +182,7 @@ export function RegisterForm({ onSubmit, error, onInteraction }: RegisterFormPro
         </button>
         <p className="text-pretty text-sm leading-7 text-[#5a4632]">
           已经有账户了？
-          <Link href="/login" className="ml-1 underline underline-offset-4">
+          <Link href={loginHref} className="ml-1 underline underline-offset-4">
             去登录
           </Link>
         </p>

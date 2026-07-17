@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { StatusPill } from "@/components/shared/status-pill";
 import { ActionButton, Divider } from "@/components/ui";
+import { passwordSchema } from "@/features/auth/auth.schema";
 
 interface DeleteAccountPayload {
   password: string;
@@ -22,6 +23,8 @@ export function AccountDangerZone({ username, onLogout, onDeleteAccount }: Accou
   const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const passwordValid = passwordSchema.safeParse(password).success;
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -37,6 +40,12 @@ export function AccountDangerZone({ username, onLogout, onDeleteAccount }: Accou
   }
 
   async function handleDelete() {
+    setPasswordTouched(true);
+    if (!passwordValid) {
+      setError("请输入 8–72 位当前密码");
+      return;
+    }
+
     setDeleting(true);
     setError(null);
 
@@ -127,7 +136,13 @@ export function AccountDangerZone({ username, onLogout, onDeleteAccount }: Accou
                 className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-white/70 px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-[var(--line-strong)]"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                onBlur={() => setPasswordTouched(true)}
+                aria-invalid={passwordTouched && !passwordValid}
+                aria-describedby="delete-account-password-help"
               />
+              <p id="delete-account-password-help" className={`text-xs leading-5 ${passwordTouched && !passwordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+                {passwordTouched && !passwordValid ? "请输入 8–72 位当前密码。" : "密码长度为 8–72 位。"}
+              </p>
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -138,6 +153,7 @@ export function AccountDangerZone({ username, onLogout, onDeleteAccount }: Accou
                 onClick={() => {
                   setDialogOpen(false);
                   setPassword("");
+                  setPasswordTouched(false);
                 }}
               >
                 取消
@@ -146,7 +162,7 @@ export function AccountDangerZone({ username, onLogout, onDeleteAccount }: Accou
                 type="button"
                 className="inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2.5 text-sm text-[#8a5440] underline decoration-1 underline-offset-4 transition-colors hover:text-[#6f3f2e] disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleDelete}
-                disabled={password.trim().length === 0 || deleting}
+                disabled={!passwordValid || deleting}
               >
                 {deleting ? "删除中…" : "确认删除并清空数据"}
               </button>

@@ -466,6 +466,7 @@ export interface JournalEntryRecord extends JoyEntryDraft {
   linkedSessionIds: string[];
   updatedAt: string;
   savedAt: string | null;
+  confirmationState?: "draft" | "confirmed" | "modified";
 }
 
 export interface DailyJournalEntryRecord {
@@ -480,6 +481,7 @@ export interface DailyJournalEntryRecord {
   sourceUpdatedAt: string | null;
   updatedAt: string;
   savedAt: string | null;
+  confirmationState?: "draft" | "confirmed" | "modified";
 }
 
 export interface InterviewEventRecord {

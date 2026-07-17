@@ -632,7 +632,9 @@ async function logAttempt(
 export async function extractJoySnapshotWithAI(input: {
   session: InterviewSessionRecord;
   userMessage: string;
+  signal?: AbortSignal;
 }): Promise<JoySnapshot> {
+  input.signal?.throwIfAborted();
   const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
     allowClosureInference: false,
     allowOptionalSignalInference: false
@@ -665,6 +667,7 @@ export async function extractJoySnapshotWithAI(input: {
     }),
     temperature: 0.15,
     maxTokens: 500,
+    signal: input.signal,
     onAttempt: (attempt) => logAttempt(input.session.id, attempt)
   });
 
@@ -1040,7 +1043,9 @@ async function runAssistantQuestionAttempt(input: {
   messages: AIChatMessage[];
   stream: boolean;
   onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void;
+  signal?: AbortSignal;
 }) {
+  input.signal?.throwIfAborted();
   const parser = createAssistantReplySegmentParser(input.onDelta);
   const startedAt = Date.now();
 
@@ -1048,7 +1053,8 @@ async function runAssistantQuestionAttempt(input: {
     for await (const chunk of input.provider.stream!({
       messages: input.messages,
       temperature: 0.45,
-      maxTokens: 500
+      maxTokens: 500,
+      signal: input.signal
     })) {
       await parser.push(chunk);
     }
@@ -1056,7 +1062,8 @@ async function runAssistantQuestionAttempt(input: {
     const result = await input.provider.complete({
       messages: input.messages,
       temperature: 0.45,
-      maxTokens: 500
+      maxTokens: 500,
+      signal: input.signal
     });
 
     await parser.push(result.content);
@@ -1090,8 +1097,10 @@ async function runAssistantQuestionAttempt(input: {
 
 async function requestAssistantReplySegments(
   input: AssistantTurnGenerationInput,
-  onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void
+  onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void,
+  signal?: AbortSignal
 ) {
+  signal?.throwIfAborted();
   const provider = await getAIProvider("chat");
   const providerStatus = await getAIProviderStatus("chat");
 
@@ -1117,13 +1126,18 @@ async function requestAssistantReplySegments(
         sessionId: input.sessionId,
         messages,
         stream: useStream,
-        onDelta
+        onDelta,
+        signal
       });
 
       if (result) {
         return result;
       }
     } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+
       await logAttempt(input.sessionId, {
         stage: "generate",
         provider: provider.name,
@@ -1161,7 +1175,8 @@ export async function streamJoyAssistantTurn(
   input: AssistantTurnGenerationInput,
   callbacks: {
     onDelta: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void;
-  }
+  },
+  options?: { signal?: AbortSignal }
 ) {
   const fallbackTurn = createFallbackAssistantTurn({
     dimension: input.dimension,
@@ -1172,7 +1187,7 @@ export async function streamJoyAssistantTurn(
     questionSpec: input.questionSpec
   });
 
-  const segments = await requestAssistantReplySegments(input, callbacks.onDelta);
+  const segments = await requestAssistantReplySegments(input, callbacks.onDelta, options?.signal);
 
   if (!segments) {
     logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");

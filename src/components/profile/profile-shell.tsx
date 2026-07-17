@@ -42,7 +42,7 @@ export function ProfileShell() {
             key: item.key,
             children:
               item.key === "portrait" ? (
-                <PortraitView />
+                <PortraitView onOpenMemories={() => setTab("memories")} />
               ) : item.key === "memories" ? (
                 <MemoriesView />
               ) : (

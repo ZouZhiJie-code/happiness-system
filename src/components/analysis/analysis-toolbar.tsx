@@ -33,9 +33,7 @@ import { cn } from "@/lib/utils";
 
 const sectionTabs: ReadonlyArray<{ key: AnalysisSectionKey; label: string }> = [
   { key: "trends", label: "量化趋势" },
-  { key: "dimensions", label: "五维记录" },
-  { key: "correlation", label: "关联" },
-  { key: "review", label: "复盘" }
+  { key: "dimensions", label: "五维记录" }
 ];
 
 const presetTabs: ReadonlyArray<{ key: AnalysisRangePreset; label: string }> = [

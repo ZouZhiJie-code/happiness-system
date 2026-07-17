@@ -20,16 +20,8 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
-const { mockGetCalendarDay } = vi.hoisted(() => ({
-  mockGetCalendarDay: vi.fn()
-}));
-
 vi.mock("@/server/services/ai", () => ({
   getAIProvider: vi.fn(() => null)
-}));
-
-vi.mock("@/server/services/calendar/calendar.service", () => ({
-  getCalendarDay: mockGetCalendarDay
 }));
 
 vi.mock("@/server/repositories/daily-journal.repository", () => ({
@@ -50,7 +42,6 @@ import {
   DailyJournalError,
   generateDailyJournal,
   getDailyJournal,
-  getTodayJournalBoard,
   saveDailyJournal,
   updateDailyJournal
 } from "@/server/services/daily-journal/daily-journal.service";
@@ -91,62 +82,6 @@ describe("daily journal service", () => {
     mockUpdateDailyJournalDraft.mockReset();
     mockUpsertDailyJournalDraft.mockReset();
     mockRecordAnalyticsEvent.mockReset();
-    mockGetCalendarDay.mockReset();
-  });
-
-  it("composes the today journal board from calendar status, saved content, and daily journal state", async () => {
-    mockGetCalendarDay.mockResolvedValue({
-      date: "2026-05-02",
-      dimensions: [
-        { dimension: "joy", status: "completed", title: "被稳稳接住", sessionId: "session-joy", hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: true },
-        { dimension: "fulfillment", status: "in_progress", title: null, sessionId: "session-ful", hasActiveSession: true, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "reflection", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "improvement", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "gratitude", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false }
-      ]
-    });
-    mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([sourceEntry]);
-    mockListDraftJournalEntriesForDate.mockResolvedValue([]);
-    mockFindDailyJournalByDate.mockResolvedValue(null);
-
-    const board = await getTodayJournalBoard("user-1", "2026-05-02");
-
-    expect(board.dimensions.find((card) => card.dimension === "joy")).toMatchObject({
-      status: "journaled",
-      title: "被稳稳接住",
-      content: sourceEntry.content,
-      hasNewSinceJournal: false
-    });
-    expect(board.dimensions.find((card) => card.dimension === "fulfillment")).toMatchObject({
-      status: "talking"
-    });
-    expect(board.dimensions.find((card) => card.dimension === "reflection")).toMatchObject({
-      status: "none"
-    });
-    expect(board.dailyJournal).toMatchObject({ state: "none", id: null, savedCount: 1 });
-  });
-
-  it("marks a journaled dimension as having new content when an active session coexists", async () => {
-    mockGetCalendarDay.mockResolvedValue({
-      date: "2026-05-02",
-      dimensions: [
-        { dimension: "joy", status: "mixed", title: "被稳稳接住", sessionId: "session-joy", hasActiveSession: true, hasDraftEntry: false, hasSavedEntry: true },
-        { dimension: "fulfillment", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "reflection", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "improvement", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false },
-        { dimension: "gratitude", status: "empty", title: null, sessionId: null, hasActiveSession: false, hasDraftEntry: false, hasSavedEntry: false }
-      ]
-    });
-    mockListSavedJournalEntriesForDailyJournal.mockResolvedValue([sourceEntry]);
-    mockListDraftJournalEntriesForDate.mockResolvedValue([]);
-    mockFindDailyJournalByDate.mockResolvedValue(null);
-
-    const board = await getTodayJournalBoard("user-1", "2026-05-02");
-
-    expect(board.dimensions.find((card) => card.dimension === "joy")).toMatchObject({
-      status: "journaled",
-      hasNewSinceJournal: true
-    });
   });
 
   it("reports stale when saved source entries changed after generation", async () => {

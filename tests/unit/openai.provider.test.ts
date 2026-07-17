@@ -112,4 +112,35 @@ describe("OpenAIProvider", () => {
 
     expect(chunks).toEqual(["你", "好"]);
   });
+
+  it("forwards caller cancellation to the upstream request", async () => {
+    let upstreamSignal: AbortSignal | undefined;
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      upstreamSignal = init?.signal ?? undefined;
+      return new Promise<Response>((_resolve, reject) => {
+        upstreamSignal?.addEventListener(
+          "abort",
+          () => reject(new DOMException("The request was canceled.", "AbortError")),
+          { once: true }
+        );
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OpenAIProvider({
+      apiKey: "sk-openai",
+      model: "gpt-5",
+      baseUrl: "https://api.openai.com/v1"
+    });
+    const controller = new AbortController();
+    const completion = provider.complete({
+      messages: [{ role: "user", content: "你好" }],
+      signal: controller.signal
+    });
+
+    controller.abort();
+
+    await expect(completion).rejects.toMatchObject({ code: "CANCELED" });
+    expect(upstreamSignal?.aborted).toBe(true);
+  });
 });

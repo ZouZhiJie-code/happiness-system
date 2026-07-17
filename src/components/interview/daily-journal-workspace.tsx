@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { DailyJournalExportMenu } from "@/components/daily-journal/daily-journal-export-menu";
 import { ActionButton } from "@/components/ui";
@@ -33,7 +33,15 @@ interface DailyJournalWorkspaceProps {
   openRequestId: number;
 }
 
-function getStateLabel(state: DailyJournalState, sourceCount: number) {
+function getStateLabel(
+  state: DailyJournalState,
+  sourceCount: number,
+  confirmationState?: DailyJournalEntryRecord["confirmationState"]
+) {
+  if (confirmationState === "modified") {
+    return "已修改";
+  }
+
   if (state === "stale") {
     return "需更新";
   }
@@ -184,8 +192,11 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
   const hasUnsavedChanges = Boolean(dailyJournal && (title !== dailyJournal.title || content !== dailyJournal.content));
   const tooLong = title.length > MAX_JOURNAL_TITLE_LENGTH || content.length > MAX_DAILY_JOURNAL_CONTENT_LENGTH;
   const canPersist = Boolean(dailyJournal && title.trim() && content.trim() && !tooLong);
-  // 编辑后回退到 draft，或还有未保存改动时，才在底部亮起「保存修改」。
-  const showSaveEdits = Boolean(dailyJournal) && (hasUnsavedChanges || state === "draft");
+  const showSaveEdits = Boolean(dailyJournal) && (
+    hasUnsavedChanges ||
+    state === "draft" ||
+    dailyJournal?.confirmationState === "modified"
+  );
 
   const stopAutosave = useCallback(() => {
     if (autosaveTimerRef.current) {
@@ -352,7 +363,7 @@ export const DailyJournalWorkspace = React.forwardRef<DailyJournalWorkspaceHandl
     }
   }
 
-  const stateLabel = getStateLabel(state, availableSourceCount);
+  const stateLabel = getStateLabel(state, availableSourceCount, dailyJournal?.confirmationState);
   const dateLabel = formatDailyJournalDateLabel(date);
 
   return (

@@ -36,7 +36,7 @@ import {
   touchStoredInterviewSessionId
 } from "@/features/interview/dimensions";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
-import { bootstrapInterviewSession, prefetchStoredInterviewSessions } from "@/features/interview/session-bootstrap";
+import { bootstrapInterviewSession } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate, isEntryDateString } from "@/features/interview/entry-date";
 import {
   getJournalGenerationPhaseDescription,
@@ -47,7 +47,6 @@ import {
   JOURNAL_GENERATION_PROGRESS_TICK_MS
 } from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
-import { cancelIdleTask, scheduleIdleTask } from "@/lib/schedule-idle-task";
 import type { TodayJournalBoardPayload, TodayJournalDimensionCardPayload } from "@/features/daily-journal/schema";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
@@ -738,6 +737,7 @@ export function InterviewShell({
   });
   const conversationResetHandledRef = useRef(0);
   const interviewResponseAbortControllerRef = useRef<AbortController | null>(null);
+  const pendingUserMessageRef = useRef<string | null>(null);
   const interviewSubmitLockRef = useRef(false);
   const sessionStateRef = useRef({
     sessionId,
@@ -762,6 +762,8 @@ export function InterviewShell({
     sessionId &&
       status === "active" &&
       pendingDecision &&
+      !journalEntry &&
+      draftGenerateState !== "loading" &&
       !optimisticUserMessage &&
       assistantState === "idle" &&
       isSessionHydratedForCurrentDimension
@@ -798,7 +800,7 @@ export function InterviewShell({
       draftTitle.trim() &&
       draftContent.trim() &&
       !draftTooLong &&
-      (journalEntry.status !== "saved" || hasUnsavedDraftChanges)
+      (journalEntry.confirmationState === "modified" || journalEntry.status !== "saved" || hasUnsavedDraftChanges)
   );
   const isRefreshingExistingDraft = Boolean(isGeneratingDraft && journalEntry);
   const isChoiceDraftActionBlocked = Boolean(panelOpen && isGeneratingDraft);
@@ -849,6 +851,10 @@ export function InterviewShell({
 
     if (hasUnsavedDraftChanges) {
       return { label: "未保存的修改", tone: "dirty" };
+    }
+
+    if (journalEntry.confirmationState === "modified") {
+      return { label: "已修改，待确认", tone: "dirty" };
     }
 
     if (journalEntry.status === "saved") {
@@ -1099,11 +1105,16 @@ export function InterviewShell({
   }, []);
 
   const cancelInterviewResponse = useCallback(() => {
+    const pendingUserMessage = pendingUserMessageRef.current;
     interviewResponseAbortControllerRef.current?.abort();
     interviewResponseAbortControllerRef.current = null;
+    pendingUserMessageRef.current = null;
     interviewSubmitLockRef.current = false;
     activeStreamIdRef.current += 1;
     clearStreamState();
+    if (pendingUserMessage) {
+      setInput((current) => current.trim() ? current : pendingUserMessage);
+    }
     setIsBusy(false);
   }, [clearStreamState]);
 
@@ -1138,6 +1149,7 @@ export function InterviewShell({
     }
 
     const nextSession = pendingSessionRef.current;
+    pendingUserMessageRef.current = null;
     touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
     hydrate(nextSession);
     pendingSessionRef.current = null;
@@ -1415,29 +1427,6 @@ export function InterviewShell({
       journalEntry
     };
   }, [draftContent, draftTitle, journalEntry]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (shouldOpenDailyJournalFromQuery || workspaceMode !== "interview") {
-      return;
-    }
-
-    const todayEntryDate = getTodayEntryDate();
-    if (requestedEntryDate && requestedEntryDate !== todayEntryDate) {
-      return;
-    }
-
-    const idleHandle = scheduleIdleTask(() => {
-      prefetchStoredInterviewSessions(requestedEntryDate);
-    });
-
-    return () => {
-      cancelIdleTask(idleHandle);
-    };
-  }, [requestedEntryDate, shouldOpenDailyJournalFromQuery, workspaceMode]);
 
   useEffect(() => {
     setDimensionSessionCacheEntryDateWindow(resolvedEntryDate);
@@ -1743,6 +1732,7 @@ export function InterviewShell({
 
     pendingAutoDraftRequestRef.current =
       payload.action === "reply" && isAutoDraftRequestMessage(optimisticMessage ?? "");
+    pendingUserMessageRef.current = payload.action === "reply" ? optimisticMessage : null;
 
     interviewSubmitLockRef.current = true;
     setInterviewIssue(null);
@@ -1919,6 +1909,7 @@ export function InterviewShell({
         return;
       }
 
+      pendingUserMessageRef.current = null;
       pendingAutoDraftRequestRef.current = false;
       clearStreamState();
       if (payload.action === "reply" && optimisticMessage) {

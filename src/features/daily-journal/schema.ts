@@ -25,7 +25,8 @@ export const dailyJournalEntrySchema = z.object({
   sourceSignature: z.string(),
   sourceUpdatedAt: z.string().nullable(),
   updatedAt: z.string(),
-  savedAt: z.string().nullable()
+  savedAt: z.string().nullable(),
+  confirmationState: z.enum(["draft", "confirmed", "modified"])
 });
 
 export const dailyJournalSourceSchema = z.object({
@@ -83,6 +84,7 @@ export const saveAllDailyJournalRequestSchema = z.object({
 export const saveAllDailyJournalResponseSchema = z.object({
   dailyJournal: dailyJournalEntrySchema,
   promotedDimensions: z.array(z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"])),
+  failedDimensions: z.array(z.enum(["joy", "fulfillment", "reflection", "improvement", "gratitude"])).default([]),
   availableSourceCount: z.number().int().nonnegative(),
   sources: z.array(dailyJournalSourceSchema),
   state: z.enum(["draft", "saved", "stale"])

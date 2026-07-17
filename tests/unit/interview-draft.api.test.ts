@@ -61,6 +61,7 @@ function buildDraftResponse() {
       },
       source: "ai_draft_direct",
       status: "draft",
+      confirmationState: "draft",
       linkedSessionIds: ["session-1"],
       updatedAt: "2026-05-17T00:00:00.000Z",
       savedAt: null

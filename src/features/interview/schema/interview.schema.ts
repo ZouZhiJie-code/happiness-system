@@ -353,7 +353,8 @@ export const journalEntrySchema = journalDraftSchema.extend({
   status: z.enum(["draft", "saved"]),
   linkedSessionIds: z.array(z.string()),
   updatedAt: z.string(),
-  savedAt: z.string().nullable()
+  savedAt: z.string().nullable(),
+  confirmationState: z.enum(["draft", "confirmed", "modified"])
 });
 
 const interviewEventSchema = z.object({
@@ -519,8 +520,7 @@ export const updateJournalEntryContentRequestSchema = z.object({
 });
 
 export const settingsFormSchema = z.object({
-  memoryEnabled: z.boolean(),
-  transcriptAutoFallbackEnabled: z.boolean()
+  memoryEnabled: z.boolean()
 });
 
 export const updateJoyEntryRequestSchema = updateJournalEntryRequestSchema;
