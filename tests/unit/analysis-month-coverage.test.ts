@@ -1,7 +1,5 @@
-import {
-  buildAnalysisMonthCoverage,
-  buildAnalysisScoreTrend
-} from "@/features/analysis/month-coverage";
+import { buildAnalysisScoreTrend } from "@/features/analysis/aggregate-month";
+import { buildAnalysisMonthCoverage } from "@/features/analysis/month-coverage";
 import type {
   AnalysisSavedDailyJournalSource,
   AnalysisSavedEntrySource
