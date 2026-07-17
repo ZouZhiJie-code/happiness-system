@@ -332,4 +332,3 @@ Run the Task 7 Analysis suite and `npm run typecheck` again after any review fix
 git add docs/plans/2026-07-17-analysis-month-aggregation-refactor-design.md docs/plans/2026-07-17-analysis-month-aggregation-refactor.md
 git commit -m "docs: plan analysis month aggregation refactor"
 ```
-

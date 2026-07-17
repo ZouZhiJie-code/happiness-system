@@ -323,4 +323,3 @@ export function buildAnalysisInsightsOverview(dimensions: AnalysisDimensionInsig
     links
   } satisfies AnalysisInsightsOverview;
 }
-
