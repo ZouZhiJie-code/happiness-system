@@ -485,7 +485,7 @@ export function InterviewHeaderToolbar({ isAdmin = false }: { isAdmin?: boolean 
             })}
           />
         </div>
-        <HeaderToolbarDivider />
+        <HeaderToolbarDivider className="hidden lg:inline-flex" />
         <div className="header-ws-slot header-ws-slot--context flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
           {showSelectedProgressPod ? (
             <>

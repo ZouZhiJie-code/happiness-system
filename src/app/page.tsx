@@ -37,7 +37,7 @@ function SectionBackdrop({
   contentClassName?: string;
 }) {
   return (
-    <>
+    <div className="relative isolate">
       {visual.src ? (
         <Image
           src={visual.src}
@@ -53,7 +53,7 @@ function SectionBackdrop({
         aria-hidden="true"
       />
       <div className={clsx("relative z-10", contentClassName)}>{children}</div>
-    </>
+    </div>
   );
 }
 

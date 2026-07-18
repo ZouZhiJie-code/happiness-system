@@ -380,6 +380,12 @@ function EightFactorsPanel({ record }: { record: AnalysisTrendsRangeRecord }) {
           activeKey={view}
           ariaLabel="幸福8要素图表视图"
           className={TRENDS_BOTTOM_PANE_SLOT}
+          swipeable
+          onRequestChange={(key) => {
+            if (key === "radar" || key === "lollipop") {
+              setView(key);
+            }
+          }}
           pages={[
             {
               key: "radar",

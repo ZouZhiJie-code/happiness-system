@@ -32,7 +32,7 @@ export function CalendarMonthGrid({
     <div className="flex min-h-full flex-1 flex-col gap-1.5 px-4 pb-1 pt-3 md:gap-2 md:px-5 md:pb-1.5 md:pt-4">
       <div className="grid shrink-0 grid-cols-7 px-1">
         {weekLabels.map((label) => (
-          <p key={label} className="text-center text-[0.69rem] tracking-[0.01em] text-[#8a6b4b]">
+          <p key={label} className="text-center text-[0.75rem] tracking-[0.01em] text-[#8a6b4b]">
             {label}
           </p>
         ))}
@@ -107,7 +107,7 @@ export function CalendarMonthGrid({
                 {previewState.visibleStateLabel ? (
                   <span
                     className={clsx(
-                      "inline-flex h-5 min-w-[3.4rem] items-center justify-center rounded-[999px] px-2.5 text-[0.64rem] font-semibold leading-none tracking-[0.04em]",
+                      "inline-flex h-5 min-w-[3.4rem] items-center justify-center rounded-[999px] px-2.5 text-[0.75rem] font-semibold leading-none tracking-[0.02em]",
                       "bg-[#eef6ec] text-[#45644a] shadow-[inset_0_1px_0_rgba(255,252,247,0.72),0_1px_1.5px_rgba(120,94,66,0.08)]"
                     )}
                   >
@@ -123,7 +123,7 @@ export function CalendarMonthGrid({
                           key={`${day.date}-${dimension.dimension}`}
                           data-dimension={dimension.dimension}
                           className={clsx(
-                            "inline-flex h-5 min-w-[1.45rem] items-center justify-center rounded-[999px] px-1.5 text-[0.6rem] font-semibold leading-none tracking-[0.03em]",
+                            "inline-flex h-5 min-w-[1.45rem] items-center justify-center rounded-[999px] px-1.5 text-[0.75rem] font-semibold leading-none tracking-[0.01em]",
                             "shadow-[inset_0_1px_0_rgba(255,252,247,0.68),0_1px_1.5px_rgba(120,94,66,0.06)]",
                             visualMeta.softBadgeClass,
                             getCalendarMonthDimensionPillClass(dimension.tone)
@@ -134,7 +134,7 @@ export function CalendarMonthGrid({
                       );
                     })}
                     {previewState.extraDimensionCount > 0 ? (
-                      <span className="text-[0.68rem] leading-none text-[#8a6b4b]">
+                      <span className="text-[0.75rem] leading-none text-[#8a6b4b]">
                         +{previewState.extraDimensionCount}
                       </span>
                     ) : null}

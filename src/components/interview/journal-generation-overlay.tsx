@@ -3,10 +3,13 @@
 import React, { useEffect, useState } from "react";
 
 import { JournalSkeletonLines } from "@/components/interview/journal-skeleton-lines";
-import { formatJournalGenerationProgress } from "@/features/interview/journal-generation-progress";
+import {
+  getJournalGenerationPhaseIndex,
+  getJournalGenerationPhaseLabel
+} from "@/features/interview/journal-generation-copy";
 import { cn } from "@/lib/utils";
 
-type OverlayState = "active" | "hold" | "reveal" | "fade";
+type OverlayState = "active" | "reveal" | "fade";
 export type JournalGenerationOverlayMode = "dimension" | "daily";
 
 export interface JournalGenerationOverlayProps {
@@ -16,7 +19,6 @@ export interface JournalGenerationOverlayProps {
   description?: string;
   progress: number;
   mode: JournalGenerationOverlayMode;
-  minVisibleMs?: number;
   onExited?: () => void;
 }
 
@@ -35,23 +37,21 @@ export function JournalGenerationOverlay({
   description,
   progress,
   mode,
-  minVisibleMs = 0,
   onExited
 }: JournalGenerationOverlayProps) {
   const [mounted, setMounted] = useState(active);
   const [overlayState, setOverlayState] = useState<OverlayState>(active ? "active" : "fade");
   const exitRequestedRef = React.useRef(false);
-  const activatedAtRef = React.useRef<number | null>(active ? Date.now() : null);
   const normalizedProgress = clampProgress(progress);
-  const progressLabel = formatJournalGenerationProgress(normalizedProgress);
-  const showMark = overlayState === "active" || overlayState === "hold";
+  const phaseLabel = getJournalGenerationPhaseLabel(normalizedProgress);
+  const activePhaseIndex = getJournalGenerationPhaseIndex(normalizedProgress);
+  const showMark = overlayState === "active";
   const showLiveContent = overlayState === "active" && active;
-  const exitDurationMs = complete ? 680 : 260;
+  const exitDurationMs = complete ? 360 : 220;
 
   useEffect(() => {
     if (active) {
       exitRequestedRef.current = false;
-      activatedAtRef.current = Date.now();
       setMounted(true);
       setOverlayState("active");
       return;
@@ -61,8 +61,6 @@ export function JournalGenerationOverlay({
       return;
     }
 
-    const elapsedMs = activatedAtRef.current ? Date.now() - activatedAtRef.current : minVisibleMs;
-    const waitMs = complete ? Math.max(0, minVisibleMs - elapsedMs) : 0;
     let exitTimer: number | null = null;
 
     const startExit = () => {
@@ -78,25 +76,14 @@ export function JournalGenerationOverlay({
       }, exitDurationMs);
     };
 
-    if (waitMs === 0) {
-      startExit();
-      return () => {
-        if (exitTimer) {
-          window.clearTimeout(exitTimer);
-        }
-      };
-    }
-
-    setOverlayState("hold");
-    const waitTimer = window.setTimeout(startExit, waitMs);
+    startExit();
 
     return () => {
-      window.clearTimeout(waitTimer);
       if (exitTimer) {
         window.clearTimeout(exitTimer);
       }
     };
-  }, [active, complete, exitDurationMs, minVisibleMs, mounted, onExited]);
+  }, [active, complete, exitDurationMs, mounted, onExited]);
 
   if (!mounted) {
     return null;
@@ -114,7 +101,7 @@ export function JournalGenerationOverlay({
       role="status"
       aria-live="polite"
       onAnimationEnd={() => {
-        if (overlayState === "active" || overlayState === "hold") {
+        if (overlayState === "active") {
           return;
         }
 
@@ -141,15 +128,21 @@ export function JournalGenerationOverlay({
               {description ? <p className="journal-generation-overlay__description">{description}</p> : null}
             </div>
 
-            <div className="journal-generation-overlay__meter" aria-label={`生成进度 ${progressLabel}`}>
-              <div className="journal-generation-overlay__track">
-                <div className="journal-generation-overlay__bar" style={{ width: progressLabel }} />
-              </div>
-              <span className="journal-generation-overlay__percent">{progressLabel}</span>
+            <div className="journal-generation-overlay__meter" aria-label={`当前阶段：${phaseLabel}`}>
+              {(["搭建骨架", "补充细节", "完成润色"] as const).map((item, index) => (
+                <span
+                  key={item}
+                  className="journal-generation-overlay__phase"
+                  data-state={index < activePhaseIndex ? "complete" : index === activePhaseIndex ? "active" : "upcoming"}
+                >
+                  <span aria-hidden="true" className="journal-generation-overlay__phase-dot" />
+                  {item}
+                </span>
+              ))}
             </div>
           </React.Fragment>
         )}
-        {overlayState === "active" || overlayState === "hold" ? null : (
+        {overlayState === "active" ? null : (
           <div className="sr-only" aria-hidden="true">
             reveal
           </div>

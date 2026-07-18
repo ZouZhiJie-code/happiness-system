@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { ActionButton, type ActionButtonVariant } from "@/components/ui/action-button";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,19 @@ export function ActionMenu({
 }: ActionMenuProps) {
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [placement, setPlacement] = useState<"top" | "bottom">("top");
+  const reduceMotion = useReducedMotion();
+
+  const closeMenu = useCallback((restoreFocus = false) => {
+    setMenuOpen(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -51,28 +64,65 @@ export function ActionMenu({
 
     function handlePointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false);
+        closeMenu();
       }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setMenuOpen(false);
+        closeMenu(true);
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
+  }, [closeMenu, menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const menu = menuRef.current;
+    const root = rootRef.current;
+    if (menu && root) {
+      const rootRect = root.getBoundingClientRect();
+      const menuHeight = menu.getBoundingClientRect().height;
+      setPlacement(rootRect.top >= menuHeight + 12 ? "top" : "bottom");
+    }
+
+    itemRefs.current[0]?.focus();
   }, [menuOpen]);
+
+  function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const enabledItems = itemRefs.current.filter((item): item is HTMLButtonElement => Boolean(item));
+    if (enabledItems.length === 0) return;
+
+    const currentIndex = enabledItems.indexOf(document.activeElement as HTMLButtonElement);
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      enabledItems[(currentIndex + 1 + enabledItems.length) % enabledItems.length].focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      enabledItems[(currentIndex - 1 + enabledItems.length) % enabledItems.length].focus();
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      enabledItems[0].focus();
+    } else if (event.key === "End") {
+      event.preventDefault();
+      enabledItems[enabledItems.length - 1].focus();
+    }
+  }
 
   return (
     <div ref={rootRef} className="relative" data-testid={testId}>
       <ActionButton
+        ref={triggerRef}
         type="button"
         variant={variant}
         aria-haspopup="menu"
@@ -96,33 +146,47 @@ export function ActionMenu({
         ) : null}
       </ActionButton>
 
-      {menuOpen ? (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={menuAriaLabel}
-          className={cn(
-            "ui-action-menu-panel absolute z-20 bottom-[calc(100%+0.45rem)]",
-            align === "end" ? "right-0" : "left-0",
-            surface === "calendar" && "ui-action-menu-panel--calendar"
-          )}
-        >
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              className="ui-action-menu-item"
-              onClick={() => {
-                setMenuOpen(false);
-                item.onSelect();
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.div
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            aria-label={menuAriaLabel}
+            aria-orientation="vertical"
+            onKeyDown={handleMenuKeyDown}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: placement === "top" ? 6 : -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: placement === "top" ? 6 : -6, scale: 0.97 }}
+            transition={reduceMotion ? { duration: 0.1 } : { type: "spring", bounce: 0, duration: 0.28 }}
+            className={cn(
+              "ui-action-menu-panel absolute z-20",
+              placement === "top" ? "bottom-[calc(100%+0.45rem)] origin-bottom" : "top-[calc(100%+0.45rem)] origin-top",
+              align === "end" ? "right-0" : "left-0",
+              surface === "calendar" && "ui-action-menu-panel--calendar"
+            )}
+          >
+            {items.map((item, index) => (
+              <button
+                key={item.id}
+                ref={(node) => {
+                  itemRefs.current[index] = node;
+                }}
+                type="button"
+                role="menuitem"
+                tabIndex={index === 0 ? 0 : -1}
+                className="ui-action-menu-item"
+                onClick={() => {
+                  closeMenu(true);
+                  item.onSelect();
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

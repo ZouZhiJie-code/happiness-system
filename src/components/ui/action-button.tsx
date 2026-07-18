@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType } from "react";
+import { forwardRef, type ComponentPropsWithoutRef, type ElementType, type ForwardedRef } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -24,12 +24,16 @@ type ActionButtonProps<T extends ElementType> = {
 /**
  * 三态动作按钮：primary（暖棕渐变）/ secondary（描边纸面）/ ghost（下划线文字）。
  */
-export function ActionButton<T extends ElementType = "button">({
+function ActionButtonInner<T extends ElementType = "button">({
   as,
   variant = "secondary",
   className,
   ...rest
-}: ActionButtonProps<T>) {
+}: ActionButtonProps<T>, ref: ForwardedRef<HTMLElement>) {
   const Tag = (as ?? "button") as ElementType;
-  return <Tag className={actionButtonClass(variant, className)} {...rest} />;
+  return <Tag ref={ref} className={actionButtonClass(variant, className)} {...rest} />;
 }
+
+export const ActionButton = forwardRef(ActionButtonInner) as <T extends ElementType = "button">(
+  props: ActionButtonProps<T> & { ref?: ForwardedRef<HTMLElement> }
+) => React.ReactElement;

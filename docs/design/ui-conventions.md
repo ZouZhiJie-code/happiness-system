@@ -62,7 +62,7 @@ chip、pill、按钮继续使用 `rounded-full`，不占档位。禁止新增 `r
 | `Divider` | hairline 分隔线，横/竖两向 |
 | `ActionButton` | primary / secondary / ghost 三态按钮 |
 | `SlidingSegmentedControl` | 带滑块的 segmented 切换；变体 `soft / calendar / admin / underline` |
-| `HorizontalPager` | 横向分页内容轨，与 segmented 联动 |
+| `HorizontalPager` | 横向分页内容轨，与 segmented 联动；按需开启 `swipeable` 与 `onRequestChange` |
 | `DimensionStatusDot` | 访谈维度状态灯（灰 / 黄呼吸 / 红 / 绿） |
 
 页面组件不再手写卡片样式；需要新形态时先扩展原语，再使用。
@@ -79,7 +79,7 @@ chip、pill、按钮继续使用 `rounded-full`，不占档位。禁止新增 `r
 | 访谈五维 | `SlidingSegmentedControl` admin + `DimensionStatusDot` | `HorizontalPager` |
 | 管理员 复盘/监控 | `SlidingSegmentedControl` admin | URL replace（不做 pager） |
 
-动效参数：`320ms` · `cubic-bezier(0.32, 0.72, 0, 1)`；`prefers-reduced-motion: reduce` 时关闭 transition。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
+动效参数：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；拖动释放允许轻微边界阻尼并继承释放速度。`prefers-reduced-motion: reduce` 时统一降级为约 `160ms` 的交叉淡入淡出。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
 
 ## 7. 例外
 

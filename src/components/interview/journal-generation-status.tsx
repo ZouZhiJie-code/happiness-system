@@ -3,7 +3,10 @@
 import React from "react";
 
 import { JournalSkeletonLines } from "@/components/interview/journal-skeleton-lines";
-import { formatJournalGenerationProgress } from "@/features/interview/journal-generation-progress";
+import {
+  getJournalGenerationPhaseIndex,
+  getJournalGenerationPhaseLabel
+} from "@/features/interview/journal-generation-copy";
 import { cn } from "@/lib/utils";
 
 interface JournalGenerationStatusProps {
@@ -23,7 +26,8 @@ export function JournalGenerationStatus({
   className,
   "data-testid": dataTestId
 }: JournalGenerationStatusProps) {
-  const progressLabel = formatJournalGenerationProgress(progress);
+  const phaseLabel = getJournalGenerationPhaseLabel(progress);
+  const activePhaseIndex = getJournalGenerationPhaseIndex(progress);
   const compact = variant === "compact";
 
   return (
@@ -63,8 +67,8 @@ export function JournalGenerationStatus({
               {label}
             </p>
           </div>
-          <div className="rounded-full border border-[rgba(171,123,72,0.18)] bg-[rgba(255,250,242,0.74)] px-3 py-1 text-[0.72rem] tracking-[0.12em] text-[#946b45]">
-            {progressLabel}
+          <div className="rounded-full border border-[rgba(171,123,72,0.18)] bg-[rgba(255,250,242,0.74)] px-3 py-1 text-[0.75rem] tracking-[0.08em] text-[#946b45]">
+            {phaseLabel}
           </div>
         </div>
 
@@ -79,14 +83,16 @@ export function JournalGenerationStatus({
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[rgba(185,146,103,0.14)]">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(182,126,72,0.84),rgba(223,185,132,0.98),rgba(145,104,63,0.88))] transition-[width] duration-700 ease-out"
-                style={{ width: progressLabel }}
-              />
-            </div>
-            <span className="min-w-[3.1rem] text-right text-[0.72rem] tracking-[0.08em] text-[#97724c]">{progressLabel}</span>
+          <div className="grid grid-cols-3 gap-2" aria-label={`当前阶段：${phaseLabel}`}>
+            {(["搭建骨架", "补充细节", "完成润色"] as const).map((item, index) => (
+              <span
+                key={item}
+                data-state={index < activePhaseIndex ? "complete" : index === activePhaseIndex ? "active" : "upcoming"}
+                className="journal-generation-step"
+              >
+                {item}
+              </span>
+            ))}
           </div>
           {description ? (
             <p className={cn("max-w-[32rem] text-[#5b4a38]", compact ? "text-[0.83rem] leading-6" : "text-sm leading-7")}>{description}</p>

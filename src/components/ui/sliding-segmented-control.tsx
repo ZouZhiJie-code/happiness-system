@@ -9,6 +9,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode
 } from "react";
+import { motion, useReducedMotion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -54,7 +55,8 @@ export function SlidingSegmentedControl<T extends string>({
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef(new Map<T, HTMLButtonElement>());
-  const [thumbStyle, setThumbStyle] = useState<{ width: number; transform: string } | null>(null);
+  const reduceMotion = useReducedMotion();
+  const [thumbStyle, setThumbStyle] = useState<{ width: number; x: number } | null>(null);
 
   const repositionThumb = useCallback(() => {
     const container = scrollRef.current ?? containerRef.current;
@@ -70,7 +72,7 @@ export function SlidingSegmentedControl<T extends string>({
 
     const nextThumbStyle = {
       width: buttonRect.width,
-      transform: `translateX(${x}px)`
+      x
     };
 
     setThumbStyle(nextThumbStyle);
@@ -78,7 +80,22 @@ export function SlidingSegmentedControl<T extends string>({
 
   useLayoutEffect(() => {
     repositionThumb();
-  }, [repositionThumb, items, value]);
+    const activeButton = buttonRefs.current.get(value);
+    const scrollContainer = scrollRef.current;
+
+    if (
+      activeButton &&
+      scrollContainer &&
+      scrollContainer.scrollWidth > scrollContainer.clientWidth &&
+      typeof activeButton.scrollIntoView === "function"
+    ) {
+      activeButton.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "nearest",
+        inline: "nearest"
+      });
+    }
+  }, [repositionThumb, items, reduceMotion, value]);
 
   useEffect(() => {
     const container = scrollRef.current ?? containerRef.current;
@@ -110,20 +127,23 @@ export function SlidingSegmentedControl<T extends string>({
 
   const inner = (
     <>
-      <span
+      <motion.span
         aria-hidden
         className={cn(
           "ui-segmented-control__thumb",
           isUnderline && "ui-segmented-control__thumb--underline",
           !highlightSelection && "ui-segmented-control__thumb--hidden"
         )}
-        style={
+        initial={false}
+        animate={
           highlightSelection && thumbStyle
-            ? {
-                width: thumbStyle.width,
-                transform: thumbStyle.transform
-              }
-            : undefined
+            ? { width: thumbStyle.width, x: thumbStyle.x, opacity: 1 }
+            : { opacity: 0 }
+        }
+        transition={
+          reduceMotion
+            ? { duration: 0.16, ease: "easeOut" }
+            : { type: "spring", bounce: 0, duration: 0.36 }
         }
       />
       {items.map((item) => {

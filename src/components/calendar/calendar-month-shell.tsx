@@ -71,7 +71,7 @@ function CalendarMonthPrimaryErrorPane({ onRetry }: { onRetry: () => void }) {
     <div className="flex min-h-0 flex-1 flex-col px-4 pb-1 pt-3 md:px-5 md:pb-1.5 md:pt-4" data-testid="calendar-month-primary-error">
       <div className="grid shrink-0 grid-cols-7 px-1">
         {["周一", "周二", "周三", "周四", "周五", "周六", "周日"].map((label) => (
-          <p key={label} className="text-center text-[0.69rem] tracking-[0.01em] text-[#8a6b4b]">
+          <p key={label} className="text-center text-[0.75rem] tracking-[0.01em] text-[#8a6b4b]">
             {label}
           </p>
         ))}

@@ -5341,7 +5341,7 @@ describe("InterviewShell", () => {
     });
   });
 
-  it("opens the journal as a right sheet instead of taking over the full workspace", async () => {
+  it("opens the journal as a responsive sheet without taking over the full workspace", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
     renderInterviewPage();
@@ -5352,7 +5352,7 @@ describe("InterviewShell", () => {
     const journalPanel = document.querySelector(".journal-panel-sheet");
     expect(journalPanel).toBeTruthy();
     expect(journalPanel).toHaveClass("absolute");
-    expect(journalPanel).toHaveClass("max-w-[30rem]");
+    expect(journalPanel).toHaveClass("md:max-w-[30rem]", "max-h-[92%]");
     expect(screen.getByTestId("interview-message-scroll")).toBeInTheDocument();
   });
 

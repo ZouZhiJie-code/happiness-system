@@ -19,6 +19,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.22.0",
     "clsx": "^2.1.1",
+    "motion": "^12.42.2",
     "next": "^15.0.0",
     "pino": "^9.5.0",
     "react": "^19.0.0",

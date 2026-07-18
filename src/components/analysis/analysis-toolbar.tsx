@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAnalysisChrome } from "@/components/analysis/analysis-chrome-context";
@@ -57,6 +57,7 @@ export function AnalysisToolbar() {
   });
   const [optimisticPeriod, setOptimisticPeriod] = useState<AnalysisPeriodState | null>(null);
   const [pressedDirection, setPressedDirection] = useState<"previous" | "next" | null>(null);
+  const activeSectionRef = useRef<HTMLButtonElement>(null);
 
   const resolvedPeriod = useMemo(
     () =>
@@ -88,6 +89,28 @@ export function AnalysisToolbar() {
       setPressedDirection(null);
     }
   }, [isPeriodLoading]);
+
+  useEffect(() => {
+    const activeButton = activeSectionRef.current;
+    const scrollContainer = activeButton?.closest<HTMLElement>(".site-header-context-scroll");
+
+    if (!activeButton || !scrollContainer || scrollContainer.scrollWidth <= scrollContainer.clientWidth) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const buttonRect = activeButton.getBoundingClientRect();
+      const nextScrollLeft = Math.max(
+        0,
+        scrollContainer.scrollLeft + buttonRect.right - containerRect.right + 12
+      );
+
+      scrollContainer.scrollTo({ left: nextScrollLeft, behavior: "smooth" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeSection]);
 
   function applyOptimisticPeriodNavigation(
     nextPeriod: AnalysisPeriodState,
@@ -187,7 +210,7 @@ export function AnalysisToolbar() {
   const periodLoadingLabel = isPeriodLoading ? getAnalysisPeriodLoadingLabel(activePeriod.preset) : null;
 
   return (
-    <div data-testid="analysis-toolbar" className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden">
+    <div data-testid="analysis-toolbar" className="flex min-h-[var(--site-header-lane-min-height)] min-w-max items-center gap-1.5 overflow-visible lg:min-w-0 lg:w-full lg:overflow-hidden">
       <div className="header-ws-template flex w-full min-w-0 items-center gap-1.5">
         <div className="header-ws-slot header-ws-slot--time flex shrink-0 items-center gap-1.5">
           <SlidingSegmentedControl
@@ -205,7 +228,7 @@ export function AnalysisToolbar() {
             }))}
           />
 
-          <HeaderToolbarDivider />
+          <HeaderToolbarDivider className="hidden lg:inline-flex" />
 
           <HeaderToolbarPeriodStepper
             testId="analysis-period-stepper"
@@ -257,7 +280,7 @@ export function AnalysisToolbar() {
           </HeaderToolbarPeriodStepper>
 
         </div>
-        <HeaderToolbarDivider />
+        <HeaderToolbarDivider className="hidden lg:inline-flex" />
         <div className="header-ws-slot header-ws-slot--context min-w-0 flex-1 overflow-x-auto pb-0.5">
           <div className="flex min-w-max items-center gap-1.5">
             {sectionTabs.map((tab) => {
@@ -266,6 +289,7 @@ export function AnalysisToolbar() {
               return (
                 <button
                   key={tab.key}
+                  ref={active ? activeSectionRef : undefined}
                   type="button"
                   onClick={() => navigateSection(tab.key)}
                   className={cn(

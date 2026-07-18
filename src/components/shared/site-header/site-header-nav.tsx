@@ -37,7 +37,7 @@ export function SiteHeaderNav({
 
   if (!authenticated) {
     return (
-      <nav aria-label="账户入口" className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-1.5">
+      <nav aria-label="账户入口" className="col-start-2 row-start-1 flex min-h-[var(--site-header-lane-min-height)] items-center justify-self-end gap-1.5 lg:col-auto lg:row-auto">
         <Link
           href="/login"
           aria-current={pathname === "/login" ? "page" : undefined}
@@ -57,7 +57,7 @@ export function SiteHeaderNav({
   }
 
   return (
-    <nav className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2">
+    <nav className="col-start-2 row-start-1 flex min-h-[var(--site-header-lane-min-height)] items-center justify-self-end gap-2 lg:col-auto lg:row-auto">
       {navItems.map((item) => {
         const active = isEnteringCalendar
           ? item.matchPath === "/calendar"

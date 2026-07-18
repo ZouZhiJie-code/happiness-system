@@ -80,3 +80,18 @@ export function getJournalGenerationPhaseDescription(scope: JournalGenerationCop
   const phases = journalGenerationCopyMap[scope].phases;
   return phases.find((phase) => normalizedProgress < phase.until)?.description ?? phases[phases.length - 1].description;
 }
+
+export function getJournalGenerationPhaseLabel(progress: number) {
+  const normalizedProgress = clampProgress(progress);
+
+  if (normalizedProgress < 30) return "搭建骨架";
+  if (normalizedProgress < 65) return "补充细节";
+  return "完成润色";
+}
+
+export function getJournalGenerationPhaseIndex(progress: number) {
+  const normalizedProgress = clampProgress(progress);
+  if (normalizedProgress < 30) return 0;
+  if (normalizedProgress < 65) return 1;
+  return 2;
+}

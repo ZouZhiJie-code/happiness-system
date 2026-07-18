@@ -38,6 +38,12 @@ export function ProfileShell() {
         <HorizontalPager
           activeKey={tab}
           ariaLabel="画像页内容"
+          swipeable
+          onRequestChange={(key) => {
+            if (TABS.some((item) => item.key === key)) {
+              setTab(key as ProfileViewTab);
+            }
+          }}
           pages={TABS.map((item) => ({
             key: item.key,
             children:

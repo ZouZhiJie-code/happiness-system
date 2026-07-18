@@ -16,7 +16,7 @@ import { formatCalendarWeekdayLabel } from "@/features/calendar/view-state";
 
 function SummaryPill({ text }: { text: string }) {
   return (
-    <span className="calendar-summary-chip rounded-full px-2 py-1 text-[0.68rem] leading-none text-[#755d47]">
+    <span className="calendar-summary-chip rounded-full px-2 py-1 text-[0.75rem] leading-none text-[#755d47]">
       {text}
     </span>
   );
@@ -68,7 +68,7 @@ export function CalendarWeekBoard({
 
                 <span
                   className={clsx(
-                    "shrink-0 rounded-full border px-2.5 py-1 text-[0.74rem] tabular-nums",
+                    "shrink-0 rounded-full border px-2.5 py-1 text-[0.75rem] tabular-nums",
                     getCalendarStatusBadgeClass(day.overallStatus)
                   )}
                 >

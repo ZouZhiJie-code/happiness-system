@@ -18,7 +18,8 @@ describe("JournalGenerationStatus", () => {
     expect(screen.getByText("日志正在整理")).toBeInTheDocument();
     expect(screen.getByText("今天真正动到你的那段开心，值得被写成一页")).toBeInTheDocument();
     expect(screen.getByText("先把让你有感觉的那个片段立住")).toBeInTheDocument();
-    expect(screen.getAllByText("36%").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("补充细节").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("当前阶段：补充细节")).toBeInTheDocument();
     expect(screen.getByTestId("journal-skeleton-lines")).toBeInTheDocument();
   });
 
@@ -34,7 +35,8 @@ describe("JournalGenerationStatus", () => {
 
     expect(screen.getByText("今天想走得更稳的地方，整理成下次用得上的一页")).toBeInTheDocument();
     expect(screen.getByText("收束标题和读感，让这页日志下次拿得到")).toBeInTheDocument();
-    expect(screen.getAllByText("92%").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("完成润色").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("当前阶段：完成润色")).toBeInTheDocument();
     expect(screen.getByTestId("journal-skeleton-lines")).toBeInTheDocument();
   });
 });

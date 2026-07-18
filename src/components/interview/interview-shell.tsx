@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from "motion/react";
 
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
@@ -659,6 +660,7 @@ export function InterviewShell({
   const [streamedAssistantSummary, setStreamedAssistantSummary] = useState("");
   const [streamedAssistantQuestion, setStreamedAssistantQuestion] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [isCompactJournalPanel, setIsCompactJournalPanel] = useState(false);
   const [draftGenerateState, setDraftGenerateState] = useState<DraftGenerateState>("idle");
   const [draftGenerateProgress, setDraftGenerateProgress] = useState(0);
   const [draftGenerationOverlayActive, setDraftGenerationOverlayActive] = useState(false);
@@ -681,6 +683,8 @@ export function InterviewShell({
   const [panelRatio, setPanelRatio] = useState(DEFAULT_PANEL_RATIO);
   const [isResizingPanel, setIsResizingPanel] = useState(false);
   const [isJournalPanelCollapsed, setIsJournalPanelCollapsed] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const journalSheetDragControls = useDragControls();
   const pendingPanelDimensionActionRef = useRef<{ dimension: InterviewDimension; action: "generate" } | null>(null);
   const panelResizeStateRef = useRef<{ startX: number; startRatio: number } | null>(null);
   const pendingPanelActionDebugKeyRef = useRef<string | null>(null);
@@ -688,6 +692,18 @@ export function InterviewShell({
     setTodayJournalBoardRefreshKey((current) => current + 1);
   }, []);
   const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => setIsCompactJournalPanel(mediaQuery.matches);
+    syncViewport();
+    mediaQuery.addEventListener?.("change", syncViewport);
+    return () => mediaQuery.removeEventListener?.("change", syncViewport);
+  }, []);
   const currentDimension = normalizeInterviewDimension(searchParams.get("dimension") ?? dimension);
   const activeTargetDimension = normalizeInterviewDimension(pendingUrlDimension ?? currentDimension);
   const displayDimension = activeTargetDimension;
@@ -1133,10 +1149,9 @@ export function InterviewShell({
     [stopToastTimer]
   );
 
-  const finalizeDraftGenerationVisuals = useCallback(async () => {
+  const finalizeDraftGenerationVisuals = useCallback(() => {
     stopDraftPhaseTimers();
     setDraftGenerateProgress(100);
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
   }, [stopDraftPhaseTimers]);
 
   function maybeFinalizeStream(activeStreamId: number) {
@@ -2142,7 +2157,7 @@ export function InterviewShell({
       if (requestRunId !== draftGenerateRunIdRef.current) {
         return;
       }
-      await finalizeDraftGenerationVisuals();
+      finalizeDraftGenerationVisuals();
       if (requestRunId !== draftGenerateRunIdRef.current) {
         return;
       }
@@ -3298,20 +3313,52 @@ export function InterviewShell({
       </div>
       )}
 
-      {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
-        <div
-          aria-hidden="true"
-          data-testid="journal-panel-scrim"
-          onClick={() => void handleCloseButtonClick()}
-          className="absolute inset-0 z-20 bg-[rgba(32,24,17,0.32)] backdrop-blur-[1px]"
-        />
-      ) : null}
+      <AnimatePresence>
+        {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
+          <motion.div
+            key="journal-panel-scrim"
+            aria-hidden="true"
+            data-testid="journal-panel-scrim"
+            onClick={() => void handleCloseButtonClick()}
+            className="absolute inset-0 z-20 bg-[rgba(32,24,17,0.32)] backdrop-blur-[1px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0.12 : 0.22, ease: "easeOut" }}
+          />
+        ) : null}
+      </AnimatePresence>
 
-      {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
-        <aside
+      <AnimatePresence>
+        {!showWorkspaceTransition && panelOpen && workspaceMode === "interview" ? (
+        <motion.aside
+          key="journal-panel-sheet"
           ref={journalPanelRef}
-          className="paper-sheet journal-panel-sheet absolute inset-y-0 right-0 z-30 flex min-h-0 w-full max-w-[30rem] flex-col overflow-hidden rounded-none border-y-0 border-r-0 px-4 pb-4 pt-4 shadow-[-24px_0_60px_-20px_rgba(74,44,18,0.45)] md:px-5 md:pb-5 md:pt-5"
+          className="paper-sheet journal-panel-sheet absolute inset-x-0 bottom-0 z-30 flex max-h-[92%] min-h-0 w-full flex-col overflow-hidden rounded-t-[var(--radius-shell)] border-x-0 border-b-0 px-4 pb-4 pt-4 shadow-[0_-24px_60px_-20px_rgba(74,44,18,0.45)] md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:max-w-[30rem] md:rounded-none md:border-y-0 md:border-r-0 md:px-5 md:pb-5 md:pt-5 md:shadow-[-24px_0_60px_-20px_rgba(74,44,18,0.45)]"
+          initial={reduceMotion ? { opacity: 0 } : isCompactJournalPanel ? { y: "100%" } : { x: "100%" }}
+          animate={{ x: 0, y: 0, opacity: 1 }}
+          exit={reduceMotion ? { opacity: 0 } : isCompactJournalPanel ? { y: "100%" } : { x: "100%" }}
+          transition={reduceMotion ? { duration: 0.14 } : { type: "spring", bounce: 0, duration: 0.38 }}
+          drag={isCompactJournalPanel && !reduceMotion ? "y" : false}
+          dragControls={journalSheetDragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.02, bottom: 0.28 }}
+          dragMomentum={false}
+          onDragEnd={(_, info) => {
+            if (info.offset.y > 90 || info.velocity.y > 700) {
+              void handleCloseButtonClick();
+            }
+          }}
         >
+          <button
+            type="button"
+            aria-label="向下拖动关闭日志面板"
+            className="mx-auto -mt-1 mb-1 flex h-7 w-16 touch-none items-center justify-center md:hidden"
+            onPointerDown={(event) => journalSheetDragControls.start(event)}
+          >
+            <span aria-hidden="true" className="h-1 w-10 rounded-full bg-[rgba(110,73,38,0.28)]" />
+          </button>
           <JournalGenerationOverlay
             active={draftGenerationOverlayActive}
             complete={draftGenerationOverlayComplete}
@@ -3319,7 +3366,6 @@ export function InterviewShell({
             description={draftGenerationOverlayMeta.description}
             progress={draftGenerateProgress}
             mode="dimension"
-            minVisibleMs={1000}
             onExited={() => setDraftGenerationOverlayComplete(false)}
           />
           <button
@@ -3435,8 +3481,9 @@ export function InterviewShell({
             {draftError ? <p className="mt-4 text-sm text-[#9f3a2f]">{draftError}</p> : null}
             {journalEntry && draftGenerateIssue ? <p className="mt-4 text-sm text-[#9f3a2f]">{draftGenerateIssue.message}</p> : null}
           </div>
-        </aside>
+        </motion.aside>
       ) : null}
+      </AnimatePresence>
       {showWorkspaceTransition && workspaceTransitionState ? (
         <div className="absolute inset-0 z-30 bg-[rgba(247,240,229,0.92)] backdrop-blur-[2px]">
           <WorkspaceTransitionCard transitionState={workspaceTransitionState} />

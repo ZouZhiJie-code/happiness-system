@@ -76,9 +76,22 @@ export function CalendarToolbar() {
     normalizedSearch.view === "day" ? getCachedCalendarDayRecord(normalizedSearch.date) : null
   );
   const [hasFetchError, setHasFetchError] = useState(false);
+  const [isCompactToolbar, setIsCompactToolbar] = useState(false);
   const [isLoading, setIsLoading] = useState(
     () => !hasCachedToolbarRecord(normalizedSearch.view, normalizedSearch.date)
   );
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncCompactToolbar = () => setIsCompactToolbar(mediaQuery.matches);
+    syncCompactToolbar();
+    mediaQuery.addEventListener("change", syncCompactToolbar);
+    return () => mediaQuery.removeEventListener("change", syncCompactToolbar);
+  }, []);
 
   useEffect(() => {
     if (!isCalendarPage) {
@@ -195,10 +208,10 @@ export function CalendarToolbar() {
     <div
       data-testid="calendar-toolbar"
       aria-busy={isLoading ? "true" : "false"}
-      className="flex min-h-[var(--site-header-lane-min-height)] w-full items-center gap-1.5 overflow-hidden"
+      className="flex min-h-[var(--site-header-lane-min-height)] min-w-max items-center gap-1.5 overflow-visible lg:min-w-0 lg:w-full lg:overflow-hidden"
     >
       <div className="header-ws-template flex w-full min-w-0 items-center gap-1.5">
-        <div className="header-ws-slot header-ws-slot--time shrink-0">
+        <div className="header-ws-slot header-ws-slot--time order-1 shrink-0 md:order-none">
           <HeaderToolbarPeriodStepper
             testId="calendar-period-stepper"
             busy={isLoading}
@@ -212,22 +225,38 @@ export function CalendarToolbar() {
           </HeaderToolbarPeriodStepper>
         </div>
 
-        <HeaderToolbarDivider />
+        <HeaderToolbarDivider className="order-2 hidden lg:order-none lg:inline-flex" />
 
-        <div className="header-ws-slot header-ws-slot--context header-ws-slot--context--chips shrink-0">
-          <div className="flex min-w-0 flex-col gap-1">
-            {hasFetchError ? (
-              <HeaderToolbarStatus tone="error" role="alert">
-                {getCalendarErrorLabel("toolbar")}
-              </HeaderToolbarStatus>
-            ) : null}
-            <HeaderSummaryChipRow chips={chips} />
-          </div>
+        <div className="header-ws-slot header-ws-slot--context header-ws-slot--context--chips order-7 shrink-0 md:order-none">
+          {isCompactToolbar ? (
+            <details className="group">
+              <summary className="header-toolbar-chip-btn cursor-pointer list-none select-none marker:hidden">
+                摘要
+              </summary>
+              <div className="mt-1.5 flex min-w-0 flex-col gap-1">
+                {hasFetchError ? (
+                  <HeaderToolbarStatus tone="error" role="alert">
+                    {getCalendarErrorLabel("toolbar")}
+                  </HeaderToolbarStatus>
+                ) : null}
+                <HeaderSummaryChipRow chips={chips} />
+              </div>
+            </details>
+          ) : (
+            <div className="flex min-w-0 flex-col gap-1">
+              {hasFetchError ? (
+                <HeaderToolbarStatus tone="error" role="alert">
+                  {getCalendarErrorLabel("toolbar")}
+                </HeaderToolbarStatus>
+              ) : null}
+              <HeaderSummaryChipRow chips={chips} />
+            </div>
+          )}
         </div>
 
-        <HeaderToolbarDivider />
+        <HeaderToolbarDivider className="order-6 hidden lg:order-none lg:inline-flex" />
 
-        <div className="header-ws-slot header-ws-slot--view shrink-0">
+        <div className="header-ws-slot header-ws-slot--view order-3 shrink-0 md:order-none">
           <CalendarViewSwitcher
             currentView={activeView}
             currentDate={normalizedSearch.date}
@@ -235,9 +264,9 @@ export function CalendarToolbar() {
           />
         </div>
 
-        <HeaderToolbarDivider />
+        <HeaderToolbarDivider className="order-4 hidden lg:order-none lg:inline-flex" />
 
-        <div className="header-ws-slot header-ws-slot--action shrink-0">
+        <div className="header-ws-slot header-ws-slot--action order-5 shrink-0 md:order-none">
           <HeaderToolbarChipButton onClick={() => navigate({ date: today })} aria-label="回到今天">
             今天
           </HeaderToolbarChipButton>

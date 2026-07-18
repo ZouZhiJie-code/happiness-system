@@ -90,7 +90,7 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
         ref={headerRef}
         className="site-header-frosted sticky top-0 z-50 isolate w-full px-3 md:px-6"
       >
-      <div className="relative z-10 flex min-h-[var(--site-header-frame-min-height)] flex-col gap-1.5 md:grid md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] md:items-center md:gap-3">
+      <div className="relative z-10 grid min-h-[var(--site-header-frame-min-height)] grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] lg:gap-3">
         <Link
           href="/"
           onClick={(event) => handleProtectedNavigation(event, "/")}
@@ -109,8 +109,8 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
           </div>
           <p className="whitespace-nowrap font-display text-[1.08rem] text-[#2f2823]">Daily Light</p>
         </Link>
-        <HeaderToolbarDivider className="hidden md:flex" />
-        <div className="flex min-h-[var(--site-header-lane-min-height)] min-w-0 items-center overflow-x-hidden">
+        <HeaderToolbarDivider className="hidden lg:flex" />
+        <div className="site-header-context-scroll col-span-2 row-start-2 flex min-h-[var(--site-header-lane-min-height)] min-w-0 items-center overflow-x-auto pb-0.5 lg:col-span-1 lg:row-auto lg:overflow-x-hidden lg:pb-0">
           {isInterviewPage ? <InterviewHeaderToolbar isAdmin={isAdmin} /> : null}
           {isCalendarPage ? <CalendarToolbar /> : null}
           {isAnalysisPage ? <AnalysisToolbar /> : null}
@@ -118,7 +118,7 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
             <HeaderPlainContext title={headerPlainContext.title} subtitle={headerPlainContext.subtitle} />
           ) : null}
         </div>
-        <HeaderToolbarDivider className="hidden md:flex" />
+        <HeaderToolbarDivider className="hidden lg:flex" />
         <SiteHeaderNav
           authenticated={authenticated}
           pathname={pathname}
