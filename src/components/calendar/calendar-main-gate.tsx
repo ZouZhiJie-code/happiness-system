@@ -13,7 +13,10 @@ export function CalendarMainGate({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className={showEntryOverlay ? "hidden" : undefined} aria-hidden={showEntryOverlay || undefined}>
+      <div
+        className={showEntryOverlay ? "hidden" : "flex min-h-0 flex-1 flex-col"}
+        aria-hidden={showEntryOverlay || undefined}
+      >
         {children}
       </div>
       {showEntryOverlay ? (
