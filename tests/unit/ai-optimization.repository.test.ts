@@ -31,7 +31,8 @@ describe("AI optimization repository", () => {
       path: "few_shot",
       promptKey: "interview.question.joy",
       proposal: { sourceTraceIds: ["trace-1"] },
-      fewShotExamples: [{ id: "example-1" }]
+      fewShotExamples: [{ id: "example-1" }],
+      validations: [{ id: "validation-1", status: "passed" }]
     });
     tx.aIFewShotExample.findMany.mockResolvedValue(
       Array.from({ length: 8 }, (_, index) => ({ id: `example-${index + 1}` }))
@@ -71,11 +72,29 @@ describe("AI optimization repository", () => {
       path: "engineering",
       promptKey: "interview.question.joy",
       proposal: {},
-      fewShotExamples: []
+      fewShotExamples: [],
+      validations: []
     });
 
     await expect(publishOptimizationCandidate("candidate-engineering", "admin")).rejects.toThrow(
       "ENGINEERING_CANDIDATE_CANNOT_PUBLISH"
+    );
+    expect(tx.aIPromptRelease.create).not.toHaveBeenCalled();
+  });
+
+  it("requires a passed validation before publishing", async () => {
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-unvalidated",
+      status: "approved",
+      path: "system_prompt",
+      promptKey: "interview.question.joy",
+      proposal: { instructionPatch: "每次只问一个问题。" },
+      fewShotExamples: [],
+      validations: []
+    });
+
+    await expect(publishOptimizationCandidate("candidate-unvalidated", "admin")).rejects.toThrow(
+      "OPTIMIZATION_VALIDATION_REQUIRED"
     );
     expect(tx.aIPromptRelease.create).not.toHaveBeenCalled();
   });
