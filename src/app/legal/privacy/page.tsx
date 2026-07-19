@@ -13,6 +13,11 @@ const sections = [
       "为了完成访谈理解、草稿生成和画像整理，系统会将必要的文本内容发送给 AI 服务进行处理。我们会尽量按功能所需最小范围使用这些内容，并持续优化内部隔离与错误处理。"
   },
   {
+    title: "回复反馈与质量优化",
+    body:
+      "系统会把 AI 回复、当时的必要上下文、自动质量评分，以及你提交的点赞、点踩、问题标签和文字说明用于发现问题和改进生成质量。每条反馈都会绑定对应的生成记录，你可以修改或撤回单条反馈。"
+  },
+  {
     title: "保存、删除与联系",
     body:
       "你的数据会与账号绑定，用于后续回看、继续编辑、日历与分析展示。后续开放账号注销后，相关记录会按系统规则一起删除。如果本政策发生重要更新，我们会在产品内同步最新版本。"
@@ -28,6 +33,7 @@ export default function PrivacyPage() {
             <StatusPill label="法律文档" tone="neutral" />
             <p className="archive-label mt-6">隐私说明</p>
             <h1 className="mt-5 font-display text-5xl leading-[0.96] text-ink md:text-6xl">隐私政策</h1>
+            <p className="mt-3 text-xs text-ink/56">版本：2026-07-19</p>
             <p className="mt-4 text-sm leading-8 text-ink/76">
               本政策说明账号绑定、AI 处理、数据保存与删除方式，帮助你了解个人信息在产品中的使用范围。
             </p>

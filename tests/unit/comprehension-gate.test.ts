@@ -124,13 +124,24 @@ describe("evaluateQuestionComprehension", () => {
     expect(result.reasonCodes).toContain("forbidden_theory_term");
   });
 
-  it("passes a grounded judgment clue question that stays anchored and easy to answer", () => {
+  it("rejects a mechanical judgment-clue template even when it contains the event anchor", () => {
     const result = evaluate({
       question: "回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？"
     });
 
+    expect(result.pass).toBe(false);
+    expect(result.reasonCodes).toEqual(
+      expect.arrayContaining(["mechanical_anchor_lead", "premature_distillation"])
+    );
+    expect(result.downgradeRecommendation).toBe("rewrite_with_user_words");
+  });
+
+  it("passes a grounded natural judgment clue question that stays anchored and easy to answer", () => {
+    const result = evaluate({
+      question: "“回顾过去问问大象的经历”里，什么具体结果最能代表这次投入？"
+    });
+
     expect(result.pass).toBe(true);
     expect(result.reasonCodes).toEqual([]);
-    expect(result.downgradeRecommendation).toBeNull();
   });
 });

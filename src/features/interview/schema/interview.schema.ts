@@ -280,6 +280,7 @@ export const assistantTurnPayloadSchema = z.object({
 
 const interviewMessageSchema = z.object({
   id: z.string(),
+  traceId: z.string().nullable().optional(),
   role: z.enum(["user", "assistant", "system"]),
   inputMode: z.enum(["text", "voice"]).optional(),
   content: z.string(),
@@ -350,6 +351,8 @@ const journalDraftSchema = z.object({
 
 export const journalEntrySchema = journalDraftSchema.extend({
   id: z.string(),
+  traceId: z.string().nullable().optional(),
+  generationVersion: z.number().int().nonnegative().optional(),
   status: z.enum(["draft", "saved"]),
   linkedSessionIds: z.array(z.string()),
   updatedAt: z.string(),

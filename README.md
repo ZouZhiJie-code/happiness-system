@@ -20,6 +20,7 @@
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
 - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
+- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、点赞/点踩与版本化授权、Badcase 聚类、System Prompt / Few-shot / 工程候选、管理员审核发布和回滚均已接入；管理员入口为 `/admin/ai-quality`
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - `2026-05-25` 已完成一次真实 production AI 恢复：`dlight.cc.cd` 当前 production runtime 走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded runtime probe 在恢复窗口中返回过 `ai.probe.status=200`，随后 `ENABLE_RUNTIME_ENV_READBACK` 已重新关闭。
 - 同一轮 production 排障中，已补齐 `20260521120000_add_admin_analytics_tables` migration，修复了 live 注册路径因 `AnalyticsEvent` 表缺失而出现的 `REGISTER_FAILED`。
@@ -209,6 +210,9 @@ npm run dev
   - API：`/api/auth/register`、`/api/auth/login`、`/api/auth/logout`、`/api/auth/session`、`/api/auth/delete-account`
   - 管理员页面：`/admin/analytics`
   - 管理员 API：`/api/admin/analytics/*`
+  - AI 质量页面：`/admin/ai-quality`
+  - AI 反馈 API：`/api/ai-feedback/*`
+  - AI 质量 Cron：`/api/cron/ai-quality/evaluate`、`/api/cron/ai-quality/iterate`
 
 ### 5. 回归检查
 
@@ -261,6 +265,7 @@ npx prisma migrate deploy
 - 当前架构：`docs/architecture.md`
 - 当前 API 面：`docs/integration-guide.md`
 - 本地排障与运行手册：`docs/operator-runbook.md`
+- AI 评估、反馈与自迭代闭环：`docs/ai-quality-loop.md`
 - 托管平台部署主线：`docs/vercel-preview-production-lane.md`
 - 当前阶段 handoff：`docs/handoff.md`
 - joy 理论对齐：`docs/theory/joy-alignment.md`

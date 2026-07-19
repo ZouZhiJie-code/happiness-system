@@ -17,6 +17,7 @@ import {
   getAIRuntimeConfigRecordById,
   getAIRuntimeDraftRecord,
   getAIRuntimeHistoryRecords,
+  getAIRuntimeAdminPageRecords,
   getNextAIRuntimeVersion,
   getPublishedAIRuntimeConfigRecord,
   publishAIRuntimeConfigRecord,
@@ -27,6 +28,8 @@ import {
 import { AIProviderError } from "@/server/services/ai/ai-provider";
 import { createRuntimeAIProvider } from "@/server/services/ai/runtime-provider-factory";
 import { getAIProviderStatus } from "@/server/services/ai";
+import { logger } from "@/server/lib/logger";
+import { withAdminReadRetry } from "@/server/services/admin-read-retry";
 
 export class AdminAIRuntimeServiceError extends Error {
   constructor(
@@ -325,6 +328,51 @@ export async function getAdminAIRuntimeStatus() {
       }
     ]
   };
+}
+
+export async function getAdminAIRuntimePageData() {
+  try {
+    const records = await withAdminReadRetry(() => getAIRuntimeAdminPageRecords());
+    const forCapability = (capability: AIRuntimeCapability) => records.filter((record) => record.capability === capability);
+    const chatRecords = forCapability("chat");
+    const embeddingRecords = forCapability("embedding");
+    const chatPublished = chatRecords.find((record) => record.status === "published") ?? null;
+    const embeddingPublished = embeddingRecords.find((record) => record.status === "published") ?? null;
+    const chatDraft = chatRecords.find((record) => record.status === "draft") ?? null;
+    const embeddingDraft = embeddingRecords.find((record) => record.status === "draft") ?? null;
+    const [chatStatus, embeddingStatus] = await Promise.all([
+      getAIProviderStatus("chat", { publishedConfig: chatPublished }),
+      getAIProviderStatus("embedding", { publishedConfig: embeddingPublished })
+    ]);
+
+    return {
+      databaseAvailable: true,
+      capabilities: [
+        { ...chatStatus, publishedConfig: chatPublished, latestProbe: resolveLatestProbe(chatDraft?.probes, chatPublished?.probes) },
+        { ...embeddingStatus, publishedConfig: embeddingPublished, latestProbe: resolveLatestProbe(embeddingDraft?.probes, embeddingPublished?.probes) }
+      ],
+      drafts: { chat: chatDraft, embedding: embeddingDraft },
+      history: {
+        chat: chatRecords.filter((record) => record.status === "published" || record.status === "archived"),
+        embedding: embeddingRecords.filter((record) => record.status === "published" || record.status === "archived")
+      }
+    };
+  } catch (error) {
+    logger.error({ err: error }, "Admin AI runtime database data is temporarily unavailable.");
+    const [chatStatus, embeddingStatus] = await Promise.all([
+      getAIProviderStatus("chat", { publishedConfig: null }),
+      getAIProviderStatus("embedding", { publishedConfig: null })
+    ]);
+    return {
+      databaseAvailable: false,
+      capabilities: [
+        { ...chatStatus, publishedConfig: null, latestProbe: null },
+        { ...embeddingStatus, publishedConfig: null, latestProbe: null }
+      ],
+      drafts: { chat: null, embedding: null },
+      history: { chat: [], embedding: [] }
+    };
+  }
 }
 
 export async function rollbackAIRuntimeConfig(input: {

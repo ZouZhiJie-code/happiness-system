@@ -37,6 +37,10 @@ vi.mock("@/components/joy/settings-form", () => ({
   SettingsForm: () => <div data-testid="settings-form-stub">settings form stub</div>
 }));
 
+vi.mock("@/components/ai-feedback/ai-quality-consent-settings", () => ({
+  AIQualityConsentSettings: () => <div data-testid="ai-quality-consent-settings-stub">quality settings stub</div>
+}));
+
 import SettingsPage from "@/app/settings/page";
 
 describe("settings page", () => {
@@ -78,5 +82,6 @@ describe("settings page", () => {
 
     expect(screen.getByRole("link", { name: "管理员数据分析" })).toHaveAttribute("href", "/admin/analytics");
     expect(screen.getByRole("link", { name: "AI 运行配置中心" })).toHaveAttribute("href", "/settings/ai-runtime");
+    expect(screen.getByRole("link", { name: "AI 质量改进中心" })).toHaveAttribute("href", "/admin/ai-quality");
   });
 });

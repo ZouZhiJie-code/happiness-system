@@ -143,7 +143,9 @@ describe("interview start api route", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockStartInterview).toHaveBeenCalledWith("user-1", "joy", "2026-04-21");
+    expect(mockStartInterview).toHaveBeenCalledWith("user-1", "joy", "2026-04-21", {
+      requestId: expect.stringMatching(/^ir_/)
+    });
     expect(mockResponseParse).toHaveBeenCalledTimes(1);
   });
 

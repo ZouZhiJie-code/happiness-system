@@ -6,8 +6,10 @@ import {
 } from "@/features/interview/schema/interview.schema";
 import { isAuthenticationRequiredError, requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { startInterview } from "@/server/services/interview/interview.service";
+import { createInterviewRequestId } from "@/server/services/interview/respond-error";
 
 export async function POST(request: Request) {
+  const requestId = createInterviewRequestId();
   const body = await request.json();
   const parsed = startInterviewRequestSchema.safeParse(body);
 
@@ -17,7 +19,7 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
-    const result = await startInterview(user.id, parsed.data.dimension, parsed.data.entryDate);
+    const result = await startInterview(user.id, parsed.data.dimension, parsed.data.entryDate, { requestId });
     const payload = startInterviewResponseSchema.parse(result);
 
     return NextResponse.json(payload);

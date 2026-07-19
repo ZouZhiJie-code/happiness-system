@@ -1,6 +1,11 @@
 import type { AIRequestStage } from "@prisma/client";
 
 import {
+  createPromptEnvelope,
+  getInterviewPromptKey,
+  type PromptEnvelope
+} from "@/features/ai-quality/prompt-manifest";
+import {
   buildDraftBrief,
   buildDraftWritingProfile,
   createFallbackDraft,
@@ -13,8 +18,8 @@ import {
   inferQuestionSpecFromQuestion,
   resolveQuestionFromSpec
 } from "@/features/joy-interview/server/question-protocol";
+import { applyExplicitEvidenceRevisions } from "@/features/joy-interview/server/evidence-revision";
 import {
-  buildAssistantQuestion,
   extractJoySignals,
   getDelightSignature,
   getDirectionSignal,
@@ -45,12 +50,18 @@ import {
   buildJoyExtractMessages,
   buildJoyQuestionMessages
 } from "@/features/joy-interview/prompts/joy-prompts";
+import {
+  appendGenerationTraceDecision,
+  markGenerationTraceOrigin,
+  recordAIInvocation
+} from "@/server/repositories/ai-quality.repository";
 import { createAIRequestLog } from "@/server/repositories/joy-interview.repository";
 import { logger } from "@/server/lib/logger";
 import { formatAIProviderUnavailableCode, getAIProvider, getAIProviderStatus } from "@/server/services/ai";
-import type { AIChatMessage, AIProvider } from "@/server/services/ai/ai-provider";
+import type { AIProvider } from "@/server/services/ai/ai-provider";
 import { getAIProviderFailureCode } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
+import { resolveOptimizedPromptEnvelope } from "@/server/services/ai-quality/prompt-optimization.service";
 import type {
   AssistantDepth,
   AssistantQuestionSpec,
@@ -100,6 +111,8 @@ interface AssistantTurnGenerationInput {
   action: "reply" | "continue_current_event";
   questionSpec?: AssistantQuestionSpec | null;
   memoryContext?: string | null;
+  traceId?: string | null;
+  requestId?: string | null;
 }
 
 function sanitizeNullableString(value: string | null | undefined) {
@@ -539,10 +552,18 @@ function logAttempt(
   sessionId: string,
   attempt: {
     stage: AIRequestStage;
+    attempt?: number;
     provider: string;
     success: boolean;
     latencyMs: number | null;
     errorCode: string | null;
+    responseText?: string | null;
+  },
+  trace?: {
+    traceId?: string | null;
+    requestId?: string | null;
+    envelope?: PromptEnvelope | null;
+    params?: Record<string, unknown> | null;
   }
 ) {
   const warnOnTelemetryFailure = (error: unknown) => {
@@ -559,14 +580,29 @@ function logAttempt(
 
   try {
     void Promise.resolve(
-      createAIRequestLog({
-        sessionId,
-        stage: attempt.stage,
-        provider: attempt.provider,
-        success: attempt.success,
-        latencyMs: attempt.latencyMs,
-        errorCode: attempt.errorCode
-      })
+      trace?.traceId
+        ? recordAIInvocation({
+            sessionId,
+            traceId: trace.traceId,
+            requestId: trace.requestId,
+            stage: attempt.stage,
+            attempt: attempt.attempt ?? 1,
+            provider: attempt.provider,
+            envelope: trace.envelope,
+            responseText: attempt.responseText,
+            params: trace.params,
+            success: attempt.success,
+            latencyMs: attempt.latencyMs,
+            errorCode: attempt.errorCode
+          })
+        : createAIRequestLog({
+            sessionId,
+            stage: attempt.stage,
+            provider: attempt.provider,
+            success: attempt.success,
+            latencyMs: attempt.latencyMs,
+            errorCode: attempt.errorCode
+          })
     ).catch(warnOnTelemetryFailure);
   } catch (error) {
     warnOnTelemetryFailure(error);
@@ -577,6 +613,8 @@ export async function extractJoySnapshotWithAI(input: {
   session: InterviewSessionRecord;
   userMessage: string;
   signal?: AbortSignal;
+  traceId?: string | null;
+  requestId?: string | null;
 }): Promise<JoySnapshot> {
   input.signal?.throwIfAborted();
   const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
@@ -597,11 +635,8 @@ export async function extractJoySnapshotWithAI(input: {
   );
   const provider = await getAIProvider("chat");
   const providerStatus = await getAIProviderStatus("chat");
-  const aiResult = await completeStructuredOutput({
-    provider,
-    providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
-    stage: "extract",
-    schema: getExtractResultSchema(input.session.dimension),
+  const envelope = createPromptEnvelope({
+    promptKey: getInterviewPromptKey("extract", input.session.dimension),
     messages: buildJoyExtractMessages({
       dimension: input.session.dimension,
       stage: input.session.stage,
@@ -610,11 +645,24 @@ export async function extractJoySnapshotWithAI(input: {
       userMessage: input.userMessage,
       snapshot: input.session.snapshot,
       messages: input.session.messages
-    }),
+    })
+  });
+  const aiResult = await completeStructuredOutput({
+    provider,
+    providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
+    stage: "extract",
+    schema: getExtractResultSchema(input.session.dimension),
+    messages: envelope.messages,
     temperature: 0.15,
     maxTokens: 500,
     signal: input.signal,
-    onAttempt: (attempt) => logAttempt(input.session.id, attempt)
+    onAttempt: (attempt) =>
+      logAttempt(input.session.id, attempt, {
+        traceId: input.traceId,
+        requestId: input.requestId,
+        envelope,
+        params: { temperature: 0.15, maxTokens: 500 }
+      })
   });
 
   if (!aiResult) {
@@ -626,7 +674,12 @@ export async function extractJoySnapshotWithAI(input: {
       "AI extraction unavailable, fallback snapshot will be used."
     );
 
-    return stageAwareFallbackSnapshot;
+    return applyExplicitEvidenceRevisions({
+      dimension: input.session.dimension,
+      previousSnapshot: input.session.snapshot,
+      candidateSnapshot: stageAwareFallbackSnapshot,
+      message: input.userMessage
+    }).snapshot;
   }
 
   const aiSnapshot = mergeJoySignals(
@@ -641,7 +694,7 @@ export async function extractJoySnapshotWithAI(input: {
 
   // Keep AI extraction authoritative, but backfill holes with the conservative rule-based extractor
   // so real-world "对我来说……才算数" style fulfillment replies can still close the loop.
-  return mergeJoySignals(aiSnapshot, {
+  const mergedSnapshot = mergeJoySignals(aiSnapshot, {
     event: aiSnapshot.event ? null : stageAwareFallbackSnapshot.event,
     feeling: aiSnapshot.feeling ? null : stageAwareFallbackSnapshot.feeling,
     whyItMattered: aiSnapshot.whyItMattered ? null : stageAwareFallbackSnapshot.whyItMattered,
@@ -674,6 +727,13 @@ export async function extractJoySnapshotWithAI(input: {
     reciprocityHint: aiSnapshot.reciprocityHint ? null : stageAwareFallbackSnapshot.reciprocityHint,
     tags: stageAwareFallbackSnapshot.tags
   });
+
+  return applyExplicitEvidenceRevisions({
+    dimension: input.session.dimension,
+    previousSnapshot: input.session.snapshot,
+    candidateSnapshot: mergedSnapshot,
+    message: input.userMessage
+  }).snapshot;
 }
 
 function createFallbackAssistantTurn(input: {
@@ -985,7 +1045,10 @@ export function createAssistantReplySegmentParser(
 async function runAssistantQuestionAttempt(input: {
   provider: AIProvider;
   sessionId: string;
-  messages: AIChatMessage[];
+  envelope: PromptEnvelope;
+  traceId?: string | null;
+  requestId?: string | null;
+  attempt: number;
   stream: boolean;
   onDelta?: (delta: { target: AssistantStreamingTarget; text: string }) => Promise<void> | void;
   signal?: AbortSignal;
@@ -993,24 +1056,27 @@ async function runAssistantQuestionAttempt(input: {
   input.signal?.throwIfAborted();
   const parser = createAssistantReplySegmentParser(input.onDelta);
   const startedAt = Date.now();
+  let responseText = "";
 
   if (input.stream) {
     for await (const chunk of input.provider.stream!({
-      messages: input.messages,
+      messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
       signal: input.signal
     })) {
+      responseText += chunk;
       await parser.push(chunk);
     }
   } else {
     const result = await input.provider.complete({
-      messages: input.messages,
+      messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
       signal: input.signal
     });
 
+    responseText = result.content;
     await parser.push(result.content);
   }
 
@@ -1019,22 +1085,36 @@ async function runAssistantQuestionAttempt(input: {
 
   if (!hasMeaningfulOutput) {
     await logAttempt(input.sessionId, {
-      stage: "generate",
+      stage: "question",
+      attempt: input.attempt,
       provider: input.provider.name,
       success: false,
       latencyMs: Date.now() - startedAt,
-      errorCode: "QUESTION_EMPTY_OUTPUT"
+      errorCode: "QUESTION_EMPTY_OUTPUT",
+      responseText
+    }, {
+      traceId: input.traceId,
+      requestId: input.requestId,
+      envelope: input.envelope,
+      params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
     });
 
     return null;
   }
 
   await logAttempt(input.sessionId, {
-    stage: "generate",
+    stage: "question",
+    attempt: input.attempt,
     provider: input.provider.name,
     success: true,
     latencyMs: Date.now() - startedAt,
-    errorCode: null
+    errorCode: null,
+    responseText
+  }, {
+    traceId: input.traceId,
+    requestId: input.requestId,
+    envelope: input.envelope,
+    params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
   });
 
   return segments;
@@ -1051,25 +1131,36 @@ async function requestAssistantReplySegments(
 
   if (!provider) {
     await logAttempt(input.sessionId, {
-      stage: "generate",
+      stage: "question",
       provider: "disabled",
       success: false,
       latencyMs: null,
       errorCode: formatAIProviderUnavailableCode("QUESTION_PROVIDER", providerStatus)
+    }, {
+      traceId: input.traceId,
+      requestId: input.requestId
     });
 
     return null;
   }
 
-  const messages = getQuestionMessages(input);
+  const envelope = await resolveOptimizedPromptEnvelope(
+    createPromptEnvelope({
+      promptKey: getInterviewPromptKey("question", input.dimension),
+      messages: getQuestionMessages(input)
+    })
+  );
   const attempts: boolean[] = onDelta && provider.stream ? [true, false] : [false];
 
-  for (const useStream of attempts) {
+  for (const [attemptIndex, useStream] of attempts.entries()) {
     try {
       const result = await runAssistantQuestionAttempt({
         provider,
         sessionId: input.sessionId,
-        messages,
+        envelope,
+        traceId: input.traceId,
+        requestId: input.requestId,
+        attempt: attemptIndex + 1,
         stream: useStream,
         onDelta,
         signal
@@ -1084,11 +1175,17 @@ async function requestAssistantReplySegments(
       }
 
       await logAttempt(input.sessionId, {
-        stage: "generate",
+        stage: "question",
+        attempt: attemptIndex + 1,
         provider: provider.name,
         success: false,
         latencyMs: null,
         errorCode: `QUESTION_${getAIProviderFailureCode(error)}`
+      }, {
+        traceId: input.traceId,
+        requestId: input.requestId,
+        envelope,
+        params: { temperature: 0.45, maxTokens: 500, stream: useStream }
       });
     }
   }
@@ -1109,6 +1206,13 @@ export async function generateJoyAssistantTurn(input: AssistantTurnGenerationInp
   const segments = await requestAssistantReplySegments(input);
 
   if (!segments) {
+    if (input.traceId) {
+      await markGenerationTraceOrigin(input.traceId, "fallback");
+      await appendGenerationTraceDecision(input.traceId, {
+        kind: "assistant_fallback",
+        reason: "question_generation_unavailable"
+      });
+    }
     logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");
     return fallbackTurn;
   }
@@ -1135,6 +1239,13 @@ export async function streamJoyAssistantTurn(
   const segments = await requestAssistantReplySegments(input, callbacks.onDelta, options?.signal);
 
   if (!segments) {
+    if (input.traceId) {
+      await markGenerationTraceOrigin(input.traceId, "fallback");
+      await appendGenerationTraceDecision(input.traceId, {
+        kind: "assistant_fallback",
+        reason: "question_generation_unavailable"
+      });
+    }
     logger.warn({ sessionId: input.sessionId }, "AI assistant turn unavailable, fallback turn will be used.");
     return fallbackTurn;
   }
@@ -1366,7 +1477,10 @@ function normalizeDraftResult(
   };
 }
 
-export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
+export async function generateJoyDraftWithAI(
+  session: InterviewSessionRecord,
+  trace?: { traceId?: string | null; requestId?: string | null }
+) {
   const sourceEvents = getDraftSourceEvents(session);
   const generationMode = resolveDraftGenerationMode(session, sourceEvents);
   const generationOptions = getDraftGenerationOptions(generationMode);
@@ -1399,37 +1513,66 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     },
     "Starting joy draft generation."
   );
+  const envelope = await resolveOptimizedPromptEnvelope(
+    createPromptEnvelope({
+      promptKey: getInterviewPromptKey("journal", session.dimension),
+      messages: buildJoyDraftMessages({
+        dimension: session.dimension,
+        draftBrief,
+        writingProfile: draftWritingProfile,
+        events: promptEvents,
+        messages: promptMessages,
+        generationMode,
+        existingDraft: session.journalEntry
+          ? {
+              title: session.journalEntry.title,
+              content: session.journalEntry.content
+            }
+          : null
+      })
+    })
+  );
   const aiResult = await completeStructuredOutput({
     provider,
     providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("DRAFT_PROVIDER", providerStatus),
     stage: "generate",
     schema: joyDraftResultSchema,
-    messages: buildJoyDraftMessages({
-      dimension: session.dimension,
-      draftBrief,
-      writingProfile: draftWritingProfile,
-      events: promptEvents,
-      messages: promptMessages,
-      generationMode,
-      existingDraft: session.journalEntry
-        ? {
-            title: session.journalEntry.title,
-            content: session.journalEntry.content
-          }
-        : null
-    }),
+    messages: envelope.messages,
     temperature: 0.35,
     maxTokens: generationOptions.maxTokens,
     maxAttempts: generationOptions.maxAttempts,
     timeoutMs: generationOptions.timeoutMs,
     onAttempt: (attempt) =>
-      logAttempt(session.id, {
-        ...attempt,
-        errorCode: attempt.errorCode ? `DRAFT_${attempt.errorCode}` : null
-      })
+      logAttempt(
+        session.id,
+        {
+          ...attempt,
+          errorCode: attempt.errorCode ? `DRAFT_${attempt.errorCode}` : null
+        },
+        {
+          traceId: trace?.traceId,
+          requestId: trace?.requestId,
+          envelope,
+          params: {
+            temperature: 0.35,
+            maxTokens: generationOptions.maxTokens,
+            maxAttempts: generationOptions.maxAttempts,
+            timeoutMs: generationOptions.timeoutMs,
+            generationMode
+          }
+        }
+      )
   });
 
   if (!aiResult) {
+    if (trace?.traceId) {
+      await markGenerationTraceOrigin(trace.traceId, "fallback");
+      await appendGenerationTraceDecision(trace.traceId, {
+        kind: "draft_fallback",
+        reason: "generation_unavailable",
+        generationMode
+      });
+    }
     logger.warn(
       {
         sessionId: session.id,
@@ -1454,6 +1597,18 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     (draftBrief.dimension === "gratitude" &&
       (hasGratitudeDraftCorruption(normalizedDraft.content) || hasCorruptedGratitudeFields(normalizedDraft)))
   ) {
+    if (trace?.traceId) {
+      const issues = qualityGate.accepted
+        ? [...qualityGate.issues, "gratitude_corrupted_draft"]
+        : qualityGate.issues;
+      await markGenerationTraceOrigin(trace.traceId, "fallback");
+      await appendGenerationTraceDecision(trace.traceId, {
+        kind: "draft_quality_gate",
+        accepted: false,
+        issues,
+        generationMode
+      });
+    }
     logger.warn(
       {
         sessionId: session.id,
@@ -1465,6 +1620,15 @@ export async function generateJoyDraftWithAI(session: InterviewSessionRecord) {
     );
 
     return fallbackDraft;
+  }
+
+  if (trace?.traceId) {
+    await appendGenerationTraceDecision(trace.traceId, {
+      kind: "draft_quality_gate",
+      accepted: true,
+      issues: qualityGate.issues,
+      generationMode
+    });
   }
 
   logger.info(

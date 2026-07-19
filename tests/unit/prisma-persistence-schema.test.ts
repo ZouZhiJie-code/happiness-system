@@ -51,4 +51,73 @@ describe("prisma persistence indexes", () => {
     expect(envPreviewExample).toContain('AI_RUNTIME_CONFIG_SECRET=""');
     expect(envProductionExample).toContain('AI_RUNTIME_CONFIG_SECRET=""');
   });
+
+  it("declares end-to-end AI generation lineage and case storage", () => {
+    const schema = readFileSync(resolve(process.cwd(), "prisma/schema.prisma"), "utf8");
+    const migration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260719010000_add_ai_generation_trace/migration.sql"),
+      "utf8"
+    );
+    const evaluationMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260719020000_add_ai_evaluation/migration.sql"),
+      "utf8"
+    );
+    const feedbackMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260719030000_add_ai_feedback_and_consent/migration.sql"),
+      "utf8"
+    );
+    const optimizationMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260719040000_add_ai_optimization_engine/migration.sql"),
+      "utf8"
+    );
+    const qualityDefaultsMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260719050000_default_ai_quality_and_candidate_dedupe/migration.sql"),
+      "utf8"
+    );
+
+    expect(schema).toContain("model AIGenerationTrace");
+    expect(schema).toContain("model AICase");
+    expect(schema).toContain("model AIEvaluation");
+    expect(schema).toContain("model AIFeedback");
+    expect(schema).toContain("model AIFeedbackRevision");
+    expect(schema).toContain("model AIOptimizationRun");
+    expect(schema).toContain("model AIBadcaseCluster");
+    expect(schema).toContain("model AIOptimizationCandidate");
+    expect(schema).toContain("model AIFewShotExample");
+    expect(schema).toContain("model AIPromptRelease");
+    expect(schema).toContain("dedupeKey");
+    expect(schema).toContain("aiQualityConsentVersion");
+    expect(schema).toContain("feedbackEvaluationPending");
+    expect(schema).toContain("generationTraceId String?");
+    expect(schema).toContain("currentGenerationTraceId String?");
+    expect(schema).toContain("promptVersion");
+    expect(schema).toContain("promptHash");
+    expect(schema).toContain("requestMessages");
+    expect(schema).toContain("responseText");
+    expect(schema).toContain("@@index([userId, createdAt])");
+    expect(schema).toContain("@@index([artifactType, dimension, createdAt])");
+    expect(schema).toContain("@@index([classification, priority, updatedAt])");
+
+    expect(migration).toContain('CREATE TABLE "AIGenerationTrace"');
+    expect(migration).toContain('CREATE TABLE "AICase"');
+    expect(migration).toContain('ADD COLUMN "generationTraceId" TEXT');
+    expect(migration).toContain('ADD COLUMN "currentGenerationTraceId" TEXT');
+    expect(migration).toContain('FOREIGN KEY ("traceId") REFERENCES "AIGenerationTrace"("id")');
+    expect(evaluationMigration).toContain('CREATE TABLE "AIEvaluation"');
+    expect(evaluationMigration).toContain('"dimensionScores" JSONB NOT NULL');
+    expect(evaluationMigration).toContain('"deductions" JSONB NOT NULL');
+    expect(evaluationMigration).toContain('CREATE UNIQUE INDEX "AIEvaluation_traceId_key"');
+    expect(feedbackMigration).toContain('CREATE TABLE "AIFeedback"');
+    expect(feedbackMigration).toContain('CREATE TABLE "AIFeedbackRevision"');
+    expect(feedbackMigration).toContain('ADD COLUMN "aiQualityConsentVersion" TEXT');
+    expect(feedbackMigration).toContain('CREATE UNIQUE INDEX "AIFeedback_traceId_key"');
+    expect(optimizationMigration).toContain('CREATE TABLE "AIOptimizationRun"');
+    expect(optimizationMigration).toContain('CREATE TABLE "AIBadcaseCluster"');
+    expect(optimizationMigration).toContain('CREATE TABLE "AIOptimizationCandidate"');
+    expect(optimizationMigration).toContain('CREATE TABLE "AIFewShotExample"');
+    expect(optimizationMigration).toContain('CREATE TABLE "AIPromptRelease"');
+    expect(optimizationMigration).toContain('CREATE UNIQUE INDEX "AIPromptRelease_promptKey_version_key"');
+    expect(qualityDefaultsMigration).toContain('"aiQualityConsentVersion" = \'2026-07-19\'');
+    expect(qualityDefaultsMigration).toContain('CREATE UNIQUE INDEX "AIOptimizationCandidate_dedupeKey_key"');
+  });
 });

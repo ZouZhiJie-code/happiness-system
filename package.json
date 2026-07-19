@@ -8,6 +8,7 @@
     "build": "next build",
     "postinstall": "prisma generate",
     "runtime-env:readback": "node scripts/runtime-env-readback.mjs",
+    "acceptance:ai-quality:seed": "node scripts/seed-ai-quality-acceptance.mjs",
     "start": "next start",
     "lint": "eslint .",
     "smoke:public": "node scripts/http-smoke.mjs",
@@ -30,6 +31,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.6",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@types/node": "^22.9.0",

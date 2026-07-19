@@ -1,4 +1,5 @@
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
+import { assessDimensionEvidence } from "@/features/interview/dimension-evidence";
 import {
   getDelightSignature,
   getDirectionSignal,
@@ -31,6 +32,16 @@ import {
 } from "@/features/interview/server/draft-policies/shared";
 
 export function pickPrimaryEvent(dimension: InterviewDimension, sourceEvents: InterviewEventRecord[]) {
+  const assessedEvents = sourceEvents.map((event) => ({
+    event,
+    evidence: assessDimensionEvidence(dimension, event.snapshot, event.snapshotData)
+  }));
+  const evidenceReadyEvent = assessedEvents.find(({ evidence }) => evidence.readiness === "complete")?.event
+    ?? assessedEvents.find(({ evidence }) => evidence.readiness === "partial")?.event;
+  if (evidenceReadyEvent) {
+    return evidenceReadyEvent;
+  }
+
   if (dimension === "joy") {
     return (
       sourceEvents.find((event) => isJoySnapshotComplete(event.snapshot)) ??
@@ -73,18 +84,6 @@ function isJoySnapshotComplete(snapshot: JoySnapshot) {
       : Boolean(getJoyMoment(snapshot) && getJoySource(snapshot) && (getStateShift(snapshot) || getMeaningNeed(snapshot)));
 
   return hasCore && hasJoyStableClosure(snapshot);
-}
-
-function resolveJoyCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftCompletionMode {
-  if (session.pendingDecision?.kind === "event_complete" && session.pendingDecision.completionMode) {
-    return session.pendingDecision.completionMode;
-  }
-
-  if (sourceEvents.some((event) => isJoySnapshotComplete(event.snapshot)) || isJoySnapshotComplete(session.snapshot)) {
-    return "complete";
-  }
-
-  return "user_override_partial";
 }
 
 function deriveJoyEmphasis(snapshot: JoySnapshot): DraftEmphasis {
@@ -236,18 +235,6 @@ function buildDefaultBrief(input: {
   };
 }
 
-function hasFulfillmentValueSignal(snapshot: JoySnapshot) {
-  return Boolean(sanitizeNullableString(snapshot.selfPattern));
-}
-
-function resolveFulfillmentCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftCompletionMode {
-  if (sourceEvents.some((event) => hasFulfillmentValueSignal(event.snapshot)) || hasFulfillmentValueSignal(session.snapshot)) {
-    return "complete";
-  }
-
-  return "user_override_partial";
-}
-
 function buildFulfillmentBrief(input: {
   session: InterviewSessionRecord;
   sourceEvents: InterviewEventRecord[];
@@ -290,18 +277,6 @@ function buildFulfillmentBrief(input: {
     antiFlatteningTargets: semanticInterpretation.antiFlatteningTargets,
     tags
   };
-}
-
-function hasReflectionViewpointShift(snapshot: JoySnapshot) {
-  return Boolean(sanitizeNullableString(snapshot.selfPattern));
-}
-
-function resolveReflectionCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftCompletionMode {
-  if (sourceEvents.some((event) => hasReflectionViewpointShift(event.snapshot)) || hasReflectionViewpointShift(session.snapshot)) {
-    return "complete";
-  }
-
-  return "user_override_partial";
 }
 
 function buildReflectionBrief(input: {
@@ -375,15 +350,7 @@ export function resolveImprovementCompletionMode(
   session: InterviewSessionRecord,
   sourceEvents: InterviewEventRecord[]
 ): DraftCompletionMode {
-  if (session.pendingDecision?.kind === "event_complete" && session.pendingDecision.completionMode) {
-    return session.pendingDecision.completionMode;
-  }
-
-  if (sourceEvents.some((event) => hasCompleteImprovementSnapshot(event.snapshot)) || hasCompleteImprovementSnapshot(session.snapshot)) {
-    return "complete";
-  }
-
-  return "user_override_partial";
+  return resolveDraftCompletionMode(session, sourceEvents);
 }
 
 export function buildImprovementBrief(input: {
@@ -446,22 +413,6 @@ export function buildImprovementBrief(input: {
   };
 }
 
-function hasGratitudeRelationshipSignal(snapshot: JoySnapshot) {
-  return Boolean(sanitizeNullableString(snapshot.relationshipSignal ?? snapshot.selfPattern));
-}
-
-function resolveGratitudeCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]): DraftCompletionMode {
-  if (session.pendingDecision?.kind === "event_complete" && session.pendingDecision.completionMode) {
-    return session.pendingDecision.completionMode;
-  }
-
-  if (sourceEvents.some((event) => hasGratitudeRelationshipSignal(event.snapshot)) || hasGratitudeRelationshipSignal(session.snapshot)) {
-    return "complete";
-  }
-
-  return "user_override_partial";
-}
-
 function buildGratitudeBrief(input: {
   session: InterviewSessionRecord;
   sourceEvents: InterviewEventRecord[];
@@ -517,27 +468,14 @@ function buildGratitudeBrief(input: {
 }
 
 export function resolveDraftCompletionMode(session: InterviewSessionRecord, sourceEvents: InterviewEventRecord[]) {
-  if (session.dimension === "joy") {
-    return resolveJoyCompletionMode(session, sourceEvents);
-  }
+  const candidates = [
+    ...sourceEvents.map((event) => assessDimensionEvidence(session.dimension, event.snapshot, event.snapshotData)),
+    assessDimensionEvidence(session.dimension, session.snapshot, session.snapshotData)
+  ];
+  const best = candidates.find((candidate) => candidate.readiness === "complete")
+    ?? candidates.find((candidate) => candidate.readiness === "partial");
 
-  if (session.dimension === "fulfillment") {
-    return resolveFulfillmentCompletionMode(session, sourceEvents);
-  }
-
-  if (session.dimension === "reflection") {
-    return resolveReflectionCompletionMode(session, sourceEvents);
-  }
-
-  if (session.dimension === "improvement") {
-    return resolveImprovementCompletionMode(session, sourceEvents);
-  }
-
-  if (session.dimension === "gratitude") {
-    return resolveGratitudeCompletionMode(session, sourceEvents);
-  }
-
-  return "complete" as const;
+  return best?.completionMode ?? "user_override_partial";
 }
 
 export function buildDraftBrief(input: {

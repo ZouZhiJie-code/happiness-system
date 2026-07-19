@@ -30,6 +30,14 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
+const { createAIGenerationTrace, appendGenerationTraceDecision, cancelGenerationTrace, failGenerationTrace } =
+  vi.hoisted(() => ({
+    createAIGenerationTrace: vi.fn(),
+    appendGenerationTraceDecision: vi.fn(),
+    cancelGenerationTrace: vi.fn(),
+    failGenerationTrace: vi.fn()
+  }));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
@@ -109,6 +117,13 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 
 vi.mock("@/server/repositories/admin-analytics.repository", () => ({
   recordAnalyticsEvent: mockRecordAnalyticsEvent
+}));
+
+vi.mock("@/server/repositories/ai-quality.repository", () => ({
+  createAIGenerationTrace,
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  failGenerationTrace
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -233,6 +248,14 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
 
 describe("repair protocol response flow", () => {
   beforeEach(() => {
+    createAIGenerationTrace.mockReset();
+    appendGenerationTraceDecision.mockReset();
+    cancelGenerationTrace.mockReset();
+    failGenerationTrace.mockReset();
+    createAIGenerationTrace.mockResolvedValue({ id: "trace-1" });
+    appendGenerationTraceDecision.mockResolvedValue(undefined);
+    cancelGenerationTrace.mockResolvedValue(undefined);
+    failGenerationTrace.mockResolvedValue(undefined);
     appendJoyInterviewTurn.mockReset();
     completeJoyInterviewSessionRecord.mockReset();
     createJoyInterviewSession.mockReset();
@@ -280,7 +303,7 @@ describe("repair protocol response flow", () => {
     expect(result.nextEventTurnCount).toBe(2);
     expect(result.roundMeaningfulReplyCount).toBe(0);
     expect(result.nextProgressData).toBeNull();
-    expect(result.assistantTurn.question).toBe("回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？");
+    expect(result.assistantTurn.question).toBe("你提到“今天看完一个项目复盘”。不用先总结，只说一个最具体的例子，会是哪一下？");
     expect(result.assistantTurn.questionSpec).toEqual({
       target: "judgment_clue",
       stageIntent: "repair",
@@ -324,7 +347,7 @@ describe("repair protocol response flow", () => {
     expect(phases).toEqual(["summary", "question"]);
     expect(deltas.some((delta) => delta.target === "summary")).toBe(true);
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(
-      "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？"
+      "你提到“今天看完一个项目复盘”。这次经历让你修正了原来的哪个判断？"
     );
     expect(result.assistantTurn?.questionSpec?.repairCount).toBe(1);
   });

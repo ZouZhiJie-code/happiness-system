@@ -22,6 +22,10 @@ const { createAIRequestLog } = vi.hoisted(() => ({
   createAIRequestLog: vi.fn()
 }));
 
+const { resolveOptimizedPromptEnvelope } = vi.hoisted(() => ({
+  resolveOptimizedPromptEnvelope: vi.fn(async (envelope: unknown) => envelope)
+}));
+
 const { info, warn, error } = vi.hoisted(() => ({
   info: vi.fn(),
   warn: vi.fn(),
@@ -59,6 +63,10 @@ vi.mock("@/features/joy-interview/prompts/joy-prompts", () => ({
 
 vi.mock("@/server/repositories/joy-interview.repository", () => ({
   createAIRequestLog
+}));
+
+vi.mock("@/server/services/ai-quality/prompt-optimization.service", () => ({
+  resolveOptimizedPromptEnvelope
 }));
 
 vi.mock("@/server/lib/logger", () => ({
@@ -393,7 +401,8 @@ describe("generateJoyAssistantTurn", () => {
       }
     });
 
-    expect(turn.question).toBe("回到“今天看完一个项目复盘”这件事，下次再遇到类似情况，你最想先提醒自己看哪一点？");
+    expect(turn.question).toBe("你提到“今天看完一个项目复盘”。下次遇到类似情形，你会用什么新依据重新判断？");
+    expect(turn.question).not.toMatch(/^回到|如果只留一句/u);
     expect(turn.question).not.toContain("判断依据");
     expect(turn.questionSpec).toEqual({
       target: "judgment_clue",
@@ -448,7 +457,7 @@ describe("generateJoyAssistantTurn", () => {
       action: "reply"
     });
 
-    expect(turn.question).toBe("回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？");
+    expect(turn.question).toBe("“回顾过去问问大象的经历”里，什么样的具体结果会让这份投入对你算数？");
     expect(turn.questionSpec).toEqual({
       target: "judgment_clue",
       stageIntent: "advance",
@@ -499,7 +508,7 @@ describe("generateJoyAssistantTurn", () => {
 
     expect(createAIRequestLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        stage: "generate",
+        stage: "question",
         provider: "disabled",
         success: false,
         errorCode: "QUESTION_PROVIDER_PLACEHOLDER_BASE_URL"
@@ -543,7 +552,7 @@ describe("generateJoyAssistantTurn", () => {
 
     expect(createAIRequestLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        stage: "generate",
+        stage: "question",
         provider: "mock-provider",
         success: false,
         errorCode: "QUESTION_ACCOUNTOVERDUEERROR"
@@ -600,7 +609,7 @@ describe("generateJoyAssistantTurn", () => {
       }
     });
 
-    expect(turn.question).toBe("回到“今天下午改一份材料”这件事，最先让你意识到不一样的，是哪个具体细节？");
+    expect(turn.question).toBe("你提到“今天下午改一份材料”。哪个具体细节让你产生了新的理解？");
     expect(turn.questionSpec).toEqual({
       target: "insight_evidence",
       stageIntent: "advance",
@@ -651,7 +660,7 @@ describe("generateJoyAssistantTurn", () => {
 
     expect(createAIRequestLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        stage: "generate",
+        stage: "question",
         provider: "disabled",
         success: false,
         errorCode: "QUESTION_PROVIDER_PLACEHOLDER_BASE_URL"
@@ -695,7 +704,7 @@ describe("generateJoyAssistantTurn", () => {
 
     expect(createAIRequestLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        stage: "generate",
+        stage: "question",
         provider: "mock-provider",
         success: false,
         errorCode: "QUESTION_ACCOUNTOVERDUEERROR"

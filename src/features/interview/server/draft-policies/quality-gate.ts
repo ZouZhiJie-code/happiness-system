@@ -47,6 +47,9 @@ const FULFILLMENT_DIRECTION_ESCALATION_PATTERN =
   /(真正热爱|人生方向|人生价值|职业使命|事业使命|天赋所在|长期战略|命中注定|生命主题)/u;
 const STABLE_RULE_PATTERN =
   /((?:只要|每次只要|一旦|如果我能|当我)(?:[^。！？!?]{0,50})(?:就会|我就会|我会更容易|我更容易|我通常会|就更容易|才算|才会))/u;
+const JOY_PARTIAL_STABILITY_PATTERN =
+  /(?:我(?:现在|也)?(?:更知道|更清楚)|我通常会|我更容易)[^。！？!?]{0,28}(?:会被|会因为|会在|被[^。！？!?]{0,10}(?:带动|带轻|点亮)|感到开心)/u;
+const FULFILLMENT_PROGRESS_CLAIM_PATTERN = /(推进|完成|积累|往前走|接上|落地|收口|没白费|不算白过)/u;
 const REFLECTION_INSIGHT_PATTERN =
   /(意识到|发现|想明白|理解到|看清|重新看见|更清楚|真正有(?:进展|价值|分量)|真正让我明白|这让我看到|原来|其实|判断依据|规律|盲点|优势|方向)/u;
 const REFLECTION_ACTION_PLAN_PATTERN = /(以后要|下次要|我应该|行动计划|执行计划|立刻去|马上去|每天都要|必须要)/u;
@@ -527,6 +530,10 @@ export function runDraftQualityGate(input: {
       issues.push("progress_slogan_tone");
     }
 
+    if (!input.brief.emotionalCore && FULFILLMENT_PROGRESS_CLAIM_PATTERN.test(content)) {
+      issues.push("unsupported_progress_claim");
+    }
+
     if (FULFILLMENT_DIRECTION_ESCALATION_PATTERN.test(content)) {
       issues.push("fake_direction_escalation");
     }
@@ -706,7 +713,7 @@ export function runDraftQualityGate(input: {
       issues.push("forced_delight_signature");
     }
 
-    if (STABLE_RULE_PATTERN.test(content)) {
+    if (STABLE_RULE_PATTERN.test(content) || (input.brief.dimension === "joy" && JOY_PARTIAL_STABILITY_PATTERN.test(content))) {
       issues.push("fake_rule_tone");
     }
   }

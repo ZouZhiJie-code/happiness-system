@@ -19,6 +19,7 @@ import {
   buildJournalPayloadForDimension,
   buildSnapshotDataForDimension
 } from "@/features/interview/dimension-definitions";
+import { assessDimensionEvidence, canGenerateFromEvidence } from "@/features/interview/dimension-evidence";
 import {
   formatEntryDate,
   getTodayEntryDate,
@@ -184,59 +185,7 @@ function parseGratitudeSnapshotData(value: unknown): Pick<
 }
 
 function normalizeSnapshotDataForDimension(dimension: InterviewDimension, snapshot: JoySnapshot, raw: unknown) {
-  if (dimension === "gratitude") {
-    const parsed = parseGratitudeSnapshotData(raw);
-
-    return buildSnapshotDataForDimension(
-      "gratitude",
-      buildJoySnapshot({
-        event: snapshot.event,
-        feeling: snapshot.feeling,
-        whyItMattered: snapshot.whyItMattered,
-        happinessType: snapshot.happinessType,
-        selfPattern: snapshot.selfPattern,
-        gratitudeMoment: parsed?.gratitudeMoment ?? snapshot.gratitudeMoment,
-        gratitudeTarget: parsed?.gratitudeTarget ?? snapshot.gratitudeTarget,
-        kindAction: parsed?.kindAction ?? snapshot.kindAction,
-        seenNeed: parsed?.seenNeed ?? snapshot.seenNeed,
-        innerEffect: parsed?.innerEffect ?? snapshot.innerEffect,
-        gratitudeReason: parsed?.gratitudeReason ?? snapshot.gratitudeReason,
-        gratitudeType: parsed?.gratitudeType ?? snapshot.gratitudeType,
-        relationshipSignal: parsed?.relationshipSignal ?? snapshot.relationshipSignal,
-        reciprocityHint: parsed?.reciprocityHint ?? snapshot.reciprocityHint,
-        evidenceState: parsed?.evidenceState ?? snapshot.evidenceState,
-        tags: snapshot.tags
-      })
-    );
-  }
-
-  if (dimension !== "joy") {
-    return raw ? (raw as InterviewEventRecord["snapshotData"]) : buildSnapshotDataForDimension(dimension, snapshot);
-  }
-
-  const parsed = parseJoySnapshotData(raw);
-
-  return buildSnapshotDataForDimension(
-    "joy",
-    buildJoySnapshot({
-      event: snapshot.event,
-      feeling: snapshot.feeling,
-      whyItMattered: snapshot.whyItMattered,
-      happinessType: snapshot.happinessType,
-      selfPattern: snapshot.selfPattern,
-      joyMoment: parsed?.joyMoment,
-      joySource: parsed?.joySource,
-      stateShift: parsed?.stateShift,
-      meaningNeed: parsed?.meaningNeed,
-      manualClue: parsed?.manualClue,
-      delightSignature: parsed?.delightSignature,
-      directionSignal: parsed?.directionSignal,
-      valueImpact: parsed?.valueImpact,
-      durability: parsed?.durability,
-      psychProfile: parsed?.psychProfile,
-      tags: parsed?.tags
-    })
-  );
+  return assessDimensionEvidence(dimension, snapshot, raw).snapshotData;
 }
 
 function normalizePayloadForDimension(dimension: InterviewDimension, entry: JoyEntryRecord) {
@@ -594,6 +543,8 @@ function mapJournalEntry(entry: JoyEntryRecord | null | undefined, dimensionFall
 
   return {
     id: entry.id,
+    traceId: entry.currentGenerationTraceId ?? null,
+    generationVersion: entry.generationVersion ?? 0,
     title: entry.title,
     content: entry.content,
     event: entry.event,
@@ -649,6 +600,45 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     activeEvent && session.activeEvent
       ? (session.activeEvent.progressData as Record<string, unknown> | null | undefined)
       : undefined;
+  const journalEntry = mapJournalEntry(session.joyEntry, session.dimension);
+  const evidence = assessDimensionEvidence(
+    session.dimension,
+    activeEvent?.snapshot ?? mapSnapshot(session.snapshots[0]),
+    activeEvent?.snapshotData
+  );
+  const pendingDecision =
+    activeEvent?.status === "ready_for_choice"
+      ? progressData?.kind === "dimension_redirect" && progressData.targetDimension === "improvement"
+        ? {
+            kind: "dimension_redirect" as const,
+            eventId: activeEvent.id,
+            eventSequence: activeEvent.sequence,
+            targetDimension: "improvement" as const,
+            reason:
+              typeof progressData.reason === "string" && progressData.reason
+                ? progressData.reason
+                : "这一天暂时更适合去聊改进。",
+            actions: ["continue_current_event", "switch_dimension"] as const
+          }
+        : progressData?.kind === "boundary_insufficient" || (!journalEntry && !canGenerateFromEvidence(evidence))
+          ? {
+              kind: "boundary_insufficient" as const,
+              eventId: activeEvent.id,
+              eventSequence: activeEvent.sequence,
+              reason:
+                typeof progressData?.reason === "string" && progressData.reason
+                  ? progressData.reason
+                  : "我不再继续追问细节了。",
+              actions: ["continue_current_event", "next_event", "pause_session"] as const
+            }
+          : {
+              kind: "event_complete" as const,
+              eventId: activeEvent.id,
+              eventSequence: activeEvent.sequence,
+              completionMode: evidence.completionMode ?? ("user_override_partial" as const),
+              actions: ["continue_current_event", "next_event", "generate_draft"] as const
+            }
+      : null;
   const mappedSession = {
     id: session.id,
     userId: session.userId,
@@ -658,6 +648,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     activeEventId: activeEvent?.id ?? null,
     messages: session.messages.map((message) => ({
       id: message.id,
+      traceId: message.generationTraceId ?? null,
       role: message.role,
       inputMode: message.inputMode ?? undefined,
       content: message.content,
@@ -668,47 +659,12 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     snapshot: activeEvent?.snapshot ?? mapSnapshot(session.snapshots[0]),
     snapshotData: activeEvent?.snapshotData ?? buildSnapshotDataForDimension(session.dimension, mapSnapshot(session.snapshots[0])),
     events,
-    pendingDecision:
-      activeEvent?.status === "ready_for_choice"
-        ? progressData?.kind === "dimension_redirect" && progressData.targetDimension === "improvement"
-          ? {
-              kind: "dimension_redirect" as const,
-              eventId: activeEvent.id,
-              eventSequence: activeEvent.sequence,
-              targetDimension: "improvement" as const,
-              reason:
-                typeof progressData.reason === "string" && progressData.reason
-                  ? progressData.reason
-                  : "这一天暂时更适合去聊改进。",
-              actions: ["continue_current_event", "switch_dimension"] as const
-            }
-          : progressData?.kind === "boundary_insufficient"
-            ? {
-                kind: "boundary_insufficient" as const,
-                eventId: activeEvent.id,
-                eventSequence: activeEvent.sequence,
-                reason:
-                  typeof progressData.reason === "string" && progressData.reason
-                    ? progressData.reason
-                    : "我不再继续追问细节了。",
-                actions: ["continue_current_event", "next_event", "pause_session"] as const
-              }
-          : {
-              kind: "event_complete" as const,
-              eventId: activeEvent.id,
-              eventSequence: activeEvent.sequence,
-              completionMode:
-                progressData?.completionMode === "user_override_partial"
-                  ? ("user_override_partial" as const)
-                  : ("complete" as const),
-              actions: ["continue_current_event", "next_event", "generate_draft"] as const
-            }
-        : null,
+    pendingDecision,
     entryDate: formatEntryDate(session.entryDate ?? session.startedAt),
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
     completedAt: session.completedAt?.toISOString() ?? null,
-    journalEntry: mapJournalEntry(session.joyEntry, session.dimension),
+    journalEntry,
     turnCount: session.turnCount,
     lastAssistantQuestion: session.lastAssistantQuestion ?? "",
     draftSummary: session.draftSummary,
@@ -741,6 +697,11 @@ async function ensureInterviewEvents(database: DatabaseClient, sessionId: string
   }
 
   const fallbackSnapshot = mapSnapshot(existing.snapshots[0]);
+  const fallbackEvidence = assessDimensionEvidence(
+    existing.dimension as InterviewDimension,
+    fallbackSnapshot,
+    existing.events[0]?.snapshotData
+  );
   const createdEvent =
     existing.events[0] ??
     (await database.interviewEvent.create({
@@ -760,13 +721,25 @@ async function ensureInterviewEvents(database: DatabaseClient, sessionId: string
         whyItMattered: fallbackSnapshot.whyItMattered,
         happinessType: fallbackSnapshot.happinessType,
         selfPattern: fallbackSnapshot.selfPattern,
-        confidence: fallbackSnapshot.confidence,
-        missingSlots: fallbackSnapshot.missingSlots,
+        snapshotData: toJsonValue(fallbackEvidence.snapshotData),
+        confidence: fallbackEvidence.confidence,
+        missingSlots: fallbackEvidence.missingSlots,
         draftSummary: existing.draftSummary,
         startedAt: existing.startedAt,
         completedAt: existing.completedAt
       }
     }));
+
+  if (existing.events[0]) {
+    await database.interviewEvent.update({
+      where: { id: createdEvent.id },
+      data: {
+        snapshotData: toJsonValue(fallbackEvidence.snapshotData),
+        confidence: fallbackEvidence.confidence,
+        missingSlots: fallbackEvidence.missingSlots
+      }
+    });
+  }
 
   await database.interviewSession.update({
     where: { id: sessionId },
@@ -785,14 +758,22 @@ export async function createJoyInterviewSession(
   userId: string,
   dimension: InterviewDimension,
   openingQuestion: string,
-  entryDate?: string
+  entryDate?: string,
+  options?: { requestId?: string | null }
 ) {
   const emptySnapshot = createEmptySnapshot();
   const openingAssistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
-  const emptySnapshotData = buildSnapshotDataForDimension(dimension, emptySnapshot);
+  const emptyEvidence = assessDimensionEvidence(
+    dimension,
+    emptySnapshot,
+    buildSnapshotDataForDimension(dimension, emptySnapshot)
+  );
+  const emptySnapshotData = emptyEvidence.snapshotData;
   const resolvedEntryDate = parseEntryDateInput(entryDate ?? getTodayEntryDate());
   const sessionId = randomUUID();
   const activeEventId = randomUUID();
+  const assistantMessageId = randomUUID();
+  const generationTraceId = randomUUID();
 
   await prisma.$transaction([
     prisma.interviewSession.create({
@@ -804,15 +785,6 @@ export async function createJoyInterviewSession(
         stage: "collect_event",
         entryDate: resolvedEntryDate,
         lastAssistantQuestion: openingQuestion,
-        messages: {
-          create: [
-            {
-              role: "assistant",
-              content: serializeAssistantTurnPayload(openingAssistantTurn),
-              sequence: 0
-            }
-          ]
-        },
         snapshots: {
           create: [
             {
@@ -822,11 +794,45 @@ export async function createJoyInterviewSession(
               whyItMattered: emptySnapshot.whyItMattered,
               happinessType: emptySnapshot.happinessType,
               selfPattern: emptySnapshot.selfPattern,
-              confidence: emptySnapshot.confidence,
-              missingSlots: emptySnapshot.missingSlots
+              confidence: emptyEvidence.confidence,
+              missingSlots: emptyEvidence.missingSlots
             }
           ]
         }
+      }
+    }),
+    prisma.aIGenerationTrace.create({
+      data: {
+        id: generationTraceId,
+        requestId: options?.requestId ?? null,
+        userId,
+        sessionId,
+        dimension: dimension as PrismaInterviewDimension,
+        artifactType: "interview_turn",
+        artifactId: assistantMessageId,
+        artifactVersion: 1,
+        status: "completed",
+        outputOrigin: "deterministic",
+        contextSnapshot: toJsonValue({
+          kind: "interview_opening",
+          entryDate: formatEntryDate(resolvedEntryDate),
+          dimension,
+          snapshot: emptySnapshotData,
+          messageIds: []
+        }),
+        finalOutput: toJsonValue(openingAssistantTurn),
+        pipelineDecisions: toJsonValue([{ kind: "deterministic_opening" }]),
+        completedAt: new Date()
+      }
+    }),
+    prisma.interviewMessage.create({
+      data: {
+        id: assistantMessageId,
+        sessionId,
+        generationTraceId,
+        role: "assistant",
+        content: serializeAssistantTurnPayload(openingAssistantTurn),
+        sequence: 0
       }
     }),
     prisma.interviewEvent.create({
@@ -848,8 +854,8 @@ export async function createJoyInterviewSession(
         happinessType: emptySnapshot.happinessType,
         selfPattern: emptySnapshot.selfPattern,
         snapshotData: toJsonValue(emptySnapshotData),
-        confidence: emptySnapshot.confidence,
-        missingSlots: emptySnapshot.missingSlots
+        confidence: emptyEvidence.confidence,
+        missingSlots: emptyEvidence.missingSlots
       }
     }),
     prisma.interviewSession.update({
@@ -904,6 +910,10 @@ interface AppendJoyInterviewTurnInput {
   totalMeaningfulReplyCount: number;
   draftSummary: string | null;
   completedAt: Date | null;
+  generationTraceId?: string | null;
+  requestId?: string | null;
+  outputOrigin?: "llm" | "deterministic" | "fallback";
+  pipelineDecisions?: Array<Record<string, unknown>>;
 }
 
 export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput) {
@@ -918,11 +928,35 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
   const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
   const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
   const legacyProjection = projectLegacyFields(input.snapshot);
+  const evidence = assessDimensionEvidence(
+    existing.dimension as InterviewDimension,
+    input.snapshot,
+    buildSnapshotDataForDimension(existing.dimension as InterviewDimension, input.snapshot)
+  );
+  const assistantMessageId = randomUUID();
+  const userMessageId = input.userMessage ? randomUUID() : null;
+  const generationTraceId = input.generationTraceId ?? randomUUID();
+  const existingTrace = input.generationTraceId
+    ? await prisma.aIGenerationTrace.findUnique({
+        where: { id: input.generationTraceId },
+        select: { outputOrigin: true, pipelineDecisions: true }
+      })
+    : null;
+  const outputOrigin = existingTrace?.outputOrigin ?? input.outputOrigin ?? "llm";
+  const currentPipelineDecisions = Array.isArray(existingTrace?.pipelineDecisions)
+    ? existingTrace.pipelineDecisions
+    : [];
+  const finalPipelineDecisions = [
+    ...currentPipelineDecisions,
+    ...(input.pipelineDecisions ?? []),
+    ...(outputOrigin === "deterministic" ? [{ kind: "deterministic_response" }] : [])
+  ];
 
   const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
 
   if (input.userMessage) {
     messagesToCreate.push({
+      id: userMessageId ?? undefined,
       sessionId: input.sessionId,
       role: "user",
       inputMode: input.inputMode,
@@ -932,13 +966,63 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
   }
 
   messagesToCreate.push({
+    id: assistantMessageId,
     sessionId: input.sessionId,
+    generationTraceId,
     role: "assistant",
     content: serializedAssistantTurn,
     sequence: nextSequence + (input.userMessage ? 1 : 0)
   });
 
+  const traceWrite = input.generationTraceId
+    ? prisma.aIGenerationTrace.update({
+        where: { id: generationTraceId },
+        data: {
+          artifactId: assistantMessageId,
+          artifactVersion: 1,
+          triggerMessageId: userMessageId,
+          status: "completed",
+          outputOrigin,
+          finalOutput: toJsonValue(input.assistantTurn),
+          pipelineDecisions: toJsonValue(finalPipelineDecisions),
+          completedAt: new Date(),
+          errorCode: null
+        }
+      })
+    : prisma.aIGenerationTrace.create({
+        data: {
+          id: generationTraceId,
+          requestId: input.requestId ?? null,
+          userId: existing.userId,
+          sessionId: input.sessionId,
+          dimension: existing.dimension,
+          artifactType: "interview_turn",
+          artifactId: assistantMessageId,
+          artifactVersion: 1,
+          triggerMessageId: userMessageId,
+          status: "completed",
+          outputOrigin,
+          contextSnapshot: toJsonValue({
+            action: input.userMessage ? "reply" : "continue_current_event",
+            userMessage: input.userMessage ?? null,
+            messageIds: existing.messages.map((message) => message.id),
+            messages: existing.messages.map((message) => ({
+              id: message.id,
+              role: message.role,
+              sequence: message.sequence,
+              content: message.content
+            })),
+            activeEventId: input.activeEventId,
+            snapshot: evidence.snapshotData
+          }),
+          finalOutput: toJsonValue(input.assistantTurn),
+          pipelineDecisions: toJsonValue(input.pipelineDecisions ?? []),
+          completedAt: new Date()
+        }
+      });
+
   await prisma.$transaction([
+    traceWrite,
     prisma.interviewMessage.createMany({ data: messagesToCreate }),
     prisma.joyInterviewSnapshot.create({
       data: {
@@ -949,8 +1033,8 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         whyItMattered: legacyProjection.whyItMattered,
         happinessType: legacyProjection.happinessType,
         selfPattern: legacyProjection.selfPattern,
-        confidence: input.snapshot.confidence,
-        missingSlots: input.snapshot.missingSlots
+        confidence: evidence.confidence,
+        missingSlots: evidence.missingSlots
       }
     }),
     prisma.interviewEvent.update({
@@ -967,10 +1051,10 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         whyItMattered: legacyProjection.whyItMattered,
         happinessType: legacyProjection.happinessType,
         selfPattern: legacyProjection.selfPattern,
-        snapshotData: toJsonValue(buildSnapshotDataForDimension(existing.dimension, input.snapshot)),
+        snapshotData: toJsonValue(evidence.snapshotData),
         progressData: input.progressData ? toJsonValue(input.progressData) : Prisma.JsonNull,
-        confidence: input.snapshot.confidence,
-        missingSlots: input.snapshot.missingSlots,
+        confidence: evidence.confidence,
+        missingSlots: evidence.missingSlots,
         draftSummary: input.draftSummary,
         completedAt: input.eventStatus === "completed" ? (input.completedAt ?? new Date()) : null
       }
@@ -1038,7 +1122,11 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
   return mapInterviewSession(session);
 }
 
-export async function startNextInterviewEvent(sessionId: string, openingQuestion: string) {
+export async function startNextInterviewEvent(
+  sessionId: string,
+  openingQuestion: string,
+  options?: { requestId?: string | null }
+) {
   const existing = await ensureInterviewEvents(prisma, sessionId);
 
   if (!existing) {
@@ -1047,8 +1135,15 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
 
   const nextSequence = (existing.events[existing.events.length - 1]?.sequence ?? 0) + 1;
   const emptySnapshot = createEmptySnapshot();
+  const emptyEvidence = assessDimensionEvidence(
+    existing.dimension as InterviewDimension,
+    emptySnapshot,
+    buildSnapshotDataForDimension(existing.dimension as InterviewDimension, emptySnapshot)
+  );
   const nextEventId = randomUUID();
   const assistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
+  const assistantMessageId = randomUUID();
+  const generationTraceId = randomUUID();
 
   const writes: Prisma.PrismaPromise<unknown>[] = [];
 
@@ -1083,14 +1178,39 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
         whyItMattered: emptySnapshot.whyItMattered,
         happinessType: emptySnapshot.happinessType,
         selfPattern: emptySnapshot.selfPattern,
-        snapshotData: toJsonValue(buildSnapshotDataForDimension(existing.dimension, emptySnapshot)),
-        confidence: emptySnapshot.confidence,
-        missingSlots: emptySnapshot.missingSlots
+        snapshotData: toJsonValue(emptyEvidence.snapshotData),
+        confidence: emptyEvidence.confidence,
+        missingSlots: emptyEvidence.missingSlots
+      }
+    }),
+    prisma.aIGenerationTrace.create({
+      data: {
+        id: generationTraceId,
+        requestId: options?.requestId ?? null,
+        userId: existing.userId,
+        sessionId,
+        dimension: existing.dimension,
+        artifactType: "interview_turn",
+        artifactId: assistantMessageId,
+        artifactVersion: 1,
+        status: "completed",
+        outputOrigin: "deterministic",
+        contextSnapshot: toJsonValue({
+          kind: "next_event_opening",
+          messageIds: existing.messages.map((message) => message.id),
+          previousEventId: existing.activeEventId,
+          nextEventId
+        }),
+        finalOutput: toJsonValue(assistantTurn),
+        pipelineDecisions: toJsonValue([{ kind: "deterministic_next_event_opening" }]),
+        completedAt: new Date()
       }
     }),
     prisma.interviewMessage.create({
       data: {
+        id: assistantMessageId,
         sessionId,
+        generationTraceId,
         role: "assistant",
         content: serializeAssistantTurnPayload(assistantTurn),
         sequence: existing.messages.length
@@ -1120,7 +1240,15 @@ export async function startNextInterviewEvent(sessionId: string, openingQuestion
   return mapInterviewSession(session);
 }
 
-export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEntryDraft) {
+export async function saveJoyInterviewDraft(
+  sessionId: string,
+  draftEntry: JoyEntryDraft,
+  trace?: {
+    traceId?: string | null;
+    requestId?: string | null;
+    outputOrigin?: "llm" | "deterministic" | "fallback";
+  }
+) {
   const existing = await prisma.interviewSession.findUnique({
     where: { id: sessionId },
     include: interviewSessionInclude
@@ -1166,8 +1294,59 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
     tags: draftEntry.tags
   });
   const finalEntryId = existing.joyEntry?.id ?? randomUUID();
+  const generationVersion = (existing.joyEntry?.generationVersion ?? 0) + 1;
+  const generationTraceId = trace?.traceId ?? randomUUID();
+  const existingTrace = trace?.traceId
+    ? await prisma.aIGenerationTrace.findUnique({
+        where: { id: trace.traceId },
+        select: { outputOrigin: true }
+      })
+    : null;
+  const outputOrigin = existingTrace?.outputOrigin ?? trace?.outputOrigin ?? "llm";
+  const traceWrite = trace?.traceId
+    ? prisma.aIGenerationTrace.update({
+        where: { id: generationTraceId },
+        data: {
+          artifactId: finalEntryId,
+          artifactVersion: generationVersion,
+          status: "completed",
+          outputOrigin,
+          finalOutput: toJsonValue({ title: draftEntry.title, content: draftEntry.content }),
+          completedAt: new Date(),
+          errorCode: null
+        }
+      })
+    : prisma.aIGenerationTrace.create({
+        data: {
+          id: generationTraceId,
+          requestId: trace?.requestId ?? null,
+          userId: existing.userId,
+          sessionId,
+          dimension: existing.dimension,
+          artifactType: "dimension_journal",
+          artifactId: finalEntryId,
+          artifactVersion: generationVersion,
+          status: "completed",
+          outputOrigin,
+          contextSnapshot: toJsonValue({
+            messageIds: existing.messages.map((message) => message.id),
+            messages: existing.messages.map((message) => ({
+              id: message.id,
+              role: message.role,
+              sequence: message.sequence,
+              content: message.content
+            })),
+            eventIds: existing.events.map((event) => event.id),
+            snapshot: existing.activeEvent?.snapshotData ?? null
+          }),
+          finalOutput: toJsonValue({ title: draftEntry.title, content: draftEntry.content }),
+          pipelineDecisions: toJsonValue([]),
+          completedAt: new Date()
+        }
+      });
 
   await prisma.$transaction([
+    traceWrite,
     prisma.joyEntry.upsert({
       where: { sessionId },
       update: {
@@ -1185,6 +1364,8 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         status: existing.joyEntry?.status ?? "draft",
         savedAt: existing.joyEntry?.savedAt ?? null,
         linkedSessionIds: [sessionId]
+        ,generationVersion
+        ,currentGenerationTraceId: generationTraceId
       },
       create: {
         id: finalEntryId,
@@ -1204,6 +1385,8 @@ export async function saveJoyInterviewDraft(sessionId: string, draftEntry: JoyEn
         source: draftEntry.source,
         status: "draft",
         linkedSessionIds: [sessionId]
+        ,generationVersion
+        ,currentGenerationTraceId: generationTraceId
       }
     }),
     prisma.interviewSession.update({

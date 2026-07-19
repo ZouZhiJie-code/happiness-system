@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
+import { assessDimensionEvidence, canGenerateFromEvidence } from "@/features/interview/dimension-evidence";
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import {
   assessUserTurnMessage,
@@ -16,6 +17,11 @@ import {
   renderDeterministicRepairTurn
 } from "@/features/joy-interview/server/question-protocol";
 import {
+  applyExplicitEvidenceRevisions,
+  buildEvidenceRevisionThinkingSummary,
+  detectExplicitEvidenceRevisions
+} from "@/features/joy-interview/server/evidence-revision";
+import {
   buildAssistantQuestion,
   hasCredibleFulfillmentProgressEvidence,
   hasCredibleFulfillmentValueSignal,
@@ -24,7 +30,6 @@ import {
   getJoyTrack,
   getJoyMoment,
   getJoySource,
-  hasJoyStableClosure,
   getManualClue,
   getMeaningNeed,
   getNextStage,
@@ -44,6 +49,12 @@ import {
   saveJoyInterviewDraft,
   startNextInterviewEvent
 } from "@/server/repositories/joy-interview.repository";
+import {
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  createAIGenerationTrace,
+  failGenerationTrace
+} from "@/server/repositories/ai-quality.repository";
 import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import {
   extractJoySnapshotWithAI,
@@ -72,6 +83,7 @@ import type {
 type InterviewRespondInput =
   | {
       userId: string;
+      requestId?: string;
       action: "reply";
       sessionId: string;
       userMessage: string;
@@ -79,16 +91,19 @@ type InterviewRespondInput =
     }
   | {
       userId: string;
+      requestId?: string;
       action: "continue";
       sessionId: string;
     }
   | {
       userId: string;
+      requestId?: string;
       action: "continue_current_event";
       sessionId: string;
     }
   | {
       userId: string;
+      requestId?: string;
       action: "next_event";
       sessionId: string;
     };
@@ -150,6 +165,9 @@ interface PreparedInterviewTurnContext {
   assistantTurn: AssistantTurnPayload | null;
   assistantAction: "reply" | "continue_current_event" | "repair_current_question" | null;
   questionSpec: AssistantQuestionSpec | null;
+  generationTraceId: string;
+  requestId?: string | null;
+  outputOrigin?: "llm" | "deterministic" | "fallback";
 }
 
 type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
@@ -886,57 +904,6 @@ function hasNewProgressAchieved(input: {
   }
 }
 
-function isJoyCoreReadyForDraft(snapshot: JoySnapshot) {
-  if (getJoyTrack(snapshot) === "delight_track") {
-    return Boolean(getJoyMoment(snapshot) && getJoySource(snapshot) && getStateShift(snapshot));
-  }
-
-  return Boolean(getJoyMoment(snapshot) && getJoySource(snapshot) && (getStateShift(snapshot) || getMeaningNeed(snapshot)));
-}
-
-function isEventCoreComplete(snapshot: JoySnapshot) {
-  return Boolean(isJoyCoreReadyForDraft(snapshot) && hasJoyStableClosure(snapshot));
-}
-
-function isFulfillmentCoreReadyForDraft(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && snapshot.whyItMattered);
-}
-
-function isFulfillmentComplete(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && snapshot.whyItMattered && snapshot.selfPattern);
-}
-
-function isReflectionCoreReadyForDraft(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && snapshot.whyItMattered);
-}
-
-function isReflectionComplete(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && snapshot.whyItMattered && snapshot.selfPattern);
-}
-
-function getImprovementCause(snapshot: JoySnapshot) {
-  return snapshot.improvementTrack === "repeat_good"
-    ? snapshot.repeatCondition
-    : snapshot.improvementTrack === "avoid_bad"
-      ? snapshot.frictionPoint
-      : snapshot.frictionPoint ?? snapshot.repeatCondition ?? snapshot.whyItMattered;
-}
-
-function isImprovementCoreReadyForDraft(snapshot: JoySnapshot) {
-  return Boolean(snapshot.event && getImprovementCause(snapshot));
-}
-
-function isImprovementComplete(snapshot: JoySnapshot) {
-  return Boolean(
-    snapshot.event &&
-      snapshot.improvementTrack &&
-      snapshot.stateAssessment &&
-      getImprovementCause(snapshot) &&
-      snapshot.controllableFactor &&
-      snapshot.nextAttempt
-  );
-}
-
 function getGratitudeMoment(snapshot: JoySnapshot) {
   return snapshot.gratitudeMoment ?? snapshot.event;
 }
@@ -963,73 +930,41 @@ function isGratitudeEvidencePartial(snapshot: JoySnapshot) {
   return hasMoment && hasAction && (hasConfirmedReason || hasConfirmedNeed || Boolean(snapshot.gratitudeReason)) && deniedDeeper;
 }
 
-function isGratitudeCoreReadyForDraft(snapshot: JoySnapshot) {
-  return Boolean(getGratitudeMoment(snapshot) && snapshot.kindAction && (snapshot.seenNeed || getGratitudeReason(snapshot)));
-}
-
-function isGratitudeComplete(snapshot: JoySnapshot) {
-  return Boolean(
-    getGratitudeMoment(snapshot) &&
-      snapshot.kindAction &&
-      snapshot.seenNeed &&
-      getGratitudeReason(snapshot) &&
-      getGratitudeRelationshipSignal(snapshot)
-  );
-}
-
 function isBoundaryIntent(intent: ReturnType<typeof assessUserTurnMessage>["intent"]) {
   return intent === "boundary_stop" || intent === "hostile_boundary";
-}
-
-function sessionHasUserReplies(session: InterviewSessionRecord) {
-  return session.messages.some((message) => message.role === "user")
-    || session.turnCount > 0
-    || session.events.some((event) => event.totalMeaningfulReplyCount > 0 || event.roundMeaningfulReplyCount > 0);
-}
-
-function isCoreReadyForBoundaryPartial(dimension: InterviewDimension, snapshot: JoySnapshot) {
-  if (dimension === "joy") {
-    return isJoyCoreReadyForDraft(snapshot);
-  }
-
-  if (dimension === "fulfillment") {
-    return isFulfillmentCoreReadyForDraft(snapshot);
-  }
-
-  if (dimension === "reflection") {
-    return isReflectionCoreReadyForDraft(snapshot);
-  }
-
-  if (dimension === "improvement") {
-    return isImprovementCoreReadyForDraft(snapshot);
-  }
-
-  if (dimension === "gratitude") {
-    return isGratitudeCoreReadyForDraft(snapshot);
-  }
-
-  return Boolean(snapshot.event && snapshot.whyItMattered);
 }
 
 function isJoyDraftOverrideRequested(message: string | null) {
   return isDraftOverrideRequestedFromBoundary(message);
 }
 
-function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
+function buildBoundaryInsufficientAssistantTurn(
+  dimension: InterviewDimension,
+  intent: "draft_request" | "boundary_stop" | "hostile_boundary" | "conversation_feedback" = "boundary_stop"
+): AssistantTurnPayload {
+  const isHostile = intent === "hostile_boundary";
+  const isFeedback = intent === "conversation_feedback";
+  const insight = isHostile
+    ? "我先停下这道题，不再继续追问。"
+    : isFeedback
+      ? "我听到了：刚才的问题让你觉得难懂、重复，或者问法太单一。我先停下当前追问。"
+      : intent === "draft_request"
+        ? "当前证据还不足以整理成可信日志，我先把生成停在这里。"
+        : "你已经把现在的边界说清了，我先停在这里，不再继续追问细节。";
   return {
-    insight: "你已经把现在的边界说清了，我先停在这里，不再继续追问细节。",
+    insight,
     thinkingSummary: "",
-    analysis: "用户明确表达不想继续追问，但当前材料还不足以整理成日志；下一步交给用户选择：只补一句、换一个片段，或先退出。",
+    analysis: "控制类输入已优先处理；当前材料不足以整理成日志，下一步交给用户选择：只补一句、换一个片段，或先退出。",
     question:
       dimension === "fulfillment"
-        ? "如果还愿意补一句，只说这件事为什么让今天不算白过就够了。"
-        : "如果还愿意补一句，只说这个片段最关键的一点就够了。",
+        ? "你可以只补一句这件事带来的具体进展，也可以换个片段，或者先退出。"
+        : "你可以只补一句最关键的内容，也可以换个片段，或者先退出。",
     stateUpdate: {
       turnPhase: "choice",
       shouldEndDimension: false,
       offerChoice: true,
       choiceKind: "boundary_insufficient",
-      choiceReason: "用户表达了停止边界，但当前材料不足以直接整理成日志。",
+      choiceReason: "当前材料不足以直接整理成日志。",
     },
     meta: {
       depthReached: []
@@ -1037,25 +972,21 @@ function buildBoundaryInsufficientAssistantTurn(dimension: InterviewDimension): 
   };
 }
 
-function buildEmptyDraftRequestAssistantTurn(dimension: InterviewDimension): AssistantTurnPayload {
-  return {
-    insight: "现在还没有可整理的材料，我先不替你硬生成日志。",
-    thinkingSummary: "",
-    analysis: "用户表达了生成日志意图，但当前 session 里还没有任何用户输入；先明确说明原因，并把用户带回首个有效回答。",
-    question:
-      dimension === "fulfillment"
-        ? "当前还没有对话内容，无法生成日志。请先说一点今天让你觉得不算白过的片段。"
-        : "当前还没有对话内容，无法生成日志。请先说一点今天的具体片段。",
-    stateUpdate: {
-      turnPhase: "opening",
-      shouldEndDimension: false,
-      offerChoice: false,
-      choiceReason: ""
-    },
-    meta: {
-      depthReached: []
-    }
-  };
+function buildControlChoiceAssistantTurn(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  explorationRound: number;
+  completionMode: DraftCompletionMode;
+  intent: "draft_request" | "boundary_stop" | "hostile_boundary" | "conversation_feedback";
+}) {
+  const turn = buildChoiceAssistantTurn(input.dimension, input.snapshot, input.explorationRound, input.completionMode);
+  if (input.intent === "hostile_boundary") {
+    return { ...turn, insight: "我先停下这道题，不再继续追问。" };
+  }
+  if (input.intent === "conversation_feedback") {
+    return { ...turn, insight: "我听到了：刚才的问题让你觉得难懂、重复，或者问法太单一。我先停下当前追问。" };
+  }
+  return turn;
 }
 
 function buildRepairEscalationAssistantTurn(): AssistantTurnPayload {
@@ -1074,6 +1005,22 @@ function buildRepairEscalationAssistantTurn(): AssistantTurnPayload {
     meta: {
       depthReached: []
     }
+  };
+}
+
+function buildLowSignalAssistantTurn(): AssistantTurnPayload {
+  return {
+    insight: "我在听，你可以把刚才那句话慢慢说完。",
+    thinkingSummary: "",
+    analysis: "当前输入还没有形成可抽取的完整表达；保持阶段与计数，邀请用户继续原话。",
+    question: "你想说的那一点，接下来是什么？",
+    stateUpdate: {
+      turnPhase: "digging",
+      shouldEndDimension: false,
+      offerChoice: false,
+      choiceReason: ""
+    },
+    meta: { depthReached: [] }
   };
 }
 
@@ -1964,6 +1911,17 @@ function normalizeThinkingSummary(input: {
 }) {
   const summary = input.summary.replace(/\s+/g, " ").trim();
 
+  const revisionSummary = input.userMessage
+    ? buildEvidenceRevisionThinkingSummary({
+        dimension: input.dimension,
+        message: input.userMessage
+      })
+    : null;
+
+  if (revisionSummary) {
+    return revisionSummary;
+  }
+
   if (!summary) {
     return summary;
   }
@@ -1996,14 +1954,20 @@ function normalizeThinkingSummary(input: {
   });
 }
 
-function buildReflectionContinuationFallbackQuestion(snapshot: JoySnapshot) {
+function buildReflectionContinuationFallbackQuestion(snapshot: JoySnapshot, hadSceneDenial: boolean) {
   const anchor = trimSummaryField(snapshot.event, 28);
 
-  if (anchor) {
-    return `如果不是某段具体对话，那在“${anchor}”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？`;
+  if (hadSceneDenial) {
+    return anchor
+      ? `在“${anchor}”这件事里，最先卡住你的一个具体顾虑、画面或念头是什么？`
+      : "当时最先卡住你的一个具体顾虑、画面或念头是什么？";
   }
 
-  return "如果不是某段具体对话，那今天在做这个判断时，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？";
+  if (anchor) {
+    return `你说“${anchor}”。当时最直接让你纠结的是什么？`;
+  }
+
+  return "当时最直接让你纠结的是什么？";
 }
 
 function buildContinuationFallbackQuestion(
@@ -2020,7 +1984,10 @@ function buildContinuationFallbackQuestion(
       existingSpec,
       target: "insight_evidence",
       surfaceLevel: "concrete_anchor",
-      candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+      candidateQuestion: buildReflectionContinuationFallbackQuestion(
+        input.nextSnapshot,
+        Boolean(findLatestReflectionSceneDenial(input.session.messages))
+      ),
       preserveStructuredCandidateQuestion: true
     });
 
@@ -2099,7 +2066,10 @@ function applyQuestionGuard(
           existingSpec: assistantTurn.questionSpec ?? input.questionSpec,
           target: "insight_evidence",
           surfaceLevel: "concrete_anchor",
-          candidateQuestion: buildReflectionContinuationFallbackQuestion(input.nextSnapshot),
+          candidateQuestion: buildReflectionContinuationFallbackQuestion(
+            input.nextSnapshot,
+            Boolean(findLatestReflectionSceneDenial(input.session.messages))
+          ),
           preserveStructuredCandidateQuestion: true
         })
       };
@@ -2185,147 +2155,29 @@ function getChoiceCompletionMode(input: {
           isMeaningfulReply: input.isMeaningfulReply
         });
 
-  if (input.dimension === "joy") {
-    if (hasJoyStableClosure(input.nextSnapshot)) {
-      if (!input.isMeaningfulReply || input.nextStage !== "wrap_up") {
-        return null;
-      }
+  const evidence = assessDimensionEvidence(input.dimension, input.nextSnapshot);
 
-      if (input.activeEvent.explorationRound <= 1) {
-        return "complete";
-      }
-
-      return newProgressAchieved ? "complete" : null;
-    }
-
-    if (!isJoyCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
+  if (evidence.readiness === "complete") {
+    if (!input.isMeaningfulReply || input.nextStage !== "wrap_up") {
       return null;
     }
-
-    if (input.activeEvent.explorationRound <= 1) {
-      return input.nextEventTurnCount >= 3 ? "user_override_partial" : null;
-    }
-
-    return newProgressAchieved ? "user_override_partial" : null;
+    return input.activeEvent.explorationRound <= 1 || newProgressAchieved ? "complete" : null;
   }
 
-  if (input.dimension === "fulfillment") {
-    if (input.isMeaningfulReply && isFulfillmentComplete(input.nextSnapshot)) {
-      if (input.nextStage !== "wrap_up") {
-        return null;
-      }
-
-      if (input.activeEvent.explorationRound <= 1) {
-        return "complete";
-      }
-
-      return newProgressAchieved ? "complete" : null;
-    }
-
-    if (!isFulfillmentCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
-      return null;
-    }
-
-    if (input.activeEvent.explorationRound <= 1) {
-      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
-    }
-
-    return newProgressAchieved ? "user_override_partial" : null;
-  }
-
-  if (input.dimension === "reflection") {
-    if (input.isMeaningfulReply && isReflectionComplete(input.nextSnapshot)) {
-      if (input.nextStage !== "wrap_up") {
-        return null;
-      }
-
-      if (input.activeEvent.explorationRound <= 1) {
-        return "complete";
-      }
-
-      return newProgressAchieved ? "complete" : null;
-    }
-
-    if (!isReflectionCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
-      return null;
-    }
-
-    if (input.activeEvent.explorationRound <= 1) {
-      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
-    }
-
-    return newProgressAchieved ? "user_override_partial" : null;
-  }
-
-  if (input.dimension === "improvement") {
-    if (input.isMeaningfulReply && isImprovementComplete(input.nextSnapshot)) {
-      if (input.nextStage !== "wrap_up") {
-        return null;
-      }
-
-      if (input.activeEvent.explorationRound <= 1) {
-        return "complete";
-      }
-
-      return newProgressAchieved ? "complete" : null;
-    }
-
-    if (!isImprovementCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
-      return null;
-    }
-
-    if (input.activeEvent.explorationRound <= 1) {
-      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
-    }
-
-    return newProgressAchieved ? "user_override_partial" : null;
-  }
-
-  if (input.dimension === "gratitude") {
-    if (input.isMeaningfulReply && isGratitudeComplete(input.nextSnapshot)) {
-      if (input.nextStage !== "wrap_up") {
-        return null;
-      }
-
-      if (input.activeEvent.explorationRound <= 1) {
-        return "complete";
-      }
-
-      return newProgressAchieved ? "complete" : null;
-    }
-
-    if (input.nextStage === "wrap_up" && isGratitudeEvidencePartial(input.nextSnapshot)) {
-      return "user_override_partial";
-    }
-
-    if (!isGratitudeCoreReadyForDraft(input.nextSnapshot) || !isJoyDraftOverrideRequested(input.userMessage)) {
-      return null;
-    }
-
-    if (input.activeEvent.explorationRound <= 1) {
-      return input.nextEventTurnCount >= 2 ? "user_override_partial" : null;
-    }
-
-    return newProgressAchieved ? "user_override_partial" : null;
-  }
-
-  if (!input.isMeaningfulReply) {
-    return null;
-  }
-
-  if (input.nextStage !== "wrap_up") {
-    return null;
-  }
-
-  if (!isEventCoreComplete(input.nextSnapshot)) {
+  const gratitudeEvidencePartial = input.dimension === "gratitude" && isGratitudeEvidencePartial(input.nextSnapshot);
+  if (
+    evidence.readiness !== "partial" ||
+    (!isJoyDraftOverrideRequested(input.userMessage) && !(input.nextStage === "wrap_up" && gratitudeEvidencePartial))
+  ) {
     return null;
   }
 
   if (input.activeEvent.explorationRound <= 1) {
-    return input.nextEventTurnCount >= 3 ? "complete" : null;
+    const minimumTurns = input.dimension === "joy" ? 3 : 2;
+    return input.nextEventTurnCount >= minimumTurns || gratitudeEvidencePartial ? "user_override_partial" : null;
   }
 
-  return newProgressAchieved ? "complete" : null;
+  return newProgressAchieved || gratitudeEvidencePartial ? "user_override_partial" : null;
 }
 
 function looksLikeNoJoyMessage(message: string | null) {
@@ -2399,6 +2251,76 @@ function getNextEventOpeningQuestion(dimension: InterviewDimension) {
     case "gratitude":
       return "如果今天还有另一段让你想说谢谢的经历，我们就聊那一段。那个片段是什么？";
   }
+}
+
+async function createInterviewTurnTrace(input: {
+  requestId?: string | null;
+  session: InterviewSessionRecord;
+  activeEvent: InterviewEventRecord;
+  action: CanonicalInterviewAction;
+  userMessage?: string | null;
+  inputMode?: InputMode;
+  outputOrigin?: "llm" | "deterministic" | "fallback";
+}) {
+  return createAIGenerationTrace({
+    requestId: input.requestId,
+    userId: input.session.userId,
+    sessionId: input.session.id,
+    dimension: input.session.dimension,
+    artifactType: "interview_turn",
+    outputOrigin: input.outputOrigin,
+    contextSnapshot: {
+      action: input.action,
+      inputMode: input.inputMode ?? null,
+      userMessage: input.userMessage ?? null,
+      entryDate: input.session.entryDate,
+      stage: input.session.stage,
+      activeEventId: input.activeEvent.id,
+      snapshot: input.activeEvent.snapshotData ?? input.activeEvent.snapshot,
+      messageIds: input.session.messages.map((message) => message.id),
+      messages: input.session.messages.map((message) => ({
+        id: message.id,
+        role: message.role,
+        sequence: message.sequence,
+        content: message.content
+      }))
+    }
+  });
+}
+
+function assessSessionDimensionEvidence(session: InterviewSessionRecord) {
+  const candidates = [
+    ...session.events.map((event) => assessDimensionEvidence(session.dimension, event.snapshot, event.snapshotData)),
+    assessDimensionEvidence(session.dimension, session.snapshot, session.snapshotData)
+  ];
+  return candidates.find((candidate) => candidate.readiness === "complete")
+    ?? candidates.find((candidate) => candidate.readiness === "partial")
+    ?? candidates[0];
+}
+
+async function appendEvidenceDecisionTrace(input: {
+  traceId: string;
+  detectedIntent: ReturnType<typeof assessUserTurnMessage>["intent"];
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  snapshotData?: unknown;
+  decisionOrigin: "deterministic" | "llm" | "fallback";
+  extractionSkipped: boolean;
+  turnAdvanced: boolean;
+  evidence?: ReturnType<typeof assessDimensionEvidence>;
+}) {
+  const evidence = input.evidence ?? assessDimensionEvidence(input.dimension, input.snapshot, input.snapshotData);
+  await appendGenerationTraceDecision(input.traceId, {
+    kind: "interview_evidence_decision",
+    detectedIntent: input.detectedIntent,
+    readiness: evidence.readiness,
+    missingSlots: evidence.missingSlots,
+    completionMode: evidence.completionMode,
+    decisionOrigin: input.decisionOrigin,
+    extractionSkipped: input.extractionSkipped,
+    turnAdvanced: input.turnAdvanced
+  });
+  return evidence;
 }
 
 function buildImmediateResponseFromSession(session: InterviewSessionRecord) {
@@ -2509,6 +2431,8 @@ function buildAssistantGenerationInput(input: PreparedInterviewTurnContext & {
     isMeaningfulReply: input.isMeaningfulReply,
     action: input.assistantAction === "repair_current_question" ? "continue_current_event" : input.assistantAction,
     questionSpec: input.questionSpec
+    ,traceId: input.generationTraceId
+    ,requestId: input.requestId
   } as const;
 }
 
@@ -2519,15 +2443,36 @@ function finalizeAssistantTurn(
   const guardedAssistantTurn = applyQuestionGuard(input, assistantTurn);
   const fulfillmentGuardedAssistantTurn = applyFulfillmentQuestionGuard(input, guardedAssistantTurn);
   const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, fulfillmentGuardedAssistantTurn);
+  const evidenceRevisions = input.userMessage
+    ? detectExplicitEvidenceRevisions({
+        dimension: input.session.dimension,
+        message: input.userMessage
+      })
+    : [];
+  const revisionGuardedAssistantTurn =
+    input.session.dimension === "fulfillment" &&
+    evidenceRevisions.some((revision) => revision.field === "whyItMattered" && revision.action === "clear")
+      ? {
+          ...fallbackAssistantTurn,
+          question: "那这段先放下。今天还有哪个片段，留下了一点看得见的结果？想不到也可以直接说没有。",
+          questionSpec: {
+            target: "event_anchor" as const,
+            stageIntent: "advance" as const,
+            surfaceLevel: "concrete_anchor" as const,
+            anchorText: null,
+            repairCount: 0
+          }
+        }
+      : fallbackAssistantTurn;
   const finalizedAssistantTurn = {
-    ...fallbackAssistantTurn,
-    questionSpec: fallbackAssistantTurn.questionSpec ?? input.questionSpec ?? null,
+    ...revisionGuardedAssistantTurn,
+    questionSpec: revisionGuardedAssistantTurn.questionSpec ?? input.questionSpec ?? null,
     thinkingSummary: normalizeThinkingSummary({
       dimension: input.session.dimension,
       stage: input.nextStage,
       snapshot: input.nextSnapshot,
       assistantAction: input.assistantAction,
-      summary: fallbackAssistantTurn.thinkingSummary,
+      summary: revisionGuardedAssistantTurn.thinkingSummary,
       userMessage: input.userMessage
     })
   };
@@ -2613,7 +2558,20 @@ async function resolvePreparedInterviewTurn(
 
   callbacks?.signal?.throwIfAborted();
 
-  return finalizeAssistantTurn(input, generatedAssistantTurn);
+  const finalized = finalizeAssistantTurn(input, generatedAssistantTurn);
+
+  if (
+    finalized.assistantTurn.question !== generatedAssistantTurn.question ||
+    finalized.assistantTurn.thinkingSummary !== generatedAssistantTurn.thinkingSummary
+  ) {
+    await appendGenerationTraceDecision(input.generationTraceId, {
+      kind: "assistant_server_guard",
+      questionChanged: finalized.assistantTurn.question !== generatedAssistantTurn.question,
+      summaryChanged: finalized.assistantTurn.thinkingSummary !== generatedAssistantTurn.thinkingSummary
+    });
+  }
+
+  return finalized;
 }
 
 async function getActiveInterviewSession(userId: string, sessionId: string) {
@@ -2639,9 +2597,14 @@ async function getActiveInterviewSession(userId: string, sessionId: string) {
   return session;
 }
 
-export async function startJoyInterview(userId: string, dimension: InterviewDimension, entryDate?: string) {
+export async function startJoyInterview(
+  userId: string,
+  dimension: InterviewDimension,
+  entryDate?: string,
+  options?: { requestId?: string | null }
+) {
   const openingQuestion = getOpeningQuestion(dimension);
-  const session = await createJoyInterviewSession(userId, dimension, openingQuestion, entryDate);
+  const session = await createJoyInterviewSession(userId, dimension, openingQuestion, entryDate, options);
 
   await recordAnalyticsEvent({
     eventName: "interview_session_started",
@@ -2792,6 +2755,12 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
     if (!resumedSession || !resumedEvent) {
       throw new Error("SESSION_NOT_FOUND");
     }
+    const trace = await createInterviewTurnTrace({
+      requestId: input.requestId,
+      session: resumedSession,
+      activeEvent: resumedEvent,
+      action: canonicalAction
+    });
 
     return {
       session: resumedSession,
@@ -2811,6 +2780,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       totalMeaningfulReplyCount: resumedEvent.totalMeaningfulReplyCount,
       assistantTurn: null,
       assistantAction: "continue_current_event",
+      generationTraceId: trace.id,
+      requestId: input.requestId ?? null,
+      outputOrigin: "llm",
       questionSpec: createQuestionSpec({
         dimension: resumedSession.dimension,
         stage: resumedEvent.stage,
@@ -2833,7 +2805,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
     }
 
-    const nextSession = await startNextInterviewEvent(session.id, getNextEventOpeningQuestion(session.dimension));
+    const nextSession = await startNextInterviewEvent(session.id, getNextEventOpeningQuestion(session.dimension), {
+      requestId: input.requestId
+    });
 
     if (!nextSession) {
       throw new Error("SESSION_NOT_FOUND");
@@ -2847,88 +2821,81 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
   }
 
   const assessment = assessUserTurnMessage(input.userMessage);
-  if (assessment.intent === "draft_request") {
-    const hasUserReplies = sessionHasUserReplies(session);
+  const trace = await createInterviewTurnTrace({
+    requestId: input.requestId,
+    session,
+    activeEvent,
+    action: canonicalAction,
+    userMessage: input.userMessage,
+    inputMode: input.inputMode
+  });
+  if (
+    assessment.intent === "draft_request" ||
+    isBoundaryIntent(assessment.intent) ||
+    assessment.intent === "conversation_feedback"
+  ) {
+    const controlRevision = applyExplicitEvidenceRevisions({
+      dimension: session.dimension,
+      previousSnapshot: activeEvent.snapshot,
+      candidateSnapshot: activeEvent.snapshot,
+      message: input.userMessage
+    });
+    const controlSnapshot = controlRevision.snapshot;
 
-    if (!hasUserReplies) {
-      return {
-        session,
-        activeEvent,
-        nextSnapshot: activeEvent.snapshot,
-        nextTurnCount: session.turnCount,
-        nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
-        nextStage: activeEvent.stage,
-        nextEventStatus: activeEvent.status,
-        nextProgressData: null,
-        isReadyForDraft: false,
-        userMessage: input.userMessage,
-        inputMode: input.inputMode,
-        isMeaningfulReply: false,
-        coveredLenses: activeEvent.coveredLenses,
-        roundCoveredLenses: activeEvent.roundCoveredLenses,
-        roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
-        totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
-        assistantTurn: buildEmptyDraftRequestAssistantTurn(session.dimension),
-        assistantAction: null,
-        questionSpec: null
-      } satisfies PreparedInterviewTurnContext;
+    if (controlRevision.revisions.length) {
+      await appendGenerationTraceDecision(trace.id, {
+        kind: "interview_evidence_revision",
+        decisionOrigin: "deterministic",
+        revisions: controlRevision.revisions
+      });
     }
 
-    return {
-      session,
-      activeEvent,
-      nextSnapshot: activeEvent.snapshot,
-      nextTurnCount: session.turnCount,
-      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
-      nextStage: "wrap_up",
-      nextEventStatus: "ready_for_choice",
-      nextProgressData: {
-        kind: "event_complete",
-        completionMode: "user_override_partial"
-      },
-      isReadyForDraft: true,
-      userMessage: input.userMessage,
-      inputMode: input.inputMode,
-      isMeaningfulReply: false,
-      coveredLenses: activeEvent.coveredLenses,
-      roundCoveredLenses: activeEvent.roundCoveredLenses,
-      roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
-      totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
-      assistantTurn: buildChoiceAssistantTurn(
-        session.dimension,
-        activeEvent.snapshot,
-        activeEvent.explorationRound,
-        "user_override_partial"
-      ),
-      assistantAction: null,
-      questionSpec: null
-    } satisfies PreparedInterviewTurnContext;
-  }
-
-  if (isBoundaryIntent(assessment.intent)) {
-    const isReadyForPartial = isCoreReadyForBoundaryPartial(session.dimension, activeEvent.snapshot);
-    const boundaryAssistantTurn = isReadyForPartial
-      ? buildChoiceAssistantTurn(session.dimension, activeEvent.snapshot, activeEvent.explorationRound, "user_override_partial")
-      : buildBoundaryInsufficientAssistantTurn(session.dimension);
+    const selectedEvidence = controlRevision.revisions.length
+      ? assessDimensionEvidence(session.dimension, controlSnapshot)
+      : assessment.intent === "draft_request"
+        ? assessSessionDimensionEvidence(session)
+        : assessDimensionEvidence(session.dimension, activeEvent.snapshot, activeEvent.snapshotData);
+    const evidence = await appendEvidenceDecisionTrace({
+      traceId: trace.id,
+      detectedIntent: assessment.intent,
+      dimension: session.dimension,
+      snapshot: controlSnapshot,
+      snapshotData: controlRevision.revisions.length ? undefined : activeEvent.snapshotData,
+      decisionOrigin: "deterministic",
+      extractionSkipped: true,
+      turnAdvanced: false,
+      evidence: selectedEvidence
+    });
+    const canGenerate = canGenerateFromEvidence(evidence);
+    const completionMode = evidence.completionMode ?? "user_override_partial";
+    const assistantTurn = canGenerate
+      ? buildControlChoiceAssistantTurn({
+          dimension: session.dimension,
+          snapshot: controlSnapshot,
+          explorationRound: activeEvent.explorationRound,
+          completionMode,
+          intent: assessment.intent
+        })
+      : buildBoundaryInsufficientAssistantTurn(session.dimension, assessment.intent);
 
     return {
       session,
       activeEvent,
-      nextSnapshot: activeEvent.snapshot,
+      nextSnapshot: controlSnapshot,
       nextTurnCount: session.turnCount,
       nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
       nextStage: "wrap_up",
       nextEventStatus: "ready_for_choice",
-      nextProgressData: isReadyForPartial
+      nextProgressData: canGenerate
         ? {
             kind: "event_complete",
-            completionMode: "user_override_partial"
+            completionMode
           }
         : {
             kind: "boundary_insufficient",
             reason: "我不再继续追问细节了。"
           },
-      isReadyForDraft: isReadyForPartial || Boolean(session.journalEntry),
+      isReadyForDraft: canGenerate,
       userMessage: input.userMessage,
       inputMode: input.inputMode,
       isMeaningfulReply: false,
@@ -2936,13 +2903,63 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       roundCoveredLenses: activeEvent.roundCoveredLenses,
       roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
       totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
-      assistantTurn: boundaryAssistantTurn,
+      assistantTurn,
       assistantAction: null,
+      generationTraceId: trace.id,
+      requestId: input.requestId ?? null,
+      outputOrigin: "deterministic",
+      questionSpec: null
+    } satisfies PreparedInterviewTurnContext;
+  }
+
+  if (assessment.intent === "low_signal") {
+    await appendEvidenceDecisionTrace({
+      traceId: trace.id,
+      detectedIntent: assessment.intent,
+      dimension: session.dimension,
+      snapshot: activeEvent.snapshot,
+      snapshotData: activeEvent.snapshotData,
+      decisionOrigin: "deterministic",
+      extractionSkipped: true,
+      turnAdvanced: false
+    });
+    return {
+      session,
+      activeEvent,
+      nextSnapshot: activeEvent.snapshot,
+      nextTurnCount: session.turnCount,
+      nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+      nextStage: activeEvent.stage,
+      nextEventStatus: activeEvent.status,
+      nextProgressData: null,
+      isReadyForDraft: Boolean(session.journalEntry),
+      userMessage: input.userMessage,
+      inputMode: input.inputMode,
+      isMeaningfulReply: false,
+      coveredLenses: activeEvent.coveredLenses,
+      roundCoveredLenses: activeEvent.roundCoveredLenses,
+      roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+      assistantTurn: buildLowSignalAssistantTurn(),
+      assistantAction: null,
+      generationTraceId: trace.id,
+      requestId: input.requestId ?? null,
+      outputOrigin: "deterministic",
       questionSpec: null
     } satisfies PreparedInterviewTurnContext;
   }
 
   if (assessment.intent === "question_repair") {
+    await appendEvidenceDecisionTrace({
+      traceId: trace.id,
+      detectedIntent: assessment.intent,
+      dimension: session.dimension,
+      snapshot: activeEvent.snapshot,
+      snapshotData: activeEvent.snapshotData,
+      decisionOrigin: "deterministic",
+      extractionSkipped: true,
+      turnAdvanced: false
+    });
     const previousSpec = getLatestAssistantQuestionSpec(session.messages);
     const nextRepairCount = (previousSpec?.repairCount ?? 0) + 1;
     const requestedSurfaceLevel =
@@ -2994,28 +3011,58 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
             hadReflectionSceneDenial: session.dimension === "reflection" && Boolean(findLatestReflectionSceneDenial(session.messages))
           }),
       assistantAction: null,
+      generationTraceId: trace.id,
+      requestId: input.requestId ?? null,
+      outputOrigin: "deterministic",
       questionSpec: shouldEscalateRepair ? null : repairSpec
     } satisfies PreparedInterviewTurnContext;
   }
 
   const isMeaningfulReply = assessment.isMeaningful;
-  const rawNextSnapshot = assessment.shouldExtractSnapshot
-    ? await extractJoySnapshotWithAI({
-        session,
-        userMessage: input.userMessage,
-        signal: options?.signal
-      })
-    : activeEvent.snapshot;
+  let rawNextSnapshot: JoySnapshot;
+  try {
+    rawNextSnapshot = assessment.shouldExtractSnapshot
+      ? await extractJoySnapshotWithAI({
+          session,
+          userMessage: input.userMessage,
+          signal: options?.signal,
+          traceId: trace.id,
+          requestId: input.requestId
+        })
+      : activeEvent.snapshot;
+  } catch (error) {
+    if (options?.signal?.aborted) {
+      await cancelGenerationTrace(trace.id);
+    } else {
+      await failGenerationTrace(trace.id, error instanceof Error ? error.name : "EXTRACT_FAILED");
+    }
+    throw error;
+  }
   options?.signal?.throwIfAborted();
+  const revisedExtraction = applyExplicitEvidenceRevisions({
+    dimension: session.dimension,
+    previousSnapshot: activeEvent.snapshot,
+    candidateSnapshot: rawNextSnapshot,
+    message: input.userMessage
+  });
   const nextSnapshot =
     session.dimension === "gratitude"
       ? applyGratitudeEvidenceState({
           previous: activeEvent.snapshot,
-          next: rawNextSnapshot,
+          next: revisedExtraction.snapshot,
           questionSpec: getLatestAssistantQuestionSpec(session.messages),
           assessment
         })
-      : rawNextSnapshot;
+      : revisedExtraction.snapshot;
+  const evidenceRevisions = revisedExtraction.revisions;
+
+  if (evidenceRevisions.length) {
+    await appendGenerationTraceDecision(trace.id, {
+      kind: "interview_evidence_revision",
+      decisionOrigin: "deterministic",
+      revisions: evidenceRevisions
+    });
+  }
   const nextTurnCount = session.turnCount + (assessment.shouldAdvanceTurn ? 1 : 0);
   const nextEventTurnCount = activeEvent.totalMeaningfulReplyCount + (assessment.shouldAdvanceRound ? 1 : 0);
   const derivedNextStage = getNextStage(session.dimension, nextSnapshot, nextEventTurnCount);
@@ -3057,6 +3104,15 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
     nextStage: shouldOfferChoiceNow ? "wrap_up" : derivedNextStage,
     shouldOfferChoiceNow: shouldOfferChoiceNow || shouldOfferRedirectNow
   });
+  await appendEvidenceDecisionTrace({
+    traceId: trace.id,
+    detectedIntent: assessment.intent,
+    dimension: session.dimension,
+    snapshot: nextSnapshot,
+    decisionOrigin: shouldOfferChoiceNow || shouldOfferRedirectNow ? "deterministic" : "llm",
+    extractionSkipped: !assessment.shouldExtractSnapshot,
+    turnAdvanced: assessment.shouldAdvanceTurn
+  });
 
   return {
     session,
@@ -3092,6 +3148,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
         ? buildRedirectAssistantTurn(redirectReason, nextSnapshot)
         : null,
     assistantAction: shouldOfferChoiceNow || shouldOfferRedirectNow ? null : "reply",
+    generationTraceId: trace.id,
+    requestId: input.requestId ?? null,
+    outputOrigin: shouldOfferChoiceNow || shouldOfferRedirectNow ? "deterministic" : "llm",
     questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
       ? null
       : shouldPreserveReflectionConcreteInsightAfterRepair({
@@ -3188,15 +3247,32 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
     return prepared;
   }
 
-  return resolvePreparedInterviewTurn(prepared);
+  try {
+    return await resolvePreparedInterviewTurn(prepared);
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      await cancelGenerationTrace(prepared.generationTraceId);
+    } else {
+      await failGenerationTrace(
+        prepared.generationTraceId,
+        error instanceof Error ? error.name : "ASSISTANT_GENERATION_FAILED"
+      );
+    }
+    throw error;
+  }
 }
 
 export async function completeJoyInterviewResponse(
   input: ResolvedPreparedInterviewTurn,
   options?: { signal?: AbortSignal }
 ) {
-  options?.signal?.throwIfAborted();
-  const updatedSession = await appendJoyInterviewTurn({
+  if (options?.signal?.aborted) {
+    await cancelGenerationTrace(input.generationTraceId);
+    options.signal.throwIfAborted();
+  }
+  let updatedSession;
+  try {
+    updatedSession = await appendJoyInterviewTurn({
     sessionId: input.session.id,
     activeEventId: input.activeEvent.id,
     userMessage: input.userMessage ?? undefined,
@@ -3218,7 +3294,18 @@ export async function completeJoyInterviewResponse(
       getJoySource(input.nextSnapshot) ??
       getJoyMoment(input.nextSnapshot),
     completedAt: null
-  });
+    ,generationTraceId: input.generationTraceId
+    ,requestId: input.requestId
+    ,outputOrigin: input.outputOrigin
+    });
+  } catch (error) {
+    if (options?.signal?.aborted) {
+      await cancelGenerationTrace(input.generationTraceId);
+    } else {
+      await failGenerationTrace(input.generationTraceId, error instanceof Error ? error.name : "TRACE_PERSIST_FAILED");
+    }
+    throw error;
+  }
 
   if (!updatedSession) {
     throw new Error("SESSION_NOT_FOUND");
@@ -3332,8 +3419,7 @@ export async function streamJoyInterviewResponse(
     summary: "",
     question: ""
   };
-  const shouldBufferContinuationOutput =
-    prepared.assistantAction === "continue_current_event" || prepared.session.dimension === "fulfillment";
+  const shouldBufferContinuationOutput = true;
   // Questions pass through deterministic semantic and repetition guards after model generation.
   // Buffer the question until those guards have selected the final user-visible wording.
   const shouldBufferQuestionOutput = true;
@@ -3357,9 +3443,11 @@ export async function streamJoyInterviewResponse(
     emittedSummary = summary;
     streamedText.summary = summary;
   };
-  const completed = await resolvePreparedInterviewTurn(prepared, {
-    signal,
-    onDelta: async (delta) => {
+  let completed: ResolvedPreparedInterviewTurn;
+  try {
+    completed = await resolvePreparedInterviewTurn(prepared, {
+      signal,
+      onDelta: async (delta) => {
       if (!delta.text) {
         return;
       }
@@ -3397,8 +3485,19 @@ export async function streamJoyInterviewResponse(
 
       await emitPhase(delta.target);
       await emitRawDelta(delta.target, delta.text);
+      }
+    });
+  } catch (error) {
+    if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
+      await cancelGenerationTrace(prepared.generationTraceId);
+    } else {
+      await failGenerationTrace(
+        prepared.generationTraceId,
+        error instanceof Error ? error.name : "ASSISTANT_STREAM_FAILED"
+      );
     }
-  });
+    throw error;
+  }
   const completedVisibleText = getVisibleAssistantText(completed.assistantTurn);
 
   if (
@@ -3428,7 +3527,11 @@ export async function streamJoyInterviewResponse(
   return completeJoyInterviewResponse(completed, { signal });
 }
 
-export async function generateJoyInterviewDraft(userId: string, sessionIds: string[]) {
+export async function generateJoyInterviewDraft(
+  userId: string,
+  sessionIds: string[],
+  options?: { requestId?: string | null }
+) {
   if (sessionIds.length !== 1) {
     throw new DraftGenerationError("SESSION_BATCH_UNSUPPORTED", false);
   }
@@ -3439,23 +3542,73 @@ export async function generateJoyInterviewDraft(userId: string, sessionIds: stri
     throw new DraftGenerationError("SESSION_NOT_FOUND", false);
   }
 
-  if (session.pendingDecision?.kind === "boundary_insufficient" || !session.draftGenerationUnlocked) {
+  const trace = await createAIGenerationTrace({
+    requestId: options?.requestId,
+    userId: session.userId,
+    sessionId: session.id,
+    dimension: session.dimension,
+    artifactType: "dimension_journal",
+    artifactId: session.journalEntry?.id ?? null,
+    artifactVersion: (session.journalEntry?.generationVersion ?? 0) + 1,
+    contextSnapshot: {
+      action: session.journalEntry ? "regenerate_dimension_journal" : "generate_dimension_journal",
+      entryDate: session.entryDate,
+      stage: session.stage,
+      messageIds: session.messages.map((message) => message.id),
+      messages: session.messages.map((message) => ({
+        id: message.id,
+        role: message.role,
+        sequence: message.sequence,
+        content: message.content
+      })),
+      eventIds: session.events.map((event) => event.id),
+      events: session.events.map((event) => ({
+        id: event.id,
+        sequence: event.sequence,
+        snapshot: event.snapshotData ?? event.snapshot
+      })),
+      currentDraft: session.journalEntry
+        ? { title: session.journalEntry.title, content: session.journalEntry.content }
+        : null
+    }
+  });
+  const evidence = assessSessionDimensionEvidence(session);
+  await appendGenerationTraceDecision(trace.id, {
+    kind: "draft_evidence_gate",
+    detectedIntent: "draft_request",
+    readiness: evidence.readiness,
+    missingSlots: evidence.missingSlots,
+    completionMode: evidence.completionMode,
+    decisionOrigin: "deterministic",
+    extractionSkipped: true,
+    turnAdvanced: false
+  });
+  if (!canGenerateFromEvidence(evidence)) {
+    await cancelGenerationTrace(trace.id, "DRAFT_GENERATE_NOT_READY");
     throw new DraftGenerationError("DRAFT_GENERATE_NOT_READY", false, "Draft generation is not available yet.");
   }
 
   let draftEntry;
 
   try {
-    draftEntry = await generateJoyDraftWithAI(session);
+    draftEntry = await generateJoyDraftWithAI(session, {
+      traceId: trace.id,
+      requestId: options?.requestId
+    });
   } catch (error) {
+    await failGenerationTrace(trace.id, error instanceof Error ? error.name : "DRAFT_GENERATE_UPSTREAM_ERROR");
     throw new DraftGenerationError("DRAFT_GENERATE_UPSTREAM_ERROR", true, "Draft generation failed upstream.", error);
   }
 
   let draftSession;
 
   try {
-    draftSession = await saveJoyInterviewDraft(session.id, draftEntry);
+    draftSession = await saveJoyInterviewDraft(session.id, draftEntry, {
+      traceId: trace.id,
+      requestId: options?.requestId
+    });
   } catch (error) {
+    await failGenerationTrace(trace.id, error instanceof Error ? error.name : "DRAFT_PERSIST_FAILED");
     if (error instanceof Prisma.PrismaClientKnownRequestError || error instanceof Prisma.PrismaClientInitializationError) {
       throw new DraftGenerationError("DRAFT_GENERATE_DB_ERROR", true, "Draft persistence failed.", error);
     }

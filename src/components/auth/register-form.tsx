@@ -167,6 +167,7 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
               <Link href="/legal/privacy" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
                 《隐私政策》
               </Link>
+              ，并知悉服务会使用对话、AI 生成内容及反馈进行质量评估与持续改进。
             </span>
           </label>
         </div>

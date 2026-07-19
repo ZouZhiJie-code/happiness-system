@@ -1,6 +1,8 @@
 import React from "react";
+import { randomUUID } from "node:crypto";
 
 import { AdminAnalyticsShell } from "@/components/admin/admin-analytics-shell";
+import { AdminDataUnavailable } from "@/components/admin/admin-data-unavailable";
 import { normalizeAdminAnalyticsSearchParams } from "@/features/admin-analytics/view-state";
 import { requireAdminPage } from "@/server/services/auth/auth-page-guard";
 import {
@@ -14,6 +16,8 @@ import {
   getAdminAnalyticsUserDetail,
   listAdminAnalyticsUsers
 } from "@/server/services/admin-analytics/admin-analytics.service";
+import { withAdminReadRetry } from "@/server/services/admin-read-retry";
+import { logger } from "@/server/lib/logger";
 
 type AdminAnalyticsPageProps = {
   searchParams: Promise<{
@@ -38,29 +42,30 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
   const resolvedSearchParams = await searchParams;
   const normalized = normalizeAdminAnalyticsSearchParams(resolvedSearchParams ?? {});
   const range = normalized.range;
+  try {
   const [overview, funnel, retention, quality, users] = await Promise.all([
-    getAdminAnalyticsOverview(range),
-    getAdminAnalyticsFunnel(range),
-    getAdminAnalyticsRetention(range),
-    getAdminAnalyticsQuality(range),
-    listAdminAnalyticsUsers({
+    withAdminReadRetry(() => getAdminAnalyticsOverview(range)),
+    withAdminReadRetry(() => getAdminAnalyticsFunnel(range)),
+    withAdminReadRetry(() => getAdminAnalyticsRetention(range)),
+    withAdminReadRetry(() => getAdminAnalyticsQuality(range)),
+    withAdminReadRetry(() => listAdminAnalyticsUsers({
       ...range,
       username: normalized.username ?? undefined,
       hasSavedJournal: normalized.hasSavedJournal,
       hasBoundaryInsufficient: normalized.hasBoundaryInsufficient,
       hasReopenedSession: normalized.hasReopenedSession
-    })
+    }))
   ]);
   const [userDetail, sessionDetail, entryDetail, dailyJournalDetail] = await Promise.all([
-    normalized.userId ? getAdminAnalyticsUserDetail(normalized.userId) : Promise.resolve(null),
+    normalized.userId ? withAdminReadRetry(() => getAdminAnalyticsUserDetail(normalized.userId!)) : Promise.resolve(null),
     normalized.sessionId
-      ? getAdminAnalyticsSessionDetail(admin.username, normalized.sessionId)
+      ? withAdminReadRetry(() => getAdminAnalyticsSessionDetail(admin.username, normalized.sessionId!))
       : Promise.resolve(null),
     normalized.entryId
-      ? getAdminAnalyticsEntryDetail(admin.username, normalized.entryId)
+      ? withAdminReadRetry(() => getAdminAnalyticsEntryDetail(admin.username, normalized.entryId!))
       : Promise.resolve(null),
     normalized.dailyJournalId
-      ? getAdminAnalyticsDailyJournalDetail(admin.username, normalized.dailyJournalId)
+      ? withAdminReadRetry(() => getAdminAnalyticsDailyJournalDetail(admin.username, normalized.dailyJournalId!))
       : Promise.resolve(null)
   ]);
 
@@ -86,4 +91,9 @@ export default async function AdminAnalyticsPage({ searchParams }: AdminAnalytic
       />
     </div>
   );
+  } catch (error) {
+    const requestId = randomUUID();
+    logger.error({ err: error, requestId }, "Admin analytics page data load failed.");
+    return <AdminDataUnavailable errorCode="ADMIN_ANALYTICS_QUERY_FAILED" requestId={requestId} />;
+  }
 }

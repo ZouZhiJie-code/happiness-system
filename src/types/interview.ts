@@ -102,6 +102,7 @@ export interface AssistantTurnPayload {
 
 export interface InterviewMessage {
   id: string;
+  traceId?: string | null;
   role: InterviewRole;
   inputMode?: InputMode;
   content: string;
@@ -461,6 +462,8 @@ export type InterviewJournalPayload =
 
 export interface JournalEntryRecord extends JoyEntryDraft {
   id: string;
+  traceId?: string | null;
+  generationVersion?: number;
   payload?: InterviewJournalPayload;
   status: JoyEntryStatus;
   linkedSessionIds: string[];

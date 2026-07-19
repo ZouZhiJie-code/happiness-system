@@ -12,7 +12,7 @@ describe("prisma drift contract", () => {
       "utf8"
     );
 
-    expect(schema).toContain("eventBlocks     Json?");
+    expect(schema).toContain("eventBlocks              Json?");
     expect(schema).toContain("sourceEntryIds   String[]           @default([])");
     expect(schema).toContain("sourceSessionIds String[]           @default([])");
 

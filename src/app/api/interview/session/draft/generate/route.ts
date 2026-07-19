@@ -11,8 +11,10 @@ import {
   DraftGenerationError,
   generateInterviewDraft
 } from "@/server/services/interview/interview.service";
+import { createInterviewRequestId } from "@/server/services/interview/respond-error";
 
 export async function POST(request: Request) {
+  const requestId = createInterviewRequestId();
   const body = await request.json();
   const parsed = generateDraftRequestSchema.safeParse(body);
 
@@ -22,7 +24,7 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
-    const result = await generateInterviewDraft(user.id, parsed.data.sessionIds);
+    const result = await generateInterviewDraft(user.id, parsed.data.sessionIds, { requestId });
     const payload = generateDraftResponseSchema.parse(result);
 
     return NextResponse.json(payload);

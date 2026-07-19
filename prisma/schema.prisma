@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -67,7 +67,91 @@ enum AIRequestStage {
   transcribe
   extract
   generate
+  question
+  evaluate
+  iterate
   portrait_synthesis
+}
+
+enum AIGenerationArtifactType {
+  interview_turn
+  dimension_journal
+}
+
+enum AIGenerationTraceStatus {
+  pending
+  completed
+  failed
+  canceled
+}
+
+enum AIOutputOrigin {
+  llm
+  deterministic
+  fallback
+}
+
+enum AICaseClassification {
+  bad
+  review
+  good
+}
+
+enum AIEvaluationStatus {
+  rules_completed
+  completed
+  failed
+}
+
+enum AIEvaluationTrigger {
+  routine
+  risk
+  sample
+  user_feedback
+  manual
+}
+
+enum AIFeedbackVote {
+  upvote
+  downvote
+}
+
+enum AIFeedbackStatus {
+  active
+  revoked
+}
+
+enum AIOptimizationPath {
+  system_prompt
+  few_shot
+  engineering
+}
+
+enum AIOptimizationStatus {
+  draft
+  approved
+  published
+  rejected
+  rolled_back
+}
+
+enum AIOptimizationRunStatus {
+  running
+  completed
+  failed
+}
+
+enum AIOptimizationValidationStatus {
+  running
+  passed
+  failed
+  error
+}
+
+enum AIFewShotStatus {
+  candidate
+  active
+  retired
 }
 
 enum MemorySourceType {
@@ -93,32 +177,38 @@ enum AIRuntimeConfigStatus {
 }
 
 model User {
-  id                String               @id @default(cuid())
-  username          String               @unique
-  passwordHash      String
-  agreedToTermsAt   DateTime
-  agreedToPrivacyAt DateTime
-  createdAt         DateTime             @default(now())
-  settings          UserSettings?
-  sessions          InterviewSession[]
-  joyEntries        JoyEntry[]
-  dailyJournalEntries DailyJournalEntry[]
-  dailyHappinessScores DailyHappinessScore[]
-  memoryFacts       MemoryFact[]
-  portraitSnapshots PortraitSnapshot[]
-  authSessions      AuthSession[]
+  id                        String                @id @default(cuid())
+  username                  String                @unique
+  passwordHash              String
+  agreedToTermsAt           DateTime
+  agreedToPrivacyAt         DateTime
+  privacyPolicyVersion      String                @default("legacy")
+  aiQualityConsentVersion   String?
+  aiQualityConsentAt        DateTime?
+  aiQualityConsentRevokedAt DateTime?
+  createdAt                 DateTime              @default(now())
+  settings                  UserSettings?
+  sessions                  InterviewSession[]
+  joyEntries                JoyEntry[]
+  dailyJournalEntries       DailyJournalEntry[]
+  dailyHappinessScores      DailyHappinessScore[]
+  memoryFacts               MemoryFact[]
+  portraitSnapshots         PortraitSnapshot[]
+  authSessions              AuthSession[]
+  aiGenerationTraces        AIGenerationTrace[]
+  aiFeedbacks               AIFeedback[]
 }
 
 model AuthSession {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
-  tokenHash  String   @unique
+  tokenHash  String    @unique
   expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
   userAgent  String?
   ipAddress  String?
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -155,6 +245,7 @@ model InterviewSession {
   messages              InterviewMessage[]
   snapshots             JoyInterviewSnapshot[]
   aiRequestLogs         AIRequestLog[]
+  aiGenerationTraces    AIGenerationTrace[]
   user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   joyEntry              JoyEntry?              @relation("SessionJoyEntry")
 
@@ -163,91 +254,96 @@ model InterviewSession {
 }
 
 model InterviewEvent {
-  id                       String               @id @default(cuid())
-  sessionId                String
-  sequence                 Int
-  status                   InterviewEventStatus @default(active)
-  stage                    JoyInterviewStage    @default(collect_event)
-  explorationRound         Int                  @default(1)
-  coveredLenses            String[]             @default([])
-  roundCoveredLenses       String[]             @default([])
-  roundMeaningfulReplyCount Int                 @default(0)
-  totalMeaningfulReplyCount Int                 @default(0)
-  startMessageSequence     Int                  @default(0)
-  event                    String?
-  feeling                  String?
-  whyItMattered            String?
-  happinessType            String?
-  selfPattern              String?
-  snapshotData             Json?
-  progressData             Json?
-  confidence               Float?
-  missingSlots             String[]             @default([])
-  draftSummary             String?
-  startedAt                DateTime             @default(now())
-  completedAt              DateTime?
-  session                  InterviewSession     @relation("SessionInterviewEvents", fields: [sessionId], references: [id], onDelete: Cascade)
-  activeForSession         InterviewSession[]   @relation("ActiveInterviewEvent")
+  id                        String               @id @default(cuid())
+  sessionId                 String
+  sequence                  Int
+  status                    InterviewEventStatus @default(active)
+  stage                     JoyInterviewStage    @default(collect_event)
+  explorationRound          Int                  @default(1)
+  coveredLenses             String[]             @default([])
+  roundCoveredLenses        String[]             @default([])
+  roundMeaningfulReplyCount Int                  @default(0)
+  totalMeaningfulReplyCount Int                  @default(0)
+  startMessageSequence      Int                  @default(0)
+  event                     String?
+  feeling                   String?
+  whyItMattered             String?
+  happinessType             String?
+  selfPattern               String?
+  snapshotData              Json?
+  progressData              Json?
+  confidence                Float?
+  missingSlots              String[]             @default([])
+  draftSummary              String?
+  startedAt                 DateTime             @default(now())
+  completedAt               DateTime?
+  session                   InterviewSession     @relation("SessionInterviewEvents", fields: [sessionId], references: [id], onDelete: Cascade)
+  activeForSession          InterviewSession[]   @relation("ActiveInterviewEvent")
 
   @@unique([sessionId, sequence])
   @@index([sessionId, status])
 }
 
 model InterviewMessage {
-  id        String           @id @default(cuid())
-  sessionId String
-  role      InterviewRole
-  inputMode InputMode?
-  content   String
-  sequence  Int
-  createdAt DateTime         @default(now())
-  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id                String             @id @default(cuid())
+  sessionId         String
+  generationTraceId String?            @unique
+  role              InterviewRole
+  inputMode         InputMode?
+  content           String
+  sequence          Int
+  createdAt         DateTime           @default(now())
+  session           InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  generationTrace   AIGenerationTrace? @relation("InterviewMessageGenerationTrace", fields: [generationTraceId], references: [id], onDelete: SetNull)
 
   @@unique([sessionId, sequence])
   @@index([sessionId, createdAt])
 }
 
 model JoyInterviewSnapshot {
-  id              String           @id @default(cuid())
-  sessionId       String
-  version         Int
-  event           String?
-  feeling         String?
-  whyItMattered   String?
-  happinessType   String?
-  selfPattern     String?
-  confidence      Float?
-  missingSlots    String[]
-  createdAt       DateTime         @default(now())
-  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id            String           @id @default(cuid())
+  sessionId     String
+  version       Int
+  event         String?
+  feeling       String?
+  whyItMattered String?
+  happinessType String?
+  selfPattern   String?
+  confidence    Float?
+  missingSlots  String[]
+  createdAt     DateTime         @default(now())
+  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, version])
   @@index([sessionId, createdAt])
 }
 
 model JoyEntry {
-  id              String         @id @default(cuid())
-  userId          String
-  sessionId       String         @unique
-  date            DateTime
-  title           String
-  content         String
-  event           String?
-  feeling         String?
-  whyItMattered   String?
-  happinessType   String?
-  selfPattern     String?
-  tags            String[]
-  payload         Json?
-  eventBlocks     Json?
-  source          JoyEntrySource
-  status          JoyEntryStatus @default(draft)
-  linkedSessionIds String[]      @default([])
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  savedAt         DateTime?
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session         InterviewSession @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+  id                       String             @id @default(cuid())
+  userId                   String
+  sessionId                String             @unique
+  date                     DateTime
+  title                    String
+  content                  String
+  event                    String?
+  feeling                  String?
+  whyItMattered            String?
+  happinessType            String?
+  selfPattern              String?
+  tags                     String[]
+  payload                  Json?
+  eventBlocks              Json?
+  source                   JoyEntrySource
+  status                   JoyEntryStatus     @default(draft)
+  linkedSessionIds         String[]           @default([])
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  savedAt                  DateTime?
+  generationVersion        Int                @default(0)
+  currentGenerationTraceId String?            @unique
+  user                     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session                  InterviewSession   @relation("SessionJoyEntry", fields: [sessionId], references: [id], onDelete: Cascade)
+  currentGenerationTrace   AIGenerationTrace? @relation("CurrentJoyEntryGenerationTrace", fields: [currentGenerationTraceId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
   @@index([userId, status, date])
@@ -370,50 +466,316 @@ model DailyHappinessScore {
 }
 
 model MemoryFact {
-  id                 String             @id @default(cuid())
+  id                 String                       @id @default(cuid())
   userId             String
   dimension          InterviewDimension
   kind               String
-  topicTags          String[]           @default([])
+  topicTags          String[]                     @default([])
   summary            String
   /// Provisioned by pgvector migration; runtime paths must tolerate it being unavailable.
   embedding          Unsupported("vector(2048)")?
-  sourceType         MemorySourceType   @default(ai_extracted)
-  confidence         Float              @default(0)
+  sourceType         MemorySourceType             @default(ai_extracted)
+  confidence         Float                        @default(0)
   evidenceEntryIds   String[]
-  evidenceSessionIds String[]           @default([])
+  evidenceSessionIds String[]                     @default([])
   deletedAt          DateTime?
   lastUsedAt         DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  user               User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, dimension, kind])
   @@index([userId, deletedAt])
 }
 
 model AIRequestLog {
-  id        String          @id @default(cuid())
-  sessionId String
-  stage     AIRequestStage
-  provider  String
-  latencyMs Int?
-  success   Boolean
-  errorCode String?
-  createdAt DateTime        @default(now())
-  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id              String             @id @default(cuid())
+  sessionId       String?
+  traceId         String?
+  requestId       String?
+  stage           AIRequestStage
+  attempt         Int                @default(1)
+  provider        String
+  model           String?
+  promptKey       String?
+  promptVersion   String?
+  promptHash      String?
+  requestMessages Json?
+  responseText    String?
+  responseHash    String?
+  params          Json?
+  tokenUsage      Json?
+  latencyMs       Int?
+  success         Boolean
+  errorCode       String?
+  createdAt       DateTime           @default(now())
+  session         InterviewSession?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  trace           AIGenerationTrace? @relation(fields: [traceId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, stage])
+  @@index([traceId, stage, attempt])
+  @@index([promptKey, promptVersion, createdAt])
+}
+
+model AIGenerationTrace {
+  id                        String                   @id @default(uuid())
+  requestId                 String?
+  userId                    String
+  sessionId                 String?
+  dimension                 InterviewDimension?
+  artifactType              AIGenerationArtifactType
+  artifactId                String?
+  artifactVersion           Int                      @default(1)
+  triggerMessageId          String?
+  status                    AIGenerationTraceStatus  @default(pending)
+  outputOrigin              AIOutputOrigin?
+  contextSnapshot           Json
+  finalOutput               Json?
+  pipelineDecisions         Json
+  errorCode                 String?
+  completedAt               DateTime?
+  failedAt                  DateTime?
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  feedbackEvaluationPending Boolean                  @default(false)
+  user                      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session                   InterviewSession?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  invocations               AIRequestLog[]
+  interviewMessage          InterviewMessage?        @relation("InterviewMessageGenerationTrace")
+  currentForJoyEntry        JoyEntry?                @relation("CurrentJoyEntryGenerationTrace")
+  case                      AICase?
+  evaluation                AIEvaluation?
+  feedback                  AIFeedback?
+  fewShotExample            AIFewShotExample?
+
+  @@unique([artifactType, artifactId, artifactVersion])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([status, createdAt])
+  @@index([artifactType, dimension, createdAt])
+}
+
+model AIOptimizationRun {
+  id             String                    @id @default(cuid())
+  periodStart    DateTime
+  periodEnd      DateTime
+  status         AIOptimizationRunStatus   @default(running)
+  scannedBad     Int                       @default(0)
+  scannedGood    Int                       @default(0)
+  clusterCount   Int                       @default(0)
+  candidateCount Int                       @default(0)
+  summary        String?
+  errorCode      String?
+  startedAt      DateTime                  @default(now())
+  completedAt    DateTime?
+  clusters       AIBadcaseCluster[]
+  candidates     AIOptimizationCandidate[]
+
+  @@index([status, startedAt])
+  @@index([periodStart, periodEnd])
+}
+
+model AIBadcaseCluster {
+  id            String                    @id @default(cuid())
+  runId         String
+  artifactType  AIGenerationArtifactType
+  dimension     InterviewDimension?
+  issueCode     String
+  caseCount     Int
+  traceIds      String[]
+  summary       String
+  suggestedPath AIOptimizationPath
+  createdAt     DateTime                  @default(now())
+  run           AIOptimizationRun         @relation(fields: [runId], references: [id], onDelete: Cascade)
+  candidates    AIOptimizationCandidate[]
+
+  @@index([runId, caseCount])
+  @@index([issueCode, createdAt])
+}
+
+model AIOptimizationCandidate {
+  id               String                    @id @default(cuid())
+  dedupeKey        String?                   @unique
+  runId            String
+  clusterId        String?
+  path             AIOptimizationPath
+  status           AIOptimizationStatus      @default(draft)
+  artifactType     AIGenerationArtifactType?
+  dimension        InterviewDimension?
+  promptKey        String?
+  title            String
+  rationale        String
+  proposal         Json
+  evidenceTraceIds String[]
+  riskLevel        String                    @default("medium")
+  createdAt        DateTime                  @default(now())
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  publishedBy      String?
+  publishedAt      DateTime?
+  rolledBackBy     String?
+  rolledBackAt     DateTime?
+  run              AIOptimizationRun         @relation(fields: [runId], references: [id], onDelete: Cascade)
+  cluster          AIBadcaseCluster?         @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  releases         AIPromptRelease[]
+  fewShotExamples  AIFewShotExample[]
+  validations      AIOptimizationValidation[]
+
+  @@index([status, path, createdAt])
+  @@index([promptKey, status, publishedAt])
+  @@index([runId, createdAt])
+}
+
+model AIOptimizationValidation {
+  id                      String                         @id @default(cuid())
+  candidateId             String
+  status                  AIOptimizationValidationStatus @default(running)
+  rubricVersion           String
+  targetCaseCount         Int                            @default(0)
+  targetPassedCount       Int                            @default(0)
+  regressionCaseCount     Int                            @default(0)
+  regressionPassedCount   Int                            @default(0)
+  criticalRegressionCount Int                            @default(0)
+  averageScoreDelta       Float                          @default(0)
+  summary                 String?
+  results                 Json
+  errorCode               String?
+  startedAt               DateTime                       @default(now())
+  completedAt             DateTime?
+  createdBy               String
+  candidate               AIOptimizationCandidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId, startedAt])
+  @@index([status, startedAt])
+}
+
+model AIFewShotExample {
+  id            String                   @id @default(cuid())
+  sourceTraceId String                   @unique
+  candidateId   String?
+  promptKey     String
+  artifactType  AIGenerationArtifactType
+  dimension     InterviewDimension?
+  inputSnapshot Json
+  output        Json
+  qualityScore  Int
+  status        AIFewShotStatus          @default(candidate)
+  promotedAt    DateTime?
+  retiredAt     DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  sourceTrace   AIGenerationTrace        @relation(fields: [sourceTraceId], references: [id], onDelete: Cascade)
+  candidate     AIOptimizationCandidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  @@index([promptKey, status, qualityScore])
+  @@index([candidateId, status])
+}
+
+model AIPromptRelease {
+  id                String                  @id @default(cuid())
+  candidateId       String
+  promptKey         String
+  version           Int
+  instructionPatch  String?
+  fewShotExampleIds String[]                @default([])
+  status            AIOptimizationStatus    @default(published)
+  publishedBy       String
+  publishedAt       DateTime                @default(now())
+  rolledBackBy      String?
+  rolledBackAt      DateTime?
+  candidate         AIOptimizationCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([promptKey, version])
+  @@index([promptKey, status, version])
+  @@index([candidateId, status])
+}
+
+model AIFeedback {
+  id                   String               @id @default(cuid())
+  traceId              String               @unique
+  userId               String
+  vote                 AIFeedbackVote
+  tags                 String[]             @default([])
+  comment              String?
+  status               AIFeedbackStatus     @default(active)
+  revision             Int                  @default(1)
+  privacyPolicyVersion String
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  revokedAt            DateTime?
+  trace                AIGenerationTrace    @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions            AIFeedbackRevision[]
+
+  @@index([userId, updatedAt])
+  @@index([vote, status, updatedAt])
+}
+
+model AIFeedbackRevision {
+  id         String           @id @default(cuid())
+  feedbackId String
+  revision   Int
+  vote       AIFeedbackVote
+  tags       String[]         @default([])
+  comment    String?
+  status     AIFeedbackStatus
+  createdAt  DateTime         @default(now())
+  feedback   AIFeedback       @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@unique([feedbackId, revision])
+  @@index([feedbackId, createdAt])
+}
+
+model AIEvaluation {
+  id                 String              @id @default(cuid())
+  traceId            String              @unique
+  status             AIEvaluationStatus
+  trigger            AIEvaluationTrigger @default(routine)
+  rubricVersion      String
+  ruleScore          Int
+  judgeScore         Int?
+  totalScore         Int
+  dimensionScores    Json
+  deductions         Json
+  reasons            String[]            @default([])
+  ruleSignals        String[]            @default([])
+  judgeTriggered     Boolean             @default(false)
+  judgeTriggerReason String?
+  judgeResult        Json?
+  errorCode          String?
+  evaluatedAt        DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  trace              AIGenerationTrace   @relation(fields: [traceId], references: [id], onDelete: Cascade)
+
+  @@index([status, evaluatedAt])
+  @@index([trigger, evaluatedAt])
+  @@index([totalScore, evaluatedAt])
+}
+
+model AICase {
+  id               String               @id @default(cuid())
+  traceId          String               @unique
+  classification   AICaseClassification
+  priority         Int                  @default(0)
+  sourceSignals    String[]             @default([])
+  primaryIssueCode String?
+  summary          String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  trace            AIGenerationTrace    @relation(fields: [traceId], references: [id], onDelete: Cascade)
+
+  @@index([classification, priority, updatedAt])
+  @@index([primaryIssueCode, updatedAt])
 }
 
 model PortraitSnapshot {
-  id               String   @id @default(cuid())
-  userId           String
-  summary          String
+  id                String   @id @default(cuid())
+  userId            String
+  summary           String
   dimensionInsights Json
-  factCount        Int
-  dataRangeMonths  Int      @default(3)
-  generatedAt      DateTime @default(now())
+  factCount         Int
+  dataRangeMonths   Int      @default(3)
+  generatedAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

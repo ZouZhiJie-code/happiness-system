@@ -59,6 +59,14 @@ export async function getAIRuntimeHistoryRecords(capability: AIRuntimeCapability
   });
 }
 
+export function getAIRuntimeAdminPageRecords() {
+  return prisma.aIRuntimeConfig.findMany({
+    where: { status: { in: ["draft", "published", "archived"] } },
+    orderBy: [{ updatedAt: "desc" }],
+    include: includeProbes
+  });
+}
+
 export async function getNextAIRuntimeVersion(capability: AIRuntimeCapability) {
   const result = await prisma.aIRuntimeConfig.aggregate({
     where: {

@@ -77,6 +77,8 @@ const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
   /(完成|推进|收口|落地|交付|解决|学到|练到|积累|帮到|支持|配合|变顺|更熟|整理成(?:能投递|一版简历)?|卡住的部分|收住了|落了地|往前推了一步|真的被推开)/u;
 const FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN =
   /^(?:很)?(?:充实|踏实|有目标感|有意义|开心|满足|值得|算数|没白过|不算白过)(?:了|吧|啊|呀)?$/u;
+const FULFILLMENT_NEGATED_PROGRESS_PATTERN =
+  /(?:(?:并没有|并未|根本没|没有|没能|谈不上|算不上|不算)[^。！？!?]{0,18}(?:修改|推进|完成|积累|进展|产出|交付|解决|做完|做好|落地|收口|学到|练到|帮到)|(?:修改|推进|完成|积累|进展|产出|交付|解决|做完|做好|落地|收口|学到|练到|帮到)[^。！？!?]{0,10}(?:并没有|并未|根本没|没有|没能|谈不上|算不上|不算))/u;
 const FULFILLMENT_VALUE_SIGNAL_PATTERN =
   /(对我来说|我(?:更)?(?:在意|看重|重视)|才会觉得(?:这一天|今天)?(?:算数|没白过|不算白忙|不算空转)|什么样的(?:努力|投入)|力气花得值|真正算数的)/u;
 
@@ -726,6 +728,10 @@ function inferJoySource(message: string) {
 
 function inferFulfillmentProgressEvidence(message: string) {
   const normalized = normalizeText(message);
+
+  if (FULFILLMENT_NEGATED_PROGRESS_PATTERN.test(normalized)) {
+    return null;
+  }
   const directMatch = normalized.match(
     /(?:没有白过的是|今天算数的是|让我觉得没白过的是|真正推进的是|具体推进了|实际完成了|练到的是|积累到的是|帮到的是)(.+)$/u
   );
@@ -779,6 +785,8 @@ function inferFulfillmentProgressEvidence(message: string) {
 function inferFulfillmentType(message: string) {
   const normalized = normalizeText(message);
 
+  if (FULFILLMENT_NEGATED_PROGRESS_PATTERN.test(normalized)) return null;
+
   if (/(帮助|协作|一起|支持|配合|交接|对别人有用|帮到)/u.test(normalized)) return "协作贡献型";
   if (/(专心|沉浸|投入|专注|练习|学习|学到|练到|积累|更熟)/u.test(normalized)) return "投入积累型";
   if (/(完成|推进|整理完|收尾|交付|解决|推进完|收口|搞定)/u.test(normalized)) return "推进完成型";
@@ -816,7 +824,10 @@ export function hasCredibleFulfillmentProgressEvidence(
     .filter((value): value is string => Boolean(value));
 
   return candidates.some((value) => {
-    if (FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN.test(value)) {
+    if (
+      FULFILLMENT_PROGRESS_ONLY_FEELING_PATTERN.test(value) ||
+      FULFILLMENT_NEGATED_PROGRESS_PATTERN.test(value)
+    ) {
       return false;
     }
 
@@ -1180,6 +1191,14 @@ function inferGratitudeReason(message: string) {
     return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 140) || null;
   }
 
+  const appreciationMatch = normalized.match(
+    /((?:我(?:很|更|格外)?珍惜|我(?:很|特别)?感谢)[^。！？!?]{2,120})/u
+  );
+
+  if (appreciationMatch) {
+    return trimTrailingPunctuation(appreciationMatch[1] ?? "").slice(0, 140) || null;
+  }
+
   if (/(被接住|被支持|不孤单|不再一个人)/u.test(normalized)) return "它让我觉得自己不是一个人在扛";
   if (/(被理解|被看见|有人懂)/u.test(normalized)) return "它让我觉得自己的状态真的被看见了";
   if (/(省力|轻松|松了一口气)/u.test(normalized)) return "它让我在很紧的时候松了一口气";
@@ -1189,6 +1208,14 @@ function inferGratitudeReason(message: string) {
 
 function inferRelationshipSignal(message: string) {
   const normalized = normalizeText(message);
+  const appreciationMatch = normalized.match(
+    /((?:我(?:很|更|格外)?珍惜)[^。！？!?]{2,100})/u
+  );
+
+  if (appreciationMatch) {
+    return trimTrailingPunctuation(appreciationMatch[1] ?? "").slice(0, 100) || null;
+  }
+
   const directMatch = normalized.match(
     /((?:我更知道|我发现|原来|这让我觉得)[^。！？!?]{0,90}(?:值得珍惜|值得学习|信任|关系|连接|被接住|互相支持)[^。！？!?]{0,30})/u
   );

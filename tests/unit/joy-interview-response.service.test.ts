@@ -28,6 +28,18 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
+const {
+  createAIGenerationTrace,
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  failGenerationTrace
+} = vi.hoisted(() => ({
+  createAIGenerationTrace: vi.fn(),
+  appendGenerationTraceDecision: vi.fn(),
+  cancelGenerationTrace: vi.fn(),
+  failGenerationTrace: vi.fn()
+}));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
@@ -62,7 +74,11 @@ const {
 } = vi.hoisted(() => ({
   buildAssistantQuestion: vi.fn(),
   hasCredibleFulfillmentProgressEvidence: (snapshot: JoySnapshot, recentUserMessage?: string | null) =>
-    Boolean(snapshot.whyItMattered || recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u)),
+    Boolean(
+      snapshot.whyItMattered ||
+      recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u) &&
+        !recentUserMessage.match(/(?:没有|没|并未|谈不上)[^。！？]{0,16}(?:推进|完成|积累|帮到|达成|前进|收口)/u)
+    ),
   hasCredibleFulfillmentValueSignal: (snapshot: JoySnapshot, recentUserMessage?: string | null) =>
     Boolean(snapshot.selfPattern || recentUserMessage?.match(/对我来说|什么样的努力|力气花得值|算数/u)),
   getDelightSignature: (snapshot: JoySnapshot) => snapshot.delightSignature ?? null,
@@ -82,7 +98,11 @@ const {
   getManualClue: (snapshot: JoySnapshot) => snapshot.manualClue ?? snapshot.selfPattern ?? null,
   resolveFulfillmentQuestionTarget: (input: { snapshot: JoySnapshot; recentUserMessage?: string | null }) => {
     if (!input.snapshot.event) return "event_detail";
-    if (!(input.snapshot.whyItMattered || input.recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u))) {
+    if (!(
+      input.snapshot.whyItMattered ||
+      input.recentUserMessage?.match(/推进|完成|积累|帮到|达成|前进|收口/u) &&
+        !input.recentUserMessage.match(/(?:没有|没|并未|谈不上)[^。！？]{0,16}(?:推进|完成|积累|帮到|达成|前进|收口)/u)
+    )) {
       return "progress_evidence";
     }
     if (!(input.snapshot.selfPattern || input.recentUserMessage?.match(/对我来说|什么样的努力|力气花得值|算数/u))) {
@@ -107,6 +127,13 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 
 vi.mock("@/server/repositories/admin-analytics.repository", () => ({
   recordAnalyticsEvent: mockRecordAnalyticsEvent
+}));
+
+vi.mock("@/server/repositories/ai-quality.repository", () => ({
+  createAIGenerationTrace,
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  failGenerationTrace
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -242,6 +269,10 @@ describe("prepareJoyInterviewResponse", () => {
     saveJoyInterviewDraft.mockReset();
     startNextInterviewEvent.mockReset();
     mockRecordAnalyticsEvent.mockReset();
+    createAIGenerationTrace.mockReset();
+    appendGenerationTraceDecision.mockReset();
+    cancelGenerationTrace.mockReset();
+    failGenerationTrace.mockReset();
     extractJoySnapshotWithAI.mockReset();
     generateJoyAssistantTurn.mockReset();
     streamJoyAssistantTurn.mockReset();
@@ -255,6 +286,10 @@ describe("prepareJoyInterviewResponse", () => {
       memories: [],
       formattedContext: null
     });
+    createAIGenerationTrace.mockResolvedValue({ id: "trace-1" });
+    appendGenerationTraceDecision.mockResolvedValue(undefined);
+    cancelGenerationTrace.mockResolvedValue(undefined);
+    failGenerationTrace.mockResolvedValue(undefined);
   });
 
   it("turns wrap-up completion into a choice card instead of another closing question", async () => {
@@ -820,14 +855,13 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.nextStage).toBe("collect_event");
-    expect(result.nextEventStatus).toBe("active");
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
     expect(result.isReadyForDraft).toBe(false);
-    expect(result.nextProgressData).toBeNull();
-    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
-    expect(result.assistantTurn.stateUpdate.choiceKind ?? null).toBeNull();
-    expect(result.assistantTurn.question).toContain("当前还没有对话内容");
-    expect(result.assistantTurn.question).toContain("无法生成日志");
+    expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
+    expect(result.assistantTurn.question).toContain("只补一句");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
     expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
   });
@@ -977,9 +1011,43 @@ describe("prepareJoyInterviewResponse", () => {
   });
 
   it("rejects draft generation when the session is still in boundary_insufficient", async () => {
+    const insufficientSnapshot = {
+      ...baseSnapshot,
+      whyItMattered: null,
+      selfPattern: null,
+      joySource: null,
+      manualClue: null
+    };
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
         dimension: "fulfillment",
+        snapshot: insufficientSnapshot,
+        snapshotData: {
+          kind: "fulfillment",
+          experience: insufficientSnapshot.event,
+          feeling: insufficientSnapshot.feeling,
+          fulfillmentType: insufficientSnapshot.happinessType,
+          progressEvidence: null,
+          valueSignal: null,
+          confidence: 0.3,
+          missingSlots: ["progressEvidence", "valueSignal"]
+        },
+        events: [
+          {
+            ...buildSession().events[0],
+            snapshot: insufficientSnapshot,
+            snapshotData: {
+              kind: "fulfillment",
+              experience: insufficientSnapshot.event,
+              feeling: insufficientSnapshot.feeling,
+              fulfillmentType: insufficientSnapshot.happinessType,
+              progressEvidence: null,
+              valueSignal: null,
+              confidence: 0.3,
+              missingSlots: ["progressEvidence", "valueSignal"]
+            }
+          }
+        ],
         draftGenerationUnlocked: false,
         pendingDecision: {
           kind: "boundary_insufficient",
@@ -1335,7 +1403,8 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(startNextInterviewEvent).toHaveBeenCalledWith(
       "session-ready",
-      "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？"
+      "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？",
+      { requestId: undefined }
     );
     expect(result).toMatchObject({
       assistantMessage: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
@@ -1396,14 +1465,13 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.nextStage).toBe("collect_event");
-    expect(result.nextEventStatus).toBe("active");
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
     expect(result.isReadyForDraft).toBe(false);
-    expect(result.nextProgressData).toBeNull();
-    expect(result.assistantTurn.insight).toBe("现在还没有可整理的材料，我先不替你硬生成日志。");
-    expect(result.assistantTurn.stateUpdate.choiceKind ?? null).toBeNull();
-    expect(result.assistantTurn.question).toContain("当前还没有对话内容");
-    expect(result.assistantTurn.question).toContain("无法生成日志");
+    expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
+    expect(result.assistantTurn.insight).toContain("证据还不足");
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("boundary_insufficient");
+    expect(result.assistantTurn.question).toContain("只补一句");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 
@@ -1766,7 +1834,7 @@ describe("prepareJoyInterviewResponse", () => {
       })
     );
     expect(result.nextStage).toBe("probe_pattern");
-    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantTurn.question).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
     expect(result.assistantTurn.thinkingSummary).toBe(
       "你已经碰到这段开心里最打动你的那层了，这份被朋友真正接住也慢慢清楚了，再看看它为什么会一直留在你心里。"
     );
@@ -2004,7 +2072,7 @@ describe("prepareJoyInterviewResponse", () => {
     }
 
     expect(result.assistantTurn.question).toBe(
-      "如果不是某段具体对话，那在“面临毕业-就业节点的选择”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？"
+      "在“面临毕业-就业节点的选择”这件事里，最先卡住你的一个具体顾虑、画面或念头是什么？"
     );
     expect(result.assistantTurn.question).not.toContain("具体的经历或对话");
     expect(result.assistantTurn.questionSpec).toMatchObject({
@@ -2290,7 +2358,7 @@ describe("prepareJoyInterviewResponse", () => {
       anchorText: "今天下午改一份材料"
     });
     expect(result.assistantTurn.question).toBe(
-      "回到“今天下午改一份材料”这件事，最先让你意识到不一样的，是哪个具体细节？"
+      "你提到“今天下午改一份材料”。哪个具体细节让你产生了新的理解？"
     );
     expect(result.assistantTurn.question).not.toContain("下次再遇到类似情况");
   });
@@ -2667,7 +2735,7 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantTurn.question).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -3068,7 +3136,7 @@ describe("prepareJoyInterviewResponse", () => {
       },
       {
         target: "question",
-        text: "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？"
+        text: "你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？"
       }
     ]);
     expect(streamJoyAssistantTurn).toHaveBeenCalled();
@@ -3077,12 +3145,12 @@ describe("prepareJoyInterviewResponse", () => {
         nextTurnCount: 4,
         assistantTurn: expect.objectContaining({
           thinkingSummary: "这份开心像是来自连接感。",
-          question: "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？"
+          question: "你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？"
         })
       })
     );
-    expect(result.assistantMessage).toBe("这份开心像是来自连接感。\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
-    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantMessage).toBe("这份开心像是来自连接感。\n你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
+    expect(result.assistantTurn?.question).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
   });
 
   it("preserves raw whitespace in the guarded final question", async () => {
@@ -3214,10 +3282,10 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(summaryDeltas.length).toBeGreaterThan(1);
     expect(summaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedSummary);
-    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedSummary);
-    expect(result.assistantMessage).toBe(`${normalizedSummary}\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？`);
-    expect(result.assistantMessage).not.toContain("你提到");
+    expect(result.assistantMessage).toBe(`${normalizedSummary}\n你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？`);
+    expect(result.assistantTurn?.thinkingSummary).not.toContain("你提到");
     expect(result.assistantMessage).not.toContain("我想知道");
     expect(result.assistantMessage).not.toContain("？\n");
   });
@@ -3392,17 +3460,17 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(continuedSummaryDeltas.length).toBeGreaterThan(1);
     expect(continuedSummaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedContinuedSummary);
-    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
-    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？`);
+    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
+    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？`);
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
-    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantTurn?.question).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
   });
 
   it("does not let continue_current_event re-ask the same question with only a framing prefix", async () => {
     const previousQuestion = "你觉得自己在关系里最在乎什么？";
     const continuedQuestion = "如果只留一个点，你觉得自己在关系里最在乎什么？";
-    const fallbackQuestion = "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？";
+    const fallbackQuestion = "你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？";
     const continuedSummary = "被朋友真正接住之后，最想留下的那层关系感觉已经更清楚了。";
 
     const choiceSession = buildSession({
@@ -3534,7 +3602,7 @@ describe("prepareJoyInterviewResponse", () => {
     };
     const repeatedQuestion = "今天有什么具体的经历或对话，让你第一次清晰地感受到这种“局外人”和“局内人”视角的差异？";
     const fallbackQuestion =
-      "如果不是某段具体对话，那在“面临毕业-就业节点的选择”这件事里，哪一个具体顾虑、画面或念头，最先让你意识到不能只看“看起来合适”？";
+      "在“面临毕业-就业节点的选择”这件事里，最先卡住你的一个具体顾虑、画面或念头是什么？";
     const choiceSession = buildSession({
       dimension: "reflection",
       stage: "wrap_up",
@@ -3753,7 +3821,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const repeatedQuestion = "在简历优化完成的那个时刻，你看到或感受到什么，让你觉得今天没有白过？";
-    const fallbackQuestion = "回到“今天围绕目标岗位开始改简历”这件事，如果只留一句，你最想记住哪句？";
+    const fallbackQuestion = "“今天围绕目标岗位开始改简历”里，什么样的具体结果会让这份投入对你算数？";
     const choiceSession = buildSession({
       dimension: "fulfillment",
       stage: "wrap_up",
@@ -3968,7 +4036,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const unnaturalQuestion = "简历优化完成，对你来说，意味着什么样的努力算数了？";
-    const fallbackQuestion = "回到“今天把简历一点点改顺了”这件事，如果只留一句，你最想记住哪句？";
+    const fallbackQuestion = "“今天把简历一点点改顺了”里，什么样的具体结果会让这份投入对你算数？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -4243,7 +4311,7 @@ describe("prepareJoyInterviewResponse", () => {
     };
     const previousValueQuestion = "回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
     const wrappedDuplicateQuestion = "如果只留一个点，回头看这次把简历理顺，哪一种投入最让你觉得值得继续？";
-    const fallbackQuestion = "回到“今天把散着的简历经历重新理顺了”这件事，如果只留一句，你最想记住哪句？";
+    const fallbackQuestion = "“今天把散着的简历经历重新理顺了”里，什么样的具体结果会让这份投入对你算数？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -4339,7 +4407,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const repeatedValueQuestion = "回头看简历优化这件事，什么样的投入会让你觉得自己的力气花得值？";
-    const fallbackQuestion = "回到“今天在围绕目标岗位改简历”这件事，如果只留一句，你最想记住哪句？";
+    const fallbackQuestion = "“今天在围绕目标岗位改简历”里，什么样的具体结果会让这份投入对你算数？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -4642,7 +4710,7 @@ describe("prepareJoyInterviewResponse", () => {
       missingSlots: ["valueSignal"]
     };
     const abstractContrastQuestion = "这种“没有停滞不前”的感觉，和你之前卡住时有什么不同？";
-    const fallbackQuestion = "回到“今天在围绕目标岗位改简历”这件事，如果只留一句，你最想记住哪句？";
+    const fallbackQuestion = "“今天在围绕目标岗位改简历”里，什么样的具体结果会让这份投入对你算数？";
 
     findJoyInterviewSessionById.mockResolvedValue(
       buildSession({
@@ -4723,7 +4791,8 @@ describe("prepareJoyInterviewResponse", () => {
     expect(deltas.filter((delta) => delta.target === "question").map((delta) => delta.text).join("")).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).toBe(fallbackQuestion);
     expect(result.assistantTurn?.question).not.toBe(abstractContrastQuestion);
-    expect(result.assistantTurn?.question).toContain("如果只留一句");
+    expect(result.assistantTurn?.question).toContain("具体结果");
+    expect(result.assistantTurn?.question).not.toContain("如果只留一句");
   });
 
   it.each([
@@ -5280,5 +5349,230 @@ describe("prepareJoyInterviewResponse", () => {
         dedupeKey: "interview_draft_saved:session-ready:entry-1"
       })
     );
+  });
+
+  it("stops the joy Badcase on the first explicit dimension boundary", async () => {
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "结束这个维度",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected deterministic control turn.");
+    expect(result.nextTurnCount).toBe(3);
+    expect(result.nextEventTurnCount).toBe(3);
+    expect(result.nextProgressData).toEqual({ kind: "event_complete", completionMode: "complete" });
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
+  it("routes the fulfillment Badcase draft request to boundary_insufficient without progress evidence", async () => {
+    const snapshot: JoySnapshot = { ...baseSnapshot, whyItMattered: null, selfPattern: null, joySource: null, manualClue: null };
+    findJoyInterviewSessionById.mockResolvedValue(buildSession({
+      dimension: "fulfillment",
+      snapshot,
+      snapshotData: {
+        kind: "fulfillment",
+        experience: snapshot.event,
+        feeling: snapshot.feeling,
+        fulfillmentType: snapshot.happinessType,
+        progressEvidence: null,
+        valueSignal: null,
+        confidence: 0.34,
+        missingSlots: ["progressEvidence", "valueSignal"]
+      },
+      events: [{
+        ...buildSession().events[0],
+        snapshot,
+        snapshotData: {
+          kind: "fulfillment",
+          experience: snapshot.event,
+          feeling: snapshot.feeling,
+          fulfillmentType: snapshot.happinessType,
+          progressEvidence: null,
+          valueSignal: null,
+          confidence: 0.34,
+          missingSlots: ["progressEvidence", "valueSignal"]
+        }
+      }]
+    }));
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "生成日志",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected deterministic control turn.");
+    expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
+    expect(result.isReadyForDraft).toBe(false);
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
+  it("retracts a stale fulfillment conclusion when the user says no progress actually happened", async () => {
+    const staleSnapshot: JoySnapshot = {
+      ...baseSnapshot,
+      event: "今天围绕目标岗位改了简历",
+      joyMoment: "今天围绕目标岗位改了简历",
+      whyItMattered: "完成了简历的修改",
+      joySource: "完成了简历的修改",
+      happinessType: "推进完成型",
+      directionSignal: "推进完成型",
+      selfPattern: null,
+      manualClue: null
+    };
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "probe_reason",
+      snapshot: staleSnapshot,
+      events: [{
+        ...buildSession().events[0],
+        stage: "probe_reason",
+        snapshot: staleSnapshot,
+        snapshotData: {
+          kind: "fulfillment",
+          experience: staleSnapshot.event,
+          feeling: staleSnapshot.feeling,
+          fulfillmentType: staleSnapshot.happinessType,
+          progressEvidence: staleSnapshot.whyItMattered,
+          valueSignal: null,
+          confidence: 0.72,
+          missingSlots: ["valueSignal"]
+        }
+      }]
+    });
+    findJoyInterviewSessionById.mockResolvedValue(session);
+    extractJoySnapshotWithAI.mockResolvedValue(staleSnapshot);
+    getNextStage.mockReturnValue("probe_reason");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "这件事对你算数，因为完成了简历的修改。",
+      analysis: "继续追问进展证据。",
+      question: "你提到“打开看了一眼”。当时实际做了哪一步？",
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceKind: null,
+        choiceReason: ""
+      },
+      meta: { depthReached: [] }
+    });
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "我只是打开看了一眼，没有修改，也没有推进",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected revised fulfillment turn.");
+    expect(result.nextSnapshot.event).toBe("打开看了一眼");
+    expect(result.nextSnapshot.whyItMattered).toBeNull();
+    expect(result.nextProgressData).toBeNull();
+    expect(result.assistantTurn.thinkingSummary).toBe(
+      "你刚刚澄清了：实际只是打开看了一眼，之前关于完成或推进的理解需要收回。"
+    );
+    expect(result.assistantTurn.question).toBe(
+      "那这段先放下。今天还有哪个片段，留下了一点看得见的结果？想不到也可以直接说没有。"
+    );
+    expect(appendGenerationTraceDecision).toHaveBeenCalledWith(
+      "trace-1",
+      expect.objectContaining({ kind: "interview_evidence_revision" })
+    );
+  });
+
+  it("applies deterministic evidence retraction before handling a combined correction and draft request", async () => {
+    const staleSnapshot: JoySnapshot = {
+      ...baseSnapshot,
+      event: "今天围绕目标岗位改了简历",
+      joyMoment: "今天围绕目标岗位改了简历",
+      whyItMattered: "完成了简历的修改",
+      joySource: "完成了简历的修改",
+      happinessType: "推进完成型",
+      directionSignal: "推进完成型",
+      selfPattern: null,
+      manualClue: null
+    };
+    findJoyInterviewSessionById.mockResolvedValue(buildSession({
+      dimension: "fulfillment",
+      snapshot: staleSnapshot,
+      events: [{ ...buildSession().events[0], snapshot: staleSnapshot }]
+    }));
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "我只是打开看了一眼，没有修改，也没有推进，直接生成日志",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected deterministic control turn.");
+    expect(result.nextSnapshot.whyItMattered).toBeNull();
+    expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
+    expect(result.isReadyForDraft).toBe(false);
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["我觉得就是", "我在听，你可以把刚才那句话慢慢说完。"],
+    ["你他妈在说什么呢", "我先停下这道题，不再继续追问。"]
+  ])("keeps reflection Badcase control input %s out of extraction and progress", async (userMessage, expectedInsight) => {
+    const snapshot: JoySnapshot = { ...baseSnapshot, whyItMattered: null, selfPattern: null };
+    findJoyInterviewSessionById.mockResolvedValue(buildSession({
+      dimension: "reflection",
+      snapshot,
+      events: [{ ...buildSession().events[0], snapshot }]
+    }));
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage,
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected deterministic control turn.");
+    expect(result.nextTurnCount).toBe(3);
+    expect(result.nextEventTurnCount).toBe(3);
+    expect(result.assistantTurn.insight).toBe(expectedInsight);
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges the improvement product-feedback Badcase without the criticized template", async () => {
+    const snapshot: JoySnapshot = { ...baseSnapshot, whyItMattered: null, selfPattern: null, frictionPoint: null, repeatCondition: null };
+    findJoyInterviewSessionById.mockResolvedValue(buildSession({
+      dimension: "improvement",
+      snapshot,
+      events: [{ ...buildSession().events[0], snapshot }]
+    }));
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "你这些问题一直重复，问法也很单一，整个产品设计都有问题",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) throw new Error("Expected deterministic control turn.");
+    const visibleText = `${result.assistantTurn.insight}\n${result.assistantTurn.question}`;
+    expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
+    expect(visibleText).toContain("难懂、重复");
+    expect(visibleText).not.toContain("回到");
+    expect(visibleText).not.toContain("如果只留一句");
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
   });
 });

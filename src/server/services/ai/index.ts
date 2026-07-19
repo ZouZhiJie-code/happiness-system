@@ -195,8 +195,11 @@ function logUnavailableProvider(status: AIProviderStatus, error?: unknown) {
   lastLoggedProviderUnavailableCode.set(key, status.code);
 }
 
-export async function getAIProviderStatus(capability: AIRuntimeCapability): Promise<AIProviderStatus> {
-  const resolution = await resolveAIRuntimeConfig(capability);
+export async function getAIProviderStatus(
+  capability: AIRuntimeCapability,
+  options?: Parameters<typeof resolveAIRuntimeConfig>[1]
+): Promise<AIProviderStatus> {
+  const resolution = await resolveAIRuntimeConfig(capability, options);
 
   if (!resolution) {
     return buildUnavailableStatus(capability);

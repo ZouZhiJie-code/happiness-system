@@ -39,7 +39,8 @@ describe("question repair protocol", () => {
       hadReflectionSceneDenial: false
     });
 
-    expect(turn.question).toBe("回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？");
+    expect(turn.question).toBe("你提到“今天看完一个项目复盘”。这次经历让你修正了原来的哪个判断？");
+    expect(turn.question).not.toMatch(/^回到|如果只留一句/u);
     expect(turn.question).not.toMatch(/判断依据|判断线索|视角变化|方法论/u);
     expect(turn.questionSpec?.repairCount).toBe(1);
   });

@@ -89,8 +89,13 @@ function buildEnvironmentFallback(
   };
 }
 
-export async function resolveAIRuntimeConfig(capability: AIRuntimeCapability): Promise<AIRuntimeResolution | null> {
-  const publishedConfig = await getPublishedAIRuntimeConfigRecord(capability);
+type PublishedAIRuntimeConfig = Awaited<ReturnType<typeof getPublishedAIRuntimeConfigRecord>>;
+
+export async function resolveAIRuntimeConfig(
+  capability: AIRuntimeCapability,
+  options?: { publishedConfig: PublishedAIRuntimeConfig }
+): Promise<AIRuntimeResolution | null> {
+  const publishedConfig = options ? options.publishedConfig : await getPublishedAIRuntimeConfigRecord(capability);
 
   if (!publishedConfig) {
     return buildEnvironmentFallback(capability, null);

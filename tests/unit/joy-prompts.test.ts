@@ -780,4 +780,14 @@ describe("memory context injection", () => {
 
     expect(messages[1]?.content).not.toContain("用户画像");
   });
+
+  it("treats questionSpec as an evidence target and asks the model for the highest-information natural follow-up", () => {
+    const messages = buildJoyQuestionMessages(questionInput);
+    const systemPrompt = messages[0]?.content ?? "";
+
+    expect(systemPrompt).toContain("questionSpec 只规定本轮要补的证据目标和认知负担");
+    expect(systemPrompt).toContain("信息增益最高的一个切口");
+    expect(systemPrompt).toContain("用户纠正或否认旧理解时");
+    expect(systemPrompt).toContain("避免使用“回到……这件事”“如果只留一句”");
+  });
 });

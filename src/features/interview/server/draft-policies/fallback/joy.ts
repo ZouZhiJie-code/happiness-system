@@ -129,30 +129,30 @@ function buildJoyPartialClosing(snapshot: JoySnapshot) {
   }
 
   if (joyTrack === "delight_track" && emotionalCore) {
-    return `我现在更知道，自己会被${trimTrailingPunctuation(emotionalCore)}这种感觉轻轻带动。`;
+    return `今天这份由${trimTrailingPunctuation(emotionalCore)}带来的开心，我想先原样记下来。`;
   }
 
   if (meaningNeed) {
-    return `我现在更知道，自己其实很在意${trimTrailingPunctuation(meaningNeed)}。`;
+    return `这一次，${trimTrailingPunctuation(meaningNeed)}确实在这个片段里有了回应。`;
   }
 
   if (emotionalCore) {
-    return `我现在更知道，真正会让我有感觉的，还是${trimTrailingPunctuation(emotionalCore)}。`;
+    return `这一次，${trimTrailingPunctuation(emotionalCore)}确实让我有了感觉。`;
   }
 
   if (directionSignal) {
-    return `我现在更知道，自己会被${trimTrailingPunctuation(directionSignal)}这样的方向轻轻打动。`;
+    return `今天和${trimTrailingPunctuation(directionSignal)}有关的这份触动，我想先记在这里。`;
   }
 
   if (valueSignal) {
-    return `我现在更知道，自己会被${trimTrailingPunctuation(valueSignal)}这样的感觉打动。`;
+    return `今天由${trimTrailingPunctuation(valueSignal)}带来的这份感受，我想先记在这里。`;
   }
 
   if (stateShift) {
     return `我现在更想记住的，是这种会让我慢慢变得${trimTrailingPunctuation(stateShift)}的时刻。`;
   }
 
-  return "我现在更想记住的，是自己也会被这种片刻轻轻接住。";
+  return "这个具体片刻带来的开心，我想先按今天的感受记下来。";
 }
 
 export function buildJoyFallbackContent(input: {

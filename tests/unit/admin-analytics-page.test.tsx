@@ -435,4 +435,15 @@ describe("admin analytics page", () => {
     expect(screen.getByText("展开维度日志正文")).toBeInTheDocument();
     expect(screen.getByText("展开完整日志正文")).toBeInTheDocument();
   });
+
+  it("renders a complete friendly error state when an analytics read fails", async () => {
+    mockGetAdminAnalyticsOverview.mockRejectedValue(new Error("database unavailable"));
+
+    render(await AdminAnalyticsPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole("heading", { name: "数据连接暂时不可用" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "重新加载" })).toBeInTheDocument();
+    expect(screen.getByText(/ADMIN_ANALYTICS_QUERY_FAILED/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "管理员数据分析" })).not.toBeInTheDocument();
+  });
 });

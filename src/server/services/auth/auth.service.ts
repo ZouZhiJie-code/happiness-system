@@ -2,13 +2,15 @@ import { createHash } from "node:crypto";
 import { Prisma } from "@prisma/client";
 
 import { AUTH_SESSION_TTL_SECONDS } from "@/features/auth/auth.constants";
+import { CURRENT_PRIVACY_POLICY_VERSION } from "@/features/ai-feedback/feedback-config";
 import {
   createAuthSession,
   createUserWithInitialSession,
   deleteAuthSessionByTokenHash,
   deleteUserById,
   findAuthSessionByTokenHash,
-  findUserByUsername
+  findUserByUsername,
+  ensureAIQualityParticipation
 } from "@/server/repositories/auth.repository";
 import { recordAnalyticsEvent } from "@/server/repositories/admin-analytics.repository";
 import { hashPassword, verifyPassword } from "@/server/services/auth/password.service";
@@ -54,11 +56,15 @@ export async function registerUser(input: RegisterUserInput) {
 
     const passwordHash = await hashPassword(input.password);
     const token = await createSessionToken();
+    const agreedAt = new Date();
     const user = await createUserWithInitialSession({
       username: input.username,
       passwordHash,
-      agreedToTermsAt: new Date(),
-      agreedToPrivacyAt: new Date(),
+      agreedToTermsAt: agreedAt,
+      agreedToPrivacyAt: agreedAt,
+      privacyPolicyVersion: CURRENT_PRIVACY_POLICY_VERSION,
+      aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
+      aiQualityConsentAt: agreedAt,
       tokenHash: token.hash,
       expiresAt: new Date(Date.now() + AUTH_SESSION_TTL_SECONDS * 1000)
     });
@@ -105,6 +111,8 @@ export async function loginUser(input: LoginUserInput) {
     }
 
     const token = await createSessionToken();
+
+    await ensureAIQualityParticipation(user.id, CURRENT_PRIVACY_POLICY_VERSION);
 
     await createAuthSession({
       userId: user.id,

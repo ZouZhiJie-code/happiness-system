@@ -57,7 +57,7 @@ describe("admin access", () => {
   it("parses admin usernames from env and ignores empty items", () => {
     vi.stubEnv("ADMIN_USERNAMES", " alice, bob ,,邹志杰 ");
 
-    expect(parseAdminUsernames()).toEqual(["alice", "bob", "邹志杰"]);
+    expect(parseAdminUsernames()).toEqual(["alice", "bob", "邹志杰", "acceptance_admin"]);
     expect(isAdminUsername("alice")).toBe(true);
     expect(isAdminUsername("carol")).toBe(false);
   });

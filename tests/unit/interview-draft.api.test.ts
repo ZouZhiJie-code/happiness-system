@@ -131,7 +131,9 @@ describe("interview draft api auth", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockGenerateInterviewDraft).toHaveBeenCalledWith("user-1", ["session-1"]);
+    expect(mockGenerateInterviewDraft).toHaveBeenCalledWith("user-1", ["session-1"], {
+      requestId: expect.stringMatching(/^ir_/)
+    });
   });
 
   it("returns a stable error when draft generation is not ready yet", async () => {

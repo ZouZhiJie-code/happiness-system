@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "motion/react";
 
+import { AIResponseFeedback } from "@/components/ai-feedback/ai-response-feedback";
 import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/components/interview/daily-journal-workspace";
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
@@ -210,7 +211,12 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
   const assistantPayload = message.assistantPayload;
 
   if (!assistantPayload) {
-    return <MessageBubble message={message} />;
+    return (
+      <React.Fragment>
+        <MessageBubble message={message} />
+        {message.traceId ? <AIResponseFeedback traceId={message.traceId} /> : null}
+      </React.Fragment>
+    );
   }
 
   const parts = getAssistantDisplayParts(assistantPayload);
@@ -221,6 +227,7 @@ function ConversationMessage({ message }: { message: InterviewMessage }) {
         <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
       ) : null}
       {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+      {message.traceId ? <AIResponseFeedback traceId={message.traceId} /> : null}
     </React.Fragment>
   );
 }
@@ -806,6 +813,30 @@ export function InterviewShell({
       }),
     [messages, showChoiceCard, terminalMessageId]
   );
+  const activeChoiceAcknowledgement = useMemo(() => {
+    if (!showChoiceCard) {
+      return null;
+    }
+
+    const terminalMessage = messages.at(-1);
+    const payload = terminalMessage?.role === "assistant" ? terminalMessage.assistantPayload : null;
+
+    if (!payload || !getAssistantChoiceKind(payload)) {
+      return null;
+    }
+
+    const acknowledgement = payload.thinkingSummary?.trim() || payload.insight?.trim() || null;
+
+    if (
+      !acknowledgement ||
+      (!showBoundaryInsufficientChoice &&
+        !/(我先停下|当前证据还不足|边界说清|我听到了|不再继续换问法)/u.test(acknowledgement))
+    ) {
+      return null;
+    }
+
+    return acknowledgement;
+  }, [messages, showBoundaryInsufficientChoice, showChoiceCard]);
   const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
@@ -3184,6 +3215,9 @@ export function InterviewShell({
                         ) : null}
                         {showChoiceCard ? (
                           <>
+                            {activeChoiceAcknowledgement ? (
+                              <MessageBubble content={activeChoiceAcknowledgement} role="assistant" variant="thinking" />
+                            ) : null}
                             <ChoiceActionCard
                               dimensionLabel={dimensionMeta.label}
                               mode={
@@ -3496,6 +3530,7 @@ export function InterviewShell({
                   className="min-h-[15rem] w-full resize-none overflow-hidden border-none bg-transparent px-2 py-5 text-sm leading-8 text-[#302114] outline-none transition placeholder:text-[#9c7a56] focus:shadow-[inset_0_0_0_1px_rgba(159,104,56,0.42)] disabled:cursor-wait disabled:opacity-70"
                 />
                 <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[rgba(173,131,84,0.16)] px-2 py-4">
+                  {journalEntry.traceId ? <AIResponseFeedback traceId={journalEntry.traceId} compact /> : null}
                   <button
                     type="button"
                     onClick={handleSaveJournalClick}

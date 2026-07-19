@@ -74,6 +74,10 @@ function isBadJournalTitleCandidate(value: string | null | undefined) {
     return true;
   }
 
+  if (/^(?:真的收了个口|把事情落下去)$/u.test(candidate)) {
+    return true;
+  }
+
   return false;
 }
 
@@ -138,7 +142,9 @@ function buildFulfillmentTitleCandidates(input: SemanticJournalTitleInput) {
     pushCandidate(candidates, "让协作接上");
   }
 
-  if (/推进|收口|完成|搞定/u.test(joined)) {
+  if (/收口|收尾|交付|落地|完成|搞定/u.test(joined)) {
+    pushCandidate(candidates, "终于落了地");
+  } else if (/推进/u.test(joined)) {
     pushCandidate(candidates, "把事情往前推");
   }
 

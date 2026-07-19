@@ -37,7 +37,7 @@ function expectEnvelopeShape(envelope: AskIntentEnvelope, intent: AskIntent) {
 }
 
 describe("planAskIntentEnvelope", () => {
-  it("maps fulfillment judgment_clue to a one-sentence distillation intent", () => {
+  it("maps fulfillment judgment_clue to a concrete key-part intent", () => {
     const snapshot = createSnapshot({
       selfPattern: "把工作记录下来，之后复盘才能看到新的东西"
     });
@@ -55,9 +55,9 @@ describe("planAskIntentEnvelope", () => {
       spec
     });
 
-    expect(envelope.intent).toBe("leave_one_sentence");
-    expect(envelope.constraints.preferredAnswerShape).toBe("one_sentence_distillation");
-    expectEnvelopeShape(envelope, "leave_one_sentence");
+    expect(envelope.intent).toBe("point_out_key_part");
+    expect(envelope.constraints.preferredAnswerShape).toBe("single_key_point");
+    expectEnvelopeShape(envelope, "point_out_key_part");
   });
 
   it("maps reflection insight_evidence to a key-part pointing intent", () => {

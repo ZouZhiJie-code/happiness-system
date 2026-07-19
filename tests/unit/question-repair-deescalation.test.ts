@@ -30,6 +30,14 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
+const { createAIGenerationTrace, appendGenerationTraceDecision, cancelGenerationTrace, failGenerationTrace } =
+  vi.hoisted(() => ({
+    createAIGenerationTrace: vi.fn(),
+    appendGenerationTraceDecision: vi.fn(),
+    cancelGenerationTrace: vi.fn(),
+    failGenerationTrace: vi.fn()
+  }));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } =
   vi.hoisted(() => ({
     extractJoySnapshotWithAI: vi.fn(),
@@ -111,6 +119,13 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 
 vi.mock("@/server/repositories/admin-analytics.repository", () => ({
   recordAnalyticsEvent: mockRecordAnalyticsEvent
+}));
+
+vi.mock("@/server/repositories/ai-quality.repository", () => ({
+  createAIGenerationTrace,
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  failGenerationTrace
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -245,6 +260,14 @@ function buildReflectionSession(overrides: Partial<InterviewSessionRecord> = {})
 
 describe("question repair de-escalation", () => {
   beforeEach(() => {
+    createAIGenerationTrace.mockReset();
+    appendGenerationTraceDecision.mockReset();
+    cancelGenerationTrace.mockReset();
+    failGenerationTrace.mockReset();
+    createAIGenerationTrace.mockResolvedValue({ id: "trace-1" });
+    appendGenerationTraceDecision.mockResolvedValue(undefined);
+    cancelGenerationTrace.mockResolvedValue(undefined);
+    failGenerationTrace.mockResolvedValue(undefined);
     appendJoyInterviewTurn.mockReset();
     completeJoyInterviewSessionRecord.mockReset();
     createJoyInterviewSession.mockReset();
@@ -286,7 +309,7 @@ describe("question repair de-escalation", () => {
     }
 
     expect(result.assistantTurn.question).toBe(
-      "回到“今天看完一个项目复盘”这件事，你现在最想指出的关键一点是什么？"
+      "你提到“今天看完一个项目复盘”。这次经历让你修正了原来的哪个判断？"
     );
     expect(result.assistantTurn.questionSpec).toEqual({
       target: "judgment_clue",
@@ -348,7 +371,7 @@ describe("question repair de-escalation", () => {
     }
 
     expect(result.assistantTurn.question).toBe(
-      "回到“今天看完一个项目复盘”这件事，不用先总结，只说一个最具体的例子，会是哪一下？"
+      "你提到“今天看完一个项目复盘”。不用先总结，只说一个最具体的例子，会是哪一下？"
     );
     expect(result.assistantTurn.questionSpec).toEqual({
       target: "judgment_clue",
@@ -376,7 +399,7 @@ describe("question repair de-escalation", () => {
     });
 
     expect(turn.question).toBe(
-      "回到“回顾过去问问大象的经历”这件事，如果只留一句，你最想记住哪句？"
+      "“回顾过去问问大象的经历”里，什么样的具体结果会让这份投入对你算数？"
     );
     expect(turn.questionSpec?.surfaceLevel).toBe("simplified");
   });

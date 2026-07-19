@@ -103,6 +103,17 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
         >
           {submitting ? "登录中…" : "登录并继续"}
         </button>
+        <p className="text-xs leading-6 text-[var(--text-faint)]">
+          登录即表示你已阅读并同意
+          <Link href="/legal/terms" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
+            《用户协议》
+          </Link>
+          和
+          <Link href="/legal/privacy" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
+            《隐私政策》
+          </Link>
+          ，并知悉服务会使用对话、AI 生成内容及反馈进行质量评估与持续改进。
+        </p>
         <p className="text-pretty text-sm leading-7 text-[#5a4632]">
           请使用注册时保存的密码。还没有账户？
           <Link href={registerHref} className="ml-1 underline underline-offset-4">
