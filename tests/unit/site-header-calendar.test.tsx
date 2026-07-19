@@ -7,6 +7,7 @@ import { CALENDAR_ENTRY_LOADING_TOAST_MESSAGE } from "@/components/calendar/cale
 import { clearAllCalendarRecordCache, saveCalendarRecordCache } from "@/features/calendar/calendar-record-cache";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { useInterviewStore } from "@/stores/interview-store";
 import { renderWithCalendarChrome } from "../helpers/render-with-calendar-chrome";
 
 const CURRENT_MONTH = new Intl.DateTimeFormat("en-CA", {
@@ -265,6 +266,7 @@ describe("site header calendar toolbar", () => {
       date: "2026-05-02",
       month: null
     };
+    useInterviewStore.getState().reset();
   });
 
   afterEach(() => {
@@ -534,6 +536,40 @@ describe("site header calendar toolbar", () => {
     expect(await screen.findByTestId("calendar-toolbar")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "日历" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "访谈" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("navigates away from an active interview without a site navigation confirmation", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: "joy",
+      view: null,
+      date: null,
+      month: null
+    };
+    useInterviewStore.setState({
+      dimension: "joy",
+      sessionDimension: "joy",
+      sessionEntryDate: "2026-05-02",
+      sessionId: "session-1",
+      status: "active",
+      messages: [
+        {
+          id: "message-1",
+          role: "user",
+          content: "今天完成了一件重要的事。",
+          sequence: 1,
+          createdAt: "2026-05-02T10:00:00.000Z"
+        }
+      ]
+    });
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    fireEvent.click(screen.getByRole("link", { name: "日历" }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(await screen.findByTestId("calendar-toolbar")).toBeInTheDocument();
   });
 
   it("hides interview toolbar when optimistically entering calendar", async () => {

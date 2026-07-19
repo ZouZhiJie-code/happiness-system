@@ -14,7 +14,6 @@ import { isInterviewDimension } from "@/features/interview/dimensions";
 
 import { InterviewHeaderToolbar } from "./site-header/interview-header-toolbar";
 import { SiteHeaderNav } from "./site-header/site-header-nav";
-import { useInterviewLeaveGuard } from "./site-header/use-interview-leave-guard";
 import { useSiteHeaderViewportOffset } from "./site-header/use-site-header-viewport-offset";
 
 const headerPlainContextByPath: Partial<Record<string, { title: string; subtitle: string }>> = {
@@ -51,9 +50,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement | null>(null);
-  const { confirmLeaveInterview } = useInterviewLeaveGuard();
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
   const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
   const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
   const todayEntryDate = getTodayEntryDate();
@@ -71,18 +67,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
 
   useSiteHeaderViewportOffset(headerRef);
 
-  function handleProtectedNavigation(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    if (isActive(href)) {
-      return;
-    }
-
-    if (confirmLeaveInterview()) {
-      return;
-    }
-
-    event.preventDefault();
-  }
-
   return (
     <>
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
@@ -93,7 +77,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
       <div className="relative z-10 grid min-h-[var(--site-header-frame-min-height)] grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] lg:gap-3">
         <Link
           href="/"
-          onClick={(event) => handleProtectedNavigation(event, "/")}
           className="flex min-h-[var(--site-header-lane-min-height)] items-center gap-2.5"
         >
           <div className="flex size-9 items-center justify-center overflow-hidden rounded-[12px] border border-[rgba(166,121,74,0.18)] bg-[rgba(255,250,242,0.62)] shadow-[inset_0_1px_0_rgba(255,255,255,0.54)]">
@@ -125,7 +108,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
           todayCalendarHref={todayCalendarHref}
           todayAnalysisHref={todayAnalysisHref}
           todayEntryDate={todayEntryDate}
-          onProtectedNavigation={handleProtectedNavigation}
         />
       </div>
       </header>

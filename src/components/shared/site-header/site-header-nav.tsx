@@ -1,6 +1,5 @@
 import Link from "next/link";
 import clsx from "clsx";
-import type { MouseEvent } from "react";
 
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
 import { prefetchAllCalendarViews } from "@/features/calendar/calendar-client";
@@ -19,7 +18,6 @@ type SiteHeaderNavProps = {
   todayCalendarHref: string;
   todayAnalysisHref: string;
   todayEntryDate: string;
-  onProtectedNavigation: (event: MouseEvent<HTMLAnchorElement>, href: string) => void;
 };
 
 export function SiteHeaderNav({
@@ -27,8 +25,7 @@ export function SiteHeaderNav({
   pathname,
   todayCalendarHref,
   todayAnalysisHref,
-  todayEntryDate,
-  onProtectedNavigation
+  todayEntryDate
 }: SiteHeaderNavProps) {
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
@@ -75,10 +72,8 @@ export function SiteHeaderNav({
           <Link
             key={item.matchPath}
             href={href}
-            onClick={(event) => {
-              onProtectedNavigation(event, href);
-
-              if (!event.defaultPrevented && item.matchPath === "/calendar" && !active) {
+            onClick={() => {
+              if (item.matchPath === "/calendar" && !active) {
                 calendarChrome?.beginCalendarEntry();
               }
             }}
