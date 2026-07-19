@@ -1891,7 +1891,7 @@ describe("InterviewShell", () => {
     });
   });
 
-  it("opens the happiness score workspace from header and keeps entryDate after returning to interview", async () => {
+  it("opens the happiness score workspace from the compact interview actions and keeps entryDate", async () => {
     mockSearchParams.value = {
       dimension: "joy",
       entryDate: "2026-05-01",
@@ -1934,7 +1934,11 @@ describe("InterviewShell", () => {
 
     await screen.findByTestId("interview-entry-date-label");
     expect(screen.getByTestId("interview-entry-date-label")).toHaveTextContent("当前记录日期：2026-05-01");
-    const scoreTrigger = within(getDimensionBar()).getByRole("button", { name: "打开当天评分" });
+    const mobileActions = screen.getByTestId("mobile-interview-actions");
+    const scoreTrigger = within(mobileActions).getByRole("button", { name: "当天评分" });
+
+    expect(within(mobileActions).getByRole("button", { name: /当前维度/ })).toBeDisabled();
+    expect(within(mobileActions).getByRole("button", { name: "查看完整日志" })).toBeEnabled();
 
     fireEvent.click(scoreTrigger);
 

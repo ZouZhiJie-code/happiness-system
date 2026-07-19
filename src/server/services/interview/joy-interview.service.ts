@@ -2041,27 +2041,49 @@ function buildContinuationFallbackQuestion(
     return stageFallback;
   }
 
+  if (existingSpec) {
+    const repairTurn = renderDeterministicRepairTurn({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      spec: {
+        ...existingSpec,
+        stageIntent: "repair",
+        surfaceLevel: existingSpec.surfaceLevel === "default" ? "simplified" : "concrete_anchor",
+        repairCount: existingSpec.repairCount + 1
+      },
+      previousQuestion: repeatedQuestion,
+      hadReflectionSceneDenial:
+        input.session.dimension === "reflection" && Boolean(findLatestReflectionSceneDenial(input.session.messages))
+    });
+
+    if (repairTurn.question && !areQuestionsEquivalent(repairTurn.question, repeatedQuestion)) {
+      return {
+        question: repairTurn.question,
+        questionSpec: repairTurn.questionSpec
+      };
+    }
+  }
+
   return {
     question: repeatedQuestion,
     questionSpec: existingSpec
   };
 }
 
-function applyContinueQuestionGuard(
+function applyQuestionGuard(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
 ) {
-  if (input.assistantAction !== "continue_current_event") {
-    return assistantTurn;
-  }
-
   const question = assistantTurn.question.trim();
 
   if (!question) {
     return assistantTurn;
   }
 
-  if (input.session.dimension === "reflection") {
+  const isChoiceContinuation = input.assistantAction === "continue_current_event";
+
+  if (isChoiceContinuation && input.session.dimension === "reflection") {
     const deniedSceneQuestion = findLatestReflectionSceneDenial(input.session.messages);
 
     if (deniedSceneQuestion && isReflectionSceneQuestion(question)) {
@@ -2084,7 +2106,7 @@ function applyContinueQuestionGuard(
     }
   }
 
-  if (input.session.dimension === "gratitude") {
+  if (isChoiceContinuation && input.session.dimension === "gratitude") {
     const deniedTargets = new Set(input.nextSnapshot.evidenceState?.deniedTargets ?? []);
     const latestDenial = findLatestGratitudeHypothesisDenial(input.session.messages);
 
@@ -2119,8 +2141,12 @@ function applyContinueQuestionGuard(
 
   return {
     ...assistantTurn,
-    insight: "",
-    thinkingSummary: "",
+    ...(isChoiceContinuation
+      ? {
+          insight: "",
+          thinkingSummary: ""
+        }
+      : {}),
     ...buildContinuationFallbackQuestion(input, question, existingSpec)
   };
 }
@@ -2166,7 +2192,7 @@ function getChoiceCompletionMode(input: {
       }
 
       if (input.activeEvent.explorationRound <= 1) {
-        return input.nextEventTurnCount >= 4 ? "complete" : null;
+        return "complete";
       }
 
       return newProgressAchieved ? "complete" : null;
@@ -2190,7 +2216,7 @@ function getChoiceCompletionMode(input: {
       }
 
       if (input.activeEvent.explorationRound <= 1) {
-        return input.nextEventTurnCount >= 3 ? "complete" : null;
+        return "complete";
       }
 
       return newProgressAchieved ? "complete" : null;
@@ -2214,7 +2240,7 @@ function getChoiceCompletionMode(input: {
       }
 
       if (input.activeEvent.explorationRound <= 1) {
-        return input.nextEventTurnCount >= 3 ? "complete" : null;
+        return "complete";
       }
 
       return newProgressAchieved ? "complete" : null;
@@ -2238,7 +2264,7 @@ function getChoiceCompletionMode(input: {
       }
 
       if (input.activeEvent.explorationRound <= 1) {
-        return input.nextEventTurnCount >= 3 ? "complete" : null;
+        return "complete";
       }
 
       return newProgressAchieved ? "complete" : null;
@@ -2262,7 +2288,7 @@ function getChoiceCompletionMode(input: {
       }
 
       if (input.activeEvent.explorationRound <= 1) {
-        return input.nextEventTurnCount >= 3 ? "complete" : null;
+        return "complete";
       }
 
       return newProgressAchieved ? "complete" : null;
@@ -2490,7 +2516,7 @@ function finalizeAssistantTurn(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
 ): ResolvedPreparedInterviewTurn {
-  const guardedAssistantTurn = applyContinueQuestionGuard(input, assistantTurn);
+  const guardedAssistantTurn = applyQuestionGuard(input, assistantTurn);
   const fulfillmentGuardedAssistantTurn = applyFulfillmentQuestionGuard(input, guardedAssistantTurn);
   const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, fulfillmentGuardedAssistantTurn);
   const finalizedAssistantTurn = {
@@ -3308,6 +3334,9 @@ export async function streamJoyInterviewResponse(
   };
   const shouldBufferContinuationOutput =
     prepared.assistantAction === "continue_current_event" || prepared.session.dimension === "fulfillment";
+  // Questions pass through deterministic semantic and repetition guards after model generation.
+  // Buffer the question until those guards have selected the final user-visible wording.
+  const shouldBufferQuestionOutput = true;
   let emittedSummary = "";
   let activePhase: StreamingPhase | null = "thinking";
   const emitPhase = async (phase: StreamingPhase) => {
@@ -3362,6 +3391,10 @@ export async function streamJoyInterviewResponse(
         streamedText.summary = normalizedSummary;
       }
 
+      if (shouldBufferQuestionOutput) {
+        return;
+      }
+
       await emitPhase(delta.target);
       await emitRawDelta(delta.target, delta.text);
     }
@@ -3375,13 +3408,14 @@ export async function streamJoyInterviewResponse(
     await emitSummaryOnce(completedVisibleText.firstBubble);
   }
 
-  if (shouldBufferContinuationOutput && completedVisibleText.question) {
+  if ((shouldBufferContinuationOutput || shouldBufferQuestionOutput) && completedVisibleText.question) {
     await emitPhase("question");
     await emitText("question", completedVisibleText.question, 80);
   }
 
   if (
     !shouldBufferContinuationOutput &&
+    !shouldBufferQuestionOutput &&
     completedVisibleText.question &&
     completedVisibleText.question.startsWith(streamedText.question) &&
     streamedText.question !== completedVisibleText.question

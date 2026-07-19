@@ -12,8 +12,8 @@ import { pickPrimaryEvent } from "@/features/interview/server/draft-policies/bri
 import {
   buildDraftContent,
   buildParagraph,
-  formatTheorySummarySentence,
   sanitizeNullableString,
+  takeFirstSentence,
   trimTrailingPunctuation
 } from "@/features/interview/server/draft-policies/shared";
 
@@ -21,7 +21,7 @@ function buildFulfillmentOpeningSentence(snapshot: JoySnapshot) {
   const experience = sanitizeNullableString(snapshot.event);
 
   return experience
-    ? `今天最让我觉得不算白过的，是${trimTrailingPunctuation(experience)}。`
+    ? `今天最让我觉得不算白过的，是${takeFirstSentence(experience)}。`
     : "今天最让我觉得不算白过的，是有一件事真的往前走了一点。";
 }
 
@@ -31,25 +31,6 @@ function buildFulfillmentProgressSentence(snapshot: JoySnapshot) {
   return progressEvidence
     ? `这件事真正有分量的地方，是${trimTrailingPunctuation(progressEvidence)}。`
     : null;
-}
-
-function buildFulfillmentStateSentence(snapshot: JoySnapshot) {
-  const feeling = sanitizeNullableString(snapshot.feeling);
-  const fulfillmentType = sanitizeNullableString(snapshot.happinessType);
-
-  if (feeling && fulfillmentType) {
-    return `做完之后，我心里多了一点${trimTrailingPunctuation(feeling)}，这种充实更接近${trimTrailingPunctuation(fulfillmentType)}。`;
-  }
-
-  if (feeling) {
-    return `做完之后，我心里多了一点${trimTrailingPunctuation(feeling)}。`;
-  }
-
-  if (fulfillmentType) {
-    return `它给我的充实感，更接近${trimTrailingPunctuation(fulfillmentType)}。`;
-  }
-
-  return null;
 }
 
 function buildFulfillmentClosingSentence(input: {
@@ -70,10 +51,10 @@ function buildFulfillmentClosingSentence(input: {
   }
 
   if (progressEvidence) {
-    return `至少这件事让我确认，今天不是空转的一天。`;
+    return "回头看，这份投入有了清楚的着落。";
   }
 
-  return "至少今天不是完全空转的一天，我能看到自己确实往前走了一点。";
+  return "回头看，我能看见自己今天确实往前走了一步。";
 }
 
 function buildFulfillmentFallbackContent(input: {
@@ -83,9 +64,9 @@ function buildFulfillmentFallbackContent(input: {
   return buildDraftContent(
     buildParagraph(
       buildFulfillmentOpeningSentence(input.snapshot),
-      formatTheorySummarySentence(input.brief) ?? buildFulfillmentProgressSentence(input.snapshot)
+      buildFulfillmentProgressSentence(input.snapshot)
     ),
-    buildParagraph(buildFulfillmentStateSentence(input.snapshot), buildFulfillmentClosingSentence(input))
+    buildParagraph(buildFulfillmentClosingSentence(input))
   );
 }
 

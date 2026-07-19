@@ -25,6 +25,11 @@ const INTERNAL_THEORY_DRAFT_PATTERNS = [
   /这种会把状态轻轻带起来的方式/u,
   /会把状态带轻/u
 ];
+const INTERNAL_CLASSIFICATION_PATTERN =
+  /(推进完成型|投入积累型|协作贡献型|规律发现型|方向优势型|判断校准型|表达型改进|节奏型改进|协作型改进|支持回应型|理解体谅型|陪伴接住型|照顾减负型|信任机会型)/u;
+const TEMPLATE_CONTRAST_PATTERN = /(?:不只是|不是)[^。！？!?]{0,80}而是/u;
+const CORRUPTED_PROSE_PATTERN =
+  /(多了一点最有[^。！？!?]{0,40}的是|它让我看见[，,]?我(?:意识到|发现|想明白|理解到)|对方像是看见了(?:更珍惜|值得珍惜)|对方也看见了[，,]我|这让我感到[^。！？!?]{0,40}(?:接住|理解|看见|照顾|支持|回应)了我的|回头看[，,](?:紧张|着急|慌)[，,]|回头看[，,]我也更知道[，,](?:更|更加)?珍惜)/u;
 const ABSTRACT_JOY_CLOSING_PATTERN =
   /(回头看|我现在|我也)?[^。！？!?]{0,12}(更知道|更清楚)[^。！？!?]{0,8}(象征意义|动作本身|确定性|简单性|启动信号|仪式感)[。！？!?]/u;
 const FULFILLMENT_PROGRESS_EVIDENCE_PATTERN =
@@ -41,7 +46,7 @@ const FULFILLMENT_FORCED_VALUE_PATTERN =
 const FULFILLMENT_DIRECTION_ESCALATION_PATTERN =
   /(真正热爱|人生方向|人生价值|职业使命|事业使命|天赋所在|长期战略|命中注定|生命主题)/u;
 const STABLE_RULE_PATTERN =
-  /((?:只要|每次只要|一旦|如果我能|当我)(?:[^。！？!?]{0,50})(?:就会|我就会|我更容易|我通常会|就更容易|才算|才会))/u;
+  /((?:只要|每次只要|一旦|如果我能|当我)(?:[^。！？!?]{0,50})(?:就会|我就会|我会更容易|我更容易|我通常会|就更容易|才算|才会))/u;
 const REFLECTION_INSIGHT_PATTERN =
   /(意识到|发现|想明白|理解到|看清|重新看见|更清楚|真正有(?:进展|价值|分量)|真正让我明白|这让我看到|原来|其实|判断依据|规律|盲点|优势|方向)/u;
 const REFLECTION_ACTION_PLAN_PATTERN = /(以后要|下次要|我应该|行动计划|执行计划|立刻去|马上去|每天都要|必须要)/u;
@@ -446,6 +451,18 @@ export function runDraftQualityGate(input: {
 
   if (INTERNAL_THEORY_DRAFT_PATTERNS.some((pattern) => pattern.test(content))) {
     issues.push("internal_theory_tone");
+  }
+
+  if (INTERNAL_CLASSIFICATION_PATTERN.test(content)) {
+    issues.push("internal_classification_tone");
+  }
+
+  if (TEMPLATE_CONTRAST_PATTERN.test(content)) {
+    issues.push("template_contrast_tone");
+  }
+
+  if (CORRUPTED_PROSE_PATTERN.test(content)) {
+    issues.push("corrupted_prose");
   }
 
   if (input.brief.dimension === "joy" && ABSTRACT_JOY_CLOSING_PATTERN.test(content)) {

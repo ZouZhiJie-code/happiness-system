@@ -12,9 +12,9 @@ import { pickPrimaryEvent } from "@/features/interview/server/draft-policies/bri
 import {
   buildDraftContent,
   buildParagraph,
-  formatTheorySummarySentence,
   normalizeGratitudeNeedText,
   sanitizeNullableString,
+  takeFirstSentence,
   trimTrailingPunctuation
 } from "@/features/interview/server/draft-policies/shared";
 
@@ -22,21 +22,29 @@ function buildGratitudeOpeningSentence(snapshot: JoySnapshot) {
   const moment = sanitizeNullableString(snapshot.gratitudeMoment ?? snapshot.event);
 
   return moment
-    ? `今天让我想认真记下来的感谢，是${trimTrailingPunctuation(moment)}。`
+    ? `今天让我想认真记下来的感谢，是${takeFirstSentence(moment)}。`
     : "今天有一个很小的片段，让我想认真说一声谢谢。";
 }
 
 function buildGratitudeActionSentence(snapshot: JoySnapshot) {
+  const moment = sanitizeNullableString(snapshot.gratitudeMoment ?? snapshot.event);
   const target = sanitizeNullableString(snapshot.gratitudeTarget);
   const kindAction = sanitizeNullableString(snapshot.kindAction);
   const normalizedTarget = target?.replace(/^(的是|是|那个|这位)/u, "").trim() ?? null;
 
+  if (moment && kindAction && takeFirstSentence(moment).includes(trimTrailingPunctuation(kindAction))) {
+    return null;
+  }
+
   if (normalizedTarget && kindAction) {
-    return `我感谢的不是一句泛泛的好意，而是${trimTrailingPunctuation(normalizedTarget)}当时${trimTrailingPunctuation(kindAction)}。`;
+    const normalizedAction = trimTrailingPunctuation(kindAction);
+    return normalizedAction.startsWith(normalizedTarget)
+      ? `我记得${normalizedAction}。`
+      : `我记得${trimTrailingPunctuation(normalizedTarget)}当时${normalizedAction}。`;
   }
 
   if (kindAction) {
-    return `我感谢的不是一句泛泛的好意，而是对方当时${trimTrailingPunctuation(kindAction)}。`;
+    return `我记得对方当时${trimTrailingPunctuation(kindAction)}。`;
   }
 
   return null;
@@ -50,24 +58,30 @@ function buildGratitudeNeedSentence(snapshot: JoySnapshot) {
   const normalizedReason = normalizeGratitudeNeedText(gratitudeReason);
 
   if (normalizedNeed && innerEffect) {
-    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedNeed)}，也让我心里多了一点${trimTrailingPunctuation(innerEffect)}。`;
+    const needClause = normalizedNeed.startsWith("我")
+      ? trimTrailingPunctuation(normalizedNeed)
+      : `我${trimTrailingPunctuation(normalizedNeed)}`;
+    const normalizedEffect = trimTrailingPunctuation(innerEffect);
+    const effectSentence = /(?:接住|理解|看见|照顾|支持|回应|帮助)了(?:我|我的)/u.test(normalizedEffect)
+      ? `这份回应${normalizedEffect}。`
+      : `这让我感到${normalizedEffect}。`;
+    return `对方也看见了${needClause}。${effectSentence}`;
   }
 
   if (normalizedNeed) {
-    return `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedNeed)}。`;
+    const needClause = normalizedNeed.startsWith("我")
+      ? trimTrailingPunctuation(normalizedNeed)
+      : `我${trimTrailingPunctuation(normalizedNeed)}`;
+    return `对方也看见了${needClause}。`;
   }
 
   if (normalizedReason) {
-    return `这份感谢之所以重要，是因为${trimTrailingPunctuation(normalizedReason)}。`;
+    return /^(?:我|他|她|这)/u.test(normalizedReason)
+      ? `${trimTrailingPunctuation(normalizedReason)}。`
+      : `这份感谢对我很重要，因为${trimTrailingPunctuation(normalizedReason)}。`;
   }
 
   return null;
-}
-
-function buildGratitudeTypeSentence(snapshot: JoySnapshot) {
-  const gratitudeType = sanitizeNullableString(snapshot.gratitudeType ?? snapshot.happinessType);
-
-  return gratitudeType ? `这份善意更接近${trimTrailingPunctuation(gratitudeType)}。` : null;
 }
 
 function buildGratitudeSupportingParagraph(snapshot: JoySnapshot, index: number) {
@@ -110,14 +124,24 @@ function buildGratitudeClosingSentence(input: {
   const gratitudeReason = sanitizeNullableString(input.snapshot.gratitudeReason ?? input.snapshot.whyItMattered);
 
   if (input.brief.completionMode === "complete" && relationshipSignal) {
-    return `回头看，我也更知道，${trimTrailingPunctuation(relationshipSignal)}。`;
+    const normalizedSignal = trimTrailingPunctuation(relationshipSignal);
+
+    if (/^我/u.test(normalizedSignal)) {
+      return `回头看，${normalizedSignal}。`;
+    }
+
+    if (/^(?:更|更加)?珍惜/u.test(normalizedSignal)) {
+      return `回头看，我也${normalizedSignal}。`;
+    }
+
+    return `回头看，我也更清楚，${normalizedSignal}。`;
   }
 
   if (gratitudeReason) {
-    return "先停在这里也够了：这份感谢已经让我看见，自己当时确实被认真回应过。";
+    return "这份感谢提醒我，自己当时确实被认真回应过。";
   }
 
-  return "先停在这里也够了：这件小事让我记得，关系里有些善意值得被看见。";
+  return "这件小事让我记得，关系里有些善意值得被看见。";
 }
 
 function buildGratitudeFallbackContent(input: {
@@ -129,9 +153,8 @@ function buildGratitudeFallbackContent(input: {
     buildParagraph(
       buildGratitudeOpeningSentence(input.snapshot),
       buildGratitudeActionSentence(input.snapshot),
-      formatTheorySummarySentence(input.brief) ?? buildGratitudeNeedSentence(input.snapshot)
+      buildGratitudeNeedSentence(input.snapshot)
     ),
-    buildParagraph(buildGratitudeTypeSentence(input.snapshot)),
     ...(input.supportingSnapshots ?? []).map((snapshot, index) => buildParagraph(buildGratitudeSupportingParagraph(snapshot, index))),
     buildParagraph(buildGratitudeClosingSentence(input))
   );

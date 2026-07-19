@@ -1,9 +1,9 @@
 const {
   mockAdminAuditLogCreate,
   mockAnalyticsEventCreate,
+  mockAnalyticsEventCreateMany,
   mockAnalyticsEventFindMany,
   mockAnalyticsEventGroupBy,
-  mockAnalyticsEventUpsert,
   mockDailyHappinessScoreFindMany,
   mockDailyJournalEntryFindMany,
   mockInterviewSessionFindMany,
@@ -12,9 +12,9 @@ const {
 } = vi.hoisted(() => ({
   mockAdminAuditLogCreate: vi.fn(),
   mockAnalyticsEventCreate: vi.fn(),
+  mockAnalyticsEventCreateMany: vi.fn(),
   mockAnalyticsEventFindMany: vi.fn(),
   mockAnalyticsEventGroupBy: vi.fn(),
-  mockAnalyticsEventUpsert: vi.fn(),
   mockDailyHappinessScoreFindMany: vi.fn(),
   mockDailyJournalEntryFindMany: vi.fn(),
   mockInterviewSessionFindMany: vi.fn(),
@@ -29,9 +29,9 @@ vi.mock("@/server/db/prisma", () => ({
     },
     analyticsEvent: {
       create: mockAnalyticsEventCreate,
+      createMany: mockAnalyticsEventCreateMany,
       findMany: mockAnalyticsEventFindMany,
-      groupBy: mockAnalyticsEventGroupBy,
-      upsert: mockAnalyticsEventUpsert
+      groupBy: mockAnalyticsEventGroupBy
     },
     dailyHappinessScore: {
       findMany: mockDailyHappinessScoreFindMany
@@ -63,7 +63,7 @@ describe("admin analytics repository", () => {
   });
 
   it("writes analytics events with optional linkage fields and dedupe key", async () => {
-    mockAnalyticsEventUpsert.mockResolvedValue({ id: "event-1" });
+    mockAnalyticsEventCreateMany.mockResolvedValue({ count: 1 });
 
     await recordAnalyticsEvent({
       eventName: "interview_draft_saved",
@@ -77,11 +77,8 @@ describe("admin analytics repository", () => {
       }
     });
 
-    expect(mockAnalyticsEventUpsert).toHaveBeenCalledWith({
-      where: {
-        dedupeKey: "interview_draft_saved:session-1:entry-1"
-      },
-      create: {
+    expect(mockAnalyticsEventCreateMany).toHaveBeenCalledWith({
+      data: [{
         eventName: "interview_draft_saved",
         userId: "user-1",
         sessionId: "session-1",
@@ -91,8 +88,8 @@ describe("admin analytics repository", () => {
         properties: {
           dimension: "joy"
         }
-      },
-      update: {}
+      }],
+      skipDuplicates: true
     });
   });
 

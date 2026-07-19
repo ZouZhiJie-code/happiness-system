@@ -15,6 +15,7 @@ import {
   buildParagraph,
   getUsableDelightSignature,
   sanitizeNullableString,
+  takeFirstSentence,
   trimTrailingPunctuation
 } from "@/features/interview/server/draft-policies/shared";
 
@@ -23,7 +24,7 @@ function buildJoyMomentSequence(brief: DraftBrief, snapshot: JoySnapshot) {
     new Set(
       [sanitizeNullableString(getJoyMoment(snapshot) ?? snapshot.event), ...brief.supportingMoments.map(sanitizeNullableString)]
         .filter((value): value is string => Boolean(value))
-        .map((value) => trimTrailingPunctuation(value))
+        .map((value) => takeFirstSentence(value))
     )
   ).slice(0, 3);
 }
@@ -54,9 +55,13 @@ function buildJoyCoreSentence(input: { brief: DraftBrief; snapshot: JoySnapshot 
     return null;
   }
 
+  const normalizedCore = trimTrailingPunctuation(emotionalCore)
+    .replace(/^(?:因为|这让我觉得|让我觉得|真正让我开心的是)/u, "")
+    .trim();
+
   return momentCount > 1
-    ? `它们真正打动我的地方其实很像，都是${trimTrailingPunctuation(emotionalCore)}。`
-    : `真正让我开心的，不只是事情本身，而是${trimTrailingPunctuation(emotionalCore)}。`;
+    ? `它们打动我的地方很像，都是${normalizedCore}。`
+    : `真正让我开心的是${normalizedCore}。`;
 }
 
 function buildJoyStateSentence(snapshot: JoySnapshot) {
@@ -65,11 +70,11 @@ function buildJoyStateSentence(snapshot: JoySnapshot) {
   const joyTrack = getJoyTrack(snapshot);
 
   if (joyTrack === "meaning_track" && stateShift && meaningNeed) {
-    return `那一刻我不只是变得${trimTrailingPunctuation(stateShift)}，也更能感觉到自己其实很在意${trimTrailingPunctuation(meaningNeed)}。`;
+    return `那一刻，我感到${trimTrailingPunctuation(stateShift)}，也更能感觉到自己很在意${trimTrailingPunctuation(meaningNeed)}。`;
   }
 
   if (stateShift) {
-    return `那一刻我明显变得${trimTrailingPunctuation(stateShift)}。`;
+    return `那一刻，我感到${trimTrailingPunctuation(stateShift)}。`;
   }
 
   if (joyTrack === "meaning_track" && meaningNeed) {

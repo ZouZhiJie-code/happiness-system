@@ -61,6 +61,7 @@ export type FulfillmentQuestionTarget = "event_detail" | "progress_evidence" | "
 
 interface ExtractJoySignalOptions {
   allowClosureInference?: boolean;
+  allowHeuristicClosureInference?: boolean;
   allowOptionalSignalInference?: boolean;
 }
 
@@ -1258,7 +1259,7 @@ function inferMeaningNeed(message: string) {
 function inferManualClue(message: string) {
   const normalized = normalizeText(message);
   const directMatch = normalized.match(
-    /((?:只要|每次只要|一旦|如果我能|当我)(?:[^。！？!?]{0,40})(?:就会|我就会|我更容易|我通常会)(?:[^。！？!?]{0,40}))/
+    /((?:只要|每次只要|一旦|如果我能|当我)(?:[^。！？!?]{0,40})(?:就会|我就会|我会更容易|我更容易|就更容易|我通常会)(?:[^。！？!?]{0,40}))/
   );
 
   if (directMatch) {
@@ -1276,7 +1277,7 @@ function inferManualClue(message: string) {
   return cleaned.length > 6 ? cleaned.slice(0, 100) : null;
 }
 
-function inferDelightSignature(message: string) {
+function inferDelightSignature(message: string, allowHeuristicInference = true) {
   const normalized = normalizeText(message);
   const directMatch = normalized.match(
     /((?:我会被|我很容易被|这种|这类)(?:[^。！？!?]{0,32})(?:逗笑|逗乐|带松|带进状态|轻轻接住|放松下来|上头|带动起来))/u
@@ -1284,6 +1285,10 @@ function inferDelightSignature(message: string) {
 
   if (directMatch) {
     return trimTrailingPunctuation(directMatch[1] ?? "").slice(0, 100) || null;
+  }
+
+  if (!allowHeuristicInference) {
+    return null;
   }
 
   if (/(短视频|段子|梗|反差|好笑|上头|停不下来|沉浸|刷下去)/u.test(normalized)) {
@@ -1391,6 +1396,7 @@ export function extractJoySignals(
 
   if (dimension === "joy") {
     const allowClosureInference = options.allowClosureInference ?? true;
+    const allowHeuristicClosureInference = options.allowHeuristicClosureInference ?? true;
     const allowOptionalSignalInference = options.allowOptionalSignalInference ?? true;
 
     return mergeJoySignals(previous, {
@@ -1399,7 +1405,9 @@ export function extractJoySignals(
       stateShift: inferStateShift(normalized),
       meaningNeed: inferMeaningNeed(normalized),
       manualClue: allowClosureInference ? inferManualClue(normalized) : null,
-      delightSignature: allowClosureInference ? inferDelightSignature(normalized) : null,
+      delightSignature: allowClosureInference
+        ? inferDelightSignature(normalized, allowHeuristicClosureInference)
+        : null,
       directionSignal: allowOptionalSignalInference ? inferDirectionSignal(normalized) : null,
       valueImpact: allowOptionalSignalInference ? inferValueImpact(normalized) : null,
       durability: allowOptionalSignalInference ? inferDurability(normalized) : null,

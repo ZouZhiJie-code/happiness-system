@@ -12,8 +12,8 @@ import { pickPrimaryEvent } from "@/features/interview/server/draft-policies/bri
 import {
   buildDraftContent,
   buildParagraph,
-  formatTheorySummarySentence,
   sanitizeNullableString,
+  takeFirstSentence,
   trimTrailingPunctuation
 } from "@/features/interview/server/draft-policies/shared";
 
@@ -21,33 +21,22 @@ function buildReflectionOpeningSentence(snapshot: JoySnapshot) {
   const trigger = sanitizeNullableString(snapshot.event);
 
   return trigger
-    ? `今天让我停下来想了一下的，是${trimTrailingPunctuation(trigger)}。`
+    ? `今天让我停下来想了一下的，是${takeFirstSentence(trigger)}。`
     : "今天有一个片段让我停下来多想了一层。";
 }
 
 function buildReflectionInsightSentence(snapshot: JoySnapshot) {
   const insight = sanitizeNullableString(snapshot.whyItMattered);
 
-  return insight ? `它让我看见，${trimTrailingPunctuation(insight)}。` : null;
-}
-
-function buildReflectionStateSentence(snapshot: JoySnapshot) {
-  const feeling = sanitizeNullableString(snapshot.feeling);
-  const reflectionType = sanitizeNullableString(snapshot.happinessType);
-
-  if (feeling && reflectionType) {
-    return `当时的感觉有点${trimTrailingPunctuation(feeling)}，这次思考更接近${trimTrailingPunctuation(reflectionType)}。`;
+  if (!insight) {
+    return null;
   }
 
-  if (feeling) {
-    return `当时的感觉有点${trimTrailingPunctuation(feeling)}。`;
-  }
+  const normalizedInsight = trimTrailingPunctuation(insight);
 
-  if (reflectionType) {
-    return `这次思考更接近${trimTrailingPunctuation(reflectionType)}。`;
-  }
-
-  return null;
+  return /^(?:我|原来|以前|过去|今天|现在)/u.test(normalizedInsight)
+    ? `${normalizedInsight}。`
+    : `这让我看见，${normalizedInsight}。`;
 }
 
 function buildReflectionClosingSentence(input: {
@@ -75,9 +64,9 @@ function buildReflectionFallbackContent(input: {
   return buildDraftContent(
     buildParagraph(
       buildReflectionOpeningSentence(input.snapshot),
-      formatTheorySummarySentence(input.brief) ?? buildReflectionInsightSentence(input.snapshot)
+      buildReflectionInsightSentence(input.snapshot)
     ),
-    buildParagraph(buildReflectionStateSentence(input.snapshot), buildReflectionClosingSentence(input))
+    buildParagraph(buildReflectionClosingSentence(input))
   );
 }
 

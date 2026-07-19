@@ -109,6 +109,30 @@ describe("planAskIntentEnvelope", () => {
     expectEnvelopeShape(envelope, "name_direct_feeling");
   });
 
+  it("maps joy judgment_clue to a reusable next-time cue", () => {
+    const snapshot = createSnapshot({
+      event: "早上在窗边安静喝完咖啡",
+      feeling: "从匆忙变得从容",
+      whyItMattered: "这半小时没有被消息切碎"
+    });
+    const spec = createQuestionSpec({
+      dimension: "joy",
+      stage: "probe_pattern",
+      snapshot,
+      stageIntent: "advance",
+      target: "judgment_clue"
+    });
+
+    const envelope = planAskIntentEnvelope({
+      dimension: "joy",
+      snapshot,
+      spec
+    });
+
+    expect(envelope.intent).toBe("name_next_time_cue");
+    expect(envelope.constraints.preferredAnswerShape).toBe("next_time_cue");
+  });
+
   it("falls back to key-part intent for unsupported dimension-specific judgment_clue variants", () => {
     const snapshot = createSnapshot({
       gratitudeMoment: "对方陪我一起回来",

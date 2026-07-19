@@ -49,7 +49,7 @@ function debugTodayJournalPanel(hypothesisId: string, message: string, data: Rec
   }).catch(() => {});
 }
 
-function resolveDayAction(board: TodayJournalBoardPayload | null): {
+export function resolveDayAction(board: TodayJournalBoardPayload | null): {
   variant: TodayDayActionVariant;
   label: string;
   ariaLabel: string;

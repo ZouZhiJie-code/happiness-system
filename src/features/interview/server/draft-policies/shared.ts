@@ -1,5 +1,5 @@
 import { isUsableJoyDelightSignature } from "@/features/joy-interview/server/joy-interview-engine";
-import type { DraftBrief, JoySnapshot } from "@/types/interview";
+import type { JoySnapshot } from "@/types/interview";
 
 export function sanitizeNullableString(value: string | null | undefined) {
   if (!value) {
@@ -13,6 +13,12 @@ export function sanitizeNullableString(value: string | null | undefined) {
 
 export function trimTrailingPunctuation(value: string) {
   return value.replace(/[，。！？；：,.!?;:\s]+$/u, "").trim();
+}
+
+export function takeFirstSentence(value: string) {
+  const firstSentence = value.match(/^[^。！？!?]+/u)?.[0] ?? value;
+
+  return trimTrailingPunctuation(firstSentence);
 }
 
 export function normalizeGratitudeNeedText(value: string | null | undefined) {
@@ -68,19 +74,6 @@ export function buildDraftContent(...paragraphs: Array<string | null | undefined
 
 export function normalizeSignature(value: string | null | undefined) {
   return value ? value.replace(/\s+/g, "").replace(/[，。！？；：,.!?;:]/gu, "") : "";
-}
-
-export function formatTheorySummarySentence(brief: DraftBrief) {
-  const theorySummary = sanitizeNullableString(brief.theorySummary);
-
-  if (brief.dimension === "gratitude") {
-    const normalizedTheorySummary = normalizeGratitudeNeedText(theorySummary);
-    return normalizedTheorySummary
-      ? `这件事之所以重要，是因为对方像是看见了${trimTrailingPunctuation(normalizedTheorySummary)}。`
-      : null;
-  }
-
-  return theorySummary ? `${trimTrailingPunctuation(theorySummary)}。` : null;
 }
 
 export function hasSpecificDelightCue(value: string | null | undefined) {

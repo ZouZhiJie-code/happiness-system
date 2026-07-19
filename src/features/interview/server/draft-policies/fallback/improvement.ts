@@ -15,8 +15,8 @@ import {
 import {
   buildDraftContent,
   buildParagraph,
-  formatTheorySummarySentence,
   sanitizeNullableString,
+  takeFirstSentence,
   trimTrailingPunctuation
 } from "@/features/interview/server/draft-policies/shared";
 
@@ -24,7 +24,7 @@ function buildImprovementOpeningSentence(snapshot: JoySnapshot) {
   const situation = sanitizeNullableString(snapshot.event);
 
   return situation
-    ? `今天最想回头看一眼的，是${trimTrailingPunctuation(situation)}。`
+    ? `今天最想回头看一眼的，是${takeFirstSentence(situation)}。`
     : "今天有一个片段，让我觉得下次可以稍微调整得更稳一点。";
 }
 
@@ -32,16 +32,31 @@ function buildImprovementStateSentence(snapshot: JoySnapshot) {
   const stateAssessment = sanitizeNullableString(snapshot.stateAssessment);
   const feeling = sanitizeNullableString(snapshot.feeling);
 
-  if (stateAssessment && feeling) {
-    return `当时的状态有点${trimTrailingPunctuation(feeling)}，回头看，不理想或值得保留的地方是${trimTrailingPunctuation(stateAssessment)}。`;
-  }
-
   if (stateAssessment) {
-    return `回头看，当时最值得记录的状态判断是${trimTrailingPunctuation(stateAssessment)}。`;
+    const frictionPoint = sanitizeNullableString(snapshot.frictionPoint ?? snapshot.whyItMattered);
+    const normalizedState = trimTrailingPunctuation(stateAssessment);
+    const stateWithoutRepeatedFriction = frictionPoint && normalizedState.includes(frictionPoint)
+      ? normalizedState
+          .split(/[，,]/u)
+          .filter((clause) => !clause.includes(frictionPoint))
+          .join("，")
+          .replace(/[，,\s]+$/u, "")
+          .trim()
+      : normalizedState;
+
+    if (!stateWithoutRepeatedFriction) {
+      return null;
+    }
+
+    if (/^(?:我|当时我|这次|今天|那时|汇报时)/u.test(stateWithoutRepeatedFriction)) {
+      return `回头看，${stateWithoutRepeatedFriction}。`;
+    }
+
+    return `回头看，我当时${stateWithoutRepeatedFriction}。`;
   }
 
   if (feeling) {
-    return `当时的感觉有点${trimTrailingPunctuation(feeling)}。`;
+    return `当时，我感到${trimTrailingPunctuation(feeling)}。`;
   }
 
   return null;
@@ -74,7 +89,7 @@ function buildImprovementControlSentence(snapshot: JoySnapshot) {
   const controllableFactor = sanitizeNullableString(snapshot.controllableFactor);
 
   return controllableFactor
-    ? `现在能抓住的可控点很小，就是${trimTrailingPunctuation(controllableFactor)}。`
+    ? `我能先抓住的一小步，是${trimTrailingPunctuation(controllableFactor)}。`
     : null;
 }
 
@@ -86,23 +101,23 @@ function buildImprovementClosingSentence(input: {
   const successSignal = sanitizeNullableString(input.snapshot.successSignal);
   const controllableFactor = sanitizeNullableString(input.snapshot.controllableFactor);
   const core = getImprovementCore(input.snapshot);
-  const cleanedNextAttempt = nextAttempt?.replace(/^(?:下次|以后|下一次)(?:我)?(?:想)?(?:先|会|要)?/u, "").trim() ?? null;
+  const cleanedNextAttempt = nextAttempt?.replace(/^(?:下次|以后|下一次)(?:我)?(?:想)?(?:会|要)?/u, "").trim() ?? null;
 
   if (input.brief.completionMode === "complete" && nextAttempt) {
     return successSignal
-      ? `下次我想先试试${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}。如果${trimTrailingPunctuation(successSignal)}，就说明比这次稳了一点。`
-      : `下次我想先试试${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}，先把这一小步做出来。`;
+      ? `下次我会${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}。如果${trimTrailingPunctuation(successSignal)}，我就知道这次调整起作用了。`
+      : `下次我会${trimTrailingPunctuation(cleanedNextAttempt ?? nextAttempt)}，先把这一小步做出来。`;
   }
 
   if (controllableFactor) {
-    return `先停在这里就够了：这件事让我看见，${trimTrailingPunctuation(controllableFactor)}是一个可以调整的地方。`;
+    return `这次先记住，${trimTrailingPunctuation(controllableFactor)}是我可以调整的地方。`;
   }
 
   if (core) {
-    return `先停在这里就够了：这件事让我看见，${trimTrailingPunctuation(core)}是下一次可以继续留意的地方。`;
+    return `这次先记住，${trimTrailingPunctuation(core)}是下一次可以继续留意的地方。`;
   }
 
-  return "先停在这里就够了：这件事让我看见，下次可以从一个很小的地方开始调整。";
+  return "这次先记住，下次可以从一个很小的地方开始调整。";
 }
 
 function buildImprovementFallbackContent(input: {
@@ -112,7 +127,7 @@ function buildImprovementFallbackContent(input: {
   return buildDraftContent(
     buildParagraph(buildImprovementOpeningSentence(input.snapshot), buildImprovementStateSentence(input.snapshot)),
     buildParagraph(
-      formatTheorySummarySentence(input.brief) ?? buildImprovementCoreSentence(input.snapshot),
+      buildImprovementCoreSentence(input.snapshot),
       buildImprovementControlSentence(input.snapshot)
     ),
     buildParagraph(buildImprovementClosingSentence(input))

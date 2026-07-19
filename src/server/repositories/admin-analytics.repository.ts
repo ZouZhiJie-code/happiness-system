@@ -25,12 +25,9 @@ export async function recordAnalyticsEvent(input: {
   };
 
   if (input.dedupeKey) {
-    return prisma.analyticsEvent.upsert({
-      where: {
-        dedupeKey: input.dedupeKey
-      },
-      create: data,
-      update: {}
+    return prisma.analyticsEvent.createMany({
+      data: [data],
+      skipDuplicates: true
     });
   }
 
