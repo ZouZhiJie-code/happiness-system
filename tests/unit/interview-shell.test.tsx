@@ -2925,6 +2925,11 @@ describe("InterviewShell", () => {
   it("does not repeat a separate generating badge inside the workspace while the top button is already busy", async () => {
     cacheInterviewSessions({ joy: "session-ready" });
 
+    let releaseDraftGeneration: (() => void) | undefined;
+    const draftGenerationGate = new Promise<void>((resolve) => {
+      releaseDraftGeneration = resolve;
+    });
+
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
 
@@ -2938,7 +2943,7 @@ describe("InterviewShell", () => {
       }
 
       if (url.endsWith("/api/interview/session/draft/generate")) {
-        await new Promise((resolve) => window.setTimeout(resolve, 50));
+        await draftGenerationGate;
 
         return new Response(
           JSON.stringify({
@@ -2988,6 +2993,8 @@ describe("InterviewShell", () => {
 
     expect(await screen.findByText("今天真正动到你的那段开心，值得被写成一页")).toBeInTheDocument();
     expect(screen.queryByText(/^生成中$/)).not.toBeInTheDocument();
+
+    releaseDraftGeneration?.();
     await screen.findByTestId("journal-editor-card");
   });
 
