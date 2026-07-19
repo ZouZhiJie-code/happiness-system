@@ -35,6 +35,7 @@ export default async function SettingsPage() {
             <SettingsAccountPanel
               user={user}
               showAdminAnalyticsEntry={isAdmin}
+              showAdminAIQualityEntry={isAdmin}
               showAdminAIRuntimeEntry={isAdmin}
             />
           </div>

@@ -386,30 +386,30 @@ function renderReflectionQuestion(input: {
     case "event_anchor":
       if (isConcrete) {
         return anchor
-          ? `回到“${anchor}”这件事，当时你最先注意到的画面或细节是哪一下？`
+          ? `你提到“${anchor}”。当时你最先注意到的画面或细节是哪一下？`
           : "今天让你停下来多想一下时，你最先注意到的画面或细节是哪一下？";
       }
 
       return anchor
         ? isSimplified
-          ? `回到“${anchor}”这件事，最关键的那个瞬间是什么？`
-          : `回到“${anchor}”这件事，最先让你停下来多想一下的那个瞬间是什么？`
+          ? `你提到“${anchor}”。最关键的那个瞬间是什么？`
+          : `你提到“${anchor}”。最先让你停下来多想一下的那个瞬间是什么？`
         : isSimplified
           ? "今天让你停下来多想一下的关键瞬间是什么？"
           : "今天让你停下来多想一下的那个具体瞬间是什么？";
     case "prior_assumption":
       if (isConcrete) {
         return anchor
-          ? `回到“${anchor}”这件事，当时你脑子里先冒出来的老想法是什么？`
+          ? `你提到“${anchor}”。当时你脑子里先冒出来的老想法是什么？`
           : "在你开始转过来之前，你脑子里先冒出来的老想法是什么？";
       }
 
       return anchor
-        ? `回到“${anchor}”这件事，在你开始转过来之前，你原来更容易怎么想？`
+        ? `你提到“${anchor}”。在你开始转过来之前，你原来更容易怎么想？`
         : "在你开始转过来之前，你原来更容易怎么想这件事？";
     default:
       return anchor
-        ? `回到“${anchor}”这件事，最先让你停下来多想一下的那个瞬间是什么？`
+        ? `你提到“${anchor}”。最先让你停下来多想一下的那个瞬间是什么？`
         : "今天让你停下来多想一下的那个具体瞬间是什么？";
   }
 }
@@ -427,8 +427,8 @@ function renderGenericQuestion(input: {
   if (target === "event_anchor") {
     return anchor
       ? isConcrete
-        ? `回到“${anchor}”这件事，当时最具体的画面或细节是哪一下？`
-        : `回到“${anchor}”这件事，当时最具体的一幕是什么？`
+        ? `你提到“${anchor}”。当时最具体的画面或细节是哪一下？`
+        : `你提到“${anchor}”。当时最具体的一幕是什么？`
       : isConcrete
         ? "当时最具体的画面或细节是哪一下？"
         : "当时最具体的一幕是什么？";
@@ -468,7 +468,7 @@ function buildRepairThinkingSummary(input: {
     case "example_first":
       return "我先不让你总结，只要举一个最具体的例子。";
     case "one_sentence_fallback":
-      return "我先不展开，只留一句你现在最想记住的话就够了。";
+      return "我先不展开，只抓一个现在最容易说清的具体点。";
   }
 
   if (input.dimension === "reflection") {
@@ -535,7 +535,7 @@ function renderExampleFirstQuestion(input: {
   spec: AssistantQuestionSpec;
 }) {
   const anchor = input.spec.anchorText;
-  const prefix = anchor ? `回到“${anchor}”这件事，` : "";
+  const prefix = anchor ? `你提到“${anchor}”。` : "";
 
   switch (input.dimension) {
     case "joy":
@@ -589,7 +589,7 @@ function renderRepairDeescalatedQuestion(input: {
       }
 
       return input.spec.anchorText
-        ? `回到“${input.spec.anchorText}”这件事，不用先总结，只说一个最具体的例子，会是哪一下？`
+        ? `你提到“${input.spec.anchorText}”。不用先总结，只说一个最具体的例子，会是哪一下？`
         : "不用先总结，只说一个最具体的例子，会是哪一下？";
     case "one_sentence_fallback":
       if (input.spec.target === "judgment_clue") {
@@ -601,9 +601,12 @@ function renderRepairDeescalatedQuestion(input: {
         });
       }
 
-      return input.spec.anchorText
-        ? `回到“${input.spec.anchorText}”这件事，如果只留一句，你最想记住哪句？`
-        : "如果只留一句，你最想记住哪句？";
+      return realizeRepairIntentQuestion({
+        dimension: input.dimension,
+        snapshot: input.snapshot,
+        spec: input.spec,
+        intent: "point_out_key_part"
+      });
   }
 }
 
@@ -898,20 +901,34 @@ export function applyQuestionSurfaceProtocol(input: {
   candidateQuestion: string | null | undefined;
   preserveStructuredCandidateQuestion?: boolean;
 }) {
-  const shouldPreferDedicatedCandidate =
-    input.preserveStructuredCandidateQuestion === true &&
-    Boolean(normalizeText(input.candidateQuestion)) &&
-    shouldUseStructuredQuestionRealizer(input.spec.target);
+  const candidateQuestion = normalizeText(input.candidateQuestion);
+  const candidateGate = evaluateQuestionComprehension({
+    dimension: input.dimension,
+    question: candidateQuestion,
+    spec: input.spec,
+    snapshot: input.snapshot
+  });
+
+  if (candidateQuestion && candidateGate.pass) {
+    return {
+      question: candidateQuestion,
+      questionSpec: input.spec
+    };
+  }
+
   const primaryQuestion = normalizeText(
-    shouldPreferDedicatedCandidate
-      ? input.candidateQuestion
-      : shouldUseStructuredQuestionRealizer(input.spec.target)
+    shouldUseStructuredQuestionRealizer(input.spec.target)
       ? realizeStructuredQuestion({
           dimension: input.dimension,
           snapshot: input.snapshot,
           spec: input.spec
         })
-      : input.candidateQuestion
+      : renderQuestion({
+          dimension: input.dimension,
+          stage: input.stage,
+          snapshot: input.snapshot,
+          spec: input.spec
+        })
   );
 
   const primaryGate = evaluateQuestionComprehension({

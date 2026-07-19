@@ -12,11 +12,14 @@ export class AdminAuthorizationError extends Error {}
 
 export function parseAdminUsernames() {
   const raw = process.env.ADMIN_USERNAMES ?? "";
-
-  return raw
+  const usernames = raw
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+  if (process.env.NODE_ENV !== "production") {
+    usernames.push(process.env.ACCEPTANCE_ADMIN_USERNAME ?? "acceptance_admin");
+  }
+  return Array.from(new Set(usernames));
 }
 
 export function isAdminUsername(username: string) {

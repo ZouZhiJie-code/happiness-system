@@ -314,6 +314,25 @@ describe("joy interview engine", () => {
     expect(getNextStage("gratitude", snapshot, 3)).toBe("wrap_up");
   });
 
+  it("keeps an explicit appreciation statement as gratitude reason evidence", () => {
+    const snapshot = extractJoySignals(
+      "gratitude",
+      "小李帮我把最急的两件事拆开，也替我协调了截止时间。我珍惜这种在压力里主动接住、愿意共同承担的关系。",
+      {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: []
+      }
+    );
+
+    expect(snapshot.gratitudeReason).toContain("我珍惜这种在压力里主动接住");
+    expect(snapshot.relationshipSignal).toContain("我珍惜这种在压力里主动接住");
+  });
+
   it("wraps up gratitude immediately after relationship-signal denial", () => {
     const snapshot = buildJoySnapshot({
       event: "同事先帮我把最急的两件事拆出来",

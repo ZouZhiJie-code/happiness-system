@@ -8,6 +8,7 @@ import type {
   JournalEntryRecord,
   JoySnapshot
 } from "@/types/interview";
+import { assessDimensionEvidence } from "@/features/interview/dimension-evidence";
 
 interface DefinitionProgressInput {
   snapshot: JoySnapshot | null;
@@ -106,12 +107,14 @@ function buildSnapshotData(
   fields: Record<string, unknown>,
   snapshot: JoySnapshot
 ): InterviewSnapshotData {
-  return {
+  const rawSnapshotData = {
     kind,
     ...fields,
     confidence: snapshot.confidence,
     missingSlots: snapshot.missingSlots
   } as InterviewSnapshotData;
+
+  return assessDimensionEvidence(kind, snapshot, rawSnapshotData).snapshotData;
 }
 
 function buildJournalPayload(

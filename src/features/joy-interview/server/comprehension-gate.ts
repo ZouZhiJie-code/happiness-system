@@ -18,6 +18,26 @@ const NOT_EXAMPLE_ANSWERABLE_PATTERN =
   /(?:什么样的内容或场景节奏|什么样的投入|什么样的努力|(?:先看|看)哪个更具体的(?:反应|信号))/u;
 const EXAMPLE_SHAPE_CUES =
   /(哪一下|哪一幕|哪一点|哪句|哪一步|哪个瞬间|最直接|最打动|最想记住|具体的|先试哪一步|先抓住哪一点)/u;
+const MECHANICAL_ANCHOR_LEAD_PATTERN = /^(?:回到|说到)(?:“[^”]+”)?(?:这件事)?[，,]?/u;
+const PREMATURE_DISTILLATION_PATTERN = /如果只留一句/u;
+const MULTIPLE_INFORMATION_REQUEST_PATTERN =
+  /(?:什么|哪(?:个|一|项|种|句|步|点|下|幕)?|如何|怎么)[^。！？?]{0,45}[，,；;][^。！？?]{0,45}(?:什么|哪(?:个|一|项|种|句|步|点|下|幕)?|如何|怎么)/u;
+const FULFILLMENT_PREMISE_PATTERN =
+  /(?:已经|确实|真的)[^。！？?]{0,18}(?:完成|推进|积累|有了进展|(?:没|没有|不算)白[^。！？?]{0,8}|算数|值得)|(?:让你|使你|最让你)[^。！？?]{0,18}(?:(?:没|没有|不算)白[^。！？?]{0,8}|算数|值得)/u;
+const GENERIC_ANCHOR_PARTS = [
+  "今天",
+  "当时",
+  "这件事",
+  "这一次",
+  "一个",
+  "一下",
+  "围绕",
+  "让我",
+  "觉得",
+  "就是",
+  "真的",
+  "有点"
+];
 
 export type ComprehensionGateReasonCode =
   | "forbidden_theory_term"
@@ -27,7 +47,11 @@ export type ComprehensionGateReasonCode =
   | "abstract_lead_phrasing"
   | "multi_cognitive_actions"
   | "weak_anchor"
-  | "not_example_answerable";
+  | "not_example_answerable"
+  | "mechanical_anchor_lead"
+  | "premature_distillation"
+  | "multiple_information_requests"
+  | "presupposed_fulfillment_progress";
 
 export type ComprehensionGateDowngradeRecommendation =
   | "rewrite_with_user_words"
@@ -74,6 +98,22 @@ function hasStrongAnchor(question: string, spec: AssistantQuestionSpec) {
     return true;
   }
 
+  const reducedAnchor = GENERIC_ANCHOR_PARTS.reduce(
+    (value, part) => value.replaceAll(part, ""),
+    compactAnchor
+  );
+  const compactQuestion = normalizeAnchorToken(question);
+
+  for (let length = Math.min(6, reducedAnchor.length); length >= 2; length -= 1) {
+    for (let start = 0; start <= reducedAnchor.length - length; start += 1) {
+      const phrase = reducedAnchor.slice(start, start + length);
+
+      if (phrase && compactQuestion.includes(phrase)) {
+        return true;
+      }
+    }
+  }
+
   if (/回头看“[^”]+”|回头看'[^']+'|回头看“[^”]+”这层进展/u.test(question)) {
     return true;
   }
@@ -85,6 +125,7 @@ function needsStrongAnchor(spec: AssistantQuestionSpec) {
   return (
     spec.target === "judgment_clue" ||
     spec.target === "insight_evidence" ||
+    spec.target === "reaction_evidence" ||
     spec.stageIntent === "repair"
   );
 }
@@ -131,6 +172,26 @@ function collectReasonCodes(input: {
     reasonCodes.push("multi_cognitive_actions");
   }
 
+  if (MECHANICAL_ANCHOR_LEAD_PATTERN.test(normalizedQuestion)) {
+    reasonCodes.push("mechanical_anchor_lead");
+  }
+
+  if (PREMATURE_DISTILLATION_PATTERN.test(normalizedQuestion)) {
+    reasonCodes.push("premature_distillation");
+  }
+
+  if (MULTIPLE_INFORMATION_REQUEST_PATTERN.test(normalizedQuestion)) {
+    reasonCodes.push("multiple_information_requests");
+  }
+
+  if (
+    input.dimension === "fulfillment" &&
+    !input.snapshot.whyItMattered &&
+    FULFILLMENT_PREMISE_PATTERN.test(normalizedQuestion)
+  ) {
+    reasonCodes.push("presupposed_fulfillment_progress");
+  }
+
   if (needsStrongAnchor(input.spec) && !hasStrongAnchor(normalizedQuestion, input.spec)) {
     reasonCodes.push("weak_anchor");
   }
@@ -157,12 +218,18 @@ function chooseDowngradeRecommendation(reasonCodes: ComprehensionGateReasonCode[
   if (
     reasonCodes.includes("multi_cognitive_actions") ||
     reasonCodes.includes("multi_hop_reasoning") ||
-    reasonCodes.includes("cross_category_compare")
+    reasonCodes.includes("cross_category_compare") ||
+    reasonCodes.includes("multiple_information_requests")
   ) {
     return "narrow_to_single_action" as const;
   }
 
-  if (reasonCodes.includes("abstract_lead_phrasing")) {
+  if (
+    reasonCodes.includes("abstract_lead_phrasing") ||
+    reasonCodes.includes("mechanical_anchor_lead") ||
+    reasonCodes.includes("premature_distillation") ||
+    reasonCodes.includes("presupposed_fulfillment_progress")
+  ) {
     return "rewrite_with_user_words" as const;
   }
 

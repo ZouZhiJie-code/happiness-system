@@ -96,7 +96,8 @@ export async function POST(request: Request) {
           const result = await streamInterviewResponse(
             {
               ...parsed.data,
-              userId: user.id
+              userId: user.id,
+              requestId
             },
             {
               onPhase: (phase) => send("phase", { state: phase }),

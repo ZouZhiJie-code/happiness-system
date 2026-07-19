@@ -602,13 +602,28 @@ describe("draft policies", () => {
       directionSignal: "推进完成型",
       valueSignal: "能把卡住的事情真正往前推进",
       closingInsight: "能把卡住的事情真正往前推进",
-      titleTheme: "真的收了个口"
+      titleTheme: "终于落了地"
     });
     expect(brief.theorySummary).toContain("不算白过");
     expect(brief.antiFlatteningTargets).toContain("不要写成今天很忙");
     expect(profile.closingMode).toBe("stable_clue");
     expect(profile.toneBanSet).toContain("周报腔");
     expect(profile.toneBanSet).toContain("绩效总结");
+  });
+
+  it("rewrites awkward fulfillment closure titles into natural Chinese", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "fulfillment",
+      snapshot: {
+        ...fulfillmentSnapshot,
+        event: "今天把项目经历重写了两段，并投递了三家公司",
+        whyItMattered: "完成了可用版本，也迈出了申请这一步",
+        selfPattern: "推进到可交付、能被验证的状态，才算没白忙"
+      },
+      aiTitle: "真的收了个口"
+    });
+
+    expect(title).toBe("终于落了地");
   });
 
   it("keeps fulfillment drafts partial when there is no value signal", () => {
@@ -828,6 +843,26 @@ describe("draft policies", () => {
 
     expect(result.accepted).toBe(false);
     expect(result.issues).toContain("forced_manual_clue");
+    expect(result.issues).toContain("fake_rule_tone");
+  });
+
+  it("rejects a partial joy draft that disguises a stable rule as current understanding", () => {
+    const brief = buildDraftBrief({
+      session: buildSession(partialJoySnapshot),
+      sourceEvents: [buildEvent(partialJoySnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "一起吃饭的轻松",
+        content: "今天和家人一起吃饭聊天，让我重新回到被陪伴接住的轻松里。我现在更知道，自己会被稳定的陪伴轻轻带动。",
+        manualClue: null,
+        delightSignature: null
+      }
+    });
+
+    expect(result.accepted).toBe(false);
     expect(result.issues).toContain("fake_rule_tone");
   });
 
@@ -1430,7 +1465,8 @@ describe("draft policies", () => {
     expect(draft.manualClue).toBeNull();
     expect(draft.content).not.toContain("使用说明书");
     expect(draft.content).toContain("今天最想记下来的，是今天和家人一起吃饭聊天。");
-    expect(draft.content).toContain("我现在更知道");
+    expect(draft.content).toContain("这个片段里有了回应");
+    expect(draft.content).not.toMatch(/我现在更知道|我通常会|我更容易|自己会被/u);
     expect(draft.content).not.toContain("至少到现在");
     expect(draft.content).not.toContain("我也开始更确定");
   });

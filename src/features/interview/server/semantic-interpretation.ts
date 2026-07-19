@@ -402,17 +402,17 @@ function buildFulfillmentInterpretation(input: BuildDimensionSemanticInterpretat
     appendUnique(titleCandidates, "练到一点手感", "把这一段写顺");
   } else if (/(收口|收尾|交付|落地|定下来|终于完了|搞定)/u.test(joined)) {
     themeKey = "real_closure";
-    themeLabel = "真的收了个口";
+    themeLabel = "终于落了地";
     theorySummary = progressEvidence
       ? `这件事真正有分量的地方，是${progressEvidence}。也因为这样，今天不算白过。`
-      : "这件事真正有分量的地方，不是终于忙完，而是事情真的收了个口。";
+      : "事情真正落了地，这份完成让今天有了分量。";
     thinkingSummaryLead = progressEvidence
-      ? `这段充实的分量，不在忙完，而在“${progressEvidence}”让事情真的收了个口`
-      : "这段充实的分量，不在忙完，而在事情真的收了个口";
+      ? `“${progressEvidence}”让事情真正落了地，这就是这段充实的分量`
+      : "事情真正落了地，这就是这段充实的分量";
     narrativePremise = "正文要写出哪里终于落下去了，不要写成任务完成汇报。";
     closurePremise = "结尾收在什么样的收口会让自己踏实，不要上升成效率哲学。";
     antiFlatteningTargets = ["不要只写终于做完了", "要写哪里真的收口了"];
-    appendUnique(titleCandidates, "真的收了个口", "把事情落下去");
+    appendUnique(titleCandidates, "终于落了地", "把事情落下来");
   } else if (/(卡住|推进|往前|推开|打通|终于动了)/u.test(joined) && !/(主线|脉络|理顺|清楚|明确|交接|协作|接手时一眼就能看懂|一眼就能看懂|收口|收尾|落地)/u.test(joined)) {
     themeKey = "blocker_moved";
     themeLabel = "把事情往前推";

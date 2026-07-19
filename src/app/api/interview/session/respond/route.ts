@@ -65,7 +65,8 @@ export async function POST(request: Request) {
     const user = await requireCurrentUserFromRequest(request);
     const result = await respondToInterview({
       ...parsed.data,
-      userId: user.id
+      userId: user.id,
+      requestId
     });
     const payload = respondInterviewResponseSchema.parse(result);
 

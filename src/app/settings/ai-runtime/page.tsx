@@ -7,23 +7,15 @@ import type { AIRuntimeStatusPayload } from "@/features/admin-ai-runtime/api";
 import { sanitizeAIRuntimeConfig, sanitizeAIRuntimeStatusPayload } from "@/app/api/admin/ai-runtime/_shared";
 import { requireAdminPage } from "@/server/services/auth/admin-access";
 import {
-  getAdminAIRuntimeStatus,
-  getAIRuntimeDraft,
-  getAIRuntimeHistory
+  getAdminAIRuntimePageData
 } from "@/server/services/admin-ai-runtime/admin-ai-runtime.service";
 
 export default async function AdminAIRuntimePage() {
   await requireAdminPage("/settings/ai-runtime");
 
-  const [statusPayload, chatDraft, embeddingDraft, chatHistory, embeddingHistory] = await Promise.all([
-    getAdminAIRuntimeStatus(),
-    getAIRuntimeDraft("chat"),
-    getAIRuntimeDraft("embedding"),
-    getAIRuntimeHistory("chat"),
-    getAIRuntimeHistory("embedding")
-  ]);
+  const pageData = await getAdminAIRuntimePageData();
 
-  const sanitizedStatus = sanitizeAIRuntimeStatusPayload(statusPayload).capabilities as AIRuntimeStatusPayload[];
+  const sanitizedStatus = sanitizeAIRuntimeStatusPayload({ capabilities: pageData.capabilities }).capabilities as AIRuntimeStatusPayload[];
 
   return (
     <div className="min-h-0 flex-1">
@@ -43,21 +35,28 @@ export default async function AdminAIRuntimePage() {
             </p>
           </div>
 
+          <div className="grid gap-4">
+            {!pageData.databaseAvailable ? (
+              <p role="alert" className="border-l-2 border-[var(--line-strong)] pl-3 text-sm leading-7 text-[#8a5440]">
+                数据库配置暂时不可用。当前继续展示环境变量中的 Provider 诊断；草稿和历史版本会在连接恢复后重新载入。
+              </p>
+            ) : null}
           <AIRuntimePageClient
             initialStatus={sanitizedStatus}
             initialDrafts={{
-              chat: sanitizeAIRuntimeConfig(chatDraft),
-              embedding: sanitizeAIRuntimeConfig(embeddingDraft)
+              chat: sanitizeAIRuntimeConfig(pageData.drafts.chat),
+              embedding: sanitizeAIRuntimeConfig(pageData.drafts.embedding)
             }}
             initialHistory={{
-              chat: chatHistory
+              chat: pageData.history.chat
                 .map(sanitizeAIRuntimeConfig)
                 .filter((item): item is NonNullable<typeof item> => item !== null),
-              embedding: embeddingHistory
+              embedding: pageData.history.embedding
                 .map(sanitizeAIRuntimeConfig)
                 .filter((item): item is NonNullable<typeof item> => item !== null)
             }}
           />
+          </div>
         </div>
       </Surface>
     </div>

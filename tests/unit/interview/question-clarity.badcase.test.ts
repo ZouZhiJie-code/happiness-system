@@ -31,6 +31,14 @@ const { mockRecordAnalyticsEvent } = vi.hoisted(() => ({
   mockRecordAnalyticsEvent: vi.fn()
 }));
 
+const { createAIGenerationTrace, appendGenerationTraceDecision, cancelGenerationTrace, failGenerationTrace } =
+  vi.hoisted(() => ({
+    createAIGenerationTrace: vi.fn(),
+    appendGenerationTraceDecision: vi.fn(),
+    cancelGenerationTrace: vi.fn(),
+    failGenerationTrace: vi.fn()
+  }));
+
 const { extractJoySnapshotWithAI, generateJoyAssistantTurn, streamJoyAssistantTurn, generateJoyDraftWithAI } = vi.hoisted(() => ({
   extractJoySnapshotWithAI: vi.fn(),
   generateJoyAssistantTurn: vi.fn(),
@@ -110,6 +118,13 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 
 vi.mock("@/server/repositories/admin-analytics.repository", () => ({
   recordAnalyticsEvent: mockRecordAnalyticsEvent
+}));
+
+vi.mock("@/server/repositories/ai-quality.repository", () => ({
+  createAIGenerationTrace,
+  appendGenerationTraceDecision,
+  cancelGenerationTrace,
+  failGenerationTrace
 }));
 
 vi.mock("@/server/services/interview/joy-interview-ai.service", () => ({
@@ -275,6 +290,14 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
 
 describe("question clarity badcase baseline", () => {
   beforeEach(() => {
+    createAIGenerationTrace.mockReset();
+    appendGenerationTraceDecision.mockReset();
+    cancelGenerationTrace.mockReset();
+    failGenerationTrace.mockReset();
+    createAIGenerationTrace.mockResolvedValue({ id: "trace-1" });
+    appendGenerationTraceDecision.mockResolvedValue(undefined);
+    cancelGenerationTrace.mockResolvedValue(undefined);
+    failGenerationTrace.mockResolvedValue(undefined);
     appendJoyInterviewTurn.mockReset();
     completeJoyInterviewSessionRecord.mockReset();
     createJoyInterviewSession.mockReset();
@@ -404,7 +427,7 @@ describe("question clarity badcase baseline", () => {
     });
 
     expect(turn.question).not.toMatch(/小动作|先试哪一步|下次再遇到类似情况/u);
-    expect(turn.question).toMatch(/最值得先看住的那一点是什么/u);
+    expect(turn.question).toMatch(/下次最值得先调整的一个环节是什么/u);
   });
 
   it("keeps gratitude judgment-clue follow-ups on the concrete response instead of jumping to “最值得珍惜的是什么”", () => {
@@ -421,9 +444,9 @@ describe("question clarity badcase baseline", () => {
       candidateQuestion: "这种能一针见血地帮你破除迷茫的回应，让你觉得这份感谢里，最值得珍惜的是什么？"
     });
 
-    expect(surfaced.question).toContain("回到“中午陪我一起回来，还给了面试建议”这件事");
-    expect(surfaced.question).toMatch(/最打动你|最有分量|最算数/u);
-    expect(surfaced.question).toMatch(/哪一点|那一点|哪个点/u);
+    expect(surfaced.question).toContain("你提到“中午陪我一起回来，还给了面试建议”");
+    expect(surfaced.question).not.toMatch(/^回到|如果只留一句/u);
+    expect(surfaced.question).toMatch(/具体照顾到了你的什么需要/u);
     expect(hasMultiActionQuestionShape(surfaced.question)).toBe(false);
     expect(surfaced.question).not.toMatch(/最值得珍惜|这份感谢里/u);
   });

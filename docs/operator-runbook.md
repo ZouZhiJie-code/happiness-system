@@ -21,6 +21,7 @@
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
 | `DIRECT_URL` | Prisma migration / 运维直连数据库 URL；共享环境建议配置 |
 | `ADMIN_USERNAMES` | 逗号分隔的管理员用户名白名单，用于 `/admin/analytics` 页面与 `/api/admin/analytics/*` 接口鉴权 |
+| `CRON_SECRET` | 保护 AI 每日评估与每周迭代任务的 Bearer Secret；推荐用 `openssl rand -base64 32` 生成 |
 
 账户体系补充说明：
 
@@ -42,6 +43,7 @@ VOLCENGINE_ARK_ENDPOINT_ID=""
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 ADMIN_USERNAMES=""
+CRON_SECRET=""
 ```
 
 `AI_RUNTIME_CONFIG_SECRET` 说明：
@@ -240,6 +242,35 @@ npm run dev
 5. 发布草稿，确认提示“发布后，从下一次 AI 请求开始生效”
 6. 打开历史版本表，执行一次回滚，确认新版本重新发布成功
 7. 如需排查当前来源，临时启用 `/api/debug/runtime-env?probe=1`，检查 `ai.chat.source` 和 `ai.embedding.source`
+
+### 2.8 AI 质量闭环冒烟
+
+完整架构、评分权重、标签与数据表见 `docs/ai-quality-loop.md`。上线前至少覆盖一次：
+
+1. 配置 `ADMIN_USERNAMES` 与 `CRON_SECRET`，用管理员账号登录。
+2. 在 `/settings` 确认出现“AI 质量改进中心”，进入 `/admin/ai-quality`。
+3. 用普通账号接受 AI 质量改进授权，完成一轮访谈并提交一次点踩标签和自由文本。
+4. 调用每日评估任务，确认 Trace 生成结构化 `AIEvaluation` 与 `AICase`。
+5. 调用每周迭代任务，确认后台出现 System Prompt、Few-shot 或工程修复候选。
+6. 依次验证批准、发布和回滚，确认 `AdminAuditLog` 记录对应动作。
+7. 撤回反馈或退出质量改进计划，确认关联 Few-shot 状态立即变为 `retired`。
+
+手工调用任务：
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "http://localhost:3000/api/cron/ai-quality/evaluate?limit=100"
+
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "http://localhost:3000/api/cron/ai-quality/iterate"
+```
+
+共享环境发布时按顺序应用以下迁移：
+
+- `20260719010000_add_ai_generation_trace`
+- `20260719020000_add_ai_evaluation`
+- `20260719030000_add_ai_feedback_and_consent`
+- `20260719040000_add_ai_optimization_engine`
 
 ## 3. AI 运行配置中心
 

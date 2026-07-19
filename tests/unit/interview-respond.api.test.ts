@@ -138,7 +138,8 @@ describe("interview respond api auth", () => {
       action: "reply",
       sessionId: "session-1",
       userMessage: "我想记住被接住的感觉。",
-      inputMode: "text"
+      inputMode: "text",
+      requestId: expect.stringMatching(/^ir_/)
     });
   });
 
@@ -164,7 +165,8 @@ describe("interview respond api auth", () => {
         action: "reply",
         sessionId: "session-1",
         userMessage: "我想记住被接住的感觉。",
-        inputMode: "text"
+        inputMode: "text",
+        requestId: expect.stringMatching(/^ir_/)
       },
       expect.any(Object),
       { signal: expect.any(AbortSignal) }

@@ -82,32 +82,32 @@ function matchHighRiskCopy(question: string) {
 }
 
 function expectAnchoredQuestion(question: string, anchorText: string) {
-  expect(question).toContain(`回到“${anchorText}”这件事`);
+  expect(question).toContain(anchorText);
+  expect(question).not.toMatch(/^回到/u);
 }
 
 function expectLeaveOneSentenceFamily(question: string) {
-  expect(question).toMatch(/只留一句|只记一句/u);
-  expect(question).toMatch(/最想记住哪句|会留下哪句/u);
+  expect(question).toMatch(/具体结果|今天的投入/u);
+  expect(question).not.toMatch(/只留一句|只记一句/u);
 }
 
 function expectKeyPartFamily(question: string) {
-  expect(question).toMatch(/最打动你|最有分量|最算数/u);
-  expect(question).toMatch(/哪一点|那一点|哪个点/u);
+  expect(question).toMatch(/具体照顾|什么需要/u);
 }
 
 function expectReflectionCueFamily(question: string) {
-  expect(question).toMatch(/下次再遇到类似情况|再碰到类似情况/u);
-  expect(question).toMatch(/先提醒自己看哪一点|先留意哪一点/u);
+  expect(question).toMatch(/下次遇到类似情形/u);
+  expect(question).toMatch(/什么新依据重新判断/u);
 }
 
 function expectJoyMomentFamily(question: string) {
-  expect(question).toMatch(/当时|那一下/u);
-  expect(question).toMatch(/最具体的一下|最具体的瞬间|哪一下/u);
+  expect(question).toMatch(/当时/u);
+  expect(question).toMatch(/最具体的画面/u);
 }
 
 function expectImprovementCueFamily(question: string) {
-  expect(question).toMatch(/下次再遇到类似情况|再碰到类似情况/u);
-  expect(question).toMatch(/最想先试哪一步|最先能调整哪一步|最想先做哪一步/u);
+  expect(question).toMatch(/下次遇到类似情况/u);
+  expect(question).toMatch(/哪个具体动作/u);
 }
 
 describe("question copy guard", () => {

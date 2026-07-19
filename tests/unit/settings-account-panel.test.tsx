@@ -8,6 +8,10 @@ const locationState = { href: "http://localhost/settings" };
 
 vi.stubGlobal("location", locationState);
 
+vi.mock("@/components/ai-feedback/ai-quality-consent-settings", () => ({
+  AIQualityConsentSettings: () => <div>AI 质量设置</div>
+}));
+
 import { SettingsAccountPanel } from "@/components/auth/settings-account-panel";
 
 describe("settings account panel", () => {
@@ -43,5 +47,20 @@ describe("settings account panel", () => {
     });
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
     expect(locationState.href).toBe("/login");
+  });
+
+  it("shows the AI quality review entry to administrators", () => {
+    render(
+      <SettingsAccountPanel
+        user={{ id: "admin-1", username: "admin" }}
+        showAdminAIQualityEntry
+      />
+    );
+
+    expect(screen.getByRole("link", { name: "AI 质量改进中心" })).toHaveAttribute(
+      "href",
+      "/admin/ai-quality"
+    );
+    expect(screen.queryByText("AI 质量设置")).not.toBeInTheDocument();
   });
 });

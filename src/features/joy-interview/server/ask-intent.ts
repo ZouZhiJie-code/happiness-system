@@ -48,10 +48,6 @@ function resolveIntent(target: AssistantQuestionTarget, dimension: InterviewDime
   }
 
   if (target === "judgment_clue") {
-    if (dimension === "fulfillment") {
-      return "leave_one_sentence";
-    }
-
     if (dimension === "joy" || dimension === "reflection" || dimension === "improvement") {
       return "name_next_time_cue";
     }

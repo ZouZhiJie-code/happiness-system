@@ -5,14 +5,8 @@ const { mockRequireAdminPage } = vi.hoisted(() => ({
   mockRequireAdminPage: vi.fn()
 }));
 
-const {
-  mockGetAdminAIRuntimeStatus,
-  mockGetAIRuntimeDraft,
-  mockGetAIRuntimeHistory
-} = vi.hoisted(() => ({
-  mockGetAdminAIRuntimeStatus: vi.fn(),
-  mockGetAIRuntimeDraft: vi.fn(),
-  mockGetAIRuntimeHistory: vi.fn()
+const { mockGetAdminAIRuntimePageData } = vi.hoisted(() => ({
+  mockGetAdminAIRuntimePageData: vi.fn()
 }));
 
 vi.mock("@/server/services/auth/admin-access", () => ({
@@ -20,9 +14,7 @@ vi.mock("@/server/services/auth/admin-access", () => ({
 }));
 
 vi.mock("@/server/services/admin-ai-runtime/admin-ai-runtime.service", () => ({
-  getAdminAIRuntimeStatus: mockGetAdminAIRuntimeStatus,
-  getAIRuntimeDraft: mockGetAIRuntimeDraft,
-  getAIRuntimeHistory: mockGetAIRuntimeHistory
+  getAdminAIRuntimePageData: mockGetAdminAIRuntimePageData
 }));
 
 import AdminAIRuntimePage from "@/app/settings/ai-runtime/page";
@@ -34,7 +26,8 @@ describe("admin ai runtime page", () => {
       id: "user-1",
       username: "admin_user"
     });
-    mockGetAdminAIRuntimeStatus.mockResolvedValue({
+    mockGetAdminAIRuntimePageData.mockResolvedValue({
+      databaseAvailable: true,
       capabilities: [
         {
           capability: "chat",
@@ -101,41 +94,41 @@ describe("admin ai runtime page", () => {
           publishedConfig: null,
           latestProbe: null
         }
-      ]
-    });
-    mockGetAIRuntimeDraft.mockResolvedValue({
-      id: "draft-chat-1",
-      capability: "chat",
-      provider: "openai",
-      status: "draft",
-      enabled: true,
-      displayName: "OpenAI Chat",
-      apiKeyConfigured: true,
-      apiKeyMask: "sk-o...enai",
-      config: {
-        model: "gpt-5",
-        baseUrl: "https://api.openai.com/v1"
-      },
-      probes: []
-    });
-    mockGetAIRuntimeHistory.mockResolvedValue([
-      {
-        id: "published-chat-1",
-        capability: "chat",
-        provider: "volcengine_ark",
-        status: "archived",
-        enabled: true,
-        displayName: "Ark Chat",
-        config: {
-          modelId: "deepseek-v3-2-251201",
-          baseUrl: "https://ark.cn-beijing.volces.com/api/v3"
+      ],
+      drafts: {
+        chat: {
+          id: "draft-chat-1",
+          capability: "chat",
+          provider: "openai",
+          status: "draft",
+          enabled: true,
+          displayName: "OpenAI Chat",
+          apiKeyConfigured: true,
+          apiKeyMask: "sk-o...enai",
+          config: { model: "gpt-5", baseUrl: "https://api.openai.com/v1" },
+          probes: []
         },
-        version: 1,
-        publishedBy: "admin_user",
-        publishedAt: "2026-05-25T14:30:00.000Z",
-        probes: []
+        embedding: null
+      },
+      history: {
+        chat: [
+          {
+            id: "published-chat-1",
+            capability: "chat",
+            provider: "volcengine_ark",
+            status: "archived",
+            enabled: true,
+            displayName: "Ark Chat",
+            config: { modelId: "deepseek-v3-2-251201", baseUrl: "https://ark.cn-beijing.volces.com/api/v3" },
+            version: 1,
+            publishedBy: "admin_user",
+            publishedAt: "2026-05-25T14:30:00.000Z",
+            probes: []
+          }
+        ],
+        embedding: []
       }
-    ]);
+    });
   });
 
   it("renders status cards, draft form, and history for admins", async () => {
@@ -154,5 +147,21 @@ describe("admin ai runtime page", () => {
     expect(screen.getByRole("button", { name: "执行连通性测试" })).toBeInTheDocument();
     expect(screen.getAllByText("历史版本").length).toBeGreaterThan(0);
     expect(screen.getByText("发布后，从下一次 AI 请求开始生效")).toBeInTheDocument();
+  });
+
+  it("keeps environment diagnostics visible when database-backed config is unavailable", async () => {
+    const current = await mockGetAdminAIRuntimePageData();
+    mockGetAdminAIRuntimePageData.mockResolvedValue({
+      ...current,
+      databaseAvailable: false,
+      drafts: { chat: null, embedding: null },
+      history: { chat: [], embedding: [] }
+    });
+
+    render(await AdminAIRuntimePage());
+
+    expect(screen.getByRole("alert")).toHaveTextContent("数据库配置暂时不可用");
+    expect(screen.getAllByText("聊天能力").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("向量嵌入能力").length).toBeGreaterThan(0);
   });
 });

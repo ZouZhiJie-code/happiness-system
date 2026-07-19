@@ -5,6 +5,9 @@ type CreateUserInput = {
   passwordHash: string;
   agreedToTermsAt: Date;
   agreedToPrivacyAt: Date;
+  privacyPolicyVersion?: string;
+  aiQualityConsentVersion?: string;
+  aiQualityConsentAt?: Date;
 };
 
 type CreateAuthSessionInput = {
@@ -50,6 +53,25 @@ export async function createAuthSession(_input: CreateAuthSessionInput) {
   });
 }
 
+export function ensureAIQualityParticipation(userId: string, policyVersion: string, consentAt = new Date()) {
+  return prisma.user.updateMany({
+    where: {
+      id: userId,
+      OR: [
+        { aiQualityConsentVersion: { not: policyVersion } },
+        { aiQualityConsentAt: null },
+        { aiQualityConsentRevokedAt: { not: null } }
+      ]
+    },
+    data: {
+      privacyPolicyVersion: policyVersion,
+      aiQualityConsentVersion: policyVersion,
+      aiQualityConsentAt: consentAt,
+      aiQualityConsentRevokedAt: null
+    }
+  });
+}
+
 export async function createUserWithInitialSession(_input: CreateUserWithInitialSessionInput) {
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
@@ -57,7 +79,10 @@ export async function createUserWithInitialSession(_input: CreateUserWithInitial
         username: _input.username,
         passwordHash: _input.passwordHash,
         agreedToTermsAt: _input.agreedToTermsAt,
-        agreedToPrivacyAt: _input.agreedToPrivacyAt
+        agreedToPrivacyAt: _input.agreedToPrivacyAt,
+        privacyPolicyVersion: _input.privacyPolicyVersion ?? "legacy",
+        aiQualityConsentVersion: _input.aiQualityConsentVersion ?? null,
+        aiQualityConsentAt: _input.aiQualityConsentAt ?? null
       },
       select: {
         id: true,

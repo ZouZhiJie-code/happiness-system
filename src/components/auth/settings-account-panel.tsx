@@ -23,6 +23,7 @@ type SessionUser = {
 interface SettingsAccountPanelProps {
   user: SessionUser;
   showAdminAnalyticsEntry?: boolean;
+  showAdminAIQualityEntry?: boolean;
   showAdminAIRuntimeEntry?: boolean;
 }
 
@@ -47,6 +48,7 @@ function clearInterviewClientState() {
 export function SettingsAccountPanel({
   user,
   showAdminAnalyticsEntry = false,
+  showAdminAIQualityEntry = false,
   showAdminAIRuntimeEntry = false
 }: SettingsAccountPanelProps) {
   const [loggingOut, setLoggingOut] = React.useState(false);
@@ -96,6 +98,9 @@ export function SettingsAccountPanel({
 
       <Divider />
 
+
+      <Divider />
+
       <div className="flex items-center">
         <ActionButton
           type="button"
@@ -131,6 +136,16 @@ export function SettingsAccountPanel({
           <div className="flex items-center">
             <a href="/admin/analytics" className={actionButtonClass("ghost", "min-h-11")}>
               管理员数据分析
+            </a>
+          </div>
+        </>
+      ) : null}
+      {showAdminAIQualityEntry ? (
+        <>
+          <Divider />
+          <div className="flex items-center">
+            <a href="/admin/ai-quality" className={actionButtonClass("ghost", "min-h-11")}>
+              AI 质量改进中心
             </a>
           </div>
         </>

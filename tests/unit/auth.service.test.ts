@@ -3,13 +3,15 @@ const {
   mockCreateUserWithInitialSession,
   mockDeleteAuthSessionByTokenHash,
   mockFindAuthSessionByTokenHash,
-  mockFindUserByUsername
+  mockFindUserByUsername,
+  mockEnsureAIQualityParticipation
 } = vi.hoisted(() => ({
   mockCreateAuthSession: vi.fn(),
   mockCreateUserWithInitialSession: vi.fn(),
   mockDeleteAuthSessionByTokenHash: vi.fn(),
   mockFindAuthSessionByTokenHash: vi.fn(),
-  mockFindUserByUsername: vi.fn()
+  mockFindUserByUsername: vi.fn(),
+  mockEnsureAIQualityParticipation: vi.fn()
 }));
 
 const { mockHashPassword, mockVerifyPassword } = vi.hoisted(() => ({
@@ -30,7 +32,8 @@ vi.mock("@/server/repositories/auth.repository", () => ({
   createUserWithInitialSession: mockCreateUserWithInitialSession,
   deleteAuthSessionByTokenHash: mockDeleteAuthSessionByTokenHash,
   findAuthSessionByTokenHash: mockFindAuthSessionByTokenHash,
-  findUserByUsername: mockFindUserByUsername
+  findUserByUsername: mockFindUserByUsername,
+  ensureAIQualityParticipation: mockEnsureAIQualityParticipation
 }));
 
 vi.mock("@/server/services/auth/password.service", () => ({
@@ -76,9 +79,15 @@ describe("auth.service", () => {
       expect.objectContaining({
         username: "daily_light_01",
         passwordHash: "salted-hash",
+        privacyPolicyVersion: "2026-07-19",
         tokenHash: "hashed-session-token"
       })
     );
+    const registrationData = mockCreateUserWithInitialSession.mock.calls[0]?.[0];
+    expect(registrationData).toEqual(expect.objectContaining({
+      aiQualityConsentVersion: "2026-07-19",
+      aiQualityConsentAt: expect.any(Date)
+    }));
     expect(result).toEqual({
       token: "raw-session-token",
       user: {
@@ -151,6 +160,7 @@ describe("auth.service", () => {
     });
 
     expect(mockVerifyPassword).toHaveBeenCalledWith("supersecret1", "stored-hash");
+    expect(mockEnsureAIQualityParticipation).toHaveBeenCalledWith("user-1", "2026-07-19");
     expect(result).toEqual({
       token: "raw-session-token",
       user: {

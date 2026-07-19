@@ -1,11 +1,15 @@
 import type { AskIntentEnvelope } from "@/features/joy-interview/server/ask-intent";
 
-function formatAnchor(anchorText: string | null) {
-  return anchorText ? `回到“${anchorText}”这件事，` : "";
+function formatAnchorLead(anchorText: string | null) {
+  return anchorText ? `你提到“${anchorText}”。` : "";
+}
+
+function formatQuotedAnchor(anchorText: string | null) {
+  return anchorText ? `“${anchorText}”里，` : "";
 }
 
 function formatRecallSpecificMoment(anchorText: string | null) {
-  return `${formatAnchor(anchorText)}当时最具体的一下是什么？`;
+  return `${formatAnchorLead(anchorText)}当时最具体的画面是什么？`;
 }
 
 function formatPointOutKeyPart(input: {
@@ -13,34 +17,35 @@ function formatPointOutKeyPart(input: {
   sourceTarget: AskIntentEnvelope["sourceTarget"];
   anchorText: string | null;
 }) {
-  const prefix = formatAnchor(input.anchorText);
+  const lead = formatAnchorLead(input.anchorText);
+  const quotedAnchor = formatQuotedAnchor(input.anchorText);
 
   if (input.sourceTarget === "insight_evidence") {
     switch (input.dimension) {
       case "joy":
-        return `${prefix}最先把你带起来的是哪一点？`;
+        return `${lead}哪个具体细节最先让你的状态有了变化？`;
       case "fulfillment":
-        return `${prefix}最让你觉得今天没白过的是哪一点？`;
+        return `${lead}这一步实际留下了什么结果或积累？如果没有，也可以直接说没有推进。`;
       case "reflection":
-        return `${prefix}最先让你意识到不一样的，是哪个具体细节？`;
+        return `${lead}哪个具体细节让你产生了新的理解？`;
       case "improvement":
-        return `${prefix}最需要先看住的是哪一点？`;
+        return `${lead}当时具体卡在了哪里？`;
       case "gratitude":
-        return `${prefix}最让你觉得被照顾到的是哪一点？`;
+        return `${lead}对方具体做了什么，让你感到被照顾？`;
     }
   }
 
   switch (input.dimension) {
     case "joy":
-      return `${prefix}最打动你的那一点是什么？`;
+      return `${lead}哪个细节让这份开心对你格外有分量？`;
     case "fulfillment":
-      return `${prefix}最让你觉得今天没白过的那一点是什么？`;
+      return `${quotedAnchor}什么样的具体结果会让这份投入对你算数？`;
     case "reflection":
-      return `${prefix}你现在最想指出的关键一点是什么？`;
+      return `${lead}这次经历让你修正了原来的哪个判断？`;
     case "improvement":
-      return `${prefix}最值得先看住的那一点是什么？`;
+      return `${lead}下次最值得先调整的一个环节是什么？`;
     case "gratitude":
-      return `${prefix}最打动你的那一点是什么？`;
+      return `${lead}这份回应具体照顾到了你的什么需要？`;
   }
 }
 
@@ -48,19 +53,19 @@ function formatNameDirectFeeling(input: {
   dimension: AskIntentEnvelope["dimension"];
   anchorText: string | null;
 }) {
-  const prefix = formatAnchor(input.anchorText);
+  const lead = formatAnchorLead(input.anchorText);
 
   switch (input.dimension) {
     case "reflection":
-      return `${prefix}当时最直接冒出来的感觉或念头是什么？`;
+      return `${lead}当时最直接冒出来的感觉或念头是什么？`;
     case "fulfillment":
     case "improvement":
-      return `${prefix}当时最直接冒出来的感觉是什么？`;
+      return `${lead}当时最直接冒出来的感觉是什么？`;
     case "gratitude":
-      return `${prefix}当时你最直接的感觉是什么？`;
+      return `${lead}当时你最直接的感觉是什么？`;
     case "joy":
     default:
-      return `${prefix}当时最直接的感觉是什么？`;
+      return `${lead}当时最直接的感觉是什么？`;
   }
 }
 
@@ -68,19 +73,19 @@ function formatLeaveOneSentence(input: {
   dimension: AskIntentEnvelope["dimension"];
   anchorText: string | null;
 }) {
-  const prefix = formatAnchor(input.anchorText);
+  const lead = formatAnchorLead(input.anchorText);
 
   switch (input.dimension) {
     case "joy":
-      return `${prefix}如果只留一句，你最想记住哪句？`;
+      return `${lead}这份开心里，你最想记住的具体细节是什么？`;
     case "fulfillment":
-      return `${prefix}如果只留一句，你最想记住哪句？`;
+      return `${lead}哪项具体结果最能代表今天的投入？`;
     case "reflection":
-      return `${prefix}如果只留一句，你现在最想留下哪句？`;
+      return `${lead}这次最值得保留的新理解是什么？`;
     case "improvement":
-      return `${prefix}如果只留一句，你下次最想记住哪句提醒？`;
+      return `${lead}下次最想先调整的一个动作是什么？`;
     case "gratitude":
-      return `${prefix}如果只留一句，你最想记住哪句感谢？`;
+      return `${lead}这份回应里，你最想记住的具体动作是什么？`;
   }
 }
 
@@ -88,19 +93,19 @@ function formatNameNextTimeCue(input: {
   dimension: AskIntentEnvelope["dimension"];
   anchorText: string | null;
 }) {
-  const prefix = formatAnchor(input.anchorText);
+  const lead = formatAnchorLead(input.anchorText);
 
   switch (input.dimension) {
     case "joy":
-      return `${prefix}下次再遇到类似情况，你最想先抓住哪一点？`;
+      return `${lead}下次想让这份开心更容易出现，你会先留意什么线索？`;
     case "fulfillment":
-      return `${prefix}下次再回看类似经历，你最想先记住哪一点？`;
+      return `${lead}以后判断一天是否充实时，你会先看哪项具体结果？`;
     case "reflection":
-      return `${prefix}下次再遇到类似情况，你最想先提醒自己看哪一点？`;
+      return `${lead}下次遇到类似情形，你会用什么新依据重新判断？`;
     case "improvement":
-      return `${prefix}下次再遇到类似情况，你最想先试哪一步？`;
+      return `${lead}下次遇到类似情况，你最想先试哪个具体动作？`;
     case "gratitude":
-      return `${prefix}下次再遇到类似时刻，你最想先记住哪一点？`;
+      return `${lead}以后遇到类似时刻，你会先留意哪种关系回应？`;
   }
 }
 

@@ -4,14 +4,22 @@ const {
   mockCreate,
   mockSessionCreate,
   mockUpsert,
-  mockTransaction
+  mockTransaction,
+  mockTraceCreate,
+  mockTraceFindUnique,
+  mockTraceUpdate,
+  mockMessageCreate
 } = vi.hoisted(() => ({
   mockFindUnique: vi.fn(),
   mockUpdate: vi.fn(),
   mockCreate: vi.fn(),
   mockSessionCreate: vi.fn(),
   mockUpsert: vi.fn(),
-  mockTransaction: vi.fn()
+  mockTransaction: vi.fn(),
+  mockTraceCreate: vi.fn(),
+  mockTraceFindUnique: vi.fn(),
+  mockTraceUpdate: vi.fn(),
+  mockMessageCreate: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -25,8 +33,16 @@ vi.mock("@/server/db/prisma", () => ({
     interviewEvent: {
       create: mockCreate
     },
+    interviewMessage: {
+      create: mockMessageCreate
+    },
     joyEntry: {
       upsert: mockUpsert
+    },
+    aIGenerationTrace: {
+      create: mockTraceCreate,
+      findUnique: mockTraceFindUnique,
+      update: mockTraceUpdate
     }
   }
 }));
@@ -41,6 +57,10 @@ describe("findJoyInterviewSessionById", () => {
     mockSessionCreate.mockReset();
     mockUpsert.mockReset();
     mockTransaction.mockReset();
+    mockTraceCreate.mockReset();
+    mockTraceFindUnique.mockReset();
+    mockTraceUpdate.mockReset();
+    mockMessageCreate.mockReset();
   });
 
   it("does not reinterpret legacy joyType labels as a direction signal", async () => {
@@ -430,7 +450,7 @@ describe("findJoyInterviewSessionById", () => {
     mockFindUnique.mockResolvedValue({
       id: "session-new",
       userId: "user-1",
-      dimension: "joy",
+      dimension: "fulfillment",
       status: "active",
       stage: "collect_event",
       activeEventId: "event-1",
@@ -464,7 +484,7 @@ describe("findJoyInterviewSessionById", () => {
           happinessType: null,
           selfPattern: null,
           snapshotData: {
-            kind: "joy"
+            kind: "fulfillment"
           },
           draftSummary: null,
           confidence: null,
@@ -500,19 +520,46 @@ describe("findJoyInterviewSessionById", () => {
 
     const session = await createJoyInterviewSession(
       "user-1",
-      "joy",
-      "今天有没有一个让你真心开心的瞬间？",
+      "fulfillment",
+      "今天哪件事让你觉得这一天没有白过？",
       "2026-05-16"
     );
 
     expect(mockTransaction).toHaveBeenCalledTimes(1);
     const txCalls = mockTransaction.mock.calls[0]?.[0];
     expect(Array.isArray(txCalls)).toBe(true);
-    expect(txCalls).toHaveLength(3);
+    expect(txCalls).toHaveLength(5);
+    expect(mockTraceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: "user-1",
+          dimension: "fulfillment",
+          artifactType: "interview_turn",
+          status: "completed",
+          outputOrigin: "deterministic"
+        })
+      })
+    );
+    expect(mockMessageCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          generationTraceId: expect.any(String)
+        })
+      })
+    );
     expect(mockFindUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           id: expect.any(String)
+        })
+      })
+    );
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          snapshotData: expect.objectContaining({ kind: "fulfillment" }),
+          confidence: 0,
+          missingSlots: ["experience", "progressEvidence", "valueSignal"]
         })
       })
     );

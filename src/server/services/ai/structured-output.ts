@@ -5,10 +5,12 @@ import { getAIProviderFailureCode, type AIChatMessage, type AIProvider } from "@
 
 export interface StructuredOutputAttempt {
   stage: AIRequestStage;
+  attempt?: number;
   provider: string;
   success: boolean;
   latencyMs: number | null;
   errorCode: string | null;
+  responseText?: string | null;
 }
 
 interface StructuredOutputOptions<T> {
@@ -62,6 +64,7 @@ export async function completeStructuredOutput<T>({
   if (!provider) {
     await onAttempt?.({
       stage,
+      attempt: 1,
       provider: "disabled",
       success: false,
       latencyMs: null,
@@ -87,20 +90,24 @@ export async function completeStructuredOutput<T>({
       if (!parsed.success) {
         await onAttempt?.({
           stage,
+          attempt: attempt + 1,
           provider: result.provider,
           success: false,
           latencyMs: result.latencyMs,
-          errorCode: "INVALID_SCHEMA"
+          errorCode: "INVALID_SCHEMA",
+          responseText: result.content
         });
         continue;
       }
 
       await onAttempt?.({
         stage,
+        attempt: attempt + 1,
         provider: result.provider,
         success: true,
         latencyMs: result.latencyMs,
-        errorCode: null
+        errorCode: null,
+        responseText: result.content
       });
 
       return parsed.data;
@@ -111,6 +118,7 @@ export async function completeStructuredOutput<T>({
 
       await onAttempt?.({
         stage,
+        attempt: attempt + 1,
         provider: provider.name,
         success: false,
         latencyMs: null,

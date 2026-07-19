@@ -48,6 +48,14 @@ vi.mock("next/navigation", () => ({
   })
 }));
 
+vi.mock("@/components/ai-feedback/ai-quality-consent-banner", () => ({
+  AIQualityConsentBanner: () => null
+}));
+
+vi.mock("@/components/ai-feedback/ai-response-feedback", () => ({
+  AIResponseFeedback: () => null
+}));
+
 const baseSnapshot: JoySnapshot = {
   event: "今天和家人一起吃饭聊天",
   feeling: "轻松踏实",
@@ -1741,6 +1749,7 @@ describe("InterviewShell", () => {
     renderInterviewPage();
 
     expect(await screen.findByRole("button", { name: "只补一句" })).toBeInTheDocument();
+    expect(screen.getByText("我不再继续追问细节了。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "换一个片段" })).toBeInTheDocument();
     const pauseButton = screen.getByRole("button", { name: "先退出" });
     expect(pauseButton).toBeInTheDocument();

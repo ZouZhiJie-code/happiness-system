@@ -29,7 +29,7 @@ describe("getDimensionProgressSummary", () => {
   it.each(["结束本轮访谈", "结束这轮访谈", "先结束这一轮"])("treats %s as a boundary stop", (message) => {
     expect(assessUserTurnMessage(message)).toMatchObject({
       intent: "boundary_stop",
-      isMeaningful: true,
+      isMeaningful: false,
       shouldExtractSnapshot: false,
       shouldAdvanceTurn: false,
       shouldAdvanceRound: false

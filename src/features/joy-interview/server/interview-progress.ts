@@ -25,6 +25,7 @@ export interface UserTurnAssessment {
   intent:
     | "content"
     | "low_signal"
+    | "conversation_feedback"
     | "question_repair"
     | "hypothesis_denial"
     | "draft_request"
@@ -57,6 +58,13 @@ const DRAFT_REQUEST_PATTERN =
   /(直接生成|先生成日志|生成一下日志|生成日志(?:吧|了)?|帮我生成(?:一下)?日志|直接整理|先整理日志|整理日志(?:吧|了)?|整理成日志|写成日志|(?:帮我)?出(?:一篇|一份|个)?日志|总结日志|总结成日志|总结成日志吧|帮我(?:总结|整理)(?:一下)?(?:成日志|日志)?)/u;
 const GENERIC_BOUNDARY_PATTERN =
   /(不要再(?:追问|问|深挖|纠结)|别(?:再)?(?:追问|问)了|不想(?:再)?(?:继续|深挖|聊了|说了|回答)|已经(?:讲|说)得很具体|这(?:追问|问题|样问)(?:有)?什么意义|你(?:干嘛|为什么|怎么)(?:老|一直|总是)?(?:问|纠结|追问)|先这样|就这样吧|先到这|不用(?:再)?问|没必要(?:再)?问|够了)/u;
+const EXACT_BOUNDARY_PATTERN = /^(?:请)?(?:结束吧?|先结束|到这|先到这|停|停吧|退出)(?:了)?$/u;
+const DIMENSION_BOUNDARY_PATTERN = /^(?:请)?(?:结束|停止|停下|退出)(?:这个|当前|本次|这次)?(?:维度|访谈|对话|话题)(?:吧|了)?$/u;
+const HOSTILE_BOUNDARY_PATTERN =
+  /(烦不烦|有病|傻逼|滚|闭嘴|废话|神经病|妈的|他妈|卧槽|我操|操(?:你|他|这|$)|草(?:泥马|你妈|$)|你(?:到底)?在说什么|到底在问什么|这问的什么(?:东西)?|问的什么东西)/u;
+const CONVERSATION_FEEDBACK_PATTERN =
+  /((?:问题|问法|提问|访谈|产品|设计).*(?:难懂|看不懂|听不懂|重复|单一|绕|抽象|有问题|不合理|奇怪|糟糕|不好)|(?:一直|总是|反复).*(?:问|追问).*(?:一样|同一个|重复)|(?:只会|来回)(?:问|追问)|(?:中文|人话).*(?:说|问))/u;
+const INCOMPLETE_UTTERANCE_PATTERN = /(?:我觉得就是|我想说的是|可能就是|应该就是|大概就是)[，,、：:…\.。]*$/u;
 
 function isTurnEndingBoundary(compactMessage: string) {
   return TURN_END_PATTERNS.some((pattern) => compactMessage.includes(pattern))
@@ -65,7 +73,13 @@ function isTurnEndingBoundary(compactMessage: string) {
 
 export function isBoundaryStopRequested(message: string) {
   const compactMessage = normalizeMessage(message).replace(/\s+/g, "");
-  return Boolean(compactMessage) && (GENERIC_BOUNDARY_PATTERN.test(compactMessage) || isTurnEndingBoundary(compactMessage));
+  const commandMessage = compactMessage.replace(/[。！!？?]+$/u, "");
+  return Boolean(compactMessage) && (
+    GENERIC_BOUNDARY_PATTERN.test(compactMessage) ||
+    EXACT_BOUNDARY_PATTERN.test(commandMessage) ||
+    DIMENSION_BOUNDARY_PATTERN.test(commandMessage) ||
+    isTurnEndingBoundary(compactMessage)
+  );
 }
 
 export function isDraftOverrideRequestedFromBoundary(message: string | null) {
@@ -97,8 +111,6 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
     };
   }
 
-  const hostilePattern = /(烦不烦|有病|傻逼|滚|闭嘴|废话|神经病|妈的|操)/u;
-
   if (isDraftOverrideRequestedFromBoundary(compactMessage)) {
     return {
       normalizedMessage,
@@ -110,11 +122,35 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
       repairSignal: null
     };
   }
+  if (HOSTILE_BOUNDARY_PATTERN.test(compactMessage)) {
+    return {
+      normalizedMessage,
+      isMeaningful: false,
+      intent: "hostile_boundary",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
+    };
+  }
   if (isBoundaryStopRequested(compactMessage)) {
     return {
       normalizedMessage,
-      isMeaningful: true,
-      intent: hostilePattern.test(compactMessage) ? "hostile_boundary" : "boundary_stop",
+      isMeaningful: false,
+      intent: "boundary_stop",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
+      repairSignal: null
+    };
+  }
+
+  const hasExplicitRepairRequest = /(换一个|换个问法|换种说法|换个说法|说简单点|简单点说|说白一点|说直白点)/u.test(normalizedMessage);
+  if (CONVERSATION_FEEDBACK_PATTERN.test(normalizedMessage) && !hasExplicitRepairRequest) {
+    return {
+      normalizedMessage,
+      isMeaningful: false,
+      intent: "conversation_feedback",
       shouldExtractSnapshot: false,
       shouldAdvanceTurn: false,
       shouldAdvanceRound: false,
@@ -148,6 +184,18 @@ export function assessUserTurnMessage(message: string): UserTurnAssessment {
       shouldExtractSnapshot: true,
       shouldAdvanceTurn: true,
       shouldAdvanceRound: true,
+      repairSignal: null
+    };
+  }
+
+  if (INCOMPLETE_UTTERANCE_PATTERN.test(normalizedMessage)) {
+    return {
+      normalizedMessage,
+      isMeaningful: false,
+      intent: "low_signal",
+      shouldExtractSnapshot: false,
+      shouldAdvanceTurn: false,
+      shouldAdvanceRound: false,
       repairSignal: null
     };
   }
