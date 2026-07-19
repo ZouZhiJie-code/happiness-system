@@ -1766,7 +1766,7 @@ describe("prepareJoyInterviewResponse", () => {
       })
     );
     expect(result.nextStage).toBe("probe_pattern");
-    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
+    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
     expect(result.assistantTurn.thinkingSummary).toBe(
       "你已经碰到这段开心里最打动你的那层了，这份被朋友真正接住也慢慢清楚了，再看看它为什么会一直留在你心里。"
     );
@@ -2556,7 +2556,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
-  it("keeps probing when wrap-up is reached before the choice threshold", async () => {
+  it("offers the choice as soon as a rich reply completes the current event", async () => {
     const preWrapSnapshot: JoySnapshot = {
       ...baseSnapshot,
       happinessType: null,
@@ -2621,15 +2621,14 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(generateJoyAssistantTurn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        stage: "probe_pattern"
-      })
-    );
-    expect(result.nextStage).toBe("probe_pattern");
-    expect(result.nextEventStatus).toBe("active");
-    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
-    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+    expect(result.nextStage).toBe("wrap_up");
+    expect(result.nextEventStatus).toBe("ready_for_choice");
+    expect(result.nextProgressData).toEqual({
+      kind: "event_complete",
+      completionMode: "complete"
+    });
+    expect(result.assistantTurn.stateUpdate.offerChoice).toBe(true);
   });
 
   it("falls back to a stage question when the model returns an empty follow-up", async () => {
@@ -2668,7 +2667,7 @@ describe("prepareJoyInterviewResponse", () => {
       throw new Error("Expected an active interview response with an assistant turn.");
     }
 
-    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
+    expect(result.assistantTurn.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
     expect(result.assistantTurn.stateUpdate.offerChoice).toBe(false);
   });
 
@@ -3069,7 +3068,7 @@ describe("prepareJoyInterviewResponse", () => {
       },
       {
         target: "question",
-        text: "你觉得自己在关系里最在乎什么？"
+        text: "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？"
       }
     ]);
     expect(streamJoyAssistantTurn).toHaveBeenCalled();
@@ -3078,15 +3077,15 @@ describe("prepareJoyInterviewResponse", () => {
         nextTurnCount: 4,
         assistantTurn: expect.objectContaining({
           thinkingSummary: "这份开心像是来自连接感。",
-          question: "你觉得自己在关系里最在乎什么？"
+          question: "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？"
         })
       })
     );
-    expect(result.assistantMessage).toBe("这份开心像是来自连接感。\n你觉得自己在关系里最在乎什么？");
-    expect(result.assistantTurn?.question).toBe("你觉得自己在关系里最在乎什么？");
+    expect(result.assistantMessage).toBe("这份开心像是来自连接感。\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
   });
 
-  it("preserves raw whitespace across streamed question deltas", async () => {
+  it("preserves raw whitespace in the guarded final question", async () => {
     findJoyInterviewSessionById.mockResolvedValue(buildSession());
     extractJoySnapshotWithAI.mockResolvedValue(baseSnapshot);
     getNextStage.mockReturnValue("probe_pattern");
@@ -3147,11 +3146,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(questionDeltas).toEqual([
       {
         target: "question",
-        text: "What "
-      },
-      {
-        target: "question",
-        text: "next?"
+        text: "What next?"
       }
     ]);
     expect(questionDeltas.map((delta) => delta.text).join("")).toBe("What next?");
@@ -3219,9 +3214,9 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(summaryDeltas.length).toBeGreaterThan(1);
     expect(summaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedSummary);
-    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("你觉得自己在关系里最在乎什么？");
+    expect(questionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedSummary);
-    expect(result.assistantMessage).toBe(`${normalizedSummary}\n你觉得自己在关系里最在乎什么？`);
+    expect(result.assistantMessage).toBe(`${normalizedSummary}\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？`);
     expect(result.assistantMessage).not.toContain("你提到");
     expect(result.assistantMessage).not.toContain("我想知道");
     expect(result.assistantMessage).not.toContain("？\n");
@@ -3397,17 +3392,17 @@ describe("prepareJoyInterviewResponse", () => {
 
     expect(continuedSummaryDeltas.length).toBeGreaterThan(1);
     expect(continuedSummaryDeltas.map((delta) => delta.text).join("")).toBe(normalizedContinuedSummary);
-    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
-    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？`);
+    expect(continuedQuestionDeltas.map((delta) => delta.text).join("")).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
+    expect(result.assistantMessage).toBe(`${normalizedContinuedSummary}\n回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？`);
     expect(result.assistantTurn?.thinkingSummary).toBe(normalizedContinuedSummary);
     expect(result.assistantTurn?.insight).toBe("");
-    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？");
+    expect(result.assistantTurn?.question).toBe("回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？");
   });
 
   it("does not let continue_current_event re-ask the same question with only a framing prefix", async () => {
     const previousQuestion = "你觉得自己在关系里最在乎什么？";
     const continuedQuestion = "如果只留一个点，你觉得自己在关系里最在乎什么？";
-    const fallbackQuestion = "回到“今天和朋友聊了很久”这件事，最打动你的那一点是什么？";
+    const fallbackQuestion = "回到“今天和朋友聊了很久”这件事，下次再遇到类似情况，你最想先抓住哪一点？";
     const continuedSummary = "被朋友真正接住之后，最想留下的那层关系感觉已经更清楚了。";
 
     const choiceSession = buildSession({

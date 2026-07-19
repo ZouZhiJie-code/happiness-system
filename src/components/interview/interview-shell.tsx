@@ -8,7 +8,11 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
-import { TodayJournalPanel, type TodayDayActionVariant } from "@/components/interview/today-journal-panel";
+import {
+  resolveDayAction,
+  TodayJournalPanel,
+  type TodayDayActionVariant
+} from "@/components/interview/today-journal-panel";
 import { ConfirmDialog, HorizontalPager, useConfirmDialog, type HorizontalPagerMotion } from "@/components/ui";
 import { getScopedLocalStorageKey } from "@/features/auth/auth-local";
 import {
@@ -2857,6 +2861,7 @@ export function InterviewShell({
       })
     };
   }, [currentRecordDate, liveCurrentDimensionCard, todayJournalBoard]);
+  const mobileDayAction = useMemo(() => resolveDayAction(mergedTodayJournalBoard), [mergedTodayJournalBoard]);
 
   function navigateToDimensionFromPanel(targetDimension: InterviewDimension) {
     if (sessionId) {
@@ -3096,6 +3101,36 @@ export function InterviewShell({
         }`}
       >
       <div className="page-shell flex min-h-0 flex-col rounded-none border-x-0 border-t-0 p-3 md:p-4">
+        <div
+          data-testid="mobile-interview-actions"
+          className="mb-2 grid shrink-0 grid-cols-3 gap-1.5 border-b border-[var(--line-soft)] pb-2 lg:hidden"
+        >
+          <button
+            type="button"
+            onClick={() => void openHappinessScoreWorkspace()}
+            className="rounded-[var(--radius-control)] px-2 py-2 text-xs font-medium text-[#684d35] transition hover:bg-[rgba(255,250,242,0.72)]"
+          >
+            当天评分
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleTogglePanel()}
+            disabled={!canOpenWorkspace}
+            aria-label={canOpenWorkspace ? `${workspaceToggleLabel}当前维度日志` : "当前维度还没有日志"}
+            className="rounded-[var(--radius-control)] px-2 py-2 text-xs font-medium text-[#684d35] transition hover:bg-[rgba(255,250,242,0.72)] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            当前日志
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDayAction(mobileDayAction.variant)}
+            disabled={mobileDayAction.disabled || isDayActionBusy}
+            aria-label={mobileDayAction.ariaLabel}
+            className="rounded-[var(--radius-control)] bg-[rgba(226,200,164,0.54)] px-2 py-2 text-xs font-semibold text-[#4b3522] transition hover:bg-[rgba(226,200,164,0.76)] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isDayActionBusy ? "整理中…" : "完整日志"}
+          </button>
+        </div>
         <HorizontalPager
           activeKey={displayDimension}
           ariaLabel="访谈维度内容"

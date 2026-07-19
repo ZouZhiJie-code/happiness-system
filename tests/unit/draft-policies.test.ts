@@ -1553,7 +1553,7 @@ describe("draft policies", () => {
     expect(draft.selfPattern).toBeNull();
     expect(draft.title.length).toBeLessThanOrEqual(MAX_JOURNAL_TITLE_LENGTH);
     expect(draft.title).not.toContain("今天把一个拖了很久");
-    expect(draft.content).toContain("至少这件事让我确认，今天不是空转的一天。");
+    expect(draft.content).toContain("回头看，这份投入有了清楚的着落。");
     expect(draft.content).not.toContain("值得感标准");
     expect(draft.content).not.toContain("对我来说");
   });
@@ -1577,7 +1577,8 @@ describe("draft policies", () => {
     expect(draft.title.length).toBeLessThanOrEqual(MAX_JOURNAL_TITLE_LENGTH);
     expect(draft.title).toBe("忙碌不等于进展");
     expect(draft.content).toContain("今天让我停下来想了一下的，是今天看完一个项目复盘。");
-    expect(draft.content).toContain("它让我看见，我意识到自己以前太容易把忙碌当成进展。");
+    expect(draft.content).toContain("我意识到自己以前太容易把忙碌当成进展。");
+    expect(draft.content).not.toContain("它让我看见，我意识到");
     expect(draft.content).toContain("以后再判断类似事情时，我会多带着这条线索");
     expect(countParagraphs(draft.content)).toBe(2);
     expect(draft.content).not.toContain("触发片段");
@@ -1633,7 +1634,7 @@ describe("draft policies", () => {
     expect(draft.title).toBe("先听完再回应");
     expect(draft.content).toContain("今天最想回头看一眼的，是今天开会时我有点急，对方问题还没说完我就开始解释。");
     expect(draft.content).toContain("真正卡住我的地方，是没有先确认问题就开始解释。");
-    expect(draft.content).toContain("下次我想先试试先复述一遍问题，再开始回答。");
+    expect(draft.content).toContain("下次我会先复述一遍问题，再开始回答。");
     expect(countParagraphs(draft.content)).toBe(3);
     expect(draft.content).not.toContain("改进情境");
     expect(draft.content).not.toContain("制定一个计划");
@@ -1663,10 +1664,30 @@ describe("draft policies", () => {
 
     expect(draft.selfPattern).toBeNull();
     expect(draft.nextAttempt).toBeNull();
-    expect(draft.content).toContain("先停在这里就够了");
-    expect(draft.content).toContain("回答前先复述问题是一个可以调整的地方");
+    expect(draft.content).toContain("这次先记住");
+    expect(draft.content).toContain("回答前先复述问题是我可以调整的地方");
     expect(draft.content).not.toContain("下次我想先试试");
     expect(draft.content).not.toContain("以后我要");
+  });
+
+  it("removes repeated friction clauses from improvement state sentences", () => {
+    const snapshot: JoySnapshot = {
+      ...improvementSnapshot,
+      event: "汇报时急着回应质疑，打断了同事两次",
+      stateAssessment: "紧张，把对方的问题听成了否定",
+      frictionPoint: "把对方的问题听成了否定",
+      controllableFactor: "先听完并复述，再回答",
+      nextAttempt: "先停两秒，确认对方的重点",
+      selfPattern: "先停两秒，确认对方的重点"
+    };
+    const session = buildImprovementSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({ session, sourceEvents });
+    const draft = createFallbackDraft({ session, sourceEvents, eventBlocks: [], brief });
+
+    expect(draft.content).toContain("回头看，我当时紧张。");
+    expect(draft.content.match(/把对方的问题听成了否定/gu)).toHaveLength(1);
+    expect(draft.content).not.toContain("回头看，紧张，把");
   });
 
   it("creates complete gratitude fallback drafts with a light relationship signal", () => {
@@ -1688,8 +1709,9 @@ describe("draft policies", () => {
     expect(draft.selfPattern).toBe("这样的关系回应值得我珍惜，也值得我学习");
     expect(draft.title).toBe("被稳稳接住");
     expect(draft.content).toContain("今天让我想认真记下来的感谢");
-    expect(draft.content).toContain("我感谢的不是一句泛泛的好意");
-    expect(draft.content).toContain("对方像是看见了我当时需要有人帮我把混乱的事情理清");
+    expect(draft.content.match(/看出我快撑不住，帮我先理清优先级/gu)).toHaveLength(1);
+    expect(draft.content).toContain("对方也看见了我当时需要有人帮我把混乱的事情理清");
+    expect(draft.content).not.toMatch(/(?:不只是|不是)[^。！？!?]{0,80}而是/u);
     expect(draft.content).not.toContain("感谢片段");
     expect(draft.content).not.toContain("必须报答");
   });
@@ -1717,8 +1739,8 @@ describe("draft policies", () => {
       brief
     });
 
-    expect(draft.content).toContain("而是她当时帮我把会议记录框架列好了");
-    expect(draft.content).not.toContain("而是的是她");
+    expect(draft.content).toContain("我记得她当时帮我把会议记录框架列好了");
+    expect(draft.content).not.toContain("的是她");
   });
 
   it("normalizes gratitude need wording before composing fallback need sentences", () => {
@@ -1746,9 +1768,34 @@ describe("draft policies", () => {
       brief
     });
 
-    expect(draft.content).toContain("对方像是看见了我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
+    expect(draft.content).toContain("对方也看见了我当时的慌和虚弱，以及不用硬撑着一边听一边记的难处");
     expect(draft.content).not.toContain("也让我不用硬撑着一边听一边记");
     expect(draft.content).not.toContain("我当时的慌和虚弱被看见了，不用硬撑着一边听一边记");
+  });
+
+  it("composes full-clause gratitude fields without duplicated actions or broken grammar", () => {
+    const snapshot: JoySnapshot = {
+      ...gratitudeSnapshot,
+      gratitudeMoment: "晚上我准备材料时有点慌，朋友主动帮我把逻辑顺了一遍，还提醒我先吃点东西。",
+      event: "晚上我准备材料时有点慌，朋友主动帮我把逻辑顺了一遍，还提醒我先吃点东西。",
+      gratitudeTarget: "朋友",
+      kindAction: "帮我把逻辑顺了一遍，还提醒我先吃点东西",
+      seenNeed: "既需要具体帮助，也需要有人让我慢下来",
+      innerEffect: "稳稳接住了我的慌乱",
+      gratitudeReason: "更珍惜这种既支持又尊重边界的关系",
+      relationshipSignal: "更珍惜这种既支持又尊重边界的关系",
+      selfPattern: "更珍惜这种既支持又尊重边界的关系"
+    };
+    const session = buildGratitudeSession(snapshot);
+    const sourceEvents = [buildEvent(snapshot)];
+    const brief = buildDraftBrief({ session, sourceEvents });
+    const draft = createFallbackDraft({ session, sourceEvents, eventBlocks: [], brief });
+
+    expect(draft.content).toContain("对方也看见了我既需要具体帮助，也需要有人让我慢下来。");
+    expect(draft.content).toContain("这份回应稳稳接住了我的慌乱。");
+    expect(draft.content).toContain("回头看，我也更珍惜这种既支持又尊重边界的关系。");
+    expect(draft.content.match(/帮我把逻辑顺了一遍/gu)).toHaveLength(1);
+    expect(draft.content).not.toMatch(/对方也看见了[，,]我|这让我感到稳稳接住|更知道[，,]更珍惜/u);
   });
 
   it("deduplicates improvement closing prefixes when nextAttempt already starts with 下次", () => {
@@ -1771,8 +1818,8 @@ describe("draft policies", () => {
       brief
     });
 
-    expect(draft.content).toContain("下次我想先试试复述一遍问题，再开始回答");
-    expect(draft.content).not.toContain("下次我想先试试下次我想");
+    expect(draft.content).toContain("下次我会先复述一遍问题，再开始回答");
+    expect(draft.content).not.toContain("下次我会下次");
   });
 
   it("keeps supporting gratitude moments in stitched fallback drafts", () => {
@@ -1843,7 +1890,7 @@ describe("draft policies", () => {
     expect(draft.content).toContain("冰淇淋");
     expect(draft.relationshipSignal).toBe("这样的关系回应值得我珍惜，也值得我学习");
     expect(draft.eventBlocks).toHaveLength(2);
-    expect(countParagraphs(draft.content)).toBe(4);
+    expect(countParagraphs(draft.content)).toBe(3);
   });
 
   it("keeps joy fallback drafts from splitting each sentence into its own paragraph", () => {
@@ -1886,8 +1933,8 @@ describe("draft policies", () => {
     expect(draft.title).toBe("清醒地开始");
     expect(draft.delightSignature).toBeNull();
     expect(draft.content).toContain("今天最想记下来的，是早起本身。");
-    expect(draft.content).toContain("真正让我开心的，不只是事情本身，而是有更多的时间。");
-    expect(draft.content).toContain("那一刻我明显变得身体上更清醒，更有准备。");
+    expect(draft.content).toContain("真正让我开心的是有更多的时间。");
+    expect(draft.content).toContain("那一刻，我感到身体上更清醒，更有准备。");
     expect(draft.content).not.toContain("轻快乐");
     expect(draft.content).not.toContain("深意义");
     expect(draft.content).not.toContain("象征意义");
@@ -1916,6 +1963,28 @@ describe("draft policies", () => {
     expect(result.issues).toContain("title_theme_mismatch");
   });
 
+  it("rejects internal classification labels, template contrasts and corrupted prose", () => {
+    const brief = buildDraftBrief({
+      session: buildFulfillmentSession(fulfillmentSnapshot),
+      sourceEvents: [buildEvent(fulfillmentSnapshot)]
+    });
+
+    const result = runDraftQualityGate({
+      brief,
+      draft: {
+        title: "把事情往前推",
+        content:
+          "今天最让我觉得不算白过的，是今天把一个拖了很久的任务推进完了。这件事真正有分量的地方，不是做了很多，而是原本卡住的部分终于收口了。做完之后，我心里多了一点最有满足感的是材料终于可以直接讨论，这种充实更接近推进完成型。",
+        selfPattern: fulfillmentSnapshot.selfPattern
+      }
+    });
+
+    expect(result.accepted).toBe(false);
+    expect(result.issues).toContain("internal_classification_tone");
+    expect(result.issues).toContain("template_contrast_tone");
+    expect(result.issues).toContain("corrupted_prose");
+  });
+
   it("creates partial gratitude fallback drafts without forcing relationship signals", () => {
     const partialSnapshot: JoySnapshot = {
       ...gratitudeSnapshot,
@@ -1940,7 +2009,7 @@ describe("draft policies", () => {
 
     expect(draft.selfPattern).toBeNull();
     expect(draft.relationshipSignal).toBeNull();
-    expect(draft.content).toContain("先停在这里也够了");
+    expect(draft.content).toContain("这份感谢提醒我");
     expect(draft.content).not.toContain("值得我珍惜，也值得我学习");
   });
 });

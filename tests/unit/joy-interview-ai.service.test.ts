@@ -787,7 +787,7 @@ describe("extractJoySnapshotWithAI", () => {
     ).toBe(true);
   });
 
-  it("keeps fallback extraction from auto-writing a stable manual clue or optional signals", async () => {
+  it("preserves an explicitly stated stable manual clue while keeping optional signals conservative", async () => {
     const session = buildSession({
       stage: "probe_pattern",
       turnCount: 2,
@@ -824,13 +824,59 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.joySource).toContain("因为");
     expect(snapshot.stateShift).toBe("更轻松");
     expect(snapshot.meaningNeed).toContain("我在乎");
-    expect(snapshot.manualClue).toBeNull();
+    expect(snapshot.manualClue).toContain("只要和熟悉的人慢下来相处");
     expect(snapshot.directionSignal).toBeNull();
     expect(snapshot.valueImpact).toBeNull();
     expect(snapshot.durability).toBeNull();
   });
 
-  it("keeps fallback extraction from auto-writing a delight signature", async () => {
+  it("preserves 当我能…我会更容易 as an explicit joy closure", async () => {
+    const session = buildSession({
+      stage: "collect_event",
+      turnCount: 0,
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        joyMoment: null,
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        tags: [],
+        confidence: 0.2,
+        missingSlots: ["joyMoment", "joySource", "stateShiftOrMeaningNeed", "manualClue"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      joyMoment: "早起后坐在窗边喝咖啡",
+      joySource: "一段没有被消息切碎的时间",
+      stateShift: "从匆忙变得从容",
+      meaningNeed: null,
+      manualClue: null,
+      delightSignature: null,
+      directionSignal: null,
+      valueImpact: null,
+      durability: null,
+      tags: []
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage:
+        "我发现，当我能在一天开始时留一点不被打扰的时间，我会更容易回到自己的节奏。"
+    });
+
+    expect(snapshot.manualClue).toContain("当我能在一天开始时留一点不被打扰的时间，我会更容易回到自己的节奏");
+  });
+
+  it("preserves an explicitly stated delight signature without heuristic synthesis", async () => {
     const session = buildSession({
       stage: "probe_pattern",
       turnCount: 2,
@@ -866,6 +912,41 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.joyMoment).toContain("中午刷到一个反差特别强的搞笑短视频");
     expect(snapshot.joySource).toContain("那种突然反转的好笑感");
     expect(snapshot.stateShift).toBe("更轻松");
+    expect(snapshot.delightSignature).toContain("我会被这种内容一下子带动起来");
+  });
+
+  it("does not synthesize a delight signature from a scene and reaction alone", async () => {
+    const session = buildSession({
+      stage: "probe_pattern",
+      turnCount: 2,
+      lastAssistantQuestion: "这种开心通常会被什么样的内容、节奏或场景带出来？",
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        joyMoment: null,
+        joySource: null,
+        stateShift: null,
+        meaningNeed: null,
+        manualClue: null,
+        delightSignature: null,
+        directionSignal: null,
+        valueImpact: null,
+        durability: null,
+        tags: [],
+        confidence: 0.2,
+        missingSlots: ["joyMoment", "joySource", "stateShiftOrMeaningNeed", "delightSignature"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue(null);
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "中午刷到一个反差特别强的搞笑短视频，我一下就笑出来了，整个人都轻松了很多。"
+    });
+
     expect(snapshot.delightSignature).toBeNull();
   });
 
@@ -1213,7 +1294,7 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.frictionPoint).toBe("真正的卡点是我一听到不同意见就想立刻澄清，怕场面失控");
   });
 
-  it("keeps improvement nextAttempt empty during probe_reason even if the user blurts out an action early", async () => {
+  it("keeps explicit improvement actions even when the user answers ahead of the current stage", async () => {
     const session = buildSession({
       dimension: "improvement",
       stage: "probe_reason",
@@ -1256,9 +1337,9 @@ describe("extractJoySnapshotWithAI", () => {
     });
 
     expect(snapshot.repeatCondition).toBe("关键是我开工前先把当天主线和三条重点写出来了");
-    expect(snapshot.controllableFactor).toBeNull();
-    expect(snapshot.nextAttempt).toBeNull();
-    expect(snapshot.successSignal).toBeNull();
+    expect(snapshot.controllableFactor).toBe("开始前先定重点和主线");
+    expect(snapshot.nextAttempt).toBe("下次我还想继续先写三条重点，再处理细节");
+    expect(snapshot.successSignal).toBe("主线没有被临时消息带跑");
   });
 
   it("preserves an improvement track even when the condition or friction point is not ready yet", async () => {
@@ -1304,7 +1385,7 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.nextAttempt).toBeNull();
   });
 
-  it("keeps repeat_good collect_event replies from backfilling legacy improvement cause fields too early", async () => {
+  it("keeps explicit repeat conditions from a rich collect_event reply", async () => {
     const session = buildSession({
       dimension: "improvement",
       stage: "collect_event",
@@ -1345,7 +1426,7 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.selfPattern).toBeNull();
     expect(snapshot.improvementTrack).toBe("repeat_good");
     expect(snapshot.frictionPoint).toBeNull();
-    expect(snapshot.repeatCondition).toBeNull();
+    expect(snapshot.repeatCondition).toBe("先写了三条重点后主线没有被消息带着跑");
     expect(snapshot.controllableFactor).toBeNull();
     expect(snapshot.nextAttempt).toBeNull();
     expect(snapshot.successSignal).toBeNull();
@@ -1387,7 +1468,7 @@ describe("extractJoySnapshotWithAI", () => {
     });
 
     expect(snapshot.stateAssessment).toBe("这次有一个值得重复的好状态");
-    expect(snapshot.repeatCondition).toBeNull();
+    expect(snapshot.repeatCondition).toBe("我先写了三条重点再开工，整个上午都没怎么被消息带跑");
     expect(snapshot.nextAttempt).toBeNull();
   });
 
@@ -1428,6 +1509,122 @@ describe("extractJoySnapshotWithAI", () => {
 
     expect(snapshot.improvementTrack).toBe("repeat_good");
     expect(snapshot.stateAssessment).toBe("这次有一个值得重复的好状态");
+  });
+
+  it("keeps all explicit fulfillment evidence from one rich opening reply", async () => {
+    const session = buildSession({
+      dimension: "fulfillment",
+      stage: "collect_event",
+      turnCount: 0,
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["experience", "progressEvidence", "valueSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      experience: "今天把拖了三天的项目复盘整理完，补齐数据、结论和下一步，并发给团队",
+      feeling: "踏实",
+      progressEvidence: "零散信息变成了团队可以直接讨论的材料，也让明天的评审有了可靠依据",
+      fulfillmentType: "推进完成型",
+      valueSignal: "真正推动团队做决定，才会让我觉得今天的投入有分量",
+      tags: ["推进"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage:
+        "今天我把拖了三天的项目复盘终于整理完，补齐了数据、结论和下一步，并发给团队。最有满足感的是那些零散信息终于变成大家可以直接讨论的材料，也让明天的评审有了可靠依据。我觉得今天的投入没白费，因为它真正推动了团队做决定。"
+    });
+
+    expect(snapshot.event).toContain("项目复盘");
+    expect(snapshot.whyItMattered).toContain("团队可以直接讨论");
+    expect(snapshot.selfPattern).toContain("推动团队做决定");
+  });
+
+  it("keeps cause, control, next attempt and success signal from one rich improvement reply", async () => {
+    const session = buildSession({
+      dimension: "improvement",
+      stage: "collect_event",
+      turnCount: 0,
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["situation", "frictionPoint", "controllableFactor", "nextAttempt"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      situation: "今天汇报时我急着回应质疑，打断了同事两次，结果讨论越来越乱",
+      feeling: "紧张",
+      improvementType: "沟通节奏",
+      improvementTrack: "avoid_bad",
+      stateAssessment: "急着回应，讨论节奏越来越乱",
+      frictionPoint: "把对方的问题听成了否定",
+      repeatCondition: null,
+      controllableFactor: "先听完并复述，再回答",
+      nextAttempt: "下次先停两秒，确认对方的重点后再继续",
+      successSignal: "讨论节奏更稳，双方都能把话说完",
+      tags: ["沟通"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage:
+        "今天汇报时我急着回应质疑，打断了同事两次，结果讨论越来越乱。我当时紧张，卡点是把对方的问题听成了否定。可控的地方是先听完并复述，再回答。下次我会先停两秒，确认对方的重点后再继续；成功信号是讨论节奏更稳、双方都能把话说完。"
+    });
+
+    expect(snapshot.frictionPoint).toBe("把对方的问题听成了否定");
+    expect(snapshot.controllableFactor).toBe("先听完并复述，再回答");
+    expect(snapshot.nextAttempt).toContain("先停两秒");
+    expect(snapshot.successSignal).toContain("双方都能把话说完");
+  });
+
+  it("keeps need, reason and relationship signal from one rich gratitude reply", async () => {
+    const session = buildSession({
+      dimension: "gratitude",
+      stage: "collect_event",
+      turnCount: 0,
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["gratitudeMoment", "kindAction", "seenNeed", "gratitudeReason", "relationshipSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      gratitudeMoment: "晚上准备评审材料时，朋友帮我把逻辑顺了一遍，还提醒我先吃点东西",
+      gratitudeTarget: "朋友",
+      kindAction: "帮我把逻辑顺了一遍，还提醒我先吃点东西",
+      seenNeed: "我既需要具体帮助，也需要有人让我慢下来",
+      innerEffect: "被稳稳接住",
+      gratitudeReason: "他没有替我做决定，却稳稳接住了我的慌乱",
+      gratitudeType: "陪伴接住型",
+      relationshipSignal: "这种既支持又尊重边界的关系值得珍惜",
+      reciprocityHint: null,
+      tags: ["朋友"]
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage:
+        "晚上我准备评审材料时有点慌，朋友主动帮我把逻辑顺了一遍，还提醒我先吃点东西。他看见了我既需要具体帮助，也需要有人让我慢下来。最让我感谢的是他没有替我做决定，却稳稳接住了我的慌乱。这让我更珍惜这种既支持又尊重边界的关系。"
+    });
+
+    expect(snapshot.kindAction).toContain("帮我把逻辑顺了一遍");
+    expect(snapshot.seenNeed).toContain("需要具体帮助");
+    expect(snapshot.gratitudeReason).toContain("稳稳接住了我的慌乱");
+    expect(snapshot.relationshipSignal).toContain("尊重边界");
   });
 });
 
@@ -1536,6 +1733,36 @@ describe("generateJoyDraftWithAI", () => {
 
     expect(result).toEqual(fallbackDraft);
     expect(result.content).not.toBe(session.journalEntry?.content);
+  });
+
+  it("does not let pending telemetry writes block the draft fallback path", async () => {
+    const session = buildSession();
+    createAIRequestLog.mockReturnValue(new Promise(() => {}));
+    completeStructuredOutput.mockImplementation(async (options: {
+      onAttempt?: (attempt: {
+        stage: "generate";
+        provider: string;
+        success: boolean;
+        latencyMs: number | null;
+        errorCode: string | null;
+      }) => Promise<void> | void;
+    }) => {
+      await options.onAttempt?.({
+        stage: "generate",
+        provider: "mock-provider",
+        success: false,
+        latencyMs: null,
+        errorCode: "TIMEOUT"
+      });
+      return null;
+    });
+
+    const result = await Promise.race([
+      generateJoyDraftWithAI(session),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("telemetry blocked the draft path")), 100))
+    ]);
+
+    expect(result).toEqual(fallbackDraft);
   });
 
   it("passes stitched gratitude events into the fallback path when draft generation times out", async () => {

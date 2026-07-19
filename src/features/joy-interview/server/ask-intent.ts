@@ -52,7 +52,7 @@ function resolveIntent(target: AssistantQuestionTarget, dimension: InterviewDime
       return "leave_one_sentence";
     }
 
-    if (dimension === "reflection" || dimension === "improvement") {
+    if (dimension === "joy" || dimension === "reflection" || dimension === "improvement") {
       return "name_next_time_cue";
     }
 

@@ -435,7 +435,6 @@ function normalizeExtractedFields(fields: JoySignalFields): JoySignalFields {
 
 function normalizeExtractedFieldsForSession(input: {
   dimension: InterviewDimension;
-  stage: JoyInterviewStage;
   fields: JoySignalFields;
   existingSnapshot?: JoySnapshot | null;
   userMessage?: string;
@@ -445,8 +444,10 @@ function normalizeExtractedFieldsForSession(input: {
   if (input.dimension === "gratitude") {
     const gratitudeNormalized: JoySignalFields = {
       ...normalized,
+      event: input.existingSnapshot?.event ? null : normalized.event,
+      gratitudeMoment: input.existingSnapshot?.gratitudeMoment ? null : normalized.gratitudeMoment,
       gratitudeTarget: normalizeGratitudeTarget(normalized.gratitudeTarget),
-      kindAction: normalizeGratitudeKindAction(normalized.kindAction),
+      kindAction: input.existingSnapshot?.kindAction ? null : normalizeGratitudeKindAction(normalized.kindAction),
       seenNeed: normalizeSeenNeed(normalized.seenNeed),
       gratitudeReason: normalizeGratitudeReason(normalized.gratitudeReason ?? normalized.whyItMattered),
       relationshipSignal: sanitizeNullableString(normalized.relationshipSignal),
@@ -461,37 +462,6 @@ function normalizeExtractedFieldsForSession(input: {
       valueImpact: null,
       durability: null
     };
-
-    if (input.stage === "collect_event") {
-      return {
-        ...gratitudeNormalized,
-        seenNeed: null,
-        gratitudeReason: null,
-        relationshipSignal: null,
-        reciprocityHint: null
-      };
-    }
-
-    if (input.stage === "probe_reason") {
-      return {
-        ...gratitudeNormalized,
-        event: input.existingSnapshot?.event ? null : gratitudeNormalized.event,
-        gratitudeMoment: input.existingSnapshot?.gratitudeMoment ? null : gratitudeNormalized.gratitudeMoment,
-        relationshipSignal: null,
-        reciprocityHint: null
-      };
-    }
-
-    if (input.stage === "probe_pattern") {
-      return {
-        ...gratitudeNormalized,
-        event: input.existingSnapshot?.event ? null : gratitudeNormalized.event,
-        gratitudeMoment: input.existingSnapshot?.gratitudeMoment ? null : gratitudeNormalized.gratitudeMoment,
-        kindAction: input.existingSnapshot?.kindAction ? null : gratitudeNormalized.kindAction,
-        gratitudeTarget: input.existingSnapshot?.gratitudeTarget ? null : gratitudeNormalized.gratitudeTarget
-      };
-    }
-
     return gratitudeNormalized;
   }
 
@@ -499,9 +469,9 @@ function normalizeExtractedFieldsForSession(input: {
     const improvementActionCue = /(?:下次|以后|再遇到|下一次|如果下次|我会|我想|可以先|准备先)/u.test(
       input.userMessage ?? ""
     );
-    const improvementTrack = input.existingSnapshot?.improvementTrack ?? normalized.improvementTrack ?? null;
     const improvementNormalized: JoySignalFields = {
       ...normalized,
+      event: input.existingSnapshot?.event ? null : normalized.event,
       whyItMattered: null,
       selfPattern: null,
       joyMoment: null,
@@ -514,41 +484,16 @@ function normalizeExtractedFieldsForSession(input: {
       valueImpact: null,
       durability: null
     };
+    const shouldKeepImprovementActionFields = improvementActionCue;
 
-    if (input.stage === "collect_event") {
-      return {
-        ...improvementNormalized,
-        frictionPoint: null,
-        repeatCondition: null,
-        controllableFactor: null,
-        nextAttempt: null,
-        successSignal: null
-      };
-    }
-
-    if (input.stage === "probe_reason") {
-      const shouldKeepImprovementActionFields =
-        improvementTrack === "avoid_bad" && improvementActionCue;
-
-      return {
-        ...improvementNormalized,
-        event: input.existingSnapshot?.event ? null : improvementNormalized.event,
-        controllableFactor: shouldKeepImprovementActionFields ? improvementNormalized.controllableFactor : null,
-        nextAttempt: shouldKeepImprovementActionFields ? improvementNormalized.nextAttempt : null,
-        successSignal: shouldKeepImprovementActionFields ? improvementNormalized.successSignal : null
-      };
-    }
-
-    if (input.stage === "probe_pattern") {
-      return {
-        ...improvementNormalized,
-        event: input.existingSnapshot?.event ? null : improvementNormalized.event,
-        frictionPoint: input.existingSnapshot?.frictionPoint ? null : improvementNormalized.frictionPoint,
-        repeatCondition: input.existingSnapshot?.repeatCondition ? null : improvementNormalized.repeatCondition
-      };
-    }
-
-    return improvementNormalized;
+    return {
+      ...improvementNormalized,
+      frictionPoint: input.existingSnapshot?.frictionPoint ? null : improvementNormalized.frictionPoint,
+      repeatCondition: input.existingSnapshot?.repeatCondition ? null : improvementNormalized.repeatCondition,
+      controllableFactor: shouldKeepImprovementActionFields ? improvementNormalized.controllableFactor : null,
+      nextAttempt: shouldKeepImprovementActionFields ? improvementNormalized.nextAttempt : null,
+      successSignal: shouldKeepImprovementActionFields ? improvementNormalized.successSignal : null
+    };
   }
 
   if (input.dimension !== "fulfillment") {
@@ -557,6 +502,7 @@ function normalizeExtractedFieldsForSession(input: {
 
   const fulfillmentNormalized: JoySignalFields = {
     ...normalized,
+    event: input.existingSnapshot?.event ? null : normalized.event,
     whyItMattered: normalizeFulfillmentProgressEvidence(normalized.whyItMattered),
     selfPattern: normalizeFulfillmentValueSignal(normalized.selfPattern),
     joyMoment: null,
@@ -570,31 +516,11 @@ function normalizeExtractedFieldsForSession(input: {
     durability: null
   };
 
-  if (input.stage === "collect_event") {
-    return {
-      ...fulfillmentNormalized,
-      whyItMattered: null,
-      selfPattern: null
-    };
-  }
-
-  if (input.stage === "probe_reason") {
-    return {
-      ...fulfillmentNormalized,
-      event: input.existingSnapshot?.event ? null : fulfillmentNormalized.event,
-      selfPattern: null
-    };
-  }
-
-  if (input.stage === "probe_pattern") {
-    return {
-      ...fulfillmentNormalized,
-      event: input.existingSnapshot?.event ? null : fulfillmentNormalized.event,
-      whyItMattered: input.existingSnapshot?.whyItMattered ? null : fulfillmentNormalized.whyItMattered
-    };
-  }
-
-  return fulfillmentNormalized;
+  return {
+    ...fulfillmentNormalized,
+    whyItMattered: input.existingSnapshot?.whyItMattered ? null : fulfillmentNormalized.whyItMattered,
+    selfPattern: input.existingSnapshot?.selfPattern ? null : fulfillmentNormalized.selfPattern
+  };
 }
 
 function getExtractResultSchema(dimension: InterviewDimension) {
@@ -609,7 +535,7 @@ function getExtractResultSchema(dimension: InterviewDimension) {
   return dimension === "fulfillment" || dimension === "reflection" ? fulfillmentExtractResultSchema : joyExtractResultSchema;
 }
 
-async function logAttempt(
+function logAttempt(
   sessionId: string,
   attempt: {
     stage: AIRequestStage;
@@ -619,14 +545,32 @@ async function logAttempt(
     errorCode: string | null;
   }
 ) {
-  await createAIRequestLog({
-    sessionId,
-    stage: attempt.stage,
-    provider: attempt.provider,
-    success: attempt.success,
-    latencyMs: attempt.latencyMs,
-    errorCode: attempt.errorCode
-  });
+  const warnOnTelemetryFailure = (error: unknown) => {
+    logger.warn(
+      {
+        err: error,
+        sessionId,
+        stage: attempt.stage,
+        provider: attempt.provider
+      },
+      "AI request telemetry recording failed."
+    );
+  };
+
+  try {
+    void Promise.resolve(
+      createAIRequestLog({
+        sessionId,
+        stage: attempt.stage,
+        provider: attempt.provider,
+        success: attempt.success,
+        latencyMs: attempt.latencyMs,
+        errorCode: attempt.errorCode
+      })
+    ).catch(warnOnTelemetryFailure);
+  } catch (error) {
+    warnOnTelemetryFailure(error);
+  }
 }
 
 export async function extractJoySnapshotWithAI(input: {
@@ -636,14 +580,16 @@ export async function extractJoySnapshotWithAI(input: {
 }): Promise<JoySnapshot> {
   input.signal?.throwIfAborted();
   const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
-    allowClosureInference: false,
+    // The deterministic path may preserve closure language the user stated explicitly.
+    // Heuristic synthesis stays disabled so a scene alone cannot become a stable rule.
+    allowClosureInference: true,
+    allowHeuristicClosureInference: false,
     allowOptionalSignalInference: false
   });
   const stageAwareFallbackSnapshot = mergeJoySignals(
     input.session.snapshot,
     normalizeExtractedFieldsForSession({
       dimension: input.session.dimension,
-      stage: input.session.stage,
       fields: fallbackSnapshot,
       existingSnapshot: input.session.snapshot,
       userMessage: input.userMessage
@@ -687,7 +633,6 @@ export async function extractJoySnapshotWithAI(input: {
     input.session.snapshot,
     normalizeExtractedFieldsForSession({
       dimension: input.session.dimension,
-      stage: input.session.stage,
       fields: aiResult,
       existingSnapshot: input.session.snapshot,
       userMessage: input.userMessage

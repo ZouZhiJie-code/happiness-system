@@ -16,6 +16,7 @@ export default [
       "**/node_modules/**",
       "**/dist/**",
       "**/.next/**",
+      "**/.next-dev/**",
       "**/.worktrees/**",
       "**/.claude/worktrees/**",
       "next-env.d.ts"
