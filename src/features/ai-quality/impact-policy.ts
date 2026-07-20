@@ -12,6 +12,8 @@ export type AIQualityIssueFamily =
   | "engineering"
   | "other";
 
+export type AIQualityIssueKey = string;
+
 export type AIQualityImpactMetrics = {
   generationCount: number;
   upvoteCount: number;
@@ -48,13 +50,24 @@ export function normalizeAIQualityIssueFamily(issueCode: string | null | undefin
   if (!value) return "other";
   if (includesAny(value, [/boundary/u, /ignored_boundary/u, /stop_request/u, /user_override/u])) return "boundary";
   if (includesAny(value, [/ground/u, /hallucin/u, /fact/u, /anchor/u, /faithful/u, /supporting_scene/u])) return "grounding";
-  if (includesAny(value, [/abstract/u, /clarity/u, /multiple_questions/u, /question_/u, /easy_to_answer/u])) return "clarity";
+  if (includesAny(value, [/abstract/u, /clarity/u, /multiple_questions/u, /question_/u, /repetitive_question/u, /misunderstood/u, /easy_to_answer/u])) {
+    return "clarity";
+  }
   if (includesAny(value, [/tone/u, /diagnosis/u, /pressure/u, /advice/u, /self_blame/u, /safety/u])) return "tone_safety";
   if (/title/u.test(value)) return "title";
   if (includesAny(value, [/schema/u, /provider/u, /generation_not_completed/u, /missing_final_output/u, /database/u, /trace/u, /request_log/u])) {
     return "engineering";
   }
   return "other";
+}
+
+export function normalizeAIQualityIssueKey(issueCode: string | null | undefined): AIQualityIssueKey | null {
+  const value = issueCode?.trim().toLowerCase();
+  if (!value) return null;
+  return value
+    .replace(/^(?:user_downvote|feedback):/u, "")
+    .replace(/[\s-]+/gu, "_")
+    .replace(/_+/gu, "_");
 }
 
 export function isSevereAIQualityIssue(issueCode: string | null | undefined) {
@@ -154,7 +167,7 @@ export function concludeAIQualityImpact(input: {
   const failureClearlyWorse = failureDelta !== null && failureDelta > 0.05;
   if (issueWorse || downvoteClearlyWorse || failureClearlyWorse) {
     const reasons = [
-      issueWorse ? "同类问题率较发布前上升。" : null,
+      issueWorse ? "同一问题率较发布前上升。" : null,
       downvoteClearlyWorse ? "点踩率较发布前上升超过 10 个百分点。" : null,
       failureClearlyWorse ? "AI 调用失败率较发布前上升超过 5 个百分点。" : null
     ].filter((value): value is string => Boolean(value));
@@ -177,7 +190,7 @@ export function concludeAIQualityImpact(input: {
         summary: "七天观察期已结束，相关回复保持稳定或有所改善。",
         reasons: [
           "观察期内未发现严重质量问题。",
-          input.after.sameIssueRate === 0 ? "上线后未再发现同类问题。" : "同类问题率较发布前下降。"
+          input.after.sameIssueRate === 0 ? "上线后未再发现同一问题。" : "同一问题率较发布前下降。"
         ]
       };
     }

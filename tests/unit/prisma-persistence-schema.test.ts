@@ -78,6 +78,10 @@ describe("prisma persistence indexes", () => {
       resolve(process.cwd(), "prisma/migrations/20260720010000_bind_prompt_release_validation/migration.sql"),
       "utf8"
     );
+    const reviewReasonMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260720153000_add_ai_optimization_review_reason/migration.sql"),
+      "utf8"
+    );
 
     expect(schema).toContain("model AIGenerationTrace");
     expect(schema).toContain("model AICase");
@@ -97,6 +101,7 @@ describe("prisma persistence indexes", () => {
     expect(schema).toContain("currentGenerationTraceId String?");
     expect(schema).toContain("promptVersion");
     expect(schema).toContain("validationId");
+    expect(schema).toContain("reviewReason");
     expect(schema).toContain("promptHash");
     expect(schema).toContain("requestMessages");
     expect(schema).toContain("responseText");
@@ -127,5 +132,6 @@ describe("prisma persistence indexes", () => {
     expect(qualityDefaultsMigration).toContain('CREATE UNIQUE INDEX "AIOptimizationCandidate_dedupeKey_key"');
     expect(releaseValidationMigration).toContain('ADD COLUMN "validationId" TEXT');
     expect(releaseValidationMigration).toContain('REFERENCES "AIOptimizationValidation"("id")');
+    expect(reviewReasonMigration).toContain('ADD COLUMN "reviewReason" TEXT');
   });
 });

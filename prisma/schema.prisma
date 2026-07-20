@@ -611,6 +611,7 @@ model AIOptimizationCandidate {
   createdAt        DateTime                  @default(now())
   reviewedBy       String?
   reviewedAt       DateTime?
+  reviewReason     String?
   publishedBy      String?
   publishedAt      DateTime?
   rolledBackBy     String?

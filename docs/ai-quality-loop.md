@@ -184,7 +184,7 @@ Badcase 按 `artifactType + dimension + issueCode` 聚类。候选路径：
 | Few-shot | 点赞且评分至少 85 的高质量 LLM 回复 | 验证通过后按 Prompt Key 激活，最多 6 条 |
 | Engineering | Schema、provider、Trace、数据库和结构化故障 | 进入研发与回归流程 |
 
-候选保存 `path / promptKey / proposal / evidenceTraceIds / riskLevel / status / dedupeKey`。`dedupeKey` 根据路径、Prompt Key、问题类型和排序后的证据 Trace ID 计算 SHA-256：
+候选保存 `path / promptKey / proposal / evidenceTraceIds / riskLevel / status / dedupeKey`。管理员拒绝候选时还会保存 `reviewReason`，理由长度为 `4–300` 字。`dedupeKey` 根据路径、Prompt Key、问题类型和排序后的证据 Trace ID 计算 SHA-256：
 
 - 相同证据重复运行会复用现有候选。
 - 新增证据会生成新的候选版本。
@@ -222,6 +222,8 @@ draft -> approved -> validated -> published -> rolled_back
 ```
 
 发布和回滚都由管理员确认，动作写入 `AdminAuditLog`。Engineering 候选保持在工程队列中，通过正常研发发布链路处理。
+
+拒绝候选也会写入审核人、审核时间和 `reviewReason`。发布缺少通过验证时，候选接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
 
 ## 7. 七天线上效果观察
 
@@ -271,7 +273,7 @@ GET /api/admin/ai-quality/candidates/:candidateId/impact/evidence?kind=attention
 | `AIFeedbackRevision` | 反馈修订与撤回历史 |
 | `AIOptimizationRun` | 手动或定时运行记录 |
 | `AIBadcaseCluster` | 问题簇和证据 Trace |
-| `AIOptimizationCandidate` | 优化候选、去重键和审核状态 |
+| `AIOptimizationCandidate` | 优化候选、去重键、审核状态和拒绝原因 |
 | `AIOptimizationValidation` | 候选回放验证及各案例结果 |
 | `AIFewShotExample` | 动态示例及激活、退役状态 |
 | `AIPromptRelease` | 发布版本、验证绑定和回滚记录 |
@@ -294,6 +296,7 @@ ADMIN_USERNAMES="管理员用户名，多个用逗号分隔"
 - `20260719050000_default_ai_quality_and_candidate_dedupe`
 - `20260719060000_add_ai_candidate_validation`
 - `20260720010000_bind_prompt_release_validation`
+- `20260720153000_add_ai_optimization_review_reason`
 
 验收主线：
 

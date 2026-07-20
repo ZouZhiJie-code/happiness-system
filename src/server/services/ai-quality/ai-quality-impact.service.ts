@@ -1,11 +1,12 @@
-import type { AIQualityImpactMetrics, AIQualityIssueFamily } from "@/features/ai-quality/impact-policy";
+import type { AIQualityImpactMetrics, AIQualityIssueKey } from "@/features/ai-quality/impact-policy";
 import {
   buildCandidateVersionMarker,
   calculateImpactWindow,
   calculateRate,
   concludeAIQualityImpact,
   isSevereAIQualityIssue,
-  normalizeAIQualityIssueFamily
+  normalizeAIQualityIssueFamily,
+  normalizeAIQualityIssueKey
 } from "@/features/ai-quality/impact-policy";
 import type {
   AdminAIQualityImpactEvidenceResponse,
@@ -59,7 +60,7 @@ export function aggregateAIQualityImpactMetrics(input: {
   traces: AIQualityImpactTrace[];
   promptKey: string;
   versionMarker?: string | null;
-  issueFamily: AIQualityIssueFamily;
+  issueKey: AIQualityIssueKey | null;
 }): AIQualityImpactMetrics {
   let upvoteCount = 0;
   let downvoteCount = 0;
@@ -74,7 +75,12 @@ export function aggregateAIQualityImpactMetrics(input: {
       if (trace.feedback.vote === "downvote") downvoteCount += 1;
     }
     const issueSignals = readIssueSignals(trace);
-    if (issueSignals.some((signal) => normalizeAIQualityIssueFamily(signal) === input.issueFamily)) sameIssueCount += 1;
+    if (
+      input.issueKey &&
+      issueSignals.some((signal) => normalizeAIQualityIssueKey(signal) === input.issueKey)
+    ) {
+      sameIssueCount += 1;
+    }
     if (issueSignals.some(isSevereAIQualityIssue)) severeIssueCount += 1;
 
     const relevantInvocations = trace.invocations.filter(
@@ -96,7 +102,7 @@ export function aggregateAIQualityImpactMetrics(input: {
     downvoteCount,
     downvoteRate: calculateRate(downvoteCount, feedbackCount),
     sameIssueCount,
-    sameIssueRate: calculateRate(sameIssueCount, generationCount),
+    sameIssueRate: input.issueKey ? calculateRate(sameIssueCount, generationCount) : null,
     severeIssueCount,
     failureCount,
     failureRate: calculateRate(failureCount, generationCount),
@@ -152,16 +158,17 @@ export async function getAIQualityCandidateImpact(
       versionMarker
     });
     const issueFamily = normalizeAIQualityIssueFamily(candidate.cluster?.issueCode);
+    const issueKey = normalizeAIQualityIssueKey(candidate.cluster?.issueCode);
     const baseline = aggregateAIQualityImpactMetrics({
       traces: baselineTraces,
       promptKey: release.promptKey,
-      issueFamily
+      issueKey
     });
     const after = aggregateAIQualityImpactMetrics({
       traces: afterTraces,
       promptKey: release.promptKey,
       versionMarker,
-      issueFamily
+      issueKey
     });
 
     return {

@@ -23,6 +23,9 @@ export default async function AdminAIQualityPage() {
     evidenceTraceIds: candidate.evidenceTraceIds,
     riskLevel: candidate.riskLevel,
     createdAt: candidate.createdAt.toISOString(),
+    reviewedBy: candidate.reviewedBy,
+    reviewedAt: candidate.reviewedAt?.toISOString() ?? null,
+    reviewReason: candidate.reviewReason,
     cluster: candidate.cluster
       ? { issueCode: candidate.cluster.issueCode, caseCount: candidate.cluster.caseCount }
       : null,

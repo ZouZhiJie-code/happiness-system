@@ -136,5 +136,22 @@ describe("AI optimization repository", () => {
     expect(tx.adminAuditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ action: "approve", resourceId: "candidate-1" })
     });
+
+    tx.aIOptimizationCandidate.update.mockResolvedValue({ id: "candidate-2", status: "rejected" });
+    await reviewOptimizationCandidateStatus({
+      id: "candidate-2",
+      status: "rejected",
+      adminUsername: "admin",
+      reviewReason: "证据不足，请补充具体对话。"
+    });
+
+    expect(tx.aIOptimizationCandidate.update).toHaveBeenLastCalledWith({
+      where: { id: "candidate-2" },
+      data: expect.objectContaining({
+        status: "rejected",
+        reviewedBy: "admin",
+        reviewReason: "证据不足，请补充具体对话。"
+      })
+    });
   });
 });
