@@ -7,6 +7,7 @@ import type {
   AdminAIQualityEvidenceItem,
   AdminAIQualityEvidenceResponse
 } from "@/features/ai-quality/admin-evidence";
+import { formatAdminDateTime } from "@/features/ai-quality/admin-date-time";
 
 const DIMENSION_LABEL = {
   joy: "开心",
@@ -53,7 +54,7 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
           <span>{evidence.userLabel}</span>
           <span>{evidence.dimension ? DIMENSION_LABEL[evidence.dimension] : "通用场景"}</span>
           <span>{ARTIFACT_LABEL[evidence.artifactType]}</span>
-          <span>{new Date(evidence.entryDate ?? evidence.createdAt).toLocaleString("zh-CN")}</span>
+          <span>{formatAdminDateTime(evidence.entryDate ?? evidence.createdAt)}</span>
         </div>
       </div>
 
