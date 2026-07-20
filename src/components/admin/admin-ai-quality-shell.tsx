@@ -10,6 +10,7 @@ import { AdminAIQualityImpact } from "@/components/admin/admin-ai-quality-impact
 import { ActionButton, Card, Divider, Surface } from "@/components/ui";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { AdminAIQualityEvidenceItem } from "@/features/ai-quality/admin-evidence";
+import { formatAdminDateTime } from "@/features/ai-quality/admin-date-time";
 import {
   getAIQualityExpectedImprovement,
   getAIQualityIssueDescription,
@@ -458,7 +459,7 @@ function RunHistory({ runs }: { runs: AIOptimizationRunView[] }) {
                 <li key={run.id} className="grid gap-2 py-4 text-sm leading-6 text-[var(--text-dim)]">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-medium text-ink">{run.status === "completed" ? "已完成" : run.status === "failed" ? "失败" : "运行中"}</span>
-                    <time className="text-xs tabular-nums">{new Date(run.startedAt).toLocaleString("zh-CN")}</time>
+                    <time className="text-xs tabular-nums">{formatAdminDateTime(run.startedAt)}</time>
                   </div>
                   <p className="tabular-nums">{run.scannedBad} 条需改进 · {run.scannedGood} 条优质 · {run.clusterCount} 类问题 · {run.candidateCount} 条新建议</p>
                   <p>{formatRunResult(run)}</p>
@@ -485,7 +486,7 @@ function RunHistory({ runs }: { runs: AIOptimizationRunView[] }) {
                       <td className="py-2 pr-3 tabular-nums">{run.scannedBad} 需改进 · {run.scannedGood} 优质</td>
                       <td className="py-2 pr-3 tabular-nums">{run.clusterCount}</td>
                       <td className="py-2 pr-3 tabular-nums">{run.candidateCount}</td>
-                      <td className="py-2 pr-3 tabular-nums">{new Date(run.startedAt).toLocaleString("zh-CN")}</td>
+                      <td className="py-2 pr-3 tabular-nums">{formatAdminDateTime(run.startedAt)}</td>
                       <td className="py-2">{formatRunResult(run)}</td>
                     </tr>
                   ))}
@@ -696,7 +697,7 @@ export function AdminAIQualityShell({
           <div className="flex flex-wrap items-center gap-3 lg:justify-end">
             <p className="text-xs leading-6 text-[var(--text-dim)]">
               {latestRun
-                ? `最近检查 ${new Date(latestRun.startedAt).toLocaleString("zh-CN")} · 新增 ${latestRun.candidateCount} · 自动合并 ${getReusedCount(latestRun.summary)}`
+                ? `最近检查 ${formatAdminDateTime(latestRun.startedAt)} · 新增 ${latestRun.candidateCount} · 自动合并 ${getReusedCount(latestRun.summary)}`
                 : "等待首次质量检查"}
             </p>
             <ActionButton
@@ -776,7 +777,7 @@ export function AdminAIQualityShell({
                         <span>{selectedCandidate.artifactType ? ARTIFACT_LABEL[selectedCandidate.artifactType] : "通用回复"}</span>
                         <span>{PATH_LABEL[selectedCandidate.path]}</span>
                         <span className="tabular-nums">{selectedCandidate.evidenceTraceIds.length} 条证据</span>
-                        <span className="tabular-nums">发现于 {new Date(selectedCandidate.createdAt).toLocaleString("zh-CN")}</span>
+                        <span className="tabular-nums">发现于 {formatAdminDateTime(selectedCandidate.createdAt)}</span>
                       </div>
                     </header>
 
@@ -860,7 +861,7 @@ export function AdminAIQualityShell({
                         <p className="font-medium text-ink">已退回调整</p>
                         {selectedCandidate.reviewReason ? <p>原因：{selectedCandidate.reviewReason}</p> : null}
                         <p className="text-xs tabular-nums text-[var(--text-dim)]">
-                          {[selectedCandidate.reviewedBy, selectedCandidate.reviewedAt ? new Date(selectedCandidate.reviewedAt).toLocaleString("zh-CN") : null].filter(Boolean).join(" · ")}
+                          {[selectedCandidate.reviewedBy, selectedCandidate.reviewedAt ? formatAdminDateTime(selectedCandidate.reviewedAt) : null].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     ) : returnCandidateId === selectedCandidate.id ? (
