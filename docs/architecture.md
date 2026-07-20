@@ -1,15 +1,16 @@
 # Architecture
 
-最后更新：`2026-05-21`
+最后更新：`2026-07-20`
 
 ## 1. 系统概览
 
 这是一个单仓库的 Next.js 应用，用 AI 访谈来帮助用户完成“幸福日志”记录。
 
-当前架构形态不是“一个开放聊天机器人”，而是：
+当前架构形态包含：
 - 一个受状态控制的访谈系统
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
+- 一个以 Trace 为血缘、由管理员验证和发布的 AI 质量闭环
 
 截至 `2026-05-04`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
@@ -33,10 +34,18 @@
   - 记录分析月度页面
 - `src/app/admin/analytics`
   - 管理员数据分析工作台页面
+- `src/app/admin/ai-quality`
+  - AI 质量治理页面：候选、真实证据、回放验证、全量发布、七天效果观察与回滚
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
 - `src/app/api/admin/analytics/*`
   - 管理员分析总览、漏斗、留存、质量、候选用户与内容级下钻接口
+- `src/app/api/ai-feedback/*`
+  - 赞、踩、标签、文本、撤回与版本化合规状态接口
+- `src/app/api/admin/ai-quality/*`
+  - 手动评估运行、候选审核、证据、验证、发布、效果统计和效果证据接口
+- `src/app/api/cron/ai-quality/*`
+  - 每日自动评估与每周候选聚类任务
 - `src/app/api/calendar/*`
   - 记录日历的 `day / week / month` 查询接口
 - `src/app/api/analysis/month`
@@ -66,6 +75,10 @@
   - `section=trends|dimensions|correlation|review` 与 `preset=week|month|custom`、`start/end` URL 归一化；`date-range.ts`、`aggregate-trends-range.ts`；`GET /api/analysis/range` 服务量化趋势；`GET /api/analysis/month` 服务五维全景
 - `src/features/admin-analytics`
   - 管理员分析页 URL 状态、类型和接口约定；负责把 `view / range / user drilldown` 投影成同页工作台状态
+- `src/features/ai-feedback`
+  - 访谈与日志的正负反馈标签、提交约束和当前质量政策版本
+- `src/features/ai-quality`
+  - 自动评分量表、Judge schema、候选策略、Prompt 清单、管理员证据读模型和七天影响结论规则
 - `src/features/happiness-score`
   - 幸福 8 要素日评分的数据类型、`1-10` 输入 schema、保存请求 schema 和评分 key 定义
   - `presentation.ts` 统一维护评分展示顺序与标签（健康→经济→人际→擅长→意志→热爱→美德→意义）
@@ -103,6 +116,14 @@
   - 管理员白名单鉴权；页面侧使用 `requireAdminPage()`，接口侧使用 `requireAdminRequest()`
 - `src/server/services/admin-analytics/admin-analytics.service.ts`
   - 管理员分析的服务端查询入口；负责总览、漏斗、留存、质量、候选用户、单人详情与内容级下钻
+- `src/server/services/ai-quality/*`
+  - `ai-evaluator.service.ts` 执行规则评分和抽样 Judge
+  - `ai-feedback.service.ts` 维护当前反馈与修订历史
+  - `ai-iteration.service.ts` 聚类 Badcase、提拔 Goodcase 并生成去重候选
+  - `ai-candidate-validation.service.ts` 回放目标证据和正向回归证据
+  - `prompt-optimization.service.ts` 加载已发布 Prompt/Few-shot，并执行发布与回滚
+  - `ai-quality-impact.service.ts` 计算发布前基线、发布后指标和七天结论
+  - `ai-quality-evidence.service.ts` 提供脱敏对话证据并记录管理员审计
 - `src/server/services/daily-journal/daily-journal.service.ts`
   - 当天整合日志的 source 收集、AI 轻整理、fallback 章节合集、草稿更新与保存
 - `src/server/services/memory/memory-extraction.service.ts`
@@ -128,6 +149,16 @@
   - 从 `JoyEntry / DailyJournalEntry` 查询 `saved` 分析 source；`DailyJournalEntry` 现在额外返回 `title` 和 `content`，供聚合层生成 `journalTitle` / `contentPreview`
 - `src/server/repositories/admin-analytics.repository.ts`
   - 维护分析埋点、管理员审计日志，以及管理员工作台所需的用户列表 / 单人详情 / 内容级下钻读模型
+- `src/server/repositories/ai-quality.repository.ts`
+  - 创建生成 Trace、记录模型请求，并将 Trace 绑定到访谈回复或日志
+- `src/server/repositories/ai-evaluation.repository.ts`
+  - 维护结构化评估和 Goodcase / Badcase / Review 分类
+- `src/server/repositories/ai-feedback.repository.ts`
+  - 维护当前反馈、不可变修订历史与合规版本时间
+- `src/server/repositories/ai-optimization.repository.ts`
+  - 维护运行记录、问题簇、候选、验证、Few-shot 和 Prompt Release
+- `src/server/repositories/ai-quality-impact.repository.ts`
+  - 按发布版本标记读取基线、观察期指标和真实证据
 - `src/server/repositories/daily-happiness-score.repository.ts`
   - 维护 `DailyHappinessScore` 的日期查询、upsert 与 record 映射
 - `src/server/repositories/daily-journal.repository.ts`
@@ -341,6 +372,19 @@
 - **五维全景**：`GET /api/analysis/month`；**关联 / 复盘**：占位，手动 AI 后续接入
 - 幸福 8 要素评分录入在 `/interview`「当天评分」工作区，不在分析页
 - 设计规范见根目录 `DESIGN.md` 与 `docs/design/ui-conventions.md`
+
+### 3.8 AI 质量数据模型
+
+AI 质量闭环使用四组实体：
+
+| 分组 | 模型 | 关系 |
+|---|---|---|
+| 血缘 | `AIGenerationTrace / AIRequestLog` | 一条生成 Trace 对应多次模型调用，并反向绑定业务回复或日志 |
+| 信号 | `AIFeedback / AIFeedbackRevision / AIEvaluation / AICase` | 当前反馈与修订历史、结构化评分和案例分类都绑定 Trace |
+| 优化 | `AIOptimizationRun / AIBadcaseCluster / AIOptimizationCandidate / AIFewShotExample` | 一次运行形成问题簇与去重候选，点赞 Goodcase 可成为动态示例 |
+| 发布 | `AIOptimizationValidation / AIPromptRelease` | 候选拥有多次验证；Release 通过 nullable `validationId` 绑定发布采用的通过记录 |
+
+删除 Trace 会级联清理其质量信号；删除候选会级联验证和 Release，并将关联 Few-shot 的候选引用置空。`AIPromptRelease` 通过 `promptKey + version` 唯一约束保持版本单调。
 
 ## 4. 结构化数据面
 
@@ -747,7 +791,64 @@ gratitude 已接入统一成稿链路：
 - 道德负债感、还人情、强行回馈任务
 - partial 模式硬写稳定关系线索
 
-## 10. 前端工作区现状
+## 10. AI 质量闭环
+
+### 10.1 血缘与反馈
+
+每个用户可见 AI 回复先创建 `AIGenerationTrace`，再用 `AIRequestLog` 记录该 Trace 下的抽取、提问、生成、评估或迭代调用。`contextSnapshot`、`systemPromptVersion`、`finalOutput` 和业务实体反向引用共同构成可回放血缘。
+
+用户反馈写入两层模型：
+
+- `AIFeedback`：一条 Trace 当前有效的赞或踩。
+- `AIFeedbackRevision`：提交、切换和撤回的不可变历史。
+
+注册和登录会写入当前质量政策版本与合规时间。产品默认参与质量评估；兼容退出接口返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`。
+
+### 10.2 自动评估与候选
+
+```mermaid
+flowchart TD
+  T["AIGenerationTrace"] --> R["确定性规则"]
+  R --> J{"风险、反馈或稳定抽样"}
+  J -->|需要语义判断| L["LLM Judge"]
+  J -->|本地结果充分| C["AICase"]
+  L --> C
+  C --> W["7 天聚类"]
+  W --> O["System Prompt / Few-shot / Engineering"]
+```
+
+每条 Trace 运行确定性规则；高风险、低分、fallback、质量门拒绝、用户反馈和 10% 稳定抽样进入 Judge。`AIEvaluation` 保存分数和扣分原因，`AICase` 保存分类与主问题码。
+
+手动运行 `POST /api/admin/ai-quality/runs` 会先处理最多 20 条待评估 Trace，再扫描最近 7 天案例。定时任务保持每日评估和每周聚类。候选 `dedupeKey` 由路径、Prompt Key、问题类型和排序证据计算，相同证据会复用现有候选。
+
+### 10.3 验证、发布与归因
+
+System Prompt 和 Few-shot 候选需要同时满足“管理员批准”和“最近一次回放验证通过”。`AIOptimizationValidation` 保存目标案例、回归案例和各项分数；`AIPromptRelease.validationId` 将线上版本绑定到发布时采用的验证记录。
+
+运行时版本标记：
+
+- System Prompt 候选：`+opt:{candidateId}`
+- Few-shot 候选：`+fs:{SHA-256(示例 ID).slice(0,10)}`
+
+发布创建递增的 `AIPromptRelease`。Prompt 加载失败时保留基础 Prompt；管理员可以通过确认弹窗回滚到上一有效配置。发布、证据查看和回滚均写入 `AdminAuditLog`。
+
+### 10.4 七天影响窗口
+
+`GET /api/admin/ai-quality/candidates/[candidateId]/impact` 读取发布前 7 天基线，并只统计发布后命中当前版本标记的 Trace。观察期最长 7 天；回滚或同路径新版本发布会提前截止。
+
+影响指标包括生成数、赞踩、同类问题、严重问题、调用失败和平均延迟。结论由 `src/features/ai-quality/impact-policy.ts` 以低样本、严重问题和变化百分点规则投影为：
+
+- `继续观察`
+- `样本较少，请结合真实对话判断`
+- `需要人工复核`
+- `建议保留`
+- `建议回滚`
+
+证据接口按 `attention / positive` 分页返回脱敏对话、目标回复、用户反馈和自动评估。内容展开时记录管理员审计。
+
+完整产品与运维合同见 `docs/ai-quality-loop.md`。
+
+## 11. 前端工作区现状
 
 访谈页当前是双栏工作区 + 覆盖式书页（`2026-06-14`）：
 - 左栏：全屏对话区和底部输入框
@@ -785,7 +886,7 @@ gratitude 已接入统一成稿链路：
 
 对用户来说，右侧的唯一主对象是“日志正文”，不是结构化摘要。
 
-## 11. 已知架构债务
+## 12. 已知架构债务
 
 这些是当前最重要的架构现实：
 

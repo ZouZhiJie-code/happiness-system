@@ -17,6 +17,10 @@
 - 管理员数据分析工作台已经落地：管理员用户会在 `/settings` 看到 `/admin/analytics` 入口；页面当前按“总览 -> 候选用户 -> 单人证据”三层推进，支持 `review / monitor` 两种视角、时间范围切换、候选用户筛查与内容级下钻。
 - 管理员分析权限当前由 `ADMIN_USERNAMES` 控制；非管理员访问页面时走 `notFound()`，管理员接口走 `requireAdminRequest()`。
 - 仓库当前已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：`AnalyticsEvent` 承接注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；`AdminAuditLog` 记录管理员查看会话 / 日志正文的审计日志。
+- AI 质量数据飞轮已经覆盖生成 Trace、Prompt 血缘、规则评分与抽样 Judge、访谈/日志赞踩标签和文本、Badcase 聚类、System Prompt / Few-shot / Engineering 候选、去重、真实对话证据、回放验证、全量发布、回滚和七天效果观察；管理员入口为 `/admin/ai-quality`。
+- System Prompt 与 Few-shot 候选只有在管理员批准且最近一次 `AIOptimizationValidation` 通过后才能发布；`AIPromptRelease.validationId` 绑定发布采用的验证记录，线上 Trace 分别用 `+opt:{candidateId}` 与 `+fs:{fingerprint}` 归因。
+- AI 质量改进当前默认参与，注册与登录会写入或校准质量政策版本和合规时间；兼容退出请求返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`，前端设置页不提供退出开关。
+- `npm run acceptance:ai-quality:seed` 默认只允许本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。`2026-07-20` 已清理共享生产库中的固定验收账号、Trace、反馈、候选与运行记录，生产数据继续只承载真实用户链路。
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续部署、验收、回调和文档入口统一使用 `dailylight.chat`。
 - `2026-05-25` 已完成一次真实生产修复：production AI 调用优先走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded `GET /api/debug/runtime-env` 支持返回 `ai` 诊断块和 `?probe=1` 的最小 provider 探针，但 production 默认保持关闭，只在短时验证窗口中临时打开。
 - production 共享库此前缺少 `20260521120000_add_admin_analytics_tables` migration，导致 live `POST /api/auth/register` 在写 `AnalyticsEvent` 时失败；该 migration 已于 `2026-05-25` 在 production 补齐。
@@ -284,6 +288,10 @@ gratitude 理论翻译基线：
   - 幸福 8 要素日评分的数据类型、`1-10` zod schema、保存请求 schema 与评分 key 定义。
 - `src/features/daily-journal`
   - 当天整合日志 schema、正文长度约束和 source signature helper。
+- `src/features/ai-feedback`
+  - 访谈与日志的赞踩标签、提交约束和当前质量政策版本。
+- `src/features/ai-quality`
+  - 评分量表、Judge schema、候选策略、Prompt 清单、管理员证据读模型和七天影响结论规则。
 - `src/components/calendar`
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 桌面是双栏检查面板、小屏是上下堆叠工作台，week 是 7 天对比板，day 是五维紧凑操作台。
@@ -304,6 +312,8 @@ gratitude 理论翻译基线：
   - `admin-access.ts`：管理员白名单解析、页面鉴权和接口鉴权。
 - `src/server/services/admin-analytics`
   - 管理员分析工作台的总览、候选用户、单人详情和内容级下钻服务。
+- `src/server/services/ai-quality`
+  - Trace 评估、用户反馈、Badcase 聚类、候选验证、Prompt/Few-shot 发布、效果统计和真实证据服务。
 - `src/server/services/memory`
   - `memory-extraction.service.ts`：访谈结束后从会话数据中 AI 提取用户模式，去重后存入 MemoryFact，生成向量嵌入；fire-and-forget，失败静默。
   - `memory-retrieval.service.ts`：访谈问题生成时，从用户历史记忆中语义检索相关条目（pgvector 余弦相似度 Top-K），注入 AI prompt；embedding 不可用时降级为按维度 + confidence 排序。
@@ -317,6 +327,7 @@ gratitude 理论翻译基线：
   - 会话、事件、日志、payload 映射与数据库读写。
   - `calendar.repository.ts` 把 `InterviewSession / JoyEntry` 标准化成 calendar source。
   - `daily-journal.repository.ts` 维护 `DailyJournalEntry` 和当天已保存维度日志 source。
+  - `ai-quality.repository.ts / ai-evaluation.repository.ts / ai-feedback.repository.ts / ai-optimization.repository.ts / ai-quality-impact.repository.ts` 维护 AI 质量血缘、反馈、评估、候选、验证、发布与效果数据。
   - `memory.repository.ts` 维护 `MemoryFact` 的 CRUD、文本去重（关键词重叠率 > 0.6）和向量操作。
 - `prisma`
   - 数据模型与迁移。
@@ -361,7 +372,11 @@ gratitude 理论翻译基线：
   - 每次重新合成清除旧记录，只保留最新一条。
   - 字段：`summary`（总述）、`dimensionInsights`（JSON，五维度洞察）、`factCount`、`generatedAt`。
 - `AIRequestLog`
-  - `transcribe / extract / generate / portrait_synthesis` 四阶段调用日志。
+  - `transcribe / extract / generate / question / evaluate / iterate / portrait_synthesis` 调用日志。
+- `AIGenerationTrace / AIFeedback / AIFeedbackRevision / AIEvaluation / AICase`
+  - AI 生成血缘、当前用户反馈、反馈修订、结构化评分和案例分类。
+- `AIOptimizationRun / AIBadcaseCluster / AIOptimizationCandidate / AIOptimizationValidation / AIFewShotExample / AIPromptRelease`
+  - AI 质量运行、聚类、候选、回放验证、动态示例和线上发布版本。
 
 关键事实：
 - 新的多维度结构主要落在 `snapshotData` 和 `payload` 里。
@@ -410,6 +425,17 @@ gratitude 理论翻译基线：
 - `GET /api/admin/analytics/sessions/[sessionId]`
 - `GET /api/admin/analytics/entries/[entryId]`
 - `GET /api/admin/analytics/daily-journals/[id]`
+- `GET/PUT/DELETE /api/ai-feedback/[traceId]`
+- `GET/PATCH /api/ai-feedback/consent`
+- `GET /api/admin/ai-quality/candidates`
+- `PATCH /api/admin/ai-quality/candidates/[candidateId]`
+- `GET /api/admin/ai-quality/candidates/[candidateId]/evidence`
+- `POST /api/admin/ai-quality/candidates/[candidateId]/validate`
+- `GET /api/admin/ai-quality/candidates/[candidateId]/impact`
+- `GET /api/admin/ai-quality/candidates/[candidateId]/impact/evidence`
+- `POST /api/admin/ai-quality/runs`
+- `GET /api/cron/ai-quality/evaluate`
+- `GET /api/cron/ai-quality/iterate`
 
 必须记住：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
@@ -466,8 +492,9 @@ gratitude 理论翻译基线：
   - 先执行 `npx prisma db push`
   - 再重启 `npm run dev`
 - 如果 `npm run build` 失败：
-  - 先区分是不是这次改动引起的
-  - 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`，以及 `tests/unit/interview-shell.test.tsx` 的旧断言漂移；这些问题会让 full build / full test 继续报红，不能误记成“本次改动引入”
+  - 先运行 `npm run typecheck` 和 `npm run lint`，区分 TypeScript、ESLint 与 Next.js 构建错误
+  - `2026-07-20` 基线为 `npm run build` 通过并保留既有 ESLint warnings；新的非零退出码按首次错误位置排查
+  - Prisma Client 缺失或 schema 版本不一致时，执行 `npx prisma generate` 并确认 migrations
 - 如果用户看到结构化访谈提交错误：
   - `NETWORK_UNAVAILABLE`：先确认 `npm run dev` 仍在运行，再刷新页面
   - `MESSAGE_TOO_LONG`：单次回复超过 `1200` 字，拆成两段发送
@@ -478,7 +505,7 @@ gratitude 理论翻译基线：
   - 优先检查 `src/features/joy-interview/prompts/joy-prompts.ts`
   - 再检查 `joy-interview-ai.service.ts` 的 fallback 文本
 - 如果语音链路看起来“可用但质量很怪”：
-  - 先确认这不是 bug，`/api/transcribe` 当前就是 stub
+  - 当前 `/api/transcribe` 是 stub，先按占位能力处理
 
 ## 8. 测试与交付要求
 
@@ -486,9 +513,11 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-05-08`，本地测试基线为：
-- `44` 个测试文件
-- `473` 个测试；`npx tsc --noEmit` 有 `2` 个类型错误（`memory-extraction.service.test.ts` 和 `memory-retrieval.service.test.ts` 中 JoySnapshot/JoyEntryDraft 类型不匹配），`npm test` 有 `11` 个失败（含 `calendar-presentation.test.ts` 的旧规则断言和 memory 相关测试的类型问题）。
+截至 `2026-07-20`，验证基线为：
+- `npm test`：`168` 个测试文件、`1061` 个测试通过
+- AI 质量发布与效果观察专项：`10` 个测试文件、`30` 个测试通过
+- `npx tsc --noEmit`：通过
+- `npm run build`：通过，保留既有 ESLint warnings
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点

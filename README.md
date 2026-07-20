@@ -20,7 +20,7 @@
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
 - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
-- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、点赞/点踩与版本化授权、Badcase 聚类、System Prompt / Few-shot / 工程候选、管理员审核发布和回滚均已接入；管理员入口为 `/admin/ai-quality`
+- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、赞踩标签与文本、Badcase 聚类、候选去重、回放验证、管理员全量发布与回滚、七天效果观察和真实对话证据均已接入；管理员入口为 `/admin/ai-quality`
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
 - `2026-05-25` 已完成一次真实 production AI 恢复：production runtime 走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded runtime probe 在恢复窗口中返回过 `ai.probe.status=200`，随后 `ENABLE_RUNTIME_ENV_READBACK` 已重新关闭。
@@ -213,6 +213,7 @@ npm run dev
   - 管理员 API：`/api/admin/analytics/*`
   - AI 质量页面：`/admin/ai-quality`
   - AI 反馈 API：`/api/ai-feedback/*`
+  - AI 质量管理员 API：`/api/admin/ai-quality/*`
   - AI 质量 Cron：`/api/cron/ai-quality/evaluate`、`/api/cron/ai-quality/iterate`
 
 ### 5. 回归检查
@@ -222,11 +223,12 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-19`，当前自动化现实为：
+截至 `2026-07-20`，当前自动化现实为：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 通过
 - `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
-- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npm run lint` = `0 error / 31 warnings`
+- 当前最新全量验证快照：`npm test` = `168` 个测试文件、`1061` 个测试通过
+- AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
 ### 6. 首条托管平台主线
@@ -251,6 +253,7 @@ npm run dev
 npm test
 npm run lint
 npm run smoke:public -- http://127.0.0.1:3000
+npm run acceptance:ai-quality:seed
 node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
 node scripts/runtime-env-readback.mjs https://your-target-host runtime
 npx tsc --noEmit
@@ -285,6 +288,9 @@ npx prisma migrate deploy
 - `src/server/services/auth/admin-access.ts` 负责管理员白名单鉴权；`src/app/settings/page.tsx` 与 `src/components/auth/settings-account-panel.tsx` 负责设置页管理员入口显隐。
 - `src/app/admin/analytics/page.tsx`、`src/components/admin/admin-analytics-shell.tsx`、`src/features/admin-analytics/*`、`src/server/services/admin-analytics/admin-analytics.service.ts` 与 `src/server/repositories/admin-analytics.repository.ts` 已落地管理员数据分析工作台、筛查/下钻 URL 状态、真实读模型查询和管理员审计日志。
 - `src/app/api/admin/analytics/*` 已公开管理员分析接口：总览、漏斗、留存、质量、候选用户和内容级下钻；所有接口都要求已登录且命中 `ADMIN_USERNAMES`。
+- `src/app/admin/ai-quality/page.tsx`、`src/components/admin/admin-ai-quality-*`、`src/features/ai-quality/*`、`src/server/services/ai-quality/*` 与 `src/server/repositories/ai-*` 已落地 AI 质量候选、真实证据、回放验证、全量发布、回滚和七天效果观察。
+- `AIPromptRelease.validationId` 将线上版本绑定到最近通过的候选验证；System Prompt 使用 `+opt:{candidateId}`，Few-shot 使用 `+fs:{fingerprint}` 归因线上 Trace。
+- `npm run acceptance:ai-quality:seed` 默认只写本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
 - `src/components/shared/site-header.tsx` 现在会在客户端测量真实 header 高度，并把结果写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按这个真实高度扣减剩余视口，而不是依赖固定 `4rem`。

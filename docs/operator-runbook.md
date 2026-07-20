@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-05-27`
+最后更新：`2026-07-20`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -22,6 +22,13 @@
 | `DIRECT_URL` | Prisma migration / 运维直连数据库 URL；共享环境建议配置 |
 | `ADMIN_USERNAMES` | 逗号分隔的管理员用户名白名单，用于 `/admin/analytics` 页面与 `/api/admin/analytics/*` 接口鉴权 |
 | `CRON_SECRET` | 保护 AI 每日评估与每周迭代任务的 Bearer Secret；推荐用 `openssl rand -base64 32` 生成 |
+
+生产环境合同：
+
+- 唯一生产主域名：`https://dailylight.chat`
+- `APP_URL`：`https://dailylight.chat`
+- `https://www.dailylight.chat`：兼容入口
+- `dlight.cc.cd`：已于 `2026-07-20` 移除并废弃
 
 账户体系补充说明：
 
@@ -249,11 +256,13 @@ npm run dev
 
 1. 配置 `ADMIN_USERNAMES` 与 `CRON_SECRET`，用管理员账号登录。
 2. 在 `/settings` 确认出现“AI 质量改进中心”，进入 `/admin/ai-quality`。
-3. 用普通账号接受 AI 质量改进授权，完成一轮访谈并提交一次点踩标签和自由文本。
-4. 调用每日评估任务，确认 Trace 生成结构化 `AIEvaluation` 与 `AICase`。
-5. 调用每周迭代任务，确认后台出现 System Prompt、Few-shot 或工程修复候选。
-6. 依次验证批准、发布和回滚，确认 `AdminAuditLog` 记录对应动作。
-7. 撤回反馈或退出质量改进计划，确认关联 Few-shot 状态立即变为 `retired`。
+3. 用普通账号完成一轮访谈，分别验证赞、踩、标签、自由文本、切换和撤回。
+4. 点击“立即评估并生成候选”，确认本次运行先评估最多 20 条，再扫描最近 7 天案例。
+5. 打开候选证据，确认可以看到脱敏背景、用户与 AI 对话、用户反馈和自动评分。
+6. 批准候选并执行验证；验证通过后确认“全量应用”可用。
+7. 在发布确认弹窗中核对 Prompt Key、验证结果和回滚说明，再由管理员发布。
+8. 展开“上线效果观察”，核对发布前基线、发布后指标和真实案例。
+9. 执行回滚，确认 `AdminAuditLog` 有记录，观察窗口提前截止。
 
 手工调用任务：
 
@@ -265,12 +274,47 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
   "http://localhost:3000/api/cron/ai-quality/iterate"
 ```
 
+管理员登录态下也可以直接触发手动运行：
+
+```bash
+curl -X POST \
+  --cookie "dl_session=<本地管理员会话 Cookie>" \
+  "http://localhost:3000/api/admin/ai-quality/runs"
+```
+
 共享环境发布时按顺序应用以下迁移：
 
 - `20260719010000_add_ai_generation_trace`
 - `20260719020000_add_ai_evaluation`
 - `20260719030000_add_ai_feedback_and_consent`
 - `20260719040000_add_ai_optimization_engine`
+- `20260719050000_default_ai_quality_and_candidate_dedupe`
+- `20260719060000_add_ai_candidate_validation`
+- `20260720010000_bind_prompt_release_validation`
+
+本地验收数据：
+
+- `npm run acceptance:ai-quality:seed` 只用于可重复的本地验收。
+- 执行前先确认 `DATABASE_URL` 指向本机数据库。
+- 远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`。
+- production 环境会主动终止脚本。
+- 共享生产库只保留真实用户数据；验收完成后清理固定验收账号、Trace、反馈、候选和运行记录。
+- 本地快捷登录 `/api/dev/acceptance-login` 在 production 统一返回 `404`。
+
+本地验收顺序：
+
+```bash
+npm run acceptance:ai-quality:seed
+npm run dev
+```
+
+随后打开：
+
+```text
+http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance&redirect=%2Fadmin%2Fai-quality
+```
+
+`ACCEPTANCE_LOGIN_TOKEN`、`ACCEPTANCE_ADMIN_USERNAME` 和 `ACCEPTANCE_ADMIN_PASSWORD` 可以覆盖默认验收凭据。快捷登录只接受 localhost/127.0.0.1 请求，并用恒定时间比较 token。
 
 ## 3. AI 运行配置中心
 
@@ -576,16 +620,20 @@ npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-05-19`，当前基线是：
+截至 `2026-07-20`，当前基线是：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 以最近一次回归结果为准
 - `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
-- 当前最新验证快照：`npm test` = `71` 个测试文件、`595` 个测试通过；`npx tsc --noEmit` 通过；`npm run build` 通过；`npm run lint` = `0 error / 31 warnings`
+- 当前最新全量验证快照：`npm test` = `168` 个测试文件、`1061` 个测试通过
+- AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
+- `npx tsc --noEmit` 与 `npm run build` 通过；构建仍会输出既有 ESLint warnings
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 5. 托管平台主线
 
 当前默认托管平台路线固定为 `Vercel`。
+
+生产 smoke、回调和人工验收统一使用 `https://dailylight.chat`。`https://www.dailylight.chat` 只承担兼容访问。
 
 相关文件：
 
@@ -638,7 +686,7 @@ ALL_PROXY=http://127.0.0.1:7897
 
 ### 5.1.1 Production URL contract direct readback
 
-当 launch gate 需要直接验证 `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` / `APP_URL` 的运行时值时，不要继续依赖 `vercel env pull`。当前仓库的最小直读面是：
+当 launch gate 需要直接验证 `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` / `APP_URL` 的运行时值时，使用当前仓库的最小直读面：
 
 - route：`GET /api/debug/runtime-env`
 - script：`scripts/runtime-env-readback.mjs`
@@ -656,8 +704,8 @@ ALL_PROXY=http://127.0.0.1:7897
 RUNTIME_ENV_READBACK_TOKEN="your-readback-token" \
 ACCEPTANCE_TRANSPORT=vercel-curl \
 ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
-ACCEPTANCE_BASE_URL="https://your-target-host" \
-node scripts/runtime-env-readback.mjs "https://your-target-host" runtime
+ACCEPTANCE_BASE_URL="https://dailylight.chat" \
+node scripts/runtime-env-readback.mjs "https://dailylight.chat" runtime
 ```
 
 返回只允许读取这些白名单字段：
@@ -694,19 +742,15 @@ node scripts/runtime-env-readback.mjs "https://your-target-host" runtime
 
 ## 6. 高频故障排查
 
-### 5.0 `npm run build` 仍然失败
+### 5.0 `npm run build` 失败
 
-症状：
-- `next build` 能完成编译，但会停在 lint / type checking 阶段
+当前 `2026-07-20` 验证基线为生产构建通过，并保留既有 ESLint warnings。新出现的非零退出码需要按本次构建日志定位：
 
-当前已知现实：
-- 截至 `2026-05-04`，当前仓库仍有一批既有 ESLint `no-explicit-any` 错误，集中在 `src/server/repositories/*`
-- 这不是本轮语义解释层改动单独引入的问题
-
-处理：
-1. 先确认是不是新改动引起的新增错误
-2. 如果报错仍然集中在 `src/server/repositories/*` 的 `no-explicit-any`，按现有 lint debt 单独收尾，不要误判成当前功能改动造成
-3. 如果还同时看到 `tests/unit/calendar-presentation.test.ts` 的 mixed pill 视觉区分断言失败，先确认它是否仍符合当前月格单字 badge 的真实样式语义，再决定是更新断言还是恢复视觉区分
+1. 先运行 `npm run typecheck`，区分 TypeScript 错误与 Next.js 构建错误。
+2. 再运行 `npm run lint`，记录新增 error 与既有 warning。
+3. 确认 Prisma Client 已通过 `npm install` 的 `postinstall` 生成；需要时执行 `npx prisma generate`。
+4. 检查部署环境是否已应用当前 migrations。
+5. 用首次出现的文件位置和错误码排查，避免把 warning 当成构建失败原因。
 
 ### 5.1 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
 
@@ -907,6 +951,23 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - `src/server/services/interview/joy-interview.service.ts` 的 `normalizeThinkingSummary`
 - `src/components/interview/interview-shell.tsx` 的 `MessageBubble` variant
 
+### 5.9 AI 质量后台读取失败
+
+症状：
+
+- `/admin/ai-quality` 的效果区提示数据连接暂不可用
+- 响应包含 `P1001 / P1017 / P2024` 或 `AI_QUALITY_IMPACT_FAILED`
+
+处理：
+
+1. 记录页面展示的 `requestId`。
+2. 先点击局部“重新加载”；管理员只读查询已经等待约 `300ms` 并重试一次。
+3. 检查 `DATABASE_URL` 的 pooler 连通性与连接池占用。
+4. 检查服务端对应 requestId 日志；Prisma 原始错误只会出现在服务端。
+5. 数据库恢复后重新展开效果区或真实案例。
+
+候选缺少通过验证时，底层会阻止发布并抛出 `OPTIMIZATION_VALIDATION_REQUIRED`。当前候选 PATCH 路由会返回通用 `500 AI_QUALITY_REVIEW_FAILED`；补齐结构化 `409` 映射前，管理员应先执行候选验证，再重新发布。
+
 ## 7. 关键日志与定位点
 
 优先看：
@@ -928,7 +989,11 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 
 数据库里当前也会记录：
 - `AIRequestLog`
-  - `transcribe / extract / generate`
+  - `transcribe / extract / generate / question / evaluate / iterate / portrait_synthesis`
+- `AIGenerationTrace / AIEvaluation / AICase`
+- `AIFeedback / AIFeedbackRevision`
+- `AIOptimizationRun / AIBadcaseCluster / AIOptimizationCandidate / AIOptimizationValidation`
+- `AIFewShotExample / AIPromptRelease`
 - `InterviewSession`
 - `InterviewEvent`
 - `JoyEntry`
@@ -963,4 +1028,4 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
-- `/analysis?month=YYYY-MM&section=overview|score|rhythm|insights` 当前已接入 tab 互斥视图的月度复盘工作台，`overview` 只在默认视图内显示月度判断、评分可信度、“建议先看”主行动、轻入口和证据条，正文区按 `section` 只渲染总览 / 评分 / 节奏 / 五维洞察之一；缺失 `section` 的默认入口为 `overview`。回到维度访谈的下钻链接会保留 `entryDate`，未来日期热力区 drill-down 只保留 `查看当天`；当前月 `最长空档` 会排除未来日期；`rhythm` 与 `insights` 现在都会把 `stale` 的当天整合日志视为待处理，即使当天已没有任何 `saved` 来源也不会漏掉。`PUT /api/happiness-score` 允许保存所有非未来日期；当前月评分保存成功后 header toolbar 的 contextual chip 会立即刷新。评分录入入口已迁移到访谈页顶部「当天评分」独立工作区，分析页评分分区保留趋势阅读。生成式 AI 月度洞察仍未接入
+- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 当前为单页四段纵向 scroll + 顶部锚点工作台；缺失 `section` 时默认 `trends`，旧 `overview|score|rhythm|insights` 会归一到新 keys。量化趋势走 `GET /api/analysis/range`，五维全景走 `GET /api/analysis/month`，关联与复盘仍为占位。`PUT /api/happiness-score` 允许保存所有非未来日期，评分录入入口位于访谈页「当天评分」工作区。
