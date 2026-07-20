@@ -6,8 +6,11 @@
 
 这是一个单仓库的 Next.js 应用，用 AI 访谈来帮助用户完成“幸福日志”记录。
 
+产品层的功能架构图、主链时序图和逐节点图解统一收录在 [访谈功能图谱](./diagrams/README.md)。
+
 当前架构形态包含：
 - 一个受状态控制的访谈系统
+- 一个先保存用户原话、再完成 AI 处理，并支持同轮恢复的提交系统
 - 一个以 `snapshotData` 和 `payload` 为内部真相的结构化采集系统
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 - 一个以 Trace 为血缘、由管理员验证和发布的 AI 质量闭环
@@ -67,6 +70,7 @@
 
 - `src/features/interview`
   - 多维度共用：schema、维度定义、进度算法、前端元信息
+  - `user-turn.ts` 统一用户回复文本规范化与 Unicode 字符计数；`user-turn-storage.ts` 管理输入草稿和待发 outbox
   - `server/semantic-interpretation.ts` 与 `server/draft-policies.ts` 承担服务端语义解释和正文策略投影；这层解释只服务 summary、`DraftBrief`、短标题和质量门，不能作为正文句子直接进入用户可见日志
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
@@ -140,7 +144,7 @@
 ### 持久化层
 
 - `src/server/repositories/joy-interview.repository.ts`
-  - 会话、事件、日志、payload、legacy 字段投影映射
+  - 会话、事件、用户提交记录、消息、日志、payload、legacy 字段投影映射
 - `src/server/repositories/calendar.repository.ts`
   - 从 `InterviewSession / JoyEntry / DailyJournalEntry` 查询标准化 calendar source
   - 如果 session 拿到了 `messageCount`，聚合层会把“只有 opening assistant、没有任何用户回复”的空开场 session 视为 opening-only，不再算作 `in_progress`
@@ -193,6 +197,16 @@
   - 单个事件级访谈单元，记录 `snapshotData`、`progressData` 和事件级状态
 - `InterviewMessage`
   - 全部可恢复消息
+- `InterviewUserTurn`
+  - 用户回复与选择动作的提交事实，保存 `clientTurnId / action / rawText / baseMessageSequence / status / attemptCount / errorCode`
+  - 同一会话内 `clientTurnId` 唯一；同一时刻只允许一条 `processing / failed / canceled` 未解决提交
+  - 文本回复在 AI 处理前创建对应用户消息；AI 结果完成时，助手消息、事件、会话和本轮 `completed` 状态在同一事务中写入
+
+当前用户提交状态：
+- `processing`
+- `completed`
+- `failed`
+- `canceled`
 
 当前事件状态：
 - `active`
@@ -386,6 +400,8 @@ AI 质量闭环使用四组实体：
 
 删除 Trace 会级联清理其质量信号；删除候选会级联验证和 Release，并将关联 Few-shot 的候选引用置空。`AIPromptRelease` 通过 `promptKey + version` 唯一约束保持版本单调。
 
+`AIOptimizationCandidate.reviewReason` 保存管理员拒绝候选时填写的理由，长度为 `4–300` 字；批准、发布和回滚动作会清空该字段。发布缺少通过验证时，候选路由返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
+
 ## 4. 结构化数据面
 
 ### 4.1 snapshot vs snapshotData
@@ -457,17 +473,29 @@ AI 质量闭环使用四组实体：
 - `POST /api/interview/session/respond/stream`
 
 SSE 事件：
+- `turn`
 - `phase`
 - `delta`
 - `summary`
 - `question`
 - `session`
-- repair 模式下不再走模型流式输出；服务端会直接发完整 `summary -> question -> session`，不会出现 provider `thinking` phase
+- repair 模式下不再走模型流式输出；服务端会直接发完整 `turn -> summary -> question -> session`，不会出现 provider `thinking` phase
 - `error`
 
 非流式路由 `respond` 仍存在，但当前主 UI 使用的是 stream 版本。
 
-provider 流式返回的正式追问原始 `delta.text` 会原样透传给前端，不能对单个任意增量做 trim 或空白折叠；系统自己生成的完整文本、fallback 文本、最终补齐文本，以及规范化后的 `summary` 文本才进入内部切块逻辑。
+一轮回复采用两阶段持久化：
+
+1. 页面保存输入草稿；点击发送后生成 `clientTurnId`，记录 `baseMessageSequence` 并写入本地 outbox。
+2. 服务端先校验重复提交、未解决提交和对话位置，再创建 `InterviewUserTurn(processing)`；文本回复同时保存用户原话。
+3. 流式接口发送 `turn`，确认原话已经成为服务端持久事实。
+4. 服务端执行意图识别、槽位提取、动作决策、问题生成和输出检查。
+5. 最终事务写入助手消息、快照、事件、会话和生成 Trace，并把本轮标记为 `completed`。
+6. 流式接口发送最终 `session`；页面清理 outbox。
+
+AI 处理失败时本轮进入 `failed`；请求取消时进入 `canceled`。会话读取把这两类状态和仍在处理的状态投影为 `pendingUserTurn`。用户点击“继续生成”后，前端用同一 `clientTurnId` 发送 `resume_turn`，服务端增加尝试次数并从原始消息位置继续。
+
+provider 流式返回的候选文本会先在服务端累计。服务端完成问题协议、重复保护、维度专项检查和 fallback 后，再把最终 `summary / question` 分块发送给前端；分块过程保持最终文本的空格和换行。
 
 截至 `2026-05-01`，访谈回复错误不再只用一句“提交失败”兜底。`respond/stream` 的 `error` 事件和非流式 `respond` 的错误 JSON 都会携带结构化 `issue`：
 - `code`
@@ -479,6 +507,13 @@ provider 流式返回的正式追问原始 `delta.text` 会原样透传给前端
 - `requestId`
 
 这层结构由 `src/features/interview/interview-issue.ts` 定义，并由 `src/server/services/interview/respond-error.ts` 统一把 schema 校验、session 状态、分叉过期、数据库写入和未知异常映射成用户可执行的错误说明。前端 `InterviewShell` 只展示用户有行动价值的信息：原因、解决方案、错误码和 requestId。
+
+用户提交恢复新增四类冲突语义：
+
+- `INTERVIEW_TURN_IN_PROGRESS`：同一会话已有提交正在处理。
+- `INTERVIEW_TURN_OUT_OF_DATE`：页面基于较早的消息位置提交。
+- `INTERVIEW_TURN_RETRY_REQUIRED`：同一提交已失败或取消，需要走恢复动作。
+- `INTERVIEW_TURN_NOT_FOUND`：指定的待恢复提交不存在或不属于当前用户。
 
 ### 5.3 分叉决策
 
@@ -824,6 +859,8 @@ flowchart TD
 ### 10.3 验证、发布与归因
 
 System Prompt 和 Few-shot 候选需要同时满足“管理员批准”和“最近一次回放验证通过”。`AIOptimizationValidation` 保存目标案例、回归案例和各项分数；`AIPromptRelease.validationId` 将线上版本绑定到发布时采用的验证记录。
+
+候选拒绝属于可审计的人工决策：管理员提交 `4–300` 字理由后，系统将其写入 `AIOptimizationCandidate.reviewReason` 并记录审核人和审核时间。
 
 运行时版本标记：
 

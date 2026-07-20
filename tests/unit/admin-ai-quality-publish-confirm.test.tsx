@@ -18,6 +18,9 @@ const candidate: AIOptimizationCandidateView = {
   evidenceTraceIds: ["trace-1"],
   riskLevel: "high",
   createdAt: "2026-07-19T00:00:00.000Z",
+  reviewedBy: "admin",
+  reviewedAt: "2026-07-19T00:30:00.000Z",
+  reviewReason: null,
   cluster: { issueCode: "ignored_boundary", caseCount: 1 },
   fewShotExampleCount: 0,
   releaseCount: 0,
@@ -44,7 +47,7 @@ describe("AI quality full publication confirmation", () => {
     global.fetch = vi.fn(async () => Response.json({ result: { id: "release-1" } })) as typeof fetch;
     render(<AdminAIQualityShell candidates={[candidate]} runs={[]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "全量应用" }));
+    fireEvent.click(screen.getByRole("button", { name: "思考 · 忽视停止或边界：全量应用" }));
     expect(screen.getByRole("dialog", { name: "全量应用这条建议？" })).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
 

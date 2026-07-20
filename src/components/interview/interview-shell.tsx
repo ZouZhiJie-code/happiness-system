@@ -27,6 +27,7 @@ import {
 import { getAssistantChoiceKind, getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import {
   buildInterviewIssue,
+  INTERVIEW_REPLY_MAX_LENGTH,
   parseInterviewIssue,
   type InterviewIssue
 } from "@/features/interview/interview-issue";
@@ -53,13 +54,24 @@ import {
   JOURNAL_GENERATION_PROGRESS_TICK_MS
 } from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import { countInterviewReplyCharacters } from "@/features/interview/user-turn";
+import {
+  clearComposerDraft,
+  clearUserTurnOutbox,
+  readComposerDraft,
+  readUserTurnOutbox,
+  writeComposerDraft,
+  writeUserTurnOutbox,
+  type UserTurnOutboxRecord
+} from "@/features/interview/user-turn-storage";
 import type { TodayJournalBoardPayload, TodayJournalDimensionCardPayload } from "@/features/daily-journal/schema";
 import { useInterviewStore, type InterviewWorkspaceTransitionState } from "@/stores/interview-store";
 import type {
   DraftCompletionMode,
   InterviewDimension,
   InterviewMessage,
-  InterviewSessionRecord
+  InterviewSessionRecord,
+  InterviewUserTurnRecord
 } from "@/types/interview";
 
 type AssistantState = "idle" | "thinking" | "summary" | "question";
@@ -651,6 +663,7 @@ export function InterviewShell({
     journalEntry,
     messages,
     pendingDecision,
+    pendingUserTurn,
     reset,
     sessionId,
     setPendingUrlDimension,
@@ -663,6 +676,7 @@ export function InterviewShell({
     workspaceTransitionState
   } = useInterviewStore();
   const [input, setInput] = useState("");
+  const [localPendingUserTurn, setLocalPendingUserTurn] = useState<InterviewUserTurnRecord | null>(null);
   const [hasDismissedInputPlaceholder, setHasDismissedInputPlaceholder] = useState(false);
   const [interviewIssue, setInterviewIssue] = useState<InterviewIssue | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -749,6 +763,7 @@ export function InterviewShell({
   const journalPanelRef = useRef<HTMLElement | null>(null);
   const shellRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputValueRef = useRef("");
   const draftContentRef = useRef<HTMLTextAreaElement | null>(null);
   const isInputComposingRef = useRef(false);
   const autosaveTimerRef = useRef<number | null>(null);
@@ -765,6 +780,10 @@ export function InterviewShell({
   const conversationResetHandledRef = useRef(0);
   const interviewResponseAbortControllerRef = useRef<AbortController | null>(null);
   const pendingUserMessageRef = useRef<string | null>(null);
+  const activeUserTurnRef = useRef<InterviewUserTurnRecord | null>(null);
+  const activeUserTurnOutboxRef = useRef<UserTurnOutboxRecord | null>(null);
+  const composerDraftTimerRef = useRef<number | null>(null);
+  const restoredComposerDraftKeyRef = useRef<string | null>(null);
   const interviewSubmitLockRef = useRef(false);
   const sessionStateRef = useRef({
     sessionId,
@@ -778,6 +797,10 @@ export function InterviewShell({
   });
   const [shellHeight, setShellHeight] = useState<number | null>(null);
   const hasUserMessages = useMemo(() => messages.some((message) => message.role === "user"), [messages]);
+  const effectivePendingUserTurn = localPendingUserTurn ?? pendingUserTurn ?? null;
+  const inputCharacterCount = countInterviewReplyCharacters(input);
+  const inputTooLong = inputCharacterCount > INTERVIEW_REPLY_MAX_LENGTH;
+  const showInputCharacterCount = inputCharacterCount >= Math.floor(INTERVIEW_REPLY_MAX_LENGTH * 0.8);
   const currentDraftCoverageSignature = useMemo(() => buildDraftCoverageSignature(turnCount, messages), [messages, turnCount]);
   const showRedirectChoice = pendingDecision?.kind === "dimension_redirect";
   const showBoundaryInsufficientChoice = pendingDecision?.kind === "boundary_insufficient";
@@ -792,6 +815,7 @@ export function InterviewShell({
       !journalEntry &&
       draftGenerateState !== "loading" &&
       !optimisticUserMessage &&
+      !effectivePendingUserTurn &&
       assistantState === "idle" &&
       isSessionHydratedForCurrentDimension
   );
@@ -876,6 +900,8 @@ export function InterviewShell({
   );
   const canSendInput = Boolean(
     input.trim() &&
+      !inputTooLong &&
+      !effectivePendingUserTurn &&
       isSessionHydratedForCurrentDimension &&
       !isBusy &&
       !isGeneratingDraft &&
@@ -971,6 +997,113 @@ export function InterviewShell({
     setDraftSyncState("saved");
     setHasSavedJournal((current) => current || journalEntry.status === "saved" || Boolean(journalEntry.savedAt));
   }, [journalEntry]);
+
+  useEffect(() => {
+    inputValueRef.current = input;
+  }, [input]);
+
+  useEffect(() => {
+    if (!sessionId || !sessionEntryDate || sessionDimension !== currentDimension) {
+      return;
+    }
+
+    const scopeKey = `${sessionId}::${sessionEntryDate}::${currentDimension}`;
+    if (restoredComposerDraftKeyRef.current === scopeKey) {
+      return;
+    }
+
+    restoredComposerDraftKeyRef.current = scopeKey;
+    const storedDraft = readComposerDraft({
+      sessionId,
+      entryDate: sessionEntryDate,
+      dimension: currentDimension
+    });
+
+    if (storedDraft && !effectivePendingUserTurn) {
+      setInput((current) => current || storedDraft);
+    }
+  }, [currentDimension, effectivePendingUserTurn, sessionDimension, sessionEntryDate, sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !sessionEntryDate || sessionDimension !== currentDimension) {
+      return;
+    }
+
+    if (composerDraftTimerRef.current) {
+      window.clearTimeout(composerDraftTimerRef.current);
+    }
+
+    composerDraftTimerRef.current = window.setTimeout(() => {
+      writeComposerDraft(
+        {
+          sessionId,
+          entryDate: sessionEntryDate,
+          dimension: currentDimension
+        },
+        input
+      );
+      composerDraftTimerRef.current = null;
+    }, 300);
+
+    return () => {
+      if (composerDraftTimerRef.current) {
+        window.clearTimeout(composerDraftTimerRef.current);
+        composerDraftTimerRef.current = null;
+      }
+    };
+  }, [currentDimension, input, sessionDimension, sessionEntryDate, sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || sessionDimension !== currentDimension) {
+      return;
+    }
+
+    const outbox = readUserTurnOutbox(sessionId);
+
+    if (pendingUserTurn) {
+      activeUserTurnRef.current = pendingUserTurn;
+      activeUserTurnOutboxRef.current =
+        outbox ??
+        {
+          clientTurnId: pendingUserTurn.clientTurnId,
+          sessionId,
+          action: pendingUserTurn.action,
+          rawText: pendingUserTurn.rawText,
+          inputMode: pendingUserTurn.inputMode,
+          baseMessageSequence: pendingUserTurn.baseMessageSequence,
+          status: pendingUserTurn.status,
+          createdAt: pendingUserTurn.createdAt
+        };
+      setLocalPendingUserTurn((current) => current ?? pendingUserTurn);
+      return;
+    }
+
+    if (!outbox) {
+      return;
+    }
+
+    const wasCompleted = messages.some(
+      (message) => message.clientTurnId === outbox.clientTurnId
+    );
+
+    if (wasCompleted) {
+      clearUserTurnOutbox(sessionId);
+      activeUserTurnOutboxRef.current = null;
+      activeUserTurnRef.current = null;
+      setLocalPendingUserTurn(null);
+      return;
+    }
+
+    if (outbox.action === "reply" && outbox.rawText) {
+      setInput((current) => current || outbox.rawText || "");
+    }
+    const recoverableOutbox: UserTurnOutboxRecord = {
+      ...outbox,
+      status: "failed"
+    };
+    activeUserTurnOutboxRef.current = recoverableOutbox;
+    writeUserTurnOutbox(recoverableOutbox);
+  }, [currentDimension, messages, pendingUserTurn, sessionDimension, sessionId]);
 
   useEffect(() => {
     const inputElement = inputRef.current;
@@ -1157,13 +1290,40 @@ export function InterviewShell({
 
   const cancelInterviewResponse = useCallback(() => {
     const pendingUserMessage = pendingUserMessageRef.current;
+    const acceptedTurn = activeUserTurnRef.current;
     interviewResponseAbortControllerRef.current?.abort();
     interviewResponseAbortControllerRef.current = null;
     pendingUserMessageRef.current = null;
     interviewSubmitLockRef.current = false;
     activeStreamIdRef.current += 1;
     clearStreamState();
-    if (pendingUserMessage) {
+    if (acceptedTurn) {
+      const canceledTurn: InterviewUserTurnRecord = {
+        ...acceptedTurn,
+        status: "canceled",
+        errorCode: "REQUEST_CANCELED",
+        updatedAt: new Date().toISOString()
+      };
+      activeUserTurnRef.current = canceledTurn;
+      setLocalPendingUserTurn(canceledTurn);
+      const currentOutbox = activeUserTurnOutboxRef.current;
+
+      if (currentOutbox) {
+        const canceledOutbox: UserTurnOutboxRecord = {
+          ...currentOutbox,
+          status: "canceled"
+        };
+        activeUserTurnOutboxRef.current = canceledOutbox;
+        writeUserTurnOutbox(canceledOutbox);
+      }
+
+      const hasPersistedUserMessage = useInterviewStore
+        .getState()
+        .messages.some((message) => message.userTurnId === acceptedTurn.id);
+      if (!hasPersistedUserMessage && acceptedTurn.rawText) {
+        setOptimisticUserMessage(acceptedTurn.rawText);
+      }
+    } else if (pendingUserMessage) {
       setInput((current) => current.trim() ? current : pendingUserMessage);
     }
     setIsBusy(false);
@@ -1200,6 +1360,10 @@ export function InterviewShell({
 
     const nextSession = pendingSessionRef.current;
     pendingUserMessageRef.current = null;
+    clearUserTurnOutbox(nextSession.id);
+    activeUserTurnRef.current = null;
+    activeUserTurnOutboxRef.current = null;
+    setLocalPendingUserTurn(null);
     touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
     hydrate(nextSession);
     pendingSessionRef.current = null;
@@ -1328,6 +1492,9 @@ export function InterviewShell({
 
   const clearDimensionSwitchUiState = useCallback(() => {
     setInput("");
+    setLocalPendingUserTurn(null);
+    activeUserTurnRef.current = null;
+    activeUserTurnOutboxRef.current = null;
     setHasDismissedInputPlaceholder(false);
     setInterviewIssue(null);
     setDraftError(null);
@@ -1359,6 +1526,7 @@ export function InterviewShell({
         activeEventId,
         events,
         pendingDecision,
+        pendingUserTurn: effectivePendingUserTurn,
         draftGenerationUnlocked: sessionDraftGenerationUnlocked,
         turnCount,
         messages,
@@ -1383,6 +1551,15 @@ export function InterviewShell({
           hasSavedJournal: hasSavedJournalRef.current
         }
       });
+
+      writeComposerDraft(
+        {
+          sessionId,
+          entryDate: sessionEntryDate ?? resolvedEntryDate,
+          dimension: leavingDimension
+        },
+        inputValueRef.current
+      );
     },
     [
       activeEventId,
@@ -1390,6 +1567,7 @@ export function InterviewShell({
       journalEntry,
       messages,
       pendingDecision,
+      effectivePendingUserTurn,
       resolvedEntryDate,
       sessionDimension,
       sessionDraftGenerationUnlocked,
@@ -1769,14 +1947,18 @@ export function InterviewShell({
       | {
           action: "continue_current_event" | "next_event";
         }
+      | {
+          action: "resume_turn";
+          clientTurnId: string;
+        }
   ) {
     if (isBusy || interviewSubmitLockRef.current) {
       return;
     }
 
-    const optimisticMessage = payload.action === "reply" ? payload.userMessage.trim() : null;
+    const optimisticMessage = payload.action === "reply" ? payload.userMessage : null;
 
-    if (payload.action === "reply" && !optimisticMessage) {
+    if (payload.action === "reply" && !(optimisticMessage ?? "").trim()) {
       return;
     }
 
@@ -1789,6 +1971,18 @@ export function InterviewShell({
     if (payload.action === "reply") {
       setInput("");
       setOptimisticUserMessage(optimisticMessage);
+    } else if (payload.action === "resume_turn") {
+      setLocalPendingUserTurn((current) =>
+        current
+          ? {
+              ...current,
+              status: "processing",
+              attemptCount: current.attemptCount + 1,
+              errorCode: null,
+              updatedAt: new Date().toISOString()
+            }
+          : current
+      );
     } else {
       setOptimisticUserMessage(null);
     }
@@ -1819,6 +2013,57 @@ export function InterviewShell({
         );
       }
 
+      const currentMessages = useInterviewStore.getState().messages;
+      const currentBaseMessageSequence = currentMessages.at(-1)?.sequence ?? -1;
+      const previousOutbox = activeUserTurnOutboxRef.current;
+      const canReuseReplyOutbox =
+        payload.action === "reply" &&
+        previousOutbox?.sessionId === resolvedSessionId &&
+        previousOutbox.action === "reply" &&
+        previousOutbox.rawText === optimisticMessage &&
+        (
+          previousOutbox.status === "submitting" ||
+          previousOutbox.status === "failed"
+        );
+      const baseMessageSequence = canReuseReplyOutbox
+        ? previousOutbox.baseMessageSequence
+        : currentBaseMessageSequence;
+      const clientTurnId =
+        payload.action === "resume_turn"
+          ? payload.clientTurnId
+          : canReuseReplyOutbox
+            ? previousOutbox.clientTurnId
+          : globalThis.crypto?.randomUUID?.() ?? `turn_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const action =
+        payload.action === "reply"
+          ? "reply"
+          : payload.action === "resume_turn"
+            ? activeUserTurnRef.current?.action ?? effectivePendingUserTurn?.action ?? "reply"
+            : payload.action;
+      const outbox: UserTurnOutboxRecord =
+        payload.action === "resume_turn" && activeUserTurnOutboxRef.current
+          ? {
+              ...activeUserTurnOutboxRef.current,
+              status: "processing"
+            }
+          : canReuseReplyOutbox
+            ? {
+                ...previousOutbox,
+                status: "submitting"
+              }
+          : {
+              clientTurnId,
+              sessionId: resolvedSessionId,
+              action,
+              rawText: optimisticMessage,
+              inputMode: payload.action === "reply" ? payload.inputMode : undefined,
+              baseMessageSequence,
+              status: "submitting",
+              createdAt: new Date().toISOString()
+            };
+      activeUserTurnOutboxRef.current = outbox;
+      writeUserTurnOutbox(outbox);
+
       const response = await fetch("/api/interview/session/respond/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1828,13 +2073,23 @@ export function InterviewShell({
             ? {
                 action: "reply",
                 sessionId: resolvedSessionId,
-                userMessage: optimisticMessage,
-                inputMode: payload.inputMode
+                rawText: optimisticMessage,
+                inputMode: payload.inputMode,
+                clientTurnId,
+                baseMessageSequence
               }
-            : {
+            : payload.action === "resume_turn"
+              ? {
+                  action: "resume_turn",
+                  sessionId: resolvedSessionId,
+                  clientTurnId
+                }
+              : {
                 action: payload.action,
-                sessionId: resolvedSessionId
-              }
+                sessionId: resolvedSessionId,
+                clientTurnId,
+                baseMessageSequence
+                }
         )
       });
 
@@ -1893,6 +2148,39 @@ export function InterviewShell({
                 setStreamedAssistantSummary((current) => current + text);
               } else {
                 setStreamedAssistantQuestion((current) => current + text);
+              }
+            }
+
+            return;
+          }
+
+          if (parsed.event === "turn") {
+            const turn = parsed.data.turn as InterviewUserTurnRecord | undefined;
+
+            if (turn?.id && turn.clientTurnId) {
+              activeUserTurnRef.current = turn;
+              setLocalPendingUserTurn(turn.status === "completed" ? null : turn);
+              const currentOutbox = activeUserTurnOutboxRef.current;
+
+              if (currentOutbox) {
+                const nextOutbox: UserTurnOutboxRecord = {
+                  ...currentOutbox,
+                  status: turn.status
+                };
+                activeUserTurnOutboxRef.current = nextOutbox;
+                writeUserTurnOutbox(nextOutbox);
+              }
+
+              if (
+                turn.action === "reply" &&
+                sessionEntryDate &&
+                sessionDimension
+              ) {
+                clearComposerDraft({
+                  sessionId: turn.sessionId,
+                  entryDate: sessionEntryDate,
+                  dimension: sessionDimension
+                });
               }
             }
 
@@ -1959,16 +2247,94 @@ export function InterviewShell({
         return;
       }
 
-      pendingUserMessageRef.current = null;
-      pendingAutoDraftRequestRef.current = false;
-      clearStreamState();
-      if (payload.action === "reply" && optimisticMessage) {
-        setInput(optimisticMessage);
-      }
       const issue = parseInterviewIssue(error)
         ?? (error instanceof TypeError
           ? buildInterviewIssue("NETWORK_UNAVAILABLE")
           : buildInterviewIssue("INTERVIEW_RESPOND_FAILED"));
+      const acceptedTurn = activeUserTurnRef.current;
+      pendingUserMessageRef.current = null;
+      pendingAutoDraftRequestRef.current = false;
+      clearStreamState();
+      if (acceptedTurn) {
+        const failedTurn: InterviewUserTurnRecord = {
+          ...acceptedTurn,
+          status: "failed",
+          errorCode: parseInterviewIssue(error)?.code ?? "INTERVIEW_RESPOND_FAILED",
+          updatedAt: new Date().toISOString()
+        };
+        activeUserTurnRef.current = failedTurn;
+        setLocalPendingUserTurn(failedTurn);
+        const currentOutbox = activeUserTurnOutboxRef.current;
+
+        if (currentOutbox) {
+          const failedOutbox: UserTurnOutboxRecord = {
+            ...currentOutbox,
+            status: "failed"
+          };
+          activeUserTurnOutboxRef.current = failedOutbox;
+          writeUserTurnOutbox(failedOutbox);
+        }
+
+        const hasPersistedUserMessage = useInterviewStore
+          .getState()
+          .messages.some((message) => message.userTurnId === acceptedTurn.id);
+        if (!hasPersistedUserMessage && acceptedTurn.rawText) {
+          setOptimisticUserMessage(acceptedTurn.rawText);
+        }
+      } else if (payload.action === "reply" && optimisticMessage) {
+        const currentOutbox = activeUserTurnOutboxRef.current;
+        const serverTurnStatus =
+          issue.code === "INTERVIEW_TURN_RETRY_REQUIRED"
+            ? "failed"
+            : issue.code === "INTERVIEW_TURN_IN_PROGRESS"
+              ? "processing"
+              : null;
+        const shouldKeepOutbox =
+          issue.code === "NETWORK_UNAVAILABLE" ||
+          issue.code === "STREAM_PROTOCOL_ERROR" ||
+          Boolean(serverTurnStatus);
+
+        if (currentOutbox && shouldKeepOutbox) {
+          const recoverableOutbox: UserTurnOutboxRecord = {
+            ...currentOutbox,
+            status: serverTurnStatus ?? "failed"
+          };
+          activeUserTurnOutboxRef.current = recoverableOutbox;
+          writeUserTurnOutbox(recoverableOutbox);
+
+          if (serverTurnStatus) {
+            const pendingTurn: InterviewUserTurnRecord = {
+              id: `pending:${currentOutbox.clientTurnId}`,
+              clientTurnId: currentOutbox.clientTurnId,
+              sessionId: currentOutbox.sessionId,
+              activeEventId: activeEventId ?? null,
+              action: currentOutbox.action,
+              rawText: currentOutbox.rawText,
+              inputMode: currentOutbox.inputMode,
+              baseMessageSequence: currentOutbox.baseMessageSequence,
+              status: serverTurnStatus,
+              attemptCount: 1,
+              errorCode: issue.code,
+              createdAt: currentOutbox.createdAt,
+              updatedAt: new Date().toISOString(),
+              completedAt: null
+            };
+            activeUserTurnRef.current = pendingTurn;
+            setLocalPendingUserTurn(pendingTurn);
+            setInput("");
+            setOptimisticUserMessage(optimisticMessage);
+          } else {
+            setInput(optimisticMessage);
+          }
+        } else {
+          setInput(optimisticMessage);
+          const outboxSessionId = currentOutbox?.sessionId ?? sessionId;
+          if (outboxSessionId) {
+            clearUserTurnOutbox(outboxSessionId);
+          }
+          activeUserTurnOutboxRef.current = null;
+        }
+      }
       const actionSpecificIssue =
         issue.code === "INTERVIEW_RESPOND_FAILED" && payload.action === "continue_current_event"
           ? buildInterviewIssue("INTERVIEW_RESPOND_FAILED", {
@@ -2024,6 +2390,24 @@ export function InterviewShell({
     setPanelOpen(false);
     await runInterviewAction({
       action: "next_event"
+    });
+  }
+
+  async function handleResumeUserTurn() {
+    if (
+      !effectivePendingUserTurn ||
+      (
+        effectivePendingUserTurn.status !== "failed" &&
+        effectivePendingUserTurn.status !== "canceled"
+      )
+    ) {
+      return;
+    }
+
+    activeUserTurnRef.current = effectivePendingUserTurn;
+    await runInterviewAction({
+      action: "resume_turn",
+      clientTurnId: effectivePendingUserTurn.clientTurnId
     });
   }
 
@@ -2625,6 +3009,14 @@ export function InterviewShell({
       stopToastTimer();
       cancelDraftGeneration();
       cancelInterviewResponse();
+      if (sessionId && (sessionEntryDate ?? requestedEntryDate)) {
+        clearComposerDraft({
+          sessionId,
+          entryDate: sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate(),
+          dimension: sessionDimension ?? currentDimension
+        });
+        clearUserTurnOutbox(sessionId);
+      }
       clearAllDimensionSessionCache();
       dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
       dimensionsToClear.forEach((dimensionToClear) => markStoredInterviewSessionFreshStart(dimensionToClear, entryDateForFreshStart));
@@ -2650,6 +3042,7 @@ export function InterviewShell({
     ensureSession,
     reset,
     sessionDimension,
+    sessionId,
     stopDraftAutosave,
     stopToastTimer
   ]);
@@ -3192,6 +3585,37 @@ export function InterviewShell({
                             ))
                           : null}
                         {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
+                        {effectivePendingUserTurn && assistantState === "idle" ? (
+                          <div
+                            data-testid="pending-user-turn-status"
+                            className="flex items-center justify-end gap-3 px-2 text-xs text-[#765a40]"
+                          >
+                            <span>
+                              {effectivePendingUserTurn.status === "processing"
+                                ? effectivePendingUserTurn.action === "reply"
+                                  ? "这条回复仍在处理中…"
+                                  : "这个访谈操作仍在处理中…"
+                                : effectivePendingUserTurn.status === "canceled"
+                                  ? effectivePendingUserTurn.action === "reply"
+                                    ? "已停止生成，你的原话已经保留。"
+                                    : "已停止生成，可以继续这个访谈操作。"
+                                  : effectivePendingUserTurn.action === "reply"
+                                    ? "这条回复已经保留，可以继续生成。"
+                                    : "这个访谈操作已经保留，可以继续生成。"}
+                            </span>
+                            {effectivePendingUserTurn.status === "failed" ||
+                            effectivePendingUserTurn.status === "canceled" ? (
+                              <button
+                                type="button"
+                                onClick={handleResumeUserTurn}
+                                disabled={isBusy}
+                                className="rounded-[var(--radius-control)] bg-[rgba(226,200,164,0.54)] px-3 py-1.5 font-semibold text-[#4b3522] transition hover:bg-[rgba(226,200,164,0.76)] disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                继续生成
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
                         {showStreamingBubble ? (
                           <>
                             {assistantState === "thinking" && !streamedAssistantSummary && !streamedAssistantQuestion ? (
@@ -3283,6 +3707,17 @@ export function InterviewShell({
                         className="absolute inset-x-2 bottom-3 z-20 md:bottom-4"
                       >
                         {interviewIssue ? <InterviewIssueNotice issue={interviewIssue} className="mb-2" /> : null}
+                        {showInputCharacterCount ? (
+                          <div
+                            id="interview-input-count"
+                            className={`mb-1 pr-3 text-right text-xs ${
+                              inputTooLong ? "text-[#9f3f2f]" : "text-[#806a56]"
+                            }`}
+                          >
+                            {inputCharacterCount}/{INTERVIEW_REPLY_MAX_LENGTH}
+                            {inputTooLong ? "，请删短后发送" : ""}
+                          </div>
+                        ) : null}
                         <div className="liquid-composer rounded-[26px] px-2 py-1.5 md:px-2.5">
                           <textarea
                             ref={inputRef}
@@ -3299,6 +3734,8 @@ export function InterviewShell({
                             }}
                             onKeyDown={handleInputKeyDown}
                             placeholder={composerPlaceholder}
+                            aria-invalid={inputTooLong}
+                            aria-describedby={showInputCharacterCount ? "interview-input-count" : undefined}
                             className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
                           />
                           <button

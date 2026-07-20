@@ -11,6 +11,7 @@
 - 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质检现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 quality gate；这层内部解释不能直接写进用户可见正文或 fallback draft。`joy` 质量门接受语义等价改写，但会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类内部理论腔和抽象收尾。
 - `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` stitched supporting-scene 的 loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
+- 当前工作区已经接入可恢复的用户提交记录：页面保存输入草稿和待发 outbox，服务端在 AI 处理前创建 `InterviewUserTurn` 并保存用户原话；重复提交用 `clientTurnId` 去重，旧对话位置会被拦截，失败或取消后可用“继续生成”恢复同一轮。
 - 首版账户体系已经接入：
   - 支持用户名 + 密码注册与登录
   - 登录态使用 `httpOnly` cookie `dl_session`
@@ -20,7 +21,7 @@
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
 - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
-- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、赞踩标签与文本、Badcase 聚类、候选去重、回放验证、管理员全量发布与回滚、七天效果观察和真实对话证据均已接入；管理员入口为 `/admin/ai-quality`
+- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、赞踩标签与文本、Badcase 聚类、候选去重、回放验证、管理员全量发布与回滚、七天效果观察和真实对话证据均已接入；管理员拒绝候选时需要填写 `4–300` 字原因，发布缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`；管理员入口为 `/admin/ai-quality`
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
 - `2026-05-25` 已完成一次真实 production AI 恢复：production runtime 走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded runtime probe 在恢复窗口中返回过 `ai.probe.status=200`，随后 `ENABLE_RUNTIME_ENV_READBACK` 已重新关闭。
@@ -62,8 +63,8 @@
 - 已保存的维度日志或当天整合日志再次编辑时，会先回到 `draft`；只有用户点击“保存修改”后才重新成为正式保存版本。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有卡片结束后，最终停在 transcript 末尾的历史 choice 才会继续可见。
 - `gratitude` 的 `stitched_moments` supporting-scene 质量门现在只接受仍保留明确照顾动作和足够场景锚点的自然压缩：把“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这类语义反转会继续被拦住。
-- `respond/stream` 会原样透传 provider 的 `delta.text` 空白字符，不再在 SSE chunk 边界折叠空格或吞掉换行；用户流式阶段看到的文本与最终保存的助手消息保持一致。
-- `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
+- `respond/stream` 会先缓冲模型候选问题，完成服务端协议检查、纠偏和 fallback 后，再分块发送最终摘要与问题；用户流式阶段看到的文本与最终保存的助手消息保持一致。
+- `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `turn -> summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
 
 ## 当前产品状态
 
@@ -86,6 +87,7 @@
 - 五个维度的日志标题统一经过语义短标题治理，不再把长事件句机械截断成标题；joy 会拦截 `一下被带轻 / 象征意义` 这类伪中文或理论词标题，早起/多出时间/准备感场景应收束为 `清醒地开始` 这类自然短标题
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志”等边界或日志整理意图时，边界优先级高于槽位完整度；材料足够则 partial 收束，材料不足则给低压选择
 - 访谈提交错误已经结构化；`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的错误说明，前端展示原因、解决方案和错误码
+- 用户回复持久化与恢复：`InterviewUserTurn`、输入草稿、客户端 outbox、SSE `turn` 确认、`pendingUserTurn` 恢复和 `resume_turn` 继续生成
 - 日志生成已支持阶段式反馈；如果当前草稿已经是最新版本，再次点击会直接复用，不再重复等待
 - 访谈页开发辅助：可清除“当前维度”的本地对话恢复记录并直接重开一轮
 - `snapshotData` / `payload` 驱动的多维度结构化数据面
@@ -226,9 +228,10 @@ npm test
 
 截至 `2026-07-20`，当前自动化现实为：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
+- 当前最新全量验证快照：`npm test` = `174` 个测试文件、`1095` 个测试通过
+- `npm run lint` 通过，保留 `44` 条既有 warning
 - `npx tsc --noEmit` 通过
-- `npm run build` 通过；仍有既有 ESLint warnings（主要是未使用变量和部分 hook 依赖提示），但不阻塞构建
-- 当前最新全量验证快照：`npm test` = `168` 个测试文件、`1061` 个测试通过
+- `npm run build` 通过，保留既有 ESLint warnings
 - AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
@@ -268,6 +271,7 @@ npx prisma migrate deploy
 - 设计系统总纲：`DESIGN.md`（创意方向、页面形态、Do/Don't）
 - 容器与 token 工程规范：`docs/design/ui-conventions.md`（DESIGN.md 附录）
 - 当前架构：`docs/architecture.md`
+- 访谈功能架构图、主链时序图与节点图谱：`docs/diagrams/README.md`
 - 当前 API 面：`docs/integration-guide.md`
 - 本地排障与运行手册：`docs/operator-runbook.md`
 - AI 评估、反馈与自迭代闭环：`docs/ai-quality-loop.md`
@@ -291,6 +295,7 @@ npx prisma migrate deploy
 - `src/app/api/admin/analytics/*` 已公开管理员分析接口：总览、漏斗、留存、质量、候选用户和内容级下钻；所有接口都要求已登录且命中 `ADMIN_USERNAMES`。
 - `src/app/admin/ai-quality/page.tsx`、`src/components/admin/admin-ai-quality-*`、`src/features/ai-quality/*`、`src/server/services/ai-quality/*` 与 `src/server/repositories/ai-*` 已落地 AI 质量候选、真实证据、回放验证、全量发布、回滚和七天效果观察。
 - `AIPromptRelease.validationId` 将线上版本绑定到最近通过的候选验证；System Prompt 使用 `+opt:{candidateId}`，Few-shot 使用 `+fs:{fingerprint}` 归因线上 Trace。
+- `AIOptimizationCandidate.reviewReason` 保存候选拒绝原因；对应 migration 为 `20260720153000_add_ai_optimization_review_reason`。
 - `npm run acceptance:ai-quality:seed` 默认只写本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
@@ -326,7 +331,7 @@ npx prisma migrate deploy
 - 结构化线索仍然存在于系统内部，用来驱动进度、收尾和日志生成，但不会直接展示给用户。
 - `thinkingSummary` 是用户可见的浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；五个维度都会通过 `summary` SSE delta 流式展示这层内容，并且不能写成第二个正式追问。
 - 如果模型给出的 `thinkingSummary` 只是浅复述、语气不对或写成第二个追问，服务端会基于同一层维度语义解释重写它，不会直接把浅复述透传给用户。
-- `respond/stream` 现在会原样透传 provider 的 `delta.text`，不对任意流式增量单独 trim 或折叠空白；只有系统自己生成的完整补发文本才允许内部切块。
+- `respond/stream` 当前统一输出经过服务端检查的最终摘要与问题，分块过程保持最终文本的空格和换行；模型候选增量只在服务端内部累计。
 - calendar 功能当前已完成 month/week/day 三层：
   - `InterviewSession.entryDate`
   - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`

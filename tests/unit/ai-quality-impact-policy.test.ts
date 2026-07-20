@@ -4,6 +4,7 @@ import {
   calculateImpactWindow,
   concludeAIQualityImpact,
   normalizeAIQualityIssueFamily,
+  normalizeAIQualityIssueKey,
   type AIQualityImpactMetrics
 } from "@/features/ai-quality/impact-policy";
 
@@ -44,6 +45,15 @@ describe("AI quality impact policy", () => {
     expect(normalizeAIQualityIssueFamily("too_abstract")).toBe("clarity");
     expect(normalizeAIQualityIssueFamily("pressure_tone")).toBe("tone_safety");
     expect(normalizeAIQualityIssueFamily("schema_parse_failed")).toBe("engineering");
+    expect(normalizeAIQualityIssueFamily("user_downvote:repetitive_question")).toBe("clarity");
+  });
+
+  it("keeps exact issue identities while aligning evaluator and feedback prefixes", () => {
+    expect(normalizeAIQualityIssueKey("user_downvote:repetitive_question")).toBe("repetitive_question");
+    expect(normalizeAIQualityIssueKey("repetitive_question")).toBe("repetitive_question");
+    expect(normalizeAIQualityIssueKey("unknown_issue_alpha")).toBe("unknown_issue_alpha");
+    expect(normalizeAIQualityIssueKey("unknown_issue_beta")).toBe("unknown_issue_beta");
+    expect(normalizeAIQualityIssueKey(null)).toBeNull();
   });
 
   it("ends the observation at rollback or the next same-path release", () => {

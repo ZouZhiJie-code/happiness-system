@@ -163,31 +163,58 @@ Accept: text/event-stream
 {
   "action": "reply",
   "sessionId": "cuid",
-  "userMessage": "今天复盘后，我发现自己把忙碌误当成了进展。",
-  "inputMode": "text"
+  "rawText": "今天复盘后，我发现自己把忙碌误当成了进展。",
+  "inputMode": "text",
+  "clientTurnId": "浏览器生成的唯一 ID",
+  "baseMessageSequence": 4
 }
 ```
+
+`rawText` 是当前主前端字段；`userMessage` 继续作为旧客户端兼容字段。`baseMessageSequence` 表示页面发送时看到的最后一条消息序号，服务端用它拦截基于旧对话位置发起的提交。
 
 分叉动作可使用：
 
 ```json
-{"action":"continue_current_event","sessionId":"cuid"}
+{
+  "action": "continue_current_event",
+  "sessionId": "cuid",
+  "clientTurnId": "浏览器生成的唯一 ID",
+  "baseMessageSequence": 4
+}
 ```
 
 ```json
-{"action":"next_event","sessionId":"cuid"}
+{
+  "action": "next_event",
+  "sessionId": "cuid",
+  "clientTurnId": "浏览器生成的唯一 ID",
+  "baseMessageSequence": 4
+}
+```
+
+失败或取消后继续同一轮：
+
+```json
+{
+  "action": "resume_turn",
+  "sessionId": "cuid",
+  "clientTurnId": "原提交的唯一 ID"
+}
 ```
 
 SSE 事件：
 
 | 事件 | 数据 |
 |---|---|
+| `turn` | 服务端已接收的 `InterviewUserTurn`；用户原话此时已经持久化 |
 | `phase` | 当前处理阶段 |
 | `delta` | `summary / question / thinking` 等增量 |
 | `session` | 最终完整 session |
 | `error` | 结构化 `issue` |
 
-`delta.text` 的空白字符会原样传递。`question_repair` 会由服务端确定性生成 `summary -> question -> session`，不进入 provider 流式调用。
+主链时序为 `turn -> phase / delta -> session`。`turn` 确认“原话已收到”，`session` 确认“AI 回应和会话状态已完整保存”。处理失败或浏览器取消后，session hydrate 会通过 `pendingUserTurn` 返回原提交，页面可显示“继续生成”。
+
+`delta.text` 来自服务端检查后的最终摘要或问题，分块过程保留最终文本的空格和换行。`question_repair` 会由服务端确定性生成 `turn -> summary -> question -> session`，不进入 provider 流式调用。
 
 非流式接口使用同一请求 schema，并返回 `assistantMessage / assistantTurn / sessionStatus / turnCount / snapshotData / session`。
 
@@ -220,9 +247,15 @@ SSE 事件：
 | `AUTHENTICATION_REQUIRED` | 401 | 登录态缺失或失效 |
 | `SESSION_NOT_FOUND` | 404 | 会话不存在或不属于当前用户 |
 | `SESSION_CHOICE_UNAVAILABLE` | 409 | 分叉动作已过期 |
+| `INTERVIEW_TURN_IN_PROGRESS` | 409 | 当前会话已有用户提交正在处理，或已有未解决提交 |
+| `INTERVIEW_TURN_OUT_OF_DATE` | 409 | `baseMessageSequence` 落后于服务端最新消息位置 |
+| `INTERVIEW_TURN_RETRY_REQUIRED` | 409 | 同一 `clientTurnId` 已失败或取消，需要使用 `resume_turn` |
+| `INTERVIEW_TURN_NOT_FOUND` | 404 | 指定的待恢复提交不存在或不属于当前用户 |
 | `INTERVIEW_DB_WRITE_FAILED` | 500 | 本轮回复写入失败 |
 | `STREAM_PROTOCOL_ERROR` | 500 | SSE 数据格式异常 |
 | `INTERVIEW_RESPOND_FAILED` | 500 | 未分类兜底错误 |
+
+流式连接建立后的冲突通过 SSE `error` 事件返回；非流式接口使用表中的 HTTP 状态。
 
 ## 5. 维度日志
 
@@ -431,19 +464,19 @@ HTTP 状态为 `409`。
 
 `action` 允许 `approve / reject / publish / rollback`。
 
+拒绝候选时必须提供 `4–300` 字原因：
+
+```json
+{"action":"reject","reason":"当前证据不足以支持这项修改，先补充更多同类对话。"}
+```
+
 验证：
 
 ```text
 POST /api/admin/ai-quality/candidates/[candidateId]/validate
 ```
 
-System Prompt 会回放目标和正向回归证据；Few-shot 会复查点赞有效性与至少 85 分的评估。发布要求候选已批准且最近验证通过。
-
-当前已知接口偏差：
-
-- 仓储缺少通过验证时抛出 `OPTIMIZATION_VALIDATION_REQUIRED`。
-- 候选 PATCH 路由当前会把该错误投影为 `500 AI_QUALITY_REVIEW_FAILED`。
-- 目标合同是结构化 `409 OPTIMIZATION_VALIDATION_REQUIRED`，该映射与 API 回归测试仍待补齐。
+System Prompt 会回放目标和正向回归证据；Few-shot 会复查点赞有效性与至少 85 分的评估。发布要求候选已批准且最近验证通过；缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
 
 ### 9.3 七天效果
 
@@ -475,6 +508,7 @@ GET /api/admin/ai-quality/candidates/[candidateId]/impact/evidence?kind=positive
 | `AUTHENTICATION_REQUIRED` | 401 | 登录态缺失 |
 | `ADMIN_FORBIDDEN` | 403 | 用户未命中管理员白名单 |
 | `OPTIMIZATION_CANDIDATE_NOT_FOUND` | 404 | 候选不存在 |
+| `OPTIMIZATION_VALIDATION_REQUIRED` | 409 | 候选缺少最近一次通过的回放验证 |
 | `OPTIMIZATION_IMPACT_UNAVAILABLE` | 409 | 候选尚未发布，无法统计效果 |
 | `P1001 / P1017 / P2024` | 500 | 管理员只读查询重试一次后数据库仍不可用 |
 | `AI_QUALITY_IMPACT_FAILED` | 500 | 效果查询兜底错误 |

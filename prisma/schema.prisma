@@ -91,6 +91,19 @@ enum AIOutputOrigin {
   fallback
 }
 
+enum InterviewUserTurnAction {
+  reply
+  continue_current_event
+  next_event
+}
+
+enum InterviewUserTurnStatus {
+  processing
+  completed
+  failed
+  canceled
+}
+
 enum AICaseClassification {
   bad
   review
@@ -243,6 +256,7 @@ model InterviewSession {
   activeEvent           InterviewEvent?        @relation("ActiveInterviewEvent", fields: [activeEventId], references: [id], onDelete: SetNull)
   events                InterviewEvent[]       @relation("SessionInterviewEvents")
   messages              InterviewMessage[]
+  userTurns             InterviewUserTurn[]
   snapshots             JoyInterviewSnapshot[]
   aiRequestLogs         AIRequestLog[]
   aiGenerationTraces    AIGenerationTrace[]
@@ -287,6 +301,7 @@ model InterviewEvent {
 model InterviewMessage {
   id                String             @id @default(cuid())
   sessionId         String
+  userTurnId        String?
   generationTraceId String?            @unique
   role              InterviewRole
   inputMode         InputMode?
@@ -294,10 +309,34 @@ model InterviewMessage {
   sequence          Int
   createdAt         DateTime           @default(now())
   session           InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userTurn          InterviewUserTurn? @relation(fields: [userTurnId], references: [id], onDelete: SetNull)
   generationTrace   AIGenerationTrace? @relation("InterviewMessageGenerationTrace", fields: [generationTraceId], references: [id], onDelete: SetNull)
 
   @@unique([sessionId, sequence])
   @@index([sessionId, createdAt])
+  @@index([userTurnId, sequence])
+}
+
+model InterviewUserTurn {
+  id                  String                  @id @default(cuid())
+  clientTurnId        String
+  sessionId           String
+  activeEventId       String?
+  action              InterviewUserTurnAction
+  rawText             String?
+  inputMode           InputMode?
+  baseMessageSequence Int
+  status              InterviewUserTurnStatus @default(processing)
+  attemptCount        Int                     @default(1)
+  errorCode           String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  completedAt         DateTime?
+  session             InterviewSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messages            InterviewMessage[]
+
+  @@unique([sessionId, clientTurnId])
+  @@index([sessionId, status, createdAt])
 }
 
 model JoyInterviewSnapshot {
@@ -594,12 +633,12 @@ model AIBadcaseCluster {
 }
 
 model AIOptimizationCandidate {
-  id               String                    @id @default(cuid())
-  dedupeKey        String?                   @unique
+  id               String                     @id @default(cuid())
+  dedupeKey        String?                    @unique
   runId            String
   clusterId        String?
   path             AIOptimizationPath
-  status           AIOptimizationStatus      @default(draft)
+  status           AIOptimizationStatus       @default(draft)
   artifactType     AIGenerationArtifactType?
   dimension        InterviewDimension?
   promptKey        String?
@@ -607,16 +646,17 @@ model AIOptimizationCandidate {
   rationale        String
   proposal         Json
   evidenceTraceIds String[]
-  riskLevel        String                    @default("medium")
-  createdAt        DateTime                  @default(now())
+  riskLevel        String                     @default("medium")
+  createdAt        DateTime                   @default(now())
   reviewedBy       String?
   reviewedAt       DateTime?
+  reviewReason     String?
   publishedBy      String?
   publishedAt      DateTime?
   rolledBackBy     String?
   rolledBackAt     DateTime?
-  run              AIOptimizationRun         @relation(fields: [runId], references: [id], onDelete: Cascade)
-  cluster          AIBadcaseCluster?         @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  run              AIOptimizationRun          @relation(fields: [runId], references: [id], onDelete: Cascade)
+  cluster          AIBadcaseCluster?          @relation(fields: [clusterId], references: [id], onDelete: SetNull)
   releases         AIPromptRelease[]
   fewShotExamples  AIFewShotExample[]
   validations      AIOptimizationValidation[]
@@ -673,19 +713,19 @@ model AIFewShotExample {
 }
 
 model AIPromptRelease {
-  id                String                  @id @default(cuid())
+  id                String                    @id @default(cuid())
   candidateId       String
   validationId      String?
   promptKey         String
   version           Int
   instructionPatch  String?
-  fewShotExampleIds String[]                @default([])
-  status            AIOptimizationStatus    @default(published)
+  fewShotExampleIds String[]                  @default([])
+  status            AIOptimizationStatus      @default(published)
   publishedBy       String
-  publishedAt       DateTime                @default(now())
+  publishedAt       DateTime                  @default(now())
   rolledBackBy      String?
   rolledBackAt      DateTime?
-  candidate         AIOptimizationCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate         AIOptimizationCandidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   validation        AIOptimizationValidation? @relation(fields: [validationId], references: [id], onDelete: SetNull)
 
   @@unique([promptKey, version])

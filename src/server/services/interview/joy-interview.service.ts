@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import { assessDimensionEvidence, canGenerateFromEvidence } from "@/features/interview/dimension-evidence";
@@ -39,12 +40,16 @@ import {
 } from "@/features/joy-interview/server/joy-interview-engine";
 import {
   appendJoyInterviewTurn,
+  cancelInterviewUserTurn,
   completeJoyInterviewSessionRecord,
   createJoyInterviewSession,
   findJoyInterviewSessionById,
+  markInterviewUserTurnFailed,
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
+  reserveInterviewUserTurn,
+  resumeInterviewUserTurn,
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
@@ -76,6 +81,8 @@ import type {
   InterviewLens,
   InterviewMessage,
   InterviewSessionRecord,
+  InterviewUserTurnAction,
+  InterviewUserTurnRecord,
   JoyInterviewStage,
   JoySnapshot
 } from "@/types/interview";
@@ -87,25 +94,41 @@ type InterviewRespondInput =
       action: "reply";
       sessionId: string;
       userMessage: string;
+      rawText?: string;
       inputMode: InputMode;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
     }
   | {
       userId: string;
       requestId?: string;
       action: "continue";
       sessionId: string;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
     }
   | {
       userId: string;
       requestId?: string;
       action: "continue_current_event";
       sessionId: string;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
     }
   | {
       userId: string;
       requestId?: string;
       action: "next_event";
       sessionId: string;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
+    }
+  | {
+      userId: string;
+      requestId?: string;
+      action: "resume_turn";
+      sessionId: string;
+      clientTurnId: string;
     };
 
 type StreamingPhase = "thinking" | "summary" | "question";
@@ -126,6 +149,121 @@ type InterviewDecisionProgressData =
       kind: "boundary_insufficient";
       reason: string;
     };
+
+async function recordUserTurnLifecycleEvent(input: {
+  eventName:
+    | "user_turn_submitted"
+    | "user_turn_completed"
+    | "user_turn_canceled"
+    | "user_turn_retried"
+    | "user_turn_deduplicated"
+    | "user_turn_stale_rejected";
+  userId: string;
+  sessionId: string;
+  requestId?: string | null;
+  clientTurnId?: string | null;
+  turnId?: string | null;
+  action?: InterviewUserTurnAction | null;
+  status?: InterviewUserTurnRecord["status"] | null;
+  attemptCount?: number | null;
+  inputMode?: InputMode | null;
+  dimension?: InterviewDimension | null;
+}) {
+  const dedupeSuffix =
+    input.eventName === "user_turn_retried"
+      ? `${input.turnId ?? input.clientTurnId}:${input.attemptCount ?? 1}`
+      : input.eventName === "user_turn_deduplicated" || input.eventName === "user_turn_stale_rejected"
+        ? input.requestId ?? `${input.clientTurnId}:${Date.now()}`
+        : input.turnId ?? input.clientTurnId ?? input.requestId ?? `${input.sessionId}:${Date.now()}`;
+
+  try {
+    await recordAnalyticsEvent({
+      eventName: input.eventName,
+      userId: input.userId,
+      sessionId: input.sessionId,
+      requestId: input.requestId ?? null,
+      dedupeKey: `${input.eventName}:${dedupeSuffix}`,
+      properties: {
+        clientTurnId: input.clientTurnId ?? null,
+        turnId: input.turnId ?? null,
+        action: input.action ?? null,
+        status: input.status ?? null,
+        attemptCount: input.attemptCount ?? null,
+        inputMode: input.inputMode ?? null,
+        dimension: input.dimension ?? null
+      }
+    });
+  } catch {
+    // Analytics must not interrupt the interview turn lifecycle.
+  }
+}
+
+async function recordAcceptedUserTurn(input: InterviewRespondInput, turn: InterviewUserTurnRecord) {
+  const eventName =
+    turn.status === "completed"
+      ? "user_turn_deduplicated"
+      : input.action === "resume_turn"
+        ? "user_turn_retried"
+        : "user_turn_submitted";
+
+  await recordUserTurnLifecycleEvent({
+    eventName,
+    userId: input.userId,
+    sessionId: input.sessionId,
+    requestId: input.requestId,
+    clientTurnId: turn.clientTurnId,
+    turnId: turn.id,
+    action: turn.action,
+    status: turn.status,
+    attemptCount: turn.attemptCount,
+    inputMode: turn.inputMode ?? null
+  });
+}
+
+async function recordRejectedUserTurn(input: InterviewRespondInput, error: unknown) {
+  if (!(error instanceof Error)) {
+    return;
+  }
+
+  const eventName =
+    error.message === "INTERVIEW_TURN_OUT_OF_DATE"
+      ? "user_turn_stale_rejected"
+      : error.message === "INTERVIEW_TURN_IN_PROGRESS" ||
+          error.message === "INTERVIEW_TURN_RETRY_REQUIRED"
+        ? "user_turn_deduplicated"
+        : null;
+
+  if (!eventName) {
+    return;
+  }
+
+  await recordUserTurnLifecycleEvent({
+    eventName,
+    userId: input.userId,
+    sessionId: input.sessionId,
+    requestId: input.requestId,
+    clientTurnId: "clientTurnId" in input ? input.clientTurnId ?? null : null,
+    action:
+      input.action === "resume_turn"
+        ? null
+        : input.action === "continue"
+          ? "continue_current_event"
+          : input.action,
+    inputMode: input.action === "reply" ? input.inputMode : null
+  });
+}
+
+function getUserTurnErrorCode(error: unknown, fallback: string) {
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  if (/^[A-Z][A-Z0-9_]+$/u.test(error.message)) {
+    return error.message;
+  }
+
+  return error.name && error.name !== "Error" ? error.name : fallback;
+}
 
 export class DraftGenerationError extends Error {
   constructor(
@@ -168,6 +306,9 @@ interface PreparedInterviewTurnContext {
   generationTraceId: string;
   requestId?: string | null;
   outputOrigin?: "llm" | "deterministic" | "fallback";
+  userTurnId: string;
+  clientTurnId: string;
+  userMessageId: string | null;
 }
 
 type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
@@ -178,6 +319,10 @@ type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
 function getCanonicalAction(action: InterviewRespondInput["action"]): CanonicalInterviewAction {
   if (action === "continue") {
     return "continue_current_event";
+  }
+
+  if (action === "resume_turn") {
+    throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
   }
 
   return action;
@@ -2261,6 +2406,8 @@ async function createInterviewTurnTrace(input: {
   userMessage?: string | null;
   inputMode?: InputMode;
   outputOrigin?: "llm" | "deterministic" | "fallback";
+  userTurnId?: string | null;
+  triggerMessageId?: string | null;
 }) {
   return createAIGenerationTrace({
     requestId: input.requestId,
@@ -2268,9 +2415,11 @@ async function createInterviewTurnTrace(input: {
     sessionId: input.session.id,
     dimension: input.session.dimension,
     artifactType: "interview_turn",
+    triggerMessageId: input.triggerMessageId,
     outputOrigin: input.outputOrigin,
     contextSnapshot: {
       action: input.action,
+      userTurnId: input.userTurnId ?? null,
       inputMode: input.inputMode ?? null,
       userMessage: input.userMessage ?? null,
       entryDate: input.session.entryDate,
@@ -2728,38 +2877,139 @@ export async function completeJoyInterviewSession(userId: string, sessionId: str
   };
 }
 
-async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, options?: { signal?: AbortSignal }) {
+async function prepareJoyInterviewResponseContext(
+  requestInput: InterviewRespondInput,
+  options?: {
+    signal?: AbortSignal;
+    onTurn?: (turn: InterviewUserTurnRecord) => Promise<void> | void;
+  }
+) {
   options?.signal?.throwIfAborted();
-  const session = await getActiveInterviewSession(input.userId, input.sessionId);
+  let session = await getActiveInterviewSession(requestInput.userId, requestInput.sessionId);
   options?.signal?.throwIfAborted();
 
   if ("assistantMessage" in session) {
     return session;
   }
 
-  const canonicalAction = getCanonicalAction(input.action);
-  const activeEvent = getActiveEvent(session);
+  let canonicalAction =
+    requestInput.action === "resume_turn"
+      ? null
+      : getCanonicalAction(requestInput.action);
+  let activeEvent = getActiveEvent(session);
 
   if (!activeEvent) {
     throw new Error("SESSION_EVENT_NOT_FOUND");
   }
 
-  if (canonicalAction === "continue_current_event") {
-    if (session.pendingDecision?.eventId !== activeEvent.id) {
+  if (requestInput.action !== "resume_turn") {
+    if (
+      canonicalAction === "continue_current_event" &&
+      session.pendingDecision?.eventId !== activeEvent.id
+    ) {
       throw new Error("SESSION_CONTINUE_UNAVAILABLE");
     }
 
-    const resumedSession = await resumeCurrentInterviewEvent(session.id);
+    if (
+      canonicalAction === "next_event" &&
+      (
+        !session.pendingDecision ||
+        session.pendingDecision.kind === "dimension_redirect" ||
+        !session.pendingDecision.actions.includes("next_event") ||
+        session.pendingDecision.eventId !== activeEvent.id
+      )
+    ) {
+      throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
+    }
+  }
+
+  const reservation =
+    requestInput.action === "resume_turn"
+      ? await resumeInterviewUserTurn({
+          userId: requestInput.userId,
+          sessionId: requestInput.sessionId,
+          clientTurnId: requestInput.clientTurnId
+        })
+      : await reserveInterviewUserTurn({
+          userId: requestInput.userId,
+          sessionId: requestInput.sessionId,
+          activeEventId: activeEvent.id,
+          clientTurnId: requestInput.clientTurnId ?? randomUUID(),
+          action: canonicalAction as InterviewUserTurnAction,
+          rawText:
+            requestInput.action === "reply"
+              ? requestInput.rawText ?? requestInput.userMessage
+              : null,
+          inputMode: requestInput.action === "reply" ? requestInput.inputMode : undefined,
+          baseMessageSequence: requestInput.baseMessageSequence
+        });
+
+  await options?.onTurn?.(reservation.turn);
+
+  if (reservation.kind === "completed") {
+    return buildImmediateResponseFromSession(reservation.session);
+  }
+
+  canonicalAction = reservation.turn.action;
+
+  if (requestInput.action === "resume_turn") {
+    session = {
+      ...reservation.session,
+      messages: reservation.session.messages.filter(
+        (message) => message.sequence <= reservation.turn.baseMessageSequence
+      ),
+      pendingUserTurn: reservation.turn
+    };
+    activeEvent =
+      session.events.find((event) => event.id === reservation.turn.activeEventId) ??
+      getActiveEvent(session);
+
+    if (!activeEvent) {
+      await markInterviewUserTurnFailed(reservation.turn.id, "SESSION_EVENT_NOT_FOUND");
+      throw new Error("SESSION_EVENT_NOT_FOUND");
+    }
+  }
+
+  const input: InterviewRespondInput =
+    reservation.turn.action === "reply"
+      ? {
+          userId: requestInput.userId,
+          requestId: requestInput.requestId,
+          action: "reply",
+          sessionId: requestInput.sessionId,
+          userMessage: reservation.turn.rawText ?? "",
+          rawText: reservation.turn.rawText ?? "",
+          inputMode: reservation.turn.inputMode ?? "text",
+          clientTurnId: reservation.turn.clientTurnId,
+          baseMessageSequence: reservation.turn.baseMessageSequence
+        }
+      : {
+          userId: requestInput.userId,
+          requestId: requestInput.requestId,
+          action: reservation.turn.action,
+          sessionId: requestInput.sessionId,
+          clientTurnId: reservation.turn.clientTurnId,
+          baseMessageSequence: reservation.turn.baseMessageSequence
+        };
+
+  if (canonicalAction === "continue_current_event") {
+    const shouldResumeEvent = activeEvent.status !== "active" || Boolean(session.pendingDecision);
+    const resumedSession = shouldResumeEvent
+      ? await resumeCurrentInterviewEvent(session.id)
+      : reservation.session;
     const resumedEvent = resumedSession ? getActiveEvent(resumedSession) : null;
 
     if (!resumedSession || !resumedEvent) {
+      await markInterviewUserTurnFailed(reservation.turn.id, "SESSION_NOT_FOUND");
       throw new Error("SESSION_NOT_FOUND");
     }
     const trace = await createInterviewTurnTrace({
       requestId: input.requestId,
       session: resumedSession,
       activeEvent: resumedEvent,
-      action: canonicalAction
+      action: canonicalAction,
+      userTurnId: reservation.turn.id,
+      triggerMessageId: reservation.userMessageId
     });
 
     return {
@@ -2783,6 +3033,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       generationTraceId: trace.id,
       requestId: input.requestId ?? null,
       outputOrigin: "llm",
+      userTurnId: reservation.turn.id,
+      clientTurnId: reservation.turn.clientTurnId,
+      userMessageId: reservation.userMessageId,
       questionSpec: createQuestionSpec({
         dimension: resumedSession.dimension,
         stage: resumedEvent.stage,
@@ -2794,7 +3047,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
   }
 
   if (canonicalAction === "next_event") {
-    const pendingDecision = session.pendingDecision;
+    const pendingDecision = requestInput.action === "resume_turn"
+      ? reservation.session.pendingDecision
+      : session.pendingDecision;
 
     if (
       !pendingDecision ||
@@ -2806,10 +3061,12 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
     }
 
     const nextSession = await startNextInterviewEvent(session.id, getNextEventOpeningQuestion(session.dimension), {
-      requestId: input.requestId
+      requestId: input.requestId,
+      userTurnId: reservation.turn.id
     });
 
     if (!nextSession) {
+      await markInterviewUserTurnFailed(reservation.turn.id, "SESSION_NOT_FOUND");
       throw new Error("SESSION_NOT_FOUND");
     }
 
@@ -2817,6 +3074,7 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
   }
 
   if (input.action !== "reply") {
+    await markInterviewUserTurnFailed(reservation.turn.id, "INTERVIEW_ACTION_UNSUPPORTED");
     throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
   }
 
@@ -2827,7 +3085,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
     activeEvent,
     action: canonicalAction,
     userMessage: input.userMessage,
-    inputMode: input.inputMode
+    inputMode: input.inputMode,
+    userTurnId: reservation.turn.id,
+    triggerMessageId: reservation.userMessageId
   });
   if (
     assessment.intent === "draft_request" ||
@@ -2908,6 +3168,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       generationTraceId: trace.id,
       requestId: input.requestId ?? null,
       outputOrigin: "deterministic",
+      userTurnId: reservation.turn.id,
+      clientTurnId: reservation.turn.clientTurnId,
+      userMessageId: reservation.userMessageId,
       questionSpec: null
     } satisfies PreparedInterviewTurnContext;
   }
@@ -2945,6 +3208,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       generationTraceId: trace.id,
       requestId: input.requestId ?? null,
       outputOrigin: "deterministic",
+      userTurnId: reservation.turn.id,
+      clientTurnId: reservation.turn.clientTurnId,
+      userMessageId: reservation.userMessageId,
       questionSpec: null
     } satisfies PreparedInterviewTurnContext;
   }
@@ -3014,6 +3280,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
       generationTraceId: trace.id,
       requestId: input.requestId ?? null,
       outputOrigin: "deterministic",
+      userTurnId: reservation.turn.id,
+      clientTurnId: reservation.turn.clientTurnId,
+      userMessageId: reservation.userMessageId,
       questionSpec: shouldEscalateRepair ? null : repairSpec
     } satisfies PreparedInterviewTurnContext;
   }
@@ -3033,8 +3302,13 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
   } catch (error) {
     if (options?.signal?.aborted) {
       await cancelGenerationTrace(trace.id);
+      await cancelInterviewUserTurn(reservation.turn.id);
     } else {
       await failGenerationTrace(trace.id, error instanceof Error ? error.name : "EXTRACT_FAILED");
+      await markInterviewUserTurnFailed(
+        reservation.turn.id,
+        getUserTurnErrorCode(error, "EXTRACT_FAILED")
+      );
     }
     throw error;
   }
@@ -3151,6 +3425,9 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
     generationTraceId: trace.id,
     requestId: input.requestId ?? null,
     outputOrigin: shouldOfferChoiceNow || shouldOfferRedirectNow ? "deterministic" : "llm",
+    userTurnId: reservation.turn.id,
+    clientTurnId: reservation.turn.clientTurnId,
+    userMessageId: reservation.userMessageId,
     questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
       ? null
       : shouldPreserveReflectionConcreteInsightAfterRepair({
@@ -3179,7 +3456,65 @@ async function prepareJoyInterviewResponseContext(input: InterviewRespondInput, 
 }
 
 export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
-  const prepared = await prepareJoyInterviewResponseContext(input);
+  const acceptedTurnRef: { current: InterviewUserTurnRecord | null } = { current: null };
+  let prepared;
+
+  try {
+    prepared = await prepareJoyInterviewResponseContext(input, {
+      onTurn: async (turn) => {
+        acceptedTurnRef.current = turn;
+        await recordAcceptedUserTurn(input, turn);
+      }
+    });
+  } catch (error) {
+    await recordRejectedUserTurn(input, error);
+
+    const acceptedTurn = acceptedTurnRef.current;
+
+    if (acceptedTurn?.status === "processing") {
+      if (error instanceof Error && error.name === "AbortError") {
+        await cancelInterviewUserTurn(acceptedTurn.id);
+        await recordUserTurnLifecycleEvent({
+          eventName: "user_turn_canceled",
+          userId: input.userId,
+          sessionId: input.sessionId,
+          requestId: input.requestId,
+          clientTurnId: acceptedTurn.clientTurnId,
+          turnId: acceptedTurn.id,
+          action: acceptedTurn.action,
+          status: "canceled",
+          attemptCount: acceptedTurn.attemptCount,
+          inputMode: acceptedTurn.inputMode ?? null
+        });
+      } else {
+        await markInterviewUserTurnFailed(
+          acceptedTurn.id,
+          getUserTurnErrorCode(error, "INTERVIEW_PREPARE_FAILED")
+        );
+      }
+    }
+
+    throw error;
+  }
+
+  if (
+    "assistantMessage" in prepared &&
+    acceptedTurnRef.current?.status === "processing"
+  ) {
+    await recordUserTurnLifecycleEvent({
+      eventName: "user_turn_completed",
+      userId: input.userId,
+      sessionId: input.sessionId,
+      requestId: input.requestId,
+      clientTurnId: acceptedTurnRef.current.clientTurnId,
+      turnId: acceptedTurnRef.current.id,
+      action: acceptedTurnRef.current.action,
+      status: "completed",
+      attemptCount: acceptedTurnRef.current.attemptCount,
+      inputMode: acceptedTurnRef.current.inputMode ?? null,
+      dimension: prepared.session.dimension
+    });
+  }
 
   if (!("assistantMessage" in prepared)) {
     const progressData = prepared.nextProgressData;
@@ -3252,10 +3587,27 @@ export async function prepareJoyInterviewResponse(input: InterviewRespondInput) 
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       await cancelGenerationTrace(prepared.generationTraceId);
+      await cancelInterviewUserTurn(prepared.userTurnId);
+      await recordUserTurnLifecycleEvent({
+        eventName: "user_turn_canceled",
+        userId: prepared.session.userId,
+        sessionId: prepared.session.id,
+        requestId: prepared.requestId,
+        clientTurnId: prepared.clientTurnId,
+        turnId: prepared.userTurnId,
+        action: prepared.userMessage ? "reply" : "continue_current_event",
+        status: "canceled",
+        inputMode: prepared.inputMode ?? null,
+        dimension: prepared.session.dimension
+      });
     } else {
       await failGenerationTrace(
         prepared.generationTraceId,
         error instanceof Error ? error.name : "ASSISTANT_GENERATION_FAILED"
+      );
+      await markInterviewUserTurnFailed(
+        prepared.userTurnId,
+        getUserTurnErrorCode(error, "ASSISTANT_GENERATION_FAILED")
       );
     }
     throw error;
@@ -3268,6 +3620,19 @@ export async function completeJoyInterviewResponse(
 ) {
   if (options?.signal?.aborted) {
     await cancelGenerationTrace(input.generationTraceId);
+    await cancelInterviewUserTurn(input.userTurnId);
+    await recordUserTurnLifecycleEvent({
+      eventName: "user_turn_canceled",
+      userId: input.session.userId,
+      sessionId: input.session.id,
+      requestId: input.requestId,
+      clientTurnId: input.clientTurnId,
+      turnId: input.userTurnId,
+      action: input.userMessage ? "reply" : "continue_current_event",
+      status: "canceled",
+      inputMode: input.inputMode ?? null,
+      dimension: input.session.dimension
+    });
     options.signal.throwIfAborted();
   }
   let updatedSession;
@@ -3293,16 +3658,34 @@ export async function completeJoyInterviewResponse(
       getDelightSignature(input.nextSnapshot) ??
       getJoySource(input.nextSnapshot) ??
       getJoyMoment(input.nextSnapshot),
-    completedAt: null
-    ,generationTraceId: input.generationTraceId
-    ,requestId: input.requestId
-    ,outputOrigin: input.outputOrigin
+    completedAt: null,
+    generationTraceId: input.generationTraceId,
+    requestId: input.requestId,
+    outputOrigin: input.outputOrigin,
+    userTurnId: input.userTurnId
     });
   } catch (error) {
     if (options?.signal?.aborted) {
       await cancelGenerationTrace(input.generationTraceId);
+      await cancelInterviewUserTurn(input.userTurnId);
+      await recordUserTurnLifecycleEvent({
+        eventName: "user_turn_canceled",
+        userId: input.session.userId,
+        sessionId: input.session.id,
+        requestId: input.requestId,
+        clientTurnId: input.clientTurnId,
+        turnId: input.userTurnId,
+        action: input.userMessage ? "reply" : "continue_current_event",
+        status: "canceled",
+        inputMode: input.inputMode ?? null,
+        dimension: input.session.dimension
+      });
     } else {
       await failGenerationTrace(input.generationTraceId, error instanceof Error ? error.name : "TRACE_PERSIST_FAILED");
+      await markInterviewUserTurnFailed(
+        input.userTurnId,
+        getUserTurnErrorCode(error, "TRACE_PERSIST_FAILED")
+      );
     }
     throw error;
   }
@@ -3323,6 +3706,19 @@ export async function completeJoyInterviewResponse(
       }
     });
   }
+
+  await recordUserTurnLifecycleEvent({
+    eventName: "user_turn_completed",
+    userId: updatedSession.userId,
+    sessionId: updatedSession.id,
+    requestId: input.requestId,
+    clientTurnId: input.clientTurnId,
+    turnId: input.userTurnId,
+    action: input.userMessage ? "reply" : "continue_current_event",
+    status: "completed",
+    inputMode: input.inputMode ?? null,
+    dimension: updatedSession.dimension
+  });
 
   const visibleText = getVisibleAssistantText(input.assistantTurn);
 
@@ -3353,12 +3749,73 @@ export async function streamJoyInterviewResponse(
   callbacks: {
     onPhase: (phase: StreamingPhase) => Promise<void> | void;
     onDelta: (delta: { target: StreamingTarget; text: string }) => Promise<void> | void;
+    onTurn?: (turn: InterviewUserTurnRecord) => Promise<void> | void;
   },
   options?: { signal?: AbortSignal }
 ) {
   const signal = options?.signal;
   signal?.throwIfAborted();
-  const prepared = await prepareJoyInterviewResponseContext(input, { signal });
+  const acceptedTurnRef: { current: InterviewUserTurnRecord | null } = { current: null };
+  let prepared;
+
+  try {
+    prepared = await prepareJoyInterviewResponseContext(input, {
+      signal,
+      onTurn: async (turn) => {
+        acceptedTurnRef.current = turn;
+        await callbacks.onTurn?.(turn);
+        await recordAcceptedUserTurn(input, turn);
+      }
+    });
+  } catch (error) {
+    await recordRejectedUserTurn(input, error);
+
+    const acceptedTurn = acceptedTurnRef.current;
+
+    if (acceptedTurn?.status === "processing") {
+      if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
+        await cancelInterviewUserTurn(acceptedTurn.id);
+        await recordUserTurnLifecycleEvent({
+          eventName: "user_turn_canceled",
+          userId: input.userId,
+          sessionId: input.sessionId,
+          requestId: input.requestId,
+          clientTurnId: acceptedTurn.clientTurnId,
+          turnId: acceptedTurn.id,
+          action: acceptedTurn.action,
+          status: "canceled",
+          attemptCount: acceptedTurn.attemptCount,
+          inputMode: acceptedTurn.inputMode ?? null
+        });
+      } else {
+        await markInterviewUserTurnFailed(
+          acceptedTurn.id,
+          getUserTurnErrorCode(error, "INTERVIEW_PREPARE_FAILED")
+        );
+      }
+    }
+
+    throw error;
+  }
+
+  if (
+    "assistantMessage" in prepared &&
+    acceptedTurnRef.current?.status === "processing"
+  ) {
+    await recordUserTurnLifecycleEvent({
+      eventName: "user_turn_completed",
+      userId: input.userId,
+      sessionId: input.sessionId,
+      requestId: input.requestId,
+      clientTurnId: acceptedTurnRef.current.clientTurnId,
+      turnId: acceptedTurnRef.current.id,
+      action: acceptedTurnRef.current.action,
+      status: "completed",
+      attemptCount: acceptedTurnRef.current.attemptCount,
+      inputMode: acceptedTurnRef.current.inputMode ?? null,
+      dimension: prepared.session.dimension
+    });
+  }
   const emitText = async (target: StreamingTarget, text: string, chunkSize = SUMMARY_STREAM_CHUNK_SIZE) => {
     for (const chunk of splitStreamingText(text, chunkSize)) {
       signal?.throwIfAborted();
@@ -3490,10 +3947,27 @@ export async function streamJoyInterviewResponse(
   } catch (error) {
     if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
       await cancelGenerationTrace(prepared.generationTraceId);
+      await cancelInterviewUserTurn(prepared.userTurnId);
+      await recordUserTurnLifecycleEvent({
+        eventName: "user_turn_canceled",
+        userId: prepared.session.userId,
+        sessionId: prepared.session.id,
+        requestId: prepared.requestId,
+        clientTurnId: prepared.clientTurnId,
+        turnId: prepared.userTurnId,
+        action: prepared.userMessage ? "reply" : "continue_current_event",
+        status: "canceled",
+        inputMode: prepared.inputMode ?? null,
+        dimension: prepared.session.dimension
+      });
     } else {
       await failGenerationTrace(
         prepared.generationTraceId,
         error instanceof Error ? error.name : "ASSISTANT_STREAM_FAILED"
+      );
+      await markInterviewUserTurnFailed(
+        prepared.userTurnId,
+        getUserTurnErrorCode(error, "ASSISTANT_STREAM_FAILED")
       );
     }
     throw error;

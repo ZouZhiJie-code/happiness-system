@@ -54,7 +54,7 @@ export function SiteHeaderNav({
   }
 
   return (
-    <nav className="col-start-2 row-start-1 flex min-h-[var(--site-header-lane-min-height)] items-center justify-self-end gap-2 lg:col-auto lg:row-auto">
+    <nav className="col-start-2 row-start-1 flex min-h-[var(--site-header-lane-min-height)] items-center justify-self-end gap-0 sm:gap-2 lg:col-auto lg:row-auto">
       {navItems.map((item) => {
         const active = isEnteringCalendar
           ? item.matchPath === "/calendar"
@@ -86,10 +86,10 @@ export function SiteHeaderNav({
             }
             aria-current={active ? "page" : undefined}
             className={clsx(
-              "relative px-2.5 py-2 font-medium text-[#4a4038] transition duration-200 after:absolute after:inset-x-2 after:bottom-1.5 after:h-[3px] after:rounded-sm after:bg-[#8a5527] after:transition-opacity after:duration-200 after:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8c6034]",
+              "relative whitespace-nowrap px-1.5 py-2 font-medium text-[var(--text-dim)] transition duration-200 after:absolute after:inset-x-1.5 after:bottom-1.5 after:h-0.5 after:rounded-sm after:bg-[var(--paper-deep)] after:transition-opacity after:duration-200 after:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--paper-deep)] sm:px-2.5 sm:after:inset-x-2",
               active
-                ? "text-[13px] font-semibold text-[#2f2823] after:opacity-100"
-                : "text-[13px] after:opacity-0 hover:text-[#2f2823] hover:after:opacity-55"
+                ? "text-[13px] font-semibold text-ink after:opacity-100"
+                : "text-[13px] after:opacity-0 hover:after:opacity-55 active:text-ink"
             )}
           >
             {item.label}

@@ -146,6 +146,7 @@ export async function reviewAIOptimizationCandidate(input: {
   candidateId: string;
   action: "approve" | "reject" | "publish" | "rollback";
   adminUsername: string;
+  reason?: string;
 }) {
   const candidate = await findOptimizationCandidate(input.candidateId);
   if (!candidate) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
@@ -163,10 +164,15 @@ export async function reviewAIOptimizationCandidate(input: {
     if (!(["draft", "approved"] as AIOptimizationStatus[]).includes(candidate.status)) {
       throw new Error("OPTIMIZATION_CANDIDATE_NOT_REVIEWABLE");
     }
+    const reason = input.reason?.trim() ?? "";
+    if (reason.length < 4 || reason.length > 300) {
+      throw new Error("OPTIMIZATION_REVIEW_REASON_REQUIRED");
+    }
     return reviewOptimizationCandidateStatus({
       id: candidate.id,
       status: "rejected",
-      adminUsername: input.adminUsername
+      adminUsername: input.adminUsername,
+      reviewReason: reason
     });
   }
 

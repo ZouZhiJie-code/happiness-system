@@ -438,6 +438,7 @@ export function reviewOptimizationCandidateStatus(input: {
   id: string;
   status: "approved" | "rejected";
   adminUsername: string;
+  reviewReason?: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
     const candidate = await tx.aIOptimizationCandidate.update({
@@ -445,7 +446,8 @@ export function reviewOptimizationCandidateStatus(input: {
       data: {
         status: input.status,
         reviewedBy: input.adminUsername,
-        reviewedAt: new Date()
+        reviewedAt: new Date(),
+        reviewReason: input.status === "rejected" ? input.reviewReason?.trim() ?? null : null
       }
     });
     await tx.adminAuditLog.create({

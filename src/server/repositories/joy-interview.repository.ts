@@ -3,6 +3,7 @@ import {
   PrismaClient,
   type AIRequestStage,
   type InterviewDimension as PrismaInterviewDimension,
+  type InterviewUserTurnStatus as PrismaInterviewUserTurnStatus,
   type InputMode,
   type InterviewSessionStatus,
   type JoyInterviewStage
@@ -38,12 +39,16 @@ import type {
   InterviewEventRecord,
   InterviewLens,
   InterviewSessionRecord,
+  InterviewUserTurnAction,
+  InterviewUserTurnRecord,
   JournalEntryRecord,
   JoyEntryDraft,
   JoyEventBlock,
   JoyPsychProfile,
   JoySnapshot
 } from "@/types/interview";
+
+const unresolvedUserTurnStatuses: PrismaInterviewUserTurnStatus[] = ["processing", "failed", "canceled"];
 
 const interviewSessionInclude = {
   activeEvent: true,
@@ -55,7 +60,25 @@ const interviewSessionInclude = {
   messages: {
     orderBy: {
       sequence: "asc"
+    },
+    include: {
+      userTurn: {
+        select: {
+          clientTurnId: true
+        }
+      }
     }
+  },
+  userTurns: {
+    where: {
+      status: {
+        in: unresolvedUserTurnStatuses
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: 1
   },
   snapshots: {
     orderBy: {
@@ -81,6 +104,27 @@ type InterviewSessionWithRelations = Prisma.InterviewSessionGetPayload<{
 type SnapshotRecord = NonNullable<InterviewSessionWithRelations["snapshots"][number]>;
 type EventRecord = NonNullable<InterviewSessionWithRelations["events"][number]>;
 type JoyEntryRecord = NonNullable<InterviewSessionWithRelations["joyEntry"]>;
+
+function mapInterviewUserTurn(
+  turn: InterviewSessionWithRelations["userTurns"][number]
+): InterviewUserTurnRecord {
+  return {
+    id: turn.id,
+    clientTurnId: turn.clientTurnId,
+    sessionId: turn.sessionId,
+    activeEventId: turn.activeEventId,
+    action: turn.action,
+    rawText: turn.rawText,
+    inputMode: turn.inputMode ?? undefined,
+    baseMessageSequence: turn.baseMessageSequence,
+    status: turn.status,
+    attemptCount: turn.attemptCount,
+    errorCode: turn.errorCode,
+    createdAt: turn.createdAt.toISOString(),
+    updatedAt: turn.updatedAt.toISOString(),
+    completedAt: turn.completedAt?.toISOString() ?? null
+  };
+}
 
 function parseJoySnapshotData(value: unknown) {
   if (!value || typeof value !== "object") {
@@ -649,6 +693,8 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     messages: session.messages.map((message) => ({
       id: message.id,
       traceId: message.generationTraceId ?? null,
+      userTurnId: message.userTurnId ?? null,
+      clientTurnId: message.userTurn?.clientTurnId ?? null,
       role: message.role,
       inputMode: message.inputMode ?? undefined,
       content: message.content,
@@ -660,6 +706,7 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     snapshotData: activeEvent?.snapshotData ?? buildSnapshotDataForDimension(session.dimension, mapSnapshot(session.snapshots[0])),
     events,
     pendingDecision,
+    pendingUserTurn: session.userTurns?.[0] ? mapInterviewUserTurn(session.userTurns[0]) : null,
     entryDate: formatEntryDate(session.entryDate ?? session.startedAt),
     startedAt: session.startedAt.toISOString(),
     pausedAt: session.pausedAt?.toISOString() ?? null,
@@ -892,6 +939,355 @@ export async function findJoyInterviewSessionById(sessionId: string, userId?: st
   return mapInterviewSession(session);
 }
 
+interface ReserveInterviewUserTurnInput {
+  userId: string;
+  sessionId: string;
+  activeEventId: string | null;
+  clientTurnId: string;
+  action: InterviewUserTurnAction;
+  rawText: string | null;
+  inputMode?: InputMode;
+  baseMessageSequence?: number;
+}
+
+export type ReserveInterviewUserTurnResult =
+  | {
+      kind: "reserved";
+      turn: InterviewUserTurnRecord;
+      userMessageId: string | null;
+      session: InterviewSessionRecord;
+    }
+  | {
+      kind: "completed";
+      turn: InterviewUserTurnRecord;
+      userMessageId: string | null;
+      session: InterviewSessionRecord;
+    };
+
+function mapStandaloneInterviewUserTurn(turn: {
+  id: string;
+  clientTurnId: string;
+  sessionId: string;
+  activeEventId: string | null;
+  action: InterviewUserTurnAction;
+  rawText: string | null;
+  inputMode: InputMode | null;
+  baseMessageSequence: number;
+  status: InterviewUserTurnRecord["status"];
+  attemptCount: number;
+  errorCode: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt: Date | null;
+}): InterviewUserTurnRecord {
+  return {
+    ...turn,
+    inputMode: turn.inputMode ?? undefined,
+    createdAt: turn.createdAt.toISOString(),
+    updatedAt: turn.updatedAt.toISOString(),
+    completedAt: turn.completedAt?.toISOString() ?? null
+  };
+}
+
+export async function reserveInterviewUserTurn(
+  input: ReserveInterviewUserTurnInput
+): Promise<ReserveInterviewUserTurnResult> {
+  const result = await prisma.$transaction(async (database) => {
+      const session = await database.interviewSession.findUnique({
+        where: { id: input.sessionId },
+        select: { id: true, userId: true }
+      });
+
+      if (!session || session.userId !== input.userId) {
+        throw new Error("SESSION_NOT_FOUND");
+      }
+
+      const existingTurn = await database.interviewUserTurn.findUnique({
+        where: {
+          sessionId_clientTurnId: {
+            sessionId: input.sessionId,
+            clientTurnId: input.clientTurnId
+          }
+        },
+        include: {
+          messages: {
+            where: { role: "user" },
+            take: 1
+          }
+        }
+      });
+
+      if (existingTurn) {
+        if (existingTurn.status === "completed") {
+          return {
+            kind: "completed" as const,
+            turn: existingTurn,
+            userMessageId: existingTurn.messages[0]?.id ?? null
+          };
+        }
+
+        if (existingTurn.status === "processing") {
+          throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+        }
+
+        throw new Error("INTERVIEW_TURN_RETRY_REQUIRED");
+      }
+
+      const unresolvedTurn = await database.interviewUserTurn.findFirst({
+        where: {
+          sessionId: input.sessionId,
+          status: {
+            in: ["processing", "failed", "canceled"]
+          }
+        },
+        select: { id: true }
+      });
+
+      if (unresolvedTurn) {
+        throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+      }
+
+      const latestMessage = await database.interviewMessage.findFirst({
+        where: { sessionId: input.sessionId },
+        orderBy: { sequence: "desc" },
+        select: { sequence: true }
+      });
+      const currentBaseMessageSequence = latestMessage?.sequence ?? -1;
+      const requestedBaseMessageSequence = input.baseMessageSequence ?? currentBaseMessageSequence;
+
+      if (requestedBaseMessageSequence !== currentBaseMessageSequence) {
+        throw new Error("INTERVIEW_TURN_OUT_OF_DATE");
+      }
+
+      const turnId = randomUUID();
+      const userMessageId = input.action === "reply" ? randomUUID() : null;
+      const turn = await database.interviewUserTurn.create({
+        data: {
+          id: turnId,
+          clientTurnId: input.clientTurnId,
+          sessionId: input.sessionId,
+          activeEventId: input.activeEventId,
+          action: input.action,
+          rawText: input.rawText,
+          inputMode: input.inputMode,
+          baseMessageSequence: requestedBaseMessageSequence,
+          status: "processing"
+        }
+      });
+
+      if (userMessageId && input.rawText !== null) {
+        await database.interviewMessage.create({
+          data: {
+            id: userMessageId,
+            sessionId: input.sessionId,
+            userTurnId: turnId,
+            role: "user",
+            inputMode: input.inputMode,
+            content: input.rawText,
+            sequence: currentBaseMessageSequence + 1
+          }
+        });
+      }
+
+      return {
+        kind: "reserved" as const,
+        turn,
+        userMessageId
+      };
+    })
+    .catch(async (error: unknown) => {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+        throw error;
+      }
+
+      const duplicateTurn = await prisma.interviewUserTurn.findUnique({
+        where: {
+          sessionId_clientTurnId: {
+            sessionId: input.sessionId,
+            clientTurnId: input.clientTurnId
+          }
+        },
+        include: {
+          messages: {
+            where: { role: "user" },
+            take: 1
+          }
+        }
+      });
+
+      if (duplicateTurn?.status === "completed") {
+        return {
+          kind: "completed" as const,
+          turn: duplicateTurn,
+          userMessageId: duplicateTurn.messages[0]?.id ?? null
+        };
+      }
+
+      if (duplicateTurn && (duplicateTurn.status === "failed" || duplicateTurn.status === "canceled")) {
+        throw new Error("INTERVIEW_TURN_RETRY_REQUIRED");
+      }
+
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    });
+
+  const session = await findJoyInterviewSessionById(input.sessionId, input.userId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  return {
+    kind: result.kind,
+    turn: mapStandaloneInterviewUserTurn(result.turn),
+    userMessageId: result.userMessageId,
+    session
+  };
+}
+
+export async function resumeInterviewUserTurn(input: {
+  userId: string;
+  sessionId: string;
+  clientTurnId: string;
+}): Promise<ReserveInterviewUserTurnResult> {
+  const result = await prisma.$transaction(async (database) => {
+    const turn = await database.interviewUserTurn.findUnique({
+      where: {
+        sessionId_clientTurnId: {
+          sessionId: input.sessionId,
+          clientTurnId: input.clientTurnId
+        }
+      },
+      include: {
+        session: {
+          select: { userId: true }
+        },
+        messages: {
+          where: { role: "user" },
+          take: 1
+        }
+      }
+    });
+
+    if (!turn || turn.session.userId !== input.userId) {
+      throw new Error("INTERVIEW_TURN_NOT_FOUND");
+    }
+
+    if (turn.status === "completed") {
+      return {
+        kind: "completed" as const,
+        turn,
+        userMessageId: turn.messages[0]?.id ?? null
+      };
+    }
+
+    if (turn.status === "processing") {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    const updateResult = await database.interviewUserTurn.updateMany({
+      where: {
+        id: turn.id,
+        status: {
+          in: ["failed", "canceled"]
+        }
+      },
+      data: {
+        status: "processing",
+        attemptCount: { increment: 1 },
+        errorCode: null,
+        completedAt: null
+      }
+    });
+
+    if (updateResult.count !== 1) {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    const updatedTurn = await database.interviewUserTurn.findUnique({
+      where: { id: turn.id }
+    });
+
+    if (!updatedTurn) {
+      throw new Error("INTERVIEW_TURN_NOT_FOUND");
+    }
+
+    return {
+      kind: "reserved" as const,
+      turn: updatedTurn,
+      userMessageId: turn.messages[0]?.id ?? null
+    };
+  });
+
+  const session = await findJoyInterviewSessionById(input.sessionId, input.userId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  return {
+    kind: result.kind,
+    turn: mapStandaloneInterviewUserTurn(result.turn),
+    userMessageId: result.userMessageId,
+    session
+  };
+}
+
+export async function markInterviewUserTurnFailed(turnId: string, errorCode: string) {
+  await prisma.interviewUserTurn.updateMany({
+    where: { id: turnId, status: "processing" },
+    data: {
+      status: "failed",
+      errorCode
+    }
+  });
+}
+
+export async function cancelInterviewUserTurn(turnId: string, errorCode = "REQUEST_CANCELED") {
+  await prisma.interviewUserTurn.updateMany({
+    where: { id: turnId, status: "processing" },
+    data: {
+      status: "canceled",
+      errorCode
+    }
+  });
+}
+
+export async function failInterviewUserTurnByClientId(input: {
+  sessionId: string;
+  clientTurnId: string;
+  errorCode: string;
+}) {
+  await prisma.interviewUserTurn.updateMany({
+    where: {
+      sessionId: input.sessionId,
+      clientTurnId: input.clientTurnId,
+      status: "processing"
+    },
+    data: {
+      status: "failed",
+      errorCode: input.errorCode
+    }
+  });
+}
+
+export async function cancelInterviewUserTurnByClientId(input: {
+  sessionId: string;
+  clientTurnId: string;
+  errorCode?: string;
+}) {
+  await prisma.interviewUserTurn.updateMany({
+    where: {
+      sessionId: input.sessionId,
+      clientTurnId: input.clientTurnId,
+      status: "processing"
+    },
+    data: {
+      status: "canceled",
+      errorCode: input.errorCode ?? "REQUEST_CANCELED"
+    }
+  });
+}
+
 interface AppendJoyInterviewTurnInput {
   sessionId: string;
   activeEventId: string;
@@ -914,6 +1310,7 @@ interface AppendJoyInterviewTurnInput {
   requestId?: string | null;
   outputOrigin?: "llm" | "deterministic" | "fallback";
   pipelineDecisions?: Array<Record<string, unknown>>;
+  userTurnId?: string | null;
 }
 
 export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput) {
@@ -934,7 +1331,11 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
     buildSnapshotDataForDimension(existing.dimension as InterviewDimension, input.snapshot)
   );
   const assistantMessageId = randomUUID();
-  const userMessageId = input.userMessage ? randomUUID() : null;
+  const persistedUserMessage = input.userTurnId
+    ? existing.messages.find((message) => message.userTurnId === input.userTurnId && message.role === "user")
+    : null;
+  const shouldCreateUserMessage = Boolean(input.userMessage && !persistedUserMessage);
+  const userMessageId = persistedUserMessage?.id ?? (shouldCreateUserMessage ? randomUUID() : null);
   const generationTraceId = input.generationTraceId ?? randomUUID();
   const existingTrace = input.generationTraceId
     ? await prisma.aIGenerationTrace.findUnique({
@@ -954,10 +1355,11 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
 
   const messagesToCreate: Prisma.InterviewMessageCreateManyInput[] = [];
 
-  if (input.userMessage) {
+  if (shouldCreateUserMessage && input.userMessage) {
     messagesToCreate.push({
       id: userMessageId ?? undefined,
       sessionId: input.sessionId,
+      userTurnId: input.userTurnId ?? undefined,
       role: "user",
       inputMode: input.inputMode,
       content: input.userMessage,
@@ -968,10 +1370,11 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
   messagesToCreate.push({
     id: assistantMessageId,
     sessionId: input.sessionId,
+    userTurnId: input.userTurnId ?? undefined,
     generationTraceId,
     role: "assistant",
     content: serializedAssistantTurn,
-    sequence: nextSequence + (input.userMessage ? 1 : 0)
+    sequence: nextSequence + (shouldCreateUserMessage ? 1 : 0)
   });
 
   const traceWrite = input.generationTraceId
@@ -1021,6 +1424,17 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         }
       });
 
+  const turnCompletionWrite = input.userTurnId
+    ? prisma.interviewUserTurn.update({
+        where: { id: input.userTurnId },
+        data: {
+          status: "completed",
+          errorCode: null,
+          completedAt: new Date()
+        }
+      })
+    : null;
+
   await prisma.$transaction([
     traceWrite,
     prisma.interviewMessage.createMany({ data: messagesToCreate }),
@@ -1069,7 +1483,8 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         draftSummary: input.draftSummary,
         completedAt: input.completedAt
       }
-    })
+    }),
+    ...(turnCompletionWrite ? [turnCompletionWrite] : [])
   ]);
 
   const session = await prisma.interviewSession.findUnique({
@@ -1125,7 +1540,7 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
 export async function startNextInterviewEvent(
   sessionId: string,
   openingQuestion: string,
-  options?: { requestId?: string | null }
+  options?: { requestId?: string | null; userTurnId?: string | null }
 ) {
   const existing = await ensureInterviewEvents(prisma, sessionId);
 
@@ -1210,6 +1625,7 @@ export async function startNextInterviewEvent(
       data: {
         id: assistantMessageId,
         sessionId,
+        userTurnId: options?.userTurnId ?? undefined,
         generationTraceId,
         role: "assistant",
         content: serializeAssistantTurnPayload(assistantTurn),
@@ -1223,7 +1639,19 @@ export async function startNextInterviewEvent(
         stage: "collect_event",
         lastAssistantQuestion: openingQuestion
       }
-    })
+    }),
+    ...(options?.userTurnId
+      ? [
+          prisma.interviewUserTurn.update({
+            where: { id: options.userTurnId },
+            data: {
+              status: "completed",
+              errorCode: null,
+              completedAt: new Date()
+            }
+          })
+        ]
+      : [])
   );
 
   await prisma.$transaction(writes);

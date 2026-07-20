@@ -97,6 +97,32 @@ describe("AI iteration service", () => {
     expect(repository.rollbackOptimizationCandidate).toHaveBeenCalledWith("candidate-1", "admin");
   });
 
+  it("requires and records a review reason when returning a candidate", async () => {
+    repository.findOptimizationCandidate.mockResolvedValue({ id: "candidate-1", status: "draft" });
+    repository.reviewOptimizationCandidateStatus.mockResolvedValue({ id: "candidate-1", status: "rejected" });
+
+    await expect(reviewAIOptimizationCandidate({
+      candidateId: "candidate-1",
+      action: "reject",
+      adminUsername: "admin",
+      reason: "短"
+    })).rejects.toThrow("OPTIMIZATION_REVIEW_REASON_REQUIRED");
+
+    await reviewAIOptimizationCandidate({
+      candidateId: "candidate-1",
+      action: "reject",
+      adminUsername: "admin",
+      reason: "  证据不足，请补充具体对话。  "
+    });
+
+    expect(repository.reviewOptimizationCandidateStatus).toHaveBeenCalledWith({
+      id: "candidate-1",
+      status: "rejected",
+      adminUsername: "admin",
+      reviewReason: "证据不足，请补充具体对话。"
+    });
+  });
+
   it("reports reused candidates without increasing the new-candidate count", async () => {
     repository.loadOptimizationEvidence.mockResolvedValue({
       badCases: [

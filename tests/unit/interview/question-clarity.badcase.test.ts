@@ -11,6 +11,10 @@ const {
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
+  reserveInterviewUserTurn,
+  resumeInterviewUserTurn,
+  markInterviewUserTurnFailed,
+  cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
@@ -22,6 +26,10 @@ const {
   markJoyEntrySaved: vi.fn(),
   pauseJoyInterviewSessionRecord: vi.fn(),
   reopenJoyInterviewSessionRecord: vi.fn(),
+  reserveInterviewUserTurn: vi.fn(),
+  resumeInterviewUserTurn: vi.fn(),
+  markInterviewUserTurnFailed: vi.fn(),
+  cancelInterviewUserTurn: vi.fn(),
   resumeCurrentInterviewEvent: vi.fn(),
   saveJoyInterviewDraft: vi.fn(),
   startNextInterviewEvent: vi.fn()
@@ -111,6 +119,10 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
+  reserveInterviewUserTurn,
+  resumeInterviewUserTurn,
+  markInterviewUserTurnFailed,
+  cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
@@ -305,6 +317,10 @@ describe("question clarity badcase baseline", () => {
     markJoyEntrySaved.mockReset();
     pauseJoyInterviewSessionRecord.mockReset();
     reopenJoyInterviewSessionRecord.mockReset();
+    reserveInterviewUserTurn.mockReset();
+    resumeInterviewUserTurn.mockReset();
+    markInterviewUserTurnFailed.mockReset();
+    cancelInterviewUserTurn.mockReset();
     resumeCurrentInterviewEvent.mockReset();
     saveJoyInterviewDraft.mockReset();
     startNextInterviewEvent.mockReset();
@@ -322,6 +338,44 @@ describe("question clarity badcase baseline", () => {
       memories: [],
       formattedContext: null
     });
+    reserveInterviewUserTurn.mockImplementation(
+      async (input: {
+        sessionId: string;
+        clientTurnId: string;
+        activeEventId: string | null;
+        action: "reply" | "continue_current_event" | "next_event";
+        rawText: string | null;
+        inputMode?: "text" | "voice";
+        baseMessageSequence?: number;
+      }) => {
+        const session = await findJoyInterviewSessionById(input.sessionId);
+        const baseMessageSequence =
+          input.baseMessageSequence ??
+          Math.max(-1, ...session.messages.map((message: { sequence: number }) => message.sequence));
+
+        return {
+          kind: "reserved",
+          turn: {
+            id: "turn-test",
+            clientTurnId: input.clientTurnId,
+            sessionId: input.sessionId,
+            activeEventId: input.activeEventId,
+            action: input.action,
+            rawText: input.rawText,
+            inputMode: input.inputMode,
+            baseMessageSequence,
+            status: "processing",
+            attemptCount: 1,
+            errorCode: null,
+            createdAt: "2026-05-21T00:00:00.000Z",
+            updatedAt: "2026-05-21T00:00:00.000Z",
+            completedAt: null
+          },
+          userMessageId: input.action === "reply" ? "user-turn-message" : null,
+          session
+        };
+      }
+    );
   });
 
   it("flags fulfillment abstract value prompts that the current surface protocol still lets through", () => {

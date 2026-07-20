@@ -9,6 +9,10 @@ import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { clearAllDimensionSessionCache } from "@/features/interview/dimension-session-cache";
 import { clearInterviewBootstrapTasks } from "@/features/interview/session-bootstrap";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import {
+  readComposerDraft,
+  writeComposerDraft
+} from "@/features/interview/user-turn-storage";
 import { useInterviewStore } from "@/stores/interview-store";
 import type {
   AssistantTurnPayload,
@@ -497,6 +501,7 @@ describe("InterviewShell", () => {
     clearAllDimensionSessionCache();
     clearInterviewBootstrapTasks();
     window.localStorage.clear();
+    window.sessionStorage.clear();
     mockPathname.value = "/interview";
     mockRouterPush.mockReset();
     mockRouterReplace.mockReset();
@@ -1290,7 +1295,9 @@ describe("InterviewShell", () => {
     expect(continueCall).toBeTruthy();
     expect(JSON.parse(String(continueCall?.[1]?.body))).toEqual({
       action: "continue_current_event",
-      sessionId: "session-choice"
+      sessionId: "session-choice",
+      clientTurnId: expect.any(String),
+      baseMessageSequence: 0
     });
   });
 
@@ -5436,5 +5443,238 @@ describe("InterviewShell", () => {
       expect(textarea).toHaveValue("先停在这里");
     });
     expect(within(screen.getByTestId("interview-message-scroll")).queryByText("先停在这里")).not.toBeInTheDocument();
+  });
+
+  it("keeps an accepted user turn visible and recoverable after stopping generation", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    const encoder = new TextEncoder();
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+
+        return new Response(
+          JSON.stringify({
+            session,
+            sessionId: session.id,
+            openingQuestion: session.lastAssistantQuestion
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        capturedSignal = init?.signal ?? undefined;
+        const requestBody = JSON.parse(String(init?.body)) as {
+          clientTurnId: string;
+          rawText: string;
+          baseMessageSequence: number;
+        };
+
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(
+                encoder.encode(
+                  `event: turn\ndata: ${JSON.stringify({
+                    turn: {
+                      id: "turn-accepted",
+                      clientTurnId: requestBody.clientTurnId,
+                      sessionId: "session-joy",
+                      activeEventId: "event-1",
+                      action: "reply",
+                      rawText: requestBody.rawText,
+                      inputMode: "text",
+                      baseMessageSequence: requestBody.baseMessageSequence,
+                      status: "processing",
+                      attemptCount: 1,
+                      errorCode: null,
+                      createdAt: "2026-07-20T00:00:00.000Z",
+                      updatedAt: "2026-07-20T00:00:00.000Z",
+                      completedAt: null
+                    }
+                  })}\n\n`
+                )
+              );
+              controller.enqueue(encoder.encode('event: phase\ndata: {"state":"thinking"}\n\n'));
+            }
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "text/event-stream; charset=utf-8" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "这句话已经发出，请保留" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    const stopButton = await screen.findByRole("button", { name: "停止生成" });
+    await waitFor(() => {
+      expect(screen.getByText("正在思考中...")).toBeInTheDocument();
+    });
+    fireEvent.click(stopButton);
+
+    await waitFor(() => {
+      expect(capturedSignal?.aborted).toBe(true);
+      expect(textarea).toHaveValue("");
+      expect(screen.getByText("这句话已经发出，请保留")).toBeInTheDocument();
+      expect(screen.getByText("已停止生成，你的原话已经保留。")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "继续生成" })).toBeInTheDocument();
+    });
+  });
+
+  it("keeps over-limit Unicode input and pauses submission", async () => {
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    const overLimitText = "🙂".repeat(1201);
+    fireEvent.change(textarea, { target: { value: overLimitText } });
+
+    expect(textarea).toHaveValue(overLimitText);
+    expect(screen.getByText("1201/1200，请删短后发送")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "发送回答" })).toBeDisabled();
+    expect(
+      vi.mocked(global.fetch).mock.calls.some(([input]) =>
+        String(input).endsWith("/api/interview/session/respond/stream")
+      )
+    ).toBe(false);
+  });
+
+  it("restores an unsent composer draft for the current session", async () => {
+    writeComposerDraft(
+      {
+        sessionId: "session-joy",
+        entryDate: defaultEntryDate(),
+        dimension: "joy"
+      },
+      "刷新前还没发送的内容"
+    );
+
+    renderInterviewPage();
+
+    expect(await screen.findByRole("textbox")).toHaveValue("刷新前还没发送的内容");
+    expect(
+      readComposerDraft({
+        sessionId: "session-joy",
+        entryDate: defaultEntryDate(),
+        dimension: "joy"
+      })
+    ).toBe("刷新前还没发送的内容");
+  });
+
+  it("reuses the same clientTurnId after a network response is lost", async () => {
+    const respondBodies: Array<{
+      clientTurnId: string;
+      baseMessageSequence: number;
+      rawText: string;
+    }> = [];
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/calendar/day?")) {
+        return new Response(JSON.stringify(buildHeaderDayRecord()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/start")) {
+        const session = buildSession();
+        return new Response(
+          JSON.stringify({
+            session,
+            sessionId: session.id,
+            openingQuestion: session.lastAssistantQuestion
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        const requestBody = JSON.parse(String(init?.body)) as {
+          clientTurnId: string;
+          baseMessageSequence: number;
+          rawText: string;
+        };
+        respondBodies.push(requestBody);
+
+        if (respondBodies.length === 1) {
+          throw new TypeError("network response lost");
+        }
+
+        const completedSession = buildSession({
+          turnCount: 1,
+          stage: "probe_reason",
+          messages: [
+            openingMessage,
+            {
+              id: "user-recovered",
+              role: "user",
+              content: requestBody.rawText,
+              clientTurnId: requestBody.clientTurnId,
+              sequence: 1,
+              createdAt: "2026-07-20T00:01:00.000Z"
+            },
+            {
+              id: "assistant-recovered",
+              role: "assistant",
+              content: "这段经历已经接回来了。",
+              clientTurnId: requestBody.clientTurnId,
+              sequence: 2,
+              createdAt: "2026-07-20T00:01:30.000Z"
+            }
+          ]
+        });
+
+        return buildSseResponse([
+          `event: session\ndata: ${JSON.stringify({ session: completedSession })}\n\n`
+        ]);
+      }
+
+      throw new Error(`Unhandled fetch: ${url} ${init?.method ?? "GET"}`);
+    }) as typeof fetch;
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "网络断开时也只保存一次" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    expect(await screen.findByText("网络连接异常")).toBeInTheDocument();
+    expect(textarea).toHaveValue("网络断开时也只保存一次");
+
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    await waitFor(() => {
+      expect(respondBodies).toHaveLength(2);
+    });
+    expect(respondBodies[1]).toMatchObject({
+      clientTurnId: respondBodies[0]?.clientTurnId,
+      baseMessageSequence: respondBodies[0]?.baseMessageSequence,
+      rawText: "网络断开时也只保存一次"
+    });
   });
 });

@@ -19,6 +19,7 @@
 - 仓库当前已新增 `AnalyticsEvent` 与 `AdminAuditLog` 两张表：`AnalyticsEvent` 承接注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等埋点；`AdminAuditLog` 记录管理员查看会话 / 日志正文的审计日志。
 - AI 质量数据飞轮已经覆盖生成 Trace、Prompt 血缘、规则评分与抽样 Judge、访谈/日志赞踩标签和文本、Badcase 聚类、System Prompt / Few-shot / Engineering 候选、去重、真实对话证据、回放验证、全量发布、回滚和七天效果观察；管理员入口为 `/admin/ai-quality`。
 - System Prompt 与 Few-shot 候选只有在管理员批准且最近一次 `AIOptimizationValidation` 通过后才能发布；`AIPromptRelease.validationId` 绑定发布采用的验证记录，线上 Trace 分别用 `+opt:{candidateId}` 与 `+fs:{fingerprint}` 归因。
+- 管理员拒绝 AI 质量候选时必须提供 `4–300` 字的 `reviewReason`；缺少通过验证时发布接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
 - AI 质量改进当前默认参与，注册与登录会写入或校准质量政策版本和合规时间；兼容退出请求返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`，前端设置页不提供退出开关。
 - `npm run acceptance:ai-quality:seed` 默认只允许本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。`2026-07-20` 已清理共享生产库中的固定验收账号、Trace、反馈、候选与运行记录，生产数据继续只承载真实用户链路。
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续部署、验收、回调和文档入口统一使用 `dailylight.chat`。
@@ -27,6 +28,9 @@
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有当 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
+- 访谈回复当前采用“用户原话先持久化、AI 结果后完成”的两阶段提交：前端用 `sessionStorage` 保存输入草稿和待发 outbox，服务端用 `InterviewUserTurn` 保存 `clientTurnId / rawText / baseMessageSequence / status / attemptCount`；SSE `turn` 确认服务端已接收原话，失败或取消后 session hydrate 返回 `pendingUserTurn`，用户可点击“继续生成”用同一 `clientTurnId` 调用 `resume_turn`。
+- `20260720120000_add_interview_user_turn` migration 新增 `InterviewUserTurn`、相关枚举与 `InterviewMessage.userTurnId`。当前完整测试为 `174` 个测试文件、`1095` 个用例通过；`npx tsc --noEmit` 与 `npm run build` 均通过。
+- `20260720153000_add_ai_optimization_review_reason` migration 为 `AIOptimizationCandidate` 新增 `reviewReason`，用于保留管理员拒绝候选的理由。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”，避免用户误把旧日期会话当成当天记录。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不能再追同一字段，而要改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间；服务层会在最终落库前和流式输出前同时兜底，避免重复问题先漏给前端。
@@ -352,6 +356,9 @@ gratitude 理论翻译基线：
   - 事件级状态、轮次、覆盖镜头、`snapshotData`、`progressData`。
 - `InterviewMessage`
   - 全部可恢复对话消息。
+- `InterviewUserTurn`
+  - 用户回复与选择动作的可恢复提交记录；同一会话内 `clientTurnId` 唯一。
+  - 保存原话、提交时的消息位置、处理状态、尝试次数与错误码；`processing / failed / canceled` 会进入 session 的 `pendingUserTurn`。
 - `JoyInterviewSnapshot`
   - 历史兼容快照表，仍保留旧 joy 结构投影。
 - `JoyEntry`
@@ -377,14 +384,14 @@ gratitude 理论翻译基线：
 - `AIGenerationTrace / AIFeedback / AIFeedbackRevision / AIEvaluation / AICase`
   - AI 生成血缘、当前用户反馈、反馈修订、结构化评分和案例分类。
 - `AIOptimizationRun / AIBadcaseCluster / AIOptimizationCandidate / AIOptimizationValidation / AIFewShotExample / AIPromptRelease`
-  - AI 质量运行、聚类、候选、回放验证、动态示例和线上发布版本。
+  - AI 质量运行、聚类、候选、回放验证、动态示例和线上发布版本；候选的 `reviewReason` 保存管理员拒绝理由。
 
 关键事实：
 - 新的多维度结构主要落在 `snapshotData` 和 `payload` 里。
 - 新增的 `boundary_insufficient` 只存在于 `InterviewEvent.progressData` 到 API response 的映射中，不需要 DB migration。
 - legacy 列仍保留，用于兼容旧代码与旧数据投影。
 - `entryDate` / `date` 的日期范围查询当前统一按 `Asia/Shanghai` 整天窗口执行：`gte dayStartUtc`、`lt nextDayStartUtc`。
-- 当前没有额外的 DB migration 依赖才能理解 joy 结构；但本地数据库必须和 `prisma/schema.prisma` 同步。
+- 用户提交恢复链路依赖 `prisma/migrations/20260720120000_add_interview_user_turn/migration.sql`；本地和共享数据库必须与 `prisma/schema.prisma` 同步。
 
 ## 6. API 面与调用语义
 
@@ -442,7 +449,9 @@ gratitude 理论翻译基线：
 - 前端主链路使用的是 `respond/stream`，不是普通 `respond`。
 - `POST /api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`；session hydrate 也会返回 `entryDate`。
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
-- `respond/stream` 的 provider 原始 `delta.text` 会原样透传给前端，不对任意流式增量单独 trim 或折叠空白；只有完整文本或系统生成的补发文本才允许分块。
+- `respond/stream` 会在 AI 处理前发送 SSE `turn`，确认用户原话已经进入服务端持久状态；成功完成后再发送 `session`。
+- 普通回复请求优先使用 `rawText + clientTurnId + baseMessageSequence`；兼容旧客户端的 `userMessage`。失败或取消的提交使用 `action: resume_turn` 和原 `clientTurnId` 恢复。
+- `respond/stream` 当前会在服务端累计 provider 候选输出，完成问题协议、重复保护、维度专项检查和 fallback 后，再分块发送最终摘要与问题；分块过程保持最终文本的空格和换行。
 - `/admin/analytics` 当前是管理员工作台，不向普通用户暴露；筛查和下钻主要通过 URL 查询参数驱动页面重新取数。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
 - `transcribe` 现在还是占位 stub，不是真实语音转写。
@@ -494,13 +503,17 @@ gratitude 理论翻译基线：
   - 再重启 `npm run dev`
 - 如果 `npm run build` 失败：
   - 先运行 `npm run typecheck` 和 `npm run lint`，区分 TypeScript、ESLint 与 Next.js 构建错误
-  - `2026-07-20` 基线为 `npm run build` 通过并保留既有 ESLint warnings；新的非零退出码按首次错误位置排查
+  - `2026-07-20` 当前基线为 `npm run build` 通过并保留既有 ESLint warnings；新的非零退出码按首次错误位置排查
   - Prisma Client 缺失或 schema 版本不一致时，执行 `npx prisma generate` 并确认 migrations
 - 如果用户看到结构化访谈提交错误：
   - `NETWORK_UNAVAILABLE`：先确认 `npm run dev` 仍在运行，再刷新页面
   - `MESSAGE_TOO_LONG`：单次回复超过 `1200` 字，拆成两段发送
   - `SESSION_NOT_FOUND`：刷新页面；仍失败则点击 `清除对话记录`
   - `SESSION_CHOICE_UNAVAILABLE`：分叉状态过期，刷新后按最新状态操作
+  - `INTERVIEW_TURN_IN_PROGRESS`：同一会话已有回复正在处理，等待或刷新
+  - `INTERVIEW_TURN_OUT_OF_DATE`：提交基于旧对话位置，刷新后重新发送
+  - `INTERVIEW_TURN_RETRY_REQUIRED`：原话已保留，点击“继续生成”
+  - `INTERVIEW_TURN_NOT_FOUND`：待恢复提交已失效，刷新后按最新对话继续
   - `INTERVIEW_DB_WRITE_FAILED` / `INTERVIEW_RESPONSE_SCHEMA_ERROR` / `INTERVIEW_RESPOND_FAILED`：看 dev server 日志里的 requestId 和堆栈
 - 如果日志能生成但风格偏保守：
   - 优先检查 `src/features/joy-interview/prompts/joy-prompts.ts`
@@ -515,8 +528,9 @@ gratitude 理论翻译基线：
 - `npx tsc --noEmit`
 
 截至 `2026-07-20`，验证基线为：
-- `npm test`：`168` 个测试文件、`1061` 个测试通过
+- 当前工作区 `npm test`：`174` 个测试文件、`1095` 个测试通过
 - AI 质量发布与效果观察专项：`10` 个测试文件、`30` 个测试通过
+- `npm run lint`：通过，保留 `44` 条既有 warning
 - `npx tsc --noEmit`：通过
 - `npm run build`：通过，保留既有 ESLint warnings
 

@@ -103,12 +103,34 @@ export interface AssistantTurnPayload {
 export interface InterviewMessage {
   id: string;
   traceId?: string | null;
+  userTurnId?: string | null;
+  clientTurnId?: string | null;
   role: InterviewRole;
   inputMode?: InputMode;
   content: string;
   assistantPayload?: AssistantTurnPayload | null;
   sequence: number;
   createdAt: string;
+}
+
+export type InterviewUserTurnAction = "reply" | "continue_current_event" | "next_event";
+export type InterviewUserTurnStatus = "processing" | "completed" | "failed" | "canceled";
+
+export interface InterviewUserTurnRecord {
+  id: string;
+  clientTurnId: string;
+  sessionId: string;
+  activeEventId: string | null;
+  action: InterviewUserTurnAction;
+  rawText: string | null;
+  inputMode?: InputMode;
+  baseMessageSequence: number;
+  status: InterviewUserTurnStatus;
+  attemptCount: number;
+  errorCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
 }
 
 export interface JoyPsychProfile {
@@ -552,6 +574,7 @@ export interface InterviewSessionRecord {
   snapshotData?: InterviewSnapshotData;
   events: InterviewEventRecord[];
   pendingDecision: PendingDecisionRecord | null;
+  pendingUserTurn?: InterviewUserTurnRecord | null;
   entryDate: string;
   startedAt: string;
   pausedAt: string | null;

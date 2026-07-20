@@ -79,4 +79,34 @@ describe("AI quality iteration APIs", () => {
     expect(response.status).toBe(400);
     expect(reviewAIOptimizationCandidate).not.toHaveBeenCalled();
   });
+
+  it("requires a bounded reason before returning a candidate", async () => {
+    requireAdminRequest.mockResolvedValue({ id: "admin-1", username: "admin" });
+
+    const missingReason = await PATCH(
+      new Request("http://localhost/api/admin/ai-quality/candidates/candidate-1", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "reject" })
+      }),
+      { params: Promise.resolve({ candidateId: "candidate-1" }) }
+    );
+    expect(missingReason.status).toBe(400);
+
+    reviewAIOptimizationCandidate.mockResolvedValue({ id: "candidate-1", status: "rejected" });
+    const accepted = await PATCH(
+      new Request("http://localhost/api/admin/ai-quality/candidates/candidate-1", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "reject", reason: "证据不足，请补充具体对话。" })
+      }),
+      { params: Promise.resolve({ candidateId: "candidate-1" }) }
+    );
+
+    expect(accepted.status).toBe(200);
+    expect(reviewAIOptimizationCandidate).toHaveBeenLastCalledWith({
+      candidateId: "candidate-1",
+      action: "reject",
+      adminUsername: "admin",
+      reason: "证据不足，请补充具体对话。"
+    });
+  });
 });

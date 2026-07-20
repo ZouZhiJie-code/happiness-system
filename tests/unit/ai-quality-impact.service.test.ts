@@ -60,7 +60,7 @@ describe("AI quality impact service", () => {
       })] as never,
       promptKey: "interview.question.reflection",
       versionMarker: "+opt:candidate-1",
-      issueFamily: "boundary"
+      issueKey: "ignored_boundary"
     });
     expect(result).toMatchObject({
       generationCount: 1,
@@ -69,6 +69,46 @@ describe("AI quality impact service", () => {
       failureCount: 1,
       failureRate: 1
     });
+  });
+
+  it("does not merge different unknown issue codes into the same impact metric", () => {
+    const result = aggregateAIQualityImpactMetrics({
+      traces: [
+        trace({
+          id: "trace-alpha",
+          createdAt: "2026-07-03T00:00:00.000Z",
+          version: "v1",
+          issueCode: "unknown_issue_alpha"
+        }),
+        trace({
+          id: "trace-beta",
+          createdAt: "2026-07-03T01:00:00.000Z",
+          version: "v1",
+          issueCode: "unknown_issue_beta"
+        })
+      ] as never,
+      promptKey: "interview.question.reflection",
+      issueKey: "unknown_issue_alpha"
+    });
+
+    expect(result.sameIssueCount).toBe(1);
+    expect(result.sameIssueRate).toBe(0.5);
+  });
+
+  it("marks the exact issue metric unavailable when the candidate has no issue code", () => {
+    const result = aggregateAIQualityImpactMetrics({
+      traces: [trace({
+        id: "trace-1",
+        createdAt: "2026-07-03T00:00:00.000Z",
+        version: "v1",
+        issueCode: "ignored_boundary"
+      })] as never,
+      promptKey: "interview.question.reflection",
+      issueKey: null
+    });
+
+    expect(result.sameIssueCount).toBe(0);
+    expect(result.sameIssueRate).toBeNull();
   });
 
   it("compares the seven-day baseline with traces attributed to the released marker", async () => {

@@ -49,7 +49,7 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
     <div className="grid gap-5" aria-label={`${evidence.userLabel}的证据详情`}>
       <div className="grid gap-2">
         <p className="text-sm font-medium leading-7 text-ink">{evidence.scenarioSummary}</p>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs leading-6 text-[var(--text-faint)]">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs leading-6 text-[var(--text-dim)]">
           <span>{evidence.userLabel}</span>
           <span>{evidence.dimension ? DIMENSION_LABEL[evidence.dimension] : "通用场景"}</span>
           <span>{ARTIFACT_LABEL[evidence.artifactType]}</span>
@@ -58,7 +58,7 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
       </div>
 
       <div className="grid gap-2">
-        <p className="text-xs font-medium tracking-wide text-[var(--text-faint)]">用户反馈与系统判断</p>
+        <p className="text-xs font-medium tracking-wide text-[var(--text-dim)]">用户反馈与系统判断</p>
         {evidence.feedback ? (
           <div className="grid gap-2 text-sm leading-7 text-[var(--text-dim)]">
             <p>{evidence.feedback.vote === "upvote" ? "用户点了赞，认可这条回复。" : "用户点了踩，认为这条回复需要改进。"}</p>
@@ -106,9 +106,9 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
                 key={message.id}
                 className={`border-l-2 pl-4 ${message.isTarget ? "border-[var(--paper-deep)]" : "border-[var(--line-soft)]"}`}
               >
-                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--text-faint)]">
+                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--text-dim)]">
                   <span>{ROLE_LABEL[message.role]}</span>
-                  {message.isTarget ? <span className="text-[var(--paper-deep)]">本次重点判断</span> : null}
+                  {message.isTarget ? <span className="text-ink">本次重点判断</span> : null}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-7 text-ink/80">{message.text}</p>
               </li>
@@ -121,7 +121,7 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
 
       {!hasTargetInConversation || evidence.artifactType === "dimension_journal" ? (
         <div className="grid gap-2 border-l-2 border-[var(--paper-deep)] pl-4">
-          <p className="text-xs font-medium text-[var(--paper-deep)]">本次生成结果</p>
+          <p className="text-xs font-medium text-ink">本次生成结果</p>
           {evidence.targetOutput.title ? <p className="font-medium text-ink">{evidence.targetOutput.title}</p> : null}
           <p className="whitespace-pre-wrap text-sm leading-7 text-ink/80">{evidence.targetOutput.text}</p>
         </div>
@@ -130,7 +130,17 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
   );
 }
 
-export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candidateId: string; evidenceCount: number }) {
+export function AdminAIQualityEvidence({
+  candidateId,
+  candidateName,
+  evidenceCount,
+  onActiveEvidenceChange
+}: {
+  candidateId: string;
+  candidateName?: string;
+  evidenceCount: number;
+  onActiveEvidenceChange?: (candidateId: string, evidence: AdminAIQualityEvidenceItem) => void;
+}) {
   const [expanded, setExpanded] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -162,13 +172,23 @@ export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candida
   const activeEvidence = payload?.items[activeIndex] ?? null;
   const itemOffset = payload ? (payload.page - 1) * payload.pageSize : 0;
 
+  React.useEffect(() => {
+    if (activeEvidence) onActiveEvidenceChange?.(candidateId, activeEvidence);
+  }, [activeEvidence, candidateId, onActiveEvidenceChange]);
+
   return (
     <section className="grid gap-4" aria-label="用户场景与对话证据">
       <div className="flex flex-wrap items-center gap-3">
-        <ActionButton variant="secondary" aria-expanded={expanded} onClick={toggleEvidence}>
+        <ActionButton
+          variant="secondary"
+          className="whitespace-nowrap"
+          aria-expanded={expanded}
+          aria-label={candidateName ? `${candidateName}：${expanded ? "收起问题证据" : `查看问题证据，共 ${evidenceCount} 条`}` : undefined}
+          onClick={toggleEvidence}
+        >
           {expanded ? "收起用户场景与对话" : `查看用户场景与对话（${evidenceCount}）`}
         </ActionButton>
-        <span className="text-xs leading-6 text-[var(--text-faint)]">查看行为会记录在管理员审计日志中</span>
+        <span className="text-xs leading-6 text-[var(--text-dim)]">查看行为会记录在管理员审计日志中</span>
       </div>
 
       {expanded ? (
@@ -176,7 +196,7 @@ export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candida
           {loading ? <p role="status" className="text-sm leading-7 text-[var(--text-dim)]">正在还原对话背景…</p> : null}
           {error ? (
             <div className="flex flex-wrap items-center gap-3">
-              <p role="alert" className="text-sm leading-7 text-[#8a5440]">{error}</p>
+              <p role="alert" className="text-sm leading-7 text-ink">{error}</p>
               <ActionButton variant="ghost" onClick={() => void loadPage(payload?.page ?? 1)}>重新加载</ActionButton>
             </div>
           ) : null}
@@ -193,7 +213,7 @@ export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candida
                     第 {itemOffset + index + 1} 段对话
                   </ActionButton>
                 ))}
-                <span className="text-xs text-[var(--text-faint)]">共 {payload.total} 段证据</span>
+                <span className="text-xs tabular-nums text-[var(--text-dim)]">共 {payload.total} 段证据</span>
               </div>
 
               {activeEvidence ? <AdminAIQualityEvidenceDetail evidence={activeEvidence} /> : null}
@@ -203,7 +223,7 @@ export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candida
                   <ActionButton variant="ghost" disabled={payload.page <= 1 || loading} onClick={() => void loadPage(payload.page - 1)}>
                     上一组
                   </ActionButton>
-                  <span className="text-xs text-[var(--text-faint)]">第 {payload.page}/{payload.totalPages} 组</span>
+                  <span className="text-xs tabular-nums text-[var(--text-dim)]">第 {payload.page}/{payload.totalPages} 组</span>
                   <ActionButton variant="ghost" disabled={payload.page >= payload.totalPages || loading} onClick={() => void loadPage(payload.page + 1)}>
                     下一组
                   </ActionButton>
