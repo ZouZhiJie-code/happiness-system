@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { ActionButton, Card, Divider, SectionHeading, Surface } from "@/components/ui";
 import { AdminAIQualityEvidence } from "@/components/admin/admin-ai-quality-evidence";
+import { AdminAIQualityImpact } from "@/components/admin/admin-ai-quality-impact";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export type AIOptimizationCandidateView = {
   id: string;
@@ -22,6 +24,20 @@ export type AIOptimizationCandidateView = {
   cluster: { issueCode: string; caseCount: number } | null;
   fewShotExampleCount: number;
   releaseCount: number;
+  latestValidation: {
+    id: string;
+    status: "running" | "passed" | "failed" | "error";
+    targetCaseCount: number;
+    targetPassedCount: number;
+    regressionCaseCount: number;
+    regressionPassedCount: number;
+    criticalRegressionCount: number;
+    averageScoreDelta: number;
+    summary: string | null;
+    errorCode: string | null;
+    completedAt: string | null;
+    results: unknown;
+  } | null;
 };
 
 export type AIOptimizationRunView = {
@@ -130,6 +146,9 @@ function getFriendlyError(errorCode: string) {
   if (errorCode === "ADMIN_FORBIDDEN") return "当前登录账号没有管理员权限，请重新使用管理员验收入口登录。";
   if (errorCode === "AUTHENTICATION_REQUIRED") return "登录状态已失效，请重新登录后再试。";
   if (/DATABASE|P1001|P2024/iu.test(errorCode)) return "数据连接暂时不可用，请稍后重新尝试。";
+  if (errorCode === "OPTIMIZATION_VALIDATION_REQUIRED") return "这条建议需要先通过上线前验证。";
+  if (errorCode === "OPTIMIZATION_VALIDATION_FAILED") return "验证过程暂时未完成，请检查 AI 运行配置后重试。";
+  if (errorCode === "ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION") return "工程修复建议需要由产品技术人员完成验证。";
   return "本次操作暂时未完成，请稍后重试。";
 }
 
@@ -144,6 +163,32 @@ function formatRunResult(run: AIOptimizationRunView) {
   const reused = getReusedCount(run.summary);
   const reusedText = reused > 0 ? `另有 ${reused} 条建议与已有内容相同，已自动合并。` : "";
   return `发现 ${run.scannedBad} 条需要改进的回复、${run.scannedGood} 条值得学习的回复，整理出 ${run.clusterCount} 类问题，形成 ${run.candidateCount} 条新建议。${reusedText}`;
+}
+
+function readValidationResults(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const record = readRecord(item);
+    if (typeof record.traceId !== "string" || (record.kind !== "target" && record.kind !== "regression")) return [];
+    return [{
+      traceId: record.traceId,
+      kind: record.kind,
+      passed: record.passed === true,
+      baselineScore: typeof record.baselineScore === "number" ? record.baselineScore : null,
+      candidateScore: typeof record.candidateScore === "number" ? record.candidateScore : null,
+      reason: typeof record.reason === "string" ? record.reason : "验证结果已记录。",
+      candidateOutput: readRecord(record.candidateOutput)
+    }];
+  });
+}
+
+function formatValidationOutput(value: Record<string, unknown>) {
+  const title = typeof value.title === "string" ? value.title.trim() : "";
+  const content = typeof value.content === "string" ? value.content.trim() : "";
+  if (content) return [title, content].filter(Boolean).join("\n");
+  const summary = typeof value.thinkingSummary === "string" ? value.thinkingSummary.trim() : "";
+  const question = typeof value.question === "string" ? value.question.trim() : "";
+  return [summary, question].filter(Boolean).join("\n");
 }
 
 function formatProposal(value: unknown) {
@@ -165,6 +210,7 @@ export function AdminAIQualityShell({
   const [activeAction, setActiveAction] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [runSummary, setRunSummary] = React.useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirmDialog();
 
   async function runIteration() {
     setActiveAction("run");
@@ -209,6 +255,46 @@ export function AdminAIQualityShell({
     } finally {
       setActiveAction(null);
     }
+  }
+
+  async function validate(candidateId: string) {
+    setActiveAction(`${candidateId}:validate`);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/ai-quality/candidates/${candidateId}/validate`, { method: "POST" });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "OPTIMIZATION_VALIDATION_FAILED");
+      router.refresh();
+    } catch (validationError) {
+      setError(getFriendlyError(validationError instanceof Error ? validationError.message : "OPTIMIZATION_VALIDATION_FAILED"));
+    } finally {
+      setActiveAction(null);
+    }
+  }
+
+  async function requestPublish(candidate: AIOptimizationCandidateView) {
+    const accepted = await confirm({
+      eyebrow: "全量发布确认",
+      title: "全量应用这条建议？",
+      description: `应用后，${candidate.dimension ? DIMENSION_LABEL[candidate.dimension] : "相关场景"}的新 AI 回复会使用这条规则。Prompt Key：${candidate.promptKey ?? "通用"}。最近一次上线前验证已通过，后续可以在这里查看七天效果并一键回滚。`,
+      confirmLabel: "确认全量应用",
+      cancelLabel: "再检查一下",
+      initialFocus: "cancel"
+    });
+    if (accepted) await review(candidate.id, "publish");
+  }
+
+  async function requestRollback(candidate: AIOptimizationCandidateView) {
+    const accepted = await confirm({
+      eyebrow: "版本回滚确认",
+      title: "恢复到上一版本？",
+      description: `确认后，${candidate.dimension ? DIMENSION_LABEL[candidate.dimension] : "相关场景"}的新 AI 回复会停止使用这条建议。已有 Trace 和七天观察记录会继续保留，方便后续复盘。`,
+      confirmLabel: "确认回滚",
+      cancelLabel: "继续观察",
+      tone: "danger",
+      initialFocus: "cancel"
+    });
+    if (accepted) await review(candidate.id, "rollback");
   }
 
   return (
@@ -329,6 +415,80 @@ export function AdminAIQualityShell({
 
                 <AdminAIQualityEvidence candidateId={candidate.id} evidenceCount={candidate.evidenceTraceIds.length} />
 
+                {candidate.path !== "engineering" ? (
+                  <div className="grid gap-3 border-t border-[var(--line-soft)] pt-5">
+                    <SectionHeading
+                      title="上线前效果验证"
+                      description="系统会用原问题场景和历史优质场景重新生成回答，确认问题得到改善且正常场景保持稳定。"
+                    />
+                    {candidate.latestValidation ? (
+                      <div className="grid gap-2 text-sm leading-7 text-[var(--text-dim)]">
+                        <p className="font-medium text-ink">
+                          {candidate.latestValidation.status === "passed"
+                            ? "验证通过，可以进入应用流程"
+                            : candidate.latestValidation.status === "failed"
+                              ? "验证未通过，建议继续调整"
+                              : candidate.latestValidation.status === "error"
+                                ? "验证过程遇到问题"
+                                : "正在验证"}
+                        </p>
+                        <p>{candidate.latestValidation.summary ?? (candidate.latestValidation.errorCode ? getFriendlyError(candidate.latestValidation.errorCode) : "系统正在整理验证结果。")}</p>
+                        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-faint)]">
+                          <span>目标证据：{candidate.latestValidation.targetPassedCount}/{candidate.latestValidation.targetCaseCount} 通过</span>
+                          <span>优质回归：{candidate.latestValidation.regressionPassedCount}/{candidate.latestValidation.regressionCaseCount} 稳定</span>
+                          <span>平均分变化：{candidate.latestValidation.averageScoreDelta > 0 ? "+" : ""}{candidate.latestValidation.averageScoreDelta}</span>
+                          <span>严重回归：{candidate.latestValidation.criticalRegressionCount}</span>
+                          {candidate.latestValidation.completedAt ? <span>{new Date(candidate.latestValidation.completedAt).toLocaleString("zh-CN")}</span> : null}
+                        </div>
+                        {readValidationResults(candidate.latestValidation.results).length ? (
+                          <details className="text-xs leading-6 text-[var(--text-dim)]">
+                            <summary className="cursor-pointer select-none font-medium text-[var(--text-faint)]">查看验证明细</summary>
+                            <div className="mt-3 grid gap-4">
+                              {readValidationResults(candidate.latestValidation.results).map((result, index) => {
+                                const output = formatValidationOutput(result.candidateOutput);
+                                return (
+                                  <div key={`${result.traceId}-${index}`} className="border-l-2 border-[var(--line-soft)] pl-4">
+                                    <p className="font-medium text-ink">
+                                      {result.kind === "target" ? "问题场景" : "优质回归场景"} · {result.passed ? "通过" : "未通过"}
+                                    </p>
+                                    <p>
+                                      原回复 {result.baselineScore ?? "暂无"} 分 → 候选回复 {result.candidateScore ?? "生成失败"} 分
+                                    </p>
+                                    <p>{result.reason}</p>
+                                    {output ? <p className="mt-2 whitespace-pre-wrap text-ink/75">候选回复：{output}</p> : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-7 text-[var(--text-dim)]">这条建议还没有进行效果验证。</p>
+                    )}
+                    {candidate.status === "draft" || candidate.status === "approved" ? (
+                      <div>
+                        <ActionButton
+                          variant="secondary"
+                          disabled={pending}
+                          onClick={() => void validate(candidate.id)}
+                        >
+                          {activeAction === `${candidate.id}:validate` ? "正在回放验证…" : candidate.latestValidation ? "重新验证这条建议" : "验证这条建议"}
+                        </ActionButton>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {candidate.status === "published" || candidate.status === "rolled_back" ? (
+                  <AdminAIQualityImpact
+                    candidateId={candidate.id}
+                    rollbackAvailable={candidate.status === "published"}
+                    rollbackPending={activeAction === `${candidate.id}:rollback`}
+                    onRollback={() => void requestRollback(candidate)}
+                  />
+                ) : null}
+
                 <details className="text-xs leading-6 text-[var(--text-dim)]">
                   <summary className="cursor-pointer select-none font-medium text-[var(--text-faint)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]">
                     查看技术详情
@@ -358,21 +518,23 @@ export function AdminAIQualityShell({
                   ) : null}
                   {candidate.status === "approved" && candidate.path !== "engineering" ? (
                     <>
-                      <ActionButton variant="primary" disabled={pending} onClick={() => review(candidate.id, "publish")}>
-                        应用到 AI 回答
+                      <ActionButton
+                        variant="primary"
+                        disabled={pending || candidate.latestValidation?.status !== "passed"}
+                        onClick={() => void requestPublish(candidate)}
+                      >
+                        全量应用
                       </ActionButton>
                       <ActionButton disabled={pending} onClick={() => review(candidate.id, "reject")}>
                         暂不采用
                       </ActionButton>
                     </>
                   ) : null}
+                  {candidate.status === "approved" && candidate.path !== "engineering" && candidate.latestValidation?.status !== "passed" ? (
+                    <span className="text-sm text-[var(--text-dim)]">通过上线前验证后即可全量应用。</span>
+                  ) : null}
                   {candidate.status === "approved" && candidate.path === "engineering" ? (
                     <span className="text-sm text-[var(--text-dim)]">产品技术人员会继续处理这条建议，完成验证后再安排上线。</span>
-                  ) : null}
-                  {candidate.status === "published" ? (
-                    <ActionButton disabled={pending} onClick={() => review(candidate.id, "rollback")}>
-                        撤回这次应用
-                    </ActionButton>
                   ) : null}
                   {pending ? <span className="text-xs text-[var(--text-faint)]">处理中…</span> : null}
                 </div>
@@ -381,6 +543,7 @@ export function AdminAIQualityShell({
           })}
         </div>
       </div>
+      {confirmDialog}
     </Surface>
   );
 }

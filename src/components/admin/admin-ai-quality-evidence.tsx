@@ -27,14 +27,22 @@ const ROLE_LABEL = {
   context: "背景信息"
 } as const;
 
-function friendlyEvidenceError(code: string) {
+const EVALUATION_DIMENSION_LABEL: Record<string, string> = {
+  grounding: "事实忠实",
+  dimensionAlignment: "维度与产品目标",
+  boundarySafety: "用户边界与安全",
+  clarity: "表达清晰度",
+  completeness: "任务完成度"
+};
+
+export function friendlyEvidenceError(code: string) {
   if (code === "ADMIN_FORBIDDEN") return "当前账号没有查看这些内容的权限，请重新使用管理员入口登录。";
   if (code === "AUTHENTICATION_REQUIRED") return "登录状态已失效，请重新登录后查看。";
   if (code === "OPTIMIZATION_CANDIDATE_NOT_FOUND") return "这条改进建议已经更新，请刷新页面后重试。";
   return "对话证据暂时无法读取，请稍后重试。";
 }
 
-function EvidenceDetail({ evidence }: { evidence: AdminAIQualityEvidenceItem }) {
+export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQualityEvidenceItem }) {
   const hasTargetInConversation = evidence.conversation.some((message) => message.isTarget);
 
   return (
@@ -71,10 +79,13 @@ function EvidenceDetail({ evidence }: { evidence: AdminAIQualityEvidenceItem }) 
         {evidence.evaluation ? (
           <div className="grid gap-1 text-sm leading-7 text-[var(--text-dim)]">
             <p>系统质量评分：{evidence.evaluation.totalScore} 分</p>
+            {evidence.classification?.level === "bad" && evidence.evaluation.totalScore >= 85 ? (
+              <p>这条回复命中了严重质量问题，因此仍被列为需要改进。</p>
+            ) : null}
             {evidence.evaluation.reasons.map((reason) => <p key={reason}>判断原因：{reason}</p>)}
             {evidence.evaluation.deductions.map((deduction, index) => (
               <p key={`${deduction.reason}-${index}`}>
-                需要改进：{deduction.reason}{deduction.points ? `（扣 ${deduction.points} 分）` : ""}
+                需要改进：{deduction.reason}{deduction.points ? `（${EVALUATION_DIMENSION_LABEL[deduction.dimension ?? ""] ?? "对应质量"}维度扣 ${deduction.points} 分）` : ""}
               </p>
             ))}
           </div>
@@ -185,7 +196,7 @@ export function AdminAIQualityEvidence({ candidateId, evidenceCount }: { candida
                 <span className="text-xs text-[var(--text-faint)]">共 {payload.total} 段证据</span>
               </div>
 
-              {activeEvidence ? <EvidenceDetail evidence={activeEvidence} /> : null}
+              {activeEvidence ? <AdminAIQualityEvidenceDetail evidence={activeEvidence} /> : null}
 
               {payload.totalPages > 1 ? (
                 <div className="flex items-center gap-3 border-t border-[var(--line-soft)] pt-4">

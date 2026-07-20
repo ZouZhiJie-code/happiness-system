@@ -644,6 +644,7 @@ model AIOptimizationValidation {
   completedAt             DateTime?
   createdBy               String
   candidate               AIOptimizationCandidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  releases                AIPromptRelease[]
 
   @@index([candidateId, startedAt])
   @@index([status, startedAt])
@@ -674,6 +675,7 @@ model AIFewShotExample {
 model AIPromptRelease {
   id                String                  @id @default(cuid())
   candidateId       String
+  validationId      String?
   promptKey         String
   version           Int
   instructionPatch  String?
@@ -684,10 +686,12 @@ model AIPromptRelease {
   rolledBackBy      String?
   rolledBackAt      DateTime?
   candidate         AIOptimizationCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  validation        AIOptimizationValidation? @relation(fields: [validationId], references: [id], onDelete: SetNull)
 
   @@unique([promptKey, version])
   @@index([promptKey, status, version])
   @@index([candidateId, status])
+  @@index([validationId])
 }
 
 model AIFeedback {

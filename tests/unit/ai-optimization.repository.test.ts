@@ -54,6 +54,7 @@ describe("AI optimization repository", () => {
     expect(tx.aIPromptRelease.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         candidateId: "candidate-1",
+        validationId: "validation-1",
         promptKey: "interview.question.joy",
         version: 4,
         fewShotExampleIds: ["example-1", "example-2", "example-3", "example-4", "example-5", "example-6"],

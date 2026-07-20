@@ -7,6 +7,33 @@ function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+export const AI_QUALITY_EVIDENCE_INCLUDE = Prisma.validator<Prisma.AIGenerationTraceInclude>()({
+  feedback: true,
+  evaluation: true,
+  case: true,
+  interviewMessage: { select: { id: true, sequence: true } },
+  session: {
+    select: {
+      entryDate: true,
+      messages: {
+        orderBy: { sequence: "asc" },
+        select: {
+          id: true,
+          generationTraceId: true,
+          role: true,
+          content: true,
+          sequence: true,
+          createdAt: true
+        }
+      }
+    }
+  }
+});
+
+export type AIQualityEvidenceTrace = Prisma.AIGenerationTraceGetPayload<{
+  include: typeof AI_QUALITY_EVIDENCE_INCLUDE;
+}>;
+
 export function createOptimizationRun(periodStart: Date, periodEnd: Date) {
   return prisma.aIOptimizationRun.create({ data: { periodStart, periodEnd } });
 }
@@ -274,8 +301,7 @@ export async function loadOptimizationValidationInput(candidateId: string) {
     promptKey: true,
     promptVersion: true
   } as const;
-  const [targetTraces, regressionTraces] = await Promise.all([
-    prisma.aIGenerationTrace.findMany({
+  const targetTraces = await prisma.aIGenerationTrace.findMany({
       where: { id: { in: candidate.evidenceTraceIds } },
       include: {
         evaluation: true,
@@ -287,9 +313,9 @@ export async function loadOptimizationValidationInput(candidateId: string) {
           select: invocationSelect
         }
       }
-    }),
-    candidate.promptKey
-      ? prisma.aIGenerationTrace.findMany({
+    });
+  const regressionTraces = candidate.promptKey
+      ? await prisma.aIGenerationTrace.findMany({
           where: {
             id: { notIn: candidate.evidenceTraceIds },
             artifactType: candidate.artifactType ?? undefined,
@@ -312,8 +338,7 @@ export async function loadOptimizationValidationInput(candidateId: string) {
           orderBy: { createdAt: "desc" },
           take: 3
         })
-      : []
-  ]);
+      : [];
 
   const targetById = new Map(targetTraces.map((trace) => [trace.id, trace]));
   return {
@@ -394,28 +419,7 @@ export async function findOptimizationCandidateEvidencePage(input: {
   const traces = traceIds.length
     ? await prisma.aIGenerationTrace.findMany({
         where: { id: { in: traceIds } },
-        include: {
-          feedback: true,
-          evaluation: true,
-          case: true,
-          interviewMessage: { select: { id: true, sequence: true } },
-          session: {
-            select: {
-              entryDate: true,
-              messages: {
-                orderBy: { sequence: "asc" },
-                select: {
-                  id: true,
-                  generationTraceId: true,
-                  role: true,
-                  content: true,
-                  sequence: true,
-                  createdAt: true
-                }
-              }
-            }
-          }
-        }
+        include: AI_QUALITY_EVIDENCE_INCLUDE
       })
     : [];
   const traceById = new Map(traces.map((trace) => [trace.id, trace]));
@@ -549,6 +553,7 @@ export async function publishOptimizationCandidate(candidateId: string, adminUse
     const release = await tx.aIPromptRelease.create({
       data: {
         candidateId: candidate.id,
+        validationId: candidate.validations[0].id,
         promptKey: candidate.promptKey,
         version: (latestRelease?.version ?? 0) + 1,
         instructionPatch,

@@ -27,7 +27,23 @@ export default async function AdminAIQualityPage() {
       ? { issueCode: candidate.cluster.issueCode, caseCount: candidate.cluster.caseCount }
       : null,
     fewShotExampleCount: candidate.fewShotExamples.length,
-    releaseCount: candidate.releases.length
+    releaseCount: candidate.releases.length,
+    latestValidation: candidate.validations[0]
+      ? {
+          id: candidate.validations[0].id,
+          status: candidate.validations[0].status,
+          targetCaseCount: candidate.validations[0].targetCaseCount,
+          targetPassedCount: candidate.validations[0].targetPassedCount,
+          regressionCaseCount: candidate.validations[0].regressionCaseCount,
+          regressionPassedCount: candidate.validations[0].regressionPassedCount,
+          criticalRegressionCount: candidate.validations[0].criticalRegressionCount,
+          averageScoreDelta: candidate.validations[0].averageScoreDelta,
+          summary: candidate.validations[0].summary,
+          errorCode: candidate.validations[0].errorCode,
+          completedAt: candidate.validations[0].completedAt?.toISOString() ?? null,
+          results: candidate.validations[0].results
+        }
+      : null
   }));
 
   return (

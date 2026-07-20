@@ -8,6 +8,7 @@ function getErrorCode(error: unknown): string | null {
   }
   if (error instanceof Error) {
     if (error.message.includes("P1001")) return "P1001";
+    if (error.message.includes("P1017")) return "P1017";
     if (error.message.includes("P2024")) return "P2024";
   }
   return null;
@@ -15,7 +16,7 @@ function getErrorCode(error: unknown): string | null {
 
 export function getTransientAdminReadErrorCode(error: unknown) {
   const code = getErrorCode(error);
-  return code === "P1001" || code === "P2024" ? code : null;
+  return code === "P1001" || code === "P1017" || code === "P2024" ? code : null;
 }
 
 export async function withAdminReadRetry<T>(operation: () => Promise<T>, delayMs = 300): Promise<T> {
