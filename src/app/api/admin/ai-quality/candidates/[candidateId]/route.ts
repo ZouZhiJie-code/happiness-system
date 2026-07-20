@@ -13,7 +13,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ candi
     const result = await reviewAIOptimizationCandidate({
       candidateId,
       action: parsed.data.action,
-      adminUsername: admin.username
+      adminUsername: admin.username,
+      ...(parsed.data.action === "reject" ? { reason: parsed.data.reason } : {})
     });
     return NextResponse.json({ result });
   } catch (error) {
@@ -24,7 +25,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ candi
         ? 403
         : message.includes("NOT_FOUND")
           ? 404
-          : message.includes("NOT_") || message.includes("CANNOT") || message.includes("MISSING")
+          : message.includes("NOT_") || message.includes("CANNOT") || message.includes("MISSING") || message.includes("REQUIRED")
             ? 409
             : 500;
     return NextResponse.json({ error: message }, { status });

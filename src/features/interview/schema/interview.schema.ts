@@ -3,6 +3,10 @@ import { z } from "zod";
 import { ENTRY_DATE_REGEX, parseEntryDateInput } from "@/features/interview/entry-date";
 import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
+import {
+  countInterviewReplyCharacters,
+  normalizeInterviewUserTurnText
+} from "@/features/interview/user-turn";
 
 const entryDateStringSchema = z.string().regex(ENTRY_DATE_REGEX).refine((value) => {
   try {
@@ -281,12 +285,31 @@ export const assistantTurnPayloadSchema = z.object({
 const interviewMessageSchema = z.object({
   id: z.string(),
   traceId: z.string().nullable().optional(),
+  userTurnId: z.string().nullable().optional(),
+  clientTurnId: z.string().nullable().optional(),
   role: z.enum(["user", "assistant", "system"]),
   inputMode: z.enum(["text", "voice"]).optional(),
   content: z.string(),
   assistantPayload: assistantTurnPayloadSchema.nullable().optional(),
   sequence: z.number().int().nonnegative(),
   createdAt: z.string()
+});
+
+const interviewUserTurnSchema = z.object({
+  id: z.string(),
+  clientTurnId: z.string(),
+  sessionId: z.string(),
+  activeEventId: z.string().nullable(),
+  action: z.enum(["reply", "continue_current_event", "next_event"]),
+  rawText: z.string().nullable(),
+  inputMode: z.enum(["text", "voice"]).optional(),
+  baseMessageSequence: z.number().int().min(-1),
+  status: z.enum(["processing", "completed", "failed", "canceled"]),
+  attemptCount: z.number().int().positive(),
+  errorCode: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  completedAt: z.string().nullable()
 });
 
 const joyEventBlockSchema = z.object({
@@ -418,6 +441,7 @@ export const interviewSessionSchema = z.object({
   snapshotData: interviewSnapshotDataSchema,
   events: z.array(interviewEventSchema),
   pendingDecision: pendingDecisionSchema.nullable(),
+  pendingUserTurn: interviewUserTurnSchema.nullable().default(null),
   entryDate: entryDateStringSchema,
   startedAt: z.string(),
   pausedAt: z.string().nullable(),
@@ -436,24 +460,72 @@ export const startInterviewResponseSchema = z.object({
   session: interviewSessionSchema
 });
 
-export const respondInterviewRequestSchema = z.discriminatedUnion("action", [
-  z.object({
+const respondReplyRequestSchema = z
+  .object({
     action: z.literal("reply"),
     sessionId: z.string(),
-    userMessage: z.string().min(1).max(INTERVIEW_REPLY_MAX_LENGTH),
-    inputMode: z.enum(["text", "voice"]).default("text")
-  }),
+    rawText: z.string().optional(),
+    userMessage: z.string().optional(),
+    inputMode: z.enum(["text", "voice"]).default("text"),
+    clientTurnId: z.string().min(1).optional(),
+    baseMessageSequence: z.number().int().min(-1).optional()
+  })
+  .superRefine((value, context) => {
+    const rawText = value.rawText ?? value.userMessage ?? "";
+
+    if (!normalizeInterviewUserTurnText(rawText)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["rawText"],
+        message: "Reply text is required"
+      });
+    }
+
+    if (countInterviewReplyCharacters(rawText) > INTERVIEW_REPLY_MAX_LENGTH) {
+      context.addIssue({
+        code: z.ZodIssueCode.too_big,
+        path: ["rawText"],
+        maximum: INTERVIEW_REPLY_MAX_LENGTH,
+        inclusive: true,
+        type: "string",
+        message: `Reply text must contain at most ${INTERVIEW_REPLY_MAX_LENGTH} characters`
+      });
+    }
+  })
+  .transform((value) => {
+    const rawText = value.rawText ?? value.userMessage ?? "";
+
+    return {
+      ...value,
+      rawText,
+      userMessage: rawText
+    };
+  });
+
+const respondActionRequestFields = {
+  sessionId: z.string(),
+  clientTurnId: z.string().min(1).optional(),
+  baseMessageSequence: z.number().int().min(-1).optional()
+};
+
+export const respondInterviewRequestSchema = z.union([
+  respondReplyRequestSchema,
   z.object({
     action: z.literal("continue"),
-    sessionId: z.string()
+    ...respondActionRequestFields
   }),
   z.object({
     action: z.literal("continue_current_event"),
-    sessionId: z.string()
+    ...respondActionRequestFields
   }),
   z.object({
     action: z.literal("next_event"),
-    sessionId: z.string()
+    ...respondActionRequestFields
+  }),
+  z.object({
+    action: z.literal("resume_turn"),
+    sessionId: z.string(),
+    clientTurnId: z.string().min(1)
   })
 ]);
 

@@ -70,6 +70,15 @@ export function normalizeInterviewRespondError({
     return buildInterviewIssue("SESSION_EVENT_NOT_FOUND", { requestId });
   }
 
+  if (
+    errorMessage === "INTERVIEW_TURN_IN_PROGRESS" ||
+    errorMessage === "INTERVIEW_TURN_OUT_OF_DATE" ||
+    errorMessage === "INTERVIEW_TURN_NOT_FOUND" ||
+    errorMessage === "INTERVIEW_TURN_RETRY_REQUIRED"
+  ) {
+    return buildInterviewIssue(errorMessage, { requestId });
+  }
+
   if (errorMessage === "INTERVIEW_ACTION_UNSUPPORTED") {
     return buildInterviewIssue("INTERVIEW_ACTION_UNSUPPORTED", { requestId });
   }

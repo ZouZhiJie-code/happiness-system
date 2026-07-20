@@ -74,6 +74,14 @@ describe("prisma persistence indexes", () => {
       resolve(process.cwd(), "prisma/migrations/20260719050000_default_ai_quality_and_candidate_dedupe/migration.sql"),
       "utf8"
     );
+    const releaseValidationMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260720010000_bind_prompt_release_validation/migration.sql"),
+      "utf8"
+    );
+    const reviewReasonMigration = readFileSync(
+      resolve(process.cwd(), "prisma/migrations/20260720153000_add_ai_optimization_review_reason/migration.sql"),
+      "utf8"
+    );
 
     expect(schema).toContain("model AIGenerationTrace");
     expect(schema).toContain("model AICase");
@@ -83,6 +91,7 @@ describe("prisma persistence indexes", () => {
     expect(schema).toContain("model AIOptimizationRun");
     expect(schema).toContain("model AIBadcaseCluster");
     expect(schema).toContain("model AIOptimizationCandidate");
+    expect(schema).toContain("model AIOptimizationValidation");
     expect(schema).toContain("model AIFewShotExample");
     expect(schema).toContain("model AIPromptRelease");
     expect(schema).toContain("dedupeKey");
@@ -91,6 +100,8 @@ describe("prisma persistence indexes", () => {
     expect(schema).toContain("generationTraceId String?");
     expect(schema).toContain("currentGenerationTraceId String?");
     expect(schema).toContain("promptVersion");
+    expect(schema).toContain("validationId");
+    expect(schema).toContain("reviewReason");
     expect(schema).toContain("promptHash");
     expect(schema).toContain("requestMessages");
     expect(schema).toContain("responseText");
@@ -119,5 +130,8 @@ describe("prisma persistence indexes", () => {
     expect(optimizationMigration).toContain('CREATE UNIQUE INDEX "AIPromptRelease_promptKey_version_key"');
     expect(qualityDefaultsMigration).toContain('"aiQualityConsentVersion" = \'2026-07-19\'');
     expect(qualityDefaultsMigration).toContain('CREATE UNIQUE INDEX "AIOptimizationCandidate_dedupeKey_key"');
+    expect(releaseValidationMigration).toContain('ADD COLUMN "validationId" TEXT');
+    expect(releaseValidationMigration).toContain('REFERENCES "AIOptimizationValidation"("id")');
+    expect(reviewReasonMigration).toContain('ADD COLUMN "reviewReason" TEXT');
   });
 });

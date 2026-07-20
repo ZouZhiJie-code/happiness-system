@@ -1,6 +1,13 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-05-25`
+最后更新：`2026-07-20`
+
+## 当前生产域名
+
+- 唯一生产主域名：`https://dailylight.chat`
+- 兼容访问域名：`https://www.dailylight.chat`
+- `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
+- 本文后续出现的 `dlight.cc.cd` 仅用于保留 `2026-05` 历史发布与排障证据，当前命令、验收和回调配置统一使用 `dailylight.chat`。
 
 ## 目标
 

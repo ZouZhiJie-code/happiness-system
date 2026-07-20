@@ -7,7 +7,10 @@ import type {
 } from "@/features/ai-quality/admin-evidence";
 import { getAssistantDisplayParts, parseAssistantTurnPayload } from "@/features/joy-interview/assistant-turn";
 import { recordAdminAuditLog } from "@/server/repositories/admin-analytics.repository";
-import { findOptimizationCandidateEvidencePage } from "@/server/repositories/ai-optimization.repository";
+import {
+  findOptimizationCandidateEvidencePage,
+  type AIQualityEvidenceTrace
+} from "@/server/repositories/ai-optimization.repository";
 
 const DEFAULT_PAGE_SIZE = 5;
 const MAX_PAGE_SIZE = 10;
@@ -114,6 +117,60 @@ function buildScenarioSummary(input: {
     : "系统根据日志内容和用户反馈，将这条记录选作判断依据。";
 }
 
+export function mapAIQualityEvidenceTrace(trace: AIQualityEvidenceTrace): AdminAIQualityEvidenceItem {
+  const targetOutput = formatFinalOutput(trace.finalOutput);
+  const conversation = trace.session?.messages.length
+    ? trace.session.messages.map<AdminEvidenceConversationMessage>((message) => ({
+        id: message.id,
+        role: message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "context",
+        text: message.role === "assistant" ? formatAssistantContent(message.content) : message.content,
+        createdAt: message.createdAt.toISOString(),
+        isTarget: message.generationTraceId === trace.id || message.id === trace.artifactId
+      }))
+    : normalizeSnapshotMessages(trace.contextSnapshot, targetOutput);
+  const feedbackTags = trace.feedback
+    ? new Map<string, string>(getFeedbackTags(trace.artifactType, trace.feedback.vote).map((tag) => [tag.code, tag.label]))
+    : null;
+
+  return {
+    traceId: trace.id,
+    userLabel: buildUserLabel(trace.userId),
+    artifactType: trace.artifactType,
+    dimension: trace.dimension,
+    createdAt: trace.createdAt.toISOString(),
+    entryDate: trace.session?.entryDate.toISOString() ?? null,
+    scenarioSummary: buildScenarioSummary({
+      vote: trace.feedback?.vote ?? null,
+      comment: trace.feedback?.comment ?? null,
+      caseSummary: trace.case?.summary ?? null,
+      artifactType: trace.artifactType
+    }),
+    conversation,
+    targetOutput,
+    feedback: trace.feedback
+      ? {
+          vote: trace.feedback.vote,
+          tags: trace.feedback.tags.map((code) => ({ code, label: feedbackTags?.get(code) ?? code })),
+          comment: trace.feedback.comment
+        }
+      : null,
+    evaluation: trace.evaluation
+      ? {
+          totalScore: trace.evaluation.totalScore,
+          reasons: trace.evaluation.reasons,
+          deductions: normalizeDeductions(trace.evaluation.deductions)
+        }
+      : null,
+    classification: trace.case
+      ? {
+          level: trace.case.classification,
+          summary: trace.case.summary,
+          issueCode: trace.case.primaryIssueCode
+        }
+      : null
+  };
+}
+
 export async function getAIOptimizationCandidateEvidence(input: {
   candidateId: string;
   adminUsername: string;
@@ -137,59 +194,7 @@ export async function getAIOptimizationCandidateEvidence(input: {
     )
   );
 
-  const items = result.traces.map<AdminAIQualityEvidenceItem>((trace) => {
-    const targetOutput = formatFinalOutput(trace.finalOutput);
-    const conversation = trace.session?.messages.length
-      ? trace.session.messages.map<AdminEvidenceConversationMessage>((message) => ({
-          id: message.id,
-          role: message.role === "assistant" ? "assistant" : message.role === "user" ? "user" : "context",
-          text: message.role === "assistant" ? formatAssistantContent(message.content) : message.content,
-          createdAt: message.createdAt.toISOString(),
-          isTarget: message.generationTraceId === trace.id || message.id === trace.artifactId
-        }))
-      : normalizeSnapshotMessages(trace.contextSnapshot, targetOutput);
-    const feedbackTags = trace.feedback
-      ? new Map<string, string>(getFeedbackTags(trace.artifactType, trace.feedback.vote).map((tag) => [tag.code, tag.label]))
-      : null;
-
-    return {
-      traceId: trace.id,
-      userLabel: buildUserLabel(trace.userId),
-      artifactType: trace.artifactType,
-      dimension: trace.dimension,
-      createdAt: trace.createdAt.toISOString(),
-      entryDate: trace.session?.entryDate.toISOString() ?? null,
-      scenarioSummary: buildScenarioSummary({
-        vote: trace.feedback?.vote ?? null,
-        comment: trace.feedback?.comment ?? null,
-        caseSummary: trace.case?.summary ?? null,
-        artifactType: trace.artifactType
-      }),
-      conversation,
-      targetOutput,
-      feedback: trace.feedback
-        ? {
-            vote: trace.feedback.vote,
-            tags: trace.feedback.tags.map((code) => ({ code, label: feedbackTags?.get(code) ?? code })),
-            comment: trace.feedback.comment
-          }
-        : null,
-      evaluation: trace.evaluation
-        ? {
-            totalScore: trace.evaluation.totalScore,
-            reasons: trace.evaluation.reasons,
-            deductions: normalizeDeductions(trace.evaluation.deductions)
-          }
-        : null,
-      classification: trace.case
-        ? {
-            level: trace.case.classification,
-            summary: trace.case.summary,
-            issueCode: trace.case.primaryIssueCode
-          }
-        : null
-    };
-  });
+  const items = result.traces.map(mapAIQualityEvidenceTrace);
 
   return {
     candidateId: result.candidateId,

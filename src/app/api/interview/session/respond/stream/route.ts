@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
 import { interviewSessionSchema, respondInterviewRequestSchema } from "@/features/interview/schema/interview.schema";
+import { countInterviewReplyCharacters } from "@/features/interview/user-turn";
 import {
   createInterviewRequestId,
   logInterviewRespondError,
@@ -45,9 +46,15 @@ export async function POST(request: Request) {
       typeof body === "object" &&
       "userMessage" in body &&
       typeof body.userMessage === "string" &&
-      body.userMessage.length > INTERVIEW_REPLY_MAX_LENGTH;
+      countInterviewReplyCharacters(body.userMessage) > INTERVIEW_REPLY_MAX_LENGTH;
+    const isRawTextTooLong =
+      body &&
+      typeof body === "object" &&
+      "rawText" in body &&
+      typeof body.rawText === "string" &&
+      countInterviewReplyCharacters(body.rawText) > INTERVIEW_REPLY_MAX_LENGTH;
     const issue = normalizeInterviewRespondError({
-      error: new Error(isMessageTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
+      error: new Error(isMessageTooLong || isRawTextTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
       requestId
     });
 
@@ -79,6 +86,12 @@ export async function POST(request: Request) {
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let closed = false;
+        const acceptedTurnRef: {
+          current: {
+            id: string;
+            status: "processing" | "completed" | "failed" | "canceled";
+          } | null;
+        } = { current: null };
         const send = (event: string, data: unknown) => {
           if (closed || streamAbortController.signal.aborted) {
             return;
@@ -101,7 +114,14 @@ export async function POST(request: Request) {
             },
             {
               onPhase: (phase) => send("phase", { state: phase }),
-              onDelta: (delta) => send("delta", delta)
+              onDelta: (delta) => send("delta", delta),
+              onTurn: (turn) => {
+                acceptedTurnRef.current = {
+                  id: turn.id,
+                  status: turn.status
+                };
+                send("turn", { turn });
+              }
             },
             { signal: streamAbortController.signal }
           );
@@ -129,7 +149,16 @@ export async function POST(request: Request) {
           send("error", {
             code: issue.code,
             message: issue.message,
-            issue
+            issue,
+            clientTurnId:
+              "clientTurnId" in parsed.data ? parsed.data.clientTurnId ?? null : null,
+            turnId: acceptedTurnRef.current?.id ?? null,
+            status:
+              acceptedTurnRef.current?.status === "completed"
+                ? "completed"
+                : acceptedTurnRef.current
+                  ? "failed"
+                  : null
           });
         } finally {
           request.signal.removeEventListener("abort", abortFromRequest);

@@ -67,12 +67,14 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
   background: linear-gradient(180deg, #8b5f38 0%, #b37b47 24%, #d3a36c 58%, #e5c08f 100%);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background:
     var(--wood-grain),
     linear-gradient(180deg, rgba(150, 101, 55, 0.96) 0%, rgba(182, 125, 72, 0.98) 22%, rgba(213, 169, 112, 0.98) 54%, rgba(236, 205, 158, 0.98) 100%),
@@ -1790,6 +1792,28 @@ body::after {
   box-shadow: 0 10px 22px rgba(118, 75, 37, 0.22);
 }
 
+.admin-ai-quality-workbench .ui-btn--primary,
+.admin-ai-quality-workbench .ui-btn--primary:hover:not(:disabled) {
+  background: var(--text-main);
+  color: var(--paper-main);
+  box-shadow: var(--shadow-amber);
+}
+
+.admin-ai-quality-workbench button,
+.admin-ai-quality-workbench textarea {
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.admin-ai-quality-workbench textarea {
+  white-space: pre-wrap;
+}
+
+.admin-ai-quality-workbench .ui-btn--primary:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--line-strong);
+}
+
 .ui-btn--secondary {
   border: 1px solid var(--line-soft);
   background: rgba(255, 250, 242, 0.78);
@@ -1800,6 +1824,18 @@ body::after {
   border-color: var(--line-strong);
   background: rgba(255, 248, 236, 0.95);
   color: #3e2f23;
+}
+
+.admin-ai-quality-workbench .ui-btn--secondary {
+  border-color: var(--line-soft);
+  background: var(--header-surface-strong);
+  color: var(--text-main);
+}
+
+.admin-ai-quality-workbench .ui-btn--secondary:hover:not(:disabled) {
+  border-color: var(--line-soft);
+  background: var(--amber-soft);
+  color: var(--text-main);
 }
 
 .ui-btn--ghost {

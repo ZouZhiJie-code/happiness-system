@@ -8,6 +8,10 @@ const {
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
+  reserveInterviewUserTurn,
+  resumeInterviewUserTurn,
+  markInterviewUserTurnFailed,
+  cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
@@ -19,6 +23,10 @@ const {
   markJoyEntrySaved: vi.fn(),
   pauseJoyInterviewSessionRecord: vi.fn(),
   reopenJoyInterviewSessionRecord: vi.fn(),
+  reserveInterviewUserTurn: vi.fn(),
+  resumeInterviewUserTurn: vi.fn(),
+  markInterviewUserTurnFailed: vi.fn(),
+  cancelInterviewUserTurn: vi.fn(),
   resumeCurrentInterviewEvent: vi.fn(),
   saveJoyInterviewDraft: vi.fn(),
   startNextInterviewEvent: vi.fn()
@@ -120,6 +128,10 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
   reopenJoyInterviewSessionRecord,
+  reserveInterviewUserTurn,
+  resumeInterviewUserTurn,
+  markInterviewUserTurnFailed,
+  cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
   saveJoyInterviewDraft,
   startNextInterviewEvent
@@ -265,6 +277,10 @@ describe("prepareJoyInterviewResponse", () => {
     markJoyEntrySaved.mockReset();
     pauseJoyInterviewSessionRecord.mockReset();
     reopenJoyInterviewSessionRecord.mockReset();
+    reserveInterviewUserTurn.mockReset();
+    resumeInterviewUserTurn.mockReset();
+    markInterviewUserTurnFailed.mockReset();
+    cancelInterviewUserTurn.mockReset();
     resumeCurrentInterviewEvent.mockReset();
     saveJoyInterviewDraft.mockReset();
     startNextInterviewEvent.mockReset();
@@ -290,6 +306,44 @@ describe("prepareJoyInterviewResponse", () => {
     appendGenerationTraceDecision.mockResolvedValue(undefined);
     cancelGenerationTrace.mockResolvedValue(undefined);
     failGenerationTrace.mockResolvedValue(undefined);
+    reserveInterviewUserTurn.mockImplementation(
+      async (input: {
+        sessionId: string;
+        clientTurnId: string;
+        activeEventId: string | null;
+        action: "reply" | "continue_current_event" | "next_event";
+        rawText: string | null;
+        inputMode?: "text" | "voice";
+        baseMessageSequence?: number;
+      }) => {
+        const session = await findJoyInterviewSessionById(input.sessionId);
+        const baseMessageSequence =
+          input.baseMessageSequence ??
+          Math.max(-1, ...session.messages.map((message: { sequence: number }) => message.sequence));
+
+        return {
+          kind: "reserved",
+          turn: {
+            id: "turn-test",
+            clientTurnId: input.clientTurnId,
+            sessionId: input.sessionId,
+            activeEventId: input.activeEventId,
+            action: input.action,
+            rawText: input.rawText,
+            inputMode: input.inputMode,
+            baseMessageSequence,
+            status: "processing",
+            attemptCount: 1,
+            errorCode: null,
+            createdAt: "2026-04-21T00:00:00.000Z",
+            updatedAt: "2026-04-21T00:00:00.000Z",
+            completedAt: null
+          },
+          userMessageId: input.action === "reply" ? "user-turn-message" : null,
+          session
+        };
+      }
+    );
   });
 
   it("turns wrap-up completion into a choice card instead of another closing question", async () => {
@@ -332,6 +386,20 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.stateUpdate.choiceKind).toBe("event_complete");
     expect(result.assistantTurn.stateUpdate.shouldEndDimension).toBe(false);
     expect(result.assistantTurn.stateUpdate.choiceReason).toContain("开心日志线索");
+    const submittedAnalytics = mockRecordAnalyticsEvent.mock.calls.find(
+      ([event]) => event.eventName === "user_turn_submitted"
+    )?.[0];
+    expect(submittedAnalytics).toMatchObject({
+      eventName: "user_turn_submitted",
+      userId: "user-1",
+      sessionId: "session-ready",
+      properties: expect.objectContaining({
+        action: "reply",
+        status: "processing"
+      })
+    });
+    expect(submittedAnalytics?.properties).not.toHaveProperty("rawText");
+    expect(submittedAnalytics?.properties).not.toHaveProperty("userMessage");
   });
 
   it.each([
@@ -1404,7 +1472,7 @@ describe("prepareJoyInterviewResponse", () => {
     expect(startNextInterviewEvent).toHaveBeenCalledWith(
       "session-ready",
       "如果今天还有另一个你想复盘的改进情境，我们就聊那件事。那一刻发生了什么？",
-      { requestId: undefined }
+      { requestId: undefined, userTurnId: "turn-test" }
     );
     expect(result).toMatchObject({
       assistantMessage: "今天有没有另一个让你觉得下次可以更好一点的具体时刻？先讲那个情境。",
@@ -3151,6 +3219,17 @@ describe("prepareJoyInterviewResponse", () => {
     );
     expect(result.assistantMessage).toBe("这份开心像是来自连接感。\n你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
     expect(result.assistantTurn?.question).toBe("你提到“今天和朋友聊了很久”。下次想让这份开心更容易出现，你会先留意什么线索？");
+    expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "user_turn_completed",
+        userId: "user-1",
+        sessionId: "session-ready",
+        properties: expect.objectContaining({
+          turnId: "turn-test",
+          status: "completed"
+        })
+      })
+    );
   });
 
   it("preserves raw whitespace in the guarded final question", async () => {

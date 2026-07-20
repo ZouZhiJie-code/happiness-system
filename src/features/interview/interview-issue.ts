@@ -16,6 +16,10 @@ export type InterviewIssueCode =
   | "SESSION_NOT_FOUND"
   | "SESSION_CHOICE_UNAVAILABLE"
   | "SESSION_EVENT_NOT_FOUND"
+  | "INTERVIEW_TURN_IN_PROGRESS"
+  | "INTERVIEW_TURN_OUT_OF_DATE"
+  | "INTERVIEW_TURN_NOT_FOUND"
+  | "INTERVIEW_TURN_RETRY_REQUIRED"
   | "INTERVIEW_ACTION_UNSUPPORTED"
   | "ASSISTANT_ACTION_MISSING"
   | "INTERVIEW_DB_WRITE_FAILED"
@@ -46,7 +50,7 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
   NETWORK_UNAVAILABLE: {
     title: "网络连接异常",
     message: "这一轮回复没有连上服务端。",
-    resolution: "请确认服务正在运行或网络正常，然后刷新页面再试。",
+    resolution: "页面会保留这段输入；请确认网络正常后重试。",
     retryable: true,
     action: "refresh"
   },
@@ -85,6 +89,34 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
     retryable: true,
     action: "restart_session"
   },
+  INTERVIEW_TURN_IN_PROGRESS: {
+    title: "这条回复仍在处理中",
+    message: "系统已经接收这条回复，当前仍在整理下一步回应。",
+    resolution: "请稍等片刻；刷新页面后也可以继续查看处理结果。",
+    retryable: true,
+    action: "refresh"
+  },
+  INTERVIEW_TURN_OUT_OF_DATE: {
+    title: "当前对话已经更新",
+    message: "这条回复对应的是较早的对话位置。",
+    resolution: "请刷新页面查看最新问题，再重新发送。",
+    retryable: true,
+    action: "refresh"
+  },
+  INTERVIEW_TURN_NOT_FOUND: {
+    title: "待恢复的回复已失效",
+    message: "系统找不到这条待继续生成的回复。",
+    resolution: "请刷新页面后按最新对话继续。",
+    retryable: true,
+    action: "refresh"
+  },
+  INTERVIEW_TURN_RETRY_REQUIRED: {
+    title: "这条回复等待继续生成",
+    message: "系统已经保留你的原话，上一次生成已经停止。",
+    resolution: "请使用“继续生成”恢复这一轮。",
+    retryable: true,
+    action: "retry"
+  },
   INTERVIEW_ACTION_UNSUPPORTED: {
     title: "访谈流程异常",
     message: "当前页面发起了服务端不支持的访谈动作。",
@@ -102,7 +134,7 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
   INTERVIEW_DB_WRITE_FAILED: {
     title: "保存本轮回复失败",
     message: "这次回复生成完成前，服务端写入访谈记录失败。",
-    resolution: "请稍后重试；你的原输入会保留在输入框里。",
+    resolution: "你的原话已经保留，请稍后使用“继续生成”恢复这一轮。",
     retryable: true,
     action: "retry"
   },

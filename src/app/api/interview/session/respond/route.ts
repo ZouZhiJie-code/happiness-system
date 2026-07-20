@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
+import { countInterviewReplyCharacters } from "@/features/interview/user-turn";
 import {
   respondInterviewRequestSchema,
   respondInterviewResponseSchema
@@ -42,9 +43,15 @@ export async function POST(request: Request) {
       typeof body === "object" &&
       "userMessage" in body &&
       typeof body.userMessage === "string" &&
-      body.userMessage.length > INTERVIEW_REPLY_MAX_LENGTH;
+      countInterviewReplyCharacters(body.userMessage) > INTERVIEW_REPLY_MAX_LENGTH;
+    const isRawTextTooLong =
+      body &&
+      typeof body === "object" &&
+      "rawText" in body &&
+      typeof body.rawText === "string" &&
+      countInterviewReplyCharacters(body.rawText) > INTERVIEW_REPLY_MAX_LENGTH;
     const issue = normalizeInterviewRespondError({
-      error: new Error(isMessageTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
+      error: new Error(isMessageTooLong || isRawTextTooLong ? "MESSAGE_TOO_LONG" : "INVALID_RESPOND_REQUEST"),
       requestId
     });
 
@@ -81,8 +88,13 @@ export async function POST(request: Request) {
         ? 401
         : issue.code === "SESSION_NOT_FOUND"
         ? 404
-        : issue.code === "SESSION_CHOICE_UNAVAILABLE"
+        : issue.code === "SESSION_CHOICE_UNAVAILABLE" ||
+            issue.code === "INTERVIEW_TURN_IN_PROGRESS" ||
+            issue.code === "INTERVIEW_TURN_OUT_OF_DATE" ||
+            issue.code === "INTERVIEW_TURN_RETRY_REQUIRED"
           ? 409
+          : issue.code === "INTERVIEW_TURN_NOT_FOUND"
+            ? 404
           : 500;
 
     logInterviewRespondError({

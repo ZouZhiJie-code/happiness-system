@@ -82,6 +82,7 @@ export function buildInterviewSessionRecordFromStore(input: {
   activeEventId: string | null;
   events: InterviewSessionRecord["events"];
   pendingDecision: InterviewSessionRecord["pendingDecision"];
+  pendingUserTurn?: InterviewSessionRecord["pendingUserTurn"];
   draftGenerationUnlocked: boolean;
   turnCount: number;
   messages: InterviewMessage[];
@@ -109,6 +110,7 @@ export function buildInterviewSessionRecordFromStore(input: {
     snapshotData: input.snapshotData ?? undefined,
     events: input.events,
     pendingDecision: input.pendingDecision,
+    pendingUserTurn: input.pendingUserTurn ?? null,
     entryDate: input.sessionEntryDate,
     startedAt: input.sessionEntryDate,
     pausedAt: null,

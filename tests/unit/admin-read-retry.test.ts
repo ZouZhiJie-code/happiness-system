@@ -1,7 +1,7 @@
 import { getTransientAdminReadErrorCode, withAdminReadRetry } from "@/server/services/admin-read-retry";
 
 describe("admin read retry", () => {
-  it.each(["P1001", "P2024"])("retries one transient %s read failure", async (code) => {
+  it.each(["P1001", "P1017", "P2024"])("retries one transient %s read failure", async (code) => {
     const operation = vi.fn()
       .mockRejectedValueOnce(new Error(`Prisma read failed with ${code}`))
       .mockResolvedValueOnce("ready");

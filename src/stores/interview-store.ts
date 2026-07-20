@@ -8,6 +8,7 @@ import type {
   InterviewMessage,
   InterviewSessionRecord,
   InterviewSnapshotData,
+  InterviewUserTurnRecord,
   JournalEntryRecord,
   JoySnapshot,
   PendingDecisionRecord
@@ -42,6 +43,7 @@ interface InterviewState {
   activeEventId: string | null;
   events: InterviewEventRecord[];
   pendingDecision: PendingDecisionRecord | null;
+  pendingUserTurn: InterviewUserTurnRecord | null;
   draftGenerationUnlocked: boolean;
   draftGenerationBusy: boolean;
   draftGenerationDisabled: boolean;
@@ -92,6 +94,7 @@ const initialState = {
   activeEventId: null,
   events: [] as InterviewEventRecord[],
   pendingDecision: null,
+  pendingUserTurn: null,
   draftGenerationUnlocked: false,
   draftGenerationBusy: false,
   draftGenerationDisabled: true,
@@ -127,6 +130,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       activeEventId: session.activeEventId,
       events: session.events,
       pendingDecision: session.pendingDecision,
+      pendingUserTurn: session.pendingUserTurn ?? null,
       draftGenerationUnlocked: session.draftGenerationUnlocked,
       turnCount: session.turnCount,
       messages: session.messages,
@@ -146,6 +150,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       activeEventId: session.activeEventId,
       events: session.events,
       pendingDecision: session.pendingDecision,
+      pendingUserTurn: session.pendingUserTurn ?? null,
       draftGenerationUnlocked: session.draftGenerationUnlocked,
       turnCount: session.turnCount,
       messages: session.messages,

@@ -1,5 +1,10 @@
 import type { AIGenerationArtifactType, AIOptimizationPath, InterviewDimension } from "@prisma/client";
 
+import {
+  getAIQualityExpectedImprovement,
+  getAIQualityIssueLabel
+} from "@/features/ai-quality/issue-presentation";
+
 export type OptimizationEvidence = {
   traceId: string;
   artifactType: AIGenerationArtifactType;
@@ -64,10 +69,12 @@ export function clusterBadcases(evidence: OptimizationEvidence[]): BadcaseCluste
 }
 
 export function buildOptimizationProposal(cluster: BadcaseCluster) {
+  const issueLabel = getAIQualityIssueLabel(cluster.issueCode, cluster.artifactType);
+  const expectedImprovement = getAIQualityExpectedImprovement(cluster.issueCode);
   if (cluster.suggestedPath === "engineering") {
     return {
-      title: `工程修复：${cluster.issueCode}`,
-      rationale: `${cluster.summary} 该模式涉及结构、Schema、运行时或血缘完整性，需要工程修复与回归测试。`,
+      title: `工程修复：${issueLabel}`,
+      rationale: `系统发现 ${cluster.caseCount} 条回复出现“${issueLabel}”。该模式涉及生成结构或运行链路，需要工程修复与回归测试。`,
       proposal: {
         workItemType: "rule_or_schema",
         issueCode: cluster.issueCode,
@@ -83,8 +90,8 @@ export function buildOptimizationProposal(cluster: BadcaseCluster) {
 
   const instructionPatch = buildInstructionPatch(cluster.issueCode);
   return {
-    title: `Prompt 优化：${cluster.issueCode}`,
-    rationale: `${cluster.summary} 该问题可通过收紧用户可见输出约束进行验证。`,
+    title: `回答规则：${issueLabel}`,
+    rationale: `系统发现 ${cluster.caseCount} 条回复出现“${issueLabel}”。${expectedImprovement}`,
     proposal: {
       instructionPatch,
       issueCode: cluster.issueCode,
@@ -98,6 +105,12 @@ export function buildOptimizationProposal(cluster: BadcaseCluster) {
 }
 
 function buildInstructionPatch(issueCode: string) {
+  if (/repetitive_question|repeat.*question/u.test(issueCode)) {
+    return "记录已经询问、已经回答和用户明确拒绝回答的内容；继续访谈时改问新的低压具体锚点，禁止重复追问同一信息。";
+  }
+  if (/misunderstood|misunderstand/u.test(issueCode)) {
+    return "生成回应前先依据用户原话确认人物、事件和表达重点；理解存在歧义时使用一句简短确认，禁止补写未经用户表达的判断。";
+  }
   if (/boundary|ignored_boundary/u.test(issueCode)) {
     return "当用户表达停止、拒绝继续、直接整理或追问无意义时，立即停止补槽位式追问；根据材料进入日志选择或低压选择。";
   }

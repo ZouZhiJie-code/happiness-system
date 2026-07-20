@@ -1,7 +1,6 @@
-import { createHash } from "node:crypto";
-
 import type { PromptEnvelope } from "@/features/ai-quality/prompt-manifest";
 import { hashPromptContent } from "@/features/ai-quality/prompt-manifest";
+import { buildFewShotFingerprint } from "@/features/ai-quality/impact-policy";
 import { loadActivePromptOptimization } from "@/server/repositories/ai-optimization.repository";
 import { logger } from "@/server/lib/logger";
 
@@ -38,10 +37,7 @@ export async function resolveOptimizedPromptEnvelope(base: PromptEnvelope): Prom
     ]);
     messages.splice(insertionIndex, 0, ...exampleMessages);
 
-    const exampleFingerprint = createHash("sha256")
-      .update(examples.map((example) => example.id).join(","))
-      .digest("hex")
-      .slice(0, 10);
+    const exampleFingerprint = buildFewShotFingerprint(examples.map((example) => example.id));
     const promptVersion = `${base.promptVersion}+opt:${optimization.promptCandidate?.id ?? "none"}+fs:${exampleFingerprint}`;
 
     return {

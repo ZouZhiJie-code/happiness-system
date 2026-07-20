@@ -138,6 +138,7 @@ describe("interview respond api auth", () => {
       action: "reply",
       sessionId: "session-1",
       userMessage: "我想记住被接住的感觉。",
+      rawText: "我想记住被接住的感觉。",
       inputMode: "text",
       requestId: expect.stringMatching(/^ir_/)
     });
@@ -165,12 +166,164 @@ describe("interview respond api auth", () => {
         action: "reply",
         sessionId: "session-1",
         userMessage: "我想记住被接住的感觉。",
+        rawText: "我想记住被接住的感觉。",
         inputMode: "text",
         requestId: expect.stringMatching(/^ir_/)
       },
-      expect.any(Object),
+      expect.objectContaining({
+        onDelta: expect.any(Function),
+        onPhase: expect.any(Function),
+        onTurn: expect.any(Function)
+      }),
       { signal: expect.any(AbortSignal) }
     );
+  });
+
+  it("passes the new UserTurn identity and base sequence into respond", async () => {
+    mockRespondToInterview.mockResolvedValue(buildRespondPayload());
+
+    const response = await respondRoute(
+      new Request("http://localhost/api/interview/session/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          clientTurnId: "client-turn-1",
+          baseMessageSequence: 4,
+          rawText: "  原样保留这一句。  ",
+          inputMode: "text"
+        })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRespondToInterview).toHaveBeenCalledWith({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-1",
+      clientTurnId: "client-turn-1",
+      baseMessageSequence: 4,
+      rawText: "  原样保留这一句。  ",
+      userMessage: "  原样保留这一句。  ",
+      inputMode: "text",
+      requestId: expect.stringMatching(/^ir_/)
+    });
+  });
+
+  it("passes resume_turn through with the existing client identity", async () => {
+    mockRespondToInterview.mockResolvedValue(buildRespondPayload());
+
+    const response = await respondRoute(
+      new Request("http://localhost/api/interview/session/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "resume_turn",
+          sessionId: "session-1",
+          clientTurnId: "client-turn-1"
+        })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRespondToInterview).toHaveBeenCalledWith({
+      userId: "user-1",
+      action: "resume_turn",
+      sessionId: "session-1",
+      clientTurnId: "client-turn-1",
+      requestId: expect.stringMatching(/^ir_/)
+    });
+  });
+
+  it("rejects over-limit Unicode input before calling the service", async () => {
+    const response = await respondRoute(
+      new Request("http://localhost/api/interview/session/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          rawText: "🙂".repeat(1201),
+          inputMode: "text"
+        })
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "MESSAGE_TOO_LONG",
+      issue: {
+        code: "MESSAGE_TOO_LONG"
+      }
+    });
+    expect(mockRespondToInterview).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when the submitted base sequence is stale", async () => {
+    mockRespondToInterview.mockRejectedValueOnce(new Error("INTERVIEW_TURN_OUT_OF_DATE"));
+
+    const response = await respondRoute(
+      new Request("http://localhost/api/interview/session/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          clientTurnId: "client-turn-stale",
+          baseMessageSequence: 1,
+          rawText: "这一句基于旧问题。",
+          inputMode: "text"
+        })
+      })
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "INTERVIEW_TURN_OUT_OF_DATE",
+      issue: {
+        code: "INTERVIEW_TURN_OUT_OF_DATE"
+      }
+    });
+  });
+
+  it("includes the accepted turn identity in a streamed failure event", async () => {
+    mockStreamInterviewResponse.mockImplementationOnce(
+      async (
+        _input: unknown,
+        callbacks: {
+          onTurn: (turn: {
+            id: string;
+            clientTurnId: string;
+            status: "processing";
+          }) => Promise<void> | void;
+        }
+      ) => {
+        await callbacks.onTurn({
+          id: "turn-accepted",
+          clientTurnId: "client-turn-accepted",
+          status: "processing"
+        });
+        throw new Error("ASSISTANT_STREAM_FAILED");
+      }
+    );
+
+    const response = await respondStreamRoute(
+      new Request("http://localhost/api/interview/session/respond/stream", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "reply",
+          sessionId: "session-1",
+          clientTurnId: "client-turn-accepted",
+          baseMessageSequence: 2,
+          rawText: "这条已经被服务端接收。",
+          inputMode: "text"
+        })
+      })
+    );
+
+    const body = await response.text();
+    expect(body).toContain("event: turn");
+    expect(body).toContain('"id":"turn-accepted"');
+    expect(body).toContain("event: error");
+    expect(body).toContain('"turnId":"turn-accepted"');
+    expect(body).toContain('"status":"failed"');
   });
 
   it("returns a structured error when stream auth fails before streaming starts", async () => {
