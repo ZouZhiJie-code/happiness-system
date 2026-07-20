@@ -16,3 +16,7 @@ dist
 # Git worktrees
 .worktrees/
 .vercel
+
+# Local design-tool metadata and external document export payloads
+.hallmark/
+artifacts/interview-nodes/lark-doc-integration/

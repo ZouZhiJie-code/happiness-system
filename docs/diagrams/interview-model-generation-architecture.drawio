@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram id="node8-model-generation" name="节点八-模型生成">
+    <mxGraphModel dx="2200" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="节点八｜模型生成：把既定访谈任务转成自然对话" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=26;fontStyle=1;fontColor=#2D3748;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1500" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="流程权限归服务端｜模型生成 thinkingSummary 与一个 question｜异常时采用确定性问题继续访谈" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=14;fontColor=#5F6B7A;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1600" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mainLane" value="节点八主链｜对话回复生成" style="swimlane;startSize=40;horizontal=1;rounded=1;html=1;whiteSpace=wrap;fillColor=#F8FAFC;swimlaneFillColor=#FFFFFF;strokeColor=#B8C5D6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=16;fontStyle=1;fontColor=#334155;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="2120" height="420" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="promptInput" value="① 节点七输出&#xa;问题 Prompt&#xa;维度·阶段·快照·questionSpec" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#1E3A5F;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="50" y="150" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="provider" value="② 解析 Chat Provider&#xa;数据库发布配置优先&#xa;环境方舟配置兜底" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#6B3C00;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="320" y="150" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="modeDecision" value="③ 有流式回调且&#xa;Provider 支持 stream？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#5C4800;spacing=4;" vertex="1" parent="mainLane">
+          <mxGeometry x="590" y="145" width="170" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="streamCall" value="④ 流式模型调用&#xa;temperature 0.45&#xa;maxTokens 500" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#4A2858;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="830" y="70" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="completeCall" value="⑤ 非流式模型调用&#xa;普通请求直接调用&#xa;流式失败时同 Provider 重试" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#4A2858;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="830" y="225" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="markerParser" value="⑥ 标记解析器&#xa;SUMMARY 段&#xa;QUESTION 段" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#1E3A5F;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="1110" y="150" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="segments" value="⑦ 两段生成结果&#xa;thinkingSummary&#xa;question" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#27552A;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="1370" y="150" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="assemble" value="⑧ 服务端组装 Assistant Turn&#xa;沿用 questionSpec&#xa;问题表层协议·长度限制·固定状态" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#1E3A5F;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="1630" y="145" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="node9" value="⑨ 交给节点九&#xa;服务端检查与输出控制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#27552A;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="1910" y="150" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="fallback" value="⑩ 确定性 fallback&#xa;Provider 缺失 / 调用失败 / 空输出&#xa;按维度·阶段·questionSpec 生成问题" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#6B2220;spacing=8;" vertex="1" parent="mainLane">
+          <mxGeometry x="1260" y="305" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="extractLane" value="相邻调用边界｜结构化槽位抽取属于节点二，与本节点是两次独立模型调用" style="swimlane;startSize=40;horizontal=1;rounded=1;html=1;whiteSpace=wrap;fillColor=#F8FAFC;swimlaneFillColor=#FFFFFF;strokeColor=#B8C5D6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=16;fontStyle=1;fontColor=#334155;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="550" width="2120" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="extractRequest" value="⑪ 抽取 Prompt＋维度 Schema&#xa;非流式 completeStructuredOutput&#xa;temperature 0.15｜最多 2 次" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#4A2858;spacing=8;" vertex="1" parent="extractLane">
+          <mxGeometry x="300" y="80" width="360" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="extractResult" value="⑫ 结构化 JSON 校验与合并&#xa;成功：AI 结果优先，规则补空&#xa;失败：保守规则快照" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#27552A;spacing=8;" vertex="1" parent="extractLane">
+          <mxGeometry x="820" y="80" width="360" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="boundaryNote" value="确定性分支直接跳过节点八：&#xa;问题修复｜停止边界｜事件完成｜维度转向&#xa;&#xa;日志草稿生成使用另一套 Prompt、Schema、质量门与 fallback。" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=1.2;fontFamily=PingFang SC;fontSize=13;fontColor=#475569;spacing=10;align=left;" vertex="1" parent="extractLane">
+          <mxGeometry x="1410" y="65" width="520" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="已组装上下文" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="promptInput" target="provider">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="单一运行时" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#D79B00;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="provider" target="modeDecision">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="是" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0.7;exitY=0;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="modeDecision" target="streamCall">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="否" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0.7;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="modeDecision" target="completeCall">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="文本分片" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="mainLane" source="streamCall" target="markerParser">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="完整文本" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="mainLane" source="completeCall" target="markerParser">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="拆分" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="markerParser" target="segments">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="候选文本" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="segments" target="assemble">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="完整 Assistant Turn" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#82B366;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="assemble" target="node9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="非流式仍失败" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#B85450;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#6B2220;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.8;entryX=0;entryY=0.5;" edge="1" parent="mainLane" source="completeCall" target="fallback">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1080" y="300"/>
+              <mxPoint x="1080" y="345"/>
+              <mxPoint x="1210" y="345"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="流式失败后非流式重试" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#B85450;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#6B2220;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="mainLane" source="streamCall" target="completeCall">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" value="规则问题" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#B85450;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#6B2220;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="mainLane" source="fallback" target="assemble">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1560" y="345"/>
+              <mxPoint x="1740" y="345"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="JSON / Schema" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=1.5;fontFamily=PingFang SC;fontSize=11;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="extractLane" source="extractRequest" target="extractResult">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
