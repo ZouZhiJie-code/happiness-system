@@ -6,8 +6,12 @@ import { ActionButton, Surface } from "@/components/ui";
 import {
   EventCenteredDialogueWorkspaceView,
   type EventCenteredDialogueTab,
-  type EventCenteredDialogueWorkspaceAction
+  type EventCenteredDialogueWorkspaceAction,
+  type EventCenteredRightPanel
 } from "@/components/interview/event-centered/event-centered-dialogue-workspace-view";
+import { EventCenteredDailyJournalWorkspace } from "@/components/interview/event-centered/event-centered-daily-journal-workspace";
+import { EventJournalSheet } from "@/components/interview/event-centered/event-journal-sheet";
+import { TodayJournalSheet } from "@/components/interview/event-centered/today-journal-sheet";
 import {
   createEventCenteredClientTurnId,
   EventCenteredWorkspaceRequestError,
@@ -34,8 +38,8 @@ const EVENT_CENTERED_MODE = "event-centered";
 
 export type EventCenteredWorkspaceHrefOptions = {
   entryDate: string;
-  sessionId: string;
-  panel?: "journal";
+  sessionId?: string | null;
+  panel?: "journal" | "today" | "daily-journal";
   eventEntryId?: string | null;
 };
 
@@ -45,12 +49,10 @@ export function buildEventCenteredWorkspaceHref({
   panel,
   eventEntryId
 }: EventCenteredWorkspaceHrefOptions) {
-  const params = new URLSearchParams({
-    mode: EVENT_CENTERED_MODE,
-    sessionId,
-    entryDate
-  });
-  if (panel === "journal") params.set("panel", "journal");
+  const params = new URLSearchParams({ mode: EVENT_CENTERED_MODE });
+  if (sessionId) params.set("sessionId", sessionId);
+  params.set("entryDate", entryDate);
+  if (panel) params.set("panel", panel);
   if (panel === "journal" && eventEntryId) params.set("eventEntryId", eventEntryId);
   return `/interview?${params.toString()}`;
 }
@@ -92,17 +94,35 @@ async function getEventTabs(entryDate: string): Promise<EventCenteredDialogueTab
   }));
 }
 
+async function getEventForJournalEntry(entryDate: string, entryId: string) {
+  const response = await fetch(`/api/event-calendar/day?date=${encodeURIComponent(entryDate)}`, {
+    cache: "no-store"
+  });
+  const payload = await response.json().catch(() => null) as {
+    events?: EventCalendarEventRecord[];
+  } | null;
+  if (!response.ok || !payload?.events) return null;
+  return payload.events.find((event) => event.entryId === entryId) ?? null;
+}
+
 function updateWorkspaceAddress(input: {
   entryDate: string;
-  sessionId: string;
-  journalOpen: boolean;
+  sessionId?: string | null;
+  rightPanel: EventCenteredRightPanel;
+  mainWorkspace: "dialogue" | "daily-journal";
   eventEntryId: string | null;
 }) {
   if (typeof window === "undefined") return;
   const href = buildEventCenteredWorkspaceHref({
     entryDate: input.entryDate,
     sessionId: input.sessionId,
-    panel: input.journalOpen ? "journal" : undefined,
+    panel: input.mainWorkspace === "daily-journal"
+      ? "daily-journal"
+      : input.rightPanel === "event-journal"
+        ? "journal"
+        : input.rightPanel === "today"
+          ? "today"
+          : undefined,
     eventEntryId: input.eventEntryId
   });
   window.history.replaceState(window.history.state, "", href);
@@ -136,6 +156,9 @@ function requestForAction(input: {
   if (action.action === "regenerate_response") return { ...base, ...action };
   if (action.action === "switch_response_version") return { ...base, ...action };
   if (action.action === "resume_turn") return { ...base, action: "resume_turn" };
+  if (action.action === "generate_event_journal") {
+    return { ...base, action: "generate_event_journal" };
+  }
   return { ...base, action: "exit_event" };
 }
 
@@ -167,6 +190,9 @@ function canReuseOutbox(input: {
       request.rawText === action.rawText &&
       request.targetMessageId === action.targetMessageId;
   }
+  if (action.action === "generate_event_journal") {
+    return request.action === "generate_event_journal";
+  }
   return false;
 }
 
@@ -175,19 +201,32 @@ export function EventCenteredInterviewWorkspace({
   initialSessionId = null,
   initialJournalPanelOpen = false,
   initialEventEntryId = null,
+  initialPanel,
   writeEnabled = true
 }: {
   entryDate: string;
   initialSessionId?: string | null;
   initialJournalPanelOpen?: boolean;
   initialEventEntryId?: string | null;
+  initialPanel?: "journal" | "today" | "daily-journal" | null;
   writeEnabled?: boolean;
 }) {
+  const resolvedInitialPanel = initialPanel ??
+    (initialJournalPanelOpen ? "journal" : null);
   const [requestedSessionId, setRequestedSessionId] = useState(initialSessionId);
   const [workspace, setWorkspace] = useState<EventCenteredWorkspaceSession | null>(null);
   const [tabs, setTabs] = useState<EventCenteredDialogueTab[]>([]);
   const [draft, setDraft] = useState("");
-  const [journalOpen, setJournalOpen] = useState(initialJournalPanelOpen);
+  const [rightPanel, setRightPanel] = useState<EventCenteredRightPanel>(
+    resolvedInitialPanel === "journal"
+      ? "event-journal"
+      : resolvedInitialPanel === "today"
+        ? "today"
+        : null
+  );
+  const [mainWorkspace, setMainWorkspace] = useState<"dialogue" | "daily-journal">(
+    resolvedInitialPanel === "daily-journal" ? "daily-journal" : "dialogue"
+  );
   const [journalEventEntryId, setJournalEventEntryId] = useState<string | null>(initialEventEntryId);
   const [notice, setNotice] = useState<WorkspaceNotice | null>(null);
   const [busy, setBusy] = useState(false);
@@ -231,10 +270,24 @@ export function EventCenteredInterviewWorkspace({
 
   useEffect(() => {
     setRequestedSessionId(initialSessionId);
-    setJournalOpen(initialJournalPanelOpen);
+    const nextPanel = initialPanel ?? (initialJournalPanelOpen ? "journal" : null);
+    setRightPanel(
+      nextPanel === "journal"
+        ? "event-journal"
+        : nextPanel === "today"
+          ? "today"
+          : null
+    );
+    setMainWorkspace(nextPanel === "daily-journal" ? "daily-journal" : "dialogue");
     setJournalEventEntryId(initialEventEntryId);
     setDraft("");
-  }, [entryDate, initialEventEntryId, initialJournalPanelOpen, initialSessionId]);
+  }, [
+    entryDate,
+    initialEventEntryId,
+    initialJournalPanelOpen,
+    initialPanel,
+    initialSessionId
+  ]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -242,6 +295,20 @@ export function EventCenteredInterviewWorkspace({
     const savedOutbox = readEventCenteredWorkspaceOutbox(scope);
     const pending = workspace.recovery.pendingTurn;
     const savedDraft = readEventCenteredComposerDraft(scope);
+
+    if (
+      savedOutbox?.request.action === "generate_event_journal" &&
+      (
+        workspace.journal.status === "generating" ||
+        workspace.journal.status === "draft" ||
+        workspace.journal.status === "modified" ||
+        workspace.journal.status === "saved"
+      )
+    ) {
+      clearEventCenteredWorkspaceOutbox(scope);
+      setOutbox(null);
+      return;
+    }
 
     if (savedOutbox?.status === "accepted" && !pending) {
       const alreadyVisible = Boolean(
@@ -258,21 +325,32 @@ export function EventCenteredInterviewWorkspace({
     }
     setOutbox(savedOutbox);
     setDraft(pending ? "" : savedDraft);
-  }, [workspace?.activeBranchSessionId, workspace?.rootSessionId]);
+  }, [workspace]);
 
   useEffect(() => {
+    if (mainWorkspace === "daily-journal") {
+      setLoading(false);
+      return;
+    }
     void loadWorkspace(requestedSessionId);
-  }, [loadWorkspace, requestedSessionId]);
+  }, [loadWorkspace, mainWorkspace, requestedSessionId]);
 
   useEffect(() => {
-    if (!workspace) return;
     updateWorkspaceAddress({
       entryDate,
-      sessionId: workspace.rootSessionId,
-      journalOpen,
+      sessionId: workspace?.rootSessionId ?? requestedSessionId,
+      rightPanel,
+      mainWorkspace,
       eventEntryId: journalEventEntryId
     });
-  }, [entryDate, journalEventEntryId, journalOpen, workspace]);
+  }, [
+    entryDate,
+    journalEventEntryId,
+    mainWorkspace,
+    requestedSessionId,
+    rightPanel,
+    workspace?.rootSessionId
+  ]);
 
   const canCreateEvent = Boolean(
     writeEnabled &&
@@ -362,7 +440,8 @@ export function EventCenteredInterviewWorkspace({
       setRequestedSessionId(nextWorkspace.rootSessionId);
       setDraft("");
       setOutbox(null);
-      setJournalOpen(false);
+      setRightPanel(null);
+      setMainWorkspace("dialogue");
       setJournalEventEntryId(null);
       await refreshTabs();
     } catch (error) {
@@ -389,6 +468,70 @@ export function EventCenteredInterviewWorkspace({
     setDraft(nextDraft);
     if (workspace) writeEventCenteredComposerDraft(scopeForWorkspace(workspace), nextDraft);
   }, [workspace]);
+
+  const openEventJournal = useCallback((input?: {
+    rootSessionId?: string;
+    entryId?: string | null;
+  }) => {
+    if (input?.rootSessionId && input.rootSessionId !== workspace?.rootSessionId) {
+      setRequestedSessionId(input.rootSessionId);
+    }
+    setJournalEventEntryId(input?.entryId ?? workspace?.journal.entryId ?? null);
+    setMainWorkspace("dialogue");
+    setRightPanel("event-journal");
+  }, [workspace?.journal.entryId, workspace?.rootSessionId]);
+
+  const openTodayJournal = useCallback(() => {
+    setMainWorkspace("dialogue");
+    setRightPanel("today");
+  }, []);
+
+  const openDailyJournal = useCallback(() => {
+    setRightPanel(null);
+    setMainWorkspace("daily-journal");
+  }, []);
+
+  const returnToDialogue = useCallback(() => {
+    setMainWorkspace("dialogue");
+    setRightPanel("today");
+  }, []);
+
+  const handleEventEntryChange = useCallback(() => {
+    void refreshTabs();
+  }, [refreshTabs]);
+
+  const refreshCurrentWorkspace = useCallback(async () => {
+    if (!workspace?.rootSessionId) return;
+    const nextWorkspace = await getEventCenteredWorkspace(workspace.rootSessionId);
+    setWorkspace(nextWorkspace);
+    await refreshTabs();
+  }, [refreshTabs, workspace?.rootSessionId]);
+
+  if (mainWorkspace === "daily-journal") {
+    return (
+      <EventCenteredDailyJournalWorkspace
+        entryDate={entryDate}
+        writeEnabled={writeEnabled}
+        onBack={returnToDialogue}
+        onOpenEventEntry={(entryId) => {
+          if (workspace?.journal.entryId === entryId) {
+            openEventJournal({ rootSessionId: workspace.rootSessionId, entryId });
+            return;
+          }
+          void getEventForJournalEntry(entryDate, entryId).then((event) => {
+            if (!event) {
+              setNotice({
+                title: "暂时无法定位这篇事件日志",
+                message: "当天完整日志仍然保留，可以稍后从今日日志重新打开。"
+              });
+              return;
+            }
+            openEventJournal({ rootSessionId: event.rootSessionId, entryId });
+          });
+        }}
+      />
+    );
+  }
 
   if (loading && !workspace) {
     return (
@@ -421,16 +564,48 @@ export function EventCenteredInterviewWorkspace({
       canCreateEvent={canCreateEvent}
       composerDraft={draft}
       streamPreview={streamPreview}
-      journalOpen={journalOpen}
+      rightPanel={rightPanel}
+      rightPanelContent={rightPanel === "event-journal" ? (
+        <EventJournalSheet
+          session={workspace}
+          entryId={journalEventEntryId ?? workspace.journal.entryId}
+          writeEnabled={writeEnabled}
+          onClose={() => setRightPanel(null)}
+          onGenerate={() => performAction({ action: "generate_event_journal" })}
+          onGenerationCancelled={refreshCurrentWorkspace}
+          onEntryChange={handleEventEntryChange}
+        />
+      ) : rightPanel === "today" ? (
+        <TodayJournalSheet
+          entryDate={entryDate}
+          onClose={() => setRightPanel(null)}
+          onSelectEvent={(rootSessionId) => {
+            setRequestedSessionId(rootSessionId);
+            setRightPanel(null);
+            setJournalEventEntryId(null);
+          }}
+          onOpenEventJournal={({ rootSessionId, entryId }) => {
+            openEventJournal({ rootSessionId, entryId });
+          }}
+          onOpenDailyJournal={openDailyJournal}
+          onStartEvent={() => {
+            void createNextEvent();
+          }}
+        />
+      ) : null}
       error={notice}
       onComposerDraftChange={handleComposerDraftChange}
-      onJournalOpenChange={setJournalOpen}
+      onRightPanelChange={(panel) => {
+        if (panel === "event-journal") openEventJournal();
+        else if (panel === "today") openTodayJournal();
+        else setRightPanel(null);
+      }}
       onAction={handleViewAction}
       onCreateEvent={() => void createNextEvent()}
       onSelectTab={(rootSessionId) => {
         if (rootSessionId === workspace.rootSessionId) return;
         setRequestedSessionId(rootSessionId);
-        setJournalOpen(false);
+        setRightPanel(null);
         setJournalEventEntryId(null);
         setNotice(null);
         setDraft("");

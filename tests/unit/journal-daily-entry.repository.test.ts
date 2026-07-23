@@ -6,6 +6,7 @@ const { mockPrisma, state } = vi.hoisted(() => {
   const state = {
     eventEntries: [] as any[],
     dailyEntries: [] as any[],
+    dailyGenerations: [] as any[],
     nextDailyEntryId: 1
   };
 
@@ -91,6 +92,16 @@ const { mockPrisma, state } = vi.hoisted(() => {
       return { count: 1 };
     })
   };
+  mockPrisma.journalDailyEntryGeneration = {
+    findFirst: vi.fn(async ({ where }: any) => {
+      const matching = state.dailyGenerations.filter(
+        (generation) =>
+          generation.userId === where.userId &&
+          generation.entryDate.getTime() === where.entryDate.getTime()
+      );
+      return matching.at(-1) ?? null;
+    })
+  };
 
   return { mockPrisma, state };
 });
@@ -174,6 +185,7 @@ describe("journal daily entry repository", () => {
   beforeEach(() => {
     state.eventEntries.splice(0);
     state.dailyEntries.splice(0);
+    state.dailyGenerations.splice(0);
     state.nextDailyEntryId = 1;
     vi.clearAllMocks();
   });

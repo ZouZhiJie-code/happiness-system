@@ -194,6 +194,13 @@ export function getEventCenteredAllowedActions(input: {
   if (input.state.phase === "checkpoint_two" || input.state.phase === "deep_companionship") {
     actions.push("continue_exploration");
   }
+  if (
+    input.state.phase === "checkpoint_one" ||
+    input.state.phase === "checkpoint_two" ||
+    input.state.phase === "deep_companionship"
+  ) {
+    actions.push("generate_event_journal");
+  }
   return actions;
 }
 

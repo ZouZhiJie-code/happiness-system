@@ -78,6 +78,28 @@ describe("interview respond error normalization", () => {
       code: "SESSION_CHOICE_UNAVAILABLE",
       action: "refresh"
     });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("EVENT_JOURNAL_QUALITY_CHECK_FAILED"),
+        requestId: "request-event-journal-quality"
+      })
+    ).toMatchObject({
+      code: "EVENT_JOURNAL_QUALITY_CHECK_FAILED",
+      action: "retry",
+      retryable: true,
+      requestId: "request-event-journal-quality"
+    });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("EVENT_OPERATION_CONFLICT"),
+        requestId: "request-event-operation"
+      })
+    ).toMatchObject({
+      code: "INTERVIEW_TURN_OUT_OF_DATE",
+      action: "refresh"
+    });
   });
 
   it("maps validation, schema, and write failures without exposing raw errors", () => {

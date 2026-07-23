@@ -316,6 +316,21 @@ describe("EventCenteredInterviewWorkspace", () => {
       const url = String(input);
       if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(initial);
       if (url === "/api/event-calendar/day?date=2026-07-22") return jsonResponse(eventCalendarDay());
+      if (url === "/api/event-journal/entry-1") {
+        return jsonResponse({
+          entry: {
+            id: "entry-1",
+            eventId: "event-1",
+            title: "会议之后",
+            content: "会议结束后，我终于松了一口气。",
+            status: "saved",
+            contentRevision: 1,
+            savedRevision: 1,
+            updatedAt: "2026-07-22T09:00:00.000Z",
+            savedAt: "2026-07-22T09:00:00.000Z"
+          }
+        });
+      }
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
 
@@ -329,7 +344,8 @@ describe("EventCenteredInterviewWorkspace", () => {
       />
     );
 
-    expect(await screen.findByRole("complementary", { name: "当前事件日志" })).toHaveTextContent("日志整理将在批次 C 接入");
+    expect(await screen.findByDisplayValue("会议结束后，我终于松了一口气。")).toBeVisible();
+    expect(screen.getByRole("complementary", { name: "当前事件日志" })).toHaveTextContent("已保存");
     expect(screen.getByLabelText("输入当前事件")).toBeDisabled();
     expect(screen.getByRole("button", { name: "记下一件事" })).toBeDisabled();
     expect(screen.getByText("只读查看")).toBeVisible();

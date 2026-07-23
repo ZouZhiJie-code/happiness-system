@@ -21,7 +21,7 @@ vi.mock("@/components/interview/event-centered/event-centered-interview-workspac
   EventCenteredInterviewWorkspace: (props: {
     entryDate: string;
     initialSessionId?: string | null;
-    initialJournalPanelOpen?: boolean;
+    initialPanel?: "journal" | "today" | "daily-journal" | null;
     initialEventEntryId?: string | null;
   }) => (
     <div data-testid="event-centered-workspace">
@@ -61,8 +61,45 @@ describe("event-centered interview page route", () => {
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("event-root-1");
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("2026-07-22");
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("entry-1");
+    expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent(
+      '"initialPanel":"journal"'
+    );
     expect(screen.queryByTestId("legacy-interview-shell")).not.toBeInTheDocument();
     expect(screen.queryByTestId("legacy-dimension-picker")).not.toBeInTheDocument();
+  });
+
+  it("opens the today journal side panel from a deep link", async () => {
+    const page = await InterviewPage({
+      searchParams: Promise.resolve({
+        mode: "event-centered",
+        sessionId: "event-root-1",
+        entryDate: "2026-07-22",
+        panel: "today"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent(
+      '"initialPanel":"today"'
+    );
+  });
+
+  it("opens the complete daily journal workspace without resolving an empty interview route", async () => {
+    const page = await InterviewPage({
+      searchParams: Promise.resolve({
+        mode: "event-centered",
+        entryDate: "2026-07-22",
+        panel: "daily-journal"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent(
+      '"initialPanel":"daily-journal"'
+    );
+    expect(getCalendarReadRoute).not.toHaveBeenCalled();
   });
 
   it("opens the event workspace for an unclaimed day after the event release is enabled", async () => {

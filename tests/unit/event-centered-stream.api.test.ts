@@ -76,7 +76,8 @@ function workspace() {
         "correct_understanding",
         "regenerate_response",
         "switch_response_version",
-        "exit_event"
+        "exit_event",
+        "generate_event_journal"
       ] as const,
       progress: [
         { id: "record" as const, label: "轻量记录" as const, status: "complete" as const, percent: 100, detail: "辨认这件事" },
@@ -85,7 +86,14 @@ function workspace() {
       ]
     },
     recovery: { pendingTurn: null },
-    journal: { status: "not_generated" as const, entryId: null, eventStatus: "active" as const }
+    journal: {
+      status: "not_generated" as const,
+      entryId: null,
+      generationId: null,
+      errorCode: null,
+      retryable: false,
+      eventStatus: "active" as const
+    }
   };
 }
 
@@ -140,7 +148,7 @@ describe("event-centered stream api", () => {
     expect(body).toContain("event: session");
     expect(body.indexOf("event: turn")).toBeLessThan(body.indexOf("event: delta"));
     expect(body.indexOf("event: delta")).toBeLessThan(body.indexOf("event: session"));
-    expect(body).not.toContain("generate_event_journal");
+    expect(body).toContain("generate_event_journal");
   });
 
   it("turn 已可靠接收后的错误输出结构化 issue 与 failed 状态", async () => {

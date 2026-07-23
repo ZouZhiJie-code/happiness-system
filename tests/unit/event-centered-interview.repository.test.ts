@@ -284,6 +284,9 @@ const { state, mockPrisma } = vi.hoisted(() => {
       state.journalEventEntries.find((entry) => entry.eventId === where.eventId) ?? null
     )
   };
+  mockPrisma.journalEventEntryGeneration = {
+    findFirst: vi.fn(async () => null)
+  };
   mockPrisma.$transaction = vi.fn(async (operation: any) => {
     return Array.isArray(operation) ? Promise.all(operation) : operation(mockPrisma);
   });

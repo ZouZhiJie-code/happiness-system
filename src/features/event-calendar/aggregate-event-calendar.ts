@@ -130,6 +130,8 @@ function toEventRecord(
           ? (["view_event_entry"] satisfies EventCalendarAction[])
           : [];
 
+  const displaySummary = entry ? summarizeContent(entry.content) : null;
+
   return {
     eventId: event.eventId,
     rootSessionId: event.rootSessionId,
@@ -141,7 +143,8 @@ function toEventRecord(
     entryStatus: entry?.status ?? null,
     state,
     title: entry?.title ?? null,
-    summary: entry ? summarizeContent(entry.content) : null,
+    displaySummary,
+    summary: displaySummary,
     latestUpdatedAt: entry && new Date(entry.updatedAt).getTime() > new Date(event.updatedAt).getTime()
       ? entry.updatedAt
       : event.updatedAt,

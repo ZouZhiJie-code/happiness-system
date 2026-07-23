@@ -58,6 +58,7 @@ import {
   regenerateEventCenteredResponseVersion,
   selectEventCenteredResponseVersion
 } from "@/server/services/interview/event-centered-response-version.service";
+import { generateEventJournal } from "@/server/services/journal-event/event-journal.service";
 import type {
   EventCenteredRespondRequest,
   EventCenteredWorkspaceSession
@@ -206,9 +207,11 @@ export async function getEventCenteredInterviewWorkspace(
       ? "saved" as const
       : data.journalEntry?.status === "modified"
         ? "modified" as const
-      : data.journalEntry
-        ? "draft" as const
-        : "not_generated" as const;
+        : data.journalEntry
+          ? "draft" as const
+          : data.journalGeneration?.status === "failed"
+            ? "failed" as const
+            : "not_generated" as const;
 
   return {
     ...data.identity,
@@ -250,9 +253,9 @@ export async function getEventCenteredInterviewWorkspace(
     journal: {
       status: journalStatus,
       entryId: data.journalEntry?.id ?? null,
-      generationId: null,
-      errorCode: null,
-      retryable: false,
+      generationId: data.journalGeneration?.id ?? null,
+      errorCode: data.journalGeneration?.errorCode ?? null,
+      retryable: data.journalGeneration?.status === "failed",
       eventStatus: data.identity.eventStatus
     }
   };
@@ -676,6 +679,62 @@ export async function respondEventCenteredInterview(
   assertEventCenteredWriteAllowed();
   const before = await getEventCenteredInterviewWorkspaceData(userId, request.rootSessionId);
   if (!before) throw new Error("SESSION_NOT_FOUND");
+  if (request.action === "generate_event_journal") {
+    if (
+      !before.identity.eventId ||
+      !before.identity.branchStateId ||
+      !request.baseBranchSessionId ||
+      request.baseMessageSequence === undefined
+    ) {
+      throw new Error("EVENT_STATE_CHANGED");
+    }
+    await assertEventCenteredOperationAllowed({
+      eventId: before.identity.eventId,
+      activeBranchSessionId: before.identity.activeBranchSessionId,
+      operation: "generate_event_journal"
+    });
+    await generateEventJournal(
+      {
+        userId,
+        eventId: before.identity.eventId,
+        activeBranchSessionId: request.baseBranchSessionId,
+        clientOperationId: request.clientTurnId,
+        baseMessageSequence: request.baseMessageSequence,
+        requestId: options?.requestId
+      },
+      {
+        signal: options?.signal,
+        onPhase: options?.onPhase,
+        onReserved: async (generation, reservedNow) => {
+          if (!generation.userTurnId || !generation.branchSessionId) return;
+          await options?.onTurn?.({
+            kind: reservedNow ? "reserved" : "existing",
+            eventId: before.identity.eventId!,
+            rootSessionId: before.identity.rootSessionId,
+            activeBranchSessionId: generation.branchSessionId,
+            branchStateId: before.identity.branchStateId!,
+            userMessageId: generation.userTurnId,
+            turn: {
+              id: generation.userTurnId,
+              clientTurnId: generation.clientOperationId,
+              sessionId: generation.branchSessionId,
+              rawText: "",
+              inputMode: "text",
+              baseMessageSequence: generation.baseMessageSequence,
+              status: generation.status,
+              createdAt: generation.startedAt
+            }
+          });
+        }
+      }
+    );
+    const workspace = await getEventCenteredInterviewWorkspace(
+      userId,
+      request.rootSessionId
+    );
+    if (!workspace) throw new Error("SESSION_NOT_FOUND");
+    return { workspace, assistantPayload: null };
+  }
   if (request.action === "regenerate_response") {
     if (
       !request.targetMessageId ||

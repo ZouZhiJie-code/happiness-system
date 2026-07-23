@@ -328,7 +328,12 @@ describe("journal event entry repository", () => {
     const replay = await reserve();
 
     expect(first.kind).toBe("generation");
-    expect(replay).toEqual(first);
+    expect(first).toMatchObject({ kind: "generation", reservedNow: true });
+    expect(replay).toMatchObject({
+      kind: "generation",
+      reservedNow: false,
+      generation: first.kind === "generation" ? first.generation : undefined
+    });
     expect(state.generations).toHaveLength(1);
     expect(state.turns).toHaveLength(1);
     expect(state.turns[0]).toMatchObject({

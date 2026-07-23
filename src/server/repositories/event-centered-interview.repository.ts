@@ -369,7 +369,13 @@ export async function getEventCenteredInterviewWorkspaceData(
       message.responseGroupId ? [message.responseGroupId] : []
     )
   ));
-  const [branchState, pendingTurn, journalEntry, responseVersions] = await Promise.all([
+  const [
+    branchState,
+    pendingTurn,
+    journalEntry,
+    journalGeneration,
+    responseVersions
+  ] = await Promise.all([
     route.activeBranch.activeEventId
       ? prisma.interviewEvent.findUnique({
           where: { id: route.activeBranch.activeEventId },
@@ -379,7 +385,8 @@ export async function getEventCenteredInterviewWorkspaceData(
     prisma.interviewUserTurn.findFirst({
       where: {
         sessionId: route.activeBranch.id,
-        status: { in: ["processing", "failed", "canceled"] }
+        status: { in: ["processing", "failed", "canceled"] },
+        action: { not: "generate_event_journal" }
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -409,6 +416,18 @@ export async function getEventCenteredInterviewWorkspaceData(
             generationVersion: true,
             contentRevision: true,
             savedRevision: true,
+            updatedAt: true
+          }
+        })
+      : null,
+    route.root.journalEvent
+      ? prisma.journalEventEntryGeneration.findFirst({
+          where: { eventId: route.root.journalEvent.id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            status: true,
+            errorCode: true,
             updatedAt: true
           }
         })
@@ -451,6 +470,14 @@ export async function getEventCenteredInterviewWorkspaceData(
           contentRevision: journalEntry.contentRevision,
           savedRevision: journalEntry.savedRevision,
           updatedAt: journalEntry.updatedAt.toISOString()
+        }
+      : null,
+    journalGeneration: journalGeneration
+      ? {
+          id: journalGeneration.id,
+          status: journalGeneration.status,
+          errorCode: journalGeneration.errorCode,
+          updatedAt: journalGeneration.updatedAt.toISOString()
         }
       : null
   };

@@ -13,6 +13,7 @@ import {
 } from "@/server/repositories/journal-event-fact-revision.repository";
 import { confirmPendingUnderstandingClaimWithClient } from "@/server/repositories/journal-event-understanding.repository";
 import { JOURNAL_EVENT_ANGLES } from "@/types/journal-event-angle-outcome";
+import { MAX_EVENT_JOURNAL_CONTENT_LENGTH } from "@/types/journal-event-entry";
 import type {
   CompleteJournalEventEntryGenerationInput,
   JournalEventEntryGenerationRecord,
@@ -120,7 +121,12 @@ function assertPositiveInteger(value: number, code: string) {
 }
 
 function assertEntryContent(title: string, content: string) {
-  if (!title.trim() || [...title.trim()].length > 16 || !content.trim()) {
+  if (
+    !title.trim() ||
+    [...title.trim()].length > 16 ||
+    !content.trim() ||
+    [...content].length > MAX_EVENT_JOURNAL_CONTENT_LENGTH
+  ) {
     throw new Error("EVENT_JOURNAL_ENTRY_INVALID");
   }
 }
@@ -274,7 +280,13 @@ async function readReservedResult(
     findGenerationForOperation(database, userId, eventId, clientOperationId)
   ]);
   if (entry) return { kind: "entry", entry: mapEntry(entry) };
-  if (generation) return { kind: "generation", generation: mapGeneration(generation) };
+  if (generation) {
+    return {
+      kind: "generation",
+      generation: mapGeneration(generation),
+      reservedNow: false
+    };
+  }
   return null;
 }
 
@@ -485,7 +497,11 @@ export async function reserveJournalEventEntryGeneration(
           sourceSnapshot: toJsonValue(sourceSnapshot)
         }
       });
-      return { kind: "generation", generation: mapGeneration(generation) };
+      return {
+        kind: "generation",
+        generation: mapGeneration(generation),
+        reservedNow: true
+      };
     });
   } catch (error) {
     const replay = await readReservedResult(

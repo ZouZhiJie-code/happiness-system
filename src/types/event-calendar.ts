@@ -108,6 +108,8 @@ export interface EventCalendarEventRecord {
   entryStatus: EventCalendarEntryStatus | null;
   state: EventCalendarEventState;
   title: string | null;
+  /** 今日日志 C 密度使用的安全正文片段；summary 保留为旧客户端兼容字段。 */
+  displaySummary?: string | null;
   summary: string | null;
   latestUpdatedAt: string;
   actions: EventCalendarAction[];

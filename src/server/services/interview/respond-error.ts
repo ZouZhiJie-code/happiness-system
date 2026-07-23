@@ -105,6 +105,20 @@ export function normalizeInterviewRespondError({
     return buildInterviewIssue("INTERVIEW_RESPONSE_SCHEMA_ERROR", { requestId });
   }
 
+  if (
+    errorMessage === "EVENT_JOURNAL_SOURCE_INSUFFICIENT" ||
+    errorMessage === "EVENT_JOURNAL_PROVIDER_UNAVAILABLE" ||
+    errorMessage === "EVENT_JOURNAL_QUALITY_CHECK_FAILED" ||
+    errorMessage === "EVENT_JOURNAL_OPERATION_FAILED" ||
+    errorMessage === "EVENT_JOURNAL_GENERATION_CANCELED"
+  ) {
+    return buildInterviewIssue(errorMessage, { requestId });
+  }
+
+  if (errorMessage === "EVENT_OPERATION_CONFLICT") {
+    return buildInterviewIssue("INTERVIEW_TURN_OUT_OF_DATE", { requestId });
+  }
+
   if (errorMessage === "INTERVIEW_ACTION_UNSUPPORTED") {
     return buildInterviewIssue("INTERVIEW_ACTION_UNSUPPORTED", { requestId });
   }

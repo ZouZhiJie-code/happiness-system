@@ -602,7 +602,7 @@ describe("event-centered common interview policy", () => {
     expect(result.nextState.currentQuestion).toBeNull();
   });
 
-  it("Batch B 对话工作台不开放生成事件日志动作", () => {
+  it("在两个检查点和深度陪伴开放生成事件日志动作", () => {
     const firstCheckpointActions = getEventCenteredAllowedActions({
       state: checkpointState(),
       eventStatus: "active",
@@ -615,9 +615,17 @@ describe("event-centered common interview policy", () => {
       eventStatus: "active",
       hasPendingTurn: false
     });
+    const deepCompanionship = checkpointState();
+    deepCompanionship.phase = "deep_companionship";
+    const deepCompanionshipActions = getEventCenteredAllowedActions({
+      state: deepCompanionship,
+      eventStatus: "active",
+      hasPendingTurn: false
+    });
 
-    expect(firstCheckpointActions).not.toContain("generate_event_journal");
-    expect(secondCheckpointActions).not.toContain("generate_event_journal");
+    expect(firstCheckpointActions).toContain("generate_event_journal");
+    expect(secondCheckpointActions).toContain("generate_event_journal");
+    expect(deepCompanionshipActions).toContain("generate_event_journal");
   });
 
   it("解析含 T1-03 事实澄清字段的快照时保留现有对话状态", () => {

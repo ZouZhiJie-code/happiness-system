@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { ActionButton, Card, Divider, Surface } from "@/components/ui";
 import type { JournalEventAngle } from "@/types/journal-event-angle-outcome";
@@ -30,7 +30,10 @@ export type EventCenteredDialogueWorkspaceAction =
     }
   | { action: "switch_response_version"; targetMessageId: string; targetBranchSessionId: string }
   | { action: "resume_turn" }
-  | { action: "exit_event" };
+  | { action: "exit_event" }
+  | { action: "generate_event_journal" };
+
+export type EventCenteredRightPanel = "event-journal" | "today" | null;
 
 export type EventCenteredDialogueWorkspaceViewProps = {
   session: EventCenteredWorkspaceSession;
@@ -50,12 +53,16 @@ export type EventCenteredDialogueWorkspaceViewProps = {
   } | null;
   /** 日志只在用户点击入口后展开；桌面为右侧栏，小屏由父层决定承载方式。 */
   journalOpen?: boolean;
+  /** Batch C 成果面板；保留 journalOpen 作为旧调用兼容。 */
+  rightPanel?: EventCenteredRightPanel;
+  rightPanelContent?: ReactNode;
   error?: { title: string; message: string } | null;
   onAction: (action: EventCenteredDialogueWorkspaceAction) => Promise<void> | void;
   onSelectTab?: (rootSessionId: string) => void;
   onCreateEvent?: () => void;
   onComposerDraftChange?: (draft: string) => void;
   onJournalOpenChange?: (open: boolean) => void;
+  onRightPanelChange?: (panel: EventCenteredRightPanel) => void;
   /** 兼容父层已有的打开日志动作。 */
   onOpenJournal?: () => void;
 };
@@ -527,18 +534,21 @@ export function EventCenteredDialogueWorkspaceView({
   composerDraft,
   streamPreview = null,
   journalOpen = false,
+  rightPanel,
+  rightPanelContent,
   error = null,
   onAction,
   onSelectTab,
   onCreateEvent,
   onComposerDraftChange,
   onJournalOpenChange,
+  onRightPanelChange,
   onOpenJournal
 }: EventCenteredDialogueWorkspaceViewProps) {
   const [localComposerDraft, setLocalComposerDraft] = useState("");
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const journalTriggerRef = useRef<HTMLButtonElement>(null);
-  const journalPanelRef = useRef<HTMLElement | null>(null);
+  const todayTriggerRef = useRef<HTMLButtonElement>(null);
   const allTabs = useMemo(() => {
     if (tabs.some((tab) => tab.rootSessionId === session.rootSessionId)) return tabs;
     const currentStatus: EventCenteredDialogueTab["status"] = session.eventStatus === "completed"
@@ -563,18 +573,27 @@ export function EventCenteredDialogueWorkspaceView({
   const activeTab = allTabs.find((tab) => tab.rootSessionId === activeTabId) ?? allTabs[0];
   const dialoguePanelId = `event-centered-dialogue-panel-${session.rootSessionId}`;
   const activeComposerDraft = composerDraft ?? localComposerDraft;
+  const activeRightPanel = rightPanel === undefined
+    ? journalOpen ? "event-journal" : null
+    : rightPanel;
   const setComposerDraft = (next: string) => {
     if (composerDraft === undefined) setLocalComposerDraft(next);
     onComposerDraftChange?.(next);
   };
-  const toggleJournal = () => {
-    const next = !journalOpen;
-    onJournalOpenChange?.(next);
-    if (next) onOpenJournal?.();
+  const changeRightPanel = (nextPanel: Exclude<EventCenteredRightPanel, null>) => {
+    const next = activeRightPanel === nextPanel ? null : nextPanel;
+    if (onRightPanelChange) {
+      onRightPanelChange(next);
+    } else if (nextPanel === "event-journal") {
+      onJournalOpenChange?.(next === "event-journal");
+    }
+    if (next === "event-journal") onOpenJournal?.();
   };
-  const closeJournal = () => {
-    onJournalOpenChange?.(false);
-    journalTriggerRef.current?.focus();
+  const closeRightPanel = () => {
+    if (onRightPanelChange) onRightPanelChange(null);
+    else onJournalOpenChange?.(false);
+    if (activeRightPanel === "today") todayTriggerRef.current?.focus();
+    else journalTriggerRef.current?.focus();
   };
   const selectTab = (rootSessionId: string) => {
     if (busy || !onSelectTab || rootSessionId === activeTabId) return;
@@ -597,8 +616,12 @@ export function EventCenteredDialogueWorkspaceView({
   };
 
   useEffect(() => {
-    if (journalOpen) journalPanelRef.current?.focus();
-  }, [journalOpen]);
+    if (!activeRightPanel) return;
+    const panelId = activeRightPanel === "today"
+      ? "event-centered-today-panel"
+      : "event-centered-journal-panel";
+    document.getElementById(panelId)?.focus();
+  }, [activeRightPanel]);
   const submitReply = async () => {
     const rawText = activeComposerDraft.trim();
     if (!rawText || actionBusy || !allowReply) return;
@@ -613,7 +636,7 @@ export function EventCenteredDialogueWorkspaceView({
   };
 
   return (
-    <Surface className={`grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 ${journalOpen ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : "lg:grid-cols-1"}`}>
+    <Surface className={`grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 ${activeRightPanel ? "lg:grid-cols-[minmax(0,1fr)_21rem]" : "lg:grid-cols-1"}`}>
       <section
         id={dialoguePanelId}
         role="tabpanel"
@@ -662,12 +685,22 @@ export function EventCenteredDialogueWorkspaceView({
             <button
               ref={journalTriggerRef}
               type="button"
-              onClick={toggleJournal}
-              aria-expanded={journalOpen}
+              onClick={() => changeRightPanel("event-journal")}
+              aria-expanded={activeRightPanel === "event-journal"}
               aria-controls="event-centered-journal-panel"
               className="mb-1 shrink-0 px-2 py-1.5 text-xs font-medium text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-4 hover:text-ink"
             >
               当前事件日志
+            </button>
+            <button
+              ref={todayTriggerRef}
+              type="button"
+              onClick={() => changeRightPanel("today")}
+              aria-expanded={activeRightPanel === "today"}
+              aria-controls="event-centered-today-panel"
+              className="mb-1 shrink-0 px-2 py-1.5 text-xs font-medium text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-4 hover:text-ink"
+            >
+              今日日志
             </button>
             {readOnly ? <span className="mb-1 shrink-0 px-1 py-1.5 text-xs text-[var(--text-faint)]">只读查看</span> : null}
             {actionAllowed(session, "exit_event") ? (
@@ -756,14 +789,13 @@ export function EventCenteredDialogueWorkspaceView({
         </form>
       </section>
 
-      {journalOpen ? (
-        <EventJournalPending
-          session={session}
-          panelRef={(node) => {
-            journalPanelRef.current = node;
-          }}
-          onClose={closeJournal}
-        />
+      {activeRightPanel ? (
+        rightPanelContent ?? (
+          <EventJournalPending
+            session={session}
+            onClose={closeRightPanel}
+          />
+        )
       ) : null}
     </Surface>
   );

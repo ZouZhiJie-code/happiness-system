@@ -141,6 +141,15 @@ function buildEventDailyJournalHref(date: string) {
   return `/interview?mode=event-centered&entryDate=${date}&panel=daily-journal`;
 }
 
+export function buildEventDailyJournalResultHref(day: EventCalendarDayRecord) {
+  const directEvent = day.dailyJournal.collection === "single_entry"
+    ? day.events.find((event) => event.entryId === day.dailyJournal.directEntryId)
+    : null;
+  return directEvent
+    ? getEventActionHref(directEvent)
+    : buildEventDailyJournalHref(day.date);
+}
+
 function getEventActionHref(event: EventCalendarEventRecord) {
   const action = event.actions[0] as EventCalendarAction | undefined;
 
@@ -216,7 +225,11 @@ function EventCalendarRecordLink({ event, compact = false }: { event: EventCalen
       </span>
       <span className="min-w-0 flex-1">
         <span className={clsx("block truncate text-[#403024]", compact ? "text-[0.78rem]" : "text-[0.88rem]")}>{title}</span>
-        {!compact && event.summary ? <span className="mt-0.5 block line-clamp-1 text-[0.76rem] leading-5 text-[#765f49]">{event.summary}</span> : null}
+        {!compact && (event.displaySummary ?? event.summary) ? (
+          <span className="mt-0.5 block line-clamp-2 text-[0.76rem] leading-5 text-[#765f49]">
+            {event.displaySummary ?? event.summary}
+          </span>
+        ) : null}
       </span>
       <span className="shrink-0 text-[0.72rem] text-[#8a6b4b] group-hover:text-[#604529]">{status}</span>
     </Link>
@@ -236,9 +249,7 @@ function EventDailyJournalRow({ day }: { day: EventCalendarDayRecord }) {
         : dailyJournal.freshness === "stale"
           ? "完整日志待更新"
           : "整理当天记录";
-  const href = dailyJournal.collection === "single_entry" && day.events[0]
-    ? getEventActionHref(day.events[0])
-    : buildEventDailyJournalHref(day.date);
+  const href = buildEventDailyJournalResultHref(day);
 
   return (
     <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--line-soft)] pt-3">

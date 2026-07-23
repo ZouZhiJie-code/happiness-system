@@ -148,6 +148,13 @@ export interface EventCenteredWorkspaceJournalEntryData {
   updatedAt: string;
 }
 
+export interface EventCenteredWorkspaceJournalGenerationData {
+  id: string;
+  status: "processing" | "completed" | "failed" | "canceled";
+  errorCode: string | null;
+  updatedAt: string;
+}
+
 export interface EventCenteredInterviewWorkspaceData {
   identity: EventCenteredSessionIdentity;
   messages: EventCenteredWorkspaceMessageData[];
@@ -156,6 +163,7 @@ export interface EventCenteredInterviewWorkspaceData {
   snapshotData: unknown;
   pendingTurn: EventCenteredWorkspacePendingTurn | null;
   journalEntry: EventCenteredWorkspaceJournalEntryData | null;
+  journalGeneration: EventCenteredWorkspaceJournalGenerationData | null;
 }
 
 export interface ReserveEventCenteredTurnResult {

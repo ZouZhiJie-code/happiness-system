@@ -1,3 +1,5 @@
+import type { AIOutputOrigin } from "@prisma/client";
+
 export type JournalDailyEntryStatus = "draft" | "saved" | "modified";
 
 export type JournalDailyEntryGenerationKind = "daily_journal" | "self_insight";
@@ -74,29 +76,63 @@ export interface ReserveJournalDailyEntryGenerationInput {
   entryDate: string;
   operationKind: JournalDailyEntryGenerationKind;
   clientOperationId: string;
-  intendedEntryId: string;
   expectedSourceSignature: string;
   expectedContentRevision: number | null;
   replaceManualEditsConfirmed: boolean;
+  requestId?: string | null;
 }
 
 export type ReserveJournalDailyEntryGenerationResult =
   | {
       kind: "entry";
       entry: JournalDailyEntryRecord;
+      generation: JournalDailyEntryGenerationRecord;
     }
   | {
       kind: "generation";
       generation: JournalDailyEntryGenerationRecord;
+      newlyReserved: boolean;
     };
 
 export interface CompleteJournalDailyEntryGenerationInput {
   userId: string;
   generationId: string;
   sourceSignature: string;
-  resultEntryId: string;
-  traceId?: string | null;
+  title: string;
+  content: string;
+  outputOrigin: AIOutputOrigin;
+  pipelineDecisions?: Array<Record<string, unknown>>;
 }
+
+export interface JournalDailySelfInsight {
+  text: string;
+  sourceEventIds: string[];
+  sharedEvidencePhrase: string;
+  evidence: Array<{
+    eventId: string;
+    quote: string;
+  }>;
+}
+
+export interface CompleteJournalDailySelfInsightGenerationInput {
+  userId: string;
+  generationId: string;
+  sourceSignature: string;
+  baseContentRevision: number;
+  selfInsight: JournalDailySelfInsight | null;
+  outputOrigin: AIOutputOrigin;
+  pipelineDecisions?: Array<Record<string, unknown>>;
+}
+
+export type CompleteJournalDailySelfInsightGenerationResult =
+  | {
+      kind: "appended";
+      entry: JournalDailyEntryRecord;
+    }
+  | {
+      kind: "insufficient_evidence";
+      entry: JournalDailyEntryRecord;
+    };
 
 export interface SettleJournalDailyEntryGenerationInput {
   userId: string;
@@ -118,6 +154,7 @@ export interface JournalDailyJournalView {
   sourceSignature: string;
   collection: JournalDailySourceCollection;
   entry: JournalDailyEntryRecord | null;
+  generation: JournalDailyEntryGenerationRecord | null;
   freshness: JournalDailyEntryFreshness;
   updateBlockedByPendingSource: boolean;
 }

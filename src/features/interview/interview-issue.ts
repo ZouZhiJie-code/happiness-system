@@ -29,6 +29,11 @@ export type InterviewIssueCode =
   | "INTERVIEW_REGENERATION_FAILED"
   | "JOURNAL_DAY_MODE_CONFLICT"
   | "JOURNAL_DAY_MODE_MIXED"
+  | "EVENT_JOURNAL_SOURCE_INSUFFICIENT"
+  | "EVENT_JOURNAL_PROVIDER_UNAVAILABLE"
+  | "EVENT_JOURNAL_QUALITY_CHECK_FAILED"
+  | "EVENT_JOURNAL_OPERATION_FAILED"
+  | "EVENT_JOURNAL_GENERATION_CANCELED"
   | "ASSISTANT_ACTION_MISSING"
   | "INTERVIEW_DB_WRITE_FAILED"
   | "INTERVIEW_RESPONSE_SCHEMA_ERROR"
@@ -187,6 +192,41 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
     resolution: "请刷新后分别查看当天记录；新的内容可以记录到其他日期。",
     retryable: false,
     action: "refresh"
+  },
+  EVENT_JOURNAL_SOURCE_INSUFFICIENT: {
+    title: "还需要一段事件内容",
+    message: "当前已经确认的内容还不足以组成一篇可信的事件日志。",
+    resolution: "请回到当前事件补充一句具体内容，再重新整理。",
+    retryable: false,
+    action: "none"
+  },
+  EVENT_JOURNAL_PROVIDER_UNAVAILABLE: {
+    title: "这次整理暂时停住了",
+    message: "日志整理服务暂时没有返回内容，当前事件和已经确认的信息都已保留。",
+    resolution: "请稍后重新整理。",
+    retryable: true,
+    action: "retry"
+  },
+  EVENT_JOURNAL_QUALITY_CHECK_FAILED: {
+    title: "这次日志还不够可靠",
+    message: "生成内容没有通过事实和表达检查，当前事件仍保留在原检查点。",
+    resolution: "你可以补充一句内容，或直接重新整理。",
+    retryable: true,
+    action: "retry"
+  },
+  EVENT_JOURNAL_OPERATION_FAILED: {
+    title: "这次日志还没整理完成",
+    message: "整理过程中出现异常，当前事件和已经确认的内容都已保留。",
+    resolution: "请重新整理；若再次出现，可刷新后继续。",
+    retryable: true,
+    action: "retry"
+  },
+  EVENT_JOURNAL_GENERATION_CANCELED: {
+    title: "已经停止本次整理",
+    message: "当前事件继续保留在原检查点。",
+    resolution: "需要时可以重新整理事件日志。",
+    retryable: true,
+    action: "retry"
   },
   ASSISTANT_ACTION_MISSING: {
     title: "访谈流程异常",

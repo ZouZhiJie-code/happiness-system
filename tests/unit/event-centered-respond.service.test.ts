@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInitialEventCenteredDialogueState } from "@/features/interview/event-centered/dialogue-state";
+import type { ReserveEventCenteredTurnResult } from "@/types/event-centered-interview";
 
 const mocks = vi.hoisted(() => ({
   getWorkspaceData: vi.fn(),
@@ -25,7 +26,8 @@ const mocks = vi.hoisted(() => ({
   createSafePayload: vi.fn(),
   assertWriteAllowed: vi.fn(),
   regenerateVersion: vi.fn(),
-  selectVersion: vi.fn()
+  selectVersion: vi.fn(),
+  generateJournal: vi.fn()
 }));
 
 vi.mock("@/features/interview/event-centered-release", () => ({
@@ -84,6 +86,10 @@ vi.mock("@/server/services/interview/event-centered-response-version.service", (
   selectEventCenteredResponseVersion: mocks.selectVersion
 }));
 
+vi.mock("@/server/services/journal-event/event-journal.service", () => ({
+  generateEventJournal: mocks.generateJournal
+}));
+
 import {
   getEventCenteredInterviewWorkspace,
   respondEventCenteredInterview
@@ -137,6 +143,7 @@ function workspaceData(overrides: Record<string, unknown> = {}) {
     responseVersions: [],
     pendingTurn: null,
     journalEntry: null,
+    journalGeneration: null,
     ...overrides
   };
 }
@@ -603,15 +610,82 @@ describe("event-centered respond service", () => {
     expect(mocks.commit).not.toHaveBeenCalled();
   });
 
-  it("服务层工作台在 Batch B 隐藏生成事件日志动作", async () => {
+  it("普通记录阶段保持生成动作关闭并返回完整日志状态", async () => {
     const workspace = await getEventCenteredInterviewWorkspace("user-1", "root-1");
 
     expect(workspace?.dialogue.allowedActions).not.toContain("generate_event_journal");
     expect(workspace?.journal).toEqual({
       status: "not_generated",
       entryId: null,
+      generationId: null,
+      errorCode: null,
+      retryable: false,
       eventStatus: "active"
     });
+  });
+
+  it("生成事件日志动作完成可靠确认并调用成果服务", async () => {
+    const turns: ReserveEventCenteredTurnResult[] = [];
+    mocks.generateJournal.mockImplementation(async (
+      _input: unknown,
+      options: {
+        onReserved?: (
+          generation: Record<string, unknown>,
+          reservedNow: boolean
+        ) => Promise<void> | void;
+      }
+    ) => {
+      await options.onReserved?.({
+        id: "generation-1",
+        eventId: "event-1",
+        branchSessionId: "branch-1",
+        userTurnId: "turn-journal-1",
+        clientOperationId: "client-journal-1",
+        baseMessageSequence: 1,
+        status: "processing",
+        startedAt: now
+      }, true);
+      return {
+        kind: "processing",
+        entry: null,
+        generationId: "generation-1",
+        outputOrigin: null,
+        usedFallback: false
+      };
+    });
+
+    await respondEventCenteredInterview("user-1", replyRequest({
+      action: "generate_event_journal",
+      clientTurnId: "client-journal-1"
+    }), {
+      onTurn: (turn) => {
+        turns.push(turn);
+      }
+    });
+
+    expect(mocks.generateJournal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        eventId: "event-1",
+        activeBranchSessionId: "branch-1",
+        clientOperationId: "client-journal-1",
+        baseMessageSequence: 1
+      }),
+      expect.objectContaining({
+        onReserved: expect.any(Function)
+      })
+    );
+    expect(turns).toHaveLength(1);
+    expect(turns[0]).toMatchObject({
+      kind: "reserved",
+      turn: {
+        id: "turn-journal-1",
+        clientTurnId: "client-journal-1",
+        status: "processing"
+      }
+    });
+    expect(mocks.reserveAction).not.toHaveBeenCalled();
+    expect(mocks.understand).not.toHaveBeenCalled();
   });
 
   it("统一接口生成问题新版本并返回最新工作台", async () => {
