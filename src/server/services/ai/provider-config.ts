@@ -17,7 +17,7 @@ export interface AIProviderConfigSummary {
   hasApiKey: boolean;
   hasModel: boolean;
   hasBaseUrl: boolean;
-  modelSource: "VOLCENGINE_ARK_MODEL" | "ARK_MODEL" | "VOLCENGINE_ARK_ENDPOINT_ID" | "ARK_ENDPOINT_ID" | null;
+  modelSource: "DEEPSEEK_MODEL" | "VOLCENGINE_ARK_MODEL" | "ARK_MODEL" | "VOLCENGINE_ARK_ENDPOINT_ID" | "ARK_ENDPOINT_ID" | null;
   baseUrlHost: string | null;
 }
 
@@ -71,8 +71,9 @@ function parseBaseUrlHost(value: string | null) {
 }
 
 export function readVolcengineArkConfig(env: NodeJS.ProcessEnv = process.env): VolcengineArkConfig {
-  const apiKey = trimEnvValue(env.VOLCENGINE_ARK_API_KEY) ?? trimEnvValue(env.ARK_API_KEY);
+  const apiKey = trimEnvValue(env.DEEPSEEK_API_KEY) ?? trimEnvValue(env.VOLCENGINE_ARK_API_KEY) ?? trimEnvValue(env.ARK_API_KEY);
   const modelCandidates = [
+    ["DEEPSEEK_MODEL", trimEnvValue(env.DEEPSEEK_MODEL)],
     ["VOLCENGINE_ARK_MODEL", trimEnvValue(env.VOLCENGINE_ARK_MODEL)],
     ["ARK_MODEL", trimEnvValue(env.ARK_MODEL)],
     ["VOLCENGINE_ARK_ENDPOINT_ID", trimEnvValue(env.VOLCENGINE_ARK_ENDPOINT_ID)],
@@ -81,7 +82,7 @@ export function readVolcengineArkConfig(env: NodeJS.ProcessEnv = process.env): V
   const modelEntry = modelCandidates.find(([, value]) => Boolean(value)) ?? null;
   const model = modelEntry?.[1] ?? null;
   const modelSource = modelEntry?.[0] ?? null;
-  const baseUrl = trimEnvValue(env.VOLCENGINE_ARK_BASE_URL) ?? trimEnvValue(env.ARK_BASE_URL) ?? DEFAULT_BASE_URL;
+  const baseUrl = trimEnvValue(env.DEEPSEEK_BASE_URL) ?? trimEnvValue(env.VOLCENGINE_ARK_BASE_URL) ?? trimEnvValue(env.ARK_BASE_URL) ?? DEFAULT_BASE_URL;
 
   const issues: AIProviderStatusCode[] = [];
 

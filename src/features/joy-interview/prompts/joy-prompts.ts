@@ -32,6 +32,7 @@ import type {
   JoyInterviewStage,
   JoySnapshot
 } from "@/types/interview";
+import type { IntentAssessmentV1 } from "@/features/interview/intent/intent-v1";
 
 const dimensionPromptGuide: Record<
   InterviewDimension,
@@ -317,8 +318,35 @@ export function buildJoyExtractMessages(input: {
   userMessage: string;
   snapshot: JoySnapshot;
   messages: InterviewMessage[];
+  intentCandidate?: IntentAssessmentV1 | null;
 }): AIChatMessage[] {
   const config = getInterviewDimensionConfig(input.dimension);
+  const candidateTargetIsGrounded = Boolean(
+    input.intentCandidate?.reasonCodes.includes("contextual_short_answer") ||
+    input.intentCandidate?.reasonCodes.includes("explicit_absence") ||
+    input.intentCandidate?.reasonCodes.includes("explicit_answer_frame") ||
+    input.intentCandidate?.dialogueActs.includes("correct_previous") ||
+    input.intentCandidate?.dialogueActs.includes("deny_hypothesis")
+  );
+  const intentCandidateForPrompt = input.intentCandidate
+    ? {
+        ...input.intentCandidate,
+        content: {
+          ...input.intentCandidate.content,
+          answeredTarget: candidateTargetIsGrounded
+            ? input.intentCandidate.content.answeredTarget
+            : null
+        },
+        reasonCodes: candidateTargetIsGrounded
+          ? input.intentCandidate.reasonCodes
+          : Array.from(
+              new Set([
+                ...input.intentCandidate.reasonCodes,
+                "answer_target_requires_semantic_validation"
+              ])
+            )
+      }
+    : null;
   const extractShape =
     input.dimension === "joy"
       ? '{"joyMoment":string|null,"joySource":string|null,"stateShift":string|null,"meaningNeed":string|null,"manualClue":string|null,"delightSignature":string|null,"directionSignal":string|null,"valueImpact":string|null,"durability":string|null,"tags":string[]}'
@@ -383,6 +411,12 @@ export function buildJoyExtractMessages(input: {
         ]
       : [];
 
+  const intentShape =
+    '{"version":"interview-intent-v1","primaryControl":"none"|"generate_draft"|"stop_follow_up"|"repair_question"|"skip_question"|"switch_event"|"switch_dimension","controlSignals":string[],"dialogueActs":("provide_content"|"supplement"|"correct_previous"|"deny_hypothesis"|"express_uncertainty"|"decline_answer"|"give_feedback")[],"content":{"presence":"none"|"possible"|"clear","evidenceText":string|null,"explicitAbsence":boolean,"answeredTarget":string|null},"referenceTarget":"current_question"|"previous_interpretation"|"current_event"|"session"|"journal"|"dimension"|"quoted_event"|"unclear","frustration":"none"|"mild"|"strong","confidence":number,"origin":"llm","reasonCodes":string[]}';
+  const outputShape = input.intentCandidate
+    ? `{"intent":${intentShape},"evidence":${extractShape}}`
+    : extractShape;
+
   return [
     {
       role: "system",
@@ -397,8 +431,41 @@ export function buildJoyExtractMessages(input: {
         ...reflectionExtractRules,
         ...improvementExtractRules,
         ...gratitudeExtractRules,
-        "如果用户没明确说到，就返回 null。",
-        `只返回 JSON：${extractShape}`
+        input.intentCandidate
+          ? "同时判断用户希望系统下一步做什么。用户一条消息可以同时包含内容和控制要求。"
+          : null,
+        input.intentCandidate
+          ? "content.evidenceText 必须逐字取自用户原话，并排除“生成日志、停止追问、换问法、换事件、切维度”等操作指令；事件中的引用和转述继续属于内容。"
+          : null,
+        input.intentCandidate
+          ? "content.answeredTarget 只有在有效内容语义上回答了上一句问题时才填写对应 target/subTarget；规则层候选只是上下文线索。内容属于其他维度、另一个话题或无法回答当前问题时返回 null。简短称谓、情绪词、是/否回答和明确修正需要结合上一句问题判断。"
+          : null,
+        input.intentCandidate
+          ? "answeredTarget 只能使用当前问题提供的标准回答目标，或返回 null；禁止改写成维度槽位名和其他近义字段名。"
+          : null,
+        input.intentCandidate
+          ? "当有效内容明确属于其他维度、其他话题或无法回答当前目标，并因此返回 answeredTarget=null 时，reasonCodes 必须加入 semantic_target_mismatch。仅仅表达简短、措辞不同或信息不够完整时，仍应填写标准回答目标。"
+          : null,
+        input.intentCandidate
+          ? "判断示例：感谢问题问“她的回应为什么让你珍惜？”，用户只说“让我满足的是项目终于推进了一步，帮我整理吧”时，保留进展内容和生成要求，answeredTarget=null，并加入 semantic_target_mismatch，因为这句话没有说明感谢原因。"
+          : null,
+        input.intentCandidate && input.dimension === "gratitude"
+          ? "感谢原因正例：当问题问“她的回应为什么让你珍惜？”，用户说对方记得自己的偏好、让自己感到被放在心上、被重视或被照顾，这些内容语义上回答了感谢原因，answeredTarget 应填写当前标准目标 gratitude_reason。"
+          : null,
+        input.intentCandidate
+          ? "高影响控制动作只在原话明确指向当前访谈时填写；转述别人说“有病、什么意思、结束”等内容时，referenceTarget=quoted_event，primaryControl=none。"
+          : null,
+        input.intentCandidate
+          ? "switch_event 指向 current_event；generate_draft 指向 journal；stop_follow_up 指向 session；repair_question 和 skip_question 指向 current_question；switch_dimension 指向 dimension。"
+          : null,
+        input.intentCandidate
+          ? "用户评价问题重复、难懂、有压力或表示被逼迫回答时加入 give_feedback。frustration=mild 同时覆盖轻度不满、访谈压力和精力不足；直接攻击、强烈被迫感或强硬边界使用 strong。"
+          : null,
+        input.intentCandidate
+          ? "intent.origin 固定返回 llm，version 固定返回 interview-intent-v1，confidence 使用 0 到 1。"
+          : null,
+        "维度槽位如果用户没明确说到，就返回 null。",
+        `只返回 JSON：${outputShape}`
       ].filter(Boolean).join("\n")
     },
     {
@@ -409,8 +476,14 @@ export function buildJoyExtractMessages(input: {
         `上一句访谈问题: ${input.lastAssistantQuestion}`,
         `已有快照:\n${formatSnapshotForDimension(input.dimension, input.snapshot)}`,
         `最近对话:\n${formatVisibleRecentMessages(input.messages)}`,
+        input.intentCandidate
+          ? `当前问题的标准回答目标（只有语义成立时才填写）: ${input.intentCandidate.content.answeredTarget ?? "null"}`
+          : null,
+        input.intentCandidate
+          ? `规则层候选意图（用于校验和消歧）:\n${JSON.stringify(intentCandidateForPrompt)}`
+          : null,
         `用户本轮回答: ${input.userMessage}`
-      ].join("\n\n")
+      ].filter(Boolean).join("\n\n")
     }
   ];
 }

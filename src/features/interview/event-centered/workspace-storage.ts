@@ -1,0 +1,97 @@
+"use client";
+
+import { getLocalAuthUserId } from "@/features/auth/auth-local";
+import type { EventCenteredRespondRequest } from "@/types/event-centered-dialogue";
+
+const DRAFT_PREFIX = "hs-event-centered-composer-draft";
+const OUTBOX_PREFIX = "hs-event-centered-turn-outbox";
+
+function scope() {
+  return getLocalAuthUserId() ?? "anonymous";
+}
+
+function composerKey(input: { rootSessionId: string; branchSessionId: string }) {
+  return [DRAFT_PREFIX, scope(), input.rootSessionId, input.branchSessionId].join("::");
+}
+
+function outboxKey(input: { rootSessionId: string; branchSessionId: string }) {
+  return [OUTBOX_PREFIX, scope(), input.rootSessionId, input.branchSessionId].join("::");
+}
+
+export function readEventCenteredComposerDraft(input: { rootSessionId: string; branchSessionId: string }) {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.sessionStorage.getItem(composerKey(input)) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function writeEventCenteredComposerDraft(
+  input: { rootSessionId: string; branchSessionId: string },
+  value: string
+) {
+  if (typeof window === "undefined") return;
+  try {
+    const key = composerKey(input);
+    if (value) window.sessionStorage.setItem(key, value);
+    else window.sessionStorage.removeItem(key);
+  } catch {
+    // 隐私模式下 sessionStorage 不可用时，服务端可靠轮次仍负责恢复已接收的原话。
+  }
+}
+
+export type EventCenteredWorkspaceOutboxRecord = {
+  request: EventCenteredRespondRequest;
+  status: "submitting" | "accepted" | "failed";
+  createdAt: string;
+};
+
+function isEventCenteredOutbox(value: unknown): value is EventCenteredWorkspaceOutboxRecord {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Partial<EventCenteredWorkspaceOutboxRecord>;
+  const request = record.request;
+  return Boolean(
+    request &&
+      typeof request.rootSessionId === "string" &&
+      typeof request.clientTurnId === "string" &&
+      typeof request.action === "string" &&
+      typeof request.baseBranchSessionId === "string" &&
+      typeof request.baseMessageSequence === "number" &&
+      (record.status === "submitting" || record.status === "accepted" || record.status === "failed") &&
+      typeof record.createdAt === "string"
+  );
+}
+
+export function readEventCenteredWorkspaceOutbox(input: { rootSessionId: string; branchSessionId: string }) {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(outboxKey(input));
+    if (!raw) return null;
+    const record = JSON.parse(raw) as unknown;
+    return isEventCenteredOutbox(record) ? record : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeEventCenteredWorkspaceOutbox(
+  input: { rootSessionId: string; branchSessionId: string },
+  record: EventCenteredWorkspaceOutboxRecord
+) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(outboxKey(input), JSON.stringify(record));
+  } catch {
+    // 已接收用户轮次仍由服务端保存，存储层故障不影响可靠续接。
+  }
+}
+
+export function clearEventCenteredWorkspaceOutbox(input: { rootSessionId: string; branchSessionId: string }) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(outboxKey(input));
+  } catch {
+    // 无需额外恢复动作。
+  }
+}

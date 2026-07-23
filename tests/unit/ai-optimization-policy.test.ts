@@ -52,6 +52,7 @@ describe("AI optimization policy", () => {
     expect(chooseOptimizationPath("schema_parse_failed")).toBe("engineering");
     expect(chooseOptimizationPath("user_downvote:too_abstract")).toBe("system_prompt");
     expect(getPromptKeyForArtifact("dimension_journal", "gratitude")).toBe("interview.journal.gratitude");
+    expect(getPromptKeyForArtifact("event_journal", null)).toBe("interview.journal.event");
   });
 
   it("produces an auditable, boundary-specific prompt proposal", () => {

@@ -293,6 +293,20 @@ describe("site header calendar toolbar", () => {
     expect(toolbar).toHaveAttribute("aria-busy", "false");
   });
 
+  it("switches month and week reading to the explicit event model", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    const toolbar = await screen.findByTestId("calendar-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button", { name: "切换到事件记录" }));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      "/calendar?view=month&date=2026-05-02&calendarMode=event_centered",
+      { scroll: false }
+    );
+  });
+
   it("keeps calendar header sticky frosted without spacer", async () => {
     global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
 

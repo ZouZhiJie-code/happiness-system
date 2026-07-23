@@ -19,7 +19,8 @@ const DIMENSION_LABEL = {
 
 const ARTIFACT_LABEL = {
   interview_turn: "访谈回复",
-  dimension_journal: "日志内容"
+  dimension_journal: "五维日志",
+  event_journal: "事件日志"
 } as const;
 
 const ROLE_LABEL = {
@@ -30,7 +31,7 @@ const ROLE_LABEL = {
 
 const EVALUATION_DIMENSION_LABEL: Record<string, string> = {
   grounding: "事实忠实",
-  dimensionAlignment: "维度与产品目标",
+  dimensionAlignment: "任务与产品目标",
   boundarySafety: "用户边界与安全",
   clarity: "表达清晰度",
   completeness: "任务完成度"
@@ -120,7 +121,7 @@ export function AdminAIQualityEvidenceDetail({ evidence }: { evidence: AdminAIQu
         )}
       </div>
 
-      {!hasTargetInConversation || evidence.artifactType === "dimension_journal" ? (
+      {!hasTargetInConversation || evidence.artifactType !== "interview_turn" ? (
         <div className="grid gap-2 border-l-2 border-[var(--paper-deep)] pl-4">
           <p className="text-xs font-medium text-ink">本次生成结果</p>
           {evidence.targetOutput.title ? <p className="font-medium text-ink">{evidence.targetOutput.title}</p> : null}

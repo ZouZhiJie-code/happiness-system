@@ -79,8 +79,55 @@ export function normalizeInterviewRespondError({
     return buildInterviewIssue(errorMessage, { requestId });
   }
 
+  if (errorMessage === "EVENT_STATE_CHANGED") {
+    return buildInterviewIssue("INTERVIEW_TURN_OUT_OF_DATE", { requestId });
+  }
+
+  if (errorMessage === "EVENT_TURN_NOT_FOUND") {
+    return buildInterviewIssue("INTERVIEW_TURN_NOT_FOUND", { requestId });
+  }
+
+  if (errorMessage === "EVENT_TURN_RETRY_REQUIRED") {
+    return buildInterviewIssue("INTERVIEW_TURN_RETRY_REQUIRED", { requestId });
+  }
+
+  if (
+    errorMessage === "EVENT_FACT_CLARIFICATION_REQUIRED" ||
+    errorMessage === "EVENT_ANGLE_OUTCOME_REPAIR_REQUIRED"
+  ) {
+    return buildInterviewIssue("SESSION_CHOICE_UNAVAILABLE", { requestId });
+  }
+
+  if (
+    errorMessage === "EVENT_UNDERSTANDING_CHECK_FAILED" ||
+    errorMessage === "EVENT_ANGLE_OUTCOME_CHECK_FAILED"
+  ) {
+    return buildInterviewIssue("INTERVIEW_RESPONSE_SCHEMA_ERROR", { requestId });
+  }
+
   if (errorMessage === "INTERVIEW_ACTION_UNSUPPORTED") {
     return buildInterviewIssue("INTERVIEW_ACTION_UNSUPPORTED", { requestId });
+  }
+
+  if (
+    errorMessage === "INTERVIEW_REGENERATION_UNAVAILABLE" ||
+    errorMessage === "INTERVIEW_REGENERATION_INTENT_UNAVAILABLE" ||
+    errorMessage === "INTERVIEW_REGENERATION_TARGET_CHANGED" ||
+    errorMessage === "INTERVIEW_REGENERATION_LIMIT_REACHED" ||
+    errorMessage === "INTERVIEW_QUESTION_OPPORTUNITY_LIMIT_REACHED" ||
+    errorMessage === "INTERVIEW_BRANCH_OUT_OF_DATE" ||
+    errorMessage === "INTERVIEW_BRANCH_TARGET_INVALID" ||
+    errorMessage === "INTERVIEW_BRANCH_LOCKED_BY_JOURNAL" ||
+    errorMessage === "INTERVIEW_REGENERATION_FAILED" ||
+    errorMessage === "JOURNAL_DAY_MODE_CONFLICT" ||
+    errorMessage === "JOURNAL_DAY_MODE_MIXED"
+  ) {
+    const issueCode = errorMessage === "INTERVIEW_QUESTION_OPPORTUNITY_LIMIT_REACHED"
+      ? "INTERVIEW_REGENERATION_LIMIT_REACHED"
+      : errorMessage === "INTERVIEW_REGENERATION_TARGET_CHANGED" || errorMessage === "INTERVIEW_BRANCH_TARGET_INVALID"
+        ? "INTERVIEW_BRANCH_OUT_OF_DATE"
+        : errorMessage;
+    return buildInterviewIssue(issueCode, { requestId });
   }
 
   if (errorMessage === "ASSISTANT_ACTION_MISSING") {
@@ -97,7 +144,7 @@ export function normalizeInterviewRespondError({
 export function logInterviewRespondError(input: {
   error: unknown;
   issue: InterviewIssue;
-  route: "respond" | "respond/stream";
+  route: "respond" | "respond/stream" | "branch/select" | "branch/preview";
   sessionId?: string | null;
 }) {
   logger.error(

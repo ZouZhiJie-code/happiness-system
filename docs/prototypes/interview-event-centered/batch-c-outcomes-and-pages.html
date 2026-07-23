@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>批次 C｜事件成果与页面闭环原型</title>
+    <style>
+      :root {
+        --ink: #302114;
+        --ink-soft: #523a27;
+        --muted: #755c44;
+        --faint: #9a8068;
+        --paper: #f8e9cc;
+        --paper-light: #fff9ed;
+        --paper-deep: #e6c895;
+        --paper-wash: #f1dcba;
+        --ember: #a96f3d;
+        --ember-deep: #855127;
+        --moss: #65784f;
+        --plum: #806274;
+        --danger: #984c3a;
+        --line-soft: #e2c9a7;
+        --line-strong: #ba9062;
+        --radius-control: 12px;
+        --radius-card: 20px;
+        --radius-shell: 28px;
+        --display: "Iowan Old Style", "Songti SC", "STSong", serif;
+        --body: Charter, Georgia, "Songti SC", "STSong", serif;
+        --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { min-width: 320px; background: #af7545; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        font-family: var(--ui);
+        background:
+          radial-gradient(circle at 12% 5%, rgba(255, 250, 238, .43), transparent 24%),
+          radial-gradient(circle at 91% 10%, rgba(84, 48, 20, .18), transparent 28%),
+          linear-gradient(180deg, #925f38 0, #bc834c 30%, #d9aa70 64%, #efd3a3 100%);
+      }
+      body::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        content: "";
+        pointer-events: none;
+        opacity: .35;
+        background: repeating-linear-gradient(108deg, transparent 0 26px, rgba(255, 255, 255, .08) 27px, transparent 28px 53px);
+      }
+      button, input, textarea { font: inherit; }
+      button { cursor: pointer; touch-action: manipulation; }
+      button:disabled { cursor: not-allowed; opacity: .48; }
+      button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+        outline: 3px solid rgba(133, 81, 39, .5);
+        outline-offset: 3px;
+      }
+      button:active:not(:disabled) { transform: scale(.97); }
+      input, textarea { color: var(--ink); }
+
+      .site-header {
+        position: sticky;
+        z-index: 20;
+        top: 0;
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+        align-items: center;
+        gap: 18px;
+        min-height: 64px;
+        padding: 9px clamp(18px, 4vw, 52px);
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 249, 239, .72);
+        backdrop-filter: blur(15px) saturate(135%);
+      }
+      .brand { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -.04em; }
+      .site-nav { display: flex; justify-content: center; gap: 3px; }
+      .site-nav button {
+        padding: 7px 9px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .site-nav button[aria-current="page"] { border-color: var(--ember); color: var(--ink); font-weight: 750; }
+      .header-meta { justify-self: end; color: var(--faint); font-size: 12px; white-space: nowrap; }
+
+      main { padding: clamp(14px, 2vw, 25px) clamp(10px, 3vw, 40px) 38px; }
+      .max-width { max-width: 1440px; margin-right: auto; margin-left: auto; }
+      .prototype-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 11px;
+      }
+      .prototype-head p { margin: 0; color: #694f39; font-size: 12px; line-height: 1.6; }
+      .batch-label, .tag, .status-pill, .summary-chip, .build-tag {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--line-soft);
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .batch-label { min-height: 27px; padding: 4px 10px; background: rgba(255, 249, 239, .72); color: #694626; font-size: 11px; font-weight: 780; }
+      .page-switch {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 11px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      .page-switch button, .choice {
+        min-height: 33px;
+        padding: 6px 11px;
+        border: 1px solid var(--line-soft);
+        border-radius: 999px;
+        background: rgba(255, 249, 239, .64);
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .page-switch button[aria-pressed="true"], .choice[aria-pressed="true"] {
+        border-color: var(--ember-deep);
+        background: #936039;
+        color: #fff9ed;
+      }
+      .screen[hidden] { display: none; }
+
+      .surface {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        min-height: min(780px, calc(100vh - 190px));
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-shell);
+        background: linear-gradient(180deg, rgba(249, 237, 215, .98), rgba(233, 210, 171, .98));
+        box-shadow: 0 24px 64px rgba(79, 48, 21, .17);
+      }
+      .event-strip {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        min-height: 58px;
+        align-items: end;
+        gap: 7px;
+        padding: 13px 16px 0;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 249, 238, .36);
+        scrollbar-width: thin;
+      }
+      .event-strip::after { flex: 1 0 10px; content: ""; }
+      .event-tab {
+        display: inline-flex;
+        min-width: 145px;
+        max-width: 230px;
+        min-height: 43px;
+        align-items: center;
+        gap: 8px;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-control) var(--radius-control) 0 0;
+        background: transparent;
+        color: var(--muted);
+        text-align: left;
+        transition: background .18s ease, color .18s ease, transform .18s ease;
+      }
+      .event-tab:hover { background: rgba(255, 249, 239, .55); color: var(--ink); }
+      .event-tab[aria-selected="true"] {
+        position: relative;
+        z-index: 1;
+        border-color: var(--line-soft);
+        border-bottom-color: #f7e8ca;
+        background: #f7e8ca;
+        color: var(--ink);
+      }
+      .event-tab[aria-selected="true"]::after {
+        position: absolute;
+        right: 12px;
+        bottom: -2px;
+        left: 12px;
+        height: 2px;
+        border-radius: 999px;
+        content: "";
+        background: var(--ember);
+      }
+      .event-index, .row-index {
+        display: grid;
+        width: 23px;
+        height: 23px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+        background: #ecd3ad;
+        color: #764825;
+        font-family: var(--display);
+        font-size: 12px;
+        font-style: normal;
+      }
+      .event-tab[aria-selected="true"] .event-index { background: #976034; color: #fff9ec; }
+      .event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .event-dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--moss); }
+      .event-dot.draft { background: var(--ember); }
+      .new-event {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
+        place-items: center;
+        margin: 0 0 4px 2px;
+        border: 1px dashed var(--line-strong);
+        border-radius: var(--radius-control);
+        background: rgba(255, 250, 241, .38);
+        color: var(--ember-deep);
+        font-size: 21px;
+      }
+      .stage-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: clamp(11px, 2vw, 27px);
+        padding: 13px 18px 14px;
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 250, 242, .56);
+      }
+      .stage-top { display: flex; justify-content: space-between; gap: 8px; color: var(--faint); font-size: 12px; }
+      .stage-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .stage-name b { margin-right: 5px; color: #7f512c; }
+      .stage-progress { height: 7px; margin-top: 7px; overflow: hidden; border-radius: 999px; background: #dcc7a7; }
+      .stage-progress b { display: block; width: var(--progress); height: 100%; border-radius: inherit; background: #c6c3bd; }
+      .stage-item.done .stage-progress b { background: linear-gradient(90deg, #79945f, #627c4d); }
+      .stage-item.current .stage-top { color: var(--ink); font-weight: 750; }
+      .stage-item.current .stage-progress b { background: linear-gradient(90deg, #ba7c42, #92582c); }
+
+      .chat-area {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+        min-height: 620px;
+        padding: 0 clamp(14px, 3vw, 44px);
+        background: linear-gradient(180deg, rgba(244, 230, 204, .72), rgba(240, 220, 187, .56));
+      }
+      .conversation {
+        width: 100%;
+        min-width: 0;
+        height: 620px;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 27px 0 126px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+      }
+      .conversation-head { display: flex; justify-content: space-between; gap: 12px; margin: 0 4px 21px; color: var(--faint); font-size: 12px; }
+      .message { display: flex; margin-bottom: 16px; }
+      .message.user { justify-content: flex-end; }
+      .bubble {
+        max-width: min(86%, 600px);
+        overflow-wrap: anywhere;
+        padding: 13px 16px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-card);
+        box-shadow: 0 7px 17px rgba(93, 58, 29, .05);
+        font-size: 14px;
+        line-height: 1.75;
+      }
+      .message.assistant .bubble { border-top-left-radius: 5px; background: rgba(255, 250, 242, .89); color: var(--ink-soft); }
+      .message.user .bubble { border-top-right-radius: 5px; background: linear-gradient(180deg, #e9cda7, #dfbb8e); color: #3e2d20; }
+      .thinking { max-width: 680px; margin: -4px 0 16px 15px; color: #85664a; font-size: 12px; line-height: 1.65; }
+      .thinking::before { margin-right: 6px; content: "·"; color: var(--ember); }
+      .checkpoint {
+        width: calc(100% - 13px);
+        max-width: 635px;
+        margin: 8px 0 21px 13px;
+        padding: 17px 18px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-card);
+        background: rgba(255, 248, 234, .8);
+        box-shadow: 0 10px 23px rgba(96, 58, 28, .06);
+      }
+      .checkpoint-label { color: var(--ember-deep); font-size: 10px; font-weight: 800; letter-spacing: .11em; }
+      .checkpoint h2 { margin: 8px 0 6px; font-family: var(--display); font-size: 22px; letter-spacing: -.03em; }
+      .checkpoint p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+      .checkpoint-actions, .journal-actions, .workspace-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+      .button {
+        display: inline-flex;
+        min-height: 36px;
+        align-items: center;
+        justify-content: center;
+        padding: 7px 12px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-control);
+        font-size: 12px;
+        font-weight: 720;
+        transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+      }
+      .button.primary { background: linear-gradient(180deg, #b77c43, #92582c); color: #fff9ec; box-shadow: 0 7px 14px rgba(117, 68, 28, .18); }
+      .button.secondary { border-color: var(--line-strong); background: rgba(255, 250, 242, .8); color: #6c482a; }
+      .button.ghost { background: transparent; color: #7c4e29; text-decoration: underline; text-underline-offset: 4px; }
+      .button.small { min-height: 31px; padding: 5px 9px; font-size: 11px; }
+      .composer-wrap { position: absolute; right: clamp(14px, 3vw, 44px); bottom: 14px; left: clamp(14px, 3vw, 44px); max-width: 860px; margin: auto; }
+      .composer {
+        display: flex;
+        min-height: 60px;
+        align-items: end;
+        padding: 8px 8px 8px 18px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-shell);
+        background: rgba(255, 250, 242, .96);
+        box-shadow: 0 13px 30px rgba(93, 57, 26, .14);
+      }
+      .composer textarea { min-height: 38px; max-height: 108px; flex: 1; resize: vertical; border: 0; outline: 0; background: transparent; font-size: 13px; line-height: 1.55; }
+      .composer textarea::placeholder { color: var(--faint); }
+      .send { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 50%; background: linear-gradient(180deg, #e7c492, #d7a96c); color: #3d2d20; font-size: 18px; }
+      .journal-trigger {
+        position: absolute;
+        z-index: 2;
+        top: 17px;
+        right: 17px;
+        display: inline-flex;
+        min-height: 36px;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 11px;
+        border: 1px solid var(--line-soft);
+        border-radius: 999px;
+        background: rgba(255, 249, 238, .86);
+        color: #65462b;
+        box-shadow: 0 7px 18px rgba(92, 56, 25, .1);
+        font-size: 12px;
+      }
+      .journal-trigger i { width: 7px; height: 7px; border-radius: 50%; background: var(--ember); }
+
+      .journal-scrim { position: absolute; z-index: 6; inset: 0; display: none; background: rgba(52, 35, 22, .27); backdrop-filter: blur(1px); }
+      .journal-scrim.open { display: block; }
+      .journal-panel {
+        position: absolute;
+        z-index: 7;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        width: min(470px, 94%);
+        flex-direction: column;
+        padding: 24px 28px 22px 30px;
+        transform: translateX(104%);
+        border-left: 1px solid var(--line-soft);
+        background: linear-gradient(180deg, #fffaf0, #eddbbd);
+        box-shadow: -24px 0 60px -20px rgba(74, 44, 18, .48);
+        transition: transform .32s cubic-bezier(.2, .75, .2, 1);
+      }
+      .journal-panel.open { transform: translateX(0); }
+      .journal-panel::before { position: absolute; top: 0; bottom: 0; left: 16px; width: 1px; content: ""; background: #dfbe94; }
+      .journal-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-left: 2px; }
+      .journal-top p { margin: 0; color: var(--faint); font-size: 12px; }
+      .close-journal { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line-soft); border-radius: 50%; background: #fff7e8; color: #61462f; font-size: 18px; }
+      .journal-body { min-height: 0; flex: 1; padding: 25px 2px 14px; overflow-y: auto; }
+      .journal-state-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+      .status-pill { min-height: 25px; padding: 4px 8px; background: #f6e7d0; color: #745034; font-size: 10px; font-weight: 750; }
+      .status-pill.saved { background: #e8eedb; color: #536540; }
+      .status-pill.warning { background: #f2dbbd; color: #81562e; }
+      .journal-title-input {
+        width: 100%;
+        padding: 4px 0 10px;
+        border: 0;
+        border-bottom: 1px solid transparent;
+        outline: 0;
+        background: transparent;
+        font-family: var(--display);
+        font-size: 29px;
+        font-weight: 700;
+        letter-spacing: -.04em;
+      }
+      .journal-title-input:not([readonly]):focus { border-bottom-color: var(--line-strong); }
+      .journal-section-label { margin: 18px 0 7px; color: var(--ember-deep); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .journal-copy, .journal-editor {
+        width: 100%;
+        margin: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #513a27;
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.88;
+      }
+      .journal-editor { min-height: 162px; resize: vertical; padding: 0; }
+      .journal-insight { margin-top: 14px; padding-left: 15px; border-left: 2px solid var(--ember); color: #60432c; font-family: var(--body); font-size: 16px; line-height: 1.8; }
+      .journal-divider { height: 1px; margin: 20px 0 0; background: var(--line-soft); }
+      .fold-toggle {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 18px;
+        padding: 11px 0;
+        border: 0;
+        border-top: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        background: transparent;
+        color: var(--ink-soft);
+        font-size: 13px;
+        font-weight: 750;
+        text-align: left;
+      }
+      .journal-tabs { display: flex; gap: 4px; margin: 16px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+      .journal-tab { padding: 6px 9px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--faint); font-size: 12px; }
+      .journal-tab[aria-selected="true"] { border-color: var(--ember); color: var(--ink); font-weight: 750; }
+      .generation-stage { margin-top: 21px; }
+      .generation-stage p { display: flex; justify-content: space-between; margin: 0 0 7px; color: var(--muted); font-size: 12px; }
+      .generation-track { height: 8px; overflow: hidden; border-radius: 999px; background: #dfcaa8; }
+      .generation-track i {
+        display: block;
+        width: 68%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #ba7b42, #91603a);
+        animation: breathe 1.8s ease-in-out infinite alternate;
+      }
+      @keyframes breathe { from { opacity: .62; } to { opacity: 1; } }
+      .skeleton-line { height: 12px; margin-top: 15px; border-radius: 999px; background: linear-gradient(90deg, #e8d2b0, #f7e8ce, #e8d2b0); background-size: 200% 100%; animation: shimmer 1.5s linear infinite; }
+      .skeleton-line.short { width: 66%; }
+      @keyframes shimmer { to { background-position: -200% 0; } }
+      .notice {
+        margin: 13px 0;
+        padding: 11px 13px;
+        border-left: 3px solid var(--ember);
+        background: rgba(246, 226, 195, .58);
+        color: #6a4b33;
+        font-size: 12px;
+        line-height: 1.65;
+      }
+      .notice.error { border-color: var(--danger); background: #f3ded2; color: #733f32; }
+      .autosave { margin-left: auto; color: var(--faint); font-size: 11px; }
+
+      .control-board {
+        display: grid;
+        grid-template-columns: .9fr 1.4fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .control-section {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-control);
+        background: rgba(255, 249, 239, .72);
+      }
+      .control-label { margin-right: 2px; color: #72553c; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+
+      .today-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(330px, .75fr);
+        min-height: 780px;
+      }
+      .today-main, .today-side, .full-main, .full-side { min-width: 0; padding: clamp(22px, 3vw, 39px); }
+      .today-side, .full-side { border-left: 1px solid var(--line-soft); background: rgba(255, 250, 241, .47); }
+      .eyebrow { color: var(--ember-deep); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+      .page-title { margin: 9px 0 7px; font-family: var(--display); font-size: clamp(29px, 3vw, 42px); letter-spacing: -.045em; }
+      .page-lead { max-width: 720px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+      .summary-row { display: flex; flex-wrap: wrap; gap: 7px; margin: 23px 0 18px; }
+      .summary-chip { min-height: 29px; padding: 5px 9px; background: rgba(255, 250, 242, .68); color: #6a4c31; font-size: 11px; }
+      .event-list { border-top: 1px solid var(--line-soft); }
+      .event-row {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 11px;
+        padding: 18px 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .event-row h3 { margin: 0 0 4px; color: var(--ink); font-family: var(--display); font-size: 20px; letter-spacing: -.02em; }
+      .event-row p { max-width: 660px; margin: 0; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.55; text-overflow: ellipsis; white-space: nowrap; }
+      .event-row p.long-copy {
+        overflow: visible;
+        color: #5c432e;
+        font-family: var(--body);
+        font-size: 14px;
+        line-height: 1.72;
+        text-overflow: clip;
+        white-space: normal;
+      }
+      .row-meta { display: flex; align-items: center; gap: 7px; margin-top: 7px; color: var(--faint); font-size: 10px; }
+      .row-meta i { width: 6px; height: 6px; border-radius: 50%; background: var(--moss); }
+      .row-meta i.draft { background: var(--ember); }
+      .side-heading { margin: 7px 0 8px; font-family: var(--display); font-size: 25px; letter-spacing: -.035em; }
+      .side-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+      .daily-preview { margin: 24px 0 18px; padding: 17px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+      .daily-preview strong { display: block; margin-bottom: 6px; font-family: var(--display); font-size: 19px; }
+      .daily-preview p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+      .policy-note { margin-top: 22px; padding-left: 13px; border-left: 2px solid var(--plum); color: #685263; font-size: 11px; line-height: 1.65; }
+      .product-choice { margin-top: 22px; padding-top: 17px; border-top: 1px solid var(--line-soft); }
+      .product-choice strong { display: block; margin-bottom: 9px; color: var(--ink-soft); font-size: 12px; }
+      .product-choice-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+      .product-choice .choice { background: rgba(255, 250, 242, .7); }
+      .product-choice .choice[aria-pressed="true"] { background: #936039; color: #fff9ed; }
+
+      .full-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, .58fr); min-height: 780px; }
+      .full-sheet { max-width: 790px; margin: 0 auto; }
+      .full-head { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
+      .daily-title-input {
+        width: 100%;
+        max-width: 590px;
+        margin-top: 5px;
+        padding: 3px 0 8px;
+        border: 0;
+        border-bottom: 1px solid var(--line-soft);
+        outline: 0;
+        background: transparent;
+        font-family: var(--display);
+        font-size: clamp(28px, 3vw, 39px);
+        font-weight: 700;
+        letter-spacing: -.045em;
+      }
+      .source-strip { display: flex; flex-wrap: wrap; gap: 8px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
+      .source-chip { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
+      .source-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--moss); }
+      .full-event { padding: 25px 0 21px; border-bottom: 1px solid var(--line-soft); }
+      .full-event-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; }
+      .full-event-head span { color: var(--faint); font-size: 10px; }
+      .full-event h2 { margin: 0; font-family: var(--display); font-size: 25px; letter-spacing: -.03em; }
+      .full-event p { margin: 0 0 13px; color: #513a27; font-family: var(--body); font-size: 17px; line-height: 1.88; }
+      .full-event .source-insight { padding-left: 14px; border-left: 2px solid var(--line-strong); color: #664a34; font-size: 15px; }
+      .day-insight { margin: 28px 0 10px; padding: 19px 21px; border-left: 3px solid var(--plum); background: rgba(245, 235, 227, .58); }
+      .day-insight h2 { margin: 0 0 7px; font-family: var(--display); font-size: 23px; }
+      .day-insight p { margin: 0; color: #5e4959; font-family: var(--body); font-size: 16px; line-height: 1.8; }
+      .day-insight-prompt { margin: 28px 0 10px; padding: 18px 0 18px 16px; border-left: 3px solid var(--plum); }
+      .day-insight-prompt h2 { margin: 0 0 7px; font-family: var(--display); font-size: 22px; }
+      .day-insight-prompt p { max-width: 650px; margin: 0 0 12px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+      .source-status { padding: 13px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+      .source-status + .source-status { border-top: 0; }
+      .source-status strong { display: block; margin-bottom: 4px; font-size: 12px; }
+      .source-status p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+      .update-warning { margin-top: 18px; padding: 12px 0 12px 14px; border-left: 3px solid var(--ember); color: #704a2e; font-size: 11px; line-height: 1.7; }
+      .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 20px; }
+      .toggle-row label { color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .switch {
+        position: relative;
+        width: 42px;
+        height: 24px;
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 999px;
+        background: #ccb99b;
+      }
+      .switch::after { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; content: ""; background: #fff9ed; transition: transform .18s ease; }
+      .switch[aria-pressed="true"] { background: var(--plum); }
+      .switch[aria-pressed="true"]::after { transform: translateX(18px); }
+
+      .calendar-shell { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 780px; }
+      .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 22px; border-bottom: 1px solid var(--line-soft); }
+      .calendar-toolbar h2 { margin: 0; font-family: var(--display); font-size: 27px; letter-spacing: -.04em; }
+      .calendar-toolbar p { margin: 3px 0 0; color: var(--faint); font-size: 11px; }
+      .calendar-view-switch { display: flex; gap: 4px; }
+      .calendar-view-switch button { padding: 6px 10px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 12px; }
+      .calendar-view-switch button[aria-pressed="true"] { border-color: var(--ember); color: var(--ink); font-weight: 750; }
+      .calendar-view[hidden] { display: none; }
+      .month-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .7fr); min-height: 720px; }
+      .month-main { min-width: 0; padding: 24px; }
+      .weekday-row, .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+      .weekday-row { color: var(--faint); font-size: 11px; text-align: center; }
+      .month-grid { margin-top: 8px; overflow: hidden; border-top: 1px solid var(--line-soft); border-left: 1px solid var(--line-soft); }
+      .day-cell {
+        position: relative;
+        display: flex;
+        min-height: 91px;
+        flex-direction: column;
+        padding: 10px;
+        border: 0;
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 250, 242, .34);
+        color: var(--muted);
+        text-align: left;
+      }
+      .day-cell:hover { background: rgba(255, 250, 242, .76); }
+      .day-cell.outside { color: #b59d85; background: rgba(238, 218, 187, .28); }
+      .day-cell[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ember); background: #fff8ea; }
+      .day-cell.today::after { position: absolute; top: 10px; right: 10px; width: 6px; height: 6px; border-radius: 50%; content: ""; background: var(--ember); }
+      .day-number { font-family: var(--display); font-size: 16px; }
+      .calendar-marker { display: inline-flex; align-self: flex-start; margin-top: auto; padding: 3px 6px; border-radius: 999px; background: #ead7b8; color: #714927; font-size: 9px; }
+      .calendar-marker.complete { background: #e6eddc; color: #4f6542; }
+      .calendar-marker.draft { background: #f1dbc0; color: #83562d; }
+      .month-side { padding: 24px 22px; border-left: 1px solid var(--line-soft); background: rgba(255, 250, 241, .47); }
+      .month-side h3 { margin: 7px 0 7px; font-family: var(--display); font-size: 27px; }
+      .calendar-event-line { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
+      .calendar-event-line strong { display: block; overflow: hidden; margin-bottom: 2px; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .calendar-event-line span { color: var(--faint); font-size: 10px; }
+      .week-board { display: grid; min-width: 980px; grid-template-columns: repeat(7, 1fr); gap: 9px; padding: 24px; }
+      .week-scroll { overflow-x: auto; }
+      .week-card {
+        display: flex;
+        min-height: 230px;
+        flex-direction: column;
+        padding: 15px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-card);
+        background: rgba(255, 250, 242, .62);
+      }
+      .week-card.current { border-color: var(--line-strong); background: #fff8e9; }
+      .week-card h3 { margin: 0; font-family: var(--display); font-size: 18px; }
+      .week-card .status-pill { align-self: flex-start; margin-top: 12px; }
+      .week-card p { margin: 14px 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+      .week-card .button { width: 100%; margin-top: auto; }
+      .day-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .65fr); min-height: 720px; }
+      .day-main, .day-side { padding: 27px; }
+      .day-side { border-left: 1px solid var(--line-soft); background: rgba(255, 250, 241, .47); }
+
+      .design-note {
+        display: grid;
+        grid-template-columns: minmax(0, 1.42fr) minmax(280px, .58fr);
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .note-panel {
+        padding: 17px 19px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-card);
+        background: rgba(255, 249, 239, .77);
+      }
+      .note-panel h1, .note-panel h2 { margin: 0 0 7px; font-family: var(--display); letter-spacing: -.035em; }
+      .note-panel h1 { font-size: 22px; }
+      .note-panel h2 { font-size: 18px; }
+      .note-panel p { margin: 0; color: #6d533d; font-size: 12px; line-height: 1.72; }
+      .note-panel p + p { margin-top: 8px; }
+      .legend { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+      .tag { min-height: 25px; padding: 4px 9px; background: #fff7e8; color: #684a2d; font-size: 10px; }
+      .tag.reuse { background: #e9efd9; }
+      .tag.extend { background: #f3dfc0; }
+      .tag.new { background: #eee5ed; }
+      .build-tag { min-height: 21px; padding: 3px 7px; background: rgba(255, 250, 242, .73); color: var(--muted); font-size: 9px; }
+
+      [hidden] { display: none !important; }
+      @media (max-width: 960px) {
+        .today-layout, .full-layout, .month-layout, .day-layout { grid-template-columns: 1fr; }
+        .today-side, .full-side, .month-side, .day-side { border-top: 1px solid var(--line-soft); border-left: 0; }
+        .control-board, .design-note { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 760px) {
+        .site-header { grid-template-columns: 1fr auto; }
+        .site-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; overflow-x: auto; }
+        .header-meta { grid-column: 2; grid-row: 1; }
+        .prototype-head { align-items: flex-start; flex-direction: column; }
+        .surface { border-radius: var(--radius-card); }
+        .stage-summary { gap: 8px; padding-right: 11px; padding-left: 11px; }
+        .stage-name b { display: none; }
+        .stage-top { font-size: 10px; }
+        .event-row { grid-template-columns: 28px minmax(0, 1fr); }
+        .event-row > .button { grid-column: 2; justify-self: start; }
+        .journal-panel {
+          top: auto;
+          width: 100%;
+          height: min(680px, 86%);
+          transform: translateY(104%);
+          border-top: 1px solid var(--line-soft);
+          border-left: 0;
+          border-radius: var(--radius-shell) var(--radius-shell) 0 0;
+        }
+        .journal-panel.open { transform: translateY(0); }
+        .month-main { padding: 14px 7px; overflow-x: auto; }
+        .weekday-row, .month-grid { min-width: 660px; }
+      }
+      @media (max-width: 520px) {
+        main { padding-right: 7px; padding-left: 7px; overflow-x: hidden; }
+        .header-meta { display: none; }
+        .event-tab { min-width: 131px; }
+        .chat-area { padding: 0 10px; }
+        .conversation { height: 650px; padding-top: 22px; }
+        .journal-trigger { top: 11px; right: 9px; }
+        .bubble { max-width: 92%; }
+        .page-title { font-size: 30px; }
+        .today-main, .today-side, .full-main, .full-side { padding: 22px 18px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          transition-duration: .01ms !important;
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+        button:active:not(:disabled) { transform: none; }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .site-header, .composer, .control-section, .note-panel { background: var(--paper-light); backdrop-filter: none; }
+        .journal-scrim { backdrop-filter: none; }
+      }
+      @media (prefers-contrast: more) {
+        :root { --muted: #503824; --faint: #674a32; --line-soft: #b48655; --line-strong: #8e5b2d; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">Daily Light</div>
+      <nav class="site-nav" aria-label="主导航">
+        <button type="button" data-page-link="interview" aria-current="page">访谈</button>
+        <button type="button" data-page-link="calendar">日历</button>
+        <button type="button" data-static-page="analysis">分析</button>
+        <button type="button" data-static-page="profile">画像</button>
+        <button type="button">设置</button>
+      </nav>
+      <div class="header-meta">当前记录日期：2026-07-22</div>
+    </header>
+
+    <main>
+      <div class="prototype-head max-width">
+        <p><strong>批次 C 可操作原型</strong>　沿着“当前事件日志 → 今日日志 → 完整日志 → 日历回看”体验完整闭环。</p>
+        <span class="batch-label">成果与页面闭环 · 产品选择稿</span>
+      </div>
+
+      <div class="page-switch max-width" role="group" aria-label="切换成果页面">
+        <button type="button" data-page="interview" aria-pressed="true">访谈与事件日志</button>
+        <button type="button" data-page="today" aria-pressed="false">今日日志</button>
+        <button type="button" data-page="full" aria-pressed="false">当天完整日志</button>
+        <button type="button" data-page="calendar" aria-pressed="false">日历月周日</button>
+      </div>
+
+      <section id="screen-interview" class="screen max-width" aria-label="访谈与事件日志">
+        <section id="interview-workspace" class="surface" aria-label="事件中心访谈工作台">
+          <div class="event-strip" role="tablist" aria-label="当天事件">
+            <button class="event-tab" type="button" role="tab" aria-selected="false">
+              <span class="event-index">1</span><span class="event-title">傍晚那段慢下来的路</span><i class="event-dot" aria-label="已保存"></i>
+            </button>
+            <button class="event-tab" type="button" role="tab" aria-selected="true">
+              <span class="event-index">2</span><span class="event-title">开会前突然有点想躲开</span><i class="event-dot draft" aria-label="事件日志草稿"></i>
+            </button>
+            <button class="new-event" type="button" aria-label="记下另一件事" title="记下另一件事">＋</button>
+          </div>
+
+          <section class="stage-summary" aria-label="当前事件访谈进度">
+            <div class="stage-item done">
+              <div class="stage-top"><span class="stage-name"><b>1 ·</b>轻量记录</span><span>100%</span></div>
+              <div class="stage-progress"><b style="--progress:100%"></b></div>
+            </div>
+            <div class="stage-item done">
+              <div class="stage-top"><span class="stage-name"><b>2 ·</b>引导复盘</span><span>100%</span></div>
+              <div class="stage-progress"><b style="--progress:100%"></b></div>
+            </div>
+            <div class="stage-item current">
+              <div class="stage-top"><span class="stage-name"><b>3 ·</b>深入探索</span><span>74%</span></div>
+              <div class="stage-progress"><b style="--progress:74%"></b></div>
+            </div>
+          </section>
+
+          <div class="chat-area">
+            <button id="open-journal" class="journal-trigger" type="button" aria-controls="journal-panel" aria-expanded="false">
+              <i aria-hidden="true"></i>事件日志
+            </button>
+            <div id="conversation" class="conversation" role="log" aria-live="polite" aria-label="访谈对话">
+              <div class="conversation-head"><span>第 2 件事 · 日志待保存</span><span>理解感受</span></div>
+              <article class="message user"><div class="bubble">开会前我突然有点想躲开，明明准备了很久，还是觉得自己讲不好。</div></article>
+              <p class="thinking">你想先记下的是：准备了很久，临到开会前却突然想躲开。</p>
+              <article class="message assistant"><div class="bubble">当时最让你紧张的，是哪一部分？</div></article>
+              <article class="message user"><div class="bubble">我总觉得站上去之前，应该先把所有问题都回答好。可讲完以后，大家其实更关心能不能一起把问题理清。</div></article>
+              <p class="thinking">这次真实的互动，让“站出来前要先完全确定”这条标准松动了一点。</p>
+              <section class="checkpoint" aria-label="对话内纸笺">
+                <span class="checkpoint-label">A 方案 · 对话内纸笺</span>
+                <h2>已经有一条值得留下的线索</h2>
+                <p>站出来未必意味着独自给出全部答案，也可以是邀请大家一起把问题理清。事件日志已经形成草稿，你可以在右侧继续编辑和保存。</p>
+                <div class="checkpoint-actions">
+                  <button class="button primary" type="button" data-open-state="draft">查看事件日志</button>
+                  <button class="button secondary" type="button" data-page-target="today">查看今日日志</button>
+                </div>
+              </section>
+            </div>
+            <div class="composer-wrap">
+              <div class="composer">
+                <textarea rows="1" aria-label="回复访谈" placeholder="这件事已经成稿，仍可补充想留下的话…"></textarea>
+                <button class="send" type="button" aria-label="发送补充">↑</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="journal-scrim" class="journal-scrim" aria-hidden="true"></div>
+          <aside id="journal-panel" class="journal-panel" aria-label="当前事件日志" aria-hidden="true">
+            <div class="journal-top">
+              <p>事件日志 · 第 2 件事</p>
+              <button id="close-journal" class="close-journal" type="button" aria-label="关闭事件日志">×</button>
+            </div>
+            <div id="journal-body" class="journal-body" aria-live="polite"></div>
+            <div id="journal-actions" class="journal-actions"></div>
+          </aside>
+        </section>
+
+        <section class="control-board" aria-label="事件日志方案和状态切换">
+          <div class="control-section" role="group" aria-label="事件日志呈现方案">
+            <span class="control-label">呈现方案</span>
+            <button class="choice" type="button" data-scheme="continuous" aria-pressed="true">A · 连续阅读</button>
+            <button class="choice" type="button" data-scheme="folded" aria-pressed="false">B · 折叠线索</button>
+            <button class="choice" type="button" data-scheme="sectioned" aria-pressed="false">C · 分区阅读</button>
+          </div>
+          <div class="control-section" role="group" aria-label="事件日志状态">
+            <span class="control-label">日志状态</span>
+            <button class="choice" type="button" data-journal-state="generating" aria-pressed="false">生成中</button>
+            <button class="choice" type="button" data-journal-state="draft" aria-pressed="true">草稿</button>
+            <button class="choice" type="button" data-journal-state="editing" aria-pressed="false">编辑中</button>
+            <button class="choice" type="button" data-journal-state="saved" aria-pressed="false">已保存</button>
+            <button class="choice" type="button" data-journal-state="stale" aria-pressed="false">来源更新</button>
+            <button class="choice" type="button" data-journal-state="failure" aria-pressed="false">失败恢复</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="screen-today" class="screen max-width" aria-label="今日日志面板" hidden>
+        <section class="surface today-layout">
+          <div class="today-main">
+            <span class="eyebrow">今日日志 · 7 月 22 日</span>
+            <h1 class="page-title">今天记下的两件事</h1>
+            <p class="page-lead">按记录顺序保留当天真实存在的事件。采用正文片段帮助用户直接回忆当天经过，主要操作继续保持清楚可见。</p>
+            <div class="summary-row" aria-label="今日日志概况">
+              <span class="summary-chip">待继续 1</span>
+              <span class="summary-chip">已完成 1</span>
+              <span class="summary-chip">完整日志 · 可汇总</span>
+            </div>
+            <div class="event-list">
+              <article class="event-row">
+                <i class="row-index">1</i>
+                <div>
+                  <h3>傍晚那段慢下来的路</h3>
+                  <p class="event-summary" data-short="沿着河边走回家时，我发现自己可以暂时不急着把今天想明白。" data-long="傍晚沿着河边走回家时，风很轻，路上的人也不多。我没有立刻打开手机，也没有急着总结今天，只想跟着脚步慢一点。" hidden></p>
+                  <div class="row-meta"><i aria-hidden="true"></i><span>已保存 · 18:42</span></div>
+                </div>
+                <button class="button secondary small" type="button" data-event-log="saved">查看日志</button>
+              </article>
+              <article class="event-row">
+                <i class="row-index">2</i>
+                <div>
+                  <h3>开会前突然有点想躲开</h3>
+                  <p class="event-summary" data-short="准备已久的我临到开会前还是想躲开，讲完后却看到另一种合作方式。" data-long="开会前，我明明准备了很久，却还是突然想躲开。我总觉得站上去之前应该先回答好所有问题，真正讲完后才发现，大家更关心的是能不能一起把事情理清。" hidden></p>
+                  <div class="row-meta"><i class="draft" aria-hidden="true"></i><span>草稿 · 待保存</span></div>
+                </div>
+                <button class="button primary small" type="button" data-event-log="editing">继续编辑</button>
+              </article>
+            </div>
+            <div class="workspace-actions">
+              <button class="button secondary" type="button" data-page-target="interview">返回当前事件</button>
+              <button class="button ghost" type="button">记下一件</button>
+            </div>
+          </div>
+          <aside class="today-side">
+            <span class="eyebrow">当天成果</span>
+            <h2 class="side-heading">完整日志可以开始整理</h2>
+            <p class="side-copy">当前有一篇已保存事件日志。第二篇仍在草稿中，保存后才能一起进入完整日志。</p>
+            <div class="daily-preview">
+              <strong>7 月 22 日 · 两件事</strong>
+              <p>事件正文会按记录顺序原样保留；跨事件的“今天看见的自己”只在至少两篇内容共同支持时生成。</p>
+            </div>
+            <button class="button primary" type="button" data-page-target="full">查看完整日志方案</button>
+            <div class="product-choice">
+              <strong>今日日志信息密度</strong>
+              <div class="product-choice-buttons" role="group" aria-label="今日日志信息密度">
+                <button class="choice" type="button" data-today-density="a" aria-pressed="false">A · 标题状态动作</button>
+                <button class="choice" type="button" data-today-density="b" aria-pressed="false">B · 增加短摘要</button>
+                <button class="choice" type="button" data-today-density="c" aria-pressed="true">C · 正文片段</button>
+              </div>
+            </div>
+            <p id="today-density-note" class="policy-note">已选择 C：直接展示正文片段，增强当天回忆感；标题、状态和主动作继续保持清楚。</p>
+          </aside>
+        </section>
+      </section>
+
+      <section id="screen-full" class="screen max-width" aria-label="当天完整日志" hidden>
+        <section class="surface full-layout">
+          <div class="full-main">
+            <article class="full-sheet">
+              <div class="full-head">
+                <div>
+                  <span class="eyebrow">当天完整日志 · 已保存</span>
+                  <input class="daily-title-input" value="慢下来，也站出来" aria-label="当天完整日志标题" />
+                </div>
+                <span id="full-status" class="status-pill saved">已保存</span>
+              </div>
+              <div class="source-strip" aria-label="当天完整日志来源">
+                <span class="source-chip"><i aria-hidden="true"></i>第 1 件 · 已保存</span>
+                <span class="source-chip"><i aria-hidden="true"></i>第 2 件 · 已保存</span>
+              </div>
+              <section class="full-event">
+                <div class="full-event-head"><span>第 1 件事</span><h2>傍晚那段慢下来的路</h2></div>
+                <p>傍晚沿着河边走回家时，风很轻，路上的人也不多。我忽然不想立刻打开手机，也不想马上总结今天，只想跟着脚步慢一点。</p>
+                <p class="source-insight">我看见自己也需要一些不急着产出答案的时间。慢下来本身，就已经让今天有了一个可以呼吸的位置。</p>
+              </section>
+              <section class="full-event">
+                <div class="full-event-head"><span>第 2 件事</span><h2>开会前突然有点想躲开</h2></div>
+                <p>开会前，我明明准备了很久，却还是突然想躲开。我总觉得站上去之前，应该先把所有问题都回答好。真正讲完后，大家更关心的是能不能一起把问题理清。</p>
+                <p class="source-insight">我开始看到，站出来未必意味着独自给出全部答案，也可以是邀请大家一起把事情向前推进。</p>
+              </section>
+              <section id="day-insight" class="day-insight">
+                <h2>今天看见的自己</h2>
+                <p>今天的两件事里，我都在练习给“不确定”留一点位置：走路时允许自己暂时不总结，开会时也允许答案在合作中慢慢清楚。今天暂时看见，这份松动让我既能慢下来，也更愿意站出来。</p>
+              </section>
+              <section id="day-insight-prompt" class="day-insight-prompt" hidden>
+                <h2>要看看今天共同出现的线索吗？</h2>
+                <p>两篇事件日志已经保留完整。你可以额外生成一段“今天看见的自己”，也可以只阅读事件合集。</p>
+                <button id="generate-day-insight" class="button secondary" type="button">生成今天看见的自己</button>
+              </section>
+              <div class="workspace-actions">
+                <button class="button primary" type="button" id="save-full">保存完整日志</button>
+                <button class="button secondary" type="button" data-page-target="today">返回今日日志</button>
+              </div>
+            </article>
+          </div>
+          <aside class="full-side">
+            <span class="eyebrow">来源与更新</span>
+            <h2 class="side-heading">两篇事件原文完整保留</h2>
+            <p class="side-copy">AI只生成最后的当天线索。事件正文及每篇“我看见的”继续使用用户已经确认和编辑后的版本。</p>
+            <div class="source-status">
+              <strong>第 1 件事 · 来源一致</strong>
+              <p>傍晚那段慢下来的路，已保存于 18:42。</p>
+            </div>
+            <div class="source-status">
+              <strong>第 2 件事 · 来源一致</strong>
+              <p>开会前突然有点想躲开，已保存于 21:16。</p>
+            </div>
+            <div class="product-choice">
+              <strong>“今天看见的自己”生成方式</strong>
+              <div class="product-choice-buttons" role="group" aria-label="当天线索生成方式">
+                <button class="choice" type="button" data-insight-strategy="a" aria-pressed="false">A · 随完整日志生成</button>
+                <button class="choice" type="button" data-insight-strategy="b" aria-pressed="true">B · 额外点击生成</button>
+                <button class="choice" type="button" data-insight-strategy="c" aria-pressed="false">C · 只保留事件合集</button>
+              </div>
+            </div>
+            <p id="insight-strategy-note" class="policy-note">已选择 B：先形成事件合集，再由用户决定是否生成“今天看见的自己”。</p>
+            <div id="update-copy" class="update-warning">模拟来源更新后，完整日志会标记“需更新”。更新会替换当前完整日志中的手动编辑，入口会提前说明。</div>
+            <div class="workspace-actions">
+              <button class="button secondary small" type="button" data-full-state="stale">模拟来源更新</button>
+              <button class="button secondary small" type="button" data-full-state="failure">模拟更新失败</button>
+              <button class="button ghost small" type="button" data-full-state="saved">恢复已保存</button>
+            </div>
+          </aside>
+        </section>
+      </section>
+
+      <section id="screen-calendar" class="screen max-width" aria-label="日历月周日适配" hidden>
+        <section class="surface calendar-shell">
+          <header class="calendar-toolbar">
+            <div><h2>2026 年 7 月</h2><p>月、周、日工作台保持原有结构，状态切换为事件成果语义。</p></div>
+            <div class="calendar-view-switch" role="group" aria-label="日历视图">
+              <button type="button" data-calendar-view="month" aria-pressed="true">月</button>
+              <button type="button" data-calendar-view="week" aria-pressed="false">周</button>
+              <button type="button" data-calendar-view="day" aria-pressed="false">日</button>
+            </div>
+          </header>
+
+          <section id="calendar-month" class="calendar-view month-layout" aria-label="月视图">
+            <div class="month-main">
+              <div class="weekday-row" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
+              <div id="month-grid" class="month-grid" role="grid" aria-label="2026年7月日历"></div>
+            </div>
+            <aside class="month-side" aria-live="polite">
+              <span class="eyebrow">当天检查</span>
+              <h3 id="month-day-title">7 月 22 日 · 今天</h3>
+              <div id="month-summary" class="summary-row">
+                <span class="summary-chip">待继续 1</span><span class="summary-chip">已完成 1</span><span class="summary-chip">完整日志 · 可汇总</span>
+              </div>
+              <div id="month-detail">
+                <div class="calendar-event-line"><i class="row-index">1</i><div><strong>傍晚那段慢下来的路</strong><span>已保存事件日志</span></div><button class="button ghost small" type="button">查看</button></div>
+                <div class="calendar-event-line"><i class="row-index">2</i><div><strong>开会前突然有点想躲开</strong><span>事件日志草稿</span></div><button class="button ghost small" type="button">编辑</button></div>
+              </div>
+              <div class="workspace-actions"><button class="button primary" type="button" data-page-target="today">查看当天成果</button></div>
+            </aside>
+          </section>
+
+          <section id="calendar-week" class="calendar-view week-scroll" aria-label="周视图" hidden>
+            <div class="week-board">
+              <article class="week-card"><h3>周一 · 20</h3><span class="status-pill">空白</span><p>这一天还没有事件记录。</p><button class="button secondary small" type="button">开始记录</button></article>
+              <article class="week-card"><h3>周二 · 21</h3><span class="status-pill warning">待编辑 1</span><p>一篇事件日志仍在草稿中。</p><button class="button primary small" type="button">继续编辑</button></article>
+              <article class="week-card current"><h3>周三 · 22</h3><span class="status-pill saved">2 件事</span><p>一篇已保存，一篇待保存；完整日志可汇总。</p><button class="button primary small" type="button" data-page-target="today">查看今天</button></article>
+              <article class="week-card"><h3>周四 · 23</h3><span class="status-pill warning">进行中</span><p>当前事件仍在轻量记录阶段。</p><button class="button primary small" type="button">继续记录</button></article>
+              <article class="week-card"><h3>周五 · 24</h3><span class="status-pill">空白</span><p>到了当天，再从一件事开始。</p><button class="button secondary small" type="button" disabled>待到来</button></article>
+              <article class="week-card"><h3>周六 · 25</h3><span class="status-pill">空白</span><p>到了当天，再从一件事开始。</p><button class="button secondary small" type="button" disabled>待到来</button></article>
+              <article class="week-card"><h3>周日 · 26</h3><span class="status-pill">空白</span><p>到了当天，再从一件事开始。</p><button class="button secondary small" type="button" disabled>待到来</button></article>
+            </div>
+          </section>
+
+          <section id="calendar-day" class="calendar-view day-layout" aria-label="日视图" hidden>
+            <div class="day-main">
+              <span class="eyebrow">周三 · 7 月 22 日</span>
+              <h1 class="page-title">今天的事件</h1>
+              <p class="page-lead">每一件事保留自己的访谈和日志状态，主动作直接对应继续记录、继续编辑或查看成果。</p>
+              <div class="event-list">
+                <article class="event-row"><i class="row-index">1</i><div><h3>傍晚那段慢下来的路</h3><p>已保存事件日志，可直接阅读。</p><div class="row-meta"><i></i><span>已保存</span></div></div><button class="button secondary small" type="button">查看日志</button></article>
+                <article class="event-row"><i class="row-index">2</i><div><h3>开会前突然有点想躲开</h3><p>事件日志已有草稿，等待确认保存。</p><div class="row-meta"><i class="draft"></i><span>待保存</span></div></div><button class="button primary small" type="button">继续编辑</button></article>
+              </div>
+            </div>
+            <aside class="day-side">
+              <span class="eyebrow">完整日志</span>
+              <h2 class="side-heading">保存第二篇后即可汇总</h2>
+              <p class="side-copy">单篇已保存时入口直达事件日志；两篇及以上已保存时，进入当天完整日志。</p>
+              <div class="daily-preview"><strong>当前来源 1 / 2</strong><p>仍有一篇事件日志处于草稿，完整日志会等待来源稳定。</p></div>
+              <button class="button secondary" type="button" data-page-target="today">查看今日日志</button>
+            </aside>
+          </section>
+        </section>
+      </section>
+
+      <section class="design-note max-width" aria-label="原型设计说明">
+        <article class="note-panel">
+          <h1>产品选择已确认：A / B / C</h1>
+          <p>事件叙事和“我看见的”天然组成一篇完整日志。连续阅读保持书页感，也让轻量记录可以自然地只展示事件叙事；中度和深度成果只需在同一篇日志下方增加真实形成的线索。折叠方案更适合用户频繁只看经过，分区方案更适合内容很长的成熟产品阶段。</p>
+          <p>当天完整日志先保留事件合集，用户再决定是否额外生成“今天看见的自己”；证据不足时直接说明当前无法形成共同线索。今日日志展示正文片段，加强一天中具体经历的回忆感，同时保留标题、状态和单一主动作。</p>
+          <div class="legend">
+            <span class="tag reuse">复用｜大对话区、事件标签、生成反馈、右侧日志书页、编辑保存</span>
+            <span class="tag extend">扩展｜今日日志事件列表、来源状态、日历月周日事件语义</span>
+            <span class="tag new">新增｜三种日志呈现方案、跨事件当天线索、完整日志来源提示</span>
+          </div>
+        </article>
+        <aside class="note-panel">
+          <h2>选择取舍</h2>
+          <p>完整日志 B 给用户更明确的生成控制，多增加一次动作；C 最轻，只形成事件合集。</p>
+          <p>今日日志 B 增加定位上下文；C 接近阅读页，会显著提高面板密度。分析和画像继续使用已有口径。</p>
+          <div class="legend"><span class="build-tag">分析 · 保持现状</span><span class="build-tag">画像 · 保持现状</span></div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const pageButtons = Array.from(document.querySelectorAll('[data-page]'));
+      const pageLinks = Array.from(document.querySelectorAll('[data-page-link]'));
+      const screens = {
+        interview: document.getElementById('screen-interview'),
+        today: document.getElementById('screen-today'),
+        full: document.getElementById('screen-full'),
+        calendar: document.getElementById('screen-calendar')
+      };
+
+      function showPage(page) {
+        Object.entries(screens).forEach(([name, screen]) => { screen.hidden = name !== page; });
+        pageButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.page === page)));
+        pageLinks.forEach((button) => button.setAttribute('aria-current', button.dataset.pageLink === page ? 'page' : 'false'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      pageButtons.forEach((button) => button.addEventListener('click', () => showPage(button.dataset.page)));
+      pageLinks.forEach((button) => button.addEventListener('click', () => showPage(button.dataset.pageLink)));
+      document.querySelectorAll('[data-page-target]').forEach((button) => button.addEventListener('click', () => showPage(button.dataset.pageTarget)));
+      document.querySelectorAll('[data-static-page]').forEach((button) => button.addEventListener('click', () => {
+        window.alert(`${button.textContent}页维持当前产品设计，本批次不改变其数据口径和页面结构。`);
+      }));
+
+      const journal = document.getElementById('journal-panel');
+      const scrim = document.getElementById('journal-scrim');
+      const journalOpen = document.getElementById('open-journal');
+      const journalBody = document.getElementById('journal-body');
+      const journalActions = document.getElementById('journal-actions');
+      const stateButtons = Array.from(document.querySelectorAll('[data-journal-state]'));
+      const schemeButtons = Array.from(document.querySelectorAll('[data-scheme]'));
+      let journalState = 'draft';
+      let journalScheme = 'continuous';
+      let journalSection = 'story';
+      let insightExpanded = false;
+
+      const eventStory = '开会前，我明明准备了很久，却还是突然想躲开。我总觉得站上去之前，应该先把所有问题都回答好。真正讲完以后，我发现大家更关心的，是我们能不能一起把问题理清。';
+      const eventInsight = '我开始看到，站出来未必意味着独自给出全部答案，也可以是邀请大家一起把事情向前推进。';
+
+      function journalContent(editable) {
+        const title = `<input class="journal-title-input" value="站出来，也一起想明白" aria-label="事件日志标题" ${editable ? '' : 'readonly'} />`;
+        const story = editable
+          ? `<textarea class="journal-editor" aria-label="事件叙事">${eventStory}</textarea>`
+          : `<p class="journal-copy">${eventStory}</p>`;
+        const insight = editable
+          ? `<textarea class="journal-editor" aria-label="我看见的">${eventInsight}</textarea>`
+          : `<p class="journal-insight">${eventInsight}</p>`;
+
+        if (journalScheme === 'folded') {
+          return `${title}<p class="journal-section-label">事件叙事</p>${story}
+            <button class="fold-toggle" type="button" id="fold-toggle" aria-expanded="${insightExpanded}">
+              <span>我看见的</span><span aria-hidden="true">${insightExpanded ? '收起' : '展开'}</span>
+            </button>
+            <div id="folded-insight" ${insightExpanded ? '' : 'hidden'}>${insight}</div>`;
+        }
+
+        if (journalScheme === 'sectioned') {
+          const body = journalSection === 'story'
+            ? `<p class="journal-section-label">完整经过</p>${story}`
+            : `<p class="journal-section-label">这一轮形成的线索</p>${insight}`;
+          return `${title}<div class="journal-tabs" role="tablist" aria-label="事件日志分区">
+            <button class="journal-tab" type="button" role="tab" data-journal-section="story" aria-selected="${journalSection === 'story'}">事件叙事</button>
+            <button class="journal-tab" type="button" role="tab" data-journal-section="insight" aria-selected="${journalSection === 'insight'}">我看见的</button>
+          </div>${body}`;
+        }
+
+        return `${title}<p class="journal-section-label">事件叙事</p>${story}<div class="journal-divider"></div><p class="journal-section-label">我看见的</p>${insight}`;
+      }
+
+      function renderJournal() {
+        stateButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.journalState === journalState)));
+        schemeButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.scheme === journalScheme)));
+
+        if (journalState === 'generating') {
+          journalBody.innerHTML = `<div class="journal-state-head"><span class="status-pill warning">正在整理</span><span class="autosave">可取消</span></div>
+            <h2 class="page-title" style="font-size:29px">正在把这件事收成一篇日志</h2>
+            <p class="side-copy">继续复用现有的骨架、细节、润色三阶段反馈。</p>
+            <div class="generation-stage"><p><span>补全事件骨架与线索</span><span>68%</span></p><div class="generation-track"><i></i></div></div>
+            <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div>`;
+          journalActions.innerHTML = `<button class="button secondary" type="button" data-cancel-generation>取消整理</button>`;
+        } else if (journalState === 'failure') {
+          journalBody.innerHTML = `<div class="journal-state-head"><span class="status-pill warning">生成未完成</span></div>
+            <h2 class="page-title" style="font-size:29px">这次整理暂时停住了</h2>
+            <div class="notice error" role="alert"><strong>访谈内容和已形成的线索都已保留。</strong><br />可以继续生成；基础版本通过事实检查后也会直接打开编辑。</div>
+            <p class="side-copy">若基础版本缺少可信材料，事件会回到生成前的检查点。</p>`;
+          journalActions.innerHTML = `<button class="button primary" type="button" data-retry-generation>继续生成</button><button class="button secondary" type="button" data-close-from-journal>返回检查点</button>`;
+        } else {
+          const editable = journalState === 'draft' || journalState === 'editing' || journalState === 'stale';
+          const label = journalState === 'saved' ? '已保存' : journalState === 'stale' ? '待保存' : journalState === 'editing' ? '编辑中' : '草稿';
+          const className = journalState === 'saved' ? 'saved' : journalState === 'stale' ? 'warning' : '';
+          const notice = journalState === 'stale'
+            ? `<div class="notice"><strong>这篇事件日志已被重新编辑。</strong><br />完整日志会显示“需更新”，再次保存后成为当天最新来源。</div>`
+            : '';
+          journalBody.innerHTML = `<div class="journal-state-head"><span class="status-pill ${className}">${label}</span><span class="autosave">${editable ? '编辑将自动暂存' : '保存于 21:16'}</span></div>${notice}${journalContent(editable)}`;
+          journalActions.innerHTML = journalState === 'saved'
+            ? `<button class="button secondary" type="button" data-edit-journal>重新编辑</button><button class="button primary" type="button" data-page-from-journal="today">查看今日日志</button>`
+            : `<button class="button primary" type="button" data-save-journal>保存</button><button class="button secondary" type="button" data-page-from-journal="today">记下一件</button><button class="button ghost" type="button" data-close-from-journal>关闭</button>`;
+        }
+
+        const foldToggle = document.getElementById('fold-toggle');
+        if (foldToggle) {
+          foldToggle.addEventListener('click', () => {
+            insightExpanded = !insightExpanded;
+            renderJournal();
+          });
+        }
+        document.querySelectorAll('[data-journal-section]').forEach((button) => button.addEventListener('click', () => {
+          journalSection = button.dataset.journalSection;
+          renderJournal();
+        }));
+        const save = journalActions.querySelector('[data-save-journal]');
+        if (save) save.addEventListener('click', () => { journalState = 'saved'; renderJournal(); });
+        const edit = journalActions.querySelector('[data-edit-journal]');
+        if (edit) edit.addEventListener('click', () => { journalState = 'editing'; renderJournal(); });
+        const retry = journalActions.querySelector('[data-retry-generation]');
+        if (retry) retry.addEventListener('click', () => {
+          retry.textContent = '正在继续…';
+          retry.disabled = true;
+          window.setTimeout(() => { journalState = 'draft'; renderJournal(); }, 700);
+        });
+        const cancel = journalActions.querySelector('[data-cancel-generation]');
+        if (cancel) cancel.addEventListener('click', () => { journalState = 'draft'; renderJournal(); });
+        journalActions.querySelectorAll('[data-close-from-journal]').forEach((button) => button.addEventListener('click', () => setJournal(false)));
+        journalActions.querySelectorAll('[data-page-from-journal]').forEach((button) => button.addEventListener('click', () => {
+          setJournal(false);
+          showPage(button.dataset.pageFromJournal);
+        }));
+      }
+
+      function setJournal(open) {
+        journal.classList.toggle('open', open);
+        scrim.classList.toggle('open', open);
+        journal.setAttribute('aria-hidden', String(!open));
+        scrim.setAttribute('aria-hidden', String(!open));
+        journalOpen.setAttribute('aria-expanded', String(open));
+        if (open) {
+          renderJournal();
+          document.getElementById('close-journal').focus();
+        } else {
+          journalOpen.focus();
+        }
+      }
+
+      journalOpen.addEventListener('click', () => setJournal(true));
+      document.getElementById('close-journal').addEventListener('click', () => setJournal(false));
+      scrim.addEventListener('click', () => setJournal(false));
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && journal.classList.contains('open')) setJournal(false);
+      });
+      schemeButtons.forEach((button) => button.addEventListener('click', () => {
+        journalScheme = button.dataset.scheme;
+        insightExpanded = false;
+        journalSection = 'story';
+        renderJournal();
+        setJournal(true);
+      }));
+      stateButtons.forEach((button) => button.addEventListener('click', () => {
+        journalState = button.dataset.journalState;
+        renderJournal();
+        setJournal(true);
+      }));
+      document.querySelectorAll('[data-open-state]').forEach((button) => button.addEventListener('click', () => {
+        journalState = button.dataset.openState;
+        setJournal(true);
+      }));
+      document.querySelectorAll('[data-event-log]').forEach((button) => button.addEventListener('click', () => {
+        showPage('interview');
+        journalState = button.dataset.eventLog;
+        window.setTimeout(() => setJournal(true), 50);
+      }));
+
+      const todayDensityButtons = Array.from(document.querySelectorAll('[data-today-density]'));
+      const eventSummaries = Array.from(document.querySelectorAll('.event-summary'));
+      const todayDensityNote = document.getElementById('today-density-note');
+      function setTodayDensity(density) {
+        todayDensityButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.todayDensity === density)));
+        eventSummaries.forEach((summary) => {
+          summary.hidden = density === 'a';
+          summary.textContent = density === 'c' ? summary.dataset.long : summary.dataset.short;
+          summary.classList.toggle('long-copy', density === 'c');
+        });
+        todayDensityNote.textContent = density === 'a'
+          ? '推荐 A：右侧面板保持管理和导航效率。活动事件允许展示一条可信短摘要，已成稿内容回到日志书页阅读。'
+          : density === 'b'
+            ? 'B 方案：每件事增加一句短摘要，定位更快，列表纵向空间会相应增加。'
+            : 'C 方案：直接展示正文片段，回忆感更强，今日日志会更接近第二个阅读页。';
+      }
+      todayDensityButtons.forEach((button) => button.addEventListener('click', () => setTodayDensity(button.dataset.todayDensity)));
+
+      const insightStrategyButtons = Array.from(document.querySelectorAll('[data-insight-strategy]'));
+      const dayInsight = document.getElementById('day-insight');
+      const dayInsightPrompt = document.getElementById('day-insight-prompt');
+      const insightStrategyNote = document.getElementById('insight-strategy-note');
+      let insightStrategy = 'b';
+      let optInInsightGenerated = false;
+      function setInsightStrategy(strategy) {
+        insightStrategy = strategy;
+        insightStrategyButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.insightStrategy === strategy)));
+        dayInsight.hidden = strategy === 'c' || (strategy === 'b' && !optInInsightGenerated);
+        dayInsightPrompt.hidden = strategy !== 'b' || optInInsightGenerated;
+        const generateButton = document.getElementById('generate-day-insight');
+        if (strategy === 'b' && !optInInsightGenerated) {
+          generateButton.textContent = '生成今天看见的自己';
+          generateButton.disabled = false;
+        }
+        insightStrategyNote.textContent = strategy === 'a'
+          ? '推荐 A：至少两篇事件共同支持时同步生成，证据不足时整节省略，完整日志一次形成。'
+          : strategy === 'b'
+            ? 'B 方案：事件合集先形成，用户再决定是否额外生成当天线索，增加一次主动选择。'
+            : 'C 方案：完整日志只保留事件合集，生成范围最轻，跨事件线索暂不提供。';
+      }
+      insightStrategyButtons.forEach((button) => button.addEventListener('click', () => {
+        optInInsightGenerated = false;
+        setInsightStrategy(button.dataset.insightStrategy);
+      }));
+      document.getElementById('generate-day-insight').addEventListener('click', (event) => {
+        event.currentTarget.textContent = '正在生成…';
+        event.currentTarget.disabled = true;
+        window.setTimeout(() => {
+          optInInsightGenerated = true;
+          setInsightStrategy(insightStrategy);
+        }, 650);
+      });
+
+      const fullStatus = document.getElementById('full-status');
+      const updateCopy = document.getElementById('update-copy');
+      document.querySelectorAll('[data-full-state]').forEach((button) => button.addEventListener('click', () => {
+        const state = button.dataset.fullState;
+        fullStatus.className = `status-pill ${state === 'saved' ? 'saved' : 'warning'}`;
+        if (state === 'stale') {
+          fullStatus.textContent = '需更新';
+          updateCopy.className = 'update-warning';
+          updateCopy.innerHTML = '<strong>第 2 件事件日志已重新保存。</strong><br />可以用最新来源更新完整日志。更新会替换当前完整日志中的手动编辑。';
+        } else if (state === 'failure') {
+          fullStatus.textContent = '更新失败';
+          updateCopy.className = 'notice error';
+          updateCopy.innerHTML = '<strong>旧版完整日志仍然可以阅读。</strong><br />最新来源已经保留，可以稍后继续更新。';
+        } else {
+          fullStatus.textContent = '已保存';
+          updateCopy.className = 'update-warning';
+          updateCopy.textContent = '两篇来源与当前完整日志一致。';
+        }
+      }));
+      document.getElementById('save-full').addEventListener('click', (event) => {
+        event.currentTarget.textContent = '已保存';
+        fullStatus.textContent = '已保存';
+        fullStatus.className = 'status-pill saved';
+      });
+
+      const calendarViewButtons = Array.from(document.querySelectorAll('[data-calendar-view]'));
+      const calendarViews = {
+        month: document.getElementById('calendar-month'),
+        week: document.getElementById('calendar-week'),
+        day: document.getElementById('calendar-day')
+      };
+      function setCalendarView(view) {
+        Object.entries(calendarViews).forEach(([name, element]) => { element.hidden = name !== view; });
+        calendarViewButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.calendarView === view)));
+      }
+      calendarViewButtons.forEach((button) => button.addEventListener('click', () => setCalendarView(button.dataset.calendarView)));
+
+      const monthGrid = document.getElementById('month-grid');
+      const monthDayTitle = document.getElementById('month-day-title');
+      const monthSummary = document.getElementById('month-summary');
+      const monthDetail = document.getElementById('month-detail');
+      const dayData = {
+        18: { marker: '1 篇已保存', tone: 'complete', summary: '已完成 1', title: '7 月 18 日', detail: '一篇事件日志已保存，可直接查看。' },
+        20: { marker: '历史五维', tone: '', summary: '历史五维记录', title: '7 月 20 日', detail: '继续沿用原有五维阅读路径，不与事件成果合并。' },
+        21: { marker: '草稿 1', tone: 'draft', summary: '待继续 1', title: '7 月 21 日', detail: '一篇事件日志仍在草稿中。' },
+        22: { marker: '2 件事', tone: 'complete', summary: '完整日志 · 可汇总', title: '7 月 22 日 · 今天', detail: '一篇已保存，一篇待保存。' },
+        23: { marker: '正在记录', tone: 'draft', summary: '待继续 1', title: '7 月 23 日', detail: '一件事仍在访谈中。' },
+        28: { marker: '两类记录', tone: '', summary: '两类历史记录', title: '7 月 28 日', detail: '五维记录与事件记录分别提供阅读入口。' }
+      };
+      const cells = [
+        { day: 29, outside: true }, { day: 30, outside: true },
+        ...Array.from({ length: 31 }, (_, index) => ({ day: index + 1, outside: false })),
+        ...Array.from({ length: 9 }, (_, index) => ({ day: index + 1, outside: true }))
+      ];
+      cells.forEach((cell) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `day-cell${cell.outside ? ' outside' : ''}${!cell.outside && cell.day === 22 ? ' today' : ''}`;
+        button.setAttribute('role', 'gridcell');
+        button.setAttribute('aria-pressed', String(!cell.outside && cell.day === 22));
+        button.setAttribute('aria-label', `${cell.outside ? '相邻月份' : '7月'}${cell.day}日`);
+        const data = cell.outside ? null : dayData[cell.day];
+        button.innerHTML = `<span class="day-number">${cell.day}</span>${data ? `<span class="calendar-marker ${data.tone}">${data.marker}</span>` : ''}`;
+        if (!cell.outside) {
+          button.addEventListener('click', () => {
+            monthGrid.querySelectorAll('.day-cell').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+            button.setAttribute('aria-pressed', 'true');
+            const selected = dayData[cell.day];
+            monthDayTitle.textContent = selected?.title || `7 月 ${cell.day} 日`;
+            monthSummary.innerHTML = `<span class="summary-chip">${selected?.summary || '还没有记录'}</span>`;
+            monthDetail.innerHTML = `<p class="side-copy">${selected?.detail || '可以从一件还留在心里的事开始。'}</p>`;
+          });
+        }
+        monthGrid.appendChild(button);
+      });
+
+      document.querySelector('.send').addEventListener('click', () => {
+        const textarea = document.querySelector('.composer textarea');
+        const text = textarea.value.trim();
+        if (!text) return;
+        const article = document.createElement('article');
+        article.className = 'message user';
+        article.innerHTML = `<div class="bubble"></div>`;
+        article.querySelector('.bubble').textContent = text;
+        document.getElementById('conversation').appendChild(article);
+        textarea.value = '';
+        document.getElementById('conversation').scrollTop = document.getElementById('conversation').scrollHeight;
+      });
+      document.querySelector('.composer textarea').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          document.querySelector('.send').click();
+        }
+      });
+
+      setTodayDensity('c');
+      setInsightStrategy('b');
+      renderJournal();
+    </script>
+  </body>
+</html>

@@ -27,6 +27,8 @@ typography:
     lineHeight: 1
   body:
     fontFamily: "Charter, Georgia, PingFang SC, Hiragino Sans GB, serif"
+  ui:
+    fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif"
   mono:
     fontFamily: "IBM Plex Mono, SFMono-Regular, Menlo, monospace"
 rounded:
@@ -76,11 +78,13 @@ components:
 | **[docs/design/ui-conventions.md](docs/design/ui-conventions.md)** | 容器层级、圆角/边框 token、共享原语清单（工程必遵） |
 | **`docs/plans/`** | 历史决策过程；若与 DESIGN 或代码冲突，以 DESIGN + 代码为准 |
 
-### Changelog 2026-06-12
+### Changelog
 
-1. **全站单层卡片制**：每页最多 Surface 底板 + 一层 Card；卡片内用眉题 / hairline / 留白分区，禁止再嵌套 border+bg 子容器。
-2. **分析页 IA**：单页四段纵向 scroll + 顶部锚点 tab + scroll spy；section keys 为 `trends / dimensions / correlation / review`。
-3. **量化趋势段**：只读读数台（`GET /api/analysis/range`），无评分录入、无热力点选、无补漏 CTA。
+1. **2026-06-12｜全站单层卡片制**：每页最多 Surface 底板 + 一层 Card；卡片内用眉题 / hairline / 留白分区，禁止再嵌套 border+bg 子容器。
+2. **2026-07-18｜流动交互原语**：按钮和交互卡片统一按下反馈；segmented 与横向分页改用可重定向 spring；画像和分析内容支持横向滑动；日志书页、菜单和确认弹窗补齐空间连续性、键盘操作和焦点恢复。
+3. **2026-07-20｜分析页 IA 收束**：页面保留 `trends / dimensions` 两段纵向阅读区与顶部锚点切换；旧 `overview / score / rhythm` 归一到 `trends`，旧 `insights / correlation / review` 归一到 `dimensions`。
+4. **量化趋势段**：只读读数台（`GET /api/analysis/range`），无评分录入、无热力点选、无补漏 CTA。
+5. **2026-07-21｜访谈换问法反馈**：生成状态只由目标回复气泡承担；操作区保留静态禁用入口，避免同一动作出现两套加载提示。回复版本切换在同一位置完成，并优先呈现已预加载版本。
 
 视觉参考 mockup：[`docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html`](docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html)、[`trends-final-preview.html`](docs/plans/analysis-ia-mockups/trends-final-preview.html)。
 
@@ -100,7 +104,7 @@ components:
 - **单层卡片制（2026-06-12）**：section 用眉题 + hairline + 留白分区；只有可点击单元或需边界感的数据块才配 Card，纯信息分组不配卡片外壳。
 - 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮；主导航当前页使用贴近文字的暖棕实线下划线，选中项字号略大。
 - 首页、设置页、管理员页优先采用连续工作台：内容顺着一张主纸面展开。
-- **分析页**是纵向 scroll 报告体：四段同屏 + 锚点 tab，不是互斥 tab 仪表盘，也不是冷色 SaaS dashboard；职责是读数、理解与后续手动 AI 复盘，不承担补漏推进。
+- **分析页**是纵向 scroll 报告体：量化趋势与五维记录两段同屏 + 顶部锚点切换；职责是读数与理解，不承担补漏推进。
 - calendar 优先判断效率，减少装饰性纹理和厚重阴影。
 - serif 标题贯穿全站，工作台正文和操作信息更紧凑克制。
 - 状态色回答“现在是什么阶段”，维度色回答“这是哪一类记录”。
@@ -145,7 +149,10 @@ components:
 
 - **Display:** `Baskerville, Iowan Old Style, Times New Roman, Songti SC, serif`
 - **Body:** `Charter, Georgia, PingFang SC, Hiragino Sans GB, serif`
+- **UI:** `ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif`
 - **Mono:** `IBM Plex Mono, SFMono-Regular, Menlo, monospace`（仅程序化数据）
+
+品牌标题和日志正文继续使用 display / body；导航、按钮、状态、图表标签和输入控件使用 UI 字体。新增或调整的核心工具文字以 `0.75rem` 为最低基线，非关键图表刻度与装饰性标记可按空间单独评估。
 
 ### Calendar Workspace Override
 
@@ -187,6 +194,10 @@ components:
 | `SectionHeading` | 眉题式分组标题 |
 | `Divider` | hairline 分隔线 |
 | `ActionButton` | primary / secondary / ghost 三态按钮 |
+| `SlidingSegmentedControl` | 可重定向 spring 滑块；支持滚动容器内自动显露选中项 |
+| `HorizontalPager` | 内容分页轨；按需启用横向 swipe 与速度投影 |
+| `ActionMenu` | 带方向键导航、焦点恢复和上下翻转的菜单 |
+| `ConfirmDialog` | 带焦点圈定、Escape 关闭和安全初始焦点的确认弹窗 |
 
 ### Shells
 
@@ -194,13 +205,13 @@ components:
 - **Calendar shell**：浅暖背景、轻阴影，不套木纹。
 - **Settings / Home / Admin shell**：一张连续主纸面；控制区用 Divider 分行，不再各自漂浮成大卡。
 - **Analysis shell（2026-06-12）**：
-  - 单页四段同屏：`trends` / `dimensions` / `correlation` / `review`
-  - `SiteHeader` 中区：周期 preset（本周/本月/自定义）+ 四段锚点 tab + contextual chip
+  - 单页两段同屏：`trends` / `dimensions`
+  - `SiteHeader` 中区：周期 preset（本周/本月/自定义）+ 两段锚点 tab + contextual chip
   - 导航：tab 点击 → 锚点滚动；用户滚动 → scroll spy 更新 URL `section`
   - 段间：`Divider` + 留白；段内眉题用 `AnalysisSection` / `SectionHeading`
   - **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；数据来自 `GET /api/analysis/range`
-  - **五维全景**：按月聚合（`GET /api/analysis/month`）；**关联 / 复盘**：占位，手动 AI 后续接入
-  - 旧 URL `overview|score|rhythm|insights` 自动映射到新 section keys
+  - **五维记录**：按月聚合（`GET /api/analysis/month`），展示五维线索与代表片段
+  - 旧 URL `overview|score|rhythm` 映射到 `trends`；`insights|correlation|review` 映射到 `dimensions`
 
 ### Panels and Cards
 
@@ -220,6 +231,7 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 - **Primary**：最直接下一步（calendar：`查看当天`、`继续访谈`）。
 - **Secondary / ghost**：补充或只读跳转。
 - **Disabled**：低对比、去阴影，一眼不可点。
+- **Pressed**：按钮缩放约 `0.97`，大卡片约 `0.985`；反馈在 pointer-down 当帧出现，只改变 `transform / opacity / color / box-shadow`。
 
 分析页趋势段：**不做**补漏 primary CTA；若保留链接，只用 ghost 级只读「查看来源」。
 
@@ -227,7 +239,16 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 
 - **View switcher**：月/周/日 segmented，当前项 `Calendar Ink` 填充。
 - **Header middle lane**：维度条、calendar toolbar、analysis toolbar 平铺在中区，用 `｜` 分隔，不套独立外框。
-- **Analysis anchor tabs**：四段 tab 与 scroll spy 双向联动；不是互斥渲染切换。
+- **Analysis anchor tabs**：两段 tab 与 scroll spy 双向联动。
+- **Motion**：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；横向 swipe 采用约 `10px` 方向判定、1:1 跟手、速度投影与边界阻尼。
+- **Responsive header**：小于 `1024px` 时，品牌/主导航与上下文工具栏分成两行；上下文工具栏可横向滚动，并通过边缘渐隐提示剩余内容。
+
+### Sheets, Menus and Dialogs
+
+- 日志书页在桌面从右侧进入，在移动端从底部进入；移动端可向下拖动关闭，关闭与反向打开沿当前运动位置继续。
+- `ActionMenu` 从触发点展开，并根据视口空间选择向上或向下；支持方向键、Home、End、Escape 和关闭后的焦点恢复。
+- `ConfirmDialog` 圈定 Tab 焦点，Escape 或遮罩关闭后把焦点还给触发元素；危险操作默认聚焦取消按钮。
+- `prefers-reduced-motion` 关闭拖动、平滑滚动和按压缩放，spring 收敛为短缓动或透明度过渡；`prefers-reduced-transparency` 使用近实色材质；`prefers-contrast: more` 提升边界与文字对比度。
 
 ### Day Cells and Boards
 
@@ -248,6 +269,7 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 - 状态色与维度色各司其职。
 - 标题保留 serif，摘要与操作服务快速扫描。
 - 统一按钮三态与 focus-visible。
+- 保持触摸按下反馈、拖动方向判定和纵向滚动互不抢占。
 
 ### Don't
 

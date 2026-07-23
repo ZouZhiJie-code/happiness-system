@@ -1,0 +1,39 @@
+{
+  "reportVersion": "intent-core-eval-v1",
+  "generatedAt": "2026-07-21T03:37:16.348Z",
+  "datasetVersion": "intent-eval-v1.0+intent-eval-v1.7-blind-adjudicated",
+  "scope": "blind",
+  "runLabel": "adjudicated4",
+  "assessmentPath": "deterministic_plus_provider_merge",
+  "total": 24,
+  "overallScore": 0.9937500000000002,
+  "p0Failed": 1,
+  "metricAccuracy": {
+    "control": 1,
+    "dialogueActs": 1,
+    "contentBoundary": 1,
+    "referenceTarget": 1,
+    "contextUnderstanding": 0.9583333333333334,
+    "stability": 1
+  },
+  "dialogueActPrecision": 1,
+  "dialogueActRecall": 1,
+  "dialogueActF1": 1,
+  "provider": {
+    "attempted": 13,
+    "succeeded": 13,
+    "failed": 0,
+    "failureCodes": {},
+    "p50LatencyMs": 8352,
+    "p95LatencyMs": 10081
+  },
+  "failedCases": [
+    {
+      "id": "INT-EVAL-226",
+      "score": 0.8500000000000001,
+      "issues": [
+        "上下文理解：期望目标 judgment_clue，实际 空"
+      ]
+    }
+  ]
+}

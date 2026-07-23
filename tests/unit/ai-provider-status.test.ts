@@ -15,12 +15,15 @@ const ENV_KEYS = [
   "AI_PROVIDER",
   "VOLCENGINE_ARK_API_KEY",
   "ARK_API_KEY",
+  "DEEPSEEK_API_KEY",
   "VOLCENGINE_ARK_MODEL",
   "ARK_MODEL",
+  "DEEPSEEK_MODEL",
   "VOLCENGINE_ARK_ENDPOINT_ID",
   "ARK_ENDPOINT_ID",
   "VOLCENGINE_ARK_BASE_URL",
   "ARK_BASE_URL",
+  "DEEPSEEK_BASE_URL",
   "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"
 ] as const;
 
@@ -30,6 +33,10 @@ describe("getAIProviderStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetPublishedAIRuntimeConfigRecord.mockResolvedValue(null);
+
+    for (const key of ENV_KEYS) {
+      delete process.env[key];
+    }
   });
 
   afterEach(() => {
@@ -85,6 +92,32 @@ describe("getAIProviderStatus", () => {
         modelOrEndpoint: "ep-20260524-realish",
         baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
         baseUrlHost: "ark.cn-beijing.volces.com"
+      }
+    });
+  });
+
+  it("uses DeepSeek V4 Pro environment configuration ahead of legacy Ark values", async () => {
+    vi.stubEnv("AI_PROVIDER", "volcengine-ark");
+    vi.stubEnv("VOLCENGINE_ARK_API_KEY", "legacy-ark-key");
+    vi.stubEnv("VOLCENGINE_ARK_ENDPOINT_ID", "legacy-endpoint");
+    vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
+    vi.stubEnv("DEEPSEEK_API_KEY", "deepseek-live-key");
+    vi.stubEnv("DEEPSEEK_MODEL", "deepseek-v4-pro");
+    vi.stubEnv("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
+
+    const status = await getAIProviderStatus("chat");
+
+    expect(status).toMatchObject({
+      available: true,
+      state: "ready",
+      code: "READY",
+      source: "environment",
+      issues: [],
+      configSummary: {
+        modelSource: "DEEPSEEK_MODEL",
+        modelOrEndpoint: "deepseek-v4-pro",
+        baseUrl: "https://api.deepseek.com",
+        baseUrlHost: "api.deepseek.com"
       }
     });
   });

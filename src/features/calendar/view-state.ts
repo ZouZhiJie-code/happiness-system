@@ -1,6 +1,11 @@
 import { formatEntryDate, getTodayEntryDate, isEntryDateString, parseEntryDateInput } from "@/features/interview/entry-date";
 
 export type CalendarView = "month" | "week" | "day";
+/**
+ * 月、周视图只读取一套日历模型。日视图由 read-route 决定实际阅读入口，
+ * 因此此字段只承担月、周的明确切换和双轨日期内的二次阅读目标。
+ */
+export type CalendarMode = "legacy" | "event_centered";
 
 export interface CalendarMonthGridCell {
   key: string;
@@ -35,6 +40,10 @@ export function normalizeCalendarView(view: string | null | undefined): Calendar
   return "month";
 }
 
+export function normalizeCalendarMode(mode: string | null | undefined): CalendarMode {
+  return mode === "event_centered" ? "event_centered" : "legacy";
+}
+
 export function normalizeCalendarDate(date: string | null | undefined, today = getTodayEntryDate()) {
   if (!date || !isEntryDateString(date)) {
     return today;
@@ -55,9 +64,24 @@ export function getCalendarMonthKey(date: string) {
 export function buildCalendarHref(input: {
   date: string;
   view?: CalendarView;
+  calendarMode?: CalendarMode;
+  readTarget?: CalendarMode;
 }) {
   const view = normalizeCalendarView(input.view);
-  return `/calendar?view=${view}&date=${input.date}`;
+  const params = new URLSearchParams({
+    view,
+    date: input.date
+  });
+
+  if (input.calendarMode) {
+    params.set("calendarMode", input.calendarMode);
+  }
+
+  if (input.readTarget) {
+    params.set("readTarget", input.readTarget);
+  }
+
+  return `/calendar?${params.toString()}`;
 }
 
 export function shiftCalendarMonth(date: string, offset: number) {

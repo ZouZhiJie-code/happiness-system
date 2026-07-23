@@ -62,7 +62,7 @@ function isBadJournalTitleCandidate(value: string | null | undefined) {
     return true;
   }
 
-  if (/^(?:一下被带轻|轻轻被带起来|象征意义|动作本身|启动信号|确定性|简单性|仪式感)$/u.test(candidate)) {
+  if (/^(?:一下被带轻|轻轻被带起来|表达被点亮|象征意义|动作本身|启动信号|确定性|简单性|仪式感)$/u.test(candidate)) {
     return true;
   }
 

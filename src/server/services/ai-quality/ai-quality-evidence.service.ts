@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { AIGenerationArtifactType } from "@prisma/client";
 
 import { getFeedbackTags } from "@/features/ai-feedback/feedback-config";
 import type {
@@ -106,15 +107,18 @@ function buildScenarioSummary(input: {
   vote: "upvote" | "downvote" | null;
   comment: string | null;
   caseSummary: string | null;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
 }) {
   if (input.comment) {
     return input.vote === "upvote" ? `用户认可这条回复，并补充说明：“${input.comment}”` : `用户认为这条回复有问题，并补充说明：“${input.comment}”`;
   }
   if (input.caseSummary) return input.caseSummary;
-  return input.artifactType === "interview_turn"
-    ? "系统根据访谈回复和前后对话，将这条记录选作判断依据。"
-    : "系统根据日志内容和用户反馈，将这条记录选作判断依据。";
+  if (input.artifactType === "interview_turn") {
+    return "系统根据访谈回复和前后对话，将这条记录选作判断依据。";
+  }
+  return input.artifactType === "event_journal"
+    ? "系统根据事件日志、来源事实和用户反馈，将这条记录选作判断依据。"
+    : "系统根据五维日志内容和用户反馈，将这条记录选作判断依据。";
 }
 
 export function mapAIQualityEvidenceTrace(trace: AIQualityEvidenceTrace): AdminAIQualityEvidenceItem {

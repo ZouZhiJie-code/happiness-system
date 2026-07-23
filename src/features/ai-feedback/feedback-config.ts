@@ -19,6 +19,14 @@ export const AI_FEEDBACK_TAGS = {
     { code: "voice_mismatch", label: "文风不像我" },
     { code: "awkward_writing", label: "结构或表达不自然" },
     { code: "bad_title", label: "标题不合适" }
+  ],
+  event_journal: [
+    { code: "missing_key_detail", label: "遗漏重要内容" },
+    { code: "hallucinated_detail", label: "写了我没说的" },
+    { code: "event_boundary_leak", label: "混入了另一件事" },
+    { code: "insight_mismatch", label: "“我看见的”不准确" },
+    { code: "voice_or_writing_mismatch", label: "文风或表达不自然" },
+    { code: "bad_title", label: "标题不合适" }
   ]
 } as const satisfies Record<AIGenerationArtifactType, ReadonlyArray<{ code: string; label: string }>>;
 
@@ -37,6 +45,14 @@ export const AI_POSITIVE_FEEDBACK_TAGS = {
     { code: "dimension_aligned", label: "维度贴合" },
     { code: "matches_my_voice", label: "文风像我" },
     { code: "natural_structure", label: "结构自然" },
+    { code: "appropriate_title", label: "标题合适" }
+  ],
+  event_journal: [
+    { code: "complete_content", label: "内容完整" },
+    { code: "faithful_to_facts", label: "忠于我的表达" },
+    { code: "event_boundary_clear", label: "事件范围清楚" },
+    { code: "insight_aligned", label: "“我看见的”准确" },
+    { code: "natural_voice", label: "文风自然" },
     { code: "appropriate_title", label: "标题合适" }
   ]
 } as const satisfies Record<AIGenerationArtifactType, ReadonlyArray<{ code: string; label: string }>>;

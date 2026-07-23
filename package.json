@@ -14,6 +14,11 @@
     "smoke:public": "node scripts/http-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "eval:interview-intent": "vite-node -c vitest.config.ts scripts/report-interview-intent-eval.ts",
+    "eval:interview-intent:core": "vite-node -c vitest.config.ts scripts/generate-interview-intent-core-review.ts",
+    "eval:interview-intent:seed": "vite-node -c vitest.config.ts scripts/report-interview-intent-eval.ts --seed",
+    "eval:interview-intent:test": "vitest run tests/evals/interview-intent-seed.eval.test.ts --reporter=verbose",
+    "eval:event-centered:batch-b": "vite-node -c vitest.config.ts scripts/run-event-centered-batch-b-eval.ts",
     "test:watch": "vitest"
   },
   "dependencies": {

@@ -81,11 +81,13 @@ function buildConfigSummary(resolution: AIRuntimeResolution): AIProviderConfigSu
       };
     }
 
-    return {
-      hasApiKey: true,
-      hasModel: true,
-      hasBaseUrl: true,
-      modelSource: "VOLCENGINE_ARK_MODEL",
+      return {
+        hasApiKey: true,
+        hasModel: true,
+        hasBaseUrl: true,
+        modelSource: resolution.source === "environment" && process.env.DEEPSEEK_MODEL?.trim()
+          ? "DEEPSEEK_MODEL"
+          : "VOLCENGINE_ARK_MODEL",
       modelOrEndpoint: "modelId" in config ? config.modelId ?? null : null,
       baseUrl,
       baseUrlHost: parseBaseUrlHost(baseUrl)

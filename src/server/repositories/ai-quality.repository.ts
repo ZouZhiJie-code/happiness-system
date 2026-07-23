@@ -9,11 +9,17 @@ function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
-export async function createAIGenerationTrace(input: {
+type AIGenerationTraceDatabaseClient = Pick<
+  Prisma.TransactionClient,
+  "aIGenerationTrace"
+>;
+
+export interface CreateAIGenerationTraceInput {
   id?: string;
   requestId?: string | null;
   userId: string;
   sessionId?: string | null;
+  journalEventId?: string | null;
   dimension?: InterviewDimension | null;
   artifactType: AIGenerationArtifactType;
   artifactId?: string | null;
@@ -22,13 +28,19 @@ export async function createAIGenerationTrace(input: {
   contextSnapshot: unknown;
   outputOrigin?: AIOutputOrigin | null;
   pipelineDecisions?: unknown[];
-}) {
-  return prisma.aIGenerationTrace.create({
+}
+
+export async function createAIGenerationTraceWithClient(
+  database: AIGenerationTraceDatabaseClient,
+  input: CreateAIGenerationTraceInput
+) {
+  return database.aIGenerationTrace.create({
     data: {
       id: input.id,
       requestId: input.requestId ?? null,
       userId: input.userId,
       sessionId: input.sessionId ?? null,
+      journalEventId: input.journalEventId ?? null,
       dimension: input.dimension ?? null,
       artifactType: input.artifactType,
       artifactId: input.artifactId ?? null,
@@ -39,6 +51,10 @@ export async function createAIGenerationTrace(input: {
       pipelineDecisions: toJson(input.pipelineDecisions ?? [])
     }
   });
+}
+
+export async function createAIGenerationTrace(input: CreateAIGenerationTraceInput) {
+  return createAIGenerationTraceWithClient(prisma, input);
 }
 
 export async function appendGenerationTraceDecision(traceId: string, decision: Record<string, unknown>) {
