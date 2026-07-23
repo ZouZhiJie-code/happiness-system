@@ -22,7 +22,13 @@ export type AIOptimizationCandidateView = {
   id: string;
   path: "system_prompt" | "few_shot" | "engineering";
   status: "draft" | "approved" | "published" | "rejected" | "rolled_back";
-  artifactType: "interview_turn" | "dimension_journal" | "event_journal" | null;
+  artifactType:
+    | "interview_turn"
+    | "dimension_journal"
+    | "event_journal"
+    | "daily_journal"
+    | "daily_journal_insight"
+    | null;
   dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
   promptKey: string | null;
   title: string;
@@ -118,7 +124,9 @@ const REGENERATION_QUESTION_TARGET_LABEL = {
 const ARTIFACT_LABEL = {
   interview_turn: "访谈回复",
   dimension_journal: "五维日志",
-  event_journal: "事件日志"
+  event_journal: "事件日志",
+  daily_journal: "当天完整日志",
+  daily_journal_insight: "今天看见的自己"
 } as const;
 
 const RISK_LABEL: Record<string, string> = {

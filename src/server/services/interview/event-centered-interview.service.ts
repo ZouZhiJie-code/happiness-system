@@ -204,6 +204,8 @@ export async function getEventCenteredInterviewWorkspace(
     ? "generating" as const
     : data.journalEntry?.status === "saved"
       ? "saved" as const
+      : data.journalEntry?.status === "modified"
+        ? "modified" as const
       : data.journalEntry
         ? "draft" as const
         : "not_generated" as const;
@@ -248,6 +250,9 @@ export async function getEventCenteredInterviewWorkspace(
     journal: {
       status: journalStatus,
       entryId: data.journalEntry?.id ?? null,
+      generationId: null,
+      errorCode: null,
+      retryable: false,
       eventStatus: data.identity.eventStatus
     }
   };

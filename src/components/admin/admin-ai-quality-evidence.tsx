@@ -20,7 +20,9 @@ const DIMENSION_LABEL = {
 const ARTIFACT_LABEL = {
   interview_turn: "访谈回复",
   dimension_journal: "五维日志",
-  event_journal: "事件日志"
+  event_journal: "事件日志",
+  daily_journal: "当天完整日志",
+  daily_journal_insight: "今天看见的自己"
 } as const;
 
 const ROLE_LABEL = {

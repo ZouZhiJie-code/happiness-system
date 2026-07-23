@@ -202,10 +202,27 @@ export const eventCenteredWorkspaceSessionSchema = eventCenteredSessionIdentityS
     }).nullable()
   }).default({ pendingTurn: null }),
   journal: z.object({
-    status: z.enum(["not_generated", "generating", "draft", "saved"]),
+    status: z.enum([
+      "not_generated",
+      "generating",
+      "draft",
+      "modified",
+      "saved",
+      "failed"
+    ]),
     entryId: z.string().nullable(),
+    generationId: z.string().nullable(),
+    errorCode: z.string().nullable(),
+    retryable: z.boolean(),
     eventStatus: z.enum(["active", "generating", "completed", "abandoned"]).nullable()
-  }).default({ status: "not_generated", entryId: null, eventStatus: null })
+  }).default({
+    status: "not_generated",
+    entryId: null,
+    generationId: null,
+    errorCode: null,
+    retryable: false,
+    eventStatus: null
+  })
 });
 
 export const eventCenteredRespondRequestSchema = z.object({
@@ -218,7 +235,8 @@ export const eventCenteredRespondRequestSchema = z.object({
     "regenerate_response",
     "switch_response_version",
     "resume_turn",
-    "exit_event"
+    "exit_event",
+    "generate_event_journal"
   ]),
   rootSessionId: z.string().min(1),
   clientTurnId: z.string().min(1),

@@ -1,5 +1,13 @@
 export type JournalDailyEntryStatus = "draft" | "saved" | "modified";
 
+export type JournalDailyEntryGenerationKind = "daily_journal" | "self_insight";
+
+export type JournalDailyEntryGenerationStatus =
+  | "processing"
+  | "completed"
+  | "failed"
+  | "canceled";
+
 export interface JournalDailySourceEntry {
   eventId: string;
   entryId: string;
@@ -34,6 +42,66 @@ export interface JournalDailyEntryRecord {
   savedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface JournalDailyEntryGenerationRecord {
+  id: string;
+  entryDate: string;
+  operationKind: JournalDailyEntryGenerationKind;
+  clientOperationId: string;
+  intendedEntryId: string;
+  resultEntryId: string | null;
+  traceId: string | null;
+  status: JournalDailyEntryGenerationStatus;
+  attemptCount: number;
+  sourceSignature: string;
+  sourceEntryIds: string[];
+  sourceEventIds: string[];
+  sourceSnapshot: JournalDailyEntrySourceSnapshot;
+  baseContentRevision: number | null;
+  replaceManualEditsConfirmed: boolean;
+  errorCode: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  failedAt: string | null;
+  canceledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReserveJournalDailyEntryGenerationInput {
+  userId: string;
+  entryDate: string;
+  operationKind: JournalDailyEntryGenerationKind;
+  clientOperationId: string;
+  intendedEntryId: string;
+  expectedSourceSignature: string;
+  expectedContentRevision: number | null;
+  replaceManualEditsConfirmed: boolean;
+}
+
+export type ReserveJournalDailyEntryGenerationResult =
+  | {
+      kind: "entry";
+      entry: JournalDailyEntryRecord;
+    }
+  | {
+      kind: "generation";
+      generation: JournalDailyEntryGenerationRecord;
+    };
+
+export interface CompleteJournalDailyEntryGenerationInput {
+  userId: string;
+  generationId: string;
+  sourceSignature: string;
+  resultEntryId: string;
+  traceId?: string | null;
+}
+
+export interface SettleJournalDailyEntryGenerationInput {
+  userId: string;
+  generationId: string;
+  errorCode: string;
 }
 
 export type JournalDailySourceCollection =

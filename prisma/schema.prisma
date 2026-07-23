@@ -131,6 +131,18 @@ enum JournalDailyEntryStatus {
   modified
 }
 
+enum JournalDailyEntryGenerationKind {
+  daily_journal
+  self_insight
+}
+
+enum JournalDailyEntryGenerationStatus {
+  processing
+  completed
+  failed
+  canceled
+}
+
 enum JournalDayOwnershipStatus {
   clean
   mixed
@@ -183,6 +195,8 @@ enum AIGenerationArtifactType {
   interview_turn
   dimension_journal
   event_journal
+  daily_journal
+  daily_journal_insight
 }
 
 enum AIGenerationTraceStatus {
@@ -319,29 +333,30 @@ enum AIRuntimeConfigStatus {
 }
 
 model User {
-  id                        String                @id @default(cuid())
-  username                  String                @unique
-  passwordHash              String
-  agreedToTermsAt           DateTime
-  agreedToPrivacyAt         DateTime
-  privacyPolicyVersion      String                @default("legacy")
-  aiQualityConsentVersion   String?
-  aiQualityConsentAt        DateTime?
-  aiQualityConsentRevokedAt DateTime?
-  createdAt                 DateTime              @default(now())
-  settings                  UserSettings?
-  sessions                  InterviewSession[]
-  journalEvents             JournalEvent[]
-  joyEntries                JoyEntry[]
-  dailyJournalEntries       DailyJournalEntry[]
-  journalDailyEntries       JournalDailyEntry[]
-  journalDayOwnerships      JournalDayOwnership[]
-  dailyHappinessScores      DailyHappinessScore[]
-  memoryFacts               MemoryFact[]
-  portraitSnapshots         PortraitSnapshot[]
-  authSessions              AuthSession[]
-  aiGenerationTraces        AIGenerationTrace[]
-  aiFeedbacks               AIFeedback[]
+  id                           String                        @id @default(cuid())
+  username                     String                        @unique
+  passwordHash                 String
+  agreedToTermsAt              DateTime
+  agreedToPrivacyAt            DateTime
+  privacyPolicyVersion         String                        @default("legacy")
+  aiQualityConsentVersion      String?
+  aiQualityConsentAt           DateTime?
+  aiQualityConsentRevokedAt    DateTime?
+  createdAt                    DateTime                      @default(now())
+  settings                     UserSettings?
+  sessions                     InterviewSession[]
+  journalEvents                JournalEvent[]
+  joyEntries                   JoyEntry[]
+  dailyJournalEntries          DailyJournalEntry[]
+  journalDailyEntries          JournalDailyEntry[]
+  journalDailyEntryGenerations JournalDailyEntryGeneration[]
+  journalDayOwnerships         JournalDayOwnership[]
+  dailyHappinessScores         DailyHappinessScore[]
+  memoryFacts                  MemoryFact[]
+  portraitSnapshots            PortraitSnapshot[]
+  authSessions                 AuthSession[]
+  aiGenerationTraces           AIGenerationTrace[]
+  aiFeedbacks                  AIFeedback[]
 }
 
 model AuthSession {
@@ -988,28 +1003,62 @@ model DailyJournalEntry {
 }
 
 model JournalDailyEntry {
-  id              String                  @id @default(cuid())
+  id              String                        @id @default(cuid())
   userId          String
   entryDate       DateTime
-  title           String                  @db.VarChar(16)
+  title           String                        @db.VarChar(16)
   content         String
-  status          JournalDailyEntryStatus @default(draft)
-  sourceEntryIds  String[]                @default([])
-  sourceEventIds  String[]                @default([])
+  status          JournalDailyEntryStatus       @default(draft)
+  sourceEntryIds  String[]                      @default([])
+  sourceEventIds  String[]                      @default([])
   sourceSignature String
   sourceSnapshot  Json
   sourceUpdatedAt DateTime?
-  contentRevision Int                     @default(1)
+  contentRevision Int                           @default(1)
   savedRevision   Int?
   editedAt        DateTime?
   savedAt         DateTime?
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
-  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+  user            User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generations     JournalDailyEntryGeneration[]
 
   @@unique([userId, entryDate])
   @@index([userId, status, entryDate])
   @@index([userId, entryDate])
+}
+
+model JournalDailyEntryGeneration {
+  id                          String                            @id @default(cuid())
+  userId                      String
+  entryDate                   DateTime
+  operationKind               JournalDailyEntryGenerationKind
+  clientOperationId           String
+  intendedEntryId             String
+  resultEntryId               String?
+  traceId                     String?                           @unique
+  status                      JournalDailyEntryGenerationStatus @default(processing)
+  attemptCount                Int                               @default(1)
+  sourceSignature             String
+  sourceEntryIds              String[]                          @default([])
+  sourceEventIds              String[]                          @default([])
+  sourceSnapshot              Json
+  baseContentRevision         Int?
+  replaceManualEditsConfirmed Boolean                           @default(false)
+  errorCode                   String?
+  startedAt                   DateTime                          @default(now())
+  completedAt                 DateTime?
+  failedAt                    DateTime?
+  canceledAt                  DateTime?
+  createdAt                   DateTime                          @default(now())
+  updatedAt                   DateTime                          @updatedAt
+  user                        User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resultEntry                 JournalDailyEntry?                @relation(fields: [resultEntryId], references: [id], onDelete: SetNull)
+  trace                       AIGenerationTrace?                @relation("JournalDailyEntryGenerationTrace", fields: [traceId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, entryDate, clientOperationId])
+  @@index([userId, entryDate, status, createdAt])
+  @@index([resultEntryId, createdAt])
 }
 
 model JournalDayOwnership {
@@ -1219,6 +1268,7 @@ model AIGenerationTrace {
   angleOutcomeRepairResolutions  JournalEventAngleOutcomeRepairResolution[] @relation("JournalEventAngleOutcomeRepairResolutionTrace")
   currentForJournalEventEntry    JournalEventEntry?                         @relation("CurrentJournalEventEntryGenerationTrace")
   journalEventEntryGeneration    JournalEventEntryGeneration?               @relation("JournalEventEntryGenerationTrace")
+  journalDailyEntryGeneration    JournalDailyEntryGeneration?               @relation("JournalDailyEntryGenerationTrace")
 
   @@unique([artifactType, artifactId, artifactVersion])
   @@index([userId, createdAt])

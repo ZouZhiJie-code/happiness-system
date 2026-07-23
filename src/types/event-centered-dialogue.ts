@@ -184,8 +184,17 @@ export type EventCenteredWorkspaceSession = EventCenteredSessionIdentity & {
     }) | null;
   };
   journal: {
-    status: "not_generated" | "generating" | "draft" | "saved";
+    status:
+      | "not_generated"
+      | "generating"
+      | "draft"
+      | "modified"
+      | "saved"
+      | "failed";
     entryId: string | null;
+    generationId: string | null;
+    errorCode: string | null;
+    retryable: boolean;
     eventStatus: JournalEventStatus | null;
   };
 };
@@ -199,7 +208,8 @@ export type EventCenteredRespondAction =
   | "regenerate_response"
   | "switch_response_version"
   | "resume_turn"
-  | "exit_event";
+  | "exit_event"
+  | "generate_event_journal";
 
 export type EventCenteredRespondRequest = {
   action: EventCenteredRespondAction;

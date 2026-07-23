@@ -37,6 +37,8 @@ export function getPromptKeyForArtifact(
   dimension: InterviewDimension | null
 ) {
   if (artifactType === "event_journal") return "interview.journal.event";
+  if (artifactType === "daily_journal") return "journal.daily";
+  if (artifactType === "daily_journal_insight") return "journal.daily.insight";
   if (!dimension) return null;
   return artifactType === "dimension_journal"
     ? `interview.journal.${dimension}`
@@ -61,7 +63,15 @@ export function clusterBadcases(evidence: OptimizationEvidence[]): BadcaseCluste
         issueCode: first.issueCode,
         traceIds: items.map((item) => item.traceId),
         caseCount: items.length,
-        summary: `${items.length} 条${first.artifactType === "event_journal" ? "事件日志" : first.dimension ?? "未分类"}生成命中 ${first.issueCode}。`,
+        summary: `${items.length} 条${
+          first.artifactType === "event_journal"
+            ? "事件日志"
+            : first.artifactType === "daily_journal"
+              ? "当天完整日志"
+              : first.artifactType === "daily_journal_insight"
+                ? "当天线索"
+                : first.dimension ?? "未分类"
+        }生成命中 ${first.issueCode}。`,
         suggestedPath,
         maxPriority: Math.max(...items.map((item) => item.priority))
       };

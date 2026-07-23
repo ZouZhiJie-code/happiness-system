@@ -75,7 +75,14 @@ function buildWorkspace(overrides: Partial<EventCenteredWorkspaceSession> = {}):
       ]
     },
     recovery: { pendingTurn: null },
-    journal: { status: "not_generated", entryId: null, eventStatus: "active" },
+    journal: {
+      status: "not_generated",
+      entryId: null,
+      generationId: null,
+      errorCode: null,
+      retryable: false,
+      eventStatus: "active"
+    },
     ...overrides
   };
 }
