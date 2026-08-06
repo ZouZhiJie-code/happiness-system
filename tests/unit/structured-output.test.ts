@@ -32,6 +32,12 @@ describe("structured output", () => {
     });
   });
 
+  it("只读取首个完整 JSON，忽略模型追加的第二个对象", () => {
+    expect(parseStructuredJson('{"value":"first"}\n{"value":"second"}')).toEqual({
+      value: "first"
+    });
+  });
+
   it("retries once when the first payload is invalid", async () => {
     const attempts: string[] = [];
     const result = await completeStructuredOutput({

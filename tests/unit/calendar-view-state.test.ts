@@ -1,6 +1,8 @@
 import {
   buildCalendarMonthGrid,
+  buildCalendarHref,
   getCalendarWeekRange,
+  normalizeCalendarMode,
   normalizeCalendarSearchParams,
   normalizeCalendarView,
   shiftCalendarWeek,
@@ -26,6 +28,15 @@ describe("calendar view state helpers", () => {
     expect(normalizeCalendarView("week")).toBe("week");
     expect(normalizeCalendarView("day")).toBe("day");
     expect(normalizeCalendarView("something-else")).toBe("month");
+  });
+
+  it("keeps the event reading mode explicit while legacy remains the default", () => {
+    expect(normalizeCalendarMode("event_centered")).toBe("event_centered");
+    expect(normalizeCalendarMode("legacy")).toBe("legacy");
+    expect(normalizeCalendarMode("unknown")).toBe("legacy");
+    expect(buildCalendarHref({ view: "month", date: "2026-05-02", calendarMode: "event_centered" })).toBe(
+      "/calendar?view=month&date=2026-05-02&calendarMode=event_centered"
+    );
   });
 
   it("clamps month shifts when the target month has fewer days", () => {

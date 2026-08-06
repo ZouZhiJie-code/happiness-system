@@ -56,9 +56,11 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
   const isInterviewWorkspace =
-    isInterviewDimension(searchParams.get("dimension")) ||
-    Boolean(searchParams.get("sessionId")) ||
-    searchParams.get("mode") === "daily-journal";
+    searchParams.get("mode") !== "event-centered" && (
+      isInterviewDimension(searchParams.get("dimension")) ||
+      Boolean(searchParams.get("sessionId")) ||
+      searchParams.get("mode") === "daily-journal"
+    );
   const isInterviewPage = pathname === "/interview" && isInterviewWorkspace && !isEnteringCalendar;
   const shouldReserveHeaderSpace = false;
   const isCalendarPage = pathname === "/calendar" || isEnteringCalendar;

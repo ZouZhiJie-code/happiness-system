@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 type FeedbackVote = "upvote" | "downvote";
 type FeedbackTag = { code: string; label: string };
@@ -85,10 +85,12 @@ function VoteButton({
 
 export function AIResponseFeedback({
   traceId,
-  compact = false
+  compact = false,
+  leadingAction
 }: {
   traceId: string;
   compact?: boolean;
+  leadingAction?: ReactNode;
 }) {
   const [feedback, setFeedback] = useState<FeedbackRecord | null>(null);
   const [tagOptions, setTagOptions] = useState<Record<FeedbackVote, FeedbackTag[]>>({
@@ -222,6 +224,7 @@ export function AIResponseFeedback({
   return (
     <div className={`${compact ? "mt-2" : "mt-1 ml-3"} text-xs text-[#806951]`} data-testid={`ai-feedback-${traceId}`}>
       <div className="flex flex-wrap items-center gap-1">
+        {leadingAction}
         <VoteButton
           vote="upvote"
           selected={visibleVote === "upvote"}

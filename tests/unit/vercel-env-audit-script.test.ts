@@ -6,21 +6,27 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const previewContract = `# Vercel preview environment contract
 DATABASE_URL=""
-AI_PROVIDER="volcengine-ark"
-VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_ENDPOINT_ID=""
-VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+AI_PROVIDER="openai"
+DEEPSEEK_API_KEY=""
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+VOLCENGINE_ARK_API_KEY="" # optional: legacy rollback only
+VOLCENGINE_ARK_MODEL="" # optional: legacy rollback only
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3" # optional: legacy rollback only
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: legacy embedding path only
 APP_URL="https://your-project-git-branch-your-team.vercel.app" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
 const productionContract = `# Vercel production environment contract
 DATABASE_URL=""
-AI_PROVIDER="volcengine-ark"
-VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_ENDPOINT_ID=""
-VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+AI_PROVIDER="openai"
+DEEPSEEK_API_KEY=""
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+VOLCENGINE_ARK_API_KEY="" # optional: legacy rollback only
+VOLCENGINE_ARK_MODEL="" # optional: legacy rollback only
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3" # optional: legacy rollback only
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: legacy embedding path only
 APP_URL="https://your-domain.example.com" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
@@ -119,11 +125,14 @@ describe("vercel env audit script", () => {
     expect(result.contract.preview.required).toEqual([
       "DATABASE_URL",
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.contract.preview.optional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
       "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
     ]);
@@ -136,13 +145,18 @@ describe("vercel env audit script", () => {
     ]);
     expect(result.audit.Preview.missingRequired).toEqual([
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.audit.Preview.presentRequired).toEqual(["DATABASE_URL"]);
     expect(result.audit.Preview.presentOptional).toEqual(["APP_URL"]);
-    expect(result.audit.Preview.missingOptional).toEqual(["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"]);
+    expect(result.audit.Preview.missingOptional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
+      "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"
+    ]);
     expect(result.audit.Preview.unverifiedConditionalOptional).toEqual([
       {
         name: "APP_URL",
@@ -153,11 +167,14 @@ describe("vercel env audit script", () => {
     expect(result.audit.Production.presentRequired).toEqual(["DATABASE_URL"]);
     expect(result.audit.Production.missingRequired).toEqual([
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.audit.Production.missingOptional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
       "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
     ]);
@@ -283,11 +300,24 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "AI_RUNTIME_CONFIG_SECRET",
         "CRON_SECRET",
         "AI_PROVIDER",
+        "INTERVIEW_INTENT_V2_MODE",
+        "INTERVIEW_EVENT_CENTERED_MODE",
+        "INTERVIEW_REGENERATION_ENABLED",
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_MODEL",
+        "DEEPSEEK_BASE_URL",
+        "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
+      ],
+      optional: [
+        "INTERVIEW_EVENT_CENTERED_STRATEGY",
+        "EVENT_CENTERED_GENERATIVE_MODEL",
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_MODEL",
-        "VOLCENGINE_ARK_BASE_URL"
+        "VOLCENGINE_ARK_BASE_URL",
+        "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+        "APP_URL"
       ],
-      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
       conditionalOptional: [
         {
           name: "APP_URL",
@@ -302,11 +332,24 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "AI_RUNTIME_CONFIG_SECRET",
         "CRON_SECRET",
         "AI_PROVIDER",
+        "INTERVIEW_INTENT_V2_MODE",
+        "INTERVIEW_EVENT_CENTERED_MODE",
+        "INTERVIEW_REGENERATION_ENABLED",
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_MODEL",
+        "DEEPSEEK_BASE_URL",
+        "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
+      ],
+      optional: [
+        "INTERVIEW_EVENT_CENTERED_STRATEGY",
+        "EVENT_CENTERED_GENERATIVE_MODEL",
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_MODEL",
-        "VOLCENGINE_ARK_BASE_URL"
+        "VOLCENGINE_ARK_BASE_URL",
+        "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+        "APP_URL"
       ],
-      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
       conditionalOptional: [
         {
           name: "APP_URL",

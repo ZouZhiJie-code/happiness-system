@@ -1,0 +1,53 @@
+{
+  "reportVersion": "intent-core-eval-v1",
+  "generatedAt": "2026-07-21T05:00:15.006Z",
+  "datasetVersion": "intent-eval-v1.8-external-sealed",
+  "scope": "external-review",
+  "runLabel": "regression-v1",
+  "assessmentPath": "deterministic",
+  "total": 24,
+  "overallScore": 0.9812500000000003,
+  "p0Failed": 1,
+  "metricAccuracy": {
+    "control": 1,
+    "dialogueActs": 0.9583333333333334,
+    "contentBoundary": 1,
+    "referenceTarget": 1,
+    "contextUnderstanding": 0.9166666666666666,
+    "stability": 1
+  },
+  "dialogueActPrecision": 1,
+  "dialogueActRecall": 0.9629629629629629,
+  "dialogueActF1": 0.9811320754716981,
+  "provider": {
+    "attempted": 0,
+    "succeeded": 0,
+    "failed": 0,
+    "failureCodes": {},
+    "p50LatencyMs": null,
+    "p95LatencyMs": null
+  },
+  "failedCases": [
+    {
+      "id": "INT-EVAL-248",
+      "score": 0.8500000000000001,
+      "issues": [
+        "上下文理解：期望目标 judgment_clue，实际 judgment_clue"
+      ]
+    },
+    {
+      "id": "INT-EVAL-249",
+      "score": 0.85,
+      "issues": [
+        "对话行为：期望 provide_content、correct_previous、deny_hypothesis，实际 provide_content、correct_previous"
+      ]
+    },
+    {
+      "id": "INT-EVAL-251",
+      "score": 0.8500000000000001,
+      "issues": [
+        "上下文理解：期望目标 judgment_clue，实际 judgment_clue"
+      ]
+    }
+  ]
+}

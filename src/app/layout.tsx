@@ -5,6 +5,7 @@ import { AuthLocalBootstrap } from "@/components/auth/auth-local-bootstrap";
 import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
 import { CalendarChromeProvider } from "@/components/calendar/calendar-chrome-context";
 import { CalendarMainGate } from "@/components/calendar/calendar-main-gate";
+import { PublicSecurityFooter } from "@/components/shared/public-security-footer";
 import { SiteHeader } from "@/components/shared/site-header";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME } from "@/features/auth/auth.constants";
@@ -41,6 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <main className="flex min-h-0 w-full flex-1 flex-col">
                   <CalendarMainGate>{children}</CalendarMainGate>
                 </main>
+                <PublicSecurityFooter />
               </div>
             </CalendarChromeProvider>
           </AnalysisChromeProvider>

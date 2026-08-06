@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { AIGenerationArtifactType } from "@prisma/client";
 
 import { buildDraftBrief, runDraftQualityGate } from "@/features/interview/server/draft-policies";
 import { assistantTurnPayloadSchema } from "@/features/interview/schema/interview.schema";
@@ -6,11 +7,11 @@ import { evaluateQuestionComprehension } from "@/features/joy-interview/server/c
 import { assessUserTurnMessage } from "@/features/joy-interview/server/interview-progress";
 import type { InterviewDimension, InterviewSessionRecord, JoySnapshot } from "@/types/interview";
 
-export const AI_EVALUATION_RUBRIC_VERSION = "2026-07-19.1";
+export const AI_EVALUATION_RUBRIC_VERSION = "2026-07-22.1";
 
 export const AI_EVALUATION_DIMENSIONS = {
   grounding: { label: "事实忠实与上下文依据", weight: 0.3 },
-  dimensionAlignment: { label: "五维理论与产品目标对齐", weight: 0.2 },
+  dimensionAlignment: { label: "产品目标与生成任务对齐", weight: 0.2 },
   boundarySafety: { label: "用户边界与安全", weight: 0.2 },
   clarity: { label: "表达清晰与自然度", weight: 0.15 },
   completeness: { label: "任务完成度与相关性", weight: 0.15 }
@@ -39,7 +40,7 @@ export type RuleEvaluationResult = {
 type TraceLike = {
   id: string;
   status: string;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
   dimension: InterviewDimension | null;
   outputOrigin: string | null;
   contextSnapshot: unknown;
@@ -71,7 +72,7 @@ function compactEvidence(value: string) {
 }
 
 const INTERNAL_FIELD_PATTERN =
-  /(snapshotData|pendingDecision|manualClue|delightSignature|joyMoment|joySource|stateShift|meaningNeed|progressEvidence|valueSignal|viewpointShift|frictionPoint|repeatCondition|controllableFactor|nextAttempt|seenNeed|relationshipSignal)/iu;
+  /(snapshotData|pendingDecision|manualClue|delightSignature|joyMoment|joySource|stateShift|meaningNeed|progressEvidence|valueSignal|viewpointShift|frictionPoint|repeatCondition|controllableFactor|nextAttempt|seenNeed|relationshipSignal|sourceFactIds|sourceAngleOutcomeIds|logEligibleOutcomeIds|branchSessionId|JournalEventFact)/iu;
 const DIAGNOSIS_OR_PRESSURE_PATTERN =
   /(心理诊断|人格缺陷|创伤|抑郁症|焦虑症|病态|你应该|你必须|你需要|一定要|必须做到)/u;
 const TEMPLATE_PATTERN = /(总的来说|总结起来|换句话说|这次访谈|我已经整理出|当前版本日志)/u;
@@ -102,7 +103,15 @@ const DRAFT_ISSUE_DIMENSION: Partial<Record<string, AIEvaluationDimension>> = {
   reflection_diagnosis: "boundarySafety",
   improvement_self_blame: "boundarySafety",
   improvement_advice_tone: "boundarySafety",
-  gratitude_debt_tone: "boundarySafety"
+  gratitude_debt_tone: "boundarySafety",
+  missing_event_narrative: "completeness",
+  missing_self_insight: "completeness",
+  unsupported_statement: "grounding",
+  event_boundary_leak: "grounding",
+  fact_conflict: "grounding",
+  invalidated_fact_used: "grounding",
+  invalidated_outcome_used: "grounding",
+  internal_structure_exposed: "dimensionAlignment"
 };
 
 function buildResult(deductions: EvaluationDeduction[], signals: string[]): RuleEvaluationResult {
@@ -246,11 +255,10 @@ function evaluateInterviewTurn(trace: TraceLike, deductions: EvaluationDeduction
   if (turn.stateUpdate.offerChoice) signals.push("choice_turn");
 }
 
-function evaluateDimensionJournal(
+function evaluateJournalBasics(
   trace: TraceLike,
-  session: InterviewSessionRecord | null,
-  deductions: EvaluationDeduction[],
-  signals: string[]
+  journalLabel: "五维日志" | "事件日志",
+  deductions: EvaluationDeduction[]
 ) {
   const output = asRecord(trace.finalOutput);
   const title = asString(output?.title);
@@ -261,9 +269,9 @@ function evaluateDimensionJournal(
       code: "missing_journal_content",
       dimension: "completeness",
       points: 80,
-      reason: "维度日志缺少标题或正文。"
+      reason: `${journalLabel}缺少标题或正文。`
     });
-    return;
+    return null;
   }
 
   if (title.length > 16) {
@@ -296,6 +304,54 @@ function evaluateDimensionJournal(
     });
   }
 
+  if (/^(开心|充实|思考|改进|感谢|事件)日志$/u.test(title)) {
+    deductions.push({
+      code: "generic_title",
+      dimension: "dimensionAlignment",
+      points: 25,
+      reason: "日志标题使用了通用分类名，未概括这次具体经历。",
+      evidence: title
+    });
+  }
+
+  if (content.length < 40) {
+    deductions.push({
+      code: "journal_too_thin",
+      dimension: "completeness",
+      points: 25,
+      reason: "日志正文过短，难以保留场景与意义线索。"
+    });
+  }
+
+  return { title, content };
+}
+
+function addJournalQualityGateDeductions(input: {
+  issues: Set<string>;
+  codePrefix: "draft_gate" | "event_journal_gate";
+  reasonPrefix: "五维日志" | "事件日志";
+  deductions: EvaluationDeduction[];
+}) {
+  for (const issue of input.issues) {
+    const dimension = DRAFT_ISSUE_DIMENSION[issue] ?? "completeness";
+    input.deductions.push({
+      code: `${input.codePrefix}_${issue}`,
+      dimension,
+      points: dimension === "grounding" || dimension === "boundarySafety" ? 45 : 25,
+      reason: `${input.reasonPrefix}触发质量门问题：${issue}。`
+    });
+  }
+}
+
+function evaluateDimensionJournal(
+  trace: TraceLike,
+  session: InterviewSessionRecord | null,
+  deductions: EvaluationDeduction[],
+  signals: string[]
+) {
+  const journal = evaluateJournalBasics(trace, "五维日志", deductions);
+  if (!journal) return;
+
   const qualityDecision = asArray(trace.pipelineDecisions)
     .map(asRecord)
     .find((item) => item?.kind === "draft_quality_gate");
@@ -309,7 +365,7 @@ function evaluateDimensionJournal(
     if (sourceEvents.length > 0) {
       try {
         const brief = buildDraftBrief({ session, sourceEvents });
-        const qualityGate = runDraftQualityGate({ brief, draft: { title, content } });
+        const qualityGate = runDraftQualityGate({ brief, draft: journal });
         qualityGate.issues.forEach((issue) => gateIssues.add(issue));
       } catch {
         signals.push("historical_quality_gate_unavailable");
@@ -318,36 +374,66 @@ function evaluateDimensionJournal(
 
   }
 
-  for (const issue of gateIssues) {
-    const dimension = DRAFT_ISSUE_DIMENSION[issue] ?? "completeness";
-    deductions.push({
-      code: `draft_gate_${issue}`,
-      dimension,
-      points: dimension === "grounding" || dimension === "boundarySafety" ? 45 : 25,
-      reason: `日志触发现有质量门问题：${issue}。`
-    });
-  }
+  addJournalQualityGateDeductions({
+    issues: gateIssues,
+    codePrefix: "draft_gate",
+    reasonPrefix: "五维日志",
+    deductions
+  });
 
   if (qualityDecision?.accepted === true) signals.push("draft_quality_gate_passed");
 
-  if (/^(开心|充实|思考|改进|感谢)日志$/u.test(title)) {
+}
+
+function hasEventJournalSource(contextSnapshot: unknown) {
+  const context = asRecord(contextSnapshot);
+  const source = asRecord(context?.sourceSnapshot) ?? context;
+  if (!source) return false;
+
+  const sourceKeys = [
+    "sourceMessageIds",
+    "sourceFactIds",
+    "sourceAngleOutcomeIds",
+    "messages",
+    "userTurns",
+    "facts",
+    "angleOutcomes"
+  ];
+  return sourceKeys.some((key) => asArray(source[key]).length > 0) || Boolean(asString(source.sourceFingerprint));
+}
+
+function evaluateEventJournal(
+  trace: TraceLike,
+  deductions: EvaluationDeduction[],
+  signals: string[]
+) {
+  const journal = evaluateJournalBasics(trace, "事件日志", deductions);
+  if (!journal) return;
+
+  if (!hasEventJournalSource(trace.contextSnapshot)) {
     deductions.push({
-      code: "generic_title",
-      dimension: "dimensionAlignment",
-      points: 25,
-      reason: "日志标题退化为通用维度名。",
-      evidence: title
+      code: "missing_event_journal_source",
+      dimension: "grounding",
+      points: 45,
+      reason: "事件日志 Trace 缺少可核对的原话、事实或角度成果来源。"
     });
   }
 
-  if (content.length < 40) {
-    deductions.push({
-      code: "journal_too_thin",
-      dimension: "completeness",
-      points: 25,
-      reason: "日志正文过短，难以保留场景与意义线索。"
-    });
-  }
+  const qualityDecision = asArray(trace.pipelineDecisions)
+    .map(asRecord)
+    .find((item) => item?.kind === "event_journal_quality_gate");
+  const gateIssues = new Set(
+    asArray(qualityDecision?.issues).filter((item): item is string => typeof item === "string")
+  );
+
+  addJournalQualityGateDeductions({
+    issues: gateIssues,
+    codePrefix: "event_journal_gate",
+    reasonPrefix: "事件日志",
+    deductions
+  });
+
+  if (qualityDecision?.accepted === true) signals.push("event_journal_quality_gate_passed");
 }
 
 export function evaluateGenerationTraceRules(input: {
@@ -383,12 +469,17 @@ export function evaluateGenerationTraceRules(input: {
   for (const decision of asArray(trace.pipelineDecisions).map(asRecord).filter(Boolean)) {
     if (decision?.kind === "assistant_server_guard") signals.push("assistant_server_guard");
     if (decision?.kind === "draft_quality_gate" && decision.accepted === false) signals.push("draft_quality_gate_rejected");
+    if (decision?.kind === "event_journal_quality_gate" && decision.accepted === false) {
+      signals.push("event_journal_quality_gate_rejected");
+    }
   }
 
   if (trace.artifactType === "interview_turn") {
     evaluateInterviewTurn(trace, deductions, signals);
-  } else {
+  } else if (trace.artifactType === "dimension_journal") {
     evaluateDimensionJournal(trace, input.session ?? null, deductions, signals);
+  } else {
+    evaluateEventJournal(trace, deductions, signals);
   }
 
   return buildResult(deductions, signals);
@@ -399,7 +490,8 @@ export function shouldTriggerJudge(traceId: string, rules: RuleEvaluationResult)
     "fallback_output",
     "provider_or_schema_failure",
     "assistant_server_guard",
-    "draft_quality_gate_rejected"
+    "draft_quality_gate_rejected",
+    "event_journal_quality_gate_rejected"
   ]);
   const risk = rules.critical || rules.score < 90 || rules.signals.some((signal) => riskSignals.has(signal));
 

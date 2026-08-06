@@ -8,6 +8,8 @@ import {
 } from "./launch-acceptance-runner.mjs";
 
 const INVALID_ENTRY_DATE = "2026-02-30";
+const DEFAULT_PRODUCT_SMOKE_USERNAME = "preview_acceptance";
+const DEFAULT_PRODUCT_SMOKE_PASSWORD = "DailyLight2026";
 
 function buildStep(name, details) {
   return { name, ...details };
@@ -22,12 +24,18 @@ function inferErrorCode(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function isMissingAcceptanceAccount(error) {
+  const message = inferErrorCode(error);
+  return message.includes("401") || message.includes("INVALID_CREDENTIALS");
+}
+
 export async function runProductSmoke(
   {
     baseUrl = BASE_URL,
     dimension = "joy",
     entryDate,
-    prefix = "product"
+    username = process.env.PRODUCT_SMOKE_USERNAME ?? DEFAULT_PRODUCT_SMOKE_USERNAME,
+    password = process.env.PRODUCT_SMOKE_PASSWORD ?? DEFAULT_PRODUCT_SMOKE_PASSWORD
   } = {},
   {
     registerAccount,
@@ -51,54 +59,58 @@ export async function runProductSmoke(
     steps: []
   };
 
-  let registration;
+  summary.account = { username };
+
+  let login;
+  let accountMode = "reused";
   try {
-    registration = await activeRegisterAccount(prefix);
-    summary.account = { username: registration.username };
-    summary.steps.push(
-      buildStep("register", {
-        ok: registration.register.status === 200 && Boolean(registration.cookie),
-        status: registration.register.status,
-        authenticated: Boolean(registration.register.json?.authenticated),
-        cookieEstablished: Boolean(registration.cookie)
-      })
-    );
+    login = await activeLoginAccount({ username, password });
   } catch (error) {
-    summary.steps.push(
-      buildStep("register", {
-        ok: false,
-        status: inferStatus(error),
-        error: inferErrorCode(error)
-      })
-    );
-    return summary;
+    if (!isMissingAcceptanceAccount(error)) {
+      summary.steps.push(
+        buildStep("account", {
+          ok: false,
+          mode: "unavailable",
+          status: inferStatus(error),
+          error: inferErrorCode(error)
+        })
+      );
+      return summary;
+    }
+
+    try {
+      await activeRegisterAccount(username, password);
+      accountMode = "created";
+      login = await activeLoginAccount({ username, password });
+    } catch (registrationError) {
+      summary.steps.push(
+        buildStep("account", {
+          ok: false,
+          mode: "create_failed",
+          status: inferStatus(registrationError),
+          error: inferErrorCode(registrationError)
+        })
+      );
+      return summary;
+    }
   }
 
-  let loginCookie;
-  try {
-    const login = await activeLoginAccount({
-      username: registration.username,
-      password: registration.password
-    });
-    loginCookie = login.cookie;
-    summary.steps.push(
-      buildStep("login", {
-        ok: login.login.status === 200 && Boolean(login.cookie),
-        status: login.login.status,
-        authenticated: Boolean(login.login.json?.authenticated),
-        cookieEstablished: Boolean(login.cookie)
-      })
-    );
-  } catch (error) {
-    summary.steps.push(
-      buildStep("login", {
-        ok: false,
-        status: inferStatus(error),
-        error: inferErrorCode(error)
-      })
-    );
-    return summary;
-  }
+  const loginCookie = login.cookie;
+  summary.steps.push(
+    buildStep("account", {
+      ok: true,
+      mode: accountMode,
+      username
+    })
+  );
+  summary.steps.push(
+    buildStep("login", {
+      ok: login.login.status === 200 && Boolean(login.cookie),
+      status: login.login.status,
+      authenticated: Boolean(login.login.json?.authenticated),
+      cookieEstablished: Boolean(login.cookie)
+    })
+  );
 
   try {
     const session = await activeGetSession({ cookie: loginCookie });
@@ -202,8 +214,8 @@ export async function runProductSmoke(
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  const [dimension = "joy", entryDate = new Date().toISOString().slice(0, 10), prefix = "product"] = argv;
-  const summary = await runProductSmoke({ baseUrl: BASE_URL, dimension, entryDate, prefix });
+  const [dimension = "joy", entryDate = new Date().toISOString().slice(0, 10)] = argv;
+  const summary = await runProductSmoke({ baseUrl: BASE_URL, dimension, entryDate });
 
   process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 

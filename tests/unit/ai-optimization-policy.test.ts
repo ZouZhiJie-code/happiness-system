@@ -52,6 +52,33 @@ describe("AI optimization policy", () => {
     expect(chooseOptimizationPath("schema_parse_failed")).toBe("engineering");
     expect(chooseOptimizationPath("user_downvote:too_abstract")).toBe("system_prompt");
     expect(getPromptKeyForArtifact("dimension_journal", "gratitude")).toBe("interview.journal.gratitude");
+    expect(getPromptKeyForArtifact("event_journal", null)).toBe("interview.journal.event");
+    expect(getPromptKeyForArtifact("daily_journal", null)).toBe("journal.daily");
+    expect(getPromptKeyForArtifact("daily_journal_insight", null)).toBe("journal.daily.insight");
+  });
+
+  it("keeps day-level artifacts separated in optimization summaries", () => {
+    const clusters = clusterBadcases([
+      {
+        traceId: "trace-daily",
+        artifactType: "daily_journal",
+        dimension: null,
+        issueCode: "altered_event_text",
+        summary: null,
+        priority: 80
+      },
+      {
+        traceId: "trace-insight",
+        artifactType: "daily_journal_insight",
+        dimension: null,
+        issueCode: "unsupported_commonality",
+        summary: null,
+        priority: 70
+      }
+    ]);
+
+    expect(clusters.find((cluster) => cluster.artifactType === "daily_journal")?.summary).toContain("当天完整日志");
+    expect(clusters.find((cluster) => cluster.artifactType === "daily_journal_insight")?.summary).toContain("今天看见的自己");
   });
 
   it("produces an auditable, boundary-specific prompt proposal", () => {

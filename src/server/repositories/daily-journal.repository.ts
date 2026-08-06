@@ -23,7 +23,7 @@ type SavedJoyEntryForDailyJournalListItem = Pick<
   "id" | "sessionId" | "date" | "title" | "content" | "updatedAt" | "savedAt"
 > & {
   session: {
-    dimension: InterviewDimension;
+    dimension: InterviewDimension | null;
   } | null;
 };
 
@@ -111,6 +111,10 @@ export async function listSavedJournalEntriesForDailyJournal(userId: string, dat
       date: {
         gte: startAt,
         lt: endExclusive
+      },
+      session: {
+        mode: "dimension_legacy",
+        dimension: { not: null }
       }
     },
     select: {
@@ -147,6 +151,10 @@ export async function listDraftJournalEntriesForDate(userId: string, date: strin
       date: {
         gte: startAt,
         lt: endExclusive
+      },
+      session: {
+        mode: "dimension_legacy",
+        dimension: { not: null }
       }
     },
     select: {

@@ -1,6 +1,7 @@
 import type {
   AssistantQuestionSpec,
   AssistantQuestionTarget,
+  GratitudeQuestionSubTarget,
   InterviewDimension,
   JoySnapshot
 } from "@/types/interview";
@@ -15,6 +16,7 @@ export type AskIntent =
 export interface AskIntentEnvelope {
   intent: AskIntent;
   sourceTarget: AssistantQuestionTarget;
+  gratitudeSubTarget: GratitudeQuestionSubTarget | null;
   dimension: InterviewDimension;
   anchorText: string | null;
   cognitiveLoad: "low" | "medium";
@@ -92,6 +94,18 @@ function getPlannerNotes(target: AssistantQuestionTarget, dimension: InterviewDi
   return notes;
 }
 
+function resolveAnchorText(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  spec: AssistantQuestionSpec;
+}) {
+  if (input.dimension === "gratitude" && input.spec.subTarget !== "kind_action" && input.snapshot.kindAction) {
+    return trimText(input.snapshot.kindAction);
+  }
+
+  return trimText(input.spec.anchorText ?? input.snapshot.event);
+}
+
 export function planAskIntentEnvelope(input: {
   dimension: InterviewDimension;
   snapshot: JoySnapshot;
@@ -102,8 +116,9 @@ export function planAskIntentEnvelope(input: {
   return {
     intent,
     sourceTarget: input.spec.target,
+    gratitudeSubTarget: input.dimension === "gratitude" ? input.spec.subTarget ?? null : null,
     dimension: input.dimension,
-    anchorText: trimText(input.spec.anchorText ?? input.snapshot.event),
+    anchorText: resolveAnchorText(input),
     cognitiveLoad: intent === "name_direct_feeling" ? "low" : "medium",
     shouldAnchorToUserWords: true,
     constraints: {

@@ -36,6 +36,9 @@ export function getPromptKeyForArtifact(
   artifactType: AIGenerationArtifactType,
   dimension: InterviewDimension | null
 ) {
+  if (artifactType === "event_journal") return "interview.journal.event";
+  if (artifactType === "daily_journal") return "journal.daily";
+  if (artifactType === "daily_journal_insight") return "journal.daily.insight";
   if (!dimension) return null;
   return artifactType === "dimension_journal"
     ? `interview.journal.${dimension}`
@@ -60,7 +63,15 @@ export function clusterBadcases(evidence: OptimizationEvidence[]): BadcaseCluste
         issueCode: first.issueCode,
         traceIds: items.map((item) => item.traceId),
         caseCount: items.length,
-        summary: `${items.length} 条${first.dimension ?? "未分类"}生成命中 ${first.issueCode}。`,
+        summary: `${items.length} 条${
+          first.artifactType === "event_journal"
+            ? "事件日志"
+            : first.artifactType === "daily_journal"
+              ? "当天完整日志"
+              : first.artifactType === "daily_journal_insight"
+                ? "今天看见的自己"
+                : first.dimension ?? "未分类"
+        }生成命中 ${first.issueCode}。`,
         suggestedPath,
         maxPriority: Math.max(...items.map((item) => item.priority))
       };
@@ -111,6 +122,12 @@ function buildInstructionPatch(issueCode: string) {
   if (/misunderstood|misunderstand/u.test(issueCode)) {
     return "生成回应前先依据用户原话确认人物、事件和表达重点；理解存在歧义时使用一句简短确认，禁止补写未经用户表达的判断。";
   }
+  if (/event_boundary_leak/u.test(issueCode)) {
+    return "事件日志只整理当前事件及帮助理解它的背景；另一件独立事件保持隔离，禁止把人物、情节或结论串入当前日志。";
+  }
+  if (/insight_mismatch/u.test(issueCode)) {
+    return "“我看见的”只能依据用户原话、已确认事实和当前有效角度成果；保持克制，禁止替用户补充未经确认的归因或结论。";
+  }
   if (/boundary|ignored_boundary/u.test(issueCode)) {
     return "当用户表达停止、拒绝继续、直接整理或追问无意义时，立即停止补槽位式追问；根据材料进入日志选择或低压选择。";
   }
@@ -126,5 +143,5 @@ function buildInstructionPatch(issueCode: string) {
   if (/title/u.test(issueCode)) {
     return "标题使用不超过 16 字的自然语义短标题，概括具体体验，避免维度通用名、理论词和机械截断。";
   }
-  return `针对 ${issueCode}：生成前核对用户边界、上下文事实、维度目标和自然中文表达；发现冲突时优先遵守用户边界与事实依据。`;
+  return `针对 ${issueCode}：生成前核对用户边界、上下文事实、当前生成任务和自然中文表达；发现冲突时优先遵守用户边界与事实依据。`;
 }

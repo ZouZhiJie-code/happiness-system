@@ -28,7 +28,14 @@ describe("OpenAIProvider", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            choices: [{ message: { content: "你好，OpenAI" } }]
+            choices: [{ message: { content: "你好，OpenAI" } }],
+            usage: {
+              prompt_tokens: 10,
+              completion_tokens: 4,
+              total_tokens: 14,
+              prompt_cache_hit_tokens: 6,
+              prompt_cache_miss_tokens: 4
+            }
           }),
           {
             status: 200,
@@ -70,6 +77,13 @@ describe("OpenAIProvider", () => {
     });
 
     expect(completion.content).toBe("你好，OpenAI");
+    expect(completion.tokenUsage).toEqual({
+      promptTokens: 10,
+      completionTokens: 4,
+      totalTokens: 14,
+      promptCacheHitTokens: 6,
+      promptCacheMissTokens: 4
+    });
     expect(embeddings).toEqual({
       embeddings: [[0.1, 0.2, 0.3]],
       tokenCount: 12
@@ -111,6 +125,85 @@ describe("OpenAIProvider", () => {
     }
 
     expect(chunks).toEqual(["你", "好"]);
+  });
+
+  it("uses DeepSeek's thinking control for official API calls", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "预检通过" } }]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "允许思考" } }]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          createSSEStream(['data: {"choices":[{"delta":{"content":"好"}}]}\n\n', "data: [DONE]\n\n"]),
+          { status: 200, headers: { "content-type": "text/event-stream" } }
+        )
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OpenAIProvider({
+      apiKey: "sk-deepseek",
+      model: "deepseek-v4-flash",
+      baseUrl: "https://api.deepseek.com"
+    });
+
+    await provider.complete({ messages: [{ role: "user", content: "预检" }] });
+    await provider.complete({
+      messages: [{ role: "user", content: "需要推理" }],
+      thinking: "enabled"
+    });
+    const chunks: string[] = [];
+    for await (const chunk of provider.stream({ messages: [{ role: "user", content: "流式预检" }] })) {
+      chunks.push(chunk);
+    }
+
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      thinking: { type: "disabled" }
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      thinking: { type: "enabled" }
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toMatchObject({
+      stream: true,
+      thinking: { type: "disabled" }
+    });
+    expect(chunks).toEqual(["好"]);
+  });
+
+  it("keeps the DeepSeek-only field out of standard OpenAI requests", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: "你好" } }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new OpenAIProvider({
+      apiKey: "sk-openai",
+      model: "gpt-5",
+      baseUrl: "https://api.openai.com/v1"
+    });
+
+    await provider.complete({
+      messages: [{ role: "user", content: "你好" }],
+      thinking: "disabled"
+    });
+
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).not.toHaveProperty("thinking");
   });
 
   it("forwards caller cancellation to the upstream request", async () => {

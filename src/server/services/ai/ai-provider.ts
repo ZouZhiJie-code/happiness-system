@@ -10,6 +10,8 @@ export interface AICompletionParams {
   temperature?: number;
   maxTokens?: number;
   timeoutMs?: number;
+  responseFormat?: "json_object";
+  thinking?: "enabled" | "disabled";
   signal?: AbortSignal;
 }
 
@@ -17,6 +19,18 @@ export interface AICompletionResult {
   content: string;
   latencyMs: number;
   provider: string;
+  tokenUsage?: AICompletionTokenUsage | null;
+}
+
+/**
+ * 供应商返回的计费用量。字段保持可选，避免不提供 usage 的模型影响现有调用。
+ */
+export interface AICompletionTokenUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  promptCacheHitTokens?: number;
+  promptCacheMissTokens?: number;
 }
 
 export interface AIEmbeddingParams {

@@ -25,7 +25,13 @@ function getDimensionState(day: CalendarDayRecord | null, dimension: InterviewDi
   return "开始记录";
 }
 
-export function InterviewDimensionPicker({ entryDate }: { entryDate: string }) {
+export function InterviewDimensionPicker({
+  entryDate,
+  showEventCenteredEntry = false
+}: {
+  entryDate: string;
+  showEventCenteredEntry?: boolean;
+}) {
   const [day, setDay] = useState<CalendarDayRecord | null>(null);
 
   useEffect(() => {
@@ -54,7 +60,25 @@ export function InterviewDimensionPicker({ entryDate }: { entryDate: string }) {
           每个方向都会从一个具体片段开始。选得大致贴近就可以，进入访谈后仍能随时切换。
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {showEventCenteredEntry ? (
+          <Link
+            href={`/interview?${new URLSearchParams({ mode: "event-centered", entryDate }).toString()}`}
+            className="group mt-7 flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-[var(--paper-soft)] px-5 py-4 transition hover:border-[var(--line-strong)] hover:bg-[var(--header-surface-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] sm:flex-row sm:items-center sm:justify-between"
+            aria-label="直接开始"
+          >
+            <span>
+              <span className="block font-display text-xl text-ink">直接开始</span>
+              <span className="mt-1 block text-sm leading-6 text-[var(--text-dim)]">
+                从一件具体的事里，理清当时的判断和依据。
+              </span>
+            </span>
+            <span className="shrink-0 text-xs font-medium tracking-[0.08em] text-ember transition group-hover:text-ink">
+              开始复盘 →
+            </span>
+          </Link>
+        ) : null}
+
+        <div className={`${showEventCenteredEntry ? "mt-5" : "mt-8"} grid gap-4 md:grid-cols-2 xl:grid-cols-5`}>
           {interviewDimensions.map((dimension) => {
             const meta = getInterviewDimensionMeta(dimension);
             const state = getDimensionState(day, dimension);

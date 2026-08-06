@@ -122,4 +122,43 @@ describe("AI quality evidence service", () => {
       expect.objectContaining({ role: "assistant", text: "当时最开心的是什么？", isTarget: true })
     ]);
   });
+
+  it.each([
+    [
+      "daily_journal",
+      "系统根据当天完整日志、事件原文和用户反馈，将这条记录选作判断依据。"
+    ],
+    [
+      "daily_journal_insight",
+      "系统根据当天多件事件的共同证据和用户反馈，将这条记录选作判断依据。"
+    ]
+  ] as const)("uses the correct day-level evidence summary for %s", async (artifactType, scenarioSummary) => {
+    findOptimizationCandidateEvidencePage.mockResolvedValue({
+      candidateId: "candidate-daily",
+      total: 1,
+      traces: [
+        {
+          id: `trace-${artifactType}`,
+          userId: "user-daily",
+          artifactId: "daily-output",
+          artifactType,
+          dimension: null,
+          createdAt: new Date("2026-07-23T08:00:00.000Z"),
+          contextSnapshot: {},
+          finalOutput: { title: "今天的记录", content: "当天成果正文。" },
+          session: null,
+          feedback: null,
+          evaluation: null,
+          case: null
+        }
+      ]
+    });
+
+    const result = await getAIOptimizationCandidateEvidence({
+      candidateId: "candidate-daily",
+      adminUsername: "admin"
+    });
+
+    expect(result.items[0]?.scenarioSummary).toBe(scenarioSummary);
+  });
 });

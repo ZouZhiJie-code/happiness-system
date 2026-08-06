@@ -2,6 +2,7 @@ const {
   mockTransaction,
   mockSessionFindUnique,
   mockTopTurnFindUnique,
+  mockTopTurnUpdateMany,
   mockTxSessionFindUnique,
   mockTxTurnFindUnique,
   mockTxTurnFindFirst,
@@ -13,6 +14,7 @@ const {
   mockTransaction: vi.fn(),
   mockSessionFindUnique: vi.fn(),
   mockTopTurnFindUnique: vi.fn(),
+  mockTopTurnUpdateMany: vi.fn(),
   mockTxSessionFindUnique: vi.fn(),
   mockTxTurnFindUnique: vi.fn(),
   mockTxTurnFindFirst: vi.fn(),
@@ -20,6 +22,16 @@ const {
   mockTxTurnUpdateMany: vi.fn(),
   mockTxMessageFindFirst: vi.fn(),
   mockTxMessageCreate: vi.fn()
+}));
+
+const {
+  mockClaimJournalDayModeInTransaction,
+  mockResolveJournalDayModeInTransaction,
+  mockAssertJournalDayModeInTransaction
+} = vi.hoisted(() => ({
+  mockClaimJournalDayModeInTransaction: vi.fn(),
+  mockResolveJournalDayModeInTransaction: vi.fn(),
+  mockAssertJournalDayModeInTransaction: vi.fn()
 }));
 
 const transactionClient = {
@@ -45,12 +57,20 @@ vi.mock("@/server/db/prisma", () => ({
       findUnique: mockSessionFindUnique
     },
     interviewUserTurn: {
-      findUnique: mockTopTurnFindUnique
+      findUnique: mockTopTurnFindUnique,
+      updateMany: mockTopTurnUpdateMany
     }
   }
 }));
 
+vi.mock("@/server/repositories/journal-day-mode.repository", () => ({
+  claimJournalDayModeInTransaction: mockClaimJournalDayModeInTransaction,
+  resolveJournalDayModeInTransaction: mockResolveJournalDayModeInTransaction,
+  assertJournalDayModeInTransaction: mockAssertJournalDayModeInTransaction
+}));
+
 import {
+  persistInterviewUserTurnIntent,
   reserveInterviewUserTurn,
   resumeInterviewUserTurn
 } from "@/server/repositories/joy-interview.repository";
@@ -181,14 +201,50 @@ describe("InterviewUserTurn repository lifecycle", () => {
       async (callback: (client: typeof transactionClient) => unknown) =>
         callback(transactionClient)
     );
-    mockTxSessionFindUnique.mockResolvedValue({
-      id: "session-1",
-      userId: "user-1"
+    mockTxSessionFindUnique.mockImplementation(async (args: {
+      select?: {
+        messages?: unknown;
+      };
+    }) => {
+      if (args.select?.messages) {
+        return {
+          id: "session-1",
+          parentSessionId: null,
+          forkMessageSequence: null,
+          messages: [
+            {
+              id: "assistant-opening",
+              generationTraceId: null,
+              userTurnId: null,
+              userTurn: null,
+              role: "assistant",
+              inputMode: null,
+              content: "今天有什么让你开心的时刻？",
+              sequence: 0,
+              createdAt: new Date("2026-07-20T00:00:00.000Z")
+            }
+          ]
+        };
+      }
+
+      return {
+        id: "session-1",
+        userId: "user-1"
+      };
     });
     mockTxTurnFindUnique.mockResolvedValue(null);
     mockTxTurnFindFirst.mockResolvedValue(null);
     mockTxMessageFindFirst.mockResolvedValue({ sequence: 0 });
     mockTxMessageCreate.mockResolvedValue({ id: "user-message-1" });
+    mockClaimJournalDayModeInTransaction.mockResolvedValue({
+      kind: "claimed",
+      ownership: { id: "day-mode-1" }
+    });
+    mockResolveJournalDayModeInTransaction.mockResolvedValue({
+      kind: "unclaimed",
+      entryDate: "2026-07-20"
+    });
+    mockAssertJournalDayModeInTransaction.mockResolvedValue({ id: "day-mode-1" });
   });
 
   it("reserves a turn and persists the exact raw text before processing", async () => {
@@ -234,6 +290,89 @@ describe("InterviewUserTurn repository lifecycle", () => {
     });
   });
 
+  it("让首条五维原话原子锁定当天的五维记录路径", async () => {
+    const storedTurn = buildDatabaseTurn();
+    mockTxTurnCreate.mockImplementation(async ({ data }: { data: typeof storedTurn }) => ({ ...storedTurn, ...data }));
+    mockSessionFindUnique.mockImplementation(async (args: { select?: { messages?: unknown } }) => {
+      if (args.select?.messages) {
+        return {
+          id: "session-1",
+          parentSessionId: null,
+          forkMessageSequence: null,
+          messages: [{
+            id: "assistant-opening",
+            generationTraceId: null,
+            userTurnId: null,
+            userTurn: null,
+            role: "assistant",
+            inputMode: null,
+            content: "今天有什么让你开心的时刻？",
+            sequence: 0,
+            createdAt: new Date("2026-07-20T00:00:00.000Z")
+          }]
+        };
+      }
+
+      return args.select
+        ? {
+            id: "session-1",
+            userId: "user-1",
+            rootSessionId: null,
+            activeBranchSessionId: "session-1",
+            mode: "dimension_legacy",
+            conversationSchemaVersion: 2
+          }
+        : buildMappedSessionFixture(storedTurn);
+    });
+    mockTxSessionFindUnique.mockImplementation(async (args: { select?: { messages?: unknown } }) => {
+      if (args.select?.messages) {
+        return {
+          id: "session-1",
+          parentSessionId: null,
+          forkMessageSequence: null,
+          messages: [{
+            id: "assistant-opening",
+            generationTraceId: null,
+            userTurnId: null,
+            userTurn: null,
+            role: "assistant",
+            inputMode: null,
+            content: "今天有什么让你开心的时刻？",
+            sequence: 0,
+            createdAt: new Date("2026-07-20T00:00:00.000Z")
+          }]
+        };
+      }
+      return {
+        id: "session-1",
+        userId: "user-1",
+        mode: "dimension_legacy",
+        entryDate: new Date("2026-07-19T16:00:00.000Z")
+      };
+    });
+
+    await reserveInterviewUserTurn({
+      userId: "user-1",
+      sessionId: "session-1",
+      activeEventId: "event-1",
+      clientTurnId: "legacy-day-mode-turn",
+      action: "reply",
+      rawText: "我想记下今天被家人接住的感觉。",
+      inputMode: "text",
+      baseMessageSequence: 0
+    });
+
+    expect(mockClaimJournalDayModeInTransaction).toHaveBeenCalledWith(
+      transactionClient,
+      expect.objectContaining({
+        userId: "user-1",
+        entryDate: "2026-07-20",
+        mode: "dimension_legacy",
+        claimedBySessionId: "session-1"
+      })
+    );
+  });
+
   it("returns a completed duplicate without creating another message", async () => {
     const completedTurn = {
       ...buildDatabaseTurn({
@@ -270,7 +409,37 @@ describe("InterviewUserTurn repository lifecycle", () => {
   });
 
   it("rejects a stale base sequence before persisting the turn", async () => {
-    mockTxMessageFindFirst.mockResolvedValue({ sequence: 3 });
+    mockTxSessionFindUnique.mockImplementation(async (args: {
+      select?: {
+        messages?: unknown;
+      };
+    }) => {
+      if (args.select?.messages) {
+        return {
+          id: "session-1",
+          parentSessionId: null,
+          forkMessageSequence: null,
+          messages: [
+            {
+              id: "assistant-latest",
+              generationTraceId: null,
+              userTurnId: null,
+              userTurn: null,
+              role: "assistant",
+              inputMode: null,
+              content: "最新问题",
+              sequence: 3,
+              createdAt: new Date("2026-07-20T00:00:00.000Z")
+            }
+          ]
+        };
+      }
+
+      return {
+        id: "session-1",
+        userId: "user-1"
+      };
+    });
 
     await expect(
       reserveInterviewUserTurn({
@@ -328,9 +497,19 @@ describe("InterviewUserTurn repository lifecycle", () => {
     expect(mockTxTurnUpdateMany).toHaveBeenCalledWith({
       where: {
         id: "turn-1",
-        status: {
-          in: ["failed", "canceled"]
-        }
+        OR: [
+          {
+            status: {
+              in: ["failed", "canceled"]
+            }
+          },
+          {
+            status: "processing",
+            updatedAt: {
+              lte: expect.any(Date)
+            }
+          }
+        ]
       },
       data: {
         status: "processing",
@@ -364,6 +543,158 @@ describe("InterviewUserTurn repository lifecycle", () => {
       })
     ).rejects.toThrow("INTERVIEW_TURN_IN_PROGRESS");
 
-    expect(mockSessionFindUnique).not.toHaveBeenCalled();
+    expect(mockTxTurnUpdateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a recent processing turn protected from duplicate resume", async () => {
+    const processingTurn = {
+      ...buildDatabaseTurn({
+        status: "processing"
+      }),
+      updatedAt: new Date(),
+      session: {
+        userId: "user-1"
+      },
+      messages: [{ id: "user-message-1" }]
+    };
+    mockTxTurnFindUnique.mockResolvedValue(processingTurn);
+
+    await expect(
+      resumeInterviewUserTurn({
+        userId: "user-1",
+        sessionId: "session-1",
+        clientTurnId: "client-turn-1"
+      })
+    ).rejects.toThrow("INTERVIEW_TURN_IN_PROGRESS");
+
+    expect(mockTxTurnUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("reclaims a stale processing turn after an interrupted server request", async () => {
+    const staleProcessingTurn = {
+      ...buildDatabaseTurn({
+        status: "processing"
+      }),
+      updatedAt: new Date(Date.now() - 120_000),
+      session: {
+        userId: "user-1"
+      },
+      messages: [{ id: "user-message-1" }]
+    };
+    const resumedTurn = {
+      ...buildDatabaseTurn({
+        status: "processing",
+        attemptCount: 2
+      }),
+      updatedAt: new Date()
+    };
+    mockTxTurnFindUnique
+      .mockResolvedValueOnce(staleProcessingTurn)
+      .mockResolvedValueOnce(resumedTurn);
+    mockTxTurnUpdateMany.mockResolvedValue({ count: 1 });
+    mockSessionFindUnique.mockResolvedValue(buildMappedSessionFixture(resumedTurn));
+
+    const result = await resumeInterviewUserTurn({
+      userId: "user-1",
+      sessionId: "session-1",
+      clientTurnId: "client-turn-1"
+    });
+
+    expect(result.kind).toBe("reserved");
+    expect(result.turn).toMatchObject({
+      id: "turn-1",
+      clientTurnId: "client-turn-1",
+      attemptCount: 2,
+      status: "processing"
+    });
+    expect(mockTxTurnUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "turn-1",
+        OR: [
+          {
+            status: {
+              in: ["failed", "canceled"]
+            }
+          },
+          {
+            status: "processing",
+            updatedAt: {
+              lte: expect.any(Date)
+            }
+          }
+        ]
+      },
+      data: {
+        status: "processing",
+        attemptCount: { increment: 1 },
+        errorCode: null,
+        completedAt: null
+      }
+    });
+  });
+
+  it("persists an intent assessment only once", async () => {
+    mockTopTurnFindUnique
+      .mockResolvedValueOnce({
+        intentAssessment: null,
+        intentClassifierVersion: null,
+        intentDecision: null,
+        intentAssessedAt: null
+      });
+    mockTopTurnUpdateMany.mockResolvedValue({ count: 1 });
+
+    const assessment = {
+      version: "interview-intent-v1",
+      primaryControl: "none"
+    };
+    const decision = {
+      version: "interview-turn-policy-v1",
+      runExtraction: true
+    };
+    const result = await persistInterviewUserTurnIntent({
+      turnId: "turn-1",
+      classifierVersion: "interview-intent-v1",
+      assessment,
+      decision
+    });
+
+    expect(mockTopTurnUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "turn-1",
+        intentAssessedAt: null
+      },
+      data: expect.objectContaining({
+        intentAssessment: assessment,
+        intentClassifierVersion: "interview-intent-v1",
+        intentDecision: decision,
+        intentAssessedAt: expect.any(Date)
+      })
+    });
+    expect(result).toMatchObject({
+      intentAssessment: assessment,
+      intentClassifierVersion: "interview-intent-v1",
+      intentDecision: decision
+    });
+  });
+
+  it("reuses an existing immutable intent assessment", async () => {
+    const assessedAt = new Date("2026-07-20T00:03:00.000Z");
+    const existing = {
+      intentAssessment: { version: "interview-intent-v1" },
+      intentClassifierVersion: "interview-intent-v1",
+      intentDecision: { version: "interview-turn-policy-v1" },
+      intentAssessedAt: assessedAt
+    };
+    mockTopTurnFindUnique.mockResolvedValue(existing);
+
+    const result = await persistInterviewUserTurnIntent({
+      turnId: "turn-1",
+      classifierVersion: "interview-intent-v1",
+      assessment: { version: "new" },
+      decision: { version: "new" }
+    });
+
+    expect(result).toEqual(existing);
+    expect(mockTopTurnUpdateMany).not.toHaveBeenCalled();
   });
 });

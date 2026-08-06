@@ -3,6 +3,7 @@ import {
   createTimedAbortScope,
   isAbortError,
   type AICompletionParams,
+  type AICompletionTokenUsage,
   type AIEmbeddingParams,
   type AIEmbeddingResult,
   type AIProvider
@@ -43,6 +44,25 @@ function extractMessageContent(content: unknown) {
   return "";
 }
 
+function readCompletionTokenUsage(value: unknown): AICompletionTokenUsage | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const usage = value as Record<string, unknown>;
+  const numeric = (key: string) => {
+    const candidate = usage[key];
+    return typeof candidate === "number" && Number.isFinite(candidate)
+      ? candidate
+      : undefined;
+  };
+  const result: AICompletionTokenUsage = {
+    promptTokens: numeric("prompt_tokens"),
+    completionTokens: numeric("completion_tokens"),
+    totalTokens: numeric("total_tokens"),
+    promptCacheHitTokens: numeric("prompt_cache_hit_tokens"),
+    promptCacheMissTokens: numeric("prompt_cache_miss_tokens")
+  };
+  return Object.values(result).some((item) => item !== undefined) ? result : null;
+}
+
 function assertConfiguredString(value: string | undefined, errorCode: string, errorMessage: string) {
   const trimmed = value?.trim();
 
@@ -76,15 +96,29 @@ export class OpenAIProvider implements AIProvider {
   private readonly model: string;
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
+  private readonly isDeepSeekOfficialApi: boolean;
 
   constructor(config: OpenAIProviderConfig) {
     this.apiKey = assertConfiguredString(config.apiKey, "MISSING_API_KEY", "Missing OpenAI API key.");
     this.model = assertConfiguredString(config.model, "MISSING_MODEL", "Missing OpenAI model.");
     this.baseUrl = assertValidBaseUrl(config.baseUrl);
     this.timeoutMs = config.timeoutMs ?? Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
+    this.isDeepSeekOfficialApi = new URL(this.baseUrl).hostname.toLowerCase() === "api.deepseek.com";
   }
 
-  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs, signal }: AICompletionParams) {
+  private buildThinkingPayload(thinking: AICompletionParams["thinking"]) {
+    if (!this.isDeepSeekOfficialApi) {
+      return {};
+    }
+
+    return {
+      thinking: {
+        type: thinking ?? "disabled"
+      }
+    };
+  }
+
+  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs, responseFormat, thinking, signal }: AICompletionParams) {
     const startedAt = Date.now();
     const abortScope = createTimedAbortScope(signal, timeoutMs ?? this.timeoutMs);
 
@@ -99,7 +133,11 @@ export class OpenAIProvider implements AIProvider {
           model: this.model,
           messages,
           temperature,
-          max_tokens: maxTokens
+          max_tokens: maxTokens,
+          ...(responseFormat === "json_object"
+            ? { response_format: { type: "json_object" } }
+            : {}),
+          ...this.buildThinkingPayload(thinking)
         }),
         cache: "no-store",
         signal: abortScope.signal
@@ -118,6 +156,7 @@ export class OpenAIProvider implements AIProvider {
             content?: unknown;
           };
         }>;
+        usage?: unknown;
       };
       const content = extractMessageContent(payload.choices?.[0]?.message?.content);
 
@@ -128,7 +167,8 @@ export class OpenAIProvider implements AIProvider {
       return {
         content,
         latencyMs,
-        provider: this.name
+        provider: this.name,
+        tokenUsage: readCompletionTokenUsage(payload.usage)
       };
     } catch (error) {
       if (error instanceof AIProviderError) {
@@ -148,7 +188,7 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
-  async *stream({ messages, temperature = 0.2, maxTokens = 180, timeoutMs, signal }: AICompletionParams): AsyncIterable<string> {
+  async *stream({ messages, temperature = 0.2, maxTokens = 180, timeoutMs, thinking, signal }: AICompletionParams): AsyncIterable<string> {
     const abortScope = createTimedAbortScope(signal, timeoutMs ?? this.timeoutMs);
 
     try {
@@ -163,7 +203,8 @@ export class OpenAIProvider implements AIProvider {
           messages,
           temperature,
           max_tokens: maxTokens,
-          stream: true
+          stream: true,
+          ...this.buildThinkingPayload(thinking)
         }),
         cache: "no-store",
         signal: abortScope.signal
