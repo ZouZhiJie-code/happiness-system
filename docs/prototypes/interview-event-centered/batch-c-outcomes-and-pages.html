@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>批次 C｜事件日志闭环实现对照</title>
+  <style>
+    :root {
+      --ink:#332316; --muted:#715a44; --faint:#927a62; --paper:#faedda;
+      --paper-soft:#fff9ef; --paper-deep:#e3c18e; --line:#dcc19c;
+      --line-soft:#ead8bd; --ember:#985f31; --moss:#637151;
+      --control:12px; --card:20px; --shell:28px;
+      --display:"Iowan Old Style","Songti SC",serif;
+      --ui:ui-sans-serif,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    }
+    *{box-sizing:border-box} html{background:#b87d49} body{margin:0;min-width:320px;min-height:100vh;color:var(--ink);font-family:var(--ui);background:linear-gradient(180deg,#a56d40,#dfb27a 58%,#efd3a6)}
+    button,input,textarea{font:inherit} button{cursor:pointer} button:active{transform:scale(.97)}
+    button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid rgba(152,95,49,.45);outline-offset:3px}
+    .header{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:62px;padding:10px clamp(16px,4vw,48px);border-bottom:1px solid var(--line);background:rgba(255,249,239,.76);backdrop-filter:blur(14px)}
+    .brand{font:700 22px var(--display)} .header span{font-size:12px;color:var(--muted)}
+    main{padding:clamp(12px,2vw,26px)} .meta,.workspace,.notes{max-width:1420px;margin-inline:auto}
+    .meta{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px;color:#60452e;font-size:12px}
+    .badge{padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,249,239,.72);font-weight:700}
+    .workspace{display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:min(780px,calc(100vh - 132px));overflow:hidden;border:1px solid var(--line);border-radius:var(--shell);background:rgba(249,235,211,.98);box-shadow:0 25px 68px rgba(69,39,17,.2)}
+    .dialogue{display:flex;min-width:0;flex-direction:column}.tabs{display:flex;align-items:end;gap:4px;min-height:57px;padding:12px 14px 0;border-bottom:1px solid var(--line-soft)}
+    .tab{padding:10px 13px;border:0;border-radius:var(--control) var(--control) 0 0;background:transparent;color:var(--muted)} .tab.active{background:var(--paper-soft);color:var(--ink);font-weight:700}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:13px 18px;border-bottom:1px solid var(--line-soft);font-size:11px;color:var(--faint)}
+    .steps b{display:block;margin-bottom:5px;color:var(--ink);font-size:12px}.line{height:3px;border-radius:3px;background:var(--line-soft)} .line i{display:block;height:100%;border-radius:inherit;background:var(--ember)}
+    .conversation{flex:1;overflow:auto;padding:26px clamp(18px,5vw,64px)} .conversation>div{max-width:690px;margin:0 auto 18px}.user{margin-left:auto!important;padding:13px 16px;border-radius:var(--card);background:#f3ddbc;line-height:1.75}.thought{padding-left:12px;border-left:2px solid var(--paper-deep);color:var(--muted);line-height:1.7}.assistant{margin-top:8px;padding:13px 16px;border-radius:var(--card);background:var(--paper-soft);line-height:1.75}
+    .checkpoint{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 18px;border:1px solid var(--line);border-radius:var(--card);background:rgba(255,249,239,.56)} .checkpoint p{margin:0;font-size:13px;line-height:1.6}
+    .primary,.secondary{min-height:39px;padding:8px 14px;border-radius:var(--control);font-weight:700}.primary{border:1px solid var(--ember);background:var(--ember);color:white}.secondary{border:1px solid var(--line);background:transparent;color:var(--ink)}
+    .composer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft)} .composer textarea{flex:1;resize:none;border:0;border-radius:var(--card);background:var(--paper-soft);padding:12px 14px;color:var(--ink)}
+    .journal{display:flex;min-height:0;flex-direction:column;padding:22px;border-left:1px solid var(--line);background:linear-gradient(180deg,#fff9ef,#f5e1c1)} .journal-head{display:flex;align-items:start;justify-content:space-between;gap:12px}.journal h2{margin:0;font:700 24px var(--display)} .status{margin-top:4px;color:var(--faint);font-size:11px}
+    .state-switch{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0;padding-bottom:16px;border-bottom:1px solid var(--line-soft)} .state-switch button{padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:11px}.state-switch button[aria-pressed="true"]{background:var(--ink);color:white}
+    .journal-body{display:flex;min-height:0;flex:1;flex-direction:column}.empty,.progress{display:grid;flex:1;place-content:center}.empty h3{margin:0;font:700 27px var(--display)} .empty p,.progress p{max-width:30ch;color:var(--muted);font-size:13px;line-height:1.8}.bar{height:7px;overflow:hidden;border-radius:7px;background:var(--line-soft)} .bar i{display:block;width:68%;height:100%;background:var(--ember)}
+    .editor{display:flex;min-height:0;flex:1;flex-direction:column}.editor input,.editor textarea{border:0;background:transparent;color:var(--ink);outline-offset:1px}.editor input{padding:8px 2px 13px;border-bottom:1px solid var(--line-soft);font:700 25px var(--display)}.editor textarea{flex:1;min-height:330px;resize:none;padding:18px 2px;line-height:2}.actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:15px;border-top:1px solid var(--line-soft)} .actions a{margin-left:auto;color:var(--muted);font-size:12px;text-underline-offset:4px}
+    .notes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.note{padding:14px 16px;border:1px solid rgba(113,78,43,.25);border-radius:var(--card);background:rgba(255,249,239,.58)}.note b{font-size:12px}.note p{margin:6px 0 0;color:#654b34;font-size:11px;line-height:1.65}
+    [hidden]{display:none!important}
+    @media(max-width:900px){.workspace{display:block;min-height:720px}.journal{position:fixed;z-index:5;inset:auto 0 0;max-height:88dvh;border:1px solid var(--line);border-radius:var(--shell) var(--shell) 0 0;box-shadow:0 -24px 60px rgba(64,36,15,.28)}.journal::before{width:42px;height:4px;margin:-8px auto 12px;border-radius:9px;background:var(--line);content:""}.notes{grid-template-columns:1fr}.steps{gap:8px;padding-inline:12px}.steps span{display:none}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <header class="header"><strong class="brand">Daily Light</strong><span>当前记录日期：2026-08-02</span></header>
+  <main>
+    <div class="meta"><span class="badge">Batch C · 已冻结实现对照</span><span>检查点 → 生成 → 编辑暂存 → 正式保存 → 刷新恢复</span></div>
+    <section class="workspace" aria-label="事件日志完整闭环原型">
+      <div class="dialogue">
+        <div class="tabs"><button class="tab active">会议结束后的松快</button><button class="tab">散步时想到的事</button><button class="tab" aria-label="再记一件">＋</button></div>
+        <div class="steps"><div><b>1 · 轻量记录</b><div class="line"><i style="width:100%"></i></div><span>事件已经记下</span></div><div><b>2 · 引导复盘</b><div class="line"><i style="width:100%"></i></div><span>看到一条感受线索</span></div><div><b>3 · 深入探索</b><div class="line"><i style="width:42%"></i></div><span>可以继续，也可以停下</span></div></div>
+        <div class="conversation">
+          <div class="user">今天做完汇报，走出会议室那一刻，我突然觉得整个人松开了。</div>
+          <div><div class="thought">汇报完成和走出会议室共同构成了这个变化时刻。现在这段材料已经能说明松快从哪里开始。</div><div class="assistant">你一直绷着的那部分，在任务真正结束后终于放下来了。</div></div>
+          <div class="checkpoint"><p><strong>这一段先到这里。</strong><br />现在可以生成日志，也可以继续沿刚才的方向输入。</p><button class="primary" id="generate">生成事件日志</button></div>
+        </div>
+        <div class="composer"><textarea rows="1" aria-label="继续补充" placeholder="把此刻想补充的话说给我听…"></textarea><button class="secondary">发送</button></div>
+      </div>
+      <aside class="journal" aria-label="当前事件日志" id="journal">
+        <div class="journal-head"><div><h2>当前事件日志</h2><div class="status" id="status">尚未生成</div></div><button class="secondary" id="close">收起</button></div>
+        <div class="state-switch" aria-label="原型状态切换">
+          <button data-state="empty" aria-pressed="true">生成前</button><button data-state="generating" aria-pressed="false">生成中</button><button data-state="draft" aria-pressed="false">草稿</button><button data-state="saved" aria-pressed="false">已保存</button><button data-state="conflict" aria-pressed="false">版本冲突</button>
+        </div>
+        <div class="journal-body empty" data-panel="empty"><div><h3>把这件事收进日志</h3><p>当前原话和已经形成的认识，会整理成一篇可以继续修改的事件日志。</p><button class="primary" data-start>生成事件日志</button></div></div>
+        <div class="journal-body progress" data-panel="generating" hidden><div><h3>正在整理这件事</h3><p>先放好事件经过，再整理已经形成的认识。</p><div class="bar"><i></i></div></div></div>
+        <div class="journal-body editor" data-panel="editor" hidden>
+          <label hidden for="title">日志标题</label><input id="title" value="会议结束后的松快" maxlength="16" />
+          <label hidden for="content">日志正文</label><textarea id="content">今天做完汇报，走出会议室的那一刻，我突然觉得整个人松开了。
+
+我看见的
+
+任务真正结束以后，一直绷着的那部分终于放了下来。</textarea>
+          <div class="actions"><button class="primary" id="save">保存日志</button><button class="secondary">再记一件</button><a href="#">返回今天</a></div>
+        </div>
+      </aside>
+    </section>
+    <section class="notes" aria-label="实现说明">
+      <div class="note"><b>直接复用</b><p>事件标签、三阶段进度、对话主区、思路摘要、桌面侧栏和移动端底部 sheet。</p></div>
+      <div class="note"><b>本批新增</b><p>三个合法停顿的生成入口、700ms 自动暂存、正式保存、刷新恢复、再记一件与返回今天。</p></div>
+      <div class="note"><b>失败保护</b><p>AI 技术失败后使用冻结来源的基础版本；并发冲突保留当前编辑；来源不足时回到原检查点补充。</p></div>
+    </section>
+  </main>
+  <script>
+    const buttons=[...document.querySelectorAll('[data-state]')];
+    const panels={empty:document.querySelector('[data-panel="empty"]'),generating:document.querySelector('[data-panel="generating"]'),editor:document.querySelector('[data-panel="editor"]')};
+    const status=document.querySelector('#status'); const save=document.querySelector('#save');
+    function show(state){buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.state===state)));Object.values(panels).forEach(p=>p.hidden=true);if(state==='empty')panels.empty.hidden=false;if(state==='generating')panels.generating.hidden=false;if(['draft','saved','conflict'].includes(state))panels.editor.hidden=false;status.textContent={empty:'尚未生成',generating:'正在生成…',draft:'草稿已暂存',saved:'已保存',conflict:'暂存冲突 · 当前文字仍保留'}[state];save.textContent=state==='saved'?'已保存':'保存日志';}
+    buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.state)));
+    document.querySelectorAll('[data-start],#generate').forEach(b=>b.addEventListener('click',()=>{show('generating');setTimeout(()=>show('draft'),900)}));
+    save.addEventListener('click',()=>show('saved'));
+    document.querySelector('#close').addEventListener('click',()=>document.querySelector('#journal').toggleAttribute('hidden'));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelector('#journal').toggleAttribute('hidden',true)});
+  </script>
+</body>
+</html>

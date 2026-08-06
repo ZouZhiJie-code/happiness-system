@@ -1,0 +1,45 @@
+{
+  "evaluationId": "board7a_real_output_ab_v1",
+  "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+  "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+  "pairingSeed": "2026-08-06.board7a-real-output-ab-balanced-pairing-v1",
+  "revealAfter": "product_owner_blind_review_complete",
+  "pairing": [
+    {
+      "displayOrder": 1,
+      "caseId": "H1",
+      "left": "candidate_a",
+      "right": "candidate_b"
+    },
+    {
+      "displayOrder": 2,
+      "caseId": "T1",
+      "left": "candidate_b",
+      "right": "candidate_a"
+    },
+    {
+      "displayOrder": 3,
+      "caseId": "T2",
+      "left": "candidate_a",
+      "right": "candidate_b"
+    },
+    {
+      "displayOrder": 4,
+      "caseId": "H3",
+      "left": "candidate_b",
+      "right": "candidate_a"
+    },
+    {
+      "displayOrder": 5,
+      "caseId": "H2",
+      "left": "candidate_a",
+      "right": "candidate_b"
+    },
+    {
+      "displayOrder": 6,
+      "caseId": "T3",
+      "left": "candidate_b",
+      "right": "candidate_a"
+    }
+  ]
+}

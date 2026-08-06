@@ -1,0 +1,56 @@
+{
+  "evaluationId": "board7a_real_output_ab_v1",
+  "status": "candidate_package_ready_pending_product_owner_run_authorization",
+  "createdAt": "2026-08-06T14:29:15Z",
+  "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+  "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+  "caseIds": [
+    "H1",
+    "H2",
+    "H3",
+    "T1",
+    "T2",
+    "T3"
+  ],
+  "sourceMix": {
+    "historicalPreview": 3,
+    "targetRule": 3
+  },
+  "modeDistribution": {
+    "helpRecord": 2,
+    "accompanyChat": 4
+  },
+  "runtimeConfig": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1200,
+    "timeoutMs": 20000,
+    "responseFormat": "json_object",
+    "thinking": "disabled"
+  },
+  "requestBudget": {
+    "candidateA": 6,
+    "candidateB": 12,
+    "nominalGenerationRequests": 18,
+    "technicalRetriesMax": 3,
+    "generationRequestsMax": 21,
+    "qualityRetries": 0
+  },
+  "modelCallsAtPackageCreation": 0,
+  "productionDataUsed": false,
+  "productionRuntimeChanged": false,
+  "files": {
+    "dataset": "evals/event-centered-generative/board7a-real-output/board7a-six-case-v1.json",
+    "candidateContract": "evals/event-centered-generative/board7a-real-output/board7a-real-output-ab.ts",
+    "runner": "scripts/run-board7a-real-output-ab.ts",
+    "test": "tests/unit/board7a-real-output-ab.test.ts",
+    "confirmation": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-confirmation.md",
+    "prompts": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-prompts.md",
+    "blindReview": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-blind-review.md",
+    "reveal": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-reveal.json",
+    "budget": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-budget.json",
+    "approvalTemplate": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-approval-template.json"
+  }
+}

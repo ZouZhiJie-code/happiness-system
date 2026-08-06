@@ -1,0 +1,107 @@
+{
+  "datasetVersion": "2026-08-01.board7-provider-v31-repair-probe-v1",
+  "purpose": "只复验 Provider v3.1 的两条已确认修复：具体作答入口与 AI 对话人称。两个全新故事及隐藏判尺仅用于独立 repair probe，不进入 Prompt、Few-shot、旧 v3 候选集或旧预算账本。",
+  "deduplication": {
+    "checkedBeforeAddition": true,
+    "checkedScopes": ["src", "tests", "evals", "artifacts", "docs", "scripts"],
+    "storyAnchors": ["阳台照片与照片日记封面", "雨夜宠物医院与航空箱"],
+    "matchedExistingStories": []
+  },
+  "cases": [
+    {
+      "id": "V31-RP-T-ENTRY-01",
+      "scenarioFamily": "balcony_photos_diary_cover_choice_clue",
+      "capability": "thought_needs_more_concrete_answer_entry",
+      "repairRule": "goal_abstract_answer_entry_concrete",
+      "expectedVisiblePerspective": "second_person_or_neutral",
+      "angle": "thought",
+      "mode": "guided_reflection",
+      "userContext": "用户给同一处阳台拍了两张很接近的照片，放大比较后选了一张做照片日记封面；选择已经发生，真正让比较停止的判断线索仍未说清。",
+      "conversationContext": [{
+        "user": "我给同一处阳台拍了两张很像的照片，来回放大看了好几遍，最后挑了一张做这周照片日记的封面。",
+        "assistantUnderstanding": "两张照片整体很接近，你还是在放大比较后停在了其中一张。",
+        "assistantQuestion": "最后选中的那张更符合你心里的什么标准？"
+      }],
+      "currentQuestion": "最后选中的那张更符合你心里的什么标准？",
+      "currentQuestionTarget": "balcony_photo_cover_choice_clue",
+      "currentQuestionCognitiveAction": "clarify_user_term",
+      "currentQuestionIntent": {
+        "targetId": "balcony_photo_cover_choice_clue",
+        "semanticGoal": "理解用户停止比较两张照片时采用的判断依据",
+        "minimumAnswerScope": "说出放大照片时让目光停住或结束比较的一处具体画面"
+      },
+      "currentUserText": "我只知道放大以后就偏向现在这张，可真正让我停止比较的那个点，我还说不清。",
+      "trustedFacts": [
+        "用户给同一处阳台拍了两张很接近的照片",
+        "用户来回放大比较后选定一张作为本周照片日记封面",
+        "用户尚未说清放大后让自己停止比较的具体判断线索"
+      ],
+      "expectedState": "needs_more",
+      "expectedAction": "ask",
+      "expectedUnderstanding": {
+        "mustCover": ["放大比较后选定了封面照片", "停止比较的具体判断线索仍未说清"],
+        "relationSides": []
+      },
+      "expectedQuestionIntent": {
+        "goalMustCover": ["识别停止比较两张照片时采用的判断依据"],
+        "answerEntryMustCover": ["放大照片时目光先停在哪里或哪一处让比较结束"],
+        "mustBeConcrete": true
+      },
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "abstract_goal_with_concrete_event_entry",
+      "mustCover": ["放大比较后完成选择", "具体判断尚未说清"],
+      "mustAvoid": [
+        "把 goal 原样改写成你最想确认什么",
+        "让 answerEntry 与 goal 停留在同一抽象层",
+        "提供光线、构图、颜色等候选答案",
+        "转向以后怎样拍照或选择封面"
+      ]
+    },
+    {
+      "id": "V31-RP-R-VOICE-01",
+      "scenarioFamily": "rainy_pet_hospital_support_preserves_user_voice",
+      "capability": "relationship_pause_second_person_voice",
+      "repairRule": "visible_second_person_or_neutral",
+      "expectedVisiblePerspective": "second_person_or_neutral",
+      "angle": "relationship",
+      "mode": "deep_conversation",
+      "userContext": "雨夜带猫去宠物医院时，朋友承担了最慌乱的杂事，也把向医生说明情况的主导权留给用户；用户已经说清支持与自主同时成立，并希望停在这里。",
+      "conversationContext": [{
+        "user": "昨晚猫突然不舒服，朋友冒雨陪我去了宠物医院。她一路抱着航空箱，我才能腾出手登记。",
+        "assistantUnderstanding": "她接过了最忙乱的一部分，同时陪你进入了就诊过程。",
+        "assistantQuestion": "医生开始问情况以后，她的陪伴让你处在什么位置？"
+      }],
+      "currentQuestion": "医生开始问情况以后，她的陪伴让你处在什么位置？",
+      "currentQuestionTarget": "pet_hospital_support_and_agency",
+      "currentQuestionCognitiveAction": "connect_clues",
+      "currentQuestionIntent": {
+        "targetId": "pet_hospital_support_and_agency",
+        "semanticGoal": "理解朋友的支持怎样同时保留用户在就诊沟通中的主导位置",
+        "minimumAnswerScope": "说明朋友承担的部分和用户仍然保留的部分"
+      },
+      "currentUserText": "医生问情况时，她先等我讲完，只在我漏掉发作时间后补了一句。我感觉有人接住了最慌的部分，怎么说明情况仍由我来。这个角度就聊到这里吧。",
+      "trustedFacts": [
+        "朋友在雨夜陪用户带猫去宠物医院并抱着航空箱",
+        "医生询问情况时，朋友先等用户讲完，只补充了用户漏掉的发作时间",
+        "用户感到慌乱部分被接住，同时保留了说明情况的主导权",
+        "用户明确希望当前角度聊到这里"
+      ],
+      "expectedState": "ready",
+      "expectedAction": "pause",
+      "expectedUnderstanding": {
+        "mustCover": ["朋友接住了慌乱中的实际负担", "用户仍保留就诊说明的主导权"],
+        "relationSides": ["先等用户讲完", "只补充漏掉的时间"]
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "ready_relationship_pause_with_ai_voice",
+      "mustCover": ["支持与自主同时成立", "尊重用户停止"],
+      "mustAvoid": [
+        "继续追问关系意义",
+        "用我或我的替用户写自述",
+        "猜测朋友的动机",
+        "扩大为长期关系结论"
+      ]
+    }
+  ]
+}

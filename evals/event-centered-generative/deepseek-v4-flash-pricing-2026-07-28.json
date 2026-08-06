@@ -1,0 +1,9 @@
+{
+  "model": "deepseek-v4-flash",
+  "currency": "USD",
+  "inputPerMillion": 0.14,
+  "cacheHitInputPerMillion": 0.0028,
+  "outputPerMillion": 0.28,
+  "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+  "effectiveDate": "2026-07-28"
+}

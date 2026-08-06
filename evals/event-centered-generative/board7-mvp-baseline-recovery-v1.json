@@ -1,0 +1,17 @@
+{
+  "datasetVersion": "2026-08-02.board7-mvp-baseline-recovery-v1",
+  "parentDatasetVersion": "2026-08-02.board7-mvp-four-angle-smoke-v1",
+  "purpose": "只验证四角度首轮中生成式内部失败的想法与关系案例，经过正式 baseline 理解和表达后，用户能否最终得到安全、可理解的回应。",
+  "caseIds": [
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01"
+  ],
+  "runPolicy": {
+    "baselineOnly": true,
+    "repetitionsPerCase": 1,
+    "maxTechnicalAttemptsPerStage": 2,
+    "promptTuningAllowed": false,
+    "generativeRerunAllowed": false,
+    "fullEvaluationAllowed": false
+  }
+}

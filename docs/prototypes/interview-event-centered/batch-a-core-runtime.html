@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>批次 A｜事件访谈工作台原型</title>
+    <style>
+      :root {
+        --ink: #302114;
+        --muted: rgba(48, 33, 20, 0.68);
+        --faint: rgba(48, 33, 20, 0.48);
+        --paper: #f8e9cc;
+        --paper-light: #fff9ed;
+        --paper-deep: #e5c694;
+        --ember: #a96f3d;
+        --ember-deep: #875126;
+        --moss: #65754f;
+        --line: rgba(110, 73, 38, 0.16);
+        --line-strong: rgba(110, 73, 38, 0.3);
+        --radius-control: 12px;
+        --radius-card: 20px;
+        --radius-shell: 28px;
+        --display: "Iowan Old Style", "Songti SC", "STSong", serif;
+        --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: #be8953; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--ui);
+        background:
+          radial-gradient(circle at 14% 7%, rgba(255, 248, 234, .36), transparent 22%),
+          radial-gradient(circle at 88% 11%, rgba(100, 60, 27, .18), transparent 29%),
+          linear-gradient(180deg, #936039 0, #bb844d 25%, #d9aa71 58%, #edcf9d 100%);
+      }
+      body::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        content: "";
+        pointer-events: none;
+        opacity: .48;
+        background: repeating-linear-gradient(108deg, transparent 0 23px, rgba(255,255,255,.07) 24px, transparent 25px 48px);
+      }
+      button, a { font: inherit; }
+      button { cursor: pointer; }
+      button:focus-visible, a:focus-visible { outline: 3px solid rgba(169,111,61,.58); outline-offset: 3px; }
+
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 64px;
+        padding: 10px clamp(18px, 4vw, 52px);
+        border-bottom: 1px solid rgba(110,73,38,.15);
+        background: rgba(255,249,239,.58);
+        backdrop-filter: blur(14px) saturate(140%);
+      }
+      .brand { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -.035em; }
+      .site-nav { display: flex; gap: 4px; }
+      .site-nav a { padding: 7px 9px; border-bottom: 2px solid transparent; color: var(--muted); font-size: 13px; text-decoration: none; }
+      .site-nav a[aria-current="page"] { border-color: var(--ember); color: var(--ink); font-weight: 700; }
+      .record-date { color: var(--faint); font-size: 12px; white-space: nowrap; }
+
+      main { padding: clamp(14px, 2vw, 28px) clamp(14px, 3vw, 42px) 28px; }
+      .prototype-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        max-width: 1440px;
+        margin: 0 auto 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .tag { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,250,241,.55); color: #684a2d; font-size: 11px; white-space: nowrap; }
+      .tag.reuse { background: rgba(101,123,79,.12); }
+      .tag.extend { background: rgba(169,111,61,.12); }
+      .tag.new { background: rgba(118,94,158,.1); }
+
+      .workspace {
+        position: relative;
+        display: grid;
+        min-height: min(786px, calc(100vh - 142px));
+        max-width: 1440px;
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid rgba(110,73,38,.16);
+        border-radius: var(--radius-shell);
+        background: linear-gradient(180deg, rgba(249,237,215,.97), rgba(233,210,171,.97));
+        box-shadow: 0 24px 64px rgba(79,48,21,.17);
+      }
+      .event-strip {
+        display: flex;
+        align-items: end;
+        gap: 7px;
+        min-height: 58px;
+        padding: 13px 16px 0;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255,249,238,.34);
+        scrollbar-width: thin;
+      }
+      .event-strip::after { flex: 1 0 10px; content: ""; }
+      .event-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 136px;
+        max-width: 220px;
+        min-height: 43px;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: 13px 13px 0 0;
+        background: transparent;
+        color: var(--muted);
+        text-align: left;
+        transition: background .18s ease, transform .18s ease, color .18s ease;
+      }
+      .event-tab:hover { background: rgba(255,249,239,.48); color: var(--ink); }
+      .event-tab[aria-selected="true"] {
+        position: relative;
+        z-index: 1;
+        border-color: rgba(142,94,49,.25);
+        border-bottom-color: #f7e8ca;
+        background: #f7e8ca;
+        color: var(--ink);
+        box-shadow: 0 -6px 15px rgba(112,72,34,.06);
+      }
+      .event-tab[aria-selected="true"]::after { position: absolute; right: 12px; bottom: -2px; left: 12px; height: 2px; border-radius: 999px; content: ""; background: var(--ember); }
+      .event-index { display: grid; width: 20px; height: 20px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: rgba(169,111,61,.13); color: #744825; font-family: var(--display); font-size: 12px; }
+      .event-tab[aria-selected="true"] .event-index { background: #9c6431; color: #fff9ea; }
+      .event-tab-copy { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .event-dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--moss); }
+      .event-dot.active { background: var(--ember); box-shadow: 0 0 0 3px rgba(169,111,61,.12); }
+      .new-event-button {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
+        place-items: center;
+        margin: 0 0 4px 2px;
+        border: 1px dashed rgba(139,88,41,.45);
+        border-radius: 11px;
+        background: rgba(255,250,241,.34);
+        color: #835128;
+        font-size: 22px;
+        line-height: 1;
+        transition: transform .18s ease, background .18s ease;
+      }
+      .new-event-button:hover { transform: translateY(-1px); background: rgba(255,250,241,.75); }
+
+      .stage-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: clamp(11px, 2vw, 27px);
+        padding: 13px 18px 14px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255,250,242,.52);
+      }
+      .stage-item { min-width: 0; }
+      .stage-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: var(--faint); font-size: 12px; }
+      .stage-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .stage-name b { margin-right: 5px; color: #7f512c; font-weight: 750; }
+      .stage-percent { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+      .stage-progress { height: 7px; margin-top: 7px; overflow: hidden; border-radius: 999px; background: rgba(122,84,45,.16); }
+      .stage-progress b { display: block; width: var(--progress, 0%); height: 100%; border-radius: inherit; background: #d3d3d3; transition: width .35s ease, background .35s ease; }
+      .stage-item.current .stage-top { color: var(--ink); font-weight: 700; }
+      .stage-item.current .stage-progress b { background: linear-gradient(90deg, #b9783e, #91572b); }
+      .stage-item.done .stage-progress b { background: linear-gradient(90deg, #7a9660, #607c49); }
+
+      .chat-area { position: relative; min-height: 0; padding: 0 clamp(14px, 3vw, 44px); background: linear-gradient(180deg, rgba(244,230,204,.7), rgba(240,220,187,.55)); }
+      .conversation { height: 100%; min-height: 510px; max-width: 840px; margin: 0 auto; padding: 28px 0 118px; overflow-y: auto; }
+      .date-label { margin: 0 0 20px 4px; color: var(--faint); font-size: 12px; }
+      .message { display: flex; margin: 0 0 17px; }
+      .message.user { justify-content: flex-end; }
+      .bubble { max-width: min(86%, 560px); padding: 13px 16px; border: 1px solid var(--line); border-radius: 19px; box-shadow: 0 7px 17px rgba(93,58,29,.05); font-size: 14px; line-height: 1.75; }
+      .message.assistant .bubble { border-top-left-radius: 5px; background: rgba(255,250,242,.84); color: #453225; }
+      .message.user .bubble { border-top-right-radius: 5px; background: linear-gradient(180deg, rgba(229,202,165,.9), rgba(220,188,146,.91)); color: #3e2d20; }
+      .understanding { margin: -4px 0 17px 15px; color: #8d6c4a; font-size: 12px; line-height: 1.6; }
+      .understanding::before { margin-right: 6px; content: "·"; color: var(--ember); }
+      .checkpoint-card {
+        max-width: 590px;
+        margin: 8px 0 20px 13px;
+        padding: 15px 16px;
+        border: 1px solid rgba(151,103,57,.26);
+        border-radius: 17px;
+        background: rgba(255,248,234,.72);
+        box-shadow: 0 10px 23px rgba(96,58,28,.06);
+      }
+      .checkpoint-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+      .checkpoint-card strong { display: block; margin-bottom: 5px; color: var(--ink); font-family: var(--display); font-size: 18px; letter-spacing: -.02em; }
+      .checkpoint-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+
+      .button { display: inline-flex; min-height: 35px; align-items: center; justify-content: center; padding: 7px 12px; border: 1px solid transparent; border-radius: var(--radius-control); font-size: 12px; font-weight: 680; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+      .button:hover { transform: translateY(-1px); }
+      .button.primary { background: linear-gradient(180deg, #b57c43, #92582c); color: #fff9ec; box-shadow: 0 7px 14px rgba(117,68,28,.18); }
+      .button.secondary { border-color: var(--line-strong); background: rgba(255,250,242,.68); color: #6c482a; }
+      .button.text { padding-right: 4px; padding-left: 4px; color: #7c4e29; text-decoration: underline; text-underline-offset: 4px; }
+      .composer-wrap { position: absolute; right: clamp(14px, 3vw, 44px); bottom: 14px; left: clamp(14px, 3vw, 44px); max-width: 840px; margin: auto; }
+      .composer { position: relative; display: flex; align-items: center; min-height: 57px; padding: 7px 7px 7px 18px; border: 1px solid rgba(144,98,52,.28); border-radius: 25px; background: rgba(255,250,242,.93); box-shadow: 0 13px 30px rgba(93,57,26,.14); }
+      .composer-text { flex: 1; color: #a28b72; font-size: 13px; }
+      .send { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 50%; background: linear-gradient(180deg, #e7c492, #d7a96c); color: #3d2d20; font-size: 19px; box-shadow: inset 0 1px 0 rgba(255,255,255,.65); }
+
+      .journal-trigger {
+        position: absolute;
+        top: 141px;
+        right: 17px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 36px;
+        padding: 7px 11px;
+        border: 1px solid rgba(142,94,49,.23);
+        border-radius: 999px;
+        background: rgba(255,249,238,.76);
+        color: #65462b;
+        box-shadow: 0 7px 18px rgba(92,56,25,.1);
+        font-size: 12px;
+      }
+      .journal-trigger i { width: 7px; height: 7px; border-radius: 50%; background: var(--moss); }
+      .journal-scrim { position: absolute; z-index: 4; inset: 0; display: none; background: rgba(35,24,15,.28); backdrop-filter: blur(1px); }
+      .journal-scrim.open { display: block; }
+      .journal-panel {
+        position: absolute;
+        z-index: 5;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        width: min(420px, 90%);
+        flex-direction: column;
+        padding: 25px 26px;
+        transform: translateX(104%);
+        border-left: 1px solid rgba(150,109,66,.21);
+        background: linear-gradient(180deg, rgba(255,250,240,.99), rgba(237,218,186,.98));
+        box-shadow: -24px 0 60px -20px rgba(74,44,18,.48);
+        transition: transform .32s cubic-bezier(.2,.75,.2,1);
+      }
+      .journal-panel.open { transform: translateX(0); }
+      .journal-panel::before { position: absolute; top: 0; bottom: 0; left: 16px; width: 1px; content: ""; background: rgba(169,111,61,.17); }
+      .journal-top { display: flex; align-items: center; justify-content: space-between; padding-left: 13px; }
+      .journal-top p { margin: 0; color: var(--faint); font-size: 12px; }
+      .close-button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,250,241,.7); color: #61462f; font-size: 18px; }
+      .journal-title { margin: 34px 0 11px 13px; font-family: var(--display); font-size: 28px; letter-spacing: -.04em; }
+      .journal-content { flex: 1; margin-left: 13px; color: #523c28; font-family: var(--display); font-size: 18px; line-height: 1.85; overflow: auto; }
+      .journal-content p { margin: 0 0 19px; }
+      .journal-actions { display: flex; gap: 8px; padding: 15px 0 0 13px; border-top: 1px solid var(--line); }
+
+      .prototype-controls { display: flex; flex-wrap: wrap; gap: 8px; max-width: 1440px; margin: 12px auto 0; }
+      .control-label { align-self: center; margin-right: 2px; color: var(--faint); font-size: 11px; font-weight: 700; letter-spacing: .1em; }
+      .choice { min-height: 31px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,249,239,.56); color: var(--muted); font-size: 12px; }
+      .choice[aria-pressed="true"] { border-color: rgba(142,91,45,.52); background: #9a6335; color: #fff8e9; }
+      .legend { display: flex; flex-wrap: wrap; gap: 7px; max-width: 1440px; margin: 12px auto 0; color: var(--muted); font-size: 11px; }
+      .recommendation { max-width: 1440px; margin: 18px auto 0; padding: 17px 19px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255,249,239,.72); }
+      .recommendation h1 { margin: 0 0 7px; font-family: var(--display); font-size: 22px; letter-spacing: -.035em; }
+      .recommendation p { max-width: 950px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.72; }
+
+      .prototype-view-switch { display: flex; gap: 5px; max-width: 1440px; margin: 0 auto 12px; }
+      .prototype-view-switch button { min-height: 34px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,249,239,.5); color: var(--muted); font-size: 12px; }
+      .prototype-view-switch button[aria-pressed="true"] { border-color: rgba(142,91,45,.52); background: #9a6335; color: #fff8e9; }
+      .prototype-screen[hidden] { display: none; }
+      .calendar-prototype {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(290px, .72fr);
+        min-height: 682px;
+        max-width: 1440px;
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid rgba(110,73,38,.16);
+        border-radius: var(--radius-shell);
+        background: linear-gradient(180deg, rgba(249,237,215,.97), rgba(233,210,171,.97));
+        box-shadow: 0 24px 64px rgba(79,48,21,.17);
+      }
+      .calendar-main { min-width: 0; padding: clamp(18px, 2.6vw, 34px); }
+      .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+      .calendar-heading h2 { margin: 0; font-family: var(--display); font-size: 29px; letter-spacing: -.04em; }
+      .calendar-heading p { margin: 3px 0 0; color: var(--faint); font-size: 12px; }
+      .month-nav { display: flex; align-items: center; gap: 8px; }
+      .month-nav button { display: grid; width: 31px; height: 31px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,250,242,.64); color: #714a29; }
+      .month-nav span { color: #65452b; font-family: var(--display); font-size: 16px; white-space: nowrap; }
+      .weekday-row, .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+      .weekday-row { margin-bottom: 5px; padding: 0 2px; color: var(--faint); font-size: 11px; text-align: center; }
+      .calendar-cell { position: relative; display: flex; min-height: 89px; flex-direction: column; padding: 9px; border: 1px solid transparent; border-radius: 16px; background: rgba(255,250,242,.35); color: var(--muted); text-align: left; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+      .calendar-cell:not(:disabled):hover { transform: translateY(-1px); border-color: var(--line-strong); background: rgba(255,250,242,.68); }
+      .calendar-cell.empty { opacity: .46; }
+      .calendar-cell.selected { border-color: rgba(155,100,49,.5); background: rgba(255,248,233,.93); box-shadow: inset 0 0 0 1px rgba(255,255,255,.45); }
+      .calendar-cell.today::after { position: absolute; top: 10px; right: 10px; width: 6px; height: 6px; border-radius: 50%; content: ""; background: var(--ember); }
+      .cell-date { color: #563d29; font-family: var(--display); font-size: 16px; }
+      .cell-event { display: inline-flex; align-items: center; align-self: flex-start; gap: 4px; margin-top: auto; padding: 3px 6px; border-radius: 999px; background: rgba(169,111,61,.13); color: #7c4d27; font-size: 10px; }
+      .cell-event::before { width: 5px; height: 5px; border-radius: 50%; content: ""; background: currentColor; }
+      .cell-legacy { display: flex; gap: 3px; margin-top: auto; }
+      .cell-legacy b { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid rgba(112,79,45,.17); border-radius: 6px; background: rgba(255,250,242,.72); color: #7a5632; font-size: 10px; }
+      .cell-dual { align-self: flex-start; margin-top: auto; padding: 3px 6px; border: 1px solid rgba(121,93,158,.24); border-radius: 999px; background: rgba(121,93,158,.09); color: #664e83; font-size: 10px; }
+      .calendar-side { display: flex; min-height: 0; flex-direction: column; border-left: 1px solid var(--line); background: rgba(255,250,241,.5); }
+      .calendar-side-head { padding: 23px 22px 16px; border-bottom: 1px solid var(--line); }
+      .calendar-side-head p { margin: 0; color: var(--faint); font-size: 12px; }
+      .calendar-side-head h3 { margin: 6px 0 0; font-family: var(--display); font-size: 25px; letter-spacing: -.035em; }
+      .calendar-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 13px; }
+      .summary-chip { padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,250,242,.65); color: #6a4d31; font-size: 11px; }
+      .calendar-detail { min-height: 0; flex: 1; padding: 17px 20px; overflow: auto; }
+      .calendar-detail-label { margin: 0 0 9px; color: var(--faint); font-size: 11px; font-weight: 700; letter-spacing: .1em; }
+      .calendar-event-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+      .calendar-event-row:last-child { border-bottom: 0; }
+      .calendar-event-index { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: rgba(169,111,61,.13); color: #754825; font-family: var(--display); font-size: 13px; }
+      .calendar-event-row strong { display: block; overflow: hidden; margin-bottom: 2px; color: #4f3826; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+      .calendar-event-row span { color: var(--faint); font-size: 11px; }
+      .calendar-action { border: 0; background: transparent; color: #88542a; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+      .calendar-empty-copy { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+      .dual-entry { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,250,242,.58); }
+      .dual-entry + .dual-entry { margin-top: 9px; }
+      .dual-entry strong { display: block; margin: 4px 0; color: #4d3725; font-family: var(--display); font-size: 17px; }
+      .dual-entry p { margin: 0 0 9px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .calendar-side-footer { padding: 13px 20px 18px; border-top: 1px solid var(--line); }
+
+      @media (max-width: 720px) {
+        .site-header { align-items: flex-start; flex-wrap: wrap; }
+        .site-nav { order: 3; width: 100%; overflow-x: auto; }
+        .stage-summary { gap: 8px; padding-right: 12px; padding-left: 12px; }
+        .stage-top { align-items: flex-start; flex-direction: column; gap: 3px; }
+        .stage-name { white-space: normal; }
+        .event-strip { padding-left: 9px; }
+        .event-tab { min-width: 126px; }
+        .journal-trigger { top: 149px; right: 11px; }
+        .conversation { padding-top: 22px; }
+        .bubble { max-width: 91%; }
+        .journal-panel { top: auto; width: 100%; height: min(78%, 650px); transform: translateY(104%); border-top: 1px solid var(--line); border-left: 0; border-radius: 27px 27px 0 0; }
+        .journal-panel.open { transform: translateY(0); }
+        .calendar-prototype { grid-template-columns: 1fr; }
+        .calendar-side { min-height: 290px; border-top: 1px solid var(--line); border-left: 0; }
+        .calendar-cell { min-height: 72px; padding: 7px; }
+        .cell-event { padding: 2px 4px; font-size: 9px; }
+        .month-nav { display: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">Daily Light</div>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="#" aria-current="page">访谈</a>
+        <a href="#">日历</a>
+        <a href="#">分析</a>
+        <a href="#">画像</a>
+        <a href="#">设置</a>
+      </nav>
+      <span class="record-date">当前记录日期 · 2026 年 7 月 22 日</span>
+    </header>
+
+    <main>
+      <div class="prototype-note">
+        <span>批次 A · 本原型聚焦访谈页；日历将保留现有月、周、日工作台并适配事件记录，分析和画像沿用现有页面。</span>
+        <span class="tag extend">在原访谈工作台上扩展</span>
+      </div>
+
+      <div class="prototype-view-switch" role="group" aria-label="切换原型页面">
+        <button type="button" data-prototype-view="interview" aria-pressed="true">访谈页适配</button>
+        <button type="button" data-prototype-view="calendar" aria-pressed="false">日历适配</button>
+      </div>
+
+      <section id="interview-screen" class="prototype-screen" aria-label="访谈页适配原型">
+      <section class="workspace" aria-label="事件中心访谈工作台">
+        <div class="event-strip" role="tablist" aria-label="今天的事件">
+          <button class="event-tab" type="button" role="tab" aria-selected="false" data-event="0">
+            <span class="event-index">1</span><span class="event-tab-copy">傍晚那段慢下来的路</span><i class="event-dot" aria-label="已保存"></i>
+          </button>
+          <button class="event-tab" type="button" role="tab" aria-selected="true" data-event="1">
+            <span class="event-index">2</span><span class="event-tab-copy">开会前突然有点想躲开</span><i class="event-dot active" aria-label="进行中"></i>
+          </button>
+          <button id="new-event" class="new-event-button" type="button" aria-label="记下另一件事" title="记下另一件事">＋</button>
+        </div>
+
+        <section class="stage-summary" aria-label="当前事件的访谈进度">
+          <div id="stage-0" class="stage-item current">
+            <div class="stage-top"><span class="stage-name"><b>1 ·</b>轻量记录</span><span class="stage-percent">64%</span></div>
+            <div class="stage-progress"><b style="--progress:64%"></b></div>
+          </div>
+          <div id="stage-1" class="stage-item">
+            <div class="stage-top"><span class="stage-name"><b>2 ·</b>引导复盘</span><span class="stage-percent">0%</span></div>
+            <div class="stage-progress"><b style="--progress:0%"></b></div>
+          </div>
+          <div id="stage-2" class="stage-item">
+            <div class="stage-top"><span class="stage-name"><b>3 ·</b>深入探索</span><span class="stage-percent">0%</span></div>
+            <div class="stage-progress"><b style="--progress:0%"></b></div>
+          </div>
+        </section>
+
+        <div class="chat-area">
+          <button id="open-journal" class="journal-trigger" type="button" aria-controls="event-journal" aria-expanded="false"><i aria-hidden="true"></i>事件日志</button>
+          <div class="conversation" role="log" aria-live="polite" aria-label="访谈对话">
+            <p class="date-label">第 2 件事 · 进行中</p>
+            <article class="message assistant"><div class="bubble">先从这件事开始吧。刚刚发生了什么？</div></article>
+            <article class="message user"><div class="bubble">开会前我突然有点想躲开，明明准备了很久，还是觉得自己讲不好。</div></article>
+            <p class="understanding">你已经说出了一个很具体的担心：怕自己的准备，在现场显得不够好。</p>
+            <article class="message assistant"><div class="bubble">当你想躲开的时候，最先担心的会是什么？</div></article>
+            <article class="message user"><div class="bubble">可能是害怕别人觉得我不专业。那种感觉很像我还没准备好被看见。</div></article>
+            <section class="checkpoint-card">
+              <strong>你已经找到了一个可以停一停的地方</strong>
+              <p>“怕不专业”背后，似乎还有“还没准备好被看见”的顾虑。接下来可以继续把它说清，也可以先收在这里。</p>
+              <div class="checkpoint-actions"><button class="button primary" type="button">继续探索</button><button class="button secondary" type="button">换个问法</button><button class="button text" type="button">纠正理解</button></div>
+            </section>
+          </div>
+          <div class="composer-wrap"><div class="composer"><span class="composer-text">写下你愿意补充的内容…</span><button class="send" type="button" aria-label="发送回答">↑</button></div></div>
+        </div>
+
+        <div id="journal-scrim" class="journal-scrim" aria-hidden="true"></div>
+        <aside id="event-journal" class="journal-panel" aria-label="当前事件日志" aria-hidden="true">
+          <div class="journal-top"><p>事件日志 · 第 2 件事</p><button id="close-journal" class="close-button" type="button" aria-label="关闭事件日志">×</button></div>
+          <h1 class="journal-title">还没准备好被看见</h1>
+          <div class="journal-content"><p>开会前，我明明准备了很久，却还是突然想躲开。那股退意并不完全来自“讲不好”，更像是害怕自己还没准备好，就被别人看见。</p><p>今天我先看见了这份顾虑。它提醒我，准备不只是材料齐不齐，也包括我愿不愿意带着还不完美的自己站出来。</p></div>
+          <div class="journal-actions"><button class="button primary" type="button">继续编辑</button><button class="button secondary" type="button">保存</button></div>
+        </aside>
+      </section>
+      </section>
+
+      <section id="calendar-screen" class="prototype-screen" aria-label="日历适配原型" hidden>
+        <section class="calendar-prototype">
+          <div class="calendar-main">
+            <div class="calendar-heading">
+              <div><h2>2026 年 7 月</h2><p>沿用原有月视图；当天根据记录类型显示事件成果或历史五维成果。</p></div>
+              <div class="month-nav" aria-label="月份切换"><button type="button" aria-label="上一个月">‹</button><span>回到今天</span><button type="button" aria-label="下一个月">›</button></div>
+            </div>
+            <div class="weekday-row" aria-hidden="true"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+            <div class="month-grid" role="grid" aria-label="2026年7月日历">
+              <button class="calendar-cell empty" type="button" disabled><span class="cell-date">28</span></button><button class="calendar-cell empty" type="button" disabled><span class="cell-date">29</span></button><button class="calendar-cell empty" type="button" disabled><span class="cell-date">30</span></button>
+              <button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">1</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">2</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">3</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">4</span></button>
+              <button class="calendar-cell" type="button" data-calendar-mode="event"><span class="cell-date">5</span><span class="cell-event">1 件已保存</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">6</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">7</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">8</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">9</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">10</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">11</span></button>
+              <button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">12</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">13</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">14</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">15</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">16</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">17</span></button><button class="calendar-cell" type="button" data-calendar-mode="legacy"><span class="cell-date">18</span><span class="cell-legacy"><b>悦</b><b>谢</b></span></button>
+              <button class="calendar-cell" type="button" data-calendar-mode="legacy"><span class="cell-date">19</span><span class="cell-legacy"><b>实</b></span></button><button class="calendar-cell" type="button" data-calendar-mode="dual"><span class="cell-date">20</span><span class="cell-dual">两类记录</span></button><button class="calendar-cell" type="button" data-calendar-mode="event"><span class="cell-date">21</span><span class="cell-event">1 件草稿</span></button><button class="calendar-cell selected today" type="button" data-calendar-mode="event"><span class="cell-date">22</span><span class="cell-event">2 件事</span></button><button class="calendar-cell" type="button" data-calendar-mode="event"><span class="cell-date">23</span><span class="cell-event">正在记录</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">24</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">25</span></button>
+              <button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">26</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">27</span></button><button class="calendar-cell" type="button" data-calendar-mode="legacy"><span class="cell-date">28</span><span class="cell-legacy"><b>思</b><b>改</b></span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">29</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">30</span></button><button class="calendar-cell" type="button" data-calendar-mode="empty"><span class="cell-date">31</span></button><button class="calendar-cell empty" type="button" disabled><span class="cell-date">1</span></button>
+            </div>
+          </div>
+          <aside class="calendar-side" aria-live="polite">
+            <div class="calendar-side-head"><p>当天检查</p><h3 id="calendar-day-title">7 月 22 日 · 今天</h3><div id="calendar-summary" class="calendar-summary"><span class="summary-chip">待继续 1</span><span class="summary-chip">已保存 1</span><span class="summary-chip">完整日志 · 可汇总</span></div></div>
+            <div id="calendar-detail" class="calendar-detail">
+              <p class="calendar-detail-label">今天的事件</p>
+              <div class="calendar-event-row"><i class="calendar-event-index">1</i><div><strong>傍晚那段慢下来的路</strong><span>已保存为事件日志</span></div><button class="calendar-action" type="button">查看</button></div>
+              <div class="calendar-event-row"><i class="calendar-event-index">2</i><div><strong>开会前突然有点想躲开</strong><span>正在访谈</span></div><button class="calendar-action" type="button">继续</button></div>
+            </div>
+            <div class="calendar-side-footer"><button id="calendar-primary-action" class="button primary" type="button">继续第 2 件事</button></div>
+          </aside>
+        </section>
+      </section>
+
+      <div id="stage-controls" class="prototype-controls" role="group" aria-label="原型状态切换">
+        <span class="control-label">查看阶段</span>
+        <button class="choice" type="button" data-stage="0" aria-pressed="true">轻量记录</button>
+        <button class="choice" type="button" data-stage="1" aria-pressed="false">引导复盘</button>
+        <button class="choice" type="button" data-stage="2" aria-pressed="false">深入探索</button>
+      </div>
+
+      <div class="legend"><strong>复用范围：</strong><span class="tag reuse">对话区、消息气泡、浮动输入框、回复版本、失败续接</span><span class="tag reuse">右侧滑出日志面板、拖动与响应式行为</span><span class="tag extend">原五维切换区 → 事件标签栏</span><span class="tag new">阶段进度聚合条、事件标签身份</span></div>
+
+      <section class="recommendation" aria-label="设计说明">
+        <h1>推荐实现：事件标签栏 + 对话顶部阶段进度</h1>
+        <p>顶部事件标签承担“在多件事之间跳转”和“新增下一件事”两件事；大面积空间继续留给原有对话体验。进度条放在标签栏下方，始终只呈现当前事件的阶段，用户切换事件时会立即同步。右侧继续沿用点击后展开的日志面板，只是日志从维度成果变为当前事件成果。</p>
+      </section>
+    </main>
+
+    <script>
+      const tabs = Array.from(document.querySelectorAll('.event-tab'));
+      const heading = document.querySelector('.date-label');
+      const content = [
+        { title: '第 1 件事 · 已保存', stage: 2, values: [100, 100, 100] },
+        { title: '第 2 件事 · 进行中', stage: 0, values: [64, 0, 0] }
+      ];
+      const stageNames = ['轻量记录', '引导复盘', '深入探索'];
+      const stageDescriptions = [
+        '先把发生了什么和此刻最重要的感受记下来。',
+        '沿着已经出现的线索，慢慢看见它对你意味着什么。',
+        '只在你愿意且材料足够时，进入更深的探索。'
+      ];
+      const stageButtons = Array.from(document.querySelectorAll('[data-stage]'));
+      const journal = document.getElementById('event-journal');
+      const scrim = document.getElementById('journal-scrim');
+      const journalOpen = document.getElementById('open-journal');
+
+      function setStage(active, values) {
+        [0, 1, 2].forEach((index) => {
+          const element = document.getElementById(`stage-${index}`);
+          const percent = values[index];
+          element.classList.toggle('current', index === active);
+          element.classList.toggle('done', index < active || percent === 100);
+          element.querySelector('.stage-percent').textContent = `${percent}%`;
+          element.querySelector('.stage-progress b').style.setProperty('--progress', `${percent}%`);
+        });
+        stageButtons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.stage) === active)));
+      }
+
+      tabs.forEach((tab) => tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+        const event = content[Number(tab.dataset.event)];
+        heading.textContent = event.title;
+        setStage(event.stage, event.values);
+      }));
+      stageButtons.forEach((button) => button.addEventListener('click', () => {
+        const stage = Number(button.dataset.stage);
+        setStage(stage, [100, stage === 0 ? 64 : stage === 1 ? 52 : 36, stage === 2 ? 36 : 0]);
+        document.querySelector('.checkpoint-card p').textContent = stageDescriptions[stage];
+      }));
+      document.getElementById('new-event').addEventListener('click', () => {
+        heading.textContent = '第 3 件事 · 刚刚开始';
+        setStage(0, [0, 0, 0]);
+        document.querySelector('.checkpoint-card strong').textContent = '先从这件事开始';
+        document.querySelector('.checkpoint-card p').textContent = '说出一个还留在你心里的片段就可以，不需要先判断它属于什么。';
+      });
+      function setJournal(open) {
+        journal.classList.toggle('open', open); scrim.classList.toggle('open', open);
+        journal.setAttribute('aria-hidden', String(!open)); journalOpen.setAttribute('aria-expanded', String(open));
+      }
+      journalOpen.addEventListener('click', () => setJournal(true));
+      document.getElementById('close-journal').addEventListener('click', () => setJournal(false));
+      scrim.addEventListener('click', () => setJournal(false));
+      window.addEventListener('keydown', (event) => { if (event.key === 'Escape') setJournal(false); });
+
+      const viewButtons = Array.from(document.querySelectorAll('[data-prototype-view]'));
+      const interviewScreen = document.getElementById('interview-screen');
+      const calendarScreen = document.getElementById('calendar-screen');
+      const stageControls = document.getElementById('stage-controls');
+      function showPrototypeView(view) {
+        const interviewActive = view === 'interview';
+        interviewScreen.hidden = !interviewActive;
+        calendarScreen.hidden = interviewActive;
+        stageControls.hidden = !interviewActive;
+        viewButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.prototypeView === view)));
+      }
+      viewButtons.forEach((button) => button.addEventListener('click', () => showPrototypeView(button.dataset.prototypeView)));
+
+      const calendarTitle = document.getElementById('calendar-day-title');
+      const calendarSummary = document.getElementById('calendar-summary');
+      const calendarDetail = document.getElementById('calendar-detail');
+      const calendarAction = document.getElementById('calendar-primary-action');
+      const calendarCells = Array.from(document.querySelectorAll('[data-calendar-mode]'));
+      const calendarContent = {
+        event: {
+          summary: '<span class="summary-chip">待继续 1</span><span class="summary-chip">已保存 1</span><span class="summary-chip">完整日志 · 可汇总</span>',
+          detail: '<p class="calendar-detail-label">当天的事件</p><div class="calendar-event-row"><i class="calendar-event-index">1</i><div><strong>傍晚那段慢下来的路</strong><span>已保存为事件日志</span></div><button class="calendar-action" type="button">查看</button></div><div class="calendar-event-row"><i class="calendar-event-index">2</i><div><strong>开会前突然有点想躲开</strong><span>正在访谈</span></div><button class="calendar-action" type="button">继续</button></div>',
+          action: '继续第 2 件事'
+        },
+        legacy: {
+          summary: '<span class="summary-chip">历史五维记录</span><span class="summary-chip">已完成 2 项</span>',
+          detail: '<p class="calendar-detail-label">保留原有阅读方式</p><p class="calendar-empty-copy">这一天的开心、充实、思考、改进和感谢记录继续沿用现有页面与原有直达动作。</p>',
+          action: '查看当天记录'
+        },
+        dual: {
+          summary: '<span class="summary-chip">两类历史记录</span><span class="summary-chip">分别阅读</span>',
+          detail: '<p class="calendar-detail-label">这一天保留两条路径</p><article class="dual-entry"><span class="tag reuse">原有内容</span><strong>五维记录</strong><p>保留开心与感谢的既有阅读方式。</p><button class="calendar-action" type="button">查看五维记录</button></article><article class="dual-entry"><span class="tag extend">事件中心</span><strong>事件记录</strong><p>保留一件独立事件及其日志，不和五维内容拼接。</p><button class="calendar-action" type="button">查看事件记录</button></article>',
+          action: '返回访谈页'
+        },
+        empty: {
+          summary: '<span class="summary-chip">还没有记录</span>',
+          detail: '<p class="calendar-detail-label">这一天还空着</p><p class="calendar-empty-copy">可以从一件还留在心里的事开始。日历继续使用原有入口，把你带到对应日期的访谈页。</p>',
+          action: '开始记一件事'
+        }
+      };
+      function setCalendarDay(cell) {
+        calendarCells.forEach((item) => item.classList.toggle('selected', item === cell));
+        const mode = cell.dataset.calendarMode;
+        const date = cell.querySelector('.cell-date').textContent;
+        const data = calendarContent[mode];
+        calendarTitle.textContent = `7 月 ${date} 日${date === '22' ? ' · 今天' : ''}`;
+        calendarSummary.innerHTML = data.summary;
+        calendarDetail.innerHTML = data.detail;
+        calendarAction.textContent = data.action;
+      }
+      calendarCells.forEach((cell) => cell.addEventListener('click', () => setCalendarDay(cell)));
+      calendarAction.addEventListener('click', () => showPrototypeView('interview'));
+    </script>
+  </body>
+</html>
