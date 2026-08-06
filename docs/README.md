@@ -47,6 +47,7 @@
 - 本地运行与排障：[operator-runbook.md](./operator-runbook.md)
 - 当前交接：[handoff.md](./handoff.md)
 - 访谈意图评测：[interview-intent-evaluation-source-of-truth.md](./interview-intent-evaluation-source-of-truth.md)
+- 工作区收口结果：[2026-08-06-workspace-consolidation-result.md](./maintenance/2026-08-06-workspace-consolidation-result.md)
 
 ### 历史证据
 
