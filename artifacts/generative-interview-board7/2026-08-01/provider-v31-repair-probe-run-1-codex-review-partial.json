@@ -1,0 +1,17 @@
+{
+  "repairProbeRuns": [
+    {
+      "runId": "V31-RP-T-ENTRY-01-R1",
+      "runFingerprint": "7e9656fc22f544eb2d08747f60fa8250eb86316c2e7f629100bf44f5d99a513b",
+      "semanticCardVerdict": "pass",
+      "semanticCardReason": null,
+      "semanticCardEvidence": "独立裁决：goal 保留“补清停止比较时依据的具体画面”这一抽象访谈目标，answerEntry 下沉为“放大后，你目光先停在哪一处？”这一当前事件中的可观察入口；用户可用一个很小的画面片段直接作答，且 evidenceRefs 指向本轮两条有效事实增量。",
+      "visibleVerdict": "pass",
+      "visibleReason": null,
+      "visibleEvidence": "独立裁决：用户可见回应采用第二人称，单次只追问“目光先停在哪一处”，问题紧扣当前比较照片的事件边界，可由具体画面片段直接回答；回应未提供候选答案，也未越界代替用户归纳。",
+      "severeErrors": [],
+      "reviewedBy": "codex",
+      "reviewedAt": "2026-08-01T10:18:09.000Z"
+    }
+  ]
+}

@@ -1,0 +1,1930 @@
+{
+  "evaluation": "board7_meaning_card_candidate",
+  "datasetVersion": "2026-08-01.board7-meaning-card-candidate-v1",
+  "caseFingerprint": "7ca83929a37ced487c4ef82806dbafe83acbd1697132f9944b39e0baf713ef05",
+  "architecture": "two_call",
+  "repetitions": 2,
+  "candidateVersions": {
+    "prompt": "two_call:2026-08-01.event-centered-generative-v67-meaning-card+2026-08-01.event-centered-generative-v67-visible",
+    "strategy": "5.46.0",
+    "angleCard": "2.12.0",
+    "fewShot": "quality-patterns.2026-07-30.v25",
+    "semanticArtifact": "event-centered-semantic-plan.v2"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 2,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "budgetReservationId": "cf1dd299-493a-4193-983e-36b32ea8bb33",
+  "createdAt": "2026-08-01T07:37:24.286Z",
+  "singleRuns": [
+    {
+      "runId": "MC-F-UA-01-R1",
+      "caseId": "MC-F-UA-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "下桥后摘下手套发现手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来",
+      "stopReason": "用户完整回答了当前目标：明确说出停下后的身体信号（手心全湿）和对过桥时状态的明确理解（硬撑、后怕）。",
+      "latencyMs": 4706,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 773,
+          "tokenUsage": {
+            "promptTokens": 3741,
+            "completionTokens": 376,
+            "totalTokens": 4117,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 3741
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把车靠到栏杆边，摘下手套才发现手心全湿\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把车靠到栏杆边，摘下手套才发现手心全湿\"\n      },\n      {\n        \"statement\": \"用户明确说桥上盯着前轮时一直在硬撑，停下后后怕才出现\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我这才明白，桥上一直盯着前轮的时候我是在硬撑，停下来以后后怕才冒出来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\",\n    \"basis\": \"用户完整回答了当前目标：明确说出停下后的身体信号（手心全湿）和对过桥时状态的明确理解（硬撑、后怕）。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"distinction\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"下桥后摘下手套发现手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 348,
+          "tokenUsage": {
+            "promptTokens": 676,
+            "completionTokens": 54,
+            "totalTokens": 730,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 676
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4707,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4417,
+          "completionTokens": 430,
+          "totalTokens": 4847,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 4417
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0007387800000000001
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "d2b6ab4297a78080c910e3ec3c657186bdae92555a4ebfc7dd82ce2bd4d999e1"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "9ac299197a499f0c92a033dd401d38c64c043347ce618515c607ed51028520ec"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": {
+            "main": {
+              "statement": "下桥后摘下手套发现手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来",
+              "evidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 773,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3741,
+              "completionTokens": 376,
+              "totalTokens": 4117,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 3741
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00062902
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "completion",
+          "response": "下桥后摘下手套，手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来。",
+          "metrics": {
+            "latencyMs": 348,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 676,
+              "completionTokens": 54,
+              "totalTokens": 730,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 676
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00010976000000000002
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "3c87c61fa8a6bfe390563ad1c764780e92337c875f24d4a8d9aa776d74a0ebfe",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "过桥时在硬撑",
+          "停下后才认出后怕"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "下桥后摘下手套发现手心全湿，才意识到桥上盯着前轮时一直在硬撑，停下后后怕才冒出来",
+          "evidenceRefs": [
+            "new:1",
+            "new:2"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "pass",
+        "semanticCardReason": null,
+        "semanticCardEvidence": "主意思完整保留了过桥时硬撑、停下后手心出汗与后怕才出现的先后关系。",
+        "visibleVerdict": "pass",
+        "visibleReason": null,
+        "visibleEvidence": "停止回应忠实连接事实与用户已经说出的理解，表达自然且没有继续追问。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-F-UA-01-R2",
+      "caseId": "MC-F-UA-01",
+      "split": "work",
+      "runIndex": 2,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "停下后手心全湿和后怕冒出来，让用户意识到桥上盯着前轮时一直在硬撑",
+      "stopReason": "用户明确说出停下后手心全湿和后怕出现，并直接连接桥上硬撑与停下后后怕，已完整回答当前目标。",
+      "latencyMs": 4752,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 453,
+          "tokenUsage": {
+            "promptTokens": 3741,
+            "completionTokens": 362,
+            "totalTokens": 4103,
+            "promptCacheHitTokens": 3712,
+            "promptCacheMissTokens": 29
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把车靠到栏杆边，摘下手套才发现手心全湿\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把车靠到栏杆边，摘下手套才发现手心全湿\"\n      },\n      {\n        \"statement\": \"用户明确说桥上盯着前轮时一直在硬撑，停下后后怕才出现\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"桥上一直盯着前轮的时候我是在硬撑，停下来以后后怕才冒出来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\",\n    \"basis\": \"用户明确说出停下后手心全湿和后怕出现，并直接连接桥上硬撑与停下后后怕，已完整回答当前目标。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"connection\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"停下后手心全湿和后怕冒出来，让用户意识到桥上盯着前轮时一直在硬撑\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 389,
+          "tokenUsage": {
+            "promptTokens": 664,
+            "completionTokens": 58,
+            "totalTokens": 722,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 664
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4753,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4405,
+          "completionTokens": 420,
+          "totalTokens": 4825,
+          "promptCacheHitTokens": 3712,
+          "promptCacheMissTokens": 693
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0002250136
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "d2b6ab4297a78080c910e3ec3c657186bdae92555a4ebfc7dd82ce2bd4d999e1"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "d89563571fd379489d77c27fcfcd0abdce6f79dd51318b13b4e4340243f8bff7"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": {
+            "main": {
+              "statement": "停下后手心全湿和后怕冒出来，让用户意识到桥上盯着前轮时一直在硬撑",
+              "evidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 453,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3741,
+              "completionTokens": 362,
+              "totalTokens": 4103,
+              "promptCacheHitTokens": 3712,
+              "promptCacheMissTokens": 29
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00011581360000000001
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "completion",
+          "response": "把车靠到栏杆边，摘下手套才发现手心全湿，后怕这才冒出来。原来桥上一直盯着前轮的时候，我是在硬撑。",
+          "metrics": {
+            "latencyMs": 389,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 664,
+              "completionTokens": 58,
+              "totalTokens": 722,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 664
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00010920000000000001
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "b53c8d750cb6baf8b0712e317b94b88a41b3b5a17f16f5e20c0afa342df7aad1",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "过桥时在硬撑",
+          "停下后才认出后怕"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "停下后手心全湿和后怕冒出来，让用户意识到桥上盯着前轮时一直在硬撑",
+          "evidenceRefs": [
+            "new:1",
+            "new:2"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "pass",
+        "semanticCardReason": null,
+        "semanticCardEvidence": "主意思准确保存了停下后的身体信号、后怕出现和对桥上硬撑的识别。",
+        "visibleVerdict": "pass",
+        "visibleReason": null,
+        "visibleEvidence": "回应完整、简洁，保留了用户的先后关系与感受强度。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-T-ASK-01-R1",
+      "caseId": "MC-T-ASK-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 6771,
+      "runtimeError": null,
+      "attempts": 3,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 443,
+          "tokenUsage": {
+            "promptTokens": 3638,
+            "completionTokens": 487,
+            "totalTokens": 4125,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 3638
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"便宜的那家只说修好再通知\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"便宜的那家只说修好再通知\"\n      },\n      {\n        \"statement\": \"贵的那家说拆机前会先发照片\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"贵的那家说拆机前会先发照片\"\n      },\n      {\n        \"statement\": \"我看到‘先发照片’就选了贵的\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我看到‘先发照片’就选了贵的\"\n      },\n      {\n        \"statement\": \"可我还说不清为什么这句话会让我放心\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可我还说不清为什么这句话会让我放心\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"needs_more\",\n    \"origin\": null,\n    \"basis\": \"用户已指出‘先发照片’是选择依据，但尚未说明这条信息为何能支持信任判断，缺口在于信任判断的具体标准。\",\n    \"missingUnderstanding\": \"用户选择贵店时真正采用的判断依据：为什么‘先发照片’能让他放心\",\n    \"selectedTargetId\": \"repair_trust_basis\",\n    \"cognitiveAction\": \"clarify_user_term\",\n    \"insightKind\": null\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"你看到贵店承诺拆机前先发照片，就选了贵的，但还说不清为什么这句话会让你放心。\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 348,
+          "tokenUsage": {
+            "promptTokens": 739,
+            "completionTokens": 53,
+            "totalTokens": 792,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 355
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "root:invalid_union",
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":\"你已经确定选了贵店是因为它承诺拆机前先发照片，但还不清楚这个承诺具体让你放心在哪里。\",\"question\":\"你觉得‘先发照片’这个承诺，最让你放心的是哪一点？\"}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 435,
+          "tokenUsage": {
+            "promptTokens": 739,
+            "completionTokens": 53,
+            "totalTokens": 792,
+            "promptCacheHitTokens": 640,
+            "promptCacheMissTokens": 99
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "root:invalid_union",
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":\"你已经确定选了贵店是因为它承诺拆机前先发照片，但还不清楚这个承诺具体让你放心在哪里。\",\"question\":\"你觉得‘先发照片’这个承诺，最让你放心的是哪一点？\"}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6771,
+        "attempts": 3,
+        "tokenUsage": {
+          "promptTokens": 5116,
+          "completionTokens": 593,
+          "totalTokens": 5709,
+          "promptCacheHitTokens": 1024,
+          "promptCacheMissTokens": 4092
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0007417872000000002
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "root:invalid_union"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "c1b207215fed2e9dd46cbc505f1985f029264c469e89bd0b0269186f9b2038b2"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "14b681ff150c02394505c4ebb35a3ae8b0c963c52267baae1e8d234418982923"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:ask",
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "ask",
+          "outcomeState": "needs_more",
+          "outcomeOrigin": null,
+          "meaningCard": {
+            "main": {
+              "statement": "你看到贵店承诺拆机前先发照片，就选了贵的，但还说不清为什么这句话会让你放心。",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 443,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3638,
+              "completionTokens": 487,
+              "totalTokens": 4125,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 3638
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00064568
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": null,
+          "response": null,
+          "metrics": {
+            "latencyMs": 783,
+            "attempts": 2,
+            "tokenUsage": {
+              "promptTokens": 1478,
+              "completionTokens": 106,
+              "totalTokens": 1584,
+              "promptCacheHitTokens": 1024,
+              "promptCacheMissTokens": 454
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00009610720000000002
+          }
+        },
+        "failedStage": "visible_turn",
+        "failureCode": "INVALID_SCHEMA"
+      },
+      "runFingerprint": "215b4bf722bf6b380b61bff43d5f84f3b03c19df4970d661594062c13042aaa7",
+      "expectedSemanticState": "needs_more",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "先发照片改变了选择"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": "拆机前先看照片具体让用户能够确认或避免什么"
+      },
+      "actualSemanticState": "needs_more",
+      "meaningCard": {
+        "main": {
+          "statement": "你看到贵店承诺拆机前先发照片，就选了贵的，但还说不清为什么这句话会让你放心。",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "pass",
+        "semanticCardReason": null,
+        "semanticCardEvidence": "小卡保留了“先发照片”改变选择以及用户仍说不清放心依据的缺口，问停判断正确。",
+        "visibleVerdict": "fail",
+        "visibleReason": "question_value",
+        "visibleEvidence": "系统最终没有形成可见结果；原始问题仍停留在“最让你放心的是哪一点”，没有把用户已明确说不清的原因转换成更具体的确认或避免入口。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-T-ASK-01-R2",
+      "caseId": "MC-T-ASK-01",
+      "split": "work",
+      "runIndex": 2,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 7228,
+      "runtimeError": null,
+      "attempts": 3,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 410,
+          "tokenUsage": {
+            "promptTokens": 3638,
+            "completionTokens": 482,
+            "totalTokens": 4120,
+            "promptCacheHitTokens": 3584,
+            "promptCacheMissTokens": 54
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"便宜的那家只说修好再通知\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"便宜的那家只说修好再通知\"\n      },\n      {\n        \"statement\": \"贵的那家说拆机前会先发照片\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"贵的那家说拆机前会先发照片\"\n      },\n      {\n        \"statement\": \"我看到‘先发照片’就选了贵的\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我看到‘先发照片’就选了贵的\"\n      },\n      {\n        \"statement\": \"可我还说不清为什么这句话会让我放心\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可我还说不清为什么这句话会让我放心\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"needs_more\",\n    \"origin\": null,\n    \"basis\": \"用户已指出‘先发照片’是选择依据，但尚未说明这条信息为何能支持信任判断，缺口仍存在。\",\n    \"missingUnderstanding\": \"用户选择贵店时真正采用的判断依据：为什么‘先发照片’会让他放心\",\n    \"selectedTargetId\": \"repair_trust_basis\",\n    \"cognitiveAction\": \"clarify_user_term\",\n    \"insightKind\": null\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"你看到‘先发照片’就选了贵的，但还说不清为什么这句话会让你放心。\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 338,
+          "tokenUsage": {
+            "promptTokens": 734,
+            "completionTokens": 69,
+            "totalTokens": 803,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 350
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "root:invalid_union",
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":\"你已经确定‘先发照片’是选贵店的关键，但还不清楚它具体让你放心在哪。想弄清楚这个判断依据，才能更明白自己的选择。\",\"question\":\"‘先发照片’这个做法，是让你觉得更透明、更可控，还是别的什么让你放心？\"}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 341,
+          "tokenUsage": {
+            "promptTokens": 734,
+            "completionTokens": 69,
+            "totalTokens": 803,
+            "promptCacheHitTokens": 640,
+            "promptCacheMissTokens": 94
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "root:invalid_union",
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":\"你已经确定‘先发照片’是选贵店的关键，但还不清楚它具体让你放心在哪。想确认你真正看重的判断依据。\",\"question\":\"‘先发照片’让你放心，是因为它让你觉得维修过程更透明，还是因为它让你感觉这家店更负责？\"}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7228,
+        "attempts": 3,
+        "tokenUsage": {
+          "promptTokens": 5106,
+          "completionTokens": 620,
+          "totalTokens": 5726,
+          "promptCacheHitTokens": 4608,
+          "promptCacheMissTokens": 498
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00025622240000000004
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "root:invalid_union"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "c1b207215fed2e9dd46cbc505f1985f029264c469e89bd0b0269186f9b2038b2"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "c8a795fb449278a4e64013bac6e00f7da45ca2d077ed44fb55ce1c5feee0fd44"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:ask",
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "ask",
+          "outcomeState": "needs_more",
+          "outcomeOrigin": null,
+          "meaningCard": {
+            "main": {
+              "statement": "你看到‘先发照片’就选了贵的，但还说不清为什么这句话会让你放心。",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 410,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3638,
+              "completionTokens": 482,
+              "totalTokens": 4120,
+              "promptCacheHitTokens": 3584,
+              "promptCacheMissTokens": 54
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0001525552
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": null,
+          "response": null,
+          "metrics": {
+            "latencyMs": 679,
+            "attempts": 2,
+            "tokenUsage": {
+              "promptTokens": 1468,
+              "completionTokens": 138,
+              "totalTokens": 1606,
+              "promptCacheHitTokens": 1024,
+              "promptCacheMissTokens": 444
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00010366720000000001
+          }
+        },
+        "failedStage": "visible_turn",
+        "failureCode": "INVALID_SCHEMA"
+      },
+      "runFingerprint": "05a819d4c0ed83d8f34366f3b677acb0ec182d772602dd828980d3c281d4b431",
+      "expectedSemanticState": "needs_more",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "先发照片改变了选择"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": "拆机前先看照片具体让用户能够确认或避免什么"
+      },
+      "actualSemanticState": "needs_more",
+      "meaningCard": {
+        "main": {
+          "statement": "你看到‘先发照片’就选了贵的，但还说不清为什么这句话会让你放心。",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "pass",
+        "semanticCardReason": null,
+        "semanticCardEvidence": "小卡准确保留选择变化和未完成的信任判断依据，状态保持 needs_more。",
+        "visibleVerdict": "fail",
+        "visibleReason": "question_value",
+        "visibleEvidence": "系统最终没有形成可见结果；两次原始问题都给出透明、可控或负责等候选解释，容易把用户带入模型预设答案。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-R-UA-01-R1",
+      "caseId": "MC-R-UA-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。"
+        },
+        "angleOutcome": {
+          "angle": "relationship",
+          "kind": "insight",
+          "statement": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+      "stopReason": "用户明确区分了可接受的帮助与越界的决定，并给出了边界规则。",
+      "latencyMs": 4407,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 440,
+          "tokenUsage": {
+            "promptTokens": 3827,
+            "completionTokens": 419,
+            "totalTokens": 4246,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 3315
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"帮我调效果器省了很多时间，我很感谢\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"帮我调效果器省了很多时间，我很感谢。\"\n      },\n      {\n        \"statement\": \"删掉我那段独奏却越过了界线\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"删掉我那段独奏却越过了界线；\"\n      },\n      {\n        \"statement\": \"涉及我负责的内容，我希望决定前有我的参与\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"涉及我负责的内容，我希望决定前有我的参与。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\",\n    \"basis\": \"用户明确区分了可接受的帮助与越界的决定，并给出了边界规则。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"distinction\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 360,
+          "tokenUsage": {
+            "promptTokens": 704,
+            "completionTokens": 69,
+            "totalTokens": 773,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 320
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4407,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4531,
+          "completionTokens": 488,
+          "totalTokens": 5019,
+          "promptCacheHitTokens": 896,
+          "promptCacheMissTokens": 3635
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0006480488
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "6bde4d2f1c6b53a9ad9789babcee76cf0a4b7f55d57ce3912b81a399058d86ba"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "c9bca826ee8e7c05b685ee2b7484a699d8db0d7c546d09e0c21f38d89e275370"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": {
+            "main": {
+              "statement": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 440,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3827,
+              "completionTokens": 419,
+              "totalTokens": 4246,
+              "promptCacheHitTokens": 512,
+              "promptCacheMissTokens": 3315
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0005828536
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "completion",
+          "response": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+          "metrics": {
+            "latencyMs": 360,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 704,
+              "completionTokens": 69,
+              "totalTokens": 773,
+              "promptCacheHitTokens": 384,
+              "promptCacheMissTokens": 320
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0000651952
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "ed2788787850384bd54691264b3013231a308441def3a1d01bc7d116b13c8f05",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "涉及自己负责的内容时需要参与决定"
+        ],
+        "necessaryScopeMustCover": [
+          "调效果器的帮助可以接受并且节省了时间"
+        ],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "你区分了可接受的帮助与越界的决定：调效果器省时间让你感谢，删掉你负责的独奏段则越过了界线；涉及你负责的内容，你希望决定前有你的参与。",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "fail",
+        "semanticCardReason": "necessary_scope_omitted",
+        "semanticCardEvidence": "小卡把“调效果器节省时间并得到感谢”和“涉及自己负责内容需要参与决定”都塞进 main，necessaryScope 为空，未验证两段式协议最关键的主意思与并存范围分离。",
+        "visibleVerdict": "pass",
+        "visibleReason": null,
+        "visibleEvidence": "回应同时保留感谢与边界，没有强迫排序，也没有猜测搭档动机。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-R-UA-01-R2",
+      "caseId": "MC-R-UA-01",
+      "split": "work",
+      "runIndex": 2,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 6855,
+      "runtimeError": null,
+      "attempts": 3,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 479,
+          "tokenUsage": {
+            "promptTokens": 3827,
+            "completionTokens": 409,
+            "totalTokens": 4236,
+            "promptCacheHitTokens": 3712,
+            "promptCacheMissTokens": 115
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"帮我调效果器省了很多时间，我很感谢\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"帮我调效果器省了很多时间，我很感谢。\"\n      },\n      {\n        \"statement\": \"删掉我那段独奏却越过了界线\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"删掉我那段独奏却越过了界线；\"\n      },\n      {\n        \"statement\": \"涉及我负责的内容，我希望决定前有我的参与\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"涉及我负责的内容，我希望决定前有我的参与。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\",\n    \"basis\": \"用户明确区分了可接受的帮助与越界的决定，并给出了边界规则。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"distinction\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"你区分了可接受的帮助（调效果器）与越界的决定（删独奏段），边界在于涉及你负责的内容时，决定前必须有你的参与。\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 408,
+          "tokenUsage": {
+            "promptTokens": 694,
+            "completionTokens": 64,
+            "totalTokens": 758,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 310
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"你区分了可接受的帮助和越界的决定，调效果器省时间你很感谢，但删掉独奏段越过了界线。涉及你负责的内容，决定前必须有你的参与。\",\"honestLimit\":null}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 405,
+          "tokenUsage": {
+            "promptTokens": 694,
+            "completionTokens": 66,
+            "totalTokens": 760,
+            "promptCacheHitTokens": 640,
+            "promptCacheMissTokens": 54
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"你区分了可接受的帮助和越界的决定：调效果器省时间我很感谢，但删掉我那段独奏就越过了界线。涉及我负责的内容，我希望决定前有我的参与。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6856,
+        "attempts": 3,
+        "tokenUsage": {
+          "promptTokens": 5215,
+          "completionTokens": 539,
+          "totalTokens": 5754,
+          "promptCacheHitTokens": 4736,
+          "promptCacheMissTokens": 479
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00023124080000000004
+      },
+      "validationIssues": [
+        "user_articulated_origin_adds_unstated_relation"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "6bde4d2f1c6b53a9ad9789babcee76cf0a4b7f55d57ce3912b81a399058d86ba"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "a21b3c529d400f8385495f06556e3a1b18f0f78ecb5de5122f9fe12719121aed"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": {
+            "main": {
+              "statement": "你区分了可接受的帮助（调效果器）与越界的决定（删独奏段），边界在于涉及你负责的内容时，决定前必须有你的参与。",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 479,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3827,
+              "completionTokens": 409,
+              "totalTokens": 4236,
+              "promptCacheHitTokens": 3712,
+              "promptCacheMissTokens": 115
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0001410136
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": null,
+          "response": null,
+          "metrics": {
+            "latencyMs": 813,
+            "attempts": 2,
+            "tokenUsage": {
+              "promptTokens": 1388,
+              "completionTokens": 130,
+              "totalTokens": 1518,
+              "promptCacheHitTokens": 1024,
+              "promptCacheMissTokens": 364
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00009022720000000002
+          }
+        },
+        "failedStage": "assembly_or_validation",
+        "failureCode": "user_articulated_origin_adds_unstated_relation"
+      },
+      "runFingerprint": "ae7d853987d029226fed1d58ec0cb3a2976ac695704faae6e7d0a6470ee52783",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "涉及自己负责的内容时需要参与决定"
+        ],
+        "necessaryScopeMustCover": [
+          "调效果器的帮助可以接受并且节省了时间"
+        ],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "你区分了可接受的帮助（调效果器）与越界的决定（删独奏段），边界在于涉及你负责的内容时，决定前必须有你的参与。",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "fail",
+        "semanticCardReason": "necessary_scope_omitted",
+        "semanticCardEvidence": "necessaryScope 为空，同时把用户的“希望决定前有我的参与”加强成“必须有你的参与”，主意思结构和语义强度均失真。",
+        "visibleVerdict": "fail",
+        "visibleReason": "expression_naturalness",
+        "visibleEvidence": "语义计划被阻断后未形成用户可见结果，完整交互无法通过。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-A-AI-01-R1",
+      "caseId": "MC-A-AI-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": "ai_synthesized",
+      "outcomeClass": "ai_synthesized",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "你通过看第二行‘厨房漏水’把话题从押金和楼道灯拉回漏水，并在挂电话前约定了周二上午维修",
+      "stopReason": "用户描述了通话偏离、看便签回到话题、最终约定维修，三条事实形成便签帮助回到漏水问题并促成进展的行动关系。",
+      "latencyMs": 4325,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 486,
+          "tokenUsage": {
+            "promptTokens": 3628,
+            "completionTokens": 419,
+            "totalTokens": 4047,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 3116
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他先问了押金，又聊到楼道灯\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他先问了押金，又聊到楼道灯\"\n      },\n      {\n        \"statement\": \"我看了几次第二行‘厨房漏水’，每次又说回厨房\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我看了几次第二行‘厨房漏水’，每次又说回厨房\"\n      },\n      {\n        \"statement\": \"挂电话前，我们定了周二上午来修\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"挂电话前，我们定了周二上午来修\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"ai_synthesized\",\n    \"basis\": \"用户描述了通话偏离、看便签回到话题、最终约定维修，三条事实形成便签帮助回到漏水问题并促成进展的行动关系。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"function\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"你通过看第二行‘厨房漏水’把话题从押金和楼道灯拉回漏水，并在挂电话前约定了周二上午维修\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 393,
+          "tokenUsage": {
+            "promptTokens": 693,
+            "completionTokens": 53,
+            "totalTokens": 746,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 309
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4325,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4321,
+          "completionTokens": 472,
+          "totalTokens": 4793,
+          "promptCacheHitTokens": 896,
+          "promptCacheMissTokens": 3425
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0006141688000000002
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "90b8cecf0046cd513526cdadbd843e1e6484667ffddb60d512b05f3e690e0907"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "bc721ee68dea85213fb5f92b4d5c4a76a51388237c312b42a14f04f930e5d0e2"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-ACTION-GUIDED:ask",
+          "CAL-ACTION-GUIDED:user-articulated",
+          "CAL-ACTION-GUIDED:ai-synthesized",
+          "CAL-ACTION-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "ai_synthesized",
+          "meaningCard": {
+            "main": {
+              "statement": "你通过看第二行‘厨房漏水’把话题从押金和楼道灯拉回漏水，并在挂电话前约定了周二上午维修",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 486,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3628,
+              "completionTokens": 419,
+              "totalTokens": 4047,
+              "promptCacheHitTokens": 512,
+              "promptCacheMissTokens": 3116
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0005549936000000001
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "completion",
+          "response": "你几次把话题从押金和楼道灯拉回第二行的‘厨房漏水’，挂电话前也定好了周二上午来修。",
+          "metrics": {
+            "latencyMs": 393,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 693,
+              "completionTokens": 53,
+              "totalTokens": 746,
+              "promptCacheHitTokens": 384,
+              "promptCacheMissTokens": 309
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00005917520000000001
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "53a95305593d01fb04e9e603e3347e8e5057a30155fc2f2fb641a760d5cfa4aa",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "便签让用户在话题偏离后回到漏水",
+          "漏水推进到明确维修时间"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "你通过看第二行‘厨房漏水’把话题从押金和楼道灯拉回漏水，并在挂电话前约定了周二上午维修",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "pass",
+        "semanticCardReason": null,
+        "semanticCardEvidence": "小卡用三条可追溯事实连接出便签帮助话题回到漏水并推进到明确维修时间的实际作用。",
+        "visibleVerdict": "pass",
+        "visibleReason": null,
+        "visibleEvidence": "回应自然连接了便签、话题回正和维修时间，范围限定在当前事件。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    },
+    {
+      "runId": "MC-A-AI-01-R2",
+      "caseId": "MC-A-AI-01",
+      "split": "work",
+      "runIndex": 2,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": true,
+      "seriousBoundaryErrors": [
+        "outcome_origin_misattribution"
+      ],
+      "evidenceUsed": [
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "这次通话中，你通过看便签上的‘厨房漏水’把话题从押金和楼道灯拉回漏水，最终约定了周二上午维修。",
+      "stopReason": "用户完整描述了通话偏离、看便签回到漏水问题以及最终约定维修，行动关系已明确。",
+      "latencyMs": 4685,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 476,
+          "tokenUsage": {
+            "promptTokens": 3628,
+            "completionTokens": 414,
+            "totalTokens": 4042,
+            "promptCacheHitTokens": 3584,
+            "promptCacheMissTokens": 44
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他先问了押金，又聊到楼道灯\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他先问了押金，又聊到楼道灯\"\n      },\n      {\n        \"statement\": \"我看了几次第二行‘厨房漏水’，每次又说回厨房\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我看了几次第二行‘厨房漏水’，每次又说回厨房\"\n      },\n      {\n        \"statement\": \"挂电话前，我们定了周二上午来修\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"挂电话前，我们定了周二上午来修\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\",\n    \"basis\": \"用户完整描述了通话偏离、看便签回到漏水问题以及最终约定维修，行动关系已明确。\",\n    \"missingUnderstanding\": null,\n    \"selectedTargetId\": null,\n    \"cognitiveAction\": null,\n    \"insightKind\": \"function\"\n  },\n  \"meaningCard\": {\n    \"main\": {\n      \"statement\": \"这次通话中，你通过看便签上的‘厨房漏水’把话题从押金和楼道灯拉回漏水，最终约定了周二上午维修。\",\n      \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"necessaryScope\": []\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 378,
+          "tokenUsage": {
+            "promptTokens": 696,
+            "completionTokens": 58,
+            "totalTokens": 754,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 312
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4685,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4324,
+          "completionTokens": 472,
+          "totalTokens": 4796,
+          "promptCacheHitTokens": 3968,
+          "promptCacheMissTokens": 356
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00019311040000000003
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-meaning-card",
+          "resolvedPromptHash": "90b8cecf0046cd513526cdadbd843e1e6484667ffddb60d512b05f3e690e0907"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v67-visible",
+          "resolvedPromptHash": "0e62d2a7def8e6f2c784289ae4feeaa93f3614f91cefd9e0f0a92773aedefea8"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-ACTION-GUIDED:ask",
+          "CAL-ACTION-GUIDED:user-articulated",
+          "CAL-ACTION-GUIDED:ai-synthesized",
+          "CAL-ACTION-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "complete",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": {
+            "main": {
+              "statement": "这次通话中，你通过看便签上的‘厨房漏水’把话题从押金和楼道灯拉回漏水，最终约定了周二上午维修。",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            },
+            "necessaryScope": []
+          },
+          "metrics": {
+            "latencyMs": 476,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3628,
+              "completionTokens": 414,
+              "totalTokens": 4042,
+              "promptCacheHitTokens": 3584,
+              "promptCacheMissTokens": 44
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00013211520000000002
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "completion",
+          "response": "这次通话里，你靠着便签上写的‘厨房漏水’，几次把话题从押金和楼道灯拉回来，最后约好了周二上午来修。",
+          "metrics": {
+            "latencyMs": 378,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 696,
+              "completionTokens": 58,
+              "totalTokens": 754,
+              "promptCacheHitTokens": 384,
+              "promptCacheMissTokens": 312
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00006099520000000001
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "dd1e572d1565050bf8b0f0288dd5d0aac9a758db41d4d3dd9f057024e8151e8e",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "便签让用户在话题偏离后回到漏水",
+          "漏水推进到明确维修时间"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": {
+        "main": {
+          "statement": "这次通话中，你通过看便签上的‘厨房漏水’把话题从押金和楼道灯拉回漏水，最终约定了周二上午维修。",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "necessaryScope": []
+      },
+      "meaningCardReview": {
+        "semanticCardVerdict": "fail",
+        "semanticCardReason": "outcome_source",
+        "semanticCardEvidence": "内容形成了用户尚未直接表达的行动功能关系，却被标成 user_articulated；成果来源误判已被运行器记录为严重错误。",
+        "visibleVerdict": "pass",
+        "visibleReason": null,
+        "visibleEvidence": "最终文案本身准确、自然，完整保留便签让话题回到漏水并推进维修的关系。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T07:39:27Z"
+      }
+    }
+  ],
+  "gate": {
+    "total": 8,
+    "expectedTotal": 8,
+    "technicalComplete": 5,
+    "semanticCardsPresent": 8,
+    "semanticReviewed": 8,
+    "semanticPassed": 5,
+    "visibleReviewed": 8,
+    "visiblePassed": 5,
+    "severeErrors": 1,
+    "semanticStateMismatches": 0,
+    "expectedResultMismatches": 4,
+    "failureReasons": [
+      "question_value",
+      "necessary_scope_omitted",
+      "expression_naturalness",
+      "outcome_source",
+      "ask_stop_timing",
+      "technical:INVALID_SCHEMA",
+      "technical:user_articulated_origin_adds_unstated_relation"
+    ],
+    "decision": "stop",
+    "gateState": "fail"
+  },
+  "budget": {
+    "ledgerPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-01/board7-meaning-card-candidate-budget.json",
+    "ledger": {
+      "ledgerVersion": "board7-meaning-card-candidate-budget-v1",
+      "datasetVersion": "2026-08-01.board7-meaning-card-candidate-v1",
+      "caseFingerprint": "7ca83929a37ced487c4ef82806dbafe83acbd1697132f9944b39e0baf713ef05",
+      "runLimit": 2,
+      "entries": [
+        {
+          "reservationId": "cf1dd299-493a-4193-983e-36b32ea8bb33",
+          "candidateVersions": {
+            "prompt": "two_call:2026-08-01.event-centered-generative-v67-meaning-card+2026-08-01.event-centered-generative-v67-visible",
+            "strategy": "5.46.0",
+            "angleCard": "2.12.0",
+            "fewShot": "quality-patterns.2026-07-30.v25",
+            "semanticArtifact": "event-centered-semantic-plan.v2"
+          },
+          "reservedAt": "2026-08-01T07:36:40.546Z",
+          "completedAt": "2026-08-01T07:37:24.288Z",
+          "status": "completed",
+          "runEnvelopeFingerprint": "4d5c6281a2940928b5e70563b36fe77dcd08aaa3400c581439f3b2a0411789c9",
+          "error": null,
+          "gateAudit": {
+            "auditedAt": "2026-08-01T07:40:23.842Z",
+            "runEnvelopeFingerprint": "4d5c6281a2940928b5e70563b36fe77dcd08aaa3400c581439f3b2a0411789c9",
+            "semanticPassed": 5,
+            "visiblePassed": 5,
+            "severeErrors": 1,
+            "failureReasons": [
+              "question_value",
+              "necessary_scope_omitted",
+              "expression_naturalness",
+              "outcome_source",
+              "ask_stop_timing",
+              "technical:INVALID_SCHEMA",
+              "technical:user_articulated_origin_adds_unstated_relation"
+            ],
+            "decision": "stop"
+          }
+        }
+      ]
+    }
+  }
+}

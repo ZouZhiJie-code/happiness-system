@@ -1,0 +1,368 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T06",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "deep_companionship",
+    "activeAngle": "relationship",
+    "lastCompletedAngle": "relationship",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [
+          "会上指出问题时的互动细节"
+        ],
+        "askedTargets": [
+          "会上指出问题时的互动细节",
+          "公开与私下两种互动方式对信任的影响"
+        ],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": {
+      "opportunityNumber": 2,
+      "angle": "relationship",
+      "target": "公开与私下两种互动方式对信任的影响",
+      "surfaceLevel": "open_anchor",
+      "repairCount": 0,
+      "assistantMessageId": null,
+      "cognitiveAction": "surface_tension"
+    },
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.9.0",
+    "currentMicrogoal": {
+      "id": "microgoal:relationship:会上指出问题时的互动细节",
+      "angle": "relationship",
+      "statement": "连接可观察互动与用户的期待或边界",
+      "questionCount": 2,
+      "status": "active",
+      "evidenceRefs": [
+        "T06-fact-1",
+        "T06-fact-2",
+        "T06-fact-3",
+        "T06-fact-4"
+      ]
+    }
+  },
+  "facts": [
+    {
+      "id": "T06-fact-1",
+      "eventId": "evaluation-event-T06",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "他会上说得很直接，我很难堪",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T06-1",
+          "factId": "T06-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "他会上说得很直接，我很难堪",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T06-fact-2",
+      "eventId": "evaluation-event-T06",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "会后又认真帮我改了很久",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T06-2",
+          "factId": "T06-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "会后又认真帮我改了很久",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T06-fact-3",
+      "eventId": "evaluation-event-T06",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "他直接指出我做错了，没有先让我解释",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T06-3",
+          "factId": "T06-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "他直接指出我做错了，没有先让我解释",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T06-fact-4",
+      "eventId": "evaluation-event-T06",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-4",
+      "createdByRevisionId": null,
+      "statement": "会后又很耐心地陪我梳理了一个小时",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T06-4",
+          "factId": "T06-fact-4",
+          "sourceTurnId": "evaluation-turn-4",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-4",
+          "role": "direct_expression",
+          "quote": "会后又很耐心地陪我梳理了一个小时",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "他会上说得很直接，我很难堪，可会后又认真帮我改了很久。",
+      "assistantUnderstanding": "会上他直接指出问题让你难堪，会后他又花时间帮你修改。",
+      "assistantQuestion": "会上他指出问题时，你当时有解释的机会吗？"
+    },
+    {
+      "user": "没有，他直接指出我做错了，没有先让我解释；会后又很耐心地陪我梳理了一个小时。",
+      "assistantUnderstanding": "会上他直接指出错误不让你解释，会后却耐心陪你梳理了一个小时。",
+      "assistantQuestion": "这两种截然不同的互动方式放在一起，怎样影响你对他的信任或你希望保持的边界？"
+    }
+  ],
+  "currentQuestion": "这两种截然不同的互动方式放在一起，怎样影响你对他的信任或你希望保持的边界？",
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "他会上说得很直接，我很难堪，可会后又认真帮我改了很久。",
+      "visibleResponse": "会上他直接指出问题让你难堪，会后他又花时间帮你修改。\n会上他指出问题时，你当时有解释的机会吗？",
+      "finalAction": "ask",
+      "selectedTarget": "会上指出问题时的互动细节",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T06-fact-1",
+        "T06-fact-2"
+      ],
+      "factDeltas": [
+        {
+          "id": "T06-fact-1",
+          "statement": "他会上说得很直接，我很难堪",
+          "quote": "他会上说得很直接，我很难堪"
+        },
+        {
+          "id": "T06-fact-2",
+          "statement": "会后又认真帮我改了很久",
+          "quote": "会后又认真帮我改了很久"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:relationship:会上指出问题时的互动细节",
+        "angle": "relationship",
+        "statement": "获取一个具体的可观察互动，以便后续连接用户的期待或边界",
+        "questionCount": 1,
+        "status": "active",
+        "evidenceRefs": [
+          "T06-fact-1",
+          "T06-fact-2"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 241,
+          "tokenUsage": {
+            "promptTokens": 2759,
+            "completionTokens": 378,
+            "totalTokens": 3137,
+            "promptCacheHitTokens": 896,
+            "promptCacheMissTokens": 1863
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"unknown\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他会上说得很直接，我很难堪\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他会上说得很直接，我很难堪\"\n      },\n      {\n        \"statement\": \"会后又认真帮我改了很久\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又认真帮我改了很久\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"会上指出问题时的互动细节\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"start\",\n      \"statement\": \"获取一个具体的可观察互动，以便后续连接用户的期待或边界\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"明确会上他具体说了什么、你是否有回应机会，为后续理解你的位置或边界提供基础\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"会上他直接指出问题让你难堪，会后他又花时间帮你修改\",\n    \"question\": \"会上他指出问题时，你当时有解释的机会吗？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3330,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2759,
+          "completionTokens": 378,
+          "totalTokens": 3137,
+          "promptCacheHitTokens": 896,
+          "promptCacheMissTokens": 1863
+        },
+        "estimatedCost": 0.0003691688
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 2,
+      "rawText": "没有，他直接指出我做错了，没有先让我解释；会后又很耐心地陪我梳理了一个小时。",
+      "visibleResponse": "会上他直接指出错误不让你解释，会后却耐心陪你梳理了一个小时。\n这两种截然不同的互动方式放在一起，怎样影响你对他的信任或你希望保持的边界？",
+      "finalAction": "ask",
+      "selectedTarget": "公开与私下两种互动方式对信任的影响",
+      "cognitiveAction": "surface_tension",
+      "evidenceUsed": [
+        "T06-fact-1",
+        "T06-fact-2",
+        "T06-fact-3",
+        "T06-fact-4"
+      ],
+      "factDeltas": [
+        {
+          "id": "T06-fact-3",
+          "statement": "他直接指出我做错了，没有先让我解释",
+          "quote": "他直接指出我做错了，没有先让我解释"
+        },
+        {
+          "id": "T06-fact-4",
+          "statement": "会后又很耐心地陪我梳理了一个小时",
+          "quote": "会后又很耐心地陪我梳理了一个小时"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:relationship:会上指出问题时的互动细节",
+        "angle": "relationship",
+        "statement": "连接可观察互动与用户的期待或边界",
+        "questionCount": 2,
+        "status": "active",
+        "evidenceRefs": [
+          "T06-fact-1",
+          "T06-fact-2",
+          "T06-fact-3",
+          "T06-fact-4"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 331,
+          "tokenUsage": {
+            "promptTokens": 2902,
+            "completionTokens": 435,
+            "totalTokens": 3337,
+            "promptCacheHitTokens": 1024,
+            "promptCacheMissTokens": 1878
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他直接指出我做错了，没有先让我解释\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他直接指出我做错了，没有先让我解释\"\n      },\n      {\n        \"statement\": \"会后又很耐心地陪我梳理了一个小时\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又很耐心地陪我梳理了一个小时\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"会后耐心陪伴与公开批评的对比\",\n    \"evidenceRefs\": [\"T06-fact-1\", \"T06-fact-2\", \"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"获取用户对公开批评与私下帮助之间关系的解释\",\n      \"supportEvidenceRefs\": [\"T06-fact-1\", \"T06-fact-2\", \"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"理解用户如何看待这种公开批评与私下帮助的对比，以及它如何影响用户对双方关系的期待或边界\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"会上他直接指出你做错，没有给你解释的机会，会后却耐心陪你梳理了一个小时\",\n    \"question\": \"这两种不同的对待方式，让你更在意的是他公开批评的方式，还是会后愿意花时间帮你改进的态度？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 298,
+          "tokenUsage": {
+            "promptTokens": 2942,
+            "completionTokens": 420,
+            "totalTokens": 3362,
+            "promptCacheHitTokens": 1024,
+            "promptCacheMissTokens": 1918
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他直接指出我做错了，没有先让我解释\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他直接指出我做错了，没有先让我解释\"\n      },\n      {\n        \"statement\": \"会后又很耐心地陪我梳理了一个小时\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又很耐心地陪我梳理了一个小时\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"surface_tension\",\n    \"selectedTarget\": \"公开与私下两种互动方式对信任的影响\",\n    \"evidenceRefs\": [\"T06-fact-1\", \"T06-fact-2\", \"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"连接可观察互动与用户的期待或边界\",\n      \"supportEvidenceRefs\": [\"T06-fact-1\", \"T06-fact-2\", \"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"理解用户如何看待公开批评与私下帮助并存时对信任或边界的影响\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"会上他直接指出错误不让你解释，会后却耐心陪你梳理了一个小时\",\n    \"question\": \"这两种截然不同的互动方式放在一起，怎样影响你对他的信任或你希望保持的边界？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6964,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5844,
+          "completionTokens": 855,
+          "totalTokens": 6699,
+          "promptCacheHitTokens": 2048,
+          "promptCacheMissTokens": 3796
+        },
+        "estimatedCost": 0.0007765744000000002
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": true,
+  "completed": false,
+  "completionReason": null,
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

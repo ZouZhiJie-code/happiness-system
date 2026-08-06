@@ -1,0 +1,36 @@
+{
+  "ledgerVersion": "board7-minimal-two-stage-v3-candidate-budget-v1",
+  "datasetVersion": "2026-08-01.board7-minimal-two-stage-v3-candidate-v1",
+  "caseFingerprint": "c53b78fa6f5f842636f23e022051a8d9cf4d972c9bf0a00d9c14bf5e6378bb3d",
+  "runLimit": 2,
+  "entries": [
+    {
+      "reservationId": "73f523c6-1578-47f0-8456-a6ee10486f79",
+      "candidateVersions": {
+        "prompt": "two_call:2026-08-01.event-centered-generative-v68-understanding-card+2026-08-01.event-centered-generative-v68-visible",
+        "strategy": "5.47.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-08-01.v26",
+        "semanticArtifact": "event-centered-semantic-plan.v3"
+      },
+      "reservedAt": "2026-08-01T09:16:02.976Z",
+      "completedAt": "2026-08-01T09:16:37.161Z",
+      "status": "completed",
+      "runEnvelopeFingerprint": "a62ec5f6664ce6e2a0dc7a3cf12b01b28d7125257e6792006e2b83442be4d5f3",
+      "error": null,
+      "gateAudit": {
+        "auditedAt": "2026-08-01T09:19:03.205Z",
+        "runEnvelopeFingerprint": "a62ec5f6664ce6e2a0dc7a3cf12b01b28d7125257e6792006e2b83442be4d5f3",
+        "semanticPassed": 5,
+        "visiblePassed": 4,
+        "severeErrors": 0,
+        "failureReasons": [
+          "answer_entry_burden",
+          "question_value",
+          "expression_naturalness"
+        ],
+        "decision": "stop"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "replayVersion": "board7-mvp-deterministic-fallback-replay-v1",
+  "sourceGenerativeRun": "board7-mvp-four-angle-smoke-v1",
+  "sourceRecoveryProbe": "board7-mvp-baseline-recovery-v1",
+  "mode": "offline_current_code_path",
+  "providerRequests": 0,
+  "results": [
+    {
+      "caseId": "SF4-T-ASK-01",
+      "technicalComplete": true,
+      "finalAction": "ask",
+      "visibleResponse": "我先记住你刚才说的这部分：我只知道退到门口再看时就不想继续挪了，可具体是哪一处让我停手，我还说不清。\n你提到“用户上下调整一幅小版画多次后停在当前墙面位置”。当时脑子里最先冒出来的具体念头是什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "severeFactError": false,
+      "crossEventError": false,
+      "boundaryError": false,
+      "strongInferenceError": false
+    },
+    {
+      "caseId": "SF4-R-COEXIST-01",
+      "technicalComplete": true,
+      "finalAction": "pause",
+      "visibleResponse": "我先记住你刚才说的这部分：我跟不上时，他会在旁边数拍，我就能接回节奏；可我只要错一步，他就当着大家把音乐喊停，我会一下很紧。帮到我和让我有压力，这两边都是真的。\n好，我听到了。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 生成日志",
+      "severeFactError": false,
+      "crossEventError": false,
+      "boundaryError": false,
+      "strongInferenceError": false
+    }
+  ]
+}

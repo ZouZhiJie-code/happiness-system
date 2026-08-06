@@ -1,0 +1,12 @@
+{
+  "approvalType": "board7_provider_v70_root_visible_probe_run",
+  "approvalVersion": "board7-provider-v70-root-visible-probe-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-01T14:42:38Z",
+  "confirmationText": "确认",
+  "taskId": "codex-board7-v70-root-visible-probe-2026-08-01",
+  "approvalCardFingerprint": "e4e4c7bbdab7d4c88a5257d92b1008487ffbb13efb4295177f3d03a0e2e7c94f",
+  "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+  "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414"
+}

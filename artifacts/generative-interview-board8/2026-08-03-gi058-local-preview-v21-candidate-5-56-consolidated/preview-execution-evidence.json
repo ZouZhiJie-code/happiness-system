@@ -1,0 +1,45 @@
+{
+  "evaluation": "board8_gi058_deepseek_official_preview_consolidated",
+  "candidate": {
+    "strategyVersion": "5.56.0",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v8",
+    "semanticPromptVersion": "2026-08-03.event-centered-generative-v76-gi058-origin-correction",
+    "visiblePromptVersion": "2026-08-03.event-centered-generative-v76-gi058-origin-correction-visible",
+    "model": "deepseek-v4-flash",
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "eventMode": "optional",
+    "eventStrategy": "generative"
+  },
+  "window": {
+    "startedAt": "2026-08-03T15:31:08.958Z",
+    "completedAt": "2026-08-03T15:35:37.260Z"
+  },
+  "database": "happiness_board8_preview_20260803_gi058_local",
+  "cases": [
+    { "id": "feeling-1", "rootSessionId": "59fae19e-1514-4ff2-a33c-4742fb27449f", "status": "passed", "journalOrigin": "llm" },
+    { "id": "feeling-2", "rootSessionId": "69d2b2e6-1e61-4191-8d5d-05d75d5ca6a6", "status": "passed", "journalOrigin": "llm", "closedAngle": true },
+    { "id": "thought-1", "rootSessionId": "a3a21c08-e6db-4c2e-9266-9b90c9615212", "status": "passed", "journalOrigin": "llm", "correction": true },
+    { "id": "thought-2", "rootSessionId": "7161fb12-bcc1-47f6-bd65-dbf1bb462224", "status": "passed", "journalOrigin": "llm" },
+    { "id": "relationship-1", "rootSessionId": "b1f0fca2-7a52-46c3-8aa8-1a7e38893a7f", "status": "passed", "journalOrigin": "llm" },
+    { "id": "relationship-2", "rootSessionId": "8d9e9bcb-a270-4e29-9aea-00d53619025d", "status": "passed", "journalOrigin": "llm", "closedAngle": true },
+    { "id": "action-1", "rootSessionId": "47d29d1c-b039-468c-92bc-12afbcdd2c93", "status": "passed", "journalOrigin": "llm", "focusSelection": true },
+    { "id": "action-2", "rootSessionId": "37ba3922-cde3-4b44-924b-811a7c94d09d", "status": "passed", "journalOrigin": "llm" }
+  ],
+  "smokes": [
+    { "id": "first_checkpoint", "status": "passed" },
+    { "id": "legacy_five_dimension", "status": "passed" }
+  ],
+  "technicalSummary": {
+    "mainTrajectoriesCompleted": 8,
+    "journalLoopsCompleted": 8,
+    "blockingIssues": 0,
+    "status": "technical_release_gate_passed_pending_product_owner_review"
+  },
+  "privacy": {
+    "userRawText": false,
+    "aiFullText": false,
+    "journalContent": false,
+    "traceContext": false
+  }
+}

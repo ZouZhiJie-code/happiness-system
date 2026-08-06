@@ -1,0 +1,315 @@
+{
+  "version": "batch-b-eval-v1",
+  "mode": "model",
+  "judgeEnabled": true,
+  "providers": {
+    "replay": "volcengine-ark",
+    "judge": "volcengine-ark-responses",
+    "judgeIsIndependent": true
+  },
+  "generatedAt": "2026-07-25T11:57:02.151Z",
+  "catalogTotal": 580,
+  "selectedTotal": 1,
+  "completedTotal": 1,
+  "judgeCompletedTotal": 1,
+  "passedTotal": 1,
+  "failedTotal": 0,
+  "providerUnavailableTotal": 0,
+  "providerUnavailableByReason": {},
+  "judgeUnavailableByReason": {},
+  "rawModelIssueCounts": {
+    "production_understanding:raw_focus_option_group_ambiguous": 1
+  },
+  "bySuite": {
+    "public_protocol": {
+      "total": 120,
+      "selected": 1,
+      "completed": 1,
+      "passed": 1,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": 1,
+      "meetsThreshold": true
+    },
+    "feeling": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "thought": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "relationship": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "action": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "safety": {
+      "total": 60,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    }
+  },
+  "qualityGate": {
+    "eligible": false,
+    "reasons": [
+      "公共协议仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "理解感受仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "理解感受通过率尚未达到 95%，或存在未完成回放。",
+      "理清想法仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "理清想法通过率尚未达到 95%，或存在未完成回放。",
+      "梳理关系仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "梳理关系通过率尚未达到 95%，或存在未完成回放。",
+      "复盘行动仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "复盘行动通过率尚未达到 95%，或存在未完成回放。",
+      "安全红线仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "安全红线通过率尚未达到 95%，或存在未完成回放。"
+    ]
+  },
+  "failedCases": [],
+  "judgeConflicts": [],
+  "passingSamples": [
+    {
+      "id": "EVB-PUB-034",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "providerAttemptCount": 1,
+      "providerDurationMs": 19195,
+      "judgeAttemptCount": 1,
+      "judgeDurationMs": 9695,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "rawModelIssues": [
+        "production_understanding:raw_focus_option_group_ambiguous"
+      ],
+      "evaluationSemanticsVersion": 23,
+      "visiblePayload": {
+        "naturalUnderstanding": "你提到早上出门前找不到钥匙，在门口急得转了两圈，还有跑步最后一公里很想停，还是慢慢跑完了。",
+        "naturalResponse": "我先把你刚才提到的两件事都留在这里。",
+        "responseKind": "clarification",
+        "questionSpec": {
+          "phase": "event_focus_clarification",
+          "angle": null,
+          "target": "event_selection",
+          "opportunityNumber": null,
+          "surfaceLevel": "low_pressure_choice",
+          "anchorText": null,
+          "repairCount": 0
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "productionUnderstandingProbe": {
+        "status": "completed",
+        "outputOrigin": "llm",
+        "attemptCount": 1,
+        "durationMs": 13160,
+        "attemptErrorCodes": [],
+        "decision": {
+          "eventBoundary": "multiple_events",
+          "coreEventIdentifiable": false,
+          "answerSignal": "partly_answered",
+          "facts": [],
+          "angleEvidence": [],
+          "outcomeCandidate": null,
+          "unsupportedHypothesis": null,
+          "adviceRequest": null,
+          "eventOptions": [
+            {
+              "label": "早上出门前找不到钥匙，我在门口急得转了两圈",
+              "sourceText": "早上出门前找不到钥匙，我在门口急得转了两圈"
+            },
+            {
+              "label": "跑步最后一公里我很想停，后来还是慢慢跑完了",
+              "sourceText": "跑步最后一公里我很想停，后来还是慢慢跑完了"
+            }
+          ],
+          "correctionTargetHint": null,
+          "boundaryReason": "用户原话包含两个独立事件，由“另外”分隔，彼此无因果或背景关系，需先选择聚焦哪个事件。"
+        },
+        "rawIssues": [
+          "production_understanding:raw_focus_option_group_ambiguous"
+        ]
+      },
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到早上出门前找不到钥匙，在门口急得转了两圈，还有跑步最后一公里很想停，还是慢慢跑完了。",
+        "naturalResponse": "这两件事我都记下了。",
+        "rationale": "用户同时给出两个可识别的事件，主线无法自动判断聚焦哪一个。按照规则，正文只做一句承接性回应，不将任一事件预选为当前事实，具体选择通过纸笺交由用户完成。因此 nextMove 为 clarify_event，questionTarget 为 current_event_choice。activeAngle 保持为 null，未发生变化。理解中只保留用户原话的事实锚点，回应不添加感受或角度洞见。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "两件并列事件均被正确承接并对应到纸笺选项，正文未重复选项或追加问题，符合冻结策略六。"
+        ]
+      },
+      "judgeConflict": false
+    }
+  ],
+  "results": [
+    {
+      "id": "EVB-PUB-034",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "providerAttemptCount": 1,
+      "providerDurationMs": 19195,
+      "judgeAttemptCount": 1,
+      "judgeDurationMs": 9695,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "rawModelIssues": [
+        "production_understanding:raw_focus_option_group_ambiguous"
+      ],
+      "evaluationSemanticsVersion": 23,
+      "visiblePayload": {
+        "naturalUnderstanding": "你提到早上出门前找不到钥匙，在门口急得转了两圈，还有跑步最后一公里很想停，还是慢慢跑完了。",
+        "naturalResponse": "我先把你刚才提到的两件事都留在这里。",
+        "responseKind": "clarification",
+        "questionSpec": {
+          "phase": "event_focus_clarification",
+          "angle": null,
+          "target": "event_selection",
+          "opportunityNumber": null,
+          "surfaceLevel": "low_pressure_choice",
+          "anchorText": null,
+          "repairCount": 0
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "productionUnderstandingProbe": {
+        "status": "completed",
+        "outputOrigin": "llm",
+        "attemptCount": 1,
+        "durationMs": 13160,
+        "attemptErrorCodes": [],
+        "decision": {
+          "eventBoundary": "multiple_events",
+          "coreEventIdentifiable": false,
+          "answerSignal": "partly_answered",
+          "facts": [],
+          "angleEvidence": [],
+          "outcomeCandidate": null,
+          "unsupportedHypothesis": null,
+          "adviceRequest": null,
+          "eventOptions": [
+            {
+              "label": "早上出门前找不到钥匙，我在门口急得转了两圈",
+              "sourceText": "早上出门前找不到钥匙，我在门口急得转了两圈"
+            },
+            {
+              "label": "跑步最后一公里我很想停，后来还是慢慢跑完了",
+              "sourceText": "跑步最后一公里我很想停，后来还是慢慢跑完了"
+            }
+          ],
+          "correctionTargetHint": null,
+          "boundaryReason": "用户原话包含两个独立事件，由“另外”分隔，彼此无因果或背景关系，需先选择聚焦哪个事件。"
+        },
+        "rawIssues": [
+          "production_understanding:raw_focus_option_group_ambiguous"
+        ]
+      },
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到早上出门前找不到钥匙，在门口急得转了两圈，还有跑步最后一公里很想停，还是慢慢跑完了。",
+        "naturalResponse": "这两件事我都记下了。",
+        "rationale": "用户同时给出两个可识别的事件，主线无法自动判断聚焦哪一个。按照规则，正文只做一句承接性回应，不将任一事件预选为当前事实，具体选择通过纸笺交由用户完成。因此 nextMove 为 clarify_event，questionTarget 为 current_event_choice。activeAngle 保持为 null，未发生变化。理解中只保留用户原话的事实锚点，回应不添加感受或角度洞见。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "两件并列事件均被正确承接并对应到纸笺选项，正文未重复选项或追加问题，符合冻结策略六。"
+        ]
+      },
+      "judgeConflict": false
+    }
+  ]
+}

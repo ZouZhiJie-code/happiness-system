@@ -1,0 +1,30 @@
+{
+  "ledgerVersion": "board7-event-journal-mvp-probe-budget-v1",
+  "scopeFingerprint": "28578566815bdf22b013cf41af64cb880f443e85bb86cbad1a0788a1521314b9",
+  "status": "completed",
+  "model": "deepseek-v4-flash",
+  "nominalRunLimit": 1,
+  "technicalAttemptLimit": 2,
+  "nominalRunsConsumed": 1,
+  "technicalAttemptsConsumed": 1,
+  "requests": [
+    {
+      "requestId": "d8023c00-c1ef-4cbe-ac81-a090cd74857a",
+      "attempt": 1,
+      "status": "completed",
+      "reservedAt": "2026-08-02T10:59:39.919Z",
+      "settledAt": "2026-08-02T10:59:41.678Z",
+      "latencyMs": 776,
+      "tokenUsage": {
+        "promptTokens": 362,
+        "completionTokens": 57,
+        "totalTokens": 419,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 362
+      },
+      "errorCode": null
+    }
+  ],
+  "outcome": "quality_fallback",
+  "updatedAt": "2026-08-02T10:59:41.683Z"
+}

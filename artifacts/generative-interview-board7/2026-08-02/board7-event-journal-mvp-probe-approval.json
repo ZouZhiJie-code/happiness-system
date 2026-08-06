@@ -1,0 +1,12 @@
+{
+  "approvalType": "board7_event_journal_mvp_probe_run",
+  "approvalVersion": "board7-event-journal-mvp-probe-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-02T10:53:57Z",
+  "confirmationText": "PLEASE IMPLEMENT THIS PLAN：运行真实模型最小验证，并完成一条事件日志完整闭环。",
+  "scopeFingerprint": "28578566815bdf22b013cf41af64cb880f443e85bb86cbad1a0788a1521314b9",
+  "model": "deepseek-v4-flash",
+  "nominalRuns": 1,
+  "technicalAttemptLimit": 2
+}

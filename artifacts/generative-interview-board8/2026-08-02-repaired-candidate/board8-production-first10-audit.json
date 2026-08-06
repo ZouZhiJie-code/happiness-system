@@ -1,0 +1,124 @@
+{
+  "reportVersion": "board8.production-first10.v1",
+  "generatedAt": "2026-08-02T14:07:03.012Z",
+  "window": {
+    "productionEnabledAt": "2026-08-02T14:03:00.000Z",
+    "observedUntil": "2026-08-02T14:06:53.000Z"
+  },
+  "selection": {
+    "rule": "first_content_after_enable_then_root_session_dedupe",
+    "requested": 10,
+    "selected": 1,
+    "complete": false
+  },
+  "funnel": {
+    "event_centered_entry_exposed": 1,
+    "event_centered_entry_opened": 1,
+    "event_centered_first_content_submitted": 1,
+    "event_centered_response_completed": 1,
+    "event_centered_checkpoint_reached": 1,
+    "event_journal_generation_started": 1,
+    "event_journal_generated": 1,
+    "event_journal_saved": 1,
+    "event_centered_turn_fallback": 1,
+    "event_centered_session_abandoned": 0
+  },
+  "latency": {
+    "sampleCount": 1,
+    "medianMs": 6155,
+    "p90Ms": 6155,
+    "releaseBand": "pass"
+  },
+  "fallback": {
+    "total": 1,
+    "maxConsecutive": 1,
+    "recent20EligibleTurns": 1,
+    "recent20FallbackCount": 1,
+    "recent20FallbackRate": 1
+  },
+  "journal": {
+    "generatedSessions": 1,
+    "savedSessions": 1,
+    "savedWithin24Hours": 1,
+    "savedWithin24HoursRate": 1,
+    "consecutiveUnrecoveredFailures": 0
+  },
+  "rollbackSignals": {
+    "firstTenFallbackThresholdReached": false,
+    "recent20FallbackRateThresholdReached": false,
+    "journalFailureThresholdReached": false
+  },
+  "sessions": [
+    {
+      "sequence": 1,
+      "rootSessionId": "b5d062f3-19d8-46ea-b726-172a94635da7",
+      "firstContentSubmittedAt": "2026-08-02T14:03:25.701Z",
+      "entryDate": "2026-08-01",
+      "source": null,
+      "angle": null,
+      "stage": "checkpoint_one",
+      "checkpoints": [
+        "first"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 1,
+        "event_centered_checkpoint_reached": 1,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "responseLatency": {
+        "sampleCount": 1,
+        "medianMs": 6155,
+        "p90Ms": 6155,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "0621d372-f2d7-4185-a6b8-39018f0ae182",
+        "entryId": "b4ce743b-ae45-4069-9e51-76fb1630f985",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-02T14:05:32.660Z",
+        "savedWithin24Hours": true
+      },
+      "failures": [
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-02T14:03:31.822Z",
+          "stage": "semantic",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "f589406d-7e88-412e-bb21-47d4b38109ce",
+        "32049434-7328-4f95-a8ab-8ae37e8e34ba"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "privacy": {
+    "contentFieldsExcluded": true,
+    "excludedFields": [
+      "用户原话",
+      "AI 全文",
+      "事件日志标题与正文",
+      "Trace contextSnapshot",
+      "Trace finalOutput",
+      "模型请求与响应正文"
+    ]
+  }
+}

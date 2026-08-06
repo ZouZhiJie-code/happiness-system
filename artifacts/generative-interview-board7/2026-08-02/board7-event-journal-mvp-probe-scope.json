@@ -1,0 +1,99 @@
+{
+  "probeVersion": "board7-event-journal-mvp-probe-v1",
+  "promptVersion": "2026-08-02.event-journal-mvp-v1",
+  "model": "deepseek-v4-flash",
+  "temperature": 0.2,
+  "maxTokens": 1500,
+  "timeoutMs": 12000,
+  "thinking": "disabled",
+  "nominalRuns": 1,
+  "technicalAttemptLimit": 2,
+  "sourceSnapshot": {
+    "schemaVersion": 1,
+    "eventId": "synthetic-event-journal-probe-1",
+    "branchSessionId": "synthetic-branch-journal-probe-1",
+    "baseMessageSequence": 4,
+    "messages": [
+      {
+        "id": "probe-user-message-1",
+        "role": "user",
+        "sequence": 2,
+        "content": "今天下午做完项目汇报，走出会议室时我突然松了口气。"
+      },
+      {
+        "id": "probe-user-message-2",
+        "role": "user",
+        "sequence": 4,
+        "content": "我这几天一直担心讲不清楚，真正结束以后才发现肩膀放松了。"
+      }
+    ],
+    "facts": [
+      {
+        "id": "probe-fact-1",
+        "eventId": "synthetic-event-journal-probe-1",
+        "createdBranchSessionId": "synthetic-branch-journal-probe-1",
+        "pathAnchorMessageId": "probe-user-message-1",
+        "createdByRevisionId": null,
+        "statement": "今天下午做完项目汇报，走出会议室时我突然松了口气",
+        "scope": "current_event",
+        "stance": "affirmed",
+        "kind": "event_detail",
+        "origin": "user_expression",
+        "createdAt": "2026-08-02T10:00:00.000Z",
+        "evidence": []
+      },
+      {
+        "id": "probe-fact-2",
+        "eventId": "synthetic-event-journal-probe-1",
+        "createdBranchSessionId": "synthetic-branch-journal-probe-1",
+        "pathAnchorMessageId": "probe-user-message-2",
+        "createdByRevisionId": null,
+        "statement": "这几天一直担心汇报时讲不清楚",
+        "scope": "current_event",
+        "stance": "affirmed",
+        "kind": "thought",
+        "origin": "user_expression",
+        "createdAt": "2026-08-02T10:01:00.000Z",
+        "evidence": []
+      },
+      {
+        "id": "probe-fact-3",
+        "eventId": "synthetic-event-journal-probe-1",
+        "createdBranchSessionId": "synthetic-branch-journal-probe-1",
+        "pathAnchorMessageId": "probe-user-message-2",
+        "createdByRevisionId": null,
+        "statement": "汇报真正结束以后肩膀放松了",
+        "scope": "current_event",
+        "stance": "affirmed",
+        "kind": "feeling",
+        "origin": "user_expression",
+        "createdAt": "2026-08-02T10:01:00.000Z",
+        "evidence": []
+      }
+    ],
+    "effectiveFactIds": [
+      "probe-fact-1",
+      "probe-fact-2",
+      "probe-fact-3"
+    ],
+    "deprioritizedFactIds": [],
+    "explorationFactIds": [],
+    "angleOutcomes": [
+      {
+        "id": "probe-outcome-1",
+        "eventId": "synthetic-event-journal-probe-1",
+        "angle": "feeling",
+        "kind": "insight",
+        "statement": "汇报真正结束后，持续绷着的身体才放松下来。"
+      }
+    ],
+    "logEligibleOutcomeIds": [
+      "probe-outcome-1"
+    ],
+    "pendingClaimConfirmation": {
+      "kind": "no_eligible_claim",
+      "claimId": null,
+      "factId": null
+    }
+  }
+}
