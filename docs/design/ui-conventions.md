@@ -1,6 +1,8 @@
-# UI 设计规范：单层卡片制（2026-06-12）
+# UI 设计规范：单层卡片与流动交互
 
-本文件是 **[DESIGN.md](../../DESIGN.md) 的工程实现附录**：容器层级、圆角/边框 token、共享原语清单。创意方向与页面形态以 DESIGN.md 为准；分析页 IA 详见 DESIGN.md「Analysis shell」与 [2026-06-12-analysis-scroll-anchor-design.md](../plans/2026-06-12-analysis-scroll-anchor-design.md)。
+最后更新：`2026-07-20`
+
+本文件是 **[DESIGN.md](../../DESIGN.md) 的工程实现附录**：容器层级、圆角/边框 token、共享原语与交互验收基线。创意方向与页面形态以 DESIGN.md 为准；`docs/plans/` 中的设计稿保留历史决策过程。
 
 本规范约束全站（除访谈页消息区与首页品牌区外）的视觉容器结构。适用页面（持续）：分析页、日历周/日视图、设置全家桶、管理员页面等。访谈页和日历月视图是本规范的参照样板。
 
@@ -64,10 +66,19 @@ chip、pill、按钮继续使用 `rounded-full`，不占档位。禁止新增 `r
 | `SlidingSegmentedControl` | 带滑块的 segmented 切换；变体 `soft / calendar / admin / underline` |
 | `HorizontalPager` | 横向分页内容轨，与 segmented 联动；按需开启 `swipeable` 与 `onRequestChange` |
 | `DimensionStatusDot` | 访谈维度状态灯（灰 / 黄呼吸 / 红 / 绿） |
+| `ActionMenu` | 自适应上下展开、方向键导航与焦点恢复 |
+| `ConfirmDialog` | 焦点圈定、Escape、危险操作安全初始焦点与焦点恢复 |
 
 页面组件不再手写卡片样式；需要新形态时先扩展原语，再使用。
 
-## 8. 动效原语（2026-06-12）
+## 7. 即时反馈
+
+- `ActionButton`、header 动作、交互卡片、导航项和日历格统一提供 pointer-down 反馈。
+- 按钮缩放约 `0.97`，大卡片缩放约 `0.985`；disabled / `aria-disabled` 保持静止。
+- 反馈只使用 `transform / opacity / color / box-shadow`，避免触发布局重排。
+- `button` 与主要交互原语统一使用 `touch-action: manipulation`，横向分页容器使用 `touch-action: pan-y`。
+
+## 8. 动效原语
 
 滑块与分页动效统一走共享原语，禁止各页手写 thumb / track transition。
 
@@ -76,12 +87,27 @@ chip、pill、按钮继续使用 `rounded-full`，不占档位。禁止新增 `r
 | 分析页 8 要素雷达/棒棒糖 | `SlidingSegmentedControl` soft | `HorizontalPager` |
 | 日历 月/周/日 | `SlidingSegmentedControl` calendar | URL 整页切换（不做 pager） |
 | 画像 三 tab | `SlidingSegmentedControl` underline | `HorizontalPager` |
-| 访谈五维 | `SlidingSegmentedControl` admin + `DimensionStatusDot` | `HorizontalPager` |
+| 访谈五维 | `SlidingSegmentedControl` admin + `DimensionStatusDot` | 保留业务状态切换；按页面配置决定是否使用 pager |
 | 管理员 复盘/监控 | `SlidingSegmentedControl` admin | URL replace（不做 pager） |
 
-动效参数：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；拖动释放允许轻微边界阻尼并继承释放速度。`prefers-reduced-motion: reduce` 时统一降级为约 `160ms` 的交叉淡入淡出。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
+动效参数：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；拖动释放使用约 `10px` 原始位移判定、1:1 跟手、速度投影和轻微边界阻尼。`prefers-reduced-motion: reduce` 时关闭拖动，并把 spring 收敛为约 `160ms` 的短缓动；弹层使用短透明度过渡。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
 
-## 7. 例外
+## 9. 响应式工具栏与弹层
+
+- 小于 `1024px` 时，`SiteHeader` 使用“品牌与主导航 + 上下文工具栏”两行布局。
+- 上下文工具栏使用横向滚动和左右渐隐边缘；选中的分析段落和 segmented 项在溢出时滚入可见区域。
+- 日志书页桌面从右侧进入；移动端从底部进入，并支持向下拖动关闭。
+- `ActionMenu` 根据触发点上下空间自动翻转；支持 ArrowUp / ArrowDown / Home / End / Escape。
+- `ConfirmDialog` 圈定 Tab 焦点，关闭后恢复触发元素焦点；危险操作默认聚焦取消按钮。
+
+## 10. 环境偏好
+
+- `prefers-reduced-motion: reduce`：关闭平滑滚动、横向拖动和缩放按压，spring 改为短缓动，弹层保留短透明度过渡。
+- `prefers-reduced-transparency: reduce`：顶栏、输入区、菜单和弹窗改用近实色背景，关闭 blur。
+- `prefers-contrast: more`：提升 `--line-soft / --line-strong / --text-dim / --text-faint` 对比度。
+- 工具文字、状态和图表标签使用系统 UI 字体；新增或调整的核心控制字号最低 `0.75rem`，非关键刻度与装饰标记可按空间单独评估。
+
+## 11. 例外
 
 - 访谈页消息气泡、`liquid-composer` 输入框、日志 `paper-sheet` 编辑面：已是目标形态，不动。
 - 首页品牌广告页：营销排版，不受层级预算约束。

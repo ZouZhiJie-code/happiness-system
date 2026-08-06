@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-07-20`
+最后更新：`2026-08-05`
 
 ## 1. 系统概览
 
@@ -15,7 +15,7 @@
 - 一个把结构化信息再压缩成日志正文草稿的生成系统
 - 一个以 Trace 为血缘、由管理员验证和发布的 AI 质量闭环
 
-截至 `2026-05-04`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
+截至 `2026-08-02`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
 - 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
@@ -41,6 +41,8 @@
   - AI 质量治理页面：候选、真实证据、回放验证、全量发布、七天效果观察与回滚
 - `src/app/api/interview/session/*`
   - 会话 start / respond / stream / pause / complete / reopen / draft
+- `src/app/api/interview/event-centered/*`
+  - 事件中心 MVP 的会话启动、恢复、用户回合可靠提交、SSE 回复以及事件日志生成、读取、编辑与保存
 - `src/app/api/admin/analytics/*`
   - 管理员分析总览、漏斗、留存、质量、候选用户与内容级下钻接口
 - `src/app/api/ai-feedback/*`
@@ -76,7 +78,7 @@
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、month/week/day URL/helper、月/周统计、header toolbar 投影、状态/维度视觉 helper 与 deep link helper，不直接访问数据库
 - `src/features/analysis`
-  - `section=trends|dimensions|correlation|review` 与 `preset=week|month|custom`、`start/end` URL 归一化；`date-range.ts`、`aggregate-trends-range.ts`；`GET /api/analysis/range` 服务量化趋势；`GET /api/analysis/month` 服务五维全景
+  - `section=trends|dimensions` 与 `preset=week|month|custom`、`start/end` URL 归一化；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；`date-range.ts`、`aggregate-trends-range.ts`；`GET /api/analysis/range` 服务量化趋势；`GET /api/analysis/month` 服务五维记录
 - `src/features/admin-analytics`
   - 管理员分析页 URL 状态、类型和接口约定；负责把 `view / range / user drilldown` 投影成同页工作台状态
 - `src/features/ai-feedback`
@@ -92,7 +94,7 @@
 - `src/components/admin`
   - 管理员数据分析工作台壳层；当前采用“总览 -> 候选用户 -> 单人证据”的调查式结构
 - `src/components/analysis`
-  - 单页四段 scroll 壳（`analysis-shell.tsx` + section 组件 + scroll spy）；`analysis-toolbar.tsx` 在 header 渲染周期 preset、锚点 tab 与 chip；量化趋势为只读读数台，五维仍按月阅读，关联/复盘占位
+  - `analysis-shell.tsx` 挂载量化趋势与五维记录两段，并由 scroll spy 更新当前锚点；`analysis-toolbar.tsx` 在 header 渲染周期 preset、日期范围、两段 tab 与 chip；历史关联/复盘占位组件当前未挂载
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、AI schema、服务端逻辑
   - 当前也承载 fulfillment、reflection、improvement 与 gratitude 的理论对齐分支、专属抽取 schema，以及多维度提问 / fallback 逻辑
@@ -105,6 +107,12 @@
   - 现实上主要是 re-export joy service 的壳子
 - `src/server/services/interview/joy-interview.service.ts`
   - 会话编排、分叉决策、draft 生成与保存的主逻辑
+- `src/server/services/interview/event-centered-interview.service.ts`
+  - 事件中心会话、活动分支、用户回合、检查点、两段式生成、确定性 baseline 回退与 Trace 组装
+- `src/server/services/interview/journal-event-entry.service.ts`
+  - 单事件日志来源快照、生成预留、AI 草稿、来源门、基础版本、编辑与正式保存
+- `src/server/services/interview/event-centered-analytics.service.ts`
+  - 入口、检查点、回合降级、日志生成/保存和放弃等事件中心埋点；使用 `dedupeKey` 保证幂等
 - `src/server/services/interview/joy-interview-ai.service.ts`
   - joy、fulfillment、reflection、improvement 与 gratitude 的结构化抽取 schema 分发；同时承载问题生成、日志草稿生成与 fallback
   - 生成链路会拦截内部理论腔进入用户正文：fallback draft 不直接消费 `theorySummary`，joy 质量门会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类抽象解释句和坏标题
@@ -201,6 +209,12 @@
   - 用户回复与选择动作的提交事实，保存 `clientTurnId / action / rawText / baseMessageSequence / status / attemptCount / errorCode`
   - 同一会话内 `clientTurnId` 唯一；同一时刻只允许一条 `processing / failed / canceled` 未解决提交
   - 文本回复在 AI 处理前创建对应用户消息；AI 结果完成时，助手消息、事件、会话和本轮 `completed` 状态在同一事务中写入
+  - `intentAssessment / intentDecision / intentClassifierVersion / intentAssessedAt` 保存本轮意图判断及其决策依据，用于重放与质量回溯；它们不进入用户可见读模型
+- 回复版本与活动分支
+  - 新会话以 `conversationSchemaVersion = 2` 创建；根会话通过 `activeBranchSessionId` 指向当前采用路径。
+  - `InterviewMessage.responseGroupId / responseVersion` 将同一正式追问的原始版本和替代版本归组；每组最多三个版本。
+  - `InterviewBranchCheckpoint` 在每条正式追问处保存可恢复的会话、事件和进度状态；历史换问法据此创建写时复制分支。
+  - `AIResponseRegeneration` 将原问题、候选、意图、Trace、结果与采用情况连成独立质量记录。
 
 当前用户提交状态：
 - `processing`
@@ -279,6 +293,11 @@
 - 字段包括 `adminUsername / targetUserId / resourceType / resourceId / action / createdAt`
 - 当前只在管理员 drilldown 读取正文时写入，不参与普通用户业务链路
 
+`EventCenteredWorkspaceMessage` 与 `JournalEventEntry` 承载事件中心 MVP 的用户可见结果：
+- 事件中心消息沿用 `InterviewMessage`、`InterviewUserTurn`、活动分支和 checkpoint，用户原话先保存，AI 处理完成后再提交助手消息与状态
+- 事件日志沿用现有事件日志表、生成预留、来源快照、内容版本和“一事件一日志”约束，不新增专用数据库表
+- `generationTraceId` 将事件中心日志生成与 AI 质量反馈、请求账本关联；用户可见层只展示对话、日志和可用操作
+
 ### 3.5 画像与记忆
 
 `MemoryFact` 是长期记忆条目：
@@ -337,6 +356,7 @@
   - 3 个实时摘要 chip
   - calendar toolbar 与访谈维度条现在共用 header 中区高度预算，业务控制组用 `｜` 分隔，但不再套独立中区方框
   - `SiteHeader` 会在客户端测量真实 header 高度，并把结果同步到 `--site-header-viewport-offset`，让 calendar / analysis / settings 这类首屏工作区按剩余视口真实高度布局，而不是依赖固定 `4rem`
+  - `CalendarMainGate` 的正常内容层使用 `flex-1` 纵向伸展，访谈维度选择页可以完整承接主区可用高度，避免页面内容结束后露出全局背景造成色彩断层
 - 当页面处于 `entryDate` 访谈上下文时，当前选中维度胶囊优先显示 live session 的实时轮次 / 进度圈；其余维度，以及切到 `daily_journal` 工作区后的胶囊状态，继续使用 `CalendarDayRecord.dimensions`
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，live progress 会先被压在 `88%` 以下；这个边界态优先级高于历史 `draftGenerationUnlocked`
 - 全站 `SiteHeader` 已改为全宽暖色工具栏，不再使用居中 `page-shell` 大卡片外壳；主导航也不再包内层方框，当前页改用贴近文字的暖棕实线下划线表达，选中项字号略大；主导航不再包含【首页】项，点击左侧【Daily Light】品牌标识可返回首页
@@ -377,13 +397,13 @@
 
 ### 3.7 记录分析页现实
 
-截至 `2026-06-12`，`/analysis` 为单页四段纵向 scroll + 顶部锚点 tab：
+截至 `2026-07-20`，`/analysis` 为量化趋势与五维记录两段纵向 scroll + 顶部锚点切换：
 
-- URL：`section=trends|dimensions|correlation|review`；旧 `overview|score|rhythm|insights` 自动映射到新 keys；缺省 `section=trends`
+- URL：`section=trends|dimensions`；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；缺省 `section=trends`
 - 周期：`preset=week|month|custom` + 可选 `start/end`；量化趋势段走 `GET /api/analysis/range`
-- `SiteHeader` 中区 `AnalysisToolbar`：周期 preset、日期范围、四段 tab、contextual chip；tab 点击锚点跳转，scroll spy 更新 URL
+- `SiteHeader` 中区 `AnalysisToolbar`：周期 preset、日期范围、两段 tab、contextual chip；tab 点击锚点跳转，scroll spy 更新 URL
 - **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；无评分录入、无热力点选、无补漏 CTA
-- **五维全景**：`GET /api/analysis/month`；**关联 / 复盘**：占位，手动 AI 后续接入
+- **五维记录**：`GET /api/analysis/month`；按月展示五维线索与代表片段
 - 幸福 8 要素评分录入在 `/interview`「当天评分」工作区，不在分析页
 - 设计规范见根目录 `DESIGN.md` 与 `docs/design/ui-conventions.md`
 
@@ -493,7 +513,11 @@ SSE 事件：
 5. 最终事务写入助手消息、快照、事件、会话和生成 Trace，并把本轮标记为 `completed`。
 6. 流式接口发送最终 `session`；页面清理 outbox。
 
+按意图换问法也复用这条可靠提交链：客户端带上目标消息、当前分支和 `clientTurnId`；服务端保留同一组回复版本、在需要时从检查点创建分支，并在 SSE 中发送 `version` 与最终 `session`。前端把生成状态定向投放到目标回复气泡，普通用户回复仍在对话末尾产生新助手消息。版本预览为只读投影；用户确认切换后才更新根会话的活动分支。
+
 AI 处理失败时本轮进入 `failed`；请求取消时进入 `canceled`。会话读取把这两类状态和仍在处理的状态投影为 `pendingUserTurn`。用户点击“继续生成”后，前端用同一 `clientTurnId` 发送 `resume_turn`，服务端增加尝试次数并从原始消息位置继续。
+
+意图识别采用可渐进发布的三档模式：`legacy` 继续沿用既有决策；`shadow` 在生成 Trace 中记录新旧判断对照；`enforce` 持久化 `InterviewUserTurn` 的意图评估，并用它决定是否抽取、推进、收束或重问。确定性规则先识别显式控制表达，模型只对符合证据约束的补充判断参与合并，避免引用事件里的敏感词被误读为对系统的控制指令。`2026-07-21` 起，Production 与 Preview 均使用 `enforce`；`legacy` 保留为 P0 问题的即时回退档位。
 
 provider 流式返回的候选文本会先在服务端累计。服务端完成问题协议、重复保护、维度专项检查和 fallback 后，再把最终 `summary / question` 分块发送给前端；分块过程保持最终文本的空格和换行。
 
@@ -602,19 +626,68 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 3. 按 `joy / fulfillment / reflection / improvement / gratitude` 顺序整理 source
 4. AI 轻整理为已有维度章节合集；AI 不可用时用确定性 fallback 章节
 5. upsert `DailyJournalEntry` 为 `draft`
-6. 后续编辑自动保存草稿，用户确认后标记为 `saved`
+6. 访谈页日级动作随后调用保存接口，成功后打开当天日志工作区；后续编辑会回到 `draft`，用户点击“保存修改”后重新标记为 `saved`
 
 约束：
 - 没有已保存维度日志时返回 `DAILY_JOURNAL_SOURCE_EMPTY`
 - 不读取未保存草稿，不直接读取访谈消息
 - 不生成空章节，不提示缺失维度
-- 访谈页顶部【完整日志】按钮把主工作区切到当天日志模式，不弹层、不跳转；打开或生成当天完整日志时显示共享阶段进度、细进度轨和书页生长动效
+- 桌面端从右侧「今日日志」面板底部的 `生成日志 / 更新日志 / 查看日志` 进入；移动端从对话区顶部的【完整日志】快捷按钮进入。生成或更新会连续调用 generate 与 save，再打开当天日志工作区
 - `mode=daily-journal` 深链只打开当天日志主区；如果页面尚未 hydrate 访谈 session，也不会调用 `/api/interview/session/start` 创建新的 joy session
 - 从 `mode=daily-journal` 点击“回到访谈”时，前端会先通过 `DailyJournalWorkspace.flushPendingEdits()` 保存未触发 autosave 的草稿编辑，再移除 URL 里的 `mode`，回到同一 `dimension + entryDate` 的普通访谈 hydrate 流程
 - 从单维度日志书页切到当天日志主区前，前端会先复用书页关闭路径：保存未暂存编辑，或取消正在生成的 draft
 - 从当天日志主区返回访谈，或在当天日志主区切换访谈维度时，前端会先通过 `DailyJournalWorkspace.flushPendingEdits()` 保存未触发 autosave 的草稿编辑；保存失败或内容非法时不卸载当天日志主区，避免静默丢稿
 - 当访谈维度变化且 URL 没有 `mode=daily-journal` 时，`InterviewShell` 会把 `workspaceMode` 重置为 `interview`，避免新维度会话被完整日志工作区遮住
 - calendar 只展示轻量状态，不内联编辑
+
+### 5.7 事件中心 MVP：稳定底座、候选策略与发布隔离
+
+事件中心把一件事作为稳定聚合对象，支持可靠提交、失败恢复、Trace 和可编辑、可保存、可恢复的事件日志。历史四角度与多版两段式策略继续作为兼容实现和回归资产。`GI-067 / GI-068～074` 已冻结目标产品架构：每次新记录由用户选择【帮我记】或【陪我聊】，记录内保持所选模式，结束当前记录后从新记录入口重新选择；【帮我记】在用户表达后零追问，【陪我聊】以“理清想法”单角度验证三个可回返阶段、模型自治、确定性保护和完整评测闭环。
+
+事件中心会话 API：
+
+| 方法 | 路由 | 主要职责 |
+|---|---|---|
+| `POST` | `/api/interview/event-centered/session/start` | 按 `entryDate` 创建或恢复事件中心根会话，并返回工作区 |
+| `GET` | `/api/interview/event-centered/session/[id]` | 读取当前用户可访问的事件中心工作区、活动分支、消息和可用操作 |
+| `POST` | `/api/interview/event-centered/session/turn` | 显式预留用户原话并返回可靠提交确认，供兼容客户端和受控测试使用 |
+| `POST` | `/api/interview/event-centered/session/respond/stream` | 通过 SSE 完成两段式生成或 baseline 回退，发送 `turn / phase / delta / session / error` |
+
+事件日志 API：
+
+| 方法 | 路由 | 主要职责 |
+|---|---|---|
+| `POST` | `/api/interview/event-centered/journal/generate` | 从当前活动分支、有效原话、事实和角度成果冻结来源并生成事件日志草稿 |
+| `GET` | `/api/interview/event-centered/journal/[id]` | 读取当前用户可访问的事件日志 |
+| `PATCH` | `/api/interview/event-centered/journal/[id]` | 按 `expectedContentRevision` 自动暂存标题与正文，防止并发覆盖 |
+| `POST` | `/api/interview/event-centered/journal/[id]/save` | 按版本号将草稿确认保存为正式日志 |
+
+历史生成式候选使用两段职责：
+
+1. 第一段读取当前事件、近期上下文和本轮用户原话，更新事实，处理纠正/拒绝/停止，判断 `ask / complete / pause / honest_limit`，并形成成果来源、证据、问法目标和语义 checkpoint。
+2. 第二段只接收冻结后的动作、语义结果、证据引用和提问意图，生成思路摘要加一个问题，或一段完成/暂停/诚实收束回应。第二段不重新判断角度、问停和成果来源。
+
+系统在第一段完成后保存语义 checkpoint，并通过同一 `clientTurnId` 保护可靠续接。历史候选保留 deterministic baseline 兼容能力。目标产品采用“产品协议 → Interview Skill / Prompt → 大模型自主回应 → 确定性保护 → Trace → Evals 与真人 Preview”；板块 5 冻结问题计数、修复、回复版本、焦点纠正、失败恢复和成果／暂停后交互，板块 6 建立 GI-074 评测资产，板块 7 再确定调用编排、状态结构、Prompt / Skill 和失败处理实现。记录级模式边界直接继承 GI-068。Production 当前使用 `legacy + baseline`，事件中心生成式入口保持关闭。
+
+日志生成同样分为 AI 草稿、来源门和安全基础版本：
+
+- 来源快照只包含当前活动分支、有效原话、确认事实和允许进入日志的角度成果。
+- AI 草稿必须通过标题与正文来源覆盖、数字与引号可追溯等客观来源门；自然度和认识深度进入质量评审。
+- AI 请求失败、结构无效或来源门拒绝时，使用逐句取自来源的安全基础版本；基础版本不创造新的原因、动机、建议或长期规律。
+- 来源不足时恢复到上一检查点并返回结构化错误，保留全部材料供用户补充。
+
+入口和策略由两个开关独立控制：
+
+- `INTERVIEW_EVENT_CENTERED_MODE=legacy`：五维入口保持默认；已有事件可读。
+- `INTERVIEW_EVENT_CENTERED_MODE=optional`：五维入口保持默认，同时展示“从一件事开始”入口，并允许新事件写入。
+- `INTERVIEW_EVENT_CENTERED_MODE=event_centered`：事件中心作为默认入口，允许新事件写入，供内部 Preview 使用。
+- `INTERVIEW_EVENT_CENTERED_MODE=event_recovery`：保留已有事件的恢复阅读，暂停新的事件写入。
+- `INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`：现有确定性提问链路。
+- `INTERVIEW_EVENT_CENTERED_STRATEGY=generative`：事件中心两段式生成链路，失败时仍可回退到 baseline。
+
+事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
+
+当前产品状态（`2026-08-05`）：GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 作为历史技术证据保留；最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～074` 七个批次已冻结，板块 4 产品决策完成，当前进入板块 5 校准计数、修复、回复版本、焦点纠正、失败恢复与交互收束；GI-068 记录级模式边界直接继承。板块 6 负责评测资产化，板块 7 等待板块 5～6，板块 8 等待新候选并采用两模式 `4＋2` 验收。Production 保持 `legacy + baseline`。
 
 ## 6. joy 维度为什么是当前标品
 
@@ -862,6 +935,8 @@ System Prompt 和 Few-shot 候选需要同时满足“管理员批准”和“�
 
 候选拒绝属于可审计的人工决策：管理员提交 `4–300` 字理由后，系统将其写入 `AIOptimizationCandidate.reviewReason` 并记录审核人和审核时间。
 
+`/admin/ai-quality` 前端把数据库状态投影成审核阶段：`draft` 为待审核，`approved` 按最近验证结果分为待验证或待发布，Engineering 路径单列待技术处理，`published` 为观察中，`rejected / rolled_back` 进入历史。候选队列和右侧审核区共享当前选中候选，证据、方案、回复对照、验证与发布或退回决策始终围绕同一条候选展开。
+
 运行时版本标记：
 
 - System Prompt 候选：`+opt:{candidateId}`
@@ -873,7 +948,7 @@ System Prompt 和 Few-shot 候选需要同时满足“管理员批准”和“�
 
 `GET /api/admin/ai-quality/candidates/[candidateId]/impact` 读取发布前 7 天基线，并只统计发布后命中当前版本标记的 Trace。观察期最长 7 天；回滚或同路径新版本发布会提前截止。
 
-影响指标包括生成数、赞踩、同类问题、严重问题、调用失败和平均延迟。结论由 `src/features/ai-quality/impact-policy.ts` 以低样本、严重问题和变化百分点规则投影为：
+影响指标包括生成数、赞踩、同一问题、严重问题、调用失败和平均延迟。`issueFamily` 服务于宽泛分类，影响服务以标准化后的具体 `issueKey` 判断同一问题；缺少问题码时返回空口径并由页面显示“口径不足”。结论由 `src/features/ai-quality/impact-policy.ts` 以低样本、严重问题和变化百分点规则投影为：
 
 - `继续观察`
 - `样本较少，请结合真实对话判断`
@@ -911,6 +986,15 @@ System Prompt 和 Few-shot 候选需要同时满足“管理员批准”和“�
 - 访谈完成后不显示结束卡；输入框常驻，继续输入会先重开 session 再发送
 - 切换维度时 header 先静默持久化当前 session，不弹原生离开确认
 - 访谈页通过 header 主导航切换到日历、分析、画像、设置或首页时直接完成路由切换；刷新或关闭页面时，`InterviewShell` 继续通过 `beforeunload` 保存会话恢复标记并提供浏览器离开保护
+- 桌面书页从右侧进入并沿原路径退出；移动端改为底部 sheet，支持向下拖动关闭、速度判定和边界阻尼；reduced motion 下关闭拖动并使用短透明度过渡
+
+共享交互原语：
+- `ActionButton`、header 动作、交互卡片和日历格统一提供 pointer-down 按下反馈
+- `SlidingSegmentedControl` 的选中滑块使用可重定向 spring，连续切换会从当前屏幕位置继续
+- `HorizontalPager` 可选 `swipeable / onRequestChange`；画像与分析启用横向 swipe，约 `10px` 原始位移以内保持当前页，容器使用 `pan-y` 保护页面纵向滚动
+- `ActionMenu` 支持上下自动翻转、方向键、Home / End / Escape 和焦点恢复
+- `ConfirmDialog` 支持 Tab 焦点圈定、Escape、关闭后的焦点恢复，危险操作默认聚焦取消按钮
+- `globals.css` 统一响应 reduced motion、reduced transparency 与增强对比度偏好
 
 完整日志整页（`daily-journal-workspace.tsx`）：
 - 只读 + 编辑；不再有底部「整理完整日志 / 保存正式日志 / 收成并保存完整日志」三按钮

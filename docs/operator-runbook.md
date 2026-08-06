@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-07-20`
+最后更新：`2026-08-05`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -12,11 +12,24 @@
 |---|---|
 | `DATABASE_URL` | PostgreSQL 连接串 |
 | `AI_RUNTIME_CONFIG_SECRET` | 用于加密数据库里 AI provider API Key 的主密钥；推荐用 `openssl rand -base64 32` 生成 |
-| `AI_PROVIDER` | 当前默认是 `volcengine-ark` |
-| `VOLCENGINE_ARK_API_KEY` | Ark API Key |
-| `VOLCENGINE_ARK_MODEL` | Ark chat completions 的首选模型 ID；当前 production 已切到直连模型路径 |
-| `VOLCENGINE_ARK_ENDPOINT_ID` | 兼容旧路径：项目绑定 endpoint，只有在 key 能访问该 endpoint 时再用 |
-| `VOLCENGINE_ARK_BASE_URL` | Ark base URL |
+| `AI_PROVIDER` | 当前产品与候选统一使用 `openai`，对应 DeepSeek 官方 API 的 OpenAI 兼容接口；Ark 只保留历史兼容代码 |
+| `INTERVIEW_INTENT_V2_MODE` | 访谈意图识别发布档位：`legacy` 保持既有决策，`shadow` 记录新旧对照，`enforce` 启用新决策。当前 Production 与 Preview 均使用 `enforce`，`legacy` 保留为 P0 问题的即时回退档位 |
+| `INTERVIEW_EVENT_CENTERED_MODE` | 事件中心入口档位：`legacy` 保持五维入口为默认并允许读取已有事件；`optional` 保持五维默认入口并展示“从一件事开始”且允许事件写入；`event_centered` 以事件中心为默认入口并允许事件写入；`event_recovery` 仅保留已有事件的恢复阅读，关闭事件新增与修改。板块 8 Preview 使用 `optional`，Production 默认保持 `legacy`；生成式问题触发条件发布时保留 `optional` 并切换策略。 |
+| `INTERVIEW_EVENT_CENTERED_STRATEGY` | 事件中心内部提问策略：`baseline` 使用现有确定性提问链路，`generative` 使用同一模型的两段式结构化链路（第一段语义判断、第二段用户表达）。默认 `baseline`；板块 8 Preview 使用 `optional + generative`，生成式质量或稳定性触发回退时切换 `optional + baseline`；数据、隐私、来源或恢复主链风险切换 `event_recovery + baseline`，读路径受影响时切换 `legacy + baseline`。 |
+| `EVENT_CENTERED_GENERATIVE_MODEL` | 事件中心新候选固定使用 `deepseek-v4-flash`；只在受控 Preview 或候选验证中设置，Production 保持空值直到 Board 8 明确批准。 |
+| `EVENT_CENTERED_EVALUATION_TIMEOUT_MS` | 事件中心离线策略回放与 Judge 的超时，范围 `1000–90000ms`，默认 `18000ms`；缺省时兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。不影响线上访谈超时。 |
+| `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY` | 离线 Judge 专用 API Key；仅本地或隔离评测使用，不提交仓库、不注入客户端或生产请求。缺省时可按代码顺序兼容 `DEEPSEEK_JUDGE_API_KEY` 或回放 key。 |
+| `EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL` | 离线 Judge 模型名，必须显式提供；兼容别名为 `DEEPSEEK_JUDGE_MODEL`。策略回放的 `DEEPSEEK_MODEL` 不会自动充当 Judge 模型。 |
+| `EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL` | 离线 Judge 的 OpenAI-compatible base URL；兼容 `DEEPSEEK_JUDGE_BASE_URL`，最后可复用 `DEEPSEEK_BASE_URL`。只记录 host 元数据。 |
+| `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL` | DeepSeek 官方 API 的候选/目标聊天配置。API key 仅进入运行或评测进程内 provider，不写入报告和 Trace；模型名与 base URL host 可写入安全元数据。共享运行时切换后才用于官方预检。 |
+| `INTERVIEW_REGENERATION_ENABLED` | 回复“换个问法”开关；`true` 开放新会话的重新生成与版本切换，`false` 让版本 2 会话沿当前路径继续完成 |
+| `DEEPSEEK_API_KEY` | DeepSeek 官方 API 候选/目标聊天 Provider 的 API Key；发布到共享运行时前需要单独授权 |
+| `DEEPSEEK_MODEL` | 当前聊天模型名 |
+| `DEEPSEEK_BASE_URL` | 当前聊天 API 地址，默认 `https://api.deepseek.com` |
+| `VOLCENGINE_ARK_API_KEY` | 历史 Ark 回退 API Key，仅在明确执行回退时使用 |
+| `VOLCENGINE_ARK_MODEL` | 历史 Ark 回退模型 ID |
+| `VOLCENGINE_ARK_ENDPOINT_ID` | 历史 Ark 兼容路径 endpoint |
+| `VOLCENGINE_ARK_BASE_URL` | 历史 Ark 回退地址 |
 | `APP_URL` | 前端访问地址 |
 | `VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` | embedding 模型 endpoint（记忆系统向量嵌入，可选） |
 | `DIRECT_URL` | Prisma migration / 运维直连数据库 URL；共享环境建议配置 |
@@ -43,7 +56,16 @@
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_RUNTIME_CONFIG_SECRET=""
-AI_PROVIDER="volcengine-ark"
+AI_PROVIDER="openai"
+INTERVIEW_INTENT_V2_MODE="enforce"
+INTERVIEW_EVENT_CENTERED_MODE="legacy"
+INTERVIEW_EVENT_CENTERED_STRATEGY="baseline"
+EVENT_CENTERED_GENERATIVE_MODEL="deepseek-v4-flash"
+INTERVIEW_REGENERATION_ENABLED="true"
+DEEPSEEK_API_KEY=""
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+# 历史 Ark 回退兼容
 VOLCENGINE_ARK_API_KEY=""
 VOLCENGINE_ARK_MODEL=""
 VOLCENGINE_ARK_ENDPOINT_ID=""
@@ -51,11 +73,16 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 APP_URL="http://localhost:3000"
 ADMIN_USERNAMES=""
 CRON_SECRET=""
+# 事件中心离线评测（仅本地/隔离环境，Production 保持未配置）
+EVENT_CENTERED_EVALUATION_TIMEOUT_MS="18000"
+EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY=""
+EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL="deepseek-v4-pro"
+EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL="https://api.deepseek.com"
 ```
 
 `AI_RUNTIME_CONFIG_SECRET` 说明：
 
-- 这是本系统自己的加密主密钥，不是 OpenAI、Anthropic 或 Ark 的 API Key。
+- 这是本系统自己的加密主密钥，和 DeepSeek API Key、历史 Ark API Key 分开管理。
 - 推荐生成命令：`openssl rand -base64 32`
 - 同一个部署环境内的所有实例必须使用完全相同的值。
 - 不能提交到 git，不能从任何 provider API Key 推导生成。
@@ -91,6 +118,15 @@ npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/202
 - 这是当前仓库本地已有数据时最稳的同步方式
 - 该 migration 会先补列，再把历史 `entryDate` 回填为 `startedAt`
 - 当前 `prisma migrate dev` 在本仓库的 shadow DB 链路上还有历史 migration 问题，不是这次 `entryDate` 改动单独引起的
+
+如果当前代码包含 `20260720210000_add_interview_intent_assessment`，请先同步 schema 后再启用 `enforce`：
+
+```bash
+npx prisma db push
+npx prisma generate
+```
+
+共享环境使用 `npx prisma migrate deploy` 应用同名 migration。该 migration 只为 `InterviewUserTurn` 增加意图评估与决策记录字段。推荐发布顺序为：本地 `legacy` 验证 → Preview `enforce` 验证 → production 保持 `legacy` 观察 → 小范围切换 `shadow` 或 `enforce`。
 
 如果你是在已有本地数据的库上首次同步账户体系，并看到以下任一现象：
 
@@ -284,13 +320,14 @@ npm run dev
 1. 配置 `ADMIN_USERNAMES` 与 `CRON_SECRET`，用管理员账号登录。
 2. 在 `/settings` 确认出现“AI 质量改进中心”，进入 `/admin/ai-quality`。
 3. 用普通账号完成一轮访谈，分别验证赞、踩、标签、自由文本、切换和撤回。
-4. 点击“立即评估并生成候选”，确认本次运行先评估最多 20 条，再扫描最近 7 天案例。
+4. 查看首屏状态摘要和候选队列；需要补充数据时点击“检查最近回复”，确认本次运行先评估最多 20 条，再扫描最近 7 天案例。
 
 5. 打开候选证据，确认可以看到脱敏背景、用户与 AI 对话、用户反馈和自动评分。
-6. 批准候选并执行验证；验证通过后确认“全量应用”可用。
+6. 批准候选并执行验证；验证通过后确认“全量应用”可用。退回调整时确认原因输入限制为 `4–300` 字，并能在历史记录中读取。
 7. 在发布确认弹窗中核对 Prompt Key、验证结果和回滚说明，再由管理员发布。
 8. 展开“上线效果观察”，核对发布前基线、发布后指标和真实案例。
 9. 执行回滚，确认 `AdminAuditLog` 有记录，观察窗口提前截止。
+10. 在影响范围检查“同一问题率”：已知问题码按具体问题键计算；候选缺少问题码时页面显示“口径不足”。
 
 手工调用任务：
 
@@ -355,6 +392,58 @@ http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance
 4. 重新打开同一会话，确认原话仍在对话中，并显示待处理状态。
 5. 点击“继续生成”，确认复用同一 `clientTurnId` 完成 AI 回应，最终不产生重复用户消息。
 6. 用旧的 `baseMessageSequence` 再提交一条新回复，确认返回 `INTERVIEW_TURN_OUT_OF_DATE`。
+
+### 2.10 事件中心 MVP 冒烟
+
+事件中心写入需要 `INTERVIEW_EVENT_CENTERED_MODE=optional` 或 `event_centered`。本地验证时建议使用独立数据库或本地测试账号；Production 保持 `legacy + baseline`，不在本节直接切换生产环境变量。
+
+最小事件闭环：
+
+1. 启动开发服务：
+
+```bash
+npm run dev
+```
+
+2. 打开 `/interview?mode=event-centered&entryDate=YYYY-MM-DD`，确认事件中心工作区出现开场问题。
+3. 提交一条用户原话，确认 SSE 先返回 `turn`，随后出现 `summary / question` 或完成/暂停回应与 `session`。
+4. 在任一检查点选择“生成事件日志”，确认只使用当前活动分支的用户原话、有效事实和可写入成果。
+5. 桌面端确认右侧日志书页打开；移动端确认底部日志 sheet 打开。
+6. 修改标题或正文，等待约 `700ms` 自动暂存；刷新后确认 `GET /api/interview/event-centered/journal/{id}` 恢复修改。
+7. 点击保存正式日志，确认 `POST /api/interview/event-centered/journal/{id}/save` 成功，日志进入 `saved`，当天事件标签可以重新打开。
+8. 在生成式策略下制造一次模型失败，确认本轮最多重试一次后立即走 deterministic baseline；baseline 仍失败时显示“继续生成”，用户原话继续保留。
+
+事件中心专项本地命令：
+
+```bash
+npm test -- tests/evals/event-centered-mvp-journal-closure.test.tsx tests/unit/event-centered-release.test.ts
+npm run eval:event-centered:batch-b -- --mode=rules --all
+npx tsc --noEmit
+npm run lint
+npm run build
+git diff --check
+```
+
+真实模型回放与 Judge 需要额外授权，运行前先确认模型、案例指纹和预算属于本次候选；有效但质量一般的输出进入评审，不用重试挑选更好的文案。
+
+### 2.11 GI-066 历史人工实聊工作台
+
+GI-066 修复候选只允许在本机显式开关、命名隔离数据库和 DeepSeek 官方 Provider 同时满足时回看。历史入口为：
+
+```text
+http://127.0.0.1:3010/preview/board8-gi066-review
+```
+
+页面顶部应显示 `openai · api.deepseek.com · deepseek-v4-flash`、候选 `5.65.0` 和语义产物 `v17`。该批次最新真人裁决为 `No-Go`，候选失效，剩余人工任务停止。工作台只用于历史证据回看，不承担 GI-067 裁决。
+
+GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录内模式保持和结束后新记录重选；新工作台继续等待板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束规则，板块 6 正式评测资产，以及板块 7 新候选和 Provider 预检；板块 8 将使用两模式 `4＋2` 进行真人验收。Production 继续保持 `legacy + baseline`。
+
+事件日志生成故障处理：
+
+- AI 请求失败、JSON 无效或来源门拒绝：检查 Trace 的失败阶段与来源门结果，预期使用安全基础版本。
+- 来源不足：接口返回 `EVENT_JOURNAL_SOURCE_INSUFFICIENT`，工作区恢复上一检查点，让用户补充材料。
+- 版本冲突：重新 GET 当前日志，合并用户编辑后使用最新 `expectedContentRevision` PATCH/save。
+- 日志生成或保存连续失败：保留原话和当前事件，暂停后续入口切换，交由 Board 8 Go/No-Go 处理。
 
 ## 3. AI 运行配置中心
 
@@ -441,7 +530,7 @@ node scripts/admin-ai-runtime-smoke.mjs
 9. 在仍有用户回复的活动访谈中点击 header 的“日历”或“分析”，确认直接完成站内跳转
 10. 在活动访谈页面执行浏览器刷新或关闭操作，确认浏览器离开保护仍会保存会话恢复标记
 
-### 提问链路专项验证
+### 4.1 提问链路专项验证
 
 如果改动涉及访谈问题生成、repair、follow-up fallback 或文案回归，最少补跑：
 
@@ -457,7 +546,7 @@ npm test -- tests/unit/question-copy-guard.test.ts
 - `question-copy-guard` 锁的是高风险坏问法和关键 intent 的推荐问法族
 - 这两组测试当前是提问链路回归的最低门槛，不能只跑纯函数单测就宣称“问题自然了”
 
-### 3.0 joy 日志质量冒烟场景
+### 4.2 joy 日志质量冒烟场景
 
 如果当前改动涉及 joy 抽取、闭合判断、正文生成、fallback draft、质量门或标题治理，除主链路外至少覆盖：
 
@@ -466,7 +555,7 @@ npm test -- tests/unit/question-copy-guard.test.ts
 3. 正文理论腔防线：AI draft 或 fallback draft 不应出现“这份开心更像轻快乐”“关键不是深意义”“这种会把状态轻轻带起来的方式”这类内部解释句。
 4. partial 边界：用户已有 `joyMoment + joySource + stateShift|meaningNeed` 后说“别追问了，直接整理”，可以生成当前版本日志，但不能硬写稳定规律。
 
-### 3.0.1 calendar 月视图冒烟场景
+### 4.3 calendar 月视图冒烟场景
 
 如果当前是在调记录日历月视图，每次改动后至少人工覆盖：
 
@@ -489,61 +578,57 @@ npm test -- tests/unit/question-copy-guard.test.ts
 17. 让 `/api/calendar/month` 返回失败
 18. 预期：月视图仍保留“月历主体 + 当天检查”的方框 split-pane 骨架；主区与右侧 pane 各自出现错误说明和重试按钮；右侧显示“当天检查暂时不可用”，且两侧都不显示“这一天还空着”这类假空白状态
 
-### 3.0.2 analysis 入口冒烟场景
+### 4.4 analysis 入口冒烟场景
 
 如果当前是在调记录分析入口，每次改动后至少人工覆盖：
 
 1. 打开 `/analysis`
-2. 预期：URL 被归一到 `/analysis?month=<北京时间当前 YYYY-MM>&section=overview`
-3. 点击 `上月 / 下月 / 本月`
-4. 预期：URL 更新 `month` 并保留当前 `section`，页面标题同步成对应月份
-5. 直接打开 `/analysis?month=<该月>&section=rhythm` 或 `/analysis?month=<该月>&section=insights`
-6. 预期：页面选中对应 tab，只渲染节奏或五维洞察板块；非 `overview` 视图不显示月度判断、建议先看和证据条
-7. 再直接打开 `/analysis`
-8. 预期：首屏停在顶部月度判断与总览，不会自动跳到评分区
-9. 预期：总览是默认视图；首屏能看到评分可信度、“建议先看”主行动，以及维度记录日 / 成果保存日 / 待整合日 / 评分可信度证据条；页内可切到 `评分 / 节奏 / 五维`
-10. 如果当前月是干净库，没有任何已保存数据：
-11. 先通过任一维度访谈生成并保存至少 1 篇维度日志，再从访谈页顶部【完整日志】进入当天整合日志主区，生成并保存 1 篇当天整合日志
-12. 回到 `/analysis?month=<该月>&section=rhythm`
-13. 预期：对应日期显示 `1-5维` 和单字维度标识 `悦 / 实 / 思 / 改 / 谢`
-14. 预期：该日期出现轻量整合标记
-15. 切到 `/analysis?month=<该月>&section=insights`
-16. 预期：`五维洞察` 首屏会显示 `本月判断`，下方是五维全景卡片，以及 `维度之间 / 下一步`；有真实数据时不应出现示意样板短句或旧的“主线维度 + 浮现/安静维度”布局
-17. 点击任一“回到某维度”链接
-18. 预期：跳转到 `/interview?dimension=<维度>&entryDate=YYYY-MM-DD`，日期应对应被分析的那条记录，不应误跳到今天
-19. 如果当前查看的是本月 `rhythm`
-20. 预期：`最长空档` 不应把今天之后的未来日期算进去
-21. 切到一个未来月份的 `/analysis?month=<未来月>&section=rhythm`
-22. 预期：月格保持 `待到来` 语义，`最长空档` 显示 `暂无`，不应把整个月误算成空档
-23. 直接打开一个未来月份的 `/analysis?month=<未来月>&section=overview`
-24. 预期：总览首屏会提示“这个月还没到来”并提供 `回到本月`，不会出现 `开始记录`
-25. 在热力图里点一个未来日期
-26. 预期：右侧只保留 `查看当天`，不会出现 `开始这一天的记录 / 继续当天记录`
-27. 进入任意日期访谈页，在 header 点击 `当天评分`
-28. 预期：主工作区切到独立评分工作区（不是访谈消息流）；`当天评分` 按钮高亮，维度按钮不被整体置灰
-29. 预期：评分项首次进入无预选，点某个分值后才选中并自动跳到下一个“未评分维度”
-30. 预期：评分区显示 8 项打分总览（每项 `未评分/几分`）
-31. 预期：按键 `1..9` 和 `0`（=10分）可直接打分；悬浮提示延迟约 `1s` 才出现
-32. 在 8 项未全部打完前
-33. 预期：`保存并退出` 按钮置灰
-34. 8 项全部打完后点击 `保存并退出`
-35. 预期：请求 `PUT /api/happiness-score` 成功并返回访谈工作区，`entryDate` 不变
-36. 切回 `/analysis?month=当前月&section=score`
-37. 预期：评分区为趋势阅读（`总分平均走势 / 8 项快扫 / 单项走势`），不再出现评分编辑器
-38. 如果当前月只有 `1` 天评分，或多天但 `8` 项评分完全持平
-39. 预期：不显示 `长期偏高 / 最常掉下来 / 波动最大` 排名卡，而是显示“样本/差异不足，仅供参考”的提示
-40. 点击任一 8 要素快扫按钮
-41. 预期：单项走势切换到对应要素，URL 的 `month` 不变
-42. 切到一个没有已保存记录的旧月份
-43. 预期：`overview / score / rhythm / insights` 视图都能稳定打开，并显示真实空态；不应出现示意填充或伪造数据
-44. 切到一个“只有评分、没有已保存维度日志”的月份
-45. 预期：`rhythm` 会把对应日期保留在 `只评未记 / 待成文` 语义，不会伪造 `已整合`、密度结论或整月空档；`insights` 显示空态，不出现伪造的 `主线维度`
-46. 如果某一天先保存了完整日志，再新增或更新同日 `saved` 维度日志
-47. 预期：`rhythm` 会把这一天重新标成 `待更新 / 待整合`，并提供更新完整日志入口，而不是继续显示 `已整合`
-48. 如果同一天所有来源维度日志后来都回到了 `draft`，只剩一篇 `stale` 的当天整合日志
-49. 预期：`rhythm` 仍把这一天算进待处理；切到 `insights` 后，`watchpoint` 会优先提示”完整日志已经过时，需要重新整理”，而不是被安静维度或评分提示盖过去
+2. 预期：URL 归一到 `/analysis?month=<北京时间当前 YYYY-MM>&section=trends`
+3. 预期：页面连续渲染 `评分与记录趋势`、`五维记录线索` 两段，顶部显示 `量化趋势 / 五维记录` 两个锚点按钮
+4. 点击 `本周 / 本月 / 自定义`，并使用前后周期按钮
+5. 预期：URL 更新 `preset / month / start / end`，周期显示与 loading 文案同步变化
+6. 点击 `五维记录`
+7. 预期：页面滚动到五维段，URL 更新为 `section=dimensions`；手动滚回趋势段时 scroll spy 把 URL 更新为 `section=trends`
+8. 直接打开旧 URL `section=overview / score / rhythm`
+9. 预期：统一归一到 `section=trends`
+10. 直接打开旧 URL `section=insights / correlation / review`
+11. 预期：统一归一到 `section=dimensions`
+12. 量化趋势段应展示周期摘要、总分柱线图、日志天数色块和 8 要素雷达/棒棒糖；页面只读，不出现评分编辑器
+13. 点击雷达/棒棒糖切换，并在支持触摸或指针拖动的环境横向 swipe
+14. 预期：连续快速切换从当前滑块位置继续，完整拖动切换视图，原始位移小于 `10px` 时保持当前视图，页面纵向滚动位置不被横向手势改变
+15. 五维记录段展开任一维度，再展开一个代表片段
+16. 预期：显示真实记录摘要、来源日期以及“在日历中打开 / 看完整日志 / 继续这条线”等有效入口
+17. 点击代表片段入口
+18. 预期：日期和维度保持一致，跳转到对应日历或访谈日志，不跳到其他日期
+19. 切换到无评分、无日志的周期
+20. 预期：两个段落都显示真实空态，不出现示意数据或历史 `建议先看 / 待成文` 文案
+21. 让 `/api/analysis/range` 失败而 `/api/analysis/month` 成功
+22. 预期：趋势段显示局部错误，五维记录段继续可读
+23. 让 `/api/analysis/month` 失败而 `/api/analysis/range` 成功
+24. 预期：五维记录段显示局部错误，趋势段继续可读
 
-### 3.6 画像页冒烟
+### 4.5 流动交互与无障碍冒烟
+
+涉及共享交互、顶栏、日志书页、菜单或弹窗时，至少覆盖：
+
+1. 在 `390×844`、`768×1024`、`1280×720` 下打开访谈、日历和分析
+2. 预期：小屏 header 分成两行，上下文工具栏可以横向滚动；所有操作可见或可滚动抵达，页面本身无横向溢出
+3. 按住主要按钮、交互卡片和日历格
+4. 预期：pointer-down 当帧出现缩放、颜色或阴影反馈，松开后恢复；disabled 控件保持静止
+5. 连续快速点击 segmented 的相邻和非相邻项
+6. 预期：滑块从当前屏幕位置继续运动，无瞬移或重置
+7. 在画像或分析分页上横向拖动，同时尝试页面纵向滚动
+8. 预期：横向拖动达到阈值时切页，短拖保持原页，纵向滚动可继续使用
+9. 在移动端打开日志书页，向下拖动超过 `90px` 或以较高速度释放
+10. 预期：书页沿底部来源关闭；桌面书页沿右侧来源进入和退出
+11. 打开 `ActionMenu`，依次使用 ArrowDown / ArrowUp / Home / End / Escape
+12. 预期：焦点在菜单项之间循环，Escape 关闭后回到触发按钮；靠近视口边缘时菜单选择可用方向展开
+13. 打开危险确认弹窗，使用 Tab / Shift+Tab / Escape
+14. 预期：初始焦点位于取消按钮，焦点保持在弹窗内，关闭后回到触发按钮
+15. 分别启用 reduced motion、reduced transparency 和增强对比度
+16. 预期：横向拖动、平滑滚动和按压缩放关闭，spring 收敛为短缓动，弹层使用短透明度过渡；透明材质改为近实色，边框和次级文字清晰可辨
+
+### 4.6 画像页冒烟
 
 如果当前改动涉及画像（profile/portrait）系统：
 
@@ -567,7 +652,7 @@ npm test -- tests/unit/question-copy-guard.test.ts
 2. 它会只重开当前维度的一轮新访谈
 3. 不需要手动清 localStorage，也不需要改数据库
 
-### 3.1 fulfillment 冒烟场景
+### 4.7 fulfillment 冒烟场景
 
 fulfillment 已是理论对齐维度，每次改动 fulfillment 访谈或日志生成后，至少人工覆盖：
 
@@ -579,7 +664,7 @@ fulfillment 已是理论对齐维度，每次改动 fulfillment 访谈或日志�
 6. 用户拒绝继续但材料不足：只有 `experience` 或只有模糊片段时，用户说“别问了”，应展示“只补一句 / 换一个片段 / 先退出”
 7. 标题治理：生成的 fulfillment 标题不应是长事件句截断，例如不应出现“看了一本相关的书籍，介绍怎么解活”
 
-### 3.2 reflection 冒烟场景
+### 4.8 reflection 冒烟场景
 
 reflection 已是理论对齐维度，每次改动 reflection 访谈或日志生成后，至少人工覆盖：
 
@@ -592,7 +677,7 @@ reflection 已是理论对齐维度，每次改动 reflection 访谈或日志生
 7. 标题治理：生成的 reflection 标题不应是长事件句截断，判断校准类材料可压成“忙碌不等于进展”“判断依据变清楚”这类短标题
 8. 继续深聊防回卷：如果上一轮已经问过“有没有具体经历 / 对话”，用户明确回答“没有”，再点 `继续深聊` 后不应重复追同一字段；下一问必须改成更低压的具体锚点，例如某个顾虑、脑中画面、比较时刻或选择瞬间
 
-### 3.3 improvement 当前冒烟场景
+### 4.9 improvement 当前冒烟场景
 
 improvement 目前完成了数据结构、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。每次改动 improvement 抽取、结构、访谈推进、提问策略或正文生成时，至少覆盖：
 
@@ -607,7 +692,7 @@ improvement 目前完成了数据结构、AI 抽取独立化、fallback 抽取�
 9. partial 收束：有 `situation + frictionPoint|repeatCondition`，且用户说“今天沟通有点急，别追问了，直接整理。”时，应进入 `user_override_partial`，不硬写完整方案
 10. 材料不足：只有“今天很糟，我需要改进。别问了。”时，不生成日志，应进入 `boundary_insufficient`
 
-### 3.4 gratitude 当前冒烟场景
+### 4.10 gratitude 当前冒烟场景
 
 gratitude 目前完成了理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。每次改动 gratitude 抽取、结构、访谈推进、提问策略或正文生成时，至少覆盖：
 
@@ -621,28 +706,27 @@ gratitude 目前完成了理论规格、结构字段扩展、AI 抽取独立化�
 8. 标题治理：标题不应退回长事件句截断，也不应生成 `感谢日志 / 谢谢你 / 今天很感恩` 这类泛标题
 9. stitched 多事件：先形成一条主感谢，再补一条像“赵月请我吃冰淇淋/喝水”的 supporting moment；如果 AI 生成超时或质检回退，fallback draft 正文仍应保留两条片段，不应退化成只剩主事件
 
-### 3.5 当天整合日志冒烟场景
+### 4.11 当天整合日志冒烟场景
 
-如果当前改动涉及 `/api/daily-journal*`、calendar 日视图入口或访谈页顶部【完整日志】，至少覆盖：
+如果当前改动涉及 `/api/daily-journal*`、今日日志面板、移动端【完整日志】快捷入口或 calendar 日视图入口，至少覆盖：
 
 1. 在同一 `entryDate` 下保存至少一篇维度日志
 2. 打开 `/interview?dimension=joy&entryDate=2026-05-03`
-3. 点击顶部【完整日志】
-4. 预期：主工作区切到当天整合日志；只统计已保存维度日志，不读取未保存草稿
-5. 点击“生成当天日志”
-6. 预期：正文只包含已有维度章节，不出现空章节或缺失维度提醒
-7. 如果随后又在同一天新增一篇 `saved` 维度日志，重新打开当天整合日志
-8. 预期：`GET /api/daily-journal?date=...` 返回 `state = "stale"`；点击“重新生成”后，章节数应与当天真实 `saved` 维度集合重新对齐
-9. 修改标题或正文，等待自动保存，再点击保存正式日志
-10. 预期：`GET /api/daily-journal?date=2026-05-03` 返回 `state = "saved"`
-11. 从 `/calendar?view=day&date=2026-05-03` 进入当天日志 deep link
-12. 预期：`mode=daily-journal` 只打开当天日志主区，不会调用 `/api/interview/session/start`
-13. 点击“回到访谈”
-14. 预期：如果标题或正文有未等到 700ms 自动保存的修改，会先请求 `PUT /api/daily-journal/[id]`；保存成功后 URL 移除 `mode=daily-journal`，回到同一日期的普通访谈 hydrate 流程
-15. 再次进入顶部【完整日志】，修改正文后直接点击另一个访谈维度
-16. 预期：前端先保存当天日志 pending 编辑，再把主工作区切回普通访谈；新维度访谈不应被完整日志工作区遮住
+3. 桌面端点击右侧「今日日志」面板底部的 `生成日志`；移动端点击对话区顶部的【完整日志】
+4. 预期：依次请求 `POST /api/daily-journal/generate` 和 `POST /api/daily-journal/[id]/save`，随后打开当天日志工作区；来源只统计已保存维度日志
+5. 预期：正文只包含已有维度章节，不出现空章节或缺失维度提醒
+6. 如果随后又在同一天新增一篇 `saved` 维度日志，重新打开当天整合日志
+7. 预期：今日日志面板日级按钮显示 `更新日志`；点击后章节数与当天真实 `saved` 维度集合重新对齐，并重新保存
+8. 修改标题或正文，等待自动保存，再点击保存正式日志
+9. 预期：`GET /api/daily-journal?date=2026-05-03` 返回 `state = "saved"`
+10. 从 `/calendar?view=day&date=2026-05-03` 进入当天日志 deep link
+11. 预期：`mode=daily-journal` 只打开当天日志主区，不会调用 `/api/interview/session/start`
+12. 点击“回到访谈”
+13. 预期：如果标题或正文有未等到 700ms 自动保存的修改，会先请求 `PUT /api/daily-journal/[id]`；保存成功后 URL 移除 `mode=daily-journal`，回到同一日期的普通访谈 hydrate 流程
+14. 再次进入完整日志工作区，修改正文后直接点击另一个访谈维度
+15. 预期：前端先保存当天日志 pending 编辑，再把主工作区切回普通访谈；新维度访谈保持可见
 
-### 5.1.2 同一天的维度数与完整日志来源数对不上
+### 4.12 同一天的维度数与完整日志来源数对不上
 
 症状：
 - 顶部维度胶囊、`/api/calendar/day` 和当天整合日志里的 `availableSourceCount` 看起来不一致
@@ -666,7 +750,7 @@ npm test
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - `npx tsc --noEmit` 以最近一次回归结果为准
 - `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
-- 当前工作区验证：`npm test` = `174` 个测试文件、`1095` 个测试通过
+- 当前工作区验证（`2026-07-21`）：`npm test` = `187` 个测试文件、`1392` 个测试通过
 - AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
 - `npm run lint` 通过，保留 `44` 条既有 warning
 - `npx tsc --noEmit` 通过
@@ -689,7 +773,7 @@ npm test
 - protected preview 自动化 smoke 脚本：`scripts/product-smoke.mjs`
 - production / preview URL 合同 runtime 直读脚本：`scripts/runtime-env-readback.mjs`
 
-### 5.1 Preview 部署后最小检查
+### 6.1 Preview 部署后最小检查
 
 以 `docs/vercel-preview-production-lane.md` 为 source of truth，按 preview 是否受保护分流：
 
@@ -699,7 +783,7 @@ npm test
 ACCEPTANCE_TRANSPORT=vercel-curl \
 ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
 ACCEPTANCE_BASE_URL="https://your-preview-url.vercel.app" \
-node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
+node scripts/product-smoke.mjs joy 2026-05-19
 ```
 
 2. non-protected preview：
@@ -719,16 +803,16 @@ HTTP_PROXY=http://127.0.0.1:7897 \
 ALL_PROXY=http://127.0.0.1:7897
 ```
 
-`product-smoke.mjs` 当前自动化只覆盖：
+`product-smoke.mjs` 默认复用固定的 `preview_acceptance` 账号，仅在首次缺失时注册；可通过 `PRODUCT_SMOKE_USERNAME / PRODUCT_SMOKE_PASSWORD` 显式切换另一组固定凭据。当前自动化只覆盖：
 
-- 注册
+- 固定验收账号复用或首次注册
 - 登录 / session 建立
 - `POST /api/interview/session/start`
 - `invalid_entry_date` 拒绝路径
 
 它当前不自动覆盖更深的 `joy -> respond -> wrap_up -> draft generate -> draft save`。这条更深链路如果需要证据，仍由 controller 手工 deep-chain 补证。
 
-### 5.1.1 Production URL contract direct readback
+### 6.2 Production URL contract direct readback
 
 当 launch gate 需要直接验证 `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` / `APP_URL` 的运行时值时，使用当前仓库的最小直读面：
 
@@ -779,14 +863,45 @@ node scripts/runtime-env-readback.mjs "https://dailylight.chat" runtime
 - `/api/auth/session` 返回 `200`
 - session JSON 里存在 `authenticated: boolean`
 
-### 5.2 当前不开放的能力
+### 6.3 UserTurn 可恢复提交验收
+
+公开 smoke 覆盖账户、会话创建与日期校验。每次涉及访谈提交、流式输出或数据库 migration 的 production 发布后，还应补一次可恢复提交验收：
+
+1. 用临时账号新建一条访谈会话，记录请求中的 `clientTurnId` 与 `baseMessageSequence`。
+2. 提交一段普通文本，确认 SSE 先收到 `turn`，最终收到完整 `session`。
+3. 使用相同的 `clientTurnId` 重放该提交，确认会话轮次和消息数量保持稳定，服务端直接返回既有完成结果。
+4. 通过刷新或停止生成制造待恢复状态，确认 hydrate 返回 `pendingUserTurn`，点击“继续生成”后只补出一条对应的 AI 消息。
+5. 在 Preview 的 `enforce` 模式下提交“直接生成日志”“换个问法”“先到这里”等表达，确认生成、重问和收束符合用户意图；引用事件里的相似措辞继续作为对话内容处理。
+6. 清理临时账号及其测试数据；production 只保留真实用户数据。
+
+若需要数据库侧佐证，可按第 `7.5` 节“访谈回复显示结构化错误”查询 `InterviewUserTurn` 状态、重试次数和错误码。
+
+### 6.4 当前不开放的能力
 
 - `/api/transcribe` 仍是 stub，不纳入 preview / production smoke
 - 没有真实转写模型前，不开放语音入口
 
+### 6.5 按意图重新生成发布检查
+
+涉及 `20260720223000_add_interview_response_regeneration` 的发布按以下顺序执行：
+
+1. 对目标数据库执行 `npx prisma migrate deploy`，确认迁移已应用。
+2. Preview 使用独立数据库，设置 `INTERVIEW_REGENERATION_ENABLED=true`，完成五维换问法、纠正理解、历史分支、三个版本上限和日志锁定验收。
+3. 确认目标回复气泡承担唯一加载反馈；操作区保持静态禁用入口，避免第二套加载状态。
+4. 推广已验收的 Preview 或重新部署同一代码版本到 production。
+5. 生产只做真实用户可用性检查；固定验收账号与验收数据继续留在 Preview 数据库。
+
+功能暂停时设置：
+
+```bash
+INTERVIEW_REGENERATION_ENABLED=false
+```
+
+已有版本和分支会保留，用户继续沿当前采用路径完成访谈。
+
 ## 7. 高频故障排查
 
-### 5.0 `npm run build` 失败
+### 7.1 `npm run build` 失败
 
 当前 `2026-07-20` 验证基线为生产构建通过，并保留既有 ESLint warnings。新出现的非零退出码需要按本次构建日志定位：
 
@@ -796,7 +911,7 @@ node scripts/runtime-env-readback.mjs "https://dailylight.chat" runtime
 4. 检查部署环境是否已应用当前 migrations。
 5. 用首次出现的文件位置和错误码排查，避免把 warning 当成构建失败原因。
 
-### 5.1 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
+### 7.2 启动访谈失败，报缺少 `snapshotData` 或 `payload` 列
 
 症状：
 - `/api/interview/session/start` 返回 500
@@ -819,7 +934,7 @@ npm run dev
 
 这是当前最常见的本地环境问题。
 
-### 5.1.1 旧本地库同步后报 `entryDate` 必填列无法新增
+### 7.3 旧本地库同步后报 `entryDate` 必填列无法新增
 
 症状：
 - `npx prisma db push` 报 required column `entryDate` 无法新增
@@ -837,7 +952,7 @@ npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/202
 npm run dev
 ```
 
-### 5.2 “生成日志”按钮长时间显示忙碌
+### 7.4 “生成日志”按钮长时间显示忙碌
 
 要先区分两种情况：
 
@@ -863,7 +978,7 @@ npm run dev
 - 网络是否超时
 - 服务端是否返回了 `DRAFT_GENERATE_*` 错误
 
-### 5.3 访谈回复显示结构化错误
+### 7.5 访谈回复显示结构化错误
 
 截至 `2026-05-01`，访谈提交失败时前端会展示：
 - 错误原因
@@ -898,7 +1013,7 @@ psql "$DIRECT_URL" -c 'select "clientTurnId", "status", "attemptCount", "errorCo
 
 `failed / canceled` 应在页面提供“继续生成”；`processing` 长时间不变化时，结合 requestId、服务端日志和当前请求是否仍在运行判断。
 
-### 5.4 draft 生成失败，但页面没有崩
+### 7.6 draft 生成失败，但页面保持可用
 
 这是预期保护行为。
 
@@ -909,7 +1024,7 @@ psql "$DIRECT_URL" -c 'select "clientTurnId", "status", "attemptCount", "errorCo
 
 如果看到“日志草稿风格太机械”，不一定是 bug，也可能是触发了 fallback。
 
-### 5.4.1 AI provider 排障顺序
+### 7.7 AI provider 排障顺序
 
 当 production / preview 看起来“像没接大模型”时，优先按下面顺序排：
 
@@ -919,11 +1034,11 @@ psql "$DIRECT_URL" -c 'select "clientTurnId", "status", "attemptCount", "errorCo
 
 当前代码事实：
 
-- `VOLCENGINE_ARK_MODEL` 是首选路径，`VOLCENGINE_ARK_ENDPOINT_ID` 只作为兼容旧路径的 fallback
+- `DEEPSEEK_MODEL` 是当前聊天模型，`DEEPSEEK_BASE_URL` 默认指向 `https://api.deepseek.com`
 - provider 初始化阶段会识别：
-  - 缺少 key / model
-  - `$VOLCENGINE_...` 这类占位串
-  - 非法 `VOLCENGINE_ARK_BASE_URL`
+  - 缺少 DeepSeek key / model
+  - `$DEEPSEEK_...` 这类占位串
+  - 非法 `DEEPSEEK_BASE_URL`
 - guarded `GET /api/debug/runtime-env?probe=1` 会返回：
   - `ai.state`
   - `ai.code`
@@ -935,22 +1050,22 @@ psql "$DIRECT_URL" -c 'select "clientTurnId", "status", "attemptCount", "errorCo
 排障判断：
 
 - `ai.state=config_invalid`
-  - 说明问题还在 env 值形态层，例如把 `$VOLCENGINE_ARK_API_KEY` 当作字面值写进平台
+  - 说明问题还在 env 值形态层，例如把 `$DEEPSEEK_API_KEY` 当作字面值写进平台
 - `ai.state=ready` 且 `ai.probe.status=200`
   - 说明 provider 真实可用；如果用户仍觉得“像 fallback”，再去看访谈 prompt / 追问质量
 - `ai.probe.code=ACCOUNTOVERDUEERROR`
-  - 说明 key 已生效，但账户额度 / 计费状态阻断了上游调用
+  - 说明当前被探测的上游账户额度或计费状态阻断了调用；先确认探针记录的 base URL，DeepSeek 官方 API 与历史 Ark 运行时分别判断
 - `ai.probe.code=ACCESSDENIED`
-  - 常见于 key 无权访问当前 `endpoint`；优先切换到直连 `VOLCENGINE_ARK_MODEL`
+  - 说明当前 key 无权访问所配置的模型或地址；先核对 DeepSeek 官方 API 的 key、模型名和 base URL，历史 Ark endpoint 只在明确回退时排查
 
-当前 production 已验证过的一条可用模型路径：
+历史 Ark 运行时曾验证过的一条模型路径（仅供历史追溯）：
 
 ```bash
 VOLCENGINE_ARK_MODEL="deepseek-v3-2-251201"
 VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 ```
 
-### 5.5 标题看起来像半截句子
+### 7.8 标题看起来像半截句子
 
 截至 `2026-05-01`，这不应再是正常现象。
 
@@ -965,7 +1080,7 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - `src/server/services/interview/joy-interview-ai.service.ts` 的 `normalizeDraftTitle`
 - `src/features/interview/server/draft-policies.ts` 的 fallback draft 标题路径
 
-### 5.6 用户说“不想继续 / 总结日志”，系统还在追问细节
+### 7.9 用户说“不想继续 / 总结日志”，系统还在追问细节
 
 截至 `2026-05-01`，这不应再是正常现象。
 
@@ -982,7 +1097,7 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - `src/server/services/interview/joy-interview.service.ts`
 - `src/components/interview/interview-shell.tsx` 的 `ChoiceActionCard`
 
-### 5.7 语音转写看起来“能用”，但文本明显不对
+### 7.10 语音转写看起来“能用”，但文本明显不对
 
 当前 `/api/transcribe` 只是 stub：
 - 上传 `audio`
@@ -992,7 +1107,7 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - 现在不应该把语音质量问题当作模型 bug 排查
 - 真正的转写模型还没接上
 
-### 5.8 浅色 `thinkingSummary` 看起来像第二个追问
+### 7.11 浅色 `thinkingSummary` 看起来像第二个追问
 
 截至 `2026-05-01`，这不应再是正常现象。
 
@@ -1007,7 +1122,7 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - `src/server/services/interview/joy-interview.service.ts` 的 `normalizeThinkingSummary`
 - `src/components/interview/interview-shell.tsx` 的 `MessageBubble` variant
 
-### 5.9 AI 质量后台读取失败
+### 7.12 AI 质量后台读取失败
 
 症状：
 
@@ -1023,6 +1138,29 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 5. 数据库恢复后重新展开效果区或真实案例。
 
 候选缺少通过验证时，候选 PATCH 路由返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。管理员完成回放验证并获得通过结果后，可以重新发布。
+
+### 7.13 事件中心生成失败或事件日志无法保存
+
+先确认请求所在发布档位：
+
+```bash
+printf '%s\n' "$INTERVIEW_EVENT_CENTERED_MODE" "$INTERVIEW_EVENT_CENTERED_STRATEGY"
+```
+
+预期生产值为 `legacy` 与 `baseline`。Preview 发布门通过且获得单独批准后才设置 `optional + generative`；生成式问题按分层回退顺序切换到 `optional + baseline`，数据、隐私、来源或恢复主链风险切换到 `event_recovery + baseline`，读路径受影响时切换到 `legacy + baseline`。事件中心写入只有在 `optional` 或 `event_centered` 时开放；`event_recovery` 只允许读取已有事件。
+
+按现象排查：
+
+- `EVENT_CENTERED_ENTRY_DISABLED` / `EVENT_CENTERED_FUTURE_DATE`：检查入口档位和 `entryDate`，不要修改数据库绕过写入门。
+- `EVENT_STATE_CHANGED` / `EVENT_OPERATION_CONFLICT`：刷新事件中心工作区，确认活动分支与最后消息序号，再用新的 `clientTurnId` 或原提交恢复。
+- SSE `error` 且 `turn` 已到达：用户原话已经保存；从工作区点击“继续生成”，服务端复用同一 `clientTurnId`，不会重复原话。
+- 生成式第一段或第二段失败：查看 `AIGenerationTrace` 的请求策略、失败阶段、错误码和最终策略；当前最多一次技术重试，随后应直接记录 `effectiveStrategy=baseline`。
+- 事件日志 AI 草稿被来源门拒绝：确认 Trace 中的 `sourceFingerprint`、`sourceGrounded` 与拒绝原因；预期使用安全基础版本，基础版本只整理来源事实。
+- `EVENT_JOURNAL_SOURCE_INSUFFICIENT`：当前事件材料不足，保留上一检查点并让用户补充；不要通过关闭来源门强行生成。
+- `EVENT_JOURNAL_ENTRY_VERSION_CONFLICT`：重新 GET 当前内容版本，合并编辑后用最新 `expectedContentRevision` PATCH/save。
+- `JOURNAL_DAY_MODE_CONFLICT` / `JOURNAL_DAY_MODE_MIXED`：同一日期存在活动事件或不一致日志工作区，先从当前事件标签恢复并完成保存，再重试当天操作。
+
+离线 Judge 的 API key、模型和 base URL 仅供本地/隔离评测。生产排障不应临时把 Judge 凭据加入 Production，也不应通过 `/api/debug/runtime-env` 读取 key；该诊断面只允许白名单运行环境字段。
 
 ## 8. 关键日志与定位点
 
@@ -1052,6 +1190,9 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 - `AIFewShotExample / AIPromptRelease`
 - `InterviewSession`
 - `InterviewEvent`
+- `InterviewUserTurn`（事件中心原话、可靠提交、重试与失败码）
+- `JournalEventEntry` 及生成预留记录（来源快照、内容版本、生成状态）
+- `AnalyticsEvent`（事件中心入口、检查点、回合降级、日志生成/保存和放弃）
 - `JoyEntry`
 
 ## 9. 当前已知非故障现实
@@ -1084,4 +1225,4 @@ VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
   - 周视图、日视图和月视图右侧当天检查面板的可见维度 badge 也已统一改成单字；辅助技术仍保留完整维度名
   - month / week / day / toolbar 已补 `aria-busy`、loading `status`、error `alert`、focus-visible 和主要 CTA 的可访问名称
   - 日视图按五维紧凑操作台组织，不做时间轴，也不内联正文编辑
-- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 当前为单页四段纵向 scroll + 顶部锚点工作台；缺失 `section` 时默认 `trends`，旧 `overview|score|rhythm|insights` 会归一到新 keys。量化趋势走 `GET /api/analysis/range`，五维全景走 `GET /api/analysis/month`，关联与复盘仍为占位。`PUT /api/happiness-score` 允许保存所有非未来日期，评分录入入口位于访谈页「当天评分」工作区。
+- `/analysis?month=YYYY-MM&section=trends|dimensions` 当前为量化趋势与五维记录两段纵向 scroll + 顶部锚点工作台；缺失 `section` 时默认 `trends`。旧 `overview|score|rhythm` 归一到 `trends`，旧 `insights|correlation|review` 归一到 `dimensions`。量化趋势走 `GET /api/analysis/range`，五维记录走 `GET /api/analysis/month`。`PUT /api/happiness-score` 允许保存所有非未来日期，评分录入入口位于访谈页「当天评分」工作区。

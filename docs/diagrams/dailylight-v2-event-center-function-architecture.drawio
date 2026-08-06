@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram name="Daily Light 版本二 事件中心产品功能架构">
+    <mxGraphModel dx="2100" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2140" pageHeight="1630" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Daily Light 版本二｜事件中心目标产品功能架构" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=25;fontStyle=1;fontColor=#4f3526;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="2060" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="目标产品全景｜从一件具体发生的事开始，经过事件复盘形成事件日志，并逐步沉淀长期自我认识｜实线=当前已落地/Preview，虚线=目标演进" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#7a6253;" vertex="1" parent="1">
+          <mxGeometry x="40" y="68" width="2060" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="root" value="Daily Light｜事件中心&#xa;产品目标：让用户从一件具体的事出发，形成真实可回看的理解&#xa;核心对象：事件 → 角度成果 → 事件日志 → 当天完整日志" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#6f4e37;strokeColor=#5c3f2d;fontColor=#ffffff;fontSize=18;fontStyle=1;align=left;spacingLeft=24;" vertex="1" parent="1">
+          <mxGeometry x="40" y="115" width="2060" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="main_path" value="核心对象与成果生命周期：事件入口  →  事件记录  →  选择角度  →  引导复盘 / 深入探索  →  事件日志  →  当天完整日志  →  日历 / 长期认识自己" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#5d4a16;fontSize=15;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="215" width="2060" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_entry" value="01 统一事件入口与事件工作台" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eaf0fa;swimlaneFillColor=#fbfcff;strokeColor=#7186aa;fontColor=#324c68;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="285" width="650" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="entry_1" value="统一入口：从一件事开始&#xa;用户无需先选择维度或交流深度" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_entry">
+          <mxGeometry x="30" y="60" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="entry_2" value="当天事件标签、记下一件与事件切换&#xa;每个标签代表一件独立记录" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_entry">
+          <mxGeometry x="30" y="125" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="entry_3" value="日期恢复、活动事件与当前状态&#xa;从今天或日历回到正确的事件现场" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_entry">
+          <mxGeometry x="30" y="190" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="entry_4" value="三段进度&#xa;轻量记录 · 引导复盘 · 深入探索" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_entry">
+          <mxGeometry x="30" y="255" width="590" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_event" value="02 事件理解与事实边界" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7d9;swimlaneFillColor=#fffdf4;strokeColor=#c7a13c;fontColor=#554717;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="735" y="285" width="650" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="event_1" value="单事件边界&#xa;当前对话、事实和成果始终围绕一件事" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;" vertex="1" parent="domain_event">
+          <mxGeometry x="30" y="60" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="event_2" value="事实、证据与 AI 理解&#xa;用户原话是事件事实和角度成果的来源" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;" vertex="1" parent="domain_event">
+          <mxGeometry x="30" y="125" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="event_3" value="背景经历与独立事件隔离&#xa;背景可以解释当前事件，另一件事保持独立" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;" vertex="1" parent="domain_event">
+          <mxGeometry x="30" y="190" width="590" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="event_4" value="纠正、否定、冲突与重点变化&#xa;用户最新表达优先，争议内容暂停进入成果" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;" vertex="1" parent="domain_event">
+          <mxGeometry x="30" y="255" width="590" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_stages" value="03 三阶段事件复盘" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff0e5;swimlaneFillColor=#fffaf6;strokeColor=#c98952;fontColor=#533a2b;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="285" width="670" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="stage_1" value="轻量记录&#xa;留下当前事件，材料足够即可进入第一检查点" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=13;" vertex="1" parent="domain_stages">
+          <mxGeometry x="30" y="60" width="610" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="stage_2" value="第一检查点&#xa;生成事件日志，或选择一个自我探索角度" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=13;" vertex="1" parent="domain_stages">
+          <mxGeometry x="30" y="111" width="610" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="stage_3" value="引导复盘&#xa;通常一至两问，最多三问，形成当前认识后收束" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=13;" vertex="1" parent="domain_stages">
+          <mxGeometry x="30" y="162" width="610" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="stage_4" value="第二检查点&#xa;生成日志、选择剩余角度或继续输入" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=13;" vertex="1" parent="domain_stages">
+          <mxGeometry x="30" y="213" width="610" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="stage_5" value="深入探索&#xa;围绕当前微目标继续交流，取得进展后自然暂停" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=13;" vertex="1" parent="domain_stages">
+          <mxGeometry x="30" y="264" width="610" height="43" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_angles" value="04 四个自我探索角度" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f1e8f5;swimlaneFillColor=#fbf8fc;strokeColor=#9673a6;fontColor=#493451;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="650" width="650" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="angle_feeling" value="理解感受&#xa;具体触发 · 准确感受" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f8f2fa;strokeColor=#9673a6;fontColor=#493451;fontSize=12;" vertex="1" parent="domain_angles">
+          <mxGeometry x="30" y="60" width="285" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="angle_thought" value="理清想法&#xa;当前判断 · 判断依据" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f8f2fa;strokeColor=#9673a6;fontColor=#493451;fontSize=12;" vertex="1" parent="domain_angles">
+          <mxGeometry x="335" y="60" width="285" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="angle_relationship" value="梳理关系&#xa;互动 · 期待 · 位置 · 边界" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f8f2fa;strokeColor=#9673a6;fontColor=#493451;fontSize=12;" vertex="1" parent="domain_angles">
+          <mxGeometry x="30" y="135" width="285" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="angle_action" value="复盘行动&#xa;目标 · 选择 · 效果 · 阻力" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f8f2fa;strokeColor=#9673a6;fontColor=#493451;fontSize=12;" vertex="1" parent="domain_angles">
+          <mxGeometry x="335" y="135" width="285" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="angle_future" value="目标演进：用户自定义角度、动态角度与更丰富的跨事件探索" style="rounded=1;arcSize=8;dashed=1;whiteSpace=wrap;html=1;fillColor=#fcfbfd;strokeColor=#b39bbd;fontColor=#60486c;fontSize=12;" vertex="1" parent="domain_angles">
+          <mxGeometry x="30" y="215" width="590" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_ai" value="05 事件中心 AI 对话能力" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eee4f2;swimlaneFillColor=#fbf8fc;strokeColor=#9673a6;fontColor=#493451;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="735" y="650" width="650" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="ai_1" value="自然理解 + 自然回应&#xa;先接住事件和个人反应，再决定下一步" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=13;" vertex="1" parent="domain_ai">
+          <mxGeometry x="30" y="60" width="590" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ai_2" value="一个方向、一条问题与用户自主选择&#xa;AI 不替用户推荐角度，不替用户决定关系和行动" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=13;" vertex="1" parent="domain_ai">
+          <mxGeometry x="30" y="120" width="590" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ai_3" value="纠正、问停、问题修复与低压力收束&#xa;用户说没有、不知道或不想答时及时结束当前角度" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=13;" vertex="1" parent="domain_ai">
+          <mxGeometry x="30" y="180" width="590" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ai_4" value="证据约束、事实安全与生成式降级&#xa;模型失败时使用安全 baseline，保留原话和当前成果" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=13;" vertex="1" parent="domain_ai">
+          <mxGeometry x="30" y="240" width="590" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_journal" value="06 事件日志与日级成果" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e1ecf8;swimlaneFillColor=#f8fbff;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="650" width="670" height="325" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_1" value="一件事对应一篇事件日志&#xa;标题、事件叙事与可选的“我看见的”" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="60" width="610" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_2" value="生成、编辑、自动暂存、保存与恢复&#xa;成稿后结束当前事件，日志可重新打开" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="120" width="610" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_3" value="当天事件列表与事件标签&#xa;继续记录、继续编辑、查看日志、记下一件" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=13;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="180" width="610" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_4" value="多篇事件日志 → 当天完整日志&#xa;保留事件顺序、来源和当天成果状态" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e7f0e5;strokeColor=#82a77c;fontColor=#345233;fontSize=13;fontStyle=1;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="240" width="610" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_longterm" value="07 日历、历史与长期发展" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e2efdf;swimlaneFillColor=#f8fcf7;strokeColor=#82b366;fontColor=#345233;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1015" width="2060" height="215" as="geometry" />
+        </mxCell>
+        <mxCell id="longterm_1" value="当前回看&#xa;月 / 周 / 日事件回看与继续记录、继续编辑、查看日志直达" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=13;" vertex="1" parent="domain_longterm">
+          <mxGeometry x="30" y="60" width="480" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="longterm_2" value="历史兼容&#xa;历史五维记录保持独立阅读，不混入新角度统计" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=13;" vertex="1" parent="domain_longterm">
+          <mxGeometry x="530" y="60" width="480" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="longterm_3" value="目标演进：新事件与四角度分析&#xa;从事件日志中积累新的观察维度" style="rounded=1;arcSize=8;dashed=1;whiteSpace=wrap;html=1;fillColor=#fbfdfb;strokeColor=#a1be99;fontColor=#466744;fontSize=13;" vertex="1" parent="domain_longterm">
+          <mxGeometry x="1030" y="60" width="480" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="longterm_4" value="目标演进：长期模式与周月复盘&#xa;跨事件形成更稳定的自我认识" style="rounded=1;arcSize=8;dashed=1;whiteSpace=wrap;html=1;fillColor=#fbfdfb;strokeColor=#a1be99;fontColor=#466744;fontSize=13;" vertex="1" parent="domain_longterm">
+          <mxGeometry x="1530" y="60" width="500" height="78" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_support" value="08 事件中心数据与质量支撑" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f1f0ee;swimlaneFillColor=#fbfbfa;strokeColor=#8c8178;fontColor=#514942;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1255" width="2060" height="285" as="geometry" />
+        </mxCell>
+        <mxCell id="support_1" value="事件身份与成果来源&#xa;eventId、事件事实、角度成果、日志来源快照" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f7f6f4;strokeColor=#9b9088;fontColor=#514942;fontSize=13;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="62" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="support_2" value="会话与恢复&#xa;会话、分支、消息、检查点、可靠用户回合、继续生成" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f7f6f4;strokeColor=#9b9088;fontColor=#514942;fontSize=13;" vertex="1" parent="domain_support">
+          <mxGeometry x="530" y="62" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="support_3" value="质量与发布&#xa;Trace、反馈、事件漏斗、Preview、生成式降级、快速回退" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f7f6f4;strokeColor=#9b9088;fontColor=#514942;fontSize=13;" vertex="1" parent="domain_support">
+          <mxGeometry x="1030" y="62" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="support_4" value="运营与安全&#xa;隐私边界、管理员审计、指标观察和生产发布治理" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f7f6f4;strokeColor=#9b9088;fontColor=#514942;fontSize=13;" vertex="1" parent="domain_support">
+          <mxGeometry x="1530" y="62" width="500" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="support_note" value="产品判断：事件中心的基本单位是一件事；四个角度是用户自主选择的探索入口；事件日志是单件成果，多篇事件日志再形成当天成果。" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=13;align=center;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="185" width="2000" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="阅读方式：实线卡片代表当前已落地或 Preview 能力；虚线卡片代表目标演进能力。每个色块是一个产品功能域，底部集中展示事件中心的数据、质量和运营支撑。" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=13;align=left;spacingLeft=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1570" width="2060" height="42" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
