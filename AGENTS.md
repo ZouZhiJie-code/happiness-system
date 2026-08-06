@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-07-20` 的代码与生产修复结果为准：
+当前代码与生产修复状态以 `2026-08-02` 快照为准；生成式访谈产品决策状态已同步至 `2026-08-05`：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -23,21 +23,35 @@
 - AI 质量改进当前默认参与，注册与登录会写入或校准质量政策版本和合规时间；兼容退出请求返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`，前端设置页不提供退出开关。
 - `npm run acceptance:ai-quality:seed` 默认只允许本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。`2026-07-20` 已清理共享生产库中的固定验收账号、Trace、反馈、候选与运行记录，生产数据继续只承载真实用户链路。
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续部署、验收、回调和文档入口统一使用 `dailylight.chat`。
-- `2026-05-25` 已完成一次真实生产修复：production AI 调用优先走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded `GET /api/debug/runtime-env` 支持返回 `ai` 诊断块和 `?probe=1` 的最小 provider 探针，但 production 默认保持关闭，只在短时验证窗口中临时打开。
+- 当前产品与事件中心候选的聊天 Provider 事实源为 DeepSeek 官方 API：运行时使用 `openai` 兼容适配器，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供，新事件中心候选固定使用 `deepseek-v4-flash`。Ark 适配器及 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误只作为历史证据。guarded `GET /api/debug/runtime-env` 支持返回 `ai` 诊断块和 `?probe=1` 的最小 provider 探针，但 production 默认保持关闭，只在短时验证窗口中临时打开。
+- 生成式访谈事件中心已具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。历史策略继续保留代码兼容与回归资产；当前产品范围、提问策略和验收状态统一以 `docs/generative-interview-refactor-map.md` 及其当前专项为准，兼容代码不直接代表当前产品结论。
+- 事件中心知识治理固定区分三层：明确确认或验证的内容进入当前事实，未定性的内容保留“待讨论 / 待校准”，失效候选和失败结果保留为历史证据。自动技术通过不能替代真人体验裁决，历史候选不能承担当前发布授权。
+- 事件中心发布模式为 `legacy / optional / event_centered / event_recovery`；Production 继续保持 `legacy + baseline`，`optional + generative` 只作为板块 8 内部 Preview 与人工授权目标。
+- `2026-08-06` 已冻结 `GI-075～080`，板块 5 六类规则完成 `6/6`，产品决策已冻结，事件中心落地验证尚未启动。`GI-075、GI-076、GI-078` 为中置信度，`GI-077、GI-079、GI-080` 为高置信度；`GI-067 / GI-068～074` 继续保持“已冻结·高置信度”。
+- 阶段 1～2 继续按 GI-075 以新的用户回答机会计数，阶段 3 继续无数字上限。问题修复由模型基于完整语境重新判断下一步，不建立语义分类路由或修复专属次数上限；原始对话持续保留，被用户否定的状态退出当前事实和日志。回复版本退出事件中心目标 MVP，Production legacy 现有换问法能力继续保留。中断与失败恢复继承结构化错误、`requestId`、原话保存和同一 `clientTurnId` 恢复。
+- 成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮，【生成日志】成功时同时结束当前记录，页面跳转只保存当前状态。方法 `v1.0` 已冻结；下一板块为板块 6 正式评测资产建设，板块 7 等待板块 6，板块 8 使用两模式 `4＋2` 完成真人验收。GI-068 的新记录显式选择、记录内保持和日志完成后重新选择继续生效。当前状态源为 `docs/generative-interview-refactor-map.md`，板块 5 详细事实源为 `05-board5-stability-user-control-and-interaction-scope.md`，冻结评测交接见 `04x-07-evaluation-preview-and-handoff.md`。
+- `2026-08-06` 板块 5 完成态同步只更新产品文档；公共 API、类型、代码、配置、Prompt、数据库和运行开关保持原样。
+- 事件中心已接入 `generationTraceId`、现有反馈链路和十类观测事件（九类漏斗事件加响应完成耗时事件）；日志接口复用现有事件日志表和来源快照，当前无需新增数据库迁移。
 - production 共享库此前缺少 `20260521120000_add_admin_analytics_tables` migration，导致 live `POST /api/auth/register` 在写 `AnalyticsEvent` 时失败；该 migration 已于 `2026-05-25` 在 production 补齐。
 - 用户表达“不想继续 / 不要再追问 / 直接生成 / 总结日志 / 整理成日志 / 追问没有意义”等边界或日志整理意图时，边界优先级高于槽位完整度。
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有当 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - 访谈回复当前采用“用户原话先持久化、AI 结果后完成”的两阶段提交：前端用 `sessionStorage` 保存输入草稿和待发 outbox，服务端用 `InterviewUserTurn` 保存 `clientTurnId / rawText / baseMessageSequence / status / attemptCount`；SSE `turn` 确认服务端已接收原话，失败或取消后 session hydrate 返回 `pendingUserTurn`，用户可点击“继续生成”用同一 `clientTurnId` 调用 `resume_turn`。
-- `20260720120000_add_interview_user_turn` migration 新增 `InterviewUserTurn`、相关枚举与 `InterviewMessage.userTurnId`。当前完整测试为 `174` 个测试文件、`1095` 个用例通过；`npx tsc --noEmit` 与 `npm run build` 均通过。
+- 访谈意图识别 v1 已完成全量发布：系统把“生成日志、停止追问、修正问题、跳过、切换片段、切换维度”和用户内容分开判断。`INTERVIEW_INTENT_V2_MODE` 支持 `legacy / shadow / enforce` 三档；Production与Preview当前均使用`enforce`，`legacy`保留为P0即时回退档位。
+- `20260720210000_add_interview_intent_assessment` migration 为 `InterviewUserTurn` 增加意图评估、决策、分类器版本与评估时间字段。意图评估属于内部运行记录，SSE 和 session hydrate 继续只暴露用户恢复所需字段。
+- `20260720120000_add_interview_user_turn` migration 新增 `InterviewUserTurn`、相关枚举与 `InterviewMessage.userTurnId`。具体测试数量属于候选验证快照，统一记录在当前 Handoff、专项文档与候选证据中；项目级长期规则只要求类型检查、相关专项、全量测试、构建、Prisma 校验和差异检查按风险通过。
+- `2026-07-21` 已完成“按意图重新生成”正式发布与线上验收：新会话可对正式追问选择简单、具体、换角度、深入或轻一点，也可纠正理解；每组回复最多三个版本，历史换问法通过活动分支保留原路径。加载状态只在目标回复气泡内呈现，操作区保留静态禁用入口。
+- `2026-07-21` 已完成访谈意图识别全量发布：`INT-EVAL-252`内容边界已修正，Production切换到`enforce`，当前production deployment为`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，主域名为`https://dailylight.chat`；上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `20260720153000_add_ai_optimization_review_reason` migration 为 `AIOptimizationCandidate` 新增 `reviewReason`，用于保留管理员拒绝候选的理由。
+- `/admin/ai-quality` 已完成生产工作台：首屏按待审核、待验证、待发布、观察中和历史记录分流；队列以“维度 · 具体问题”命名，右侧连续承接证据、方案、回复对照、验证和决策。影响服务用标准化后的具体 `issueKey` 计算“同一问题率”；未知问题各自保留标准化键，缺少问题码时页面显示“口径不足”。管理员时间统一固定为 `Asia/Shanghai`，避免服务端与浏览器水合文本不一致。
+- `2026-07-20` 已完成 UserTurn 可靠提交改造的 production 发布：两条 migration 均已应用，PR #36（`ce1e2afbefe98eb79a21faf3d02869fe377085f4`）已合并进 main，公开 smoke 和同 `clientTurnId` 重放校验通过。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”，避免用户误把旧日期会话当成当天记录。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不能再追同一字段，而要改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间；服务层会在最终落库前和流式输出前同时兜底，避免重复问题先漏给前端。
 - 访谈 repair 协议已收紧：当用户明确表示“看不懂 / 太抽象 / 换一个 / 说简单点”时，服务端会识别 `question_repair`，并对当前问题走纯服务端确定性重问，不再请求模型；repair 轮不会抽取 snapshot、不会增加 `turnCount`、不会推进 `roundMeaningfulReplyCount`、不会触发新的 `event_complete`。`reflection` 维度现在优先按 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 的强约束模板重问；如果上一轮已经命中过“没有具体经历 / 对话”的 guard，repair 不能回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点。连续第 `3` 次 repair 会直接进入低压 choice，不再继续换问法。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
-- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【完整日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集；完整日志打开/生成与单维度日志生成都显示共享阶段进度、细进度轨和书页生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物。桌面端从右侧「今日日志」面板底部的 `生成日志 / 更新日志 / 查看日志` 进入，移动端从对话区顶部的【完整日志】快捷按钮进入；生成或更新会基于当前 `entryDate` 已保存的维度日志整理章节、直接保存并打开当天日志工作区。完整日志工作区离开前会保存未自动暂存的编辑；从完整日志切回访谈或切换访谈维度时，会保留 700ms autosave 触发前的输入。
 - 当天整合日志的来源集合现在会随着同日新增 `saved` 维度日志、来源维度日志更新时间变化或来源不再是 `saved` 进入 `stale`；来源签名按“同一天每个维度最新一篇 `saved` 日志”计算，重新生成后章节集合会与当天真实 `saved` 维度重新对齐。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。主导航不再包含【首页】项，点击左侧【Daily Light】品牌标识可返回首页。
 - 访谈页通过 header 主导航切换到日历、分析、画像、设置或首页时直接完成路由切换；刷新或关闭访谈页面时继续由 `beforeunload` 保存会话恢复标记并提供浏览器离开保护。
@@ -45,12 +59,14 @@
 - opening-only 空会话（只有 opening assistant、`turnCount = 0` 且没有用户回复）不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍会保留在库里，但不会继续污染当天状态。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 `90% ready`。
 - 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
-- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 记录分析页当前是单页四段纵向 scroll + 顶部锚点跳转；可选 `preset=week|month|custom` 与 `start/end` 控制量化趋势周期。`SiteHeader` 中区承接周期 preset、日期范围、四段 tab 和 contextual chip。`量化趋势` 段走 `GET /api/analysis/range`，展示周期摘要、总分柱线图、只读日志天数色块、8 要素雷达/棒棒糖，不带评分录入或热力点选 CTA。`五维全景` 仍走 `GET /api/analysis/month`；`关联 / 复盘` 仍是占位。旧 `overview|score|rhythm|insights` URL 会归一到 `trends|dimensions`。幸福 8 要素评分录入在 `/interview` 的「当天评分」工作区，不在分析页。
+- `/analysis?month=YYYY-MM&section=trends|dimensions` 记录分析页当前是量化趋势与五维记录两段纵向 scroll + 顶部锚点切换；可选 `preset=week|month|custom` 与 `start/end` 控制量化趋势周期。`SiteHeader` 中区承接周期 preset、日期范围、两段 tab 和 contextual chip。`量化趋势` 走 `GET /api/analysis/range`，展示周期摘要、总分柱线图、只读日志天数色块、8 要素雷达/棒棒糖；`五维记录` 走 `GET /api/analysis/month`。旧 `overview|score|rhythm` 归一到 `trends`，旧 `insights|correlation|review` 归一到 `dimensions`。幸福 8 要素评分录入在 `/interview` 的「当天评分」工作区。
 - analysis 的 `narrative-service.ts` 当前仍是确定性占位文本，不是最终 AI 叙事；五维段仍保留模板叙事与证据链接。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
-- `2026-06-12` 起全站执行「单层卡片制」设计规范（`docs/design/ui-conventions.md`）：每页最多“1 个底板 + 1 层卡片”，卡片内禁再嵌套 border+bg 容器，分区用标题 / hairline 分隔线 / 留白；圆角三档 `12/20/28px`（`--radius-control / --radius-card / --radius-shell`）、边框两档 `--line-soft / --line-strong`，新代码禁手写 `border-[rgba(...)]` 等任意值。共享原语在 `src/components/ui/`（`Surface / Card / SectionHeading / Divider / ActionButton`）。分析页 4 个子视图（`analysis-shell.tsx` 已拆为 shell + 4 个 section 文件）、日历周/日视图、设置全家桶和管理员页面均已按此重构；访谈页与日历月视图本就是目标形态，未改动。
+- `2026-06-12` 起全站执行「单层卡片制」设计规范（`docs/design/ui-conventions.md`）：每页最多“1 个底板 + 1 层卡片”，卡片内禁再嵌套 border+bg 容器，分区用标题 / hairline 分隔线 / 留白；圆角三档 `12/20/28px`（`--radius-control / --radius-card / --radius-shell`）、边框两档 `--line-soft / --line-strong`，新代码禁手写 `border-[rgba(...)]` 等任意值。共享原语在 `src/components/ui/`（`Surface / Card / SectionHeading / Divider / ActionButton`）。分析页两段工作区、日历周/日视图、设置全家桶和管理员页面均已按此重构；访谈页与日历月视图保持各自的目标形态。
+- `2026-07-18` 起共享交互原语统一采用即时按下反馈与可打断运动：按钮约 `0.97`、大卡片约 `0.985`；`SlidingSegmentedControl` 使用无回弹 spring；`HorizontalPager` 可选 swipe，采用约 `10px` 原始位移判定、速度投影和边界阻尼；画像与分析启用 swipe。移动端 `SiteHeader` 上下文工具栏可横向滚动，日志书页使用底部 sheet 并支持拖动关闭；`ActionMenu` 与 `ConfirmDialog` 补齐方向键、焦点圈定与焦点恢复。全局响应 reduced motion、reduced transparency 和增强对比度偏好。
 - calendar 页面当前优先首屏工作区；桌面超量信息进入局部 pane 滚动，小屏月视图改为“月历主体在上 + 当天检查面板在下”的纵向工作台，不再依赖 `1040px` 横向滚动访问右侧面板。桌面月视图仍是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - `SiteHeader` 现在会把真实 header 高度同步到 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按“实际 header 高度之后的剩余视口”计算可用高度，不再假设顶部永远只有 `4rem`，因此小屏、多行 toolbar 或 header 换行时不会再因为 offset 写死而出现底部假留白或双滚动。
+- 访谈维度选择页的 `CalendarMainGate` 内容层会纵向伸展到可用视口，保证页面底部背景连续；相关修复已在生产部署中生效。
 - 月视图月格当前固定渲染 6 行 42 格，loading skeleton 也渲染同样的 42 格，保证加载前后高度一致。
 - 月视图当前已经切到“已保存结果优先”的可见语义：`1-4` 个已保存维度显示单字 `悦 / 实 / 思 / 改 / 谢`，五维都至少保存过一次时收束为 `已完成`；`进行中 / 混合状态` 不再作为月格里的可见文字标签。
 - 月视图当天检查面板当前显示 `待继续 / 已完成 / 完整日志` 三个 summary chip；`待继续` 按 `activeCount + draftCount` 投影，`完整日志` 显示 `未生成 / 可汇总 / 草稿 / 已保存 / 需更新`。过去空白日只显示轻空态，不再列出 5 个空维度；月查询失败时不会再把主区或右侧伪装成空白日，而是保留月历主体 + 当天检查的 split-pane 方框骨架，在左右 pane 内分别显示错误说明和重试动作。
@@ -67,24 +83,56 @@
 3. 用户在合适时机点击“生成日志”。
 4. 右侧只展示日志正文初稿，不展示结构化槽位。
 5. 用户可继续编辑并保存正式日志。
-6. 用户可点击顶部【完整日志】切到当天日志主区，生成、编辑并保存当天整合日志。
+6. 用户可通过今日日志面板的日级按钮进入当天日志主区，查看、编辑并保存当天整合日志；移动端提供【完整日志】快捷按钮。
 
 ## 2. 文档优先级
 
-如果文档之间有冲突，按以下顺序判断：
+讨论或优化访谈链路时，先读取 `docs/interview-product-optimization-map.md`，用其中的模块边界、依赖关系和当前讨论位置保持跨会话目标一致。
+
+讨论生成式访谈板块 5～8 时，固定按以下顺序读取：
+
+1. `AGENTS.md`
+2. `docs/interview-product-optimization-map.md`
+3. `docs/generative-interview-refactor-map.md`
+4. `docs/technical/interview-event-centered/00-generative-interview-ai-product-working-method.md`
+5. 当前板块专项文档
+6. 当前专项明确链接的上游冻结档案、实现事实或历史证据
+
+`docs/generative-interview-refactor-map.md` 是生成式访谈板块 1～8 的唯一状态与决策索引；方法论文档规定板块怎样推进，当前专项承载详细讨论、案例和交接。方法论已经完成 `v0.1` 的板块 4 回溯检查、板块 6～8 纸面交接和板块 5 首题真实试运行，产品负责人已于 `2026-08-06` 确认并冻结 `v1.0`。
+
+### 新会话文件发现入口
+
+新的 AI 或协作者需要查找当前工作时，固定按以下入口导航，避免依赖旧会话记忆或遍历全部历史文件：
+
+1. [`docs/README.md`](./docs/README.md)：五分钟项目导航、常见任务与稳定搜索词；
+2. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
+3. 总 Map 当前链接的专项文档：当前板块 6 使用 `04j-generative-quality-evaluation-v1.md`；
+4. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
+5. [`artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/README.md`](./artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/README.md)：GI-081 六题真实输出与当前盲评入口。
+
+当前检索关键词：`GI-081`、`板块 6`、`board6-calibration`、`board7a-real-output-ab`、`legacy + baseline`。历史 `GI-066`、旧 Board 7/8 与 Batch B 候选统一从 `artifacts/README.md` 进入，并保持历史证据身份。
+
+阅读顺序用于建立完整上下文；文档冲突按事实职责裁决。优先级如下：
+
 1. 用户本轮最新指令
 2. 本文件 `AGENTS.md`
-3. `README.md`
-4. `docs/architecture.md`
-5. `docs/integration-guide.md`
-6. `docs/operator-runbook.md`
-7. `docs/theory/joy-alignment.md`
-8. `docs/theory/fulfillment-alignment.md`
-9. `docs/theory/reflection-alignment.md`
-10. `docs/theory/improvement-alignment.md`
-11. `docs/theory/gratitude-alignment.md`
-12. `docs/theory/dimension-draft-template.md`
-13. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
+3. `docs/generative-interview-refactor-map.md`（生成式访谈板块 1～8 的产品事实、决策状态、依赖与当前推进位置）
+4. 总 Map 当前链接的上游冻结决策档案（对应决策的最终结论、范围、依据与案例）
+5. 当前板块专项文档（当前开放问题、详细规则、证据与交接；保持上游冻结结论关闭）
+6. `docs/technical/interview-event-centered/00-generative-interview-ai-product-working-method.md`（板块 5～8 的工作方式，不覆盖产品事实）
+7. `docs/interview-product-optimization-map.md`（访谈链路全产品模块、依赖关系与衡量边界）
+8. `docs/interview-intent-evaluation-source-of-truth.md`（访谈意图评测、数据集与上线门槛）
+9. `README.md`
+10. `docs/architecture.md`
+11. `docs/integration-guide.md`
+12. `docs/operator-runbook.md`
+13. `docs/theory/joy-alignment.md`
+14. `docs/theory/fulfillment-alignment.md`
+15. `docs/theory/reflection-alignment.md`
+16. `docs/theory/improvement-alignment.md`
+17. `docs/theory/gratitude-alignment.md`
+18. `docs/theory/dimension-draft-template.md`
+19. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
 
 协作语言：
 - 默认用中文输出，除非用户明确要求使用其他语言，或需要保留代码、命令、错误信息、API 字段等原文。
@@ -92,6 +140,40 @@
 
 表达约束：
 - 严禁使用通过先否定前者再突出后者的对举句式来制造强调效果，例如“不是……而是……”“与其……不如……”这类表达；默认改写为直接陈述核心判断、并列展开差异，或按因果/递进关系表达。
+- 只把事实源已经确认、用户明确提出或已经完成清晰定义的概念写成当前事实。模型自行提出的概念必须标记为“讨论候选”，并在首次出现时说明定义、来源、适用范围、使用者、触发条件、实际作用和当前状态；缺少这些信息时，直接描述具体事实。严禁把未定义的角色、机制、层级、信号、状态或流程写成既有产品内容。
+- 引用产品结论时，明确区分“已冻结事实、用户本轮选择、模型建议、待验证假设、历史证据”。自动技术通过、历史候选和外部方法不能替代当前产品结论或真人发布授权。
+
+### 生成式访谈板块 5～8 产品讨论规则
+
+- MVP 优先冻结跨场景核心原则、用户结果和最小必要硬边界；长尾表达、低频细节和实现枚举留给评测、后续迭代或对应下游板块。
+- 每次只讨论一个会实质影响产品行为或下游交接的关键选择；先用具体用户场景说明背景、纠正原因、目标、风险和不同方案的实际影响，再引入内部概念和选项。
+- 提问前先检查上游冻结事实、当前专项和已经验证的现有能力。事实源能够唯一推出的客观边界直接继承并说明依据，不重复提交产品选择。
+- 在 Plan 模式中，需要产品负责人选择的关键问题必须使用选项卡，提供 `2～3` 个互斥选项并保留自由输入；推荐项同时说明原因和取舍。当前协作模式缺少选项卡能力时，保持结论开放并提示产品负责人进入 Plan 模式后选择。
+- 只有会改变用户结果、模型自主权、程序硬边界或下游交接的问题才提交产品选择；表达是否清晰、具体含义和自然承接等完整语境判断直接交给模型。
+- 每项候选结论形成前，检查产品负责人、模型、程序、自动评测与 Judge、真人 Preview 分别承担什么；职责缺少定义时继续保持待讨论。
+- 模型负责完整语境下的焦点、认识增量、下一问价值、回答负担和自然表达判断；程序负责模式保持、问题计数、单轮一问、来源、安全、事件隔离、用户控制和失败恢复；评测与真人 Preview 提供质量证据；产品负责人确认冻结和发布。
+- 完整语境能够支持模型判断时，不把语义拆成表达分类、置信度分支、场景路由、固定模板或逐案例程序规则。
+- 候选规则按四类归档：跨场景原则进入产品协议或后续 Prompt／Skill，可确定执行的客观边界进入程序保护，长尾表达或单个案例进入评测集，证据不足的判断保留为待验证假设。单个案例只有在涉及严重风险时才能直接形成硬边界。
+- 具体案例用于讲清背景、检验原则和形成评测资产；案例本身不自动形成程序分支。被后续选择覆盖的候选保留为讨论历史，不进入当前事实。
+- `GI-068～080` 保持关闭。板块 6～8 的新讨论只承接已冻结输入；发现新证据时按总 Map 的“重新打开”流程处理。
+
+### `/neat` 项目级同步规则
+
+本项目使用 `/neat`（neat-freak）进行阶段性知识整理。整理不要求项目全部完成，可以在产品决策冻结、工程实现完成、Preview 裁决或板块切换后执行。
+
+每次调用 `/neat` 时，默认遵守以下边界：
+
+- 只有用户明确确认、冻结或已经验证的内容，才写入“当前有效事实”或长期项目规则。
+- 尚未定性的方案、假设、讨论中的判断和待补证据，保留为“待讨论”“待校准”或“验证中”，不得升格为最终产品结论。
+- 已失效的候选、失败案例、No-Go 裁决和历史工程证据继续保留，并明确标记为历史；当前状态与历史记录分开表达。
+- Map、专项文档和项目说明中的当前板块、当前候选、依赖关系、下一步与 Production 状态保持一致。
+- 事件中心的产品讨论必须保留决策编号、状态、置信度、适用范围、依据、影响板块和候选血缘，避免把讨论草案写成冻结决策。
+- 全局或项目级长期说明只写稳定事实；单次会话上下文、临时猜测和尚未确认的产品偏好留在对应专项文档或会话记录中。
+- Production 当前保持 `legacy + baseline`。任何生产切换、部署或生产数据写入都必须等待产品负责人单独授权。
+- 发现无法自动判断的文档冲突、结论归属或状态变化时，先列出冲突与影响，等待产品负责人裁决。
+- 完成整理后，报告实际修改的文件、每项修改原因、保留的历史证据、未处理事项和当前下一步。
+
+调用 `/neat` 时，可以在本条消息中补充本阶段的范围，例如“只同步 GI-067 已冻结内容”“先做只读审计，暂不修改”或“保留 GI-066 全部历史证据”。本节规则作为本项目的默认安全边界。
 
 子 agent / 本地 provider 熔断约定：
 - 本地 provider 出现 `503 Service Unavailable`、`所有供应商已熔断`、`无可用渠道` 等错误时，优先视为可恢复的本地调度波动。
@@ -242,7 +324,7 @@ gratitude 理论翻译基线：
 - 如果用户打开的是一篇已经 `saved` 的维度日志：
   - 标题或正文一旦通过 `PUT /api/journal-entry/[id]` 自动暂存，会先回到 `draft`
   - 只有用户再次点击“保存修改”，这篇日志才会重新成为正式保存版本
-- 如果用户从维度日志面板切到顶部【完整日志】当天整合日志主区：
+- 如果用户从单维度日志书页切到今日日志面板的日级动作或移动端【完整日志】快捷入口：
   - 前端必须先复用日志面板关闭路径，保存未暂存编辑或取消正在生成的 draft，再切换主工作区。
 - 如果用户从完整日志主区返回访谈，或在完整日志主区切换访谈维度：
   - 前端必须先 flush 当天日志的 pending 编辑；保存失败或内容非法时留在完整日志主区并展示错误。
@@ -277,16 +359,18 @@ gratitude 理论翻译基线：
 - `src/app`
   - 页面与 API 入口。
 - `src/components`
- - 纯 UI 组件。
+  - 纯 UI 组件。
 - `src/components/ui`
- - 单层卡片制共享原语：`Surface`（页面底板）、`Card`（唯一卡片层）、`SectionHeading`、`Divider`、`ActionButton`；新页面禁止手写卡片样式，先扩展原语再使用。
+  - 单层卡片与交互共享原语：`Surface`、`Card`、`SectionHeading`、`Divider`、`ActionButton`、`SlidingSegmentedControl`、`HorizontalPager`、`ActionMenu`、`ConfirmDialog`；新页面优先扩展原语后复用。
 - `src/features/interview`
   - 多维度通用前端定义、schema、进度与维度元信息。
+- `src/features/interview/event-centered`
+  - 事件中心对话状态、历史四角度与 `thought_only` 兼容策略、生成协议、发布模式和专项评测资产。当前产品策略以总 Map 和当前专项为准。
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
 - `src/features/analysis`
-  - 记录分析的 `month=YYYY-MM`、`section=trends|dimensions|correlation|review`（旧 `overview|score|rhythm|insights` 自动映射）、`preset=week|month|custom` 与 `start/end` URL 归一化；`date-range.ts` 推导周期窗口；`aggregate-trends-range.ts` 与 `GET /api/analysis/range` 服务量化趋势读数台；`GET /api/analysis/month` 仍服务五维全景；`generateMonthNarrative` 占位叙事（预留 AI 接入口）。
+  - 记录分析的 `month=YYYY-MM`、`section=trends|dimensions`、`preset=week|month|custom` 与 `start/end` URL 归一化；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；`date-range.ts` 推导周期窗口；`aggregate-trends-range.ts` 与 `GET /api/analysis/range` 服务量化趋势读数台；`GET /api/analysis/month` 服务五维记录；`generateMonthNarrative` 保留占位叙事。
 - `src/content`
   - 首页文案、CTA 和图片位配置；当前首页配置在 `homepage.ts`。
 - `src/features/happiness-score`
@@ -301,7 +385,7 @@ gratitude 理论翻译基线：
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 桌面是双栏检查面板、小屏是上下堆叠工作台，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳：单页四段纵向 scroll（`analysis-trends-section` / `analysis-insights-section` / `analysis-correlation-section` / `analysis-review-section`）+ `use-analysis-section-spy` scroll spy；`analysis-toolbar.tsx` 在 `SiteHeader` 中区渲染周期 preset、日期范围、四段锚点 tab 与 contextual chip。量化趋势段为只读读数台；五维段仍用 `DimensionInsights`；关联/复盘为占位。legacy `analysis-overview-section` 等文件保留但 shell 不再引用。
+  - 记录分析页壳：`analysis-shell.tsx` 只挂载 `analysis-trends-section` 与 `analysis-insights-section` 两段，并由 `use-analysis-section-spy` 更新当前锚点；`analysis-toolbar.tsx` 在 `SiteHeader` 中区渲染周期 preset、日期范围、两段 tab 与 contextual chip。`analysis-correlation-section.tsx`、`analysis-review-section.tsx` 等历史占位文件当前未被 shell 引用。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -309,6 +393,12 @@ gratitude 理论翻译基线：
   - 当前对外暴露的访谈 service 层。
   - 现实情况：`interview.service.ts` 目前主要是 re-export `joy-interview.service.ts`。
   - `respond-error.ts` 负责把访谈提交错误归一化为用户可展示的 `issue`。
+- `src/server/services/interview/event-centered-interview.service.ts`
+  - 事件中心问答、候选生成编排、语义 checkpoint、Trace、恢复和兼容降级能力。当前候选是否允许降级由冻结产品规则与发布档位共同决定。
+- `src/server/services/interview/journal-event-entry.service.ts`
+  - 事件日志来源快照、AI 草稿、来源质量门、安全基础版本、自动暂存和正式保存。
+- `src/server/services/interview/event-centered-analytics.service.ts`
+  - 事件中心入口、响应完成、检查点、生成、保存、降级和放弃的十类 AnalyticsEvent。
 - `src/server/services/calendar`
   - 记录日历的 `day / week / month` 服务端查询入口。
 - `src/server/services/daily-journal`
@@ -355,10 +445,15 @@ gratitude 理论翻译基线：
 - `InterviewEvent`
   - 事件级状态、轮次、覆盖镜头、`snapshotData`、`progressData`。
 - `InterviewMessage`
-  - 全部可恢复对话消息。
+  - 全部可恢复对话消息；正式追问的 `responseGroupId / responseVersion` 维护版本组，`regenerationIntent / regeneratedFromMessageId / branchSessionId` 保留来源与路径。
 - `InterviewUserTurn`
   - 用户回复与选择动作的可恢复提交记录；同一会话内 `clientTurnId` 唯一。
   - 保存原话、提交时的消息位置、处理状态、尝试次数与错误码；`processing / failed / canceled` 会进入 session 的 `pendingUserTurn`。
+  - `intentAssessment / intentDecision / intentClassifierVersion / intentAssessedAt` 保存可回放的意图判断；仅在 `enforce` 模式参与正式决策。
+- `InterviewBranchCheckpoint / AIResponseRegeneration`
+  - 前者保存正式追问处的可恢复会话状态；后者记录重新生成的原问题、候选、意图、Trace、耗时、状态与采用结果。
+- `InterviewSession`
+  - 新会话写入 `conversationSchemaVersion = 2`；根会话用 `activeBranchSessionId` 指向当前采用路径，分支通过 `rootSessionId / parentSessionId / forkMessageSequence` 继承此前对话。
 - `JoyInterviewSnapshot`
   - 历史兼容快照表，仍保留旧 joy 结构投影。
 - `JoyEntry`
@@ -381,6 +476,7 @@ gratitude 理论翻译基线：
   - 字段：`summary`（总述）、`dimensionInsights`（JSON，五维度洞察）、`factCount`、`generatedAt`。
 - `AIRequestLog`
   - `transcribe / extract / generate / question / evaluate / iterate / portrait_synthesis` 调用日志。
+- 事件中心日志复用现有 `JournalEventEntry`、`InterviewSession`、`InterviewEvent`、`AIGenerationTrace` 与 `AnalyticsEvent`；本轮没有新增数据库表或迁移，事件日志生成、编辑、保存和恢复通过事件中心专用 API 完成。
 - `AIGenerationTrace / AIFeedback / AIFeedbackRevision / AIEvaluation / AICase`
   - AI 生成血缘、当前用户反馈、反馈修订、结构化评分和案例分类。
 - `AIOptimizationRun / AIBadcaseCluster / AIOptimizationCandidate / AIOptimizationValidation / AIFewShotExample / AIPromptRelease`
@@ -400,11 +496,20 @@ gratitude 理论翻译基线：
 - `GET /api/interview/session/[id]`
 - `POST /api/interview/session/respond`
 - `POST /api/interview/session/respond/stream`
+- `POST /api/interview/session/branch/preview`
+- `POST /api/interview/session/branch/select`
 - `POST /api/interview/session/pause`
 - `POST /api/interview/session/complete`
 - `POST /api/interview/session/reopen`
 - `POST /api/interview/session/draft/generate`
 - `POST /api/interview/session/draft/save`
+- `POST /api/interview/event-centered/session/start`
+- `GET /api/interview/event-centered/session/[id]`
+- `POST /api/interview/event-centered/session/respond/stream`
+- `POST /api/interview/event-centered/session/turn`
+- `POST /api/interview/event-centered/journal/generate`
+- `GET/PATCH /api/interview/event-centered/journal/[id]`
+- `POST /api/interview/event-centered/journal/[id]/save`
 - `PUT /api/journal-entry/[id]`
 - `PUT /api/joy-entry/[id]`（兼容别名）
 - `GET /api/daily-journal?date=YYYY-MM-DD`
@@ -451,6 +556,9 @@ gratitude 理论翻译基线：
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `respond/stream` 会在 AI 处理前发送 SSE `turn`，确认用户原话已经进入服务端持久状态；成功完成后再发送 `session`。
 - 普通回复请求优先使用 `rawText + clientTurnId + baseMessageSequence`；兼容旧客户端的 `userMessage`。失败或取消的提交使用 `action: resume_turn` 和原 `clientTurnId` 恢复。
+- 换问法使用 `action: regenerate_question`，提交 `targetMessageId / intent / clientTurnId / baseMessageSequence / baseBranchSessionId`；纠正理解使用 `action: correct_understanding` 与 `rawText`。SSE `version` 事件返回当前版本与活动分支；分支 preview 只读，select 才切换活动路径。
+- `INTERVIEW_REGENERATION_ENABLED=false` 可暂停新换问法与版本入口；版本 2 会话继续沿当前活动路径完成，已有分支、Trace 和质量记录保留。
+- 意图识别字段属于服务端内部记录，不加入 `turn` SSE 事件或公开 session 读模型。`shadow` 只记录新旧决策对照，`enforce` 才让新决策参与访谈推进。
 - `respond/stream` 当前会在服务端累计 provider 候选输出，完成问题协议、重复保护、维度专项检查和 fallback 后，再分块发送最终摘要与问题；分块过程保持最终文本的空格和换行。
 - `/admin/analytics` 当前是管理员工作台，不向普通用户暴露；筛查和下钻主要通过 URL 查询参数驱动页面重新取数。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
@@ -477,7 +585,7 @@ gratitude 理论翻译基线：
   - `GET /api/analysis/month?month=YYYY-MM` — 五维全景等按月聚合；返回 `month / logOverview / dailyCoverage / rhythmOverview / dimensionBreakdown / dimensions / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates / narrative` 等
   - `GET /api/analysis/range?preset=week|month|custom&startDate=&endDate=` — 量化趋势读数台；返回 `AnalysisTrendsRangeRecord`（`preset / startDate / endDate / logOverview / dailyCoverage / scoreOverview / scoreTrend`）
   - 只统计 `saved` 维度日志和 `saved` 当天整合日志；`stale` 整合日志在 read model 中仍按待更新处理
-- 页面当前为单页四段纵向 scroll + 顶部锚点 tab：`section=trends|dimensions|correlation|review`（旧 keys 自动映射）；`SiteHeader` 中区 `AnalysisToolbar` 渲染周期 preset、日期范围、四段 tab 与 contextual chip；tab 点击锚点跳转，滚动 scroll spy 更新 URL
+- 页面当前为量化趋势与五维记录两段纵向 scroll + 顶部锚点切换：`section=trends|dimensions`；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；`SiteHeader` 中区 `AnalysisToolbar` 渲染周期 preset、日期范围、两段 tab 与 contextual chip，scroll spy 更新 URL
   - 缺失 `section` 时默认 `trends`；`preset` 缺省为 `month`
   - 量化趋势段只读，无评分录入与补漏 CTA；幸福 8 要素评分录入在 `/interview`「当天评分」工作区
   - `PUT /api/happiness-score` 允许保存所有非未来日期（Asia/Shanghai 口径）
@@ -503,7 +611,7 @@ gratitude 理论翻译基线：
   - 再重启 `npm run dev`
 - 如果 `npm run build` 失败：
   - 先运行 `npm run typecheck` 和 `npm run lint`，区分 TypeScript、ESLint 与 Next.js 构建错误
-  - `2026-07-20` 当前基线为 `npm run build` 通过并保留既有 ESLint warnings；新的非零退出码按首次错误位置排查
+  - `2026-08-02` 当前基线为 `npm run build` 通过并保留既有 ESLint warnings；新的非零退出码按首次错误位置排查
   - Prisma Client 缺失或 schema 版本不一致时，执行 `npx prisma generate` 并确认 migrations
 - 如果用户看到结构化访谈提交错误：
   - `NETWORK_UNAVAILABLE`：先确认 `npm run dev` 仍在运行，再刷新页面
@@ -527,12 +635,14 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-07-20`，验证基线为：
-- 当前工作区 `npm test`：`174` 个测试文件、`1095` 个测试通过
-- AI 质量发布与效果观察专项：`10` 个测试文件、`30` 个测试通过
-- `npm run lint`：通过，保留 `44` 条既有 warning
-- `npx tsc --noEmit`：通过
-- `npm run build`：通过，保留既有 ESLint warnings
+候选验证快照写入对应专项文档和 `docs/handoff.md`，避免把会持续变化的测试数量写成长期项目规则。默认交付门包括：
+
+- 相关专项测试与全量 `npm test`
+- `npx tsc --noEmit`
+- `npm run lint`
+- `npm run build`
+- `npx prisma validate`，涉及迁移时再验证隔离库 `migrate status`
+- `git diff --check`
 
 每次开发或修复一个功能后，交付回复里必须给出至少一个可执行测试用例：
 - 可以是已经自动化落地的测试名称与覆盖点
@@ -558,7 +668,8 @@ gratitude 理论翻译基线：
 - gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
-- 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索、画像页面 `/profile`；但该功能当前由 `memoryEnabled` 设置项控制，默认关闭，且新测试文件存在类型兼容问题（TS2741 / TS2322），需要修复后才能完全通过回归。
+- 事件中心板块 4 已完成 `GI-067 / GI-068～074` 产品规则冻结；板块 5 已冻结 `GI-075～080`，六类规则完成 `6/6`，方法 v1.0 已冻结，下一步进入板块 6 正式评测资产建设。GI-068 记录级模式边界、GI-075 计数合同及 GI-076～080 稳定性与交互合同直接继承。板块 7 等待板块 6 正式资产，板块 8 等待新候选并采用两模式 `4＋2` 验收。Production 继续使用 `legacy + baseline`。
+- 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索和画像页面 `/profile`；当前由 `memoryEnabled` 设置项控制，默认关闭。`2026-08-02` 的全量类型检查与测试基线均已通过。
 
 ## 10. 修改文档时的规则
 
@@ -570,3 +681,16 @@ gratitude 理论翻译基线：
   - `docs/architecture.md`
   - `docs/integration-guide.md`
   - `docs/handoff.md`
+
+## 11. ChatGPT × Codex 任务交接
+
+本项目支持通过 `docs/ai-tasks/` 接收 ChatGPT 生成的本地执行方案。
+
+- ChatGPT 负责读取项目背景、讨论方案并创建 `docs/ai-tasks/inbox/` 下的 Markdown 任务。
+- 在项目目录打开 Codex 后，用户输入“执行最新 ChatGPT 方案”，Codex 读取最新 `ready` 任务并开始执行。
+- Codex 使用可复用 Skill `chatgpt-plan-executor` 处理任务选取、状态流转、验证和结果回写。
+- Codex 执行前先读取本文件和任务全文；任务状态按 `inbox -> running -> done|blocked` 推进。
+- Codex 必须在结果文档中记录完成摘要、修改文件、验证命令、验证结果、风险和下一步建议。
+- 任务方案与执行结果使用同一个 `task_id`，结果文件命名为 `<task_id>.result.md`。
+- Codex 默认保留 Git 变更，不自动提交、推送或部署。
+- 任务格式、目录状态和 ChatGPT 权限边界见 `docs/ai-tasks/README.md`。

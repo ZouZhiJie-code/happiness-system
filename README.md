@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-07-20`，这个仓库的真实状态是：
+截至 `2026-08-06`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -11,7 +11,10 @@
 - 五个维度的 `thinkingSummary`、日志正文、日志标题和 `joy` draft 质检现在都共用一层服务端语义解释层：系统会先判断当前片段在维度理论里属于什么主题、为什么成立，再把这层解释投影到 summary、`DraftBrief`、短标题和 quality gate；这层内部解释不能直接写进用户可见正文或 fallback draft。`joy` 质量门接受语义等价改写，但会拒绝“更像轻快乐 / 关键不是深意义 / 象征意义 / 确定性”这类内部理论腔和抽象收尾。
 - `fulfillment` 质量门现在接受“没白费 / 终于落了地 / 总算收住了”这类自然换述，不再因为没有命中少数固定理论词就把有效 AI 草稿静默打回 fallback；`gratitude` stitched supporting-scene 的 loose anchor 也重新收紧，不会因为共用几个壳子短语就误放行被改写的副事件。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 当前工作区已经接入可恢复的用户提交记录：页面保存输入草稿和待发 outbox，服务端在 AI 处理前创建 `InterviewUserTurn` 并保存用户原话；重复提交用 `clientTurnId` 去重，旧对话位置会被拦截，失败或取消后可用“继续生成”恢复同一轮。
+- 访谈提交已接入可恢复记录：页面保存输入草稿和待发 outbox，服务端在 AI 处理前创建 `InterviewUserTurn` 并保存用户原话；重复提交用 `clientTurnId` 去重，旧对话位置会被拦截，失败或取消后可用“继续生成”恢复同一轮。
+- 访谈意图识别已完成全量启用：系统会区分“继续讲内容”“需要换个问法”“想直接生成日志”“希望停止追问”等表达；Production 与 Preview 当前均使用 `enforce`，`legacy` 保留为 P0 问题的即时回退档位。
+- 正式追问已支持按意图“换个问法”：用户可选择更简单、更具体、换角度、再深入或问得轻一点，也可纠正 AI 的理解。新会话保留最多三个回复版本，历史换问法通过分支保存原路径；加载状态只在原回复气泡内呈现，避免重复反馈。`2026-07-21` 已完成 Preview 与正式环境验收并发布到 `dailylight.chat`。
+- `2026-07-20` 已完成 UserTurn 可靠提交改造的 production 发布：`InterviewUserTurn` 与 AI 候选审核理由 migration 已应用，公开 smoke 和同 `clientTurnId` 重放校验通过。
 - 首版账户体系已经接入：
   - 支持用户名 + 密码注册与登录
   - 登录态使用 `httpOnly` cookie `dl_session`
@@ -21,10 +24,15 @@
   - 账号删除会级联删除该用户的会话、日志、评分、画像、记忆和认证会话
   - 前端 interview 本地恢复缓存与“上次维度”记忆已按 `userId` 做作用域隔离，避免同浏览器多账号串线
 - 管理员工作台 `/admin/analytics` 已落地；只有命中 `ADMIN_USERNAMES` 白名单的登录用户会在设置页看到入口
-- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、赞踩标签与文本、Badcase 聚类、候选去重、回放验证、管理员全量发布与回滚、七天效果观察和真实对话证据均已接入；管理员拒绝候选时需要填写 `4–300` 字原因，发布缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`；管理员入口为 `/admin/ai-quality`
+- AI 质量数据飞轮已落地：生成 Trace 与 Prompt 血缘、规则 + 抽样 Judge、赞踩标签与文本、Badcase 聚类、候选去重、回放验证、管理员全量发布与回滚、七天效果观察和真实对话证据均已接入。`/admin/ai-quality` 采用状态摘要、候选队列和连续审核区；管理员退回候选时填写 `4–300` 字原因，发布缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。影响观察按标准化后的具体问题键计算“同一问题率”，缺少问题码时显示“口径不足”。
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
-- `2026-05-25` 已完成一次真实 production AI 恢复：production runtime 走 `VOLCENGINE_ARK_MODEL=deepseek-v3-2-251201` 的直连模型路径；guarded runtime probe 在恢复窗口中返回过 `ai.probe.status=200`，随后 `ENABLE_RUNTIME_ENV_READBACK` 已重新关闭。
+- 访谈维度选择页通过 `CalendarMainGate` 的内容层纵向伸展完整承接可用视口，页面底部背景保持连续，修复内容区结束后露出全局木色背景的断层问题。
+- 当前产品与事件中心候选的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供，新事件中心候选固定使用 `deepseek-v4-flash`。Ark 适配器与 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误归入历史证据，不代表当前运行配置。
+- 生成式访谈事件中心已经具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。`GI-065` 已把新会话产品范围收口为“理清想法”单角度，感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。
+- `GI-067 / GI-068～074` 已完成并冻结七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前按 `GI-074` 建设正式评测资产；`GI-081` 板块 7A 六题 A/B 已完成 `18/18` 次真实生成，等待产品负责人盲评。板块 7 正式实现继续等待板块 6，板块 8 等待新候选完成两模式 `4＋2` 真人验收。Production 继续保持 `legacy + baseline`。
+- 事件中心日志支持生成、编辑、700ms 自动暂存、正式保存、刷新恢复和通过当天事件标签重新打开；事件日志接口、Trace、反馈和九类漏斗埋点已接入，未新增数据库迁移。
+- GI-066 使用 DeepSeek 官方 API 完成严格 `10×3` 与单角度自动 `8+2`，这些结果保留为历史技术证据；最新真人实聊因目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效。Production 继续保持 `legacy + baseline`。
 - 同一轮 production 排障中，已补齐 `20260521120000_add_admin_analytics_tables` migration，修复了 live 注册路径因 `AnalyticsEvent` 表缺失而出现的 `REGISTER_FAILED`。
 - 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
@@ -32,7 +40,7 @@
 - 访谈 repair 协议已升级成稳定的服务端闭环：当用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等修问题表达时，系统会识别 `question_repair`，直接在服务端对当前问题做确定性重问，不再请求模型；repair 轮不会增加 `turnCount`、不会改写 snapshot、不会推进 round，也不会贡献新的完成进度。`reflection` 维度现在有专属 repair 模板，并且在用户已明确说“没有某段具体经历 / 对话”后，不会再回卷到 scene question。连续第 `3` 次 repair 会进入低压 choice，让用户改为“只补一句 / 换一个片段 / 先退出”。
 - 记录日历的 month/week/day 三层已经落地：calendar 展示层读模型、`/api/calendar/day|week|month`、`/calendar` 月/周/日视图、以及进入访谈/日志的 deep link 都已完成。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
-- 当天整合日志已经落地：访谈页顶部【完整日志】按钮会把主工作区切到当天日志模式，基于当前 `entryDate` 已保存的维度日志生成五维章节合集；打开或生成完整日志时会显示与单维度日志一致的共享阶段进度、细进度轨和书页生长动效。
+- 当天整合日志已经落地：桌面端从右侧「今日日志」面板底部的 `生成日志 / 更新日志 / 查看日志` 进入，移动端从对话区顶部的【完整日志】快捷按钮进入；生成或更新会基于当前 `entryDate` 已保存的维度日志整理章节、直接保存并打开当天日志工作区。
 - 当天整合日志的来源集合现在会随同日新增 `saved` 维度日志或已有来源更新时间变化而进入 `stale`；来源签名按“同一天每个维度最新一篇 `saved` 日志”计算，重新生成后章节数会与当天真实 `saved` 维度集合重新对齐。
 - 完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
 - `/calendar` 顶部导航中区现在会承接 month/week/day 的全局切换、前后翻段、回到今天和实时摘要；正文不再重复放一套导航。
@@ -41,8 +49,9 @@
 - opening-only 空会话（只有 opening assistant、`turnCount = 0` 且没有用户回复）不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍会保留在库里，但不会继续污染当天状态。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，当前选中维度的 live progress 会被压在 `88%` 以下，不会被历史 `draftGenerationUnlocked` 顶回 ready 状态。
 - 首页已重构为品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记心有所归”；文案与图片配置集中在 `src/content/homepage.ts`，当前已接入 `public/homepage/*` 本地图片，并把 Hero / 痛点 / 日志 / 沉淀图片区统一收成“单行标题 + 图片本体”的去卡片化广告片布局，首页木纹背景也已调成上浅下深。
-- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 记录分析页为单页四段纵向 scroll + 顶部锚点 tab；量化趋势段走 `GET /api/analysis/range`（本周/本月/自定义），为只读读数台；五维全景仍走 `GET /api/analysis/month`。幸福 8 要素评分录入在 `/interview`「当天评分」工作区，不在分析页。
+- `/analysis?month=YYYY-MM&section=trends|dimensions` 记录分析页为量化趋势与五维记录两段纵向 scroll + 顶部锚点切换；量化趋势走 `GET /api/analysis/range`（本周/本月/自定义），五维记录走 `GET /api/analysis/month`。旧 `overview / score / rhythm` 归一到 `trends`，旧 `insights / correlation / review` 归一到 `dimensions`。幸福 8 要素评分录入位于 `/interview`「当天评分」工作区。
 - 全站视觉已在 `2026-06-12` 收敛为「单层卡片制」：创意与页面形态见 **`DESIGN.md`**；容器层级、圆角/边框 token 与共享原语见 **`docs/design/ui-conventions.md`**（`Surface / Card / SectionHeading / Divider / ActionButton` 在 `src/components/ui/`）。分析页、日历周/日视图、设置与管理员页面已按此重构。
+- 全站交互已在 `2026-07-18` 收敛到共享流动体验：按钮和交互卡片提供即时按下反馈；segmented 使用可重定向 spring；画像与分析分页支持横向 swipe；移动端上下文工具栏可横向滚动；日志书页、菜单和确认弹窗具备连续进出场、键盘操作与焦点恢复；系统统一响应 reduced motion、reduced transparency 和增强对比度偏好。
 - calendar 页面已经进入“首屏工作区 + 局部滚动容器”结构：
   - 月视图桌面是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 入口；小屏改为月历主体在上、当天检查面板在下，不再依赖横向滚动访问右侧面板
   - `SiteHeader` 会把真实 header 高度同步给首屏工作区；calendar / analysis / settings 这类页面会按剩余视口高度布局，小屏、多行 toolbar 或 header 换行时不会再因为顶部 offset 写死而制造底部假留白
@@ -95,7 +104,7 @@
 - `CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord` 读模型与对应服务端聚合链路
 - `GET /api/calendar/day|week|month` 公开日历查询接口
 - `/calendar?view=month|week|day&date=YYYY-MM-DD` 月/周/日视图页面
-- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 记录分析页（单页四段 scroll + 锚点 tab；`GET /api/analysis/range` 量化趋势 + `GET /api/analysis/month` 五维全景）
+- `/analysis?month=YYYY-MM&section=trends|dimensions` 记录分析页（两段 scroll + 锚点切换；`GET /api/analysis/range` 量化趋势 + `GET /api/analysis/month` 五维记录）
 - `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、访谈页独立评分工作区；分析页趋势段为只读读数台
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会先保存当天日志 pending 编辑，再移除 `mode` 并恢复所选日期的正常访谈 hydrate
@@ -127,11 +136,21 @@ npm install
 DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_RUNTIME_CONFIG_SECRET=""            # 用 openssl rand -base64 32 生成；用于加密数据库里的 provider API Key
-AI_PROVIDER="volcengine-ark"
-VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_MODEL=""                # 首选：直接模型 ID；当前 production 使用 deepseek-v3-2-251201
+AI_PROVIDER="openai"                    # 当前聊天 Provider：DeepSeek 官方 API 的 OpenAI 兼容接口
+INTERVIEW_INTENT_V2_MODE="enforce"      # enforce 是当前正式行为；legacy 保留为即时回退档位
+INTERVIEW_REGENERATION_ENABLED="true"   # false 时暂停“换个问法”与版本入口；已有会话继续沿当前路径完成
+INTERVIEW_EVENT_CENTERED_MODE="legacy"  # legacy / optional / event_centered / event_recovery
+INTERVIEW_EVENT_CENTERED_STRATEGY="baseline" # 仅板块 8 Preview 才考虑 generative
+EVENT_CENTERED_GENERATIVE_MODEL="deepseek-v4-flash" # 新事件中心候选固定模型；仅受控 Preview 使用
+DEEPSEEK_API_KEY=""                     # 当前聊天 Provider 的 key
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL="deepseek-v4-pro"
+EVENT_CENTERED_JUDGE_TIMEOUT_MS="20000"
+VOLCENGINE_ARK_API_KEY=""               # 可选：历史回退兼容
+VOLCENGINE_ARK_MODEL=""                # 可选：历史回退兼容
 VOLCENGINE_ARK_ENDPOINT_ID=""          # 兼容旧路径：项目绑定 endpoint；只有确认 key 能访问该 endpoint 时再用
-VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3" # 可选：历史回退兼容
 APP_URL="http://localhost:3000"
 VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""  # embedding 模型（doubao-embedding），用于记忆系统向量嵌入
 ADMIN_USERNAMES=""                       # 逗号分隔的管理员用户名白名单，例如 "alice,bob"
@@ -219,19 +238,36 @@ npm run dev
   - AI 质量管理员 API：`/api/admin/ai-quality/*`
   - AI 质量 Cron：`/api/cron/ai-quality/evaluate`、`/api/cron/ai-quality/iterate`
 
+事件中心 MVP API：
+
+  - `POST /api/interview/event-centered/session/start`
+  - `GET /api/interview/event-centered/session/[id]`
+  - `POST /api/interview/event-centered/session/respond/stream`
+  - `POST /api/interview/event-centered/session/turn`
+  - `POST /api/interview/event-centered/journal/generate`
+  - `GET/PATCH /api/interview/event-centered/journal/[id]`
+  - `POST /api/interview/event-centered/journal/[id]/save`
+
 ### 5. 回归检查
+
+访谈意图评测、数据集建设和上线门槛统一以
+[访谈意图评测与上线事实源](docs/interview-intent-evaluation-source-of-truth.md)
+为依据。后续新增案例、调整门槛或改变发布流程时，先更新该文档的当前阶段、决策记录和新输入记录。
 
 ```bash
 npx tsc --noEmit
 npm test
 ```
 
-截至 `2026-07-20`，当前自动化现实为：
+截至 `2026-08-04`，最近一份完整候选验证记录为：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
-- 当前最新全量验证快照：`npm test` = `174` 个测试文件、`1095` 个测试通过
-- `npm run lint` 通过，保留 `44` 条既有 warning
+- GI-066 阻断修复候选：`npm test` = `268` 个测试文件、`2541/2541` 个用例通过；该候选随后因真人体验 `No-Go` 失效，数据只作为历史技术证据。
+- `npm run lint` 通过，`0 error`，保留 `46` 条仓库既有 warning
 - `npx tsc --noEmit` 通过
 - `npm run build` 通过，保留既有 ESLint warnings
+- `npx prisma validate`、隔离库 migrate status 与 `git diff --check` 通过
+- GI-066 严格 `10×3`：动作、方向和完整无问题均为 `30/30`，重复选题错误 `0`
+- GI-066 自动 `8+2`：主链 `8/8`、日志闭环 `8/8`、两条冒烟通过、运行降级 `0`
 - AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 噪声污染主仓结果
 
@@ -245,8 +281,11 @@ npm test
 - preview 部署后的分流：
   - protected preview：按 `docs/vercel-preview-production-lane.md` 里的 `vercel-curl + product-smoke.mjs` 路径执行
   - non-protected preview：可继续走 `SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public`
+- 当前 `product-smoke.mjs` 默认复用固定的 `preview_acceptance` 验收账号，仅在账号首次缺失时注册；可通过 `PRODUCT_SMOKE_USERNAME / PRODUCT_SMOKE_PASSWORD` 覆盖
 - 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
 - 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
+- 事件中心专项命令包括 `npm run eval:event-centered:batch-b` 与 `npm run eval:event-centered:generative`；板块 7 的四角度 smoke、baseline recovery 和事件日志探针使用 `scripts/run-board7-*.ts`，证据集中在 `artifacts/generative-interview-board7/2026-08-02/`
+- 事件中心当前产品状态以 [`生成式访谈重构总 Map`](docs/generative-interview-refactor-map.md) 为准；板块 6 当前评测资产与开放校准见 [`04j｜生成式质量评测 v1`](docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，板块 5 冻结输入见 [`板块 5 专项`](docs/technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)；七批次冻结规则索引见 [`04x 全局架构`](docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)。GI-066 历史候选与自动证据见 [`04u｜GI-066`](docs/technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)；板块 8 生产授权边界见 [`04p`](docs/technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)
 - production URL contract 与 AI provider 诊断 lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`；它和公开 smoke 分开，默认保持关闭，只在短时验证窗口中临时打开
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
@@ -258,7 +297,7 @@ npm test
 npm run lint
 npm run smoke:public -- http://127.0.0.1:3000
 npm run acceptance:ai-quality:seed
-node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
+node scripts/product-smoke.mjs joy 2026-05-19
 node scripts/runtime-env-readback.mjs https://your-target-host runtime
 npx tsc --noEmit
 npx prisma db push
@@ -267,6 +306,7 @@ npx prisma migrate deploy
 
 ## 文档导航
 
+- 新会话五分钟导航：`docs/README.md`
 - 项目级 agent 说明：`AGENTS.md`
 - 设计系统总纲：`DESIGN.md`（创意方向、页面形态、Do/Don't）
 - 容器与 token 工程规范：`docs/design/ui-conventions.md`（DESIGN.md 附录）
@@ -277,6 +317,12 @@ npx prisma migrate deploy
 - AI 评估、反馈与自迭代闭环：`docs/ai-quality-loop.md`
 - 托管平台部署主线：`docs/vercel-preview-production-lane.md`
 - 当前阶段 handoff：`docs/handoff.md`
+- 评测资产总入口：`artifacts/README.md`
+- 生成式访谈当前状态与讨论位置：`docs/generative-interview-refactor-map.md`
+- 板块 6 当前评测与校准：`docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md`
+- 板块 5 冻结产品输入：`docs/technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md`
+- GI-067 七批次架构与冻结结论：`docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md`
+- GI-074 评测体系与下游交接：`docs/technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md`
 - joy 理论对齐：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐：`docs/theory/fulfillment-alignment.md`
 - reflection 理论对齐：`docs/theory/reflection-alignment.md`
@@ -298,14 +344,18 @@ npx prisma migrate deploy
 - `AIOptimizationCandidate.reviewReason` 保存候选拒绝原因；对应 migration 为 `20260720153000_add_ai_optimization_review_reason`。
 - `npm run acceptance:ai-quality:seed` 默认只写本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。
 - `src/server/services/calendar/calendar.service.ts` 与 `src/server/repositories/calendar.repository.ts` 负责 `day / week / month` 记录读模型查询；`src/app/api/calendar/*` 已公开这三条只读 HTTP 路由。
+- `src/features/interview/event-centered-release.ts` 与 `src/features/interview/event-centered/generative-release.ts` 负责事件中心发布模式和策略分流；`legacy / optional / event_centered / event_recovery` 分别表达默认入口与事件中心写入范围。
+- `src/server/services/interview/event-centered-interview.service.ts` 负责事件中心问答、两段式生成和 baseline 快速降级；`src/server/services/interview/journal-event-entry.service.ts` 与 `src/app/api/interview/event-centered/journal/*` 负责事件日志生成、来源快照、编辑、暂存、保存和恢复。
+- `src/server/services/interview/event-centered-analytics.service.ts` 负责事件中心九类漏斗埋点；事件中心生成消息通过 `generationTraceId` 接入现有 AI 反馈链路。
 - `src/app/calendar/page.tsx` 与 `src/components/calendar/*` 已落地 month/week/day 路由分发、header 中区的 calendar 控制条、工作区壳层、月视图双栏检查面板、周视图 7 天对比板与日视图五维紧凑操作台。
 - `src/components/shared/site-header.tsx` 现在会在客户端测量真实 header 高度，并把结果写回 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按这个真实高度扣减剩余视口，而不是依赖固定 `4rem`。
-- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/date-range.ts`、`src/features/analysis/aggregate-trends-range.ts`、`src/features/analysis/aggregate-month.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、单页四段 scroll + scroll spy、`section=trends|dimensions|correlation|review` URL 归一化（旧 keys 自动映射）、`GET /api/analysis/range` 量化趋势读数台、`GET /api/analysis/month` 五维全景、`generateMonthNarrative` 占位叙事（预留 AI 接入口）。
+- `src/app/analysis/page.tsx`、`src/components/analysis/analysis-shell.tsx`、`src/features/analysis/view-state.ts`、`src/features/analysis/date-range.ts`、`src/features/analysis/aggregate-trends-range.ts`、`src/features/analysis/aggregate-month.ts`、`src/server/services/analysis/analysis.service.ts` 与 `src/server/repositories/analysis.repository.ts` 已落地记录分析入口、`trends / dimensions` 两段 scroll + scroll spy、旧 section keys 归一化、`GET /api/analysis/range` 量化趋势读数台、`GET /api/analysis/month` 五维记录和 `generateMonthNarrative` 占位叙事。
 - `src/features/happiness-score/schema.ts`、`src/features/happiness-score/types.ts`、`src/features/happiness-score/presentation.ts`、`src/components/interview/happiness-score-entry.tsx`、`src/server/services/happiness-score/happiness-score.service.ts`、`src/server/repositories/daily-happiness-score.repository.ts`、`src/app/api/happiness-score/route.ts` 与 `prisma/migrations/20260503143000_add_daily_happiness_score/migration.sql` 已落地幸福 8 要素日评分的数据模型、zod schema、展示顺序配置、访谈页独立评分工作区与保存接口（非未来日期可保存）。
 - `src/features/calendar/presentation.ts` 现在是 calendar 状态色、维度标识和 badge / surface / marker class 的单一视觉真相源。
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
+- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。板块 6 正在建设正式评测资产；`GI-081` 板块 7A 六题真实输出和 Codex 封存初评已经完成，等待产品负责人盲评与架构裁决。板块 7 正式实现继续等待板块 6，板块 8 等待新候选执行两模式 `4＋2` 真人验收与 Go/No-Go。GI-066 自动技术证据和真人 `No-Go` 继续作为历史证据保留。Production 保持 `legacy + baseline`。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
 - `/api/daily-journal*` 是当天整合日志的查询、生成、草稿更新和保存接口。
 - `/api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`，session hydrate 也会返回 `entryDate`。
@@ -326,7 +376,7 @@ npx prisma migrate deploy
 - joy / fulfillment / reflection / improvement / gratitude 的最终正文文风还要继续打磨。
 - 已有草稿后，新的访谈内容不会自动触发日志整理；用户手动点击“生成日志”后才会刷新。
 - 如果用户在日志整理过程中直接关闭日志面板，当前这次整理会被取消；这也是当前有意设计。
-- 如果从维度日志面板切到顶部【完整日志】当天整合日志主区，前端会先保存未暂存编辑或取消正在生成的 draft，再切换主工作区。
+- 如果从单维度日志书页切到完整日志入口，前端会先保存未暂存编辑或取消正在生成的 draft，再切换主工作区。
 - 如果从完整日志主区返回访谈，或在完整日志主区切换访谈维度，前端会先 flush 当天日志的未自动保存编辑；保存失败或内容非法时会留在完整日志工作区并展示错误。
 - 结构化线索仍然存在于系统内部，用来驱动进度、收尾和日志生成，但不会直接展示给用户。
 - `thinkingSummary` 是用户可见的浅色思路层，用来呈现 AI 对用户回复的理解和处理焦点；五个维度都会通过 `summary` SSE delta 流式展示这层内容，并且不能写成第二个正式追问。

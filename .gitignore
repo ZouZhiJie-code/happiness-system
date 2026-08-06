@@ -20,3 +20,10 @@ dist
 # Local design-tool metadata and external document export payloads
 .hallmark/
 artifacts/interview-nodes/lark-doc-integration/
+
+# Local evaluation scratch. Formal evidence stays in versioned artifact folders.
+artifacts/local-runtime/
+
+# Editor and patch backup files. Keep durable evidence in Git or formal artifacts.
+*.orig
+*.rej
