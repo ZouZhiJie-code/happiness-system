@@ -1,11 +1,13 @@
 ---
 task_id: "GI-088-v8r2-evaluation-foundation-hardening-20260810"
-status: "running"
+status: "done"
 project: "Happiness-system-codex"
 created_at: "2026-08-10T13:47:31.000Z"
+completed_at: "2026-08-10T18:26:00.000Z"
 title: "GI-088 v8r2 意图控制与评测底座全量修复"
 source: "codex"
 execution_mode: "single_session_no_intermediate_approval"
+result: "docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.result.md"
 ---
 
 # GI-088 v8r2｜意图控制与评测底座全量修复
@@ -83,6 +85,23 @@ README 与 manifest 仍记录创建时的 `0/12`。产品负责人随后在 A1 �
 - 新的高精度控制决策协议能够在不增加模型调用的情况下覆盖明确控制命令，并让模糊表达安全进入正常访谈。
 - 调用账本和可重入 finalizer 能在多实例、CAS 冲突、刷新和断线下完整保留 Provider 结果。
 - 全量程序介入复核与统一指标能够在真人批次中及时发现误接管和证据缺口。
+
+### 3.3 `2026-08-10` Preview 开门复审差额
+
+主体实现和核心零模型回归通过后，独立只读复审确认以下八项合同差额。它们都需要在最终静态门和 Preview 部署前收口：
+
+1. 明确继续能够撤销同句中的更早命令，仍需作为独立 `continue_interview` 候选进入 Trace。
+2. Provider preflight 发生在服务端原话和 Turn 持久化之前时，配置失败会失去服务端事实源。
+3. 单次调用的 `effectiveConfig/requestHash` 仍缺实际 provider、base URL host、model、endpoint 和 payload contract version。
+4. `finalization_failed` 尚未进入 `GET /session` 对账，可能让 Turn、pending 与 operation 长期停在处理中。
+5. 首次不可变导出后仍可追加操作事件；重复导出重新计算 payload 会与既有快照冲突。
+6. `targetTrigger=blocked_by_technical_failure` 尚未强制绑定同一轨迹的真实技术失败证据。
+7. 部分 store／service 错误尚未进入 typed error catalog 与 HTTP 映射，页面只能收到统一内部错误。
+8. 客户端操作事件的 `taskId/turnId` 尚未校验属于目标 run，可能形成错误血缘。
+
+同时收口一项相邻公开合同：`Gi088PublicSession` 返回真实 `runRevision`，跨标签通知携带该值；`Gi088EvaluationOperationEvent` 继续作为追加事实且不设置生命周期状态，`Gi088EvaluationOperation` 在本候选实际使用 `processing/completed/failed`；`POST /compare` 只承担历史兼容并固定返回 `GI088_COMPARISON_NOT_REQUIRED`。
+
+复审代码入口：`src/server/services/evaluation/gi088/foundation-service.ts` 的 run 对账、轨迹评价、operation event 与 export；`foundation-prisma-store.ts` 的导出快照；`http.ts` 的错误映射；`src/app/api/preview/gi088/operation-events/route.ts` 的请求血缘；Public session 与跨标签同步类型及工作台测试。
 
 ## 4. 本轮冻结版本
 
@@ -201,6 +220,7 @@ type InterviewControlDecisionV2 = {
   classifierVersion: "2026-08-10.interview-intent-v2";
   finalAction:
     | "none"
+    | "continue_interview"
     | "stop_follow_up"
     | "generate_draft"
     | "repair_question"
@@ -235,6 +255,7 @@ type InterviewControlDecisionV2 = {
 - 疲惫、烦躁、重复感、事件里的停止行为和第三方表达只作为内容或体验反馈，不直接形成 `stop_follow_up`。
 - 否定、转述、引号内容、历史叙述和被后文撤回的控制不执行。
 - 同一句包含多个控制时，保存全部候选；采用文本中最后一个仍有效的明确命令。
+- `continue_interview` 是显式控制动作：它保留自己的证据、作用对象和顺序，并撤销同一句中更早的停止、生成或切换命令；最终行为继续正常访谈，程序不额外调用模型。
 - 内容和控制并存：内容继续完整保存；明确停止时，纯控制零调用暂停，真实内容加停止最多调用一次吸收内容后强制暂停。
 - 证据不足时 `finalAction=none`，继续正常访谈，并进入程序介入候选复核；禁止静默停止。
 - 不新增模型调用，不使用 LLM 自报置信度作为程序执行依据。
@@ -282,6 +303,7 @@ type InterviewControlDecisionV2 = {
 - `callId` 主键；`runId / taskId / branch / turnId / clientTurnId / attempt / kind`
 - `status`：`reserved / dispatched / provider_succeeded / provider_failed / finalized / interrupted_unknown_dispatch / finalization_failed / superseded`
 - `parentCallId / retryTrigger / requestHash / effectiveConfig`
+- `effectiveConfig` 至少保存实际 `provider / baseUrlHost / model / endpoint / payloadContractVersion` 与 Thinking、JSON、超时、恢复等运行参数；任一字段变化都必须改变该次 `requestHash` 以及所属 Runner／Execution 指纹。
 - `baseAssistantMessageId / semanticStateBeforeHash`
 - `executionDeadlineAt / automaticDeadlineAt`
 - `reservedAt / dispatchedAt / providerCompletedAt / finalizedAt`
@@ -293,7 +315,7 @@ type InterviewControlDecisionV2 = {
 
 ### 8.2 调用生命周期
 
-1. Provider 实例化、静态配置和密钥存在性检查在预约前完成；失败时实际调用数为 `0`，不留下 pending Turn。
+1. 用户原话、对话锚点和幂等操作先持久化。Provider 实例化、静态配置和密钥存在性检查在调用账本预约前完成；失败时实际调用数为 `0`、不创建虚假 Call，并把该用户 Turn 收口为可恢复的 no-call 配置失败。服务端原话是事实源，浏览器 outbox 只承担额外恢复。
 2. `reserveTurnWithCall` 在一个数据库事务中完成 run revision 条件更新、Turn pending 与 ledger `reserved` 写入。
 3. 调用前通过条件更新取得 `reserved → dispatched`；只有成功取得者可以请求 Provider。
 4. 调用预算只统计 `dispatched` 及其后续状态，预约失败不计模型调用。
@@ -304,7 +326,8 @@ type InterviewControlDecisionV2 = {
 9. Turn 已被截止回收或被用户强制放弃时，迟到结果记为 `superseded`，可以补写安全诊断，禁止提交 assistant 或语义状态。
 10. Provider、解析、来源补全、合同验证、状态应用和最终保存全部进入统一异常收口。Provider 结果写账本遇到短暂数据库错误，按固定 `3` 次、`250ms/500ms/1000ms` 退避重试；持续失败时向调用方返回 `RESULT_PERSISTENCE_UNKNOWN`，原 ledger 保持 dispatched，数据库恢复后由对账转为 `interrupted_unknown_dispatch`，禁止自动再次调用模型并进入人工处置。
 11. 暂时性 CAS 冲突继续保持 `provider_succeeded/provider_failed`，供 finalizer 对账重试；`finalization_failed` 只表示确定性、无法自动处理的提交错误。
-12. 当前轨迹存在 `pendingTurnId` 时，服务端拒绝人工提问分类并返回 `GI088_REVIEW_DURING_PROCESSING`；页面同步禁用提交。
+12. `GET /session` 对账必须识别 `finalization_failed`：保留已经落账的 Provider 结果和 Call 事实，把 Turn 收口为稳定的 finalization failure，清除 `pendingTurnId`，将对应 operation 记为 `failed`，开放部分任务终止和导出；读取接口不重新调用 Provider。修复确定性代码后，显式管理式 re-finalize 可以复用原结果，且不得改变原 Call 身份。
+13. 当前轨迹存在 `pendingTurnId` 时，服务端拒绝人工提问分类并返回 `GI088_REVIEW_DURING_PROCESSING`；页面同步禁用提交。
 
 ### 8.3 提交绑定所见对话
 
@@ -315,6 +338,7 @@ type InterviewControlDecisionV2 = {
 - 基线过期返回 `GI088_TURN_OUT_OF_DATE`，Provider 调用为 `0`；原话继续留在草稿／outbox，页面提示读取最新对话后重新确认。
 - `/question-review` 携带 `clientOperationId` 与 observation fingerprint。
 - `/end-trajectory` 携带 `clientOperationId` 与 `reviewSnapshotFingerprint`。
+- `/end-trajectory` 选择 `targetTrigger=blocked_by_technical_failure` 时，服务端必须在同一轨迹找到 `provider_failed / interrupted_unknown_dispatch / finalization_failed / RESULT_PERSISTENCE_UNKNOWN / no-call provider preflight failure` 等冻结技术事实；缺少证据时返回 typed conflict，模型调用为 `0`。
 - 轨迹在评测人查看后发生变化时返回 `GI088_REVIEW_SNAPSHOT_OUT_OF_DATE`；重新读取后才能评价。
 - 相同 `clientOperationId` 的重复提交幂等返回已经保存的结果。
 
@@ -395,7 +419,7 @@ type Gi088GateStatus =
 - 草稿与 outbox 分开。outbox 改为多条 map，键包含 `runId/taskId/branch/kind/clientTurnId`；不同任务或操作不能互相覆盖。
 - 同一 `runId/taskId/branch/kind/baseAssistantMessageId/contentHash` 已存在 unresolved outbox 时，刷新、流丢失或再次点击发送必须复用原 `clientTurnId`；只有正文、base anchor 或确认状态变化后才能生成新 ID。
 - `sessionStorage` 按标签页隔离；跨标签页并发风险由服务端 pending、base anchor 和 snapshot fingerprint 最终保护。
-- `BroadcastChannel` 只负责提示“另一标签页已经更新，请读取最新状态”，不承担正确性或调用幂等。
+- `Gi088PublicSession` 返回真实 `runRevision`；`BroadcastChannel` 携带 `runId/runRevision`，只负责提示“另一标签页已经更新，请读取最新状态”，不承担正确性或调用幂等。revision 缺失的历史只读投影只发送无版本刷新提示。
 - 网络或流响应丢失时先 GET 最新 session；禁止通过重复发送猜测状态。
 
 ### 9.7 错误目录与操作事件
@@ -403,9 +427,11 @@ type Gi088GateStatus =
 - 新建唯一 typed error catalog。每个 `Gi088EvaluationError` 必须包含中文原因、数据是否已保存、影响范围、恢复动作和 `retryable`。
 - API 统一返回结构化 `issue.action`，工作台据此展示“读取最新状态／回到当前任务／重新确认提交／再次生成／封存并导出”。
 - TypeScript `satisfies Record<Gi088ErrorCode,...>` 保证新增错误缺少文案时编译失败。
+- service、store 和 route 暴露的全部错误码统一进入 typed error catalog 与 HTTP 映射；operation payload conflict、不可变导出冲突、程序介入冲突、技术阻断证据缺失等都返回准确状态码、中文原因、数据保存情况和恢复动作。CI 枚举可抛错误与 store 错误，存在漏项时直接失败。
 - 新增脱敏 `Gi088EvaluationOperationEvent`，记录 `runId/taskId/turnId/route/code/time` 和安全摘要；禁止保存隐藏推理、密钥、完整用户原话和完整模型正文。
 - 并发冲突、陈旧提交、恢复中断、导出失败、草稿恢复等真实评测摩擦进入导出。
-- 新增 best-effort `POST /api/preview/gi088/operation-events` 供客户端上报草稿恢复、下载失败等浏览器侧事件。请求携带 `clientOperationId` 并幂等写入独立追加表；它不能推进 run revision，也不能阻塞聊天、评价或导出。页面卸载导致最后一条事件未上报属于可接受观测损失。
+- 新增 best-effort `POST /api/preview/gi088/operation-events` 供客户端上报草稿恢复、下载失败等浏览器侧事件。请求携带 `clientOperationId` 并幂等写入独立追加表；它不能推进 run revision，也不能阻塞聊天、评价或导出。`taskId` 存在时必须属于该 run 的冻结数据集，`turnId` 存在时必须属于该 run 与 task；错误血缘返回 typed conflict。页面卸载导致最后一条事件未上报属于可接受观测损失。
+- `Gi088EvaluationOperationEvent` 是追加事实，不设置 lifecycle status；`Gi088EvaluationOperation` 在 v8r2 实际写入 `processing/completed/failed`，每条写操作都必须离开 processing 终态。
 
 ### 9.8 导出与下载
 
@@ -413,6 +439,7 @@ type Gi088GateStatus =
 - 导出包含完整可见对话、逐轮／程序介入分类、轨迹评价、调用血缘、安全诊断、gate 状态／原因、修订历史和操作事件。
 - 导出继续排除隐藏推理正文、密钥和未批准 header。
 - 导出 v0.6 保留 v0.5 历史解析，禁止版本回退。返回形状固定为 `{payload, receipt}`：SHA256 只计算 canonical payload 字节，receipt 不参与哈希；记录数来自同一不可变快照。客户端重算相同 payload 后才显示 `verified=true`。
+- 首次导出在同一事务中冻结 `snapshotCutoffAt`、canonical payload 和 receipt。重复下载直接返回首次保存的 payload 与 receipt，不重新组装或重算；第一次快照之后追加的下载失败等 operation event 继续保存在独立事件表，并明确排除在该 run 已冻结的导出证据边界之外。
 - 导出请求与下载操作事件不进入本次已经冻结的 payload 快照，保证同一终态 run 重复下载得到相同 payload hash；页面自动下载后永久保留“再次下载”。
 
 ## 10. 统一指标计算器
@@ -500,12 +527,13 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 | `POST /turn` | 增加 `runId/baseAssistantMessageId`；保留 `clientTurnId` |
 | `POST /retry` | 增加 `runId/clientOperationId`；v8r2 只接受人工第三次生成，自动恢复由服务端链执行 |
 | `POST /question-review` | 增加 `runId/clientOperationId/observationFingerprint`，支持终态前审计修订 |
-| `POST /end-trajectory` | 增加 `runId/clientOperationId/reviewSnapshotFingerprint` |
+| `POST /end-trajectory` | 增加 `runId/clientOperationId/reviewSnapshotFingerprint`；技术阻断判断绑定同轨迹失败事实 |
 | `POST /abort-current-task` | 保存部分证据并终止当前项 |
-| `POST /early-stop`、`/seal`、`/compare` | 增加 `runId/clientOperationId` |
-| `POST /operation-events` | best-effort 幂等上报客户端摩擦，不推进 run revision |
-| `GET /export` | 必填 `runId`，返回 v0.6 `{payload,receipt}` 与 SHA256 收据 |
-| `Gi088PublicSession` | 增加 run、gate、dialogueAnchor、reviewSnapshot、metrics、intervention reviews |
+| `POST /early-stop`、`/seal` | 增加 `runId/clientOperationId` |
+| `POST /compare` | 历史兼容占位；v8r2 固定返回 `GI088_COMPARISON_NOT_REQUIRED`，模型调用为零 |
+| `POST /operation-events` | best-effort 幂等上报客户端摩擦，校验 run/task/turn 血缘，不推进 run revision |
+| `GET /export` | 必填 `runId`，首次冻结 v0.6 `{payload,receipt}`；重复下载返回同一快照与 SHA256 收据 |
+| `Gi088PublicSession` | 增加 run、`runRevision`、gate、dialogueAnchor、reviewSnapshot、metrics、intervention reviews |
 | `Gi088Turn/Call` | 增加 ledger 状态、执行截止、base anchor 和安全 finalization 摘要 |
 
 历史请求与字段只用于历史解析；新 v8r2 工作台统一使用上述接口。
@@ -518,13 +546,15 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 
 - 第 7.3 节全部原话及语义近邻。
 - GI-088 与目标正式访谈服务共享适配器一致性。
+- 明确 `continue_interview` 保存独立候选、证据和顺序，并取消同句中更早的停止、生成或切换动作。
 - 疲惫、拒答、停止、跳过、修复、生成和切换的作用对象、否定、转述与撤回。
 - 用户未停止时模型 `pause` 被保护并最多自动纠正一次。
 - A6、A9 保持访谈开放；明确停止零调用或混合停止最多一次调用。
 
 ### 14.2 事务与并发
 
-- Provider factory 失败：实际调用 `0`，无 orphan processing。
+- Provider factory 失败：服务端保留用户原话和 no-call 失败 Turn，实际调用 `0`、Call 记录 `0`、无 orphan processing。
+- provider、base URL host、model、endpoint 或 payload contract 任一变化都会改变该次 request hash、Runner fingerprint 和 Execution fingerprint。
 - Provider 挂起期间另一标签页保存旧轮分类：回答和分类都保留，Provider 只调用一次。
 - finalizer 注入 `1～4` 次 CAS 冲突后成功；第 5 次失败保留可重入结果，模型不重调。
 - 同 `clientTurnId` 同 payload 幂等；同 ID 不同 payload 返回冲突；不同 ID 同 base 并发只有一个 dispatch。
@@ -532,11 +562,15 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 - 在 reserved、dispatched、provider_succeeded 和 finalize 后分别断线；刷新最终收敛，用户消息一次、assistant 最多一次。
 - Provider、解析、补全、校验、状态应用、结果落账和 finalizer 各处异常都有明确终态。
 - Provider 结果写账本短暂失败按固定退避恢复；持续失败进入 `RESULT_PERSISTENCE_UNKNOWN`，无自动重复调用。
+- `finalization_failed` 经 `GET /session` 对账后清除 pending，Turn 与 operation 进入稳定失败终态；原 Provider 结果保留，读取调用数为零。
 - 自动恢复到 90 秒零 1 毫秒时 `retrying/processing=0`；人工第三次获得独立 60 秒。
 - 两标签页同时恢复只消费一次额度；总 dispatch 不超过三次。
 - 自动恢复和人工恢复各自并发预约时，只创建一个唯一 attempt，恢复状态与调用账本原子一致。
 
 ### 14.3 人工证据与运行治理
+
+- `blocked_by_technical_failure` 有同轨迹冻结技术事实时可提交；缺少事实时返回 typed conflict 且评价不落库。
+- operation event 的 task／turn 血缘属于目标 run 时写入；跨 run、未知 task 或未知 turn 全部拒绝且不推进 run revision。
 
 - 旧页面基于 U2 评价，另一页新增零问题 U3；旧评价返回 SNAPSHOT_OUT_OF_DATE。
 - protected ask 未展示时不进入提问必填；恢复后可见 ask 正常进入。
@@ -568,6 +602,9 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 - 旧 run 在新部署下只读导出成功；隐藏推理正文仍不可读取、迁移或导出。
 - 历史数据集使用各自不可变任务包重算一致。
 - 现有第 13、25 次提交回归继续通过；不新增第 201 次或容量性能验收。
+- 首次终态导出后追加下载失败 operation event，再次下载仍逐字节返回首次 payload 与 receipt；篡改一个字节时客户端验签失败。
+- service、store 与 route 的每个可抛错误码都存在 typed catalog、HTTP 状态和恢复动作；`POST /compare` 的兼容占位行为固定且不改变 run。
+- Public session 的 `runRevision` 随真实 run 变化，跨标签通知不再发送伪造或固定空 revision。
 
 ## 15. 验收命令与开门标准
 
@@ -590,6 +627,7 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 - 已经成功写入调用账本的 Provider 结果丢失数 `0`；数据库持续不可写时进入 `RESULT_PERSISTENCE_UNKNOWN`，模型自动重调数 `0`。
 - 陈旧回答和陈旧评价触发 Provider 调用数 `0`。
 - 超过执行截止加 5 秒的 `processing` 数 `0`；不确定派发统一进入 `interrupted_unknown_dispatch`。
+- `finalization_failed`、operation 与 Turn 的孤儿 processing 数 `0`。
 - 每段原话 assistant 提交不超过 `1`、语义状态提交不超过 `1`、真实 dispatch 不超过 `3`。
 - 所有自动／人工恢复均有父调用、触发原因和实际配置。
 - 相关测试、Typecheck、ESLint、两套 Prisma validate、Production build、Preview build 全部通过。
@@ -614,11 +652,25 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 
 同时更新：
 
+- `AGENTS.md`
+- `README.md`
+- `PRODUCT.md`
+- `docs/README.md`
 - `docs/generative-interview-refactor-map.md`
+- `docs/interview-product-optimization-map.md`
+- `docs/interview-event-centered-product-spec.md`
+- `docs/interview-event-centered-refactor-discussion-map.md`
 - `docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md`
+- `docs/architecture.md`
+- `docs/integration-guide.md`
+- `docs/operator-runbook.md`
+- `docs/handoff.md`
+- `docs/vercel-preview-production-lane.md`
 - `artifacts/README.md`
 - `artifacts/generative-interview-board7/README.md`
 - 当前问题台账：新增本次意图误停、事务、快照、复核、指纹和工作台问题；分别保存产品负责人判断、Codex 初评、已确认根因和待验证假设。
+
+上述文档在实现与验证后写入实际合同、验证结果和当前停止点；计划阶段保持为进行中，不提前记录 Preview、部署或新 run 已完成。
 
 当前 v8r1 事故只保存脱敏正式总结；完整对话、数据库快照和用户原话只进入 `artifacts/local-runtime/`。
 
@@ -664,4 +716,4 @@ Git commit、构建产物和 Vercel Deployment ID 作为部署证明绑定执行
 
 在新 Codex 会话中发送：
 
-> 执行本地任务 `docs/ai-tasks/inbox/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`。完整读取任务文件及其规定的事实源，继承其中已经确认的产品结论，不重新发起产品讨论。P0 与 P1 在同一个会话全部完成，中间不等待我再次授权；容量超过约 200 轮的优化明确排除。完成代码、迁移、零模型与真实评测库验证、历史兼容、全绿静态门、不可变版本、新指纹、Preview 部署和全新 `0/12` Thinking high 批次后暂停。禁止模型探针、真人内容提交、Production 变更和隐藏推理持久化。
+> 执行本地任务 `docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`。完整读取任务文件及其规定的事实源，继承其中已经确认的产品结论，不重新发起产品讨论。先收口当前八项 Preview 开门审计差额：明确继续独立进入 Trace；Provider preflight 失败时服务端保留原话与 no-call Turn；per-call 请求身份覆盖实际 Provider／Host／模型／endpoint／payload 合同；`finalization_failed` 进入 session 对账并清除孤儿 pending；重复导出返回首次不可变快照；技术阻断评价绑定同轨迹失败事实；全部 store／service 错误进入 typed catalog 与 HTTP 映射；operation event 校验 run／task／turn 血缘。同步补齐 Public session 的真实 `runRevision`，固定 operation/event 与 `/compare` 的兼容合同。随后把 P0 与 P1 在同一个会话全部完成，中间不等待我再次授权；容量超过约 200 轮的优化明确排除。完成代码、迁移、零模型与真实评测库验证、历史兼容、全绿静态门、不可变版本、新指纹、Preview 部署和全新 `0/12` Thinking high 批次后暂停。禁止模型探针、真人内容提交、Production 变更和隐藏推理持久化。

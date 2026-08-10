@@ -22,7 +22,7 @@
 - `EVENT_CENTERED_GENERATIVE_MODEL` 用于候选链路独立锁定模型；新事件中心候选固定为 `deepseek-v4-flash`，共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供。
 - `EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
 - Board 8 批准前，Production 保持 `legacy + baseline`；已有事件与日志继续可读。
-- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v7r4 保留历史证据；v8 以 `1/4 early_stopped` 获产品通过。当前 v8r1 最终 `12` 项私有 Preview 已 READY，`0/12` 空白批次回读通过。Production 接入继续保持关闭并使用 `legacy + baseline`。
+- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v7r4 保留历史证据；v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，原 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效调用只读保留。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本和全绿静态门；行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项 Thinking high 真人验收。真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除；Production 接入保持关闭并使用 `legacy + baseline`。
 
 ## 2. 路由速查
 
@@ -76,15 +76,18 @@
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
-| `GET` | `/api/preview/gi088/session` | 读取当前批次、12 项进度、活动任务、双分支和 Trace |
-| `POST` | `/api/preview/gi088/start-task` | 冻结 `A0＋U1`，启动 off；完成 off 裁决后从同起点启动 high |
-| `POST` | `/api/preview/gi088/turn` | 向当前分支提交一次真实用户输入；`clientTurnId` 保护重复提交 |
-| `POST` | `/api/preview/gi088/retry` | 产品负责人显式重试一次技术失败，原失败继续保留 |
-| `POST` | `/api/preview/gi088/end-trajectory` | 结束成功或技术失败轨迹，写入感受、质量和理由 |
-| `POST` | `/api/preview/gi088/compare` | 在 off／high 都完成后写入配置比较 |
-| `POST` | `/api/preview/gi088/seal` | 完成 12 项后封存整批 |
-| `GET` | `/api/preview/gi088/export` | 只读导出已封存批次 |
-| `POST` | `/api/preview/gi088/smoke` | 用独立作用域和 UUID 各执行一次 off／high 技术冒烟 |
+| `GET/POST` | `/api/preview/gi088/runs` | 列出 run，或以 `clientOperationId` 幂等创建同候选的新 run；创建调用数为零 |
+| `GET` | `/api/preview/gi088/session?runId=&taskId=` | 读取指定 run、任务、真实 `runRevision`、gate 和 Trace；历史指纹进入只读投影 |
+| `POST` | `/api/preview/gi088/start-task` | 在指定 run 启动 Thinking high 任务并写入操作账本 |
+| `POST` | `/api/preview/gi088/turn` | 绑定 `clientTurnId` 与 `baseAssistantMessageId` 提交真实输入 |
+| `POST` | `/api/preview/gi088/retry` | 只接受用户主动的第三次生成；自动恢复由服务端执行 |
+| `POST` | `/api/preview/gi088/question-review`、`program-intervention-review`、`end-trajectory` | 绑定观察或轨迹快照提交、修订人工证据 |
+| `POST` | `/api/preview/gi088/abort-current-task` | 保留部分证据并终止当前项，后续任务仍可采集 |
+| `POST` | `/api/preview/gi088/early-stop`、`seal` | 分别收口部分 run 或完整 run |
+| `POST` | `/api/preview/gi088/compare` | 历史兼容占位；v8r2 固定返回 `GI088_COMPARISON_NOT_REQUIRED` |
+| `POST` | `/api/preview/gi088/operation-events` | 幂等保存脱敏客户端摩擦，并校验 run／task／turn 血缘 |
+| `GET` | `/api/preview/gi088/export?runId=` | 首次冻结 v0.6 payload 与 receipt；重复下载返回同一快照 |
+| `POST` | `/api/preview/gi088/smoke` | 历史隔离技术冒烟入口；v8r2 开门流程不调用 |
 
 ### 2.4 当天整合日志
 
@@ -724,11 +727,27 @@ git diff --check
 
 ### 10.2 GI-088 真人交互开发评测
 
-当前本地运行器版本为 `2026-08-09.gi088-human-eval-v2-diagnostic`。历史 Preview 的 v1 批次保持 `8/12` 只读快照。每项先完成 Thinking 关闭轨迹，再从相同 `A0＋U1` 建立 high 独立轨迹。页面任务说明、目标触发提示和判定标准只对评测人可见，不进入模型上下文。
+当前候选版本名为 `2026-08-10.gi088-human-eval-v8r2-foundation-hardening`，服务版本为 `2026-08-10.gi088-evaluation-foundation-service-v8r2`。最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`。当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。运行配置保持官方 `deepseek-v4-pro`、Thinking high、`json_object` 与 `provider_default`。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r1 的批次、双分支、错误、恢复和导出继续只读兼容；当前等待产品负责人完成 12 项真人验收。
 
-模型请求只在 `GI088_MODEL_CALL_SCOPE=batch` 且 `GI088_AUTHORIZED_EXECUTION_FINGERPRINT` 精确匹配当前执行指纹时发出。两组请求都省略应用层 `max_tokens`，最终仍受 DeepSeek 模型自身输出边界约束。每次用户提交对应一次请求，当前 diagnostic 基线的质量失败和技术失败均不自动重试。
+v8r2 API 以 `runId` 明确一次真人运行：
 
-技术失败可以选择手动重试，也可以保留当前失败后直接完成轨迹评价。同一 `clientTurnId` 和相同输入用于响应丢失后的幂等恢复；产品负责人修改输入后使用新请求身份。完整任务边界可以提前结束整批，部分导出会标记已完成任务与 `not_run` 任务。
+- `GET/POST /api/preview/gi088/runs`：列出 run；创建时必须提供 `clientOperationId`，同一冻结候选终态后可创建下一 `runOrdinal`。
+- `GET /api/preview/gi088/session?runId=&taskId=`：读取指定 run 和任务；历史指纹不匹配时返回只读投影并继续允许导出。
+- `POST /api/preview/gi088/start-task`：提交 `runId / taskId / initialUserMessage / clientOperationId`，仅开放 high。
+- `POST /api/preview/gi088/turn`：提交 `runId / taskId / content / clientTurnId / clientOperationId / baseAssistantMessageId`；同一操作先做幂等回放，再校验对话锚点，陈旧标签页返回 `GI088_TURN_OUT_OF_DATE` 且模型调用为零。
+- `POST /api/preview/gi088/retry`：只接受产品负责人主动触发的 `manual_after_auto_recovery`；自动恢复由服务端执行并与首次调用共享截止。
+- `POST /api/preview/gi088/question-review`、`program-intervention-review`、`end-trajectory`：分别绑定 observation 或 review snapshot fingerprint；终态前的人工修订追加保存旧值、新值和原因。
+- `POST /api/preview/gi088/abort-current-task`：把当前项收口为 `aborted_with_partial_evidence`，保留对话和 Trace，并让后续项保持可采集。
+- `POST /api/preview/gi088/early-stop`、`seal`：分别结束部分 run 或完整 run；collection status 与 gate status 独立保存。
+- `POST /api/preview/gi088/compare`：只读兼容旧双分支协议；v8r2 固定返回 `GI088_COMPARISON_NOT_REQUIRED`。
+- `GET /api/preview/gi088/export?runId=`：终态 run 首次返回并冻结 `{ payload, receipt }`，导出版本为 `2026-08-10.gi088-readonly-export-v0.6`；SHA256 只覆盖 canonical payload，receipt 不参与哈希；重复下载直接返回首次快照。
+- `POST /api/preview/gi088/operation-events`：以独立追加记录保存草稿恢复、下载失败等安全操作摩擦，校验 task／turn 属于 run，不推进 run revision，也不阻断聊天或导出。首次导出后的新事件留在事件表，不改变已冻结 payload。
+
+每次 Provider 调用在 `Gi088EvaluationCallLedger` 中按 `reserved → dispatched → provider_succeeded/provider_failed → finalized` 留痕。Provider 返回后先保存结果，再由可重入 finalizer 提交可见回答与语义状态；CAS 冲突、刷新和断线只重试落账或 finalizer。实际调用预算只统计 `dispatched` 及其后续状态。v8r2 已补齐 preflight 原话、完整请求身份和 `finalization_failed` session 对账，并通过零模型、真实评测库与历史兼容验证。
+
+每个用户提交最多经历首次、一次自动恢复和一次人工再次生成。首次与自动恢复共享 `90` 秒，人工再次生成获得独立 `60` 秒。页面刷新后对任意 pending turn 只读轮询；服务端根据 `executionDeadlineAt / automaticDeadlineAt` 对账，浏览器关闭不会改变已经消费的调用额度。
+
+控制决策把访谈内容和控制动作分开保存。明确继续可以撤销同一句中更早的停止或生成动作，并作为独立 `continue_interview` 候选进入证据 Trace；明确停止只有在说话人、目标、肯定极性和本人直接表达同时成立时执行。程序接管的停止、继续或配置失败全部进入 intervention review；技术阻断评价必须绑定同轨迹冻结失败事实，人工复核完成后再进入质量裁决。
 
 空内容探针默认只做本地血缘检查：
 
@@ -737,7 +756,7 @@ npm run eval:gi088:probe:empty:inspect
 npm run eval:gi088:probe:thinking:inspect
 ```
 
-空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；当前运行资产以 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md) 为准。
+空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；v8r1 事故与部署快照见 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。v8r2 最终 Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、调用 `0`、真人提交 `0` 和质量未评价只作为脱敏排除记录。当前结构、证据和发布边界见 [`GI-088 v8r2 证据包`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
 
 ## 11. 通用错误语义
 

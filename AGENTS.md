@@ -23,7 +23,7 @@
 - AI 质量改进当前默认参与，注册与登录会写入或校准质量政策版本和合规时间；兼容退出请求返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`，前端设置页不提供退出开关。
 - `npm run acceptance:ai-quality:seed` 默认只允许本地数据库；远程隔离测试库需要显式设置 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`，production 环境会主动终止。`2026-07-20` 已清理共享生产库中的固定验收账号、Trace、反馈、候选与运行记录，生产数据继续只承载真实用户链路。
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续部署、验收、回调和文档入口统一使用 `dailylight.chat`。
-- 当前产品与事件中心候选的聊天 Provider 事实源为 DeepSeek 官方 API：运行时使用 `openai` 兼容适配器，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值，GI-088 v8r1 私有评测候选使用独立的 `deepseek-v4-pro` 运行策略。Ark 适配器及 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误只作为历史证据。guarded `GET /api/debug/runtime-env` 支持返回 `ai` 诊断块和 `?probe=1` 的最小 provider 探针，但 production 默认保持关闭，只在短时验证窗口中临时打开。
+- 当前产品与事件中心候选的聊天 Provider 事实源为 DeepSeek 官方 API：运行时使用 `openai` 兼容适配器，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值，GI-088 v8r1 与 v8r2 私有评测候选使用独立的 `deepseek-v4-pro` 运行策略。Ark 适配器及 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误只作为历史证据。guarded `GET /api/debug/runtime-env` 支持返回 `ai` 诊断块和 `?probe=1` 的最小 provider 探针，但 production 默认保持关闭，只在短时验证窗口中临时打开。
 - 生成式访谈事件中心已具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。历史策略继续保留代码兼容与回归资产；当前产品范围、提问策略和验收状态统一以 `docs/generative-interview-refactor-map.md` 及其当前专项为准，兼容代码不直接代表当前产品结论。
 - 事件中心知识治理固定区分三层：明确确认或验证的内容进入当前事实，未定性的内容保留“待讨论 / 待校准”，失效候选和失败结果保留为历史证据。自动技术通过不能替代真人体验裁决，历史候选不能承担当前发布授权。
 - 事件中心发布模式为 `legacy / optional / event_centered / event_recovery`；Production 继续保持 `legacy + baseline`，`optional + generative` 只作为板块 8 内部 Preview 与人工授权目标。
@@ -108,7 +108,8 @@
 2. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
 3. 总 Map 当前链接的专项文档：当前板块 6 使用 `04j-generative-quality-evaluation-v1.md`；
 4. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
-5. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)：GI-088 当前最终 12 项真人验收、Thinking high 运行配置、执行指纹与 `0/12` 停止点。v1 的 `8/12` 复盘继续从 `artifacts/README.md` 进入。
+5. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)：GI-088 v8r2 当前证据包与后续真人验收入口。P0／P1、最终初始化幂等、全绿静态门与不可变版本已收口；Preview 已 `READY`，全新 Thinking high run 停在 `0/12`、`gate=pending`、模型调用 `0`，等待产品负责人完成 12 项真人验收；
+6. [`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`](./docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)：v8r2 已完成的实施范围、合同与停止条件。v8r1 A1 误停聊事故及其历史只读 run 继续从 `artifacts/README.md` 进入。
 
 当前检索关键词：`GI-088`、`GI-087`、`板块 6`、`board6-calibration`、`board7b-working-task-v1`、`legacy + baseline`。GI-081、GI-083、GI-084 开发失败血缘、GI-085／086 No-Go、历史 `GI-066`、旧 Board 7/8 与 Batch B 候选统一从 `artifacts/README.md` 进入，并保持各自的诊断或历史证据身份。
 
@@ -668,7 +669,7 @@ gratitude 理论翻译基线：
 - gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
-- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080`，方法 v1.0 保持冻结。GI-087 保留为 GI-088 基础候选。GI-088 v0 历史批次累计 `9` 次正式调用并只作历史证据；v1 执行指纹为 `4b658013…f70b2`，产品负责人完成 A1～A8 共 `8/12` 后主动提前结束。前 8 项评价与比较完整并形成只读封存快照，系统状态仍为 `running`、`sealedAt=null`。v1 共 `66` 次调用，其中 high 出现 `12` 次空内容、`7` 次超时与 `17` 次手动重试；产品负责人和 Codex 均观察到 high 内容优势。当前等待产品负责人确认下一唯一主要影响因素；新模型调用、Preview 批次和 Production 变化继续等待单独授权。板块 7 正式接入等待板块 6，板块 8 等待新候选验证并采用两模式 `4＋2` 验收。Production 继续使用 `legacy + baseline`。
+- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080`，方法 v1.0 保持冻结。GI-087 保留为 GI-088 基础候选，v0～v8 继续承担历史证据。v8r1 的历史 run 只读保留：活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；A1 控制误停使该 run 退出最终准入。v8r2 已收口意图控制、调用落账、快照绑定、人工证据治理、工作台恢复、八项 Preview 开门差额和主要零模型／真实评测库／历史兼容验证；最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `running / 0 of 12 / gate=pending / high_only / high / calls=0`，当前暂停等待 12 项真人验收。旧预发布 v8r2 run 已行政 `early_stopped`，其 `0/12`、零调用、零真人和质量未评测只作为排除记录。质量与发布未裁决。约 `200` 轮以上的容量优化继续留在本轮边界外；板块 7 正式接入与板块 8 继续等待；Production 使用 `legacy + baseline`。
 - GI-088 只在私有 Preview 中开放：先通过 Vercel Deployment Protection，再通过 Daily Light 登录与 `ADMIN_USERNAMES ∩ GI088_EVALUATOR_USERNAMES`。应用登录和评测数据使用同一专属 Preview 物理库的 `gi088_app_preview` / `gi088_evaluation_v0` 两个 schema；完整环境、授权和排障契约见 `.env.preview.example`与 `docs/operator-runbook.md`。
 - 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索和画像页面 `/profile`；当前由 `memoryEnabled` 设置项控制，默认关闭。`2026-08-02` 的全量类型检查与测试基线均已通过。
 

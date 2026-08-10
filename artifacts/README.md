@@ -2,7 +2,7 @@
 
 最后更新：`2026-08-10`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8 以 1/4 early_stopped 收口并获产品通过；v8r1 Preview READY，0/12 空白批次等待最终真人验收`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8 以 1/4 early_stopped 收口并获产品通过；v8r1 A1 控制误停单例阻断及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门和 READY Preview 已形成，run b816d468…e78cd 停在 running 0/12、gate pending、high_only/high、calls 0；等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
 
 ## 1. 为什么需要这份规则
 
@@ -26,6 +26,9 @@
 8. 产品负责人最终裁决。
 
 当前入口：
+
+- [GI-088 v8r2 当前真人验收与正式证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [GI-088 v8r2 已完成实施合同](../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 
 - [板块 6 首批校准资产](./generative-interview-board6/2026-08-06/README.md)
 - [GI-088 真人交互开发评测集 v1 与透明 Thinking 对照](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)
@@ -68,9 +71,10 @@
 - [GI-088 v8 manifest](./generative-interview-board7/2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-human-eval-v8-question-decision-pro-manifest.json)
 - [GI-088 v8 静态验证](./generative-interview-board7/2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-question-decision-static-validation.md)
 - [GI-088 v8 真人验收脱敏收口](./generative-interview-board7/2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-human-eval-closure-summary.md)
-- [GI-088 v8r1 最终 12 项独立验收](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)
+- [GI-088 v8r1 最终 12 项候选、部署快照与 A1 阻断](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)
 - [GI-088 v8r1 manifest](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-human-eval-v8r1-final12-manifest.json)
 - [GI-088 v8r1 静态验证](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
+- [GI-088 v8r2 评测底座加固、Preview 与新 0/12 run](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 空内容配对探针 manifest](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
 - [GI-088 空内容配对探针脱敏结果](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-result.json)
 - [GI-088 空内容配对探针裁决](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-decision.md)

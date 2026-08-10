@@ -1,6 +1,6 @@
 # GI-088｜v8r1 最终 12 项独立验收
 
-状态：`Preview READY；0/12 空白批次已回读；等待产品负责人真人验收`
+状态：`创建时 Preview READY、0/12；A1 真人轨迹确认控制误停单例阻断；v8r1 退出最终通过候选`
 
 评测版本：`2026-08-10.gi088-human-eval-v8r1-final12`
 
@@ -27,6 +27,15 @@ Production：`legacy + baseline`
 v8 A1 完成 `10` 次用户提交后由产品负责人确认通过，并以 `1/4 early_stopped` 收口。零问题后继续提供实质内容时，AI 已重新找到有价值的下一问；阶段 3 深化、来源补全、单一回答焦点和最终暂停均形成真人正向证据。
 
 末轮“很好，就聊到这吧”产生一次多余的 V4 Pro 调用。v8r1 将简短礼貌回应与明确停止的组合纳入纯停止识别，随后直接进入最终 12 项，不增加中间真人批次。
+
+## 1.1 真人事故与收口
+
+- **产品负责人判断**：A1 体验变差，属于单例阻断，任务目标未触发；停止继续运行 v8r1 最终批次。
+- **Codex 初评**：模型已经返回有效承接，程序随后把事件内容中的沟通负担升级为停止当前访谈，并覆盖了继续提问路径；v8r1 无法承担最终通过证据。
+- **已确认根因**：旧意图规则使用宽泛疲惫词面，缺少说话人、作用对象、否定、转述和撤回判断；GI-088 又把 `fatigue_feedback` 直接升级为停止资格。旧 Interview Skill 同时允许模型在用户未明确停止时自行暂停，与产品负责人最新规则冲突。
+- **待验证假设**：v8r2 的高精度控制决策、程序介入复核和共享评测底座能够消除同类误停，并在最终 12 项中保持连续追问。
+
+`2026-08-10` 专用评测库只读回读：run `5123d795-5c19-408d-9b98-7767eaa7892c` 状态为 `running`，活动任务 A2，已完成轨迹 `1`，Provider 调用 `2` 且均为 `valid`。完整对话和数据库快照只保存在 `artifacts/local-runtime/`。当前真人验收与正式证据入口为 [GI-088 v8r2 评测底座加固资产](../2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，已完成实施合同见[执行任务](../../../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。
 
 ## 2. 当前行为
 
@@ -69,9 +78,9 @@ v8 A1 完成 `10` 次用户提交后由产品负责人确认通过，并以 `1/4
 - `EMPTY_CONTENT=0`；连续两轮需要恢复直接判阻断。
 - 所有可见提问完成人工单一回答焦点分类，`multiple_independent_tasks=0`。
 
-## 6. 停止点
+## 6. 历史停止点
 
-当前已停在真人验收起点。真人模型调用只由产品负责人在页面提交真实内容时触发。批次完成后由 Codex独立评分、检查调用血缘并更新问题台账；Production 继续保持 `legacy + baseline`。
+v8r1 已停在 A1 单例阻断。该 run 保持只读，后续任务不再承担当前准入证据。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本、全绿静态门和 Preview 部署；最终 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`，Preview 已 `READY`。全新 High-only run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已零调用初始化为 `running 0/12 / gate=pending / high`。当前暂停等待 12 项真人验收；候选质量与发布尚未裁决，约 `200` 轮以上容量优化继续排除，Production 继续保持 `legacy + baseline`。
 
 ## 7. Preview 交付
 
@@ -79,7 +88,8 @@ v8 A1 完成 `10` 次用户提交后由产品负责人确认通过，并以 `1/4
 - 页面：`https://xingfuxitong-5l1ns4sci-zouzhijies-projects.vercel.app/preview/gi088-evaluation`
 - 部署状态：`READY`；目标为 `preview`；Vercel 登录保护生效
 - 批次：`5123d795-5c19-408d-9b98-7767eaa7892c`
-- 批次回读：`running 0/12`；仅启用 `high`
+- 创建时批次回读：`running 0/12`；仅启用 `high`
+- A1 后只读回读：`running`；活动任务 A2；已完成轨迹 `1`；Provider 调用 `2`，均为 `valid`
 - 初始化模型调用：`0`
 
 完整验证记录见 [`gi088-v8r1-final12-static-validation.md`](./gi088-v8r1-final12-static-validation.md)。

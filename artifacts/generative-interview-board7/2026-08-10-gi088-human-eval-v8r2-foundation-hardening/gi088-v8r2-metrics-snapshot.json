@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "metricsVersion": "2026-08-10.gi088-evaluation-metrics-v1",
+  "status": "passed",
+  "evidenceStatus": "verified_preview_zero_of_12",
+  "source": {
+    "commit": "5281bc53f2b04be9c31adb6d7f4710ac818883a8",
+    "deploymentId": "dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9",
+    "runId": "b816d468-e3c3-4459-a822-04f95b1e78cd",
+    "runOrdinal": 2,
+    "runRevision": 0
+  },
+  "finalSnapshot": {
+  "collection": {
+    "status": "running",
+    "gateStatus": "pending",
+    "completedTaskCount": 0,
+    "totalTaskCount": 12,
+    "activeTaskId": null,
+    "providerCallCount": 0
+  },
+  "targetCoverage": {
+    "triggeredTrajectoryCount": 0,
+    "reviewedTrajectoryCount": 0,
+    "totalTrajectoryCount": 12
+  },
+  "metrics": {
+    "eligibleModelSubmissionCount": 0,
+    "firstVisibleSuccessCount": 0,
+    "firstVisibleSuccessRate": null,
+    "zeroCallControlCount": 0,
+    "rawTechnicalEventCount": 0,
+    "rawProtectedEventCount": 0,
+    "autoRecoverySuccessCount": 0,
+    "finalFailureCount": 0,
+    "manualThirdGenerationCount": 0,
+    "consecutiveRecoveryCount": 0,
+    "duplicateMessageCount": 0,
+    "programInterventionCount": 0,
+    "programInterventionFalsePositiveCount": 0,
+    "programInterventionReviewCoverage": null,
+    "visibleQuestionCount": 0,
+    "visibleQuestionReviewedCount": 0,
+    "visibleQuestionReviewCoverage": null,
+    "multipleIndependentTasksCount": 0,
+    "gateFacts": {
+      "completedTaskCount": 0,
+      "abortedTaskCount": 0,
+      "notRunTaskCount": 0,
+      "targetTriggeredTrajectoryCount": 0,
+      "targetNotTriggeredCount": 0,
+      "targetBlockedByTechnicalFailureCount": 0,
+      "directUseCount": 0,
+      "minorIssueCount": 0,
+      "qualityFailureCount": 0,
+      "singleCaseBlockerCount": 0,
+      "protectedFailureCount": 0,
+      "finalTechnicalFailureCount": 0,
+      "emptyContentEventCount": 0,
+      "automaticRecoveryAttemptCount": 0,
+      "automaticRecoveryWithinDeadlineSuccessCount": 0,
+      "automaticRecoveryLateOrUnknownCount": 0,
+      "programInterventionUncertainCount": 0,
+      "visibleQuestionUncertainCount": 0,
+      "targetLegacyUnknownCount": 0,
+      "unreviewedTrajectoryCount": 0,
+      "unreviewedProgramInterventionCount": 0,
+      "unreviewedVisibleQuestionCount": 0,
+      "allProgramInterventionsReviewed": true,
+      "allVisibleQuestionsReviewed": true
+    }
+  },
+  "display": {
+    "firstVisibleSuccessRate": "N/A",
+    "programInterventionReviewCoverage": "N/A",
+    "visibleQuestionReviewCoverage": "N/A"
+  }
+  },
+  "preReleaseCorrection": {
+    "issue": "high_only_empty_batch_counted_inactive_off_branch",
+    "resolution": "metrics_projection_uses_active_branches_and_empty_trajectories_keep_zero_review_counts",
+    "oldDeploymentAndRunDisposition": "administratively_retired_and_excluded_from_current_evidence"
+  },
+  "modelCallsUsedByReadback": 0,
+  "humanContentSubmissions": 0
+}

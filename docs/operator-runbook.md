@@ -450,13 +450,13 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 
 ### 2.12 GI-088 私有真人评测工作台
 
-当前本地运行器是 `2026-08-09.gi088-human-eval-v2-diagnostic`，只用于板块 6／7 开发评测；既有私有 Preview 仍保留 v1 的 `8/12` 历史批次。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+当前证据包与后续真人验收入口为 [`GI-088 v8r2 评测底座加固资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v8r1 A1 已确认控制意图误停的单例阻断；其原 run 保持只读。v8r2 的 P0／P1、八项开门差额、最终初始化幂等、全绿静态门、不可变行为 commit 与 Execution fingerprint 均已收口；Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
 
 - `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
 - `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
 - `GI088_EVALUATION_ENABLED=I_UNDERSTAND`；
-- 正式批次只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
-- off／high 技术冒烟分别使用 `smoke_off`、`smoke_high` 及全新 UUID，不写入正式批次。
+- 正式 run 只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
+- v8r2 仅开放 Thinking high；历史 off/high 冒烟及探针授权继续只读，新的模型探针不属于本轮开门步骤。
 
 静态检查：
 
@@ -464,13 +464,28 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 npm run prisma:gi088:generate
 npm run prisma:gi088:validate
 npm run eval:gi088:inspect
-npm run eval:gi088:probe:empty:inspect
-npm run eval:gi088:probe:thinking:inspect
+npm run typecheck
+git diff --check
 ```
 
-三个 inspect 命令只重算资产、执行指纹、来源快照和探针血缘，不产生模型请求。空内容 response format 探针已通过 `eval:gi088:probe:empty:run` 完成一次精确 `6/6` 授权；Thinking 模式探针也已按指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成一次精确 `4/4` 授权。两个授权 UUID 均已消费，禁止复用于新实验；任何新探针需要全新静态清单、指纹、授权 UUID 和独立预算。独立 schema 部署使用 `npm run prisma:gi088:deploy`，命令还要求 `GI088_EVALUATION_SCHEMA_DEPLOY=I_UNDERSTAND`；每次部署前核对目标为 Preview 专属库。
+`eval:gi088:inspect` 只重算资产、指纹和血缘，不产生模型请求。v8r2 已完成主要零模型回归、真实评测库集成、历史兼容、全量测试、typecheck、ESLint、两套 Prisma validate、Production build、Preview build、行为清单与 diff check；最终结果与线上回读已经统一进入 v8r2 资产目录。
 
-访问 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。工作台页面和 `GET /api/preview/gi088/session` 应显示同一执行指纹、与当前 manifest 一致的任务状态及完成数；Production 的页面、session 和 smoke 路由均应返回 `404`。GI-088 v8r1 当前回读值为批次 `5123d795-5c19-408d-9b98-7767eaa7892c`、`running 0/12`、仅 `high`、执行指纹 `40da54f2…bf8f82`，初始化模型调用 `0`。
+独立 schema 部署使用 `npm run prisma:gi088:deploy`，命令要求 `GI088_EVALUATION_SCHEMA_DEPLOY=I_UNDERSTAND`，并在调用前核对目标为 Preview 专属库。迁移 `20260810180000_add_v8r2_foundation_hardening` 增加 run ordinal、gate、调用账本、幂等操作、程序介入、人工修订、操作事件和导出快照；它会替换旧的 owner+version 唯一约束，同时保留旧数据和旧 JSON。兼容迁移后的只读回读确认 v8r1 原 run 仍为 `runOrdinal=1`、`running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。
+
+故障处理：
+
+- `GI088_TURN_OUT_OF_DATE` 或 `GI088_REVIEW_SNAPSHOT_OUT_OF_DATE`：读取最新状态，保留草稿，重新阅读后确认；本次模型调用为零。
+- `GI088_PROVIDER_PREFLIGHT_FAILED`：用户原话已保存，调用账本不计 dispatched；修复配置后按页面动作继续。
+- `GI088_CALL_FINALIZATION_FAILED`：读取最新状态完成稳定失败收口，确认 pending 和 operation 已退出处理中；已经落账的 Provider 结果继续保留，读取过程不调用模型。`GI088_RESULT_PERSISTENCE_UNKNOWN`：停止自动模型重调，等待数据库恢复后按调用截止对账。
+- 生成期间刷新或断线：页面每两秒只读轮询 pending turn；服务端按调用截止与共享恢复截止收口。
+- 当前项阻断：使用“终止当前任务并保留部分证据”；该项进入 aborted、gate 进入 no_go，后续任务仍可继续采集。
+- 历史指纹不匹配：进入只读查看和导出；创建新 run 需要当前候选与新 `clientOperationId`。
+- v8r2 开门合同 `GI088_TECHNICAL_FAILURE_EVIDENCE_REQUIRED`：轨迹中缺少可支持“技术失败阻断”的冻结事实，重新选择准确的目标触发结论。
+- v8r2 开门合同 `GI088_OPERATION_EVENT_LINEAGE_INVALID`：客户端事件引用了不属于当前 run 的 task 或 turn；读取最新 run 后重新上报，聊天与评价数据保持不变。
+- typed error catalog 检查失败：先补齐 store／service 错误的 HTTP 状态、中文原因、保存情况和恢复动作，再开放 Preview。
+- 导出：只接受终态 run；首次导出冻结 payload 与 receipt，后续下载直接返回同一快照；客户端重算 canonical payload SHA256 后再标记收据验证成功。
+
+访问最终 v8r2 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。最终 deployment 为 `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`，URL 为 `https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`，并确认由绑定最终指纹的新 `clientOperationId` 创建。旧预发布零内容 run 已行政 `early_stopped` 并作为脱敏排除记录。Production 的 GI-088 页面和接口继续统一返回 `404`。
 
 事件日志生成故障处理：
 

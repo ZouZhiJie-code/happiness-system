@@ -4,12 +4,14 @@
 
 ## 当前入口
 
-[GI-088｜v8r1 最终 12 项独立验收](./2026-08-10-gi088-human-eval-v8r1-final12/README.md)
+[GI-088｜v8r2 评测底座加固与最终 12 项真人验收](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 
-状态：`v8 以 1/4 early_stopped 收口并获产品通过；v8r1 Preview READY，0/12 空白批次等待最终真人验收`
+状态：`v8r1 A1 控制误停及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门与 READY Preview 已形成，run b816d468…e78cd 为 running 0/12、gate pending、high_only/high、calls 0；当前等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
 
 当前迭代证据：
 
+- [v8r2 评测底座加固、Preview 与新 0/12 run](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [v8r2 已完成实施合同](../../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 - [v2 diagnostic 运行器说明](./2026-08-09-gi088-human-eval-v2-diagnostic/README.md)
 - [v2 diagnostic manifest](./2026-08-09-gi088-human-eval-v2-diagnostic/gi088-human-eval-v2-diagnostic-manifest.json)
 - [v2 diagnostic 静态验证](./2026-08-09-gi088-human-eval-v2-diagnostic/gi088-v2-diagnostic-static-validation.md)
@@ -51,7 +53,7 @@
 - [v8 manifest](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-human-eval-v8-question-decision-pro-manifest.json)
 - [v8 静态验证](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-question-decision-static-validation.md)
 - [v8 真人验收脱敏收口](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-human-eval-closure-summary.md)
-- [v8r1 最终 12 项候选说明](./2026-08-10-gi088-human-eval-v8r1-final12/README.md)
+- [v8r1 最终 12 项候选、部署快照与 A1 阻断](./2026-08-10-gi088-human-eval-v8r1-final12/README.md)
 - [v8r1 manifest](./2026-08-10-gi088-human-eval-v8r1-final12/gi088-human-eval-v8r1-final12-manifest.json)
 - [v8r1 静态验证](./2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
 - [空内容配对探针 manifest](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
