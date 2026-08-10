@@ -9,6 +9,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { InterviewResponseRegeneration } from "@/components/interview/interview-response-regeneration";
 import {
   resolveDayAction,
   TodayJournalPanel,
@@ -54,7 +55,11 @@ import {
   JOURNAL_GENERATION_PROGRESS_TICK_MS
 } from "@/features/interview/journal-generation-progress";
 import { MAX_JOURNAL_CONTENT_LENGTH, MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
-import { countInterviewReplyCharacters } from "@/features/interview/user-turn";
+import {
+  INTERVIEW_USER_TURN_LEASE_MS,
+  countInterviewReplyCharacters,
+  isInterviewUserTurnLeaseExpired
+} from "@/features/interview/user-turn";
 import {
   clearComposerDraft,
   clearUserTurnOutbox,
@@ -70,14 +75,45 @@ import type {
   DraftCompletionMode,
   InterviewDimension,
   InterviewMessage,
+  InterviewRegenerationIntent,
   InterviewSessionRecord,
   InterviewUserTurnRecord
 } from "@/types/interview";
 
 type AssistantState = "idle" | "thinking" | "summary" | "question";
 type StreamingTarget = "summary" | "question";
+type RegenerationMode = "question" | "correction" | "version" | null;
+type RegenerationStreamPreview = {
+  summary: string;
+  question: string;
+};
 type DraftSyncState = "idle" | "saving" | "saved" | "error";
 type DraftGenerateState = "idle" | "loading" | "error";
+
+function hasSnapshotText(snapshotData: unknown, key: string) {
+  if (!snapshotData || typeof snapshotData !== "object") return false;
+  const value = (snapshotData as Record<string, unknown>)[key];
+  return typeof value === "string" && Boolean(value.trim());
+}
+
+function canDeepenCurrentInterview(dimension: InterviewDimension, snapshotData: unknown) {
+  switch (dimension) {
+    case "joy":
+      return hasSnapshotText(snapshotData, "joyMoment") &&
+        (hasSnapshotText(snapshotData, "joySource") || hasSnapshotText(snapshotData, "stateShift"));
+    case "fulfillment":
+      return hasSnapshotText(snapshotData, "experience") && hasSnapshotText(snapshotData, "progressEvidence");
+    case "reflection":
+      return hasSnapshotText(snapshotData, "trigger") && hasSnapshotText(snapshotData, "insight");
+    case "improvement":
+      return hasSnapshotText(snapshotData, "situation") &&
+        (hasSnapshotText(snapshotData, "frictionPoint") || hasSnapshotText(snapshotData, "repeatCondition"));
+    case "gratitude":
+      return (hasSnapshotText(snapshotData, "gratitudeMoment") || hasSnapshotText(snapshotData, "moment")) &&
+        hasSnapshotText(snapshotData, "kindAction") &&
+        (hasSnapshotText(snapshotData, "seenNeed") || hasSnapshotText(snapshotData, "gratitudeReason"));
+  }
+}
 type ToastState = {
   message: string;
   visible: boolean;
@@ -122,30 +158,6 @@ function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessa
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
 }
 
-function debugShortId(value: string | null | undefined) {
-  return value ? value.slice(-8) : null;
-}
-
-function debugInterviewShell(hypothesisId: string, message: string, data: Record<string, unknown>) {
-  if (process.env.NODE_ENV === "test") {
-    return;
-  }
-
-  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
-    body: JSON.stringify({
-      sessionId: "7fc210",
-      runId: "post-fix",
-      hypothesisId,
-      location: "interview-shell.tsx:debug",
-      message,
-      data,
-      timestamp: Date.now()
-    })
-  }).catch(() => {});
-}
-
 function isAutoDraftRequestMessage(message: string) {
   const normalized = message.replace(/\s+/g, "");
 
@@ -160,6 +172,21 @@ function sessionHasUserMessages(session: Pick<InterviewSessionRecord, "messages"
 
 function shouldCacheSession(status: InterviewSessionRecord["status"] | null) {
   return status === "active" || status === "paused" || status === "completed";
+}
+
+function buildBranchProjectionCacheKey(rootSessionId: string, branchSessionId: string) {
+  return `${rootSessionId}::${branchSessionId}`;
+}
+
+function findInterviewResponseVersion(messages: InterviewMessage[], targetMessageId: string) {
+  for (const message of messages) {
+    const version = message.responseVersion?.versions.find(
+      (candidate) => candidate.messageId === targetMessageId
+    );
+    if (version) return version;
+  }
+
+  return null;
 }
 
 function MessageBubble({
@@ -215,31 +242,172 @@ function MessageBubble({
   );
 }
 
-function ConversationMessage({ message }: { message: InterviewMessage }) {
+function InPlaceRegenerationStatus({
+  messageId,
+  label
+}: {
+  messageId: string;
+  label: string;
+}) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <div className="flex justify-start">
+      <motion.div
+        id={`interview-regeneration-status-${messageId}`}
+        data-testid="regeneration-in-place-status"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        tabIndex={-1}
+        className="flex max-w-2xl items-center gap-2 rounded-[28px] border border-[rgba(166,111,59,0.24)] bg-[linear-gradient(180deg,rgba(255,246,234,0.98),rgba(243,226,199,0.96))] px-4 py-3 text-sm font-medium leading-7 text-[#65503d] outline-none focus-visible:ring-2 focus-visible:ring-[#a57548]/50"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }}
+      >
+        <span
+          aria-hidden="true"
+          className="size-4 shrink-0 animate-spin rounded-full border-2 border-[#806951]/25 border-t-[#806951] motion-reduce:animate-none"
+        />
+        <span>{label}</span>
+      </motion.div>
+    </div>
+  );
+}
+
+export function ConversationMessage({
+  message,
+  canDeepen,
+  regenerationBusy,
+  regenerationMode,
+  onRegenerate,
+  onCorrectUnderstanding,
+  onSwitchVersion,
+  onPrefetchVersion,
+  onRegenerationLimitAction,
+  canGenerateFromLimit,
+  regenerationStream
+}: {
+  message: InterviewMessage;
+  canDeepen: boolean;
+  regenerationBusy: boolean;
+  regenerationMode: RegenerationMode;
+  regenerationStream: RegenerationStreamPreview;
+  onRegenerate: (message: InterviewMessage, intent: InterviewRegenerationIntent) => Promise<void> | void;
+  onCorrectUnderstanding: (message: InterviewMessage, rawText: string) => Promise<void> | void;
+  onSwitchVersion: (message: InterviewMessage, targetMessageId: string) => Promise<void> | void;
+  onPrefetchVersion: (targetMessageId: string) => Promise<unknown> | void;
+  onRegenerationLimitAction: (action: "next_event" | "generate_draft" | "pause_session") => Promise<void> | void;
+  canGenerateFromLimit: boolean;
+}) {
+  const reduceMotion = useReducedMotion();
+
   if (message.role !== "assistant") {
     return <MessageBubble message={message} />;
   }
 
   const assistantPayload = message.assistantPayload;
+  const regenerationAction = message.responseVersion ? (
+    <InterviewResponseRegeneration
+      message={message}
+      canDeepen={canDeepen}
+      busy={regenerationBusy}
+      onRegenerate={(intent) => onRegenerate(message, intent)}
+      onCorrectUnderstanding={(rawText) => onCorrectUnderstanding(message, rawText)}
+      onSwitchVersion={(targetMessageId) => onSwitchVersion(message, targetMessageId)}
+      onPrefetchVersion={onPrefetchVersion}
+      onLimitAction={onRegenerationLimitAction}
+      canGenerateFromLimit={canGenerateFromLimit}
+    />
+  ) : null;
 
   if (!assistantPayload) {
     return (
       <React.Fragment>
         <MessageBubble message={message} />
-        {message.traceId ? <AIResponseFeedback traceId={message.traceId} /> : null}
+        {message.traceId ? <AIResponseFeedback traceId={message.traceId} leadingAction={regenerationAction} /> : null}
       </React.Fragment>
     );
   }
 
   const parts = getAssistantDisplayParts(assistantPayload);
+  const isInPlaceRegeneration = regenerationBusy && (
+    regenerationMode === "question" || regenerationMode === "version"
+  );
+  const hasStreamedReplacement = Boolean(
+    regenerationStream.summary || regenerationStream.question
+  );
+  const inPlaceLabel = regenerationMode === "version"
+    ? "正在切换回复版本…"
+    : "正在换一个更合适的问法…";
 
   return (
     <React.Fragment>
-      {parts.summary || parts.insight ? (
-        <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
+      {isInPlaceRegeneration ? (
+        <div
+          data-message-group-id={message.id}
+          aria-busy="true"
+          className="grid transition-opacity duration-150 motion-reduce:transition-none"
+        >
+          <div aria-hidden="true" className="invisible col-start-1 row-start-1 flex flex-col gap-3">
+            {parts.summary || parts.insight ? (
+              <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
+            ) : null}
+            {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+          </div>
+          <div className="col-start-1 row-start-1 flex flex-col gap-3">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {hasStreamedReplacement ? (
+                <motion.div
+                  key="replacement"
+                  className="flex flex-col gap-3"
+                  initial={reduceMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }}
+                >
+                  {regenerationStream.summary ? (
+                    <MessageBubble content={regenerationStream.summary} role="assistant" variant="thinking" />
+                  ) : null}
+                  {regenerationStream.question ? (
+                    <MessageBubble content={regenerationStream.question} role="assistant" variant="question" />
+                  ) : (
+                    <InPlaceRegenerationStatus messageId={message.id} label={inPlaceLabel} />
+                  )}
+                </motion.div>
+              ) : (
+                <InPlaceRegenerationStatus key="loading" messageId={message.id} label={inPlaceLabel} />
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          className="flex flex-col gap-3"
+          initial={message.responseVersion && !reduceMotion ? { opacity: 0.45 } : false}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.12, ease: "easeOut" }}
+        >
+          {parts.summary || parts.insight ? (
+            <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
+          ) : null}
+          {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+        </motion.div>
+      )}
+      {message.traceId ? <AIResponseFeedback traceId={message.traceId} leadingAction={regenerationAction} /> : null}
+      {regenerationBusy && regenerationMode === "correction" ? (
+        <p
+          id={`interview-regeneration-status-${message.id}`}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          tabIndex={-1}
+          className="ml-4 text-xs text-[#806951] outline-none focus-visible:ring-2 focus-visible:ring-[#a57548]/50"
+        >
+          已收到，正在按你的纠正重新理解…
+        </p>
       ) : null}
-      {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
-      {message.traceId ? <AIResponseFeedback traceId={message.traceId} /> : null}
     </React.Fragment>
   );
 }
@@ -651,6 +819,8 @@ export function InterviewShell({
     pendingUrlDimension,
     sessionDimension,
     sessionEntryDate,
+    conversationSchemaVersion,
+    activeBranchSessionId,
     activeEventId,
     events,
     snapshot,
@@ -677,6 +847,8 @@ export function InterviewShell({
   } = useInterviewStore();
   const [input, setInput] = useState("");
   const [localPendingUserTurn, setLocalPendingUserTurn] = useState<InterviewUserTurnRecord | null>(null);
+  const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
+  const [regenerationMode, setRegenerationMode] = useState<RegenerationMode>(null);
   const [hasDismissedInputPlaceholder, setHasDismissedInputPlaceholder] = useState(false);
   const [interviewIssue, setInterviewIssue] = useState<InterviewIssue | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -712,10 +884,44 @@ export function InterviewShell({
   const journalSheetDragControls = useDragControls();
   const pendingPanelDimensionActionRef = useRef<{ dimension: InterviewDimension; action: "generate" } | null>(null);
   const panelResizeStateRef = useRef<{ startX: number; startRatio: number } | null>(null);
-  const pendingPanelActionDebugKeyRef = useRef<string | null>(null);
   const bumpTodayJournalBoard = useCallback(() => {
     setTodayJournalBoardRefreshKey((current) => current + 1);
   }, []);
+  const clearBranchProjectionCache = useCallback(() => {
+    branchPreviewGenerationRef.current += 1;
+    branchProjectionCacheRef.current.clear();
+    branchPreviewInFlightRef.current.clear();
+    branchProjectionRootRef.current = null;
+  }, []);
+  const applyInterviewSession = useCallback((
+    session: InterviewSessionRecord,
+    options?: { preserveBranchCache?: boolean }
+  ) => {
+    const rootSessionId = session.rootSessionId ?? session.id;
+    const branchSessionId = session.activeBranchSessionId ?? session.id;
+    const preserveBranchCache = Boolean(
+      options?.preserveBranchCache && branchProjectionRootRef.current === rootSessionId
+    );
+
+    if (!preserveBranchCache) {
+      clearBranchProjectionCache();
+    }
+
+    branchProjectionRootRef.current = rootSessionId;
+    branchProjectionCacheRef.current.set(
+      buildBranchProjectionCacheKey(rootSessionId, branchSessionId),
+      session
+    );
+    latestHydratedSessionRef.current = session;
+    sessionStateRef.current = {
+      sessionId: session.id,
+      sessionDimension: session.dimension,
+      sessionEntryDate: session.entryDate,
+      conversationSchemaVersion: session.conversationSchemaVersion ?? 1,
+      activeBranchSessionId: branchSessionId
+    };
+    hydrate(session);
+  }, [clearBranchProjectionCache, hydrate]);
   const { confirm: confirmAction, confirmDialog } = useConfirmDialog();
 
   useEffect(() => {
@@ -748,6 +954,12 @@ export function InterviewShell({
   const restoreHasUserMessagesRef = useRef(false);
   const activeStreamIdRef = useRef(0);
   const pendingSessionRef = useRef<InterviewSessionRecord | null>(null);
+  const latestHydratedSessionRef = useRef<InterviewSessionRecord | null>(null);
+  const branchProjectionCacheRef = useRef(new Map<string, InterviewSessionRecord>());
+  const branchPreviewInFlightRef = useRef(new Map<string, Promise<InterviewSessionRecord | null>>());
+  const branchPreviewGenerationRef = useRef(0);
+  const branchProjectionRootRef = useRef<string | null>(null);
+  const branchCacheJournalSignatureRef = useRef<string | null>(null);
   const pendingAutoDraftRequestRef = useRef(false);
   const lastDraftGenerationRequestRef = useRef(0);
   const lastDailyJournalOpenRequestRef = useRef(0);
@@ -785,10 +997,13 @@ export function InterviewShell({
   const composerDraftTimerRef = useRef<number | null>(null);
   const restoredComposerDraftKeyRef = useRef<string | null>(null);
   const interviewSubmitLockRef = useRef(false);
+  const branchSwitchLockRef = useRef(false);
   const sessionStateRef = useRef({
     sessionId,
     sessionDimension,
-    sessionEntryDate
+    sessionEntryDate,
+    conversationSchemaVersion,
+    activeBranchSessionId
   });
   const draftStateRef = useRef({
     draftTitle,
@@ -798,8 +1013,20 @@ export function InterviewShell({
   const [shellHeight, setShellHeight] = useState<number | null>(null);
   const hasUserMessages = useMemo(() => messages.some((message) => message.role === "user"), [messages]);
   const effectivePendingUserTurn = localPendingUserTurn ?? pendingUserTurn ?? null;
+  const [pendingUserTurnClock, setPendingUserTurnClock] = useState(() => Date.now());
+  const pendingUserTurnRecoveryReady =
+    effectivePendingUserTurn?.status === "failed" ||
+    effectivePendingUserTurn?.status === "canceled" ||
+    Boolean(
+      effectivePendingUserTurn &&
+      isInterviewUserTurnLeaseExpired(effectivePendingUserTurn, pendingUserTurnClock)
+    );
   const inputCharacterCount = countInterviewReplyCharacters(input);
   const inputTooLong = inputCharacterCount > INTERVIEW_REPLY_MAX_LENGTH;
+  const canDeepenRegeneratedQuestion = useMemo(
+    () => canDeepenCurrentInterview(displayDimension, snapshotData),
+    [displayDimension, snapshotData]
+  );
   const showInputCharacterCount = inputCharacterCount >= Math.floor(INTERVIEW_REPLY_MAX_LENGTH * 0.8);
   const currentDraftCoverageSignature = useMemo(() => buildDraftCoverageSignature(turnCount, messages), [messages, turnCount]);
   const showRedirectChoice = pendingDecision?.kind === "dimension_redirect";
@@ -807,6 +1034,27 @@ export function InterviewShell({
   const eventChoiceCompletionMode =
     pendingDecision?.kind === "event_complete" ? pendingDecision.completionMode ?? "complete" : "complete";
   const isSessionHydratedForCurrentDimension = sessionDimension === displayDimension;
+
+  useEffect(() => {
+    if (!effectivePendingUserTurn || effectivePendingUserTurn.status !== "processing") {
+      return;
+    }
+
+    const updatedAt = Date.parse(effectivePendingUserTurn.updatedAt);
+
+    if (!Number.isFinite(updatedAt)) {
+      return;
+    }
+
+    const delay = Math.max(0, updatedAt + INTERVIEW_USER_TURN_LEASE_MS - Date.now()) + 50;
+    const timer = window.setTimeout(() => {
+      setPendingUserTurnClock(Date.now());
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [effectivePendingUserTurn]);
 
   const showChoiceCard = Boolean(
     sessionId &&
@@ -861,7 +1109,12 @@ export function InterviewShell({
 
     return acknowledgement;
   }, [messages, showBoundaryInsufficientChoice, showChoiceCard]);
-  const showStreamingBubble = assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion);
+  const isQuestionRegeneratingInPlace = Boolean(
+    regeneratingMessageId && regenerationMode === "question"
+  );
+  const showStreamingBubble = !isQuestionRegeneratingInPlace && (
+    assistantState !== "idle" || Boolean(streamedAssistantSummary || streamedAssistantQuestion)
+  );
   const showBootBubble = messages.length === 0 && bootState !== "idle";
   const isGeneratingDraft = draftGenerateState === "loading";
   const isInterviewCompleted = isSessionHydratedForCurrentDimension && status === "completed";
@@ -1007,7 +1260,7 @@ export function InterviewShell({
       return;
     }
 
-    const scopeKey = `${sessionId}::${sessionEntryDate}::${currentDimension}`;
+    const scopeKey = `${sessionId}::${activeBranchSessionId ?? sessionId}::${sessionEntryDate}::${currentDimension}`;
     if (restoredComposerDraftKeyRef.current === scopeKey) {
       return;
     }
@@ -1015,6 +1268,7 @@ export function InterviewShell({
     restoredComposerDraftKeyRef.current = scopeKey;
     const storedDraft = readComposerDraft({
       sessionId,
+      branchSessionId: activeBranchSessionId,
       entryDate: sessionEntryDate,
       dimension: currentDimension
     });
@@ -1022,7 +1276,7 @@ export function InterviewShell({
     if (storedDraft && !effectivePendingUserTurn) {
       setInput((current) => current || storedDraft);
     }
-  }, [currentDimension, effectivePendingUserTurn, sessionDimension, sessionEntryDate, sessionId]);
+  }, [activeBranchSessionId, currentDimension, effectivePendingUserTurn, sessionDimension, sessionEntryDate, sessionId]);
 
   useEffect(() => {
     if (!sessionId || !sessionEntryDate || sessionDimension !== currentDimension) {
@@ -1037,6 +1291,7 @@ export function InterviewShell({
       writeComposerDraft(
         {
           sessionId,
+          branchSessionId: activeBranchSessionId,
           entryDate: sessionEntryDate,
           dimension: currentDimension
         },
@@ -1051,14 +1306,14 @@ export function InterviewShell({
         composerDraftTimerRef.current = null;
       }
     };
-  }, [currentDimension, input, sessionDimension, sessionEntryDate, sessionId]);
+  }, [activeBranchSessionId, currentDimension, input, sessionDimension, sessionEntryDate, sessionId]);
 
   useEffect(() => {
     if (!sessionId || sessionDimension !== currentDimension) {
       return;
     }
 
-    const outbox = readUserTurnOutbox(sessionId);
+    const outbox = readUserTurnOutbox(sessionId, activeBranchSessionId);
 
     if (pendingUserTurn) {
       activeUserTurnRef.current = pendingUserTurn;
@@ -1067,7 +1322,10 @@ export function InterviewShell({
         {
           clientTurnId: pendingUserTurn.clientTurnId,
           sessionId,
+          baseBranchSessionId: activeBranchSessionId,
           action: pendingUserTurn.action,
+          targetMessageId: pendingUserTurn.targetMessageId,
+          regenerationIntent: pendingUserTurn.regenerationIntent,
           rawText: pendingUserTurn.rawText,
           inputMode: pendingUserTurn.inputMode,
           baseMessageSequence: pendingUserTurn.baseMessageSequence,
@@ -1087,7 +1345,7 @@ export function InterviewShell({
     );
 
     if (wasCompleted) {
-      clearUserTurnOutbox(sessionId);
+      clearUserTurnOutbox(sessionId, activeBranchSessionId);
       activeUserTurnOutboxRef.current = null;
       activeUserTurnRef.current = null;
       setLocalPendingUserTurn(null);
@@ -1103,7 +1361,36 @@ export function InterviewShell({
     };
     activeUserTurnOutboxRef.current = recoverableOutbox;
     writeUserTurnOutbox(recoverableOutbox);
-  }, [currentDimension, messages, pendingUserTurn, sessionDimension, sessionId]);
+    if (
+      outbox.action === "regenerate_question" ||
+      outbox.action === "correct_understanding"
+    ) {
+      const localTurn: InterviewUserTurnRecord = {
+        id: `pending:${outbox.clientTurnId}`,
+        clientTurnId: outbox.clientTurnId,
+        sessionId: outbox.sessionId,
+        activeEventId: activeEventId ?? null,
+        action: outbox.action,
+        targetMessageId: outbox.targetMessageId,
+        regenerationIntent: outbox.regenerationIntent,
+        baseBranchSessionId: outbox.baseBranchSessionId,
+        rawText: outbox.rawText,
+        inputMode: outbox.inputMode,
+        baseMessageSequence: outbox.baseMessageSequence,
+        status: "failed",
+        attemptCount: 1,
+        errorCode: "INTERVIEW_TURN_RETRY_REQUIRED",
+        createdAt: outbox.createdAt,
+        updatedAt: new Date().toISOString(),
+        completedAt: null
+      };
+      activeUserTurnRef.current = localTurn;
+      setLocalPendingUserTurn(localTurn);
+      if (outbox.action === "correct_understanding" && outbox.rawText) {
+        setOptimisticUserMessage(outbox.rawText);
+      }
+    }
+  }, [activeBranchSessionId, activeEventId, currentDimension, messages, pendingUserTurn, sessionDimension, sessionId]);
 
   useEffect(() => {
     const inputElement = inputRef.current;
@@ -1134,9 +1421,11 @@ export function InterviewShell({
     sessionStateRef.current = {
       sessionId,
       sessionDimension,
-      sessionEntryDate
+      sessionEntryDate,
+      conversationSchemaVersion,
+      activeBranchSessionId
     };
-  }, [sessionDimension, sessionEntryDate, sessionId]);
+  }, [activeBranchSessionId, conversationSchemaVersion, sessionDimension, sessionEntryDate, sessionId]);
 
   useEffect(() => {
     draftStateRef.current = {
@@ -1145,6 +1434,32 @@ export function InterviewShell({
       journalEntry
     };
   }, [draftContent, draftTitle, journalEntry]);
+
+  useEffect(() => {
+    const signature = journalEntry
+      ? `${journalEntry.id}:${journalEntry.status}:${journalEntry.updatedAt}`
+      : "none";
+    const previousSignature = branchCacheJournalSignatureRef.current;
+    branchCacheJournalSignatureRef.current = signature;
+
+    if (previousSignature === null || previousSignature === signature) {
+      return;
+    }
+
+    const currentSession = latestHydratedSessionRef.current;
+    clearBranchProjectionCache();
+    if (currentSession && currentSession.id === sessionId) {
+      const nextSession = { ...currentSession, journalEntry };
+      const rootSessionId = nextSession.rootSessionId ?? nextSession.id;
+      const branchSessionId = nextSession.activeBranchSessionId ?? nextSession.id;
+      latestHydratedSessionRef.current = nextSession;
+      branchProjectionRootRef.current = rootSessionId;
+      branchProjectionCacheRef.current.set(
+        buildBranchProjectionCacheKey(rootSessionId, branchSessionId),
+        nextSession
+      );
+    }
+  }, [clearBranchProjectionCache, journalEntry, sessionId]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -1360,12 +1675,15 @@ export function InterviewShell({
 
     const nextSession = pendingSessionRef.current;
     pendingUserMessageRef.current = null;
-    clearUserTurnOutbox(nextSession.id);
+    clearUserTurnOutbox(
+      nextSession.id,
+      activeUserTurnOutboxRef.current?.baseBranchSessionId
+    );
     activeUserTurnRef.current = null;
     activeUserTurnOutboxRef.current = null;
     setLocalPendingUserTurn(null);
     touchStoredInterviewSessionId(nextSession.dimension, nextSession.id, nextSession.entryDate, sessionHasUserMessages(nextSession));
-    hydrate(nextSession);
+    applyInterviewSession(nextSession);
     pendingSessionRef.current = null;
     const shouldAutoGenerateDraft =
       pendingAutoDraftRequestRef.current &&
@@ -1441,7 +1759,7 @@ export function InterviewShell({
             return session.id;
           }
 
-          hydrate(session);
+          applyInterviewSession(session);
           return session.id;
         }
 
@@ -1449,7 +1767,7 @@ export function InterviewShell({
           return null;
         }
 
-        hydrate(session);
+        applyInterviewSession(session);
         restoreHasUserMessagesRef.current = false;
         setBootState("idle");
         return session.id;
@@ -1487,7 +1805,7 @@ export function InterviewShell({
         return null;
       }
     },
-    [hydrate, reset, setBootState]
+    [applyInterviewSession, reset, setBootState]
   );
 
   const clearDimensionSwitchUiState = useCallback(() => {
@@ -1505,11 +1823,12 @@ export function InterviewShell({
     stopDraftAutosave();
     stopToastTimer();
     clearStreamState();
+    clearBranchProjectionCache();
     setOptimisticUserMessage(null);
     setStreamedAssistantSummary("");
     setStreamedAssistantQuestion("");
     setAssistantState("idle");
-  }, [clearStreamState, stopDraftAutosave, stopToastTimer]);
+  }, [clearBranchProjectionCache, clearStreamState, stopDraftAutosave, stopToastTimer]);
 
   const saveLeavingDimensionToCache = useCallback(
     (leavingDimension: InterviewDimension) => {
@@ -1519,6 +1838,8 @@ export function InterviewShell({
 
       const cachedSession = buildInterviewSessionRecordFromStore({
         sessionId,
+        conversationSchemaVersion,
+        activeBranchSessionId,
         sessionDimension,
         sessionEntryDate: sessionEntryDate ?? resolvedEntryDate,
         status,
@@ -1555,6 +1876,7 @@ export function InterviewShell({
       writeComposerDraft(
         {
           sessionId,
+          branchSessionId: activeBranchSessionId,
           entryDate: sessionEntryDate ?? resolvedEntryDate,
           dimension: leavingDimension
         },
@@ -1563,6 +1885,8 @@ export function InterviewShell({
     },
     [
       activeEventId,
+      activeBranchSessionId,
+      conversationSchemaVersion,
       events,
       journalEntry,
       messages,
@@ -1749,7 +2073,7 @@ export function InterviewShell({
 
     if (cachedEntry) {
       setPagerMotion("instant");
-      hydrate(cachedEntry.session);
+      applyInterviewSession(cachedEntry.session);
       setDraftTitle(cachedEntry.ui.draftTitle);
       setDraftContent(cachedEntry.ui.draftContent);
       setPanelOpen(cachedEntry.ui.panelOpen);
@@ -1775,7 +2099,7 @@ export function InterviewShell({
     activeTargetDimension,
     clearDimensionSwitchUiState,
     ensureSession,
-    hydrate,
+    applyInterviewSession,
     requestedEntryDate,
     reset,
     resolvedEntryDate,
@@ -1819,13 +2143,20 @@ export function InterviewShell({
   useEffect(() => {
     const messageScrollElement = messageScrollRef.current;
 
-    if (!messageScrollElement) {
+    if (!messageScrollElement || isQuestionRegeneratingInPlace) {
       return;
     }
 
     // Keep the chat pinned to the latest message without scrolling the whole document.
     messageScrollElement.scrollTop = messageScrollElement.scrollHeight;
-  }, [assistantState, optimisticUserMessage, streamedAssistantQuestion, streamedAssistantSummary, visibleMessages.length]);
+  }, [
+    assistantState,
+    isQuestionRegeneratingInPlace,
+    optimisticUserMessage,
+    streamedAssistantQuestion,
+    streamedAssistantSummary,
+    visibleMessages.length
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1951,25 +2282,49 @@ export function InterviewShell({
           action: "resume_turn";
           clientTurnId: string;
         }
+      | {
+          action: "regenerate_question";
+          targetMessageId: string;
+          intent: InterviewRegenerationIntent;
+        }
+      | {
+          action: "correct_understanding";
+          targetMessageId: string;
+          rawText: string;
+        }
   ) {
     if (isBusy || interviewSubmitLockRef.current) {
       return;
     }
 
-    const optimisticMessage = payload.action === "reply" ? payload.userMessage : null;
+    const optimisticMessage =
+      payload.action === "reply"
+        ? payload.userMessage
+        : payload.action === "correct_understanding"
+          ? payload.rawText
+          : null;
 
-    if (payload.action === "reply" && !(optimisticMessage ?? "").trim()) {
+    if (
+      (payload.action === "reply" || payload.action === "correct_understanding") &&
+      !(optimisticMessage ?? "").trim()
+    ) {
       return;
     }
 
     pendingAutoDraftRequestRef.current =
       payload.action === "reply" && isAutoDraftRequestMessage(optimisticMessage ?? "");
-    pendingUserMessageRef.current = payload.action === "reply" ? optimisticMessage : null;
+    pendingUserMessageRef.current =
+      payload.action === "reply" || payload.action === "correct_understanding"
+        ? optimisticMessage
+        : null;
 
+    clearBranchProjectionCache();
     interviewSubmitLockRef.current = true;
     setInterviewIssue(null);
     if (payload.action === "reply") {
       setInput("");
+      setOptimisticUserMessage(optimisticMessage);
+    } else if (payload.action === "correct_understanding") {
       setOptimisticUserMessage(optimisticMessage);
     } else if (payload.action === "resume_turn") {
       setLocalPendingUserTurn((current) =>
@@ -1997,13 +2352,15 @@ export function InterviewShell({
     interviewResponseAbortControllerRef.current = abortController;
 
     try {
-      const resolvedSessionId = await ensureSession(currentDimension);
+      const resolvedSessionId = await ensureSession(currentDimension, {
+        entryDate: requestedEntryDate ?? sessionEntryDate ?? resolvedEntryDate
+      });
 
       if (!resolvedSessionId) {
         throw new Error("INTERVIEW_START_FAILED");
       }
 
-      if (payload.action === "reply") {
+      if (payload.action === "reply" || payload.action === "correct_understanding") {
         const activeSession = sessionStateRef.current;
         touchStoredInterviewSessionId(
           currentDimension,
@@ -2054,15 +2411,34 @@ export function InterviewShell({
           : {
               clientTurnId,
               sessionId: resolvedSessionId,
+              baseBranchSessionId: activeBranchSessionId ?? resolvedSessionId,
               action,
+              targetMessageId:
+                payload.action === "regenerate_question" || payload.action === "correct_understanding"
+                  ? payload.targetMessageId
+                  : undefined,
+              regenerationIntent:
+                payload.action === "regenerate_question"
+                  ? payload.intent
+                  : undefined,
               rawText: optimisticMessage,
-              inputMode: payload.action === "reply" ? payload.inputMode : undefined,
+              inputMode:
+                payload.action === "reply" || payload.action === "correct_understanding"
+                  ? "text"
+                  : undefined,
               baseMessageSequence,
               status: "submitting",
               createdAt: new Date().toISOString()
             };
       activeUserTurnOutboxRef.current = outbox;
       writeUserTurnOutbox(outbox);
+      const shouldReplayUnacceptedBranchAction =
+        payload.action === "resume_turn" &&
+        activeUserTurnRef.current?.id.startsWith("pending:") &&
+        (
+          outbox.action === "regenerate_question" ||
+          outbox.action === "correct_understanding"
+        );
 
       const response = await fetch("/api/interview/session/respond/stream", {
         method: "POST",
@@ -2076,19 +2452,61 @@ export function InterviewShell({
                 rawText: optimisticMessage,
                 inputMode: payload.inputMode,
                 clientTurnId,
-                baseMessageSequence
+                baseMessageSequence,
+                baseBranchSessionId: activeBranchSessionId ?? resolvedSessionId
               }
-            : payload.action === "resume_turn"
+            : payload.action === "regenerate_question"
               ? {
-                  action: "resume_turn",
+                  action: "regenerate_question",
                   sessionId: resolvedSessionId,
-                  clientTurnId
+                  targetMessageId: payload.targetMessageId,
+                  intent: payload.intent,
+                  clientTurnId,
+                  baseMessageSequence,
+                  baseBranchSessionId: activeBranchSessionId ?? resolvedSessionId
                 }
+              : payload.action === "correct_understanding"
+                ? {
+                    action: "correct_understanding",
+                    sessionId: resolvedSessionId,
+                    targetMessageId: payload.targetMessageId,
+                    rawText: payload.rawText,
+                    clientTurnId,
+                    baseMessageSequence,
+                    baseBranchSessionId: activeBranchSessionId ?? resolvedSessionId
+                  }
+            : payload.action === "resume_turn"
+              ? shouldReplayUnacceptedBranchAction
+                ? outbox.action === "regenerate_question"
+                  ? {
+                      action: "regenerate_question",
+                      sessionId: resolvedSessionId,
+                      targetMessageId: outbox.targetMessageId,
+                      intent: outbox.regenerationIntent,
+                      clientTurnId,
+                      baseMessageSequence: outbox.baseMessageSequence,
+                      baseBranchSessionId: outbox.baseBranchSessionId ?? activeBranchSessionId ?? resolvedSessionId
+                    }
+                  : {
+                      action: "correct_understanding",
+                      sessionId: resolvedSessionId,
+                      targetMessageId: outbox.targetMessageId,
+                      rawText: outbox.rawText,
+                      clientTurnId,
+                      baseMessageSequence: outbox.baseMessageSequence,
+                      baseBranchSessionId: outbox.baseBranchSessionId ?? activeBranchSessionId ?? resolvedSessionId
+                    }
+                : {
+                    action: "resume_turn",
+                    sessionId: resolvedSessionId,
+                    clientTurnId
+                  }
               : {
                 action: payload.action,
                 sessionId: resolvedSessionId,
-                clientTurnId,
-                baseMessageSequence
+                  clientTurnId,
+                  baseMessageSequence,
+                  baseBranchSessionId: activeBranchSessionId ?? resolvedSessionId
                 }
         )
       });
@@ -2177,7 +2595,8 @@ export function InterviewShell({
                 sessionDimension
               ) {
                 clearComposerDraft({
-                  sessionId: turn.sessionId,
+                  sessionId: sessionId ?? turn.sessionId,
+                  branchSessionId: activeBranchSessionId,
                   entryDate: sessionEntryDate,
                   dimension: sessionDimension
                 });
@@ -2281,7 +2700,11 @@ export function InterviewShell({
         if (!hasPersistedUserMessage && acceptedTurn.rawText) {
           setOptimisticUserMessage(acceptedTurn.rawText);
         }
-      } else if (payload.action === "reply" && optimisticMessage) {
+      } else if (
+        payload.action === "reply" ||
+        payload.action === "correct_understanding" ||
+        payload.action === "regenerate_question"
+      ) {
         const currentOutbox = activeUserTurnOutboxRef.current;
         const serverTurnStatus =
           issue.code === "INTERVIEW_TURN_RETRY_REQUIRED"
@@ -2302,7 +2725,7 @@ export function InterviewShell({
           activeUserTurnOutboxRef.current = recoverableOutbox;
           writeUserTurnOutbox(recoverableOutbox);
 
-          if (serverTurnStatus) {
+          if (serverTurnStatus || payload.action !== "reply") {
             const pendingTurn: InterviewUserTurnRecord = {
               id: `pending:${currentOutbox.clientTurnId}`,
               clientTurnId: currentOutbox.clientTurnId,
@@ -2312,7 +2735,10 @@ export function InterviewShell({
               rawText: currentOutbox.rawText,
               inputMode: currentOutbox.inputMode,
               baseMessageSequence: currentOutbox.baseMessageSequence,
-              status: serverTurnStatus,
+              targetMessageId: currentOutbox.targetMessageId,
+              regenerationIntent: currentOutbox.regenerationIntent,
+              baseBranchSessionId: currentOutbox.baseBranchSessionId,
+              status: serverTurnStatus ?? "failed",
               attemptCount: 1,
               errorCode: issue.code,
               createdAt: currentOutbox.createdAt,
@@ -2321,13 +2747,17 @@ export function InterviewShell({
             };
             activeUserTurnRef.current = pendingTurn;
             setLocalPendingUserTurn(pendingTurn);
-            setInput("");
+            if (payload.action === "reply") {
+              setInput("");
+            }
             setOptimisticUserMessage(optimisticMessage);
           } else {
-            setInput(optimisticMessage);
+            setInput(optimisticMessage ?? "");
           }
         } else {
-          setInput(optimisticMessage);
+          if (payload.action === "reply") {
+            setInput(optimisticMessage ?? "");
+          }
           const outboxSessionId = currentOutbox?.sessionId ?? sessionId;
           if (outboxSessionId) {
             clearUserTurnOutbox(outboxSessionId);
@@ -2359,6 +2789,257 @@ export function InterviewShell({
 
       setIsBusy(false);
     }
+  }
+
+  async function confirmHistoricalBranch(message: InterviewMessage) {
+    const hasLaterConversation = messages.some((candidate) => candidate.sequence > message.sequence);
+
+    if (!hasLaterConversation) {
+      return true;
+    }
+
+    return confirmAction({
+      eyebrow: "开启访谈版本",
+      title: "从这里换一个方向吗？",
+      description: "系统会从这条回复之前开启新的访谈版本，后面的原对话会完整保留，也可以通过版本入口切回。",
+      confirmLabel: "开启新版本",
+      cancelLabel: "保留当前路径"
+    });
+  }
+
+  async function requestRegenerationMutation(
+    message: InterviewMessage,
+    payload:
+      | {
+          action: "regenerate_question";
+          intent: InterviewRegenerationIntent;
+        }
+      | {
+          action: "correct_understanding";
+          rawText: string;
+        }
+  ) {
+    if (!sessionId || !activeBranchSessionId || regeneratingMessageId || isBusy) {
+      return;
+    }
+
+    const confirmed = await confirmHistoricalBranch(message);
+    if (!confirmed) return;
+
+    const nextRegenerationMode = payload.action === "correct_understanding" ? "correction" : "question";
+    setRegenerationMode(nextRegenerationMode);
+    setRegeneratingMessageId(message.id);
+    if (nextRegenerationMode === "correction") {
+      showToast("已收到，正在重新理解…");
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.getElementById(`interview-regeneration-status-${message.id}`)?.focus({ preventScroll: true });
+        });
+      });
+    }
+    try {
+      if (payload.action === "regenerate_question") {
+        await runInterviewAction({
+          action: "regenerate_question",
+          targetMessageId: message.id,
+          intent: payload.intent
+        });
+      } else {
+        await runInterviewAction({
+          action: "correct_understanding",
+          targetMessageId: message.id,
+          rawText: payload.rawText
+        });
+      }
+    } finally {
+      setRegeneratingMessageId(null);
+      setRegenerationMode(null);
+    }
+  }
+
+  async function handleRegenerateQuestion(
+    message: InterviewMessage,
+    intent: InterviewRegenerationIntent
+  ) {
+    await requestRegenerationMutation(message, {
+      action: "regenerate_question",
+      intent
+    });
+  }
+
+  async function handleCorrectUnderstanding(message: InterviewMessage, rawText: string) {
+    await requestRegenerationMutation(message, {
+      action: "correct_understanding",
+      rawText
+    });
+  }
+
+  const prefetchResponseVersion = useCallback(async (targetMessageId: string) => {
+    if (!sessionId || !activeBranchSessionId || isBusy) {
+      return null;
+    }
+
+    const version = findInterviewResponseVersion(messages, targetMessageId);
+    if (!version) return null;
+
+    const rootSessionId = sessionId;
+    const cacheKey = buildBranchProjectionCacheKey(rootSessionId, version.branchSessionId);
+    const cachedSession = branchProjectionCacheRef.current.get(cacheKey);
+    if (cachedSession) return cachedSession;
+
+    if (version.branchSessionId === activeBranchSessionId) {
+      const currentSession = latestHydratedSessionRef.current;
+      if (currentSession) {
+        branchProjectionCacheRef.current.set(cacheKey, currentSession);
+      }
+      return currentSession;
+    }
+
+    const inFlight = branchPreviewInFlightRef.current.get(cacheKey);
+    if (inFlight) return inFlight;
+    if (branchPreviewInFlightRef.current.size >= 2) return null;
+
+    const generation = branchPreviewGenerationRef.current;
+    const baseBranchSessionId = activeBranchSessionId;
+    const request = (async () => {
+      try {
+        const response = await fetch("/api/interview/session/branch/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: rootSessionId,
+            targetMessageId,
+            baseBranchSessionId
+          })
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { targetBranchSessionId?: string; session?: InterviewSessionRecord }
+          | null;
+
+        if (
+          !response.ok ||
+          !payload?.session ||
+          payload.targetBranchSessionId !== version.branchSessionId ||
+          generation !== branchPreviewGenerationRef.current ||
+          sessionStateRef.current.sessionId !== rootSessionId
+        ) {
+          return null;
+        }
+
+        branchProjectionRootRef.current = rootSessionId;
+        branchProjectionCacheRef.current.set(cacheKey, payload.session);
+        return payload.session;
+      } catch {
+        return null;
+      }
+    })();
+
+    branchPreviewInFlightRef.current.set(cacheKey, request);
+    try {
+      return await request;
+    } finally {
+      if (branchPreviewInFlightRef.current.get(cacheKey) === request) {
+        branchPreviewInFlightRef.current.delete(cacheKey);
+      }
+    }
+  }, [activeBranchSessionId, isBusy, messages, sessionId]);
+
+  async function handleSwitchResponseVersion(
+    message: InterviewMessage,
+    targetMessageId: string
+  ) {
+    if (
+      !sessionId ||
+      !activeBranchSessionId ||
+      regeneratingMessageId ||
+      isBusy ||
+      branchSwitchLockRef.current
+    ) {
+      return;
+    }
+
+    const targetVersion = message.responseVersion?.versions.find(
+      (version) => version.messageId === targetMessageId
+    );
+    if (!targetVersion) return;
+
+    const rootSessionId = sessionId;
+    const baseBranchSessionId = activeBranchSessionId;
+    const previousSession = latestHydratedSessionRef.current;
+    const targetCacheKey = buildBranchProjectionCacheKey(
+      rootSessionId,
+      targetVersion.branchSessionId
+    );
+    const cachedTargetSession = branchProjectionCacheRef.current.get(targetCacheKey) ?? null;
+    let showedCachedTarget = false;
+
+    branchSwitchLockRef.current = true;
+    setRegeneratingMessageId(message.id);
+    setRegenerationMode("version");
+    setIsBusy(true);
+    setInterviewIssue(null);
+
+    if (cachedTargetSession) {
+      applyInterviewSession(cachedTargetSession, { preserveBranchCache: true });
+      showedCachedTarget = true;
+    }
+
+    try {
+      const response = await fetch("/api/interview/session/branch/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: rootSessionId,
+          targetMessageId,
+          baseBranchSessionId
+        })
+      });
+      const responsePayload = (await response.json().catch(() => null)) as
+        | { session?: InterviewSessionRecord; issue?: unknown; error?: string; message?: string }
+        | null;
+
+      if (!response.ok || !responsePayload?.session) {
+        throw (
+          parseInterviewIssue(responsePayload?.issue) ??
+          buildFallbackInterviewIssue(
+            responsePayload?.error ?? "INTERVIEW_BRANCH_OUT_OF_DATE",
+            responsePayload?.message
+          )
+        );
+      }
+
+      clearUserTurnOutbox(rootSessionId, baseBranchSessionId);
+      clearUserTurnOutbox(rootSessionId, targetVersion.branchSessionId);
+      applyInterviewSession(responsePayload.session, { preserveBranchCache: true });
+      bumpTodayJournalBoard();
+    } catch (error) {
+      if (showedCachedTarget && previousSession) {
+        applyInterviewSession(previousSession, { preserveBranchCache: true });
+      }
+      setInterviewIssue(
+        parseInterviewIssue(error) ??
+          buildInterviewIssue("INTERVIEW_BRANCH_OUT_OF_DATE")
+      );
+    } finally {
+      branchSwitchLockRef.current = false;
+      setRegeneratingMessageId(null);
+      setRegenerationMode(null);
+      setIsBusy(false);
+    }
+  }
+
+  async function handleRegenerationLimitAction(
+    action: "next_event" | "generate_draft" | "pause_session"
+  ) {
+    if (action === "next_event") {
+      await handleNextEventChoice();
+      return;
+    }
+    if (action === "generate_draft") {
+      await handleGenerateDraft();
+      return;
+    }
+    await handlePauseSessionChoice();
   }
 
   async function handleSend() {
@@ -2394,13 +3075,7 @@ export function InterviewShell({
   }
 
   async function handleResumeUserTurn() {
-    if (
-      !effectivePendingUserTurn ||
-      (
-        effectivePendingUserTurn.status !== "failed" &&
-        effectivePendingUserTurn.status !== "canceled"
-      )
-    ) {
+    if (!effectivePendingUserTurn || !pendingUserTurnRecoveryReady) {
       return;
     }
 
@@ -2412,7 +3087,14 @@ export function InterviewShell({
   }
 
   async function handlePauseSessionChoice() {
-    if (!sessionId || pendingDecision?.kind !== "boundary_insufficient" || isBusy) {
+    const regenerationLimitReached =
+      ([...messages].reverse().find((message) => message.role === "assistant")?.responseVersion?.versionCount ?? 0) >= 3;
+
+    if (
+      !sessionId ||
+      (pendingDecision?.kind !== "boundary_insufficient" && !regenerationLimitReached) ||
+      isBusy
+    ) {
       return;
     }
 
@@ -2434,7 +3116,7 @@ export function InterviewShell({
       const data = (await response.json()) as { session?: InterviewSessionRecord };
 
       if (data.session) {
-        hydrate(data.session);
+        applyInterviewSession(data.session);
       }
 	    } catch {
 	      setInterviewIssue(
@@ -2584,7 +3266,7 @@ export function InterviewShell({
         sessionId: data.session.id,
         signature: buildDraftCoverageSignature(data.session.turnCount, data.session.messages)
       };
-      hydrate(data.session);
+      applyInterviewSession(data.session);
       setDraftGenerationOverlayComplete(true);
       setDraftGenerationOverlayActive(false);
       setDraftSyncState("saved");
@@ -2657,7 +3339,7 @@ export function InterviewShell({
       }
 
       const data = await response.json();
-      hydrate(data.session);
+      applyInterviewSession(data.session);
       setDraftSyncState("saved");
       setHasSavedJournal(true);
       showToast("当前日志已保存");
@@ -2711,7 +3393,7 @@ export function InterviewShell({
       }
 
       const data = await response.json();
-      hydrate(data.session);
+      applyInterviewSession(data.session);
       touchStoredInterviewSessionId(
         data.session.dimension,
         data.session.id,
@@ -3012,10 +3694,11 @@ export function InterviewShell({
       if (sessionId && (sessionEntryDate ?? requestedEntryDate)) {
         clearComposerDraft({
           sessionId,
+          branchSessionId: activeBranchSessionId,
           entryDate: sessionEntryDate ?? requestedEntryDate ?? getTodayEntryDate(),
           dimension: sessionDimension ?? currentDimension
         });
-        clearUserTurnOutbox(sessionId);
+        clearUserTurnOutbox(sessionId, activeBranchSessionId);
       }
       clearAllDimensionSessionCache();
       dimensionsToClear.forEach((dimensionToClear) => clearStoredInterviewSessionId(dimensionToClear));
@@ -3037,6 +3720,7 @@ export function InterviewShell({
   }, [
     cancelDraftGeneration,
     cancelInterviewResponse,
+    activeBranchSessionId,
     conversationResetRequestId,
     currentDimension,
     ensureSession,
@@ -3066,22 +3750,6 @@ export function InterviewShell({
         const data = (await response.json()) as TodayJournalBoardPayload;
 
         if (!cancelled) {
-          // #region agent log
-          debugInterviewShell("H3", "loaded today journal board", {
-            date: currentRecordDate,
-            currentDimension,
-            sessionDimension,
-            sessionId: debugShortId(sessionId),
-            dimensions: data.dimensions.map((card) => ({
-              dimension: card.dimension,
-              status: card.status,
-              hasContent: Boolean(card.content),
-              hasNewSinceJournal: card.hasNewSinceJournal,
-              sessionId: debugShortId(card.sessionId)
-            })),
-            dailyJournal: data.dailyJournal
-          });
-          // #endregion
           setTodayJournalBoard(data);
         }
       } catch {
@@ -3334,23 +4002,6 @@ export function InterviewShell({
   }
 
   function handleGenerateDimensionFromPanel(targetDimension: InterviewDimension) {
-    const targetCard =
-      mergedTodayJournalBoard?.dimensions.find((card) => card.dimension === targetDimension) ?? null;
-
-    // #region agent log
-    debugInterviewShell("H4", "today journal single dimension generate clicked", {
-      targetDimension,
-      currentDimension,
-      sessionDimension,
-      currentSessionId: debugShortId(sessionId),
-      targetCardStatus: targetCard?.status ?? null,
-      targetCardSessionId: debugShortId(targetCard?.sessionId),
-      targetCardHasContent: Boolean(targetCard?.content),
-      targetCardHasNewSinceJournal: Boolean(targetCard?.hasNewSinceJournal),
-      sameDimension: targetDimension === currentDimension
-    });
-    // #endregion
-
     if (targetDimension === currentDimension) {
       void handleGenerateDraft();
       return;
@@ -3362,34 +4013,6 @@ export function InterviewShell({
 
   useEffect(() => {
     const pending = pendingPanelDimensionActionRef.current;
-    const pendingReadiness = pending
-      ? {
-          action: pending.action,
-          targetDimension: pending.dimension,
-          workspaceMode,
-          currentDimension,
-          sessionDimension,
-          isSessionHydratedForCurrentDimension,
-          bootState,
-          hasJournalEntry: Boolean(journalEntry),
-          sessionId: debugShortId(sessionId),
-          draftGenerationUnlocked
-        }
-      : null;
-
-    if (pendingReadiness) {
-      const debugKey = JSON.stringify(pendingReadiness);
-
-      if (pendingPanelActionDebugKeyRef.current !== debugKey) {
-        pendingPanelActionDebugKeyRef.current = debugKey;
-        // #region agent log
-        debugInterviewShell("H4", "pending panel dimension action readiness", pendingReadiness);
-        // #endregion
-      }
-    } else {
-      pendingPanelActionDebugKeyRef.current = null;
-    }
-
     if (
       !pending ||
       workspaceMode !== "interview" ||
@@ -3581,7 +4204,23 @@ export function InterviewShell({
                         </div>
                         {isSessionHydratedForCurrentDimension
                           ? visibleMessages.map((message) => (
-                              <ConversationMessage key={message.id} message={message} />
+                              <ConversationMessage
+                                key={message.id}
+                                message={message}
+                                canDeepen={canDeepenRegeneratedQuestion}
+                                regenerationBusy={regeneratingMessageId === message.id}
+                                regenerationMode={regeneratingMessageId === message.id ? regenerationMode : null}
+                                regenerationStream={{
+                                  summary: regeneratingMessageId === message.id ? streamedAssistantSummary : "",
+                                  question: regeneratingMessageId === message.id ? streamedAssistantQuestion : ""
+                                }}
+                                onRegenerate={handleRegenerateQuestion}
+                                onCorrectUnderstanding={handleCorrectUnderstanding}
+                                onSwitchVersion={handleSwitchResponseVersion}
+                                onPrefetchVersion={prefetchResponseVersion}
+                                onRegenerationLimitAction={handleRegenerationLimitAction}
+                                canGenerateFromLimit={sessionDraftGenerationUnlocked}
+                              />
                             ))
                           : null}
                         {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
@@ -3591,7 +4230,7 @@ export function InterviewShell({
                             className="flex items-center justify-end gap-3 px-2 text-xs text-[#765a40]"
                           >
                             <span>
-                              {effectivePendingUserTurn.status === "processing"
+                              {effectivePendingUserTurn.status === "processing" && !pendingUserTurnRecoveryReady
                                 ? effectivePendingUserTurn.action === "reply"
                                   ? "这条回复仍在处理中…"
                                   : "这个访谈操作仍在处理中…"
@@ -3603,8 +4242,7 @@ export function InterviewShell({
                                     ? "这条回复已经保留，可以继续生成。"
                                     : "这个访谈操作已经保留，可以继续生成。"}
                             </span>
-                            {effectivePendingUserTurn.status === "failed" ||
-                            effectivePendingUserTurn.status === "canceled" ? (
+                            {pendingUserTurnRecoveryReady ? (
                               <button
                                 type="button"
                                 onClick={handleResumeUserTurn}
@@ -3733,10 +4371,12 @@ export function InterviewShell({
                               isInputComposingRef.current = false;
                             }}
                             onKeyDown={handleInputKeyDown}
+                            disabled={regenerationMode === "version" && isBusy}
                             placeholder={composerPlaceholder}
                             aria-invalid={inputTooLong}
+                            aria-busy={regenerationMode === "version" && isBusy ? "true" : undefined}
                             aria-describedby={showInputCharacterCount ? "interview-input-count" : undefined}
-                            className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886]"
+                            className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 text-sm leading-6 text-[#2d241c] outline-none transition placeholder:text-[#ab9886] disabled:cursor-wait disabled:opacity-55"
                           />
                           <button
                             type="button"

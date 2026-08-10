@@ -645,6 +645,9 @@ export async function listAdminAnalyticsUsers(input: {
         userId: {
           in: userIds
         },
+        mode: "dimension_legacy",
+        dimension: { not: null },
+        parentSessionId: null,
         entryDate: {
           gte: startAt,
           lt: endExclusive
@@ -770,7 +773,12 @@ export async function getAdminAnalyticsUserDetail(userId: string) {
       }
     }),
     prisma.interviewSession.findMany({
-      where: { userId },
+      where: {
+        userId,
+        mode: "dimension_legacy",
+        dimension: { not: null },
+        parentSessionId: null
+      },
       select: {
         id: true,
         dimension: true,
@@ -862,6 +870,10 @@ export async function getAdminAnalyticsUserDetail(userId: string) {
     hasAnySession: sessions.length > 0
   });
 
+  const legacySessions = sessions.filter(
+    (session): session is typeof session & { dimension: InterviewDimension } => Boolean(session.dimension)
+  );
+
   return {
     user,
     recentActiveAt,
@@ -870,7 +882,7 @@ export async function getAdminAnalyticsUserDetail(userId: string) {
       scoreCount: scores.length,
       latestScoreDate: scores[0] ? formatEntryDate(scores[0].date) : null
     },
-    sessions,
+    sessions: legacySessions,
     joyEntries,
     dailyJournals,
     scores

@@ -35,6 +35,18 @@ const ISSUE_RULES: IssueRule[] = [
     expectedImprovement: "让 AI 先依据用户原话确认重点，再生成下一步回应。"
   },
   {
+    pattern: /event_boundary_leak/iu,
+    label: "事件范围串线",
+    description: "事件日志混入了另一件独立事件的内容，当前事件范围不够清楚。",
+    expectedImprovement: "让事件日志只使用当前事件及必要背景，并隔离另一件独立事件。"
+  },
+  {
+    pattern: /insight_mismatch/iu,
+    label: "“我看见的”理解偏差",
+    description: "事件日志中的理解或总结偏离了用户已经确认的表达。",
+    expectedImprovement: "让“我看见的”只依据用户原话、有效事实和当前角度成果。"
+  },
+  {
     pattern: /boundary|ignored_boundary|stop_request|user_override/iu,
     label: "忽视停止边界",
     description: "用户已经想停下或直接整理，AI 仍继续追问。",
@@ -83,7 +95,7 @@ const ISSUE_RULES: IssueRule[] = [
     expectedImprovement: "让正文沿用用户的自然语言和表达节奏。"
   },
   {
-    pattern: /awkward_writing/iu,
+    pattern: /awkward_writing|voice_or_writing_mismatch/iu,
     label: "表达不自然",
     description: "生成内容的结构或中文表达不够自然。",
     expectedImprovement: "让内容按真实经历展开，并使用自然、可读的中文。"

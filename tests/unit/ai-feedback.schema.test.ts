@@ -4,8 +4,16 @@ describe("AI feedback schema", () => {
   it("keeps six relevant downvote labels for each supported artifact", () => {
     expect(AI_FEEDBACK_TAGS.interview_turn).toHaveLength(6);
     expect(AI_FEEDBACK_TAGS.dimension_journal).toHaveLength(6);
+    expect(AI_FEEDBACK_TAGS.event_journal).toHaveLength(6);
+    expect(AI_FEEDBACK_TAGS.daily_journal).toHaveLength(6);
+    expect(AI_FEEDBACK_TAGS.daily_journal_insight).toHaveLength(6);
     expect(AI_POSITIVE_FEEDBACK_TAGS.interview_turn).toHaveLength(6);
     expect(AI_POSITIVE_FEEDBACK_TAGS.dimension_journal).toHaveLength(6);
+    expect(AI_POSITIVE_FEEDBACK_TAGS.event_journal).toHaveLength(6);
+    expect(AI_POSITIVE_FEEDBACK_TAGS.daily_journal).toHaveLength(6);
+    expect(AI_POSITIVE_FEEDBACK_TAGS.daily_journal_insight).toHaveLength(6);
+    expect(AI_FEEDBACK_TAGS.daily_journal.map((item) => item.code)).toContain("altered_event_text");
+    expect(AI_FEEDBACK_TAGS.daily_journal_insight.map((item) => item.code)).toContain("unsupported_commonality");
   });
 
   it("allows a plain upvote and requires details for a downvote", () => {

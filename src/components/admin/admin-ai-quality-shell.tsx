@@ -10,6 +10,8 @@ import { AdminAIQualityImpact } from "@/components/admin/admin-ai-quality-impact
 import { ActionButton, Card, Divider, Surface } from "@/components/ui";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { AdminAIQualityEvidenceItem } from "@/features/ai-quality/admin-evidence";
+import { formatAdminDateTime } from "@/features/ai-quality/admin-date-time";
+import type { InterviewRegenerationMetricsView } from "@/features/ai-quality/regeneration-metrics";
 import {
   getAIQualityExpectedImprovement,
   getAIQualityIssueDescription,
@@ -20,7 +22,13 @@ export type AIOptimizationCandidateView = {
   id: string;
   path: "system_prompt" | "few_shot" | "engineering";
   status: "draft" | "approved" | "published" | "rejected" | "rolled_back";
-  artifactType: "interview_turn" | "dimension_journal" | null;
+  artifactType:
+    | "interview_turn"
+    | "dimension_journal"
+    | "event_journal"
+    | "daily_journal"
+    | "daily_journal_insight"
+    | null;
   dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
   promptKey: string | null;
   title: string;
@@ -97,9 +105,28 @@ const DIMENSION_LABEL = {
   gratitude: "感谢"
 } as const;
 
+const REGENERATION_INTENT_LABEL = {
+  simplify: "更简单",
+  concretize: "更具体",
+  change_angle: "换角度",
+  deepen: "再深入",
+  lighten: "问轻一点"
+} as const;
+
+const REGENERATION_QUESTION_TARGET_LABEL = {
+  event_anchor: "具体片段",
+  prior_assumption: "原有判断",
+  reaction_evidence: "反应证据",
+  insight_evidence: "新理解",
+  judgment_clue: "判断线索"
+} as const;
+
 const ARTIFACT_LABEL = {
   interview_turn: "访谈回复",
-  dimension_journal: "日志内容"
+  dimension_journal: "五维日志",
+  event_journal: "事件日志",
+  daily_journal: "当天完整日志",
+  daily_journal_insight: "今天看见的自己"
 } as const;
 
 const RISK_LABEL: Record<string, string> = {
@@ -131,6 +158,47 @@ const STAGE_PRIORITY: Record<CandidateStage, number> = {
   observe: 3,
   history: 4
 };
+
+const EMPTY_REGENERATION_METRICS: InterviewRegenerationMetricsView = {
+  periodStart: "",
+  periodEnd: "",
+  total: 0,
+  completed: 0,
+  successCount: 0,
+  successRate: 0,
+  adoptionRate: 0,
+  repeatedRate: 0,
+  switchedBackRate: 0,
+  failureRate: 0,
+  fallbackRate: 0,
+  averageLatencyMs: null,
+  p95LatencyMs: null,
+  intents: [
+    "simplify",
+    "concretize",
+    "change_angle",
+    "deepen",
+    "lighten"
+  ].map((intent) => ({
+    intent: intent as keyof typeof REGENERATION_INTENT_LABEL,
+    total: 0,
+    completed: 0,
+    successCount: 0,
+    successRate: 0
+  })),
+  dimensions: [],
+  questionTargets: []
+};
+
+function formatPercent(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
+
+function formatDuration(value: number | null) {
+  if (value === null) return "暂无";
+  if (value < 1000) return `${value}ms`;
+  return `${(value / 1000).toFixed(value < 10_000 ? 1 : 0)}s`;
+}
 
 function readRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -458,7 +526,7 @@ function RunHistory({ runs }: { runs: AIOptimizationRunView[] }) {
                 <li key={run.id} className="grid gap-2 py-4 text-sm leading-6 text-[var(--text-dim)]">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-medium text-ink">{run.status === "completed" ? "已完成" : run.status === "failed" ? "失败" : "运行中"}</span>
-                    <time className="text-xs tabular-nums">{new Date(run.startedAt).toLocaleString("zh-CN")}</time>
+                    <time className="text-xs tabular-nums">{formatAdminDateTime(run.startedAt)}</time>
                   </div>
                   <p className="tabular-nums">{run.scannedBad} 条需改进 · {run.scannedGood} 条优质 · {run.clusterCount} 类问题 · {run.candidateCount} 条新建议</p>
                   <p>{formatRunResult(run)}</p>
@@ -485,7 +553,7 @@ function RunHistory({ runs }: { runs: AIOptimizationRunView[] }) {
                       <td className="py-2 pr-3 tabular-nums">{run.scannedBad} 需改进 · {run.scannedGood} 优质</td>
                       <td className="py-2 pr-3 tabular-nums">{run.clusterCount}</td>
                       <td className="py-2 pr-3 tabular-nums">{run.candidateCount}</td>
-                      <td className="py-2 pr-3 tabular-nums">{new Date(run.startedAt).toLocaleString("zh-CN")}</td>
+                      <td className="py-2 pr-3 tabular-nums">{formatAdminDateTime(run.startedAt)}</td>
                       <td className="py-2">{formatRunResult(run)}</td>
                     </tr>
                   ))}
@@ -501,9 +569,11 @@ function RunHistory({ runs }: { runs: AIOptimizationRunView[] }) {
 
 export function AdminAIQualityShell({
   candidates,
+  regenerationMetrics = EMPTY_REGENERATION_METRICS,
   runs
 }: {
   candidates: AIOptimizationCandidateView[];
+  regenerationMetrics?: InterviewRegenerationMetricsView;
   runs: AIOptimizationRunView[];
 }) {
   const router = useRouter();
@@ -696,7 +766,7 @@ export function AdminAIQualityShell({
           <div className="flex flex-wrap items-center gap-3 lg:justify-end">
             <p className="text-xs leading-6 text-[var(--text-dim)]">
               {latestRun
-                ? `最近检查 ${new Date(latestRun.startedAt).toLocaleString("zh-CN")} · 新增 ${latestRun.candidateCount} · 自动合并 ${getReusedCount(latestRun.summary)}`
+                ? `最近检查 ${formatAdminDateTime(latestRun.startedAt)} · 新增 ${latestRun.candidateCount} · 自动合并 ${getReusedCount(latestRun.summary)}`
                 : "等待首次质量检查"}
             </p>
             <ActionButton
@@ -709,6 +779,78 @@ export function AdminAIQualityShell({
             </ActionButton>
           </div>
         </header>
+
+        <section className="grid gap-3 border-y border-[var(--line-soft)] py-4" aria-labelledby="regeneration-metrics-title">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 id="regeneration-metrics-title" className="font-display text-xl text-ink">访谈修复效果</h2>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-dim)]">
+                最近 30 天 · 新问法获得有效回答，期间未再次换问法、切回、点踩或退出。
+              </p>
+            </div>
+            <p className="text-xs tabular-nums text-[var(--text-dim)]">
+              共 {regenerationMetrics.total} 次
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm sm:grid-cols-4 lg:grid-cols-7">
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">修复成功率</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.successRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">获得回答</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.adoptionRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">连续换问法</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.repeatedRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">切回旧版本</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.switchedBackRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">生成失败</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.failureRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">安全兜底</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatPercent(regenerationMetrics.fallbackRate)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--text-dim)]">P95 等待</dt>
+              <dd className="mt-1 font-display text-2xl tabular-nums text-ink">{formatDuration(regenerationMetrics.p95LatencyMs)}</dd>
+            </div>
+          </dl>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs leading-6 text-[var(--text-dim)]" aria-label="各调整意图修复效果">
+            {regenerationMetrics.intents.map((item) => (
+              <li key={item.intent}>
+                <span className="text-ink">{REGENERATION_INTENT_LABEL[item.intent]}</span>
+                {" "}{item.total} 次 · {formatPercent(item.successRate)}
+              </li>
+            ))}
+          </ul>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs leading-6 text-[var(--text-dim)]" aria-label="各维度修复效果">
+            {regenerationMetrics.dimensions.map((item) => (
+              <li key={item.key}>
+                <span className="text-ink">{DIMENSION_LABEL[item.key as keyof typeof DIMENSION_LABEL]}</span>
+                {" "}{item.total} 次 · {formatPercent(item.successRate)}
+              </li>
+            ))}
+          </ul>
+          {regenerationMetrics.questionTargets.length ? (
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs leading-6 text-[var(--text-dim)]" aria-label="各原始问题类型修复效果">
+              {regenerationMetrics.questionTargets.map((item) => (
+                <li key={item.key}>
+                  <span className="text-ink">
+                    {REGENERATION_QUESTION_TARGET_LABEL[item.key as keyof typeof REGENERATION_QUESTION_TARGET_LABEL] ?? "其他问题"}
+                  </span>
+                  {" "}{item.total} 次 · {formatPercent(item.successRate)}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" aria-label="按候选状态筛选">
           <StatusFilter label="全部待处理" count={counts.actionable} pressed={filter === "actionable"} onClick={() => selectFilter("actionable")} />
@@ -776,7 +918,7 @@ export function AdminAIQualityShell({
                         <span>{selectedCandidate.artifactType ? ARTIFACT_LABEL[selectedCandidate.artifactType] : "通用回复"}</span>
                         <span>{PATH_LABEL[selectedCandidate.path]}</span>
                         <span className="tabular-nums">{selectedCandidate.evidenceTraceIds.length} 条证据</span>
-                        <span className="tabular-nums">发现于 {new Date(selectedCandidate.createdAt).toLocaleString("zh-CN")}</span>
+                        <span className="tabular-nums">发现于 {formatAdminDateTime(selectedCandidate.createdAt)}</span>
                       </div>
                     </header>
 
@@ -860,7 +1002,7 @@ export function AdminAIQualityShell({
                         <p className="font-medium text-ink">已退回调整</p>
                         {selectedCandidate.reviewReason ? <p>原因：{selectedCandidate.reviewReason}</p> : null}
                         <p className="text-xs tabular-nums text-[var(--text-dim)]">
-                          {[selectedCandidate.reviewedBy, selectedCandidate.reviewedAt ? new Date(selectedCandidate.reviewedAt).toLocaleString("zh-CN") : null].filter(Boolean).join(" · ")}
+                          {[selectedCandidate.reviewedBy, selectedCandidate.reviewedAt ? formatAdminDateTime(selectedCandidate.reviewedAt) : null].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     ) : returnCandidateId === selectedCandidate.id ? (

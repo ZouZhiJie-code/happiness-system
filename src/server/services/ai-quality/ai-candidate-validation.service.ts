@@ -1,3 +1,6 @@
+import type { AIGenerationArtifactType } from "@prisma/client";
+import { z } from "zod";
+
 import type { AIChatMessage, AIProvider } from "@/server/services/ai/ai-provider";
 
 import { AI_EVALUATION_RUBRIC_VERSION, evaluateGenerationTraceRules } from "@/features/ai-quality/evaluation-rubric";
@@ -26,6 +29,13 @@ type ValidationCaseResult = {
   reason: string;
   candidateOutput: unknown | null;
 };
+
+const eventJournalDraftResultSchema = z
+  .object({
+    title: z.string().trim().min(1).max(16),
+    content: z.string().trim().min(1).max(5000)
+  })
+  .strict();
 
 function readRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -79,7 +89,7 @@ function applyCandidateMessages(input: {
 
 async function generateReplayOutput(input: {
   provider: AIProvider;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
   messages: AIChatMessage[];
 }) {
   if (input.artifactType === "interview_turn") {
@@ -97,7 +107,7 @@ async function generateReplayOutput(input: {
   return completeStructuredOutput({
     provider: input.provider,
     stage: "generate",
-    schema: joyDraftResultSchema,
+    schema: input.artifactType === "event_journal" ? eventJournalDraftResultSchema : joyDraftResultSchema,
     messages: input.messages,
     temperature: 0.2,
     maxTokens: 1400,
@@ -109,7 +119,7 @@ async function generateReplayOutput(input: {
 function evaluateOutput(trace: {
   id: string;
   status: string;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
   dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
   outputOrigin: string | null;
   contextSnapshot: unknown;

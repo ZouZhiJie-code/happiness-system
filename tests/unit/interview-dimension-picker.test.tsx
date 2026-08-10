@@ -29,4 +29,28 @@ describe("InterviewDimensionPicker", () => {
       expect.anything()
     );
   });
+
+  it("shows the secondary event entry without changing the five-dimension default", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify({
+      date: "2026-05-03",
+      dimensions: []
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    })) as typeof fetch;
+
+    render(
+      <InterviewDimensionPicker
+        entryDate="2026-05-03"
+        showEventCenteredEntry
+      />
+    );
+
+    expect(await screen.findByRole("link", { name: "直接开始" })).toHaveAttribute(
+      "href",
+      "/interview?mode=event-centered&entryDate=2026-05-03"
+    );
+    expect(screen.getByText("从一件具体的事里，理清当时的判断和依据。")).toBeVisible();
+    expect(screen.getAllByRole("link")).toHaveLength(6);
+  });
 });

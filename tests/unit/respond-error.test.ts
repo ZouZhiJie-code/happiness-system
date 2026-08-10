@@ -36,6 +36,48 @@ describe("interview respond error normalization", () => {
       action: "login",
       requestId: "request-auth"
     });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("JOURNAL_DAY_MODE_CONFLICT"),
+        requestId: "request-day-mode"
+      })
+    ).toMatchObject({
+      code: "JOURNAL_DAY_MODE_CONFLICT",
+      action: "refresh",
+      requestId: "request-day-mode"
+    });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("JOURNAL_DAY_MODE_MIXED"),
+        requestId: "request-mixed-day"
+      })
+    ).toMatchObject({
+      code: "JOURNAL_DAY_MODE_MIXED",
+      action: "refresh",
+      retryable: false
+    });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("EVENT_STATE_CHANGED"),
+        requestId: "request-event-version"
+      })
+    ).toMatchObject({
+      code: "INTERVIEW_TURN_OUT_OF_DATE",
+      action: "refresh"
+    });
+
+    expect(
+      normalizeInterviewRespondError({
+        error: new Error("EVENT_FACT_CLARIFICATION_REQUIRED"),
+        requestId: "request-event-clarification"
+      })
+    ).toMatchObject({
+      code: "SESSION_CHOICE_UNAVAILABLE",
+      action: "refresh"
+    });
   });
 
   it("maps validation, schema, and write failures without exposing raw errors", () => {

@@ -9,6 +9,8 @@ describe("AI quality issue presentation", () => {
     expect(getAIQualityIssueLabel("user_downvote:repetitive_question", "interview_turn")).toBe("追问重复");
     expect(getAIQualityIssueLabel("too_abstract", "interview_turn")).toBe("问题太抽象");
     expect(getAIQualityIssueLabel("bad_title", "dimension_journal")).toBe("标题不合适");
+    expect(getAIQualityIssueLabel("event_boundary_leak", "event_journal")).toBe("混入了另一件事");
+    expect(getAIQualityIssueDescription("event_boundary_leak", "event_journal")).toContain("另一件独立事件");
     expect(getAIQualityIssueLabel("factually_wrong", "interview_turn")).toBe("内容有误或编造");
   });
 

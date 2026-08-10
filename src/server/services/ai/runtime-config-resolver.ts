@@ -2,7 +2,7 @@ import type { AIRuntimeCapability, AIRuntimePersistedConfig, AIRuntimeProvider }
 import { getAIRuntimePersistedConfigSchema } from "@/features/admin-ai-runtime/schema";
 import { getPublishedAIRuntimeConfigRecord } from "@/server/repositories/admin-ai-runtime.repository";
 import { AdminAIRuntimeCryptoError, decryptAIRuntimeApiKey } from "@/server/services/admin-ai-runtime/admin-ai-runtime-crypto";
-import { readVolcengineArkConfig } from "@/server/services/ai/provider-config";
+import { readDeepSeekConfig, readVolcengineArkConfig } from "@/server/services/ai/provider-config";
 
 export type AIRuntimeFallbackReason =
   | "DATABASE_CONFIG_DISABLED"
@@ -30,6 +30,36 @@ function buildEnvironmentFallback(
   capability: AIRuntimeCapability,
   fallbackReason: AIRuntimeFallbackReason
 ): AIRuntimeResolution | null {
+  const configuredProvider = process.env.AI_PROVIDER?.trim().toLowerCase() ?? "openai";
+
+  if (configuredProvider === "openai" || configuredProvider === "deepseek") {
+    if (capability !== "chat") {
+      return null;
+    }
+
+    const config = readDeepSeekConfig();
+
+    if (config.issues.length > 0 || !config.apiKey || !config.baseUrl || !config.model) {
+      return null;
+    }
+
+    return {
+      capability,
+      source: "environment",
+      provider: "openai",
+      config: {
+        provider: "openai",
+        config: {
+          model: config.model,
+          baseUrl: config.baseUrl
+        }
+      },
+      apiKey: config.apiKey,
+      publishedConfigId: null,
+      fallbackReason
+    };
+  }
+
   const config = readVolcengineArkConfig();
 
   if (config.issues.length > 0 || !config.apiKey || !config.baseUrl) {

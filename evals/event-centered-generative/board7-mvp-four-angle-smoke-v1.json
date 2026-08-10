@@ -1,0 +1,27 @@
+{
+  "datasetVersion": "2026-08-02.board7-mvp-four-angle-smoke-v1",
+  "baseDatasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "purpose": "首发前只验证四个角度的基本可用性。案例沿用已确认且未进入运行时 Prompt 的四个全新故事，每例只运行一次；质量普通但结构有效的结果直接进入评审。",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01"
+  ],
+  "gates": {
+    "technicalComplete": "4/4",
+    "sourceOriginErrors": 0,
+    "severeFactErrors": 0,
+    "boundaryErrors": 0,
+    "strongInferenceErrors": 0,
+    "visibleResponseUnderstandable": "4/4"
+  },
+  "runPolicy": {
+    "repetitionsPerCase": 1,
+    "validLowQualityRetryAllowed": false,
+    "maxTechnicalRetriesPerStage": 1,
+    "requiresIndependentApproval": true,
+    "automaticSecondRoundAllowed": false,
+    "fullEvaluationAllowed": false
+  }
+}

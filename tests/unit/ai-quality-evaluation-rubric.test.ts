@@ -101,6 +101,54 @@ describe("AI quality evaluation rubric", () => {
     );
   });
 
+  it("evaluates event journals from their frozen event source without applying a five-dimension gate", () => {
+    const result = evaluateGenerationTraceRules({
+      trace: {
+        ...buildTrace(),
+        artifactType: "event_journal",
+        dimension: null,
+        outputOrigin: "llm",
+        contextSnapshot: {
+          sourceSnapshot: {
+            messages: [{ id: "message-1", role: "user", content: "今天开会时我终于把真正担心的事说清楚了。" }],
+            facts: [{ id: "fact-1", statement: "用户在会上说清楚了真正担心的事。" }],
+            angleOutcomes: []
+          }
+        },
+        finalOutput: {
+          title: "把担心说清楚",
+          content: "今天开会时，我终于把真正担心的事说清楚了。说出口之后，我发现自己更在意的是彼此能不能坦诚面对分歧。"
+        },
+        pipelineDecisions: [{ kind: "event_journal_quality_gate", accepted: true, issues: [] }]
+      }
+    });
+
+    expect(result.score).toBe(100);
+    expect(result.signals).toContain("event_journal_quality_gate_passed");
+    expect(result.deductions).toEqual([]);
+  });
+
+  it("reports event-boundary leakage through the event journal quality gate", () => {
+    const result = evaluateGenerationTraceRules({
+      trace: {
+        ...buildTrace(),
+        artifactType: "event_journal",
+        dimension: null,
+        contextSnapshot: { sourceMessageIds: ["message-1"] },
+        finalOutput: {
+          title: "把担心说清楚",
+          content: "今天开会时，我终于把真正担心的事说清楚了。说出口之后，我也更确认自己希望怎样面对接下来的沟通。"
+        },
+        pipelineDecisions: [{ kind: "event_journal_quality_gate", accepted: false, issues: ["event_boundary_leak"] }]
+      }
+    });
+
+    expect(result.signals).toContain("event_journal_quality_gate_rejected");
+    expect(result.deductions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "event_journal_gate_event_boundary_leak", dimension: "grounding" })])
+    );
+  });
+
   it("combines deterministic and judge scores with the configured weighting", () => {
     expect(mergeRuleAndJudgeScores(90, 60)).toBe(72);
     expect(classifyEvaluation(72, false)).toBe("review");

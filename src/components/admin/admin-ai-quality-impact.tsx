@@ -11,6 +11,7 @@ import type {
   AdminAIQualityImpactEvidenceResponse,
   AdminAIQualityImpactResponse
 } from "@/features/ai-quality/admin-impact";
+import { formatAdminDateTime } from "@/features/ai-quality/admin-date-time";
 
 type MetricRow = {
   key: keyof AdminAIQualityImpactResponse["baseline"];
@@ -289,7 +290,7 @@ export function AdminAIQualityImpact({
                 <div className="grid content-start gap-2 border-t border-[var(--line-soft)] pt-4 text-sm leading-7 text-[var(--text-dim)] md:border-l md:border-t-0 md:pl-6 md:pt-0">
                   <p className="font-medium tabular-nums text-ink">观察第 {impact.observation.observedDay}/7 天</p>
                   <p className="tabular-nums">当前版本：第 {impact.release.version} 版</p>
-                  <p>发布时间：{new Date(impact.release.publishedAt).toLocaleString("zh-CN")}</p>
+                  <p>发布时间：{formatAdminDateTime(impact.release.publishedAt)}</p>
                   <p>{impact.observation.completed ? "观察期已结束" : "观察数据持续更新中"}</p>
                 </div>
               </div>

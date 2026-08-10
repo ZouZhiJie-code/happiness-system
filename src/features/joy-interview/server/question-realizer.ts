@@ -15,10 +15,24 @@ function formatRecallSpecificMoment(anchorText: string | null) {
 function formatPointOutKeyPart(input: {
   dimension: AskIntentEnvelope["dimension"];
   sourceTarget: AskIntentEnvelope["sourceTarget"];
+  gratitudeSubTarget: AskIntentEnvelope["gratitudeSubTarget"];
   anchorText: string | null;
 }) {
   const lead = formatAnchorLead(input.anchorText);
   const quotedAnchor = formatQuotedAnchor(input.anchorText);
+
+  if (input.dimension === "gratitude") {
+    switch (input.gratitudeSubTarget) {
+      case "kind_action":
+        return `${lead}对方当时具体做了什么，让你想把这份善意记下来？`;
+      case "seen_need":
+        return `${lead}对方的这个帮助，接住了你当时哪一层需要或难处？`;
+      case "gratitude_reason":
+        return `${lead}对方的这个帮助，为什么让你特别想记住？`;
+      case "relationship_signal":
+        return `${lead}对方这样的帮助，让你更看重关系里的哪种回应方式？`;
+    }
+  }
 
   if (input.sourceTarget === "insight_evidence") {
     switch (input.dimension) {
@@ -131,6 +145,7 @@ export function realizeQuestion(input: {
       return formatPointOutKeyPart({
         dimension: envelope.dimension,
         sourceTarget: envelope.sourceTarget,
+        gratitudeSubTarget: envelope.gratitudeSubTarget,
         anchorText: envelope.anchorText
       });
     case "name_direct_feeling":

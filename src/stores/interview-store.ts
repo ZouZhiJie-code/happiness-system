@@ -38,6 +38,8 @@ interface InterviewState {
   sessionDimension: InterviewDimension | null;
   sessionEntryDate: string | null;
   sessionId: string | null;
+  conversationSchemaVersion: number;
+  activeBranchSessionId: string | null;
   status: InterviewSessionRecord["status"] | null;
   stage: InterviewSessionRecord["stage"] | null;
   activeEventId: string | null;
@@ -89,6 +91,8 @@ const initialState = {
   sessionDimension: null,
   sessionEntryDate: null,
   sessionId: null,
+  conversationSchemaVersion: 1,
+  activeBranchSessionId: null,
   status: null,
   stage: null,
   activeEventId: null,
@@ -125,6 +129,8 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       sessionDimension: session.dimension,
       sessionEntryDate: session.entryDate,
       sessionId: session.id,
+      conversationSchemaVersion: session.conversationSchemaVersion ?? 1,
+      activeBranchSessionId: session.activeBranchSessionId ?? session.id,
       status: session.status,
       stage: session.stage,
       activeEventId: session.activeEventId,
@@ -145,6 +151,8 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       sessionDimension: session.dimension,
       sessionEntryDate: session.entryDate,
       sessionId: session.id,
+      conversationSchemaVersion: session.conversationSchemaVersion ?? 1,
+      activeBranchSessionId: session.activeBranchSessionId ?? session.id,
       status: session.status,
       stage: session.stage,
       activeEventId: session.activeEventId,

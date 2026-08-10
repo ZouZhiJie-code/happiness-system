@@ -1,4 +1,4 @@
-import { Prisma, type AIOptimizationPath } from "@prisma/client";
+import { Prisma, type AIGenerationArtifactType, type AIOptimizationPath } from "@prisma/client";
 
 import { CURRENT_PRIVACY_POLICY_VERSION } from "@/features/ai-feedback/feedback-config";
 import { prisma } from "@/server/db/prisma";
@@ -86,7 +86,7 @@ export async function loadOptimizationEvidence(periodStart: Date, periodEnd: Dat
 export async function createClusterAndCandidate(input: {
   dedupeKey: string;
   runId: string;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
   dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
   issueCode: string;
   caseCount: number;
@@ -147,7 +147,7 @@ export async function createFewShotCandidate(input: {
   dedupeKey: string;
   runId: string;
   promptKey: string;
-  artifactType: "interview_turn" | "dimension_journal";
+  artifactType: AIGenerationArtifactType;
   dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
   traces: Array<{
     id: string;

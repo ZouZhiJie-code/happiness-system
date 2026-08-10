@@ -61,6 +61,160 @@ describe("VolcengineArkProvider", () => {
     expect(provider.name).toBe("volcengine-ark");
   });
 
+  it("returns answer content without exposing reasoning content", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              finish_reason: "stop",
+              message: {
+                content: "给用户的最终答案",
+                reasoning_content: "内部推理不能作为结果"
+              }
+            }
+          ]
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const provider = new VolcengineArkProvider({
+      apiKey: "test-key",
+      modelId: "deepseek-r1-250528"
+    });
+
+    await expect(
+      provider.complete({
+        messages: [{ role: "user", content: "测试" }]
+      })
+    ).resolves.toMatchObject({
+      content: "给用户的最终答案",
+      provider: "volcengine-ark"
+    });
+  });
+
+  it("reports output truncation when chat completions reaches the token limit", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: "length",
+                message: {
+                  content: "尚未完成的答案",
+                  reasoning_content: "不能出现在错误信息中的内部推理"
+                }
+              }
+            ]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+    );
+
+    const provider = new VolcengineArkProvider({
+      apiKey: "test-key",
+      modelId: "deepseek-r1-250528"
+    });
+
+    await expect(
+      provider.complete({
+        messages: [{ role: "user", content: "测试" }]
+      })
+    ).rejects.toMatchObject({
+      code: "OUTPUT_TRUNCATED",
+      message: "Model output reached the token limit before completion."
+    });
+  });
+
+  it("distinguishes reasoning-only chat completions from a generic empty response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: "",
+                  reasoning_content: "仅供模型内部使用的推理"
+                }
+              }
+            ]
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+    );
+
+    const provider = new VolcengineArkProvider({
+      apiKey: "test-key",
+      modelId: "deepseek-r1-250528"
+    });
+
+    await expect(
+      provider.complete({
+        messages: [{ role: "user", content: "测试" }]
+      })
+    ).rejects.toMatchObject({
+      code: "EMPTY_CONTENT_AFTER_REASONING",
+      message: "Model produced reasoning but no answer content."
+    });
+  });
+
+  it("returns a safe error when a successful chat completion contains invalid JSON", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("private malformed upstream response", { status: 200 }))
+    );
+
+    const provider = new VolcengineArkProvider({
+      apiKey: "test-key",
+      modelId: "deepseek-r1-250528"
+    });
+
+    await expect(
+      provider.complete({
+        messages: [{ role: "user", content: "测试" }]
+      })
+    ).rejects.toMatchObject({
+      code: "INVALID_RESPONSE",
+      message: "Model returned an invalid response."
+    });
+  });
+
+  it("reports output truncation from a streaming chat completion", async () => {
+    const streamBody = [
+      `data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "内部推理" } }] })}`,
+      `data: ${JSON.stringify({ choices: [{ delta: { content: "部分答案" } }] })}`,
+      `data: ${JSON.stringify({ choices: [{ finish_reason: "length", delta: {} }] })}`,
+      "data: [DONE]",
+      ""
+    ].join("\n\n");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(streamBody, { status: 200 })));
+
+    const provider = new VolcengineArkProvider({
+      apiKey: "test-key",
+      modelId: "deepseek-r1-250528"
+    });
+    const collect = async () => {
+      const chunks: string[] = [];
+
+      for await (const chunk of provider.stream!({ messages: [{ role: "user", content: "测试" }] })) {
+        chunks.push(chunk);
+      }
+
+      return chunks;
+    };
+
+    await expect(collect()).rejects.toMatchObject({ code: "OUTPUT_TRUNCATED" });
+  });
+
   it("uses the configured embedding endpoint id for embeddings", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

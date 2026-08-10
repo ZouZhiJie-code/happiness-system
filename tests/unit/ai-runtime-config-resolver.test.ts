@@ -46,6 +46,7 @@ describe("ai runtime config resolver", () => {
 
   it("falls back to env when no published database config exists", async () => {
     mockGetPublishedAIRuntimeConfigRecord.mockResolvedValue(null);
+    vi.stubEnv("AI_PROVIDER", "volcengine-ark");
     vi.stubEnv("VOLCENGINE_ARK_API_KEY", "ark-key");
     vi.stubEnv("VOLCENGINE_ARK_MODEL", "deepseek-v3-2-251201");
     vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
@@ -59,6 +60,7 @@ describe("ai runtime config resolver", () => {
   });
 
   it("falls back to env when the published database config is disabled or cannot decrypt", async () => {
+    vi.stubEnv("AI_PROVIDER", "volcengine-ark");
     vi.stubEnv("VOLCENGINE_ARK_API_KEY", "ark-key");
     vi.stubEnv("VOLCENGINE_ARK_MODEL", "deepseek-v3-2-251201");
     vi.stubEnv("VOLCENGINE_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3");
@@ -96,6 +98,28 @@ describe("ai runtime config resolver", () => {
     expect(decryptFailedResult).toMatchObject({
       source: "environment",
       fallbackReason: "DATABASE_CONFIG_UNAVAILABLE"
+    });
+  });
+
+  it("uses DeepSeek official API as the default environment chat provider", async () => {
+    mockGetPublishedAIRuntimeConfigRecord.mockResolvedValue(null);
+    vi.stubEnv("AI_PROVIDER", "openai");
+    vi.stubEnv("DEEPSEEK_API_KEY", "deepseek-key");
+    vi.stubEnv("DEEPSEEK_MODEL", "deepseek-v4-flash");
+    vi.stubEnv("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
+
+    const result = await resolveAIRuntimeConfig("chat");
+
+    expect(result).toMatchObject({
+      source: "environment",
+      provider: "openai",
+      config: {
+        provider: "openai",
+        config: {
+          model: "deepseek-v4-flash",
+          baseUrl: "https://api.deepseek.com"
+        }
+      }
     });
   });
 });

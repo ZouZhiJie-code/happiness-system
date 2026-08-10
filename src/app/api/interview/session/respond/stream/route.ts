@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { INTERVIEW_REPLY_MAX_LENGTH } from "@/features/interview/interview-issue";
-import { interviewSessionSchema, respondInterviewRequestSchema } from "@/features/interview/schema/interview.schema";
+import {
+  interviewSessionSchema,
+  interviewUserTurnSchema,
+  respondInterviewRequestSchema
+} from "@/features/interview/schema/interview.schema";
 import { countInterviewReplyCharacters } from "@/features/interview/user-turn";
 import {
   createInterviewRequestId,
@@ -10,12 +14,15 @@ import {
 } from "@/server/services/interview/respond-error";
 import { requireCurrentUserFromRequest } from "@/server/services/auth/current-user.service";
 import { streamInterviewResponse } from "@/server/services/interview/interview.service";
+import type { InterviewUserTurnAction } from "@/types/interview";
 
 export const dynamic = "force-dynamic";
 
 function formatSseEvent(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
+
+const publicInterviewUserTurnSchema = interviewUserTurnSchema.partial();
 
 export async function POST(request: Request) {
   const requestId = createInterviewRequestId();
@@ -90,6 +97,7 @@ export async function POST(request: Request) {
           current: {
             id: string;
             status: "processing" | "completed" | "failed" | "canceled";
+            action: InterviewUserTurnAction;
           } | null;
         } = { current: null };
         const send = (event: string, data: unknown) => {
@@ -118,13 +126,34 @@ export async function POST(request: Request) {
               onTurn: (turn) => {
                 acceptedTurnRef.current = {
                   id: turn.id,
-                  status: turn.status
+                  status: turn.status,
+                  action: turn.action
                 };
-                send("turn", { turn });
+                send("turn", { turn: publicInterviewUserTurnSchema.parse(turn) });
               }
             },
             { signal: streamAbortController.signal }
           );
+
+          if (
+            parsed.data.action === "regenerate_question" ||
+            acceptedTurnRef.current?.action === "regenerate_question"
+          ) {
+            const activeVersionMessage = [...result.session.messages]
+              .reverse()
+              .find((message) =>
+                message.responseVersion?.versions.some((version: { active: boolean }) => version.active)
+              );
+            if (activeVersionMessage?.responseVersion) {
+              send("version", {
+                responseGroupId: activeVersionMessage.responseVersion.groupId,
+                messageId: activeVersionMessage.id,
+                version: activeVersionMessage.responseVersion.version,
+                versionCount: activeVersionMessage.responseVersion.versionCount,
+                activeBranchSessionId: result.session.activeBranchSessionId
+              });
+            }
+          }
 
           send("session", {
             session: interviewSessionSchema.parse(result.session)

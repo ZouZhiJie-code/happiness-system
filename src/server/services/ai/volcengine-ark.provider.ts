@@ -45,6 +45,34 @@ function extractMessageContent(content: unknown) {
   return "";
 }
 
+function hasNonEmptyMessageContent(content: unknown) {
+  if (typeof content === "string") {
+    return Boolean(content.trim());
+  }
+
+  if (!Array.isArray(content)) {
+    return false;
+  }
+
+  return content.some((item) => {
+    if (typeof item === "string") {
+      return Boolean(item.trim());
+    }
+
+    return Boolean(
+      item && typeof item === "object" && "text" in item && typeof item.text === "string" && item.text.trim()
+    );
+  });
+}
+
+function createOutputTruncatedError() {
+  return new AIProviderError("Model output reached the token limit before completion.", "OUTPUT_TRUNCATED");
+}
+
+function createEmptyContentAfterReasoningError() {
+  return new AIProviderError("Model produced reasoning but no answer content.", "EMPTY_CONTENT_AFTER_REASONING");
+}
+
 function parseUpstreamErrorMessage(raw: string) {
   try {
     const parsed = JSON.parse(raw) as {
@@ -151,7 +179,7 @@ export class VolcengineArkProvider implements AIProvider {
     this.timeoutMs = Number(process.env.AI_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   }
 
-  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs, signal }: AICompletionParams) {
+  async complete({ messages, temperature = 0.2, maxTokens = 600, timeoutMs, responseFormat, thinking, signal }: AICompletionParams) {
     if (!this.model) {
       throw new AIProviderError("Missing Volcengine Ark model.", "MISSING_MODEL");
     }
@@ -170,7 +198,11 @@ export class VolcengineArkProvider implements AIProvider {
           model: this.model,
           messages,
           temperature,
-          max_tokens: maxTokens
+          max_tokens: maxTokens,
+          ...(responseFormat === "json_object"
+            ? { response_format: { type: "json_object" } }
+            : {}),
+          ...(thinking ? { thinking: { type: thinking } } : {})
         }),
         cache: "no-store",
         signal: abortScope.signal
@@ -183,23 +215,59 @@ export class VolcengineArkProvider implements AIProvider {
         throw new AIProviderError(errorText || "AI request failed.", "UPSTREAM_HTTP_ERROR", response.status);
       }
 
-      const payload = (await response.json()) as {
+      let payload: {
         choices?: Array<{
+          finish_reason?: unknown;
           message?: {
             content?: unknown;
+            reasoning_content?: unknown;
           };
         }>;
+        usage?: {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+          prompt_cache_hit_tokens?: number;
+          prompt_cache_miss_tokens?: number;
+        };
       };
-      const content = extractMessageContent(payload.choices?.[0]?.message?.content);
+
+      const rawResponse = await response.text();
+      try {
+        payload = JSON.parse(rawResponse) as typeof payload;
+      } catch {
+        throw new AIProviderError("Model returned an invalid response.", "INVALID_RESPONSE");
+      }
+
+      const choice = payload.choices?.[0];
+
+      if (choice?.finish_reason === "length") {
+        throw createOutputTruncatedError();
+      }
+
+      const content = extractMessageContent(choice?.message?.content);
 
       if (!content) {
+        if (hasNonEmptyMessageContent(choice?.message?.reasoning_content)) {
+          throw createEmptyContentAfterReasoningError();
+        }
+
         throw new AIProviderError("Model returned empty content.", "EMPTY_CONTENT");
       }
 
       return {
         content,
         latencyMs,
-        provider: this.name
+        provider: this.name,
+        tokenUsage: payload.usage
+          ? {
+              promptTokens: payload.usage.prompt_tokens,
+              completionTokens: payload.usage.completion_tokens,
+              totalTokens: payload.usage.total_tokens,
+              promptCacheHitTokens: payload.usage.prompt_cache_hit_tokens,
+              promptCacheMissTokens: payload.usage.prompt_cache_miss_tokens
+            }
+          : null
       };
     } catch (error) {
       if (error instanceof AIProviderError) {
@@ -257,6 +325,8 @@ export class VolcengineArkProvider implements AIProvider {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let hasAnswerContent = false;
+      let hasReasoningContent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -282,30 +352,51 @@ export class VolcengineArkProvider implements AIProvider {
           }
 
           if (data === "[DONE]") {
+            if (!hasAnswerContent && hasReasoningContent) {
+              throw createEmptyContentAfterReasoningError();
+            }
+
             return;
           }
 
           const payload = JSON.parse(data) as {
             choices?: Array<{
+              finish_reason?: unknown;
               delta?: {
                 content?: unknown;
+                reasoning_content?: unknown;
               };
               message?: {
                 content?: unknown;
+                reasoning_content?: unknown;
               };
             }>;
           };
+          const choice = payload.choices?.[0];
+
+          if (choice?.finish_reason === "length") {
+            throw createOutputTruncatedError();
+          }
+
+          hasReasoningContent =
+            hasReasoningContent ||
+            hasNonEmptyMessageContent(choice?.delta?.reasoning_content) ||
+            hasNonEmptyMessageContent(choice?.message?.reasoning_content);
           const content =
-            extractMessageContent(payload.choices?.[0]?.delta?.content) ||
-            extractMessageContent(payload.choices?.[0]?.message?.content);
+            extractMessageContent(choice?.delta?.content) || extractMessageContent(choice?.message?.content);
 
           if (content) {
+            hasAnswerContent = true;
             yield content;
           }
         }
       }
 
       if (!buffer.trim()) {
+        if (!hasAnswerContent && hasReasoningContent) {
+          throw createEmptyContentAfterReasoningError();
+        }
+
         return;
       }
 
@@ -322,21 +413,38 @@ export class VolcengineArkProvider implements AIProvider {
 
         const payload = JSON.parse(data) as {
           choices?: Array<{
+            finish_reason?: unknown;
             delta?: {
               content?: unknown;
+              reasoning_content?: unknown;
             };
             message?: {
               content?: unknown;
+              reasoning_content?: unknown;
             };
           }>;
         };
+        const choice = payload.choices?.[0];
+
+        if (choice?.finish_reason === "length") {
+          throw createOutputTruncatedError();
+        }
+
+        hasReasoningContent =
+          hasReasoningContent ||
+          hasNonEmptyMessageContent(choice?.delta?.reasoning_content) ||
+          hasNonEmptyMessageContent(choice?.message?.reasoning_content);
         const content =
-          extractMessageContent(payload.choices?.[0]?.delta?.content) ||
-          extractMessageContent(payload.choices?.[0]?.message?.content);
+          extractMessageContent(choice?.delta?.content) || extractMessageContent(choice?.message?.content);
 
         if (content) {
+          hasAnswerContent = true;
           yield content;
         }
+      }
+
+      if (!hasAnswerContent && hasReasoningContent) {
+        throw createEmptyContentAfterReasoningError();
       }
     } catch (error) {
       if (error instanceof AIProviderError) {

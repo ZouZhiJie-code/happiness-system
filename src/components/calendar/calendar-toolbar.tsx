@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useCalendarChrome } from "@/components/calendar/calendar-chrome-context";
+import { CalendarModeSwitcher } from "@/components/calendar/calendar-mode-switcher";
 import { CalendarViewSwitcher } from "@/components/calendar/calendar-view-switcher";
 import { HeaderToolbarPeriodStepper } from "@/components/shared/header-toolbar-nav";
 import {
@@ -32,7 +33,12 @@ import {
 } from "@/features/calendar/toolbar";
 import type { CalendarDayRecord, CalendarMonthRecord, CalendarWeekRecord } from "@/features/calendar/types";
 import { buildCalendarWeekStats } from "@/features/calendar/week-stats";
-import { buildCalendarHref, normalizeCalendarSearchParams } from "@/features/calendar/view-state";
+import {
+  buildCalendarHref,
+  normalizeCalendarMode,
+  normalizeCalendarSearchParams,
+  type CalendarMode
+} from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
 function hasCachedToolbarRecord(view: ReturnType<typeof normalizeCalendarSearchParams>["view"], date: string) {
@@ -58,6 +64,17 @@ export function CalendarToolbar() {
     date: searchParams.get("date"),
     today
   });
+  const calendarView = normalizedSearch.view;
+  const calendarDate = normalizedSearch.date;
+  const requestedCalendarMode = searchParams.get("calendarMode");
+  const calendarMode = normalizeCalendarMode(requestedCalendarMode);
+  const isRouteLocatedDay = activeView === "day" && calendarMode === "event_centered";
+  const isEventCalendarMode = calendarMode === "event_centered" && !isRouteLocatedDay;
+  const readTarget = searchParams.get("readTarget") === "event_centered"
+    ? "event_centered"
+    : searchParams.get("readTarget") === "legacy"
+      ? "legacy"
+      : undefined;
   const toolbarState = useMemo(
     () =>
       buildCalendarToolbarState({
@@ -98,19 +115,41 @@ export function CalendarToolbar() {
       return;
     }
 
-    const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}`;
-    if (currentHref !== normalizedSearch.href) {
-      router.replace(normalizedSearch.href, { scroll: false });
+    const currentHref = `/calendar?view=${searchParams.get("view") ?? ""}&date=${searchParams.get("date") ?? ""}${requestedCalendarMode ? `&calendarMode=${requestedCalendarMode}` : ""}${readTarget ? `&readTarget=${readTarget}` : ""}`;
+    const normalizedHref = buildCalendarHref({
+      view: normalizedSearch.view,
+      date: normalizedSearch.date,
+      calendarMode: requestedCalendarMode ? calendarMode : undefined,
+      readTarget
+    });
+    if (currentHref !== normalizedHref) {
+      router.replace(normalizedHref, { scroll: false });
     }
-  }, [isCalendarPage, normalizedSearch.href, router, searchParams]);
+  }, [calendarMode, isCalendarPage, normalizedSearch.date, normalizedSearch.view, readTarget, requestedCalendarMode, router, searchParams]);
 
   useEffect(() => {
+    if (isEventCalendarMode || isRouteLocatedDay) {
+      return;
+    }
     prefetchCalendarAdjacentViews(normalizedSearch.view, normalizedSearch.date);
-  }, [normalizedSearch.date, normalizedSearch.view]);
+  }, [isEventCalendarMode, isRouteLocatedDay, normalizedSearch.date, normalizedSearch.view]);
 
   useEffect(() => {
     let cancelled = false;
-    const { view, date } = normalizedSearch;
+
+    if (isEventCalendarMode || isRouteLocatedDay) {
+      setIsLoading(false);
+      setHasFetchError(false);
+      setMonthRecord(null);
+      setWeekRecord(null);
+      setDayRecord(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const view = calendarView;
+    const date = calendarDate;
     const cachedRecord =
       view === "month"
         ? getCachedCalendarMonthRecord(date)
@@ -171,9 +210,25 @@ export function CalendarToolbar() {
     return () => {
       cancelled = true;
     };
-  }, [normalizedSearch.date, normalizedSearch.view]);
+  }, [calendarDate, calendarView, isEventCalendarMode, isRouteLocatedDay]);
 
   const chips = useMemo(() => {
+    if (isRouteLocatedDay) {
+      return [
+        { id: "date", label: "记录", value: "当天" },
+        { id: "route", label: "阅读", value: "定位" },
+        { id: "boundary", label: "模式", value: "分流" }
+      ];
+    }
+
+    if (isEventCalendarMode) {
+      return [
+        { id: "model", label: "记录", value: "事件" },
+        { id: "order", label: "排序", value: "当天" },
+        { id: "route", label: "阅读", value: activeView === "day" ? "定位" : "当前" }
+      ];
+    }
+
     if (isLoading || hasFetchError) {
       return buildCalendarToolbarFallbackChips(activeView);
     }
@@ -184,10 +239,11 @@ export function CalendarToolbar() {
       weekStats: weekRecord ? buildCalendarWeekStats(weekRecord) : null,
       dayRecord
     });
-  }, [activeView, dayRecord, hasFetchError, isLoading, monthRecord, weekRecord]);
+  }, [activeView, dayRecord, hasFetchError, isEventCalendarMode, isLoading, isRouteLocatedDay, monthRecord, weekRecord]);
 
-  function navigate(input: { date?: string; view?: typeof normalizedSearch.view }) {
+  function navigate(input: { date?: string; view?: typeof normalizedSearch.view; calendarMode?: CalendarMode }) {
     const nextView = input.view ?? normalizedSearch.view;
+    const nextCalendarMode = input.calendarMode ?? (requestedCalendarMode ? calendarMode : undefined);
 
     if (input.view && input.view !== normalizedSearch.view) {
       beginCalendarViewChange(input.view);
@@ -196,7 +252,8 @@ export function CalendarToolbar() {
     router.replace(
       buildCalendarHref({
         view: nextView,
-        date: input.date ?? normalizedSearch.date
+        date: input.date ?? normalizedSearch.date,
+        calendarMode: nextCalendarMode
       }),
       { scroll: false }
     );
@@ -261,12 +318,22 @@ export function CalendarToolbar() {
             currentView={activeView}
             currentDate={normalizedSearch.date}
             onSelectView={(view) => navigate({ view })}
+            shouldPrefetch={!isEventCalendarMode && !isRouteLocatedDay}
           />
         </div>
 
-        <HeaderToolbarDivider className="order-4 hidden lg:order-none lg:inline-flex" />
+        {activeView !== "day" ? (
+          <>
+            <HeaderToolbarDivider className="order-4 hidden lg:order-none lg:inline-flex" />
+            <div className="header-ws-slot header-ws-slot--view order-4 shrink-0 md:order-none">
+              <CalendarModeSwitcher currentMode={calendarMode} onSelectMode={(mode) => navigate({ calendarMode: mode })} />
+            </div>
+          </>
+        ) : null}
 
-        <div className="header-ws-slot header-ws-slot--action order-5 shrink-0 md:order-none">
+        <HeaderToolbarDivider className="order-5 hidden lg:order-none lg:inline-flex" />
+
+        <div className="header-ws-slot header-ws-slot--action order-6 shrink-0 md:order-none">
           <HeaderToolbarChipButton onClick={() => navigate({ date: today })} aria-label="回到今天">
             今天
           </HeaderToolbarChipButton>
