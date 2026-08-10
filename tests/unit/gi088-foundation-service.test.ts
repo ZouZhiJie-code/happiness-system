@@ -368,6 +368,12 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(replay.created).toBe(false);
     expect(await store.listRuns({ ownerUserId: "owner-create" })).toHaveLength(1);
     expect(await store.listCalls(first.runId)).toEqual([]);
+    expect(first.session.batch.targetCoverage).toEqual({
+      triggeredTrajectoryCount: 0,
+      reviewedTrajectoryCount: 0,
+      totalTrajectoryCount: 12
+    });
+    expect(first.session.metrics?.gateFacts.unreviewedTrajectoryCount).toBe(0);
     expect(getProvider).not.toHaveBeenCalled();
     expect(provider.provider.complete).not.toHaveBeenCalled();
   });

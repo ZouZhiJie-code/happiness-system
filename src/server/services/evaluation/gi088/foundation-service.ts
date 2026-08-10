@@ -774,8 +774,13 @@ function interventionToPublic(
 }
 
 function stateForMetrics(state: Gi088BatchState) {
+  const activeBranches: Gi088BranchKey[] =
+    state.evaluationMode === "paired" ? ["off", "high"] : ["high"];
   return state.tasks.map((task) => ({
     ...task,
+    branches: Object.fromEntries(
+      activeBranches.map((branch) => [branch, task.branches[branch]])
+    ),
     status: publicTaskStatus(state, task)
   }));
 }
@@ -1247,7 +1252,10 @@ export class Gi088EvaluationFoundationService {
           triggeredTrajectoryCount:
             metrics.gateFacts.targetTriggeredTrajectoryCount,
           reviewedTrajectoryCount:
-            definitions.length - metrics.gateFacts.unreviewedTrajectoryCount,
+            metrics.gateFacts.targetTriggeredTrajectoryCount +
+            metrics.gateFacts.targetNotTriggeredCount +
+            metrics.gateFacts.targetBlockedByTechnicalFailureCount +
+            metrics.gateFacts.targetLegacyUnknownCount,
           totalTrajectoryCount: definitions.length
         },
         gate: {

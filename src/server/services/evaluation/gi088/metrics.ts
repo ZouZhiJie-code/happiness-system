@@ -164,6 +164,15 @@ function trajectoriesForTask(task: Gi088MetricsTaskInput) {
   return Object.values(task.branches ?? {});
 }
 
+function trajectoryHasEvaluationEvidence(
+  trajectory: Gi088MetricsTrajectoryInput
+) {
+  return trajectory.review !== null && trajectory.review !== undefined ||
+    (trajectory.turns?.length ?? 0) > 0 ||
+    (trajectory.messages?.length ?? 0) > 0 ||
+    trajectory.status !== undefined && trajectory.status !== "not_started";
+}
+
 function callIdentifier(call: Gi088MetricsCallInput) {
   return call.callId ?? call.id ?? null;
 }
@@ -515,7 +524,9 @@ export function calculateGi088EvaluationMetrics(
     (intervention) => interventionReviewOutcome(intervention) === "uncertain"
   ).length;
 
-  const trajectories = input.tasks.flatMap(trajectoriesForTask);
+  const trajectories = input.tasks
+    .flatMap(trajectoriesForTask)
+    .filter(trajectoryHasEvaluationEvidence);
   const reviews = trajectories
     .map((trajectory) => trajectory.review)
     .filter((review): review is NonNullable<Gi088MetricsTrajectoryInput["review"]> =>

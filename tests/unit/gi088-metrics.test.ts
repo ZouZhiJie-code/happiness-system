@@ -25,6 +25,39 @@ function successfulTurn(
 }
 
 describe("GI-088 evaluation metrics v1", () => {
+  it("空白 high-only 批次保持零复核计数与 N/A 比率", () => {
+    const metrics = calculateGi088EvaluationMetrics({
+      tasks: Array.from({ length: 12 }, (_, index) => ({
+        taskId: `A${index + 1}`,
+        status: "pending",
+        branches: {
+          off: {
+            id: `A${index + 1}-off`,
+            status: "not_started",
+            messages: [],
+            turns: [],
+            review: null
+          },
+          high: {
+            id: `A${index + 1}-high`,
+            status: "not_started",
+            messages: [],
+            turns: [],
+            review: null
+          }
+        }
+      })),
+      callLedger: [],
+      programInterventions: []
+    });
+
+    expect(metrics.eligibleModelSubmissionCount).toBe(0);
+    expect(metrics.firstVisibleSuccessRate).toBeNull();
+    expect(metrics.gateFacts.unreviewedTrajectoryCount).toBe(0);
+    expect(metrics.gateFacts.unreviewedVisibleQuestionCount).toBe(0);
+    expect(metrics.gateFacts.unreviewedProgramInterventionCount).toBe(0);
+  });
+
   it("对历史 JSON calls 统一计算恢复、失败、重复与人工复核指标", () => {
     const turns: Gi088MetricsTurnInput[] = [
       successfulTurn("t1", "client-1", {
