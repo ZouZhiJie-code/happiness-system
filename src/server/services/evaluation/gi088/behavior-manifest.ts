@@ -236,7 +236,8 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
   },
   { path: "package.json", layers: ALL_LAYERS },
   { path: "package-lock.json", layers: ALL_LAYERS },
-  { path: "pnpm-lock.yaml", layers: ALL_LAYERS }
+  { path: "pnpm-lock.yaml", layers: ALL_LAYERS },
+  { path: "pnpm-workspace.yaml", layers: ALL_LAYERS }
 ] as const satisfies readonly Gi088BehaviorFileSpec[];
 
 function sha256(value: string | Uint8Array) {

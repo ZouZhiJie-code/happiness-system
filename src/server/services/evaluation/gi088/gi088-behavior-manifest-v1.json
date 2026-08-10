@@ -48,7 +48,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "3d084a0e2caae1902fa328860c39ed20c32406faec0fa23db54e8436a3f33124"
+      "sha256": "6b2ef288fbf8837a4826593ffd24f5c3459b412e0b16bceb79827ec9b3494753"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -59,6 +59,16 @@
         "runner"
       ],
       "sha256": "1d3950337ae79ac069c257a3fb631388726a29a7c50b33fce28a84aaa5d4a304"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "layers": [
+        "candidate",
+        "dataset",
+        "experience",
+        "runner"
+      ],
+      "sha256": "4b16caf9c94750df6aa0719e21bc8859b4f5fd81b5d68944318f9c9e05bcf7aa"
     },
     {
       "path": "prisma/evaluation/migrations/20260810180000_add_v8r2_foundation_hardening/migration.sql",
@@ -289,7 +299,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "31d7af10fb0cc34bdbc93d7fedbec08a337857a676d67e280e39b2959a280ed4"
+      "sha256": "41eb0b82b5a5ede8fc5fd248b436cb4ddd2191efd04c6ef4617a403b156be3af"
     },
     {
       "path": "src/server/services/evaluation/gi088/candidate.ts",
