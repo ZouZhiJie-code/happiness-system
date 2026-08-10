@@ -21,6 +21,22 @@ import type { Gi088PublicSession } from "../src/server/services/evaluation/gi088
 
 const SOURCE_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R1;
 const CONFIRMATION = "I_UNDERSTAND_ZERO_MODEL_CALLS";
+const DIRECT_RUN_MARKER = "--gi088-initialize-direct-run";
+export function isGi088InitializeDirectRun(
+  argv: readonly string[] = process.argv,
+  moduleUrl: string = import.meta.url
+) {
+  // vite-node 2.1.5 的普通 runner 会移除入口文件参数，只保留 `--` 后的参数。
+  if (argv.includes(DIRECT_RUN_MARKER)) return true;
+  return argv.slice(1).some((argument) => {
+    if (!argument || argument.startsWith("-")) return false;
+    try {
+      return pathToFileURL(resolve(argument)).href === moduleUrl;
+    } catch {
+      return false;
+    }
+  });
+}
 
 export function resolveGi088InitializeDatabaseUrl(
   env: NodeJS.ProcessEnv = process.env
@@ -175,11 +191,7 @@ async function main() {
   }
 }
 
-const isDirectRun =
-  Boolean(process.argv[1]) &&
-  import.meta.url === pathToFileURL(resolve(process.argv[1]!)).href;
-
-if (isDirectRun) {
+if (isGi088InitializeDirectRun()) {
   void main().catch((error) => {
     console.error(
       error instanceof Error ? error.message : "GI088_INITIALIZE_FAILED"

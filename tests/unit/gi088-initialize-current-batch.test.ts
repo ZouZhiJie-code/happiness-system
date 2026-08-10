@@ -1,7 +1,12 @@
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
   assertGi088ZeroModelInitializeReadback,
+  isGi088InitializeDirectRun,
   resolveGi088InitializeDatabaseUrl
 } from "../../scripts/initialize-gi088-current-batch";
 import {
@@ -59,6 +64,58 @@ async function validInitializeReadback() {
 }
 
 describe("GI-088 v8r2 zero-model initialize database guard", () => {
+  it("识别普通 Node、vite-node argv 与实际 package runner", () => {
+    const scriptPath = resolve(
+      process.cwd(),
+      "scripts/initialize-gi088-current-batch.ts"
+    );
+    const scriptUrl = pathToFileURL(scriptPath).href;
+
+    expect(
+      isGi088InitializeDirectRun([process.execPath, scriptPath], scriptUrl)
+    ).toBe(true);
+    expect(
+      isGi088InitializeDirectRun(
+        [
+          process.execPath,
+          resolve(process.cwd(), "node_modules/vite-node/vite-node.mjs"),
+          scriptPath
+        ],
+        scriptUrl
+      )
+    ).toBe(true);
+    expect(
+      isGi088InitializeDirectRun(
+        [process.execPath, "vite-node", "--gi088-initialize-direct-run"],
+        scriptUrl
+      )
+    ).toBe(true);
+    expect(
+      isGi088InitializeDirectRun(
+        [process.execPath, "vite-node", "tests/unit/example.test.ts"],
+        scriptUrl
+      )
+    ).toBe(false);
+
+    const result = spawnSync(
+      "npm",
+      ["run", "-s", "eval:gi088:initialize-current"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          NODE_ENV: "test",
+          VERCEL_ENV: "preview",
+          GI088_INITIALIZE_CONFIRMATION: ""
+        }
+      }
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("GI088_INITIALIZE_CONFIRMATION_REQUIRED");
+    expect(result.stdout.trim()).toBe("");
+  }, 20_000);
+
   it("只接受同一 Preview 物理库中的 app/evaluation 隔离 schema", () => {
     const source = validEnvironment();
     const result = resolveGi088InitializeDatabaseUrl(source);

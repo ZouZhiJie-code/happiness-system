@@ -12,7 +12,7 @@
     "prisma:gi088:deploy": "vite-node -c vitest.config.ts scripts/deploy-gi088-evaluation-schema.ts",
     "prisma:gi088:purge": "vite-node -c vitest.config.ts scripts/purge-gi088-evaluation-data.ts",
     "eval:gi088:inspect": "vite-node -c vitest.config.ts scripts/inspect-gi088-evaluation.ts",
-    "eval:gi088:initialize-current": "vite-node -c vitest.config.ts scripts/initialize-gi088-current-batch.ts",
+    "eval:gi088:initialize-current": "vite-node -c vitest.config.ts scripts/initialize-gi088-current-batch.ts -- --gi088-initialize-direct-run",
     "eval:gi088:replay:v7r3": "vite-node -c vitest.config.ts scripts/replay-gi088-v7r2-deterministic-state.ts",
     "eval:gi088:replay:v8-baseline": "vite-node -c vitest.config.ts scripts/replay-gi088-v7r4-v8-baseline.ts",
     "eval:gi088:probe:empty:inspect": "vite-node -c vitest.config.ts scripts/run-gi088-empty-content-probe.ts",
