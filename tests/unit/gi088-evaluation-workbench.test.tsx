@@ -511,8 +511,13 @@ describe("Gi088EvaluationWorkbench", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "评价当前分支并继续对照" }));
 
-    expect(screen.getByLabelText("当前任务目标判定参考")).toHaveTextContent(targetTriggerPrompt);
-    expect(screen.getByLabelText("当前任务目标判定参考")).toHaveTextContent(criterion);
+    const targetReference = await screen.findByLabelText(
+      "当前任务目标判定参考",
+      {},
+      { timeout: 5_000 }
+    );
+    expect(targetReference).toHaveTextContent(targetTriggerPrompt);
+    expect(targetReference).toHaveTextContent(criterion);
     expect(screen.getByText("评测人参考 · 仅页面可见")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "质量失败" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "可直接使用" })).toHaveAttribute("aria-pressed", "false");
@@ -669,10 +674,18 @@ describe("Gi088EvaluationWorkbench", () => {
     fireEvent.change(screen.getByLabelText("复核说明（选填）"), {
       target: { value: "三个问句共同帮助回答同一种卡住感。" }
     });
+    await waitFor(
+      () => expect(screen.getByRole("button", { name: "保存本轮分类" })).toBeEnabled(),
+      { timeout: 5_000 }
+    );
     fireEvent.click(screen.getByRole("button", { name: "保存本轮分类" }));
 
-    expect(await screen.findByText("已保存：同一焦点，容易回答")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2), {
+      timeout: 5_000
+    });
+    expect(
+      await screen.findByText("已保存：同一焦点，容易回答", {}, { timeout: 5_000 })
+    ).toBeInTheDocument();
     expect(fetchMock.mock.calls[1]![0]).toBe(
       "/api/preview/gi088/question-review"
     );
@@ -789,10 +802,16 @@ describe("Gi088EvaluationWorkbench", () => {
     render(<Gi088EvaluationWorkbench />);
     const composer = await screen.findByPlaceholderText("直接回应 AI。⌘ Enter 发送");
     fireEvent.change(composer, { target: { value: "我想继续说说这个部分。" } });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "发送" })).toBeEnabled()
+    );
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
-    expect((await screen.findAllByText(/正在继续整理最终回答/u)).length)
-      .toBeGreaterThanOrEqual(2);
+    await waitFor(
+      () => expect(screen.getAllByText(/正在继续整理最终回答/u).length)
+        .toBeGreaterThanOrEqual(2),
+      { timeout: 5_000 }
+    );
     expect(screen.getByTestId("gi088-conversation")).toHaveAttribute("aria-busy", "true");
     streamController.enqueue(encoder.encode(JSON.stringify({
       type: "session",
@@ -949,9 +968,17 @@ describe("Gi088EvaluationWorkbench", () => {
     render(<Gi088EvaluationWorkbench />);
     const composer = await screen.findByPlaceholderText("直接回应 AI。⌘ Enter 发送");
     fireEvent.change(composer, { target: { value: "这条消息服务端其实已经收到了。" } });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "发送" })).toBeEnabled()
+    );
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
-    expect(await screen.findByText(/评测工作台暂时无法连接/u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/评测工作台暂时无法连接/u, {}, { timeout: 5_000 })
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "发送" })).toBeEnabled()
+    );
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => expect(window.sessionStorage.getItem(GI088_OUTBOX_STORAGE_KEY)).toBeNull());
@@ -976,9 +1003,17 @@ describe("Gi088EvaluationWorkbench", () => {
     render(<Gi088EvaluationWorkbench />);
     const input = await screen.findByPlaceholderText("按你平时来 Daily Light 的方式直接说就可以。");
     fireEvent.change(input, { target: { value: "我想聊聊最近一直拖着没决定的事情。" } });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "冻结起点并开始关闭组" })).toBeEnabled()
+    );
     fireEvent.click(screen.getByRole("button", { name: "冻结起点并开始关闭组" }));
 
-    expect(await screen.findByText(/评测工作台暂时无法连接/u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/评测工作台暂时无法连接/u, {}, { timeout: 5_000 })
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "冻结起点并开始关闭组" })).toBeEnabled()
+    );
     fireEvent.click(screen.getByRole("button", { name: "冻结起点并开始关闭组" }));
     await screen.findByText("A0＋U1 已冻结");
 
