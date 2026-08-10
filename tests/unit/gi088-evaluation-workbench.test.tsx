@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { configure, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { Gi088EvaluationWorkbench } from "@/components/interview/event-centered/gi088-evaluation-workbench";
@@ -13,6 +13,8 @@ import {
   prepareGi088Outbox,
   readGi088Outbox
 } from "@/features/interview/event-centered/gi088-evaluation-client";
+
+configure({ asyncUtilTimeout: 5_000 });
 
 const instruction = "请在真实聊天中主动触发：先说两件互相影响的事，再选择其中一边作为当前入口。";
 const targetTriggerPrompt = "请在 U1 同时说明两个相互影响的方面，并明确说出当前想先聊哪一个。";

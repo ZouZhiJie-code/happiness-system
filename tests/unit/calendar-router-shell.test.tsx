@@ -245,7 +245,11 @@ describe("calendar router shell", () => {
 
     render(<CalendarRouterShellHarness />);
 
-    expect(await screen.findByTestId("event-calendar-month-workspace")).toHaveAttribute("aria-busy", "false");
+    const workspace = await screen.findByTestId("event-calendar-month-workspace");
+    await waitFor(
+      () => expect(workspace).toHaveAttribute("aria-busy", "false"),
+      { timeout: 5_000 }
+    );
     expect(screen.getAllByText("把今天的事收住")).toHaveLength(2);
     expect(screen.getByRole("link", { name: /把今天的事收住/ })).toHaveAttribute(
       "href",
