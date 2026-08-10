@@ -1,0 +1,21 @@
+{
+  "template": true,
+  "authorizationVersion": "2026-08-07.board7b-semantic-frame-authorization-v1",
+  "decision": "pending",
+  "candidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "datasetFingerprint": "e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1",
+  "requestSetFingerprint": "56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71",
+  "evaluationPolicyFingerprint": "3d7204f4e8d5f2d29c1f92b6054a66c4e05134aa2772ae357af4a24c85cfc669",
+  "executionFingerprint": "23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4",
+  "runnerVersion": "2026-08-07.board7b-semantic-frame-runner-v1",
+  "authorizationId": null,
+  "authorizationScope": "eight_case_semantic_frame_regression",
+  "plannedModelCallBudget": 8,
+  "authorizedModelCallBudget": 0,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": null,
+  "approvedAt": null,
+  "productionChangeAuthorized": false,
+  "confirmationText": "等待产品负责人针对 semantic-frame v1 候选、数据、请求集、判尺与执行指纹单独授权。"
+}

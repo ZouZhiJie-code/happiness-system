@@ -1,0 +1,104 @@
+{
+  "datasetVersion": "2026-08-07.board7b-semantic-frame-regression-inputs-v1",
+  "purpose": "GI-085 semantic-frame-first isolated local regression",
+  "modelInputPolicy": {
+    "caseIdSentToModel": false,
+    "rubricSentToModel": false,
+    "expectedAnswerSentToModel": false,
+    "productionDataUsed": false
+  },
+  "cases": [
+    {
+      "caseId": "D1-autumn-open-known-regression",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "D2-autumn-priority-known-regression",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。" },
+        { "id": "A1", "role": "assistant", "content": "你提到秋招窗口期只剩一个月，既要决定公司、行业和业务方向，又要准备作品集通过筛选，确实两头都压着。你现在最纠结的是先定方向，还是先保证能拿到 offer？" },
+        { "id": "U2", "role": "user", "content": "我现在主要还是先拿 offer 吧，所以我在准备一些作品集。" }
+      ],
+      "latestUserMessageId": "U2",
+      "semanticState": {
+        "stage": "engage_focus",
+        "focusSummary": "秋招窗口内同时推进拿到工作和判断公司、行业与业务方向",
+        "focusEvidenceRefs": ["U1"],
+        "understandingSummary": "近期作品集过筛压力与长期方向不确定同时存在并互相影响",
+        "openPartSummary": "长期方向怎样影响当前作品集准备",
+        "burdenSummary": "秋招窗口约剩一个月，用户感到焦急",
+        "stage1Used": 1,
+        "stage2Used": 0
+      }
+    },
+    {
+      "caseId": "N1-course-relocation-transfer-1",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "我想报名一个三个月的康复课程，这周就得决定，公司又可能两个月后把我调到外地。腰最近确实难受，但报名费不低，我一直拖着没交钱。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "N1-course-relocation-transfer-2",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "我想报名一个三个月的康复课程，这周就得决定，公司又可能两个月后把我调到外地。腰最近确实难受，但报名费不低，我一直拖着没交钱。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "N2-project-study-transfer-1",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "手上有个半年项目这周要答复，我也在准备明年申请研究生。接不接我想了好几天，申请材料却一直没开始整理。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "N2-project-study-transfer-2",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "手上有个半年项目这周要答复，我也在准备明年申请研究生。接不接我想了好几天，申请材料却一直没开始整理。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "F1-independent-content-counterfactual",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "最近我一边在挑周末去哪儿爬山，一边在纠结要不要换手机。两件事都让我犹豫，但其实互相没什么关系。" }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "F2-user-defers-one-side-counterfactual",
+      "messages": [
+        { "id": "A0", "role": "assistant", "content": "此刻你想聊点什么？" },
+        { "id": "U1", "role": "user", "content": "我在考虑要不要换城市工作，也担心这会影响和伴侣的相处。" },
+        { "id": "A1", "role": "assistant", "content": "换城市的工作机会和你们的相处会互相影响，你现在最担心这份影响落在哪里？" },
+        { "id": "U2", "role": "user", "content": "伴侣这部分我今天不想聊，先只看工作机会本身。" }
+      ],
+      "latestUserMessageId": "U2",
+      "semanticState": {
+        "stage": "explore_clarify",
+        "focusSummary": "换城市工作与伴侣相处之间的相互影响",
+        "focusEvidenceRefs": ["U1"],
+        "openPartSummary": "换城市会怎样影响伴侣相处",
+        "stage1Used": 1,
+        "stage2Used": 1
+      }
+    }
+  ]
+}

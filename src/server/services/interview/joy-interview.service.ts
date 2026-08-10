@@ -14,6 +14,10 @@ import {
   type IntentAssessmentV1,
   type TurnDecisionV1
 } from "@/features/interview/intent/intent-v1";
+import {
+  decideInterviewControlV2,
+  reconcileIntentAssessmentWithControlDecisionV2
+} from "@/features/interview/intent/control-decision-v2";
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import {
@@ -3452,12 +3456,32 @@ async function prepareJoyInterviewResponseContext(
 
   const legacyAssessment = assessUserTurnMessage(input.userMessage);
   const intentMode = getInterviewIntentV2Mode();
-  const baseDeterministicIntent = assessUserTurnIntent({
+  const latestAssistantQuestion = getLatestAssistantQuestion(session.messages);
+  const latestAssistantQuestionSpec = getLatestAssistantQuestionSpec(
+    session.messages
+  );
+  const controlDecisionV2 = decideInterviewControlV2({
     rawText: input.userMessage,
-    lastAssistantQuestion: getLatestAssistantQuestion(session.messages),
-    questionSpec: getLatestAssistantQuestionSpec(session.messages)
+    lastAssistantMessage: latestAssistantQuestion,
+    currentQuestionTarget:
+      latestAssistantQuestionSpec?.subTarget ??
+      latestAssistantQuestionSpec?.target ??
+      null,
+    workingTaskRef: activeEvent.id,
+    semanticState: activeEvent.snapshot
+  });
+  const baseDeterministicIntentV1 = assessUserTurnIntent({
+    rawText: input.userMessage,
+    lastAssistantQuestion: latestAssistantQuestion,
+    questionSpec: latestAssistantQuestionSpec
+  });
+  const baseDeterministicIntent = reconcileIntentAssessmentWithControlDecisionV2({
+    assessment: baseDeterministicIntentV1,
+    decision: controlDecisionV2
   });
   const persistedIntent = intentMode === "enforce" ? readPersistedIntent(reservation.turn) : null;
+  const shouldOverridePersistedIntent =
+    Boolean(persistedIntent) && controlDecisionV2.reviewCandidate;
   const shouldRecomputePersistedIntent =
     intentMode === "enforce" &&
     Boolean(reservation.turn.intentAssessedAt) &&
@@ -3473,8 +3497,15 @@ async function prepareJoyInterviewResponseContext(
         )
       }
     : baseDeterministicIntent;
-  let intentAssessment = persistedIntent?.assessment ?? deterministicIntent;
-  let intentDecision = persistedIntent?.decision ?? decideUserTurn(intentAssessment);
+  let intentAssessment = shouldOverridePersistedIntent
+    ? reconcileIntentAssessmentWithControlDecisionV2({
+        assessment: persistedIntent!.assessment,
+        decision: controlDecisionV2
+      })
+    : persistedIntent?.assessment ?? deterministicIntent;
+  let intentDecision = shouldOverridePersistedIntent
+    ? decideUserTurn(intentAssessment)
+    : persistedIntent?.decision ?? decideUserTurn(intentAssessment);
   let assessment =
     intentMode === "enforce"
       ? toLegacyUserTurnAssessment(input.userMessage, intentAssessment, intentDecision)
@@ -3489,6 +3520,11 @@ async function prepareJoyInterviewResponseContext(
     inputMode: input.inputMode,
     userTurnId: reservation.turn.id,
     triggerMessageId: reservation.userMessageId
+  });
+
+  await appendGenerationTraceDecision(trace.id, {
+    kind: "interview_control_decision_v2",
+    ...controlDecisionV2
   });
 
   if (intentMode === "shadow") {
@@ -3513,7 +3549,8 @@ async function prepareJoyInterviewResponseContext(
       assessment: intentAssessment,
       decision: intentDecision,
       reusedAssessment: Boolean(persistedIntent),
-      replaceExisting: shouldRecomputePersistedIntent
+      replaceExisting:
+        shouldRecomputePersistedIntent || shouldOverridePersistedIntent
     });
     intentTraceRecorded = true;
   }
@@ -3779,7 +3816,10 @@ async function prepareJoyInterviewResponseContext(
           onIntentAssessment:
             intentMode === "enforce" && !persistedIntent
               ? async (refinedAssessment) => {
-                  intentAssessment = refinedAssessment;
+                  intentAssessment = reconcileIntentAssessmentWithControlDecisionV2({
+                    assessment: refinedAssessment,
+                    decision: controlDecisionV2
+                  });
                   intentDecision = decideUserTurn(intentAssessment);
                   assessment = toLegacyUserTurnAssessment(
                     input.userMessage,
@@ -3795,7 +3835,9 @@ async function prepareJoyInterviewResponseContext(
                     assessment: intentAssessment,
                     decision: intentDecision,
                     reusedAssessment: false,
-                    replaceExisting: shouldRecomputePersistedIntent
+                    replaceExisting:
+                      shouldRecomputePersistedIntent ||
+                      shouldOverridePersistedIntent
                   });
                   intentTraceRecorded = true;
                 }
@@ -3826,7 +3868,8 @@ async function prepareJoyInterviewResponseContext(
       assessment: intentAssessment,
       decision: intentDecision,
       reusedAssessment: Boolean(persistedIntent),
-      replaceExisting: shouldRecomputePersistedIntent
+      replaceExisting:
+        shouldRecomputePersistedIntent || shouldOverridePersistedIntent
     });
     intentTraceRecorded = true;
   }

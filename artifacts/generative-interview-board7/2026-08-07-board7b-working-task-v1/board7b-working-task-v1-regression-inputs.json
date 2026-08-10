@@ -1,0 +1,246 @@
+{
+  "datasetVersion": "2026-08-07.board7b-working-task-regression-inputs-v1",
+  "purpose": "GI-087 working-task plus next-inquiry isolated local screening",
+  "modelInputPolicy": {
+    "caseIdSentToModel": false,
+    "rubricSentToModel": false,
+    "expectedAnswerSentToModel": false,
+    "productionDataUsed": false
+  },
+  "cases": [
+    {
+      "caseId": "AUT1",
+      "sourceType": "real_history_checkpoint",
+      "messages": [
+        {
+          "id": "A0",
+          "role": "assistant",
+          "content": "此刻你想聊点什么？"
+        },
+        {
+          "id": "U1",
+          "role": "user",
+          "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。"
+        }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    },
+    {
+      "caseId": "AUT2",
+      "sourceType": "real_history_checkpoint",
+      "messages": [
+        {
+          "id": "A0",
+          "role": "assistant",
+          "content": "此刻你想聊点什么？"
+        },
+        {
+          "id": "U1",
+          "role": "user",
+          "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。"
+        },
+        {
+          "id": "A1",
+          "role": "assistant",
+          "content": "你提到秋招窗口期只剩一个月，既要决定公司、行业和业务方向，又要准备作品集通过筛选，确实两头都压着。\n\n你现在最纠结的是先定方向，还是先保证能拿到 offer？"
+        },
+        {
+          "id": "U2",
+          "role": "user",
+          "content": "我现在主要还是先拿 offer 吧，所以我在准备一些作品集。"
+        }
+      ],
+      "latestUserMessageId": "U2",
+      "semanticState": {
+        "stage": "engage_focus",
+        "workingTaskSummary": "弄清秋招窗口内，长期方向和当前拿到 offer、准备作品集怎样共同影响求职选择",
+        "workingTaskEvidenceRefs": ["U1"],
+        "understandingSummary": "长期方向不确定与近期作品集过筛压力同时存在，用户当前感到焦急",
+        "understandingEvidenceRefs": ["U1"],
+        "nextInquiry": {
+          "answerTarget": "当前先从长期方向还是拿到 offer 开始",
+          "taskEffect": "选择本轮聊天入口，同时保留两者对秋招选择的共同影响",
+          "evidenceRefs": ["U1"]
+        },
+        "burdenSummary": "秋招窗口约剩一个月，用户感到焦急",
+        "burdenEvidenceRefs": ["U1"],
+        "stage1Used": 1,
+        "stage2Used": 0,
+        "returnableTasks": []
+      }
+    },
+    {
+      "caseId": "H1",
+      "sourceType": "real_history_checkpoint",
+      "messages": [
+        {
+          "id": "d9538307-dd0f-4a54-8da2-e7262c21ee36",
+          "role": "assistant",
+          "content": "先从这件事开始吧。刚刚发生了什么？"
+        },
+        {
+          "id": "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "role": "user",
+          "content": "晚上跟邹志杰一起去吃了鸭腿，还有天方夜谭的包子。因为我们饿了好久，9 点钟才吃饭，所以吃的时候感觉特别的香，而且有人抢就很香。比一个人吃香。"
+        },
+        {
+          "id": "e767eeae-5269-46af-b373-0efe4bf70b35",
+          "role": "assistant",
+          "content": "我先把这件事和你的反应记下来。\n这件事发生时，你心里最先冒出的感受是什么？"
+        },
+        {
+          "id": "f2e61352-f816-428a-9fd9-22d8dff6acf6",
+          "role": "user",
+          "content": "感觉很爽吧，有点轻松，因为学了一天累了，可以这样子爽爽地吃一顿。"
+        },
+        {
+          "id": "1ea57ba9-50c5-4206-92e0-f142530b59c9",
+          "role": "assistant",
+          "content": "当前判断聚焦于‘爽’与‘轻松’是否源于学习后的疲惫感，需回到具体时刻确认这一关联。\n在那个学了一天累了的时刻，你心里最直接的感受是爽还是轻松？"
+        },
+        {
+          "id": "1228fecf-1a8a-47ec-9b4f-d6d01e300981",
+          "role": "user",
+          "content": "爽和轻松为什么要分别出来呢？我就是并存的呀。"
+        }
+      ],
+      "latestUserMessageId": "1228fecf-1a8a-47ec-9b4f-d6d01e300981",
+      "semanticState": {
+        "stage": "explore_clarify",
+        "workingTaskSummary": "理解学习一天后，一起吃晚饭带来的爽与轻松体验",
+        "workingTaskEvidenceRefs": [
+          "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "f2e61352-f816-428a-9fd9-22d8dff6acf6"
+        ],
+        "understandingSummary": "饿了很久、学习后的疲惫和有人一起抢着吃，共同构成这顿晚饭的体验",
+        "understandingEvidenceRefs": [
+          "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "f2e61352-f816-428a-9fd9-22d8dff6acf6"
+        ],
+        "nextInquiry": {
+          "answerTarget": "在爽和轻松之间选择一个更直接的感受",
+          "taskEffect": "判断哪一种感受更能说明这顿晚饭的意义",
+          "evidenceRefs": ["f2e61352-f816-428a-9fd9-22d8dff6acf6"]
+        },
+        "stage1Used": 1,
+        "stage2Used": 1,
+        "returnableTasks": []
+      }
+    },
+    {
+      "caseId": "H2",
+      "sourceType": "real_history_checkpoint",
+      "messages": [
+        {
+          "id": "759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d",
+          "role": "assistant",
+          "content": "先从这件事开始吧。刚刚发生了什么？"
+        },
+        {
+          "id": "b19e235e-3768-4827-b927-2e5c261859f0",
+          "role": "user",
+          "content": "今天邹志杰说到了问问大象续费的事情，这又勾起了我的陈年回忆，又开始思考了上次问问大象的事情，然后陷入到一些烦躁和内耗当中。"
+        },
+        {
+          "id": "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7",
+          "role": "assistant",
+          "content": "当前判断关系是邹志杰今天提到续费事项，但具体判断瞬间尚未确认；回到该来源的具体时刻有助于锁定判断依据。\n邹志杰今天提到续费时，是在什么具体情境下说的？"
+        },
+        {
+          "id": "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+          "role": "user",
+          "content": "是他随口一提，说只有 33 个人续费。当时我心里面有一点一掉的感觉，只有 33 个人吗？感觉好少。然后我就仔细去看了一下消息，原来已经开通了续费功能。然后又想到之前的事情，就感觉很不爽。"
+        },
+        {
+          "id": "b3b49591-454b-40c9-ae0f-21a39ace322a",
+          "role": "assistant",
+          "content": "当前需要确认判断依据的具体来源，因为随口一提的续费人数可能不足以支撑判断。\n你记得他是在什么场合下提到只有33个人续费的吗？"
+        },
+        {
+          "id": "a0404de2-7191-48da-9b5e-3a2847ac7dfe",
+          "role": "user",
+          "content": "你他妈就是个傻逼，场合根本不重要，重要的是勾起我的陈年回忆，重要的是我想到之前的事情。我都给你埋了钩子，你不问干嘛？你他妈个叉，大傻逼。"
+        }
+      ],
+      "latestUserMessageId": "a0404de2-7191-48da-9b5e-3a2847ac7dfe",
+      "semanticState": {
+        "stage": "explore_clarify",
+        "workingTaskSummary": "弄清续费信息勾起的过去经历，怎样让用户再次陷入烦躁和内耗",
+        "workingTaskEvidenceRefs": ["b19e235e-3768-4827-b927-2e5c261859f0"],
+        "understandingSummary": "33 人续费的信息带来失落感，并让用户再次想到过去的事情",
+        "understandingEvidenceRefs": ["564fe641-c98b-49b3-9bf4-29ad5ea40a83"],
+        "nextInquiry": {
+          "answerTarget": "续费人数是在什么场合被提到的",
+          "taskEffect": "通过补充发生场合判断续费信息为什么引起烦躁",
+          "evidenceRefs": ["564fe641-c98b-49b3-9bf4-29ad5ea40a83"]
+        },
+        "stage1Used": 1,
+        "stage2Used": 1,
+        "returnableTasks": []
+      }
+    },
+    {
+      "caseId": "PAUSE",
+      "sourceType": "synthetic_guardrail",
+      "messages": [
+        {
+          "id": "PAUSE-A1",
+          "role": "assistant",
+          "content": "今天这种沉最明显是在哪个时刻？"
+        },
+        {
+          "id": "PAUSE-U1",
+          "role": "user",
+          "content": "说不清，脑子里也没有哪个画面，就是觉得今天整个人有点沉。"
+        },
+        {
+          "id": "PAUSE-A2",
+          "role": "assistant",
+          "content": "那先不找具体时刻；如果只用一个词，这股沉更接近累、空，还是压着什么？"
+        },
+        {
+          "id": "PAUSE-U2",
+          "role": "user",
+          "content": "还是说不清，我现在也不想再想了。"
+        }
+      ],
+      "latestUserMessageId": "PAUSE-U2",
+      "semanticState": {
+        "stage": "explore_clarify",
+        "workingTaskSummary": "理解今天持续的低落感",
+        "workingTaskEvidenceRefs": ["PAUSE-U1"],
+        "understandingSummary": "用户目前只能确认今天整个人有点沉，无法提供具体画面",
+        "understandingEvidenceRefs": ["PAUSE-U1"],
+        "nextInquiry": {
+          "answerTarget": "从累、空或压着什么中选择一个更接近的描述",
+          "taskEffect": "为低落感找到一个更容易继续探索的入口",
+          "evidenceRefs": ["PAUSE-U1"]
+        },
+        "burdenSummary": "用户首次表示说不清，系统已经提供过一次更轻的回答入口",
+        "burdenEvidenceRefs": ["PAUSE-U1"],
+        "stage1Used": 1,
+        "stage2Used": 1,
+        "returnableTasks": []
+      }
+    },
+    {
+      "caseId": "INDEP",
+      "sourceType": "synthetic_guardrail",
+      "messages": [
+        {
+          "id": "A0",
+          "role": "assistant",
+          "content": "此刻你想聊点什么？"
+        },
+        {
+          "id": "U1",
+          "role": "user",
+          "content": "最近我一边在挑周末去哪儿爬山，一边在纠结要不要换手机。两件事都让我犹豫，但其实互相没什么关系。"
+        }
+      ],
+      "latestUserMessageId": "U1",
+      "semanticState": "empty"
+    }
+  ]
+}

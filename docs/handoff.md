@@ -1,6 +1,6 @@
 # 当前阶段 Handoff
 
-最后更新：`2026-08-06`
+最后更新：`2026-08-10`
 
 ## 1. 交接结论
 
@@ -14,14 +14,14 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 
 事件中心当前采用“理清想法”单角度 MVP。GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 已通过，继续作为历史技术证据；最新真人实聊因提问目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效，剩余人工批次停止。
 
-`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；`GI-081` 板块 7A 六题真实输出和 Codex 封存初评已经完成，等待产品负责人盲评。板块 7 正式实现继续等待板块 6，板块 8 等待新候选完成两模式 `4＋2` 真人验收。Production 继续保持 `legacy + baseline`。
+`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；GI-081 已归档为临时 Prompt 诊断基线，GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 继续保存诊断、恢复、状态、平台和真人证据。v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人裁决为 `通过 / direct_use / target triggered`；Codex 保留“礼貌回应＋明确停止”多一次调用的轻微问题。v8r1 已完成该零调用修复、真实 U10 回放、最终 `12` 项资产、静态验证和 Preview 部署；批次 `5123d795-5c19-408d-9b98-7767eaa7892c` 回读为 `running 0/12`，初始化模型调用 `0`。板块 7 正式接入继续等待板块 6 与最终真人门，板块 8 等待当前候选裁决。Production 继续保持 `legacy + baseline`。
 
 ## 2. 当前生产事实
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产，GI-081 板块 7A 诊断等待产品盲评，板块 7 正式实现和板块 8 继续等待；`optional + generative` 继续保持关闭
+- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产，GI-088 v8r1 私有 Preview 的 `0/12` 空白批次等待最终真人验收，板块 7 正式接入和板块 8 继续等待；`optional + generative` 继续保持关闭
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
@@ -200,11 +200,13 @@ AI 质量发布与效果观察专项验证：
 
 ### 7.0 当前交付顺序
 
-1. 产品负责人完成 GI-081 六题真实输出盲评；随后揭晓架构、校准分歧并检查每种候选的 `4/6` 门槛。
-2. 板块 6B 只根据重复出现的真实问题扩建判尺，并继续建立复标后的 `24＋40`、`28＋12`、Judge 说明、人工评分卡和正式准入报告。
-3. 板块 7 将冻结产品规则和板块 6 正式资产落实为 Prompt / Interview Skill、状态、Trace、确定性保护、运行器和版本血缘，并重新完成 DeepSeek 官方 Provider 预检与候选回归。
-4. 板块 8 使用独立 Preview 数据和新候选完成 `4` 条计分轨迹与 `2` 条冒烟，逐条形成真人裁决和 Go/No-Go。
-5. 真人 Go 后暂停并等待产品负责人单独授权；获得授权后再切换 Production，完成线上冒烟和首批 `10` 次有效会话全审。任意单例阻断立即进入停止、修复或回退。
+1. v1 继续保持 `8/12` 只读快照；v2 diagnostic 使用独立评测版本和执行指纹。
+2. 空内容 response format 探针已完成精确 `6/6`，零自动重试；两种格式均出现空内容，普通文本侧另有一次结构保护失败。
+3. 移除 `response_format=json_object` 候选 No-Go；继续保留 high＋JSON mode。Thinking 模式探针已按指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`：high `2/2 valid`、disabled `2/2 valid`，重试和降级 `0`。high 未复现空内容，Thinking 主要影响因素未确认；当前继续停留在 `EMPTY_CONTENT`。
+4. 下一轮建议只验证相同 high 请求的空内容复现稳定性。先形成静态清单、停止门与新指纹，再申请独立调用预算；TIMEOUT、输出合同、内容与边界问题保持排队。
+5. disabled 继续只承担诊断。空内容形成可验证修复并完成 `2～4` 项定向真人复测后，进入独立超时探针、分阶段截止和同 high 单次恢复；输出合同、内容与边界按顺序继续处理。
+6. 全部阻断清零后运行新的 `12` 项、`24` 条独立真人批次，再由板块 6B 扩建复标资产、Judge 说明、人工评分卡和正式准入报告。
+7. 板块 7 正式接入与板块 8 的 `4＋2` 继续等待；真人 Go 后再等待 Production 单独授权。
 
 ### 7.1 上线后收集真实反馈
 
@@ -233,7 +235,7 @@ AI 质量发布与效果观察专项验证：
 ## 8. 仍需持续关注
 
 - 板块 5 已冻结 GI-075～080 六类规则，落地验证仍待板块 7 正式候选承接。
-- 板块 6 仍需完成六题真实输出盲评、判尺扩建及可运行、可复标的正式评测资产；板块 7 正式实现等待板块 6，板块 8 等待新候选。
+- 板块 6 当前运行 GI-088 v8r1 的 `12` 项、`12` 条 Thinking high 独立最终评测，并继续建设可运行、可复标的正式资产；板块 7 正式接入等待板块 6，板块 8 等待当前候选。
 - GI-066 自动层通过、真人体验 `No-Go` 和候选失效三类状态继续分开保存；Production 授权前保持 `legacy + baseline`。
 - 小流量下样本增长较慢，低于 5 条时以真实对话判断为主
 - Few-shot 依赖持续有效的点赞与 85 分以上评估
@@ -255,6 +257,7 @@ AI 质量发布与效果观察专项验证：
 - 生成式访谈当前状态与依赖：`docs/generative-interview-refactor-map.md`
 - GI-067 七批次架构与冻结结论：`docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md`
 - GI-074 评测体系与下游交接：`docs/technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md`
+- GI-088 当前真人交互评测入口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
 - 事件中心公共产品协议：`docs/technical/interview-event-centered/04-four-angle-common-interview-protocol.md`
 - 历史板块 7 Preview 候选：`docs/technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md`
 - 前端设计规范：`DESIGN.md`、`docs/design/ui-conventions.md`

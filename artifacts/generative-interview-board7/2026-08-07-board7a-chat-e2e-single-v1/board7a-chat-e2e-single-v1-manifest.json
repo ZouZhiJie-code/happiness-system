@@ -1,0 +1,59 @@
+{
+  "evaluationId": "board7a_chat_e2e_single_v1",
+  "candidateVersion": "2026-08-07.board7a-chat-e2e-single-v1.1",
+  "status": "historical_diagnostic_engineering_validated_product_owner_run_pending",
+  "candidateFingerprint": "2ceb7bb37e196f47dbd70fcd6ffaf0cf3b4c7727ae2e8721e62b593751dbbe46",
+  "fixedOpening": "此刻你想聊点什么？",
+  "runFingerprint": null,
+  "approvalStatus": "not_created",
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1200,
+    "thinking": "disabled",
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0
+  },
+  "promptVersions": {
+    "basePrompt": "2026-08-07.gi083-direct-base-prompt-v1",
+    "interviewSkill": "2026-08-07.gi083-direct-interview-skill-v1.1",
+    "outputContract": "2026-08-07.gi083-direct-one-call-output-v1.1"
+  },
+  "interaction": {
+    "mode": "accompany_chat",
+    "branches": 1,
+    "entry": "ui_start_confirmation",
+    "semanticReveal": "after_each_turn_always_visible",
+    "contentTurnLimit": null,
+    "endFeedback": ["better", "same", "worse"],
+    "journalIncluded": false
+  },
+  "workbench": {
+    "binding": "127.0.0.1",
+    "randomAccessToken": true,
+    "credentialSource": "macos_keychain_or_isolated_process_environment",
+    "credentialPreflight": "deepseek_authentication_and_model_availability_before_listen",
+    "externalFactCard": false,
+    "externalApprovalFile": false,
+    "approvalTrajectoryLimit": 1
+  },
+  "engineeringSelfTest": {
+    "inputType": "synthetic_only",
+    "trajectoryCount": 3,
+    "deepseekRequestCount": 5,
+    "validRequestCount": 5,
+    "technicalFailureCount": 0,
+    "protectedFailureCount": 0,
+    "browserFlow": "passed",
+    "productOwnerTrajectoryCount": 0,
+    "qualityObservation": "unsupported_emotion_inference_retained_for_board6"
+  },
+  "storage": {
+    "raw": "artifacts/local-runtime/",
+    "formal": "product_owner_confirmed_redacted_copy"
+  },
+  "modelCallsBeforeFirstUserSend": 0,
+  "production": "legacy + baseline"
+}

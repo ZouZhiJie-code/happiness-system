@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/@prisma/gi088-evaluation-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("EVALUATION_DATABASE_URL")
+}
+
+model Gi088EvaluationBatch {
+  id                   String    @id @default(uuid())
+  ownerUserId          String
+  evaluationVersion    String
+  runOrdinal           Int       @default(1)
+  candidateFingerprint String
+  executionFingerprint String
+  status               String
+  gateStatus           String    @default("legacy_unknown")
+  gateReasons          Json?
+  state                Json
+  revision             Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  sealedAt             DateTime?
+
+  @@unique([ownerUserId, evaluationVersion, runOrdinal], map: "gi088_batch_owner_version_ordinal_key")
+  @@index([status, updatedAt], map: "gi088_batch_status_updated_idx")
+  @@index([ownerUserId, evaluationVersion, status], map: "gi088_batch_owner_version_status_idx")
+  @@map("gi088_evaluation_batches")
+}
+
+model Gi088EvaluationCallLedger {
+  callId                  String    @id @default(uuid())
+  runId                   String
+  taskId                  String
+  branch                  String
+  turnId                  String
+  clientTurnId            String
+  clientOperationId       String
+  attempt                 Int
+  kind                    String
+  status                  String
+  providerResultStatus    String?
+  parentCallId            String?
+  retryTrigger            String?
+  requestHash             String
+  effectiveConfig         Json
+  baseAssistantMessageId  String?
+  semanticStateBeforeHash String
+  executionDeadlineAt     DateTime?
+  automaticDeadlineAt     DateTime?
+  reservedAt              DateTime  @default(now())
+  dispatchedAt            DateTime?
+  providerCompletedAt     DateTime?
+  finalizedAt             DateTime?
+  rawFinalOutput          String?   @db.Text
+  responseHash            String?
+  tokenUsage              Json?
+  providerDiagnostics     Json?
+  errorCode               String?
+  finalizationError       String?
+  finalizedResult         Json?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@unique([turnId, attempt], map: "gi088_call_turn_attempt_key")
+  @@index([status, executionDeadlineAt], map: "gi088_call_status_deadline_idx")
+  @@index([runId, taskId, branch], map: "gi088_call_run_task_branch_idx")
+  @@index([runId, clientTurnId], map: "gi088_call_run_client_turn_idx")
+  @@index([runId, clientOperationId], map: "gi088_call_run_client_operation_idx")
+  @@index([parentCallId], map: "gi088_call_parent_idx")
+  @@map("gi088_evaluation_call_ledger")
+}
+
+model Gi088EvaluationOperation {
+  id                String    @id @default(uuid())
+  ownerUserId       String
+  evaluationVersion String
+  runId             String?
+  clientOperationId String
+  action            String
+  payloadHash       String
+  status            String
+  resultRevision    Int?
+  resultSnapshot    Json?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([ownerUserId, evaluationVersion, clientOperationId], map: "gi088_operation_owner_version_client_key")
+  @@index([runId, action, status], map: "gi088_operation_run_action_status_idx")
+  @@index([status, createdAt], map: "gi088_operation_status_created_idx")
+  @@map("gi088_evaluation_operations")
+}
+
+model Gi088ProgramIntervention {
+  id                     String    @id @default(uuid())
+  runId                  String
+  taskId                 String
+  branch                 String
+  turnId                 String?
+  callId                 String?
+  clientOperationId      String
+  interventionType       String
+  originalAction         String?
+  effectiveAction        String
+  evidenceSpan           String?   @db.Text
+  controlDecision        Json?
+  traceSummary           Json?
+  observationFingerprint String
+  reviewOutcome          String?
+  reviewReason           String?   @db.Text
+  reviewedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([runId, clientOperationId], map: "gi088_intervention_run_client_idx")
+  @@index([runId, taskId, branch], map: "gi088_intervention_run_task_branch_idx")
+  @@index([runId, reviewOutcome], map: "gi088_intervention_run_review_idx")
+  @@index([turnId], map: "gi088_intervention_turn_idx")
+  @@map("gi088_program_interventions")
+}
+
+model Gi088EvaluationReviewRevision {
+  id                String   @id @default(uuid())
+  runId             String
+  subjectType       String
+  subjectId         String
+  oldValue          Json?
+  newValue          Json
+  reason            String   @db.Text
+  actorUserId       String
+  clientOperationId String
+  createdAt         DateTime @default(now())
+
+  @@unique([runId, clientOperationId], map: "gi088_review_revision_run_client_key")
+  @@index([runId, subjectType, subjectId, createdAt], map: "gi088_review_revision_subject_idx")
+  @@map("gi088_evaluation_review_revisions")
+}
+
+model Gi088EvaluationOperationEvent {
+  id                String   @id @default(uuid())
+  runId             String
+  taskId            String?
+  turnId            String?
+  route             String
+  code              String
+  safeSummary       Json?
+  clientOperationId String
+  createdAt         DateTime @default(now())
+
+  @@unique([runId, clientOperationId], map: "gi088_operation_event_run_client_key")
+  @@index([runId, createdAt], map: "gi088_operation_event_run_created_idx")
+  @@index([code, createdAt], map: "gi088_operation_event_code_created_idx")
+  @@map("gi088_evaluation_operation_events")
+}
+
+model Gi088EvaluationExportSnapshot {
+  runId         String   @id
+  exportVersion String
+  payload       Json
+  payloadHash   String
+  recordCounts  Json
+  createdAt     DateTime @default(now())
+
+  @@index([exportVersion, createdAt], map: "gi088_export_snapshot_version_idx")
+  @@map("gi088_evaluation_export_snapshots")
+}
+
+model Gi088RetentionAudit {
+  id                   String   @id @default(uuid())
+  batchId              String
+  action               String
+  board6ClosedAt       DateTime
+  eligibleAfter        DateTime
+  executionFingerprint String
+  recordSummary        Json
+  createdAt            DateTime @default(now())
+
+  @@index([batchId, createdAt])
+  @@map("gi088_retention_audits")
+}
+
+model Gi088TechnicalSmoke {
+  id                   String    @id @default(uuid())
+  executionFingerprint String
+  arm                  String
+  authorizationId      String
+  status               String
+  requestHash          String
+  rawFinalOutput       String?
+  semantic             Json?
+  visible              Json?
+  validationIssues     Json
+  latencyMs            Int?
+  tokenUsage           Json?
+  providerDiagnostics  Json?
+  errorCode            String?
+  createdAt            DateTime  @default(now())
+  completedAt          DateTime?
+
+  @@unique([executionFingerprint, arm, authorizationId])
+  @@map("gi088_technical_smokes")
+}

@@ -1,0 +1,76 @@
+{
+  "decisionId": "GI-084",
+  "evaluationId": "board7b_prompt_skill_v0_1",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.1",
+  "candidateFingerprint": "b17e662434188d6f5938bc283f17abf38a76a95aa482e7d67686a1093bd709c3",
+  "status": "regression_completed_failed",
+  "promptVersions": {
+    "basePrompt": "2026-08-07.board7b-base-prompt-v0.1",
+    "interviewSkill": "2026-08-07.board7b-interview-skill-v0.1",
+    "outputContract": "2026-08-07.board7b-semantic-result-v0",
+    "turnInput": "2026-08-07.board7b-turn-input-v0"
+  },
+  "modelFacingAssets": {
+    "basePrompt": "board7b-base-prompt-v0.1.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "board7b-semantic-result-v0.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "nonModelAssets": {
+    "ruleCoverage": "board7b-gi068-080-rule-coverage-v0.1.md",
+    "regressionPlan": "board7b-prompt-skill-v0.1-regression-plan.json",
+    "authorizationTemplate": "board7b-prompt-skill-v0.1-authorization-template.json"
+  },
+  "runtime": {
+    "mode": "accompany_chat",
+    "provider": "openai-compatible",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "thinking": "disabled",
+    "callsPerUserTurn": 1,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0,
+    "currentExecutionScope": "static_checks_only"
+  },
+  "semanticStructure": {
+    "version": "2026-08-07.board7b-semantic-result-v0",
+    "stateMerge": "reused_from_GI-084_v0",
+    "programForcedDeepening": false
+  },
+  "regressionCallBudget": 8,
+  "authorizedModelCalls": 8,
+  "modelCalls": 8,
+  "gates": {
+    "staticChecks": "ready",
+    "regressionAuthorization": "approved_and_consumed",
+    "regressionRun": "failed",
+    "realTrajectoryAuthorization": "blocked_by_regression_result",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "workbench": {
+    "kind": "direct_local_chat_after_separate_authorization",
+    "binding": "127.0.0.1",
+    "randomAccessToken": true,
+    "fixedOpeningModelCalls": 0,
+    "oneUserSubmissionOneRequest": true,
+    "manualTechnicalRetry": true,
+    "rawStorage": "gitignored_local_runtime",
+    "productionDataAccess": false
+  },
+  "production": "legacy + baseline",
+  "preservedHistory": {
+    "GI-083": "unchanged_failure_comparison",
+    "GI-084_v0": "unchanged_predecessor_candidate"
+  },
+  "latestRegression": {
+    "runFingerprint": "b9c32fb3ffa4148175ab890c5e5b0fd90a34f4781f7c5d6f70a8845726bdb749",
+    "attemptedCalls": 8,
+    "validStructure": 3,
+    "protectedFailures": 1,
+    "technicalStructureFailures": 4,
+    "decision": "no_go_for_real_trajectory",
+    "resultAsset": "board7b-prompt-skill-v0.1-regression-result.md"
+  }
+}

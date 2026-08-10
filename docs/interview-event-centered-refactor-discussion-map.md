@@ -1,12 +1,12 @@
 # 事件中心自我探索重构讨论地图
 
-最后更新：`2026-08-06`
+最后更新：`2026-08-09`
 
 文档状态：`事件中心 MVP 产品讨论与阶段边界持续有效；GI-067 / GI-068～080 已冻结；GI-066 真人实聊 No-Go 作为历史证据保留`
 
-当前讨论位置：`板块 6｜GI-081 六题真实输出等待产品负责人盲评`
+当前讨论位置：`板块 6／7B｜GI-088 v1 首批 8/12 复盘与下一候选方案确认`
 
-当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 正在建立 GI-074 正式评测资产。GI-081 板块 7A 六题隔离诊断已完成并等待产品盲评，板块 7 正式实现继续等待板块 6，板块 8 继续等待。Production 保持 legacy + baseline`
+当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 正在建立 GI-074 正式评测资产。GI-081 已归档为临时 Prompt 诊断基线；GI-088 v0 保留 Token 上限失败历史，v1 已在 8/12 主动提前结束并完成首批复盘。板块 7 正式接入继续等待板块 6，板块 8 继续等待。Production 保持 legacy + baseline`
 
 历史阶段记录（`2026-08-04`及更早）：`原有 Batch B 讨论、版本基线、评测结果和候选交接继续保留作为决策过程与历史证据；当前状态与依赖以生成式专项 Map 为准，当前评测与开放问题以板块 6 专项为准，板块 5 专项作为冻结输入，评测交接以 04x-07 为准`
 
@@ -66,7 +66,7 @@ Daily Light 已完成事件中心 MVP 的产品方案讨论。产品将从五维
 
 当前产品专项：[`板块 6｜生成式访谈质量评测 v1`](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)。板块 5 冻结输入见[`稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，冻结规则索引见[`04x｜GI-067 全局架构`](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)，评测交接见[`04x-07｜GI-074`](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)
 
-板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 建立正式评测资产并承接 GI-081 真人盲评，板块 7 正式实现和板块 8 依次等待上游完成。
+板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 建立正式评测资产并承接 GI-088 整批真人轨迹，板块 7 正式接入和板块 8 依次等待上游完成。
 
 每份阶段方案作为LeadAgent与Subagent共同实施的契约，保存公共接口、实施边界、开发顺序和验证证据；本地图负责跨阶段保存进度、决策、依赖、开发状态和验收结果。
 

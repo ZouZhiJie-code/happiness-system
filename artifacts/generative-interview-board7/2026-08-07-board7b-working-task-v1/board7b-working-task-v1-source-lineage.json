@@ -1,0 +1,86 @@
+{
+  "ledgerVersion": "2026-08-07.board7b-working-task-source-lineage-v1",
+  "datasetVersion": "2026-08-07.board7b-working-task-regression-inputs-v1",
+  "productionDataUsed": false,
+  "entries": [
+    {
+      "caseId": "AUT1",
+      "sourceType": "real_history_checkpoint",
+      "readOnlySourcePath": "artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-history-source-extracts.json",
+      "durableCrossCheckPath": "artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-history-source-extracts.json",
+      "originReadbackPath": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7a-chat-e2e-single-v1/run-07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1/checkpoint.json",
+      "sourceLocator": {
+        "runFingerprint": "07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1",
+        "trajectoryId": "7c46bbbb-5cbe-4b77-a521-283f42587329",
+        "includedMessageIds": ["A0", "U1"],
+        "includedTurnIds": [],
+        "includedTraceIds": []
+      },
+      "extractionBoundary": "只提取固定开场与用户第一段秋招原话；旧模型输出、后续用户回答和本地批准信息均不进入 AUT1。"
+    },
+    {
+      "caseId": "AUT2",
+      "sourceType": "real_history_checkpoint",
+      "readOnlySourcePath": "artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-history-source-extracts.json",
+      "durableCrossCheckPath": "artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-history-source-extracts.json",
+      "originReadbackPath": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7a-chat-e2e-single-v1/run-07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1/checkpoint.json",
+      "sourceLocator": {
+        "runFingerprint": "07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1",
+        "trajectoryId": "7c46bbbb-5cbe-4b77-a521-283f42587329",
+        "includedMessageIds": ["A0", "U1", "A1", "U2"],
+        "includedTurnIds": ["d6e584d1-65ec-49d5-81ba-ad5568ddb614"],
+        "includedTraceIds": ["b75dc0a4-dab1-416a-8a39-023d5847b3a3"]
+      },
+      "extractionBoundary": "提取用户选择先拿 offer 之前的完整可见上下文；导致过早收束的旧 A2 只作为历史失败证据，不进入 GI-087 模型输入。"
+    },
+    {
+      "caseId": "H1",
+      "sourceType": "real_history_checkpoint",
+      "readOnlySourcePath": "evals/event-centered-generative/board7a-real-output/board7a-six-case-v1.json",
+      "durableCrossCheckPath": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-source-readback.md",
+      "sourceLocator": {
+        "rootSessionId": "8b8df99c-4e56-4501-a7aa-584c5c66632f",
+        "sourceCaseId": "H1",
+        "includedMessageIds": ["d9538307-dd0f-4a54-8da2-e7262c21ee36", "b85e7448-49c5-49c8-8e46-d2c869b83654", "e767eeae-5269-46af-b373-0efe4bf70b35", "f2e61352-f816-428a-9fd9-22d8dff6acf6", "1ea57ba9-50c5-4206-92e0-f142530b59c9", "1228fecf-1a8a-47ec-9b4f-d6d01e300981"],
+        "includedTraceIds": ["05ea1272-f726-4e92-a924-4d0e52fa9858", "72d23a70-9c40-4a8a-b9fb-5fa6b8482c09"]
+      },
+      "extractionBoundary": "提取用户纠正爽与轻松二选一之前的完整可见回合；后续历史失败输出不进入模型输入。"
+    },
+    {
+      "caseId": "H2",
+      "sourceType": "real_history_checkpoint",
+      "readOnlySourcePath": "evals/event-centered-generative/board7a-real-output/board7a-six-case-v1.json",
+      "durableCrossCheckPath": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-source-readback.md",
+      "sourceLocator": {
+        "rootSessionId": "b03b9868-3cce-4a0a-a419-020f074a79d2",
+        "sourceCaseId": "H2",
+        "includedMessageIds": ["759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d", "b19e235e-3768-4827-b927-2e5c261859f0", "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7", "564fe641-c98b-49b3-9bf4-29ad5ea40a83", "b3b49591-454b-40c9-ae0f-21a39ace322a", "a0404de2-7191-48da-9b5e-3a2847ac7dfe"],
+        "includedTraceIds": ["d438924f-6512-4466-ac14-1b155faaf30d", "d8ab4769-a331-4a03-b480-f48bd1b953a9"]
+      },
+      "extractionBoundary": "提取用户明确指出旧问题问偏之前的完整可见回合；后续历史失败输出不进入模型输入。"
+    },
+    {
+      "caseId": "PAUSE",
+      "sourceType": "synthetic_guardrail",
+      "readOnlySourcePath": "artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-blind.md",
+      "durableCrossCheckPath": "evals/event-centered-generative/board7a-real-output/board7a-six-case-v1.json",
+      "sourceLocator": {
+        "sourceCardId": "C5",
+        "sourceCaseId": "T3",
+        "includedMessageIds": ["PAUSE-A1", "PAUSE-U1", "PAUSE-A2", "PAUSE-U2"]
+      },
+      "extractionBoundary": "按冻结暂停规则建立人工护栏；消息 id 为 GI-087 本地稳定编号。"
+    },
+    {
+      "caseId": "INDEP",
+      "sourceType": "synthetic_guardrail",
+      "readOnlySourcePath": "artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/board7b-semantic-frame-v1-regression-inputs.json",
+      "durableCrossCheckPath": "artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-inputs.json",
+      "sourceLocator": {
+        "sourceCaseId": "F1-independent-content-counterfactual",
+        "includedMessageIds": ["A0", "U1"]
+      },
+      "extractionBoundary": "沿用已隔离的独立话题人工护栏，仅验证 GI-087 是否尊重用户声明的互不相关。"
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationPlanId": "2026-08-09.gi088-human-eval-v1",
+  "decisionId": "GI-088",
+  "status": "product_owner_early_stop_8_of_12_readonly_snapshot",
+  "currentExecutionEntry": false,
+  "currentReviewEntry": true,
+  "changeFromV0": "remove application max_tokens for both arms and allow reviewed exit from technical failure",
+  "dataset": {
+    "kind": "development_evaluation_set",
+    "taskCount": 12,
+    "trajectoryCount": 24
+  },
+  "outcome": {
+    "productOwnerDecision": "early_stop_and_enter_batch_iteration",
+    "completedTaskCount": 8,
+    "completedTrajectoryCount": 16,
+    "notStartedTaskIds": ["A2-R", "A3-R", "A4-R", "A6-R"],
+    "systemBatchStatus": "running",
+    "systemSealedAt": null,
+    "databaseRevision": 156,
+    "readonlySnapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "readonlySnapshotBytes": 683383,
+    "candidateInputLineageQualified": 16,
+    "taskAbilityLineageQualified": 11
+  },
+  "candidate": {
+    "model": "deepseek-v4-flash",
+    "responseFormat": "json",
+    "maxTokens": null,
+    "maxTokensPolicy": "provider_default",
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0,
+    "off": {
+      "thinking": "disabled",
+      "temperature": 0.2,
+      "reasoningEffort": null
+    },
+    "high": {
+      "thinking": "enabled",
+      "temperature": null,
+      "reasoningEffort": "high"
+    }
+  },
+  "fingerprints": {
+    "baseGi087Candidate": "e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa",
+    "effectiveCandidate": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "dataset": "93c9808b6f805caea801eeb06d8d0bac46d35a08df68257d74c03cdfc1774e29",
+    "execution": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2"
+  },
+  "runner": {
+    "serviceVersion": "2026-08-09.gi088-preview-service-v0.6",
+    "deploymentId": "dpl_9VjwswqWK9QUoojXXKNs5BWjBvCS",
+    "deploymentUrl": "https://xingfuxitong-5vak37bgb-zouzhijies-projects.vercel.app",
+    "readyState": "READY",
+    "modelCallScope": "batch",
+    "currentModelCallAuthorization": "closed_after_product_owner_early_stop",
+    "productionPageStatus": 404,
+    "productionSessionApiStatus": 404
+  },
+  "calls": {
+    "v1BuildAndReadback": 0,
+    "v1FormalBatch": 66,
+    "v1Initial": 16,
+    "v1Turn": 33,
+    "v1ManualRetry": 17,
+    "v1Valid": 37,
+    "v1ProtectedFailure": 10,
+    "v1TechnicalFailure": 19,
+    "v1EmptyContent": 12,
+    "v1Timeout": 7,
+    "historicalTechnicalSmokes": 5,
+    "historicalV0FormalBatch": 9
+  },
+  "reviews": {
+    "trajectoryReviews": 16,
+    "pairComparisons": 8,
+    "productOwner": {
+      "off": {
+        "directUse": 1,
+        "minorIssue": 0,
+        "qualityFailure": 5,
+        "singleCaseBlocker": 2
+      },
+      "high": {
+        "directUse": 4,
+        "minorIssue": 1,
+        "qualityFailure": 3,
+        "singleCaseBlocker": 0
+      },
+      "pairComparison": {
+        "highBetter": 6,
+        "offBetter": 0,
+        "equivalent": 2
+      }
+    },
+    "codex": {
+      "directUse": 2,
+      "minorIssue": 5,
+      "qualityFailure": 7,
+      "singleCaseBlocker": 2,
+      "technicallyCompleteTrajectories": 4,
+      "cleanTrajectories": 2
+    }
+  },
+  "validation": {
+    "targetedTests": 42,
+    "typeCheck": "passed",
+    "targetedLint": "passed",
+    "diffCheck": "passed",
+    "localBuild": "passed",
+    "previewBuild": "passed",
+    "startupAuthenticatedSessionReadback": "passed_0_of_12",
+    "postRunAuthenticatedSessionReadback": "passed_8_of_12_product_owner_early_stop",
+    "readonlyDatabaseAudit": "passed_first_8_complete_system_running_unsealed",
+    "requestOmitsApplicationMaxTokens": true,
+    "productionIsolation": "passed"
+  },
+  "production": {
+    "mode": "legacy + baseline",
+    "publicPagesChanged": false,
+    "publicApiChanged": false,
+    "productionDatabaseChanged": false,
+    "onlinePromptChanged": false,
+    "runtimeFlagsChanged": false
+  }
+}

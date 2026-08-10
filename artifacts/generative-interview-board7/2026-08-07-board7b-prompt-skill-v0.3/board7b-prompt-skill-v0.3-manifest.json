@@ -1,0 +1,61 @@
+{
+  "decisionId": "GI-084",
+  "evaluationId": "board7b_prompt_skill_v0_3",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.3",
+  "candidateFingerprint": "892bf90feb1b412c7470a90408032e5b1a6c53446a7f8865ffb4c358f990ba5b",
+  "status": "regression_completed_failed",
+  "promptVersions": {
+    "basePrompt": "2026-08-07.board7b-base-prompt-v0.1",
+    "interviewSkill": "2026-08-07.board7b-interview-skill-v0.3",
+    "outputContract": "2026-08-07.board7b-semantic-result-v0.1",
+    "turnInput": "2026-08-07.board7b-turn-input-v0"
+  },
+  "modelFacingAssets": {
+    "basePrompt": "../2026-08-07-board7b-prompt-skill-v0.2/board7b-base-prompt-v0.1.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "../2026-08-07-board7b-prompt-skill-v0.2/board7b-semantic-result-v0.1.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "singleProductChange": {
+    "location": "Interview Skill / 动作选择与可见回应 / ask",
+    "purpose": "把两个可见字段的分工和单轮一个回答任务说明到可稳定执行"
+  },
+  "unchanged": {
+    "basePrompt": true,
+    "outputContract": true,
+    "semanticSchema": true,
+    "stateMerge": true,
+    "regressionInputs": true,
+    "passCriteria": true
+  },
+  "regressionPlan": "board7b-prompt-skill-v0.3-regression-plan.json",
+  "regressionCallBudget": 8,
+  "authorizedModelCalls": 8,
+  "modelCalls": 8,
+  "gates": {
+    "staticChecks": "passed",
+    "regressionAuthorization": "approved_and_consumed",
+    "regressionRun": "failed",
+    "realTrajectoryAuthorization": "blocked_by_regression_result",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "production": "legacy + baseline",
+  "predecessor": {
+    "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.2",
+    "candidateFingerprint": "171d1a3c5ee8f044f3c517f106424fd74312b07132861a4ceff395813be382c6",
+    "regressionDecision": "no_go_for_real_trajectory",
+    "runFingerprint": "0732eab66c7fa22ade15f924a9dd25bfc2cb466801ce8122f54497534bd2abc1"
+  },
+  "latestRegression": {
+    "runFingerprint": "4267a54017285b986b2ae02f07fbf81879a751e9217bb3d48129e6021ea9ecbe",
+    "attemptedCalls": 8,
+    "validStructure": 8,
+    "protectedFailures": 0,
+    "technicalFailures": 0,
+    "autumnKeyPointsPassed": 2,
+    "autumnKeyPointsTotal": 4,
+    "decision": "no_go_for_real_trajectory",
+    "resultAsset": "board7b-prompt-skill-v0.3-regression-result.md"
+  }
+}

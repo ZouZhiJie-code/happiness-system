@@ -1,0 +1,285 @@
+{
+  "probeVersion": "2026-08-10.gi088-empty-content-ark-flash-platform-probe-v1",
+  "probeFingerprint": "7bec10fdf529471625ef33e73a825d5efecbbf9e75da46a1ac86a3979741034e",
+  "sourceProbeVersion": "2026-08-09.gi088-empty-content-response-format-probe-v1",
+  "sourceProbeFingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
+  "sourceSnapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+  "sourceEvaluationVersion": "2026-08-09.gi088-human-eval-v1",
+  "sourceCandidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+  "sourceExecutionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+  "runtime": {
+    "transport": "direct_rest_openai_compatible",
+    "provider": "volcengine_ark",
+    "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+    "baseUrlHost": "ark.cn-beijing.volces.com",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "useProviderDefaultTemperature": true,
+    "useProviderDefaultMaxTokens": true,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000,
+    "automaticRetries": 0,
+    "fallbackCalls": 0
+  },
+  "authorizedCallBudget": 3,
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "taskId": "A3",
+      "branch": "high",
+      "turnId": "5b85a506-dc99-4f43-82b6-073f2c677851",
+      "sourceCallId": "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+      "sourceRequestHash": "2f4e1e38bbd64e93f6e740ab07da9e61f2b04f98da499d556e44cb983d689912",
+      "request": {
+        "caseId": "E1",
+        "requestedModel": "deepseek-v4-flash-ga-260731",
+        "requestHash": "0cd3162aff242c1a71b8a83fc07a5255c2f6e50c7c9ce0a8cdb440841bcd9965",
+        "messagesHash": "b2fc3a7d2022bcc862cd7d58a89f32544e16ffa6869ae487191cedd2524acfec",
+        "messageCount": 2,
+        "messageRoles": [
+          "system",
+          "user"
+        ],
+        "useProviderDefaultTemperature": true,
+        "useProviderDefaultMaxTokens": true,
+        "headersTimeoutMs": 15000,
+        "bodyIdleTimeoutMs": 45000,
+        "hardTimeoutMs": 60000,
+        "responseFormat": "json_object",
+        "thinking": "enabled",
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "E2",
+      "contextClass": "mid_trajectory",
+      "taskId": "A8",
+      "branch": "high",
+      "turnId": "e15ab3df-5e77-4e13-8558-4da9cbca5757",
+      "sourceCallId": "06b9e404-394c-4949-a669-92700d4d3247",
+      "sourceRequestHash": "25b6943cd42be4694486bc5d7d42925d7b73579cc5d6bd14c29801b1f0642e0d",
+      "request": {
+        "caseId": "E2",
+        "requestedModel": "deepseek-v4-flash-ga-260731",
+        "requestHash": "c8afff9f3b36265b8f58ae873b176d2cc51d95e4bd222148bf4ad045bec4f3c9",
+        "messagesHash": "093123dbfb01c3847f359f8695390bb6fa986c767046721fe112ba126b6f3225",
+        "messageCount": 2,
+        "messageRoles": [
+          "system",
+          "user"
+        ],
+        "useProviderDefaultTemperature": true,
+        "useProviderDefaultMaxTokens": true,
+        "headersTimeoutMs": 15000,
+        "bodyIdleTimeoutMs": 45000,
+        "hardTimeoutMs": 60000,
+        "responseFormat": "json_object",
+        "thinking": "enabled",
+        "reasoningEffort": "high"
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "taskId": "A1",
+      "branch": "high",
+      "turnId": "b6163c4b-973e-4dc0-a7e4-be526e4e20f8",
+      "sourceCallId": "052f6a93-3583-4890-a377-12dec613a254",
+      "sourceRequestHash": "d9ca7d0cc781e6d6fa974923060c326456a0ae435e85b31b96225456e3258b89",
+      "request": {
+        "caseId": "E3",
+        "requestedModel": "deepseek-v4-flash-ga-260731",
+        "requestHash": "ee5a9ed1a3e5af37325c86b84adf13bda03c68921a28cf050a0f0a1dbb5592c1",
+        "messagesHash": "01832f573f35fdabe7fd3c87ccf2e9b3e0757dcc33f9ad758d25c1da3f39afaa",
+        "messageCount": 2,
+        "messageRoles": [
+          "system",
+          "user"
+        ],
+        "useProviderDefaultTemperature": true,
+        "useProviderDefaultMaxTokens": true,
+        "headersTimeoutMs": 15000,
+        "bodyIdleTimeoutMs": 45000,
+        "hardTimeoutMs": 60000,
+        "responseFormat": "json_object",
+        "thinking": "enabled",
+        "reasoningEffort": "high"
+      }
+    }
+  ],
+  "ledgerSchemaVersion": "1.0",
+  "publicSummaryContract": {
+    "version": "2026-08-10.gi088-ark-platform-public-summary-v1",
+    "userContent": "excluded",
+    "prompt": "hash_only",
+    "rawOutput": "excluded",
+    "reasoningBody": "excluded",
+    "validationIssues": "code_only",
+    "upstreamRequestId": "sha256_or_null"
+  },
+  "modelGenerationCalls": 3,
+  "executionAuthorized": true,
+  "completedAt": "2026-08-10T07:31:40.575Z",
+  "results": [
+    {
+      "order": 1,
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "requestedModel": "deepseek-v4-flash-ga-260731",
+      "sourceCallId": "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+      "sourceRequestHash": "2f4e1e38bbd64e93f6e740ab07da9e61f2b04f98da499d556e44cb983d689912",
+      "probeRequestHash": "0cd3162aff242c1a71b8a83fc07a5255c2f6e50c7c9ce0a8cdb440841bcd9965",
+      "requestHashVerified": true,
+      "status": "technical_failure",
+      "errorCode": "TIMEOUT",
+      "responseHash": null,
+      "validationIssues": [],
+      "latencyMs": 15007,
+      "tokenUsage": null,
+      "providerDiagnostics": {
+        "finishReason": null,
+        "reasoningPresent": null,
+        "reasoningLength": null,
+        "reasoningTokens": null,
+        "latencyMs": 15007,
+        "tokenUsage": null,
+        "upstreamRequestId": null,
+        "httpStatus": null,
+        "responseModel": null,
+        "choiceCount": null,
+        "contentType": null,
+        "contentLength": null,
+        "reasoningType": null,
+        "headersLatencyMs": null,
+        "bodyLatencyMs": null,
+        "totalLatencyMs": 15007,
+        "timeoutStage": "headers",
+        "abortSource": "deadline"
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "E2",
+      "contextClass": "mid_trajectory",
+      "requestedModel": "deepseek-v4-flash-ga-260731",
+      "sourceCallId": "06b9e404-394c-4949-a669-92700d4d3247",
+      "sourceRequestHash": "25b6943cd42be4694486bc5d7d42925d7b73579cc5d6bd14c29801b1f0642e0d",
+      "probeRequestHash": "c8afff9f3b36265b8f58ae873b176d2cc51d95e4bd222148bf4ad045bec4f3c9",
+      "requestHashVerified": true,
+      "status": "valid",
+      "errorCode": null,
+      "responseHash": "71ad5a9bf029e658f640261384ccc5ee7bf769754583a5ab50e07a33e4b24f1f",
+      "validationIssues": [],
+      "latencyMs": 7037,
+      "tokenUsage": {
+        "promptTokens": 2859,
+        "completionTokens": 639,
+        "totalTokens": 3498
+      },
+      "providerDiagnostics": {
+        "finishReason": "stop",
+        "reasoningPresent": true,
+        "reasoningLength": 855,
+        "reasoningTokens": 320,
+        "latencyMs": 7037,
+        "tokenUsage": {
+          "promptTokens": 2859,
+          "completionTokens": 639,
+          "totalTokens": 3498
+        },
+        "upstreamRequestId": "2a13ca2e41ada8e42c3ce1a3d365fccad33dfdc1296841cceb32a85ca8d2a148",
+        "httpStatus": 200,
+        "responseModel": "deepseek-v4-flash-ga-260731",
+        "choiceCount": 1,
+        "contentType": "string",
+        "contentLength": 855,
+        "reasoningType": "string",
+        "headersLatencyMs": 7035,
+        "bodyLatencyMs": 2,
+        "totalLatencyMs": 7037,
+        "timeoutStage": null,
+        "abortSource": null
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "requestedModel": "deepseek-v4-flash-ga-260731",
+      "sourceCallId": "052f6a93-3583-4890-a377-12dec613a254",
+      "sourceRequestHash": "d9ca7d0cc781e6d6fa974923060c326456a0ae435e85b31b96225456e3258b89",
+      "probeRequestHash": "ee5a9ed1a3e5af37325c86b84adf13bda03c68921a28cf050a0f0a1dbb5592c1",
+      "requestHashVerified": true,
+      "status": "protected_failure",
+      "errorCode": "MODEL_OUTPUT_PROTECTED",
+      "responseHash": "23469bbd1736cdc6afa9f7d755fd675a5e64f8e6b6e1400415da562ff2e23243",
+      "validationIssues": [
+        "OUTPUT_SCHEMA_INVALID"
+      ],
+      "latencyMs": 9813,
+      "tokenUsage": {
+        "promptTokens": 3691,
+        "completionTokens": 840,
+        "totalTokens": 4531
+      },
+      "providerDiagnostics": {
+        "finishReason": "stop",
+        "reasoningPresent": true,
+        "reasoningLength": 1031,
+        "reasoningTokens": 414,
+        "latencyMs": 9813,
+        "tokenUsage": {
+          "promptTokens": 3691,
+          "completionTokens": 840,
+          "totalTokens": 4531
+        },
+        "upstreamRequestId": "ead4ba555b5cc4b660d14ab4ae013053625787eb5bc00af47f400dc6fcf163fc",
+        "httpStatus": 200,
+        "responseModel": "deepseek-v4-flash-ga-260731",
+        "choiceCount": 1,
+        "contentType": "string",
+        "contentLength": 1103,
+        "reasoningType": "string",
+        "headersLatencyMs": 9812,
+        "bodyLatencyMs": 0,
+        "totalLatencyMs": 9813,
+        "timeoutStage": null,
+        "abortSource": null
+      }
+    }
+  ],
+  "decision": {
+    "aggregate": {
+      "valid": 1,
+      "emptyContent": 0,
+      "protectedFailure": 1,
+      "otherTechnicalFailure": 1
+    },
+    "disposition": "initial_result_requires_e1_timeout_policy_correction"
+  },
+  "e1TimeoutCorrection": {
+    "probeVersion": "2026-08-10.gi088-ark-e1-60s-header-correction-v1",
+    "probeFingerprint": "3d2d6b6f48bc787638a08150883908dc221868669af84104027b01745bc1df2a",
+    "changedFactor": "headers_timeout_15000_to_60000",
+    "status": "valid",
+    "errorCode": null,
+    "latencyMs": 15777,
+    "source": "gi088-ark-e1-timeout-correction-v1-result.json"
+  },
+  "reconciledDecision": {
+    "visibleAnswers": 3,
+    "emptyContent": 0,
+    "historicalContractValid": 2,
+    "historicalContractProtected": 1,
+    "averageVisibleAnswerLatencyMs": 10876,
+    "maximumVisibleAnswerLatencyMs": 15777,
+    "disposition": "directional_support_for_ark_flash_human_preview_candidate"
+  }
+}

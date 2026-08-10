@@ -1,0 +1,16 @@
+{
+  "template": true,
+  "authorizationVersion": "2026-08-07.board7b-prompt-skill-authorization-v0.1",
+  "decision": "pending",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.1",
+  "candidateFingerprint": "b17e662434188d6f5938bc283f17abf38a76a95aa482e7d67686a1093bd709c3",
+  "authorizationScope": "eight_case_hidden_regression",
+  "plannedModelCallBudget": 8,
+  "authorizedModelCallBudget": 0,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": null,
+  "approvedAt": null,
+  "expiresAt": null,
+  "productionChangeAuthorized": false,
+  "confirmationText": "等待产品负责人针对当前候选指纹单独授权八次隐藏回归。"
+}

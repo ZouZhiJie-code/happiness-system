@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "status": "zero_call_replay_passed_frozen_as_v7r4_baseline",
+  "evaluation": {
+    "id": "gi088_human_eval_v7r3_deterministic_state",
+    "version": "2026-08-10.gi088-human-eval-v7r3-deterministic-state",
+    "serviceVersion": "2026-08-10.gi088-deterministic-state-service-v7r3",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.2",
+    "statePolicyVersion": "2026-08-10.gi088-deterministic-state-maintenance-v1",
+    "effectiveCandidateFingerprint": "f527c74873e774a146878f00312a11384e0913cbb0bd0867db6652455934c702",
+    "datasetFingerprint": "5ac0fc2da0be2fb4038d00c60b7f793f2d6b5802caed025805a796fab5c670cb",
+    "executionFingerprint": "f3f112e73be9579a635a339c07225a03d8771765aca554796e21410cf4fefda7"
+  },
+  "singlePrimaryFactor": "deterministic_working_task_lineage_and_explicit_stop_maintenance",
+  "stateMaintenance": {
+    "continueAndReturnModelEvidence": "current_turn_only",
+    "historicalEvidenceMergeOwner": "program",
+    "stableOrdering": true,
+    "deduplicate": true,
+    "maximumStateEvidenceRefs": 400,
+    "pureStopProviderCalls": 0,
+    "mixedStopMaximumProviderCalls": 1,
+    "mixedStopCommitsAfterGenerationFailure": true,
+    "rawModelOutputSeparatedFromEffectiveState": true
+  },
+  "privateReplay": {
+    "sourceEvaluationVersion": "2026-08-10.gi088-human-eval-v7r2-ark-flash",
+    "sourceExportSha256": "cf42c7f747143fa8f217f8790fe01d8cc77b8adef97ea6e6ea7b8858888373f1",
+    "traceAnchors": ["A1_U8", "A2_U7"],
+    "A1_U8": {
+      "explicitStop": "mixed",
+      "effectiveAction": "pause",
+      "nextInquiryCleared": true
+    },
+    "A2_U7": {
+      "effectiveStage": "deepen_integrate",
+      "rawSubmittedEvidenceCount": 1,
+      "effectiveEvidenceCount": 7,
+      "validationIssues": 0
+    },
+    "modelGenerationCalls": 0,
+    "rawUserContentInFormalEvidence": false,
+    "rawModelOutputInFormalEvidence": false
+  },
+  "preview": {
+    "deployed": false,
+    "batchCreated": false
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

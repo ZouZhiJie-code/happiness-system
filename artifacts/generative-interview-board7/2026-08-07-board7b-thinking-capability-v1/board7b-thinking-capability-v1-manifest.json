@@ -1,0 +1,34 @@
+{
+  "decisionId": "GI-086",
+  "candidateVersion": "2026-08-07.board7b-thinking-capability-v1",
+  "status": "package_ready_waiting_authorization",
+  "evidenceIdentity": "capability_route_probe",
+  "sourceCandidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fe2b306cb8172523b0b64f72bf1d41107d798d9f25e8eda0710f9260c96deb4d",
+  "sourceCandidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "datasetFingerprint": "29b1e9e16100047af446981d955b990535b7b1749d0705725ed4409ba98bbb99",
+  "requestSetFingerprint": "f2d84e97b7171e7d1b742769663337fa679c24542e1fa365c44bd627d72fa81e",
+  "evaluationPolicyFingerprint": "4d1194750b89cfee1f8b297ebd0ac58a7d158dac10aa4a1b64ee60adc20aba06",
+    "executionFingerprint": "f958b16c629a29fee3137e5cc82a37e47aafba6f7781198f7ccbfbdbe05dafc4",
+  "modelFacingAssets": {
+    "policy": "read_and_hash_bind_GI085_assets_without_copy_or_edit",
+    "basePrompt": "../2026-08-07-board7b-semantic-frame-v1/board7b-base-prompt-v1.md",
+    "interviewSkill": "../2026-08-07-board7b-semantic-frame-v1/conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "../2026-08-07-board7b-semantic-frame-v1/board7b-output-contract-v1.md",
+    "turnInputContract": "../2026-08-07-board7b-semantic-frame-v1/board7b-turn-input-v1.md"
+  },
+  "probe": {
+    "plannedCalls": 8,
+    "authorizedCalls": 0,
+    "modelCalls": 0,
+    "pairs": 4,
+    "thinkingDisabledCalls": 4,
+    "thinkingHighCalls": 4,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0,
+    "reviewMode": "fully_transparent"
+  },
+  "hiddenReasoningSaved": false,
+  "realTrajectory": "closed",
+  "production": "legacy + baseline"
+}

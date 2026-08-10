@@ -78,6 +78,16 @@ EVENT_CENTERED_EVALUATION_TIMEOUT_MS="18000"
 EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY=""
 EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL="deepseek-v4-pro"
 EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL="https://api.deepseek.com"
+# GI-088 私有 Preview 评测（完整契约见 .env.preview.example）
+EVALUATION_DATABASE_URL="" # 专属 Preview 物理库的 gi088_evaluation_v0 schema
+EVALUATION_POSTGRES_HOST=""
+EVALUATION_POSTGRES_DATABASE=""
+GI088_EVALUATION_DATABASE_SCHEMA="gi088_evaluation_v0"
+GI088_EVALUATION_ENABLED=""
+GI088_EVALUATOR_USERNAMES=""
+GI088_MODEL_CALL_SCOPE="disabled"
+GI088_AUTHORIZED_EXECUTION_FINGERPRINT=""
+GI088_SMOKE_AUTHORIZATION_ID=""
 ```
 
 `AI_RUNTIME_CONFIG_SECRET` 说明：
@@ -437,6 +447,30 @@ http://127.0.0.1:3010/preview/board8-gi066-review
 页面顶部应显示 `openai · api.deepseek.com · deepseek-v4-flash`、候选 `5.65.0` 和语义产物 `v17`。该批次最新真人裁决为 `No-Go`，候选失效，剩余人工任务停止。工作台只用于历史证据回看，不承担 GI-067 裁决。
 
 GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录内模式保持和结束后新记录重选；新工作台继续等待板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束规则，板块 6 正式评测资产，以及板块 7 新候选和 Provider 预检；板块 8 将使用两模式 `4＋2` 进行真人验收。Production 继续保持 `legacy + baseline`。
+
+### 2.12 GI-088 私有真人评测工作台
+
+当前本地运行器是 `2026-08-09.gi088-human-eval-v2-diagnostic`，只用于板块 6／7 开发评测；既有私有 Preview 仍保留 v1 的 `8/12` 历史批次。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+
+- `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
+- `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
+- `GI088_EVALUATION_ENABLED=I_UNDERSTAND`；
+- 正式批次只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
+- off／high 技术冒烟分别使用 `smoke_off`、`smoke_high` 及全新 UUID，不写入正式批次。
+
+静态检查：
+
+```bash
+npm run prisma:gi088:generate
+npm run prisma:gi088:validate
+npm run eval:gi088:inspect
+npm run eval:gi088:probe:empty:inspect
+npm run eval:gi088:probe:thinking:inspect
+```
+
+三个 inspect 命令只重算资产、执行指纹、来源快照和探针血缘，不产生模型请求。空内容 response format 探针已通过 `eval:gi088:probe:empty:run` 完成一次精确 `6/6` 授权；Thinking 模式探针也已按指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成一次精确 `4/4` 授权。两个授权 UUID 均已消费，禁止复用于新实验；任何新探针需要全新静态清单、指纹、授权 UUID 和独立预算。独立 schema 部署使用 `npm run prisma:gi088:deploy`，命令还要求 `GI088_EVALUATION_SCHEMA_DEPLOY=I_UNDERSTAND`；每次部署前核对目标为 Preview 专属库。
+
+访问 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。工作台页面和 `GET /api/preview/gi088/session` 应显示同一执行指纹、与当前 manifest 一致的任务状态及完成数；Production 的页面、session 和 smoke 路由均应返回 `404`。GI-088 v8r1 当前回读值为批次 `5123d795-5c19-408d-9b98-7767eaa7892c`、`running 0/12`、仅 `high`、执行指纹 `40da54f2…bf8f82`，初始化模型调用 `0`。
 
 事件日志生成故障处理：
 
@@ -1161,6 +1195,15 @@ printf '%s\n' "$INTERVIEW_EVENT_CENTERED_MODE" "$INTERVIEW_EVENT_CENTERED_STRATE
 - `JOURNAL_DAY_MODE_CONFLICT` / `JOURNAL_DAY_MODE_MIXED`：同一日期存在活动事件或不一致日志工作区，先从当前事件标签恢复并完成保存，再重试当天操作。
 
 离线 Judge 的 API key、模型和 base URL 仅供本地/隔离评测。生产排障不应临时把 Judge 凭据加入 Production，也不应通过 `/api/debug/runtime-env` 读取 key；该诊断面只允许白名单运行环境字段。
+
+### 7.14 GI-088 轨迹出现 `EMPTY_CONTENT` 或程序保护
+
+先在右侧 Trace 区分两类结果：
+
+- `finishReason=length`、`completionTokens` 与 `reasoningTokens` 相等、可见内容为空：输出空间被 Thinking 耗尽。v0 在 `1600` Token 上限下已连续复现三次；v1 已省略应用层 `max_tokens`。
+- `protected_failure`：Provider 已返回最终内容，结构、来源或“单轮一问”等确定性边界未通过。原始结果和校验问题保留，状态不合并进正式对话。
+
+v1 在两类失败下都提供“结束并评价当前技术失败”。手动重试每次都会新增一次模型请求，适合偶发网络、超时或 Provider 抖动。相同参数已稳定复现的预算耗尽直接保留失败并评价，避免消费额外请求。
 
 ## 8. 关键日志与定位点
 

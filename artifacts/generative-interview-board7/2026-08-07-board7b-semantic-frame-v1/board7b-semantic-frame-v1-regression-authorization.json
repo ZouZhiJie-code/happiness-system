@@ -1,0 +1,22 @@
+{
+  "template": false,
+  "authorizationVersion": "2026-08-07.board7b-semantic-frame-authorization-v1",
+  "decision": "approved",
+  "candidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "datasetFingerprint": "e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1",
+  "requestSetFingerprint": "56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71",
+  "evaluationPolicyFingerprint": "3d7204f4e8d5f2d29c1f92b6054a66c4e05134aa2772ae357af4a24c85cfc669",
+  "executionFingerprint": "23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4",
+  "runnerVersion": "2026-08-07.board7b-semantic-frame-runner-v1",
+  "authorizationId": "1eca419d-979b-43bd-9324-0bd6e00d0e79",
+  "authorizationScope": "eight_case_semantic_frame_regression",
+  "plannedModelCallBudget": 8,
+  "authorizedModelCallBudget": 8,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": "product_owner_conversation",
+  "approvedAt": "2026-08-07T11:45:55.320Z",
+  "productionChangeAuthorized": false,
+  "confirmationText": "产品负责人授权 GI-085 按绑定的五项指纹执行 8 次隔离回归，质量重试 0，自动技术重试 0。",
+  "authorizationDigest": "3a5b86beff30d7761529c2c2cfd90c976c71cbb611afe35b0c560cedb6c1b59d"
+}

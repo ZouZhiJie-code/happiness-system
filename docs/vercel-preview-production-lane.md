@@ -1,13 +1,13 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-09`
 
 ## 当前生产域名
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
-- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。GI-066 已使用该链路完成官方最小预检、`10×3` 和单角度自动 `8+2`；最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～074` 产品规则已冻结，当前进入板块 5 校准计数、修复、回复版本、焦点纠正、失败恢复与交互收束；GI-068 记录级模式边界直接继承。新的候选版本、Preview 批次和人工工作台继续等待板块 5～7。Ark 变量和适配器只承担历史兼容，旧 Ark 账务错误不参与当前候选裁决。Production 继续保持 `legacy + baseline`。
+- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v7r4 保留各自的失败、恢复、平台和真人证据；v8 以 `1/4 early_stopped` 获产品通过。当前 v8r1 使用官方 V4 Pro 与 Thinking high，Preview READY，`0/12` 空白批次已回读。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
 - `2026-07-21` 历史生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
 - `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。
@@ -62,6 +62,18 @@
 - 如果项目没有暴露上述 system env，才回退为手工维护 `APP_URL`
 - 当前批次还没有直接证据证明 `xingfuxitong` 已启用该能力；依赖这条路径前，必须额外验证项目设置里的 `Automatically expose System Environment Variables` 开关，以及部署运行时是否能读到 `VERCEL=1`
 - preview 数据库必须和本地库、生产库隔离
+
+#### 2026-08-09～10 GI-088 私有评测 Preview
+
+- 当前执行入口为 [`GI-088 v8r1 最终 12 项独立验收`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)；
+- 访问链路依次通过 Vercel Deployment Protection、Daily Light 应用登录和 `ADMIN_USERNAMES ∩ GI088_EVALUATOR_USERNAMES`；
+- 应用登录与评测数据共用一个专属 Preview 物理库，分别使用 `gi088_app_preview`、`gi088_evaluation_v0` schema，两者均不指向 Production；
+- `GI088_EVALUATION_ENABLED` 只在该 Preview 设为 `I_UNDERSTAND`；模型请求还要求作用域与当前执行指纹精确匹配；
+- 正式批次使用 `batch`，两个技术冒烟分别使用 `smoke_off`、`smoke_high` 和独立 UUID；
+- Production 的 `/preview/gi088-evaluation`、`/api/preview/gi088/session`、`/api/preview/gi088/smoke` 统一返回 `404`。
+- v2 diagnostic 已完成评测底座与两轮空内容诊断；response format 探针按精确授权完成 `6/6`，移除参数候选 No-Go；Thinking 模式探针按精确授权完成 `4/4`，high 与 disabled 均有效，主要影响因素未确认。产品负责人随后停止继续复现 DeepSeek 内部原因，确认 v3 使用 Thinking high 可见答案自动恢复。v3 deployment 为 `dpl_6ByMq3r9E8LvyTwZh3R87usLpro3`，执行指纹 `3b79fe68…70d23b`；A1 双轨迹完成后批次在 `1/12` 提前结束，消费 `8/40`。本组空内容与自动恢复均为 `0`，两边第 4 轮共同命中回答机会边界。v4 阶段 2→3 自然转场候选已完成本地静态验证，执行指纹 `0206fd34…b1d0a`；产品负责人已授权私有 Preview、新批次和最坏 `40` 次调用，deployment `dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV` 已 Ready。登录与 `0/12` 空白批次回读通过，模型调用仍为 `0`，可以开始 A1。浏览器标签修正版 `dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV` 已 Ready，并绑定固定别名 `xingfuxitong-gi088-v4-stage-transition.vercel.app`；当前已登录批次继续使用首次 deployment。Production 继续保持 `legacy + baseline`。
+- v5 High-only 候选完成私有 Preview 与 `0/12` 空白批次回读，未发生真人模型调用。v6 取消新轮次的单问号程序拦截与自动整理，保留问号观测并要求所有可见 ask 在结束轨迹前完成人工分类；当前共 `4` 项、活动分支仅 `high`、执行指纹 `a5042e97…c094d`、最坏调用预算 `48`。deployment `dpl_5Rq7gTnovApDY97b4pg8k7YJf33r` 已 Ready，固定入口为 `xingfuxitong-gi088-v6-single-focus.vercel.app`；专用评测库批次 `37517d91-a258-423a-bb26-a58c97357e68` 回读为 `0/4`、模型调用 `0`。v5 与更早 Preview 保持只读，Production 继续保持 `legacy + baseline`。
+- v8 批次 `cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60` 以 `1/4 early_stopped` 收口并获产品通过。v8r1 deployment `dpl_HPBafL2QmHd6UsUXQ8kWVbUvKJAQ` 目标为 Preview，状态 `READY`；页面为 `https://xingfuxitong-5l1ns4sci-zouzhijies-projects.vercel.app/preview/gi088-evaluation`。专用评测库批次 `5123d795-5c19-408d-9b98-7767eaa7892c` 回读为 `running 0/12`、模型调用 `0`，执行指纹 `40da54f2…bf8f82`。当前 Preview 受 Vercel 登录保护；Production 继续保持 `legacy + baseline`。
 
 #### 2026-07-21 访谈意图独立验收环境（历史记录）
 

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0",
+  "status": "early_stopped_readonly_1_of_12_after_A1",
+  "evaluation": {
+    "id": "gi088_human_eval_v3_empty_recovery",
+    "version": "2026-08-09.gi088-human-eval-v3-empty-recovery",
+    "serviceVersion": "2026-08-09.gi088-empty-content-recovery-service-v3",
+    "effectiveCandidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "datasetFingerprint": "6f3f3cf8c28d1dc72ad2a330a5a22014961dda5ba29b6be189fcb2329cf734ca",
+    "executionFingerprint": "3b79fe68ecdb541b867b8c78ff85bf3f6fba222333523e36e47f4f4fa170d23b"
+  },
+  "lineage": {
+    "historicalHumanEvaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "historicalHumanExecutionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+    "historicalCompletedTasks": 8,
+    "historicalTotalTasks": 12,
+    "diagnosticEvaluationVersion": "2026-08-09.gi088-human-eval-v2-diagnostic",
+    "diagnosticExecutionFingerprint": "96a555c6ecef0efd8ff2946bbf7ec9c7ee6b717157520a1e6944bb888b29f943"
+  },
+  "decisionLedger": {
+    "productOwnerJudgment": "implement_thinking_high_visible_answer_auto_recovery",
+    "codexInitialAssessment": "A1_confirmed_same_answer_opportunity_protection_in_off_and_high",
+    "confirmedRootCauseBoundary": "upstream_http_200_stop_with_reasoning_and_zero_length_visible_content",
+    "pendingHypothesis": "empty_content_auto_recovery_human_effect_remains_unobserved_because_A1_had_zero_empty_content",
+    "sameHighReproductionProbe": "stopped_by_product_owner"
+  },
+  "recoveryContract": {
+    "version": "2026-08-09.gi088-empty-content-auto-recovery-v1",
+    "eligibleBranch": "high",
+    "trigger": "EMPTY_CONTENT",
+    "maximumAutomaticRetriesPerTurn": 1,
+    "maximumProviderCallsPerTurn": 2,
+    "retryThinking": "enabled",
+    "retryReasoningEffort": "high",
+    "retryResponseFormat": "json_object",
+    "recoveryInstructionVersion": "2026-08-09.gi088-empty-content-recovery-instruction-v1",
+    "recoveryInstruction": "刚才只完成了思考，请直接输出最终可见 JSON，不要继续解释思考过程。",
+    "fallbackToThinkingDisabled": false,
+    "fallbackToOff": false,
+    "readsOrStoresReasoningBody": false
+  },
+  "accounting": {
+    "initialEmptyContentPermanentlyRecorded": true,
+    "successfulTurnStatus": "complete_after_auto_recovery",
+    "recoveryStates": [
+      "eligible",
+      "retrying",
+      "recovered",
+      "exhausted"
+    ],
+    "lineageFields": [
+      "parentCallId",
+      "retryTrigger",
+      "retryOrdinal",
+      "effectiveConfig"
+    ],
+    "distinctRequestFingerprintForRecovery": true,
+    "assistantCommitsOnSuccess": 1,
+    "thirdCallAllowed": false
+  },
+  "automaticValidation": {
+    "testFiles": 3,
+    "testsPassed": 69,
+    "testsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "targetedHumanEvaluation": {
+    "status": "early_stopped_after_A1_sufficient_evidence",
+    "taskIds": [
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "plannedTaskCount": 3,
+    "modelCallBudgetAuthorized": 40,
+    "modelCallsConsumed": 8,
+    "automaticRetriesPerUserSubmissionMaximum": 1,
+    "providerCallsPerUserSubmissionMaximum": 2,
+    "finishPolicy": "product_owner_early_stopped_before_A2",
+    "previewBatchCreated": true,
+    "completedTaskIds": [
+      "A1"
+    ],
+    "notRunTaskIds": [
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A2-R",
+      "A3-R",
+      "A4-R",
+      "A6-R"
+    ],
+    "terminalAt": "2026-08-09T13:48:04.807Z",
+    "emptyContentCount": 0,
+    "automaticRecoveryCount": 0,
+    "manualRetryCount": 0,
+    "protectedFailureCount": 2,
+    "sharedProtectedFailureCode": "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE",
+    "productOwnerPreference": "high_better",
+    "emptyRecoveryHumanVerdict": "not_triggered_in_A1"
+  },
+  "queuedAfterEmptyContent": [
+    "timeout_root_cause_recovery_and_waiting_experience",
+    "output_contract",
+    "content_and_boundary",
+    "full_12_task_24_trajectory_batch"
+  ],
+  "preview": {
+    "deployed": true,
+    "deploymentId": "dpl_6ByMq3r9E8LvyTwZh3R87usLpro3",
+    "url": "https://xingfuxitong-fpxzwohws-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "pageHttpStatus": 200,
+    "unauthenticatedSessionHttpStatus": 401,
+    "newBatchCreated": true,
+    "batchCreationPolicy": "create_on_first_authenticated_session_read"
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

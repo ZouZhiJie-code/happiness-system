@@ -1,0 +1,4 @@
+{
+  "version": "2026-08-09.gi088-output-contract-clarification-v0.1",
+  "content": "# GI-088 输出合同澄清 v0.1\n\n本补充只澄清 `burdenSignal` 的可空编码，不改变 GI-087 的访谈策略、动作空间、任务结构或用户可见表达要求。\n\n## `burdenSignal` 编码\n\n- `burdenSignal` 字段始终保留。\n- 当前记录中缺少仍然有效、会影响本轮问停判断的用户负担证据时，输出 JSON `null`。\n- 当前记录中存在仍然有效的负担信号时，输出对象，且 `evidenceRefs` 至少包含一条支持该信号的用户消息 id。\n- “没有明显负担信号”“暂未发现负担”或无法从用户原话确认负担，都表示当前缺少负担证据，输出 JSON `null`。\n\n本澄清优先于原合同示例中对 `burdenSignal` 的占位展示。严格结构校验继续生效；程序不会把空证据对象自动改写成 `null`。\n"
+}

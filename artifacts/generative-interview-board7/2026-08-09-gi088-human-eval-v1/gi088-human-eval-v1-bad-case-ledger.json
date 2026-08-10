@@ -1,0 +1,380 @@
+{
+  "schemaVersion": "1.0",
+  "ledgerVersion": "2026-08-09.gi088-human-eval-v1-bad-case-ledger-v1",
+  "evaluationPlanId": "2026-08-09.gi088-human-eval-v1",
+  "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+  "sourceSnapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+  "judgmentLabels": [
+    "product_owner_judgment",
+    "codex_initial_review",
+    "confirmed_root_cause",
+    "confirmed_behavior",
+    "hypothesis",
+    "excluded"
+  ],
+  "problemGroups": [
+    {
+      "groupId": "PG-01",
+      "name": "Thinking high 运行可靠性与恢复负担",
+      "issueIds": ["BC-02", "BC-03", "BC-04"],
+      "relationship": "BC-02 与 BC-03 触发 BC-04；三者共同构成产品负责人提前结束本批的主要体验原因。",
+      "priority": "P0",
+      "nextMainFactorCandidate": true
+    },
+    {
+      "groupId": "PG-02",
+      "name": "模型输出与严格合同失配",
+      "issueIds": ["BC-05", "BC-06", "BC-07", "BC-08"],
+      "relationship": "模型生成内容触发确定性保护，保护层正确阻止错误状态，同时造成用户当轮无回应；部分 raw 内容语义可用。",
+      "priority": "P0",
+      "nextMainFactorCandidate": false
+    },
+    {
+      "groupId": "PG-03",
+      "name": "内容任务与来源质量",
+      "issueIds": ["BC-09", "BC-10"],
+      "relationship": "内容层问题影响决策支持、问题价值与来源边界；当前受运行失败和任务未触发干扰。",
+      "priority": "P1",
+      "nextMainFactorCandidate": false
+    },
+    {
+      "groupId": "PG-04",
+      "name": "评测覆盖与批次状态",
+      "issueIds": ["BC-01", "BC-11"],
+      "relationship": "运行器缺少提前结束状态，任务结束条件又不校验目标行为是否触发；两者影响证据身份和能力通过率。",
+      "priority": "P1",
+      "nextMainFactorCandidate": false
+    },
+    {
+      "groupId": "PG-05",
+      "name": "已复核排除项",
+      "issueIds": ["BC-12"],
+      "relationship": "产品负责人提出疑问，Codex 按冻结问停规则复核后排除为缺陷。",
+      "priority": "closed",
+      "nextMainFactorCandidate": false
+    }
+  ],
+  "issues": [
+    {
+      "issueId": "BC-01",
+      "title": "8/12 提前结束无法形成服务端 sealed 与正式 export",
+      "problem": "产品负责人已结束本批，系统仍为 running 且 sealedAt 为空。",
+      "judgments": {
+        "productOwner": "主动取消四项复测并结束本批，进入复盘。",
+        "codex": "前 8 项内部完整，可作为只读封存快照；整批不能写成服务端已封存。"
+      },
+      "evidence": {
+        "batchId": "830f9a3f-a90e-4c41-901d-1c63211e0c8c",
+        "databaseStatus": "running",
+        "sealedAt": null,
+        "completedTasks": 8,
+        "plannedTasks": 12,
+        "code": [
+          "src/server/services/evaluation/gi088/service.ts:939",
+          "src/server/services/evaluation/gi088/service.ts:956"
+        ]
+      },
+      "rootCause": {
+        "status": "confirmed_root_cause",
+        "statement": "seal 要求 12 项均有 comparison，export 又要求 batch 已 sealed；状态机未定义产品负责人提前结束。"
+      },
+      "impactScope": "批次证据治理、页面状态、正式导出；不影响前 8 项数据内部完整性。",
+      "nextAction": "本轮保留只读快照；运行器 early_stopped 能力进入后续独立迭代。"
+    },
+    {
+      "issueId": "BC-02",
+      "title": "Thinking high 返回 reasoning-only 空可见内容",
+      "problem": "12 次 high 调用以 finishReason=stop 结束，存在推理 Token，最终 content 为空。",
+      "judgments": {
+        "productOwner": "频繁 EMPTY_CONTENT 显著打断访谈，是提前结束原因之一。",
+        "codex": "症状已确认并排除 v0 的 1600 Token length exhaustion；精确上游成因仍待验证。"
+      },
+      "evidence": {
+        "affectedTasks": ["A1", "A2", "A3", "A4", "A8"],
+        "affectedHighTrajectories": 5,
+        "callIds": [
+          "3f953793-0e3f-4e66-a9e6-88a315efadbe",
+          "f8fa51ca-b26e-4965-9ef2-04354599511e",
+          "052f6a93-3583-4890-a377-12dec613a254",
+          "de549680-171b-40b3-a5ae-484155e3b232",
+          "e9cce7c3-e550-4da1-ad7c-b648e40bc70f",
+          "6b57bffb-2b62-42c3-a552-26d4bf6a2f48",
+          "9c4075fd-dd34-46f9-81f5-d28f4a578277",
+          "442ee731-891a-4f61-aead-329d0d00f560",
+          "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+          "947f8ac1-40be-438b-a8d5-e3a122789d3d",
+          "06b9e404-394c-4949-a669-92700d4d3247",
+          "9ab3e66a-ddce-4270-9c9f-485fd908ec57"
+        ],
+        "providerCode": "src/server/services/ai/openai.provider.ts:267",
+        "externalEvidence": "https://api-docs.deepseek.com/guides/json_mode"
+      },
+      "rootCause": {
+        "status": "hypothesis",
+        "confirmedPart": "Provider 收到空 content 后按 EMPTY_CONTENT 结束；所有样本均为 high、reasoningPresent=true、finishReason=stop。",
+        "hypothesis": "deepseek-v4-flash 的 high Thinking 与 JSON 输出组合偶发只产生 reasoning，未留下最终 content。官方 JSON Output 指南也记录了偶发空 content 风险。"
+      },
+      "impactScope": "5/8 条 high 轨迹、12/49 次 high 调用；A1 无法收口，其他多轮依赖手动重试。",
+      "nextAction": "作为下一主要影响因素的核心症状；新模型调用继续等待单独授权。"
+    },
+    {
+      "issueId": "BC-03",
+      "title": "Thinking high 调用达到 30 秒应用超时",
+      "problem": "7 次 high 调用在本地 30 秒截止时间终止，缺少 Provider 结果。",
+      "judgments": {
+        "productOwner": "等待和失败持续破坏真实访谈节奏。",
+        "codex": "应用截止时间已确认；Provider、网络或模型端具体成因待验证。"
+      },
+      "evidence": {
+        "affectedTasks": ["A1", "A4", "A6", "A7", "A8"],
+        "callIds": [
+          "a7b303fe-80b2-4bca-a05d-102cd91df182",
+          "a545acf3-ac98-4824-b762-c28e80234f10",
+          "df35d4c9-bd16-441f-a43d-961df60c0c25",
+          "92d2eed1-de4f-4b6c-bd8a-4875d302752b",
+          "9f1a0f5a-33b5-426b-afce-9dfee7e7f258",
+          "cc5da456-0900-4216-ba45-1e7f6f95bd49",
+          "6fc90aec-ad90-4bf2-b076-881b2b165c75"
+        ],
+        "timeoutCode": [
+          "src/server/services/evaluation/gi088/service.ts:243",
+          "src/server/services/evaluation/gi088/service.ts:628"
+        ],
+        "validHighLatencyMs": {
+          "count": 27,
+          "p50": 375,
+          "p95": 453,
+          "max": 489
+        }
+      },
+      "rootCause": {
+        "status": "hypothesis",
+        "confirmedPart": "应用在 30000ms 主动中止；超时调用没有 token 和 Provider diagnostics。",
+        "hypothesis": "上游请求或连接偶发悬挂；当前证据无法区分网络、Provider 排队或模型端原因。"
+      },
+      "impactScope": "5/8 条 high 轨迹、7/49 次 high 调用。",
+      "nextAction": "与 BC-02 一起纳入 high 技术失败恢复候选；根因探针需单独模型授权。"
+    },
+    {
+      "issueId": "BC-04",
+      "title": "技术失败恢复依赖频繁手动重试",
+      "problem": "12 个 high 用户轮经历技术失败，产品负责人共点击 17 次手动重试。",
+      "judgments": {
+        "productOwner": "技术失败和重复操作严重影响访谈体验。",
+        "codex": "手动重试保留了输入血缘和透明性，同时把恢复成本完整转移给评测者。"
+      },
+      "evidence": {
+        "technicalAffectedTurns": 12,
+        "manualRetries": 17,
+        "eventualOutcomes": {
+          "valid": 7,
+          "protectedFailure": 3,
+          "technicalFailure": 2
+        }
+      },
+      "rootCause": {
+        "status": "confirmed_root_cause",
+        "statement": "v1 的恢复策略固定为零自动技术重试，失败后只提供显式手动重试或结束评价。"
+      },
+      "impactScope": "全部 8 条 high 轨迹中 7 条使用过手动重试；增加等待、操作和判断负担。",
+      "nextAction": "推荐把 high 技术失败恢复策略作为下一候选唯一主要影响因素。"
+    },
+    {
+      "issueId": "BC-05",
+      "title": "单轮生成两个问题",
+      "problem": "7 次 raw output 含两个问号，严格单轮一问保护拒绝整轮。",
+      "judgments": {
+        "productOwner": "多条关闭组轨迹直接失败，体验明显受损。",
+        "codex": "程序保护正确；候选对表层单问合同的遵循不足。"
+      },
+      "evidence": {
+        "affected": ["A1/off", "A2/off", "A4/off", "A5/off", "A6/high", "A7/high", "A8/off"],
+        "callIds": [
+          "054ee2b4-6e85-4582-908e-2c67d56ae01d",
+          "96f94dd4-011f-4ad0-b113-f1cbbcf9d511",
+          "cb330f0a-9f2c-46c9-800a-2d0af0e4cfb8",
+          "9fd657c3-1e90-49b7-9e73-712f8d1e1bee",
+          "e4aacdde-acde-4568-8a75-ff159999f23a",
+          "88577ee4-fea9-4e38-a4d9-bb879a4dce1e",
+          "4365e5a6-e5b6-4aab-89b9-7c942c58a1ab"
+        ],
+        "validation": "ASK_QUESTION_COUNT_INVALID:2",
+        "validatorCode": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts:974"
+      },
+      "rootCause": {
+        "status": "confirmed_behavior",
+        "confirmedPart": "raw output 反复采用主问题加解释性子问题或二选一，校验器按冻结单轮一问合同正确拦截。",
+        "hypothesis": "Prompt／Skill 对最终可见文本的单问表达约束不足，off 更容易沿用这种表达。"
+      },
+      "impactScope": "7/16 条轨迹；off 5、high 2；跨 Thinking 配置。",
+      "nextAction": "保留为第二问题簇，避免与 high 技术恢复同时改动。"
+    },
+    {
+      "issueId": "BC-06",
+      "title": "非 ask 动作的结构字段与严格合同不一致",
+      "problem": "A2 high 的 synthesize 输出空字段对象，A7 off 的 acknowledge 填写理解文案；两条语义可用结果均被结构保护整体拒绝。",
+      "judgments": {
+        "productOwner": "A2 high 最终一轮因字段不合规失败；A7 off 构成边界风险。",
+        "codex": "A2 属于结构执行失败；A7 进一步造成明确纠正未写入状态，构成端到端单例阻断。"
+      },
+      "evidence": {
+        "cases": [
+          {
+            "task": "A2/high",
+            "traceId": "aca27479-8b33-495e-add4-b0112b833250",
+            "turnId": "fab11f22-083b-4c87-8b26-6d823b67aad7",
+            "callId": "1663b68b-92a0-4993-b472-39134eebaf18",
+            "validation": "semantic.nextInquiry fields invalid; synthesize requires nextInquiry=null"
+          },
+          {
+            "task": "A7/off",
+            "traceId": "917f336b-ab89-4e2a-979c-2b93aeb0fb8a",
+            "turnId": "c326df67-9fa1-4d20-81bb-b96ddf3edbf0",
+            "callId": "4d284dff-bbaa-4af5-911b-04d5213d2d02",
+            "validation": "NON_ASK_VISIBLE_UNDERSTANDING_MUST_BE_NULL"
+          }
+        ],
+        "validatorCode": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts:1011"
+      },
+      "rootCause": {
+        "status": "confirmed_behavior",
+        "statement": "模型输出未遵守动作对应字段合同；严格校验按当前规则拒绝整轮。是否引入确定性规范化或调整合同保持开放。"
+      },
+      "impactScope": "2/16 条轨迹；A7 off 影响用户纠正和旧状态退出。",
+      "nextAction": "作为输出合同专项候选，需与单轮双问一起重新设计后再验证。"
+    },
+    {
+      "issueId": "BC-07",
+      "title": "提问机会用尽后仍申请 new",
+      "problem": "A6 off 在阶段 1～2 的三次新回答机会均已使用后，继续输出 answerOpportunity=new。",
+      "judgments": {
+        "productOwner": "问题本身有助于具体化并收敛。",
+        "codex": "内容方向有价值，候选未遵守已提供的客观机会账本；程序保护正确。"
+      },
+      "evidence": {
+        "traceId": "0eb443fa-2c3d-4526-9b1a-9d669ddc0bdd",
+        "turnId": "677a0505-5202-4818-a9cb-fc1db138d9ed",
+        "callId": "44f21e6c-7a02-4200-99a8-350c5cf7ff74",
+        "validation": "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE",
+        "validatorCode": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts:988"
+      },
+      "rootCause": {
+        "status": "confirmed_behavior",
+        "statement": "输入账本 stage2Used=2，模型仍输出 new；精确 Prompt／Skill 因果归属待验证。"
+      },
+      "impactScope": "A6 off 单条；当前 A6 边界行为又未触发。",
+      "nextAction": "保留程序保护；进入输出合同问题簇。"
+    },
+    {
+      "issueId": "BC-08",
+      "title": "无认识变化仍创建 understandingDelta",
+      "problem": "A2 high 明确表述无认识变化，同时仍写入 understanding object，现有结构校验未拦截。",
+      "judgments": {
+        "productOwner": "页面评价未单独识别此内部状态问题。",
+        "codex": "内部多出无效认识节点，当前未造成可见错误。"
+      },
+      "evidence": {
+        "traceId": "aca27479-8b33-495e-add4-b0112b833250",
+        "turnId": "5161709c-1ec1-40ee-bb08-f8299da948ba",
+        "successfulCallId": "c6c4ed78-d116-42a2-bb32-a455d98eae53"
+      },
+      "rootCause": {
+        "status": "confirmed_behavior",
+        "statement": "文本合同要求无变化时为 null，结构层允许语义空对象通过。"
+      },
+      "impactScope": "当前确认 A2 high 一轮；影响内部状态洁净度。",
+      "nextAction": "加入静态合同回归，不与下一主要影响因素混改。"
+    },
+    {
+      "issueId": "BC-09",
+      "title": "A5 决策支持退化为情绪来源探索",
+      "problem": "off 与 high 都离开养狗条件化决策任务，转向过去失去或朋友关系；off 进一步形成无充分来源的长期模式推断。",
+      "judgments": {
+        "productOwner": "high 的提问、回应和总结非常满意。",
+        "codex": "认可认识质量；按 A5 任务仍缺少可用于判断条件、取舍和行动边界的决策支持。off 原始输出命中单例阻断。"
+      },
+      "evidence": {
+        "traceIds": [
+          "3f125523-d69a-4114-af1b-b8a688777fa8",
+          "d5313cb1-aff1-4762-9ef6-a74a40c2b052"
+        ],
+        "blockerCallId": "9fd657c3-1e90-49b7-9e73-712f8d1e1bee"
+      },
+      "rootCause": {
+        "status": "hypothesis",
+        "confirmedPart": "两条轨迹均未回到条件化决策结果；off raw output 形成跨情境长期模式。",
+        "hypothesis": "当前 Skill 缺少决策支持判尺，模型输入也不包含页面任务说明，导致通用深聊取代决策任务。"
+      },
+      "impactScope": "A5 两条轨迹；影响任务完成，off 进一步触发模型输出层阻断。",
+      "nextAction": "待运行可靠性稳定后，作为内容策略候选单独处理。"
+    },
+    {
+      "issueId": "BC-10",
+      "title": "问题价值、来源与表达的分散质量问题",
+      "problem": "A3 off 重复索取已有意义；A1 high 二选一收窄并把主因压成排他因果；A4 high 加入有道德压力的无来源选项；A8 high 最终整合略微伸展到“像家人／联结”。",
+      "judgments": {
+        "productOwner": "A3 off 明显较差；A4 high 提问体验好；A8 high 可直接使用。",
+        "codex": "A3 off 为质量失败；A1 high 与 A8 high 为轻微问题；A4 high 的无来源选项构成质量失败。"
+      },
+      "evidence": {
+        "traceIds": [
+          "2ca8be12-57a1-496f-8be8-eb1972321091",
+          "5fb7e6f1-4c9b-4a78-9ed7-b1a0cbe2477d",
+          "b4edcf05-8b0c-4709-a22d-5857bb43a132",
+          "bf1ea1bd-bfae-4aa6-abfd-aedc81c1b642"
+        ]
+      },
+      "rootCause": {
+        "status": "hypothesis",
+        "statement": "候选为了形成易回答或更丰富的叙事，偶发采用二元选项、重复意义问题或超出来源的关系表达；需要跨新话题复测。"
+      },
+      "impactScope": "4 条轨迹、跨 off/high；当前强度从轻微到质量失败。",
+      "nextAction": "保留为内容回归集，当前不作为唯一主要影响因素。"
+    },
+    {
+      "issueId": "BC-11",
+      "title": "指定任务行为未触发仍可完成评价",
+      "problem": "A4、A6 的四条轨迹和 A7 high 没有触发任务指定行为，页面仍允许结束并评价。",
+      "judgments": {
+        "productOwner": "已完成对应轨迹并给出体验评价；A7 原案例表达也被认为不够理想。",
+        "codex": "这些轨迹保留一般质量证据，不能承担目标能力通过证据；A7 配对无法得出 Thinking 能力比较。"
+      },
+      "evidence": {
+        "affected": ["A4/off", "A4/high", "A6/off", "A6/high", "A7/high"],
+        "candidateLineageQualified": 16,
+        "taskAbilityLineageQualified": 11
+      },
+      "rootCause": {
+        "status": "confirmed_root_cause",
+        "statement": "runner 的轨迹结束条件不校验任务目标行为是否实际发生；任务说明也依赖评测者主动触发。"
+      },
+      "impactScope": "5/16 条轨迹；污染能力覆盖率和配对解释。",
+      "nextAction": "下一批执行前增加非生成式能力触发确认；变化单独记录在数据集／运行器指纹。"
+    },
+    {
+      "issueId": "BC-12",
+      "title": "A8 high 用户继续后只追问一轮便收束",
+      "problem": "产品负责人提出该节奏是否符合深聊问停标准。",
+      "judgments": {
+        "productOwner": "开放疑问，内容总体可直接使用。",
+        "codex": "已排除为 Bad Case。U5 主动补充新原因，A5 一问获得足够新关系，U6 回答后 A6 合成；符合 GI-071 动态问停。"
+      },
+      "evidence": {
+        "traceId": "bf1ea1bd-bfae-4aa6-abfd-aedc81c1b642",
+        "sequence": "U5 -> A5 -> U6 -> A6"
+      },
+      "rootCause": {
+        "status": "excluded",
+        "statement": "阶段 3 没有数字问题上限或最低追问数；当前新部分已在一问内补足。"
+      },
+      "impactScope": "不构成缺陷，不进入下一候选修改范围。",
+      "nextAction": "保留为动态问停正例。"
+    }
+  ],
+  "recommendedMainFactor": {
+    "status": "codex_recommendation_waiting_product_owner_confirmation",
+    "name": "Thinking high 技术失败恢复策略",
+    "why": "保留 high 已观察到的内容优势，优先处理 19 次技术失败与 17 次手动重试对真人访谈的直接破坏。",
+    "scopeBoundary": "成功的 high 输出、Base Prompt、Interview Skill、模型、严格 Schema、任务集和 Production 均保持；输出合同与内容问题分批处理。"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "planVersion": "2026-08-07.board7b-prompt-skill-regression-v0.1",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.1",
+  "candidateFingerprint": "b17e662434188d6f5938bc283f17abf38a76a95aa482e7d67686a1093bd709c3",
+  "modelInputExcludes": [
+    "caseId",
+    "expectedBehavior",
+    "forbiddenBehavior",
+    "passCriteria"
+  ],
+  "plannedCalls": 8,
+  "authorizedCalls": 0,
+  "groups": [
+    {
+      "groupId": "autumn-linked-priorities",
+      "repetitions": 2,
+      "steps": [
+        {
+          "caseId": "autumn-open",
+          "userMessage": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。",
+          "expectedBehavior": [
+            "保留一个月内找到工作与长期方向两层",
+            "说明两层怎样互相影响",
+            "提出一个不会强迫二选一的问题"
+          ],
+          "forbiddenBehavior": [
+            "要求用户在先定方向与先拿 offer 中二选一",
+            "只复述信息后结束"
+          ]
+        },
+        {
+          "caseId": "autumn-prioritize-offer",
+          "userMessage": "我现在主要还是先拿 offer 吧，所以我在准备一些作品集。",
+          "expectedBehavior": [
+            "采用先拿 offer 的当前优先级",
+            "保留公司、行业和业务方向对作品集选择的影响",
+            "围绕一个具体连接继续深入"
+          ],
+          "forbiddenBehavior": [
+            "替用户宣布先拿 offer 更实际",
+            "直接要求用户只把精力放在作品集",
+            "丢失长期方向条件"
+          ]
+        }
+      ]
+    },
+    {
+      "groupId": "single-turn-cases",
+      "repetitions": 1,
+      "cases": [
+        {
+          "caseId": "boundary-defer-long-term",
+          "conversation": [
+            "我眼下先想把面试准备做好，但长期方向也有点担心。",
+            "长期方向我暂时不想讨论，先看眼下准备。"
+          ],
+          "expectedBehavior": ["尊重当前边界", "只沿眼下准备推进"],
+          "forbiddenBehavior": ["继续追问长期方向"]
+        },
+        {
+          "caseId": "coexisting-content-transfer",
+          "conversation": [
+            "我一方面想尽快搬出去，另一方面又担心短期租约会限制明年的工作地点选择。"
+          ],
+          "expectedBehavior": ["保留两项内容互相影响", "避免要求二选一"],
+          "forbiddenBehavior": ["把两项内容拆成只能选一项的焦点"]
+        },
+        {
+          "caseId": "user-correction",
+          "conversation": [
+            "最近工作很累，我一直想离开。",
+            "重点已经不是累不累，我更想看清离开后会不会后悔。"
+          ],
+          "expectedBehavior": ["采用新焦点", "重新规划下一步"],
+          "forbiddenBehavior": ["继续询问工作强度或疲惫原因"]
+        },
+        {
+          "caseId": "unclear-stop-again",
+          "conversation": [
+            "我说不清。",
+            "如果只想一个最近最明显的时刻呢？",
+            "还是说不清，我不想再想了。"
+          ],
+          "expectedBehavior": ["选择 pause", "零问题自然停住"],
+          "forbiddenBehavior": ["改写问题", "继续邀请作答"]
+        }
+      ]
+    }
+  ],
+  "passCriteria": {
+    "autumnDecisionPoints": "4/4",
+    "forcedBinary": 0,
+    "prematureClosure": 0,
+    "ungroundedActionAdvice": 0,
+    "schemaValid": "8/8",
+    "evidenceValid": "8/8",
+    "singleCaseBlocks": 0,
+    "ordinaryQualityFailures": 0,
+    "minorExpressionIssuesMax": 2
+  }
+}

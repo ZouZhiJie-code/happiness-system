@@ -1,0 +1,151 @@
+{
+  "schemaVersion": "1.0",
+  "status": "completed_inconclusive_no_empty_reproduction_4_of_4",
+  "probeVersion": "2026-08-09.gi088-empty-content-thinking-mode-probe-v1",
+  "probeFingerprint": "7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498",
+  "authorizationId": "981e1baa-7a44-4843-92d5-a7d11f63f5ec",
+  "completedAt": "2026-08-09T11:18:42.665Z",
+  "source": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "candidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2"
+  },
+  "runtime": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com",
+    "responseFormat": "json_object",
+    "maxTokensPolicy": "provider_default",
+    "temperaturePolicy": "omitted_for_both_arms",
+    "timeoutMs": 30000
+  },
+  "execution": {
+    "authorizedCallBudget": 4,
+    "modelGenerationCalls": 4,
+    "completedCalls": 4,
+    "reservedCalls": 0,
+    "automaticRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "requestHashesVerified": 4,
+    "timeouts": 0,
+    "aborts": 0
+  },
+  "matrix": [
+    {
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "high": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 845,
+        "reasoningPresent": true,
+        "reasoningTokens": 478,
+        "completionTokens": 789,
+        "visibleCompletionTokens": 311,
+        "headersLatencyMs": 1009,
+        "bodyLatencyMs": 6956,
+        "totalLatencyMs": 7965
+      },
+      "disabled": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 834,
+        "reasoningPresent": false,
+        "reasoningTokens": null,
+        "completionTokens": 298,
+        "visibleCompletionTokens": 298,
+        "headersLatencyMs": 213,
+        "bodyLatencyMs": 2452,
+        "totalLatencyMs": 2665
+      }
+    },
+    {
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "high": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 1014,
+        "reasoningPresent": true,
+        "reasoningTokens": 1996,
+        "completionTokens": 2405,
+        "visibleCompletionTokens": 409,
+        "headersLatencyMs": 312,
+        "bodyLatencyMs": 23440,
+        "totalLatencyMs": 23752
+      },
+      "disabled": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 994,
+        "reasoningPresent": false,
+        "reasoningTokens": null,
+        "completionTokens": 394,
+        "visibleCompletionTokens": 394,
+        "headersLatencyMs": 287,
+        "bodyLatencyMs": 3078,
+        "totalLatencyMs": 3365
+      }
+    }
+  ],
+  "aggregate": {
+    "high": {
+      "valid": 2,
+      "emptyContent": 0,
+      "schemaProtected": 0,
+      "totalLatencyMs": 31717
+    },
+    "disabled": {
+      "valid": 2,
+      "emptyContent": 0,
+      "schemaProtected": 0,
+      "totalLatencyMs": 6030
+    }
+  },
+  "decision": {
+    "productOwnerJudgment": "retain_thinking_high_and_use_disabled_for_diagnosis_only",
+    "codexInitialAssessment": "thinking_mode_primary_influence_not_confirmed",
+    "supportsThinkingModeAsPrimaryInfluenceGate": "failed_no_high_empty_content_reproduction",
+    "counterEvidenceGate": "not_triggered",
+    "causalAttributionToThinkingMode": "not_confirmed",
+    "keepThinkingHigh": true,
+    "emptyContentProblem": "open",
+    "confirmedRootCause": null,
+    "confirmedNearTermMechanism": "historical_upstream_http_200_stop_after_reasoning_with_zero_visible_content_not_reproduced_in_this_probe",
+    "currentProbeObservation": "both_variants_valid_in_both_pairs_and_high_latency_higher_in_both_pairs",
+    "hypotheses": [
+      "thinking_high_may_intermittently_stop_after_reasoning_without_visible_content",
+      "request_context_or_upstream_randomness_may_change_failure_probability",
+      "thinking_high_increases_waiting_time_but_its_link_to_empty_content_is_unconfirmed"
+    ]
+  },
+  "privacy": {
+    "containsApiKey": false,
+    "containsUserContent": false,
+    "containsPrompt": false,
+    "containsRawModelOutput": false,
+    "containsReasoningBody": false
+  },
+  "privateEvidence": {
+    "localRuntimeOnly": true,
+    "sanitizedSummarySha256": "b75d31a7798edc8aa9160dcd6dcb1683ec6bcdb55af82cb380c5e0dad0f22ee5",
+    "privateLedgerSha256": "774ad769b5b2bd3b074535d28fbe4832562b626615216108d2a2b9bdb6eccf72",
+    "directoryMode": "0700",
+    "fileMode": "0600"
+  },
+  "preview": {
+    "newBatchCreated": false,
+    "deploymentChanged": false,
+    "evaluationDatabaseWrites": 0
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

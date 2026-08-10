@@ -22,7 +22,7 @@
 - `EVENT_CENTERED_GENERATIVE_MODEL` 用于候选链路独立锁定模型；新事件中心候选固定为 `deepseek-v4-flash`，共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供。
 - `EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
 - Board 8 批准前，Production 保持 `legacy + baseline`；已有事件与日志继续可读。
-- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。`GI-081` 板块 7A 六题隔离诊断已完成真实输出并等待产品盲评；正式候选、人工 Preview 和 Production 授权继续保持关闭。
+- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v7r4 保留历史证据；v8 以 `1/4 early_stopped` 获产品通过。当前 v8r1 最终 `12` 项私有 Preview 已 READY，`0/12` 空白批次回读通过。Production 接入继续保持关闭并使用 `legacy + baseline`。
 
 ## 2. 路由速查
 
@@ -69,6 +69,22 @@
 | `GET` | `/api/interview/event-centered/journal/[id]` | 读取事件日志及当前内容版本 |
 | `PATCH` | `/api/interview/event-centered/journal/[id]` | 自动暂存标题和正文；要求 `expectedContentRevision` |
 | `POST` | `/api/interview/event-centered/journal/[id]/save` | 将当前草稿按版本号正式保存 |
+
+#### GI-088 私有 Preview 评测接口
+
+这组接口只服务板块 6／7 开发评测，页面入口为 `/preview/gi088-evaluation`。全部请求要求 Preview 环境、专用开关、应用登录和“管理员 ∩ GI-088 评测名单”。
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `GET` | `/api/preview/gi088/session` | 读取当前批次、12 项进度、活动任务、双分支和 Trace |
+| `POST` | `/api/preview/gi088/start-task` | 冻结 `A0＋U1`，启动 off；完成 off 裁决后从同起点启动 high |
+| `POST` | `/api/preview/gi088/turn` | 向当前分支提交一次真实用户输入；`clientTurnId` 保护重复提交 |
+| `POST` | `/api/preview/gi088/retry` | 产品负责人显式重试一次技术失败，原失败继续保留 |
+| `POST` | `/api/preview/gi088/end-trajectory` | 结束成功或技术失败轨迹，写入感受、质量和理由 |
+| `POST` | `/api/preview/gi088/compare` | 在 off／high 都完成后写入配置比较 |
+| `POST` | `/api/preview/gi088/seal` | 完成 12 项后封存整批 |
+| `GET` | `/api/preview/gi088/export` | 只读导出已封存批次 |
+| `POST` | `/api/preview/gi088/smoke` | 用独立作用域和 UUID 各执行一次 off／high 技术冒烟 |
 
 ### 2.4 当天整合日志
 
@@ -705,6 +721,23 @@ git diff --check
 ```
 
 `--mode=rules` 只回归确定性规则；真实模型回放、Judge 和用户质量判断需要单独授权。Production 保持 `legacy + baseline`，不得把评测 key 或 Judge 开关放入生产请求路径。
+
+### 10.2 GI-088 真人交互开发评测
+
+当前本地运行器版本为 `2026-08-09.gi088-human-eval-v2-diagnostic`。历史 Preview 的 v1 批次保持 `8/12` 只读快照。每项先完成 Thinking 关闭轨迹，再从相同 `A0＋U1` 建立 high 独立轨迹。页面任务说明、目标触发提示和判定标准只对评测人可见，不进入模型上下文。
+
+模型请求只在 `GI088_MODEL_CALL_SCOPE=batch` 且 `GI088_AUTHORIZED_EXECUTION_FINGERPRINT` 精确匹配当前执行指纹时发出。两组请求都省略应用层 `max_tokens`，最终仍受 DeepSeek 模型自身输出边界约束。每次用户提交对应一次请求，当前 diagnostic 基线的质量失败和技术失败均不自动重试。
+
+技术失败可以选择手动重试，也可以保留当前失败后直接完成轨迹评价。同一 `clientTurnId` 和相同输入用于响应丢失后的幂等恢复；产品负责人修改输入后使用新请求身份。完整任务边界可以提前结束整批，部分导出会标记已完成任务与 `not_run` 任务。
+
+空内容探针默认只做本地血缘检查：
+
+```bash
+npm run eval:gi088:probe:empty:inspect
+npm run eval:gi088:probe:thinking:inspect
+```
+
+空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；当前运行资产以 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md) 为准。
 
 ## 11. 通用错误语义
 

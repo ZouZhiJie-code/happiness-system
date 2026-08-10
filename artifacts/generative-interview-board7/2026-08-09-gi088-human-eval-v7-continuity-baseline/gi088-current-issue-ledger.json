@@ -1,0 +1,410 @@
+{
+  "schemaVersion": "2.0",
+  "ledgerVersion": "2026-08-10.gi088-current-issue-ledger-v5",
+  "status": "v8r1_final12_preview_ready_0_of_12_waiting_human_validation",
+  "sourceLedgers": [
+    {
+      "version": "2026-08-09.gi088-human-eval-v1-bad-case-ledger-v1",
+      "path": "../2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-bad-case-ledger.json",
+      "inheritance": "BC-01～BC-12 全部保留；原始调用、Trace 和关系证据继续以该账本为事实源。"
+    }
+  ],
+  "priorityDefinition": {
+    "P0": "当前候选必须解决，直接阻断连续对话或状态正确性。",
+    "P1": "当前或下一候选处理，显著影响恢复、操作或问题质量。",
+    "P2": "已修复能力的回归项或证据仍少的质量风险。",
+    "closed": "已验证关闭、产品负责人排除或只保留历史。"
+  },
+  "currentQueue": [
+    "V7R4-STATE-01",
+    "V8-STOP-01",
+    "V7R4-QD-01",
+    "V7R4-REC-01",
+    "BC-09",
+    "BC-10",
+    "V6-QD-01"
+  ],
+  "issues": [
+    {
+      "issueId": "BC-01",
+      "title": "部分批次无法提前结束和正式导出",
+      "productOwnerJudgment": "v1 在 8/12 主动结束并进入复盘。",
+      "codexInitialAssessment": "前八项内部完整，但旧状态机无法表达产品负责人的结束决定。",
+      "confirmedRootCause": "旧 seal 要求全部任务完成，旧 export 又要求 sealed。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "resolved_in_v2_and_verified_by_v3_v4_v6",
+      "trace": ["v1:batch:830f9a3f-a90e-4c41-901d-1c63211e0c8c", "v6:batch:37517d91-a258-423a-bb26-a58c97357e68"],
+      "targetVersion": "v2_diagnostic_baseline"
+    },
+    {
+      "issueId": "BC-02",
+      "title": "Thinking high 返回 reasoning-only 空可见内容",
+      "productOwnerJudgment": "空内容严重打断访谈。",
+      "codexInitialAssessment": "保留 high 与 JSON mode，通过一次同 high 恢复降低可见失败。",
+      "confirmedRootCause": "DeepSeek 可返回 HTTP 200、stop、reasoning 存在且 visible content 长度为零；Provider 正确记录 EMPTY_CONTENT。",
+      "hypotheses": ["上游 high 推理偶发在可见答案生成前正常停止。"],
+      "priority": "P2",
+      "status": "mitigated_in_v3_keep_as_regression",
+      "trace": ["v1:BC-02", "v3:empty_content_recovery"],
+      "targetVersion": "v7_regression"
+    },
+    {
+      "issueId": "BC-03",
+      "title": "Thinking high 正文生成被 30 秒硬截止中断",
+      "productOwnerJudgment": "长等待后的失败破坏交流节奏。",
+      "codexInitialAssessment": "分开响应头、正文空闲和总时长，允许健康正文继续生成。",
+      "confirmedRootCause": "v4 两次超时均已快速收到响应头，正文在本地 30 秒 hard total 被主动中止。",
+      "hypotheses": [],
+      "priority": "P2",
+      "status": "resolved_in_v5_keep_as_regression",
+      "trace": ["v1:BC-03", "v4:A1:high:hard_total"],
+      "targetVersion": "v7_regression"
+    },
+    {
+      "issueId": "BC-04",
+      "title": "技术失败恢复把操作负担转移给评测者",
+      "productOwnerJudgment": "频繁手动重试明显影响体验。",
+      "codexInitialAssessment": "自动链承担一次偶发恢复，连续失败后把最终决定交还用户。",
+      "confirmedRootCause": "v1 固定零自动技术重试；v3～v6 自动链失败后又直接终止。",
+      "hypotheses": ["一次明确的用户主动再次生成能在控制调用风险的同时恢复用户控制。"],
+      "priority": "P1",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v1:BC-04", "v7:manual_after_auto_recovery"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "BC-05",
+      "title": "严格按问号数量拦截自然的同焦点提问",
+      "productOwnerJudgment": "一段连贯回答可覆盖的主问题、解释和选项属于同一回答焦点。",
+      "codexInitialAssessment": "问号数量只用于观察，语义质量由真人复核。",
+      "confirmedRootCause": "v5 把用户回答负担错误映射为问号数量，形成历史过度修复。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "human_verified_in_v6",
+      "trace": ["v1:BC-05", "v6:A1-A2:11_visible_asks"],
+      "targetVersion": "v6"
+    },
+    {
+      "issueId": "BC-06",
+      "title": "非 ask 动作、可见承接与状态合同失配",
+      "productOwnerJudgment": "确认、总结、暂停都需要自然承接用户。",
+      "codexInitialAssessment": "输出本轮语义变化，并让可见承接与状态变化一次提交。",
+      "confirmedRootCause": "旧合同要求模型重复输出完整状态，又把非 ask 的 visible.understanding 设为 null，语义表达与结构约束冲突。",
+      "hypotheses": ["delta 合同能减少 stale ref 与语义可用结果被整轮拒绝。"],
+      "priority": "P0",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v1:A2-high:aca27479-8b33-495e-add4-b0112b833250", "v1:A7-off:917f336b-ab89-4e2a-979c-2b93aeb0fb8a"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "BC-07",
+      "title": "阶段 2 机会用尽后仍在原阶段创建新机会",
+      "productOwnerJudgment": "条件满足时自然进入阶段 3，条件不足时总结或暂停。",
+      "codexInitialAssessment": "模型负责转场判断，程序继续保护机会账本。",
+      "confirmedRootCause": "模型已收到阶段 2 无剩余机会，仍输出阶段 2 与 new。",
+      "hypotheses": [],
+      "priority": "P2",
+      "status": "resolved_in_v4_keep_as_regression",
+      "trace": ["v1:A6-off:0eb443fa-2c3d-4526-9b1a-9d669ddc0bdd", "v3:A1:both_branches"],
+      "targetVersion": "v7_regression"
+    },
+    {
+      "issueId": "BC-08",
+      "title": "认识无变化时仍重复创建状态节点",
+      "productOwnerJudgment": "内部状态需要忠实反映真实认识变化。",
+      "codexInitialAssessment": "none/add/revise 显式表达变化，新增编号交给程序。",
+      "confirmedRootCause": "旧结构只支持 understandingDelta 对象或 null，模型容易把承接误写成新增认识。",
+      "hypotheses": ["显式 none 可降低重复状态节点。"],
+      "priority": "P0",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v1:A2-high:5161709c-1ec1-40ee-bb08-f8299da948ba", "v7:semantic_delta_contract_v2"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "BC-09",
+      "title": "决策支持退化为通用情绪来源探索",
+      "productOwnerJudgment": "深聊质量可以很好，同时仍需持续服务当前选择。",
+      "codexInitialAssessment": "每个问题应改变当前选择的条件、取舍或下一步认识。",
+      "confirmedRootCause": "通用深聊缺少统一的问前决策判尺，容易偏离当前共同任务。",
+      "hypotheses": ["v8 统一问前决策可同时约束决策服务和认识增量。"],
+      "priority": "P1",
+      "status": "implemented_in_v8_waiting_human_validation",
+      "trace": ["v1:A5-off:3f125523-d69a-4114-af1b-b8a688777fa8", "v1:A5-high:d5313cb1-aff1-4762-9ef6-a74a40c2b052"],
+      "targetVersion": "v8"
+    },
+    {
+      "issueId": "BC-10",
+      "title": "追问已有答案、抽象入口和来源伸展",
+      "productOwnerJudgment": "保留真正影响回答价值的问题；A4 与 A8 相关判断已关闭。",
+      "codexInitialAssessment": "继续处理 A3 重复意义、A1 收窄与跨场景复现；已关闭案例仅作历史。",
+      "confirmedRootCause": "旧 Skill 缺少统一问前决策顺序，模型会优先采用熟悉的意义追问、二选一或叙事扩写。",
+      "hypotheses": ["先确认未解部分和认识增量，再选择具体入口，可减少这些分散问题。"],
+      "priority": "P1",
+      "status": "implemented_in_v8_waiting_human_validation",
+      "trace": ["v1:A3-off:2ca8be12-57a1-496f-8be8-eb1972321091", "v1:A1-high:5fb7e6f1-4c9b-4a78-9ed7-b1a0cbe2477d"],
+      "targetVersion": "v8"
+    },
+    {
+      "issueId": "BC-11",
+      "title": "任务目标未触发仍可被当成能力通过",
+      "productOwnerJudgment": "轨迹体验评价和目标能力证据需要分账。",
+      "codexInitialAssessment": "结束时必填目标触发判断，未触发轨迹保留质量证据但不承担能力通过。",
+      "confirmedRootCause": "v1 runner 没有独立记录目标触发状态。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "resolved_in_v2",
+      "trace": ["v1:BC-11", "v2:targetTrigger"],
+      "targetVersion": "v2_diagnostic_baseline"
+    },
+    {
+      "issueId": "BC-12",
+      "title": "阶段 3 一轮后收束是否过早",
+      "productOwnerJudgment": "保持为开放疑问后完成复核。",
+      "codexInitialAssessment": "该案例一问获得新关系并在下一轮完成整合，符合动态问停。",
+      "confirmedRootCause": "该案例符合已冻结规则，未形成缺陷。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "excluded",
+      "trace": ["v1:A8-high:bf1ea1bd-bfae-4aa6-abfd-aedc81c1b642"],
+      "targetVersion": "history_only"
+    },
+    {
+      "issueId": "V3-01",
+      "title": "两种 Thinking 配置都在阶段机会边界被拦截",
+      "productOwnerJudgment": "单组证据足以停止，问题与 Thinking 开关无关。",
+      "codexInitialAssessment": "转入阶段 2→3 自然转场候选。",
+      "confirmedRootCause": "两边均在阶段 2 机会用完后继续输出 new。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "merged_into_BC_07_and_resolved_in_v4",
+      "trace": ["v3:A1:8_calls"],
+      "targetVersion": "v4"
+    },
+    {
+      "issueId": "V4-01",
+      "title": "30 秒总截止切断健康 high 正文",
+      "productOwnerJudgment": "high 继续保留，超时与提问表达分别处理。",
+      "codexInitialAssessment": "分阶段超时并延长健康正文总时长。",
+      "confirmedRootCause": "约 0.43 秒已收到响应头，正文在 30 秒 hard total 被切断。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "merged_into_BC_03_and_resolved_in_v5",
+      "trace": ["v4:A1:high:last_two_initial_calls"],
+      "targetVersion": "v5"
+    },
+    {
+      "issueId": "V5-01",
+      "title": "严格单问号规则形成过度修复",
+      "productOwnerJudgment": "控制单位改为独立回答任务。",
+      "codexInitialAssessment": "问号数量改为观测，所有可见 ask 进入真人复核。",
+      "confirmedRootCause": "程序用表面标点替代回答负担的语义判断。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "human_verified_in_v6",
+      "trace": ["v5:0_of_12_historical", "v6:A1-A2"],
+      "targetVersion": "v6"
+    },
+    {
+      "issueId": "V6-SEM-01",
+      "title": "完整状态重写导致连续性、纠正和负担引用脆弱",
+      "productOwnerJudgment": "纠正后要自然承接，状态也要同步修正并继续聊。",
+      "codexInitialAssessment": "模型只输出本轮变化，程序负责编号与原子提交。",
+      "confirmedRootCause": "模型每轮重写整份状态，容易重复认识、引用陈旧编号或让可见承接与内部状态分离。",
+      "hypotheses": ["v7 delta 合同可以让纠正、无变化与负担信号保持一致。"],
+      "priority": "P0",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": [
+        "v6:A1:turn:99ba2324-9df7-439e-b62d-3f077c3848b0",
+        "v6:A1:call:12e923c3-c206-427f-908b-f3286da93706",
+        "OUTPUT_SCHEMA_INVALID:semantic.burdenSignal:unrecognized_keys",
+        "v7:semantic_delta_contract_v2"
+      ],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "V6-CAP-01",
+      "title": "整条轨迹 12 次调用上限会在深聊中强制中断",
+      "productOwnerJudgment": "深挖过程中中断明显伤害体验，整条轨迹改为不设次数上限。",
+      "codexInitialAssessment": "成本安全继续放在单次用户提交的恢复上限，整段对话保持连续。",
+      "confirmedRootCause": "旧设计把批次成本治理直接绑定到用户对话长度。",
+      "hypotheses": [],
+      "priority": "P0",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v6:trajectory_limit:12", "v7:test:13_and_25"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "V6-REC-01",
+      "title": "自动恢复两次失败后缺少一次明确的用户主动恢复",
+      "productOwnerJudgment": "失败后保留原话，并允许用户主动再生成一次。",
+      "codexInitialAssessment": "自动链仍为两次；第三次需要用户点击，失败后最终停止。",
+      "confirmedRootCause": "旧两次上限同时承担自动安全和用户控制，连续失败后用户只能结束。",
+      "hypotheses": ["一次显式第三次调用能改善恢复感，同时维持可预测上限。"],
+      "priority": "P1",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v7:manual_after_auto_recovery"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "V6-UX-01",
+      "title": "滚动、任务回看、评价区和导出缺少连续工作台体验",
+      "productOwnerJudgment": "前端滚动影响体验，需要固定输入、稳定回看和清楚的任务切换。",
+      "codexInitialAssessment": "对话、任务与 Trace 分别拥有滚动区域；历史回看停止自动跟随并提供回到最新。",
+      "confirmedRootCause": "旧页面缺少聊天跟随状态和滚动区域所有权，任务完成后也无法按 taskId 读取完整结果。",
+      "hypotheses": ["对话中心布局能减少跳动和操作丢失。"],
+      "priority": "P1",
+      "status": "v7_implementation_complete_waiting_human_validation",
+      "trace": ["v6:workbench", "v7:conversation_center"],
+      "targetVersion": "v7"
+    },
+    {
+      "issueId": "V6-QD-01",
+      "title": "问题缺少统一的问前价值判断",
+      "productOwnerJudgment": "最近语义问题与历史问题需要一起处理，包括明确继续、已有答案、阶段 3 深化和决策支持。",
+      "codexInitialAssessment": "在同一 Skill 中统一判断用户意图、未解部分、认识增量和低负担入口。",
+      "confirmedRootCause": "分散 Prompt 规则只约束局部表达，缺少每轮统一的提问决策顺序。",
+      "hypotheses": ["v8 统一问前决策可以覆盖多个内容问题，同时保持 Base Prompt 与 v7 状态合同稳定。"],
+      "priority": "P1",
+      "status": "implemented_in_v8_waiting_human_validation",
+      "trace": ["BC-09", "BC-10", "v6:recent_semantic_feedback"],
+      "targetVersion": "v8"
+    },
+    {
+      "issueId": "V6-RESULT-01",
+      "title": "单一回答焦点真人验证",
+      "productOwnerJudgment": "核对两条后确认原有多问题问题已解决，提前结束。",
+      "codexInitialAssessment": "11 条可见 ask 中没有独立多任务，v6 主要因素通过。",
+      "confirmedRootCause": "单一回答焦点约束与逐轮真人分类共同控制回答负担。",
+      "hypotheses": [],
+      "priority": "closed",
+      "status": "human_verified_pass",
+      "trace": [
+        "v6:A1:completed",
+        "v6:A2:completed",
+        "v6:visible_ask:11",
+        "v6:multiple_independent_tasks:0"
+      ],
+      "targetVersion": "v6"
+    },
+    {
+      "issueId": "V7R4-MODEL-01",
+      "title": "官方 DeepSeek V4 Pro 可见回答可靠性判断",
+      "productOwnerJudgment": "保留官方 DeepSeek V4 Pro，程序修复后直接进入 v8。",
+      "codexInitialAssessment": "首次可见回答 11/12，空内容 0；可靠性已经达到继续使用条件。",
+      "confirmedRootCause": "v7r4 未通过主要由两次程序保护和连续停止提问造成，当前证据不支持把它们归因给模型平台可靠性。",
+      "hypotheses": ["最终 12 项批次继续观察首次可见回答率和价格变化。"],
+      "priority": "closed",
+      "status": "product_owner_accepted_for_v8",
+      "trace": [
+        "v7r4:batch:954f144c-b26b-487a-ac3e-74f84183ad09",
+        "v7r4:first_visible:11_of_12",
+        "v7r4:empty_content:0"
+      ],
+      "targetVersion": "v8"
+    },
+    {
+      "issueId": "V7R4-STATE-01",
+      "title": "有效回应因确定性来源字段缺失被整轮拦截",
+      "productOwnerJudgment": "确定性来源由程序补全，原始模型输出继续保留并进入人工复核。",
+      "codexInitialAssessment": "空来源可以从当前任务状态和最新用户消息确定生成，无需增加模型调用。",
+      "confirmedRootCause": "严格合同校验发生在程序来源维护之前，模型遗漏 nextInquiry 或 workingTask 来源时，有效回应被提前拒绝。",
+      "hypotheses": ["程序补全后，非空未知来源和跨任务来源仍能维持严格保护。"],
+      "priority": "P0",
+      "status": "human_observed_in_v8_A1_keep_final12_regression",
+      "trace": [
+        "v7r4:A1:U4:nextInquiry.evidenceRefs_empty",
+        "v8:zero_call_replay:A1_U4",
+        "v8:A1:U1:program_source_completion"
+      ],
+      "targetVersion": "v8r1_final12"
+    },
+    {
+      "issueId": "V7R4-STOP-01",
+      "title": "组合停止表达未被本地停止识别覆盖",
+      "productOwnerJudgment": "纯停止由程序零调用完成；新内容加停止最多调用一次并最终暂停。",
+      "codexInitialAssessment": "组合停止词可以在保持否定和转述边界的前提下确定识别。",
+      "confirmedRootCause": "本地停止识别只覆盖单一短句，组合表达进入模型后又因空任务来源触发保护。",
+      "hypotheses": ["否定表达和转述他人停止需继续作为回归边界。"],
+      "priority": "P2",
+      "status": "visible_pause_passed_in_v8_polite_variant_split_to_V8-STOP-01",
+      "trace": [
+        "v7r4:A2:U8:compound_explicit_stop",
+        "v8:zero_call_replay:A2_U8",
+        "v8:A1:U10:visible_pause_valid"
+      ],
+      "targetVersion": "v8r1_regression"
+    },
+    {
+      "issueId": "V7R4-QD-01",
+      "title": "用户持续提供实质内容时连续收束且不再提问",
+      "productOwnerJudgment": "零问题回应后用户继续提供实质内容时，默认寻找一个值得推进的下一问。",
+      "codexInitialAssessment": "每轮需要先判断未解部分、认识增量和低负担入口，条件不足时再总结或暂停。",
+      "confirmedRootCause": "现有 Skill 的局部提问规则缺少统一问前顺序，模型可以在共同任务尚有推进价值时连续选择 synthesize。",
+      "hypotheses": ["统一问前决策可以同时改善明确继续、重复追问、阶段 3 深化与决策支持。"],
+      "priority": "P0",
+      "status": "human_verified_in_v8_A1_keep_final12_regression",
+      "trace": [
+        "v7r4:A2:U5-U7:no_visible_question",
+        "BC-09",
+        "BC-10",
+        "v8:A1:U6-U7:substantive_continuation_resumed_question"
+      ],
+      "targetVersion": "v8r1_final12"
+    },
+    {
+      "issueId": "V7R4-REC-01",
+      "title": "首次调用与自动恢复缺少统一的用户等待上限",
+      "productOwnerJudgment": "自动恢复总等待上限为 90 秒，用户主动再次生成获得独立 60 秒。",
+      "codexInitialAssessment": "服务端从首次调用开始计算共享截止，可防止刷新、多标签页和网络延迟延长自动链。",
+      "confirmedRootCause": "旧策略分别限制单次调用，自动恢复仍可获得完整 60 秒，页面无法承诺整条自动链的总等待。",
+      "hypotheses": ["90 秒共享截止可覆盖本批 75.6 秒恢复，同时维持可预测等待。"],
+      "priority": "P1",
+      "status": "implemented_in_v8_waiting_human_validation",
+      "trace": ["v7r4:auto_recovery:75.6s", "v8:shared_deadline:90s"],
+      "targetVersion": "v8r1_final12"
+    },
+    {
+      "issueId": "V8-STOP-01",
+      "title": "礼貌回应与明确停止组合多产生一次调用",
+      "productOwnerJudgment": "v8 核心行为通过；最终 12 项前完成确定性小修，不增加中间真人批次。",
+      "codexInitialAssessment": "最终可见停止和状态正确，但多等待 17.514 秒并增加一次 V4 Pro 调用。",
+      "confirmedRootCause": "停止识别按标点拆段后，简短礼貌回应未被识别为无实质内容，整句因此进入混合停止路径。",
+      "hypotheses": [],
+      "priority": "P1",
+      "status": "implemented_and_zero_call_replay_passed_waiting_final12_human_validation",
+      "trace": [
+        "v8:batch:cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60",
+        "v8:A1:U10:explicitStop=mixed",
+        "v8:A1:U10:call:cbe43a52-8e74-49d5-a022-0422c61f4fb2",
+        "v8r1:zero_call_replay:polite_stop_passed",
+        "v8r1:batch:5123d795-5c19-408d-9b98-7767eaa7892c:0_of_12"
+      ],
+      "targetVersion": "v8r1_final12"
+    }
+  ],
+  "historicalExclusions": [
+    {
+      "id": "A4_INITIAL_ASSOCIATION",
+      "status": "closed_by_product_owner",
+      "reason": "保留历史评价，不进入当前修复队列。"
+    },
+    {
+      "id": "A7_INITIAL_RELATION_MIXING",
+      "status": "closed_by_product_owner",
+      "reason": "最初关联判断已关闭；A7 的纠正状态问题继续由 BC-06 与 v7 回归覆盖。"
+    },
+    {
+      "id": "A8_SOURCE_INFERENCE",
+      "status": "closed_by_product_owner",
+      "reason": "来源伸展判断保留历史，不进入当前修复队列。"
+    }
+  ],
+  "versionTargets": {
+    "v7": ["BC-04", "BC-06", "BC-08", "V6-SEM-01", "V6-CAP-01", "V6-REC-01", "V6-UX-01"],
+    "v8": ["BC-09", "BC-10", "V6-QD-01", "V7R4-STATE-01", "V7R4-STOP-01", "V7R4-QD-01", "V7R4-REC-01"],
+    "v8r1_final12": ["V8-STOP-01", "BC-09", "BC-10", "V6-QD-01", "V7R4-STATE-01", "V7R4-QD-01", "V7R4-REC-01"],
+    "regression": ["BC-02", "BC-03", "BC-07"],
+    "closed": ["BC-01", "BC-05", "BC-11", "BC-12", "V3-01", "V4-01", "V5-01", "V6-RESULT-01", "V7R4-MODEL-01"]
+  }
+}

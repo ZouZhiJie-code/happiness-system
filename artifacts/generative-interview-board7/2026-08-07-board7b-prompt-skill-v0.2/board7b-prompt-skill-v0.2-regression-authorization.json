@@ -1,0 +1,13 @@
+{
+  "authorizationVersion": "2026-08-07.board7b-prompt-skill-authorization-v0.2",
+  "decision": "approved",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.2",
+  "candidateFingerprint": "171d1a3c5ee8f044f3c517f106424fd74312b07132861a4ceff395813be382c6",
+  "authorizationScope": "eight_case_hidden_regression",
+  "authorizedModelCallBudget": 8,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": "product_owner_conversation",
+  "approvedAt": "2026-08-07T09:01:33.000Z",
+  "productionChangeAuthorized": false,
+  "source": "用户在当前会话明确回复：授权，继续"
+}

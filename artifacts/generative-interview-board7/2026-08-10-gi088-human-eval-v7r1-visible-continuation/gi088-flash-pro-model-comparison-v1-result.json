@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "1.0",
+  "status": "completed_directional_support_for_pro_visible_answer_reliability",
+  "probeVersion": "2026-08-10.gi088-empty-content-flash-pro-comparison-v1",
+  "probeFingerprint": "ffa0c4b8c4985c15671df10abc15381f8abac1914c518d787aaf98f9198b88de",
+  "authorizationId": "060c2d9e-fe01-4eaa-92ca-5eae6acf6edf",
+  "completedAt": "2026-08-10T07:14:35.734Z",
+  "source": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "candidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+    "caseIds": ["E1", "E2", "E3"]
+  },
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "models": {
+      "flash": "deepseek-v4-flash",
+      "pro": "deepseek-v4-pro"
+    },
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "temperaturePolicy": "provider_default",
+    "maxTokensPolicy": "provider_default",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000
+  },
+  "execution": {
+    "authorizedCallBudget": 6,
+    "modelGenerationCalls": 6,
+    "completedCalls": 6,
+    "reservedCalls": 0,
+    "automaticRetries": 0,
+    "fallbackCalls": 0,
+    "requestHashesVerified": 6,
+    "timeouts": 0,
+    "aborts": 0
+  },
+  "matrix": [
+    {
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "flash": {
+        "status": "valid",
+        "errorCode": null,
+        "responseModel": "deepseek-v4-flash",
+        "visibleContentLength": 857,
+        "totalLatencyMs": 8527
+      },
+      "pro": {
+        "status": "valid",
+        "errorCode": null,
+        "responseModel": "deepseek-v4-pro",
+        "visibleContentLength": 809,
+        "totalLatencyMs": 21981
+      }
+    },
+    {
+      "caseId": "E2",
+      "contextClass": "mid_trajectory",
+      "flash": {
+        "status": "valid",
+        "errorCode": null,
+        "responseModel": "deepseek-v4-flash",
+        "visibleContentLength": 926,
+        "totalLatencyMs": 12183
+      },
+      "pro": {
+        "status": "protected_failure",
+        "errorCode": "MODEL_OUTPUT_PROTECTED",
+        "validationIssues": ["ASK_QUESTION_COUNT_INVALID"],
+        "jsonParseable": true,
+        "responseModel": "deepseek-v4-pro",
+        "visibleContentLength": 935,
+        "totalLatencyMs": 25437
+      }
+    },
+    {
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "flash": {
+        "status": "technical_failure",
+        "errorCode": "EMPTY_CONTENT",
+        "responseModel": "deepseek-v4-flash",
+        "visibleContentLength": 0,
+        "reasoningPresent": true,
+        "finishReason": "stop",
+        "totalLatencyMs": 3423
+      },
+      "pro": {
+        "status": "valid",
+        "errorCode": null,
+        "responseModel": "deepseek-v4-pro",
+        "visibleContentLength": 987,
+        "totalLatencyMs": 42510
+      }
+    }
+  ],
+  "aggregate": {
+    "flash": {
+      "visibleAnswerReturned": 2,
+      "jsonParseable": 2,
+      "legacyV1ContractValid": 2,
+      "emptyContent": 1,
+      "visibleAnswerAverageLatencyMs": 10355,
+      "maximumLatencyMs": 12183
+    },
+    "pro": {
+      "visibleAnswerReturned": 3,
+      "jsonParseable": 3,
+      "legacyV1ContractValid": 2,
+      "emptyContent": 0,
+      "visibleAnswerAverageLatencyMs": 29976,
+      "medianLatencyMs": 25437,
+      "maximumLatencyMs": 42510
+    }
+  },
+  "decision": {
+    "productOwnerJudgment": "pending_discussion",
+    "codexInitialAssessment": "directional_support_for_pro_visible_answer_reliability",
+    "emptyContentAttribution": "model_or_model_specific_runtime_has_material_influence",
+    "sharedPlatformConstraint": "prefix_and_json_output_remain_incompatible",
+    "proVisibleAnswerGate": "passed_3_of_3",
+    "proCurrentContractGate": "not_tested_with_v7r1_contract",
+    "proLatencyGate": "requires_product_judgment",
+    "recommendedNextCandidate": "v7r2_thinking_high_pro_without_prefix"
+  },
+  "limits": [
+    "three paired cases provide directional evidence and do not estimate a stable population failure rate",
+    "the frozen requests use the v1 prompt and output contract rather than the current v7r1 semantic-delta contract",
+    "the Pro E2 response was parseable JSON but hit the historical strict question-count validator",
+    "prompt-cache hit differences contribute to the observed latency gap"
+  ],
+  "privacy": {
+    "containsApiKey": false,
+    "containsUserContent": false,
+    "containsPrompt": false,
+    "containsRawModelOutput": false,
+    "containsReasoningBody": false
+  },
+  "privateEvidence": {
+    "localRuntimeOnly": true,
+    "sanitizedSummarySha256": "254786e0567e826e1b7cae46e991548ef05347f4cb4ef38dcc8daa630b2543c2",
+    "privateLedgerSha256": "db4c906cc3ece4926d56e1852d449aeabdf4255210a2e768ce9cd2967ba79628",
+    "directoryMode": "0700",
+    "fileMode": "0600"
+  },
+  "preview": {
+    "newBatchCreated": false,
+    "deploymentChanged": false,
+    "evaluationDatabaseWrites": 0
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

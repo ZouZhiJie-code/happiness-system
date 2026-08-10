@@ -1,0 +1,20 @@
+{
+  "planVersion": "2026-08-07.board7b-prompt-skill-regression-v0.3",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.3",
+  "candidateFingerprint": "892bf90feb1b412c7470a90408032e5b1a6c53446a7f8865ffb4c358f990ba5b",
+  "inputSource": "../2026-08-07-board7b-prompt-skill-v0.1/board7b-prompt-skill-v0.1-regression-plan.json",
+  "inputVersionChanged": false,
+  "plannedCalls": 8,
+  "authorizedCalls": 0,
+  "distribution": {
+    "autumnOpen": 2,
+    "autumnPrioritizeOffer": 2,
+    "deferLongTermBoundary": 1,
+    "coexistingContent": 1,
+    "userCorrection": 1,
+    "unclearStopAgain": 1
+  },
+  "passCriteriaChanged": false,
+  "qualityRetries": 0,
+  "automaticTechnicalRetries": 0
+}

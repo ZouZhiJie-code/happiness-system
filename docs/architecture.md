@@ -687,7 +687,26 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
 
-当前产品状态（`2026-08-05`）：GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 作为历史技术证据保留；最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～074` 七个批次已冻结，板块 4 产品决策完成，当前进入板块 5 校准计数、修复、回复版本、焦点纠正、失败恢复与交互收束；GI-068 记录级模式边界直接继承。板块 6 负责评测资产化，板块 7 等待板块 5～6，板块 8 等待新候选并采用两模式 `4＋2` 验收。Production 保持 `legacy + baseline`。
+当前产品状态（`2026-08-10`）：GI-066 的自动技术通过和真人 `No-Go` 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。板块 6 继续资产化评测；GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 保留历史证据，v8 以 `1/4 early_stopped` 获产品通过。v8r1 已完成礼貌停聊确定性修复，当前私有 Preview 与 `0/12` 空白批次等待最终真人验收。板块 7 正式接入继续等待板块 6，板块 8 等待当前候选裁决。Production 保持 `legacy + baseline`。
+
+### 5.8 GI-088 私有 Preview 评测运行器
+
+GI-088 用一套独立运行器承接真人交互开发评测。它只在 Vercel Preview、显式启用开关、管理员与专用评测名单同时命中时可用。Production 的页面和接口统一返回 `404`。
+
+核心数据流是：
+
+```text
+产品负责人在 Preview 工作台输入真实内容
+→ 服务端按 clientTurnId 幂等预留试次
+→ 精确指纹与 batch 作用域通过后请求 DeepSeek
+→ 严格 Schema、来源和单轮一问程序保护
+→ 保存原始最终输出、可核查语义 Trace 和 Provider 安全摘要
+→ 产品负责人结束轨迹、裁决两组并封存整批
+```
+
+运行器使用与主应用相同的专属 Preview 物理库，应用登录数据位于 `gi088_app_preview` schema，评测批次、技术冒烟和保留期审计位于 `gi088_evaluation_v0` schema。独立 Prisma Client 只跟踪进 `/api/preview/gi088/**` 的 Preview 函数。
+
+v1 的 off 与 high 共用 Prompt、Interview Skill、任务结构、Schema、输入和网页流程，应用层共同省略 `max_tokens`；off 使用温度 `0.2`，high 使用 `reasoning_effort=high`。每次应用、数据集、运行器或参数变更都会生成新执行指纹，旧授权自动失效。
 
 ## 6. joy 维度为什么是当前标品
 
