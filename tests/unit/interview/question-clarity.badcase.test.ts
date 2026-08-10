@@ -484,7 +484,7 @@ describe("question clarity badcase baseline", () => {
     expect(turn.question).toMatch(/下次最值得先调整的一个环节是什么/u);
   });
 
-  it("keeps gratitude judgment-clue follow-ups on the concrete response instead of jumping to “最值得珍惜的是什么”", () => {
+  it("anchors gratitude judgment-clue follow-ups to the concrete help while moving to the missing relationship response", () => {
     const surfaced = applyQuestionSurfaceProtocol({
       dimension: "gratitude",
       stage: "probe_pattern",
@@ -498,11 +498,11 @@ describe("question clarity badcase baseline", () => {
       candidateQuestion: "这种能一针见血地帮你破除迷茫的回应，让你觉得这份感谢里，最值得珍惜的是什么？"
     });
 
-    expect(surfaced.question).toContain("你提到“中午陪我一起回来，还给了面试建议”");
+    expect(surfaced.question).toContain("你提到“陪我一起回来，还一针见血地分析了焦虑和迷茫”");
     expect(surfaced.question).not.toMatch(/^回到|如果只留一句/u);
-    expect(surfaced.question).toMatch(/具体照顾到了你的什么需要/u);
+    expect(surfaced.question).toMatch(/更看重关系里的哪种回应方式/u);
     expect(hasMultiActionQuestionShape(surfaced.question)).toBe(false);
-    expect(surfaced.question).not.toMatch(/最值得珍惜|这份感谢里/u);
+    expect(surfaced.question).not.toMatch(/最值得珍惜|这份感谢里|具体照顾到了你的什么需要/u);
   });
 
   it("routes an explicit boundary stop through the real response-preparation path into a choice turn instead of another follow-up question", async () => {

@@ -1,0 +1,210 @@
+{
+  "datasetVersion": "2026-08-01.board7-meaning-card-candidate-v1",
+  "purpose": "验证极简两段式理解小卡能否先稳定保存本轮新增理解，再生成自然的用户回应。案例及隐藏判尺不得进入运行时 Prompt 或 Few-shot。",
+  "repetitionsPerCase": 2,
+  "cases": [
+    {
+      "id": "MC-F-UA-01",
+      "scenarioFamily": "bike_bridge_delayed_fear_recognition",
+      "angle": "feeling",
+      "mode": "guided_reflection",
+      "userContext": "用户第一次骑车经过一座窄桥；安全下桥以后，才从身体变化中认出刚才一直在硬撑。",
+      "conversationContext": [
+        {
+          "user": "今天第一次骑车过河边那座窄桥，下桥以后我还觉得腿发硬。",
+          "assistantUnderstanding": "桥已经过完，腿上的紧张还留着。",
+          "assistantQuestion": "下桥以后，哪个变化让你意识到自己刚才其实在紧张？"
+        }
+      ],
+      "currentQuestion": "下桥以后，哪个变化让你意识到自己刚才其实在紧张？",
+      "currentQuestionIntent": {
+        "targetId": "delayed_fear_recognition",
+        "semanticGoal": "理解用户在安全停下后怎样认出过桥时的紧张",
+        "minimumAnswerScope": "一个停下后的身体信号，以及用户对过桥时状态的明确理解"
+      },
+      "currentUserText": "我把车靠到栏杆边，摘下手套才发现手心全湿。我这才明白，桥上一直盯着前轮的时候我是在硬撑，停下来以后后怕才冒出来。",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "expectedSemanticState": "ready",
+      "trustedFacts": [
+        "用户第一次骑车经过窄桥，下桥后腿仍发硬",
+        "停车摘下手套后，用户发现手心全湿",
+        "用户明确说桥上盯着前轮时一直在硬撑，停下后后怕才出现"
+      ],
+      "expectedInsightKinds": ["connection"],
+      "expectedUnderstandingDelta": "用户在过桥时靠盯住前轮硬撑，安全停下和看见手心出汗以后才认出后怕。",
+      "valuableTargets": [],
+      "mustCover": [
+        "用户已经明确说出过桥时在硬撑",
+        "停下后发现手心出汗，后怕才出现"
+      ],
+      "mustAvoid": [
+        "继续追问已经说清的感受",
+        "扩大成用户长期害怕过桥或患有焦虑",
+        "把后怕改写成桥上已经清楚感到害怕"
+      ],
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "过桥时在硬撑",
+          "停下后才认出后怕"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      }
+    },
+    {
+      "id": "MC-T-ASK-01",
+      "scenarioFamily": "camera_repair_photo_commitment_choice_gap",
+      "angle": "thought",
+      "mode": "guided_reflection",
+      "userContext": "用户在两家相机维修店之间选择了报价较高的一家；一条关于维修前照片的承诺改变了选择，但用户尚未说清它对应的判断标准。",
+      "conversationContext": [
+        {
+          "user": "相机坏了，我问了两家维修店，最后选了报价更高的那家。",
+          "assistantUnderstanding": "更低的价格没有直接决定你的选择，另一条信息让你停了下来。",
+          "assistantQuestion": "两家的回复里，哪一点让你更愿意选贵的那家？"
+        }
+      ],
+      "currentQuestion": "两家的回复里，哪一点让你更愿意选贵的那家？",
+      "currentQuestionIntent": {
+        "targetId": "repair_trust_basis",
+        "semanticGoal": "理解用户选择维修店时真正采用的判断依据",
+        "minimumAnswerScope": "指出改变选择的信息，并说明这条信息为何能支持信任判断"
+      },
+      "currentUserText": "便宜的那家只说修好再通知，贵的那家说拆机前会先发照片。我看到‘先发照片’就选了贵的，可我还说不清为什么这句话会让我放心。",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "expectedSemanticState": "needs_more",
+      "trustedFacts": [
+        "用户在两家相机维修店之间选择了报价更高的一家",
+        "便宜的维修店只承诺修好后通知",
+        "较贵的维修店承诺拆机前先发照片，这句话让用户更放心，但具体原因尚未说清"
+      ],
+      "expectedInsightKinds": ["meaning"],
+      "expectedUnderstandingDelta": "理解拆机前看见照片具体保护了用户对维修过程的哪项判断。",
+      "valuableTargets": [
+        "缺少拆机前照片时，用户最担心维修过程中的哪件事无法确认"
+      ],
+      "mustCover": [
+        "先发照片改变了用户的选择",
+        "用户尚未说清这条承诺为何带来放心"
+      ],
+      "mustAvoid": [
+        "直接断言用户追求控制感或曾被维修店欺骗",
+        "继续比较价格高低",
+        "把已经提供的两家回复再问一遍"
+      ],
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "先发照片改变了选择"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": "拆机前先看照片具体让用户能够确认或避免什么"
+      }
+    },
+    {
+      "id": "MC-R-UA-01",
+      "scenarioFamily": "bandmate_equipment_help_and_solo_edit_boundary",
+      "angle": "relationship",
+      "mode": "guided_reflection",
+      "userContext": "乐队搭档既帮助用户调好了效果器，也未经商量删掉了用户负责的独奏段；用户明确区分了可接受的帮助与需要共同决定的内容。",
+      "conversationContext": [
+        {
+          "user": "排练前搭档帮我把效果器调好了，后来又改了合奏编排，我心里有点别扭。",
+          "assistantUnderstanding": "同一场排练里，他既替你解决了设备问题，也动了你负责的段落。",
+          "assistantQuestion": "这两件事对你来说，分界落在哪里？"
+        }
+      ],
+      "currentQuestion": "这两件事对你来说，分界落在哪里？",
+      "currentQuestionIntent": {
+        "targetId": "collaboration_boundary",
+        "semanticGoal": "理解用户怎样区分可接受的合作帮助与需要本人参与的内容决定",
+        "minimumAnswerScope": "同时说明帮助中可接受的部分，以及触及边界的决定"
+      },
+      "currentUserText": "帮我调效果器省了很多时间，我很感谢。删掉我那段独奏却越过了界线；涉及我负责的内容，我希望决定前有我的参与。",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "expectedSemanticState": "ready",
+      "trustedFacts": [
+        "搭档帮用户调好效果器，节省了用户的时间，用户对此感谢",
+        "搭档未经商量删掉了用户负责的独奏段",
+        "用户明确希望涉及自己负责内容的决定应当有本人参与"
+      ],
+      "expectedInsightKinds": ["distinction", "connection"],
+      "expectedUnderstandingDelta": "用户接受设备上的实际帮助，同时把自己负责内容的参与决定权作为合作边界。",
+      "valuableTargets": [],
+      "mustCover": [
+        "调效果器的帮助得到用户认可",
+        "涉及用户负责内容的决定需要用户参与"
+      ],
+      "mustAvoid": [
+        "把搭档的全部帮助写成控制",
+        "遗漏用户对设备帮助的感谢",
+        "猜测搭档删独奏的动机"
+      ],
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "涉及自己负责的内容时需要参与决定"
+        ],
+        "necessaryScopeMustCover": [
+          "调效果器的帮助可以接受并且节省了时间"
+        ],
+        "missingUnderstandingMustBe": null
+      }
+    },
+    {
+      "id": "MC-A-AI-01",
+      "scenarioFamily": "landlord_call_note_restores_repair_request",
+      "angle": "action",
+      "mode": "guided_reflection",
+      "userContext": "用户上次给房东打电话时偏离漏水问题，这次提前写下三行便签；用户只描述了通话经过与最终结果，尚未主动总结便签发挥的作用。",
+      "conversationContext": [
+        {
+          "user": "上次我给房东打电话，聊到别的事，漏水没约上；这次打之前我写了三行便签。",
+          "assistantUnderstanding": "上次通话没有推进漏水，这次你在拨号前多做了一个动作。",
+          "assistantQuestion": "这次电话从接通到挂断，发生了什么？"
+        }
+      ],
+      "currentQuestion": "这次电话从接通到挂断，发生了什么？",
+      "currentQuestionIntent": {
+        "targetId": "call_note_effect",
+        "semanticGoal": "理解三行便签在本次沟通中产生的实际作用",
+        "minimumAnswerScope": "描述通话偏离、用户怎样回到漏水问题，以及最终是否形成实际进展"
+      },
+      "currentUserText": "他先问了押金，又聊到楼道灯。我看了几次第二行‘厨房漏水’，每次又说回厨房。挂电话前，我们定了周二上午来修。",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "expectedSemanticState": "ready",
+      "trustedFacts": [
+        "上次用户与房东通话时聊到别的事，漏水维修没有约成",
+        "这次通话前用户写了三行便签",
+        "房东谈到押金和楼道灯时，用户多次看第二行厨房漏水并把话题带回厨房",
+        "本次通话结束前约定了周二上午维修"
+      ],
+      "expectedInsightKinds": ["function", "connection"],
+      "expectedUnderstandingDelta": "三行便签在话题偏离时提供了返回点，使漏水请求持续留在通话中并推进到明确维修时间。",
+      "valuableTargets": [],
+      "mustCover": [
+        "便签帮助用户在话题偏离后回到漏水",
+        "本次通话形成了明确维修时间"
+      ],
+      "mustAvoid": [
+        "把用户写便签解释成强迫、焦虑或长期习惯",
+        "猜测房东故意逃避维修",
+        "只复述便签和约定时间，不连接实际作用"
+      ],
+      "expectedMeaningCard": {
+        "mainMustCover": [
+          "便签让用户在话题偏离后回到漏水",
+          "漏水推进到明确维修时间"
+        ],
+        "necessaryScopeMustCover": [],
+        "missingUnderstandingMustBe": null
+      }
+    }
+  ],
+  "regressionOnly": {
+    "caseId": "SMK-R-PARTIAL-ASK",
+    "note": "旧帮拿快递案例只用于回归检查并存范围；不计入本候选集8个正式结果。"
+  }
+}

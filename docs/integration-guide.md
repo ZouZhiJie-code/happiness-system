@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-07-20`
+最后更新：`2026-08-06`
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -14,6 +14,15 @@
 - 天级业务日期格式固定为 `YYYY-MM-DD`，归档与“当天”判断使用 `Asia/Shanghai`。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前五个访谈维度。
 - 生产主域名为 `https://dailylight.chat`。
+
+事件中心发布配置：
+
+- `INTERVIEW_EVENT_CENTERED_MODE` 控制入口与写入范围：`legacy`、`optional`、`event_centered`、`event_recovery`。
+- `INTERVIEW_EVENT_CENTERED_STRATEGY` 控制提问链路：`baseline` 或 `generative`。生产默认使用 `baseline`。
+- `EVENT_CENTERED_GENERATIVE_MODEL` 用于候选链路独立锁定模型；新事件中心候选固定为 `deepseek-v4-flash`，共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供。
+- `EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
+- Board 8 批准前，Production 保持 `legacy + baseline`；已有事件与日志继续可读。
+- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1 已在 `8/12` 主动提前结束并完成首批复盘；Thinking 模式四次探针已完成并形成 inconclusive，EMPTY_CONTENT 根因继续开放。正式候选、板块 8 人工 Preview 和 Production 授权继续保持关闭。
 
 ## 2. 路由速查
 
@@ -36,6 +45,8 @@
 | `GET` | `/api/interview/session/[id]` | 恢复会话 |
 | `POST` | `/api/interview/session/respond/stream` | 主前端使用的 SSE 回复 |
 | `POST` | `/api/interview/session/respond` | 非流式兼容回复 |
+| `POST` | `/api/interview/session/branch/preview` | 只读预览目标回复版本的活动路径 |
+| `POST` | `/api/interview/session/branch/select` | 采用目标回复版本并切换活动路径 |
 | `POST` | `/api/interview/session/pause` | 暂停会话 |
 | `POST` | `/api/interview/session/complete` | 完成会话 |
 | `POST` | `/api/interview/session/reopen` | 重开会话 |
@@ -44,7 +55,38 @@
 | `PUT` | `/api/journal-entry/[id]` | 更新维度日志标题和正文 |
 | `PUT` | `/api/joy-entry/[id]` | 兼容旧命名的等价更新接口 |
 
-### 2.3 当天整合日志
+### 2.3 事件中心 MVP
+
+事件中心采用事件级会话和事件级日志。所有路由要求当前用户登录，并按用户校验根会话、活动分支和日志来源。
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `POST` | `/api/interview/event-centered/session/start` | 创建或恢复指定 `entryDate` 的事件中心会话 |
+| `GET` | `/api/interview/event-centered/session/[id]` | 读取事件中心工作区、消息、检查点和 `allowedActions` |
+| `POST` | `/api/interview/event-centered/session/turn` | 显式预留一条用户原话并返回可靠回合确认；供兼容客户端和受控测试使用 |
+| `POST` | `/api/interview/event-centered/session/respond/stream` | 执行两段式理解/表达，SSE 返回 `turn / phase / delta / session / error` |
+| `POST` | `/api/interview/event-centered/journal/generate` | 冻结来源并生成事件日志草稿；生成位置由 `allowedActions` 控制 |
+| `GET` | `/api/interview/event-centered/journal/[id]` | 读取事件日志及当前内容版本 |
+| `PATCH` | `/api/interview/event-centered/journal/[id]` | 自动暂存标题和正文；要求 `expectedContentRevision` |
+| `POST` | `/api/interview/event-centered/journal/[id]/save` | 将当前草稿按版本号正式保存 |
+
+#### GI-088 私有 Preview 评测接口
+
+这组接口只服务板块 6／7 开发评测，页面入口为 `/preview/gi088-evaluation`。全部请求要求 Preview 环境、专用开关、应用登录和“管理员 ∩ GI-088 评测名单”。
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `GET` | `/api/preview/gi088/session` | 读取当前批次、12 项进度、活动任务、双分支和 Trace |
+| `POST` | `/api/preview/gi088/start-task` | 冻结 `A0＋U1`，启动 off；完成 off 裁决后从同起点启动 high |
+| `POST` | `/api/preview/gi088/turn` | 向当前分支提交一次真实用户输入；`clientTurnId` 保护重复提交 |
+| `POST` | `/api/preview/gi088/retry` | 产品负责人显式重试一次技术失败，原失败继续保留 |
+| `POST` | `/api/preview/gi088/end-trajectory` | 结束成功或技术失败轨迹，写入感受、质量和理由 |
+| `POST` | `/api/preview/gi088/compare` | 在 off／high 都完成后写入配置比较 |
+| `POST` | `/api/preview/gi088/seal` | 完成 12 项后封存整批 |
+| `GET` | `/api/preview/gi088/export` | 只读导出已封存批次 |
+| `POST` | `/api/preview/gi088/smoke` | 用独立作用域和 UUID 各执行一次 off／high 技术冒烟 |
+
+### 2.4 当天整合日志
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -55,7 +97,7 @@
 | `PUT` | `/api/daily-journal/[id]` | 更新日级日志标题和正文 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存日级日志 |
 
-### 2.4 日历、分析与画像
+### 2.5 日历、分析与画像
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -69,7 +111,7 @@
 | `GET/POST` | `/api/profile/portrait` | 查询或生成画像快照 |
 | `POST` | `/api/transcribe` | 语音占位接口，当前为 stub |
 
-### 2.5 AI 反馈与质量治理
+### 2.6 AI 反馈与质量治理
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -81,11 +123,11 @@
 | `POST` | `/api/admin/ai-quality/candidates/[candidateId]/validate` | 回放验证候选 |
 | `GET` | `/api/admin/ai-quality/candidates/[candidateId]/impact` | 查询发布前后七天指标 |
 | `GET` | `/api/admin/ai-quality/candidates/[candidateId]/impact/evidence?kind=attention&page=1` | 查询上线后真实案例 |
-| `POST` | `/api/admin/ai-quality/runs` | 立即评估并生成候选 |
+| `POST` | `/api/admin/ai-quality/runs` | 评估待处理 Trace，并聚类生成或复用候选 |
 | `GET` | `/api/cron/ai-quality/evaluate?limit=100` | 每日评估任务 |
 | `GET` | `/api/cron/ai-quality/iterate` | 每周聚类任务 |
 
-### 2.6 其他管理员接口
+### 2.7 其他管理员接口
 
 - `/api/admin/analytics/*`：总览、漏斗、留存、质量、候选用户和内容级下钻。
 - `/api/admin/ai-runtime/*`：chat/embedding 配置草稿、探针、发布、历史和回滚。
@@ -202,6 +244,22 @@ Accept: text/event-stream
 }
 ```
 
+按意图重新生成正式追问：
+
+```json
+{
+  "action": "regenerate_question",
+  "sessionId": "cuid",
+  "targetMessageId": "assistant-message-cuid",
+  "intent": "simplify",
+  "clientTurnId": "浏览器生成的唯一 ID",
+  "baseMessageSequence": 4,
+  "baseBranchSessionId": "当前活动分支 ID"
+}
+```
+
+`intent` 支持 `simplify / concretize / change_angle / deepen / lighten`。纠正理解使用 `action: "correct_understanding"`，并提交同样的定位字段与用户输入 `rawText`。分支预览和选择接口使用 `{ sessionId, targetMessageId, baseBranchSessionId }`；预览响应返回 `targetBranchSessionId` 与只读 `session`，选择响应返回已采用路径的 `session`。
+
 SSE 事件：
 
 | 事件 | 数据 |
@@ -210,15 +268,103 @@ SSE 事件：
 | `phase` | 当前处理阶段 |
 | `delta` | `summary / question / thinking` 等增量 |
 | `session` | 最终完整 session |
+| `version` | 回复版本的组标识、当前版本、版本数与活动分支 |
 | `error` | 结构化 `issue` |
 
 主链时序为 `turn -> phase / delta -> session`。`turn` 确认“原话已收到”，`session` 确认“AI 回应和会话状态已完整保存”。处理失败或浏览器取消后，session hydrate 会通过 `pendingUserTurn` 返回原提交，页面可显示“继续生成”。
+
+服务端会为每轮回复判断用户是在补充内容、修正理解、要求换问法、希望停止追问，还是要求生成日志。这些判断用于保护对话体验和支持重放，属于内部运行记录；客户端继续以 `turn / delta / session / error` 事件完成交互，无需新增请求字段或解析内部判断结果。
 
 `delta.text` 来自服务端检查后的最终摘要或问题，分块过程保留最终文本的空格和换行。`question_repair` 会由服务端确定性生成 `turn -> summary -> question -> session`，不进入 provider 流式调用。
 
 非流式接口使用同一请求 schema，并返回 `assistantMessage / assistantTurn / sessionStatus / turnCount / snapshotData / session`。
 
-### 4.3 结构化错误
+### 4.3 事件中心会话与两段式生成
+
+事件中心入口地址：
+
+```text
+/interview?mode=event-centered&entryDate=YYYY-MM-DD
+```
+
+五维选择页在 `optional` 档位会保留五维默认入口，并展示事件中心次级入口。历史文案为“从一件事开始”，GI-065 候选文案为“直接开始”；Production 当前使用 `legacy`，因此事件中心新写入入口保持关闭。事件中心默认以今天的 `entryDate` 启动；未来日期由服务端拒绝写入。
+
+启动或恢复会话：
+
+```text
+POST /api/interview/event-centered/session/start
+Content-Type: application/json
+```
+
+```json
+{"entryDate":"2026-08-02"}
+```
+
+发送一轮用户原话时，主界面直接调用 SSE 接口；服务端会在同一请求内完成可靠预留和用户原话持久化。需要显式预留的兼容客户端或受控测试可以单独调用：
+
+```text
+POST /api/interview/event-centered/session/turn
+```
+
+```json
+{
+  "rootSessionId": "root-session-cuid",
+  "baseBranchSessionId": "active-branch-cuid",
+  "baseMessageSequence": 4,
+  "clientTurnId": "browser-generated-id",
+  "rawText": "今天把一件拖着的事终于收住了。"
+}
+```
+
+主界面调用：
+
+```text
+POST /api/interview/event-centered/session/respond/stream
+Accept: text/event-stream
+```
+
+不要对同一条用户原话同时调用 `/session/turn` 和 `/session/respond/stream`，以免创建重复预留。正常回合的 SSE 顺序包含 `turn -> phase / delta -> session`；`turn` 表示原话已写入，`session` 表示本轮助手回应和会话状态已提交。页面刷新或生成中断后，使用同一 `clientTurnId` 继续生成，不重复保存用户原话。
+
+历史候选使用“第一段理解与计划、第二段用户表达”的两段式合同，并保留 deterministic baseline 兼容路径。`GI-067 / GI-068～080` 已冻结目标产品职责和稳定性输入：产品协议固定结果和硬边界，Interview Skill / Prompt 承载方法与案例，大模型自主判断回应，程序执行确定性保护，Trace、Evals 与真人 Preview 共同验收。GI-081 的一次调用／两阶段结构只承担六题离线诊断；正式调用次数、字段、状态结构和失败处理由板块 7 在板块 6 正式资产完成后确定，并同步更新本节。可靠原话保存、同一 `clientTurnId` 续接、结构化错误和 Trace 继续有效。
+
+事件日志生成由工作区 `allowedActions` 控制：
+
+```text
+POST /api/interview/event-centered/journal/generate
+```
+
+```json
+{
+  "rootSessionId": "root-session-cuid",
+  "baseBranchSessionId": "active-branch-cuid",
+  "baseMessageSequence": 8,
+  "clientOperationId": "browser-operation-id"
+}
+```
+
+生成后，桌面端打开右侧日志书页，移动端打开底部 sheet。编辑使用：
+
+```text
+GET   /api/interview/event-centered/journal/{id}
+PATCH /api/interview/event-centered/journal/{id}
+POST  /api/interview/event-centered/journal/{id}/save
+```
+
+`PATCH` 请求至少携带 `title`、`content` 和 `expectedContentRevision`；自动暂存使用同一接口，版本不一致时返回冲突并保留用户当前编辑。`save` 也携带 `expectedContentRevision`，成功后日志状态变为 `saved`。刷新后通过 `GET` 恢复；当天事件标签可以重新打开同一事件日志。
+
+日志来源快照只包含当前活动分支、有效用户原话、确认事实和允许写入日志的角度成果。AI 草稿经过来源门检查；AI 请求失败、结构无效或来源门拒绝时使用安全基础版本。基础版本只整理来源中已经出现的事件与理解，来源不足时返回 `EVENT_JOURNAL_SOURCE_INSUFFICIENT` 并恢复上一检查点。
+
+事件中心的入口与提问策略分开设置：
+
+| 配置 | 值 | 作用 |
+|---|---|---|
+| `INTERVIEW_EVENT_CENTERED_MODE` | `legacy` / `optional` / `event_centered` / `event_recovery` | 五维默认入口、可选事件入口、事件中心默认入口、历史事件恢复档位 |
+| `INTERVIEW_EVENT_CENTERED_STRATEGY` | `baseline` / `generative` | 确定性提问链路或两段式生成链路 |
+| `EVENT_CENTERED_GENERATIVE_MODEL` | `deepseek-v4-flash` | 新事件中心候选固定模型；共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供 |
+
+Production 继续使用 `legacy + baseline`。Board 8 Preview 经过人工开启后才使用 `optional` 或 `event_centered` 搭配 `generative`；事件已有数据在回退档位仍可读取。
+
+### 4.4 结构化错误
 
 `respond` 和 `respond/stream` 的错误包含：
 
@@ -251,6 +397,11 @@ SSE 事件：
 | `INTERVIEW_TURN_OUT_OF_DATE` | 409 | `baseMessageSequence` 落后于服务端最新消息位置 |
 | `INTERVIEW_TURN_RETRY_REQUIRED` | 409 | 同一 `clientTurnId` 已失败或取消，需要使用 `resume_turn` |
 | `INTERVIEW_TURN_NOT_FOUND` | 404 | 指定的待恢复提交不存在或不属于当前用户 |
+| `INTERVIEW_REGENERATION_UNAVAILABLE` | 409 | 当前会话、日志边界或服务开关暂不支持换问法 |
+| `INTERVIEW_REGENERATION_INTENT_UNAVAILABLE` | 409 | 当前证据不足以使用所选换问法，例如“再深入一点” |
+| `INTERVIEW_REGENERATION_LIMIT_REACHED` | 409 | 该正式追问已保留三个版本 |
+| `INTERVIEW_BRANCH_OUT_OF_DATE` | 409 | 请求基于较早的活动分支 |
+| `INTERVIEW_BRANCH_LOCKED_BY_JOURNAL` | 409 | 已生成日志锁定了历史路径 |
 | `INTERVIEW_DB_WRITE_FAILED` | 500 | 本轮回复写入失败 |
 | `STREAM_PROTOCOL_ERROR` | 500 | SSE 数据格式异常 |
 | `INTERVIEW_RESPOND_FAILED` | 500 | 未分类兜底错误 |
@@ -373,10 +524,10 @@ GET /api/analysis/month?month=2026-07
 前端 URL：
 
 ```text
-/analysis?month=2026-07&section=trends|dimensions|correlation|review
+/analysis?month=2026-07&section=trends|dimensions
 ```
 
-旧 `overview|score|rhythm|insights` 会归一到 `trends|dimensions`。量化趋势为只读读数台；关联与复盘当前为占位。
+旧 `overview|score|rhythm` 会归一到 `trends`，旧 `insights|correlation|review` 会归一到 `dimensions`。量化趋势为只读读数台，五维记录展示按月聚合的线索与代表片段。
 
 ### 7.3 幸福 8 要素评分
 
@@ -478,6 +629,8 @@ POST /api/admin/ai-quality/candidates/[candidateId]/validate
 
 System Prompt 会回放目标和正向回归证据；Few-shot 会复查点赞有效性与至少 85 分的评估。发布要求候选已批准且最近验证通过；缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
 
+管理页将 `draft / approved / published / rejected / rolled_back` 投影为待审核、待验证、待发布、观察中和历史记录；Engineering 路径的已批准候选进入待技术处理。接口仍返回原始状态，客户端应按最近验证结果和候选路径完成展示投影。
+
 ### 9.3 七天效果
 
 ```text
@@ -491,6 +644,8 @@ GET /api/admin/ai-quality/candidates/[candidateId]/impact
 - `baseline / after / changes`：生成、反馈、问题、严重问题、失败和延迟
 - `conclusion`：继续观察、低样本、人工复核、建议保留或建议回滚
 - `evidenceCounts`：需关注和正向案例数
+
+`sameIssueCount / sameIssueRate` 以标准化后的具体问题键计算。候选缺少问题码时，两个窗口的 `sameIssueRate` 返回 `null`，客户端应显示“口径不足”，不应把未知问题聚合为同一类。
 
 真实案例：
 
@@ -543,6 +698,47 @@ http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance
 - production 环境会终止 seed。
 - acceptance login 只接受 localhost 请求，production 返回 `404`。
 
+### 10.1 事件中心离线评测
+
+事件中心批量回放与 Judge 只用于受控的本地或隔离评测环境，不参与用户请求链路。策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`；Judge 使用独立模型配置，优先读取：
+
+- `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY`、`EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL`、`EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`
+- 兼容别名：`DEEPSEEK_JUDGE_API_KEY`、`DEEPSEEK_JUDGE_MODEL`、`DEEPSEEK_JUDGE_BASE_URL`
+- 最后才复用策略回放的 `DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL`；Judge 模型名必须显式提供
+
+超时配置读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，缺省时兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`，有效范围为 `1,000–90,000ms`，默认 `18,000ms`。评测运行器会把模型名和 base URL host 写入运行元数据，API key 只用于进程内请求，不写入报告、Trace 或用户可见响应。
+
+常用本地命令：
+
+```bash
+npm run eval:event-centered:batch-b -- --mode=rules --all
+npm run eval:event-centered:generative
+npm test -- tests/evals/event-centered-mvp-journal-closure.test.tsx
+npx tsc --noEmit
+npm run lint
+npm run build
+git diff --check
+```
+
+`--mode=rules` 只回归确定性规则；真实模型回放、Judge 和用户质量判断需要单独授权。Production 保持 `legacy + baseline`，不得把评测 key 或 Judge 开关放入生产请求路径。
+
+### 10.2 GI-088 真人交互开发评测
+
+当前本地运行器版本为 `2026-08-10.gi088-human-eval-v7r2-ark-flash`。v1～v7r1 继续作为只读历史证据；v7r2 继承 v7 的两项 Thinking high 连续性任务。页面任务说明、目标触发提示和判定标准只对评测人可见，不进入模型上下文。
+
+模型请求只在 `GI088_MODEL_CALL_SCOPE=batch` 且 `GI088_AUTHORIZED_EXECUTION_FINGERPRINT` 精确匹配当前执行指纹时发出。v7r2 通过独立 Ark REST Provider 使用 `deepseek-v4-flash-ga-260731`，继续省略应用层 `max_tokens`，响应头、正文空闲和总时长均按 60 秒契约执行。每次用户提交最多允许三次 Provider 调用，恢复与人工重试共用同一上限。
+
+技术失败可以选择手动重试，也可以保留当前失败后直接完成轨迹评价。同一 `clientTurnId` 和相同输入用于响应丢失后的幂等恢复；产品负责人修改输入后使用新请求身份。完整任务边界可以提前结束整批，部分导出会标记已完成任务与 `not_run` 任务。
+
+公开仓库可执行当前资产和合成 Prefix 兼容检查：
+
+```bash
+npm run eval:gi088:inspect
+npm run eval:gi088:probe:prefix:inspect
+```
+
+空内容、Thinking、官方 Flash / Pro 与 Ark Flash 历史探针的完整重放入口依赖私有 turn/call 定位符，继续保留在 `artifacts/local-runtime/`。公开仓库保留脱敏聚合结果、当前 Ark Provider、评测服务与自动回归。当前资产、结果和停止点以 [`GI-088 v7r2 Ark Flash`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md) 为准。
+
 ## 11. 通用错误语义
 
 | 错误码 | 含义 |
@@ -550,6 +746,16 @@ http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance
 | `AUTHENTICATION_REQUIRED` | 需要重新登录 |
 | `INVALID_*_REQUEST` | 请求体或查询参数不符合 schema |
 | `*_NOT_FOUND` | 资源不存在或不属于当前用户 |
+| `EVENT_CENTERED_ENTRY_DISABLED` | 当前发布档位暂停事件中心新增和修改 |
+| `EVENT_CENTERED_FUTURE_DATE` | 事件中心禁止写入未来日期 |
+| `EVENT_STATE_CHANGED` | 活动分支或消息位置已变化，需要刷新工作区 |
+| `EVENT_OPERATION_CONFLICT` | 事件操作已被同一客户端或另一请求占用 |
+| `EVENT_JOURNAL_GENERATION_NOT_ALLOWED` | 当前检查点尚未提供生成事件日志的操作 |
+| `EVENT_JOURNAL_ENTRY_NOT_FOUND` | 事件日志不存在或不属于当前用户 |
+| `EVENT_JOURNAL_ENTRY_VERSION_CONFLICT` | 自动暂存或保存使用了过期内容版本 |
+| `EVENT_JOURNAL_SOURCE_INSUFFICIENT` | 来源材料不足以形成可信的事件日志 |
+| `JOURNAL_DAY_MODE_CONFLICT` | 当前日期已被另一日志工作区或活动事件占用 |
+| `JOURNAL_DAY_MODE_MIXED` | 同一天存在无法统一投影的日志状态 |
 | `DAILY_JOURNAL_SOURCE_EMPTY` | 当天缺少已保存维度日志 |
 | `ANALYSIS_QUERY_FAILED` | 分析查询失败 |
 | `CALENDAR_QUERY_FAILED` | 日历查询失败 |

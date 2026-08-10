@@ -1,7 +1,7 @@
 import type { AIRuntimeCapability } from "@/features/admin-ai-runtime/types";
 import { logger } from "@/server/lib/logger";
 import { AIProviderError, type AIProvider } from "@/server/services/ai/ai-provider";
-import { readVolcengineArkConfig } from "@/server/services/ai/provider-config";
+import { readDeepSeekConfig, readVolcengineArkConfig } from "@/server/services/ai/provider-config";
 import { resolveAIRuntimeConfig, type AIRuntimeResolution } from "@/server/services/ai/runtime-config-resolver";
 import { createRuntimeAIProvider } from "@/server/services/ai/runtime-provider-factory";
 
@@ -108,7 +108,12 @@ function buildConfigSummary(resolution: AIRuntimeResolution): AIProviderConfigSu
     hasApiKey: true,
     hasModel: "model" in config || "anthropicVersion" in config,
     hasBaseUrl: Boolean(baseUrl),
-    modelSource: resolution.source === "database" ? "DATABASE_CONFIG" : null,
+    modelSource:
+      resolution.source === "database"
+        ? "DATABASE_CONFIG"
+        : resolution.provider === "openai"
+          ? "DEEPSEEK_MODEL"
+          : null,
     modelOrEndpoint: "model" in config ? config.model : null,
     baseUrl,
     baseUrlHost: parseBaseUrlHost(baseUrl)
@@ -130,10 +135,14 @@ function buildReadyStatus(resolution: AIRuntimeResolution): AIProviderStatus {
 }
 
 function buildUnavailableStatus(capability: AIRuntimeCapability): AIProviderStatus {
-  const config = readVolcengineArkConfig();
-  const issues = [...config.issues] as AIProviderStatusCode[];
+  const configuredProvider = process.env.AI_PROVIDER?.trim().toLowerCase() ?? "openai";
+  const usesDeepSeek = configuredProvider === "openai" || configuredProvider === "deepseek";
+  const config = usesDeepSeek ? readDeepSeekConfig() : readVolcengineArkConfig();
+  const issues = usesDeepSeek && capability === "embedding"
+    ? ["MISSING_EMBEDDING_ENDPOINT_ID" as const]
+    : [...config.issues] as AIProviderStatusCode[];
 
-  if (capability === "embedding" && !process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim()) {
+  if (!usesDeepSeek && capability === "embedding" && !process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim()) {
     issues.push("MISSING_EMBEDDING_ENDPOINT_ID");
   }
 
@@ -141,7 +150,7 @@ function buildUnavailableStatus(capability: AIRuntimeCapability): AIProviderStat
 
   return {
     capability,
-    provider: "volcengine_ark",
+    provider: usesDeepSeek ? "openai" : "volcengine_ark",
     available: false,
     state: "config_invalid",
     source: null,
@@ -152,18 +161,18 @@ function buildUnavailableStatus(capability: AIRuntimeCapability): AIProviderStat
       hasApiKey: Boolean(config.apiKey),
       hasModel:
         capability === "embedding"
-          ? Boolean(process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim())
+          ? usesDeepSeek ? false : Boolean(process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim())
           : Boolean(config.model),
       hasBaseUrl: Boolean(config.baseUrl),
       modelSource:
         capability === "embedding"
-          ? process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim()
+          ? usesDeepSeek ? null : process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim()
             ? "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"
             : null
           : config.modelSource,
       modelOrEndpoint:
         capability === "embedding"
-          ? process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim() ?? null
+          ? usesDeepSeek ? null : process.env.VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID?.trim() ?? null
           : config.model,
       baseUrl: config.baseUrl,
       baseUrlHost: config.baseUrlHost

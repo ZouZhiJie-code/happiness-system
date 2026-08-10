@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>批次 B｜事件中心 AI 访谈原型</title>
+    <style>
+      :root {
+        --ink: #302114;
+        --ink-soft: #503925;
+        --muted: #715b47;
+        --faint: #947d67;
+        --paper: #f8e9cc;
+        --paper-light: #fff9ed;
+        --paper-deep: #e5c694;
+        --paper-wash: #f3ddba;
+        --ember: #a96f3d;
+        --ember-deep: #875126;
+        --moss: #65754f;
+        --plum: #806274;
+        --line: #d8bc91;
+        --line-soft: #e5ceb0;
+        --line-strong: #b98f61;
+        --danger: #9a4d38;
+        --radius-control: 12px;
+        --radius-card: 20px;
+        --radius-shell: 28px;
+        --display: "Iowan Old Style", "Songti SC", "STSong", serif;
+        --body: Charter, Georgia, "PingFang SC", "Hiragino Sans GB", serif;
+        --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: #b87d48; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--ui);
+        background:
+          radial-gradient(circle at 13% 6%, rgba(255, 249, 235, .38), transparent 23%),
+          radial-gradient(circle at 91% 10%, rgba(91, 53, 23, .18), transparent 29%),
+          linear-gradient(180deg, #936039 0, #bb844d 27%, #d9aa71 61%, #edcf9d 100%);
+      }
+      body::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        content: "";
+        pointer-events: none;
+        opacity: .45;
+        background: repeating-linear-gradient(108deg, transparent 0 24px, rgba(255, 255, 255, .07) 25px, transparent 26px 49px);
+      }
+      button, textarea { font: inherit; }
+      button { cursor: pointer; touch-action: manipulation; }
+      button:focus-visible, textarea:focus-visible { outline: 3px solid rgba(135, 81, 38, .46); outline-offset: 3px; }
+      button:active:not(:disabled) { transform: scale(.97); }
+      button:disabled { cursor: not-allowed; opacity: .48; }
+
+      .site-header {
+        display: grid;
+        grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr);
+        align-items: center;
+        gap: 18px;
+        min-height: 64px;
+        padding: 10px clamp(18px, 4vw, 52px);
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 249, 239, .66);
+        backdrop-filter: blur(14px) saturate(135%);
+      }
+      .brand { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -.035em; }
+      .site-nav { display: flex; justify-content: center; gap: 4px; }
+      .site-nav button { padding: 7px 9px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; }
+      .site-nav button[aria-current="page"] { border-color: var(--ember); color: var(--ink); font-weight: 750; }
+      .record-date { justify-self: end; color: var(--faint); font-size: 12px; white-space: nowrap; }
+
+      main { padding: clamp(14px, 2vw, 26px) clamp(12px, 3vw, 40px) 32px; }
+      .prototype-bar, .workspace, .control-board, .design-note { max-width: 1440px; margin-right: auto; margin-left: auto; }
+      .prototype-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 11px; }
+      .prototype-bar p { margin: 0; color: #654c37; font-size: 12px; line-height: 1.55; }
+      .batch-label { display: inline-flex; align-items: center; min-height: 27px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 249, 239, .7); color: #664526; font-size: 11px; font-weight: 750; white-space: nowrap; }
+
+      .workspace {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        min-height: min(790px, calc(100vh - 137px));
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-shell);
+        background: linear-gradient(180deg, rgba(249, 237, 215, .98), rgba(233, 210, 171, .98));
+        box-shadow: 0 24px 64px rgba(79, 48, 21, .17);
+      }
+
+      .event-strip {
+        display: flex;
+        align-items: end;
+        gap: 7px;
+        min-height: 58px;
+        padding: 13px 16px 0;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 249, 238, .36);
+        scrollbar-width: thin;
+      }
+      .event-strip::after { flex: 1 0 10px; content: ""; }
+      .event-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 142px;
+        max-width: 220px;
+        min-height: 43px;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-control) var(--radius-control) 0 0;
+        background: transparent;
+        color: var(--muted);
+        text-align: left;
+        transition: background .18s ease, transform .18s ease, color .18s ease;
+      }
+      .event-tab:hover { background: rgba(255, 249, 239, .5); color: var(--ink); }
+      .event-tab[aria-selected="true"] { position: relative; z-index: 1; border-color: var(--line); border-bottom-color: #f7e8ca; background: #f7e8ca; color: var(--ink); }
+      .event-tab[aria-selected="true"]::after { position: absolute; right: 12px; bottom: -2px; left: 12px; height: 2px; border-radius: 999px; content: ""; background: var(--ember); }
+      .event-index { display: grid; width: 20px; height: 20px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #ecd4b0; color: #744825; font-family: var(--display); font-size: 12px; }
+      .event-tab[aria-selected="true"] .event-index { background: #9c6431; color: #fff9ea; }
+      .event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .event-dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--moss); }
+      .event-dot.active { background: var(--ember); box-shadow: 0 0 0 3px #ecd6b7; }
+      .new-event {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
+        place-items: center;
+        margin: 0 0 4px 2px;
+        border: 1px dashed var(--line-strong);
+        border-radius: var(--radius-control);
+        background: rgba(255, 250, 241, .38);
+        color: #835128;
+        font-size: 22px;
+      }
+
+      .stage-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: clamp(11px, 2vw, 27px);
+        padding: 13px 18px 14px;
+        border-bottom: 1px solid var(--line-soft);
+        background: rgba(255, 250, 242, .55);
+      }
+      .stage-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: var(--faint); font-size: 12px; }
+      .stage-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .stage-name b { margin-right: 5px; color: #7f512c; font-weight: 750; }
+      .stage-percent { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+      .stage-progress { height: 7px; margin-top: 7px; overflow: hidden; border-radius: 999px; background: #dbc7a8; }
+      .stage-progress b { display: block; width: var(--progress, 0%); height: 100%; border-radius: inherit; background: #c7c4bd; transition: width .35s ease, background .35s ease; }
+      .stage-item.current .stage-top { color: var(--ink); font-weight: 750; }
+      .stage-item.current .stage-progress b { background: linear-gradient(90deg, #b9783e, #91572b); }
+      .stage-item.done .stage-progress b { background: linear-gradient(90deg, #7a9660, #607c49); }
+
+      .chat-area { position: relative; min-height: 0; padding: 0 clamp(14px, 3vw, 44px); background: linear-gradient(180deg, rgba(244, 230, 204, .72), rgba(240, 220, 187, .58)); }
+      .conversation { height: 100%; min-height: 520px; max-width: 860px; margin: 0 auto; padding: 27px 0 128px; overflow-y: auto; scroll-behavior: smooth; }
+      .conversation-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 4px 21px; color: var(--faint); font-size: 12px; }
+      .angle-pill { display: inline-flex; align-items: center; min-height: 26px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; background: #f6e7cd; color: #6f4c2e; font-size: 11px; font-weight: 700; }
+      .message { display: flex; margin: 0 0 16px; }
+      .message.user { justify-content: flex-end; }
+      .bubble { max-width: min(86%, 590px); padding: 13px 16px; border: 1px solid var(--line-soft); border-radius: var(--radius-card); box-shadow: 0 7px 17px rgba(93, 58, 29, .05); font-size: 14px; line-height: 1.75; }
+      .message.assistant .bubble { border-top-left-radius: 5px; background: rgba(255, 250, 242, .88); color: var(--ink-soft); }
+      .message.user .bubble { border-top-right-radius: 5px; background: linear-gradient(180deg, #e9cda7, #dfbc8f); color: #3e2d20; }
+      .thinking { margin: -4px 0 16px 15px; max-width: 680px; color: #85664a; font-size: 12px; line-height: 1.65; }
+      .thinking::before { margin-right: 6px; content: "·"; color: var(--ember); }
+      .question-actions { display: flex; align-items: center; gap: 7px; margin: -9px 0 17px 14px; }
+      .question-action { padding: 4px 7px; border: 0; border-radius: 999px; background: transparent; color: #7b5a3b; font-size: 11px; text-decoration: underline; text-decoration-color: #c4a27d; text-underline-offset: 3px; }
+      .version-switch { display: inline-flex; align-items: center; gap: 6px; margin: -8px 0 18px 14px; color: var(--faint); font-size: 11px; }
+      .version-switch button { display: grid; width: 27px; height: 27px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: #fff5e3; color: #6b4a2e; }
+
+      .checkpoint { max-width: 635px; margin: 9px 0 21px 13px; }
+      .checkpoint h2 { margin: 0; font-family: var(--display); font-size: 21px; letter-spacing: -.025em; }
+      .checkpoint p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+      .checkpoint-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+      .checkpoint-label { display: block; margin-bottom: 6px; color: var(--ember-deep); font-size: 10px; font-weight: 800; letter-spacing: .11em; }
+      .angle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+      .angle-choice { min-height: 57px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: rgba(255, 250, 242, .64); color: var(--ink-soft); text-align: left; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+      .angle-choice:hover { border-color: var(--line-strong); background: #fff7e9; }
+      .angle-choice strong { display: block; margin-bottom: 3px; font-size: 12px; }
+      .angle-choice span { color: var(--faint); font-size: 11px; line-height: 1.45; }
+      .angle-choice.complete strong::after { margin-left: 6px; color: var(--moss); content: "✓"; }
+      .angle-choice[aria-pressed="true"] { border-color: var(--ember); background: #f5dec0; box-shadow: inset 3px 0 0 var(--ember); }
+
+      .scheme-a .checkpoint { padding: 17px 18px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 248, 234, .78); box-shadow: 0 10px 23px rgba(96, 58, 28, .06); }
+      .scheme-b .checkpoint { padding: 16px 0 17px 20px; border-left: 3px solid var(--ember); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); background: linear-gradient(90deg, #f2dbb8 0, rgba(248, 233, 204, .15) 74%); }
+      .scheme-b .angle-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .scheme-c .checkpoint { padding: 15px 16px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: #fff9ed; }
+      .scheme-c .checkpoint::before { display: block; width: 38px; height: 3px; margin-bottom: 13px; border-radius: 999px; content: ""; background: var(--ember); }
+      .scheme-c .angle-grid { display: flex; flex-wrap: wrap; }
+      .scheme-c .angle-choice { width: auto; min-height: 38px; flex: 1 1 128px; }
+      .scheme-c .angle-choice span { display: none; }
+
+      .insight-line { margin-top: 14px; padding-left: 14px; border-left: 2px solid #b97742; color: #61432c; font-family: var(--body); font-size: 16px; line-height: 1.75; }
+      .honest-limit { display: inline-flex; gap: 7px; align-items: center; margin-top: 11px; color: #765d46; font-size: 11px; }
+      .honest-limit i { width: 7px; height: 7px; border-radius: 50%; background: var(--plum); }
+
+      .notice { max-width: 630px; margin: 8px 0 20px 13px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-control); background: #f6e5c8; color: #684c35; font-size: 12px; line-height: 1.6; }
+      .notice.error { border-color: #c99479; background: #f4ded1; color: #744133; }
+      .notice strong { color: var(--ink); }
+      .notice-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+      .repair-note { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px 14px; color: #7c5a3d; font-size: 11px; }
+      .repair-note::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--ember); }
+      .no-question { max-width: 610px; margin: 6px 0 20px 13px; padding: 0 0 0 16px; border-left: 2px solid #91a077; color: #5f4a38; font-family: var(--body); font-size: 16px; line-height: 1.75; }
+
+      .button { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 7px 12px; border: 1px solid transparent; border-radius: var(--radius-control); font-size: 12px; font-weight: 700; transition: transform .16s ease, box-shadow .16s ease, background .16s ease; }
+      .button.primary { background: linear-gradient(180deg, #b57c43, #92582c); color: #fff9ec; box-shadow: 0 7px 14px rgba(117, 68, 28, .18); }
+      .button.secondary { border-color: var(--line-strong); background: rgba(255, 250, 242, .78); color: #6c482a; }
+      .button.ghost { border-color: transparent; background: transparent; color: #7c4e29; text-decoration: underline; text-underline-offset: 4px; }
+      .button.small { min-height: 31px; padding: 5px 9px; font-size: 11px; }
+
+      .composer-wrap { position: absolute; right: clamp(14px, 3vw, 44px); bottom: 14px; left: clamp(14px, 3vw, 44px); max-width: 860px; margin: auto; }
+      .composer { position: relative; display: flex; align-items: end; min-height: 60px; padding: 8px 8px 8px 18px; border: 1px solid var(--line-strong); border-radius: var(--radius-shell); background: rgba(255, 250, 242, .96); box-shadow: 0 13px 30px rgba(93, 57, 26, .14); }
+      .composer textarea { min-height: 38px; max-height: 110px; flex: 1; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; line-height: 1.55; }
+      .composer textarea::placeholder { color: var(--faint); }
+      .send { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 50%; background: linear-gradient(180deg, #e7c492, #d7a96c); color: #3d2d20; font-size: 19px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65); }
+
+      .journal-trigger { position: absolute; z-index: 2; top: 143px; right: 17px; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 249, 238, .82); color: #65462b; box-shadow: 0 7px 18px rgba(92, 56, 25, .1); font-size: 12px; }
+      .journal-trigger i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+      .journal-scrim { position: absolute; z-index: 4; inset: 0; display: none; background: rgba(52, 35, 22, .27); backdrop-filter: blur(1px); }
+      .journal-scrim.open { display: block; }
+      .journal-panel { position: absolute; z-index: 5; top: 0; right: 0; bottom: 0; display: flex; width: min(420px, 92%); flex-direction: column; padding: 25px 26px; transform: translateX(104%); border-left: 1px solid var(--line); background: linear-gradient(180deg, #fffaf0, #eddaba); box-shadow: -24px 0 60px -20px rgba(74, 44, 18, .48); transition: transform .32s cubic-bezier(.2, .75, .2, 1); }
+      .journal-panel.open { transform: translateX(0); }
+      .journal-panel::before { position: absolute; top: 0; bottom: 0; left: 16px; width: 1px; content: ""; background: #dfbe94; }
+      .journal-top { display: flex; align-items: center; justify-content: space-between; padding-left: 13px; }
+      .journal-top p { margin: 0; color: var(--faint); font-size: 12px; }
+      .close-journal { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: #fff7e8; color: #61462f; font-size: 18px; }
+      .journal-empty { display: grid; flex: 1; place-items: center; padding-left: 13px; text-align: center; }
+      .journal-empty i { display: block; width: 44px; height: 52px; margin: 0 auto 16px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: linear-gradient(135deg, #fff9ed, #ead1aa); box-shadow: inset 8px 0 0 #f1dfc1; }
+      .journal-empty h2 { margin: 0 0 8px; font-family: var(--display); font-size: 25px; letter-spacing: -.035em; }
+      .journal-empty p { max-width: 280px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+      .journal-empty .batch-label { margin-top: 17px; }
+
+      .control-board { display: grid; grid-template-columns: 1fr 1.55fr; gap: 10px; margin-top: 12px; }
+      .control-section { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: rgba(255, 249, 239, .72); }
+      .control-label { margin-right: 3px; color: #70553d; font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+      .choice { min-height: 31px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 249, 239, .7); color: var(--muted); font-size: 11px; }
+      .choice[aria-pressed="true"] { border-color: var(--ember-deep); background: #94603a; color: #fff8e9; }
+      .design-note { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr); gap: 12px; margin-top: 12px; }
+      .note-panel { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 249, 239, .76); }
+      .note-panel h1, .note-panel h2 { margin: 0 0 7px; font-family: var(--display); letter-spacing: -.035em; }
+      .note-panel h1 { font-size: 22px; }
+      .note-panel h2 { font-size: 18px; }
+      .note-panel p { margin: 0; color: #6d533d; font-size: 12px; line-height: 1.7; }
+      .legend { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+      .tag { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; background: #fff7e8; color: #684a2d; font-size: 10px; white-space: nowrap; }
+      .tag.reuse { background: #e9efd9; }
+      .tag.extend { background: #f3dfc0; }
+      .tag.new { background: #eee5ed; }
+
+      [hidden] { display: none !important; }
+      @media (max-width: 820px) {
+        .site-header { grid-template-columns: 1fr auto; }
+        .site-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; overflow-x: auto; }
+        .record-date { grid-column: 2; grid-row: 1; }
+        .control-board, .design-note { grid-template-columns: 1fr; }
+        .scheme-b .angle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 580px) {
+        main { padding-right: 8px; padding-left: 8px; }
+        .record-date { display: none; }
+        .prototype-bar { align-items: flex-start; flex-direction: column; }
+        .workspace { min-height: 760px; border-radius: var(--radius-card); }
+        .stage-summary { gap: 8px; padding-right: 12px; padding-left: 12px; }
+        .stage-name b { display: none; }
+        .stage-top { font-size: 10px; }
+        .chat-area { padding: 0 10px; }
+        .conversation { padding-top: 20px; }
+        .journal-trigger { top: 138px; right: 10px; }
+        .angle-grid, .scheme-b .angle-grid { grid-template-columns: 1fr; }
+        .journal-panel { top: auto; width: 100%; height: min(610px, 82%); transform: translateY(104%); border-top: 1px solid var(--line); border-left: 0; border-radius: var(--radius-shell) var(--radius-shell) 0 0; }
+        .journal-panel.open { transform: translateY(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+        button:active:not(:disabled) { transform: none; }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .site-header, .composer, .prototype-bar, .control-section, .note-panel { background: var(--paper-light); backdrop-filter: none; }
+      }
+      @media (prefers-contrast: more) {
+        :root { --muted: #4f3825; --faint: #624832; --line: #a87b50; --line-soft: #b78b5d; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">Daily Light</div>
+      <nav class="site-nav" aria-label="主导航">
+        <button type="button" aria-current="page">访谈</button><button type="button">日历</button><button type="button">分析</button><button type="button">画像</button><button type="button">设置</button>
+      </nav>
+      <div class="record-date">当前记录日期：2026-07-22</div>
+    </header>
+
+    <main>
+      <div class="prototype-bar">
+        <p><strong>批次 B 交互原型</strong>　切换下方“呈现方案”和“访谈状态”，比较检查点、角度成果与恢复体验。</p>
+        <span class="batch-label">AI 访谈能力 · 产品选择稿</span>
+      </div>
+
+      <section id="workspace" class="workspace scheme-a" aria-label="事件中心访谈工作台原型">
+        <div class="event-strip" role="tablist" aria-label="当天事件">
+          <button class="event-tab" type="button" role="tab" aria-selected="false">
+            <span class="event-index">1</span><span class="event-title">傍晚那段慢下来的路</span><i class="event-dot" aria-label="已完成"></i>
+          </button>
+          <button class="event-tab" type="button" role="tab" aria-selected="true">
+            <span class="event-index">2</span><span class="event-title">开会前突然有点想躲开</span><i class="event-dot active" aria-label="进行中"></i>
+          </button>
+          <button class="new-event" type="button" aria-label="当前事件完成后记下另一件事" title="当前事件完成后可新增" disabled>＋</button>
+        </div>
+
+        <section class="stage-summary" aria-label="当前事件访谈进度">
+          <div id="stage-light" class="stage-item done">
+            <div class="stage-top"><span class="stage-name"><b>1 ·</b>轻量记录</span><span class="stage-percent">100%</span></div>
+            <div class="stage-progress"><b style="--progress:100%"></b></div>
+          </div>
+          <div id="stage-guided" class="stage-item current">
+            <div class="stage-top"><span class="stage-name"><b>2 ·</b>引导复盘</span><span class="stage-percent">52%</span></div>
+            <div class="stage-progress"><b style="--progress:52%"></b></div>
+          </div>
+          <div id="stage-deep" class="stage-item">
+            <div class="stage-top"><span class="stage-name"><b>3 ·</b>深入探索</span><span class="stage-percent">0%</span></div>
+            <div class="stage-progress"><b style="--progress:0%"></b></div>
+          </div>
+        </section>
+
+        <div class="chat-area">
+          <button id="open-journal" class="journal-trigger" type="button" aria-controls="journal-panel" aria-expanded="false"><i aria-hidden="true"></i>事件日志</button>
+          <div id="conversation" class="conversation" role="log" aria-live="polite" aria-label="访谈对话"></div>
+          <div class="composer-wrap">
+            <div class="composer">
+              <textarea id="composer-text" rows="1" aria-label="回复访谈" placeholder="写下你愿意补充的内容…"></textarea>
+              <button id="send" class="send" type="button" aria-label="发送回答">↑</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="journal-scrim" class="journal-scrim" aria-hidden="true"></div>
+        <aside id="journal-panel" class="journal-panel" aria-label="当前事件日志" aria-hidden="true">
+          <div class="journal-top"><p>事件日志 · 第 2 件事</p><button id="close-journal" class="close-journal" type="button" aria-label="关闭事件日志">×</button></div>
+          <div class="journal-empty"><div><i aria-hidden="true"></i><h2>日志将在下一批次接入</h2><p>本批次先验证访谈如何理解、追问与收束。事件日志的生成、编辑和保存将在批次 C 完成。</p><span class="batch-label">批次 C 待接入</span></div></div>
+        </aside>
+      </section>
+
+      <section class="control-board" aria-label="原型切换">
+        <div class="control-section" role="group" aria-label="呈现方案">
+          <span class="control-label">呈现方案</span>
+          <button class="choice" type="button" data-scheme="a" aria-pressed="true">A · 对话内纸笺</button>
+          <button class="choice" type="button" data-scheme="b" aria-pressed="false">B · 横向线索带</button>
+          <button class="choice" type="button" data-scheme="c" aria-pressed="false">C · 紧凑行动条</button>
+        </div>
+        <div class="control-section" role="group" aria-label="访谈状态">
+          <span class="control-label">访谈状态</span>
+          <button class="choice" type="button" data-state="checkpoint-one" aria-pressed="true">第一检查点</button>
+          <button class="choice" type="button" data-state="guided" aria-pressed="false">中度复盘</button>
+          <button class="choice" type="button" data-state="checkpoint-two" aria-pressed="false">第二检查点</button>
+          <button class="choice" type="button" data-state="deep" aria-pressed="false">深度回应</button>
+          <button class="choice" type="button" data-state="repair" aria-pressed="false">问题修复</button>
+          <button class="choice" type="button" data-state="versions" aria-pressed="false">回复版本</button>
+          <button class="choice" type="button" data-state="failure" aria-pressed="false">失败恢复</button>
+        </div>
+      </section>
+
+      <section class="design-note" aria-label="设计说明">
+        <article class="note-panel">
+          <h1>推荐 A：对话内纸笺</h1>
+          <p>检查点是对话自然抵达的一处停顿。A 方案保持它紧贴上下文，同时给四个角度足够的解释空间，第一眼能看清“刚刚形成了什么”以及“接下来可以怎样继续”。B 更适合高频扫读，横向排布在窄屏会增加跳动；C 最紧凑，角度说明和成果分量都会变轻。</p>
+          <div class="legend"><span class="tag reuse">复用｜事件标签、三阶段进度、大对话区、输入框、右侧日志</span><span class="tag extend">扩展｜自然理解、回复版本、问题修复、失败续接</span><span class="tag new">新增｜两次检查点、四角度选择、自然成果、深度无问题回应</span></div>
+        </article>
+        <aside class="note-panel">
+          <h2>本批次边界</h2>
+          <p>原型只验证 AI 访谈链路。日志按钮保留既有位置，点击后明确展示“批次 C 待接入”；日历、分析和画像不进入本原型。</p>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const workspace = document.getElementById('workspace');
+      const conversation = document.getElementById('conversation');
+      const composer = document.getElementById('composer-text');
+      const stateButtons = Array.from(document.querySelectorAll('[data-state]'));
+      const schemeButtons = Array.from(document.querySelectorAll('[data-scheme]'));
+      const stageItems = {
+        light: document.getElementById('stage-light'),
+        guided: document.getElementById('stage-guided'),
+        deep: document.getElementById('stage-deep')
+      };
+
+      const opening = `
+        <div class="conversation-head"><span>第 2 件事 · 进行中</span><span class="angle-pill">当前事件</span></div>
+        <article class="message user"><div class="bubble">开会前我突然有点想躲开，明明准备了很久，还是觉得自己讲不好。</div></article>
+        <p class="thinking">你想先记下的是：准备了很久，临到开会前却突然想躲开。</p>`;
+
+      const screens = {
+        'checkpoint-one': `${opening}
+          <article class="message assistant"><div class="bubble">这件事已经记下来了。你可以先停在这里，也可以选一个方向再看看。</div></article>
+          <section class="checkpoint" aria-label="第一检查点">
+            <span class="checkpoint-label">第一检查点 · 轻量记录完成</span>
+            <h2>开会前，准备已久的你忽然想躲开</h2>
+            <p>核心经过已经清楚，可以直接收下这份记录。四个角度由你平等选择，AI 不替你推荐方向。</p>
+            <div class="angle-grid">
+              <button class="angle-choice" type="button"><strong>理解感受</strong><span>更准确地辨认当时的体验</span></button>
+              <button class="angle-choice" type="button"><strong>理清想法</strong><span>看看当时依据什么作判断</span></button>
+              <button class="angle-choice" type="button"><strong>梳理关系</strong><span>看见互动中的期待和边界</span></button>
+              <button class="angle-choice" type="button"><strong>复盘行动</strong><span>理解目标、选择与阻力</span></button>
+            </div>
+            <div class="checkpoint-actions"><button class="button secondary" type="button">先收在这里</button><button class="button ghost" type="button">退出这件事</button></div>
+          </section>`,
+        guided: `${opening}
+          <article class="message assistant"><div class="bubble">你说“想躲开”的那一刻，身体或情绪上最先出现了什么变化？</div></article>
+          <div class="question-actions"><button class="question-action" type="button">换种问法</button><button class="question-action" type="button">纠正理解</button></div>
+          <article class="message user"><div class="bubble">心里一下紧了，脑子里一直在想，别人会不会觉得我根本不专业。</div></article>
+          <p class="thinking">那股紧张紧贴着一个很具体的担心：自己的表现会被别人当成“不专业”。</p>
+          <article class="message assistant"><div class="bubble">当“不专业”这个担心冒出来时，你最怕别人看见的是哪一部分？</div></article>
+          <div class="question-actions"><button class="question-action" type="button">换种问法</button><button class="question-action" type="button">纠正理解</button></div>
+          <section class="notice"><strong>理解感受 · 第 2 次回答机会</strong><br />每一问只推进一个目标；最多三次回答机会。遇到“不知道”时只增加一次更低压力的锚点。</section>`,
+        'checkpoint-two': `${opening}
+          <article class="message assistant"><div class="bubble">当“不专业”这个担心冒出来时，你最怕别人看见的是哪一部分？</div></article>
+          <article class="message user"><div class="bubble">可能是怕他们发现我也有没想明白的地方。我总觉得站上去之前，应该先把所有问题都回答好。</div></article>
+          <p class="thinking">你在意的不只是现场表现，还把“准备好”理解成了“应该能回答所有问题”。</p>
+          <section class="checkpoint" aria-label="第二检查点">
+            <span class="checkpoint-label">第二检查点 · 理解感受完成</span>
+            <h2>这一轮看见的线索</h2>
+            <p class="insight-line">想躲开的紧张，和“站出来之前应该回答好所有问题”的要求连在一起。你担心被看见的，也许正是自己仍有没想明白的地方。</p>
+            <div class="honest-limit"><i aria-hidden="true"></i><span>线索只使用这轮已确认的表达；后续纠正会生成新的有效版本。</span></div>
+            <div class="checkpoint-actions"><button class="button primary" type="button">继续深入</button><button class="button secondary" type="button">选择另一个角度</button><button class="button secondary" type="button">先收在这里</button><button class="button ghost" type="button">纠正这条线索</button></div>
+          </section>`,
+        deep: `${opening}
+          <section class="checkpoint" aria-label="已完成角度">
+            <span class="checkpoint-label">深入探索 · 理解感受</span>
+            <h2>允许这份线索继续长出来</h2>
+            <p class="insight-line">你慢慢分清了：紧张里既有对专业表现的重视，也有对“还不完整的自己被看见”的不安。</p>
+          </section>
+          <article class="message user"><div class="bubble">对，我好像总想等到完全确定了才愿意站出来。可这次讲完以后，其实大家更关心能不能一起把问题理清。</div></article>
+          <p class="thinking">这次真实的互动，让“要先完全确定”这条标准松动了一点。</p>
+          <article class="message assistant"><div class="bubble">你已经看见了一个新的可能：站出来未必意味着独自给出全部答案，也可以是邀请大家一起把问题理清。</div></article>
+          <p class="no-question">这一轮已有足够的新认识，AI 先吸收和回应，不为了延长对话继续追问。你可以继续补充，也可以停在这里。</p>
+          <div class="checkpoint-actions"><button class="button secondary" type="button">继续说说</button><button class="button primary" type="button">完成这件事</button></div>`,
+        repair: `${opening}
+          <article class="message assistant"><div class="bubble">如果把这种退缩放在你对专业身份的内在建构里，它更接近哪一种自我保护？</div></article>
+          <article class="message user"><div class="bubble">看不懂，说简单一点。</div></article>
+          <p class="repair-note">已识别为问题修复；当前角度和事实保持不变，新的回答机会已开启</p>
+          <p class="thinking">刚才的问题太抽象了。换成一个更具体、一次只问一件事的说法。</p>
+          <article class="message assistant"><div class="bubble">你当时最怕别人怎么评价你？</div></article>
+          <div class="question-actions"><button class="question-action" type="button">再简单一点</button><button class="question-action" type="button">我不想回答</button></div>
+          <section class="notice"><strong>问题修复形成了新的问题，现在是第 2 次回答机会。</strong>新问题更具体、更容易回答，因此占用一次回答机会；当前角度、已有事实和前三问上限保持不变。</section>`,
+        versions: `${opening}
+          <article class="message assistant"><div class="bubble">你当时最怕别人怎么评价你？</div></article>
+          <div class="version-switch" aria-label="回复版本"><button type="button" aria-label="上一个版本">‹</button><span>回复 2 / 3 · 具体一点</span><button type="button" aria-label="下一个版本">›</button></div>
+          <div class="question-actions"><button class="question-action" type="button">简单一点</button><button class="question-action" type="button">换种问法</button><button class="question-action" type="button">更深入</button><button class="question-action" type="button">纠正理解</button></div>
+          <section class="notice"><strong>同一问题切换回复版本，当前仍是第 1 次回答机会。</strong>用户尚未回答时，版本切换保持稳定的事件身份、角度和机会数；选定版本后再继续当前路径。</section>`,
+        failure: `${opening}
+          <article class="message assistant"><div class="bubble">你说“想躲开”的那一刻，身体或情绪上最先出现了什么变化？</div></article>
+          <article class="message user"><div class="bubble">心里一下紧了，脑子里一直在想，别人会不会觉得我根本不专业。</div></article>
+          <section class="notice error" role="alert"><strong>你的回答已经保存，AI 回应暂时没有完成。</strong><br />可以从这里继续生成，也可以先刷新页面。你的原话、当前角度和进度都会保留。<div class="notice-actions"><button id="retry-button" class="button primary small" type="button">继续生成</button><button class="button secondary small" type="button">保留并稍后继续</button></div></section>
+          <p class="thinking">恢复后将继续处理这一条回答，不需要重新发送，也不会重复写入。</p>`
+      };
+
+      const stateStages = {
+        'checkpoint-one': ['light', [100, 0, 0]],
+        guided: ['guided', [100, 52, 0]],
+        'checkpoint-two': ['guided', [100, 100, 0]],
+        deep: ['deep', [100, 100, 58]],
+        repair: ['guided', [100, 34, 0]],
+        versions: ['guided', [100, 34, 0]],
+        failure: ['guided', [100, 52, 0]]
+      };
+
+      function setStage(current, values) {
+        ['light', 'guided', 'deep'].forEach((name, index) => {
+          const item = stageItems[name];
+          const value = values[index];
+          item.classList.toggle('current', name === current);
+          item.classList.toggle('done', value === 100 && name !== current);
+          item.querySelector('.stage-percent').textContent = `${value}%`;
+          item.querySelector('.stage-progress b').style.setProperty('--progress', `${value}%`);
+        });
+      }
+
+      function setState(state) {
+        conversation.innerHTML = screens[state];
+        stateButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.state === state)));
+        const stage = stateStages[state];
+        setStage(stage[0], stage[1]);
+        const angle = conversation.querySelector('.angle-choice');
+        if (angle) angle.addEventListener('click', () => {
+          conversation.querySelectorAll('.angle-choice').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+          angle.setAttribute('aria-pressed', 'true');
+          setState('guided');
+        });
+        const retry = document.getElementById('retry-button');
+        if (retry) retry.addEventListener('click', () => {
+          retry.textContent = '正在继续…';
+          retry.disabled = true;
+          window.setTimeout(() => setState('guided'), 700);
+        });
+        conversation.scrollTop = conversation.scrollHeight;
+      }
+
+      stateButtons.forEach((button) => button.addEventListener('click', () => setState(button.dataset.state)));
+      schemeButtons.forEach((button) => button.addEventListener('click', () => {
+        workspace.classList.remove('scheme-a', 'scheme-b', 'scheme-c');
+        workspace.classList.add(`scheme-${button.dataset.scheme}`);
+        schemeButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+      }));
+
+      const journal = document.getElementById('journal-panel');
+      const scrim = document.getElementById('journal-scrim');
+      const journalOpen = document.getElementById('open-journal');
+      function setJournal(open) {
+        journal.classList.toggle('open', open);
+        scrim.classList.toggle('open', open);
+        journal.setAttribute('aria-hidden', String(!open));
+        scrim.setAttribute('aria-hidden', String(!open));
+        journalOpen.setAttribute('aria-expanded', String(open));
+        if (open) document.getElementById('close-journal').focus();
+        else journalOpen.focus();
+      }
+      journalOpen.addEventListener('click', () => setJournal(true));
+      document.getElementById('close-journal').addEventListener('click', () => setJournal(false));
+      scrim.addEventListener('click', () => setJournal(false));
+      window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && journal.classList.contains('open')) setJournal(false); });
+
+      document.getElementById('send').addEventListener('click', () => {
+        if (!composer.value.trim()) return;
+        const message = document.createElement('article');
+        message.className = 'message user';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = composer.value.trim();
+        message.appendChild(bubble);
+        conversation.appendChild(message);
+        composer.value = '';
+        conversation.scrollTop = conversation.scrollHeight;
+      });
+      composer.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); document.getElementById('send').click(); }
+      });
+
+      setState('checkpoint-one');
+    </script>
+  </body>
+</html>

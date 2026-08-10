@@ -489,6 +489,25 @@ describe("draft policies", () => {
     expect(title).not.toBe("象征意义");
   });
 
+  it("turns expression-themed joy into a natural diary title", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "joy",
+      snapshot: {
+        ...partialJoySnapshot,
+        event: "晚上写产品想法时，原本卡住的那一段突然写顺了",
+        joyMoment: "晚上写产品想法时，原本卡住的那一段突然写顺了",
+        whyItMattered: "脑子里的想法终于能清楚地表达出来",
+        joySource: "把想法写顺之后整个人都亮了起来",
+        feeling: "轻快",
+        stateShift: "从卡住变得轻快"
+      },
+      aiTitle: "表达被点亮"
+    });
+
+    expect(title).toBe("把想法写顺");
+    expect(title).not.toBe("表达被点亮");
+  });
+
   it("governs improvement titles with semantic candidates instead of event truncation or generic labels", () => {
     const meetingTitle = buildSemanticJournalTitle({
       dimension: "improvement",

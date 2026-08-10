@@ -2,6 +2,8 @@
 
 最后更新：`2026-05-25`
 
+> 历史发布清单。此处的 `dlight.cc.cd` 记录 `2026-05` 的发布状态；当前生产主域名、环境合同和验收命令以 [`docs/vercel-preview-production-lane.md`](../vercel-preview-production-lane.md) 为准。
+
 ## 1. 文档回填
 
 - [x] `AI-01 joy` 结论已回填

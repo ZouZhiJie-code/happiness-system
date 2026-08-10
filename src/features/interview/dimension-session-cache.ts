@@ -75,6 +75,8 @@ function getLastAssistantQuestion(messages: InterviewMessage[]) {
 
 export function buildInterviewSessionRecordFromStore(input: {
   sessionId: string;
+  conversationSchemaVersion?: number;
+  activeBranchSessionId?: string | null;
   sessionDimension: InterviewDimension;
   sessionEntryDate: string;
   status: InterviewSessionRecord["status"];
@@ -98,6 +100,9 @@ export function buildInterviewSessionRecordFromStore(input: {
     id: input.sessionId,
     userId: "",
     dimension: input.sessionDimension,
+    conversationSchemaVersion: input.conversationSchemaVersion ?? 1,
+    rootSessionId: input.sessionId,
+    activeBranchSessionId: input.activeBranchSessionId ?? input.sessionId,
     status: input.status,
     stage: input.stage,
     activeEventId: input.activeEventId,

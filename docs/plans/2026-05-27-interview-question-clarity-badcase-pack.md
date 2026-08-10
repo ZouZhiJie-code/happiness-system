@@ -44,7 +44,7 @@
 
 **Case ID:** `JOY-DRIFT-MATERIAL`  
 **Dimension:** `joy`  
-**Session:** `15dbf43a-8d7b-49e0-a040-fc3abaa22275`
+**Session:** `redacted-operational-id`
 
 ### Context
 
@@ -97,7 +97,7 @@ AI：这种视觉或质感上的美感，具体是哪种颜色、形状或材质
 
 **Case ID:** `JOY-BOUNDARY-REPEAT`  
 **Dimension:** `joy`  
-**Session:** `15dbf43a-8d7b-49e0-a040-fc3abaa22275`
+**Session:** `redacted-operational-id`
 
 ### Transcript Slice
 
@@ -140,7 +140,7 @@ AI：抛开具体的颜色或材质不谈，什么样的内容或场景节奏，
 
 **Case ID:** `FULFILLMENT-ABSTRACT-STANDARD`  
 **Dimension:** `fulfillment`  
-**Session:** `533f4bac-5fce-40ea-9d87-807d8ffaf6a9`
+**Session:** `redacted-operational-id`
 
 ### Context
 
@@ -189,7 +189,7 @@ AI：如果只留一句最算数的标准，你会怎么说？
 
 **Case ID:** `REFLECTION-NONEXISTENT-MENTAL-OBJECT`  
 **Dimension:** `reflection`  
-**Session:** `b512bed9-2b54-434b-91e4-d5e17e42cc28`
+**Session:** `redacted-operational-id`
 
 ### Context
 
@@ -242,7 +242,7 @@ AI：今天上午“搞一会就休息会”的时候，心里具体在比较哪
 
 **Case ID:** `REFLECTION-MULTI-ACTION`  
 **Dimension:** `reflection`  
-**Session:** `b512bed9-2b54-434b-91e4-d5e17e42cc28`
+**Session:** `redacted-operational-id`
 
 ### Transcript Slice
 
@@ -277,7 +277,7 @@ AI：这种“不知道具体该干什么”的模糊感，具体在哪个瞬间
 
 **Case ID:** `IMPROVEMENT-I-DONT-KNOW`  
 **Dimension:** `improvement`  
-**Session:** `ab9693bb-9b55-4c65-8704-5939bbbc66e2`
+**Session:** `redacted-operational-id`
 
 ### Transcript Slice
 
@@ -313,7 +313,7 @@ AI：如果下次在早餐后再次感到“无聊、没兴奋感”，你最先
 
 **Case ID:** `GRATITUDE-ABSTRACT-TREASURE`  
 **Dimension:** `gratitude`  
-**Session:** `87a7abb3-353b-4bd9-be69-c8e528357d51`
+**Session:** `redacted-operational-id`
 
 ### Context
 

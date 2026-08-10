@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { intentAssessmentV1Schema } from "@/features/interview/intent/intent-v1";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 
 const nullableString = z.union([z.string(), z.null()]);
@@ -129,6 +130,15 @@ export const gratitudeExtractResultSchema = z
       });
     }
   });
+
+export function createIntentAwareExtractResultSchema<T extends z.ZodTypeAny>(evidenceSchema: T) {
+  return z
+    .object({
+      intent: intentAssessmentV1Schema,
+      evidence: evidenceSchema
+    })
+    .strict();
+}
 
 export const joyQuestionSchema = z
   .object({

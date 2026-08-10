@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram name="访谈功能架构图">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="幸福日志访谈功能架构图" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=25;fontStyle=1;fontColor=#4f3526;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="700" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="静态能力分解｜呈现功能域、子功能与归属关系" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#7a6253;" vertex="1" parent="1">
+          <mxGeometry x="40" y="65" width="700" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="root_capability" value="AI 幸福日志访谈功能" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#6f4e37;strokeColor=#5c3f2d;fontColor=#ffffff;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="1720" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_session" value="01 会话与事件管理" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff1e5;swimlaneFillColor=#fffaf6;strokeColor=#c98952;fontColor=#533a2b;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="540" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="session_1" value="日期与五维访谈入口" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="domain_session">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="session_2" value="会话创建与当天恢复" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="domain_session">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="session_3" value="当前事件与多事件管理" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="domain_session">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="session_4" value="继续、暂停与会话完成状态" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="domain_session">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="session_5" value="按日期、维度与待处理回复恢复访谈现场" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="domain_session">
+          <mxGeometry x="30" y="305" width="480" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_understanding" value="02 用户表达理解" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7d9;swimlaneFillColor=#fffdf4;strokeColor=#c7a13c;fontColor=#554717;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="210" width="540" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="understanding_1" value="消息意图与显式操作识别" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="domain_understanding">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="understanding_2" value="停止、整理日志与敌意边界识别" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="domain_understanding">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="understanding_3" value="问题理解失败与 repair 协议" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="domain_understanding">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="understanding_4" value="五维专属结构化槽位提取与规则 fallback" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="domain_understanding">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="understanding_5" value="证据状态处理与事件档案合并" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="domain_understanding">
+          <mxGeometry x="30" y="305" width="480" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_decision" value="03 访谈决策控制" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#ffe7cf;swimlaneFillColor=#fff9f2;strokeColor=#d79b00;fontColor=#573a0a;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="210" width="540" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_1" value="维度专属阶段判断" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2e4;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;" vertex="1" parent="domain_decision">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_2" value="完整、部分版本与最低轮数判断" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2e4;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;" vertex="1" parent="domain_decision">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_3" value="继续追问、事件完成、转维度与材料不足分支" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2e4;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;" vertex="1" parent="domain_decision">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_4" value="pendingDecision 与用户选择动作管理" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2e4;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;" vertex="1" parent="domain_decision">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="decision_5" value="追问目标、问题规格与访谈进度计算" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2e4;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;" vertex="1" parent="domain_decision">
+          <mxGeometry x="30" y="305" width="480" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_dialogue" value="04 对话表达与输出控制" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eee4f2;swimlaneFillColor=#fbf8fc;strokeColor=#9673a6;fontColor=#493451;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="540" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="dialogue_1" value="上下文选择与 Prompt 组装" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="domain_dialogue">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dialogue_2" value="thinkingSummary 生成与语义重写" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="domain_dialogue">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dialogue_3" value="单个正式追问的自然语言生成" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="domain_dialogue">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dialogue_4" value="防重复、防回卷、协议检查与 fallback" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="domain_dialogue">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dialogue_5" value="SSE 流式展示与结构化错误反馈" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f0f8;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="domain_dialogue">
+          <mxGeometry x="30" y="305" width="480" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_journal" value="05 日志成果管理" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e1ecf8;swimlaneFillColor=#f8fbff;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="630" y="620" width="540" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_1" value="来源事件选择与 stitched 多事件材料管理" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_2" value="维度语义解释、DraftBrief 与写作控制" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_3" value="维度短标题与正文草稿生成" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_4" value="质量门、标题治理与 fallback draft" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="journal_5" value="编辑、自动暂存、正式保存与当天完整日志" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="domain_journal">
+          <mxGeometry x="30" y="305" width="480" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="domain_support" value="06 状态、数据与运营支撑" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e2efdf;swimlaneFillColor=#f8fcf7;strokeColor=#82b366;fontColor=#345233;fontSize=16;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="620" width="540" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="support_1" value="用户回复先落库 + 消息、会话与事件持久化" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=14;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="65" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="support_2" value="snapshotData、payload 与证据状态存储" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=14;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="125" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="support_3" value="draft / saved 日志状态生命周期" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=14;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="185" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="support_4" value="输入草稿、待发 outbox、刷新恢复与继续生成" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=14;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="245" width="480" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="support_5" value="访谈埋点、管理员分析与内容查看审计" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef7ec;strokeColor=#82b366;fontColor=#345233;fontSize=14;" vertex="1" parent="domain_support">
+          <mxGeometry x="30" y="305" width="480" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note" value="阅读方式：每个色块代表一个一级功能域；色块内部是该功能域包含的二级能力。图中不表达调用顺序。" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=13;align=left;spacingLeft=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1040" width="1720" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

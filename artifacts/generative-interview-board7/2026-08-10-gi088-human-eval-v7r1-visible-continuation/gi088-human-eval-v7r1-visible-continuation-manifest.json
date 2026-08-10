@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "status": "no_go_prefix_json_mode_incompatible",
+  "evaluation": {
+    "id": "gi088_human_eval_v7r1_visible_continuation",
+    "version": "2026-08-10.gi088-human-eval-v7r1-visible-continuation",
+    "serviceVersion": "2026-08-10.gi088-visible-continuation-service-v7r1",
+    "recoveryPolicyVersion": "2026-08-10.gi088-deepseek-prefix-continuation-v1",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.1",
+    "mode": "high_only",
+    "activeBranches": ["high"],
+    "taskCount": 2,
+    "effectiveCandidateFingerprint": "63acaede24844272886ea798c435d7f59ab14deb989b734d842b60ab48ee7242",
+    "datasetFingerprint": "6753507247d257de1fef9105c7aa4e8102b749f91512130942b1a2507158f44e",
+    "executionFingerprint": "58a516fab81305bc7f3bec3bed74650385950923d79c0b53f002ebffe2ac1a04"
+  },
+  "lineage": {
+    "previousEvaluationVersion": "2026-08-09.gi088-human-eval-v7-continuity-baseline",
+    "previousBatchStatus": "sealed_2_of_2",
+    "v7Disposition": "continuity_experience_completed_visible_answer_reliability_failed",
+    "preservedHistoricalVersions": ["v1", "v2", "v3", "v4", "v5", "v6", "v7"]
+  },
+  "visibleContinuation": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "endpoint": "/beta/chat/completions",
+    "visiblePrefix": "{",
+    "sharedDeadlineMs": 60000,
+    "automaticPrefixContinuationsPerSubmission": 1,
+    "manualAfterAutoRecoveryAllowed": 1,
+    "maximumProviderCallsPerUserSubmission": 3,
+    "maximumProviderCallsPerTrajectory": null,
+    "automaticRecoveryChains": false
+  },
+  "privacy": {
+    "hiddenReasoningLifetime": "single_request_one_shot_memory_only",
+    "hiddenReasoningSerializable": false,
+    "hiddenReasoningStored": false,
+    "hiddenReasoningLogged": false,
+    "hiddenReasoningDisplayed": false,
+    "hiddenReasoningInPersistentRequestHash": false,
+    "credentialsInExport": false
+  },
+  "probe": {
+    "version": "2026-08-10.gi088-prefix-beta-compatibility-probe-v1",
+    "fingerprint": "8bfde44d369845ecbee3ec909f0c53ff50865ea48bc13ddfb2453c94b9f6d4e5",
+    "authorizedCallBudget": 1,
+    "automaticRetries": 0,
+    "fallbackCalls": 0,
+    "status": "failed",
+    "modelGenerationCalls": 1,
+    "errorCode": "UPSTREAM_HTTP_ERROR",
+    "safeErrorSummary": "response_format json_object should not be used with prefix",
+    "disposition": "stop_preview_deployment_and_enter_thinking_high_model_comparison"
+  },
+  "automaticValidation": {
+    "status": "local_targeted_passed",
+    "targetedTestFiles": 8,
+    "targetedTestsPassed": 124,
+    "historicalTestsSkipped": 6,
+    "targetedTestsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "preview": {
+    "deployed": false,
+    "deploymentStoppedByCompatibilityGate": true,
+    "newBatchCreated": false,
+    "modelCallsConsumedByCodexOutsidePrefixProbe": 11,
+    "totalModelCallsConsumedByCodexForV7r1Evidence": 12
+  },
+  "modelComparison": {
+    "version": "2026-08-10.gi088-empty-content-flash-pro-comparison-v1",
+    "fingerprint": "ffa0c4b8c4985c15671df10abc15381f8abac1914c518d787aaf98f9198b88de",
+    "modelGenerationCalls": 6,
+    "automaticRetries": 0,
+    "fallbackCalls": 0,
+    "flashVisibleAnswers": 2,
+    "flashEmptyContent": 1,
+    "proVisibleAnswers": 3,
+    "proEmptyContent": 0,
+    "proHistoricalContractProtected": 1,
+    "codexInitialAssessment": "directional_support_for_pro_visible_answer_reliability",
+    "nextCandidate": "v7r2_thinking_high_pro_pending_product_discussion"
+  },
+  "arkPlatformComparison": {
+    "version": "2026-08-10.gi088-empty-content-ark-flash-platform-probe-v1",
+    "fingerprint": "7bec10fdf529471625ef33e73a825d5efecbbf9e75da46a1ac86a3979741034e",
+    "e1CorrectionVersion": "2026-08-10.gi088-ark-e1-60s-header-correction-v1",
+    "e1CorrectionFingerprint": "3d2d6b6f48bc787638a08150883908dc221868669af84104027b01745bc1df2a",
+    "model": "deepseek-v4-flash-ga-260731",
+    "provider": "volcengine_ark",
+    "transport": "direct_rest_openai_compatible",
+    "modelGenerationCalls": 5,
+    "historicalCaseCalls": 4,
+    "syntheticCompatibilityCalls": 1,
+    "automaticRetries": 0,
+    "fallbackCalls": 0,
+    "visibleAnswers": 3,
+    "emptyContent": 0,
+    "historicalContractValid": 2,
+    "historicalContractProtected": 1,
+    "averageVisibleAnswerLatencyMs": 10876,
+    "maximumVisibleAnswerLatencyMs": 15777,
+    "codexInitialAssessment": "ark_flash_is_current_best_combined_candidate",
+    "recommendedIntegration": "rest_chat_completions_via_typescript_openai_compatible_provider",
+    "nextCandidate": "v7r2_thinking_high_ark_flash_pending_human_preview"
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

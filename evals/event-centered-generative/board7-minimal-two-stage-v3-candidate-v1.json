@@ -1,0 +1,233 @@
+{
+  "datasetVersion": "2026-08-01.board7-minimal-two-stage-v3-candidate-v1",
+  "purpose": "验证 Provider v3 的 understandingCard、questionIntent 与 limitReason 能否稳定支持第二段自然表达。案例和隐藏判尺不得进入运行时 Prompt 或 Few-shot。",
+  "cases": [
+    {
+      "id": "V3-F-READY-01",
+      "scenarioFamily": "pottery_kiln_cooling_relief_recognition",
+      "capability": "feeling_ready_user_understanding",
+      "angle": "feeling",
+      "mode": "guided_reflection",
+      "userContext": "用户第一次独立烧制陶杯；打开窑门确认杯子完整以后，才从身体变化中认出此前一直紧张。",
+      "conversationContext": [{
+        "user": "今天第一次自己烧陶杯，等窑冷下来的几个小时我一直不敢看。",
+        "assistantUnderstanding": "结果还没确认时，你一直把注意力悬在窑里。",
+        "assistantQuestion": "真正打开窑门以后，你最先有什么变化？"
+      }],
+      "currentQuestion": "真正打开窑门以后，你最先有什么变化？",
+      "currentQuestionTarget": "kiln_opening_state_change",
+      "currentQuestionCognitiveAction": "trace_change",
+      "currentQuestionIntent": {
+        "targetId": "kiln_opening_state_change",
+        "semanticGoal": "理解确认陶杯完整前后用户状态怎样变化",
+        "minimumAnswerScope": "打开窑门后的一个身体变化和用户对此前状态的理解"
+      },
+      "currentUserText": "看到杯子没裂，我才发现自己一直咬着牙。把杯子拿出来那一下，下巴松了，我才承认前面其实很紧张。",
+      "trustedFacts": [
+        "用户第一次独立烧制陶杯，等待窑冷时一直不敢查看",
+        "看到陶杯没有裂开时，用户发现自己一直咬着牙",
+        "拿出陶杯时下巴放松，用户明确认出此前一直紧张"
+      ],
+      "expectedState": "ready",
+      "expectedAction": "complete",
+      "expectedUnderstanding": {
+        "mustCover": ["确认杯子完整前一直紧张", "拿出杯子时下巴放松"],
+        "relationSides": ["咬着牙", "下巴松了"]
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "faithful_user_understanding",
+      "mustAvoid": ["继续追问已经说清的状态变化", "扩大成长期焦虑或完美主义"]
+    },
+    {
+      "id": "V3-T-ASK-01",
+      "scenarioFamily": "print_shop_watermark_proof_choice_standard",
+      "capability": "thought_needs_more_answer_entry",
+      "angle": "thought",
+      "mode": "guided_reflection",
+      "userContext": "用户在两家打印店之间选择了交付更慢的一家；样张水印承诺改变了选择，但判断标准仍未说清。",
+      "conversationContext": [{
+        "user": "我要印作品集，最后选了要多等一天的那家店。",
+        "assistantUnderstanding": "交付速度没有直接决定你的选择，另一项承诺更重要。",
+        "assistantQuestion": "哪项承诺让你愿意多等一天？"
+      }],
+      "currentQuestion": "哪项承诺让你愿意多等一天？",
+      "currentQuestionTarget": "print_shop_choice_clue",
+      "currentQuestionCognitiveAction": "clarify_user_term",
+      "currentQuestionIntent": {
+        "targetId": "print_shop_choice_clue",
+        "semanticGoal": "找到改变打印店选择的具体承诺",
+        "minimumAnswerScope": "指出承诺及其对选择的影响"
+      },
+      "currentUserText": "那家说正式印之前会给每页样张加水印让我确认。我看到这句就愿意多等一天，可我还没说清自己到底在确认什么。",
+      "trustedFacts": [
+        "用户选择了交付时间多一天的打印店",
+        "该店承诺正式印刷前提供带水印的逐页样张",
+        "逐页样张让用户愿意等待，但用户尚未说清具体判断标准"
+      ],
+      "expectedState": "needs_more",
+      "expectedAction": "ask",
+      "expectedUnderstanding": {
+        "mustCover": ["逐页样张改变了选择", "具体判断标准仍未说清"],
+        "relationSides": []
+      },
+      "expectedQuestionIntent": {
+        "goalMustCover": ["逐页确认具体保护哪项判断"],
+        "answerEntryMustCover": ["看到某一页样张时会检查什么"],
+        "mustBeConcrete": true
+      },
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "needs_user_judgment_standard",
+      "mustAvoid": ["重新询问哪家更快", "断言用户追求控制感", "重复询问已经给出的样张承诺"]
+    },
+    {
+      "id": "V3-R-READY-01",
+      "scenarioFamily": "community_garden_help_and_label_boundary",
+      "capability": "relationship_ready_coexisting_boundary",
+      "angle": "relationship",
+      "mode": "guided_reflection",
+      "userContext": "社区花园搭档帮用户浇了苗，也未经沟通替用户更换了植物标签；用户同时认可帮助并说明决定边界。",
+      "conversationContext": [{
+        "user": "我晚到花园时，搭档已经帮我浇了苗，还把几块植物标签换了。",
+        "assistantUnderstanding": "同一次帮忙里，照料和替你做决定同时发生了。",
+        "assistantQuestion": "这两部分对你来说分别意味着什么？"
+      }],
+      "currentQuestion": "这两部分对你来说分别意味着什么？",
+      "currentQuestionTarget": "garden_help_decision_boundary",
+      "currentQuestionCognitiveAction": "differentiate",
+      "currentQuestionIntent": {
+        "targetId": "garden_help_decision_boundary",
+        "semanticGoal": "理解用户怎样区分欢迎的照料与需要共同决定的改变",
+        "minimumAnswerScope": "同时说明认可的帮助和触及边界的改变"
+      },
+      "currentUserText": "浇水确实替我解了急，我很感谢。标签代表我在记录不同苗的生长，换之前应该先和我说；我欢迎帮忙，但这类改变需要一起决定。",
+      "trustedFacts": [
+        "搭档帮用户给幼苗浇水，用户对此感谢",
+        "植物标签用于记录不同幼苗的生长",
+        "用户欢迎帮忙，同时希望更换标签这类改变由双方共同决定"
+      ],
+      "expectedState": "ready",
+      "expectedAction": "complete",
+      "expectedUnderstanding": {
+        "mustCover": ["浇水的帮助得到认可", "更换记录标签需要共同决定"],
+        "relationSides": ["欢迎帮忙", "改变需要一起决定"]
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "coexisting_relationship_boundary",
+      "mustAvoid": ["把全部帮助写成控制", "遗漏用户对浇水的感谢", "猜测搭档动机"]
+    },
+    {
+      "id": "V3-A-READY-01",
+      "scenarioFamily": "support_chat_screenshot_keeps_issue_traceable",
+      "capability": "action_ready_safe_relation",
+      "angle": "action",
+      "mode": "deep_conversation",
+      "userContext": "用户联系客服处理重复扣费；提前把两笔扣费放在同一张截图中，客服据此保持在同一问题上并完成退款登记。",
+      "conversationContext": [{
+        "user": "上次找客服说重复扣费，我翻来翻去没讲清。这次我先把两笔扣费放进了一张截图。",
+        "assistantUnderstanding": "这次你在沟通前把分散证据放到了一起。",
+        "assistantQuestion": "这张截图在实际沟通中发挥了什么作用？"
+      }],
+      "currentQuestion": "这张截图在实际沟通中发挥了什么作用？",
+      "currentQuestionTarget": "screenshot_support_function",
+      "currentQuestionCognitiveAction": "connect_clues",
+      "currentQuestionIntent": {
+        "targetId": "screenshot_support_function",
+        "semanticGoal": "理解合并截图在本次客服沟通中的实际作用",
+        "minimumAnswerScope": "说明截图怎样影响问题确认和最终进展"
+      },
+      "currentUserText": "客服本来问的是其中一笔，我把截图发过去后，他直接圈出两笔说确实重复，接着就登记了退款，不用我来回找订单号。",
+      "trustedFacts": [
+        "上次用户处理重复扣费时因来回查找而没有讲清",
+        "这次用户事先把两笔扣费放在同一张截图中",
+        "客服看到截图后圈出两笔并确认重复，随后登记退款",
+        "用户本次无需来回查找订单号"
+      ],
+      "expectedState": "ready",
+      "expectedAction": "pause",
+      "expectedUnderstanding": {
+        "mustCover": ["截图让两笔扣费可以直接对照", "沟通推进到退款登记"],
+        "relationSides": ["同一张截图", "确认重复并登记退款"]
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "safe_current_event_relation",
+      "mustAvoid": ["把截图解释为长期习惯或人格特点", "猜测客服此前故意拖延", "只罗列截图和退款而不连接作用"]
+    },
+    {
+      "id": "V3-CORRECT-01",
+      "scenarioFamily": "meeting_answered_for_correction",
+      "capability": "correction_priority_new_card",
+      "angle": "relationship",
+      "mode": "deep_conversation",
+      "userContext": "AI 先前把沉默理解成口误后的尴尬；用户明确纠正，真正介意的是同事替自己回答。",
+      "conversationContext": [{
+        "user": "会上我说错了一个数字，后来就没再说话。",
+        "assistantUnderstanding": "说错数字以后，你似乎一直被尴尬压住。",
+        "assistantQuestion": "那份尴尬最明显停在哪里？"
+      }],
+      "currentQuestion": "那份尴尬最明显停在哪里？",
+      "currentQuestionTarget": "mistake_embarrassment",
+      "currentQuestionCognitiveAction": "clarify_user_term",
+      "currentQuestionIntent": {
+        "targetId": "mistake_embarrassment",
+        "semanticGoal": "理解口误后的尴尬体验",
+        "minimumAnswerScope": "一个尴尬最明显的时刻"
+      },
+      "currentUserText": "不是尴尬。数字我马上改了，我真正不舒服的是同事没等我说完就替我回答，后面我才不想再接着说。",
+      "trustedFacts": [
+        "用户在会上说错数字后马上完成纠正",
+        "同事没有等用户说完便替用户回答",
+        "用户明确纠正旧理解，表示不舒服来自被替答，随后不想继续发言"
+      ],
+      "expectedState": "ready",
+      "expectedAction": "pause",
+      "expectedUnderstanding": {
+        "mustCover": ["旧有尴尬理解已经撤回", "被同事替答后不想继续发言"],
+        "relationSides": ["没等说完就替答", "后面不想再说"]
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": [],
+      "qualitySourceLabel": "correction_replaces_old_understanding",
+      "mustAvoid": ["继续沿尴尬方向提问", "遗漏用户已经纠正数字", "猜测同事故意抢话"]
+    },
+    {
+      "id": "V3-LIMIT-01",
+      "scenarioFamily": "elevator_encounter_vague_and_stop",
+      "capability": "limited_without_safe_entry",
+      "angle": "feeling",
+      "mode": "guided_reflection",
+      "userContext": "用户只记得一次电梯相遇让自己不舒服，无法回忆具体时刻，并明确希望停在这里。",
+      "conversationContext": [{
+        "user": "今天在电梯里遇到一个邻居，出来以后有点不舒服。",
+        "assistantUnderstanding": "这次相遇留下了不舒服，具体触发点还不清楚。",
+        "assistantQuestion": "电梯里哪一刻最先让你不舒服？"
+      }],
+      "currentQuestion": "电梯里哪一刻最先让你不舒服？",
+      "currentQuestionTarget": "elevator_discomfort_anchor",
+      "currentQuestionCognitiveAction": "anchor_specific",
+      "currentQuestionIntent": {
+        "targetId": "elevator_discomfort_anchor",
+        "semanticGoal": "找到电梯相遇中最先触发不舒服的具体锚点",
+        "minimumAnswerScope": "一个时刻、原话、动作或身体变化"
+      },
+      "currentUserText": "我真的想不起他说了什么，也分不出是哪一刻，就只记得不舒服。这段先停在这里吧。",
+      "trustedFacts": [
+        "用户在电梯遇到邻居后感到不舒服",
+        "用户无法回忆具体原话或触发时刻",
+        "用户明确要求这一段先停在这里"
+      ],
+      "expectedState": "limited",
+      "expectedAction": "honest_limit",
+      "expectedUnderstanding": {
+        "mustCover": [],
+        "relationSides": []
+      },
+      "expectedQuestionIntent": null,
+      "expectedLimitReasonMustCover": ["用户无法提供安全的具体入口并希望停止"],
+      "qualitySourceLabel": "limited_by_user_boundary",
+      "mustAvoid": ["继续追问邻居说了什么", "制造不舒服的原因", "要求用户从候选感受中选择"]
+    }
+  ]
+}

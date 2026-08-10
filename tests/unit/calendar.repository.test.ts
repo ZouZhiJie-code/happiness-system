@@ -186,4 +186,62 @@ describe("calendar.repository", () => {
       }
     ]);
   });
+
+  it("重新生成开场问题后仍保持 opening-only 空会话语义", async () => {
+    mockInterviewSessionFindMany
+      .mockResolvedValueOnce([
+        {
+          id: "root-session",
+          activeBranchSessionId: "branch-session",
+          dimension: "joy",
+          entryDate: new Date("2026-05-01T16:00:00.000Z"),
+          status: "active",
+          startedAt: new Date("2026-05-02T01:00:00.000Z"),
+          completedAt: null,
+          pausedAt: null,
+          draftSummary: null,
+          finalEntryId: null,
+          _count: { messages: 0 },
+          messages: [{ createdAt: new Date("2026-05-02T01:00:00.000Z") }]
+        }
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "root-session",
+          rootSessionId: "root-session",
+          status: "active",
+          startedAt: new Date("2026-05-02T01:00:00.000Z"),
+          completedAt: null,
+          pausedAt: null,
+          draftSummary: null,
+          _count: { messages: 0 },
+          messages: [{ createdAt: new Date("2026-05-02T01:00:00.000Z") }]
+        },
+        {
+          id: "branch-session",
+          rootSessionId: "root-session",
+          status: "active",
+          startedAt: new Date("2026-05-02T01:00:00.000Z"),
+          completedAt: null,
+          pausedAt: null,
+          draftSummary: null,
+          _count: { messages: 0 },
+          messages: [{ createdAt: new Date("2026-05-02T01:01:00.000Z") }]
+        }
+      ]);
+    mockJoyEntryFindMany.mockResolvedValue([]);
+    mockDailyJournalFindMany.mockResolvedValue([]);
+
+    const result = await listCalendarSourcesByDateRange({
+      userId: "user-1",
+      startDate: "2026-05-02",
+      endDate: "2026-05-02"
+    });
+
+    expect(result.sessions[0]).toMatchObject({
+      id: "root-session",
+      status: "active",
+      messageCount: 1
+    });
+  });
 });

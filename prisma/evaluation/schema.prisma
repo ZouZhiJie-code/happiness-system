@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/@prisma/gi088-evaluation-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("EVALUATION_DATABASE_URL")
+}
+
+model Gi088EvaluationBatch {
+  id                   String   @id @default(uuid())
+  ownerUserId          String
+  evaluationVersion    String
+  candidateFingerprint String
+  executionFingerprint String
+  status               String
+  state                Json
+  revision             Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  sealedAt             DateTime?
+
+  @@unique([ownerUserId, evaluationVersion])
+  @@index([status, updatedAt])
+  @@map("gi088_evaluation_batches")
+}
+
+model Gi088RetentionAudit {
+  id                   String   @id @default(uuid())
+  batchId              String
+  action               String
+  board6ClosedAt       DateTime
+  eligibleAfter        DateTime
+  executionFingerprint String
+  recordSummary        Json
+  createdAt            DateTime @default(now())
+
+  @@index([batchId, createdAt])
+  @@map("gi088_retention_audits")
+}
+
+model Gi088TechnicalSmoke {
+  id                   String   @id @default(uuid())
+  executionFingerprint String
+  arm                  String
+  authorizationId      String
+  status               String
+  requestHash           String
+  rawFinalOutput       String?
+  semantic             Json?
+  visible              Json?
+  validationIssues     Json
+  latencyMs            Int?
+  tokenUsage           Json?
+  providerDiagnostics  Json?
+  errorCode            String?
+  createdAt            DateTime @default(now())
+  completedAt          DateTime?
+
+  @@unique([executionFingerprint, arm, authorizationId])
+  @@map("gi088_technical_smokes")
+}

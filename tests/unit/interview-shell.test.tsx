@@ -24,7 +24,7 @@ import type {
   JoySnapshot
 } from "@/types/interview";
 
-const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
+const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchParams, mockFeedbackActionVisibility } = vi.hoisted(() => ({
   mockPathname: {
     value: "/interview"
   },
@@ -38,6 +38,9 @@ const { mockPathname, mockRouterPush, mockRouterReplace, mockSearchParams } = vi
       panel: null as string | null,
       sessionId: null as string | null
     }
+  },
+  mockFeedbackActionVisibility: {
+    value: false
   }
 }));
 
@@ -57,7 +60,8 @@ vi.mock("@/components/ai-feedback/ai-quality-consent-banner", () => ({
 }));
 
 vi.mock("@/components/ai-feedback/ai-response-feedback", () => ({
-  AIResponseFeedback: () => null
+  AIResponseFeedback: ({ leadingAction }: { leadingAction?: React.ReactNode }) =>
+    mockFeedbackActionVisibility.value ? leadingAction ?? null : null
 }));
 
 const baseSnapshot: JoySnapshot = {
@@ -505,6 +509,7 @@ describe("InterviewShell", () => {
     mockPathname.value = "/interview";
     mockRouterPush.mockReset();
     mockRouterReplace.mockReset();
+    mockFeedbackActionVisibility.value = false;
     mockSearchParams.value = {
       dimension: "joy",
       entryDate: null,
@@ -1296,6 +1301,7 @@ describe("InterviewShell", () => {
     expect(JSON.parse(String(continueCall?.[1]?.body))).toEqual({
       action: "continue_current_event",
       sessionId: "session-choice",
+      baseBranchSessionId: "session-choice",
       clientTurnId: expect.any(String),
       baseMessageSequence: 0
     });
@@ -4596,6 +4602,89 @@ describe("InterviewShell", () => {
     expect(textarea).toHaveValue("第二行\n第三行");
   });
 
+  it("keeps an historical deep-link date when submitting the first reply", async () => {
+    const entryDate = "2026-04-20";
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate,
+      mode: null,
+      panel: null,
+      sessionId: null
+    };
+    const startedSession = buildSession({
+      id: "session-historical-first-reply",
+      entryDate,
+      activeBranchSessionId: "session-historical-first-reply"
+    });
+    const streamedSession = buildSession({
+      ...startedSession,
+      turnCount: 1,
+      messages: [
+        openingMessage,
+        {
+          id: "user-historical-first-reply",
+          role: "user",
+          content: "今天完成了一件小事，感觉踏实。",
+          sequence: 1,
+          createdAt: "2026-04-20T00:01:00.000Z"
+        },
+        {
+          id: "assistant-historical-first-reply",
+          role: "assistant",
+          content: "收到，我继续问下一个细节。",
+          assistantPayload: buildAssistantPayload({ question: "收到，我继续问下一个细节。" }),
+          sequence: 2,
+          createdAt: "2026-04-20T00:02:00.000Z"
+        }
+      ]
+    });
+    const startBodies: Array<Record<string, unknown>> = [];
+    let respondBody: Record<string, unknown> | null = null;
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/start")) {
+        startBodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+        return new Response(
+          JSON.stringify({
+            session: startedSession,
+            sessionId: startedSession.id,
+            openingQuestion: startedSession.lastAssistantQuestion
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        respondBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return buildSseResponse([
+          'event: phase\ndata: {"state":"thinking"}\n\n',
+          `event: session\ndata: ${JSON.stringify({ session: streamedSession })}\n\n`
+        ]);
+      }
+
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+
+    const textarea = await screen.findByRole("textbox");
+    fireEvent.change(textarea, { target: { value: "今天完成了一件小事，感觉踏实。" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送回答" }));
+
+    await waitFor(() => {
+      expect(respondBody).toMatchObject({
+        action: "reply",
+        sessionId: startedSession.id,
+        baseMessageSequence: 0,
+        baseBranchSessionId: startedSession.id
+      });
+    });
+    expect(startBodies).toEqual([{ dimension: "joy", entryDate }]);
+  });
+
   it("keeps the composer collapsed to a single-line minimum height", async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -5675,6 +5764,346 @@ describe("InterviewShell", () => {
       clientTurnId: respondBodies[0]?.clientTurnId,
       baseMessageSequence: respondBodies[0]?.baseMessageSequence,
       rawText: "网络断开时也只保存一次"
+    });
+  });
+
+  it("keeps question regeneration loading and streamed content in the original reply position", async () => {
+    mockFeedbackActionVisibility.value = true;
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: defaultEntryDate(),
+      mode: null,
+      panel: null,
+      sessionId: "session-regeneration"
+    };
+    const originalMessage: InterviewMessage = {
+      id: "assistant-version-1",
+      traceId: "trace-version-1",
+      role: "assistant",
+      content: "",
+      assistantPayload: buildAssistantPayload({
+        thinkingSummary: "我先沿着这个时刻继续理解。",
+        question: "那一刻发生了什么？",
+        questionSpec: {
+          target: "event_anchor",
+          stageIntent: "advance",
+          surfaceLevel: "default",
+          repairCount: 0
+        }
+      }),
+      branchSessionId: "session-regeneration",
+      responseVersion: {
+        groupId: "group-regeneration",
+        version: 1,
+        versionCount: 1,
+        canRegenerate: true,
+        canSwitch: false,
+        disabledReason: null,
+        versions: [
+          {
+            messageId: "assistant-version-1",
+            branchSessionId: "session-regeneration",
+            version: 1,
+            active: true
+          }
+        ]
+      },
+      sequence: 0,
+      createdAt: "2026-07-20T00:00:00.000Z"
+    };
+    const initialSession = buildSession({
+      id: "session-regeneration",
+      rootSessionId: "session-regeneration",
+      activeBranchSessionId: "session-regeneration",
+      conversationSchemaVersion: 2,
+      messages: [originalMessage],
+      lastAssistantQuestion: "那一刻发生了什么？"
+    });
+    const replacementMessage: InterviewMessage = {
+      ...originalMessage,
+      id: "assistant-version-2",
+      traceId: "trace-version-2",
+      branchSessionId: "branch-regeneration-2",
+      assistantPayload: buildAssistantPayload({
+        thinkingSummary: "我把问题落到一个更容易回答的画面。",
+        question: "你最先想到的是哪个画面？",
+        questionSpec: {
+          target: "event_anchor",
+          stageIntent: "advance",
+          surfaceLevel: "simplified",
+          repairCount: 0
+        }
+      }),
+      responseVersion: {
+        groupId: "group-regeneration",
+        version: 2,
+        versionCount: 2,
+        canRegenerate: true,
+        canSwitch: true,
+        disabledReason: null,
+        versions: [
+          {
+            messageId: "assistant-version-1",
+            branchSessionId: "session-regeneration",
+            version: 1,
+            active: false
+          },
+          {
+            messageId: "assistant-version-2",
+            branchSessionId: "branch-regeneration-2",
+            version: 2,
+            active: true
+          }
+        ]
+      }
+    };
+    const completedSession = buildSession({
+      ...initialSession,
+      activeBranchSessionId: "branch-regeneration-2",
+      messages: [replacementMessage],
+      lastAssistantQuestion: "你最先想到的是哪个画面？"
+    });
+    const deferredResponse = createDeferredResponse();
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/api/interview/session/session-regeneration")) {
+        return new Response(JSON.stringify(initialSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        return deferredResponse.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+    expect(await screen.findByText("那一刻发生了什么？")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "换个问法" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /更简单一点/u }));
+
+    const status = await screen.findByTestId("regeneration-in-place-status");
+    expect(status).toHaveTextContent("正在换一个更合适的问法…");
+    expect(status.closest("[data-message-group-id='assistant-version-1']")).toBeInTheDocument();
+    expect(screen.queryByText("正在思考中...")).not.toBeInTheDocument();
+
+    await act(async () => {
+      deferredResponse.resolve(buildSseResponse([
+        `event: session\ndata: ${JSON.stringify({ session: completedSession })}\n\n`
+      ]));
+    });
+
+    expect(await screen.findByText("你最先想到的是哪个画面？")).toBeInTheDocument();
+  });
+
+  it("shows a prefetched version immediately and rolls back when server selection is rejected", async () => {
+    mockFeedbackActionVisibility.value = true;
+    mockSearchParams.value = {
+      dimension: "joy",
+      entryDate: defaultEntryDate(),
+      mode: null,
+      panel: null,
+      sessionId: "session-version-cache"
+    };
+    const versions = [
+      { messageId: "version-cache-1", branchSessionId: "session-version-cache", version: 1, active: true },
+      { messageId: "version-cache-2", branchSessionId: "branch-version-cache-2", version: 2, active: false }
+    ];
+    const originalMessage: InterviewMessage = {
+      id: "version-cache-1",
+      traceId: "trace-cache-1",
+      role: "assistant",
+      content: "",
+      assistantPayload: buildAssistantPayload({ question: "原来的问题是什么？" }),
+      branchSessionId: "session-version-cache",
+      responseVersion: {
+        groupId: "group-version-cache",
+        version: 1,
+        versionCount: 2,
+        canRegenerate: true,
+        canSwitch: true,
+        disabledReason: null,
+        versions
+      },
+      sequence: 0,
+      createdAt: "2026-07-20T00:00:00.000Z"
+    };
+    const replacementMessage: InterviewMessage = {
+      ...originalMessage,
+      id: "version-cache-2",
+      traceId: "trace-cache-2",
+      branchSessionId: "branch-version-cache-2",
+      assistantPayload: buildAssistantPayload({ question: "预加载后的问题是什么？" }),
+      responseVersion: {
+        ...originalMessage.responseVersion!,
+        version: 2,
+        versions: versions.map((version) => ({
+          ...version,
+          active: version.messageId === "version-cache-2"
+        }))
+      }
+    };
+    const initialSession = buildSession({
+      id: "session-version-cache",
+      rootSessionId: "session-version-cache",
+      activeBranchSessionId: "session-version-cache",
+      conversationSchemaVersion: 2,
+      messages: [originalMessage],
+      lastAssistantQuestion: "原来的问题是什么？"
+    });
+    const previewSession = buildSession({
+      ...initialSession,
+      activeBranchSessionId: "branch-version-cache-2",
+      messages: [replacementMessage],
+      lastAssistantQuestion: "预加载后的问题是什么？"
+    });
+    const deferredSelection = createDeferredResponse();
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/api/interview/session/session-version-cache")) {
+        return new Response(JSON.stringify(initialSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url.endsWith("/api/interview/session/branch/preview")) {
+        return new Response(JSON.stringify({
+          targetBranchSessionId: "branch-version-cache-2",
+          session: previewSession
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url.endsWith("/api/interview/session/branch/select")) {
+        return deferredSelection.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+    expect(await screen.findByText("原来的问题是什么？")).toBeInTheDocument();
+    const nextVersionButton = screen.getByRole("button", { name: "查看下一个回复版本" });
+    fireEvent.pointerEnter(nextVersionButton);
+    await waitFor(() => {
+      expect(vi.mocked(global.fetch).mock.calls.some(([input]) =>
+        String(input).endsWith("/api/interview/session/branch/preview")
+      )).toBe(true);
+    });
+
+    fireEvent.click(nextVersionButton);
+    expect(await screen.findByText("预加载后的问题是什么？")).toBeInTheDocument();
+
+    await act(async () => {
+      deferredSelection.resolve(new Response(JSON.stringify({
+        error: "INTERVIEW_BRANCH_OUT_OF_DATE",
+        message: "当前访谈版本已经变化"
+      }), {
+        status: 409,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("原来的问题是什么？")).toBeInTheDocument();
+      expect(screen.queryByText("预加载后的问题是什么？")).not.toBeInTheDocument();
+    });
+  });
+
+  it("offers continue generation for a stale processing turn after reload", async () => {
+    cacheInterviewSessions({ joy: "session-stale-processing" });
+    const staleClientTurnId = "client-turn-stale-processing";
+    const staleTurn = {
+      id: "turn-stale-processing",
+      clientTurnId: staleClientTurnId,
+      sessionId: "session-stale-processing",
+      activeEventId: "event-1",
+      action: "reply" as const,
+      rawText: "服务中断后仍要保留这一句",
+      inputMode: "text" as const,
+      baseMessageSequence: 0,
+      status: "processing" as const,
+      attemptCount: 1,
+      errorCode: null,
+      createdAt: new Date(Date.now() - 120_000).toISOString(),
+      updatedAt: new Date(Date.now() - 120_000).toISOString(),
+      completedAt: null
+    };
+    const pendingSession = buildSession({
+      id: "session-stale-processing",
+      messages: [
+        openingMessage,
+        {
+          id: "user-stale-processing",
+          role: "user",
+          content: staleTurn.rawText,
+          clientTurnId: staleClientTurnId,
+          sequence: 1,
+          createdAt: staleTurn.createdAt
+        }
+      ],
+      pendingUserTurn: staleTurn
+    });
+    const defaultFetch = vi.mocked(global.fetch).getMockImplementation();
+    let resumeBody: {
+      action: string;
+      sessionId: string;
+      clientTurnId: string;
+    } | null = null;
+
+    vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/interview/session/session-stale-processing")) {
+        return new Response(JSON.stringify(pendingSession), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.endsWith("/api/interview/session/respond/stream")) {
+        resumeBody = JSON.parse(String(init?.body));
+        const completedSession = buildSession({
+          ...pendingSession,
+          pendingUserTurn: null,
+          turnCount: 1,
+          messages: [
+            ...pendingSession.messages,
+            {
+              id: "assistant-stale-recovered",
+              role: "assistant",
+              content: "这条回复已经接回来了。",
+              clientTurnId: staleClientTurnId,
+              sequence: 2,
+              createdAt: new Date().toISOString()
+            }
+          ]
+        });
+
+        return buildSseResponse([
+          `event: session\ndata: ${JSON.stringify({ session: completedSession })}\n\n`
+        ]);
+      }
+
+      return defaultFetch!(input, init);
+    });
+
+    renderInterviewPage();
+
+    expect(await screen.findByText("这条回复已经保留，可以继续生成。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "继续生成" }));
+
+    await waitFor(() => {
+      expect(resumeBody).toEqual({
+        action: "resume_turn",
+        sessionId: "session-stale-processing",
+        clientTurnId: staleClientTurnId
+      });
     });
   });
 });

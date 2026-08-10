@@ -26,7 +26,14 @@ const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => (
       dimension: null as string | null,
       view: "month" as string | null,
       date: "2026-05-02" as string | null,
-      month: null as string | null
+      month: null as string | null,
+      mode: null as string | null
+    } as {
+      dimension: string | null;
+      view: string | null;
+      date: string | null;
+      month: string | null;
+      mode?: string | null;
     }
   }
 }));
@@ -264,7 +271,8 @@ describe("site header calendar toolbar", () => {
       dimension: null,
       view: "month",
       date: "2026-05-02",
-      month: null
+      month: null,
+      mode: null
     };
     useInterviewStore.getState().reset();
   });
@@ -291,6 +299,20 @@ describe("site header calendar toolbar", () => {
     expect(within(toolbar).getByText("2天")).toBeInTheDocument();
     expect(within(toolbar).getByText("0维")).toBeInTheDocument();
     expect(toolbar).toHaveAttribute("aria-busy", "false");
+  });
+
+  it("switches month and week reading to the explicit event model", async () => {
+    global.fetch = vi.fn(async () => new Response(JSON.stringify(buildMonthRecord()), { status: 200 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    const toolbar = await screen.findByTestId("calendar-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button", { name: "切换到事件记录" }));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith(
+      "/calendar?view=month&date=2026-05-02&calendarMode=event_centered",
+      { scroll: false }
+    );
   });
 
   it("keeps calendar header sticky frosted without spacer", async () => {
@@ -320,6 +342,23 @@ describe("site header calendar toolbar", () => {
     expect(header).toHaveClass("sticky", "top-0", "site-header-frosted", "isolate");
     expect(header.className).not.toContain("fixed");
     expect(header.previousElementSibling).toBeNull();
+  });
+
+  it("keeps event-centered journal deep links out of the legacy dimension route", async () => {
+    mockPathname.value = "/interview";
+    mockSearchParams.value = {
+      dimension: null,
+      view: null,
+      date: null,
+      month: null,
+      mode: "event-centered"
+    };
+    window.localStorage.setItem("hs-last-interview-dimension", "joy");
+
+    renderWithCalendarChrome(<SiteHeader />);
+
+    await waitFor(() => expect(mockRouterReplace).not.toHaveBeenCalled());
+    expect(screen.queryByRole("group", { name: "访谈维度切换" })).not.toBeInTheDocument();
   });
 
   it("keeps the dimension toolbar hidden on the generic interview picker", () => {

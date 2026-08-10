@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Board 7B Prompt／Skill v0 只读工作台</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #302a24;
+        background: #f5efe5;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; }
+      main { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 48px; }
+      header { display: grid; gap: 14px; margin-bottom: 24px; }
+      .eyebrow { color: #8c6043; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(28px, 4vw, 46px); font-weight: 650; letter-spacing: -.03em; }
+      .lead { max-width: 780px; margin: 0; color: #655c53; line-height: 1.7; }
+      .status-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      .chip { border: 1px solid #d8cabc; border-radius: 999px; padding: 7px 11px; background: rgba(255,255,255,.55); font-size: 13px; }
+      .chip.good { color: #2f6849; border-color: #a9c8b4; background: #eff8f1; }
+      .chip.wait { color: #8a5a2f; border-color: #dcc2a5; background: #fff7eb; }
+      .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; }
+      nav, section { border: 1px solid #ddcfc1; border-radius: 20px; background: rgba(255,255,255,.72); }
+      nav { align-self: start; padding: 10px; position: sticky; top: 16px; }
+      button { width: 100%; border: 0; border-radius: 12px; padding: 11px 12px; text-align: left; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+      button:hover, button[aria-selected="true"] { background: #efe2d3; }
+      section { min-height: 620px; padding: 22px; }
+      .panel-title { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 14px; }
+      h2 { margin: 0; font-size: 21px; }
+      .meta { color: #82776d; font-size: 12px; overflow-wrap: anywhere; }
+      pre { margin: 0; padding: 18px; overflow: auto; border-radius: 14px; background: #28241f; color: #f8eee2; font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+      .error { color: #9a2d2d; }
+      @media (max-width: 760px) {
+        main { width: min(100% - 20px, 1180px); padding-top: 20px; }
+        .layout { grid-template-columns: 1fr; }
+        nav { position: static; display: flex; overflow-x: auto; }
+        button { min-width: max-content; }
+        section { min-height: 520px; padding: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Board 7B · 正式资产候选 · 只读</div>
+        <h1>基础 Prompt v0 × Interview Skill v0</h1>
+        <p class="lead">逐项查看模型将获得的稳定产品合同、专业访谈方法、结构输出合同和对照案例。这个工作台只读取本机资产，当前模型调用 0。</p>
+        <div class="status-row" id="status-row">
+          <span class="chip wait">正在读取候选</span>
+        </div>
+      </header>
+      <div class="layout">
+        <nav aria-label="候选资产">
+          <button type="button" data-panel="basePrompt" aria-selected="true">基础 Prompt v0</button>
+          <button type="button" data-panel="interviewSkill">Interview Skill v0</button>
+          <button type="button" data-panel="outputContract">最小语义结果</button>
+          <button type="button" data-panel="assembledSystemPrompt">一次调用装配预览</button>
+          <button type="button" data-panel="contrastiveCases">三个案例与反事实</button>
+          <button type="button" data-panel="manifest">版本清单</button>
+          <button type="button" data-panel="factCard">事实卡模板</button>
+          <button type="button" data-panel="authorization">授权卡模板</button>
+        </nav>
+        <section aria-live="polite">
+          <div class="panel-title">
+            <h2 id="panel-title">基础 Prompt v0</h2>
+            <span class="meta" id="fingerprint"></span>
+          </div>
+          <pre id="content">正在读取……</pre>
+        </section>
+      </div>
+    </main>
+    <script>
+      const token = new URLSearchParams(location.search).get("token") || "";
+      const titles = {
+        basePrompt: "基础 Prompt v0",
+        interviewSkill: "Interview Skill v0",
+        outputContract: "最小结构化语义结果",
+        assembledSystemPrompt: "一次调用装配预览",
+        contrastiveCases: "三个对照案例与反事实变体",
+        manifest: "版本清单",
+        factCard: "事实卡模板",
+        authorization: "授权卡模板"
+      };
+      const elements = {
+        status: document.querySelector("#status-row"),
+        title: document.querySelector("#panel-title"),
+        fingerprint: document.querySelector("#fingerprint"),
+        content: document.querySelector("#content")
+      };
+      let state = null;
+      let activePanel = "basePrompt";
+
+      function renderPanel() {
+        if (!state) return;
+        elements.title.textContent = titles[activePanel];
+        const value = state.assets[activePanel];
+        elements.content.textContent =
+          typeof value === "string" ? value : JSON.stringify(value, null, 2);
+        document.querySelectorAll("[data-panel]").forEach((button) => {
+          button.setAttribute(
+            "aria-selected",
+            String(button.dataset.panel === activePanel)
+          );
+        });
+      }
+
+      document.querySelectorAll("[data-panel]").forEach((button) => {
+        button.addEventListener("click", () => {
+          activePanel = button.dataset.panel;
+          renderPanel();
+        });
+      });
+
+      function showLaunchInstructions() {
+        elements.status.innerHTML = '<span class="chip wait">需要本机启动器</span>';
+        elements.title.textContent = "如何打开工作台";
+        elements.content.classList.remove("error");
+        elements.content.textContent = [
+          "这个页面需要通过本机只读启动器打开，启动器会提供候选资产和临时访问令牌。",
+          "",
+          "请在项目目录运行：",
+          "npx vite-node -c vitest.config.ts scripts/run-board7b-prompt-skill-v0-workbench.ts --serve",
+          "",
+          "然后打开终端输出的 http://127.0.0.1 地址。整个过程只读取本机资产，模型调用保持 0。"
+        ].join("\n");
+      }
+
+      function loadCandidate() {
+        return fetch("/api/candidate", {
+          headers: { "x-workbench-token": token }
+        })
+        .then((response) => {
+          if (!response.ok) throw new Error(`读取失败：${response.status}`);
+          return response.json();
+        })
+        .then((value) => {
+          state = value;
+          elements.fingerprint.textContent = `候选指纹 ${state.candidateFingerprint}`;
+          elements.status.innerHTML = [
+            '<span class="chip good">资产已准备</span>',
+            '<span class="chip wait">事实卡待确认</span>',
+            '<span class="chip wait">运行授权待确认</span>',
+            '<span class="chip good">模型调用 0</span>',
+            `<span class="chip ${state.staticValidation.status === "passed" ? "good" : "wait"}">静态校验 ${state.staticValidation.status}</span>`
+          ].join("");
+          renderPanel();
+        })
+        .catch((error) => {
+          elements.status.innerHTML = '<span class="chip wait">读取失败</span>';
+          elements.content.classList.add("error");
+          elements.content.textContent = error.message;
+        });
+      }
+
+      if (location.protocol === "file:") {
+        showLaunchInstructions();
+      } else {
+        loadCandidate();
+      }
+    </script>
+  </body>
+</html>

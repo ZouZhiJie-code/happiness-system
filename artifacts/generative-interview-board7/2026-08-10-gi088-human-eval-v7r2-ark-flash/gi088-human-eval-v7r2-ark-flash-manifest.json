@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0",
+  "status": "ready_for_preview_deploy_and_blank_batch",
+  "evaluation": {
+    "id": "gi088_human_eval_v7r2_ark_flash",
+    "version": "2026-08-10.gi088-human-eval-v7r2-ark-flash",
+    "serviceVersion": "2026-08-10.gi088-ark-flash-service-v7r2",
+    "runtimePolicyVersion": "2026-08-10.gi088-ark-flash-runtime-v1",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.1",
+    "mode": "high_only",
+    "activeBranches": ["high"],
+    "taskCount": 2,
+    "effectiveCandidateFingerprint": "63acaede24844272886ea798c435d7f59ab14deb989b734d842b60ab48ee7242",
+    "datasetFingerprint": "ea2d42c59850222bed72b59213263bed21d9660fb6d21937af533d5800e88a6c",
+    "executionFingerprint": "deb5f242d0fb5edea5f2a2d874ee7c029bfbefde62223fef8125dfb4ae175275"
+  },
+  "lineage": {
+    "previousEvaluationVersion": "2026-08-10.gi088-human-eval-v7r1-visible-continuation",
+    "previousDisposition": "no_go_prefix_json_mode_incompatible",
+    "preservedHistoricalVersions": ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v7r1"],
+    "singlePrimaryFactor": "provider_platform_route_to_volcengine_ark_flash"
+  },
+  "runtime": {
+    "provider": "openai",
+    "transport": "openai_compatible_rest",
+    "baseUrlHost": "ark.cn-beijing.volces.com",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "temperature": null,
+    "maxTokens": null,
+    "headersTimeoutMs": 60000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "visibleAnswerPrefixContinuation": false
+  },
+  "recovery": {
+    "automaticEmptyContentRetries": 1,
+    "automaticTimeoutRetries": 1,
+    "automaticStageTransitionRetries": 1,
+    "manualRetriesAfterAutomaticFailure": 1,
+    "maximumProviderCallsPerUserSubmission": 3,
+    "maximumProviderCallsPerTrajectory": null,
+    "fallbackToThinkingDisabled": false,
+    "fallbackToOff": false,
+    "automaticRecoveryChains": false
+  },
+  "privacy": {
+    "hiddenReasoningReadByService": false,
+    "hiddenReasoningStored": false,
+    "hiddenReasoningLogged": false,
+    "hiddenReasoningDisplayed": false,
+    "credentialsInEvidence": false
+  },
+  "directionalEvidence": {
+    "arkHistoricalCases": 3,
+    "visibleAnswers": 3,
+    "emptyContent": 0,
+    "historicalContractValid": 2,
+    "historicalContractProtected": 1,
+    "averageVisibleAnswerLatencyMs": 10876,
+    "maximumVisibleAnswerLatencyMs": 15777,
+    "interpretation": "directional_only_requires_human_continuity_preview"
+  },
+  "automaticValidation": {
+    "status": "passed",
+    "targetedTestFiles": 5,
+    "targetedTestsPassed": 100,
+    "historicalTestsSkipped": 6,
+    "targetedTestsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "preview": {
+    "deployed": false,
+    "deploymentId": null,
+    "deploymentUrl": null,
+    "evaluationPageUrl": null,
+    "pageReadbackStatus": null,
+    "newBatchCreated": false,
+    "batchId": null,
+    "batchStatus": null,
+    "completedTaskCount": 0,
+    "totalTaskCount": 2,
+    "expectedInitialBatchStatus": "running_0_of_2",
+    "modelCallsDuringBatchInitialization": 0
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

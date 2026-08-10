@@ -6,26 +6,32 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const previewContract = `# Vercel preview environment contract
 DATABASE_URL=""
-AI_PROVIDER="volcengine-ark"
-VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_ENDPOINT_ID=""
-VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+AI_PROVIDER="openai"
+DEEPSEEK_API_KEY=""
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+VOLCENGINE_ARK_API_KEY="" # optional: legacy rollback only
+VOLCENGINE_ARK_MODEL="" # optional: legacy rollback only
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3" # optional: legacy rollback only
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: legacy embedding path only
 APP_URL="https://your-project-git-branch-your-team.vercel.app" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
 const productionContract = `# Vercel production environment contract
 DATABASE_URL=""
-AI_PROVIDER="volcengine-ark"
-VOLCENGINE_ARK_API_KEY=""
-VOLCENGINE_ARK_ENDPOINT_ID=""
-VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: only set this when embeddings are enabled
+AI_PROVIDER="openai"
+DEEPSEEK_API_KEY=""
+DEEPSEEK_MODEL="deepseek-v4-pro"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+VOLCENGINE_ARK_API_KEY="" # optional: legacy rollback only
+VOLCENGINE_ARK_MODEL="" # optional: legacy rollback only
+VOLCENGINE_ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3" # optional: legacy rollback only
+VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID="" # optional: legacy embedding path only
 APP_URL="https://your-domain.example.com" # optional: user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere
 `;
 
 const vercelEnvLsTable = `Vercel CLI 39.1.0
-> Environment Variables found for zouzhijies-projects/xingfuxitong [221ms]
+> Environment Variables found for example-team/xingfuxitong [221ms]
 
  name          value       environments                      created
  DATABASE_URL  Encrypted   Production, Preview, Development  2d ago
@@ -119,11 +125,14 @@ describe("vercel env audit script", () => {
     expect(result.contract.preview.required).toEqual([
       "DATABASE_URL",
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.contract.preview.optional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
       "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
     ]);
@@ -136,13 +145,18 @@ describe("vercel env audit script", () => {
     ]);
     expect(result.audit.Preview.missingRequired).toEqual([
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.audit.Preview.presentRequired).toEqual(["DATABASE_URL"]);
     expect(result.audit.Preview.presentOptional).toEqual(["APP_URL"]);
-    expect(result.audit.Preview.missingOptional).toEqual(["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"]);
+    expect(result.audit.Preview.missingOptional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
+      "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID"
+    ]);
     expect(result.audit.Preview.unverifiedConditionalOptional).toEqual([
       {
         name: "APP_URL",
@@ -153,11 +167,14 @@ describe("vercel env audit script", () => {
     expect(result.audit.Production.presentRequired).toEqual(["DATABASE_URL"]);
     expect(result.audit.Production.missingRequired).toEqual([
       "AI_PROVIDER",
-      "VOLCENGINE_ARK_API_KEY",
-      "VOLCENGINE_ARK_ENDPOINT_ID",
-      "VOLCENGINE_ARK_BASE_URL"
+      "DEEPSEEK_API_KEY",
+      "DEEPSEEK_MODEL",
+      "DEEPSEEK_BASE_URL"
     ]);
     expect(result.audit.Production.missingOptional).toEqual([
+      "VOLCENGINE_ARK_API_KEY",
+      "VOLCENGINE_ARK_MODEL",
+      "VOLCENGINE_ARK_BASE_URL",
       "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
       "APP_URL"
     ]);
@@ -168,7 +185,7 @@ describe("vercel env audit script", () => {
           "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
       }
     ]);
-    expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
+    expect(result.project).toBe("example-team/xingfuxitong");
   });
 
   it("classifies optional variables from explanatory contract annotations instead of a hardcoded variable name list", async () => {
@@ -249,7 +266,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       };
     };
 
-    expect(parsed.project).toBe("zouzhijies-projects/xingfuxitong");
+    expect(parsed.project).toBe("example-team/xingfuxitong");
     expect(parsed.audit.Preview.missingRequired).toContain("AI_PROVIDER");
     expect(parsed.audit.Preview.missingRequired).not.toContain("APP_URL");
     expect(parsed.audit.Preview.presentOptional).toContain("APP_URL");
@@ -280,14 +297,38 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     expect(buildEnvironmentContract(previewFile)).toEqual({
       required: [
         "DATABASE_URL",
+        "EVALUATION_DATABASE_URL",
+        "EVALUATION_POSTGRES_HOST",
+        "EVALUATION_POSTGRES_DATABASE",
+        "GI088_EVALUATION_DATABASE_SCHEMA",
+        "GI088_EVALUATION_SCHEMA_DEPLOY",
+        "GI088_EVALUATION_ENABLED",
+        "ADMIN_USERNAMES",
+        "GI088_EVALUATOR_USERNAMES",
+        "GI088_MODEL_CALL_SCOPE",
+        "GI088_AUTHORIZED_EXECUTION_FINGERPRINT",
+        "GI088_SMOKE_AUTHORIZATION_ID",
         "AI_RUNTIME_CONFIG_SECRET",
         "CRON_SECRET",
         "AI_PROVIDER",
+        "INTERVIEW_INTENT_V2_MODE",
+        "INTERVIEW_EVENT_CENTERED_MODE",
+        "INTERVIEW_REGENERATION_ENABLED",
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_MODEL",
+        "DEEPSEEK_BASE_URL",
         "VOLCENGINE_ARK_API_KEY",
-        "VOLCENGINE_ARK_MODEL",
-        "VOLCENGINE_ARK_BASE_URL"
+        "VOLCENGINE_ARK_BASE_URL",
+        "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
       ],
-      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
+      optional: [
+        "INTERVIEW_EVENT_CENTERED_STRATEGY",
+        "EVENT_CENTERED_GENERATIVE_MODEL",
+        "VOLCENGINE_ARK_MODEL",
+        "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+        "APP_URL"
+      ],
       conditionalOptional: [
         {
           name: "APP_URL",
@@ -302,11 +343,24 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "AI_RUNTIME_CONFIG_SECRET",
         "CRON_SECRET",
         "AI_PROVIDER",
+        "INTERVIEW_INTENT_V2_MODE",
+        "INTERVIEW_EVENT_CENTERED_MODE",
+        "INTERVIEW_REGENERATION_ENABLED",
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_MODEL",
+        "DEEPSEEK_BASE_URL",
+        "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
+      ],
+      optional: [
+        "INTERVIEW_EVENT_CENTERED_STRATEGY",
+        "EVENT_CENTERED_GENERATIVE_MODEL",
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_MODEL",
-        "VOLCENGINE_ARK_BASE_URL"
+        "VOLCENGINE_ARK_BASE_URL",
+        "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
+        "APP_URL"
       ],
-      optional: ["VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID", "APP_URL"],
       conditionalOptional: [
         {
           name: "APP_URL",
@@ -322,13 +376,13 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
 
     const cwd = resolveVercelCommandCwd({
       currentCwd:
-        "/Users/zouzhijie/Desktop/Happiness-system-codex/.worktrees/launch-ai-env-and-product-smoke",
+        "/tmp/Happiness-system-codex/.worktrees/launch-ai-env-and-product-smoke",
       env: { ...process.env },
       fileExists: (targetPath) =>
-        targetPath === "/Users/zouzhijie/Desktop/Happiness-system-codex/.vercel/project.json"
+        targetPath === "/tmp/Happiness-system-codex/.vercel/project.json"
     });
 
-    expect(cwd).toBe("/Users/zouzhijie/Desktop/Happiness-system-codex");
+    expect(cwd).toBe("/tmp/Happiness-system-codex");
   });
 
   it("fails fast when --project does not match the audited project", () => {
@@ -342,13 +396,13 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       "--input-file",
       inputPath,
       "--project",
-      "zouzhijies-projects/some-other-project"
+      "example-team/some-other-project"
     ]);
 
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
     expect(result.stderr).toMatch(/expected project .*some-other-project/i);
-    expect(result.stderr).toMatch(/audited project .*zouzhijies-projects\/xingfuxitong/i);
+    expect(result.stderr).toMatch(/audited project .*example-team\/xingfuxitong/i);
   });
 
   it("supports --input-file project validation without touching the network path", async () => {
@@ -378,7 +432,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       vercelEnvLsText: readFileSync(inputPath, "utf8")
     });
 
-    expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
+    expect(result.project).toBe("example-team/xingfuxitong");
     expect(mockedExecFileSync).not.toHaveBeenCalled();
     vi.doUnmock("node:child_process");
   });

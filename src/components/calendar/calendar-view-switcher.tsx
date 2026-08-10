@@ -14,11 +14,13 @@ const CALENDAR_VIEW_ITEMS: Array<{ value: CalendarView; label: string; ariaLabel
 export function CalendarViewSwitcher({
   currentView,
   currentDate,
-  onSelectView
+  onSelectView,
+  shouldPrefetch = true
 }: {
   currentView: CalendarView;
   currentDate: string;
   onSelectView: (view: CalendarView) => void;
+  shouldPrefetch?: boolean;
 }) {
   return (
     <SlidingSegmentedControl
@@ -33,12 +35,12 @@ export function CalendarViewSwitcher({
         buttonProps: {
           "aria-current": currentView === item.value ? ("page" as const) : undefined,
           onPointerEnter: () => {
-            if (item.value !== currentView) {
+            if (shouldPrefetch && item.value !== currentView) {
               prefetchCalendarView(item.value, currentDate);
             }
           },
           onPointerDown: () => {
-            if (item.value !== currentView) {
+            if (shouldPrefetch && item.value !== currentView) {
               prefetchCalendarView(item.value, currentDate);
             }
           }

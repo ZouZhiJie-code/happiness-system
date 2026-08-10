@@ -1,0 +1,92 @@
+# Daily Light 文档导航
+
+最后更新：`2026-08-10`
+
+用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
+
+## 1. 当前状态
+
+- `GI-068～080` 保持关闭；
+- 生成式访谈工作方法 `v1.0` 已冻结；
+- 板块 6 继续进行中；
+- `GI-081` 六题真实输出与盲评已经完成，当前作为临时 Prompt 诊断基线；
+- `GI-083` v0/v1 保留一次调用透明诊断历史；产品负责人轨迹调用 `0`，v1.1 工程合成自测 `5/5` 次请求通过；
+- `GI-084` v0.1～v0.3 三轮回归均为 No-Go，v0.4 在运行前关闭；
+- `GI-085` semantic-frame-first v1 已完成 8 次隔离回归并判定 No-Go，真实网页轨迹关闭；
+- `GI-086` Thinking 能力校准已完成 `8/8` 次调用、产品透明裁决与 Codex 九维初评；固定门 No-Go，Thinking 通用能力保持开放；
+- `GI-087` 已把任务结构调整为稳定的 `workingTask` 与单轮 `nextInquiry`；六题隔离筛选已经完成；
+- `GI-088` v1 原计划 `12` 项、`24` 条同起点轨迹；产品负责人完成 A1～A8 共 `8` 项、`16` 条轨迹后主动提前结束。基础 GI-087 指纹为 `e45f431f…3321aa`，有效候选指纹为 `58074d31…08b884`，执行指纹为 `4b658013…f70b2`；
+- v1 前 8 项的评价与比较数据完整，已形成只读封存快照；系统状态仍为 `running`、`sealedAt=null`。本批共 `66` 次调用，其中 high 出现 `12` 次空内容、`7` 次超时和 `17` 次手动重试；产品负责人和 Codex 均观察到 high 内容优势。产品负责人已确认保留 high、按 `EMPTY_CONTENT → TIMEOUT → 输出合同 → 内容与边界` 分阶段迭代；
+- v2 diagnostic 评测底座已完成：支持 `early_stopped`、8/12 部分导出、逐任务目标触发确认和安全分阶段诊断。空内容 response format 探针 `6/6` 已判定移除参数 No-Go，Thinking 模式探针 `4/4` 形成 inconclusive。产品负责人随后停止继续复现 DeepSeek 内部原因，并确认 v3 唯一主要因素为“Thinking high 可见答案自动恢复”；
+- v3 候选已完成本地验证并部署私有 Preview：产品负责人完成 A1 的 off/high 两条轨迹后，以证据充分为由在 `1/12` 提前结束，调用消费 `8/40`。本组 `EMPTY_CONTENT=0`、自动恢复 `0`，因此空内容恢复真人效果保持未判定；两边第 4 轮均命中 `NEW_ANSWER_OPPORTUNITY_UNAVAILABLE`，已确认属于回答机会边界与模型动作不一致，并与 Thinking 开关无关。完整脱敏复盘见 [A1 定向真人评测复盘](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v3-empty-recovery/gi088-v3-targeted-human-eval-summary.md)；Production 保持 `legacy + baseline`；
+- v4 阶段 2→3 自然转场候选已完成 A1 两条轨迹并以 `1/12` 提前结束；阶段转场形成单例真人证据，原执行指纹 `0206fd34…b1d0a` 与完整 Trace 继续只读保留；
+- v4 实际完成 A1 两条轨迹并以 `1/12 early_stopped` 只读封存，共 `10` 次调用。high 后两轮均在本地 `30s hard_total` 被截断；off/high 各出现一次双问题保护。产品负责人确认后续只保留 Thinking high；v5 将等待改为 `15s 响应头＋45s 正文空闲＋60s 总上限`，并增加单问合同与一次自动纠正。私有 Preview 已 Ready，High-only `0/12` 空白批次与零调用回读通过，等待登录后开始 A1；
+- v5 尚未发生真人模型调用。产品负责人复核后确认严格“一个问号”会过度限制自然澄清、举例和选项，因此 v6 把控制单位恢复为“一个独立回答任务”。产品负责人完成 A1、A2 两条 Thinking high 轨迹后确认原有问题解决，并以 `2/4 early_stopped` 收口；11 条可见 ask 中，同一焦点自然可答 `9`、同一焦点表达偏重 `2`、独立多任务 `0`，A3、A4 标记未执行；
+- v7 两条 Thinking high 真人轨迹已经完成并封存，批次暴露“思考正常结束、可见正文为空且普通自动恢复仍可能失败”的可靠性问题。v7r1 的 Prefix 兼容探针确认 DeepSeek 拒绝 Prefix 与 `response_format=json_object` 同时使用，因此判定 No-Go；
+- 官方 Flash / Pro 与火山 Ark Flash 对照完成后，v7r2 选择 Ark Flash 作为唯一平台变量；本地实现、100 项定向测试和 Production build 已通过，当前等待受控 Preview 部署回读与 `0/2` 空白批次初始化。v8 统一问前决策继续等待可靠性门；
+- Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON、其中一项命中历史问号数量保护。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒，综合选择已经收口到 v7r2 Ark Flash；
+- 板块 7 正式接入继续等待板块 6；
+- 板块 8 继续等待；
+- Production 保持 `legacy + baseline`。
+
+## 2. 新会话阅读顺序
+
+1. [项目协作与事实规则](../AGENTS.md)
+2. [访谈产品优化总 Map](./interview-product-optimization-map.md)
+3. [生成式访谈重构总 Map](./generative-interview-refactor-map.md)
+4. [生成式访谈 AI 产品工作方法 v1.0](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)
+5. [板块 6 当前专项｜生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
+6. [板块 5 冻结输入](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)
+7. [GI-074 评测与交接](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)
+8. [评测资产总入口](../artifacts/README.md)
+
+## 3. 按任务找文件
+
+### 产品状态与决策
+
+- 全产品访谈链路：[访谈产品优化总 Map](./interview-product-optimization-map.md)
+- 事件中心阶段与批次：[事件中心重构讨论地图](./interview-event-centered-refactor-discussion-map.md)
+- 生成式板块 1～8：[生成式访谈重构总 Map](./generative-interview-refactor-map.md)
+- 事件中心产品事实：[事件中心产品规格](./interview-event-centered-product-spec.md)
+
+### 当前评测与真人裁决
+
+- GI-088 当前迭代入口：[v7r2 Thinking high Ark Flash](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)
+- GI-088 直接上游：[v7 连续性底座封存](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/README.md)与[v7r1 Prefix No-Go](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r1-visible-continuation/README.md)
+- GI-088 历史批次复盘：[v1 8/12 提前结束的脱敏数量与结论](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)
+- GI-087 公开实现基线：[基础 Prompt](../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-base-prompt-v1.md)与[输出合同](../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-output-contract-v1.md)
+- GI-086 能力校准历史：[Board 7B Thinking capability v1](../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/README.md)
+- GI-085 回归结果与根因：[Board 7B semantic-frame v1](../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/README.md)
+- 评测资产治理：[artifacts 总入口](../artifacts/README.md)
+
+### 工程实现与运行
+
+- 系统结构：[architecture.md](./architecture.md)
+- API 与调用方式：[integration-guide.md](./integration-guide.md)
+- 本地运行与排障：[operator-runbook.md](./operator-runbook.md)
+- 当前交接：[handoff.md](./handoff.md)
+- 访谈意图评测：[interview-intent-evaluation-source-of-truth.md](./interview-intent-evaluation-source-of-truth.md)
+- 工作区收口结果：[2026-08-06-workspace-consolidation-result.md](./maintenance/2026-08-06-workspace-consolidation-result.md)
+
+### 历史证据
+
+- 历史 Board 7：[Board 7 资产索引](../artifacts/generative-interview-board7/README.md)
+- `GI-066` 真人 No-Go 与历史候选：[04u 专项](./technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)
+
+## 4. 稳定搜索词
+
+在仓库根目录使用：
+
+```bash
+rg -n "GI-088|v7r2|Ark Flash|板块 6|legacy \+ baseline" AGENTS.md README.md docs artifacts
+```
+
+历史候选使用：
+
+```bash
+rg -n "GI-066|No-Go|historical|历史证据" docs/technical/interview-event-centered artifacts
+```
+
+## 5. 事实使用规则
+
+总 Map 的当前状态优先于历史报告；当前专项承载开放问题和校准过程；冻结专项承载关闭输入；`artifacts/` 保存运行和人工裁决证据。自动技术通过、旧候选和历史 Preview 结论不能替代当前产品裁决或 Production 授权。

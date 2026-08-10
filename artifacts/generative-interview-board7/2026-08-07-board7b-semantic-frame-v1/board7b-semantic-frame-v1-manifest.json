@@ -1,0 +1,105 @@
+{
+  "decisionId": "GI-085",
+  "evaluationId": "board7b_semantic_frame_v1",
+  "candidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "status": "regression_completed_no_go",
+  "architecture": "single_call_semantic_frame_first",
+  "runnerVersion": "2026-08-07.board7b-semantic-frame-runner-v1",
+  "promptVersions": {
+    "basePrompt": "2026-08-07.board7b-base-prompt-v1",
+    "interviewSkill": "2026-08-07.board7b-interview-skill-v1",
+    "outputContract": "2026-08-07.board7b-output-contract-v1",
+    "turnInput": "2026-08-07.board7b-turn-input-v1"
+  },
+  "modelFacingAssets": {
+    "basePrompt": "board7b-base-prompt-v1.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "board7b-output-contract-v1.md",
+    "turnInputContract": "board7b-turn-input-v1.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "executionAssets": {
+    "inspector": "scripts/inspect-board7b-semantic-frame-v1.ts",
+    "runnerEntry": "scripts/execute-board7b-semantic-frame-v1-regression.ts",
+    "runnerLibrary": "scripts/run-board7b-semantic-frame-v1-regression.ts",
+    "inspectCommand": "npm run eval:board7b-semantic-frame:inspect",
+    "runCommand": "npm run eval:board7b-semantic-frame:run",
+    "regressionPlan": "board7b-semantic-frame-v1-regression-plan.json",
+    "authorizationTemplate": "board7b-semantic-frame-v1-authorization-template.json",
+    "consumedAuthorization": "board7b-semantic-frame-v1-regression-authorization.json",
+    "regressionResult": "board7b-semantic-frame-v1-regression-result.json",
+    "regressionReview": "board7b-semantic-frame-v1-regression-review.md",
+    "localOutputRoot": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1",
+    "immutableEvidence": "authorization-consumption + attempts + results"
+  },
+  "rootCauseChanges": [
+    "rewrite_prompt_skill_and_contract_from_clean_responsibilities",
+    "remove_all_contrastive_examples_from_skill",
+    "open_part_is_the_only_question_semantic_source",
+    "remove_repeated_question_goal",
+    "nullable_delta_replaces_none_null_empty_tuple",
+    "model_input_exposes_active_semantics_and_question_boundaries_only",
+    "model_prompt_excludes_program_state_merge_details",
+    "fresh_transfer_and_counterfactual_regression_cases",
+    "self_contained_state_transition_without_legacy_adapter",
+    "explicit_invalidated_archived_or_preserved_focus_disposition",
+    "nullable_focus_for_honest_pause",
+    "evidence_lineage_and_ledger_continuity",
+    "returnable_archived_focus_keeps_original_ledger",
+    "returnable_archived_focus_can_be_invalidated_with_ledger_removal",
+    "duplicate_important_branch_add_is_rejected",
+    "returnable_archived_focus_is_included_in_branch_deduplication",
+    "exact_requests_materialized_before_authorization_consumption",
+    "one_time_authorization_and_append_only_per_case_evidence",
+    "repository_execution_entry_and_resolved_environment_fingerprint",
+    "model_contract_failure_is_separate_from_technical_failure"
+  ],
+  "regression": {
+    "accountingIdentity": "locked_pre_run_plan_snapshot",
+    "datasetVersion": "2026-08-07.board7b-semantic-frame-regression-inputs-v1",
+    "datasetFingerprint": "e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1",
+    "requestSetFingerprint": "56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71",
+    "evaluationPolicyFingerprint": "3d7204f4e8d5f2d29c1f92b6054a66c4e05134aa2772ae357af4a24c85cfc669",
+    "executionFingerprint": "23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4",
+    "plannedCalls": 8,
+    "authorizedCalls": 0,
+    "modelCalls": 0,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0
+  },
+  "latestRegression": {
+    "runFingerprint": "1ccb38aaedb19f60043a9f1b385f18d2dce0c5e564d4563337899ed1d646a0fb",
+    "authorizationId": "redacted-operational-id",
+    "authorizationStatus": "consumed_once",
+    "modelCalls": 8,
+    "valid": 7,
+    "protectedFailures": 1,
+    "modelContractFailures": 0,
+    "technicalFailures": 0,
+    "ordinaryQualityFailures": 4,
+    "singleCaseBlocks": 0,
+    "decision": "no_go_for_real_trajectory"
+  },
+  "gates": {
+    "staticChecks": "passed",
+    "independentForwardChecks": "passed",
+    "independentRootAudit": "passed_no_p0_or_p1",
+    "regressionAuthorization": "consumed_once",
+    "regressionRun": "completed_no_go",
+    "realTrajectoryAuthorization": "blocked_by_regression_no_go",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "production": "legacy + baseline",
+  "predecessors": {
+    "v0_3": {
+      "decision": "no_go_for_real_trajectory",
+      "runFingerprint": "4267a54017285b986b2ae02f07fbf81879a751e9217bb3d48129e6021ea9ecbe"
+    },
+    "v0_4": {
+      "status": "superseded_before_run_by_root_cause_redesign",
+      "modelCalls": 0
+    }
+  }
+}

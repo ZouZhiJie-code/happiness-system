@@ -48,6 +48,9 @@ importers:
       '@eslint/eslintrc':
         specifier: 3.3.6
         version: 3.3.6
+      '@next/env':
+        specifier: ^15.5.20
+        version: 15.5.20
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1

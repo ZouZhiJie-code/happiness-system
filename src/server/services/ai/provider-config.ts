@@ -1,4 +1,5 @@
-const DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
+const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
+const DEFAULT_VOLCENGINE_ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
 
 export type AIProviderStatusState = "ready" | "disabled" | "unsupported" | "config_invalid";
 
@@ -17,7 +18,7 @@ export interface AIProviderConfigSummary {
   hasApiKey: boolean;
   hasModel: boolean;
   hasBaseUrl: boolean;
-  modelSource: "VOLCENGINE_ARK_MODEL" | "ARK_MODEL" | "VOLCENGINE_ARK_ENDPOINT_ID" | "ARK_ENDPOINT_ID" | null;
+  modelSource: "DEEPSEEK_MODEL" | "VOLCENGINE_ARK_MODEL" | "ARK_MODEL" | "VOLCENGINE_ARK_ENDPOINT_ID" | "ARK_ENDPOINT_ID" | null;
   baseUrlHost: string | null;
 }
 
@@ -35,6 +36,15 @@ export interface VolcengineArkConfig {
   model: string | null;
   baseUrl: string;
   modelSource: AIProviderConfigSummary["modelSource"];
+  issues: AIProviderStatusCode[];
+  baseUrlHost: string | null;
+}
+
+export interface DeepSeekConfig {
+  apiKey: string | null;
+  model: string | null;
+  baseUrl: string;
+  modelSource: "DEEPSEEK_MODEL" | null;
   issues: AIProviderStatusCode[];
   baseUrlHost: string | null;
 }
@@ -70,6 +80,41 @@ function parseBaseUrlHost(value: string | null) {
   }
 }
 
+export function readDeepSeekConfig(env: NodeJS.ProcessEnv = process.env): DeepSeekConfig {
+  const apiKey = trimEnvValue(env.DEEPSEEK_API_KEY);
+  const model = trimEnvValue(env.DEEPSEEK_MODEL);
+  const baseUrl = trimEnvValue(env.DEEPSEEK_BASE_URL) ?? DEFAULT_DEEPSEEK_BASE_URL;
+  const issues: AIProviderStatusCode[] = [];
+
+  if (!apiKey) {
+    issues.push("MISSING_API_KEY");
+  } else if (looksLikePlaceholder(apiKey)) {
+    issues.push("PLACEHOLDER_API_KEY");
+  }
+
+  if (!model) {
+    issues.push("MISSING_MODEL");
+  } else if (looksLikePlaceholder(model)) {
+    issues.push("PLACEHOLDER_MODEL");
+  }
+
+  const baseUrlHost = parseBaseUrlHost(baseUrl);
+  if (looksLikePlaceholder(baseUrl)) {
+    issues.push("PLACEHOLDER_BASE_URL");
+  } else if (!baseUrlHost) {
+    issues.push("INVALID_BASE_URL");
+  }
+
+  return {
+    apiKey,
+    model,
+    baseUrl,
+    modelSource: model ? "DEEPSEEK_MODEL" : null,
+    issues,
+    baseUrlHost
+  };
+}
+
 export function readVolcengineArkConfig(env: NodeJS.ProcessEnv = process.env): VolcengineArkConfig {
   const apiKey = trimEnvValue(env.VOLCENGINE_ARK_API_KEY) ?? trimEnvValue(env.ARK_API_KEY);
   const modelCandidates = [
@@ -81,7 +126,7 @@ export function readVolcengineArkConfig(env: NodeJS.ProcessEnv = process.env): V
   const modelEntry = modelCandidates.find(([, value]) => Boolean(value)) ?? null;
   const model = modelEntry?.[1] ?? null;
   const modelSource = modelEntry?.[0] ?? null;
-  const baseUrl = trimEnvValue(env.VOLCENGINE_ARK_BASE_URL) ?? trimEnvValue(env.ARK_BASE_URL) ?? DEFAULT_BASE_URL;
+  const baseUrl = trimEnvValue(env.VOLCENGINE_ARK_BASE_URL) ?? trimEnvValue(env.ARK_BASE_URL) ?? DEFAULT_VOLCENGINE_ARK_BASE_URL;
 
   const issues: AIProviderStatusCode[] = [];
 
@@ -115,7 +160,7 @@ export function readVolcengineArkConfig(env: NodeJS.ProcessEnv = process.env): V
 }
 
 export function getAIProviderStatus(env: NodeJS.ProcessEnv = process.env): AIProviderStatus {
-  const provider = (trimEnvValue(env.AI_PROVIDER) ?? "volcengine-ark").toLowerCase();
+  const provider = (trimEnvValue(env.AI_PROVIDER) ?? "openai").toLowerCase();
 
   if (provider === "disabled") {
     return {
@@ -130,6 +175,25 @@ export function getAIProviderStatus(env: NodeJS.ProcessEnv = process.env): AIPro
         hasBaseUrl: false,
         modelSource: null,
         baseUrlHost: null
+      }
+    };
+  }
+
+  if (provider === "openai" || provider === "deepseek") {
+    const config = readDeepSeekConfig(env);
+
+    return {
+      provider: "openai",
+      available: config.issues.length === 0,
+      state: config.issues.length === 0 ? "ready" : "config_invalid",
+      code: config.issues[0] ?? "READY",
+      issues: config.issues,
+      configSummary: {
+        hasApiKey: Boolean(config.apiKey),
+        hasModel: Boolean(config.model),
+        hasBaseUrl: Boolean(config.baseUrl),
+        modelSource: config.modelSource,
+        baseUrlHost: config.baseUrlHost
       }
     };
   }
@@ -173,4 +237,4 @@ export function formatAIProviderUnavailableCode(prefix: string, status: AIProvid
   return `${prefix}_${status.code}`;
 }
 
-export { DEFAULT_BASE_URL };
+export { DEFAULT_VOLCENGINE_ARK_BASE_URL as DEFAULT_BASE_URL };

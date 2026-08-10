@@ -21,9 +21,20 @@ export type InterviewIssueCode =
   | "INTERVIEW_TURN_NOT_FOUND"
   | "INTERVIEW_TURN_RETRY_REQUIRED"
   | "INTERVIEW_ACTION_UNSUPPORTED"
+  | "INTERVIEW_REGENERATION_UNAVAILABLE"
+  | "INTERVIEW_REGENERATION_INTENT_UNAVAILABLE"
+  | "INTERVIEW_REGENERATION_LIMIT_REACHED"
+  | "INTERVIEW_BRANCH_OUT_OF_DATE"
+  | "INTERVIEW_BRANCH_LOCKED_BY_JOURNAL"
+  | "INTERVIEW_REGENERATION_FAILED"
+  | "JOURNAL_DAY_MODE_CONFLICT"
+  | "JOURNAL_DAY_MODE_MIXED"
   | "ASSISTANT_ACTION_MISSING"
   | "INTERVIEW_DB_WRITE_FAILED"
   | "INTERVIEW_RESPONSE_SCHEMA_ERROR"
+  | "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE"
+  | "EVENT_CENTERED_CONFIGURATION_FAILURE"
+  | "EVENT_CENTERED_CONTENT_CHECK_FAILURE"
   | "STREAM_PROTOCOL_ERROR"
   | "INTERVIEW_RESPOND_FAILED";
 
@@ -124,6 +135,62 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
     retryable: true,
     action: "refresh"
   },
+  INTERVIEW_REGENERATION_UNAVAILABLE: {
+    title: "当前问题暂不支持换问法",
+    message: "这条问题所属的访谈版本未开启重新生成功能。",
+    resolution: "请继续回答当前问题，后续新访谈会自动支持该功能。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_INTENT_UNAVAILABLE: {
+    title: "当前材料还不适合这样调整",
+    message: "已有内容暂时不足以支撑这个追问方向。",
+    resolution: "请选择另一种调整方式，或补充一句纠正理解。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_LIMIT_REACHED: {
+    title: "这个问题已经换过两次",
+    message: "当前问题组已经保留了三个版本。",
+    resolution: "你可以纠正理解、换个片段、整理当前内容或先停一下。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_BRANCH_OUT_OF_DATE: {
+    title: "访谈路径已经更新",
+    message: "你操作的版本已经不再是当前采用路径。",
+    resolution: "请刷新后从当前版本继续。",
+    retryable: true,
+    action: "refresh"
+  },
+  INTERVIEW_BRANCH_LOCKED_BY_JOURNAL: {
+    title: "这段历史已经进入日志",
+    message: "日志生成后，已经有后续回答的历史路径会保持稳定。",
+    resolution: "当前最新问题仍可换问法；也可以继续回答后再手动更新日志。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_FAILED: {
+    title: "这次换问法没有完成",
+    message: "系统暂时未能生成更合适的新版本，原问题已经保留。",
+    resolution: "请稍后重试，或使用“纠正理解”直接告诉我需要调整的地方。",
+    retryable: true,
+    action: "retry"
+  },
+  JOURNAL_DAY_MODE_CONFLICT: {
+    title: "当天已有另一类记录",
+    message: "这一天已经在另一种记录方式中继续进行。",
+    resolution: "请刷新页面，回到当天已有的记录继续；这段输入会保留在输入框。",
+    retryable: true,
+    action: "refresh"
+  },
+  JOURNAL_DAY_MODE_MIXED: {
+    title: "当天有两类历史记录",
+    message: "这一天同时保留了两套历史记录，系统会分别展示，避免内容混在一起。",
+    resolution: "请刷新后分别查看当天记录；新的内容可以记录到其他日期。",
+    retryable: false,
+    action: "refresh"
+  },
   ASSISTANT_ACTION_MISSING: {
     title: "访谈流程异常",
     message: "服务端没有拿到下一步访谈动作。",
@@ -144,6 +211,27 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
     resolution: "请刷新页面后重试。",
     retryable: true,
     action: "refresh"
+  },
+  EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE: {
+    title: "AI 暂时忙不过来",
+    message: "AI 现在有点忙，已经自动重试过一次，这一轮仍未完成。",
+    resolution: "你的原话和当前进度已经保留，稍后点“继续生成”即可从原位置恢复。",
+    retryable: true,
+    action: "retry"
+  },
+  EVENT_CENTERED_CONFIGURATION_FAILURE: {
+    title: "AI 配置需要检查",
+    message: "当前候选的 Provider、模型、地址、密钥或版本与 Preview 要求不一致。",
+    resolution: "请先完成官方 DeepSeek 预检；当前原话和进度会保留。",
+    retryable: false,
+    action: "none"
+  },
+  EVENT_CENTERED_CONTENT_CHECK_FAILURE: {
+    title: "这一轮回复未通过内容检查",
+    message: "系统发现重复提问、纠正承接、来源、安全或结构完整性问题，已停止展示该回复。",
+    resolution: "你的原话和进度已经保留；请稍后从原位置继续生成，并带上错误码和请求标识反馈。",
+    retryable: true,
+    action: "retry"
   },
   STREAM_PROTOCOL_ERROR: {
     title: "回复数据异常",

@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "status": "completed_candidate_rejected_root_cause_open_6_of_6",
+  "probeVersion": "2026-08-09.gi088-empty-content-response-format-probe-v1",
+  "probeFingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
+  "authorizationId": "redacted-operational-id",
+  "completedAt": "2026-08-09T10:22:19.247Z",
+  "source": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "candidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2"
+  },
+  "runtime": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "maxTokensPolicy": "provider_default",
+    "timeoutMs": 30000
+  },
+  "execution": {
+    "authorizedCallBudget": 6,
+    "modelGenerationCalls": 6,
+    "completedCalls": 6,
+    "reservedCalls": 0,
+    "automaticRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "requestHashesVerified": 6,
+    "timeouts": 0,
+    "aborts": 0
+  },
+  "matrix": [
+    {
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "jsonObject": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 864,
+        "reasoningTokens": 1196,
+        "completionTokens": 1520,
+        "totalLatencyMs": 13324
+      },
+      "textJson": {
+        "status": "technical_failure",
+        "errorCode": "EMPTY_CONTENT",
+        "finishReason": "stop",
+        "contentLength": 0,
+        "reasoningTokens": 325,
+        "completionTokens": 325,
+        "totalLatencyMs": 3664
+      }
+    },
+    {
+      "caseId": "E2",
+      "contextClass": "mid_trajectory",
+      "jsonObject": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 1007,
+        "reasoningTokens": 1300,
+        "completionTokens": 1696,
+        "totalLatencyMs": 14834
+      },
+      "textJson": {
+        "status": "valid",
+        "errorCode": null,
+        "finishReason": "stop",
+        "contentLength": 807,
+        "reasoningTokens": 983,
+        "completionTokens": 1302,
+        "totalLatencyMs": 12139
+      }
+    },
+    {
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "jsonObject": {
+        "status": "technical_failure",
+        "errorCode": "EMPTY_CONTENT",
+        "finishReason": "stop",
+        "contentLength": 0,
+        "reasoningTokens": 440,
+        "completionTokens": 440,
+        "totalLatencyMs": 3864
+      },
+      "textJson": {
+        "status": "protected_failure",
+        "errorCode": "MODEL_OUTPUT_PROTECTED",
+        "validationIssues": [
+          "OUTPUT_SCHEMA_INVALID"
+        ],
+        "finishReason": "stop",
+        "contentLength": 124,
+        "reasoningTokens": 2113,
+        "completionTokens": 2187,
+        "totalLatencyMs": 22559
+      }
+    }
+  ],
+  "aggregate": {
+    "jsonObject": {
+      "valid": 2,
+      "emptyContent": 1,
+      "schemaProtected": 0,
+      "parseable": 2
+    },
+    "textJson": {
+      "valid": 1,
+      "emptyContent": 1,
+      "schemaProtected": 1,
+      "parseable": 1
+    }
+  },
+  "decision": {
+    "productOwnerJudgment": "pending_discussion",
+    "codexInitialAssessment": "reject_removing_response_format",
+    "removeProviderJsonModeGate": "failed",
+    "rejectTextJsonCandidateGate": "passed",
+    "causalAttributionToResponseFormat": "not_confirmed",
+    "keepResponseFormatJsonObject": true,
+    "emptyContentProblem": "open",
+    "confirmedRootCause": null,
+    "confirmedNearTermMechanism": "upstream_http_200_stop_after_reasoning_with_zero_visible_content",
+    "hypotheses": [
+      "thinking_high_may_intermittently_stop_after_reasoning_without_visible_content",
+      "request_or_context_characteristics_may_change_failure_probability",
+      "text_json_may_increase_output_contract_drift"
+    ]
+  },
+  "privacy": {
+    "containsApiKey": false,
+    "containsUserContent": false,
+    "containsPrompt": false,
+    "containsRawModelOutput": false,
+    "containsReasoningBody": false
+  },
+  "privateEvidence": {
+    "localRuntimeOnly": true,
+    "sanitizedSummarySha256": "532a292af9f76e2f84966a879fc2c6c681f9bdf69c3bbc63da6ef9306bccb2a5",
+    "privateLedgerSha256": "dacada85b65d6a8bb16afee8a29445374b342729fb24ca4c0c6253aef21e3e48",
+    "directoryMode": "0700",
+    "fileMode": "0600"
+  },
+  "preview": {
+    "newBatchCreated": false,
+    "deploymentChanged": false,
+    "evaluationDatabaseWrites": 0
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

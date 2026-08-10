@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import { AdminAIQualityEvidence } from "@/components/admin/admin-ai-quality-evidence";
+import {
+  AdminAIQualityEvidence,
+  AdminAIQualityEvidenceDetail
+} from "@/components/admin/admin-ai-quality-evidence";
 
 describe("AdminAIQualityEvidence", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -45,5 +48,64 @@ describe("AdminAIQualityEvidence", () => {
     expect(screen.getByText("忽视停止或边界")).toBeInTheDocument();
     expect(screen.getByText("本次重点判断")).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith("/api/admin/ai-quality/candidates/candidate-1/evidence?page=1");
+  });
+
+  it("presents event journals as an independent artifact and keeps their generated result visible", () => {
+    render(
+      <AdminAIQualityEvidenceDetail
+        evidence={{
+          traceId: "trace-event",
+          userLabel: "用户 E1A2B3",
+          artifactType: "event_journal",
+          dimension: null,
+          createdAt: "2026-07-22T08:00:00.000Z",
+          entryDate: "2026-07-22T00:00:00.000Z",
+          scenarioSummary: "系统根据事件日志、来源事实和用户反馈，将这条记录选作判断依据。",
+          conversation: [
+            { id: "user-event", role: "user", text: "我终于把担心说清楚了。", createdAt: null, isTarget: false }
+          ],
+          targetOutput: {
+            title: "把担心说清楚",
+            text: "今天我终于把真正担心的事情说清楚了。"
+          },
+          feedback: null,
+          evaluation: null,
+          classification: null
+        }}
+      />
+    );
+
+    expect(screen.getByText("事件日志")).toBeInTheDocument();
+    expect(screen.getByText("把担心说清楚")).toBeInTheDocument();
+    expect(screen.getByText("今天我终于把真正担心的事情说清楚了。")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["daily_journal", "当天完整日志"],
+    ["daily_journal_insight", "今天看见的自己"]
+  ] as const)("presents %s with its day-level product label", (artifactType, label) => {
+    render(
+      <AdminAIQualityEvidenceDetail
+        evidence={{
+          traceId: `trace-${artifactType}`,
+          userLabel: "用户 D1A2B3",
+          artifactType,
+          dimension: null,
+          createdAt: "2026-07-23T08:00:00.000Z",
+          entryDate: "2026-07-23T00:00:00.000Z",
+          scenarioSummary: "系统根据当天成果和用户反馈，将这条记录选作判断依据。",
+          conversation: [],
+          targetOutput: {
+            title: "今天的记录",
+            text: "这是当天成果正文。"
+          },
+          feedback: null,
+          evaluation: null,
+          classification: null
+        }}
+      />
+    );
+
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 });

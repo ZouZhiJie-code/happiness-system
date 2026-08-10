@@ -1,0 +1,144 @@
+{
+  "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "baseDatasetVersion": "2026-08-01.board7-semantic-frame-v4-offline-confirmation-v1",
+  "purpose": "在已确认六例故事上验证最小充分协议：ready 直接保留成果归属；第二段只生成统一回应。行动案例调整为用户提供两侧事实、AI 连接可观察效果，确保六例同时覆盖 user_articulated 与 ai_synthesized。当前只用于离线确认，真实模型运行需要新的独立授权。",
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "runPolicy": {
+    "mode": "offline_confirmation_only",
+    "modelRunAllowed": false,
+    "providerRequestBudget": null,
+    "requiresSeparateApproval": true
+  },
+  "caseExpectations": [
+    {
+      "id": "SF4-F-READY-01",
+      "expectedOrigin": "user_articulated"
+    },
+    {
+      "id": "SF4-T-ASK-01",
+      "expectedOrigin": null
+    },
+    {
+      "id": "SF4-R-COEXIST-01",
+      "expectedOrigin": "user_articulated"
+    },
+    {
+      "id": "SF4-A-EFFECT-01",
+      "expectedOrigin": "ai_synthesized",
+      "override": {
+        "userContext": "用户练习一首三页的曲子时总因翻谱中断，后来把三页复印并横排在谱架上。",
+        "conversationContext": [
+          {
+            "user": "这首曲子有三页，我之前每次到第二页末尾都要把手拿开翻谱，后面就会断。后来我把三页复印出来，横排在谱架上。",
+            "assistantUnderstanding": "你已经改变了乐谱的摆放方式，正在观察昨晚实际练习发生了什么。",
+            "assistantQuestion": "昨晚再练时，手和三页曲子的连续性分别是什么样？"
+          }
+        ],
+        "currentQuestion": "昨晚再练时，手和三页曲子的连续性分别是什么样？",
+        "currentQuestionTarget": "horizontal_score_observable_results",
+        "currentQuestionCognitiveAction": "connect_clues",
+        "currentQuestionIntent": {
+          "targetId": "horizontal_score_observable_results",
+          "semanticGoal": "理解横排三页乐谱与昨晚连续弹奏之间的实际效果关系",
+          "minimumAnswerScope": "分别说出昨晚手部动作和三页弹奏是否连续"
+        },
+        "currentUserText": "三页还横排在谱架上。昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了。",
+        "trustedFacts": [
+          {
+            "id": "SF4-A-EFFECT-01-fact-1",
+            "statement": "用户过去每次到第二页末尾都要把手拿开翻谱，后面会中断",
+            "sourceQuote": "我之前每次到第二页末尾都要把手拿开翻谱，后面就会断"
+          },
+          {
+            "id": "SF4-A-EFFECT-01-fact-2",
+            "statement": "用户把三页乐谱复印并横排在谱架上",
+            "sourceQuote": "我把三页复印出来，横排在谱架上"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "SF4-A-EFFECT-01-fact-2",
+            "source": "trusted_fact",
+            "quote": "我把三页复印出来，横排在谱架上"
+          },
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "三页还横排在谱架上"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+          }
+        ],
+        "expectedUnderstanding": {
+          "answerStatus": "answered",
+          "correctionOrBoundaryKind": null,
+          "mustCover": [
+            "三页乐谱仍横排在谱架上",
+            "手一直留在琴键上",
+            "从第一页到第三页连续弹完"
+          ],
+          "mustAvoid": [
+            "把实际效果扩写成提高效率、专注力或形成习惯",
+            "把 AI 连接的效果关系标成用户已经说出的结论"
+          ]
+        },
+        "roundValue": "根据横排乐谱和连续弹奏两侧事实，形成一次安全的实际效果连接，同时保持它属于 AI 综合。",
+        "expectedSemanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "change",
+              "evidenceRefs": ["SF4-A-EFFECT-01-fact-2", "new:1"]
+            },
+            {
+              "id": "u2",
+              "role": "result",
+              "evidenceRefs": ["new:2"]
+            }
+          ],
+          "relation": {
+            "type": "change_effect",
+            "fromUnitId": "u1",
+            "toUnitId": "u2"
+          }
+        },
+        "expectedVisibleQuality": {
+          "responseKind": "completion",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "横排三页乐谱",
+            "手没有离开琴键",
+            "连续弹完三页并少掉原先翻谱中断"
+          ],
+          "mustAvoid": [
+            "未来练习计划",
+            "提高专注力或效率",
+            "形成习惯",
+            "把成果归属写成用户已经说出的结论",
+            "change_effect 或 unit 等内部字段"
+          ]
+        }
+      }
+    },
+    {
+      "id": "SF4-CORRECTION-READY-01",
+      "expectedOrigin": "user_articulated"
+    },
+    {
+      "id": "SF4-LIMITED-01",
+      "expectedOrigin": null
+    }
+  ]
+}

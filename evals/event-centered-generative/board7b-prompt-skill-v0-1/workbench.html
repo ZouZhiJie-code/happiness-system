@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GI-084 v0.1｜Daily Light 真实体验</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f4efe4;
+        --paper-deep: #e9dfcf;
+        --ink: #28231e;
+        --muted: #786d60;
+        --line: rgba(59, 47, 36, 0.18);
+        --accent: #9b4d2c;
+        --accent-dark: #71321b;
+        --sage: #52685a;
+        --error: #9f3029;
+        --shadow: 0 22px 60px rgba(64, 47, 31, 0.1);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+        background:
+          linear-gradient(rgba(74, 54, 33, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(74, 54, 33, 0.025) 1px, transparent 1px),
+          var(--paper);
+        background-size: 32px 32px;
+      }
+
+      button, textarea { font: inherit; }
+      button:focus-visible, textarea:focus-visible {
+        outline: 3px solid rgba(155, 77, 44, 0.28);
+        outline-offset: 2px;
+      }
+
+      .topbar {
+        min-height: 86px;
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        background: rgba(244, 239, 228, 0.92);
+        backdrop-filter: blur(14px);
+      }
+      .eyebrow {
+        color: var(--accent);
+        font: 700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      h1 { margin: 4px 0 0; font-size: clamp(23px, 2.2vw, 34px); font-weight: 600; }
+      h2 { margin: 0 0 9px; font-size: 15px; }
+      p { margin: 0; color: var(--muted); line-height: 1.65; }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 5px rgba(82, 104, 90, 0.12); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.7fr) minmax(440px, 1.45fr) minmax(310px, 1fr);
+        min-height: calc(100vh - 87px);
+      }
+      .panel { min-width: 0; padding: 24px; }
+      .side { border-right: 1px solid var(--line); background: rgba(236, 226, 211, 0.46); }
+      .chat { display: flex; flex-direction: column; background: rgba(255, 252, 246, 0.56); }
+      .trace { border-left: 1px solid var(--line); overflow: auto; }
+      .section { padding: 0 0 20px; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
+      .section ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.75; font-size: 13px; }
+      .method {
+        margin-top: 10px;
+        color: var(--accent-dark);
+        font-size: 13px;
+        line-height: 1.8;
+      }
+      .fingerprint { margin-top: 8px; font: 11px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-line; overflow-wrap: anywhere; }
+
+      .start-card {
+        padding: 18px;
+        border: 1px solid rgba(155, 77, 44, 0.28);
+        background: rgba(255, 250, 241, 0.7);
+        box-shadow: var(--shadow);
+      }
+      .hint { margin-top: 7px; font-size: 12px; line-height: 1.55; }
+      button {
+        border: 0;
+        cursor: pointer;
+        transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+      }
+      button:active { transform: scale(0.975); }
+      button:disabled { cursor: not-allowed; opacity: 0.48; }
+      .primary, .secondary, .feeling {
+        min-height: 42px;
+        padding: 10px 15px;
+        border-radius: 12px;
+      }
+      .primary { margin-top: 14px; color: #fffaf1; background: var(--accent); }
+      .primary:hover:not(:disabled) { background: var(--accent-dark); }
+      .secondary { color: var(--accent-dark); border: 1px solid rgba(155, 77, 44, 0.28); background: transparent; }
+
+      .chat-head { padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+      .chat-head p { margin-top: 5px; font-size: 13px; }
+      .messages { flex: 1; min-height: 360px; padding: 22px 0; overflow: auto; }
+      .message { max-width: 84%; margin-bottom: 18px; }
+      .message.user { margin-left: auto; }
+      .role { margin-bottom: 5px; color: var(--muted); font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.08em; }
+      .message.user .role { text-align: right; }
+      .bubble { padding: 13px 15px; border-left: 3px solid var(--sage); background: rgba(255, 252, 245, 0.86); line-height: 1.75; white-space: pre-wrap; }
+      .message.user .bubble { border-left: 0; border-right: 3px solid var(--accent); background: rgba(235, 222, 203, 0.66); }
+      .empty { padding: 28px 12px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.7; }
+
+      .composer { padding-top: 16px; border-top: 1px solid var(--line); }
+      textarea {
+        width: 100%; min-height: 92px; resize: vertical; padding: 13px 14px;
+        color: var(--ink); border: 1px solid var(--line); border-radius: 12px;
+        background: rgba(255, 252, 246, 0.88);
+      }
+      .composer-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .composer-row > div { display: flex; gap: 8px; }
+      .composer-row .primary { margin-top: 8px; }
+      .composer-row .secondary { margin-top: 8px; }
+
+      .notice { margin: 10px 0; padding: 11px 13px; border-left: 3px solid; font-size: 13px; line-height: 1.6; }
+      .notice.error { color: var(--error); border-color: var(--error); background: rgba(159, 48, 41, 0.07); }
+      .notice.ok { color: var(--sage); border-color: var(--sage); background: rgba(82, 104, 90, 0.08); }
+      .trace > p { margin-bottom: 18px; font-size: 13px; }
+      .trace-card { padding: 15px 0; border-top: 1px solid var(--line); }
+      .trace-card:first-child { border-top: 0; }
+      .meta { margin-bottom: 9px; color: var(--accent); font: 700 10px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.07em; }
+      dl { margin: 0; display: grid; grid-template-columns: 76px 1fr; gap: 7px 10px; font-size: 12px; line-height: 1.55; }
+      dt { color: var(--muted); }
+      dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+      .end { margin-top: 22px; padding-top: 20px; border-top: 2px solid var(--ink); }
+      .end textarea { min-height: 70px; margin-top: 10px; }
+      .feeling-grid { display: grid; gap: 8px; margin-top: 10px; }
+      .feeling { color: var(--ink); text-align: left; border: 1px solid var(--line); background: rgba(255, 252, 246, 0.72); }
+      .feeling:hover { border-color: rgba(155, 77, 44, 0.46); }
+
+      @media (max-width: 1080px) {
+        .layout { grid-template-columns: 240px 1fr; }
+        .trace { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+      }
+      @media (max-width: 760px) {
+        .topbar { padding: 15px 18px; }
+        .layout { display: block; }
+        .panel { padding: 20px 18px; }
+        .side, .trace { border: 0; border-bottom: 1px solid var(--line); }
+        .chat { min-height: 72vh; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">GI-084 v0.1 · isolated local evaluation</div>
+        <h1>Daily Light｜陪我聊</h1>
+      </div>
+      <div class="status"><span class="dot"></span><span id="statusText">读取中</span></div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel side">
+        <section class="section">
+          <h2>真实体验方式</h2>
+          <p>你可以没有预设话题或目标。开始后直接按真实感受回应，Codex只在轨迹封存后读取结果。</p>
+          <div class="method">共同聚焦 → 形成认识 → 动态深入<br />需要做选择时提供条件化决策支持</div>
+        </section>
+        <section class="section">
+          <h2>运行边界</h2>
+          <ul>
+            <li>固定为【陪我聊】和 GI-084 v0.1。</li>
+            <li>每次发送只触发一次 DeepSeek 请求。</li>
+            <li>程序不会按回合数强制深入。</li>
+            <li>技术失败只在你手动点击后重试。</li>
+            <li>本轮停在聊天感受，暂不生成日志。</li>
+          </ul>
+        </section>
+        <section class="section">
+          <h2>当前模型与策略</h2>
+          <p id="runtimeIdentity">DeepSeek 官方 API · deepseek-v4-flash</p>
+          <p class="fingerprint" id="promptIdentity"></p>
+        </section>
+        <section class="start-card" id="startCard">
+          <strong>开始一条真实轨迹</strong>
+          <p class="hint">固定开场为“此刻你想聊点什么？”。点击只创建本机轨迹和唯一运行指纹，模型调用保持 0。</p>
+          <button class="primary" id="start" type="button">开始真实体验</button>
+        </section>
+        <section class="section" id="runInfo" hidden>
+          <h2>当前轨迹</h2>
+          <p class="fingerprint" id="fingerprints"></p>
+          <p class="hint" id="callCount"></p>
+        </section>
+      </aside>
+
+      <section class="panel chat">
+        <div class="chat-head">
+          <strong>你正在直接和 DeepSeek 交流</strong>
+          <p>网页使用冻结的 GI-084 v0.1 Prompt、Interview Skill 和结构合同。你可以随时结束。</p>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="notice error" id="errorNotice" hidden></div>
+        <div class="notice ok" id="resultNotice" hidden></div>
+        <form class="composer" id="composer">
+          <textarea id="input" placeholder="先点击“开始真实体验”" disabled></textarea>
+          <div class="composer-row">
+            <span class="hint" id="composerHint">开始后先回答固定开场。</span>
+            <div>
+              <button class="secondary" id="retry" type="button" hidden>手动重试当前轮</button>
+              <button class="primary" id="send" type="submit" disabled>发送这一轮</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel trace">
+        <h2>每轮语义结果</h2>
+        <p>持续展示动作、焦点、认识变化、原话证据、提问目标和暂停原因。</p>
+        <div id="traceList"></div>
+        <section class="end" id="endPanel" hidden>
+          <strong>结束这次体验</strong>
+          <p class="hint">只判断聊完后的真实感受，文字理由可以留空。</p>
+          <textarea id="endReason" placeholder="可选：为什么有这种感受？"></textarea>
+          <div class="feeling-grid">
+            <button class="feeling" data-feeling="better" type="button">聊完感觉变好了</button>
+            <button class="feeling" data-feeling="same" type="button">聊完感觉差不多</button>
+            <button class="feeling" data-feeling="worse" type="button">聊完感觉变差了</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script>
+      const token = new URLSearchParams(window.location.search).get("token");
+      const elements = Object.fromEntries([
+        "statusText", "startCard", "start", "runInfo", "runtimeIdentity",
+        "promptIdentity", "fingerprints", "callCount", "messages", "traceList",
+        "composer", "input", "composerHint", "send", "retry", "errorNotice",
+        "resultNotice", "endPanel", "endReason"
+      ].map((id) => [id, document.getElementById(id)]));
+      let currentState = null;
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Eval-Token": token,
+            ...(options.headers || {})
+          }
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "请求失败");
+        return body;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function renderMessages(state) {
+        if (!state.messages.length) {
+          elements.messages.innerHTML = '<div class="empty">点击【开始真实体验】，Daily Light 会给出一条宽泛开场。</div>';
+          return;
+        }
+        elements.messages.innerHTML = state.messages.map((message) => `
+          <article class="message ${message.role}">
+            <div class="role">${message.role === "user" ? "你" : "Daily Light"} · ${escapeHtml(message.id)}</div>
+            <div class="bubble">${escapeHtml(message.content)}</div>
+          </article>
+        `).join("");
+        elements.messages.scrollTop = elements.messages.scrollHeight;
+      }
+
+      function renderTrace(state) {
+        const cards = [];
+        if (state.status !== "awaiting_start") {
+          cards.push(`
+            <article class="trace-card">
+              <div class="meta">A0 · fixed opening · model calls 0</div>
+              <dl><dt>作用</dt><dd>给没有预设目标的用户一个宽泛入口</dd><dt>内容</dt><dd>${escapeHtml(state.fixedOpening)}</dd></dl>
+            </article>
+          `);
+        }
+        for (const turn of state.turns) {
+          const semantic = turn.semantic;
+          const lastCall = turn.lastCall;
+          const question = semantic?.questionDecision;
+          const delta = semantic?.understandingDelta;
+          cards.push(`
+            <article class="trace-card">
+              <div class="meta">${escapeHtml(turn.status)} · request ${escapeHtml(turn.callCount)}</div>
+              <dl>
+                <dt>阶段／动作</dt><dd>${escapeHtml(semantic?.stage || "等待结果")} / ${escapeHtml(semantic?.action || "—")}</dd>
+                <dt>当前焦点</dt><dd>${escapeHtml(semantic?.focus?.summary || "—")} ${semantic?.focus?.relation ? `(${escapeHtml(semantic.focus.relation)})` : ""}</dd>
+                <dt>认识变化</dt><dd>${escapeHtml(delta?.kind || "—")}${delta?.summary ? `｜${escapeHtml(delta.summary)}` : ""}</dd>
+                <dt>开放部分</dt><dd>${escapeHtml(semantic?.openPart?.summary || "—")}</dd>
+                <dt>原话证据</dt><dd>${turn.evidenceExcerpts.length ? turn.evidenceExcerpts.map((item) => `${escapeHtml(item.id)}｜${escapeHtml(item.content)}`).join("\n") : "—"}</dd>
+                <dt>提问目标</dt><dd>${escapeHtml(question?.goal || "—")}${question?.expectedChange ? `\n变化：${escapeHtml(question.expectedChange)}` : ""}</dd>
+                <dt>负担／暂停</dt><dd>${escapeHtml(semantic?.burdenSignal?.summary || semantic?.pauseReason || "—")}</dd>
+                <dt>请求证据</dt><dd>${lastCall ? `${escapeHtml(lastCall.requestHash.slice(0, 16))}… · ${escapeHtml(lastCall.latencyMs ?? "—")}ms · ${escapeHtml(lastCall.tokenUsage?.totalTokens ?? "—")} tokens` : "尚未形成模型请求"}</dd>
+                ${turn.validationIssues.length ? `<dt>程序拦截</dt><dd>${escapeHtml(turn.validationIssues.join("、"))}</dd>` : ""}
+              </dl>
+            </article>
+          `);
+        }
+        elements.traceList.innerHTML = cards.length ? cards.join("") : '<div class="empty">开始后，这里会显示透明 Trace。</div>';
+      }
+
+      function render(state) {
+        currentState = state;
+        const labels = {
+          awaiting_start: "等待开始",
+          running: "真实体验中",
+          technical_failure: "技术失败待处理",
+          protected_failure: "程序保护已拦截",
+          completed: "轨迹已封存"
+        };
+        elements.statusText.textContent = labels[state.status] || state.status;
+        const started = state.status !== "awaiting_start";
+        const terminal = state.status === "completed";
+        elements.startCard.hidden = started;
+        elements.runInfo.hidden = !started;
+        elements.runtimeIdentity.textContent = `${state.runtime.service} · ${state.runtime.model} · ${state.runtime.baseUrlHost}`;
+        elements.promptIdentity.textContent = `基础 Prompt：${state.runtime.promptVersions.basePrompt}\nInterview Skill：${state.runtime.promptVersions.interviewSkill}`;
+        elements.fingerprints.textContent = started
+          ? `候选 ${state.candidateFingerprint.slice(0, 12)}…\n运行 ${state.runFingerprint.slice(0, 12)}…`
+          : `候选 ${state.candidateFingerprint.slice(0, 12)}…`;
+        elements.callCount.textContent = `模型调用：${state.modelCallCount}`;
+        renderMessages(state);
+        renderTrace(state);
+
+        const canSend = state.status === "running" && !state.inFlight;
+        elements.input.disabled = !canSend;
+        elements.send.disabled = !canSend;
+        elements.input.placeholder = canSend ? "按真实感受回答 AI" : "当前无法发送";
+        elements.composerHint.textContent = terminal
+          ? "轨迹已经结束。"
+          : started ? "每次发送只触发一次模型请求。" : "开始后先回答固定开场。";
+        elements.retry.hidden = state.status !== "technical_failure";
+        elements.errorNotice.hidden = !["technical_failure", "protected_failure"].includes(state.status);
+        elements.errorNotice.textContent = state.status === "technical_failure"
+          ? `技术失败：${state.technicalError}。原始失败已保存，可手动重试。`
+          : state.status === "protected_failure"
+            ? "模型输出未通过程序保护。原始结果已保存。"
+            : "";
+        elements.endPanel.hidden = !started || terminal;
+        elements.resultNotice.hidden = !terminal;
+        const feelingLabels = { better: "变好了", same: "差不多", worse: "变差了" };
+        elements.resultNotice.textContent = terminal
+          ? `轨迹已封存：聊完感觉${feelingLabels[state.result.feeling]}${state.result.reason ? `｜${state.result.reason}` : ""}`
+          : "";
+      }
+
+      async function refresh() {
+        try { render(await api("/api/session")); }
+        catch (error) {
+          elements.errorNotice.hidden = false;
+          elements.errorNotice.textContent = error.message;
+        }
+      }
+
+      elements.start.addEventListener("click", async () => {
+        if (!window.confirm("开始后将创建一条本机真实体验轨迹。继续吗？")) return;
+        elements.start.disabled = true;
+        try {
+          render(await api("/api/start", { method: "POST", body: JSON.stringify({ confirmation: true }) }));
+          elements.input.focus();
+        } catch (error) {
+          elements.errorNotice.hidden = false;
+          elements.errorNotice.textContent = error.message;
+        } finally { elements.start.disabled = false; }
+      });
+
+      elements.composer.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const content = elements.input.value.trim();
+        if (!content || !currentState || currentState.inFlight) return;
+        elements.send.disabled = true;
+        elements.send.textContent = "生成中…";
+        try {
+          const state = await api("/api/turn", { method: "POST", body: JSON.stringify({ content }) });
+          elements.input.value = "";
+          render(state);
+        } catch (error) {
+          elements.errorNotice.hidden = false;
+          elements.errorNotice.textContent = error.message;
+          await refresh();
+        } finally { elements.send.textContent = "发送这一轮"; }
+      });
+
+      elements.retry.addEventListener("click", async () => {
+        elements.retry.disabled = true;
+        try { render(await api("/api/retry", { method: "POST", body: "{}" })); }
+        catch (error) {
+          elements.errorNotice.hidden = false;
+          elements.errorNotice.textContent = error.message;
+        } finally { elements.retry.disabled = false; }
+      });
+
+      document.querySelectorAll("[data-feeling]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          if (!window.confirm("确认用这个感受结束并封存轨迹？")) return;
+          document.querySelectorAll("[data-feeling]").forEach((item) => { item.disabled = true; });
+          try {
+            render(await api("/api/end", {
+              method: "POST",
+              body: JSON.stringify({ feeling: button.dataset.feeling, reason: elements.endReason.value.trim() || null })
+            }));
+          } catch (error) {
+            elements.errorNotice.hidden = false;
+            elements.errorNotice.textContent = error.message;
+          } finally {
+            document.querySelectorAll("[data-feeling]").forEach((item) => { item.disabled = false; });
+          }
+        });
+      });
+
+      refresh();
+    </script>
+  </body>
+</html>

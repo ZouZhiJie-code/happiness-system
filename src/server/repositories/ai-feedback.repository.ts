@@ -158,6 +158,14 @@ export async function saveAIResponseFeedback(input: {
         data: { status: "retired", retiredAt: new Date() }
       });
     }
+    if (tx.aIResponseRegeneration?.updateMany) {
+      await tx.aIResponseRegeneration.updateMany({
+        where: { generatedTraceId: trace.id },
+        data: {
+          downvotedAt: input.vote === "downvote" ? new Date() : null
+        }
+      });
+    }
 
     const feedbackSignal = input.vote === "downvote" ? "user_downvote" : "user_upvote";
     const sourceSignals = Array.from(
@@ -217,6 +225,12 @@ export async function revokeAIResponseFeedback(traceId: string, userId: string) 
       where: { id: trace.id },
       data: { feedbackEvaluationPending: false }
     });
+    if (tx.aIResponseRegeneration?.updateMany) {
+      await tx.aIResponseRegeneration.updateMany({
+        where: { generatedTraceId: trace.id },
+        data: { downvotedAt: null }
+      });
+    }
     await tx.aIFewShotExample.updateMany({
       where: { sourceTraceId: trace.id, status: { in: ["candidate", "active"] } },
       data: { status: "retired", retiredAt: now }
