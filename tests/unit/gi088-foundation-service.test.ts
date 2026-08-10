@@ -6,9 +6,50 @@ import type {
   AIProviderDiagnostics
 } from "@/server/services/ai/ai-provider";
 import {
+  GI088_EVALUATION_ID_V1,
+  GI088_EVALUATION_ID_V2,
+  GI088_EVALUATION_ID_V3,
+  GI088_EVALUATION_ID_V4,
+  GI088_EVALUATION_ID_V5,
+  GI088_EVALUATION_ID_V6,
+  GI088_EVALUATION_ID_V7,
+  GI088_EVALUATION_ID_V7R1,
+  GI088_EVALUATION_ID_V7R2,
+  GI088_EVALUATION_ID_V7R3,
+  GI088_EVALUATION_ID_V7R4,
+  GI088_EVALUATION_ID_V8,
+  GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_VERSION,
+  GI088_EVALUATION_VERSION_V1,
+  GI088_EVALUATION_VERSION_V2,
+  GI088_EVALUATION_VERSION_V3,
+  GI088_EVALUATION_VERSION_V4,
+  GI088_EVALUATION_VERSION_V5,
+  GI088_EVALUATION_VERSION_V6,
+  GI088_EVALUATION_VERSION_V7,
+  GI088_EVALUATION_VERSION_V7R1,
+  GI088_EVALUATION_VERSION_V7R2,
+  GI088_EVALUATION_VERSION_V7R3,
+  GI088_EVALUATION_VERSION_V7R4,
+  GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
+  GI088_SERVICE_VERSION_V1,
+  GI088_SERVICE_VERSION_V2,
+  GI088_SERVICE_VERSION_V3,
+  GI088_SERVICE_VERSION_V4,
+  GI088_SERVICE_VERSION_V5,
+  GI088_SERVICE_VERSION_V6,
+  GI088_SERVICE_VERSION_V7,
+  GI088_SERVICE_VERSION_V7R1,
+  GI088_SERVICE_VERSION_V7R2,
+  GI088_SERVICE_VERSION_V7R3,
+  GI088_SERVICE_VERSION_V7R4,
+  GI088_SERVICE_VERSION_V8,
+  GI088_SERVICE_VERSION_V8R1,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
+  GI088_V5_TASKS,
+  GI088_V6_TASKS,
+  GI088_V8R1_TASKS,
   createGi088DatasetFingerprint
 } from "@/server/services/evaluation/gi088/candidate";
 import { Gi088MemoryFoundationStore } from "@/server/services/evaluation/gi088/foundation-memory-store";
@@ -21,8 +62,15 @@ import {
   type Gi088EvaluationFoundationStore,
   type Gi088FoundationJson
 } from "@/server/services/evaluation/gi088/foundation-store";
+import type {
+  Gi088BatchState,
+  Gi088EvaluationMode
+} from "@/server/services/evaluation/gi088/types";
 
 const HIDDEN_REASONING_SENTINEL = "PRIVATE_HIDDEN_REASONING_SENTINEL";
+const LEGACY_HIDDEN_REASONING_SENTINEL =
+  "PRIVATE_LEGACY_HIDDEN_REASONING_SENTINEL";
+const LEGACY_VISIBLE_RAW_OUTPUT = "LEGACY_VISIBLE_RAW_OUTPUT";
 
 function firstTurnOutput() {
   return JSON.stringify({
@@ -135,6 +183,75 @@ async function createRun(
   clientOperationId = "create-run"
 ) {
   return service.createRun({ ownerUserId, clientOperationId });
+}
+
+async function createHistoricalEvidenceState() {
+  const seedStore = new Gi088MemoryFoundationStore();
+  const fake = fakeProvider();
+  const seed = serviceWith({ store: seedStore, provider: fake.provider });
+  const created = await createRun(seed.service, "owner-historical-seed");
+  const session = await seed.service.startTask({
+    ownerUserId: "owner-historical-seed",
+    runId: created.runId,
+    taskId: "A1",
+    initialUserMessage: "这段历史原话、调用和评价都要保持原样。",
+    clientOperationId: "historical-seed-turn"
+  });
+  const stored = await seedStore.findRun({
+    ownerUserId: "owner-historical-seed",
+    runId: created.runId
+  });
+  if (!stored || !session.activeTask) {
+    throw new Error("GI088_HISTORICAL_TEST_SEED_FAILED");
+  }
+  const state = structuredClone(
+    stored.state
+  ) as unknown as Gi088BatchState;
+  const task = state.tasks.find((item) => item.taskId === "A1");
+  const publicTurn = session.activeTask.branches.high.turns[0];
+  if (!task || !publicTurn?.calls[0]) {
+    throw new Error("GI088_HISTORICAL_TEST_EVIDENCE_MISSING");
+  }
+  const call = structuredClone(publicTurn.calls[0]);
+  call.rawFinalOutput = LEGACY_VISIBLE_RAW_OUTPUT;
+  (call as unknown as Record<string, unknown>).reasoning_content =
+    LEGACY_HIDDEN_REASONING_SENTINEL;
+  task.branches.high.turns[0]!.calls = [call];
+  task.branches.high.review = {
+    feeling: "better",
+    quality: "direct_use",
+    reason: "LEGACY_REVIEW_REASON",
+    reviewedAt: "2026-08-09T12:00:00.000Z",
+    targetTrigger: "triggered"
+  };
+  task.branches.high.status = "completed";
+  task.branches.high.completedAt = "2026-08-09T12:00:00.000Z";
+  state.activeTaskId = "A1";
+  return state;
+}
+
+function projectHistoricalState(input: {
+  base: Gi088BatchState;
+  runId: string;
+  taskIds: readonly string[];
+  mode: Gi088EvaluationMode;
+}) {
+  const state = structuredClone(input.base);
+  const sourceById = new Map(
+    state.tasks.map((task) => [task.taskId, task] as const)
+  );
+  state.batchId = input.runId;
+  state.evaluationMode = input.mode;
+  state.tasks = input.taskIds.map((taskId, index) => {
+    const source = sourceById.get(taskId) ?? state.tasks[index];
+    if (!source) throw new Error("GI088_HISTORICAL_TASK_SEED_MISSING");
+    return {
+      ...structuredClone(source),
+      taskId
+    };
+  });
+  state.activeTaskId = "A1";
+  return state;
 }
 
 async function expectCode(promise: Promise<unknown>, code: string) {
@@ -1480,6 +1597,312 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     ).resolves.toMatchObject({
       receipt: { payloadSha256: expect.stringMatching(/^[a-f0-9]{64}$/u) }
     });
+    expect(fake.provider.complete).not.toHaveBeenCalled();
+  });
+
+  it("v1 至 v8r1 全版本会话和导出按存储态及不可变版本元数据投影", async () => {
+    const base = await createHistoricalEvidenceState();
+    const v1TaskIds = [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A2-R",
+      "A3-R",
+      "A4-R",
+      "A6-R"
+    ] as const;
+    const cases = [
+      {
+        label: "v1 paired",
+        version: GI088_EVALUATION_VERSION_V1,
+        id: GI088_EVALUATION_ID_V1,
+        serviceVersion: GI088_SERVICE_VERSION_V1,
+        model: "deepseek-v4-flash",
+        mode: "paired",
+        taskIds: v1TaskIds
+      },
+      {
+        label: "v2",
+        version: GI088_EVALUATION_VERSION_V2,
+        id: GI088_EVALUATION_ID_V2,
+        serviceVersion: GI088_SERVICE_VERSION_V2,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: v1TaskIds
+      },
+      {
+        label: "v3",
+        version: GI088_EVALUATION_VERSION_V3,
+        id: GI088_EVALUATION_ID_V3,
+        serviceVersion: GI088_SERVICE_VERSION_V3,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: v1TaskIds
+      },
+      {
+        label: "v4",
+        version: GI088_EVALUATION_VERSION_V4,
+        id: GI088_EVALUATION_ID_V4,
+        serviceVersion: GI088_SERVICE_VERSION_V4,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: v1TaskIds
+      },
+      {
+        label: "v5",
+        version: GI088_EVALUATION_VERSION_V5,
+        id: GI088_EVALUATION_ID_V5,
+        serviceVersion: GI088_SERVICE_VERSION_V5,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: GI088_V5_TASKS.map((task) => task.id)
+      },
+      {
+        label: "v6",
+        version: GI088_EVALUATION_VERSION_V6,
+        id: GI088_EVALUATION_ID_V6,
+        serviceVersion: GI088_SERVICE_VERSION_V6,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: GI088_V6_TASKS.map((task) => task.id)
+      },
+      {
+        label: "v7",
+        version: GI088_EVALUATION_VERSION_V7,
+        id: GI088_EVALUATION_ID_V7,
+        serviceVersion: GI088_SERVICE_VERSION_V7,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: ["A1", "A2"]
+      },
+      {
+        label: "v7r1",
+        version: GI088_EVALUATION_VERSION_V7R1,
+        id: GI088_EVALUATION_ID_V7R1,
+        serviceVersion: GI088_SERVICE_VERSION_V7R1,
+        model: "deepseek-v4-flash",
+        mode: "high_only",
+        taskIds: ["A1", "A2"]
+      },
+      {
+        label: "v7r2",
+        version: GI088_EVALUATION_VERSION_V7R2,
+        id: GI088_EVALUATION_ID_V7R2,
+        serviceVersion: GI088_SERVICE_VERSION_V7R2,
+        model: "deepseek-v4-flash-ga-260731",
+        mode: "high_only",
+        taskIds: ["A1", "A2"]
+      },
+      {
+        label: "v7r3",
+        version: GI088_EVALUATION_VERSION_V7R3,
+        id: GI088_EVALUATION_ID_V7R3,
+        serviceVersion: GI088_SERVICE_VERSION_V7R3,
+        model: "deepseek-v4-flash-ga-260731",
+        mode: "high_only",
+        taskIds: ["A1", "A2"]
+      },
+      {
+        label: "v7r4",
+        version: GI088_EVALUATION_VERSION_V7R4,
+        id: GI088_EVALUATION_ID_V7R4,
+        serviceVersion: GI088_SERVICE_VERSION_V7R4,
+        model: "deepseek-v4-pro",
+        mode: "high_only",
+        taskIds: ["A1", "A2"]
+      },
+      {
+        label: "v8",
+        version: GI088_EVALUATION_VERSION_V8,
+        id: GI088_EVALUATION_ID_V8,
+        serviceVersion: GI088_SERVICE_VERSION_V8,
+        model: "deepseek-v4-pro",
+        mode: "high_only",
+        taskIds: GI088_V8R1_TASKS.slice(0, 4).map((task) => task.id)
+      },
+      {
+        label: "v8r1",
+        version: GI088_EVALUATION_VERSION_V8R1,
+        id: GI088_EVALUATION_ID_V8R1,
+        serviceVersion: GI088_SERVICE_VERSION_V8R1,
+        model: "deepseek-v4-pro",
+        mode: "high_only",
+        taskIds: GI088_V8R1_TASKS.map((task) => task.id)
+      }
+    ] as const;
+    const store = new Gi088MemoryFoundationStore();
+    const fake = fakeProvider();
+    const { service, getProvider } = serviceWith({
+      store,
+      provider: fake.provider
+    });
+
+    for (const historical of cases) {
+      const runId = `historical-${historical.label.replaceAll(" ", "-")}`;
+      const ownerUserId = `owner-${runId}`;
+      const state = projectHistoricalState({
+        base,
+        runId,
+        taskIds: historical.taskIds,
+        mode: historical.mode
+      });
+      await store.createRunIdempotently({
+        runId,
+        ownerUserId,
+        evaluationVersion: historical.version,
+        candidateFingerprint: `${historical.label}-candidate`,
+        executionFingerprint: `${historical.label}-execution`,
+        state: state as unknown as Gi088FoundationJson,
+        gateStatus: "legacy_unknown",
+        clientOperationId: `${runId}-seed`,
+        payloadHash: `${runId}-payload`
+      });
+
+      const lastTaskId = historical.taskIds.at(-1)!;
+      const selected = await service.getSession({
+        ownerUserId,
+        runId,
+        taskId: lastTaskId
+      });
+      expect(selected.evaluation, historical.label).toMatchObject({
+        id: historical.id,
+        version: historical.version,
+        serviceVersion: historical.serviceVersion,
+        model: historical.model,
+        mode: historical.mode,
+        candidateFingerprint: `${historical.label}-candidate`,
+        executionFingerprint: `${historical.label}-execution`,
+        activeBranches:
+          historical.mode === "paired" ? ["off", "high"] : ["high"],
+        datasetFingerprint: createGi088DatasetFingerprint(historical.version)
+      });
+      expect(selected.evaluation, historical.label).not.toHaveProperty(
+        "runnerFingerprint"
+      );
+      expect(selected.evaluation, historical.label).not.toHaveProperty(
+        "experienceFingerprint"
+      );
+      expect(selected.evaluation, historical.label).not.toHaveProperty(
+        "behaviorManifestSha256"
+      );
+      expect(selected.tasks.map((task) => task.id), historical.label).toEqual(
+        historical.taskIds
+      );
+      expect(selected.activeTask?.taskId, historical.label).toBe(lastTaskId);
+      expect(selected.batch, historical.label).toMatchObject({
+        readOnly: true,
+        readOnlyReason: "execution_fingerprint_mismatch"
+      });
+      await expectCode(
+        service.startTask({
+          ownerUserId,
+          runId,
+          taskId: "A1",
+          initialUserMessage: "历史版本只能读取。",
+          clientOperationId: `${runId}-readonly-write`
+        }),
+        "GI088_RUN_READ_ONLY"
+      );
+
+      const evidence = await service.getSession({
+        ownerUserId,
+        runId,
+        taskId: "A1"
+      });
+      expect(
+        evidence.activeTask?.branches.high.turns[0]?.calls[0]?.rawFinalOutput,
+        historical.label
+      ).toBeNull();
+      expect(
+        evidence.activeTask?.branches.high.turns[0]?.calls[0],
+        historical.label
+      ).toMatchObject({
+        status: "valid",
+        tokenUsage: {
+          promptTokens: 10,
+          completionTokens: 20,
+          totalTokens: 30
+        }
+      });
+      expect(
+        evidence.activeTask?.branches.high.review?.reason,
+        historical.label
+      ).toBe("LEGACY_REVIEW_REASON");
+      expect(evidence.batch.gate, historical.label).toMatchObject({
+        status: "legacy_unknown",
+        reasons: []
+      });
+      const serializedSession = JSON.stringify(evidence);
+      expect(serializedSession, historical.label).not.toContain(
+        LEGACY_VISIBLE_RAW_OUTPUT
+      );
+      expect(serializedSession, historical.label).not.toContain(
+        LEGACY_HIDDEN_REASONING_SENTINEL
+      );
+      expect(serializedSession, historical.label).not.toContain(
+        "reasoning_content"
+      );
+
+      const exported = await service.exportRun({ ownerUserId, runId });
+      const payload = exported.payload as unknown as {
+        evaluation: {
+          id: string;
+          version: string;
+          serviceVersion: string;
+          model: string;
+          candidateFingerprint: string;
+          executionFingerprint: string;
+          maximumProviderCallsPerUserSubmission?: number;
+        };
+        run: {
+          gate: {
+            status: string;
+            reasons: unknown[];
+          };
+        };
+        batch: Gi088BatchState;
+      };
+      expect(payload.evaluation, historical.label).toMatchObject({
+        id: historical.id,
+        version: historical.version,
+        serviceVersion: historical.serviceVersion,
+        model: historical.model,
+        candidateFingerprint: `${historical.label}-candidate`,
+        executionFingerprint: `${historical.label}-execution`
+      });
+      expect(payload.evaluation, historical.label).not.toHaveProperty(
+        "maximumProviderCallsPerUserSubmission"
+      );
+      expect(payload.run.gate, historical.label).toEqual({
+        status: "legacy_unknown",
+        reasons: []
+      });
+      expect(
+        payload.batch.tasks.map((task) => task.taskId),
+        historical.label
+      ).toEqual(historical.taskIds);
+      const serializedExport = JSON.stringify(exported);
+      expect(serializedExport, historical.label).toContain(
+        LEGACY_VISIBLE_RAW_OUTPUT
+      );
+      expect(serializedExport, historical.label).toContain(
+        "LEGACY_REVIEW_REASON"
+      );
+      expect(serializedExport, historical.label).not.toContain(
+        LEGACY_HIDDEN_REASONING_SENTINEL
+      );
+      expect(serializedExport, historical.label).not.toContain(
+        "reasoning_content"
+      );
+      expect(await store.listCalls(runId), historical.label).toEqual([]);
+    }
+
+    expect(getProvider).not.toHaveBeenCalled();
     expect(fake.provider.complete).not.toHaveBeenCalled();
   });
 });

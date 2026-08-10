@@ -1,3 +1,6 @@
+import { pathToFileURL } from "node:url";
+import { resolve } from "node:path";
+
 import { PrismaClient } from "@prisma/gi088-evaluation-client";
 
 import {
@@ -6,19 +9,46 @@ import {
 } from "../src/server/services/evaluation/gi088/candidate";
 import { Gi088PrismaFoundationStore } from "../src/server/services/evaluation/gi088/foundation-prisma-store";
 import { Gi088EvaluationFoundationService } from "../src/server/services/evaluation/gi088/foundation-service";
+import {
+  GI088_EVALUATION_SCHEMA,
+  validateGi088EvaluationDatabaseUrl
+} from "../src/server/services/evaluation/gi088/access";
 
 const SOURCE_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R1;
 const CONFIRMATION = "I_UNDERSTAND_ZERO_MODEL_CALLS";
 
-function prepareEvaluationDatabaseUrl() {
+export function resolveGi088InitializeDatabaseUrl(
+  env: NodeJS.ProcessEnv = process.env
+) {
+  if (env.VERCEL_ENV === "production" || env.NODE_ENV === "production") {
+    throw new Error("GI088_INITIALIZE_PRODUCTION_FORBIDDEN");
+  }
+  if (env.VERCEL_ENV !== "preview") {
+    throw new Error("GI088_INITIALIZE_PREVIEW_ONLY");
+  }
   const raw =
-    process.env.EVALUATION_DATABASE_URL?.trim() ||
-    process.env.EVALUATION_DATABASE_URL_UNPOOLED?.trim();
-  const schema = process.env.GI088_EVALUATION_DATABASE_SCHEMA?.trim();
+    env.EVALUATION_DATABASE_URL?.trim() ||
+    env.EVALUATION_DATABASE_URL_UNPOOLED?.trim();
+  const schema = env.GI088_EVALUATION_DATABASE_SCHEMA?.trim();
   if (!raw || !schema) throw new Error("GI088_INITIALIZE_DATABASE_CONFIG_MISSING");
+  if (!env.DATABASE_URL?.trim()) {
+    throw new Error("GI088_INITIALIZE_APP_DATABASE_CONFIG_MISSING");
+  }
+  if (schema !== GI088_EVALUATION_SCHEMA) {
+    throw new Error("GI088_INITIALIZE_DATABASE_SCHEMA_MISMATCH");
+  }
   const url = new URL(raw);
+  const configuredSchema = url.searchParams.get("schema");
+  if (configuredSchema && configuredSchema !== schema) {
+    throw new Error("GI088_INITIALIZE_DATABASE_SCHEMA_MISMATCH");
+  }
   url.searchParams.set("schema", schema);
-  process.env.EVALUATION_DATABASE_URL = url.toString();
+  const evaluationDatabaseUrl = url.toString();
+  validateGi088EvaluationDatabaseUrl({
+    ...env,
+    EVALUATION_DATABASE_URL: evaluationDatabaseUrl
+  });
+  return evaluationDatabaseUrl;
 }
 
 async function main() {
@@ -36,9 +66,9 @@ async function main() {
     throw new Error("GI088_INITIALIZE_EXECUTION_FINGERPRINT_MISMATCH");
   }
 
-  prepareEvaluationDatabaseUrl();
+  const evaluationDatabaseUrl = resolveGi088InitializeDatabaseUrl();
   const client = new PrismaClient({
-    datasources: { db: { url: process.env.EVALUATION_DATABASE_URL } }
+    datasources: { db: { url: evaluationDatabaseUrl } }
   });
   try {
     const sources = await client.gi088EvaluationBatch.findMany({
@@ -103,7 +133,15 @@ async function main() {
   }
 }
 
-void main().catch((error) => {
-  console.error(error instanceof Error ? error.message : "GI088_INITIALIZE_FAILED");
-  process.exitCode = 1;
-});
+const isDirectRun =
+  Boolean(process.argv[1]) &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1]!)).href;
+
+if (isDirectRun) {
+  void main().catch((error) => {
+    console.error(
+      error instanceof Error ? error.message : "GI088_INITIALIZE_FAILED"
+    );
+    process.exitCode = 1;
+  });
+}

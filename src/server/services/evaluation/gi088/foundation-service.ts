@@ -27,20 +27,62 @@ import {
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
   GI088_EVALUATION_ID,
+  GI088_EVALUATION_ID_V1,
+  GI088_EVALUATION_ID_V2,
+  GI088_EVALUATION_ID_V3,
+  GI088_EVALUATION_ID_V4,
+  GI088_EVALUATION_ID_V5,
+  GI088_EVALUATION_ID_V6,
+  GI088_EVALUATION_ID_V7,
+  GI088_EVALUATION_ID_V7R1,
+  GI088_EVALUATION_ID_V7R2,
+  GI088_EVALUATION_ID_V7R3,
+  GI088_EVALUATION_ID_V7R4,
+  GI088_EVALUATION_ID_V8,
+  GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_MODE,
   GI088_EVALUATION_VERSION,
+  GI088_EVALUATION_VERSION_V1,
+  GI088_EVALUATION_VERSION_V2,
+  GI088_EVALUATION_VERSION_V3,
+  GI088_EVALUATION_VERSION_V4,
+  GI088_EVALUATION_VERSION_V5,
+  GI088_EVALUATION_VERSION_V6,
+  GI088_EVALUATION_VERSION_V7,
+  GI088_EVALUATION_VERSION_V7R1,
+  GI088_EVALUATION_VERSION_V7R2,
+  GI088_EVALUATION_VERSION_V7R3,
+  GI088_EVALUATION_VERSION_V7R4,
+  GI088_EVALUATION_VERSION_V8,
+  GI088_EVALUATION_VERSION_V8R1,
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
+  GI088_SERVICE_VERSION_V1,
+  GI088_SERVICE_VERSION_V2,
+  GI088_SERVICE_VERSION_V3,
+  GI088_SERVICE_VERSION_V4,
+  GI088_SERVICE_VERSION_V5,
+  GI088_SERVICE_VERSION_V6,
+  GI088_SERVICE_VERSION_V7,
+  GI088_SERVICE_VERSION_V7R1,
+  GI088_SERVICE_VERSION_V7R2,
+  GI088_SERVICE_VERSION_V7R3,
+  GI088_SERVICE_VERSION_V7R4,
+  GI088_SERVICE_VERSION_V8,
+  GI088_SERVICE_VERSION_V8R1,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
   GI088_TIMEOUT_RECOVERY_POLICY,
+  GI088_V5_TASKS,
+  GI088_V6_TASKS,
   GI088_V8R1_TASKS,
   createGi088DatasetFingerprint,
   createGi088EffectiveCandidateFingerprint,
   createGi088ExecutionFingerprint,
   createGi088FingerprintBundle,
-  getGi088CandidateAssets
+  getGi088CandidateAssets,
+  type Gi088EvaluationTaskDefinition
 } from "@/server/services/evaluation/gi088/candidate";
 import {
   GI088_DETERMINISTIC_STATE_POLICY_VERSION,
@@ -52,6 +94,7 @@ import {
 } from "@/server/services/evaluation/gi088/errors";
 import {
   createGi088ExportEnvelope,
+  sanitizeGi088ExportPayload,
   type Gi088ExportEnvelope,
   type Gi088ExportJsonValue
 } from "@/server/services/evaluation/gi088/export-v06";
@@ -215,9 +258,150 @@ function taskState(state: Gi088BatchState, taskId: string) {
   return task;
 }
 
-function taskDefinitionsFor(evaluationVersion: string) {
-  if (evaluationVersion.includes("v8r1")) return GI088_V8R1_TASKS;
-  return GI088_TASKS;
+type Gi088EvaluationVersionMetadata = {
+  id: string;
+  serviceVersion: string;
+  model: string;
+};
+
+const GI088_HISTORICAL_EVALUATION_METADATA = {
+  [GI088_EVALUATION_VERSION_V1]: {
+    id: GI088_EVALUATION_ID_V1,
+    serviceVersion: GI088_SERVICE_VERSION_V1,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V2]: {
+    id: GI088_EVALUATION_ID_V2,
+    serviceVersion: GI088_SERVICE_VERSION_V2,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V3]: {
+    id: GI088_EVALUATION_ID_V3,
+    serviceVersion: GI088_SERVICE_VERSION_V3,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V4]: {
+    id: GI088_EVALUATION_ID_V4,
+    serviceVersion: GI088_SERVICE_VERSION_V4,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V5]: {
+    id: GI088_EVALUATION_ID_V5,
+    serviceVersion: GI088_SERVICE_VERSION_V5,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V6]: {
+    id: GI088_EVALUATION_ID_V6,
+    serviceVersion: GI088_SERVICE_VERSION_V6,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V7]: {
+    id: GI088_EVALUATION_ID_V7,
+    serviceVersion: GI088_SERVICE_VERSION_V7,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V7R1]: {
+    id: GI088_EVALUATION_ID_V7R1,
+    serviceVersion: GI088_SERVICE_VERSION_V7R1,
+    model: "deepseek-v4-flash"
+  },
+  [GI088_EVALUATION_VERSION_V7R2]: {
+    id: GI088_EVALUATION_ID_V7R2,
+    serviceVersion: GI088_SERVICE_VERSION_V7R2,
+    model: "deepseek-v4-flash-ga-260731"
+  },
+  [GI088_EVALUATION_VERSION_V7R3]: {
+    id: GI088_EVALUATION_ID_V7R3,
+    serviceVersion: GI088_SERVICE_VERSION_V7R3,
+    model: "deepseek-v4-flash-ga-260731"
+  },
+  [GI088_EVALUATION_VERSION_V7R4]: {
+    id: GI088_EVALUATION_ID_V7R4,
+    serviceVersion: GI088_SERVICE_VERSION_V7R4,
+    model: "deepseek-v4-pro"
+  },
+  [GI088_EVALUATION_VERSION_V8]: {
+    id: GI088_EVALUATION_ID_V8,
+    serviceVersion: GI088_SERVICE_VERSION_V8,
+    model: "deepseek-v4-pro"
+  },
+  [GI088_EVALUATION_VERSION_V8R1]: {
+    id: GI088_EVALUATION_ID_V8R1,
+    serviceVersion: GI088_SERVICE_VERSION_V8R1,
+    model: "deepseek-v4-pro"
+  }
+} as const satisfies Readonly<Record<string, Gi088EvaluationVersionMetadata>>;
+
+function evaluationMetadataFor(
+  evaluationVersion: string
+): Gi088EvaluationVersionMetadata {
+  if (evaluationVersion === GI088_EVALUATION_VERSION) {
+    return {
+      id: GI088_EVALUATION_ID,
+      serviceVersion: GI088_FOUNDATION_SERVICE_VERSION,
+      model: GI088_CONFIGS.high.model
+    };
+  }
+  const historical = GI088_HISTORICAL_EVALUATION_METADATA[
+    evaluationVersion as keyof typeof GI088_HISTORICAL_EVALUATION_METADATA
+  ];
+  if (historical) return historical;
+  return {
+    id: `gi088_historical:${evaluationVersion}`,
+    serviceVersion: `gi088_historical:${evaluationVersion}`,
+    model: "historical_unknown"
+  };
+}
+
+function immutableTaskPackageFor(evaluationVersion: string) {
+  if (evaluationVersion === GI088_EVALUATION_VERSION) return GI088_TASKS;
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V8R1) {
+    return GI088_V8R1_TASKS;
+  }
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V8) {
+    return GI088_V8R1_TASKS.slice(0, 4);
+  }
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V6) {
+    return GI088_V6_TASKS;
+  }
+  if (
+    evaluationVersion === GI088_EVALUATION_VERSION_V4 ||
+    evaluationVersion === GI088_EVALUATION_VERSION_V5
+  ) {
+    return GI088_V5_TASKS;
+  }
+  return [];
+}
+
+function storedHistoricalTaskDefinition(
+  evaluationVersion: string,
+  taskId: string
+): Gi088EvaluationTaskDefinition {
+  const repeated = taskId.match(/^(.+)-R$/u)?.[1] ?? null;
+  return {
+    id: taskId,
+    capabilityId: `historical:${evaluationVersion}:${taskId}`,
+    title: `历史任务 ${taskId}`,
+    instruction: "按该历史运行已经保存的任务顺序只读查看证据。",
+    targetTriggerPrompt: "历史任务说明以该版本的原始资产和已保存证据为准。",
+    criterion: "保留并查看历史对话、调用、状态和人工评价的原始记录。",
+    repeatOf: repeated
+  };
+}
+
+function taskDefinitionsFor(
+  evaluationVersion: string,
+  state?: Gi088BatchState
+): readonly Gi088EvaluationTaskDefinition[] {
+  const immutablePackage = immutableTaskPackageFor(evaluationVersion);
+  if (!state) return immutablePackage;
+  const immutableById = new Map<string, Gi088EvaluationTaskDefinition>(
+    immutablePackage.map((definition) => [definition.id, definition] as const)
+  );
+  return state.tasks.map(
+    (task) => immutableById.get(task.taskId) ??
+      storedHistoricalTaskDefinition(evaluationVersion, task.taskId)
+  );
 }
 
 function taskDefinition(evaluationVersion: string, taskId: string) {
@@ -226,6 +410,163 @@ function taskDefinition(evaluationVersion: string, taskId: string) {
   );
   if (!definition) throw new Gi088EvaluationError("GI088_TASK_NOT_FOUND");
   return definition;
+}
+
+function historicalMaximumProviderCallsPerTrajectory(
+  evaluationVersion: string
+) {
+  return [
+    GI088_EVALUATION_VERSION_V1,
+    GI088_EVALUATION_VERSION_V2,
+    GI088_EVALUATION_VERSION_V3,
+    GI088_EVALUATION_VERSION_V4,
+    GI088_EVALUATION_VERSION_V5,
+    GI088_EVALUATION_VERSION_V6
+  ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V1)
+    ? 12
+    : null;
+}
+
+function historicalRecoveryLimits(evaluationVersion: string) {
+  const emptyContent = [
+    GI088_EVALUATION_VERSION_V3,
+    GI088_EVALUATION_VERSION_V4,
+    GI088_EVALUATION_VERSION_V5,
+    GI088_EVALUATION_VERSION_V6,
+    GI088_EVALUATION_VERSION_V7,
+    GI088_EVALUATION_VERSION_V7R1,
+    GI088_EVALUATION_VERSION_V7R2,
+    GI088_EVALUATION_VERSION_V7R3,
+    GI088_EVALUATION_VERSION_V7R4,
+    GI088_EVALUATION_VERSION_V8,
+    GI088_EVALUATION_VERSION_V8R1
+  ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V3)
+    ? 1
+    : 0;
+  const stageTransition = [
+    GI088_EVALUATION_VERSION_V4,
+    GI088_EVALUATION_VERSION_V5,
+    GI088_EVALUATION_VERSION_V6,
+    GI088_EVALUATION_VERSION_V7,
+    GI088_EVALUATION_VERSION_V7R1,
+    GI088_EVALUATION_VERSION_V7R2,
+    GI088_EVALUATION_VERSION_V7R3,
+    GI088_EVALUATION_VERSION_V7R4,
+    GI088_EVALUATION_VERSION_V8,
+    GI088_EVALUATION_VERSION_V8R1
+  ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V4)
+    ? 1
+    : 0;
+  const automaticTechnicalRecovery = [
+    GI088_EVALUATION_VERSION_V5,
+    GI088_EVALUATION_VERSION_V6,
+    GI088_EVALUATION_VERSION_V7,
+    GI088_EVALUATION_VERSION_V7R1,
+    GI088_EVALUATION_VERSION_V7R2,
+    GI088_EVALUATION_VERSION_V7R3,
+    GI088_EVALUATION_VERSION_V7R4,
+    GI088_EVALUATION_VERSION_V8,
+    GI088_EVALUATION_VERSION_V8R1
+  ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V5);
+  return {
+    automaticEmptyContentRetries: emptyContent,
+    automaticStageTransitionRetries: stageTransition,
+    automaticSingleQuestionRetries:
+      evaluationVersion === GI088_EVALUATION_VERSION_V5 ? 1 : 0,
+    automaticTechnicalRetries: automaticTechnicalRecovery ? 1 : 0
+  };
+}
+
+function historicalCallToPublic(call: Gi088Call): Gi088Call {
+  const safeDiagnostics = sanitizeAIProviderDiagnostics(
+    call.providerDiagnostics
+  );
+  const publicDiagnostics = safeDiagnostics
+    ? Object.fromEntries(
+        Object.entries(safeDiagnostics).filter(
+          ([key]) => key !== "upstreamRequestId"
+        )
+      ) as Gi088Call["providerDiagnostics"]
+    : null;
+  return sanitizeGi088ExportPayload({
+    id: call.id,
+    attempt: call.attempt,
+    kind: call.kind,
+    status: call.status,
+    startedAt: call.startedAt,
+    completedAt: call.completedAt,
+    requestHash: call.requestHash,
+    responseHash: call.responseHash,
+    rawFinalOutput: null,
+    latencyMs: call.latencyMs,
+    tokenUsage: sanitizeAICompletionTokenUsage(call.tokenUsage),
+    providerDiagnostics: publicDiagnostics,
+    errorCode: call.errorCode,
+    parentCallId: call.parentCallId,
+    retryTrigger: call.retryTrigger,
+    retryOrdinal: call.retryOrdinal,
+    effectiveConfig: call.effectiveConfig,
+    ...(call.ledgerStatus ? { ledgerStatus: call.ledgerStatus } : {}),
+    ...(call.executionDeadlineAt !== undefined
+      ? { executionDeadlineAt: call.executionDeadlineAt }
+      : {}),
+    ...(call.automaticDeadlineAt !== undefined
+      ? { automaticDeadlineAt: call.automaticDeadlineAt }
+      : {}),
+    ...(call.finalizationError !== undefined
+      ? { finalizationError: call.finalizationError }
+      : {})
+  }) as unknown as Gi088Call;
+}
+
+function historicalTrajectoryConfig(
+  evaluationVersion: string,
+  trajectory: Gi088Trajectory
+) {
+  const historicalCalls = trajectory.turns.flatMap((turn) => turn.calls);
+  const effectiveConfig = [...historicalCalls]
+    .reverse()
+    .find((call) => call.effectiveConfig)?.effectiveConfig;
+  const maximumProviderCallsPerTrajectory =
+    historicalMaximumProviderCallsPerTrajectory(evaluationVersion);
+  const providerCallsUsed = historicalCalls.length;
+  const retryLimits = historicalRecoveryLimits(evaluationVersion);
+  const thinking = effectiveConfig?.thinking ??
+    (trajectory.branch === "high" ? "enabled" : "disabled");
+  const reasoningEffort = effectiveConfig?.reasoningEffort ??
+    (thinking === "enabled" ? "high" : null);
+  const temperature = effectiveConfig?.temperature ??
+    (thinking === "disabled" ? 0.2 : null);
+  return {
+    key: trajectory.branch,
+    label: thinking === "enabled" ? "Thinking 开启 · high" : "Thinking 关闭",
+    thinking,
+    temperature,
+    effectiveTemperature: temperature,
+    reasoningEffort,
+    ...retryLimits,
+    providerCallsUsed,
+    providerCallsRemaining: maximumProviderCallsPerTrajectory === null
+      ? null
+      : Math.max(0, maximumProviderCallsPerTrajectory - providerCallsUsed),
+    maximumProviderCallsPerTrajectory
+  };
+}
+
+function historicalExportConfig(
+  state: Gi088BatchState,
+  metadata: Gi088EvaluationVersionMetadata
+) {
+  const latestCall = state.tasks
+    .flatMap((task) => [task.branches.off, task.branches.high])
+    .flatMap((trajectory) => trajectory.turns)
+    .flatMap((turn) => turn.calls)
+    .reverse()
+    .find((call) => call.effectiveConfig);
+  return {
+    model: metadata.model,
+    ...(latestCall?.effectiveConfig ?? {})
+  };
 }
 
 function trajectoryComplete(trajectory: Gi088Trajectory) {
@@ -469,7 +810,10 @@ function gateFor(input: {
   interventions: Gi088FoundationProgramInterventionRecord[];
   now: Date;
 }) {
-  if (input.run.status !== "running") {
+  if (
+    input.run.status !== "running" ||
+    input.run.evaluationVersion !== GI088_EVALUATION_VERSION
+  ) {
     return {
       status: input.run.gateStatus as Gi088GateStatus,
       reasons: existingGateReasons(input.run)
@@ -619,7 +963,7 @@ export class Gi088EvaluationFoundationService {
           completedTaskCount: state.tasks.filter((task) =>
             taskCompletedFor(state, task)
           ).length,
-          totalTasks: taskDefinitionsFor(run.evaluationVersion).length,
+          totalTasks: taskDefinitionsFor(run.evaluationVersion, state).length,
           createdAt: run.createdAt.toISOString(),
           updatedAt: run.updatedAt.toISOString(),
           sealedAt: dateIso(run.sealedAt),
@@ -688,8 +1032,13 @@ export class Gi088EvaluationFoundationService {
     runId: string;
     taskId?: string | null;
   }) {
-    if (input.taskId) taskDefinition(GI088_EVALUATION_VERSION, input.taskId);
     const run = await this.requireRun(input.ownerUserId, input.runId);
+    if (
+      input.taskId &&
+      !parseState(run).tasks.some((task) => task.taskId === input.taskId)
+    ) {
+      throw new Gi088EvaluationError("GI088_TASK_NOT_FOUND");
+    }
     const reconciled = await this.reconcileRun(run);
     return this.createPublicSession(reconciled, input.taskId);
   }
@@ -710,7 +1059,7 @@ export class Gi088EvaluationFoundationService {
       calls,
       interventions: interventionRows
     });
-    const definitions = taskDefinitionsFor(run.evaluationVersion);
+    const definitions = taskDefinitionsFor(run.evaluationVersion, state);
     const requested = selectedTaskId
       ? state.tasks.find((task) => task.taskId === selectedTaskId) ?? null
       : null;
@@ -721,41 +1070,55 @@ export class Gi088EvaluationFoundationService {
       run.evaluationVersion !== GI088_EVALUATION_VERSION ||
       run.executionFingerprint !== this.executionFingerprint ||
       run.candidateFingerprint !== this.candidateFingerprint;
-    const fingerprints = createGi088FingerprintBundle();
+    const currentFoundationRun = run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
+    const fingerprints = currentFoundationRun
+      ? createGi088FingerprintBundle()
+      : null;
 
     const publicTrajectory = (trajectory: Gi088Trajectory) => {
       const branchCalls = calls.filter((call) =>
         call.taskId === selectedTask?.taskId &&
         call.branch === trajectory.branch
       );
-      const turns = trajectory.turns.map((turn) => ({
-        ...turn,
-        calls: branchCalls
+      const turns = trajectory.turns.map((turn) => {
+        const ledgerCalls = branchCalls
           .filter((call) => call.turnId === turn.id)
           .sort((left, right) => left.attempt - right.attempt)
-          .map(callToPublic)
-      }));
-      const config = GI088_CONFIGS[trajectory.branch];
+          .map(callToPublic);
+        return {
+          ...turn,
+          calls: currentFoundationRun
+            ? ledgerCalls
+            : turn.calls.map(historicalCallToPublic)
+        };
+      });
+      const currentConfig = GI088_CONFIGS[trajectory.branch];
+      const config = currentFoundationRun
+        ? {
+            key: currentConfig.key,
+            label: currentConfig.label,
+            thinking: currentConfig.thinking,
+            temperature: currentConfig.temperature,
+            effectiveTemperature: currentConfig.effectiveTemperature,
+            reasoningEffort: currentConfig.reasoningEffort,
+            automaticEmptyContentRetries:
+              currentConfig.automaticEmptyContentRetries,
+            automaticStageTransitionRetries:
+              currentConfig.automaticStageTransitionRetries,
+            automaticSingleQuestionRetries:
+              currentConfig.automaticSingleQuestionRetries,
+            automaticTechnicalRetries: currentConfig.automaticTechnicalRetries,
+            providerCallsUsed:
+              branchCalls.filter((call) => call.dispatchedAt).length,
+            providerCallsRemaining: null,
+            maximumProviderCallsPerTrajectory: null
+          }
+        : historicalTrajectoryConfig(run.evaluationVersion, trajectory);
       return {
         ...trajectory,
         turns,
-        config: {
-          key: config.key,
-          label: config.label,
-          thinking: config.thinking,
-          temperature: config.temperature,
-          effectiveTemperature: config.effectiveTemperature,
-          reasoningEffort: config.reasoningEffort,
-          automaticEmptyContentRetries: config.automaticEmptyContentRetries,
-          automaticStageTransitionRetries:
-            config.automaticStageTransitionRetries,
-          automaticSingleQuestionRetries:
-            config.automaticSingleQuestionRetries,
-          automaticTechnicalRetries: config.automaticTechnicalRetries,
-          providerCallsUsed: branchCalls.filter((call) => call.dispatchedAt).length,
-          providerCallsRemaining: null,
-          maximumProviderCallsPerTrajectory: null
-        },
+        config,
         dialogueAnchor: createDialogueAnchor(trajectory),
         reviewSnapshotFingerprint: selectedTask
           ? reviewSnapshotFingerprint({
@@ -803,32 +1166,35 @@ export class Gi088EvaluationFoundationService {
 
     return {
       evaluation: {
-        id: run.evaluationVersion === GI088_EVALUATION_VERSION
-          ? GI088_EVALUATION_ID
-          : `gi088_historical:${run.evaluationVersion}`,
+        id: evaluationMetadata.id,
         version: run.evaluationVersion,
         mode: state.evaluationMode ?? "high_only",
         activeBranches:
           state.evaluationMode === "paired" ? ["off", "high"] : ["high"],
         candidateFingerprint: run.candidateFingerprint,
         executionFingerprint: run.executionFingerprint,
-        model: GI088_CONFIGS.high.model,
-        serviceVersion: GI088_FOUNDATION_SERVICE_VERSION,
-        behaviorManifestVersion: fingerprints.behaviorManifestVersion,
-        behaviorManifestSha256: fingerprints.behaviorManifestSha256,
+        model: evaluationMetadata.model,
+        serviceVersion: evaluationMetadata.serviceVersion,
         datasetFingerprint: createGi088DatasetFingerprint(
           run.evaluationVersion
         ),
-        runnerFingerprint: fingerprints.runnerFingerprint,
-        experienceFingerprint: fingerprints.experienceFingerprint,
-        config: {
-          thinking: "enabled",
-          reasoningEffort: "high",
-          responseFormat: "json_object",
-          maxTokensPolicy: "provider_default",
-          timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
-          routeMaxDurationSeconds: GI088_TIMEOUT_POLICY.routeMaxDurationSeconds
-        }
+        ...(fingerprints
+          ? {
+              behaviorManifestVersion: fingerprints.behaviorManifestVersion,
+              behaviorManifestSha256: fingerprints.behaviorManifestSha256,
+              runnerFingerprint: fingerprints.runnerFingerprint,
+              experienceFingerprint: fingerprints.experienceFingerprint,
+              config: {
+                thinking: "enabled" as const,
+                reasoningEffort: "high" as const,
+                responseFormat: "json_object" as const,
+                maxTokensPolicy: "provider_default" as const,
+                timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+                routeMaxDurationSeconds:
+                  GI088_TIMEOUT_POLICY.routeMaxDurationSeconds
+              }
+            }
+          : {})
       },
       batch: {
         id: run.id,
@@ -880,7 +1246,11 @@ export class Gi088EvaluationFoundationService {
         ? {
             taskId: selectedTask.taskId,
             frozenStart: {
-              opening: GI088_FIXED_OPENING,
+              opening: currentFoundationRun
+                ? GI088_FIXED_OPENING
+                : selectedTask.branches.high.messages.find(
+                    (message) => message.role === "assistant"
+                  )?.content ?? GI088_FIXED_OPENING,
               userMessage: selectedTask.initialUserMessage
             },
             activeBranch: selectedTask.activeBranch,
@@ -3369,23 +3739,31 @@ export class Gi088EvaluationFoundationService {
       this.store.listOperationEvents(run.id)
     ]);
     const state = parseState(run);
+    const currentFoundationRun = run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
     const metrics = metricsFor({ state, calls, interventions });
     const gate = gateFor({ run, state, calls, interventions, now: this.now() });
     const payload = {
       exportVersion: "2026-08-10.gi088-readonly-export-v0.6",
       evaluation: {
-        id: GI088_EVALUATION_ID,
+        id: evaluationMetadata.id,
         version: run.evaluationVersion,
-        serviceVersion: GI088_FOUNDATION_SERVICE_VERSION,
+        serviceVersion: evaluationMetadata.serviceVersion,
         candidateFingerprint: run.candidateFingerprint,
         executionFingerprint: run.executionFingerprint,
         mode: state.evaluationMode ?? "high_only",
         activeBranches:
           state.evaluationMode === "paired" ? ["off", "high"] : GI088_ACTIVE_BRANCHES,
-        model: GI088_CONFIGS.high.model,
-        config: GI088_CONFIGS.high,
-        maximumProviderCallsPerUserSubmission:
-          GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
+        model: evaluationMetadata.model,
+        config: currentFoundationRun
+          ? GI088_CONFIGS.high
+          : historicalExportConfig(state, evaluationMetadata),
+        ...(currentFoundationRun
+          ? {
+              maximumProviderCallsPerUserSubmission:
+                GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
+            }
+          : {})
       },
       run: {
         runId: run.id,
