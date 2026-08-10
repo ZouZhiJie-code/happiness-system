@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.1",
+  "evaluationPlanId": "2026-08-08.gi088-human-eval-v0",
+  "decisionId": "GI-088",
+  "status": "historical_batch_stopped_a2_high_repeated_1600_token_exhaustion",
+  "currentExecutionEntry": false,
+  "dataset": {
+    "kind": "development_evaluation_set",
+    "taskCount": 12,
+    "trajectoryCount": 24,
+    "taskIds": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A2-R",
+      "A3-R",
+      "A4-R",
+      "A6-R"
+    ]
+  },
+  "candidate": {
+    "baseSourceVersion": "2026-08-07.board7b-working-task-v1",
+    "effectiveVersion": "2026-08-09.gi088-output-contract-clarification-v0.1",
+    "changeFromBase": "burdenSignal nullable encoding only",
+    "model": "deepseek-v4-flash",
+    "responseFormat": "json",
+    "maxTokens": 1600,
+    "qualityRetries": 0,
+    "sourceAssets": [
+      {
+        "path": "../2026-08-07-board7b-working-task-v1/board7b-base-prompt-v1.md",
+        "sha256": "526c7d8b338264bc345a2fda7415d3d0682a61c8700022af17f7afa7a9895c64"
+      },
+      {
+        "path": "../2026-08-07-board7b-working-task-v1/conduct-daily-light-thinking-interview/SKILL.md",
+        "sha256": "d984590640e684f713238ba0bcc8d5097bc7902f1a0c25a45d9132e9f8f6e92c"
+      },
+      {
+        "path": "../2026-08-07-board7b-working-task-v1/board7b-output-contract-v1.md",
+        "sha256": "7b99c52372c0593fdd6e1d8484c052a83887812678bb5cd9865bc87d136a4f5c"
+      },
+      {
+        "path": "../2026-08-07-board7b-working-task-v1/board7b-turn-input-v1.md",
+        "sha256": "5fb6a60946447a8cc3ed48a815796b29287dbb1bd9ecb34efe8747a5eef013c8"
+      },
+      {
+        "path": "./gi088-output-contract-clarification-v0.1.md",
+        "sha256": "bd2be750c03de65529b474cf9708250498a15834f3775c2a392a40b737589e12"
+      }
+    ],
+    "configurations": {
+      "off": {
+        "thinking": "disabled",
+        "temperature": 0.2,
+        "reasoningEffort": null
+      },
+      "high": {
+        "thinking": "enabled",
+        "temperature": null,
+        "reasoningEffort": "high"
+      }
+    }
+  },
+  "fingerprints": {
+    "baseGi087Candidate": "e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa",
+    "effectiveCandidate": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "dataset": "73be5280bfcd5626fbec2fe743c5d7d6b03221df6107b8d20ebfacc91d2c50d1",
+    "execution": "3bea0a9e01205a8a2cf6723b35cffc4272cf44da5cee077d0c0609fee45d4113"
+  },
+  "runner": {
+    "serviceVersion": "2026-08-09.gi088-preview-service-v0.5",
+    "deploymentId": "redacted-deployment-id",
+    "deploymentUrl": "https://xingfuxitong-34pbcz5so-example-team.vercel.app",
+    "readyState": "READY",
+    "modelCallScope": "batch",
+    "productionRouteStatus": 404,
+    "validation": "passed_authenticated_protected_failure_review_entry_readback",
+    "uiRecovery": {
+      "previousDeploymentId": "redacted-deployment-id",
+      "reason": "protected failure review action was clipped below a short desktop viewport",
+      "candidateFingerprintChanged": false,
+      "executionFingerprintChanged": false,
+      "modelCallsDuringRecovery": 0
+    }
+  },
+  "authorization": {
+    "fakeProviderBuild": "authorized",
+    "historicalDeepSeekGenerationCalls": 5,
+    "currentVersionDeepSeekGenerationCalls": 2,
+    "formalHumanBatchDeepSeekGenerationCalls": 9,
+    "offSmoke": "consumed_valid",
+    "highSmoke": "consumed_valid",
+    "formalHumanBatch": "historical_stopped_a2_high_after_initial_plus_two_manual_retries"
+  },
+  "historicalSmokes": [
+    {
+      "serviceVersion": "v0.3",
+      "arm": "off",
+      "status": "valid",
+      "modelCalls": 1
+    },
+    {
+      "serviceVersion": "v0.3",
+      "arm": "high",
+      "status": "technical_failure",
+      "errorCode": "EMPTY_CONTENT",
+      "modelCalls": 1
+    },
+    {
+      "serviceVersion": "v0.4",
+      "arm": "high",
+      "status": "protected_failure",
+      "errorCode": "OUTPUT_SCHEMA_INVALID",
+      "rootCause": "burdenSignal encoded absence as an object with empty evidenceRefs",
+      "modelCalls": 1
+    },
+    {
+      "serviceVersion": "v0.5",
+      "arm": "off",
+      "status": "valid",
+      "requestId": "redacted-operational-id",
+      "deploymentId": "redacted-deployment-id",
+      "finishReason": "stop",
+      "totalTokens": 2553,
+      "reasoningPresent": false,
+      "reasoningLengthChars": 0,
+      "reasoningTokens": null,
+      "providerLatencyMs": 369,
+      "modelCalls": 1
+    },
+    {
+      "serviceVersion": "v0.5",
+      "arm": "high",
+      "status": "valid",
+      "requestId": "redacted-operational-id",
+      "deploymentId": "redacted-deployment-id",
+      "finishReason": "stop",
+      "totalTokens": 3377,
+      "reasoningPresent": true,
+      "reasoningLengthChars": 2971,
+      "reasoningTokens": 722,
+      "providerLatencyMs": 411,
+      "modelCalls": 1
+    }
+  ],
+  "databaseAudit": {
+    "removedEmptyBatchId": "redacted-operational-id",
+    "removedBatchExecutionFingerprint": "efbade8059ee0a85b377115593584e04bc88ffb327123a18ca4058f88c8f56a8",
+    "guardedDeleteConditions": "running revision 0, activeTaskId null, messages 0, turns 0",
+    "deletedBatchCount": 1,
+    "historicalSmokeRecordsPreserved": 5
+  },
+  "validation": {
+    "targetedTests": 37,
+    "typeCheck": "passed",
+    "targetedLint": "passed",
+    "prismaValidate": "passed",
+    "localBuild": "passed",
+    "previewBuild": "passed",
+    "previewOuterProtection": "passed",
+    "previewApplicationAuthentication": "passed",
+    "previewWorkbenchReadback": "passed_0_of_12",
+    "previewRuntimeLogAudit": "passed_login_and_get_only_no_start_turn_or_smoke_post",
+    "customPrismaRuntimeTrace": "passed",
+    "productionIsolation": "passed_page_session_smoke_404",
+    "v0_5BothSmokes": "passed",
+    "historicalModelGenerationCalls": 5,
+    "currentVersionModelGenerationCalls": 2,
+    "formalHumanBatchModelGenerationCalls": 9
+  },
+  "production": {
+    "mode": "legacy + baseline",
+    "publicPagesChanged": false,
+    "publicApiChanged": false,
+    "productionDatabaseChanged": false,
+    "onlinePromptChanged": false,
+    "runtimeFlagsChanged": false
+  },
+  "supersedesCurrentPlan": {
+    "name": "最小纯净评测包",
+    "reason": "真实交互分叉和重复样本需要由真人评测运行器与整批轨迹承接",
+    "historyPreserved": true
+  }
+}

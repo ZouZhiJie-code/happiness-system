@@ -1,0 +1,56 @@
+{
+  "decisionId": "GI-084",
+  "evaluationId": "board7b_prompt_skill_v0_2",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.2",
+  "candidateFingerprint": "171d1a3c5ee8f044f3c517f106424fd74312b07132861a4ceff395813be382c6",
+  "status": "regression_completed_failed",
+  "promptVersions": {
+    "basePrompt": "2026-08-07.board7b-base-prompt-v0.1",
+    "interviewSkill": "2026-08-07.board7b-interview-skill-v0.2",
+    "outputContract": "2026-08-07.board7b-semantic-result-v0.1",
+    "turnInput": "2026-08-07.board7b-turn-input-v0"
+  },
+  "modelFacingAssets": {
+    "basePrompt": "board7b-base-prompt-v0.1.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "board7b-semantic-result-v0.1.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "singleProductChange": {
+    "location": "Interview Skill / 共同聚焦",
+    "purpose": "关联内容直接形成焦点，禁止类别二选一，并在用户暂时放下内容后更新当前状态"
+  },
+  "technicalClarification": {
+    "location": "结构合同 / 严格枚举与空值自检",
+    "schemaChanged": false,
+    "stateMergeChanged": false
+  },
+  "regressionPlan": "board7b-prompt-skill-v0.2-regression-plan.json",
+  "regressionCallBudget": 8,
+  "authorizedModelCalls": 8,
+  "modelCalls": 8,
+  "gates": {
+    "staticChecks": "passed",
+    "regressionAuthorization": "approved_and_consumed",
+    "regressionRun": "failed",
+    "realTrajectoryAuthorization": "blocked_by_regression_result",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "production": "legacy + baseline",
+  "predecessor": {
+    "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.1",
+    "candidateFingerprint": "b17e662434188d6f5938bc283f17abf38a76a95aa482e7d67686a1093bd709c3",
+    "regressionDecision": "no_go_for_real_trajectory",
+    "runFingerprint": "b9c32fb3ffa4148175ab890c5e5b0fd90a34f4781f7c5d6f70a8845726bdb749"
+  },
+  "latestRegression": {
+    "runFingerprint": "0732eab66c7fa22ade15f924a9dd25bfc2cb466801ce8122f54497534bd2abc1",
+    "attemptedCalls": 8,
+    "validStructure": 3,
+    "protectedFailures": 5,
+    "technicalFailures": 0,
+    "decision": "no_go_for_real_trajectory",
+    "resultAsset": "board7b-prompt-skill-v0.2-regression-result.md"
+  }
+}

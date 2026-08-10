@@ -1,0 +1,14 @@
+{
+  "template": true,
+  "version": "2026-08-06.board7a-chat-e2e-fact-card-v2",
+  "status": "draft",
+  "mode": "accompany_chat",
+  "opening": "待产品负责人填写第一段真实表达",
+  "evaluatorGoal": "待产品负责人填写这次最希望弄清的事情",
+  "knownFactsAndFeelings": [],
+  "unknownOrUnclear": [],
+  "boundaries": [],
+  "successSigns": [],
+  "confirmedBy": null,
+  "confirmedAt": null
+}

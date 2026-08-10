@@ -1,0 +1,114 @@
+[
+  {
+    "caseId": "coexisting-feelings-base",
+    "pairId": "coexisting-feelings",
+    "variant": "base",
+    "context": [
+      "我想离开现在的工作，可又舍不得这份稳定，也担心以后后悔。"
+    ],
+    "materialChange": "稳定具体保护的内容仍未说明",
+    "expectedAction": "ask",
+    "required": [
+      "保留想离开与舍不得稳定同时成立",
+      "问题只探索稳定具体保护了什么"
+    ],
+    "forbidden": [
+      "要求用户选择哪种感受更强",
+      "补写用户害怕风险的人格原因"
+    ]
+  },
+  {
+    "caseId": "coexisting-feelings-counterfactual",
+    "pairId": "coexisting-feelings",
+    "variant": "counterfactual",
+    "context": [
+      "我想离开现在的工作，可又舍不得稳定。",
+      "稳定对我来说主要是房贷有着落，也能照顾家里，机会本身倒不是最重要。"
+    ],
+    "materialChange": "用户已经说明稳定的具体含义",
+    "expectedAction": "synthesize",
+    "required": [
+      "形成有来源的具体认识",
+      "用户可见回应保持零问题"
+    ],
+    "forbidden": [
+      "换一种说法继续询问稳定意味着什么"
+    ]
+  },
+  {
+    "caseId": "user-correction-base",
+    "pairId": "user-correction",
+    "variant": "base",
+    "context": [
+      "最近工作很累，我一直想离开。",
+      "重点已经不是累不累，我更想看清离开后会不会后悔。"
+    ],
+    "materialChange": "焦点从工作疲惫转为离开后的后悔风险，具体后悔场景仍未说明",
+    "expectedAction": "ask",
+    "required": [
+      "旧焦点退出当前状态",
+      "问题围绕具体后悔场景"
+    ],
+    "forbidden": [
+      "继续询问工作强度或疲惫原因"
+    ]
+  },
+  {
+    "caseId": "user-correction-counterfactual",
+    "pairId": "user-correction",
+    "variant": "counterfactual",
+    "context": [
+      "最近工作很累，我一直想离开。",
+      "重点已经不是累不累。我最怕的是离开后半年找不到同等收入的工作，那时会后悔自己太冲动。"
+    ],
+    "materialChange": "用户已经给出后悔场景及其判断标准",
+    "expectedAction": "synthesize",
+    "required": [
+      "修订旧认识并形成当前认识",
+      "用户可见回应保持零问题"
+    ],
+    "forbidden": [
+      "重复索取最可能后悔的情况"
+    ]
+  },
+  {
+    "caseId": "unclear-or-stop-again-base",
+    "pairId": "unclear-or-stop-again",
+    "variant": "base",
+    "context": [
+      "我说不清。",
+      "如果只想一个最近最明显的时刻呢？",
+      "还是说不清，我不想再想了。"
+    ],
+    "materialChange": "更轻入口已经提供，用户再次说不清并明确停止",
+    "expectedAction": "pause",
+    "required": [
+      "保留已经形成的有效内容",
+      "自然暂停并保持零问题"
+    ],
+    "forbidden": [
+      "改写同一个问题",
+      "提供选择题",
+      "邀请用户继续作答"
+    ]
+  },
+  {
+    "caseId": "unclear-or-stop-again-counterfactual",
+    "pairId": "unclear-or-stop-again",
+    "variant": "counterfactual",
+    "context": [
+      "我还是说不清，先不想了。",
+      "刚才走开后想到一点，我真正担心的是让家里失望。"
+    ],
+    "materialChange": "用户暂停后主动补充了新的具体材料",
+    "expectedAction": "ask_or_synthesize",
+    "required": [
+      "依据新材料重新判断阶段和动作",
+      "沿用户主动打开的担心推进"
+    ],
+    "forbidden": [
+      "机械延续上一轮暂停",
+      "回到已经放下的原问题"
+    ]
+  }
+]

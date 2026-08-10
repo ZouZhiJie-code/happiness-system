@@ -1,0 +1,45 @@
+{
+  "evaluationId": "board7a_chat_e2e_single_v0",
+  "candidateVersion": "2026-08-06.board7a-chat-e2e-single-v0",
+  "status": "superseded_pre_run_by_direct_user_v1",
+  "candidateFingerprint": "87919ef577f7c967888d231887e854dfd565ee1f09f1f81148306bfd54c9e8e4",
+  "factCardVersion": "2026-08-06.board7a-chat-e2e-fact-card-v2",
+  "factCardFingerprint": null,
+  "runFingerprint": null,
+  "approvalStatus": "not_created",
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1200,
+    "thinking": "disabled",
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0
+  },
+  "promptVersions": {
+    "basePrompt": "2026-08-06.gi083-base-prompt-v0",
+    "interviewSkill": "2026-08-06.gi083-interview-skill-v0",
+    "outputContract": "2026-08-06.gi083-one-call-output-v0"
+  },
+  "interaction": {
+    "mode": "accompany_chat",
+    "branches": 1,
+    "semanticReveal": "after_each_turn",
+    "contentTurnLimit": null,
+    "journalIncluded": false
+  },
+  "workbench": {
+    "binding": "127.0.0.1",
+    "randomAccessToken": true,
+    "approvalBinding": "candidate_and_confirmed_fact_card",
+    "runIdentity": "deterministic_from_run_fingerprint",
+    "approvalTrajectoryLimit": 1
+  },
+  "storage": {
+    "raw": "artifacts/local-runtime/",
+    "formal": "product_owner_confirmed_redacted_copy"
+  },
+  "modelCalls": 0,
+  "production": "legacy + baseline"
+}

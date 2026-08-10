@@ -1,0 +1,62 @@
+{
+  "decisionId": "GI-084",
+  "evaluationId": "board7b_prompt_skill_v0",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0",
+  "status": "assets_ready_awaiting_fact_card_and_authorization",
+  "candidateFingerprint": "84c17021fe079d9b3060092ea279dc3c41bfc0bb34addcaa51912fcfabf45541",
+  "promptVersions": {
+    "basePrompt": "2026-08-07.board7b-base-prompt-v0",
+    "interviewSkill": "2026-08-07.board7b-interview-skill-v0",
+    "outputContract": "2026-08-07.board7b-semantic-result-v0",
+    "turnInput": "2026-08-07.board7b-turn-input-v0"
+  },
+  "modelFacingAssets": {
+    "basePrompt": "board7b-base-prompt-v0.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "board7b-semantic-result-v0.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "evaluationAssets": {
+    "contrastiveCases": "board7b-prompt-skill-v0-contrastive-cases.json",
+    "caseCount": 6,
+    "modelInputIncludesEvaluationLabels": false
+  },
+  "runtime": {
+    "mode": "accompany_chat",
+    "intendedProvider": "openai-compatible",
+    "intendedBaseUrlHost": "api.deepseek.com",
+    "intendedModel": "deepseek-v4-flash",
+    "callsPerUserTurn": 1,
+    "thinking": "disabled",
+    "currentExecutionScope": "static_local_assets_only"
+  },
+  "context": {
+    "conversation": "full_current_record_with_stable_message_ids",
+    "latestUserMessageId": true,
+    "compactSemanticState": true,
+    "evaluationAnswers": false,
+    "expectedActions": false,
+    "hiddenEvaluatorGoal": false
+  },
+  "gates": {
+    "factCard": "pending",
+    "authorization": "pending",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "factCardStatus": "pending",
+  "authorizationStatus": "pending",
+  "workbench": {
+    "kind": "read_only_asset_workbench",
+    "binding": "127.0.0.1",
+    "randomAccessToken": true,
+    "modelRequestEndpoint": false,
+    "productionDataAccess": false
+  },
+  "modelCalls": 0,
+  "production": "legacy + baseline",
+  "historicalAssets": {
+    "GI-081": "temporary_diagnostic_prompt_history",
+    "GI-083": "preserved_diagnostic_candidates"
+  }
+}

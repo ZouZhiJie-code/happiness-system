@@ -1,0 +1,49 @@
+{
+  "datasetVersion": "2026-08-07.board7b-thinking-capability-inputs-v1",
+  "purpose": "使用同期配对输出判断 Thinking high 是否改善关系语义执行，同时守住话题独立性和用户边界。",
+  "evidenceIdentity": "capability_route_probe",
+  "sourceCandidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "modelInputPolicy": {
+    "promptSkillContractUnchanged": true,
+    "caseIdSentToModel": false,
+    "rubricSentToModel": false,
+    "hiddenReasoningSaved": false,
+    "productionDataUsed": false
+  },
+  "cases": [
+    {
+      "pairId": "P1",
+      "sourceCaseId": "D1-autumn-open-known-regression",
+      "role": "problem_probe",
+      "evaluationFocus": "保留长期方向与眼前 offer 的共同影响，避免强迫二选一。"
+    },
+    {
+      "pairId": "P2",
+      "sourceCaseId": "N2-project-study-transfer-1",
+      "role": "problem_probe",
+      "evaluationFocus": "保留半年项目与读研申请的相互影响，避免预设用户未表达的原因。"
+    },
+    {
+      "pairId": "P3",
+      "sourceCaseId": "F1-independent-content-counterfactual",
+      "role": "guard_control",
+      "evaluationFocus": "尊重两件事互不相关，避免过度建立联系。"
+    },
+    {
+      "pairId": "P4",
+      "sourceCaseId": "F2-user-defers-one-side-counterfactual",
+      "role": "guard_control",
+      "evaluationFocus": "尊重用户暂缓伴侣话题的边界，只沿工作机会推进。"
+    }
+  ],
+  "callOrder": [
+    { "callNumber": 1, "pairId": "P1", "sourceCaseId": "D1-autumn-open-known-regression", "arm": "thinking_disabled" },
+    { "callNumber": 2, "pairId": "P1", "sourceCaseId": "D1-autumn-open-known-regression", "arm": "thinking_high" },
+    { "callNumber": 3, "pairId": "P2", "sourceCaseId": "N2-project-study-transfer-1", "arm": "thinking_high" },
+    { "callNumber": 4, "pairId": "P2", "sourceCaseId": "N2-project-study-transfer-1", "arm": "thinking_disabled" },
+    { "callNumber": 5, "pairId": "P3", "sourceCaseId": "F1-independent-content-counterfactual", "arm": "thinking_disabled" },
+    { "callNumber": 6, "pairId": "P3", "sourceCaseId": "F1-independent-content-counterfactual", "arm": "thinking_high" },
+    { "callNumber": 7, "pairId": "P4", "sourceCaseId": "F2-user-defers-one-side-counterfactual", "arm": "thinking_high" },
+    { "callNumber": 8, "pairId": "P4", "sourceCaseId": "F2-user-defers-one-side-counterfactual", "arm": "thinking_disabled" }
+  ]
+}

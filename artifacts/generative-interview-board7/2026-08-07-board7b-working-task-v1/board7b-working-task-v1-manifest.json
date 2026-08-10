@@ -1,0 +1,83 @@
+{
+  "decisionId": "GI-087",
+  "evaluationId": "board7b_working_task_v1",
+  "candidateVersion": "2026-08-07.board7b-working-task-v1",
+  "candidateFingerprint": "e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa",
+  "status": "screening_completed_awaiting_product_review",
+  "architecture": "single_call_working_task_plus_next_inquiry",
+  "runnerVersion": "2026-08-07.board7b-working-task-runner-v1",
+  "modelFacingAssets": {
+    "basePrompt": "board7b-base-prompt-v1.md",
+    "interviewSkill": "conduct-daily-light-thinking-interview/SKILL.md",
+    "outputContract": "board7b-output-contract-v1.md",
+    "turnInputContract": "board7b-turn-input-v1.md",
+    "assembly": "base_prompt + interview_skill_body + output_contract"
+  },
+  "executionAssets": {
+    "inspector": "scripts/inspect-board7b-working-task-v1.ts",
+    "runnerEntry": "scripts/execute-board7b-working-task-v1-regression.ts",
+    "runnerLibrary": "scripts/run-board7b-working-task-v1-regression.ts",
+    "workbenchRunner": "scripts/run-board7b-working-task-v1-workbench.ts",
+    "workbenchPage": "evals/event-centered-generative/board7b-working-task-v1/workbench.html",
+    "manualTechnicalRetry": "same runner entry with --retry-case CASE_ID; technical_failure only; budget 2",
+    "regressionPlan": "board7b-working-task-v1-regression-plan.json",
+    "authorizationTemplate": "board7b-working-task-v1-authorization-template.json",
+    "realTrajectoryAuthorizationTemplate": "local-runtime-only",
+    "approvedAuthorization": "local-runtime-only",
+    "formalResult": "local-runtime-only",
+    "codexReview": "local-runtime-only",
+    "productReview": "local-runtime-only",
+    "productReviewTemplate": "local-runtime-only",
+    "localOutputRoot": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7b-working-task-v1",
+    "sourceLineage": "local-runtime-only",
+    "immutableEvidence": "authorization-consumption + attempts + results + manual-retry-consumption"
+  },
+  "workbench": {
+    "executionFingerprint": "965682241f8fd2b95c87466bd8ab3f0368626af24fe8989406008bbac5205802",
+    "staticInspectCommand": "npx vite-node -c vitest.config.ts scripts/run-board7b-working-task-v1-workbench.ts --check",
+    "serveCommand": "npx vite-node -c vitest.config.ts scripts/run-board7b-working-task-v1-workbench.ts --serve",
+    "authorizationBudget": 0,
+    "modelCalls": 0,
+    "status": "blocked_by_six_case_structure_failure"
+  },
+  "regression": {
+    "datasetVersion": "2026-08-07.board7b-working-task-regression-inputs-v1",
+    "datasetFingerprint": "f2046402a854743d215219a78b35a7447b6bb335c13308d457ef5dbb8cfcd41d",
+    "sourceLineageFingerprint": "7f234016d361fd3cc082b4cd6f91bd3ad48df00c63cfd641baf406d08e8f8eac",
+    "requestSetFingerprint": "b83d8ae3c34d36f91454b4d27546509872d727474fd98bc7bf2de5ed93d9bfeb",
+    "evaluationPolicyFingerprint": "901b7fd29af40b930a6272cc7464d7fafd23c5076b0199da0cef1b5c783e7194",
+    "executionFingerprint": "6b909f50b9c98fb1b8fa2d9265010ccf58870bc4bea714482c231fb6b1247c5b",
+    "plannedCalls": 6,
+    "authorizedCalls": 0,
+    "modelCalls": 0,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0,
+    "manualTechnicalRetryBudget": 2
+  },
+  "screeningResult": {
+    "runFingerprint": "2881fb9d0e1b48f4c8325dfdbe4a813925513a6320cc04f79c27717e0638cfc2",
+    "authorizedCalls": 6,
+    "modelCalls": 6,
+    "valid": 5,
+    "protectedFailures": 1,
+    "modelContractFailures": 0,
+    "technicalFailures": 0,
+    "manualTechnicalRetriesUsed": 0,
+    "productReview": "pending",
+    "realTrajectory": "blocked_by_invalid_structure"
+  },
+  "gates": {
+    "candidatePackage": "screening_evidence_ready",
+    "regressionAuthorization": "consumed_once",
+    "regressionRun": "completed_5_valid_1_protected_failure",
+    "productOwnerReview": "pending",
+    "realTrajectoryAuthorization": "blocked_by_invalid_structure",
+    "formalEvaluation": "pending",
+    "productionRelease": "pending"
+  },
+  "production": "legacy + baseline",
+  "predecessors": {
+    "GI-085": "no_go_for_real_trajectory",
+    "GI-086": "no_go_for_thinking_stability_validation"
+  }
+}
