@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveGi088InitializeDatabaseUrl } from "../../scripts/initialize-gi088-current-batch";
+import {
+  assertGi088ZeroModelInitializeReadback,
+  resolveGi088InitializeDatabaseUrl
+} from "../../scripts/initialize-gi088-current-batch";
+import {
+  createGi088EffectiveCandidateFingerprint,
+  createGi088ExecutionFingerprint
+} from "@/server/services/evaluation/gi088/candidate";
+import { Gi088MemoryFoundationStore } from "@/server/services/evaluation/gi088/foundation-memory-store";
+import { Gi088EvaluationFoundationService } from "@/server/services/evaluation/gi088/foundation-service";
 
 function validEnvironment(): NodeJS.ProcessEnv {
   return {
@@ -16,6 +25,36 @@ function validEnvironment(): NodeJS.ProcessEnv {
     EVALUATION_PGHOST_UNPOOLED: "direct.preview.example",
     EVALUATION_POSTGRES_DATABASE: "dailylight_preview",
     GI088_EVALUATION_DATABASE_SCHEMA: "gi088_evaluation_v0"
+  };
+}
+
+async function validInitializeReadback() {
+  const store = new Gi088MemoryFoundationStore();
+  const executionFingerprint = createGi088ExecutionFingerprint();
+  const candidateFingerprint = createGi088EffectiveCandidateFingerprint();
+  const service = new Gi088EvaluationFoundationService({
+    store,
+    getProvider: async () => {
+      throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
+    },
+    authorizeModelCall: () => {
+      throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
+    }
+  });
+  const created = await service.createRun({
+    ownerUserId: "owner-initialize-readback",
+    clientOperationId: "initialize-readback"
+  });
+  const session = await service.getSession({
+    ownerUserId: "owner-initialize-readback",
+    runId: created.runId
+  });
+  return {
+    session,
+    callCount: (await store.listCalls(created.runId)).length,
+    expectedRunId: created.runId,
+    expectedExecutionFingerprint: executionFingerprint,
+    expectedCandidateFingerprint: candidateFingerprint
   };
 }
 
@@ -96,5 +135,53 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
         ...overrides
       })
     ).toThrow(expectedCode);
+  });
+
+  it("只接受当前不可变指纹的 0/12 Thinking high run", async () => {
+    const readback = await validInitializeReadback();
+
+    expect(() =>
+      assertGi088ZeroModelInitializeReadback(readback)
+    ).not.toThrow();
+  });
+
+  it.each([
+    [
+      "旧 execution fingerprint",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.executionFingerprint = "0".repeat(64);
+      }
+    ],
+    [
+      "旧 candidate fingerprint",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.candidateFingerprint = "1".repeat(64);
+      }
+    ],
+    [
+      "任务总数漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.batch.totalTasks = 11;
+      }
+    ],
+    [
+      "非 high_only",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.mode = "paired";
+      }
+    ],
+    [
+      "初始化已有调用",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.callCount = 1;
+      }
+    ]
+  ])("拒绝%s的初始化回读", async (_label, mutate) => {
+    const readback = await validInitializeReadback();
+    mutate(readback);
+
+    expect(() => assertGi088ZeroModelInitializeReadback(readback)).toThrow(
+      "GI088_INITIALIZE_ZERO_MODEL_READBACK_MISMATCH"
+    );
   });
 });

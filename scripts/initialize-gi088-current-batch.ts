@@ -4,7 +4,11 @@ import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/gi088-evaluation-client";
 
 import {
+  GI088_CONFIGS,
+  GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V8R1,
+  GI088_TASKS,
+  createGi088EffectiveCandidateFingerprint,
   createGi088ExecutionFingerprint
 } from "../src/server/services/evaluation/gi088/candidate";
 import { Gi088PrismaFoundationStore } from "../src/server/services/evaluation/gi088/foundation-prisma-store";
@@ -13,6 +17,7 @@ import {
   GI088_EVALUATION_SCHEMA,
   validateGi088EvaluationDatabaseUrl
 } from "../src/server/services/evaluation/gi088/access";
+import type { Gi088PublicSession } from "../src/server/services/evaluation/gi088/types";
 
 const SOURCE_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R1;
 const CONFIRMATION = "I_UNDERSTAND_ZERO_MODEL_CALLS";
@@ -51,6 +56,43 @@ export function resolveGi088InitializeDatabaseUrl(
   return evaluationDatabaseUrl;
 }
 
+export function assertGi088ZeroModelInitializeReadback(input: {
+  session: Gi088PublicSession;
+  callCount: number;
+  expectedRunId: string;
+  expectedExecutionFingerprint: string;
+  expectedCandidateFingerprint: string;
+}) {
+  const { session } = input;
+  const config = session.evaluation.config;
+  if (
+    session.evaluation.version !== GI088_EVALUATION_VERSION ||
+    session.evaluation.executionFingerprint !==
+      input.expectedExecutionFingerprint ||
+    session.evaluation.candidateFingerprint !==
+      input.expectedCandidateFingerprint ||
+    session.evaluation.mode !== "high_only" ||
+    session.evaluation.activeBranches.length !== 1 ||
+    session.evaluation.activeBranches[0] !== "high" ||
+    session.evaluation.model !== GI088_CONFIGS.high.model ||
+    config?.thinking !== "enabled" ||
+    config.reasoningEffort !== "high" ||
+    config.responseFormat !== "json_object" ||
+    config.maxTokensPolicy !== "provider_default" ||
+    session.batch.runId !== input.expectedRunId ||
+    session.batch.completedTaskCount !== 0 ||
+    session.batch.totalTasks !== GI088_TASKS.length ||
+    session.batch.status !== "running" ||
+    session.batch.gate?.status !== "pending" ||
+    session.batch.readOnly !== false ||
+    session.tasks.length !== GI088_TASKS.length ||
+    session.activeTask !== null ||
+    input.callCount !== 0
+  ) {
+    throw new Error("GI088_INITIALIZE_ZERO_MODEL_READBACK_MISMATCH");
+  }
+}
+
 async function main() {
   if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
     throw new Error("GI088_INITIALIZE_PRODUCTION_FORBIDDEN");
@@ -59,6 +101,7 @@ async function main() {
     throw new Error("GI088_INITIALIZE_CONFIRMATION_REQUIRED");
   }
   const executionFingerprint = createGi088ExecutionFingerprint();
+  const candidateFingerprint = createGi088EffectiveCandidateFingerprint();
   if (
     process.env.GI088_AUTHORIZED_EXECUTION_FINGERPRINT?.trim() !==
     executionFingerprint
@@ -101,14 +144,13 @@ async function main() {
     const callCount = await client.gi088EvaluationCallLedger.count({
       where: { runId: created.runId }
     });
-    if (
-      session.batch.completedTaskCount !== 0 ||
-      session.batch.status !== "running" ||
-      session.batch.gate?.status !== "pending" ||
-      callCount !== 0
-    ) {
-      throw new Error("GI088_INITIALIZE_ZERO_MODEL_READBACK_MISMATCH");
-    }
+    assertGi088ZeroModelInitializeReadback({
+      session,
+      callCount,
+      expectedRunId: created.runId,
+      expectedExecutionFingerprint: executionFingerprint,
+      expectedCandidateFingerprint: candidateFingerprint
+    });
     console.log(
       JSON.stringify(
         {

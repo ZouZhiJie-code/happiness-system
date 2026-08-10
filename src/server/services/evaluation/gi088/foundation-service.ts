@@ -391,9 +391,14 @@ function storedHistoricalTaskDefinition(
 
 function taskDefinitionsFor(
   evaluationVersion: string,
-  state?: Gi088BatchState
+  state?: Gi088BatchState,
+  includeCurrentVersionPackage = true
 ): readonly Gi088EvaluationTaskDefinition[] {
-  const immutablePackage = immutableTaskPackageFor(evaluationVersion);
+  const immutablePackage =
+    evaluationVersion === GI088_EVALUATION_VERSION &&
+    !includeCurrentVersionPackage
+      ? []
+      : immutableTaskPackageFor(evaluationVersion);
   if (!state) return immutablePackage;
   const immutableById = new Map<string, Gi088EvaluationTaskDefinition>(
     immutablePackage.map((definition) => [definition.id, definition] as const)
@@ -521,15 +526,24 @@ function historicalCallToPublic(call: Gi088Call): Gi088Call {
 
 function historicalTrajectoryConfig(
   evaluationVersion: string,
-  trajectory: Gi088Trajectory
+  trajectory: Gi088Trajectory,
+  ledgerCalls: Gi088FoundationCallRecord[] = []
 ) {
   const historicalCalls = trajectory.turns.flatMap((turn) => turn.calls);
-  const effectiveConfig = [...historicalCalls]
+  const embeddedEffectiveConfig = [...historicalCalls]
     .reverse()
     .find((call) => call.effectiveConfig)?.effectiveConfig;
+  const ledgerEffectiveConfig = [...ledgerCalls]
+    .reverse()
+    .find((call) => call.effectiveConfig)?.effectiveConfig as unknown as
+      | Gi088CallEffectiveConfig
+      | undefined;
+  const effectiveConfig = ledgerEffectiveConfig ?? embeddedEffectiveConfig;
   const maximumProviderCallsPerTrajectory =
     historicalMaximumProviderCallsPerTrajectory(evaluationVersion);
-  const providerCallsUsed = historicalCalls.length;
+  const providerCallsUsed = ledgerCalls.length > 0
+    ? ledgerCalls.filter((call) => call.dispatchedAt).length
+    : historicalCalls.length;
   const retryLimits = historicalRecoveryLimits(evaluationVersion);
   const thinking = effectiveConfig?.thinking ??
     (trajectory.branch === "high" ? "enabled" : "disabled");
@@ -555,8 +569,14 @@ function historicalTrajectoryConfig(
 
 function historicalExportConfig(
   state: Gi088BatchState,
-  metadata: Gi088EvaluationVersionMetadata
+  metadata: Gi088EvaluationVersionMetadata,
+  ledgerCalls: Gi088FoundationCallRecord[] = []
 ) {
+  const latestLedgerConfig = [...ledgerCalls]
+    .reverse()
+    .find((call) => call.effectiveConfig)?.effectiveConfig as
+      | Gi088CallEffectiveConfig
+      | undefined;
   const latestCall = state.tasks
     .flatMap((task) => [task.branches.off, task.branches.high])
     .flatMap((trajectory) => trajectory.turns)
@@ -565,7 +585,7 @@ function historicalExportConfig(
     .find((call) => call.effectiveConfig);
   return {
     model: metadata.model,
-    ...(latestCall?.effectiveConfig ?? {})
+    ...(latestLedgerConfig ?? latestCall?.effectiveConfig ?? {})
   };
 }
 
@@ -1059,7 +1079,6 @@ export class Gi088EvaluationFoundationService {
       calls,
       interventions: interventionRows
     });
-    const definitions = taskDefinitionsFor(run.evaluationVersion, state);
     const requested = selectedTaskId
       ? state.tasks.find((task) => task.taskId === selectedTaskId) ?? null
       : null;
@@ -1070,9 +1089,19 @@ export class Gi088EvaluationFoundationService {
       run.evaluationVersion !== GI088_EVALUATION_VERSION ||
       run.executionFingerprint !== this.executionFingerprint ||
       run.candidateFingerprint !== this.candidateFingerprint;
-    const currentFoundationRun = run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const usesFoundationLedger =
+      run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const matchesCurrentBehavior =
+      usesFoundationLedger &&
+      run.executionFingerprint === this.executionFingerprint &&
+      run.candidateFingerprint === this.candidateFingerprint;
+    const definitions = taskDefinitionsFor(
+      run.evaluationVersion,
+      state,
+      !usesFoundationLedger || matchesCurrentBehavior
+    );
     const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
-    const fingerprints = currentFoundationRun
+    const fingerprints = matchesCurrentBehavior
       ? createGi088FingerprintBundle()
       : null;
 
@@ -1088,13 +1117,13 @@ export class Gi088EvaluationFoundationService {
           .map(callToPublic);
         return {
           ...turn,
-          calls: currentFoundationRun
+          calls: usesFoundationLedger
             ? ledgerCalls
             : turn.calls.map(historicalCallToPublic)
         };
       });
       const currentConfig = GI088_CONFIGS[trajectory.branch];
-      const config = currentFoundationRun
+      const config = matchesCurrentBehavior
         ? {
             key: currentConfig.key,
             label: currentConfig.label,
@@ -1114,7 +1143,11 @@ export class Gi088EvaluationFoundationService {
             providerCallsRemaining: null,
             maximumProviderCallsPerTrajectory: null
           }
-        : historicalTrajectoryConfig(run.evaluationVersion, trajectory);
+        : historicalTrajectoryConfig(
+            run.evaluationVersion,
+            trajectory,
+            branchCalls
+          );
       return {
         ...trajectory,
         turns,
@@ -1175,9 +1208,13 @@ export class Gi088EvaluationFoundationService {
         executionFingerprint: run.executionFingerprint,
         model: evaluationMetadata.model,
         serviceVersion: evaluationMetadata.serviceVersion,
-        datasetFingerprint: createGi088DatasetFingerprint(
-          run.evaluationVersion
-        ),
+        ...(matchesCurrentBehavior || !usesFoundationLedger
+          ? {
+              datasetFingerprint: createGi088DatasetFingerprint(
+                run.evaluationVersion
+              )
+            }
+          : {}),
         ...(fingerprints
           ? {
               behaviorManifestVersion: fingerprints.behaviorManifestVersion,
@@ -1246,7 +1283,7 @@ export class Gi088EvaluationFoundationService {
         ? {
             taskId: selectedTask.taskId,
             frozenStart: {
-              opening: currentFoundationRun
+              opening: matchesCurrentBehavior
                 ? GI088_FIXED_OPENING
                 : selectedTask.branches.high.messages.find(
                     (message) => message.role === "assistant"
@@ -1758,6 +1795,7 @@ export class Gi088EvaluationFoundationService {
     ownerUserId: string;
     evaluationVersion: string;
     clientOperationId: string;
+    action: string;
     payloadHash: string;
     runId: string;
   }) {
@@ -1767,7 +1805,10 @@ export class Gi088EvaluationFoundationService {
       clientOperationId: input.clientOperationId
     });
     if (!operation) return null;
-    if (operation.payloadHash !== input.payloadHash) {
+    if (
+      operation.action !== input.action ||
+      operation.payloadHash !== input.payloadHash
+    ) {
       throw new Gi088EvaluationError("GI088_OPERATION_PAYLOAD_CONFLICT");
     }
     if (operation.runId !== input.runId) {
@@ -1827,6 +1868,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -2924,6 +2966,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3117,6 +3160,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3224,6 +3268,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3353,6 +3398,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3463,6 +3509,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3592,6 +3639,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3650,6 +3698,7 @@ export class Gi088EvaluationFoundationService {
       ownerUserId: input.ownerUserId,
       evaluationVersion: run.evaluationVersion,
       clientOperationId: input.clientOperationId,
+      action: operation.action,
       payloadHash: operation.payloadHash,
       runId: run.id
     });
@@ -3739,7 +3788,12 @@ export class Gi088EvaluationFoundationService {
       this.store.listOperationEvents(run.id)
     ]);
     const state = parseState(run);
-    const currentFoundationRun = run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const usesFoundationLedger =
+      run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const matchesCurrentBehavior =
+      usesFoundationLedger &&
+      run.executionFingerprint === this.executionFingerprint &&
+      run.candidateFingerprint === this.candidateFingerprint;
     const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
     const metrics = metricsFor({ state, calls, interventions });
     const gate = gateFor({ run, state, calls, interventions, now: this.now() });
@@ -3755,10 +3809,10 @@ export class Gi088EvaluationFoundationService {
         activeBranches:
           state.evaluationMode === "paired" ? ["off", "high"] : GI088_ACTIVE_BRANCHES,
         model: evaluationMetadata.model,
-        config: currentFoundationRun
+        config: matchesCurrentBehavior
           ? GI088_CONFIGS.high
-          : historicalExportConfig(state, evaluationMetadata),
-        ...(currentFoundationRun
+          : historicalExportConfig(state, evaluationMetadata, calls),
+        ...(matchesCurrentBehavior
           ? {
               maximumProviderCallsPerUserSubmission:
                 GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION

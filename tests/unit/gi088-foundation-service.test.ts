@@ -58,8 +58,10 @@ import {
   type Gi088FoundationExecutionEvent
 } from "@/server/services/evaluation/gi088/foundation-service";
 import {
+  createGi088FoundationPayloadHash,
   Gi088FoundationStoreError,
   type Gi088EvaluationFoundationStore,
+  type Gi088FoundationCallRecord,
   type Gi088FoundationJson
 } from "@/server/services/evaluation/gi088/foundation-store";
 import type {
@@ -457,6 +459,48 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     );
     expect(fake.provider.complete).toHaveBeenCalledTimes(1);
     expect(await store.listCalls(created.runId)).toHaveLength(1);
+  });
+
+  it("同 operation id 跨 action 即使 payload 相同也拒绝回放", async () => {
+    const fake = fakeProvider();
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const ownerUserId = "owner-operation-action-conflict";
+    const created = await createRun(service, ownerUserId);
+    const clientOperationId = "cross-action-operation";
+    const initialUserMessage = "我想聊聊最近一直拿不定主意的事情。";
+    const payload = {
+      runId: created.runId,
+      taskId: "A1",
+      branch: "high",
+      content: initialUserMessage,
+      clientTurnId: clientOperationId,
+      baseAssistantMessageId: "A0",
+      kind: "initial"
+    } as const;
+    await store.beginOperation({
+      ownerUserId,
+      evaluationVersion: GI088_EVALUATION_VERSION,
+      runId: created.runId,
+      clientOperationId,
+      action: "different_action",
+      payloadHash: createGi088FoundationPayloadHash(payload)
+    });
+
+    await expectCode(
+      service.startTask({
+        ownerUserId,
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage,
+        clientOperationId
+      }),
+      "GI088_OPERATION_PAYLOAD_CONFLICT"
+    );
+    expect(fake.provider.complete).not.toHaveBeenCalled();
+    expect(
+      (await service.getSession({ ownerUserId, runId: created.runId }))
+        .activeTask
+    ).toBeNull();
   });
 
   it("纯停止由程序零调用提交，并记录可复核 intervention", async () => {
@@ -1512,6 +1556,11 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       readOnly: true,
       readOnlyReason: "execution_fingerprint_mismatch"
     });
+    expect(session.evaluation).not.toHaveProperty("datasetFingerprint");
+    expect(session.evaluation).not.toHaveProperty("behaviorManifestSha256");
+    expect(session.evaluation).not.toHaveProperty("runnerFingerprint");
+    expect(session.evaluation).not.toHaveProperty("experienceFingerprint");
+    expect(session.evaluation).not.toHaveProperty("config");
     await expectCode(
       service.startTask({
         ownerUserId: "owner-history",
@@ -1522,16 +1571,141 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       }),
       "GI088_RUN_READ_ONLY"
     );
-    await expect(
-      service.exportRun({
-        ownerUserId: "owner-history",
-        runId: historicalRunId
-      })
-    ).resolves.toMatchObject({
+    const exported = await service.exportRun({
+      ownerUserId: "owner-history",
+      runId: historicalRunId
+    });
+    expect(exported).toMatchObject({
       receipt: { payloadSha256: expect.stringMatching(/^[a-f0-9]{64}$/u) }
     });
+    const exportEvaluation = (
+      exported.payload as unknown as {
+        evaluation: Record<string, unknown>;
+      }
+    ).evaluation;
+    expect(exportEvaluation).toMatchObject({
+      config: { model: "deepseek-v4-pro" }
+    });
+    expect(exportEvaluation).not.toHaveProperty(
+      "maximumProviderCallsPerUserSubmission"
+    );
     expect(fake.provider.complete).not.toHaveBeenCalled();
     expect(await store.listCalls(historicalRunId)).toEqual([]);
+  });
+
+  it("同版本旧指纹活动轨迹只投影存储 opening、任务占位与 ledger config", async () => {
+    const store = new Gi088MemoryFoundationStore();
+    const fake = fakeProvider();
+    const { service } = serviceWith({ store, provider: fake.provider });
+    const ownerUserId = "owner-same-version-old-fingerprint";
+    const created = await createRun(service, ownerUserId);
+    await service.startTask({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "这是一条旧指纹运行中已经保存的真实内容。",
+      clientOperationId: "old-fingerprint-turn"
+    });
+    const persisted = await store.findRun({
+      ownerUserId,
+      runId: created.runId
+    });
+    if (!persisted) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+    const state = structuredClone(
+      persisted.state
+    ) as unknown as Gi088BatchState;
+    const activeTask = state.tasks.find((task) => task.taskId === "A1");
+    const storedOpening = activeTask?.branches.high.messages.find(
+      (message) => message.id === "A0"
+    );
+    if (!storedOpening) throw new Error("GI088_TEST_OPENING_NOT_FOUND");
+    storedOpening.content = "旧部署实际保存的开场白";
+    await store.commitRunMutation({
+      mutation: {
+        runId: persisted.id,
+        ownerUserId,
+        expectedRevision: persisted.revision,
+        expectedExecutionFingerprint: persisted.executionFingerprint,
+        nextState: state as unknown as Gi088FoundationJson
+      },
+      operation: {
+        ownerUserId,
+        evaluationVersion: persisted.evaluationVersion,
+        runId: persisted.id,
+        clientOperationId: "rewrite-stored-opening-for-test",
+        action: "test_fixture_rewrite",
+        payloadHash: "rewrite-stored-opening-for-test"
+      },
+      resultSnapshot: null
+    });
+
+    const [persistedCall] = await store.listCalls(created.runId);
+    if (
+      !persistedCall ||
+      !persistedCall.effectiveConfig ||
+      typeof persistedCall.effectiveConfig !== "object" ||
+      Array.isArray(persistedCall.effectiveConfig)
+    ) {
+      throw new Error("GI088_TEST_CALL_CONFIG_NOT_FOUND");
+    }
+    const mutableCalls = (
+      store as unknown as {
+        calls: Map<string, Gi088FoundationCallRecord>;
+      }
+    ).calls;
+    mutableCalls.set(persistedCall.callId, {
+      ...persistedCall,
+      effectiveConfig: {
+        ...persistedCall.effectiveConfig,
+        thinking: "disabled",
+        reasoningEffort: null,
+        temperature: 0.37
+      }
+    });
+    (
+      service as unknown as { executionFingerprint: string }
+    ).executionFingerprint = "f".repeat(64);
+
+    const session = await service.getSession({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A1"
+    });
+    expect(session.batch).toMatchObject({
+      readOnly: true,
+      readOnlyReason: "execution_fingerprint_mismatch"
+    });
+    expect(session.tasks[0]).toMatchObject({
+      id: "A1",
+      title: "历史任务 A1"
+    });
+    expect(session.tasks[0]?.targetTriggerPrompt).toContain("历史任务说明");
+    expect(session.activeTask?.frozenStart.opening).toBe(
+      "旧部署实际保存的开场白"
+    );
+    expect(session.activeTask?.branches.high.config).toMatchObject({
+      thinking: "disabled",
+      reasoningEffort: null,
+      temperature: 0.37,
+      providerCallsUsed: 1
+    });
+    expect(session.activeTask?.branches.high.turns[0]?.calls).toHaveLength(1);
+    expect(session.evaluation).not.toHaveProperty("config");
+
+    const exported = await service.exportRun({
+      ownerUserId,
+      runId: created.runId
+    });
+    expect(exported.payload).toMatchObject({
+      evaluation: {
+        config: {
+          thinking: "disabled",
+          reasoningEffort: null,
+          temperature: 0.37
+        }
+      }
+    });
+    expect(fake.provider.complete).toHaveBeenCalledTimes(1);
   });
 
   it("v8r1 run 使用历史任务包与不可变 dataset fingerprint 只读解析", async () => {
