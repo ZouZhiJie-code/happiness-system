@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertGi088ZeroModelInitializeReadback,
+  createGi088InitializeClientOperationId,
   isGi088InitializeDirectRun,
   resolveGi088InitializeDatabaseUrl
 } from "../../scripts/initialize-gi088-current-batch";
@@ -48,7 +49,8 @@ async function validInitializeReadback() {
   });
   const created = await service.createRun({
     ownerUserId: "owner-initialize-readback",
-    clientOperationId: "initialize-readback"
+    clientOperationId:
+      createGi088InitializeClientOperationId(executionFingerprint)
   });
   const session = await service.getSession({
     ownerUserId: "owner-initialize-readback",
@@ -64,6 +66,57 @@ async function validInitializeReadback() {
 }
 
 describe("GI-088 v8r2 zero-model initialize database guard", () => {
+  it("让 operation ID 随 execution fingerprint 变化并保持同指纹稳定", () => {
+    const firstFingerprint = "a".repeat(64);
+    const secondFingerprint = "b".repeat(64);
+    const firstId = createGi088InitializeClientOperationId(firstFingerprint);
+
+    expect(firstId).toBe(
+      createGi088InitializeClientOperationId(firstFingerprint)
+    );
+    expect(firstId).not.toBe(
+      createGi088InitializeClientOperationId(secondFingerprint)
+    );
+    expect(firstId).toContain(firstFingerprint);
+    expect(firstId.length).toBeLessThanOrEqual(160);
+    expect(() =>
+      createGi088InitializeClientOperationId("invalid-fingerprint")
+    ).toThrow("GI088_INITIALIZE_EXECUTION_FINGERPRINT_INVALID");
+  });
+
+  it("同一 execution fingerprint 的初始化 operation 稳定重放同一 run", async () => {
+    const store = new Gi088MemoryFoundationStore();
+    const executionFingerprint = createGi088ExecutionFingerprint();
+    const clientOperationId =
+      createGi088InitializeClientOperationId(executionFingerprint);
+    const service = new Gi088EvaluationFoundationService({
+      store,
+      getProvider: async () => {
+        throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
+      },
+      authorizeModelCall: () => {
+        throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
+      }
+    });
+
+    const first = await service.createRun({
+      ownerUserId: "owner-initialize-idempotency",
+      clientOperationId
+    });
+    const replay = await service.createRun({
+      ownerUserId: "owner-initialize-idempotency",
+      clientOperationId:
+        createGi088InitializeClientOperationId(executionFingerprint)
+    });
+
+    expect(first.created).toBe(true);
+    expect(replay.created).toBe(false);
+    expect(replay.runId).toBe(first.runId);
+    expect((await store.listRuns({
+      ownerUserId: "owner-initialize-idempotency"
+    }))).toHaveLength(1);
+  });
+
   it("识别普通 Node、vite-node argv 与实际 package runner", () => {
     const scriptPath = resolve(
       process.cwd(),

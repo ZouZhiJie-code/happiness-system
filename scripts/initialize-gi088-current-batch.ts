@@ -22,6 +22,23 @@ import type { Gi088PublicSession } from "../src/server/services/evaluation/gi088
 const SOURCE_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R1;
 const CONFIRMATION = "I_UNDERSTAND_ZERO_MODEL_CALLS";
 const DIRECT_RUN_MARKER = "--gi088-initialize-direct-run";
+const INITIALIZE_OPERATION_PREFIX =
+  "gi088-v8r2-zero-model-initialize" as const;
+
+export function createGi088InitializeClientOperationId(
+  executionFingerprint: string
+) {
+  if (!/^[a-f0-9]{64}$/u.test(executionFingerprint)) {
+    throw new Error("GI088_INITIALIZE_EXECUTION_FINGERPRINT_INVALID");
+  }
+  const clientOperationId =
+    `${INITIALIZE_OPERATION_PREFIX}-${executionFingerprint}`;
+  if (clientOperationId.length > 160) {
+    throw new Error("GI088_INITIALIZE_OPERATION_ID_TOO_LONG");
+  }
+  return clientOperationId;
+}
+
 export function isGi088InitializeDirectRun(
   argv: readonly string[] = process.argv,
   moduleUrl: string = import.meta.url
@@ -151,7 +168,8 @@ async function main() {
     });
     const created = await service.createRun({
       ownerUserId: ownerUserIds[0],
-      clientOperationId: "gi088-v8r2-zero-model-initialize-20260810"
+      clientOperationId:
+        createGi088InitializeClientOperationId(executionFingerprint)
     });
     const session = await service.getSession({
       ownerUserId: ownerUserIds[0],
