@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram id="slot-extraction" name="槽位提取功能架构">
+    <mxGraphModel dx="1600" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1450" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="槽位提取功能架构图" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=26;fontStyle=1;fontColor=#3D3028;" vertex="1" parent="1">
+          <mxGeometry x="510" y="20" width="620" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="把用户的自然表达，转化为持续更新、可供系统判断的内部证据结构" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#6B5A50;" vertex="1" parent="1">
+          <mxGeometry x="425" y="65" width="790" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gate" value="入口条件：意图识别层允许提取&#xa;正常内容 / 否定 AI 推测" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E5;strokeColor=#D79B00;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#5C3D00;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="590" y="115" width="460" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="input_lane" value="① 上下文输入层" style="swimlane;startSize=38;horizontal=1;rounded=1;container=1;pointerEvents=0;whiteSpace=wrap;html=1;fillColor=#F5F9FF;swimlaneFillColor=#FFFFFF;strokeColor=#7EA6D8;strokeWidth=1.5;fontSize=16;fontStyle=1;fontColor=#284A73;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="220" width="1500" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="input_message" value="用户最新回复&#xa;本轮主要提取对象" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#1F3C5C;arcSize=16;" vertex="1" parent="input_lane">
+          <mxGeometry x="35" y="68" width="300" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="input_dimension" value="当前维度与阶段&#xa;选择槽位结构与提取重点" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#1F3C5C;arcSize=16;" vertex="1" parent="input_lane">
+          <mxGeometry x="400" y="68" width="300" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="input_history" value="上一问与历史对话&#xa;理解省略、指代和上下文" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#1F3C5C;arcSize=16;" vertex="1" parent="input_lane">
+          <mxGeometry x="765" y="68" width="300" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="input_snapshot" value="已有材料快照&#xa;保留前几轮已经确认的内容" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#1F3C5C;arcSize=16;" vertex="1" parent="input_lane">
+          <mxGeometry x="1130" y="68" width="300" height="92" as="geometry" />
+        </mxCell>
+
+        <mxCell id="context_bundle" value="组装本轮提取输入包" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontSize=16;fontStyle=1;fontColor=#4D3459;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="650" y="465" width="340" height="66" as="geometry" />
+        </mxCell>
+
+        <mxCell id="extract_lane" value="② 结构化提取层" style="swimlane;startSize=38;horizontal=1;rounded=1;container=1;pointerEvents=0;whiteSpace=wrap;html=1;fillColor=#FBF7FF;swimlaneFillColor=#FFFFFF;strokeColor=#9673A6;strokeWidth=1.5;fontSize=16;fontStyle=1;fontColor=#4D3459;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="575" width="1500" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="schema_selector" value="选择当前维度槽位结构&#xa;开心 / 充实 / 思考 / 改进 / 感谢" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#4D3459;arcSize=16;" vertex="1" parent="extract_lane">
+          <mxGeometry x="50" y="80" width="345" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ai_extract" value="AI 结构化提取&#xa;识别本轮新增或修正的材料&#xa;输出固定字段、缺失项与置信度" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D9D2E9;strokeColor=#8064A2;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#3E2D52;arcSize=16;" vertex="1" parent="extract_lane">
+          <mxGeometry x="555" y="62" width="365" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="rule_extract" value="保守规则提取候选&#xa;捕捉表达中明确、可直接确认的材料&#xa;承担模型不可用时的兜底" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#5C4B00;arcSize=16;dashed=1;dashPattern=6 4;" vertex="1" parent="extract_lane">
+          <mxGeometry x="1060" y="62" width="365" height="136" as="geometry" />
+        </mxCell>
+
+        <mxCell id="process_lane" value="③ 证据处理与材料合并层" style="swimlane;startSize=38;horizontal=1;rounded=1;container=1;pointerEvents=0;whiteSpace=wrap;html=1;fillColor=#FFF9F0;swimlaneFillColor=#FFFFFF;strokeColor=#D6A14A;strokeWidth=1.5;fontSize=16;fontStyle=1;fontColor=#684B1B;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="850" width="1500" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="normalize" value="字段规范化与证据检查&#xa;限制过度推断 · 记录用户否定&#xa;判断新材料是否真正得到支持" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE5CD;strokeColor=#D79B00;strokeWidth=1.5;fontSize=15;fontStyle=1;fontColor=#664000;arcSize=16;" vertex="1" parent="process_lane">
+          <mxGeometry x="250" y="64" width="400" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="merge" value="与已有快照合并&#xa;保留可信旧材料 · 接纳更具体的新材料&#xa;AI 留空时由保守规则补充" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE5CD;strokeColor=#D79B00;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#664000;arcSize=16;" vertex="1" parent="process_lane">
+          <mxGeometry x="850" y="64" width="400" height="128" as="geometry" />
+        </mxCell>
+
+        <mxCell id="snapshot" value="④ 新的内部材料快照｜用户不可见&#xa;&#xa;已确认槽位　·　仍缺失的槽位　·　置信度　·　证据与否定状态" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2.5;fontSize=16;fontStyle=1;fontColor=#2F5A2C;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="390" y="1120" width="860" height="112" as="geometry" />
+        </mxCell>
+
+        <mxCell id="downstream_lane" value="⑤ 槽位快照的下游用途" style="swimlane;startSize=38;horizontal=1;rounded=1;container=1;pointerEvents=0;whiteSpace=wrap;html=1;fillColor=#F4FAF3;swimlaneFillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=1.5;fontSize=16;fontStyle=1;fontColor=#2F5A2C;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1275" width="1500" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="down_stage" value="判断访谈阶段&#xa;现在聊到哪里" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4E8;strokeColor=#82B366;fontSize=14;fontStyle=1;fontColor=#2F5A2C;arcSize=16;" vertex="1" parent="downstream_lane">
+          <mxGeometry x="35" y="65" width="300" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="down_question" value="规划下一问&#xa;还需要了解什么" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4E8;strokeColor=#82B366;fontSize=14;fontStyle=1;fontColor=#2F5A2C;arcSize=16;" vertex="1" parent="downstream_lane">
+          <mxGeometry x="400" y="65" width="300" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="down_complete" value="判断能否收束&#xa;完整版本或当前版本" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4E8;strokeColor=#82B366;fontSize=14;fontStyle=1;fontColor=#2F5A2C;arcSize=16;" vertex="1" parent="downstream_lane">
+          <mxGeometry x="765" y="65" width="300" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="down_draft" value="形成日志写作简报&#xa;支撑标题、正文与质检" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF4E8;strokeColor=#82B366;fontSize=14;fontStyle=1;fontColor=#2F5A2C;arcSize=16;" vertex="1" parent="downstream_lane">
+          <mxGeometry x="1130" y="65" width="300" height="82" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="图例：蓝色＝输入上下文　紫色＝AI/结构化提取　黄色＝规则与证据控制　绿色＝输出与用途　虚线＝兜底路径" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=12;fontColor=#75665D;" vertex="1" parent="1">
+          <mxGeometry x="320" y="1480" width="1000" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_gate_message" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#A56A00;strokeWidth=2;endArrow=block;endFill=1;exitX=0.18;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="gate" target="input_message">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_message_bundle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.08;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="input_message" target="context_bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dimension_bundle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.36;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="input_dimension" target="context_bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_history_bundle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.64;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="input_history" target="context_bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_snapshot_bundle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.92;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="input_snapshot" target="context_bundle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_bundle_schema" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8064A2;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="context_bundle" target="schema_selector">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_schema_ai" value="固定结构输出" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8064A2;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="schema_selector" target="ai_extract">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_schema_rule" value="同时准备候选" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=1.5;dashed=1;dashPattern=6 4;endArrow=block;endFill=1;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="schema_selector" target="rule_extract">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ai_normalize" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8064A2;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="ai_extract" target="normalize">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_normalize_merge" value="可信候选材料" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B00;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="normalize" target="merge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rule_merge" value="补空位 / 故障兜底" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=1.5;dashed=1;dashPattern=6 4;endArrow=block;endFill=1;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="rule_extract" target="merge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_old_merge" value="历史材料" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=1.5;dashed=1;endArrow=block;endFill=1;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="input_snapshot" target="merge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1515" y="465" />
+              <mxPoint x="1515" y="1040" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_merge_snapshot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=2.5;endArrow=block;endFill=1;" edge="1" parent="1" source="merge" target="snapshot">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_snapshot_stage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="snapshot" target="down_stage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_snapshot_question" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="snapshot" target="down_question">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_snapshot_complete" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="snapshot" target="down_complete">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_snapshot_draft" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="snapshot" target="down_draft">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

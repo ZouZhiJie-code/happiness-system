@@ -1,5 +1,7 @@
 # 管理员 AI 运行配置中心实施计划
 
+> 历史实施计划：当前聊天 Provider 已切换为 DeepSeek 官方 API 的 OpenAI 兼容链路，环境变量回退合同现由 `AI_PROVIDER=openai`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL` 和 `DEEPSEEK_BASE_URL` 承担；本文保留原始设计背景，实时事实以 `AGENTS.md`、`.env.example` 与运行配置代码为准。
+
 > **For Codex:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task.
 
 **Goal:** 实现一个仅管理员可见的 AI 运行配置中心。管理员可以在产品后台维护全站生效的聊天模型配置和向量嵌入配置，先保存草稿，再执行连通性测试，测试通过后发布；也可以查看历史版本并回滚。发布后，从下一次 AI 请求开始生效；如果数据库配置不可用，系统回退到现有环境变量配置。

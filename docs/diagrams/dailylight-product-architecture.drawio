@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram name="Daily Light 双版本产品架构图">
+    <mxGraphModel dx="1900" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1960" pageHeight="1490" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Daily Light｜双版本产品架构图" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=26;fontStyle=1;fontColor=#4f3526;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="1860" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="同一个长期目标，两种进入日常的方式：从五维度开始，或从一件具体发生的事开始" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#7a6253;" vertex="1" parent="1">
+          <mxGeometry x="50" y="68" width="1860" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="brand" value="Daily Light｜幸福日志&#xa;在日常里照见自己，把表达沉淀为可以回看的自我理解" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#6f4e37;strokeColor=#5c3f2d;fontColor=#ffffff;fontSize=20;fontStyle=1;align=left;spacingLeft=24;" vertex="1" parent="1">
+          <mxGeometry x="50" y="115" width="1860" height="78" as="geometry" />
+        </mxCell>
+
+        <mxCell id="shared" value="共享产品底座｜两种版本共用的体验骨架" style="swimlane;startSize=42;horizontal=1;rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#fbf0e7;swimlaneFillColor=#fffaf6;strokeColor=#c98952;fontColor=#533a2b;fontSize=17;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="225" width="1860" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_entry" value="统一入口与日期工作台&#xa;首页 · 今天 · 日历 · 分析 · 画像 · 设置" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="shared">
+          <mxGeometry x="30" y="68" width="560" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_ai" value="AI 对话与理解&#xa;用户原话 · 意图识别 · 上下文 · 下一步推进" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=14;" vertex="1" parent="shared">
+          <mxGeometry x="650" y="68" width="560" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_result" value="日志成果管理&#xa;生成 · 编辑 · 自动暂存 · 正式保存 · 刷新恢复" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="shared">
+          <mxGeometry x="1270" y="68" width="560" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_goal" value="共同体验目标：用户愿意表达 → AI 听懂并自然推进 → 用户确认一篇忠于自己的日志" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=14;align=center;" vertex="1" parent="shared">
+          <mxGeometry x="30" y="160" width="1800" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c98952;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="shared" source="shared_entry" target="shared_ai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="shared_edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c98952;endArrow=block;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="shared" source="shared_ai" target="shared_result">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="difference" value="核心差异｜版本一先选“看自己的哪一面”，版本二先讲“今天发生了哪一件事”" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#5d4a16;fontSize=15;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="490" width="1860" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="version_one" value="版本一｜五维度记录&#xa;默认入口 · Production 主链" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#fff0e5;swimlaneFillColor=#fffaf6;strokeColor=#c98952;fontColor=#533a2b;fontSize=18;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="555" width="900" height="570" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_entry" value="入口：选择一个维度&#xa;用户决定今天从哪种视角开始记录" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff7f0;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="version_one">
+          <mxGeometry x="30" y="70" width="840" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_dimensions" value="五维访谈&#xa;开心 Joy　·　充实 Fulfillment　·　思考 Reflection　·　改进 Improvement　·　感谢 Gratitude" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9f2;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="version_one">
+          <mxGeometry x="30" y="155" width="840" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_dialogue" value="按维度理论逐步推进&#xa;从具体片段出发，逐步形成这一维度的理解线索" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9f2;strokeColor=#d9a579;fontColor=#523b2e;fontSize=14;" vertex="1" parent="version_one">
+          <mxGeometry x="30" y="256" width="840" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_journal" value="维度日志&#xa;每个维度形成一篇可编辑、可保存的当日记录" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#324c68;fontSize=14;" vertex="1" parent="version_one">
+          <mxGeometry x="30" y="347" width="840" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_daily" value="日级沉淀&#xa;五维日志 → 今日日志 → 五维分析与画像" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e7f0e5;strokeColor=#82a77c;fontColor=#345233;fontSize=14;fontStyle=1;" vertex="1" parent="version_one">
+          <mxGeometry x="30" y="438" width="840" height="72" as="geometry" />
+        </mxCell>
+
+        <mxCell id="v1_edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c98952;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_one" source="v1_entry" target="v1_dimensions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c98952;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_one" source="v1_dimensions" target="v1_dialogue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_edge_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c98952;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_one" source="v1_dialogue" target="v1_journal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v1_edge_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82a77c;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_one" source="v1_journal" target="v1_daily">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="version_two" value="版本二｜事件中心&#xa;可选入口 · Preview / 事件驱动主链" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#eaf0fa;swimlaneFillColor=#fbfcff;strokeColor=#7186aa;fontColor=#324c68;fontSize=18;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="555" width="900" height="570" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_entry" value="入口：从一件事开始&#xa;用户先讲今天发生了什么，不需要先选择维度" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=14;" vertex="1" parent="version_two">
+          <mxGeometry x="30" y="70" width="840" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_event" value="事件记录&#xa;先建立事件事实，再接住用户的感受、想法、关系或行动反应" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f4f7fc;strokeColor=#91a3c0;fontColor=#324c68;fontSize=14;" vertex="1" parent="version_two">
+          <mxGeometry x="30" y="155" width="840" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_angles" value="选择复盘角度&#xa;理解感受　·　理清想法　·　梳理关系　·　复盘行动" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f1ebf5;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="version_two">
+          <mxGeometry x="30" y="256" width="840" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_review" value="围绕所选角度继续复盘&#xa;检查点收束，用户在合适时机结束并生成事件日志" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f1ebf5;strokeColor=#9673a6;fontColor=#493451;fontSize=14;" vertex="1" parent="version_two">
+          <mxGeometry x="30" y="347" width="840" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_journal" value="事件成果&#xa;一件事对应一篇事件日志；可编辑、保存、刷新恢复、按事件标签重开" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e7f0e5;strokeColor=#82a77c;fontColor=#345233;fontSize=14;fontStyle=1;" vertex="1" parent="version_two">
+          <mxGeometry x="30" y="438" width="840" height="72" as="geometry" />
+        </mxCell>
+
+        <mxCell id="v2_edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7186aa;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_two" source="v2_entry" target="v2_event">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7186aa;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_two" source="v2_event" target="v2_angles">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_edge_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_two" source="v2_angles" target="v2_review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v2_edge_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82a77c;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="version_two" source="v2_review" target="v2_journal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="convergence" value="共同汇合｜可回看的自我记录" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#6f4e37;strokeColor=#5c3f2d;fontColor=#ffffff;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1160" width="660" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="convergence_edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6f4e37;endArrow=block;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="v1_daily" target="convergence">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="1140" />
+              <mxPoint x="815" y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="convergence_edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6f4e37;endArrow=block;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="v2_journal" target="convergence">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1460" y="1140" />
+              <mxPoint x="1145" y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="long_term" value="长期沉淀｜两种版本最终都服务于同一套回看体验" style="swimlane;startSize=40;horizontal=1;rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#edf4eb;swimlaneFillColor=#fbfdfb;strokeColor=#82a77c;fontColor=#345233;fontSize=17;fontStyle=1;container=1;collapsible=0;pointerEvents=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1270" width="1860" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="long_journal" value="成果库&#xa;维度日志 · 事件日志 · 当天整合日志" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f3f9f1;strokeColor=#82a77c;fontColor=#345233;fontSize=14;" vertex="1" parent="long_term">
+          <mxGeometry x="30" y="55" width="560" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="long_calendar" value="回看与导航&#xa;月 / 周 / 日历 · 今日日志 · 事件标签" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f3f9f1;strokeColor=#82a77c;fontColor=#345233;fontSize=14;" vertex="1" parent="long_term">
+          <mxGeometry x="650" y="55" width="560" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="long_insight" value="长期认识自己&#xa;五维趋势 · 画像 · 个人线索与反馈" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f3f9f1;strokeColor=#82a77c;fontColor=#345233;fontSize=14;" vertex="1" parent="long_term">
+          <mxGeometry x="1270" y="55" width="560" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="long_edge_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82a77c;endArrow=block;exitX=0.25;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="convergence" target="long_journal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="long_edge_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82a77c;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="convergence" target="long_calendar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="long_edge_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82a77c;endArrow=block;exitX=0.75;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="convergence" target="long_insight">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="阅读方式：上方是共享能力；中间两列是两种产品入口和主链；下方是共同的长期价值。颜色用于帮助区分层次，不代表技术实现边界。" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=13;align=left;spacingLeft=14;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1420" width="1860" height="42" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

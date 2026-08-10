@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram name="证据校验与状态合并">
+    <mxGraphModel dx="1900" dy="920" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1940" pageHeight="940" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="2" value="访谈中的证据校验与状态合并" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=28;fontStyle=1;fontColor=#2F2A24;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="900" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="读图顺序：从左到右。系统把本轮新信息与历史档案合并，形成下一轮可继续使用的最新状态。" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=15;fontColor=#6D6258;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1120" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="10" value="① 输入" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=14;whiteSpace=wrap;html=1;container=1;pointerEvents=0;fillColor=#F5F9FF;swimlaneFillColor=#FFFFFF;strokeColor=#8FAED3;strokeWidth=2;fontFamily=PingFang SC;fontSize=18;fontStyle=1;fontColor=#304D6D;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="280" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="&lt;b&gt;用户最新回复&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;本轮提供的事实、感受、补充或纠正&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7CBE3;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="10">
+          <mxGeometry x="20" y="70" width="240" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="&lt;b&gt;候选槽位&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;AI 提取结果 + 保守规则补充&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7CBE3;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="10">
+          <mxGeometry x="20" y="172" width="240" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="&lt;b&gt;历史事件档案&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;此前轮次已经积累的槽位内容&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7CBE3;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="10">
+          <mxGeometry x="20" y="274" width="240" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="&lt;b&gt;对话上下文&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;上一问题、回复意图、当前维度与阶段&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7CBE3;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="10">
+          <mxGeometry x="20" y="376" width="240" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="形成本轮输入包" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCEBFA;strokeColor=#6C8EBF;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontStyle=1;fontColor=#304D6D;" vertex="1" parent="10">
+          <mxGeometry x="45" y="500" width="190" height="54" as="geometry" />
+        </mxCell>
+
+        <mxCell id="20" value="② 证据判断" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=14;whiteSpace=wrap;html=1;container=1;pointerEvents=0;fillColor=#FFFAEE;swimlaneFillColor=#FFFFFF;strokeColor=#D9B65C;strokeWidth=2;fontFamily=PingFang SC;fontSize=18;fontStyle=1;fontColor=#6B5421;" vertex="1" parent="1">
+          <mxGeometry x="370" y="140" width="300" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="&lt;b&gt;1. 整理候选信息&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;清理空值、重复和格式差异&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDF7;strokeColor=#E0C776;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="20">
+          <mxGeometry x="25" y="74" width="250" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="&lt;b&gt;2. 识别证据强度&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;明确表达 / 用户确认 / 较弱推断&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDF7;strokeColor=#E0C776;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="20">
+          <mxGeometry x="25" y="186" width="250" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="&lt;b&gt;3. 识别关系变化&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;补充 / 细化 / 确认 / 否认 / 冲突&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#D79B00;strokeWidth=2;fontFamily=PingFang SC;fontSize=14;fontColor=#5A4217;spacing=10;" vertex="1" parent="20">
+          <mxGeometry x="25" y="304" width="250" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="输出：本轮可信证据" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontStyle=1;fontColor=#6B5421;" vertex="1" parent="20">
+          <mxGeometry x="50" y="450" width="200" height="58" as="geometry" />
+        </mxCell>
+
+        <mxCell id="30" value="③ 状态合并" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=14;whiteSpace=wrap;html=1;container=1;pointerEvents=0;fillColor=#FFF7F1;swimlaneFillColor=#FFFFFF;strokeColor=#D79B72;strokeWidth=2;fontFamily=PingFang SC;fontSize=18;fontStyle=1;fontColor=#70462E;" vertex="1" parent="1">
+          <mxGeometry x="720" y="140" width="420" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="35" value="根据新旧信息关系选择合并动作" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE4D5;strokeColor=#C97C52;strokeWidth=2;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#70462E;" vertex="1" parent="30">
+          <mxGeometry x="85" y="70" width="250" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="&lt;b&gt;填空&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;原槽位为空，新证据有效时写入&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E3B89F;fontFamily=PingFang SC;fontSize=13;fontColor=#2F2A24;spacing=8;" vertex="1" parent="30">
+          <mxGeometry x="20" y="174" width="115" height="124" as="geometry" />
+        </mxCell>
+        <mxCell id="32" value="&lt;b&gt;补充与细化&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;保留可信内容，增加更具体的细节&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#E3B89F;fontFamily=PingFang SC;fontSize=13;fontColor=#2F2A24;spacing=8;" vertex="1" parent="30">
+          <mxGeometry x="152" y="174" width="115" height="124" as="geometry" />
+        </mxCell>
+        <mxCell id="33" value="&lt;b&gt;纠正与否认&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#7D4E22&quot;&gt;更新相关字段，记录被否认的判断方向&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontFamily=PingFang SC;fontSize=13;fontColor=#5A4217;spacing=8;" vertex="1" parent="30">
+          <mxGeometry x="284" y="174" width="115" height="124" as="geometry" />
+        </mxCell>
+        <mxCell id="34" value="&lt;b&gt;生成新版本事件档案&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;每轮回复后形成一个更新后的 snapshot&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBE4D5;strokeColor=#C97C52;strokeWidth=2;fontFamily=PingFang SC;fontSize=15;fontStyle=1;fontColor=#70462E;spacing=10;" vertex="1" parent="30">
+          <mxGeometry x="85" y="430" width="250" height="88" as="geometry" />
+        </mxCell>
+
+        <mxCell id="40" value="④ 最新内部状态" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=14;whiteSpace=wrap;html=1;container=1;pointerEvents=0;fillColor=#F2FAF2;swimlaneFillColor=#FFFFFF;strokeColor=#82B366;strokeWidth=2;fontFamily=PingFang SC;fontSize=18;fontStyle=1;fontColor=#355C36;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="140" width="280" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="41" value="&lt;b&gt;最新槽位快照&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;当前事件已知的事实、感受和意义线索&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A9CFA7;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="40">
+          <mxGeometry x="20" y="82" width="240" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="42" value="&lt;b&gt;证据状态&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;已确认 · 较弱线索 · 已否认&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A9CFA7;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="40">
+          <mxGeometry x="20" y="216" width="240" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="43" value="&lt;b&gt;剩余信息缺口&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;哪些关键材料仍需要确认&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A9CFA7;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="40">
+          <mxGeometry x="20" y="346" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="44" value="用户不可见的系统内部档案" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#355C36;" vertex="1" parent="40">
+          <mxGeometry x="35" y="480" width="210" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="50" value="⑤ 下游使用" style="swimlane;startSize=48;horizontal=1;rounded=1;arcSize=14;whiteSpace=wrap;html=1;container=1;pointerEvents=0;fillColor=#F7F3FA;swimlaneFillColor=#FFFFFF;strokeColor=#A98ABC;strokeWidth=2;fontFamily=PingFang SC;fontSize=18;fontStyle=1;fontColor=#5A4567;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="140" width="310" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="51" value="&lt;b&gt;访谈阶段与进度&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;当前处于收集、追问或收束阶段&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C6B2D2;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="50">
+          <mxGeometry x="30" y="90" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="52" value="&lt;b&gt;下一轮问题目标&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;继续补哪个缺口，避开哪些已否认方向&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C6B2D2;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="50">
+          <mxGeometry x="30" y="224" width="250" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="53" value="&lt;b&gt;完成与日志生成判断&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6D6258&quot;&gt;材料是否足以收束或生成当前版本日志&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C6B2D2;fontFamily=PingFang SC;fontSize=14;fontColor=#2F2A24;spacing=10;" vertex="1" parent="50">
+          <mxGeometry x="30" y="364" width="250" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="54" value="进入下一节点：阶段判断与下一动作决策" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;fontFamily=PingFang SC;fontSize=14;fontStyle=1;fontColor=#5A4567;" vertex="1" parent="50">
+          <mxGeometry x="35" y="500" width="240" height="58" as="geometry" />
+        </mxCell>
+
+        <mxCell id="60" value="主数据流" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6C8EBF;strokeWidth=3;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontColor=#4A6078;" edge="1" parent="1" source="15" target="21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="61" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="20" source="21" target="22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="62" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="20" source="22" target="23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="63" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="20" source="23" target="24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="64" value="可信证据" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C97C52;strokeWidth=3;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontColor=#70462E;" edge="1" parent="1" source="24" target="35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="65" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="30" source="35" target="31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="66" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="30" source="35" target="32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="67" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="30" source="35" target="33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="75" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="30" source="31" target="34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="76" value="更新后的状态" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontColor=#70462E;" edge="1" parent="30" source="32" target="34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="77" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D79B72;strokeWidth=2;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="30" source="33" target="34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="68" value="新版本档案" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82B366;strokeWidth=3;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontColor=#355C36;" edge="1" parent="1" source="34" target="41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="69" value="供下一节点读取" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673A6;strokeWidth=3;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontColor=#5A4567;" edge="1" parent="1" source="44" target="51">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="70" value="纠正 / 否认路径" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D46B3C;strokeWidth=3;dashed=1;dashPattern=8 4;endArrow=block;endFill=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;fontFamily=PingFang SC;fontSize=12;fontStyle=1;fontColor=#9A4625;" edge="1" parent="1" source="23" target="33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="520" />
+              <mxPoint x="1060" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="80" value="&lt;b&gt;核心理解&lt;/b&gt;：这一层维护的是“当前最可信的事件版本”。用户的新补充会增加信息，用户的纠正会改变证据状态，最终结果继续影响访谈阶段、下一问题和日志生成。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDF8;strokeColor=#C9B9A6;strokeWidth=1;fontFamily=PingFang SC;fontSize=16;fontColor=#443B33;align=left;verticalAlign=middle;spacingLeft=18;spacingRight=18;" vertex="1" parent="1">
+          <mxGeometry x="40" y="770" width="1790" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="81" value="实线箭头：主数据流" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=12;fontColor=#6D6258;" vertex="1" parent="1">
+          <mxGeometry x="40" y="870" width="180" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="82" value="橙色虚线：用户纠正或否认产生的定向更新" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=PingFang SC;fontSize=12;fontColor=#9A4625;" vertex="1" parent="1">
+          <mxGeometry x="240" y="870" width="370" height="24" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

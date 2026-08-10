@@ -10,7 +10,7 @@
 
 ### 会话 1
 
-- `sessionId`: `db49a367-4aa6-4d47-a690-7f256be7af0e`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T02:48:13.045Z`
 - `status`: `active`
 - `turnCount`: `0`
@@ -25,7 +25,7 @@ AI：这段充实已经不是忙碌感，而是在指向今天真正算数的那
 
 ### 会话 2
 
-- `sessionId`: `56fc4ac0-3816-46fa-9846-7161d9729956`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T03:36:53.242Z`
 - `status`: `active`
 - `turnCount`: `0`
@@ -35,7 +35,7 @@ AI：今天有没有一个让你觉得充实的片段？先讲讲那时你在做
 
 ### 会话 3
 
-- `sessionId`: `897d587b-03e4-40e4-950e-0df0792174a8`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T04:08:45.636Z`
 - `status`: `active`
 - `turnCount`: `2`
@@ -57,7 +57,7 @@ AI：这件事真正有分量的地方，是简历优化完成。也因为这样
 
 ### 会话 1
 
-- `sessionId`: `76ebee26-f6a3-455e-b7af-3e192b88c859`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T02:48:14.200Z`
 - `status`: `active`
 - `turnCount`: `1`
@@ -77,7 +77,7 @@ AI：这次思考已经不只是想了很多，而是在形成新的判断依据
 
 ### 会话 2
 
-- `sessionId`: `8612706c-a186-4d19-8bb7-822843afcb43`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T03:35:24.538Z`
 - `status`: `active`
 - `turnCount`: `0`
@@ -92,7 +92,7 @@ AI：从测试回复里，需要先找到今天触发思考的具体时刻。
 
 ### 会话 3
 
-- `sessionId`: `867aee0b-29ac-4a28-8c60-1bc22c4dcd69`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T04:08:50.278Z`
 - `status`: `active`
 - `turnCount`: `4`
@@ -125,7 +125,7 @@ AI：AI 进入选择分叉（`event_complete`）
 
 ### 会话 1
 
-- `sessionId`: `13403721-b0ff-4aa0-a692-56583c61ff23`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T02:48:14.577Z`
 - `status`: `active`
 - `turnCount`: `5`
@@ -163,7 +163,7 @@ AI：如果今天还有另一个你想复盘的改进情境，我们就聊那件
 
 ### 会话 1
 
-- `sessionId`: `a3c59339-499e-402b-bb7b-3fbeb0865953`
+- `sessionId`: `redacted-operational-id`
 - `startedAt`: `2026-05-20T02:48:15.189Z`
 - `status`: `active`
 - `turnCount`: `6`

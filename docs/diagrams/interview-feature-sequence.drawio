@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="30.2.6">
+  <diagram name="访谈主链时序图">
+    <mxGraphModel dx="2000" dy="2050" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2050" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="幸福日志访谈主链时序图" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=25;fontStyle=1;fontColor=#4f3526;" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="700" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="动态交互顺序｜覆盖会话恢复、单轮访谈、收束分支、日志生成与正式保存" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#7a6253;" vertex="1" parent="1">
+          <mxGeometry x="30" y="65" width="1000" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user" value="用户" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#fff2e6;strokeColor=#c98952;fontColor=#51382a;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="210" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value="访谈页面" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#314b66;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="service" value="访谈服务" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#573a0a;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="690" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="rules" value="规则与状态逻辑&#xa;访谈服务内部" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="model" value="AI 模型" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#493451;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="状态与日志仓库" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#304d2f;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1410" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+        <mxCell id="draft" value="日志生成模块&#xa;访谈服务内部" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#dfeaf7;strokeColor=#6c8ebf;fontColor=#314b66;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1650" y="110" width="180" height="1880" as="geometry" />
+        </mxCell>
+
+        <mxCell id="phase_1" value="阶段一&#xa;进入与恢复" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="220" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="phase_2" value="阶段二&#xa;单轮访谈" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e8;strokeColor=#d6b656;fontColor=#4f421d;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="490" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="phase_3" value="阶段三&#xa;生成与保存日志" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eef5fc;strokeColor=#6c8ebf;fontColor=#314b66;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1290" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="divider_1" value="" style="endArrow=none;dashed=1;strokeColor=#c9a98e;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="190" y="450" as="sourcePoint" /><mxPoint x="1880" y="450" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="divider_2" value="" style="endArrow=none;dashed=1;strokeColor=#c9a98e;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="190" y="1240" as="sourcePoint" /><mxPoint x="1880" y="1240" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="m01" value="1. 打开指定日期与维度" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6f4e37;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="230" as="sourcePoint" /><mxPoint x="540" y="230" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m02" value="2. start / recover session" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="270" as="sourcePoint" /><mxPoint x="780" y="270" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m03" value="3. 读取或创建当天会话" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#d79b00;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="310" as="sourcePoint" /><mxPoint x="1500" y="310" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m04" value="4. session + event + messages" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#73966e;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1500" y="350" as="sourcePoint" /><mxPoint x="780" y="350" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m05" value="5. 返回可恢复访谈现场" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#999999;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="390" as="sourcePoint" /><mxPoint x="540" y="390" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="m06" value="6. 输入回复或点击操作" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6f4e37;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="510" as="sourcePoint" /><mxPoint x="540" y="510" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m07" value="7. 保存输入草稿与待发 outbox" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="480" y="550" as="sourcePoint" /><mxPoint x="600" y="550" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m08" value="8. respond / stream + clientTurnId + 对话位置" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="590" as="sourcePoint" /><mxPoint x="780" y="590" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m09" value="9. 预留本轮并先保存用户原话" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="630" as="sourcePoint" /><mxPoint x="1500" y="630" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="10. InterviewUserTurn(processing) + user message" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#73966e;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1500" y="670" as="sourcePoint" /><mxPoint x="780" y="670" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="11. SSE turn：确认原话已被接收" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="710" as="sourcePoint" /><mxPoint x="540" y="710" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="12. 识别意图、边界与 repair" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#d79b00;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="750" as="sourcePoint" /><mxPoint x="1020" y="750" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m13" value="13. 返回处理方式" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#b48a25;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1020" y="790" as="sourcePoint" /><mxPoint x="780" y="790" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m14" value="14. [正常内容 / 假设否认] 请求结构化槽位提取" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="830" as="sourcePoint" /><mxPoint x="1260" y="830" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m15" value="15. 候选槽位" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1260" y="870" as="sourcePoint" /><mxPoint x="780" y="870" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m16" value="16. 合并档案、判断阶段与下一动作" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#d79b00;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="910" as="sourcePoint" /><mxPoint x="1020" y="910" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m17" value="17. 动作结果 + 问题目标" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#b48a25;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1020" y="950" as="sourcePoint" /><mxPoint x="780" y="950" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m18" value="18. [继续追问] 组装上下文并生成表达" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="990" as="sourcePoint" /><mxPoint x="1260" y="990" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m19" value="19. thinkingSummary + question" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1260" y="1030" as="sourcePoint" /><mxPoint x="780" y="1030" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m20" value="20. 协议检查、纠偏与 fallback" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#d79b00;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="1070" as="sourcePoint" /><mxPoint x="1020" y="1070" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m21" value="21. 保存助手回应、档案、阶段，并将本轮标记 completed" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="1110" as="sourcePoint" /><mxPoint x="1500" y="1110" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m22" value="22. SSE：摘要与问题 / 选择卡 / session" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="1150" as="sourcePoint" /><mxPoint x="540" y="1150" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m23" value="23. 展示本轮结果并清理 outbox" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#999999;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="1190" as="sourcePoint" /><mxPoint x="300" y="1190" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="branch_note" value="恢复与分支事实&#xa;• 页面先保存输入草稿和待发 outbox&#xa;• 服务端先保存 InterviewUserTurn 与用户原话&#xa;• 失败 / 取消保留原话；刷新后显示待处理状态&#xa;• “继续生成”用同一 clientTurnId 恢复&#xa;• 旧对话位置和重复提交由服务端拦截&#xa;• repair 跳过槽位提取和进度累计&#xa;• 边界停止按材料进入 partial 或低压选择" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffaf4;strokeColor=#c9a98e;fontColor=#6a5142;fontSize=10;align=left;verticalAlign=top;spacing=7;" vertex="1" parent="1">
+          <mxGeometry x="30" y="690" width="150" height="320" as="geometry" />
+        </mxCell>
+
+        <mxCell id="m24" value="24. 点击生成日志" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6f4e37;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="1310" as="sourcePoint" /><mxPoint x="540" y="1310" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m25" value="25. generate draft" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="1350" as="sourcePoint" /><mxPoint x="1740" y="1350" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m26" value="26. 读取 source events 与 snapshot" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1390" as="sourcePoint" /><mxPoint x="1500" y="1390" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m27" value="27. 返回日志材料" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#73966e;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1500" y="1430" as="sourcePoint" /><mxPoint x="1740" y="1430" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m28" value="28. 语义解释 + DraftBrief + 写作约束" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1470" as="sourcePoint" /><mxPoint x="1260" y="1470" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m29" value="29. 返回标题与正文草稿" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#9673a6;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1260" y="1510" as="sourcePoint" /><mxPoint x="1740" y="1510" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m30" value="30. 执行质量门、标题治理与 fallback" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#d79b00;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1550" as="sourcePoint" /><mxPoint x="1020" y="1550" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m30r" value="返回合格稿或 fallback 稿" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#b48a25;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1020" y="1580" as="sourcePoint" /><mxPoint x="1740" y="1580" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m31" value="31. 保存 draft" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1610" as="sourcePoint" /><mxPoint x="1500" y="1610" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m32" value="32. 返回可编辑草稿" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1650" as="sourcePoint" /><mxPoint x="540" y="1650" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m33" value="33. 展示日志工作区" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#999999;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="1690" as="sourcePoint" /><mxPoint x="300" y="1690" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m34" value="34. 编辑后点击正式保存" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6f4e37;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="1730" as="sourcePoint" /><mxPoint x="540" y="1730" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m35" value="35. save journal" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="1770" as="sourcePoint" /><mxPoint x="1740" y="1770" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m36" value="36. 更新为 saved，并将会话设为 finalize" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1810" as="sourcePoint" /><mxPoint x="1500" y="1810" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m37" value="37. 保存成功" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#6c8ebf;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="1740" y="1850" as="sourcePoint" /><mxPoint x="540" y="1850" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="m38" value="38. 显示已保存状态" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;strokeColor=#999999;fontSize=12;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="540" y="1890" as="sourcePoint" /><mxPoint x="300" y="1890" as="targetPoint" /></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
