@@ -28,9 +28,9 @@
 - v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人判断 `通过 / direct_use / target triggered`；`10/10` 次首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`；
 - v8r1 已将简短礼貌回应与明确停止组合收入零调用暂停，真实 U10 回放通过。最终 `12` 项 Thinking high 候选完成 `160` 项相关测试、构建、Preview 部署与创建时 `0/12` 空白批次回读；初始化模型调用 `0`。产品负责人随后完成 A1 一条轨迹，确认事件内容中的沟通负担被程序误判为停止当前访谈，形成单例阻断。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；
 - v8r2 已完成评测底座建设；#5 随当前质量与调用事实行政 `early_stopped / No-Go`，完整只读保留；
-- v8r3 已完成 Interview Skill、Ark Flash、Foundation 校验、问题价值复核、v0.7 导出、`4＋2` 任务、【帮我记】兼容链、离线评测器和对话优先工作台。首轮 `98` 次正式候选调用暴露结构与校验缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝。两轮累计 `194` 次，当前结论为 `No-Go`；Preview deployment 与 `0/6` 均未创建，等待 Ark 账户恢复后建立新的不可变评测版本和预算；
+- v8r3 前两轮 No-Go 继续保存为历史证据。Ark 账户恢复后，v8r3r1 已用新的不可变正式评测身份完成 `96` 个检查点：首次有效 `95/96 = 98.96%`，自动恢复 `1` 次且成功，最终失败和最终保护均为 `0`；可见延迟 p50 `7.484s`、p90 `27.263s`、最大 `43.416s`。可靠性与延迟硬门通过，`80` 份质量结果等待产品负责人人工裁决；两轮真实 Golden Set、Judge、Preview deployment 与 `0/6` 均保持关闭；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
-- 板块 7 的 v8r3 候选实现已完成，继续等待新的离线硬门通过；
+- 板块 7 的 v8r3 候选实现已完成，v8r3r1 可靠性与延迟通过，继续等待人工质量门；
 - 板块 8 继续等待通过离线硬门的候选；
 - Production 保持 `legacy + baseline`。
 
@@ -57,7 +57,8 @@
 ### 当前评测与真人裁决
 
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
-- GI-088 当前正式证据入口：[v8r3 Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
+- GI-088 当前正式证据入口：[v8r3r1 账户恢复后运行门通过、质量待裁决](../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
+- GI-088 v8r3 历史证据：[Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - GI-088 v8r2 历史底座与行政收口：[v8r2 评测底座加固证据](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - GI-088 v8r2 已完成实施合同：[意图控制与评测底座全量修复](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 - GI-088 v8r1 事故与部署时快照：[v8r1 最终 12 项独立验收](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)

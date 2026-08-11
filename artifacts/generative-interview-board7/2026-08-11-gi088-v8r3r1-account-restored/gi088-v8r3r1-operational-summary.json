@@ -1,0 +1,37 @@
+{
+  "summaryVersion": "2026-08-11.gi088-v8r3r1-operational-summary-v1",
+  "status": "passed",
+  "formalEvaluationVersion": "2026-08-11.gi088-v8r3r1-account-restored-formal-evaluation",
+  "deterministic": {
+    "cases": 24,
+    "assertions": 72,
+    "passed": true,
+    "externalModelCalls": 0
+  },
+  "reliability": {
+    "passed": true,
+    "eligibleCheckpoints": 96,
+    "firstValidCount": 95,
+    "firstValidRate": 0.9895833333333334,
+    "automaticRecoveryAttempts": 1,
+    "automaticRecoverySuccesses": 1,
+    "finalFailures": 0,
+    "manualRecoveries": 0,
+    "finalProtections": 0,
+    "duplicateMessages": 0,
+    "pendingTurns": 0
+  },
+  "latency": {
+    "passed": true,
+    "sampleCount": 96,
+    "p50Ms": 7484,
+    "p90Ms": 27263,
+    "maxMs": 43416
+  },
+  "quality": {
+    "status": "pending_human_adjudication",
+    "reviewItemCount": 80,
+    "judgeCalls": 0,
+    "goldenRoundsAvailable": 0
+  }
+}

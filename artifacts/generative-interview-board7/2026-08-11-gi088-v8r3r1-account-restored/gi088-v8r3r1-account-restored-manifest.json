@@ -1,0 +1,46 @@
+{
+  "manifestVersion": "2026-08-11.gi088-v8r3r1-account-restored-manifest-v1",
+  "status": "operational_gates_passed_quality_pending",
+  "formalEvaluationVersion": "2026-08-11.gi088-v8r3r1-account-restored-formal-evaluation",
+  "frozenCommit": "8ec55fb64ac6a1794f95d5bbe86923374c41cef9",
+  "behaviorManifestSha256": "3cc2c14b9efd2d61776677189711e92a8b954fafbbac8dc4788ad288ae69fca0",
+  "fingerprints": {
+    "candidate": "f88f0082a529870587b5e73d635c14939ad8bf6ec792aa7c72884c5b2a7ec657",
+    "dataset": "6b54d6b533766f8add1884cfa274d057fcf345b67836e9bfaa6743efafc4a750",
+    "runner": "1bf31d40d16a3fc5a62185c937cc3b6398a2adc59f82a697e93860b6db48c19a",
+    "experience": "a466fee442ee85a2b701abcb34e799c0e5de2145e0fb0a30563a0a77027864d8",
+    "execution": "6a657b1993acc7eab93be0970b26546ce07e00762c4d0fd6b1c05c7368c4012f",
+    "offlineDataset": "db728e87921658f6e66f8f5b9d18d72f1c3d23a581843187ea6b47f9c902c535",
+    "offlineRun": "82bf0dec82b5d3eb8aedc5e5d98e412671f60d15aaa720b54c395abdd0ef5b4d",
+    "candidateEvidence": "de161ff9cf41849fae06f414bc478ebb3f67878ddd23738f0041c0e98c3ce46b"
+  },
+  "skill": {
+    "version": "2026-08-11.gi088-interview-skill-v8r3",
+    "sha256": "a1b13e4f451a40850bd1122f5b873cce3eb9496c62ef6d42c4b8b28d0ab20494"
+  },
+  "model": {
+    "provider": "volcengine_ark",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object"
+  },
+  "evidence": {
+    "deterministicCases": 24,
+    "deterministicAssertions": 72,
+    "eligibleCheckpoints": 96,
+    "initialCalls": 96,
+    "automaticRecoveryCalls": 1,
+    "totalCalls": 97,
+    "firstValidCount": 95,
+    "finalFailureCount": 0,
+    "finalProtectionCount": 0,
+    "completeLatencySamples": 96,
+    "humanAdjudicationItems": 80,
+    "judgeCalls": 0,
+    "previewDeployments": 0,
+    "previewRuns": 0
+  },
+  "nextGate": "human_quality_adjudication_and_two_real_golden_rounds",
+  "production": "legacy_baseline_unchanged"
+}
