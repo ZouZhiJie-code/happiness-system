@@ -520,6 +520,21 @@ function lastAssistantMessageId(trajectory: Gi088Trajectory | null) {
     null;
 }
 
+function turnHasActiveServerWork(
+  turn: Gi088Trajectory["turns"][number]
+) {
+  return turn.status === "processing" ||
+    turn.recovery?.status === "eligible" ||
+    turn.recovery?.status === "retrying" ||
+    turn.recovery?.status === "manual_retrying";
+}
+
+function sessionHasActiveServerWork(session: Gi088EvaluationSession) {
+  return Boolean(session.activeTask && Object.values(
+    session.activeTask.branches
+  ).some((branch) => branch.turns.some(turnHasActiveServerWork)));
+}
+
 function sessionConfirmsOutbox(
   session: Gi088EvaluationSession,
   entry: Gi088EvaluationOutboxEntry
@@ -2339,17 +2354,7 @@ function WorkspaceReady({
   const earlyStopped = session.batch.status === "early_stopped";
   const terminal = sealed || earlyStopped;
   const runReadOnly = terminal || Boolean(session.batch.readOnly);
-  const serverProcessing = Boolean(activeTask && Object.values(
-    activeTask.branches
-  ).some((branch) =>
-    Boolean(branch.pendingTurnId) ||
-    branch.turns.some((turn) =>
-      turn.status === "processing" ||
-      turn.recovery?.status === "eligible" ||
-      turn.recovery?.status === "retrying" ||
-      turn.recovery?.status === "manual_retrying"
-    )
-  ));
+  const serverProcessing = sessionHasActiveServerWork(session);
   const recoveryActive = Boolean(activeTask && Object.values(
     activeTask.branches
   ).some((branch) => branch.turns.some((turn) =>
@@ -2589,14 +2594,18 @@ function WorkspaceReady({
       setPending(true);
       setIssue(null);
       try {
-        update(await getGi088EvaluationSession({ runId, taskId }), false);
+        const selectedTask = session.tasks.find((task) => task.id === taskId);
+        update(await getGi088EvaluationSession({
+          runId,
+          ...(selectedTask?.status === "ready" ? {} : { taskId })
+        }), false);
       } catch (error) {
         setIssue(issueFromUnknown(error));
       } finally {
         setPending(false);
       }
     },
-    [pending, runId, update]
+    [pending, runId, session.tasks, update]
   );
 
   useEffect(() => {
@@ -2608,13 +2617,8 @@ function WorkspaceReady({
     }
     const activeBranch = activeTask.activeBranch;
     const activeTrajectory = activeTask.branches[activeBranch];
-    const activeTurn = [...activeTrajectory.turns].reverse().find((turn) =>
-      turn.id === activeTrajectory.pendingTurnId ||
-      turn.status === "processing" ||
-      turn.recovery?.status === "eligible" ||
-      turn.recovery?.status === "retrying" ||
-      turn.recovery?.status === "manual_retrying"
-    );
+    const activeTurn = [...activeTrajectory.turns].reverse()
+      .find(turnHasActiveServerWork);
     const recovery = activeTurn?.recovery;
     setPendingOperation({
       taskId: activeTask.taskId,

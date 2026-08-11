@@ -473,6 +473,72 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect((fetchMock.mock.calls[1]![1] as RequestInit).method).toBeUndefined();
   }, 5_000);
 
+  it("自动恢复收口为 manual_available 后停止等待并开放人工恢复", async () => {
+    const processing = evaluationSession({ processing: true });
+    const settled = evaluationSession();
+    const high = settled.activeTask!.branches.high;
+    const failedTurn = high.turns[0]!;
+    high.status = "protected_failure";
+    high.pendingTurnId = failedTurn.id;
+    failedTurn.status = "protected_failure";
+    failedTurn.visibleText = null;
+    failedTurn.recovery = {
+      status: "manual_available",
+      trigger: "TIMEOUT",
+      automaticRetryCount: 1,
+      initialCallId: "call-1",
+      recoveryCallId: "call-2",
+      manualRetryCount: 0,
+      manualRetryCallId: null,
+      eligibleAt: "2026-08-10T00:00:00.000Z",
+      automaticDeadlineAt: "2026-08-10T00:01:30.000Z",
+      startedAt: "2026-08-10T00:00:10.000Z",
+      completedAt: "2026-08-10T00:01:18.000Z"
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(processing))
+      .mockResolvedValueOnce(jsonResponse(settled));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Gi088EvaluationWorkbench />);
+
+    await screen.findByText(/正在自动重试/u);
+    expect(await screen.findByRole(
+      "button",
+      { name: "再次生成" },
+      { timeout: 3_500 }
+    ))
+      .toBeEnabled();
+    expect(screen.getByRole("button", { name: "安全终止当前任务" }))
+      .toBeEnabled();
+    expect(screen.queryByText("当前模型调用仍在执行，调用收口后才能终止任务。"))
+      .not.toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  }, 5_000);
+
+  it("安全终止后点击下一项直接回到可开始状态", async () => {
+    const abortedView = evaluationSession();
+    abortedView.tasks[0]!.status = "aborted";
+    abortedView.tasks[1]!.status = "ready";
+    abortedView.activeTask!.readOnly = true;
+    const readyView = evaluationSession({ active: false });
+    readyView.tasks[0]!.status = "aborted";
+    readyView.tasks[1]!.status = "ready";
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(abortedView))
+      .mockResolvedValueOnce(jsonResponse(readyView));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Gi088EvaluationWorkbench />);
+
+    fireEvent.click(await screen.findByRole("button", {
+      name: "A2 评测任务 2 待开始"
+    }));
+
+    expect(await screen.findByLabelText("你的第一段表达 U1")).toBeEnabled();
+    expect(fetchMock.mock.calls[1]![0]).toBe(
+      "/api/preview/gi088/session?runId=run-1"
+    );
+  });
+
   it("逐轮复核提交 questionPresence、observation fingerprint 与 operation ID", async () => {
     const value = evaluationSession({ questionReview: true });
     const fetchMock = vi.fn()
