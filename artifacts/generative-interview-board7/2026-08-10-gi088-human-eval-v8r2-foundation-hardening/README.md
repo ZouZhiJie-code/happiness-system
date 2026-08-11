@@ -11,9 +11,10 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 - 评测版本：`2026-08-10.gi088-human-eval-v8r2-foundation-hardening`
 - 不可变 commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
 - Execution fingerprint：`55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`
-- Preview deployment：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`
-- Preview URL：`https://xingfuxitong-8d1e2o7m1-zouzhijies-projects.vercel.app`
+- Preview deployment：`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
+- Preview URL：`https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app`
 - 运行时验收：虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`
+- 真人调用授权：修复分支有效环境为 `GI088_MODEL_CALL_SCOPE=batch`，并与当前 Execution fingerprint 精确匹配；零模型回读通过
 - 当前 run：`ce893fe6-e9e2-4445-9153-deca3b1571ce`
 - 批次状态：`running / 0 of 12 / gate=pending / high_only / high`
 - 运行配置：`deepseek-v4-pro / Thinking high / json_object / provider_default`

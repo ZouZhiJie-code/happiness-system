@@ -90,8 +90,8 @@
     "residueCount": 0
   },
   "preview": {
-    "deploymentId": "dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3",
-    "url": "https://xingfuxitong-8d1e2o7m1-zouzhijies-projects.vercel.app",
+    "deploymentId": "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc",
+    "url": "https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app",
     "target": "preview",
     "state": "READY",
     "deploymentSourceFixCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
@@ -100,6 +100,14 @@
       "syntheticInvalidAccountStatus": 401,
       "errorCode": "INVALID_CREDENTIALS",
       "deploymentErrorLogCount": 0
+    },
+    "humanModelCallAuthorization": {
+      "status": "verified_without_model_call",
+      "scope": "batch",
+      "authorizedExecutionFingerprint": "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e",
+      "branch": "codex/gi088-v8r2-schema-lock-fix",
+      "modelCallsUsedByVerification": 0,
+      "humanContentSubmissions": 0
     },
     "anonymousGetStatus": 302,
     "cacheControl": "no-store",

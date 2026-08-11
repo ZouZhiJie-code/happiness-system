@@ -7,8 +7,8 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 ## 部署身份
 
 - Commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
-- Deployment ID：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`
-- URL：`https://xingfuxitong-8d1e2o7m1-zouzhijies-projects.vercel.app`
+- Deployment ID：`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
+- URL：`https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app`
 - Target：`preview`
 - State：`READY`
 
@@ -31,6 +31,14 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 - 调用边界：错误发生在 Provider dispatch 前，受影响 run 保持 `0/12 / calls=0 / active=null`。
 - 修复：事务锁验证评测分区标识并使用分区限定表名；真实集成测试主动保持默认分区与评测分区不同。
 - 验收：真实 PostgreSQL `3/3`、线上认证 session 回读、零模型新 run 回读均通过；新 deployment error logs 为 `0`。
+
+## 真人批次模型调用授权
+
+- 受影响 deployment：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`
+- 现象：产品负责人点击【开始 Thinking high 评测】后返回 `GI088_MODEL_CALL_AUTHORIZATION_REQUIRED`。
+- 根因：当前 Execution fingerprint 已完成精确授权，分支仍继承 Preview 的安全默认值 `GI088_MODEL_CALL_SCOPE=disabled`。
+- 修复：仅对 `codex/gi088-v8r2-schema-lock-fix` Preview 分支设置 `GI088_MODEL_CALL_SCOPE=batch`，保持精确 Execution fingerprint 不变，并重新远程构建部署。
+- 验收：分支有效环境回读同时满足 `scope=batch`、当前 Execution fingerprint 与评测开关；校验过程的模型请求、真人内容提交和 Call Ledger 创建均为 `0`。
 
 ## 线上版本与指纹
 

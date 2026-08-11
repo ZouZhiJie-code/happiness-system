@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-11.gi088-current-issue-ledger-v11",
+  "ledgerVersion": "2026-08-11.gi088-current-issue-ledger-v12",
   "status": "v8r2_preview_runtime_verified_zero_of_twelve_initialized_waiting_human_validation",
   "currentQueueStage": "v8r2_final12_human_validation_pending",
   "sourceLedgers": [
@@ -39,9 +39,11 @@
     "unreviewedTrajectoryCount": 0,
     "behaviorCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
     "executionFingerprint": "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e",
-    "previewDeploymentId": "dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3",
+    "previewDeploymentId": "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc",
     "previewDeploymentStatus": "READY",
-    "previewUrl": "https://xingfuxitong-8d1e2o7m1-zouzhijies-projects.vercel.app",
+    "previewUrl": "https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app",
+    "modelCallScope": "batch",
+    "modelCallAuthorizationVerifiedWithoutCall": true,
     "deploymentSourceFixCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
     "runtimePackaging": "vercel_remote_linux_build_generated_both_prisma_clients",
     "artifactPath": "../2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md",
@@ -155,6 +157,7 @@
     }
   ],
   "currentQueue": [
+    "V8R2-AUTH-01",
     "V8R2-SCHEMA-LOCK-01",
     "V8R1-CTRL-01",
     "V8R2-TXN-01",
@@ -750,6 +753,20 @@
         "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-v8r2-preview-readback.md"
       ],
       "targetVersion": "v8r2_foundation_hardening"
+    },
+    {
+      "issueId": "V8R2-AUTH-01",
+      "title": "真人批次分支仍继承模型调用关闭默认值",
+      "productOwnerJudgment": "进入全新 0/12 批次并点击开始后，真人 Thinking high 评测需要按当前不可变指纹开放。",
+      "codexInitialAssessment": "执行指纹授权已正确，模型调用范围仍为 disabled，因此安全硬门在 Provider 创建前拦截请求。",
+      "confirmedRootCause": "修复分支缺少 GI088_MODEL_CALL_SCOPE=batch 覆盖，继承了通用 Preview 的 disabled 默认值。",
+      "hypotheses": [],
+      "priority": "P0",
+      "status": "resolved_and_effective_environment_verified_without_model_call",
+      "trace": [
+        "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-v8r2-preview-readback.md"
+      ],
+      "targetVersion": "v8r2_foundation_hardening"
     }
   ],
   "historicalExclusions": [
@@ -857,5 +874,15 @@
     "confirmedRootCause": "run 行锁的原生 SQL 缺少评测分区限定，运行连接在 PostgreSQL 默认分区查找评测表。",
     "resolution": "事务锁校验并限定评测 schema；真实集成测试移除 search_path 覆盖后仍通过。",
     "verification": "新 commit 的真实 PostgreSQL 事务 3/3、Preview 认证回读、全新 ordinal 3 零模型 0/12 初始化均通过；受影响 run 以 0 calls 行政退役。"
+  },
+  "humanModelCallAuthorization": {
+    "issueId": "V8R2-AUTH-01",
+    "priority": "P0",
+    "status": "resolved_and_verified_without_model_call",
+    "affectedDeploymentId": "dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3",
+    "symptom": "开始 Thinking high 评测后返回 GI088_MODEL_CALL_AUTHORIZATION_REQUIRED。",
+    "confirmedRootCause": "分支已授权当前 Execution fingerprint，但模型调用范围仍继承通用 Preview 的 disabled 默认值。",
+    "resolution": "仅对修复分支设置 batch scope，并重新部署同一不可变行为。",
+    "verification": "有效分支环境同时回读 batch scope、当前 Execution fingerprint 与评测开关；模型调用与真人内容提交均为 0。"
   }
 }
