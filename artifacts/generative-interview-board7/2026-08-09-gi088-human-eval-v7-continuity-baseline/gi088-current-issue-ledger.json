@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-11.gi088-current-issue-ledger-v12",
+  "ledgerVersion": "2026-08-11.gi088-current-issue-ledger-v13",
   "status": "v8r2_preview_runtime_verified_zero_of_twelve_initialized_waiting_human_validation",
   "currentQueueStage": "v8r2_final12_human_validation_pending",
   "sourceLedgers": [
@@ -18,8 +18,8 @@
   },
   "currentRunInitialization": {
     "evaluationVersion": "2026-08-10.gi088-human-eval-v8r2-foundation-hardening",
-    "runId": "ce893fe6-e9e2-4445-9153-deca3b1571ce",
-    "runOrdinal": 3,
+    "runId": "e1dccbfd-d808-4706-8ddf-be5e254f4d2d",
+    "runOrdinal": 4,
     "revision": 0,
     "status": "running",
     "completedTrajectoryCount": 0,
@@ -39,11 +39,11 @@
     "unreviewedTrajectoryCount": 0,
     "behaviorCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
     "executionFingerprint": "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e",
-    "previewDeploymentId": "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc",
+    "previewDeploymentId": "dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz",
     "previewDeploymentStatus": "READY",
-    "previewUrl": "https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app",
+    "previewUrl": "https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app",
     "modelCallScope": "batch",
-    "modelCallAuthorizationVerifiedWithoutCall": true,
+    "modelCallAuthorizationVerifiedEndToEnd": true,
     "deploymentSourceFixCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
     "runtimePackaging": "vercel_remote_linux_build_generated_both_prisma_clients",
     "artifactPath": "../2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md",
@@ -759,10 +759,10 @@
       "title": "真人批次分支仍继承模型调用关闭默认值",
       "productOwnerJudgment": "进入全新 0/12 批次并点击开始后，真人 Thinking high 评测需要按当前不可变指纹开放。",
       "codexInitialAssessment": "执行指纹授权已正确，模型调用范围仍为 disabled，因此安全硬门在 Provider 创建前拦截请求。",
-      "confirmedRootCause": "修复分支缺少 GI088_MODEL_CALL_SCOPE=batch 覆盖，继承了通用 Preview 的 disabled 默认值。",
+      "confirmedRootCause": "Vercel CLI deployment 缺少 Git branch identity，已保存的分支级 GI088_MODEL_CALL_SCOPE=batch 覆盖未进入运行时，服务继续读取通用 Preview 的 disabled 默认值。",
       "hypotheses": [],
       "priority": "P0",
-      "status": "resolved_and_effective_environment_verified_without_model_call",
+      "status": "resolved_and_real_end_to_end_verified",
       "trace": [
         "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-v8r2-preview-readback.md"
       ],
@@ -794,6 +794,11 @@
       "id": "V8R2_PRE_RELEASE_INITIALIZATION",
       "status": "administratively_retired_and_excluded",
       "reason": "旧预发布零内容 run 经只读核验后行政 early_stopped；其完成数 0/12、Provider 调用 0、真人提交 0、质量未评价，不进入正式当前证据。旧部署与 run 身份保持脱敏。"
+    },
+    {
+      "id": "V8R2_AUTHORIZATION_E2E_TECHNICAL_RUN",
+      "status": "administratively_retired_and_excluded",
+      "reason": "run ce893fe6-e9e2-4445-9153-deca3b1571ce 使用一条明确标记的虚构技术内容完成真人调用授权端到端验收；两次调用分别为程序保护与成功自动恢复。该 run 已 early_stopped，不进入真人质量证据。"
     }
   ],
   "versionTargets": {
@@ -878,11 +883,14 @@
   "humanModelCallAuthorization": {
     "issueId": "V8R2-AUTH-01",
     "priority": "P0",
-    "status": "resolved_and_verified_without_model_call",
-    "affectedDeploymentId": "dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3",
+    "status": "resolved_and_real_end_to_end_verified",
+    "affectedDeploymentIds": [
+      "dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3",
+      "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc"
+    ],
     "symptom": "开始 Thinking high 评测后返回 GI088_MODEL_CALL_AUTHORIZATION_REQUIRED。",
-    "confirmedRootCause": "分支已授权当前 Execution fingerprint，但模型调用范围仍继承通用 Preview 的 disabled 默认值。",
-    "resolution": "仅对修复分支设置 batch scope，并重新部署同一不可变行为。",
-    "verification": "有效分支环境同时回读 batch scope、当前 Execution fingerprint 与评测开关；模型调用与真人内容提交均为 0。"
+    "confirmedRootCause": "分支已授权当前 Execution fingerprint；CLI deployment 缺少 Git branch identity，因此分支级 batch scope 未进入运行时。",
+    "resolution": "最终 deployment 创建时显式注入 batch scope 与精确 Execution fingerprint，并继续使用远程 Linux 构建。",
+    "verification": "技术 run ce893fe6-e9e2-4445-9153-deca3b1571ce 真实提交一条虚构内容；第一次调用触发程序保护，第二次自动恢复成功，最终可见回答长度 72 且语义状态已提交。技术 run 已 early_stopped；新 run e1dccbfd-d808-4706-8ddf-be5e254f4d2d 为 ordinal 4 / 0/12 / calls=0；临时认证 session 残留 0。"
   }
 }

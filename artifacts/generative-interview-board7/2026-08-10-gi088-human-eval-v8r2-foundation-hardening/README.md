@@ -11,11 +11,11 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 - 评测版本：`2026-08-10.gi088-human-eval-v8r2-foundation-hardening`
 - 不可变 commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
 - Execution fingerprint：`55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`
-- Preview deployment：`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
-- Preview URL：`https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app`
+- Preview deployment：`dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz`
+- Preview URL：`https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app`
 - 运行时验收：虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`
-- 真人调用授权：修复分支有效环境为 `GI088_MODEL_CALL_SCOPE=batch`，并与当前 Execution fingerprint 精确匹配；零模型回读通过
-- 当前 run：`ce893fe6-e9e2-4445-9153-deca3b1571ce`
+- 真人调用授权：最终 deployment 显式使用 `GI088_MODEL_CALL_SCOPE=batch` 与当前 Execution fingerprint；真实端到端调用通过
+- 当前 run：`e1dccbfd-d808-4706-8ddf-be5e254f4d2d`
 - 批次状态：`running / 0 of 12 / gate=pending / high_only / high`
 - 运行配置：`deepseek-v4-pro / Thinking high / json_object / provider_default`
 - 初始化模型调用：`0`
@@ -32,6 +32,7 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 - 全量测试为 309 个文件通过、1 个文件跳过；2930 个测试通过、9 个测试跳过；`0 failed`。
 - Typecheck、两套 Prisma validate、Production／Preview build、行为清单和定向 ESLint 全部通过。
 - SSO 匿名回读为 `302 / no-store / noindex`，核心 `start / turn / retry` 路由均为 `120s`。
+- 真人调用授权使用 `1` 条虚构技术内容完成真实端到端验收：第一次输出触发程序保护，自动恢复后成功返回并提交语义状态；技术 run 的 `2` 次调用已随该 run 行政收口并排除真人质量证据，新的 ordinal `4` run 保持 `0/12 / calls=0`。
 
 ## 文件索引
 
@@ -49,6 +50,6 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 
 - 本目录只保存脱敏后的技术事实和发布边界。
 - 正式证据排除 owner 标识、用户原话、数据库连接身份、凭据、请求正文和隐藏推理。
-- 模型探针、真人内容提交和 Production 变更均为 `0`。
+- 模型探针、真人内容提交和 Production 变更均为 `0`；授权端到端验收单独使用 `1` 条虚构技术内容与 `2` 次模型调用，并保留脱敏落账事实。
 - 容量超过约 200 轮的优化继续明确排除。
 - 真人质量与发布裁决仍由产品负责人完成。

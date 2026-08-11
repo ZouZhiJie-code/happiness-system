@@ -90,8 +90,8 @@
     "residueCount": 0
   },
   "preview": {
-    "deploymentId": "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc",
-    "url": "https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app",
+    "deploymentId": "dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz",
+    "url": "https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app",
     "target": "preview",
     "state": "READY",
     "deploymentSourceFixCommit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
@@ -102,12 +102,25 @@
       "deploymentErrorLogCount": 0
     },
     "humanModelCallAuthorization": {
-      "status": "verified_without_model_call",
+      "status": "verified_end_to_end",
       "scope": "batch",
       "authorizedExecutionFingerprint": "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e",
       "branch": "codex/gi088-v8r2-schema-lock-fix",
-      "modelCallsUsedByVerification": 0,
-      "humanContentSubmissions": 0
+      "modelCallsUsedByVerification": 2,
+      "syntheticTechnicalContentSubmissions": 1,
+      "humanContentSubmissions": 0,
+      "technicalRun": {
+        "runId": "ce893fe6-e9e2-4445-9153-deca3b1571ce",
+        "runOrdinal": 3,
+        "finalStatus": "early_stopped",
+        "excludedFromHumanQualityEvidence": true,
+        "firstAttempt": "provider_succeeded_MODEL_OUTPUT_PROTECTED",
+        "automaticRecovery": "provider_succeeded_valid",
+        "finalTurnStatus": "complete_after_auto_recovery",
+        "visibleTextLength": 72,
+        "semanticStateCommitted": true
+      },
+      "temporaryAuthSessionResidue": 0
     },
     "anonymousGetStatus": 302,
     "cacheControl": "no-store",
@@ -129,8 +142,8 @@
     "verification": "synthetic_invalid_account_login_returned_401_INVALID_CREDENTIALS_and_deployment_error_logs_were_zero"
   },
   "run": {
-    "id": "ce893fe6-e9e2-4445-9153-deca3b1571ce",
-    "ordinal": 3,
+    "id": "e1dccbfd-d808-4706-8ddf-be5e254f4d2d",
+    "ordinal": 4,
     "revision": 0,
     "collectionStatus": "running",
     "completedTaskCount": 0,
@@ -162,6 +175,8 @@
   "safety": {
     "modelProbeCalls": 0,
     "humanContentSubmissions": 0,
+    "syntheticTechnicalContentSubmissions": 1,
+    "technicalAcceptanceModelCalls": 2,
     "productionChanged": false,
     "productionMode": "legacy + baseline",
     "hiddenReasoningPersisted": false,

@@ -25,9 +25,9 @@ v8r1 A1 已确认把事件内容里的负担表达误判为停止当前访谈，
 - Behavior Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
 - Deployment source fix commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
 - 主工作区同内容 commit：`483c613723693d576bd16da4fa4cf4b5795fe2e2`
-- Preview deployment：`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
-- Preview URL：`https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app`
-- 新 run：`ce893fe6-e9e2-4445-9153-deca3b1571ce`
+- Preview deployment：`dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz`
+- Preview URL：`https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app`
+- 新 run：`e1dccbfd-d808-4706-8ddf-be5e254f4d2d`
 
 ## 运行时打包事故闭环
 

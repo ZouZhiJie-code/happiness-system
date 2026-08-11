@@ -5,9 +5,9 @@
   "evidenceStatus": "verified_preview_zero_of_12",
   "source": {
     "commit": "e01c9ed5fa0334d8d717dbed2643791f1045e04d",
-    "deploymentId": "dpl_GG4qs4PFLXzCmHRZvopTmsajroUc",
-    "runId": "ce893fe6-e9e2-4445-9153-deca3b1571ce",
-    "runOrdinal": 3,
+    "deploymentId": "dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz",
+    "runId": "e1dccbfd-d808-4706-8ddf-be5e254f4d2d",
+    "runOrdinal": 4,
     "runRevision": 0
   },
   "finalSnapshot": {
@@ -80,7 +80,15 @@
     "issue": "high_only_empty_batch_counted_inactive_off_branch",
     "resolution": "metrics_projection_uses_active_branches_and_empty_trajectories_keep_zero_review_counts",
     "oldDeploymentAndRunDisposition": "administratively_retired_and_excluded_from_current_evidence",
-    "schemaLockIncident": "old_0_of_12_run_administratively_retired_after_unqualified_row_lock_failed_before_provider_dispatch"
+    "schemaLockIncident": "old_0_of_12_run_administratively_retired_after_unqualified_row_lock_failed_before_provider_dispatch",
+    "authorizationAcceptance": {
+      "technicalRunId": "ce893fe6-e9e2-4445-9153-deca3b1571ce",
+      "technicalRunFinalStatus": "early_stopped",
+      "syntheticTechnicalContentSubmissions": 1,
+      "modelCalls": 2,
+      "result": "first_attempt_protected_then_automatic_recovery_succeeded",
+      "excludedFromFinalSnapshot": true
+    }
   },
   "modelCallsUsedByReadback": 0,
   "humanContentSubmissions": 0

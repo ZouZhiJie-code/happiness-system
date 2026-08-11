@@ -7,8 +7,8 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 ## 部署身份
 
 - Commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
-- Deployment ID：`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
-- URL：`https://xingfuxitong-ov2vk47wq-zouzhijies-projects.vercel.app`
+- Deployment ID：`dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz`
+- URL：`https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app`
 - Target：`preview`
 - State：`READY`
 
@@ -32,13 +32,14 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 - 修复：事务锁验证评测分区标识并使用分区限定表名；真实集成测试主动保持默认分区与评测分区不同。
 - 验收：真实 PostgreSQL `3/3`、线上认证 session 回读、零模型新 run 回读均通过；新 deployment error logs 为 `0`。
 
-## 真人批次模型调用授权
+## 真人批次模型调用授权与真实端到端验收
 
-- 受影响 deployment：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`
+- 受影响 deployment：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`、`dpl_GG4qs4PFLXzCmHRZvopTmsajroUc`
 - 现象：产品负责人点击【开始 Thinking high 评测】后返回 `GI088_MODEL_CALL_AUTHORIZATION_REQUIRED`。
-- 根因：当前 Execution fingerprint 已完成精确授权，分支仍继承 Preview 的安全默认值 `GI088_MODEL_CALL_SCOPE=disabled`。
-- 修复：仅对 `codex/gi088-v8r2-schema-lock-fix` Preview 分支设置 `GI088_MODEL_CALL_SCOPE=batch`，保持精确 Execution fingerprint 不变，并重新远程构建部署。
-- 验收：分支有效环境回读同时满足 `scope=batch`、当前 Execution fingerprint 与评测开关；校验过程的模型请求、真人内容提交和 Call Ledger 创建均为 `0`。
+- 根因：当前 Execution fingerprint 已完成精确授权；Vercel CLI 创建的 deployment 缺少 Git branch identity，分支级 `batch` 覆盖未进入运行时，服务继续读取通用 Preview 的安全默认值 `disabled`。
+- 修复：最终 deployment 在创建时显式注入 `GI088_MODEL_CALL_SCOPE=batch` 与精确 Execution fingerprint，同时保留远程 Linux 构建。
+- 真实验收：技术 run `ce893fe6-e9e2-4445-9153-deca3b1571ce`（ordinal `3`）提交 `1` 条明确标记的虚构内容。第一次调用形成 `MODEL_OUTPUT_PROTECTED`，程序自动恢复一次后返回 `complete_after_auto_recovery`，可见回答长度 `72`，语义状态已提交；两次 Call Ledger 均为 `provider_succeeded / finalized`。
+- 清理：技术 run 已先终止 A1，再行政 `early_stopped`，明确排除真人质量证据；新的正式 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d`（ordinal `4`）回读为 `0/12 / calls=0`。临时认证 session 残留为 `0`，最终 deployment error logs 为 `0`。
 
 ## 线上版本与指纹
 
@@ -70,8 +71,8 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 
 ## 全新零模型批次
 
-- Run ID：`ce893fe6-e9e2-4445-9153-deca3b1571ce`
-- Run ordinal：`3`
+- Run ID：`e1dccbfd-d808-4706-8ddf-be5e254f4d2d`
+- Run ordinal：`4`
 - Revision：`0`
 - Collection status：`running`
 - Completed：`0/12`
@@ -84,9 +85,9 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 - `unreviewedTrajectoryCount`：`0`
 - 无有效分母的比率：`null`，页面显示 `N/A`
 
-初始化脚本验证了 Preview 数据库身份与预期身份；Provider 实例化、模型授权和 Call Ledger 创建均为 `0`。
+新正式 run 由已通过数据库身份门的 Preview 服务创建；该 run 的 Provider 实例化、模型授权和 Call Ledger 创建均为 `0`。
 
-线上认证 session 再次只读回读，run 保持 `ordinal=3 / revision=0 / running / 0/12 / gate=pending / tasks=12 / active=null / calls=0`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。临时只读验收 session 已立即删除，残留为 `0`。
+Preview 数据库再次只读回读，run 保持 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / tasks=12 / active=null / calls=0`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。
 
 ## 发布边界
 
@@ -95,7 +96,9 @@ Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Ve
 - Production migration／部署／数据写入：`0`
 - 模型探针：`0`
 - 真人内容提交：`0`
+- 虚构端到端技术内容提交：`1`
+- 端到端技术验收模型调用：`2`，对应一次程序保护与一次成功自动恢复
 - 隐藏推理持久化：`0`
 - 容量超过约 200 轮的优化：`excluded`
 
-预发布指标缺陷、运行时打包事故和事务分区事故对应的旧 run／deployment 均已退出当前入口。本页分别保留事故历史与最终当前证据。
+预发布指标缺陷、运行时打包事故、事务分区事故和授权配置事故对应的旧 run／deployment 均已退出当前入口。本页分别保留事故历史、真实端到端验收与最终当前证据。

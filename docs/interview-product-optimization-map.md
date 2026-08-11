@@ -102,7 +102,7 @@ flowchart TD
 ### 待执行与待校准
 
 - 板块 6 需要按 GI-074 建立复标后的 `24＋40`、`28＋12`、Judge 说明、人工评分卡、两模式 `4＋2` 脚本和正式准入报告。
-- 板块 7 已完成 GI-087 的基础 Prompt、Interview Skill、共同任务结构、状态合并、六题运行器和真人工作台。GI-088 v1 前 8 项已经完成产品评价、Codex 九维、阻断、血缘和 Bad Case 复盘；v2～v7r4 形成诊断、恢复、阶段、单一焦点、连续性、平台和程序状态证据。v8 真人验收已形成产品通过证据；v8r1 使用官方 `deepseek-v4-pro`，部署时执行指纹为 `40da54f2…bf8f82`，随后 A1 真实运行确认控制意图误停并失去最终准入资格。v8r2 最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；Preview 已 `READY`，全新 High-only run `ce893fe6-e9e2-4445-9153-deca3b1571ce` 为 `running 0/12 / gate=pending / high / calls=0`。旧预发布 v8r2 run 已行政停止并排除正式当前态。正式评测资产、日志映射和 Production 接入继续等待板块 6 真人质量门；板块 8 继续等待。
+- 板块 7 已完成 GI-087 的基础 Prompt、Interview Skill、共同任务结构、状态合并、六题运行器和真人工作台。GI-088 v1 前 8 项已经完成产品评价、Codex 九维、阻断、血缘和 Bad Case 复盘；v2～v7r4 形成诊断、恢复、阶段、单一焦点、连续性、平台和程序状态证据。v8 真人验收已形成产品通过证据；v8r1 使用官方 `deepseek-v4-pro`，部署时执行指纹为 `40da54f2…bf8f82`，随后 A1 真实运行确认控制意图误停并失去最终准入资格。v8r2 最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；Preview 已 `READY`，全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running 0/12 / gate=pending / high / calls=0`。旧预发布 v8r2 run 已行政停止并排除正式当前态。正式评测资产、日志映射和 Production 接入继续等待板块 6 真人质量门；板块 8 继续等待。
 
 ### 历史候选与证据
 

@@ -27,7 +27,7 @@
 - v7r3 已把来源合并和明确停止交给程序维护。v7r4 的两条官方 `deepseek-v4-pro` 真人轨迹已封存：共 `12` 次用户提交、`13` 次调用，首次产生可见正文 `11/12`、空内容 `0`、自动恢复 `1`、程序保护 `2`；产品负责人裁决整体 `No-Go`，同时确认 V4 Pro 继续使用；
 - v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人判断 `通过 / direct_use / target triggered`；`10/10` 次首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`；
 - v8r1 已将简短礼貌回应与明确停止组合收入零调用暂停，真实 U10 回放通过。最终 `12` 项 Thinking high 候选完成 `160` 项相关测试、构建、Preview 部署与创建时 `0/12` 空白批次回读；初始化模型调用 `0`。产品负责人随后完成 A1 一条轨迹，确认事件内容中的沟通负担被程序误判为停止当前访谈，形成单例阻断。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；
-- v8r2 已统一收口高影响控制判断、Provider 结果落账、陈旧页面写入、人工复核证据、run 生命周期、工作台恢复、八项 Preview 开门差额和最终初始化幂等。不可变行为 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d`、Execution fingerprint `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e` 与 `READY` Preview 已形成；全新 High-only run `ce893fe6-e9e2-4445-9153-deca3b1571ce` 为 `running 0/12 / gate=pending / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决；约 `200` 轮以上的容量优化继续排除；
+- v8r2 已统一收口高影响控制判断、Provider 结果落账、陈旧页面写入、人工复核证据、run 生命周期、工作台恢复、八项 Preview 开门差额和最终初始化幂等。不可变行为 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d`、Execution fingerprint `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e` 与 `READY` Preview 已形成；全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running 0/12 / gate=pending / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决；约 `200` 轮以上的容量优化继续排除；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
 - 板块 7 正式接入继续等待板块 6；
 - 板块 8 继续等待；
