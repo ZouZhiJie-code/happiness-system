@@ -4,7 +4,7 @@
 
 原事故类别与语义近邻均由确定性控制决策完成，回放过程的 Provider factory、授权函数和 Provider `complete` 调用均为 `0`。正式证据只保留脱敏分类，真人原话留在私有运行证据。
 
-最终验证 commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`。
+最终验证 commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`。
 
 ## 控制矩阵
 
@@ -43,7 +43,7 @@
 - `tests/unit/gi088-foundation-service.test.ts`
 - `tests/unit/gi088-question-decision.test.ts`
 - 命令：`npx vitest run tests/unit/interview-control-decision-v2.test.ts tests/unit/gi088-deterministic-state.test.ts tests/unit/gi088-foundation-service.test.ts tests/unit/gi088-question-decision.test.ts`
-- 结果：全部通过；同时包含在全量 `2929 passed / 0 failed` 静态门中。
+- 结果：全部通过；同时包含在全量 `2930 passed / 0 failed` 静态门中。
 
 ## 隐私与调用边界
 

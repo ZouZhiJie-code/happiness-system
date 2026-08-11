@@ -80,7 +80,7 @@ v8 A1 完成 `10` 次用户提交后由产品负责人确认通过，并以 `1/4
 
 ## 6. 历史停止点
 
-v8r1 已停在 A1 单例阻断。该 run 保持只读，后续任务不再承担当前准入证据。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本、全绿静态门和 Preview 部署；最终 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`，Preview 已 `READY`。全新 High-only run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已零调用初始化为 `running 0/12 / gate=pending / high`。当前暂停等待 12 项真人验收；候选质量与发布尚未裁决，约 `200` 轮以上容量优化继续排除，Production 继续保持 `legacy + baseline`。
+v8r1 已停在 A1 单例阻断。该 run 保持只读，后续任务不再承担当前准入证据。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本、全绿静态门和 Preview 部署；最终 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`，Preview 已 `READY`。全新 High-only run `ce893fe6-e9e2-4445-9153-deca3b1571ce` 已零调用初始化为 `running 0/12 / gate=pending / high`。当前暂停等待 12 项真人验收；候选质量与发布尚未裁决，约 `200` 轮以上容量优化继续排除，Production 继续保持 `legacy + baseline`。
 
 ## 7. Preview 交付
 

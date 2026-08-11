@@ -6,7 +6,7 @@
 
 当前讨论位置：`板块 6／7B｜GI-088 v8r2 全新 0/12 Thinking high 真人验收`
 
-当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 正在建立 GI-074 正式评测资产。GI-081～GI-088 v8r1 分别保留诊断、恢复、平台、状态和真人事故证据；v8r1 A1 控制误停单例阻断及原 run 只读保留。v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、P0／P1、八项 Preview 开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；Preview 已 READY，run b816d468…e78cd 为 running 0/12、gate pending、high_only/high、calls 0。当前暂停等待 12 项真人验收；质量、板块 7 正式接入、板块 8 与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 正在建立 GI-074 正式评测资产。GI-081～GI-088 v8r1 分别保留诊断、恢复、平台、状态和真人事故证据；v8r1 A1 控制误停单例阻断及原 run 只读保留。v8r2 commit e01c9ed5…e04d、FP 55c0c9b0…b34e、P0／P1、八项 Preview 开门差额、最终初始化幂等、不可变版本、全绿静态门与 Preview 运行时 schema 锁修复已收口；Preview 已 READY，run ce893fe6…71ce 为 running 0/12、gate pending、high_only/high、calls 0。当前暂停等待 12 项真人验收；质量、板块 7 正式接入、板块 8 与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
 
 历史阶段记录（`2026-08-04`及更早）：`原有 Batch B 讨论、版本基线、评测结果和候选交接继续保留作为决策过程与历史证据；当前状态与依赖以生成式专项 Map 为准，当前评测与开放问题以板块 6 专项为准，板块 5 专项作为冻结输入，评测交接以 04x-07 为准`
 

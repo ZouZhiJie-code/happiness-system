@@ -19,9 +19,9 @@ Memory Store 可以证明业务合同，真实 PostgreSQL 事务才能验证唯�
 
 | 用例 | 验证内容 | 结果 | 耗时 |
 | --- | --- | --- | --- |
-| 1 | 并发 run、调用领取、恢复血缘、幂等证据与不可变导出 | pass | 42.216s |
-| 2 | 零 dispatch 的 reserved 回收调用可作为连续恢复父调用 | pass | 12.480s |
-| 3 | 用户主动人工恢复可承接 `interrupted_unknown_dispatch` 调用 | pass | 12.704s |
+| 1 | 并发 run、调用领取、恢复血缘、幂等证据与不可变导出 | pass | 48.170s |
+| 2 | 零 dispatch 的 reserved 回收调用可作为连续恢复父调用 | pass | 12.659s |
+| 3 | 用户主动人工恢复可承接 `interrupted_unknown_dispatch` 调用 | pass | 14.273s |
 
 汇总：`3/3 passed`；`0 failed`；清理后 residue `0`。
 
@@ -42,6 +42,7 @@ Memory Store 可以证明业务合同，真实 PostgreSQL 事务才能验证唯�
 - 环境限定：`VERCEL_ENV=preview`。
 - 测试 schema 使用强制的隔离命名规则和显式身份确认。
 - 测试 URL 与共享评测库 URL 分离。
+- 测试连接主动移除 `search_path` 覆盖，使 `current_schema()` 保持默认分区；事务锁仍显式访问隔离评测分区。
 - 正式证据排除 Host、database、schema 与连接凭据。
 - Production 数据写入：`0`。
 

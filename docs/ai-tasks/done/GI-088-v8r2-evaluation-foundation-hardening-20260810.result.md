@@ -20,14 +20,14 @@ v8r1 A1 已确认把事件内容里的负担表达误判为停止当前访谈，
 
 ## 不可变版本与部署
 
-- 行为提交：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
-- Execution fingerprint：`96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`
+- 行为提交：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
+- Execution fingerprint：`55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`
 - Behavior Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
-- Deployment source fix commit：`0a993afad1248e67a2863456d2c35b774bb2130f`
+- Deployment source fix commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`
 - 主工作区同内容 commit：`483c613723693d576bd16da4fa4cf4b5795fe2e2`
-- Preview deployment：`dpl_YRUQitffCQH264xiksHpLMviQZLy`
-- Preview URL：`https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`
-- 新 run：`b816d468-e3c3-4459-a822-04f95b1e78cd`
+- Preview deployment：`dpl_5wqmDbg7ZMyf8zmaRgvXSh5N1Aa3`
+- Preview URL：`https://xingfuxitong-8d1e2o7m1-zouzhijies-projects.vercel.app`
+- 新 run：`ce893fe6-e9e2-4445-9153-deca3b1571ce`
 
 ## 运行时打包事故闭环
 

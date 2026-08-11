@@ -4,7 +4,7 @@
 
 历史 run 按存储 state 与对应 evaluationVersion 的不可变元数据解释。当前 v8r2 指纹只限制写入与模型调用，历史 session 和只读 export 保持可用。兼容迁移前后的 v8r1 业务 state SHA-256 完全一致。
 
-最终验证 commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`。
+最终验证 commit：`e01c9ed5fa0334d8d717dbed2643791f1045e04d`。
 
 ## v8r1 真实历史 run 只读回读
 
