@@ -104,7 +104,7 @@ describe("GI-088 v6 single answer focus", () => {
     expect(issues).toContain("ASK_NEXT_INQUIRY_REQUIRED");
   });
 
-  it("非 ask 动作继续保持零问题合同", () => {
+  it("非 ask 动作的问号只进入观察记录，不触发技术拦截", () => {
     const output = askOutput("这种卡住更接近哪一种感受？");
     output.semantic.action = "acknowledge";
     output.semantic.nextInquiry = null;
@@ -114,7 +114,21 @@ describe("GI-088 v6 single answer focus", () => {
       output,
       issues: validateBoard7bWorkingTaskV1Output({ input: turnInput, output })
     });
-    expect(issues).toContain("NON_ASK_QUESTION_COUNT_INVALID:1");
+    expect(issues).not.toContain("NON_ASK_QUESTION_COUNT_INVALID:1");
+    expect(createGi088QuestionObservation(output)).toEqual({
+      questionMarkCount: 1,
+      reviewCandidate: "none",
+      review: null
+    });
+  });
+
+  it("非 ask 且无问号时不创建多余观察记录", () => {
+    const output = askOutput("先把这份犹豫留在这里。");
+    output.semantic.action = "acknowledge";
+    output.semantic.nextInquiry = null;
+    output.semantic.answerOpportunity = null;
+    output.visible.understanding = null;
+    expect(createGi088QuestionObservation(output)).toBeNull();
   });
 
   it("v6 Prompt 使用单一回答焦点并退出严格单问号文案", () => {

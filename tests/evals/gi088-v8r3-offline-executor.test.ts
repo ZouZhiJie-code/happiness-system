@@ -11,6 +11,7 @@ import {
   createGi088V8r3ArkProviderIdentity,
   createGi088V8r3CandidateCompletionParams,
   createGi088V8r3CandidateRequestHashPayload,
+  createGi088V8r3OfflineTurnInput,
   createGi088V8r3HistoricalBaselineEvidenceFingerprint,
   createGi088V8r3HistoricalBaselineModelIdentity,
   createGi088V8r3HistoricalBaselineRecordFingerprint,
@@ -30,14 +31,17 @@ import {
   parseGi088V8r3JudgePrescreenReport,
   parseGi088V8r3JudgeGoldenFile,
   runGi088V8r3DeterministicRegression,
+  validateGi088V8r3CandidateOutput,
   type Gi088V8r3JudgeGoldenFile
 } from "../../evals/event-centered-generative/gi088-v8r3-skill-evaluation/offline-executor";
 import { GI088_V8R3_DETERMINISTIC_REGRESSION_CASES } from "../../evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures";
 import { GI088_V8R3_TEST_HIDDEN_ADMISSION_CASES } from "./fixtures/gi088-v8r3-test-hidden-fixtures";
 import { createGi088V8r3DatasetFingerprint } from "../../evals/event-centered-generative/gi088-v8r3-skill-evaluation/runner";
-import type {
+import {
+  AIProviderError,
+  type AICompletionResult,
   AICompletionParams,
-  AIProvider
+  type AIProvider
 } from "@/server/services/ai/ai-provider";
 import { createGi088FingerprintBundle } from "@/server/services/evaluation/gi088/candidate";
 
@@ -67,7 +71,76 @@ function technicalFailureProvider(seen: AICompletionParams[] = []): AIProvider {
     name: "openai",
     async complete(params) {
       seen.push(params);
-      throw new Error("TEST_PROVIDER_FAILURE");
+      throw new AIProviderError("TEST_TIMEOUT", "TIMEOUT");
+    }
+  };
+}
+
+function validCandidateResult(params: AICompletionParams): AICompletionResult {
+  const modelInput = JSON.parse(params.messages.at(-1)!.content) as {
+    latestUserMessageId: string;
+    semanticContext: {
+      workingTask: { ref: string; summary: string };
+    };
+  };
+  const stopRequested = params.messages.some((message) =>
+    message.content.includes('"finalAction":"stop_follow_up"')
+  );
+  const action = stopRequested ? "pause" : "ask";
+  return {
+    content: JSON.stringify({
+      semantic: {
+        stage: "explore_clarify",
+        action,
+        workingTask: {
+          continuity: "continue",
+          targetRef: modelInput.semanticContext.workingTask.ref,
+          summary: modelInput.semanticContext.workingTask.summary,
+          evidenceRefs: [modelInput.latestUserMessageId]
+        },
+        understandingChange: { kind: "none" },
+        invalidatedRefs: [],
+        returnableTaskDelta: { preserveRefs: [], add: [] },
+        nextInquiry: stopRequested
+          ? null
+          : {
+              answerTarget: "补充一个推进当前共同任务的具体线索",
+              taskEffect: "用新线索更新当前共同任务",
+              evidenceRefs: [modelInput.latestUserMessageId]
+            },
+        answerOpportunity: stopRequested ? null : "new",
+        burdenSignalChange: { kind: "unchanged" },
+        pauseReason: stopRequested ? "用户明确要求停止当前访谈" : null
+      },
+      visible: {
+        understanding: "我会继续围绕你刚才确认的重点。",
+        response: stopRequested
+          ? "好，我们先停在这里。"
+          : "你愿意补充一个最能帮助我们弄清当前问题的具体线索吗？"
+      }
+    }),
+    latencyMs: 321,
+    provider: "openai",
+    tokenUsage: { promptTokens: 10, completionTokens: 3, totalTokens: 13 },
+    diagnostics: {
+      finishReason: "stop",
+      reasoningPresent: true,
+      reasoningLength: 123,
+      reasoningTokens: 7,
+      latencyMs: 321,
+      tokenUsage: { promptTokens: 10, completionTokens: 3, totalTokens: 13 },
+      upstreamRequestId: "raw-provider-request-id",
+      httpStatus: 200,
+      responseModel: "test-model",
+      choiceCount: 1,
+      contentType: "object",
+      contentLength: 2,
+      reasoningType: "string",
+      headersLatencyMs: 20,
+      bodyLatencyMs: 301,
+      totalLatencyMs: 321,
+      timeoutStage: null,
+      abortSource: null
     }
   };
 }
@@ -77,72 +150,7 @@ function validCandidateProvider(seen: AICompletionParams[] = []): AIProvider {
     name: "openai",
     async complete(params) {
       seen.push(params);
-      const modelInput = JSON.parse(params.messages.at(-1)!.content) as {
-        latestUserMessageId: string;
-        semanticContext: {
-          workingTask: { ref: string; summary: string };
-        };
-      };
-      const stopRequested = params.messages.some((message) =>
-        message.content.includes('"finalAction":"stop_follow_up"')
-      );
-      const action = stopRequested ? "pause" : "ask";
-      return {
-        content: JSON.stringify({
-          semantic: {
-            stage: "explore_clarify",
-            action,
-            workingTask: {
-              continuity: "continue",
-              targetRef: modelInput.semanticContext.workingTask.ref,
-              summary: modelInput.semanticContext.workingTask.summary,
-              evidenceRefs: [modelInput.latestUserMessageId]
-            },
-            understandingChange: { kind: "none" },
-            invalidatedRefs: [],
-            returnableTaskDelta: { preserveRefs: [], add: [] },
-            nextInquiry: stopRequested
-              ? null
-              : {
-                  answerTarget: "补充一个推进当前共同任务的具体线索",
-                  taskEffect: "用新线索更新当前共同任务",
-                  evidenceRefs: [modelInput.latestUserMessageId]
-                },
-            answerOpportunity: stopRequested ? null : "new",
-            burdenSignalChange: { kind: "unchanged" },
-            pauseReason: stopRequested ? "用户明确要求停止当前访谈" : null
-          },
-          visible: {
-            understanding: "我会继续围绕你刚才确认的重点。",
-            response: stopRequested
-              ? "好，我们先停在这里。"
-              : "你愿意补充一个最能帮助我们弄清当前问题的具体线索吗？"
-          }
-        }),
-        latencyMs: 321,
-        provider: "openai",
-        tokenUsage: { promptTokens: 10, completionTokens: 3, totalTokens: 13 },
-        diagnostics: {
-          finishReason: "stop",
-          reasoningPresent: true,
-          reasoningLength: 123,
-          reasoningTokens: 7,
-          latencyMs: 321,
-          tokenUsage: { promptTokens: 10, completionTokens: 3, totalTokens: 13 },
-          upstreamRequestId: "raw-provider-request-id",
-          httpStatus: 200,
-          responseModel: "test-model",
-          choiceCount: 1,
-          contentType: "object",
-          contentLength: 2,
-          reasoningType: "string",
-          headersLatencyMs: 20,
-          bodyLatencyMs: 301,
-          totalLatencyMs: 321,
-          timeoutStage: null,
-          abortSource: null
-        }
-      };
+      return validCandidateResult(params);
     }
   };
 }
@@ -312,14 +320,30 @@ describe("GI-088 v8r3 formal offline executor", () => {
       reasoningEffort: "high"
     });
     expect(params.maxTokens).toBeUndefined();
-    expect(
+    const initialHashPayload = createGi088V8r3CandidateRequestHashPayload({
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!,
+      checkpointIndex: 0,
+      attempt: 1,
+      kind: "initial"
+    });
+    expect(initialHashPayload.transport).toBe("openai_compatible_rest");
+    expect(initialHashPayload).toMatchObject({
+      recoveryTrigger: null,
+      recoveryInstructionVersion: null
+    });
+    const schemaRecoveryHashPayload =
       createGi088V8r3CandidateRequestHashPayload({
         evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!,
         checkpointIndex: 0,
-        attempt: 1,
-        kind: "initial"
-      }).transport
-    ).toBe("openai_compatible_rest");
+        attempt: 2,
+        kind: "automatic_recovery",
+        recoveryTrigger: "OUTPUT_SCHEMA_INVALID"
+      });
+    expect(schemaRecoveryHashPayload).toMatchObject({
+      recoveryTrigger: "OUTPUT_SCHEMA_INVALID",
+      recoveryInstructionVersion:
+        "2026-08-11.gi088-output-schema-correction-v1"
+    });
   });
 
   it("executes every trajectory checkpoint sequentially and caps technical recovery globally", async () => {
@@ -349,6 +373,9 @@ describe("GI-088 v8r3 formal offline executor", () => {
     ).toBe(true);
     expect(report.operationalLedger.eligibleSubmissionCount).toBe(96);
     expect(report.operationalLedger.automaticRecoveryAttemptCount).toBe(2);
+    expect(seen[1]?.messages.some((message) =>
+      message.role === "system" && message.content.includes("共享时限")
+    )).toBe(true);
     expect(evaluateGi088V8r3CandidateOperationalGates(report).passed).toBe(false);
     await expect(
       executeGi088V8r3CandidateEvaluation({
@@ -356,6 +383,144 @@ describe("GI-088 v8r3 formal offline executor", () => {
         automaticRecoveryMaximum: 3
       })
     ).rejects.toThrow(/AUTOMATIC_RECOVERY_MAXIMUM_INVALID/u);
+  });
+
+  it("uses Foundation parity parsing and trigger-specific schema/semantic corrections", async () => {
+    const seen: AICompletionParams[] = [];
+    let callIndex = 0;
+    const provider: AIProvider = {
+      name: "openai",
+      async complete(params) {
+        seen.push(params);
+        const index = callIndex;
+        callIndex += 1;
+        if (index === 0) {
+          return {
+            ...validCandidateResult(params),
+            content: '{"semantic":{"action":42}}'
+          };
+        }
+        if (index === 2) {
+          const result = validCandidateResult(params);
+          const output = JSON.parse(result.content) as {
+            semantic: { nextInquiry: unknown };
+          };
+          output.semantic.nextInquiry = null;
+          return { ...result, content: JSON.stringify(output) };
+        }
+        return validCandidateResult(params);
+      }
+    };
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput(provider),
+      automaticRecoveryMaximum: 2
+    });
+    const recoveredCheckpoints = report.records.flatMap((record) =>
+      record.checkpoints.filter(
+        (checkpoint) => checkpoint.automaticRecoveryCount === 1
+      )
+    );
+
+    expect(report.budget.automaticRecoveryCalls).toBe(2);
+    expect(recoveredCheckpoints).toHaveLength(2);
+    expect(recoveredCheckpoints[0]?.calls[0]?.validationIssues).toContain(
+      "OUTPUT_SCHEMA_INVALID:semantic.action:invalid_type"
+    );
+    expect(recoveredCheckpoints[0]?.calls[0]?.validationIssues).toSatisfy(
+      (issues: string[]) =>
+        issues.length <= 12 &&
+        issues.every((issue) =>
+          /^OUTPUT_SCHEMA_INVALID:(?:\$|[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*){0,11}):[a-z_]+$/u.test(
+            issue
+          )
+        )
+    );
+    expect(recoveredCheckpoints[1]?.calls[0]?.validationIssues).toContain(
+      "ASK_NEXT_INQUIRY_REQUIRED"
+    );
+    expect(recoveredCheckpoints.every(
+      (checkpoint) => checkpoint.status === "valid"
+    )).toBe(true);
+    expect(seen[1]?.messages.some((message) =>
+      message.role === "system" && message.content.includes("结构化 JSON 合同")
+    )).toBe(true);
+    expect(seen[3]?.messages.some((message) =>
+      message.role === "system" && message.content.includes("当前语义合同")
+    )).toBe(true);
+  });
+
+  it("keeps ASK/NON_ASK question counts observational and reserves state correction", () => {
+    const evaluationCase = GI088_V8R3_DEVELOPMENT_CASES[0]!;
+    const params = createGi088V8r3CandidateCompletionParams({
+      evaluationCase,
+      checkpointIndex: 0,
+      recovery: false
+    });
+    const turnInput = createGi088V8r3OfflineTurnInput(evaluationCase, 0);
+    const askResult = validCandidateResult(params);
+    const askOutput = JSON.parse(askResult.content) as {
+      semantic: {
+        action: string;
+        understandingChange: unknown;
+        nextInquiry: unknown;
+        answerOpportunity: unknown;
+        pauseReason: unknown;
+      };
+      visible: { understanding: string | null; response: string };
+    };
+    askOutput.visible.response = "这份卡住是什么感受？更接近害怕做错吗？";
+    expect(validateGi088V8r3CandidateOutput({
+      content: JSON.stringify(askOutput),
+      turnInput,
+      controlDecisionFinalAction: "none"
+    })).toMatchObject({ validationIssues: [], recoveryTrigger: null });
+
+    askOutput.semantic.action = "acknowledge";
+    askOutput.semantic.nextInquiry = null;
+    askOutput.semantic.answerOpportunity = null;
+    askOutput.semantic.pauseReason = null;
+    askOutput.visible.understanding = null;
+    askOutput.visible.response = "先把当前线索放在这里，可以吗？";
+    expect(validateGi088V8r3CandidateOutput({
+      content: JSON.stringify(askOutput),
+      turnInput,
+      controlDecisionFinalAction: "none"
+    })).toMatchObject({ validationIssues: [], recoveryTrigger: null });
+
+    turnInput.semanticState.understandings = Array.from(
+      { length: 100 },
+      (_, index) => ({
+        stateId: `state-existing-${index}`,
+        summary: `已有认识 ${index}`,
+        evidenceRefs: [turnInput.latestUserMessageId]
+      })
+    );
+    askOutput.semantic.action = "synthesize";
+    askOutput.semantic.understandingChange = {
+      kind: "add",
+      summary: "新增认识会使确定性状态超过合同容量",
+      evidenceRefs: [turnInput.latestUserMessageId]
+    };
+    askOutput.visible.response = "先保留这条新形成的认识。";
+    expect(validateGi088V8r3CandidateOutput({
+      content: JSON.stringify(askOutput),
+      turnInput,
+      controlDecisionFinalAction: "none"
+    })).toEqual({
+      output: null,
+      validationIssues: ["STATE_TRANSITION_INVALID"],
+      recoveryTrigger: "STATE_TRANSITION_INVALID"
+    });
+
+    const stateCorrection = createGi088V8r3CandidateCompletionParams({
+      evaluationCase,
+      checkpointIndex: 0,
+      recovery: true,
+      recoveryTrigger: "STATE_TRANSITION_INVALID"
+    });
+    expect(stateCorrection.messages.some((message) =>
+      message.role === "system" && message.content.includes("语义状态越界")
+    )).toBe(true);
   });
 
   it("records only sanitized candidate evidence and attested Ark identity", async () => {

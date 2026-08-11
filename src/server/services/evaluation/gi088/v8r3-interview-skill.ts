@@ -57,6 +57,16 @@ export const GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT = `# Daily Light Thinking Inter
 - pause：承接用户明确停止当前访谈的边界，保留已形成内容，保持零问题。
 - 问题价值有限时，自然整理现有认识，避免用仪式性邀请替代有效推进。
 
+## 完整输出合同
+
+- 只输出一个 JSON 对象。逐项保留合同当前分支定义的全部 key；可空字段缺值时写 \`null\`，列表缺值时写 \`[]\`，不能省略 key、输出 \`undefined\`、自造占位枚举或在 JSON 前后添加文字。
+- \`semantic\` 每轮完整包含 \`stage\`、\`action\`、\`workingTask\`、\`understandingChange\`、\`invalidatedRefs\`、\`returnableTaskDelta\`、\`nextInquiry\`、\`answerOpportunity\`、\`burdenSignalChange\`、\`pauseReason\`；\`visible\` 完整包含 \`understanding\` 和 \`response\`。嵌套对象与数组项目也要包含当前分支定义的全部 key。
+- \`understandingChange\` 只使用三种完整形状：无变化写 \`{ "kind": "none" }\`；新增认识写 \`{ "kind": "add", "summary": "...", "evidenceRefs": [...] }\`；修订认识写 \`{ "kind": "revise", "targetRef": "...", "summary": "...", "evidenceRefs": [...] }\`。\`burdenSignalChange\` 只使用 \`{ "kind": "unchanged" }\`、\`{ "kind": "set", "summary": "...", "evidenceRefs": [...] }\` 或 \`{ "kind": "clear" }\`。
+- 继续当前共同任务时，\`workingTask.continuity\` 写 \`continue\`，\`targetRef\` 必须逐字复制当前 \`semanticContext.workingTask.ref\`。继续或返回的目标引用都不能同时出现在 \`invalidatedRefs\` 或 \`returnableTaskDelta.preserveRefs\`；只有真正离开当前任务时，才把旧任务恰好处置一次。
+- 从前两阶段进入 \`deepen_integrate\` 时，先确认状态已有认识；状态尚无认识时，本轮必须从最新用户消息形成 \`understandingChange\` 的 \`add\` 分支，并把 \`latestUserMessageId\` 放进其 \`evidenceRefs\`。形成不了认识时保持原阶段并选择零问题动作。
+- 在 \`deepen_integrate\` 使用 \`ask\` 时，\`visible.understanding\` 要准确承接最新用户表达，\`nextInquiry.evidenceRefs\` 必须包含 \`latestUserMessageId\`，再围绕同一个未解部分提问。
+- \`acknowledge\`、\`synthesize\` 和 \`pause\` 的 \`nextInquiry\`、\`answerOpportunity\` 都写 \`null\`；两段可见文本都不得出现 \`?\` 或 \`？\`，包括反问和仪式性邀请。
+
 ## 三个微案例
 
 ### 1. 已回答内容被换一种说法重问
@@ -85,7 +95,7 @@ export const GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT =
   `${GI088_V8R3_INTERVIEW_SKILL_FRONTMATTER}\n\n${GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT}\n`;
 
 export const GI088_V8R3_INTERVIEW_SKILL_SHA256 =
-  "477692b5f1bbffc0ee940e3201d5f67fa70ab2efec5c7162d5a63799260df842" as const;
+  "a1b13e4f451a40850bd1122f5b873cce3eb9496c62ef6d42c4b8b28d0ab20494" as const;
 
 export function createGi088V8r3InterviewSkillSha256(
   source = GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT

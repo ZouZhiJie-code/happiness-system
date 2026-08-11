@@ -577,10 +577,17 @@ describe("GI-088 Preview evaluation service", () => {
     expect(baseAssets.turnInputContract).toBe(originals[3].trim());
     expect(assets.basePrompt).toContain(baseAssets.basePrompt);
     expect(assets.basePrompt).toContain(GI088_STAGE_TRANSITION_APPENDICES.basePrompt);
-    expect(assets.interviewSkillSource).toBe(
-      GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT
+    expect(assets.interviewSkillSource).toContain(
+      GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT.trim()
     );
-    expect(assets.interviewSkill).toBe(GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT);
+    expect(assets.interviewSkill).toContain(
+      GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT.trim()
+    );
+    expect(assets.interviewSkill).toContain(
+      "## 阶段 2 用完后的自然转场"
+    );
+    expect(assets.interviewSkill).toContain("## 单一回答焦点的生成检查");
+    expect(assets.interviewSkill).toContain("## 本轮语义变化");
     expect(assets.interviewSkillSource).not.toContain(
       baseAssets.interviewSkillSource
     );

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const GI088_V8R3_EVALUATION_DATASET_VERSION =
   "2026-08-11.gi088-v8r3-skill-evaluation-v2" as const;
 export const GI088_V8R3_RUNNER_VERSION =
-  "2026-08-11.gi088-v8r3-skill-runner-v4" as const;
+  "2026-08-11.gi088-v8r3-skill-runner-v5" as const;
 
 export const GI088_V8R3_EXPECTED_CASE_COUNTS = {
   deterministicRegression: 24,

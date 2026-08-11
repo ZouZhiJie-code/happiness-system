@@ -39,7 +39,7 @@ export const GI088_V8R3_VERSION_MANIFEST = {
   semanticDelta: "2026-08-10.gi088-semantic-delta-contract-v2.4",
   interviewSkill: "2026-08-11.gi088-interview-skill-v8r3",
   questionValueReview: "2026-08-11.gi088-question-value-review-v1",
-  singleFocus: "2026-08-09.gi088-single-answer-focus-v1",
+  singleFocus: "2026-08-11.gi088-single-answer-focus-v2",
   runtime: "2026-08-11.gi088-ark-flash-runtime-v2",
   payloadContract: "2026-08-11.gi088-ark-openai-json-v1",
   sharedRecoveryDeadline:

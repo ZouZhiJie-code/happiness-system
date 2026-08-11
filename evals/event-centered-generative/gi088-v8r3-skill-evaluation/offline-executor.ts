@@ -48,6 +48,7 @@ import {
   GI088_ARK_FLASH_RUNTIME_POLICY,
   GI088_DEEPSEEK_PRO_RUNTIME_POLICY,
   GI088_MODEL_CALL_IDENTITY,
+  GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY,
   GI088_TIMEOUT_POLICY,
   createGi088EffectiveCandidateFingerprint,
   createGi088FingerprintBundle,
@@ -56,11 +57,14 @@ import {
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
 import { applyGi088SingleFocusValidationPolicy } from "@/server/services/evaluation/gi088/single-focus";
 import {
-  parseGi088SemanticDeltaOutput,
+  applyGi088SemanticDeltaValidatedResult,
+  assertGi088SemanticDeltaOutput,
+  parseGi088SemanticDeltaCandidateOutput,
   toBoard7bWorkingTaskV1CompatibilityOutput,
   validateGi088SemanticDeltaOutput,
   type Gi088SemanticDeltaOutput
 } from "@/server/services/evaluation/gi088/semantic-delta";
+import { normalizeGi088DeterministicStateOutput } from "@/server/services/evaluation/gi088/deterministic-state";
 import {
   createGi088StageTransitionUserPrompt,
   validateGi088StageTransitionOutput
@@ -75,7 +79,7 @@ function sha256(value: string) {
 }
 
 export const GI088_V8R3_OFFLINE_EXECUTOR_VERSION =
-  "2026-08-11.gi088-v8r3-offline-executor-v4" as const;
+  "2026-08-11.gi088-v8r3-offline-executor-v5" as const;
 
 export const GI088_V8R3_FORMAL_CALL_BUDGET = {
   deterministicRegressionCalls: 0,
@@ -112,6 +116,18 @@ export type Gi088V8r3ProviderIdentity = {
   model: string;
   payloadContractVersion: string;
 };
+
+export type Gi088V8r3CandidateRecoveryTrigger =
+  | "TIMEOUT"
+  | "OUTPUT_SCHEMA_INVALID"
+  | "SEMANTIC_VALIDATION_FAILED"
+  | "STATE_TRANSITION_INVALID";
+
+function candidateRecoveryCorrection(
+  trigger: Gi088V8r3CandidateRecoveryTrigger
+) {
+  return GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections[trigger];
+}
 
 export function createGi088V8r3ArkProviderIdentity(): Gi088V8r3ProviderIdentity {
   return {
@@ -175,6 +191,7 @@ export type Gi088V8r3SafeProviderTrace = {
 export type Gi088V8r3CandidateCallRecord = {
   callId: string;
   kind: "initial" | "automatic_recovery";
+  appliedRecoveryTrigger: Gi088V8r3CandidateRecoveryTrigger | null;
   checkpointIndex: number;
   requestHash: string;
   status: "valid" | "protected_failure" | "technical_failure";
@@ -316,6 +333,17 @@ function safeCode(value: unknown, fallback: string) {
     : fallback;
 }
 
+function safeValidationIssue(value: string) {
+  if (
+    /^OUTPUT_SCHEMA_INVALID(?::(?:\$|[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*){0,11}):[a-z_]+)?$/u.test(
+      value
+    )
+  ) {
+    return value;
+  }
+  return safeCode(value, "VALIDATION_ISSUE");
+}
+
 function safeTrace(
   completion: AICompletionResult | null,
   diagnosticsInput?: AIProviderDiagnostics | null
@@ -413,6 +441,7 @@ export function createGi088V8r3CandidateCompletionParams(input: {
   evaluationCase: Gi088V8r3EvaluationCase;
   checkpointIndex?: number;
   recovery: boolean;
+  recoveryTrigger?: Gi088V8r3CandidateRecoveryTrigger | null;
 }): AICompletionParams {
   const checkpointIndex =
     input.checkpointIndex ?? input.evaluationCase.checkpoints.length - 1;
@@ -438,8 +467,9 @@ export function createGi088V8r3CandidateCompletionParams(input: {
         ? [
             {
               role: "system" as const,
-              content:
-                "上次调用发生技术失败。使用同一段可见对话重新生成一次最终 JSON；保持当前共同任务、问题价值条件和单一回答目标。"
+              content: input.recoveryTrigger
+                ? candidateRecoveryCorrection(input.recoveryTrigger).instruction
+                : "上次调用发生技术失败。使用同一段可见对话重新生成一次最终 JSON；保持当前共同任务、问题价值条件和单一回答目标。"
             }
           ]
         : []),
@@ -490,8 +520,12 @@ export function createGi088V8r3CandidateRequestHashPayload(input: {
   checkpointIndex: number;
   attempt: 1 | 2;
   kind: "initial" | "automatic_recovery";
+  recoveryTrigger?: Gi088V8r3CandidateRecoveryTrigger | null;
 }) {
   const runtimeIdentity = createGi088V8r3ArkProviderIdentity();
+  const recoveryCorrection = input.recoveryTrigger
+    ? candidateRecoveryCorrection(input.recoveryTrigger)
+    : null;
   return {
     identity: GI088_MODEL_CALL_IDENTITY,
     transport: runtimeIdentity.transport,
@@ -501,6 +535,8 @@ export function createGi088V8r3CandidateRequestHashPayload(input: {
     checkpointIndex: input.checkpointIndex,
     attempt: input.attempt,
     kind: input.kind,
+    recoveryTrigger: input.recoveryTrigger ?? null,
+    recoveryInstructionVersion: recoveryCorrection?.version ?? null,
     timeoutPolicy: GI088_TIMEOUT_POLICY
   };
 }
@@ -513,12 +549,86 @@ export function createGi088V8r3CandidateRequestHash(
   );
 }
 
+export function validateGi088V8r3CandidateOutput(input: {
+  content: string;
+  turnInput: Board7bWorkingTaskV1TurnInput;
+  controlDecisionFinalAction: "none" | "stop_follow_up";
+}): {
+  output: Gi088SemanticDeltaOutput | null;
+  validationIssues: string[];
+  recoveryTrigger: Exclude<
+    Gi088V8r3CandidateRecoveryTrigger,
+    "TIMEOUT"
+  > | null;
+} {
+  let output: Gi088SemanticDeltaOutput;
+  try {
+    const parsed = parseGi088SemanticDeltaCandidateOutput(input.content);
+    const normalized = normalizeGi088DeterministicStateOutput({
+      turnInput: input.turnInput,
+      output: parsed
+    });
+    output = assertGi088SemanticDeltaOutput(normalized.output);
+  } catch (error) {
+    return {
+      output: null,
+      validationIssues: createGi088OutputSchemaIssues(error),
+      recoveryTrigger: "OUTPUT_SCHEMA_INVALID"
+    };
+  }
+
+  const compatibility = toBoard7bWorkingTaskV1CompatibilityOutput(
+    input.turnInput,
+    output
+  );
+  const semanticIssues = validateGi088SemanticDeltaOutput({
+    input: input.turnInput,
+    output,
+    deterministicStateMaintenance: true,
+    controlDecisionFinalAction: input.controlDecisionFinalAction
+  });
+  const validationIssues = [
+    ...applyGi088SingleFocusValidationPolicy({
+      output: compatibility,
+      issues: semanticIssues
+    }),
+    ...validateGi088StageTransitionOutput({
+      input: input.turnInput,
+      output: compatibility
+    })
+  ];
+  const distinctIssues = [...new Set(validationIssues)];
+  if (distinctIssues.length > 0) {
+    return {
+      output: null,
+      validationIssues: distinctIssues,
+      recoveryTrigger: "SEMANTIC_VALIDATION_FAILED"
+    };
+  }
+
+  try {
+    applyGi088SemanticDeltaValidatedResult({
+      input: input.turnInput,
+      output
+    });
+  } catch {
+    return {
+      output: null,
+      validationIssues: ["STATE_TRANSITION_INVALID"],
+      recoveryTrigger: "STATE_TRANSITION_INVALID"
+    };
+  }
+
+  return { output, validationIssues: [], recoveryTrigger: null };
+}
+
 async function executeCandidateCall(input: {
   provider: AIProvider;
   evaluationCase: Gi088V8r3EvaluationCase;
   checkpointIndex: number;
   attempt: 1 | 2;
   kind: "initial" | "automatic_recovery";
+  recoveryTrigger?: Gi088V8r3CandidateRecoveryTrigger | null;
   now: () => Date;
 }) {
   const requestHash = createGi088V8r3CandidateRequestHash(input);
@@ -530,18 +640,24 @@ async function executeCandidateCall(input: {
       createGi088V8r3CandidateCompletionParams({
         evaluationCase: input.evaluationCase,
         checkpointIndex: input.checkpointIndex,
-        recovery: input.kind === "automatic_recovery"
+        recovery: input.kind === "automatic_recovery",
+        recoveryTrigger: input.recoveryTrigger
       })
     );
   } catch (error) {
+    const failureCode = safeCode(
+      getAIProviderFailureCode(error),
+      "PROVIDER_FAILURE"
+    );
     return {
       call: {
         callId,
         kind: input.kind,
+        appliedRecoveryTrigger: input.recoveryTrigger ?? null,
         checkpointIndex: input.checkpointIndex,
         requestHash,
         status: "technical_failure" as const,
-        errorCode: safeCode(getAIProviderFailureCode(error), "PROVIDER_FAILURE"),
+        errorCode: failureCode,
         validationIssues: [],
         responseHash: null,
         safeTrace: safeTrace(null, getAIProviderDiagnostics(error)),
@@ -550,82 +666,41 @@ async function executeCandidateCall(input: {
       },
       visible: null,
       action: null,
-      retryEligible: true
+      recoveryTrigger:
+        failureCode === "TIMEOUT" ? "TIMEOUT" as const : null
     };
   }
-  try {
-    const output = parseGi088SemanticDeltaOutput(completion.content);
-    const turnInput = createGi088V8r3OfflineTurnInput(
+  const validated = validateGi088V8r3CandidateOutput({
+    content: completion.content,
+    turnInput: createGi088V8r3OfflineTurnInput(
       input.evaluationCase,
       input.checkpointIndex
-    );
-    const compatibility = toBoard7bWorkingTaskV1CompatibilityOutput(
-      turnInput,
-      output
-    );
-    const semanticIssues = validateGi088SemanticDeltaOutput({
-      input: turnInput,
-      output,
-      deterministicStateMaintenance: true,
-      controlDecisionFinalAction: controlActionForCheckpoint(
-        input.evaluationCase,
-        input.checkpointIndex
-      )
-    });
-    const issues = [
-      ...applyGi088SingleFocusValidationPolicy({
-        output: compatibility,
-        issues: semanticIssues
-      }),
-      ...validateGi088StageTransitionOutput({
-        input: turnInput,
-        output: compatibility
-      })
-    ].map((issue) => safeCode(issue, "VALIDATION_ISSUE"));
-    return {
-      call: {
-        callId,
-        kind: input.kind,
-        checkpointIndex: input.checkpointIndex,
-        requestHash,
-        status: issues.length ? "protected_failure" as const : "valid" as const,
-        errorCode: issues.length ? "MODEL_OUTPUT_PROTECTED" : null,
-        validationIssues: [...new Set(issues)],
-        responseHash: sha256(completion.content),
-        safeTrace: safeTrace(completion),
-        startedAt,
-        completedAt: input.now().toISOString()
-      },
-      visible: output.visible,
-      action: output.semantic.action,
-      retryEligible: false
-    };
-  } catch (error) {
-    return {
-      call: {
-        callId,
-        kind: input.kind,
-        checkpointIndex: input.checkpointIndex,
-        requestHash,
-        status: "protected_failure" as const,
-        errorCode: "MODEL_OUTPUT_PROTECTED",
-        validationIssues: [
-          ...new Set(
-            createGi088OutputSchemaIssues(error).map((issue) =>
-              safeCode(issue, "OUTPUT_SCHEMA_INVALID")
-            )
-          )
-        ],
-        responseHash: completion.content ? sha256(completion.content) : null,
-        safeTrace: safeTrace(completion),
-        startedAt,
-        completedAt: input.now().toISOString()
-      },
-      visible: null,
-      action: null,
-      retryEligible: false
-    };
-  }
+    ),
+    controlDecisionFinalAction: controlActionForCheckpoint(
+      input.evaluationCase,
+      input.checkpointIndex
+    )
+  });
+  const issues = validated.validationIssues.map(safeValidationIssue);
+  return {
+    call: {
+      callId,
+      kind: input.kind,
+      appliedRecoveryTrigger: input.recoveryTrigger ?? null,
+      checkpointIndex: input.checkpointIndex,
+      requestHash,
+      status: issues.length ? "protected_failure" as const : "valid" as const,
+      errorCode: issues.length ? "MODEL_OUTPUT_PROTECTED" : null,
+      validationIssues: [...new Set(issues)],
+      responseHash: completion.content ? sha256(completion.content) : null,
+      safeTrace: safeTrace(completion),
+      startedAt,
+      completedAt: input.now().toISOString()
+    },
+    visible: validated.output?.visible ?? null,
+    action: validated.output?.semantic.action ?? null,
+    recoveryTrigger: validated.recoveryTrigger
+  };
 }
 
 async function executeCandidateCheckpoint(input: {
@@ -640,10 +715,14 @@ async function executeCandidateCheckpoint(input: {
   const initial = await executeCandidateCall({ ...input, kind: "initial" });
   const calls = [initial.call];
   let final = initial;
-  if (initial.retryEligible && input.budget.reserve("automatic_recovery")) {
+  if (
+    initial.recoveryTrigger &&
+    input.budget.reserve("automatic_recovery")
+  ) {
     const recovery = await executeCandidateCall({
       ...input,
-      kind: "automatic_recovery"
+      kind: "automatic_recovery",
+      recoveryTrigger: initial.recoveryTrigger
     });
     calls.push(recovery.call);
     final = recovery;
@@ -1196,6 +1275,10 @@ function assertCandidateReport(
             checkpointIndex: checkpoint.checkpointIndex,
             attempt: record.attempt,
             kind: call.kind,
+            recoveryTrigger: call.appliedRecoveryTrigger,
+            recoveryInstructionVersion: call.appliedRecoveryTrigger
+              ? candidateRecoveryCorrection(call.appliedRecoveryTrigger).version
+              : null,
             timeoutPolicy: GI088_TIMEOUT_POLICY
           })
         );

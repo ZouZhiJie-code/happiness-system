@@ -6,7 +6,7 @@ import type {
 import type { Gi088QuestionObservation } from "@/server/services/evaluation/gi088/types";
 
 export const GI088_SINGLE_FOCUS_POLICY_VERSION =
-  "2026-08-09.gi088-single-answer-focus-v1" as const;
+  "2026-08-11.gi088-single-answer-focus-v2" as const;
 
 export const GI088_SINGLE_FOCUS_APPENDICES = {
   basePrompt: `本轮只推进一个独立回答任务。可以使用主问题、澄清、举例或选项帮助用户回答；所有问句都需要服务同一个 \`nextInquiry.answerTarget\`，并且能够由用户用一段连贯回答覆盖。避免打开需要分别回答的新事件、人物、时间范围、行动选择或判断任务。表达自然、低负担。`,
@@ -77,8 +77,8 @@ export function createGi088QuestionObservation(
     semantic: { action: Board7bWorkingTaskV1Output["semantic"]["action"] };
   }
 ): Gi088QuestionObservation | null {
-  if (output.semantic.action !== "ask") return null;
   const questionMarkCount = countGi088VisibleQuestionMarks(output);
+  if (output.semantic.action !== "ask" && questionMarkCount === 0) return null;
   return {
     questionMarkCount,
     reviewCandidate:
@@ -95,8 +95,8 @@ export function applyGi088SingleFocusValidationPolicy(input: {
   output: Board7bWorkingTaskV1Output;
   issues: string[];
 }) {
-  if (input.output.semantic.action !== "ask") return input.issues;
   return input.issues.filter(
-    (issue) => !/^ASK_QUESTION_COUNT_INVALID:\d+$/u.test(issue)
+    (issue) =>
+      !/^(?:ASK|NON_ASK)_QUESTION_COUNT_INVALID:\d+$/u.test(issue)
   );
 }

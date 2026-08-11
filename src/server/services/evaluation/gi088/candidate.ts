@@ -1130,17 +1130,11 @@ export function createGi088V1EffectiveCandidateFingerprint() {
 
 export function getGi088CandidateAssets(): Board7bWorkingTaskV1Assets {
   const base = getGi088V1CandidateAssets();
-  const outputContract = base.outputContract;
-  const stageTransitionAssets = applyGi088StageTransitionAssets({
-    ...base,
-    outputContract,
-    systemPrompt: [base.basePrompt, base.interviewSkill, outputContract].join(
-      "\n\n"
-    )
-  });
-  return applyGi088V8r3InterviewSkillAssets(
-    applyGi088SemanticDeltaAssets(
-      applyGi088SingleFocusAssets(stageTransitionAssets)
+  return applyGi088SemanticDeltaAssets(
+    applyGi088SingleFocusAssets(
+      applyGi088StageTransitionAssets(
+        applyGi088V8r3InterviewSkillAssets(base)
+      )
     )
   );
 }
