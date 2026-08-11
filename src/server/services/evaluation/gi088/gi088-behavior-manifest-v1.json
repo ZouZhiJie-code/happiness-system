@@ -29,7 +29,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "c5d516eb6199455ca1e4dd9bf53fbe6ff9670153d33b64371a96d53438cdc3ad"
+      "sha256": "cc72f4e5a0f69d045f29b58dc12d74b90d6856815e0c77c4ae059d9aa72dafb8"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
@@ -66,7 +66,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "1af71d24179c8c8ab985680f0625bad8f9432f3d665e89118ed8aea431f8e8f8"
+      "sha256": "5dbdc72780c970c764ccaf70b7dd46d40883f3985abd7b31f4d2fb8ba13a7101"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures.ts",

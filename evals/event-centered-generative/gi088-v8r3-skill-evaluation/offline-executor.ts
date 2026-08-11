@@ -8,6 +8,7 @@ import {
 } from "../board7b-working-task-v1/board7b-working-task-v1";
 import {
   GI088_V8R3_EVALUATION_DATASET_VERSION,
+  GI088_V8R3_FORMAL_EVALUATION_VERSION,
   GI088_V8R3_HARD_GATES,
   GI088_V8R3_RUNNER_VERSION,
   gi088V8r3BadCaseCategorySchema,
@@ -79,7 +80,7 @@ function sha256(value: string) {
 }
 
 export const GI088_V8R3_OFFLINE_EXECUTOR_VERSION =
-  "2026-08-11.gi088-v8r3-offline-executor-v5" as const;
+  "2026-08-11.gi088-v8r3-offline-executor-v6" as const;
 
 export const GI088_V8R3_FORMAL_CALL_BUDGET = {
   deterministicRegressionCalls: 0,
@@ -235,6 +236,7 @@ export type Gi088V8r3CandidateTrialRecord = {
 
 export type Gi088V8r3CandidateExecutionReport = {
   reportVersion: typeof GI088_V8R3_OFFLINE_EXECUTOR_VERSION;
+  formalEvaluationVersion: typeof GI088_V8R3_FORMAL_EVALUATION_VERSION;
   runId: string;
   createdAt: string;
   datasetVersion: typeof GI088_V8R3_EVALUATION_DATASET_VERSION;
@@ -296,6 +298,7 @@ export type Gi088V8r3CandidateExecutionReport = {
 export function createGi088V8r3OfflineExecutionPlan() {
   return {
     version: GI088_V8R3_OFFLINE_EXECUTOR_VERSION,
+    formalEvaluationVersion: GI088_V8R3_FORMAL_EVALUATION_VERSION,
     executionAuthorized: false,
     externalModelCalls: 0,
     candidate: {
@@ -1092,6 +1095,7 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
     JSON.stringify({
       fingerprintKind: "gi088-v8r3-offline-run",
       reportVersion: GI088_V8R3_OFFLINE_EXECUTOR_VERSION,
+      formalEvaluationVersion: GI088_V8R3_FORMAL_EVALUATION_VERSION,
       runnerVersion: GI088_V8R3_RUNNER_VERSION,
       behaviorFingerprintBundle,
       datasetFingerprint,
@@ -1113,6 +1117,7 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
   );
   return {
     reportVersion: GI088_V8R3_OFFLINE_EXECUTOR_VERSION,
+    formalEvaluationVersion: GI088_V8R3_FORMAL_EVALUATION_VERSION,
     runId: input.runId ?? randomUUID(),
     createdAt: now().toISOString(),
     datasetVersion: GI088_V8R3_EVALUATION_DATASET_VERSION,
@@ -1151,6 +1156,7 @@ function assertCandidateReport(
   }
   const report = input as Gi088V8r3CandidateExecutionReport;
   if (
+    report.formalEvaluationVersion !== GI088_V8R3_FORMAL_EVALUATION_VERSION ||
     report.datasetVersion !== GI088_V8R3_EVALUATION_DATASET_VERSION ||
     report.runnerVersion !== GI088_V8R3_RUNNER_VERSION
   ) {
@@ -1311,6 +1317,7 @@ function assertCandidateReport(
     JSON.stringify({
       fingerprintKind: "gi088-v8r3-offline-run",
       reportVersion: GI088_V8R3_OFFLINE_EXECUTOR_VERSION,
+      formalEvaluationVersion: GI088_V8R3_FORMAL_EVALUATION_VERSION,
       runnerVersion: GI088_V8R3_RUNNER_VERSION,
       behaviorFingerprintBundle: report.behaviorFingerprintBundle,
       datasetFingerprint: report.datasetFingerprint,

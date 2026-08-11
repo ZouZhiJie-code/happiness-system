@@ -271,6 +271,9 @@ function historicalBaseline(
 describe("GI-088 v8r3 formal offline executor", () => {
   it("declares 96 checkpoint calls, global recovery 2, and a 194-call formal ceiling", () => {
     const plan = createGi088V8r3OfflineExecutionPlan();
+    expect(plan.formalEvaluationVersion).toBe(
+      "2026-08-11.gi088-v8r3r1-account-restored-formal-evaluation"
+    );
     expect(plan.externalModelCalls).toBe(0);
     expect(plan.callBudget).toEqual({
       deterministicRegressionCalls: 0,
@@ -352,6 +355,9 @@ describe("GI-088 v8r3 formal offline executor", () => {
       ...candidateInput(technicalFailureProvider(seen)),
       automaticRecoveryMaximum: 2
     });
+    expect(report.formalEvaluationVersion).toBe(
+      "2026-08-11.gi088-v8r3r1-account-restored-formal-evaluation"
+    );
     expect(report.records).toHaveLength(80);
     expect(report.budget).toEqual({
       authorizedMaximum: 98,
