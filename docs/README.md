@@ -1,6 +1,6 @@
 # Daily Light 文档导航
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-11`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
@@ -27,10 +27,11 @@
 - v7r3 已把来源合并和明确停止交给程序维护。v7r4 的两条官方 `deepseek-v4-pro` 真人轨迹已封存：共 `12` 次用户提交、`13` 次调用，首次产生可见正文 `11/12`、空内容 `0`、自动恢复 `1`、程序保护 `2`；产品负责人裁决整体 `No-Go`，同时确认 V4 Pro 继续使用；
 - v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人判断 `通过 / direct_use / target triggered`；`10/10` 次首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`；
 - v8r1 已将简短礼貌回应与明确停止组合收入零调用暂停，真实 U10 回放通过。最终 `12` 项 Thinking high 候选完成 `160` 项相关测试、构建、Preview 部署与创建时 `0/12` 空白批次回读；初始化模型调用 `0`。产品负责人随后完成 A1 一条轨迹，确认事件内容中的沟通负担被程序误判为停止当前访谈，形成单例阻断。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；
-- v8r2 已统一收口高影响控制判断、Provider 结果落账、陈旧页面写入、人工复核证据、run 生命周期、工作台恢复、八项 Preview 开门差额和最终初始化幂等。不可变行为 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d`、Execution fingerprint `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e` 与 `READY` Preview 已形成；全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running 0/12 / gate=pending / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决；约 `200` 轮以上的容量优化继续排除；
+- v8r2 已完成评测底座建设；#5 随当前质量与调用事实行政 `early_stopped / No-Go`，完整只读保留；
+- v8r3 已完成 Interview Skill、Ark Flash、Foundation 校验、问题价值复核、v0.7 导出、`4＋2` 任务、【帮我记】兼容链、离线评测器和对话优先工作台。首轮 `98` 次正式候选调用暴露结构与校验缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝。两轮累计 `194` 次，当前结论为 `No-Go`；Preview deployment 与 `0/6` 均未创建，等待 Ark 账户恢复后建立新的不可变评测版本和预算；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
-- 板块 7 正式接入继续等待板块 6；
-- 板块 8 继续等待；
+- 板块 7 的 v8r3 候选实现已完成，继续等待新的离线硬门通过；
+- 板块 8 继续等待通过离线硬门的候选；
 - Production 保持 `legacy + baseline`。
 
 ## 2. 新会话阅读顺序
@@ -56,7 +57,8 @@
 ### 当前评测与真人裁决
 
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
-- GI-088 当前真人验收与正式证据入口：[v8r2 评测底座加固与最终 12 项真人验收](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- GI-088 当前正式证据入口：[v8r3 Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
+- GI-088 v8r2 历史底座与行政收口：[v8r2 评测底座加固证据](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - GI-088 v8r2 已完成实施合同：[意图控制与评测底座全量修复](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 - GI-088 v8r1 事故与部署时快照：[v8r1 最终 12 项独立验收](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)
 - GI-088 当前问题台账：[BC-01～12 与 v3～v8r2 补充问题](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)

@@ -1,8 +1,8 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-11`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8 以 1/4 early_stopped 收口并获产品通过；v8r1 A1 控制误停单例阻断及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门和 READY Preview 已形成，run b816d468…e78cd 停在 running 0/12、gate pending、high_only/high、calls 0；等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3 已完成 Interview Skill、Ark Flash、Foundation、离线评测器、【帮我记】兼容链和工作台改造。首轮候选暴露结构与校验缺口，第二轮 96/96 请求被 Ark ACCOUNTOVERDUEERROR 在生成前拒绝；两轮累计 194 次正式候选调用，当前 No-Go，Preview 与 0/6 保持关闭。v8r2 #5 已行政 early_stopped / No-Go 并只读保留。Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
 
 ## 1. 为什么需要这份规则
 
@@ -27,7 +27,8 @@
 
 当前入口：
 
-- [GI-088 v8r2 当前真人验收与正式证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [GI-088 v8r3 Interview Skill 与 Ark Flash 离线 No-Go 证据](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
+- [GI-088 v8r2 评测底座、历史 Preview 与行政 No-Go 证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 v8r2 已完成实施合同](../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 
 - [板块 6 首批校准资产](./generative-interview-board6/2026-08-06/README.md)
@@ -75,6 +76,7 @@
 - [GI-088 v8r1 manifest](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-human-eval-v8r1-final12-manifest.json)
 - [GI-088 v8r1 静态验证](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
 - [GI-088 v8r2 评测底座加固、Preview 与新 0/12 run](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [GI-088 v8r3 Interview Skill、Ark Flash 与两轮离线 No-Go](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - [GI-088 空内容配对探针 manifest](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
 - [GI-088 空内容配对探针脱敏结果](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-result.json)
 - [GI-088 空内容配对探针裁决](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-decision.md)

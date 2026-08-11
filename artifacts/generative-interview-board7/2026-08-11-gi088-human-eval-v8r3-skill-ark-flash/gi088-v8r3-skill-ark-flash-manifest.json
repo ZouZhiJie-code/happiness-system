@@ -1,0 +1,80 @@
+{
+  "version": "2026-08-11.gi088-v8r3-skill-ark-flash-manifest-v1",
+  "status": "no_go_before_preview",
+  "evaluationVersion": "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash",
+  "immutableCommit": "4e4afb2a338e376bf6783c037470dca580cdd8a3",
+  "behaviorManifest": {
+    "version": "2026-08-11.gi088-behavior-manifest-v2",
+    "fileCount": 112,
+    "sha256": "3fd1749af70e6e5e47a87cc1c78103788cb1fe690dd0708ab95815171526cf81"
+  },
+  "fingerprints": {
+    "candidate": "f88f0082a529870587b5e73d635c14939ad8bf6ec792aa7c72884c5b2a7ec657",
+    "dataset": "4fdc9b8c8fa9fe3cab0bac1417939647d0071c9f9fca2918a690de7fd486ba8a",
+    "runner": "5c2a74b355372376a5aef7f30c5a7c6d3f230866b252b9f98bd2e8716d2cab61",
+    "experience": "a466fee442ee85a2b701abcb34e799c0e5de2145e0fb0a30563a0a77027864d8",
+    "execution": "093fa6ace9f5b8edad088ccb76a2fbffd62492ae3df92d4ad59c7dce99d719d0"
+  },
+  "skill": {
+    "version": "2026-08-11.gi088-interview-skill-v8r3",
+    "sha256": "a1b13e4f451a40850bd1122f5b873cce3eb9496c62ef6d42c4b8b28d0ab20494"
+  },
+  "runtime": {
+    "provider": "volcengine_ark",
+    "baseUrlHost": "ark.cn-beijing.volces.com",
+    "endpoint": "/chat/completions",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 60000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "automaticChainDeadlineMs": 90000
+  },
+  "evaluationDesign": {
+    "scoredTrajectories": 4,
+    "compatibilitySmokes": 2,
+    "deterministicRegressionCases": 24,
+    "developmentCases": 28,
+    "hiddenAdmissionCases": 12,
+    "hiddenAggregateCommitment": "4d4f8e67816608a5d37ac3b60163d772554138199aaa60c8f620b7a18c2d11b9"
+  },
+  "formalRounds": {
+    "round1": {
+      "commit": "24ddd2920dfbb4002896eb039a6eb3aa1ccb689c",
+      "calls": 98,
+      "firstValid": 81,
+      "eligible": 96,
+      "finalFailures": 13,
+      "finalProtections": 12,
+      "decision": "no_go"
+    },
+    "round2": {
+      "commit": "4e4afb2a338e376bf6783c037470dca580cdd8a3",
+      "offlineRunFingerprint": "04fc496b93db30b020cbe7dd21eb64b0d8d38b80387f15a02c5c112f94cfdce5",
+      "evidenceFingerprint": "bb438d041574c4d71551ba502615fa8207b5d92fc6aa5789032724aefce0dd58",
+      "calls": 96,
+      "firstValid": 0,
+      "eligible": 96,
+      "finalFailures": 96,
+      "providerErrorCode": "ACCOUNTOVERDUEERROR",
+      "decision": "no_go"
+    },
+    "combinedCalls": 194,
+    "capacityExpansionExcluded": true
+  },
+  "release": {
+    "previewDeployment": null,
+    "previewRun": null,
+    "productionChanged": false,
+    "productionMode": "legacy_plus_baseline"
+  },
+  "nextRequired": [
+    "restore_ark_account_availability",
+    "create_new_immutable_evaluation_version_and_budget",
+    "rerun_independent_quality_reliability_latency_gates",
+    "complete_human_golden_calibration",
+    "deploy_preview_only_after_all_gates_pass"
+  ]
+}

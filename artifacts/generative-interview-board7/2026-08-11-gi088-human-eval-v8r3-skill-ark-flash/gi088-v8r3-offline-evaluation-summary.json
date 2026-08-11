@@ -1,0 +1,62 @@
+{
+  "version": "2026-08-11.gi088-v8r3-offline-evaluation-summary-v1",
+  "status": "no_go",
+  "privacy": {
+    "hiddenPromptsIncluded": false,
+    "visibleResponsesIncluded": false,
+    "requestBodiesIncluded": false,
+    "credentialsIncluded": false,
+    "hiddenReasoningIncluded": false
+  },
+  "round1": {
+    "reportVersion": "2026-08-11.gi088-v8r3-offline-executor-v4",
+    "runnerVersion": "2026-08-11.gi088-v8r3-skill-runner-v4",
+    "executionFingerprint": "8d06faabe55365842393dc512673fe797ea1295e8d6107994eff292d3cb5d6c0",
+    "offlineRunFingerprint": "0686fbc00e3f3f27a4215c631c9654384e9fc81f9a8c5821ee4c67fa5af7f138",
+    "evidenceFingerprint": "9456bbb5aecbe2662b5a7d59d5d1b620a9fc7e491cc5e67c42db7e7488645147",
+    "initialCalls": 96,
+    "automaticRecoveryCalls": 2,
+    "totalCalls": 98,
+    "firstValidCount": 81,
+    "firstValidRate": 0.84375,
+    "finalFailureCount": 13,
+    "finalProtectionCount": 12,
+    "validCallCount": 83,
+    "protectedCallCount": 12,
+    "technicalFailureCallCount": 3,
+    "visibleLatencySamples": 83,
+    "visibleLatencyP50Ms": 20781,
+    "visibleLatencyP90Ms": 41909,
+    "visibleLatencyMaximumMs": 88234,
+    "decision": "no_go"
+  },
+  "round2": {
+    "reportVersion": "2026-08-11.gi088-v8r3-offline-executor-v5",
+    "runnerVersion": "2026-08-11.gi088-v8r3-skill-runner-v5",
+    "executionFingerprint": "093fa6ace9f5b8edad088ccb76a2fbffd62492ae3df92d4ad59c7dce99d719d0",
+    "offlineRunFingerprint": "04fc496b93db30b020cbe7dd21eb64b0d8d38b80387f15a02c5c112f94cfdce5",
+    "evidenceFingerprint": "bb438d041574c4d71551ba502615fa8207b5d92fc6aa5789032724aefce0dd58",
+    "initialCalls": 96,
+    "automaticRecoveryCalls": 0,
+    "totalCalls": 96,
+    "firstValidCount": 0,
+    "firstValidRate": 0,
+    "finalFailureCount": 96,
+    "finalProtectionCount": 0,
+    "providerErrorCode": "ACCOUNTOVERDUEERROR",
+    "providerErrorCount": 96,
+    "deterministicRegressionCases": 24,
+    "deterministicValidatorAssertions": 72,
+    "deterministicRegressionPassed": true,
+    "humanAdjudicationPacketItems": 80,
+    "humanAdjudicationExternalModelCalls": 0,
+    "decision": "no_go"
+  },
+  "combined": {
+    "formalCandidateCalls": 194,
+    "additionalFormalRoundAllowedInCurrentPlan": false,
+    "judgeCalls": 0,
+    "modelProbes": 0,
+    "humanContentSubmissionsByCodex": 0
+  }
+}
