@@ -736,7 +736,15 @@ function TaskRail({
   const activeTaskId = session.activeTask?.taskId ?? session.tasks.find((item) => item.status === "ready")?.id;
 
   return (
-    <Card as="aside" className="min-h-0 overflow-hidden p-0" aria-label={`${session.batch.totalTasks} 项真人交互开发评测集`} data-testid="gi088-task-rail">
+    <Card
+      as="aside"
+      className={cn(
+        "min-h-0 overflow-hidden p-0",
+        compact ? "" : "flex h-full flex-col"
+      )}
+      aria-label={`${session.batch.totalTasks} 项真人交互开发评测集`}
+      data-testid="gi088-task-rail"
+    >
       <div className="px-5 pb-4 pt-5">
         <SectionHeading
           title="开发评测集"
@@ -745,7 +753,13 @@ function TaskRail({
         />
       </div>
       <Divider />
-      <ol className={cn("px-2 py-2", compact ? "space-y-1" : "space-y-1")}>
+      <ol
+        className={cn(
+          "space-y-1 px-2 py-2",
+          compact ? "" : "min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        )}
+        data-testid={compact ? undefined : "gi088-task-scroll"}
+      >
         {session.tasks.map((task, index) => {
           const active = task.id === activeTaskId;
           return (
@@ -1921,7 +1935,7 @@ function TraceLedger({
   onPending: (value: boolean) => void;
 }) {
   return (
-    <Card as="aside" className="min-h-0 overflow-hidden p-0" aria-label="当前分支透明语义 Trace" data-testid="gi088-trace-ledger">
+    <Card as="aside" className="flex h-full min-h-0 flex-col overflow-hidden p-0" aria-label="当前分支透明语义 Trace" data-testid="gi088-trace-ledger">
       <div className="px-5 pb-4 pt-5">
         <SectionHeading title="透明 Trace" hint={`${trajectory.turns.length} 轮`} description="显示可核查语义结论；隐藏推理不会读取、保存或展示。" />
         <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs leading-5">
@@ -1936,7 +1950,7 @@ function TraceLedger({
         </dl>
       </div>
       <Divider />
-      <div className="max-h-[32rem] overflow-y-auto px-5 py-1 xl:max-h-[calc(100dvh-23rem)]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-1" data-testid="gi088-trace-scroll">
         {trajectory.turns.length === 0 ? (
           <p className="py-8 text-center text-sm leading-6 text-[var(--text-dim)]">第一轮完成后，这里会显示共同任务、当前探查和原话证据。</p>
         ) : trajectory.turns.map((turn, index) => {
@@ -2061,13 +2075,20 @@ function GateAndMetricsSummary({ session }: { session: Gi088EvaluationSession })
         ? "历史运行，机器门状态未知"
         : "机器门等待更多证据";
   return (
-    <section
-      className="mx-auto mb-4 max-w-[116rem] border-l-2 border-[var(--amber)] pl-4 text-sm"
+    <details
+      className="mx-auto mb-3 w-full max-w-[116rem] border-l-2 border-[var(--amber)] pl-4 text-sm"
       aria-label="评测资格与统一指标"
       data-testid="gi088-gate-summary"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold text-ink">{gateLabel}</p>
+      <summary className="cursor-pointer list-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay [&::-webkit-details-marker]:hidden">
+        <span className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-semibold text-ink">{gateLabel}</span>
+          <span className="font-mono text-xs text-[var(--text-dim)]">
+            gate={gate?.status ?? "legacy_unknown"} · 展开指标与原因
+          </span>
+        </span>
+      </summary>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-xs text-[var(--text-faint)]">
           gate={gate?.status ?? "legacy_unknown"}
         </span>
@@ -2091,7 +2112,7 @@ function GateAndMetricsSummary({ session }: { session: Gi088EvaluationSession })
           <div><dt className="inline">可见回应复核 </dt><dd className="inline font-semibold text-ink">{metrics.visibleQuestionReviewCoverage === null ? "N/A" : `${Math.round(metrics.visibleQuestionReviewCoverage * 100)}%`}</dd></div>
         </dl>
       ) : null}
-    </section>
+    </details>
   );
 }
 
@@ -2328,6 +2349,8 @@ function WorkspaceReady({
   const [exporting, setExporting] = useState(false);
   const [externalUpdate, setExternalUpdate] = useState(false);
   const [desktopLayout, setDesktopLayout] = useState(false);
+  const [taskPanelOpen, setTaskPanelOpen] = useState(true);
+  const [tracePanelOpen, setTracePanelOpen] = useState(false);
   const earlyStopToggleRef = useRef<HTMLElement>(null);
   const syncRef = useRef<ReturnType<typeof createGi088EvaluationSync> | null>(null);
   const recoveryToastTimerRef = useRef<number | null>(null);
@@ -2435,7 +2458,7 @@ function WorkspaceReady({
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
-    const media = window.matchMedia("(min-width: 1280px)");
+    const media = window.matchMedia("(min-width: 1024px)");
     const sync = () => setDesktopLayout(media.matches);
     sync();
     media.addEventListener?.("change", sync);
@@ -3003,11 +3026,19 @@ function WorkspaceReady({
     void readLatest();
   }, [batchComplete, downloadExport, generateAgain, readLatest, returnToCurrentTask, terminal]);
 
+  const desktopGridColumns = taskPanelOpen && tracePanelOpen
+    ? "lg:grid-cols-[14rem_minmax(24rem,1fr)_18rem] 2xl:grid-cols-[18rem_minmax(30rem,1fr)_22rem]"
+    : taskPanelOpen
+      ? "lg:grid-cols-[14rem_minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)]"
+      : tracePanelOpen
+        ? "lg:grid-cols-[minmax(0,1fr)_18rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]"
+        : "lg:grid-cols-1";
+
   return (
     <>
       <RecoveryToast toast={recoveryToast} />
-      <Surface as="section" className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-4 py-5 md:px-6" data-testid="gi088-evaluation-workbench">
-        <header className="mx-auto max-w-[116rem]">
+      <Surface as="section" className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-4 py-4 md:px-6 lg:flex lg:h-[calc(100dvh-var(--site-header-viewport-offset))] lg:min-h-0 lg:flex-col lg:overflow-hidden" data-testid="gi088-evaluation-workbench">
+        <header className="mx-auto w-full max-w-[116rem] shrink-0">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div>
               <p className="archive-label">
@@ -3015,10 +3046,10 @@ function WorkspaceReady({
                   ? "GI-088 · v8r2 评测底座加固"
                   : "GI-088 · 真人交互开发评测集 v4 阶段转场候选"}
               </p>
-              <h1 className="mt-3 max-w-4xl text-balance font-display text-3xl leading-tight text-ink md:text-4xl">
+              <h1 className="mt-2 max-w-4xl text-balance font-display text-2xl leading-tight text-ink md:text-3xl">
                 {highOnly ? "持续聊下去，也能随时回看和纠正" : "同一起点，两条真实聊天轨迹"}
               </h1>
-              <p className="mt-2 max-w-4xl text-pretty text-sm leading-7 text-[var(--text-dim)]">
+              <p className="mt-2 max-w-4xl text-pretty text-sm leading-6 text-[var(--text-dim)] lg:truncate">
                 {highOnly
                   ? "12 项任务只运行官方 DeepSeek V4 Pro 的 Thinking high。程序维护确定性来源、礼貌停聊与停止状态；轨迹不设次数上限，单次生成最多 60 秒，自动恢复链总计不超过 90 秒。所有可见提问都要在 Trace 完成人工分类。"
                   : "完成 Thinking 关闭分支，再从相同 A0＋U1 独立开启高 Thinking。任务提示只对你可见，模型只接收真实对话。"}
@@ -3039,7 +3070,7 @@ function WorkspaceReady({
             </div>
           </div>
           <div
-            className="mt-5 h-1 overflow-hidden rounded-full bg-paper/35"
+            className="mt-3 h-1 overflow-hidden rounded-full bg-paper/35"
             role="progressbar"
             aria-label="整批评测进度"
             aria-valuemin={0}
@@ -3048,7 +3079,7 @@ function WorkspaceReady({
           >
             <div className="h-full rounded-full bg-ink" style={{ width: `${(session.batch.completedTaskCount / session.batch.totalTasks) * 100}%` }} />
           </div>
-          <div className="mt-4 flex flex-wrap items-end justify-between gap-3" aria-label="评测运行与导出">
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3" aria-label="评测运行与导出">
             <label className="text-xs font-semibold text-[var(--text-dim)]">
               当前运行
               <select
@@ -3096,7 +3127,7 @@ function WorkspaceReady({
           ) : null}
         </header>
 
-        <Divider className="mx-auto my-5 max-w-[116rem]" />
+        <Divider className="mx-auto my-3 w-full max-w-[116rem] shrink-0" />
 
         <GateAndMetricsSummary session={session} />
         <EvidenceGovernancePanel
@@ -3107,7 +3138,7 @@ function WorkspaceReady({
           onPending={setPending}
         />
 
-        {!desktopLayout ? <details className="mx-auto mb-4 max-w-[116rem] rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/55 p-3">
+        {!desktopLayout ? <details className="mx-auto mb-4 w-full max-w-[116rem] rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/55 p-3">
           <summary className="cursor-pointer text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay">
             查看任务 · {session.batch.completedTaskCount}/{session.batch.totalTasks}
           </summary>
@@ -3116,14 +3147,63 @@ function WorkspaceReady({
           </div>
         </details> : null}
 
-        <div className="mx-auto grid max-w-[116rem] gap-4 xl:h-[calc(100dvh-var(--site-header-viewport-offset)-12rem)] xl:grid-cols-[18rem_minmax(30rem,1fr)_22rem]">
-          {desktopLayout ? <div className="min-h-0">
+        {desktopLayout ? (
+          <div className="mx-auto mb-2 flex w-full max-w-[116rem] shrink-0 flex-wrap items-center justify-between gap-2" aria-label="工作区辅助面板">
+            <p className="text-xs text-[var(--text-faint)]">主对话保持在当前视口；任务与 Trace 可随时展开。</p>
+            <div className="flex flex-wrap gap-2">
+              <ActionButton
+                type="button"
+                variant="ghost"
+                aria-pressed={taskPanelOpen}
+                aria-controls="gi088-task-panel"
+                onClick={() => setTaskPanelOpen((value) => !value)}
+              >
+                {taskPanelOpen
+                  ? "收起任务"
+                  : `查看任务 · ${session.batch.completedTaskCount}/${session.batch.totalTasks}`}
+              </ActionButton>
+              <ActionButton
+                type="button"
+                variant="ghost"
+                aria-pressed={tracePanelOpen}
+                aria-controls="gi088-trace-panel"
+                onClick={() => setTracePanelOpen((value) => !value)}
+              >
+                {tracePanelOpen
+                  ? "收起 Trace"
+                  : `查看 Trace · ${trajectory?.turns.length ?? 0} 轮${unreviewedQuestionCount > 0 ? ` · 待复核 ${unreviewedQuestionCount}` : ""}`}
+              </ActionButton>
+              {taskPanelOpen || tracePanelOpen ? (
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setTaskPanelOpen(false);
+                    setTracePanelOpen(false);
+                  }}
+                >
+                  专注对话
+                </ActionButton>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <div
+          className={cn(
+            "mx-auto grid w-full max-w-[116rem] gap-3",
+            "lg:min-h-0 lg:flex-1",
+            desktopGridColumns
+          )}
+          data-testid="gi088-workspace-grid"
+        >
+          {desktopLayout && taskPanelOpen ? <div id="gi088-task-panel" className="min-h-0">
             <TaskRail session={session} onSelect={(taskId) => void selectTask(taskId)} />
           </div> : null}
 
           <Card
             as="section"
-            className="flex min-h-[36rem] min-w-0 flex-col overflow-hidden p-0 md:min-h-[42rem] xl:min-h-0"
+            className="flex min-h-[36rem] min-w-0 flex-col overflow-hidden p-0 md:min-h-[42rem] lg:h-full lg:min-h-0"
             aria-labelledby="gi088-current-task-title"
             aria-busy={busy}
             data-testid="gi088-dialogue-panel"
@@ -3583,18 +3663,20 @@ function WorkspaceReady({
             ) : null}
           </Card>
 
-          {trajectory ? (
+          {desktopLayout && !tracePanelOpen ? null : trajectory ? (
             desktopLayout ? (
-              <TraceLedger
-                taskId={activeTask!.taskId}
-                branch={selectedBranch}
-                trajectory={trajectory}
-                session={session}
-                disabled={busy || runReadOnly}
-                onUpdated={update}
-                onError={setIssue}
-                onPending={setPending}
-              />
+              <div id="gi088-trace-panel" className="min-h-0">
+                <TraceLedger
+                  taskId={activeTask!.taskId}
+                  branch={selectedBranch}
+                  trajectory={trajectory}
+                  session={session}
+                  disabled={busy || runReadOnly}
+                  onUpdated={update}
+                  onError={setIssue}
+                  onPending={setPending}
+                />
+              </div>
             ) : (
               <details className="rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/55 p-3">
                 <summary className="cursor-pointer text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay">
@@ -3615,20 +3697,22 @@ function WorkspaceReady({
               </details>
             )
           ) : (
-            <Card as="aside" className="min-h-[22rem] p-5">
-              <SectionHeading title="透明 Trace" description="开始评测后持续显示配置、共同任务、当前探查和原话证据。" />
-              <Divider className="my-4" />
-              <dl className="space-y-3 text-xs leading-5">
-                <div><dt className="text-[var(--text-faint)]">模型</dt><dd className="mt-0.5 font-mono text-ink">{session.evaluation.model}</dd></div>
-                {!highOnly ? <div><dt className="text-[var(--text-faint)]">关闭组</dt><dd className="mt-0.5 text-ink">Thinking 关闭 · 温度 0.2</dd></div> : null}
-                <div><dt className="text-[var(--text-faint)]">开启组</dt><dd className="mt-0.5 text-ink">Thinking 开启 · reasoning high · 温度 N/A</dd></div>
-                <div><dt className="text-[var(--text-faint)]">共同输出</dt><dd className="mt-0.5 text-ink">结构化 JSON · 应用不设 Token 上限 · 同一段原话最多三次调用</dd></div>
-                <div><dt className="text-[var(--text-faint)]">轨迹调用</dt><dd className="mt-0.5 text-ink">已使用 N 次，本轨迹不设上限</dd></div>
-                {highOnly ? <div><dt className="text-[var(--text-faint)]">等待策略</dt><dd className="mt-0.5 text-ink">响应头 15 秒 · 正文空闲 45 秒 · 总时长 60 秒</dd></div> : null}
-                <div><dt className="text-[var(--text-faint)]">执行指纹</dt><dd title={session.evaluation.executionFingerprint} className="mt-0.5 font-mono text-ink">{compactFingerprint(session.evaluation.executionFingerprint)}</dd></div>
-                <div><dt className="text-[var(--text-faint)]">数据状态</dt><dd className="mt-0.5 text-ink">{terminal ? "只读封存" : "Preview 独立评测存储"}</dd></div>
-              </dl>
-            </Card>
+            <div id={desktopLayout ? "gi088-trace-panel" : undefined} className={desktopLayout ? "min-h-0" : ""}>
+              <Card as="aside" className={cn("p-5", desktopLayout ? "h-full min-h-0 overflow-y-auto" : "min-h-[22rem]")}>
+                <SectionHeading title="透明 Trace" description="开始评测后持续显示配置、共同任务、当前探查和原话证据。" />
+                <Divider className="my-4" />
+                <dl className="space-y-3 text-xs leading-5">
+                  <div><dt className="text-[var(--text-faint)]">模型</dt><dd className="mt-0.5 font-mono text-ink">{session.evaluation.model}</dd></div>
+                  {!highOnly ? <div><dt className="text-[var(--text-faint)]">关闭组</dt><dd className="mt-0.5 text-ink">Thinking 关闭 · 温度 0.2</dd></div> : null}
+                  <div><dt className="text-[var(--text-faint)]">开启组</dt><dd className="mt-0.5 text-ink">Thinking 开启 · reasoning high · 温度 N/A</dd></div>
+                  <div><dt className="text-[var(--text-faint)]">共同输出</dt><dd className="mt-0.5 text-ink">结构化 JSON · 应用不设 Token 上限 · 同一段原话最多三次调用</dd></div>
+                  <div><dt className="text-[var(--text-faint)]">轨迹调用</dt><dd className="mt-0.5 text-ink">已使用 N 次，本轨迹不设上限</dd></div>
+                  {highOnly ? <div><dt className="text-[var(--text-faint)]">等待策略</dt><dd className="mt-0.5 text-ink">响应头 15 秒 · 正文空闲 45 秒 · 总时长 60 秒</dd></div> : null}
+                  <div><dt className="text-[var(--text-faint)]">执行指纹</dt><dd title={session.evaluation.executionFingerprint} className="mt-0.5 font-mono text-ink">{compactFingerprint(session.evaluation.executionFingerprint)}</dd></div>
+                  <div><dt className="text-[var(--text-faint)]">数据状态</dt><dd className="mt-0.5 text-ink">{terminal ? "只读封存" : "Preview 独立评测存储"}</dd></div>
+                </dl>
+              </Card>
+            </div>
           )}
         </div>
       </Surface>

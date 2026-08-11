@@ -539,6 +539,42 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     );
   });
 
+  it("正常桌面宽度优先显示主对话，并让任务与 Trace 独立滚动和随时收起", async () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      })
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(evaluationSession()));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Gi088EvaluationWorkbench />);
+
+    expect(await screen.findByRole("button", { name: "收起任务" })).toBeEnabled();
+    expect(screen.getByTestId("gi088-dialogue-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("gi088-task-scroll")).toHaveClass(
+      "flex-1",
+      "overflow-y-auto"
+    );
+    expect(screen.queryByTestId("gi088-trace-ledger")).not.toBeInTheDocument();
+    expect(screen.getByTestId("gi088-gate-summary")).not.toHaveAttribute("open");
+
+    fireEvent.click(screen.getByRole("button", { name: "查看 Trace · 1 轮" }));
+
+    expect(await screen.findByTestId("gi088-trace-ledger")).toBeInTheDocument();
+    expect(screen.getByTestId("gi088-trace-scroll")).toHaveClass(
+      "flex-1",
+      "overflow-y-auto"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "专注对话" }));
+    expect(screen.queryByTestId("gi088-task-rail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("gi088-trace-ledger")).not.toBeInTheDocument();
+    expect(screen.getByTestId("gi088-dialogue-panel")).toBeInTheDocument();
+  });
+
   it("逐轮复核提交 questionPresence、observation fingerprint 与 operation ID", async () => {
     const value = evaluationSession({ questionReview: true });
     const fetchMock = vi.fn()
