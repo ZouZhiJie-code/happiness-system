@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "GI-088 v8r2 最终 12 项真人评测工作台 | Daily Light",
-  description: "Daily Light 生成式访谈 v8r2 Thinking high V4 Pro 的最终 12 项私有真人评测工作台。",
+  title: "GI-088 v8r3 Skill 与 Ark Flash 真人评测工作台 | Daily Light",
+  description: "Daily Light 生成式访谈 v8r3 Interview Skill、Ark Flash Thinking high 的 4＋2 私有真人评测工作台。",
   robots: { index: false, follow: false }
 };
 

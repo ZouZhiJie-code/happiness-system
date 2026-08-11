@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  GI088_CONFIGS,
-  GI088_DEEPSEEK_PRO_RUNTIME_POLICY,
-  GI088_TIMEOUT_POLICY
+  GI088_DEEPSEEK_PRO_RUNTIME_POLICY
 } from "../../src/server/services/evaluation/gi088/candidate";
 import {
   Gi088ProRuntimeConfigurationError,
@@ -19,22 +17,6 @@ describe("GI-088 v7r4 DeepSeek Pro runtime", () => {
       thinking: "enabled",
       reasoningEffort: "high",
       responseFormat: "json_object"
-    });
-    expect(GI088_CONFIGS.high).toMatchObject({
-      baseUrlHost: "api.deepseek.com",
-      model: "deepseek-v4-pro",
-      thinking: "enabled",
-      reasoningEffort: "high",
-      responseFormat: "json_object",
-      activeInEvaluation: true
-    });
-  });
-
-  it("采用 15 秒响应头、45 秒正文空闲与 60 秒总上限", () => {
-    expect(GI088_TIMEOUT_POLICY).toMatchObject({
-      headersTimeoutMs: 15_000,
-      bodyIdleTimeoutMs: 45_000,
-      hardTimeoutMs: 60_000
     });
   });
 

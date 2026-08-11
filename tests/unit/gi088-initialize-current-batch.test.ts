@@ -16,6 +16,14 @@ import {
 } from "@/server/services/evaluation/gi088/candidate";
 import { Gi088MemoryFoundationStore } from "@/server/services/evaluation/gi088/foundation-memory-store";
 import { Gi088EvaluationFoundationService } from "@/server/services/evaluation/gi088/foundation-service";
+import type { Gi088V8r3OfflineEvaluationEvidence } from "@/server/services/evaluation/gi088/types";
+
+const OFFLINE_EVIDENCE: Gi088V8r3OfflineEvaluationEvidence = {
+  candidateOfflineRunFingerprint: "a".repeat(64),
+  candidateEvidenceFingerprint: "b".repeat(64),
+  admissionFingerprint: null,
+  automaticRecoveryCount: 1
+};
 
 function validEnvironment(): NodeJS.ProcessEnv {
   return {
@@ -23,6 +31,8 @@ function validEnvironment(): NodeJS.ProcessEnv {
     VERCEL_ENV: "preview",
     DATABASE_URL:
       "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=gi088_app_preview",
+    DIRECT_URL:
+      "postgresql://preview:test@direct.preview.example/dailylight_preview?schema=gi088_app_preview",
     EVALUATION_DATABASE_URL:
       "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=gi088_evaluation_v0",
     EVALUATION_DATABASE_URL_UNPOOLED:
@@ -30,7 +40,14 @@ function validEnvironment(): NodeJS.ProcessEnv {
     EVALUATION_POSTGRES_HOST: "pool.preview.example",
     EVALUATION_PGHOST_UNPOOLED: "direct.preview.example",
     EVALUATION_POSTGRES_DATABASE: "dailylight_preview",
-    GI088_EVALUATION_DATABASE_SCHEMA: "gi088_evaluation_v0"
+    GI088_EVALUATION_DATABASE_SCHEMA: "gi088_evaluation_v0",
+    GI088_V8R3_CANDIDATE_OFFLINE_RUN_FINGERPRINT:
+      OFFLINE_EVIDENCE.candidateOfflineRunFingerprint,
+    GI088_V8R3_CANDIDATE_EVIDENCE_FINGERPRINT:
+      OFFLINE_EVIDENCE.candidateEvidenceFingerprint,
+    GI088_V8R3_OFFLINE_AUTOMATIC_RECOVERY_COUNT: String(
+      OFFLINE_EVIDENCE.automaticRecoveryCount
+    )
   };
 }
 
@@ -45,7 +62,8 @@ async function validInitializeReadback() {
     },
     authorizeModelCall: () => {
       throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
-    }
+    },
+    offlineEvaluationEvidence: OFFLINE_EVIDENCE
   });
   const created = await service.createRun({
     ownerUserId: "owner-initialize-readback",
@@ -61,11 +79,12 @@ async function validInitializeReadback() {
     callCount: (await store.listCalls(created.runId)).length,
     expectedRunId: created.runId,
     expectedExecutionFingerprint: executionFingerprint,
-    expectedCandidateFingerprint: candidateFingerprint
+    expectedCandidateFingerprint: candidateFingerprint,
+    expectedOfflineEvaluationEvidence: OFFLINE_EVIDENCE
   };
 }
 
-describe("GI-088 v8r2 zero-model initialize database guard", () => {
+describe("GI-088 v8r3 zero-model initialize database guard", () => {
   it("让 operation ID 随 execution fingerprint 变化并保持同指纹稳定", () => {
     const firstFingerprint = "a".repeat(64);
     const secondFingerprint = "b".repeat(64);
@@ -96,7 +115,8 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
       },
       authorizeModelCall: () => {
         throw new Error("GI088_INITIALIZE_TEST_MODEL_CALL_FORBIDDEN");
-      }
+      },
+      offlineEvaluationEvidence: OFFLINE_EVIDENCE
     });
 
     const first = await service.createRun({
@@ -176,6 +196,7 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
     expect(new URL(result).searchParams.get("schema")).toBe(
       "gi088_evaluation_v0"
     );
+    expect(new URL(result).hostname).toBe("direct.preview.example");
     expect(source.EVALUATION_DATABASE_URL).toContain(
       "schema=gi088_evaluation_v0"
     );
@@ -198,12 +219,35 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
       "GI088_INITIALIZE_APP_DATABASE_CONFIG_MISSING"
     ],
     [
+      "缺失 app 迁移数据库身份",
+      { DIRECT_URL: "" },
+      "GI088_INITIALIZE_APP_DATABASE_CONFIG_MISSING"
+    ],
+    [
+      "缺失 evaluation runtime 数据库身份",
+      { EVALUATION_DATABASE_URL: "" },
+      "GI088_EVALUATION_DATABASE_URL_MISSING"
+    ],
+    [
+      "缺失 evaluation migration 数据库身份",
+      { EVALUATION_DATABASE_URL_UNPOOLED: "" },
+      "GI088_INITIALIZE_DATABASE_CONFIG_MISSING"
+    ],
+    [
       "evaluation schema 错误",
+      {
+        EVALUATION_DATABASE_URL_UNPOOLED:
+          "postgresql://preview:test@direct.preview.example/dailylight_preview?schema=public"
+      },
+      "GI088_INITIALIZE_DATABASE_SCHEMA_MISMATCH"
+    ],
+    [
+      "evaluation runtime schema 错误",
       {
         EVALUATION_DATABASE_URL:
           "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=public"
       },
-      "GI088_INITIALIZE_DATABASE_SCHEMA_MISMATCH"
+      "GI088_EVALUATION_DATABASE_SCHEMA_MISMATCH"
     ],
     [
       "app schema 错误",
@@ -212,6 +256,22 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
           "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=public"
       },
       "GI088_PREVIEW_APP_DATABASE_SCHEMA_MISMATCH"
+    ],
+    [
+      "app migration 使用 pooled host",
+      {
+        DIRECT_URL:
+          "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=gi088_app_preview"
+      },
+      "GI088_PREVIEW_APP_DIRECT_DATABASE_IDENTITY_MISMATCH"
+    ],
+    [
+      "evaluation migration 使用 pooled host",
+      {
+        EVALUATION_DATABASE_URL_UNPOOLED:
+          "postgresql://preview:test@pool.preview.example/dailylight_preview?schema=gi088_evaluation_v0"
+      },
+      "GI088_EVALUATION_DATABASE_UNPOOLED_IDENTITY_MISMATCH"
     ],
     [
       "evaluation host 错误",
@@ -247,7 +307,7 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
     ).toThrow(expectedCode);
   });
 
-  it("只接受当前不可变指纹的 0/12 Thinking high run", async () => {
+  it("只接受当前不可变指纹的 0/6 Thinking high run", async () => {
     const readback = await validInitializeReadback();
 
     expect(() =>
@@ -269,9 +329,95 @@ describe("GI-088 v8r2 zero-model initialize database guard", () => {
       }
     ],
     [
+      "Skill version 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.skillVersion = "stale-skill";
+      }
+    ],
+    [
+      "Skill SHA 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.skillSha256 = "2".repeat(64);
+      }
+    ],
+    [
+      "dataset fingerprint 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.datasetFingerprint = "3".repeat(64);
+      }
+    ],
+    [
+      "behavior manifest 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.behaviorManifestSha256 = "4".repeat(64);
+      }
+    ],
+    [
+      "behavior manifest version 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.behaviorManifestVersion = "stale-manifest";
+      }
+    ],
+    [
+      "runner fingerprint 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.runnerFingerprint = "5".repeat(64);
+      }
+    ],
+    [
+      "experience fingerprint 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.experienceFingerprint = "6".repeat(64);
+      }
+    ],
+    [
+      "model transport 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.modelIdentity!.transport = "unknown";
+      }
+    ],
+    [
+      "model endpoint 漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.evaluation.modelIdentity!.endpoint = "/wrong";
+      }
+    ],
+    [
+      "伪造一致的旧 execution bundle",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.expectedExecutionFingerprint = "7".repeat(64);
+        input.session.evaluation.executionFingerprint = "7".repeat(64);
+      }
+    ],
+    [
       "任务总数漂移",
       (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
-        input.session.batch.totalTasks = 11;
+        input.session.batch.totalTasks = 5;
+      }
+    ],
+    [
+      "离线候选恢复计数漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.batch.offlineEvaluationEvidence!.automaticRecoveryCount = 2;
+      }
+    ],
+    [
+      "离线候选证据指纹漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.batch.offlineEvaluationEvidence!
+          .candidateEvidenceFingerprint = "8".repeat(64);
+      }
+    ],
+    [
+      "合计恢复预算回读漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.batch.recoveryBudget!.combinedAutomaticRecoveryCount = 2;
+      }
+    ],
+    [
+      "任务角色漂移",
+      (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
+        input.session.tasks[4]!.evaluationRole = "scored_trajectory";
       }
     ],
     [

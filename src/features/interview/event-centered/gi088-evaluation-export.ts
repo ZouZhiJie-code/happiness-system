@@ -20,6 +20,12 @@ export type Gi088ExportVerificationResult = {
   >;
 };
 
+export type Gi088PreparedExportDownload = Gi088ExportVerificationResult & {
+  filename: string;
+  url: string;
+  revoke: () => void;
+};
+
 export class Gi088ExportDownloadError extends Error {
   constructor(
     readonly code:
@@ -145,7 +151,12 @@ export async function verifyGi088EvaluationExport(
     };
   }
   const failureReasons: Gi088ExportVerificationResult["failureReasons"] = [];
-  if (value.receipt.exportVersion !== "2026-08-10.gi088-readonly-export-v0.6") {
+  if (
+    value.receipt.exportVersion !==
+      "2026-08-10.gi088-readonly-export-v0.6" &&
+    value.receipt.exportVersion !==
+      "2026-08-11.gi088-readonly-export-v0.7"
+  ) {
     failureReasons.push("UNSUPPORTED_EXPORT_VERSION");
   }
   if (
@@ -187,8 +198,12 @@ export async function downloadVerifiedGi088EvaluationExport(input: {
   runId: string;
   completedTaskCount: number;
   totalTasks: number;
+  signal?: AbortSignal;
 }) {
   const verification = await verifyGi088EvaluationExport(input.envelope);
+  if (input.signal?.aborted) {
+    throw new Gi088ExportDownloadError("GI088_EXPORT_DOWNLOAD_UNAVAILABLE");
+  }
   if (!verification.verified || !validEnvelope(input.envelope)) {
     throw new Gi088ExportDownloadError(
       "GI088_EXPORT_VERIFICATION_FAILED",
@@ -205,20 +220,37 @@ export async function downloadVerifiedGi088EvaluationExport(input: {
     type: "application/json;charset=utf-8"
   });
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = [
+  if (input.signal?.aborted) {
+    URL.revokeObjectURL(url);
+    throw new Gi088ExportDownloadError("GI088_EXPORT_DOWNLOAD_UNAVAILABLE");
+  }
+  const filename = [
     safeFilenamePart(input.evaluationVersion),
     safeFilenamePart(input.runId),
     `${input.completedTaskCount}-of-${input.totalTasks}`
   ].join("-") + ".json";
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
   anchor.hidden = true;
   document.body.append(anchor);
   try {
     anchor.click();
+  } catch {
+    URL.revokeObjectURL(url);
+    throw new Gi088ExportDownloadError("GI088_EXPORT_DOWNLOAD_UNAVAILABLE");
   } finally {
     anchor.remove();
-    URL.revokeObjectURL(url);
   }
-  return verification;
+  let revoked = false;
+  return {
+    ...verification,
+    filename,
+    url,
+    revoke: () => {
+      if (revoked) return;
+      revoked = true;
+      URL.revokeObjectURL(url);
+    }
+  } satisfies Gi088PreparedExportDownload;
 }

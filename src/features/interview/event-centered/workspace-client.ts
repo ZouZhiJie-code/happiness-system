@@ -3,6 +3,7 @@ import type {
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
 import type {
+  EventCenteredRecordMode,
   EventCenteredSessionTabRecord,
   EventCenteredTurnConfirmation
 } from "@/types/event-centered-interview";
@@ -78,11 +79,14 @@ export async function getEventCenteredWorkspace(sessionId: string) {
   return payload as EventCenteredWorkspaceSession;
 }
 
-export async function startEventCenteredWorkspace(entryDate: string) {
+export async function startEventCenteredWorkspace(
+  entryDate: string,
+  recordMode: EventCenteredRecordMode
+) {
   const response = await fetch("/api/interview/event-centered/session/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entryDate })
+    body: JSON.stringify({ entryDate, recordMode })
   });
   const payload = await readJson(response);
   if (!response.ok) {
@@ -160,7 +164,7 @@ export async function generateEventJournal(input: {
     entry: JournalEventEntryRecord;
     workspace: EventCenteredWorkspaceSession;
     generation: {
-      origin: "llm" | "fallback" | "existing";
+      origin: "llm" | "fallback" | "deterministic" | "existing";
       attemptCount: number;
       latencyMs: number;
     };

@@ -367,12 +367,17 @@ async function resolveEffectiveMessagePath(
   return messages;
 }
 
-async function findEventCenteredRootByDate(userId: string, entryDate: Date) {
+async function findEventCenteredRootByDate(
+  userId: string,
+  entryDate: Date,
+  recordMode: "capture" | "chat"
+) {
   return prisma.interviewSession.findFirst({
     where: {
       userId,
       entryDate,
       mode: "event_centered",
+      recordMode,
       parentSessionId: null,
       status: "active"
     },
@@ -414,6 +419,7 @@ async function resolveEventCenteredRoute(
       id: true,
       userId: true,
       entryDate: true,
+      recordMode: true,
       status: true,
       conversationSchemaVersion: true,
       activeBranchSessionId: true,
@@ -469,6 +475,7 @@ function toSessionIdentity(
 
   return {
     mode: "event_centered",
+    recordMode: route.root.recordMode ?? "chat",
     rootSessionId: route.root.id,
     activeBranchSessionId: route.activeBranch.id,
     eventId: event?.id ?? null,
@@ -505,12 +512,14 @@ export async function listEventCenteredSessionTabsByDate(
       rootSessionId: true,
       daySequence: true,
       status: true,
+      rootSession: { select: { recordMode: true } },
       entry: { select: { title: true } }
     },
     orderBy: [{ daySequence: "asc" }, { startedAt: "asc" }]
   });
   return events.map((event) => ({
     rootSessionId: event.rootSessionId,
+    recordMode: event.rootSession?.recordMode ?? "chat",
     label: event.entry?.title.trim() || `事件 ${event.daySequence}`,
     status: event.status
   }));
@@ -619,9 +628,19 @@ export async function getEventCenteredInterviewWorkspaceData(
 export async function startEventCenteredInterviewSession(input: {
   userId: string;
   entryDate: string;
-  openingQuestion: string;
+  recordMode?: "capture" | "chat";
+  openingMessage?: string;
+  /** Historical test/script compatibility; new callers use openingMessage. */
+  openingQuestion?: string;
+  lastAssistantQuestion?: string | null;
 }): Promise<EventCenteredSessionIdentity> {
   const entryDate = parseEntryDateInput(input.entryDate);
+  const recordMode = input.recordMode ?? "chat";
+  const openingMessage =
+    input.openingMessage ?? input.openingQuestion ?? "先从这件事开始吧。刚刚发生了什么？";
+  const lastAssistantQuestion = input.lastAssistantQuestion === undefined
+    ? recordMode === "chat" ? openingMessage : null
+    : input.lastAssistantQuestion;
   const dayMode = await resolveJournalDayMode(input.userId, input.entryDate);
   if (dayMode.kind === "mixed") {
     throw new Error(dayMode.code);
@@ -629,7 +648,11 @@ export async function startEventCenteredInterviewSession(input: {
   if (dayMode.kind === "clean" && dayMode.ownership.primaryMode !== "event_centered") {
     throw new Error("JOURNAL_DAY_MODE_CONFLICT");
   }
-  const existing = await findEventCenteredRootByDate(input.userId, entryDate);
+  const existing = await findEventCenteredRootByDate(
+    input.userId,
+    entryDate,
+    recordMode
+  );
 
   if (existing) {
     const identity = await getEventCenteredSessionIdentity(input.userId, existing.id);
@@ -642,7 +665,7 @@ export async function startEventCenteredInterviewSession(input: {
   const dialogueState = createInitialEventCenteredDialogueState();
   const assistantTurn = {
     naturalUnderstanding: "",
-    naturalResponse: input.openingQuestion,
+    naturalResponse: openingMessage,
     responseKind: "opening" as const,
     questionSpec: null,
     checkpoint: null,
@@ -656,6 +679,7 @@ export async function startEventCenteredInterviewSession(input: {
           id: sessionId,
           userId: input.userId,
           mode: "event_centered",
+          recordMode,
           dimension: null,
           conversationSchemaVersion: EVENT_CENTERED_SCHEMA_VERSION,
           rootSessionId: sessionId,
@@ -663,7 +687,7 @@ export async function startEventCenteredInterviewSession(input: {
           status: "active",
           stage: "collect_event",
           entryDate,
-          lastAssistantQuestion: input.openingQuestion
+          lastAssistantQuestion
         }
       }),
       prisma.interviewEvent.create({
@@ -706,7 +730,7 @@ export async function startEventCenteredInterviewSession(input: {
             stage: "collect_event",
             activeEventId: branchStateId,
             turnCount: 0,
-            lastAssistantQuestion: input.openingQuestion,
+            lastAssistantQuestion,
             draftSummary: null
           },
           eventsState: [
@@ -725,7 +749,11 @@ export async function startEventCenteredInterviewSession(input: {
   } catch (error) {
     if (!isUniqueConflict(error)) throw error;
 
-    const winner = await findEventCenteredRootByDate(input.userId, entryDate);
+    const winner = await findEventCenteredRootByDate(
+      input.userId,
+      entryDate,
+      recordMode
+    );
     if (!winner) throw error;
     const identity = await getEventCenteredSessionIdentity(input.userId, winner.id);
     if (!identity) throw error;

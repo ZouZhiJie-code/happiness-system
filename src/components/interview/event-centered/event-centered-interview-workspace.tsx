@@ -35,11 +35,13 @@ import {
   type EventCenteredJournalOperationRecord,
   type EventCenteredWorkspaceOutboxRecord
 } from "@/features/interview/event-centered/workspace-storage";
+import { writeGi088HelpRecordReceipt } from "@/features/interview/event-centered/gi088-compatibility-receipt";
 import { isEventCenteredJournalRequestText } from "@/features/interview/event-centered/thought-question-policy";
 import type {
   EventCenteredRespondRequest,
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
+import type { EventCenteredRecordMode } from "@/types/event-centered-interview";
 import type { JournalEventEntryRecord } from "@/types/journal-event-entry";
 
 const EVENT_CENTERED_MODE = "event-centered";
@@ -47,6 +49,11 @@ const EVENT_CENTERED_MODE = "event-centered";
 export type EventCenteredWorkspaceHrefOptions = {
   entryDate: string;
   sessionId: string;
+  recordMode?: EventCenteredRecordMode;
+  gi088CompatibilityContext?: {
+    runId: string;
+    taskId: "A5" | "A6";
+  };
   panel?: "journal";
   eventEntryId?: string | null;
 };
@@ -54,6 +61,8 @@ export type EventCenteredWorkspaceHrefOptions = {
 export function buildEventCenteredWorkspaceHref({
   entryDate,
   sessionId,
+  recordMode,
+  gi088CompatibilityContext,
   panel,
   eventEntryId
 }: EventCenteredWorkspaceHrefOptions) {
@@ -62,6 +71,11 @@ export function buildEventCenteredWorkspaceHref({
     sessionId,
     entryDate
   });
+  if (recordMode) params.set("recordMode", recordMode);
+  if (gi088CompatibilityContext) {
+    params.set("gi088RunId", gi088CompatibilityContext.runId);
+    params.set("gi088TaskId", gi088CompatibilityContext.taskId);
+  }
   if (panel === "journal") params.set("panel", "journal");
   if (panel === "journal" && eventEntryId) params.set("eventEntryId", eventEntryId);
   return `/interview?${params.toString()}`;
@@ -96,6 +110,11 @@ async function getEventTabs(entryDate: string): Promise<EventCenteredDialogueTab
 function updateWorkspaceAddress(input: {
   entryDate: string;
   sessionId: string;
+  recordMode: EventCenteredRecordMode;
+  gi088CompatibilityContext?: {
+    runId: string;
+    taskId: "A5" | "A6";
+  };
   journalOpen: boolean;
   eventEntryId: string | null;
 }) {
@@ -103,6 +122,8 @@ function updateWorkspaceAddress(input: {
   const href = buildEventCenteredWorkspaceHref({
     entryDate: input.entryDate,
     sessionId: input.sessionId,
+    recordMode: input.recordMode,
+    gi088CompatibilityContext: input.gi088CompatibilityContext,
     panel: input.journalOpen ? "journal" : undefined,
     eventEntryId: input.eventEntryId
   });
@@ -177,6 +198,8 @@ function canReuseOutbox(input: {
 export function EventCenteredInterviewWorkspace({
   entryDate,
   initialSessionId = null,
+  initialRecordMode = null,
+  gi088CompatibilityContext = null,
   initialJournalPanelOpen = false,
   initialEventEntryId = null,
   writeEnabled = true,
@@ -187,6 +210,11 @@ export function EventCenteredInterviewWorkspace({
 }: {
   entryDate: string;
   initialSessionId?: string | null;
+  initialRecordMode?: EventCenteredRecordMode | null;
+  gi088CompatibilityContext?: {
+    runId: string;
+    taskId: "A5" | "A6";
+  } | null;
   initialJournalPanelOpen?: boolean;
   initialEventEntryId?: string | null;
   writeEnabled?: boolean;
@@ -198,6 +226,12 @@ export function EventCenteredInterviewWorkspace({
   onWorkspaceChange?: (workspace: EventCenteredWorkspaceSession) => void;
 }) {
   const [requestedSessionId, setRequestedSessionId] = useState(initialSessionId);
+  const [requestedRecordMode, setRequestedRecordMode] = useState<EventCenteredRecordMode | null>(
+    initialRecordMode
+  );
+  const [choosingRecordMode, setChoosingRecordMode] = useState(
+    !initialSessionId && !initialRecordMode
+  );
   const [workspace, setWorkspace] = useState<EventCenteredWorkspaceSession | null>(null);
   const [tabs, setTabs] = useState<EventCenteredDialogueTab[]>([]);
   const [draft, setDraft] = useState("");
@@ -223,7 +257,10 @@ export function EventCenteredInterviewWorkspace({
     setTabs(nextTabs);
   }, [entryDate]);
 
-  const loadWorkspace = useCallback(async (sessionId?: string | null) => {
+  const loadWorkspace = useCallback(async (
+    sessionId?: string | null,
+    recordMode: EventCenteredRecordMode | null = requestedRecordMode
+  ) => {
     if (!sessionId && !writeEnabled) {
       setWorkspace(null);
       setNotice({
@@ -233,14 +270,22 @@ export function EventCenteredInterviewWorkspace({
       setLoading(false);
       return;
     }
+    if (!sessionId && !recordMode) {
+      setWorkspace(null);
+      setChoosingRecordMode(true);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     if (sessionId) setSwitchingSession(true);
     setNotice(null);
     try {
       const nextWorkspace = sessionId
         ? await getEventCenteredWorkspace(sessionId)
-        : await startEventCenteredWorkspace(entryDate);
+        : await startEventCenteredWorkspace(entryDate, recordMode!);
       setWorkspace(nextWorkspace);
+      setRequestedRecordMode(nextWorkspace.recordMode);
+      setChoosingRecordMode(false);
       await refreshTabs();
     } catch (error) {
       setWorkspace(null);
@@ -249,17 +294,25 @@ export function EventCenteredInterviewWorkspace({
       setLoading(false);
       setSwitchingSession(false);
     }
-  }, [entryDate, refreshTabs, writeEnabled]);
+  }, [entryDate, refreshTabs, requestedRecordMode, writeEnabled]);
 
   useEffect(() => {
     setRequestedSessionId(initialSessionId);
+    setRequestedRecordMode(initialRecordMode);
+    setChoosingRecordMode(!initialSessionId && !initialRecordMode);
     setJournalOpen(initialJournalPanelOpen);
     setJournalEventEntryId(initialEventEntryId);
     setJournalEntry(null);
     setJournalGenerating(false);
     setJournalNotice(null);
     setDraft("");
-  }, [entryDate, initialEventEntryId, initialJournalPanelOpen, initialSessionId]);
+  }, [
+    entryDate,
+    initialEventEntryId,
+    initialJournalPanelOpen,
+    initialRecordMode,
+    initialSessionId
+  ]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -348,16 +401,34 @@ export function EventCenteredInterviewWorkspace({
     updateWorkspaceAddress({
       entryDate,
       sessionId: workspace.rootSessionId,
+      recordMode: workspace.recordMode,
+      gi088CompatibilityContext: gi088CompatibilityContext ?? undefined,
       journalOpen,
       eventEntryId: journalEventEntryId
     });
-  }, [entryDate, journalEventEntryId, journalOpen, syncAddress, workspace]);
+  }, [
+    entryDate,
+    gi088CompatibilityContext,
+    journalEventEntryId,
+    journalOpen,
+    syncAddress,
+    workspace
+  ]);
 
   const canCreateEvent = Boolean(
     writeEnabled &&
       (workspace?.sessionStatus === "completed" || workspace?.sessionStatus === "abandoned") &&
       (workspace.eventStatus === "completed" || workspace.eventStatus === "abandoned")
   );
+
+  const rememberGi088CompatibilityReceipt = useCallback((value: EventCenteredWorkspaceSession) => {
+    if (!gi088CompatibilityContext || value.recordMode !== "capture") return;
+    writeGi088HelpRecordReceipt({
+      ...gi088CompatibilityContext,
+      productSessionId: value.rootSessionId,
+      recordedAt: new Date().toISOString()
+    });
+  }, [gi088CompatibilityContext]);
 
   const performAction = useCallback(async (action: EventCenteredDialogueWorkspaceAction) => {
     if (!workspace || busy || switchingSession || !writeEnabled) return;
@@ -403,6 +474,7 @@ export function EventCenteredInterviewWorkspace({
         onSession: setWorkspace
       });
       setWorkspace(nextWorkspace);
+      rememberGi088CompatibilityReceipt(nextWorkspace);
       setStreamPreview(null);
       clearEventCenteredWorkspaceOutbox(scope);
       setOutbox(null);
@@ -414,6 +486,7 @@ export function EventCenteredInterviewWorkspace({
         try {
           const recoveredWorkspace = await getEventCenteredWorkspace(workspace.rootSessionId);
           setWorkspace(recoveredWorkspace);
+          rememberGi088CompatibilityReceipt(recoveredWorkspace);
           await refreshTabs();
           return;
         } catch {
@@ -432,7 +505,15 @@ export function EventCenteredInterviewWorkspace({
     } finally {
       setBusy(false);
     }
-  }, [busy, outbox, refreshTabs, switchingSession, workspace, writeEnabled]);
+  }, [
+    busy,
+    outbox,
+    refreshTabs,
+    rememberGi088CompatibilityReceipt,
+    switchingSession,
+    workspace,
+    writeEnabled
+  ]);
 
   const generateCurrentJournal = useCallback(async (
     recoveryOperation?: EventCenteredJournalOperationRecord | null
@@ -474,6 +555,8 @@ export function EventCenteredInterviewWorkspace({
       updateWorkspaceAddress({
         entryDate,
         sessionId: operation.rootSessionId,
+        recordMode: result.workspace.recordMode,
+        gi088CompatibilityContext: gi088CompatibilityContext ?? undefined,
         journalOpen: true,
         eventEntryId: result.entry.id
       });
@@ -495,7 +578,15 @@ export function EventCenteredInterviewWorkspace({
     } finally {
       setJournalGenerating(false);
     }
-  }, [entryDate, journalGenerating, refreshTabs, switchingSession, workspace, writeEnabled]);
+  }, [
+    entryDate,
+    gi088CompatibilityContext,
+    journalGenerating,
+    refreshTabs,
+    switchingSession,
+    workspace,
+    writeEnabled
+  ]);
 
   useEffect(() => {
     if (!workspace || workspace.journal.status !== "generating" || journalGenerating) return;
@@ -548,6 +639,8 @@ export function EventCenteredInterviewWorkspace({
       updateWorkspaceAddress({
         entryDate,
         sessionId: activeWorkspace.rootSessionId,
+        recordMode: activeWorkspace.recordMode,
+        gi088CompatibilityContext: gi088CompatibilityContext ?? undefined,
         journalOpen: true,
         eventEntryId: entry.id
       });
@@ -557,34 +650,29 @@ export function EventCenteredInterviewWorkspace({
       setJournalNotice(toWorkspaceNotice(error));
       throw error;
     }
-  }, [entryDate, refreshTabs, workspace]);
+  }, [entryDate, gi088CompatibilityContext, refreshTabs, workspace]);
 
-  async function createNextEvent() {
+  function createNextEvent() {
     if (!canCreateEvent || busy) return;
-    setBusy(true);
     setNotice(null);
-    try {
-      const nextWorkspace = await startEventCenteredWorkspace(entryDate);
-      setWorkspace(nextWorkspace);
-      setRequestedSessionId(nextWorkspace.rootSessionId);
-      setDraft("");
-      setOutbox(null);
-      setJournalOpen(false);
-      setJournalEventEntryId(null);
-      setJournalEntry(null);
-      setJournalNotice(null);
-      resumedJournalOperationRef.current = null;
-      updateWorkspaceAddress({
-        entryDate,
-        sessionId: nextWorkspace.rootSessionId,
-        journalOpen: false,
-        eventEntryId: null
+    setWorkspace(null);
+    setRequestedSessionId(null);
+    setRequestedRecordMode(null);
+    setChoosingRecordMode(true);
+    setLoading(false);
+    setDraft("");
+    setOutbox(null);
+    setJournalOpen(false);
+    setJournalEventEntryId(null);
+    setJournalEntry(null);
+    setJournalNotice(null);
+    resumedJournalOperationRef.current = null;
+    if (syncAddress && typeof window !== "undefined") {
+      const params = new URLSearchParams({
+        mode: EVENT_CENTERED_MODE,
+        entryDate
       });
-      await refreshTabs();
-    } catch (error) {
-      setNotice(toWorkspaceNotice(error));
-    } finally {
-      setBusy(false);
+      window.history.replaceState(window.history.state, "", `/interview?${params.toString()}`);
     }
   }
 
@@ -593,7 +681,11 @@ export function EventCenteredInterviewWorkspace({
       await generateCurrentJournal();
       return;
     }
-    if (action.action === "reply" && isEventCenteredJournalRequestText(action.rawText)) {
+    if (
+      workspace?.recordMode === "chat" &&
+      action.action === "reply" &&
+      isEventCenteredJournalRequestText(action.rawText)
+    ) {
       await generateCurrentJournal();
       return;
     }
@@ -607,7 +699,7 @@ export function EventCenteredInterviewWorkspace({
         action.action === "correct_understanding"
       ) throw error;
     }
-  }, [generateCurrentJournal, performAction]);
+  }, [generateCurrentJournal, performAction, workspace?.recordMode]);
 
   const handleComposerDraftChange = useCallback((nextDraft: string) => {
     setDraft(nextDraft);
@@ -619,6 +711,50 @@ export function EventCenteredInterviewWorkspace({
       <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
         <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0">
           <p role="status" className="text-sm text-[var(--text-dim)]">正在恢复这件事…</p>
+        </Surface>
+      </div>
+    );
+  }
+
+  if (!workspace && choosingRecordMode && writeEnabled) {
+    const chooseRecordMode = (recordMode: EventCenteredRecordMode) => {
+      setRequestedRecordMode(recordMode);
+      setChoosingRecordMode(false);
+      setLoading(true);
+      setNotice(null);
+    };
+    return (
+      <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
+        <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0 p-6">
+          <div data-testid="event-centered-record-mode-picker" className="w-full max-w-2xl">
+            <p className="text-xs font-medium tracking-[0.12em] text-[var(--text-faint)]">新记录</p>
+            <h1 className="mt-2 text-2xl font-semibold text-ink">这次想怎么记录</h1>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-dim)]">
+              每条新记录单独选择方式，进入后会一直保持当前方式。
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => chooseRecordMode("capture")}
+                className="min-h-28 rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-[var(--paper-soft)] p-5 text-left transition hover:border-[var(--line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
+              >
+                <span className="block text-lg font-semibold text-ink">帮我记</span>
+                <span className="mt-2 block text-sm leading-6 text-[var(--text-dim)]">
+                  原话可靠保存，AI 只轻轻承接，不追问。
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseRecordMode("chat")}
+                className="min-h-28 rounded-[var(--radius-card)] border border-[var(--line-soft)] p-5 text-left transition hover:bg-[var(--paper-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
+              >
+                <span className="block text-lg font-semibold text-ink">陪我聊</span>
+                <span className="mt-2 block text-sm leading-6 text-[var(--text-dim)]">
+                  围绕当前这件事回应、追问和整理。
+                </span>
+              </button>
+            </div>
+          </div>
         </Surface>
       </div>
     );
@@ -673,11 +809,12 @@ export function EventCenteredInterviewWorkspace({
         onUpdateJournal={updateCurrentJournal}
         onSaveJournal={saveCurrentJournal}
         onAction={handleViewAction}
-        onCreateEvent={() => void createNextEvent()}
+        onCreateEvent={createNextEvent}
         onSelectTab={(rootSessionId) => {
           if (rootSessionId === workspace.rootSessionId) return;
           const selectedTab = tabs.find((tab) => tab.rootSessionId === rootSessionId);
           setRequestedSessionId(rootSessionId);
+          setRequestedRecordMode(selectedTab?.recordMode ?? null);
           setJournalOpen(selectedTab?.status === "completed");
           setJournalEventEntryId(null);
           setJournalEntry(null);

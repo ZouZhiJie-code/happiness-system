@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 import {
   Prisma,
@@ -18,6 +18,7 @@ import {
   createGi088ExecutionFingerprint,
   getGi088CandidateAssets
 } from "./candidate";
+import { createGi088ArkProvider } from "./ark-runtime";
 import type { Gi088BranchKey } from "./types";
 import type {
   AICompletionParams,
@@ -31,9 +32,11 @@ import {
   sanitizeAICompletionTokenUsage,
   sanitizeAIProviderDiagnostics
 } from "@/server/services/ai/ai-provider";
-import { resolveEventCenteredCandidateProviderConfig } from "@/server/services/ai/event-centered-provider";
-import { createRuntimeAIProvider } from "@/server/services/ai/runtime-provider-factory";
+import { createGi088ModelRequestHash } from "@/server/services/evaluation/gi088/request-identity";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
+import {
+  applyGi088SingleFocusValidationPolicy
+} from "@/server/services/evaluation/gi088/single-focus";
 import {
   createGi088StageTransitionUserPrompt,
   validateGi088StageTransitionOutput
@@ -294,10 +297,6 @@ export class Gi088MemoryTechnicalSmokeStore implements Gi088TechnicalSmokeStore 
   }
 }
 
-function sha256(value: string) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 function smokeTurnInput(): Board7bWorkingTaskV1TurnInput {
   return {
     mode: "accompany_chat",
@@ -335,13 +334,7 @@ function completionParams(arm: Gi088BranchKey): AICompletionParams {
 }
 
 function defaultProvider() {
-  const resolved = resolveEventCenteredCandidateProviderConfig(process.env);
-  return createRuntimeAIProvider({
-    capability: "chat",
-    apiKey: resolved.apiKey,
-    config: resolved.runtimeConfig,
-    timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs
-  });
+  return createGi088ArkProvider(process.env);
 }
 
 export async function runGi088TechnicalSmoke(input: {
@@ -352,7 +345,7 @@ export async function runGi088TechnicalSmoke(input: {
 }) {
   const executionFingerprint = createGi088ExecutionFingerprint();
   const params = completionParams(input.arm);
-  const requestHash = sha256(JSON.stringify(params));
+  const requestHash = createGi088ModelRequestHash(params);
   const reservation = await input.store.reserve({
     executionFingerprint,
     arm: input.arm,
@@ -385,13 +378,20 @@ export async function runGi088TechnicalSmoke(input: {
       turnInput,
       output
     );
+    const semanticIssues = validateGi088SemanticDeltaOutput({
+      input: turnInput,
+      output
+    });
     const issues = [
-      ...validateGi088SemanticDeltaOutput({ input: turnInput, output }),
+      ...applyGi088SingleFocusValidationPolicy({
+        output: compatibility,
+        issues: semanticIssues
+      }),
       ...validateGi088StageTransitionOutput({
         input: turnInput,
         output: compatibility
       })
-    ].filter((issue) => !/^ASK_QUESTION_COUNT_INVALID:\d+$/u.test(issue));
+    ];
     return input.store.finish(reservation.record.id, {
       status: issues.length ? "protected_failure" : "valid",
       rawFinalOutput: completion.content,

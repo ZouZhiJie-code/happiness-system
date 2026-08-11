@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { webcrypto } from "node:crypto";
 import { vi } from "vitest";
 
@@ -19,10 +19,13 @@ import {
   readGi088EvaluationDraft,
   writeGi088EvaluationDraft
 } from "@/features/interview/event-centered/gi088-evaluation-storage";
+import { writeGi088HelpRecordReceipt } from "@/features/interview/event-centered/gi088-compatibility-receipt";
+import { createGi088ExportEnvelope } from "@/server/services/evaluation/gi088/export-v06";
 
 function taskList(firstStatus: Gi088TaskSummary["status"]): Gi088TaskSummary[] {
   return Array.from({ length: 12 }, (_, index) => ({
     id: `A${index + 1}`,
+    evaluationRole: "scored_trajectory" as const,
     capabilityId: `A${index + 1}`,
     title: index === 0 ? "事件内沟通负担不误停" : `评测任务 ${index + 1}`,
     instruction: `只供评测人查看的任务说明 ${index + 1}`,
@@ -30,7 +33,8 @@ function taskList(firstStatus: Gi088TaskSummary["status"]): Gi088TaskSummary[] {
     criterion: `任务判定标准 ${index + 1}`,
     repeatOf: null,
     status: index === 0 ? firstStatus : "locked",
-    targetTriggers: { off: null, high: null }
+    targetTriggers: { off: null, high: null },
+    compatibilitySmoke: null
   }));
 }
 
@@ -122,12 +126,26 @@ function evaluationSession(input: {
   questionReview?: boolean;
   readOnly?: boolean;
   intervention?: Gi088ProgramIntervention;
+  compatibility?: boolean;
 } = {}): Gi088EvaluationSession {
   const active = input.active ?? true;
   const high = trajectory(active ? "running" : "not_started", {
     processing: input.processing,
     questionReview: input.questionReview
   });
+  const tasks = input.compatibility
+    ? taskList("locked").slice(0, 6).map((task, index) => ({
+        ...task,
+        evaluationRole: index >= 4
+          ? "compatibility_smoke" as const
+          : "scored_trajectory" as const,
+        status: index < 4
+          ? "completed" as const
+          : index === 4
+            ? "ready" as const
+            : "locked" as const
+      }))
+    : taskList(active ? "active" : "ready");
   return {
     evaluation: {
       id: "gi088-human-eval-v8r2",
@@ -144,14 +162,14 @@ function evaluationSession(input: {
       runOrdinal: 1,
       revision: 3,
       status: "running",
-      completedTaskCount: 0,
-      totalTasks: 12,
+      completedTaskCount: input.compatibility ? 4 : 0,
+      totalTasks: input.compatibility ? 6 : 12,
       sealedAt: null,
       earlyStop: null,
       targetCoverage: {
         triggeredTrajectoryCount: 0,
         reviewedTrajectoryCount: 0,
-        totalTrajectoryCount: 12
+        totalTrajectoryCount: input.compatibility ? 4 : 12
       },
       gate: {
         status: input.intervention?.reviewOutcome === "false_positive"
@@ -163,8 +181,8 @@ function evaluationSession(input: {
       readOnly: input.readOnly ?? false,
       readOnlyReason: input.readOnly ? "execution_fingerprint_mismatch" : null
     },
-    tasks: taskList(active ? "active" : "ready"),
-    activeTask: active ? {
+    tasks,
+    activeTask: active && !input.compatibility ? {
       taskId: "A1",
       frozenStart: {
         opening: "此刻你想聊点什么？",
@@ -228,16 +246,19 @@ function installBrowserGlobals() {
   });
 }
 
-describe("GI-088 v8r2 evaluation workbench", () => {
+describe("GI-088 evaluation workbench", () => {
   beforeEach(() => {
     installBrowserGlobals();
     window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   it("先读取运行列表，并用显式 runId 呈现当前运行", async () => {
@@ -251,6 +272,146 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect(fetchMock.mock.calls[0]![0]).toBe("/api/preview/gi088/runs");
     expect(screen.getByLabelText("当前运行")).toHaveValue("run-1");
     expect(screen.getByTestId("gi088-gate-summary")).toHaveTextContent("gate=pending");
+    expect(screen.getByRole("button", { name: "结束本批后可下载" }))
+      .toBeDisabled();
+  });
+
+  it("终态导出先显示校验状态，再保留真实的保存 JSON 链接", async () => {
+    const value = evaluationSession({ active: false });
+    value.batch.status = "early_stopped";
+    value.batch.earlyStop = {
+      reasonCode: "sufficient_evidence",
+      reason: "证据已经足够",
+      stoppedAt: "2026-08-11T00:00:00.000Z",
+      completedTaskIds: [],
+      remainingTaskIds: value.tasks.map((task) => task.id)
+    };
+    const envelope = createGi088ExportEnvelope({
+      payload: { runId: "run-1", tasks: [] }
+    });
+    let finishExport!: (response: Response) => void;
+    const exportResponse = new Promise<Response>((resolve) => {
+      finishExport = resolve;
+    });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(value))
+      .mockReturnValueOnce(exportResponse);
+    vi.stubGlobal("fetch", fetchMock);
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:gi088-terminal")
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn()
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    render(<Gi088EvaluationWorkbench />);
+    const downloadButton = await screen.findByRole("button", {
+      name: "下载已验证 JSON"
+    });
+    act(() => {
+      downloadButton.click();
+      downloadButton.click();
+    });
+
+    expect(screen.getByText("正在校验不可变收据并准备文件…"))
+      .toBeInTheDocument();
+    expect(screen.getByLabelText("当前运行")).toBeDisabled();
+    const exportCalls = fetchMock.mock.calls.filter(
+      ([url]) => url === "/api/preview/gi088/export?runId=run-1"
+    );
+    expect(exportCalls).toHaveLength(1);
+    await act(async () => {
+      finishExport(jsonResponse(envelope));
+    });
+
+    const fallback = await screen.findByRole("link", { name: "保存 JSON" });
+    expect(fallback).toHaveAttribute("href", "blob:gi088-terminal");
+    expect(fallback).toHaveAttribute("download", expect.stringContaining(
+      "run-1-0-of-12.json"
+    ));
+    expect(exportCalls[0]![0]).toBe("/api/preview/gi088/export?runId=run-1");
+  });
+
+  it("兼容冒烟只开放真实帮我记入口与零模型结果登记", async () => {
+    const value = evaluationSession({ active: false, compatibility: true });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(value));
+    vi.stubGlobal("fetch", fetchMock);
+    writeGi088HelpRecordReceipt({
+      runId: "run-1",
+      taskId: "A5",
+      productSessionId: "capture-session-a5",
+      recordedAt: "2026-08-11T00:00:00.000Z"
+    });
+
+    render(<Gi088EvaluationWorkbench />);
+
+    const entry = await screen.findByRole("link", {
+      name: "打开【帮我记】兼容入口"
+    });
+    expect(entry).toHaveAttribute(
+      "href",
+      "/interview?mode=event-centered&recordMode=capture&gi088RunId=run-1&gi088TaskId=A5"
+    );
+    expect(screen.getByText(/已检测到本项真实【帮我记】记录/))
+      .toBeInTheDocument();
+    expect(screen.queryByRole("button", {
+      name: "开始 Thinking high 评测"
+    })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "通过：模式、承接和零追问都符合"
+    }));
+    fireEvent.change(screen.getByLabelText("观察理由（必填）"), {
+      target: { value: "入口显示帮我记，回应零问号，模式保持。" }
+    });
+    fireEvent.click(screen.getByRole("button", {
+      name: "保存本项兼容结果"
+    }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1]![0]).toBe(
+      "/api/preview/gi088/compatibility-smoke"
+    );
+    expect(JSON.parse(String(fetchMock.mock.calls[1]![1]?.body))).toMatchObject({
+      runId: "run-1",
+      taskId: "A5",
+      outcome: "passed",
+      reason: "入口显示帮我记，回应零问号，模式保持。",
+      productSessionId: "capture-session-a5"
+    });
+    expect(fetchMock.mock.calls.every(([path]) =>
+      !String(path).includes("/start-task") &&
+      !String(path).includes("/turn") &&
+      !String(path).includes("/retry")
+    )).toBe(true);
+  });
+
+  it("兼容冒烟通过结论等待真实帮我记收据，失败结论仍可如实登记", async () => {
+    const value = evaluationSession({ active: false, compatibility: true });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(value)));
+
+    render(<Gi088EvaluationWorkbench />);
+
+    expect(await screen.findByText(/等待真实【帮我记】记录/))
+      .toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", {
+      name: "通过：模式、承接和零追问都符合"
+    }));
+    fireEvent.change(screen.getByLabelText("观察理由（必填）"), {
+      target: { value: "尚未形成可核验记录。" }
+    });
+    expect(screen.getByRole("button", { name: "保存本项兼容结果" }))
+      .toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "失败：入口、模式或回应存在问题"
+    }));
+    expect(screen.getByRole("button", { name: "保存本项兼容结果" }))
+      .toBeEnabled();
   });
 
   it("运行列表只返回摘要时，以显式 runId GET session 且不产生写请求", async () => {
@@ -307,7 +468,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<Gi088EvaluationWorkbench />);
-    fireEvent.click(await screen.findByRole("button", { name: "创建 0/12 运行" }));
+    fireEvent.click(await screen.findByRole("button", { name: "创建 0/6 运行" }));
 
     await screen.findByRole("heading", { name: "持续聊下去，也能随时回看和纠正" });
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
@@ -375,9 +536,14 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
-    expect(fetchMock.mock.calls[1]![0]).toBe("/api/preview/gi088/turn");
+    await waitFor(() => expect(fetchMock.mock.calls.some(([path]) =>
+      path === "/api/preview/gi088/turn"
+    )).toBe(true));
+    const turnCalls = fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/turn"
+    );
+    expect(turnCalls).toHaveLength(1);
+    const body = JSON.parse(String((turnCalls[0]![1] as RequestInit).body));
     expect(body).toMatchObject({
       runId: "run-1",
       taskId: "A1",
@@ -422,10 +588,23 @@ describe("GI-088 v8r2 evaluation workbench", () => {
   it("流响应丢失后复用 unresolved outbox 的 clientTurnId", async () => {
     const ready = evaluationSession({ active: false });
     const started = evaluationSession();
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse(ready))
-      .mockRejectedValueOnce(new Error("stream lost"))
-      .mockResolvedValueOnce(jsonResponse(started));
+    let startAttempt = 0;
+    const fetchMock = vi.fn((path: string, init?: RequestInit) => {
+      void init;
+      if (path === "/api/preview/gi088/runs") {
+        return Promise.resolve(jsonResponse(ready));
+      }
+      if (path === "/api/preview/gi088/start-task") {
+        startAttempt += 1;
+        return startAttempt === 1
+          ? Promise.reject(new Error("stream lost"))
+          : Promise.resolve(jsonResponse(started));
+      }
+      if (path === "/api/preview/gi088/operation-events") {
+        return Promise.resolve(jsonResponse({ recorded: true }));
+      }
+      return Promise.reject(new Error(`unexpected request: ${path}`));
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
@@ -433,12 +612,22 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       target: { value: "跟奶奶解释很累，但我还是想让她理解我。" }
     });
     fireEvent.click(screen.getByRole("button", { name: "开始 Thinking high 评测" }));
-    await screen.findByText("评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。");
+    await screen.findByText(
+      "评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。",
+      {},
+      { timeout: 5_000 }
+    );
     fireEvent.click(screen.getByRole("button", { name: "开始 Thinking high 评测" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-    const first = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
-    const second = JSON.parse(String((fetchMock.mock.calls[2]![1] as RequestInit).body));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/start-task"
+    )).toHaveLength(2));
+    const startCalls = fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/start-task"
+    );
+    const first = JSON.parse(String((startCalls[0]![1] as RequestInit).body));
+    const second = JSON.parse(String((startCalls[1]![1] as RequestInit).body));
+    expect(startAttempt).toBe(2);
     expect(Object.keys(first).sort()).toEqual([
       "action",
       "clientOperationId",
@@ -450,9 +639,10 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect(first.clientOperationId).toBe(second.clientOperationId);
     expect(first.clientOperationId).toMatch(/^gi088-turn-/u);
     expect(window.sessionStorage.getItem(GI088_OUTBOX_MAP_STORAGE_KEY)).toBeNull();
-  });
+  }, 15_000);
 
   it("processing 期间每 2 秒只 GET session，不发 automatic retry POST", async () => {
+    vi.useFakeTimers();
     const pending = evaluationSession({ processing: true });
     const settled = evaluationSession();
     const fetchMock = vi.fn()
@@ -461,10 +651,19 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
-    await screen.findByText(/正在自动重试/u);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2), {
-      timeout: 3_500
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
     });
+    const waitStatus = screen.getByTestId("gi088-authoritative-wait-status");
+    expect(waitStatus).toHaveTextContent("连接已恢复，正在自动生成");
+    expect(screen.getAllByTestId("gi088-authoritative-wait-status")).toHaveLength(1);
+    expect(screen.getAllByRole("status").filter((node) =>
+      node.hasAttribute("aria-live")
+    )).toHaveLength(1);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls.map(([path]) => path)).toEqual([
       "/api/preview/gi088/runs",
       "/api/preview/gi088/session?runId=run-1&taskId=A1"
@@ -474,6 +673,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
   }, 5_000);
 
   it("自动恢复收口为 manual_available 后停止等待并开放人工恢复", async () => {
+    vi.useFakeTimers();
     const processing = evaluationSession({ processing: true });
     const settled = evaluationSession();
     const high = settled.activeTask!.branches.high;
@@ -501,18 +701,20 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
-    await screen.findByText(/正在自动重试/u);
-    expect(await screen.findByRole(
-      "button",
-      { name: "再次生成" },
-      { timeout: 3_500 }
-    ))
-      .toBeEnabled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByTestId("gi088-authoritative-wait-status"))
+      .toHaveTextContent("连接已恢复，正在自动生成");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
+    });
+    expect(screen.getByRole("button", { name: "再次生成" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "安全终止当前任务" }))
       .toBeEnabled();
     expect(screen.queryByText("当前模型调用仍在执行，调用收口后才能终止任务。"))
       .not.toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   }, 5_000);
 
   it("安全终止后点击下一项直接回到可开始状态", async () => {
@@ -553,18 +755,27 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
     render(<Gi088EvaluationWorkbench />);
 
-    expect(await screen.findByRole("button", { name: "收起任务" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "查看任务 · 0/12" })).toBeEnabled();
     expect(screen.getByTestId("gi088-dialogue-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("gi088-task-rail")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "查看任务 · 0/12" }));
     expect(screen.getByTestId("gi088-task-scroll")).toHaveClass(
       "flex-1",
       "overflow-y-auto"
     );
     expect(screen.queryByTestId("gi088-trace-ledger")).not.toBeInTheDocument();
-    expect(screen.getByTestId("gi088-gate-summary")).not.toHaveAttribute("open");
+    expect(screen.queryByTestId("gi088-gate-summary")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", {
+      name: "运行详情 · gate=pending"
+    }));
+    expect(screen.getByTestId("gi088-gate-summary")).toHaveAttribute("open");
+    expect(screen.queryByTestId("gi088-task-rail")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "查看 Trace · 1 轮" }));
 
     expect(await screen.findByTestId("gi088-trace-ledger")).toBeInTheDocument();
+    expect(screen.queryByTestId("gi088-task-rail")).not.toBeInTheDocument();
     expect(screen.getByTestId("gi088-trace-scroll")).toHaveClass(
       "flex-1",
       "overflow-y-auto"
@@ -586,6 +797,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     await screen.findByTestId("gi088-question-review");
     fireEvent.click(screen.getByRole("button", { name: "包含提问" }));
     fireEvent.click(await screen.findByRole("button", { name: "同一焦点，容易回答" }));
+    fireEvent.click(screen.getByRole("button", { name: "推进当前共同任务" }));
     fireEvent.click(screen.getByRole("button", { name: "保存本轮分类" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -595,6 +807,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       turnId: "turn-high-1",
       questionPresence: "present",
       classification: "same_focus_low_burden",
+      valueClassification: "advances_working_task",
       observationFingerprint: "question-fingerprint-1"
     });
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
@@ -675,7 +888,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
   });
 
-  it("历史运行保持对话只读，同时全局保留验签下载入口", async () => {
+  it("历史运行保持对话只读，运行结束前不生成首次不可变导出", async () => {
     const value = evaluationSession({ readOnly: true });
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(value));
     vi.stubGlobal("fetch", fetchMock);
@@ -683,7 +896,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
     expect(await screen.findByText(/历史只读/u)).toBeInTheDocument();
     expect(screen.queryByLabelText("继续自然交流")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "下载已验证 JSON" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "结束本批后可下载" })).toBeDisabled();
     expect(screen.getByText("只读回看")).toBeInTheDocument();
     expect(screen.queryByTestId("gi088-technical-smoke-panel"))
       .not.toBeInTheDocument();
@@ -734,20 +947,32 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
   it("typed issue.action=read_latest_state 只读取最新 session", async () => {
     const value = evaluationSession();
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse(value))
-      .mockResolvedValueOnce(jsonResponse({
-        issue: {
-          code: "GI088_TURN_OUT_OF_DATE",
-          message: "所见对话已经更新，请先读取最新状态。",
-          retryable: false,
-          dataSaved: "no",
-          impact: "turn",
-          action: "read_latest_state",
-          requestId: "request-1"
-        }
-      }, 409))
-      .mockResolvedValueOnce(jsonResponse(value));
+    const fetchMock = vi.fn((path: string, init?: RequestInit) => {
+      void init;
+      if (path === "/api/preview/gi088/runs") {
+        return Promise.resolve(jsonResponse(value));
+      }
+      if (path === "/api/preview/gi088/turn") {
+        return Promise.resolve(jsonResponse({
+          issue: {
+            code: "GI088_TURN_OUT_OF_DATE",
+            message: "所见对话已经更新，请先读取最新状态。",
+            retryable: false,
+            dataSaved: "no",
+            impact: "turn",
+            action: "read_latest_state",
+            requestId: "request-1"
+          }
+        }, 409));
+      }
+      if (path === "/api/preview/gi088/session?runId=run-1&taskId=A1") {
+        return Promise.resolve(jsonResponse(value));
+      }
+      if (path === "/api/preview/gi088/operation-events") {
+        return Promise.resolve(jsonResponse({ recorded: true }));
+      }
+      return Promise.reject(new Error(`unexpected request: ${path}`));
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
@@ -757,11 +982,17 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
     fireEvent.click(await screen.findByRole("button", { name: "读取最新状态" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-    expect(fetchMock.mock.calls[2]![0]).toBe(
-      "/api/preview/gi088/session?runId=run-1&taskId=A1"
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/session?runId=run-1&taskId=A1"
+    )).toHaveLength(1));
+    const turnCalls = fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/turn"
     );
-    expect(fetchMock.mock.calls[2]![1]).toMatchObject({ cache: "no-store" });
-    expect((fetchMock.mock.calls[2]![1] as RequestInit).method).toBeUndefined();
+    const sessionCalls = fetchMock.mock.calls.filter(([path]) =>
+      path === "/api/preview/gi088/session?runId=run-1&taskId=A1"
+    );
+    expect(turnCalls).toHaveLength(1);
+    expect(sessionCalls[0]![1]).toMatchObject({ cache: "no-store" });
+    expect((sessionCalls[0]![1] as RequestInit).method).toBeUndefined();
   });
 });

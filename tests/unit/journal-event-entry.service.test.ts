@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   assertEventCenteredWriteAllowed: vi.fn(),
+  createCaptureJournalEventEntry: vi.fn(),
   reserveJournalEventEntryGeneration: vi.fn(),
   completeJournalEventEntryGeneration: vi.fn(),
   failJournalEventEntryGeneration: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/features/interview/event-centered-release", () => ({
   assertEventCenteredWriteAllowed: mocks.assertEventCenteredWriteAllowed
 }));
 vi.mock("@/server/repositories/journal-event-entry.repository", () => ({
+  createCaptureJournalEventEntry: mocks.createCaptureJournalEventEntry,
   reserveJournalEventEntryGeneration: mocks.reserveJournalEventEntryGeneration,
   completeJournalEventEntryGeneration: mocks.completeJournalEventEntryGeneration,
   failJournalEventEntryGeneration: mocks.failJournalEventEntryGeneration,
@@ -158,6 +160,72 @@ describe("journal event entry service", () => {
     mocks.recordAIInvocation.mockResolvedValue(undefined);
     mocks.recordEventCenteredAnalyticsEvent.mockResolvedValue(undefined);
     mocks.failJournalEventEntryGeneration.mockResolvedValue(undefined);
+  });
+
+  it("帮我记绕过认识门与 Provider，直接从用户原话生成确定性草稿", async () => {
+    const captureEntry = entry({
+      currentGenerationTraceId: null,
+      generationId: null,
+      title: "把边界说清楚",
+      content: "今天把边界说清楚了。\n\n我是不是终于敢表达了？",
+      generationOrigin: "deterministic",
+      sourceFactIds: [],
+      sourceAngleOutcomeIds: [],
+      sourceSnapshot: sourceSnapshot({
+        recordMode: "capture",
+        messages: [
+          { id: "message-1", role: "user", sequence: 1, content: "今天把边界说清楚了。" },
+          { id: "message-2", role: "user", sequence: 3, content: "我是不是终于敢表达了？" }
+        ]
+      })
+    });
+    const activeCapture = {
+      ...workspace(),
+      recordMode: "capture" as const,
+      dialogue: {
+        ...workspace().dialogue,
+        allowedActions: ["reply"]
+      }
+    };
+    const completedCapture = {
+      ...activeCapture,
+      sessionStatus: "completed" as const,
+      eventStatus: "completed" as const,
+      journal: { status: "draft" as const, entryId: captureEntry.id, eventStatus: "completed" as const }
+    };
+    mocks.getEventCenteredInterviewWorkspace
+      .mockResolvedValueOnce(activeCapture)
+      .mockResolvedValueOnce(completedCapture);
+    mocks.createCaptureJournalEventEntry.mockResolvedValue(captureEntry);
+
+    const result = await generateJournalEventEntry({
+      userId: "user-1",
+      rootSessionId: "root-1",
+      baseBranchSessionId: "branch-1",
+      baseMessageSequence: 6,
+      clientOperationId: "capture-journal-1"
+    });
+
+    expect(result.generation).toMatchObject({
+      origin: "deterministic",
+      attemptCount: 0
+    });
+    expect(result.entry.sourceSnapshot.messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: "user", content: "今天把边界说清楚了。" }),
+        expect.objectContaining({ role: "user", content: "我是不是终于敢表达了？" })
+      ])
+    );
+    expect(mocks.createCaptureJournalEventEntry).toHaveBeenCalledWith({
+      userId: "user-1",
+      eventId: "event-1",
+      activeBranchSessionId: "branch-1",
+      clientOperationId: "capture-journal-1",
+      baseMessageSequence: 6
+    });
+    expect(mocks.reserveJournalEventEntryGeneration).not.toHaveBeenCalled();
+    expect(mocks.providerComplete).not.toHaveBeenCalled();
+    expect(mocks.recordAIInvocation).not.toHaveBeenCalled();
   });
 
   it("日志 Prompt 使用去重后的唯一来源目录，避免重复发送来源摘要", () => {

@@ -53,6 +53,10 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
     create: vi.fn(async ({ data }: any) => {
       const entry = {
         ...data,
+        sourceBranchSessionId: data.sourceBranchSessionId ?? null,
+        generatedByTurnId: data.generatedByTurnId ?? null,
+        currentGenerationTraceId: data.currentGenerationTraceId ?? null,
+        generationId: data.generationId ?? null,
         savedRevision: data.savedRevision ?? null,
         savedAt: data.savedAt ?? null,
         createdAt: now(),
@@ -193,6 +197,11 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
     })),
     assertEventCenteredForwardOperationAllowedWithClient: vi.fn(async () => undefined),
     getEventCenteredRouteWithClient: vi.fn(async () => ({
+      event: {
+        rootSessionId: "root-1",
+        rootSession: { recordMode: "capture" }
+      },
+      branch: { recordMode: "capture" },
       path: { messages: state.messages }
     })),
     getEffectiveJournalEventFactProjectionWithClient: vi.fn(async () => ({
@@ -244,7 +253,9 @@ import {
   buildJournalEventEntrySourceFingerprint,
   cancelJournalEventEntryGeneration,
   completeJournalEventEntryGeneration,
+  createCaptureJournalEventEntry,
   failJournalEventEntryGeneration,
+  getJournalEventEntryForUser,
   reserveJournalEventEntryGeneration,
   saveJournalEventEntry,
   updateJournalEventEntry
@@ -292,6 +303,10 @@ describe("journal event entry repository", () => {
     ]) {
       values.splice(0);
     }
+    state.messages.splice(0, state.messages.length,
+      { id: "message-1", role: "user", sequence: 1, content: "我和同事有一次误会。" },
+      { id: "message-2", role: "assistant", sequence: 2, content: "听起来这件事让你很在意。" }
+    );
     vi.clearAllMocks();
     seedActiveEvent();
   });
@@ -321,6 +336,100 @@ describe("journal event entry repository", () => {
         sourceMessageIds: ["message-2", "message-1"]
       })
     );
+  });
+
+  it("帮我记日志只读取已完成用户原话，并沿用编辑、保存和重开链", async () => {
+    state.messages.splice(0, state.messages.length,
+      {
+        id: "assistant-opening",
+        role: "assistant",
+        sequence: 0,
+        content: "这里是【帮我记】。",
+        userTurn: null
+      },
+      {
+        id: "user-message-1",
+        role: "user",
+        sequence: 1,
+        content: "展示层文本不应成为来源",
+        userTurn: {
+          rawText: "今天把边界说清楚了。",
+          action: "reply",
+          status: "completed"
+        }
+      },
+      {
+        id: "assistant-ack-1",
+        role: "assistant",
+        sequence: 2,
+        content: "好，这一段已经记下了。",
+        userTurn: null
+      },
+      {
+        id: "user-message-2",
+        role: "user",
+        sequence: 3,
+        content: "展示层文本不应成为来源",
+        userTurn: {
+          rawText: "我是不是终于敢表达了？",
+          action: "reply",
+          status: "completed"
+        }
+      },
+      {
+        id: "assistant-ack-2",
+        role: "assistant",
+        sequence: 4,
+        content: "这份疑问也记下了。",
+        userTurn: null
+      }
+    );
+
+    const created = await createCaptureJournalEventEntry({
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      clientOperationId: "capture-generate-1",
+      baseMessageSequence: 4
+    });
+
+    expect(created.generationOrigin).toBe("deterministic");
+    expect(created.currentGenerationTraceId).toBeNull();
+    expect(created.sourceFactIds).toEqual([]);
+    expect(created.sourceAngleOutcomeIds).toEqual([]);
+    expect(created.sourceSnapshot).toMatchObject({
+      recordMode: "capture",
+      messages: [
+        { id: "user-message-1", role: "user", content: "今天把边界说清楚了。" },
+        { id: "user-message-2", role: "user", content: "我是不是终于敢表达了？" }
+      ]
+    });
+    expect(created.content).toBe(
+      "今天把边界说清楚了。\n\n我是不是终于敢表达了？"
+    );
+    expect(created.content).not.toContain("好，这一段已经记下了");
+    expect(state.events[0]?.status).toBe("completed");
+
+    const edited = await updateJournalEventEntry({
+      userId,
+      entryId: created.id,
+      expectedContentRevision: created.contentRevision,
+      title: created.title,
+      content: `${created.content}\n\n补充一行。`
+    });
+    const saved = await saveJournalEventEntry({
+      userId,
+      entryId: edited.id,
+      expectedContentRevision: edited.contentRevision
+    });
+    const reopened = await getJournalEventEntryForUser({ userId, entryId: saved.id });
+
+    expect(saved.status).toBe("saved");
+    expect(reopened).toMatchObject({
+      id: created.id,
+      status: "saved",
+      content: `${created.content}\n\n补充一行。`
+    });
   });
 
   it("confirms the pending claim, freezes the active path, and replays the same operation", async () => {

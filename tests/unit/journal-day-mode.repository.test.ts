@@ -12,58 +12,6 @@ const { mockPrisma, state } = vi.hoisted(() => {
     $transaction: vi.fn(async (operation: any) => operation(mockPrisma))
   };
 
-  const normalizeTimestamp = (value: Date | string) =>
-    value instanceof Date
-      ? value
-      : new Date(`${value.replace(" ", "T")}Z`);
-
-  mockPrisma.$executeRaw = vi.fn(async (query: { values: unknown[] }) => {
-    const [
-      id,
-      userId,
-      entryDate,
-      primaryMode,
-      claimedAt,
-      claimedBySessionId,
-      lastAssertedAt,
-      createdAt,
-      updatedAt
-    ] = query.values as [
-      string,
-      string,
-      Date | string,
-      "dimension_legacy" | "event_centered",
-      Date | string,
-      string | null,
-      Date | string,
-      Date | string,
-      Date | string
-    ];
-    const normalizedEntryDate = normalizeTimestamp(entryDate);
-    const duplicate = state.ownerships.find(
-      (ownership) => ownership.userId === userId && ownership.entryDate.getTime() === normalizedEntryDate.getTime()
-    );
-    if (duplicate) {
-      return 0;
-    }
-
-    state.ownerships.push({
-      id,
-      userId,
-      entryDate: normalizedEntryDate,
-      primaryMode,
-      status: "clean",
-      claimedAt: normalizeTimestamp(claimedAt),
-      claimedBySessionId,
-      lastAssertedAt: normalizeTimestamp(lastAssertedAt),
-      mixedAt: null,
-      mixedReason: null,
-      createdAt: normalizeTimestamp(createdAt),
-      updatedAt: normalizeTimestamp(updatedAt)
-    });
-    return 1;
-  });
-
   mockPrisma.journalDayOwnership = {
     findUnique: vi.fn(async ({ where }: any) => {
       const key = where.userId_entryDate;
@@ -78,6 +26,23 @@ const { mockPrisma, state } = vi.hoisted(() => {
       if (!ownership) throw new Error("ownership missing");
       Object.assign(ownership, data, { updatedAt: now() });
       return ownership;
+    }),
+    createMany: vi.fn(async ({ data }: any) => {
+      const candidate = data[0];
+      const duplicate = state.ownerships.find(
+        (ownership) =>
+          ownership.userId === candidate.userId &&
+          ownership.entryDate.getTime() === candidate.entryDate.getTime()
+      );
+      if (duplicate) {
+        return { count: 0 };
+      }
+      state.ownerships.push({
+        ...candidate,
+        mixedAt: null,
+        mixedReason: null
+      });
+      return { count: 1 };
     })
   };
 

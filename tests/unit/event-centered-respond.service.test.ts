@@ -303,82 +303,6 @@ function assistantPayload(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function generativeRepairTurn(input: {
-  angle: "feeling" | "thought" | "relationship" | "action";
-  target: string;
-  question: string;
-  deep?: boolean;
-}) {
-  const expectedUnderstandingDelta = "从当前问题退回一个具体时刻，补足同一目标需要的可描述材料";
-  return {
-    understanding: {
-      eventBoundary: "current_event" as const,
-      coreEventIdentifiable: true,
-      answerStatus: "unknown" as const,
-      factDeltas: [],
-      correctionOrBoundary: null,
-      tentativeInterpretation: null,
-      eventOptions: []
-    },
-    semanticPlan: {
-      action: "ask" as const,
-      activeAngle: input.angle,
-      outcomeAssessment: {
-        state: "needs_more" as const,
-        origin: null,
-        basis: "当前抽象入口暂时说不清，仍有一次具体材料入口",
-        supportEvidenceRefs: [],
-        missingUnderstanding: expectedUnderstandingDelta
-      },
-      evidenceRefs: [],
-      insightKind: null,
-      selectedTargetId: input.target,
-      expectedUnderstandingDelta,
-      tentativeInterpretation: null,
-      stopReason: null,
-      cognitiveAction: "anchor_specific" as const,
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      realizationContract: {
-        responseCore: input.question,
-        summaryAnchors: ["暂时说不清"]
-      }
-    },
-    visibleTurn: {
-      thinkingSummary: "这部分暂时说不清，可以先回到一个具体时刻。",
-      responseKind: "question" as const,
-      question: input.question,
-      insight: null,
-      honestLimit: null
-    },
-    decision: {
-      turnAction: "ask" as const,
-      cognitiveAction: "anchor_specific" as const,
-      selectedTarget: input.target,
-      evidenceRefs: [],
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      expectedValue: expectedUnderstandingDelta,
-      stopReason: null,
-      outcomeCandidate: null
-    },
-    reply: {
-      naturalUnderstanding: "这部分暂时说不清，可以先回到一个具体时刻。",
-      question: input.question
-    }
-  };
-}
-
 function replyRequest(overrides: Record<string, unknown> = {}) {
   return {
     action: "reply" as const,
@@ -651,6 +575,50 @@ beforeEach(() => {
 });
 
 describe("event-centered respond service", () => {
+  it("帮我记保存提问式原话并用零问题、零 Provider 的确定性回应承接", async () => {
+    const rawText = "我是不是反应太大了？";
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      identity: { ...identity(), recordMode: "capture" }
+    }));
+    mocks.reserveAction.mockResolvedValue(reservation({
+      turn: { ...reservation().turn, rawText }
+    }));
+
+    const result = await respondEventCenteredInterview(
+      "user-1",
+      replyRequest({ rawText })
+    );
+
+    expect(result.assistantPayload).toMatchObject({
+      naturalResponse: "这份疑问也记下了。",
+      responseKind: "acknowledgement",
+      questionSpec: null
+    });
+    expect(result.assistantPayload?.naturalResponse).not.toMatch(/[？?]/u);
+    expect(mocks.commit).toHaveBeenCalledWith(expect.objectContaining({
+      facts: [expect.objectContaining({
+        statement: rawText,
+        evidence: [expect.objectContaining({ quote: rawText })]
+      })],
+      trace: expect.objectContaining({
+        outputOrigin: "deterministic",
+        contextSnapshot: expect.objectContaining({
+          recordMode: "capture",
+          questionCount: 0,
+          providerCallCount: 0
+        })
+      }),
+      checks: expect.objectContaining({ unsupportedClaimCount: 0 })
+    }));
+    expect(mocks.generateOnce).not.toHaveBeenCalled();
+    expect(mocks.generatePlan).not.toHaveBeenCalled();
+    expect(mocks.generateVisible).not.toHaveBeenCalled();
+    expect(mocks.generateThoughtMap).not.toHaveBeenCalled();
+    expect(mocks.generateThoughtQuestion).not.toHaveBeenCalled();
+    expect(mocks.understand).not.toHaveBeenCalled();
+    expect(mocks.realize).not.toHaveBeenCalled();
+  });
+
   it("GI-066 正式回合由判断地图、系统选题和冻结表达两段完成", async () => {
     mocks.generativeEnabled.mockReturnValue(true);
     mocks.thoughtOnly.mockReturnValue(true);

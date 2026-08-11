@@ -4,7 +4,7 @@ import {
 } from "@/features/interview/event-centered/gi088-evaluation-export";
 
 export const GI088_EVALUATION_VERSION =
-  "2026-08-10.gi088-human-eval-v8r2-foundation-hardening" as const;
+  "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash" as const;
 
 export type Gi088GenerationProgress = {
   type:
@@ -44,6 +44,13 @@ export type Gi088QuestionReviewClassification =
   | "same_focus_low_burden"
   | "same_focus_heavy"
   | "multiple_independent_tasks"
+  | "uncertain";
+export type Gi088QuestionValueClassification =
+  | "advances_working_task"
+  | "reasks_answered_content"
+  | "working_task_drift"
+  | "unsupported_third_party_inference"
+  | "low_information_gain"
   | "uncertain";
 export type Gi088QuestionPresence = "present" | "absent" | "uncertain";
 
@@ -157,6 +164,11 @@ export type Gi088CallMetadata = {
   retryOrdinal?: number | null;
   effectiveConfig?: {
     branch: Gi088BranchKey;
+    provider?: string;
+    baseUrlHost?: string;
+    endpoint?: string;
+    model?: string;
+    payloadContractVersion?: string;
     thinking: "disabled" | "enabled";
     reasoningEffort: "high" | null;
     temperature: number | null;
@@ -286,6 +298,7 @@ export type Gi088TrajectoryTurn = {
     review: {
       questionPresence?: Gi088QuestionPresence;
       classification?: Gi088QuestionReviewClassification;
+      valueClassification?: Gi088QuestionValueClassification;
       note: string;
       reviewedAt: string;
     } | null;
@@ -367,6 +380,7 @@ export type Gi088Trajectory = {
 
 export type Gi088TaskSummary = {
   id: string;
+  evaluationRole?: "scored_trajectory" | "compatibility_smoke";
   capabilityId: string;
   title: string;
   instruction: string;
@@ -375,6 +389,19 @@ export type Gi088TaskSummary = {
   repeatOf: string | null;
   status: Gi088TaskStatus;
   targetTriggers: Record<Gi088BranchKey, Gi088TargetTrigger | null>;
+  compatibilitySmoke?: {
+    outcome: "passed" | "failed";
+    reason: string;
+    observedAt: string;
+    evidence?: {
+      productSessionFingerprint: string;
+      recordMode: "capture";
+      completedUserTurnCount: number;
+      questionFormTurnCount: number;
+      visibleQuestionCount: number;
+      providerCallCount: number;
+    };
+  } | null;
 };
 
 export type Gi088Comparison = {
@@ -476,6 +503,16 @@ export type Gi088EvaluationSession = {
     candidateFingerprint: string;
     executionFingerprint: string;
     model: string;
+    skillVersion?: string;
+    skillSha256?: string;
+    modelIdentity?: {
+      provider: string;
+      transport: string;
+      baseUrlHost: string;
+      endpoint: string;
+      model: string;
+      payloadContractVersion: string;
+    };
   };
   batch: {
     id: string;
@@ -979,7 +1016,7 @@ export function startGi088OffTrajectory(input: {
 }) {
   void input;
   return rejectHighOnlyMutation(
-    "当前 v8r2 运行只开放 Thinking high；历史双分支运行保持只读。"
+    "当前 v8r3 运行只开放 Thinking high；历史双分支运行保持只读。"
   );
 }
 
@@ -1032,7 +1069,7 @@ export function submitGi088Turn(input: {
 }, onProgress?: (progress: Gi088GenerationProgress) => void) {
   if (input.branch !== "high") {
     return rejectHighOnlyMutation(
-      "当前 v8r2 运行只接受 Thinking high 分支提交。"
+      "当前 v8r3 运行只接受 Thinking high 分支提交。"
     );
   }
   if (!input.baseAssistantMessageId.trim()) return rejectInvalidTurnAnchor();
@@ -1053,7 +1090,7 @@ export function retryGi088Turn(input: {
 }, onProgress?: (progress: Gi088GenerationProgress) => void) {
   if (input.branch !== "high") {
     return rejectHighOnlyMutation(
-      "当前 v8r2 运行只接受 Thinking high 分支再次生成。"
+      "当前 v8r3 运行只接受 Thinking high 分支再次生成。"
     );
   }
   return requestStreamingSession(
@@ -1074,6 +1111,7 @@ export function reviewGi088Question(input: {
   turnId: string;
   questionPresence: Gi088QuestionPresence;
   classification?: Gi088QuestionReviewClassification;
+  valueClassification?: Gi088QuestionValueClassification;
   note?: string;
   observationFingerprint: string;
   revisionReason?: string;
@@ -1081,7 +1119,7 @@ export function reviewGi088Question(input: {
 }) {
   if (input.branch !== "high") {
     return rejectHighOnlyMutation(
-      "当前 v8r2 运行只接受 Thinking high 分支问题复核。"
+      "当前 v8r3 运行只接受 Thinking high 分支问题复核。"
     );
   }
   return requestSession(
@@ -1109,7 +1147,7 @@ export function endGi088Trajectory(input: {
 }) {
   if (input.branch !== "high") {
     return rejectHighOnlyMutation(
-      "当前 v8r2 运行只接受 Thinking high 分支轨迹评价。"
+      "当前 v8r3 运行只接受 Thinking high 分支轨迹评价。"
     );
   }
   return requestSession("/api/preview/gi088/end-trajectory", jsonRequest({
@@ -1131,6 +1169,24 @@ export function compareGi088Trajectories(input: {
     clientOperationId: input.clientOperationId ??
       createGi088ClientOperationId("compare")
   }));
+}
+
+export function recordGi088CompatibilitySmoke(input: {
+  runId: string;
+  taskId: string;
+  outcome: "passed" | "failed";
+  reason: string;
+  productSessionId?: string;
+  clientOperationId?: string;
+}) {
+  return requestSession(
+    "/api/preview/gi088/compatibility-smoke",
+    jsonRequest({
+      ...input,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("compatibility-smoke")
+    })
+  );
 }
 
 export function sealGi088EvaluationBatch(input: {
@@ -1218,23 +1274,51 @@ export async function reportGi088OperationEvent(input: {
 }
 
 export const GI088_EVALUATION_EXPORT_PATH = "/api/preview/gi088/export";
+export const GI088_EVALUATION_EXPORT_DEADLINE_MS = 4_500;
 
 export async function downloadGi088EvaluationExport(input: {
   evaluationVersion: string;
   runId: string;
   completedTaskCount: number;
   totalTasks: number;
+  signal?: AbortSignal;
 }) {
   const path = `${GI088_EVALUATION_EXPORT_PATH}?runId=${encodeURIComponent(input.runId)}`;
-  const envelope = await requestPayload(path);
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(input.signal?.reason);
+  if (input.signal?.aborted) abortFromCaller();
+  else input.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  let deadline: number | null = null;
+  const deadlineFailure = new Promise<never>((_resolve, reject) => {
+    deadline = window.setTimeout(() => {
+      reject(new Gi088EvaluationRequestError({
+        code: "GI088_EXPORT_DOWNLOAD_UNAVAILABLE",
+        message: "导出在 5 秒内未完成，请重新读取运行状态后再试。",
+        retryable: true,
+        dataSaved: "yes",
+        impact: "run",
+        action: "seal_and_export"
+      }));
+      controller.abort();
+    }, GI088_EVALUATION_EXPORT_DEADLINE_MS);
+  });
   try {
-    return await downloadVerifiedGi088EvaluationExport({
-      envelope,
-      evaluationVersion: input.evaluationVersion,
-      runId: input.runId,
-      completedTaskCount: input.completedTaskCount,
-      totalTasks: input.totalTasks
-    });
+    return await Promise.race([
+      (async () => {
+        const envelope = await requestPayload(path, {
+          signal: controller.signal
+        });
+        return downloadVerifiedGi088EvaluationExport({
+          envelope,
+          evaluationVersion: input.evaluationVersion,
+          runId: input.runId,
+          completedTaskCount: input.completedTaskCount,
+          totalTasks: input.totalTasks,
+          signal: controller.signal
+        });
+      })(),
+      deadlineFailure
+    ]);
   } catch (error) {
     if (error instanceof Gi088ExportDownloadError) {
       throw new Gi088EvaluationRequestError({
@@ -1249,5 +1333,8 @@ export async function downloadGi088EvaluationExport(input: {
       });
     }
     throw error;
+  } finally {
+    if (deadline !== null) window.clearTimeout(deadline);
+    input.signal?.removeEventListener("abort", abortFromCaller);
   }
 }

@@ -15,6 +15,7 @@ import {
   endGi088Trajectory,
   getGi088EvaluationRuns,
   getGi088EvaluationSession,
+  recordGi088CompatibilitySmoke,
   reportGi088OperationEvent,
   reviewGi088Question,
   reviewGi088ProgramIntervention,
@@ -39,6 +40,7 @@ import {
   type Gi088ProviderDiagnostics,
   type Gi088QuestionPresence,
   type Gi088QuestionReviewClassification,
+  type Gi088QuestionValueClassification,
   type Gi088Quality,
   type Gi088Semantic,
   type Gi088TaskStatus,
@@ -62,6 +64,11 @@ import {
   type Gi088EvaluationDraftScope,
   type Gi088EvaluationOutboxEntry
 } from "@/features/interview/event-centered/gi088-evaluation-storage";
+import {
+  clearGi088HelpRecordReceipt,
+  readGi088HelpRecordReceipt,
+  type Gi088HelpRecordReceipt
+} from "@/features/interview/event-centered/gi088-compatibility-receipt";
 import { createGi088EvaluationSync } from "@/features/interview/event-centered/gi088-evaluation-sync";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +129,17 @@ const questionReviewOptions = [
   readonly [Gi088QuestionReviewClassification, string]
 )[];
 
+const questionValueOptions = [
+  ["advances_working_task", "推进当前共同任务"],
+  ["reasks_answered_content", "重问已经回答的内容"],
+  ["working_task_drift", "偏离当前共同任务"],
+  ["unsupported_third_party_inference", "缺少证据地猜测第三方"],
+  ["low_information_gain", "认识增量不足"],
+  ["uncertain", "暂时无法判断"]
+] as const satisfies readonly (
+  readonly [Gi088QuestionValueClassification, string]
+)[];
+
 const questionPresenceOptions = [
   ["present", "包含提问"],
   ["absent", "没有提问"],
@@ -135,6 +153,17 @@ const interventionReviewOptions = [
 ] as const satisfies readonly (
   readonly [Gi088ProgramInterventionReviewOutcome, string]
 )[];
+
+const compatibilitySmokeOptions = [
+  ["passed", "通过：模式、承接和零追问都符合"],
+  ["failed", "失败：入口、模式或回应存在问题"]
+] as const satisfies readonly (
+  readonly ["passed" | "failed", string]
+)[];
+
+function isCompatibilityTaskId(value: string): value is "A5" | "A6" {
+  return value === "A5" || value === "A6";
+}
 
 const questionReviewCandidateLabel = {
   none: "常规逐轮复核",
@@ -168,6 +197,12 @@ type RecoveryToastState = {
   callId: string;
   message: string;
 } | null;
+
+type ExportFeedback =
+  | { status: "idle" }
+  | { status: "verifying" }
+  | { status: "ready"; filename: string; url: string }
+  | { status: "failed"; message: string };
 
 function rememberRecoveryToast(callId: string) {
   try {
@@ -205,38 +240,75 @@ function PendingGenerationStatus({
 }: {
   operation: PendingOperation;
 }) {
-  const [takingLonger, setTakingLonger] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() =>
+    Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000))
+  );
 
   useEffect(() => {
-    const elapsed = Date.now() - operation.startedAt;
-    const timer = window.setTimeout(
-      () => setTakingLonger(true),
-      Math.max(0, 10_000 - elapsed)
-    );
-    return () => window.clearTimeout(timer);
+    const updateElapsed = () => {
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000))
+      );
+    };
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 1_000);
+    return () => window.clearInterval(timer);
   }, [operation.startedAt]);
 
-  const message =
+  const phase =
     operation.kind === "manual_recovery"
-      ? "正在按你的确认再次生成；这次结束后不会继续调用。"
-    : operation.kind === "automatic_empty_content_recovery"
-      ? "刚才只完成了思考，正在继续整理最终回答，请再等一会儿～"
-      : operation.kind === "automatic_timeout_recovery"
-        ? "这次连接超时，正在自动重试，请再等一会儿～"
-      : operation.kind === "automatic_stage_transition_recovery"
-        ? "刚才的回应没有顺利完成阶段转换，正在自动整理，请再等一会儿～"
-      : takingLonger
-          ? operation.branch === "high"
-            ? "这次用时较长，系统仍在等待 Thinking high 的可见回答；单次生成最多 60 秒，自动恢复链总计不超过 90 秒。"
-            : "这次用时较长，系统仍在等待回应。"
-          : operation.branch === "high"
-            ? "本页已保留这段原话，正在生成 Thinking high 回应…"
-            : "本页已保留这段原话，正在生成回应…";
+      ? "正在按你的确认再次生成"
+      : operation.kind === "automatic_empty_content_recovery"
+        ? "正在整理最终回答"
+        : operation.kind === "automatic_timeout_recovery"
+          ? "连接已恢复，正在自动生成"
+          : operation.kind === "automatic_stage_transition_recovery"
+            ? "正在整理当前阶段的最终回答"
+            : elapsedSeconds >= 20
+              ? "仍在生成可见回答"
+              : "正在生成可见回答";
+  const deadline = operation.kind === "generation" ? 60 : 90;
 
   return (
-    <div className="flex items-center gap-3 text-xs text-[var(--text-dim)]" role="status" aria-live="polite">
-      <span className="size-2 rounded-full bg-[var(--amber)]" aria-hidden="true" />
-      {message}
+    <div
+      className="flex min-h-11 items-center justify-between gap-3 rounded-[var(--radius-control)] bg-[var(--amber-soft)] px-3 py-2 text-xs text-ink"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="gi088-authoritative-wait-status"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" aria-hidden="true" />
+        <span>
+          <strong>{phase}</strong>
+          <span className="ml-2 text-[var(--text-dim)]">
+            原话已保存，可以安全等待或刷新读取。
+          </span>
+        </span>
+      </span>
+      <span className="shrink-0 font-mono tabular-nums text-[var(--text-dim)]">
+        {elapsedSeconds}s / {deadline}s
+      </span>
+    </div>
+  );
+}
+
+function ServerGenerationStatus() {
+  return (
+    <div
+      className="flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] bg-[var(--amber-soft)] px-3 py-2 text-xs text-ink"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="gi088-authoritative-wait-status"
+    >
+      <span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" aria-hidden="true" />
+      <span>
+        <strong>正在自动恢复并整理最终回答</strong>
+        <span className="ml-2 text-[var(--text-dim)]">
+          原话已保存，页面只读取服务端进度。
+        </span>
+      </span>
     </div>
   );
 }
@@ -540,6 +612,11 @@ function sessionConfirmsOutbox(
   entry: Gi088EvaluationOutboxEntry
 ) {
   if (runIdOf(session) !== entry.runId) return false;
+  if (entry.kind === "compatibility_smoke") {
+    return Boolean(session.tasks.find((task) =>
+      task.id === entry.taskId && task.compatibilitySmoke
+    ));
+  }
   const activeTask = session.activeTask;
   if (!activeTask || activeTask.taskId !== entry.taskId) return false;
   return activeTask.branches[entry.branch].turns.some(
@@ -592,7 +669,7 @@ function TechnicalSmokePanel({
 
   return (
     <details className="mt-4 border-l-2 border-[var(--amber)] pl-4 text-sm" data-testid="gi088-technical-smoke-panel">
-      <summary className="cursor-pointer font-semibold text-ink">技术冒烟 · 仅在单独授权后运行</summary>
+      <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-ink lg:min-h-0">技术冒烟 · 仅在单独授权后运行</summary>
       <p className="mt-2 max-w-3xl text-pretty leading-6 text-[var(--text-dim)]">
         {highOnly
           ? "按钮验证 High 配置的部署凭据、结构和持久化。服务器会核对当前执行指纹与授权；结果进入独立冒烟记录，不写入当前正式批次。"
@@ -710,7 +787,7 @@ function ChoiceGroup<T extends string>({
             aria-pressed={value === option}
             onClick={() => onChange(option)}
             className={cn(
-              "rounded-full border px-3 py-2 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay",
+              "min-h-11 rounded-full border px-3 py-2 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay",
               value === option
                 ? "border-[var(--line-strong)] bg-[var(--amber-soft)] font-semibold text-ink"
                 : "border-[var(--line-soft)] bg-paper/45 text-[var(--text-dim)] hover:border-[var(--line-strong)]"
@@ -789,6 +866,9 @@ function TaskRail({
                       <span className={cn("rounded-full px-2 py-0.5 text-xs", statusTone(task.status))}>
                         {taskStatusLabel[task.status]}
                       </span>
+                      {task.evaluationRole === "compatibility_smoke" ? (
+                        <span className="text-xs text-[var(--text-faint)]">零模型兼容冒烟</span>
+                      ) : null}
                       {task.repeatOf ? (
                         <span className="text-xs text-[var(--text-faint)]">复测 {task.repeatOf}</span>
                       ) : null}
@@ -826,7 +906,7 @@ function BranchTabs({
           aria-pressed={selected === branch}
           onClick={() => onSelect(branch)}
           className={cn(
-            "rounded-full px-3 py-1.5 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay disabled:cursor-not-allowed disabled:opacity-40",
+            "min-h-11 rounded-full px-3 py-1.5 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay disabled:cursor-not-allowed disabled:opacity-40",
             selected === branch ? "bg-ink text-paper" : "text-[var(--text-dim)] hover:text-ink"
           )}
         >
@@ -904,7 +984,7 @@ function Conversation({
       aria-busy={Boolean(pendingOperation)}
       data-testid="gi088-conversation"
     >
-      <div className="space-y-5">
+      <div className="mx-auto w-full max-w-[72ch] space-y-5">
       {trajectory.messages.map((message, index) => (
         <article
           key={message.id}
@@ -926,14 +1006,6 @@ function Conversation({
           </div>
         </article>
       ))}
-      {pendingOperation ? (
-        <PendingGenerationStatus operation={pendingOperation} />
-      ) : trajectory.status === "running" && trajectory.pendingTurnId ? (
-        <div className="flex items-center gap-3 text-xs text-[var(--text-dim)]" role="status">
-          <span className="size-2 rounded-full bg-[var(--amber)]" aria-hidden="true" />
-          服务端正在完成这一轮，刷新只会读取当前进度。
-        </div>
-      ) : null}
       <div ref={endRef} className="h-px" aria-hidden="true" data-testid="gi088-conversation-end" />
       </div>
       {!followingLatest ? (
@@ -941,7 +1013,7 @@ function Conversation({
           <button
             type="button"
             onClick={() => goToLatest()}
-            className="rounded-full border border-[var(--line-strong)] bg-paper px-4 py-2 text-xs font-semibold text-ink shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
+            className="min-h-11 rounded-full border border-[var(--line-strong)] bg-paper px-4 py-2 text-xs font-semibold text-ink shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
             data-testid="gi088-back-to-latest"
           >
             回到最新
@@ -961,7 +1033,8 @@ function TechnicalFailure({
   onUpdated,
   onError,
   onPending,
-  allowManualRetry = true
+  allowManualRetry = true,
+  showRecoveryStatus = true
 }: {
   runId: string;
   taskId: string;
@@ -972,6 +1045,7 @@ function TechnicalFailure({
   onError: (issue: Gi088EvaluationIssue) => void;
   onPending: (value: boolean) => void;
   allowManualRetry?: boolean;
+  showRecoveryStatus?: boolean;
 }) {
   if (trajectory.status !== "technical_failure" || !trajectory.technicalError) return null;
   const failedTurn = [...trajectory.turns].reverse().find((item) => item.status === "technical_failure");
@@ -983,6 +1057,7 @@ function TechnicalFailure({
     recovery?.status === "retrying" ||
     recovery?.status === "manual_retrying"
   ) {
+    if (!showRecoveryStatus) return null;
     const timeoutRecovery = recovery.trigger === "TIMEOUT";
     const manualRetrying = recovery.status === "manual_retrying";
     return (
@@ -1109,7 +1184,8 @@ function ProtectedFailure({
   disabled,
   onUpdated,
   onError,
-  onPending
+  onPending,
+  showRecoveryStatus = true
 }: {
   runId: string;
   taskId: string;
@@ -1119,6 +1195,7 @@ function ProtectedFailure({
   onUpdated: (session: Gi088EvaluationSession) => void;
   onError: (issue: Gi088EvaluationIssue) => void;
   onPending: (value: boolean) => void;
+  showRecoveryStatus?: boolean;
 }) {
   if (trajectory.status !== "protected_failure") return null;
   const failedTurn = [...trajectory.turns].reverse().find((item) => item.status === "protected_failure");
@@ -1138,6 +1215,7 @@ function ProtectedFailure({
     );
   }
   if (recovery?.status === "manual_retrying") {
+    if (!showRecoveryStatus) return null;
     return (
       <div className="border-l-2 border-[var(--amber)] pl-4 text-sm leading-6" role="status" aria-live="polite">
         <p className="font-semibold text-ink">正在再次生成</p>
@@ -1188,6 +1266,7 @@ function ProtectedFailure({
     stageTransitionRecovery &&
     (recovery.status === "eligible" || recovery.status === "retrying")
   ) {
+    if (!showRecoveryStatus) return null;
     return (
       <div
         className="border-l-2 border-[var(--amber)] pl-4 text-sm leading-6"
@@ -1682,6 +1761,15 @@ function QuestionReviewEditor({
     storedQuestionReview?.classification === "uncertain"
       ? storedQuestionReview.classification
       : null;
+  const storedValueClassification: Gi088QuestionValueClassification | null =
+    storedQuestionReview?.valueClassification === "advances_working_task" ||
+    storedQuestionReview?.valueClassification === "reasks_answered_content" ||
+    storedQuestionReview?.valueClassification === "working_task_drift" ||
+    storedQuestionReview?.valueClassification === "unsupported_third_party_inference" ||
+    storedQuestionReview?.valueClassification === "low_information_gain" ||
+    storedQuestionReview?.valueClassification === "uncertain"
+      ? storedQuestionReview.valueClassification
+      : null;
   const [questionPresence, setQuestionPresence] =
     useState<Gi088QuestionPresence | null>(
       storedQuestionPresence ?? observation?.review?.questionPresence ??
@@ -1691,6 +1779,12 @@ function QuestionReviewEditor({
   const [classification, setClassification] =
     useState<Gi088QuestionReviewClassification | null>(
       storedQuestionClassification ?? observation?.review?.classification ?? null
+    );
+  const [valueClassification, setValueClassification] =
+    useState<Gi088QuestionValueClassification | null>(
+      storedValueClassification ??
+      observation?.review?.valueClassification ??
+      null
     );
   const [note, setNote] = useState(
     storedQuestionNote ?? observation?.review?.note ?? ""
@@ -1703,6 +1797,7 @@ function QuestionReviewEditor({
   const saveQuestionDraft = (next: {
     questionPresence: Gi088QuestionPresence | null;
     classification: Gi088QuestionReviewClassification | null;
+    valueClassification: Gi088QuestionValueClassification | null;
     note: string;
   }) => writeGi088EvaluationDraft(noteDraftScope, next);
 
@@ -1718,6 +1813,11 @@ function QuestionReviewEditor({
       observation?.review?.classification ??
       null
     );
+    setValueClassification(
+      storedValueClassification ??
+      observation?.review?.valueClassification ??
+      null
+    );
     setNote(
       storedQuestionNote ?? observation?.review?.note ?? ""
     );
@@ -1730,6 +1830,7 @@ function QuestionReviewEditor({
     observation?.questionPresence,
     observation?.review,
     storedQuestionClassification,
+    storedValueClassification,
     storedQuestionPresence,
     storedQuestionNote
   ]);
@@ -1738,7 +1839,8 @@ function QuestionReviewEditor({
 
   const submit = async () => {
     if (!questionPresence ||
-      (questionPresence === "present" && !classification) ||
+      (questionPresence === "present" &&
+        (!classification || !valueClassification)) ||
       (observation.review && !revisionReason.trim())) return;
     let outbox;
     try {
@@ -1753,6 +1855,9 @@ function QuestionReviewEditor({
           questionPresence,
           classification: questionPresence === "present"
             ? classification
+            : null,
+          valueClassification: questionPresence === "present"
+            ? valueClassification
             : null,
           note,
           revisionReason: observation.review
@@ -1778,6 +1883,9 @@ function QuestionReviewEditor({
           questionPresence,
           ...(questionPresence === "present" && classification
             ? { classification }
+            : {}),
+          ...(questionPresence === "present" && valueClassification
+            ? { valueClassification }
             : {}),
           note,
           observationFingerprint:
@@ -1825,6 +1933,7 @@ function QuestionReviewEditor({
             saveQuestionDraft({
               questionPresence: value,
               classification,
+              valueClassification,
               note
             });
           }}
@@ -1838,11 +1947,34 @@ function QuestionReviewEditor({
           options={questionReviewOptions}
           onChange={(value) => {
             setClassification(value);
-            saveQuestionDraft({ questionPresence, classification: value, note });
+            saveQuestionDraft({
+              questionPresence,
+              classification: value,
+              valueClassification,
+              note
+            });
           }}
           disabled={disabled || saving}
           required
         />
+        ) : null}
+        {questionPresence === "present" ? (
+          <ChoiceGroup
+            label="这次提问对共同任务的价值"
+            value={valueClassification}
+            options={questionValueOptions}
+            onChange={(value) => {
+              setValueClassification(value);
+              saveQuestionDraft({
+                questionPresence,
+                classification,
+                valueClassification: value,
+                note
+              });
+            }}
+            disabled={disabled || saving}
+            required
+          />
         ) : null}
         <label className="block text-xs font-semibold text-[var(--text-dim)]">
           复核说明（选填）
@@ -1854,13 +1986,14 @@ function QuestionReviewEditor({
               saveQuestionDraft({
                 questionPresence,
                 classification,
+                valueClassification,
                 note: event.target.value
               });
             }}
             rows={2}
             maxLength={1_000}
             aria-describedby={helpId}
-            placeholder="记录问句是否共同服务同一回答目标，以及实际回答负担。"
+            placeholder="记录回答负担、共同任务、已有答案和预期认识增量。"
             className="mt-2 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/55 px-3 py-2 text-sm font-normal leading-6 text-ink outline-none transition focus:border-[var(--line-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
           />
         </label>
@@ -1893,7 +2026,8 @@ function QuestionReviewEditor({
           disabled ||
           saving ||
           !questionPresence ||
-          (questionPresence === "present" && !classification) ||
+          (questionPresence === "present" &&
+            (!classification || !valueClassification)) ||
           Boolean(observation.review && !revisionReason.trim())
         }
         aria-describedby={helpId}
@@ -1909,6 +2043,10 @@ function QuestionReviewEditor({
               ? "是否提问暂时无法判断"
               : questionReviewOptions.find(([value]) =>
                   value === observation.review?.classification)?.[1] ?? "包含提问"}
+          {observation.review.valueClassification
+            ? ` · ${questionValueOptions.find(([value]) =>
+                value === observation.review?.valueClassification)?.[1] ?? "价值待判断"}`
+            : ""}
         </p>
       ) : null}
     </section>
@@ -2064,7 +2202,13 @@ function TraceLedger({
   );
 }
 
-function GateAndMetricsSummary({ session }: { session: Gi088EvaluationSession }) {
+function GateAndMetricsSummary({
+  session,
+  expanded = false
+}: {
+  session: Gi088EvaluationSession;
+  expanded?: boolean;
+}) {
   const gate = session.batch.gate;
   const metrics = session.metrics;
   const gateLabel = gate?.status === "no_go"
@@ -2076,18 +2220,23 @@ function GateAndMetricsSummary({ session }: { session: Gi088EvaluationSession })
         : "机器门等待更多证据";
   return (
     <details
+      open={expanded}
       className="mx-auto mb-3 w-full max-w-[116rem] border-l-2 border-[var(--amber)] pl-4 text-sm"
       aria-label="评测资格与统一指标"
       data-testid="gi088-gate-summary"
     >
-      <summary className="cursor-pointer list-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:min-h-0 [&::-webkit-details-marker]:hidden">
         <span className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-semibold text-ink">{gateLabel}</span>
           <span className="font-mono text-xs text-[var(--text-dim)]">
-            gate={gate?.status ?? "legacy_unknown"} · 展开指标与原因
+            {session.evaluation.model} · gate={gate?.status ?? "legacy_unknown"} · 展开运行详情
           </span>
         </span>
       </summary>
+      <p className="mt-2 max-w-5xl text-xs leading-5 text-[var(--text-dim)]">
+        当前候选 {session.evaluation.version} · {session.evaluation.model} · Thinking high。
+        这里集中展示模型配置、Gate 原因与统一指标，主工作区只保留任务、对话、等待状态和输入。
+      </p>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-xs text-[var(--text-faint)]">
           gate={gate?.status ?? "legacy_unknown"}
@@ -2231,13 +2380,15 @@ function EvidenceGovernancePanel({
   disabled,
   onUpdated,
   onError,
-  onPending
+  onPending,
+  expanded = false
 }: {
   session: Gi088EvaluationSession;
   disabled: boolean;
   onUpdated: (session: Gi088EvaluationSession) => void;
   onError: (issue: Gi088EvaluationIssue) => void;
   onPending: (value: boolean) => void;
+  expanded?: boolean;
 }) {
   const interventions = session.programInterventions ??
     session.activeTask?.reviewSnapshot?.programInterventions ??
@@ -2245,8 +2396,8 @@ function EvidenceGovernancePanel({
   const revisions = session.reviewRevisions ?? [];
   if (interventions.length === 0 && revisions.length === 0) return null;
   return (
-    <details className="mx-auto mb-4 max-w-[116rem] rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/45 p-3">
-      <summary className="cursor-pointer text-sm font-semibold text-ink">
+    <details open={expanded} className="mx-auto mb-4 max-w-[116rem] rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/45 p-3">
+      <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink lg:min-h-0">
         人工证据治理 · 程序介入 {interventions.length} · 修订 {revisions.length}
       </summary>
       <div className="mt-4 grid gap-5 lg:grid-cols-2">
@@ -2274,6 +2425,52 @@ function EvidenceGovernancePanel({
         </ol>
       </div>
     </details>
+  );
+}
+
+function ExportFeedbackView({ feedback }: { feedback: ExportFeedback }) {
+  if (feedback.status === "idle") return null;
+  if (feedback.status === "verifying") {
+    return (
+      <p
+        className="text-xs text-[var(--text-dim)]"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="gi088-export-feedback"
+      >
+        正在校验不可变收据并准备文件…
+      </p>
+    );
+  }
+  if (feedback.status === "failed") {
+    return (
+      <p
+        className="border-l-2 border-clay pl-3 text-xs leading-5 text-ink"
+        role="alert"
+        data-testid="gi088-export-feedback"
+      >
+        {feedback.message}
+      </p>
+    );
+  }
+  return (
+    <div
+      className="flex flex-wrap items-center justify-end gap-2 text-xs text-[var(--text-dim)]"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="gi088-export-feedback"
+    >
+      <span>已开始下载：{feedback.filename}</span>
+      <a
+        href={feedback.url}
+        download={feedback.filename}
+        className="inline-flex min-h-11 items-center rounded-[var(--radius-control)] px-3 font-semibold text-ink underline decoration-[var(--line-strong)] underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
+      >
+        保存 JSON
+      </a>
+    </div>
   );
 }
 
@@ -2308,6 +2505,16 @@ function WorkspaceReady({
   const highOnly = session.evaluation.mode === "high_only";
   const nextTask = session.tasks.find((item) => item.status === "ready") ?? session.tasks.find((item) => item.status !== "completed") ?? session.tasks.at(-1)!;
   const currentTask = session.tasks.find((item) => item.id === session.activeTask?.taskId) ?? nextTask;
+  const storedCompatibilitySmoke = readGi088EvaluationDraft<{
+    outcome: "passed" | "failed" | null;
+    reason: string;
+  }>(draftScope({
+    runId,
+    taskId: currentTask.id,
+    branch: null,
+    form: "compatibility_smoke",
+    turnId: null
+  }))?.value;
   const [selectedBranch, setSelectedBranch] = useState<Gi088BranchKey>(
     highOnly ? "high" : (session.activeTask?.activeBranch ?? "off")
   );
@@ -2347,14 +2554,40 @@ function WorkspaceReady({
   );
   const [abandonRecovery, setAbandonRecovery] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<ExportFeedback>({
+    status: "idle"
+  });
   const [externalUpdate, setExternalUpdate] = useState(false);
   const [desktopLayout, setDesktopLayout] = useState(false);
-  const [taskPanelOpen, setTaskPanelOpen] = useState(true);
+  const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [tracePanelOpen, setTracePanelOpen] = useState(false);
+  const [runDetailsPanelOpen, setRunDetailsPanelOpen] = useState(false);
+  const [compatibilityOutcome, setCompatibilityOutcome] = useState<
+    "passed" | "failed" | null
+  >(
+    currentTask.compatibilitySmoke?.outcome ??
+      storedCompatibilitySmoke?.outcome ??
+      null
+  );
+  const [compatibilityReason, setCompatibilityReason] = useState(
+    currentTask.compatibilitySmoke?.reason ??
+      storedCompatibilitySmoke?.reason ??
+      ""
+  );
+  const [compatibilityReceipt, setCompatibilityReceipt] = useState<
+    Gi088HelpRecordReceipt | null
+  >(() => isCompatibilityTaskId(currentTask.id)
+    ? readGi088HelpRecordReceipt({ runId, taskId: currentTask.id })
+    : null);
   const earlyStopToggleRef = useRef<HTMLElement>(null);
   const syncRef = useRef<ReturnType<typeof createGi088EvaluationSync> | null>(null);
   const recoveryToastTimerRef = useRef<number | null>(null);
   const activePrefixRecoveryCallRef = useRef<string | null>(null);
+  const exportRevokeRef = useRef<(() => void) | null>(null);
+  const exportAbortRef = useRef<AbortController | null>(null);
+  const exportInFlightRef = useRef(false);
+  const latestRunIdRef = useRef(runId);
+  latestRunIdRef.current = runId;
 
   const activeTask = session.activeTask;
   const activeTaskId = activeTask?.taskId ?? null;
@@ -2377,6 +2610,7 @@ function WorkspaceReady({
   const earlyStopped = session.batch.status === "early_stopped";
   const terminal = sealed || earlyStopped;
   const runReadOnly = terminal || Boolean(session.batch.readOnly);
+  const canExport = terminal;
   const serverProcessing = sessionHasActiveServerWork(session);
   const recoveryActive = Boolean(activeTask && Object.values(
     activeTask.branches
@@ -2437,7 +2671,67 @@ function WorkspaceReady({
     if (recoveryToastTimerRef.current !== null) {
       window.clearTimeout(recoveryToastTimerRef.current);
     }
+    exportRevokeRef.current?.();
+    exportRevokeRef.current = null;
+    exportAbortRef.current?.abort();
+    exportAbortRef.current = null;
+    exportInFlightRef.current = false;
   }, []);
+
+  useEffect(() => {
+    exportAbortRef.current?.abort();
+    exportAbortRef.current = null;
+    exportInFlightRef.current = false;
+    setExporting(false);
+    exportRevokeRef.current?.();
+    exportRevokeRef.current = null;
+    setExportFeedback({ status: "idle" });
+  }, [runId]);
+
+  useEffect(() => {
+    const stored = readGi088EvaluationDraft<{
+      outcome: "passed" | "failed" | null;
+      reason: string;
+    }>(draftScope({
+      runId,
+      taskId: currentTask.id,
+      branch: null,
+      form: "compatibility_smoke",
+      turnId: null
+    }))?.value;
+    setCompatibilityOutcome(
+      currentTask.compatibilitySmoke?.outcome ?? stored?.outcome ?? null
+    );
+    setCompatibilityReason(
+      currentTask.compatibilitySmoke?.reason ?? stored?.reason ?? ""
+    );
+  }, [
+    currentTask.compatibilitySmoke?.outcome,
+    currentTask.compatibilitySmoke?.reason,
+    currentTask.id,
+    runId
+  ]);
+
+  useEffect(() => {
+    if (
+      currentTask.evaluationRole !== "compatibility_smoke" ||
+      !isCompatibilityTaskId(currentTask.id)
+    ) {
+      setCompatibilityReceipt(null);
+      return;
+    }
+    const receiptScope = { runId, taskId: currentTask.id };
+    const refreshReceipt = () => {
+      setCompatibilityReceipt(readGi088HelpRecordReceipt(receiptScope));
+    };
+    refreshReceipt();
+    window.addEventListener("focus", refreshReceipt);
+    window.addEventListener("storage", refreshReceipt);
+    return () => {
+      window.removeEventListener("focus", refreshReceipt);
+      window.removeEventListener("storage", refreshReceipt);
+    };
+  }, [currentTask.evaluationRole, currentTask.id, runId]);
 
   useEffect(() => {
     if (terminal) clearRunLocalState(runId);
@@ -2464,6 +2758,12 @@ function WorkspaceReady({
     media.addEventListener?.("change", sync);
     return () => media.removeEventListener?.("change", sync);
   }, []);
+
+  useEffect(() => {
+    if (currentTask.evaluationRole === "compatibility_smoke") {
+      setTracePanelOpen(false);
+    }
+  }, [currentTask.evaluationRole]);
 
   useEffect(() => {
     const branch = highOnly
@@ -2587,17 +2887,53 @@ function WorkspaceReady({
 
   const downloadExport = useCallback(
     async (value: Gi088EvaluationSession = session) => {
+      if (exportInFlightRef.current) return;
+      if (!(value.batch.status === "sealed" ||
+        value.batch.status === "early_stopped")) {
+        setExportFeedback({
+          status: "failed",
+          message: "结束或封存本批后，才能下载不可变 JSON。"
+        });
+        return;
+      }
+      exportAbortRef.current?.abort();
+      const exportController = new AbortController();
+      exportAbortRef.current = exportController;
+      exportInFlightRef.current = true;
+      const requestedRunId = runIdOf(value);
       setExporting(true);
+      setExportFeedback({ status: "verifying" });
       try {
-        await downloadGi088EvaluationExport({
+        const prepared = await downloadGi088EvaluationExport({
           evaluationVersion: value.evaluation.version,
-          runId: runIdOf(value),
+          runId: requestedRunId,
           completedTaskCount: value.batch.completedTaskCount,
-          totalTasks: value.batch.totalTasks
+          totalTasks: value.batch.totalTasks,
+          signal: exportController.signal
+        });
+        if (latestRunIdRef.current !== requestedRunId) {
+          prepared.revoke();
+          return;
+        }
+        exportRevokeRef.current?.();
+        exportRevokeRef.current = prepared.revoke;
+        setExportFeedback({
+          status: "ready",
+          filename: prepared.filename,
+          url: prepared.url
         });
       } catch (error) {
+        if (
+          exportController.signal.aborted &&
+          latestRunIdRef.current !== requestedRunId
+        ) {
+          return;
+        }
         const nextIssue = issueFromUnknown(error);
-        setIssue(nextIssue);
+        setExportFeedback({
+          status: "failed",
+          message: nextIssue.message
+        });
         void reportGi088OperationEvent({
           runId: runIdOf(value),
           route: "export",
@@ -2605,11 +2941,82 @@ function WorkspaceReady({
           safeSummary: { action: "download" }
         }).catch(() => undefined);
       } finally {
-        setExporting(false);
+        if (exportAbortRef.current === exportController) {
+          exportAbortRef.current = null;
+          exportInFlightRef.current = false;
+          setExporting(false);
+        }
       }
     },
     [session]
   );
+
+  const saveCompatibilitySmoke = useCallback(async () => {
+    if (
+      currentTask.evaluationRole !== "compatibility_smoke" ||
+      !compatibilityOutcome ||
+      !compatibilityReason.trim() ||
+      (compatibilityOutcome === "passed" && !compatibilityReceipt)
+    ) {
+      return;
+    }
+    let outbox: Gi088EvaluationOutboxEntry;
+    try {
+      outbox = await prepareGi088EvaluationOutbox({
+        runId,
+        taskId: currentTask.id,
+        branch: "high",
+        kind: "compatibility_smoke",
+        baseAssistantMessageId: null,
+        content: JSON.stringify({
+          outcome: compatibilityOutcome,
+          reason: compatibilityReason.trim(),
+          productSessionId: compatibilityReceipt?.productSessionId ?? null
+        }),
+        confirmationFingerprint: null
+      });
+    } catch (error) {
+      setIssue(issueFromUnknown(error));
+      return;
+    }
+    setPending(true);
+    setIssue(null);
+    try {
+      const nextSession = await recordGi088CompatibilitySmoke({
+        runId,
+        taskId: currentTask.id,
+        outcome: compatibilityOutcome,
+        reason: compatibilityReason.trim(),
+        productSessionId: compatibilityReceipt?.productSessionId,
+        clientOperationId: outbox.clientTurnId
+      });
+      if (compatibilityReceipt && isCompatibilityTaskId(currentTask.id)) {
+        clearGi088HelpRecordReceipt({ runId, taskId: currentTask.id });
+        setCompatibilityReceipt(null);
+      }
+      update(nextSession);
+      clearGi088EvaluationOutbox(outbox);
+      clearGi088EvaluationDraft(draftScope({
+        runId,
+        taskId: currentTask.id,
+        branch: null,
+        form: "compatibility_smoke",
+        turnId: null
+      }));
+    } catch (error) {
+      setIssue(issueFromUnknown(error));
+    } finally {
+      setPending(false);
+    }
+  }, [
+    compatibilityOutcome,
+    compatibilityReceipt,
+    compatibilityReason,
+    currentTask.evaluationRole,
+    currentTask.id,
+    runId,
+    update
+  ]);
 
   const selectTask = useCallback(
     async (taskId: string) => {
@@ -3026,66 +3433,38 @@ function WorkspaceReady({
     void readLatest();
   }, [batchComplete, downloadExport, generateAgain, readLatest, returnToCurrentTask, terminal]);
 
-  const desktopGridColumns = taskPanelOpen && tracePanelOpen
-    ? "lg:grid-cols-[14rem_minmax(24rem,1fr)_18rem] 2xl:grid-cols-[18rem_minmax(30rem,1fr)_22rem]"
-    : taskPanelOpen
-      ? "lg:grid-cols-[14rem_minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)]"
-      : tracePanelOpen
-        ? "lg:grid-cols-[minmax(0,1fr)_18rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]"
-        : "lg:grid-cols-1";
+  const desktopGridColumns = taskPanelOpen
+    ? "lg:grid-cols-[14rem_minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)]"
+    : tracePanelOpen || runDetailsPanelOpen
+      ? "lg:grid-cols-[minmax(0,1fr)_22.5rem] 2xl:grid-cols-[minmax(0,1fr)_25rem]"
+      : "lg:grid-cols-1";
 
   return (
     <>
-      <RecoveryToast toast={recoveryToast} />
+      <RecoveryToast toast={pendingOperation || serverProcessing ? null : recoveryToast} />
       <Surface as="section" className="min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-4 py-4 md:px-6 lg:flex lg:h-[calc(100dvh-var(--site-header-viewport-offset))] lg:min-h-0 lg:flex-col lg:overflow-hidden" data-testid="gi088-evaluation-workbench">
         <header className="mx-auto w-full max-w-[116rem] shrink-0">
-          <div className="flex flex-wrap items-end justify-between gap-5">
-            <div>
-              <p className="archive-label">
-                {highOnly
-                  ? "GI-088 · v8r2 评测底座加固"
-                  : "GI-088 · 真人交互开发评测集 v4 阶段转场候选"}
+          <div className="flex min-h-[4.5rem] flex-wrap items-center justify-between gap-x-5 gap-y-2">
+            <div className="min-w-0 flex-1">
+              <p className="archive-label truncate">
+                GI-088 · {session.evaluation.version} · {session.evaluation.model}
               </p>
-              <h1 className="mt-2 max-w-4xl text-balance font-display text-2xl leading-tight text-ink md:text-3xl">
+              <h1 className="mt-1 max-w-4xl truncate font-display text-lg leading-tight text-ink md:text-xl">
                 {highOnly ? "持续聊下去，也能随时回看和纠正" : "同一起点，两条真实聊天轨迹"}
               </h1>
-              <p className="mt-2 max-w-4xl text-pretty text-sm leading-6 text-[var(--text-dim)] lg:truncate">
-                {highOnly
-                  ? "12 项任务只运行官方 DeepSeek V4 Pro 的 Thinking high。程序维护确定性来源、礼貌停聊与停止状态；轨迹不设次数上限，单次生成最多 60 秒，自动恢复链总计不超过 90 秒。所有可见提问都要在 Trace 完成人工分类。"
-                  : "完成 Thinking 关闭分支，再从相同 A0＋U1 独立开启高 Thinking。任务提示只对你可见，模型只接收真实对话。"}
-              </p>
             </div>
-            <div className="text-right">
-              <p className="font-display text-3xl tabular-nums text-ink">{session.batch.completedTaskCount}<span className="text-base text-[var(--text-faint)]"> / {session.batch.totalTasks}</span></p>
-              <p className="mt-1 font-mono text-xs text-[var(--text-faint)]">
-                {sealed
-                  ? "BATCH SEALED"
-                  : earlyStopped
-                    ? "BATCH EARLY STOPPED"
-                    : "BATCH IN PROGRESS"}
+            <div className="flex w-full min-w-0 flex-wrap items-center justify-start gap-2 md:w-auto md:shrink-0 md:justify-end">
+              <p className="mr-1 whitespace-nowrap font-display text-xl tabular-nums text-ink">
+                {session.batch.completedTaskCount}
+                <span className="text-sm text-[var(--text-faint)]"> / {session.batch.totalTasks}</span>
               </p>
-              <p className="mt-1 text-xs text-[var(--text-faint)]">
-                任务目标触发 {session.batch.targetCoverage.triggeredTrajectoryCount} / 已评价 {session.batch.targetCoverage.reviewedTrajectoryCount} 条轨迹
-              </p>
-            </div>
-          </div>
-          <div
-            className="mt-3 h-1 overflow-hidden rounded-full bg-paper/35"
-            role="progressbar"
-            aria-label="整批评测进度"
-            aria-valuemin={0}
-            aria-valuemax={session.batch.totalTasks}
-            aria-valuenow={session.batch.completedTaskCount}
-          >
-            <div className="h-full rounded-full bg-ink" style={{ width: `${(session.batch.completedTaskCount / session.batch.totalTasks) * 100}%` }} />
-          </div>
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-3" aria-label="评测运行与导出">
-            <label className="text-xs font-semibold text-[var(--text-dim)]">
-              当前运行
+              <label className="sr-only" htmlFor="gi088-run-select">当前运行</label>
               <select
-                className="mt-1 block rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/65 px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
+                id="gi088-run-select"
+                aria-label="当前评测运行"
+                className="min-h-11 min-w-0 max-w-full flex-1 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/65 px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay md:max-w-[13rem] md:flex-none"
                 value={runId}
-                disabled={busy}
+                disabled={busy || exporting}
                 onChange={(event) => onSelectRun(event.target.value)}
               >
                 {runs.map((run) => (
@@ -3094,18 +3473,42 @@ function WorkspaceReady({
                   </option>
                 ))}
               </select>
-            </label>
-            <div className="flex flex-wrap gap-2">
               {!runs.some(isWritableCurrentRun) ? (
-                <ActionButton type="button" variant="secondary" disabled={creatingRun || busy} onClick={onCreateRun}>
+                <ActionButton type="button" variant="secondary" disabled={creatingRun || busy || exporting} onClick={onCreateRun}>
                   {creatingRun ? "正在创建复测" : "创建同候选复测"}
                 </ActionButton>
               ) : null}
-              <ActionButton type="button" variant="secondary" disabled={exporting} onClick={() => void downloadExport()}>
-                {exporting ? "正在校验导出" : "下载已验证 JSON"}
+              <ActionButton
+                type="button"
+                variant="secondary"
+                disabled={exporting || !canExport}
+                aria-describedby={!canExport ? "gi088-export-availability" : undefined}
+                onClick={() => void downloadExport()}
+              >
+                {canExport
+                    ? "下载已验证 JSON"
+                    : "结束本批后可下载"}
               </ActionButton>
             </div>
           </div>
+          <div
+            className="h-1 overflow-hidden rounded-full bg-paper/35"
+            role="progressbar"
+            aria-label="整批评测进度"
+            aria-valuemin={0}
+            aria-valuemax={session.batch.totalTasks}
+            aria-valuenow={session.batch.completedTaskCount}
+          >
+            <div className="h-full rounded-full bg-ink" style={{ width: `${(session.batch.completedTaskCount / session.batch.totalTasks) * 100}%` }} />
+          </div>
+          <span id="gi088-export-availability" className="sr-only">
+            运行中的批次持续保留状态；封存或提前结束后生成不可变导出。
+          </span>
+          {exportFeedback.status !== "idle" ? (
+            <div className="mt-1 text-right text-xs text-[var(--text-faint)]">
+              <ExportFeedbackView feedback={exportFeedback} />
+            </div>
+          ) : null}
           {session.batch.readOnly ? (
             <p className="mt-3 border-l-2 border-[var(--line-strong)] pl-3 text-sm text-[var(--text-dim)]" role="status">
               历史只读：{session.batch.readOnlyReason ?? "当前执行指纹与该运行不同，仍可查看和导出。"}
@@ -3127,19 +3530,21 @@ function WorkspaceReady({
           ) : null}
         </header>
 
-        <Divider className="mx-auto my-3 w-full max-w-[116rem] shrink-0" />
-
-        <GateAndMetricsSummary session={session} />
-        <EvidenceGovernancePanel
-          session={session}
-          disabled={busy || runReadOnly}
-          onUpdated={update}
-          onError={setIssue}
-          onPending={setPending}
-        />
+        {!desktopLayout ? (
+          <>
+            <GateAndMetricsSummary session={session} />
+            <EvidenceGovernancePanel
+              session={session}
+              disabled={busy || runReadOnly}
+              onUpdated={update}
+              onError={setIssue}
+              onPending={setPending}
+            />
+          </>
+        ) : null}
 
         {!desktopLayout ? <details className="mx-auto mb-4 w-full max-w-[116rem] rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/55 p-3">
-          <summary className="cursor-pointer text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:min-h-0">
             查看任务 · {session.batch.completedTaskCount}/{session.batch.totalTasks}
           </summary>
           <div className="mt-3">
@@ -3156,7 +3561,14 @@ function WorkspaceReady({
                 variant="ghost"
                 aria-pressed={taskPanelOpen}
                 aria-controls="gi088-task-panel"
-                onClick={() => setTaskPanelOpen((value) => !value)}
+                onClick={() => {
+                  const opening = !taskPanelOpen;
+                  setTaskPanelOpen(opening);
+                  if (opening) {
+                    setTracePanelOpen(false);
+                    setRunDetailsPanelOpen(false);
+                  }
+                }}
               >
                 {taskPanelOpen
                   ? "收起任务"
@@ -3165,21 +3577,48 @@ function WorkspaceReady({
               <ActionButton
                 type="button"
                 variant="ghost"
+                disabled={currentTask.evaluationRole === "compatibility_smoke"}
                 aria-pressed={tracePanelOpen}
                 aria-controls="gi088-trace-panel"
-                onClick={() => setTracePanelOpen((value) => !value)}
+                onClick={() => {
+                  const opening = !tracePanelOpen;
+                  setTracePanelOpen(opening);
+                  if (opening) {
+                    setTaskPanelOpen(false);
+                    setRunDetailsPanelOpen(false);
+                  }
+                }}
               >
                 {tracePanelOpen
                   ? "收起 Trace"
-                  : `查看 Trace · ${trajectory?.turns.length ?? 0} 轮${unreviewedQuestionCount > 0 ? ` · 待复核 ${unreviewedQuestionCount}` : ""}`}
+                  : currentTask.evaluationRole === "compatibility_smoke"
+                    ? "兼容冒烟不产生模型 Trace"
+                    : `查看 Trace · ${trajectory?.turns.length ?? 0} 轮${unreviewedQuestionCount > 0 ? ` · 待复核 ${unreviewedQuestionCount}` : ""}`}
               </ActionButton>
-              {taskPanelOpen || tracePanelOpen ? (
+              <ActionButton
+                type="button"
+                variant="ghost"
+                aria-pressed={runDetailsPanelOpen}
+                aria-controls="gi088-run-details-panel"
+                onClick={() => {
+                  const opening = !runDetailsPanelOpen;
+                  setRunDetailsPanelOpen(opening);
+                  if (opening) {
+                    setTaskPanelOpen(false);
+                    setTracePanelOpen(false);
+                  }
+                }}
+              >
+                {runDetailsPanelOpen ? "收起运行详情" : `运行详情 · gate=${session.batch.gate?.status ?? "legacy_unknown"}`}
+              </ActionButton>
+              {taskPanelOpen || tracePanelOpen || runDetailsPanelOpen ? (
                 <ActionButton
                   type="button"
                   variant="ghost"
                   onClick={() => {
                     setTaskPanelOpen(false);
                     setTracePanelOpen(false);
+                    setRunDetailsPanelOpen(false);
                   }}
                 >
                   专注对话
@@ -3203,22 +3642,22 @@ function WorkspaceReady({
 
           <Card
             as="section"
-            className="flex min-h-[36rem] min-w-0 flex-col overflow-hidden p-0 md:min-h-[42rem] lg:h-full lg:min-h-0"
+            className="flex min-h-[calc(100dvh-var(--site-header-viewport-offset)-10rem)] min-w-0 flex-col overflow-hidden p-0 lg:h-full lg:min-h-0"
             aria-labelledby="gi088-current-task-title"
             aria-busy={busy}
             data-testid="gi088-dialogue-panel"
           >
-            <div className="px-5 pb-4 pt-5 md:px-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="shrink-0 px-5 py-2 md:px-6" data-testid="gi088-current-task-bar">
+              <div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-mono text-xs text-[var(--text-faint)]">{currentTask.id}{currentTask.repeatOf ? ` · 复测 ${currentTask.repeatOf}` : ""}</p>
-                  <h2 id="gi088-current-task-title" className="mt-1 text-balance font-display text-2xl text-ink">{currentTask.title}</h2>
-                  <p className="mt-2 max-w-3xl border-l-2 border-[var(--amber)] pl-3 text-pretty text-sm leading-6 text-[var(--text-dim)]">{currentTask.instruction}</p>
+                  <h2 id="gi088-current-task-title" className="mt-0.5 truncate font-display text-lg text-ink md:text-xl">{currentTask.title}</h2>
                 </div>
                 {activeTask && !highOnly ? <BranchTabs selected={selectedBranch} activeTask={activeTask} onSelect={setSelectedBranch} /> : null}
               </div>
-              {activeTask ? (
-                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--text-faint)]">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-faint)]">
+                {activeTask ? (
+                  <>
                   <span className="rounded-full bg-[var(--moss-soft)] px-2.5 py-1 text-ink/80">
                     {activeTask.readOnly
                       ? runReadOnly
@@ -3229,12 +3668,23 @@ function WorkspaceReady({
                         : "A0＋U1 已冻结"}
                   </span>
                   <span>{highOnly ? "仅运行 Thinking high" : "两条分支上下文独立"}</span>
-                  <span>已使用 {trajectory?.config.providerCallsUsed ?? 0} 次，本轨迹不设上限；同一段原话最多 3 次调用</span>
-                  <span>
-                    当前配置：{trajectory?.config.label ?? branchLabel[activeTask.activeBranch]} · 温度 {trajectory?.config.temperature ?? "N/A"} · Reasoning {trajectory?.config.reasoningEffort ?? "关闭"}
-                  </span>
-                </div>
-              ) : null}
+                  <span>调用 {trajectory?.config.providerCallsUsed ?? 0} 次 · {trajectory?.config.label ?? branchLabel[activeTask.activeBranch]}</span>
+                  </>
+                ) : null}
+                <details className="text-xs text-[var(--text-dim)]">
+                  <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:min-h-0">
+                    查看任务说明与判尺
+                  </summary>
+                  <div className="mt-2 max-w-3xl border-l-2 border-[var(--amber)] pl-3 leading-5">
+                    <p>{currentTask.instruction}</p>
+                    {activeTask ? (
+                      <p className="mt-2 text-[var(--text-faint)]">
+                        温度 {trajectory?.config.temperature ?? "N/A"} · Reasoning {trajectory?.config.reasoningEffort ?? "关闭"} · 同一段原话最多 3 次调用
+                      </p>
+                    ) : null}
+                  </div>
+                </details>
+              </div>
             </div>
             <Divider />
 
@@ -3263,7 +3713,7 @@ function WorkspaceReady({
                       disabled={exporting}
                       onClick={() => void downloadExport()}
                     >
-                      {exporting ? "正在准备完整结果" : "再次下载完整 JSON"}
+                      再次下载完整 JSON
                     </ActionButton>
                   </div>
                 ) : batchComplete ? (
@@ -3271,6 +3721,98 @@ function WorkspaceReady({
                     <p className="text-balance font-display text-3xl text-ink">{session.batch.totalTasks} 项都已完成</p>
                     <p className="mt-3 text-pretty text-sm leading-7 text-[var(--text-dim)]">封存会让整批进入永久只读状态。确认完成后，再开始一条新的批次迭代任务。</p>
                     <ActionButton type="button" className="mt-5" variant="primary" disabled={pending} onClick={() => setSealOpen(true)}>封存整批结果</ActionButton>
+                  </div>
+                ) : currentTask.evaluationRole === "compatibility_smoke" ? (
+                  <div className="m-auto w-full max-w-2xl">
+                    <p className="font-mono text-xs text-[var(--text-faint)]">
+                      零模型兼容冒烟 · GI-088 调用保持 0
+                    </p>
+                    <h3 className="mt-2 text-balance font-display text-2xl text-ink">
+                      在真实【帮我记】入口完成后登记结果
+                    </h3>
+                    <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-[var(--text-dim)]">
+                      <li>打开独立记录入口，确认当前模式清楚显示为【帮我记】。</li>
+                      <li>由你自行提交本项要求的真实内容，观察轻量承接、零追问和模式保持。</li>
+                      <li>回到这里登记公开结果和可核查理由；工作台不会代填真人内容。</li>
+                    </ol>
+                    <a
+                      href={`/interview?mode=event-centered&recordMode=capture&gi088RunId=${encodeURIComponent(runId)}&gi088TaskId=${encodeURIComponent(currentTask.id)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-5 inline-flex min-h-11 items-center rounded-[var(--radius-control)] bg-ink px-4 py-2 text-sm font-semibold text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
+                    >
+                      打开【帮我记】兼容入口
+                    </a>
+                    <p
+                      className="mt-3 text-sm leading-6 text-[var(--text-dim)]"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {compatibilityReceipt
+                        ? "已检测到本项真实【帮我记】记录，服务端会在保存时复核零追问和零模型调用。"
+                        : "等待真实【帮我记】记录。完成后回到本页，系统会自动识别。"}
+                    </p>
+                    <div className="mt-5 border-t border-[var(--line-soft)] pt-5">
+                      <ChoiceGroup
+                        label="本项兼容结果"
+                        value={compatibilityOutcome}
+                        options={compatibilitySmokeOptions}
+                        onChange={(value) => {
+                          setCompatibilityOutcome(value);
+                          writeGi088EvaluationDraft(draftScope({
+                            runId,
+                            taskId: currentTask.id,
+                            branch: null,
+                            form: "compatibility_smoke",
+                            turnId: null
+                          }), {
+                            outcome: value,
+                            reason: compatibilityReason
+                          });
+                        }}
+                        disabled={busy || runReadOnly}
+                        required
+                      />
+                      <label className="mt-4 block text-xs font-semibold text-[var(--text-dim)]">
+                        观察理由（必填）
+                        <textarea
+                          value={compatibilityReason}
+                          disabled={busy || runReadOnly}
+                          onChange={(event) => {
+                            setCompatibilityReason(event.target.value);
+                            writeGi088EvaluationDraft(draftScope({
+                              runId,
+                              taskId: currentTask.id,
+                              branch: null,
+                              form: "compatibility_smoke",
+                              turnId: null
+                            }), {
+                              outcome: compatibilityOutcome,
+                              reason: event.target.value
+                            });
+                          }}
+                          rows={3}
+                          maxLength={2_000}
+                          placeholder="记录入口、模式锚点、AI 可见回应和是否出现提问。"
+                          className="mt-2 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/55 px-3 py-2 text-sm font-normal leading-6 text-ink outline-none transition focus:border-[var(--line-strong)] focus:bg-paper/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
+                        />
+                      </label>
+                      <ActionButton
+                        type="button"
+                        variant="primary"
+                        className="mt-4"
+                        disabled={
+                          busy ||
+                          runReadOnly ||
+                          !compatibilityOutcome ||
+                          !compatibilityReason.trim() ||
+                          (compatibilityOutcome === "passed" && !compatibilityReceipt)
+                        }
+                        onClick={() => void saveCompatibilitySmoke()}
+                      >
+                        保存本项兼容结果
+                      </ActionButton>
+                    </div>
                   </div>
                 ) : (
                   <div className="m-auto w-full max-w-2xl">
@@ -3416,7 +3958,12 @@ function WorkspaceReady({
                   />
                 </div>
                 <Divider />
-                <div className="max-h-[48%] shrink-0 overflow-y-auto overscroll-contain bg-paper/35 px-5 py-4 md:px-6" data-testid="gi088-trajectory-controls">
+                <div className="max-h-[min(32dvh,18rem)] shrink-0 overflow-y-auto overscroll-contain bg-paper/35 px-5 py-3 md:px-6" data-testid="gi088-trajectory-controls">
+                  {pendingOperation?.taskId === activeTask.taskId && pendingOperation.branch === selectedBranch ? (
+                    <div className="mb-3"><PendingGenerationStatus operation={pendingOperation} /></div>
+                  ) : trajectory.status === "running" && trajectory.pendingTurnId ? (
+                    <div className="mb-3"><ServerGenerationStatus /></div>
+                  ) : null}
                   {issue ? <div className="mb-4"><InlineIssue issue={issue} onAction={handleIssueAction} /></div> : null}
                   {unreviewedQuestionCount > 0 ? (
                     <div id={endReviewHelpId} className="mb-4 border-l-2 border-[var(--amber)] pl-4 text-sm leading-6" role="status">
@@ -3434,6 +3981,7 @@ function WorkspaceReady({
                     onError={setIssue}
                     onPending={setPending}
                     allowManualRetry={!highOnly}
+                    showRecoveryStatus={!(pendingOperation?.taskId === activeTask.taskId && pendingOperation.branch === selectedBranch) && !trajectory.pendingTurnId}
                   />
                   <ProtectedFailure
                     runId={runId}
@@ -3444,6 +3992,7 @@ function WorkspaceReady({
                     onUpdated={update}
                     onError={setIssue}
                     onPending={setPending}
+                    showRecoveryStatus={!(pendingOperation?.taskId === activeTask.taskId && pendingOperation.branch === selectedBranch) && !trajectory.pendingTurnId}
                   />
 
                   {trajectory.review && reviewingBranch !== selectedBranch ? (
@@ -3527,7 +4076,7 @@ function WorkspaceReady({
                               void sendTurn();
                             }
                           }}
-                          rows={3}
+                          rows={2}
                           maxLength={4000}
                           placeholder="直接回应 AI。⌘ Enter 发送"
                           className="mt-2 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-paper/55 px-3 py-2 text-sm font-normal leading-6 text-ink outline-none transition focus:border-[var(--line-strong)] focus:bg-paper/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay"
@@ -3663,7 +4212,23 @@ function WorkspaceReady({
             ) : null}
           </Card>
 
-          {desktopLayout && !tracePanelOpen ? null : trajectory ? (
+          {desktopLayout && runDetailsPanelOpen ? (
+            <aside
+              id="gi088-run-details-panel"
+              className="min-h-0 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/45 p-4"
+              aria-label="运行详情"
+            >
+              <GateAndMetricsSummary session={session} expanded />
+              <EvidenceGovernancePanel
+                session={session}
+                disabled={busy || runReadOnly}
+                onUpdated={update}
+                onError={setIssue}
+                onPending={setPending}
+                expanded
+              />
+            </aside>
+          ) : desktopLayout && !tracePanelOpen ? null : trajectory ? (
             desktopLayout ? (
               <div id="gi088-trace-panel" className="min-h-0">
                 <TraceLedger
@@ -3679,7 +4244,7 @@ function WorkspaceReady({
               </div>
             ) : (
               <details className="rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-paper/55 p-3">
-                <summary className="cursor-pointer text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay">
+                <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:min-h-0">
                   查看 Trace · {trajectory.turns.length} 轮
                 </summary>
                 <div className="mt-3">
@@ -3707,7 +4272,7 @@ function WorkspaceReady({
                   <div><dt className="text-[var(--text-faint)]">开启组</dt><dd className="mt-0.5 text-ink">Thinking 开启 · reasoning high · 温度 N/A</dd></div>
                   <div><dt className="text-[var(--text-faint)]">共同输出</dt><dd className="mt-0.5 text-ink">结构化 JSON · 应用不设 Token 上限 · 同一段原话最多三次调用</dd></div>
                   <div><dt className="text-[var(--text-faint)]">轨迹调用</dt><dd className="mt-0.5 text-ink">已使用 N 次，本轨迹不设上限</dd></div>
-                  {highOnly ? <div><dt className="text-[var(--text-faint)]">等待策略</dt><dd className="mt-0.5 text-ink">响应头 15 秒 · 正文空闲 45 秒 · 总时长 60 秒</dd></div> : null}
+                  {highOnly ? <div><dt className="text-[var(--text-faint)]">等待策略</dt><dd className="mt-0.5 text-ink">响应头 60 秒 · 正文空闲 60 秒 · 单次总时长 60 秒</dd></div> : null}
                   <div><dt className="text-[var(--text-faint)]">执行指纹</dt><dd title={session.evaluation.executionFingerprint} className="mt-0.5 font-mono text-ink">{compactFingerprint(session.evaluation.executionFingerprint)}</dd></div>
                   <div><dt className="text-[var(--text-faint)]">数据状态</dt><dd className="mt-0.5 text-ink">{terminal ? "只读封存" : "Preview 独立评测存储"}</dd></div>
                 </dl>
@@ -3862,12 +4427,12 @@ export function Gi088EvaluationWorkbench() {
             {issue ? "评测工作台暂时无法打开" : "当前候选还没有真人运行"}
           </p>
           <p className="mt-3 text-pretty text-sm leading-7 text-[var(--text-dim)]">
-            {issue?.message ?? "创建运行只初始化 12 项任务，模型调用保持为 0。"}
+            {issue?.message ?? "创建运行只初始化 4 条计分轨迹与 2 条兼容冒烟，模型调用保持为 0。"}
           </p>
           {issue?.code ? <p className="mt-2 font-mono text-xs text-[var(--text-faint)]">{issue.code}</p> : null}
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <ActionButton type="button" variant="primary" disabled={creatingRun} onClick={() => void createRun()}>
-              {creatingRun ? "正在创建运行" : "创建 0/12 运行"}
+              {creatingRun ? "正在创建运行" : "创建 0/6 运行"}
             </ActionButton>
             <ActionButton type="button" variant="secondary" disabled={creatingRun} onClick={() => void load()}>重新读取</ActionButton>
           </div>

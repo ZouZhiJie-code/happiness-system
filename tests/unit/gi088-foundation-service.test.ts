@@ -19,6 +19,7 @@ import {
   GI088_EVALUATION_ID_V7R4,
   GI088_EVALUATION_ID_V8,
   GI088_EVALUATION_ID_V8R1,
+  GI088_EVALUATION_ID_V8R2,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V1,
   GI088_EVALUATION_VERSION_V2,
@@ -33,6 +34,8 @@ import {
   GI088_EVALUATION_VERSION_V7R4,
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
+  GI088_MODEL_CALL_IDENTITY,
   GI088_SERVICE_VERSION_V1,
   GI088_SERVICE_VERSION_V2,
   GI088_SERVICE_VERSION_V3,
@@ -46,10 +49,12 @@ import {
   GI088_SERVICE_VERSION_V7R4,
   GI088_SERVICE_VERSION_V8,
   GI088_SERVICE_VERSION_V8R1,
+  GI088_SERVICE_VERSION_V8R2,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_V5_TASKS,
   GI088_V6_TASKS,
   GI088_V8R1_TASKS,
+  GI088_V8R2_TASKS,
   createGi088DatasetFingerprint
 } from "@/server/services/evaluation/gi088/candidate";
 import { Gi088MemoryFoundationStore } from "@/server/services/evaluation/gi088/foundation-memory-store";
@@ -58,21 +63,35 @@ import {
   type Gi088FoundationExecutionEvent
 } from "@/server/services/evaluation/gi088/foundation-service";
 import {
+  GI088_READONLY_EXPORT_VERSION,
+  canonicalizeGi088ExportPayload
+} from "@/server/services/evaluation/gi088/export-v06";
+import { GI088_READONLY_EXPORT_VERSION_V07 } from "@/server/services/evaluation/gi088/export-v07";
+import { createGi088ModelRequestHash } from "@/server/services/evaluation/gi088/request-identity";
+import {
   createGi088FoundationPayloadHash,
   Gi088FoundationStoreError,
   type Gi088EvaluationFoundationStore,
   type Gi088FoundationCallRecord,
+  type Gi088FoundationExportSnapshotRecord,
   type Gi088FoundationJson
 } from "@/server/services/evaluation/gi088/foundation-store";
 import type {
   Gi088BatchState,
-  Gi088EvaluationMode
+  Gi088EvaluationMode,
+  Gi088V8r3OfflineEvaluationEvidence
 } from "@/server/services/evaluation/gi088/types";
 
 const HIDDEN_REASONING_SENTINEL = "PRIVATE_HIDDEN_REASONING_SENTINEL";
 const LEGACY_HIDDEN_REASONING_SENTINEL =
   "PRIVATE_LEGACY_HIDDEN_REASONING_SENTINEL";
 const LEGACY_VISIBLE_RAW_OUTPUT = "LEGACY_VISIBLE_RAW_OUTPUT";
+const DEFAULT_OFFLINE_EVIDENCE: Gi088V8r3OfflineEvaluationEvidence = {
+  candidateOfflineRunFingerprint: "a".repeat(64),
+  candidateEvidenceFingerprint: "b".repeat(64),
+  admissionFingerprint: "c".repeat(64),
+  automaticRecoveryCount: 0
+};
 
 function firstTurnOutput() {
   return JSON.stringify({
@@ -121,6 +140,28 @@ function unauthorizedPauseOutput() {
   return JSON.stringify(output);
 }
 
+function sameFocusMultipleQuestionMarksOutput() {
+  const output = JSON.parse(firstTurnOutput()) as {
+    visible: { understanding: string | null; response: string };
+  };
+  output.visible.response =
+    "它目前最卡住你的具体感受是什么？比如更接近为难，还是担心？";
+  return JSON.stringify(output);
+}
+
+function semanticValidationFailureOutput() {
+  const output = JSON.parse(firstTurnOutput()) as {
+    semantic: Record<string, unknown>;
+  };
+  output.semantic.understandingChange = {
+    kind: "revise",
+    targetRef: "missing-understanding",
+    summary: "尝试修订一条并不存在的认识",
+    evidenceRefs: ["U1"]
+  };
+  return JSON.stringify(output);
+}
+
 function fakeProvider(outputs: string[] = [firstTurnOutput()]) {
   const params: AICompletionParams[] = [];
   let index = 0;
@@ -164,6 +205,7 @@ function serviceWith(input?: {
   getProvider?: () => AIProvider | Promise<AIProvider>;
   now?: () => Date;
   sleep?: (milliseconds: number) => Promise<void>;
+  offlineEvaluationEvidence?: Gi088V8r3OfflineEvaluationEvidence;
 }) {
   const store = input?.store ?? new Gi088MemoryFoundationStore();
   const fallback = fakeProvider();
@@ -173,6 +215,8 @@ function serviceWith(input?: {
     store,
     getProvider,
     authorizeModelCall: vi.fn(),
+    offlineEvaluationEvidence:
+      input?.offlineEvaluationEvidence ?? DEFAULT_OFFLINE_EVIDENCE,
     now: input?.now,
     sleep: input?.sleep
   });
@@ -185,6 +229,72 @@ async function createRun(
   clientOperationId = "create-run"
 ) {
   return service.createRun({ ownerUserId, clientOperationId });
+}
+
+async function markMemoryRunTerminalForExport(input: {
+  store: Gi088MemoryFoundationStore;
+  ownerUserId: string;
+  runId: string;
+  sealedAt?: Date;
+}) {
+  const run = await input.store.findRun({
+    ownerUserId: input.ownerUserId,
+    runId: input.runId
+  });
+  if (!run) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+  const mutableRuns = (
+    input.store as unknown as {
+      runs: Map<string, typeof run>;
+    }
+  ).runs;
+  mutableRuns.set(run.id, {
+    ...run,
+    status: "early_stopped",
+    sealedAt: input.sealedAt ?? new Date("2026-08-11T00:00:00.000Z")
+  });
+}
+
+async function completeScoredTrajectory(input: {
+  service: Gi088EvaluationFoundationService;
+  ownerUserId: string;
+  runId: string;
+  taskId: "A1" | "A2" | "A3" | "A4";
+}) {
+  const started = await input.service.startTask({
+    ownerUserId: input.ownerUserId,
+    runId: input.runId,
+    taskId: input.taskId,
+    initialUserMessage: `${input.taskId} 的真实测试内容。`,
+    clientOperationId: `${input.taskId}-start`
+  });
+  const turn = started.activeTask!.branches.high.turns[0]!;
+  const reviewed = await input.service.reviewQuestion({
+    ownerUserId: input.ownerUserId,
+    runId: input.runId,
+    taskId: input.taskId,
+    branch: "high",
+    turnId: turn.id,
+    questionPresence: "present",
+    classification: "same_focus_low_burden",
+    valueClassification: "advances_working_task",
+    note: "问题推进当前共同任务且回答负担较低。",
+    observationFingerprint:
+      turn.questionObservation!.observationFingerprint!,
+    clientOperationId: `${input.taskId}-review`
+  });
+  return input.service.endTrajectory({
+    ownerUserId: input.ownerUserId,
+    runId: input.runId,
+    taskId: input.taskId,
+    branch: "high",
+    feeling: "better",
+    quality: "direct_use",
+    targetTrigger: "triggered",
+    reason: "该轨迹可以直接使用。",
+    reviewSnapshotFingerprint:
+      reviewed.activeTask!.reviewSnapshot!.fingerprint,
+    clientOperationId: `${input.taskId}-end`
+  });
 }
 
 async function createHistoricalEvidenceState() {
@@ -244,11 +354,14 @@ function projectHistoricalState(input: {
   );
   state.batchId = input.runId;
   state.evaluationMode = input.mode;
+  delete state.offlineEvaluationEvidence;
   state.tasks = input.taskIds.map((taskId, index) => {
-    const source = sourceById.get(taskId) ?? state.tasks[index];
+    const source = sourceById.get(taskId) ?? state.tasks[index] ?? state.tasks[0];
     if (!source) throw new Error("GI088_HISTORICAL_TASK_SEED_MISSING");
+    const projected = structuredClone(source);
+    delete projected.compatibilitySmoke;
     return {
-      ...structuredClone(source),
+      ...projected,
       taskId
     };
   });
@@ -351,6 +464,53 @@ class ToggleProviderResultFailureStore extends Gi088MemoryFoundationStore {
 }
 
 describe("GI-088 v8r2 evaluation foundation service", () => {
+  it("冻结离线证据，并用离线加 Preview 合计恢复预算阻断绕过", async () => {
+    const pending = serviceWith({
+      offlineEvaluationEvidence: {
+        ...DEFAULT_OFFLINE_EVIDENCE,
+        admissionFingerprint: null,
+        automaticRecoveryCount: 2
+      }
+    });
+    const pendingRun = await createRun(
+      pending.service,
+      "owner-offline-admission-pending"
+    );
+    expect(pendingRun.session.batch).toMatchObject({
+      gate: { status: "pending", reasons: [] },
+      offlineEvaluationEvidence: {
+        admissionFingerprint: null,
+        automaticRecoveryCount: 2
+      },
+      recoveryBudget: {
+        offlineAutomaticRecoveryCount: 2,
+        previewAutomaticRecoveryCount: 0,
+        combinedAutomaticRecoveryCount: 2,
+        maximumAutomaticRecoveryCount: 2
+      }
+    });
+
+    const exceeded = serviceWith({
+      offlineEvaluationEvidence: {
+        ...DEFAULT_OFFLINE_EVIDENCE,
+        automaticRecoveryCount: 3
+      }
+    });
+    const exceededRun = await createRun(
+      exceeded.service,
+      "owner-offline-budget-exceeded"
+    );
+    expect(exceededRun.session.batch.gate).toMatchObject({
+      status: "no_go",
+      reasons: [
+        expect.objectContaining({
+          code: "automatic_recovery_budget_exceeded",
+          sourceType: "technical_fact"
+        })
+      ]
+    });
+  });
+
   it("并发与重复创建只产生一个 run，保持零 Provider 调用", async () => {
     const provider = fakeProvider();
     const getProvider = vi.fn(() => provider.provider);
@@ -371,11 +531,213 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(first.session.batch.targetCoverage).toEqual({
       triggeredTrajectoryCount: 0,
       reviewedTrajectoryCount: 0,
-      totalTrajectoryCount: 12
+      totalTrajectoryCount: 4
     });
+    expect(first.session.batch).toMatchObject({
+      completedTaskCount: 0,
+      totalTasks: 6,
+      revision: 0
+    });
+    expect(first.session.tasks.map((task) => task.evaluationRole)).toEqual([
+      "scored_trajectory",
+      "scored_trajectory",
+      "scored_trajectory",
+      "scored_trajectory",
+      "compatibility_smoke",
+      "compatibility_smoke"
+    ]);
+    expect(first.session.tasks.every((task) =>
+      task.compatibilitySmoke === null
+    )).toBe(true);
     expect(first.session.metrics?.gateFacts.unreviewedTrajectoryCount).toBe(0);
     expect(getProvider).not.toHaveBeenCalled();
     expect(provider.provider.complete).not.toHaveBeenCalled();
+  });
+
+  it("A5/A6 只接受零模型兼容结果登记，并以幂等结果完成 0/6 任务", async () => {
+    const fake = fakeProvider();
+    const getProvider = vi.fn(() => fake.provider);
+    const { service, store } = serviceWith({ getProvider });
+    const ownerUserId = "owner-compatibility-smoke";
+    const created = await createRun(service, ownerUserId);
+
+    for (const taskId of ["A1", "A2", "A3", "A4"] as const) {
+      await completeScoredTrajectory({
+        service,
+        ownerUserId,
+        runId: created.runId,
+        taskId
+      });
+    }
+    const beforeSmoke = await service.getSession({
+      ownerUserId,
+      runId: created.runId
+    });
+    expect(beforeSmoke.batch.completedTaskCount).toBe(4);
+    expect(beforeSmoke.tasks[4]).toMatchObject({
+      id: "A5",
+      evaluationRole: "compatibility_smoke",
+      status: "ready",
+      compatibilitySmoke: null
+    });
+
+    await expectCode(
+      service.startTask({
+        ownerUserId,
+        runId: created.runId,
+        taskId: "A5",
+        initialUserMessage: "这段内容不得进入陪聊模型。",
+        clientOperationId: "A5-model-start-forbidden"
+      }),
+      "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT"
+    );
+    await expectCode(
+      service.retry({
+        ownerUserId,
+        runId: created.runId,
+        taskId: "A5",
+        branch: "high",
+        turnId: "123e4567-e89b-12d3-a456-426614174000",
+        trigger: "manual_after_auto_recovery",
+        clientOperationId: "A5-model-retry-forbidden"
+      }),
+      "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT"
+    );
+
+    const a5Input = {
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A5",
+      outcome: "passed" as const,
+      reason: "真实【帮我记】入口已完成轻量忠实承接。",
+      evidence: {
+        productSessionFingerprint: "a".repeat(64),
+        recordMode: "capture" as const,
+        completedUserTurnCount: 1,
+        questionFormTurnCount: 0,
+        visibleQuestionCount: 0,
+        providerCallCount: 0
+      },
+      clientOperationId: "A5-compatibility-result"
+    };
+    const a5 = await service.recordCompatibilitySmoke(a5Input);
+    const a5Replay = await service.recordCompatibilitySmoke(a5Input);
+    expect(a5Replay.tasks[4]?.compatibilitySmoke).toEqual(
+      a5.tasks[4]?.compatibilitySmoke
+    );
+    expect(a5.batch.completedTaskCount).toBe(5);
+    expect(a5.tasks[5]?.status).toBe("ready");
+    await expectCode(
+      service.recordCompatibilitySmoke({
+        ...a5Input,
+        outcome: "failed"
+      }),
+      "GI088_OPERATION_PAYLOAD_CONFLICT"
+    );
+
+    const completed = await service.recordCompatibilitySmoke({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A6",
+      outcome: "passed",
+      reason: "提问式自我表达按记录内容承接，产品链路未代答或追问。",
+      evidence: {
+        productSessionFingerprint: "b".repeat(64),
+        recordMode: "capture",
+        completedUserTurnCount: 1,
+        questionFormTurnCount: 1,
+        visibleQuestionCount: 0,
+        providerCallCount: 0
+      },
+      clientOperationId: "A6-compatibility-result"
+    });
+    expect(completed.batch).toMatchObject({
+      completedTaskCount: 6,
+      totalTasks: 6,
+      gate: { status: "ready_for_final_review" }
+    });
+    expect(completed.tasks.slice(4).map((task) => task.compatibilitySmoke)).toEqual([
+      expect.objectContaining({ outcome: "passed" }),
+      expect.objectContaining({ outcome: "passed" })
+    ]);
+    const calls = await store.listCalls(created.runId);
+    expect(calls.filter((call) => call.taskId === "A5" || call.taskId === "A6"))
+      .toEqual([]);
+    expect(getProvider).toHaveBeenCalledTimes(4);
+    expect(fake.provider.complete).toHaveBeenCalledTimes(4);
+
+    await service.seal({
+      ownerUserId,
+      runId: created.runId,
+      confirmation: true,
+      clientOperationId: "seal-compatibility-run"
+    });
+    const exported = await service.exportRun({
+      ownerUserId,
+      runId: created.runId
+    });
+    expect(exported.receipt.exportVersion).toBe(
+      GI088_READONLY_EXPORT_VERSION_V07
+    );
+    expect(exported.payload).toMatchObject({
+      taskDefinitions: expect.arrayContaining([
+        expect.objectContaining({
+          id: "A5",
+          evaluationRole: "compatibility_smoke"
+        }),
+        expect.objectContaining({
+          id: "A6",
+          evaluationRole: "compatibility_smoke"
+        })
+      ]),
+      batch: {
+        tasks: expect.arrayContaining([
+          expect.objectContaining({
+            taskId: "A5",
+            compatibilitySmoke: expect.objectContaining({ outcome: "passed" })
+          }),
+          expect.objectContaining({
+            taskId: "A6",
+            compatibilitySmoke: expect.objectContaining({ outcome: "passed" })
+          })
+        ])
+      }
+    });
+  });
+
+  it("兼容冒烟失败形成明确 No-Go，且不生成该任务调用账本", async () => {
+    const fake = fakeProvider();
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const ownerUserId = "owner-compatibility-failed";
+    const created = await createRun(service, ownerUserId);
+    for (const taskId of ["A1", "A2", "A3", "A4"] as const) {
+      await completeScoredTrajectory({
+        service,
+        ownerUserId,
+        runId: created.runId,
+        taskId
+      });
+    }
+    const failed = await service.recordCompatibilitySmoke({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A5",
+      outcome: "failed",
+      reason: "真实产品链路未按记录内容承接。",
+      clientOperationId: "A5-compatibility-failed"
+    });
+    expect(failed.batch.gate).toMatchObject({
+      status: "no_go",
+      reasons: [
+        expect.objectContaining({
+          code: "compatibility_smoke_failed",
+          sourceId: "A5"
+        })
+      ]
+    });
+    expect((await store.listCalls(created.runId)).some(
+      (call) => call.taskId === "A5"
+    )).toBe(false);
   });
 
   it("Provider factory 失败时保持零账本、零 pending turn", async () => {
@@ -991,6 +1353,121 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         (item) => item.interventionType === "unauthorized_pause_recovery"
       )
     ).toBe(true);
+    expect(fake.params[1]?.messages.some((message) =>
+      message.role === "system" &&
+      message.content.includes("用户未明确停止时选择了暂停")
+    )).toBe(true);
+    expect(calls[0]?.automaticDeadlineAt).toEqual(
+      calls[1]?.automaticDeadlineAt
+    );
+  });
+
+  it("结构化或语义校验失败只纠正一次，并对同一原话原子幂等提交", async () => {
+    const fake = fakeProvider([
+      "{ invalid-json",
+      firstTurnOutput()
+    ]);
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const created = await createRun(service, "owner-contract-recovery");
+    const schemaInput = {
+      ownerUserId: "owner-contract-recovery",
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "同一段需要被可靠保存的原话。",
+      clientOperationId: "schema-recovery-turn"
+    };
+    const first = await service.startTask(schemaInput);
+    const replay = await service.startTask(schemaInput);
+    const schemaCalls = await store.listCalls(created.runId);
+
+    expect(fake.provider.complete).toHaveBeenCalledTimes(2);
+    expect(schemaCalls.map((call) => call.retryTrigger)).toEqual([
+      null,
+      "OUTPUT_SCHEMA_INVALID"
+    ]);
+    expect(fake.params[1]?.messages.some((message) =>
+      message.role === "system" &&
+      message.content.includes("结构化 JSON 合同")
+    )).toBe(true);
+    expect(first.activeTask?.branches.high.messages.filter(
+      (message) => message.role === "user"
+    )).toHaveLength(1);
+    expect(replay.activeTask?.branches.high.messages).toEqual(
+      first.activeTask?.branches.high.messages
+    );
+    expect(schemaCalls[0]?.automaticDeadlineAt).toEqual(
+      schemaCalls[1]?.automaticDeadlineAt
+    );
+
+    const semanticFake = fakeProvider([
+      semanticValidationFailureOutput(),
+      firstTurnOutput()
+    ]);
+    const semantic = serviceWith({ provider: semanticFake.provider });
+    const semanticRun = await createRun(
+      semantic.service,
+      "owner-semantic-recovery"
+    );
+    const second = await semantic.service.startTask({
+      ownerUserId: "owner-semantic-recovery",
+      runId: semanticRun.runId,
+      taskId: "A1",
+      initialUserMessage: "继续验证语义合同恢复。",
+      clientOperationId: "semantic-recovery-turn"
+    });
+    const semanticCalls = await semantic.store.listCalls(semanticRun.runId);
+    expect(semanticFake.provider.complete).toHaveBeenCalledTimes(2);
+    expect(semanticCalls.map((call) => call.retryTrigger)).toEqual([
+      null,
+      "SEMANTIC_VALIDATION_FAILED"
+    ]);
+    expect(semanticFake.params[1]?.messages.some((message) =>
+      message.role === "system" &&
+      message.content.includes("当前语义合同")
+    )).toBe(true);
+    expect(second.activeTask?.branches.high.turns[0]).toMatchObject({
+      status: "complete_after_auto_recovery",
+      recovery: { automaticRetryCount: 1 }
+    });
+  });
+
+  it("同一回答目标允许多个问号且只调用一次 Provider", async () => {
+    const fake = fakeProvider([sameFocusMultipleQuestionMarksOutput()]);
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const created = await createRun(service, "owner-multiple-question-marks");
+    const session = await service.startTask({
+      ownerUserId: "owner-multiple-question-marks",
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "我想聊聊最近一次让我为难的沟通。",
+      clientOperationId: "multiple-question-marks-turn"
+    });
+    const calls = await store.listCalls(created.runId);
+    const turn = session.activeTask?.branches.high.turns[0];
+
+    expect(fake.provider.complete).toHaveBeenCalledTimes(1);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.retryTrigger).toBeNull();
+    expect(turn).toMatchObject({
+      status: "valid",
+      validationIssues: [],
+      recovery: null,
+      questionObservation: {
+        questionMarkCount: 2,
+        reviewCandidate: "multiple_question_marks"
+      }
+    });
+    expect(calls[0]?.effectiveConfig).toMatchObject({
+      ...GI088_MODEL_CALL_IDENTITY,
+      headersTimeoutMs: 60_000,
+      bodyIdleTimeoutMs: 60_000,
+      hardTimeoutMs: 60_000,
+      maxTokensPolicy: "provider_default",
+      responseFormat: "json_object"
+    });
+    expect(calls[0]?.requestHash).toBe(
+      createGi088ModelRequestHash(fake.params[0]!)
+    );
   });
 
   it("自动恢复严格受 90 秒共享截止约束", async () => {
@@ -1203,6 +1680,23 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         turnId: turn.id,
         questionPresence: "present",
         classification: "same_focus_low_burden",
+        note: "缺少问题价值分类。",
+        observationFingerprint:
+          turn.questionObservation!.observationFingerprint!,
+        clientOperationId: "missing-value-classification"
+      }),
+      "GI088_QUESTION_REVIEW_CLASSIFICATION_INVALID"
+    );
+    await expectCode(
+      service.reviewQuestion({
+        ownerUserId: "owner-review-stale",
+        runId: created.runId,
+        taskId: "A1",
+        branch: "high",
+        turnId: turn.id,
+        questionPresence: "present",
+        classification: "same_focus_low_burden",
+        valueClassification: "advances_working_task",
         note: "使用陈旧观察指纹。",
         observationFingerprint: "0".repeat(64),
         clientOperationId: "stale-observation"
@@ -1217,6 +1711,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       turnId: turn.id,
       questionPresence: "present",
       classification: "same_focus_low_burden",
+      valueClassification: "advances_working_task",
       note: "问题保持单一焦点且回答负担较低。",
       observationFingerprint:
         turn.questionObservation!.observationFingerprint!,
@@ -1225,6 +1720,51 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(reviewed.activeTask!.reviewSnapshot!.fingerprint).not.toBe(
       originalSnapshot
     );
+    expect(
+      reviewed.activeTask!.branches.high.turns[0]!.questionObservation!.review
+    ).toMatchObject({
+      classification: "same_focus_low_burden",
+      valueClassification: "advances_working_task"
+    });
+    expect(reviewed.questionValueStatistics).toEqual({
+      reviewedCount: 1,
+      counts: {
+        advances_working_task: 1,
+        reasks_answered_content: 0,
+        working_task_drift: 0,
+        unsupported_third_party_inference: 0,
+        low_information_gain: 0,
+        uncertain: 0
+      }
+    });
+    const revised = await service.reviewQuestion({
+      ownerUserId: "owner-review-stale",
+      runId: created.runId,
+      taskId: "A1",
+      branch: "high",
+      turnId: turn.id,
+      questionPresence: "present",
+      classification: "same_focus_low_burden",
+      valueClassification: "low_information_gain",
+      note: "复核后认为问题信息增量不足。",
+      observationFingerprint:
+        turn.questionObservation!.observationFingerprint!,
+      clientOperationId: "revise-question-value",
+      revisionReason: "重新核对共同任务与可见问题后修订价值分类。"
+    });
+    expect(revised.questionValueStatistics).toMatchObject({
+      reviewedCount: 1,
+      counts: {
+        advances_working_task: 0,
+        low_information_gain: 1
+      }
+    });
+    expect(revised.reviewRevisions).toMatchObject([{
+      subjectType: "question_review",
+      oldValue: { valueClassification: "advances_working_task" },
+      newValue: { valueClassification: "low_information_gain" },
+      reason: "重新核对共同任务与可见问题后修订价值分类。"
+    }]);
     await expectCode(
       service.endTrajectory({
         ownerUserId: "owner-review-stale",
@@ -1239,6 +1779,124 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         clientOperationId: "stale-trajectory-snapshot"
       }),
       "GI088_REVIEW_SNAPSHOT_OUT_OF_DATE"
+    );
+    await service.endTrajectory({
+      ownerUserId: "owner-review-stale",
+      runId: created.runId,
+      taskId: "A1",
+      branch: "high",
+      feeling: "same",
+      quality: "minor_issue",
+      targetTrigger: "triggered",
+      reason: "问题价值有轻微不足，保留本轮修订证据。",
+      reviewSnapshotFingerprint:
+        revised.activeTask!.reviewSnapshot!.fingerprint,
+      clientOperationId: "end-after-question-value-revision"
+    });
+    await service.earlyStop({
+      ownerUserId: "owner-review-stale",
+      runId: created.runId,
+      reasonCode: "sufficient_evidence",
+      reason: "当前一项已足以验证问题价值修订导出。",
+      confirmation: true,
+      clientOperationId: "question-value-export-stop"
+    });
+    const exported = await service.exportRun({
+      ownerUserId: "owner-review-stale",
+      runId: created.runId
+    });
+    expect(exported.payload).toMatchObject({
+      questionValueStatistics: {
+        reviewedCount: 1,
+        counts: { low_information_gain: 1 }
+      },
+      reviewRevisions: [{
+        subjectType: "question_review",
+        oldValue: { valueClassification: "advances_working_task" },
+        newValue: { valueClassification: "low_information_gain" }
+      }]
+    });
+  });
+
+  it("持久化态中可见问题缺少价值分类时禁止结束轨迹", async () => {
+    const fake = fakeProvider();
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const ownerUserId = "owner-question-value-required";
+    const created = await createRun(service, ownerUserId);
+    const started = await service.startTask({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "我想梳理这次现实选择。",
+      clientOperationId: "value-required-turn"
+    });
+    const turn = started.activeTask!.branches.high.turns[0]!;
+    await service.reviewQuestion({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A1",
+      branch: "high",
+      turnId: turn.id,
+      questionPresence: "present",
+      classification: "same_focus_low_burden",
+      valueClassification: "advances_working_task",
+      note: "完整复核。",
+      observationFingerprint:
+        turn.questionObservation!.observationFingerprint!,
+      clientOperationId: "value-required-review"
+    });
+
+    const persisted = await store.findRun({
+      ownerUserId,
+      runId: created.runId
+    });
+    if (!persisted) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+    const state = structuredClone(
+      persisted.state
+    ) as unknown as Gi088BatchState;
+    const storedReview = state.tasks[0]?.branches.high.turns[0]
+      ?.questionObservation?.review;
+    if (!storedReview) throw new Error("GI088_TEST_REVIEW_NOT_FOUND");
+    delete storedReview.valueClassification;
+    await store.commitRunMutation({
+      mutation: {
+        runId: persisted.id,
+        ownerUserId,
+        expectedRevision: persisted.revision,
+        expectedExecutionFingerprint: persisted.executionFingerprint,
+        nextState: state as unknown as Gi088FoundationJson
+      },
+      operation: {
+        ownerUserId,
+        evaluationVersion: persisted.evaluationVersion,
+        runId: persisted.id,
+        clientOperationId: "fixture-remove-value-classification",
+        action: "test_fixture_rewrite",
+        payloadHash: "fixture-remove-value-classification"
+      },
+      resultSnapshot: null
+    });
+    const malformed = await service.getSession({
+      ownerUserId,
+      runId: created.runId,
+      taskId: "A1"
+    });
+
+    await expectCode(
+      service.endTrajectory({
+        ownerUserId,
+        runId: created.runId,
+        taskId: "A1",
+        branch: "high",
+        feeling: "better",
+        quality: "direct_use",
+        targetTrigger: "triggered",
+        reason: "缺少价值复核时不能结束。",
+        reviewSnapshotFingerprint:
+          malformed.activeTask!.reviewSnapshot!.fingerprint,
+        clientOperationId: "value-required-end"
+      }),
+      "GI088_QUESTION_REVIEWS_REQUIRED"
     );
   });
 
@@ -1312,6 +1970,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       turnId: a1Turn.id,
       questionPresence: "present",
       classification: "same_focus_low_burden",
+      valueClassification: "advances_working_task",
       note: "问题保持单一焦点。",
       observationFingerprint:
         a1Turn.questionObservation!.observationFingerprint!,
@@ -1411,6 +2070,31 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         newQuality: "direct_use"
       }
     ]);
+
+    await service.abortCurrentTask({
+      ownerUserId: "owner-trajectory-revision",
+      runId: created.runId,
+      taskId: "A2",
+      reason: "收口第二项以验证不可变导出边界。",
+      confirmation: true,
+      clientOperationId: "revision-a2-abort"
+    });
+    await service.earlyStop({
+      ownerUserId: "owner-trajectory-revision",
+      runId: created.runId,
+      reasonCode: "sufficient_evidence",
+      reason: "当前修订历史足以验证导出隐私边界。",
+      confirmation: true,
+      clientOperationId: "revision-export-early-stop"
+    });
+    const exported = await service.exportRun({
+      ownerUserId: "owner-trajectory-revision",
+      runId: created.runId
+    });
+    const serialized = JSON.stringify(exported);
+    expect(serialized).toContain("重新核对可见回答后修订质量结论");
+    expect(serialized).not.toContain("owner-trajectory-revision");
+    expect(serialized).not.toContain("actorUserId");
   });
 
   it("pending turn 禁止复核，Provider 收口后仍只提交一次", async () => {
@@ -1475,7 +2159,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
 
   it("安全终止形成 No-Go、开放下一任务，并生成稳定且排除隐藏推理的导出", async () => {
     const fake = fakeProvider();
-    const { service } = serviceWith({ provider: fake.provider });
+    const { service, store } = serviceWith({ provider: fake.provider });
     const created = await createRun(service, "owner-abort-export");
     await service.startTask({
       ownerUserId: "owner-abort-export",
@@ -1509,18 +2193,51 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       ownerUserId: "owner-abort-export",
       runId: created.runId
     });
+    await service.appendOperationEvent({
+      ownerUserId: "owner-abort-export",
+      runId: created.runId,
+      route: "/api/preview/gi088/export",
+      code: "EXPORT_DOWNLOAD_OBSERVED_AFTER_SNAPSHOT",
+      clientOperationId: "export-operation-after-snapshot"
+    });
     const replay = await service.exportRun({
       ownerUserId: "owner-abort-export",
       runId: created.runId
     });
     const exported = JSON.stringify(first);
 
-    expect(replay.receipt).toEqual(first.receipt);
+    expect(replay).toEqual(first);
+    expect(first.receipt.exportVersion).toBe(
+      GI088_READONLY_EXPORT_VERSION_V07
+    );
     expect(first.receipt.payloadSha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(first.receipt.recordCounts.calls).toBe(1);
     expect(exported).not.toContain(HIDDEN_REASONING_SENTINEL);
     expect(exported).not.toContain("reasoning_content");
-    expect(exported).not.toContain("hiddenReasoning");
+    expect(first.payload).toMatchObject({
+      evaluation: {
+        config: { hiddenReasoningPersistence: "forbidden" }
+      }
+    });
+
+    const mutableExports = (
+      store as unknown as {
+        exports: Map<string, Gi088FoundationExportSnapshotRecord>;
+      }
+    ).exports;
+    const frozenSnapshot = mutableExports.get(created.runId);
+    if (!frozenSnapshot) throw new Error("GI088_TEST_EXPORT_NOT_FOUND");
+    mutableExports.set(created.runId, {
+      ...frozenSnapshot,
+      payload: { corrupted: true }
+    });
+    await expectCode(
+      service.exportRun({
+        ownerUserId: "owner-abort-export",
+        runId: created.runId
+      }),
+      "GI088_EXPORT_FAILED"
+    );
   });
 
   it("旧 execution fingerprint 只读，可查看和导出且保持零调用", async () => {
@@ -1562,7 +2279,17 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       readOnly: true,
       readOnlyReason: "execution_fingerprint_mismatch"
     });
-    expect(session.evaluation).not.toHaveProperty("datasetFingerprint");
+    expect(session.evaluation).toMatchObject({
+      datasetFingerprint: createGi088DatasetFingerprint(
+        GI088_EVALUATION_VERSION
+      ),
+      skillVersion: expect.any(String),
+      skillSha256: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      modelIdentity: {
+        ...GI088_MODEL_CALL_IDENTITY,
+        transport: "openai_compatible_rest"
+      }
+    });
     expect(session.evaluation).not.toHaveProperty("behaviorManifestSha256");
     expect(session.evaluation).not.toHaveProperty("runnerFingerprint");
     expect(session.evaluation).not.toHaveProperty("experienceFingerprint");
@@ -1577,6 +2304,22 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       }),
       "GI088_RUN_READ_ONLY"
     );
+    await expectCode(
+      service.exportRun({
+        ownerUserId: "owner-history",
+        runId: historicalRunId
+      }),
+      "GI088_BATCH_MUST_BE_TERMINAL"
+    );
+    expect(await store.findExportSnapshot({
+      ownerUserId: "owner-history",
+      runId: historicalRunId
+    })).toBeNull();
+    await markMemoryRunTerminalForExport({
+      store,
+      ownerUserId: "owner-history",
+      runId: historicalRunId
+    });
     const exported = await service.exportRun({
       ownerUserId: "owner-history",
       runId: historicalRunId
@@ -1590,13 +2333,275 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       }
     ).evaluation;
     expect(exportEvaluation).toMatchObject({
-      config: { model: "deepseek-v4-pro" }
+      config: { model: "deepseek-v4-flash-ga-260731" },
+      skillVersion: expect.any(String),
+      skillSha256: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      modelIdentity: {
+        ...GI088_MODEL_CALL_IDENTITY,
+        transport: "openai_compatible_rest"
+      }
     });
-    expect(exportEvaluation).not.toHaveProperty(
-      "maximumProviderCallsPerUserSubmission"
-    );
+    expect(exportEvaluation.maximumProviderCallsPerUserSubmission).toBe(3);
     expect(fake.provider.complete).not.toHaveBeenCalled();
     expect(await store.listCalls(historicalRunId)).toEqual([]);
+  });
+
+  it("v8r2 Foundation run 保持历史身份并复用 v0.6 导出合同", async () => {
+    const frozenAt = new Date("2026-08-10T12:00:00.000Z");
+    const seedStore = new Gi088MemoryFoundationStore();
+    const seed = serviceWith({ store: seedStore });
+    const created = await createRun(seed.service, "owner-v8r2-seed");
+    const current = await seedStore.findRun({
+      ownerUserId: "owner-v8r2-seed",
+      runId: created.runId
+    });
+    if (!current) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+
+    const store = new Gi088MemoryFoundationStore();
+    const runId = "08820000-0000-4000-8000-000000000001";
+    const candidateFingerprint =
+      "0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6";
+    const executionFingerprint =
+      "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e";
+    const state = projectHistoricalState({
+      base: structuredClone(current.state) as unknown as Gi088BatchState,
+      runId,
+      taskIds: GI088_V8R2_TASKS.map((task) => task.id),
+      mode: "high_only"
+    });
+    state.status = "running";
+    state.activeTaskId = null;
+    state.createdAt = frozenAt.toISOString();
+    state.updatedAt = frozenAt.toISOString();
+    state.sealedAt = null;
+    state.earlyStop = null;
+    state.tasks.forEach((task) => {
+      task.initialUserMessage = null;
+      task.activeBranch = "high";
+      task.comparison = null;
+      task.aborted = null;
+      for (const branch of ["off", "high"] as const) {
+        const trajectory = task.branches[branch];
+        trajectory.id = `${task.taskId}-${branch}-trajectory`;
+        trajectory.status = "not_started";
+        trajectory.messages = [];
+        trajectory.turns = [];
+        trajectory.pendingTurnId = null;
+        trajectory.technicalError = null;
+        trajectory.review = null;
+        trajectory.startedAt = null;
+        trajectory.completedAt = null;
+        trajectory.abortedAt = null;
+        trajectory.abortReason = null;
+      }
+    });
+    await store.createRunIdempotently({
+      runId,
+      ownerUserId: "owner-v8r2-history",
+      evaluationVersion: GI088_EVALUATION_VERSION_V8R2,
+      candidateFingerprint,
+      executionFingerprint,
+      state: state as unknown as Gi088FoundationJson,
+      gateStatus: "pending",
+      clientOperationId: "seed-v8r2-history",
+      payloadHash: "seed-v8r2-history"
+    });
+    const persisted = await store.findRun({
+      ownerUserId: "owner-v8r2-history",
+      runId
+    });
+    if (!persisted) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+    const mutableRuns = (
+      store as unknown as {
+        runs: Map<string, typeof persisted>;
+      }
+    ).runs;
+    mutableRuns.set(runId, {
+      ...persisted,
+      createdAt: frozenAt,
+      updatedAt: frozenAt,
+      sealedAt: null
+    });
+    const fake = fakeProvider();
+    const { service } = serviceWith({ store, provider: fake.provider });
+
+    const session = await service.getSession({
+      ownerUserId: "owner-v8r2-history",
+      runId
+    });
+    expect(session.evaluation).toEqual({
+      id: GI088_EVALUATION_ID_V8R2,
+      version: GI088_EVALUATION_VERSION_V8R2,
+      mode: "high_only",
+      activeBranches: ["high"],
+      candidateFingerprint,
+      executionFingerprint,
+      serviceVersion: GI088_SERVICE_VERSION_V8R2,
+      model: "deepseek-v4-pro",
+      datasetFingerprint:
+        "191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf",
+      behaviorManifestVersion: "2026-08-10.gi088-behavior-manifest-v1",
+      behaviorManifestSha256:
+        "68321bf7329020761cd804bbdaffdb3f7fcc76c8cf5141510474112f9962cf44",
+      runnerFingerprint:
+        "f14f6fd04d33521e7fddcca0e97b4c2a71d425693140558d2a7771a41f51bea5",
+      experienceFingerprint:
+        "17c42be27cf31f38606bb076594dbd3578a8f7c699daf53c375e762053686636",
+      config: {
+        thinking: "enabled",
+        reasoningEffort: "high",
+        responseFormat: "json_object",
+        maxTokensPolicy: "provider_default",
+        timeoutMs: 60_000,
+        routeMaxDurationSeconds: 120
+      }
+    });
+    expect(session.tasks.map((task) => task.id)).toEqual(
+      GI088_V8R2_TASKS.map((task) => task.id)
+    );
+    expect(session.tasks).toHaveLength(12);
+    expect(session.tasks[0]).not.toHaveProperty("evaluationRole");
+    expect(session.tasks[0]).not.toHaveProperty("compatibilitySmoke");
+    expect(session.batch).not.toHaveProperty("revision");
+    await expectCode(
+      service.exportRun({
+        ownerUserId: "owner-v8r2-history",
+        runId
+      }),
+      "GI088_BATCH_MUST_BE_TERMINAL"
+    );
+    expect(await store.findExportSnapshot({
+      ownerUserId: "owner-v8r2-history",
+      runId
+    })).toBeNull();
+    await markMemoryRunTerminalForExport({
+      store,
+      ownerUserId: "owner-v8r2-history",
+      runId,
+      sealedAt: frozenAt
+    });
+    const first = await service.exportRun({
+      ownerUserId: "owner-v8r2-history",
+      runId
+    });
+    await service.appendOperationEvent({
+      ownerUserId: "owner-v8r2-history",
+      runId,
+      route: "/api/preview/gi088/export",
+      code: "HISTORICAL_EXPORT_DOWNLOADED_AFTER_SNAPSHOT",
+      clientOperationId: "v8r2-export-event-after-snapshot"
+    });
+    const replay = await service.exportRun({
+      ownerUserId: "owner-v8r2-history",
+      runId
+    });
+    expect(first.receipt.exportVersion).toBe(GI088_READONLY_EXPORT_VERSION);
+    expect(replay).toEqual(first);
+    expect(first.payload).toEqual({
+      exportVersion: GI088_READONLY_EXPORT_VERSION,
+      evaluation: {
+        id: GI088_EVALUATION_ID_V8R2,
+        version: GI088_EVALUATION_VERSION_V8R2,
+        serviceVersion: GI088_SERVICE_VERSION_V8R2,
+        candidateFingerprint,
+        executionFingerprint,
+        mode: "high_only",
+        activeBranches: ["high"],
+        model: "deepseek-v4-pro",
+        config: {
+          key: "high",
+          label: "Thinking 开启 · high",
+          provider: "openai",
+          baseUrlHost: "api.deepseek.com",
+          model: "deepseek-v4-pro",
+          thinking: "enabled",
+          temperature: null,
+          effectiveTemperature: null,
+          reasoningEffort: "high",
+          maxTokens: null,
+          maxTokensPolicy: "provider_default",
+          responseFormat: "json_object",
+          qualityRetries: 0,
+          automaticTechnicalRetries: 1,
+          automaticEmptyContentRetries: 1,
+          automaticStageTransitionRetries: 1,
+          automaticSingleQuestionRetries: 0,
+          activeInEvaluation: true
+        },
+        maximumProviderCallsPerUserSubmission: 3
+      },
+      run: {
+        runId,
+        runOrdinal: 1,
+        collectionStatus: "early_stopped",
+        gate: { status: "pending", reasons: [] },
+        revision: 0,
+        createdAt: frozenAt.toISOString(),
+        updatedAt: frozenAt.toISOString(),
+        sealedAt: frozenAt.toISOString()
+      },
+      batch: state,
+      callLedger: [],
+      programInterventions: [],
+      reviewRevisions: [],
+      operationEvents: [],
+      metrics: {
+        version: "2026-08-10.gi088-evaluation-metrics-v1",
+        firstVisibleSuccessRate: null,
+        firstVisibleSuccessCount: 0,
+        eligibleModelSubmissionCount: 0,
+        autoRecoverySuccessCount: 0,
+        finalFailureCount: 0,
+        duplicateMessageCount: 0,
+        consecutiveRecoveryCount: 0,
+        manualThirdGenerationCount: 0,
+        visibleQuestionCount: 0,
+        visibleQuestionReviewedCount: 0,
+        visibleQuestionReviewCoverage: null,
+        multipleIndependentTasksCount: 0,
+        programInterventionCount: 0,
+        programInterventionFalsePositiveCount: 0,
+        programInterventionReviewCoverage: null,
+        zeroCallControlCount: 0,
+        rawTechnicalEventCount: 0,
+        rawProtectedEventCount: 0,
+        gateFacts: {
+          completedTaskCount: 0,
+          notRunTaskCount: 0,
+          abortedTaskCount: 0,
+          targetTriggeredTrajectoryCount: 0,
+          targetNotTriggeredCount: 0,
+          targetBlockedByTechnicalFailureCount: 0,
+          targetLegacyUnknownCount: 0,
+          directUseCount: 0,
+          minorIssueCount: 0,
+          qualityFailureCount: 0,
+          singleCaseBlockerCount: 0,
+          automaticRecoveryAttemptCount: 0,
+          automaticRecoveryWithinDeadlineSuccessCount: 0,
+          automaticRecoveryLateOrUnknownCount: 0,
+          emptyContentEventCount: 0,
+          finalTechnicalFailureCount: 0,
+          protectedFailureCount: 0,
+          unreviewedVisibleQuestionCount: 0,
+          visibleQuestionUncertainCount: 0,
+          unreviewedProgramInterventionCount: 0,
+          programInterventionUncertainCount: 0,
+          unreviewedTrajectoryCount: 0,
+          allVisibleQuestionsReviewed: true,
+          allProgramInterventionsReviewed: true
+        }
+      }
+    });
+    expect(Buffer.byteLength(
+      canonicalizeGi088ExportPayload(first.payload),
+      "utf8"
+    )).toBe(15_092);
+    expect(first.receipt.canonicalByteLength).toBe(15_092);
+    expect(first.receipt.payloadSha256).toBe(
+      "46529ed69d5caa25a8ec35344638b14177fa539dc6e6cf30d70205137adc48cb"
+    );
+    expect(fake.provider.complete).not.toHaveBeenCalled();
   });
 
   it("同版本旧指纹活动轨迹只投影存储 opening、任务占位与 ledger config", async () => {
@@ -1698,6 +2703,15 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(session.activeTask?.branches.high.turns[0]?.calls).toHaveLength(1);
     expect(session.evaluation).not.toHaveProperty("config");
 
+    await expectCode(
+      service.exportRun({ ownerUserId, runId: created.runId }),
+      "GI088_BATCH_MUST_BE_TERMINAL"
+    );
+    await markMemoryRunTerminalForExport({
+      store,
+      ownerUserId,
+      runId: created.runId
+    });
     const exported = await service.exportRun({
       ownerUserId,
       runId: created.runId
@@ -1725,12 +2739,12 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(current).not.toBeNull();
 
     const historicalRunId = "historical-v8r1-run";
-    const historicalState = structuredClone(current!.state) as Record<
-      string,
-      Gi088FoundationJson
-    >;
-    historicalState.batchId = historicalRunId;
-    historicalState.evaluationMode = "paired";
+    const historicalState = projectHistoricalState({
+      base: structuredClone(current!.state) as unknown as Gi088BatchState,
+      runId: historicalRunId,
+      taskIds: GI088_V8R1_TASKS.map((task) => task.id),
+      mode: "paired"
+    });
     const store = new Gi088MemoryFoundationStore();
     await store.createRunIdempotently({
       runId: historicalRunId,
@@ -1738,7 +2752,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       evaluationVersion: GI088_EVALUATION_VERSION_V8R1,
       candidateFingerprint: "1".repeat(64),
       executionFingerprint: "2".repeat(64),
-      state: historicalState,
+      state: historicalState as unknown as Gi088FoundationJson,
       gateStatus: "legacy_unknown",
       clientOperationId: "seed-v8r1-history",
       payloadHash: "historical-v8r1-payload"
@@ -1768,6 +2782,18 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(session.batch).toMatchObject({
       readOnly: true,
       readOnlyReason: "execution_fingerprint_mismatch"
+    });
+    await expectCode(
+      service.exportRun({
+        ownerUserId: "owner-v8r1-history",
+        runId: historicalRunId
+      }),
+      "GI088_BATCH_MUST_BE_TERMINAL"
+    );
+    await markMemoryRunTerminalForExport({
+      store,
+      ownerUserId: "owner-v8r1-history",
+      runId: historicalRunId
     });
     await expect(
       service.exportRun({
@@ -1973,11 +2999,18 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       expect(selected.tasks.map((task) => task.id), historical.label).toEqual(
         historical.taskIds
       );
+      expect(selected.tasks[0], historical.label).not.toHaveProperty(
+        "evaluationRole"
+      );
+      expect(selected.tasks[0], historical.label).not.toHaveProperty(
+        "compatibilitySmoke"
+      );
       expect(selected.activeTask?.taskId, historical.label).toBe(lastTaskId);
       expect(selected.batch, historical.label).toMatchObject({
         readOnly: true,
         readOnlyReason: "execution_fingerprint_mismatch"
       });
+      expect(selected.batch, historical.label).not.toHaveProperty("revision");
       await expectCode(
         service.startTask({
           ownerUserId,
@@ -2028,6 +3061,11 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         "reasoning_content"
       );
 
+      await expectCode(
+        service.exportRun({ ownerUserId, runId }),
+        "GI088_BATCH_MUST_BE_TERMINAL"
+      );
+      await markMemoryRunTerminalForExport({ store, ownerUserId, runId });
       const exported = await service.exportRun({ ownerUserId, runId });
       const payload = exported.payload as unknown as {
         evaluation: {
@@ -2083,6 +3121,49 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     }
 
     expect(getProvider).not.toHaveBeenCalled();
+    expect(fake.provider.complete).not.toHaveBeenCalled();
+  });
+
+  it("未知 evaluationVersion 禁止伪装为历史 v0.6 导出", async () => {
+    const seedStore = new Gi088MemoryFoundationStore();
+    const seed = serviceWith({ store: seedStore });
+    const created = await createRun(seed.service, "owner-unknown-seed");
+    const current = await seedStore.findRun({
+      ownerUserId: "owner-unknown-seed",
+      runId: created.runId
+    });
+    if (!current) throw new Error("GI088_TEST_RUN_NOT_FOUND");
+
+    const store = new Gi088MemoryFoundationStore();
+    const runId = "unknown-evaluation-version-run";
+    await store.createRunIdempotently({
+      runId,
+      ownerUserId: "owner-unknown-version",
+      evaluationVersion: "2099-01-01.gi088-unknown",
+      candidateFingerprint: "unknown-candidate",
+      executionFingerprint: "unknown-execution",
+      state: {
+        ...(current.state as Record<string, Gi088FoundationJson>),
+        batchId: runId
+      },
+      gateStatus: "legacy_unknown",
+      clientOperationId: "seed-unknown-version",
+      payloadHash: "seed-unknown-version"
+    });
+    const fake = fakeProvider();
+    const { service } = serviceWith({ store, provider: fake.provider });
+
+    await expectCode(
+      service.exportRun({
+        ownerUserId: "owner-unknown-version",
+        runId
+      }),
+      "GI088_EXPORT_FAILED"
+    );
+    expect(await store.findExportSnapshot({
+      ownerUserId: "owner-unknown-version",
+      runId
+    })).toBeNull();
     expect(fake.provider.complete).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,7 @@ const { state, mockPrisma } = vi.hoisted(() => {
     id: string;
     userId: string;
     mode: "event_centered";
+    recordMode: "capture" | "chat";
     dimension: null;
     conversationSchemaVersion: number;
     rootSessionId: string;
@@ -105,6 +106,7 @@ const { state, mockPrisma } = vi.hoisted(() => {
         if (where.id && candidate.id !== where.id) return false;
         if (where.userId && candidate.userId !== where.userId) return false;
         if (where.mode && candidate.mode !== where.mode) return false;
+        if (where.recordMode && candidate.recordMode !== where.recordMode) return false;
         if (where.status && candidate.status !== where.status) return false;
         if (where.parentSessionId === null && candidate.parentSessionId !== null) return false;
         if (where.entryDate && candidate.entryDate.getTime() !== where.entryDate.getTime()) return false;
@@ -129,6 +131,7 @@ const { state, mockPrisma } = vi.hoisted(() => {
     create: vi.fn(({ data }: any) => {
       const session: Session = {
         ...data,
+        recordMode: data.recordMode ?? "chat",
         parentSessionId: data.parentSessionId ?? null,
         forkMessageSequence: data.forkMessageSequence ?? null,
         startedAt: new Date("2026-07-22T01:00:00.000Z"),
@@ -400,6 +403,31 @@ describe("event-centered interview aggregate", () => {
     expect(state.journalEvents).toHaveLength(0);
   });
 
+  it("同一天按 capture/chat 隔离活动根会话，并在各自模式内恢复", async () => {
+    const chat = await startEventCenteredInterviewSession({
+      ...startInput,
+      recordMode: "chat"
+    });
+    const capture = await startEventCenteredInterviewSession({
+      ...startInput,
+      recordMode: "capture",
+      openingMessage: "这里是【帮我记】。写下此刻想留下的内容就好。",
+      lastAssistantQuestion: null
+    });
+    const captureReplay = await startEventCenteredInterviewSession({
+      ...startInput,
+      recordMode: "capture",
+      openingMessage: "这里是【帮我记】。写下此刻想留下的内容就好。",
+      lastAssistantQuestion: null
+    });
+
+    expect(capture.rootSessionId).not.toBe(chat.rootSessionId);
+    expect(captureReplay.rootSessionId).toBe(capture.rootSessionId);
+    expect(chat.recordMode).toBe("chat");
+    expect(capture.recordMode).toBe("capture");
+    expect(state.sessions).toHaveLength(2);
+  });
+
   it("当天事件标签保留已退出记录，并只返回安全标题元数据", async () => {
     const active = await startEventCenteredInterviewSession(startInput);
     const reserved = await reserveEventCenteredUserTurn({
@@ -417,6 +445,7 @@ describe("event-centered interview aggregate", () => {
 
     expect(tabs).toEqual([{
       rootSessionId: active.rootSessionId,
+      recordMode: "chat",
       label: "事件 1",
       status: "abandoned"
     }]);

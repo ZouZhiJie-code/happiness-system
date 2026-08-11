@@ -479,6 +479,10 @@ describeIntegration("GI-088 v8r2 Prisma foundation store", () => {
     expect(snapshot.created).toBe(true);
     expect(snapshotReplay.created).toBe(false);
     expect(snapshotReplay.snapshot.payloadHash).toBe(snapshot.snapshot.payloadHash);
+    await expect(store.findExportSnapshot({
+      ownerUserId,
+      runId
+    })).resolves.toEqual(snapshot.snapshot);
   }, PRISMA_INTEGRATION_TEST_TIMEOUT_MS);
 
   it("允许零 dispatch 的 reserved 回收调用作为连续恢复父调用", async () => {

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -12,6 +11,7 @@ import {
 
 import {
   GI088_ASSET_SOURCE_SHA256,
+  GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
   GI088_CONFIGS,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EVALUATION_ID,
@@ -42,6 +42,7 @@ import {
   GI088_EVALUATION_VERSION_V7R4,
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
   GI088_GI087_CANDIDATE_FINGERPRINT,
   GI088_GOVERNED_EVALUATION_VERSIONS,
   GI088_SERVICE_VERSION,
@@ -69,8 +70,12 @@ import {
 } from "../../src/server/services/evaluation/gi088/candidate";
 import {
   GI088_STAGE_TRANSITION_APPENDICES,
-  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION
 } from "../../src/server/services/evaluation/gi088/stage-transition";
+import { createGi088ModelRequestHash } from "../../src/server/services/evaluation/gi088/request-identity";
+import {
+  GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT,
+  GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT
+} from "../../src/server/services/evaluation/gi088/v8r3-interview-skill";
 import {
   GI088_EVALUATION_ENABLE_VALUE,
   canOpenGi088Evaluation,
@@ -78,6 +83,7 @@ import {
   parseGi088EvaluatorUsernames,
   requireGi088ModelCallAuthorization,
   requireGi088SmokeAuthorization,
+  resolveGi088V8r3OfflineEvaluationEvidence,
   validateGi088EvaluationDatabaseUrl
 } from "../../src/server/services/evaluation/gi088/access";
 import {
@@ -363,15 +369,15 @@ async function reachStageTransitionViolation(input: {
 }
 
 describe("GI-088 Preview evaluation service", () => {
-  it("把当前 v8r2 与 v8r1、v8 及全部历史版本分开治理", () => {
+  it("把当前 v8r3 与 v8r2、v8r1、v8 及全部历史版本分开治理", () => {
     expect({
       id: GI088_EVALUATION_ID,
       version: GI088_EVALUATION_VERSION,
       serviceVersion: GI088_SERVICE_VERSION
     }).toEqual({
-      id: "gi088_human_eval_v8r2_foundation_hardening",
-      version: "2026-08-10.gi088-human-eval-v8r2-foundation-hardening",
-      serviceVersion: "2026-08-10.gi088-evaluation-foundation-service-v8r2"
+      id: "gi088_human_eval_v8r3_skill_ark_flash",
+      version: "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash",
+      serviceVersion: "2026-08-11.gi088-skill-ark-flash-foundation-service-v8r3"
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -504,6 +510,7 @@ describe("GI-088 Preview evaluation service", () => {
       GI088_EVALUATION_VERSION_V7R4,
       GI088_EVALUATION_VERSION_V8,
       GI088_EVALUATION_VERSION_V8R1,
+      GI088_EVALUATION_VERSION_V8R2,
       GI088_EVALUATION_VERSION
     ]);
     expect(createGi088EffectiveCandidateFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
@@ -511,27 +518,34 @@ describe("GI-088 Preview evaluation service", () => {
     expect(createGi088ExecutionFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
   });
 
-  it("最终 12 项都具备独立触发提示与判定标准", () => {
-    expect(GI088_TASKS).toHaveLength(12);
-    expect(new Set(GI088_TASKS.map((task) => task.id)).size).toBe(12);
+  it("当前 6 项都具备独立触发提示、判定标准与任务角色", () => {
+    expect(GI088_TASKS).toHaveLength(6);
+    expect(new Set(GI088_TASKS.map((task) => task.id)).size).toBe(6);
+    expect(GI088_TASKS.filter(
+      (task) => task.evaluationRole === "scored_trajectory"
+    )).toHaveLength(4);
+    expect(GI088_TASKS.filter(
+      (task) => task.evaluationRole === "compatibility_smoke"
+    )).toHaveLength(2);
     for (const task of GI088_TASKS) {
       expect(task.targetTriggerPrompt.trim().length).toBeGreaterThan(20);
       expect(task.criterion.trim().length).toBeGreaterThan(20);
     }
   });
 
-  it("v8r2 继续只启用官方 DeepSeek V4 Pro Thinking high", () => {
+  it("v8r3 只启用 Ark DeepSeek V4 Flash Thinking high", () => {
     expect(GI088_CONFIGS.high).toMatchObject({
-      baseUrlHost: "api.deepseek.com",
-      model: "deepseek-v4-pro",
+      provider: "volcengine_ark",
+      baseUrlHost: "ark.cn-beijing.volces.com",
+      model: "deepseek-v4-flash-ga-260731",
       thinking: "enabled",
       reasoningEffort: "high",
       responseFormat: "json_object",
       activeInEvaluation: true
     });
     expect(GI088_TIMEOUT_POLICY).toMatchObject({
-      headersTimeoutMs: 15_000,
-      bodyIdleTimeoutMs: 45_000,
+      headersTimeoutMs: 60_000,
+      bodyIdleTimeoutMs: 60_000,
       hardTimeoutMs: 60_000
     });
   });
@@ -563,8 +577,13 @@ describe("GI-088 Preview evaluation service", () => {
     expect(baseAssets.turnInputContract).toBe(originals[3].trim());
     expect(assets.basePrompt).toContain(baseAssets.basePrompt);
     expect(assets.basePrompt).toContain(GI088_STAGE_TRANSITION_APPENDICES.basePrompt);
-    expect(assets.interviewSkillSource).toContain(baseAssets.interviewSkillSource);
-    expect(assets.interviewSkillSource).toContain("## 阶段 2 用完后的自然转场");
+    expect(assets.interviewSkillSource).toBe(
+      GI088_V8R3_INTERVIEW_SKILL_SOURCE_SNAPSHOT
+    );
+    expect(assets.interviewSkill).toBe(GI088_V8R3_INTERVIEW_SKILL_SNAPSHOT);
+    expect(assets.interviewSkillSource).not.toContain(
+      baseAssets.interviewSkillSource
+    );
     expect(assets.turnInputContract).toContain(baseAssets.turnInputContract);
     expect(assets.turnInputContract).toContain(
       GI088_STAGE_TRANSITION_APPENDICES.turnInputContract
@@ -611,9 +630,7 @@ describe("GI-088 Preview evaluation service", () => {
     );
     const storedRequestHash =
       stored?.state.tasks[0].branches.off.turns[0].calls[0].requestHash;
-    const expectedRequestHash = createHash("sha256")
-      .update(JSON.stringify(calls[0]))
-      .digest("hex");
+    const expectedRequestHash = createGi088ModelRequestHash(calls[0]);
     expect(storedRequestHash).toBe(expectedRequestHash);
   });
 
@@ -661,35 +678,50 @@ describe("GI-088 Preview evaluation service", () => {
       VERCEL_ENV: "preview",
       GI088_EVALUATION_ENABLED: GI088_EVALUATION_ENABLE_VALUE,
       EVALUATION_DATABASE_URL:
-        "postgresql://preview:test@example.com/dailylight?schema=gi088_evaluation_v0",
-      EVALUATION_POSTGRES_HOST: "example.com",
+        "postgresql://preview:test@pool.example.com/dailylight?schema=gi088_evaluation_v0",
+      EVALUATION_DATABASE_URL_UNPOOLED:
+        "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_evaluation_v0",
+      EVALUATION_POSTGRES_HOST: "pool.example.com",
+      EVALUATION_PGHOST_UNPOOLED: "direct.example.com",
       EVALUATION_POSTGRES_DATABASE: "dailylight",
+      GI088_EVALUATION_DATABASE_SCHEMA: "gi088_evaluation_v0",
       DATABASE_URL:
-        "postgresql://preview:test@example.com/dailylight?schema=gi088_app_preview",
+        "postgresql://preview:test@pool.example.com/dailylight?schema=gi088_app_preview",
+      DIRECT_URL:
+        "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_app_preview",
+      GI088_V8R3_CANDIDATE_OFFLINE_RUN_FINGERPRINT: "a".repeat(64),
+      GI088_V8R3_CANDIDATE_EVIDENCE_FINGERPRINT: "b".repeat(64),
+      GI088_V8R3_OFFLINE_AUTOMATIC_RECOVERY_COUNT: "1",
       GI088_EVALUATOR_USERNAMES: "product_owner, reviewer"
     } as NodeJS.ProcessEnv;
     expect(canOpenGi088Evaluation(env)).toBe(true);
     expect(validateGi088EvaluationDatabaseUrl(env)).toEqual({
       schema: "gi088_evaluation_v0",
-      host: "example.com",
+      host: "pool.example.com",
       database: "dailylight"
     });
-    expect(
-      validateGi088EvaluationDatabaseUrl({
-        ...env,
-        EVALUATION_DATABASE_URL: "",
-        EVALUATION_POSTGRES_HOST: "",
-        EVALUATION_DATABASE_URL_UNPOOLED:
-          "postgresql://preview:test@direct.example.com/dailylight",
-        EVALUATION_PGHOST_UNPOOLED: "direct.example.com",
-        DATABASE_URL:
-          "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_app_preview"
-      })
-    ).toEqual({
-      schema: "gi088_evaluation_v0",
-      host: "direct.example.com",
-      database: "dailylight"
+    expect(resolveGi088V8r3OfflineEvaluationEvidence(env)).toEqual({
+      candidateOfflineRunFingerprint: "a".repeat(64),
+      candidateEvidenceFingerprint: "b".repeat(64),
+      admissionFingerprint: null,
+      automaticRecoveryCount: 1
     });
+    expect(resolveGi088V8r3OfflineEvaluationEvidence({
+      ...env,
+      GI088_V8R3_ADMISSION_FINGERPRINT: "c".repeat(64)
+    }).admissionFingerprint).toBe("c".repeat(64));
+    expect(() => resolveGi088V8r3OfflineEvaluationEvidence({
+      ...env,
+      GI088_V8R3_CANDIDATE_EVIDENCE_FINGERPRINT: "invalid"
+    })).toThrow("GI088_OFFLINE_EVIDENCE_FINGERPRINT_INVALID");
+    expect(() => resolveGi088V8r3OfflineEvaluationEvidence({
+      ...env,
+      GI088_V8R3_OFFLINE_AUTOMATIC_RECOVERY_COUNT: "-1"
+    })).toThrow("GI088_OFFLINE_AUTOMATIC_RECOVERY_COUNT_INVALID");
+    expect(() => resolveGi088V8r3OfflineEvaluationEvidence({
+      ...env,
+      GI088_V8R3_CANDIDATE_OFFLINE_RUN_FINGERPRINT: ""
+    })).toThrow("GI088_OFFLINE_EVIDENCE_MISSING");
     expect(parseGi088EvaluatorUsernames(env)).toEqual([
       "product_owner",
       "reviewer"
@@ -743,20 +775,22 @@ describe("GI-088 Preview evaluation service", () => {
       validateGi088EvaluationDatabaseUrl({
         ...env,
         EVALUATION_DATABASE_URL:
-          "postgresql://preview:test@example.com/dailylight?schema=public"
+          "postgresql://preview:test@pool.example.com/dailylight?schema=public"
       })
     ).toThrow("GI088_EVALUATION_DATABASE_SCHEMA_MISMATCH");
     expect(() =>
       validateGi088EvaluationDatabaseUrl({
         ...env,
-        EVALUATION_POSTGRES_HOST: "another.example.com"
+        EVALUATION_POSTGRES_HOST: "another.example.com",
+        DATABASE_URL:
+          "postgresql://preview:test@another.example.com/dailylight?schema=gi088_app_preview"
       })
     ).toThrow("GI088_EVALUATION_DATABASE_IDENTITY_MISMATCH");
     expect(() =>
       validateGi088EvaluationDatabaseUrl({
         ...env,
         DATABASE_URL:
-          "postgresql://preview:test@example.com/dailylight?schema=public"
+          "postgresql://preview:test@pool.example.com/dailylight?schema=public"
       })
     ).toThrow("GI088_PREVIEW_APP_DATABASE_SCHEMA_MISMATCH");
     expect(() =>
@@ -766,9 +800,80 @@ describe("GI-088 Preview evaluation service", () => {
           "postgresql://preview:test@other.example.com/dailylight?schema=gi088_app_preview"
       })
     ).toThrow("GI088_PREVIEW_APP_DATABASE_IDENTITY_MISMATCH");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({ ...env, DIRECT_URL: "" })
+    ).toThrow("GI088_PREVIEW_APP_DIRECT_URL_MISSING");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({ ...env, DATABASE_URL: "" })
+    ).toThrow("GI088_PREVIEW_APP_DATABASE_URL_MISSING");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        EVALUATION_DATABASE_URL: ""
+      })
+    ).toThrow("GI088_EVALUATION_DATABASE_URL_MISSING");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        EVALUATION_DATABASE_URL_UNPOOLED: ""
+      })
+    ).toThrow("GI088_EVALUATION_DATABASE_UNPOOLED_URL_MISSING");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        DIRECT_URL:
+          "postgresql://preview:test@pool.example.com/dailylight?schema=gi088_app_preview"
+      })
+    ).toThrow("GI088_PREVIEW_APP_DIRECT_DATABASE_IDENTITY_MISMATCH");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        DIRECT_URL:
+          "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_evaluation_v0"
+      })
+    ).toThrow("GI088_PREVIEW_APP_DIRECT_DATABASE_SCHEMA_MISMATCH");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        EVALUATION_DATABASE_URL_UNPOOLED:
+          "postgresql://preview:test@pool.example.com/dailylight?schema=gi088_evaluation_v0"
+      })
+    ).toThrow("GI088_EVALUATION_DATABASE_UNPOOLED_IDENTITY_MISMATCH");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        EVALUATION_DATABASE_URL_UNPOOLED:
+          "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_app_preview"
+      })
+    ).toThrow("GI088_EVALUATION_DATABASE_UNPOOLED_SCHEMA_MISMATCH");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        VERCEL_ENV: "production"
+      })
+    ).toThrow("GI088_EVALUATION_PRODUCTION_FORBIDDEN");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        GI088_EVALUATION_DATABASE_SCHEMA: ""
+      })
+    ).toThrow("GI088_EVALUATION_DATABASE_SCHEMA_MISSING");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        VERCEL_ENV: undefined,
+        NODE_ENV: "production"
+      })
+    ).toThrow("GI088_EVALUATION_PRODUCTION_FORBIDDEN");
+    expect(() =>
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        NODE_ENV: "production"
+      })
+    ).not.toThrow();
   });
 
-  it("读取工作台创建 12 项进度且保持模型调用为 0", async () => {
+  it("读取工作台创建 6 项进度且保持模型调用为 0", async () => {
     const { provider } = validProvider();
     const service = new Gi088EvaluationService({
       store: new Gi088MemoryStore(),
@@ -778,9 +883,9 @@ describe("GI-088 Preview evaluation service", () => {
     expect(session.batch).toMatchObject({
       status: "running",
       completedTaskCount: 0,
-      totalTasks: 12
+      totalTasks: 6
     });
-    expect(session.tasks).toHaveLength(12);
+    expect(session.tasks).toHaveLength(6);
     expect(session.tasks[0].status).toBe("ready");
     expect(session.tasks[0]).toMatchObject({
       targetTriggerPrompt: GI088_TASKS[0].targetTriggerPrompt,
@@ -803,7 +908,7 @@ describe("GI-088 Preview evaluation service", () => {
       mode: "high_only",
       activeBranches: ["high"]
     });
-    expect(initial.batch.targetCoverage.totalTrajectoryCount).toBe(12);
+    expect(initial.batch.targetCoverage.totalTrajectoryCount).toBe(4);
     await expect(service.startOff({
       ownerUserId: "owner-high-only",
       taskId: "A1",
@@ -1210,7 +1315,7 @@ describe("GI-088 Preview evaluation service", () => {
     expect(recoveryParams).toMatchObject({
       timeoutMs: 45_000,
       hardTimeoutMs: 45_000,
-      headersTimeoutMs: 15_000,
+      headersTimeoutMs: 45_000,
       bodyIdleTimeoutMs: 45_000
     });
     expect(recovered.activeTask!.branches.high.turns[0]!.calls[1])
@@ -1733,7 +1838,8 @@ describe("GI-088 Preview evaluation service", () => {
         targetCalls[3].messages[0],
         {
           role: "system",
-          content: GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION
+          content:
+            GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY.recoveryInstruction
         },
         targetCalls[3].messages.at(-1)
       ]);
@@ -1757,7 +1863,7 @@ describe("GI-088 Preview evaluation service", () => {
         effectiveConfig: expect.objectContaining({
           branch,
           recoveryInstructionVersion:
-            "2026-08-09.gi088-stage-transition-recovery-instruction-v1"
+            GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY.recoveryInstructionVersion
         })
       });
       expect(initialCall.requestHash).not.toBe(recoveryCall.requestHash);
@@ -2870,6 +2976,7 @@ describe("GI-088 Preview evaluation service", () => {
             GI088_EVALUATION_VERSION_V7R4,
             GI088_EVALUATION_VERSION_V8,
             GI088_EVALUATION_VERSION_V8R1,
+            GI088_EVALUATION_VERSION_V8R2,
             GI088_EVALUATION_VERSION
           ]
         }
@@ -2997,7 +3104,7 @@ describe("GI-088 Preview evaluation service", () => {
       targetCoverage: {
         triggeredTrajectoryCount: 1,
         reviewedTrajectoryCount: 2,
-        totalTrajectoryCount: 24
+        totalTrajectoryCount: 8
       }
     });
     expect(stopped.batch.sealedAt).toBe(stopped.batch.earlyStop?.stoppedAt);
@@ -3164,14 +3271,23 @@ describe("GI-088 Preview evaluation service", () => {
     });
   });
 
-  it("假 Provider 完整走通 12 项、24 条配对轨迹、封存与只读导出", async () => {
+  it("假 Provider 完整走通 4 条配对轨迹与 2 条零模型兼容冒烟", async () => {
     const { provider } = validProvider();
     const service = new Gi088EvaluationService({
       store: new Gi088MemoryStore(),
       getProvider: () => provider
     });
     for (const [index, task] of GI088_TASKS.entries()) {
-      await completeTask(service, "owner-6", task.id, String(index + 1));
+      if (task.evaluationRole === "compatibility_smoke") {
+        await service.recordCompatibilitySmoke({
+          ownerUserId: "owner-6",
+          taskId: task.id,
+          outcome: "passed",
+          reason: "真实【帮我记】链路兼容冒烟通过。"
+        });
+      } else {
+        await completeTask(service, "owner-6", task.id, String(index + 1));
+      }
       const progress = await service.getSession("owner-6");
       expect(progress.activeTask).toBeNull();
       if (index < GI088_TASKS.length - 1) {
@@ -3197,9 +3313,9 @@ describe("GI-088 Preview evaluation service", () => {
         );
       }
     }
-    expect(provider.complete).toHaveBeenCalledTimes(GI088_TASKS.length * 2);
+    expect(provider.complete).toHaveBeenCalledTimes(8);
     const beforeSeal = await service.getSession("owner-6");
-    expect(beforeSeal.batch.completedTaskCount).toBe(12);
+    expect(beforeSeal.batch.completedTaskCount).toBe(6);
     const sealed = await service.seal("owner-6");
     expect(sealed.batch.status).toBe("sealed");
     const exported = await service.export("owner-6");
@@ -3209,7 +3325,7 @@ describe("GI-088 Preview evaluation service", () => {
       completedTaskIds: GI088_TASKS.map((task) => task.id),
       notRunTaskIds: []
     });
-    expect(exported.batch.tasks).toHaveLength(12);
+    expect(exported.batch.tasks).toHaveLength(6);
     expect(exported.batch.tasks.every((task) => task.status === "completed")).toBe(true);
     expect(
       exported.batch.tasks[0].branches.off.turns[0].calls[0].rawFinalOutput

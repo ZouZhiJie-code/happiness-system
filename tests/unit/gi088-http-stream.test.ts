@@ -8,6 +8,12 @@ const { requireRequest, createStore } = vi.hoisted(() => ({
 vi.mock("@/server/services/evaluation/gi088/access", () => ({
   requireGi088EvaluationRequest: requireRequest,
   requireGi088ModelCallAuthorization: vi.fn(),
+  resolveGi088V8r3OfflineEvaluationEvidence: vi.fn(() => ({
+    candidateOfflineRunFingerprint: "a".repeat(64),
+    candidateEvidenceFingerprint: "b".repeat(64),
+    admissionFingerprint: null,
+    automaticRecoveryCount: 0
+  })),
   Gi088AccessError: class Gi088AccessError extends Error {}
 }));
 

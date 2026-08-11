@@ -7,6 +7,8 @@ import {
   type Board7bWorkingTaskV1TurnInput
 } from "../../evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1";
 import {
+  GI088_STAGE_TRANSITION_APPENDICES,
+  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION,
   createGi088StageTransitionModelInput,
   validateGi088StageTransitionOutput
 } from "../../src/server/services/evaluation/gi088/stage-transition";
@@ -95,6 +97,16 @@ function deepenAskOutput(
 }
 
 describe("GI-088 v4 stage transition contract", () => {
+  it("低信息增益保持访谈开放，pause 只承接用户明确停止", () => {
+    const contract = [
+      GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION,
+      ...Object.values(GI088_STAGE_TRANSITION_APPENDICES)
+    ].join("\n");
+    expect(contract).toContain("只有用户明确停止当前访谈时");
+    expect(contract).toContain("保持访谈开放");
+    expect(contract).not.toContain("继续价值有限时，选择 `acknowledge` 或 `pause`");
+  });
+
   it("把阶段 2 已用尽和允许的转场动作明确投影给模型", () => {
     const modelInput = createGi088StageTransitionModelInput(
       stage2ExhaustedInput()

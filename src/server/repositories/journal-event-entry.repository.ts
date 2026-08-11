@@ -2,6 +2,10 @@ import { Prisma } from "@prisma/client";
 import { createHash, randomUUID } from "node:crypto";
 
 import { prisma } from "@/server/db/prisma";
+import {
+  buildCaptureJournalDraft,
+  isEffectiveCaptureContent
+} from "@/features/interview/event-centered/capture-mode";
 import { createAIGenerationTraceWithClient } from "@/server/repositories/ai-quality.repository";
 import {
   getEffectiveJournalEventAngleProjectionWithClient
@@ -500,6 +504,195 @@ export async function reserveJournalEventEntryGeneration(
       input.clientOperationId
     );
     if (replay) return replay;
+    if (isUniqueConflict(error)) throw new Error("EVENT_STATE_CHANGED");
+    throw error;
+  }
+}
+
+export async function createCaptureJournalEventEntry(input: {
+  userId: string;
+  eventId: string;
+  activeBranchSessionId: string;
+  clientOperationId: string;
+  baseMessageSequence: number;
+}): Promise<JournalEventEntryRecord> {
+  assertNonEmpty(input.userId, "EVENT_OPERATION_INVALID");
+  assertNonEmpty(input.eventId, "EVENT_OPERATION_INVALID");
+  assertNonEmpty(input.activeBranchSessionId, "EVENT_OPERATION_INVALID");
+  assertNonEmpty(input.clientOperationId, "EVENT_OPERATION_INVALID");
+  assertPositiveInteger(input.baseMessageSequence, "EVENT_OPERATION_INVALID");
+
+  try {
+    return await prisma.$transaction(async (database) => {
+      const existingEntry = await findEntryForEvent(database, input.userId, input.eventId);
+      if (existingEntry) return mapEntry(existingEntry);
+
+      const route = await getEventCenteredRouteWithClient(database, {
+        eventId: input.eventId,
+        activeBranchSessionId: input.activeBranchSessionId,
+        userId: input.userId,
+        requireWritable: true
+      });
+      if (
+        route.event.rootSession.recordMode !== "capture" ||
+        route.branch.recordMode !== "capture"
+      ) {
+        throw new Error("CAPTURE_JOURNAL_MODE_REQUIRED");
+      }
+      if ((route.path.messages.at(-1)?.sequence ?? 0) !== input.baseMessageSequence) {
+        throw new Error("EVENT_STATE_CHANGED");
+      }
+
+      const existingTurn = await database.interviewUserTurn.findUnique({
+        where: {
+          sessionId_clientTurnId: {
+            sessionId: input.activeBranchSessionId,
+            clientTurnId: input.clientOperationId
+          }
+        },
+        select: { id: true, action: true, journalEventId: true }
+      });
+      if (existingTurn) {
+        const replay = await findEntryForEvent(database, input.userId, input.eventId);
+        if (
+          replay &&
+          existingTurn.action === "generate_event_journal" &&
+          existingTurn.journalEventId === input.eventId
+        ) {
+          return mapEntry(replay);
+        }
+        throw new Error("EVENT_OPERATION_CONFLICT");
+      }
+
+      const sourceMessageIdsOnPath = route.path.messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.id);
+      const storedMessages = sourceMessageIdsOnPath.length
+        ? await database.interviewMessage.findMany({
+            where: { id: { in: sourceMessageIdsOnPath }, role: "user" },
+            select: {
+              id: true,
+              sequence: true,
+              userTurn: {
+                select: { rawText: true, action: true, status: true }
+              }
+            }
+          })
+        : [];
+      const storedById = new Map(storedMessages.map((message) => [message.id, message]));
+      const sourceMessages = sourceMessageIdsOnPath.flatMap((messageId) => {
+        const message = storedById.get(messageId);
+        const rawText = message?.userTurn?.rawText?.trim() ?? "";
+        return message?.userTurn?.action === "reply" &&
+          message.userTurn.status === "completed" &&
+          isEffectiveCaptureContent(rawText)
+          ? [{
+              id: message.id,
+              role: "user" as const,
+              sequence: message.sequence,
+              content: rawText
+            }]
+          : [];
+      });
+      const draft = buildCaptureJournalDraft(
+        sourceMessages.map((message) => message.content)
+      );
+      if (!draft) throw new Error("EVENT_JOURNAL_SOURCE_INSUFFICIENT");
+
+      const sourceMessageIds = sourceMessages.map((message) => message.id);
+      const sourceSnapshot: JournalEventEntrySourceSnapshot = {
+        schemaVersion: 1,
+        recordMode: "capture",
+        eventId: input.eventId,
+        branchSessionId: input.activeBranchSessionId,
+        baseMessageSequence: input.baseMessageSequence,
+        messages: sourceMessages,
+        facts: [],
+        effectiveFactIds: [],
+        deprioritizedFactIds: [],
+        explorationFactIds: [],
+        angleOutcomes: [],
+        logEligibleOutcomeIds: [],
+        pendingClaimConfirmation: {
+          kind: "no_eligible_claim",
+          claimId: null,
+          factId: null
+        }
+      };
+      const sourceFingerprint = hashSource({
+        recordMode: "capture",
+        eventId: input.eventId,
+        activeBranchSessionId: input.activeBranchSessionId,
+        baseMessageSequence: input.baseMessageSequence,
+        sourceMessages
+      });
+      const userTurnId = randomUUID();
+      const entryId = randomUUID();
+      const now = new Date();
+
+      await database.interviewUserTurn.create({
+        data: {
+          id: userTurnId,
+          clientTurnId: input.clientOperationId,
+          sessionId: input.activeBranchSessionId,
+          journalEventId: input.eventId,
+          action: "generate_event_journal",
+          baseBranchSessionId: input.activeBranchSessionId,
+          baseMessageSequence: input.baseMessageSequence,
+          status: "completed",
+          completedAt: now
+        }
+      });
+      await database.journalEventEntry.create({
+        data: {
+          id: entryId,
+          eventId: input.eventId,
+          sourceBranchSessionId: input.activeBranchSessionId,
+          generatedByTurnId: userTurnId,
+          title: draft.title,
+          content: draft.content,
+          status: "draft",
+          generationOrigin: "deterministic",
+          generationVersion: 1,
+          sourceMessageSequence: input.baseMessageSequence,
+          sourceMessageIds,
+          sourceFactIds: [],
+          sourceAngleOutcomeIds: [],
+          sourceFingerprint,
+          sourceSnapshot: toJsonValue(sourceSnapshot),
+          contentRevision: 1,
+          editedAt: now
+        }
+      });
+      const eventUpdate = await database.journalEvent.updateMany({
+        where: {
+          id: input.eventId,
+          userId: input.userId,
+          status: "active"
+        },
+        data: { status: "completed", completedAt: now }
+      });
+      if (eventUpdate.count !== 1) throw new Error("EVENT_STATE_CHANGED");
+      await database.interviewSession.updateMany({
+        where: {
+          userId: input.userId,
+          mode: "event_centered",
+          recordMode: "capture",
+          OR: [
+            { id: route.event.rootSessionId },
+            { rootSessionId: route.event.rootSessionId }
+          ]
+        },
+        data: { status: "completed", completedAt: now }
+      });
+
+      const createdEntry = await findEntryForEvent(database, input.userId, input.eventId);
+      if (!createdEntry) throw new Error("EVENT_GENERATION_STATE_CHANGED");
+      return mapEntry(createdEntry);
+    });
+  } catch (error) {
+    const replay = await findEntryForEvent(prisma, input.userId, input.eventId);
+    if (replay) return mapEntry(replay);
     if (isUniqueConflict(error)) throw new Error("EVENT_STATE_CHANGED");
     throw error;
   }

@@ -6,6 +6,7 @@ import {
 } from "../../src/features/interview/intent/control-decision-v2";
 import {
   GI088_DATASET_MACHINE_GATE_V8R2,
+  GI088_DATASET_MACHINE_GATE_V8R3,
   GI088_EVALUATION_ID,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V8R1,
@@ -13,7 +14,10 @@ import {
   GI088_HISTORICAL_DATASET_FINGERPRINTS,
   GI088_SERVICE_VERSION,
   GI088_TASKS,
+  GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY,
+  GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT,
   GI088_V8R1_TASKS,
+  GI088_V8R2_TASKS,
   createGi088DatasetFingerprint,
   createGi088EffectiveCandidateFingerprint,
   createGi088ExecutionFingerprint,
@@ -32,6 +36,7 @@ import { GI088_QUESTION_DECISION_SKILL_VERSION } from "../../src/server/services
 import { GI088_SEMANTIC_DELTA_CONTRACT_VERSION } from "../../src/server/services/evaluation/gi088/semantic-delta";
 import {
   GI088_V8R2_VERSION_MANIFEST,
+  GI088_V8R3_VERSION_MANIFEST,
   GI088_EVALUATION_ID_V8R1,
   GI088_SERVICE_VERSION_V8R1
 } from "../../src/server/services/evaluation/gi088/version-manifest";
@@ -78,9 +83,9 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
       evaluation: GI088_EVALUATION_VERSION,
       service: GI088_SERVICE_VERSION
     }).toEqual({
-      id: GI088_V8R2_VERSION_MANIFEST.evaluationId,
-      evaluation: GI088_V8R2_VERSION_MANIFEST.evaluation,
-      service: GI088_V8R2_VERSION_MANIFEST.service
+      id: GI088_V8R3_VERSION_MANIFEST.evaluationId,
+      evaluation: GI088_V8R3_VERSION_MANIFEST.evaluation,
+      service: GI088_V8R3_VERSION_MANIFEST.service
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -106,24 +111,41 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
     expect(GI088_QUESTION_DECISION_SKILL_VERSION).toBe(
       GI088_V8R2_VERSION_MANIFEST.questionDecision
     );
+    expect(GI088_V8R3_VERSION_MANIFEST).not.toHaveProperty(
+      "questionDecision"
+    );
+    expect(GI088_V8R3_VERSION_MANIFEST).toMatchObject({
+      interviewSkill: "2026-08-11.gi088-interview-skill-v8r3",
+      questionValueReview: "2026-08-11.gi088-question-value-review-v1",
+      runtime: "2026-08-11.gi088-ark-flash-runtime-v2",
+      payloadContract: "2026-08-11.gi088-ark-openai-json-v1"
+    });
+    expect(
+      GI088_BEHAVIOR_FILE_SPECS.some(
+        (spec) => spec.path.endsWith("/question-decision.ts")
+      )
+    ).toBe(false);
     expect(GI088_GOVERNED_EVALUATION_VERSIONS).toContain(
       GI088_EVALUATION_VERSION_V8R1
+    );
+    expect(GI088_GOVERNED_EVALUATION_VERSIONS).toContain(
+      GI088_V8R2_VERSION_MANIFEST.evaluation
     );
   });
 
   it("冻结 v8r1 任务包并把 A1、A6、A9、A12 更新到 v8r2 口径", () => {
     expect(GI088_V8R1_TASKS).toHaveLength(12);
-    expect(GI088_TASKS).toHaveLength(12);
+    expect(GI088_V8R2_TASKS).toHaveLength(12);
     expect(GI088_V8R1_TASKS[0].targetTriggerPrompt).not.toContain(
       "跟奶奶解释很累"
     );
-    expect(GI088_TASKS[0].targetTriggerPrompt).toContain("跟奶奶解释很累");
-    expect(GI088_TASKS[0].criterion).toContain("只有最后明确停止当前访谈时");
-    expect(GI088_TASKS[5].criterion).toContain("不自主暂停");
-    expect(GI088_TASKS[5].criterion).toContain("只有用户最后明确停止时");
-    expect(GI088_TASKS[8].criterion).toContain("必须继续提出一个");
-    expect(GI088_TASKS[8].criterion).toContain("明确停止前不得输出 pause");
-    expect(GI088_TASKS[11].instruction).toContain("至少完成八次用户提交");
+    expect(GI088_V8R2_TASKS[0].targetTriggerPrompt).toContain("跟奶奶解释很累");
+    expect(GI088_V8R2_TASKS[0].criterion).toContain("只有最后明确停止当前访谈时");
+    expect(GI088_V8R2_TASKS[5].criterion).toContain("不自主暂停");
+    expect(GI088_V8R2_TASKS[5].criterion).toContain("只有用户最后明确停止时");
+    expect(GI088_V8R2_TASKS[8].criterion).toContain("必须继续提出一个");
+    expect(GI088_V8R2_TASKS[8].criterion).toContain("明确停止前不得输出 pause");
+    expect(GI088_V8R2_TASKS[11].instruction).toContain("至少完成八次用户提交");
     expect(GI088_DATASET_MACHINE_GATE_V8R2).toMatchObject({
       requiredTargetTriggerCount: 12,
       minimumDirectUseCount: 9,
@@ -131,6 +153,45 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
       minimumFirstVisibleSuccessRate: 0.9,
       maximumAutomaticRecoveryCount: 1,
       automaticRecoveryDeadlineMs: 90_000
+    });
+  });
+
+  it("v8r3 当前任务冻结为 4 条计分轨迹与 2 条零模型兼容冒烟", () => {
+    expect(GI088_TASKS).toHaveLength(6);
+    expect(
+      GI088_TASKS.filter((task) => task.evaluationRole === "scored_trajectory")
+    ).toHaveLength(4);
+    expect(
+      GI088_TASKS.filter((task) => task.evaluationRole === "compatibility_smoke")
+    ).toHaveLength(2);
+    expect(GI088_TASKS[4].criterion).toContain("Provider 调用数保持 0");
+    expect(GI088_TASKS[5].criterion).toContain("Provider 调用数保持 0");
+    expect(GI088_DATASET_MACHINE_GATE_V8R3).toMatchObject({
+      requiredScoredTrajectoryCount: 4,
+      requiredCompatibilitySmokeCount: 2,
+      requiredTargetTriggerCount: 4,
+      totalTaskCount: 6,
+      minimumFirstVisibleSuccessRate: 0.85,
+      maximumAutomaticRecoveryCount: 2
+    });
+  });
+
+  it("v8r3 自动恢复只覆盖真实技术错误，并冻结离线与 Preview 合计预算", () => {
+    expect(GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY).toMatchObject({
+      maximumAutomaticRetriesPerTurn: 1,
+      maximumProviderCallsPerTurn: 2,
+      sharedAutomaticChainDeadlineMs: 90_000
+    });
+    expect(Object.keys(
+      GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections
+    )).not.toContain("ASK_QUESTION_COUNT_INVALID:2");
+    expect(Object.values(
+      GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections
+    ).every((item) => item.instruction.length > 20)).toBe(true);
+    expect(GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT).toMatchObject({
+      optionalAdmissionBinding: "admissionFingerprint",
+      automaticRecoveryBudgetScope: "offline_candidate_plus_preview",
+      immutableAfterRunCreation: true
     });
   });
 
@@ -151,7 +212,7 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
   it("四层与 execution 指纹稳定生成且排除部署结果字段", () => {
     const bundle = createGi088FingerprintBundle();
     expect(bundle).toEqual({
-      behaviorManifestVersion: GI088_V8R2_VERSION_MANIFEST.behaviorManifest,
+      behaviorManifestVersion: GI088_V8R3_VERSION_MANIFEST.behaviorManifest,
       behaviorManifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/u),
       candidateFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),
       datasetFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),
@@ -167,7 +228,7 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
   it("行为文件变化传播到对应分层指纹和 execution", () => {
     const candidateChanged = replaceFileHash(
       GI088_BEHAVIOR_MANIFEST,
-      "src/server/services/evaluation/gi088/question-decision.ts"
+      "src/server/services/evaluation/gi088/v8r3-interview-skill.ts"
     );
     expect(createGi088EffectiveCandidateFingerprint(candidateChanged)).not.toBe(
       createGi088EffectiveCandidateFingerprint()
@@ -193,6 +254,58 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
       createGi088EffectiveCandidateFingerprint()
     );
     expect(createGi088ExecutionFingerprint(experienceChanged)).not.toBe(
+      createGi088ExecutionFingerprint()
+    );
+  });
+
+  it("v8r3 Skill、离线评测、兼容证据和帮我记链路进入对应分层", () => {
+    const specs = new Map(
+      GI088_BEHAVIOR_FILE_SPECS.map((spec) => [spec.path, [...spec.layers]])
+    );
+    expect(
+      specs.get("skills/conduct-daily-light-thinking-interview/agents/openai.yaml")
+    ).toEqual(["candidate"]);
+    expect(
+      specs.get(
+        "evals/event-centered-generative/gi088-v8r3-skill-evaluation/contracts.ts"
+      )
+    ).toEqual(["dataset", "runner"]);
+    expect(
+      specs.get(
+        "evals/event-centered-generative/gi088-v8r3-skill-evaluation/offline-executor.ts"
+      )
+    ).toEqual(["runner"]);
+    expect(
+      specs.get("scripts/run-gi088-v8r3-offline-evaluation.ts")
+    ).toEqual(["runner"]);
+    expect(
+      specs.get("src/server/services/evaluation/gi088/compatibility-evidence.ts")
+    ).toEqual(["runner"]);
+    expect(
+      specs.get("src/app/api/preview/gi088/compatibility-smoke/route.ts")
+    ).toEqual(["runner", "experience"]);
+    expect(
+      specs.get("src/features/interview/event-centered/capture-mode.ts")
+    ).toEqual(["runner", "experience"]);
+    expect(
+      specs.get("src/features/interview/event-centered/gi088-compatibility-receipt.ts")
+    ).toEqual(["experience"]);
+    expect(specs.get("prisma/schema.prisma")).toEqual(["experience"]);
+    expect(
+      specs.get("src/server/services/interview/event-centered-interview.service.ts")
+    ).toEqual(["experience"]);
+
+    const offlineRunnerChanged = replaceFileHash(
+      GI088_BEHAVIOR_MANIFEST,
+      "evals/event-centered-generative/gi088-v8r3-skill-evaluation/offline-executor.ts"
+    );
+    expect(createGi088RunnerFingerprint(offlineRunnerChanged)).not.toBe(
+      createGi088RunnerFingerprint()
+    );
+    expect(createGi088DatasetFingerprint(undefined, offlineRunnerChanged)).toBe(
+      createGi088DatasetFingerprint()
+    );
+    expect(createGi088ExecutionFingerprint(offlineRunnerChanged)).not.toBe(
       createGi088ExecutionFingerprint()
     );
   });

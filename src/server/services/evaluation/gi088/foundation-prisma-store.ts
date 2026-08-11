@@ -13,6 +13,7 @@ import {
 } from "@prisma/gi088-evaluation-client";
 
 import {
+  assertGi088FoundationFrozenRunFacts,
   assertGi088FoundationCallTransition,
   createGi088FoundationPayloadHash,
   Gi088FoundationStoreError,
@@ -368,6 +369,10 @@ function assertRunMutation(
   if (run.revision !== mutation.expectedRevision) {
     throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
   }
+  assertGi088FoundationFrozenRunFacts({
+    currentState: run.state as unknown as Gi088FoundationJson,
+    nextState: mutation.nextState
+  });
 }
 
 function runMutationData(
@@ -1762,6 +1767,18 @@ implements Gi088EvaluationFoundationStore {
     return records.map(toEventRecord);
   }
 
+  async findExportSnapshot(input: { ownerUserId: string; runId: string }) {
+    const run = await this.client.gi088EvaluationBatch.findFirst({
+      where: { id: input.runId, ownerUserId: input.ownerUserId },
+      select: { id: true }
+    });
+    if (!run) return null;
+    const snapshot = await this.client.gi088EvaluationExportSnapshot.findUnique({
+      where: { runId: input.runId }
+    });
+    return snapshot ? toExportSnapshotRecord(snapshot) : null;
+  }
+
   async getOrCreateExportSnapshot(input: {
     ownerUserId: string;
     runId: string;
@@ -1789,6 +1806,9 @@ implements Gi088EvaluationFoundationStore {
           );
         }
         return { snapshot: toExportSnapshotRecord(existing), created: false };
+      }
+      if (run.status === "running") {
+        throw new Gi088FoundationStoreError("GI088_BATCH_MUST_BE_TERMINAL");
       }
       const snapshot = await transaction.gi088EvaluationExportSnapshot.create({
         data: {

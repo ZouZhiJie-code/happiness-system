@@ -6,11 +6,13 @@ import {
   EventCenteredInterviewWorkspace
 } from "@/components/interview/event-centered/event-centered-interview-workspace";
 import { writeEventCenteredJournalOperation } from "@/features/interview/event-centered/workspace-storage";
+import { readGi088HelpRecordReceipt } from "@/features/interview/event-centered/gi088-compatibility-receipt";
 import type { EventCenteredWorkspaceSession } from "@/types/event-centered-dialogue";
 
 function buildWorkspace(overrides: Partial<EventCenteredWorkspaceSession> = {}): EventCenteredWorkspaceSession {
   return {
     mode: "event_centered",
+    recordMode: "chat",
     rootSessionId: "root-1",
     activeBranchSessionId: "branch-1",
     eventId: "event-1",
@@ -108,6 +110,78 @@ describe("EventCenteredInterviewWorkspace", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/interview");
     window.sessionStorage.clear();
+    window.localStorage.clear();
+  });
+
+  it("新记录显式选择帮我记，并把模式写入创建请求、页面和恢复地址", async () => {
+    const capture = buildWorkspace({
+      recordMode: "capture",
+      messages: [{
+        ...buildWorkspace().messages[0]!,
+        content: "这里是【帮我记】。写下此刻想留下的内容就好。",
+        rawText: "这里是【帮我记】。写下此刻想留下的内容就好。",
+        assistantPayload: {
+          naturalUnderstanding: "",
+          naturalResponse: "这里是【帮我记】。写下此刻想留下的内容就好。",
+          responseKind: "opening",
+          questionSpec: null,
+          checkpoint: null,
+          angleOutcome: null
+        }
+      }],
+      dialogue: {
+        ...buildWorkspace().dialogue,
+        questionOpportunityCount: 0,
+        availableAngles: [],
+        allowedActions: ["reply"],
+        progress: [{
+          id: "record",
+          label: "轻量记录",
+          status: "current",
+          percent: 0,
+          detail: "帮我记"
+        }]
+      }
+    });
+    const startBodies: unknown[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/start") {
+        startBodies.push(JSON.parse(String(init?.body)));
+        return jsonResponse(capture);
+      }
+      if (url === "/api/interview/event-centered/sessions?entryDate=2026-07-22") {
+        return jsonResponse([{ ...eventSessionTabs()[0], recordMode: "capture" }]);
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        return sseResponse([{ event: "session", data: { session: capture } }]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(
+      <EventCenteredInterviewWorkspace
+        entryDate="2026-07-22"
+        gi088CompatibilityContext={{ runId: "run-compat", taskId: "A5" }}
+      />
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /帮我记/u }));
+    expect(await screen.findByTestId("event-centered-capture-mode-label")).toHaveTextContent("帮我记");
+    expect(screen.queryByText("引导复盘")).not.toBeInTheDocument();
+    expect(screen.queryByText("深入探索")).not.toBeInTheDocument();
+    expect(startBodies).toEqual([{ entryDate: "2026-07-22", recordMode: "capture" }]);
+    await waitFor(() => expect(window.location.search).toContain("recordMode=capture"));
+    expect(window.location.search).toContain("gi088RunId=run-compat");
+
+    fireEvent.change(screen.getByLabelText("输入要记录的内容"), {
+      target: { value: "今天散步时看见一棵开花的树。" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    await waitFor(() => expect(readGi088HelpRecordReceipt({
+      runId: "run-compat",
+      taskId: "A5"
+    })).toMatchObject({ productSessionId: "root-1" }));
   });
 
   it("把 A 方案的对话内纸笺接入统一流式写入，并在可靠完成后清空草稿", async () => {
@@ -158,7 +232,7 @@ describe("EventCenteredInterviewWorkspace", () => {
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
 
-    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" />);
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialRecordMode="chat" />);
 
     expect(await screen.findByRole("tab", { name: /会议之后/u })).toBeVisible();
     expect(screen.getByTestId("event-centered-workspace-layout")).toHaveClass(
@@ -213,7 +287,7 @@ describe("EventCenteredInterviewWorkspace", () => {
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
 
-    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" />);
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialRecordMode="chat" />);
     const input = await screen.findByLabelText("输入当前事件");
     fireEvent.change(input, { target: { value: "我想先把这件事记下来" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -293,7 +367,7 @@ describe("EventCenteredInterviewWorkspace", () => {
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
 
-    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" />);
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialRecordMode="chat" />);
     const input = await screen.findByLabelText("输入当前事件");
     fireEvent.change(input, { target: { value: acceptedTurn.turn.rawText } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -345,7 +419,7 @@ describe("EventCenteredInterviewWorkspace", () => {
       throw new Error(`Unexpected request: ${url}`);
     }) as typeof fetch;
 
-    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" />);
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialRecordMode="chat" />);
     const input = await screen.findByLabelText("输入当前事件");
     fireEvent.change(input, { target: { value: "整理成日志" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -505,6 +579,7 @@ describe("EventCenteredInterviewWorkspace", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "再记一件" }));
+    fireEvent.click(await screen.findByRole("button", { name: /陪我聊/u }));
     await waitFor(() => {
       expect(window.location.search).toContain("sessionId=root-2");
       expect(window.location.search).not.toContain("eventEntryId=entry-1");
@@ -562,6 +637,7 @@ describe("EventCenteredInterviewWorkspace", () => {
     expect(await screen.findByRole("tab", { name: /已退出的旧事件.*已退出/u })).toBeVisible();
     expect(screen.getByLabelText("输入当前事件")).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "记下一件事" }));
+    fireEvent.click(await screen.findByRole("button", { name: /陪我聊/u }));
 
     await waitFor(() => expect(window.location.search).toContain("sessionId=root-2"));
     expect(await screen.findByRole("tab", { name: /已退出的旧事件.*已退出/u })).toBeVisible();

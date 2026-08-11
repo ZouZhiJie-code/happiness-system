@@ -16,6 +16,7 @@ export type Gi088EvaluationDraftForm =
   | "question_review_note"
   | "trajectory_review"
   | "review_revision_reason"
+  | "compatibility_smoke"
   | "early_stop_reason";
 
 export type Gi088JsonValue =
@@ -48,6 +49,7 @@ export type Gi088EvaluationOutboxKind =
   | "program_intervention_review"
   | "trajectory_review"
   | "review_revision"
+  | "compatibility_smoke"
   | "abort_current_task"
   | "early_stop"
   | "seal";
@@ -132,6 +134,7 @@ function validDraftScope(value: unknown): value is Gi088EvaluationDraftScope {
       scope.form === "question_review_note" ||
       scope.form === "trajectory_review" ||
       scope.form === "review_revision_reason" ||
+      scope.form === "compatibility_smoke" ||
       scope.form === "early_stop_reason") &&
     (scope.turnId === null || validIdentifier(scope.turnId));
 }

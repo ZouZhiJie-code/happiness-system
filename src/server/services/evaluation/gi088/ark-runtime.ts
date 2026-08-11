@@ -2,7 +2,7 @@ import { OpenAIProvider } from "@/server/services/ai/openai.provider";
 import { AIProviderError } from "@/server/services/ai/ai-provider";
 import {
   GI088_ARK_FLASH_RUNTIME_POLICY,
-  GI088_V7R3_TIMEOUT_POLICY
+  GI088_TIMEOUT_POLICY
 } from "@/server/services/evaluation/gi088/candidate";
 
 export type Gi088ArkRuntimeConfigurationCode =
@@ -54,10 +54,13 @@ export function resolveGi088ArkRuntimeConfig(
     baseUrl: normalizedBaseUrl,
     model: GI088_ARK_FLASH_RUNTIME_POLICY.model,
     summary: {
-      provider: "openai" as const,
+      provider: GI088_ARK_FLASH_RUNTIME_POLICY.provider,
       transport: GI088_ARK_FLASH_RUNTIME_POLICY.transport,
       baseUrlHost: GI088_ARK_FLASH_RUNTIME_POLICY.baseUrlHost,
-      model: GI088_ARK_FLASH_RUNTIME_POLICY.model
+      endpoint: GI088_ARK_FLASH_RUNTIME_POLICY.endpoint,
+      model: GI088_ARK_FLASH_RUNTIME_POLICY.model,
+      payloadContractVersion:
+        GI088_ARK_FLASH_RUNTIME_POLICY.payloadContractVersion
     }
   };
 }
@@ -70,6 +73,6 @@ export function createGi088ArkProvider(
     apiKey: resolved.apiKey,
     baseUrl: resolved.baseUrl,
     model: resolved.model,
-    timeoutMs: GI088_V7R3_TIMEOUT_POLICY.hardTimeoutMs
+    timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs
   });
 }

@@ -19,12 +19,32 @@ const inputSchema = z
       "multiple_independent_tasks",
       "uncertain"
     ]).optional(),
+    valueClassification: z.enum([
+      "advances_working_task",
+      "reasks_answered_content",
+      "working_task_drift",
+      "unsupported_third_party_inference",
+      "low_information_gain",
+      "uncertain"
+    ]).optional(),
     note: z.string().trim().max(1_000).default(""),
     observationFingerprint: z.string().length(64),
     clientOperationId: z.string().trim().min(1).max(160),
     revisionReason: z.string().trim().min(1).max(1_000).optional()
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.questionPresence === "present" &&
+      (!value.classification || !value.valueClassification)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valueClassification"],
+        message: "present question review requires focus and value classifications"
+      });
+    }
+  });
 
 export async function POST(request: Request) {
   return withGi088Evaluation(request, async ({ ownerUserId, service }) => {

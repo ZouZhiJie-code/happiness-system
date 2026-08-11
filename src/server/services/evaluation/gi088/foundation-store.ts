@@ -93,6 +93,32 @@ export function createGi088FoundationPayloadHash(
     .digest("hex");
 }
 
+function offlineEvidenceFromState(value: Gi088FoundationJson) {
+  if (value === null || Array.isArray(value) || typeof value !== "object") {
+    return undefined;
+  }
+  return (value as { readonly [key: string]: Gi088FoundationJson })
+    .offlineEvaluationEvidence;
+}
+
+export function assertGi088FoundationFrozenRunFacts(input: {
+  currentState: Gi088FoundationJson;
+  nextState: Gi088FoundationJson;
+}) {
+  const currentEvidence = offlineEvidenceFromState(input.currentState);
+  const nextEvidence = offlineEvidenceFromState(input.nextState);
+  if (currentEvidence === undefined && nextEvidence === undefined) return;
+  if (
+    currentEvidence === undefined ||
+    nextEvidence === undefined ||
+    canonicalJson(currentEvidence) !== canonicalJson(nextEvidence)
+  ) {
+    throw new Gi088FoundationStoreError(
+      "GI088_FROZEN_OFFLINE_EVIDENCE_MISMATCH"
+    );
+  }
+}
+
 const CALL_TRANSITIONS = {
   reserved: ["dispatched", "superseded"],
   dispatched: [
@@ -541,6 +567,11 @@ export interface Gi088EvaluationFoundationStore {
   listOperationEvents(
     runId: string
   ): Promise<Gi088FoundationOperationEventRecord[]>;
+
+  findExportSnapshot(input: {
+    ownerUserId: string;
+    runId: string;
+  }): Promise<Gi088FoundationExportSnapshotRecord | null>;
 
   getOrCreateExportSnapshot(input: {
     ownerUserId: string;

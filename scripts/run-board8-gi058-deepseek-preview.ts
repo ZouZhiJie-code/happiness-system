@@ -159,7 +159,7 @@ type CaseResult = {
   unusedRequiredReplies: string[];
   journal: {
     generated: boolean;
-    origin: "llm" | "fallback" | "existing" | null;
+    origin: "llm" | "fallback" | "deterministic" | "existing" | null;
     edited: boolean;
     saved: boolean;
     reopened: boolean;

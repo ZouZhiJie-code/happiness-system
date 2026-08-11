@@ -6,7 +6,7 @@ import { prisma } from "@/server/db/prisma";
 
 type JournalDayModeDatabase = Pick<
   Prisma.TransactionClient,
-  "journalDayOwnership" | "$executeRaw"
+  "journalDayOwnership"
 >;
 
 export type JournalDayMode = Extract<
@@ -64,16 +64,6 @@ export type AssertJournalDayModeInput = {
 };
 
 type StoredJournalDayOwnership = Prisma.JournalDayOwnershipGetPayload<Record<never, never>>;
-
-/**
- * Prisma maps DateTime values to PostgreSQL `timestamp without time zone` using
- * the stored wall-clock value. Raw SQL parameters serialize JavaScript Date
- * values as UTC, which shifts the Asia/Shanghai entry-date boundary by eight
- * hours. Keep the raw insert aligned with Prisma's DateTime representation.
- */
-function formatTimestampWithoutTimeZone(value: Date) {
-  return value.toISOString().replace("T", " ").replace("Z", "");
-}
 
 function mapJournalDayMode(ownership: StoredJournalDayOwnership): JournalDayModeRecord {
   return {
@@ -185,41 +175,27 @@ export async function claimJournalDayModeInTransaction(
     return result;
   }
 
-  const insertedCount = await database.$executeRaw(
-    Prisma.sql`
-      INSERT INTO "JournalDayOwnership" (
-        "id",
-        "userId",
-        "entryDate",
-        "primaryMode",
-        "status",
-        "claimedAt",
-        "claimedBySessionId",
-        "lastAssertedAt",
-        "createdAt",
-        "updatedAt"
-      )
-      VALUES (
-        ${randomUUID()},
-        ${input.userId},
-        ${formatTimestampWithoutTimeZone(entryDate)}::timestamp,
-        ${input.mode}::"InterviewSessionMode",
-        'clean'::"JournalDayOwnershipStatus",
-        ${formatTimestampWithoutTimeZone(now)}::timestamp,
-        ${input.claimedBySessionId ?? null},
-        ${formatTimestampWithoutTimeZone(now)}::timestamp,
-        ${formatTimestampWithoutTimeZone(now)}::timestamp,
-        ${formatTimestampWithoutTimeZone(now)}::timestamp
-      )
-      ON CONFLICT ("userId", "entryDate") DO NOTHING
-    `
-  );
+  const inserted = await database.journalDayOwnership.createMany({
+    data: [{
+      id: randomUUID(),
+      userId: input.userId,
+      entryDate,
+      primaryMode: input.mode,
+      status: "clean",
+      claimedAt: now,
+      claimedBySessionId: input.claimedBySessionId ?? null,
+      lastAssertedAt: now,
+      createdAt: now,
+      updatedAt: now
+    }],
+    skipDuplicates: true
+  });
   const claimedOwnership = await findJournalDayOwnership(database, input.userId, entryDate);
   if (!claimedOwnership) {
     throw new Error("JOURNAL_DAY_MODE_CLAIM_FAILED");
   }
 
-  return toClaimedMode(claimedOwnership, input.mode, insertedCount === 1);
+  return toClaimedMode(claimedOwnership, input.mode, inserted.count === 1);
 }
 
 export async function claimJournalDayMode(input: ClaimJournalDayModeInput) {

@@ -59,6 +59,16 @@ export default async function InterviewPage({ searchParams }: InterviewPageProps
   const dimension = typeof resolvedSearchParams.dimension === "string" ? resolvedSearchParams.dimension : null;
   const sessionId = typeof resolvedSearchParams.sessionId === "string" ? resolvedSearchParams.sessionId : null;
   const mode = typeof resolvedSearchParams.mode === "string" ? resolvedSearchParams.mode : null;
+  const recordMode = resolvedSearchParams.recordMode === "capture" || resolvedSearchParams.recordMode === "chat"
+    ? resolvedSearchParams.recordMode
+    : null;
+  const gi088CompatibilityRunId = typeof resolvedSearchParams.gi088RunId === "string"
+    ? resolvedSearchParams.gi088RunId
+    : null;
+  const gi088CompatibilityTaskId = resolvedSearchParams.gi088TaskId === "A5" ||
+    resolvedSearchParams.gi088TaskId === "A6"
+    ? resolvedSearchParams.gi088TaskId
+    : null;
   const panel = typeof resolvedSearchParams.panel === "string" ? resolvedSearchParams.panel : null;
   const eventEntryId = typeof resolvedSearchParams.eventEntryId === "string" ? resolvedSearchParams.eventEntryId : null;
   const requestedEntryDate = typeof resolvedSearchParams.entryDate === "string" ? resolvedSearchParams.entryDate : null;
@@ -99,6 +109,15 @@ export default async function InterviewPage({ searchParams }: InterviewPageProps
         <EventCenteredInterviewWorkspace
           entryDate={entryDate}
           initialSessionId={sessionId}
+          initialRecordMode={recordMode}
+          gi088CompatibilityContext={
+            gi088CompatibilityRunId && gi088CompatibilityTaskId
+              ? {
+                  runId: gi088CompatibilityRunId,
+                  taskId: gi088CompatibilityTaskId
+                }
+              : null
+          }
           initialJournalPanelOpen={panel === "journal"}
           initialEventEntryId={eventEntryId}
           writeEnabled={eventCenteredWriteEnabled}

@@ -297,6 +297,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
     expect(buildEnvironmentContract(previewFile)).toEqual({
       required: [
         "DATABASE_URL",
+        "DIRECT_URL",
         "EVALUATION_DATABASE_URL",
         "EVALUATION_DATABASE_URL_UNPOOLED",
         "EVALUATION_POSTGRES_HOST",
@@ -309,6 +310,9 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "GI088_EVALUATOR_USERNAMES",
         "GI088_MODEL_CALL_SCOPE",
         "GI088_AUTHORIZED_EXECUTION_FINGERPRINT",
+        "GI088_V8R3_CANDIDATE_OFFLINE_RUN_FINGERPRINT",
+        "GI088_V8R3_CANDIDATE_EVIDENCE_FINGERPRINT",
+        "GI088_V8R3_OFFLINE_AUTOMATIC_RECOVERY_COUNT",
         "GI088_SMOKE_AUTHORIZATION_ID",
         "AI_RUNTIME_CONFIG_SECRET",
         "CRON_SECRET",
@@ -326,6 +330,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
       ],
       optional: [
+        "GI088_V8R3_ADMISSION_FINGERPRINT",
         "INTERVIEW_EVENT_CENTERED_STRATEGY",
         "VOLCENGINE_ARK_MODEL",
         "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
@@ -339,6 +344,16 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         }
       ]
     });
+    expect(previewFile).toContain('INTERVIEW_EVENT_CENTERED_MODE="optional"');
+    expect(previewFile).toContain(
+      'INTERVIEW_EVENT_CENTERED_STRATEGY="generative"'
+    );
+    expect(productionFile).toContain(
+      'INTERVIEW_EVENT_CENTERED_MODE="legacy"'
+    );
+    expect(productionFile).toContain(
+      'INTERVIEW_EVENT_CENTERED_STRATEGY="baseline"'
+    );
     expect(buildEnvironmentContract(productionFile)).toEqual({
       required: [
         "DATABASE_URL",

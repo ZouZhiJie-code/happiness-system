@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-10.gi088-behavior-manifest-v1",
+  "version": "2026-08-11.gi088-behavior-manifest-v2",
   "files": [
     {
       "path": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts",
@@ -22,6 +22,66 @@
         "candidate"
       ],
       "sha256": "2c0713a555ac2f6d5b537d0c79b815a38c59d356f0ac55db95e78956764115c1"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/contracts.ts",
+      "layers": [
+        "dataset",
+        "runner"
+      ],
+      "sha256": "4c72e27d7ae9ce7a3cc383bfc7978f11035b1fa08e559b15a1db91bc28297773"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
+      "layers": [
+        "dataset"
+      ],
+      "sha256": "6f3691d4a507ba01265e46b802c0f5d9e2b569412337c4c49990047de58a71ac"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/fixture-helpers.ts",
+      "layers": [
+        "dataset"
+      ],
+      "sha256": "e486d78a8a8cbcd67cba8483ca5ec808802311012939f4ac202c8289bbebcd3c"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/hidden-fixtures.ts",
+      "layers": [
+        "dataset",
+        "runner"
+      ],
+      "sha256": "bc8045bf47548a1ddd79b5b84368ca60f7b0c1122ae66a12363834fb26d1c7da"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/index.ts",
+      "layers": [
+        "dataset",
+        "runner"
+      ],
+      "sha256": "48a63ca9944e2031d3d71c68827280652aba9cff70d4243843ddf5b62df8f19f"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/offline-executor.ts",
+      "layers": [
+        "runner"
+      ],
+      "sha256": "77880cf8129aae2df414dce50a1de65fcf964e463350b6187bebb5dc8f224dde"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures.ts",
+      "layers": [
+        "dataset"
+      ],
+      "sha256": "01421a4d8b4417b382a24703402e1056a58a52684429cff58e2b99907905b817"
+    },
+    {
+      "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/runner.ts",
+      "layers": [
+        "dataset",
+        "runner"
+      ],
+      "sha256": "e8c7366ddb082fe041e228aa24d4bd3b4915f3959dbe38b94e82d0d1415babb5"
     },
     {
       "path": "next.config.ts",
@@ -48,7 +108,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "586e23f50b030a5fd09e95a996615911a9683abce8d1f14122dcc95df6b09f45"
+      "sha256": "193daed82f502bee80ccf9d5a4ecb578d67cd62e639f5ef670b6e4b5b69f49db"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -85,6 +145,20 @@
       "sha256": "a323f81ac35a9a86896101532b4ec51fd7394c068a8b3f850088153ff23f63e9"
     },
     {
+      "path": "prisma/migrations/20260811120000_add_interview_record_mode/migration.sql",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "55dd1c4e1f66d2201f80ae534c4e49b8ffd41bdc75744bb240d9cc4c2c56b211"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "6c082ed887fbfd69a3ffc114d34ba5ce055380927720c60439f6b06eaa0a1c87"
+    },
+    {
       "path": "scripts/check-gi088-behavior-manifest.ts",
       "layers": [
         "candidate",
@@ -106,7 +180,77 @@
       "layers": [
         "runner"
       ],
-      "sha256": "084a093e8fc8215f22d49026f8dddf7ab8c554114e9b000e99315ff34df53227"
+      "sha256": "69cacedb944b1812a70f1b1d38fb5f5146c4fb21ab694e7dee59e55aeb9c70e0"
+    },
+    {
+      "path": "scripts/run-gi088-v8r3-offline-evaluation.ts",
+      "layers": [
+        "runner"
+      ],
+      "sha256": "6bffe391857d17b3d75381eb28cb5fde11239814f8f960a56d4de0884c636d95"
+    },
+    {
+      "path": "skills/conduct-daily-light-thinking-interview/agents/openai.yaml",
+      "layers": [
+        "candidate"
+      ],
+      "sha256": "d5dbe72067db0061e336be21ff46daa2b459176ae75c9772711c23581b6afdb3"
+    },
+    {
+      "path": "skills/conduct-daily-light-thinking-interview/SKILL.md",
+      "layers": [
+        "candidate"
+      ],
+      "sha256": "477692b5f1bbffc0ee940e3201d5f67fa70ab2efec5c7162d5a63799260df842"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/journal/[id]/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "3cc3239cab8964b0d2b0c24546389cb748e84ff3368c71b2c6006040d8fb9fd9"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/journal/[id]/save/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "a137c9d5fe868ef6e09b3f9e6f2c1d4b5bcf99dba92263a13c48e7a5280e237b"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/journal/generate/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "77cac5d46e3e0a6ed34f8a8e2588b47db2db631c0225ee1b89d984f365494246"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/session/[id]/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "d3602a600067e63b7e4354d3c044f6a072a23036d256022689df32899603cb10"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/session/respond/stream/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "b46eca3f911e0ee9368f6b2b15e79d112875f1602958a6a87c45fd054bdfff5c"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/session/start/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f6aeaf3f0a13eb1be8aa532c6f01d6e8fa9d9f79d11efd6a81845bdb9ca28b02"
+    },
+    {
+      "path": "src/app/api/interview/event-centered/sessions/route.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "2ef05b19da12a374f6dec6a48f298a9521a9067da581440a7fd38f4dce290c27"
     },
     {
       "path": "src/app/api/preview/gi088/abort-current-task/route.ts",
@@ -121,6 +265,14 @@
         "experience"
       ],
       "sha256": "81a22ad6ae0814d4fd9c200071bff7a325a47f451c45896313c7a0a1764dee1f"
+    },
+    {
+      "path": "src/app/api/preview/gi088/compatibility-smoke/route.ts",
+      "layers": [
+        "experience",
+        "runner"
+      ],
+      "sha256": "9b0d5a6d44a57c8392631a8501914d97fed4808addf54987515b53284a689879"
     },
     {
       "path": "src/app/api/preview/gi088/early-stop/route.ts",
@@ -162,7 +314,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "dee4f5d275dcd278f3e3b6f231150cf009a99d172790e98df37906bebcab1872"
+      "sha256": "ba213a56d197e64b46524acdd8c3932032a202b8f7c35c4d27edaa427d66c085"
     },
     {
       "path": "src/app/api/preview/gi088/retry/route.ts",
@@ -214,39 +366,104 @@
       "sha256": "52e24306d9323fbe1423fe8f312bf334db0450888a0217042923d4c1259fc056"
     },
     {
+      "path": "src/app/interview/page.tsx",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "6421b31e42aa02ce101bfca03f668328d0404ee2bb78e3b71577a43de5458bee"
+    },
+    {
       "path": "src/app/preview/gi088-evaluation/page.tsx",
       "layers": [
         "experience"
       ],
-      "sha256": "ab643a4577a28dd1ff71ef9d7387340926fa343ebe1efd25b899b22097296ab2"
+      "sha256": "d92a6602ffec6b49808cbaf7cc35145e8aa243c48ed058a6ca50fd7433099db6"
+    },
+    {
+      "path": "src/components/interview/event-centered/event-centered-dialogue-workspace-view.tsx",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "9e998e628d768750a11d018cbfa927d8bde7abd34e2388c18f32563d3720fa7a"
+    },
+    {
+      "path": "src/components/interview/event-centered/event-centered-interview-workspace.tsx",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "d7d5b3fc44e3b627484d00e182be6d1197ef66c1e10ac7014fb617151f3602a8"
     },
     {
       "path": "src/components/interview/event-centered/gi088-evaluation-workbench.tsx",
       "layers": [
         "experience"
       ],
-      "sha256": "c4655300e99e39e5ce62c02becf30031b4632ce854ce2fc5d0f94af31713029d"
+      "sha256": "80d83dcf2445b054b37578248ea60b8e2c7f10abe27ef419d59b20ab71b08f2b"
+    },
+    {
+      "path": "src/features/auth/auth-local.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "b0982f742650b76b1d211a7f1cb352127849ba0edf7a35d517ecbe04cc1797e9"
+    },
+    {
+      "path": "src/features/interview/entry-date.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "99ce2bbcb4f6a1b8af0678f8da4bd98b44b0f3c9c48be41c13e2d5a3aeb7ec3b"
+    },
+    {
+      "path": "src/features/interview/event-centered-release.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "a4445273431e056e5f848be4199e75d70c27b9cf2be314633fe9819ac4cf1490"
+    },
+    {
+      "path": "src/features/interview/event-centered/capture-mode.ts",
+      "layers": [
+        "experience",
+        "runner"
+      ],
+      "sha256": "d6cf121d8387622b07b593ab516ad947f2f5e1042705e0a224308c7fa5cf05bd"
+    },
+    {
+      "path": "src/features/interview/event-centered/dialogue-state.ts",
+      "layers": [
+        "experience",
+        "runner"
+      ],
+      "sha256": "5677af4edb250cd008e6d60391c1ca14dec18a575553f7777a91c92b4c0e7582"
+    },
+    {
+      "path": "src/features/interview/event-centered/gi088-compatibility-receipt.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "d7609a0fc3de63e682cc06f9e3cd48518a2d20d88be2487327c2695be1c30107"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-client.ts",
       "layers": [
         "experience"
       ],
-      "sha256": "55efa0a1daa989dd384eddf8041732199c0a96913b40cb0df61b1444b5bf2ad5"
+      "sha256": "3b63f44533cc69377763dc7624ebd35efaa123d7e823ad7d42429a40e23c2c88"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-export.ts",
       "layers": [
         "experience"
       ],
-      "sha256": "a03392a39fff8da1bad3cf1603f9e10c22b3e7206073e2d048784d4b46bcc883"
+      "sha256": "269a6dc06dad93d7a361017443b086eeb1908df9eaee3aa11441851c76baca51"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-storage.ts",
       "layers": [
         "experience"
       ],
-      "sha256": "b1108590a8d52b0c919b20882ed50a2670b99df09afb77071d804f27b4d94370"
+      "sha256": "ac1a4c973820f13acf6a5e58c403394f8adc02c10a49f59dbd87dc69fa584b8f"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-sync.ts",
@@ -254,6 +471,13 @@
         "experience"
       ],
       "sha256": "90b0fdaa103e2e65d2153cb6a61e7bf8298590c0b999e2992745ee6e1d8225f5"
+    },
+    {
+      "path": "src/features/interview/event-centered/workspace-client.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "8ad5c26ee21d92048dd0bbe7fd98b2803745438491317d7a763f5aa6ec0a313f"
     },
     {
       "path": "src/features/interview/intent/control-decision-v2.ts",
@@ -268,6 +492,55 @@
         "runner"
       ],
       "sha256": "5c83b2ed6745a114348e49d94c49c5346d95030c115a9c2ec1cb03a8dc720d90"
+    },
+    {
+      "path": "src/features/interview/schema/event-centered-interview.schema.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "0e37c294c03b9e2ef402187c16812bb7ec08995f7baeaca62811869719a20021"
+    },
+    {
+      "path": "src/server/repositories/event-centered-interview.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "10935cd85c7acf8a530e782c14e057605991c88bc5afeb13af54c31039434f6e"
+    },
+    {
+      "path": "src/server/repositories/event-centered-response-version.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f3bfeda1dc335e190d612177e0d4ac57fa3c69a8623c93ddda4d7a990a69e3dd"
+    },
+    {
+      "path": "src/server/repositories/journal-day-mode.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "959eacb06a0994bac75b3cd11a9324be04853df44bfa252961747700f7d7c786"
+    },
+    {
+      "path": "src/server/repositories/journal-event-entry.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "2af26e86b8342979f76fb10603f4855e26e06a7fc37787c64d6946295e260ea8"
+    },
+    {
+      "path": "src/server/repositories/journal-event-fact-revision.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "6ca28241a5dd9997cf44befe74baa209dd6de1aa2f4718cdc45b8c958c1e3de6"
+    },
+    {
+      "path": "src/server/repositories/journal-event-understanding.repository.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "837d16a5c3799d68dcbca8fd208ff9fa59b5158f719b7a2abced08ff3b894383"
     },
     {
       "path": "src/server/services/ai/ai-provider.ts",
@@ -289,7 +562,14 @@
         "experience",
         "runner"
       ],
-      "sha256": "87ba8959bf2fe7832733d42cd4a67dba9aaaa3a2505d3458602d315f8be9bb77"
+      "sha256": "b7a76bb441bcc1634dacb22c0a8ce54d25fe7e0aac81dcd94991bc6bd8208fdd"
+    },
+    {
+      "path": "src/server/services/evaluation/gi088/ark-runtime.ts",
+      "layers": [
+        "runner"
+      ],
+      "sha256": "73923bed63708b31d681ac5769226519a5c85173b74795dd6c7f2fa0cf089a3c"
     },
     {
       "path": "src/server/services/evaluation/gi088/behavior-manifest.ts",
@@ -299,7 +579,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "41eb0b82b5a5ede8fc5fd248b436cb4ddd2191efd04c6ef4617a403b156be3af"
+      "sha256": "ec53b2649f664009ac6d1d8eb58a526e0560c3532a0f1ce2679781630b76bcd4"
     },
     {
       "path": "src/server/services/evaluation/gi088/candidate.ts",
@@ -308,7 +588,14 @@
         "dataset",
         "runner"
       ],
-      "sha256": "bd929cc2b1ca49c679d68c874295f9f5a5a18489c0824654058de37169b3a518"
+      "sha256": "36eba012cbf8b0c288e02722ed78f236421e7496494c45927a7f4dd3d01891de"
+    },
+    {
+      "path": "src/server/services/evaluation/gi088/compatibility-evidence.ts",
+      "layers": [
+        "runner"
+      ],
+      "sha256": "7d8d7f9799f394140e830309de2ed018a245cd190a39ad5d852a2fdabe71154c"
     },
     {
       "path": "src/server/services/evaluation/gi088/deterministic-state.ts",
@@ -322,7 +609,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "636eb0aafd72ef9d93a633bcfb716097e35b1c24410f88c37461552aebfe4d8d"
+      "sha256": "c41f317115a00a35bc1a460dfd116b080727edf5252f21ea0d4bc362a00bcfa5"
     },
     {
       "path": "src/server/services/evaluation/gi088/export-v06.ts",
@@ -332,32 +619,39 @@
       "sha256": "b060ae02ab2b3f087b33d7b709165eb1938d1e328e5ea4ddaac3d51d85614b57"
     },
     {
+      "path": "src/server/services/evaluation/gi088/export-v07.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f3fc0765c3de3fb6dd910956d1cec0238cc8a6afa3bd84d0ed3f173f8f8b2359"
+    },
+    {
       "path": "src/server/services/evaluation/gi088/foundation-memory-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "4aa594aa6dc75166a070be3e7a94233df684a6ac8825a70e855b00af82d39357"
+      "sha256": "2e069f3b71b8f2c1a27921048b7e80a31fc43f0fe2b0236152e4661a1733ad6b"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-prisma-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "1be9e9cfefbd1c96967713e6cd4383c2022c354a611a83ce6ae77ac090cd42b0"
+      "sha256": "232891c60de4a79a1e848b0a527acf131baec4cd4e154c41d449e2d02915ae12"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-service.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "0bfc15acbda43336e12b759bf59f1364dfb8bc6af514a21c3299f478ea4d267c"
+      "sha256": "054b2faa089b936928f8c02434ccf77840fdf16744ee60e6cdd398195be812a1"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "9b5e9ba87ec840e5e3e55de54333f256a639e4f119d3811fe7bcdeb6213eebf0"
+      "sha256": "9257bcc16377248c2ca75cddbeeeb5ed54124b2ce7d8b91e38f2576875ad1c18"
     },
     {
       "path": "src/server/services/evaluation/gi088/historical-export.ts",
@@ -395,11 +689,11 @@
       "sha256": "aae0fc94b3ec93b0593483d9610953a422f530743ac97629d88ae768ce8f3645"
     },
     {
-      "path": "src/server/services/evaluation/gi088/question-decision.ts",
+      "path": "src/server/services/evaluation/gi088/request-identity.ts",
       "layers": [
-        "candidate"
+        "runner"
       ],
-      "sha256": "5fd71d1de1a1059c596ea04054214797f42de38fb2f1d6ed6777184eaf2bb087"
+      "sha256": "c2b348f599dc0970b7f74f1d8400bdba375bb634fabc25922333465ecbabc480"
     },
     {
       "path": "src/server/services/evaluation/gi088/schema-diagnostics.ts",
@@ -421,7 +715,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "dba03e8ab958d08c4195624cf4348e8f1e1e50d393ccafd0e94d0ec8a70c6f12"
+      "sha256": "bcde8be0ba9c8b0327b14d6bfabe99f54f0e297d5a9c25a2ea23f85216aa7079"
     },
     {
       "path": "src/server/services/evaluation/gi088/single-focus.ts",
@@ -444,7 +738,7 @@
         "candidate",
         "runner"
       ],
-      "sha256": "1c8657e4473993d335eb9435e3110419769e7228965d47dad19dcea337ff0326"
+      "sha256": "f8ed6899b31aa7a90f51c05c1d60c5a9b270a692845c216deb5fad311fe75ff9"
     },
     {
       "path": "src/server/services/evaluation/gi088/store.ts",
@@ -459,7 +753,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "4c528eac13b3c0165e91e24273c0d42b8be65ebae688895184e6a9f0c2f959f0"
+      "sha256": "e4102d8f120e7e7b51f10f2e03a57e6aee1bfa486db67b77cdd1b74cfc2c7fe1"
     },
     {
       "path": "src/server/services/evaluation/gi088/types.ts",
@@ -467,7 +761,14 @@
         "experience",
         "runner"
       ],
-      "sha256": "b5cf5664d1f3d2fba129e41a0842429c5a21b75064a379d3c15da7f2046f857e"
+      "sha256": "9368143c01257700d28184782f2886259edadbd0f701481c7d7240f96715691e"
+    },
+    {
+      "path": "src/server/services/evaluation/gi088/v8r3-interview-skill.ts",
+      "layers": [
+        "candidate"
+      ],
+      "sha256": "3e41a302eeaf9d9f291d7668484df5d476d4aee2d608ba43a2ab5730c715205f"
     },
     {
       "path": "src/server/services/evaluation/gi088/version-manifest.ts",
@@ -477,7 +778,21 @@
         "experience",
         "runner"
       ],
-      "sha256": "24140ba85569e84e1e1478f962a82990ef08295a9eb8e171eed7a361168567b4"
+      "sha256": "a0e329fd838b3e3cb99db021e6c2672e984a0a4e2128fb8d54adcd4b63a77208"
+    },
+    {
+      "path": "src/server/services/interview/event-centered-interview.service.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f52a71c2b2681d2d4487949ef7dec6306fae929713ff59a8b5bcdbf6f2495819"
+    },
+    {
+      "path": "src/server/services/interview/journal-event-entry.service.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "259f77d68cf3da57f011c0279f8deeffe263da4f83e16551b009a73e815e5970"
     },
     {
       "path": "src/server/services/interview/joy-interview.service.ts",
@@ -485,6 +800,27 @@
         "runner"
       ],
       "sha256": "eac343ab04f8498341e3764c01245a2cc15b6c9f19b0f862a43b127e0aeab069"
+    },
+    {
+      "path": "src/types/event-centered-dialogue.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "ea444dd1ecf0fbe05388567f8d134bba60973db0b4f002ff3d9e08463a2055dc"
+    },
+    {
+      "path": "src/types/event-centered-interview.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f6c4e2f6e3d9c30438e1d951e80c2774fc7ace7f932761fd8876ea2df7e5aed4"
+    },
+    {
+      "path": "src/types/journal-event-entry.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "f9ff5f68cd7442e2f1e51c57b35dbf92d144114b3f300f3c6c4bf01297d88d81"
     }
   ]
 }

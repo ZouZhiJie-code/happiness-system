@@ -16,6 +16,7 @@ vi.mock("@/components/ai-feedback/ai-response-feedback", () => ({
 function buildSession(overrides: Partial<EventCenteredWorkspaceSession> = {}): EventCenteredWorkspaceSession {
   return {
     mode: "event_centered",
+    recordMode: "chat",
     rootSessionId: "root-1",
     activeBranchSessionId: "branch-1",
     eventId: "event-1",

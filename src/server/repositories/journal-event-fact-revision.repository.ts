@@ -39,6 +39,7 @@ export type EventCenteredRoute = {
     rootSession: {
       id: string;
       mode: "dimension_legacy" | "event_centered";
+      recordMode: "capture" | "chat";
       status: "active" | "paused" | "completed" | "abandoned";
       activeBranchSessionId: string | null;
     };
@@ -47,6 +48,7 @@ export type EventCenteredRoute = {
     id: string;
     userId: string;
     mode: "dimension_legacy" | "event_centered";
+    recordMode: "capture" | "chat";
     status: "active" | "paused" | "completed" | "abandoned";
     rootSessionId: string | null;
     activeEventId: string | null;
@@ -325,7 +327,13 @@ async function requireEventRoute(
       rootSessionId: true,
       status: true,
       rootSession: {
-        select: { id: true, mode: true, status: true, activeBranchSessionId: true }
+        select: {
+          id: true,
+          mode: true,
+          recordMode: true,
+          status: true,
+          activeBranchSessionId: true
+        }
       }
     }
   });
@@ -335,6 +343,7 @@ async function requireEventRoute(
       id: true,
       userId: true,
       mode: true,
+      recordMode: true,
       status: true,
       rootSessionId: true,
       activeEventId: true,
@@ -352,6 +361,7 @@ async function requireEventRoute(
     branch.userId !== event.userId ||
     event.rootSession.mode !== "event_centered" ||
     branch.mode !== "event_centered" ||
+    branch.recordMode !== event.rootSession.recordMode ||
     (branch.rootSessionId ?? branch.id) !== event.rootSessionId ||
     (event.rootSession.activeBranchSessionId ?? event.rootSessionId) !== branch.id ||
     (requireWritable &&

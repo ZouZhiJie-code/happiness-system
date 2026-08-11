@@ -36,8 +36,11 @@ export type Gi088GateStatus =
   | "legacy_unknown";
 
 export type Gi088GateReasonCode =
+  | "offline_evidence_missing"
+  | "automatic_recovery_budget_exceeded"
   | "single_case_blocker"
   | "quality_failure"
+  | "compatibility_smoke_failed"
   | "protected_failure"
   | "final_technical_failure"
   | "multiple_independent_tasks"
@@ -97,7 +100,24 @@ export type Gi088RecoveryTrigger =
   | "TIMEOUT"
   | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
   | "ASK_QUESTION_COUNT_INVALID:2"
+  | "OUTPUT_SCHEMA_INVALID"
+  | "SEMANTIC_VALIDATION_FAILED"
+  | "STATE_TRANSITION_INVALID"
   | "UNAUTHORIZED_PAUSE";
+
+// The legacy service can still parse the historical question-count trigger.
+// Foundation v8r3 intentionally cannot create that trigger.
+export type Gi088FoundationRecoveryTrigger = Exclude<
+  Gi088RecoveryTrigger,
+  "ASK_QUESTION_COUNT_INVALID:2"
+>;
+
+export type Gi088V8r3OfflineEvaluationEvidence = {
+  candidateOfflineRunFingerprint: string;
+  candidateEvidenceFingerprint: string;
+  admissionFingerprint: string | null;
+  automaticRecoveryCount: number;
+};
 
 export type Gi088TurnRecovery = {
   status: Gi088RecoveryStatus;
@@ -119,11 +139,25 @@ export type Gi088QuestionReviewClassification =
   | "multiple_independent_tasks"
   | "uncertain";
 
+export type Gi088QuestionValueClassification =
+  | "advances_working_task"
+  | "reasks_answered_content"
+  | "working_task_drift"
+  | "unsupported_third_party_inference"
+  | "low_information_gain"
+  | "uncertain";
+
 export type Gi088QuestionReview = {
   questionPresence?: "present" | "absent" | "uncertain";
   classification?: Gi088QuestionReviewClassification;
+  valueClassification?: Gi088QuestionValueClassification;
   note: string;
   reviewedAt: string;
+};
+
+export type Gi088QuestionValueStatistics = {
+  reviewedCount: number;
+  counts: Record<Gi088QuestionValueClassification, number>;
 };
 
 export type Gi088QuestionObservation = {
@@ -139,6 +173,12 @@ export type Gi088QuestionObservation = {
 
 export type Gi088CallEffectiveConfig = {
   branch: Gi088BranchKey;
+  provider?: string;
+  baseUrlHost?: string;
+  endpoint?: string;
+  model?: string;
+  payloadContractVersion?: string;
+  hiddenReasoningPersistence?: "forbidden";
   thinking: "disabled" | "enabled";
   reasoningEffort: "high" | null;
   temperature: number | null;
@@ -260,12 +300,31 @@ export type Gi088Comparison = {
   comparedAt: string;
 };
 
+export type Gi088EvaluationTaskRole =
+  | "scored_trajectory"
+  | "compatibility_smoke";
+
+export type Gi088CompatibilitySmokeResult = {
+  outcome: "passed" | "failed";
+  reason: string;
+  observedAt: string;
+  evidence?: {
+    productSessionFingerprint: string;
+    recordMode: "capture";
+    completedUserTurnCount: number;
+    questionFormTurnCount: number;
+    visibleQuestionCount: number;
+    providerCallCount: number;
+  };
+};
+
 export type Gi088TaskState = {
   taskId: string;
   initialUserMessage: string | null;
   activeBranch: Gi088BranchKey;
   branches: Record<Gi088BranchKey, Gi088Trajectory>;
   comparison: Gi088Comparison | null;
+  compatibilitySmoke?: Gi088CompatibilitySmokeResult | null;
   aborted?: {
     reason: string;
     abortedAt: string;
@@ -283,6 +342,7 @@ export type Gi088BatchState = {
   updatedAt: string;
   sealedAt: string | null;
   earlyStop?: Gi088EarlyStop | null;
+  offlineEvaluationEvidence?: Gi088V8r3OfflineEvaluationEvidence;
 };
 
 export type Gi088StoredBatch = {
@@ -347,6 +407,16 @@ export type Gi088PublicSession = {
     candidateFingerprint: string;
     executionFingerprint: string;
     model: string;
+    skillVersion?: string;
+    skillSha256?: string;
+    modelIdentity?: {
+      provider: string;
+      transport: string;
+      baseUrlHost: string;
+      endpoint: string;
+      model: string;
+      payloadContractVersion: string;
+    };
     serviceVersion?: string;
     behaviorManifestVersion?: string;
     behaviorManifestSha256?: string;
@@ -359,7 +429,12 @@ export type Gi088PublicSession = {
       responseFormat: "json_object";
       maxTokensPolicy: "provider_default";
       timeoutMs: number;
+      headersTimeoutMs?: number;
+      bodyIdleTimeoutMs?: number;
+      hardTimeoutMs?: number;
+      automaticChainDeadlineMs?: number;
       routeMaxDurationSeconds: number;
+      hiddenReasoningPersistence?: "forbidden";
     };
   };
   batch: {
@@ -376,16 +451,25 @@ export type Gi088PublicSession = {
     };
     runId?: string;
     runOrdinal?: number;
+    revision?: number;
     gate?: {
       status: Gi088GateStatus;
       reasons: Gi088GateReason[];
       frozen: boolean;
+    };
+    offlineEvaluationEvidence?: Gi088V8r3OfflineEvaluationEvidence;
+    recoveryBudget?: {
+      offlineAutomaticRecoveryCount: number;
+      previewAutomaticRecoveryCount: number;
+      combinedAutomaticRecoveryCount: number;
+      maximumAutomaticRecoveryCount: number;
     };
     readOnly?: boolean;
     readOnlyReason?: string | null;
   };
   tasks: Array<{
     id: string;
+    evaluationRole?: Gi088EvaluationTaskRole;
     capabilityId: string;
     title: string;
     instruction: string;
@@ -394,6 +478,7 @@ export type Gi088PublicSession = {
     repeatOf: string | null;
     status: Gi088TaskStatus;
     targetTriggers: Record<Gi088BranchKey, Gi088TargetTrigger | null>;
+    compatibilitySmoke?: Gi088CompatibilitySmokeResult | null;
   }>;
   activeTask: null | {
     taskId: string;
@@ -443,4 +528,5 @@ export type Gi088PublicSession = {
   metrics?: Gi088EvaluationMetrics;
   programInterventions?: Gi088ProgramIntervention[];
   reviewRevisions?: Gi088ReviewRevision[];
+  questionValueStatistics?: Gi088QuestionValueStatistics;
 };

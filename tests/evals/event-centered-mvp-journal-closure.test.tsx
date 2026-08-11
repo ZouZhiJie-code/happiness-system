@@ -26,6 +26,7 @@ function workspace(input: {
   const eventId = input.eventId ?? "event-1";
   return {
     mode: "event_centered",
+    recordMode: "chat",
     rootSessionId,
     activeBranchSessionId: branchSessionId,
     eventId,
@@ -176,7 +177,12 @@ describe("Board 7 event-centered journal MVP closure", () => {
     expect(screen.getAllByRole("link")).toHaveLength(6);
     picker.unmount();
 
-    const firstVisit = render(<EventCenteredInterviewWorkspace entryDate="2026-08-02" />);
+    const firstVisit = render(
+      <EventCenteredInterviewWorkspace
+        entryDate="2026-08-02"
+        initialRecordMode="chat"
+      />
+    );
     expect(await screen.findByTestId("event-centered-second-checkpoint")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "生成事件日志" }));
     const content = await screen.findByLabelText("事件日志正文");

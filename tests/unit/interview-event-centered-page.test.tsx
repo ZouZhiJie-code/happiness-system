@@ -67,6 +67,7 @@ describe("event-centered interview page route", () => {
     const page = await InterviewPage({
       searchParams: Promise.resolve({
         mode: "event-centered",
+        recordMode: "capture",
         sessionId: "event-root-1",
         entryDate: "2026-07-22",
         panel: "journal",
@@ -79,6 +80,7 @@ describe("event-centered interview page route", () => {
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("event-root-1");
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("2026-07-22");
     expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent("entry-1");
+    expect(screen.getByTestId("event-centered-workspace")).toHaveTextContent('"initialRecordMode":"capture"');
     expect(screen.queryByTestId("legacy-interview-shell")).not.toBeInTheDocument();
     expect(screen.queryByTestId("legacy-dimension-picker")).not.toBeInTheDocument();
   });

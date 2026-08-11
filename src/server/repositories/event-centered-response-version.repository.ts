@@ -464,6 +464,7 @@ export async function completeEventCenteredResponseVersion(input: {
         id: childSessionId,
         userId: root.userId,
         mode: "event_centered",
+        recordMode: root.recordMode ?? "chat",
         dimension: null,
         conversationSchemaVersion: root.conversationSchemaVersion,
         rootSessionId: root.id,

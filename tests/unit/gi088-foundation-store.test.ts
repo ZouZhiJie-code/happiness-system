@@ -27,6 +27,70 @@ const migration = readFileSync(
 );
 
 describe("GI-088 v8r2 evaluation foundation store", () => {
+  it("run 创建后禁止替换离线候选证据与恢复计数", async () => {
+    const store = new Gi088MemoryFoundationStore();
+    const evidence = {
+      candidateOfflineRunFingerprint: "a".repeat(64),
+      candidateEvidenceFingerprint: "b".repeat(64),
+      admissionFingerprint: "c".repeat(64),
+      automaticRecoveryCount: 1
+    };
+    await store.createRunIdempotently({
+      runId: "run-frozen-offline-evidence",
+      ownerUserId: "owner-frozen-offline-evidence",
+      evaluationVersion: "v8r3",
+      candidateFingerprint: "candidate-fp",
+      executionFingerprint: "execution-fp",
+      state: { step: 0, offlineEvaluationEvidence: evidence },
+      gateStatus: "pending",
+      clientOperationId: "create-frozen-offline-evidence",
+      payloadHash: "create-frozen-offline-evidence"
+    });
+
+    await expect(store.getOrCreateExportSnapshot({
+      ownerUserId: "owner-frozen-offline-evidence",
+      runId: "run-frozen-offline-evidence",
+      exportVersion: "v0.7",
+      payload: { runId: "run-frozen-offline-evidence" },
+      recordCounts: { calls: 0 }
+    })).rejects.toMatchObject({ code: "GI088_BATCH_MUST_BE_TERMINAL" });
+    expect(await store.findExportSnapshot({
+      ownerUserId: "owner-frozen-offline-evidence",
+      runId: "run-frozen-offline-evidence"
+    })).toBeNull();
+
+    await expect(store.commitRunMutation({
+      mutation: {
+        runId: "run-frozen-offline-evidence",
+        ownerUserId: "owner-frozen-offline-evidence",
+        expectedRevision: 0,
+        expectedExecutionFingerprint: "execution-fp",
+        nextState: {
+          step: 1,
+          offlineEvaluationEvidence: {
+            ...evidence,
+            automaticRecoveryCount: 2
+          }
+        }
+      },
+      operation: {
+        ownerUserId: "owner-frozen-offline-evidence",
+        evaluationVersion: "v8r3",
+        runId: "run-frozen-offline-evidence",
+        clientOperationId: "mutate-frozen-offline-evidence",
+        action: "mutate",
+        payloadHash: "mutate-frozen-offline-evidence"
+      },
+      resultSnapshot: { step: 1 }
+    })).rejects.toMatchObject({
+      code: "GI088_FROZEN_OFFLINE_EVIDENCE_MISMATCH"
+    });
+    expect((await store.findRun({
+      ownerUserId: "owner-frozen-offline-evidence",
+      runId: "run-frozen-offline-evidence"
+    }))?.revision).toBe(0);
+  });
+
   it("固定 store v2，并为相同 JSON 语义生成稳定 canonical hash", () => {
     expect(GI088_EVALUATION_STORE_VERSION).toBe(
       "2026-08-10.gi088-evaluation-store-v2"
@@ -492,6 +556,14 @@ describe("GI-088 v8r2 evaluation foundation store", () => {
     });
     expect(snapshot.created).toBe(true);
     expect(snapshotReplay.created).toBe(false);
+    await expect(store.findExportSnapshot({
+      ownerUserId: "owner-1",
+      runId: "run-call"
+    })).resolves.toEqual(snapshot.snapshot);
+    await expect(store.findExportSnapshot({
+      ownerUserId: "other-owner",
+      runId: "run-call"
+    })).rejects.toMatchObject({ code: "GI088_RUN_NOT_FOUND" });
     await expect(
       store.getOrCreateExportSnapshot({
         ownerUserId: "owner-1",

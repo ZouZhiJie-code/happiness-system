@@ -22,7 +22,9 @@ import {
 import {
   GI088_ACTIVE_BRANCHES,
   GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
+  GI088_ARK_FLASH_RUNTIME_POLICY,
   GI088_CONFIGS,
+  GI088_DATASET_MACHINE_GATE_V8R3,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
@@ -40,6 +42,7 @@ import {
   GI088_EVALUATION_ID_V7R4,
   GI088_EVALUATION_ID_V8,
   GI088_EVALUATION_ID_V8R1,
+  GI088_EVALUATION_ID_V8R2,
   GI088_EVALUATION_MODE,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V1,
@@ -55,8 +58,11 @@ import {
   GI088_EVALUATION_VERSION_V7R4,
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
+  GI088_MODEL_CALL_IDENTITY,
+  GI088_SERVICE_VERSION,
   GI088_SERVICE_VERSION_V1,
   GI088_SERVICE_VERSION_V2,
   GI088_SERVICE_VERSION_V3,
@@ -70,13 +76,16 @@ import {
   GI088_SERVICE_VERSION_V7R4,
   GI088_SERVICE_VERSION_V8,
   GI088_SERVICE_VERSION_V8R1,
+  GI088_SERVICE_VERSION_V8R2,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
   GI088_TIMEOUT_RECOVERY_POLICY,
+  GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY,
   GI088_V5_TASKS,
   GI088_V6_TASKS,
   GI088_V8R1_TASKS,
+  GI088_V8R2_TASKS,
   createGi088DatasetFingerprint,
   createGi088EffectiveCandidateFingerprint,
   createGi088ExecutionFingerprint,
@@ -93,11 +102,17 @@ import {
   Gi088EvaluationError
 } from "@/server/services/evaluation/gi088/errors";
 import {
+  GI088_READONLY_EXPORT_VERSION,
   createGi088ExportEnvelope,
   sanitizeGi088ExportPayload,
   type Gi088ExportEnvelope,
   type Gi088ExportJsonValue
 } from "@/server/services/evaluation/gi088/export-v06";
+import {
+  GI088_READONLY_EXPORT_VERSION_V07,
+  createGi088ExportEnvelopeV07,
+  type Gi088ExportEnvelopeV07
+} from "@/server/services/evaluation/gi088/export-v07";
 import {
   createGi088FoundationPayloadHash,
   type Gi088EvaluationFoundationStore,
@@ -105,13 +120,20 @@ import {
   type Gi088FoundationJson,
   type Gi088FoundationOperationIdentity,
   type Gi088FoundationProgramInterventionRecord,
+  type Gi088FoundationReviewRevisionRecord,
+  type Gi088FoundationExportSnapshotRecord,
   type Gi088FoundationRunRecord
 } from "@/server/services/evaluation/gi088/foundation-store";
 import {
   calculateGi088EvaluationMetrics
 } from "@/server/services/evaluation/gi088/metrics";
-import { createGi088ProProvider } from "@/server/services/evaluation/gi088/pro-runtime";
+import { createGi088ArkProvider } from "@/server/services/evaluation/gi088/ark-runtime";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
+import { createGi088ModelRequestHash } from "@/server/services/evaluation/gi088/request-identity";
+import {
+  GI088_V8R3_INTERVIEW_SKILL_SHA256,
+  GI088_V8R3_INTERVIEW_SKILL_VERSION
+} from "@/server/services/evaluation/gi088/v8r3-interview-skill";
 import {
   applyGi088SemanticDeltaValidatedResult,
   assertGi088SemanticDeltaOutput,
@@ -121,10 +143,11 @@ import {
   validateGi088SemanticDeltaOutput,
   type Gi088SemanticDeltaOutput
 } from "@/server/services/evaluation/gi088/semantic-delta";
-import { createGi088QuestionObservation } from "@/server/services/evaluation/gi088/single-focus";
 import {
-  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION,
-  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION,
+  applyGi088SingleFocusValidationPolicy,
+  createGi088QuestionObservation
+} from "@/server/services/evaluation/gi088/single-focus";
+import {
   createGi088StageTransitionUserPrompt,
   validateGi088StageTransitionOutput
 } from "@/server/services/evaluation/gi088/stage-transition";
@@ -136,22 +159,28 @@ import type {
   Gi088EarlyStopReasonCode,
   Gi088GateReason,
   Gi088GateStatus,
+  Gi088FoundationRecoveryTrigger,
   Gi088Message,
   Gi088ProgramIntervention,
   Gi088PublicSession,
   Gi088QuestionReviewClassification,
+  Gi088QuestionValueClassification,
   Gi088RecoveryTrigger,
   Gi088ReviewRevision,
   Gi088TargetTrigger,
   Gi088TaskState,
   Gi088Trajectory,
   Gi088TrajectoryReview,
-  Gi088Turn
+  Gi088Turn,
+  Gi088V8r3OfflineEvaluationEvidence
 } from "@/server/services/evaluation/gi088/types";
-import { requireGi088ModelCallAuthorization } from "@/server/services/evaluation/gi088/access";
+import {
+  requireGi088ModelCallAuthorization,
+  resolveGi088V8r3OfflineEvaluationEvidence
+} from "@/server/services/evaluation/gi088/access";
 
 export const GI088_FOUNDATION_SERVICE_VERSION =
-  "2026-08-10.gi088-evaluation-foundation-service-v8r2" as const;
+  GI088_SERVICE_VERSION;
 
 const RESULT_PERSISTENCE_BACKOFF_MS = [250, 500, 1_000] as const;
 const MAX_FINALIZER_CAS_ATTEMPTS = 5;
@@ -176,7 +205,7 @@ export type Gi088FoundationExecutionEvent =
     }
   | {
       type: "recovery_started";
-      trigger: Gi088RecoveryTrigger;
+      trigger: Gi088FoundationRecoveryTrigger;
       turnId: string;
       callId: string;
     };
@@ -185,12 +214,13 @@ type FoundationServiceDependencies = {
   store: Gi088EvaluationFoundationStore;
   getProvider?: () => AIProvider | Promise<AIProvider>;
   authorizeModelCall?: (branch: Gi088BranchKey) => void;
+  offlineEvaluationEvidence?: Gi088V8r3OfflineEvaluationEvidence;
   now?: () => Date;
   sleep?: (milliseconds: number) => Promise<void>;
 };
 
 function defaultProvider() {
-  return createGi088ProProvider(process.env);
+  return createGi088ArkProvider(process.env);
 }
 
 function sha256(value: string) {
@@ -223,7 +253,11 @@ function createEmptyTrajectory(branch: Gi088BranchKey): Gi088Trajectory {
   };
 }
 
-function createInitialState(now: Date, runId: string): Gi088BatchState {
+function createInitialState(
+  now: Date,
+  runId: string,
+  offlineEvaluationEvidence: Gi088V8r3OfflineEvaluationEvidence
+): Gi088BatchState {
   const timestamp = now.toISOString();
   return {
     batchId: runId,
@@ -239,13 +273,38 @@ function createInitialState(now: Date, runId: string): Gi088BatchState {
         high: createEmptyTrajectory("high")
       },
       comparison: null,
+      ...(task.evaluationRole === "compatibility_smoke"
+        ? { compatibilitySmoke: null }
+        : {}),
       aborted: null
     })),
     createdAt: timestamp,
     updatedAt: timestamp,
     sealedAt: null,
-    earlyStop: null
+    earlyStop: null,
+    offlineEvaluationEvidence: structuredClone(offlineEvaluationEvidence)
   };
+}
+
+function recoveryCorrection(
+  trigger: Gi088FoundationRecoveryTrigger
+): { version: string; instruction: string } {
+  if (trigger === "EMPTY_CONTENT") {
+    return {
+      version: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
+      instruction: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
+    };
+  }
+  if (trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE") {
+    return {
+      version:
+        GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY
+          .recoveryInstructionVersion,
+      instruction:
+        GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY.recoveryInstruction
+    };
+  }
+  return GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections[trigger];
 }
 
 function parseState(run: Gi088FoundationRunRecord): Gi088BatchState {
@@ -329,8 +388,71 @@ const GI088_HISTORICAL_EVALUATION_METADATA = {
     id: GI088_EVALUATION_ID_V8R1,
     serviceVersion: GI088_SERVICE_VERSION_V8R1,
     model: "deepseek-v4-pro"
+  },
+  [GI088_EVALUATION_VERSION_V8R2]: {
+    id: GI088_EVALUATION_ID_V8R2,
+    serviceVersion: GI088_SERVICE_VERSION_V8R2,
+    model: "deepseek-v4-pro"
   }
 } as const satisfies Readonly<Record<string, Gi088EvaluationVersionMetadata>>;
+
+// v0.6 serialized this exact current-candidate config for every v8r2
+// Foundation export. Keep the literal frozen so a first export after an
+// upgrade has the same canonical payload as the v8r2 exporter.
+const GI088_V8R2_READONLY_EXPORT_HIGH_CONFIG = {
+  key: "high",
+  label: "Thinking 开启 · high",
+  provider: "openai",
+  baseUrlHost: "api.deepseek.com",
+  model: "deepseek-v4-pro",
+  thinking: "enabled",
+  temperature: null,
+  effectiveTemperature: null,
+  reasoningEffort: "high",
+  maxTokens: null,
+  maxTokensPolicy: "provider_default",
+  responseFormat: "json_object",
+  qualityRetries: 0,
+  automaticTechnicalRetries: 1,
+  automaticEmptyContentRetries: 1,
+  automaticStageTransitionRetries: 1,
+  automaticSingleQuestionRetries: 0,
+  activeInEvaluation: true
+} as const;
+
+const GI088_V8R2_READONLY_SESSION_FINGERPRINTS_BY_EXECUTION = {
+  "55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e": {
+    behaviorManifestVersion: "2026-08-10.gi088-behavior-manifest-v1",
+    behaviorManifestSha256:
+      "68321bf7329020761cd804bbdaffdb3f7fcc76c8cf5141510474112f9962cf44",
+    runnerFingerprint:
+      "f14f6fd04d33521e7fddcca0e97b4c2a71d425693140558d2a7771a41f51bea5",
+    experienceFingerprint:
+      "17c42be27cf31f38606bb076594dbd3578a8f7c699daf53c375e762053686636"
+  },
+  "96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c": {
+    behaviorManifestVersion: "2026-08-10.gi088-behavior-manifest-v1",
+    behaviorManifestSha256:
+      "e38e5798e635c8100d804de4953ae2cd3d726a38926ae8a4ea1661537dc6f222",
+    runnerFingerprint:
+      "1943497a658d882aeb6682a49c2d9c90a11f6b3a1a8736f9f16c7ef8327539bb",
+    experienceFingerprint:
+      "b98dc88431ea5feb1a614593f2c3b996f144d6a493c156b707e26bb55ea4a744"
+  }
+} as const;
+
+function v8r2ReadOnlySessionFingerprints(run: Gi088FoundationRunRecord) {
+  if (
+    run.evaluationVersion !== GI088_EVALUATION_VERSION_V8R2 ||
+    run.candidateFingerprint !==
+      "0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6"
+  ) {
+    return null;
+  }
+  return GI088_V8R2_READONLY_SESSION_FINGERPRINTS_BY_EXECUTION[
+    run.executionFingerprint as keyof typeof GI088_V8R2_READONLY_SESSION_FINGERPRINTS_BY_EXECUTION
+  ] ?? null;
+}
 
 function evaluationMetadataFor(
   evaluationVersion: string
@@ -353,8 +475,34 @@ function evaluationMetadataFor(
   };
 }
 
+function usesGi088FoundationLedger(evaluationVersion: string) {
+  return evaluationVersion === GI088_EVALUATION_VERSION ||
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R2;
+}
+
+const GI088_KNOWN_EVALUATION_VERSIONS = new Set<string>([
+  GI088_EVALUATION_VERSION_V1,
+  GI088_EVALUATION_VERSION_V2,
+  GI088_EVALUATION_VERSION_V3,
+  GI088_EVALUATION_VERSION_V4,
+  GI088_EVALUATION_VERSION_V5,
+  GI088_EVALUATION_VERSION_V6,
+  GI088_EVALUATION_VERSION_V7,
+  GI088_EVALUATION_VERSION_V7R1,
+  GI088_EVALUATION_VERSION_V7R2,
+  GI088_EVALUATION_VERSION_V7R3,
+  GI088_EVALUATION_VERSION_V7R4,
+  GI088_EVALUATION_VERSION_V8,
+  GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION
+]);
+
 function immutableTaskPackageFor(evaluationVersion: string) {
   if (evaluationVersion === GI088_EVALUATION_VERSION) return GI088_TASKS;
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V8R2) {
+    return GI088_V8R2_TASKS;
+  }
   if (evaluationVersion === GI088_EVALUATION_VERSION_V8R1) {
     return GI088_V8R1_TASKS;
   }
@@ -444,7 +592,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R3,
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
-    GI088_EVALUATION_VERSION_V8R1
+    GI088_EVALUATION_VERSION_V8R1,
+    GI088_EVALUATION_VERSION_V8R2
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V3)
     ? 1
     : 0;
@@ -458,7 +607,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R3,
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
-    GI088_EVALUATION_VERSION_V8R1
+    GI088_EVALUATION_VERSION_V8R1,
+    GI088_EVALUATION_VERSION_V8R2
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V4)
     ? 1
     : 0;
@@ -471,7 +621,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R3,
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
-    GI088_EVALUATION_VERSION_V8R1
+    GI088_EVALUATION_VERSION_V8R1,
+    GI088_EVALUATION_VERSION_V8R2
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V5);
   return {
     automaticEmptyContentRetries: emptyContent,
@@ -598,6 +749,10 @@ function taskCompleted(task: Gi088TaskState) {
 }
 
 function taskCompletedFor(state: Gi088BatchState, task: Gi088TaskState) {
+  if (Object.prototype.hasOwnProperty.call(task, "compatibilitySmoke")) {
+    return task.compatibilitySmoke !== null &&
+      task.compatibilitySmoke !== undefined;
+  }
   if ((state.evaluationMode ?? "paired") === "paired") {
     return trajectoryComplete(task.branches.off) &&
       trajectoryComplete(task.branches.high) &&
@@ -773,6 +928,21 @@ function interventionToPublic(
   };
 }
 
+function reviewRevisionToPublic(
+  revision: Gi088FoundationReviewRevisionRecord
+): Gi088ReviewRevision {
+  return {
+    id: revision.id,
+    subjectType: revision.subjectType,
+    subjectId: revision.subjectId,
+    oldValue: revision.oldValue,
+    newValue: revision.newValue,
+    reason: revision.reason,
+    clientOperationId: revision.clientOperationId,
+    createdAt: revision.createdAt.toISOString()
+  };
+}
+
 function stateForMetrics(state: Gi088BatchState) {
   const activeBranches: Gi088BranchKey[] =
     state.evaluationMode === "paired" ? ["off", "high"] : ["high"];
@@ -783,6 +953,69 @@ function stateForMetrics(state: Gi088BatchState) {
     ),
     status: publicTaskStatus(state, task)
   }));
+}
+
+function questionValueStatisticsFor(state: Gi088BatchState) {
+  const counts: Record<Gi088QuestionValueClassification, number> = {
+    advances_working_task: 0,
+    reasks_answered_content: 0,
+    working_task_drift: 0,
+    unsupported_third_party_inference: 0,
+    low_information_gain: 0,
+    uncertain: 0
+  };
+  for (const task of state.tasks) {
+    for (const turn of task.branches.high.turns) {
+      const classification =
+        turn.questionObservation?.review?.valueClassification;
+      if (classification) counts[classification] += 1;
+    }
+  }
+  return {
+    reviewedCount: Object.values(counts).reduce(
+      (total, count) => total + count,
+      0
+    ),
+    counts
+  };
+}
+
+function questionReviewComplete(turn: Gi088Turn) {
+  const observation = turn.questionObservation;
+  if (!observation) return true;
+  const review = observation.review;
+  if (!review) return false;
+  if (review.questionPresence !== "present") return true;
+  return Boolean(review.classification && review.valueClassification);
+}
+
+function allQuestionValueReviewsComplete(state: Gi088BatchState) {
+  return state.tasks.every((task) =>
+    task.branches.high.turns.every(questionReviewComplete)
+  );
+}
+
+function exportEnvelopeFromSnapshot(
+  snapshot: Gi088FoundationExportSnapshotRecord
+): Gi088ExportEnvelope | Gi088ExportEnvelopeV07 {
+  let envelope: Gi088ExportEnvelope | Gi088ExportEnvelopeV07;
+  if (snapshot.exportVersion === GI088_READONLY_EXPORT_VERSION_V07) {
+    envelope = createGi088ExportEnvelopeV07({
+      payload: snapshot.payload as Gi088ExportJsonValue,
+      issuedAt: snapshot.createdAt
+    });
+  } else if (snapshot.exportVersion === GI088_READONLY_EXPORT_VERSION) {
+    envelope = createGi088ExportEnvelope({
+      payload: snapshot.payload as Gi088ExportJsonValue,
+      issuedAt: snapshot.createdAt
+    });
+  } else {
+    throw new Gi088EvaluationError("GI088_EXPORT_FAILED");
+  }
+  if (envelope.receipt.payloadSha256 !== snapshot.payloadHash) {
+    throw new Gi088EvaluationError("GI088_EXPORT_FAILED");
+  }
+  return envelope;
 }
 
 function metricsFor(input: {
@@ -868,7 +1101,51 @@ function gateFor(input: {
     });
   };
 
+  const offlineEvidence = input.state.offlineEvaluationEvidence;
+  const offlineEvidenceValid = Boolean(
+    offlineEvidence &&
+      /^[a-f0-9]{64}$/u.test(
+        offlineEvidence.candidateOfflineRunFingerprint
+      ) &&
+      /^[a-f0-9]{64}$/u.test(offlineEvidence.candidateEvidenceFingerprint) &&
+      (offlineEvidence.admissionFingerprint === null ||
+        /^[a-f0-9]{64}$/u.test(offlineEvidence.admissionFingerprint)) &&
+      Number.isSafeInteger(offlineEvidence.automaticRecoveryCount) &&
+      offlineEvidence.automaticRecoveryCount >= 0
+  );
+  const previewAutomaticRecoveryCount =
+    metrics.gateFacts.automaticRecoveryAttemptCount;
+  const combinedAutomaticRecoveryCount = offlineEvidenceValid
+    ? offlineEvidence!.automaticRecoveryCount + previewAutomaticRecoveryCount
+    : previewAutomaticRecoveryCount;
+  if (!offlineEvidenceValid) {
+    add(
+      "offline_evidence_missing",
+      "technical_fact",
+      input.run.id,
+      "当前候选缺少可验证的离线运行证据或恢复计数"
+    );
+  } else if (
+    combinedAutomaticRecoveryCount >
+    GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount
+  ) {
+    add(
+      "automatic_recovery_budget_exceeded",
+      "technical_fact",
+      input.run.id,
+      `离线与 Preview 自动恢复合计 ${combinedAutomaticRecoveryCount}，超过上限 ${GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount}`
+    );
+  }
+
   for (const task of input.state.tasks) {
+    if (task.compatibilitySmoke?.outcome === "failed") {
+      add(
+        "compatibility_smoke_failed",
+        "current_human_conclusion",
+        task.taskId,
+        "真实【帮我记】兼容冒烟登记为失败"
+      );
+    }
     const trajectory = task.branches.high;
     if (taskAborted(task)) {
       add(
@@ -924,27 +1201,51 @@ function gateFor(input: {
   if (reasons.length > 0) return { status: "no_go" as const, reasons };
 
   const facts = metrics.gateFacts;
-  const allTasksComplete = facts.completedTaskCount === GI088_TASKS.length;
+  const scoredTrajectoryCount = GI088_TASKS.filter(
+    (task) => task.evaluationRole === "scored_trajectory"
+  ).length;
+  const compatibilitySmokeCount = GI088_TASKS.filter(
+    (task) => task.evaluationRole === "compatibility_smoke"
+  ).length;
+  const allTasksComplete = input.state.tasks.every((task) =>
+    taskCompletedFor(input.state, task)
+  );
   const qualityReady =
-    facts.targetTriggeredTrajectoryCount === GI088_TASKS.length &&
-    facts.directUseCount >= 9 &&
-    facts.minorIssueCount <= 3 &&
+    facts.targetTriggeredTrajectoryCount === scoredTrajectoryCount &&
+    facts.directUseCount + facts.minorIssueCount === scoredTrajectoryCount &&
+    facts.minorIssueCount <= 2 &&
     facts.qualityFailureCount === 0 &&
     facts.singleCaseBlockerCount === 0;
+  const compatibilityTasks = input.state.tasks.filter((task) =>
+    taskDefinition(GI088_EVALUATION_VERSION, task.taskId).evaluationRole ===
+      "compatibility_smoke"
+  );
+  const compatibilityReady =
+    compatibilityTasks.length === compatibilitySmokeCount &&
+    compatibilityTasks.filter(
+      (task) => task.compatibilitySmoke?.outcome === "passed"
+    ).length === compatibilitySmokeCount;
   const reliabilityReady =
     metrics.firstVisibleSuccessRate !== null &&
-    metrics.firstVisibleSuccessRate >= 0.9 &&
-    facts.automaticRecoveryAttemptCount <= 1 &&
+    metrics.firstVisibleSuccessRate >= 0.85 &&
+    combinedAutomaticRecoveryCount <=
+      GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount &&
     metrics.consecutiveRecoveryCount === 0 &&
     facts.emptyContentEventCount === 0;
+  const offlineAdmissionReady = Boolean(
+    offlineEvidenceValid && offlineEvidence?.admissionFingerprint
+  );
   const reviewReady =
     facts.allVisibleQuestionsReviewed &&
+    allQuestionValueReviewsComplete(input.state) &&
     facts.allProgramInterventionsReviewed &&
     facts.visibleQuestionUncertainCount === 0 &&
     facts.programInterventionUncertainCount === 0;
   return {
     status:
-      allTasksComplete && qualityReady && reliabilityReady && reviewReady
+      allTasksComplete && qualityReady && compatibilityReady &&
+        offlineAdmissionReady &&
+        reliabilityReady && reviewReady
         ? ("ready_for_final_review" as const)
         : ("pending" as const),
     reasons: []
@@ -957,6 +1258,7 @@ export class Gi088EvaluationFoundationService {
   private readonly authorizeModelCall: (branch: Gi088BranchKey) => void;
   private readonly now: () => Date;
   private readonly sleep: (milliseconds: number) => Promise<void>;
+  private readonly offlineEvaluationEvidence: Gi088V8r3OfflineEvaluationEvidence;
   private readonly candidateFingerprint = createGi088EffectiveCandidateFingerprint();
   private readonly executionFingerprint = createGi088ExecutionFingerprint();
 
@@ -966,6 +1268,10 @@ export class Gi088EvaluationFoundationService {
     this.now = dependencies.now ?? (() => new Date());
     this.sleep = dependencies.sleep ?? ((milliseconds) =>
       new Promise((resolve) => setTimeout(resolve, milliseconds)));
+    this.offlineEvaluationEvidence = structuredClone(
+      dependencies.offlineEvaluationEvidence ??
+        resolveGi088V8r3OfflineEvaluationEvidence(process.env)
+    );
     this.authorizeModelCall = dependencies.authorizeModelCall ??
       (dependencies.getProvider
         ? () => undefined
@@ -1012,7 +1318,8 @@ export class Gi088EvaluationFoundationService {
     const runId = randomUUID();
     const payload = {
       evaluationVersion: GI088_EVALUATION_VERSION,
-      mode: GI088_EVALUATION_MODE
+      mode: GI088_EVALUATION_MODE,
+      offlineEvaluationEvidence: this.offlineEvaluationEvidence
     };
     const result = await this.store.createRunIdempotently({
       runId,
@@ -1020,12 +1327,26 @@ export class Gi088EvaluationFoundationService {
       evaluationVersion: GI088_EVALUATION_VERSION,
       candidateFingerprint: this.candidateFingerprint,
       executionFingerprint: this.executionFingerprint,
-      state: json(createInitialState(this.now(), runId)),
+      state: json(
+        createInitialState(
+          this.now(),
+          runId,
+          this.offlineEvaluationEvidence
+        )
+      ),
       gateStatus: "pending",
       gateReasons: [],
       clientOperationId: input.clientOperationId,
       payloadHash: createGi088FoundationPayloadHash(json(payload))
     });
+    if (
+      createGi088FoundationPayloadHash(
+        json(parseState(result.run).offlineEvaluationEvidence ?? null)
+      ) !==
+      createGi088FoundationPayloadHash(json(this.offlineEvaluationEvidence))
+    ) {
+      throw new Gi088EvaluationError("GI088_STORED_FINGERPRINT_MISMATCH");
+    }
     return {
       created: result.created,
       runId: result.run.id,
@@ -1094,7 +1415,10 @@ export class Gi088EvaluationFoundationService {
       run.evaluationVersion !== GI088_EVALUATION_VERSION ||
       run.executionFingerprint !== this.executionFingerprint ||
       run.candidateFingerprint !== this.candidateFingerprint;
-    const usesFoundationLedger =
+    const usesFoundationLedger = usesGi088FoundationLedger(
+      run.evaluationVersion
+    );
+    const currentEvaluationVersion =
       run.evaluationVersion === GI088_EVALUATION_VERSION;
     const matchesCurrentBehavior =
       usesFoundationLedger &&
@@ -1108,7 +1432,7 @@ export class Gi088EvaluationFoundationService {
     const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
     const fingerprints = matchesCurrentBehavior
       ? createGi088FingerprintBundle()
-      : null;
+      : v8r2ReadOnlySessionFingerprints(run);
 
     const publicTrajectory = (trajectory: Gi088Trajectory) => {
       const branchCalls = calls.filter((call) =>
@@ -1212,29 +1536,51 @@ export class Gi088EvaluationFoundationService {
         candidateFingerprint: run.candidateFingerprint,
         executionFingerprint: run.executionFingerprint,
         model: evaluationMetadata.model,
-        serviceVersion: evaluationMetadata.serviceVersion,
-        ...(matchesCurrentBehavior || !usesFoundationLedger
+        ...(currentEvaluationVersion
           ? {
-              datasetFingerprint: createGi088DatasetFingerprint(
-                run.evaluationVersion
-              )
+              skillVersion: GI088_V8R3_INTERVIEW_SKILL_VERSION,
+              skillSha256: GI088_V8R3_INTERVIEW_SKILL_SHA256,
+              modelIdentity: {
+                ...GI088_MODEL_CALL_IDENTITY,
+                transport: GI088_ARK_FLASH_RUNTIME_POLICY.transport
+              }
             }
           : {}),
+        serviceVersion: evaluationMetadata.serviceVersion,
+        datasetFingerprint: createGi088DatasetFingerprint(
+          run.evaluationVersion
+        ),
         ...(fingerprints
           ? {
               behaviorManifestVersion: fingerprints.behaviorManifestVersion,
               behaviorManifestSha256: fingerprints.behaviorManifestSha256,
               runnerFingerprint: fingerprints.runnerFingerprint,
               experienceFingerprint: fingerprints.experienceFingerprint,
-              config: {
-                thinking: "enabled" as const,
-                reasoningEffort: "high" as const,
-                responseFormat: "json_object" as const,
-                maxTokensPolicy: "provider_default" as const,
-                timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
-                routeMaxDurationSeconds:
-                  GI088_TIMEOUT_POLICY.routeMaxDurationSeconds
-              }
+              config: matchesCurrentBehavior
+                ? {
+                    thinking: "enabled" as const,
+                    reasoningEffort: "high" as const,
+                    responseFormat: "json_object" as const,
+                    maxTokensPolicy: "provider_default" as const,
+                    timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+                    headersTimeoutMs: GI088_TIMEOUT_POLICY.headersTimeoutMs,
+                    bodyIdleTimeoutMs: GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
+                    hardTimeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+                    automaticChainDeadlineMs:
+                      GI088_SHARED_RECOVERY_DEADLINE_POLICY
+                        .automaticChainDeadlineMs,
+                    routeMaxDurationSeconds:
+                      GI088_TIMEOUT_POLICY.routeMaxDurationSeconds,
+                    hiddenReasoningPersistence: "forbidden" as const
+                  }
+                : {
+                    thinking: "enabled" as const,
+                    reasoningEffort: "high" as const,
+                    responseFormat: "json_object" as const,
+                    maxTokensPolicy: "provider_default" as const,
+                    timeoutMs: 60_000,
+                    routeMaxDurationSeconds: 120
+                  }
             }
           : {})
       },
@@ -1242,6 +1588,7 @@ export class Gi088EvaluationFoundationService {
         id: run.id,
         runId: run.id,
         runOrdinal: run.runOrdinal,
+        ...(currentEvaluationVersion ? { revision: run.revision } : {}),
         status: run.status,
         completedTaskCount: state.tasks.filter((task) =>
           taskCompletedFor(state, task)).length,
@@ -1256,13 +1603,35 @@ export class Gi088EvaluationFoundationService {
             metrics.gateFacts.targetNotTriggeredCount +
             metrics.gateFacts.targetBlockedByTechnicalFailureCount +
             metrics.gateFacts.targetLegacyUnknownCount,
-          totalTrajectoryCount: definitions.length
+          totalTrajectoryCount: definitions.filter(
+            (definition) =>
+              (definition.evaluationRole ?? "scored_trajectory") ===
+                "scored_trajectory"
+          ).length
         },
         gate: {
           status: gate.status,
           reasons: gate.reasons,
           frozen: run.status !== "running"
         },
+        ...(currentEvaluationVersion && state.offlineEvaluationEvidence
+          ? {
+              offlineEvaluationEvidence: structuredClone(
+                state.offlineEvaluationEvidence
+              ),
+              recoveryBudget: {
+                offlineAutomaticRecoveryCount:
+                  state.offlineEvaluationEvidence.automaticRecoveryCount,
+                previewAutomaticRecoveryCount:
+                  metrics.gateFacts.automaticRecoveryAttemptCount,
+                combinedAutomaticRecoveryCount:
+                  state.offlineEvaluationEvidence.automaticRecoveryCount +
+                  metrics.gateFacts.automaticRecoveryAttemptCount,
+                maximumAutomaticRecoveryCount:
+                  GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount
+              }
+            }
+          : {}),
         readOnly,
         readOnlyReason: readOnly
           ? run.status !== "running"
@@ -1274,6 +1643,13 @@ export class Gi088EvaluationFoundationService {
         const task = taskState(state, definition.id);
         return {
           id: definition.id,
+          ...(currentEvaluationVersion
+            ? {
+                evaluationRole:
+                  definition.evaluationRole ?? "scored_trajectory",
+                compatibilitySmoke: task.compatibilitySmoke ?? null
+              }
+            : {}),
           capabilityId: definition.capabilityId,
           title: definition.title,
           instruction: definition.instruction,
@@ -1313,35 +1689,24 @@ export class Gi088EvaluationFoundationService {
           }
         : null,
       metrics,
+      ...(currentEvaluationVersion
+        ? { questionValueStatistics: questionValueStatisticsFor(state) }
+        : {}),
       programInterventions: interventions,
-      reviewRevisions: revisionRows.map((revision): Gi088ReviewRevision => ({
-        id: revision.id,
-        subjectType: revision.subjectType,
-        subjectId: revision.subjectId,
-        oldValue: revision.oldValue,
-        newValue: revision.newValue,
-        reason: revision.reason,
-        clientOperationId: revision.clientOperationId,
-        createdAt: revision.createdAt.toISOString()
-      }))
+      reviewRevisions: revisionRows.map(reviewRevisionToPublic)
     };
   }
 
   private createCompletionParams(input: {
     turnInput: Board7bWorkingTaskV1TurnInput;
     controlDecision: InterviewControlDecisionV2;
-    recoveryTrigger?: Gi088RecoveryTrigger | null;
+    recoveryTrigger?: Gi088FoundationRecoveryTrigger | null;
     hardTimeoutMs?: number;
   }): AICompletionParams {
     const hardTimeoutMs = input.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
-    const recoveryInstruction =
-      input.recoveryTrigger === "EMPTY_CONTENT"
-        ? GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
-        : input.recoveryTrigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-          ? GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION
-          : input.recoveryTrigger === "UNAUTHORIZED_PAUSE"
-            ? "上次输出未经用户明确停止便选择暂停。请吸收同一段原话，继续当前共同任务，只提出一个有价值、具体、低负担的问题。"
-            : null;
+    const recoveryInstruction = input.recoveryTrigger
+      ? recoveryCorrection(input.recoveryTrigger).instruction
+      : null;
     return {
       messages: [
         { role: "system", content: getGi088CandidateAssets().systemPrompt },
@@ -1379,13 +1744,15 @@ export class Gi088EvaluationFoundationService {
   }
 
   private createEffectiveConfig(input: {
-    recoveryTrigger?: Gi088RecoveryTrigger | null;
+    recoveryTrigger?: Gi088FoundationRecoveryTrigger | null;
     hardTimeoutMs?: number;
     remainingSharedDeadlineMs?: number | null;
   }): Gi088CallEffectiveConfig {
     const hardTimeoutMs = input.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
     return {
       branch: "high",
+      ...GI088_MODEL_CALL_IDENTITY,
+      hiddenReasoningPersistence: "forbidden",
       thinking: "enabled",
       reasoningEffort: "high",
       temperature: null,
@@ -1402,14 +1769,9 @@ export class Gi088EvaluationFoundationService {
       ),
       hardTimeoutMs,
       timeoutPolicyVersion: GI088_TIMEOUT_POLICY.version,
-      recoveryInstructionVersion:
-        input.recoveryTrigger === "EMPTY_CONTENT"
-          ? GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION
-          : input.recoveryTrigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-            ? GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION
-            : input.recoveryTrigger === "UNAUTHORIZED_PAUSE"
-              ? GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY.recoveryInstructionVersion
-              : null,
+      recoveryInstructionVersion: input.recoveryTrigger
+        ? recoveryCorrection(input.recoveryTrigger).version
+        : null,
       continuationMode: null,
       reasoningReplay: null,
       visiblePrefix: null,
@@ -1854,7 +2216,12 @@ export class Gi088EvaluationFoundationService {
     }
     let run = await this.requireRun(input.ownerUserId, input.runId);
     this.assertMutable(run);
-    taskDefinition(run.evaluationVersion, input.taskId);
+    const definition = taskDefinition(run.evaluationVersion, input.taskId);
+    if (definition.evaluationRole === "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT"
+      );
+    }
     const payload = {
       runId: input.runId,
       taskId: input.taskId,
@@ -2034,7 +2401,7 @@ export class Gi088EvaluationFoundationService {
         clientOperationId: operation.clientOperationId,
         attempt: 1,
         kind: input.kind,
-        requestHash: sha256(JSON.stringify(completionParams)),
+        requestHash: createGi088ModelRequestHash(completionParams),
         effectiveConfig: json(effectiveConfig),
         baseAssistantMessageId: input.baseAssistantMessageId,
         semanticStateBeforeHash: createGi088FoundationPayloadHash(
@@ -2308,7 +2675,7 @@ export class Gi088EvaluationFoundationService {
   private recoveryTriggerFor(input: {
     call: Gi088FoundationCallRecord;
     issues?: string[];
-  }): Gi088RecoveryTrigger | null {
+  }): Gi088FoundationRecoveryTrigger | null {
     if (input.call.attempt !== 1) return null;
     if (input.issues?.includes("UNAUTHORIZED_PAUSE")) return "UNAUTHORIZED_PAUSE";
     if (
@@ -2316,14 +2683,34 @@ export class Gi088EvaluationFoundationService {
     ) {
       return "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE";
     }
-    if (input.issues?.some((issue) => /^ASK_QUESTION_COUNT_INVALID:2$/u.test(issue))) {
-      return "ASK_QUESTION_COUNT_INVALID:2";
-    }
     if (input.call.errorCode === GI088_EMPTY_CONTENT_RECOVERY_POLICY.trigger) {
       return "EMPTY_CONTENT";
     }
     if (input.call.errorCode === GI088_TIMEOUT_RECOVERY_POLICY.trigger) {
       return "TIMEOUT";
+    }
+    if (input.call.status === "provider_failed") return null;
+    if (
+      input.issues?.some((issue) =>
+        /^ASK_QUESTION_COUNT_INVALID:\d+$/u.test(issue)
+      )
+    ) {
+      return null;
+    }
+    if (input.issues?.includes("STATE_TRANSITION_INVALID")) {
+      return "STATE_TRANSITION_INVALID";
+    }
+    if (
+      input.issues?.some((issue) =>
+        issue.startsWith("OUTPUT_SCHEMA_INVALID") ||
+        issue.startsWith("SCHEMA_") ||
+        issue.startsWith("JSON_")
+      )
+    ) {
+      return "OUTPUT_SCHEMA_INVALID";
+    }
+    if ((input.issues?.length ?? 0) > 0) {
+      return "SEMANTIC_VALIDATION_FAILED";
     }
     return null;
   }
@@ -2333,7 +2720,7 @@ export class Gi088EvaluationFoundationService {
     call: Gi088FoundationCallRecord;
     issues: string[];
     protectedFailure: boolean;
-    recoveryTrigger: Gi088RecoveryTrigger | null;
+    recoveryTrigger: Gi088FoundationRecoveryTrigger | null;
   }) {
     const trajectory = taskState(input.state, input.call.taskId).branches.high;
     const turn = trajectory.turns.find((item) => item.id === input.call.turnId)!;
@@ -2645,12 +3032,16 @@ export class Gi088EvaluationFoundationService {
             turnInput,
             effectiveOutput
           );
+          const semanticIssues = validateGi088SemanticDeltaOutput({
+            input: turnInput,
+            output: effectiveOutput,
+            deterministicStateMaintenance: true,
+            controlDecisionFinalAction: controlDecision.finalAction
+          });
           issues = [
-            ...validateGi088SemanticDeltaOutput({
-              input: turnInput,
-              output: effectiveOutput,
-              deterministicStateMaintenance: true,
-              controlDecisionFinalAction: controlDecision.finalAction
+            ...applyGi088SingleFocusValidationPolicy({
+              output: compatibility,
+              issues: semanticIssues
             }),
             ...validateGi088StageTransitionOutput({
               input: turnInput,
@@ -2678,6 +3069,21 @@ export class Gi088EvaluationFoundationService {
             effectiveOutput = null;
             maintenance = null;
           }
+        }
+      }
+
+      if (effectiveOutput && maintenance && issues.length === 0) {
+        try {
+          applyGi088SemanticDeltaValidatedResult({
+            input: turnInput,
+            output: effectiveOutput
+          });
+        } catch {
+          issues = ["STATE_TRANSITION_INVALID"];
+          protectedFailure = true;
+          finalErrorCode = "MODEL_OUTPUT_PROTECTED";
+          effectiveOutput = null;
+          maintenance = null;
         }
       }
 
@@ -2845,6 +3251,30 @@ export class Gi088EvaluationFoundationService {
       return result.run;
     }
     const trigger = turn.recovery.trigger;
+    if (trigger === "ASK_QUESTION_COUNT_INVALID:2") {
+      turn.recovery.status = "manual_available";
+      turn.recovery.completedAt = this.now().toISOString();
+      const operation = operationIdentity({
+        ownerUserId: run.ownerUserId,
+        evaluationVersion: run.evaluationVersion,
+        runId: run.id,
+        clientOperationId: `auto-trigger-ineligible:${turn.id}`,
+        action: "automatic_recovery_trigger_ineligible",
+        payload: { turnId: turn.id, trigger }
+      });
+      const result = await this.store.commitRunMutation({
+        mutation: {
+          runId: run.id,
+          ownerUserId: run.ownerUserId,
+          expectedRevision: run.revision,
+          expectedExecutionFingerprint: this.executionFingerprint,
+          nextState: json(state)
+        },
+        operation,
+        resultSnapshot: json({ turnId: turn.id, status: "manual_available" })
+      });
+      return result.run;
+    }
     const hardTimeoutMs = Math.max(
       1,
       Math.min(
@@ -2910,7 +3340,7 @@ export class Gi088EvaluationFoundationService {
         kind: "automatic_retry",
         parentCallId: initialCall.callId,
         retryTrigger: trigger,
-        requestHash: sha256(JSON.stringify(completionParams)),
+        requestHash: createGi088ModelRequestHash(completionParams),
         effectiveConfig: json(this.createEffectiveConfig({
           recoveryTrigger: trigger,
           hardTimeoutMs,
@@ -2955,6 +3385,12 @@ export class Gi088EvaluationFoundationService {
   }) {
     let run = await this.requireRun(input.ownerUserId, input.runId);
     this.assertMutable(run);
+    const definition = taskDefinition(run.evaluationVersion, input.taskId);
+    if (definition.evaluationRole === "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT"
+      );
+    }
     const payload = {
       runId: input.runId,
       taskId: input.taskId,
@@ -3055,7 +3491,7 @@ export class Gi088EvaluationFoundationService {
         kind: "manual_retry",
         parentCallId: parentCall.callId,
         retryTrigger: turn.recovery.trigger,
-        requestHash: sha256(JSON.stringify(completionParams)),
+        requestHash: createGi088ModelRequestHash(completionParams),
         effectiveConfig: json(this.createEffectiveConfig({
           hardTimeoutMs:
             GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs,
@@ -3083,6 +3519,111 @@ export class Gi088EvaluationFoundationService {
     });
     run = await this.requireRun(input.ownerUserId, input.runId);
     return this.createPublicSession(await this.reconcileRun(run));
+  }
+
+  async recordCompatibilitySmoke(input: {
+    ownerUserId: string;
+    runId: string;
+    taskId: string;
+    outcome: "passed" | "failed";
+    reason: string;
+    evidence?: {
+      productSessionFingerprint: string;
+      recordMode: "capture";
+      completedUserTurnCount: number;
+      questionFormTurnCount: number;
+      visibleQuestionCount: number;
+      providerCallCount: number;
+    };
+    clientOperationId: string;
+  }) {
+    let run = await this.requireRun(input.ownerUserId, input.runId);
+    this.assertMutable(run);
+    const reason = input.reason.trim();
+    const evidence = input.evidence;
+    if (
+      !reason ||
+      reason.length > 2_000 ||
+      !input.clientOperationId.trim() ||
+      input.clientOperationId.length > 160 ||
+      (
+        input.outcome === "passed" &&
+        (
+          !evidence ||
+          !/^[0-9a-f]{64}$/u.test(evidence.productSessionFingerprint) ||
+          evidence.recordMode !== "capture" ||
+          evidence.completedUserTurnCount < 1 ||
+          evidence.visibleQuestionCount !== 0 ||
+          evidence.providerCallCount !== 0 ||
+          (input.taskId === "A6" && evidence.questionFormTurnCount < 1)
+        )
+      )
+    ) {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_INPUT_INVALID"
+      );
+    }
+    const definition = taskDefinition(run.evaluationVersion, input.taskId);
+    if (definition.evaluationRole !== "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_UNAVAILABLE"
+      );
+    }
+    const payload = {
+      runId: input.runId,
+      taskId: input.taskId,
+      outcome: input.outcome,
+      reason,
+      evidence: evidence ?? null
+    };
+    const operation = operationIdentity({
+      ownerUserId: input.ownerUserId,
+      evaluationVersion: run.evaluationVersion,
+      runId: run.id,
+      clientOperationId: input.clientOperationId,
+      action: "record_compatibility_smoke",
+      payload
+    });
+    const replay = await this.replayOperationIfPresent({
+      ownerUserId: input.ownerUserId,
+      evaluationVersion: run.evaluationVersion,
+      clientOperationId: input.clientOperationId,
+      action: operation.action,
+      payloadHash: operation.payloadHash,
+      runId: run.id
+    });
+    if (replay) return replay;
+
+    const state = structuredClone(parseState(run));
+    const task = taskState(state, input.taskId);
+    if (
+      state.activeTaskId !== null ||
+      firstOpenTaskId(state) !== input.taskId ||
+      task.compatibilitySmoke !== null ||
+      task.aborted
+    ) {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_UNAVAILABLE"
+      );
+    }
+    const compatibilitySmoke = {
+      outcome: input.outcome,
+      reason,
+      ...(evidence ? { evidence } : {}),
+      observedAt: this.now().toISOString()
+    } as const;
+    task.compatibilitySmoke = compatibilitySmoke;
+    state.updatedAt = compatibilitySmoke.observedAt;
+    run = (await this.commitSimpleMutation({
+      run,
+      state,
+      operation,
+      resultSnapshot: {
+        taskId: input.taskId,
+        compatibilitySmoke
+      }
+    })).run;
+    return this.createPublicSession(run, input.taskId);
   }
 
   private async commitSimpleMutation(input: {
@@ -3129,6 +3670,7 @@ export class Gi088EvaluationFoundationService {
     turnId: string;
     questionPresence: "present" | "absent" | "uncertain";
     classification?: Gi088QuestionReviewClassification;
+    valueClassification?: Gi088QuestionValueClassification;
     note: string;
     observationFingerprint: string;
     clientOperationId: string;
@@ -3140,7 +3682,10 @@ export class Gi088EvaluationFoundationService {
     if (note.length > 1_000) {
       throw new Gi088EvaluationError("GI088_QUESTION_REVIEW_NOTE_INVALID");
     }
-    if (input.questionPresence === "present" && !input.classification) {
+    if (
+      input.questionPresence === "present" &&
+      (!input.classification || !input.valueClassification)
+    ) {
       throw new Gi088EvaluationError(
         "GI088_QUESTION_REVIEW_CLASSIFICATION_INVALID"
       );
@@ -3152,6 +3697,7 @@ export class Gi088EvaluationFoundationService {
       turnId: input.turnId,
       questionPresence: input.questionPresence,
       classification: input.classification ?? null,
+      valueClassification: input.valueClassification ?? null,
       note,
       observationFingerprint: input.observationFingerprint,
       revisionReason: input.revisionReason?.trim() ?? null
@@ -3191,6 +3737,9 @@ export class Gi088EvaluationFoundationService {
       questionPresence: input.questionPresence,
       ...(input.classification
         ? { classification: input.classification }
+        : {}),
+      ...(input.valueClassification
+        ? { valueClassification: input.valueClassification }
         : {}),
       note,
       reviewedAt: this.now().toISOString()
@@ -3296,9 +3845,7 @@ export class Gi088EvaluationFoundationService {
     }
     if (
       trajectory.pendingTurnId ||
-      trajectory.turns.some(
-        (turn) => turn.questionObservation && !turn.questionObservation.review
-      ) ||
+      trajectory.turns.some((turn) => !questionReviewComplete(turn)) ||
       interventions.some(
         (item) =>
           item.taskId === input.taskId &&
@@ -3780,13 +4327,17 @@ export class Gi088EvaluationFoundationService {
   async exportRun(input: {
     ownerUserId: string;
     runId: string;
-  }): Promise<Gi088ExportEnvelope> {
+  }): Promise<Gi088ExportEnvelope | Gi088ExportEnvelopeV07> {
     const run = await this.requireRun(input.ownerUserId, input.runId);
-    const historicalReadOnly =
-      run.evaluationVersion !== GI088_EVALUATION_VERSION ||
-      run.executionFingerprint !== this.executionFingerprint ||
-      run.candidateFingerprint !== this.candidateFingerprint;
-    if (run.status === "running" && !historicalReadOnly) {
+    if (!GI088_KNOWN_EVALUATION_VERSIONS.has(run.evaluationVersion)) {
+      throw new Gi088EvaluationError("GI088_EXPORT_FAILED");
+    }
+    const existingSnapshot = await this.store.findExportSnapshot({
+      ownerUserId: input.ownerUserId,
+      runId: run.id
+    });
+    if (existingSnapshot) return exportEnvelopeFromSnapshot(existingSnapshot);
+    if (run.status === "running") {
       throw new Gi088EvaluationError("GI088_BATCH_MUST_BE_TERMINAL");
     }
     const [calls, interventions, revisions, operationEvents] = await Promise.all([
@@ -3796,8 +4347,9 @@ export class Gi088EvaluationFoundationService {
       this.store.listOperationEvents(run.id)
     ]);
     const state = parseState(run);
-    const usesFoundationLedger =
-      run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const usesFoundationLedger = usesGi088FoundationLedger(
+      run.evaluationVersion
+    );
     const matchesCurrentBehavior =
       usesFoundationLedger &&
       run.executionFingerprint === this.executionFingerprint &&
@@ -3805,8 +4357,12 @@ export class Gi088EvaluationFoundationService {
     const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
     const metrics = metricsFor({ state, calls, interventions });
     const gate = gateFor({ run, state, calls, interventions, now: this.now() });
+    const currentExport = run.evaluationVersion === GI088_EVALUATION_VERSION;
+    const exportVersion = currentExport
+      ? GI088_READONLY_EXPORT_VERSION_V07
+      : GI088_READONLY_EXPORT_VERSION;
     const payload = {
-      exportVersion: "2026-08-10.gi088-readonly-export-v0.6",
+      exportVersion,
       evaluation: {
         id: evaluationMetadata.id,
         version: run.evaluationVersion,
@@ -3817,10 +4373,35 @@ export class Gi088EvaluationFoundationService {
         activeBranches:
           state.evaluationMode === "paired" ? ["off", "high"] : GI088_ACTIVE_BRANCHES,
         model: evaluationMetadata.model,
-        config: matchesCurrentBehavior
-          ? GI088_CONFIGS.high
-          : historicalExportConfig(state, evaluationMetadata, calls),
-        ...(matchesCurrentBehavior
+        config:
+          run.evaluationVersion === GI088_EVALUATION_VERSION_V8R2
+            ? GI088_V8R2_READONLY_EXPORT_HIGH_CONFIG
+            : matchesCurrentBehavior
+              ? {
+                  ...GI088_CONFIGS.high,
+                  headersTimeoutMs: GI088_TIMEOUT_POLICY.headersTimeoutMs,
+                  bodyIdleTimeoutMs: GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
+                  hardTimeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+                  automaticChainDeadlineMs:
+                    GI088_SHARED_RECOVERY_DEADLINE_POLICY
+                      .automaticChainDeadlineMs,
+                  routeMaxDurationSeconds:
+                    GI088_TIMEOUT_POLICY.routeMaxDurationSeconds,
+                  hiddenReasoningPersistence: "forbidden" as const
+                }
+              : historicalExportConfig(state, evaluationMetadata, calls),
+        ...(currentExport
+          ? {
+              skillVersion: GI088_V8R3_INTERVIEW_SKILL_VERSION,
+              skillSha256: GI088_V8R3_INTERVIEW_SKILL_SHA256,
+              modelIdentity: {
+                ...GI088_MODEL_CALL_IDENTITY,
+                transport: GI088_ARK_FLASH_RUNTIME_POLICY.transport
+              }
+            }
+          : {}),
+        ...(currentExport ||
+          run.evaluationVersion === GI088_EVALUATION_VERSION_V8R2
           ? {
               maximumProviderCallsPerUserSubmission:
                 GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
@@ -3838,6 +4419,19 @@ export class Gi088EvaluationFoundationService {
         sealedAt: run.sealedAt
       },
       batch: state,
+      ...(currentExport
+        ? {
+            taskDefinitions: taskDefinitionsFor(
+              run.evaluationVersion,
+              state
+            ).map((definition) => ({
+              ...definition,
+              evaluationRole:
+                definition.evaluationRole ?? "scored_trajectory"
+            })),
+            questionValueStatistics: questionValueStatisticsFor(state)
+          }
+        : {}),
       callLedger: calls.map((call) => ({
         ...call,
         rawFinalOutput:
@@ -3848,11 +4442,15 @@ export class Gi088EvaluationFoundationService {
             : null
       })),
       programInterventions: interventions,
-      reviewRevisions: revisions,
+      reviewRevisions: currentExport
+        ? revisions.map(reviewRevisionToPublic)
+        : revisions,
       operationEvents,
       metrics
     };
-    const envelope = createGi088ExportEnvelope({ payload });
+    const envelope = currentExport
+      ? createGi088ExportEnvelopeV07({ payload })
+      : createGi088ExportEnvelope({ payload });
     const stored = await this.store.getOrCreateExportSnapshot({
       ownerUserId: input.ownerUserId,
       runId: run.id,
@@ -3860,9 +4458,6 @@ export class Gi088EvaluationFoundationService {
       payload: envelope.payload as Gi088FoundationJson,
       recordCounts: json(envelope.receipt.recordCounts)
     });
-    return createGi088ExportEnvelope({
-      payload: stored.snapshot.payload as Gi088ExportJsonValue,
-      issuedAt: stored.snapshot.createdAt
-    });
+    return exportEnvelopeFromSnapshot(stored.snapshot);
   }
 }

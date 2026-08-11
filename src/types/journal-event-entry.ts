@@ -23,6 +23,8 @@ export interface JournalEventEntrySourceMessage {
 
 export interface JournalEventEntrySourceSnapshot {
   schemaVersion: 1;
+  /** Added for capture journals; absent historical snapshots remain chat-compatible. */
+  recordMode?: "capture" | "chat";
   eventId: string;
   branchSessionId: string;
   baseMessageSequence: number;

@@ -9,6 +9,7 @@ import {
 import {
   GI088_CONFIGS,
   GI088_ACTIVE_BRANCHES,
+  GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
@@ -17,6 +18,7 @@ import {
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
   GI088_MANUAL_RECOVERY_POLICY,
+  GI088_MODEL_CALL_IDENTITY,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
@@ -51,17 +53,17 @@ import {
   sanitizeAIProviderDiagnostics,
   takeAIReasoningOnlyContinuation
 } from "@/server/services/ai/ai-provider";
-import { createGi088ProProvider } from "@/server/services/evaluation/gi088/pro-runtime";
+import { createGi088ArkProvider } from "@/server/services/evaluation/gi088/ark-runtime";
+import { createGi088ModelRequestHash } from "@/server/services/evaluation/gi088/request-identity";
 import { requireGi088ModelCallAuthorization } from "@/server/services/evaluation/gi088/access";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
 import {
-  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION,
-  GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION,
   GI088_STAGE_TRANSITION_RECOVERY_POLICY,
   createGi088StageTransitionUserPrompt,
   validateGi088StageTransitionOutput
 } from "@/server/services/evaluation/gi088/stage-transition";
 import {
+  applyGi088SingleFocusValidationPolicy,
   createGi088QuestionObservation
 } from "@/server/services/evaluation/gi088/single-focus";
 import {
@@ -165,7 +167,10 @@ function createBatchState(
         off: createEmptyTrajectory("off"),
         high: createEmptyTrajectory("high")
       },
-      comparison: null
+      comparison: null,
+      ...(task.evaluationRole === "compatibility_smoke"
+        ? { compatibilitySmoke: null }
+        : {})
     })),
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -191,6 +196,10 @@ function evaluationMode(state: Gi088BatchState): Gi088EvaluationMode {
 }
 
 function isTaskCompleted(state: Gi088BatchState, task: Gi088TaskState) {
+  if (Object.prototype.hasOwnProperty.call(task, "compatibilitySmoke")) {
+    return task.compatibilitySmoke !== null &&
+      task.compatibilitySmoke !== undefined;
+  }
   return evaluationMode(state) === "high_only"
     ? isCompletedTrajectory(task.branches.high)
     : task.comparison !== null &&
@@ -244,6 +253,14 @@ function isCompletedTrajectory(trajectory: Gi088Trajectory) {
 }
 
 function isCompletedTaskBoundary(state: Gi088BatchState, task: Gi088TaskState) {
+  if (Object.prototype.hasOwnProperty.call(task, "compatibilitySmoke")) {
+    return task.compatibilitySmoke !== null &&
+      task.compatibilitySmoke !== undefined &&
+      task.initialUserMessage === null &&
+      task.comparison === null &&
+      isPristineTrajectory(task.branches.off, "off") &&
+      isPristineTrajectory(task.branches.high, "high");
+  }
   return task.initialUserMessage !== null && isTaskCompleted(state, task);
 }
 
@@ -410,13 +427,16 @@ export function createGi088PublicSession(
           (review) => normalizeTargetTrigger(review.targetTrigger) === "triggered"
         ).length,
         reviewedTrajectoryCount: reviews.length,
-        totalTrajectoryCount: GI088_TASKS.length * activeBranches.length
+        totalTrajectoryCount: GI088_TASKS.filter(
+          (task) => task.evaluationRole === "scored_trajectory"
+        ).length * activeBranches.length
       }
     },
     tasks: GI088_TASKS.map((definition) => {
       const task = taskState(state, definition.id);
       return {
         id: definition.id,
+        evaluationRole: definition.evaluationRole ?? "scored_trajectory",
         capabilityId: definition.capabilityId,
         title: definition.title,
         instruction: definition.instruction,
@@ -431,7 +451,8 @@ export function createGi088PublicSession(
           high: task.branches.high.review
             ? normalizeTargetTrigger(task.branches.high.review.targetTrigger)
             : null
-        }
+        },
+        compatibilitySmoke: task.compatibilitySmoke ?? null
       };
     }),
     activeTask: selectedTask
@@ -456,7 +477,7 @@ export function createGi088PublicSession(
 }
 
 function createDefaultProvider() {
-  return createGi088ProProvider(process.env);
+  return createGi088ArkProvider(process.env);
 }
 
 type ServiceDependencies = {
@@ -638,7 +659,13 @@ export class Gi088EvaluationService {
   private assertTaskCanStart(batch: Gi088StoredBatch, taskId: string) {
     const state = batch.state;
     this.assertMutable(batch);
-    taskDefinition(taskId);
+    const definition = taskDefinition(taskId);
+    if (definition.evaluationRole === "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT",
+        409
+      );
+    }
     if (firstIncompleteTaskId(state) !== taskId) {
       throw new Gi088EvaluationError("GI088_TASK_ORDER_INVALID", 409);
     }
@@ -846,6 +873,12 @@ export class Gi088EvaluationService {
     }
     let batch = await this.getOrCreateBatch(input.ownerUserId);
     this.assertMutable(batch);
+    if (taskDefinition(input.taskId).evaluationRole === "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT",
+        409
+      );
+    }
     if (evaluationMode(batch.state) === "high_only" && input.branch !== "high") {
       throw new Gi088EvaluationError("GI088_HIGH_ONLY_EVALUATION", 409);
     }
@@ -1003,7 +1036,7 @@ export class Gi088EvaluationService {
       recoveryTrigger === "EMPTY_CONTENT"
         ? GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
         : recoveryTrigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-          ? GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION
+          ? GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY.recoveryInstruction
           : null;
     const shared = {
       messages: [
@@ -1042,7 +1075,7 @@ export class Gi088EvaluationService {
   }
 
   private createRequestHash(params: AICompletionParams) {
-    return sha256(JSON.stringify(params));
+    return createGi088ModelRequestHash(params);
   }
 
   private createEffectiveConfig(
@@ -1060,6 +1093,8 @@ export class Gi088EvaluationService {
       GI088_TIMEOUT_POLICY.hardTimeoutMs;
     return {
       branch,
+      ...GI088_MODEL_CALL_IDENTITY,
+      hiddenReasoningPersistence: "forbidden",
       thinking: config.thinking,
       reasoningEffort: config.reasoningEffort,
       temperature: config.temperature,
@@ -1080,7 +1115,8 @@ export class Gi088EvaluationService {
         recoveryTrigger === "EMPTY_CONTENT"
           ? GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION
           : recoveryTrigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-            ? GI088_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION
+            ? GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY
+              .recoveryInstructionVersion
             : null,
       continuationMode: null,
       reasoningReplay: null,
@@ -1240,17 +1276,21 @@ export class Gi088EvaluationService {
       turnInput,
       validationOutput
     );
+    const semanticIssues = validateGi088SemanticDeltaOutput({
+      input: turnInput,
+      output: validationOutput,
+      deterministicStateMaintenance: true
+    });
     const issues = [
-      ...validateGi088SemanticDeltaOutput({
-        input: turnInput,
-        output: validationOutput,
-        deterministicStateMaintenance: true
+      ...applyGi088SingleFocusValidationPolicy({
+        output: compatibilityOutput,
+        issues: semanticIssues
       }),
       ...validateGi088StageTransitionOutput({
         input: turnInput,
         output: compatibilityOutput
       })
-    ].filter((issue) => !/^ASK_QUESTION_COUNT_INVALID:\d+$/u.test(issue));
+    ];
     if (issues.length) {
       if (explicitStop === "mixed") {
         return this.finishDeterministicStop({
@@ -1572,6 +1612,12 @@ export class Gi088EvaluationService {
   }) {
     let batch = await this.getOrCreateBatch(input.ownerUserId);
     this.assertMutable(batch);
+    if (taskDefinition(input.taskId).evaluationRole === "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT",
+        409
+      );
+    }
     const task = taskState(batch.state, input.taskId);
     const trajectory = task.branches[input.branch];
     const turn = trajectory.turns.find((item) => item.id === input.turnId);
@@ -2065,6 +2111,57 @@ export class Gi088EvaluationService {
     state.activeTaskId = null;
     const saved = await this.save(batch, state);
     return createGi088PublicSession(saved);
+  }
+
+  async recordCompatibilitySmoke(input: {
+    ownerUserId: string;
+    taskId: string;
+    outcome: "passed" | "failed";
+    reason: string;
+  }) {
+    const reason = input.reason.trim();
+    if (!reason || reason.length > 2_000) {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_INPUT_INVALID",
+        400
+      );
+    }
+    let batch = await this.getOrCreateBatch(input.ownerUserId);
+    this.assertMutable(batch);
+    const definition = taskDefinition(input.taskId);
+    if (definition.evaluationRole !== "compatibility_smoke") {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_UNAVAILABLE",
+        409
+      );
+    }
+    const existing = taskState(batch.state, input.taskId).compatibilitySmoke;
+    if (existing) {
+      if (existing.outcome === input.outcome && existing.reason === reason) {
+        return createGi088PublicSession(batch);
+      }
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_UNAVAILABLE",
+        409
+      );
+    }
+    if (
+      batch.state.activeTaskId !== null ||
+      firstIncompleteTaskId(batch.state) !== input.taskId
+    ) {
+      throw new Gi088EvaluationError(
+        "GI088_COMPATIBILITY_SMOKE_UNAVAILABLE",
+        409
+      );
+    }
+    const state = structuredClone(batch.state);
+    taskState(state, input.taskId).compatibilitySmoke = {
+      outcome: input.outcome,
+      reason,
+      observedAt: nowIso(this.now)
+    };
+    batch = await this.save(batch, state);
+    return createGi088PublicSession(batch);
   }
 
   async seal(ownerUserId: string) {

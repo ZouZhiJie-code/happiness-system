@@ -86,6 +86,19 @@ export const GI088_ERROR_CATALOG = {
   GI088_EARLY_STOP_INPUT_INVALID: input("提前结束需要填写原因并确认。"),
   GI088_SEAL_INPUT_INVALID: input("封存操作需要再次确认。"),
   GI088_SMOKE_INPUT_INVALID: input("技术检查参数无效。"),
+  GI088_COMPATIBILITY_SMOKE_INPUT_INVALID: input("兼容冒烟登记信息不完整。"),
+  GI088_COMPATIBILITY_SMOKE_EVIDENCE_INVALID: conflict(
+    "未找到可核验的【帮我记】零追问记录，请回到真实入口完成本项后再登记。",
+    "return_to_current_task"
+  ),
+  GI088_COMPATIBILITY_SMOKE_REQUIRES_EXTERNAL_RESULT: conflict(
+    "该任务需要先完成真实【帮我记】链路，再登记零模型兼容结果。",
+    "return_to_current_task"
+  ),
+  GI088_COMPATIBILITY_SMOKE_UNAVAILABLE: conflict(
+    "当前任务无法登记兼容冒烟结果，请读取最新状态。",
+    "return_to_current_task"
+  ),
   GI088_TASK_NOT_FOUND: { ...conflict("找不到该评测任务。", "return_to_current_task"), status: 404 },
   GI088_TASK_STATE_NOT_FOUND: { ...conflict("评测任务状态缺失。", "return_to_current_task"), status: 404 },
   GI088_TASK_ORDER_INVALID: conflict("请按评测任务顺序继续。", "return_to_current_task"),
@@ -115,7 +128,7 @@ export const GI088_ERROR_CATALOG = {
   GI088_EARLY_STOP_REASON_INVALID: input("提前结束原因需要为 1 至 2000 字。"),
   GI088_EARLY_STOP_REASON_CODE_INVALID: input("提前结束原因类型无效。"),
   GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED: conflict("请先收口当前任务，再提前结束整批评测。", "return_to_current_task"),
-  GI088_QUESTION_REVIEW_CLASSIFICATION_INVALID: input("问题焦点分类无效。"),
+  GI088_QUESTION_REVIEW_CLASSIFICATION_INVALID: input("问题焦点或问题价值分类无效。"),
   GI088_QUESTION_REVIEW_NOTE_INVALID: input("问题复核说明最多 1000 字。"),
   GI088_QUESTION_REVIEW_UNAVAILABLE: conflict("当前回答无需或暂不能提交问题复核。"),
   GI088_QUESTION_REVIEWS_REQUIRED: conflict("请完成所有可见回答的问题复核。", "return_to_current_task"),

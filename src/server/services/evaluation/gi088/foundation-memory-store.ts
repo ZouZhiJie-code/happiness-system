@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  assertGi088FoundationFrozenRunFacts,
   assertGi088FoundationCallTransition,
   createGi088FoundationPayloadHash,
   Gi088FoundationStoreError,
@@ -197,6 +198,10 @@ implements Gi088EvaluationFoundationStore {
     if (run.revision !== mutation.expectedRevision) {
       throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
     }
+    assertGi088FoundationFrozenRunFacts({
+      currentState: run.state,
+      nextState: mutation.nextState
+    });
   }
 
   private applyRunMutation(
@@ -1202,6 +1207,17 @@ implements Gi088EvaluationFoundationStore {
       .map(clone);
   }
 
+  findExportSnapshot(input: { ownerUserId: string; runId: string }) {
+    return this.atomic(() => {
+      const run = this.requireRun(input.runId);
+      if (run.ownerUserId !== input.ownerUserId) {
+        throw new Gi088FoundationStoreError("GI088_RUN_NOT_FOUND");
+      }
+      const snapshot = this.exports.get(run.id);
+      return snapshot ? clone(snapshot) : null;
+    });
+  }
+
   getOrCreateExportSnapshot(input: {
     ownerUserId: string;
     runId: string;
@@ -1226,6 +1242,9 @@ implements Gi088EvaluationFoundationStore {
           );
         }
         return { snapshot: clone(existing), created: false };
+      }
+      if (run.status === "running") {
+        throw new Gi088FoundationStoreError("GI088_BATCH_MUST_BE_TERMINAL");
       }
       const snapshot: Gi088FoundationExportSnapshotRecord = {
         runId: run.id,

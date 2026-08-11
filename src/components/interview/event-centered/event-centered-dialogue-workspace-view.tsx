@@ -17,6 +17,7 @@ import type {
 
 export type EventCenteredDialogueTab = {
   rootSessionId: string;
+  recordMode?: "capture" | "chat";
   label: string;
   status: "active" | "completed" | "generating" | "abandoned" | "blank";
 };
@@ -530,6 +531,7 @@ export function EventCenteredDialogueWorkspaceView({
   onOpenJournal
 }: EventCenteredDialogueWorkspaceViewProps) {
   const [localComposerDraft, setLocalComposerDraft] = useState("");
+  const captureMode = session.recordMode === "capture";
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const journalTriggerRef = useRef<HTMLButtonElement>(null);
   const journalPanelRef = useRef<HTMLElement | null>(null);
@@ -546,11 +548,12 @@ export function EventCenteredDialogueWorkspaceView({
       ...tabs,
       {
         rootSessionId: session.rootSessionId,
+        recordMode: session.recordMode,
         label: session.journalEvent ? `事件 ${session.journalEvent.daySequence}` : "新记录",
         status: currentStatus
       }
     ];
-  }, [session.eventId, session.eventStatus, session.journalEvent, session.rootSessionId, tabs]);
+  }, [session.eventId, session.eventStatus, session.journalEvent, session.recordMode, session.rootSessionId, tabs]);
   const checkpoint = session.dialogue.checkpoint;
   const allowReply = actionAllowed(session, "reply");
   const isAngleSelectionCheckpoint = checkpoint?.kind === "first" && !allowReply;
@@ -639,7 +642,9 @@ export function EventCenteredDialogueWorkspaceView({
                     ? "inline-flex shrink-0 items-center gap-2 rounded-t-[var(--radius-control)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm font-medium text-ink"
                     : "inline-flex shrink-0 items-center gap-2 rounded-t-[var(--radius-control)] px-3 py-2 text-sm text-[var(--text-dim)] transition hover:bg-[var(--paper-soft)] disabled:cursor-default"}
                 >
-                  <span className="max-w-36 truncate">{tab.label}</span>
+                  <span className="max-w-36 truncate">
+                    {tab.recordMode === "capture" ? `帮我记 · ${tab.label}` : tab.label}
+                  </span>
                   <span className="text-[0.68rem] text-[var(--text-faint)]">{statusCopy(tab.status)}</span>
                 </button>
               ))}
@@ -663,7 +668,7 @@ export function EventCenteredDialogueWorkspaceView({
               aria-controls="event-centered-journal-panel"
               className="mb-1 shrink-0 px-2 py-1.5 text-xs font-medium text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-4 hover:text-ink"
             >
-              当前事件日志
+              {captureMode ? "当前记录日志" : "当前事件日志"}
             </button>
             {readOnly ? <span className="mb-1 shrink-0 px-1 py-1.5 text-xs text-[var(--text-faint)]">只读查看</span> : null}
             {actionAllowed(session, "exit_event") ? (
@@ -677,17 +682,30 @@ export function EventCenteredDialogueWorkspaceView({
               </button>
             ) : null}
           </div>
-          <EventProgress session={session} />
+          {captureMode ? (
+            <div className="flex items-center gap-2 py-3" data-testid="event-centered-capture-mode-label">
+              <span className="rounded-full bg-[var(--paper-soft)] px-3 py-1 text-xs font-semibold text-ink">
+                帮我记
+              </span>
+              <span className="text-xs text-[var(--text-dim)]">只记录，不追问</span>
+            </div>
+          ) : (
+            <EventProgress session={session} />
+          )}
           {!readOnly && !canCreateEvent && session.eventStatus === "active" ? (
             <p data-testid="event-centered-next-event-blocker" className="pb-3 text-xs leading-5 text-[var(--text-dim)]">
-              这件事还在进行中。生成当前事件日志后，就可以记录下一件。
+              {captureMode
+                ? "这条记录还在进行中。生成当前记录日志后，就可以开始下一条。"
+                : "这件事还在进行中。生成当前事件日志后，就可以记录下一件。"}
             </p>
           ) : null}
         </header>
 
         <div className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pb-5">
-            <p className="text-xs text-[var(--text-faint)]">当前记录日期：{entryDate} · {angleLabel(session.dialogue.activeAngle)}</p>
+            <p className="text-xs text-[var(--text-faint)]">
+              当前记录日期：{entryDate} · {captureMode ? "帮我记" : angleLabel(session.dialogue.activeAngle)}
+            </p>
             {session.messages.map((message) => message.role === "user" ? (
               <div key={message.id} className="flex justify-end">
                 <div className="max-w-2xl rounded-[var(--radius-card)] bg-[var(--paper-soft)] px-4 py-3 text-sm leading-7 text-ink">
@@ -709,7 +727,9 @@ export function EventCenteredDialogueWorkspaceView({
               </div>
             ) : null}
 
-            <FocusSelectionNote session={session} busy={actionBusy} onAction={onAction} />
+            {captureMode ? null : (
+              <FocusSelectionNote session={session} busy={actionBusy} onAction={onAction} />
+            )}
             {streamPreview ? (
               <div role="status" aria-live="polite" className="mx-auto w-full max-w-2xl border-l-2 border-[var(--paper-deep)] py-1 pl-3">
                 <p className="text-xs text-[var(--text-faint)]">
@@ -732,14 +752,18 @@ export function EventCenteredDialogueWorkspaceView({
             ) : null}
             {!checkpoint && actionAllowed(session, "generate_event_journal") ? (
               <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-2 border-l-2 border-[var(--paper-deep)] py-1 pl-3">
-                <p className="text-xs leading-5 text-[var(--text-dim)]">这一段随时可以收进当前事件日志。</p>
+                <p className="text-xs leading-5 text-[var(--text-dim)]">
+                  {captureMode
+                    ? "已保存的原话可以整理成当前记录日志。"
+                    : "这一段随时可以收进当前事件日志。"}
+                </p>
                 <ActionButton
                   type="button"
                   variant="secondary"
                   disabled={actionBusy}
                   onClick={() => void onAction({ action: "generate_event_journal" })}
                 >
-                  生成事件日志
+                  {captureMode ? "生成记录日志" : "生成事件日志"}
                 </ActionButton>
               </div>
             ) : null}
@@ -772,7 +796,9 @@ export function EventCenteredDialogueWorkspaceView({
               />
             ) : null}
             <div className="liquid-composer mx-auto flex max-w-3xl items-end gap-2 rounded-[var(--radius-card)] px-3 py-2">
-              <label className="sr-only" htmlFor="event-centered-dialogue-input">输入当前事件</label>
+              <label className="sr-only" htmlFor="event-centered-dialogue-input">
+                {captureMode ? "输入要记录的内容" : "输入当前事件"}
+              </label>
               <textarea
                 id="event-centered-dialogue-input"
                 rows={1}
@@ -786,7 +812,9 @@ export function EventCenteredDialogueWorkspaceView({
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder={session.dialogue.phase === "event_focus_clarification"
+                placeholder={captureMode
+                  ? "继续写下想留下的内容…"
+                  : session.dialogue.phase === "event_focus_clarification"
                   ? "用一句话说，你想先记录哪一件…"
                   : allowReply ? "把此刻想补充的话说给我听…" : "这一段已经收好，可以选择下一步"}
                 className="min-h-10 flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-6 text-ink outline-none placeholder:text-[var(--text-faint)] disabled:cursor-not-allowed"

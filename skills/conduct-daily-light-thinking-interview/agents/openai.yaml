@@ -1,0 +1,4 @@
+interface:
+  display_name: "Daily Light Thinking Interview"
+  short_description: "Guide value-led Daily Light interview responses"
+  default_prompt: "Use $conduct-daily-light-thinking-interview to produce the next grounded, value-led interview response."

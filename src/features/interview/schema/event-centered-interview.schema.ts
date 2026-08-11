@@ -35,6 +35,7 @@ const journalEventSchema = z.object({
 
 export const eventCenteredSessionIdentitySchema = z.object({
   mode: z.literal("event_centered"),
+  recordMode: z.enum(["capture", "chat"]).default("chat"),
   rootSessionId: z.string(),
   activeBranchSessionId: z.string(),
   eventId: z.string().nullable(),
@@ -48,7 +49,8 @@ export const eventCenteredSessionIdentitySchema = z.object({
 });
 
 export const startEventCenteredSessionRequestSchema = z.object({
-  entryDate: entryDateSchema
+  entryDate: entryDateSchema,
+  recordMode: z.enum(["capture", "chat"])
 });
 
 export const reserveEventCenteredTurnRequestSchema = z.object({

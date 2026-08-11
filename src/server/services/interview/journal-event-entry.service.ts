@@ -4,6 +4,7 @@ import { createPromptEnvelope } from "@/features/ai-quality/prompt-manifest";
 import { assertEventCenteredWriteAllowed } from "@/features/interview/event-centered-release";
 import {
   completeJournalEventEntryGeneration,
+  createCaptureJournalEventEntry,
   failJournalEventEntryGeneration,
   getJournalEventEntryForUser,
   reserveJournalEventEntryGeneration,
@@ -102,7 +103,7 @@ export type GenerateJournalEventEntryResult = {
   entry: JournalEventEntryRecord;
   workspace: NonNullable<Awaited<ReturnType<typeof getEventCenteredInterviewWorkspace>>>;
   generation: {
-    origin: "llm" | "fallback" | "existing";
+    origin: "llm" | "fallback" | "deterministic" | "existing";
     attemptCount: number;
     latencyMs: number;
   };
@@ -617,6 +618,30 @@ export async function generateJournalEventEntry(
     before.latestMessageSequence !== input.baseMessageSequence
   ) {
     throw new Error("EVENT_STATE_CHANGED");
+  }
+  if (before.recordMode === "capture") {
+    const startedAt = Date.now();
+    const entry = await createCaptureJournalEventEntry({
+      userId: input.userId,
+      eventId: before.eventId,
+      activeBranchSessionId: input.baseBranchSessionId,
+      clientOperationId: input.clientOperationId,
+      baseMessageSequence: input.baseMessageSequence
+    });
+    const workspace = await getEventCenteredInterviewWorkspace(
+      input.userId,
+      input.rootSessionId
+    );
+    if (!workspace) throw new Error("SESSION_NOT_FOUND");
+    return {
+      entry,
+      workspace,
+      generation: {
+        origin: "deterministic",
+        attemptCount: 0,
+        latencyMs: Math.max(0, Date.now() - startedAt)
+      }
+    };
   }
   if (
     before.eventStatus !== "generating" &&

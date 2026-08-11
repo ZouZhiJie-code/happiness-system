@@ -50,8 +50,48 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     layers: ["candidate", "dataset", "runner"]
   },
   {
-    path: "src/server/services/evaluation/gi088/question-decision.ts",
+    path: "src/server/services/evaluation/gi088/v8r3-interview-skill.ts",
     layers: ["candidate"]
+  },
+  {
+    path: "skills/conduct-daily-light-thinking-interview/SKILL.md",
+    layers: ["candidate"]
+  },
+  {
+    path: "skills/conduct-daily-light-thinking-interview/agents/openai.yaml",
+    layers: ["candidate"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/contracts.ts",
+    layers: ["dataset", "runner"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/fixture-helpers.ts",
+    layers: ["dataset"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures.ts",
+    layers: ["dataset"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
+    layers: ["dataset"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/hidden-fixtures.ts",
+    layers: ["dataset", "runner"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/runner.ts",
+    layers: ["dataset", "runner"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/index.ts",
+    layers: ["dataset", "runner"]
+  },
+  {
+    path: "evals/event-centered-generative/gi088-v8r3-skill-evaluation/offline-executor.ts",
+    layers: ["runner"]
   },
   {
     path: "src/server/services/evaluation/gi088/stage-transition.ts",
@@ -130,6 +170,18 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     layers: ["runner"]
   },
   {
+    path: "src/server/services/evaluation/gi088/ark-runtime.ts",
+    layers: ["runner"]
+  },
+  {
+    path: "src/server/services/evaluation/gi088/request-identity.ts",
+    layers: ["runner"]
+  },
+  {
+    path: "src/server/services/evaluation/gi088/compatibility-evidence.ts",
+    layers: ["runner"]
+  },
+  {
     path: "src/server/services/evaluation/gi088/access.ts",
     layers: ["runner", "experience"]
   },
@@ -178,6 +230,10 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     layers: ["experience"]
   },
   {
+    path: "src/server/services/evaluation/gi088/export-v07.ts",
+    layers: ["experience"]
+  },
+  {
     path: "src/features/interview/event-centered/gi088-evaluation-client.ts",
     layers: ["experience"]
   },
@@ -193,6 +249,52 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     path: "src/features/interview/event-centered/gi088-evaluation-export.ts",
     layers: ["experience"]
   },
+  {
+    path: "src/features/interview/event-centered/gi088-compatibility-receipt.ts",
+    layers: ["experience"]
+  },
+  {
+    path: "src/features/interview/event-centered/capture-mode.ts",
+    layers: ["runner", "experience"]
+  },
+  {
+    path: "src/features/interview/event-centered/dialogue-state.ts",
+    layers: ["runner", "experience"]
+  },
+  {
+    path: "src/app/api/preview/gi088/compatibility-smoke/route.ts",
+    layers: ["runner", "experience"]
+  },
+  ...[
+    "prisma/schema.prisma",
+    "prisma/migrations/20260811120000_add_interview_record_mode/migration.sql",
+    "src/features/interview/entry-date.ts",
+    "src/features/interview/event-centered-release.ts",
+    "src/features/auth/auth-local.ts",
+    "src/features/interview/schema/event-centered-interview.schema.ts",
+    "src/features/interview/event-centered/workspace-client.ts",
+    "src/app/interview/page.tsx",
+    "src/components/interview/event-centered/event-centered-interview-workspace.tsx",
+    "src/components/interview/event-centered/event-centered-dialogue-workspace-view.tsx",
+    "src/app/api/interview/event-centered/session/start/route.ts",
+    "src/app/api/interview/event-centered/session/[id]/route.ts",
+    "src/app/api/interview/event-centered/sessions/route.ts",
+    "src/app/api/interview/event-centered/session/respond/stream/route.ts",
+    "src/app/api/interview/event-centered/journal/generate/route.ts",
+    "src/app/api/interview/event-centered/journal/[id]/route.ts",
+    "src/app/api/interview/event-centered/journal/[id]/save/route.ts",
+    "src/server/repositories/event-centered-interview.repository.ts",
+    "src/server/repositories/event-centered-response-version.repository.ts",
+    "src/server/repositories/journal-day-mode.repository.ts",
+    "src/server/repositories/journal-event-understanding.repository.ts",
+    "src/server/repositories/journal-event-fact-revision.repository.ts",
+    "src/server/repositories/journal-event-entry.repository.ts",
+    "src/server/services/interview/event-centered-interview.service.ts",
+    "src/server/services/interview/journal-event-entry.service.ts",
+    "src/types/event-centered-dialogue.ts",
+    "src/types/event-centered-interview.ts",
+    "src/types/journal-event-entry.ts"
+  ].map((path) => ({ path, layers: ["experience"] as const })),
   {
     path: "src/components/interview/event-centered/gi088-evaluation-workbench.tsx",
     layers: ["experience"]
@@ -228,6 +330,10 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
   },
   {
     path: "scripts/deploy-gi088-evaluation-schema.ts",
+    layers: ["runner"]
+  },
+  {
+    path: "scripts/run-gi088-v8r3-offline-evaluation.ts",
     layers: ["runner"]
   },
   {

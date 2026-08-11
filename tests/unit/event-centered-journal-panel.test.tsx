@@ -8,6 +8,7 @@ import type { JournalEventEntryRecord } from "@/types/journal-event-entry";
 function session(): EventCenteredWorkspaceSession {
   return {
     mode: "event_centered",
+    recordMode: "chat",
     rootSessionId: "root-1",
     activeBranchSessionId: "branch-1",
     eventId: "event-1",

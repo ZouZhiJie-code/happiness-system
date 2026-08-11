@@ -1,4 +1,5 @@
 export type JournalEventStatus = "active" | "generating" | "completed" | "abandoned";
+export type EventCenteredRecordMode = "capture" | "chat";
 
 export interface JournalEventIdentity {
   id: string;
@@ -13,6 +14,7 @@ export interface JournalEventIdentity {
 
 export interface EventCenteredSessionIdentity {
   mode: "event_centered";
+  recordMode: EventCenteredRecordMode;
   rootSessionId: string;
   activeBranchSessionId: string;
   eventId: string | null;
@@ -134,6 +136,7 @@ export interface EventCenteredWorkspaceMessageData {
 
 export interface EventCenteredSessionTabRecord {
   rootSessionId: string;
+  recordMode: EventCenteredRecordMode;
   label: string;
   status: "active" | "completed" | "generating" | "abandoned";
 }

@@ -29,7 +29,7 @@ describe("event-centered session start api", () => {
 
     const response = await POST(new Request("http://localhost/api/interview/event-centered/session/start", {
       method: "POST",
-      body: JSON.stringify({ entryDate: "2026-07-22" })
+      body: JSON.stringify({ entryDate: "2026-07-22", recordMode: "chat" })
     }));
 
     expect(response.status).toBe(409);
@@ -41,7 +41,7 @@ describe("event-centered session start api", () => {
 
     const response = await POST(new Request("http://localhost/api/interview/event-centered/session/start", {
       method: "POST",
-      body: JSON.stringify({ entryDate: "2026-07-22" })
+      body: JSON.stringify({ entryDate: "2026-07-22", recordMode: "chat" })
     }));
 
     expect(response.status).toBe(409);

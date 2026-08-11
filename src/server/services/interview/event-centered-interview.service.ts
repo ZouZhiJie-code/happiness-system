@@ -2,6 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
+  buildCaptureAcknowledgement,
+  EVENT_CENTERED_CAPTURE_OPENING,
+  isEffectiveCaptureContent,
+  type EventCenteredRecordMode
+} from "@/features/interview/event-centered/capture-mode";
+import {
   getEventCenteredAllowedActions,
   getEventCenteredCheckpoint,
   getEventCenteredCurrentQuestionIntent,
@@ -182,7 +188,11 @@ function classifyEventCenteredGenerationFailure(code: string) {
   return "content_check" as const;
 }
 
-export function startEventCenteredInterview(userId: string, entryDate = getTodayEntryDate()) {
+export function startEventCenteredInterview(
+  userId: string,
+  entryDate = getTodayEntryDate(),
+  recordMode: EventCenteredRecordMode = "chat"
+) {
   assertEventCenteredWriteAllowed({
     entryDate,
     today: getTodayEntryDate()
@@ -191,7 +201,11 @@ export function startEventCenteredInterview(userId: string, entryDate = getToday
   return startEventCenteredInterviewSession({
     userId,
     entryDate,
-    openingQuestion: EVENT_CENTERED_OPENING
+    recordMode,
+    openingMessage: recordMode === "capture"
+      ? EVENT_CENTERED_CAPTURE_OPENING
+      : EVENT_CENTERED_OPENING,
+    lastAssistantQuestion: recordMode === "capture" ? null : EVENT_CENTERED_OPENING
   });
 }
 
@@ -232,8 +246,9 @@ export async function getEventCenteredInterviewWorkspace(
 ): Promise<EventCenteredWorkspaceSession | null> {
   const data = await getEventCenteredInterviewWorkspaceData(userId, sessionId);
   if (!data) return null;
+  const captureMode = data.identity.recordMode === "capture";
   const state = parseEventCenteredDialogueState(data.snapshotData);
-  const workspaceProjections = data.identity.eventId
+  const workspaceProjections = data.identity.eventId && !captureMode
     ? await getEffectiveJournalEventWorkspaceProjectionsForPath({
         eventId: data.identity.eventId,
         messageIds: data.messages.map((message) => message.id),
@@ -274,6 +289,7 @@ export async function getEventCenteredInterviewWorkspace(
             version: message.responseVersion ?? 1,
             versionCount: Math.max(1, group.length),
             canRegenerate:
+              !captureMode &&
               data.identity.eventStatus === "active" &&
               group.length < 3 &&
               data.messages.at(-1)?.id === message.id &&
@@ -291,12 +307,26 @@ export async function getEventCenteredInterviewWorkspace(
     }];
   });
   const currentRun = state.activeAngle ? state.angleRuns[state.activeAngle] : null;
-  let allowedActions = getEventCenteredAllowedActions({
-    state,
-    eventStatus: data.identity.eventStatus,
-    hasPendingTurn: Boolean(data.pendingTurn)
-  });
-  if (factProjection?.pendingClarification || angleProjection.repairPendingAngles.length > 0) {
+  const hasCaptureContent = captureMode && data.messages.some(
+    (message) => message.role === "user" && isEffectiveCaptureContent(message.rawText ?? message.content)
+  );
+  let allowedActions = captureMode
+    ? data.pendingTurn
+      ? ["resume_turn" as const]
+      : data.identity.sessionStatus === "active" &&
+          (data.identity.eventStatus === null || data.identity.eventStatus === "active")
+        ? [
+            "reply" as const,
+            ...(data.identity.eventId ? ["exit_event" as const] : []),
+            ...(hasCaptureContent ? ["generate_event_journal" as const] : [])
+          ]
+        : []
+    : getEventCenteredAllowedActions({
+        state,
+        eventStatus: data.identity.eventStatus,
+        hasPendingTurn: Boolean(data.pendingTurn)
+      });
+  if (!captureMode && (factProjection?.pendingClarification || angleProjection.repairPendingAngles.length > 0)) {
     allowedActions = allowedActions.filter((action) => action === "reply" || action === "exit_event");
   }
   const outcomes = angleProjection.completedAngles.flatMap((angle) => {
@@ -325,24 +355,34 @@ export async function getEventCenteredInterviewWorkspace(
     ...data.identity,
     messages,
     dialogue: {
-      productScope,
-      phase: state.phase,
-      activeAngle: state.activeAngle,
-      questionOpportunityCount: currentRun?.questionOpportunityCount ?? 0,
-      focusOptions: state.focusOptions,
-      completedAngles: angleProjection.completedAngles,
-      availableAngles,
-      closedAngles,
-      reopenedAngles: angleProjection.reopenedAngles,
-      outcomes,
-      checkpoint: getEventCenteredCheckpoint(
-        state,
-        state.lastCompletedAngle
-          ? angleProjection.outcomesByAngle[state.lastCompletedAngle]?.statement ?? null
-          : null
-      ),
+      productScope: captureMode ? undefined : productScope,
+      phase: captureMode ? "event_recording" : state.phase,
+      activeAngle: captureMode ? null : state.activeAngle,
+      questionOpportunityCount: captureMode ? 0 : currentRun?.questionOpportunityCount ?? 0,
+      focusOptions: captureMode ? [] : state.focusOptions,
+      completedAngles: captureMode ? [] : angleProjection.completedAngles,
+      availableAngles: captureMode ? [] : availableAngles,
+      closedAngles: captureMode ? [] : closedAngles,
+      reopenedAngles: captureMode ? [] : angleProjection.reopenedAngles,
+      outcomes: captureMode ? [] : outcomes,
+      checkpoint: captureMode
+        ? null
+        : getEventCenteredCheckpoint(
+            state,
+            state.lastCompletedAngle
+              ? angleProjection.outcomesByAngle[state.lastCompletedAngle]?.statement ?? null
+              : null
+          ),
       allowedActions,
-      progress: getEventCenteredProgress(state)
+      progress: captureMode
+        ? [{
+            id: "record",
+            label: "轻量记录",
+            status: data.identity.sessionStatus === "active" ? "current" : "complete",
+            percent: hasCaptureContent ? 100 : 0,
+            detail: "帮我记"
+          }]
+        : getEventCenteredProgress(state)
     },
     recovery: {
       pendingTurn: data.pendingTurn
@@ -1516,6 +1556,14 @@ export async function respondEventCenteredInterview(
   const before = await getEventCenteredInterviewWorkspaceData(userId, request.rootSessionId);
   timing.initialWorkspaceReadMs = elapsedMs(initialWorkspaceStartedAt);
   if (!before) throw new Error("SESSION_NOT_FOUND");
+  if (
+    before.identity.recordMode === "capture" &&
+    request.action !== "reply" &&
+    request.action !== "resume_turn" &&
+    request.action !== "exit_event"
+  ) {
+    throw new Error("CAPTURE_ACTION_NOT_ALLOWED");
+  }
   if (request.action === "regenerate_response") {
     if (
       !request.targetMessageId ||
@@ -1709,6 +1757,106 @@ export async function respondEventCenteredInterview(
 
   try {
     options?.signal?.throwIfAborted();
+    if (before.identity.recordMode === "capture") {
+      if (effectiveRequest.action !== "reply") {
+        throw new Error("CAPTURE_ACTION_NOT_ALLOWED");
+      }
+      const rawText = reservation.turn.rawText || effectiveRequest.rawText || "";
+      const assistantMessageId = randomUUID();
+      const responsePayload: EventCenteredAssistantPayload = {
+        naturalUnderstanding: "",
+        naturalResponse: buildCaptureAcknowledgement(rawText),
+        responseKind: "acknowledgement",
+        questionSpec: null,
+        checkpoint: null,
+        angleOutcome: null
+      };
+      const nextState: EventCenteredDialogueState = {
+        ...stateBeforeTurn,
+        phase: "event_recording",
+        reflectionReady: false,
+        activeAngle: null,
+        lastCompletedAngle: null,
+        currentQuestion: null,
+        currentQuestionIntent: null,
+        focusOptions: [],
+        focusSummary: "帮我记内容已保存",
+        pendingUnderstandingClaimId: null,
+        pendingAngleOutcomeRepairIds: [],
+        repairPendingAngles: []
+      };
+      await options?.onPhase?.("committing");
+      await options?.onDelta?.("response", responsePayload.naturalResponse);
+      const factWrites: JournalEventFactWrite[] = isEffectiveCaptureContent(rawText)
+        ? [{
+            operation: "create",
+            statement: rawText.trim(),
+            scope: "current_event",
+            stance: "affirmed",
+            kind: "event_detail",
+            origin: "user_expression",
+            pathAnchorMessageId: reservation.userMessageId,
+            evidence: [{
+              sourceTurnId: reservation.turn.id,
+              contextMessageId: null,
+              pathAnchorMessageId: reservation.userMessageId,
+              role: "direct_expression",
+              quote: rawText.trim()
+            }]
+          }]
+        : [];
+      await commitEventCenteredTurnUnderstanding({
+        userId,
+        eventId: reservation.eventId,
+        activeBranchSessionId: reservation.activeBranchSessionId,
+        branchStateId: reservation.branchStateId,
+        userTurnId: reservation.turn.id,
+        assistantMessage: {
+          id: assistantMessageId,
+          content: serializeEventCenteredAssistantPayload(responsePayload),
+          responseGroupId: assistantMessageId,
+          responseVersion: 1,
+          lastAssistantQuestion: null
+        },
+        facts: factWrites,
+        pendingClaim: null,
+        focusSummary: "帮我记内容已保存",
+        snapshotData: nextState,
+        trace: {
+          requestId: options?.requestId ?? null,
+          outputOrigin: "deterministic",
+          contextSnapshot: {
+            recordMode: "capture",
+            questionCount: 0,
+            providerCallCount: 0
+          },
+          finalOutput: {
+            responseKind: "acknowledgement",
+            questionCount: 0
+          },
+          pipelineDecisions: [{
+            kind: "capture_zero_question_acknowledgement",
+            providerCallCount: 0,
+            hiddenReasoningPersisted: false
+          }]
+        },
+        checks: {
+          eventBoundaryPassed: true,
+          factsHaveUserSource: true,
+          visibleUnderstandingMatchesClaim: true,
+          unsupportedClaimCount: 0
+        },
+        angleOutcome: null,
+        angleRepairResolutions: []
+      });
+      const workspace = await getEventCenteredInterviewWorkspace(
+        userId,
+        request.rootSessionId
+      );
+      if (!workspace) throw new Error("SESSION_NOT_FOUND");
+      await options?.onPhase?.("complete");
+      return { workspace, assistantPayload: responsePayload };
+    }
     await options?.onPhase?.("understanding");
     const state = turnContext.state;
     const answeredQuestionContext = resolveCurrentQuestionContext(

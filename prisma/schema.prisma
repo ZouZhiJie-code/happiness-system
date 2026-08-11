@@ -28,6 +28,11 @@ enum InterviewSessionMode {
   event_centered
 }
 
+enum InterviewRecordMode {
+  capture
+  chat
+}
+
 enum InterviewRole {
   user
   assistant
@@ -376,6 +381,7 @@ model InterviewSession {
   id                            String                                     @id @default(cuid())
   userId                        String
   mode                          InterviewSessionMode                       @default(dimension_legacy)
+  recordMode                    InterviewRecordMode                        @default(chat)
   dimension                     InterviewDimension?
   conversationSchemaVersion     Int                                        @default(1)
   rootSessionId                 String?
@@ -433,6 +439,7 @@ model InterviewSession {
   @@index([parentSessionId])
   @@index([activeBranchSessionId])
   @@index([mode, userId, entryDate, status])
+  @@index([mode, recordMode, userId, entryDate, status])
 }
 
 model JournalEvent {
