@@ -7,7 +7,7 @@
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
-- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`，新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `running 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项真人验收。质量与发布未裁决，约 `200` 轮以上容量优化继续排除。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
+- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，Vercel Linux 远程生成两套 Prisma Client 后，登录存储与 error logs 验收通过；新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `running 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项真人验收。质量与发布未裁决，约 `200` 轮以上容量优化继续排除。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
 - `2026-07-21` 历史生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
 - `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。
@@ -74,7 +74,7 @@
 - v2 diagnostic 已完成评测底座与两轮空内容诊断；response format 探针按精确授权完成 `6/6`，移除参数候选 No-Go；Thinking 模式探针按精确授权完成 `4/4`，high 与 disabled 均有效，主要影响因素未确认。产品负责人随后停止继续复现 DeepSeek 内部原因，确认 v3 使用 Thinking high 可见答案自动恢复。v3 deployment 为 `dpl_6ByMq3r9E8LvyTwZh3R87usLpro3`，执行指纹 `3b79fe68…70d23b`；A1 双轨迹完成后批次在 `1/12` 提前结束，消费 `8/40`。本组空内容与自动恢复均为 `0`，两边第 4 轮共同命中回答机会边界。v4 阶段 2→3 自然转场候选已完成本地静态验证，执行指纹 `0206fd34…b1d0a`；产品负责人已授权私有 Preview、新批次和最坏 `40` 次调用，deployment `dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV` 已 Ready。登录与 `0/12` 空白批次回读通过，模型调用仍为 `0`，可以开始 A1。浏览器标签修正版 `dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV` 已 Ready，并绑定固定别名 `xingfuxitong-gi088-v4-stage-transition.vercel.app`；当前已登录批次继续使用首次 deployment。Production 继续保持 `legacy + baseline`。
 - v5 High-only 候选完成私有 Preview 与 `0/12` 空白批次回读，未发生真人模型调用。v6 取消新轮次的单问号程序拦截与自动整理，保留问号观测并要求所有可见 ask 在结束轨迹前完成人工分类；当前共 `4` 项、活动分支仅 `high`、执行指纹 `a5042e97…c094d`、最坏调用预算 `48`。deployment `dpl_5Rq7gTnovApDY97b4pg8k7YJf33r` 已 Ready，固定入口为 `xingfuxitong-gi088-v6-single-focus.vercel.app`；专用评测库批次 `37517d91-a258-423a-bb26-a58c97357e68` 回读为 `0/4`、模型调用 `0`。v5 与更早 Preview 保持只读，Production 继续保持 `legacy + baseline`。
 - v8 批次 `cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60` 以 `1/4 early_stopped` 收口并获产品通过。v8r1 deployment `dpl_HPBafL2QmHd6UsUXQ8kWVbUvKJAQ` 目标为 Preview，状态 `READY`；页面为 `https://xingfuxitong-5l1ns4sci-zouzhijies-projects.vercel.app/preview/gi088-evaluation`。部署创建时，专用评测库 run `5123d795-5c19-408d-9b98-7767eaa7892c` 回读为 `running 0/12`、模型调用 `0`，执行指纹 `40da54f2…bf8f82`；随后 A1 真人运行确认控制意图误停的单例阻断。兼容迁移后只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均有效。该 Preview 与原 run 保持历史只读，Production 继续保持 `legacy + baseline`。
-- v8r2 最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 已 `READY`，URL 为 `https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`；run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`。初始化已使用绑定最终指纹的新 `clientOperationId`。旧预发布零内容 run 已行政 `early_stopped`，其零调用、零真人和质量未评测只作为脱敏排除记录。Production 保持 `legacy + baseline`。
+- v8r2 最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，URL 为 `https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`；部署源码修复 commit 为 `0a993afad1248e67a2863456d2c35b774bb2130f`，Vercel Linux 远程构建生成主库与评测库两套 Prisma Client。虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`。初始化已使用绑定最终指纹的新 `clientOperationId`。旧预发布零内容 run 已行政 `early_stopped`，其零调用、零真人和质量未评测只作为脱敏排除记录。Production 保持 `legacy + baseline`。
 
 #### 2026-07-21 访谈意图独立验收环境（历史记录）
 
@@ -171,9 +171,9 @@
 
 1. 在 Vercel 创建项目并连接当前仓库
 2. 把 preview 环境变量按 [`.env.preview.example`](../.env.preview.example) 填入平台；这里指 AI / 数据库类用户自定义变量，不再把 `APP_URL` 作为“无条件必须手填”的第一选择
-3. 确认 [package.json](../package.json) 保留 `postinstall: prisma generate`
-4. 确认根目录 [vercel.json](../vercel.json) 保留 `framework: "nextjs"`，避免项目后台残留 `Other` preset 时 preview 域名落到 `404`
-5. 确认 Vercel 的默认 build 命令保持 `next build`
+3. 确认 [package.json](../package.json) 保留主库与评测库两次 `prisma generate` 的 `postinstall`
+4. 确认根目录 [vercel.json](../vercel.json) 同时保留 `framework: "nextjs"` 和“生成两套 Prisma Client 后再执行 `pnpm run build`”的 `buildCommand`
+5. Preview 使用 Vercel Linux 远程构建；macOS 本机产物不进入 `vercel deploy --prebuilt`
 6. 首次部署前确认 `.vercelignore` 已排除 `.worktrees`、`.claude`、`.omx`
 7. 如果本次发布包含 `20260720210000_add_interview_intent_assessment` 或 `20260720223000_add_interview_response_regeneration`，先对目标数据库执行 `npx prisma migrate deploy`；Preview与Production当前均采用`enforce`。重新生成验收环境设置 `INTERVIEW_REGENERATION_ENABLED=true`。
 8. 等首个 preview 部署完成后：
@@ -251,8 +251,9 @@ npm run report:event-centered:board8 -- \
 ## 当前仓库的构建注意事项
 
 - 这个仓库使用 Prisma；在 Vercel 上如果只依赖默认依赖缓存，`Prisma Client` 可能不会自动重新生成。
-- 当前仓库已经通过 `postinstall: prisma generate` 解决这个问题；不要删掉这条脚本，否则 preview 构建可能在 `/_not-found` 的 page data 阶段报 `PrismaClientInitializationError`。
-- 当前仓库还用 [vercel.json](../vercel.json) 把 framework 固定为 `nextjs`；不要随手删掉，否则项目后台如果还停在 `Other` preset，新的 preview 可能重新回到“部署 Ready 但域名 `404`”。
+- 当前仓库保留 `postinstall` 生成两套 Prisma Client，并由 [vercel.json](../vercel.json) 的 `buildCommand` 在 `next build` 前再次生成。后一步负责避开 Vercel 依赖缓存，并保证主应用与 GI-088 评测 Client 同时进入当前 Linux 构建产物。
+- [vercel.json](../vercel.json) 继续把 framework 固定为 `nextjs`；该配置同时防止项目后台残留 `Other` preset 导致 Preview 域名在部署 `Ready` 后返回 `404`。
+- Preview 部署固定上传源码交给 Vercel Linux 远程构建。本机 `vercel build` 只用于本地检查；macOS 产物不再通过 `vercel deploy --prebuilt` 发布，避免把 `darwin-arm64` Prisma engine 带入 Linux 运行时。
 - 如果未来要在部署时顺带执行数据库迁移，再单独评估是否引入 `prisma migrate deploy`，不要和“先把 preview 构建打通”混成同一个步骤。
 
 ## 最小 smoke 范围

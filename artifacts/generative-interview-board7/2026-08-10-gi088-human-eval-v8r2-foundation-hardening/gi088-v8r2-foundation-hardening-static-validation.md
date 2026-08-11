@@ -7,7 +7,7 @@
 ## 不可变版本
 
 - Commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
-- Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
+- Behavior Build ID：`cfGovtoHY1ZF9Mk6RTvZa`（用于不可变行为构建证据；当前 Vercel Linux 远程部署身份见 Preview 回读）
 - Effective candidate：`0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6`
 - Dataset：`191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf`
 - Execution：`96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`
@@ -26,6 +26,15 @@
 | Preview build | `VERCEL_ENV=preview npm run build` | pass；63 routes |
 | Behavior manifest | `npx tsx scripts/check-gi088-behavior-manifest.ts --require-tracked` | pass；65 files |
 | 差异格式 | `git diff --check` | pass |
+
+## Preview 运行时打包修复
+
+- 修复提交：部署源码 `0a993afad1248e67a2863456d2c35b774bb2130f`；主工作区同内容提交 `483c613723693d576bd16da4fa4cf4b5795fe2e2`。
+- 构建合同：Vercel 在 `next build` 前重新生成主应用与 GI-088 评测两套 Prisma Client。
+- 云端构建：Vercel Linux 远程构建通过，完成 `63` 个页面／接口路由和全部 serverless functions。
+- 合同回归：`tests/unit/vercel-prisma-build-contract.test.ts` 为 `1/1` 通过，目标 ESLint 为 `0 warning`，全仓 typecheck 通过。
+- 运行时验收：虚构账号登录由受影响部署的 `503 AUTH_STORAGE_NOT_READY` 恢复为当前部署的 `401 INVALID_CREDENTIALS`；当前 deployment error logs 为 `0`。
+- 版本边界：评测行为文件保持不变，因此 Behavior manifest、分层指纹、Execution fingerprint 与现有 `0/12` run 继续有效。
 
 ## 行为与依赖锁定
 

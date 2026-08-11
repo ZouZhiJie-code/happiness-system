@@ -2,7 +2,7 @@
 
 ## 为什么停在 `0/12`
 
-v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全绿静态门、不可变版本和 Preview 部署。新的 High-only 批次已经以零模型调用初始化并回读为 `running 0/12`。下一步需要产品负责人完成 12 项 Thinking high 真人轨迹，自动技术通过继续只承担开门证据。
+v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全绿静态门、不可变版本和 Preview 部署。运行时打包已改为 Vercel Linux 远程生成两套 Prisma Client，登录存储初始化验证通过。新的 High-only 批次已经以零模型调用初始化并回读为 `running 0/12`。下一步需要产品负责人完成 12 项 Thinking high 真人轨迹，自动技术通过继续只承担开门证据。
 
 预发布阶段发现的 high-only 指标投影缺陷已在最终不可变 commit 中修正。旧预发布部署与旧初始化 run 已行政退役，正式当前证据只引用本目录记录的新版本。
 
@@ -11,8 +11,9 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 - 评测版本：`2026-08-10.gi088-human-eval-v8r2-foundation-hardening`
 - 不可变 commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
 - Execution fingerprint：`96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`
-- Preview deployment：`dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`
-- Preview URL：`https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`
+- Preview deployment：`dpl_YRUQitffCQH264xiksHpLMviQZLy`
+- Preview URL：`https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`
+- 运行时验收：虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`
 - 当前 run：`b816d468-e3c3-4459-a822-04f95b1e78cd`
 - 批次状态：`running / 0 of 12 / gate=pending / high_only / high`
 - 运行配置：`deepseek-v4-pro / Thinking high / json_object / provider_default`

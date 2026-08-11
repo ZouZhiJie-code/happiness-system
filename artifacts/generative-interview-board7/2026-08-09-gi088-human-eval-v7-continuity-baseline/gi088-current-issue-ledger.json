@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-10.gi088-current-issue-ledger-v9",
-  "status": "v8r2_preview_deployed_zero_of_twelve_initialized_waiting_human_validation",
+  "ledgerVersion": "2026-08-10.gi088-current-issue-ledger-v10",
+  "status": "v8r2_preview_runtime_verified_zero_of_twelve_initialized_waiting_human_validation",
   "currentQueueStage": "v8r2_final12_human_validation_pending",
   "sourceLedgers": [
     {
@@ -39,10 +39,13 @@
     "unreviewedTrajectoryCount": 0,
     "behaviorCommit": "5281bc53f2b04be9c31adb6d7f4710ac818883a8",
     "executionFingerprint": "96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c",
-    "buildId": "cfGovtoHY1ZF9Mk6RTvZa",
-    "previewDeploymentId": "dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9",
+    "behaviorBuildId": "cfGovtoHY1ZF9Mk6RTvZa",
+    "previewDeploymentId": "dpl_YRUQitffCQH264xiksHpLMviQZLy",
     "previewDeploymentStatus": "READY",
-    "previewUrl": "https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app",
+    "previewUrl": "https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app",
+    "deploymentSourceFixCommit": "0a993afad1248e67a2863456d2c35b774bb2130f",
+    "workspaceCherryPickCommit": "483c613723693d576bd16da4fa4cf4b5795fe2e2",
+    "runtimePackaging": "vercel_remote_linux_build_generated_both_prisma_clients",
     "artifactPath": "../2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md",
     "qualityDecision": "pending_human_validation",
     "releaseDecision": "not_authorized",
@@ -54,6 +57,17 @@
     "status": "resolved_and_verified",
     "confirmedRootCause": "固定 clientOperationId 会在旧 run 终态后重放旧 run，无法证明创建的是全新 0/12 run。",
     "requiredOutcome": "初始化操作 ID 已绑定最终 Execution fingerprint；不可变版本、全绿静态门、Preview READY 与全新 running / 0 of 12 / gate=pending / high_only / calls=0 回读均已验证。"
+  },
+  "runtimePackagingIncident": {
+    "issueId": "V8R2-PACKAGING-01",
+    "priority": "P0",
+    "status": "resolved_and_verified",
+    "affectedDeploymentId": "dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9",
+    "affectedUrl": "https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app",
+    "symptom": "虚构账号 POST login 返回 503 AUTH_STORAGE_NOT_READY，数据库查询尚未开始。",
+    "confirmedRootCause": "本机 --prebuilt 产物只携带 darwin-arm64 Prisma engine，Vercel Linux 运行时无法初始化 Prisma Client。",
+    "resolution": "Vercel 远程 Linux 构建在应用 build 前同时生成主库与评测库 Prisma Client。",
+    "verification": "新 deployment 的虚构账号 POST login 返回 401 INVALID_CREDENTIALS，deployment error logs 为 0；run 回读继续保持 ordinal=2 / revision=0 / running / 0/12 / gate=pending / tasks=12 / active=null / calls=0。"
   },
   "currentRunConclusion": {
     "scope": "historical_read_only_v8r1",

@@ -21,7 +21,7 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 为 `READY`；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
+- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
@@ -202,7 +202,7 @@ AI 质量发布与效果观察专项验证：
 
 1. v8r1 run 保持只读；专用评测库快照已经确认 A1 完成、A2 活动、两次 Provider 调用均有效。完整用户内容继续只保存在私有运行目录。
 2. v8r2 已在同一个开发周期收口高精度控制决策、调用结果落账、陈旧快照保护、人工证据治理、run 生命周期、工作台恢复和八项 Preview 开门差额。
-3. 最终初始化幂等、全量验证、行为清单、不可变 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 和私有 Preview 已收口；deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9` 为 `READY`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。
+3. 最终初始化幂等、全量验证、行为清单、不可变 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 和私有 Preview 已收口；当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。
 4. 当前工作流暂停等待产品负责人完成 12 项 Thinking high 真人验收。旧预发布 v8r2 零内容 run 已行政 `early_stopped` 并作为脱敏排除记录；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
 
 ### 7.1 上线后收集真实反馈

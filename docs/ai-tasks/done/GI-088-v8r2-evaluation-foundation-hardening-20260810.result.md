@@ -22,10 +22,20 @@ v8r1 A1 已确认把事件内容里的负担表达误判为停止当前访谈，
 
 - 行为提交：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
 - Execution fingerprint：`96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`
-- Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
-- Preview deployment：`dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`
-- Preview URL：`https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`
+- Behavior Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
+- Deployment source fix commit：`0a993afad1248e67a2863456d2c35b774bb2130f`
+- 主工作区同内容 commit：`483c613723693d576bd16da4fa4cf4b5795fe2e2`
+- Preview deployment：`dpl_YRUQitffCQH264xiksHpLMviQZLy`
+- Preview URL：`https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`
 - 新 run：`b816d468-e3c3-4459-a822-04f95b1e78cd`
+
+## 运行时打包事故闭环
+
+- 受影响 deployment `dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`（`https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`）由本机 `--prebuilt` 产出，只携带 `darwin-arm64` Prisma engine。
+- 虚构账号 `POST login` 返回 `503 AUTH_STORAGE_NOT_READY`；故障发生在 Prisma Client 初始化阶段，数据库查询尚未开始。
+- 修复后的 Vercel Linux 远程构建在应用 build 前生成主库与评测库两套 Prisma Client。
+- 新 deployment 使用虚构账号 `POST login` 返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。
+- 行为 commit、Execution fingerprint 与现有 `0/12` run 保持不变。
 
 ## 验证
 
@@ -37,6 +47,7 @@ v8r1 A1 已确认把事件内容里的负担表达误判为停止当前访谈，
 - 最终提交真实 Preview 隔离库：`4/4` migrations、Prisma 集成 `3/3`，临时 schema 删除后残留 `0`。
 - 历史兼容：v1～v8r1 共 `13` 个冻结版本的 session/export 矩阵通过；v8r1 state SHA 在迁移前后保持一致。
 - Preview：deployment `READY`；`start / turn / retry` 三条核心路由均为 `120s`；未认证 GET 返回 SSO `302`、`no-store`、`noindex`。
+- Preview 登录存储：虚构账号请求返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。
 - 新 run 回读：ordinal `2`、revision `0`、`running`、`0/12`、`gate=pending`、`high_only / high`、Thinking enabled、reasoning high、活动任务为空、调用账本为 `0`、target coverage 为 `0/12`。
 
 ## 安全边界

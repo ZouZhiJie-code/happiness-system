@@ -2,16 +2,28 @@
 
 ## 为什么该批次可以交给产品负责人
 
-Preview 来自通过全绿静态门的不可变 commit，线上回读的版本、指纹、运行配置和构建身份与本地证据一致。新批次只执行零模型初始化，当前保持 `0/12`，因此真人体验证据可以从干净起点开始累计。
+Preview 的产品行为来自通过全绿静态门的不可变行为 commit；Vercel 远程 Linux 构建同时生成两套 Prisma Client，运行时存储初始化已经验收。线上回读的版本、指纹和运行配置与本地证据一致。新批次只执行零模型初始化，当前保持 `0/12`，因此真人体验证据可以从干净起点开始累计。
 
 ## 部署身份
 
 - Commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
-- Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
-- Deployment ID：`dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`
-- URL：`https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`
+- Behavior Build ID：`cfGovtoHY1ZF9Mk6RTvZa`
+- Deployment source fix commit：`0a993afad1248e67a2863456d2c35b774bb2130f`
+- 主工作区同内容 commit：`483c613723693d576bd16da4fa4cf4b5795fe2e2`
+- Deployment ID：`dpl_YRUQitffCQH264xiksHpLMviQZLy`
+- URL：`https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`
 - Target：`preview`
 - State：`READY`
+
+## 运行时打包事故与修复验收
+
+- 受影响 deployment：`dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9`
+- 受影响 URL：`https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app`
+- 现象：虚构账号 `POST login` 返回 `503 AUTH_STORAGE_NOT_READY`，故障发生在 Prisma Client 初始化阶段，数据库查询尚未开始。
+- 根因：本机 `--prebuilt` 产物只携带 `darwin-arm64` Prisma engine，无法在 Vercel Linux 运行时初始化。
+- 修复：`vercel.json` 在应用 build 前同时执行主库与评测库的 `prisma generate`，两套 Client 均由 Vercel Linux 远程构建。
+- 验收：新 deployment 使用虚构账号 `POST login` 返回 `401 INVALID_CREDENTIALS`，表明认证存储已进入正常查询路径；deployment error logs 为 `0`。
+- 版本连续性：行为 commit、Execution fingerprint 和 run 身份保持不变。
 
 ## 线上版本与指纹
 
@@ -59,6 +71,8 @@ Preview 来自通过全绿静态门的不可变 commit，线上回读的版本�
 
 初始化脚本验证了 Preview 数据库身份与预期身份；Provider 实例化、模型授权和 Call Ledger 创建均为 `0`。
 
+运行时修复后再次只读回读，run 继续保持 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / tasks=12 / active=null / calls=0`，Execution fingerprint 继续为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。
+
 ## 发布边界
 
 - Production changed：`false`
@@ -69,4 +83,4 @@ Preview 来自通过全绿静态门的不可变 commit，线上回读的版本�
 - 隐藏推理持久化：`0`
 - 容量超过约 200 轮的优化：`excluded`
 
-预发布指标缺陷对应的旧 deployment 与旧 run 已行政退役，本页只承载最终当前证据。
+预发布指标缺陷对应的旧 run 已行政退役；受打包事故影响的 deployment 也已退出当前入口。本页分别保留事故历史与最终当前证据。
