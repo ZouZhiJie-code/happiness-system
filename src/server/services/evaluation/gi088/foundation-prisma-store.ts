@@ -35,6 +35,7 @@ import {
   type Gi088FoundationRunMutation,
   type Gi088FoundationRunRecord
 } from "./foundation-store";
+import { resolveGi088EvaluationDatabaseSchema } from "./access";
 import { getGi088PrismaClient } from "./prisma-store";
 
 const RUN_STATUSES = ["running", "sealed", "early_stopped"] as const;
@@ -336,10 +337,15 @@ async function lockScope(
 
 async function lockRun(
   transaction: Prisma.TransactionClient,
-  runId: string
+  runId: string,
+  schema: string
 ) {
+  if (!/^[a-z][a-z0-9_]{0,62}$/u.test(schema)) {
+    throw new Gi088FoundationStoreError("GI088_EVALUATION_SCHEMA_INVALID");
+  }
+  const table = Prisma.raw(`"${schema}"."gi088_evaluation_batches"`);
   const rows = await transaction.$queryRaw<Array<{ id: string }>>(
-    Prisma.sql`SELECT "id" FROM "gi088_evaluation_batches" WHERE "id" = ${runId} FOR UPDATE`
+    Prisma.sql`SELECT "id" FROM ${table} WHERE "id" = ${runId} FOR UPDATE`
   );
   if (rows.length !== 1) {
     throw new Gi088FoundationStoreError("GI088_RUN_NOT_FOUND");
@@ -428,6 +434,7 @@ function operationCreateData(
 
 async function reserveCallInTransaction(input: {
   transaction: Prisma.TransactionClient;
+  schema: string;
   mutation: Gi088FoundationRunMutation;
   operation: Gi088FoundationOperationIdentity;
   call: Gi088FoundationCallReservation;
@@ -436,7 +443,7 @@ async function reserveCallInTransaction(input: {
   if (operation.runId !== mutation.runId || call.runId !== mutation.runId) {
     throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
   }
-  await lockRun(transaction, mutation.runId);
+  await lockRun(transaction, mutation.runId, input.schema);
   const run = await transaction.gi088EvaluationBatch.findUnique({
     where: { id: mutation.runId }
   });
@@ -530,6 +537,7 @@ async function reserveCallInTransaction(input: {
 
 async function commitRunWithCallTransitionInTransaction(input: {
   transaction: Prisma.TransactionClient;
+  schema: string;
   mutation: Gi088FoundationRunMutation;
   operation: Gi088FoundationOperationIdentity;
   resultSnapshot: Gi088FoundationJson;
@@ -549,7 +557,7 @@ async function commitRunWithCallTransitionInTransaction(input: {
   for (const status of input.expectedStatuses) {
     assertGi088FoundationCallTransition(status, input.nextStatus);
   }
-  await lockRun(input.transaction, input.mutation.runId);
+  await lockRun(input.transaction, input.mutation.runId, input.schema);
   const [run, call, existingOperation] = await Promise.all([
     input.transaction.gi088EvaluationBatch.findUnique({
       where: { id: input.mutation.runId }
@@ -628,7 +636,10 @@ async function commitRunWithCallTransitionInTransaction(input: {
 
 export class Gi088PrismaFoundationStore
 implements Gi088EvaluationFoundationStore {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(
+    private readonly client: PrismaClient,
+    private readonly schema = resolveGi088EvaluationDatabaseSchema()
+  ) {}
 
   async listRuns(input: {
     ownerUserId: string;
@@ -859,7 +870,12 @@ implements Gi088EvaluationFoundationStore {
     call: Gi088FoundationCallReservation;
   }) {
     const result = await this.client.$transaction(
-      (transaction) => reserveCallInTransaction({ transaction, ...input }),
+      (transaction) =>
+        reserveCallInTransaction({
+          transaction,
+          schema: this.schema,
+          ...input
+        }),
       GI088_FOUNDATION_TRANSACTION_OPTIONS
     );
     return {
@@ -1036,7 +1052,7 @@ implements Gi088EvaluationFoundationStore {
     };
   }) {
     const result = await this.client.$transaction(async (transaction) => {
-      await lockRun(transaction, input.mutation.runId);
+      await lockRun(transaction, input.mutation.runId, this.schema);
       const [run, call] = await Promise.all([
         transaction.gi088EvaluationBatch.findUnique({
           where: { id: input.mutation.runId }
@@ -1147,7 +1163,7 @@ implements Gi088EvaluationFoundationStore {
       if (input.operation.runId !== input.mutation.runId) {
         throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
       }
-      await lockRun(transaction, input.mutation.runId);
+      await lockRun(transaction, input.mutation.runId, this.schema);
       const run = await transaction.gi088EvaluationBatch.findUnique({
         where: { id: input.mutation.runId }
       });
@@ -1222,6 +1238,7 @@ implements Gi088EvaluationFoundationStore {
       (transaction) =>
         commitRunWithCallTransitionInTransaction({
           transaction,
+          schema: this.schema,
           ...input,
           nextStatus: "superseded"
         }),
@@ -1246,6 +1263,7 @@ implements Gi088EvaluationFoundationStore {
       (transaction) =>
         commitRunWithCallTransitionInTransaction({
           transaction,
+          schema: this.schema,
           ...input,
           expectedStatuses: ["dispatched"],
           nextStatus: "interrupted_unknown_dispatch"
@@ -1278,7 +1296,7 @@ implements Gi088EvaluationFoundationStore {
       ) {
         throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
       }
-      await lockRun(transaction, input.mutation.runId);
+      await lockRun(transaction, input.mutation.runId, this.schema);
       const run = await transaction.gi088EvaluationBatch.findUnique({
         where: { id: input.mutation.runId }
       });
@@ -1455,7 +1473,7 @@ implements Gi088EvaluationFoundationStore {
       ) {
         throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
       }
-      await lockRun(transaction, input.mutation.runId);
+      await lockRun(transaction, input.mutation.runId, this.schema);
       const run = await transaction.gi088EvaluationBatch.findUnique({
         where: { id: input.mutation.runId }
       });
@@ -1561,7 +1579,7 @@ implements Gi088EvaluationFoundationStore {
       ) {
         throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
       }
-      await lockRun(transaction, input.mutation.runId);
+      await lockRun(transaction, input.mutation.runId, this.schema);
       const [run, intervention, existingOperation] = await Promise.all([
         transaction.gi088EvaluationBatch.findUnique({
           where: { id: input.mutation.runId }
@@ -1753,7 +1771,7 @@ implements Gi088EvaluationFoundationStore {
   }) {
     const payloadHash = createGi088FoundationPayloadHash(input.payload);
     return this.client.$transaction(async (transaction) => {
-      await lockRun(transaction, input.runId);
+      await lockRun(transaction, input.runId, this.schema);
       const run = await transaction.gi088EvaluationBatch.findFirst({
         where: { id: input.runId, ownerUserId: input.ownerUserId }
       });

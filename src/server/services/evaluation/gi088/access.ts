@@ -6,6 +6,12 @@ import {
 export const GI088_EVALUATION_ENABLE_VALUE = "I_UNDERSTAND" as const;
 export const GI088_EVALUATION_SCHEMA = "gi088_evaluation_v0" as const;
 
+export function resolveGi088EvaluationDatabaseSchema(
+  env: NodeJS.ProcessEnv = process.env
+) {
+  return env.GI088_EVALUATION_DATABASE_SCHEMA?.trim() || GI088_EVALUATION_SCHEMA;
+}
+
 function normalizedSecretValue(value: string | undefined) {
   const trimmed = value?.trim() ?? "";
   return trimmed === '""' || trimmed === "''" ? "" : trimmed;
@@ -14,8 +20,7 @@ function normalizedSecretValue(value: string | undefined) {
 export function resolveGi088EvaluationDatabaseUrl(
   env: NodeJS.ProcessEnv = process.env
 ) {
-  const expectedSchema =
-    env.GI088_EVALUATION_DATABASE_SCHEMA?.trim() || GI088_EVALUATION_SCHEMA;
+  const expectedSchema = resolveGi088EvaluationDatabaseSchema(env);
   const source =
     normalizedSecretValue(env.EVALUATION_DATABASE_URL) ||
     normalizedSecretValue(env.EVALUATION_DATABASE_URL_UNPOOLED);
@@ -73,8 +78,7 @@ export function validateGi088EvaluationDatabaseUrl(
   } catch {
     throw new Gi088AccessError("GI088_EVALUATION_DATABASE_URL_INVALID", 503);
   }
-  const expectedSchema =
-    env.GI088_EVALUATION_DATABASE_SCHEMA?.trim() || GI088_EVALUATION_SCHEMA;
+  const expectedSchema = resolveGi088EvaluationDatabaseSchema(env);
   if (url.searchParams.get("schema") !== expectedSchema) {
     throw new Gi088AccessError("GI088_EVALUATION_DATABASE_SCHEMA_MISMATCH", 503);
   }

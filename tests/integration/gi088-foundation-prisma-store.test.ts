@@ -79,17 +79,19 @@ describeIntegration("GI-088 v8r2 Prisma foundation store", () => {
 
   beforeAll(async () => {
     const { source, schema } = resolveIsolatedPreviewTestUrl();
+    const runtimeUrl = new URL(source);
+    runtimeUrl.searchParams.delete("options");
     client = new PrismaClient({
-      datasources: { db: { url: source } },
+      datasources: { db: { url: runtimeUrl.toString() } },
       log: ["error"]
     });
     const rows = await client.$queryRaw<Array<{ schema: string }>>`
       SELECT current_schema() AS schema
     `;
-    if (rows[0]?.schema !== schema) {
-      throw new Error("GI088_FOUNDATION_TEST_SCHEMA_RUNTIME_MISMATCH");
+    if (rows[0]?.schema === schema) {
+      throw new Error("GI088_FOUNDATION_TEST_DEFAULT_SCHEMA_REQUIRED");
     }
-    store = new Gi088PrismaFoundationStore(client);
+    store = new Gi088PrismaFoundationStore(client, schema);
   }, PRISMA_INTEGRATION_TEST_TIMEOUT_MS);
 
   afterAll(async () => {
