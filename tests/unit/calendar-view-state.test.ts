@@ -10,7 +10,7 @@ import {
 } from "@/features/calendar/view-state";
 
 describe("calendar view state helpers", () => {
-  it("normalizes empty search params to month view and today", () => {
+  it("normalizes empty search params to today's journal day view", () => {
     expect(
       normalizeCalendarSearchParams({
         view: null,
@@ -18,16 +18,17 @@ describe("calendar view state helpers", () => {
         today: "2026-05-02"
       })
     ).toEqual({
-      view: "month",
+      view: "day",
       date: "2026-05-02",
-      href: "/calendar?view=month&date=2026-05-02"
+      href: "/calendar?view=day&date=2026-05-02"
     });
   });
 
-  it("accepts week and day views while defaulting unknown values to month", () => {
+  it("accepts month and week views while defaulting unknown values to day", () => {
+    expect(normalizeCalendarView("month")).toBe("month");
     expect(normalizeCalendarView("week")).toBe("week");
     expect(normalizeCalendarView("day")).toBe("day");
-    expect(normalizeCalendarView("something-else")).toBe("month");
+    expect(normalizeCalendarView("something-else")).toBe("day");
   });
 
   it("keeps the event reading mode explicit while legacy remains the default", () => {

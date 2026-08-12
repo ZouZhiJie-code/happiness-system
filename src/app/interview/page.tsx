@@ -61,6 +61,9 @@ export default async function InterviewPage({ searchParams }: InterviewPageProps
   const mode = typeof resolvedSearchParams.mode === "string" ? resolvedSearchParams.mode : null;
   const panel = typeof resolvedSearchParams.panel === "string" ? resolvedSearchParams.panel : null;
   const eventEntryId = typeof resolvedSearchParams.eventEntryId === "string" ? resolvedSearchParams.eventEntryId : null;
+  const recordMode = resolvedSearchParams.recordMode === "capture" || resolvedSearchParams.recordMode === "chat"
+    ? resolvedSearchParams.recordMode
+    : null;
   const requestedEntryDate = typeof resolvedSearchParams.entryDate === "string" ? resolvedSearchParams.entryDate : null;
   const todayEntryDate = getTodayEntryDate();
   const entryDate = requestedEntryDate && isEntryDateString(requestedEntryDate) ? requestedEntryDate : todayEntryDate;
@@ -101,6 +104,7 @@ export default async function InterviewPage({ searchParams }: InterviewPageProps
           initialSessionId={sessionId}
           initialJournalPanelOpen={panel === "journal"}
           initialEventEntryId={eventEntryId}
+          initialRecordMode={recordMode}
           writeEnabled={eventCenteredWriteEnabled}
         />
       </Suspense>

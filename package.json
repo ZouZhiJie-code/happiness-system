@@ -27,6 +27,7 @@
     "eval:gi088:probe:ark:run": "vite-node -c vitest.config.ts scripts/run-gi088-ark-platform-probe.ts --execute",
     "eval:gi088:probe:ark:e1-correction:inspect": "vite-node -c vitest.config.ts scripts/run-gi088-ark-e1-timeout-correction.ts",
     "eval:gi088:probe:ark:e1-correction:run": "vite-node -c vitest.config.ts scripts/run-gi088-ark-e1-timeout-correction.ts --execute",
+    "test:journal-preview": "vitest run tests/unit/journal-preview-service.test.ts tests/unit/journal-preview-api.test.ts",
     "runtime-env:readback": "node scripts/runtime-env-readback.mjs",
     "acceptance:ai-quality:seed": "node scripts/seed-ai-quality-acceptance.mjs",
     "start": "next start",

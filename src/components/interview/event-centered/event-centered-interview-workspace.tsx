@@ -5,42 +5,33 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActionButton, Surface } from "@/components/ui";
 import {
   EventCenteredDialogueWorkspaceView,
+  EventCenteredStartWorkspaceView,
   type EventCenteredDialogueTab,
   type EventCenteredDialogueWorkspaceAction
 } from "@/components/interview/event-centered/event-centered-dialogue-workspace-view";
+import { useEventCenteredInterviewChromeOptional } from "@/components/interview/event-centered/event-centered-interview-chrome-context";
 import {
   createEventCenteredClientTurnId,
-  createEventJournalOperationId,
   EventCenteredWorkspaceRequestError,
-  generateEventJournal,
   ensureBoard8Gi066ReviewSession,
-  getEventJournalEntry,
   getEventCenteredSessionTabs,
   getEventCenteredWorkspace,
   respondInEventCenteredWorkspace,
-  saveEventJournalEntry,
   startEventCenteredWorkspace,
-  updateEventJournalEntry,
   type EventCenteredWorkspaceIssue
 } from "@/features/interview/event-centered/workspace-client";
 import {
-  clearEventCenteredJournalOperation,
   clearEventCenteredWorkspaceOutbox,
   readEventCenteredComposerDraft,
-  readEventCenteredJournalOperation,
   readEventCenteredWorkspaceOutbox,
   writeEventCenteredComposerDraft,
-  writeEventCenteredJournalOperation,
   writeEventCenteredWorkspaceOutbox,
-  type EventCenteredJournalOperationRecord,
   type EventCenteredWorkspaceOutboxRecord
 } from "@/features/interview/event-centered/workspace-storage";
-import { isEventCenteredJournalRequestText } from "@/features/interview/event-centered/thought-question-policy";
 import type {
   EventCenteredRespondRequest,
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
-import type { JournalEventEntryRecord } from "@/types/journal-event-entry";
 
 const EVENT_CENTERED_MODE = "event-centered";
 
@@ -96,17 +87,19 @@ async function getEventTabs(entryDate: string): Promise<EventCenteredDialogueTab
 function updateWorkspaceAddress(input: {
   entryDate: string;
   sessionId: string;
-  journalOpen: boolean;
-  eventEntryId: string | null;
 }) {
   if (typeof window === "undefined") return;
   const href = buildEventCenteredWorkspaceHref({
     entryDate: input.entryDate,
-    sessionId: input.sessionId,
-    panel: input.journalOpen ? "journal" : undefined,
-    eventEntryId: input.eventEntryId
+    sessionId: input.sessionId
   });
   window.history.replaceState(window.history.state, "", href);
+}
+
+function updateWorkspaceStartAddress(entryDate: string) {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams({ mode: EVENT_CENTERED_MODE, entryDate });
+  window.history.replaceState(window.history.state, "", `/interview?${params.toString()}`);
 }
 
 function requestForAction(input: {
@@ -177,8 +170,7 @@ function canReuseOutbox(input: {
 export function EventCenteredInterviewWorkspace({
   entryDate,
   initialSessionId = null,
-  initialJournalPanelOpen = false,
-  initialEventEntryId = null,
+  initialRecordMode = null,
   writeEnabled = true,
   syncAddress = true,
   layout = "viewport",
@@ -189,6 +181,7 @@ export function EventCenteredInterviewWorkspace({
   initialSessionId?: string | null;
   initialJournalPanelOpen?: boolean;
   initialEventEntryId?: string | null;
+  initialRecordMode?: "capture" | "chat" | null;
   writeEnabled?: boolean;
   syncAddress?: boolean;
   /** 标准访谈固定在可用视口内；嵌入评审页时交由外层确定高度。 */
@@ -201,19 +194,19 @@ export function EventCenteredInterviewWorkspace({
   const [workspace, setWorkspace] = useState<EventCenteredWorkspaceSession | null>(null);
   const [tabs, setTabs] = useState<EventCenteredDialogueTab[]>([]);
   const [draft, setDraft] = useState("");
-  const [journalOpen, setJournalOpen] = useState(initialJournalPanelOpen);
-  const [journalEventEntryId, setJournalEventEntryId] = useState<string | null>(initialEventEntryId);
-  const [journalEntry, setJournalEntry] = useState<JournalEventEntryRecord | null>(null);
-  const [journalGenerating, setJournalGenerating] = useState(false);
-  const [journalNotice, setJournalNotice] = useState<WorkspaceNotice | null>(null);
   const [notice, setNotice] = useState<WorkspaceNotice | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingRecordMode, setPendingRecordMode] = useState<"capture" | "chat" | null>(null);
   const [loading, setLoading] = useState(true);
   const [switchingSession, setSwitchingSession] = useState(false);
   const [streamPreview, setStreamPreview] = useState<StreamPreview | null>(null);
   const [outbox, setOutbox] = useState<EventCenteredWorkspaceOutboxRecord | null>(null);
+  const [completionHandoffSessionId, setCompletionHandoffSessionId] = useState<string | null>(null);
   const [previewAuthReady, setPreviewAuthReady] = useState(!previewAuth);
-  const resumedJournalOperationRef = useRef<string | null>(null);
+  const consumedRecordModeKeyRef = useRef<string | null>(null);
+  // 访谈工作区也会被独立评审壳层复用；没有全站导航时继续保持可渲染。
+  const interviewChrome = useEventCenteredInterviewChromeOptional();
+  const setInterviewChromeState = interviewChrome?.setState;
   const workspaceLayoutClass = layout === "viewport"
     ? "flex h-[calc(100dvh-var(--site-header-viewport-offset))] min-h-0 flex-col"
     : "flex min-h-0 flex-1 flex-col";
@@ -237,9 +230,12 @@ export function EventCenteredInterviewWorkspace({
     if (sessionId) setSwitchingSession(true);
     setNotice(null);
     try {
-      const nextWorkspace = sessionId
-        ? await getEventCenteredWorkspace(sessionId)
-        : await startEventCenteredWorkspace(entryDate);
+      if (!sessionId) {
+        setWorkspace(null);
+        await refreshTabs();
+        return;
+      }
+      const nextWorkspace = await getEventCenteredWorkspace(sessionId);
       setWorkspace(nextWorkspace);
       await refreshTabs();
     } catch (error) {
@@ -249,17 +245,40 @@ export function EventCenteredInterviewWorkspace({
       setLoading(false);
       setSwitchingSession(false);
     }
-  }, [entryDate, refreshTabs, writeEnabled]);
+  }, [refreshTabs, writeEnabled]);
+
+  const startEvent = useCallback(async (recordMode: "capture" | "chat") => {
+    if (busy || !writeEnabled) return;
+    setBusy(true);
+    setPendingRecordMode(recordMode);
+    setCompletionHandoffSessionId(null);
+    setNotice(null);
+    try {
+      const nextWorkspace = await startEventCenteredWorkspace(entryDate, recordMode);
+      setWorkspace(nextWorkspace);
+      setRequestedSessionId(nextWorkspace.rootSessionId);
+      setDraft("");
+      setOutbox(null);
+      if (syncAddress) {
+        updateWorkspaceAddress({
+          entryDate,
+          sessionId: nextWorkspace.rootSessionId
+        });
+      }
+      await refreshTabs();
+    } catch (error) {
+      setNotice(toWorkspaceNotice(error));
+    } finally {
+      setBusy(false);
+      setPendingRecordMode(null);
+    }
+  }, [busy, entryDate, refreshTabs, syncAddress, writeEnabled]);
 
   useEffect(() => {
     setRequestedSessionId(initialSessionId);
-    setJournalOpen(initialJournalPanelOpen);
-    setJournalEventEntryId(initialEventEntryId);
-    setJournalEntry(null);
-    setJournalGenerating(false);
-    setJournalNotice(null);
     setDraft("");
-  }, [entryDate, initialEventEntryId, initialJournalPanelOpen, initialSessionId]);
+    setCompletionHandoffSessionId(null);
+  }, [entryDate, initialSessionId]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -290,29 +309,6 @@ export function EventCenteredInterviewWorkspace({
   }, [workspace?.activeBranchSessionId, workspace?.rootSessionId]);
 
   useEffect(() => {
-    const entryId = workspace?.journal.entryId ?? journalEventEntryId;
-    if (!entryId) {
-      if (workspace?.journal.status !== "generating") setJournalEntry(null);
-      return;
-    }
-    let active = true;
-    setJournalEventEntryId(entryId);
-    void getEventJournalEntry(entryId)
-      .then((entry) => {
-        if (!active) return;
-        setJournalEntry(entry);
-        setJournalNotice(null);
-      })
-      .catch((error) => {
-        if (!active) return;
-        setJournalNotice(toWorkspaceNotice(error));
-      });
-    return () => {
-      active = false;
-    };
-  }, [journalEventEntryId, workspace?.journal.entryId, workspace?.journal.status]);
-
-  useEffect(() => {
     if (!previewAuth) {
       setPreviewAuthReady(true);
       return;
@@ -335,8 +331,24 @@ export function EventCenteredInterviewWorkspace({
 
   useEffect(() => {
     if (previewAuth && !previewAuthReady) return;
-    void loadWorkspace(requestedSessionId);
-  }, [loadWorkspace, previewAuth, previewAuthReady, requestedSessionId]);
+    if (requestedSessionId) {
+      // 创建记录后 workspace 已经是最新结果，等待后续刷新时不要再发起一次读取。
+      if (workspace?.rootSessionId === requestedSessionId) return;
+      void loadWorkspace(requestedSessionId);
+      return;
+    }
+    if (initialRecordMode) {
+      const recordModeKey = `${entryDate}:${initialRecordMode}`;
+      if (consumedRecordModeKeyRef.current === recordModeKey) {
+        void loadWorkspace(null);
+        return;
+      }
+      consumedRecordModeKeyRef.current = recordModeKey;
+      void startEvent(initialRecordMode);
+      return;
+    }
+    void loadWorkspace(null);
+  }, [entryDate, initialRecordMode, loadWorkspace, previewAuth, previewAuthReady, requestedSessionId, startEvent, workspace?.rootSessionId]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -347,11 +359,9 @@ export function EventCenteredInterviewWorkspace({
     if (!workspace || !syncAddress) return;
     updateWorkspaceAddress({
       entryDate,
-      sessionId: workspace.rootSessionId,
-      journalOpen,
-      eventEntryId: journalEventEntryId
+      sessionId: workspace.rootSessionId
     });
-  }, [entryDate, journalEventEntryId, journalOpen, syncAddress, workspace]);
+  }, [entryDate, syncAddress, workspace]);
 
   const canCreateEvent = Boolean(
     writeEnabled &&
@@ -403,26 +413,47 @@ export function EventCenteredInterviewWorkspace({
         onSession: setWorkspace
       });
       setWorkspace(nextWorkspace);
+      if (
+        action.action === "exit_event" &&
+        (nextWorkspace.sessionStatus === "completed" || nextWorkspace.sessionStatus === "abandoned") &&
+        (nextWorkspace.eventStatus === "completed" || nextWorkspace.eventStatus === "abandoned")
+      ) {
+        setCompletionHandoffSessionId(nextWorkspace.rootSessionId);
+      }
       setStreamPreview(null);
+      setNotice(null);
       clearEventCenteredWorkspaceOutbox(scope);
       setOutbox(null);
       await refreshTabs();
     } catch (error) {
       setNotice(toWorkspaceNotice(error));
-      setStreamPreview(null);
       if (accepted) {
         try {
           const recoveredWorkspace = await getEventCenteredWorkspace(workspace.rootSessionId);
           setWorkspace(recoveredWorkspace);
+          setNotice(null);
+          setStreamPreview((current) => recoveredWorkspace.recovery.pendingTurn
+            ? {
+                phase: "recovery_failed",
+                summary: current?.summary ?? "",
+                response: ""
+              }
+            : null);
           await refreshTabs();
           return;
         } catch {
+          setStreamPreview((current) => ({
+            phase: "recovery_failed",
+            summary: current?.summary ?? "",
+            response: ""
+          }));
           const acceptedOutbox = { ...nextOutbox, status: "accepted" as const };
           writeEventCenteredWorkspaceOutbox(scope, acceptedOutbox);
           setOutbox(acceptedOutbox);
           return;
         }
       }
+      setStreamPreview(null);
       if (action.action !== "resume_turn") {
         const failedOutbox = { ...nextOutbox, status: "failed" as const };
         writeEventCenteredWorkspaceOutbox(scope, failedOutbox);
@@ -434,167 +465,12 @@ export function EventCenteredInterviewWorkspace({
     }
   }, [busy, outbox, refreshTabs, switchingSession, workspace, writeEnabled]);
 
-  const generateCurrentJournal = useCallback(async (
-    recoveryOperation?: EventCenteredJournalOperationRecord | null
-  ) => {
-    if (!workspace || journalGenerating || switchingSession || !writeEnabled) return;
-    const scope = scopeForWorkspace(workspace);
-    const stored = recoveryOperation ?? readEventCenteredJournalOperation(scope);
-    const canResumeStored = Boolean(
-      stored &&
-        stored.rootSessionId === workspace.rootSessionId &&
-        stored.baseBranchSessionId === workspace.activeBranchSessionId &&
-        stored.baseMessageSequence === workspace.latestMessageSequence
-    );
-    const operation: EventCenteredJournalOperationRecord = canResumeStored && stored
-      ? { ...stored, status: "submitting" }
-      : {
-          rootSessionId: workspace.rootSessionId,
-          baseBranchSessionId: workspace.activeBranchSessionId,
-          baseMessageSequence: workspace.latestMessageSequence,
-          clientOperationId: createEventJournalOperationId(),
-          status: "submitting",
-          createdAt: new Date().toISOString()
-        };
-
-    writeEventCenteredJournalOperation(operation);
-    setJournalOpen(true);
-    setJournalGenerating(true);
-    setJournalNotice(null);
-    try {
-      const result = await generateEventJournal({
-        rootSessionId: operation.rootSessionId,
-        baseBranchSessionId: operation.baseBranchSessionId,
-        baseMessageSequence: operation.baseMessageSequence,
-        clientOperationId: operation.clientOperationId
-      });
-      setJournalEntry(result.entry);
-      setJournalEventEntryId(result.entry.id);
-      setWorkspace(result.workspace);
-      updateWorkspaceAddress({
-        entryDate,
-        sessionId: operation.rootSessionId,
-        journalOpen: true,
-        eventEntryId: result.entry.id
-      });
-      clearEventCenteredJournalOperation(scope);
-      resumedJournalOperationRef.current = null;
-      await refreshTabs();
-    } catch (error) {
-      const issue = error instanceof EventCenteredWorkspaceRequestError ? error.issue : null;
-      const failedOperation = { ...operation, status: "failed" as const };
-      if (issue?.retryable === false) clearEventCenteredJournalOperation(scope);
-      else writeEventCenteredJournalOperation(failedOperation);
-      setJournalNotice(toWorkspaceNotice(error));
-      try {
-        const recoveredWorkspace = await getEventCenteredWorkspace(workspace.rootSessionId);
-        setWorkspace(recoveredWorkspace);
-      } catch {
-        // 当前对话仍保留在页面；下一次刷新会继续走服务端恢复。
-      }
-    } finally {
-      setJournalGenerating(false);
-    }
-  }, [entryDate, journalGenerating, refreshTabs, switchingSession, workspace, writeEnabled]);
-
-  useEffect(() => {
-    if (!workspace || workspace.journal.status !== "generating" || journalGenerating) return;
-    const stored = readEventCenteredJournalOperation(scopeForWorkspace(workspace));
-    if (!stored) {
-      setJournalOpen(true);
-      setJournalNotice({
-        title: "这次整理需要继续",
-        message: "事件原话和当前阶段都已保留。请点击“生成事件日志”继续整理。"
-      });
-      return;
-    }
-    if (resumedJournalOperationRef.current === stored.clientOperationId) return;
-    resumedJournalOperationRef.current = stored.clientOperationId;
-    void generateCurrentJournal(stored);
-  }, [generateCurrentJournal, journalGenerating, workspace]);
-
-  const updateCurrentJournal = useCallback(async (input: {
-    entryId: string;
-    title: string;
-    content: string;
-    expectedContentRevision: number;
-  }) => {
-    try {
-      const entry = await updateEventJournalEntry(input);
-      setJournalEntry(entry);
-      setJournalNotice(null);
-      return entry;
-    } catch (error) {
-      setJournalNotice(toWorkspaceNotice(error));
-      throw error;
-    }
-  }, []);
-
-  const saveCurrentJournal = useCallback(async (input: {
-    entryId: string;
-    expectedContentRevision: number;
-  }) => {
-    const activeWorkspace = workspace;
-    if (!activeWorkspace) {
-      const error = new Error("EVENT_WORKSPACE_REQUIRED");
-      setJournalNotice(toWorkspaceNotice(error));
-      throw error;
-    }
-    try {
-      const entry = await saveEventJournalEntry(input);
-      setJournalEntry(entry);
-      setJournalEventEntryId(entry.id);
-      setJournalNotice(null);
-      updateWorkspaceAddress({
-        entryDate,
-        sessionId: activeWorkspace.rootSessionId,
-        journalOpen: true,
-        eventEntryId: entry.id
-      });
-      await refreshTabs();
-      return entry;
-    } catch (error) {
-      setJournalNotice(toWorkspaceNotice(error));
-      throw error;
-    }
-  }, [entryDate, refreshTabs, workspace]);
-
-  async function createNextEvent() {
-    if (!canCreateEvent || busy) return;
-    setBusy(true);
-    setNotice(null);
-    try {
-      const nextWorkspace = await startEventCenteredWorkspace(entryDate);
-      setWorkspace(nextWorkspace);
-      setRequestedSessionId(nextWorkspace.rootSessionId);
-      setDraft("");
-      setOutbox(null);
-      setJournalOpen(false);
-      setJournalEventEntryId(null);
-      setJournalEntry(null);
-      setJournalNotice(null);
-      resumedJournalOperationRef.current = null;
-      updateWorkspaceAddress({
-        entryDate,
-        sessionId: nextWorkspace.rootSessionId,
-        journalOpen: false,
-        eventEntryId: null
-      });
-      await refreshTabs();
-    } catch (error) {
-      setNotice(toWorkspaceNotice(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const handleViewAction = useCallback(async (action: EventCenteredDialogueWorkspaceAction) => {
     if (action.action === "generate_event_journal") {
-      await generateCurrentJournal();
-      return;
-    }
-    if (action.action === "reply" && isEventCenteredJournalRequestText(action.rawText)) {
-      await generateCurrentJournal();
+      setNotice({
+        title: "这件事会留在当天",
+        message: "回到日记后，可以和当天的其他记录一起整理。"
+      });
       return;
     }
     try {
@@ -607,19 +483,98 @@ export function EventCenteredInterviewWorkspace({
         action.action === "correct_understanding"
       ) throw error;
     }
-  }, [generateCurrentJournal, performAction]);
+  }, [performAction]);
+
+  useEffect(() => {
+    if (!setInterviewChromeState) return;
+    if (!workspace) {
+      setInterviewChromeState(null);
+      return () => setInterviewChromeState(null);
+    }
+
+    const hasUserMessage = workspace.messages.some((message) => message.role === "user") || Boolean(outbox?.request.rawText);
+    const completed = workspace.sessionStatus === "completed" || workspace.sessionStatus === "abandoned";
+    const canComplete = Boolean(
+      writeEnabled &&
+      !completed &&
+      hasUserMessage &&
+      workspace.dialogue.allowedActions.includes("exit_event")
+    );
+    setInterviewChromeState({
+      recordMode: workspace.recordMode ?? initialRecordMode ?? "chat",
+      entryDate: workspace.entryDate,
+      progress: workspace.dialogue.progress,
+      hasUserMessage,
+      canComplete,
+      busy: busy || switchingSession,
+      onComplete: canComplete ? () => { void handleViewAction({ action: "exit_event" }); } : null
+    });
+
+    return () => setInterviewChromeState(null);
+  }, [busy, handleViewAction, initialRecordMode, outbox?.request.rawText, setInterviewChromeState, switchingSession, workspace, writeEnabled]);
 
   const handleComposerDraftChange = useCallback((nextDraft: string) => {
     setDraft(nextDraft);
     if (workspace) writeEventCenteredComposerDraft(scopeForWorkspace(workspace), nextDraft);
   }, [workspace]);
 
+  const returnToRecordModeSelection = useCallback(() => {
+    setWorkspace(null);
+    setRequestedSessionId(null);
+    setCompletionHandoffSessionId(null);
+    setDraft("");
+    setOutbox(null);
+    setStreamPreview(null);
+    setNotice(null);
+    if (syncAddress) updateWorkspaceStartAddress(entryDate);
+    void refreshTabs();
+  }, [entryDate, refreshTabs, syncAddress]);
+
+  const loadingMessage = requestedSessionId
+    ? "正在恢复这件事…"
+    : initialRecordMode
+      ? "正在准备新的记录…"
+      : "正在打开访谈…";
+
   if (loading && !workspace) {
+    if (!requestedSessionId && !initialRecordMode) {
+      return (
+        <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
+          <EventCenteredStartWorkspaceView
+            entryDate={entryDate}
+            tabs={tabs}
+            busy
+            onStart={(recordMode) => void startEvent(recordMode)}
+          />
+        </div>
+      );
+    }
     return (
       <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
         <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0">
-          <p role="status" className="text-sm text-[var(--text-dim)]">正在恢复这件事…</p>
+          <p role="status" className="font-ui text-sm text-[var(--text-dim)]">{loadingMessage}</p>
         </Surface>
+      </div>
+    );
+  }
+
+  if (!workspace && writeEnabled && !requestedSessionId) {
+    return (
+      <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
+        <EventCenteredStartWorkspaceView
+          entryDate={entryDate}
+          tabs={tabs}
+          busy={busy || switchingSession}
+          pendingRecordMode={pendingRecordMode}
+          error={notice}
+          onStart={(recordMode) => void startEvent(recordMode)}
+          onSelectTab={(rootSessionId) => {
+            if (busy || switchingSession) return;
+            setCompletionHandoffSessionId(null);
+            setRequestedSessionId(rootSessionId);
+            setNotice(null);
+          }}
+        />
       </div>
     );
   }
@@ -628,7 +583,7 @@ export function EventCenteredInterviewWorkspace({
     return (
       <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
         <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0 p-6">
-          <div role="alert" className="max-w-lg border-l-2 border-[var(--paper-deep)] py-1 pl-4">
+          <div role="alert" className="max-w-lg text-center font-ui">
             <p className="font-medium text-ink">{notice?.title ?? "暂时无法打开事件记录"}</p>
             <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">{notice?.message ?? "请稍后重试。"}</p>
             {writeEnabled ? <ActionButton className="mt-4" onClick={() => void loadWorkspace(requestedSessionId)}>再试一次</ActionButton> : null}
@@ -655,34 +610,24 @@ export function EventCenteredInterviewWorkspace({
       <EventCenteredDialogueWorkspaceView
         session={workspace}
         entryDate={entryDate}
+        recordMode={workspace.recordMode ?? initialRecordMode ?? "chat"}
         tabs={tabs}
         activeTabId={workspace.rootSessionId}
-        busy={busy || switchingSession || journalGenerating}
+        busy={busy || switchingSession}
         readOnly={!writeEnabled || workspace.sessionStatus === "abandoned" || workspace.eventStatus === "abandoned"}
         canCreateEvent={canCreateEvent}
+        showCompletionHandoff={completionHandoffSessionId === workspace.rootSessionId}
         composerDraft={draft}
         optimisticUserMessage={optimisticUserMessage}
         streamPreview={streamPreview}
-        journalOpen={journalOpen}
-        journalEntry={journalEntry}
-        journalGenerating={journalGenerating}
-        journalNotice={journalNotice}
         error={notice}
         onComposerDraftChange={handleComposerDraftChange}
-        onJournalOpenChange={setJournalOpen}
-        onUpdateJournal={updateCurrentJournal}
-        onSaveJournal={saveCurrentJournal}
         onAction={handleViewAction}
-        onCreateEvent={() => void createNextEvent()}
+        onCreateEvent={returnToRecordModeSelection}
         onSelectTab={(rootSessionId) => {
           if (rootSessionId === workspace.rootSessionId) return;
-          const selectedTab = tabs.find((tab) => tab.rootSessionId === rootSessionId);
+          setCompletionHandoffSessionId(null);
           setRequestedSessionId(rootSessionId);
-          setJournalOpen(selectedTab?.status === "completed");
-          setJournalEventEntryId(null);
-          setJournalEntry(null);
-          setJournalNotice(null);
-          resumedJournalOperationRef.current = null;
           setNotice(null);
           setDraft("");
         }}

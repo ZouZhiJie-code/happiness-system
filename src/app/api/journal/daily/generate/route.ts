@@ -9,6 +9,11 @@ import {
   isAuthenticationRequiredError,
   requireCurrentUserFromRequest
 } from "@/server/services/auth/current-user.service";
+import {
+  journalPreviewStatusFor,
+  readJournalPreviewRequest
+} from "@/server/services/journal-preview/request";
+import { journalPreviewService } from "@/server/services/journal-preview/service";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +52,21 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
+    const preview = readJournalPreviewRequest(request);
+    if (preview) {
+      if (!parsed.data.task) {
+        return NextResponse.json({ error: "JOURNAL_PREVIEW_TASK_REQUIRED" }, { status: 400 });
+      }
+      return NextResponse.json(await journalPreviewService.generateDaily({
+        userId: user.id,
+        sessionId: preview.sessionId,
+        caseId: preview.caseId,
+        task: parsed.data.task,
+        expectedSourceSignature: parsed.data.expectedSourceSignature ?? "",
+        expectedContentRevision: parsed.data.expectedContentRevision ?? null,
+        clientOperationId: parsed.data.clientOperationId
+      }), { headers: { "Cache-Control": "private, no-store" } });
+    }
     const result = await journalDailyEntryGenerationService.execute(
       {
         userId: user.id,
@@ -72,6 +92,9 @@ export async function POST(request: Request) {
         : "JOURNAL_DAILY_GENERATION_FAILED";
     const status = statusFor(code);
     if (status >= 500) console.error("JOURNAL_DAILY_GENERATION_FAILED", error);
+    if (code.startsWith("JOURNAL_PREVIEW_")) {
+      return NextResponse.json({ error: code }, { status: journalPreviewStatusFor(code) });
+    }
     return NextResponse.json(
       {
         error: code,

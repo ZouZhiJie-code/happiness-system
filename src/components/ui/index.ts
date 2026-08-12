@@ -7,6 +7,10 @@ export {
   type ConfirmTone
 } from "./confirm-dialog";
 export { SectionHeading } from "./section-heading";
+export { PageHeading, type PageHeadingProps } from "./page-heading";
+export { InlineStatus, type InlineStatusProps, type InlineStatusTone } from "./inline-status";
+export { ReadingSurface, type ReadingSurfaceProps } from "./reading-surface";
+export { SourceDrawer, type SourceDrawerProps } from "./source-drawer";
 export { Divider } from "./divider";
 export { ActionButton, actionButtonClass, type ActionButtonVariant } from "./action-button";
 export { ActionMenu, type ActionMenuItem, type ActionMenuSurface } from "./action-menu";

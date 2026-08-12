@@ -16,7 +16,7 @@ type SurfaceProps<T extends ElementType> = {
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "className">;
 
 /**
- * 页面底板：每页唯一的重容器层（边框 + 背景 + 外阴影）。
+ * 页面底板：每页唯一的环境层，承载页面背景与必要边界。
  * 全宽工作区页面通常配 `rounded-none border-x-0 border-t-0`。
  */
 export function Surface<T extends ElementType = "section">({

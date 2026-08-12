@@ -78,11 +78,14 @@ export async function getEventCenteredWorkspace(sessionId: string) {
   return payload as EventCenteredWorkspaceSession;
 }
 
-export async function startEventCenteredWorkspace(entryDate: string) {
+export async function startEventCenteredWorkspace(
+  entryDate: string,
+  recordMode?: "capture" | "chat" | null
+) {
   const response = await fetch("/api/interview/event-centered/session/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entryDate })
+    body: JSON.stringify({ entryDate, ...(recordMode ? { recordMode } : {}) })
   });
   const payload = await readJson(response);
   if (!response.ok) {

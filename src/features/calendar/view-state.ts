@@ -33,11 +33,11 @@ function getDaysInMonth(year: number, monthNumber: number) {
 }
 
 export function normalizeCalendarView(view: string | null | undefined): CalendarView {
-  if (view === "week" || view === "day" || view === "month") {
-    return view;
-  }
+  if (view === "week" || view === "weekly") return "week";
+  if (view === "day" || view === "daily") return "day";
+  if (view === "month" || view === "monthly") return "month";
 
-  return "month";
+  return "day";
 }
 
 export function normalizeCalendarMode(mode: string | null | undefined): CalendarMode {
@@ -232,11 +232,13 @@ export function formatCalendarWeekdayLabel(date: string) {
 
 export function normalizeCalendarSearchParams(input: {
   view?: string | null;
+  /** 兼容高保真交接中曾使用的 scope=daily|weekly|monthly 地址。 */
+  scope?: string | null;
   date?: string | null;
   today?: string;
 }) {
   const today = input.today ?? getTodayEntryDate();
-  const view = normalizeCalendarView(input.view);
+  const view = normalizeCalendarView(input.view ?? input.scope);
   const date = normalizeCalendarDate(input.date, today);
 
   return {
@@ -248,7 +250,7 @@ export function normalizeCalendarSearchParams(input: {
 
 export function formatTodayCalendarHref(today = getTodayEntryDate()) {
   return buildCalendarHref({
-    view: "month",
+    view: "day",
     date: formatEntryDate(parseEntryDateInput(today))
   });
 }

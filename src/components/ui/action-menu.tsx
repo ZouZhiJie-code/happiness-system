@@ -11,6 +11,7 @@ export type ActionMenuSurface = "default" | "calendar";
 export type ActionMenuItem = {
   id: string;
   label: string;
+  description?: string;
   onSelect: () => void;
 };
 
@@ -26,6 +27,9 @@ type ActionMenuProps = {
   surface?: ActionMenuSurface;
   align?: "start" | "end";
   testId?: string;
+  triggerAriaLabel?: string;
+  triggerClassName?: string;
+  showDisclosure?: boolean;
 };
 
 export function ActionMenu({
@@ -39,7 +43,10 @@ export function ActionMenu({
   variant = "secondary",
   surface = "default",
   align = "end",
-  testId = "action-menu"
+  testId = "action-menu",
+  triggerAriaLabel,
+  triggerClassName,
+  showDisclosure = true
 }: ActionMenuProps) {
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -126,10 +133,12 @@ export function ActionMenu({
         type="button"
         variant={variant}
         aria-haspopup="menu"
+        aria-label={triggerAriaLabel}
         aria-expanded={menuOpen}
         aria-controls={menuId}
         disabled={disabled || isBusy}
         title={disabled ? (disabledReason ?? undefined) : undefined}
+        className={triggerClassName}
         onClick={() => {
           if (disabled || isBusy) {
             return;
@@ -139,7 +148,7 @@ export function ActionMenu({
         }}
       >
         {isBusy ? triggerBusyLabel : triggerLabel}
-        {!isBusy ? (
+        {!isBusy && showDisclosure ? (
           <span aria-hidden="true" className="text-[0.68rem] leading-none opacity-70">
             ▾
           </span>
@@ -181,7 +190,12 @@ export function ActionMenu({
                   item.onSelect();
                 }}
               >
-                {item.label}
+                <span className="block font-medium">{item.label}</span>
+                {item.description ? (
+                  <span className="mt-0.5 block text-xs leading-5 text-[var(--text-dim)]">
+                    {item.description}
+                  </span>
+                ) : null}
               </button>
             ))}
           </motion.div>

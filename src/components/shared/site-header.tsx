@@ -6,8 +6,9 @@ import { useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
-import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
+import { EventCenteredInterviewHeader } from "@/components/shared/site-header/event-centered-interview-header";
+import { JournalToolbar } from "@/components/journal/journal-toolbar";
 import { HeaderToolbarDivider } from "@/components/shared/header-toolbar-primitives";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { isInterviewDimension } from "@/features/interview/dimensions";
@@ -50,16 +51,22 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement | null>(null);
-  const todayCalendarHref = `/calendar?view=month&date=${getTodayEntryDate()}`;
+  const todayCalendarHref = `/calendar?view=day&date=${getTodayEntryDate()}`;
   const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
-  const todayEntryDate = getTodayEntryDate();
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
+  const interviewMode = searchParams.get("mode");
+  const hasInterviewDimension = isInterviewDimension(searchParams.get("dimension"));
+  const hasInterviewSession = Boolean(searchParams.get("sessionId"));
+  const isEventCenteredInterviewPage = pathname === "/interview" && (
+    interviewMode === "event-centered" ||
+    (!hasInterviewDimension && !hasInterviewSession && interviewMode !== "daily-journal")
+  );
   const isInterviewWorkspace =
-    searchParams.get("mode") !== "event-centered" && (
-      isInterviewDimension(searchParams.get("dimension")) ||
-      Boolean(searchParams.get("sessionId")) ||
-      searchParams.get("mode") === "daily-journal"
+    !isEventCenteredInterviewPage && (
+      hasInterviewDimension ||
+      hasInterviewSession ||
+      interviewMode === "daily-journal"
     );
   const isInterviewPage = pathname === "/interview" && isInterviewWorkspace && !isEnteringCalendar;
   const shouldReserveHeaderSpace = false;
@@ -96,8 +103,9 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
         </Link>
         <HeaderToolbarDivider className="hidden lg:flex" />
         <div className="site-header-context-scroll col-span-2 row-start-2 flex min-h-[var(--site-header-lane-min-height)] min-w-0 items-center overflow-x-auto pb-0.5 lg:col-span-1 lg:row-auto lg:overflow-x-hidden lg:pb-0">
+          {isEventCenteredInterviewPage && !isEnteringCalendar ? <EventCenteredInterviewHeader /> : null}
           {isInterviewPage ? <InterviewHeaderToolbar isAdmin={isAdmin} /> : null}
-          {isCalendarPage ? <CalendarToolbar /> : null}
+          {isCalendarPage ? <JournalToolbar /> : null}
           {isAnalysisPage ? <AnalysisToolbar /> : null}
           {headerPlainContext ? (
             <HeaderPlainContext title={headerPlainContext.title} subtitle={headerPlainContext.subtitle} />
@@ -109,7 +117,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
           pathname={pathname}
           todayCalendarHref={todayCalendarHref}
           todayAnalysisHref={todayAnalysisHref}
-          todayEntryDate={todayEntryDate}
         />
       </div>
       </header>

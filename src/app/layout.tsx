@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AuthLocalBootstrap } from "@/components/auth/auth-local-bootstrap";
 import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
 import { CalendarChromeProvider } from "@/components/calendar/calendar-chrome-context";
+import { EventCenteredInterviewChromeProvider } from "@/components/interview/event-centered/event-centered-interview-chrome-context";
 import { CalendarMainGate } from "@/components/calendar/calendar-main-gate";
 import { PublicSecurityFooter } from "@/components/shared/public-security-footer";
 import { SiteHeader } from "@/components/shared/site-header";
@@ -34,16 +35,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <Suspense fallback={null}>
           <AnalysisChromeProvider>
             <CalendarChromeProvider>
-              <div className="relative flex min-h-dvh flex-col">
-                <AuthLocalBootstrap userId={currentUser?.id ?? null} />
-                <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
-                  <SiteHeader isAdmin={isAdmin} authenticated={Boolean(currentUser)} />
-                </Suspense>
-                <main className="flex min-h-0 w-full flex-1 flex-col">
-                  <CalendarMainGate>{children}</CalendarMainGate>
-                </main>
-                <PublicSecurityFooter />
-              </div>
+              <EventCenteredInterviewChromeProvider>
+                <div className="relative flex min-h-dvh flex-col">
+                  <AuthLocalBootstrap userId={currentUser?.id ?? null} />
+                  <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
+                    <SiteHeader isAdmin={isAdmin} authenticated={Boolean(currentUser)} />
+                  </Suspense>
+                  <main className="flex min-h-0 w-full flex-1 flex-col">
+                    <CalendarMainGate>{children}</CalendarMainGate>
+                  </main>
+                  <PublicSecurityFooter />
+                </div>
+              </EventCenteredInterviewChromeProvider>
             </CalendarChromeProvider>
           </AnalysisChromeProvider>
         </Suspense>

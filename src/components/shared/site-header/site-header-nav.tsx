@@ -2,11 +2,10 @@ import Link from "next/link";
 import clsx from "clsx";
 
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
-import { prefetchAllCalendarViews } from "@/features/calendar/calendar-client";
 
 const navItems = [
   { href: "/interview", matchPath: "/interview", label: "访谈" },
-  { href: "/calendar", matchPath: "/calendar", label: "日历" },
+  { href: "/calendar", matchPath: "/calendar", label: "日记" },
   { href: "/analysis", matchPath: "/analysis", label: "分析" },
   { href: "/profile", matchPath: "/profile", label: "画像" },
   { href: "/settings", matchPath: "/settings", label: "设置" }
@@ -17,15 +16,13 @@ type SiteHeaderNavProps = {
   pathname: string;
   todayCalendarHref: string;
   todayAnalysisHref: string;
-  todayEntryDate: string;
 };
 
 export function SiteHeaderNav({
   authenticated,
   pathname,
   todayCalendarHref,
-  todayAnalysisHref,
-  todayEntryDate
+  todayAnalysisHref
 }: SiteHeaderNavProps) {
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
@@ -77,13 +74,6 @@ export function SiteHeaderNav({
                 calendarChrome?.beginCalendarEntry();
               }
             }}
-            onPointerEnter={
-              item.matchPath === "/calendar" && !active
-                ? () => {
-                    prefetchAllCalendarViews(todayEntryDate);
-                  }
-                : undefined
-            }
             aria-current={active ? "page" : undefined}
             className={clsx(
               "relative whitespace-nowrap px-1.5 py-2 font-medium text-[var(--text-dim)] transition duration-200 after:absolute after:inset-x-1.5 after:bottom-1.5 after:h-0.5 after:rounded-sm after:bg-[var(--paper-deep)] after:transition-opacity after:duration-200 after:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--paper-deep)] sm:px-2.5 sm:after:inset-x-2",
