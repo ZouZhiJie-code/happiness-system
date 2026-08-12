@@ -24,6 +24,11 @@ import type {
   Gi088V8r3OfflineEvaluationEvidence
 } from "../src/server/services/evaluation/gi088/types";
 import {
+  createGi088FoundationPayloadHash,
+  type Gi088EvaluationFoundationStore,
+  type Gi088FoundationJson
+} from "../src/server/services/evaluation/gi088/foundation-store";
+import {
   GI088_V8R3_INTERVIEW_SKILL_SHA256,
   GI088_V8R3_INTERVIEW_SKILL_VERSION
 } from "../src/server/services/evaluation/gi088/v8r3-interview-skill";
@@ -33,6 +38,17 @@ const CONFIRMATION = "I_UNDERSTAND_ZERO_MODEL_CALLS";
 const DIRECT_RUN_MARKER = "--gi088-initialize-direct-run";
 const INITIALIZE_OPERATION_PREFIX =
   "gi088-v8r3-zero-model-initialize" as const;
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
 
 export function createGi088InitializeClientOperationId(
   executionFingerprint: string
@@ -163,8 +179,8 @@ export function assertGi088ZeroModelInitializeReadback(input: {
     session.batch.totalTasks !== 6 ||
     session.batch.status !== "running" ||
     session.batch.gate?.status !== "pending" ||
-    JSON.stringify(session.batch.offlineEvaluationEvidence) !==
-      JSON.stringify(input.expectedOfflineEvaluationEvidence) ||
+    stableJson(session.batch.offlineEvaluationEvidence) !==
+      stableJson(input.expectedOfflineEvaluationEvidence) ||
     session.batch.recoveryBudget?.offlineAutomaticRecoveryCount !==
       input.expectedOfflineEvaluationEvidence.automaticRecoveryCount ||
     session.batch.recoveryBudget?.previewAutomaticRecoveryCount !== 0 ||
@@ -185,6 +201,115 @@ export function assertGi088ZeroModelInitializeReadback(input: {
   ) {
     throw new Error("GI088_INITIALIZE_ZERO_MODEL_READBACK_MISMATCH");
   }
+}
+
+function isZeroModelInitializationState(state: Gi088FoundationJson) {
+  if (!state || Array.isArray(state) || typeof state !== "object") return false;
+  const value = state as Record<string, unknown>;
+  if (value.status !== "running" || value.activeTaskId !== null) return false;
+  if (!Array.isArray(value.tasks) || value.tasks.length === 0) return false;
+  return value.tasks.every((task) => {
+    if (!task || typeof task !== "object" || Array.isArray(task)) return false;
+    const branches = (task as Record<string, unknown>).branches;
+    if (!branches || typeof branches !== "object" || Array.isArray(branches)) {
+      return false;
+    }
+    return Object.values(branches as Record<string, unknown>).every((branch) => {
+      if (!branch || typeof branch !== "object" || Array.isArray(branch)) {
+        return false;
+      }
+      return (branch as Record<string, unknown>).status === "not_started";
+    });
+  });
+}
+
+/** Close a failed zero-call draft before the immutable create-run replay. */
+export async function retireGi088StaleZeroModelRuns(input: {
+  store: Gi088EvaluationFoundationStore;
+  ownerUserId: string;
+  evaluationVersion: string;
+  expectedExecutionFingerprint: string;
+  expectedCandidateFingerprint: string;
+  now?: () => Date;
+}) {
+  const now = input.now ?? (() => new Date());
+  const runs = await input.store.listRuns({
+    ownerUserId: input.ownerUserId,
+    evaluationVersion: input.evaluationVersion
+  });
+  let retiredCount = 0;
+  for (const run of runs) {
+    if (
+      run.status !== "running" ||
+      (run.executionFingerprint === input.expectedExecutionFingerprint &&
+        run.candidateFingerprint === input.expectedCandidateFingerprint) ||
+      !isZeroModelInitializationState(run.state) ||
+      (await input.store.listCalls(run.id)).length !== 0
+    ) {
+      continue;
+    }
+    const closedAt = now();
+    const nextState = structuredClone(run.state) as Record<string, unknown>;
+    nextState.status = "early_stopped";
+    nextState.updatedAt = closedAt.toISOString();
+    nextState.sealedAt = closedAt.toISOString();
+    nextState.earlyStop = {
+      reasonCode: "technical_friction",
+      reason: "初始化版本指纹变更，旧零模型草稿收口",
+      stoppedAt: closedAt.toISOString(),
+      completedTaskIds: [],
+      remainingTaskIds: Array.isArray(nextState.tasks)
+        ? (nextState.tasks as Array<Record<string, unknown>>)
+            .map((task) => task.taskId)
+            .filter((taskId): taskId is string => typeof taskId === "string")
+        : []
+    };
+    const clientOperationId = `gi088-v8r3-retire-stale-zero-model-${run.id}`;
+    const payload = {
+      runId: run.id,
+      fromExecutionFingerprint: run.executionFingerprint,
+      fromCandidateFingerprint: run.candidateFingerprint,
+      toExecutionFingerprint: input.expectedExecutionFingerprint,
+      toCandidateFingerprint: input.expectedCandidateFingerprint,
+      reasonCode: "technical_friction",
+      confirmation: CONFIRMATION
+    };
+    const result = await input.store.commitRunMutation({
+      mutation: {
+        runId: run.id,
+        ownerUserId: input.ownerUserId,
+        expectedRevision: run.revision,
+        expectedExecutionFingerprint: run.executionFingerprint,
+        nextState: nextState as Gi088FoundationJson,
+        nextStatus: "early_stopped",
+        nextGateStatus: "no_go",
+        nextGateReasons: {
+          code: "stale_zero_model_initialization_retired",
+          reason: "初始化版本指纹变更，旧零模型草稿收口"
+        },
+        sealedAt: closedAt
+      },
+      operation: {
+        ownerUserId: input.ownerUserId,
+        evaluationVersion: input.evaluationVersion,
+        runId: run.id,
+        clientOperationId,
+        action: "initialize_retire_stale_run",
+        payloadHash: createGi088FoundationPayloadHash(
+          payload as Gi088FoundationJson
+        )
+      },
+      resultSnapshot: {
+        runId: run.id,
+        status: "early_stopped",
+        reasonCode: "stale_zero_model_initialization_retired"
+      }
+    });
+    if (result.claimed || result.run.status === "early_stopped") {
+      retiredCount += 1;
+    }
+  }
+  return retiredCount;
 }
 
 async function main() {
@@ -224,8 +349,16 @@ async function main() {
       throw new Error("GI088_INITIALIZE_OWNER_SCOPE_AMBIGUOUS");
     }
 
+    const store = new Gi088PrismaFoundationStore(client);
+    await retireGi088StaleZeroModelRuns({
+      store,
+      ownerUserId: ownerUserIds[0],
+      evaluationVersion: GI088_EVALUATION_VERSION,
+      expectedExecutionFingerprint: executionFingerprint,
+      expectedCandidateFingerprint: candidateFingerprint
+    });
     const service = new Gi088EvaluationFoundationService({
-      store: new Gi088PrismaFoundationStore(client),
+      store,
       getProvider: async () => {
         throw new Error("GI088_INITIALIZE_MODEL_CALL_FORBIDDEN");
       },
