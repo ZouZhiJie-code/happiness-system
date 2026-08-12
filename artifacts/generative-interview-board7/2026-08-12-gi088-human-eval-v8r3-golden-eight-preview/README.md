@@ -15,21 +15,22 @@
 - 候选版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`
 - 候选模型：Ark `deepseek-v4-flash-ga-260731`，Thinking high，`json_object`
 - Production：继续保持 `legacy + baseline`
-- Preview：候选 deployment 正在完成远程构建回读；数据库迁移已完成；全新 `0/6` 已初始化并保持零模型调用
+- Preview：候选 deployment 已完成远程构建并回读为 `READY`；数据库迁移已完成；全新 `0/6` 已初始化并保持零模型调用
 - 真人内容：仅由产品负责人在 Preview 回读通过后提交
 
 ## 当前 Preview 回读
 
-- 冻结提交：`c289c94`（完整 SHA 以分支回读为准）
-- Preview deployment：`dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY`
-- Preview 地址：`https://xingfuxitong-e7myzk5db-zouzhijies-projects.vercel.app`
+- 行为冻结提交：`c289c94`（完整 SHA 以分支回读为准）
+- 部署源提交：`4328ed0ee70c854d5217297a62aef39f209472b7`（仅包含证据回读文档变更）
+- Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`
+- Preview 地址：[打开 GI-088 v8r3 Preview](https://xingfuxitong-dz9pzmbkc-zouzhijies-projects.vercel.app/preview/gi088-evaluation)
 - deployment target：`preview`
-- Git ref / SHA：`codex/gi088-v8r3-skill-ark-flash` / `c289c94`
+- Git ref / SHA：`codex/gi088-v8r3-skill-ark-flash` / `4328ed0ee70c854d5217297a62aef39f209472b7`
 - 构建：Vercel 远程生成主 Prisma Client、评测 Prisma Client 后执行 Next build
 - 应用 schema：迁移 `20260811120000_add_interview_record_mode` 已应用
 - 评测 schema：4 个迁移均已应用，无待执行迁移
 - 未登录 `/api/auth/session`：`200`，`authenticated=false`
-- 不存在用户名的合法格式登录：`401 INVALID_CREDENTIALS`，未产生会话
+- 不存在用户名的合法格式登录：`401 INVALID_CREDENTIALS`，未产生会话；保护的 runs/session 接口在未登录时返回 `401 AUTHENTICATION_REQUIRED`
 - 新批次：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`ordinal=2 / revision=0 / running / 0/6 / gate=pending / high_only / high / calls=0`
 - 任务结构：4 条【陪我聊】计分轨迹＋2 条【帮我记】兼容冒烟
 - 离线候选证据：96 初始检查点、2 次自动恢复、98 次总调用；`firstValid=76/96=79.17%`，最终失败 `18`，可见延迟样本 `78`，p50 `7.630s`、p90 `25.514s`、最大 `67.011s`

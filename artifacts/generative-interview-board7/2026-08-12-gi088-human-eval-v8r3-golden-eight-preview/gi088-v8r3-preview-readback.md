@@ -2,17 +2,21 @@
 
 ## 已验证
 
-- commit：`c289c94`
+- 行为冻结 commit：`c289c94`
+- 部署源 commit：`4328ed0ee70c854d5217297a62aef39f209472b7`
 - branch：`codex/gi088-v8r3-skill-ark-flash`
-- deployment：`dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY`
+- deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`
 - target：`preview`
-- branch URL：`https://xingfuxitong-e7myzk5db-zouzhijies-projects.vercel.app`
+- status：`READY`
+- URL：`https://xingfuxitong-dz9pzmbkc-zouzhijies-projects.vercel.app/preview/gi088-evaluation`
+- Preview URL：`https://xingfuxitong-dz9pzmbkc-zouzhijies-projects.vercel.app/preview/gi088-evaluation`
 - 远程构建：主 Prisma 与评测 Prisma 均在 Vercel Linux 构建阶段生成
 - 物理数据库身份门：Preview、Neon pooled/direct host、数据库名、`gi088_app_preview` 与 `gi088_evaluation_v0` 均匹配
 - app migration：`20260811120000_add_interview_record_mode` 已应用
 - evaluation migration：4/4 已应用，0 pending
 - anonymous session readback：`200 authenticated=false`
 - invalid-format-valid login readback：`401 INVALID_CREDENTIALS`
+- unauthenticated runs/session readback：`401 AUTHENTICATION_REQUIRED`
 - model calls：0
 - 真人内容：0
 - Production：未变更

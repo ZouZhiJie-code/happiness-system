@@ -213,7 +213,7 @@ v8r2 把高精度控制决策、Provider 结果落账、陈旧页面快照保护
 
 v8r3 实现新的 Interview Skill、Ark `deepseek-v4-flash-ga-260731`、Thinking high、问题价值复核、Foundation 单焦点政策、v0.7 导出、`4＋2` 任务、【帮我记】兼容链和对话优先工作台。全量工程门、真实隔离库与行为清单通过。首轮 `98` 次正式调用确认输出结构和校验链缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝，两轮 `No-Go` 继续只读保存。
 
-Ark 账户恢复后，v8r3r1 的 `96/96` 正式检查点曾通过可靠性与延迟门；随后封存的 Golden 8 替换裁决纳入当前 v8r3 候选。当前冻结 commit `c289c94` 的 Ark Flash 候选完成 `96` 个初始检查点、`2` 次自动恢复、`98` 次总调用，首次有效 `76/96 = 79.17%`，最终失败 `18`，可见延迟 p50 `7.630s`、p90 `25.514s`、最大 `67.011s`，可靠性硬门保持 No-Go。私有 Preview deployment `dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY` 与新批次 `c873ad9a-ab5a-4629-960d-03266bc17b54` 已回读为 `running 0/6 / gate=pending / calls=0`，任务结构为 `4＋2`；Judge 20+20 保持后置未运行。当前入口见 [v8r3 Golden 8 Preview 证据包](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，两轮 No-Go 入口继续只读保留。约 `200` 轮以上容量优化继续留在本轮边界外。
+Ark 账户恢复后，v8r3r1 的 `96/96` 正式检查点曾通过可靠性与延迟门；随后封存的 Golden 8 替换裁决纳入当前 v8r3 候选。当前冻结 commit `c289c94` 的 Ark Flash 候选完成 `96` 个初始检查点、`2` 次自动恢复、`98` 次总调用，首次有效 `76/96 = 79.17%`，最终失败 `18`，可见延迟 p50 `7.630s`、p90 `25.514s`、最大 `67.011s`，可靠性硬门保持 No-Go。私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`（部署源提交 `4328ed0ee70c854d5217297a62aef39f209472b7`）已 `READY`，新批次 `c873ad9a-ab5a-4629-960d-03266bc17b54` 已回读为 `running 0/6 / gate=pending / calls=0`，任务结构为 `4＋2`；Judge 20+20 保持后置未运行。当前入口见 [v8r3 Golden 8 Preview 证据包](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，两轮 No-Go 入口继续只读保留。约 `200` 轮以上容量优化继续留在本轮边界外。
 
 原始对话保存至板块 6 关闭后 `30` 天，届时按明确范围清理并保留审计记录；产品负责人确认的脱敏正式资产长期保存。
 

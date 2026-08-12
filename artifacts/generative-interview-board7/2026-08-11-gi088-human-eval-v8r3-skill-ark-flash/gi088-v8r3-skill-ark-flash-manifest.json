@@ -82,12 +82,13 @@
     "capacityExpansionExcluded": true
   },
   "release": {
-    "previewDeployment": {
-      "id": "dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY",
-      "url": "https://xingfuxitong-e7myzk5db-zouzhijies-projects.vercel.app",
-      "target": "preview",
-      "status": "building_readback_pending"
-    },
+  "previewDeployment": {
+    "id": "dpl_6t4WWXewBbr81ripbr7M76Hu5WXR",
+    "url": "https://xingfuxitong-dz9pzmbkc-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "status": "ready",
+    "sourceCommit": "4328ed0ee70c854d5217297a62aef39f209472b7"
+  },
     "previewRun": {
       "id": "c873ad9a-ab5a-4629-960d-03266bc17b54",
       "ordinal": 2,
