@@ -29,7 +29,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "cc72f4e5a0f69d045f29b58dc12d74b90d6856815e0c77c4ae059d9aa72dafb8"
+      "sha256": "5f343ac6aaa22693d338f3ab47f8fbd1d42299f18810bc4ee99d6b271c2fa121"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
@@ -81,7 +81,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "e8c7366ddb082fe041e228aa24d4bd3b4915f3959dbe38b94e82d0d1415babb5"
+      "sha256": "f0701160b8deda7b718a2ff60e2e124a262da28301801c7b301faf9f472b601d"
     },
     {
       "path": "next.config.ts",
@@ -108,7 +108,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "193daed82f502bee80ccf9d5a4ecb578d67cd62e639f5ef670b6e4b5b69f49db"
+      "sha256": "3b8d709e1a248d9480e4dcb62c12fd4329e2622fe309ca8e8bf740ab0f7d4078"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -579,7 +579,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "ec53b2649f664009ac6d1d8eb58a526e0560c3532a0f1ce2679781630b76bcd4"
+      "sha256": "9722035f5a3871850c31fc13d013844bf9208b48e873b15124ed55672e12dc55"
     },
     {
       "path": "src/server/services/evaluation/gi088/candidate.ts",
@@ -588,7 +588,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "f5c01eb947d0fcffe92e9144bace59fd2357987750dd79332b025661d0760084"
+      "sha256": "6a01bf0d338371d18e62308bdf62f48da8d26178a26e3eab573a9931d48da2f2"
     },
     {
       "path": "src/server/services/evaluation/gi088/compatibility-evidence.ts",
@@ -652,6 +652,16 @@
         "runner"
       ],
       "sha256": "9257bcc16377248c2ca75cddbeeeb5ed54124b2ce7d8b91e38f2576875ad1c18"
+    },
+    {
+      "path": "src/server/services/evaluation/gi088/golden-eight-evidence.ts",
+      "layers": [
+        "candidate",
+        "dataset",
+        "experience",
+        "runner"
+      ],
+      "sha256": "015b1a0d54c52281904a53a56cb8e986ef838630bf37fd4fb6a7bc8685f55d3d"
     },
     {
       "path": "src/server/services/evaluation/gi088/historical-export.ts",

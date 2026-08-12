@@ -13,6 +13,12 @@ import { cn } from "@/lib/utils";
 const SESSION_API = "/api/local/gi088-v8r3/review-session";
 const DRAFT_API = "/api/local/gi088-v8r3/review-draft";
 const FINALIZE_API = "/api/local/gi088-v8r3/review-finalize";
+
+function localReviewApi(path: string) {
+  if (typeof window === "undefined") return path;
+  const token = new URLSearchParams(window.location.search).get("token");
+  return token ? `${path}?token=${encodeURIComponent(token)}` : path;
+}
 const OPTIONS: Array<{ value: GoldenEightVerdict; label: string; hint: string }> = [
   { value: "ready_to_use", label: "可直接使用", hint: "当前表达已经可以进入后续校准" },
   { value: "minor_issue", label: "轻微问题", hint: "局部调整即可保留整体方向" },
@@ -54,7 +60,7 @@ export function GoldenEightReplacementWorkbench() {
   const canSave = Boolean(!sealed && activeCard && verdict && (verdict === "ready_to_use" || reason.trim().length >= 8));
 
   useEffect(() => {
-    void fetch(SESSION_API, { cache: "no-store" })
+    void fetch(localReviewApi(SESSION_API), { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json() as ReviewPayload & { error?: string };
         if (!response.ok) throw new Error(data.error ?? "Golden 8 材料读取失败");
@@ -92,7 +98,7 @@ export function GoldenEightReplacementWorkbench() {
     setSaving(true);
     setMessage("正在保存本条裁决…");
     try {
-      const response = await fetch(DRAFT_API, {
+      const response = await fetch(localReviewApi(DRAFT_API), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ caseId: activeCard.caseId, verdict, reason })
@@ -116,7 +122,7 @@ export function GoldenEightReplacementWorkbench() {
     setFinalizing(true);
     setMessage("正在封存本轮裁决…");
     try {
-      const response = await fetch(FINALIZE_API, { method: "POST" });
+      const response = await fetch(localReviewApi(FINALIZE_API), { method: "POST" });
       const data = await response.json() as GoldenEightReceipt & { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Golden 8 封存失败");
       setReceipt(data);

@@ -13,6 +13,7 @@ import {
   type Gi088V8r3JudgeCalibrationRound,
   type Gi088V8r3TrialResult
 } from "./contracts";
+import { GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE } from "@/server/services/evaluation/gi088/golden-eight-evidence";
 
 function sha256(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -98,7 +99,8 @@ export function createGi088V8r3DatasetFingerprint(input: {
       },
       privateHiddenAggregateCommitment: createGi088V8r3CaseSetCommitment(
         input.hiddenAdmission
-      )
+      ),
+      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE
     })
   );
 }

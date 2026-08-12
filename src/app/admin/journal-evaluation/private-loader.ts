@@ -544,8 +544,21 @@ export function isLocalJournalEvaluationEnabled() {
 }
 
 export function isLocalJournalEvaluationRequest(request: Request) {
-  const hostname = new URL(request.url).hostname;
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  const url = new URL(request.url);
+  const hostnameIsLocal =
+    url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "[::1]";
+  if (!hostnameIsLocal) return false;
+  const protectedPath =
+    url.pathname.startsWith("/api/local/gi088-v8r3") ||
+    url.pathname.startsWith("/admin/journal-evaluation/golden-eight");
+  if (!protectedPath) return true;
+  const expectedToken = process.env.GI088_V8R3_REVIEW_TOKEN?.trim();
+  if (!expectedToken) return false;
+  const presentedToken =
+    request.headers.get("x-gi088-review-token") ?? url.searchParams.get("token");
+  return presentedToken === expectedToken;
 }
 
 function presentationIsComplete(presentation: ReturnType<typeof stablePresentation>) {

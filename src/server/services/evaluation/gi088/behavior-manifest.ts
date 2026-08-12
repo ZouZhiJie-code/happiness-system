@@ -54,6 +54,10 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     layers: ["candidate"]
   },
   {
+    path: "src/server/services/evaluation/gi088/golden-eight-evidence.ts",
+    layers: ALL_LAYERS
+  },
+  {
     path: "skills/conduct-daily-light-thinking-interview/SKILL.md",
     layers: ["candidate"]
   },

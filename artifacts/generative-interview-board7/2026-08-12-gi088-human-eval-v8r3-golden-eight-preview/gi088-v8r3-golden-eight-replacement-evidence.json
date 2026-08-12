@@ -1,0 +1,29 @@
+{
+  "evidenceVersion": "2026-08-11.gi088-v8r3-golden-replacements-v1",
+  "status": "sealed",
+  "sourceSha256": "93aeb1dbdce10964ad24d8ff5a197d4655463527052b8254e95eb36dba6bb973",
+  "decisionsSha256": "86b91697d833fe239b0946a436c048d311958313cc01323b1901ba80d835cb7f",
+  "receiptFileSha256": "fcfce1e4b131f657266bc1731842a976e18e4bacc0ba09b9f6da0568a53bb6e2",
+  "carryForward": {
+    "acceptedPreviousRound": 32,
+    "replacementCards": 8
+  },
+  "adjudication": {
+    "readyToUse": 7,
+    "qualityFailure": 1,
+    "singleBlocker": 0,
+    "qualityFailureCategory": "reasks_answered_content"
+  },
+  "sideEffects": {
+    "modelCalls": 0,
+    "databaseWrites": 0,
+    "externalUploads": 0
+  },
+  "privacy": {
+    "rawCards": "private_local_only",
+    "reasons": "private_local_only",
+    "hiddenReasoning": "excluded",
+    "requestBodies": "excluded",
+    "credentials": "excluded"
+  }
+}

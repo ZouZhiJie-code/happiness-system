@@ -5,6 +5,7 @@ import {
   loadGoldenEightReplacementCards
 } from "@/app/admin/journal-evaluation/golden-eight-replacements";
 import { loadGoldenEightReview } from "@/app/admin/journal-evaluation/golden-eight-loader";
+import { isLocalJournalEvaluationRequest } from "@/app/admin/journal-evaluation/private-loader";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -50,11 +51,30 @@ describe("Golden 8 replacement materials", () => {
     const review = await loadGoldenEightReview();
 
     expect(review.roundId).toBe("2026-08-11.gi088-v8r3-golden-replacements-v1");
+    expect(review.receipt?.sourceSha256).toBe(review.sourceSha256);
+    expect(review.receipt?.decisionsSha256).toBe(
+      "86b91697d833fe239b0946a436c048d311958313cc01323b1901ba80d835cb7f"
+    );
     expect(review.cards.map((card) => card.caseId)).toEqual([...GOLDEN_EIGHT_REPLACEMENT_TARGETS]);
     expect(review.decisions).toHaveLength(8);
     expect(review.decisions.map((decision) => decision.caseId).sort()).toEqual(
       [...GOLDEN_EIGHT_REPLACEMENT_TARGETS].sort()
     );
     expect(review.decisions.some((decision) => decision.caseId === "C1" || decision.caseId === "R1")).toBe(false);
+  });
+
+  it("requires the launcher token for the Golden 8 page and local APIs", () => {
+    vi.stubEnv("GI088_V8R3_REVIEW_TOKEN", "token-123");
+    expect(isLocalJournalEvaluationRequest(
+      new Request("http://127.0.0.1/admin/journal-evaluation/golden-eight")
+    )).toBe(false);
+    expect(isLocalJournalEvaluationRequest(
+      new Request("http://127.0.0.1/admin/journal-evaluation/golden-eight?token=token-123")
+    )).toBe(true);
+    expect(isLocalJournalEvaluationRequest(
+      new Request("http://127.0.0.1/api/local/gi088-v8r3/review-session", {
+        headers: { "x-gi088-review-token": "token-123" }
+      })
+    )).toBe(true);
   });
 });

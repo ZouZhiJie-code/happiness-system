@@ -60,6 +60,7 @@ import {
   GI088_V8R3_INTERVIEW_SKILL_VERSION,
   applyGi088V8r3InterviewSkillAssets
 } from "@/server/services/evaluation/gi088/v8r3-interview-skill";
+import { GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE } from "@/server/services/evaluation/gi088/golden-eight-evidence";
 
 export {
   GI088_EVALUATION_ID_V8R1,
@@ -347,6 +348,7 @@ export const GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY = {
 
 export const GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT = {
   version: "2026-08-11.gi088-offline-evidence-binding-v1",
+  goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE,
   requiredCandidateBindings: [
     "candidateOfflineRunFingerprint",
     "candidateEvidenceFingerprint",
@@ -1017,7 +1019,20 @@ export const GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R3 = {
     "low_information_gain",
     "uncertain"
   ],
-  compatibilitySmokeOutcomes: ["passed", "failed"]
+  compatibilitySmokeOutcomes: ["passed", "failed"],
+  replacementAdjudication: {
+    acceptedPreviousRoundCount:
+      GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.carryForwardCount,
+    replacementCardCount: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.cardCount,
+    acceptedCount: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.readyToUseCount,
+    qualityFailureCount:
+      GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.qualityFailureCount,
+    qualityFailureCategory: "reasks_answered_content",
+    sourceSha256: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.sourceSha256,
+    decisionsSha256: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.decisionsSha256,
+    receiptFileSha256:
+      GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE.receiptFileSha256
+  }
 } as const;
 
 export const GI088_DATASET_MACHINE_GATE_V8R3 = {
@@ -1184,6 +1199,7 @@ export function createGi088EffectiveCandidateFingerprint(
       semanticDeltaValidationRules: GI088_SEMANTIC_DELTA_VALIDATION_RULES,
       interviewSkillVersion: GI088_V8R3_INTERVIEW_SKILL_VERSION,
       interviewSkillSha256: GI088_V8R3_INTERVIEW_SKILL_SHA256,
+      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE,
       modelVisibleRecoveryInstructions: {
         emptyContent: {
           version: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
@@ -1258,6 +1274,7 @@ export function verifyGi088CandidateSnapshot(
     deterministicStateRules: GI088_DETERMINISTIC_STATE_RULES,
     interviewSkillVersion: GI088_V8R3_INTERVIEW_SKILL_VERSION,
     interviewSkillSha256: GI088_V8R3_INTERVIEW_SKILL_SHA256,
+    goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE,
     behaviorManifestVersion: behaviorManifest.version,
     behaviorManifestSha256:
       createGi088BehaviorManifestSha256(behaviorManifest),
@@ -1299,7 +1316,8 @@ export function createGi088DatasetFingerprint(
         branchContextsAreIndependent: true
       },
       productOwnerReview: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R3,
-      machineGate: GI088_DATASET_MACHINE_GATE_V8R3
+      machineGate: GI088_DATASET_MACHINE_GATE_V8R3,
+      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE
     })
   );
 }
@@ -1343,6 +1361,7 @@ export function createGi088RunnerFingerprint(
       stageTransitionRecovery: GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
       manualRecovery: GI088_MANUAL_RECOVERY_POLICY,
       offlineEvidenceContract: GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT,
+      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE,
       maximumProviderCallsPerTrajectory:
         GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY,
       maximumProviderCallsPerUserSubmission:
@@ -1368,7 +1387,8 @@ export function createGi088ExperienceFingerprint(
         readonlyExport: GI088_READONLY_EXPORT_VERSION_V8R3
       },
       reviewContract: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R3,
-      metricGateContract: GI088_DATASET_MACHINE_GATE_V8R3
+      metricGateContract: GI088_DATASET_MACHINE_GATE_V8R3,
+      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE
     })
   );
 }

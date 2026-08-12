@@ -390,6 +390,47 @@ describe("GI-088 evaluation workbench", () => {
     )).toBe(true);
   });
 
+  it("v8r3 新批次显示 Ark Flash 与 0/6 兼容任务骨架", async () => {
+    const value = evaluationSession({ active: false, compatibility: true });
+    value.evaluation.id = "gi088_human_eval_v8r3_skill_ark_flash";
+    value.evaluation.version = "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash";
+    value.evaluation.model = "deepseek-v4-flash-ga-260731";
+    value.batch.completedTaskCount = 0;
+    value.batch.totalTasks = 6;
+    value.tasks = value.tasks.map((task, index) => ({
+      ...task,
+      status: index === 0 ? "ready" as const : index < 4 ? "locked" as const : "locked" as const
+    }));
+    value.tasks[0] = {
+      ...value.tasks[4]!,
+      id: "A5",
+      status: "ready",
+      evaluationRole: "compatibility_smoke",
+      capabilityId: "help_record_entry_compatibility_smoke",
+      title: "帮我记兼容冒烟",
+      compatibilitySmoke: null
+    };
+    value.tasks[4] = {
+      ...value.tasks[4]!,
+      id: "A1",
+      status: "locked",
+      evaluationRole: "scored_trajectory",
+      capabilityId: "A1",
+      title: "事件内沟通负担不误停",
+      compatibilitySmoke: null
+    };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(value));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Gi088EvaluationWorkbench />);
+
+    expect((await screen.findAllByText(/deepseek-v4-flash-ga-260731/)).length).toBeGreaterThan(0);
+    expect(screen.getByRole("progressbar", { name: "整批评测进度" }))
+      .toHaveAttribute("aria-valuemax", "6");
+    expect(screen.getByRole("heading", { name: "帮我记兼容冒烟" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "开始 Thinking high 评测" })).not.toBeInTheDocument();
+  });
+
   it("兼容冒烟通过结论等待真实帮我记收据，失败结论仍可如实登记", async () => {
     const value = evaluationSession({ active: false, compatibility: true });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(value)));
