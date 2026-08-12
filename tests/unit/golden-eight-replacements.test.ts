@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   GOLDEN_EIGHT_REPLACEMENT_TARGETS,
   loadGoldenEightReplacementCards
 } from "@/app/admin/journal-evaluation/golden-eight-replacements";
+import { loadGoldenEightReview } from "@/app/admin/journal-evaluation/golden-eight-loader";
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe("Golden 8 replacement materials", () => {
   it("loads exactly the eight selected replacement targets in stable order", async () => {
@@ -37,5 +40,17 @@ describe("Golden 8 replacement materials", () => {
       "陪我聊",
       "陪我聊"
     ]);
+  });
+
+  it("binds the review endpoint to the replacement round and leaves the old eight-card decisions separate", async () => {
+    vi.stubEnv("JOURNAL_EVALUATION_LOCAL_ENABLED", "I_UNDERSTAND");
+    vi.stubEnv("DATABASE_URL", "postgresql://local@127.0.0.1:5432/happiness_system_codex?schema=journal_daily_eval");
+    vi.stubEnv("DIRECT_URL", "postgresql://local@127.0.0.1:5432/happiness_system_codex?schema=journal_daily_eval");
+
+    const review = await loadGoldenEightReview();
+
+    expect(review.roundId).toBe("2026-08-11.gi088-v8r3-golden-replacements-v1");
+    expect(review.cards.map((card) => card.caseId)).toEqual([...GOLDEN_EIGHT_REPLACEMENT_TARGETS]);
+    expect(review.decisions).toEqual([]);
   });
 });
