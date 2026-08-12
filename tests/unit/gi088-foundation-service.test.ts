@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   AICompletionParams,
+  AICompletionResult,
   AIProvider,
   AIProviderDiagnostics
 } from "@/server/services/ai/ai-provider";
@@ -35,6 +36,7 @@ import {
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_ADAPTIVE_RECOVERY_POLICY,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
   GI088_MODEL_CALL_IDENTITY,
   GI088_SERVICE_VERSION_V1,
@@ -67,7 +69,7 @@ import {
   GI088_READONLY_EXPORT_VERSION,
   canonicalizeGi088ExportPayload
 } from "@/server/services/evaluation/gi088/export-v06";
-import { GI088_READONLY_EXPORT_VERSION_V07 } from "@/server/services/evaluation/gi088/export-v07";
+import { GI088_READONLY_EXPORT_VERSION_V08 } from "@/server/services/evaluation/gi088/export-v08";
 import { createGi088ModelRequestHash } from "@/server/services/evaluation/gi088/request-identity";
 import {
   createGi088FoundationPayloadHash,
@@ -464,8 +466,8 @@ class ToggleProviderResultFailureStore extends Gi088MemoryFoundationStore {
   }
 }
 
-describe("GI-088 v8r2 evaluation foundation service", () => {
-  it("冻结离线证据，并用离线加 Preview 合计恢复预算阻断绕过", async () => {
+describe("GI-088 v8r3r3 evaluation foundation service", () => {
+  it("冻结离线证据，并把恢复次数保留为诊断而非旧合计硬门", async () => {
     const pending = serviceWith({
       offlineEvaluationEvidence: {
         ...DEFAULT_OFFLINE_EVIDENCE,
@@ -483,11 +485,13 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         admissionFingerprint: null,
         automaticRecoveryCount: 2
       },
-      recoveryBudget: {
-        offlineAutomaticRecoveryCount: 2,
-        previewAutomaticRecoveryCount: 0,
-        combinedAutomaticRecoveryCount: 2,
-        maximumAutomaticRecoveryCount: 2
+      adaptiveRecoveryDiagnostics: {
+        finalVisibleCompletionRate: null,
+        firstVisibleSuccessRate: null,
+        automaticRecoveryTurnCount: 0,
+        maximumAutomaticProviderCallsPerCycle: 3,
+        accelerationAfterMs: 30_000,
+        hardDeadlineMs: 60_000
       }
     });
 
@@ -502,13 +506,8 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       "owner-offline-budget-exceeded"
     );
     expect(exceededRun.session.batch.gate).toMatchObject({
-      status: "no_go",
-      reasons: [
-        expect.objectContaining({
-          code: "automatic_recovery_budget_exceeded",
-          sourceType: "technical_fact"
-        })
-      ]
+      status: "pending",
+      reasons: []
     });
   });
 
@@ -678,7 +677,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       runId: created.runId
     });
     expect(exported.receipt.exportVersion).toBe(
-      GI088_READONLY_EXPORT_VERSION_V07
+      GI088_READONLY_EXPORT_VERSION_V08
     );
     expect(exported.payload).toMatchObject({
       taskDefinitions: expect.arrayContaining([
@@ -1148,12 +1147,12 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
         callId: reservedCall!.callId,
         status: "superseded",
         dispatchedAt: null,
-        errorCode: "RESERVED_DISPATCH_EXPIRED"
+        errorCode: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
       }
     ]);
     expect(reconciled.activeTask?.branches.high.turns[0]).toMatchObject({
       status: "technical_failure",
-      activeCallId: reservedCall!.callId,
+      activeCallId: null,
       recovery: {
         status: "manual_available",
         automaticRetryCount: 0,
@@ -1169,7 +1168,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       })
     ).toMatchObject({
       status: "completed",
-      resultSnapshot: { status: "superseded" }
+      resultSnapshot: { status: "manual_available" }
     });
     expect(fake.provider.complete).not.toHaveBeenCalled();
 
@@ -1229,8 +1228,8 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(await store.listCalls(created.runId)).toMatchObject([
       {
         callId: dispatchedCall!.callId,
-        status: "interrupted_unknown_dispatch",
-        errorCode: "REQUEST_INTERRUPTED"
+        status: "superseded",
+        errorCode: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
       }
     ]);
     expect(reconciled.activeTask?.branches.high.turns[0]).toMatchObject({
@@ -1250,7 +1249,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       })
     ).toMatchObject({
       status: "completed",
-      resultSnapshot: { status: "interrupted_unknown_dispatch" }
+      resultSnapshot: { status: "manual_available" }
     });
 
     store.failPersistence = false;
@@ -1283,7 +1282,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       {
         attempt: 1,
         kind: "initial",
-        status: "interrupted_unknown_dispatch",
+        status: "superseded",
         parentCallId: null
       },
       {
@@ -1397,7 +1396,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       },
       {
         attempt: 3,
-        kind: "automatic_retry",
+        kind: "fast_hedge",
         retryTrigger: "EMPTY_CONTENT",
         status: "finalized"
       }
@@ -1423,8 +1422,8 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(userMessages).toHaveLength(1);
   });
 
-  it("EMPTY_CONTENT 回退为一次自动恢复后保留人工继续入口", async () => {
-    const fake = fakeProvider(["", ""]);
+  it("旧 EMPTY_CONTENT 回退开关不削弱 v8r3r3 固定三调用竞速周期", async () => {
+    const fake = fakeProvider(["", "", firstTurnOutput()]);
     const previous = process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES;
     process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES = "1";
     try {
@@ -1439,14 +1438,20 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       });
       const calls = await store.listCalls(created.runId);
 
-      expect(fake.provider.complete).toHaveBeenCalledTimes(2);
-      expect(calls).toHaveLength(2);
+      expect(fake.provider.complete).toHaveBeenCalledTimes(3);
+      expect(calls).toHaveLength(3);
+      expect(calls[0]?.effectiveConfig).toMatchObject({
+        emptyContentAutomaticRetries: 1,
+        emptyContentPolicyOverride: true,
+        adaptiveRecoveryPolicyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+        maximumAutomaticProviderCallsPerCycle: 3
+      });
       expect(session.activeTask?.branches.high.turns[0]).toMatchObject({
-        status: "technical_failure",
+        status: "complete_after_auto_recovery",
         recovery: {
-          status: "manual_available",
+          status: "recovered",
           trigger: "EMPTY_CONTENT",
-          automaticRetryCount: 1,
+          automaticRetryCount: 2,
           manualRetryCount: 0
         }
       });
@@ -1459,7 +1464,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     }
   });
 
-  it("EMPTY_CONTENT 连续三次为空后收束为 exhausted 且不开放第四次调用", async () => {
+  it("EMPTY_CONTENT 连续三次为空后结束自动周期并开放新手动周期", async () => {
     const fake = fakeProvider(["", "", ""]);
     const { service, store } = serviceWith({ provider: fake.provider });
     const created = await createRun(service, "owner-empty-exhausted");
@@ -1479,7 +1484,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(turn).toMatchObject({
       status: "technical_failure",
       recovery: {
-        status: "exhausted",
+        status: "manual_available",
         trigger: "EMPTY_CONTENT",
         automaticRetryCount: 2,
         manualRetryCount: 0
@@ -1512,7 +1517,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     ]);
     expect(fake.params[1]?.messages.some((message) =>
       message.role === "system" &&
-      message.content.includes("结构化 JSON 合同")
+      message.content.includes("请快速整理同一段原话")
     )).toBe(true);
     expect(first.activeTask?.branches.high.messages.filter(
       (message) => message.role === "user"
@@ -1590,15 +1595,290 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       maxTokensPolicy: "provider_default",
       responseFormat: "json_object"
     });
+    const requestConfig = calls[0]!.effectiveConfig as Record<
+      string,
+      Gi088FoundationJson
+    >;
+    const hashedParams = { ...fake.params[0]! };
+    delete hashedParams.signal;
     expect(calls[0]?.requestHash).toBe(
-      createGi088ModelRequestHash(fake.params[0]!, {
+      createGi088ModelRequestHash(hashedParams, {
         emptyContentRecoveryPolicyVersion:
           GI088_EMPTY_CONTENT_RECOVERY_POLICY.version,
         emptyContentAutomaticRetries:
           GI088_EMPTY_CONTENT_RECOVERY_POLICY.maximumAutomaticRetriesPerTurn,
-        emptyContentPolicyOverride: false
+        emptyContentPolicyOverride: false,
+        adaptiveRecoveryPolicyVersion:
+          GI088_ADAPTIVE_RECOVERY_POLICY.version,
+        raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+        raceGroupId: String(requestConfig.raceGroupId),
+        recoveryRole: "primary_high",
+        raceTrigger: null,
+        accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+        turnHardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+        remainingTurnDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+        maximumAutomaticProviderCallsPerCycle:
+          GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
       })
     );
+  });
+
+  it("主调用跨过 30 秒后快速整理先赢，迟到主结果保持失效且只落一份回复", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-12T08:00:00.000Z"));
+    let resolvePrimary!: (value: AICompletionResult) => void;
+    const params: AICompletionParams[] = [];
+    const provider: AIProvider = {
+      name: "fake-fast-wins",
+      complete: vi.fn((input): Promise<AICompletionResult> => {
+        params.push(input);
+        if (params.length === 1) {
+          return new Promise<AICompletionResult>((resolve) => {
+            resolvePrimary = resolve;
+          });
+        }
+        return Promise.resolve({
+          content: firstTurnOutput(),
+          latencyMs: 4,
+          provider: "fake-fast-wins",
+          tokenUsage: null
+        });
+      })
+    };
+    try {
+      const progress: Gi088FoundationExecutionEvent[] = [];
+      const { service, store } = serviceWith({ provider });
+      const created = await createRun(service, "owner-fast-wins");
+      const pending = service.startTask({
+        ownerUserId: "owner-fast-wins",
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage: "这条原话只能落一次。",
+        clientOperationId: "fast-wins-turn",
+        onProgress: (event) => progress.push(event)
+      });
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      const session = await pending;
+      const calls = await store.listCalls(created.runId);
+      expect(provider.complete).toHaveBeenCalledTimes(2);
+      expect(params[1]).toMatchObject({
+        thinking: "disabled",
+        responseFormat: "json_object"
+      });
+      expect(progress).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          type: "acceleration_started",
+          trigger: "LATENCY_HEDGE",
+          recoveryRole: "fast_formatter"
+        })
+      ]));
+      expect(calls.map(({ kind, status }) => ({ kind, status }))).toEqual([
+        { kind: "initial", status: "superseded" },
+        { kind: "fast_hedge", status: "finalized" }
+      ]);
+      expect(session.activeTask?.branches.high.turns[0]).toMatchObject({
+        status: "complete_after_auto_recovery",
+        adaptiveRace: {
+          status: "visible",
+          winnerCallId: calls[1]!.callId
+        }
+      });
+      expect(session.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "user"
+      )).toHaveLength(1);
+      expect(session.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "assistant"
+      )).toHaveLength(2);
+
+      resolvePrimary({
+        content: firstTurnOutput(),
+        latencyMs: 31_000,
+        provider: "fake-fast-wins",
+        tokenUsage: null
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect((await store.findCall(calls[0]!.callId))?.status).toBe("superseded");
+      const readback = await service.getSession({
+        ownerUserId: "owner-fast-wins",
+        runId: created.runId
+      });
+      expect(readback.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "assistant"
+      )).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("快速整理启动后主调用先形成合法结果，主调用原子获胜且迟到整理不重复落账", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-12T09:00:00.000Z"));
+    let resolvePrimary!: (value: AICompletionResult) => void;
+    let resolveFast!: (value: AICompletionResult) => void;
+    let callCount = 0;
+    const provider: AIProvider = {
+      name: "fake-primary-wins",
+      complete: vi.fn((): Promise<AICompletionResult> => {
+        callCount += 1;
+        return new Promise<AICompletionResult>((resolve) => {
+          if (callCount === 1) resolvePrimary = resolve;
+          else resolveFast = resolve;
+        });
+      })
+    };
+    try {
+      const { service, store } = serviceWith({ provider });
+      const created = await createRun(service, "owner-primary-wins");
+      const pending = service.startTask({
+        ownerUserId: "owner-primary-wins",
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage: "继续验证并行赢家。",
+        clientOperationId: "primary-wins-turn"
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      resolvePrimary({
+        content: firstTurnOutput(),
+        latencyMs: 30_001,
+        provider: "fake-primary-wins",
+        tokenUsage: null
+      });
+      await Promise.resolve();
+      const session = await pending;
+      const calls = await store.listCalls(created.runId);
+      expect(calls.map(({ kind, status }) => ({ kind, status }))).toEqual([
+        { kind: "initial", status: "finalized" },
+        { kind: "fast_hedge", status: "superseded" }
+      ]);
+      expect(session.activeTask?.branches.high.turns[0]?.adaptiveRace)
+        .toMatchObject({ status: "visible", winnerCallId: calls[0]!.callId });
+
+      resolveFast({
+        content: firstTurnOutput(),
+        latencyMs: 31_000,
+        provider: "fake-primary-wins",
+        tokenUsage: null
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      const readback = await service.getSession({
+        ownerUserId: "owner-primary-wins",
+        runId: created.runId
+      });
+      expect((await store.findCall(calls[1]!.callId))?.status).toBe("superseded");
+      expect(readback.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "assistant"
+      )).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("两路同一时刻完成时只确认一个原子赢家并只落一份回复", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-12T09:30:00.000Z"));
+    let resolvePrimary!: (value: AICompletionResult) => void;
+    let resolveFast!: (value: AICompletionResult) => void;
+    let callCount = 0;
+    const provider: AIProvider = {
+      name: "fake-simultaneous-race",
+      complete: vi.fn((): Promise<AICompletionResult> => {
+        callCount += 1;
+        return new Promise<AICompletionResult>((resolve) => {
+          if (callCount === 1) resolvePrimary = resolve;
+          else resolveFast = resolve;
+        });
+      })
+    };
+    try {
+      const { service, store } = serviceWith({ provider });
+      const created = await createRun(service, "owner-simultaneous-race");
+      const pending = service.startTask({
+        ownerUserId: "owner-simultaneous-race",
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage: "同时完成时也只能看到一条回复。",
+        clientOperationId: "simultaneous-race-turn"
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      resolvePrimary({
+        content: firstTurnOutput(),
+        latencyMs: 30_000,
+        provider: "fake-simultaneous-race",
+        tokenUsage: null
+      });
+      resolveFast({
+        content: firstTurnOutput(),
+        latencyMs: 1,
+        provider: "fake-simultaneous-race",
+        tokenUsage: null
+      });
+      await Promise.resolve();
+      const session = await pending;
+      const calls = await store.listCalls(created.runId);
+
+      expect(calls).toHaveLength(2);
+      expect(calls.filter((call) => call.status === "finalized")).toHaveLength(1);
+      expect(calls.filter((call) => call.status === "superseded")).toHaveLength(1);
+      expect(session.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "user"
+      )).toHaveLength(1);
+      expect(session.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "assistant"
+      )).toHaveLength(2);
+      expect(session.activeTask?.branches.high.turns[0]?.adaptiveRace)
+        .toMatchObject({
+          status: "visible",
+          winnerCallId: calls.find((call) => call.status === "finalized")?.callId
+        });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("30 秒后两路仍未完成时在 60 秒原子结束周期并保留手动重试入口", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-12T10:00:00.000Z"));
+    const provider: AIProvider = {
+      name: "fake-hard-deadline",
+      complete: vi.fn(() => new Promise<AICompletionResult>(() => undefined))
+    };
+    try {
+      const { service, store } = serviceWith({ provider });
+      const created = await createRun(service, "owner-hard-deadline");
+      const pending = service.startTask({
+        ownerUserId: "owner-hard-deadline",
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage: "即使两路都卡住，原话也要保留。",
+        clientOperationId: "hard-deadline-turn"
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(provider.complete).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(30_000);
+      const session = await pending;
+      const calls = await store.listCalls(created.runId);
+      expect(calls).toHaveLength(2);
+      expect(calls.every((call) => call.status === "superseded")).toBe(true);
+      expect(session.activeTask?.branches.high.turns[0]).toMatchObject({
+        status: "technical_failure",
+        recovery: {
+          status: "manual_available",
+          finalStatus: "manual_available"
+        },
+        adaptiveRace: {
+          status: "manual_available",
+          cumulativeWaitMs: 60_000
+        }
+      });
+      expect(session.activeTask?.branches.high.messages.filter(
+        (message) => message.role === "user"
+      )).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("自动恢复严格受 90 秒共享截止约束", async () => {
@@ -1647,8 +1927,9 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     });
   });
 
-  it("人工第三次生成独立于自动截止，并且全链只有三次调用", async () => {
+  it("自动周期耗尽后人工动作开启新的 30/60 恢复周期", async () => {
     const fake = fakeProvider([
+      unauthorizedPauseOutput(),
       unauthorizedPauseOutput(),
       unauthorizedPauseOutput(),
       firstTurnOutput()
@@ -1665,7 +1946,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     const turnId = failed.activeTask!.branches.high.turns[0]!.id;
     expect(failed.activeTask?.branches.high.turns[0]?.recovery).toMatchObject({
       status: "manual_available",
-      automaticRetryCount: 1,
+      automaticRetryCount: 2,
       manualRetryCount: 0
     });
 
@@ -1679,30 +1960,30 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       clientOperationId: "manual-third-action"
     });
     const calls = await store.listCalls(created.runId);
-    const thirdConfig = calls[2]!.effectiveConfig as Record<
+    const manualConfig = calls[3]!.effectiveConfig as Record<
       string,
       Gi088FoundationJson
     >;
 
-    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
+    expect(fake.provider.complete).toHaveBeenCalledTimes(4);
     expect(calls.map((call) => [call.attempt, call.kind])).toEqual([
       [1, "initial"],
       [2, "automatic_retry"],
-      [3, "manual_retry"]
+      [3, "fast_hedge"],
+      [4, "manual_retry"]
     ]);
-    expect(calls[2]).toMatchObject({
-      parentCallId: calls[1]!.callId,
-      automaticDeadlineAt: null,
+    expect(calls[3]).toMatchObject({
+      parentCallId: calls[2]!.callId,
       status: "finalized"
     });
-    expect(thirdConfig.hardTimeoutMs).toBe(
-      GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs
+    expect(manualConfig.hardTimeoutMs).toBe(
+      GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
     );
     expect(recovered.activeTask?.branches.high.turns[0]).toMatchObject({
       status: "complete_after_manual_recovery",
       recovery: {
         status: "recovered",
-        automaticRetryCount: 1,
+        automaticRetryCount: 2,
         manualRetryCount: 1
       }
     });
@@ -1712,6 +1993,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     let currentTime = new Date("2026-08-10T14:00:00.000Z");
     const store = new ToggleDispatchFailureStore();
     const fake = fakeProvider([
+      unauthorizedPauseOutput(),
       unauthorizedPauseOutput(),
       unauthorizedPauseOutput(),
       firstTurnOutput()
@@ -1731,7 +2013,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       clientOperationId: "manual-reserved-initial"
     });
     const turnId = failed.activeTask!.branches.high.turns[0]!.id;
-    expect(fake.provider.complete).toHaveBeenCalledTimes(2);
+    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
 
     store.failDispatch = true;
     await expect(
@@ -1747,12 +2029,12 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     ).rejects.toThrow("dispatch claim unavailable");
     const manualCall = (await store.listCalls(created.runId)).at(-1)!;
     expect(manualCall).toMatchObject({
-      attempt: 3,
+      attempt: 4,
       kind: "manual_retry",
       status: "reserved",
-      automaticDeadlineAt: null
+      automaticDeadlineAt: expect.any(Date)
     });
-    expect(fake.provider.complete).toHaveBeenCalledTimes(2);
+    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
 
     currentTime = new Date(
       manualCall.reservedAt.getTime() +
@@ -1764,13 +2046,13 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     });
     expect((await store.findCall(manualCall.callId))).toMatchObject({
       status: "superseded",
-      errorCode: "RESERVED_DISPATCH_EXPIRED"
+      errorCode: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
     });
     expect(reconciled.activeTask?.branches.high.turns[0]).toMatchObject({
       status: "technical_failure",
       recovery: {
-        status: "exhausted",
-        automaticRetryCount: 1,
+        status: "manual_available",
+        automaticRetryCount: 2,
         manualRetryCount: 1,
         manualRetryCallId: manualCall.callId
       }
@@ -1783,9 +2065,9 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       })
     ).toMatchObject({
       status: "completed",
-      resultSnapshot: { status: "superseded" }
+      resultSnapshot: { status: "manual_available" }
     });
-    expect(fake.provider.complete).toHaveBeenCalledTimes(2);
+    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
   });
 
   it("复核拒绝陈旧 observation 与 trajectory snapshot", async () => {
@@ -2339,7 +2621,7 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
 
     expect(replay).toEqual(first);
     expect(first.receipt.exportVersion).toBe(
-      GI088_READONLY_EXPORT_VERSION_V07
+      GI088_READONLY_EXPORT_VERSION_V08
     );
     expect(first.receipt.payloadSha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(first.receipt.recordCounts.calls).toBe(1);

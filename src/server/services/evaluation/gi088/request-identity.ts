@@ -17,6 +17,15 @@ export function createGi088ModelRequestHash(
     emptyContentRecoveryPolicyVersion?: string | null;
     emptyContentAutomaticRetries?: number | null;
     emptyContentPolicyOverride?: boolean | null;
+    adaptiveRecoveryPolicyVersion?: string | null;
+    raceContractVersion?: string | null;
+    raceGroupId?: string | null;
+    recoveryRole?: string | null;
+    raceTrigger?: string | null;
+    accelerationAfterMs?: number | null;
+    turnHardDeadlineMs?: number | null;
+    remainingTurnDeadlineMs?: number | null;
+    maximumAutomaticProviderCallsPerCycle?: number | null;
   }
 ) {
   return createHash("sha256")

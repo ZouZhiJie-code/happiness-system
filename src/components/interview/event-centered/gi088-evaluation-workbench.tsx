@@ -189,6 +189,8 @@ type PendingOperation = {
     | "automatic_empty_content_recovery"
     | "automatic_timeout_recovery"
     | "automatic_stage_transition_recovery"
+    | "automatic_semantic_recovery"
+    | "acceleration"
     | "manual_recovery";
   startedAt: number;
 };
@@ -241,13 +243,13 @@ function PendingGenerationStatus({
   operation: PendingOperation;
 }) {
   const [elapsedSeconds, setElapsedSeconds] = useState(() =>
-    Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000))
+    Math.min(60, Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000)))
   );
 
   useEffect(() => {
     const updateElapsed = () => {
       setElapsedSeconds(
-        Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000))
+        Math.min(60, Math.max(0, Math.floor((Date.now() - operation.startedAt) / 1_000)))
       );
     };
     updateElapsed();
@@ -257,17 +259,16 @@ function PendingGenerationStatus({
 
   const phase =
     operation.kind === "manual_recovery"
-      ? "正在按你的确认再次生成"
-      : operation.kind === "automatic_empty_content_recovery"
-        ? "正在整理最终回答"
-        : operation.kind === "automatic_timeout_recovery"
-          ? "连接已恢复，正在自动生成"
-          : operation.kind === "automatic_stage_transition_recovery"
-            ? "正在整理当前阶段的最终回答"
-            : elapsedSeconds >= 20
-              ? "仍在生成可见回答"
-              : "正在生成可见回答";
-  const deadline = operation.kind === "generation" ? 60 : 90;
+      ? "生成中"
+      : operation.kind === "acceleration"
+        ? "正在加速整理"
+        : operation.kind === "automatic_empty_content_recovery" ||
+            operation.kind === "automatic_timeout_recovery" ||
+            operation.kind === "automatic_stage_transition_recovery" ||
+            operation.kind === "automatic_semantic_recovery"
+          ? "正在自动恢复"
+          : "生成中";
+  const deadline = 60;
 
   return (
     <div
@@ -293,21 +294,61 @@ function PendingGenerationStatus({
   );
 }
 
-function ServerGenerationStatus() {
+function ServerGenerationStatus({
+  turn
+}: {
+  turn: Gi088Trajectory["turns"][number];
+}) {
+  const race = turn.adaptiveRace;
+  const startedAt = Date.parse(
+    race?.startedAt ??
+      turn.recovery?.startedAt ??
+      turn.calls[0]?.startedAt ??
+      new Date().toISOString()
+  );
+  const [elapsedSeconds, setElapsedSeconds] = useState(() =>
+    Math.min(60, Math.max(0, Math.floor((Date.now() - startedAt) / 1_000)))
+  );
+
+  useEffect(() => {
+    const updateElapsed = () => {
+      setElapsedSeconds(
+        Math.min(60, Math.max(0, Math.floor((Date.now() - startedAt) / 1_000)))
+      );
+    };
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 1_000);
+    return () => window.clearInterval(timer);
+  }, [startedAt]);
+
+  const phase = race?.status === "accelerating"
+    ? "正在加速整理"
+    : race?.status === "recovering" ||
+        turn.recovery?.status === "retrying" ||
+        turn.recovery?.status === "manual_retrying" ||
+        turn.recovery?.status === "accelerating"
+      ? "正在自动恢复"
+      : "生成中";
+
   return (
     <div
-      className="flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] bg-[var(--amber-soft)] px-3 py-2 text-xs text-ink"
+      className="flex min-h-11 items-center justify-between gap-3 rounded-[var(--radius-control)] bg-[var(--amber-soft)] px-3 py-2 text-xs text-ink"
       role="status"
       aria-live="polite"
       aria-atomic="true"
       data-testid="gi088-authoritative-wait-status"
     >
-      <span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" aria-hidden="true" />
-      <span>
-        <strong>正在自动恢复并整理最终回答</strong>
-        <span className="ml-2 text-[var(--text-dim)]">
-          原话已保存，页面只读取服务端进度。
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" aria-hidden="true" />
+        <span>
+          <strong>{phase}</strong>
+          <span className="ml-2 text-[var(--text-dim)]">
+            原话已保存，可以安全等待或刷新读取。
+          </span>
         </span>
+      </span>
+      <span className="shrink-0 font-mono tabular-nums text-[var(--text-dim)]">
+        {elapsedSeconds}s / 60s
       </span>
     </div>
   );
@@ -360,6 +401,7 @@ function displayAbortSource(value: Gi088ProviderDiagnostics["abortSource"]) {
 }
 
 function callKindLabel(kind: Gi088CallMetadata["kind"]) {
+  if (kind === "fast_hedge") return "快速整理";
   if (kind === "automatic_retry") return "自动恢复";
   if (kind === "manual_retry") return "人工重试";
   if (kind === "initial") return "首次调用";
@@ -370,10 +412,18 @@ function recoveryTriggerLabel(
   trigger:
     | "EMPTY_CONTENT"
     | "TIMEOUT"
+    | "OUTPUT_SCHEMA_INVALID"
+    | "SEMANTIC_VALIDATION_FAILED"
+    | "STATE_TRANSITION_INVALID"
     | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
     | "ASK_QUESTION_COUNT_INVALID:2"
     | "UNAUTHORIZED_PAUSE"
+    | "LATENCY_HEDGE"
 ) {
+  if (trigger === "LATENCY_HEDGE") return "30 秒加速竞速";
+  if (trigger === "OUTPUT_SCHEMA_INVALID") return "结构格式整理";
+  if (trigger === "SEMANTIC_VALIDATION_FAILED") return "语义边界纠正";
+  if (trigger === "STATE_TRANSITION_INVALID") return "状态边界纠正";
   if (trigger === "UNAUTHORIZED_PAUSE") return "未经授权暂停纠正";
   if (trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE") return "阶段转场纠正";
   if (trigger === "ASK_QUESTION_COUNT_INVALID:2") return "单一问题纠正";
@@ -383,10 +433,12 @@ function recoveryTriggerLabel(
 
 function CallTrace({
   call,
-  index
+  index,
+  winnerCallId
 }: {
   call: Gi088CallMetadata;
   index: number;
+  winnerCallId?: string | null;
 }) {
   return (
     <div className="border-l border-[var(--line-strong)] pl-3" data-call-id={call.id}>
@@ -394,7 +446,13 @@ function CallTrace({
         <p className="font-semibold text-ink/85">
           调用 {index + 1} · {callKindLabel(call.kind)}
         </p>
-        <span className="font-mono text-[var(--text-faint)]">{call.status}</span>
+        <span className="font-mono text-[var(--text-faint)]">
+          {winnerCallId === call.id
+            ? "winner"
+            : call.ledgerStatus === "superseded"
+              ? "superseded"
+              : call.status}
+        </span>
       </div>
       <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-[var(--text-faint)]">
         <dt>配置</dt>
@@ -422,6 +480,34 @@ function CallTrace({
               总计 {Math.round(call.effectiveConfig.sharedDeadlineMs / 1_000)} 秒
               {typeof call.effectiveConfig.remainingSharedDeadlineMs === "number"
                 ? ` · 本次开始时剩余 ${Math.ceil(call.effectiveConfig.remainingSharedDeadlineMs / 1_000)} 秒`
+                : ""}
+            </dd>
+          </>
+        ) : null}
+        {call.effectiveConfig?.raceGroupId ? (
+          <>
+            <dt>竞速身份</dt>
+            <dd className="text-ink/80">
+              {call.effectiveConfig.recoveryRole === "primary_high"
+                ? "主调用 · Thinking high"
+                : call.effectiveConfig.recoveryRole === "high_correction"
+                  ? "纠正调用 · Thinking high"
+                  : call.effectiveConfig.recoveryRole === "fast_formatter"
+                    ? "加速整理 · Thinking 关闭"
+                    : "手动新周期 · Thinking high"}
+              {call.effectiveConfig.raceTrigger
+                ? ` · ${recoveryTriggerLabel(call.effectiveConfig.raceTrigger)}`
+                : ""}
+            </dd>
+            <dt>竞速状态</dt>
+            <dd className="text-ink/80">
+              {call.ledgerStatus === "superseded"
+                ? "已失效，不写入对话"
+                : call.ledgerStatus === "finalized"
+                  ? "已完成"
+                  : "进行中"}
+              {typeof call.effectiveConfig.remainingTurnDeadlineMs === "number"
+                ? ` · 启动时剩余 ${Math.ceil(call.effectiveConfig.remainingTurnDeadlineMs / 1_000)} 秒`
                 : ""}
             </dd>
           </>
@@ -598,7 +684,10 @@ function turnHasActiveServerWork(
   return turn.status === "processing" ||
     turn.recovery?.status === "eligible" ||
     turn.recovery?.status === "retrying" ||
-    turn.recovery?.status === "manual_retrying";
+    turn.recovery?.status === "manual_retrying" ||
+    turn.adaptiveRace?.status === "generating" ||
+    turn.adaptiveRace?.status === "recovering" ||
+    turn.adaptiveRace?.status === "accelerating";
 }
 
 function sessionHasActiveServerWork(session: Gi088EvaluationSession) {
@@ -1055,44 +1144,22 @@ function TechnicalFailure({
   if (
     recovery?.status === "eligible" ||
     recovery?.status === "retrying" ||
-    recovery?.status === "manual_retrying"
+    recovery?.status === "manual_retrying" ||
+    recovery?.status === "accelerating"
   ) {
     if (!showRecoveryStatus) return null;
-    const timeoutRecovery = recovery.trigger === "TIMEOUT";
-    const emptyRecovery = recovery.trigger === "EMPTY_CONTENT";
-    const recoveryMaximum =
-      recovery.maximumAutomaticRetriesPerTurn ??
-      trajectory.config.automaticEmptyContentRetries ??
-      2;
-    const recoveryAttempt = Math.min(
-      recoveryMaximum,
-      recovery.automaticRetryCount + 1
-    );
-    const manualRetrying = recovery.status === "manual_retrying";
+    const accelerating = recovery.status === "accelerating" ||
+      failedTurn?.adaptiveRace?.status === "accelerating";
     return (
       <div className="border-l-2 border-[var(--amber)] pl-4 text-sm leading-6" role="status" aria-live="polite">
         <p className="font-semibold text-ink">
-          {manualRetrying
-            ? "正在再次生成"
-            : timeoutRecovery
-              ? "正在恢复连接"
-              : emptyRecovery
-                ? `正在自动恢复第 ${recoveryAttempt}/${recoveryMaximum} 次`
-                : "正在恢复可见回答"}
+          {accelerating ? "正在加速整理" : "正在自动恢复"}
         </p>
         <p className="mt-1 text-[var(--text-dim)]">
-          {manualRetrying
-            ? "你已确认再次生成。系统继续使用同一段原话、同一 Thinking high 配置和修复前状态；完成后只会提交一条最终回答。"
-            : timeoutRecovery
-            ? "第一次请求在连接或正文停滞时结束。你的原话已经保留，系统正在用相同 Thinking high 配置自动恢复一次。"
-            : emptyRecovery
-              ? `你的原话已经保留。系统正在沿用相同 Thinking high 配置恢复，这是本轮第 ${recoveryAttempt}/${recoveryMaximum} 次自动恢复。`
-              : "第一次请求只完成了思考。你的原话已经保留，系统正在用相同 Thinking high 配置自动恢复一次。"}
+          原话已保存。系统会在 30 秒时并行启动快速整理，并在 60 秒内只确认一条合法回应。
         </p>
         <p className="mt-2 text-xs text-[var(--text-faint)]">
-          {emptyRecovery
-            ? `自动链总上限 90 秒；本轮最多自动恢复 ${recoveryMaximum} 次。`
-            : "自动链最多一次、总计不超过 90 秒；自动恢复仍失败时，你可以主动再次生成一次。"}
+          同一周期最多 3 次自动调用；其他在途或迟到结果会失效。
         </p>
       </div>
     );
@@ -1126,9 +1193,9 @@ function TechnicalFailure({
     };
     return (
       <div className="border-l-2 border-clay pl-4 text-sm leading-6" role="alert">
-        <p className="font-semibold text-ink">自动恢复仍未完成</p>
+        <p className="font-semibold text-ink">本轮生成未完成，原话已保存</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          {`${callsUsed} 次调用和你的原话已经保留。你可以主动再生成一次；这次结束后系统会停止当前原话的全部调用（本轮上限 ${maximumCalls} 次）。`}
+          {`本周期 ${callsUsed} 次调用已收口，最多 ${maximumCalls} 次。你可以主动开启一个新的 30/60 秒恢复周期。`}
         </p>
         <ActionButton
           type="button"
@@ -1137,24 +1204,45 @@ function TechnicalFailure({
           disabled={disabled || !turnId}
           onClick={retryAfterAuto}
         >
-          再次生成
+          重新尝试
         </ActionButton>
       </div>
     );
   }
 
   if (recovery?.status === "exhausted") {
-    const timeoutRecovery = recovery.trigger === "TIMEOUT";
     return (
       <div className="border-l-2 border-clay pl-4 text-sm leading-6" role="alert">
-        <p className="font-semibold text-ink">
-          {timeoutRecovery
-            ? "自动重试仍未完成连接"
-            : "本轮恢复已结束"}
-        </p>
+        <p className="font-semibold text-ink">本轮生成未完成，原话已保存</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          {`最多 ${recovery.maximumProviderCallsPerTurn ?? 3} 次${branch === "high" ? " Thinking high" : " Thinking 关闭"} 调用和你的原话都已保留在 Trace。当前原话的恢复已经结束，你可以结束并评价。`}
+          {`本周期最多 ${recovery.maximumProviderCallsPerTurn ?? 3} 次调用已经收口。你可以重新尝试，新的恢复周期会继续使用同一段原话。`}
         </p>
+        {turnId ? (
+          <ActionButton
+            type="button"
+            className="mt-3"
+            variant="primary"
+            disabled={disabled}
+            onClick={async () => {
+              onPending(true);
+              try {
+                onUpdated(await retryGi088Turn({
+                  runId,
+                  taskId,
+                  branch,
+                  turnId,
+                  trigger: "manual_after_auto_recovery"
+                }));
+              } catch (error) {
+                onError(issueFromUnknown(error));
+              } finally {
+                onPending(false);
+              }
+            }}
+          >
+            重新尝试
+          </ActionButton>
+        ) : null}
       </div>
     );
   }
@@ -1241,9 +1329,9 @@ function ProtectedFailure({
     if (!showRecoveryStatus) return null;
     return (
       <div className="border-l-2 border-[var(--amber)] pl-4 text-sm leading-6" role="status" aria-live="polite">
-        <p className="font-semibold text-ink">正在再次生成</p>
+        <p className="font-semibold text-ink">正在自动恢复</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          系统沿用原话、Thinking high 配置和修复前状态；完成后只提交一条最终回答。
+          新的 30/60 秒周期已经开始；系统继续使用同一段原话，完成后只提交一条最终回答。
         </p>
       </div>
     );
@@ -1275,9 +1363,9 @@ function ProtectedFailure({
     };
     return (
       <div className="border-l-2 border-clay pl-4 text-sm leading-6" role="alert">
-        <p className="font-semibold text-ink">自动整理仍未通过规则检查</p>
+        <p className="font-semibold text-ink">本轮生成未完成，原话已保存</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          {`${callsUsed} 次结果和你的原话已经保留。你可以主动再生成一次；完成后当前原话不会继续调用（本轮上限 ${maximumCalls} 次）。`}
+          {`本周期 ${callsUsed} 次结果已收口，最多 ${maximumCalls} 次。你可以主动开启新的 30/60 秒恢复周期。`}
         </p>
         <ActionButton
           type="button"
@@ -1286,14 +1374,16 @@ function ProtectedFailure({
           disabled={disabled}
           onClick={retryAfterAuto}
         >
-          再次生成
+          重新尝试
         </ActionButton>
       </div>
     );
   }
   if (
     stageTransitionRecovery &&
-    (recovery.status === "eligible" || recovery.status === "retrying")
+    (recovery.status === "eligible" ||
+      recovery.status === "retrying" ||
+      recovery.status === "accelerating")
   ) {
     if (!showRecoveryStatus) return null;
     return (
@@ -1303,13 +1393,15 @@ function ProtectedFailure({
         aria-live="polite"
       >
         <p className="font-semibold text-ink">
-          正在自动整理阶段转换
+          {recovery.status === "accelerating"
+            ? "正在加速整理"
+            : "正在自动恢复"}
         </p>
         <p className="mt-1 text-[var(--text-dim)]">
-          第一次回应留在了机会已经用完的阶段。你的原话已经保留，系统正在沿用当前 Thinking 配置自动纠正一次。
+          原话已保存。系统先纠正阶段转换；累计 30 秒仍未完成时会并行启动快速整理。
         </p>
         <p className="mt-2 text-xs text-[var(--text-faint)]">
-          自动链最多一次；自动整理仍失败时，你可以主动再次生成一次。
+          同一周期最多 3 次自动调用，总计不超过 60 秒，只会提交一条合法回应。
         </p>
       </div>
     );
@@ -2111,7 +2203,14 @@ function TraceLedger({
           <dt className="text-[var(--text-faint)]">温度</dt><dd>{trajectory.config.temperature ?? "N/A"}</dd>
           <dt className="text-[var(--text-faint)]">Reasoning</dt><dd>{trajectory.config.reasoningEffort ?? "关闭"}</dd>
           <dt className="text-[var(--text-faint)]">输出</dt><dd>结构化 JSON · 应用不设 Token 上限 · 质量重试 0</dd>
-          <dt className="text-[var(--text-faint)]">空内容恢复</dt><dd>{trajectory.config.automaticEmptyContentRetries ? `Thinking high 最多自动恢复 ${trajectory.config.automaticEmptyContentRetries} 次` : "关闭"}</dd>
+          <dt className="text-[var(--text-faint)]">恢复策略</dt>
+          <dd>
+            {trajectory.config.adaptiveRecoveryPolicyVersion
+              ? `30 秒启动加速整理 · 60 秒硬截止 · 每周期最多 ${trajectory.config.maximumAutomaticProviderCallsPerCycle ?? 3} 次自动调用`
+              : trajectory.config.automaticEmptyContentRetries
+                ? `Thinking high 最多自动恢复 ${trajectory.config.automaticEmptyContentRetries} 次`
+                : "关闭"}
+          </dd>
           <dt className="text-[var(--text-faint)]">轨迹调用</dt><dd>已使用 {trajectory.config.providerCallsUsed ?? 0} 次，本轨迹不设上限</dd>
           <dt className="text-[var(--text-faint)]">候选指纹</dt><dd title={session.evaluation.candidateFingerprint} className="break-all font-mono text-xs">{compactFingerprint(session.evaluation.candidateFingerprint)}</dd>
         </dl>
@@ -2201,9 +2300,33 @@ function TraceLedger({
               {turn.recovery ? (
                 <p className="mt-3 text-xs font-semibold text-ink/85">
                   {recoveryTriggerLabel(turn.recovery.trigger)}：
-                  {turn.recovery.status} · 自动 {turn.recovery.automaticRetryCount}/{turn.recovery.maximumAutomaticRetriesPerTurn ?? trajectory.config.automaticEmptyContentRetries ?? 2} · 人工 {turn.recovery.manualRetryCount ?? 0}/1
-                  {turn.recovery.automaticDeadlineAt ? " · 自动链总上限 90 秒" : ""}
+                  {turn.recovery.status} · 自动调用 {turn.calls.filter((call) =>
+                    call.effectiveConfig?.raceGroupId === turn.adaptiveRace?.raceGroupId
+                  ).length}/{turn.recovery.automaticProviderCallMaximum ?? trajectory.config.maximumAutomaticProviderCallsPerCycle ?? 3}
+                  {turn.adaptiveRace ? " · 30 秒加速 / 60 秒截止" : ""}
                 </p>
+              ) : null}
+              {turn.adaptiveRace ? (
+                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs leading-5">
+                  <dt className="text-[var(--text-faint)]">竞速组</dt>
+                  <dd className="break-all font-mono text-ink/80">
+                    {compactFingerprint(turn.adaptiveRace.raceGroupId)} · 周期 {turn.adaptiveRace.cycle}
+                  </dd>
+                  <dt className="text-[var(--text-faint)]">最终状态</dt>
+                  <dd className="text-ink/80">
+                    {turn.adaptiveRace.winnerCallId
+                      ? `已确认赢家 ${compactFingerprint(turn.adaptiveRace.winnerCallId)}`
+                      : turn.adaptiveRace.status === "manual_available" ||
+                          turn.adaptiveRace.status === "exhausted"
+                        ? "60 秒内未形成合法回应"
+                        : turn.adaptiveRace.status === "accelerating"
+                          ? "正在加速竞速"
+                          : "生成中"}
+                    {typeof turn.adaptiveRace.cumulativeWaitMs === "number"
+                      ? ` · 累计 ${Math.round(turn.adaptiveRace.cumulativeWaitMs / 100) / 10} 秒`
+                      : ""}
+                  </dd>
+                </dl>
               ) : null}
               <QuestionReviewEditor
                 runId={runIdOf(session)}
@@ -2218,7 +2341,12 @@ function TraceLedger({
               {turn.calls.length ? (
                 <div className="mt-3 space-y-4" aria-label={`第 ${index + 1} 轮调用血缘`}>
                   {turn.calls.map((call, callIndex) => (
-                    <CallTrace key={call.id} call={call} index={callIndex} />
+                    <CallTrace
+                      key={call.id}
+                      call={call}
+                      index={callIndex}
+                      winnerCallId={turn.adaptiveRace?.winnerCallId}
+                    />
                   ))}
                 </div>
               ) : null}
@@ -2648,7 +2776,11 @@ function WorkspaceReady({
   ).some((branch) => branch.turns.some((turn) =>
     turn.recovery?.status === "eligible" ||
     turn.recovery?.status === "retrying" ||
-    turn.recovery?.status === "manual_retrying"
+    turn.recovery?.status === "manual_retrying" ||
+    turn.recovery?.status === "accelerating" ||
+    turn.adaptiveRace?.status === "generating" ||
+    turn.adaptiveRace?.status === "recovering" ||
+    turn.adaptiveRace?.status === "accelerating"
   )));
   const abortBlockedByActiveCall = serverProcessing && !recoveryActive;
   const busy = pending || serverProcessing;
@@ -2670,30 +2802,39 @@ function WorkspaceReady({
       setPendingOperation((current) => ({
         taskId: current?.taskId ?? session.activeTask?.taskId ?? currentTask.id,
         branch: "high",
-        kind: progress.type === "recovery_started"
-          ? progress.trigger === "TIMEOUT"
-            ? "automatic_timeout_recovery"
-            : progress.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-              ? "automatic_stage_transition_recovery"
-              : "automatic_empty_content_recovery"
-          : "generation",
+        kind: progress.type === "acceleration_started"
+          ? "acceleration"
+          : progress.type === "recovery_started"
+            ? progress.trigger === "TIMEOUT"
+              ? "automatic_timeout_recovery"
+              : progress.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
+                ? "automatic_stage_transition_recovery"
+                : progress.trigger === "OUTPUT_SCHEMA_INVALID" ||
+                    progress.trigger === "SEMANTIC_VALIDATION_FAILED" ||
+                    progress.trigger === "STATE_TRANSITION_INVALID"
+                  ? "automatic_semantic_recovery"
+                  : "automatic_empty_content_recovery"
+            : "generation",
         startedAt: current?.startedAt ?? Date.now()
       }));
       if (
-        progress.type === "recovery_started" &&
+        (progress.type === "recovery_started" ||
+          progress.type === "acceleration_started") &&
         progress.callId &&
         !hasShownRecoveryToast(progress.callId)
       ) {
         activePrefixRecoveryCallRef.current = progress.callId;
         showRecoveryToast({
           callId: `starting:${progress.callId}`,
-          message: progress.trigger === "TIMEOUT"
-            ? "这次连接超时，服务端正在自动恢复，请再等一会儿～"
+          message: progress.type === "acceleration_started"
+            ? "主调用仍在生成，快速整理已经并行启动；只会保留第一条合法回应。"
+            : progress.trigger === "TIMEOUT"
+            ? "这次连接超时，服务端正在自动恢复。"
             : progress.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
               ? "刚才的回应没有顺利完成阶段转换，服务端正在自动整理。"
               : progress.recoveryAttempt
-                ? `正在自动恢复第 ${progress.recoveryAttempt}/${progress.recoveryMaximum ?? 2} 次，请稍候。`
-                : "刚才只完成了思考，服务端正在继续整理最终回答。"
+                ? "正在自动恢复，原话已经安全保存。"
+                : "正在自动恢复，完成后只会提交一条最终回答。"
         });
       }
     },
@@ -3083,21 +3224,33 @@ function WorkspaceReady({
     const activeTurn = [...activeTrajectory.turns].reverse()
       .find(turnHasActiveServerWork);
     const recovery = activeTurn?.recovery;
+    const race = activeTurn?.adaptiveRace;
     setPendingOperation({
       taskId: activeTask.taskId,
       branch: activeBranch,
-      kind: recovery?.status === "manual_retrying"
+      kind: race?.status === "accelerating" ||
+          recovery?.status === "accelerating"
+        ? "acceleration"
+        : recovery?.status === "manual_retrying"
         ? "manual_recovery"
         : recovery?.trigger === "TIMEOUT"
           ? "automatic_timeout_recovery"
           : recovery?.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
             ? "automatic_stage_transition_recovery"
+            : recovery?.trigger === "OUTPUT_SCHEMA_INVALID" ||
+                recovery?.trigger === "SEMANTIC_VALIDATION_FAILED" ||
+                recovery?.trigger === "STATE_TRANSITION_INVALID"
+              ? "automatic_semantic_recovery"
             : recovery
               ? "automatic_empty_content_recovery"
               : "generation",
-      startedAt: recovery?.startedAt
-        ? new Date(recovery.startedAt).getTime()
-        : Date.now()
+      startedAt: race?.startedAt
+        ? new Date(race.startedAt).getTime()
+        : recovery?.startedAt
+          ? new Date(recovery.startedAt).getTime()
+          : activeTurn?.calls[0]?.startedAt
+            ? new Date(activeTurn.calls[0].startedAt).getTime()
+            : Date.now()
     });
     const pollTimer = window.setTimeout(() => {
       void getGi088EvaluationSession({
@@ -3995,7 +4148,13 @@ function WorkspaceReady({
                   {pendingOperation?.taskId === activeTask.taskId && pendingOperation.branch === selectedBranch ? (
                     <div className="mb-3"><PendingGenerationStatus operation={pendingOperation} /></div>
                   ) : trajectory.status === "running" && trajectory.pendingTurnId ? (
-                    <div className="mb-3"><ServerGenerationStatus /></div>
+                    <div className="mb-3">
+                      <ServerGenerationStatus
+                        turn={trajectory.turns.find((turn) =>
+                          turn.id === trajectory.pendingTurnId
+                        ) ?? trajectory.turns[trajectory.turns.length - 1]!}
+                      />
+                    </div>
                   ) : null}
                   {issue ? <div className="mb-4"><InlineIssue issue={issue} onAction={handleIssueAction} /></div> : null}
                   {unreviewedQuestionCount > 0 ? (
@@ -4143,7 +4302,8 @@ function WorkspaceReady({
                   !trajectory.turns.some(
                     (turn) =>
                       turn.recovery?.status === "eligible" ||
-                      turn.recovery?.status === "retrying"
+                      turn.recovery?.status === "retrying" ||
+                      turn.recovery?.status === "accelerating"
                   ) ? (
                     <div className="mt-4">
                       <ActionButton type="button" variant="primary" disabled={busy || unreviewedQuestionCount > 0} aria-describedby={unreviewedQuestionCount > 0 ? endReviewHelpId : undefined} onClick={() => setReviewingBranch(selectedBranch)}>
@@ -4156,7 +4316,8 @@ function WorkspaceReady({
                   !trajectory.turns.some(
                     (turn) =>
                       turn.recovery?.status === "eligible" ||
-                      turn.recovery?.status === "retrying"
+                      turn.recovery?.status === "retrying" ||
+                      turn.recovery?.status === "accelerating"
                   ) ? (
                     <div className="mt-3">
                       <ActionButton type="button" variant="primary" disabled={busy || unreviewedQuestionCount > 0} aria-describedby={unreviewedQuestionCount > 0 ? endReviewHelpId : undefined} onClick={() => setReviewingBranch(selectedBranch)}>结束并评价当前技术失败</ActionButton>
@@ -4303,9 +4464,10 @@ function WorkspaceReady({
                   <div><dt className="text-[var(--text-faint)]">模型</dt><dd className="mt-0.5 font-mono text-ink">{session.evaluation.model}</dd></div>
                   {!highOnly ? <div><dt className="text-[var(--text-faint)]">关闭组</dt><dd className="mt-0.5 text-ink">Thinking 关闭 · 温度 0.2</dd></div> : null}
                   <div><dt className="text-[var(--text-faint)]">开启组</dt><dd className="mt-0.5 text-ink">Thinking 开启 · reasoning high · 温度 N/A</dd></div>
-                  <div><dt className="text-[var(--text-faint)]">共同输出</dt><dd className="mt-0.5 text-ink">结构化 JSON · 应用不设 Token 上限 · 同一段原话最多三次调用</dd></div>
+                  <div><dt className="text-[var(--text-faint)]">共同输出</dt><dd className="mt-0.5 text-ink">结构化 JSON · 应用不设 Token 上限 · 每周期最多三次自动调用</dd></div>
                   <div><dt className="text-[var(--text-faint)]">轨迹调用</dt><dd className="mt-0.5 text-ink">已使用 N 次，本轨迹不设上限</dd></div>
                   {highOnly ? <div><dt className="text-[var(--text-faint)]">等待策略</dt><dd className="mt-0.5 text-ink">响应头 60 秒 · 正文空闲 60 秒 · 单次总时长 60 秒</dd></div> : null}
+                  {highOnly ? <div><dt className="text-[var(--text-faint)]">恢复竞速</dt><dd className="mt-0.5 text-ink">30 秒启动加速整理 · 60 秒确认最终结果 · 迟到回应失效</dd></div> : null}
                   <div><dt className="text-[var(--text-faint)]">执行指纹</dt><dd title={session.evaluation.executionFingerprint} className="mt-0.5 font-mono text-ink">{compactFingerprint(session.evaluation.executionFingerprint)}</dd></div>
                   <div><dt className="text-[var(--text-faint)]">数据状态</dt><dd className="mt-0.5 text-ink">{terminal ? "只读封存" : "Preview 独立评测存储"}</dd></div>
                 </dl>

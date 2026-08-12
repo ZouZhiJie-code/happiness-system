@@ -709,4 +709,170 @@ describeIntegration("GI-088 v8r2 Prisma foundation store", () => {
     expect(recovery.claimed).toBe(true);
     expect(recovery.call.parentCallId).toBe(parentCallId);
   }, PRISMA_INTEGRATION_TEST_TIMEOUT_MS);
+
+  it("在真实事务中只确认一个并行恢复赢家，并幂等失效迟到结果", async () => {
+    const evaluationVersion = evaluationVersionFor("adaptive-race-winner");
+    const runId = randomUUID();
+    const clientTurnId = randomUUID();
+    const turnId = randomUUID();
+    const rootCallId = randomUUID();
+    const correctionCallId = randomUUID();
+    const fastCallId = randomUUID();
+    const executionFingerprint = "fixture-adaptive-execution-fingerprint";
+    await store.createRunIdempotently({
+      runId,
+      ownerUserId,
+      evaluationVersion,
+      candidateFingerprint: "fixture-adaptive-candidate-fingerprint",
+      executionFingerprint,
+      state: { step: 0 },
+      gateStatus: "pending",
+      clientOperationId: "create-adaptive-race-run",
+      payloadHash: "create-adaptive-race-run-hash"
+    });
+    runIds.add(runId);
+
+    const reservation = (input: {
+      callId: string;
+      clientOperationId: string;
+      attempt: number;
+      kind: "turn" | "automatic_retry" | "fast_hedge";
+      parentCallId?: string;
+      retryTrigger?: "EMPTY_CONTENT";
+      expectedRevision: number;
+    }) => ({
+      mutation: {
+        runId,
+        ownerUserId,
+        expectedRevision: input.expectedRevision,
+        expectedExecutionFingerprint: executionFingerprint,
+        nextState: { step: input.expectedRevision + 1 }
+      },
+      operation: {
+        ownerUserId,
+        evaluationVersion,
+        runId,
+        clientOperationId: input.clientOperationId,
+        action: input.kind === "turn" ? "submit_turn" : "adaptive_recovery_call",
+        payloadHash: `${input.clientOperationId}-payload-hash`
+      },
+      call: {
+        callId: input.callId,
+        runId,
+        taskId: "GI-088-ADAPTIVE",
+        branch: "high" as const,
+        turnId,
+        clientTurnId,
+        clientOperationId: input.clientOperationId,
+        attempt: input.attempt,
+        kind: input.kind,
+        parentCallId: input.parentCallId,
+        retryTrigger: input.retryTrigger,
+        requestHash: `${input.clientOperationId}-request-hash`,
+        effectiveConfig: {
+          raceGroupId: "fixture-race-group",
+          recoveryRole:
+            input.kind === "turn"
+              ? "primary_high"
+              : input.kind === "automatic_retry"
+                ? "high_correction"
+                : "fast_formatter"
+        },
+        semanticStateBeforeHash: "fixture-adaptive-semantic-hash",
+        automaticDeadlineAt: new Date(Date.now() + 60_000),
+        reservedAt: new Date()
+      }
+    });
+
+    await store.reserveTurnWithCall(reservation({
+      callId: rootCallId,
+      clientOperationId: "adaptive-root",
+      attempt: 1,
+      kind: "turn",
+      expectedRevision: 0
+    }));
+    await store.reserveRecoveryCall(reservation({
+      callId: correctionCallId,
+      clientOperationId: "adaptive-correction",
+      attempt: 2,
+      kind: "automatic_retry",
+      parentCallId: rootCallId,
+      retryTrigger: "EMPTY_CONTENT",
+      expectedRevision: 1
+    }));
+    await store.reserveRecoveryCall(reservation({
+      callId: fastCallId,
+      clientOperationId: "adaptive-fast",
+      attempt: 3,
+      kind: "fast_hedge",
+      parentCallId: correctionCallId,
+      expectedRevision: 2
+    }));
+
+    for (const callId of [rootCallId, correctionCallId, fastCallId]) {
+      await store.claimDispatch({
+        callId,
+        dispatchedAt: new Date(),
+        executionDeadlineAt: new Date(Date.now() + 60_000)
+      });
+      await store.persistProviderResult({
+        callId,
+        status: "provider_succeeded",
+        providerCompletedAt: new Date(),
+        rawFinalOutput: `visible:${callId}`,
+        responseHash: `response:${callId}`,
+        tokenUsage: { total: 1 },
+        providerDiagnostics: { finishReason: "stop" },
+        errorCode: null
+      });
+    }
+
+    const finalize = (callId: string, clientOperationId: string) =>
+      store.finalizeCall({
+        mutation: {
+          runId,
+          ownerUserId,
+          expectedRevision: 3,
+          expectedExecutionFingerprint: executionFingerprint,
+          nextState: { step: 4, winnerCallId: callId }
+        },
+        callId,
+        finalizedAt: new Date(),
+        finalizedResult: { winnerCallId: callId },
+        operation: {
+          clientOperationId,
+          resultSnapshot: { winnerCallId: callId }
+        },
+        supersedeSiblingCallIds: [rootCallId, correctionCallId, fastCallId],
+        siblingResultSnapshot: { winnerCallId: callId, status: "superseded" }
+      });
+    const simultaneous = await Promise.allSettled([
+      finalize(correctionCallId, "adaptive-correction"),
+      finalize(fastCallId, "adaptive-fast")
+    ]);
+    expect(simultaneous.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const calls = await store.listCalls(runId);
+    const finalizedCalls = calls.filter((call) => call.status === "finalized");
+    expect(finalizedCalls).toHaveLength(1);
+    expect(calls.filter((call) => call.status === "superseded")).toHaveLength(2);
+
+    const winner = finalizedCalls[0]!;
+    const winnerReplay = await finalize(winner.callId, winner.clientOperationId);
+    expect(winnerReplay.claimed).toBe(false);
+    const lateLoser = calls.find((call) => call.status === "superseded")!;
+    const late = await store.persistProviderResult({
+      callId: lateLoser.callId,
+      status: "provider_succeeded",
+      providerCompletedAt: new Date(),
+      rawFinalOutput: "late-visible-output",
+      responseHash: "late-response-hash",
+      tokenUsage: { total: 1 },
+      providerDiagnostics: { finishReason: "stop", late: true },
+      errorCode: null
+    });
+    expect(late.claimed).toBe(false);
+    expect(late.call.status).toBe("superseded");
+    expect((await store.listCalls(runId)).filter((call) => call.status === "finalized"))
+      .toHaveLength(1);
+  }, PRISMA_INTEGRATION_TEST_TIMEOUT_MS);
 });

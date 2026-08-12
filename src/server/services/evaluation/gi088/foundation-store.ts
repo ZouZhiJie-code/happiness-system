@@ -330,14 +330,31 @@ export type Gi088FoundationCallReservation = {
 };
 
 export function isGi088FoundationRecoveryParentAllowed(
-  parent: { status: string; dispatchedAt: Date | null },
+  parent: {
+    status: string;
+    dispatchedAt: Date | null;
+    errorCode?: string | null;
+  },
   childKind: string
 ) {
   if (parent.status === "finalized") return true;
+  if (
+    childKind === "fast_hedge" ||
+    childKind === "automatic_retry"
+  ) {
+    return [
+      "reserved",
+      "dispatched",
+      "provider_succeeded",
+      "provider_failed"
+    ].includes(parent.status);
+  }
   if (childKind !== "manual_retry") return false;
   return (
     parent.status === "interrupted_unknown_dispatch" ||
-    (parent.status === "superseded" && parent.dispatchedAt === null)
+    (parent.status === "superseded" &&
+      (parent.dispatchedAt === null ||
+        parent.errorCode?.startsWith("ADAPTIVE_RECOVERY_") === true))
   );
 }
 
@@ -452,9 +469,25 @@ export interface Gi088EvaluationFoundationStore {
       clientOperationId: string;
       resultSnapshot: Gi088FoundationJson;
     };
+    supersedeSiblingCallIds?: string[];
+    siblingResultSnapshot?: Gi088FoundationJson;
   }): Promise<{
     run: Gi088FoundationRunRecord;
     call: Gi088FoundationCallRecord;
+    claimed: boolean;
+  }>;
+
+  settleAdaptiveRace(input: {
+    mutation: Gi088FoundationRunMutation;
+    operation: Gi088FoundationOperationIdentity;
+    resultSnapshot: Gi088FoundationJson;
+    callIds: string[];
+    expectedStatuses: Gi088FoundationCallStatus[];
+    errorCode: string;
+  }): Promise<{
+    run: Gi088FoundationRunRecord;
+    operation: Gi088FoundationOperationRecord;
+    calls: Gi088FoundationCallRecord[];
     claimed: boolean;
   }>;
 

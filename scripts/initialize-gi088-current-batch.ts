@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/gi088-evaluation-client";
 
 import {
   GI088_ARK_FLASH_RUNTIME_POLICY,
+  GI088_ADAPTIVE_RECOVERY_POLICY,
   GI088_CONFIGS,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V8R2,
@@ -172,7 +173,15 @@ export function assertGi088ZeroModelInitializeReadback(input: {
     config.headersTimeoutMs !== 60_000 ||
     config.bodyIdleTimeoutMs !== 60_000 ||
     config.hardTimeoutMs !== 60_000 ||
-    config.automaticChainDeadlineMs !== 90_000 ||
+    config.automaticChainDeadlineMs !== 60_000 ||
+    config.adaptiveRecoveryPolicyVersion !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.version ||
+    config.accelerationAfterMs !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs ||
+    config.turnHardDeadlineMs !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs ||
+    config.maximumAutomaticProviderCallsPerCycle !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle ||
     config.hiddenReasoningPersistence !== "forbidden" ||
     session.batch.runId !== input.expectedRunId ||
     session.batch.completedTaskCount !== 0 ||
@@ -181,12 +190,21 @@ export function assertGi088ZeroModelInitializeReadback(input: {
     session.batch.gate?.status !== "pending" ||
     stableJson(session.batch.offlineEvaluationEvidence) !==
       stableJson(input.expectedOfflineEvaluationEvidence) ||
-    session.batch.recoveryBudget?.offlineAutomaticRecoveryCount !==
-      input.expectedOfflineEvaluationEvidence.automaticRecoveryCount ||
-    session.batch.recoveryBudget?.previewAutomaticRecoveryCount !== 0 ||
-    session.batch.recoveryBudget?.combinedAutomaticRecoveryCount !==
-      input.expectedOfflineEvaluationEvidence.automaticRecoveryCount ||
-    session.batch.recoveryBudget?.maximumAutomaticRecoveryCount !== 2 ||
+    session.batch.adaptiveRecoveryDiagnostics?.finalVisibleCompletionRate !==
+      null ||
+    session.batch.adaptiveRecoveryDiagnostics?.firstVisibleSuccessRate !== null ||
+    session.batch.adaptiveRecoveryDiagnostics?.automaticRecoveryTurnCount !== 0 ||
+    session.batch.adaptiveRecoveryDiagnostics?.fastHedgeCallCount !== 0 ||
+    session.batch.adaptiveRecoveryDiagnostics?.visibleLatencyP50Ms !== null ||
+    session.batch.adaptiveRecoveryDiagnostics?.visibleLatencyP90Ms !== null ||
+    session.batch.adaptiveRecoveryDiagnostics?.visibleLatencyMaxMs !== null ||
+    session.batch.adaptiveRecoveryDiagnostics
+      ?.maximumAutomaticProviderCallsPerCycle !==
+        GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle ||
+    session.batch.adaptiveRecoveryDiagnostics?.accelerationAfterMs !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs ||
+    session.batch.adaptiveRecoveryDiagnostics?.hardDeadlineMs !==
+      GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs ||
     session.batch.readOnly !== false ||
     GI088_TASKS.length !== 6 ||
     session.tasks.length !== 6 ||
@@ -405,7 +423,8 @@ async function main() {
           experienceFingerprint: session.evaluation.experienceFingerprint,
           executionFingerprint: session.evaluation.executionFingerprint,
           offlineEvaluationEvidence: session.batch.offlineEvaluationEvidence,
-          recoveryBudget: session.batch.recoveryBudget,
+          adaptiveRecoveryDiagnostics:
+            session.batch.adaptiveRecoveryDiagnostics,
           modelIdentity: session.evaluation.modelIdentity,
           runId: session.batch.runId,
           runOrdinal: session.batch.runOrdinal,

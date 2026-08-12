@@ -29,6 +29,7 @@
     "eval:gi088:probe:ark:e1-correction:run": "vite-node -c vitest.config.ts scripts/run-gi088-ark-e1-timeout-correction.ts --execute",
     "eval:gi088:v8r3:offline": "vite-node -c vitest.config.ts scripts/run-gi088-v8r3-offline-evaluation.ts",
     "eval:gi088:v8r3:review": "JOURNAL_EVALUATION_LOCAL_ENABLED=I_UNDERSTAND vite-node -c vitest.config.ts scripts/run-gi088-v8r3-review.ts --run",
+    "eval:gi088:v8r3r3:review": "JOURNAL_EVALUATION_LOCAL_ENABLED=I_UNDERSTAND vite-node -c vitest.config.ts scripts/run-gi088-v8r3r3-adaptive-review.ts --run",
     "runtime-env:readback": "node scripts/runtime-env-readback.mjs",
     "acceptance:ai-quality:seed": "node scripts/seed-ai-quality-acceptance.mjs",
     "start": "next start",

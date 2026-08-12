@@ -155,7 +155,9 @@ export async function verifyGi088EvaluationExport(
     value.receipt.exportVersion !==
       "2026-08-10.gi088-readonly-export-v0.6" &&
     value.receipt.exportVersion !==
-      "2026-08-11.gi088-readonly-export-v0.7"
+      "2026-08-11.gi088-readonly-export-v0.7" &&
+    value.receipt.exportVersion !==
+      "2026-08-12.gi088-readonly-export-v0.8"
   ) {
     failureReasons.push("UNSUPPORTED_EXPORT_VERSION");
   }

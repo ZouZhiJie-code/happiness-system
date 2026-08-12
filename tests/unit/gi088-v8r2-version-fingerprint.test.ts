@@ -7,6 +7,8 @@ import {
 import {
   GI088_DATASET_MACHINE_GATE_V8R2,
   GI088_DATASET_MACHINE_GATE_V8R3,
+  GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3,
+  GI088_ADAPTIVE_RECOVERY_POLICY,
   GI088_EVALUATION_ID,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V8R1,
@@ -37,7 +39,7 @@ import { GI088_SEMANTIC_DELTA_CONTRACT_VERSION } from "../../src/server/services
 import {
   GI088_V8R2_VERSION_MANIFEST,
   GI088_V8R3_VERSION_MANIFEST,
-  GI088_V8R3R2_VERSION_MANIFEST,
+  GI088_V8R3R3_VERSION_MANIFEST,
   GI088_EVALUATION_ID_V8R1,
   GI088_SERVICE_VERSION_V8R1
 } from "../../src/server/services/evaluation/gi088/version-manifest";
@@ -84,9 +86,9 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
       evaluation: GI088_EVALUATION_VERSION,
       service: GI088_SERVICE_VERSION
     }).toEqual({
-      id: GI088_V8R3R2_VERSION_MANIFEST.evaluationId,
-      evaluation: GI088_V8R3R2_VERSION_MANIFEST.evaluation,
-      service: GI088_V8R3R2_VERSION_MANIFEST.service
+      id: GI088_V8R3R3_VERSION_MANIFEST.evaluationId,
+      evaluation: GI088_V8R3R3_VERSION_MANIFEST.evaluation,
+      service: GI088_V8R3R3_VERSION_MANIFEST.service
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -177,11 +179,11 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
     });
   });
 
-  it("v8r3 自动恢复只覆盖真实技术错误，并冻结离线与 Preview 合计预算", () => {
+  it("v8r3r3 以 30/60 用户结果门替换旧恢复总数门，并保留真实技术纠正", () => {
     expect(GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY).toMatchObject({
       maximumAutomaticRetriesPerTurn: 1,
       maximumProviderCallsPerTurn: 2,
-      sharedAutomaticChainDeadlineMs: 90_000
+      sharedAutomaticChainDeadlineMs: 60_000
     });
     expect(Object.keys(
       GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections
@@ -191,8 +193,22 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
     ).every((item) => item.instruction.length > 20)).toBe(true);
     expect(GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT).toMatchObject({
       optionalAdmissionBinding: "admissionFingerprint",
-      automaticRecoveryBudgetScope: "offline_candidate_plus_preview",
+      recoveryEvidenceScope: "offline_and_preview_reported_independently",
       immutableAfterRunCreation: true
+    });
+    expect(GI088_ADAPTIVE_RECOVERY_POLICY).toMatchObject({
+      accelerationAfterMs: 30_000,
+      hardDeadlineMs: 60_000,
+      maximumAutomaticProviderCallsPerCycle: 3,
+      winnerPolicy: "first_fully_valid_output"
+    });
+    expect(GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3).toMatchObject({
+      requiredAutomaticFinalVisibleRate: 1,
+      maximumVisibleLatencyP50Ms: 20_000,
+      maximumVisibleLatencyP90Ms: 40_000,
+      maximumVisibleLatencyMs: 60_000,
+      firstVisibleSuccessRate: "diagnostic_only",
+      recoveryCount: "diagnostic_only"
     });
   });
 
@@ -213,7 +229,7 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
   it("四层与 execution 指纹稳定生成且排除部署结果字段", () => {
     const bundle = createGi088FingerprintBundle();
     expect(bundle).toEqual({
-      behaviorManifestVersion: GI088_V8R3R2_VERSION_MANIFEST.behaviorManifest,
+      behaviorManifestVersion: GI088_V8R3R3_VERSION_MANIFEST.behaviorManifest,
       behaviorManifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/u),
       candidateFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),
       datasetFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),

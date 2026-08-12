@@ -11,6 +11,7 @@ import {
 import {
   GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET,
   GI088_V8R3_FORMAL_CALL_BUDGET,
+  buildGi088V8r3AdaptiveRecoveryReviewPacket,
   buildGi088V8r3BadCasePacket,
   buildGi088V8r3BlindComparisonPacket,
   buildGi088V8r3HumanAdjudicationPacket,
@@ -316,6 +317,7 @@ async function runCandidate() {
     developmentCases: GI088_V8R3_DEVELOPMENT_CASES,
     hiddenAdmissionCases: hiddenDataset.cases,
     privateHiddenFileSha256: hiddenDataset.fileSha256,
+    executionMode: "adaptive_recovery_30_60",
     automaticRecoveryMaximum:
       GI088_V8R3_FORMAL_CALL_BUDGET.candidateAutomaticRecoveryCallsMaximum,
     concurrency: 2
@@ -329,6 +331,19 @@ async function runCandidate() {
     throw new Error("GI088_V8R3_CANDIDATE_FORMAL_BUDGET_MISMATCH");
   }
   await writeJsonExclusive(outputPath, report);
+  const adaptiveReview = buildGi088V8r3AdaptiveRecoveryReviewPacket({
+    candidateReport: report,
+    cases: [...GI088_V8R3_DEVELOPMENT_CASES, ...hiddenDataset.cases],
+    seed: report.offlineRunFingerprint
+  });
+  await writeJsonExclusive(
+    sidecarPath(outputPath, "adaptive-review"),
+    adaptiveReview.publicPacket
+  );
+  await writeJsonExclusive(
+    sidecarPath(outputPath, "adaptive-review-key"),
+    adaptiveReview.sealedKey
+  );
   if (baseline) {
     const blind = buildGi088V8r3BlindComparisonPacket({
       candidateReport: report,
@@ -352,7 +367,8 @@ async function runCandidate() {
       automaticRecoveryCalls: report.budget.automaticRecoveryCalls,
       totalCalls: report.budget.totalCalls,
       resultCounts: { development: 56, hidden: 24 },
-      checkpointInitialCalls: { development: 64, hidden: 32 }
+      checkpointInitialCalls: { development: 64, hidden: 32 },
+      adaptiveRecoveryReviewItems: adaptiveReview.publicPacket.items.length
     })}\n`
   );
 }

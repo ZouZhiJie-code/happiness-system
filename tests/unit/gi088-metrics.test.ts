@@ -24,7 +24,7 @@ function successfulTurn(
   };
 }
 
-describe("GI-088 evaluation metrics v1", () => {
+describe("GI-088 evaluation metrics v1-v3", () => {
   it("空白 high-only 批次保持零复核计数与 N/A 比率", () => {
     const metrics = calculateGi088EvaluationMetrics({
       tasks: Array.from({ length: 12 }, (_, index) => ({
@@ -411,6 +411,89 @@ describe("GI-088 evaluation metrics v1", () => {
       programInterventionUncertainCount: 1,
       visibleQuestionUncertainCount: 1,
       targetLegacyUnknownCount: 1
+    });
+  });
+
+  it("v3 按用户提交到唯一赢家计算最终可见率、30 秒竞速与累计等待", () => {
+    const metrics = calculateGi088EvaluationMetrics({
+      tasks: [{
+        taskId: "A1",
+        status: "completed",
+        trajectories: [{
+          id: "trajectory-adaptive",
+          status: "completed",
+          turns: [
+            {
+              id: "turn-primary",
+              clientTurnId: "client-primary",
+              status: "valid",
+              assistantMessageId: "assistant-primary"
+            },
+            {
+              id: "turn-fast",
+              clientTurnId: "client-fast",
+              status: "complete_after_auto_recovery",
+              assistantMessageId: "assistant-fast",
+              recovery: { automaticRetryCount: 1, status: "recovered" }
+            }
+          ],
+          review: { quality: "direct_use", targetTrigger: "triggered" }
+        }]
+      }],
+      callLedger: [
+        {
+          callId: "primary-only",
+          turnId: "turn-primary",
+          attempt: 1,
+          kind: "initial",
+          status: "finalized",
+          raceWinner: true,
+          dispatchedAt: "2026-08-12T12:00:00.000Z",
+          finalizedAt: "2026-08-12T12:00:10.000Z"
+        },
+        {
+          callId: "slow-primary",
+          turnId: "turn-fast",
+          attempt: 1,
+          kind: "initial",
+          status: "superseded",
+          raceWinner: false,
+          dispatchedAt: "2026-08-12T12:01:00.000Z",
+          finalizedAt: "2026-08-12T12:01:35.000Z"
+        },
+        {
+          callId: "fast-winner",
+          turnId: "turn-fast",
+          attempt: 2,
+          kind: "fast_hedge",
+          status: "finalized",
+          raceWinner: true,
+          dispatchedAt: "2026-08-12T12:01:30.000Z",
+          finalizedAt: "2026-08-12T12:01:35.000Z"
+        }
+      ]
+    });
+
+    expect(metrics).toMatchObject({
+      version: GI088_EVALUATION_METRICS_VERSION,
+      eligibleModelSubmissionCount: 2,
+      firstVisibleSuccessCount: 1,
+      firstVisibleSuccessRate: 0.5,
+      finalVisibleCompletionCount: 2,
+      finalVisibleCompletionRate: 1,
+      visibleLatencyP50Ms: 10_000,
+      visibleLatencyP90Ms: 35_000,
+      visibleLatencyMaxMs: 35_000,
+      fastHedgeCallCount: 1,
+      totalRecoveryCalls: 1,
+      pendingOrProcessingCount: 0,
+      manualRecoveryCount: 0
+    });
+    expect(metrics.gateFacts).toMatchObject({
+      finalVisibleCompletionCount: 2,
+      fastHedgeCallCount: 1,
+      pendingOrProcessingCount: 0,
+      manualRecoveryCount: 0
     });
   });
 });

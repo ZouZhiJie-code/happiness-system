@@ -899,7 +899,7 @@ implements Gi088EvaluationFoundationStore {
     if (
       input.call.attempt < 2 ||
       !input.call.parentCallId ||
-      !input.call.retryTrigger
+      (!input.call.retryTrigger && input.call.kind !== "fast_hedge")
     ) {
       throw new Gi088FoundationStoreError(
         "GI088_RECOVERY_CALL_LINEAGE_INVALID"
@@ -1055,6 +1055,8 @@ implements Gi088EvaluationFoundationStore {
       clientOperationId: string;
       resultSnapshot: Gi088FoundationJson;
     };
+    supersedeSiblingCallIds?: string[];
+    siblingResultSnapshot?: Gi088FoundationJson;
   }) {
     const result = await this.client.$transaction(async (transaction) => {
       await lockRun(transaction, input.mutation.runId, this.schema);
@@ -1121,6 +1123,55 @@ implements Gi088EvaluationFoundationStore {
       if (updatedCall.count !== 1) {
         throw new Gi088FoundationStoreError("GI088_CALL_FINALIZE_CONFLICT");
       }
+      for (const siblingCallId of input.supersedeSiblingCallIds ?? []) {
+        if (siblingCallId === call.callId) continue;
+        const sibling = await transaction.gi088EvaluationCallLedger.findUnique({
+          where: { callId: siblingCallId }
+        });
+        if (!sibling || sibling.runId !== run.id) {
+          throw new Gi088FoundationStoreError("GI088_CALL_NOT_FOUND");
+        }
+        if (sibling.status === "finalized") {
+          throw new Gi088FoundationStoreError("GI088_RACE_WINNER_CONFLICT");
+        }
+        if (sibling.status !== "superseded") {
+          assertGi088FoundationCallTransition(
+            sibling.status as Gi088FoundationCallStatus,
+            "superseded"
+          );
+          const superseded = await transaction.gi088EvaluationCallLedger.updateMany({
+            where: { callId: sibling.callId, status: sibling.status },
+            data: {
+              status: "superseded",
+              errorCode: "RACE_LOSER_SUPERSEDED"
+            }
+          });
+          if (superseded.count !== 1) {
+            throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
+          }
+        }
+        await transaction.gi088EvaluationOperation.updateMany({
+          where: {
+            ownerUserId: run.ownerUserId,
+            evaluationVersion: run.evaluationVersion,
+            clientOperationId: sibling.clientOperationId,
+            status: "processing"
+          },
+          data: {
+            status: "completed",
+            resultRevision: input.mutation.expectedRevision + 1,
+            resultSnapshot: inputJson(
+              input.siblingResultSnapshot ?? {
+                runId: run.id,
+                turnId: call.turnId,
+                winnerCallId: call.callId,
+                status: "superseded"
+              }
+            ),
+            completedAt: input.finalizedAt
+          }
+        });
+      }
       if (input.operation) {
         const operation = await transaction.gi088EvaluationOperation.findUnique({
           where: operationWhere({
@@ -1155,6 +1206,124 @@ implements Gi088EvaluationFoundationStore {
     return {
       run: toRunRecord(result.run),
       call: toCallRecord(result.call),
+      claimed: result.claimed
+    };
+  }
+
+  async settleAdaptiveRace(input: {
+    mutation: Gi088FoundationRunMutation;
+    operation: Gi088FoundationOperationIdentity;
+    resultSnapshot: Gi088FoundationJson;
+    callIds: string[];
+    expectedStatuses: Gi088FoundationCallStatus[];
+    errorCode: string;
+  }) {
+    const result = await this.client.$transaction(async (transaction) => {
+      if (input.operation.runId !== input.mutation.runId) {
+        throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
+      }
+      if (input.callIds.length === 0 || input.expectedStatuses.length === 0) {
+        throw new Gi088FoundationStoreError("GI088_CALL_EXPECTED_STATUS_REQUIRED");
+      }
+      await lockRun(transaction, input.mutation.runId, this.schema);
+      const [run, existingOperation, calls] = await Promise.all([
+        transaction.gi088EvaluationBatch.findUnique({
+          where: { id: input.mutation.runId }
+        }),
+        transaction.gi088EvaluationOperation.findUnique({
+          where: operationWhere(input.operation)
+        }),
+        transaction.gi088EvaluationCallLedger.findMany({
+          where: { callId: { in: input.callIds } }
+        })
+      ]);
+      if (!run) throw new Gi088FoundationStoreError("GI088_RUN_NOT_FOUND");
+      if (existingOperation) {
+        assertOperationReplay(existingOperation, input.operation);
+        if (existingOperation.status === "processing") {
+          throw new Gi088FoundationStoreError("GI088_OPERATION_RESULT_INCOMPLETE");
+        }
+        return { run, operation: existingOperation, calls, claimed: false };
+      }
+      if (calls.length !== new Set(input.callIds).size) {
+        throw new Gi088FoundationStoreError("GI088_CALL_NOT_FOUND");
+      }
+      assertRunMutation(run, input.mutation);
+      const createdOperation = await transaction.gi088EvaluationOperation.create({
+        data: operationCreateData(input.operation)
+      });
+      for (const call of calls) {
+        if (call.runId !== run.id) {
+          throw new Gi088FoundationStoreError("GI088_CALL_NOT_FOUND");
+        }
+        if (input.expectedStatuses.includes(call.status as Gi088FoundationCallStatus)) {
+          assertGi088FoundationCallTransition(
+            call.status as Gi088FoundationCallStatus,
+            "superseded"
+          );
+          const updated = await transaction.gi088EvaluationCallLedger.updateMany({
+            where: { callId: call.callId, status: call.status },
+            data: { status: "superseded", errorCode: input.errorCode }
+          });
+          if (updated.count !== 1) {
+            throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
+          }
+        } else if (call.status !== "superseded") {
+          throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
+        }
+      }
+      const updatedRun = await transaction.gi088EvaluationBatch.updateMany({
+        where: {
+          id: run.id,
+          ownerUserId: input.mutation.ownerUserId,
+          status: "running",
+          revision: input.mutation.expectedRevision,
+          executionFingerprint: input.mutation.expectedExecutionFingerprint
+        },
+        data: runMutationData(run, input.mutation)
+      });
+      if (updatedRun.count !== 1) {
+        throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
+      }
+      const completedAt = new Date();
+      await transaction.gi088EvaluationOperation.updateMany({
+        where: {
+          runId: run.id,
+          clientOperationId: { in: calls.map((call) => call.clientOperationId) },
+          status: "processing"
+        },
+        data: {
+          status: "completed",
+          resultRevision: input.mutation.expectedRevision + 1,
+          resultSnapshot: inputJson(input.resultSnapshot),
+          completedAt
+        }
+      });
+      const savedOperation = await transaction.gi088EvaluationOperation.update({
+        where: { id: createdOperation.id },
+        data: {
+          status: "completed",
+          resultRevision: input.mutation.expectedRevision + 1,
+          resultSnapshot: inputJson(input.resultSnapshot),
+          completedAt
+        }
+      });
+      return {
+        run: await transaction.gi088EvaluationBatch.findUniqueOrThrow({
+          where: { id: run.id }
+        }),
+        operation: savedOperation,
+        calls: await transaction.gi088EvaluationCallLedger.findMany({
+          where: { callId: { in: input.callIds } },
+          orderBy: { attempt: "asc" }
+        }),
+        claimed: true
+      };
+    }, GI088_FOUNDATION_TRANSACTION_OPTIONS);
+    return {
+      run: toRunRecord(result.run),
+      operation: toOperationRecord(result.operation),
+      calls: result.calls.map(toCallRecord),
       claimed: result.claimed
     };
   }

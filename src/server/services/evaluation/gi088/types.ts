@@ -38,6 +38,12 @@ export type Gi088GateStatus =
 export type Gi088GateReasonCode =
   | "offline_evidence_missing"
   | "automatic_recovery_budget_exceeded"
+  | "final_visible_rate_below_gate"
+  | "visible_latency_p50_exceeded"
+  | "visible_latency_p90_exceeded"
+  | "visible_latency_max_exceeded"
+  | "pending_or_processing"
+  | "manual_recovery_used"
   | "single_case_blocker"
   | "quality_failure"
   | "compatibility_smoke_failed"
@@ -90,6 +96,7 @@ export type Gi088Message = {
 export type Gi088RecoveryStatus =
   | "eligible"
   | "retrying"
+  | "accelerating"
   | "recovered"
   | "manual_available"
   | "manual_retrying"
@@ -135,6 +142,39 @@ export type Gi088TurnRecovery = {
   maximumAutomaticRetriesPerTurn?: 1 | 2;
   maximumProviderCallsPerTurn?: 2 | 3;
   policyOverride?: boolean;
+  strategy?: "adaptive_30_60";
+  raceGroupId?: string;
+  cycle?: number;
+  activeCallIds?: string[];
+  winnerCallId?: string | null;
+  accelerationStartedAt?: string | null;
+  accelerationAfterMs?: number;
+  hardDeadlineAt?: string | null;
+  hardDeadlineMs?: number;
+  automaticProviderCallMaximum?: number;
+  finalStatus?: "visible" | "manual_available" | "exhausted" | null;
+};
+
+export type Gi088AdaptiveRecoveryRace = {
+  policyVersion: string;
+  raceContractVersion: string;
+  raceGroupId: string;
+  cycle: number;
+  status:
+    | "generating"
+    | "recovering"
+    | "accelerating"
+    | "visible"
+    | "manual_available"
+    | "exhausted";
+  startedAt: string;
+  accelerationAt: string;
+  hardDeadlineAt: string;
+  activeCallIds: string[];
+  winnerCallId: string | null;
+  accelerationCallId: string | null;
+  completedAt: string | null;
+  cumulativeWaitMs: number | null;
 };
 
 export type Gi088QuestionReviewClassification =
@@ -205,12 +245,30 @@ export type Gi088CallEffectiveConfig = {
   emptyContentMaximumProviderCalls?: 2 | 3;
   emptyContentRecoveryPolicyVersion?: string;
   emptyContentPolicyOverride?: boolean;
+  adaptiveRecoveryPolicyVersion?: string;
+  raceContractVersion?: string;
+  raceGroupId?: string;
+  recoveryRole?:
+    | "primary_high"
+    | "high_correction"
+    | "fast_formatter"
+    | "manual_high";
+  raceTrigger?: Gi088FoundationRecoveryTrigger | "LATENCY_HEDGE" | null;
+  accelerationAfterMs?: number;
+  turnHardDeadlineMs?: number;
+  remainingTurnDeadlineMs?: number;
+  maximumAutomaticProviderCallsPerCycle?: number;
 };
 
 export type Gi088Call = {
   id: string;
   attempt: number;
-  kind: "initial" | "turn" | "manual_retry" | "automatic_retry";
+  kind:
+    | "initial"
+    | "turn"
+    | "manual_retry"
+    | "automatic_retry"
+    | "fast_hedge";
   status: "processing" | "valid" | "technical_failure" | "protected_failure";
   startedAt: string;
   completedAt: string | null;
@@ -262,6 +320,7 @@ export type Gi088Turn = {
   semanticStateAfter: Board7bWorkingTaskV1SemanticState | null;
   calls: Gi088Call[];
   recovery: Gi088TurnRecovery | null;
+  adaptiveRace?: Gi088AdaptiveRecoveryRace | null;
   questionObservation?: Gi088QuestionObservation | null;
   stateMaintenance?: Gi088StateMaintenance | null;
   activeCallId?: string | null;
@@ -447,6 +506,10 @@ export type Gi088PublicSession = {
       emptyContentPolicyOverride?: boolean;
       routeMaxDurationSeconds: number;
       hiddenReasoningPersistence?: "forbidden";
+      adaptiveRecoveryPolicyVersion?: string;
+      accelerationAfterMs?: number;
+      turnHardDeadlineMs?: number;
+      maximumAutomaticProviderCallsPerCycle?: number;
     };
   };
   batch: {
@@ -475,6 +538,18 @@ export type Gi088PublicSession = {
       previewAutomaticRecoveryCount: number;
       combinedAutomaticRecoveryCount: number;
       maximumAutomaticRecoveryCount: number;
+    };
+    adaptiveRecoveryDiagnostics?: {
+      finalVisibleCompletionRate: number | null;
+      firstVisibleSuccessRate: number | null;
+      automaticRecoveryTurnCount: number;
+      fastHedgeCallCount: number;
+      visibleLatencyP50Ms: number | null;
+      visibleLatencyP90Ms: number | null;
+      visibleLatencyMaxMs: number | null;
+      maximumAutomaticProviderCallsPerCycle: number;
+      accelerationAfterMs: number;
+      hardDeadlineMs: number;
     };
     readOnly?: boolean;
     readOnlyReason?: string | null;
@@ -513,6 +588,10 @@ export type Gi088PublicSession = {
           maximumProviderCallsPerTurn?: 2 | 3;
           emptyContentRecoveryPolicyVersion?: string;
           emptyContentPolicyOverride?: boolean;
+          adaptiveRecoveryPolicyVersion?: string;
+          accelerationAfterMs?: number;
+          turnHardDeadlineMs?: number;
+          maximumAutomaticProviderCallsPerCycle?: number;
           automaticStageTransitionRetries: number;
           automaticSingleQuestionRetries: number;
           automaticTechnicalRetries: number;

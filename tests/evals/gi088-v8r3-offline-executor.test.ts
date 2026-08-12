@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GI088_V8R3_DEVELOPMENT_CASES } from "../../evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures";
 import {
   GI088_V8R3_FORMAL_CALL_BUDGET,
   GI088_V8R3_ALLOWED_HISTORICAL_CANDIDATE_VERSION,
   GI088_V8R3_HISTORICAL_BASELINE_VERSION,
+  buildGi088V8r3AdaptiveRecoveryReviewPacket,
   buildGi088V8r3BadCasePacket,
   buildGi088V8r3BlindComparisonPacket,
   buildGi088V8r3HumanAdjudicationPacket,
@@ -21,6 +22,7 @@ import {
   createGi088V8r3ProProviderIdentity,
   evaluateGi088V8r3CandidateOperationalGates,
   executeGi088V8r3Admission,
+  executeGi088V8r3AdaptiveCheckpoint,
   executeGi088V8r3BadCaseArchive,
   executeGi088V8r3CandidateEvaluation,
   executeGi088V8r3JudgeCalibration,
@@ -297,10 +299,13 @@ function historicalBaseline(
 }
 
 describe("GI-088 v8r3 formal offline executor", () => {
-  it("declares 96 checkpoint calls, global recovery 2, and a 194-call formal ceiling", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  it("declares 96 checkpoint calls, adaptive recovery 100, and a 196-call release ceiling", () => {
     const plan = createGi088V8r3OfflineExecutionPlan();
     expect(plan.formalEvaluationVersion).toBe(
-      "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash"
+      "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60"
     );
     expect(plan.externalModelCalls).toBe(0);
     expect(plan.callBudget).toEqual({
@@ -308,13 +313,14 @@ describe("GI-088 v8r3 formal offline executor", () => {
       candidateDevelopmentInitialCalls: 64,
       candidateHiddenInitialCalls: 32,
       candidateInitialCalls: 96,
-      candidateAutomaticRecoveryCallsMaximum: 2,
-      candidateCallsMaximum: 98,
+      candidateAutomaticRecoveryCallsMaximum: 100,
+      candidateCallsMaximum: 196,
       judgeCalibrationCalls: 40,
       judgeDevelopmentPrescreenCallsMaximum: 56,
       judgeHiddenCallsMaximum: 0,
       judgeCallsMaximum: 96,
-      completeFormalFlowCallsMaximum: 194
+      deferredJudgeFlowCallsMaximum: 96,
+      completeFormalFlowCallsMaximum: 196
     });
     expect(plan.candidate.developmentResults).toBe(56);
     expect(plan.candidate.hiddenResults).toBe(24);
@@ -377,6 +383,167 @@ describe("GI-088 v8r3 formal offline executor", () => {
     });
   });
 
+  it("starts non-thinking acceleration at 30 seconds and commits only its winning result", async () => {
+    vi.useFakeTimers();
+    const seen: AICompletionParams[] = [];
+    const provider: AIProvider = {
+      name: "openai",
+      complete(params) {
+        seen.push(params);
+        const delay = params.thinking === "disabled" ? 5_000 : 45_000;
+        return new Promise<AICompletionResult>((resolve, reject) => {
+          const timer = setTimeout(() => resolve(validCandidateResult(params)), delay);
+          params.signal?.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new AIProviderError("adaptive loser", "CALLER_ABORTED"));
+          }, { once: true });
+        });
+      }
+    };
+
+    const pending = executeGi088V8r3AdaptiveCheckpoint({
+      provider,
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(seen).toHaveLength(2);
+    expect(seen[1]).toMatchObject({
+      thinking: "disabled",
+      hardTimeoutMs: 30_000
+    });
+    await vi.advanceTimersByTimeAsync(5_000);
+    const checkpoint = await pending;
+
+    expect(checkpoint).toMatchObject({
+      status: "valid",
+      winnerRole: "fast_formatter",
+      nonPrimaryWinner: true,
+      accelerationStarted: true,
+      accelerationTrigger: "LATENCY_HEDGE",
+      hardDeadlineReached: false
+    });
+    expect(checkpoint.calls).toHaveLength(2);
+    expect(checkpoint.calls.filter((call) => call.winner)).toHaveLength(1);
+    expect(checkpoint.calls.find((call) => call.recoveryRole === "primary_high"))
+      .toMatchObject({ superseded: true });
+    expect(checkpoint.submitToVisibleLatencyMs).toBe(35_000);
+  });
+
+  it("keeps the original high call alive after acceleration and lets it win once", async () => {
+    vi.useFakeTimers();
+    const provider: AIProvider = {
+      name: "openai",
+      complete(params) {
+        const delay = params.thinking === "disabled" ? 20_000 : 35_000;
+        return new Promise<AICompletionResult>((resolve, reject) => {
+          const timer = setTimeout(() => resolve(validCandidateResult(params)), delay);
+          params.signal?.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new AIProviderError("adaptive loser", "CALLER_ABORTED"));
+          }, { once: true });
+        });
+      }
+    };
+    const pending = executeGi088V8r3AdaptiveCheckpoint({
+      provider,
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!
+    });
+    await vi.advanceTimersByTimeAsync(35_000);
+    const checkpoint = await pending;
+
+    expect(checkpoint).toMatchObject({
+      status: "valid",
+      winnerRole: "primary_high",
+      nonPrimaryWinner: false,
+      accelerationStarted: true
+    });
+    expect(checkpoint.calls.filter((call) => call.winner)).toHaveLength(1);
+    expect(checkpoint.calls.find((call) => call.recoveryRole === "fast_formatter"))
+      .toMatchObject({ superseded: true });
+  });
+
+  it("atomically selects one winner when both raced calls complete in the same turn", async () => {
+    vi.useFakeTimers();
+    let resolvePrimary!: (value: AICompletionResult) => void;
+    let resolveFast!: (value: AICompletionResult) => void;
+    let callCount = 0;
+    const seen: AICompletionParams[] = [];
+    const provider: AIProvider = {
+      name: "openai",
+      complete(params) {
+        seen.push(params);
+        callCount += 1;
+        return new Promise<AICompletionResult>((resolve, reject) => {
+          if (callCount === 1) resolvePrimary = resolve;
+          else resolveFast = resolve;
+          params.signal?.addEventListener("abort", () => {
+            reject(new AIProviderError("adaptive loser", "CALLER_ABORTED"));
+          }, { once: true });
+        });
+      }
+    };
+    const pending = executeGi088V8r3AdaptiveCheckpoint({
+      provider,
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    resolvePrimary(validCandidateResult(seen[0]!));
+    resolveFast(validCandidateResult(seen[1]!));
+    const checkpoint = await pending;
+
+    expect(checkpoint.status).toBe("valid");
+    expect(checkpoint.calls).toHaveLength(2);
+    expect(checkpoint.calls.filter((call) => call.winner)).toHaveLength(1);
+    expect(checkpoint.calls.filter((call) => call.superseded)).toHaveLength(1);
+    expect(checkpoint.winnerCallId).toBe(
+      checkpoint.calls.find((call) => call.winner)?.callId
+    );
+  });
+
+  it("settles a continuously invalid cycle after three automatic calls and a hanging cycle at 60 seconds", async () => {
+    const empty = await executeGi088V8r3AdaptiveCheckpoint({
+      provider: {
+        name: "openai",
+        async complete() {
+          return emptyCandidateResult();
+        }
+      },
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!
+    });
+    expect(empty.status).toBe("protected_failure");
+    expect(empty.calls).toHaveLength(3);
+    expect(empty.calls.map((call) => call.recoveryRole)).toEqual([
+      "primary_high",
+      "high_correction",
+      "fast_formatter"
+    ]);
+
+    vi.useFakeTimers();
+    const hanging = executeGi088V8r3AdaptiveCheckpoint({
+      provider: {
+        name: "openai",
+        complete(params) {
+          return new Promise<AICompletionResult>((_resolve, reject) => {
+            params.signal?.addEventListener("abort", () => {
+              reject(new AIProviderError("deadline", "CALLER_ABORTED"));
+            }, { once: true });
+          });
+        }
+      },
+      evaluationCase: GI088_V8R3_DEVELOPMENT_CASES[0]!
+    });
+    await vi.advanceTimersByTimeAsync(60_000);
+    const timedOut = await hanging;
+    expect(timedOut).toMatchObject({
+      status: "technical_failure",
+      hardDeadlineReached: true,
+      winnerCallId: null,
+      submitToVisibleLatencyMs: null
+    });
+    expect(timedOut.calls).toHaveLength(2);
+    expect(timedOut.calls.every((call) => call.superseded)).toBe(true);
+  });
+
   it("executes every trajectory checkpoint sequentially and caps technical recovery globally", async () => {
     const seen: AICompletionParams[] = [];
     const report = await executeGi088V8r3CandidateEvaluation({
@@ -384,7 +551,7 @@ describe("GI-088 v8r3 formal offline executor", () => {
       automaticRecoveryMaximum: 2
     });
     expect(report.formalEvaluationVersion).toBe(
-      "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash"
+      "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60"
     );
     expect(report.records).toHaveLength(80);
     expect(report.budget).toEqual({
@@ -414,9 +581,102 @@ describe("GI-088 v8r3 formal offline executor", () => {
     await expect(
       executeGi088V8r3CandidateEvaluation({
         ...candidateInput(technicalFailureProvider()),
-        automaticRecoveryMaximum: 3
+        automaticRecoveryMaximum: 101
       })
     ).rejects.toThrow(/AUTOMATIC_RECOVERY_MAXIMUM_INVALID/u);
+  });
+
+  it("round-trips a complete adaptive report and keeps all 96 first-valid checkpoints inside the user-result gates", async () => {
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput(validCandidateProvider()),
+      executionMode: "adaptive_recovery_30_60",
+      automaticRecoveryMaximum: 100
+    });
+
+    expect(report.budget).toEqual({
+      authorizedMaximum: 196,
+      initialCalls: 96,
+      automaticRecoveryCalls: 0,
+      totalCalls: 96
+    });
+    expect(report.operationalLedger).toMatchObject({
+      eligibleSubmissionCount: 96,
+      firstValidCount: 96,
+      finalVisibleCompletionCount: 96,
+      finalVisibleCompletionRate: 1,
+      nonPrimaryWinnerCount: 0,
+      hardDeadlineReachedCount: 0
+    });
+    expect(evaluateGi088V8r3CandidateOperationalGates(report).passed).toBe(true);
+    expect(() => parseGi088V8r3CandidateExecutionReport(report)).not.toThrow();
+  });
+
+  it("creates a blind packet for every non-primary winner without exposing its recovery identity", async () => {
+    let callIndex = 0;
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput({
+        name: "openai",
+        async complete(params) {
+          callIndex += 1;
+          return callIndex === 1
+            ? emptyCandidateResult()
+            : validCandidateResult(params);
+        }
+      }),
+      executionMode: "adaptive_recovery_30_60",
+      automaticRecoveryMaximum: 100
+    });
+    const packet = buildGi088V8r3AdaptiveRecoveryReviewPacket({
+      candidateReport: report,
+      cases: [
+        ...GI088_V8R3_DEVELOPMENT_CASES,
+        ...GI088_V8R3_TEST_HIDDEN_ADMISSION_CASES
+      ],
+      seed: report.offlineRunFingerprint
+    });
+    const serializedPublicPacket = JSON.stringify(packet.publicPacket);
+
+    expect(packet.publicPacket).toMatchObject({
+      reviewStatus: "pending",
+      modelIdentityVisibleToReviewer: false,
+      recoveryMechanicsVisibleToReviewer: false
+    });
+    expect(packet.publicPacket.items).toHaveLength(1);
+    expect(packet.sealedKey.items).toHaveLength(1);
+    expect(packet.sealedKey.items[0]).toMatchObject({
+      winnerRole: "high_correction",
+      providerCallCount: 2
+    });
+    expect(serializedPublicPacket).not.toContain("high_correction");
+    expect(serializedPublicPacket).not.toContain("volcengine_ark");
+    expect(serializedPublicPacket).not.toContain("hidden_admission");
+    expect(serializedPublicPacket).not.toContain("requestHash");
+  });
+
+  it("stops exactly at the global 100-recovery and 196-call ceiling", async () => {
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput({
+        name: "openai",
+        async complete() {
+          return emptyCandidateResult();
+        }
+      }),
+      executionMode: "adaptive_recovery_30_60",
+      automaticRecoveryMaximum: 100
+    });
+
+    expect(report.budget).toEqual({
+      authorizedMaximum: 196,
+      initialCalls: 96,
+      automaticRecoveryCalls: 100,
+      totalCalls: 196
+    });
+    expect(report.records.flatMap((record) => record.checkpoints)).toHaveLength(96);
+    expect(report.records.flatMap((record) => record.checkpoints).filter(
+      (checkpoint) => checkpoint.recoveryBudgetExhausted
+    ).length).toBeGreaterThan(0);
+    expect(evaluateGi088V8r3CandidateOperationalGates(report).passed).toBe(false);
+    expect(() => parseGi088V8r3CandidateExecutionReport(report)).not.toThrow();
   });
 
   it("uses Foundation parity parsing and trigger-specific schema/semantic corrections", async () => {
@@ -1164,7 +1424,7 @@ describe("GI-088 v8r3 formal offline executor", () => {
 
   it("keeps the complete formal ceiling below the excluded 200-call scale", () => {
     expect(GI088_V8R3_FORMAL_CALL_BUDGET.completeFormalFlowCallsMaximum).toBe(
-      194
+      196
     );
     expect(GI088_V8R3_FORMAL_CALL_BUDGET.completeFormalFlowCallsMaximum).toBeLessThan(
       200

@@ -6,6 +6,8 @@ import {
   verifyGi088EvaluationExport
 } from "@/features/interview/event-centered/gi088-evaluation-export";
 import { createGi088ExportEnvelope } from "@/server/services/evaluation/gi088/export-v06";
+import { createGi088ExportEnvelopeV07 } from "@/server/services/evaluation/gi088/export-v07";
+import { createGi088ExportEnvelopeV08 } from "@/server/services/evaluation/gi088/export-v08";
 
 describe("GI-088 client export verification", () => {
   beforeAll(() => {
@@ -63,20 +65,22 @@ describe("GI-088 client export verification", () => {
     });
   });
 
-  it("同时验签历史 v0.6 与当前 v0.7，不改写历史 payload", async () => {
+  it("同时验签历史 v0.6、v0.7 与当前 v0.8，不改写历史 payload", async () => {
     const historical = createGi088ExportEnvelope({
       payload: { runId: "run-v06", visibleText: "历史可见内容" }
     });
-    const current = structuredClone(historical) as unknown as {
-      payload: typeof historical.payload;
-      receipt: Omit<typeof historical.receipt, "exportVersion"> & {
-        exportVersion: string;
-      };
-    };
-    current.receipt.exportVersion =
-      "2026-08-11.gi088-readonly-export-v0.7";
+    const historicalV07 = createGi088ExportEnvelopeV07({
+      payload: historical.payload
+    });
+    const current = createGi088ExportEnvelopeV08({
+      payload: historical.payload
+    });
 
     await expect(verifyGi088EvaluationExport(historical)).resolves.toMatchObject({
+      verified: true,
+      failureReasons: []
+    });
+    await expect(verifyGi088EvaluationExport(historicalV07)).resolves.toMatchObject({
       verified: true,
       failureReasons: []
     });
@@ -84,6 +88,7 @@ describe("GI-088 client export verification", () => {
       verified: true,
       failureReasons: []
     });
+    expect(historicalV07.payload).toEqual(historical.payload);
     expect(current.payload).toEqual(historical.payload);
   });
 

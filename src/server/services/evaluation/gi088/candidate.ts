@@ -39,22 +39,20 @@ import {
   GI088_BEHAVIOR_MANIFEST_VERSION,
   GI088_CONTROL_DECISION_VERSION_V8R2,
   GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
-  GI088_EVALUATION_STORE_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
   GI088_EVALUATION_VERSION_V8R3R2,
-  GI088_EVALUATION_ID_V8R3R2,
+  GI088_EVALUATION_VERSION_V8R3R3,
+  GI088_EVALUATION_ID_V8R3R3,
   GI088_PAYLOAD_CONTRACT_VERSION_V8R3,
-  GI088_READONLY_EXPORT_VERSION_V8R3,
   GI088_RUNTIME_POLICY_VERSION_V8R3,
   GI088_INTENT_CLASSIFIER_VERSION_V8R2,
   GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
   GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
-  GI088_SERVICE_VERSION_V8R3R2,
-  GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
-  GI088_V8R3R2_VERSION_MANIFEST,
-  GI088_EVALUATION_METRICS_VERSION_V8R3R2
+  GI088_SERVICE_VERSION_V8R3R3,
+  GI088_V8R3R3_VERSION_MANIFEST,
+  GI088_EVALUATION_METRICS_VERSION_V8R3R3
 } from "@/server/services/evaluation/gi088/version-manifest";
 import {
   GI088_V8R3_INTERVIEW_SKILL_SHA256,
@@ -68,13 +66,17 @@ export {
   GI088_EVALUATION_ID_V8R2,
   GI088_EVALUATION_ID_V8R3,
   GI088_EVALUATION_ID_V8R3R2,
+  GI088_EVALUATION_ID_V8R3R3,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
+  GI088_EVALUATION_VERSION_V8R3R3,
   GI088_SERVICE_VERSION_V8R1,
   GI088_SERVICE_VERSION_V8R2,
   GI088_SERVICE_VERSION_V8R3,
-  GI088_SERVICE_VERSION_V8R3R2
+  GI088_SERVICE_VERSION_V8R3R2,
+  GI088_SERVICE_VERSION_V8R3R3
 } from "@/server/services/evaluation/gi088/version-manifest";
 
 export const GI088_EVALUATION_ID_V1 = "gi088_human_eval_v1" as const;
@@ -160,9 +162,9 @@ export const GI088_EVALUATION_VERSION_V8 =
 export const GI088_SERVICE_VERSION_V8 =
   "2026-08-10.gi088-question-decision-service-v8" as const;
 
-export const GI088_EVALUATION_ID = GI088_EVALUATION_ID_V8R3R2;
-export const GI088_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R3R2;
-export const GI088_SERVICE_VERSION = GI088_SERVICE_VERSION_V8R3R2;
+export const GI088_EVALUATION_ID = GI088_EVALUATION_ID_V8R3R3;
+export const GI088_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R3R3;
+export const GI088_SERVICE_VERSION = GI088_SERVICE_VERSION_V8R3R3;
 export const GI088_EVALUATION_MODE = "high_only" as const;
 export const GI088_ACTIVE_BRANCHES = ["high"] as const;
 export const GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY = null;
@@ -186,6 +188,7 @@ export const GI088_GOVERNED_EVALUATION_VERSIONS = [
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
   GI088_EVALUATION_VERSION
 ] as const;
 export const GI088_FIXED_OPENING = "此刻你想聊点什么？" as const;
@@ -200,7 +203,7 @@ export const GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION =
 export const GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION =
   "刚才只完成了思考，请直接输出最终可见 JSON，不要继续解释思考过程。" as const;
 export const GI088_EMPTY_CONTENT_RECOVERY_POLICY = {
-  version: "2026-08-12.gi088-empty-content-auto-recovery-v2",
+  version: "2026-08-12.gi088-adaptive-empty-content-recovery-v3",
   eligibleBranch: "high",
   trigger: "EMPTY_CONTENT",
   maximumAutomaticRetriesPerTurn: 2,
@@ -208,11 +211,34 @@ export const GI088_EMPTY_CONTENT_RECOVERY_POLICY = {
   retryThinking: "enabled",
   retryReasoningEffort: "high",
   retryResponseFormat: "json_object",
-  fallbackToThinkingDisabled: false,
+  fallbackToThinkingDisabled: true,
   fallbackToOff: false,
   recoveryInstructionVersion:
     GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   recoveryInstruction: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
+} as const;
+
+export const GI088_ADAPTIVE_RECOVERY_POLICY = {
+  version: "2026-08-12.gi088-adaptive-recovery-30-60-v1",
+  raceContractVersion: "2026-08-12.gi088-recovery-race-v1",
+  primaryRole: "primary_high",
+  correctionRole: "high_correction",
+  accelerationRole: "fast_formatter",
+  accelerationAfterMs: 30_000,
+  hardDeadlineMs: 60_000,
+  maximumAutomaticProviderCallsPerCycle: 3,
+  lateResultPolicy: "supersede_with_safe_diagnostics",
+  winnerPolicy: "first_fully_valid_output",
+  manualRetryStartsNewCycle: true,
+  fastFormatter: {
+    thinking: "disabled",
+    reasoningEffort: null,
+    responseFormat: "json_object",
+    instructionVersion:
+      "2026-08-12.gi088-fast-format-recovery-instruction-v1",
+    instruction:
+      "请快速整理同一段原话。只依据已有对话与当前语义状态，直接返回满足当前完整 Schema 的单个 JSON 对象；不新增事实、不展示分析过程、不改变共同任务。"
+  }
 } as const;
 
 export const GI088_EMPTY_CONTENT_AUTO_RECOVERY_OVERRIDE_ENV =
@@ -325,8 +351,9 @@ export const GI088_TIMEOUT_POLICY = {
 } as const;
 
 export const GI088_SHARED_RECOVERY_DEADLINE_POLICY = {
-  version: GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
-  automaticChainDeadlineMs: 90_000,
+  version: GI088_V8R3R3_VERSION_MANIFEST.sharedRecoveryDeadline,
+  accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+  automaticChainDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
   maximumSingleCallMs: 60_000,
   manualRetryHardTimeoutMs: 60_000,
   manualRetryStartsNewDeadline: true,
@@ -384,7 +411,7 @@ export const GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY = {
 } as const;
 
 export const GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT = {
-  version: "2026-08-11.gi088-offline-evidence-binding-v1",
+  version: "2026-08-12.gi088-offline-evidence-binding-v2",
   goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE,
   requiredCandidateBindings: [
     "candidateOfflineRunFingerprint",
@@ -394,7 +421,7 @@ export const GI088_V8R3_OFFLINE_EVIDENCE_CONTRACT = {
   optionalAdmissionBinding: "admissionFingerprint",
   fingerprintFormat: "sha256_lowercase_hex",
   admissionRequiredForFinalQualityGate: true,
-  automaticRecoveryBudgetScope: "offline_candidate_plus_preview",
+  recoveryEvidenceScope: "offline_and_preview_reported_independently",
   immutableAfterRunCreation: true
 } as const;
 
@@ -988,8 +1015,13 @@ export const GI088_HISTORICAL_DATASET_FINGERPRINTS = {
   [GI088_EVALUATION_VERSION_V8R2]:
     "191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf",
   [GI088_EVALUATION_VERSION_V8R3]:
-    "a279ef0542c9733fcf4b096db1b0bda92d23e2c41a12a254d8ae6c1f69811efb"
+    "a279ef0542c9733fcf4b096db1b0bda92d23e2c41a12a254d8ae6c1f69811efb",
+  [GI088_EVALUATION_VERSION_V8R3R2]:
+    "258a4b47ec4eb36393bcf37191fe5088ce699fc0abec5a6d7ccbc8e4b8f5a027"
 } as const;
+
+export const GI088_FROZEN_V8R3R2_DATASET_FINGERPRINT =
+  GI088_HISTORICAL_DATASET_FINGERPRINTS[GI088_EVALUATION_VERSION_V8R3R2];
 
 export const GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R2 = {
   feeling: ["better", "same", "worse"],
@@ -1099,6 +1131,22 @@ export const GI088_DATASET_MACHINE_GATE_V8R3 = {
   visibleQuestionReviewCoverage: 1,
   programInterventionReviewCoverage: 1,
   productOwnerFinalDecisionRequired: true
+} as const;
+
+export const GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3 = {
+  version: "2026-08-12.gi088-adaptive-recovery-user-outcome-gate-v1",
+  requiredAutomaticFinalVisibleRate: 1,
+  maximumVisibleLatencyP50Ms: 20_000,
+  maximumVisibleLatencyP90Ms: 40_000,
+  maximumVisibleLatencyMs: 60_000,
+  requiredZeroCounts: [
+    "final_failure",
+    "duplicate_message",
+    "pending_or_processing",
+    "manual_recovery"
+  ],
+  firstVisibleSuccessRate: "diagnostic_only",
+  recoveryCount: "diagnostic_only"
 } as const;
 
 function sha256(value: string) {
@@ -1335,30 +1383,11 @@ export function createGi088DatasetFingerprint(
     }
     return historical;
   }
-  return sha256(
-    createGi088CanonicalJson({
-      fingerprintLayer: "dataset",
-      behaviorLayerFingerprint: createGi088BehaviorLayerFingerprint(
-        "dataset",
-        behaviorManifest
-      ),
-      datasetVersion: evaluationVersion,
-      evaluationMode: GI088_EVALUATION_MODE,
-      tasks: GI088_TASKS,
-      order: GI088_TASKS.map((task) => task.id),
-      cleanStart: {
-        opening: GI088_FIXED_OPENING,
-        openingTriggersModelCall: false,
-        firstUserMessage: "U1",
-        firstUserMessageFrozenAcrossBranches: false,
-        branchOrder: GI088_ACTIVE_BRANCHES,
-        branchContextsAreIndependent: true
-      },
-      productOwnerReview: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R3,
-      machineGate: GI088_DATASET_MACHINE_GATE_V8R3,
-      goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE
-    })
-  );
+  // v8r3r3 changes only recovery scheduling. The task pack, human labels,
+  // Golden replacement evidence and hidden dataset stay byte-for-byte frozen,
+  // so the governed Dataset layer deliberately reuses the sealed v8r3r2 value.
+  void behaviorManifest;
+  return GI088_FROZEN_V8R3R2_DATASET_FINGERPRINT;
 }
 
 export function createGi088RunnerFingerprint(
@@ -1377,15 +1406,15 @@ export function createGi088RunnerFingerprint(
         deterministicState:
           GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
         semanticDelta: GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
-        interviewSkill: GI088_V8R3R2_VERSION_MANIFEST.interviewSkill,
+        interviewSkill: GI088_V8R3R3_VERSION_MANIFEST.interviewSkill,
         questionValueReview:
-          GI088_V8R3R2_VERSION_MANIFEST.questionValueReview,
-        singleFocus: GI088_V8R3R2_VERSION_MANIFEST.singleFocus,
-        runtime: GI088_V8R3R2_VERSION_MANIFEST.runtime,
-        payloadContract: GI088_V8R3R2_VERSION_MANIFEST.payloadContract,
+          GI088_V8R3R3_VERSION_MANIFEST.questionValueReview,
+        singleFocus: GI088_V8R3R3_VERSION_MANIFEST.singleFocus,
+        runtime: GI088_V8R3R3_VERSION_MANIFEST.runtime,
+        payloadContract: GI088_V8R3R3_VERSION_MANIFEST.payloadContract,
         sharedRecoveryDeadline:
-          GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
-        evaluationStore: GI088_EVALUATION_STORE_VERSION_V8R2
+          GI088_V8R3R3_VERSION_MANIFEST.sharedRecoveryDeadline,
+        evaluationStore: GI088_V8R3R3_VERSION_MANIFEST.evaluationStore
       },
       deterministicStateRules: GI088_DETERMINISTIC_STATE_RULES,
       semanticDeltaValidationRules: GI088_SEMANTIC_DELTA_VALIDATION_RULES,
@@ -1396,6 +1425,7 @@ export function createGi088RunnerFingerprint(
       technicalCorrectionRecovery:
         GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY,
       sharedRecoveryDeadline: GI088_SHARED_RECOVERY_DEADLINE_POLICY,
+      adaptiveRecovery: GI088_ADAPTIVE_RECOVERY_POLICY,
       emptyContentRecovery: GI088_EMPTY_CONTENT_RECOVERY_POLICY,
       stageTransitionRecovery: GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
       manualRecovery: GI088_MANUAL_RECOVERY_POLICY,
@@ -1420,13 +1450,15 @@ export function createGi088ExperienceFingerprint(
         behaviorManifest
       ),
       versions: {
-        metrics: GI088_EVALUATION_METRICS_VERSION_V8R3R2,
+        metrics: GI088_EVALUATION_METRICS_VERSION_V8R3R3,
         programInterventionReview:
           GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
-        readonlyExport: GI088_READONLY_EXPORT_VERSION_V8R3
+        readonlyExport: GI088_V8R3R3_VERSION_MANIFEST.readonlyExport
       },
       reviewContract: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R3,
       metricGateContract: GI088_DATASET_MACHINE_GATE_V8R3,
+      adaptiveRecoveryGateContract:
+        GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3,
       goldenEightReplacementEvidence: GI088_GOLDEN_EIGHT_REPLACEMENT_EVIDENCE
     })
   );
@@ -1438,7 +1470,7 @@ export function createGi088ExecutionFingerprint(
   return sha256(
     createGi088CanonicalJson({
       fingerprintLayer: "execution",
-      versionManifest: GI088_V8R3R2_VERSION_MANIFEST,
+      versionManifest: GI088_V8R3R3_VERSION_MANIFEST,
       behaviorManifestVersion: GI088_BEHAVIOR_MANIFEST_VERSION,
       behaviorManifestSha256:
         createGi088BehaviorManifestSha256(behaviorManifest),

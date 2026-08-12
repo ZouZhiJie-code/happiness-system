@@ -64,6 +64,26 @@ export const GI088_V8R3R2_VERSION_MANIFEST = {
   behaviorManifest: "2026-08-12.gi088-behavior-manifest-v3"
 } as const;
 
+/**
+ * Current release: Interview Skill, Ark model and evaluation assets stay
+ * frozen. Only the technical recovery scheduler and its observable evidence
+ * contract change from v8r3r2.
+ */
+export const GI088_V8R3R3_VERSION_MANIFEST = {
+  ...GI088_V8R3R2_VERSION_MANIFEST,
+  evaluationId: "gi088_human_eval_v8r3r3_adaptive_recovery_30_60",
+  evaluation:
+    "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60",
+  service:
+    "2026-08-12.gi088-adaptive-recovery-foundation-service-v8r3r3",
+  sharedRecoveryDeadline:
+    "2026-08-12.gi088-adaptive-recovery-deadline-v4",
+  evaluationStore: "2026-08-12.gi088-evaluation-store-v3-race-winner",
+  metrics: "2026-08-12.gi088-evaluation-metrics-v3",
+  readonlyExport: "2026-08-12.gi088-readonly-export-v0.8",
+  behaviorManifest: "2026-08-12.gi088-behavior-manifest-v4"
+} as const;
+
 export const GI088_EVALUATION_ID_V8R2 =
   GI088_V8R2_VERSION_MANIFEST.evaluationId;
 export const GI088_EVALUATION_VERSION_V8R2 =
@@ -118,5 +138,14 @@ export const GI088_SERVICE_VERSION_V8R3R2 =
   GI088_V8R3R2_VERSION_MANIFEST.service;
 export const GI088_EVALUATION_METRICS_VERSION_V8R3R2 =
   GI088_V8R3R2_VERSION_MANIFEST.metrics;
+
+export const GI088_EVALUATION_ID_V8R3R3 =
+  GI088_V8R3R3_VERSION_MANIFEST.evaluationId;
+export const GI088_EVALUATION_VERSION_V8R3R3 =
+  GI088_V8R3R3_VERSION_MANIFEST.evaluation;
+export const GI088_SERVICE_VERSION_V8R3R3 =
+  GI088_V8R3R3_VERSION_MANIFEST.service;
+export const GI088_EVALUATION_METRICS_VERSION_V8R3R3 =
+  GI088_V8R3R3_VERSION_MANIFEST.metrics;
 export const GI088_BEHAVIOR_MANIFEST_VERSION =
-  GI088_V8R3R2_VERSION_MANIFEST.behaviorManifest;
+  GI088_V8R3R3_VERSION_MANIFEST.behaviorManifest;

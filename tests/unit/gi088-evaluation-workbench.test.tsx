@@ -696,7 +696,8 @@ describe("GI-088 evaluation workbench", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
     const waitStatus = screen.getByTestId("gi088-authoritative-wait-status");
-    expect(waitStatus).toHaveTextContent("连接已恢复，正在自动生成");
+    expect(waitStatus).toHaveTextContent("正在自动恢复");
+    expect(waitStatus).toHaveTextContent("60s / 60s");
     expect(screen.getAllByTestId("gi088-authoritative-wait-status")).toHaveLength(1);
     expect(screen.getAllByRole("status").filter((node) =>
       node.hasAttribute("aria-live")
@@ -746,11 +747,11 @@ describe("GI-088 evaluation workbench", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
     expect(screen.getByTestId("gi088-authoritative-wait-status"))
-      .toHaveTextContent("连接已恢复，正在自动生成");
+      .toHaveTextContent("正在自动恢复");
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
-    expect(screen.getByRole("button", { name: "再次生成" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "重新尝试" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "安全终止当前任务" }))
       .toBeEnabled();
     expect(screen.queryByText("当前模型调用仍在执行，调用收口后才能终止任务。"))

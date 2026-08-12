@@ -44,6 +44,7 @@ import {
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
   GI088_GI087_CANDIDATE_FINGERPRINT,
   GI088_GOVERNED_EVALUATION_VERSIONS,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
@@ -378,9 +379,9 @@ describe("GI-088 Preview evaluation service", () => {
       version: GI088_EVALUATION_VERSION,
       serviceVersion: GI088_SERVICE_VERSION
     }).toEqual({
-      id: "gi088_human_eval_v8r3r2_empty_content_recovery_2",
-      version: "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2",
-      serviceVersion: "2026-08-12.gi088-empty-content-recovery-service-v8r3r2"
+      id: "gi088_human_eval_v8r3r3_adaptive_recovery_30_60",
+      version: "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60",
+      serviceVersion: "2026-08-12.gi088-adaptive-recovery-foundation-service-v8r3r3"
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -515,6 +516,7 @@ describe("GI-088 Preview evaluation service", () => {
       GI088_EVALUATION_VERSION_V8R1,
       GI088_EVALUATION_VERSION_V8R2,
       GI088_EVALUATION_VERSION_V8R3,
+      GI088_EVALUATION_VERSION_V8R3R2,
       GI088_EVALUATION_VERSION
     ]);
     expect(createGi088EffectiveCandidateFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
@@ -1273,7 +1275,7 @@ describe("GI-088 Preview evaluation service", () => {
     expect(hardProvider.complete).toHaveBeenCalledTimes(1);
   });
 
-  it("自动恢复从首次调用起共享 90 秒，第二次调用只获得剩余时间", async () => {
+  it("自动恢复从首次调用起共享 60 秒，第二次调用只获得剩余时间", async () => {
     let currentTime = new Date("2026-08-10T12:00:00.000Z");
     let recoveryParams: AICompletionParams | null = null;
     let calls = 0;
@@ -1319,7 +1321,7 @@ describe("GI-088 Preview evaluation service", () => {
     const failedTurn = failed.activeTask!.branches.high.turns[0]!;
     expect(failedTurn.recovery).toMatchObject({
       status: "eligible",
-      automaticDeadlineAt: "2026-08-10T12:01:30.000Z"
+      automaticDeadlineAt: "2026-08-10T12:01:00.000Z"
     });
 
     const recovered = await service.retry({
@@ -1330,37 +1332,37 @@ describe("GI-088 Preview evaluation service", () => {
       trigger: "automatic_timeout"
     });
     expect(recoveryParams).toMatchObject({
-      timeoutMs: 45_000,
-      hardTimeoutMs: 45_000,
-      headersTimeoutMs: 45_000,
-      bodyIdleTimeoutMs: 45_000
+      timeoutMs: 15_000,
+      hardTimeoutMs: 15_000,
+      headersTimeoutMs: 15_000,
+      bodyIdleTimeoutMs: 15_000
     });
     expect(recovered.activeTask!.branches.high.turns[0]!.calls[1])
       .toMatchObject({
         effectiveConfig: expect.objectContaining({
-          sharedDeadlineMs: 90_000,
-          remainingSharedDeadlineMs: 45_000,
-          hardTimeoutMs: 45_000
+          sharedDeadlineMs: 60_000,
+          remainingSharedDeadlineMs: 15_000,
+          hardTimeoutMs: 15_000
         })
       });
   });
 
-  it("90 秒额度耗尽后零调用进入人工再次生成", async () => {
+  it("60 秒额度耗尽后零调用进入人工再次生成", async () => {
     let currentTime = new Date("2026-08-10T13:00:00.000Z");
     const provider: AIProvider = {
       name: "fake-expired-shared-deadline",
       complete: vi.fn(async () => {
-        currentTime = new Date(currentTime.getTime() + 90_000);
+        currentTime = new Date(currentTime.getTime() + 60_000);
         throw new AIProviderError("body stalled", "TIMEOUT", 504, {
           finishReason: null,
           reasoningPresent: null,
           reasoningLength: null,
           reasoningTokens: null,
-          latencyMs: 90_000,
+          latencyMs: 60_000,
           tokenUsage: null,
           timeoutStage: "body",
           abortSource: "deadline",
-          totalLatencyMs: 90_000
+          totalLatencyMs: 60_000
         });
       })
     };
@@ -2999,6 +3001,7 @@ describe("GI-088 Preview evaluation service", () => {
             GI088_EVALUATION_VERSION_V8R1,
             GI088_EVALUATION_VERSION_V8R2,
             GI088_EVALUATION_VERSION_V8R3,
+            GI088_EVALUATION_VERSION_V8R3R2,
             GI088_EVALUATION_VERSION
           ]
         }

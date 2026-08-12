@@ -552,7 +552,8 @@ export function isLocalJournalEvaluationRequest(request: Request) {
   if (!hostnameIsLocal) return false;
   const protectedPath =
     url.pathname.startsWith("/api/local/gi088-v8r3") ||
-    url.pathname.startsWith("/admin/journal-evaluation/golden-eight");
+    url.pathname.startsWith("/admin/journal-evaluation/golden-eight") ||
+    url.pathname.startsWith("/admin/journal-evaluation/adaptive-recovery");
   if (!protectedPath) return true;
   const expectedToken = process.env.GI088_V8R3_REVIEW_TOKEN?.trim();
   if (!expectedToken) return false;

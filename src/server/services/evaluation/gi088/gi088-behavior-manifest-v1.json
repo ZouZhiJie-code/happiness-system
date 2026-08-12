@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-12.gi088-behavior-manifest-v3",
+  "version": "2026-08-12.gi088-behavior-manifest-v4",
   "files": [
     {
       "path": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts",
@@ -29,7 +29,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "113cd00b764f4d5a7672d1258d4197e392d4d9579f77f784dc8ccd3402fce281"
+      "sha256": "68eb2ea0a99c98bfd36fcb32be457399a88f8ff568c48ce2cb4157c5f1ccbbc8"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
@@ -66,7 +66,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "95980f7d546316f05352d823fb39f629166992f9ad359c0babe3f2202371543b"
+      "sha256": "5759b4732898688aeb9777edf0f96b4d8d5b551b8ed168fb9e271d9e49125e77"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures.ts",
@@ -108,7 +108,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "3b8d709e1a248d9480e4dcb62c12fd4329e2622fe309ca8e8bf740ab0f7d4078"
+      "sha256": "e5d174db147a8698bda1b23b4ecc52ab2c95c1c46f73ed7e4d91d7b08d2bd34b"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -180,14 +180,14 @@
       "layers": [
         "runner"
       ],
-      "sha256": "5052623e0ed7fa8ffa71b9ef5c638aeaed9a95a962e271d9532d2408bfa0af0b"
+      "sha256": "a07d0a6dad4ba5635512d89a9ab822e6668d3f6ed8079836d719cd7657eeee36"
     },
     {
       "path": "scripts/run-gi088-v8r3-offline-evaluation.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "e180d86bbd49e65e519b9f08e9a6cbc6051e5251ff717b349fafd9b5690dcbc1"
+      "sha256": "9db9b5a84271cbafbda22075ebc3adddc655e1711a9d5f6f10094fd98d2c51bc"
     },
     {
       "path": "skills/conduct-daily-light-thinking-interview/agents/openai.yaml",
@@ -398,7 +398,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "5fbdc9da2dff8ff11771adc9eaad331a4b98be0e112bf43efa216fb53752699c"
+      "sha256": "71ee5a7d68377732c292323ca24addf2c95e1b75e2001ddebe8b98df2513484c"
     },
     {
       "path": "src/features/auth/auth-local.ts",
@@ -449,14 +449,14 @@
       "layers": [
         "experience"
       ],
-      "sha256": "d540847ffa0e96bc98e5549911c4bde1ac8a86ef5cdf6743cf4a0cfef3b0c884"
+      "sha256": "202f42bea5c578b2e9082d0fbfed2932c812bb353821be46b8ba31d00383812d"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-export.ts",
       "layers": [
         "experience"
       ],
-      "sha256": "269a6dc06dad93d7a361017443b086eeb1908df9eaee3aa11441851c76baca51"
+      "sha256": "b106f3f9020197d3beb140be6f8a50f4a157bebed35b26e1e09b542c5e4919cd"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-storage.ts",
@@ -579,7 +579,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "9722035f5a3871850c31fc13d013844bf9208b48e873b15124ed55672e12dc55"
+      "sha256": "22f2dc56131351b264d734d1f51d51c74b5d950f639db55ac57b245b74a78552"
     },
     {
       "path": "src/server/services/evaluation/gi088/candidate.ts",
@@ -588,7 +588,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "840d499d8374f80e29b1a8ea7949607386da99d751a01384d9f242587fbac3fe"
+      "sha256": "019560896b561d0332589a48fcf23d3bc8f2488bdfa3a9e5d75faedb9113de5c"
     },
     {
       "path": "src/server/services/evaluation/gi088/compatibility-evidence.ts",
@@ -626,32 +626,39 @@
       "sha256": "f3fc0765c3de3fb6dd910956d1cec0238cc8a6afa3bd84d0ed3f173f8f8b2359"
     },
     {
+      "path": "src/server/services/evaluation/gi088/export-v08.ts",
+      "layers": [
+        "experience"
+      ],
+      "sha256": "ca1767ab7fe9745caba45146bac60171c93d36ed1bb978b5633d97db1d2d7ff3"
+    },
+    {
       "path": "src/server/services/evaluation/gi088/foundation-memory-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "2e069f3b71b8f2c1a27921048b7e80a31fc43f0fe2b0236152e4661a1733ad6b"
+      "sha256": "50948c705d38dafa4bb1106bc16e4a35cf9a711bf5b0903e6aad6473c09f89c2"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-prisma-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "232891c60de4a79a1e848b0a527acf131baec4cd4e154c41d449e2d02915ae12"
+      "sha256": "b1e857d0593e5b29b3697f32123825bb20191fb77c665e4c01507bf65a8e911d"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-service.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "85249723549ee6e6017bc20d03fe46d026daa867246a3528da900af0f08be3b2"
+      "sha256": "ca114ad2e67a70dcfc0d2a4a888ab161d0fecf115b6d8bbced4acd9dc2b8b0c6"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-store.ts",
       "layers": [
         "runner"
       ],
-      "sha256": "9257bcc16377248c2ca75cddbeeeb5ed54124b2ce7d8b91e38f2576875ad1c18"
+      "sha256": "cdb22b6fdfe29346d7aed1cd10cffed20ee936248ee4340989cb903a09dc3d71"
     },
     {
       "path": "src/server/services/evaluation/gi088/golden-eight-evidence.ts",
@@ -682,7 +689,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "61b61c4f0844d7cb05118ed54e2d41e3ee5d1b50ab09ba318d73ebfbeaae1033"
+      "sha256": "98e1631c5face84d132f15daed76addc317bc17c1ca5c91a82a5b21c24141eaa"
     },
     {
       "path": "src/server/services/evaluation/gi088/prisma-store.ts",
@@ -703,7 +710,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "df0ccb9e9656c5311612d0b0c22f52f9f454c2d9ae7392fbea69544f36af1716"
+      "sha256": "a9d9921dca8cb2deb49bb00ef576bd504ff092b2db8f36cf925bbb97092f6ca7"
     },
     {
       "path": "src/server/services/evaluation/gi088/schema-diagnostics.ts",
@@ -771,7 +778,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "9f7b049a141a0611975f9f7e462fcd73b651638b44932c07f4d6f9abae3564d3"
+      "sha256": "35c0d875aa21b899edf0068df310b7a4d5402dc072d7b5419163937760bcf589"
     },
     {
       "path": "src/server/services/evaluation/gi088/v8r3-interview-skill.ts",
@@ -788,7 +795,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "e0ba47a79b46804cb231bbce47a4ff96172ab03c157a4d07da2e95275922298c"
+      "sha256": "d11f6753da4b252260ca950209a35b4863eeaa3c555aef7bcbb373dd42daf80f"
     },
     {
       "path": "src/server/services/interview/event-centered-interview.service.ts",

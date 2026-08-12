@@ -4,24 +4,31 @@ import {
 } from "@/features/interview/event-centered/gi088-evaluation-export";
 
 export const GI088_EVALUATION_VERSION =
-  "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2" as const;
+  "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60" as const;
 
 export type Gi088GenerationProgress = {
   type:
     | "turn_reserved"
     | "provider_started"
     | "heartbeat"
-    | "recovery_started";
+    | "recovery_started"
+    | "acceleration_started";
   trigger?:
     | "EMPTY_CONTENT"
     | "TIMEOUT"
+    | "OUTPUT_SCHEMA_INVALID"
+    | "SEMANTIC_VALIDATION_FAILED"
+    | "STATE_TRANSITION_INVALID"
     | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
     | "ASK_QUESTION_COUNT_INVALID:2"
-    | "UNAUTHORIZED_PAUSE";
+    | "UNAUTHORIZED_PAUSE"
+    | "LATENCY_HEDGE";
   turnId: string;
   callId?: string;
   recoveryAttempt?: number;
   recoveryMaximum?: number;
+  recoveryRole?: "high_correction" | "fast_formatter";
+  elapsedMs?: number;
 };
 
 export type Gi088BranchKey = "off" | "high";
@@ -138,7 +145,12 @@ export type Gi088Semantic = {
 export type Gi088CallMetadata = {
   id: string;
   attempt: number;
-  kind: "initial" | "turn" | "manual_retry" | "automatic_retry";
+  kind:
+    | "initial"
+    | "turn"
+    | "manual_retry"
+    | "automatic_retry"
+    | "fast_hedge";
   status: "processing" | "valid" | "technical_failure" | "protected_failure";
   startedAt: string;
   completedAt?: string | null;
@@ -159,9 +171,13 @@ export type Gi088CallMetadata = {
   retryTrigger?:
     | "EMPTY_CONTENT"
     | "TIMEOUT"
+    | "OUTPUT_SCHEMA_INVALID"
+    | "SEMANTIC_VALIDATION_FAILED"
+    | "STATE_TRANSITION_INVALID"
     | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
     | "ASK_QUESTION_COUNT_INVALID:2"
     | "UNAUTHORIZED_PAUSE"
+    | "LATENCY_HEDGE"
     | null;
   retryOrdinal?: number | null;
   effectiveConfig?: {
@@ -193,6 +209,29 @@ export type Gi088CallMetadata = {
     emptyContentMaximumProviderCalls?: 2 | 3;
     emptyContentRecoveryPolicyVersion?: string;
     emptyContentPolicyOverride?: boolean;
+    adaptiveRecoveryPolicyVersion?: string;
+    raceContractVersion?: string;
+    raceGroupId?: string;
+    recoveryRole?:
+      | "primary_high"
+      | "high_correction"
+      | "fast_formatter"
+      | "manual_high";
+    raceTrigger?:
+      | "EMPTY_CONTENT"
+      | "TIMEOUT"
+      | "OUTPUT_SCHEMA_INVALID"
+      | "SEMANTIC_VALIDATION_FAILED"
+      | "STATE_TRANSITION_INVALID"
+      | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
+      | "ASK_QUESTION_COUNT_INVALID:2"
+      | "UNAUTHORIZED_PAUSE"
+      | "LATENCY_HEDGE"
+      | null;
+    accelerationAfterMs?: number;
+    turnHardDeadlineMs?: number;
+    remainingTurnDeadlineMs?: number;
+    maximumAutomaticProviderCallsPerCycle?: number;
   };
   ledgerStatus?:
     | "reserved"
@@ -274,6 +313,7 @@ export type Gi088TrajectoryTurn = {
     status:
       | "eligible"
       | "retrying"
+      | "accelerating"
       | "recovered"
       | "manual_available"
       | "manual_retrying"
@@ -281,6 +321,9 @@ export type Gi088TrajectoryTurn = {
     trigger:
       | "EMPTY_CONTENT"
       | "TIMEOUT"
+      | "OUTPUT_SCHEMA_INVALID"
+      | "SEMANTIC_VALIDATION_FAILED"
+      | "STATE_TRANSITION_INVALID"
       | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
       | "ASK_QUESTION_COUNT_INVALID:2"
       | "UNAUTHORIZED_PAUSE";
@@ -297,6 +340,38 @@ export type Gi088TrajectoryTurn = {
     maximumAutomaticRetriesPerTurn?: 1 | 2;
     maximumProviderCallsPerTurn?: 2 | 3;
     policyOverride?: boolean;
+    strategy?: "adaptive_30_60";
+    raceGroupId?: string;
+    cycle?: number;
+    activeCallIds?: string[];
+    winnerCallId?: string | null;
+    accelerationStartedAt?: string | null;
+    accelerationAfterMs?: number;
+    hardDeadlineMs?: number;
+    hardDeadlineAt?: string | null;
+    automaticProviderCallMaximum?: number;
+    finalStatus?: "visible" | "manual_available" | "exhausted" | null;
+  } | null;
+  adaptiveRace?: {
+    policyVersion: string;
+    raceContractVersion: string;
+    raceGroupId: string;
+    cycle: number;
+    status:
+      | "generating"
+      | "recovering"
+      | "accelerating"
+      | "visible"
+      | "manual_available"
+      | "exhausted";
+    startedAt: string;
+    accelerationAt: string;
+    hardDeadlineAt: string;
+    accelerationCallId: string | null;
+    activeCallIds: string[];
+    winnerCallId: string | null;
+    completedAt?: string | null;
+    cumulativeWaitMs?: number | null;
   } | null;
   questionObservation?: {
     questionPresence?: Gi088QuestionPresence;
@@ -366,6 +441,10 @@ export type Gi088Trajectory = {
     maximumProviderCallsPerTurn?: number;
     emptyContentRecoveryPolicyVersion?: string;
     emptyContentPolicyOverride?: boolean;
+    adaptiveRecoveryPolicyVersion?: string;
+    accelerationAfterMs?: number;
+    turnHardDeadlineMs?: number;
+    maximumAutomaticProviderCallsPerCycle?: number;
     automaticStageTransitionRetries: number;
     automaticSingleQuestionRetries?: number;
     automaticTechnicalRetries?: number;
@@ -496,6 +575,12 @@ export type Gi088EvaluationMetrics = {
   recoveredEmptyContentCount?: number;
   visibleLatencyP50Ms?: number | null;
   visibleLatencyP90Ms?: number | null;
+  visibleLatencyMaxMs?: number | null;
+  finalVisibleCompletionCount?: number;
+  finalVisibleCompletionRate?: number | null;
+  pendingOrProcessingCount?: number;
+  manualRecoveryCount?: number;
+  fastHedgeCallCount?: number;
   totalRecoveryCalls?: number;
   gateFacts?: Record<string, number | boolean>;
 };
@@ -538,6 +623,13 @@ export type Gi088EvaluationSession = {
       model: string;
       payloadContractVersion: string;
     };
+    config?: {
+      adaptiveRecoveryPolicyVersion?: string;
+      accelerationAfterMs?: number;
+      turnHardDeadlineMs?: number;
+      maximumAutomaticProviderCallsPerCycle?: number;
+      [key: string]: unknown;
+    };
   };
   batch: {
     id: string;
@@ -567,6 +659,18 @@ export type Gi088EvaluationSession = {
     };
     readOnly?: boolean;
     readOnlyReason?: string | null;
+    adaptiveRecoveryDiagnostics?: {
+      finalVisibleCompletionRate: number | null;
+      firstVisibleSuccessRate: number | null;
+      automaticRecoveryTurnCount: number;
+      fastHedgeCallCount: number;
+      visibleLatencyP50Ms: number | null;
+      visibleLatencyP90Ms: number | null;
+      visibleLatencyMaxMs: number | null;
+      maximumAutomaticProviderCallsPerCycle: number;
+      accelerationAfterMs: number;
+      hardDeadlineMs: number;
+    };
   };
   tasks: Gi088TaskSummary[];
   activeTask: {
@@ -801,6 +905,8 @@ async function requestStreamingSession(
       callId?: unknown;
       recoveryAttempt?: unknown;
       recoveryMaximum?: unknown;
+      recoveryRole?: unknown;
+      elapsedMs?: unknown;
       error?: unknown;
       issue?: unknown;
     };
@@ -812,15 +918,20 @@ async function requestStreamingSession(
       (event.type === "turn_reserved" ||
         event.type === "provider_started" ||
         event.type === "heartbeat" ||
-        event.type === "recovery_started") &&
+        event.type === "recovery_started" ||
+        event.type === "acceleration_started") &&
       typeof event.turnId === "string"
     ) {
       const trigger =
         event.trigger === "EMPTY_CONTENT" ||
         event.trigger === "TIMEOUT" ||
+        event.trigger === "OUTPUT_SCHEMA_INVALID" ||
+        event.trigger === "SEMANTIC_VALIDATION_FAILED" ||
+        event.trigger === "STATE_TRANSITION_INVALID" ||
         event.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE" ||
         event.trigger === "ASK_QUESTION_COUNT_INVALID:2" ||
-        event.trigger === "UNAUTHORIZED_PAUSE"
+        event.trigger === "UNAUTHORIZED_PAUSE" ||
+        event.trigger === "LATENCY_HEDGE"
           ? event.trigger
           : undefined;
       onProgress?.({
@@ -832,6 +943,13 @@ async function requestStreamingSession(
           : {}),
         ...(typeof event.recoveryMaximum === "number"
           ? { recoveryMaximum: event.recoveryMaximum }
+          : {}),
+        ...(event.recoveryRole === "high_correction" ||
+        event.recoveryRole === "fast_formatter"
+          ? { recoveryRole: event.recoveryRole }
+          : {}),
+        ...(typeof event.elapsedMs === "number"
+          ? { elapsedMs: event.elapsedMs }
           : {}),
         ...(trigger ? { trigger } : {})
       });

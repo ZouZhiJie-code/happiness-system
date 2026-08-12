@@ -3,11 +3,17 @@ import { z } from "zod";
 export const GI088_V8R3_EVALUATION_DATASET_VERSION =
   "2026-08-11.gi088-v8r3-skill-evaluation-v2" as const;
 export const GI088_V8R3_FORMAL_EVALUATION_VERSION =
-  "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash" as const;
+  "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60" as const;
 export const GI088_V8R3_RUNNER_VERSION =
-  "2026-08-11.gi088-v8r3-skill-runner-v7" as const;
+  "2026-08-12.gi088-v8r3-skill-runner-v8" as const;
 export const GI088_V8R3_LEGACY_RUNNER_VERSION =
-  "2026-08-11.gi088-v8r3-skill-runner-v6" as const;
+  "2026-08-11.gi088-v8r3-skill-runner-v7" as const;
+
+export const GI088_V8R3_ADAPTIVE_RECOVERY_ACCELERATION_MS = 30_000 as const;
+export const GI088_V8R3_ADAPTIVE_RECOVERY_HARD_DEADLINE_MS = 60_000 as const;
+export const GI088_V8R3_ADAPTIVE_RECOVERY_CALLS_PER_CHECKPOINT = 3 as const;
+export const GI088_V8R3_ADAPTIVE_RECOVERY_CALLS_MAXIMUM = 100 as const;
+export const GI088_V8R3_ADAPTIVE_TOTAL_CALLS_MAXIMUM = 196 as const;
 
 export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT =
   3 as const;
@@ -30,7 +36,7 @@ export const GI088_V8R3_HARD_GATES = {
   hiddenQualityFailureMaximum: 0,
   hiddenSingleCaseBlockerMaximum: 0,
   firstValidRateMinimum: 0.85,
-  automaticRecoveryMaximum: 2,
+  automaticRecoveryMaximum: 100,
   manualRecoveryMaximum: 0,
   finalFailureMaximum: 0,
   finalProtectionMaximum: 0,

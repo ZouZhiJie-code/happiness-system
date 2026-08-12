@@ -409,9 +409,10 @@ describe("GI-088 v8r3 zero-model initialize database guard", () => {
       }
     ],
     [
-      "合计恢复预算回读漂移",
+      "自适应恢复调用上限漂移",
       (input: Awaited<ReturnType<typeof validInitializeReadback>>) => {
-        input.session.batch.recoveryBudget!.combinedAutomaticRecoveryCount = 2;
+        input.session.batch.adaptiveRecoveryDiagnostics!
+          .maximumAutomaticProviderCallsPerCycle = 2;
       }
     ],
     [

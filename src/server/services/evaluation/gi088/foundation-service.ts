@@ -22,9 +22,10 @@ import {
 import {
   GI088_ACTIVE_BRANCHES,
   GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
+  GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3,
+  GI088_ADAPTIVE_RECOVERY_POLICY,
   GI088_ARK_FLASH_RUNTIME_POLICY,
   GI088_CONFIGS,
-  GI088_DATASET_MACHINE_GATE_V8R3,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
@@ -45,6 +46,7 @@ import {
   GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_ID_V8R2,
   GI088_EVALUATION_ID_V8R3,
+  GI088_EVALUATION_ID_V8R3R2,
   GI088_EVALUATION_MODE,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V1,
@@ -62,6 +64,7 @@ import {
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
   GI088_MODEL_CALL_IDENTITY,
@@ -81,6 +84,7 @@ import {
   GI088_SERVICE_VERSION_V8R1,
   GI088_SERVICE_VERSION_V8R2,
   GI088_SERVICE_VERSION_V8R3,
+  GI088_SERVICE_VERSION_V8R3R2,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
@@ -119,6 +123,11 @@ import {
   type Gi088ExportEnvelopeV07
 } from "@/server/services/evaluation/gi088/export-v07";
 import {
+  GI088_READONLY_EXPORT_VERSION_V08,
+  createGi088ExportEnvelopeV08,
+  type Gi088ExportEnvelopeV08
+} from "@/server/services/evaluation/gi088/export-v08";
+import {
   createGi088FoundationPayloadHash,
   type Gi088EvaluationFoundationStore,
   type Gi088FoundationCallRecord,
@@ -131,7 +140,8 @@ import {
 } from "@/server/services/evaluation/gi088/foundation-store";
 import {
   calculateGi088EvaluationMetrics,
-  GI088_EVALUATION_METRICS_VERSION_V1
+  GI088_EVALUATION_METRICS_VERSION_V1,
+  GI088_EVALUATION_METRICS_VERSION_V2
 } from "@/server/services/evaluation/gi088/metrics";
 import { createGi088ArkProvider } from "@/server/services/evaluation/gi088/ark-runtime";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
@@ -216,6 +226,15 @@ export type Gi088FoundationExecutionEvent =
       callId: string;
       recoveryAttempt?: number;
       recoveryMaximum?: number;
+      recoveryRole?: "high_correction" | "fast_formatter";
+    }
+  | {
+      type: "acceleration_started";
+      trigger: Gi088FoundationRecoveryTrigger | "LATENCY_HEDGE";
+      turnId: string;
+      callId: string;
+      elapsedMs: number;
+      recoveryRole: "fast_formatter";
     };
 
 type FoundationServiceDependencies = {
@@ -406,6 +425,11 @@ const GI088_HISTORICAL_EVALUATION_METADATA = {
     id: GI088_EVALUATION_ID_V8R3,
     serviceVersion: GI088_SERVICE_VERSION_V8R3,
     model: "deepseek-v4-flash-ga-260731"
+  },
+  [GI088_EVALUATION_VERSION_V8R3R2]: {
+    id: GI088_EVALUATION_ID_V8R3R2,
+    serviceVersion: GI088_SERVICE_VERSION_V8R3R2,
+    model: "deepseek-v4-flash-ga-260731"
   }
 } as const satisfies Readonly<Record<string, Gi088EvaluationVersionMetadata>>;
 
@@ -508,7 +532,8 @@ function evaluationMetadataFor(
 function usesGi088FoundationLedger(evaluationVersion: string) {
   return evaluationVersion === GI088_EVALUATION_VERSION ||
     evaluationVersion === GI088_EVALUATION_VERSION_V8R2 ||
-    evaluationVersion === GI088_EVALUATION_VERSION_V8R3;
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R3 ||
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R3R2;
 }
 
 const GI088_KNOWN_EVALUATION_VERSIONS = new Set<string>([
@@ -527,6 +552,7 @@ const GI088_KNOWN_EVALUATION_VERSIONS = new Set<string>([
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
   GI088_EVALUATION_VERSION
 ]);
 
@@ -535,7 +561,10 @@ function immutableTaskPackageFor(evaluationVersion: string) {
   if (evaluationVersion === GI088_EVALUATION_VERSION_V8R2) {
     return GI088_V8R2_TASKS;
   }
-  if (evaluationVersion === GI088_EVALUATION_VERSION_V8R3) {
+  if (
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R3 ||
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R3R2
+  ) {
     return GI088_V8R3_TASKS;
   }
   if (evaluationVersion === GI088_EVALUATION_VERSION_V8R1) {
@@ -616,7 +645,9 @@ function historicalMaximumProviderCallsPerTrajectory(
 }
 
 function historicalRecoveryLimits(evaluationVersion: string) {
-  const emptyContent = [
+  const emptyContent = evaluationVersion === GI088_EVALUATION_VERSION_V8R3R2
+    ? 2
+    : [
     GI088_EVALUATION_VERSION_V3,
     GI088_EVALUATION_VERSION_V4,
     GI088_EVALUATION_VERSION_V5,
@@ -645,7 +676,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V8,
     GI088_EVALUATION_VERSION_V8R1,
     GI088_EVALUATION_VERSION_V8R2,
-    GI088_EVALUATION_VERSION_V8R3
+    GI088_EVALUATION_VERSION_V8R3,
+    GI088_EVALUATION_VERSION_V8R3R2
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V4)
     ? 1
     : 0;
@@ -660,7 +692,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V8,
     GI088_EVALUATION_VERSION_V8R1,
     GI088_EVALUATION_VERSION_V8R2,
-    GI088_EVALUATION_VERSION_V8R3
+    GI088_EVALUATION_VERSION_V8R3,
+    GI088_EVALUATION_VERSION_V8R3R2
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V5);
   return {
     automaticEmptyContentRetries: emptyContent,
@@ -1035,9 +1068,14 @@ function allQuestionValueReviewsComplete(state: Gi088BatchState) {
 
 function exportEnvelopeFromSnapshot(
   snapshot: Gi088FoundationExportSnapshotRecord
-): Gi088ExportEnvelope | Gi088ExportEnvelopeV07 {
-  let envelope: Gi088ExportEnvelope | Gi088ExportEnvelopeV07;
-  if (snapshot.exportVersion === GI088_READONLY_EXPORT_VERSION_V07) {
+): Gi088ExportEnvelope | Gi088ExportEnvelopeV07 | Gi088ExportEnvelopeV08 {
+  let envelope: Gi088ExportEnvelope | Gi088ExportEnvelopeV07 | Gi088ExportEnvelopeV08;
+  if (snapshot.exportVersion === GI088_READONLY_EXPORT_VERSION_V08) {
+    envelope = createGi088ExportEnvelopeV08({
+      payload: snapshot.payload as Gi088ExportJsonValue,
+      issuedAt: snapshot.createdAt
+    });
+  } else if (snapshot.exportVersion === GI088_READONLY_EXPORT_VERSION_V07) {
     envelope = createGi088ExportEnvelopeV07({
       payload: snapshot.payload as Gi088ExportJsonValue,
       issuedAt: snapshot.createdAt
@@ -1067,7 +1105,9 @@ function metricsFor(input: {
     metricsVersion:
       input.metricsVersion === GI088_EVALUATION_METRICS_VERSION_V1
         ? GI088_EVALUATION_METRICS_VERSION_V1
-        : undefined,
+        : input.metricsVersion === GI088_EVALUATION_METRICS_VERSION_V2
+          ? GI088_EVALUATION_METRICS_VERSION_V2
+          : undefined,
     callLedger: input.calls.map((call) => ({
       id: call.callId,
       callId: call.callId,
@@ -1087,9 +1127,17 @@ function metricsFor(input: {
       errorCode: call.errorCode,
       retryTrigger: call.retryTrigger,
       retryOrdinal:
-        call.kind === "automatic_retry"
+        call.kind === "automatic_retry" || call.kind === "fast_hedge"
           ? Math.max(1, call.attempt - 1)
           : null,
+      assistantCommitted: Boolean(
+        (call.finalizedResult as { assistantCommitted?: boolean } | null)
+          ?.assistantCommitted
+      ),
+      raceWinner: Boolean(
+        (call.finalizedResult as { assistantCommitted?: boolean } | null)
+          ?.assistantCommitted
+      ),
       latencyMs:
         call.providerCompletedAt && call.dispatchedAt
           ? Math.max(
@@ -1103,6 +1151,7 @@ function metricsFor(input: {
           emptyContentAutomaticRetries?: number;
           emptyContentMaximumProviderCalls?: number;
           emptyContentPolicyOverride?: boolean;
+          recoveryRole?: string;
         },
       failedOutputDiagnostic:
         call.errorCode === "MODEL_OUTPUT_PROTECTED" ||
@@ -1115,6 +1164,14 @@ function metricsFor(input: {
       reviewOutcome: item.reviewOutcome
     }))
   });
+}
+
+function metricsVersionForEvaluation(evaluationVersion: string) {
+  if (evaluationVersion === GI088_EVALUATION_VERSION) return undefined;
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V8R3R2) {
+    return GI088_EVALUATION_METRICS_VERSION_V2;
+  }
+  return GI088_EVALUATION_METRICS_VERSION_V1;
 }
 
 function existingGateReasons(run: Gi088FoundationRunRecord) {
@@ -1175,27 +1232,12 @@ function gateFor(input: {
       Number.isSafeInteger(offlineEvidence.automaticRecoveryCount) &&
       offlineEvidence.automaticRecoveryCount >= 0
   );
-  const previewAutomaticRecoveryCount =
-    metrics.gateFacts.automaticRecoveryAttemptCount;
-  const combinedAutomaticRecoveryCount = offlineEvidenceValid
-    ? offlineEvidence!.automaticRecoveryCount + previewAutomaticRecoveryCount
-    : previewAutomaticRecoveryCount;
   if (!offlineEvidenceValid) {
     add(
       "offline_evidence_missing",
       "technical_fact",
       input.run.id,
       "当前候选缺少可验证的离线运行证据或恢复计数"
-    );
-  } else if (
-    combinedAutomaticRecoveryCount >
-    GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount
-  ) {
-    add(
-      "automatic_recovery_budget_exceeded",
-      "technical_fact",
-      input.run.id,
-      `离线与 Preview 自动恢复合计 ${combinedAutomaticRecoveryCount}，超过上限 ${GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount}`
     );
   }
 
@@ -1254,6 +1296,9 @@ function gateFor(input: {
   if (metrics.manualThirdGenerationCount > 0) {
     add("manual_third_generation", "technical_fact", input.run.id, "使用了人工第三次生成");
   }
+  if (metrics.gateFacts.manualRecoveryCount > 0) {
+    add("manual_recovery_used", "technical_fact", input.run.id, "当前批次使用了人工恢复周期");
+  }
   for (const item of input.interventions) {
     if (item.reviewOutcome === "false_positive") {
       add("program_intervention_false_positive", "current_human_conclusion", item.id, "程序介入复核为误接管");
@@ -1272,6 +1317,40 @@ function gateFor(input: {
   const allTasksComplete = input.state.tasks.every((task) =>
     taskCompletedFor(input.state, task)
   );
+  if (allTasksComplete) {
+    if (
+      metrics.finalVisibleCompletionRate !==
+        GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.requiredAutomaticFinalVisibleRate
+    ) {
+      add("final_visible_rate_below_gate", "technical_fact", input.run.id, "60 秒内自动最终可见率未达到 100%");
+    }
+    if (
+      metrics.visibleLatencyP50Ms === null ||
+      metrics.visibleLatencyP50Ms >
+        GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyP50Ms
+    ) {
+      add("visible_latency_p50_exceeded", "technical_fact", input.run.id, "可见回复 P50 超过 20 秒");
+    }
+    if (
+      metrics.visibleLatencyP90Ms === null ||
+      metrics.visibleLatencyP90Ms >
+        GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyP90Ms
+    ) {
+      add("visible_latency_p90_exceeded", "technical_fact", input.run.id, "可见回复 P90 超过 40 秒");
+    }
+    if (
+      metrics.visibleLatencyMaxMs === null ||
+      metrics.visibleLatencyMaxMs >
+        GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyMs
+    ) {
+      add("visible_latency_max_exceeded", "technical_fact", input.run.id, "单轮可见回复等待超过 60 秒");
+    }
+    if (metrics.gateFacts.pendingOrProcessingCount > 0) {
+      add("pending_or_processing", "technical_fact", input.run.id, "批次仍存在未收口的调用状态");
+    }
+  }
+
+  if (reasons.length > 0) return { status: "no_go" as const, reasons };
   const qualityReady =
     facts.targetTriggeredTrajectoryCount === scoredTrajectoryCount &&
     facts.directUseCount + facts.minorIssueCount === scoredTrajectoryCount &&
@@ -1288,12 +1367,21 @@ function gateFor(input: {
       (task) => task.compatibilitySmoke?.outcome === "passed"
     ).length === compatibilitySmokeCount;
   const reliabilityReady =
-    metrics.firstVisibleSuccessRate !== null &&
-    metrics.firstVisibleSuccessRate >= 0.85 &&
-    combinedAutomaticRecoveryCount <=
-      GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount &&
-    metrics.consecutiveRecoveryCount === 0 &&
-    facts.finalEmptyContentCount === 0;
+    metrics.finalVisibleCompletionRate ===
+      GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.requiredAutomaticFinalVisibleRate &&
+    metrics.visibleLatencyP50Ms !== null &&
+    metrics.visibleLatencyP50Ms <=
+      GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyP50Ms &&
+    metrics.visibleLatencyP90Ms !== null &&
+    metrics.visibleLatencyP90Ms <=
+      GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyP90Ms &&
+    metrics.visibleLatencyMaxMs !== null &&
+    metrics.visibleLatencyMaxMs <=
+      GI088_ADAPTIVE_RECOVERY_MACHINE_GATE_V8R3R3.maximumVisibleLatencyMs &&
+    metrics.finalFailureCount === 0 &&
+    metrics.duplicateMessageCount === 0 &&
+    facts.pendingOrProcessingCount === 0 &&
+    facts.manualRecoveryCount === 0;
   const offlineAdmissionReady = Boolean(
     offlineEvidenceValid && offlineEvidence?.admissionFingerprint
   );
@@ -1468,10 +1556,7 @@ export class Gi088EvaluationFoundationService {
       state,
       calls,
       interventions: interventionRows,
-      metricsVersion:
-        run.evaluationVersion === GI088_EVALUATION_VERSION
-          ? undefined
-          : GI088_EVALUATION_METRICS_VERSION_V1
+      metricsVersion: metricsVersionForEvaluation(run.evaluationVersion)
     });
     const requested = selectedTaskId
       ? state.tasks.find((task) => task.taskId === selectedTaskId) ?? null
@@ -1536,6 +1621,14 @@ export class Gi088EvaluationFoundationService {
               this.emptyContentRecoveryPolicy.version,
             emptyContentPolicyOverride:
               this.emptyContentRecoveryPolicy.policyOverride,
+            adaptiveRecoveryPolicyVersion:
+              GI088_ADAPTIVE_RECOVERY_POLICY.version,
+            accelerationAfterMs:
+              GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+            turnHardDeadlineMs:
+              GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+            maximumAutomaticProviderCallsPerCycle:
+              GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
             automaticStageTransitionRetries:
               currentConfig.automaticStageTransitionRetries,
             automaticSingleQuestionRetries:
@@ -1652,6 +1745,14 @@ export class Gi088EvaluationFoundationService {
                       this.emptyContentRecoveryPolicy.version,
                     emptyContentPolicyOverride:
                       this.emptyContentRecoveryPolicy.policyOverride,
+                    adaptiveRecoveryPolicyVersion:
+                      GI088_ADAPTIVE_RECOVERY_POLICY.version,
+                    accelerationAfterMs:
+                      GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+                    turnHardDeadlineMs:
+                      GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+                    maximumAutomaticProviderCallsPerCycle:
+                      GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
                     routeMaxDurationSeconds:
                       GI088_TIMEOUT_POLICY.routeMaxDurationSeconds,
                     hiddenReasoningPersistence: "forbidden" as const
@@ -1702,16 +1803,21 @@ export class Gi088EvaluationFoundationService {
               offlineEvaluationEvidence: structuredClone(
                 state.offlineEvaluationEvidence
               ),
-              recoveryBudget: {
-                offlineAutomaticRecoveryCount:
-                  state.offlineEvaluationEvidence.automaticRecoveryCount,
-                previewAutomaticRecoveryCount:
+              adaptiveRecoveryDiagnostics: {
+                finalVisibleCompletionRate:
+                  metrics.finalVisibleCompletionRate,
+                firstVisibleSuccessRate: metrics.firstVisibleSuccessRate,
+                automaticRecoveryTurnCount:
                   metrics.gateFacts.automaticRecoveryAttemptCount,
-                combinedAutomaticRecoveryCount:
-                  state.offlineEvaluationEvidence.automaticRecoveryCount +
-                  metrics.gateFacts.automaticRecoveryAttemptCount,
-                maximumAutomaticRecoveryCount:
-                  GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount
+                fastHedgeCallCount: metrics.fastHedgeCallCount,
+                visibleLatencyP50Ms: metrics.visibleLatencyP50Ms,
+                visibleLatencyP90Ms: metrics.visibleLatencyP90Ms,
+                visibleLatencyMaxMs: metrics.visibleLatencyMaxMs,
+                maximumAutomaticProviderCallsPerCycle:
+                  GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
+                accelerationAfterMs:
+                  GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+                hardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
               }
             }
           : {}),
@@ -1784,12 +1890,21 @@ export class Gi088EvaluationFoundationService {
     turnInput: Board7bWorkingTaskV1TurnInput;
     controlDecision: InterviewControlDecisionV2;
     recoveryTrigger?: Gi088FoundationRecoveryTrigger | null;
+    recoveryRole?:
+      | "primary_high"
+      | "high_correction"
+      | "fast_formatter"
+      | "manual_high";
     hardTimeoutMs?: number;
+    signal?: AbortSignal;
   }): AICompletionParams {
     const hardTimeoutMs = input.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
-    const recoveryInstruction = input.recoveryTrigger
-      ? recoveryCorrection(input.recoveryTrigger).instruction
-      : null;
+    const recoveryInstruction = input.recoveryRole === "fast_formatter"
+      ? GI088_ADAPTIVE_RECOVERY_POLICY.fastFormatter.instruction
+      : input.recoveryTrigger
+        ? recoveryCorrection(input.recoveryTrigger).instruction
+        : null;
+    const fastFormatter = input.recoveryRole === "fast_formatter";
     return {
       messages: [
         { role: "system", content: getGi088CandidateAssets().systemPrompt },
@@ -1821,8 +1936,9 @@ export class Gi088EvaluationFoundationService {
       ),
       hardTimeoutMs,
       responseFormat: "json_object",
-      thinking: "enabled",
-      reasoningEffort: "high"
+      thinking: fastFormatter ? "disabled" : "enabled",
+      reasoningEffort: fastFormatter ? undefined : "high",
+      signal: input.signal
     };
   }
 
@@ -1834,14 +1950,22 @@ export class Gi088EvaluationFoundationService {
       emptyContentMaximumProviderCalls?: 2 | 3;
       emptyContentRecoveryPolicyVersion?: string;
       emptyContentPolicyOverride?: boolean;
+      raceGroupId?: string;
+      recoveryRole?:
+        | "primary_high"
+        | "high_correction"
+        | "fast_formatter"
+        | "manual_high";
+      raceTrigger?: Gi088FoundationRecoveryTrigger | "LATENCY_HEDGE" | null;
+      remainingTurnDeadlineMs?: number;
   }): Gi088CallEffectiveConfig {
     const hardTimeoutMs = input.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
     return {
       branch: "high",
       ...GI088_MODEL_CALL_IDENTITY,
       hiddenReasoningPersistence: "forbidden",
-      thinking: "enabled",
-      reasoningEffort: "high",
+      thinking: input.recoveryRole === "fast_formatter" ? "disabled" : "enabled",
+      reasoningEffort: input.recoveryRole === "fast_formatter" ? null : "high",
       temperature: null,
       responseFormat: "json_object",
       maxTokensPolicy: "provider_default",
@@ -1884,7 +2008,18 @@ export class Gi088EvaluationFoundationService {
         this.emptyContentRecoveryPolicy.version,
       emptyContentPolicyOverride:
         input.emptyContentPolicyOverride ??
-        this.emptyContentRecoveryPolicy.policyOverride
+        this.emptyContentRecoveryPolicy.policyOverride,
+      adaptiveRecoveryPolicyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+      raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+      raceGroupId: input.raceGroupId,
+      recoveryRole: input.recoveryRole ?? "primary_high",
+      raceTrigger: input.raceTrigger ?? null,
+      accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+      turnHardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+      remainingTurnDeadlineMs:
+        input.remainingTurnDeadlineMs ?? GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+      maximumAutomaticProviderCallsPerCycle:
+        GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
     };
   }
 
@@ -1943,6 +2078,26 @@ export class Gi088EvaluationFoundationService {
       run.candidateFingerprint !== this.candidateFingerprint
     ) {
       return run;
+    }
+    const initialState = parseState(run);
+    for (const task of initialState.tasks) {
+      for (const turn of task.branches.high.turns) {
+        if (
+          turn.adaptiveRace &&
+          turn.adaptiveRace.status !== "visible" &&
+          turn.adaptiveRace.status !== "manual_available" &&
+          turn.adaptiveRace.status !== "exhausted" &&
+          this.now().getTime() >=
+            new Date(turn.adaptiveRace.hardDeadlineAt).getTime()
+        ) {
+          run = await this.settleAdaptiveRecoveryCycle({
+            ownerUserId: run.ownerUserId,
+            runId: run.id,
+            turnId: turn.id,
+            reason: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
+          });
+        }
+      }
     }
     const calls = await this.store.listCalls(run.id);
     for (const call of calls) {
@@ -2497,7 +2652,30 @@ export class Gi088EvaluationFoundationService {
       now.getTime() +
         GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs
     );
-    const effectiveConfig = this.createEffectiveConfig({});
+    const raceGroupId = `race:${turn.id}:1`;
+    turn.adaptiveRace = {
+      policyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+      raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+      raceGroupId,
+      cycle: 1,
+      status: "generating",
+      startedAt: now.toISOString(),
+      accelerationAt: new Date(
+        now.getTime() + GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs
+      ).toISOString(),
+      hardDeadlineAt: automaticDeadlineAt.toISOString(),
+      activeCallIds: [callId],
+      winnerCallId: null,
+      accelerationCallId: null,
+      completedAt: null,
+      cumulativeWaitMs: null
+    };
+    const effectiveConfig = this.createEffectiveConfig({
+      raceGroupId,
+      recoveryRole: "primary_high",
+      raceTrigger: null,
+      remainingTurnDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
+    });
     const gate = gateFor({
       run,
       state,
@@ -2532,7 +2710,17 @@ export class Gi088EvaluationFoundationService {
           emptyContentAutomaticRetries:
             this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
           emptyContentPolicyOverride:
-            this.emptyContentRecoveryPolicy.policyOverride
+            this.emptyContentRecoveryPolicy.policyOverride,
+          adaptiveRecoveryPolicyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+          raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+          raceGroupId,
+          recoveryRole: "primary_high",
+          raceTrigger: null,
+          accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+          turnHardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          remainingTurnDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          maximumAutomaticProviderCallsPerCycle:
+            GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
         }),
         effectiveConfig: json(effectiveConfig),
         baseAssistantMessageId: input.baseAssistantMessageId,
@@ -2552,13 +2740,12 @@ export class Gi088EvaluationFoundationService {
       return this.createPublicSession(await this.reconcileRun(reserved.run));
     }
     run = reserved.run;
-    await this.executeDispatchedCall({
+    await this.executeAdaptiveRecoveryCycle({
       run,
-      call: reserved.call,
+      rootCall: reserved.call,
       provider,
       turnInput,
       controlDecision,
-      completionParams,
       onProgress: input.onProgress
     });
     return this.createPublicSession(
@@ -2804,13 +2991,697 @@ export class Gi088EvaluationFoundationService {
     return input.call;
   }
 
+  private async executeProviderOnly(input: {
+    call: Gi088FoundationCallRecord;
+    provider: AIProvider;
+    completionParams: AICompletionParams;
+    onProgress?: (event: Gi088FoundationExecutionEvent) => void;
+  }) {
+    const dispatchedAt = this.now();
+    const configuredHardTimeout =
+      input.completionParams.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
+    const executionDeadlineAt = new Date(
+      dispatchedAt.getTime() + configuredHardTimeout
+    );
+    const claimed = await this.store.claimDispatch({
+      callId: input.call.callId,
+      dispatchedAt,
+      executionDeadlineAt
+    });
+    if (!claimed.claimed) return claimed.call;
+    input.onProgress?.({
+      type: "provider_started",
+      turnId: input.call.turnId,
+      callId: input.call.callId
+    });
+    const heartbeatStartedAt = Date.now();
+    const heartbeat = setInterval(() => {
+      input.onProgress?.({
+        type: "heartbeat",
+        turnId: input.call.turnId,
+        callId: input.call.callId,
+        elapsedMs: Date.now() - heartbeatStartedAt
+      });
+    }, 10_000);
+    heartbeat.unref?.();
+    let providerFailed = false;
+    let rawFinalOutput: string | null = null;
+    let responseHash: string | null = null;
+    let tokenUsage: Gi088FoundationJson | null = null;
+    let providerDiagnostics: Gi088FoundationJson | null = null;
+    let errorCode: string | null = null;
+    try {
+      const completion = await input.provider.complete(input.completionParams);
+      rawFinalOutput = completion.content;
+      responseHash = sha256(completion.content);
+      tokenUsage = json(sanitizeAICompletionTokenUsage(completion.tokenUsage));
+      providerDiagnostics = json(
+        sanitizeAIProviderDiagnostics(completion.diagnostics)
+      );
+    } catch (error) {
+      providerFailed = true;
+      takeAIReasoningOnlyContinuation(error)?.dispose();
+      errorCode = getAIProviderFailureCode(error);
+      providerDiagnostics = json(getAIProviderDiagnostics(error));
+    } finally {
+      clearInterval(heartbeat);
+    }
+    await this.persistProviderResultWithRetry({
+      callId: input.call.callId,
+      status: providerFailed ? "provider_failed" : "provider_succeeded",
+      providerCompletedAt: this.now(),
+      rawFinalOutput,
+      responseHash,
+      tokenUsage,
+      providerDiagnostics,
+      errorCode
+    });
+    return (await this.store.findCall(input.call.callId)) ?? input.call;
+  }
+
+  private async reserveAdaptiveRecoveryCall(input: {
+    ownerUserId: string;
+    runId: string;
+    turnId: string;
+    parentCall: Gi088FoundationCallRecord;
+    role: "high_correction" | "fast_formatter";
+    trigger: Gi088FoundationRecoveryTrigger | "LATENCY_HEDGE";
+    onProgress?: (event: Gi088FoundationExecutionEvent) => void;
+  }) {
+    for (let mutationAttempt = 0; mutationAttempt < MAX_FINALIZER_CAS_ATTEMPTS; mutationAttempt += 1) {
+      const run = await this.requireRun(input.ownerUserId, input.runId);
+      const state = structuredClone(parseState(run));
+      const task = state.tasks.find((candidateTask) =>
+        candidateTask.branches.high.turns.some((turn) => turn.id === input.turnId)
+      );
+      const trajectory = task?.branches.high;
+      const turn = trajectory?.turns.find((candidateTurn) =>
+        candidateTurn.id === input.turnId
+      );
+      if (!task || !trajectory || !turn || !turn.adaptiveRace) return null;
+      if (
+        trajectory.pendingTurnId !== turn.id ||
+        turn.adaptiveRace.winnerCallId ||
+        turn.adaptiveRace.status === "visible" ||
+        turn.adaptiveRace.status === "manual_available" ||
+        turn.adaptiveRace.status === "exhausted"
+      ) {
+        return null;
+      }
+      const calls = (await this.store.listCalls(run.id))
+        .filter((call) => call.turnId === turn.id)
+        .sort((left, right) => left.attempt - right.attempt);
+      const raceCalls = calls.filter((call) =>
+        (call.effectiveConfig as unknown as Gi088CallEffectiveConfig)
+          .raceGroupId === turn.adaptiveRace!.raceGroupId
+      );
+      const existingRole = raceCalls.find((call) =>
+        (call.effectiveConfig as unknown as Gi088CallEffectiveConfig)
+          .recoveryRole === input.role &&
+        call.status !== "superseded"
+      );
+      if (existingRole) return null;
+      if (
+        raceCalls.length >=
+        GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
+      ) {
+        return null;
+      }
+      const hardDeadlineAt = new Date(turn.adaptiveRace.hardDeadlineAt);
+      const reservedAt = this.now();
+      const remaining = hardDeadlineAt.getTime() - reservedAt.getTime();
+      if (remaining <= 0) return null;
+      const attempt = Math.max(...calls.map((call) => call.attempt), 0) + 1;
+      const callId = randomUUID();
+      const recoveryTrigger = input.trigger === "LATENCY_HEDGE"
+        ? null
+        : input.trigger;
+      const hardTimeoutMs = Math.max(
+        1,
+        Math.min(GI088_TIMEOUT_POLICY.hardTimeoutMs, remaining)
+      );
+      const turnInput: Board7bWorkingTaskV1TurnInput = {
+        mode: "accompany_chat",
+        conversation: trajectory.messages,
+        latestUserMessageId: turn.userMessageId,
+        semanticState: turn.semanticStateBefore
+      };
+      const controlDecision = turn.controlDecision as InterviewControlDecisionV2;
+      const completionParams = this.createCompletionParams({
+        turnInput,
+        controlDecision,
+        recoveryTrigger,
+        recoveryRole: input.role,
+        hardTimeoutMs
+      });
+      const clientOperationId =
+        `adaptive:${turn.id}:${turn.adaptiveRace.cycle}:${attempt}:${input.role}`;
+      const operation = operationIdentity({
+        ownerUserId: run.ownerUserId,
+        evaluationVersion: run.evaluationVersion,
+        runId: run.id,
+        clientOperationId,
+        action: "adaptive_recovery_call",
+        payload: {
+          turnId: turn.id,
+          raceGroupId: turn.adaptiveRace.raceGroupId,
+          parentCallId: input.parentCall.callId,
+          role: input.role,
+          trigger: input.trigger,
+          attempt
+        }
+      });
+      turn.status = "processing";
+      turn.activeCallId = callId;
+      turn.adaptiveRace.activeCallIds = [
+        ...new Set([...turn.adaptiveRace.activeCallIds, callId])
+      ];
+      turn.adaptiveRace.status = input.role === "fast_formatter"
+        ? "accelerating"
+        : "recovering";
+      if (input.role === "fast_formatter") {
+        turn.adaptiveRace.accelerationCallId = callId;
+      }
+      if (recoveryTrigger) {
+        const existingRecovery = turn.recovery;
+        turn.recovery = {
+          status: input.role === "fast_formatter" ? "accelerating" : "retrying",
+          trigger: recoveryTrigger,
+          automaticRetryCount: (existingRecovery?.automaticRetryCount ?? 0) + 1,
+          initialCallId: existingRecovery?.initialCallId ?? calls[0]!.callId,
+          recoveryCallId: callId,
+          manualRetryCount: existingRecovery?.manualRetryCount ?? 0,
+          manualRetryCallId: existingRecovery?.manualRetryCallId ?? null,
+          eligibleAt: existingRecovery?.eligibleAt ?? reservedAt.toISOString(),
+          automaticDeadlineAt: hardDeadlineAt.toISOString(),
+          startedAt: existingRecovery?.startedAt ?? reservedAt.toISOString(),
+          completedAt: null,
+          policyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+          maximumAutomaticRetriesPerTurn: 2,
+          maximumProviderCallsPerTurn: 3,
+          policyOverride: false,
+          strategy: "adaptive_30_60",
+          raceGroupId: turn.adaptiveRace.raceGroupId,
+          cycle: turn.adaptiveRace.cycle,
+          activeCallIds: turn.adaptiveRace.activeCallIds,
+          winnerCallId: null,
+          accelerationStartedAt:
+            input.role === "fast_formatter"
+              ? reservedAt.toISOString()
+              : existingRecovery?.accelerationStartedAt ?? null,
+          accelerationAfterMs:
+            GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+          hardDeadlineAt: hardDeadlineAt.toISOString(),
+          hardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          automaticProviderCallMaximum:
+            GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
+          finalStatus: null
+        };
+      }
+      trajectory.status = "running";
+      trajectory.technicalError = null;
+      state.updatedAt = reservedAt.toISOString();
+      const requestContext = {
+        emptyContentRecoveryPolicyVersion: this.emptyContentRecoveryPolicy.version,
+        emptyContentAutomaticRetries:
+          this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
+        emptyContentPolicyOverride: this.emptyContentRecoveryPolicy.policyOverride,
+        adaptiveRecoveryPolicyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+        raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+        raceGroupId: turn.adaptiveRace.raceGroupId,
+        recoveryRole: input.role,
+        raceTrigger: input.trigger,
+        accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+        turnHardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+        remainingTurnDeadlineMs: remaining,
+        maximumAutomaticProviderCallsPerCycle:
+          GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
+      };
+      try {
+        const reserved = await this.store.reserveRecoveryCall({
+          mutation: {
+            runId: run.id,
+            ownerUserId: run.ownerUserId,
+            expectedRevision: run.revision,
+            expectedExecutionFingerprint: this.executionFingerprint,
+            nextState: json(state)
+          },
+          operation,
+          call: {
+            callId,
+            runId: run.id,
+            taskId: task.taskId,
+            branch: "high",
+            turnId: turn.id,
+            clientTurnId: turn.clientTurnId,
+            clientOperationId,
+            attempt,
+            kind: input.role === "fast_formatter"
+              ? "fast_hedge"
+              : "automatic_retry",
+            parentCallId: input.parentCall.callId,
+            retryTrigger: recoveryTrigger,
+            requestHash: createGi088ModelRequestHash(
+              completionParams,
+              requestContext
+            ),
+            effectiveConfig: json(this.createEffectiveConfig({
+              recoveryTrigger,
+              hardTimeoutMs,
+              remainingSharedDeadlineMs: remaining,
+              raceGroupId: turn.adaptiveRace.raceGroupId,
+              recoveryRole: input.role,
+              raceTrigger: input.trigger,
+              remainingTurnDeadlineMs: remaining
+            })),
+            baseAssistantMessageId: turn.baseAssistantMessageId,
+            semanticStateBeforeHash: createGi088FoundationPayloadHash(
+              json(turn.semanticStateBefore)
+            ),
+            automaticDeadlineAt: hardDeadlineAt,
+            reservedAt
+          }
+        });
+        if (!reserved.claimed) return null;
+        if (input.role === "fast_formatter") {
+          input.onProgress?.({
+            type: "acceleration_started",
+            trigger: input.trigger,
+            turnId: turn.id,
+            callId,
+            elapsedMs: Math.max(
+              0,
+              reservedAt.getTime() -
+                new Date(turn.adaptiveRace.startedAt).getTime()
+            ),
+            recoveryRole: "fast_formatter"
+          });
+        } else {
+          input.onProgress?.({
+            type: "recovery_started",
+            trigger: recoveryTrigger!,
+            turnId: turn.id,
+            callId,
+            recoveryAttempt: turn.recovery?.automaticRetryCount ?? attempt - 1,
+            recoveryMaximum: 2,
+            recoveryRole: "high_correction"
+          });
+        }
+        return { reserved, completionParams };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === "GI088_CONCURRENT_UPDATE" &&
+          mutationAttempt + 1 < MAX_FINALIZER_CAS_ATTEMPTS
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+    return null;
+  }
+
+  private async settleAdaptiveRecoveryCycle(input: {
+    ownerUserId: string;
+    runId: string;
+    turnId: string;
+    reason: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED" | "ADAPTIVE_RECOVERY_EXHAUSTED";
+  }) {
+    for (let attempt = 0; attempt < MAX_FINALIZER_CAS_ATTEMPTS; attempt += 1) {
+      const run = await this.requireRun(input.ownerUserId, input.runId);
+      const state = structuredClone(parseState(run));
+      const task = state.tasks.find((candidateTask) =>
+        candidateTask.branches.high.turns.some((turn) => turn.id === input.turnId)
+      );
+      const trajectory = task?.branches.high;
+      const turn = trajectory?.turns.find((candidateTurn) =>
+        candidateTurn.id === input.turnId
+      );
+      if (!task || !trajectory || !turn || !turn.adaptiveRace) return run;
+      if (turn.adaptiveRace.status === "visible" || turn.adaptiveRace.winnerCallId) {
+        return run;
+      }
+      const callIds = [...turn.adaptiveRace.activeCallIds];
+      const completedAt = this.now();
+      turn.status = "technical_failure";
+      turn.activeCallId = null;
+      turn.failedOutputDiagnostic = {
+        errorCode: input.reason,
+        responseHash: null,
+        validationIssues: [input.reason]
+      };
+      turn.validationIssues = [...new Set([
+        ...turn.validationIssues,
+        input.reason
+      ])];
+      turn.adaptiveRace.status = "manual_available";
+      turn.adaptiveRace.activeCallIds = [];
+      turn.adaptiveRace.completedAt = completedAt.toISOString();
+      turn.adaptiveRace.cumulativeWaitMs = Math.max(
+        0,
+        completedAt.getTime() - new Date(turn.adaptiveRace.startedAt).getTime()
+      );
+      const recoveryTrigger = turn.recovery?.trigger ?? "TIMEOUT";
+      turn.recovery = {
+        ...(turn.recovery ?? {
+          trigger: recoveryTrigger,
+          automaticRetryCount: 0,
+          initialCallId: callIds[0] ?? `turn:${turn.id}`,
+          recoveryCallId: null,
+          manualRetryCount: 0,
+          manualRetryCallId: null,
+          eligibleAt: completedAt.toISOString(),
+          startedAt: turn.adaptiveRace.startedAt,
+          policyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version
+        }),
+        status: "manual_available",
+        automaticDeadlineAt: turn.adaptiveRace.hardDeadlineAt,
+        completedAt: completedAt.toISOString(),
+        strategy: "adaptive_30_60",
+        raceGroupId: turn.adaptiveRace.raceGroupId,
+        cycle: turn.adaptiveRace.cycle,
+        activeCallIds: [],
+        winnerCallId: null,
+        hardDeadlineAt: turn.adaptiveRace.hardDeadlineAt,
+        hardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+        accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+        automaticProviderCallMaximum:
+          GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
+        finalStatus: "manual_available"
+      };
+      trajectory.status = "technical_failure";
+      trajectory.technicalError = input.reason;
+      trajectory.pendingTurnId = turn.id;
+      state.updatedAt = completedAt.toISOString();
+      const operation = operationIdentity({
+        ownerUserId: run.ownerUserId,
+        evaluationVersion: run.evaluationVersion,
+        runId: run.id,
+        clientOperationId:
+          `adaptive-settle:${turn.id}:${turn.adaptiveRace.cycle}:${input.reason}`,
+        action: "adaptive_recovery_settle",
+        payload: {
+          turnId: turn.id,
+          raceGroupId: turn.adaptiveRace.raceGroupId,
+          reason: input.reason,
+          callIds
+        }
+      });
+      try {
+        if (callIds.length === 0) {
+          return (await this.store.commitRunMutation({
+            mutation: {
+              runId: run.id,
+              ownerUserId: run.ownerUserId,
+              expectedRevision: run.revision,
+              expectedExecutionFingerprint: this.executionFingerprint,
+              nextState: json(state)
+            },
+            operation,
+            resultSnapshot: json({
+              runId: run.id,
+              turnId: turn.id,
+              status: "manual_available",
+              reason: input.reason
+            })
+          })).run;
+        }
+        return (await this.store.settleAdaptiveRace({
+          mutation: {
+            runId: run.id,
+            ownerUserId: run.ownerUserId,
+            expectedRevision: run.revision,
+            expectedExecutionFingerprint: this.executionFingerprint,
+            nextState: json(state)
+          },
+          operation,
+          resultSnapshot: json({
+            runId: run.id,
+            turnId: turn.id,
+            status: "manual_available",
+            reason: input.reason
+          }),
+          callIds,
+          expectedStatuses: [
+            "reserved",
+            "dispatched",
+            "provider_succeeded",
+            "provider_failed",
+            "interrupted_unknown_dispatch",
+            "finalization_failed"
+          ],
+          errorCode: input.reason
+        })).run;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message === "GI088_CONCURRENT_UPDATE" &&
+          attempt + 1 < MAX_FINALIZER_CAS_ATTEMPTS
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new Gi088EvaluationError("GI088_CALL_FINALIZATION_FAILED", 503, true);
+  }
+
+  private async executeAdaptiveRecoveryCycle(input: {
+    run: Gi088FoundationRunRecord;
+    rootCall: Gi088FoundationCallRecord;
+    provider: AIProvider;
+    turnInput: Board7bWorkingTaskV1TurnInput;
+    controlDecision: InterviewControlDecisionV2;
+    onProgress?: (event: Gi088FoundationExecutionEvent) => void;
+  }) {
+    type CallCompletion = {
+      type: "call";
+      callId: string;
+      record: Gi088FoundationCallRecord | null;
+      error: unknown | null;
+    };
+    const controllers = new Map<string, AbortController>();
+    const pending = new Map<string, Promise<CallCompletion>>();
+    const launch = (
+      call: Gi088FoundationCallRecord,
+      completionParams: AICompletionParams
+    ) => {
+      const controller = new AbortController();
+      controllers.set(call.callId, controller);
+      const promise = this.executeProviderOnly({
+        call,
+        provider: input.provider,
+        completionParams: { ...completionParams, signal: controller.signal },
+        onProgress: input.onProgress
+      }).then(
+        (record): CallCompletion => ({
+          type: "call",
+          callId: call.callId,
+          record,
+          error: null
+        }),
+        (error): CallCompletion => ({
+          type: "call",
+          callId: call.callId,
+          record: null,
+          error
+        })
+      );
+      pending.set(call.callId, promise);
+    };
+    const rootConfig = input.rootCall.effectiveConfig as unknown as Gi088CallEffectiveConfig;
+    const hardDeadlineAt = input.rootCall.automaticDeadlineAt ?? new Date(
+      input.rootCall.reservedAt.getTime() +
+        GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
+    );
+    const accelerationAt = new Date(
+      input.rootCall.reservedAt.getTime() +
+        GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs
+    );
+    launch(
+      input.rootCall,
+      this.createCompletionParams({
+        turnInput: input.turnInput,
+        controlDecision: input.controlDecision,
+        recoveryRole: rootConfig.recoveryRole ?? "primary_high",
+        // The root request identity is frozen when the turn is reserved. Keep
+        // its provider timeout byte-for-byte aligned with that ledger entry;
+        // the outer race deadline still aborts it at the shared 60s boundary.
+        hardTimeoutMs:
+          rootConfig.remainingTurnDeadlineMs ??
+          rootConfig.hardTimeoutMs ??
+          GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
+      })
+    );
+    let accelerationLaunched = false;
+    try {
+      while (pending.size > 0) {
+        const now = this.now();
+        const hardRemaining = hardDeadlineAt.getTime() - now.getTime();
+        if (hardRemaining <= 0) {
+          for (const controller of controllers.values()) controller.abort();
+          return this.settleAdaptiveRecoveryCycle({
+            ownerUserId: input.run.ownerUserId,
+            runId: input.run.id,
+            turnId: input.rootCall.turnId,
+            reason: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
+          });
+        }
+        let accelerationTimer: ReturnType<typeof setTimeout> | null = null;
+        let hardTimer: ReturnType<typeof setTimeout> | null = null;
+        const racers: Array<Promise<CallCompletion | { type: "accelerate" } | { type: "deadline" }>> = [
+          ...pending.values()
+        ];
+        if (!accelerationLaunched) {
+          racers.push(new Promise((resolve) => {
+            accelerationTimer = setTimeout(
+              () => resolve({ type: "accelerate" }),
+              Math.max(0, accelerationAt.getTime() - now.getTime())
+            );
+            accelerationTimer.unref?.();
+          }));
+        }
+        racers.push(new Promise((resolve) => {
+          hardTimer = setTimeout(
+            () => resolve({ type: "deadline" }),
+            hardRemaining
+          );
+          hardTimer.unref?.();
+        }));
+        const settled = await Promise.race(racers);
+        if (accelerationTimer) clearTimeout(accelerationTimer);
+        if (hardTimer) clearTimeout(hardTimer);
+        if (settled.type === "deadline") {
+          for (const controller of controllers.values()) controller.abort();
+          return this.settleAdaptiveRecoveryCycle({
+            ownerUserId: input.run.ownerUserId,
+            runId: input.run.id,
+            turnId: input.rootCall.turnId,
+            reason: "ADAPTIVE_RECOVERY_DEADLINE_EXCEEDED"
+          });
+        }
+        if (settled.type === "accelerate") {
+          accelerationLaunched = true;
+          const calls = (await this.store.listCalls(input.run.id))
+            .filter((call) => call.turnId === input.rootCall.turnId)
+            .sort((left, right) => left.attempt - right.attempt);
+          const parentCall = calls.at(-1) ?? input.rootCall;
+          const reserved = await this.reserveAdaptiveRecoveryCall({
+            ownerUserId: input.run.ownerUserId,
+            runId: input.run.id,
+            turnId: input.rootCall.turnId,
+            parentCall,
+            role: "fast_formatter",
+            trigger: "LATENCY_HEDGE",
+            onProgress: input.onProgress
+          });
+          if (reserved) {
+            launch(reserved.reserved.call, reserved.completionParams);
+          }
+          continue;
+        }
+        pending.delete(settled.callId);
+        controllers.delete(settled.callId);
+        if (settled.error) {
+          throw settled.error;
+        }
+        await this.finalizeCall(settled.callId, input.run.ownerUserId);
+        const run = await this.requireRun(input.run.ownerUserId, input.run.id);
+        const state = parseState(run);
+        const task = state.tasks.find((candidateTask) =>
+          candidateTask.branches.high.turns.some(
+            (turn) => turn.id === input.rootCall.turnId
+          )
+        );
+        const turn = task?.branches.high.turns.find(
+          (candidateTurn) => candidateTurn.id === input.rootCall.turnId
+        );
+        if (
+          !turn ||
+          turn.adaptiveRace?.status === "visible" ||
+          turn.adaptiveRace?.winnerCallId ||
+          task?.branches.high.pendingTurnId !== turn.id
+        ) {
+          for (const controller of controllers.values()) controller.abort();
+          return run;
+        }
+        const finalizedCall = await this.store.findCall(settled.callId);
+        const finalizedResult = finalizedCall?.finalizedResult as
+          | { recoveryTrigger?: Gi088FoundationRecoveryTrigger | null }
+          | null;
+        const trigger = finalizedResult?.recoveryTrigger ?? null;
+        const allCalls = (await this.store.listCalls(run.id))
+          .filter((call) => call.turnId === input.rootCall.turnId)
+          .sort((left, right) => left.attempt - right.attempt);
+        const currentRaceGroupId = turn.adaptiveRace?.raceGroupId;
+        const raceCalls = allCalls.filter((call) =>
+          (call.effectiveConfig as unknown as Gi088CallEffectiveConfig)
+            .raceGroupId === currentRaceGroupId
+        );
+        if (
+          trigger &&
+          raceCalls.length <
+            GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
+        ) {
+          const completedRole = (
+            finalizedCall?.effectiveConfig as unknown as Gi088CallEffectiveConfig
+          )?.recoveryRole;
+          const role =
+            trigger === "OUTPUT_SCHEMA_INVALID" ||
+            completedRole === "high_correction"
+            ? "fast_formatter"
+            : "high_correction";
+          const parentCall = allCalls.at(-1) ?? input.rootCall;
+          const reserved = await this.reserveAdaptiveRecoveryCall({
+            ownerUserId: input.run.ownerUserId,
+            runId: input.run.id,
+            turnId: input.rootCall.turnId,
+            parentCall,
+            role,
+            trigger,
+            onProgress: input.onProgress
+          });
+          if (reserved) {
+            if (role === "fast_formatter") accelerationLaunched = true;
+            launch(reserved.reserved.call, reserved.completionParams);
+          }
+        }
+        if (pending.size === 0) {
+          const refreshedCalls = (await this.store.listCalls(run.id))
+            .filter((call) => call.turnId === input.rootCall.turnId);
+          const refreshedRaceCalls = refreshedCalls.filter((call) =>
+            (call.effectiveConfig as unknown as Gi088CallEffectiveConfig)
+              .raceGroupId === currentRaceGroupId
+          );
+          if (
+            refreshedRaceCalls.length >=
+              GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle ||
+            !trigger
+          ) {
+            return this.settleAdaptiveRecoveryCycle({
+              ownerUserId: input.run.ownerUserId,
+              runId: input.run.id,
+              turnId: input.rootCall.turnId,
+              reason: "ADAPTIVE_RECOVERY_EXHAUSTED"
+            });
+          }
+        }
+      }
+      return this.requireRun(input.run.ownerUserId, input.run.id);
+    } finally {
+      for (const controller of controllers.values()) controller.abort();
+      for (const promise of pending.values()) void promise.catch(() => undefined);
+    }
+  }
+
   private recoveryTriggerFor(input: {
     call: Gi088FoundationCallRecord;
     issues?: string[];
   }): Gi088FoundationRecoveryTrigger | null {
+    const effectiveConfig = input.call.effectiveConfig as unknown as Gi088CallEffectiveConfig;
     if (
-      input.call.attempt !== 1 &&
-      input.call.errorCode !== GI088_EMPTY_CONTENT_RECOVERY_POLICY.trigger
+      effectiveConfig.recoveryRole === "fast_formatter"
     ) {
       return null;
     }
@@ -2882,7 +3753,47 @@ export class Gi088EvaluationFoundationService {
       turn,
       input.call.effectiveConfig as unknown as Gi088CallEffectiveConfig
     );
-    if (input.recoveryTrigger && input.call.kind !== "automatic_retry") {
+    if (turn.adaptiveRace) {
+      if (input.recoveryTrigger) {
+        const existingRecovery = turn.recovery;
+        turn.recovery = {
+          status: "eligible",
+          trigger: input.recoveryTrigger,
+          automaticRetryCount: existingRecovery?.automaticRetryCount ?? 0,
+          initialCallId:
+            existingRecovery?.initialCallId ?? input.call.callId,
+          recoveryCallId: existingRecovery?.recoveryCallId ?? null,
+          manualRetryCount: existingRecovery?.manualRetryCount ?? 0,
+          manualRetryCallId: existingRecovery?.manualRetryCallId ?? null,
+          eligibleAt: existingRecovery?.eligibleAt ?? now,
+          automaticDeadlineAt: turn.adaptiveRace.hardDeadlineAt,
+          startedAt: existingRecovery?.startedAt ?? null,
+          completedAt: null,
+          policyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+          maximumAutomaticRetriesPerTurn: 2,
+          maximumProviderCallsPerTurn: 3,
+          policyOverride: false,
+          strategy: "adaptive_30_60",
+          raceGroupId: turn.adaptiveRace.raceGroupId,
+          cycle: turn.adaptiveRace.cycle,
+          activeCallIds: turn.adaptiveRace.activeCallIds,
+          winnerCallId: null,
+          accelerationStartedAt:
+            existingRecovery?.accelerationStartedAt ?? null,
+          accelerationAfterMs:
+            GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+          hardDeadlineAt: turn.adaptiveRace.hardDeadlineAt,
+          hardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          automaticProviderCallMaximum:
+            GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
+          finalStatus: null
+        };
+      }
+      turn.adaptiveRace.status = turn.adaptiveRace.accelerationCallId
+        ? "accelerating"
+        : "recovering";
+      trajectory.pendingTurnId = turn.id;
+    } else if (input.recoveryTrigger && input.call.kind !== "automatic_retry") {
       turn.recovery = {
         status: "eligible",
         trigger: input.recoveryTrigger,
@@ -2992,6 +3903,9 @@ export class Gi088EvaluationFoundationService {
     if (turn.recovery && (input.automaticRecovery || input.manualRecovery)) {
       turn.recovery.status = "recovered";
       turn.recovery.completedAt = this.now().toISOString();
+      turn.recovery.activeCallIds = [];
+      turn.recovery.winnerCallId = input.call.callId;
+      turn.recovery.finalStatus = "visible";
     }
     trajectory.messages.push({
       id: assistantMessageId,
@@ -3113,6 +4027,7 @@ export class Gi088EvaluationFoundationService {
         await this.ensureFinalizedInterventions(call);
         return run;
       }
+      if (call.status === "superseded") return run;
       if (
         call.status !== "provider_succeeded" &&
         call.status !== "provider_failed"
@@ -3122,10 +4037,13 @@ export class Gi088EvaluationFoundationService {
       const state = structuredClone(parseState(run));
       const trajectory = taskState(state, call!.taskId).branches.high;
       const turn = trajectory.turns.find((item) => item.id === call!.turnId);
+      const raceAcceptsCall = Boolean(
+        turn?.adaptiveRace?.activeCallIds.includes(call.callId)
+      );
       if (
         !turn ||
         trajectory.pendingTurnId !== turn.id ||
-        turn.activeCallId !== call.callId
+        (turn.activeCallId !== call.callId && !raceAcceptsCall)
       ) {
         await this.store.compareAndSetCallStatus({
           callId,
@@ -3254,15 +4172,47 @@ export class Gi088EvaluationFoundationService {
       }
 
       const recoveryTrigger = this.recoveryTriggerFor({ call, issues });
+      const siblingCallIds = (turn.adaptiveRace?.activeCallIds ?? [])
+        .filter((activeCallId) => activeCallId !== call!.callId);
+      if (turn.adaptiveRace) {
+        turn.adaptiveRace.activeCallIds = siblingCallIds;
+      }
       if (effectiveOutput && maintenance) {
         this.applyVisibleOutput({
           state,
           call,
           output: effectiveOutput,
           maintenance,
-          automaticRecovery: call.kind === "automatic_retry",
-          manualRecovery: call.kind === "manual_retry"
+          automaticRecovery:
+            (turn.adaptiveRace?.cycle ?? 1) === 1 &&
+            (call.kind === "automatic_retry" || call.kind === "fast_hedge"),
+          manualRecovery:
+            call.kind === "manual_retry" ||
+            (turn.adaptiveRace?.cycle ?? 1) > 1
         });
+        if (turn.adaptiveRace) {
+          turn.adaptiveRace.status = "visible";
+          turn.adaptiveRace.winnerCallId = call.callId;
+          turn.adaptiveRace.activeCallIds = [];
+          turn.adaptiveRace.completedAt = this.now().toISOString();
+          turn.adaptiveRace.cumulativeWaitMs = Math.max(
+            0,
+            this.now().getTime() -
+              new Date(turn.adaptiveRace.startedAt).getTime()
+          );
+        }
+        turn.activeCallId = null;
+      } else if (siblingCallIds.length > 0 && turn.adaptiveRace) {
+        turn.adaptiveRace.activeCallIds = siblingCallIds;
+        turn.adaptiveRace.status = turn.adaptiveRace.accelerationCallId
+          ? "accelerating"
+          : "recovering";
+        turn.activeCallId = siblingCallIds.at(-1) ?? null;
+        turn.status = "processing";
+        trajectory.pendingTurnId = turn.id;
+        trajectory.status = "running";
+        trajectory.technicalError = null;
+        state.updatedAt = this.now().toISOString();
       } else {
         this.setFailedTurn({
           state,
@@ -3326,6 +4276,10 @@ export class Gi088EvaluationFoundationService {
             turnId: call.turnId,
             assistantCommitted: Boolean(effectiveOutput),
             validationIssues: issues,
+            recoveryTrigger,
+            recoveryRole: (
+              call.effectiveConfig as unknown as Gi088CallEffectiveConfig
+            ).recoveryRole ?? null,
             interventions: interventionSpecs
           }),
           errorCode: finalErrorCode,
@@ -3338,7 +4292,15 @@ export class Gi088EvaluationFoundationService {
               status: "finalized",
               recoveryTrigger
             })
-          }
+          },
+          supersedeSiblingCallIds:
+            effectiveOutput && maintenance ? siblingCallIds : [],
+          siblingResultSnapshot: json({
+            runId: run.id,
+            turnId: call.turnId,
+            winnerCallId: call.callId,
+            status: "superseded"
+          })
         });
         call = finalized.call;
         run = finalized.run;
@@ -3642,10 +4604,7 @@ export class Gi088EvaluationFoundationService {
     if (
       !turn ||
       trajectory.pendingTurnId !== turn.id ||
-      turn.recovery?.status !== "manual_available" ||
-      (turn.recovery.automaticRetryCount !== 0 &&
-        turn.recovery.automaticRetryCount !== 1) ||
-      turn.recovery.manualRetryCount !== 0
+      turn.recovery?.status !== "manual_available"
     ) {
       throw new Gi088EvaluationError(
         "GI088_MANUAL_AFTER_AUTO_RECOVERY_UNAVAILABLE"
@@ -3659,11 +4618,7 @@ export class Gi088EvaluationFoundationService {
     if (
       !parentCall ||
       parentCall.attempt < 1 ||
-      parentCall.attempt >= 3 ||
-      calls.length !== parentCall.attempt ||
-      (turn.recovery.automaticRetryCount === 1 &&
-        (parentCall.attempt !== 2 || parentCall.kind !== "automatic_retry")) ||
-      (turn.recovery.automaticRetryCount === 0 && parentCall.attempt !== 1)
+      calls.length !== parentCall.attempt
     ) {
       throw new Gi088EvaluationError("GI088_TECHNICAL_RETRY_LIMIT_REACHED");
     }
@@ -3678,15 +4633,49 @@ export class Gi088EvaluationFoundationService {
     const completionParams = this.createCompletionParams({
       turnInput,
       controlDecision,
-      hardTimeoutMs: GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs
+      recoveryRole: "manual_high",
+      hardTimeoutMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
     });
     const callId = randomUUID();
+    const cycle = (turn.adaptiveRace?.cycle ?? 1) + 1;
+    const cycleStartedAt = this.now();
+    const hardDeadlineAt = new Date(
+      cycleStartedAt.getTime() + GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
+    );
+    const raceGroupId = `race:${turn.id}:${cycle}`;
     turn.status = "processing";
     turn.activeCallId = callId;
     turn.recovery.status = "manual_retrying";
-    turn.recovery.manualRetryCount = 1;
+    turn.recovery.manualRetryCount =
+      (turn.recovery.manualRetryCount ?? 0) + 1;
     turn.recovery.manualRetryCallId = callId;
-    turn.recovery.startedAt = this.now().toISOString();
+    turn.recovery.startedAt = cycleStartedAt.toISOString();
+    turn.recovery.completedAt = null;
+    turn.recovery.strategy = "adaptive_30_60";
+    turn.recovery.raceGroupId = raceGroupId;
+    turn.recovery.cycle = cycle;
+    turn.recovery.activeCallIds = [callId];
+    turn.recovery.winnerCallId = null;
+    turn.recovery.hardDeadlineAt = hardDeadlineAt.toISOString();
+    turn.recovery.finalStatus = null;
+    turn.adaptiveRace = {
+      policyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+      raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+      raceGroupId,
+      cycle,
+      status: "generating",
+      startedAt: cycleStartedAt.toISOString(),
+      accelerationAt: new Date(
+        cycleStartedAt.getTime() +
+          GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs
+      ).toISOString(),
+      hardDeadlineAt: hardDeadlineAt.toISOString(),
+      activeCallIds: [callId],
+      winnerCallId: null,
+      accelerationCallId: null,
+      completedAt: null,
+      cumulativeWaitMs: null
+    };
     trajectory.status = "running";
     trajectory.technicalError = null;
     state.updatedAt = this.now().toISOString();
@@ -3715,36 +4704,52 @@ export class Gi088EvaluationFoundationService {
           emptyContentRecoveryPolicyVersion: emptyPolicy.version,
           emptyContentAutomaticRetries:
             emptyPolicy.maximumAutomaticRetriesPerTurn,
-          emptyContentPolicyOverride: emptyPolicy.policyOverride
+          emptyContentPolicyOverride: emptyPolicy.policyOverride,
+          adaptiveRecoveryPolicyVersion: GI088_ADAPTIVE_RECOVERY_POLICY.version,
+          raceContractVersion: GI088_ADAPTIVE_RECOVERY_POLICY.raceContractVersion,
+          raceGroupId,
+          recoveryRole: "manual_high",
+          raceTrigger: turn.recovery.trigger === "ASK_QUESTION_COUNT_INVALID:2"
+            ? null
+            : turn.recovery.trigger,
+          accelerationAfterMs: GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+          turnHardDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          remainingTurnDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          maximumAutomaticProviderCallsPerCycle:
+            GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle
         }),
         effectiveConfig: json(this.createEffectiveConfig({
-          hardTimeoutMs:
-            GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs,
-          remainingSharedDeadlineMs: null,
+          hardTimeoutMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+          remainingSharedDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
           emptyContentAutomaticRetries:
             emptyPolicy.maximumAutomaticRetriesPerTurn,
           emptyContentMaximumProviderCalls:
             emptyPolicy.maximumProviderCallsPerTurn,
-          emptyContentPolicyOverride: emptyPolicy.policyOverride
+          emptyContentPolicyOverride: emptyPolicy.policyOverride,
+          raceGroupId,
+          recoveryRole: "manual_high",
+          raceTrigger: turn.recovery.trigger === "ASK_QUESTION_COUNT_INVALID:2"
+            ? null
+            : turn.recovery.trigger,
+          remainingTurnDeadlineMs: GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs
         })),
         baseAssistantMessageId: turn.baseAssistantMessageId,
         semanticStateBeforeHash: createGi088FoundationPayloadHash(
           json(turn.semanticStateBefore)
         ),
-        automaticDeadlineAt: null,
-        reservedAt: this.now()
+        automaticDeadlineAt: hardDeadlineAt,
+        reservedAt: cycleStartedAt
       }
     });
     if (!reserved.claimed) {
       return this.createPublicSession(await this.reconcileRun(reserved.run));
     }
-    await this.executeDispatchedCall({
+    await this.executeAdaptiveRecoveryCycle({
       run: reserved.run,
-      call: reserved.call,
+      rootCall: reserved.call,
       provider,
       turnInput,
       controlDecision,
-      completionParams,
       onProgress: input.onProgress
     });
     run = await this.requireRun(input.ownerUserId, input.runId);
@@ -4557,7 +5562,7 @@ export class Gi088EvaluationFoundationService {
   async exportRun(input: {
     ownerUserId: string;
     runId: string;
-  }): Promise<Gi088ExportEnvelope | Gi088ExportEnvelopeV07> {
+  }): Promise<Gi088ExportEnvelope | Gi088ExportEnvelopeV07 | Gi088ExportEnvelopeV08> {
     const run = await this.requireRun(input.ownerUserId, input.runId);
     if (!GI088_KNOWN_EVALUATION_VERSIONS.has(run.evaluationVersion)) {
       throw new Gi088EvaluationError("GI088_EXPORT_FAILED");
@@ -4589,16 +5594,16 @@ export class Gi088EvaluationFoundationService {
       state,
       calls,
       interventions,
-      metricsVersion:
-        run.evaluationVersion === GI088_EVALUATION_VERSION
-          ? undefined
-          : GI088_EVALUATION_METRICS_VERSION_V1
+      metricsVersion: metricsVersionForEvaluation(run.evaluationVersion)
     });
     const gate = gateFor({ run, state, calls, interventions, now: this.now() });
     const currentExport = run.evaluationVersion === GI088_EVALUATION_VERSION;
     const exportVersion = currentExport
-      ? GI088_READONLY_EXPORT_VERSION_V07
-      : GI088_READONLY_EXPORT_VERSION;
+      ? GI088_READONLY_EXPORT_VERSION_V08
+      : run.evaluationVersion === GI088_EVALUATION_VERSION_V8R3 ||
+          run.evaluationVersion === GI088_EVALUATION_VERSION_V8R3R2
+        ? GI088_READONLY_EXPORT_VERSION_V07
+        : GI088_READONLY_EXPORT_VERSION;
     const payload = {
       exportVersion,
       evaluation: {
@@ -4623,6 +5628,14 @@ export class Gi088EvaluationFoundationService {
                   automaticChainDeadlineMs:
                     GI088_SHARED_RECOVERY_DEADLINE_POLICY
                       .automaticChainDeadlineMs,
+                  adaptiveRecoveryPolicyVersion:
+                    GI088_ADAPTIVE_RECOVERY_POLICY.version,
+                  accelerationAfterMs:
+                    GI088_ADAPTIVE_RECOVERY_POLICY.accelerationAfterMs,
+                  turnHardDeadlineMs:
+                    GI088_ADAPTIVE_RECOVERY_POLICY.hardDeadlineMs,
+                  maximumAutomaticProviderCallsPerCycle:
+                    GI088_ADAPTIVE_RECOVERY_POLICY.maximumAutomaticProviderCallsPerCycle,
                   routeMaxDurationSeconds:
                     GI088_TIMEOUT_POLICY.routeMaxDurationSeconds,
                   hiddenReasoningPersistence: "forbidden" as const
@@ -4687,8 +5700,10 @@ export class Gi088EvaluationFoundationService {
       metrics
     };
     const envelope = currentExport
-      ? createGi088ExportEnvelopeV07({ payload })
-      : createGi088ExportEnvelope({ payload });
+      ? createGi088ExportEnvelopeV08({ payload })
+      : exportVersion === GI088_READONLY_EXPORT_VERSION_V07
+        ? createGi088ExportEnvelopeV07({ payload })
+        : createGi088ExportEnvelope({ payload });
     const stored = await this.store.getOrCreateExportSnapshot({
       ownerUserId: input.ownerUserId,
       runId: run.id,

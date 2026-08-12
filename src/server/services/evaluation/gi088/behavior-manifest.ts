@@ -238,6 +238,10 @@ export const GI088_BEHAVIOR_FILE_SPECS = [
     layers: ["experience"]
   },
   {
+    path: "src/server/services/evaluation/gi088/export-v08.ts",
+    layers: ["experience"]
+  },
+  {
     path: "src/features/interview/event-centered/gi088-evaluation-client.ts",
     layers: ["experience"]
   },

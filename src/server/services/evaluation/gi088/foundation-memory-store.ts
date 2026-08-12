@@ -540,7 +540,7 @@ implements Gi088EvaluationFoundationStore {
     if (
       input.call.attempt < 2 ||
       !input.call.parentCallId ||
-      !input.call.retryTrigger
+      (!input.call.retryTrigger && input.call.kind !== "fast_hedge")
     ) {
       return Promise.reject(
         new Gi088FoundationStoreError("GI088_RECOVERY_CALL_LINEAGE_INVALID")
@@ -693,6 +693,8 @@ implements Gi088EvaluationFoundationStore {
       clientOperationId: string;
       resultSnapshot: Gi088FoundationJson;
     };
+    supersedeSiblingCallIds?: string[];
+    siblingResultSnapshot?: Gi088FoundationJson;
   }) {
     return this.atomic(() => {
       const run = this.requireRun(input.mutation.runId);
@@ -749,6 +751,48 @@ implements Gi088EvaluationFoundationStore {
         updatedAt: input.finalizedAt
       };
       this.calls.set(call.callId, updatedCall);
+      for (const siblingCallId of input.supersedeSiblingCallIds ?? []) {
+        if (siblingCallId === call.callId) continue;
+        const sibling = this.calls.get(siblingCallId);
+        if (!sibling || sibling.runId !== run.id) {
+          throw new Gi088FoundationStoreError("GI088_CALL_NOT_FOUND");
+        }
+        if (sibling.status === "finalized") {
+          throw new Gi088FoundationStoreError("GI088_RACE_WINNER_CONFLICT");
+        }
+        if (sibling.status !== "superseded") {
+          assertGi088FoundationCallTransition(sibling.status, "superseded");
+          this.calls.set(sibling.callId, {
+            ...sibling,
+            status: "superseded",
+            errorCode: "RACE_LOSER_SUPERSEDED",
+            updatedAt: input.finalizedAt
+          });
+        }
+        const siblingOperationKey = operationKey({
+          ownerUserId: run.ownerUserId,
+          evaluationVersion: run.evaluationVersion,
+          clientOperationId: sibling.clientOperationId
+        });
+        const siblingOperation = this.operations.get(siblingOperationKey);
+        if (siblingOperation?.status === "processing") {
+          this.operations.set(siblingOperationKey, {
+            ...siblingOperation,
+            status: "completed",
+            resultRevision: updatedRun.revision,
+            resultSnapshot: clone(
+              input.siblingResultSnapshot ?? {
+                runId: run.id,
+                turnId: call.turnId,
+                winnerCallId: call.callId,
+                status: "superseded"
+              }
+            ),
+            completedAt: input.finalizedAt,
+            updatedAt: input.finalizedAt
+          });
+        }
+      }
       if (input.operation && operationKeyToComplete && operationToComplete) {
         this.operations.set(operationKeyToComplete, {
           ...operationToComplete,
@@ -762,6 +806,94 @@ implements Gi088EvaluationFoundationStore {
       return {
         run: clone(updatedRun),
         call: clone(updatedCall),
+        claimed: true
+      };
+    });
+  }
+
+  settleAdaptiveRace(input: {
+    mutation: Gi088FoundationRunMutation;
+    operation: Gi088FoundationOperationIdentity;
+    resultSnapshot: Gi088FoundationJson;
+    callIds: string[];
+    expectedStatuses: Gi088FoundationCallStatus[];
+    errorCode: string;
+  }) {
+    return this.atomic(() => {
+      if (input.operation.runId !== input.mutation.runId) {
+        throw new Gi088FoundationStoreError("GI088_RUN_SCOPE_MISMATCH");
+      }
+      if (input.callIds.length === 0 || input.expectedStatuses.length === 0) {
+        throw new Gi088FoundationStoreError("GI088_CALL_EXPECTED_STATUS_REQUIRED");
+      }
+      const run = this.requireRun(input.mutation.runId);
+      const key = operationKey(input.operation);
+      const existing = this.operations.get(key);
+      if (existing) {
+        assertOperationReplay(existing, input.operation);
+        if (existing.status === "processing") {
+          throw new Gi088FoundationStoreError("GI088_OPERATION_RESULT_INCOMPLETE");
+        }
+        return {
+          run: clone(run),
+          operation: clone(existing),
+          calls: input.callIds
+            .map((callId) => this.calls.get(callId))
+            .filter((call): call is Gi088FoundationCallRecord => Boolean(call))
+            .map(clone),
+          claimed: false
+        };
+      }
+      this.assertRunMutation(run, input.mutation);
+      const calls = input.callIds.map((callId) => {
+        const call = this.calls.get(callId);
+        if (!call || call.runId !== run.id) {
+          throw new Gi088FoundationStoreError("GI088_CALL_NOT_FOUND");
+        }
+        return call;
+      });
+      const completedAt = new Date();
+      const updatedRun = this.applyRunMutation(run, input.mutation, completedAt);
+      for (const call of calls) {
+        if (input.expectedStatuses.includes(call.status)) {
+          assertGi088FoundationCallTransition(call.status, "superseded");
+          this.calls.set(call.callId, {
+            ...call,
+            status: "superseded",
+            errorCode: input.errorCode,
+            updatedAt: completedAt
+          });
+        } else if (call.status !== "superseded") {
+          throw new Gi088FoundationStoreError("GI088_CONCURRENT_UPDATE");
+        }
+        const callOperationKey = operationKey({
+          ownerUserId: run.ownerUserId,
+          evaluationVersion: run.evaluationVersion,
+          clientOperationId: call.clientOperationId
+        });
+        const callOperation = this.operations.get(callOperationKey);
+        if (callOperation?.status === "processing") {
+          this.operations.set(callOperationKey, {
+            ...callOperation,
+            status: "completed",
+            resultRevision: updatedRun.revision,
+            resultSnapshot: clone(input.resultSnapshot),
+            completedAt,
+            updatedAt: completedAt
+          });
+        }
+      }
+      const operation: Gi088FoundationOperationRecord = {
+        ...createOperation(input.operation, "completed", completedAt),
+        resultRevision: updatedRun.revision,
+        resultSnapshot: clone(input.resultSnapshot),
+        completedAt
+      };
+      this.operations.set(key, operation);
+      return {
+        run: clone(updatedRun),
+        operation: clone(operation),
+        calls: input.callIds.map((callId) => clone(this.calls.get(callId)!)),
         claimed: true
       };
     });
