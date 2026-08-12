@@ -128,7 +128,8 @@ export async function loadGoldenEightReview() {
     roundId: GOLDEN_EIGHT_ROUND_ID,
     sourceSha256: goldenEightReplacementSourceSha256(cards),
     cards,
-    decisions
+    decisions,
+    receipt: await readReceipt()
   };
 }
 
@@ -138,6 +139,7 @@ export async function saveGoldenEightDecision(input: {
   reason: string;
 }) {
   const review = await loadGoldenEightReview();
+  if (review.receipt) throw new Error("GOLDEN_EIGHT_RECEIPT_IMMUTABLE");
   const card = review.cards.find((item) => item.caseId === input.caseId);
   if (!card) throw new Error("GOLDEN_EIGHT_CASE_NOT_FOUND");
   const reason = input.reason.trim();

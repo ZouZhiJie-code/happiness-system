@@ -23,6 +23,7 @@ const OPTIONS: Array<{ value: GoldenEightVerdict; label: string; hint: string }>
 type ReviewPayload = {
   cards: GoldenEightCard[];
   decisions: GoldenEightDecision[];
+  receipt: GoldenEightReceipt | null;
   sourceSha256: string;
   roundId: string;
 };
@@ -49,7 +50,8 @@ export function GoldenEightReplacementWorkbench() {
   const activeDecision = activeCard && payload ? decisionFor(payload.decisions, activeCard.caseId) : null;
   const completed = payload?.decisions.length ?? 0;
   const allComplete = completed === 8;
-  const canSave = Boolean(activeCard && verdict && (verdict === "ready_to_use" || reason.trim().length >= 8));
+  const sealed = Boolean(receipt);
+  const canSave = Boolean(!sealed && activeCard && verdict && (verdict === "ready_to_use" || reason.trim().length >= 8));
 
   useEffect(() => {
     void fetch(SESSION_API, { cache: "no-store" })
@@ -60,7 +62,8 @@ export function GoldenEightReplacementWorkbench() {
       })
       .then((data) => {
         setPayload(data);
-        setMessage(data.decisions.length === 8 ? "8 条裁决已保存，可随时复核。" : "材料已加载，选择一条开始裁决。");
+        setReceipt(data.receipt);
+        setMessage(data.receipt ? "本轮裁决已封存，可随时复核。" : data.decisions.length === 8 ? "8 条裁决已保存，可继续封存。" : "材料已加载，选择一条开始裁决。");
       })
       .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Golden 8 材料读取失败"));
   }, []);
@@ -195,7 +198,7 @@ export function GoldenEightReplacementWorkbench() {
             </div>
             <label htmlFor="golden-eight-reason" className="mt-5 block text-sm font-semibold">理由{verdict === "ready_to_use" ? "（可选）" : "（至少 8 字）"}</label>
             <textarea id="golden-eight-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="写下这一条为什么这样判断" className="mt-2 min-h-28 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-transparent px-3 py-2 text-sm leading-6 outline-none focus:border-[var(--line-strong)]" />
-            <button type="button" disabled={!canSave || saving} onClick={() => void save()} className="mt-3 min-h-11 w-full rounded-full bg-[var(--calendar-ink)] px-4 py-2 text-sm font-semibold text-[var(--calendar-surface)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45">{saving ? "保存中…" : activeDecision ? "保存修改" : "保存并下一条"}</button>
+            <button type="button" disabled={!canSave || saving} onClick={() => void save()} className="mt-3 min-h-11 w-full rounded-full bg-[var(--calendar-ink)] px-4 py-2 text-sm font-semibold text-[var(--calendar-surface)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45">{sealed ? "本轮已封存" : saving ? "保存中…" : activeDecision ? "保存修改" : "保存并下一条"}</button>
             {allComplete ? (
               <div className="mt-3 space-y-2">
                 <button type="button" disabled={finalizing || Boolean(receipt)} onClick={() => void finalize()} className="min-h-11 w-full rounded-full border border-[var(--line-strong)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55">
