@@ -312,12 +312,12 @@ describe("GI-088 evaluation workbench", () => {
     const downloadButton = await screen.findByRole("button", {
       name: "下载已验证 JSON"
     });
-    act(() => {
+    await act(async () => {
       downloadButton.click();
       downloadButton.click();
     });
 
-    expect(screen.getByText("正在校验不可变收据并准备文件…"))
+    expect(await screen.findByText("正在校验不可变收据并准备文件…"))
       .toBeInTheDocument();
     expect(screen.getByLabelText("当前运行")).toBeDisabled();
     const exportCalls = fetchMock.mock.calls.filter(
@@ -912,7 +912,7 @@ describe("GI-088 evaluation workbench", () => {
     render(<Gi088EvaluationWorkbench />);
 
     fireEvent.click(await screen.findByRole("button", { name: "安全终止当前任务" }));
-    fireEvent.change(screen.getByLabelText("终止原因（必填）"), {
+    fireEvent.change(await screen.findByLabelText("终止原因（必填）"), {
       target: { value: "页面故障阻断本项，保留现有证据。" }
     });
     fireEvent.click(screen.getByRole("button", { name: "确认终止当前任务" }));

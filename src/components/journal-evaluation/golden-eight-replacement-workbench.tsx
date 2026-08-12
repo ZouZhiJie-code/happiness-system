@@ -14,10 +14,16 @@ const SESSION_API = "/api/local/gi088-v8r3/review-session";
 const DRAFT_API = "/api/local/gi088-v8r3/review-draft";
 const FINALIZE_API = "/api/local/gi088-v8r3/review-finalize";
 
-function localReviewApi(path: string) {
+function localReviewApi(path: string, accessToken?: string) {
   if (typeof window === "undefined") return path;
-  const token = new URLSearchParams(window.location.search).get("token");
+  const token = accessToken ?? new URLSearchParams(window.location.search).get("token");
   return token ? `${path}?token=${encodeURIComponent(token)}` : path;
+}
+
+function stageHref(stage: "golden-eight" | "empty-recovery", accessToken?: string) {
+  const params = new URLSearchParams({ stage });
+  if (accessToken) params.set("token", accessToken);
+  return `/admin/journal-evaluation/golden-eight?${params.toString()}`;
 }
 const OPTIONS: Array<{ value: GoldenEightVerdict; label: string; hint: string }> = [
   { value: "ready_to_use", label: "可直接使用", hint: "当前表达已经可以进入后续校准" },
@@ -42,7 +48,7 @@ function contentLines(content: string) {
   return content.split("\n").map((line) => line.trimEnd()).filter((line) => line.trim().length > 0);
 }
 
-export function GoldenEightReplacementWorkbench() {
+export function GoldenEightReplacementWorkbench({ accessToken }: { accessToken?: string }) {
   const [payload, setPayload] = useState<ReviewPayload | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [verdict, setVerdict] = useState<GoldenEightVerdict | null>(null);
@@ -60,7 +66,7 @@ export function GoldenEightReplacementWorkbench() {
   const canSave = Boolean(!sealed && activeCard && verdict && (verdict === "ready_to_use" || reason.trim().length >= 8));
 
   useEffect(() => {
-    void fetch(localReviewApi(SESSION_API), { cache: "no-store" })
+    void fetch(localReviewApi(SESSION_API, accessToken), { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json() as ReviewPayload & { error?: string };
         if (!response.ok) throw new Error(data.error ?? "Golden 8 材料读取失败");
@@ -72,7 +78,7 @@ export function GoldenEightReplacementWorkbench() {
         setMessage(data.receipt ? "本轮裁决已封存，可随时复核。" : data.decisions.length === 8 ? "8 条裁决已保存，可继续封存。" : "材料已加载，选择一条开始裁决。");
       })
       .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Golden 8 材料读取失败"));
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     if (!activeCard) return;
@@ -98,7 +104,7 @@ export function GoldenEightReplacementWorkbench() {
     setSaving(true);
     setMessage("正在保存本条裁决…");
     try {
-      const response = await fetch(localReviewApi(DRAFT_API), {
+      const response = await fetch(localReviewApi(DRAFT_API, accessToken), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ caseId: activeCard.caseId, verdict, reason })
@@ -122,7 +128,7 @@ export function GoldenEightReplacementWorkbench() {
     setFinalizing(true);
     setMessage("正在封存本轮裁决…");
     try {
-      const response = await fetch(localReviewApi(FINALIZE_API), { method: "POST" });
+      const response = await fetch(localReviewApi(FINALIZE_API, accessToken), { method: "POST" });
       const data = await response.json() as GoldenEightReceipt & { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Golden 8 封存失败");
       setReceipt(data);
@@ -146,6 +152,10 @@ export function GoldenEightReplacementWorkbench() {
             <p className="mt-2 text-sm text-[var(--text-dim)]">前面已经确认的 32 条会直接沿用。这里只看替换材料的完整语境和可见回应；快捷键 1–4 选择结论，← → 切换卡片。</p>
           </div>
           <div className="text-right text-sm text-[var(--text-dim)]">
+            <nav aria-label="GI-088 裁决阶段" className="mb-3 flex flex-wrap justify-end gap-2 font-sans">
+              <a aria-current="page" className="inline-flex min-h-11 items-center rounded-full bg-[var(--calendar-ink)] px-4 text-xs font-semibold text-[var(--calendar-surface)]" href={stageHref("golden-eight", accessToken)}>Golden 8 · 已封存</a>
+              <a className="inline-flex min-h-11 items-center rounded-full border border-[var(--line-soft)] px-4 text-xs font-semibold text-[var(--text-main)] hover:border-[var(--line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--amber)]" href={stageHref("empty-recovery", accessToken)}>EMPTY 恢复 · 0/10</a>
+            </nav>
             <p className="font-semibold text-[var(--text-main)]">替换 {completed} / 8 已保存</p>
             <p className="mt-1 text-xs text-[var(--status-completed)]">沿用 32 / 32</p>
             <p className="mt-1">{message}</p>

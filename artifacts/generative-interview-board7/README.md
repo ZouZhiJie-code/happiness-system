@@ -1,15 +1,18 @@
 # Board 7 评测与候选资产索引
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 当前入口
 
-[GI-088｜v8r2 评测底座加固与最终 12 项真人验收](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+[GI-088｜v8r3r2 EMPTY 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 
-状态：`v8r1 A1 控制误停及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门与 READY Preview 已形成，run b816d468…e78cd 为 running 0/12、gate pending、high_only/high、calls 0；当前等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+状态：`v8r3r2 双恢复诊断首次 EMPTY 10 份、第一次恢复成功 9、第二次恢复成功 1、最终空内容 0；产品负责人盲评 10/10 可直接用，板块 7 增量准入通过；当前等待板块 8 新私有 Preview 与全新 0/6，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
 
 当前迭代证据：
 
+- [v8r3r2 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
+- [v8r3 Golden 32＋8 与历史 Preview](./2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)
+- [v8r3 Interview Skill、Ark Flash 与历史离线 No-Go](./2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - [v8r2 评测底座加固、Preview 与新 0/12 run](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [v8r2 已完成实施合同](../../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 - [v2 diagnostic 运行器说明](./2026-08-09-gi088-human-eval-v2-diagnostic/README.md)

@@ -6,9 +6,9 @@
 
 ### GI-088 当前快照（2026-08-12）
 
-- 当前候选为 `2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`。
-- Golden 8 已封存，7 条采用、1 条质量失败（`reasks_answered_content`）；离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`。
-- Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`；当前等待产品负责人决定是否继续真人回读。
+- 当前候选为 `2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`，使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`，EMPTY_CONTENT 最多自动恢复两次。
+- Golden 32＋8 独立封存；96 个 checkpoint 中首次 EMPTY 10 份均恢复，人工裁决 10/10 可直接用，板块 7 增量准入通过。
+- 板块 8 当前等待新的私有 Preview 与全新 `running 0/6 / calls 0` 回读；回读后由产品负责人提交真人内容。
 - Production 保持 `legacy + baseline`；模型探针、隐藏推理持久化、真人内容代提交和约 200 轮以上容量优化继续排除。
 
 当前代码与生产修复状态以 `2026-08-02` 快照为准；生成式访谈产品决策状态已同步至 `2026-08-05`：
@@ -36,7 +36,7 @@
 - 事件中心发布模式为 `legacy / optional / event_centered / event_recovery`；Production 继续保持 `legacy + baseline`，`optional + generative` 只作为板块 8 内部 Preview 与人工授权目标。
 - `2026-08-06` 已冻结 `GI-075～080`，板块 5 六类规则完成 `6/6`，产品决策已冻结，事件中心落地验证尚未启动。`GI-075、GI-076、GI-078` 为中置信度，`GI-077、GI-079、GI-080` 为高置信度；`GI-067 / GI-068～074` 继续保持“已冻结·高置信度”。
 - 阶段 1～2 继续按 GI-075 以新的用户回答机会计数，阶段 3 继续无数字上限。问题修复由模型基于完整语境重新判断下一步，不建立语义分类路由或修复专属次数上限；原始对话持续保留，被用户否定的状态退出当前事实和日志。回复版本退出事件中心目标 MVP，Production legacy 现有换问法能力继续保留。中断与失败恢复继承结构化错误、`requestId`、原话保存和同一 `clientTurnId` 恢复。
-- 成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮，【生成日志】成功时同时结束当前记录，页面跳转只保存当前状态。方法 `v1.0` 已冻结；下一板块为板块 6 正式评测资产建设，板块 7 等待板块 6，板块 8 使用两模式 `4＋2` 完成真人验收。GI-068 的新记录显式选择、记录内保持和日志完成后重新选择继续生效。当前状态源为 `docs/generative-interview-refactor-map.md`，板块 5 详细事实源为 `05-board5-stability-user-control-and-interaction-scope.md`，冻结评测交接见 `04x-07-evaluation-preview-and-handoff.md`。
+- 成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮，【生成日志】成功时同时结束当前记录，页面跳转只保存当前状态。方法 `v1.0` 已冻结；板块 7 v8r3r2 增量准入通过，当前进入板块 8 私有 Preview 与两模式 `4＋2` 真人验收。GI-068 的新记录显式选择、记录内保持和日志完成后重新选择继续生效。当前状态源为 `docs/generative-interview-refactor-map.md`，板块 5 详细事实源为 `05-board5-stability-user-control-and-interaction-scope.md`，板块 8 入口见 `04p-board8-preview-go-no-go-production-authorization.md`。
 - `2026-08-06` 板块 5 完成态同步只更新产品文档；公共 API、类型、代码、配置、Prompt、数据库和运行开关保持原样。
 - 事件中心已接入 `generationTraceId`、现有反馈链路和十类观测事件（九类漏斗事件加响应完成耗时事件）；日志接口复用现有事件日志表和来源快照，当前无需新增数据库迁移。
 - production 共享库此前缺少 `20260521120000_add_admin_analytics_tables` migration，导致 live `POST /api/auth/register` 在写 `AnalyticsEvent` 时失败；该 migration 已于 `2026-05-25` 在 production 补齐。
@@ -113,9 +113,9 @@
 
 1. [`docs/README.md`](./docs/README.md)：五分钟项目导航、常见任务与稳定搜索词；
 2. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
-3. 总 Map 当前链接的专项文档：当前板块 6 使用 `04j-generative-quality-evaluation-v1.md`；
+3. 总 Map 当前链接的专项文档：当前板块 8 使用 `04p-board8-preview-go-no-go-production-authorization.md`；
 4. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
-5. [`artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)：GI-088 v8r3 Golden 8 与当前 Preview 证据入口。Golden 8 已封存，当前 Ark Flash 候选可靠性硬门为 `No-Go`；Preview 已 `READY`，全新 run 停在 `0/6`、`gate=pending`、模型调用 `0`，等待产品负责人决定是否继续真人回读；
+5. [`artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)：GI-088 v8r3r2 双恢复与板块 7 封存证据入口。10 份恢复回应人工裁决 `10/10` 可直接用；当前等待板块 8 新 Preview 与全新 `0/6`；
 6. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)：GI-088 v8r2 历史证据包与已完成实施范围；
 7. [`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`](./docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)：v8r2 已完成的实施范围、合同与停止条件。v8r1 A1 误停聊事故及其历史只读 run 继续从 `artifacts/README.md` 进入。
 
@@ -677,7 +677,7 @@ gratitude 理论翻译基线：
 - gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
-- 当前 GI-088 v8r3 状态见上方快照和 `artifacts/README.md`：Golden 8 已封存，当前候选可靠性硬门为 `No-Go`；Preview deployment 已 `READY`，新 run 为 `0/6`、`gate=pending`、调用 `0`，暂停等待产品负责人决定是否继续真人回读。Production 使用 `legacy + baseline`。
+- 当前 GI-088 v8r3r2 状态见上方快照和 `artifacts/README.md`：板块 7 增量准入通过；板块 8 等待新 Preview `READY` 与全新 `0/6` 零调用回读。Production 使用 `legacy + baseline`。
 - 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080`，方法 v1.0 保持冻结。GI-087 保留为 GI-088 基础候选，v0～v8r2 继续承担历史证据。v8r2 的实现、Preview 和 run 详情保留在历史证据包中。
 - GI-088 只在私有 Preview 中开放：先通过 Vercel Deployment Protection，再通过 Daily Light 登录与 `ADMIN_USERNAMES ∩ GI088_EVALUATOR_USERNAMES`。应用登录和评测数据使用同一专属 Preview 物理库的 `gi088_app_preview` / `gi088_evaluation_v0` 两个 schema；完整环境、授权和排障契约见 `.env.preview.example`与 `docs/operator-runbook.md`。
 - 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索和画像页面 `/profile`；当前由 `memoryEnabled` 设置项控制，默认关闭。`2026-08-02` 的全量类型检查与测试基线均已通过。

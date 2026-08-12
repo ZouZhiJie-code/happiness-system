@@ -1,12 +1,12 @@
 # 04o｜板块 7 生成式访谈 MVP Preview 候选交接
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-12`
 
-状态：`历史板块 7 候选交接；GI-066 自动技术层通过、最新真人实聊 No-Go、候选失效`
+状态：`v8r3r2 板块 7 已完成并交接板块 8；下文 GI-066 等旧候选继续作为历史证据`
 
 Production：`继续使用 legacy + baseline`
 
-板块 8 目标配置：`optional + generative`，仅在产品负责人明确批准后人工开启
+板块 8 目标配置：`私有 Preview optional + generative；Production 继续 legacy + baseline`
 
 后续板块 8 验收入口：[04p｜内部 Preview、Go/No-Go 与生产授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
@@ -22,9 +22,25 @@ GI-066 历史专项入口：[04u｜理清想法的判断地图、主动提问与
 
 GI-067 历史重构入口：[04w｜“理清想法”提问策略第一性原理重构](./04w-board4-gi067-thought-question-strategy-first-principles.md)
 
-归档状态：`本文候选保持历史失效状态；GI-067 / GI-068～074 已冻结，后续进入板块 5；板块 7 等待板块 5～6，板块 8 等待新候选；Production 保持 legacy + baseline`
+当前交接状态：`v8r3r2 双恢复诊断与 10/10 人工增量准入通过；等待板块 8 新 Preview READY 与全新 0/6 回读；Production 保持 legacy + baseline`
 
 后续产品事实源：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)、[板块 5 当前专项](./05-board5-stability-user-control-and-interaction-scope.md)与[04x-07｜GI-074 评测体系及下游交接](./04x-07-evaluation-preview-and-handoff.md)
+
+## 0. 当前交接｜v8r3r2
+
+板块 7 当前候选固定为 `2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`。它保持 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object` 与 `60/60/60/90`，把 EMPTY_CONTENT 自动恢复固定为最多两次。
+
+极限诊断覆盖 `96` 个 checkpoint：首次 EMPTY `10`，第一次恢复成功 `9`、第二次恢复成功 `1`、最终空内容 `0`。产品负责人对这 `10` 份最终恢复回应完成盲评，结果为可直接用 `10/10`、轻微问题 `0`、质量失败 `0`、单例阻断 `0`。Golden 32＋8 继续承担独立判尺背景；Judge 20＋20 后置。
+
+板块 8 接收以下内容：
+
+1. Interview Skill、Foundation 单焦点与问题价值政策、Ark Flash、v0.7 导出和完整调用身份；
+2. `4` 条【陪我聊】计分轨迹与 `2` 条【帮我记】兼容冒烟；
+3. EMPTY 双恢复、原话先保存、刷新恢复、Trace 与人工回退配置；
+4. 对话优先工作台、运行中导出阻断与终态不可变下载；
+5. [板块 7 正式封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。
+
+板块 8 先完成新的私有 Preview `READY` 和全新 `running 0/6 / calls 0` 回读，再由产品负责人提交真人内容。下文从“历史交付决策”开始的 GI-055～066 内容继续承担历史追溯职责。
 
 历史交付决策：`GI-065 / GI-066` 将新会话收口为理清想法单角度。修复候选冻结为策略 `5.65.0`、Prompt `v85-gi066-fix`、语义产物 `v17`、快照 `v4` 和提问协议 `v2`；严格 `10×3` 为 `30/30`，自动 `8+2` 主链与日志闭环均为 `8/8`。最新真人体验裁决为 `No-Go`，该候选已经失效。
 

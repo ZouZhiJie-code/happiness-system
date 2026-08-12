@@ -1,12 +1,16 @@
 # GI-088 v8r3 Interview Skill 与 Ark Flash 证据包
 
-## 为什么停在 Preview 之前
+状态：`历史 No-Go 证据；当前结论见 v8r3r2 板块 7 封存`
+
+当前入口：[v8r3r2 EMPTY 双恢复与板块 7 封存](../2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
+
+## 为什么当时停在 Preview 之前
 
 v8r3 已完成 Interview Skill、Ark Flash 运行时、Foundation 校验对齐、问题价值复核、v0.7 导出、4＋2 评测结构、【帮我记】兼容链和对话优先工作台。两轮正式离线候选均未通过独立硬门，因此本版本保持 `No-Go`，Preview 部署和全新 `0/6` 批次继续关闭。
 
 首轮确认了 Skill 输出字段、有效提示组合和离线校验链的缺口。修复后冻结第二轮候选；Ark 随后对 `96/96` 次正式请求返回 `ACCOUNTOVERDUEERROR`，未形成可见回复。两轮正式候选累计 `194` 次调用，已达到本计划的调用上限，继续扩容明确排除。
 
-## 当前状态
+## 当时状态
 
 - 评测版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`
 - 最终实现 commit：`4e4afb2a338e376bf6783c037470dca580cdd8a3`
@@ -51,7 +55,7 @@ v8r3 已完成 Interview Skill、Ark Flash 运行时、Foundation 校验对齐�
 - 应用隔离库已完成 `39` 项 migration 和 capture 产品流 `1/1`；评测隔离库已完成 `4` 项 migration 和事务用例 `3/3`，两者清理残留均为 `0`。
 - v1～v8r2 历史 Session／导出兼容、v0.6／v0.7 不可变导出与隐私清洗继续通过。
 
-## 下一步条件
+## 当时的下一步条件
 
 1. 恢复 Ark 账户可用状态，并用正式账户侧证据确认欠费已解除。
 2. 新建不可变评测版本和新调用预算；当前两轮 `194` 次证据继续只读保留。

@@ -31,7 +31,7 @@ describe("GI-088 v8r3 本机裁决启动器", () => {
   it("只生成固定本机路径并携带一次性令牌", () => {
     const url = createLocalReviewUrl(3108, "a".repeat(32));
     expect(url).toBe(
-      "http://127.0.0.1:3108/admin/journal-evaluation/golden-eight?token=" + "a".repeat(32)
+      "http://127.0.0.1:3108/admin/journal-evaluation/golden-eight?stage=empty-recovery&token=" + "a".repeat(32)
     );
     expect(() => createLocalReviewUrl(80, "a".repeat(32))).toThrow(
       "GI088_LOCAL_REVIEW_PORT_INVALID"

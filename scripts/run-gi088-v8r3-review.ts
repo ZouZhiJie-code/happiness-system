@@ -3,6 +3,8 @@ import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { loadGi088EmptyRecoveryReview } from "../src/app/admin/journal-evaluation/empty-recovery-review-loader";
+
 const HOST = "127.0.0.1" as const;
 const DEFAULT_PORT = 3108;
 
@@ -39,12 +41,16 @@ export function createLocalReviewUrl(port: number, token: string) {
     throw new Error("GI088_LOCAL_REVIEW_PORT_INVALID");
   }
   if (!token || token.length < 32) throw new Error("GI088_LOCAL_REVIEW_TOKEN_INVALID");
-  return `http://${HOST}:${port}/admin/journal-evaluation/golden-eight?token=${encodeURIComponent(token)}`;
+  return `http://${HOST}:${port}/admin/journal-evaluation/golden-eight?stage=empty-recovery&token=${encodeURIComponent(token)}`;
 }
 
 async function main() {
   const { privateRoot } = validateLocalReviewLaunchEnvironment();
   await access(privateRoot);
+  const emptyRecoveryReview = await loadGi088EmptyRecoveryReview();
+  if (emptyRecoveryReview.stage !== "empty-recovery" || emptyRecoveryReview.cards.length !== 10) {
+    throw new Error("GI088_EMPTY_RECOVERY_REVIEW_INPUTS_INVALID");
+  }
   const port = Number.parseInt(process.env.GI088_REVIEW_PORT ?? `${DEFAULT_PORT}`, 10);
   const token = randomBytes(32).toString("base64url");
   const nextBin = resolve(process.cwd(), "node_modules/next/dist/bin/next");

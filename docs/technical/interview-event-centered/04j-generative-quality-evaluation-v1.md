@@ -6,7 +6,7 @@
 
 置信度：`高`
 
-落地验证状态：`首批 8 张已收口 7 张、C3 保持开放；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8 获产品通过；v8r1 A1 控制误停单例阻断只读保留；v8r2 #5 已行政 early_stopped / No-Go；v8r3 两轮 No-Go 只读保留；v8r3 Golden 8 已封存并纳入当前候选；Preview 已完成远程构建回读与全新 0/6 零模型初始化，当前候选可靠性硬门仍为 No-Go，等待产品负责人决定真人使用`
+落地验证状态：`首批 8 张校准卡继续保留历史身份；Golden 32＋8 独立封存；GI-085／086 固定门 No-Go、v8r1 控制误停、v8r2 行政 No-Go、v8r3 两轮 No-Go 均只读保留；v8r3r2 EMPTY 双恢复诊断最终可见完成率 100%，10 份恢复结果人工裁决 10/10 可直接用，板块 7 增量准入通过；等待板块 8 新 Preview 与全新 0/6`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -132,7 +132,7 @@ GI-085 回归 No-Go 后，真实网页轨迹保持关闭。焦点层已经明显
 
 GI-088 是方法 v1.0 在板块 6／7 的执行校正，延续其“候选一次只改变一个可归因变量”“结果绑定模型、Prompt、Skill、上下文、程序、数据集和评测版本”以及规则分流要求，不重新打开 GI-068～080，也不改变方法 v1.0 的冻结核心。
 
-- 当前正式证据入口更新为 [`GI-088 v8r3 Golden 8 与 Preview 回读`](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)。Interview Skill、Ark Flash 与离线候选实现见[历史证据包](../../../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)；v8r2 评测底座、历史 Preview 和行政收口继续从[历史证据包](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)回读，实施合同见[已完成任务](../../ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v1～v8r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论；v8r1 A1 事故见[候选与部署快照](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)，当前问题统一进入[GI-088 当前问题台账](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)。
+- 当前正式证据入口更新为 [`GI-088 v8r3r2 双恢复与板块 7 封存`](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。Golden 32＋8 独立证据见[替换裁决包](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)；Interview Skill、Ark Flash 与旧离线 No-Go 见[历史证据包](../../../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)；v8r2 评测底座、历史 Preview 和行政收口继续从[历史证据包](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)回读。v1～v8r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论；当前问题统一进入[GI-088 当前问题台账](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)。
 
 ### GI-088 当前评测术语
 
@@ -211,9 +211,9 @@ v8r1 将简短礼貌回应与明确停止组合识别为纯停止，直接提交
 
 v8r2 把高精度控制决策、Provider 结果落账、陈旧页面快照保护、人工证据治理、run 生命周期和工作台恢复合并为同一底座版本，并形成历史 READY Preview。#5 已行政 `early_stopped / No-Go`，完整证据只读保留。
 
-v8r3 实现新的 Interview Skill、Ark `deepseek-v4-flash-ga-260731`、Thinking high、问题价值复核、Foundation 单焦点政策、v0.7 导出、`4＋2` 任务、【帮我记】兼容链和对话优先工作台。全量工程门、真实隔离库与行为清单通过。首轮 `98` 次正式调用确认输出结构和校验链缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝，两轮 `No-Go` 继续只读保存。
+v8r3 实现新的 Interview Skill、Ark `deepseek-v4-flash-ga-260731`、Thinking high、问题价值复核、Foundation 单焦点政策、v0.7 导出、`4＋2` 任务、【帮我记】兼容链和对话优先工作台。首轮实现缺口、账户异常与后续 79.17% 可靠性结果继续作为历史 No-Go 保存。
 
-Ark 账户恢复后，v8r3r1 的 `96/96` 正式检查点曾通过可靠性与延迟门；随后封存的 Golden 8 替换裁决纳入当前 v8r3 候选。当前冻结 commit `c289c94` 的 Ark Flash 候选完成 `96` 个初始检查点、`2` 次自动恢复、`98` 次总调用，首次有效 `76/96 = 79.17%`，最终失败 `18`，可见延迟 p50 `7.630s`、p90 `25.514s`、最大 `67.011s`，可靠性硬门保持 No-Go。私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`（部署源提交 `4328ed0ee70c854d5217297a62aef39f209472b7`）已 `READY`，新批次 `c873ad9a-ab5a-4629-960d-03266bc17b54` 已回读为 `running 0/6 / gate=pending / calls=0`，任务结构为 `4＋2`；Judge 20+20 保持后置未运行。当前入口见 [v8r3 Golden 8 Preview 证据包](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，两轮 No-Go 入口继续只读保留。约 `200` 轮以上容量优化继续留在本轮边界外。
+v8r3r2 保持同一 Ark Flash、Thinking high、JSON 与 `60/60/60/90`，只把 EMPTY_CONTENT 单轮自动恢复提高到两次。极限诊断的 `96` 个 checkpoint 中首次 EMPTY `10`，第一次恢复成功 `9`、第二次恢复成功 `1`、最终空内容 `0`，首次有效率 `86.46%`、最终可见完成率 `100%`。产品负责人逐条盲评这 10 份恢复回应，结果为可直接用 `10/10`、轻微问题 `0`、质量失败 `0`、单例阻断 `0`；板块 7 增量准入通过。Golden 32＋8 继续作为独立判尺背景，Judge 20＋20 后置。当前入口见 [v8r3r2 板块 7 封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。约 `200` 轮以上容量优化继续留在本轮边界外。
 
 原始对话保存至板块 6 关闭后 `30` 天，届时按明确范围清理并保留审计记录；产品负责人确认的脱敏正式资产长期保存。
 
@@ -224,12 +224,12 @@ Provider v4 及更早两段式产物只承担历史技术、失败复现和判�
 | 退出条件 | 当前状态 |
 |---|---|
 | 板块 5 六类行为与评测交接完整、无冲突 | `已满足` |
-| 冷启动集、开发集、独立准入集、判尺、阻断项和结果分类均有版本记录 | `进行中；首批 8 张仅为校准起点` |
-| 产品负责人完成校准，Judge 说明与人工评分卡可执行 | `进行中；7 张人工卡已收口、C3 开放；GI-085 与 GI-086 固定门 No-Go；GI-088 v8 产品通过；v8r1 A1 阻断；v8r2 行政 No-Go；v8r3 Judge 合同已实现，因离线候选 No-Go 保持零调用` |
-| 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `结构已明确；正式模板待建设` |
-| 板块 7 可直接使用评测资产、Trace 要求和准入门 | `诊断子步可执行；正式实现门尚未满足` |
+| 冷启动集、开发集、独立准入集、判尺、阻断项和结果分类均有版本记录 | `已满足当前 v8r3r2 增量准入；两条已查看隐藏案例下轮替换` |
+| 产品负责人完成校准，Judge 说明与人工评分卡可执行 | `Golden 32＋8 已独立封存；Judge 20＋20 合同可执行并保持后置` |
+| 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `已满足；诊断、人工裁决与历史 No-Go 分开保存` |
+| 板块 7 可直接使用评测资产、Trace 要求和准入门 | `已满足；v8r3r2 增量准入通过` |
 
-板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v8r3 继续按各自身份保存技术、真人和 No-Go 血缘。当前 v8r3 Golden 8 已封存，Ark Flash 候选首次有效 `76/96`、最终失败 `18`，可靠性硬门 No-Go；Preview 已 READY 并初始化 0/6 零调用 run。Judge 20+20 后置，当前暂停等待产品负责人决定是否继续真人回读。Production 保持 `legacy + baseline`。
+板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v8r3 继续按各自身份保存技术、真人和 No-Go 血缘。v8r3r2 双恢复诊断与 10/10 人工增量准入成为板块 7 当前结论；下一步进入板块 8 新 Preview 与全新 0/6。Judge 20＋20 后置，Production 保持 `legacy + baseline`。
 
 ## 当前评测口径｜`2026-08-05` GI-074
 
@@ -885,7 +885,7 @@ product_preference_reason:
 
 本轮证明双层判尺能够区分基础设施、语义判断和用户表达。后续结构化输出合同修复只解决技术层；第一段三个产品失败仍需独立完成规则复核。当前不形成隐藏集、不运行工作集，也不计算有效回合成本。
 
-本节保留 v72 历史失败判尺，不代表当前候选状态。当前新候选尚未形成；板块 8 等待板块 6 准入资产与板块 7 新候选后，再组织内部 Preview 并补充真实用户回答意愿、等待体验、长期认识价值、监控和回退证据。Production 继续使用 `legacy + baseline`。
+本节保留 v72 历史失败判尺，不代表当前候选状态。当前 v8r3r2 候选已形成并通过板块 7 增量准入；板块 8 组织新私有 Preview，补充真实用户回答意愿、等待体验、长期认识价值、监控和回退证据。Production 继续使用 `legacy + baseline`。
 
 ## 11. 方法依据与局限
 

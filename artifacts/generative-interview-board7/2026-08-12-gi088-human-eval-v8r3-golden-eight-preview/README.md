@@ -1,6 +1,8 @@
 # GI-088 v8r3 Golden 8 Preview release
 
-本目录承接已封存的 Golden 8 替换裁决，并作为 v8r3 Preview 发布证据的当前入口。
+状态：`历史 Golden 32＋8 与旧 Preview 证据；当前入口已切换到 v8r3r2`
+
+本目录承接已封存的 Golden 8 替换裁决，并保存当时的 v8r3 Preview 发布证据。当前板块 7 结论见 [v8r3r2 双恢复与正式封存](../2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。
 
 ## 当前已冻结的产品证据
 
@@ -18,7 +20,7 @@
 - Preview：候选 deployment 已完成远程构建并回读为 `READY`；数据库迁移已完成；全新 `0/6` 已初始化并保持零模型调用
 - 真人内容：仅由产品负责人在 Preview 回读通过后提交
 
-## 当前 Preview 回读
+## 历史 Preview 回读
 
 - 行为冻结提交：`c289c94`（完整 SHA 以分支回读为准）
 - 部署源提交：`4328ed0ee70c854d5217297a62aef39f209472b7`（仅包含证据回读文档变更）
@@ -36,7 +38,7 @@
 - 离线候选证据：96 初始检查点、2 次自动恢复、98 次总调用；`firstValid=76/96=79.17%`，最终失败 `18`，可见延迟样本 `78`，p50 `7.630s`、p90 `25.514s`、最大 `67.011s`
 - 当前五层指纹：behavior manifest `2fd873bebdfc7484bc1c51075870702a6b7f8dadd800ea8e3e7ffbe3e9bb9e74`；candidate `77e679af80a90805f589a6effde475b7c097c62729342c79ac6f987a9df776d4`；dataset `a279ef0542c9733fcf4b096db1b0bda92d23e2c41a12a254d8ae6c1f69811efb`；runner `1db8b7227bbff76d9a03bd7080bd98d5ade4bb8b84220c92815a86bcfe328842`；experience `458cb9bffba324d507806b4bdb437a2dca384bd3dc6c918d46ec8582e19733f1`；execution `8ed702c77f68d8ac416bd6058c816d40d70595791530489f424b63e3fccc1c2f`
 
-## 当前质量边界
+## 当时的质量边界
 
 当前候选已完成 Ark Flash 离线运行并完成 0/6 零模型初始化。首次有效率低于可靠性硬门 `85%`，因此质量与可靠性仍保持 `No-Go`，Preview 仅作为产品负责人后续回读和问题定位候选，不构成 Production 发布授权。
 

@@ -1,0 +1,106 @@
+{
+  "evidenceVersion": "2026-08-12.gi088-v8r3r2-incremental-admission-v1",
+  "status": "board7_passed_preview_pending",
+  "evaluationVersion": "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2",
+  "runtime": {
+    "provider": "volcengine_ark",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 60000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "sharedAutomaticDeadlineMs": 90000,
+    "emptyContentMaximumAutomaticRetriesPerTurn": 2,
+    "maximumProviderCallsPerTurn": 3
+  },
+  "diagnostic": {
+    "sourceSha256": "151a486a2f8183d53b22d68eee5c8825914503aa3c6127f0354e8133ba76f900",
+    "checkpointCount": 96,
+    "firstVisibleSuccessRate": 0.8645833333333334,
+    "emptyContentInitialCount": 10,
+    "successAtAttempt1": 9,
+    "successAtAttempt2": 1,
+    "successAtAttempt3": 0,
+    "finalEmptyContentCount": 0,
+    "finalVisibleCompletionRate": 1,
+    "visibleLatencyP50Ms": 8538,
+    "visibleLatencyP90Ms": 30743,
+    "visibleLatencyMaxMs": 69165,
+    "totalRecoveryCalls": 14
+  },
+  "contentCommitmentsSha256": [
+    "2c6be878b2bd1adc68bedb70213888f8624e638da84dafee8beb9d4f509e14cf",
+    "26e7ade9964137243d3b63e52813cad4edd287f9302fa20ff3310356a679cdc1",
+    "b41ea3d0dfd407dc94fc693930bf8a2a69be80aaa02c42627e2f2a0a02218b18",
+    "9cf48f668cd14580dc68d1878f2b3abefc628f5c79c02c566bf4b61265e5944b",
+    "4aa6ed27cdf4a4b62c0bddee8d05dba36870abc2eef735acd706aa218853cc46",
+    "f5bb8ab9fff8d684f3d57705179e8685403514058f1328479e3312cb3114cda6",
+    "d89ce829b3660c72ee7bb8068ea613e272ee2f5df7d14f61cc3ae59b498e11cd",
+    "ad7f78c4bc9797bd4657bfe31a24b1dbe3db738dd6ab428ead5d86f0e9113486",
+    "1ceb3431d537c6d0437cb4e75d61024eb96ea1783452aac853460425db217896",
+    "28a47be0b07734dd035e800e5c13ad1abbeb2e580139ef755551e1c59750e97d"
+  ],
+  "humanAdjudication": {
+    "toolVersion": "2026-08-12.gi088-empty-recovery-review-v1",
+    "toolSourceSha256": "0bd617597636ba09104972f5bb3ab30dcbf5bdcfa1b4f67b2cd09cbc3c43ba51",
+    "bundleSha256": "734c9df793c0f4f8e71e47c0f1a7ce1764944cd5e0432f9ffecdae004f175caa",
+    "decisionsSha256": "63281ded3137bcc84c7d4cc0034ba67d6102d31c365f359ed81e9e77adb0528c",
+    "reviewCount": 10,
+    "readyToUse": 10,
+    "minorIssue": 0,
+    "qualityFailure": 0,
+    "singleCaseBlocker": 0,
+    "gate": "passed",
+    "finalizedAt": "2026-08-12T09:52:44.652Z"
+  },
+  "goldenEvidence": {
+    "relationship": "independent_background_evidence",
+    "acceptedPreviousRound": 32,
+    "replacementCards": 8,
+    "replacementReadyToUse": 7,
+    "replacementQualityFailure": 1,
+    "sourceSha256": "93aeb1dbdce10964ad24d8ff5a197d4655463527052b8254e95eb36dba6bb973",
+    "decisionsSha256": "86b91697d833fe239b0946a436c048d311958313cc01323b1901ba80d835cb7f",
+    "receiptFileSha256": "fcfce1e4b131f657266bc1731842a976e18e4bacc0ba09b9f6da0568a53bb6e2"
+  },
+  "fingerprints": {
+    "behaviorManifestVersion": "2026-08-12.gi088-behavior-manifest-v3",
+    "behaviorManifestSha256": "afd3f90b3c345e42310468665fed0c98f01ed036f5d421aa4d91e0ba305bad30",
+    "candidate": "9643a02914923281f86fcd72c2224a313ffdca0ab67abdb5bc36ad192abb98e3",
+    "dataset": "258a4b47ec4eb36393bcf37191fe5088ce699fc0abec5a6d7ccbc8e4b8f5a027",
+    "runner": "17148c384524f2b141f7a8091a21185c51ae6c297d1e9a659eb302b972e03d92",
+    "experience": "f755b278f721fbc08860c23743af7be8b99c0131b7f98f103d25a33166bb2505",
+    "execution": "c0d5245addd37063d265fb3839fe49c518096cf387f76170ef6b5d5a8b874c96"
+  },
+  "hiddenAdmissionBoundary": {
+    "exposedCaseCount": 2,
+    "status": "used_for_human_review",
+    "requiredBeforeNextHiddenAdmission": "replace_both_cases",
+    "currentBoard8Impact": "none"
+  },
+  "sideEffects": {
+    "reviewModelCalls": 0,
+    "reviewEvaluationDatabaseCalls": 0,
+    "reviewDatabaseWrites": 0,
+    "externalUploads": 0,
+    "telemetryEvents": 0
+  },
+  "privacy": {
+    "visibleResults": "private_local_0600",
+    "itemDecisions": "private_local_0600",
+    "reasons": "private_local_0600",
+    "hiddenReasoning": "excluded",
+    "requestBodies": "excluded",
+    "credentials": "excluded",
+    "identity": "excluded"
+  },
+  "releaseBoundary": {
+    "board7": "complete",
+    "board8": "preview_zero_of_six_pending",
+    "judge20Plus20": "deferred",
+    "production": "legacy_plus_baseline",
+    "humanContent": "product_owner_only"
+  }
+}

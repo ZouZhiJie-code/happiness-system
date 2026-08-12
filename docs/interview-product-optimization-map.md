@@ -2,19 +2,19 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r2 只读保留；v8r3 Golden 8 已封存，当前 Ark Flash 候选可靠性硬门 No-Go，Preview 0/6 暂停；Production 保持 legacy + baseline`
+文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3 历史证据只读保留；v8r3r2 板块 7 增量准入通过，板块 8 等待新 Preview 0/6；Production 保持 legacy + baseline`
 
-当前讨论位置：`板块 6／7B 交接｜GI-088 v8r3 Golden 8 已封存，Preview 0/6 暂停`
+当前讨论位置：`板块 8｜GI-088 v8r3r2 新私有 Preview 与全新 0/6`
 
-落地验证状态：`GI-068～GI-080 的事件中心落地验证均未启动；GI-084 v0.1～v0.3 已完成三轮 No-Go；GI-085／086 固定门 No-Go；GI-087 六题已退出当前质量门；GI-088 v8 产品通过 1/4 early_stopped，v8r1 A1 确认单例阻断，v8r2 只读保留；v8r3 Golden 8 已封存，当前候选首次有效 76/96、最终失败 18，Preview READY，新 run 为 running 0/6、gate pending、calls 0`
+落地验证状态：`GI-084～086 No-Go、GI-087 六题退出当前质量门、v8r1 控制误停、v8r2 行政 No-Go、v8r3 旧可靠性 No-Go 均保留历史；v8r3r2 首次 EMPTY 10 份均恢复，人工裁决 10/10 可直接用；板块 7 完成，板块 8 新 Preview 待部署`
 
-本次同步范围：`同步 GI-088 v8r3 Golden 8 封存、Ark Flash 候选 No-Go、READY Preview 与全新 0/6 停止点；保留 v8r1/v8r2 与两轮 v8r3 No-Go 历史证据；Judge 20+20 后置；Production 保持 legacy + baseline`
+本次同步范围：`同步 v8r3r2 双恢复诊断、10/10 人工增量准入、板块 7 完成和板块 8 新 Preview 交接；保留旧 No-Go 历史；Judge 20+20 后置；Production 保持 legacy + baseline`
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
 上一板块专项：[`板块 5｜稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)（`产品决策已冻结；6/6`）
 
-当前板块专项：[`板块 6｜生成式访谈质量评测 v1`](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
+当前板块专项：[`板块 8｜内部 Preview、Go/No-Go 与生产授权`](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)
 
 当前工作方法：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -95,14 +95,14 @@ flowchart TD
 - `GI-080｜成果／暂停后的自然收束协议` 已冻结·高置信度：成果或暂停后由输入框承接继续表达；目标 MVP 不提供【继续聊】和独立【结束记录】按钮；【生成日志】成功时同时结束记录，失败时保留可恢复状态，页面跳转只保存和暂停。
 - `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。自动进入规则由 GI-068 覆盖。
 - 用户原话、明确纠正、停止意愿、来源安全、可靠提交、失败恢复和事件日志生成编辑保存重开继续作为产品底座。
-- 正式内容问题的候选 Provider 使用 DeepSeek 官方 API；GI-088 v8r3 当前候选固定使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object` 与三段 `60s` 超时，Production 继续保持 `legacy + baseline`。
-- 推进职责已经确认：板块 4 已完成 GI-067 全部批次；板块 5 已冻结 GI-075～080，六类规则完成 `6/6`，方法 v1.0 已冻结。板块 6 当前承接 GI-088 v8r3 Golden 8 与候选证据；v8r2 及更早版本继续只读保留。Golden 8 已封存，当前候选首次有效 `76/96`、最终失败 `18`，可靠性硬门 No-Go；Preview 已 READY，新 run 为 `running 0/6 / gate=pending / calls=0`。Judge 20+20 后置，板块 7/8 的进一步发布决策等待产品负责人回读，Production 保持 `legacy + baseline`。
+- 正式内容问题的 v8r3r2 候选使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`、三段 `60s` 超时与 `90s` 共享恢复链，EMPTY_CONTENT 最多自动恢复两次；Production 继续保持 `legacy + baseline`。
+- 推进职责已经确认：板块 5 规则与方法已冻结，板块 6 评测输入已齐，板块 7 v8r3r2 增量准入通过。板块 8 当前建立新私有 Preview 与全新 `0/6`；Judge 20＋20 后置，真人内容由产品负责人提交。
 - Production 继续使用 `legacy + baseline`。`optional + generative` 需要新候选通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
 
 ### 待执行与待校准
 
 - 板块 6 需要按 GI-074 建立复标后的 `24＋40`、`28＋12`、Judge 说明、人工评分卡、两模式 `4＋2` 脚本和正式准入报告。
-- 板块 7 已完成 GI-087 的基础 Prompt、Interview Skill、共同任务结构、状态合并、六题运行器和真人工作台。GI-088 v1 前 8 项已经完成产品评价、Codex 九维、阻断、血缘和 Bad Case 复盘；v2～v7r4 形成诊断、恢复、阶段、单一焦点、连续性、平台和程序状态证据。v8 真人验收已形成产品通过证据；v8r1 使用官方 `deepseek-v4-pro`，部署时执行指纹为 `40da54f2…bf8f82`，随后 A1 真实运行确认控制意图误停并失去最终准入资格。v8r2 最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；Preview 已 `READY`，全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running 0/12 / gate=pending / high / calls=0`。旧预发布 v8r2 run 已行政停止并排除正式当前态。正式评测资产、日志映射和 Production 接入继续等待板块 6 真人质量门；板块 8 继续等待。
+- 板块 7 已完成 GI-087 基线、v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、对话工作台与 v8r3r2 EMPTY 双恢复。v1～v8r3 的产品评价、失败、诊断、恢复和历史 Preview 继续只读保留；当前 v8r3r2 的 10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 增量准入通过。板块 8 当前等待新的私有 Preview 与全新 `0/6`，完成后由产品负责人提交真人 `4＋2`。
 
 ### 历史候选与证据
 
@@ -207,7 +207,7 @@ flowchart LR
 | 2A | 本轮理解：操作要求与对话意图 | 已完成 v1，进入线上评测 |
 | 2B | 本轮理解：内容理解与事实更新 | GI-068 已冻结【帮我记】上下文；GI-069 已冻结【陪我聊】方向证据、焦点纠正与支线保留；GI-070 已冻结阶段 2 的回答状态、认识确认与纠正覆盖；GI-071 已冻结阶段 3 的逐轮理解变化与当前探索方向；GI-072 已冻结当前场景和话题修正的理解边界；GI-073 已冻结这些状态怎样投影为用户可见表达 |
 | 3 | 访谈决策与进度 | GI-068 已冻结记录路径；GI-069 已冻结阶段 1；GI-070 已冻结阶段 2；GI-071 已冻结阶段 3；GI-072 已冻结白盒决策顺序、高频回答状态、决策支持、外部知识待核实边界，以及独立事件结束与新记录入口，三阶段与高频场景机制已经闭合 |
-| 4 | 下一问与对话体验 | GI-070～074 已冻结模型主导的提问、表达与评测体系；GI-075～080 已冻结计数、修复、版本范围、纠正、恢复和自然收束，板块 5 完成 `6/6`；GI-084 三轮 No-Go、GI-085／086 固定门 No-Go 已回填；GI-087 原六题完成上下文资格审计；GI-088 v6 单一焦点已真人通过，v7r4 模型可靠性达到继续使用条件，v8 统一问前决策已获产品通过，v8r1 A1 控制意图误停形成单例阻断，v8r2 底座、最终初始化和 Preview 已收口并停在 `0/12`，正式接入等待板块 6 真人门 |
+| 4 | 下一问与对话体验 | GI-070～080 已冻结模型主导提问、价值、计数、修复、纠正、恢复和自然收束；GI-084～086 No-Go 与 GI-087 审计已回填；GI-088 v6 单一焦点、v8 问前决策、v8r1 控制误停、v8r2 底座和 v8r3 历史证据完整保留；v8r3r2 EMPTY 双恢复的 10 份回应人工裁决 `10/10` 可直接用，当前进入板块 8 `4＋2` Preview |
 | 5 | 日志成果与确认 | GI-068 已冻结一场多片段、一篇忠实日志的目标规则；结构适配、评测与真人验收等待板块 6～8 |
 
 ## 8. 地图维护规则
