@@ -51,6 +51,10 @@ describe("Golden 8 replacement materials", () => {
 
     expect(review.roundId).toBe("2026-08-11.gi088-v8r3-golden-replacements-v1");
     expect(review.cards.map((card) => card.caseId)).toEqual([...GOLDEN_EIGHT_REPLACEMENT_TARGETS]);
-    expect(review.decisions).toEqual([]);
+    expect(review.decisions).toHaveLength(8);
+    expect(review.decisions.map((decision) => decision.caseId).sort()).toEqual(
+      [...GOLDEN_EIGHT_REPLACEMENT_TARGETS].sort()
+    );
+    expect(review.decisions.some((decision) => decision.caseId === "C1" || decision.caseId === "R1")).toBe(false);
   });
 });
