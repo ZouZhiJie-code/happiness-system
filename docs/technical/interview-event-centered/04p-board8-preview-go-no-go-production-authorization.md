@@ -2,15 +2,15 @@
 
 最后更新：`2026-08-12`
 
-状态：`当前板块；v8r3r2 私有 Preview READY，running 0/6 / calls 0，等待真人 4＋2`
+状态：`暂停；v8r3r2 Preview 保留只读证据，v8r3r3 可靠性 No-Go 后返回板块 7`
 
-当前环境：`v8r3r2 候选已形成；部署和 0/6 回读已完成，人工内容由产品负责人提交`
+当前环境：`v8r3r2 已完成 4＋2 内容与兼容验收，等待体验未达发布线；v8r3r3 未部署`
 
 Production：`继续保持 legacy + baseline；Preview 达标并获得产品负责人单独批准后才可切换`
 
-产品决策状态：`GI-067 / GI-068～080 已冻结；v8r3r2 双恢复与板块 7 增量准入通过；Production 授权保持关闭`
+产品决策状态：`GI-067 / GI-068～080 已冻结；v8r3r2 质量结论只读保留；v8r3r3 正式可靠性门 No-Go；Production 授权保持关闭`
 
-落地验证状态：`板块 7 已完成；板块 8 已完成 Vercel 远程构建、双 schema 迁移、零模型 0/6 初始化和认证回读`
+落地验证状态：`上一 v8r3r2 Preview 与真人结果保留；v8r3r3 工程和真实库通过、离线可靠性失败，新 Preview 和新 0/6 未执行`
 
 总状态导航：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 

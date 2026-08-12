@@ -2,11 +2,11 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`板块 7 已完成；v8r3r2 双恢复诊断与 10/10 人工增量准入通过，已交接板块 8`
+文档状态：`板块 7 重新打开；v8r3r3 30/60 秒自适应恢复正式可靠性门 No-Go`
 
-产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；GI-081～087 保留诊断与失败血缘；GI-088 v8r3r2 为当前封存候选`
+产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；v8r3r2 质量与兼容结论只读保留；v8r3r3 为当前失败候选`
 
-落地验证状态：`Ark Flash、Interview Skill、Foundation、工作台与 EMPTY 双恢复均已收口；板块 8 私有 Preview READY，新 run 为 running 0/6 / calls 0`
+落地验证状态：`自适应竞速工程与真实隔离库通过；正式 96-checkpoint 只有 50 份最终可见、46 份最终保护；新 Preview 与 0/6 均未创建`
 
 Production：`继续保持 legacy + baseline；生成式候选入口与发布授权保持关闭`
 
@@ -22,7 +22,11 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 
 板块 8 交接：[Preview、Go/No-Go 与 Production 授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
-> 本文保留板块 7 的候选实现、Trace、验证与版本血缘。当前结论以 [v8r3r2 板块 7 封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md) 为准；真人体验、Go/No-Go 与 Production 授权进入板块 8。
+> 本文保留板块 7 的候选实现、Trace、验证与版本血缘。v8r3r2 的质量结论继续以[封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)为准；当前恢复策略结论以 [v8r3r3 No-Go 证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md) 为准。
+
+## 0.1 当前失败态｜v8r3r3
+
+v8r3r3 保持 Ark Flash、Thinking high、Interview Skill 和 Dataset，增加 30 秒非 Thinking 快速竞速、60 秒周期硬截止和原子赢家。工程门与真实隔离库 `4/4` 通过；正式评测中初始 EMPTY 突增到 `65/96`，100 次恢复预算全部耗尽，最终可见仅 `50/96`。快速整理的 44 次调用只有 6 次合法，另有 36 次返回可见内容但未形成合法 JSON。该版本停止在板块 7，不进入新 Preview。
 
 ## 0. 当前完成态｜v8r3r2
 

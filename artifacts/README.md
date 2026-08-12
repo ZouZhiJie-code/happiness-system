@@ -2,14 +2,15 @@
 
 最后更新：`2026-08-12`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r2 EMPTY 双恢复诊断最终可见完成率 100%，10 份恢复结果人工裁决 10/10 可直接用，板块 7 正式封存。板块 8 私有 Preview 已 READY，新 run 为 running 0/6 / calls 0；Judge 20+20 后置，Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r2 的内容质量与 4＋2 兼容验收通过，但等待体验未达发布线。v8r3r3 30/60 秒自适应恢复完成工程与真实库验证，正式 96-checkpoint 结果为 50/96 最终可见、46 个最终保护，可靠性门 No-Go，未部署新 Preview。Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
 
-## GI-088 v8r3r2 当前证据入口（2026-08-12）
+## GI-088 当前证据入口（2026-08-12）
 
+- [v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [Golden 32＋8 独立替换裁决](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)
 - [v8r3 Interview Skill、Ark Flash 与历史离线 No-Go](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
-- 板块 8 当前 deployment 与新 run 已写入本轮 Preview 回读；旧 deployment／run 只保留在各自历史证据包。
+- v8r3r2 deployment／run 继续作为上一候选的只读证据；v8r3r3 未创建 deployment 或 run。
 
 ## 1. 为什么需要这份规则
 
@@ -34,6 +35,7 @@
 
 当前入口：
 
+- [GI-088 v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [GI-088 v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [GI-088 v8r3r1 账户恢复后历史证据](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - [GI-088 v8r3 Interview Skill 与 Ark Flash 离线 No-Go 证据](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)

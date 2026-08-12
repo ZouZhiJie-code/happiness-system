@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-12.gi088-current-issue-ledger-v15",
-  "status": "v8r3r2_board7_sealed_board8_preview_ready_zero_of_six",
-  "currentQueueStage": "v8r3r2_board8_human_four_plus_two_pending",
+  "ledgerVersion": "2026-08-12.gi088-current-issue-ledger-v16",
+  "status": "v8r3r3_adaptive_recovery_no_go_board7_reopened",
+  "currentQueueStage": "v8r3r3_provider_empty_and_fast_formatter_reliability_attribution",
   "sourceLedgers": [
     {
       "version": "2026-08-09.gi088-human-eval-v1-bad-case-ledger-v1",
@@ -63,6 +63,27 @@
     "nextHiddenAdmissionRequirement": "replace_exposed_cases",
     "modelCallsDuringReview": 0,
     "evaluationDatabaseCallsDuringReview": 0,
+    "productionState": "legacy_plus_baseline"
+  },
+  "currentAdaptiveRecoveryRun": {
+    "evaluationVersion": "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60",
+    "implementationCommit": "ee665383b12e98c8863fc119f37714efaad5c5ff",
+    "status": "no_go",
+    "initialCalls": 96,
+    "automaticRecoveryCalls": 100,
+    "totalCalls": 196,
+    "firstValidCount": 31,
+    "finalVisibleCount": 50,
+    "finalProtectionCount": 46,
+    "primaryEmptyContentCount": 65,
+    "fastFormatterValidCount": 6,
+    "fastFormatterInvalidJsonCount": 36,
+    "recoveryBudgetExhaustedCheckpointCount": 10,
+    "duplicateMessageCount": 0,
+    "pendingTurnCount": 0,
+    "privateCandidateReportSha256": "b0a2c2c8435cfe0cd6abbf2ad38e4dac59bd33614e526bac9615a833d6bb567b",
+    "artifactPath": "../2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
+    "previewDeploymentStatus": "not_deployed",
     "productionState": "legacy_plus_baseline"
   },
   "finalInitializationBlocker": {
@@ -781,6 +802,25 @@
         "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-v8r2-preview-readback.md"
       ],
       "targetVersion": "v8r2_foundation_hardening"
+    },
+    {
+      "issueId": "V8R3R3-RECOVERY-01",
+      "title": "Ark Thinking high 空正文突增且快速整理未稳定形成合法 JSON",
+      "productOwnerJudgment": "使用 30 秒加速和 60 秒硬截止降低等待，60 秒内自动最终可见率必须达到 100%，重复回复、遗留 pending 和人工恢复为 0。",
+      "codexInitialAssessment": "竞速与原子收口工程正确，正式运行只有 50/96 最终可见，技术可靠性先于恢复内容盲评触发 No-Go。",
+      "confirmedRootCause": "96 次初始调用中 65 次以 HTTP 200 和 finish=stop 结束，存在 reasoning 但可见内容为空；56 次 high 纠正又有 42 次为空。44 次非 Thinking 快速整理均快速返回，其中 36 次不是合法 JSON。100 次全批恢复预算耗尽，10 个 checkpoint 无法获得完整恢复链。",
+      "hypotheses": [
+        "快速整理采用更窄、可确定修复的结构合同后，可以提高非 Thinking 路径的合法结果率。",
+        "Ark Thinking high 的空正文比例存在跨批次大幅波动，需要以新候选区分 Provider 波动、请求节奏和可见输出合同的影响。"
+      ],
+      "priority": "P0",
+      "status": "confirmed_no_go_waiting_next_single_factor_decision",
+      "trace": [
+        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/gi088-v8r3r3-adaptive-run-summary.json",
+        "tests/integration/gi088-foundation-prisma-store.test.ts"
+      ],
+      "targetVersion": "next_v8r3_recovery_candidate"
     }
   ],
   "historicalExclusions": [
@@ -865,6 +905,9 @@
       "BC-09",
       "BC-10",
       "V6-QD-01"
+    ],
+    "v8r3r3_adaptive_recovery": [
+      "V8R3R3-RECOVERY-01"
     ],
     "regression": [
       "BC-02",

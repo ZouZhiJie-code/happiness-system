@@ -2,19 +2,19 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3 历史证据只读保留；v8r3r2 板块 7 正式封存，板块 8 Preview READY 0/6；Production 保持 legacy + baseline`
+文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3r2 历史证据只读保留；v8r3r3 正式可靠性门 No-Go，板块 7 恢复调度继续开放；Production 保持 legacy + baseline`
 
-当前讨论位置：`板块 8｜GI-088 v8r3r2 私有 Preview 真人 4＋2`
+当前讨论位置：`板块 7｜GI-088 v8r3r3 Provider 空正文与快速整理结构可靠性`
 
-落地验证状态：`GI-084～086 No-Go、GI-087 六题退出当前质量门、v8r1 控制误停、v8r2 行政 No-Go、v8r3 旧可靠性 No-Go 均保留历史；v8r3r2 首次 EMPTY 10 份均恢复，人工裁决 10/10 可直接用；板块 7 完成，板块 8 Preview READY 且新 run 为 running 0/6 / calls 0`
+落地验证状态：`v8r3r2 内容质量、4 条陪聊与 2 条帮我记兼容均通过，最终可见 22/22；等待 P90 64.7 秒、最长 70.1 秒未达发布线。v8r3r3 的 96-checkpoint 正式结果为最终可见 50/96、保护 46，未进入新 Preview。`
 
-本次同步范围：`同步 v8r3r2 双恢复诊断、10/10 人工增量准入、板块 7 完成和板块 8 新 Preview 交接；保留旧 No-Go 历史；Judge 20+20 后置；Production 保持 legacy + baseline`
+本次同步范围：`同步 v8r3r3 30/60 秒自适应恢复实现、真实隔离库 4/4、正式 196 次调用与可靠性 No-Go；保留 v8r3r2 质量通过和等待失败证据；Judge 20+20 后置；Production 保持 legacy + baseline`
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
 上一板块专项：[`板块 5｜稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)（`产品决策已冻结；6/6`）
 
-当前板块专项：[`板块 8｜内部 Preview、Go/No-Go 与生产授权`](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)
+当前板块专项：[`板块 7｜模型主导语义判断的候选实现与验证`](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)
 
 当前工作方法：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)（`已冻结`）
 

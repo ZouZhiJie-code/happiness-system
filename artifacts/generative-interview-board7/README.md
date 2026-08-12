@@ -4,12 +4,13 @@
 
 ## 当前入口
 
-[GI-088｜v8r3r2 EMPTY 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
+[GI-088｜v8r3r3 30/60 秒自适应恢复 No-Go](./2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 
-状态：`v8r3r2 双恢复诊断首次 EMPTY 10 份、第一次恢复成功 9、第二次恢复成功 1、最终空内容 0；产品负责人盲评 10/10 可直接用，板块 7 正式封存；板块 8 私有 Preview 已 READY，新 run 为 running 0/6 / calls 0，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+状态：`v8r3r2 内容质量与 4＋2 兼容验收通过，等待体验未达发布线；v8r3r3 只调整 30/60 秒技术恢复调度，正式结果为初始有效 31/96、最终可见 50/96、最终保护 46，可靠性门 No-Go。新 Preview 与 0/6 未创建，Production 保持 legacy + baseline。`
 
 当前迭代证据：
 
+- [v8r3r3 30/60 秒自适应恢复 No-Go](./2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [v8r3 Golden 32＋8 与历史 Preview](./2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)
 - [v8r3 Interview Skill、Ark Flash 与历史离线 No-Go](./2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)

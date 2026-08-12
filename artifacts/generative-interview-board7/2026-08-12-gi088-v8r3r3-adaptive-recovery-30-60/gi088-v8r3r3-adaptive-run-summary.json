@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "2026-08-12.gi088-v8r3r3-adaptive-run-summary-v1",
+  "status": "no_go",
+  "evaluationVersion": "2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60",
+  "implementationCommit": "ee665383b12e98c8863fc119f37714efaad5c5ff",
+  "createdAt": "2026-08-12T14:43:49.481Z",
+  "runtime": {
+    "provider": "volcengine_ark",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "accelerationAfterMs": 30000,
+    "hardDeadlineMs": 60000,
+    "maximumProviderCallsPerCheckpoint": 3,
+    "concurrency": 2
+  },
+  "fingerprints": {
+    "behaviorManifestVersion": "2026-08-12.gi088-behavior-manifest-v4",
+    "behaviorManifestSha256": "b5aef1139315a16d9bc0cae9e267740f397093ec046cfae3240dd17e66beaf70",
+    "candidate": "d997e0d99a9d4c138049b2812f6e6667fe825fef3426421482f95ba0223eba6b",
+    "dataset": "258a4b47ec4eb36393bcf37191fe5088ce699fc0abec5a6d7ccbc8e4b8f5a027",
+    "runner": "5cc5c713e632a2fc2257a233fa26f6ec77040ecf838c30b639994ea83298d02f",
+    "experience": "badebe8dfb3116a4784533eb09fa41d29832a27ddbb4757db2f5884db6f160af",
+    "execution": "b0e5d613d323987950f31a3c7a5d77cfedfae244a8ccb842369d8553483fc21f",
+    "offlineRun": "2d56aec0d3e38f470710da9add413d473c51cc4b411d1c1748657a2f135d015f",
+    "evidence": "6bf1c56abbda98e7ad0e5a0eb947707526dd2a08e03bbb90210f2888823342f5"
+  },
+  "budget": {
+    "initialCalls": 96,
+    "automaticRecoveryCalls": 100,
+    "totalCalls": 196,
+    "authorizedMaximum": 196,
+    "recoveryBudgetExhaustedCheckpoints": 10
+  },
+  "outcome": {
+    "eligibleCheckpoints": 96,
+    "firstValidCount": 31,
+    "firstValidRate": 0.3229166666666667,
+    "finalVisibleCount": 50,
+    "finalVisibleRate": 0.5208333333333334,
+    "finalFailureCount": 46,
+    "finalProtectionCount": 46,
+    "duplicateMessageCount": 0,
+    "pendingTurnCount": 0,
+    "manualRecoveryCount": 0,
+    "nonPrimaryWinnerCount": 19,
+    "hardDeadlineReachedCount": 0
+  },
+  "latencyForVisibleCompletions": {
+    "sampleCount": 50,
+    "p50Ms": 11371,
+    "p90Ms": 27525,
+    "maxMs": 30883,
+    "gatePassed": false,
+    "failureReason": "46_of_96_checkpoints_have_no_visible_completion"
+  },
+  "callAttribution": {
+    "primaryHigh": {
+      "valid": 31,
+      "emptyContent": 65
+    },
+    "highCorrection": {
+      "valid": 13,
+      "emptyContent": 42,
+      "otherProtected": 1
+    },
+    "fastFormatter": {
+      "valid": 6,
+      "invalidJson": 36,
+      "superseded": 2
+    },
+    "latencyHedgeTriggers": 2
+  },
+  "gates": {
+    "finalVisibleWithin60Seconds": false,
+    "p50AtMost20Seconds": true,
+    "p90AtMost40Seconds": true,
+    "maximumAtMost60Seconds": true,
+    "finalFailureZero": false,
+    "duplicateReplyZero": true,
+    "pendingOrProcessingZero": true,
+    "manualRecoveryZero": true,
+    "overall": false
+  },
+  "adaptiveRecoveryBlindReview": {
+    "itemCount": 19,
+    "status": "deferred_after_reliability_hard_failure",
+    "packetSha256": "c81521ea2772357e4c59a9c6237bca6caa7c51236a62e5ff37ead342a5369074",
+    "sealedKeySha256": "7ddc0e96808871544e83bd6f0c27a2f53a3cf44dfec3c20ae62753153aea6c96"
+  },
+  "privateEvidence": {
+    "candidateReportSha256": "b0a2c2c8435cfe0cd6abbf2ad38e4dac59bd33614e526bac9615a833d6bb567b",
+    "fileMode": "0600",
+    "rawVisibleContentPublished": false,
+    "hiddenReasoningPublished": false,
+    "requestBodyPublished": false
+  },
+  "release": {
+    "previewDeployed": false,
+    "newRunInitialized": false,
+    "productionChanged": false
+  }
+}
