@@ -15,26 +15,30 @@
 - 候选版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`
 - 候选模型：Ark `deepseek-v4-flash-ga-260731`，Thinking high，`json_object`
 - Production：继续保持 `legacy + baseline`
-- Preview：远程构建已 READY，数据库迁移已完成；`0/6` 初始化等待私有离线候选证据回填
+- Preview：候选 deployment 正在完成远程构建回读；数据库迁移已完成；全新 `0/6` 已初始化并保持零模型调用
 - 真人内容：仅由产品负责人在 Preview 回读通过后提交
 
 ## 当前 Preview 回读
 
-- 冻结提交：`b14056fb43b4fe56bf7119b0a4dbca707a0a9644`
-- READY deployment：`dpl_FUuaiYJy9H3ZbD3ZGbxAQB11Kiee`
-- Preview 地址：`https://xingfuxitong-git-codex-gi088-v8r3-sk-5c3376-zouzhijies-projects.vercel.app`
+- 冻结提交：`c289c94`（完整 SHA 以分支回读为准）
+- Preview deployment：`dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY`
+- Preview 地址：`https://xingfuxitong-e7myzk5db-zouzhijies-projects.vercel.app`
 - deployment target：`preview`
-- Git ref / SHA：`codex/gi088-v8r3-skill-ark-flash` / `b14056fb43b4fe56bf7119b0a4dbca707a0a9644`
+- Git ref / SHA：`codex/gi088-v8r3-skill-ark-flash` / `c289c94`
 - 构建：Vercel 远程生成主 Prisma Client、评测 Prisma Client 后执行 Next build
 - 应用 schema：迁移 `20260811120000_add_interview_record_mode` 已应用
 - 评测 schema：4 个迁移均已应用，无待执行迁移
 - 未登录 `/api/auth/session`：`200`，`authenticated=false`
 - 不存在用户名的合法格式登录：`401 INVALID_CREDENTIALS`，未产生会话
+- 新批次：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`ordinal=2 / revision=0 / running / 0/6 / gate=pending / high_only / high / calls=0`
+- 任务结构：4 条【陪我聊】计分轨迹＋2 条【帮我记】兼容冒烟
+- 离线候选证据：96 初始检查点、2 次自动恢复、98 次总调用；`firstValid=76/96=79.17%`，最终失败 `18`，可见延迟样本 `78`，p50 `7.630s`、p90 `25.514s`、最大 `67.011s`
+- 当前五层指纹：behavior manifest `2fd873bebdfc7484bc1c51075870702a6b7f8dadd800ea8e3e7ffbe3e9bb9e74`；candidate `77e679af80a90805f589a6effde475b7c097c62729342c79ac6f987a9df776d4`；dataset `a279ef0542c9733fcf4b096db1b0bda92d23e2c41a12a254d8ae6c1f69811efb`；runner `1db8b7227bbff76d9a03bd7080bd98d5ade4bb8b84220c92815a86bcfe328842`；experience `458cb9bffba324d507806b4bdb437a2dca384bd3dc6c918d46ec8582e19733f1`；execution `8ed702c77f68d8ac416bd6058c816d40d70595791530489f424b63e3fccc1c2f`
 
-## 暂停原因
+## 当前质量边界
 
-Preview `/api/preview/gi088/runs`、`/session` 和本地初始化脚本均返回 `GI088_OFFLINE_EVIDENCE_MISSING`。当前隔离工作树没有绑定的私有隐藏准入包，因此无法诚实生成候选 80/80 的离线 `candidateOfflineRunFingerprint`、`candidateEvidenceFingerprint` 和自动恢复计数；保持 API 拒绝模型调用，避免用占位哈希伪装评测证据。
+当前候选已完成 Ark Flash 离线运行并完成 0/6 零模型初始化。首次有效率低于可靠性硬门 `85%`，因此质量与可靠性仍保持 `No-Go`，Preview 仅作为产品负责人后续回读和问题定位候选，不构成 Production 发布授权。
 
-恢复动作固定为：把既有私有隐藏准入包恢复到离线评测目录并保持 `0600` 权限，运行候选 Ark Flash 离线评测（初始 96 次、全批自动恢复上限 2），将输出收据的三个字段写入该分支 Preview 环境，再执行 `eval:gi088:initialize-current`。初始化回读必须得到 `running / gate=pending / 0/6 / 4 条计分轨迹 + 2 条兼容冒烟 / 0 calls`，随后才开放真人内容。
+下一步由产品负责人决定是否在该候选 Preview 继续进行真人内容；Codex 不代提交真人内容。Judge 20+20 仍是后置门，当前未运行。
 
 公开证据只保存数量、类别和哈希；原始卡片、理由、隐藏题面、请求正文、凭据和隐藏推理不进入仓库。

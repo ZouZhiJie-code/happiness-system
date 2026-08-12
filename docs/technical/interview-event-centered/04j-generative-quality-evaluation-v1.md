@@ -6,7 +6,7 @@
 
 置信度：`高`
 
-落地验证状态：`首批 8 张已收口 7 张、C3 保持开放；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8 获产品通过；v8r1 A1 控制误停单例阻断只读保留；v8r2 #5 已行政 early_stopped / No-Go；v8r3 两轮 No-Go 只读保留；账户恢复后的 v8r3r1 已通过可靠性与延迟硬门，80 份质量结果等待产品负责人人工裁决，两轮真实 Golden、Judge、Preview 与 0/6 未开放`
+落地验证状态：`首批 8 张已收口 7 张、C3 保持开放；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8 获产品通过；v8r1 A1 控制误停单例阻断只读保留；v8r2 #5 已行政 early_stopped / No-Go；v8r3 两轮 No-Go 只读保留；v8r3 Golden 8 已封存并纳入当前候选；Preview 已完成远程构建回读与全新 0/6 零模型初始化，当前候选可靠性硬门仍为 No-Go，等待产品负责人决定真人使用`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -213,7 +213,7 @@ v8r2 把高精度控制决策、Provider 结果落账、陈旧页面快照保护
 
 v8r3 实现新的 Interview Skill、Ark `deepseek-v4-flash-ga-260731`、Thinking high、问题价值复核、Foundation 单焦点政策、v0.7 导出、`4＋2` 任务、【帮我记】兼容链和对话优先工作台。全量工程门、真实隔离库与行为清单通过。首轮 `98` 次正式调用确认输出结构和校验链缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝，两轮 `No-Go` 继续只读保存。
 
-Ark 账户恢复后，新建 `2026-08-11.gi088-v8r3r1-account-restored-formal-evaluation` 不可变身份并完成正式候选：`96/96` 检查点形成可见结果，首次有效 `95/96 = 98.96%`，自动恢复 `1` 次且成功，最终失败与最终保护均为 `0`；可见延迟 p50 `7.484s`、p90 `27.263s`、最大 `43.416s`。可靠性与延迟硬门通过，确定性回归 `24` 例、`72` 个断言全通过且模型调用 `0`。当前进入 `80` 份质量结果的产品负责人人工裁决；真实 Golden Set 尚未形成，因此 Judge、Preview deployment 和新 `0/6` 均为 `0`。当前入口见 [v8r3r1 证据包](../../../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)，历史入口见 [v8r3 两轮 No-Go 证据](../../../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)。约 `200` 轮以上容量优化继续留在本轮边界外。
+Ark 账户恢复后，v8r3r1 的 `96/96` 正式检查点曾通过可靠性与延迟门；随后封存的 Golden 8 替换裁决纳入当前 v8r3 候选。当前冻结 commit `c289c94` 的 Ark Flash 候选完成 `96` 个初始检查点、`2` 次自动恢复、`98` 次总调用，首次有效 `76/96 = 79.17%`，最终失败 `18`，可见延迟 p50 `7.630s`、p90 `25.514s`、最大 `67.011s`，可靠性硬门保持 No-Go。私有 Preview deployment `dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY` 与新批次 `c873ad9a-ab5a-4629-960d-03266bc17b54` 已回读为 `running 0/6 / gate=pending / calls=0`，任务结构为 `4＋2`；Judge 20+20 保持后置未运行。当前入口见 [v8r3 Golden 8 Preview 证据包](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，两轮 No-Go 入口继续只读保留。约 `200` 轮以上容量优化继续留在本轮边界外。
 
 原始对话保存至板块 6 关闭后 `30` 天，届时按明确范围清理并保留审计记录；产品负责人确认的脱敏正式资产长期保存。
 

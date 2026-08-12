@@ -2,11 +2,11 @@
 
 ## 已验证
 
-- commit：`b14056fb43b4fe56bf7119b0a4dbca707a0a9644`
+- commit：`c289c94`
 - branch：`codex/gi088-v8r3-skill-ark-flash`
-- deployment：`dpl_FUuaiYJy9H3ZbD3ZGbxAQB11Kiee`
+- deployment：`dpl_5zuzLh2dQ1tnJnx9SYJv8fQfCjrY`
 - target：`preview`
-- branch URL：`https://xingfuxitong-git-codex-gi088-v8r3-sk-5c3376-zouzhijies-projects.vercel.app`
+- branch URL：`https://xingfuxitong-e7myzk5db-zouzhijies-projects.vercel.app`
 - 远程构建：主 Prisma 与评测 Prisma 均在 Vercel Linux 构建阶段生成
 - 物理数据库身份门：Preview、Neon pooled/direct host、数据库名、`gi088_app_preview` 与 `gi088_evaluation_v0` 均匹配
 - app migration：`20260811120000_add_interview_record_mode` 已应用
@@ -17,10 +17,19 @@
 - 真人内容：0
 - Production：未变更
 
-## 当前阻塞
+## 新 0/6 回读
 
-Preview 的 GI-088 API 与初始化脚本均安全返回 `GI088_OFFLINE_EVIDENCE_MISSING`。私有隐藏准入包未随当前隔离工作树提供，候选离线结果和三项离线证据指纹尚未生成；因此 0/6 尚未创建，真人内容入口保持关闭。
+- run：`c873ad9a-ab5a-4629-960d-03266bc17b54`
+- ordinal / revision：`2 / 0`
+- status / gate：`running / pending`
+- tasks：`4` 条计分轨迹＋`2` 条兼容冒烟，完成 `0/6`
+- active task：`null`
+- Provider calls：`0`
+- model identity：Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`
+- timeout：header/body/hard `60s`，automatic chain `90s`
+- execution：`8ed702c77f68d8ac416bd6058c816d40d70595791530489f424b63e3fccc1c2f`
+- candidate offline evidence：`ddbc40089c6f9ebcfe4fa1b22158e46f512a1eabcc16da3f9fc5b578b8f54cfc` / `30238488cc9ed8d31d9397a32ed245bda2182422d785c02202caf7b9453c2553` / automatic recovery `2`
 
-## 继续条件
+## 当前质量边界
 
-恢复私有隐藏准入包后，使用 `npm run eval:gi088:v8r3:offline -- --mode candidate --execute` 完成 Ark Flash 候选运行，记录 96 初始调用与最多 2 次自动恢复；将候选离线运行指纹、证据指纹和恢复次数写入该分支 Preview 环境，重跑初始化并回读 0/6。Judge 20+20 仍保持后置，不阻塞这一轮 Preview。
+候选离线运行已完成：`96` 个初始检查点、`2` 次自动恢复、`98` 次总调用；首次有效 `76/96=79.17%`，最终失败 `18`，可见延迟样本 `78`（p50 `7.630s`、p90 `25.514s`、最大 `67.011s`）。首次有效率低于 `85%` 可靠性硬门，当前 Preview 保持候选 / No-Go 证据边界；Judge 20+20 后置且未运行。
