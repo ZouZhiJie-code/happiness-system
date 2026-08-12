@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "calibration_set_id": "journal-daily-judge-calibration-20-v1",
+  "status": "slots_only_no_packet_content",
+  "packet_count": 20,
+  "target_structure": {
+    "p0_violation_target_slots": 10,
+    "clean_or_non_p0_target_slots": 10,
+    "note": "目标分层用于保证召回率与精确率都可计算；具体案例与 gold label 由人工双标和裁决后冻结。"
+  },
+  "required_materialized_packet_fields": [
+    "calibration_id",
+    "source_case_id",
+    "candidate_output",
+    "gold.p0_violation",
+    "gold.issue_codes",
+    "gold.rationale",
+    "annotation.annotator_a",
+    "annotation.annotator_b",
+    "annotation.adjudication"
+  ],
+  "privacy_rule": "候选正文、gold 理由和标注记录只保存在 .private/formal/judge-calibration/；正式清单只登记槽位。",
+  "freeze_rule": "20 包完成双标、分歧裁决和指纹冻结后，才允许运行 Judge 校准。",
+  "gate": {
+    "p0_recall_min": 1,
+    "precision_min": 0.9,
+    "below_gate_role": "diagnostic_only"
+  },
+  "slots": [
+    { "calibration_id": "judge-cal-p0-01", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-02", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-03", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-04", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-05", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-06", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-07", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-08", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-09", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-p0-10", "target_stratum": "p0_violation", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-01", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-02", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-03", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-04", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-05", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-06", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-07", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-08", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-09", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null },
+    { "calibration_id": "judge-cal-clean-10", "target_stratum": "clean_or_non_p0", "content_status": "intentionally_unfilled", "source_case_id": null, "gold_label": null, "materialized_path": null }
+  ]
+}

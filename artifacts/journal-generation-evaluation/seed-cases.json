@@ -1,0 +1,546 @@
+{
+  "schema_version": "2.0",
+  "dataset_version": "2026-08-10.seed-v2-two-layer",
+  "privacy_note": "10 个独立故事均为合成脱敏占位，不含私有导出原文。每个故事使用独立 source_group_id。",
+  "cases": [
+    {
+      "case_id": "seed-01-simple-event",
+      "title": "单事件忠实整理",
+      "scenario": "一次简短散步带来的轻松感，需要从记录卡到当日日志保持具体动作与感受。",
+      "source_group_id": "sg-seed-01-simple-event",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s01-u1", "role": "user", "content": "晚饭后绕小区走了两圈，风很凉，心里松下来一点。" },
+        { "message_id": "s01-u2", "role": "user", "content": "走到树下听见叶子响的时候最放松。" }
+      ],
+      "record_cards": [
+        {
+          "record_card_id": "s01-r1",
+          "event_id": "s01-e1",
+          "source_refs": ["s01-u1", "s01-u2"],
+          "must": [
+            { "rule_id": "s01-rc-m1", "any_of": ["两圈", "绕小区走"] },
+            { "rule_id": "s01-rc-m2", "any_of": ["叶子响", "树下"] }
+          ],
+          "forbidden": [{ "rule_id": "s01-rc-f1", "any_of": ["跑了五公里"] }],
+          "correction": [],
+          "valid_insight": [{ "rule_id": "s01-rc-i1", "any_of": ["松下来", "放松"] }]
+        }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s01-r1"],
+        "must": [
+          { "rule_id": "s01-d-m1", "any_of": ["两圈", "绕小区走"] },
+          { "rule_id": "s01-d-m2", "any_of": ["叶子响", "树下"] }
+        ],
+        "forbidden": [{ "rule_id": "s01-d-f1", "any_of": ["彻底治愈", "跑了五公里"] }],
+        "uncertainty": [],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s01-d-s1", "record_card_refs": ["s01-r1"], "source_refs": ["s01-u1", "s01-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-01-c1",
+          "record_cards": [{ "record_card_id": "s01-r1", "event_id": "s01-e1", "text": "晚饭后绕小区走了两圈，走到树下听见叶子响。", "insight": "那一刻心里松下来一点。", "source_refs": ["s01-u1", "s01-u2"] }],
+          "daily_output": {
+            "title": "树下的风",
+            "paragraphs": [{ "paragraph_id": "s01-c1-p1", "text": "晚饭后，我绕小区走了两圈。走到树下听见叶子响时，心里松下来一点。", "source_refs": ["s01-u1", "s01-u2"], "record_card_refs": ["s01-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-01-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-01-c2",
+          "record_cards": [{ "record_card_id": "s01-r1", "event_id": "s01-e1", "text": "晚饭后跑了五公里。", "insight": "这次运动彻底治愈了我。", "source_refs": ["s01-u1"] }],
+          "daily_output": {
+            "title": "彻底治愈的一晚",
+            "paragraphs": [{ "paragraph_id": "s01-c2-p1", "text": "晚饭后我跑了五公里，这次运动让我彻底治愈。", "source_refs": ["s01-u1"], "record_card_refs": ["s01-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-01-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-02-multiple-events",
+      "title": "同日多事件分段",
+      "scenario": "同一天的工作收尾与家人来电分别成卡、分别成段，并保持发生顺序。",
+      "source_group_id": "sg-seed-02-multiple-events",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s02-u1", "role": "user", "content": "上午把拖了三天的表格交了，终于收住。" },
+        { "message_id": "s02-u2", "role": "user", "content": "晚上妈妈打电话，只问我有没有按时吃饭，我觉得很暖。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s02-r1", "event_id": "s02-e-work", "source_refs": ["s02-u1"], "must": [{ "rule_id": "s02-r1-m", "any_of": ["表格", "收住"] }], "forbidden": [], "correction": [], "valid_insight": [{ "rule_id": "s02-r1-i", "any_of": ["终于", "完成"] }] },
+        { "record_card_id": "s02-r2", "event_id": "s02-e-family", "source_refs": ["s02-u2"], "must": [{ "rule_id": "s02-r2-m", "any_of": ["妈妈", "吃饭"] }], "forbidden": [], "correction": [], "valid_insight": [{ "rule_id": "s02-r2-i", "any_of": ["暖", "惦记"] }] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s02-r1", "s02-r2"],
+        "must": [{ "rule_id": "s02-d-m1", "any_of": ["表格"] }, { "rule_id": "s02-d-m2", "any_of": ["妈妈", "吃饭"] }],
+        "forbidden": [],
+        "uncertainty": [],
+        "merge_separate": [{ "rule_id": "s02-d-sep", "relation": "separate", "left_record_card_id": "s02-r1", "right_record_card_id": "s02-r2" }],
+        "order": [{ "rule_id": "s02-d-order", "before_record_card_id": "s02-r1", "after_record_card_id": "s02-r2" }],
+        "source": [
+          { "rule_id": "s02-d-s1", "record_card_refs": ["s02-r1"], "source_refs": ["s02-u1"] },
+          { "rule_id": "s02-d-s2", "record_card_refs": ["s02-r2"], "source_refs": ["s02-u2"] }
+        ],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-02-c1",
+          "record_cards": [
+            { "record_card_id": "s02-r1", "event_id": "s02-e-work", "text": "上午交了拖了三天的表格。", "insight": "事情终于收住。", "source_refs": ["s02-u1"] },
+            { "record_card_id": "s02-r2", "event_id": "s02-e-family", "text": "晚上妈妈来电问有没有按时吃饭。", "insight": "这份惦记让我觉得很暖。", "source_refs": ["s02-u2"] }
+          ],
+          "daily_output": {
+            "title": "今天的两个落点",
+            "paragraphs": [
+              { "paragraph_id": "s02-c1-p1", "text": "上午把拖了三天的表格交了，这件事终于收住。", "source_refs": ["s02-u1"], "record_card_refs": ["s02-r1"] },
+              { "paragraph_id": "s02-c1-p2", "text": "晚上妈妈打来电话，只问有没有按时吃饭，这份惦记让我觉得很暖。", "source_refs": ["s02-u2"], "record_card_refs": ["s02-r2"] }
+            ],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-02-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-02-c2",
+          "record_cards": [
+            { "record_card_id": "s02-r1", "event_id": "s02-e-work", "text": "上午交了表格。", "insight": "终于完成。", "source_refs": ["s02-u1"] },
+            { "record_card_id": "s02-r2", "event_id": "s02-e-family", "text": "晚上妈妈问我有没有吃饭。", "insight": "觉得很暖。", "source_refs": ["s02-u2"] }
+          ],
+          "daily_output": {
+            "title": "表格和电话",
+            "paragraphs": [{ "paragraph_id": "s02-c2-p1", "text": "上午交了表格，晚上妈妈来电问我有没有吃饭。", "source_refs": ["s02-u1", "s02-u2"], "record_card_refs": ["s02-r1", "s02-r2"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-02-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-03-cross-session-same-event",
+      "title": "跨会话同一事件合并",
+      "scenario": "后一次会话补充同一次汇报，记录卡保留两段来源，当日日志合并为同一事件。",
+      "source_group_id": "sg-seed-03-cross-session-same-event",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s03-u1", "role": "user", "content": "中午说的汇报后来顺利讲完了。" },
+        { "message_id": "s03-u2", "role": "user", "content": "经理最后追问数据时，我也答上来了。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s03-r1", "event_id": "s03-e-report", "source_refs": ["s03-u1"], "must": [{ "rule_id": "s03-r1-m", "any_of": ["汇报", "讲完"] }], "forbidden": [], "correction": [], "valid_insight": [] },
+        { "record_card_id": "s03-r2", "event_id": "s03-e-report", "source_refs": ["s03-u2"], "must": [{ "rule_id": "s03-r2-m", "any_of": ["追问", "答上来"] }], "forbidden": [{ "rule_id": "s03-r2-f", "any_of": ["没有人提问"] }], "correction": [], "valid_insight": [] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s03-r1", "s03-r2"],
+        "must": [{ "rule_id": "s03-d-m1", "any_of": ["汇报", "讲完"] }, { "rule_id": "s03-d-m2", "any_of": ["追问", "答上来"] }],
+        "forbidden": [{ "rule_id": "s03-d-f1", "any_of": ["没有人提问"] }],
+        "uncertainty": [],
+        "merge_separate": [{ "rule_id": "s03-d-merge", "relation": "merge", "left_record_card_id": "s03-r1", "right_record_card_id": "s03-r2" }],
+        "order": [],
+        "source": [{ "rule_id": "s03-d-s1", "record_card_refs": ["s03-r1", "s03-r2"], "source_refs": ["s03-u1", "s03-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-03-c1",
+          "record_cards": [
+            { "record_card_id": "s03-r1", "event_id": "s03-e-report", "text": "汇报后来顺利讲完。", "insight": "", "source_refs": ["s03-u1"] },
+            { "record_card_id": "s03-r2", "event_id": "s03-e-report", "text": "经理追问数据时也答了上来。", "insight": "", "source_refs": ["s03-u2"] }
+          ],
+          "daily_output": {
+            "title": "把汇报讲完",
+            "paragraphs": [{ "paragraph_id": "s03-c1-p1", "text": "中午提到的汇报后来顺利讲完了。经理最后追问数据时，我也答了上来。", "source_refs": ["s03-u1", "s03-u2"], "record_card_refs": ["s03-r1", "s03-r2"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-03-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-03-c2",
+          "record_cards": [
+            { "record_card_id": "s03-r1", "event_id": "s03-e-report", "text": "汇报顺利讲完。", "insight": "", "source_refs": ["s03-u1"] },
+            { "record_card_id": "s03-r2", "event_id": "s03-e-report", "text": "现场没有人提问。", "insight": "", "source_refs": ["s03-u2"] }
+          ],
+          "daily_output": {
+            "title": "顺利结束",
+            "paragraphs": [
+              { "paragraph_id": "s03-c2-p1", "text": "汇报顺利讲完。", "source_refs": ["s03-u1"], "record_card_refs": ["s03-r1"] },
+              { "paragraph_id": "s03-c2-p2", "text": "现场没有人提问。", "source_refs": ["s03-u2"], "record_card_refs": ["s03-r2"] }
+            ],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-03-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-04-similar-separate-events",
+      "title": "相似事件保持分离",
+      "scenario": "两次咖啡店经历地点相同、日期和结果不同，需要分卡、分段。",
+      "source_group_id": "sg-seed-04-similar-separate-events",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s04-u1", "role": "user", "content": "周一在楼下咖啡店等人，对方迟到了二十分钟。" },
+        { "message_id": "s04-u2", "role": "user", "content": "今天又去那家店，我一个人安静看完了一章书。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s04-r1", "event_id": "s04-e-monday", "source_refs": ["s04-u1"], "must": [{ "rule_id": "s04-r1-m", "any_of": ["周一", "迟到"] }], "forbidden": [{ "rule_id": "s04-r1-f", "any_of": ["一章书"] }], "correction": [], "valid_insight": [] },
+        { "record_card_id": "s04-r2", "event_id": "s04-e-today", "source_refs": ["s04-u2"], "must": [{ "rule_id": "s04-r2-m", "any_of": ["今天", "一章书"] }], "forbidden": [{ "rule_id": "s04-r2-f", "any_of": ["迟到"] }], "correction": [], "valid_insight": [] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s04-r1", "s04-r2"],
+        "must": [{ "rule_id": "s04-d-m1", "any_of": ["周一"] }, { "rule_id": "s04-d-m2", "any_of": ["今天"] }],
+        "forbidden": [{ "rule_id": "s04-d-f1", "any_of": ["周一看完了一章书"] }],
+        "uncertainty": [],
+        "merge_separate": [{ "rule_id": "s04-d-sep", "relation": "separate", "left_record_card_id": "s04-r1", "right_record_card_id": "s04-r2" }],
+        "order": [{ "rule_id": "s04-d-order", "before_record_card_id": "s04-r1", "after_record_card_id": "s04-r2" }],
+        "source": [
+          { "rule_id": "s04-d-s1", "record_card_refs": ["s04-r1"], "source_refs": ["s04-u1"] },
+          { "rule_id": "s04-d-s2", "record_card_refs": ["s04-r2"], "source_refs": ["s04-u2"] }
+        ],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-04-c1",
+          "record_cards": [
+            { "record_card_id": "s04-r1", "event_id": "s04-e-monday", "text": "周一等人，对方迟到二十分钟。", "insight": "", "source_refs": ["s04-u1"] },
+            { "record_card_id": "s04-r2", "event_id": "s04-e-today", "text": "今天在店里看完一章书。", "insight": "", "source_refs": ["s04-u2"] }
+          ],
+          "daily_output": {
+            "title": "两次去同一家店",
+            "paragraphs": [
+              { "paragraph_id": "s04-c1-p1", "text": "周一在楼下咖啡店等人，对方迟到了二十分钟。", "source_refs": ["s04-u1"], "record_card_refs": ["s04-r1"] },
+              { "paragraph_id": "s04-c1-p2", "text": "今天又去那家店，我一个人安静看完了一章书。", "source_refs": ["s04-u2"], "record_card_refs": ["s04-r2"] }
+            ],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-04-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-04-c2",
+          "record_cards": [
+            { "record_card_id": "s04-r1", "event_id": "s04-e-monday", "text": "周一看完一章书，对方迟到。", "insight": "", "source_refs": ["s04-u1"] },
+            { "record_card_id": "s04-r2", "event_id": "s04-e-today", "text": "今天又去那家店。", "insight": "", "source_refs": ["s04-u2"] }
+          ],
+          "daily_output": {
+            "title": "咖啡店",
+            "paragraphs": [{ "paragraph_id": "s04-c2-p1", "text": "周一看完了一章书，对方迟到；今天我又去同一家店。", "source_refs": ["s04-u1", "s04-u2"], "record_card_refs": ["s04-r1", "s04-r2"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-04-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-05-feeling-without-event",
+      "title": "只有感受时保留边界",
+      "scenario": "用户只表达模糊低落，记录卡与日志都保留暂时性，避免补造原因。",
+      "source_group_id": "sg-seed-05-feeling-without-event",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s05-u1", "role": "user", "content": "今天有点低落，但说不清发生了什么。" },
+        { "message_id": "s05-u2", "role": "user", "content": "可能只是累了，我现在还不确定。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s05-r1", "event_id": "s05-e-feeling", "source_refs": ["s05-u1", "s05-u2"], "must": [{ "rule_id": "s05-r1-m", "any_of": ["低落"] }], "forbidden": [{ "rule_id": "s05-r1-f", "any_of": ["开会被批评", "确定是工作压力"] }], "correction": [], "valid_insight": [{ "rule_id": "s05-r1-i", "any_of": ["可能", "还不确定", "说不清"] }] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s05-r1"],
+        "must": [{ "rule_id": "s05-d-m1", "any_of": ["低落"] }, { "rule_id": "s05-d-m2", "any_of": ["累", "疲惫"] }],
+        "forbidden": [{ "rule_id": "s05-d-f1", "any_of": ["因为开会被批评", "确定是工作压力"] }],
+        "uncertainty": [{ "rule_id": "s05-d-u1", "topic_any_of": ["累", "疲惫"], "qualifier_any_of": ["可能", "也许", "还不确定", "暂时"] }],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s05-d-s1", "record_card_refs": ["s05-r1"], "source_refs": ["s05-u1", "s05-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-05-c1",
+          "record_cards": [{ "record_card_id": "s05-r1", "event_id": "s05-e-feeling", "text": "今天有点低落，暂时说不清原因。", "insight": "可能只是累了，现在还不确定。", "source_refs": ["s05-u1", "s05-u2"] }],
+          "daily_output": {
+            "title": "暂时说不清的低落",
+            "paragraphs": [{ "paragraph_id": "s05-c1-p1", "text": "今天有点低落，我暂时说不清发生了什么。可能只是累了，现在还不确定。", "source_refs": ["s05-u1", "s05-u2"], "record_card_refs": ["s05-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-05-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-05-c2",
+          "record_cards": [{ "record_card_id": "s05-r1", "event_id": "s05-e-feeling", "text": "因为开会被批评而低落。", "insight": "确定是工作压力。", "source_refs": ["s05-u1", "s05-u2"] }],
+          "daily_output": {
+            "title": "工作压力",
+            "paragraphs": [{ "paragraph_id": "s05-c2-p1", "text": "今天因为开会被批评而低落，确定是工作压力让我疲惫。", "source_refs": ["s05-u1", "s05-u2"], "record_card_refs": ["s05-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-05-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-06-atomic-confirmation",
+      "title": "最小确认也要生效",
+      "scenario": "用户用一句“对”确认前一轮认识，记录卡与日志都继承被确认事实。",
+      "source_group_id": "sg-seed-06-atomic-confirmation",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s06-u1", "role": "user", "content": "今天把报名材料提交了。" },
+        { "message_id": "s06-a1", "role": "assistant", "content": "这让你觉得拖了很久的事情终于落地，对吗？" },
+        { "message_id": "s06-u2", "role": "user", "content": "对。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s06-r1", "event_id": "s06-e-submit", "source_refs": ["s06-u1", "s06-a1", "s06-u2"], "must": [{ "rule_id": "s06-r1-m", "any_of": ["报名材料", "材料"] }], "forbidden": [{ "rule_id": "s06-r1-f", "any_of": ["尚未提交"] }], "correction": [], "valid_insight": [{ "rule_id": "s06-r1-i", "any_of": ["落地", "终于完成"] }] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s06-r1"],
+        "must": [{ "rule_id": "s06-d-m1", "any_of": ["报名材料"] }, { "rule_id": "s06-d-m2", "any_of": ["落地", "终于完成"] }],
+        "forbidden": [{ "rule_id": "s06-d-f1", "any_of": ["尚未提交"] }],
+        "uncertainty": [],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s06-d-s1", "record_card_refs": ["s06-r1"], "source_refs": ["s06-u1", "s06-a1", "s06-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-06-c1",
+          "record_cards": [{ "record_card_id": "s06-r1", "event_id": "s06-e-submit", "text": "今天把报名材料提交了。", "insight": "拖了很久的事情终于落地。", "source_refs": ["s06-u1", "s06-a1", "s06-u2"] }],
+          "daily_output": {
+            "title": "报名材料落了地",
+            "paragraphs": [{ "paragraph_id": "s06-c1-p1", "text": "今天把报名材料提交了，拖了很久的事情终于落地。", "source_refs": ["s06-u1", "s06-a1", "s06-u2"], "record_card_refs": ["s06-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-06-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-06-c2",
+          "record_cards": [{ "record_card_id": "s06-r1", "event_id": "s06-e-submit", "text": "今天整理了报名材料。", "insight": "还在准备。", "source_refs": ["s06-u1"] }],
+          "daily_output": {
+            "title": "准备报名",
+            "paragraphs": [{ "paragraph_id": "s06-c2-p1", "text": "今天整理了报名材料，事情尚未提交。", "source_refs": ["s06-u1"], "record_card_refs": ["s06-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-06-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-07-weak-response",
+      "title": "弱回答避免过度推断",
+      "scenario": "回答信息量有限，记录卡保留有限认识，日志延续同样边界。",
+      "source_group_id": "sg-seed-07-weak-response",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s07-u1", "role": "user", "content": "今天开会还行。" },
+        { "message_id": "s07-u2", "role": "user", "content": "说不上来，可能就是没那么紧张。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s07-r1", "event_id": "s07-e-meeting", "source_refs": ["s07-u1", "s07-u2"], "must": [{ "rule_id": "s07-r1-m", "any_of": ["开会", "会议"] }], "forbidden": [{ "rule_id": "s07-r1-f", "any_of": ["完全克服紧张", "表现十分出色"] }], "correction": [], "valid_insight": [{ "rule_id": "s07-r1-i", "any_of": ["可能", "说不上来", "没那么紧张"] }] }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s07-r1"],
+        "must": [{ "rule_id": "s07-d-m1", "any_of": ["开会", "会议"] }, { "rule_id": "s07-d-m2", "any_of": ["紧张"] }],
+        "forbidden": [{ "rule_id": "s07-d-f1", "any_of": ["完全克服紧张", "表现十分出色"] }],
+        "uncertainty": [{ "rule_id": "s07-d-u1", "topic_any_of": ["紧张"], "qualifier_any_of": ["可能", "好像", "没那么", "说不上来"] }],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s07-d-s1", "record_card_refs": ["s07-r1"], "source_refs": ["s07-u1", "s07-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-07-c1",
+          "record_cards": [{ "record_card_id": "s07-r1", "event_id": "s07-e-meeting", "text": "今天开会还行。", "insight": "说不上来具体原因，可能只是没那么紧张。", "source_refs": ["s07-u1", "s07-u2"] }],
+          "daily_output": {
+            "title": "没那么紧张的一次会",
+            "paragraphs": [{ "paragraph_id": "s07-c1-p1", "text": "今天开会还行。我说不上来具体原因，可能只是没有那么紧张。", "source_refs": ["s07-u1", "s07-u2"], "record_card_refs": ["s07-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-07-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-07-c2",
+          "record_cards": [{ "record_card_id": "s07-r1", "event_id": "s07-e-meeting", "text": "今天会议表现十分出色。", "insight": "已经完全克服紧张。", "source_refs": ["s07-u1", "s07-u2"] }],
+          "daily_output": {
+            "title": "克服紧张",
+            "paragraphs": [{ "paragraph_id": "s07-c2-p1", "text": "今天的会议表现十分出色，我已经完全克服紧张。", "source_refs": ["s07-u1", "s07-u2"], "record_card_refs": ["s07-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-07-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-08-correction",
+      "title": "用户修正覆盖旧事实",
+      "scenario": "地点从公园修正为河边，记录卡和当日日志都退出旧地点。",
+      "source_group_id": "sg-seed-08-correction",
+      "source_file_sha256": null,
+      "record_type": "trajectory",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s08-u1", "role": "user", "content": "下午去公园走了走。" },
+        { "message_id": "s08-u2", "role": "user", "content": "我刚才说错了，是河边，不是公园。" }
+      ],
+      "record_cards": [
+        {
+          "record_card_id": "s08-r1",
+          "event_id": "s08-e-walk",
+          "source_refs": ["s08-u1", "s08-u2"],
+          "must": [],
+          "forbidden": [],
+          "correction": [{ "rule_id": "s08-r1-c", "old_any_of": ["公园散步", "去了公园"], "new_any_of": ["河边"] }],
+          "valid_insight": []
+        }
+      ],
+      "daily_input": {
+        "current_journal": null,
+        "user_edits": [],
+        "new_records": ["s08-r1"],
+        "must": [{ "rule_id": "s08-d-m1", "any_of": ["河边"] }],
+        "forbidden": [{ "rule_id": "s08-d-f1", "any_of": ["公园散步", "去了公园"] }],
+        "uncertainty": [],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s08-d-s1", "record_card_refs": ["s08-r1"], "source_refs": ["s08-u1", "s08-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-08-c1",
+          "record_cards": [{ "record_card_id": "s08-r1", "event_id": "s08-e-walk", "text": "下午去了河边走一走。", "insight": "", "source_refs": ["s08-u1", "s08-u2"] }],
+          "daily_output": {
+            "title": "河边走一走",
+            "paragraphs": [{ "paragraph_id": "s08-c1-p1", "text": "下午去了河边走一走。", "source_refs": ["s08-u1", "s08-u2"], "record_card_refs": ["s08-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-08-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-08-c2",
+          "record_cards": [{ "record_card_id": "s08-r1", "event_id": "s08-e-walk", "text": "下午去了公园散步。", "insight": "", "source_refs": ["s08-u1"] }],
+          "daily_output": {
+            "title": "公园散步",
+            "paragraphs": [{ "paragraph_id": "s08-c2-p1", "text": "下午去了公园，完成了一次公园散步。", "source_refs": ["s08-u1"], "record_card_refs": ["s08-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": null, "visible_version_id": "seed-08-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-09-deleted-content",
+      "title": "用户删除内容不能复活",
+      "scenario": "旧日志含一段猜测，用户明确删除后，新记录卡和更新日志都只保留后续事实。",
+      "source_group_id": "sg-seed-09-deleted-content",
+      "source_file_sha256": null,
+      "record_type": "derived",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s09-u1", "role": "user", "content": "我一开始猜同事可能在生我的气。" },
+        { "message_id": "s09-u2", "role": "user", "content": "这段猜测删掉吧，我后来发现只是他在赶时间。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s09-r1", "event_id": "s09-e-colleague", "source_refs": ["s09-u2"], "must": [{ "rule_id": "s09-r1-m", "any_of": ["赶时间"] }], "forbidden": [{ "rule_id": "s09-r1-f", "any_of": ["同事在生我的气", "同事生气"] }], "correction": [], "valid_insight": [] }
+      ],
+      "daily_input": {
+        "current_journal": { "version_id": "s09-journal-v1", "title": "办公室的一刻", "paragraphs": ["我猜同事可能在生我的气。"] },
+        "user_edits": [{ "edit_id": "s09-edit-1", "operation": "delete", "target": "paragraph:1", "content": "", "source_refs": ["s09-u2"] }],
+        "new_records": ["s09-r1"],
+        "must": [{ "rule_id": "s09-d-m1", "any_of": ["赶时间"] }],
+        "forbidden": [{ "rule_id": "s09-d-f1", "any_of": ["同事在生我的气", "同事生气"] }],
+        "uncertainty": [],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s09-d-s1", "record_card_refs": ["s09-r1"], "source_refs": ["s09-u2"] }],
+        "preserve_committed_on_failure": false
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-09-c1",
+          "record_cards": [{ "record_card_id": "s09-r1", "event_id": "s09-e-colleague", "text": "后来发现同事当时只是赶时间。", "insight": "", "source_refs": ["s09-u2"] }],
+          "daily_output": {
+            "title": "后来才看清",
+            "paragraphs": [{ "paragraph_id": "s09-c1-p1", "text": "后来我发现，同事当时只是正在赶时间。", "source_refs": ["s09-u2"], "record_card_refs": ["s09-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": "s09-journal-v1", "visible_version_id": "seed-09-c1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-09-c2",
+          "record_cards": [{ "record_card_id": "s09-r1", "event_id": "s09-e-colleague", "text": "同事在生我的气，后来又去赶时间。", "insight": "", "source_refs": ["s09-u1", "s09-u2"] }],
+          "daily_output": {
+            "title": "同事生气",
+            "paragraphs": [{ "paragraph_id": "s09-c2-p1", "text": "我猜同事在生我的气，后来又发现他当时在赶时间。", "source_refs": ["s09-u1", "s09-u2"], "record_card_refs": ["s09-r1"] }],
+            "runtime_snapshot": { "generation_status": "success", "last_committed_version_id": "s09-journal-v1", "visible_version_id": "seed-09-c2", "overwrite_attempted": false }
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "seed-10-update-failure",
+      "title": "更新失败时保留旧稿",
+      "scenario": "已有已提交日志，加入新记录时生成失败，页面继续展示旧稿且不写入半成品。",
+      "source_group_id": "sg-seed-10-update-failure",
+      "source_file_sha256": null,
+      "record_type": "derived",
+      "synthetic": true,
+      "transcript": [
+        { "message_id": "s10-u1", "role": "user", "content": "旧稿里已经写了今晚完成了读书计划。" },
+        { "message_id": "s10-u2", "role": "user", "content": "我想补一句读完后心里很踏实。" }
+      ],
+      "record_cards": [
+        { "record_card_id": "s10-r1", "event_id": "s10-e-reading", "source_refs": ["s10-u1", "s10-u2"], "must": [{ "rule_id": "s10-r1-m", "any_of": ["读书计划", "读完"] }], "forbidden": [], "correction": [], "valid_insight": [{ "rule_id": "s10-r1-i", "any_of": ["踏实"] }] }
+      ],
+      "daily_input": {
+        "current_journal": { "version_id": "s10-journal-v1", "title": "完成读书计划", "paragraphs": ["今晚完成了读书计划。"] },
+        "user_edits": [],
+        "new_records": ["s10-r1"],
+        "must": [{ "rule_id": "s10-d-m1", "any_of": ["读书计划", "读完"] }],
+        "forbidden": [],
+        "uncertainty": [],
+        "merge_separate": [],
+        "order": [],
+        "source": [{ "rule_id": "s10-d-s1", "record_card_refs": ["s10-r1"], "source_refs": ["s10-u1"] }],
+        "preserve_committed_on_failure": true
+      },
+      "candidates": [
+        {
+          "candidate_id": "seed-10-c1",
+          "record_cards": [{ "record_card_id": "s10-r1", "event_id": "s10-e-reading", "text": "今晚完成了读书计划。", "insight": "读完后心里很踏实。", "source_refs": ["s10-u1", "s10-u2"] }],
+          "daily_output": {
+            "title": "完成读书计划",
+            "paragraphs": [{ "paragraph_id": "s10-c1-p1", "text": "今晚完成了读书计划。", "source_refs": ["s10-u1"], "record_card_refs": ["s10-r1"] }],
+            "runtime_snapshot": { "generation_status": "failure", "last_committed_version_id": "s10-journal-v1", "visible_version_id": "s10-journal-v1", "overwrite_attempted": false }
+          }
+        },
+        {
+          "candidate_id": "seed-10-c2",
+          "record_cards": [{ "record_card_id": "s10-r1", "event_id": "s10-e-reading", "text": "今晚完成了读书计划。", "insight": "读完后心里很踏实。", "source_refs": ["s10-u1", "s10-u2"] }],
+          "daily_output": {
+            "title": "读完后的踏实",
+            "paragraphs": [{ "paragraph_id": "s10-c2-p1", "text": "今晚完成了读书计划。", "source_refs": ["s10-u1"], "record_card_refs": ["s10-r1"] }],
+            "runtime_snapshot": { "generation_status": "failure", "last_committed_version_id": "s10-journal-v1", "visible_version_id": "s10-journal-v2-partial", "overwrite_attempted": true }
+          }
+        }
+      ]
+    }
+  ]
+}

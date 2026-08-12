@@ -1,0 +1,8 @@
+# 当前项目 .env 指向远程数据库。正式评测启动命令必须显式覆盖以下变量，禁止继承 .env。
+NODE_ENV=development
+VERCEL_ENV=
+NEXT_PUBLIC_VERCEL_ENV=
+JOURNAL_DAILY_EVAL_BASE_URL=http://127.0.0.1:3000
+DATABASE_URL=postgresql://<local-user>@127.0.0.1:5432/happiness_system_codex?schema=journal_daily_eval
+DIRECT_URL=postgresql://<local-user>@127.0.0.1:5432/happiness_system_codex?schema=journal_daily_eval
+JOURNAL_DAILY_EVAL_DATA_DIR=artifacts/journal-generation-evaluation/.private/formal

@@ -1,0 +1,697 @@
+{
+  "schema_version": "2.0",
+  "dataset_version": "2026-08-10.seed-v2-two-layer",
+  "case_count": 10,
+  "candidate_count": 20,
+  "admitted_candidate_count": 10,
+  "blocked_candidate_count": 10,
+  "human_review_eligible_case_count": 0,
+  "cases": [
+    {
+      "case_id": "seed-01-simple-event",
+      "source_group_id": "sg-seed-01-simple-event",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-01-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-01-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0,
+            "source_mapping_rate": 0.3333333333333333,
+            "required_fact_coverage": 0,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "记录卡的来源引用无法完整回到期望消息。",
+              "refs": [
+                "s01-r1"
+              ]
+            },
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "记录卡遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s01-rc-m1",
+                "s01-rc-m2"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s01-rc-f1"
+              ]
+            },
+            {
+              "code": "VALID_INSIGHT_MISSING",
+              "message": "记录卡缺少已获支持的有效认识。",
+              "refs": [
+                "s01-rc-i1"
+              ]
+            },
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "当日日志遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s01-d-m1",
+                "s01-d-m2"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s01-d-f1"
+              ]
+            },
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "当日日志没有完整继承 source 规则要求的来源。",
+              "refs": [
+                "s01-d-s1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-02-multiple-events",
+      "source_group_id": "sg-seed-02-multiple-events",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-02-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-02-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 0.6666666666666666,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 0,
+            "order_rate": 0,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "MERGE_SEPARATE_RULE_FAILED",
+              "message": "当日日志没有遵守事件合并或分离规则。",
+              "refs": [
+                "s02-d-sep"
+              ]
+            },
+            {
+              "code": "ORDER_RULE_FAILED",
+              "message": "当日日志没有遵守指定事件顺序。",
+              "refs": [
+                "s02-d-order"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-03-cross-session-same-event",
+      "source_group_id": "sg-seed-03-cross-session-same-event",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-03-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-03-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0.5,
+            "daily_rule_rate": 0.4,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 0.5,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 0,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "记录卡遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s03-r2-m"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s03-r2-f"
+              ]
+            },
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "当日日志遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s03-d-m2"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s03-d-f1"
+              ]
+            },
+            {
+              "code": "MERGE_SEPARATE_RULE_FAILED",
+              "message": "当日日志没有遵守事件合并或分离规则。",
+              "refs": [
+                "s03-d-merge"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-04-similar-separate-events",
+      "source_group_id": "sg-seed-04-similar-separate-events",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-04-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-04-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0.5,
+            "daily_rule_rate": 0.5714285714285714,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 0,
+            "order_rate": 0,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s04-r1-f"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s04-d-f1"
+              ]
+            },
+            {
+              "code": "MERGE_SEPARATE_RULE_FAILED",
+              "message": "当日日志没有遵守事件合并或分离规则。",
+              "refs": [
+                "s04-d-sep"
+              ]
+            },
+            {
+              "code": "ORDER_RULE_FAILED",
+              "message": "当日日志没有遵守指定事件顺序。",
+              "refs": [
+                "s04-d-order"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-05-feeling-without-event",
+      "source_group_id": "sg-seed-05-feeling-without-event",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-05-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-05-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0.6,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 0.75,
+            "uncertainty_qualification_rate": 0,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s05-r1-f"
+              ]
+            },
+            {
+              "code": "VALID_INSIGHT_MISSING",
+              "message": "记录卡缺少已获支持的有效认识。",
+              "refs": [
+                "s05-r1-i"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s05-d-f1"
+              ]
+            },
+            {
+              "code": "UNCERTAINTY_QUALIFIER_MISSING",
+              "message": "当日日志提及待确认主题时缺少不确定性限定。",
+              "refs": [
+                "s05-d-u1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-06-atomic-confirmation",
+      "source_group_id": "sg-seed-06-atomic-confirmation",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-06-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-06-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0.25,
+            "source_mapping_rate": 0.3333333333333333,
+            "required_fact_coverage": 0.5,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 1,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "记录卡的来源引用无法完整回到期望消息。",
+              "refs": [
+                "s06-r1"
+              ]
+            },
+            {
+              "code": "VALID_INSIGHT_MISSING",
+              "message": "记录卡缺少已获支持的有效认识。",
+              "refs": [
+                "s06-r1-i"
+              ]
+            },
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "当日日志遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s06-d-m2"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s06-d-f1"
+              ]
+            },
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "当日日志没有完整继承 source 规则要求的来源。",
+              "refs": [
+                "s06-d-s1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-07-weak-response",
+      "source_group_id": "sg-seed-07-weak-response",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-07-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-07-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0.6,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 0.75,
+            "uncertainty_qualification_rate": 0,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s07-r1-f"
+              ]
+            },
+            {
+              "code": "VALID_INSIGHT_MISSING",
+              "message": "记录卡缺少已获支持的有效认识。",
+              "refs": [
+                "s07-r1-i"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s07-d-f1"
+              ]
+            },
+            {
+              "code": "UNCERTAINTY_QUALIFIER_MISSING",
+              "message": "当日日志提及待确认主题时缺少不确定性限定。",
+              "refs": [
+                "s07-d-u1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-08-correction",
+      "source_group_id": "sg-seed-08-correction",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-08-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-08-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0,
+            "source_mapping_rate": 0.3333333333333333,
+            "required_fact_coverage": 0,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "记录卡的来源引用无法完整回到期望消息。",
+              "refs": [
+                "s08-r1"
+              ]
+            },
+            {
+              "code": "CORRECTION_NOT_APPLIED",
+              "message": "记录卡仍保留旧事实，或未写入修正后的事实。",
+              "refs": [
+                "s08-r1-c"
+              ]
+            },
+            {
+              "code": "REQUIRED_FACT_MISSING",
+              "message": "当日日志遗漏 must 规则要求保留的信息。",
+              "refs": [
+                "s08-d-m1"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s08-d-f1"
+              ]
+            },
+            {
+              "code": "SOURCE_MAPPING_INCOMPLETE",
+              "message": "当日日志没有完整继承 source 规则要求的来源。",
+              "refs": [
+                "s08-d-s1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-09-deleted-content",
+      "source_group_id": "sg-seed-09-deleted-content",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-09-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-09-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 0,
+            "daily_rule_rate": 0.6666666666666666,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 2,
+            "committed_draft_preservation": 1
+          },
+          "failures": [
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "记录卡命中 forbidden 规则。",
+              "refs": [
+                "s09-r1-f"
+              ]
+            },
+            {
+              "code": "FORBIDDEN_TERM_PRESENT",
+              "message": "当日日志命中 forbidden 规则。",
+              "refs": [
+                "s09-d-f1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seed-10-update-failure",
+      "source_group_id": "sg-seed-10-update-failure",
+      "synthetic": true,
+      "eligible_for_human_review": false,
+      "candidates": [
+        {
+          "candidate_id": "seed-10-c1",
+          "admitted": true,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 1,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 1
+          },
+          "failures": []
+        },
+        {
+          "candidate_id": "seed-10-c2",
+          "admitted": false,
+          "metrics": {
+            "record_card_rule_rate": 1,
+            "daily_rule_rate": 0.6666666666666666,
+            "source_mapping_rate": 1,
+            "required_fact_coverage": 1,
+            "uncertainty_qualification_rate": 1,
+            "event_merge_separate_rate": 1,
+            "order_rate": 1,
+            "forbidden_term_hits": 0,
+            "committed_draft_preservation": 0
+          },
+          "failures": [
+            {
+              "code": "COMMITTED_DRAFT_NOT_PRESERVED",
+              "message": "更新失败后，已提交旧稿未保持可见或发生覆盖尝试。",
+              "refs": [
+                "s10-journal-v2-partial"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "report_sha256": "6a39ca4c27505eaa8cb50a3b19f8954f22bb1af8d250b34a15272256bd7630fa"
+}
