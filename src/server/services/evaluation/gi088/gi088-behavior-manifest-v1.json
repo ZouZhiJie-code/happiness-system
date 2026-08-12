@@ -29,7 +29,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "5f343ac6aaa22693d338f3ab47f8fbd1d42299f18810bc4ee99d6b271c2fa121"
+      "sha256": "113cd00b764f4d5a7672d1258d4197e392d4d9579f77f784dc8ccd3402fce281"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/development-fixtures.ts",
@@ -66,7 +66,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "5dbdc72780c970c764ccaf70b7dd46d40883f3985abd7b31f4d2fb8ba13a7101"
+      "sha256": "95980f7d546316f05352d823fb39f629166992f9ad359c0babe3f2202371543b"
     },
     {
       "path": "evals/event-centered-generative/gi088-v8r3-skill-evaluation/regression-fixtures.ts",
@@ -187,7 +187,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "6bffe391857d17b3d75381eb28cb5fde11239814f8f960a56d4de0884c636d95"
+      "sha256": "e180d86bbd49e65e519b9f08e9a6cbc6051e5251ff717b349fafd9b5690dcbc1"
     },
     {
       "path": "skills/conduct-daily-light-thinking-interview/agents/openai.yaml",

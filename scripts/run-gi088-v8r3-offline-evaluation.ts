@@ -9,6 +9,7 @@ import {
   parseGi088V8r3PrivateHiddenFile
 } from "../evals/event-centered-generative/gi088-v8r3-skill-evaluation/hidden-fixtures";
 import {
+  GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET,
   GI088_V8R3_FORMAL_CALL_BUDGET,
   buildGi088V8r3BadCasePacket,
   buildGi088V8r3BlindComparisonPacket,
@@ -52,6 +53,7 @@ const EXECUTION_CONFIRMATION = "I_UNDERSTAND_MODEL_CALLS";
 type Mode =
   | "plan"
   | "candidate"
+  | "empty-content-diagnostic"
   | "judge-calibration"
   | "judge-prescreen"
   | "human-adjudication"
@@ -72,6 +74,7 @@ function readMode(): Mode {
   if (
     value === "plan" ||
     value === "candidate" ||
+    value === "empty-content-diagnostic" ||
     value === "judge-calibration" ||
     value === "judge-prescreen" ||
     value === "human-adjudication" ||
@@ -192,7 +195,11 @@ function assertNonProduction() {
 }
 
 function assertModelExecutionGate(input: {
-  mode: "candidate" | "judge-calibration" | "judge-prescreen";
+  mode:
+    | "candidate"
+    | "empty-content-diagnostic"
+    | "judge-calibration"
+    | "judge-prescreen";
   authorizedBudget: number;
 }) {
   loadEnvConfig(process.cwd());
@@ -346,6 +353,60 @@ async function runCandidate() {
       totalCalls: report.budget.totalCalls,
       resultCounts: { development: 56, hidden: 24 },
       checkpointInitialCalls: { development: 64, hidden: 32 }
+    })}\n`
+  );
+}
+
+async function runEmptyContentDiagnostic() {
+  assertModelExecutionGate({
+    mode: "empty-content-diagnostic",
+    authorizedBudget: GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET.callsMaximum
+  });
+  const outputPath = resolveOutputPath();
+  const hiddenDataset = await loadPrivateHiddenDataset();
+  validateFormalDataset(hiddenDataset.cases);
+  const resolvedRuntime = resolveGi088ArkRuntimeConfig(process.env);
+  const identity = createGi088V8r3ArkProviderIdentity();
+  if (
+    resolvedRuntime.summary.baseUrlHost !== identity.baseUrlHost ||
+    resolvedRuntime.summary.model !== identity.model ||
+    resolvedRuntime.summary.endpoint !== identity.endpoint
+  ) {
+    throw new Error("GI088_V8R3_ARK_RUNTIME_ATTESTATION_MISMATCH");
+  }
+  const report = await executeGi088V8r3CandidateEvaluation({
+    provider: createGi088ArkProvider(process.env),
+    providerIdentity: identity,
+    deterministicRegression: GI088_V8R3_DETERMINISTIC_REGRESSION_CASES,
+    developmentCases: GI088_V8R3_DEVELOPMENT_CASES,
+    hiddenAdmissionCases: hiddenDataset.cases,
+    privateHiddenFileSha256: hiddenDataset.fileSha256,
+    executionMode: "empty_content_diagnostic",
+    automaticRecoveryMaximum:
+      GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET.recoveryCallsMaximum,
+    emptyContentRecoveryMaximumPerCheckpoint:
+      GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET.maxRetriesPerCheckpoint,
+    concurrency: 2
+  });
+  if (
+    report.budget.initialCalls !==
+      GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET.initialCalls ||
+    report.budget.totalCalls >
+      GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET.callsMaximum
+  ) {
+    throw new Error("GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET_MISMATCH");
+  }
+  parseGi088V8r3CandidateExecutionReport(report);
+  await writeJsonExclusive(outputPath, report);
+  process.stdout.write(
+    `${JSON.stringify({
+      status: "empty_content_diagnostic_complete",
+      outputPath,
+      initialCalls: report.budget.initialCalls,
+      automaticRecoveryCalls: report.budget.automaticRecoveryCalls,
+      totalCalls: report.budget.totalCalls,
+      emptyContent: report.emptyContentDiagnostics?.summary ?? null,
+      externalModelCalls: report.budget.totalCalls
     })}\n`
   );
 }
@@ -607,6 +668,7 @@ async function main() {
     return;
   }
   if (mode === "candidate") return runCandidate();
+  if (mode === "empty-content-diagnostic") return runEmptyContentDiagnostic();
   if (mode === "judge-calibration") return runJudgeCalibration();
   if (mode === "judge-prescreen") return runJudgePrescreen();
   if (mode === "human-adjudication") return runHumanAdjudication();

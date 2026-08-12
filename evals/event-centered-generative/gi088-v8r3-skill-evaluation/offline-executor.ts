@@ -8,8 +8,12 @@ import {
 } from "../board7b-working-task-v1/board7b-working-task-v1";
 import {
   GI088_V8R3_EVALUATION_DATASET_VERSION,
+  GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_CALLS_MAXIMUM,
+  GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT,
+  GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM,
   GI088_V8R3_FORMAL_EVALUATION_VERSION,
   GI088_V8R3_HARD_GATES,
+  GI088_V8R3_LEGACY_RUNNER_VERSION,
   GI088_V8R3_RUNNER_VERSION,
   gi088V8r3BadCaseCategorySchema,
   gi088V8r3EvaluationCaseSchema,
@@ -48,6 +52,8 @@ import {
 import {
   GI088_ARK_FLASH_RUNTIME_POLICY,
   GI088_DEEPSEEK_PRO_RUNTIME_POLICY,
+  GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
+  GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_MODEL_CALL_IDENTITY,
   GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY,
   GI088_TIMEOUT_POLICY,
@@ -80,7 +86,12 @@ function sha256(value: string) {
 }
 
 export const GI088_V8R3_OFFLINE_EXECUTOR_VERSION =
+  "2026-08-11.gi088-v8r3-offline-executor-v7" as const;
+export const GI088_V8R3_LEGACY_OFFLINE_EXECUTOR_VERSION =
   "2026-08-11.gi088-v8r3-offline-executor-v6" as const;
+
+export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE =
+  "empty_content_diagnostic" as const;
 
 export const GI088_V8R3_FORMAL_CALL_BUDGET = {
   deterministicRegressionCalls: 0,
@@ -94,6 +105,15 @@ export const GI088_V8R3_FORMAL_CALL_BUDGET = {
   judgeHiddenCallsMaximum: 0,
   judgeCallsMaximum: 96,
   completeFormalFlowCallsMaximum: 194
+} as const;
+
+export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET = {
+  initialCalls: 96,
+  recoveryCallsMaximum:
+    GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM,
+  callsMaximum: GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_CALLS_MAXIMUM,
+  maxRetriesPerCheckpoint:
+    GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT
 } as const;
 
 export const GI088_V8R3_OFFLINE_PRIVACY_CONTRACT = {
@@ -118,7 +138,50 @@ export type Gi088V8r3ProviderIdentity = {
   payloadContractVersion: string;
 };
 
+export type Gi088V8r3CandidateExecutionMode =
+  | "formal"
+  | typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE;
+
+export type Gi088V8r3EmptyContentCheckpointDiagnostic = {
+  caseId: string;
+  trialAttempt: 1 | 2;
+  checkpointIndex: number;
+  initialEmptyContent: boolean;
+  emptyContentRecoveryAttemptCount: number;
+  recoverySuccessAttempt: number | null;
+  emptyContentExhausted: boolean;
+  recoveryBudgetExhausted: boolean;
+  finalEmptyContent: boolean;
+  cumulativeLatencyMs: number | null;
+};
+
+export type Gi088V8r3EmptyContentDiagnosticReport = {
+  mode: typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE;
+  maxRetriesPerCheckpoint: typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT;
+  globalRecoveryCallsMaximum: typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM;
+  checkpoints: Gi088V8r3EmptyContentCheckpointDiagnostic[];
+  summary: {
+    emptyContentInitialCount: number;
+    emptyContentTriggerCount: number;
+    emptyContentRecoveryAttemptCount: number;
+    emptyContentRecoverySuccessCount: number;
+    emptyContentRecoveredCheckpointCount: number;
+    successAtAttempt1: number;
+    successAtAttempt2: number;
+    successAtAttempt3: number;
+    finalEmptyContentCount: number;
+    recoveryBudgetExhaustedCount: number;
+    finalVisibleCompletionRate: number | null;
+    visibleLatencySamplesMs: number[];
+    visibleLatencyP50Ms: number | null;
+    visibleLatencyP90Ms: number | null;
+    visibleLatencyMaxMs: number | null;
+    totalRecoveryCalls: number;
+  };
+};
+
 export type Gi088V8r3CandidateRecoveryTrigger =
+  | "EMPTY_CONTENT"
   | "TIMEOUT"
   | "OUTPUT_SCHEMA_INVALID"
   | "SEMANTIC_VALIDATION_FAILED"
@@ -127,6 +190,12 @@ export type Gi088V8r3CandidateRecoveryTrigger =
 function candidateRecoveryCorrection(
   trigger: Gi088V8r3CandidateRecoveryTrigger
 ) {
+  if (trigger === "EMPTY_CONTENT") {
+    return {
+      version: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
+      instruction: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
+    } as const;
+  }
   return GI088_TECHNICAL_CORRECTION_RECOVERY_POLICY.corrections[trigger];
 }
 
@@ -193,6 +262,7 @@ export type Gi088V8r3CandidateCallRecord = {
   callId: string;
   kind: "initial" | "automatic_recovery";
   appliedRecoveryTrigger: Gi088V8r3CandidateRecoveryTrigger | null;
+  recoveryAttempt?: number;
   checkpointIndex: number;
   requestHash: string;
   status: "valid" | "protected_failure" | "technical_failure";
@@ -214,6 +284,7 @@ export type Gi088V8r3CandidateCheckpointRecord = {
   visibleResponse: string | null;
   calls: Gi088V8r3CandidateCallRecord[];
   automaticRecoveryCount: number;
+  recoveryBudgetExhausted?: boolean;
   submitToVisibleLatencyMs: number | null;
 };
 
@@ -235,12 +306,16 @@ export type Gi088V8r3CandidateTrialRecord = {
 };
 
 export type Gi088V8r3CandidateExecutionReport = {
-  reportVersion: typeof GI088_V8R3_OFFLINE_EXECUTOR_VERSION;
+  reportVersion:
+    | typeof GI088_V8R3_OFFLINE_EXECUTOR_VERSION
+    | typeof GI088_V8R3_LEGACY_OFFLINE_EXECUTOR_VERSION;
   formalEvaluationVersion: typeof GI088_V8R3_FORMAL_EVALUATION_VERSION;
   runId: string;
   createdAt: string;
   datasetVersion: typeof GI088_V8R3_EVALUATION_DATASET_VERSION;
-  runnerVersion: typeof GI088_V8R3_RUNNER_VERSION;
+  runnerVersion:
+    | typeof GI088_V8R3_RUNNER_VERSION
+    | typeof GI088_V8R3_LEGACY_RUNNER_VERSION;
   behaviorFingerprintBundle: ReturnType<typeof createGi088FingerprintBundle>;
   candidateFingerprint: string;
   datasetFingerprint: string;
@@ -253,6 +328,8 @@ export type Gi088V8r3CandidateExecutionReport = {
   executionConfig: {
     concurrency: number;
     automaticRecoveryMaximum: number;
+    recoveryMode?: Gi088V8r3CandidateExecutionMode;
+    emptyContentRecoveryMaximumPerCheckpoint?: number;
   };
   runtime: Gi088V8r3ProviderIdentity & {
     thinking: "enabled";
@@ -292,6 +369,7 @@ export type Gi088V8r3CandidateExecutionReport = {
     submitToVisibleLatencySamplesMs: number[];
     completedCallLatencySamplesMs: number[];
   };
+  emptyContentDiagnostics?: Gi088V8r3EmptyContentDiagnosticReport;
   records: Gi088V8r3CandidateTrialRecord[];
 };
 
@@ -324,6 +402,7 @@ export function createGi088V8r3OfflineExecutionPlan() {
       hiddenAutomaticJudgement: "forbidden"
     },
     callBudget: GI088_V8R3_FORMAL_CALL_BUDGET,
+    emptyContentDiagnostic: GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_BUDGET,
     privacy: GI088_V8R3_OFFLINE_PRIVACY_CONTRACT
   } as const;
 }
@@ -367,7 +446,9 @@ function safeTrace(
     httpStatus: diagnostics?.httpStatus ?? null,
     responseModel: diagnostics?.responseModel ?? null,
     choiceCount: diagnostics?.choiceCount ?? null,
-    contentLength: diagnostics?.contentLength ?? null,
+    contentLength:
+      diagnostics?.contentLength ??
+      (completion ? completion.content.length : null),
     headersLatencyMs: diagnostics?.headersLatencyMs ?? null,
     bodyLatencyMs: diagnostics?.bodyLatencyMs ?? null,
     totalLatencyMs:
@@ -524,11 +605,14 @@ export function createGi088V8r3CandidateRequestHashPayload(input: {
   attempt: 1 | 2;
   kind: "initial" | "automatic_recovery";
   recoveryTrigger?: Gi088V8r3CandidateRecoveryTrigger | null;
+  recoveryAttempt?: number;
 }) {
   const runtimeIdentity = createGi088V8r3ArkProviderIdentity();
   const recoveryCorrection = input.recoveryTrigger
     ? candidateRecoveryCorrection(input.recoveryTrigger)
     : null;
+  const recoveryAttempt =
+    input.recoveryAttempt ?? (input.kind === "automatic_recovery" ? 1 : 0);
   return {
     identity: GI088_MODEL_CALL_IDENTITY,
     transport: runtimeIdentity.transport,
@@ -538,6 +622,7 @@ export function createGi088V8r3CandidateRequestHashPayload(input: {
     checkpointIndex: input.checkpointIndex,
     attempt: input.attempt,
     kind: input.kind,
+    recoveryAttempt,
     recoveryTrigger: input.recoveryTrigger ?? null,
     recoveryInstructionVersion: recoveryCorrection?.version ?? null,
     timeoutPolicy: GI088_TIMEOUT_POLICY
@@ -631,6 +716,7 @@ async function executeCandidateCall(input: {
   checkpointIndex: number;
   attempt: 1 | 2;
   kind: "initial" | "automatic_recovery";
+  recoveryAttempt: number;
   recoveryTrigger?: Gi088V8r3CandidateRecoveryTrigger | null;
   now: () => Date;
 }) {
@@ -652,14 +738,18 @@ async function executeCandidateCall(input: {
       getAIProviderFailureCode(error),
       "PROVIDER_FAILURE"
     );
+    const emptyContentFailure = failureCode === "EMPTY_CONTENT";
     return {
       call: {
         callId,
         kind: input.kind,
         appliedRecoveryTrigger: input.recoveryTrigger ?? null,
+        recoveryAttempt: input.recoveryAttempt,
         checkpointIndex: input.checkpointIndex,
         requestHash,
-        status: "technical_failure" as const,
+        status: emptyContentFailure
+          ? ("protected_failure" as const)
+          : ("technical_failure" as const),
         errorCode: failureCode,
         validationIssues: [],
         responseHash: null,
@@ -670,7 +760,33 @@ async function executeCandidateCall(input: {
       visible: null,
       action: null,
       recoveryTrigger:
-        failureCode === "TIMEOUT" ? "TIMEOUT" as const : null
+        emptyContentFailure
+          ? ("EMPTY_CONTENT" as const)
+          : failureCode === "TIMEOUT"
+            ? ("TIMEOUT" as const)
+            : null
+    };
+  }
+  if (completion.content.trim().length === 0) {
+    return {
+      call: {
+        callId,
+        kind: input.kind,
+        appliedRecoveryTrigger: input.recoveryTrigger ?? null,
+        recoveryAttempt: input.recoveryAttempt,
+        checkpointIndex: input.checkpointIndex,
+        requestHash,
+        status: "protected_failure" as const,
+        errorCode: "EMPTY_CONTENT",
+        validationIssues: [],
+        responseHash: null,
+        safeTrace: safeTrace(completion),
+        startedAt,
+        completedAt: input.now().toISOString()
+      },
+      visible: null,
+      action: null,
+      recoveryTrigger: "EMPTY_CONTENT" as const
     };
   }
   const validated = validateGi088V8r3CandidateOutput({
@@ -690,6 +806,7 @@ async function executeCandidateCall(input: {
       callId,
       kind: input.kind,
       appliedRecoveryTrigger: input.recoveryTrigger ?? null,
+      recoveryAttempt: input.recoveryAttempt,
       checkpointIndex: input.checkpointIndex,
       requestHash,
       status: issues.length ? "protected_failure" as const : "valid" as const,
@@ -712,23 +829,39 @@ async function executeCandidateCheckpoint(input: {
   checkpointIndex: number;
   attempt: 1 | 2;
   budget: CandidateCallBudget;
+  emptyContentRecoveryMaximumPerCheckpoint: number;
   now: () => Date;
 }): Promise<Gi088V8r3CandidateCheckpointRecord> {
   input.budget.reserve("initial");
-  const initial = await executeCandidateCall({ ...input, kind: "initial" });
+  const initial = await executeCandidateCall({
+    ...input,
+    kind: "initial",
+    recoveryAttempt: 0
+  });
   const calls = [initial.call];
   let final = initial;
-  if (
-    initial.recoveryTrigger &&
-    input.budget.reserve("automatic_recovery")
-  ) {
-    const recovery = await executeCandidateCall({
+  let recoveryAttempt = 0;
+  let recoveryBudgetExhausted = false;
+  while (final.recoveryTrigger) {
+    const trigger = final.recoveryTrigger;
+    const canRetryTrigger =
+      trigger === "EMPTY_CONTENT"
+        ? recoveryAttempt < input.emptyContentRecoveryMaximumPerCheckpoint
+        : recoveryAttempt < 1;
+    if (!canRetryTrigger) break;
+    if (!input.budget.reserve("automatic_recovery")) {
+      recoveryBudgetExhausted = true;
+      break;
+    }
+    recoveryAttempt += 1;
+    final = await executeCandidateCall({
       ...input,
       kind: "automatic_recovery",
-      recoveryTrigger: initial.recoveryTrigger
+      recoveryAttempt,
+      recoveryTrigger: trigger
     });
-    calls.push(recovery.call);
-    final = recovery;
+    calls.push(final.call);
+    if (trigger !== "EMPTY_CONTENT") break;
   }
   const checkpoint = input.evaluationCase.checkpoints[input.checkpointIndex]!;
   return {
@@ -745,6 +878,7 @@ async function executeCandidateCheckpoint(input: {
     automaticRecoveryCount: calls.filter(
       (call) => call.kind === "automatic_recovery"
     ).length,
+    recoveryBudgetExhausted,
     submitToVisibleLatencyMs:
       final.call.status === "valid" &&
       calls.every((call) => call.safeTrace.latencyMs !== null)
@@ -758,6 +892,7 @@ async function executeCandidateTrial(input: {
   evaluationCase: Gi088V8r3EvaluationCase;
   attempt: 1 | 2;
   budget: CandidateCallBudget;
+  emptyContentRecoveryMaximumPerCheckpoint: number;
   now: () => Date;
 }): Promise<Gi088V8r3CandidateTrialRecord> {
   const checkpoints: Gi088V8r3CandidateCheckpointRecord[] = [];
@@ -986,6 +1121,141 @@ function buildOperationalLedger(records: readonly Gi088V8r3CandidateTrialRecord[
   };
 }
 
+function percentile(values: readonly number[], fraction: number) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const index = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil(sorted.length * fraction) - 1)
+  );
+  return sorted[index] ?? null;
+}
+
+function buildEmptyContentDiagnosticReport(input: {
+  records: readonly Gi088V8r3CandidateTrialRecord[];
+  maxRetriesPerCheckpoint: typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT;
+  globalRecoveryCallsMaximum: typeof GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM;
+}): Gi088V8r3EmptyContentDiagnosticReport {
+  const checkpoints = input.records.flatMap((record) =>
+    record.checkpoints.map((checkpoint) => {
+      const initialCall = checkpoint.calls[0];
+      const emptyRecoveryCalls = checkpoint.calls.filter(
+        (call) =>
+          call.kind === "automatic_recovery" &&
+          call.appliedRecoveryTrigger === "EMPTY_CONTENT"
+      );
+      const successfulRecoveryCall = emptyRecoveryCalls.find(
+        (call) => call.status === "valid"
+      );
+      const cumulativeLatencyMs = checkpoint.calls.every(
+        (call) => call.safeTrace.latencyMs !== null
+      )
+        ? checkpoint.calls.reduce(
+            (total, call) => total + (call.safeTrace.latencyMs ?? 0),
+            0
+          )
+        : null;
+      return {
+        caseId: record.caseId,
+        trialAttempt: record.attempt,
+        checkpointIndex: checkpoint.checkpointIndex,
+        initialEmptyContent: initialCall?.errorCode === "EMPTY_CONTENT",
+        emptyContentRecoveryAttemptCount: emptyRecoveryCalls.length,
+        recoverySuccessAttempt: successfulRecoveryCall
+          ? successfulRecoveryCall.recoveryAttempt ??
+            emptyRecoveryCalls.indexOf(successfulRecoveryCall) + 1
+          : null,
+        emptyContentExhausted:
+          initialCall?.errorCode === "EMPTY_CONTENT" &&
+          checkpoint.calls.at(-1)?.errorCode === "EMPTY_CONTENT" &&
+          emptyRecoveryCalls.length >= input.maxRetriesPerCheckpoint,
+        recoveryBudgetExhausted: checkpoint.recoveryBudgetExhausted === true,
+        finalEmptyContent:
+          checkpoint.calls.at(-1)?.errorCode === "EMPTY_CONTENT",
+        cumulativeLatencyMs
+      } satisfies Gi088V8r3EmptyContentCheckpointDiagnostic;
+    })
+  );
+  const initialEmptyContentCount = checkpoints.filter(
+    (checkpoint) => checkpoint.initialEmptyContent
+  ).length;
+  const emptyContentRecoveryAttemptCount = checkpoints.reduce(
+    (total, checkpoint) =>
+      total + checkpoint.emptyContentRecoveryAttemptCount,
+    0
+  );
+  const emptyContentRecoverySuccessCount = checkpoints.filter(
+    (checkpoint) => checkpoint.recoverySuccessAttempt !== null
+  ).length;
+  const recoveredCheckpoints = checkpoints.filter(
+    (checkpoint) => checkpoint.recoverySuccessAttempt !== null
+  );
+  const visibleLatencySamplesMs = input.records.flatMap((record) =>
+    record.checkpoints.flatMap((checkpoint) =>
+      checkpoint.status === "valid" &&
+      checkpoint.submitToVisibleLatencyMs !== null
+        ? [checkpoint.submitToVisibleLatencyMs]
+        : []
+    )
+  );
+  const finalVisibleCount = input.records.reduce(
+    (total, record) =>
+      total + record.checkpoints.filter((checkpoint) => checkpoint.status === "valid").length,
+    0
+  );
+  const eligibleCount = input.records.reduce(
+    (total, record) => total + record.checkpoints.length,
+    0
+  );
+  return {
+    mode: GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE,
+    maxRetriesPerCheckpoint: input.maxRetriesPerCheckpoint,
+    globalRecoveryCallsMaximum: input.globalRecoveryCallsMaximum,
+    checkpoints,
+    summary: {
+      emptyContentInitialCount: initialEmptyContentCount,
+      emptyContentTriggerCount: initialEmptyContentCount,
+      emptyContentRecoveryAttemptCount,
+      emptyContentRecoverySuccessCount,
+      emptyContentRecoveredCheckpointCount: recoveredCheckpoints.length,
+      successAtAttempt1: recoveredCheckpoints.filter(
+        (checkpoint) => checkpoint.recoverySuccessAttempt === 1
+      ).length,
+      successAtAttempt2: recoveredCheckpoints.filter(
+        (checkpoint) => checkpoint.recoverySuccessAttempt === 2
+      ).length,
+      successAtAttempt3: recoveredCheckpoints.filter(
+        (checkpoint) => checkpoint.recoverySuccessAttempt === 3
+      ).length,
+      finalEmptyContentCount: checkpoints.filter(
+        (checkpoint) => checkpoint.finalEmptyContent
+      ).length,
+      recoveryBudgetExhaustedCount: checkpoints.filter(
+        (checkpoint) => checkpoint.recoveryBudgetExhausted
+      ).length,
+      finalVisibleCompletionRate:
+        eligibleCount > 0 ? finalVisibleCount / eligibleCount : null,
+      visibleLatencySamplesMs,
+      visibleLatencyP50Ms: percentile(visibleLatencySamplesMs, 0.5),
+      visibleLatencyP90Ms: percentile(visibleLatencySamplesMs, 0.9),
+      visibleLatencyMaxMs:
+        visibleLatencySamplesMs.length > 0
+          ? Math.max(...visibleLatencySamplesMs)
+          : null,
+      totalRecoveryCalls: input.records.reduce(
+        (total, record) =>
+          total +
+          record.checkpoints.reduce(
+            (checkpointTotal, checkpoint) =>
+              checkpointTotal + checkpoint.automaticRecoveryCount,
+            0
+          ),
+        0
+      )
+    }
+  };
+}
+
 export async function executeGi088V8r3CandidateEvaluation(input: {
   provider: AIProvider;
   providerIdentity: Gi088V8r3ProviderIdentity;
@@ -994,6 +1264,8 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
   hiddenAdmissionCases: readonly Gi088V8r3EvaluationCase[];
   privateHiddenFileSha256: string;
   automaticRecoveryMaximum?: number;
+  executionMode?: Gi088V8r3CandidateExecutionMode;
+  emptyContentRecoveryMaximumPerCheckpoint?: number;
   concurrency?: number;
   now?: () => Date;
   runId?: string;
@@ -1026,13 +1298,32 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
     { evaluationCase, attempt: 2 as const }
   ]);
   const initialCallCount = countInitialCalls(generativeCases);
+  const executionMode = input.executionMode ?? "formal";
   const recoveryMaximum =
     input.automaticRecoveryMaximum ??
-    GI088_V8R3_FORMAL_CALL_BUDGET.candidateAutomaticRecoveryCallsMaximum;
+    (executionMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM
+      : GI088_V8R3_FORMAL_CALL_BUDGET.candidateAutomaticRecoveryCallsMaximum);
+  const emptyContentRecoveryMaximumPerCheckpoint =
+    input.emptyContentRecoveryMaximumPerCheckpoint ??
+    (executionMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT
+      : 1);
+  const maximumRecoveryCalls =
+    executionMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM
+      : GI088_V8R3_HARD_GATES.automaticRecoveryMaximum;
+  const maximumRetriesPerCheckpoint =
+    executionMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT
+      : 1;
   if (
     !Number.isInteger(recoveryMaximum) ||
     recoveryMaximum < 0 ||
-    recoveryMaximum > GI088_V8R3_HARD_GATES.automaticRecoveryMaximum
+    recoveryMaximum > maximumRecoveryCalls ||
+    !Number.isInteger(emptyContentRecoveryMaximumPerCheckpoint) ||
+    emptyContentRecoveryMaximumPerCheckpoint < 0 ||
+    emptyContentRecoveryMaximumPerCheckpoint > maximumRetriesPerCheckpoint
   ) {
     throw new Error("GI088_V8R3_AUTOMATIC_RECOVERY_MAXIMUM_INVALID");
   }
@@ -1051,6 +1342,7 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
         evaluationCase,
         attempt,
         budget,
+        emptyContentRecoveryMaximumPerCheckpoint,
         now
       })
   });
@@ -1078,7 +1370,9 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
   };
   const executionConfig = {
     concurrency,
-    automaticRecoveryMaximum: recoveryMaximum
+    automaticRecoveryMaximum: recoveryMaximum,
+    recoveryMode: executionMode,
+    emptyContentRecoveryMaximumPerCheckpoint
   };
   const runtime = {
     ...input.providerIdentity,
@@ -1106,12 +1400,23 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
     })
   );
   const operationalLedger = buildOperationalLedger(records);
+  const emptyContentDiagnostics =
+    executionMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? buildEmptyContentDiagnosticReport({
+          records,
+          maxRetriesPerCheckpoint:
+            GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT,
+          globalRecoveryCallsMaximum:
+            GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM
+        })
+      : undefined;
   const evidenceFingerprint = sha256(
     JSON.stringify({
       offlineRunFingerprint,
       deterministicRegression: regression,
       budget: budgetEvidence,
       operationalLedger,
+      emptyContentDiagnostics,
       records
     })
   );
@@ -1134,6 +1439,7 @@ export async function executeGi088V8r3CandidateEvaluation(input: {
     budget: budgetEvidence,
     deterministicRegression: regression,
     operationalLedger,
+    ...(emptyContentDiagnostics ? { emptyContentDiagnostics } : {}),
     records
   };
 }
@@ -1145,11 +1451,17 @@ function stableJsonEqual(left: unknown, right: unknown) {
 function assertCandidateReport(
   input: unknown
 ): asserts input is Gi088V8r3CandidateExecutionReport {
+  const reportVersion =
+    input && typeof input === "object"
+      ? (input as { reportVersion?: unknown }).reportVersion
+      : null;
+  const legacyReport =
+    reportVersion === GI088_V8R3_LEGACY_OFFLINE_EXECUTOR_VERSION;
   if (
     !input ||
     typeof input !== "object" ||
-    (input as { reportVersion?: unknown }).reportVersion !==
-      GI088_V8R3_OFFLINE_EXECUTOR_VERSION ||
+    (reportVersion !== GI088_V8R3_OFFLINE_EXECUTOR_VERSION &&
+      !legacyReport) ||
     !Array.isArray((input as { records?: unknown }).records)
   ) {
     throw new Error("GI088_V8R3_CANDIDATE_REPORT_INVALID");
@@ -1158,7 +1470,8 @@ function assertCandidateReport(
   if (
     report.formalEvaluationVersion !== GI088_V8R3_FORMAL_EVALUATION_VERSION ||
     report.datasetVersion !== GI088_V8R3_EVALUATION_DATASET_VERSION ||
-    report.runnerVersion !== GI088_V8R3_RUNNER_VERSION
+    (report.runnerVersion !== GI088_V8R3_RUNNER_VERSION &&
+      (!legacyReport || report.runnerVersion !== GI088_V8R3_LEGACY_RUNNER_VERSION))
   ) {
     throw new Error("GI088_V8R3_CANDIDATE_REPORT_VERSION_INVALID");
   }
@@ -1202,12 +1515,13 @@ function assertCandidateReport(
   }
   const expectedBehaviorFingerprintBundle = createGi088FingerprintBundle();
   if (
-    !stableJsonEqual(
+    !legacyReport &&
+    (!stableJsonEqual(
       report.behaviorFingerprintBundle,
       expectedBehaviorFingerprintBundle
     ) ||
-    report.candidateFingerprint !==
-      expectedBehaviorFingerprintBundle.candidateFingerprint
+      report.candidateFingerprint !==
+        expectedBehaviorFingerprintBundle.candidateFingerprint)
   ) {
     throw new Error("GI088_V8R3_BEHAVIOR_FINGERPRINT_BUNDLE_MISMATCH");
   }
@@ -1225,13 +1539,26 @@ function assertCandidateReport(
   if (!stableJsonEqual(report.runtime, expectedRuntime)) {
     throw new Error("GI088_V8R3_CANDIDATE_RUNTIME_IDENTITY_INVALID");
   }
+  const recoveryMode = report.executionConfig?.recoveryMode ?? "formal";
+  const emptyContentRecoveryMaximumPerCheckpoint =
+    report.executionConfig?.emptyContentRecoveryMaximumPerCheckpoint ?? 1;
+  const allowedRecoveryMaximum =
+    recoveryMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+      ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM
+      : GI088_V8R3_HARD_GATES.automaticRecoveryMaximum;
   if (
     !Number.isInteger(report.executionConfig?.concurrency) ||
     report.executionConfig.concurrency <= 0 ||
     !Number.isInteger(report.executionConfig.automaticRecoveryMaximum) ||
     report.executionConfig.automaticRecoveryMaximum < 0 ||
     report.executionConfig.automaticRecoveryMaximum >
-      GI088_V8R3_HARD_GATES.automaticRecoveryMaximum ||
+      allowedRecoveryMaximum ||
+    !Number.isInteger(emptyContentRecoveryMaximumPerCheckpoint) ||
+    emptyContentRecoveryMaximumPerCheckpoint < 0 ||
+    emptyContentRecoveryMaximumPerCheckpoint >
+      (recoveryMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE
+        ? GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT
+        : 1) ||
     report.executionConfig.automaticRecoveryMaximum !==
       report.budget.authorizedMaximum - report.budget.initialCalls
   ) {
@@ -1246,7 +1573,7 @@ function assertCandidateReport(
     initialCalls !== report.budget.initialCalls ||
     recoveryCalls !== report.budget.automaticRecoveryCalls ||
     calls.length !== report.budget.totalCalls ||
-    recoveryCalls > GI088_V8R3_HARD_GATES.automaticRecoveryMaximum ||
+    recoveryCalls > allowedRecoveryMaximum ||
     report.budget.totalCalls > report.budget.authorizedMaximum
   ) {
     throw new Error("GI088_V8R3_CANDIDATE_REPORT_BUDGET_INVALID");
@@ -1271,23 +1598,25 @@ function assertCandidateReport(
     }
     for (const checkpoint of record.checkpoints) {
       for (const call of checkpoint.calls) {
-        const expectedRequestHash = sha256(
-          JSON.stringify({
-            identity: GI088_MODEL_CALL_IDENTITY,
-            transport: createGi088V8r3ArkProviderIdentity().transport,
-            candidateFingerprint: createGi088EffectiveCandidateFingerprint(),
-            inputFingerprint: record.inputFingerprint,
-            caseId: record.caseId,
-            checkpointIndex: checkpoint.checkpointIndex,
-            attempt: record.attempt,
-            kind: call.kind,
-            recoveryTrigger: call.appliedRecoveryTrigger,
-            recoveryInstructionVersion: call.appliedRecoveryTrigger
-              ? candidateRecoveryCorrection(call.appliedRecoveryTrigger).version
-              : null,
-            timeoutPolicy: GI088_TIMEOUT_POLICY
-          })
-        );
+        const requestHashPayload = {
+          identity: GI088_MODEL_CALL_IDENTITY,
+          transport: createGi088V8r3ArkProviderIdentity().transport,
+          candidateFingerprint: createGi088EffectiveCandidateFingerprint(),
+          inputFingerprint: record.inputFingerprint,
+          caseId: record.caseId,
+          checkpointIndex: checkpoint.checkpointIndex,
+          attempt: record.attempt,
+          kind: call.kind,
+          ...(legacyReport
+            ? {}
+            : { recoveryAttempt: call.recoveryAttempt ?? (call.kind === "automatic_recovery" ? 1 : 0) }),
+          recoveryTrigger: call.appliedRecoveryTrigger,
+          recoveryInstructionVersion: call.appliedRecoveryTrigger
+            ? candidateRecoveryCorrection(call.appliedRecoveryTrigger).version
+            : null,
+          timeoutPolicy: GI088_TIMEOUT_POLICY
+        };
+        const expectedRequestHash = sha256(JSON.stringify(requestHashPayload));
         if (call.requestHash !== expectedRequestHash) {
           throw new Error("GI088_V8R3_CANDIDATE_REQUEST_HASH_MISMATCH");
         }
@@ -1313,12 +1642,31 @@ function assertCandidateReport(
   if (!stableJsonEqual(derivedLedger, report.operationalLedger)) {
     throw new Error("GI088_V8R3_OPERATIONAL_LEDGER_MISMATCH");
   }
+  if (recoveryMode === GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE) {
+    if (
+      !report.emptyContentDiagnostics ||
+      !stableJsonEqual(
+        report.emptyContentDiagnostics,
+        buildEmptyContentDiagnosticReport({
+          records: report.records,
+          maxRetriesPerCheckpoint:
+            GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT,
+          globalRecoveryCallsMaximum:
+            GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM
+        })
+      )
+    ) {
+      throw new Error("GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MISMATCH");
+    }
+  } else if (report.emptyContentDiagnostics) {
+    throw new Error("GI088_V8R3_UNEXPECTED_EMPTY_CONTENT_DIAGNOSTIC");
+  }
   const expectedOfflineRunFingerprint = sha256(
     JSON.stringify({
       fingerprintKind: "gi088-v8r3-offline-run",
-      reportVersion: GI088_V8R3_OFFLINE_EXECUTOR_VERSION,
+      reportVersion: report.reportVersion,
       formalEvaluationVersion: GI088_V8R3_FORMAL_EVALUATION_VERSION,
-      runnerVersion: GI088_V8R3_RUNNER_VERSION,
+      runnerVersion: report.runnerVersion,
       behaviorFingerprintBundle: report.behaviorFingerprintBundle,
       datasetFingerprint: report.datasetFingerprint,
       privateInputs: report.privateInputs,
@@ -1336,6 +1684,7 @@ function assertCandidateReport(
       deterministicRegression: report.deterministicRegression,
       budget: report.budget,
       operationalLedger: report.operationalLedger,
+      emptyContentDiagnostics: report.emptyContentDiagnostics,
       records: report.records
     })
   );
@@ -1347,6 +1696,16 @@ function assertCandidateReport(
 export function parseGi088V8r3CandidateExecutionReport(input: unknown) {
   assertCandidateReport(input);
   return input;
+}
+
+function assertFormalCandidateReport(
+  input: unknown
+): asserts input is Gi088V8r3CandidateExecutionReport {
+  assertCandidateReport(input);
+  if ((input as Gi088V8r3CandidateExecutionReport).executionConfig?.recoveryMode ===
+    GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MODE) {
+    throw new Error("GI088_V8R3_DIAGNOSTIC_REPORT_NOT_FORMAL_CANDIDATE");
+  }
 }
 
 export function evaluateGi088V8r3CandidateOperationalGates(
@@ -1933,7 +2292,7 @@ export async function executeGi088V8r3JudgeDevelopmentPrescreen(input: {
     identity: input.providerIdentity,
     expected: createGi088V8r3ProProviderIdentity()
   });
-  assertCandidateReport(input.candidateReport);
+  assertFormalCandidateReport(input.candidateReport);
   assertCalibrationReport(input.calibrationReport);
   if (
     input.calibrationReport.datasetFingerprint !==
@@ -2076,7 +2435,7 @@ function assertPrescreenReport(
   ) {
     throw new Error("GI088_V8R3_JUDGE_PRESCREEN_REPORT_INVALID");
   }
-  assertCandidateReport(bindings.candidateReport);
+  assertFormalCandidateReport(bindings.candidateReport);
   assertCalibrationReport(bindings.calibrationReport);
   const report = input as Gi088V8r3JudgePrescreenReport;
   const identity = {
@@ -2182,7 +2541,7 @@ export function buildGi088V8r3HumanAdjudicationPacket(input: {
   cases: readonly Gi088V8r3EvaluationCase[];
   seed: string;
 }) {
-  assertCandidateReport(input.candidateReport);
+  assertFormalCandidateReport(input.candidateReport);
   const caseLookup = new Map(
     input.cases.map((evaluationCase) => [evaluationCase.id, evaluationCase])
   );
@@ -2303,7 +2662,7 @@ export function buildGi088V8r3BadCasePacket(input: {
   adjudicationFile: Gi088V8r3HumanAdjudicationFile;
   cases: readonly Gi088V8r3EvaluationCase[];
 }) {
-  assertCandidateReport(input.candidateReport);
+  assertFormalCandidateReport(input.candidateReport);
   const adjudication = gi088V8r3HumanAdjudicationFileSchema.parse(
     input.adjudicationFile
   );
@@ -2549,7 +2908,7 @@ export function executeGi088V8r3Admission(input: {
   hiddenAdmissionCases: readonly Gi088V8r3EvaluationCase[];
   now?: () => Date;
 }): Gi088V8r3AdmissionReport {
-  assertCandidateReport(input.candidateReport);
+  assertFormalCandidateReport(input.candidateReport);
   assertCalibrationReport(input.calibrationReport);
   assertPrescreenReport(input.prescreenReport, {
     candidateReport: input.candidateReport,
@@ -2925,7 +3284,7 @@ export function buildGi088V8r3BlindComparisonPacket(input: {
   baselineReport: Gi088V8r3HistoricalBaselineReport;
   seed: string;
 }) {
-  assertCandidateReport(input.candidateReport);
+  assertFormalCandidateReport(input.candidateReport);
   const baselineReport = parseGi088V8r3HistoricalBaselineReport(
     input.baselineReport
   );

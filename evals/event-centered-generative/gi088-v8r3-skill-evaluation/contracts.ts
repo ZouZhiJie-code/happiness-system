@@ -5,7 +5,15 @@ export const GI088_V8R3_EVALUATION_DATASET_VERSION =
 export const GI088_V8R3_FORMAL_EVALUATION_VERSION =
   "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash" as const;
 export const GI088_V8R3_RUNNER_VERSION =
+  "2026-08-11.gi088-v8r3-skill-runner-v7" as const;
+export const GI088_V8R3_LEGACY_RUNNER_VERSION =
   "2026-08-11.gi088-v8r3-skill-runner-v6" as const;
+
+export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_MAX_RETRIES_PER_CHECKPOINT =
+  3 as const;
+export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_RECOVERY_CALLS_MAXIMUM =
+  100 as const;
+export const GI088_V8R3_EMPTY_CONTENT_DIAGNOSTIC_CALLS_MAXIMUM = 196 as const;
 
 export const GI088_V8R3_EXPECTED_CASE_COUNTS = {
   deterministicRegression: 24,

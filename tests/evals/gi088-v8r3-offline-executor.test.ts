@@ -145,6 +145,34 @@ function validCandidateResult(params: AICompletionParams): AICompletionResult {
   };
 }
 
+function emptyCandidateResult(): AICompletionResult {
+  return {
+    content: "",
+    latencyMs: 111,
+    provider: "openai",
+    diagnostics: {
+      finishReason: "stop",
+      reasoningPresent: true,
+      reasoningLength: 64,
+      reasoningTokens: 18,
+      latencyMs: 111,
+      tokenUsage: { promptTokens: 10, completionTokens: 18, totalTokens: 28 },
+      upstreamRequestId: "empty-content-request-id",
+      httpStatus: 200,
+      responseModel: "deepseek-v4-flash-ga-260731",
+      choiceCount: 1,
+      contentType: "string",
+      contentLength: 0,
+      reasoningType: "string",
+      headersLatencyMs: 100,
+      bodyLatencyMs: 11,
+      totalLatencyMs: 111,
+      timeoutStage: null,
+      abortSource: null
+    }
+  };
+}
+
 function validCandidateProvider(seen: AICompletionParams[] = []): AIProvider {
   return {
     name: "openai",
@@ -453,6 +481,132 @@ describe("GI-088 v8r3 formal offline executor", () => {
     expect(seen[3]?.messages.some((message) =>
       message.role === "system" && message.content.includes("当前语义合同")
     )).toBe(true);
+  });
+
+  it("runs the EMPTY_CONTENT diagnostic curve through three retries and records safe metrics", async () => {
+    let callIndex = 0;
+    const provider: AIProvider = {
+      name: "openai",
+      async complete(params) {
+        const current = callIndex;
+        callIndex += 1;
+        if (current < 3 || current === 4) return emptyCandidateResult();
+        return validCandidateResult(params);
+      }
+    };
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput(provider),
+      executionMode: "empty_content_diagnostic",
+      automaticRecoveryMaximum: 100,
+      emptyContentRecoveryMaximumPerCheckpoint: 3
+    });
+
+    expect(report.executionConfig).toMatchObject({
+      recoveryMode: "empty_content_diagnostic",
+      automaticRecoveryMaximum: 100,
+      emptyContentRecoveryMaximumPerCheckpoint: 3
+    });
+    expect(report.budget).toEqual({
+      authorizedMaximum: 196,
+      initialCalls: 96,
+      automaticRecoveryCalls: 4,
+      totalCalls: 100
+    });
+    expect(report.emptyContentDiagnostics?.summary).toMatchObject({
+      emptyContentInitialCount: 2,
+      emptyContentTriggerCount: 2,
+      emptyContentRecoveryAttemptCount: 4,
+      emptyContentRecoverySuccessCount: 2,
+      emptyContentRecoveredCheckpointCount: 2,
+      successAtAttempt1: 1,
+      successAtAttempt2: 0,
+      successAtAttempt3: 1,
+      finalEmptyContentCount: 0,
+      recoveryBudgetExhaustedCount: 0,
+      totalRecoveryCalls: 4,
+      finalVisibleCompletionRate: 1
+    });
+    const recoveryAttempts = report.records
+      .flatMap((record) => record.checkpoints)
+      .flatMap((checkpoint) => checkpoint.calls)
+      .filter((call) => call.kind === "automatic_recovery")
+      .map((call) => call.recoveryAttempt);
+    expect(recoveryAttempts).toContain(1);
+    expect(recoveryAttempts).toContain(2);
+    expect(recoveryAttempts).toContain(3);
+    expect(JSON.stringify(report)).not.toContain("empty-content-request-id");
+    expect(() => parseGi088V8r3CandidateExecutionReport(report)).not.toThrow();
+  });
+
+  it("maps provider-level EMPTY_CONTENT errors into the same recovery path", async () => {
+    let callIndex = 0;
+    const provider: AIProvider = {
+      name: "openai",
+      async complete(params) {
+        if (callIndex === 0) {
+          callIndex += 1;
+          const diagnostics = emptyCandidateResult().diagnostics;
+          throw new AIProviderError(
+            "provider returned an empty visible response",
+            "EMPTY_CONTENT",
+            200,
+            diagnostics
+          );
+        }
+        callIndex += 1;
+        return validCandidateResult(params);
+      }
+    };
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput(provider),
+      executionMode: "empty_content_diagnostic",
+      automaticRecoveryMaximum: 100,
+      emptyContentRecoveryMaximumPerCheckpoint: 3
+    });
+    const firstEmpty = report.records
+      .flatMap((record) => record.checkpoints)
+      .find((checkpoint) => checkpoint.calls[0]?.errorCode === "EMPTY_CONTENT");
+    expect(firstEmpty?.calls[0]).toMatchObject({
+      status: "protected_failure",
+      errorCode: "EMPTY_CONTENT",
+      recoveryAttempt: 0
+    });
+    expect(firstEmpty?.calls[1]).toMatchObject({
+      kind: "automatic_recovery",
+      appliedRecoveryTrigger: "EMPTY_CONTENT",
+      recoveryAttempt: 1,
+      status: "valid"
+    });
+    expect(report.emptyContentDiagnostics?.summary).toMatchObject({
+      emptyContentInitialCount: 1,
+      emptyContentRecoveryAttemptCount: 1,
+      emptyContentRecoveredCheckpointCount: 1
+    });
+  });
+
+  it("records a diagnostic budget stop without issuing a fourth retry", async () => {
+    const provider: AIProvider = {
+      name: "openai",
+      async complete() {
+        return emptyCandidateResult();
+      }
+    };
+    const report = await executeGi088V8r3CandidateEvaluation({
+      ...candidateInput(provider),
+      executionMode: "empty_content_diagnostic",
+      automaticRecoveryMaximum: 2,
+      emptyContentRecoveryMaximumPerCheckpoint: 3
+    });
+    expect(report.budget.automaticRecoveryCalls).toBe(2);
+    expect(report.emptyContentDiagnostics?.summary.totalRecoveryCalls).toBe(2);
+    expect(
+      report.emptyContentDiagnostics?.summary.recoveryBudgetExhaustedCount
+    ).toBeGreaterThan(0);
+    expect(
+      report.emptyContentDiagnostics?.checkpoints.every(
+        (checkpoint) => checkpoint.emptyContentRecoveryAttemptCount <= 3
+      )
+    ).toBe(true);
   });
 
   it("keeps ASK/NON_ASK question counts observational and reserves state correction", () => {
