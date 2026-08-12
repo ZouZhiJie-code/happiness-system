@@ -215,7 +215,17 @@ describe("GI-088 evaluation metrics v1", () => {
       visibleQuestionCount: 2,
       visibleQuestionReviewedCount: 1,
       visibleQuestionReviewCoverage: 1 / 2,
-      multipleIndependentTasksCount: 1
+      multipleIndependentTasksCount: 1,
+      emptyContentInitialCount: 1,
+      emptyContentRecoveryTriggerCount: 1,
+      emptyContentRecoveryAttemptCount: 1,
+      emptyContentRecoverySuccessCount: 1,
+      successAtAttempt1: 1,
+      successAtAttempt2: 0,
+      finalEmptyContentCount: 0,
+      recoveryBudgetExhaustedCount: 0,
+      recoveredEmptyContentCount: 1,
+      totalRecoveryCalls: 3
     });
     expect(metrics.gateFacts).toMatchObject({
       completedTaskCount: 1,
@@ -228,6 +238,12 @@ describe("GI-088 evaluation metrics v1", () => {
       automaticRecoveryAttemptCount: 3,
       automaticRecoveryWithinDeadlineSuccessCount: 0,
       automaticRecoveryLateOrUnknownCount: 3,
+      emptyContentInitialCount: 1,
+      emptyContentRecoveryAttemptCount: 1,
+      emptyContentRecoverySuccessCount: 1,
+      finalEmptyContentCount: 0,
+      recoveryBudgetExhaustedCount: 0,
+      recoveredEmptyContentCount: 1,
       unreviewedProgramInterventionCount: 1,
       unreviewedVisibleQuestionCount: 1,
       allProgramInterventionsReviewed: false,

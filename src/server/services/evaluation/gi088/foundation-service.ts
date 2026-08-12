@@ -28,6 +28,7 @@ import {
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
+  resolveGi088EmptyContentRecoveryPolicy,
   GI088_EVALUATION_ID,
   GI088_EVALUATION_ID_V1,
   GI088_EVALUATION_ID_V2,
@@ -43,6 +44,7 @@ import {
   GI088_EVALUATION_ID_V8,
   GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_ID_V8R2,
+  GI088_EVALUATION_ID_V8R3,
   GI088_EVALUATION_MODE,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V1,
@@ -59,6 +61,7 @@ import {
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R3,
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
   GI088_MODEL_CALL_IDENTITY,
@@ -77,6 +80,7 @@ import {
   GI088_SERVICE_VERSION_V8,
   GI088_SERVICE_VERSION_V8R1,
   GI088_SERVICE_VERSION_V8R2,
+  GI088_SERVICE_VERSION_V8R3,
   GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
@@ -86,6 +90,7 @@ import {
   GI088_V6_TASKS,
   GI088_V8R1_TASKS,
   GI088_V8R2_TASKS,
+  GI088_V8R3_TASKS,
   createGi088DatasetFingerprint,
   createGi088EffectiveCandidateFingerprint,
   createGi088ExecutionFingerprint,
@@ -125,7 +130,8 @@ import {
   type Gi088FoundationRunRecord
 } from "@/server/services/evaluation/gi088/foundation-store";
 import {
-  calculateGi088EvaluationMetrics
+  calculateGi088EvaluationMetrics,
+  GI088_EVALUATION_METRICS_VERSION_V1
 } from "@/server/services/evaluation/gi088/metrics";
 import { createGi088ArkProvider } from "@/server/services/evaluation/gi088/ark-runtime";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
@@ -208,6 +214,8 @@ export type Gi088FoundationExecutionEvent =
       trigger: Gi088FoundationRecoveryTrigger;
       turnId: string;
       callId: string;
+      recoveryAttempt?: number;
+      recoveryMaximum?: number;
     };
 
 type FoundationServiceDependencies = {
@@ -393,6 +401,11 @@ const GI088_HISTORICAL_EVALUATION_METADATA = {
     id: GI088_EVALUATION_ID_V8R2,
     serviceVersion: GI088_SERVICE_VERSION_V8R2,
     model: "deepseek-v4-pro"
+  },
+  [GI088_EVALUATION_VERSION_V8R3]: {
+    id: GI088_EVALUATION_ID_V8R3,
+    serviceVersion: GI088_SERVICE_VERSION_V8R3,
+    model: "deepseek-v4-flash-ga-260731"
   }
 } as const satisfies Readonly<Record<string, Gi088EvaluationVersionMetadata>>;
 
@@ -441,7 +454,24 @@ const GI088_V8R2_READONLY_SESSION_FINGERPRINTS_BY_EXECUTION = {
   }
 } as const;
 
+const GI088_V8R3_READONLY_SESSION_FINGERPRINTS = {
+  behaviorManifestVersion: "2026-08-11.gi088-behavior-manifest-v2",
+  behaviorManifestSha256:
+    "2fd873bebdfc7484bc1c51075870702a6b7f8dadd800ea8e3e7ffbe3e9bb9e74",
+  runnerFingerprint:
+    "1db8b7227bbff76d9a03bd7080bd98d5ade4bb8b84220c92815a86bcfe328842",
+  experienceFingerprint:
+    "458cb9bffba324d507806b4bdb437a2dca384bd3dc6c918d46ec8582e19733f1"
+} as const;
+
 function v8r2ReadOnlySessionFingerprints(run: Gi088FoundationRunRecord) {
+  if (
+    run.evaluationVersion === GI088_EVALUATION_VERSION_V8R3 &&
+    run.candidateFingerprint ===
+      "77e679af80a90805f589a6effde475b7c097c62729342c79ac6f987a9df776d4"
+  ) {
+    return GI088_V8R3_READONLY_SESSION_FINGERPRINTS;
+  }
   if (
     run.evaluationVersion !== GI088_EVALUATION_VERSION_V8R2 ||
     run.candidateFingerprint !==
@@ -477,7 +507,8 @@ function evaluationMetadataFor(
 
 function usesGi088FoundationLedger(evaluationVersion: string) {
   return evaluationVersion === GI088_EVALUATION_VERSION ||
-    evaluationVersion === GI088_EVALUATION_VERSION_V8R2;
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R2 ||
+    evaluationVersion === GI088_EVALUATION_VERSION_V8R3;
 }
 
 const GI088_KNOWN_EVALUATION_VERSIONS = new Set<string>([
@@ -495,6 +526,7 @@ const GI088_KNOWN_EVALUATION_VERSIONS = new Set<string>([
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R3,
   GI088_EVALUATION_VERSION
 ]);
 
@@ -502,6 +534,9 @@ function immutableTaskPackageFor(evaluationVersion: string) {
   if (evaluationVersion === GI088_EVALUATION_VERSION) return GI088_TASKS;
   if (evaluationVersion === GI088_EVALUATION_VERSION_V8R2) {
     return GI088_V8R2_TASKS;
+  }
+  if (evaluationVersion === GI088_EVALUATION_VERSION_V8R3) {
+    return GI088_V8R3_TASKS;
   }
   if (evaluationVersion === GI088_EVALUATION_VERSION_V8R1) {
     return GI088_V8R1_TASKS;
@@ -593,7 +628,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
     GI088_EVALUATION_VERSION_V8R1,
-    GI088_EVALUATION_VERSION_V8R2
+    GI088_EVALUATION_VERSION_V8R2,
+    GI088_EVALUATION_VERSION_V8R3
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V3)
     ? 1
     : 0;
@@ -608,7 +644,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
     GI088_EVALUATION_VERSION_V8R1,
-    GI088_EVALUATION_VERSION_V8R2
+    GI088_EVALUATION_VERSION_V8R2,
+    GI088_EVALUATION_VERSION_V8R3
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V4)
     ? 1
     : 0;
@@ -622,7 +659,8 @@ function historicalRecoveryLimits(evaluationVersion: string) {
     GI088_EVALUATION_VERSION_V7R4,
     GI088_EVALUATION_VERSION_V8,
     GI088_EVALUATION_VERSION_V8R1,
-    GI088_EVALUATION_VERSION_V8R2
+    GI088_EVALUATION_VERSION_V8R2,
+    GI088_EVALUATION_VERSION_V8R3
   ].includes(evaluationVersion as typeof GI088_EVALUATION_VERSION_V5);
   return {
     automaticEmptyContentRetries: emptyContent,
@@ -1022,9 +1060,14 @@ function metricsFor(input: {
   state: Gi088BatchState;
   calls: Gi088FoundationCallRecord[];
   interventions: Gi088FoundationProgramInterventionRecord[];
+  metricsVersion?: string;
 }) {
   return calculateGi088EvaluationMetrics({
     tasks: stateForMetrics(input.state),
+    metricsVersion:
+      input.metricsVersion === GI088_EVALUATION_METRICS_VERSION_V1
+        ? GI088_EVALUATION_METRICS_VERSION_V1
+        : undefined,
     callLedger: input.calls.map((call) => ({
       id: call.callId,
       callId: call.callId,
@@ -1042,6 +1085,25 @@ function metricsFor(input: {
       automaticDeadlineAt: call.automaticDeadlineAt,
       responseHash: call.responseHash,
       errorCode: call.errorCode,
+      retryTrigger: call.retryTrigger,
+      retryOrdinal:
+        call.kind === "automatic_retry"
+          ? Math.max(1, call.attempt - 1)
+          : null,
+      latencyMs:
+        call.providerCompletedAt && call.dispatchedAt
+          ? Math.max(
+              0,
+              call.providerCompletedAt.getTime() -
+                call.dispatchedAt.getTime()
+            )
+          : null,
+      effectiveConfig:
+        call.effectiveConfig as unknown as {
+          emptyContentAutomaticRetries?: number;
+          emptyContentMaximumProviderCalls?: number;
+          emptyContentPolicyOverride?: boolean;
+        },
       failedOutputDiagnostic:
         call.errorCode === "MODEL_OUTPUT_PROTECTED" ||
         call.errorCode === "UNAUTHORIZED_PAUSE"
@@ -1231,7 +1293,7 @@ function gateFor(input: {
     combinedAutomaticRecoveryCount <=
       GI088_DATASET_MACHINE_GATE_V8R3.maximumAutomaticRecoveryCount &&
     metrics.consecutiveRecoveryCount === 0 &&
-    facts.emptyContentEventCount === 0;
+    facts.finalEmptyContentCount === 0;
   const offlineAdmissionReady = Boolean(
     offlineEvidenceValid && offlineEvidence?.admissionFingerprint
   );
@@ -1261,6 +1323,8 @@ export class Gi088EvaluationFoundationService {
   private readonly offlineEvaluationEvidence: Gi088V8r3OfflineEvaluationEvidence;
   private readonly candidateFingerprint = createGi088EffectiveCandidateFingerprint();
   private readonly executionFingerprint = createGi088ExecutionFingerprint();
+  private readonly emptyContentRecoveryPolicy =
+    resolveGi088EmptyContentRecoveryPolicy();
 
   constructor(dependencies: FoundationServiceDependencies) {
     this.store = dependencies.store;
@@ -1403,7 +1467,11 @@ export class Gi088EvaluationFoundationService {
     const metrics = metricsFor({
       state,
       calls,
-      interventions: interventionRows
+      interventions: interventionRows,
+      metricsVersion:
+        run.evaluationVersion === GI088_EVALUATION_VERSION
+          ? undefined
+          : GI088_EVALUATION_METRICS_VERSION_V1
     });
     const requested = selectedTaskId
       ? state.tasks.find((task) => task.taskId === selectedTaskId) ?? null
@@ -1461,7 +1529,13 @@ export class Gi088EvaluationFoundationService {
             effectiveTemperature: currentConfig.effectiveTemperature,
             reasoningEffort: currentConfig.reasoningEffort,
             automaticEmptyContentRetries:
-              currentConfig.automaticEmptyContentRetries,
+              this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
+            maximumProviderCallsPerTurn:
+              this.emptyContentRecoveryPolicy.maximumProviderCallsPerTurn,
+            emptyContentRecoveryPolicyVersion:
+              this.emptyContentRecoveryPolicy.version,
+            emptyContentPolicyOverride:
+              this.emptyContentRecoveryPolicy.policyOverride,
             automaticStageTransitionRetries:
               currentConfig.automaticStageTransitionRetries,
             automaticSingleQuestionRetries:
@@ -1569,6 +1643,15 @@ export class Gi088EvaluationFoundationService {
                     automaticChainDeadlineMs:
                       GI088_SHARED_RECOVERY_DEADLINE_POLICY
                         .automaticChainDeadlineMs,
+                    automaticEmptyContentRetries:
+                      this.emptyContentRecoveryPolicy
+                        .maximumAutomaticRetriesPerTurn,
+                    maximumProviderCallsPerTurn:
+                      this.emptyContentRecoveryPolicy.maximumProviderCallsPerTurn,
+                    emptyContentRecoveryPolicyVersion:
+                      this.emptyContentRecoveryPolicy.version,
+                    emptyContentPolicyOverride:
+                      this.emptyContentRecoveryPolicy.policyOverride,
                     routeMaxDurationSeconds:
                       GI088_TIMEOUT_POLICY.routeMaxDurationSeconds,
                     hiddenReasoningPersistence: "forbidden" as const
@@ -1747,6 +1830,10 @@ export class Gi088EvaluationFoundationService {
     recoveryTrigger?: Gi088FoundationRecoveryTrigger | null;
     hardTimeoutMs?: number;
     remainingSharedDeadlineMs?: number | null;
+      emptyContentAutomaticRetries?: 1 | 2;
+      emptyContentMaximumProviderCalls?: 2 | 3;
+      emptyContentRecoveryPolicyVersion?: string;
+      emptyContentPolicyOverride?: boolean;
   }): Gi088CallEffectiveConfig {
     const hardTimeoutMs = input.hardTimeoutMs ?? GI088_TIMEOUT_POLICY.hardTimeoutMs;
     return {
@@ -1785,8 +1872,46 @@ export class Gi088EvaluationFoundationService {
         GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs,
       recoveryPolicyVersion: input.recoveryTrigger
         ? GI088_SHARED_RECOVERY_DEADLINE_POLICY.version
-        : null
+        : null,
+      emptyContentAutomaticRetries:
+        input.emptyContentAutomaticRetries ??
+        this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
+      emptyContentMaximumProviderCalls:
+        input.emptyContentMaximumProviderCalls ??
+        this.emptyContentRecoveryPolicy.maximumProviderCallsPerTurn,
+      emptyContentRecoveryPolicyVersion:
+        input.emptyContentRecoveryPolicyVersion ??
+        this.emptyContentRecoveryPolicy.version,
+      emptyContentPolicyOverride:
+        input.emptyContentPolicyOverride ??
+        this.emptyContentRecoveryPolicy.policyOverride
     };
+  }
+
+  private emptyContentPolicyForTurn(
+    turn: Gi088Turn,
+    effectiveConfig?: Gi088CallEffectiveConfig
+  ) {
+    const config = effectiveConfig ?? turn.calls[0]?.effectiveConfig;
+    const maximumAutomaticRetriesPerTurn =
+      config?.emptyContentAutomaticRetries ??
+      turn.recovery?.maximumAutomaticRetriesPerTurn ??
+      this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn;
+    return {
+      ...this.emptyContentRecoveryPolicy,
+      version:
+        config?.emptyContentRecoveryPolicyVersion ??
+        this.emptyContentRecoveryPolicy.version,
+      maximumAutomaticRetriesPerTurn,
+      maximumProviderCallsPerTurn:
+        config?.emptyContentMaximumProviderCalls ??
+        turn.recovery?.maximumProviderCallsPerTurn ??
+        ((maximumAutomaticRetriesPerTurn + 1) as 2 | 3),
+      policyOverride:
+        config?.emptyContentPolicyOverride ??
+        turn.recovery?.policyOverride ??
+        this.emptyContentRecoveryPolicy.policyOverride
+    } as const;
   }
 
   private evidenceExcerpts(
@@ -2401,7 +2526,14 @@ export class Gi088EvaluationFoundationService {
         clientOperationId: operation.clientOperationId,
         attempt: 1,
         kind: input.kind,
-        requestHash: createGi088ModelRequestHash(completionParams),
+        requestHash: createGi088ModelRequestHash(completionParams, {
+          emptyContentRecoveryPolicyVersion:
+            this.emptyContentRecoveryPolicy.version,
+          emptyContentAutomaticRetries:
+            this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
+          emptyContentPolicyOverride:
+            this.emptyContentRecoveryPolicy.policyOverride
+        }),
         effectiveConfig: json(effectiveConfig),
         baseAssistantMessageId: input.baseAssistantMessageId,
         semanticStateBeforeHash: createGi088FoundationPayloadHash(
@@ -2676,7 +2808,12 @@ export class Gi088EvaluationFoundationService {
     call: Gi088FoundationCallRecord;
     issues?: string[];
   }): Gi088FoundationRecoveryTrigger | null {
-    if (input.call.attempt !== 1) return null;
+    if (
+      input.call.attempt !== 1 &&
+      input.call.errorCode !== GI088_EMPTY_CONTENT_RECOVERY_POLICY.trigger
+    ) {
+      return null;
+    }
     if (input.issues?.includes("UNAUTHORIZED_PAUSE")) return "UNAUTHORIZED_PAUSE";
     if (
       input.issues?.includes("NEW_ANSWER_OPPORTUNITY_UNAVAILABLE")
@@ -2741,7 +2878,11 @@ export class Gi088EvaluationFoundationService {
         }
       : null;
     const now = this.now().toISOString();
-    if (input.recoveryTrigger) {
+    const emptyPolicy = this.emptyContentPolicyForTurn(
+      turn,
+      input.call.effectiveConfig as unknown as Gi088CallEffectiveConfig
+    );
+    if (input.recoveryTrigger && input.call.kind !== "automatic_retry") {
       turn.recovery = {
         status: "eligible",
         trigger: input.recoveryTrigger,
@@ -2753,12 +2894,32 @@ export class Gi088EvaluationFoundationService {
         eligibleAt: now,
         automaticDeadlineAt: dateIso(input.call.automaticDeadlineAt),
         startedAt: null,
-        completedAt: null
+        completedAt: null,
+        policyVersion: emptyPolicy.version,
+        maximumAutomaticRetriesPerTurn:
+          emptyPolicy.maximumAutomaticRetriesPerTurn,
+        maximumProviderCallsPerTurn:
+          emptyPolicy.maximumProviderCallsPerTurn,
+        policyOverride: emptyPolicy.policyOverride
       };
       trajectory.pendingTurnId = turn.id;
     } else if (input.call.kind === "automatic_retry" && turn.recovery) {
-      turn.recovery.status = "manual_available";
-      turn.recovery.completedAt = now;
+      const exhaustedEmptyContent =
+        turn.recovery.trigger === "EMPTY_CONTENT" &&
+        turn.recovery.automaticRetryCount >=
+          (turn.recovery.maximumAutomaticRetriesPerTurn ??
+            emptyPolicy.maximumAutomaticRetriesPerTurn);
+      const maximumAutomaticRetries =
+        turn.recovery.maximumAutomaticRetriesPerTurn ??
+        emptyPolicy.maximumAutomaticRetriesPerTurn;
+      turn.recovery.status = exhaustedEmptyContent
+        ? maximumAutomaticRetries >= 2
+          ? "exhausted"
+          : "manual_available"
+        : turn.recovery.trigger === "EMPTY_CONTENT"
+          ? "eligible"
+          : "manual_available";
+      turn.recovery.completedAt = turn.recovery.status === "eligible" ? null : now;
       trajectory.pendingTurnId = turn.id;
     } else if (input.call.kind === "manual_retry" && turn.recovery) {
       turn.recovery.status = "exhausted";
@@ -3017,10 +3178,15 @@ export class Gi088EvaluationFoundationService {
           issues = [call.errorCode ?? "PROVIDER_FAILED"];
         }
       } else {
-        try {
-          const parsed = parseGi088SemanticDeltaCandidateOutput(
-            call.rawFinalOutput ?? ""
-          );
+        const rawFinalOutput = call.rawFinalOutput ?? "";
+        if (rawFinalOutput.trim().length === 0) {
+          // A provider-success response with no visible body is a distinct
+          // recoverable EMPTY_CONTENT event. Keep it out of the schema-error
+          // path so the per-turn recovery policy and metrics can observe it.
+          call = { ...call, errorCode: "EMPTY_CONTENT" };
+          finalErrorCode = "EMPTY_CONTENT";
+        } else try {
+          const parsed = parseGi088SemanticDeltaCandidateOutput(rawFinalOutput);
           const normalized = normalizeGi088DeterministicStateOutput({
             turnInput,
             output: parsed,
@@ -3220,6 +3386,45 @@ export class Gi088EvaluationFoundationService {
     }
     const initialCall = await this.store.findCall(turn.recovery.initialCallId);
     if (!initialCall) return run;
+    const emptyPolicy = this.emptyContentPolicyForTurn(
+      turn,
+      initialCall.effectiveConfig as unknown as Gi088CallEffectiveConfig
+    );
+    const maximumAutomaticRetries =
+      turn.recovery.trigger === "EMPTY_CONTENT"
+        ? emptyPolicy.maximumAutomaticRetriesPerTurn
+        : 1;
+    if (turn.recovery.automaticRetryCount >= maximumAutomaticRetries) {
+      turn.recovery.status = "exhausted";
+      turn.recovery.completedAt = this.now().toISOString();
+      const exhausted = await this.store.commitRunMutation({
+        mutation: {
+          runId: run.id,
+          ownerUserId: run.ownerUserId,
+          expectedRevision: run.revision,
+          expectedExecutionFingerprint: this.executionFingerprint,
+          nextState: json(state)
+        },
+        operation: operationIdentity({
+          ownerUserId: run.ownerUserId,
+          evaluationVersion: run.evaluationVersion,
+          runId: run.id,
+          clientOperationId: `auto-exhausted:${turn.id}:${turn.recovery.automaticRetryCount}`,
+          action: "automatic_recovery_exhausted",
+          payload: {
+            turnId: turn.id,
+            trigger: turn.recovery.trigger,
+            automaticRetryCount: turn.recovery.automaticRetryCount
+          }
+        }),
+        resultSnapshot: json({ turnId: turn.id, status: "exhausted" })
+      });
+      return exhausted.run;
+    }
+    const turnCalls = await this.store.listCalls(run.id);
+    const parentCall = turnCalls
+      .filter((call) => call.turnId === turn.id)
+      .at(-1) ?? initialCall;
     const automaticDeadlineAt = initialCall.automaticDeadlineAt ??
       new Date(
         (initialCall.dispatchedAt ?? initialCall.reservedAt).getTime() +
@@ -3296,7 +3501,8 @@ export class Gi088EvaluationFoundationService {
       hardTimeoutMs
     });
     const callId = randomUUID();
-    const operationClientId = `auto-recovery:${turn.id}`;
+    const nextRetryCount = turn.recovery.automaticRetryCount + 1;
+    const operationClientId = `auto-recovery:${turn.id}:${nextRetryCount}`;
     const operation = operationIdentity({
       ownerUserId: run.ownerUserId,
       evaluationVersion: run.evaluationVersion,
@@ -3305,14 +3511,15 @@ export class Gi088EvaluationFoundationService {
       action: "automatic_recovery",
       payload: {
         turnId: turn.id,
-        parentCallId: initialCall.callId,
-        trigger
+        parentCallId: parentCall.callId,
+        trigger,
+        automaticRetryCount: nextRetryCount
       }
     });
     turn.status = "processing";
     turn.activeCallId = callId;
     turn.recovery.status = "retrying";
-    turn.recovery.automaticRetryCount = 1;
+    turn.recovery.automaticRetryCount = nextRetryCount;
     turn.recovery.recoveryCallId = callId;
     turn.recovery.startedAt = this.now().toISOString();
     trajectory.status = "running";
@@ -3336,15 +3543,25 @@ export class Gi088EvaluationFoundationService {
         turnId: turn.id,
         clientTurnId: turn.clientTurnId,
         clientOperationId: operation.clientOperationId,
-        attempt: 2,
+        attempt: parentCall.attempt + 1,
         kind: "automatic_retry",
-        parentCallId: initialCall.callId,
+        parentCallId: parentCall.callId,
         retryTrigger: trigger,
-        requestHash: createGi088ModelRequestHash(completionParams),
+        requestHash: createGi088ModelRequestHash(completionParams, {
+          emptyContentRecoveryPolicyVersion: emptyPolicy.version,
+          emptyContentAutomaticRetries:
+            emptyPolicy.maximumAutomaticRetriesPerTurn,
+          emptyContentPolicyOverride: emptyPolicy.policyOverride
+        }),
         effectiveConfig: json(this.createEffectiveConfig({
           recoveryTrigger: trigger,
           hardTimeoutMs,
-          remainingSharedDeadlineMs: remaining
+          remainingSharedDeadlineMs: remaining,
+          emptyContentAutomaticRetries:
+            emptyPolicy.maximumAutomaticRetriesPerTurn,
+          emptyContentMaximumProviderCalls:
+            emptyPolicy.maximumProviderCallsPerTurn,
+          emptyContentPolicyOverride: emptyPolicy.policyOverride
         })),
         baseAssistantMessageId: turn.baseAssistantMessageId,
         semanticStateBeforeHash: createGi088FoundationPayloadHash(
@@ -3359,7 +3576,9 @@ export class Gi088EvaluationFoundationService {
       type: "recovery_started",
       trigger,
       turnId: turn.id,
-      callId: reserved.call.callId
+      callId: reserved.call.callId,
+      recoveryAttempt: nextRetryCount,
+      recoveryMaximum: maximumAutomaticRetries
     });
     await this.executeDispatchedCall({
       run: reserved.run,
@@ -3432,6 +3651,7 @@ export class Gi088EvaluationFoundationService {
         "GI088_MANUAL_AFTER_AUTO_RECOVERY_UNAVAILABLE"
       );
     }
+    const emptyPolicy = this.emptyContentPolicyForTurn(turn);
     const calls = (await this.store.listCalls(run.id))
       .filter((call) => call.turnId === turn.id)
       .sort((left, right) => left.attempt - right.attempt);
@@ -3491,11 +3711,21 @@ export class Gi088EvaluationFoundationService {
         kind: "manual_retry",
         parentCallId: parentCall.callId,
         retryTrigger: turn.recovery.trigger,
-        requestHash: createGi088ModelRequestHash(completionParams),
+        requestHash: createGi088ModelRequestHash(completionParams, {
+          emptyContentRecoveryPolicyVersion: emptyPolicy.version,
+          emptyContentAutomaticRetries:
+            emptyPolicy.maximumAutomaticRetriesPerTurn,
+          emptyContentPolicyOverride: emptyPolicy.policyOverride
+        }),
         effectiveConfig: json(this.createEffectiveConfig({
           hardTimeoutMs:
             GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs,
-          remainingSharedDeadlineMs: null
+          remainingSharedDeadlineMs: null,
+          emptyContentAutomaticRetries:
+            emptyPolicy.maximumAutomaticRetriesPerTurn,
+          emptyContentMaximumProviderCalls:
+            emptyPolicy.maximumProviderCallsPerTurn,
+          emptyContentPolicyOverride: emptyPolicy.policyOverride
         })),
         baseAssistantMessageId: turn.baseAssistantMessageId,
         semanticStateBeforeHash: createGi088FoundationPayloadHash(
@@ -4355,7 +4585,15 @@ export class Gi088EvaluationFoundationService {
       run.executionFingerprint === this.executionFingerprint &&
       run.candidateFingerprint === this.candidateFingerprint;
     const evaluationMetadata = evaluationMetadataFor(run.evaluationVersion);
-    const metrics = metricsFor({ state, calls, interventions });
+    const metrics = metricsFor({
+      state,
+      calls,
+      interventions,
+      metricsVersion:
+        run.evaluationVersion === GI088_EVALUATION_VERSION
+          ? undefined
+          : GI088_EVALUATION_METRICS_VERSION_V1
+    });
     const gate = gateFor({ run, state, calls, interventions, now: this.now() });
     const currentExport = run.evaluationVersion === GI088_EVALUATION_VERSION;
     const exportVersion = currentExport

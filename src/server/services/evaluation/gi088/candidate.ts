@@ -39,21 +39,22 @@ import {
   GI088_BEHAVIOR_MANIFEST_VERSION,
   GI088_CONTROL_DECISION_VERSION_V8R2,
   GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
-  GI088_EVALUATION_METRICS_VERSION_V8R2,
   GI088_EVALUATION_STORE_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
   GI088_EVALUATION_VERSION_V8R3,
-  GI088_EVALUATION_ID_V8R3,
+  GI088_EVALUATION_VERSION_V8R3R2,
+  GI088_EVALUATION_ID_V8R3R2,
   GI088_PAYLOAD_CONTRACT_VERSION_V8R3,
   GI088_READONLY_EXPORT_VERSION_V8R3,
   GI088_RUNTIME_POLICY_VERSION_V8R3,
   GI088_INTENT_CLASSIFIER_VERSION_V8R2,
   GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
   GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
-  GI088_SERVICE_VERSION_V8R3,
+  GI088_SERVICE_VERSION_V8R3R2,
   GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
-  GI088_V8R3_VERSION_MANIFEST
+  GI088_V8R3R2_VERSION_MANIFEST,
+  GI088_EVALUATION_METRICS_VERSION_V8R3R2
 } from "@/server/services/evaluation/gi088/version-manifest";
 import {
   GI088_V8R3_INTERVIEW_SKILL_SHA256,
@@ -66,11 +67,14 @@ export {
   GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_ID_V8R2,
   GI088_EVALUATION_ID_V8R3,
+  GI088_EVALUATION_ID_V8R3R2,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R3,
   GI088_SERVICE_VERSION_V8R1,
   GI088_SERVICE_VERSION_V8R2,
-  GI088_SERVICE_VERSION_V8R3
+  GI088_SERVICE_VERSION_V8R3,
+  GI088_SERVICE_VERSION_V8R3R2
 } from "@/server/services/evaluation/gi088/version-manifest";
 
 export const GI088_EVALUATION_ID_V1 = "gi088_human_eval_v1" as const;
@@ -156,9 +160,9 @@ export const GI088_EVALUATION_VERSION_V8 =
 export const GI088_SERVICE_VERSION_V8 =
   "2026-08-10.gi088-question-decision-service-v8" as const;
 
-export const GI088_EVALUATION_ID = GI088_EVALUATION_ID_V8R3;
-export const GI088_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R3;
-export const GI088_SERVICE_VERSION = GI088_SERVICE_VERSION_V8R3;
+export const GI088_EVALUATION_ID = GI088_EVALUATION_ID_V8R3R2;
+export const GI088_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R3R2;
+export const GI088_SERVICE_VERSION = GI088_SERVICE_VERSION_V8R3R2;
 export const GI088_EVALUATION_MODE = "high_only" as const;
 export const GI088_ACTIVE_BRANCHES = ["high"] as const;
 export const GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY = null;
@@ -181,6 +185,7 @@ export const GI088_GOVERNED_EVALUATION_VERSIONS = [
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R3,
   GI088_EVALUATION_VERSION
 ] as const;
 export const GI088_FIXED_OPENING = "此刻你想聊点什么？" as const;
@@ -195,11 +200,11 @@ export const GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION =
 export const GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION =
   "刚才只完成了思考，请直接输出最终可见 JSON，不要继续解释思考过程。" as const;
 export const GI088_EMPTY_CONTENT_RECOVERY_POLICY = {
-  version: "2026-08-09.gi088-empty-content-auto-recovery-v1",
+  version: "2026-08-12.gi088-empty-content-auto-recovery-v2",
   eligibleBranch: "high",
   trigger: "EMPTY_CONTENT",
-  maximumAutomaticRetriesPerTurn: 1,
-  maximumProviderCallsPerTurn: 2,
+  maximumAutomaticRetriesPerTurn: 2,
+  maximumProviderCallsPerTurn: 3,
   retryThinking: "enabled",
   retryReasoningEffort: "high",
   retryResponseFormat: "json_object",
@@ -209,6 +214,38 @@ export const GI088_EMPTY_CONTENT_RECOVERY_POLICY = {
     GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   recoveryInstruction: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
 } as const;
+
+export const GI088_EMPTY_CONTENT_AUTO_RECOVERY_OVERRIDE_ENV =
+  "GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES" as const;
+
+export type Gi088EmptyContentAutomaticRetryLimit = 1 | 2;
+
+/**
+ * Resolve the current runtime override once for a new turn. Existing turns
+ * carry the resolved values in their effective call config, so changing the
+ * environment never mutates an in-flight recovery chain.
+ */
+export function resolveGi088EmptyContentRecoveryPolicy(
+  env: NodeJS.ProcessEnv = process.env
+) {
+  const raw = env[GI088_EMPTY_CONTENT_AUTO_RECOVERY_OVERRIDE_ENV]?.trim();
+  if (raw !== undefined && raw !== "1" && raw !== "2") {
+    throw new Error(
+      `${GI088_EMPTY_CONTENT_AUTO_RECOVERY_OVERRIDE_ENV} must be 1 or 2`
+    );
+  }
+  const maximumAutomaticRetriesPerTurn: Gi088EmptyContentAutomaticRetryLimit =
+    raw === "1" ? 1 : 2;
+  return {
+    ...GI088_EMPTY_CONTENT_RECOVERY_POLICY,
+    maximumAutomaticRetriesPerTurn,
+    maximumProviderCallsPerTurn: (
+      maximumAutomaticRetriesPerTurn + 1
+    ) as 2 | 3,
+    policyOverride: raw !== undefined,
+    policyOverrideValue: raw ?? null
+  } as const;
+}
 
 export const GI088_PREFIX_CONTINUATION_POLICY = {
   version: "2026-08-10.gi088-deepseek-prefix-continuation-v1",
@@ -436,7 +473,7 @@ export const GI088_CONFIGS = {
     responseFormat: "json_object",
     qualityRetries: 0,
     automaticTechnicalRetries: 1,
-    automaticEmptyContentRetries: 1,
+    automaticEmptyContentRetries: 2,
     automaticStageTransitionRetries: 1,
     automaticSingleQuestionRetries: 0,
     activeInEvaluation: true
@@ -949,7 +986,9 @@ export const GI088_HISTORICAL_DATASET_FINGERPRINTS = {
   [GI088_EVALUATION_VERSION_V8R1]:
     "0ca2452690aa9e89b2414689bb7c96294a4fa9283359c01f3a45ca1c4b7478a7",
   [GI088_EVALUATION_VERSION_V8R2]:
-    "191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf"
+    "191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf",
+  [GI088_EVALUATION_VERSION_V8R3]:
+    "a279ef0542c9733fcf4b096db1b0bda92d23e2c41a12a254d8ae6c1f69811efb"
 } as const;
 
 export const GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R2 = {
@@ -1338,12 +1377,12 @@ export function createGi088RunnerFingerprint(
         deterministicState:
           GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
         semanticDelta: GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
-        interviewSkill: GI088_V8R3_VERSION_MANIFEST.interviewSkill,
+        interviewSkill: GI088_V8R3R2_VERSION_MANIFEST.interviewSkill,
         questionValueReview:
-          GI088_V8R3_VERSION_MANIFEST.questionValueReview,
-        singleFocus: GI088_V8R3_VERSION_MANIFEST.singleFocus,
-        runtime: GI088_V8R3_VERSION_MANIFEST.runtime,
-        payloadContract: GI088_V8R3_VERSION_MANIFEST.payloadContract,
+          GI088_V8R3R2_VERSION_MANIFEST.questionValueReview,
+        singleFocus: GI088_V8R3R2_VERSION_MANIFEST.singleFocus,
+        runtime: GI088_V8R3R2_VERSION_MANIFEST.runtime,
+        payloadContract: GI088_V8R3R2_VERSION_MANIFEST.payloadContract,
         sharedRecoveryDeadline:
           GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
         evaluationStore: GI088_EVALUATION_STORE_VERSION_V8R2
@@ -1381,7 +1420,7 @@ export function createGi088ExperienceFingerprint(
         behaviorManifest
       ),
       versions: {
-        metrics: GI088_EVALUATION_METRICS_VERSION_V8R2,
+        metrics: GI088_EVALUATION_METRICS_VERSION_V8R3R2,
         programInterventionReview:
           GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
         readonlyExport: GI088_READONLY_EXPORT_VERSION_V8R3
@@ -1399,7 +1438,7 @@ export function createGi088ExecutionFingerprint(
   return sha256(
     createGi088CanonicalJson({
       fingerprintLayer: "execution",
-      versionManifest: GI088_V8R3_VERSION_MANIFEST,
+      versionManifest: GI088_V8R3R2_VERSION_MANIFEST,
       behaviorManifestVersion: GI088_BEHAVIOR_MANIFEST_VERSION,
       behaviorManifestSha256:
         createGi088BehaviorManifestSha256(behaviorManifest),

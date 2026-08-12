@@ -1,5 +1,7 @@
-export const GI088_EVALUATION_METRICS_VERSION =
+export const GI088_EVALUATION_METRICS_VERSION_V1 =
   "2026-08-10.gi088-evaluation-metrics-v1" as const;
+export const GI088_EVALUATION_METRICS_VERSION =
+  "2026-08-12.gi088-evaluation-metrics-v2" as const;
 
 export type Gi088MetricsCallInput = {
   id?: string;
@@ -25,6 +27,14 @@ export type Gi088MetricsCallInput = {
   technicalFailure?: boolean;
   protectedFailure?: boolean;
   failedOutputDiagnostic?: unknown;
+  retryTrigger?: string | null;
+  retryOrdinal?: number | null;
+  latencyMs?: number | null;
+  effectiveConfig?: {
+    emptyContentAutomaticRetries?: number;
+    emptyContentMaximumProviderCalls?: number;
+    emptyContentPolicyOverride?: boolean;
+  } | null;
 };
 
 export type Gi088MetricsQuestionReviewInput = {
@@ -59,6 +69,7 @@ export type Gi088MetricsTurnInput = {
   calls?: Gi088MetricsCallInput[];
   recovery?: {
     status?: string;
+    trigger?: string | null;
     automaticRetryCount?: number;
     automaticDeadlineAt?: string | Date | null;
     completedAt?: string | Date | null;
@@ -102,6 +113,7 @@ export type Gi088EvaluationMetricsInput = {
   tasks: Gi088MetricsTaskInput[];
   callLedger?: Gi088MetricsCallInput[];
   programInterventions?: Gi088MetricsProgramInterventionInput[];
+  metricsVersion?: typeof GI088_EVALUATION_METRICS_VERSION | typeof GI088_EVALUATION_METRICS_VERSION_V1;
 };
 
 export type Gi088EvaluationMetrics = {
@@ -124,6 +136,18 @@ export type Gi088EvaluationMetrics = {
   visibleQuestionReviewedCount: number;
   visibleQuestionReviewCoverage: number | null;
   multipleIndependentTasksCount: number;
+  emptyContentInitialCount: number;
+  emptyContentRecoveryTriggerCount: number;
+  emptyContentRecoveryAttemptCount: number;
+  emptyContentRecoverySuccessCount: number;
+  successAtAttempt1: number;
+  successAtAttempt2: number;
+  finalEmptyContentCount: number;
+  recoveryBudgetExhaustedCount: number;
+  recoveredEmptyContentCount: number;
+  visibleLatencyP50Ms: number | null;
+  visibleLatencyP90Ms: number | null;
+  totalRecoveryCalls: number;
   gateFacts: {
     completedTaskCount: number;
     abortedTaskCount: number;
@@ -138,6 +162,12 @@ export type Gi088EvaluationMetrics = {
     protectedFailureCount: number;
     finalTechnicalFailureCount: number;
     emptyContentEventCount: number;
+    emptyContentInitialCount: number;
+    emptyContentRecoveryAttemptCount: number;
+    emptyContentRecoverySuccessCount: number;
+    finalEmptyContentCount: number;
+    recoveryBudgetExhaustedCount: number;
+    recoveredEmptyContentCount: number;
     automaticRecoveryAttemptCount: number;
     automaticRecoveryWithinDeadlineSuccessCount: number;
     automaticRecoveryLateOrUnknownCount: number;
@@ -417,6 +447,81 @@ function automaticRecoveryCalls(turn: NormalizedTurn) {
   return turn.calls.filter(isAutomaticRecoveryCall);
 }
 
+function isEmptyContentCall(call: Gi088MetricsCallInput) {
+  return call.errorCode === "EMPTY_CONTENT";
+}
+
+function initialEmptyContentCall(turn: NormalizedTurn) {
+  return turn.calls.find((call) =>
+    isEmptyContentCall(call) &&
+    !isAutomaticRecoveryCall(call) &&
+    call.kind !== "manual_retry" &&
+    (call.attempt ?? 1) === 1
+  ) ?? null;
+}
+
+function emptyContentRecoveryCalls(turn: NormalizedTurn) {
+  return turn.calls
+    .filter((call) =>
+      isAutomaticRecoveryCall(call) &&
+      (call.retryTrigger === "EMPTY_CONTENT" ||
+        call.errorCode === "EMPTY_CONTENT" ||
+        (initialEmptyContentCall(turn) !== null &&
+          !call.retryTrigger &&
+          !call.errorCode))
+    )
+    .sort((left, right) =>
+      (left.retryOrdinal ?? left.attempt ?? 0) -
+      (right.retryOrdinal ?? right.attempt ?? 0)
+    );
+}
+
+function emptyContentRecoveredAt(turn: NormalizedTurn) {
+  const initial = initialEmptyContentCall(turn);
+  if (!initial || !turnCommittedAssistant(turn.turn)) return null;
+  const successfulRecovery = emptyContentRecoveryCalls(turn).find(
+    callReachedVisibleSuccess
+  );
+  if (!successfulRecovery) return null;
+  return successfulRecovery.retryOrdinal ??
+    Math.max(1, (successfulRecovery.attempt ?? 2) - 1);
+}
+
+function latencyForVisibleTurn(turn: NormalizedTurn) {
+  if (!turnCommittedAssistant(turn.turn)) return null;
+  const first = initialDispatchedCall(turn.calls);
+  const completed = [...turn.calls]
+    .filter(callReachedVisibleSuccess)
+    .at(-1);
+  const startedAt = timestamp(first?.dispatchedAt ?? first?.startedAt);
+  const completedAt = timestamp(
+    completed?.finalizedAt ??
+    completed?.providerCompletedAt ??
+    completed?.completedAt
+  );
+  if (startedAt !== null && completedAt !== null && completedAt >= startedAt) {
+    return completedAt - startedAt;
+  }
+  const measured = turn.calls
+    .map((call) => call.latencyMs)
+    .filter((value): value is number =>
+      typeof value === "number" && Number.isFinite(value) && value >= 0
+    );
+  return measured.length > 0
+    ? measured.reduce((sum, value) => sum + value, 0)
+    : null;
+}
+
+function percentile(values: number[], percentileValue: number) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const index = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil(percentileValue * sorted.length) - 1)
+  );
+  return sorted[index] ?? null;
+}
+
 function automaticRecoverySucceededWithinDeadline(turn: NormalizedTurn) {
   if (!automaticRecoverySucceeded(turn)) return false;
   const recoveryCall = automaticRecoveryCalls(turn).at(-1);
@@ -548,9 +653,45 @@ export function calculateGi088EvaluationMetrics(
     ).length,
     0
   );
+  const emptyContentTurns = turns.filter((turn) =>
+    initialEmptyContentCall(turn) !== null
+  );
+  const emptyContentRecoveryAttemptCount = emptyContentTurns.reduce(
+    (total, turn) => total + emptyContentRecoveryCalls(turn).length,
+    0
+  );
+  const emptyContentRecoverySuccessCount = emptyContentTurns.filter(
+    (turn) => emptyContentRecoveredAt(turn) !== null
+  ).length;
+  const successAtAttempt1 = emptyContentTurns.filter(
+    (turn) => emptyContentRecoveredAt(turn) === 1
+  ).length;
+  const successAtAttempt2 = emptyContentTurns.filter(
+    (turn) => emptyContentRecoveredAt(turn) === 2
+  ).length;
+  const finalEmptyContentTurns = emptyContentTurns.filter(
+    (turn) => emptyContentRecoveredAt(turn) === null && isFinalFailure(turn)
+  );
+  const recoveryBudgetExhaustedCount = emptyContentTurns.filter((turn) =>
+    turn.turn.recovery?.trigger === "EMPTY_CONTENT" &&
+    (turn.turn.recovery.status === "exhausted" ||
+      (finalEmptyContentTurns.includes(turn) &&
+        (turn.turn.recovery.automaticRetryCount ?? 0) >=
+          (turn.calls[0]?.effectiveConfig?.emptyContentAutomaticRetries ?? 2)))
+  ).length;
+  const visibleLatencies = eligibleTurns
+    .map(latencyForVisibleTurn)
+    .filter((value): value is number => value !== null);
+  const recoveredEmptyContentCount = emptyContentRecoverySuccessCount;
+  const totalRecoveryCalls = turns.reduce(
+    (total, turn) => total + automaticRecoveryCalls(turn).length,
+    0
+  );
 
-  return {
-    version: GI088_EVALUATION_METRICS_VERSION,
+  const result = {
+    version: input.metricsVersion === GI088_EVALUATION_METRICS_VERSION_V1
+      ? GI088_EVALUATION_METRICS_VERSION_V1
+      : GI088_EVALUATION_METRICS_VERSION,
     eligibleModelSubmissionCount: eligibleTurns.length,
     firstVisibleSuccessCount,
     firstVisibleSuccessRate: ratio(
@@ -578,6 +719,18 @@ export function calculateGi088EvaluationMetrics(
       questionObservations.length
     ),
     multipleIndependentTasksCount,
+    emptyContentInitialCount: emptyContentTurns.length,
+    emptyContentRecoveryTriggerCount: emptyContentTurns.length,
+    emptyContentRecoveryAttemptCount,
+    emptyContentRecoverySuccessCount,
+    successAtAttempt1,
+    successAtAttempt2,
+    finalEmptyContentCount: finalEmptyContentTurns.length,
+    recoveryBudgetExhaustedCount,
+    recoveredEmptyContentCount,
+    visibleLatencyP50Ms: percentile(visibleLatencies, 0.5),
+    visibleLatencyP90Ms: percentile(visibleLatencies, 0.9),
+    totalRecoveryCalls,
     gateFacts: {
       completedTaskCount: taskStatusCount("completed"),
       abortedTaskCount: taskStatusCount("aborted"),
@@ -606,6 +759,12 @@ export function calculateGi088EvaluationMetrics(
       protectedFailureCount: rawProtectedEventCount,
       finalTechnicalFailureCount,
       emptyContentEventCount,
+      emptyContentInitialCount: emptyContentTurns.length,
+      emptyContentRecoveryAttemptCount,
+      emptyContentRecoverySuccessCount,
+      finalEmptyContentCount: finalEmptyContentTurns.length,
+      recoveryBudgetExhaustedCount,
+      recoveredEmptyContentCount,
       automaticRecoveryAttemptCount: automaticRecoveryTurns.length,
       automaticRecoveryWithinDeadlineSuccessCount,
       automaticRecoveryLateOrUnknownCount:
@@ -628,5 +787,41 @@ export function calculateGi088EvaluationMetrics(
       allVisibleQuestionsReviewed:
         reviewedQuestions.length === questionObservations.length
     }
-  };
+  } as Gi088EvaluationMetrics;
+  if (input.metricsVersion === GI088_EVALUATION_METRICS_VERSION_V1) {
+    const legacy = { ...result } as Record<string, unknown>;
+    const legacyGateFacts = { ...result.gateFacts } as Record<string, unknown>;
+    for (const key of [
+      "emptyContentInitialCount",
+      "emptyContentRecoveryTriggerCount",
+      "emptyContentRecoveryAttemptCount",
+      "emptyContentRecoverySuccessCount",
+      "successAtAttempt1",
+      "successAtAttempt2",
+      "finalEmptyContentCount",
+      "recoveryBudgetExhaustedCount",
+      "recoveredEmptyContentCount",
+      "visibleLatencyP50Ms",
+      "visibleLatencyP90Ms",
+      "totalRecoveryCalls"
+    ]) {
+      delete legacy[key];
+    }
+    for (const key of [
+      "emptyContentInitialCount",
+      "emptyContentRecoveryAttemptCount",
+      "emptyContentRecoverySuccessCount",
+      "finalEmptyContentCount",
+      "recoveryBudgetExhaustedCount",
+      "recoveredEmptyContentCount"
+    ]) {
+      delete legacyGateFacts[key];
+    }
+    return {
+      ...legacy,
+      version: GI088_EVALUATION_METRICS_VERSION_V1,
+      gateFacts: legacyGateFacts
+    } as unknown as Gi088EvaluationMetrics;
+  }
+  return result;
 }

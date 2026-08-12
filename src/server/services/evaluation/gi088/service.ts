@@ -13,6 +13,7 @@ import {
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION,
   GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
   GI088_EMPTY_CONTENT_RECOVERY_POLICY,
+  resolveGi088EmptyContentRecoveryPolicy,
   GI088_EVALUATION_ID,
   GI088_EVALUATION_VERSION,
   GI088_FIXED_OPENING,
@@ -47,6 +48,7 @@ import type {
 } from "@/server/services/evaluation/gi088/types";
 import type { AICompletionParams, AIProvider } from "@/server/services/ai/ai-provider";
 import {
+  AIProviderError,
   getAIProviderDiagnostics,
   getAIProviderFailureCode,
   sanitizeAICompletionTokenUsage,
@@ -486,6 +488,9 @@ type ServiceDependencies = {
   now?: () => Date;
   authorizeModelCall?: (branch: Gi088BranchKey) => void;
   evaluationMode?: Gi088EvaluationMode;
+  emptyContentRecoveryPolicy?: ReturnType<
+    typeof resolveGi088EmptyContentRecoveryPolicy
+  >;
 };
 
 export class Gi088EvaluationService {
@@ -494,6 +499,8 @@ export class Gi088EvaluationService {
   private readonly now: () => Date;
   private readonly authorizeModelCall: (branch: Gi088BranchKey) => void;
   private readonly evaluationMode: Gi088EvaluationMode;
+  private readonly emptyContentRecoveryPolicy =
+    resolveGi088EmptyContentRecoveryPolicy();
   private readonly candidateFingerprint =
     createGi088EffectiveCandidateFingerprint();
   private readonly executionFingerprint = createGi088ExecutionFingerprint();
@@ -503,6 +510,9 @@ export class Gi088EvaluationService {
     this.getProvider = dependencies.getProvider ?? createDefaultProvider;
     this.now = dependencies.now ?? (() => new Date());
     this.evaluationMode = dependencies.evaluationMode ?? "paired";
+    if (dependencies.emptyContentRecoveryPolicy) {
+      this.emptyContentRecoveryPolicy = dependencies.emptyContentRecoveryPolicy;
+    }
     this.authorizeModelCall =
       dependencies.authorizeModelCall ??
       (dependencies.getProvider
@@ -1074,8 +1084,35 @@ export class Gi088EvaluationService {
       : { ...shared, reasoningEffort: GI088_CONFIGS.high.reasoningEffort };
   }
 
-  private createRequestHash(params: AICompletionParams) {
-    return createGi088ModelRequestHash(params);
+  private emptyContentPolicyForTurn(turn: Gi088Turn) {
+    const config = turn.calls[0]?.effectiveConfig;
+    const maximumAutomaticRetriesPerTurn =
+      config?.emptyContentAutomaticRetries ??
+      this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn;
+    return {
+      ...this.emptyContentRecoveryPolicy,
+      version:
+        config?.emptyContentRecoveryPolicyVersion ??
+        this.emptyContentRecoveryPolicy.version,
+      maximumAutomaticRetriesPerTurn,
+      maximumProviderCallsPerTurn:
+        config?.emptyContentMaximumProviderCalls ??
+        ((maximumAutomaticRetriesPerTurn + 1) as 2 | 3),
+      policyOverride:
+        config?.emptyContentPolicyOverride ??
+        this.emptyContentRecoveryPolicy.policyOverride
+    } as const;
+  }
+
+  private createRequestHash(
+    params: AICompletionParams,
+    policy = this.emptyContentRecoveryPolicy
+  ) {
+    return createGi088ModelRequestHash(params, {
+      emptyContentRecoveryPolicyVersion: policy.version,
+      emptyContentAutomaticRetries: policy.maximumAutomaticRetriesPerTurn,
+      emptyContentPolicyOverride: policy.policyOverride
+    });
   }
 
   private createEffectiveConfig(
@@ -1086,6 +1123,10 @@ export class Gi088EvaluationService {
       sharedDeadlineMs?: number | null;
       remainingSharedDeadlineMs?: number | null;
       recoveryPolicyVersion?: string | null;
+      emptyContentAutomaticRetries?: 1 | 2;
+      emptyContentMaximumProviderCalls?: 2 | 3;
+      emptyContentRecoveryPolicyVersion?: string;
+      emptyContentPolicyOverride?: boolean;
     } = {}
   ): Gi088CallEffectiveConfig {
     const config = GI088_CONFIGS[branch];
@@ -1125,7 +1166,19 @@ export class Gi088EvaluationService {
       sharedDeadlineMs: options.sharedDeadlineMs ?? null,
       remainingSharedDeadlineMs:
         options.remainingSharedDeadlineMs ?? null,
-      recoveryPolicyVersion: options.recoveryPolicyVersion ?? null
+      recoveryPolicyVersion: options.recoveryPolicyVersion ?? null,
+      emptyContentAutomaticRetries:
+        options.emptyContentAutomaticRetries ??
+        this.emptyContentRecoveryPolicy.maximumAutomaticRetriesPerTurn,
+      emptyContentMaximumProviderCalls:
+        options.emptyContentMaximumProviderCalls ??
+        this.emptyContentRecoveryPolicy.maximumProviderCallsPerTurn,
+      emptyContentRecoveryPolicyVersion:
+        options.emptyContentRecoveryPolicyVersion ??
+        this.emptyContentRecoveryPolicy.version,
+      emptyContentPolicyOverride:
+        options.emptyContentPolicyOverride ??
+        this.emptyContentRecoveryPolicy.policyOverride
     };
   }
 
@@ -1215,6 +1268,20 @@ export class Gi088EvaluationService {
         });
       }
       return this.finishTechnicalFailure(batch, taskId, branch, turn.id, error);
+    }
+    if (completion.content.trim().length === 0) {
+      return this.finishTechnicalFailure(
+        batch,
+        taskId,
+        branch,
+        turn.id,
+        new AIProviderError(
+          "Provider returned empty visible content",
+          "EMPTY_CONTENT",
+          502,
+          completion.diagnostics ?? null
+        )
+      );
     }
     let output: Gi088SemanticDeltaOutput;
     try {
@@ -1470,6 +1537,7 @@ export class Gi088EvaluationService {
     call.tokenUsage = diagnostics?.tokenUsage ?? null;
     call.providerDiagnostics = diagnostics;
     turn.status = "technical_failure";
+    const emptyPolicy = this.emptyContentPolicyForTurn(turn);
     const commonRecoveryEligible =
       call.kind !== "automatic_retry" &&
       call.kind !== "manual_retry" &&
@@ -1504,11 +1572,33 @@ export class Gi088EvaluationService {
           turn.calls[0]?.startedAt ?? call.startedAt
         ),
         startedAt: null,
-        completedAt: null
+        completedAt: null,
+        policyVersion: emptyPolicy.version,
+        maximumAutomaticRetriesPerTurn:
+          emptyPolicy.maximumAutomaticRetriesPerTurn,
+        maximumProviderCallsPerTurn:
+          emptyPolicy.maximumProviderCallsPerTurn,
+        policyOverride: emptyPolicy.policyOverride
       };
     } else if (call.kind === "automatic_retry" && turn.recovery) {
-      turn.recovery.status = "manual_available";
-      turn.recovery.completedAt = nowIso(this.now);
+      const exhaustedEmptyContent =
+        turn.recovery.trigger === "EMPTY_CONTENT" &&
+        turn.recovery.automaticRetryCount >=
+          (turn.recovery.maximumAutomaticRetriesPerTurn ??
+            emptyPolicy.maximumAutomaticRetriesPerTurn);
+      const maximumAutomaticRetries =
+        turn.recovery.maximumAutomaticRetriesPerTurn ??
+        emptyPolicy.maximumAutomaticRetriesPerTurn;
+      turn.recovery.status = exhaustedEmptyContent
+        ? maximumAutomaticRetries >= 2
+          ? "exhausted"
+          : "manual_available"
+        : turn.recovery.trigger === "EMPTY_CONTENT"
+          ? "eligible"
+          : "manual_available";
+      turn.recovery.completedAt = turn.recovery.status === "eligible"
+        ? null
+        : nowIso(this.now);
     } else if (call.kind === "manual_retry" && turn.recovery) {
       turn.recovery.status = "exhausted";
       turn.recovery.completedAt = nowIso(this.now);
@@ -1625,6 +1715,7 @@ export class Gi088EvaluationService {
     const isAutomaticRecovery = recoveryTrigger !== null;
     const isManualAfterAutoRecovery =
       input.trigger === "manual_after_auto_recovery";
+    const emptyPolicy = turn ? this.emptyContentPolicyForTurn(turn) : null;
     if (
       isAutomaticRecovery &&
       turn?.recovery &&
@@ -1658,7 +1749,11 @@ export class Gi088EvaluationService {
       task.activeBranch !== input.branch ||
       (isManualAfterAutoRecovery
         ? turn.calls.length >= GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
-        : turn.calls.length >= GI088_MAXIMUM_PROVIDER_CALLS_PER_TURN)
+        : turn.calls.length >= (
+            recoveryTrigger === "EMPTY_CONTENT"
+              ? (emptyPolicy?.maximumProviderCallsPerTurn ?? 3)
+              : GI088_MAXIMUM_PROVIDER_CALLS_PER_TURN
+          ))
     ) {
       throw new Gi088EvaluationError("GI088_TECHNICAL_RETRY_LIMIT_REACHED", 409);
     }
@@ -1672,7 +1767,8 @@ export class Gi088EvaluationService {
         turn.recovery?.trigger !== recoveryTrigger ||
         turn.recovery?.status !== "eligible" ||
         turn.recovery.automaticRetryCount >=
-          GI088_EMPTY_CONTENT_RECOVERY_POLICY.maximumAutomaticRetriesPerTurn
+          (emptyPolicy?.maximumAutomaticRetriesPerTurn ??
+            GI088_EMPTY_CONTENT_RECOVERY_POLICY.maximumAutomaticRetriesPerTurn)
       ) {
         throw new Gi088EvaluationError(
           "GI088_EMPTY_CONTENT_AUTO_RECOVERY_UNAVAILABLE",
@@ -1842,7 +1938,7 @@ export class Gi088EvaluationService {
           : null,
       retryTrigger: effectiveRecoveryTrigger,
       retryOrdinal: isAutomaticRecovery
-        ? 1
+        ? (mutableTurn.recovery?.automaticRetryCount ?? 0) + 1
         : isManualAfterAutoRecovery
           ? 2
           : null,
@@ -1861,7 +1957,12 @@ export class Gi088EvaluationService {
             ? GI088_SHARED_RECOVERY_DEADLINE_POLICY.version
             : isManualAfterAutoRecovery
               ? GI088_MANUAL_RECOVERY_POLICY.version
-              : null
+              : null,
+          emptyContentAutomaticRetries:
+            emptyPolicy?.maximumAutomaticRetriesPerTurn,
+          emptyContentMaximumProviderCalls:
+            emptyPolicy?.maximumProviderCallsPerTurn,
+          emptyContentPolicyOverride: emptyPolicy?.policyOverride
         }
       )
     });

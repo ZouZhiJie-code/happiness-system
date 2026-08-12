@@ -37,6 +37,7 @@ import { GI088_SEMANTIC_DELTA_CONTRACT_VERSION } from "../../src/server/services
 import {
   GI088_V8R2_VERSION_MANIFEST,
   GI088_V8R3_VERSION_MANIFEST,
+  GI088_V8R3R2_VERSION_MANIFEST,
   GI088_EVALUATION_ID_V8R1,
   GI088_SERVICE_VERSION_V8R1
 } from "../../src/server/services/evaluation/gi088/version-manifest";
@@ -83,9 +84,9 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
       evaluation: GI088_EVALUATION_VERSION,
       service: GI088_SERVICE_VERSION
     }).toEqual({
-      id: GI088_V8R3_VERSION_MANIFEST.evaluationId,
-      evaluation: GI088_V8R3_VERSION_MANIFEST.evaluation,
-      service: GI088_V8R3_VERSION_MANIFEST.service
+      id: GI088_V8R3R2_VERSION_MANIFEST.evaluationId,
+      evaluation: GI088_V8R3R2_VERSION_MANIFEST.evaluation,
+      service: GI088_V8R3R2_VERSION_MANIFEST.service
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -212,7 +213,7 @@ describe("GI-088 v8r2 version, dataset and layered fingerprints", () => {
   it("四层与 execution 指纹稳定生成且排除部署结果字段", () => {
     const bundle = createGi088FingerprintBundle();
     expect(bundle).toEqual({
-      behaviorManifestVersion: GI088_V8R3_VERSION_MANIFEST.behaviorManifest,
+      behaviorManifestVersion: GI088_V8R3R2_VERSION_MANIFEST.behaviorManifest,
       behaviorManifestSha256: expect.stringMatching(/^[a-f0-9]{64}$/u),
       candidateFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),
       datasetFingerprint: expect.stringMatching(/^[a-f0-9]{64}$/u),

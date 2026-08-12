@@ -43,8 +43,11 @@ import {
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R3,
   GI088_GI087_CANDIDATE_FINGERPRINT,
   GI088_GOVERNED_EVALUATION_VERSIONS,
+  GI088_EMPTY_CONTENT_RECOVERY_POLICY,
+  resolveGi088EmptyContentRecoveryPolicy,
   GI088_SERVICE_VERSION,
   GI088_SERVICE_VERSION_V1,
   GI088_SERVICE_VERSION_V2,
@@ -375,9 +378,9 @@ describe("GI-088 Preview evaluation service", () => {
       version: GI088_EVALUATION_VERSION,
       serviceVersion: GI088_SERVICE_VERSION
     }).toEqual({
-      id: "gi088_human_eval_v8r3_skill_ark_flash",
-      version: "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash",
-      serviceVersion: "2026-08-11.gi088-skill-ark-flash-foundation-service-v8r3"
+      id: "gi088_human_eval_v8r3r2_empty_content_recovery_2",
+      version: "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2",
+      serviceVersion: "2026-08-12.gi088-empty-content-recovery-service-v8r3r2"
     });
     expect({
       id: GI088_EVALUATION_ID_V8R1,
@@ -511,6 +514,7 @@ describe("GI-088 Preview evaluation service", () => {
       GI088_EVALUATION_VERSION_V8,
       GI088_EVALUATION_VERSION_V8R1,
       GI088_EVALUATION_VERSION_V8R2,
+      GI088_EVALUATION_VERSION_V8R3,
       GI088_EVALUATION_VERSION
     ]);
     expect(createGi088EffectiveCandidateFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
@@ -637,7 +641,13 @@ describe("GI-088 Preview evaluation service", () => {
     );
     const storedRequestHash =
       stored?.state.tasks[0].branches.off.turns[0].calls[0].requestHash;
-    const expectedRequestHash = createGi088ModelRequestHash(calls[0]);
+    const expectedRequestHash = createGi088ModelRequestHash(calls[0], {
+      emptyContentRecoveryPolicyVersion:
+        GI088_EMPTY_CONTENT_RECOVERY_POLICY.version,
+      emptyContentAutomaticRetries:
+        GI088_EMPTY_CONTENT_RECOVERY_POLICY.maximumAutomaticRetriesPerTurn,
+      emptyContentPolicyOverride: false
+    });
     expect(storedRequestHash).toBe(expectedRequestHash);
   });
 
@@ -1988,7 +1998,7 @@ describe("GI-088 Preview evaluation service", () => {
     await service.retry(request);
     await expectGi088EvaluationError(
       service.retry({ ...request, trigger: "automatic_empty_content" }),
-      "GI088_TECHNICAL_RETRY_LIMIT_REACHED"
+      "GI088_EMPTY_CONTENT_AUTO_RECOVERY_UNAVAILABLE"
     );
     expect(targetCalls).toHaveLength(5);
   });
@@ -2715,7 +2725,11 @@ describe("GI-088 Preview evaluation service", () => {
     const service = new Gi088EvaluationService({
       store: new Gi088MemoryStore(),
       evaluationMode: "high_only",
-      getProvider: () => provider
+      getProvider: () => provider,
+      emptyContentRecoveryPolicy: resolveGi088EmptyContentRecoveryPolicy({
+        NODE_ENV: "test",
+        GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES: "1"
+      })
     });
     const failed = await service.startHigh({
       ownerUserId: "owner-v7r2-manual",
@@ -2984,6 +2998,7 @@ describe("GI-088 Preview evaluation service", () => {
             GI088_EVALUATION_VERSION_V8,
             GI088_EVALUATION_VERSION_V8R1,
             GI088_EVALUATION_VERSION_V8R2,
+            GI088_EVALUATION_VERSION_V8R3,
             GI088_EVALUATION_VERSION
           ]
         }

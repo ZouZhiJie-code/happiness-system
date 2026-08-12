@@ -131,6 +131,10 @@ export type Gi088TurnRecovery = {
   automaticDeadlineAt?: string | null;
   startedAt: string | null;
   completedAt: string | null;
+  policyVersion?: string;
+  maximumAutomaticRetriesPerTurn?: 1 | 2;
+  maximumProviderCallsPerTurn?: 2 | 3;
+  policyOverride?: boolean;
 };
 
 export type Gi088QuestionReviewClassification =
@@ -197,6 +201,10 @@ export type Gi088CallEffectiveConfig = {
   sharedDeadlineMs?: number | null;
   remainingSharedDeadlineMs?: number | null;
   recoveryPolicyVersion?: string | null;
+  emptyContentAutomaticRetries?: 1 | 2;
+  emptyContentMaximumProviderCalls?: 2 | 3;
+  emptyContentRecoveryPolicyVersion?: string;
+  emptyContentPolicyOverride?: boolean;
 };
 
 export type Gi088Call = {
@@ -433,6 +441,10 @@ export type Gi088PublicSession = {
       bodyIdleTimeoutMs?: number;
       hardTimeoutMs?: number;
       automaticChainDeadlineMs?: number;
+      automaticEmptyContentRetries?: 1 | 2;
+      maximumProviderCallsPerTurn?: 2 | 3;
+      emptyContentRecoveryPolicyVersion?: string;
+      emptyContentPolicyOverride?: boolean;
       routeMaxDurationSeconds: number;
       hiddenReasoningPersistence?: "forbidden";
     };
@@ -498,6 +510,9 @@ export type Gi088PublicSession = {
           effectiveTemperature: number | null;
           reasoningEffort: "high" | null;
           automaticEmptyContentRetries: number;
+          maximumProviderCallsPerTurn?: 2 | 3;
+          emptyContentRecoveryPolicyVersion?: string;
+          emptyContentPolicyOverride?: boolean;
           automaticStageTransitionRetries: number;
           automaticSingleQuestionRetries: number;
           automaticTechnicalRetries: number;

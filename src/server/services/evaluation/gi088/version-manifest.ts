@@ -52,6 +52,18 @@ export const GI088_V8R3_VERSION_MANIFEST = {
   behaviorManifest: "2026-08-11.gi088-behavior-manifest-v2"
 } as const;
 
+/** Current release: only EMPTY_CONTENT automatic recovery changes from v8r3. */
+export const GI088_V8R3R2_VERSION_MANIFEST = {
+  ...GI088_V8R3_VERSION_MANIFEST,
+  evaluationId: "gi088_human_eval_v8r3r2_empty_content_recovery_2",
+  evaluation:
+    "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2",
+  service:
+    "2026-08-12.gi088-empty-content-recovery-service-v8r3r2",
+  metrics: "2026-08-12.gi088-evaluation-metrics-v2",
+  behaviorManifest: "2026-08-12.gi088-behavior-manifest-v3"
+} as const;
+
 export const GI088_EVALUATION_ID_V8R2 =
   GI088_V8R2_VERSION_MANIFEST.evaluationId;
 export const GI088_EVALUATION_VERSION_V8R2 =
@@ -78,7 +90,7 @@ export const GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2 =
   GI088_V8R2_VERSION_MANIFEST.programInterventionReview;
 export const GI088_READONLY_EXPORT_VERSION_V8R2 =
   GI088_V8R2_VERSION_MANIFEST.readonlyExport;
-export const GI088_BEHAVIOR_MANIFEST_VERSION =
+export const GI088_BEHAVIOR_MANIFEST_VERSION_V8R3 =
   GI088_V8R3_VERSION_MANIFEST.behaviorManifest;
 
 export const GI088_EVALUATION_ID_V8R3 =
@@ -97,3 +109,14 @@ export const GI088_PAYLOAD_CONTRACT_VERSION_V8R3 =
   GI088_V8R3_VERSION_MANIFEST.payloadContract;
 export const GI088_READONLY_EXPORT_VERSION_V8R3 =
   GI088_V8R3_VERSION_MANIFEST.readonlyExport;
+
+export const GI088_EVALUATION_ID_V8R3R2 =
+  GI088_V8R3R2_VERSION_MANIFEST.evaluationId;
+export const GI088_EVALUATION_VERSION_V8R3R2 =
+  GI088_V8R3R2_VERSION_MANIFEST.evaluation;
+export const GI088_SERVICE_VERSION_V8R3R2 =
+  GI088_V8R3R2_VERSION_MANIFEST.service;
+export const GI088_EVALUATION_METRICS_VERSION_V8R3R2 =
+  GI088_V8R3R2_VERSION_MANIFEST.metrics;
+export const GI088_BEHAVIOR_MANIFEST_VERSION =
+  GI088_V8R3R2_VERSION_MANIFEST.behaviorManifest;

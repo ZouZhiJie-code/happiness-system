@@ -4,7 +4,7 @@ import {
 } from "@/features/interview/event-centered/gi088-evaluation-export";
 
 export const GI088_EVALUATION_VERSION =
-  "2026-08-11.gi088-human-eval-v8r3-skill-ark-flash" as const;
+  "2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2" as const;
 
 export type Gi088GenerationProgress = {
   type:
@@ -20,6 +20,8 @@ export type Gi088GenerationProgress = {
     | "UNAUTHORIZED_PAUSE";
   turnId: string;
   callId?: string;
+  recoveryAttempt?: number;
+  recoveryMaximum?: number;
 };
 
 export type Gi088BranchKey = "off" | "high";
@@ -187,6 +189,10 @@ export type Gi088CallMetadata = {
     sharedDeadlineMs?: number | null;
     remainingSharedDeadlineMs?: number | null;
     recoveryPolicyVersion?: string | null;
+    emptyContentAutomaticRetries?: 1 | 2;
+    emptyContentMaximumProviderCalls?: 2 | 3;
+    emptyContentRecoveryPolicyVersion?: string;
+    emptyContentPolicyOverride?: boolean;
   };
   ledgerStatus?:
     | "reserved"
@@ -287,6 +293,10 @@ export type Gi088TrajectoryTurn = {
     automaticDeadlineAt?: string | null;
     startedAt: string | null;
     completedAt: string | null;
+    policyVersion?: string;
+    maximumAutomaticRetriesPerTurn?: 1 | 2;
+    maximumProviderCallsPerTurn?: 2 | 3;
+    policyOverride?: boolean;
   } | null;
   questionObservation?: {
     questionPresence?: Gi088QuestionPresence;
@@ -353,6 +363,9 @@ export type Gi088Trajectory = {
     effectiveTemperature?: number | null;
     reasoningEffort: "high" | null;
     automaticEmptyContentRetries: number;
+    maximumProviderCallsPerTurn?: number;
+    emptyContentRecoveryPolicyVersion?: string;
+    emptyContentPolicyOverride?: boolean;
     automaticStageTransitionRetries: number;
     automaticSingleQuestionRetries?: number;
     automaticTechnicalRetries?: number;
@@ -472,6 +485,18 @@ export type Gi088EvaluationMetrics = {
   visibleQuestionReviewedCount?: number;
   visibleQuestionReviewCoverage: number | null;
   multipleIndependentTasksCount: number;
+  emptyContentInitialCount?: number;
+  emptyContentRecoveryTriggerCount?: number;
+  emptyContentRecoveryAttemptCount?: number;
+  emptyContentRecoverySuccessCount?: number;
+  successAtAttempt1?: number;
+  successAtAttempt2?: number;
+  finalEmptyContentCount?: number;
+  recoveryBudgetExhaustedCount?: number;
+  recoveredEmptyContentCount?: number;
+  visibleLatencyP50Ms?: number | null;
+  visibleLatencyP90Ms?: number | null;
+  totalRecoveryCalls?: number;
   gateFacts?: Record<string, number | boolean>;
 };
 
@@ -774,6 +799,8 @@ async function requestStreamingSession(
       trigger?: unknown;
       turnId?: unknown;
       callId?: unknown;
+      recoveryAttempt?: unknown;
+      recoveryMaximum?: unknown;
       error?: unknown;
       issue?: unknown;
     };
@@ -800,6 +827,12 @@ async function requestStreamingSession(
         type: event.type,
         turnId: event.turnId,
         ...(typeof event.callId === "string" ? { callId: event.callId } : {}),
+        ...(typeof event.recoveryAttempt === "number"
+          ? { recoveryAttempt: event.recoveryAttempt }
+          : {}),
+        ...(typeof event.recoveryMaximum === "number"
+          ? { recoveryMaximum: event.recoveryMaximum }
+          : {}),
         ...(trigger ? { trigger } : {})
       });
       return;

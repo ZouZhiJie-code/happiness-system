@@ -35,6 +35,7 @@ import {
   GI088_EVALUATION_VERSION_V8,
   GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION_V8R2,
+  GI088_EMPTY_CONTENT_RECOVERY_POLICY,
   GI088_MODEL_CALL_IDENTITY,
   GI088_SERVICE_VERSION_V1,
   GI088_SERVICE_VERSION_V2,
@@ -1362,6 +1363,130 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     );
   });
 
+  it("EMPTY_CONTENT 默认允许两次自动恢复且第三次调用封顶", async () => {
+    const fake = fakeProvider(["", "", firstTurnOutput()]);
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const created = await createRun(service, "owner-empty-double-recovery");
+
+    const session = await service.startTask({
+      ownerUserId: "owner-empty-double-recovery",
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "这段原话只应该保存一次，即使模型需要恢复。",
+      clientOperationId: "empty-double-recovery-turn"
+    });
+    const calls = await store.listCalls(created.runId);
+    const turn = session.activeTask?.branches.high.turns[0];
+    const userMessages = session.activeTask?.branches.high.messages.filter(
+      (message) => message.role === "user"
+    );
+
+    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
+    expect(calls.map((call) => ({
+      attempt: call.attempt,
+      kind: call.kind,
+      retryTrigger: call.retryTrigger,
+      status: call.status
+    }))).toEqual([
+      { attempt: 1, kind: "initial", retryTrigger: null, status: "finalized" },
+      {
+        attempt: 2,
+        kind: "automatic_retry",
+        retryTrigger: "EMPTY_CONTENT",
+        status: "finalized"
+      },
+      {
+        attempt: 3,
+        kind: "automatic_retry",
+        retryTrigger: "EMPTY_CONTENT",
+        status: "finalized"
+      }
+    ]);
+    expect(calls.map((call) => call.effectiveConfig)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          emptyContentAutomaticRetries: 2,
+          emptyContentMaximumProviderCalls: 3,
+          emptyContentPolicyOverride: false
+        })
+      ])
+    );
+    expect(turn).toMatchObject({
+      status: "complete_after_auto_recovery",
+      recovery: {
+        status: "recovered",
+        trigger: "EMPTY_CONTENT",
+        automaticRetryCount: 2,
+        manualRetryCount: 0
+      }
+    });
+    expect(userMessages).toHaveLength(1);
+  });
+
+  it("EMPTY_CONTENT 回退为一次自动恢复后保留人工继续入口", async () => {
+    const fake = fakeProvider(["", ""]);
+    const previous = process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES;
+    process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES = "1";
+    try {
+      const { service, store } = serviceWith({ provider: fake.provider });
+      const created = await createRun(service, "owner-empty-fallback");
+      const session = await service.startTask({
+        ownerUserId: "owner-empty-fallback",
+        runId: created.runId,
+        taskId: "A1",
+        initialUserMessage: "回退策略仍然要保留人工继续。",
+        clientOperationId: "empty-fallback-turn"
+      });
+      const calls = await store.listCalls(created.runId);
+
+      expect(fake.provider.complete).toHaveBeenCalledTimes(2);
+      expect(calls).toHaveLength(2);
+      expect(session.activeTask?.branches.high.turns[0]).toMatchObject({
+        status: "technical_failure",
+        recovery: {
+          status: "manual_available",
+          trigger: "EMPTY_CONTENT",
+          automaticRetryCount: 1,
+          manualRetryCount: 0
+        }
+      });
+    } finally {
+      if (previous === undefined) {
+        delete process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES;
+      } else {
+        process.env.GI088_EMPTY_CONTENT_AUTO_RECOVERY_RETRIES = previous;
+      }
+    }
+  });
+
+  it("EMPTY_CONTENT 连续三次为空后收束为 exhausted 且不开放第四次调用", async () => {
+    const fake = fakeProvider(["", "", ""]);
+    const { service, store } = serviceWith({ provider: fake.provider });
+    const created = await createRun(service, "owner-empty-exhausted");
+    const session = await service.startTask({
+      ownerUserId: "owner-empty-exhausted",
+      runId: created.runId,
+      taskId: "A1",
+      initialUserMessage: "连续空输出也只能结束这一条原话。",
+      clientOperationId: "empty-exhausted-turn"
+    });
+    const calls = await store.listCalls(created.runId);
+    const turn = session.activeTask?.branches.high.turns[0];
+
+    expect(fake.provider.complete).toHaveBeenCalledTimes(3);
+    expect(calls).toHaveLength(3);
+    expect(calls.every((call) => call.errorCode === "EMPTY_CONTENT")).toBe(true);
+    expect(turn).toMatchObject({
+      status: "technical_failure",
+      recovery: {
+        status: "exhausted",
+        trigger: "EMPTY_CONTENT",
+        automaticRetryCount: 2,
+        manualRetryCount: 0
+      }
+    });
+  });
+
   it("结构化或语义校验失败只纠正一次，并对同一原话原子幂等提交", async () => {
     const fake = fakeProvider([
       "{ invalid-json",
@@ -1466,7 +1591,13 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
       responseFormat: "json_object"
     });
     expect(calls[0]?.requestHash).toBe(
-      createGi088ModelRequestHash(fake.params[0]!)
+      createGi088ModelRequestHash(fake.params[0]!, {
+        emptyContentRecoveryPolicyVersion:
+          GI088_EMPTY_CONTENT_RECOVERY_POLICY.version,
+        emptyContentAutomaticRetries:
+          GI088_EMPTY_CONTENT_RECOVERY_POLICY.maximumAutomaticRetriesPerTurn,
+        emptyContentPolicyOverride: false
+      })
     );
   });
 

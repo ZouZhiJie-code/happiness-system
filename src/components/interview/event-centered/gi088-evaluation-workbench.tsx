@@ -1059,6 +1059,15 @@ function TechnicalFailure({
   ) {
     if (!showRecoveryStatus) return null;
     const timeoutRecovery = recovery.trigger === "TIMEOUT";
+    const emptyRecovery = recovery.trigger === "EMPTY_CONTENT";
+    const recoveryMaximum =
+      recovery.maximumAutomaticRetriesPerTurn ??
+      trajectory.config.automaticEmptyContentRetries ??
+      2;
+    const recoveryAttempt = Math.min(
+      recoveryMaximum,
+      recovery.automaticRetryCount + 1
+    );
     const manualRetrying = recovery.status === "manual_retrying";
     return (
       <div className="border-l-2 border-[var(--amber)] pl-4 text-sm leading-6" role="status" aria-live="polite">
@@ -1067,21 +1076,35 @@ function TechnicalFailure({
             ? "正在再次生成"
             : timeoutRecovery
               ? "正在恢复连接"
-              : "正在恢复可见回答"}
+              : emptyRecovery
+                ? `正在自动恢复第 ${recoveryAttempt}/${recoveryMaximum} 次`
+                : "正在恢复可见回答"}
         </p>
         <p className="mt-1 text-[var(--text-dim)]">
           {manualRetrying
             ? "你已确认再次生成。系统继续使用同一段原话、同一 Thinking high 配置和修复前状态；完成后只会提交一条最终回答。"
             : timeoutRecovery
             ? "第一次请求在连接或正文停滞时结束。你的原话已经保留，系统正在用相同 Thinking high 配置自动恢复一次。"
-            : "第一次请求只完成了思考。你的原话已经保留，系统正在用相同 Thinking high 配置自动恢复一次。"}
+            : emptyRecovery
+              ? `你的原话已经保留。系统正在沿用相同 Thinking high 配置恢复，这是本轮第 ${recoveryAttempt}/${recoveryMaximum} 次自动恢复。`
+              : "第一次请求只完成了思考。你的原话已经保留，系统正在用相同 Thinking high 配置自动恢复一次。"}
         </p>
-        <p className="mt-2 text-xs text-[var(--text-faint)]">自动链最多两次、总计不超过 90 秒；自动恢复仍失败时，你可以主动再次生成一次。</p>
+        <p className="mt-2 text-xs text-[var(--text-faint)]">
+          {emptyRecovery
+            ? `自动链总上限 90 秒；本轮最多自动恢复 ${recoveryMaximum} 次。`
+            : "自动链最多一次、总计不超过 90 秒；自动恢复仍失败时，你可以主动再次生成一次。"}
+        </p>
       </div>
     );
   }
 
   if (recovery?.status === "manual_available") {
+    const emptyRecovery = recovery.trigger === "EMPTY_CONTENT";
+    const callsUsed = trajectory.config.providerCallsUsed ??
+      recovery.automaticRetryCount + 1;
+    const maximumCalls = recovery.maximumProviderCallsPerTurn ??
+      trajectory.config.maximumProviderCallsPerTurn ??
+      (emptyRecovery ? 3 : 2);
     const retryAfterAuto = async () => {
       if (!turnId) return;
       onPending(true);
@@ -1105,7 +1128,7 @@ function TechnicalFailure({
       <div className="border-l-2 border-clay pl-4 text-sm leading-6" role="alert">
         <p className="font-semibold text-ink">自动恢复仍未完成</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          两次调用和你的原话已经保留。你可以主动再生成一次；这次结束后系统会停止当前原话的全部调用。
+          {`${callsUsed} 次调用和你的原话已经保留。你可以主动再生成一次；这次结束后系统会停止当前原话的全部调用（本轮上限 ${maximumCalls} 次）。`}
         </p>
         <ActionButton
           type="button"
@@ -1127,10 +1150,10 @@ function TechnicalFailure({
         <p className="font-semibold text-ink">
           {timeoutRecovery
             ? "自动重试仍未完成连接"
-            : "自动恢复仍未得到可见回答"}
+            : "本轮恢复已结束"}
         </p>
         <p className="mt-1 text-[var(--text-dim)]">
-          {`最多三次${branch === "high" ? " Thinking high" : " Thinking 关闭"} 调用和你的原话都已保留在 Trace。当前原话的恢复已经结束，你可以结束并评价。`}
+          {`最多 ${recovery.maximumProviderCallsPerTurn ?? 3} 次${branch === "high" ? " Thinking high" : " Thinking 关闭"} 调用和你的原话都已保留在 Trace。当前原话的恢复已经结束，你可以结束并评价。`}
         </p>
       </div>
     );
@@ -1226,6 +1249,12 @@ function ProtectedFailure({
     );
   }
   if (recovery?.status === "manual_available" && failedTurn) {
+    const emptyRecovery = recovery.trigger === "EMPTY_CONTENT";
+    const callsUsed = trajectory.config.providerCallsUsed ??
+      recovery.automaticRetryCount + 1;
+    const maximumCalls = recovery.maximumProviderCallsPerTurn ??
+      trajectory.config.maximumProviderCallsPerTurn ??
+      (emptyRecovery ? 3 : 2);
     const retryAfterAuto = async () => {
       onPending(true);
       try {
@@ -1248,7 +1277,7 @@ function ProtectedFailure({
       <div className="border-l-2 border-clay pl-4 text-sm leading-6" role="alert">
         <p className="font-semibold text-ink">自动整理仍未通过规则检查</p>
         <p className="mt-1 text-[var(--text-dim)]">
-          两次结果和你的原话已经保留。你可以主动再生成一次；完成后当前原话不会继续调用。
+          {`${callsUsed} 次结果和你的原话已经保留。你可以主动再生成一次；完成后当前原话不会继续调用（本轮上限 ${maximumCalls} 次）。`}
         </p>
         <ActionButton
           type="button"
@@ -1280,7 +1309,7 @@ function ProtectedFailure({
           第一次回应留在了机会已经用完的阶段。你的原话已经保留，系统正在沿用当前 Thinking 配置自动纠正一次。
         </p>
         <p className="mt-2 text-xs text-[var(--text-faint)]">
-          自动链最多两次；自动整理仍失败时，你可以主动再次生成一次。
+          自动链最多一次；自动整理仍失败时，你可以主动再次生成一次。
         </p>
       </div>
     );
@@ -2082,7 +2111,7 @@ function TraceLedger({
           <dt className="text-[var(--text-faint)]">温度</dt><dd>{trajectory.config.temperature ?? "N/A"}</dd>
           <dt className="text-[var(--text-faint)]">Reasoning</dt><dd>{trajectory.config.reasoningEffort ?? "关闭"}</dd>
           <dt className="text-[var(--text-faint)]">输出</dt><dd>结构化 JSON · 应用不设 Token 上限 · 质量重试 0</dd>
-          <dt className="text-[var(--text-faint)]">空内容恢复</dt><dd>{trajectory.config.automaticEmptyContentRetries ? "Thinking high 最多自动恢复 1 次" : "关闭"}</dd>
+          <dt className="text-[var(--text-faint)]">空内容恢复</dt><dd>{trajectory.config.automaticEmptyContentRetries ? `Thinking high 最多自动恢复 ${trajectory.config.automaticEmptyContentRetries} 次` : "关闭"}</dd>
           <dt className="text-[var(--text-faint)]">轨迹调用</dt><dd>已使用 {trajectory.config.providerCallsUsed ?? 0} 次，本轨迹不设上限</dd>
           <dt className="text-[var(--text-faint)]">候选指纹</dt><dd title={session.evaluation.candidateFingerprint} className="break-all font-mono text-xs">{compactFingerprint(session.evaluation.candidateFingerprint)}</dd>
         </dl>
@@ -2172,7 +2201,7 @@ function TraceLedger({
               {turn.recovery ? (
                 <p className="mt-3 text-xs font-semibold text-ink/85">
                   {recoveryTriggerLabel(turn.recovery.trigger)}：
-                  {turn.recovery.status} · 自动 {turn.recovery.automaticRetryCount}/1 · 人工 {turn.recovery.manualRetryCount ?? 0}/1
+                  {turn.recovery.status} · 自动 {turn.recovery.automaticRetryCount}/{turn.recovery.maximumAutomaticRetriesPerTurn ?? trajectory.config.automaticEmptyContentRetries ?? 2} · 人工 {turn.recovery.manualRetryCount ?? 0}/1
                   {turn.recovery.automaticDeadlineAt ? " · 自动链总上限 90 秒" : ""}
                 </p>
               ) : null}
@@ -2255,6 +2284,8 @@ function GateAndMetricsSummary({
         <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-dim)]">
           <div><dt className="inline">首次可见成功 </dt><dd className="inline font-semibold text-ink">{metrics.firstVisibleSuccessRate === null ? "N/A" : `${Math.round(metrics.firstVisibleSuccessRate * 100)}%`}</dd></div>
           <div><dt className="inline">自动恢复成功 </dt><dd className="inline font-semibold text-ink">{metrics.autoRecoverySuccessCount}</dd></div>
+          <div><dt className="inline">空内容恢复 </dt><dd className="inline font-semibold text-ink">{metrics.emptyContentRecoverySuccessCount ?? 0}/{metrics.emptyContentInitialCount ?? 0}</dd></div>
+          <div><dt className="inline">可见回应 p90 </dt><dd className="inline font-semibold text-ink">{metrics.visibleLatencyP90Ms == null ? "N/A" : `${Math.round(metrics.visibleLatencyP90Ms / 100) / 10}s`}</dd></div>
           <div><dt className="inline">最终失败 </dt><dd className="inline font-semibold text-ink">{metrics.finalFailureCount}</dd></div>
           <div><dt className="inline">重复消息 </dt><dd className="inline font-semibold text-ink">{metrics.duplicateMessageCount}</dd></div>
           <div><dt className="inline">程序介入复核 </dt><dd className="inline font-semibold text-ink">{metrics.programInterventionReviewCoverage === null ? "N/A" : `${Math.round(metrics.programInterventionReviewCoverage * 100)}%`}</dd></div>
@@ -2660,7 +2691,9 @@ function WorkspaceReady({
             ? "这次连接超时，服务端正在自动恢复，请再等一会儿～"
             : progress.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
               ? "刚才的回应没有顺利完成阶段转换，服务端正在自动整理。"
-              : "刚才只完成了思考，服务端正在继续整理最终回答。"
+              : progress.recoveryAttempt
+                ? `正在自动恢复第 ${progress.recoveryAttempt}/${progress.recoveryMaximum ?? 2} 次，请稍候。`
+                : "刚才只完成了思考，服务端正在继续整理最终回答。"
         });
       }
     },

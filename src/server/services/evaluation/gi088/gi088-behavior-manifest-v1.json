@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-11.gi088-behavior-manifest-v2",
+  "version": "2026-08-12.gi088-behavior-manifest-v3",
   "files": [
     {
       "path": "evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1.ts",
@@ -398,7 +398,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "80d83dcf2445b054b37578248ea60b8e2c7f10abe27ef419d59b20ab71b08f2b"
+      "sha256": "5fbdc9da2dff8ff11771adc9eaad331a4b98be0e112bf43efa216fb53752699c"
     },
     {
       "path": "src/features/auth/auth-local.ts",
@@ -449,7 +449,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "3b63f44533cc69377763dc7624ebd35efaa123d7e823ad7d42429a40e23c2c88"
+      "sha256": "d540847ffa0e96bc98e5549911c4bde1ac8a86ef5cdf6743cf4a0cfef3b0c884"
     },
     {
       "path": "src/features/interview/event-centered/gi088-evaluation-export.ts",
@@ -588,7 +588,7 @@
         "dataset",
         "runner"
       ],
-      "sha256": "6a01bf0d338371d18e62308bdf62f48da8d26178a26e3eab573a9931d48da2f2"
+      "sha256": "840d499d8374f80e29b1a8ea7949607386da99d751a01384d9f242587fbac3fe"
     },
     {
       "path": "src/server/services/evaluation/gi088/compatibility-evidence.ts",
@@ -644,7 +644,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "054b2faa089b936928f8c02434ccf77840fdf16744ee60e6cdd398195be812a1"
+      "sha256": "85249723549ee6e6017bc20d03fe46d026daa867246a3528da900af0f08be3b2"
     },
     {
       "path": "src/server/services/evaluation/gi088/foundation-store.ts",
@@ -682,7 +682,7 @@
       "layers": [
         "experience"
       ],
-      "sha256": "a9fb4589d6b4392cc0705f2a49ef8d98891e854351c42f27a1c9cdd148acb4d9"
+      "sha256": "61b61c4f0844d7cb05118ed54e2d41e3ee5d1b50ab09ba318d73ebfbeaae1033"
     },
     {
       "path": "src/server/services/evaluation/gi088/prisma-store.ts",
@@ -703,7 +703,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "c2b348f599dc0970b7f74f1d8400bdba375bb634fabc25922333465ecbabc480"
+      "sha256": "df0ccb9e9656c5311612d0b0c22f52f9f454c2d9ae7392fbea69544f36af1716"
     },
     {
       "path": "src/server/services/evaluation/gi088/schema-diagnostics.ts",
@@ -725,7 +725,7 @@
       "layers": [
         "runner"
       ],
-      "sha256": "bcde8be0ba9c8b0327b14d6bfabe99f54f0e297d5a9c25a2ea23f85216aa7079"
+      "sha256": "99ea6b5caa97bae85c2ec3668047e2946827951d736e716536521e237efc9c31"
     },
     {
       "path": "src/server/services/evaluation/gi088/single-focus.ts",
@@ -771,7 +771,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "9368143c01257700d28184782f2886259edadbd0f701481c7d7240f96715691e"
+      "sha256": "9f7b049a141a0611975f9f7e462fcd73b651638b44932c07f4d6f9abae3564d3"
     },
     {
       "path": "src/server/services/evaluation/gi088/v8r3-interview-skill.ts",
@@ -788,7 +788,7 @@
         "experience",
         "runner"
       ],
-      "sha256": "6f3d5995ed267c71233dd9d18e9b76a44b0ec89bc9b981eb8a52549e58506579"
+      "sha256": "e0ba47a79b46804cb231bbce47a4ff96172ab03c157a4d07da2e95275922298c"
     },
     {
       "path": "src/server/services/interview/event-centered-interview.service.ts",

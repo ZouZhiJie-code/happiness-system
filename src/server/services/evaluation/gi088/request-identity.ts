@@ -11,11 +11,19 @@ export const GI088_MODEL_REQUEST_IDENTITY = {
   transport: GI088_ARK_FLASH_RUNTIME_POLICY.transport
 } as const;
 
-export function createGi088ModelRequestHash(params: AICompletionParams) {
+export function createGi088ModelRequestHash(
+  params: AICompletionParams,
+  context?: {
+    emptyContentRecoveryPolicyVersion?: string | null;
+    emptyContentAutomaticRetries?: number | null;
+    emptyContentPolicyOverride?: boolean | null;
+  }
+) {
   return createHash("sha256")
     .update(JSON.stringify({
       requestIdentity: GI088_MODEL_REQUEST_IDENTITY,
-      params
+      params,
+      ...(context ? { recoveryPolicy: context } : {})
     }))
     .digest("hex");
 }
