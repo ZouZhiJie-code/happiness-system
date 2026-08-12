@@ -6,7 +6,7 @@
 
 [GI-088｜v8r3r2 EMPTY 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 
-状态：`v8r3r2 双恢复诊断首次 EMPTY 10 份、第一次恢复成功 9、第二次恢复成功 1、最终空内容 0；产品负责人盲评 10/10 可直接用，板块 7 增量准入通过；当前等待板块 8 新私有 Preview 与全新 0/6，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+状态：`v8r3r2 双恢复诊断首次 EMPTY 10 份、第一次恢复成功 9、第二次恢复成功 1、最终空内容 0；产品负责人盲评 10/10 可直接用，板块 7 正式封存；板块 8 私有 Preview 已 READY，新 run 为 running 0/6 / calls 0，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
 
 当前迭代证据：
 

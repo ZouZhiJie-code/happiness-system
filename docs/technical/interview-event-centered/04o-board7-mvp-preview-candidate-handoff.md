@@ -22,7 +22,7 @@ GI-066 历史专项入口：[04u｜理清想法的判断地图、主动提问与
 
 GI-067 历史重构入口：[04w｜“理清想法”提问策略第一性原理重构](./04w-board4-gi067-thought-question-strategy-first-principles.md)
 
-当前交接状态：`v8r3r2 双恢复诊断与 10/10 人工增量准入通过；等待板块 8 新 Preview READY 与全新 0/6 回读；Production 保持 legacy + baseline`
+当前交接状态：`v8r3r2 双恢复诊断与 10/10 人工增量准入通过；板块 8 私有 Preview READY，running 0/6 / calls 0；Production 保持 legacy + baseline`
 
 后续产品事实源：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)、[板块 5 当前专项](./05-board5-stability-user-control-and-interaction-scope.md)与[04x-07｜GI-074 评测体系及下游交接](./04x-07-evaluation-preview-and-handoff.md)
 
@@ -40,7 +40,7 @@ GI-067 历史重构入口：[04w｜“理清想法”提问策略第一性原理
 4. 对话优先工作台、运行中导出阻断与终态不可变下载；
 5. [板块 7 正式封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。
 
-板块 8 先完成新的私有 Preview `READY` 和全新 `running 0/6 / calls 0` 回读，再由产品负责人提交真人内容。下文从“历史交付决策”开始的 GI-055～066 内容继续承担历史追溯职责。
+板块 8 已完成新的私有 Preview `READY` 和全新 `running 0/6 / calls 0` 回读，当前由产品负责人提交真人 `4＋2`。下文从“历史交付决策”开始的 GI-055～066 内容继续承担历史追溯职责。
 
 历史交付决策：`GI-065 / GI-066` 将新会话收口为理清想法单角度。修复候选冻结为策略 `5.65.0`、Prompt `v85-gi066-fix`、语义产物 `v17`、快照 `v4` 和提问协议 `v2`；严格 `10×3` 为 `30/30`，自动 `8+2` 主链与日志闭环均为 `8/8`。最新真人体验裁决为 `No-Go`，该候选已经失效。
 

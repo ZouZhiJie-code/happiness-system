@@ -9,7 +9,7 @@
 - 候选版本：`2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`，Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`、EMPTY_CONTENT 最多自动恢复两次。
 - Golden 32＋8 独立封存；Judge 20＋20 后置。
 - 96 个 checkpoint 中首次 EMPTY `10`，第一次恢复成功 `9`、第二次恢复成功 `1`、最终空内容 `0`；10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 增量准入通过。
-- 板块 8 当前等待新的私有 Preview 与全新 `running 0/6 / calls 0` 回读。
+- 板块 8 私有 Preview 已 `READY`，全新 run `e96aa8eb-76bd-4dcd-8e2d-c40ca70a4b6f` 已回读为 `running 0/6 / calls 0`，当前等待产品负责人真人 `4＋2`。
 - 生产保持 `legacy + baseline`；真人内容由产品负责人决定提交，Codex 保持零代提交。
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
@@ -89,8 +89,8 @@
 ### GI-088 v8r3r2 当前交接（2026-08-12）
 
 - Golden 32＋8 独立封存；v8r3r2 双恢复结果人工裁决 `10/10` 可直接用。
-- 板块 7 已完成；当前动作是部署新的私有 Preview 并初始化全新 `0/6`。
-- 完成 `READY + 0/6 + calls 0` 回读后暂停，由产品负责人完成真人 `4＋2`；Judge 20＋20 后置，Production 保持 `legacy + baseline`。
+- 板块 7 已完成；板块 8 私有 Preview 已完成 `READY + 0/6 + calls 0` 回读。
+- 当前暂停，由产品负责人完成真人 `4＋2`；Judge 20＋20 后置，Production 保持 `legacy + baseline`。
 
 ### 已完成
 - 多维度访谈入口、维度切换静默持久化与本地 session 恢复
@@ -380,7 +380,7 @@ npx prisma migrate deploy
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
-- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0～v8r3 的失败与诊断继续作为历史证据；v8r3r2 板块 7 增量准入通过，板块 8 当前建立新私有 Preview，随后执行两模式 `4＋2` 真人验收与 Go/No-Go。Production 保持 `legacy + baseline`。
+- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0～v8r3 的失败与诊断继续作为历史证据；v8r3r2 板块 7 已正式封存，板块 8 私有 Preview 已停在全新 `0/6`，当前等待两模式 `4＋2` 真人验收与 Go/No-Go。Production 保持 `legacy + baseline`。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
 - `/api/daily-journal*` 是当天整合日志的查询、生成、草稿更新和保存接口。
 - `/api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`，session hydrate 也会返回 `entryDate`。

@@ -10,12 +10,12 @@
 
 - 当前候选：`2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`，模型为 Ark `deepseek-v4-flash-ga-260731`，Thinking high，`json_object`，EMPTY_CONTENT 最多自动恢复两次。
 - 诊断与人工门：96 个 checkpoint 中首次 EMPTY `10`，第一次恢复成功 `9`、第二次恢复成功 `1`、最终空内容 `0`；10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 增量准入通过。Golden 32＋8 独立封存，Judge 20＋20 后置。
-- 私有 Preview：等待冻结提交完成远程构建与全新 `running 0/6 / calls 0` 回读；当前证据入口为 [v8r3r2 板块 7 封存](../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。
+- 私有 Preview：Vercel 远程构建已 `READY`，全新 run 已回读为 `running 0/6 / calls 0`；当前证据入口为 [v8r3r2 板块 7 封存与板块 8 回读](../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)。
 - Production 继续保持 `legacy + baseline`；Codex 不代提交真人内容，不持久化隐藏推理，不运行模型探针，也不扩展约 200 轮以上容量。
 
 - `GI-068～080` 保持关闭；
 - 生成式访谈工作方法 `v1.0` 已冻结；
-- 板块 6 当前输入已齐；板块 7 v8r3r2 增量准入通过；板块 8 等待新 Preview 与全新 0/6；
+- 板块 6 当前输入已齐；板块 7 v8r3r2 已正式封存；板块 8 Preview 已停在全新 0/6，等待真人 4＋2；
 - `GI-081` 六题真实输出与盲评已经完成，当前作为临时 Prompt 诊断基线；
 - `GI-083` v0/v1 保留一次调用透明诊断历史；产品负责人轨迹调用 `0`，v1.1 工程合成自测 `5/5` 次请求通过；
 - `GI-084` v0.1～v0.3 三轮回归均为 No-Go，v0.4 在运行前关闭；
@@ -35,10 +35,10 @@
 - v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人判断 `通过 / direct_use / target triggered`；`10/10` 次首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`；
 - v8r1 已将简短礼貌回应与明确停止组合收入零调用暂停，真实 U10 回放通过。最终 `12` 项 Thinking high 候选完成 `160` 项相关测试、构建、Preview 部署与创建时 `0/12` 空白批次回读；初始化模型调用 `0`。产品负责人随后完成 A1 一条轨迹，确认事件内容中的沟通负担被程序误判为停止当前访谈，形成单例阻断。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；
 - v8r2 已完成评测底座建设；#5 随当前质量与调用事实行政 `early_stopped / No-Go`，完整只读保留；
-- v8r3 前两轮与旧 79.17% 可靠性 No-Go 继续保存为历史证据；v8r3r2 EMPTY 双恢复诊断最终可见完成率 `100%`，恢复结果人工裁决 `10/10` 可直接用，等待新 Preview 与全新 0/6；
+- v8r3 前两轮与旧 79.17% 可靠性 No-Go 继续保存为历史证据；v8r3r2 EMPTY 双恢复诊断最终可见完成率 `100%`，恢复结果人工裁决 `10/10` 可直接用，私有 Preview 已 `READY` 且新 run 为 `0/6 / calls 0`；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
 - 板块 7 已完成并通过 v8r3r2 增量准入；
-- 板块 8 当前等待新私有 Preview 与全新 0/6，回读后由产品负责人完成 4＋2 真人内容；
+- 板块 8 当前等待产品负责人完成 4＋2 真人内容；
 - Production 保持 `legacy + baseline`。
 
 ## 2. 新会话阅读顺序

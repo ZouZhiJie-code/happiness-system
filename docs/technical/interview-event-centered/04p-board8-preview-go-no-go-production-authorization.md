@@ -2,15 +2,15 @@
 
 最后更新：`2026-08-12`
 
-状态：`当前板块；v8r3r2 板块 7 增量准入通过，等待新私有 Preview READY 与全新 0/6`
+状态：`当前板块；v8r3r2 私有 Preview READY，running 0/6 / calls 0，等待真人 4＋2`
 
-当前环境：`v8r3r2 候选已形成；部署和 0/6 回读完成前，人工内容保持暂停`
+当前环境：`v8r3r2 候选已形成；部署和 0/6 回读已完成，人工内容由产品负责人提交`
 
 Production：`继续保持 legacy + baseline；Preview 达标并获得产品负责人单独批准后才可切换`
 
 产品决策状态：`GI-067 / GI-068～080 已冻结；v8r3r2 双恢复与板块 7 增量准入通过；Production 授权保持关闭`
 
-落地验证状态：`板块 7 已完成；板块 8 等待 Vercel 远程构建、双 schema 迁移、零模型 0/6 初始化和认证回读`
+落地验证状态：`板块 7 已完成；板块 8 已完成 Vercel 远程构建、双 schema 迁移、零模型 0/6 初始化和认证回读`
 
 总状态导航：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 
@@ -42,9 +42,11 @@ GI-074 当前验收事实源：[04x-07｜生成式访谈评测体系与下游交
 
 候选版本为 `2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`。模型与配置固定为 Ark Flash、Thinking high、JSON、`60/60/60/90`，EMPTY_CONTENT 每轮最多自动恢复两次。板块 7 的增量人工准入为可直接用 `10/10`，质量失败和单例阻断均为 `0`。
 
-当前执行顺序：冻结候选提交 → 全绿工程与真实隔离库门 → Vercel Linux 远程构建 → Preview 双 schema 幂等迁移 → 零模型初始化全新 `0/6` → 认证回读。回读需要确认 `4` 条【陪我聊】计分轨迹、`2` 条【帮我记】兼容冒烟、active task 为空、Provider calls 为 `0`、运行中导出禁用、五层指纹与冻结提交一致。
+当前私有 Preview deployment `dpl_9QNR6fEgyEdCCm2FQiy8nCAWCAk1` 已 `READY`。新 run `e96aa8eb-76bd-4dcd-8e2d-c40ca70a4b6f` 已认证回读为 `running 0/6 / gate=pending / calls 0`，包含 4 条计分轨迹和 2 条兼容冒烟。完整部署身份、数据库迁移和运行配置见 [v8r3r2 Preview 回读](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/gi088-v8r3r2-preview-readback.md)。
 
-完成上述回读后暂停，由产品负责人开始真人 `4＋2`。Judge 20＋20 保持后置，Production 继续 `legacy + baseline`。
+本轮已按以下顺序完成工程交接：冻结候选提交 → 全绿工程与真实隔离库门 → Vercel Linux 远程构建 → Preview 双 schema 幂等迁移 → 零模型初始化全新 `0/6` → 认证回读。回读确认了 `4` 条【陪我聊】计分轨迹、`2` 条【帮我记】兼容冒烟、active task 为空、Provider calls 为 `0`、运行中导出禁用、五层指纹与冻结提交一致。
+
+当前暂停，由产品负责人开始真人 `4＋2`。Judge 20＋20 保持后置，Production 继续 `legacy + baseline`。
 
 ## GI-074 当前 Preview 覆盖层
 
@@ -545,4 +547,4 @@ npm run report:event-centered:board8 -- \
 2. Preview 或首发中的生成式问题由 baseline 稳定承接，状态为“条件发布”，生成式问题拆入专项修复。
 3. 一轮修复复验仍失败、出现多个独立根因，或事件入口、数据、隐私、来源和恢复主链失败，状态为“重新打开”，Production 回到安全档位。
 
-当前板块 8 已解除上游依赖，工程执行正在建立新的私有 Preview。完成 `READY + running 0/6 + calls 0` 回读后，由产品负责人执行两模式 `4＋2`；作出 Go 后仍需单独批准 Production，才保存 Production 配置快照、部署并开启前 `10` 次审计。重复目标、重要线索遗漏、纠正后偏航、安全阻断或人工失败均继续阻断发布。Production 继续保持 `legacy + baseline`。
+当前板块 8 已解除上游依赖，并完成私有 Preview 的 `READY + running 0/6 + calls 0` 回读。产品负责人接下来执行两模式 `4＋2`；作出 Go 后仍需单独批准 Production，才保存 Production 配置快照、部署并开启前 `10` 次审计。重复目标、重要线索遗漏、纠正后偏航、安全阻断或人工失败均继续阻断发布。Production 继续保持 `legacy + baseline`。

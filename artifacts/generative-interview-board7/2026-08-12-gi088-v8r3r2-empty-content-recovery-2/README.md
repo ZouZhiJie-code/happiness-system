@@ -2,7 +2,7 @@
 
 最后更新：`2026-08-12`
 
-状态：`板块 7 增量准入通过；等待板块 8 全新 Preview 0/6 回读`
+状态：`板块 7 正式封存；板块 8 Preview READY，running 0/6，calls 0，等待真人 4＋2`
 
 ## 为什么可以进入板块 8
 
@@ -29,6 +29,8 @@ Ark Flash 同配置诊断覆盖 `96` 个 checkpoint。首次出现 `EMPTY_CONTEN
 - [板块 8 Preview 回读](./gi088-v8r3r2-preview-readback.md)
 - [Golden 32＋8 独立证据](../2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)
 
+增量准入清单以 SHA `2b9f348341656bb8eb44a235f4108716c5be7dcb16fae10cd3acec74754a8190` 在部署前冻结，因此文件内保留当时的 `preview pending` 交接状态。部署后的当前事实只由本目录的 Preview 回读追加记录，避免改写已经进入运行授权的准入证据。
+
 ## 证据边界
 
 - 公开目录只保存数量、配置、哈希、门结果和发布边界。
@@ -38,6 +40,8 @@ Ark Flash 同配置诊断覆盖 `96` 个 checkpoint。首次出现 `EMPTY_CONTEN
 - Judge 20＋20 继续作为后置门，本轮调用为 `0`。
 - Production 继续保持 `legacy + baseline`；本目录不构成 Production 切换授权。
 
-## 下一步与停止点
+## 当前 Preview 与停止点
 
-冻结候选提交并通过全部工程、真实隔离库和构建门后，使用 Vercel Linux 远程构建部署私有 Preview。随后以零模型初始化器创建全新 `running 0/6 / calls 0` 批次并完成认证回读。回读完成即暂停，真人内容由产品负责人提交。
+冻结行为提交 `1e029152ee826be963e67cee2fbf9b3844cf7c33` 已通过 Vercel Linux 远程构建部署为私有 Preview。Deployment `dpl_9QNR6fEgyEdCCm2FQiy8nCAWCAk1` 为 `READY / preview`；新 run `e96aa8eb-76bd-4dcd-8e2d-c40ca70a4b6f` 已零模型初始化并认证回读为 `running 0/6 / gate=pending / calls 0`。
+
+当前已停在真人起点。产品负责人接下来完成板块 8 的 `4` 条计分轨迹和 `2` 条兼容冒烟；Judge 20＋20 后置，Production 保持 `legacy + baseline`。

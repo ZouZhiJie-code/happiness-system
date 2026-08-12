@@ -1,12 +1,12 @@
 # 板块 7｜模型主导语义判断的候选实现与验证
 
-最后更新：`2026-08-09`
+最后更新：`2026-08-12`
 
-文档状态：`当前专项入口；GI-088 v1 首批 8/12 已复盘，response format 探针 No-Go，Thinking 模式探针 4/4 completed inconclusive；正式运行时接入继续等待板块 6`
+文档状态：`板块 7 已完成；v8r3r2 双恢复诊断与 10/10 人工增量准入通过，已交接板块 8`
 
-产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；GI-081～083 保留诊断血缘；GI-084～086 保留开发、能力校准与失败证据；GI-087 任务结构保留；GI-088 上下文纯净与影响因素调优协议已确认`
+产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；GI-081～087 保留诊断与失败血缘；GI-088 v8r3r2 为当前封存候选`
 
-落地验证状态：`GI-087 已退出当前质量门；GI-088 v0 已形成 1600 Token 上限失败证据；v1 已在 8/12 主动提前结束，high 内容优势与运行失败均已形成证据`
+落地验证状态：`Ark Flash、Interview Skill、Foundation、工作台与 EMPTY 双恢复均已收口；板块 8 私有 Preview READY，新 run 为 running 0/6 / calls 0`
 
 Production：`继续保持 legacy + baseline；生成式候选入口与发布授权保持关闭`
 
@@ -22,7 +22,13 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 
 板块 8 交接：[Preview、Go/No-Go 与 Production 授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
-> 本文是板块 7 后续讨论和执行的当前专项入口。它负责把冻结的产品行为与正式评测资产转成可验证候选，并保留实现、Trace、验证和版本血缘。GI-081 六题、GI-082 双分支方法和 GI-083 一次调用透明工作台继续承担诊断历史；GI-084～086 承担开发、失败和能力校准证据；GI-087 使用稳定共同任务约束每轮当前探查，并以六题产品裁决作为真人深聊工作台的开放门。正式评测与运行时接入继续等待各自独立门槛。
+> 本文保留板块 7 的候选实现、Trace、验证与版本血缘。当前结论以 [v8r3r2 板块 7 封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md) 为准；真人体验、Go/No-Go 与 Production 授权进入板块 8。
+
+## 0. 当前完成态｜v8r3r2
+
+当前候选为 `2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`。它使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、JSON、`60/60/60/90`，并允许 EMPTY_CONTENT 最多自动恢复两次。极限诊断中的 10 份 EMPTY 恢复回应全部形成可见结果，产品负责人裁决为可直接用 `10/10`；板块 7 因此正式封存。
+
+板块 8 私有 Preview 已通过 Vercel Linux 远程构建，正式双 schema 迁移完成，新 run 已认证回读为 `running 0/6 / calls 0`。当前停止在产品负责人真人 `4＋2` 之前；Production 保持 `legacy + baseline`。
 
 ## 1. 为什么需要新的当前入口
 

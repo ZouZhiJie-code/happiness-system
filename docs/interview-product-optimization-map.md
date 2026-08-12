@@ -2,11 +2,11 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3 历史证据只读保留；v8r3r2 板块 7 增量准入通过，板块 8 等待新 Preview 0/6；Production 保持 legacy + baseline`
+文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3 历史证据只读保留；v8r3r2 板块 7 正式封存，板块 8 Preview READY 0/6；Production 保持 legacy + baseline`
 
-当前讨论位置：`板块 8｜GI-088 v8r3r2 新私有 Preview 与全新 0/6`
+当前讨论位置：`板块 8｜GI-088 v8r3r2 私有 Preview 真人 4＋2`
 
-落地验证状态：`GI-084～086 No-Go、GI-087 六题退出当前质量门、v8r1 控制误停、v8r2 行政 No-Go、v8r3 旧可靠性 No-Go 均保留历史；v8r3r2 首次 EMPTY 10 份均恢复，人工裁决 10/10 可直接用；板块 7 完成，板块 8 新 Preview 待部署`
+落地验证状态：`GI-084～086 No-Go、GI-087 六题退出当前质量门、v8r1 控制误停、v8r2 行政 No-Go、v8r3 旧可靠性 No-Go 均保留历史；v8r3r2 首次 EMPTY 10 份均恢复，人工裁决 10/10 可直接用；板块 7 完成，板块 8 Preview READY 且新 run 为 running 0/6 / calls 0`
 
 本次同步范围：`同步 v8r3r2 双恢复诊断、10/10 人工增量准入、板块 7 完成和板块 8 新 Preview 交接；保留旧 No-Go 历史；Judge 20+20 后置；Production 保持 legacy + baseline`
 
@@ -96,13 +96,13 @@ flowchart TD
 - `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。自动进入规则由 GI-068 覆盖。
 - 用户原话、明确纠正、停止意愿、来源安全、可靠提交、失败恢复和事件日志生成编辑保存重开继续作为产品底座。
 - 正式内容问题的 v8r3r2 候选使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`、三段 `60s` 超时与 `90s` 共享恢复链，EMPTY_CONTENT 最多自动恢复两次；Production 继续保持 `legacy + baseline`。
-- 推进职责已经确认：板块 5 规则与方法已冻结，板块 6 评测输入已齐，板块 7 v8r3r2 增量准入通过。板块 8 当前建立新私有 Preview 与全新 `0/6`；Judge 20＋20 后置，真人内容由产品负责人提交。
+- 推进职责已经确认：板块 5 规则与方法已冻结，板块 6 评测输入已齐，板块 7 v8r3r2 已正式封存。板块 8 私有 Preview 已停在全新 `0/6 / calls 0`；Judge 20＋20 后置，真人内容由产品负责人提交。
 - Production 继续使用 `legacy + baseline`。`optional + generative` 需要新候选通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
 
 ### 待执行与待校准
 
 - 板块 6 需要按 GI-074 建立复标后的 `24＋40`、`28＋12`、Judge 说明、人工评分卡、两模式 `4＋2` 脚本和正式准入报告。
-- 板块 7 已完成 GI-087 基线、v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、对话工作台与 v8r3r2 EMPTY 双恢复。v1～v8r3 的产品评价、失败、诊断、恢复和历史 Preview 继续只读保留；当前 v8r3r2 的 10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 增量准入通过。板块 8 当前等待新的私有 Preview 与全新 `0/6`，完成后由产品负责人提交真人 `4＋2`。
+- 板块 7 已完成 GI-087 基线、v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、对话工作台与 v8r3r2 EMPTY 双恢复。v1～v8r3 的产品评价、失败、诊断、恢复和历史 Preview 继续只读保留；当前 v8r3r2 的 10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 正式封存。板块 8 私有 Preview 已 `READY`，全新 run 为 `running 0/6 / calls 0`，等待产品负责人提交真人 `4＋2`。
 
 ### 历史候选与证据
 
