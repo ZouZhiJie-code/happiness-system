@@ -5,12 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   GoldenEightCard,
   GoldenEightDecision,
+  GoldenEightReceipt,
   GoldenEightVerdict
 } from "@/app/admin/journal-evaluation/golden-eight-loader";
 import { cn } from "@/lib/utils";
 
 const SESSION_API = "/api/local/gi088-v8r3/review-session";
 const DRAFT_API = "/api/local/gi088-v8r3/review-draft";
+const FINALIZE_API = "/api/local/gi088-v8r3/review-finalize";
 const OPTIONS: Array<{ value: GoldenEightVerdict; label: string; hint: string }> = [
   { value: "ready_to_use", label: "可直接使用", hint: "当前表达已经可以进入后续校准" },
   { value: "minor_issue", label: "轻微问题", hint: "局部调整即可保留整体方向" },
@@ -40,6 +42,8 @@ export function GoldenEightReplacementWorkbench() {
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("正在读取 Golden 8 材料…");
   const [saving, setSaving] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [receipt, setReceipt] = useState<GoldenEightReceipt | null>(null);
 
   const activeCard = payload?.cards[activeIndex] ?? null;
   const activeDecision = activeCard && payload ? decisionFor(payload.decisions, activeCard.caseId) : null;
@@ -101,6 +105,23 @@ export function GoldenEightReplacementWorkbench() {
       setMessage(error instanceof Error ? error.message : "裁决保存失败，请重试");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function finalize() {
+    if (!allComplete || finalizing) return;
+    setFinalizing(true);
+    setMessage("正在封存本轮裁决…");
+    try {
+      const response = await fetch(FINALIZE_API, { method: "POST" });
+      const data = await response.json() as GoldenEightReceipt & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Golden 8 封存失败");
+      setReceipt(data);
+      setMessage(`本轮已封存 · ${data.verdicts.ready_to_use} 条可直接使用 · ${data.verdicts.quality_failure} 条质量失败`);
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : "Golden 8 封存失败，请重试");
+    } finally {
+      setFinalizing(false);
     }
   }
 
@@ -175,7 +196,14 @@ export function GoldenEightReplacementWorkbench() {
             <label htmlFor="golden-eight-reason" className="mt-5 block text-sm font-semibold">理由{verdict === "ready_to_use" ? "（可选）" : "（至少 8 字）"}</label>
             <textarea id="golden-eight-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="写下这一条为什么这样判断" className="mt-2 min-h-28 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-transparent px-3 py-2 text-sm leading-6 outline-none focus:border-[var(--line-strong)]" />
             <button type="button" disabled={!canSave || saving} onClick={() => void save()} className="mt-3 min-h-11 w-full rounded-full bg-[var(--calendar-ink)] px-4 py-2 text-sm font-semibold text-[var(--calendar-surface)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45">{saving ? "保存中…" : activeDecision ? "保存修改" : "保存并下一条"}</button>
-            {allComplete ? <p className="mt-3 text-center text-xs leading-5 text-[var(--status-completed)]">8 条已完成，本地裁决文件已更新。</p> : null}
+            {allComplete ? (
+              <div className="mt-3 space-y-2">
+                <button type="button" disabled={finalizing || Boolean(receipt)} onClick={() => void finalize()} className="min-h-11 w-full rounded-full border border-[var(--line-strong)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55">
+                  {receipt ? "本轮已封存" : finalizing ? "封存中…" : "封存本轮裁决"}
+                </button>
+                <p className="text-center text-xs leading-5 text-[var(--status-completed)]">8 条已完成，本地裁决文件已更新；前面确认的 32 条继续沿用。</p>
+              </div>
+            ) : null}
           </aside>
         </div>
       </div>
