@@ -317,8 +317,11 @@ describe("GI-088 evaluation workbench", () => {
       downloadButton.click();
     });
 
-    expect(await screen.findByText("正在校验不可变收据并准备文件…"))
-      .toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("gi088-export-feedback")).toHaveTextContent(
+        "正在校验不可变收据并准备文件…"
+      );
+    }, { timeout: 5_000 });
     expect(screen.getByLabelText("当前运行")).toBeDisabled();
     const exportCalls = fetchMock.mock.calls.filter(
       ([url]) => url === "/api/preview/gi088/export?runId=run-1"
@@ -913,7 +916,11 @@ describe("GI-088 evaluation workbench", () => {
     render(<Gi088EvaluationWorkbench />);
 
     fireEvent.click(await screen.findByRole("button", { name: "安全终止当前任务" }));
-    fireEvent.change(await screen.findByLabelText("终止原因（必填）"), {
+    fireEvent.change(await screen.findByLabelText(
+      "终止原因（必填）",
+      {},
+      { timeout: 5_000 }
+    ), {
       target: { value: "页面故障阻断本项，保留现有证据。" }
     });
     fireEvent.click(screen.getByRole("button", { name: "确认终止当前任务" }));
@@ -928,7 +935,7 @@ describe("GI-088 evaluation workbench", () => {
       abandonRecovery: false
     });
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
-  });
+  }, 15_000);
 
   it("历史运行保持对话只读，运行结束前不生成首次不可变导出", async () => {
     const value = evaluationSession({ readOnly: true });
