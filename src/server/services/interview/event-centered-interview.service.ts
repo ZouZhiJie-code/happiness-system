@@ -73,6 +73,7 @@ import {
   reserveEventCenteredUserTurn,
   startEventCenteredInterviewSession
 } from "@/server/repositories/event-centered-interview.repository";
+import { materializeJournalEventEntryCard } from "@/server/repositories/journal-event-entry.repository";
 import { recordEventCenteredAnalyticsEvent } from "@/server/services/interview/event-centered-analytics.service";
 import {
   getEffectiveJournalEventAngleProjection,
@@ -182,7 +183,11 @@ function classifyEventCenteredGenerationFailure(code: string) {
   return "content_check" as const;
 }
 
-export function startEventCenteredInterview(userId: string, entryDate = getTodayEntryDate()) {
+export function startEventCenteredInterview(
+  userId: string,
+  entryDate = getTodayEntryDate(),
+  recordMode: "capture" | "chat" | null = null
+) {
   assertEventCenteredWriteAllowed({
     entryDate,
     today: getTodayEntryDate()
@@ -191,6 +196,7 @@ export function startEventCenteredInterview(userId: string, entryDate = getToday
   return startEventCenteredInterviewSession({
     userId,
     entryDate,
+    recordMode,
     openingQuestion: EVENT_CENTERED_OPENING
   });
 }
@@ -1674,18 +1680,35 @@ export async function respondEventCenteredInterview(
     return { workspace, assistantPayload: null };
   }
   if (effectiveRequest.action === "exit_event") {
-    await abandonJournalEvent(userId, reservation.eventId, reservation.turn.id);
-    await recordEventCenteredAnalyticsEvent({
-      eventName: "event_centered_session_abandoned",
-      userId,
-      dedupeKey: `event_centered_session_abandoned:${reservation.eventId}`,
-      rootSessionId: reservation.rootSessionId,
-      journalEventId: reservation.eventId,
-      requestId: options?.requestId ?? null,
-      entryDate: before.identity.entryDate,
-      stage: stateBeforeTurn.phase,
-      angle: stateBeforeTurn.activeAngle
-    });
+    try {
+      await materializeJournalEventEntryCard({
+        userId,
+        eventId: reservation.eventId,
+        activeBranchSessionId: reservation.activeBranchSessionId,
+        // `exit_event` 已先以可靠用户回合写入；卡片需要绑定这条返回动作
+        // 之后的完整来源快照，才能通过并发版本校验。
+        baseMessageSequence: reservation.turn.baseMessageSequence + 1,
+        returnTurnId: reservation.turn.id
+      });
+    } catch (error) {
+      // Opening-only records do not form a timeline card. They keep the
+      // established abandonment behavior so calendar views remain truthful.
+      if (!(error instanceof Error) || error.message !== "EVENT_RECORD_CARD_SOURCE_INSUFFICIENT") {
+        throw error;
+      }
+      await abandonJournalEvent(userId, reservation.eventId, reservation.turn.id);
+      await recordEventCenteredAnalyticsEvent({
+        eventName: "event_centered_session_abandoned",
+        userId,
+        dedupeKey: `event_centered_session_abandoned:${reservation.eventId}`,
+        rootSessionId: reservation.rootSessionId,
+        journalEventId: reservation.eventId,
+        requestId: options?.requestId ?? null,
+        entryDate: before.identity.entryDate,
+        stage: stateBeforeTurn.phase,
+        angle: stateBeforeTurn.activeAngle
+      });
+    }
     const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
     if (!workspace) throw new Error("SESSION_NOT_FOUND");
     return { workspace, assistantPayload: null };

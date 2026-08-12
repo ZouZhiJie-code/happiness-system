@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   reserveAction: vi.fn(),
   reserveTurn: vi.fn(),
   abandon: vi.fn(),
+  materializeRecordCard: vi.fn(),
   angleProjection: vi.fn(),
   workspaceProjections: vi.fn(),
   factProjection: vi.fn(),
@@ -65,6 +66,10 @@ vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
   reserveEventCenteredUserAction: mocks.reserveAction,
   reserveEventCenteredUserTurn: mocks.reserveTurn,
   startEventCenteredInterviewSession: vi.fn()
+}));
+
+vi.mock("@/server/repositories/journal-event-entry.repository", () => ({
+  materializeJournalEventEntryCard: mocks.materializeRecordCard
 }));
 
 vi.mock("@/server/services/interview/event-centered-analytics.service", () => ({
@@ -592,6 +597,7 @@ beforeEach(() => {
   mocks.getPlanCheckpoint.mockResolvedValue(null);
   mocks.discardPlanCheckpoint.mockResolvedValue(null);
   mocks.recordAnalytics.mockResolvedValue(undefined);
+  mocks.materializeRecordCard.mockResolvedValue({ id: "record-card-1" });
   mocks.getWorkspaceData.mockResolvedValue(workspaceData());
   mocks.reserveAction.mockResolvedValue(reservation());
   mocks.angleProjection.mockResolvedValue(angleProjection());
@@ -2854,7 +2860,32 @@ describe("event-centered respond service", () => {
     expect(mocks.reserveAction).toHaveBeenCalledTimes(1);
   });
 
-  it("退出事件完成可靠动作并进入 abandon，不触发 AI", async () => {
+  it("返回当天会用已保存表达形成确定性事件卡片，不触发 AI", async () => {
+    await respondEventCenteredInterview("user-1", replyRequest({
+      action: "exit_event",
+      rawText: "先退出"
+    }));
+
+    expect(mocks.materializeRecordCard).toHaveBeenCalledWith({
+      userId: "user-1",
+      eventId: "event-1",
+      activeBranchSessionId: "branch-1",
+      baseMessageSequence: 2,
+      returnTurnId: "turn-1"
+    });
+    expect(mocks.abandon).not.toHaveBeenCalled();
+    expect(mocks.recordAnalytics).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_session_abandoned"
+    }));
+    expect(mocks.understand).not.toHaveBeenCalled();
+    expect(mocks.commit).not.toHaveBeenCalled();
+  });
+
+  it("只有开场且还未表达时保持轻量退出，不创建虚假的事件卡片", async () => {
+    mocks.materializeRecordCard.mockRejectedValueOnce(
+      new Error("EVENT_RECORD_CARD_SOURCE_INSUFFICIENT")
+    );
+
     await respondEventCenteredInterview("user-1", replyRequest({
       action: "exit_event",
       rawText: "先退出"
@@ -2866,8 +2897,6 @@ describe("event-centered respond service", () => {
       stage: "event_recording",
       angle: null
     }));
-    expect(mocks.understand).not.toHaveBeenCalled();
-    expect(mocks.commit).not.toHaveBeenCalled();
   });
 
   it("同一可靠 turn 的完成重放不重复提交 first_content 埋点", async () => {

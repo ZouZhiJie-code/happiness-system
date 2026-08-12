@@ -47,4 +47,30 @@ describe("event-centered session start api", () => {
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({ error: "EVENT_CENTERED_ENTRY_DISABLED" });
   });
+
+  it("forwards the selected record mode into the durable session", async () => {
+    startEventCenteredInterview.mockRejectedValueOnce(new Error("EVENT_CENTERED_ENTRY_DISABLED"));
+
+    const response = await POST(new Request("http://localhost/api/interview/event-centered/session/start", {
+      method: "POST",
+      body: JSON.stringify({ entryDate: "2026-07-22", recordMode: "capture" })
+    }));
+
+    expect(response.status).toBe(409);
+    expect(startEventCenteredInterview).toHaveBeenCalledWith(
+      "user-1",
+      "2026-07-22",
+      "capture"
+    );
+  });
+
+  it("rejects an unknown record mode before creating a session", async () => {
+    const response = await POST(new Request("http://localhost/api/interview/event-centered/session/start", {
+      method: "POST",
+      body: JSON.stringify({ entryDate: "2026-07-22", recordMode: "unknown" })
+    }));
+
+    expect(response.status).toBe(400);
+    expect(startEventCenteredInterview).not.toHaveBeenCalled();
+  });
 });

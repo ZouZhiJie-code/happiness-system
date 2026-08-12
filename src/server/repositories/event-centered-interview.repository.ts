@@ -414,6 +414,7 @@ async function resolveEventCenteredRoute(
       id: true,
       userId: true,
       entryDate: true,
+      recordMode: true,
       status: true,
       conversationSchemaVersion: true,
       activeBranchSessionId: true,
@@ -469,6 +470,7 @@ function toSessionIdentity(
 
   return {
     mode: "event_centered",
+    recordMode: route.root.recordMode,
     rootSessionId: route.root.id,
     activeBranchSessionId: route.activeBranch.id,
     eventId: event?.id ?? null,
@@ -619,6 +621,7 @@ export async function getEventCenteredInterviewWorkspaceData(
 export async function startEventCenteredInterviewSession(input: {
   userId: string;
   entryDate: string;
+  recordMode?: "capture" | "chat" | null;
   openingQuestion: string;
 }): Promise<EventCenteredSessionIdentity> {
   const entryDate = parseEntryDateInput(input.entryDate);
@@ -656,6 +659,7 @@ export async function startEventCenteredInterviewSession(input: {
           id: sessionId,
           userId: input.userId,
           mode: "event_centered",
+          recordMode: input.recordMode ?? undefined,
           dimension: null,
           conversationSchemaVersion: EVENT_CENTERED_SCHEMA_VERSION,
           rootSessionId: sessionId,

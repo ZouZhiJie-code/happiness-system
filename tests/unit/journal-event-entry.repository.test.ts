@@ -59,7 +59,7 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
         updatedAt: now()
       };
       state.entries.push(entry);
-      return entry;
+      return hydrateEntry(entry);
     }),
     updateMany: vi.fn(async ({ where, data }: any) => {
       const entry = state.entries.find(
@@ -120,7 +120,9 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
     }),
     findFirst: vi.fn(async ({ where }: any) =>
       state.events.find((event) =>
-        event.id === where.id && event.userId === where.userId && event.status === where.status
+        event.id === where.id &&
+          event.userId === where.userId &&
+          (where.status === undefined || event.status === where.status)
       ) ?? null
     )
   };
@@ -245,6 +247,7 @@ import {
   cancelJournalEventEntryGeneration,
   completeJournalEventEntryGeneration,
   failJournalEventEntryGeneration,
+  materializeJournalEventEntryCard,
   reserveJournalEventEntryGeneration,
   saveJournalEventEntry,
   updateJournalEventEntry
@@ -378,6 +381,7 @@ describe("journal event entry repository", () => {
       id: reserved.generation.intendedEntryId,
       status: "draft",
       contentRevision: 1,
+      editedAt: null,
       sourceFingerprint: reserved.generation.sourceFingerprint
     });
     expect(state.entries).toHaveLength(1);
@@ -403,6 +407,53 @@ describe("journal event entry repository", () => {
         qualityChecks: { sourceGrounded: true, basicQualityPassed: true }
       })
     ).resolves.toEqual(completed);
+  });
+
+  it("returns to today by materializing one source-grounded record card without an AI generation", async () => {
+    state.turns.push({
+      id: "return-turn-1",
+      journalEventId: eventId,
+      action: "exit_event",
+      status: "processing"
+    });
+
+    const first = await materializeJournalEventEntryCard({
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      baseMessageSequence: 2,
+      returnTurnId: "return-turn-1"
+    });
+    const replay = await materializeJournalEventEntryCard({
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      baseMessageSequence: 2,
+      returnTurnId: "return-turn-1"
+    });
+
+    expect(first).toMatchObject({
+      eventId,
+      status: "draft",
+      generationOrigin: "deterministic",
+      title: "我和同事有一次误会",
+      content: "我和同事有一次误会。",
+      sourceMessageIds: ["message-1", "message-2"],
+      sourceFactIds: ["fact-1"]
+    });
+    expect(replay).toEqual(first);
+    expect(state.entries).toHaveLength(1);
+    expect(state.generations).toHaveLength(0);
+    expect(state.traces).toHaveLength(0);
+    expect(state.events[0]).toMatchObject({ status: "completed" });
+    expect(state.sessions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "root-1", status: "completed" }),
+      expect.objectContaining({ id: branchSessionId, status: "completed" })
+    ]));
+    expect(state.turns.find((turn) => turn.id === "return-turn-1")).toMatchObject({
+      status: "completed",
+      errorCode: null
+    });
   });
 
   it.each([
@@ -460,6 +511,7 @@ describe("journal event entry repository", () => {
       content: "更新后的正文"
     });
     expect(edited).toMatchObject({ status: "modified", contentRevision: 3, savedRevision: 2 });
+    expect(edited.editedAt).not.toBeNull();
 
     await expect(
       saveJournalEventEntry({ userId, entryId: "entry-1", expectedContentRevision: 2 })
@@ -480,6 +532,7 @@ describe("journal event entry repository", () => {
       expectedContentRevision: 3
     });
     expect(saved).toMatchObject({ status: "saved", contentRevision: 3, savedRevision: 3 });
+    expect(saved.editedAt).toBe(edited.editedAt);
     await expect(
       saveJournalEventEntry({ userId, entryId: "entry-1", expectedContentRevision: 3 })
     ).resolves.toEqual(saved);

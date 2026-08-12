@@ -1,13 +1,12 @@
 export interface JournalDailySignatureSource {
-  eventId: string;
   entryId: string;
   daySequence: number;
-  savedRevision: number;
+  contentRevision: number;
 }
 
 export function buildJournalDailySourceSignature(sources: JournalDailySignatureSource[]) {
   return [
-    "v1",
+    "v2",
     ...[...sources]
       .sort((left, right) => {
         const sequenceDiff = left.daySequence - right.daySequence;
@@ -20,7 +19,7 @@ export function buildJournalDailySourceSignature(sources: JournalDailySignatureS
       })
       .map(
         (source) =>
-          `event:${source.eventId}|entry:${source.entryId}|seq:${source.daySequence}|saved:${source.savedRevision}`
+          `record:${source.entryId}|revision:${source.contentRevision}|seq:${source.daySequence}`
       )
   ].join("|");
 }

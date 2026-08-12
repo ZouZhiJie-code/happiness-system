@@ -18,7 +18,11 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
-    const session = await startEventCenteredInterview(user.id, parsed.data.entryDate);
+    const session = await startEventCenteredInterview(
+      user.id,
+      parsed.data.entryDate,
+      parsed.data.recordMode ?? null
+    );
     const workspace = await getEventCenteredInterviewWorkspace(user.id, session.rootSessionId);
     if (!workspace) throw new Error("SESSION_CREATE_FAILED");
     return NextResponse.json(eventCenteredWorkspaceSessionSchema.parse(workspace));

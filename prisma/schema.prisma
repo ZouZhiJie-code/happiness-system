@@ -28,6 +28,11 @@ enum InterviewSessionMode {
   event_centered
 }
 
+enum InterviewRecordMode {
+  capture
+  chat
+}
+
 enum InterviewRole {
   user
   assistant
@@ -129,6 +134,53 @@ enum JournalDailyEntryStatus {
   draft
   saved
   modified
+}
+
+enum JournalDailyEntryRevisionKind {
+  generated
+  updated
+  user_saved
+}
+
+enum JournalDailyEntryGenerationKind {
+  generate
+  update
+}
+
+enum JournalDailyEntryGenerationStatus {
+  processing
+  completed
+  failed
+  canceled
+}
+
+enum JournalPeriodKind {
+  week
+  month
+}
+
+enum JournalPeriodReportStatus {
+  draft
+  saved
+  modified
+}
+
+enum JournalPeriodReportRevisionKind {
+  generated
+  updated
+  user_saved
+}
+
+enum JournalPeriodReportGenerationKind {
+  generate
+  update
+}
+
+enum JournalPeriodReportGenerationStatus {
+  processing
+  completed
+  failed
+  canceled
 }
 
 enum JournalDayOwnershipStatus {
@@ -321,22 +373,25 @@ enum AIRuntimeConfigStatus {
 }
 
 model User {
-  id                        String                @id @default(cuid())
-  username                  String                @unique
+  id                        String                        @id @default(cuid())
+  username                  String                        @unique
   passwordHash              String
   agreedToTermsAt           DateTime
   agreedToPrivacyAt         DateTime
-  privacyPolicyVersion      String                @default("legacy")
+  privacyPolicyVersion      String                        @default("legacy")
   aiQualityConsentVersion   String?
   aiQualityConsentAt        DateTime?
   aiQualityConsentRevokedAt DateTime?
-  createdAt                 DateTime              @default(now())
+  createdAt                 DateTime                      @default(now())
   settings                  UserSettings?
   sessions                  InterviewSession[]
   journalEvents             JournalEvent[]
   joyEntries                JoyEntry[]
   dailyJournalEntries       DailyJournalEntry[]
   journalDailyEntries       JournalDailyEntry[]
+  journalDailyGenerations   JournalDailyEntryGeneration[]
+  journalPeriodReports      JournalPeriodReport[]
+  journalPeriodGenerations  JournalPeriodReportGeneration[]
   journalDayOwnerships      JournalDayOwnership[]
   dailyHappinessScores      DailyHappinessScore[]
   memoryFacts               MemoryFact[]
@@ -376,6 +431,7 @@ model InterviewSession {
   id                            String                                     @id @default(cuid())
   userId                        String
   mode                          InterviewSessionMode                       @default(dimension_legacy)
+  recordMode                    InterviewRecordMode?
   dimension                     InterviewDimension?
   conversationSchemaVersion     Int                                        @default(1)
   rootSessionId                 String?
@@ -683,6 +739,7 @@ model JournalEventEntry {
   generationId             String?                      @unique
   title                    String                       @db.VarChar(16)
   content                  String
+  occurredAtText           String?                      @db.VarChar(32)
   status                   JournalEventEntryStatus      @default(draft)
   generationOrigin         AIOutputOrigin
   generationVersion        Int                          @default(1)
@@ -990,28 +1047,165 @@ model DailyJournalEntry {
 }
 
 model JournalDailyEntry {
-  id              String                  @id @default(cuid())
-  userId          String
-  entryDate       DateTime
-  title           String                  @db.VarChar(16)
-  content         String
-  status          JournalDailyEntryStatus @default(draft)
-  sourceEntryIds  String[]                @default([])
-  sourceEventIds  String[]                @default([])
-  sourceSignature String
-  sourceSnapshot  Json
-  sourceUpdatedAt DateTime?
-  contentRevision Int                     @default(1)
-  savedRevision   Int?
-  editedAt        DateTime?
-  savedAt         DateTime?
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
-  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String                        @id @default(cuid())
+  userId                   String
+  entryDate                DateTime
+  title                    String                        @db.VarChar(16)
+  content                  String
+  paragraphs               Json                          @default("{\"schemaVersion\":1,\"paragraphs\":[]}")
+  status                   JournalDailyEntryStatus       @default(draft)
+  sourceEntryIds           String[]                      @default([])
+  sourceEventIds           String[]                      @default([])
+  sourceSignature          String
+  sourceSnapshot           Json
+  sourceUpdatedAt          DateTime?
+  contentRevision          Int                           @default(1)
+  savedRevision            Int?
+  currentGenerationTraceId String?                       @unique
+  lastGenerationErrorCode  String?                       @db.VarChar(80)
+  editedAt                 DateTime?
+  savedAt                  DateTime?
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  user                     User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentGenerationTrace   AIGenerationTrace?            @relation("CurrentJournalDailyEntryGenerationTrace", fields: [currentGenerationTraceId], references: [id], onDelete: SetNull)
+  revisions                JournalDailyEntryRevision[]
+  generations              JournalDailyEntryGeneration[]
 
   @@unique([userId, entryDate])
   @@index([userId, status, entryDate])
   @@index([userId, entryDate])
+}
+
+model JournalDailyEntryRevision {
+  id                String                        @id @default(cuid())
+  entryId           String
+  kind              JournalDailyEntryRevisionKind
+  title             String                        @db.VarChar(16)
+  content           String
+  paragraphs        Json
+  sourceSignature   String
+  sourceSnapshot    Json
+  contentRevision   Int
+  generationTraceId String?                       @unique
+  createdAt         DateTime                      @default(now())
+  entry             JournalDailyEntry             @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  generationTrace   AIGenerationTrace?            @relation("JournalDailyEntryRevisionGenerationTrace", fields: [generationTraceId], references: [id], onDelete: SetNull)
+  generation        JournalDailyEntryGeneration?  @relation("JournalDailyEntryGenerationResult")
+
+  @@unique([entryId, contentRevision, kind])
+  @@index([entryId, createdAt])
+}
+
+model JournalDailyEntryGeneration {
+  id                      String                            @id @default(cuid())
+  userId                  String
+  entryDate               DateTime
+  entryId                 String?
+  traceId                 String?                           @unique
+  clientOperationId       String
+  kind                    JournalDailyEntryGenerationKind
+  status                  JournalDailyEntryGenerationStatus @default(processing)
+  expectedSourceSignature String
+  expectedContentRevision Int?
+  inputSnapshot           Json
+  outputSnapshot          Json?
+  resultRevisionId        String?                           @unique
+  attemptCount            Int                               @default(1)
+  errorCode               String?                           @db.VarChar(80)
+  startedAt               DateTime                          @default(now())
+  completedAt             DateTime?
+  failedAt                DateTime?
+  canceledAt              DateTime?
+  createdAt               DateTime                          @default(now())
+  updatedAt               DateTime                          @updatedAt
+  user                    User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry                   JournalDailyEntry?                @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  trace                   AIGenerationTrace?                @relation("JournalDailyEntryGenerationTrace", fields: [traceId], references: [id], onDelete: SetNull)
+  resultRevision          JournalDailyEntryRevision?        @relation("JournalDailyEntryGenerationResult", fields: [resultRevisionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, entryDate, clientOperationId])
+  @@index([userId, entryDate, status, createdAt])
+  @@index([entryId, createdAt])
+}
+
+model JournalPeriodReport {
+  id                      String                    @id @default(cuid())
+  userId                  String
+  periodKind              JournalPeriodKind
+  periodStart             DateTime
+  periodEnd               DateTime
+  title                   String                    @db.VarChar(16)
+  content                 String
+  paragraphs              Json                      @default("{\"schemaVersion\":1,\"paragraphs\":[]}")
+  status                  JournalPeriodReportStatus @default(draft)
+  sourceIds               String[]                  @default([])
+  sourceSignature         String
+  sourceSnapshot          Json
+  sourceUpdatedAt         DateTime?
+  contentRevision         Int                       @default(1)
+  savedRevision           Int?
+  lastGenerationErrorCode String?                   @db.VarChar(80)
+  editedAt                DateTime?
+  savedAt                 DateTime?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  user                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions               JournalPeriodReportRevision[]
+  generations             JournalPeriodReportGeneration[]
+
+  @@unique([userId, periodKind, periodStart])
+  @@index([userId, periodKind, status, periodStart])
+  @@index([userId, periodKind, periodStart])
+}
+
+model JournalPeriodReportRevision {
+  id              String                          @id @default(cuid())
+  reportId        String
+  kind            JournalPeriodReportRevisionKind
+  title           String                          @db.VarChar(16)
+  content         String
+  paragraphs      Json
+  sourceSignature String
+  sourceSnapshot  Json
+  contentRevision Int
+  createdAt       DateTime                        @default(now())
+  report          JournalPeriodReport             @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  generation      JournalPeriodReportGeneration?  @relation("JournalPeriodReportGenerationResult")
+
+  @@unique([reportId, contentRevision, kind])
+  @@index([reportId, createdAt])
+}
+
+model JournalPeriodReportGeneration {
+  id                      String                                @id @default(cuid())
+  userId                  String
+  periodKind              JournalPeriodKind
+  periodStart             DateTime
+  reportId                String?
+  clientOperationId       String
+  kind                    JournalPeriodReportGenerationKind
+  status                  JournalPeriodReportGenerationStatus   @default(processing)
+  expectedSourceSignature String
+  expectedContentRevision Int?
+  inputSnapshot           Json
+  outputSnapshot          Json?
+  resultRevisionId        String?                               @unique
+  attemptCount            Int                                   @default(1)
+  errorCode               String?                               @db.VarChar(80)
+  startedAt               DateTime                              @default(now())
+  completedAt             DateTime?
+  failedAt                DateTime?
+  canceledAt              DateTime?
+  createdAt               DateTime                              @default(now())
+  updatedAt               DateTime                              @updatedAt
+  user                    User                                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report                  JournalPeriodReport?                  @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  resultRevision          JournalPeriodReportRevision?          @relation("JournalPeriodReportGenerationResult", fields: [resultRevisionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, periodKind, periodStart, clientOperationId])
+  @@index([userId, periodKind, periodStart, status, createdAt])
+  @@index([reportId, createdAt])
 }
 
 model JournalDayOwnership {
@@ -1221,6 +1415,9 @@ model AIGenerationTrace {
   angleOutcomeRepairResolutions  JournalEventAngleOutcomeRepairResolution[] @relation("JournalEventAngleOutcomeRepairResolutionTrace")
   currentForJournalEventEntry    JournalEventEntry?                         @relation("CurrentJournalEventEntryGenerationTrace")
   journalEventEntryGeneration    JournalEventEntryGeneration?               @relation("JournalEventEntryGenerationTrace")
+  currentForJournalDailyEntry    JournalDailyEntry?                         @relation("CurrentJournalDailyEntryGenerationTrace")
+  journalDailyEntryGeneration    JournalDailyEntryGeneration?               @relation("JournalDailyEntryGenerationTrace")
+  journalDailyEntryRevision      JournalDailyEntryRevision?                 @relation("JournalDailyEntryRevisionGenerationTrace")
 
   @@unique([artifactType, artifactId, artifactVersion])
   @@index([userId, createdAt])

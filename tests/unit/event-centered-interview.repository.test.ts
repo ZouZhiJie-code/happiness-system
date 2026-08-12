@@ -400,6 +400,14 @@ describe("event-centered interview aggregate", () => {
     expect(state.journalEvents).toHaveLength(0);
   });
 
+  it("omits the optional record mode when the entry has not chosen one", async () => {
+    await startEventCenteredInterviewSession({ ...startInput, recordMode: null });
+
+    expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ recordMode: undefined })
+    });
+  });
+
   it("当天事件标签保留已退出记录，并只返回安全标题元数据", async () => {
     const active = await startEventCenteredInterviewSession(startInput);
     const reserved = await reserveEventCenteredUserTurn({

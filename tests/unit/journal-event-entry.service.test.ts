@@ -133,6 +133,7 @@ function entry(overrides: Partial<JournalEventEntryRecord> = {}): JournalEventEn
     generationId: "generation-1",
     title: "会议结束以后",
     content: "会议结束后，我终于松了一口气。",
+    occurredAtText: null,
     status: "draft",
     generationOrigin: "fallback",
     generationVersion: 1,
@@ -174,9 +175,25 @@ describe("journal event entry service", () => {
 
     expect(content.match(/会议结束后，我终于松了一口气。/gu)).toHaveLength(1);
     expect(content).not.toContain("来源摘要");
+    expect(content).toContain("occurredAtText");
     expect(prompt.promptVersion).toBe(
-      "2026-08-03.event-journal-source-refs-v3-gi059-compact"
+      "2026-08-10.record-card-source-refs-v4"
     );
+  });
+
+  it("记录卡只从来源中提取明确发生时间", () => {
+    const withTime = buildSafeEventJournalFallback(sourceSnapshot({
+      messages: [{
+        id: "message-user-1",
+        role: "user",
+        sequence: 2,
+        content: "上午出门后才发现电脑没带，又跑回去拿。"
+      }]
+    }));
+    const withoutTime = buildSafeEventJournalFallback(sourceSnapshot());
+
+    expect(withTime?.occurredAtText).toBe("上午");
+    expect(withoutTime?.occurredAtText).toBeNull();
   });
 
   it("AI 三次技术失败后仍使用冻结来源生成安全基础版本，并按顺序记录 started/generated", async () => {

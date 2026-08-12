@@ -13,6 +13,8 @@ export interface JournalEventIdentity {
 
 export interface EventCenteredSessionIdentity {
   mode: "event_centered";
+  /** 记录方式用于访谈顶部上下文；历史会话缺省按陪我聊兼容。 */
+  recordMode?: "capture" | "chat" | null;
   rootSessionId: string;
   activeBranchSessionId: string;
   eventId: string | null;
