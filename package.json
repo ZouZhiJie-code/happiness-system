@@ -58,7 +58,7 @@
     "start": "next start",
     "lint": "eslint .",
     "smoke:public": "node scripts/http-smoke.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "eval:interview-intent": "vite-node -c vitest.config.ts scripts/report-interview-intent-eval.ts",
     "eval:interview-intent:core": "vite-node -c vitest.config.ts scripts/generate-interview-intent-core-review.ts",

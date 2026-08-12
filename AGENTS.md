@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前代码与生产修复状态以 `2026-08-02` 快照为准；生成式访谈产品决策状态已同步至 `2026-08-05`：
+当前代码与生产修复状态以 `2026-08-12` 快照为准；生成式访谈产品决策状态已同步至 `2026-08-06`；网页端访谈与日记高保真收口状态同步至 `2026-08-12`：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -29,7 +29,11 @@
 - 事件中心发布模式为 `legacy / optional / event_centered / event_recovery`；Production 继续保持 `legacy + baseline`，`optional + generative` 只作为板块 8 内部 Preview 与人工授权目标。
 - `2026-08-06` 已冻结 `GI-075～080`，板块 5 六类规则完成 `6/6`，产品决策已冻结，事件中心落地验证尚未启动。`GI-075、GI-076、GI-078` 为中置信度，`GI-077、GI-079、GI-080` 为高置信度；`GI-067 / GI-068～074` 继续保持“已冻结·高置信度”。
 - 阶段 1～2 继续按 GI-075 以新的用户回答机会计数，阶段 3 继续无数字上限。问题修复由模型基于完整语境重新判断下一步，不建立语义分类路由或修复专属次数上限；原始对话持续保留，被用户否定的状态退出当前事实和日志。回复版本退出事件中心目标 MVP，Production legacy 现有换问法能力继续保留。中断与失败恢复继承结构化错误、`requestId`、原话保存和同一 `clientTurnId` 恢复。
-- 成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮，【生成日志】成功时同时结束当前记录，页面跳转只保存当前状态。方法 `v1.0` 已冻结；下一板块为板块 6 正式评测资产建设，板块 7 等待板块 6，板块 8 使用两模式 `4＋2` 完成真人验收。GI-068 的新记录显式选择、记录内保持和日志完成后重新选择继续生效。当前状态源为 `docs/generative-interview-refactor-map.md`，板块 5 详细事实源为 `05-board5-stability-user-control-and-interaction-scope.md`，冻结评测交接见 `04x-07-evaluation-preview-and-handoff.md`。
+- `2026-08-11` 已确认网页端前端方向：每条【帮我记】或【陪我聊】记录完成后形成当天时间线事件卡片；用户在日记页一键生成、查看或更新唯一的今日日记。访谈页只承接表达、回应、保存与返回当天，不展示日志生成或更新行为。详见 `docs/plans/2026-08-11-daily-light-journal-page-frontend-handoff.md`。这项方向用于设计师原型与后续网页端开发；模型、评测、Preview 与 Production 保持原有边界。方法 `v1.0` 已冻结；下一板块为板块 6 正式评测资产建设，板块 7 等待板块 6，板块 8 使用两模式 `4＋2` 完成真人验收。GI-068 的新记录显式选择、记录内保持和新记录重新选择继续生效。当前状态源为 `docs/generative-interview-refactor-map.md`，板块 5 详细事实源为 `05-board5-stability-user-control-and-interaction-scope.md`，冻结评测交接见 `04x-07-evaluation-preview-and-handoff.md`。
+- `2026-08-12` 旧 UI 高保真候选曾完成收口并部署独立 Preview：无会话进入事件中心时先展示当天工作台空状态，点击【帮我记】或【陪我聊】后才创建记录；三阶段进度和“原话已保存”进入顶部导航上下文；理解与提问共用 dailylight.chat 访谈气泡；AI 回复保留赞踩与三项重新生成菜单；`/calendar?view=day|week|month&date=` 统一使用归档侧栏与报告画布骨架。该 deployment `dpl_8yNo4LoHehdowfuCtsdm4BU3w417` 只作为历史工程证据；当前新前端继续构建并等待产品验收，Production `https://dailylight.chat` 保持当前版本。
+- 今日日记已新增 `JournalDailyEntry / Revision / Generation` 数据结构及 `20260810180000_add_journal_daily_generation_system` migration；正式读、生成、自动暂存和保存接口为 `/api/journal/day` 与 `/api/journal/daily*`。它与旧五维整合链路使用的 `DailyJournalEntry` 分层保存。
+- 周报与月报已新增 `JournalPeriodReport / Revision / Generation` 数据结构及 `20260811100000_add_journal_period_reports` migration；读、生成、自动暂存和保存接口为 `/api/journal/period*`。周报优先已保存日报，月报优先已保存周报，来源签名、版本冲突、幂等和需更新保护继续生效。
+- `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED=I_UNDERSTAND` 只用于本地固定六案例零模型回放；远程 UI Preview 和 Production 均走真实数据库链路，`.vercelignore` 排除私有评测页面、接口和脚本。
 - `2026-08-06` 板块 5 完成态同步只更新产品文档；公共 API、类型、代码、配置、Prompt、数据库和运行开关保持原样。
 - 事件中心已接入 `generationTraceId`、现有反馈链路和十类观测事件（九类漏斗事件加响应完成耗时事件）；日志接口复用现有事件日志表和来源快照，当前无需新增数据库迁移。
 - production 共享库此前缺少 `20260521120000_add_admin_analytics_tables` migration，导致 live `POST /api/auth/register` 在写 `AnalyticsEvent` 时失败；该 migration 已于 `2026-05-25` 在 production 补齐。
@@ -46,7 +50,7 @@
 - `/admin/ai-quality` 已完成生产工作台：首屏按待审核、待验证、待发布、观察中和历史记录分流；队列以“维度 · 具体问题”命名，右侧连续承接证据、方案、回复对照、验证和决策。影响服务用标准化后的具体 `issueKey` 计算“同一问题率”；未知问题各自保留标准化键，缺少问题码时页面显示“口径不足”。管理员时间统一固定为 `Asia/Shanghai`，避免服务端与浏览器水合文本不一致。
 - `2026-07-20` 已完成 UserTurn 可靠提交改造的 production 发布：两条 migration 均已应用，PR #36（`ce1e2afbefe98eb79a21faf3d02869fe377085f4`）已合并进 main，公开 smoke 和同 `clientTurnId` 重放校验通过。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
-- 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”，避免用户误把旧日期会话当成当天记录。
+- 普通 `/interview` 入口现在默认代表当前日期的新记录入口：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate` 等于运行时日期时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”，避免用户误把旧日期会话当成当前日期记录。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不能再追同一字段，而要改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间；服务层会在最终落库前和流式输出前同时兜底，避免重复问题先漏给前端。
 - 访谈 repair 协议已收紧：当用户明确表示“看不懂 / 太抽象 / 换一个 / 说简单点”时，服务端会识别 `question_repair`，并对当前问题走纯服务端确定性重问，不再请求模型；repair 轮不会抽取 snapshot、不会增加 `turnCount`、不会推进 `roundMeaningfulReplyCount`、不会触发新的 `event_complete`。`reflection` 维度现在优先按 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 的强约束模板重问；如果上一轮已经命中过“没有具体经历 / 对话”的 guard，repair 不能回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点。连续第 `3` 次 repair 会直接进入低压 choice，不再继续换问法。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
@@ -105,11 +109,12 @@
 新的 AI 或协作者需要查找当前工作时，固定按以下入口导航，避免依赖旧会话记忆或遍历全部历史文件：
 
 1. [`docs/README.md`](./docs/README.md)：五分钟项目导航、常见任务与稳定搜索词；
-2. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
-3. 总 Map 当前链接的专项文档：当前板块 6 使用 `04j-generative-quality-evaluation-v1.md`；
-4. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
-5. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)：GI-088 v8r2 当前证据包与后续真人验收入口。P0／P1、最终初始化幂等、全绿静态门与不可变版本已收口；Preview 已 `READY`，全新 Thinking high run 停在 `0/12`、`gate=pending`、模型调用 `0`，等待产品负责人完成 12 项真人验收；
-6. [`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`](./docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)：v8r2 已完成的实施范围、合同与停止条件。v8r1 A1 误停聊事故及其历史只读 run 继续从 `artifacts/README.md` 进入。
+2. [`docs/plans/2026-08-11-daily-light-journal-page-frontend-handoff.md`](./docs/plans/2026-08-11-daily-light-journal-page-frontend-handoff.md)：网页端“访谈 → 事件卡片 → 今日日记”设计师与开发交接；
+3. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
+4. 总 Map 当前链接的专项文档：当前板块 6 使用 `04j-generative-quality-evaluation-v1.md`；
+5. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
+6. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)：GI-088 v8r2 当前证据包与后续真人验收入口。P0／P1、最终初始化幂等、全绿静态门与不可变版本已收口；Preview 已 `READY`，全新 Thinking high run 停在 `0/12`、`gate=pending`、模型调用 `0`，等待产品负责人完成 12 项真人验收；
+7. [`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`](./docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)：v8r2 已完成的实施范围、合同与停止条件。v8r1 A1 误停聊事故及其历史只读 run 继续从 `artifacts/README.md` 进入。
 
 当前检索关键词：`GI-088`、`GI-087`、`板块 6`、`board6-calibration`、`board7b-working-task-v1`、`legacy + baseline`。GI-081、GI-083、GI-084 开发失败血缘、GI-085／086 No-Go、历史 `GI-066`、旧 Board 7/8 与 Batch B 候选统一从 `artifacts/README.md` 进入，并保持各自的诊断或历史证据身份。
 
@@ -596,7 +601,7 @@ gratitude 理论翻译基线：
 最常用命令：
 - `npm run dev`
 - `npm test`
-- `npx tsc --noEmit`
+- `npm run typecheck`
 - `npx prisma db push`
 
 开发服务器默认策略：
@@ -634,12 +639,12 @@ gratitude 理论翻译基线：
 
 当前回归基线：
 - `npm test`
-- `npx tsc --noEmit`
+- `npm run typecheck`
 
 候选验证快照写入对应专项文档和 `docs/handoff.md`，避免把会持续变化的测试数量写成长期项目规则。默认交付门包括：
 
 - 相关专项测试与全量 `npm test`
-- `npx tsc --noEmit`
+- `npm run typecheck`
 - `npm run lint`
 - `npm run build`
 - `npx prisma validate`，涉及迁移时再验证隔离库 `migrate status`

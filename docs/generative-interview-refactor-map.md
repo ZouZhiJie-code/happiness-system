@@ -1,6 +1,6 @@
 # 生成式访谈重构总 Map（Batch B 专项）
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 文档状态：`生效中`
 
@@ -12,9 +12,19 @@
 
 Production 状态：`保持 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
 
-本次同步范围：`同步 v8r2 P0／P1、最终初始化幂等、全绿静态门、不可变版本、Execution fingerprint、READY Preview 与全新 0/12 Thinking high run；保留 v8r1 A1 历史只读证据；质量与发布未裁决；Production 保持原状`
+本次同步范围：`保留 v8r2 不可变版本、Execution fingerprint 与全新 0/12 Thinking high run；补充日志成果评测的关联说明；GI-088 访谈候选、板块 6/7/8 和 Production 状态保持原状`
+
+网页端实现同步：当前新前端处于构建中，等待产品负责人验收。`2026-08-12` 的旧 UI Preview、部署和测试结果作为历史工程证据保留；GI-088 真人评测、模型质量裁决和 Production 发布继续沿本 Map 的既有流程推进。
+
+日志成果关联：日志生成专项复用了 GI-088 的 9 条真人轨迹作为评测素材。今日日记 Prompt v3 的真人证据覆盖 9 条，其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归；这项结果只更新上层产品总 Map 的“日志成果与确认”模块，不改变 GI-088 访谈候选以及板块 6/7/8 的当前状态。阶段总结见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
+
+## 2026-08-11～12 网页端前端交接与历史实现
+
+产品负责人已确认后续网页端的用户可见成果路径：每条【帮我记】或【陪我聊】记录完成后形成当天时间线事件卡片；用户在日记页一键生成、查看或更新唯一的今日日记。访谈页专注表达、回应、保存与返回当天，日记生成与更新只在日记页出现。完整交接见[Daily Light 访谈、事件卡片与今日日记网页端前端设计交接](./plans/2026-08-11-daily-light-journal-page-frontend-handoff.md)。
+
+该方向曾形成旧 UI Preview 工程候选；当前新前端正在构建，等待产品负责人验收。GI-068～080 的评测、模型、可靠性和发布边界继续按本 Map 与对应专项执行。
 
 ## 文档关系与板块 5～8 工作路径
 

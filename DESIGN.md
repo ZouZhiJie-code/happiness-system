@@ -102,12 +102,12 @@ components:
 **Key Characteristics**
 
 - 全局界面优先保留温暖、低压、可书写的气质，同时减少整页外框、厚圆角和重复模块间隙。
-- **单层卡片制（2026-06-12）**：section 用眉题 + hairline + 留白分区；只有可点击单元或需边界感的数据块才配 Card，纯信息分组不配卡片外壳。
+- **单层卡片制（2026-08-12 修订）**：section 优先用标题层级与留白分区；只有可点击单元或需边界感的数据块才配 Card，Divider 只服务重复列表、表格或明确操作边界。
 - 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮；主导航当前页使用贴近文字的暖棕实线下划线，选中项字号略大。
 - 首页、设置页、管理员页优先采用连续工作台：内容顺着一张主纸面展开。
 - **分析页**是纵向 scroll 报告体：量化趋势与五维记录两段同屏 + 顶部锚点切换；职责是读数与理解，不承担补漏推进。
 - calendar 优先判断效率，减少装饰性纹理和厚重阴影。
-- serif 标题贯穿全站，工作台正文和操作信息更紧凑克制。
+- 工作台、导航、聊天、状态和操作默认使用 UI 无衬线字体；日记与报告的标题、正文保留 display / body 衬线字体。
 - 状态色回答“现在是什么阶段”，维度色回答“这是哪一类记录”。
 
 ## Colors
@@ -153,11 +153,23 @@ components:
 - **UI:** `ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif`
 - **Mono:** `IBM Plex Mono, SFMono-Regular, Menlo, monospace`（仅程序化数据）
 
-品牌标题和日志正文继续使用 display / body；导航、按钮、状态、图表标签和输入控件使用 UI 字体。新增或调整的核心工具文字以 `0.75rem` 为最低基线，非关键图表刻度与装饰性标记可按空间单独评估。
+工作台正文继承 UI 字体；导航、聊天、按钮、状态、图表标签和输入控件同样使用 UI 字体。日记与报告标题显式使用 display，日记与报告正文显式使用 body。品牌页面按自身叙事节奏选择 display / body。
+
+固定字号层级：
+
+| 层级 | 字号 | 用途 |
+| --- | --- | --- |
+| 页面标题 | 大桌面 `32px`、紧凑桌面 `28px` | 每个主画布唯一标题 |
+| 分区标题 | `20px` | 页面主要内容分区 |
+| 条目标题 | `16px` | 列表项、事件、卡片标题 |
+| 正文 | `15px` | 工作台正文、日记与报告正文 |
+| 辅助信息 | `13px` | 状态、来源数量、短说明 |
+
+核心状态和操作文字最低为 `13px`；非关键图表刻度与纯装饰标记可单独评估。页面标题只出现一次，内层标题按分区和条目逐级降低。
 
 ### Calendar Workspace Override
 
-- calendar 保留 serif 标题，尺寸和节奏更紧凑；摘要、动作、统计统一回到 body 信息层。
+- calendar 工作台标题默认使用 UI 字体；进入日记与周期报告阅读面时，标题显式切到 display，正文显式切到 body。
 
 **The Scannable Sentence Rule.** 工作台文案优先服务扫读，标题短、按钮短。
 
@@ -168,16 +180,16 @@ components:
 | 档位 | 值 | CSS 变量 | 用途 |
 | --- | --- | --- | --- |
 | shell | 28px | `--radius-shell` | 页面底板、对话框 |
-| card | 20px | `--radius-card` | 唯一卡片层 |
-| control | 12px | `--radius-control` | 输入件、小型 tile、图表容器 |
-| pill | 999px | — | chip / 胶囊按钮 |
+| card | 20px | `--radius-card` | 唯一卡片层、消息、阅读面 |
+| control | 12px | `--radius-control` | 按钮、输入件、小型 tile、图表容器 |
+| pill | 999px | — | 状态 chip、badge 与紧凑筛选项 |
 
 新代码禁止新增 `14/16/18/22/24/26/30/32px` 等中间圆角。calendar 遗留 class 若仍用更大圆角，逐步迁移，不得在新页面复制。
 
 ### Shadows & Borders
 
 - 边框两档：`--line-soft`（默认）/ `--line-strong`（选中、强调）。
-- 底板保留全局类自带阴影；卡片只允许 `shadow-sm` 或无阴影；hover 最多 `shadow-md`。
+- 普通内容、消息和阅读面无阴影；交互卡片 hover 最多使用轻量 `shadow-sm`；菜单、对话框等浮层才允许更明显的阴影。
 - calendar 降级装饰：轻边框 + 浅暖表面 + 低强度阴影（shell `0 16px 34px rgba(103,66,34,0.12)` 等）。
 
 **The Flat-Enough Rule.** 能靠边框、背景和留白成立的，不再叠木纹、纸纹和重阴影。
@@ -192,8 +204,12 @@ components:
 | --- | --- |
 | `Surface` | 页面底板（吸收 `page-shell` / `calendar-shell`） |
 | `Card` | 唯一卡片层，`interactive` 自带 hover/focus |
-| `SectionHeading` | 眉题式分组标题 |
-| `Divider` | hairline 分隔线 |
+| `PageHeading` | 页面唯一主标题，支持 UI / display 两种字体语境 |
+| `SectionHeading` | 20px 分区标题或 16px 条目标题，不附带装饰线 |
+| `InlineStatus` | 与当前操作贴近的加载、成功、提醒和失败状态 |
+| `ReadingSurface` | 日记与周期报告的 20px 单一阅读面 |
+| `SourceDrawer` | 按需展开来源和生成细节 |
+| `Divider` | 重复列表、表格或明确操作区的边界 |
 | `ActionButton` | primary / secondary / ghost 三态按钮 |
 | `SlidingSegmentedControl` | 可重定向 spring 滑块；支持滚动容器内自动显露选中项 |
 | `HorizontalPager` | 内容分页轨；按需启用横向 swipe 与速度投影 |
@@ -202,14 +218,14 @@ components:
 
 ### Shells
 
-- **Global shells**：`page-shell / paper-panel / paper-sheet / wood-dialog` 允许纹理与暖色，但整页层级优先平铺，避免大卡套大卡。
+- **Global shells**：`page-shell / paper-panel / wood-dialog` 承载环境与浮层；日记正文统一迁移到 `ReadingSurface`，整页层级保持平铺。
 - **Calendar shell**：浅暖背景、轻阴影，不套木纹。
-- **Settings / Home / Admin shell**：一张连续主纸面；控制区用 Divider 分行，不再各自漂浮成大卡。
+- **Settings / Home / Admin shell**：一张连续主纸面；控制区优先通过标题和留白分组，重复条目才使用 Divider。
 - **Analysis shell（2026-06-12）**：
   - 单页两段同屏：`trends` / `dimensions`
   - `SiteHeader` 中区：周期 preset（本周/本月/自定义）+ 两段锚点 tab + contextual chip
   - 导航：tab 点击 → 锚点滚动；用户滚动 → scroll spy 更新 URL `section`
-  - 段间：`Divider` + 留白；段内眉题用 `AnalysisSection` / `SectionHeading`
+  - 段间：优先使用留白；确需明确边界时使用 `Divider`；段标题用 `AnalysisSection` / `SectionHeading`
   - **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；数据来自 `GET /api/analysis/range`
   - **五维记录**：按月聚合（`GET /api/analysis/month`），展示五维线索与代表片段
   - 旧 URL `overview|score|rhythm` 映射到 `trends`；`insights|correlation|review` 映射到 `dimensions`
@@ -217,7 +233,7 @@ components:
 ### Panels and Cards
 
 - **Calendar card**：单日、单维度或摘要块；浅面、轻边框。
-- **Global content sections**：纯文案分组、设置行、管理员表格——用眉题 + Divider，**不配** Card。
+- **Global content sections**：纯文案分组使用标题层级与留白；设置行和管理员表格只在重复条目之间使用 Divider。
 - **Analysis data blocks**：图表、可点 tile 等需要边界感的块可用一层 Card；段标题区不用 Card。
 - **层级预算**：每页最多 Surface + 一层 Card；Card 内禁止再嵌套 border+bg 容器。
 
@@ -229,7 +245,7 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 
 ### Actions
 
-- **Primary**：最直接下一步（calendar：`查看当天`、`继续访谈`）。
+- **Primary**：最直接下一步，使用暖墨纯色，无渐变和常驻阴影（calendar：`查看当天`、`继续访谈`）。
 - **Secondary / ghost**：补充或只读跳转。
 - **Disabled**：低对比、去阴影，一眼不可点。
 - **Pressed**：按钮缩放约 `0.97`，大卡片约 `0.985`；反馈在 pointer-down 当帧出现，只改变 `transform / opacity / color / box-shadow`。
@@ -238,8 +254,8 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 
 ### Segmented and Navigation Controls
 
-- **View switcher**：月/周/日 segmented，当前项 `Calendar Ink` 填充。
-- **Header middle lane**：维度条、calendar toolbar、analysis toolbar 平铺在中区，用 `｜` 分隔，不套独立外框。
+- **View switcher**：日/周/月 segmented，当前项 `Calendar Ink` 填充。
+- **Header middle lane**：维度条、calendar toolbar、analysis toolbar 平铺在中区，优先通过间距形成组别；只在相邻控制容易混淆时使用单一轻分隔。
 - **Analysis anchor tabs**：两段 tab 与 scroll spy 双向联动。
 - **Motion**：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；横向 swipe 采用约 `10px` 方向判定、1:1 跟手、速度投影与边界阻尼。
 - **Responsive header**：小于 `1024px` 时，品牌/主导航与上下文工具栏分成两行；上下文工具栏可横向滚动，并通过边缘渐隐提示剩余内容。
@@ -264,11 +280,11 @@ calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三
 ### Do
 
 - 保留“温暖记录产品”母系统基调。
-- 遵循单层卡片制：Surface + 最多一层 Card + hairline 分区。
+- 遵循单层卡片制：Surface + 最多一层 Card；标题与留白承担主要分区。
 - 分析页用单页 scroll + 锚点 tab；趋势段只陈述数据。
 - calendar 优先工作台判断效率。
 - 状态色与维度色各司其职。
-- 标题保留 serif，摘要与操作服务快速扫描。
+- 工作台使用 UI 无衬线，日记标题与正文保留 display / body 衬线。
 - 统一按钮三态与 focus-visible。
 - 保持触摸按下反馈、拖动方向判定和纵向滚动互不抢占。
 

@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-08-06`
+最后更新：`2026-08-12`
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -70,6 +70,23 @@
 | `PATCH` | `/api/interview/event-centered/journal/[id]` | 自动暂存标题和正文；要求 `expectedContentRevision` |
 | `POST` | `/api/interview/event-centered/journal/[id]/save` | 将当前草稿按版本号正式保存 |
 
+事件中心网页入口使用：
+
+```text
+/interview?mode=event-centered&entryDate=YYYY-MM-DD
+```
+
+没有会话时，页面先返回当天工作台空状态；用户点击【帮我记】或【陪我聊】后，客户端才调用 `session/start`。创建请求可携带：
+
+```json
+{
+  "entryDate": "2026-08-12",
+  "recordMode": "capture"
+}
+```
+
+`recordMode` 取 `capture` 或 `chat`。顶部进度、保存状态、统一 AI/用户气泡和回复下方的赞踩/重新生成菜单属于页面层交互，继续复用现有回复、反馈与版本接口。
+
 #### GI-088 私有 Preview 评测接口
 
 这组接口只服务板块 6／7 开发评测，页面入口为 `/preview/gi088-evaluation`。全部请求要求 Preview 环境、专用开关、应用登录和“管理员 ∩ GI-088 评测名单”。
@@ -100,7 +117,51 @@
 | `PUT` | `/api/daily-journal/[id]` | 更新日级日志标题和正文 |
 | `POST` | `/api/daily-journal/[id]/save` | 保存日级日志 |
 
-### 2.5 日历、分析与画像
+当前归档工作区使用以下正式日记合同；`/api/daily-journal*` 保留为既有当天整合日志兼容入口：
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `GET` | `/api/journal/day?entryDate=YYYY-MM-DD` | 读取当天事件卡片、今日日记和生成状态 |
+| `POST` | `/api/journal/daily/generate` | 基于当天有效事件卡片生成或更新今日日记 |
+| `PATCH` | `/api/journal/daily/[id]` | 自动暂存日记标题、正文和段落来源 |
+| `POST` | `/api/journal/daily/[id]/save` | 按 `expectedContentRevision` 保存日记 |
+
+日记读取合同为 `JournalDailyJournalView`。生成、暂存和保存继续携带来源签名、内容版本和客户端操作编号；来源变化、重复提交和版本冲突分别返回 `stale` 或 `409`，已有手工内容在更新时保留。
+
+### 2.5 周报与月报
+
+周报和月报共用 `JournalPeriodReportView`，页面地址继续使用：
+
+```text
+/calendar?view=week&date=YYYY-MM-DD
+/calendar?view=month&date=YYYY-MM-DD
+```
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `GET` | `/api/journal/period?kind=week|month&date=YYYY-MM-DD` | 读取周期范围、素材、报告、来源签名和唯一主动作 |
+| `POST` | `/api/journal/period/generate` | 生成或更新周报/月报 |
+| `PATCH` | `/api/journal/period/[id]` | 自动暂存报告标题、正文和段落来源 |
+| `POST` | `/api/journal/period/[id]/save` | 按 `expectedContentRevision` 保存报告 |
+
+生成请求示例：
+
+```json
+{
+  "kind": "week",
+  "date": "2026-08-12",
+  "task": "generate",
+  "clientOperationId": "period-op-001",
+  "expectedSourceSignature": "<source-signature>",
+  "expectedContentRevision": null
+}
+```
+
+来源规则：周报优先使用已保存日报，缺少日报时回到有效事件卡片；月报优先使用完全落在本月的已保存周报，缺少周报时回到日报和事件卡片。来源通过 `sourceEventIds` 和 `upstreamSourceIds` 去重，每段正文保留 `sourceIds`。
+
+页面展示状态包括 `empty / ungenerated / generating / draft / saved / stale / update_failed`。写入接口支持幂等操作编号、来源签名校验、内容版本校验、自动暂存和失败保留；版本或来源冲突返回 `409`。
+
+### 2.6 日历、分析与画像
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -114,7 +175,7 @@
 | `GET/POST` | `/api/profile/portrait` | 查询或生成画像快照 |
 | `POST` | `/api/transcribe` | 语音占位接口，当前为 stub |
 
-### 2.6 AI 反馈与质量治理
+### 2.7 AI 反馈与质量治理
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
@@ -130,7 +191,7 @@
 | `GET` | `/api/cron/ai-quality/evaluate?limit=100` | 每日评估任务 |
 | `GET` | `/api/cron/ai-quality/iterate` | 每周聚类任务 |
 
-### 2.7 其他管理员接口
+### 2.8 其他管理员接口
 
 - `/api/admin/analytics/*`：总览、漏斗、留存、质量、候选用户和内容级下钻。
 - `/api/admin/ai-runtime/*`：chat/embedding 配置草稿、探针、发布、历史和回滚。
@@ -717,7 +778,7 @@ http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance
 npm run eval:event-centered:batch-b -- --mode=rules --all
 npm run eval:event-centered:generative
 npm test -- tests/evals/event-centered-mvp-journal-closure.test.tsx
-npx tsc --noEmit
+npm run typecheck
 npm run lint
 npm run build
 git diff --check

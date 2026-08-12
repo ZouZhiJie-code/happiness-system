@@ -1,5 +1,6 @@
 .next
 .next-dev
+next-env.d.ts
 node_modules
 .DS_Store
 tsconfig.tsbuildinfo
@@ -19,6 +20,7 @@ dist
 
 # Local design-tool metadata and external document export payloads
 .hallmark/
+.firecrawl/
 artifacts/interview-nodes/lark-doc-integration/
 
 # Local evaluation scratch. Formal evidence stays in versioned artifact folders.

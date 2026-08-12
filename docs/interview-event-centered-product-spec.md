@@ -1,6 +1,6 @@
 # 事件中心自我探索产品规格
 
-最后更新：`2026-08-09`
+最后更新：`2026-08-12`
 
 文档状态：`GI-067 / GI-068～080 产品规则已冻结；方法 v1.0 已冻结；板块 6 正在建设正式评测资产`
 
@@ -11,6 +11,8 @@
 Production：`继续使用 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
 
 历史版本状态：`四角度产品规格、一事件一日志结构、GI-050–066 候选、自动验证和真人失败证据继续保留；目标链路以生成式专项 Map、04x、板块 5 冻结专项与板块 6 当前专项为准`
+
+> `2026-08-11` 网页端前端交接已确认：用户可见路径采用“访谈记录 → 当天时间线事件卡片 → 今日日记”。访谈页不展示日志生成或更新；当天日记页统一承接一键生成、查看与更新。当前新前端处于构建中，等待产品负责人验收；`2026-08-12` 的旧 UI Preview 作为历史工程证据保留。当前实现边界以[网页端设计交接](./plans/2026-08-11-daily-light-journal-page-frontend-handoff.md)及其[Preview 合同](./plans/2026-08-12-daily-light-journal-preview-contract.md)为准。本文后续关于“事件日志按钮、事件日志侧栏、一事件一篇日志”的描述保留为历史规格与实现背景。
 
 冻结规则档案：[04x｜GI-067 全局讨论架构](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074 评测体系与下游交接](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)、[04x-01｜GI-068【帮我记】](./technical/interview-event-centered/04x-01-help-me-record-zero-question-strategy.md)、[04x-02｜GI-069 承接与焦点对齐](./technical/interview-event-centered/04x-02-accompany-me-chat-stage1-engage-and-focus.md)、[04x-03｜GI-070 探索与澄清](./technical/interview-event-centered/04x-03-accompany-me-chat-stage2-explore-and-clarify.md)、[04x-04｜GI-071 动态深化与整合](./technical/interview-event-centered/04x-04-accompany-me-chat-stage3-deepen-and-integrate.md)、[04x-05｜GI-072 高频场景、决策支持与话题修正](./technical/interview-event-centered/04x-05-scene-playbooks-and-topic-modifiers.md)、[04x-06｜GI-073 理解回应与用户可见表达](./technical/interview-event-centered/04x-06-think-summary-and-question-realization.md)
 

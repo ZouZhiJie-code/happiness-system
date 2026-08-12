@@ -1,8 +1,8 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8 以 1/4 early_stopped 收口并获产品通过；v8r1 A1 控制误停单例阻断及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门和 READY Preview 已形成，run b816d468…e78cd 停在 running 0/12、gate pending、high_only/high、calls 0；等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 访谈候选状态继续由生成式访谈总 Map 维护；日志成果专项已完成 9 条今日日记 Prompt v3 真人评价，其中 6 条完成记录卡 v3 → 今日日记 v3 完整回归；dev28、hidden12 与 Judge 20 已形成未执行骨架；新前端构建中待验收；Production 保持 legacy + baseline`
 
 ## 1. 为什么需要这份规则
 
@@ -27,6 +27,8 @@
 
 当前入口：
 
+- [日志成果九条真人轨迹阶段性总结](./journal-generation-evaluation/nine-human-trajectory-summary.md)
+- [日志生成离线评测与隔离评审入口](./journal-generation-evaluation/README.md)
 - [GI-088 v8r2 当前真人验收与正式证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 v8r2 已完成实施合同](../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 

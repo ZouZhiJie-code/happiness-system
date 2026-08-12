@@ -1,6 +1,6 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 当前生产域名
 
@@ -62,6 +62,23 @@
 - 如果项目没有暴露上述 system env，才回退为手工维护 `APP_URL`
 - 当前批次还没有直接证据证明 `xingfuxitong` 已启用该能力；依赖这条路径前，必须额外验证项目设置里的 `Automatically expose System Environment Variables` 开关，以及部署运行时是否能读到 `VERCEL=1`
 - preview 数据库必须和本地库、生产库隔离
+
+#### 2026-08-12 Daily Light 旧 UI Preview 历史工程证据
+
+这版访谈与日记页面使用独立 UI Preview，现作为历史工程证据保留，并与 GI-088 私有评测 Preview 分开记录：
+
+```text
+URL: https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
+deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417
+status: Ready
+```
+
+- Preview 使用独立验收数据库，`INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`；GI-088 评测开关关闭。
+- `.vercelignore` 已排除私有评测页面、评测接口与本地评测脚本，公开 UI Preview 只承载本轮访谈与归档工作区。
+- 验收入口：`/interview?mode=event-centered&entryDate=2026-08-12`、`/calendar?view=day|week|month&date=2026-08-12`。
+- 远程 Vercel Linux 构建为 `Ready`，浏览器已核验当天空工作台、访谈启动、事件保存、日报/周报/月报结构；专项测试 `36/36`、类型检查、Lint 和差异检查通过。
+- Production `https://dailylight.chat` 的代码、数据库、环境变量和事件中心开关保持不变；本 UI Preview 不承担模型质量评测或 Production 发布授权。
+- 当前新前端处于构建中，等待产品负责人验收；通过后再接入固定六案例 Preview。
 
 #### 2026-08-09～10 GI-088 私有评测 Preview
 

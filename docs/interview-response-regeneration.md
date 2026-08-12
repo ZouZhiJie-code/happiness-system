@@ -1,10 +1,12 @@
 # Daily Light 按意图重新生成
 
-最后更新：`2026-08-02`
+最后更新：`2026-08-12`
 
 当前有效口径：本文档记录已发布的五维访谈“按意图重新生成”能力；它继续复用原话可靠提交、活动分支、纠正和 Trace。事件中心 MVP 的两段式模型链路、事件日志闭环和可选入口属于板块 7候选，详见[板块 7 Preview 候选交接](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)。板块 8独立负责事件中心 Preview、Go/No-Go、Production `optional + generative` 授权、线上观察与回退；Production 当前继续 `legacy + baseline`。
 
 历史功能说明和 `2026-07-21` 验收证据继续保留，避免将五维回复修复与事件中心候选混为同一发布结论。
+
+网页端交互补充：事件中心高保真 UI 将回复下方操作统一呈现为【赞】【踩】【重新生成】；重新生成菜单提供“更简单一点 / 更具体一点 / 换一个角度”三项轻量入口，继续调用本文记录的 `regenerate_response`、反馈和版本切换合同。五维访谈仍保留本文中已发布的五项意图入口，两者共用服务端版本与恢复规则。
 
 ## 1. 背景与目标
 

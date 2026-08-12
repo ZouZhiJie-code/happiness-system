@@ -1,6 +1,6 @@
 # Daily Light 文档导航
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
@@ -31,7 +31,11 @@
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
 - 板块 7 正式接入继续等待板块 6；
 - 板块 8 继续等待；
+- 日志成果专项已完成 9 条真人轨迹的今日日记 Prompt v3 评价；其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归，记录卡 v3 的证据范围限定为 6 条；
+- 当前新前端处于构建中，等待产品负责人验收；旧 UI Preview 只作为历史工程证据；
 - Production 保持 `legacy + baseline`。
+
+Daily Light 当前网页端方向仍为“访谈记录 → 当天事件卡片 → 今日日记”。新前端构建完成并通过产品验收后，再开展固定六案例页面联调；旧 UI Preview 的实现、测试与部署结果保留为历史工程证据。`dev28＋hidden12` 与 Judge 20 已形成未执行骨架，私有填充、正式运行和准入保持关闭。联调契约见[隔离 Preview 联调契约](./plans/2026-08-12-daily-light-journal-preview-contract.md)，九条真人证据见[阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
 
 ## 2. 新会话阅读顺序
 
@@ -49,12 +53,18 @@
 ### 产品状态与决策
 
 - 全产品访谈链路：[访谈产品优化总 Map](./interview-product-optimization-map.md)
+- 网页端访谈、事件卡片与今日日记交接：[Daily Light：访谈、事件卡片与今日日记网页端前端设计交接](./plans/2026-08-11-daily-light-journal-page-frontend-handoff.md)
 - 事件中心阶段与批次：[事件中心重构讨论地图](./interview-event-centered-refactor-discussion-map.md)
 - 生成式板块 1～8：[生成式访谈重构总 Map](./generative-interview-refactor-map.md)
 - 事件中心产品事实：[事件中心产品规格](./interview-event-centered-product-spec.md)
+- 板块 5～8 工作方式：[生成式访谈 AI 产品工作方法 v1.0](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)
+- 方法形成过程与经验：[板块 5 与 AI 产品工作方法实操复盘](./technical/interview-event-centered/00a-generative-interview-ai-product-working-method-retrospective.md)
+- 交互式理解入口：[实操复盘可视化](./technical/interview-event-centered/00a-generative-interview-ai-product-working-method-retrospective.html)
 
 ### 当前评测与真人裁决
 
+- 日志成果九条真人轨迹：[今日日记 Prompt v3 与六条完整链路阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)
+- 日志生成评测资产：[离线评测与隔离评审入口](../artifacts/journal-generation-evaluation/README.md)
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
 - GI-088 当前真人验收与正式证据入口：[v8r2 评测底座加固与最终 12 项真人验收](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - GI-088 v8r2 已完成实施合同：[意图控制与评测底座全量修复](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
@@ -73,8 +83,10 @@
 - API 与调用方式：[integration-guide.md](./integration-guide.md)
 - 本地运行与排障：[operator-runbook.md](./operator-runbook.md)
 - 当前交接：[handoff.md](./handoff.md)
+- Daily Light 高保真 Preview 联调契约：[2026-08-12 Preview 合同](./plans/2026-08-12-daily-light-journal-preview-contract.md)
 - 访谈意图评测：[interview-intent-evaluation-source-of-truth.md](./interview-intent-evaluation-source-of-truth.md)
 - 工作区收口结果：[2026-08-06-workspace-consolidation-result.md](./maintenance/2026-08-06-workspace-consolidation-result.md)
+- 本轮 304 路径处置台账：[2026-08-12-workspace-disposition-ledger.md](./maintenance/2026-08-12-workspace-disposition-ledger.md)
 
 ### 历史证据
 

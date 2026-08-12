@@ -1,6 +1,6 @@
 # 事件中心自我探索重构讨论地图
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 文档状态：`事件中心 MVP 产品讨论与阶段边界持续有效；GI-067 / GI-068～080 已冻结；GI-066 真人实聊 No-Go 作为历史证据保留`
 
@@ -13,6 +13,10 @@
 产品事实源：[`docs/interview-event-centered-product-spec.md`](./interview-event-centered-product-spec.md)
 
 生成式访谈专项进度源：[`docs/generative-interview-refactor-map.md`](./generative-interview-refactor-map.md)
+
+网页端设计与开发交接：[`2026-08-11 Daily Light 访谈、事件卡片与今日日记网页端前端设计交接`](./plans/2026-08-11-daily-light-journal-page-frontend-handoff.md)。该交接确定当前用户可见路径为“访谈记录 → 事件卡片 → 今日日记”，并将历史事件日志页面方案保留为背景资料。
+
+`2026-08-12` 网页端高保真实现已部署独立 UI Preview，当前验收范围包括当天工作台空状态、顶部进度、统一访谈气泡、回复重生成菜单、日报/周报/月报归档骨架和真实接口适配；模型评测与 Production 仍按上方板块边界执行。
 
 ## 1. 这份地图解决什么问题
 

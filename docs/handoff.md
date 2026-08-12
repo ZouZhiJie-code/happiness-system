@@ -1,6 +1,6 @@
 # 当前阶段 Handoff
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 1. 交接结论
 
@@ -9,6 +9,40 @@ Daily Light 已具备完整的五维访谈、维度日志、当天整合日志�
 ```text
 https://dailylight.chat
 ```
+
+`2026-08-11` 产品负责人已确认下一轮网页端体验交接：每条【帮我记】或【陪我聊】记录完成后形成当天时间线事件卡片；用户只在日记页一键生成、查看或更新唯一的今日日记。访谈页不展示日志生成或更新。当前新前端处于构建中，等待产品负责人验收；`2026-08-12` 的旧 UI Preview、页面实现和测试结果作为历史工程证据保留。模型评测和 Production 继续沿用既有授权边界。
+
+日志成果专项已经完成 9 条真人轨迹的今日日记 Prompt v3 评价，9/9 通过当前人工门槛；其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归，记录卡 v3 的证据范围限定为这 6 条。`dev28＋hidden12` 与 Judge 20 槽位已经形成未执行骨架，私有正文、真人身份映射和隐藏集填充继续留在本地；当前先等待新前端产品验收，再开展固定六案例页面联调和正式评测运行。完整结论见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
+
+## 1.1 2026-08-12 旧 UI Preview 历史工程证据
+
+这组旧候选结果用于后续新前端联调参考，不代表当前新前端已通过产品验收：
+
+- `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 在当天没有会话时先展示“当天工作台”空状态；用户点击【帮我记】或【陪我聊】后才创建会话，已有事件按日期隔离恢复。
+- 三阶段进度、当前阶段和保存状态进入顶部导航上下文区域；聊天正文保留给消息与输入框。
+- “理解”和“提问”统一使用 dailylight.chat 的 AI 气泡；用户气泡、输入框、焦点、发送和键盘行为沿用现有访谈样式。
+- 每条 AI 回复提供赞、踩和重新生成；重新生成菜单包含“更简单一点 / 更具体一点 / 换一个角度”，支持版本切换、Esc 关闭和焦点恢复。
+- `/calendar` 的 day / week / month 统一采用归档侧栏 + 报告画布；加载、错误和空状态使用同一骨架，日报、周报和月报接入真实合同。
+
+历史独立 UI Preview：
+
+```text
+https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
+deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417 (Ready)
+```
+
+历史页面入口：
+
+```text
+/interview?mode=event-centered&entryDate=2026-08-12
+/calendar?view=day&date=2026-08-12
+/calendar?view=week&date=2026-08-12
+/calendar?view=month&date=2026-08-12
+```
+
+Preview 使用独立验收数据库，`INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`，GI-088 评测开关关闭；Production `https://dailylight.chat` 保持现行版本和配置。
+
+历史验证记录：高保真改动专项 `36/36` 通过，TypeScript 类型检查、Lint（0 errors）和差异检查通过；远程 Vercel Preview 构建为 `Ready`，并完成了空工作台、访谈启动、事件保存、日报/周报/月报结构的浏览器核验。当前新前端完成产品验收后，再按固定六案例 Preview 契约开展新一轮页面联调。
 
 AI 质量链路已经从“收集案例”推进到“验证候选、全量发布、按版本观察七天、支持人工回滚”。访谈意图识别已于 `2026-07-21` 全量启用；小流量阶段的运营重点是持续收集真实用户 Trace 与反馈，优先记录意图识别问题，并由管理员按需运行评估和候选生成，再对通过验证的候选执行发布。
 
@@ -200,6 +234,7 @@ AI 质量发布与效果观察专项验证：
 
 ### 7.0 当前交付顺序
 
+0. Daily Light 新前端正在构建；完成产品验收后接入固定六案例 Preview，验证五条只读回放和 v7r4 A1 编辑更新流程。`dev28＋hidden12` 与 Judge 20 保持未执行骨架，页面 Preview 通过后再启动填充、运行和准入；Production 继续等待独立决策。
 1. v8r1 run 保持只读；专用评测库快照已经确认 A1 完成、A2 活动、两次 Provider 调用均有效。完整用户内容继续只保存在私有运行目录。
 2. v8r2 已在同一个开发周期收口高精度控制决策、调用结果落账、陈旧快照保护、人工证据治理、run 生命周期、工作台恢复和八项 Preview 开门差额。
 3. 最终初始化幂等、全量验证、行为清单、不可变 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 和私有 Preview 已收口；当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。

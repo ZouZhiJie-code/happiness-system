@@ -2,7 +2,7 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-08-09`，这个仓库的真实状态是：
+截至 `2026-08-12`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -35,7 +35,7 @@
 - 事件中心日志支持生成、编辑、700ms 自动暂存、正式保存、刷新恢复和通过当天事件标签重新打开；事件日志接口、Trace、反馈和九类漏斗埋点已接入，未新增数据库迁移。
 - GI-066 使用 DeepSeek 官方 API 完成严格 `10×3` 与单角度自动 `8+2`，这些结果保留为历史技术证据；最新真人实聊因目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效。Production 继续保持 `legacy + baseline`。
 - 同一轮 production 排障中，已补齐 `20260521120000_add_admin_analytics_tables` migration，修复了 live 注册路径因 `AnalyticsEvent` 表缺失而出现的 `REGISTER_FAILED`。
-- 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
+- 普通 `/interview` 入口现在默认代表当前日期的新记录入口：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate` 等于运行时日期时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
 - 访谈 repair 协议已升级成稳定的服务端闭环：当用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等修问题表达时，系统会识别 `question_repair`，直接在服务端对当前问题做确定性重问，不再请求模型；repair 轮不会增加 `turnCount`、不会改写 snapshot、不会推进 round，也不会贡献新的完成进度。`reflection` 维度现在有专属 repair 模板，并且在用户已明确说“没有某段具体经历 / 对话”后，不会再回卷到 scene question。连续第 `3` 次 repair 会进入低压 choice，让用户改为“只补一句 / 换一个片段 / 先退出”。
@@ -75,6 +75,9 @@
 - `gratitude` 的 `stitched_moments` supporting-scene 质量门现在只接受仍保留明确照顾动作和足够场景锚点的自然压缩：把“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这类语义反转会继续被拦住。
 - `respond/stream` 会先缓冲模型候选问题，完成服务端协议检查、纠偏和 fallback 后，再分块发送最终摘要与问题；用户流式阶段看到的文本与最终保存的助手消息保持一致。
 - `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `turn -> summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
+- 当前新前端处于构建中，等待产品负责人验收。`2026-08-12` 形成的旧 UI Preview、页面实现和专项验证保留为历史工程证据，不代表当前新前端已通过产品验收。
+- 日报、周报、月报继续使用真实保存恢复链路；今日日记已有 `JournalDailyEntry / JournalDailyEntryRevision / JournalDailyEntryGeneration` 合同与 `/api/journal/day`、`/api/journal/daily*` 接口，周报/月报已有 `JournalPeriodReport / JournalPeriodReportRevision / JournalPeriodReportGeneration` 合同与 `/api/journal/period*` 接口。新前端验收后再按 [`Daily Light 隔离 Preview 联调契约`](docs/plans/2026-08-12-daily-light-journal-preview-contract.md)开展页面联调，Production 继续保持当前版本。
+- `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED=I_UNDERSTAND` 仅开启本地固定六案例零模型回放，远程 UI Preview 与 Production 继续走真实数据库链路。
 
 ## 当前产品状态
 
@@ -109,6 +112,8 @@
 - `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、访谈页独立评分工作区；分析页趋势段为只读读数台
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会先保存当天日志 pending 编辑，再移除 `mode` 并恢复所选日期的正常访谈 hydrate
+- 事件中心默认空工作台与记录模式入口：`/interview?mode=event-centered&entryDate=YYYY-MM-DD`；会话创建请求可携带 `recordMode=capture|chat`
+- 日报、周报、月报归档工作区：日报读取 `GET /api/journal/day`，周报/月报读取 `GET /api/journal/period?kind=week|month&date=YYYY-MM-DD`
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐基线文档：`docs/theory/fulfillment-alignment.md`
 - reflection 理论对齐基线文档：`docs/theory/reflection-alignment.md`
@@ -258,7 +263,7 @@ npm run dev
 为依据。后续新增案例、调整门槛或改变发布流程时，先更新该文档的当前阶段、决策记录和新输入记录。
 
 ```bash
-npx tsc --noEmit
+npm run typecheck
 npm test
 ```
 
@@ -266,7 +271,7 @@ npm test
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - GI-066 阻断修复候选：`npm test` = `268` 个测试文件、`2541/2541` 个用例通过；该候选随后因真人体验 `No-Go` 失效，数据只作为历史技术证据。
 - `npm run lint` 通过，`0 error`，保留 `46` 条仓库既有 warning
-- `npx tsc --noEmit` 通过
+- `npm run typecheck` 通过；该命令先生成 Next.js 路由类型，再执行 `tsc --noEmit`
 - `npm run build` 通过，保留既有 ESLint warnings
 - `npx prisma validate`、隔离库 migrate status 与 `git diff --check` 通过
 - GI-066 严格 `10×3`：动作、方向和完整无问题均为 `30/30`，重复选题错误 `0`
@@ -302,7 +307,7 @@ npm run smoke:public -- http://127.0.0.1:3000
 npm run acceptance:ai-quality:seed
 node scripts/product-smoke.mjs joy 2026-05-19
 node scripts/runtime-env-readback.mjs https://your-target-host runtime
-npx tsc --noEmit
+npm run typecheck
 npx prisma db push
 npx prisma migrate deploy
 ```
@@ -310,6 +315,7 @@ npx prisma migrate deploy
 ## 文档导航
 
 - 新会话五分钟导航：`docs/README.md`
+- 网页端访谈、事件卡片与今日日记设计交接：`docs/plans/2026-08-11-daily-light-journal-page-frontend-handoff.md`
 - 项目级 agent 说明：`AGENTS.md`
 - 设计系统总纲：`DESIGN.md`（创意方向、页面形态、Do/Don't）
 - 容器与 token 工程规范：`docs/design/ui-conventions.md`（DESIGN.md 附录）

@@ -1,6 +1,6 @@
 # Operator Runbook
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-12`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -17,6 +17,7 @@
 | `INTERVIEW_EVENT_CENTERED_MODE` | 事件中心入口档位：`legacy` 保持五维入口为默认并允许读取已有事件；`optional` 保持五维默认入口并展示“从一件事开始”且允许事件写入；`event_centered` 以事件中心为默认入口并允许事件写入；`event_recovery` 仅保留已有事件的恢复阅读，关闭事件新增与修改。板块 8 Preview 使用 `optional`，Production 默认保持 `legacy`；生成式问题触发条件发布时保留 `optional` 并切换策略。 |
 | `INTERVIEW_EVENT_CENTERED_STRATEGY` | 事件中心内部提问策略：`baseline` 使用现有确定性提问链路，`generative` 使用同一模型的两段式结构化链路（第一段语义判断、第二段用户表达）。默认 `baseline`；板块 8 Preview 使用 `optional + generative`，生成式质量或稳定性触发回退时切换 `optional + baseline`；数据、隐私、来源或恢复主链风险切换 `event_recovery + baseline`，读路径受影响时切换 `legacy + baseline`。 |
 | `EVENT_CENTERED_GENERATIVE_MODEL` | 事件中心新候选固定使用 `deepseek-v4-flash`；只在受控 Preview 或候选验证中设置，Production 保持空值直到 Board 8 明确批准。 |
+| `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED` | 本地固定六案例零模型回放开关；仅在 `localhost` / `127.0.0.1` 且显式设置 `I_UNDERSTAND` 时生效，远程 UI Preview 与 Production 不使用。 |
 | `EVENT_CENTERED_EVALUATION_TIMEOUT_MS` | 事件中心离线策略回放与 Judge 的超时，范围 `1000–90000ms`，默认 `18000ms`；缺省时兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。不影响线上访谈超时。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY` | 离线 Judge 专用 API Key；仅本地或隔离评测使用，不提交仓库、不注入客户端或生产请求。缺省时可按代码顺序兼容 `DEEPSEEK_JUDGE_API_KEY` 或回放 key。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL` | 离线 Judge 模型名，必须显式提供；兼容别名为 `DEEPSEEK_JUDGE_MODEL`。策略回放的 `DEEPSEEK_MODEL` 不会自动充当 Judge 模型。 |
@@ -202,6 +203,22 @@ npx prisma generate
 
 这条 migration 为候选记录补充管理员拒绝理由字段；审核候选时拒绝动作要求填写 `4–300` 字原因。
 
+如果今日日记接口出现 `JournalDailyEntry does not exist`、`JournalDailyEntryRevision does not exist` 或 `JournalDailyEntryGeneration does not exist`，执行：
+
+```bash
+psql "$DIRECT_URL" -f prisma/migrations/20260810180000_add_journal_daily_generation_system/migration.sql
+npx prisma generate
+```
+
+如果周报/月报接口出现 `JournalPeriodReport does not exist`、`JournalPeriodReportRevision does not exist` 或 `JournalPeriodReportGeneration does not exist`，继续执行：
+
+```bash
+psql "$DIRECT_URL" -f prisma/migrations/20260811100000_add_journal_period_reports/migration.sql
+npx prisma generate
+```
+
+两条 migration 分别新增今日日记和周期报告的版本、来源与生成操作记录。Preview 或其他测试环境先备份并确认 `DIRECT_URL` 指向隔离的目标库，再执行 `npx prisma migrate deploy`；网页端 UI Preview 使用独立验收库，Production migration 需要单独授权。
+
 ### 2.3 记忆系统依赖（可选）
 
 如果需要启用记忆系统（`memoryEnabled = true`），需额外安装 pgvector 扩展：
@@ -250,6 +267,8 @@ psql "$DIRECT_URL" -c '\d "DailyHappinessScore"'
 - `JoyEntry_userId_status_date_idx`
 - `DailyJournalEntry_userId_date_idx`
 - `DailyHappinessScore_userId_date_idx`
+- `JournalPeriodReport_userId_periodKind_periodStart_key`
+- `JournalPeriodReportGeneration_userId_periodKind_periodStart_clientOperationId_key`
 - `MemoryFact.embedding` 列存在，且 `\dx` 能看到 `vector` extension
 
 如果需要直接确认 auth session 生命周期逻辑，可执行：
@@ -428,7 +447,7 @@ npm run dev
 ```bash
 npm test -- tests/evals/event-centered-mvp-journal-closure.test.tsx tests/unit/event-centered-release.test.ts
 npm run eval:event-centered:batch-b -- --mode=rules --all
-npx tsc --noEmit
+npm run typecheck
 npm run lint
 npm run build
 git diff --check
@@ -793,19 +812,18 @@ gratitude 目前完成了理论规格、结构字段扩展、AI 抽取独立化�
 ## 5. 测试命令
 
 ```bash
-npx tsc --noEmit
+npm run typecheck
 npm test
 ```
 
-截至 `2026-07-20`，当前基线是：
+`npm run typecheck` 会先执行 `next typegen`，再执行 `tsc --noEmit`。`next-env.d.ts` 由 Next.js 自动生成并保留在本地忽略范围；`.firecrawl/` 只保存本地研究缓存，正式结论进入来源文档、评测报告或复盘。
+
+截至 `2026-08-12`，当前验证口径是：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
-- `npx tsc --noEmit` 以最近一次回归结果为准
-- `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
-- 当前工作区验证（`2026-07-21`）：`npm test` = `187` 个测试文件、`1392` 个测试通过
-- AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
-- `npm run lint` 通过，保留 `44` 条既有 warning
-- `npx tsc --noEmit` 通过
-- `npm run build` 通过，保留既有 ESLint warnings
+- 旧 UI Preview 网页端高保真专项：`8` 个测试文件、`36/36` 个测试通过，作为历史工程证据保留
+- `npm run typecheck`、`npm run lint`、`npm test`、`npm run build` 与 `git diff --check` 以当前分支最近一次完整验证记录为准
+- 旧远程 Vercel UI Preview 构建状态为 `Ready`；当前新前端仍在构建，尚未完成产品验收
+- 日志生成评测资产的结构验证、隔离检查和 mock/静态单测单独记录；真实模型调用、远程数据库写入和真人提交需要独立授权
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 6. 托管平台主线
@@ -825,6 +843,27 @@ npm test
 - production / preview URL 合同 runtime 直读脚本：`scripts/runtime-env-readback.mjs`
 
 ### 6.1 Preview 部署后最小检查
+
+#### Daily Light 旧 UI Preview 历史工程证据（2026-08-12）
+
+以下独立 UI Preview 已部署完成，作为当前新前端的工程联调参考：
+
+```text
+https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
+deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417 (Ready)
+```
+
+Preview 使用独立验收数据库，环境为 `INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`，`GI088_EVALUATION_ENABLED` 关闭；`.vercelignore` 已排除私有评测页面、评测接口与本地评测脚本。Production `https://dailylight.chat` 保持当前版本、数据库和开关。
+
+历史验收清单：
+
+1. 打开 `/interview?mode=event-centered&entryDate=2026-08-12`，确认无会话时看到当天工作台空状态；点击【帮我记】或【陪我聊】后才开始记录。
+2. 确认三阶段进度位于顶部导航上下文区，聊天区只显示消息和输入框；理解、提问与用户消息使用统一的 dailylight.chat 气泡体系。
+3. 在 AI 回复下方依次验证赞、踩、重新生成；打开菜单后验证“更简单一点 / 更具体一点 / 换一个角度”、键盘方向键、Esc 关闭和焦点回到触发按钮。
+4. 打开 day / week / month 三个 `/calendar` 地址，确认加载、错误、空状态和有数据时都保留归档侧栏 + 报告画布骨架。
+5. 在 `1440×900` 与 `1024×768` 两个桌面尺寸各刷新一次，确认顶部进度、输入区和报告主动作仍可见；保存后再次刷新，确认状态和内容恢复。
+
+浏览器核验已覆盖空工作台、访谈启动、事件保存和日报/周报/月报结构。当前新前端完成产品验收后，再接入固定六案例 Preview；真实模型质量评测、正式 `dev28＋hidden12` 和 Production 发布沿后续阶段单独处理。
 
 以 `docs/vercel-preview-production-lane.md` 为 source of truth，按 preview 是否受保护分流：
 
@@ -1221,6 +1260,14 @@ printf '%s\n' "$INTERVIEW_EVENT_CENTERED_MODE" "$INTERVIEW_EVENT_CENTERED_STRATE
 - `protected_failure`：Provider 已返回最终内容，结构、来源或“单轮一问”等确定性边界未通过。原始结果和校验问题保留，状态不合并进正式对话。
 
 v1 在两类失败下都提供“结束并评价当前技术失败”。手动重试每次都会新增一次模型请求，适合偶发网络、超时或 Provider 抖动。相同参数已稳定复现的预算耗尽直接保留失败并评价，避免消费额外请求。
+
+### 7.15 周报/月报读取或保存失败
+
+- `JournalPeriodReport does not exist`：按第 2.2 节应用 `20260811100000_add_journal_period_reports`，再执行 `npx prisma generate`。
+- `409` 且提示来源变化：先重新读取 `/api/journal/period`，确认新的 `sourceSignature`，再由页面使用“更新”动作生成；用户手工编辑内容会保留在当前草稿版本。
+- `409` 且提示版本冲突：重新读取报告，合并需要保留的正文后使用最新 `expectedContentRevision` 自动暂存或保存。
+- 生成中刷新页面：读取 `latestGeneration`，状态恢复为 `generating / draft / stale / update_failed` 之一；重复点击使用同一个客户端操作编号，不应产生重复报告。
+- 日报、周报或月报显示空状态：先核对 `Asia/Shanghai` 日期范围和有效事件卡片 / 已保存上层报告来源，再判断是否确实没有可汇总素材。
 
 ## 8. 关键日志与定位点
 

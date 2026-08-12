@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-12`
 
 ## 1. 系统概览
 
@@ -57,6 +57,12 @@
   - 月度记录分析查询接口
 - `src/app/api/daily-journal/*`
   - 当天整合日志的查询、生成、草稿更新与正式保存接口
+- `src/app/api/journal/day`
+  - 归档工作区读取当天事件卡片、今日日记和状态
+- `src/app/api/journal/daily/*`
+  - 今日日记生成、自动暂存与正式保存接口
+- `src/app/api/journal/period/*`
+  - 周报/月报读取、生成、自动暂存与正式保存接口
 - `src/app/api/journal-entry/[id]`
   - 当前日志正文编辑主路由
 - `src/app/api/joy-entry/[id]`
@@ -200,7 +206,7 @@
 - `InterviewSession`
   - 维度级会话，包含当前状态、当前事件、日志引用
   - 从 `2026-05-02` 起新增 `entryDate` 作为日志归属日期真相；`startedAt` 只表示会话实际创建时间
-  - plain `/interview` 在没有显式 `sessionId` / `entryDate` 时，只允许静默复用 `entryDate === 今天` 的会话；跨天挂载的 live session 也不能继续被默认入口复用
+  - plain `/interview` 在没有显式 `sessionId` / `entryDate` 时，只允许静默复用 `entryDate` 等于运行时日期的会话；跨天挂载的 live session 也不能继续被默认入口复用
 - `InterviewEvent`
   - 单个事件级访谈单元，记录 `snapshotData`、`progressData` 和事件级状态
 - `InterviewMessage`
@@ -272,6 +278,27 @@
 - 正文是按已有维度组织的章节合集，不补空维度
 - `sourceSignature` 用于判断维度日志保存后，日级日志是否进入 `stale` 状态
 - 如果来源维度日志后来不再是 `saved`、保存后的更新时间变化，或同一天新增了新的 `saved` 维度日志，当前签名都会不一致，日级日志会进入 `stale`
+
+`JournalDailyEntry`、`JournalDailyEntryRevision` 和 `JournalDailyEntryGeneration` 承载事件中心的今日日记：
+
+- `JournalDailyEntry` 以 `userId + entryDate` 唯一标识当天成果，保存 `title / content / paragraphs / status / sourceSignature / sourceSnapshot / contentRevision`
+- `sourceEntryIds` 与 `sourceEventIds` 记录参与生成的事件卡片；每个正文段落在 `paragraphs` 中保留来源编号
+- `JournalDailyEntryRevision` 保存生成、编辑和正式保存版本，`JournalDailyEntryGeneration` 保存客户端操作编号、输入输出快照、尝试次数、失败码和完成状态
+- 首次生成、来源更新、自动暂存和正式保存都校验来源签名与内容版本；重复请求按 `clientOperationId` 幂等重放，冲突返回 `409`
+- 事件卡片新增或变更后，已有今日日记进入 `stale`；用户主动更新时保留已有人工编辑，并将来源和版本推进到新修订
+- `GET /api/journal/day` 提供当天事件卡片、今日日记和主动作，`/api/journal/daily*` 承接生成、暂存与保存
+
+`DailyJournalEntry` 继续服务旧五维整合日志，`JournalDailyEntry` 服务事件卡片到今日日记的新链路。两套数据按各自 API、来源和发布边界独立演进。
+
+`JournalPeriodReport`、`JournalPeriodReportRevision` 和 `JournalPeriodReportGeneration` 承载周报/月报：
+
+- `JournalPeriodReport` 以 `userId + periodKind + periodStart` 唯一标识一个周期，`periodKind` 为 `week` 或 `month`，同时保存 `periodEnd`
+- 报告保存 `title / content / status / sourceSignature / contentRevision`，并保留当前唯一主动作、统计信息和来源素材投影
+- `JournalPeriodReportRevision` 保存编辑版本与段落来源，`JournalPeriodReportGeneration` 保存生成任务、客户端操作编号、失败信息和重试状态
+- 周报按天选材，优先使用当天有效的已保存 `DailyJournalEntry`，缺少时回退到 `JournalEventEntry`
+- 月报按周选材，优先使用完全落在本月且有效的已保存周报，缺少时回退到日报与事件卡片
+- 通过 `sourceEventIds`、`upstreamSourceIds` 和段落 `sourceIds` 去重并保留来源签名；来源变化进入 `stale`，编辑版本和来源变化都受版本校验保护
+- 前端展示状态统一为 `empty / ungenerated / generating / draft / saved / stale / update_failed`，数据库报告状态继续使用 `draft / saved / modified`；生成底座只写入带来源的确定性标题和正文段落
 
 `DailyHappinessScore` 是独立幸福 8 要素日评分表：
 - `userId + date` 唯一
@@ -393,7 +420,18 @@
   - badge、surface、marker 和主次按钮层级由 `src/features/calendar/presentation.ts` 统一投影，不再由各组件各自拼样式
   - 色温已经回收到全局暖纸张/墨色系统，不再维持蓝灰后台式分叉
   - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
-  - shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
+- shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
+
+### 3.6.1 Daily Light 旧 UI Preview 的历史工作区结构
+
+`2026-08-12` 旧 UI Preview 曾按以下边界完成工程收口；这些结构继续作为当前新前端的联调参考，产品验收和 Production 授权保持开放：
+
+- 事件中心入口以 `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 为标准地址；当天没有会话时只渲染空工作台，点击【帮我记】或【陪我聊】后才调用会话创建接口
+- `recordMode` 随会话启动请求保存，刷新时按 `entryDate` 恢复同一天的事件；事件完成后进入当天事件卡片，卡片来源变化会推动引用它的报告进入 `stale`
+- `EventCenteredInterviewHeader` 将三阶段进度、当前阶段和保存状态挂在 `SiteHeader` 上下文区；正文区域只承载对话消息和输入框，避免重复占用聊天空间
+- `InterviewMessageBubble` 统一 AI 理解、AI 提问和用户消息的视觉合同；生成记录下方复用反馈、`regenerate_response` 和版本切换接口，三项轻量菜单支持键盘导航、Esc 关闭和焦点恢复
+- `/calendar?view=day|week|month&date=YYYY-MM-DD` 统一使用归档侧栏 + 报告画布；`JournalArchiveWorkspaceFallback` 为 loading、error 和 empty 保留同一版式，数据加载完成后只替换内容层
+- 日报读取 `JournalDailyJournalView`，周报/月报读取 `JournalPeriodReportView`；前端通过数据适配层切换演示数据与真实接口，写入仍携带来源签名、内容版本和操作编号
 
 ### 3.7 记录分析页现实
 
@@ -716,7 +754,7 @@ v8r2 继续使用官方 `deepseek-v4-pro`、Thinking high 与 `json_object`。�
 
 ## 6. joy 维度为什么是当前标品
 
-joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制：
+joy 已经实现的核心覆盖以下整套机制，并由槽位、完成规则和正文质量门共同承接：
 
 ### 6.1 joy 专属槽位
 
@@ -736,7 +774,7 @@ joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制
 
 ### 6.2 完成规则
 
-当前 joy 的关键完成标准不是“聊完一件事”，而是：
+当前 joy 的关键完成标准聚焦于以下结果：
 - 找到可信 `joyMoment`
 - 说清 `joySource`
 - `meaning_track` 至少确认 `stateShift` 或 `meaningNeed`，最终沉淀出 `manualClue`
@@ -779,7 +817,7 @@ fulfillment 已经从“普通完成感复盘”收束为“今天为什么不�
 - `fulfillmentType`
 - `tags`
 
-`valueSignal` 在产品中文里固定称为“值得感标准”。它不是抽象价值观口号，而是从具体推进、积累或贡献证据里长出来的判断。
+`valueSignal` 在产品中文里固定称为“值得感标准”。这项判断从具体推进、积累或贡献证据里形成，避免停留在抽象价值观口号。
 
 ### 7.2 完成规则
 
