@@ -1,14 +1,14 @@
 # 幸福日志访谈产品优化地图
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
-文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1 A1 单例阻断只读保留，v8r2 已完成底座与 Preview 收口并停在 0/12 等待真人验收；Production 保持 legacy + baseline`
+文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r2 只读保留；v8r3 Golden 8 已封存，当前 Ark Flash 候选可靠性硬门 No-Go，Preview 0/6 暂停；Production 保持 legacy + baseline`
 
-当前讨论位置：`板块 6／7B 交接｜GI-088 v8r2 全新 0/12 Thinking high 真人验收`
+当前讨论位置：`板块 6／7B 交接｜GI-088 v8r3 Golden 8 已封存，Preview 0/6 暂停`
 
-落地验证状态：`GI-068～GI-080 的事件中心落地验证均未启动；GI-084 v0.1～v0.3 已完成三轮 No-Go；GI-085／086 固定门 No-Go；GI-087 六题已退出当前质量门；GI-088 v8 产品通过 1/4 early_stopped，v8r1 A1 确认单例阻断；v8r2 P0／P1、八项开门差额、最终初始化幂等、全绿静态门与 READY Preview 已收口，新 High-only run 为 running 0/12、gate pending、calls 0`
+落地验证状态：`GI-068～GI-080 的事件中心落地验证均未启动；GI-084 v0.1～v0.3 已完成三轮 No-Go；GI-085／086 固定门 No-Go；GI-087 六题已退出当前质量门；GI-088 v8 产品通过 1/4 early_stopped，v8r1 A1 确认单例阻断，v8r2 只读保留；v8r3 Golden 8 已封存，当前候选首次有效 76/96、最终失败 18，Preview READY，新 run 为 running 0/6、gate pending、calls 0`
 
-本次同步范围：`同步 GI-088 v8r2 不可变版本、READY Preview 与全新 0/12 停止点；保留 v8r1 A1 事故和全部历史证据；等待 12 项真人验收；质量与发布未裁决；Production 保持 legacy + baseline`
+本次同步范围：`同步 GI-088 v8r3 Golden 8 封存、Ark Flash 候选 No-Go、READY Preview 与全新 0/6 停止点；保留 v8r1/v8r2 与两轮 v8r3 No-Go 历史证据；Judge 20+20 后置；Production 保持 legacy + baseline`
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
@@ -95,8 +95,8 @@ flowchart TD
 - `GI-080｜成果／暂停后的自然收束协议` 已冻结·高置信度：成果或暂停后由输入框承接继续表达；目标 MVP 不提供【继续聊】和独立【结束记录】按钮；【生成日志】成功时同时结束记录，失败时保留可恢复状态，页面跳转只保存和暂停。
 - `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。自动进入规则由 GI-068 覆盖。
 - 用户原话、明确纠正、停止意愿、来源安全、可靠提交、失败恢复和事件日志生成编辑保存重开继续作为产品底座。
-- 正式内容问题的候选 Provider 使用 DeepSeek 官方 API，新候选模型固定为 `deepseek-v4-flash`；候选 Provider、模型和版本仍需在 Preview 前完成预检。
-- 推进职责已经确认：板块 4 已完成 GI-067 全部批次；板块 5 已冻结 GI-075～080，六类规则完成 `6/6`，方法 v1.0 已冻结。板块 6 当前按 GI-074 和 GI-075～080 建立正式评测资产；GI-084 三轮失败、GI-085 No-Go 与 GI-086 能力校准 No-Go 已进入开发证据。GI-087 原六题因旧 AI 上下文污染退出当前质量门。GI-088 已收敛为 Thinking high 单轨迹批次：v6 验证单一回答焦点，v7/v7r2 暴露可靠性与状态合同问题，v7r3 完成确定性状态底座，v7r4 确认官方 V4 Pro 可靠性，v8 统一问前决策以 `1/4 early_stopped` 获产品通过。v8r1 在 A1 确认控制意图误停的单例阻断并进入历史只读；v8r2 已收口控制意图、付费结果落账、快照绑定、人工复核、指纹、工作台治理、八项开门差额和最终初始化幂等，最终不可变 commit、Execution fingerprint、全绿静态门与 `READY` Preview 均已形成。全新 High-only run 停在 `running 0/12 / gate=pending / calls=0`，等待 12 项真人验收。板块 7 正式接入继续等待板块 6，板块 8 继续等待当前候选裁决。
+- 正式内容问题的候选 Provider 使用 DeepSeek 官方 API；GI-088 v8r3 当前候选固定使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object` 与三段 `60s` 超时，Production 继续保持 `legacy + baseline`。
+- 推进职责已经确认：板块 4 已完成 GI-067 全部批次；板块 5 已冻结 GI-075～080，六类规则完成 `6/6`，方法 v1.0 已冻结。板块 6 当前承接 GI-088 v8r3 Golden 8 与候选证据；v8r2 及更早版本继续只读保留。Golden 8 已封存，当前候选首次有效 `76/96`、最终失败 `18`，可靠性硬门 No-Go；Preview 已 READY，新 run 为 `running 0/6 / gate=pending / calls=0`。Judge 20+20 后置，板块 7/8 的进一步发布决策等待产品负责人回读，Production 保持 `legacy + baseline`。
 - Production 继续使用 `legacy + baseline`。`optional + generative` 需要新候选通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
 
 ### 待执行与待校准

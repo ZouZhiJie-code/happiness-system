@@ -1,6 +1,6 @@
 # 当前阶段 Handoff
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 1. 交接结论
 
@@ -14,14 +14,14 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 
 事件中心当前采用“理清想法”单角度 MVP。GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 已通过，继续作为历史技术证据；最新真人实聊因提问目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效，剩余人工批次停止。
 
-`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；GI-081 已归档为临时 Prompt 诊断基线，GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 继续保存诊断、恢复、状态、平台和真人证据。v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人裁决为 `通过 / direct_use / target triggered`；Codex 保留“礼貌回应＋明确停止”多一次调用的轻微问题。v8r1 A1 随后确认控制误停单例阻断，其原 run 按 `running`、A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid` 只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；行为 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d`、Execution fingerprint `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e` 与 READY Preview 已形成。全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 回读为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，当前等待 12 项真人验收。旧预发布零内容 run 已行政停止并脱敏排除。候选质量、板块 7 正式接入、板块 8 与发布范围均未裁决；约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
+`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前承接 GI-088 v8r3 Golden 8 与候选证据；前序版本继续只读保留。Golden 8 已封存，7 条采用、1 条质量失败（`reasks_answered_content`）。当前 Ark Flash 候选离线首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 回读为 `running / 0/6 / gate=pending / calls=0`，包含 4 条计分轨迹和 2 条兼容冒烟。Judge 20+20 后置，约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
 
 ## 2. 当前生产事实
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，当前 deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
+- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结。GI-088 v8r3 Golden 8 已封存，候选可靠性 No-Go；当前 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 保持 `running 0/6 / gate=pending / calls=0`，等待产品负责人决定是否继续真人回读。Judge 20+20 保持后置，`optional + generative` 保持关闭
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
@@ -200,10 +200,10 @@ AI 质量发布与效果观察专项验证：
 
 ### 7.0 当前交付顺序
 
-1. v8r1 run 保持只读；专用评测库快照已经确认 A1 完成、A2 活动、两次 Provider 调用均有效。完整用户内容继续只保存在私有运行目录。
-2. v8r2 已在同一个开发周期收口高精度控制决策、调用结果落账、陈旧快照保护、人工证据治理、run 生命周期、工作台恢复和八项 Preview 开门差额。
-3. 最终初始化幂等、全量验证、行为清单、不可变 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d`、Execution fingerprint `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e` 和私有 Preview 已收口；当前 deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 为 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`，全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 回读为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。
-4. 当前工作流暂停等待产品负责人完成 12 项 Thinking high 真人验收。旧预发布 v8r2 零内容 run 已行政 `early_stopped` 并作为脱敏排除记录；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
+1. v8r1、v8r2 和 v8r3 两轮离线 No-Go 继续只读保留；Golden 8 已封存，7 条采用、1 条质量失败。
+2. 当前 Ark Flash 候选离线首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。
+3. 私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 为 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。
+4. 当前工作流暂停等待产品负责人决定是否继续真人回读；Judge 20+20 保持后置，约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
 
 ### 7.1 上线后收集真实反馈
 
@@ -232,7 +232,7 @@ AI 质量发布与效果观察专项验证：
 ## 8. 仍需持续关注
 
 - 板块 5 已冻结 GI-075～080 六类规则，落地验证仍待板块 7 正式候选承接。
-- 板块 6 的 GI-088 v8r2 意图控制、评测底座、最终初始化幂等、不可变版本和 `READY` Preview 已收口；当前 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 保持 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 `12` 项 Thinking high 独立最终评测。真人质量与发布未裁决，板块 7 正式接入和板块 8 继续等待。
+- 板块 6 当前以 GI-088 v8r3 Golden 8 与 Ark Flash 候选回读为准；Preview run `c873ad9a-ab5a-4629-960d-03266bc17b54` 保持 `running / 0/6 / gate=pending / calls=0`。候选可靠性硬门 No-Go，真人质量与发布继续由产品负责人决定，板块 7 正式接入和板块 8 继续等待。
 - GI-066 自动层通过、真人体验 `No-Go` 和候选失效三类状态继续分开保存；Production 授权前保持 `legacy + baseline`。
 - 小流量下样本增长较慢，低于 5 条时以真实对话判断为主
 - Few-shot 依赖持续有效的点赞与 85 分以上评估
@@ -254,7 +254,8 @@ AI 质量发布与效果观察专项验证：
 - 生成式访谈当前状态与依赖：`docs/generative-interview-refactor-map.md`
 - GI-067 七批次架构与冻结结论：`docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md`
 - GI-074 评测体系与下游交接：`docs/technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md`
-- GI-088 当前真人验收与正式证据：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
+- GI-088 当前真人验收与正式证据：`artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md`
+- GI-088 v8r2 历史底座证据：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
 - GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
 - GI-088 v8r2 执行结果：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.result.md`
 - GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`

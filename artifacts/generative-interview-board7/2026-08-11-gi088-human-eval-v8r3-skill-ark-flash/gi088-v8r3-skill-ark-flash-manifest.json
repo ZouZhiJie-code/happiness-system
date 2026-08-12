@@ -102,10 +102,9 @@
     "productionMode": "legacy_plus_baseline"
   },
   "nextRequired": [
-    "resolve_preview_deployment_ready_readback",
-    "complete_human_quality_adjudication",
-    "rerun_or_accept_reliability_gate_result",
-    "complete_human_golden_calibration",
+    "product_owner_preview_readback",
+    "accept_or_reject_reliability_gate_no_go",
+    "complete_judge_golden_20_plus_20_post_gate",
     "keep_production_legacy_plus_baseline"
   ]
 }

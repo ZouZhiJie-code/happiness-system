@@ -1,6 +1,6 @@
 # 板块 6 专项｜生成式访谈质量评测 v1
 
-最后更新：`2026-08-11`
+最后更新：`2026-08-12`
 
 产品决策状态：`GI-074 完整评测体系已冻结·高置信度；GI-075～080 保持关闭；GI-081～083 保留诊断血缘；GI-084～086 保留失败与校准证据；GI-087 原六题完成上下文资格审计；GI-088 已确认`
 
@@ -132,7 +132,7 @@ GI-085 回归 No-Go 后，真实网页轨迹保持关闭。焦点层已经明显
 
 GI-088 是方法 v1.0 在板块 6／7 的执行校正，延续其“候选一次只改变一个可归因变量”“结果绑定模型、Prompt、Skill、上下文、程序、数据集和评测版本”以及规则分流要求，不重新打开 GI-068～080，也不改变方法 v1.0 的冻结核心。
 
-当前正式证据入口更新为 [`GI-088 v8r3 Interview Skill 与 Ark Flash 证据包`](../../../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)。v8r2 评测底座、历史 Preview 和行政收口继续从[历史证据包](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)回读，实施合同见[已完成任务](../../ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v1～v8r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论；v8r1 A1 事故见[候选与部署快照](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)，当前问题统一进入[GI-088 当前问题台账](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)。
+- 当前正式证据入口更新为 [`GI-088 v8r3 Golden 8 与 Preview 回读`](../../../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)。Interview Skill、Ark Flash 与离线候选实现见[历史证据包](../../../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)；v8r2 评测底座、历史 Preview 和行政收口继续从[历史证据包](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)回读，实施合同见[已完成任务](../../ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v1～v8r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论；v8r1 A1 事故见[候选与部署快照](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)，当前问题统一进入[GI-088 当前问题台账](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)。
 
 ### GI-088 当前评测术语
 
@@ -229,7 +229,7 @@ Provider v4 及更早两段式产物只承担历史技术、失败复现和判�
 | 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `结构已明确；正式模板待建设` |
 | 板块 7 可直接使用评测资产、Trace 要求和准入门 | `诊断子步可执行；正式实现门尚未满足` |
 
-板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v8r3 继续按各自身份保存技术、真人和 No-Go 血缘。v8r3r1 已通过可靠性与延迟硬门，正式接入与板块 8 继续等待人工质量裁决、两轮 Golden 校准和三项离线硬门共同收口；候选质量和发布继续开放。Production 保持 `legacy + baseline`。
+板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v8r3 继续按各自身份保存技术、真人和 No-Go 血缘。当前 v8r3 Golden 8 已封存，Ark Flash 候选首次有效 `76/96`、最终失败 `18`，可靠性硬门 No-Go；Preview 已 READY 并初始化 0/6 零调用 run。Judge 20+20 后置，当前暂停等待产品负责人决定是否继续真人回读。Production 保持 `legacy + baseline`。
 
 ## 当前评测口径｜`2026-08-05` GI-074
 

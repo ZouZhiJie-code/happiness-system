@@ -2,7 +2,15 @@
 
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-08-09`，这个仓库的真实状态是：
+截至 `2026-08-12`，这个仓库的真实状态是：
+
+### GI-088 v8r3 当前快照
+
+- 候选版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`。
+- Golden 8 已封存：7 条采用，1 条质量失败（`reasks_answered_content`）；前 32 条历史裁决只读沿用。
+- 离线候选首次有效 `76/96 = 79.17%`，最终失败 `18`，可靠性硬门为 `No-Go`。Judge 20+20 仍是后置门。
+- Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`；当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`。
+- 生产保持 `legacy + baseline`；真人内容由产品负责人决定提交，Codex 保持零代提交。
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -28,7 +36,7 @@
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
 - 访谈维度选择页通过 `CalendarMainGate` 的内容层纵向伸展完整承接可用视口，页面底部背景保持连续，修复内容区结束后露出全局木色背景的断层问题。
-- 当前产品与事件中心候选的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值，GI-088 v8r1 与 v8r2 私有评测候选使用独立的 `deepseek-v4-pro` 运行策略。Ark 适配器与 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误归入历史证据，不代表当前运行配置。
+- 当前产品与事件中心候选的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值；GI-088 v8r1／v8r2 的 V4 Pro 运行策略与 Ark 历史证据继续只读保留，当前 v8r3 候选使用 Ark `deepseek-v4-flash-ga-260731`。`VOLCENGINE_ARK_*` 变量服务当前 v8r3 Preview 与历史兼容链，Production 保持关闭。
 - 生成式访谈事件中心已经具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。`GI-065` 已把新会话产品范围收口为“理清想法”单角度，感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。
 - `GI-067 / GI-068～074`、`GI-075～080` 和方法 `v1.0` 继续冻结。板块 6 正在建设正式评测资产；GI-087 保留为 GI-088 基础候选。GI-088 v1～v7r4 的真人结果、探针、提前结束、恢复、连续性和平台对照继续承担历史证据。v8 在 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口并获产品通过。v8r1 A1 控制误停形成单例阻断；其历史 run 只读保持 A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。v8r2 的 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿验证已收口；最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。Preview 已 `READY`，全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 已零调用初始化并停在 `running 0/12 / gate=pending / high`，等待 12 项真人验收。旧预发布零内容 run 与授权端到端技术 run 均已行政停止并排除正式当前态；后者仅含 1 条虚构技术内容，第一次调用触发程序保护，第二次自动恢复成功。质量、板块 7 正式接入、板块 8 和发布范围均未裁决。约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
 - v8r2 私有评测 schema 在原批次表之外新增调用账本、幂等操作、程序介入、人工修订、操作事件和不可变导出快照；`runOrdinal` 支持同一冻结候选的多次独立运行。旧 run 数据和旧 JSON 继续只读兼容，Production 数据库不进入本次迁移范围。
@@ -77,6 +85,13 @@
 - `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `turn -> summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
 
 ## 当前产品状态
+
+### GI-088 v8r3 当前交接（2026-08-12）
+
+- Golden 8 已封存，7 条采用、1 条质量失败；前 32 条历史裁决只读沿用。
+- Ark Flash 候选离线首次有效 `76/96 = 79.17%`，最终失败 `18`，可靠性硬门为 `No-Go`。
+- 私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`。
+- 当前动作是产品负责人回读 Preview 并决定真人使用；Judge 20+20 作为后置门，Production 保持 `legacy + baseline`。
 
 ### 已完成
 - 多维度访谈入口、维度切换静默持久化与本地 session 恢复
@@ -323,7 +338,8 @@ npx prisma migrate deploy
 - 评测资产总入口：`artifacts/README.md`
 - 生成式访谈当前状态与讨论位置：`docs/generative-interview-refactor-map.md`
 - 板块 6 当前评测与校准：`docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md`
-- GI-088 当前真人验收与正式证据入口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
+- GI-088 当前真人验收与正式证据入口：`artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md`
+- GI-088 v8r2 历史底座与行政收口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
 - GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
 - GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
 - GI-088 v1 历史真人复盘：`artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md`

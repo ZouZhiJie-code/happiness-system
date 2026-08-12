@@ -1,8 +1,14 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-11`
+最后更新：`2026-08-12`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r1 已在 Ark 账户恢复后完成新的不可变正式评测。96 个检查点全部形成可见结果，首次有效率 98.96%，自动恢复 1 次且成功，p50 7.484s、p90 27.263s、最大 43.416s，可靠性与延迟硬门通过。80 份质量结果等待产品负责人人工裁决，两轮真实 Golden Set 尚待提供；Judge、Preview 与 0/6 保持关闭。v8r3 两轮 No-Go 与 v8r2 #5 行政 No-Go 继续只读保留。Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3 Golden 8 已封存（7 条采用、1 条质量失败），当前 Ark Flash 候选离线运行首次有效率 79.17%，可靠性硬门 No-Go。私有 Preview 已 READY 并初始化 0/6 零调用 run，Judge 20+20 作为后置门保持未运行。Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
+
+## GI-088 v8r3 当前证据入口（2026-08-12）
+
+- [Golden 8 与 Preview 回读](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)
+- [v8r3 Interview Skill、Ark Flash 与离线运行记录](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
+- Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`，当前 run：`c873ad9a-ab5a-4629-960d-03266bc17b54`（`running 0/6 / gate=pending / calls=0`）。
 
 ## 1. 为什么需要这份规则
 
@@ -27,7 +33,7 @@
 
 当前入口：
 
-- [GI-088 v8r3r1 账户恢复后正式评测证据](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
+- [GI-088 v8r3r1 账户恢复后历史证据](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - [GI-088 v8r3 Interview Skill 与 Ark Flash 离线 No-Go 证据](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - [GI-088 v8r2 评测底座、历史 Preview 与行政 No-Go 证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 v8r2 已完成实施合同](../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
@@ -78,7 +84,8 @@
 - [GI-088 v8r1 静态验证](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
 - [GI-088 v8r2 评测底座加固、Preview 与新 0/12 run](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 v8r3 Interview Skill、Ark Flash 与两轮离线 No-Go](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
-- [GI-088 v8r3r1 账户恢复后运行门通过、质量待裁决](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
+- [GI-088 v8r3 Golden 8 与 Preview 回读](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)
+- [GI-088 v8r3r1 账户恢复后历史证据](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - [GI-088 空内容配对探针 manifest](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
 - [GI-088 空内容配对探针脱敏结果](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-result.json)
 - [GI-088 空内容配对探针裁决](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-decision.md)

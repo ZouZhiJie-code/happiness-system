@@ -1,14 +1,21 @@
 # Daily Light 文档导航
 
-最后更新：`2026-08-11`
+最后更新：`2026-08-12`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
 ## 1. 当前状态
 
+### GI-088 v8r3 当前快照（2026-08-12）
+
+- 当前候选：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，模型为 Ark `deepseek-v4-flash-ga-260731`，Thinking high，`json_object`；Golden 8 已封存，7 条采用、1 条质量失败并归入 `reasks_answered_content`，前 32 条历史裁决只读沿用。
+- 离线候选运行：96 个初始检查点、2 次自动恢复、98 次总调用；首次有效 `76/96 = 79.17%`，最终失败 `18`，可靠性硬门为 `No-Go`。Judge 20+20 保持后置，未运行。
+- 私有 Preview：[打开 GI-088 v8r3 Preview](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)。deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`，包含 4 条【陪我聊】计分轨迹与 2 条【帮我记】兼容冒烟。
+- Production 继续保持 `legacy + baseline`；Codex 不代提交真人内容，不持久化隐藏推理，不运行模型探针，也不扩展约 200 轮以上容量。
+
 - `GI-068～080` 保持关闭；
 - 生成式访谈工作方法 `v1.0` 已冻结；
-- 板块 6 继续进行中；
+- 板块 6 当前承接 GI-088 v8r3 Golden 8 封存、候选离线证据和 Preview 回读；
 - `GI-081` 六题真实输出与盲评已经完成，当前作为临时 Prompt 诊断基线；
 - `GI-083` v0/v1 保留一次调用透明诊断历史；产品负责人轨迹调用 `0`，v1.1 工程合成自测 `5/5` 次请求通过；
 - `GI-084` v0.1～v0.3 三轮回归均为 No-Go，v0.4 在运行前关闭；
@@ -28,9 +35,9 @@
 - v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人判断 `通过 / direct_use / target triggered`；`10/10` 次首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`；
 - v8r1 已将简短礼貌回应与明确停止组合收入零调用暂停，真实 U10 回放通过。最终 `12` 项 Thinking high 候选完成 `160` 项相关测试、构建、Preview 部署与创建时 `0/12` 空白批次回读；初始化模型调用 `0`。产品负责人随后完成 A1 一条轨迹，确认事件内容中的沟通负担被程序误判为停止当前访谈，形成单例阻断。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`；
 - v8r2 已完成评测底座建设；#5 随当前质量与调用事实行政 `early_stopped / No-Go`，完整只读保留；
-- v8r3 前两轮 No-Go 继续保存为历史证据。Ark 账户恢复后，v8r3r1 已用新的不可变正式评测身份完成 `96` 个检查点：首次有效 `95/96 = 98.96%`，自动恢复 `1` 次且成功，最终失败和最终保护均为 `0`；可见延迟 p50 `7.484s`、p90 `27.263s`、最大 `43.416s`。可靠性与延迟硬门通过，`80` 份质量结果等待产品负责人人工裁决；两轮真实 Golden Set、Judge、Preview deployment 与 `0/6` 均保持关闭；
+- v8r3 前两轮 No-Go 继续保存为历史证据；当前候选的离线运行结果为首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。Golden 8 已完成封存，Preview 已 `READY` 并初始化 `0/6` 零调用 run，等待产品负责人后续回读与真人决定；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
-- 板块 7 的 v8r3 候选实现已完成，v8r3r1 可靠性与延迟通过，继续等待人工质量门；
+- 板块 7 的 v8r3 候选实现已完成，Golden 8 已封存；当前候选可靠性硬门 No-Go，Preview 0/6 已暂停，继续等待产品负责人回读；
 - 板块 8 继续等待通过离线硬门的候选；
 - Production 保持 `legacy + baseline`。
 
@@ -57,7 +64,8 @@
 ### 当前评测与真人裁决
 
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
-- GI-088 当前正式证据入口：[v8r3r1 账户恢复后运行门通过、质量待裁决](../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
+- GI-088 当前正式证据入口：[v8r3 Golden 8 与 Preview 回读](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)
+- GI-088 v8r3r1 历史证据：[账户恢复后运行门记录](../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - GI-088 v8r3 历史证据：[Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - GI-088 v8r2 历史底座与行政收口：[v8r2 评测底座加固证据](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - GI-088 v8r2 已完成实施合同：[意图控制与评测底座全量修复](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)

@@ -1,8 +1,16 @@
 # Operator Runbook
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-12`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
+
+## GI-088 v8r3 当前运行快照（2026-08-12）
+
+- 候选版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`；Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`，三段单次超时均为 `60s`，自动恢复链为 `90s`。
+- Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`，状态 `READY`；当前 run：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`running 0/6 / gate=pending / calls=0`。
+- 离线候选首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`；Golden 8 已封存，Judge 20+20 后置。
+- 未登录访问受保护 runs/session 接口应返回 `401 AUTHENTICATION_REQUIRED`；合法格式的不存在用户名登录应返回 `401 INVALID_CREDENTIALS`。若登录出现 `503 AUTH_STORAGE_NOT_READY`，优先检查 Vercel 远程构建是否包含 Linux Prisma engine 与四连接数据库身份。
+- Production 继续保持 `legacy + baseline`；模型探针、真人内容代提交和隐藏推理持久化保持关闭。
 
 ## 1. 环境变量
 
@@ -450,13 +458,13 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 
 ### 2.12 GI-088 私有真人评测工作台
 
-当前证据包与后续真人验收入口为 [`GI-088 v8r2 评测底座加固资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v8r1 A1 已确认控制意图误停的单例阻断；其原 run 保持只读。v8r2 的 P0／P1、八项开门差额、最终初始化幂等、全绿静态门、不可变行为 commit 与 Execution fingerprint 均已收口；当前 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，两套 Prisma Client 已在 Vercel Linux 远程构建并通过登录存储验收，全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+当前证据包与后续真人回读入口为 [`GI-088 v8r3 Golden 8 与 Preview 回读`](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，实现历史与候选离线证据见 [`GI-088 v8r3 Interview Skill 与 Ark Flash`](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，两套 Prisma Client 已在 Vercel Linux 远程构建并通过登录存储验收，全新 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。Golden 8 已封存，当前候选可靠性硬门为 `No-Go`，Judge 20+20 后置，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
 
 - `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
 - `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
 - `GI088_EVALUATION_ENABLED=I_UNDERSTAND`；
 - 正式 run 只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
-- v8r2 仅开放 Thinking high；历史 off/high 冒烟及探针授权继续只读，新的模型探针不属于本轮开门步骤。
+- v8r3 当前只开放 Ark Thinking high；历史 off/high 冒烟及探针授权继续只读，新的模型探针不属于本轮开门步骤。
 
 静态检查：
 

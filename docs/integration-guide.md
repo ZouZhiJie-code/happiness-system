@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-08-06`
+最后更新：`2026-08-12`
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -15,6 +15,15 @@
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前五个访谈维度。
 - 生产主域名为 `https://dailylight.chat`。
 
+## GI-088 v8r3 当前运行合同（2026-08-12）
+
+- 当前候选：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`；请求头、正文空闲和单次硬截止均为 `60000ms`，自动恢复链为 `90000ms`。
+- 当前 Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`，地址见 [v8r3 Preview 证据](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，状态 `READY`。
+- 当前 run：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`running / 0/6 / gate=pending / calls=0`；包含 4 条计分轨迹与 2 条兼容冒烟。
+- 离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`。Judge 20+20 作为后置门，当前不进入线上调用链。Production 保持 `legacy + baseline`。
+
+v8r2 API 合同与历史字段继续按冻结版本读取；v8r3 新字段（Skill、模型身份、问题价值分类、v0.7 导出）只对当前候选输出，历史 run 继续按其版本兼容投影。
+
 事件中心发布配置：
 
 - `INTERVIEW_EVENT_CENTERED_MODE` 控制入口与写入范围：`legacy`、`optional`、`event_centered`、`event_recovery`。
@@ -22,7 +31,7 @@
 - `EVENT_CENTERED_GENERATIVE_MODEL` 用于候选链路独立锁定模型；新事件中心候选固定为 `deepseek-v4-flash`，共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供。
 - `EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
 - Board 8 批准前，Production 保持 `legacy + baseline`；已有事件与日志继续可读。
-- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v7r4 保留历史证据；v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，原 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效调用只读保留。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本和全绿静态门；行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。当前 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，两套 Prisma Client 由 Vercel Linux 远程构建，登录存储与 error logs 验收通过；全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项 Thinking high 真人验收。真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除；Production 接入保持关闭并使用 `legacy + baseline`。
+- 历史版本说明：GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v8r2 的批次、错误、恢复和 Preview 继续按冻结版本只读保留。当前 v8r3 状态见上方运行合同与 10.2 小节，Production 接入保持关闭并使用 `legacy + baseline`。
 
 ## 2. 路由速查
 
@@ -86,7 +95,8 @@
 | `POST` | `/api/preview/gi088/early-stop`、`seal` | 分别收口部分 run 或完整 run |
 | `POST` | `/api/preview/gi088/compare` | 历史兼容占位；v8r2 固定返回 `GI088_COMPARISON_NOT_REQUIRED` |
 | `POST` | `/api/preview/gi088/operation-events` | 幂等保存脱敏客户端摩擦，并校验 run／task／turn 血缘 |
-| `GET` | `/api/preview/gi088/export?runId=` | 首次冻结 v0.6 payload 与 receipt；重复下载返回同一快照 |
+| `POST` | `/api/preview/gi088/compatibility-smoke` | 为 v8r3 的【帮我记】兼容冒烟登记产品会话证据；不调用模型 |
+| `GET` | `/api/preview/gi088/export?runId=` | 当前候选冻结 v0.7 payload 与 receipt；历史 v0.6 run 逐字节只读兼容，重复下载返回同一快照 |
 | `POST` | `/api/preview/gi088/smoke` | 历史隔离技术冒烟入口；v8r2 开门流程不调用 |
 
 ### 2.4 当天整合日志
@@ -727,7 +737,9 @@ git diff --check
 
 ### 10.2 GI-088 真人交互开发评测
 
-当前候选版本名为 `2026-08-10.gi088-human-eval-v8r2-foundation-hardening`，服务版本为 `2026-08-10.gi088-evaluation-foundation-service-v8r2`。最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；当前 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`。当前 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 回读为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。运行配置保持官方 `deepseek-v4-pro`、Thinking high、`json_object` 与 `provider_default`。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r1 的批次、双分支、错误、恢复和导出继续只读兼容；当前等待产品负责人完成 12 项真人验收。
+当前候选版本名为 `2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，服务版本为 `2026-08-11.gi088-evaluation-foundation-service-v8r3`。候选模型为 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`；单次三段截止均为 `60s`，自动恢复链为 `90s`。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。Golden 8 已封存，离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`；Judge 20+20 后置，当前等待产品负责人决定是否继续真人回读。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r2 的批次、错误、恢复和导出继续按冻结版本只读兼容。
+
+#### v8r2 历史 API 合同
 
 v8r2 API 以 `runId` 明确一次真人运行：
 

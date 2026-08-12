@@ -1,13 +1,14 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 当前生产域名
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
-- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；当前 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，Vercel Linux 远程生成两套 Prisma Client 后，登录存储与 error logs 验收通过；新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项真人验收。质量与发布未裁决，约 `200` 轮以上容量优化继续排除。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
+- GI-088 v8r3 当前 Preview：候选 `2026-08-11.gi088-human-eval-v8r3-skill-ark-flash` 使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`；deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`。Golden 8 已封存，离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`；Judge 20+20 后置，Production 保持 `legacy + baseline`。
+- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结；v8r2 及更早 Preview 只读保留为历史证据。当前 v8r3 Preview 事实见上方快照和 [Golden 8 与 Preview 证据](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)。Ark 变量仅服务当前 v8r3 候选与历史兼容；Production 继续保持 `legacy + baseline`。
 - `2026-07-21` 历史生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
 - `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。
