@@ -2,10 +2,11 @@
 
 最后更新：`2026-08-12`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r2 的内容质量与 4＋2 兼容验收通过，但等待体验未达发布线。v8r3r3 30/60 秒自适应恢复完成工程与真实库验证，正式 96-checkpoint 结果为 50/96 最终可见、46 个最终保护，可靠性门 No-Go，未部署新 Preview。Production 保持 legacy + baseline，约 200 轮以上容量优化继续排除。`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r3 可靠性门 No-Go。运行链根因对照已封存：官方 Pro 20/24 技术入围，最终八条人工裁决 7 优 1 轻微、0 失败；下一步在板块 7 验证只切换主 Provider／模型的 v8r3r4，尚未部署新 Preview。Production 保持 legacy + baseline。`
 
 ## GI-088 当前证据入口（2026-08-12）
 
+- [模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [Golden 32＋8 独立替换裁决](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)
@@ -35,6 +36,7 @@
 
 当前入口：
 
+- [GI-088 模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [GI-088 v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [GI-088 v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [GI-088 v8r3r1 账户恢复后历史证据](./generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)

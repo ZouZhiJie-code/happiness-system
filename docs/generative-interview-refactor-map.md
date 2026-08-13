@@ -4,15 +4,15 @@
 
 文档状态：`生效中`
 
-当前板块：`板块 7｜v8r3r3 恢复可靠性归因与下一候选`
+当前板块：`板块 7｜v8r3r4 官方 Pro 正式候选`
 
-当前讨论位置：`v8r3r3 30/60 秒自适应恢复 No-Go｜Provider 空正文与快速整理结构可靠性`
+当前讨论位置：`运行链与输出合同根因对照已封存｜准备官方 Pro 正式 96-checkpoint 候选`
 
-下一建议板块：`板块 7｜先冻结下一单一主要因素，再决定是否恢复板块 8`
+下一建议板块：`板块 7｜冻结只切换主 Provider／模型的 v8r3r4 候选并运行正式 96 checkpoint`
 
 Production 状态：`保持 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
 
-本次同步范围：`v8r3r2 的 4 条陪聊、2 条帮我记与 22/22 最终可见继续只读保留，等待 P90 64.7 秒、最长 70.1 秒未达线；v8r3r3 完成 30/60 秒恢复实现、真实库 4/4 和正式 196 次调用，最终可见 50/96、最终保护 46，No-Go 且未部署；Judge 20+20 后置，Production 保持 legacy + baseline`
+本次同步范围：`v8r3r3 No-Go 继续只读保留；A～E 根因对照总计 120 次单调用，官方 Pro 以 20/24 技术入围，固定八条人工裁决 7 优 1 轻微、0 失败；模型档位为主因、完整输出职责为重要放大因素，下一候选仅切换主 Provider／模型；Judge 20+20 后置，Production 保持 legacy + baseline`
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
 
@@ -56,8 +56,8 @@ flowchart TD
 |---|---|---|
 | 5 | [稳定性、用户控制与交互收束](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md) | `产品决策已冻结；GI-075～080 六类规则完成 6/6；落地验证未启动` |
 | 6 | [生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) | `评测资产与判尺已形成；Golden 32＋8 独立封存，Judge 20＋20 后置` |
-| 7 | [模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) | `当前板块；v8r3r3 正式可靠性门 No-Go，下一恢复候选待讨论` |
-| 8 | [内部 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) | `暂停；v8r3r2 体验证据只读保留，等待板块 7 新候选重新准入` |
+| 7 | [模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) | `当前板块；根因对照已封存，官方 Pro 下一候选待冻结与正式 96-checkpoint 验证` |
+| 8 | [内部 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) | `暂停；等待 v8r3r4 同时通过可靠性、质量与等待门` |
 
 板块 5～8 新会话固定读取 `AGENTS.md → 访谈产品优化地图 → 本 Map → AI 产品工作方法 → 当前板块专项 → 当前专项明确链接的上游档案或历史证据`。方法论 `v1.0` 已冻结；板块 6～8 统一执行该方法，并保持 `GI-068～080` 关闭。
 
@@ -89,7 +89,7 @@ flowchart TD
 
 产品负责人确认并冻结 `GI-080｜成果／暂停后的自然收束协议`，状态为“已冻结·高置信度”，落地验证未启动。成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮；【生成日志】成功时同时结束记录，失败时保留可恢复状态；页面跳转只保存和暂停。日志完成后的新记录继续按 GI-068 重新选择模式并保持内容隔离。
 
-GI-067 七个批次和板块 5 六类规则已经全部冻结。板块 5 当前进度为 `6/6`，方法 v1.0 已冻结。GI-081～087 的诊断、失败、能力校准和上下文资格审计继续作为历史输入。GI-088 v8r3r2 已完成 EMPTY 双恢复诊断与 10/10 人工增量准入，板块 7 正式封存；板块 8 私有 Preview 已停在全新 `0/6 / calls 0`，等待两模式 `4＋2`。
+GI-067 七个批次和板块 5 六类规则已经全部冻结。板块 5 当前进度为 `6/6`，方法 v1.0 已冻结。GI-081～087 的诊断、失败、能力校准和上下文资格审计继续作为历史输入。GI-088 v8r3r3 正式可靠性门 No-Go；随后根因对照确认官方 Pro 为唯一技术与人工质量入围方向，完整输出职责为重要放大因素。下一步在板块 7 验证 v8r3r4，板块 8 继续暂停。
 
 板块 6 首批判尺校准节点形成 `8` 张完整卡：`2` 张【帮我记】、`6` 张【陪我聊】，其中 `6` 个决策点、`2` 条完整轨迹。产品负责人已完成盲评；R1、R2、C1、C2、C4、C5、C6 共 `7` 张完成收口，最终分布为可直接使用 `2`、轻微问题 `4`、单例阻断 `1`。C3 因人工参考回应同时支持两种合理判断而保持开放，继续作为历史证据，不进入首批六题真实模型评测。
 
@@ -111,13 +111,13 @@ GI-083 v1 每个用户提交只使用 `deepseek-v4-flash` 一次，同时生成�
 
 当前[GI-083 v1 候选包](../artifacts/generative-interview-board7/2026-08-07-board7a-chat-e2e-single-v1/README.md)版本为 v1.1，指纹为 `2ceb7bb37e196f47dbd70fcd6ffaf0cf3b4c7727ae2e8721e62b593751dbbe46`。服务器只在 DeepSeek 官方认证和 `deepseek-v4-flash` 可用性检查通过后提供网页；启动、网页打开和点击开始保持生成调用 `0`。三条合成工程轨迹已完成 `5/5` 次真实请求，技术失败与程序拦截均为 `0`，并覆盖刷新恢复、终态封存和访问控制；两次额外情绪推断进入板块 6 质量证据。产品负责人真实轨迹仍未开始。v0 候选包继续作为运行前校正历史保存，模型调用 `0`。
 
-板块 6 当前评测输入已齐，Judge 20＋20 保持后置；板块 7 v8r3r2 增量准入通过，板块 8 当前承接 `4＋2` 私有 Preview。
+板块 6 当前评测输入已齐，Judge 20＋20 保持后置；板块 7 当前承接 v8r3r4 官方 Pro 正式 96-checkpoint 候选，板块 8 等待其通过可靠性、质量与等待三门。
 
 `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；其新会话自动进入规则由 GI-068 覆盖。DeepSeek 官方 Provider、可靠提交、日志闭环、性能和 Production 隔离继续有效。GI-066 的工程验证、官方预检、严格 `10×3` 和单角度自动 `8+2` 完整保留为历史技术证据，真人实聊 `No-Go` 裁决继续有效。
 
 最新两条真人事件进一步暴露提问策略的系统性问题：固定判断地图先于用户当前理解目标决定方向；来源筛选遗漏用户主动留下的重要线索；复合纠正撤销旧目标后未承接新的重点；缺少有效来源时仍会生成抽象兜底问题。代表结果包括重复索取已回答内容、忽略用户主动指出的“过去经历”线索，以及纠正后引入“判断发生变化”的错误前提。
 
-当前产品决策状态为“GI-067 / GI-068～074 已冻结·高置信度；GI-075、GI-076、GI-078 已冻结·中置信度；GI-077、GI-079、GI-080 已冻结·高置信度”，事件中心落地验证状态为“GI-068～080 未启动；GI-079 继承的可靠提交底座已发布并验证；GI-066 自动层证据保留、真人体验 No-Go”。新候选模型固定为 `deepseek-v4-flash`，Preview 仍需完成官方预检；Production 继续保持 `legacy + baseline`，入口和运行配置维持安全档位。
+当前产品决策状态为“GI-067 / GI-068～074 已冻结·高置信度；GI-075、GI-076、GI-078 已冻结·中置信度；GI-077、GI-079、GI-080 已冻结·高置信度”，事件中心落地验证状态为“GI-068～080 未启动；GI-079 继承的可靠提交底座已发布并验证；GI-066 自动层证据保留、真人体验 No-Go”。下一候选方向为官方 DeepSeek Pro、Thinking high 与完整输出合同，正式版本和指纹仍待冻结；Production 继续保持 `legacy + baseline`，入口和运行配置维持安全档位。
 
 当前工作方法：[生成式访谈 AI 产品工作方法 v1.0](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)。板块 5 冻结专项：[稳定性、用户控制与交互收束](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，GI-075～080 的完整行为、案例和交接保存在该专项。当前板块 6 入口：[生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)。上游冻结规则索引见 [04x｜GI-067 全局讨论架构](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)，评测交接见 [04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)，GI-068～074 的依据与案例保存在 04x-01～07 冻结决策档案。历史证据继续见 [04u｜GI-066 提问协议](./technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)、[04v｜GI-066 开发执行计划](./technical/interview-event-centered/04v-board8-gi066-development-execution-plan.md)、[候选血缘](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/candidate-lineage.md)、[10×3 报告](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-thought-stability/report.md)与[8+2 执行证据](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/preview-execution-evidence.md)。
 

@@ -2,11 +2,11 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`板块 7 重新打开；v8r3r3 30/60 秒自适应恢复正式可靠性门 No-Go`
+文档状态：`板块 7 继续开放；运行链与输出合同根因对照已封存，v8r3r4 官方 Pro 正式候选待冻结`
 
-产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；v8r3r2 质量与兼容结论只读保留；v8r3r3 为当前失败候选`
+产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；v8r3r2 质量与兼容结论、v8r3r3 No-Go 只读保留；官方 Pro 为下一候选方向`
 
-落地验证状态：`自适应竞速工程与真实隔离库通过；正式 96-checkpoint 只有 50 份最终可见、46 份最终保护；新 Preview 与 0/6 均未创建`
+落地验证状态：`A～E 共 120 次单调用完成；官方 Pro 20/24 技术入围，固定八条人工裁决 7 优 1 轻微、0 失败；P90 57.5 秒与 2 次超时待正式 96-checkpoint 验证`
 
 Production：`继续保持 legacy + baseline；生成式候选入口与发布授权保持关闭`
 
@@ -22,7 +22,17 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 
 板块 8 交接：[Preview、Go/No-Go 与 Production 授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
-> 本文保留板块 7 的候选实现、Trace、验证与版本血缘。v8r3r2 的质量结论继续以[封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)为准；当前恢复策略结论以 [v8r3r3 No-Go 证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md) 为准。
+> 本文保留板块 7 的候选实现、Trace、验证与版本血缘。v8r3r2 的质量结论继续以[封存证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)为准；恢复策略失败结论以 [v8r3r3 No-Go 证据](../../../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md) 为准；当前方向以[运行链根因对照](../../../artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)为准。
+
+## 0.2 当前方向｜运行链根因对照与 v8r3r4
+
+公开开发集 `D01–D24` 的 A～D 四组共运行 `96` 次首次调用；全部低于 `20/24` 后按冻结条件追加官方 Pro `24` 次。总调用 `120`，恢复、重试和 Judge 为 `0`。
+
+官方 Pro 在完整合同下达到 `20/24`、空内容 `0`，成为唯一技术入围组；固定八条人工裁决为 `7` 条可直接用、`1` 条轻微问题、`0` 质量失败和 `0` 阻断。Ark Flash 精简合同达到 `18/24`、空内容 `0`、P90 `20.7s`，证明完整状态输出职责会显著放大失败。官方 Flash 完整合同仍有 `8` 条空内容，Provider 路由无法单独解释问题。
+
+根因选择为：模型档位稳定性是当前主因，完整状态输出职责是重要放大因素，Provider 路由影响较小。官方 Pro 的 P90 `57.5s`、最长 `60.0s` 并出现两次超时，质量通过仍未形成发布授权。
+
+下一讨论候选为 `2026-08-12.gi088-human-eval-v8r3r4-deepseek-official-pro-adaptive-recovery`。它保持 Interview Skill、完整合同、Dataset、30/60 秒恢复底座和质量门，只把主 Provider／模型切换为官方 DeepSeek Pro，并重新运行正式 `96 checkpoint`。若等待门失败，随后单独讨论“精简输出合同＋程序投影状态”的架构候选。
 
 ## 0.1 当前失败态｜v8r3r3
 
@@ -55,7 +65,7 @@ v8r3r3 保持 Ark Flash、Thinking high、Interview Skill 和 Dataset，增加 3
 | 板块 5 产品行为约定 | `GI-075～080 六类规则完成 6/6` | 计数、修复、版本、纠正、恢复和交互收束可直接继承 |
 | 板块 6 正式评测资产 | `7 张人工卡已收口、C3 开放；GI-088 v1 前 8 项已复盘；完整正式资产仍在建设` | 当前允许下一候选单因素迭代；正式接入仍等待评分卡、Judge、开发集与准入集 |
 | 板块 7A 诊断候选 | `GI-081 与 GI-083 保留诊断历史；GI-083 产品负责人轨迹调用 0，工程合成自测 5/5` | 为正式资产保留失败背景与结构演进证据 |
-| 板块 7B 当前诊断候选 | `GI-088 Thinking 模式探针已完成 4/4，high 未复现空内容，主要影响因素未确认` | 继续保留 high 产品方向、JSON mode 与其余候选合同；下一步讨论相同 high 请求的复现稳定性 |
+| 板块 7B 当前诊断候选 | `A～E 根因对照已封存；官方 Pro 20/24、空内容 0，八条质量门通过` | 下一候选只切换主 Provider／模型；P90 57.5 秒和两次超时进入正式 96-checkpoint 验证 |
 | Production | `legacy + baseline` | 继续保持当前安全档位 |
 
 ### 2.2 启动条件

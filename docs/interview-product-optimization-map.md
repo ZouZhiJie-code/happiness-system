@@ -2,13 +2,13 @@
 
 最后更新：`2026-08-12`
 
-文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3r2 历史证据只读保留；v8r3r3 正式可靠性门 No-Go，板块 7 恢复调度继续开放；Production 保持 legacy + baseline`
+文档状态：`生效中；GI-067 / GI-068～080 保持关闭；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v8r1～v8r3r3 历史证据只读保留；运行链根因对照已封存，官方 Pro 成为下一候选方向；Production 保持 legacy + baseline`
 
-当前讨论位置：`板块 7｜GI-088 v8r3r3 Provider 空正文与快速整理结构可靠性`
+当前讨论位置：`板块 7｜GI-088 v8r3r4 官方 Pro 正式 96-checkpoint 候选设计`
 
-落地验证状态：`v8r3r2 内容质量、4 条陪聊与 2 条帮我记兼容均通过，最终可见 22/22；等待 P90 64.7 秒、最长 70.1 秒未达发布线。v8r3r3 的 96-checkpoint 正式结果为最终可见 50/96、保护 46，未进入新 Preview。`
+落地验证状态：`v8r3r3 的 96-checkpoint 正式结果为最终可见 50/96、保护 46。随后 120 次运行链根因对照证明：官方 Pro 完整合同 20/24、空内容 0，固定八条人工裁决 7 优 1 轻微、0 失败；其 P90 57.5 秒和 2 次超时仍需正式 96-checkpoint 复验。`
 
-本次同步范围：`同步 v8r3r3 30/60 秒自适应恢复实现、真实隔离库 4/4、正式 196 次调用与可靠性 No-Go；保留 v8r3r2 质量通过和等待失败证据；Judge 20+20 后置；Production 保持 legacy + baseline`
+本次同步范围：`同步 A～E 运行链与输出合同根因对照、官方 Pro 最终八条人工质量通过、成本与等待风险，以及下一版只切换主 Provider／模型的 v8r3r4 方向；Judge 20+20 后置；Production 保持 legacy + baseline`
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
@@ -96,13 +96,13 @@ flowchart TD
 - `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。自动进入规则由 GI-068 覆盖。
 - 用户原话、明确纠正、停止意愿、来源安全、可靠提交、失败恢复和事件日志生成编辑保存重开继续作为产品底座。
 - 正式内容问题的 v8r3r2 候选使用 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`、三段 `60s` 超时与 `90s` 共享恢复链，EMPTY_CONTENT 最多自动恢复两次；Production 继续保持 `legacy + baseline`。
-- 推进职责已经确认：板块 5 规则与方法已冻结，板块 6 评测输入已齐，板块 7 v8r3r2 已正式封存。板块 8 私有 Preview 已停在全新 `0/6 / calls 0`；Judge 20＋20 后置，真人内容由产品负责人提交。
+- 推进职责已经确认：板块 5 规则与方法已冻结，板块 6 评测输入已齐。v8r3r3 保持 No-Go；运行链根因对照已选出官方 Pro 方向，下一步在板块 7 建立只切换主 Provider／模型的 v8r3r4 正式 96-checkpoint 候选。板块 8 继续暂停，Judge 20＋20 后置。
 - Production 继续使用 `legacy + baseline`。`optional + generative` 需要新候选通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
 
 ### 待执行与待校准
 
 - 板块 6 需要按 GI-074 建立复标后的 `24＋40`、`28＋12`、Judge 说明、人工评分卡、两模式 `4＋2` 脚本和正式准入报告。
-- 板块 7 已完成 GI-087 基线、v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、对话工作台与 v8r3r2 EMPTY 双恢复。v1～v8r3 的产品评价、失败、诊断、恢复和历史 Preview 继续只读保留；当前 v8r3r2 的 10 份恢复回应人工裁决 `10/10` 可直接用，板块 7 正式封存。板块 8 私有 Preview 已 `READY`，全新 run 为 `running 0/6 / calls 0`，等待产品负责人提交真人 `4＋2`。
+- 板块 7 已完成 GI-087 基线、v8r3 Interview Skill、Ark Flash、Foundation、兼容链、工作台、v8r3r2 双恢复、v8r3r3 自适应恢复及 A～E 根因对照。官方 Pro 以 `20/24` 技术有效、固定八条 `7 优 1 轻微 / 0 失败` 成为下一候选方向；P90 `57.5s` 与两次超时保持开放。下一步建立 v8r3r4 正式 96-checkpoint 候选，板块 8 暂停。
 
 ### 历史候选与证据
 

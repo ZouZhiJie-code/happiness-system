@@ -808,19 +808,23 @@
       "title": "Ark Thinking high 空正文突增且快速整理未稳定形成合法 JSON",
       "productOwnerJudgment": "使用 30 秒加速和 60 秒硬截止降低等待，60 秒内自动最终可见率必须达到 100%，重复回复、遗留 pending 和人工恢复为 0。",
       "codexInitialAssessment": "竞速与原子收口工程正确，正式运行只有 50/96 最终可见，技术可靠性先于恢复内容盲评触发 No-Go。",
-      "confirmedRootCause": "96 次初始调用中 65 次以 HTTP 200 和 finish=stop 结束，存在 reasoning 但可见内容为空；56 次 high 纠正又有 42 次为空。44 次非 Thinking 快速整理均快速返回，其中 36 次不是合法 JSON。100 次全批恢复预算耗尽，10 个 checkpoint 无法获得完整恢复链。",
+    "confirmedRootCause": "v8r3r3 的 96 次初始调用中 65 次以 HTTP 200 和 finish=stop 结束，存在 reasoning 但可见内容为空；快速整理又有 36 次未形成合法 JSON。随后 A～E 根因对照显示：Ark Flash 完整合同 9/24、官方 Flash 完整合同 10/24，Provider 路由切换未消除空内容；Ark Flash 精简合同提升到 18/24 且空内容为 0，证明完整状态输出职责会放大失败；官方 Pro 完整合同达到 20/24、空内容为 0，并以 7 优 1 轻微、0 失败通过八条人工质量门。当前归因为模型档位稳定性主导，完整状态输出职责放大，Provider 路由影响较小。",
       "hypotheses": [
         "快速整理采用更窄、可确定修复的结构合同后，可以提高非 Thinking 路径的合法结果率。",
-        "Ark Thinking high 的空正文比例存在跨批次大幅波动，需要以新候选区分 Provider 波动、请求节奏和可见输出合同的影响。"
+      "官方 Pro 在正式 96-checkpoint 中仍能保持至少 85% 首次有效率，并通过 60 秒最终可见门。",
+      "官方 Pro 当前 P90 57.5 秒和两次超时可能使正式候选无法通过等待体验门。",
+      "若官方 Pro 正式候选等待门失败，再单独验证精简输出合同与程序状态投影。"
       ],
       "priority": "P0",
-      "status": "confirmed_no_go_waiting_next_single_factor_decision",
+    "status": "root_cause_diagnostic_sealed_official_pro_candidate_direction_selected",
       "trace": [
-        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
-        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/gi088-v8r3r3-adaptive-run-summary.json",
-        "tests/integration/gi088-foundation-prisma-store.test.ts"
-      ],
-      "targetVersion": "next_v8r3_recovery_candidate"
+      "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
+      "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/gi088-v8r3r3-adaptive-run-summary.json",
+      "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md",
+      "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/gi088-runtime-contract-final-eight-receipt.json",
+      "tests/integration/gi088-foundation-prisma-store.test.ts"
+    ],
+    "targetVersion": "v8r3r4_deepseek_official_pro_adaptive_recovery"
     }
   ],
   "historicalExclusions": [

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "diagnosticVersion": "2026-08-12.gi088-runtime-contract-root-cause-diagnostic-v1",
+  "status": "sealed_winner_direction_ready",
+  "reportFingerprint": "054186a5fce1972089ae848c1f6604beb6ca9584625fb54a4dd227154c2eb806",
+  "diagnosticFingerprint": "cfff86caf62c3442e1b64af770af80e29daffeb3e9d302a6fcf7443879a4767e",
+  "scheduleFingerprint": "54b776864efc86fb6691cef089f5fb990c7b047ada539281d5f92bab5b314a01",
+  "dataset": {
+    "partition": "development",
+    "caseCount": 24,
+    "hiddenDatasetRead": false
+  },
+  "budget": {
+    "primaryCalls": 96,
+    "conditionalCalls": 24,
+    "totalCalls": 120,
+    "retries": 0,
+    "recoveries": 0,
+    "judgeCalls": 0
+  },
+  "groups": [
+    {"group":"A","effectiveValidCount":9,"emptyContentCount":9,"p50Ms":8895,"p90Ms":50389,"maxMs":60003,"totalTokens":100043,"technicalAdmitted":false},
+    {"group":"B","effectiveValidCount":18,"emptyContentCount":0,"p50Ms":8317,"p90Ms":20742,"maxMs":60003,"totalTokens":49270,"technicalAdmitted":false},
+    {"group":"C","effectiveValidCount":1,"emptyContentCount":0,"p50Ms":2771,"p90Ms":6775,"maxMs":60002,"totalTokens":93696,"technicalAdmitted":false},
+    {"group":"D","effectiveValidCount":10,"emptyContentCount":8,"p50Ms":11222,"p90Ms":24271,"maxMs":60005,"totalTokens":112394,"technicalAdmitted":false},
+    {"group":"E","effectiveValidCount":20,"emptyContentCount":0,"p50Ms":41100,"p90Ms":57536,"maxMs":60003,"totalTokens":141854,"technicalAdmitted":true}
+  ],
+  "finalReview": {
+    "group": "E",
+    "reviewCount": 8,
+    "directUseCount": 7,
+    "minorIssueCount": 1,
+    "qualityFailureCount": 0,
+    "singleCaseBlockerCount": 0,
+    "gatePassed": true,
+    "minorIssueCategory": "low_information_gain"
+  },
+  "rootCause": {
+    "primary": "model_runtime_capability_and_stability",
+    "amplifier": "full_state_output_contract_responsibility",
+    "secondary": "provider_route",
+    "promptLengthSupportedAsPrimary": false
+  },
+  "nextCandidate": {
+    "version": "2026-08-12.gi088-human-eval-v8r3r4-deepseek-official-pro-adaptive-recovery",
+    "singlePrimaryChange": "switch_primary_provider_and_model_to_deepseek_official_pro",
+    "formalCheckpointCount": 96,
+    "previewAuthorized": false,
+    "productionAuthorized": false
+  },
+  "evidence": {
+    "privateReportSha256": "c735ef9b21ffbf7fb335529ea6425b928f3d30179d667bded289147f79a2f8f4",
+    "decisionsCanonicalSha256": "71357f23b83b013db8f3253c4df12e87afb4d777cf72d2b969686efe50ce28f7",
+    "receiptSha256": "e5d5562e782067bc3304453580cd34389dd0cefc6744572fa245ca9a87ec4e99",
+    "toolSourceSha256": "d06426b41f979ac9c39f76ea20ade61b29fab56f9adb3bb7369b71b3269c66a7"
+  },
+  "privacy": {
+    "requestBody": "excluded",
+    "fullModelOutput": "excluded",
+    "hiddenReasoningBody": "excluded",
+    "apiKey": "excluded",
+    "upstreamRequestIdRaw": "excluded"
+  }
+}
