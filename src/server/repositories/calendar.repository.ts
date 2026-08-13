@@ -42,6 +42,7 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
     prisma.interviewSession.findMany({
       where: {
         userId: input.userId,
+        parentSessionId: null,
         entryDate: {
           gte: startAt,
           lt: endExclusive
@@ -49,12 +50,15 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
       },
       select: {
         id: true,
+        activeBranchSessionId: true,
         dimension: true,
         entryDate: true,
         status: true,
         _count: {
           select: {
-            messages: true
+            messages: {
+              where: { role: "user" }
+            }
           }
         },
         startedAt: true,
@@ -118,23 +122,82 @@ export async function listCalendarSourcesByDateRange(input: ListCalendarSourcesB
     })
   ]);
 
+  const activeBranchIds = sessions.flatMap((session) =>
+    session.activeBranchSessionId && session.activeBranchSessionId !== session.id
+      ? [session.activeBranchSessionId]
+      : []
+  );
+  const branchSessions = activeBranchIds.length
+    ? await prisma.interviewSession.findMany({
+        where: {
+          rootSessionId: { in: sessions.map((session) => session.id) }
+        },
+        select: {
+          id: true,
+          rootSessionId: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          pausedAt: true,
+          draftSummary: true,
+          _count: {
+            select: {
+              messages: {
+                where: { role: "user" }
+              }
+            }
+          },
+          messages: {
+            orderBy: { sequence: "desc" },
+            take: 1,
+            select: { createdAt: true }
+          }
+        }
+      })
+    : [];
+  const activeBranchesById = new Map(branchSessions.map((branch) => [branch.id, branch]));
+  const branchUserMessageCounts = new Map<string, number>();
+  for (const branch of branchSessions) {
+    if (!branch.rootSessionId) continue;
+    branchUserMessageCounts.set(
+      branch.rootSessionId,
+      (branchUserMessageCounts.get(branch.rootSessionId) ?? 0) +
+        (resolveSessionMessageCount(branch) ?? 0)
+    );
+  }
+
   const calendarSessions: CalendarSessionSource[] = sessions
-    .filter((session) => session.status !== "abandoned")
+    .filter((session) => {
+      const projected = session.activeBranchSessionId
+        ? activeBranchesById.get(session.activeBranchSessionId)
+        : null;
+      return (projected?.status ?? session.status) !== "abandoned";
+    })
     .map((session) => {
-      const messageCount = resolveSessionMessageCount(session);
+      const projected = session.activeBranchSessionId
+        ? activeBranchesById.get(session.activeBranchSessionId)
+        : null;
+      const rootUserMessageCount = resolveSessionMessageCount(session);
+      const effectiveUserMessageCount = projected
+        ? branchUserMessageCounts.get(session.id) ?? 0
+        : rootUserMessageCount ?? 0;
+      const messageCount =
+        projected || typeof rootUserMessageCount === "number"
+          ? effectiveUserMessageCount > 0 ? 2 : 1
+          : undefined;
 
       return {
         kind: "session" as const,
         id: session.id,
         dimension: session.dimension,
         date: formatEntryDate(session.entryDate ?? session.startedAt),
-        status: session.status,
+        status: projected?.status ?? session.status,
         ...(typeof messageCount === "number" ? { messageCount } : {}),
-        updatedAt: resolveSessionUpdatedAt(session),
+        updatedAt: resolveSessionUpdatedAt(projected ?? session),
         startedAt: session.startedAt.toISOString(),
-        completedAt: session.completedAt?.toISOString() ?? null,
-        pausedAt: session.pausedAt?.toISOString() ?? null,
-        draftSummary: session.draftSummary,
+        completedAt: (projected?.completedAt ?? session.completedAt)?.toISOString() ?? null,
+        pausedAt: (projected?.pausedAt ?? session.pausedAt)?.toISOString() ?? null,
+        draftSummary: projected?.draftSummary ?? session.draftSummary,
         journalEntryId: session.finalEntryId
       };
     });

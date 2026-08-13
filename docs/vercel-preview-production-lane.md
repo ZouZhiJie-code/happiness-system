@@ -1,12 +1,16 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-07-20`
+最后更新：`2026-07-21`
 
 ## 当前生产域名
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
+- 当前生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
+- `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
+- `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。
+- `2026-07-20` 已完成 UserTurn 可靠提交改造的 production 发布：`20260720120000_add_interview_user_turn` 与 `20260720153000_add_ai_optimization_review_reason` 已应用，公开 smoke 与同 `clientTurnId` 重放校验通过。
 - 本文后续出现的 `dlight.cc.cd` 仅用于保留 `2026-05` 历史发布与排障证据，当前命令、验收和回调配置统一使用 `dailylight.chat`。
 
 ## 目标
@@ -38,6 +42,8 @@
 - `VOLCENGINE_ARK_API_KEY`
 - `VOLCENGINE_ARK_MODEL` 或 `VOLCENGINE_ARK_ENDPOINT_ID`
 - `VOLCENGINE_ARK_BASE_URL`
+- `INTERVIEW_INTENT_V2_MODE=enforce`，用于验证访谈意图识别的正式决策链路
+- `INTERVIEW_REGENERATION_ENABLED=true`，用于验证回复换问法与版本切换
 
 可选：
 
@@ -50,6 +56,21 @@
 - 如果项目没有暴露上述 system env，才回退为手工维护 `APP_URL`
 - 当前批次还没有直接证据证明 `xingfuxitong` 已启用该能力；依赖这条路径前，必须额外验证项目设置里的 `Automatically expose System Environment Variables` 开关，以及部署运行时是否能读到 `VERCEL=1`
 - preview 数据库必须和本地库、生产库隔离
+
+#### 2026-07-21 访谈意图独立验收环境
+
+- 当前候选 deployment：`dpl_2riNe1YjW9Ybt4ycq1JyHPZmMTz1`，状态为`Ready`。
+- 当前候选地址：`https://xingfuxitong-moaqpx0k6-zouzhijies-projects.vercel.app`。
+- 固定分支地址：`https://xingfuxitong-zouzhijie-code-zouzhijies-projects.vercel.app`。
+- 意图策略：`INTERVIEW_INTENT_V2_MODE=enforce`。
+- Preview数据库：`daily_light_preview_intent`，与生产数据库保持数据库级隔离。
+- Preview使用独立应用账号访问数据；当前29条数据库迁移均已应用，其中包含回复重新生成迁移。
+- 已创建一份空白独立评审账号。运行时注册成功后，Preview数据库中同名账号数量为1，生产数据库中同名账号数量为0。
+- 评审密码、访问保护参数和数据库凭据只通过本次验收交付，不写入仓库文档。
+- 独立评审统一使用[意图识别独立评审评分卡](../evals/interview-intent/reviewer/2026-07-20-independent-intent-assessment-scorecard.md)；五维端到端只承担下游采用验证。
+- 独立评审页面：`/intent-review`，只在非Production环境开放；当前展示新封存案例`INT-EVAL-229–252`，页面已通过评审账号登录、HTTP 200、案例内容和浏览器进度保存验证。
+- Preview管理员只读观察入口：`/api/dev/intent-observation`，只返回意图、策略、快照、Trace和抽取调用统计，不返回用户原话；Production环境固定关闭。
+- [五维采用与20轮运行观察](../evals/interview-intent/reports/2026-07-21-preview-adoption-and-20-turn-observation.md)已通过：五维5/5，普通访谈20/20，每轮恰好一次抽取调用，服务端P50 9.17秒、P95 9.99秒。
 
 ### Production
 
@@ -64,6 +85,7 @@
 - 因为 Vercel 官方定义这个变量“即使在 preview deployment 中也总是会被设置”，所以当前 production URL 合同可以按 system env 路径视为已闭环；显式 `APP_URL` 仍可作为替代路径，但不再是当前 launch gate 的阻断项
 - 生产库和 preview 库必须隔离
 - 如果记忆系统暂时不开，`VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID` 可以先留空
+- `INTERVIEW_INTENT_V2_MODE=enforce`是当前正式行为；`legacy`保留为出现P0问题时的即时回退档位
 
 ## 最小发布步骤
 
@@ -73,20 +95,23 @@
 4. 确认根目录 [vercel.json](../vercel.json) 保留 `framework: "nextjs"`，避免项目后台残留 `Other` preset 时 preview 域名落到 `404`
 5. 确认 Vercel 的默认 build 命令保持 `next build`
 6. 首次部署前确认 `.vercelignore` 已排除 `.worktrees`、`.claude`、`.omx`
-7. 等首个 preview 部署完成后：
+7. 如果本次发布包含 `20260720210000_add_interview_intent_assessment` 或 `20260720223000_add_interview_response_regeneration`，先对目标数据库执行 `npx prisma migrate deploy`；Preview与Production当前均采用`enforce`。重新生成验收环境设置 `INTERVIEW_REGENERATION_ENABLED=true`。
+8. 等首个 preview 部署完成后：
    如果当前 preview 开启了 Deployment Protection，当前已验证通过的自动化 smoke 路径是 `vercel-curl` transport；在任意 `.worktrees/...` 目录执行时，`scripts/launch-acceptance-runner.mjs` 也会自动把 Vercel cwd 回退到父 repo 根目录。执行：
 
 ```bash
 ACCEPTANCE_TRANSPORT=vercel-curl \
 ACCEPTANCE_VERCEL_SCOPE="your-vercel-scope" \
 ACCEPTANCE_BASE_URL="https://your-preview-url.vercel.app" \
-node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
+node scripts/product-smoke.mjs joy 2026-05-19
 ```
 
    匿名 raw preview root 仍可能返回 `401 Vercel Authentication Required`；这不再阻断 `vercel-curl` 自动化 smoke。
 
+   `product-smoke.mjs` 默认先登录并复用固定账号 `preview_acceptance`，只有首次缺失时才注册。需要切换另一组固定凭据时，显式设置 `PRODUCT_SMOKE_USERNAME / PRODUCT_SMOKE_PASSWORD`；脚本不再为每次运行生成新用户。
+
    当前 `scripts/product-smoke.mjs` 的自动化覆盖范围只到：
-   - 注册
+   - 固定验收账号复用或首次注册
    - 登录 / session 建立
    - `POST /api/interview/session/start`
    - `invalid_entry_date` 拒绝路径
@@ -100,7 +125,7 @@ node scripts/product-smoke.mjs joy 2026-05-19 previewsmoke
 SMOKE_BASE_URL="https://your-preview-url.vercel.app" npm run smoke:public
 ```
 
-8. smoke 通过后，再决定要不要开放给真实试用
+9. smoke 通过后，再决定要不要开放给真实试用
 
 ## URL 合同补充说明
 

@@ -4,6 +4,7 @@ import { getLocalAuthUserId } from "@/features/auth/auth-local";
 import type {
   InputMode,
   InterviewDimension,
+  InterviewRegenerationIntent,
   InterviewUserTurnAction,
   InterviewUserTurnStatus
 } from "@/types/interview";
@@ -17,6 +18,7 @@ function getScope() {
 
 export function buildComposerDraftKey(input: {
   sessionId: string;
+  branchSessionId?: string | null;
   entryDate: string;
   dimension: InterviewDimension;
 }) {
@@ -25,12 +27,14 @@ export function buildComposerDraftKey(input: {
     getScope(),
     input.entryDate,
     input.dimension,
-    input.sessionId
+    input.sessionId,
+    input.branchSessionId ?? input.sessionId
   ].join("::");
 }
 
 export function readComposerDraft(input: {
   sessionId: string;
+  branchSessionId?: string | null;
   entryDate: string;
   dimension: InterviewDimension;
 }) {
@@ -46,6 +50,7 @@ export function readComposerDraft(input: {
 export function writeComposerDraft(
   input: {
     sessionId: string;
+    branchSessionId?: string | null;
     entryDate: string;
     dimension: InterviewDimension;
   },
@@ -64,6 +69,7 @@ export function writeComposerDraft(
 
 export function clearComposerDraft(input: {
   sessionId: string;
+  branchSessionId?: string | null;
   entryDate: string;
   dimension: InterviewDimension;
 }) {
@@ -73,7 +79,10 @@ export function clearComposerDraft(input: {
 export interface UserTurnOutboxRecord {
   clientTurnId: string;
   sessionId: string;
+  baseBranchSessionId?: string | null;
   action: InterviewUserTurnAction;
+  targetMessageId?: string | null;
+  regenerationIntent?: InterviewRegenerationIntent | null;
   rawText: string | null;
   inputMode?: InputMode;
   baseMessageSequence: number;
@@ -81,15 +90,15 @@ export interface UserTurnOutboxRecord {
   createdAt: string;
 }
 
-function buildOutboxKey(sessionId: string) {
-  return [USER_TURN_OUTBOX_PREFIX, getScope(), sessionId].join("::");
+function buildOutboxKey(sessionId: string, branchSessionId?: string | null) {
+  return [USER_TURN_OUTBOX_PREFIX, getScope(), sessionId, branchSessionId ?? sessionId].join("::");
 }
 
-export function readUserTurnOutbox(sessionId: string): UserTurnOutboxRecord | null {
+export function readUserTurnOutbox(sessionId: string, branchSessionId?: string | null): UserTurnOutboxRecord | null {
   if (typeof window === "undefined") return null;
 
   try {
-    const raw = window.sessionStorage.getItem(buildOutboxKey(sessionId));
+    const raw = window.sessionStorage.getItem(buildOutboxKey(sessionId, branchSessionId));
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<UserTurnOutboxRecord>;
 
@@ -99,9 +108,23 @@ export function readUserTurnOutbox(sessionId: string): UserTurnOutboxRecord | nu
       (
         value.action !== "reply" &&
         value.action !== "continue_current_event" &&
-        value.action !== "next_event"
+        value.action !== "next_event" &&
+        value.action !== "regenerate_question" &&
+        value.action !== "correct_understanding"
       ) ||
-      typeof value.baseMessageSequence !== "number"
+      typeof value.baseMessageSequence !== "number" ||
+      (
+        (value.action === "regenerate_question" || value.action === "correct_understanding") &&
+        typeof value.targetMessageId !== "string"
+      ) ||
+      (
+        value.action === "regenerate_question" &&
+        value.regenerationIntent !== "simplify" &&
+        value.regenerationIntent !== "concretize" &&
+        value.regenerationIntent !== "change_angle" &&
+        value.regenerationIntent !== "deepen" &&
+        value.regenerationIntent !== "lighten"
+      )
     ) {
       return null;
     }
@@ -116,17 +139,20 @@ export function writeUserTurnOutbox(record: UserTurnOutboxRecord) {
   if (typeof window === "undefined") return;
 
   try {
-    window.sessionStorage.setItem(buildOutboxKey(record.sessionId), JSON.stringify(record));
+    window.sessionStorage.setItem(
+      buildOutboxKey(record.sessionId, record.baseBranchSessionId),
+      JSON.stringify(record)
+    );
   } catch {
     // The server-side UserTurn remains the durable source after acceptance.
   }
 }
 
-export function clearUserTurnOutbox(sessionId: string) {
+export function clearUserTurnOutbox(sessionId: string, branchSessionId?: string | null) {
   if (typeof window === "undefined") return;
 
   try {
-    window.sessionStorage.removeItem(buildOutboxKey(sessionId));
+    window.sessionStorage.removeItem(buildOutboxKey(sessionId, branchSessionId));
   } catch {
     // No recovery action is required when storage is unavailable.
   }

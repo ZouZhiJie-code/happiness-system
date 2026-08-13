@@ -1,0 +1,163 @@
+{
+  "packetVersion": "intent-independent-review-v1",
+  "datasetVersion": "intent-eval-v1.0+intent-eval-v1.6-blind",
+  "completedAt": "2026-07-21T03:20:58Z",
+  "reviewerType": "execution_side",
+  "independenceNote": "由本轮产品与开发执行主体完成，作为执行侧人工复核使用，不计作外部独立评审。评审判断先于本轮金标准对照固化；执行主体在此前调试中接触过部分案例，因此不声明完整盲审独立性。",
+  "completedCount": 24,
+  "total": 24,
+  "reviews": [
+    {
+      "id": "INT-EVAL-227",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户明确要求在这一轮停止，系统准确识别为停止追问，并且没有把控制表达当作访谈内容。"
+    },
+    {
+      "id": "INT-EVAL-212",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户只提出整理日志的要求，系统准确识别生成意图，并把指向对象定位为日志。"
+    },
+    {
+      "id": "INT-EVAL-123",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户在转述事件中的原话并补充情绪，系统将其保留为事件内容，没有误触发会话控制。"
+    },
+    {
+      "id": "INT-EVAL-213",
+      "verdict": "partially_correct",
+      "errorFields": [
+        "contextUnderstanding"
+      ],
+      "reason": "生成要求和有效内容边界识别准确，但“终于推进了一小步”更像充实维度的进展证据，不能充分回答当前感谢问题中的“为什么珍惜”。"
+    },
+    {
+      "id": "INT-EVAL-214",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "系统同时保留了“先确认优先级”这一回答，并执行停止追问，内容与控制边界清楚。"
+    },
+    {
+      "id": "INT-EVAL-215",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户要求把抽象问题改得具体，系统准确识别为换问法，并保持当前问题为指向对象。"
+    },
+    {
+      "id": "INT-EVAL-228",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户明确跳过当前这一问，系统准确识别跳题和拒答，没有误判为停止整段访谈。"
+    },
+    {
+      "id": "INT-EVAL-217",
+      "verdict": "partially_correct",
+      "errorFields": [
+        "referenceTarget"
+      ],
+      "reason": "切换事件的控制意图正确，“另一件事情”直接相对于当前事件表达，指向对象使用“当前事件”会更精确。"
+    },
+    {
+      "id": "INT-EVAL-218",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户要求把当前片段切换到感谢维度，系统准确识别维度切换，并且没有把操作说明当作新事实。"
+    },
+    {
+      "id": "INT-EVAL-130",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "结合“是谁陪着你”的问题，“爸爸”是完整有效的人物回答，系统正确计为具体事件信息。"
+    },
+    {
+      "id": "INT-EVAL-131",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "结合感受问题，“释然”能够直接回答当时的反应，系统对短回答的理解准确。"
+    },
+    {
+      "id": "INT-EVAL-219",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户明确否定具体对话存在，系统记录了明确缺失，同时将这一轮视为对当前目标的有效回答。"
+    },
+    {
+      "id": "INT-EVAL-220",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户针对当前推测表达暂时无法确定，系统同时识别有效回答和不确定性，回答目标准确。"
+    },
+    {
+      "id": "INT-EVAL-221",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户收回旧说法并给出新的感受，系统准确识别修正、否定原推测和新内容。"
+    },
+    {
+      "id": "INT-EVAL-156",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "“今天先歇到这里”属于事件中的引用，系统正确保留为照顾行动，没有误判为用户要求停止。"
+    },
+    {
+      "id": "INT-EVAL-222",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户反馈问题重复，系统准确识别提问体验反馈并要求换问法，轻微压力判断合理。"
+    },
+    {
+      "id": "INT-EVAL-223",
+      "verdict": "reasonable_ambiguity",
+      "errorFields": [
+        "frustration"
+      ],
+      "reason": "停止追问和疲惫反馈识别准确；“没什么力气”可以理解为轻度压力，也可以理解为单纯疲惫，情绪压力标签存在合理歧义。"
+    },
+    {
+      "id": "INT-EVAL-224",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户只想暂时放下当前问题，系统准确识别跳题和拒答，访谈整体仍可继续。"
+    },
+    {
+      "id": "INT-EVAL-225",
+      "verdict": "partially_correct",
+      "errorFields": [
+        "dialogueActs"
+      ],
+      "reason": "停止追问和强烈压力识别准确，但“别再逼着我”也明确反馈了 AI 的提问方式，表达行为应补充“反馈提问体验”。"
+    },
+    {
+      "id": "INT-EVAL-140",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "“关系结束”描述的是事件事实，系统保持普通内容路由，并正确保留随后的轻松感受。"
+    },
+    {
+      "id": "INT-EVAL-226",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "系统从混合表达中保留“核心是被尊重”，排除整理控制词，并正确执行日志生成。"
+    },
+    {
+      "id": "INT-EVAL-142",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户否定“准备不足”并补充真实原因，系统准确识别为对之前推测的修正。"
+    },
+    {
+      "id": "INT-EVAL-162",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "“今天别再想了”是对方在事件中说的话，系统正确识别为照顾行动和事件转述。"
+    },
+    {
+      "id": "INT-EVAL-144",
+      "verdict": "correct",
+      "errorFields": [],
+      "reason": "用户的表达尚未完成，系统保留为可能存在的内容并识别不确定性，没有提前认定已经回答目标。"
+    }
+  ]
+}

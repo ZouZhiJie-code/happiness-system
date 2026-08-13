@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-07-20`
+最后更新：`2026-07-21`
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -36,6 +36,8 @@
 | `GET` | `/api/interview/session/[id]` | 恢复会话 |
 | `POST` | `/api/interview/session/respond/stream` | 主前端使用的 SSE 回复 |
 | `POST` | `/api/interview/session/respond` | 非流式兼容回复 |
+| `POST` | `/api/interview/session/branch/preview` | 只读预览目标回复版本的活动路径 |
+| `POST` | `/api/interview/session/branch/select` | 采用目标回复版本并切换活动路径 |
 | `POST` | `/api/interview/session/pause` | 暂停会话 |
 | `POST` | `/api/interview/session/complete` | 完成会话 |
 | `POST` | `/api/interview/session/reopen` | 重开会话 |
@@ -81,7 +83,7 @@
 | `POST` | `/api/admin/ai-quality/candidates/[candidateId]/validate` | 回放验证候选 |
 | `GET` | `/api/admin/ai-quality/candidates/[candidateId]/impact` | 查询发布前后七天指标 |
 | `GET` | `/api/admin/ai-quality/candidates/[candidateId]/impact/evidence?kind=attention&page=1` | 查询上线后真实案例 |
-| `POST` | `/api/admin/ai-quality/runs` | 立即评估并生成候选 |
+| `POST` | `/api/admin/ai-quality/runs` | 评估待处理 Trace，并聚类生成或复用候选 |
 | `GET` | `/api/cron/ai-quality/evaluate?limit=100` | 每日评估任务 |
 | `GET` | `/api/cron/ai-quality/iterate` | 每周聚类任务 |
 
@@ -202,6 +204,22 @@ Accept: text/event-stream
 }
 ```
 
+按意图重新生成正式追问：
+
+```json
+{
+  "action": "regenerate_question",
+  "sessionId": "cuid",
+  "targetMessageId": "assistant-message-cuid",
+  "intent": "simplify",
+  "clientTurnId": "浏览器生成的唯一 ID",
+  "baseMessageSequence": 4,
+  "baseBranchSessionId": "当前活动分支 ID"
+}
+```
+
+`intent` 支持 `simplify / concretize / change_angle / deepen / lighten`。纠正理解使用 `action: "correct_understanding"`，并提交同样的定位字段与用户输入 `rawText`。分支预览和选择接口使用 `{ sessionId, targetMessageId, baseBranchSessionId }`；预览响应返回 `targetBranchSessionId` 与只读 `session`，选择响应返回已采用路径的 `session`。
+
 SSE 事件：
 
 | 事件 | 数据 |
@@ -210,9 +228,12 @@ SSE 事件：
 | `phase` | 当前处理阶段 |
 | `delta` | `summary / question / thinking` 等增量 |
 | `session` | 最终完整 session |
+| `version` | 回复版本的组标识、当前版本、版本数与活动分支 |
 | `error` | 结构化 `issue` |
 
 主链时序为 `turn -> phase / delta -> session`。`turn` 确认“原话已收到”，`session` 确认“AI 回应和会话状态已完整保存”。处理失败或浏览器取消后，session hydrate 会通过 `pendingUserTurn` 返回原提交，页面可显示“继续生成”。
+
+服务端会为每轮回复判断用户是在补充内容、修正理解、要求换问法、希望停止追问，还是要求生成日志。这些判断用于保护对话体验和支持重放，属于内部运行记录；客户端继续以 `turn / delta / session / error` 事件完成交互，无需新增请求字段或解析内部判断结果。
 
 `delta.text` 来自服务端检查后的最终摘要或问题，分块过程保留最终文本的空格和换行。`question_repair` 会由服务端确定性生成 `turn -> summary -> question -> session`，不进入 provider 流式调用。
 
@@ -251,6 +272,11 @@ SSE 事件：
 | `INTERVIEW_TURN_OUT_OF_DATE` | 409 | `baseMessageSequence` 落后于服务端最新消息位置 |
 | `INTERVIEW_TURN_RETRY_REQUIRED` | 409 | 同一 `clientTurnId` 已失败或取消，需要使用 `resume_turn` |
 | `INTERVIEW_TURN_NOT_FOUND` | 404 | 指定的待恢复提交不存在或不属于当前用户 |
+| `INTERVIEW_REGENERATION_UNAVAILABLE` | 409 | 当前会话、日志边界或服务开关暂不支持换问法 |
+| `INTERVIEW_REGENERATION_INTENT_UNAVAILABLE` | 409 | 当前证据不足以使用所选换问法，例如“再深入一点” |
+| `INTERVIEW_REGENERATION_LIMIT_REACHED` | 409 | 该正式追问已保留三个版本 |
+| `INTERVIEW_BRANCH_OUT_OF_DATE` | 409 | 请求基于较早的活动分支 |
+| `INTERVIEW_BRANCH_LOCKED_BY_JOURNAL` | 409 | 已生成日志锁定了历史路径 |
 | `INTERVIEW_DB_WRITE_FAILED` | 500 | 本轮回复写入失败 |
 | `STREAM_PROTOCOL_ERROR` | 500 | SSE 数据格式异常 |
 | `INTERVIEW_RESPOND_FAILED` | 500 | 未分类兜底错误 |
@@ -373,10 +399,10 @@ GET /api/analysis/month?month=2026-07
 前端 URL：
 
 ```text
-/analysis?month=2026-07&section=trends|dimensions|correlation|review
+/analysis?month=2026-07&section=trends|dimensions
 ```
 
-旧 `overview|score|rhythm|insights` 会归一到 `trends|dimensions`。量化趋势为只读读数台；关联与复盘当前为占位。
+旧 `overview|score|rhythm` 会归一到 `trends`，旧 `insights|correlation|review` 会归一到 `dimensions`。量化趋势为只读读数台，五维记录展示按月聚合的线索与代表片段。
 
 ### 7.3 幸福 8 要素评分
 
@@ -478,6 +504,8 @@ POST /api/admin/ai-quality/candidates/[candidateId]/validate
 
 System Prompt 会回放目标和正向回归证据；Few-shot 会复查点赞有效性与至少 85 分的评估。发布要求候选已批准且最近验证通过；缺少通过验证时接口返回 `409 OPTIMIZATION_VALIDATION_REQUIRED`。
 
+管理页将 `draft / approved / published / rejected / rolled_back` 投影为待审核、待验证、待发布、观察中和历史记录；Engineering 路径的已批准候选进入待技术处理。接口仍返回原始状态，客户端应按最近验证结果和候选路径完成展示投影。
+
 ### 9.3 七天效果
 
 ```text
@@ -491,6 +519,8 @@ GET /api/admin/ai-quality/candidates/[candidateId]/impact
 - `baseline / after / changes`：生成、反馈、问题、严重问题、失败和延迟
 - `conclusion`：继续观察、低样本、人工复核、建议保留或建议回滚
 - `evidenceCounts`：需关注和正向案例数
+
+`sameIssueCount / sameIssueRate` 以标准化后的具体问题键计算。候选缺少问题码时，两个窗口的 `sameIssueRate` 返回 `null`，客户端应显示“口径不足”，不应把未知问题聚合为同一类。
 
 真实案例：
 

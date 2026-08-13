@@ -1,0 +1,34 @@
+{
+  "reportVersion": "intent-core-eval-v1",
+  "generatedAt": "2026-07-21T05:07:48.252Z",
+  "datasetVersion": "intent-eval-v1.8-external-sealed",
+  "scope": "external-review",
+  "runLabel": "regression-v3",
+  "assessmentPath": "deterministic_plus_provider_merge",
+  "total": 24,
+  "overallScore": 1.0000000000000002,
+  "p0Failed": 0,
+  "metricAccuracy": {
+    "control": 1,
+    "dialogueActs": 1,
+    "contentBoundary": 1,
+    "referenceTarget": 1,
+    "contextUnderstanding": 1,
+    "stability": 1
+  },
+  "dialogueActPrecision": 1,
+  "dialogueActRecall": 1,
+  "dialogueActF1": 1,
+  "provider": {
+    "attempted": 16,
+    "succeeded": 6,
+    "failed": 10,
+    "failureCodes": {
+      "TIMEOUT": 4,
+      "REQUEST_FAILED": 6
+    },
+    "p50LatencyMs": 8332,
+    "p95LatencyMs": 11708
+  },
+  "failedCases": []
+}

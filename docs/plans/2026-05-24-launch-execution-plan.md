@@ -1,5 +1,7 @@
 # Launch Execution Implementation Plan
 
+> 历史执行计划（`2026-05-24`）。其中 `dlight.cc.cd`、DNSHE 和首批内测任务用于保留当时的发布证据；当前生产域名、部署命令和验收入口以 [`docs/vercel-preview-production-lane.md`](../vercel-preview-production-lane.md) 为准。
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 把当前仓库推进到“允许发出首批 `1-2` 个邀请制内测用户”的放行状态，并留下可复核的 go / no-go 证据。

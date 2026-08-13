@@ -1,0 +1,665 @@
+{
+  "variantSetId": "interview-intent-formal-variants",
+  "version": "intent-eval-v1.0",
+  "updatedAt": "2026-07-20",
+  "familyAssignments": {
+    "development": [
+      "INT-EVAL-001", "INT-EVAL-002", "INT-EVAL-003", "INT-EVAL-004",
+      "INT-EVAL-005", "INT-EVAL-006", "INT-EVAL-007", "INT-EVAL-008",
+      "INT-EVAL-009", "INT-EVAL-010", "INT-EVAL-011", "INT-EVAL-012",
+      "INT-EVAL-013", "INT-EVAL-014", "INT-EVAL-015", "INT-EVAL-016",
+      "INT-EVAL-017", "INT-EVAL-018", "INT-EVAL-019", "INT-EVAL-020",
+      "INT-EVAL-021", "INT-EVAL-022", "INT-EVAL-023", "INT-EVAL-024"
+    ],
+    "validation": [
+      "INT-EVAL-025", "INT-EVAL-026", "INT-EVAL-027", "INT-EVAL-028",
+      "INT-EVAL-029", "INT-EVAL-030", "INT-EVAL-031", "INT-EVAL-032"
+    ],
+    "candidateArchive": [
+      "INT-EVAL-033", "INT-EVAL-034", "INT-EVAL-035", "INT-EVAL-036",
+      "INT-EVAL-037", "INT-EVAL-038", "INT-EVAL-039", "INT-EVAL-040"
+    ]
+  },
+  "variants": [
+    {
+      "id": "INT-EVAL-041",
+      "baseCaseId": "INT-EVAL-001",
+      "userText": "先生成日志",
+      "understanding": "用户希望立即整理当前内容。",
+      "evidenceIncludes": [],
+      "tags": ["生成日志", "简短指令"]
+    },
+    {
+      "id": "INT-EVAL-042",
+      "baseCaseId": "INT-EVAL-001",
+      "userText": "整理成日志吧",
+      "understanding": "用户希望把当前访谈整理成日志。",
+      "evidenceIncludes": [],
+      "tags": ["生成日志", "口语变体"]
+    },
+    {
+      "id": "INT-EVAL-043",
+      "baseCaseId": "INT-EVAL-002",
+      "userText": "不要再追问了",
+      "understanding": "用户明确希望停止继续追问。",
+      "evidenceIncludes": [],
+      "tags": ["停止追问", "明确边界"]
+    },
+    {
+      "id": "INT-EVAL-044",
+      "baseCaseId": "INT-EVAL-002",
+      "userText": "不用再问了",
+      "understanding": "用户希望使用现有内容结束追问。",
+      "evidenceIncludes": [],
+      "tags": ["停止追问", "口语变体"]
+    },
+    {
+      "id": "INT-EVAL-045",
+      "baseCaseId": "INT-EVAL-003",
+      "userText": "这个问题太抽象",
+      "understanding": "用户希望当前问题更具体。",
+      "evidenceIncludes": [],
+      "tags": ["问题修复", "抽象反馈"]
+    },
+    {
+      "id": "INT-EVAL-046",
+      "baseCaseId": "INT-EVAL-003",
+      "userText": "听不太懂，换种说法",
+      "understanding": "用户希望使用更容易理解的问法。",
+      "evidenceIncludes": [],
+      "tags": ["问题修复", "换说法"]
+    },
+    {
+      "id": "INT-EVAL-047",
+      "baseCaseId": "INT-EVAL-004",
+      "userText": "跳过这个问题吧",
+      "understanding": "用户希望跳过当前问题。",
+      "evidenceIncludes": [],
+      "tags": ["跳过问题", "简短指令"]
+    },
+    {
+      "id": "INT-EVAL-048",
+      "baseCaseId": "INT-EVAL-004",
+      "userText": "这个不想说，换个问题",
+      "understanding": "用户拒绝回答当前问题并希望切换方向。",
+      "evidenceIncludes": [],
+      "tags": ["跳过问题", "拒绝回答"]
+    },
+    {
+      "id": "INT-EVAL-049",
+      "baseCaseId": "INT-EVAL-005",
+      "userText": "换一个片段",
+      "understanding": "用户希望开始记录新的事件片段。",
+      "evidenceIncludes": [],
+      "tags": ["切换事件", "简短指令"]
+    },
+    {
+      "id": "INT-EVAL-050",
+      "baseCaseId": "INT-EVAL-005",
+      "userText": "下一个片段",
+      "understanding": "用户希望结束当前片段并进入下一个片段。",
+      "evidenceIncludes": [],
+      "tags": ["切换事件", "口语变体"]
+    },
+    {
+      "id": "INT-EVAL-051",
+      "baseCaseId": "INT-EVAL-006",
+      "userText": "切到感谢维度",
+      "understanding": "用户明确希望进入感谢维度。",
+      "evidenceIncludes": [],
+      "tags": ["切换维度", "明确指令"]
+    },
+    {
+      "id": "INT-EVAL-052",
+      "baseCaseId": "INT-EVAL-006",
+      "userText": "这件事转到感谢",
+      "understanding": "用户判断当前事件更适合感谢维度。",
+      "evidenceIncludes": [],
+      "tags": ["切换维度", "事件判断"]
+    },
+    {
+      "id": "INT-EVAL-053",
+      "baseCaseId": "INT-EVAL-007",
+      "userText": "总结日志",
+      "understanding": "用户希望将当前内容整理成日志。",
+      "evidenceIncludes": [],
+      "tags": ["生成日志", "极短指令"]
+    },
+    {
+      "id": "INT-EVAL-054",
+      "baseCaseId": "INT-EVAL-007",
+      "userText": "帮我整理一下日志",
+      "understanding": "用户希望系统整理当前日志。",
+      "evidenceIncludes": [],
+      "tags": ["生成日志", "礼貌表达"]
+    },
+    {
+      "id": "INT-EVAL-055",
+      "baseCaseId": "INT-EVAL-008",
+      "userText": "你烦不烦，别问了",
+      "understanding": "用户表现出强烈不满并要求停止。",
+      "evidenceIncludes": [],
+      "tags": ["强烈边界", "情绪表达"]
+    },
+    {
+      "id": "INT-EVAL-056",
+      "baseCaseId": "INT-EVAL-008",
+      "userText": "闭嘴，停止访谈",
+      "understanding": "用户以强烈语气要求结束当前访谈。",
+      "evidenceIncludes": [],
+      "tags": ["强烈边界", "停止访谈"]
+    },
+    {
+      "id": "INT-EVAL-057",
+      "baseCaseId": "INT-EVAL-009",
+      "userText": "对我来说被接纳很重要，生成日志吧",
+      "understanding": "用户表达被接纳的重要性，同时要求生成日志。",
+      "evidenceIncludes": ["对我来说被接纳很重要"],
+      "tags": ["混合表达", "意义内容"]
+    },
+    {
+      "id": "INT-EVAL-058",
+      "baseCaseId": "INT-EVAL-009",
+      "userText": "我在意的是有人懂我，整理成日志",
+      "understanding": "用户重视被理解，并希望整理成日志。",
+      "evidenceIncludes": ["我在意的是有人懂我"],
+      "tags": ["混合表达", "内容保留"]
+    },
+    {
+      "id": "INT-EVAL-059",
+      "baseCaseId": "INT-EVAL-010",
+      "userText": "方案已经收尾了，直接整理吧",
+      "understanding": "用户完成了方案收尾，同时要求整理日志。",
+      "evidenceIncludes": ["方案已经收尾了"],
+      "tags": ["混合表达", "完成证据"]
+    },
+    {
+      "id": "INT-EVAL-060",
+      "baseCaseId": "INT-EVAL-010",
+      "userText": "今天把最后一版交了，帮我生成日志",
+      "understanding": "用户提交了最后一版，并希望生成日志。",
+      "evidenceIncludes": ["今天把最后一版交了"],
+      "tags": ["混合表达", "推进结果"]
+    },
+    {
+      "id": "INT-EVAL-061",
+      "baseCaseId": "INT-EVAL-011",
+      "userText": "复盘终于告一段落，我发现自己害怕失控，生成日志吧",
+      "understanding": "复盘结束让用户看见自己害怕失控，同时用户要求生成日志。",
+      "evidenceIncludes": ["复盘终于告一段落", "我发现自己害怕失控"],
+      "tags": ["混合表达", "新洞察"]
+    },
+    {
+      "id": "INT-EVAL-062",
+      "baseCaseId": "INT-EVAL-011",
+      "userText": "事情收尾后，我意识到自己需要明确的结果，帮我总结成日志",
+      "understanding": "事情收尾让用户意识到自己需要明确结果，同时用户要求总结日志。",
+      "evidenceIncludes": ["事情收尾后", "我意识到自己需要明确的结果"],
+      "tags": ["混合表达", "判断变化"]
+    },
+    {
+      "id": "INT-EVAL-063",
+      "baseCaseId": "INT-EVAL-012",
+      "userText": "她主动帮我检查了一遍，不用再问了",
+      "understanding": "对方主动检查提供了帮助，同时用户要求停止追问。",
+      "evidenceIncludes": ["她主动帮我检查了一遍"],
+      "tags": ["混合表达", "帮助行为"]
+    },
+    {
+      "id": "INT-EVAL-064",
+      "baseCaseId": "INT-EVAL-012",
+      "userText": "朋友替我把遗漏补上了，就这样吧",
+      "understanding": "朋友帮助用户补上遗漏，同时用户希望结束追问。",
+      "evidenceIncludes": ["朋友替我把遗漏补上了"],
+      "tags": ["混合表达", "停止追问"]
+    },
+    {
+      "id": "INT-EVAL-065",
+      "baseCaseId": "INT-EVAL-013",
+      "userText": "我总想把所有细节都讲全，结果重点反而散了，不用再问了",
+      "understanding": "用户看见追求讲全导致重点分散，同时希望停止追问。",
+      "evidenceIncludes": ["我总想把所有细节都讲全", "重点反而散了"],
+      "tags": ["混合表达", "改进卡点"]
+    },
+    {
+      "id": "INT-EVAL-066",
+      "baseCaseId": "INT-EVAL-013",
+      "userText": "我一急就把话说乱了，就这样吧",
+      "understanding": "着急让用户表达混乱，同时用户希望结束追问。",
+      "evidenceIncludes": ["我一急就把话说乱了"],
+      "tags": ["混合表达", "状态卡点"]
+    },
+    {
+      "id": "INT-EVAL-067",
+      "baseCaseId": "INT-EVAL-014",
+      "userText": "听不太懂，其实我就是安心了",
+      "understanding": "用户希望简化问题，并明确表达自己安心了。",
+      "evidenceIncludes": ["我就是安心了"],
+      "tags": ["混合表达", "修复加回答"]
+    },
+    {
+      "id": "INT-EVAL-068",
+      "baseCaseId": "INT-EVAL-014",
+      "userText": "换种说法，我的感受就是轻松了",
+      "understanding": "用户希望换种说法，并回答自己的感受是轻松。",
+      "evidenceIncludes": ["我的感受就是轻松了"],
+      "tags": ["混合表达", "感受回答"]
+    },
+    {
+      "id": "INT-EVAL-069",
+      "baseCaseId": "INT-EVAL-015",
+      "userText": "这个问题不想说，不过我发现自己当时很慌",
+      "understanding": "用户跳过当前问题，同时补充自己当时很慌。",
+      "evidenceIncludes": ["我发现自己当时很慌"],
+      "tags": ["混合表达", "跳过加内容"]
+    },
+    {
+      "id": "INT-EVAL-070",
+      "baseCaseId": "INT-EVAL-015",
+      "userText": "跳过这个问题，我更想说自己当时没准备好",
+      "understanding": "用户跳过当前问题，并补充自己当时没有准备好。",
+      "evidenceIncludes": ["我更想说自己当时没准备好"],
+      "tags": ["混合表达", "切换焦点"]
+    },
+    {
+      "id": "INT-EVAL-071",
+      "baseCaseId": "INT-EVAL-016",
+      "userText": "说简单点，其实有人愿意陪着我就很重要",
+      "understanding": "用户希望简化问题，并表达陪伴对自己很重要。",
+      "evidenceIncludes": ["有人愿意陪着我就很重要"],
+      "tags": ["混合表达", "陪伴需要"]
+    },
+    {
+      "id": "INT-EVAL-072",
+      "baseCaseId": "INT-EVAL-016",
+      "userText": "换个说法，我想表达的是她愿意耐心等我",
+      "understanding": "用户希望换问法，并补充对方愿意耐心等待。",
+      "evidenceIncludes": ["她愿意耐心等我"],
+      "tags": ["混合表达", "关系回应"]
+    },
+    {
+      "id": "INT-EVAL-073",
+      "baseCaseId": "INT-EVAL-017",
+      "userText": "我妈",
+      "understanding": "用户的妈妈是当前事件中的帮助者。",
+      "evidenceIncludes": ["我妈"],
+      "tags": ["短回答", "人物称谓"]
+    },
+    {
+      "id": "INT-EVAL-074",
+      "baseCaseId": "INT-EVAL-017",
+      "userText": "母亲",
+      "understanding": "用户的母亲是当前事件中的帮助者。",
+      "evidenceIncludes": ["母亲"],
+      "tags": ["短回答", "正式称谓"]
+    },
+    {
+      "id": "INT-EVAL-075",
+      "baseCaseId": "INT-EVAL-018",
+      "userText": "难过",
+      "understanding": "难过是用户当时的情绪。",
+      "evidenceIncludes": ["难过"],
+      "tags": ["短回答", "情绪词"]
+    },
+    {
+      "id": "INT-EVAL-076",
+      "baseCaseId": "INT-EVAL-018",
+      "userText": "憋屈",
+      "understanding": "憋屈是用户当时的情绪。",
+      "evidenceIncludes": ["憋屈"],
+      "tags": ["短回答", "口语情绪"]
+    },
+    {
+      "id": "INT-EVAL-077",
+      "baseCaseId": "INT-EVAL-019",
+      "userText": "没",
+      "understanding": "用户明确表示当时不存在具体对话。",
+      "evidenceIncludes": ["没"],
+      "tags": ["短回答", "明确否定"]
+    },
+    {
+      "id": "INT-EVAL-078",
+      "baseCaseId": "INT-EVAL-019",
+      "userText": "没有过",
+      "understanding": "用户确认相关具体对话从未发生。",
+      "evidenceIncludes": ["没有过"],
+      "tags": ["短回答", "否定变体"]
+    },
+    {
+      "id": "INT-EVAL-079",
+      "baseCaseId": "INT-EVAL-020",
+      "userText": "大概是",
+      "understanding": "用户带有保留地认可当前理解。",
+      "evidenceIncludes": ["大概是"],
+      "tags": ["短回答", "不确定"]
+    },
+    {
+      "id": "INT-EVAL-080",
+      "baseCaseId": "INT-EVAL-020",
+      "userText": "可能吧",
+      "understanding": "用户以不确定语气认可当前方向。",
+      "evidenceIncludes": ["可能吧"],
+      "tags": ["短回答", "口语不确定"]
+    },
+    {
+      "id": "INT-EVAL-081",
+      "baseCaseId": "INT-EVAL-021",
+      "userText": "是的",
+      "understanding": "用户确认今天存在相关推进事件。",
+      "evidenceIncludes": ["是的"],
+      "tags": ["短回答", "肯定"]
+    },
+    {
+      "id": "INT-EVAL-082",
+      "baseCaseId": "INT-EVAL-021",
+      "userText": "对",
+      "understanding": "用户确认当前存在性问题。",
+      "evidenceIncludes": ["对"],
+      "tags": ["短回答", "极短肯定"]
+    },
+    {
+      "id": "INT-EVAL-083",
+      "baseCaseId": "INT-EVAL-022",
+      "userText": "安心了",
+      "understanding": "用户的状态变得安心。",
+      "evidenceIncludes": ["安心了"],
+      "tags": ["短回答", "状态变化"]
+    },
+    {
+      "id": "INT-EVAL-084",
+      "baseCaseId": "INT-EVAL-022",
+      "userText": "轻松了",
+      "understanding": "用户的状态变得轻松。",
+      "evidenceIncludes": ["轻松了"],
+      "tags": ["短回答", "放松"]
+    },
+    {
+      "id": "INT-EVAL-085",
+      "baseCaseId": "INT-EVAL-023",
+      "userText": "搭档",
+      "understanding": "搭档是共同完成事情的人。",
+      "evidenceIncludes": ["搭档"],
+      "tags": ["短回答", "人物关系"]
+    },
+    {
+      "id": "INT-EVAL-086",
+      "baseCaseId": "INT-EVAL-023",
+      "userText": "队友",
+      "understanding": "队友是共同完成事情的人。",
+      "evidenceIncludes": ["队友"],
+      "tags": ["短回答", "协作关系"]
+    },
+    {
+      "id": "INT-EVAL-087",
+      "baseCaseId": "INT-EVAL-024",
+      "userText": "不是",
+      "understanding": "用户否定准备不足这一推测。",
+      "evidenceIncludes": ["不是"],
+      "tags": ["短回答", "否定推测"]
+    },
+    {
+      "id": "INT-EVAL-088",
+      "baseCaseId": "INT-EVAL-024",
+      "userText": "不算",
+      "understanding": "用户认为当前推测不成立。",
+      "evidenceIncludes": ["不算"],
+      "tags": ["短回答", "否定变体"]
+    },
+    {
+      "id": "INT-EVAL-089",
+      "baseCaseId": "INT-EVAL-025",
+      "userText": "领导说我有病，我当时很难受",
+      "understanding": "用户转述领导的攻击，并表达难受。",
+      "evidenceIncludes": ["领导说我有病", "我当时很难受"],
+      "tags": ["事件转述", "敏感词"]
+    },
+    {
+      "id": "INT-EVAL-090",
+      "baseCaseId": "INT-EVAL-025",
+      "userText": "朋友骂我神经病，我一下就僵住了",
+      "understanding": "用户转述朋友的攻击，并表达当时的僵住反应。",
+      "evidenceIncludes": ["朋友骂我神经病", "我一下就僵住了"],
+      "tags": ["事件转述", "情绪反应"]
+    },
+    {
+      "id": "INT-EVAL-091",
+      "baseCaseId": "INT-EVAL-026",
+      "userText": "我问她“什么意思”，她转身就走了",
+      "understanding": "什么意思属于事件对话，对方随后离开。",
+      "evidenceIncludes": ["我问她“什么意思”", "她转身就走了"],
+      "tags": ["引用", "事件对话"]
+    },
+    {
+      "id": "INT-EVAL-092",
+      "baseCaseId": "INT-EVAL-026",
+      "userText": "我当时问“你这是什么意思”，他沉默了",
+      "understanding": "用户转述自己在事件中的提问以及对方的沉默。",
+      "evidenceIncludes": ["我当时问“你这是什么意思”", "他沉默了"],
+      "tags": ["引用", "问题修复反例"]
+    },
+    {
+      "id": "INT-EVAL-093",
+      "baseCaseId": "INT-EVAL-027",
+      "userText": "会议结束了，我整个人轻松下来",
+      "understanding": "会议结束让用户感到轻松。",
+      "evidenceIncludes": ["会议结束了", "我整个人轻松下来"],
+      "tags": ["事件结束", "状态变化"]
+    },
+    {
+      "id": "INT-EVAL-094",
+      "baseCaseId": "INT-EVAL-027",
+      "userText": "考试终于结束了，走出来时特别开心",
+      "understanding": "考试结束是用户开心的事件。",
+      "evidenceIncludes": ["考试终于结束了", "走出来时特别开心"],
+      "tags": ["事件结束", "开心"]
+    },
+    {
+      "id": "INT-EVAL-095",
+      "baseCaseId": "INT-EVAL-028",
+      "userText": "不是因为高兴，是因为这件事总算收住了",
+      "understanding": "用户否定高兴这一解释，修正为事情收住带来的变化。",
+      "evidenceIncludes": ["不是因为高兴", "是因为这件事总算收住了"],
+      "tags": ["因果修正", "否定推测"]
+    },
+    {
+      "id": "INT-EVAL-096",
+      "baseCaseId": "INT-EVAL-028",
+      "userText": "这不是开心，是终于不用悬着了",
+      "understanding": "用户修正AI理解，核心是事情不再悬着。",
+      "evidenceIncludes": ["这不是开心", "是终于不用悬着了"],
+      "tags": ["因果修正", "结束感"]
+    },
+    {
+      "id": "INT-EVAL-097",
+      "baseCaseId": "INT-EVAL-029",
+      "userText": "我改一下，真正的问题是我怕说错",
+      "understanding": "用户修正此前信息，真正卡点是害怕说错。",
+      "evidenceIncludes": ["我改一下", "真正的问题是我怕说错"],
+      "tags": ["自我修正", "改进卡点"]
+    },
+    {
+      "id": "INT-EVAL-098",
+      "baseCaseId": "INT-EVAL-029",
+      "userText": "更准确地说，我是担心别人不认可",
+      "understanding": "用户将此前原因修正为担心不被认可。",
+      "evidenceIncludes": ["更准确地说", "我是担心别人不认可"],
+      "tags": ["自我修正", "准确表达"]
+    },
+    {
+      "id": "INT-EVAL-099",
+      "baseCaseId": "INT-EVAL-030",
+      "userText": "她说“别再问了，先喝口水”，我突然觉得有人照顾我",
+      "understanding": "别再问了属于事件原话，用户感受到被照顾。",
+      "evidenceIncludes": ["别再问了，先喝口水", "我突然觉得有人照顾我"],
+      "tags": ["引用", "照顾行为"]
+    },
+    {
+      "id": "INT-EVAL-100",
+      "baseCaseId": "INT-EVAL-030",
+      "userText": "朋友对我说“停止工作，今天先休息”，我觉得她很懂我",
+      "understanding": "停止工作属于朋友的建议，用户感受到被理解。",
+      "evidenceIncludes": ["停止工作，今天先休息", "我觉得她很懂我"],
+      "tags": ["引用", "停止反例"]
+    },
+    {
+      "id": "INT-EVAL-101",
+      "baseCaseId": "INT-EVAL-031",
+      "userText": "这个刚才已经问过了",
+      "understanding": "用户反馈当前问题已经重复。",
+      "evidenceIncludes": [],
+      "tags": ["重复提问", "简短反馈"]
+    },
+    {
+      "id": "INT-EVAL-102",
+      "baseCaseId": "INT-EVAL-031",
+      "userText": "你又在问同一件事",
+      "understanding": "用户反馈AI再次追问相同目标。",
+      "evidenceIncludes": [],
+      "tags": ["重复提问", "口语反馈"]
+    },
+    {
+      "id": "INT-EVAL-103",
+      "baseCaseId": "INT-EVAL-032",
+      "userText": "整个访谈一直在重复同一个问题",
+      "understanding": "用户反馈访谈持续重复同一问题。",
+      "evidenceIncludes": [],
+      "tags": ["产品反馈", "重复问题"]
+    },
+    {
+      "id": "INT-EVAL-104",
+      "baseCaseId": "INT-EVAL-032",
+      "userText": "问法来回都是一样的，换个方向",
+      "understanding": "用户反馈问法重复，并希望切换方向。",
+      "evidenceIncludes": [],
+      "tags": ["产品反馈", "换方向"]
+    },
+    {
+      "id": "INT-EVAL-105",
+      "baseCaseId": "INT-EVAL-033",
+      "userText": "我有点累了，不想再聊了",
+      "understanding": "用户感到疲惫并希望停止当前深聊。",
+      "evidenceIncludes": [],
+      "tags": ["疲惫", "停止深聊"]
+    },
+    {
+      "id": "INT-EVAL-106",
+      "baseCaseId": "INT-EVAL-033",
+      "userText": "脑子很累，不想回答了",
+      "understanding": "用户当前精力不足，希望停止回答。",
+      "evidenceIncludes": [],
+      "tags": ["疲惫", "低压力选择"]
+    },
+    {
+      "id": "INT-EVAL-107",
+      "baseCaseId": "INT-EVAL-034",
+      "userText": "有点压力，先这样",
+      "understanding": "用户感到压力并希望结束当前追问。",
+      "evidenceIncludes": [],
+      "tags": ["压力", "明确停止"]
+    },
+    {
+      "id": "INT-EVAL-108",
+      "baseCaseId": "INT-EVAL-034",
+      "userText": "我很累，先到这",
+      "understanding": "用户感到疲惫并希望当前访谈到此为止。",
+      "evidenceIncludes": [],
+      "tags": ["疲惫", "结束当前访谈"]
+    },
+    {
+      "id": "INT-EVAL-109",
+      "baseCaseId": "INT-EVAL-035",
+      "userText": "这个问法让我难受，换个问题",
+      "understanding": "用户对当前问法感到难受，希望切换问题。",
+      "evidenceIncludes": [],
+      "tags": ["不舒服", "换问题"]
+    },
+    {
+      "id": "INT-EVAL-110",
+      "baseCaseId": "INT-EVAL-035",
+      "userText": "这道问题让我有压力，跳过吧",
+      "understanding": "当前问题给用户带来压力，用户希望跳过。",
+      "evidenceIncludes": [],
+      "tags": ["压力", "跳过问题"]
+    },
+    {
+      "id": "INT-EVAL-111",
+      "baseCaseId": "INT-EVAL-036",
+      "userText": "生成日志吧",
+      "understanding": "恢复时继续使用用户的生成要求。",
+      "evidenceIncludes": [],
+      "tags": ["恢复", "生成日志"]
+    },
+    {
+      "id": "INT-EVAL-112",
+      "baseCaseId": "INT-EVAL-036",
+      "userText": "先整理成日志",
+      "understanding": "恢复时保持整理日志的要求。",
+      "evidenceIncludes": [],
+      "tags": ["恢复", "整理日志"]
+    },
+    {
+      "id": "INT-EVAL-113",
+      "baseCaseId": "INT-EVAL-037",
+      "userText": "她替我把重点标出来了，不用再问了",
+      "understanding": "恢复时保留对方标记重点的帮助和停止要求。",
+      "evidenceIncludes": ["她替我把重点标出来了"],
+      "tags": ["恢复", "混合停止"]
+    },
+    {
+      "id": "INT-EVAL-114",
+      "baseCaseId": "INT-EVAL-037",
+      "userText": "朋友帮我重新排好了顺序，先到这吧",
+      "understanding": "恢复时保留朋友整理顺序的帮助和结束要求。",
+      "evidenceIncludes": ["朋友帮我重新排好了顺序"],
+      "tags": ["恢复", "内容保留"]
+    },
+    {
+      "id": "INT-EVAL-115",
+      "baseCaseId": "INT-EVAL-038",
+      "userText": "太抽象了，简单点",
+      "understanding": "恢复时保持简化当前问题的要求。",
+      "evidenceIncludes": [],
+      "tags": ["恢复", "问题修复"]
+    },
+    {
+      "id": "INT-EVAL-116",
+      "baseCaseId": "INT-EVAL-038",
+      "userText": "没听懂，换个问法",
+      "understanding": "恢复时保持换问法的要求。",
+      "evidenceIncludes": [],
+      "tags": ["恢复", "换问法"]
+    },
+    {
+      "id": "INT-EVAL-117",
+      "baseCaseId": "INT-EVAL-039",
+      "userText": "对",
+      "understanding": "恢复后仍把对识别为当前问题的有效肯定。",
+      "evidenceIncludes": ["对"],
+      "tags": ["恢复", "短回答"]
+    },
+    {
+      "id": "INT-EVAL-118",
+      "baseCaseId": "INT-EVAL-039",
+      "userText": "是的",
+      "understanding": "恢复后仍把是的识别为有效回答。",
+      "evidenceIncludes": ["是的"],
+      "tags": ["恢复", "肯定回答"]
+    },
+    {
+      "id": "INT-EVAL-119",
+      "baseCaseId": "INT-EVAL-040",
+      "userText": "她说“别再问了，先吃点东西”，我觉得很贴心",
+      "understanding": "恢复时将别再问了保留为事件原话，并理解用户的贴心感受。",
+      "evidenceIncludes": ["别再问了，先吃点东西", "我觉得很贴心"],
+      "tags": ["恢复", "引用保护"]
+    },
+    {
+      "id": "INT-EVAL-120",
+      "baseCaseId": "INT-EVAL-040",
+      "userText": "妈妈说“今天不用再问我了，早点睡”，我觉得她是在心疼我",
+      "understanding": "恢复时将不用再问保留为妈妈的原话，并理解用户感受到的关心。",
+      "evidenceIncludes": ["今天不用再问我了，早点睡", "我觉得她是在心疼我"],
+      "tags": ["恢复", "事件原话"]
+    }
+  ]
+}

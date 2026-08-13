@@ -83,6 +83,17 @@ export function normalizeInterviewRespondError({
     return buildInterviewIssue("INTERVIEW_ACTION_UNSUPPORTED", { requestId });
   }
 
+  if (
+    errorMessage === "INTERVIEW_REGENERATION_UNAVAILABLE" ||
+    errorMessage === "INTERVIEW_REGENERATION_INTENT_UNAVAILABLE" ||
+    errorMessage === "INTERVIEW_REGENERATION_LIMIT_REACHED" ||
+    errorMessage === "INTERVIEW_BRANCH_OUT_OF_DATE" ||
+    errorMessage === "INTERVIEW_BRANCH_LOCKED_BY_JOURNAL" ||
+    errorMessage === "INTERVIEW_REGENERATION_FAILED"
+  ) {
+    return buildInterviewIssue(errorMessage, { requestId });
+  }
+
   if (errorMessage === "ASSISTANT_ACTION_MISSING") {
     return buildInterviewIssue("ASSISTANT_ACTION_MISSING", { requestId });
   }
@@ -97,7 +108,7 @@ export function normalizeInterviewRespondError({
 export function logInterviewRespondError(input: {
   error: unknown;
   issue: InterviewIssue;
-  route: "respond" | "respond/stream";
+  route: "respond" | "respond/stream" | "branch/select" | "branch/preview";
   sessionId?: string | null;
 }) {
   logger.error(

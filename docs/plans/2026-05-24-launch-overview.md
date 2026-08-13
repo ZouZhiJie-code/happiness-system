@@ -2,6 +2,8 @@
 
 最后更新：`2026-05-25`
 
+> 历史发布总览。本文保留首批内测阶段的决策和证据；当前生产状态与主域名以 [`docs/handoff.md`](../handoff.md) 和 [`docs/vercel-preview-production-lane.md`](../vercel-preview-production-lane.md) 为准。
+
 ## 1. 本轮发布目标
 
 本轮目标不是正式公开上线，而是开启首批邀请制内测，并把范围控制在：

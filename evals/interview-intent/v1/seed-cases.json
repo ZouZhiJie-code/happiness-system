@@ -1,0 +1,1678 @@
+{
+  "datasetId": "interview-intent-seed",
+  "version": "intent-eval-v1.1",
+  "status": "active",
+  "updatedAt": "2026-07-20",
+  "factSource": "docs/interview-intent-evaluation-source-of-truth.md",
+  "cases": [
+    {
+      "id": "INT-EVAL-001",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "explicit_control",
+      "semanticFamily": "generate-pure-direct",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这份轻松为什么对你重要？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "直接生成日志吧",
+      "productExpectation": {
+        "understanding": "用户希望使用已有内容生成日志。",
+        "action": "进入日志材料校验和收束。",
+        "nextStep": "材料足够时生成日志，材料较少时提供当前版本或低压力选择。",
+        "riskBehaviors": ["继续追问", "把操作指令写入日志"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up",
+        "nextQuestionStyle": "normal"
+      },
+      "tags": ["生成日志", "纯控制", "P0"]
+    },
+    {
+      "id": "INT-EVAL-002",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "explicit_control",
+      "semanticFamily": "stop-pure-direct",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "这件事为什么让你觉得今天没有白过？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "先别问了",
+      "productExpectation": {
+        "understanding": "用户希望停止当前追问。",
+        "action": "停止追问并检查已有材料。",
+        "nextStep": "提供当前版本整理或低压力退出选择。",
+        "riskBehaviors": ["继续追问原因", "忽略用户边界"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "session",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_stop_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["停止追问", "纯控制", "P0"]
+    },
+    {
+      "id": "INT-EVAL-003",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "historical_badcase",
+      "severity": "P0",
+      "category": "explicit_control",
+      "semanticFamily": "repair-simplify",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "这件事怎样改变了你原来的判断依据？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "太绕了，说简单点",
+      "productExpectation": {
+        "understanding": "用户希望当前问题更容易理解。",
+        "action": "保留当前进度并简化问题。",
+        "nextStep": "围绕同一信息目标给出具体、简短的问法。",
+        "riskBehaviors": ["推进新的信息目标", "继续使用抽象表达"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_repair_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": false,
+        "nextAction": "repair_question",
+        "nextQuestionStyle": "simplified"
+      },
+      "tags": ["问题修复", "简化表达", "P0"]
+    },
+    {
+      "id": "INT-EVAL-004",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P1",
+      "category": "explicit_control",
+      "semanticFamily": "skip-current-question",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "当时最卡住你的点是什么？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "这个问题不想说，跳过吧",
+      "productExpectation": {
+        "understanding": "用户希望跳过当前问题。",
+        "action": "尊重跳过并保持访谈可继续。",
+        "nextStep": "选择新的信息目标或提供低压力选择。",
+        "riskBehaviors": ["继续追问同一内容", "把拒绝回答当作事件事实"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "skip_question",
+        "controlSignalsInclude": ["skip_question"],
+        "dialogueActsInclude": ["decline_answer"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_skip_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": false,
+        "nextAction": "continue_interview",
+        "nextQuestionStyle": "new_angle"
+      },
+      "tags": ["跳过问题", "拒绝回答", "P1"]
+    },
+    {
+      "id": "INT-EVAL-005",
+      "caseVersion": "1.1",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P1",
+      "category": "explicit_control",
+      "semanticFamily": "switch-event-direct",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "她当时具体做了什么？",
+        "questionSpec": { "target": "event_anchor", "subTarget": "kind_action" }
+      },
+      "userText": "我想说另一件事",
+      "productExpectation": {
+        "understanding": "用户希望切换到新的事件片段。",
+        "action": "结束当前片段的追问。",
+        "nextStep": "从新事件的具体时刻开始。",
+        "riskBehaviors": ["继续围绕旧事件提问", "把这句话当作事件内容"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "switch_event",
+        "controlSignalsInclude": ["switch_event"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_event",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_event_switch"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "switch_event"
+      },
+      "tags": ["切换事件", "片段管理", "P1"]
+    },
+    {
+      "id": "INT-EVAL-006",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P1",
+      "category": "explicit_control",
+      "semanticFamily": "switch-dimension-direct",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这个时刻为什么让你开心？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "这个更像感谢",
+      "productExpectation": {
+        "understanding": "用户认为当前内容更适合感谢维度。",
+        "action": "停止当前维度推进并发起维度切换。",
+        "nextStep": "向用户展示切换到感谢维度的入口。",
+        "riskBehaviors": ["继续开心维度追问", "静默改变维度"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "switch_dimension",
+        "controlSignalsInclude": ["switch_dimension"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "dimension",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_dimension_switch"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "switch_dimension"
+      },
+      "tags": ["切换维度", "感谢", "P1"]
+    },
+    {
+      "id": "INT-EVAL-007",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P0",
+      "category": "explicit_control",
+      "semanticFamily": "generate-pure-summary",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "这段关系让你看见了什么？",
+        "questionSpec": { "target": "judgment_clue", "subTarget": "relationship_signal" }
+      },
+      "userText": "帮我总结成日志",
+      "productExpectation": {
+        "understanding": "用户希望整理当前内容。",
+        "action": "进入日志材料校验和收束。",
+        "nextStep": "生成当前版本或提供材料不足时的选择。",
+        "riskBehaviors": ["把总结要求当作关系内容", "继续深挖"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["生成日志", "同义表达", "P0"]
+    },
+    {
+      "id": "INT-EVAL-008",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "historical_badcase",
+      "severity": "P0",
+      "category": "explicit_control",
+      "semanticFamily": "hostile-stop-direct",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "你能再说一个具体片段吗？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "你有病吧，别再问了",
+      "productExpectation": {
+        "understanding": "用户对AI强烈不满并要求停止。",
+        "action": "立即停止追问。",
+        "nextStep": "提供退出或整理当前版本的低压力选择。",
+        "riskBehaviors": ["继续解释问题", "要求用户补充材料"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "session",
+        "frustration": "strong",
+        "reasonCodesInclude": ["direct_hostility", "explicit_stop_request", "conversation_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["强烈边界", "停止追问", "P0"]
+    },
+    {
+      "id": "INT-EVAL-009",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-generate-meaning",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这个时刻为什么值得你记住？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "被理解很重要，直接生成吧",
+      "productExpectation": {
+        "understanding": "用户表达了被理解的重要性，同时希望生成日志。",
+        "action": "保留意义内容并进入日志收束。",
+        "nextStep": "使用刚补充的内容校验日志完整度。",
+        "riskBehaviors": ["遗漏被理解很重要", "继续追问意义"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["被理解很重要"],
+        "explicitAbsence": false,
+        "answeredTarget": "judgment_clue",
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["混合表达", "内容保留", "生成日志", "P0"]
+    },
+    {
+      "id": "INT-EVAL-010",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-generate-progress",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "今天具体推进了什么？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "我把方案终于改完了，生成日志吧",
+      "productExpectation": {
+        "understanding": "用户完成了方案修改，并希望生成日志。",
+        "action": "保留完成进展并进入收束。",
+        "nextStep": "使用完成证据校验当前日志。",
+        "riskBehaviors": ["遗漏方案改完", "继续询问推进结果"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["我把方案终于改完了"],
+        "explicitAbsence": false,
+        "answeredTarget": "insight_evidence",
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["混合表达", "充实", "生成日志", "P0"]
+    },
+    {
+      "id": "INT-EVAL-011",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-generate-event-ending",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "你从这件事里看见了什么？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "项目终于结束了，我发现自己其实很需要确定感，直接生成吧",
+      "productExpectation": {
+        "understanding": "项目结束触发了用户对确定感的认识，并伴随生成要求。",
+        "action": "保留完整洞察并进入日志收束。",
+        "nextStep": "使用新洞察校验当前版本。",
+        "riskBehaviors": ["把项目结束理解为停止访谈", "遗漏确定感"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["项目终于结束了", "很需要确定感"],
+        "explicitAbsence": false,
+        "answeredTarget": "insight_evidence",
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["混合表达", "事件结束", "生成日志", "P0"]
+    },
+    {
+      "id": "INT-EVAL-012",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-stop-kind-action",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "对方当时具体做了什么？",
+        "questionSpec": { "target": "event_anchor", "subTarget": "kind_action" }
+      },
+      "userText": "今天同事帮我改完方案，先别问了",
+      "productExpectation": {
+        "understanding": "同事帮助用户改完方案，同时用户希望停止追问。",
+        "action": "保留帮助行为并停止追问。",
+        "nextStep": "按已有材料提供当前版本或低压力选择。",
+        "riskBehaviors": ["遗漏同事的帮助", "继续询问细节"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["今天同事帮我改完方案"],
+        "explicitAbsence": false,
+        "answeredTarget": "kind_action",
+        "referenceTarget": "session",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_stop_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["混合表达", "停止追问", "感谢", "P0"]
+    },
+    {
+      "id": "INT-EVAL-013",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-stop-friction",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "当时真正卡住你的是什么？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "我总想一次说得很完整，所以越说越乱，先到这吧",
+      "productExpectation": {
+        "understanding": "用户识别到追求一次说完整造成表达混乱，并希望停止。",
+        "action": "保留卡点内容并停止追问。",
+        "nextStep": "按当前材料整理或退出。",
+        "riskBehaviors": ["遗漏卡点", "继续制定改进计划"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["我总想一次说得很完整", "越说越乱"],
+        "explicitAbsence": false,
+        "answeredTarget": "insight_evidence",
+        "referenceTarget": "session",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_stop_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["混合表达", "改进", "停止追问", "P0"]
+    },
+    {
+      "id": "INT-EVAL-014",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-repair-answer",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "这个片段如何重构了你此前的判断框架？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "你问得太绕了，其实就是我松了口气",
+      "productExpectation": {
+        "understanding": "用户反馈问法难懂，同时明确回答自己松了口气。",
+        "action": "接收感受内容并调整后续问法。",
+        "nextStep": "下一问使用更简单的表达。",
+        "riskBehaviors": ["丢弃松了口气", "重复原问题"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["我松了口气"],
+        "explicitAbsence": false,
+        "answeredTarget": "judgment_clue",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_repair_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": false,
+        "nextAction": "continue_interview",
+        "nextQuestionStyle": "simplified"
+      },
+      "tags": ["混合表达", "问题修复", "明确回答", "P0"]
+    },
+    {
+      "id": "INT-EVAL-015",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-skip-new-focus",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "你觉得自己为什么会这样？",
+        "questionSpec": { "target": "prior_assumption" }
+      },
+      "userText": "这个问题不想说，不过我更在意的是当时太着急了",
+      "productExpectation": {
+        "understanding": "用户跳过原因问题，同时补充了着急这一状态。",
+        "action": "保留状态内容并换一个信息方向。",
+        "nextStep": "围绕可描述的着急时刻继续。",
+        "riskBehaviors": ["继续追问为什么", "遗漏太着急"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "skip_question",
+        "controlSignalsInclude": ["skip_question"],
+        "dialogueActsInclude": ["provide_content", "decline_answer"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["我更在意的是当时太着急了"],
+        "explicitAbsence": false,
+        "answeredTarget": "prior_assumption",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_skip_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": false,
+        "nextAction": "continue_interview",
+        "nextQuestionStyle": "new_angle"
+      },
+      "tags": ["混合表达", "跳过问题", "内容保留", "P1"]
+    },
+    {
+      "id": "INT-EVAL-016",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "mixed_content_control",
+      "semanticFamily": "mixed-repair-seen-need",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "这份回应照见了你怎样的关系性需要？",
+        "questionSpec": { "target": "insight_evidence", "subTarget": "seen_need" }
+      },
+      "userText": "换个问法，我只是觉得有人愿意听我说完很重要",
+      "productExpectation": {
+        "understanding": "用户希望换问法，并表达完整倾听对自己很重要。",
+        "action": "保留被倾听的需要并调整问法。",
+        "nextStep": "使用自然、具体的语言继续。",
+        "riskBehaviors": ["遗漏被完整倾听", "继续使用理论化表达"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["有人愿意听我说完很重要"],
+        "explicitAbsence": false,
+        "answeredTarget": "seen_need",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_repair_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": false,
+        "nextAction": "continue_interview",
+        "nextQuestionStyle": "simplified"
+      },
+      "tags": ["混合表达", "问题修复", "感谢", "P1"]
+    },
+    {
+      "id": "INT-EVAL-017",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-person-relation",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "当时是谁帮了你？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "妈妈",
+      "productExpectation": {
+        "understanding": "妈妈是当前事件中的帮助者。",
+        "action": "将人物回答计为有效内容。",
+        "nextStep": "继续询问妈妈具体做了什么。",
+        "riskBehaviors": ["要求用户说完整句子", "重复询问是谁"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["妈妈"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "nextAction": "continue_interview"
+      },
+      "tags": ["短回答", "人物", "感谢", "P1"]
+    },
+    {
+      "id": "INT-EVAL-018",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-feeling",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "那一刻你心里是什么感受？",
+        "questionSpec": { "target": "reaction_evidence" }
+      },
+      "userText": "委屈",
+      "productExpectation": {
+        "understanding": "委屈是用户当时的感受。",
+        "action": "将情绪回答计为有效内容。",
+        "nextStep": "围绕触发委屈的判断或片段继续。",
+        "riskBehaviors": ["要求展开后才计为回答", "重复询问感受"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["委屈"],
+        "explicitAbsence": false,
+        "answeredTarget": "reaction_evidence",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "感受", "思考", "P1"]
+    },
+    {
+      "id": "INT-EVAL-019",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "historical_badcase",
+      "severity": "P0",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-explicit-absence",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "当时有一段具体对话吗？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "没有",
+      "productExpectation": {
+        "understanding": "用户明确回答不存在具体对话。",
+        "action": "消费当前目标并保留原有证据深度。",
+        "nextStep": "切换到顾虑、画面或选择瞬间。",
+        "riskBehaviors": ["再次询问具体对话", "把没有当作低质量回复"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content", "deny_hypothesis"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["没有"],
+        "explicitAbsence": true,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer", "explicit_absence"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "nextAction": "continue_interview"
+      },
+      "tags": ["短回答", "明确否定", "防重复", "P0"]
+    },
+    {
+      "id": "INT-EVAL-020",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-uncertain-yes",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这算是一种被理解的感觉吗？",
+        "questionSpec": { "target": "insight_evidence" }
+      },
+      "userText": "算是",
+      "productExpectation": {
+        "understanding": "用户带有保留地认可当前理解。",
+        "action": "计为有效回答并保留不确定语气。",
+        "nextStep": "用低压力方式继续确认具体含义。",
+        "riskBehaviors": ["当作无效回复", "把保留回答强化为确定结论"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content", "express_uncertainty"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["算是"],
+        "explicitAbsence": false,
+        "answeredTarget": "insight_evidence",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "不确定", "开心", "P1"]
+    },
+    {
+      "id": "INT-EVAL-021",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-existence-yes",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "今天有一件让你觉得有推进的事吗？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "有",
+      "productExpectation": {
+        "understanding": "用户确认今天存在相关事件。",
+        "action": "将存在性回答计为有效回复。",
+        "nextStep": "请用户说出具体事件。",
+        "riskBehaviors": ["把有当作低质量回复", "重复询问是否存在"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["有"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "存在性确认", "充实", "P1"]
+    },
+    {
+      "id": "INT-EVAL-022",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-state-shift",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "那一刻你的状态有什么变化？",
+        "questionSpec": { "target": "reaction_evidence" }
+      },
+      "userText": "松了口气",
+      "productExpectation": {
+        "understanding": "用户从紧张转为放松。",
+        "action": "将状态变化计为有效内容。",
+        "nextStep": "继续了解这份放松从哪里来。",
+        "riskBehaviors": ["要求用户扩写", "重复询问状态变化"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["松了口气"],
+        "explicitAbsence": false,
+        "answeredTarget": "reaction_evidence",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "状态变化", "开心", "P1"]
+    },
+    {
+      "id": "INT-EVAL-023",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-person-colleague",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "这件事主要是和谁一起完成的？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "同事",
+      "productExpectation": {
+        "understanding": "同事是共同完成事情的人。",
+        "action": "将人物回答计为有效内容。",
+        "nextStep": "继续了解协作中的具体贡献。",
+        "riskBehaviors": ["重复询问人物", "忽略简短关系词"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["同事"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "人物", "充实", "P1"]
+    },
+    {
+      "id": "INT-EVAL-024",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "semanticFamily": "short-negative-qualifier",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "这算是因为准备不足吗？",
+        "questionSpec": { "target": "prior_assumption" }
+      },
+      "userText": "不算",
+      "productExpectation": {
+        "understanding": "用户否定准备不足这一推测。",
+        "action": "消费当前假设并保持已有内容。",
+        "nextStep": "换一个可能的卡点继续。",
+        "riskBehaviors": ["继续追问准备不足", "把否定当作无效回复"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content", "deny_hypothesis"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["不算"],
+        "explicitAbsence": true,
+        "answeredTarget": "prior_assumption",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer", "explicit_absence"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["短回答", "否定推测", "改进", "P1"]
+    },
+    {
+      "id": "INT-EVAL-025",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "semanticFamily": "reported-hostility-event",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "当时发生了什么？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "同事骂我有病，我很难受",
+      "productExpectation": {
+        "understanding": "用户在转述同事的攻击，并表达难受。",
+        "action": "作为事件内容继续理解。",
+        "nextStep": "承接用户感受，继续了解事件影响。",
+        "riskBehaviors": ["判断用户在攻击AI", "停止访谈"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["同事骂我有病", "我很难受"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "reasonCodesInclude": ["quoted_or_reported_event"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["事件转述", "敏感词", "P0"]
+    },
+    {
+      "id": "INT-EVAL-026",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "semanticFamily": "quoted-repair-keyword",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "哪一段对话让你开始重新想这件事？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "我问他“什么意思”，他一直没回答",
+      "productExpectation": {
+        "understanding": "什么意思属于事件中的原话。",
+        "action": "作为具体对话内容继续理解。",
+        "nextStep": "继续了解对方没有回答带来的判断变化。",
+        "riskBehaviors": ["触发问题修复", "更换AI问法"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["我问他“什么意思”", "他一直没回答"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "reasonCodesInclude": ["quoted_or_reported_event"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["引用", "问题修复反例", "P0"]
+    },
+    {
+      "id": "INT-EVAL-027",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "semanticFamily": "event-ending-content",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "今天发生了什么让你松下来？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "今天项目结束了，终于可以休息一下",
+      "productExpectation": {
+        "understanding": "项目结束是让用户放松的事件。",
+        "action": "作为正常内容继续理解。",
+        "nextStep": "继续了解休息带来的状态变化。",
+        "riskBehaviors": ["触发停止访谈", "直接结束当前维度"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["今天项目结束了", "终于可以休息一下"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": []
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["事件结束", "停止反例", "P0"]
+    },
+    {
+      "id": "INT-EVAL-028",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "manual_acceptance",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "semanticFamily": "correct-causal-interpretation",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "所以你是因为开心才松了口气吗？",
+        "questionSpec": { "target": "prior_assumption" }
+      },
+      "userText": "这不是因为开心，是因为终于结束了",
+      "productExpectation": {
+        "understanding": "用户否定开心这一推测，修正为事情结束带来的放松。",
+        "action": "清理旧推测并接收新的原因。",
+        "nextStep": "围绕结束带来的变化继续。",
+        "riskBehaviors": ["保留开心结论", "触发停止访谈"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content", "deny_hypothesis", "correct_previous"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["这不是因为开心", "是因为终于结束了"],
+        "explicitAbsence": false,
+        "answeredTarget": "prior_assumption",
+        "referenceTarget": "previous_interpretation",
+        "frustration": "none",
+        "reasonCodesInclude": []
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["修正理解", "否定推测", "P0"]
+    },
+    {
+      "id": "INT-EVAL-029",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P1",
+      "category": "quote_report_correction",
+      "semanticFamily": "self-correction",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "当时主要是时间不够吗？",
+        "questionSpec": { "target": "prior_assumption" }
+      },
+      "userText": "刚才说错了，其实是我一直不敢开口",
+      "productExpectation": {
+        "understanding": "用户修正了此前信息，真正卡点是不敢开口。",
+        "action": "使用新信息覆盖旧理解。",
+        "nextStep": "围绕不敢开口的具体时刻继续。",
+        "riskBehaviors": ["继续保留时间不够", "遗漏自我修正"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content", "correct_previous", "deny_hypothesis"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["刚才说错了", "我一直不敢开口"],
+        "explicitAbsence": false,
+        "answeredTarget": "prior_assumption",
+        "referenceTarget": "previous_interpretation",
+        "frustration": "none",
+        "reasonCodesInclude": []
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["修正理解", "改进", "P1"]
+    },
+    {
+      "id": "INT-EVAL-030",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "semanticFamily": "quoted-stop-keyword",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "她当时说了什么让你觉得被照顾？",
+        "questionSpec": { "target": "event_anchor", "subTarget": "kind_action" }
+      },
+      "userText": "她跟我说“别问了，你先休息一下”，我觉得被接住了",
+      "productExpectation": {
+        "understanding": "别问了属于对方在事件中的原话，用户感到被接住。",
+        "action": "作为感谢事件内容继续理解。",
+        "nextStep": "继续了解被接住回应了什么需要。",
+        "riskBehaviors": ["停止AI访谈", "遗漏对方的照顾表达"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["别问了，你先休息一下", "我觉得被接住了"],
+        "explicitAbsence": false,
+        "answeredTarget": "kind_action",
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "reasonCodesInclude": ["quoted_or_reported_event"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true
+      },
+      "tags": ["引用", "停止反例", "感谢", "P0"]
+    },
+    {
+      "id": "INT-EVAL-031",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "historical_badcase",
+      "severity": "P0",
+      "category": "pressure_feedback",
+      "semanticFamily": "repeated-question-feedback",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "当时发生了什么？",
+        "questionSpec": { "target": "event_anchor" }
+      },
+      "userText": "这个问题你已经反复问了",
+      "productExpectation": {
+        "understanding": "用户反馈当前信息目标已经重复。",
+        "action": "停止重复提问并换角度。",
+        "nextStep": "选择新的信息目标。",
+        "riskBehaviors": ["换句话重复原问题", "把反馈抽取为事件内容"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "mild",
+        "reasonCodesInclude": ["conversation_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "nextAction": "repair_question",
+        "nextQuestionStyle": "new_angle"
+      },
+      "tags": ["重复提问", "用户反馈", "P0"]
+    },
+    {
+      "id": "INT-EVAL-032",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "historical_badcase",
+      "severity": "P0",
+      "category": "pressure_feedback",
+      "semanticFamily": "product-repetition-feedback",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "为什么这件事让你觉得值得？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "你这些问题一直重复，问法也很单一",
+      "productExpectation": {
+        "understanding": "用户反馈访谈重复且角度单一。",
+        "action": "停止当前提问路径并换信息目标。",
+        "nextStep": "提供新角度或低压力选择。",
+        "riskBehaviors": ["继续追问为什么值得", "把产品反馈写入日志"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "mild",
+        "reasonCodesInclude": ["conversation_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "nextAction": "repair_question",
+        "nextQuestionStyle": "new_angle"
+      },
+      "tags": ["重复提问", "产品反馈", "P0"]
+    },
+    {
+      "id": "INT-EVAL-033",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P1",
+      "category": "pressure_feedback",
+      "semanticFamily": "fatigue-low-pressure",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "下一次你准备怎样做得更好？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "我有点累，不想想这么多了",
+      "productExpectation": {
+        "understanding": "用户感到疲惫，希望降低当前访谈压力。",
+        "action": "停止深挖并提供低压力选择。",
+        "nextStep": "让用户选择继续、整理当前版本或退出。",
+        "riskBehaviors": ["继续要求制定计划", "把疲惫当作改进内容"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "session",
+        "frustration": "mild",
+        "reasonCodesInclude": ["conversation_feedback", "fatigue_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["疲惫", "低压力选择", "P1"]
+    },
+    {
+      "id": "INT-EVAL-034",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "synthetic_variant",
+      "severity": "P0",
+      "category": "pressure_feedback",
+      "semanticFamily": "pressure-explicit-stop",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "你还能再提炼一个规律吗？",
+        "questionSpec": { "target": "judgment_clue" }
+      },
+      "userText": "压力有点大，先到这吧",
+      "productExpectation": {
+        "understanding": "用户感到压力并明确结束当前追问。",
+        "action": "停止追问。",
+        "nextStep": "提供当前版本整理或退出。",
+        "riskBehaviors": ["继续要求提炼", "忽视压力反馈"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "session",
+        "frustration": "mild",
+        "reasonCodesInclude": ["explicit_stop_request", "conversation_feedback", "fatigue_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "tags": ["压力", "明确停止", "P0"]
+    },
+    {
+      "id": "INT-EVAL-035",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "intent_policy",
+      "source": "product_requirement",
+      "severity": "P1",
+      "category": "pressure_feedback",
+      "semanticFamily": "uncomfortable-switch-angle",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "你觉得这段关系说明了什么？",
+        "questionSpec": { "target": "judgment_clue", "subTarget": "relationship_signal" }
+      },
+      "userText": "这个问题让我不舒服，换个角度吧",
+      "productExpectation": {
+        "understanding": "用户对当前问题感到不舒服，希望换角度。",
+        "action": "跳过当前目标并记录体验反馈。",
+        "nextStep": "选择更具体、压力更低的信息方向。",
+        "riskBehaviors": ["抽取不舒服为关系事实", "继续追问关系意义"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "skip_question",
+        "controlSignalsInclude": ["skip_question"],
+        "dialogueActsInclude": ["give_feedback"],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "mild",
+        "reasonCodesInclude": ["explicit_skip_request", "conversation_feedback"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": false,
+        "nextAction": "continue_interview",
+        "nextQuestionStyle": "new_angle"
+      },
+      "tags": ["不舒服", "换角度", "P1"]
+    },
+    {
+      "id": "INT-EVAL-036",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "persistence_contract",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "recovery",
+      "semanticFamily": "recovery-generate-pure",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这件事为什么让你开心？",
+        "questionSpec": { "target": "insight_evidence", "stageIntent": "resume" }
+      },
+      "userText": "直接生成吧",
+      "productExpectation": {
+        "understanding": "恢复时继续使用首次识别到的生成要求。",
+        "action": "复用理解并进入收束。",
+        "nextStep": "从失败位置继续生成。",
+        "riskBehaviors": ["重新解释为普通内容", "重复保存用户原话"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "generate_draft",
+        "controlSignalsInclude": ["generate_draft"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_generate_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "recoveryExpectation": {
+        "reuseAssessment": true,
+        "preserveRawText": true,
+        "preserveDecision": true
+      },
+      "tags": ["恢复", "生成日志", "P0"]
+    },
+    {
+      "id": "INT-EVAL-037",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "persistence_contract",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "recovery",
+      "semanticFamily": "recovery-mixed-stop",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "她具体做了什么？",
+        "questionSpec": { "target": "event_anchor", "subTarget": "kind_action", "stageIntent": "resume" }
+      },
+      "userText": "她帮我把思路理清了，先别问了",
+      "productExpectation": {
+        "understanding": "恢复时保持帮助内容和停止要求。",
+        "action": "保留内容并停止追问。",
+        "nextStep": "从原位置继续完成收束。",
+        "riskBehaviors": ["遗漏帮助内容", "恢复后继续追问"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "stop_follow_up",
+        "controlSignalsInclude": ["stop_follow_up"],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["她帮我把思路理清了"],
+        "explicitAbsence": false,
+        "answeredTarget": "kind_action",
+        "referenceTarget": "session",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_stop_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "stopFollowUp": true,
+        "nextAction": "validate_and_wrap_up"
+      },
+      "recoveryExpectation": {
+        "reuseAssessment": true,
+        "preserveRawText": true,
+        "preserveDecision": true
+      },
+      "tags": ["恢复", "混合表达", "P0"]
+    },
+    {
+      "id": "INT-EVAL-038",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "persistence_contract",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "recovery",
+      "semanticFamily": "recovery-repair",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "这件事如何重塑了你的判断依据？",
+        "questionSpec": { "target": "judgment_clue", "stageIntent": "resume" }
+      },
+      "userText": "听不懂，换个说法",
+      "productExpectation": {
+        "understanding": "恢复时保持问题修复要求。",
+        "action": "复用原判断并简化当前问题。",
+        "nextStep": "从原问题生成更简单的问法。",
+        "riskBehaviors": ["恢复后推进轮次", "改变为内容回答"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "repair_question",
+        "controlSignalsInclude": ["repair_question"],
+        "dialogueActsInclude": [],
+        "contentPresence": "none",
+        "evidenceIncludes": [],
+        "explicitAbsence": false,
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["explicit_repair_request"]
+      },
+      "expectedDecision": {
+        "runExtraction": false,
+        "advanceTurn": false,
+        "advanceRound": false,
+        "nextAction": "repair_question",
+        "nextQuestionStyle": "simplified"
+      },
+      "recoveryExpectation": {
+        "reuseAssessment": true,
+        "preserveRawText": true,
+        "preserveDecision": true
+      },
+      "tags": ["恢复", "问题修复", "P0"]
+    },
+    {
+      "id": "INT-EVAL-039",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "persistence_contract",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "recovery",
+      "semanticFamily": "recovery-short-answer",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "今天有推进吗？",
+        "questionSpec": { "target": "event_anchor", "stageIntent": "resume" }
+      },
+      "userText": "有",
+      "productExpectation": {
+        "understanding": "恢复后仍把有理解为当前问题的有效回答。",
+        "action": "复用回答目标和推进决策。",
+        "nextStep": "继续询问具体推进事件。",
+        "riskBehaviors": ["恢复后当作低质量回复", "重复询问是否有"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["有"],
+        "explicitAbsence": false,
+        "answeredTarget": "event_anchor",
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "reasonCodesInclude": ["contextual_short_answer"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "nextAction": "continue_interview"
+      },
+      "recoveryExpectation": {
+        "reuseAssessment": true,
+        "preserveRawText": true,
+        "preserveDecision": true
+      },
+      "tags": ["恢复", "短回答", "P0"]
+    },
+    {
+      "id": "INT-EVAL-040",
+      "caseVersion": "1.0",
+      "caseSet": "development",
+      "evaluationLevel": "persistence_contract",
+      "source": "product_requirement",
+      "severity": "P0",
+      "category": "recovery",
+      "semanticFamily": "recovery-quoted-control",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "对方当时说了什么？",
+        "questionSpec": { "target": "event_anchor", "subTarget": "kind_action", "stageIntent": "resume" }
+      },
+      "userText": "她说“先别问了，去休息吧”，我觉得很暖",
+      "productExpectation": {
+        "understanding": "恢复时仍将别问了识别为事件原话。",
+        "action": "复用正常内容判断。",
+        "nextStep": "继续理解对方的照顾和用户感受。",
+        "riskBehaviors": ["恢复时误触发停止", "遗漏事件原话"]
+      },
+      "expectedAssessment": {
+        "primaryControl": "none",
+        "controlSignalsInclude": [],
+        "dialogueActsInclude": ["provide_content"],
+        "contentPresence": "clear",
+        "evidenceIncludes": ["先别问了，去休息吧", "我觉得很暖"],
+        "explicitAbsence": false,
+        "answeredTarget": "kind_action",
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "reasonCodesInclude": ["quoted_or_reported_event"]
+      },
+      "expectedDecision": {
+        "runExtraction": true,
+        "advanceTurn": true,
+        "advanceRound": true,
+        "nextAction": "continue_interview"
+      },
+      "recoveryExpectation": {
+        "reuseAssessment": true,
+        "preserveRawText": true,
+        "preserveDecision": true
+      },
+      "tags": ["恢复", "事件转述", "P0"]
+    }
+  ]
+}

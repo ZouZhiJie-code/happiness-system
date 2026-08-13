@@ -1,0 +1,80 @@
+{
+  "reportVersion": "intent-core-eval-v1",
+  "generatedAt": "2026-07-21T04:37:20.435Z",
+  "datasetVersion": "intent-eval-v1.8-external-sealed",
+  "scope": "external-review",
+  "runLabel": "sealed-v1",
+  "assessmentPath": "deterministic",
+  "total": 24,
+  "overallScore": 0.9145833333333334,
+  "p0Failed": 3,
+  "metricAccuracy": {
+    "control": 0.9583333333333334,
+    "dialogueActs": 0.8333333333333334,
+    "contentBoundary": 0.875,
+    "referenceTarget": 0.9583333333333334,
+    "contextUnderstanding": 0.875,
+    "stability": 1
+  },
+  "dialogueActPrecision": 0.8928571428571429,
+  "dialogueActRecall": 0.9259259259259259,
+  "dialogueActF1": 0.9090909090909091,
+  "provider": {
+    "attempted": 0,
+    "succeeded": 0,
+    "failed": 0,
+    "failureCodes": {},
+    "p50LatencyMs": null,
+    "p95LatencyMs": null
+  },
+  "failedCases": [
+    {
+      "id": "INT-EVAL-229",
+      "score": 0.65,
+      "issues": [
+        "对话行为：期望 无，实际 provide_content",
+        "内容边界：期望 none，实际 clear，有效内容=麻烦 文字吧"
+      ]
+    },
+    {
+      "id": "INT-EVAL-231",
+      "score": 0.65,
+      "issues": [
+        "对话行为：期望 无，实际 provide_content",
+        "内容边界：期望 none，实际 clear，有效内容=这个问题能问得"
+      ]
+    },
+    {
+      "id": "INT-EVAL-247",
+      "score": 0.5,
+      "issues": [
+        "对话行为：期望 give_feedback，实际 provide_content",
+        "内容边界：期望 none，实际 clear，有效内容=你 ，别再追着问了",
+        "上下文理解：期望目标 未限定，实际 judgment_clue"
+      ]
+    },
+    {
+      "id": "INT-EVAL-248",
+      "score": 0.44999999999999996,
+      "issues": [
+        "控制信号：期望 none/无，实际 stop_follow_up/stop_follow_up",
+        "引用目标：期望 current_question，实际 session",
+        "上下文理解：期望目标 judgment_clue，实际 judgment_clue"
+      ]
+    },
+    {
+      "id": "INT-EVAL-249",
+      "score": 0.85,
+      "issues": [
+        "对话行为：期望 provide_content、correct_previous、deny_hypothesis，实际 provide_content、correct_previous"
+      ]
+    },
+    {
+      "id": "INT-EVAL-251",
+      "score": 0.8500000000000001,
+      "issues": [
+        "上下文理解：期望目标 judgment_clue，实际 judgment_clue"
+      ]
+    }
+  ]
+}
