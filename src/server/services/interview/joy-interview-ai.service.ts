@@ -1,10 +1,16 @@
 import type { AIRequestStage } from "@prisma/client";
+import type { ZodSchema } from "zod";
 
 import {
   createPromptEnvelope,
   getInterviewPromptKey,
+  INTERVIEW_INTENT_EXTRACT_PROMPT_VERSION,
   type PromptEnvelope
 } from "@/features/ai-quality/prompt-manifest";
+import {
+  mergeIntentAssessments,
+  type IntentAssessmentV1
+} from "@/features/interview/intent/intent-v1";
 import {
   buildDraftBrief,
   buildDraftWritingProfile,
@@ -39,6 +45,7 @@ import {
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
 import {
   fulfillmentExtractResultSchema,
+  createIntentAwareExtractResultSchema,
   gratitudeExtractResultSchema,
   improvementExtractResultSchema,
   joyDraftResultSchema,
@@ -78,6 +85,8 @@ import type {
 const ASSISTANT_SUMMARY_MARKER = "<<SUMMARY>>";
 const ASSISTANT_LEGACY_INSIGHT_MARKER = "<<INSIGHT>>";
 const ASSISTANT_QUESTION_MARKER = "<<QUESTION>>";
+const INTERVIEW_EXTRACT_TIMEOUT_MS = 12_000;
+const INTERVIEW_QUESTION_TIMEOUT_MS = 8_000;
 const assistantMarkers = [
   { marker: ASSISTANT_SUMMARY_MARKER, target: "summary" as const },
   { marker: ASSISTANT_LEGACY_INSIGHT_MARKER, target: "summary" as const },
@@ -187,10 +196,16 @@ function normalizeGratitudeKindAction(value: string | null | undefined) {
     return null;
   }
 
+  const quotedControlFollowedByAction = normalized.match(
+    /^(?:(?:对|跟|向)我说)?[“"]([^”"]*(?:结束|别再|不要再|先别|不用继续|别继续)[^”"]*)[”"][，,]?(?:然后|随后|接着|并且|而且|还|又)(.+)$/u
+  );
+  const actionText = quotedControlFollowedByAction?.[2] ?? normalized;
+
   return (
-    normalized
+    actionText
       .replace(/^(?:而是|不是|是真的|真的是)/u, "")
       .replace(/^她没有只说辛苦了[，,]?而是/u, "")
+      .replace(/[，,]?(?:我)?(?:很|特别|真的)?(?:感激|感谢|感动|暖心|安心|松了口气)$/u, "")
       .trim() || null
   );
 }
@@ -536,7 +551,7 @@ function normalizeExtractedFieldsForSession(input: {
   };
 }
 
-function getExtractResultSchema(dimension: InterviewDimension) {
+function getEvidenceExtractResultSchema(dimension: InterviewDimension) {
   if (dimension === "improvement") {
     return improvementExtractResultSchema;
   }
@@ -546,6 +561,22 @@ function getExtractResultSchema(dimension: InterviewDimension) {
   }
 
   return dimension === "fulfillment" || dimension === "reflection" ? fulfillmentExtractResultSchema : joyExtractResultSchema;
+}
+
+function getExtractResultSchema(dimension: InterviewDimension, intentAware = false) {
+  const evidenceSchema = getEvidenceExtractResultSchema(dimension);
+  return intentAware ? createIntentAwareExtractResultSchema(evidenceSchema) : evidenceSchema;
+}
+
+function isIntentAwareExtractResult(
+  value: unknown
+): value is { intent: IntentAssessmentV1; evidence: JoySignalFields } {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "intent" in value &&
+      "evidence" in value
+  );
 }
 
 function logAttempt(
@@ -615,6 +646,8 @@ export async function extractJoySnapshotWithAI(input: {
   signal?: AbortSignal;
   traceId?: string | null;
   requestId?: string | null;
+  intentAssessment?: IntentAssessmentV1 | null;
+  onIntentAssessment?: (assessment: IntentAssessmentV1) => Promise<void> | void;
 }): Promise<JoySnapshot> {
   input.signal?.throwIfAborted();
   const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
@@ -637,6 +670,7 @@ export async function extractJoySnapshotWithAI(input: {
   const providerStatus = await getAIProviderStatus("chat");
   const envelope = createPromptEnvelope({
     promptKey: getInterviewPromptKey("extract", input.session.dimension),
+    promptVersion: input.intentAssessment ? INTERVIEW_INTENT_EXTRACT_PROMPT_VERSION : undefined,
     messages: buildJoyExtractMessages({
       dimension: input.session.dimension,
       stage: input.session.stage,
@@ -644,24 +678,35 @@ export async function extractJoySnapshotWithAI(input: {
       lastAssistantQuestion: input.session.lastAssistantQuestion,
       userMessage: input.userMessage,
       snapshot: input.session.snapshot,
-      messages: input.session.messages
+      messages: input.session.messages,
+      intentCandidate: input.intentAssessment
     })
   });
-  const aiResult = await completeStructuredOutput({
+  const aiResult = await completeStructuredOutput<unknown>({
     provider,
     providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
     stage: "extract",
-    schema: getExtractResultSchema(input.session.dimension),
+    schema: getExtractResultSchema(
+      input.session.dimension,
+      Boolean(input.intentAssessment)
+    ) as ZodSchema<unknown>,
     messages: envelope.messages,
     temperature: 0.15,
-    maxTokens: 500,
+    maxTokens: input.intentAssessment ? 700 : 500,
+    maxAttempts: 1,
+    timeoutMs: INTERVIEW_EXTRACT_TIMEOUT_MS,
     signal: input.signal,
     onAttempt: (attempt) =>
       logAttempt(input.session.id, attempt, {
         traceId: input.traceId,
         requestId: input.requestId,
         envelope,
-        params: { temperature: 0.15, maxTokens: 500 }
+        params: {
+          temperature: 0.15,
+          maxTokens: input.intentAssessment ? 700 : 500,
+          maxAttempts: 1,
+          timeoutMs: INTERVIEW_EXTRACT_TIMEOUT_MS
+        }
       })
   });
 
@@ -674,6 +719,14 @@ export async function extractJoySnapshotWithAI(input: {
       "AI extraction unavailable, fallback snapshot will be used."
     );
 
+    if (input.intentAssessment) {
+      await input.onIntentAssessment?.({
+        ...input.intentAssessment,
+        origin: "fallback",
+        reasonCodes: Array.from(new Set([...input.intentAssessment.reasonCodes, "extract_provider_fallback"]))
+      });
+    }
+
     return applyExplicitEvidenceRevisions({
       dimension: input.session.dimension,
       previousSnapshot: input.session.snapshot,
@@ -682,11 +735,33 @@ export async function extractJoySnapshotWithAI(input: {
     }).snapshot;
   }
 
+  const intentAwareResult =
+    input.intentAssessment && isIntentAwareExtractResult(aiResult) ? aiResult : null;
+  const extractedEvidence = (
+    intentAwareResult ? intentAwareResult.evidence : aiResult
+  ) as JoySignalFields;
+
+  if (input.intentAssessment && intentAwareResult) {
+    await input.onIntentAssessment?.(
+      mergeIntentAssessments({
+        rawText: input.userMessage,
+        deterministic: input.intentAssessment,
+        llm: intentAwareResult.intent
+      })
+    );
+  } else if (input.intentAssessment) {
+    await input.onIntentAssessment?.({
+      ...input.intentAssessment,
+      origin: "fallback",
+      reasonCodes: Array.from(new Set([...input.intentAssessment.reasonCodes, "intent_output_missing"]))
+    });
+  }
+
   const aiSnapshot = mergeJoySignals(
     input.session.snapshot,
     normalizeExtractedFieldsForSession({
       dimension: input.session.dimension,
-      fields: aiResult,
+      fields: extractedEvidence,
       existingSnapshot: input.session.snapshot,
       userMessage: input.userMessage
     })
@@ -1063,6 +1138,7 @@ async function runAssistantQuestionAttempt(input: {
       messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
       signal: input.signal
     })) {
       responseText += chunk;
@@ -1073,6 +1149,7 @@ async function runAssistantQuestionAttempt(input: {
       messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
       signal: input.signal
     });
 
@@ -1096,7 +1173,12 @@ async function runAssistantQuestionAttempt(input: {
       traceId: input.traceId,
       requestId: input.requestId,
       envelope: input.envelope,
-      params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
+      params: {
+        temperature: 0.45,
+        maxTokens: 500,
+        timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+        stream: input.stream
+      }
     });
 
     return null;
@@ -1114,7 +1196,12 @@ async function runAssistantQuestionAttempt(input: {
     traceId: input.traceId,
     requestId: input.requestId,
     envelope: input.envelope,
-    params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
+    params: {
+      temperature: 0.45,
+      maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+      stream: input.stream
+    }
   });
 
   return segments;
@@ -1150,7 +1237,7 @@ async function requestAssistantReplySegments(
       messages: getQuestionMessages(input)
     })
   );
-  const attempts: boolean[] = onDelta && provider.stream ? [true, false] : [false];
+  const attempts: boolean[] = onDelta && provider.stream ? [true] : [false];
 
   for (const [attemptIndex, useStream] of attempts.entries()) {
     try {
@@ -1185,7 +1272,12 @@ async function requestAssistantReplySegments(
         traceId: input.traceId,
         requestId: input.requestId,
         envelope,
-        params: { temperature: 0.45, maxTokens: 500, stream: useStream }
+        params: {
+          temperature: 0.45,
+          maxTokens: 500,
+          timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+          stream: useStream
+        }
       });
     }
   }

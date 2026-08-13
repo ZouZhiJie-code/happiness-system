@@ -1,0 +1,949 @@
+{
+  "packetVersion": "intent-independent-review-v1",
+  "generatedAt": "2026-07-21T03:41:40.084Z",
+  "datasetVersion": "intent-eval-v1.0+intent-eval-v1.7-blind-adjudicated",
+  "scope": "blind",
+  "instructions": {
+    "question": "系统是否准确描述了用户这一轮表达？",
+    "choices": [
+      "correct",
+      "partially_correct",
+      "incorrect",
+      "reasonable_ambiguity"
+    ]
+  },
+  "cases": [
+    {
+      "id": "INT-EVAL-227",
+      "severity": "P0",
+      "category": "explicit_control",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "你还想再总结一个让自己轻松的规律吗？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "这轮我就先停在这儿吧",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "stop_follow_up",
+        "controlSignals": [
+          "stop_follow_up"
+        ],
+        "dialogueActs": [],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "session",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_stop_request"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-212",
+      "severity": "P0",
+      "category": "explicit_control",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "这件事给你带来的值得感是什么？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "麻烦汇总成一份日志",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "generate_draft",
+        "controlSignals": [
+          "generate_draft"
+        ],
+        "dialogueActs": [],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_generate_request"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-123",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "当时哪句话让你开始重新想这段关系？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "他冲我说“你闭嘴”，我一下特别愤怒",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "他冲我说“你闭嘴”，我一下特别愤怒",
+          "explicitAbsence": false,
+          "answeredTarget": "event_anchor"
+        },
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "quoted_or_reported_event",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-213",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "她的回应为什么让你珍惜？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": "gratitude_reason"
+      },
+      "userText": "让我满足的是终于推进了一小步，按这些出一份记录吧",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "generate_draft",
+        "controlSignals": [
+          "generate_draft"
+        ],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "让我满足的是终于推进了一小步",
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "explicit_generate_request",
+          "semantic_target_mismatch",
+          "answer_target_not_supported",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-214",
+      "severity": "P0",
+      "category": "mixed_content_control",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "下一次你最想调整哪个小地方？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "我下次先确认优先级，这轮先打住吧",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "stop_follow_up",
+        "controlSignals": [
+          "stop_follow_up"
+        ],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "我下次先确认优先级",
+          "explicitAbsence": false,
+          "answeredTarget": "judgment_clue"
+        },
+        "referenceTarget": "session",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "explicit_stop_request",
+          "explicit_answer_frame",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-215",
+      "severity": "P1",
+      "category": "explicit_control",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "你原来的认知框架发生了怎样的迁移？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "能不能改成具体的问题",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "repair_question",
+        "controlSignals": [
+          "repair_question"
+        ],
+        "dialogueActs": [],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_repair_request"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-228",
+      "severity": "P1",
+      "category": "explicit_control",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "这件事回应了你什么需要？",
+        "questionTarget": "insight_evidence",
+        "questionSubTarget": "seen_need"
+      },
+      "userText": "这一问先越过去吧",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "skip_question",
+        "controlSignals": [
+          "skip_question"
+        ],
+        "dialogueActs": [
+          "decline_answer"
+        ],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_skip_request",
+          "contextual_short_answer"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-217",
+      "severity": "P1",
+      "category": "explicit_control",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这个开心片段还有什么细节？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "我们换到另一件事情",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "switch_event",
+        "controlSignals": [
+          "switch_event"
+        ],
+        "dialogueActs": [],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_event",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_event_switch"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-218",
+      "severity": "P1",
+      "category": "explicit_control",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这份开心对你意味着什么？",
+        "questionTarget": "insight_evidence",
+        "questionSubTarget": null
+      },
+      "userText": "这段可以归在感谢",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "switch_dimension",
+        "controlSignals": [
+          "switch_dimension"
+        ],
+        "dialogueActs": [],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "dimension",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_dimension_switch",
+          "contextual_short_answer"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-130",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "当时是谁陪着你？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "爸爸",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "爸爸",
+          "explicitAbsence": false,
+          "answeredTarget": "event_anchor"
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "contextual_short_answer",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-131",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "做完以后你是什么感觉？",
+        "questionTarget": "reaction_evidence",
+        "questionSubTarget": null
+      },
+      "userText": "释然",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "释然",
+          "explicitAbsence": false,
+          "answeredTarget": "reaction_evidence"
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.98,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "contextual_short_answer",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-219",
+      "severity": "P0",
+      "category": "contextual_short_answer",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "当时真的有一段具体对话吗？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "完全没有过",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content",
+          "deny_hypothesis"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "完全没有过",
+          "explicitAbsence": true,
+          "answeredTarget": "event_anchor"
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "contextual_short_answer",
+          "explicit_absence",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-220",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "这更像是因为着急吗？",
+        "questionTarget": "prior_assumption",
+        "questionSubTarget": null
+      },
+      "userText": "现在还不能确定",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content",
+          "express_uncertainty"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "现在还不能确定",
+          "explicitAbsence": false,
+          "answeredTarget": "prior_assumption"
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "contextual_short_answer",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-221",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "所以你是因为开心才放松下来吗？",
+        "questionTarget": "prior_assumption",
+        "questionSubTarget": null
+      },
+      "userText": "我收回前面那个说法，其实是踏实",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content",
+          "correct_previous",
+          "deny_hypothesis"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "我收回前面那个说法，其实是踏实",
+          "explicitAbsence": false,
+          "answeredTarget": "prior_assumption"
+        },
+        "referenceTarget": "previous_interpretation",
+        "frustration": "none",
+        "confidence": 0.9,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-156",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "她当时怎么照顾你的？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": "kind_action"
+      },
+      "userText": "她跟我说“今天先歇到这里”，还替我把灯关了，我觉得很被照顾",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "她跟我说“今天先歇到这里”，还替我把灯关了，我觉得很被照顾",
+          "explicitAbsence": false,
+          "answeredTarget": "kind_action"
+        },
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "quoted_or_reported_event",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-222",
+      "severity": "P0",
+      "category": "pressure_feedback",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "当时有没有一个具体画面？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "这个你刚才提过了",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "repair_question",
+        "controlSignals": [
+          "repair_question"
+        ],
+        "dialogueActs": [
+          "give_feedback"
+        ],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_question",
+        "frustration": "mild",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "contextual_short_answer",
+          "conversation_feedback"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-223",
+      "severity": "P1",
+      "category": "pressure_feedback",
+      "dimension": "fulfillment",
+      "context": {
+        "lastAssistantQuestion": "你还能再提炼一个值得感标准吗？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "今天确实没什么力气继续",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "stop_follow_up",
+        "controlSignals": [
+          "stop_follow_up"
+        ],
+        "dialogueActs": [
+          "give_feedback"
+        ],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "session",
+        "frustration": "mild",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "conversation_feedback",
+          "fatigue_feedback"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-224",
+      "severity": "P1",
+      "category": "pressure_feedback",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "这件事回应了你心里什么缺口？",
+        "questionTarget": "insight_evidence",
+        "questionSubTarget": "seen_need"
+      },
+      "userText": "先把这个问题放一边",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "skip_question",
+        "controlSignals": [
+          "skip_question"
+        ],
+        "dialogueActs": [
+          "decline_answer"
+        ],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "explicit_skip_request"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-225",
+      "severity": "P0",
+      "category": "pressure_feedback",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "下次你准备怎样调整？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "别再逼着我回答了",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "stop_follow_up",
+        "controlSignals": [
+          "stop_follow_up"
+        ],
+        "dialogueActs": [
+          "give_feedback"
+        ],
+        "content": {
+          "presence": "none",
+          "evidenceText": null,
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "session",
+        "frustration": "strong",
+        "confidence": 0.96,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "direct_hostility",
+          "contextual_short_answer",
+          "conversation_feedback"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-140",
+      "severity": "P0",
+      "category": "quote_report_correction",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "什么事情让你开始改变判断？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": null
+      },
+      "userText": "这段关系结束以后我反而轻松了",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "这段关系结束以后我反而轻松了",
+          "explicitAbsence": false,
+          "answeredTarget": "event_anchor"
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.9,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-226",
+      "severity": "P0",
+      "category": "recovery",
+      "dimension": "joy",
+      "context": {
+        "lastAssistantQuestion": "这份开心真正打动你的是什么？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "我明白了，核心是被尊重，现在可以整理了",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "generate_draft",
+        "controlSignals": [
+          "generate_draft"
+        ],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "核心是被尊重",
+          "explicitAbsence": false,
+          "answeredTarget": "judgment_clue"
+        },
+        "referenceTarget": "journal",
+        "frustration": "none",
+        "confidence": 0.96,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "explicit_generate_request",
+          "explicit_answer_frame",
+          "semantic_target_mismatch",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-142",
+      "severity": "P0",
+      "category": "recovery",
+      "dimension": "improvement",
+      "context": {
+        "lastAssistantQuestion": "所以你主要是准备不足吗？",
+        "questionTarget": "prior_assumption",
+        "questionSubTarget": null
+      },
+      "userText": "不是这回事，是我怕被拒绝",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content",
+          "correct_previous",
+          "deny_hypothesis"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "不是这回事，是我怕被拒绝",
+          "explicitAbsence": false,
+          "answeredTarget": "prior_assumption"
+        },
+        "referenceTarget": "previous_interpretation",
+        "frustration": "none",
+        "confidence": 0.9,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-162",
+      "severity": "P0",
+      "category": "recovery",
+      "dimension": "gratitude",
+      "context": {
+        "lastAssistantQuestion": "对方怎样让你感到被照顾？",
+        "questionTarget": "event_anchor",
+        "questionSubTarget": "kind_action"
+      },
+      "userText": "她跟我说今天别再想了，先去睡一觉，我当时很感动",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "provide_content"
+        ],
+        "content": {
+          "presence": "clear",
+          "evidenceText": "她跟我说今天别再想了，先去睡一觉，我当时很感动",
+          "explicitAbsence": false,
+          "answeredTarget": "kind_action"
+        },
+        "referenceTarget": "quoted_event",
+        "frustration": "none",
+        "confidence": 0.98,
+        "origin": "hybrid",
+        "reasonCodes": [
+          "quoted_or_reported_event",
+          "llm_intent_reconciled"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    },
+    {
+      "id": "INT-EVAL-144",
+      "severity": "P1",
+      "category": "contextual_short_answer",
+      "dimension": "reflection",
+      "context": {
+        "lastAssistantQuestion": "你现在更倾向于怎么理解这件事？",
+        "questionTarget": "judgment_clue",
+        "questionSubTarget": null
+      },
+      "userText": "我觉得可能就是……",
+      "systemAssessment": {
+        "version": "interview-intent-v1",
+        "primaryControl": "none",
+        "controlSignals": [],
+        "dialogueActs": [
+          "express_uncertainty"
+        ],
+        "content": {
+          "presence": "possible",
+          "evidenceText": "我觉得可能就是……",
+          "explicitAbsence": false,
+          "answeredTarget": null
+        },
+        "referenceTarget": "current_question",
+        "frustration": "none",
+        "confidence": 0.72,
+        "origin": "deterministic",
+        "reasonCodes": [
+          "incomplete_utterance"
+        ]
+      },
+      "review": {
+        "verdict": null,
+        "reason": ""
+      }
+    }
+  ]
+}

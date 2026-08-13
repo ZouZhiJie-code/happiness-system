@@ -23,6 +23,11 @@ enum InterviewSessionStatus {
   abandoned
 }
 
+enum InterviewSessionMode {
+  dimension_legacy
+  event_centered
+}
+
 enum InterviewRole {
   user
   assistant
@@ -63,6 +68,46 @@ enum InterviewEventStatus {
   completed
 }
 
+enum JournalEventStatus {
+  active
+  generating
+  completed
+  abandoned
+}
+
+enum JournalEventFactScope {
+  current_event
+  background
+}
+
+enum JournalEventFactStance {
+  affirmed
+  denied
+  unknown
+}
+
+enum JournalEventFactKind {
+  event_detail
+  inner_experience
+  stated_interpretation
+  stated_preference
+  boundary_answer
+}
+
+enum JournalEventFactOrigin {
+  user_expression
+  explicit_confirmation
+  implicit_confirmation
+}
+
+enum JournalEventFactEvidenceRole {
+  direct_expression
+  event_selection
+  short_confirmation
+  repeated_support
+  implicit_confirmation
+}
+
 enum AIRequestStage {
   transcribe
   extract
@@ -95,9 +140,26 @@ enum InterviewUserTurnAction {
   reply
   continue_current_event
   next_event
+  regenerate_question
+  correct_understanding
 }
 
 enum InterviewUserTurnStatus {
+  processing
+  completed
+  failed
+  canceled
+}
+
+enum InterviewRegenerationIntent {
+  simplify
+  concretize
+  change_angle
+  deepen
+  lighten
+}
+
+enum AIResponseRegenerationStatus {
   processing
   completed
   failed
@@ -202,6 +264,7 @@ model User {
   createdAt                 DateTime              @default(now())
   settings                  UserSettings?
   sessions                  InterviewSession[]
+  journalEvents             JournalEvent[]
   joyEntries                JoyEntry[]
   dailyJournalEntries       DailyJournalEntry[]
   dailyHappinessScores      DailyHappinessScore[]
@@ -239,32 +302,148 @@ model UserSettings {
 }
 
 model InterviewSession {
-  id                    String                 @id @default(cuid())
-  userId                String
-  dimension             InterviewDimension
-  status                InterviewSessionStatus @default(active)
-  stage                 JoyInterviewStage      @default(collect_event)
-  activeEventId         String?
-  turnCount             Int                    @default(0)
-  entryDate             DateTime
-  startedAt             DateTime               @default(now())
-  pausedAt              DateTime?
-  completedAt           DateTime?
-  lastAssistantQuestion String?
-  draftSummary          String?
-  finalEntryId          String?                @unique
-  activeEvent           InterviewEvent?        @relation("ActiveInterviewEvent", fields: [activeEventId], references: [id], onDelete: SetNull)
-  events                InterviewEvent[]       @relation("SessionInterviewEvents")
-  messages              InterviewMessage[]
-  userTurns             InterviewUserTurn[]
-  snapshots             JoyInterviewSnapshot[]
-  aiRequestLogs         AIRequestLog[]
-  aiGenerationTraces    AIGenerationTrace[]
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  joyEntry              JoyEntry?              @relation("SessionJoyEntry")
+  id                        String                           @id @default(cuid())
+  userId                    String
+  mode                      InterviewSessionMode             @default(dimension_legacy)
+  dimension                 InterviewDimension?
+  conversationSchemaVersion Int                              @default(1)
+  rootSessionId             String?
+  parentSessionId           String?
+  activeBranchSessionId     String?
+  forkMessageSequence       Int?
+  forkedFromMessageId       String?
+  branchDepth               Int                              @default(0)
+  status                    InterviewSessionStatus           @default(active)
+  stage                     JoyInterviewStage                @default(collect_event)
+  activeEventId             String?
+  turnCount                 Int                              @default(0)
+  entryDate                 DateTime
+  startedAt                 DateTime                         @default(now())
+  pausedAt                  DateTime?
+  completedAt               DateTime?
+  lastAssistantQuestion     String?
+  draftSummary              String?
+  finalEntryId              String?                          @unique
+  activeEvent               InterviewEvent?                  @relation("ActiveInterviewEvent", fields: [activeEventId], references: [id], onDelete: SetNull)
+  rootSession               InterviewSession?                @relation("InterviewSessionRoot", fields: [rootSessionId], references: [id], onDelete: SetNull)
+  rootBranches              InterviewSession[]               @relation("InterviewSessionRoot")
+  parentSession             InterviewSession?                @relation("InterviewSessionParent", fields: [parentSessionId], references: [id], onDelete: Cascade)
+  childBranches             InterviewSession[]               @relation("InterviewSessionParent")
+  activeBranchSession       InterviewSession?                @relation("InterviewSessionActiveBranch", fields: [activeBranchSessionId], references: [id], onDelete: SetNull)
+  activeForRootSessions     InterviewSession[]               @relation("InterviewSessionActiveBranch")
+  forkedFromMessage         InterviewMessage?                @relation("InterviewSessionForkedFromMessage", fields: [forkedFromMessageId], references: [id], onDelete: SetNull)
+  events                    InterviewEvent[]                 @relation("SessionInterviewEvents")
+  messages                  InterviewMessage[]
+  branchMessages            InterviewMessage[]               @relation("InterviewMessageBranchSession")
+  userTurns                 InterviewUserTurn[]
+  basedUserTurns            InterviewUserTurn[]              @relation("InterviewUserTurnBaseBranch")
+  snapshots                 JoyInterviewSnapshot[]
+  branchCheckpoints         InterviewBranchCheckpoint[]
+  responseRegenerations     AIResponseRegeneration[]         @relation("RegenerationBranchSession")
+  rootResponseRegenerations AIResponseRegeneration[]         @relation("RegenerationRootSession")
+  aiRequestLogs             AIRequestLog[]
+  aiGenerationTraces        AIGenerationTrace[]
+  user                      User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joyEntry                  JoyEntry?                        @relation("SessionJoyEntry")
+  journalEvent              JournalEvent?                    @relation("JournalEventRootSession")
+  createdJournalEventFacts  JournalEventFact[]               @relation("JournalEventFactCreatedBranch")
+  understandingClaims       JournalEventUnderstandingClaim[] @relation("JournalEventUnderstandingClaimBranch")
 
   @@index([userId, status])
   @@index([userId, entryDate])
+  @@index([rootSessionId, branchDepth])
+  @@index([parentSessionId])
+  @@index([activeBranchSessionId])
+  @@index([mode, userId, entryDate, status])
+}
+
+model JournalEvent {
+  id                  String                           @id @default(cuid())
+  userId              String
+  rootSessionId       String                           @unique
+  entryDate           DateTime
+  daySequence         Int
+  status              JournalEventStatus               @default(active)
+  startedAt           DateTime                         @default(now())
+  generationStartedAt DateTime?
+  completedAt         DateTime?
+  abandonedAt         DateTime?
+  createdAt           DateTime                         @default(now())
+  updatedAt           DateTime                         @updatedAt
+  user                User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rootSession         InterviewSession                 @relation("JournalEventRootSession", fields: [rootSessionId], references: [id], onDelete: Cascade)
+  userTurns           InterviewUserTurn[]              @relation("JournalEventUserTurns")
+  facts               JournalEventFact[]
+  understandingClaims JournalEventUnderstandingClaim[]
+  aiGenerationTraces  AIGenerationTrace[]              @relation("JournalEventGenerationTraces")
+
+  @@unique([userId, entryDate, daySequence])
+  @@index([userId, entryDate, status])
+}
+
+model JournalEventFact {
+  id                     String                          @id @default(cuid())
+  eventId                String
+  createdBranchSessionId String
+  pathAnchorMessageId    String
+  statement              String
+  scope                  JournalEventFactScope
+  stance                 JournalEventFactStance
+  kind                   JournalEventFactKind
+  origin                 JournalEventFactOrigin
+  createdAt              DateTime                        @default(now())
+  event                  JournalEvent                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdBranchSession   InterviewSession                @relation("JournalEventFactCreatedBranch", fields: [createdBranchSessionId], references: [id], onDelete: Cascade)
+  pathAnchorMessage      InterviewMessage                @relation("JournalEventFactPathAnchor", fields: [pathAnchorMessageId], references: [id], onDelete: Cascade)
+  evidence               JournalEventFactEvidence[]
+  confirmedClaim         JournalEventUnderstandingClaim? @relation("JournalEventUnderstandingClaimConfirmedFact")
+
+  @@index([eventId, createdAt])
+  @@index([createdBranchSessionId, createdAt])
+  @@index([pathAnchorMessageId])
+}
+
+model JournalEventFactEvidence {
+  id                  String                       @id @default(cuid())
+  factId              String
+  sourceTurnId        String
+  contextMessageId    String?
+  pathAnchorMessageId String
+  role                JournalEventFactEvidenceRole
+  quote               String?
+  createdAt           DateTime                     @default(now())
+  fact                JournalEventFact             @relation(fields: [factId], references: [id], onDelete: Cascade)
+  sourceTurn          InterviewUserTurn            @relation(fields: [sourceTurnId], references: [id], onDelete: Cascade)
+  contextMessage      InterviewMessage?            @relation("JournalEventFactEvidenceContext", fields: [contextMessageId], references: [id], onDelete: Cascade)
+  pathAnchorMessage   InterviewMessage             @relation("JournalEventFactEvidencePathAnchor", fields: [pathAnchorMessageId], references: [id], onDelete: Cascade)
+
+  @@unique([factId, sourceTurnId, role, pathAnchorMessageId], map: "JournalEventFactEvidence_dedupe_key")
+  @@index([sourceTurnId, createdAt])
+  @@index([contextMessageId])
+  @@index([pathAnchorMessageId])
+}
+
+model JournalEventUnderstandingClaim {
+  id                 String                 @id @default(cuid())
+  eventId            String
+  branchSessionId    String
+  assistantMessageId String                 @unique
+  statement          String
+  scope              JournalEventFactScope
+  stance             JournalEventFactStance
+  kind               JournalEventFactKind
+  confirmedFactId    String?                @unique
+  confirmedByTurnId  String?                @unique
+  confirmedAt        DateTime?
+  createdAt          DateTime               @default(now())
+  event              JournalEvent           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  branchSession      InterviewSession       @relation("JournalEventUnderstandingClaimBranch", fields: [branchSessionId], references: [id], onDelete: Cascade)
+  assistantMessage   InterviewMessage       @relation(fields: [assistantMessageId], references: [id], onDelete: Cascade)
+  confirmedFact      JournalEventFact?      @relation("JournalEventUnderstandingClaimConfirmedFact", fields: [confirmedFactId], references: [id], onDelete: Cascade)
+  confirmedByTurn    InterviewUserTurn?     @relation("JournalEventUnderstandingClaimConfirmedByTurn", fields: [confirmedByTurnId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+  @@index([branchSessionId, createdAt])
 }
 
 model InterviewEvent {
@@ -299,44 +478,137 @@ model InterviewEvent {
 }
 
 model InterviewMessage {
-  id                String             @id @default(cuid())
-  sessionId         String
-  userTurnId        String?
-  generationTraceId String?            @unique
-  role              InterviewRole
-  inputMode         InputMode?
-  content           String
-  sequence          Int
-  createdAt         DateTime           @default(now())
-  session           InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  userTurn          InterviewUserTurn? @relation(fields: [userTurnId], references: [id], onDelete: SetNull)
-  generationTrace   AIGenerationTrace? @relation("InterviewMessageGenerationTrace", fields: [generationTraceId], references: [id], onDelete: SetNull)
+  /// Compatibility contract: generationTraceId String?
+  id                        String                          @id @default(cuid())
+  sessionId                 String
+  userTurnId                String?
+  generationTraceId         String?                         @unique
+  responseGroupId           String?
+  responseVersion           Int?
+  regenerationIntent        InterviewRegenerationIntent?
+  regeneratedFromMessageId  String?
+  branchSessionId           String?
+  role                      InterviewRole
+  inputMode                 InputMode?
+  content                   String
+  sequence                  Int
+  createdAt                 DateTime                        @default(now())
+  session                   InterviewSession                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  branchSession             InterviewSession?               @relation("InterviewMessageBranchSession", fields: [branchSessionId], references: [id], onDelete: SetNull)
+  regeneratedFromMessage    InterviewMessage?               @relation("InterviewMessageRegeneratedFrom", fields: [regeneratedFromMessageId], references: [id], onDelete: SetNull)
+  regeneratedMessages       InterviewMessage[]              @relation("InterviewMessageRegeneratedFrom")
+  forkedSessions            InterviewSession[]              @relation("InterviewSessionForkedFromMessage")
+  targetedUserTurns         InterviewUserTurn[]             @relation("InterviewUserTurnTargetMessage")
+  targetRegenerations       AIResponseRegeneration[]        @relation("RegenerationTargetMessage")
+  sourceRegenerations       AIResponseRegeneration[]        @relation("RegenerationSourceMessage")
+  generatedRegenerations    AIResponseRegeneration[]        @relation("RegenerationGeneratedMessage")
+  userTurn                  InterviewUserTurn?              @relation(fields: [userTurnId], references: [id], onDelete: SetNull)
+  generationTrace           AIGenerationTrace?              @relation("InterviewMessageGenerationTrace", fields: [generationTraceId], references: [id], onDelete: SetNull)
+  branchCheckpoint          InterviewBranchCheckpoint?
+  anchoredJournalEventFacts JournalEventFact[]              @relation("JournalEventFactPathAnchor")
+  contextFactEvidence       JournalEventFactEvidence[]      @relation("JournalEventFactEvidenceContext")
+  anchoredFactEvidence      JournalEventFactEvidence[]      @relation("JournalEventFactEvidencePathAnchor")
+  understandingClaim        JournalEventUnderstandingClaim?
 
   @@unique([sessionId, sequence])
+  @@unique([responseGroupId, responseVersion])
   @@index([sessionId, createdAt])
   @@index([userTurnId, sequence])
+  @@index([regeneratedFromMessageId])
+  @@index([branchSessionId, sequence])
 }
 
 model InterviewUserTurn {
-  id                  String                  @id @default(cuid())
-  clientTurnId        String
-  sessionId           String
-  activeEventId       String?
-  action              InterviewUserTurnAction
-  rawText             String?
-  inputMode           InputMode?
-  baseMessageSequence Int
-  status              InterviewUserTurnStatus @default(processing)
-  attemptCount        Int                     @default(1)
-  errorCode           String?
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
-  completedAt         DateTime?
-  session             InterviewSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  messages            InterviewMessage[]
+  /// Compatibility contract: userTurn          InterviewUserTurn?
+  id                           String                           @id @default(cuid())
+  clientTurnId                 String
+  sessionId                    String
+  journalEventId               String?
+  activeEventId                String?
+  action                       InterviewUserTurnAction
+  targetMessageId              String?
+  regenerationIntent           InterviewRegenerationIntent?
+  baseBranchSessionId          String?
+  rawText                      String?
+  inputMode                    InputMode?
+  baseMessageSequence          Int
+  status                       InterviewUserTurnStatus          @default(processing)
+  attemptCount                 Int                              @default(1)
+  errorCode                    String?
+  intentAssessment             Json?
+  intentClassifierVersion      String?
+  intentDecision               Json?
+  intentAssessedAt             DateTime?
+  createdAt                    DateTime                         @default(now())
+  updatedAt                    DateTime                         @updatedAt
+  completedAt                  DateTime?
+  session                      InterviewSession                 @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  journalEvent                 JournalEvent?                    @relation("JournalEventUserTurns", fields: [journalEventId], references: [id], onDelete: Cascade)
+  targetMessage                InterviewMessage?                @relation("InterviewUserTurnTargetMessage", fields: [targetMessageId], references: [id], onDelete: SetNull)
+  baseBranchSession            InterviewSession?                @relation("InterviewUserTurnBaseBranch", fields: [baseBranchSessionId], references: [id], onDelete: SetNull)
+  responseRegeneration         AIResponseRegeneration?
+  messages                     InterviewMessage[]
+  factEvidence                 JournalEventFactEvidence[]
+  confirmedUnderstandingClaims JournalEventUnderstandingClaim[] @relation("JournalEventUnderstandingClaimConfirmedByTurn")
 
   @@unique([sessionId, clientTurnId])
   @@index([sessionId, status, createdAt])
+  @@index([targetMessageId, createdAt])
+  @@index([journalEventId, createdAt])
+}
+
+model InterviewBranchCheckpoint {
+  id            String           @id @default(cuid())
+  sessionId     String
+  messageId     String           @unique
+  schemaVersion Int              @default(1)
+  sessionState  Json
+  eventsState   Json
+  createdAt     DateTime         @default(now())
+  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  message       InterviewMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model AIResponseRegeneration {
+  id                 String                       @id @default(cuid())
+  rootSessionId      String
+  branchSessionId    String
+  targetMessageId    String
+  sourceMessageId    String
+  sourceTraceId      String?
+  generatedMessageId String?                      @unique
+  generatedTraceId   String?
+  userTurnId         String?                      @unique
+  intent             InterviewRegenerationIntent
+  candidates         Json?
+  selectedCandidate  Int?
+  checks             Json?
+  status             AIResponseRegenerationStatus @default(processing)
+  latencyMs          Int?
+  errorCode          String?
+  answeredAt         DateTime?
+  replacedAt         DateTime?
+  switchedBackAt     DateTime?
+  downvotedAt        DateTime?
+  abandonedAt        DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  completedAt        DateTime?
+  session            InterviewSession             @relation("RegenerationBranchSession", fields: [branchSessionId], references: [id], onDelete: Cascade)
+  rootSession        InterviewSession             @relation("RegenerationRootSession", fields: [rootSessionId], references: [id], onDelete: Cascade)
+  targetMessage      InterviewMessage             @relation("RegenerationTargetMessage", fields: [targetMessageId], references: [id], onDelete: Cascade)
+  sourceMessage      InterviewMessage             @relation("RegenerationSourceMessage", fields: [sourceMessageId], references: [id], onDelete: Cascade)
+  generatedMessage   InterviewMessage?            @relation("RegenerationGeneratedMessage", fields: [generatedMessageId], references: [id], onDelete: SetNull)
+  sourceTrace        AIGenerationTrace?           @relation("RegenerationSourceTrace", fields: [sourceTraceId], references: [id], onDelete: SetNull)
+  generatedTrace     AIGenerationTrace?           @relation("RegenerationGeneratedTrace", fields: [generatedTraceId], references: [id], onDelete: SetNull)
+  userTurn           InterviewUserTurn?           @relation(fields: [userTurnId], references: [id], onDelete: SetNull)
+
+  @@index([rootSessionId, createdAt])
+  @@index([targetMessageId, createdAt])
+  @@index([status, createdAt])
+  @@index([intent, createdAt])
 }
 
 model JoyInterviewSnapshot {
@@ -557,39 +829,44 @@ model AIRequestLog {
 }
 
 model AIGenerationTrace {
-  id                        String                   @id @default(uuid())
-  requestId                 String?
-  userId                    String
-  sessionId                 String?
-  dimension                 InterviewDimension?
-  artifactType              AIGenerationArtifactType
-  artifactId                String?
-  artifactVersion           Int                      @default(1)
-  triggerMessageId          String?
-  status                    AIGenerationTraceStatus  @default(pending)
-  outputOrigin              AIOutputOrigin?
-  contextSnapshot           Json
-  finalOutput               Json?
-  pipelineDecisions         Json
-  errorCode                 String?
-  completedAt               DateTime?
-  failedAt                  DateTime?
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
-  feedbackEvaluationPending Boolean                  @default(false)
-  user                      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session                   InterviewSession?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  invocations               AIRequestLog[]
-  interviewMessage          InterviewMessage?        @relation("InterviewMessageGenerationTrace")
-  currentForJoyEntry        JoyEntry?                @relation("CurrentJoyEntryGenerationTrace")
-  case                      AICase?
-  evaluation                AIEvaluation?
-  feedback                  AIFeedback?
-  fewShotExample            AIFewShotExample?
+  id                             String                   @id @default(uuid())
+  requestId                      String?
+  userId                         String
+  sessionId                      String?
+  journalEventId                 String?
+  dimension                      InterviewDimension?
+  artifactType                   AIGenerationArtifactType
+  artifactId                     String?
+  artifactVersion                Int                      @default(1)
+  triggerMessageId               String?
+  status                         AIGenerationTraceStatus  @default(pending)
+  outputOrigin                   AIOutputOrigin?
+  contextSnapshot                Json
+  finalOutput                    Json?
+  pipelineDecisions              Json
+  errorCode                      String?
+  completedAt                    DateTime?
+  failedAt                       DateTime?
+  createdAt                      DateTime                 @default(now())
+  updatedAt                      DateTime                 @updatedAt
+  feedbackEvaluationPending      Boolean                  @default(false)
+  user                           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session                        InterviewSession?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  journalEvent                   JournalEvent?            @relation("JournalEventGenerationTraces", fields: [journalEventId], references: [id], onDelete: Cascade)
+  invocations                    AIRequestLog[]
+  interviewMessage               InterviewMessage?        @relation("InterviewMessageGenerationTrace")
+  currentForJoyEntry             JoyEntry?                @relation("CurrentJoyEntryGenerationTrace")
+  case                           AICase?
+  evaluation                     AIEvaluation?
+  feedback                       AIFeedback?
+  fewShotExample                 AIFewShotExample?
+  sourceResponseRegenerations    AIResponseRegeneration[] @relation("RegenerationSourceTrace")
+  generatedResponseRegenerations AIResponseRegeneration[] @relation("RegenerationGeneratedTrace")
 
   @@unique([artifactType, artifactId, artifactVersion])
   @@index([userId, createdAt])
   @@index([sessionId, createdAt])
+  @@index([journalEventId, createdAt])
   @@index([status, createdAt])
   @@index([artifactType, dimension, createdAt])
 }

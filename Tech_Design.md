@@ -40,7 +40,8 @@
 当前真实代码是：
 - 五个维度枚举和前端壳子都已经存在
 - joy / fulfillment / reflection / improvement / gratitude 已完成理论对齐深化
-- improvement / gratitude 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft 和标题治理，但仍需要端到端产品验收与文风打磨
+- improvement 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、访谈推进、专属提问策略、完成收束、正文生成、质量门、fallback draft 和标题治理；端到端产品验收与文风仍可继续打磨
+- gratitude 已完成同一套理论对齐与成稿链路，作为当前五个可用维度之一持续运行
 
 ### 2.2 数据结构
 

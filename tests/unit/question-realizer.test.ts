@@ -9,6 +9,7 @@ function createEnvelope(overrides: Partial<AskIntentEnvelope>): AskIntentEnvelop
   return {
     intent: "point_out_key_part",
     sourceTarget: "judgment_clue",
+    gratitudeSubTarget: null,
     dimension: "joy",
     anchorText: "收到扎根工程的赠礼",
     cognitiveLoad: "medium",
@@ -58,6 +59,37 @@ describe("realizeQuestion", () => {
     });
 
     expect(question).toBe("你提到“中午陪我一起回来，还给了面试建议”。这份回应具体照顾到了你的什么需要？");
+  });
+
+  it("moves gratitude from an answered action to the still-missing need", () => {
+    const snapshot: JoySnapshot = {
+      ...baseSnapshot,
+      event: "同事听到项目要收尾后主动帮我收尾",
+      gratitudeMoment: "同事听到项目要收尾后主动帮我收尾",
+      gratitudeTarget: "同事",
+      kindAction: "主动帮我收尾",
+      seenNeed: null,
+      gratitudeReason: null,
+      relationshipSignal: null
+    };
+    const spec = createQuestionSpec({
+      dimension: "gratitude",
+      stage: "probe_reason",
+      snapshot,
+      stageIntent: "advance"
+    });
+    const surfaced = applyQuestionSurfaceProtocol({
+      dimension: "gratitude",
+      stage: "probe_reason",
+      snapshot,
+      spec,
+      candidateQuestion: "对方具体做了什么，让你觉得这份感谢很重要？"
+    });
+
+    expect(spec.subTarget).toBe("seen_need");
+    expect(surfaced.question).toContain("主动帮我收尾");
+    expect(surfaced.question).toContain("哪一层需要或难处");
+    expect(surfaced.question).not.toMatch(/具体做了什么/u);
   });
 
   it("renders name_next_time_cue for reflection without abstract signal-heavy phrasing", () => {

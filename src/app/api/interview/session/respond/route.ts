@@ -91,11 +91,18 @@ export async function POST(request: Request) {
         : issue.code === "SESSION_CHOICE_UNAVAILABLE" ||
             issue.code === "INTERVIEW_TURN_IN_PROGRESS" ||
             issue.code === "INTERVIEW_TURN_OUT_OF_DATE" ||
-            issue.code === "INTERVIEW_TURN_RETRY_REQUIRED"
+            issue.code === "INTERVIEW_TURN_RETRY_REQUIRED" ||
+            issue.code === "INTERVIEW_REGENERATION_UNAVAILABLE" ||
+            issue.code === "INTERVIEW_REGENERATION_INTENT_UNAVAILABLE" ||
+            issue.code === "INTERVIEW_REGENERATION_LIMIT_REACHED" ||
+            issue.code === "INTERVIEW_BRANCH_OUT_OF_DATE" ||
+            issue.code === "INTERVIEW_BRANCH_LOCKED_BY_JOURNAL"
           ? 409
           : issue.code === "INTERVIEW_TURN_NOT_FOUND"
             ? 404
-          : 500;
+            : issue.code === "INTERVIEW_REGENERATION_FAILED"
+              ? 502
+              : 500;
 
     logInterviewRespondError({
       error,
