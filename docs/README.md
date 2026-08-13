@@ -6,16 +6,16 @@
 
 ## 1. 当前状态
 
-### GI-088 v8r3r3 当前快照（2026-08-12）
+### GI-088 板块 7 当前快照（2026-08-12）
 
-- 当前候选：`2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60`，模型仍为 Ark `deepseek-v4-flash-ga-260731`，Thinking high、`json_object`、Interview Skill 和数据集保持冻结，只调整 30/60 秒恢复调度。
+- 官方 DeepSeek Pro 完整合同与可执行精简合同＋确定性状态投影的开发配对已封存为技术 No-Go；两组统一使用任务归属状态 v2、相同 Skill、数据、输入、Thinking high、JSON 和 `60s` 配置。
 - v8r3r2 的内容质量与兼容性继续只读有效；4 条【陪我聊】和 2 条【帮我记】通过，但 P90 `64.7s`、最长 `70.1s` 的等待体验未达到发布线。
-- v8r3r3 工程门、原子赢家与真实隔离库通过；正式 96 checkpoint 运行达到 `196` 次调用上限，最终可见 `50/96`、最终保护 `46`，判定 `No-Go`。当前证据入口为 [v8r3r3 自适应并行恢复 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)。
-- 板块 7 重新开放，板块 8 暂停；本候选未部署新 Preview。Production 继续保持 `legacy + baseline`；Codex 不代提交真人内容，不持久化隐藏推理，不运行模型探针，也不扩展约 200 轮以上容量。
+- v8r3r3 正式运行 `50/96` 的 No-Go 与随后 A～E 根因对照均已封存；根因对照入口为[模型运行链与输出合同根因对照](../artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)。
+- 实际调用 `126` 次：完整组技术有效 `53/64`、精简组 `38/64`，两组有效率与延迟门均失败；状态投影四项错误为 `0`。人工裁决源未生成，隐藏集未读取，Judge、Preview 和 Production 变更均为 `0`。Production 继续 `legacy + baseline`。
 
 - `GI-068～080` 保持关闭；
 - 生成式访谈工作方法 `v1.0` 已冻结；
-- 板块 6 当前输入已齐；板块 7 因 v8r3r3 正式运行未通过用户结果门而重新开放；板块 8 暂停；
+- 板块 6 当前输入已齐；板块 7 等待下一单一主要因素决策；板块 8 暂停；
 - `GI-081` 六题真实输出与盲评已经完成，当前作为临时 Prompt 诊断基线；
 - `GI-083` v0/v1 保留一次调用透明诊断历史；产品负责人轨迹调用 `0`，v1.1 工程合成自测 `5/5` 次请求通过；
 - `GI-084` v0.1～v0.3 三轮回归均为 No-Go，v0.4 在运行前关闭；
@@ -38,7 +38,7 @@
 - v8r3 前两轮与旧 79.17% 可靠性 No-Go 继续保存为历史证据；v8r3r2 EMPTY 双恢复诊断最终可见完成率 `100%`、恢复结果人工裁决 `10/10` 可直接用，真人 `4＋2` 内容与兼容性通过，但等待体验未达到发布线；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
 - v8r3r3 自适应并行恢复正式运行最终可见 `50/96`、最终保护 `46`，判定 `No-Go`；
-- 板块 7 当前重新开放，板块 8 暂停；
+- 板块 7 已封存完整合同与精简合同＋状态投影配对技术 No-Go，板块 8 暂停；
 - Production 保持 `legacy + baseline`。
 
 ## 2. 新会话阅读顺序
@@ -64,7 +64,7 @@
 ### 当前评测与真人裁决
 
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
-- GI-088 当前正式证据入口：[v8r3r3 自适应并行恢复 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
+- GI-088 当前封存证据入口：[官方 Pro 双合同与状态投影配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - GI-088 v8r3r1 历史证据：[账户恢复后运行门记录](../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - GI-088 v8r3 历史证据：[Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - GI-088 v8r2 历史底座与行政收口：[v8r2 评测底座加固证据](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)

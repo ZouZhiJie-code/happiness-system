@@ -2,16 +2,17 @@
 
 最后更新：`2026-08-12`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 v8r3r3 可靠性门 No-Go。运行链根因对照已封存：官方 Pro 20/24 技术入围，最终八条人工裁决 7 优 1 轻微、0 失败；下一步在板块 7 验证只切换主 Provider／模型的 v8r3r4，尚未部署新 Preview。Production 保持 legacy + baseline。`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 官方 Pro 完整合同与精简合同＋状态投影配对开发验证已封存为技术 No-Go。实际调用 126 次，完整组有效 53/64、精简组 38/64，两组有效率与延迟门均失败；人工裁决源未生成，隐藏集未读取。Preview／Production 保持关闭，Production 继续 legacy + baseline。`
 
 ## GI-088 当前证据入口（2026-08-12）
 
+- [官方 Pro 完整合同与精简合同＋状态投影配对技术 No-Go](./generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - [模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [Golden 32＋8 独立替换裁决](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)
 - [v8r3 Interview Skill、Ark Flash 与历史离线 No-Go](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
-- v8r3r2 deployment／run 继续作为上一候选的只读证据；v8r3r3 未创建 deployment 或 run。
+- v8r3r2 deployment／run 继续作为上一候选的只读证据；v8r3r3 与本次双合同配对均未创建 deployment 或 run。
 
 ## 1. 为什么需要这份规则
 
@@ -36,6 +37,7 @@
 
 当前入口：
 
+- [GI-088 官方 Pro 双合同与状态投影配对技术 No-Go](./generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - [GI-088 模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [GI-088 v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [GI-088 v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)

@@ -694,7 +694,7 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
 
-当前产品状态（`2026-08-12`）：GI-066 与 GI-088 v0～v8r2 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。当前 GI-088 v8r3 Golden 8 已封存（7 条采用、1 条质量失败）；Ark Flash 候选首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running / 0/6 / gate=pending / calls=0`。Judge 20+20 保持后置，当前工作流暂停等待产品负责人决定是否继续真人回读；约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
+当前产品状态（`2026-08-12`）：GI-066 与 GI-088 v0～v8r3r3 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。v8r3 Golden 32＋8、v8r3r2 内容质量与兼容结论、v8r3r3 可靠性 No-Go 和运行链根因对照均已封存；根因对照中官方 Pro 完整合同技术有效 `20/24`，固定八条人工裁决为 `7` 条可直接用、`1` 条轻微问题、`0` 失败。后续官方 Pro 双合同开发配对实际调用 `126` 次，完整组有效 `53/64`、精简组 `38/64`，两组延迟门失败，已封存技术 No-Go；人工裁决源未生成，隐藏集未读取。历史 Ark Preview 继续只读保留。Judge 20＋20 后置，板块 7 等待下一单一主要因素决策，板块 8 暂停，约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
 
 ### 5.8 GI-088 私有 Preview 评测运行器
 

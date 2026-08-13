@@ -4,13 +4,12 @@
 
 截至 `2026-08-12`，这个仓库的真实状态是：
 
-### GI-088 v8r3r3 当前快照
+### GI-088 当前快照
 
-- 候选版本：`2026-08-12.gi088-human-eval-v8r3r3-adaptive-recovery-30-60`，保持 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`、Interview Skill 与数据集冻结，只改变 30/60 秒恢复调度。
-- v8r3r2 的内容质量与兼容性结论继续只读保留；4 条【陪我聊】与 2 条【帮我记】通过，但 P90 `64.7s`、最长 `70.1s` 的等待体验未达到发布线。
-- v8r3r3 的工程、原子赢家和真实隔离库验证通过；正式运行达到 `196` 次调用上限后，最终可见回复为 `50/96`、最终保护为 `46`，判定 `No-Go`。
-- 板块 7 已重新开放，板块 8 暂停；本候选未部署新 Preview，也未创建新 `0/6`。
-- Production 继续保持 `legacy + baseline`；真人内容由产品负责人决定提交，Codex 保持零代提交。
+- 已封存的运行链根因对照确认：官方 DeepSeek Pro＋完整合同达到 `20/24` 技术有效并通过固定八条人工质量门；模型档位稳定性为当前主因，完整状态输出职责为重要放大因素。
+- 官方 Pro＋完整合同与官方 Pro＋可执行精简合同＋确定性状态投影的开发配对已封存为技术 No-Go。实际调用 `126` 次，完整组有效 `53/64`、精简组 `38/64`，两组有效率和延迟门均失败；状态投影四项错误为 `0`。
+- 本轮未生成人工裁决源，隐藏集未读取；恢复、重试、Judge、Preview 和 Production 变更均为 `0`。板块 7 等待下一单一主要因素决策，板块 8 暂停。
+- v8r3r2 内容质量、v8r3r3 可靠性 No-Go 与前序根因证据继续只读保留。板块 8 暂停，Production 保持 `legacy + baseline`；真人内容由产品负责人提交，隐藏推理继续不持久化。
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -36,9 +35,9 @@
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
 - 访谈维度选择页通过 `CalendarMainGate` 的内容层纵向伸展完整承接可用视口，页面底部背景保持连续，修复内容区结束后露出全局木色背景的断层问题。
-- 当前产品与事件中心候选的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值；GI-088 v8r1／v8r2 的 V4 Pro 运行策略与 Ark 历史证据继续只读保留，当前 v8r3 候选使用 Ark `deepseek-v4-flash-ga-260731`。`VOLCENGINE_ARK_*` 变量服务当前 v8r3 Preview 与历史兼容链，Production 保持关闭。
+- 当前产品与事件中心生产链的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值。GI-088 v8r3r2 的 Ark Flash Preview 与前序 Ark 证据继续只读保留；官方 Pro 双合同开发配对已封存技术 No-Go，未形成 Preview 或 Production 候选。`VOLCENGINE_ARK_*` 变量继续服务历史 Preview 兼容链，Production 生成式路径保持关闭。
 - 生成式访谈事件中心已经具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。`GI-065` 已把新会话产品范围收口为“理清想法”单角度，感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。
-- `GI-067 / GI-068～074`、`GI-075～080` 和方法 `v1.0` 继续冻结。板块 6 正在建设正式评测资产；GI-087 保留为 GI-088 基础候选。GI-088 v1～v7r4 的真人结果、探针、提前结束、恢复、连续性和平台对照继续承担历史证据。v8 在 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口并获产品通过。v8r1 A1 控制误停形成单例阻断；其历史 run 只读保持 A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。v8r2 的 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿验证已收口；最终行为 commit 为 `e01c9ed5fa0334d8d717dbed2643791f1045e04d`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。Preview 已 `READY`，全新 High-only run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 已零调用初始化并停在 `running 0/12 / gate=pending / high`，等待 12 项真人验收。旧预发布零内容 run 与授权端到端技术 run 均已行政停止并排除正式当前态；后者仅含 1 条虚构技术内容，第一次调用触发程序保护，第二次自动恢复成功。质量、板块 7 正式接入、板块 8 和发布范围均未裁决。约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
+- `GI-067 / GI-068～074`、`GI-075～080` 和方法 `v1.0` 继续冻结。GI-087 保留为 GI-088 基础候选；GI-088 v1～v8r3r3 的真人结果、探针、提前结束、恢复、连续性、平台对照与 No-Go 继续承担历史证据。v8r2 的 P0／P1、Preview 和零调用初始化已经收口并保持只读；v8r3r2 的内容质量与兼容性通过，等待体验未达发布线；v8r3r3 可靠性门 No-Go。运行链根因对照确认官方 Pro 的模型档位稳定性为主因，完整状态输出职责为重要放大因素；后续官方 Pro 双合同开发配对以完整组 `53/64`、精简组 `38/64` 和两组延迟门失败封存技术 No-Go。板块 8 暂停，约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
 - v8r2 私有评测 schema 在原批次表之外新增调用账本、幂等操作、程序介入、人工修订、操作事件和不可变导出快照；`runOrdinal` 支持同一冻结候选的多次独立运行。旧 run 数据和旧 JSON 继续只读兼容，Production 数据库不进入本次迁移范围。
 - 事件中心日志支持生成、编辑、700ms 自动暂存、正式保存、刷新恢复和通过当天事件标签重新打开；事件日志接口、Trace、反馈和九类漏斗埋点已接入，未新增数据库迁移。
 - GI-066 使用 DeepSeek 官方 API 完成严格 `10×3` 与单角度自动 `8+2`，这些结果保留为历史技术证据；最新真人实聊因目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效。Production 继续保持 `legacy + baseline`。
@@ -86,11 +85,11 @@
 
 ## 当前产品状态
 
-### GI-088 v8r3r3 当前交接（2026-08-12）
+### GI-088 板块 7 当前交接（2026-08-12）
 
-- v8r3r2 的 Golden 32＋8、双恢复 `10/10` 以及真人 `4＋2` 内容结论继续只读保留。
-- v8r3r3 自适应并行恢复的状态收口和工程可靠性通过；Provider 空正文激增与快速整理 JSON 不合法共同造成最终可见 `50/96`。
-- 当前停留在板块 7 处理恢复质量，板块 8 暂停；Judge 20＋20 后置，Production 保持 `legacy + baseline`。
+- v8r3r2 的 Golden 32＋8、双恢复 `10/10`、真人 `4＋2` 内容结论与 v8r3r3 的可靠性 No-Go 继续只读保留。
+- A～E 根因对照已经封存；官方 Pro 完整合同成为质量可用方向，精简合同显示出降低空内容、等待和 Token 的潜力。
+- 官方 Pro 完整合同与可执行精简合同＋状态投影的同样本开发配对已封存技术 No-Go；人工配对裁决源未生成，隐藏准入未启动。板块 8 暂停，Judge 20＋20 后置，Production 保持 `legacy + baseline`。
 
 ### 已完成
 - 多维度访谈入口、维度切换静默持久化与本地 session 恢复
@@ -302,7 +301,7 @@ npm test
 - 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
 - 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
 - 事件中心专项命令包括 `npm run eval:event-centered:batch-b` 与 `npm run eval:event-centered:generative`；板块 7 的四角度 smoke、baseline recovery 和事件日志探针使用 `scripts/run-board7-*.ts`，证据集中在 `artifacts/generative-interview-board7/2026-08-02/`
-- 事件中心当前产品状态以 [`生成式访谈重构总 Map`](docs/generative-interview-refactor-map.md) 为准；板块 6 当前评测资产与开放校准见 [`04j｜生成式质量评测 v1`](docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，当前正式证据入口见 [`GI-088 v8r3r3 自适应并行恢复 No-Go`](artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)，v8r3r2 内容质量、v8r2 评测底座与 v8r1 事故继续作为历史证据，板块 8 Preview 与 Production 授权边界见 [`04p`](docs/technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)。
+- 事件中心当前产品状态以 [`生成式访谈重构总 Map`](docs/generative-interview-refactor-map.md) 为准；板块 6 当前评测资产与开放校准见 [`04j｜生成式质量评测 v1`](docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，当前已封存证据入口见 [`GI-088 官方 Pro 双合同配对技术 No-Go`](artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)，职责边界与状态投影见 [`07｜板块 7 专项`](docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)，运行链根因对照、v8r3r3 No-Go、v8r3r2 内容质量、v8r2 评测底座与 v8r1 事故继续作为历史证据，板块 8 Preview 与 Production 授权边界见 [`04p`](docs/technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)。
 - production URL contract 与 AI provider 诊断 lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`；它和公开 smoke 分开，默认保持关闭，只在短时验证窗口中临时打开
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
@@ -337,7 +336,8 @@ npx prisma migrate deploy
 - 评测资产总入口：`artifacts/README.md`
 - 生成式访谈当前状态与讨论位置：`docs/generative-interview-refactor-map.md`
 - 板块 6 当前评测与校准：`docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md`
-- GI-088 当前正式证据入口：`artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md`
+- GI-088 当前已封存证据入口：`artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md`
+- GI-088 当前实施专项：`docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md`
 - GI-088 v8r2 历史底座与行政收口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
 - GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
 - GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
@@ -380,7 +380,7 @@ npx prisma migrate deploy
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
-- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0～v8r3r2 的失败、诊断与真人结论继续作为历史证据；v8r3r3 因最终可见 `50/96` 判定 `No-Go`，板块 7 重新开放，板块 8 暂停。Production 保持 `legacy + baseline`。
+- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0～v8r3r3 的失败、诊断与真人结论继续作为历史证据；v8r3r3 因最终可见 `50/96` 判定 `No-Go`。运行链根因对照和官方 Pro 双合同开发配对技术 No-Go 已经封存；板块 7 等待下一单一主要因素决策，板块 8 暂停。Production 保持 `legacy + baseline`。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
 - `/api/daily-journal*` 是当天整合日志的查询、生成、草稿更新和保存接口。
 - `/api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`，session hydrate 也会返回 `entryDate`。

@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "1.0",
+  "experimentVersion": "2026-08-12.gi088-pro-contract-projection-paired-v1",
+  "status": "sealed_no_go_technical",
+  "partition": "development",
+  "runtime": {
+    "provider": "deepseek_official",
+    "model": "deepseek-v4-pro",
+    "thinking": "high",
+    "responseFormat": "json_object",
+    "headerTimeoutMs": 60000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardDeadlineMs": 60000,
+    "concurrency": 2
+  },
+  "dataset": {
+    "caseCount": 28,
+    "checkpointCount": 32,
+    "attemptsPerGroup": 2,
+    "expectedResultCountPerGroup": 64,
+    "caseSetCommitment": "3c3a4ff55734cd99663adb9a38cc318238ae220cb1c6b5ce157f04382d44c613",
+    "hiddenDatasetRead": false
+  },
+  "budget": {
+    "maximumProviderCalls": 128,
+    "providerCalls": 126,
+    "recoveries": 0,
+    "retries": 0,
+    "judgeCalls": 0
+  },
+  "groups": [
+    {
+      "group": "full",
+      "resultCount": 64,
+      "providerCallCount": 64,
+      "blockedByPriorFailureCount": 0,
+      "firstValidCount": 53,
+      "categorizedFailureCount": 11,
+      "failureCategories": {
+        "provider": 2,
+        "contract": 0,
+        "semantic": 9,
+        "projection": 0,
+        "stateCommit": 0
+      },
+      "failureIssues": {
+        "ACTION_NOT_ALLOWED": 4,
+        "ASK_VISIBLE_UNDERSTANDING_REQUIRED": 3,
+        "SYNTHESIZE_UNDERSTANDING_DELTA_REQUIRED": 2,
+        "TIMEOUT": 1,
+        "EMPTY_CONTENT": 1
+      },
+      "p50Ms": 35042,
+      "p90Ms": 50215,
+      "maxMs": 60003,
+      "latencySampleCount": 64,
+      "tokenUsageSampleCount": 63,
+      "totalTokens": 345170,
+      "projectionAmbiguityCount": 0,
+      "stateInvariantFailureCount": 0,
+      "duplicateCommitCount": 0,
+      "statePollutionCount": 0,
+      "technicalGatePassed": false
+    },
+    {
+      "group": "compact",
+      "resultCount": 64,
+      "providerCallCount": 62,
+      "blockedByPriorFailureCount": 2,
+      "firstValidCount": 38,
+      "categorizedFailureCount": 26,
+      "failureCategories": {
+        "provider": 4,
+        "contract": 0,
+        "semantic": 20,
+        "projection": 0,
+        "stateCommit": 2
+      },
+      "failureIssues": {
+        "REQUIRED_EVIDENCE_MISSING": 15,
+        "ACTION_NOT_ALLOWED": 5,
+        "TIMEOUT": 4,
+        "BLOCKED_BY_PRIOR_FAILURE": 2
+      },
+      "p50Ms": 32085,
+      "p90Ms": 54127,
+      "maxMs": 60003,
+      "latencySampleCount": 62,
+      "tokenUsageSampleCount": 58,
+      "totalTokens": 296152,
+      "projectionAmbiguityCount": 0,
+      "stateInvariantFailureCount": 0,
+      "duplicateCommitCount": 0,
+      "statePollutionCount": 0,
+      "technicalGatePassed": false
+    }
+  ],
+  "technicalDecision": {
+    "status": "no_go_technical",
+    "technicallyEligibleGroups": [],
+    "fullFirstValidGatePassed": false,
+    "compactFirstValidGatePassed": false,
+    "fullLatencyGatePassed": false,
+    "compactLatencyGatePassed": false,
+    "stateProjectionIntegrityGatePassed": true,
+    "humanReviewSourceGenerated": false,
+    "humanReviewCount": 0,
+    "hiddenRunStarted": false,
+    "hiddenProviderCalls": 0
+  },
+  "evidenceCompleteness": {
+    "missingTokenUsageSamples": 5,
+    "missingTokenUsageCause": "all_five_hard_deadline_timeouts_before_usage_was_available",
+    "providerBillingForMissingSamples": "unknown",
+    "privateReportMode": "0600",
+    "developmentReviewSourcePresent": false,
+    "hiddenReviewSourcePresent": false
+  },
+  "evidence": {
+    "privateReportSha256": "99348b9a7e5402bb0e960db5d79d3e4ae5ab3bc19bda94e5e6c2e4ce9624597d",
+    "reportFingerprint": "eff57f9766a74562d47321d52f1ea99fe3b19fdfc0dc02e863f2fc267d3d7d0d",
+    "diagnosticFingerprint": "84f62571cc6c05949e2d46eafb106763aff61b20b07b77bf23387b59cfc4a5f8",
+    "scheduleFingerprint": "888e449097b266962b3e7789aae47ec01721617f7948bc8e3fc4ceaa8dd7a08d",
+    "toolSourceSha256": "cfaeba980a286dcb3f838887ff37b6b31acb654ff0d93e24ee8870c7371a417c"
+  },
+  "runtimeFingerprints": {
+    "unchanged": true,
+    "candidate": "d997e0d99a9d4c138049b2812f6e6667fe825fef3426421482f95ba0223eba6b",
+    "dataset": "258a4b47ec4eb36393bcf37191fe5088ce699fc0abec5a6d7ccbc8e4b8f5a027",
+    "runner": "5cc5c713e632a2fc2257a233fa26f6ec77040ecf838c30b639994ea83298d02f",
+    "experience": "badebe8dfb3116a4784533eb09fa41d29832a27ddbb4757db2f5884db6f160af",
+    "execution": "b0e5d613d323987950f31a3c7a5d77cfedfae244a8ccb842369d8553483fc21f"
+  },
+  "publication": {
+    "previewDeployments": 0,
+    "productionChanges": 0,
+    "productionState": "legacy_plus_baseline"
+  },
+  "privacy": {
+    "sampleText": "excluded",
+    "requestBody": "excluded",
+    "fullModelOutput": "excluded",
+    "hiddenReasoningBody": "excluded",
+    "apiKey": "excluded",
+    "upstreamRequestIdRaw": "excluded"
+  }
+}

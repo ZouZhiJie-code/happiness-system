@@ -4,12 +4,14 @@
 
 ## 当前入口
 
-[GI-088｜v8r3r3 30/60 秒自适应恢复 No-Go](./2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
+[GI-088｜官方 Pro 双合同与状态投影配对技术 No-Go](./2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 
-状态：`v8r3r2 内容质量与 4＋2 兼容验收通过，等待体验未达发布线；v8r3r3 只调整 30/60 秒技术恢复调度，正式结果为初始有效 31/96、最终可见 50/96、最终保护 46，可靠性门 No-Go。新 Preview 与 0/6 未创建，Production 保持 legacy + baseline。`
+状态：`官方 Pro 双合同＋状态投影配对开发验证已封存为技术 No-Go：126 次调用中完整组有效 53/64、精简组 38/64，两组延迟门均失败，状态投影四项错误均为 0。人工裁决源未生成，隐藏集未读取；新 Preview 与 0/6 保持关闭，Production 继续 legacy + baseline。`
 
 当前迭代证据：
 
+- [官方 Pro 双合同与状态投影配对技术 No-Go](./2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
+- [模型运行链与输出合同根因对照](./2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [v8r3r3 30/60 秒自适应恢复 No-Go](./2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [v8r3 Golden 32＋8 与历史 Preview](./2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)

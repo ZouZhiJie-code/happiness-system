@@ -14,14 +14,14 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 
 事件中心当前采用“理清想法”单角度 MVP。GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 已通过，继续作为历史技术证据；最新真人实聊因提问目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效，剩余人工批次停止。
 
-`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前承接 GI-088 v8r3 Golden 8 与候选证据；前序版本继续只读保留。Golden 8 已封存，7 条采用、1 条质量失败（`reasks_answered_content`）。当前 Ark Flash 候选离线首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 回读为 `running / 0/6 / gate=pending / calls=0`，包含 4 条计分轨迹和 2 条兼容冒烟。Judge 20+20 后置，约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
+`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。GI-088 v8r3 Golden 8、v8r3r2 内容质量与兼容验收、v8r3r3 可靠性 No-Go 和运行链根因对照均已按各自身份封存；官方 Pro 在根因对照中达到 `20/24` 技术有效，固定八条人工裁决为 `7` 条可直接用、`1` 条轻微问题、`0` 质量失败。后续官方 Pro 双合同开发配对实际调用 `126` 次，完整组有效 `53/64`、精简组 `38/64`，两组延迟门失败并封存技术 No-Go；人工裁决源未生成，隐藏集未读取。板块 7 等待下一单一主要因素决策，板块 8 暂停，Judge 20＋20 后置，约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
 
 ## 2. 当前生产事实
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结。GI-088 v8r3 Golden 8 已封存，候选可靠性 No-Go；当前 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 保持 `running 0/6 / gate=pending / calls=0`，等待产品负责人决定是否继续真人回读。Judge 20+20 保持后置，`optional + generative` 保持关闭
+- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结。v8r3r2 Preview deployment 与 run 继续作为历史工程和真人验收证据；v8r3r3 可靠性 No-Go、运行链根因对照和官方 Pro 双合同开发配对技术 No-Go 已封存。当前未形成 Preview 候选，板块 8 暂停，Judge 20＋20 保持后置，`optional + generative` 保持关闭
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
@@ -200,10 +200,10 @@ AI 质量发布与效果观察专项验证：
 
 ### 7.0 当前交付顺序
 
-1. v8r1、v8r2 和 v8r3 两轮离线 No-Go 继续只读保留；Golden 8 已封存，7 条采用、1 条质量失败。
-2. 当前 Ark Flash 候选离线首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。
-3. 私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 为 `READY`，run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。
-4. 当前工作流暂停等待产品负责人决定是否继续真人回读；Judge 20+20 保持后置，约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
+1. v8r1、v8r2、v8r3～v8r3r3 的失败、诊断、Preview 与真人结论继续只读保留；Golden 32＋8 已封存。
+2. 运行链根因对照已经封存：官方 Pro 完整合同技术有效 `20/24`，固定八条人工质量为 `7` 条可直接用、`1` 条轻微问题、`0` 失败。
+3. 官方 Pro 完整合同与可执行精简合同＋确定性状态投影的同样本开发配对已运行 `126` 次；完整组 `53/64`、精简组 `38/64`，两组有效率和延迟门失败，状态投影四项错误为 `0`。
+4. 本轮人工配对裁决源未生成，隐藏集未读取；板块 7 等待下一单一主要因素决策，板块 8 暂停，约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
 
 ### 7.1 上线后收集真实反馈
 
@@ -232,7 +232,7 @@ AI 质量发布与效果观察专项验证：
 ## 8. 仍需持续关注
 
 - 板块 5 已冻结 GI-075～080 六类规则，落地验证仍待板块 7 正式候选承接。
-- 板块 6 当前以 GI-088 v8r3 Golden 8 与 Ark Flash 候选回读为准；Preview run `c873ad9a-ab5a-4629-960d-03266bc17b54` 保持 `running / 0/6 / gate=pending / calls=0`。候选可靠性硬门 No-Go，真人质量与发布继续由产品负责人决定，板块 7 正式接入和板块 8 继续等待。
+- 板块 6 的 Golden 32＋8、v8r3r2 内容质量与兼容结论、v8r3r3 No-Go 和运行链根因对照均已成为板块 7 输入。官方 Pro 双合同＋状态投影开发配对已封存技术 No-Go；板块 7 等待下一单一主要因素决策，板块 8 继续等待。
 - GI-066 自动层通过、真人体验 `No-Go` 和候选失效三类状态继续分开保存；Production 授权前保持 `legacy + baseline`。
 - 小流量下样本增长较慢，低于 5 条时以真实对话判断为主
 - Few-shot 依赖持续有效的点赞与 85 分以上评估

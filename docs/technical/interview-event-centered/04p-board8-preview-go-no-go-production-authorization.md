@@ -2,19 +2,19 @@
 
 最后更新：`2026-08-12`
 
-状态：`暂停；v8r3r2 Preview 保留只读证据，v8r3r3 可靠性 No-Go 后返回板块 7`
+状态：`暂停；v8r3r2 Preview 保留只读证据，官方 Pro 双合同开发配对技术 No-Go 已封存`
 
 当前环境：`v8r3r2 已完成 4＋2 内容与兼容验收，等待体验未达发布线；v8r3r3 未部署`
 
 Production：`继续保持 legacy + baseline；Preview 达标并获得产品负责人单独批准后才可切换`
 
-产品决策状态：`GI-067 / GI-068～080 已冻结；v8r3r2 质量结论只读保留；v8r3r3 正式可靠性门 No-Go；Production 授权保持关闭`
+产品决策状态：`GI-067 / GI-068～080 已冻结；v8r3r2 质量结论、v8r3r3 No-Go、运行链根因对照与双合同配对技术 No-Go 只读保留；Production 授权保持关闭`
 
-落地验证状态：`上一 v8r3r2 Preview 与真人结果保留；v8r3r3 工程和真实库通过、离线可靠性失败，新 Preview 和新 0/6 未执行`
+落地验证状态：`上一 v8r3r2 Preview 与真人结果保留；v8r3r3 离线可靠性失败；双合同开发配对为完整组 53/64、精简组 38/64 且两组延迟门失败，人工裁决源未生成、隐藏集未读取；新 Preview 和新 0/6 保持关闭`
 
 总状态导航：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 
-工作方法：[生成式访谈 AI 产品工作方法 v0.1](./00-generative-interview-ai-product-working-method.md)（`候选规范；等待板块 5 首题后确认 v1.0`）
+工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
 板块 7 当前入口：[07｜模型主导语义判断候选实现与验证](./07-board7-model-led-semantic-implementation.md)
 
@@ -38,7 +38,7 @@ GI-074 当前验收事实源：[04x-07｜生成式访谈评测体系与下游交
 
 历史验收资产：[Batch B｜AI 产品经理内部 Preview 验收单](./batch-b-ai-pm-preview-acceptance.md)
 
-## 当前 v8r3r2 Preview 入口
+## 历史 v8r3r2 Preview 证据
 
 候选版本为 `2026-08-12.gi088-human-eval-v8r3r2-empty-content-recovery-2`。模型与配置固定为 Ark Flash、Thinking high、JSON、`60/60/60/90`，EMPTY_CONTENT 每轮最多自动恢复两次。板块 7 的增量人工准入为可直接用 `10/10`，质量失败和单例阻断均为 `0`。
 
@@ -46,7 +46,7 @@ GI-074 当前验收事实源：[04x-07｜生成式访谈评测体系与下游交
 
 本轮已按以下顺序完成工程交接：冻结候选提交 → 全绿工程与真实隔离库门 → Vercel Linux 远程构建 → Preview 双 schema 幂等迁移 → 零模型初始化全新 `0/6` → 认证回读。回读确认了 `4` 条【陪我聊】计分轨迹、`2` 条【帮我记】兼容冒烟、active task 为空、Provider calls 为 `0`、运行中导出禁用、五层指纹与冻结提交一致。
 
-当前暂停，由产品负责人开始真人 `4＋2`。Judge 20＋20 保持后置，Production 继续 `legacy + baseline`。
+该 Preview 的真人 `4＋2` 已完成，并形成内容质量通过、等待体验未达线的历史结论。当前板块 8 暂停等待板块 7 选出合同与状态架构，再由后续正式候选重新申请 Preview。Judge 20＋20 保持后置，Production 继续 `legacy + baseline`。
 
 ## GI-074 当前 Preview 覆盖层
 
@@ -535,7 +535,10 @@ npm run report:event-centered:board8 -- \
 - [x] GI-066 最新两条真人实聊完成问题归因并作出人工体验 `No-Go`；候选失效，剩余人工批次停止。
 - [x] GI-067 产品规则与 GI-074 验收判尺完成冻结。
 - [x] 板块 5 完成交互校准、板块 6 建立当前准入输入、板块 7 v8r3r2 新候选实现并通过增量人工准入。
-- [ ] 产品负责人按 GI-074 的两模式 `4＋2` 完成新一轮真人验收，并独立批准或否决 Production 首发。
+- [x] 产品负责人完成 v8r3r2 两模式 `4＋2` 真人验收；内容质量通过，等待体验未达发布线。
+- [x] 板块 7 完成官方 Pro 双合同开发配对；结果为技术 No-Go，未产生胜出架构，隐藏准入未启动。
+- [ ] 板块 7 选择下一单一主要因素并形成通过完整准入门的新正式候选。
+- [ ] 新正式候选完成独立 Preview `0/6` 初始化和两模式 `4＋2` 真人验收，并由产品负责人独立批准或否决 Production 首发。
 - [ ] Production deployment ID、开启时间、配置快照和线上冒烟证据已记录。
 - [ ] 前 10 次真实有效会话逐条审计完成。
 
@@ -547,4 +550,4 @@ npm run report:event-centered:board8 -- \
 2. Preview 或首发中的生成式问题由 baseline 稳定承接，状态为“条件发布”，生成式问题拆入专项修复。
 3. 一轮修复复验仍失败、出现多个独立根因，或事件入口、数据、隐私、来源和恢复主链失败，状态为“重新打开”，Production 回到安全档位。
 
-当前板块 8 已解除上游依赖，并完成私有 Preview 的 `READY + running 0/6 + calls 0` 回读。产品负责人接下来执行两模式 `4＋2`；作出 Go 后仍需单独批准 Production，才保存 Production 配置快照、部署并开启前 `10` 次审计。重复目标、重要线索遗漏、纠正后偏航、安全阻断或人工失败均继续阻断发布。Production 继续保持 `legacy + baseline`。
+v8r3r2 的 `READY + running 0/6 + calls 0` 与后续真人 `4＋2` 作为历史证据保留。官方 Pro 双合同开发配对已按技术 No-Go 停止：实际调用 `126` 次，完整组 `53/64`、精简组 `38/64`，两组延迟门失败，人工裁决源未生成，隐藏集未读取。当前板块 8 等待板块 7 选择下一单一主要因素并形成通过完整准入门的新正式候选，再创建新的私有 Preview。新候选作出 Go 后仍需单独批准 Production，才保存 Production 配置快照、部署并开启前 `10` 次审计。重复目标、重要线索遗漏、纠正后偏航、安全阻断或人工失败均继续阻断发布。Production 继续保持 `legacy + baseline`。

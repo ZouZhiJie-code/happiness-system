@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-12.gi088-current-issue-ledger-v16",
-  "status": "v8r3r3_adaptive_recovery_no_go_board7_reopened",
-  "currentQueueStage": "v8r3r3_provider_empty_and_fast_formatter_reliability_attribution",
+  "ledgerVersion": "2026-08-12.gi088-current-issue-ledger-v18",
+  "status": "pro_contract_projection_paired_no_go_technical_sealed",
+  "currentQueueStage": "board7_waiting_next_single_factor_after_paired_technical_no_go",
   "sourceLedgers": [
     {
       "version": "2026-08-09.gi088-human-eval-v1-bad-case-ledger-v1",
@@ -85,6 +85,37 @@
     "artifactPath": "../2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
     "previewDeploymentStatus": "not_deployed",
     "productionState": "legacy_plus_baseline"
+  },
+  "currentProContractPairedRun": {
+    "experimentVersion": "2026-08-12.gi088-pro-contract-projection-paired-v1",
+    "status": "no_go_technical",
+    "maximumProviderCalls": 128,
+    "providerCallCount": 126,
+    "fullResultCount": 64,
+    "fullFirstValidCount": 53,
+    "compactResultCount": 64,
+    "compactProviderCallCount": 62,
+    "compactFirstValidCount": 38,
+    "fullLatencyP50Ms": 35042,
+    "fullLatencyP90Ms": 50215,
+    "fullLatencyMaxMs": 60003,
+    "compactLatencyP50Ms": 32085,
+    "compactLatencyP90Ms": 54127,
+    "compactLatencyMaxMs": 60003,
+    "projectionAmbiguityCount": 0,
+    "stateInvariantFailureCount": 0,
+    "duplicateCommitCount": 0,
+    "statePollutionCount": 0,
+    "humanReviewSourceGenerated": false,
+    "humanReviewCount": 0,
+    "hiddenDatasetRead": false,
+    "hiddenProviderCallCount": 0,
+    "judgeCalls": 0,
+    "previewDeploymentStatus": "not_deployed",
+    "productionState": "legacy_plus_baseline",
+    "privateReportSha256": "99348b9a7e5402bb0e960db5d79d3e4ae5ab3bc19bda94e5e6c2e4ce9624597d",
+    "publicSummarySha256": "2625dc697583ba89297d93c36d11bfb3f12fe01d6b5570c3efe3bda78238deb4",
+    "artifactPath": "../2026-08-12-gi088-pro-contract-projection-paired-v1/README.md"
   },
   "finalInitializationBlocker": {
     "issueId": "V8R2-WB-01",
@@ -192,6 +223,7 @@
     }
   ],
   "currentQueue": [
+    "PRO-CONTRACT-ARCH-01",
     "V8R2-AUTH-01",
     "V8R2-SCHEMA-LOCK-01",
     "V8R1-CTRL-01",
@@ -808,23 +840,46 @@
       "title": "Ark Thinking high 空正文突增且快速整理未稳定形成合法 JSON",
       "productOwnerJudgment": "使用 30 秒加速和 60 秒硬截止降低等待，60 秒内自动最终可见率必须达到 100%，重复回复、遗留 pending 和人工恢复为 0。",
       "codexInitialAssessment": "竞速与原子收口工程正确，正式运行只有 50/96 最终可见，技术可靠性先于恢复内容盲评触发 No-Go。",
-    "confirmedRootCause": "v8r3r3 的 96 次初始调用中 65 次以 HTTP 200 和 finish=stop 结束，存在 reasoning 但可见内容为空；快速整理又有 36 次未形成合法 JSON。随后 A～E 根因对照显示：Ark Flash 完整合同 9/24、官方 Flash 完整合同 10/24，Provider 路由切换未消除空内容；Ark Flash 精简合同提升到 18/24 且空内容为 0，证明完整状态输出职责会放大失败；官方 Pro 完整合同达到 20/24、空内容为 0，并以 7 优 1 轻微、0 失败通过八条人工质量门。当前归因为模型档位稳定性主导，完整状态输出职责放大，Provider 路由影响较小。",
+      "confirmedRootCause": "v8r3r3 的 96 次初始调用中 65 次以 HTTP 200 和 finish=stop 结束，存在 reasoning 但可见内容为空；快速整理又有 36 次未形成合法 JSON。随后 A～E 根因对照显示：Ark Flash 完整合同 9/24、官方 Flash 完整合同 10/24，Provider 路由切换未消除空内容；Ark Flash 精简合同提升到 18/24 且空内容为 0，证明完整状态输出职责会放大失败；官方 Pro 完整合同达到 20/24、空内容为 0，并以 7 优 1 轻微、0 失败通过八条人工质量门。当前归因为模型档位稳定性主导，完整状态输出职责放大，Provider 路由影响较小。",
       "hypotheses": [
         "快速整理采用更窄、可确定修复的结构合同后，可以提高非 Thinking 路径的合法结果率。",
-      "官方 Pro 在正式 96-checkpoint 中仍能保持至少 85% 首次有效率，并通过 60 秒最终可见门。",
-      "官方 Pro 当前 P90 57.5 秒和两次超时可能使正式候选无法通过等待体验门。",
-      "若官方 Pro 正式候选等待门失败，再单独验证精简输出合同与程序状态投影。"
+        "官方 Pro 在正式 96-checkpoint 中仍能保持至少 85% 首次有效率，并通过 60 秒最终可见门。",
+        "官方 Pro 当前 P90 57.5 秒和两次超时可能使正式候选无法通过等待体验门。",
+        "若官方 Pro 正式候选等待门失败，再单独验证精简输出合同与程序状态投影。"
       ],
       "priority": "P0",
-    "status": "root_cause_diagnostic_sealed_official_pro_candidate_direction_selected",
+      "status": "root_cause_diagnostic_sealed_paired_followup_no_go",
       "trace": [
-      "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
-      "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/gi088-v8r3r3-adaptive-run-summary.json",
-      "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md",
-      "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/gi088-runtime-contract-final-eight-receipt.json",
-      "tests/integration/gi088-foundation-prisma-store.test.ts"
-    ],
-    "targetVersion": "v8r3r4_deepseek_official_pro_adaptive_recovery"
+        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/gi088-v8r3r3-adaptive-run-summary.json",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/gi088-runtime-contract-final-eight-receipt.json",
+        "tests/integration/gi088-foundation-prisma-store.test.ts"
+      ],
+      "targetVersion": "runtime_contract_root_cause_diagnostic_v1"
+    },
+    {
+      "issueId": "PRO-CONTRACT-ARCH-01",
+      "title": "完整状态合同与精简语义提案配对开发技术门失败",
+      "productOwnerJudgment": "模型只提交需要语言理解的语义决策与用户可见回应，程序负责可唯一计算、校验和提交的机械状态；官方 Pro 完整合同与精简合同加确定性状态投影使用同样本配对，达到实用等效时优先精简组。",
+      "codexInitialAssessment": "既有五字段精简诊断只能证明降低输出职责可能改善空内容、延迟和 Token，缺少任务返回、认识修订、阶段进退、负担与多轮继承信号。需要让两组真实落到同一种任务归属状态 v2，才能比较可用产品链路。",
+      "confirmedRootCause": "官方 Pro 同样本开发配对实际调用 126 次。完整组技术有效 53/64，精简组 38/64，两组均低于 55/64；完整组 P50/P90 为 35.042s/50.215s，精简组为 32.085s/54.127s，两组延迟门均失败。任务归属状态 v2 的投影歧义、状态不变量失败、重复提交和状态污染均为 0，说明本轮技术 No-Go 发生在合同有效结果与等待体验，当前证据没有选出架构胜者。",
+      "hypotheses": [
+        "进一步缩小模型语义提案仍可能降低合同失败，但需要重新设计为新的单一因素候选。",
+        "官方 Pro 的等待成本可能需要独立的运行调度或模型档位决策。",
+        "任务归属状态 v2 可以继续作为后续候选的程序状态底座，并保持四项状态错误为零的回归门。"
+      ],
+      "priority": "P0",
+      "status": "development_technical_no_go_sealed",
+      "trace": [
+        "docs/generative-interview-refactor-map.md",
+        "docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md",
+        "docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md",
+        "artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/gi088-pro-contract-projection-paired-summary.json"
+      ],
+      "targetVersion": "gi088_pro_contract_projection_paired_v1"
     }
   ],
   "historicalExclusions": [
@@ -912,6 +967,9 @@
     ],
     "v8r3r3_adaptive_recovery": [
       "V8R3R3-RECOVERY-01"
+    ],
+    "pro_contract_projection_paired_v1": [
+      "PRO-CONTRACT-ARCH-01"
     ],
     "regression": [
       "BC-02",

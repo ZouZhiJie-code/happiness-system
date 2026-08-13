@@ -737,7 +737,7 @@ git diff --check
 
 ### 10.2 GI-088 真人交互开发评测
 
-当前候选版本名为 `2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，服务版本为 `2026-08-11.gi088-evaluation-foundation-service-v8r3`。候选模型为 Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`；单次三段截止均为 `60s`，自动恢复链为 `90s`。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。Golden 8 已封存，离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`；Judge 20+20 后置，当前等待产品负责人决定是否继续真人回读。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r2 的批次、错误、恢复和导出继续按冻结版本只读兼容。
+v8r3r2 Ark Flash 候选、服务版本、`60/60/60/90` 配置、Preview deployment 与 `0/6` run 继续作为历史工程和真人验收证据只读保留；v8r3r3 可靠性门为 `No-Go`。运行链根因对照确认官方 Pro 的模型档位稳定性为主因，完整状态输出职责为重要放大因素。后续两条独立评测链——官方 Pro＋完整合同，以及官方 Pro＋可执行精简合同＋确定性状态投影——已完成开发配对：实际调用 `126` 次，完整组 `53/64`、精简组 `38/64`，两组延迟门失败，状态投影四项错误为 `0`，判定技术 No-Go。人工裁决源未生成，隐藏集未读取，本轮未部署 Preview。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r3r3 的批次、错误、恢复和导出继续按冻结版本只读兼容；Judge 20＋20 后置，Production 保持 `legacy + baseline`。
 
 #### v8r2 历史 API 合同
 
