@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "authorizationVersion": "2026-08-13.gi088-stage-c2-authorization-v1",
+  "status": "completed_technical_blocked",
+  "authorizedBy": "product_owner",
+  "authorizedAt": "2026-08-13",
+  "decision": "修复 Judge 运行器后，以全新完整运行判断固定 Judge 配置是否具备 GI-088 正式初评资格。",
+  "historicalEvidencePolicy": "stage_c_v1_technical_blocked_and_14_valid_thinking_results_remain_historical_only_not_reused",
+  "inputs": {
+    "judgeDatasetVersion": "2026-08-13.v2",
+    "blindPackageSha256": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "goldMappingSha256": "82903b1ed3e83e4f629a776bc54fb788abc08fa4dbe76c89bb42fe96fb865452",
+    "promptVersion": "2026-08-13.gi088-judge-prompt-v1",
+    "promptSha256": "6426061d719ba51e5464116579fbea3d55157d60bbd344382f1d7186a3b7bf41",
+    "responseSchemaSha256": "5f8ce52e9c9fdaac5ee86177626ca3f7ee96a8b9f135662118d81a836216a2d6",
+    "runnerSha256": "68d97eb71944d2b221f5dce9d5d6ef5622a5e2a2afc6033025ec2352115bb137",
+    "scoringCoreSha256": "aac724ab644f06b9724a3d625fede446256f2ccb42bcf064cb1c88f6b4085393"
+  },
+  "route": {
+    "region": "cn-beijing",
+    "plusModel": "qwen3.7-plus-2026-05-26",
+    "plusModes": ["normal", "thinking"],
+    "maxModel": "qwen3.7-max-2026-06-08",
+    "maxModeRule": "only_after_two_complete_plus_arms_both_fail_use_better_plus_mode"
+  },
+  "requestContract": {
+    "responseFormat": "strict_json_schema",
+    "temperature": 0,
+    "stream": false,
+    "outputTokenLimit": "omitted",
+    "onlyArmVariable": "enable_thinking",
+    "reasoningContentPersistence": "forbidden"
+  },
+  "retryContract": {
+    "attemptIdentity": "model_mode_blind_id_attempt_ordinal",
+    "maximumRetryPerCase": 1,
+    "maximumTechnicalRetries": 4,
+    "continueRemainingFirstAttemptsAfterCaseFailure": true,
+    "localRunnerFaultConsumesModelRetry": false
+  },
+  "budget": {
+    "maximumCalls": 64,
+    "maximumCostCny": 10,
+    "plusInputCnyPerMillionTokens": 2,
+    "plusOutputCnyPerMillionTokens": 8,
+    "maxInputCnyPerMillionTokens": 12,
+    "maxOutputCnyPerMillionTokens": 36
+  },
+  "privacy": {
+    "credentialSource": "one_time_hidden_input_to_process_environment",
+    "credentialPersistence": "forbidden",
+    "blindPayloadOnlyDuringCalls": true,
+    "goldLoadedOnlyAfterTwoCompletePlusArms": true,
+    "failedVisibleOutputPrivatePersistence": true,
+    "reasoningBodyPersistence": false
+  },
+  "executionBoundary": {
+    "businessModelCalls": 0,
+    "independentAdmissionResults": 0,
+    "humanEvaluationSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "stopPoint": "阶段 C2 形成 Judge qualified、Judge No-Go 或 technical_blocked 后停止。"
+}

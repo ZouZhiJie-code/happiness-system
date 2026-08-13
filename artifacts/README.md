@@ -1,8 +1,8 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 访谈候选状态继续由生成式访谈总 Map 维护；日志成果专项已完成 9 条今日日记 Prompt v3 真人评价，其中 6 条完成记录卡 v3 → 今日日记 v3 完整回归；dev28、hidden12 与 Judge 20 已形成未执行骨架；新前端构建中待验收；Production 保持 legacy + baseline`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 阶段 C2 technical_blocked：Plus 双 No-Go，Max 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
 ## 1. 为什么需要这份规则
 
@@ -27,9 +27,16 @@
 
 当前入口：
 
+- [AI 评测总规范 v0.9 阶段 A 验收记录](./ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md)
+- [项目级 AI 评测总规范 v1.0](../docs/ai-evaluation-standard.md)
+- [AI 评测专项模板 v1.0](../docs/templates/ai-evaluation-specialty-template.md)
+- [GI-088 阶段 B2 双轨资产、阶段 C/C2 校准回执与 Handoff](./generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)
 - [日志成果九条真人轨迹阶段性总结](./journal-generation-evaluation/nine-human-trajectory-summary.md)
 - [日志生成离线评测与隔离评审入口](./journal-generation-evaluation/README.md)
-- [GI-088 v8r2 当前真人验收与正式证据](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [Daily Light 第二轮验收基线、功能 Preview 与发布前验证证据](./daily-light-visual-review/2026-08-13-second-round-closeout/README.md)
+- [Daily Light 第二轮验收基线 Production 发布证据](./daily-light-visual-review/2026-08-13-production-release/README.md)
+- [Daily Light 已否决的字体与色阶增强候选](./daily-light-visual-review/2026-08-13-production-typography-color/README.md)
+- [GI-088 v8r2 工程底座与 2026-08-10 初始化历史快照](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 v8r2 已完成实施合同](../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
 
 - [板块 6 首批校准资产](./generative-interview-board6/2026-08-06/README.md)
@@ -76,7 +83,7 @@
 - [GI-088 v8r1 最终 12 项候选、部署快照与 A1 阻断](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)
 - [GI-088 v8r1 manifest](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-human-eval-v8r1-final12-manifest.json)
 - [GI-088 v8r1 静态验证](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
-- [GI-088 v8r2 评测底座加固、Preview 与新 0/12 run](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [GI-088 v8r2 评测底座加固、Preview 与初始化时 0/12 快照](./generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
 - [GI-088 空内容配对探针 manifest](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
 - [GI-088 空内容配对探针脱敏结果](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-result.json)
 - [GI-088 空内容配对探针裁决](./generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-decision.md)

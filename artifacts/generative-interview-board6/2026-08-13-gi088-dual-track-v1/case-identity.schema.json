@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dailylight.chat/schemas/ai-evaluation-case-identity-v1.json",
+  "title": "Daily Light AI 评测案例身份证 v1",
+  "type": "object",
+  "required": [
+    "caseId",
+    "title",
+    "source",
+    "scene",
+    "userGoal",
+    "expectedBehavior",
+    "prohibitedBehavior",
+    "riskLevel",
+    "collection",
+    "privacyLevel",
+    "whyAdded",
+    "version",
+    "status"
+  ],
+  "properties": {
+    "caseId": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["kind", "ref", "authorization", "privacy"],
+      "properties": {
+        "kind": { "type": "string" },
+        "ref": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string" },
+        "authorization": { "type": "string" },
+        "privacy": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "scene": { "type": "string", "minLength": 1 },
+    "userGoal": { "type": "string", "minLength": 1 },
+    "expectedBehavior": { "type": "string", "minLength": 1 },
+    "prohibitedBehavior": { "type": "array", "items": { "type": "string" } },
+    "riskLevel": { "enum": ["P0", "P1", "P2"] },
+    "collection": {
+      "enum": [
+        "development_challenge",
+        "hard_boundary_regression",
+        "judge_calibration",
+        "independent_admission_blueprint"
+      ]
+    },
+    "privacyLevel": {
+      "enum": ["public_synthetic", "repository_redacted", "private_sensitive"]
+    },
+    "whyAdded": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

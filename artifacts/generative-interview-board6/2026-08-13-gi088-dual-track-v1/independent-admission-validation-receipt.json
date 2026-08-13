@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-13.independent-admission-validation-v1",
+  "datasetVersion": "2026-08-13.independent-admission-v2",
+  "status": "frozen_private_assets_ready",
+  "counts": {
+    "bodyCount": 12,
+    "requiredBodyCount": 12,
+    "standardizedDecisionPoints": 8,
+    "completeTrajectories": 4,
+    "plannedResults": 28
+  },
+  "sourceDistribution": {
+    "independentEvaluatorSynthetic": 10,
+    "authorizedRealTopics": 2
+  },
+  "modeDistribution": {
+    "captureCases": 4,
+    "capturePlannedResults": 8,
+    "chatCases": 8,
+    "chatPlannedResults": 20
+  },
+  "authorizationStatus": {
+    "authorizedRealTopics": 2,
+    "requiredRealTopics": 2,
+    "purposeConsent": "2/2",
+    "privateRetentionConsent": "2/2",
+    "externalJudgeConsent": "2/2",
+    "withdrawalAcknowledged": "2/2"
+  },
+  "leakageCheck": {
+    "exactDuplicateCount": 0,
+    "unresolvedSemanticLeakageCount": 0
+  },
+  "privacyCheck": {
+    "privateBodiesTrackedByGit": 0,
+    "privateBodiesInPublicExports": 0
+  },
+  "executionCounters": {
+    "businessModelCalls": 0,
+    "judgeCalls": 0,
+    "formalHumanScores": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "fingerprint": {
+    "algorithm": "SHA-256",
+    "canonicalization": "UTF-8 JSON with recursively sorted object keys and compact separators",
+    "bodySha256": "b7ce89418e70d9aabc038adb8e7e589f7dd4c7036ebbde209b42ae8e8f12ca11"
+  },
+  "frozenAt": "2026-08-13T14:26:12Z"
+}

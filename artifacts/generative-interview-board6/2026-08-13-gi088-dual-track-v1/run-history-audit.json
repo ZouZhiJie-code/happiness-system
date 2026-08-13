@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "result": "GI088_STAGE_B_HISTORY_AUDIT_PASS",
+  "capturedAt": "2026-08-13T12:42:54.846Z",
+  "evaluationVersion": "2026-08-10.gi088-human-eval-v8r2-foundation-hardening",
+  "runCount": 5,
+  "databaseWritesByThisExecution": 0,
+  "runs": [
+    {"runId":"995628c1-3825-4308-b039-4ac7dc79daf8","runOrdinal":1,"revision":1,"status":"early_stopped","gateStatus":"pending","sealedAt":"2026-08-10T18:19:41.068Z","candidateFingerprint":"0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6","executionFingerprint":"070e2a99bcbab11ba8f38203c0e4809e6220e0a1e11a015bdad6d1713fff09ca","completedTaskCount":0,"totalTaskCount":12,"providerCallCount":0,"humanReviewRevisionCount":0,"programInterventionCount":0,"operationCount":2,"reasonCode":"other","reason":"最终执行指纹轮换前的行政退役：该预发布批次保持 0/12、零模型调用、零真人提交，质量尚未裁决。"},
+    {"runId":"b816d468-e3c3-4459-a822-04f95b1e78cd","runOrdinal":2,"revision":1,"status":"early_stopped","gateStatus":"pending","sealedAt":"2026-08-11T02:17:08.422Z","candidateFingerprint":"0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6","executionFingerprint":"96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c","completedTaskCount":0,"totalTaskCount":12,"providerCallCount":0,"humanReviewRevisionCount":0,"programInterventionCount":0,"operationCount":2,"reasonCode":"other","reason":"运行时数据库分区修复触发新的执行指纹：该批次保持 0/12、零模型调用、零真人提交，质量尚未裁决。"},
+    {"runId":"ce893fe6-e9e2-4445-9153-deca3b1571ce","runOrdinal":3,"revision":6,"status":"early_stopped","gateStatus":"no_go","sealedAt":"2026-08-11T03:05:56.834Z","candidateFingerprint":"0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6","executionFingerprint":"55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e","completedTaskCount":0,"totalTaskCount":12,"providerCallCount":2,"humanReviewRevisionCount":0,"programInterventionCount":0,"operationCount":5,"reasonCode":"technical_friction","reason":"真人模型调用授权端到端技术验收完成；该批次仅含一条明确标记的虚构内容和两次自动恢复链调用，不进入真人质量证据。"},
+    {"runId":"e1dccbfd-d808-4706-8ddf-be5e254f4d2d","runOrdinal":4,"revision":14,"status":"early_stopped","gateStatus":"no_go","sealedAt":"2026-08-11T03:59:55.608Z","candidateFingerprint":"0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6","executionFingerprint":"55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e","completedTaskCount":0,"totalTaskCount":12,"providerCallCount":6,"humanReviewRevisionCount":0,"programInterventionCount":0,"operationCount":9,"reasonCode":"technical_friction","reason":"A1"},
+    {"runId":"106f0f01-3bdb-4359-8be8-3172ceb8d7cc","runOrdinal":5,"revision":63,"status":"early_stopped","gateStatus":"no_go","sealedAt":"2026-08-11T11:20:15.356Z","candidateFingerprint":"0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6","executionFingerprint":"da6668c2a6c6c2e330a9b9206a3b8ddb2a16a04595c32d043bd3b13a8a0cbf68","completedTaskCount":1,"totalTaskCount":12,"providerCallCount":23,"humanReviewRevisionCount":2,"programInterventionCount":2,"operationCount":41,"reasonCode":"mixed","reason":"v8r3 立项行政收口：A1 已确认共同任务漂移；A2/A3 受到问号误拦与超时恢复影响。保留全部对话、调用与人工反馈，其余任务记为未执行，本批维持 No-Go。"}
+  ]
+}

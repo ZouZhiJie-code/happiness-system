@@ -1,24 +1,105 @@
 # 生成式访谈重构总 Map（Batch B 专项）
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 文档状态：`生效中`
 
 当前板块：`板块 6｜生成式访谈正式评测资产建设`
 
-当前讨论位置：`板块 6B 最终准入｜GI-088 v8r2 全新 0/12 Thinking high 真人验收`
+当前讨论位置：`GI-088 阶段 C2｜technical_blocked；Plus 双 No-Go，Max 质量结论保留`
 
-下一建议板块：`板块 6B 最终准入｜完成十二条 Thinking high 独立真人轨迹并形成质量裁决`
+下一建议板块：`确认后续 Judge 路线；继续补齐 Max 或调整 Judge 方案均需新授权`
 
-Production 状态：`保持 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
+Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`保留 v8r2 不可变版本、Execution fingerprint 与全新 0/12 Thinking high run；补充日志成果评测的关联说明；GI-088 访谈候选、板块 6/7/8 和 Production 状态保持原状`
+本次同步范围：`阶段 B2 零调用资产已封存；阶段 C 只校准固定 Plus 普通／思考模式，必要时按冻结规则校准固定 Max；独立准入、正式人工评分、Preview 与 Production 保持关闭`
 
-网页端实现同步：当前新前端处于构建中，等待产品负责人验收。`2026-08-12` 的旧 UI Preview、部署和测试结果作为历史工程证据保留；GI-088 真人评测、模型质量裁决和 Production 发布继续沿本 Map 的既有流程推进。
+网页端实现同步：第二轮验收基线已于 `2026-08-13` 发布 Production，项目主链使用 `event_centered + baseline`；GI-088 真人评测、模型质量裁决和生成式能力发布继续沿本 Map 的既有流程推进。
 
 日志成果关联：日志生成专项复用了 GI-088 的 9 条真人轨迹作为评测素材。今日日记 Prompt v3 的真人证据覆盖 9 条，其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归；这项结果只更新上层产品总 Map 的“日志成果与确认”模块，不改变 GI-088 访谈候选以及板块 6/7/8 的当前状态。阶段总结见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
+
+## 2026-08-13｜GI-088 阶段 C2 Judge 运行器修复与完整重跑实施卡
+
+阶段 C 的 19 次调用与 `technical_blocked` 保持历史身份。产品负责人已授权 C2 使用全新运行重新校准；旧 14 份思考模式有效结果不进入新评分。
+
+| 项目 | C2 冻结值 |
+|---|---|
+| 产品决策 | 修复运行器后，判断哪一个固定 Judge 配置具备 GI-088 正式初评资格 |
+| 运行身份 | 全新运行；尝试绑定模型、模式、案例和尝试序号；模拟与真实运行分目录 |
+| 输出合同 | 严格 JSON Schema，移除输出 Token 上限；普通／思考唯一变量为 `enable_thinking` |
+| 故障策略 | 每卡最多一次技术补跑、全局最多 4 次；单卡失败后继续其余首跑；本地程序异常立即停止且不消耗模型补跑 |
+| 预算 | 最多 64 次、10 元；Plus 两模式各 20，必要时固定 Max 20 |
+| 隐私 | 原密钥通过一次性隐藏输入进入执行进程；失败可见输出保持私有；内部推理正文不落盘 |
+| 当前状态 | `technical_blocked`；Plus 普通／思考均 20/20 且 No-Go；Max 思考 15/20，后五张网络失败；64 次、4 次补跑、0.584052 元 |
+| 停止点 | 已达到并停止；当前无可推荐 Judge 配置，独立准入、人工提交、Preview 与 Production 保持关闭 |
+
+## 2026-08-13｜GI-088 阶段 C Judge 校准实施卡
+
+产品负责人已授权执行阶段 C。本轮只回答“哪一个固定 Judge 配置具备正式初评资格”，不评价访谈候选。
+
+| 项目 | 当前冻结值 |
+|---|---|
+| 数据 | Judge 20 v2；盲包与金标分离，模型调用只读取盲包 |
+| 模型与模式 | Plus 固定版普通、思考各 20 张；均未达标时，Max 固定版使用表现更好的模式运行 20 张 |
+| 绝对门 | 阻断召回 100%、阻断准确率至少 90%、四档一致至少 17/20、五类关键阻断全部识别 |
+| 预算 | 最多 64 次调用、4 次技术补跑、10 元；质量误判不补跑 |
+| 隐私 | 密钥只从执行进程环境读取；内部推理正文不保存；公开回执不含题目、金标和私有内容 |
+| 当前状态 | `technical_blocked`；19 次调用、4 次技术补跑、0.092062 元；普通 0/20、思考 14/20，Max 0 |
+| 停止点 | 已达到并停止；Judge 质量结论保留，独立准入、人工提交、Preview 与 Production 保持关闭 |
+
+## 2026-08-13｜GI-088 隐藏 12 独立建设实施卡
+
+产品负责人已确认并授权执行隐藏 12 独立建设。启动核验确认两条低敏真实话题均已填写，用途授权、私有保留授权、外部 Judge 授权和撤回知情全部完成；私有工作区已被 Git 排除。
+
+| 项目 | 当前约束 |
+|---|---|
+| 目标 | 建成 `8` 个标准化短案例和 `4` 条完整轨迹，并形成可追溯的私有正文、评分锚点、故事血缘与冻结指纹 |
+| 建设顺序 | 先独立完成 `8` 个短案例和 `2` 条脚本风险轨迹，再使用两条已授权自然开场完成 `2` 条真实轨迹；正文完成后才执行开发 28、硬边界 24 和 Judge 20 的公开摘要与血缘泄漏检查 |
+| 私有范围 | 正文、真实话题和评分锚点只进入 Git 排除的 `.private/independent-admission-v2/`；公开文档只保留状态、计数、结论、版本和指纹 |
+| 验证门 | 正文 `12/12`、结构 `8＋4`、真实授权 `2/2`、计划结果【帮我记】`8`／【陪我聊】`20`、精确重复 `0`、未解决近义泄漏 `0`、Git 与公开输出正文 `0`、指纹一致 |
+| 执行边界 | 业务模型调用 `0`、Judge 调用 `0`、正式人工评分 `0`、Preview 变更 `0`、Production 变更 `0` |
+| 当前状态 | `已完成并冻结` |
+| 结果 | `正文 12/12、结构 8＋4、真实授权 2/2、计划结果 8／20、精确重复 0、未解决近义泄漏 0、Git 与公开输出正文 0；见无正文公开回执` |
+| 停止点 | 私有数据集冻结并生成无正文公开回执后停止；独立准入运行和阶段 C Judge 校准继续等待单独授权 |
+
+
+## 2026-08-13｜AI 评测总规范 v0.9 阶段 A 实施卡
+
+产品负责人已确认《Daily Light AI 评测总规范 v0.9 与 GI-088 双轨重建计划》。本轮先完成项目级治理文件与跨会话入口，让后续所有评测任务先说明决策、风险、数据身份、判尺、评审职责、授权与停止点，再进入真实运行。
+
+| 项目 | 当前约束 |
+|---|---|
+| 目标 | 建立项目级 `1＋N` 评测文档体系，并让访谈意图、生成式访谈、日志生成三个既有专项接入 |
+| 本轮范围 | 总规范 v0.9、专项模板、`AGENTS.md`、文档导航、相关 Map、三份“总规范适配卡”及零调用验收证据 |
+| 验证门 | 链接可达、状态一致；新会话五分钟内能回答“测什么、为什么、数据来源、谁评、怎样通过、结论边界、如何维护” |
+| 运行边界 | 模型调用 `0`、人工评测提交 `0`、Preview 变更 `0`、Production 变更 `0` |
+| GI-088 当前事实 | v8r2 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running / 0 of 12 / gate=pending / calls=0`；阶段 A 不改运行记录 |
+| 结果 | `阶段 A 验收通过`；见[验收记录](../artifacts/ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md) |
+| 停止点 | 完成阶段 A 验收后等待产品负责人确认 v1.0；阶段 B 的空白 run 封存与评测资产建设在确认后启动 |
+
+本节记录阶段 A 的历史停止点。产品负责人已于 `2026-08-13` 确认升级为 `v1.0`；GI-074 的既有产品结论继续有效，总规范补充跨专项的统一治理要求，不追溯改写历史结果身份。
+
+## 2026-08-13｜AI 评测总规范 v1.0 确认与 GI-088 阶段 B 实施卡
+
+产品负责人已确认总规范升级并冻结为 `v1.0`，同时按既定计划进入 GI-088 零调用资产建设。本阶段只建设评测证据与封存旧运行，不评价候选质量，也不开放真实调用。
+
+| 项目 | 当前约束 |
+|---|---|
+| 本轮产品决策 | 判断 GI-088 是否具备进入 Judge 校准前的完整、隔离、可追溯资产基础 |
+| 被测候选 | `2026-08-10.gi088-human-eval-v8r2-foundation-hardening`；候选与 Execution fingerprint 保持原值 |
+| 数据身份 | 现有 12 项转为开发挑战；开发 28、硬边界 24、Judge 校准 20 和独立准入 12 能力蓝图分别建档 |
+| 评分与阻断 | 沿用 GI-074 九维判尺、四档结果和控制／安全／事实／事件边界等单例阻断；本阶段只校验资产结构与血缘 |
+| 评审职责 | Codex 建设、核对并封存资产；客观规则检查数量、指纹、隔离和链接；Judge 与产品负责人本阶段不提交评价 |
+| 隐私范围 | 正式资产只保存脱敏摘要、能力标签和来源引用；真实原文与隐藏题正文不得进入公开资产 |
+| 调用与授权 | 模型调用 `0`、人工评测提交 `0`；产品负责人本轮“确认”授权总规范冻结与阶段 B 零调用实施 |
+| 运行封存 | 实时审计显示目标 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已于 `2026-08-11` 封存；阶段 B 保留原原因、原指纹和 revision `1`，本轮数据库写入 `0`、删除 `0` |
+| 验证门 | 数量与分布、来源与授权、脱敏、去重、近义泄漏、集合隔离、版本指纹、封存前后只读回读全部有证据 |
+| 结果 | `阶段 B 资产结构校验通过`；[资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)与[差距报告](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/stage-b-gap-report.md)已形成 |
+| 停止点 | 提交阶段 B 资产清单和差距报告后停止，等待产品负责人另行授权 Judge 模型调用 |
+
+过程问题 `STAGE-B-LIFECYCLE-01` 已收口为合同回归：受保护的零内容行政封存路径已经实现和验证；目标历史 run 早已终止，因此未应用新原因。`STAGE-B-FACT-02` 记录文档快照与数据库历史的差异，同一 evaluationVersion 的 `5` 个 run 均保持原始身份。
 
 ## 2026-08-11～12 网页端前端交接与历史实现
 
@@ -36,9 +117,11 @@ flowchart TD
     B["访谈产品优化地图<br/>全产品模块总览"]
     C["生成式访谈重构总 Map<br/>板块 1～8 唯一状态与决策索引"]
     M["AI 产品工作方法论<br/>板块 5～8 统一执行规范"]
+    E["AI 评测总规范<br/>跨专项证据与治理"]
 
     A --> B
     B --> C
+    A --> E
     M -. "规定推进方式" .-> C
 
     C --> P5["板块 5 专项<br/>产品行为与用户控制"]
@@ -50,6 +133,10 @@ flowchart TD
     M --> P6
     M --> P7
     M --> P8
+
+    E -. "评测任务启动门" .-> P6
+    E -. "准入证据边界" .-> P7
+    E -. "Preview 与线上维护" .-> P8
 
     P5 -->|"产品行为约定"| P6
     P6 -->|"评测集、判尺与准入门"| P7
@@ -65,11 +152,11 @@ flowchart TD
 | 板块 | 当前专项入口 | 当前启动状态 |
 |---|---|---|
 | 5 | [稳定性、用户控制与交互收束](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md) | `产品决策已冻结；GI-075～080 六类规则完成 6/6；落地验证未启动` |
-| 6 | [生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) | `当前板块；v8r1 A1 单例阻断只读保留；v8r2 工程与 Preview 开门证据完成，全新 0/12 run 等待十二条真人轨迹` |
+| 6 | [生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) | `当前板块；阶段 C2 technical_blocked；Plus 双 No-Go，Max 质量结论保留；独立准入未授权` |
 | 7 | [模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) | `v8r2 不可变候选与 READY Preview 已形成，正式接入继续等待板块 6 最终真人门` |
 | 8 | [内部 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) | `等待板块 6 准入资产与板块 7 新候选` |
 
-板块 5～8 新会话固定读取 `AGENTS.md → 访谈产品优化地图 → 本 Map → AI 产品工作方法 → 当前板块专项 → 当前专项明确链接的上游档案或历史证据`。方法论 `v1.0` 已冻结；板块 6～8 统一执行该方法，并保持 `GI-068～080` 关闭。
+板块 5～8 新会话固定读取 `AGENTS.md → 访谈产品优化地图 → 本 Map → AI 产品工作方法 → 当前板块专项 → 当前专项明确链接的上游档案或历史证据`。涉及评测集、Judge、准入、Preview、Bad Case 或线上质量时，在读取当前专项前增加 [AI 评测总规范](./ai-evaluation-standard.md)。方法论 `v1.0` 已冻结；板块 6～8 统一执行该方法，并保持 `GI-068～080` 关闭。
 
 ## 当前状态｜2026-08-06 板块 6/7 真实输出校准小闭环
 
@@ -677,11 +764,11 @@ flowchart TD
 | 3｜公共成果、证据与收束边界 | **公共来源、安全和成果边界继续冻结** | 高 | GI-066 成果投影作为历史证据；GI-067 发生边界冲突时复核 | **按冲突复核** | [04w｜GI-067](./technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md)、[四角度公共协议](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md) |
 | 4｜成果与 AI 自主访谈策略 | **GI-067 / GI-068～074 已冻结·高置信度** | 高 | 七项落地验证均未启动 | **产品决策完成** | [04x 母文档](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 5｜稳定性、用户控制与交互收束 | **GI-075～080 六类规则已冻结；6/6** | GI-075、GI-076、GI-078 中；GI-077、GI-079、GI-080 高 | 产品决策完成；落地验证未启动 | **完成；交接板块 6** | [板块 5 专项](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
-| 6｜生成式质量评测 | **GI-074 完整体系保持冻结；GI-081～083 保留诊断血缘；GI-084～087 失败、校准与审计证据已回填；GI-088 按批次迭代** | 高 | v8 `1/4 early_stopped` 获产品通过；v8r1 A1 控制误停只读保留；v8r2 P0／P1、最终初始化幂等、全绿静态门、真实评测库与 READY Preview 已完成，新 run 为 `running 0/12` | **当前板块；等待十二条 Thinking high 真人轨迹** | [生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)、[GI-088 v8r2 证据包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md) |
-| 7｜模型提问策略与链路改造 | **GI-087 Prompt 与任务结构作为基线；v8r2 高精度控制决策与评测底座已形成不可变版本** | 中 | 控制、调用落账、快照绑定、人工证据治理、工作台恢复、八项开门差额、静态门和线上指纹均已收口 | **等待板块 6 v8r2 真人门** | [07｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)、[GI-088 v8r2 证据包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md) |
+| 6｜生成式质量评测 | **GI-074 体系与总规范 v1.0 保持冻结；GI-088 阶段 C2 technical_blocked** | 高 | C2 共 64 次、4 次补跑、0.584052 元；Plus 普通与思考均完整 No-Go，Max 思考 15/20 后遇网络故障；当前无可推荐 Judge | **当前板块；已停止，后续 Judge 路线与独立准入均需单独授权** | [阶段 C2 证据入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
+| 7｜模型提问策略与链路改造 | **GI-087 Prompt 与任务结构作为基线；v8r2 高精度控制决策与评测底座已形成不可变版本** | 中 | 控制、调用落账、快照绑定、人工证据治理、工作台恢复、八项开门差额、静态门和线上指纹均已收口 | **等待板块 6 独立准入结论** | [07｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)、[GI-088 v8r2 证据包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md) |
 | 8｜内部 Preview、验收与发布 | **历史 GI-066 真人 No-Go；新 `4＋2` 门已冻结** | 高 | 等待板块 6 准入资产和板块 7 新候选，随后执行两模式 `4＋2` | **等待板块 6、7** | [04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
 
-依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v6 分阶段迭代 → v7 连续性底座 → v7r1 Prefix 兼容 No-Go → v7r2 Ark Flash 真人轨迹 → v7r3 确定性状态底座 → v7r4 官方 V4 Pro `2/2` No-Go → v8 统一问前决策 `1/4` 产品通过 → v8r1 A1 控制误停单例阻断 → v8r2 意图控制与评测底座加固 → 最终初始化幂等、不可变版本与 READY Preview 完成 → 新 12 条 Thinking high 独立批次 `0/12` → 等待真人验收 → 正式资产扩建”。Production 继续保持 `legacy + baseline`。
+依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v6 分阶段迭代 → v7 连续性底座 → v7r1 Prefix 兼容 No-Go → v7r2 Ark Flash 真人轨迹 → v7r3 确定性状态底座 → v7r4 官方 V4 Pro `2/2` No-Go → v8 统一问前决策 `1/4` 产品通过 → v8r1 A1 控制误停单例阻断 → v8r2 意图控制与评测底座加固 → 最终初始化幂等、不可变版本与 READY Preview 完成 → 原独立批次历史封存 → 项目级评测总规范 v1.0 生效 → 阶段 B 双轨资产结构校验通过 → 等待 Judge 校准前差距补齐与独立授权”。Production 继续保持 `legacy + baseline`。
 
 ## 5. 板块任务书
 
@@ -1024,7 +1111,13 @@ GI-068 的记录级模式边界继续生效：每次新记录明确选择模式�
 
 ### 板块 6｜生成式质量评测
 
-**当前板块｜GI-088 v8r2 全新 0/12 Thinking high 真人验收**
+**当前板块｜AI 评测总规范 v1.0 已冻结，GI-088 阶段 B 双轨资产校验通过**
+
+产品负责人已确认项目级 `1＋N` 评测体系并将总规范冻结为 `v1.0`。阶段 B 已用零调用方式建成开发 28、硬边界 24、Judge 校准 20 和独立准入 12 能力蓝图。现有 12 项曾进入开发上下文，后续承担开发挑战用途；独立准入使用候选未见的新题。实时数据库审计确认目标 run 早在 `2026-08-11` 已封存，阶段 B 保留原历史，本轮对该 run 写入 `0`。
+
+本轮模型调用、人工提交、Preview 和 Production 变更均为 `0`。开发 28、硬边界 24、Judge 20 v2 与隐藏 12 私有数据集均已完成资产冻结；隐藏集正文 `12/12`、真实话题授权 `2/2`、泄漏检查 `0`。候选质量、独立准入和发布资格继续保持未裁决。
+
+**GI-088 v8～v8r2 当前工程与历史证据**
 
 v8 A1 完成 `10` 次用户提交后以 `1/4 early_stopped` 收口，A2～A4 为 `not_run`。产品负责人判断为 `通过 / direct_use / target triggered`；`10/10` 次调用全部首次成功，`7/7` 条可见提问均为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`。Codex 初评同时保留一项轻微问题：末轮“很好，就聊到这吧”被当作混合停止，多产生一次 V4 Pro 调用。
 
@@ -1032,7 +1125,7 @@ v8r1 将“简短礼貌回应＋明确停止”纳入纯停止，v8 U10 真实�
 
 产品负责人随后完成 A1 一条轨迹并确认体验变差、单例阻断、目标未触发。已确认根因为：事件内容中的沟通负担被旧意图规则命中为 `fatigue_feedback`，GI-088 再将其升级为停止当前访谈，覆盖了有效模型回应；旧 Skill 仍允许模型在用户未明确停止时自行暂停。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。v8r1 退出最终通过候选并保持只读。
 
-v8r2 将高精度控制决策、Provider 结果落账、陈旧页面快照保护、人工证据治理、run 生命周期和工作台恢复合并为一个评测底座版本。八项 Preview 开门差额、P0／P1、最终初始化幂等、零模型、真实评测库、历史兼容、全绿静态门与不可变版本均已收口。最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，Vercel Linux 远程生成两套 Prisma Client 后，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`。全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `running / 0 of 12 / gate=pending / high_only / high / calls=0`，当前暂停等待十二条 Thinking high 真人轨迹。旧预发布零内容 run 已行政 `early_stopped`，仅保留脱敏排除事实。质量与发布未裁决。约 `200` 轮以上的容量优化继续留在本轮边界外。当前入口见 [GI-088 v8r2 证据包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[完成任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)，v8r1 事故见 [v8r1 资产](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。
+v8r2 将高精度控制决策、Provider 结果落账、陈旧页面快照保护、人工证据治理、run 生命周期和工作台恢复合并为一个评测底座版本。八项 Preview 开门差额、P0／P1、最终初始化幂等、零模型、真实评测库、历史兼容、全绿静态门与不可变版本均已收口。最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 曾为 `READY`。`2026-08-10` 的 `running / 0 of 12` 只保留为初始化快照；`2026-08-13` 实时审计确认同一评测版本已有 `5` 个 run，目标 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 ordinal `2`、revision `1`、`early_stopped / 0 of 12 / gate=pending / calls=0`，后续 ordinal `3～5` 分别保留技术验收和 v8r3 No-Go 身份。阶段 B 未改写任何历史 run。质量与发布未裁决。约 `200` 轮以上的容量优化继续留在本轮边界外。当前双轨资产见[阶段 B 入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)，底座历史见 [v8r2 证据包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，v8r1 事故见 [v8r1 资产](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。
 
 评测运行器已使用假 Provider 完成 High-only、分阶段等待和双问题纠正全流程。v1 在 `8/12` 主动结束；v2 diagnostic 与空内容探针已收口；v3 在 `1/12` 提前结束并确认阶段机会问题；v4 完成 A1 两条轨迹后以 `1/12 early_stopped` 只读封存，共消费 `10` 次调用。v4 high 后两轮均在本地 `30s hard_total` 被截断，off/high 各出现一次双问题保护。v5 保留阶段转场与空内容恢复，改为 High-only、`15s 响应头＋45s 正文空闲＋60s 总上限`，并强化单问合同与一次同 high 自动纠正。Effective candidate、数据集与执行指纹为 `40335e6a…6aab93`、`cc6d81be…5075e`、`6dd8ed07…cfefd`；私有 Preview `dpl_3Xg4C1G28szDN2movRngGe2mPFDY` 已 Ready，独立 High-only `0/12` 批次与零调用回读通过，等待登录后开始 A1。历史候选继续按原身份保存。
 
@@ -1318,7 +1411,7 @@ GI-066 自动层达到技术门，最新两条真人实聊暴露提问目标选�
 | GI-085 | **已验证·固定准入门 No-Go；逐题体验裁决待完成** | 一次调用 semantic-frame-first 完成 8 次隔离回归；焦点层改善，关系焦点进入 `openPart` 后仍会被压成二选一、单侧倾向或预设类别；真实网页轨迹关闭 | 6、7 |
 | GI-086 | **已验证·固定门 No-Go；通用能力结论开放** | 完成 `8/8` 次同期对照、产品透明裁决与 Codex 九维初评；当前路线停止进入稳定性验证，下一步返回任务结构讨论 | 6、7 |
 | GI-087 | **已确认·六题已运行；原质量门停止；真人轨迹关闭** | `6/6` 次调用原样保存；GI-088 审计为纯净起点 `2`、历史条件式探针 `3`、程序合同探针 `1`，原组六题不再承担候选质量聚合 | 6、7 |
-| GI-088 | **进行中·高置信度；v8r2 工程与 Preview 开门完成，0/12 真人验收待执行** | v8 获产品通过；v8r1 A1 控制误停并退出最终通过候选，原 run 只读保留。v8r2 P0／P1、最终初始化幂等、不可变版本、Execution fingerprint、全绿静态门和 READY Preview 已完成；全新 High-only run 为 `running 0/12`，质量与发布未裁决 | 6、7、8 |
+| GI-088 | **阶段 C2 technical_blocked·高置信度；当前无可推荐 Judge** | Plus 普通／思考完整证据均 No-Go；Max 思考 15/20，后五张因连接与 DNS 故障缺失。候选质量、独立准入与发布未裁决 | 6、7、8 |
 
 ### 6.1 板块 1 冻结决策记录
 
@@ -2789,7 +2882,7 @@ GI-075 产品讨论完成后，板块 5 六类规则进度更新为 `1/6`。方�
 - Production：`legacy + baseline`，保持不变。
 - 确认日期：`2026-08-08`
 
-GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策全部冻结。GI-081 已完成板块 7A 首批六题真实输出、产品盲评和架构揭晓，并固定为临时 Prompt 下的诊断基线；GI-082 双分支方法保留历史计划证据；GI-083 v0/v1 保留一次调用透明诊断历史。GI-084 v0.1～v0.3 连续 No-Go，v0.4 零调用关闭。GI-085 已完成 8 次隔离回归并判定 No-Go。GI-086 已完成 `8/8` 次同期能力校准、产品透明裁决与 Codex 九维初评，固定门判定 No-Go，通用能力结论保持开放。GI-087 已完成六题隔离筛选并保留为 Base 候选；GI-088 v0 累计 `9` 次正式调用并形成 1600 Token 上限证据，v1 已在 `8/12` 主动提前结束并完成批次复盘，v2 diagnostic 与两轮探针完成，v3 在 A1 后 `1/12` 提前结束并确认回答机会边界。板块 6 继续进行，板块 7 正式接入继续等待板块 6，板块 8 等待新候选验证与准入资产。Production 继续保持 `legacy + baseline`。
+GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策全部冻结。GI-081 已完成板块 7A 首批六题真实输出、产品盲评和架构揭晓，并固定为临时 Prompt 下的诊断基线；GI-082 双分支方法保留历史计划证据；GI-083 v0/v1 保留一次调用透明诊断历史。GI-084 v0.1～v0.3 连续 No-Go，v0.4 零调用关闭。GI-085 已完成 8 次隔离回归并判定 No-Go。GI-086 已完成 `8/8` 次同期能力校准、产品透明裁决与 Codex 九维初评，固定门判定 No-Go，通用能力结论保持开放。GI-087 已完成六题隔离筛选并保留为 Base 候选；GI-088 v0 累计 `9` 次正式调用并形成 1600 Token 上限证据，v1 已在 `8/12` 主动提前结束并完成批次复盘。阶段 B2 已完成 Judge 内容判断轴重整、7 张私有最小脱敏载荷、盲测隔离、隐藏 12 模式分配和独立建设交接；公开与 Judge 私有检查通过。两条真实话题授权 `2/2`、隐藏正文 `12/12`、泄漏检查与冻结指纹已由独立任务完成。板块 7 正式接入继续等待板块 6 的 Judge 校准和独立准入结论，板块 8 等待新候选验证与准入资产。Production 继续保持 `legacy + baseline`。
 
 ## 7. 外部参考索引
 
@@ -2931,7 +3024,7 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 
 ### 10.1 Map 可维护性验收
 
-1. **冷启动验收**：新会话按 `AGENTS.md → 访谈产品优化地图 → 本 Map → 工作方法 → 当前专项` 的顺序读取后，可以准确说明背景、已有结论、未决问题、依赖、退出条件和 Production 边界。
+1. **冷启动验收**：新会话按 `AGENTS.md → AI 评测总规范（评测任务）→ 访谈产品优化地图 → 本 Map → 工作方法 → 当前专项` 的顺序读取后，可以准确说明背景、已有结论、未决问题、依赖、退出条件和 Production 边界。
 2. **状态验收**：讨论完成、实现完成、评测通过和 Production 发布分别可见。
 3. **依赖验收**：上游结论重新打开后，相关下游板块均出现`需复核`标记。
 4. **完成门验收**：缺少决策编号、专项链接或明确确认时，板块继续保持推进中状态。
@@ -2939,7 +3032,7 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 
 ### 10.2 MVP 默认约定
 
-范围说明：本节原有四角度、零问完成、检查点和生成式 baseline 约定继续用于历史候选与兼容链路。`GI-065` 继续定义【陪我聊】的 `thought_only` 单角度验证目标，其自动进入规则由 `GI-068` 覆盖；`GI-069～080` 已冻结两模式、三阶段、问停、表达、评测、稳定性和用户控制规则。`GI-039 / GI-040` 已由 GI-070、GI-071 校准为问题价值评测与证据安全边界，不承担固定运行资格门。`GI-066` 的判断地图、自动 `10×3` 与单角度 `8+2` 已转为历史产品和技术证据。GI-081 已完成六题真实输出、产品盲评与架构揭晓，固定为临时 Prompt 下的诊断基线；GI-082～086 保留诊断、开发和能力校准历史。GI-087 保留为 GI-088 基础候选，原六题退出当前质量门。GI-088 v0～v7r4 继续保存各批次的诊断、真人结果和 No-Go 血缘；v8 以 `1/4 early_stopped` 获产品通过；v8r1 完成部署后在 A1 暴露控制误停单例阻断并进入历史只读。v8r2 P0／P1、最终初始化幂等、不可变版本、静态门和 READY Preview 已收口，全新 `0/12` High-only run 等待十二条真人轨迹。板块 7 正式接入与板块 8 等待 v8r2 真人裁决和板块 6。
+范围说明：本节原有四角度、零问完成、检查点和生成式 baseline 约定继续用于历史候选与兼容链路。`GI-065` 继续定义【陪我聊】的 `thought_only` 单角度验证目标，其自动进入规则由 `GI-068` 覆盖；`GI-069～080` 已冻结两模式、三阶段、问停、表达、评测、稳定性和用户控制规则。`GI-039 / GI-040` 已由 GI-070、GI-071 校准为问题价值评测与证据安全边界，不承担固定运行资格门。`GI-066` 的判断地图、自动 `10×3` 与单角度 `8+2` 已转为历史产品和技术证据。GI-081 已完成六题真实输出、产品盲评与架构揭晓，固定为临时 Prompt 下的诊断基线；GI-082～086 保留诊断、开发和能力校准历史。GI-087 保留为 GI-088 基础候选，原六题退出当前质量门。GI-088 v0～v7r4 继续保存各批次的诊断、真人结果和 No-Go 血缘；v8 以 `1/4 early_stopped` 获产品通过；v8r1 完成部署后在 A1 暴露控制误停单例阻断并进入历史只读。v8r2 P0／P1、最终初始化幂等、不可变版本、静态门和 READY Preview 已收口，`0/12` High-only run 只保留为 2026-08-10 初始化快照；实时数据库历史由阶段 B 审计覆盖。现有 12 项已进入开发 28，独立准入使用全新隐藏 12；板块 7 正式接入与板块 8 等待 Judge 校准、独立准入和真人 Preview 裁决。
 
 - 四个角度、引导复盘和深度聊天先在内部 Preview 完整验证。
 - 【帮我记】作为独立记录路径运行；【陪我聊】使用“承接与定位、探索与澄清、深化与整合”三个可回返主任务，任一自然暂停位置都可以整理日志。旧“轻量记录、引导复盘、深度聊天”单向路径继续用于历史候选与兼容解释。
@@ -2977,6 +3070,12 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 
 | 日期 | 变化 | 影响 |
 |---|---|---|
+| `2026-08-13` | GI-088 阶段 C2 修复运行器并完成全新校准，整体以 `technical_blocked` 停止 | Plus 普通和思考均 20/20 且 No-Go；Max 思考 15/20，后五张连续网络故障。64 次调用、4 次补跑、0.584052 元；当前无可推荐 Judge，独立准入继续关闭 |
+| `2026-08-13` | GI-088 阶段 C Judge 校准以 `technical_blocked` 停止 | 累计 19 次调用、4 次技术补跑、0.092062 元；Plus 普通 0/20、思考 14/20，Max 0。完整证据不足，Judge 质量结论保留；独立准入、人工提交、Preview 与 Production 保持关闭 |
+| `2026-08-13` | GI-088 阶段 B2 完成当前开发任务收口 | Judge 20 v2 保持四档各 5 张并退出旧技术阻断卡 2 张；7 张私有载荷、盲测隔离、短题 2＋6、完整轨迹 2＋2 和结果 8／20 分布通过检查。真实话题授权 `0/2`、隐藏正文 `0/12`，等待私有填写与全新独立任务；模型调用、人工评分、Preview 与 Production 变更保持 `0` |
+| `2026-08-13` | GI-088 阶段 B 双轨资产校验通过，并完成同版本 run 血缘审计 | 开发 `28`、硬边界 `24`、Judge `20`、隐藏 `12` 蓝图与三类身份证完成；Judge 仍有 `7` 张待脱敏、`4` 张待判断轴复核，隐藏正文 `12` 条待私有建设。目标 run 已于 `2026-08-11` 封存，阶段 B 写入 `0`、删除 `0`；模型调用、人工提交、Preview 与 Production 变更均为 `0` |
+| `2026-08-13` | 产品负责人确认项目级 AI 评测总规范升级为 v1.0，阶段 B 零调用双轨资产建设启动 | 目标 run 的封存前基线为 `running / 0 of 12 / gate=pending / calls=0`；开发 28、硬边界 24、Judge 20 和隐藏 12 能力蓝图结果待验证；模型调用、人工提交、Preview 与 Production 变更均为 `0` |
+| `2026-08-13` | 完成项目级 AI 评测总规范 v0.9 阶段 A：总规范、专项模板、强制启动门、三个专项适配卡、相关 Map 与证据索引已落地；本地链接 `669/669`、确定性冷启动 `9/9`、状态一致性通过 | v0.9 具备产品负责人审阅条件；GI-088 v8r2 空白 run 保持 `running / 0 of 12 / gate=pending / calls=0`；模型调用、人工提交、Preview 与 Production 变更均为 `0` |
 | `2026-08-10` | v8r2 P0／P1、最终初始化幂等、全绿静态门、不可变版本、真实评测库和 Preview 运行时回读全部完成 | 行为 commit `5281bc53…883a8`、Execution fingerprint `96f1a022…cfd0c` 与当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 形成正式证据；Vercel Linux 远程构建两套 Prisma Client，虚构账号登录返回 `401 INVALID_CREDENTIALS`，error logs 为 `0`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `running / 0 of 12 / gate=pending / high_only / high / calls=0`，当前等待十二条真人轨迹；Production 保持 `legacy + baseline` |
 | `2026-08-10` | v8r2 八项 Preview 开门差额和主要底座验证收口；最终初始化核对发现固定 `clientOperationId` 会在旧 run 终态后重放旧 run，进入 P0 修复 | 新行为 commit、Execution fingerprint、最终静态门、Preview deployment 与全新 `0/12` High-only 零调用 run 均为 `pending`；旧 v8r2 deployment 与初始化 run 退出正式证据资格；Production 保持 `legacy + baseline` |
 | `2026-08-10` | v8r1 A1 确认“事件内沟通负担被升级为停止当前访谈”的单例阻断；专用评测库只读回读为 `running`、A2 活动、已完成轨迹 `1`、两次 Provider 调用均有效。v8r2 合并意图控制、调用落账、快照绑定、人工证据治理和工作台恢复 | v8r1 退出最终通过候选；v8r2 本地核心零模型回归 `156/156`、TypeScript、评测 Prisma 校验与差异检查通过；Preview 前审计确认八项合同差额，收口后再进入最终静态门与新 `0/12` run；约 `200` 轮以上容量优化排除；Production 保持 `legacy + baseline` |

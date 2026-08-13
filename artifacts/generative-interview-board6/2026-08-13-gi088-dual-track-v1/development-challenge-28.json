@@ -1,0 +1,213 @@
+{
+  "schemaVersion": "1.0",
+  "datasetIdentity": {
+    "datasetId": "gi088-development-challenge-28",
+    "version": "2026-08-13.v1",
+    "purpose": "帮助开发会话发现和修复生成式访谈候选的问题，并承担长期回归。",
+    "supportedDecision": "支持候选优化优先级和修复回归判断；不支持独立准入或发布结论。",
+    "collection": "development_challenge",
+    "itemCount": 28,
+    "coverageBlueprint": {
+      "existingGi088Challenges": 12,
+      "humanAdjudicatedHistoricalFailures": 8,
+      "singleVariableCounterfactuals": 8
+    },
+    "sourceDistribution": {
+      "frozenGi088Tasks": 12,
+      "historicalHumanJudgments": 8,
+      "syntheticCounterfactuals": 8
+    },
+    "frozenAt": "2026-08-13T13:00:00.000Z",
+    "visibility": "development_visible",
+    "knownLimitations": [
+      "现有 12 项已被开发团队看过，只承担练习与回归身份。",
+      "历史失败来自多个旧候选和旧运行环境，复用时保留原证据边界。",
+      "单变量反事实尚未产生目标候选结果，当前只完成案例设计。"
+    ],
+    "changeHistory": [
+      {
+        "version": "2026-08-13.v1",
+        "change": "按总规范 v1.0 建立 12＋8＋8 开发挑战集。"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "caseId": "DEV-OLD-A1",
+      "caseType": "existing_gi088_challenge",
+      "title": "继续推进与礼貌停聊",
+      "capability": "continue_after_zero_question_and_polite_stop",
+      "riskFamily": "user_control",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A1", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "AI 一度没有提问，用户继续补充真实内容，随后明确礼貌结束。",
+      "userGoal": "在仍想继续时获得有价值的下一问，在明确结束时立即停下。",
+      "expectedBehavior": "继续意愿有效时恢复一个低负担问题；明确停止时零调用暂停。",
+      "prohibitedBehavior": ["把沟通负担描述误判为停止", "明确停止后继续提问"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项核心控制挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a1-control-continue-stop", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A2", "caseType": "existing_gi088_challenge", "title": "已有答案后的下一步", "capability": "avoid_reasking_answered_content", "riskFamily": "question_value",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A2", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户已经清楚回答当前问题，并补充相邻内容。", "userGoal": "感到自己的回答被吸收，继续处理仍未解决的部分。", "expectedBehavior": "不重复索取已有答案，只推进一个新的回答目标；内容充分时自然收住。", "prohibitedBehavior": ["重复追问已回答内容", "一次打开多个回答任务"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项吸收与提问价值挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a2-answered-next", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A3", "caseType": "existing_gi088_challenge", "title": "阶段 3 具体深化", "capability": "concrete_stage3_deepening", "riskFamily": "question_value",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A3", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "形成一条认识后，用户继续打开同一焦点下的具体未解部分。", "userGoal": "围绕最新未解部分继续获得具体且低负担的深化。", "expectedBehavior": "围绕最新来源推进，不受固定轮数打断。", "prohibitedBehavior": ["重复旧意义问题", "抽象化用户已经给出的具体入口"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项深聊连续性挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a3-stage3", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A4", "caseType": "existing_gi088_challenge", "title": "现实选择与决策支持", "capability": "decision_support_stays_on_choice", "riskFamily": "focus",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A4", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户面对现实选择，并逐步说明两边条件、顾虑和代价。", "userGoal": "看清当前选择的条件、取舍和可行动下一步。", "expectedBehavior": "问题持续服务当前选择，只打开一个可回答目标。", "prohibitedBehavior": ["转向泛化人格探索", "替用户作决定"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项决策支持挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a4-decision", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A5", "caseType": "existing_gi088_challenge", "title": "纠正后修订并继续", "capability": "correction_revises_state_and_continues", "riskFamily": "correction",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A5", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户明确指出 AI 一处理解不准确，并补充真实方向。", "userGoal": "让错误理解退出当前事实，并沿真实方向继续。", "expectedBehavior": "修订认识、共同任务和下一问，后续不再引用旧错误。", "prohibitedBehavior": ["继续沿被否定事实提问", "把模型旧推断写成用户事实"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项纠正生效挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a5-correction", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A6", "caseType": "existing_gi088_challenge", "title": "说不清或拒答的边界", "capability": "unclear_or_refusal_respects_boundary", "riskFamily": "user_control",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A6", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户表示现在说不清或不想回答当前问题。", "userGoal": "边界被尊重，同时保留自然继续或暂停的空间。", "expectedBehavior": "降低负担且不重复原问题；只有同目标低负担入口存在时最多再问一次。", "prohibitedBehavior": ["施压", "换句话重复同一问题"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项拒答边界挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a6-refusal", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A7", "caseType": "existing_gi088_challenge", "title": "独立事件保持分离", "capability": "independent_topics_remain_separate", "riskFamily": "event_isolation",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A7", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户同时带入两件互不相关的事，并明确说明彼此独立。", "userGoal": "先聊一件，同时保留另一件可返回。", "expectedBehavior": "只推进一项，另一项独立保存，来源不跨任务混合。", "prohibitedBehavior": ["替用户建立关系", "跨事件合并事实"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项事件隔离挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a7-isolation", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A8", "caseType": "existing_gi088_challenge", "title": "复杂输入保持单一焦点", "capability": "complex_input_keeps_single_answer_focus", "riskFamily": "focus",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A8", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "同一事件包含多条线索、人物和时间。", "userGoal": "用一段连贯回答推进当前最有价值的焦点。", "expectedBehavior": "每轮只有一个回答目标，相关线索服务同一焦点。", "prohibitedBehavior": ["一个问号内塞入多个独立任务", "强迫用户分别组织答案"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项复杂输入挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a8-single-focus", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A9", "caseType": "existing_gi088_challenge", "title": "内容充分后自然收住", "capability": "sufficient_content_synthesizes_or_pauses", "riskFamily": "question_value",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A9", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户已把当前问题说清，暂时未打开新部分。", "userGoal": "得到自然承接或总结，避免被机械追问。", "expectedBehavior": "自然综合、承接或暂停，并保持零问题。", "prohibitedBehavior": ["为凑轮次继续追问", "重复已明确答案"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项问停判断挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a9-sufficient", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A10", "caseType": "existing_gi088_challenge", "title": "补充内容后立即停止", "capability": "mixed_content_and_stop_commits_pause", "riskFamily": "user_control",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A10", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "同一条回复既补充会改变认识的新事实，又明确要求停止。", "userGoal": "新内容被保存，同时结束边界立即生效。", "expectedBehavior": "最多一次调用吸收内容，程序最终强制暂停并清空下一问。", "prohibitedBehavior": ["停止后再提问", "丢失停止前的新事实"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项内容与控制优先级挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a10-mixed-stop", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A11", "caseType": "existing_gi088_challenge", "title": "切换后返回原任务", "capability": "switch_and_return_preserves_lineage", "riskFamily": "event_isolation",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A11", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户从第一件事切到第二件独立事情，再明确返回第一件。", "userGoal": "两条任务都被保留，返回后延续原线索。", "expectedBehavior": "使用正确任务血缘，只合并原任务来源和最新返回消息。", "prohibitedBehavior": ["把第二件事来源混入第一件", "丢失可返回任务"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项切换与返回挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a11-return", "status": "ready"
+    },
+    {
+      "caseId": "DEV-OLD-A12", "caseType": "existing_gi088_challenge", "title": "自然长聊连续性", "capability": "long_conversation_continuity", "riskFamily": "continuity_recovery",
+      "source": {"kind": "frozen_task", "ref": "src/server/services/evaluation/gi088/candidate.ts", "locator": "GI088_V8R1_TASKS.A12", "authorization": "project_frozen_rule", "privacy": "participant_supplies_private_topic_at_runtime"},
+      "scene": "用户围绕一件事自然交流至少八次，期间可能补充或纠正，最后结束。", "userGoal": "获得状态、来源、问题价值和结束动作连续的长聊体验。", "expectedBehavior": "不受总轮数上限打断，状态和来源连续，最终正确暂停。", "prohibitedBehavior": ["固定轮数中断", "恢复后重复消息或丢失原话"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "private_sensitive", "whyAdded": "旧 12 项长轨迹挑战。", "version": "2026-08-13.v1", "semanticLineageKey": "old-a12-long", "status": "ready"
+    },
+
+    {
+      "caseId": "DEV-HBC-01", "caseType": "human_adjudicated_historical_failure", "title": "已有具体意义后仍重复索取", "capability": "avoid_reasking_answered_content", "riskFamily": "question_value",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-product-review.md", "locator": "A3 Thinking关闭", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "用户已说清幸福时刻和它代表一天新开始，AI 又追问同一意义。", "userGoal": "已有答案被吸收，下一步使用新的未解入口。", "expectedBehavior": "沿新的具体未解部分推进，或在内容充分时收住。", "prohibitedBehavior": ["换一种说法重复同一问题"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人已判普通质量失败。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-repeat-meaning", "goldLabel": "quality_failure", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-02", "caseType": "human_adjudicated_historical_failure", "title": "两件独立事情被模型强行关联", "capability": "independent_topics_remain_separate", "riskFamily": "event_isolation",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-product-review.md", "locator": "A7 Thinking关闭", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "用户要求把两个话题分开，AI 仍为它们建立关系。", "userGoal": "让当前事件保持独立。", "expectedBehavior": "只选择一件推进，另一件独立保留。", "prohibitedBehavior": ["无来源地建立事件关系", "混合事件事实"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人已判单例阻断。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-event-fusion", "goldLabel": "single_case_blocker", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-03", "caseType": "human_adjudicated_historical_failure", "title": "事件中的疲惫表达被误判为停止", "capability": "control_intent_scope", "riskFamily": "user_control",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md", "locator": "1.1 真人事故与收口", "authorization": "existing_project_evaluation_evidence", "privacy": "private_snapshot_not_republished"},
+      "scene": "用户仍在继续讲事件，内容中出现疲惫或沟通负担词，程序却暂停访谈。", "userGoal": "事件内容被理解，继续意愿保持有效。", "expectedBehavior": "区分事件内容、沟通反馈和明确控制指令。", "prohibitedBehavior": ["用宽泛疲惫词直接停止", "覆盖有效继续路径"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人已确认体验变差并判单例阻断。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-control-false-stop", "goldLabel": "single_case_blocker", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-04", "caseType": "human_adjudicated_historical_failure", "title": "最新纠正未生效", "capability": "correction_revises_state_and_continues", "riskFamily": "correction",
+      "source": {"kind": "human_reconciliation", "ref": "artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-reconciliation.md", "locator": "C4", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "用户否定担心失败，并纠正为决定权被越过，AI 继续沿旧事实提问。", "userGoal": "让最新纠正立即替换旧理解。", "expectedBehavior": "旧事实退出当前状态，下一问服务纠正后的重点。", "prohibitedBehavior": ["继续引用被否定事实"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "双方校准后确认单例阻断。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-correction-ignored", "goldLabel": "single_case_blocker", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-05", "caseType": "human_adjudicated_historical_failure", "title": "接受纠正后没有重新规划", "capability": "correction_replans_next_step", "riskFamily": "correction",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-product-review.md", "locator": "H1 回应甲", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "用户否定 AI 的二选一逻辑并说明两种感受并存，AI 只表示记住，未重新规划。", "userGoal": "纠正被吸收后获得符合新方向的下一步。", "expectedBehavior": "承认纠正并重新规划当前共同任务或下一问。", "prohibitedBehavior": ["只复述纠正而停止解决任务"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人盲评为普通质量失败。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-correction-no-replan-a", "goldLabel": "quality_failure", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-06", "caseType": "human_adjudicated_historical_failure", "title": "两阶段候选接受纠正后仍未重新规划", "capability": "correction_replans_next_step", "riskFamily": "correction",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-product-review.md", "locator": "H1 回应乙", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "同一纠正场景下，另一候选也只确认不拆分两种感受，没有重新规划。", "userGoal": "纠正后继续推进真正的用户任务。", "expectedBehavior": "依据纠正调整焦点和动作。", "prohibitedBehavior": ["把接受纠正当作任务完成"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人盲评为普通质量失败，保留架构差异。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-correction-no-replan-b", "goldLabel": "quality_failure", "status": "ready"
+    },
+    {
+      "caseId": "DEV-HBC-07", "caseType": "human_adjudicated_historical_failure", "title": "单轮多任务导致首轮无法交付", "capability": "single_answer_focus", "riskFamily": "focus",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-product-review.md", "locator": "A1 Thinking关闭", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "AI 在同一轮要求用户分别回答两个问题，结果被规则保护拦截。", "userGoal": "收到一个可直接回答的聚焦问题。", "expectedBehavior": "解释或选项服务同一个回答目标，最终能向用户交付。", "prohibitedBehavior": ["要求分别组织多个答案", "结构通过但可见结果缺失"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人已判普通质量失败；技术交付轴单独保留。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-multi-task-a1", "goldLabel": "quality_failure", "status": "ready_with_legacy_axis_note"
+    },
+    {
+      "caseId": "DEV-HBC-08", "caseType": "human_adjudicated_historical_failure", "title": "多个方向同时索取导致结构拦截", "capability": "single_answer_focus", "riskFamily": "focus",
+      "source": {"kind": "human_product_review", "ref": "artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-product-review.md", "locator": "A2 Thinking关闭", "authorization": "existing_project_evaluation_evidence", "privacy": "repository_redacted"},
+      "scene": "用户提供相关整体后，AI 同时打开两个需要分别回答的方向。", "userGoal": "从相关整体中先选择一个最有价值入口。", "expectedBehavior": "只形成一个回答目标，并保留其他方向。", "prohibitedBehavior": ["一次索取两个独立答案", "因结构拦截导致无可见回应"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "repository_redacted", "whyAdded": "产品负责人已判普通质量失败；技术交付轴单独保留。", "version": "2026-08-13.v1", "semanticLineageKey": "hbc-multi-task-a2", "goldLabel": "quality_failure", "status": "ready_with_legacy_axis_note"
+    },
+
+    {
+      "caseId": "DEV-CF-01", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-01", "changedVariable": "用户新增了一个明确且尚未回答的具体细节", "title": "已有意义后出现真正的新入口", "capability": "avoid_reasking_answered_content", "riskFamily": "question_value",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-01", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "用户已说清旧意义，同时新增一个会改变认识的具体未解细节。", "userGoal": "让新细节得到聚焦，而旧答案不被重复索取。", "expectedBehavior": "只围绕新增细节提一个问题。", "prohibitedBehavior": ["再次追问旧意义"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "验证修复能区分重复追问与真实新入口。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-new-open-part", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-02", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-02", "changedVariable": "用户明确说明两件事存在因果关系", "title": "用户明确建立两件事的关系", "capability": "event_relation_respects_user_source", "riskFamily": "event_isolation",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-02", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "两件事外观独立，但用户明确说明第一件导致第二件。", "userGoal": "让自己明确表达的关系被保留。", "expectedBehavior": "可以引用用户给出的关系，同时保持来源清楚。", "prohibitedBehavior": ["把关系扩大成模型推断"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "防止事件隔离修复走向机械拆分。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-explicit-relation", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-03", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-03", "changedVariable": "疲惫描述改为直接控制指令", "title": "明确说今天先到这里", "capability": "control_intent_scope", "riskFamily": "user_control",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-03", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "用户直接说今天先聊到这里，不再补充新内容。", "userGoal": "立即结束本次访谈。", "expectedBehavior": "零调用暂停并清空下一问。", "prohibitedBehavior": ["继续追问", "把明确停止当普通情绪"],
+      "riskLevel": "P0", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "校验高精度控制识别同时保留明确停止召回。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-explicit-stop", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-04", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-04", "changedVariable": "最新一句由纠正改为补充", "title": "补充旧重点而非纠正", "capability": "correction_vs_elaboration", "riskFamily": "correction",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-04", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "用户继续补充原先对失败的担心，没有否定旧理解。", "userGoal": "让补充内容进入当前认识。", "expectedBehavior": "沿原重点更新，而不错误撤销有效事实。", "prohibitedBehavior": ["把普通补充误判为纠正"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "防止纠正修复过度删除已有事实。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-elaboration-not-correction", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-05", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-05", "changedVariable": "用户明确要求此刻只需记录、不继续聊", "title": "接受纠正后按用户要求收住", "capability": "correction_replans_next_step", "riskFamily": "correction",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-05", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "用户纠正 AI 后明确表示只想让它记住，不需要继续提问。", "userGoal": "纠正生效并自然收住。", "expectedBehavior": "更新认识并以零问题承接。", "prohibitedBehavior": ["把零问题一律判为未重新规划"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "区分缺少下一步与符合用户控制的收住。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-correction-stop-request", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-06", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-06", "changedVariable": "用户从否定二选一改为主动选择其中一项", "title": "用户主动选定一个感受继续", "capability": "focus_after_user_choice", "riskFamily": "focus",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-06", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "用户主动说更想先聊轻松感。", "userGoal": "沿自己选择的感受继续。", "expectedBehavior": "聚焦轻松感并提出一个具体入口。", "prohibitedBehavior": ["继续把两种感受并列索取"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "验证修复能响应用户主动聚焦。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-user-selects-focus", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-07", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-07", "changedVariable": "两个示例共享同一个回答目标", "title": "同目标下的两个解释示例", "capability": "single_answer_focus", "riskFamily": "focus",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-07", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "主问题只有一个，后面两个短例子帮助用户理解同一答案方向。", "userGoal": "用一段回答完成当前问题。", "expectedBehavior": "把例子视为解释，不以问号数量机械拦截。", "prohibitedBehavior": ["把同目标示例误判成多个任务"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "防止单焦点规则退化为标点规则。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-one-target-examples", "status": "ready"
+    },
+    {
+      "caseId": "DEV-CF-08", "caseType": "single_variable_counterfactual", "parentCaseId": "DEV-HBC-08", "changedVariable": "两个线索改为一个选择题的两个互斥选项", "title": "一个回答目标下的互斥选项", "capability": "single_answer_focus", "riskFamily": "focus",
+      "source": {"kind": "synthetic_counterfactual", "ref": "DEV-HBC-08", "locator": "single_variable_variant", "authorization": "project_evaluation_design", "privacy": "public_synthetic"},
+      "scene": "AI 询问当前更想先处理远期方向还是眼前求职，两个选项服务同一入口选择。", "userGoal": "选择一个方向开始聊。", "expectedBehavior": "允许一个回答目标下的互斥选项。", "prohibitedBehavior": ["要求用户同时解释两个方向"],
+      "riskLevel": "P1", "collection": "development_challenge", "privacyLevel": "public_synthetic", "whyAdded": "验证单焦点标准按回答负担判断。", "version": "2026-08-13.v1", "semanticLineageKey": "cf-one-target-options", "status": "ready"
+    }
+  ]
+}
