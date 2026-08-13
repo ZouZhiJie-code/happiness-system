@@ -1,16 +1,15 @@
 # Operator Runbook
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
-## GI-088 v8r3 当前运行快照（2026-08-12）
+## GI-088 板块 7 当前运行快照（2026-08-13）
 
-- 候选版本：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`；Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`，三段单次超时均为 `60s`，自动恢复链为 `90s`。
-- Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`，状态 `READY`；当前 run：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`running 0/6 / gate=pending / calls=0`。
-- 离线候选首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`；Golden 8 已封存，Judge 20+20 后置。
-- 未登录访问受保护 runs/session 接口应返回 `401 AUTHENTICATION_REQUIRED`；合法格式的不存在用户名登录应返回 `401 INVALID_CREDENTIALS`。若登录出现 `503 AUTH_STORAGE_NOT_READY`，优先检查 Vercel 远程构建是否包含 Linux Prisma engine 与四连接数据库身份。
-- Production 继续保持 `legacy + baseline`；模型探针、真人内容代提交和隐藏推理持久化保持关闭。
+- 最新执行为 `2026-08-12.gi088-pro-contract-projection-paired-v1`：官方 DeepSeek Pro＋完整合同与官方 DeepSeek Pro＋可执行精简合同＋确定性状态投影完成开发配对。
+- 实际 Provider 调用 `126/128`，完整组有效 `53/64`、精简组 `38/64`；两组有效率和延迟门均失败，已封存技术 No-Go。恢复、重试和 Judge 调用均为 `0`。
+- 当前未创建人工裁决源，隐藏集未读取，也未创建新 Preview 或新 run。v8r3r2 deployment 与 `4＋2` 结果只读保留为历史证据。
+- 板块 7 的下一步是先基于已分类失败做零模型归因，再由产品负责人选择一个主要因素建立新计划。Production 继续保持 `legacy + baseline`；模型探针、真人内容代提交和隐藏推理持久化保持关闭。
 
 ## 1. 环境变量
 
@@ -458,13 +457,13 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 
 ### 2.12 GI-088 私有真人评测工作台
 
-当前证据包与后续真人回读入口为 [`GI-088 v8r3 Golden 8 与 Preview 回读`](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，实现历史与候选离线证据见 [`GI-088 v8r3 Interview Skill 与 Ark Flash`](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)。Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，两套 Prisma Client 已在 Vercel Linux 远程构建并通过登录存储验收，全新 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `ordinal=2 / revision=0 / running / 0/6 / gate=pending / calls=0`。Golden 8 已封存，当前候选可靠性硬门为 `No-Go`，Judge 20+20 后置，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+当前板块 7 停止点为 [`官方 Pro 双合同与状态投影配对技术 No-Go`](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)。v8r3r2 的 [`Preview 回读`](../artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/gi088-v8r3r2-preview-readback.md) 与 Ark Flash 实现继续只读保留，当前不承担新候选或新真人批次。Judge 20＋20 后置，约 `200` 轮以上容量优化继续排除。只有新的板块 7 候选通过完整准入并获得板块 8 独立计划后，才从 [`.env.preview.example`](../.env.preview.example) 复核环境合同，并确认：
 
 - `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
 - `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
 - `GI088_EVALUATION_ENABLED=I_UNDERSTAND`；
-- 正式 run 只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
-- v8r3 当前只开放 Ark Thinking high；历史 off/high 冒烟及探针授权继续只读，新的模型探针不属于本轮开门步骤。
+- 正式 run 只使用 `GI088_MODEL_CALL_SCOPE=batch` 和届时冻结的精确执行指纹；
+- 模型、Thinking、输出合同与恢复策略必须与届时通过板块 7 的候选身份一致；历史 Ark、官方 Pro 诊断与旧探针授权继续只读。
 
 静态检查：
 
@@ -495,7 +494,7 @@ Preview 发布上传源码并交给 Vercel Linux 远程构建；[vercel.json](..
 - typed error catalog 检查失败：先补齐 store／service 错误的 HTTP 状态、中文原因、保存情况和恢复动作，再开放 Preview。
 - 导出：只接受终态 run；首次导出冻结 payload 与 receipt，后续下载直接返回同一快照；客户端重算 canonical payload SHA256 后再标记收据验证成功。
 
-访问最终 v8r2 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。最终 deployment 为 `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz`，URL 为 `https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。该 deployment 使用修复源码 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d` 在 Vercel Linux 远程生成两套 Prisma Client；虚构账号登录验收已返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。真人调用授权已用 `1` 条虚构技术内容完成真实端到端验收：第一次调用触发程序保护，第二次自动恢复成功；对应技术 run 已行政 `early_stopped` 并排除真人质量证据。当前 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 已回读为 `ordinal=4 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`，并确认由绑定最终指纹的新 `clientOperationId` 创建。Production 的 GI-088 页面和接口继续统一返回 `404`。
+访问历史 v8r2 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。最终 deployment 为 `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz`，URL 为 `https://xingfuxitong-h5ghsioa2-zouzhijies-projects.vercel.app`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`。该 deployment 使用修复源码 commit `e01c9ed5fa0334d8d717dbed2643791f1045e04d` 在 Vercel Linux 远程生成两套 Prisma Client；虚构账号登录验收已返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。真人调用授权已用 `1` 条虚构技术内容完成真实端到端验收：第一次调用触发程序保护，第二次自动恢复成功；对应技术 run 已行政 `early_stopped` 并排除真人质量证据。当时的 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 已回读为 `ordinal=4 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`，并确认由绑定最终指纹的新 `clientOperationId` 创建。Production 的 GI-088 页面和接口继续统一返回 `404`。
 
 事件日志生成故障处理：
 

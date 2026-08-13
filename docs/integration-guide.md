@@ -1,6 +1,6 @@
 # Integration Guide
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -15,14 +15,14 @@
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前五个访谈维度。
 - 生产主域名为 `https://dailylight.chat`。
 
-## GI-088 v8r3 当前运行合同（2026-08-12）
+## GI-088 板块 7 当前运行合同（2026-08-13）
 
-- 当前候选：`2026-08-11.gi088-human-eval-v8r3-skill-ark-flash`，Ark `deepseek-v4-flash-ga-260731`、Thinking high、`json_object`；请求头、正文空闲和单次硬截止均为 `60000ms`，自动恢复链为 `90000ms`。
-- 当前 Preview deployment：`dpl_6t4WWXewBbr81ripbr7M76Hu5WXR`，地址见 [v8r3 Preview 证据](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md)，状态 `READY`。
-- 当前 run：`c873ad9a-ab5a-4629-960d-03266bc17b54`，`running / 0/6 / gate=pending / calls=0`；包含 4 条计分轨迹与 2 条兼容冒烟。
-- 离线候选首次有效 `76/96 = 79.17%`，可靠性硬门为 `No-Go`。Judge 20+20 作为后置门，当前不进入线上调用链。Production 保持 `legacy + baseline`。
+- 当前没有通过开发技术门的正式候选，也没有新的 Preview 或 run。最新官方 Pro 双合同开发配对实际调用 `126` 次，完整组有效 `53/64`、精简组 `38/64`，两组有效率与延迟门均失败。
+- 配对工具只运行于本地隔离评测，恢复、重试和 Judge 调用均为 `0`；人工裁决源未生成，隐藏集未读取。
+- v8r3r2 的 Ark Flash Preview、零调用初始化、双恢复与真人 `4＋2` 继续按历史身份只读保留。
+- Judge `20＋20` 保持后置，板块 8 暂停。Production 保持 `legacy + baseline`。
 
-v8r2 API 合同与历史字段继续按冻结版本读取；v8r3 新字段（Skill、模型身份、问题价值分类、v0.7 导出）只对当前候选输出，历史 run 继续按其版本兼容投影。
+v8r2 API 合同与历史字段继续按冻结版本读取；v8r3 的 Skill、模型身份、问题价值分类和版本化导出字段继续按对应历史版本投影。新的板块 7 候选需要独立冻结版本与接口合同后，才能进入新的 Preview。
 
 事件中心发布配置：
 
@@ -768,7 +768,7 @@ npm run eval:gi088:probe:empty:inspect
 npm run eval:gi088:probe:thinking:inspect
 ```
 
-空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；v8r1 事故与部署快照见 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。v8r2 当前 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；两套 Prisma Client 已在 Vercel Linux 远程构建，登录存储验收通过。全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、调用 `0`、真人提交 `0` 和质量未评价只作为脱敏排除记录。当前结构、证据和发布边界见 [`GI-088 v8r2 证据包`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
+空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；v8r1 事故与部署快照见 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。v8r2 当时的 Preview deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 已 `READY`，Execution fingerprint 为 `55c0c9b0ef31f46bf638c3a90fd6323c1ef7ad83a14d367d4e2e2fe3cc34b34e`；两套 Prisma Client 已在 Vercel Linux 远程构建，登录存储验收通过。当时的新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `ordinal=4 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、调用 `0`、真人提交 `0` 和质量未评价只作为脱敏排除记录。v8r2 结构与证据见 [`GI-088 v8r2 证据包`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)；当前板块 7 停止点见[双合同配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)。
 
 ## 11. 通用错误语义
 

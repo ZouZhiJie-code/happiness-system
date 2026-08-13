@@ -1,17 +1,17 @@
 # Architecture
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 ## 1. 系统概览
 
 这是一个单仓库的 Next.js 应用，用 AI 访谈来帮助用户完成“幸福日志”记录。
 
-## GI-088 v8r3 当前架构快照（2026-08-12）
+## GI-088 板块 7 当前架构快照（2026-08-13）
 
-- 当前候选由 Interview Skill、Ark Flash、Foundation、问题价值复核、【帮我记】兼容链和对话优先工作台组成；模型为 Ark `deepseek-v4-flash-ga-260731`，Thinking high，`json_object`。
-- Golden 8 已封存，7 条采用、1 条质量失败；离线候选首次有效 `76/96 = 79.17%`、最终失败 `18`，可靠性硬门为 `No-Go`。
-- 私有 Preview deployment `dpl_6t4WWXewBbr81ripbr7M76Hu5WXR` 已 `READY`，当前 run `c873ad9a-ab5a-4629-960d-03266bc17b54` 为 `running 0/6 / gate=pending / calls=0`。
-- Preview 与 Production 的边界保持独立：Production 为 `legacy + baseline`，真人内容由产品负责人决定提交，隐藏推理不进入持久化。
+- 当前没有通过开发技术门的正式候选。最新验证在同一官方 DeepSeek Pro、Thinking high、Interview Skill、开发集和 `60s` 配置下比较完整合同与可执行精简合同＋确定性状态投影。
+- 两组统一落到任务归属状态 v2。程序投影的歧义、不变量失败、重复提交和状态污染均为 `0`，这套状态底座具备继续复用的工程基础。
+- 完整组技术有效 `53/64`，精简组 `38/64`；两组有效率和延迟门均失败，人工裁决源未生成，隐藏集未读取。
+- v8r3r2 的 Ark Flash Preview、双恢复和真人 `4＋2` 继续作为历史证据。当前未创建新 Preview 或新 run；Production 保持 `legacy + baseline`，隐藏推理不进入持久化。
 
 产品层的功能架构图、主链时序图和逐节点图解统一收录在 [访谈功能图谱](./diagrams/README.md)。
 
@@ -698,7 +698,7 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 ### 5.8 GI-088 私有 Preview 评测运行器
 
-当前 v8r3 运行器沿用可追溯的 run、调用账本、幂等操作、程序介入、人工修订、操作事件和不可变导出快照，并增加 Interview Skill、问题价值分类、兼容冒烟证据和 v0.7 导出。候选调用身份固定记录 provider、base URL host、endpoint、model、payload contract、Thinking high 与三段 `60s` 超时；当前 Preview 使用 Ark Flash，离线可靠性结果为 `No-Go`，因此 Preview 继续承担回读和问题定位职责。
+GI-088 运行器沿用可追溯的 run、调用账本、幂等操作、程序介入、人工修订、操作事件和不可变导出快照，并增加 Interview Skill、问题价值分类、兼容冒烟证据和版本化导出。候选调用身份固定记录 provider、base URL host、endpoint、model、payload contract、Thinking 与超时配置。v8r3r2 的 Ark Flash Preview 继续承担历史回读与问题定位证据；双合同开发配对工具位于运行时行为清单外，只形成板块 7 诊断结果，当前没有新的 Preview 候选。
 
 GI-088 用一套独立运行器承接真人交互开发评测。它只在 Vercel Preview、显式启用开关、管理员与专用评测名单同时命中时可用。Production 的页面和接口统一返回 `404`。
 

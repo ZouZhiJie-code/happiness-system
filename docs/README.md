@@ -1,6 +1,6 @@
 # Daily Light 文档导航
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
@@ -47,10 +47,11 @@
 2. [访谈产品优化总 Map](./interview-product-optimization-map.md)
 3. [生成式访谈重构总 Map](./generative-interview-refactor-map.md)
 4. [生成式访谈 AI 产品工作方法 v1.0](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)
-5. [板块 6 当前专项｜生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
-6. [板块 5 冻结输入](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)
-7. [GI-074 评测与交接](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)
-8. [评测资产总入口](../artifacts/README.md)
+5. [板块 7 新会话交接](./plans/2026-08-13-gi088-board7-next-session-handoff.md)
+6. [板块 7 当前专项｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)
+7. [板块 6 评测输入｜生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
+8. [当前停止点｜官方 Pro 双合同配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
+9. [评测资产总入口](../artifacts/README.md)
 
 ## 3. 按任务找文件
 

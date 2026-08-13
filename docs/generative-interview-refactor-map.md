@@ -1,6 +1,6 @@
 # 生成式访谈重构总 Map（Batch B 专项）
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 文档状态：`生效中`
 
@@ -13,6 +13,8 @@
 Production 状态：`保持 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
 
 本次同步范围：`官方 Pro 完整合同与可执行精简合同＋确定性状态投影开发配对已运行 126 次并触发技术 No-Go：完整组有效 53/64，精简组 38/64；两组 P50／P90／最长等待门失败，投影歧义／状态不变量失败／重复提交／状态污染均为 0。人工裁决源未生成，隐藏集未读取；Judge／Preview／Production 保持关闭`
+
+新会话交接：[`GI-088｜板块 7 下一会话讨论交接`](./plans/2026-08-13-gi088-board7-next-session-handoff.md)
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
 

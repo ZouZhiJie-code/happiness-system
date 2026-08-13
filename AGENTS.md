@@ -113,11 +113,12 @@
 
 1. [`docs/README.md`](./docs/README.md)：五分钟项目导航、常见任务与稳定搜索词；
 2. [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md)：生成式访谈唯一当前状态与决策索引；
-3. 总 Map 当前链接的专项文档：当前板块 8 使用 `04p-board8-preview-go-no-go-production-authorization.md`；
-4. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
-5. [`artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)：GI-088 v8r3r3 30/60 秒自适应并行恢复的正式 No-Go 证据入口。原子赢家与工程门通过；正式运行最终可见 `50/96`、最终保护 `46`，未进入新 Preview；
-6. [`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`](./artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)：GI-088 v8r2 历史证据包与已完成实施范围；
-7. [`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`](./docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)：v8r2 已完成的实施范围、合同与停止条件。v8r1 A1 误停聊事故及其历史只读 run 继续从 `artifacts/README.md` 进入。
+3. [`docs/plans/2026-08-13-gi088-board7-next-session-handoff.md`](./docs/plans/2026-08-13-gi088-board7-next-session-handoff.md)：板块 7 新会话的当前结论、开放问题、讨论顺序和停止边界；
+4. [`docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md`](./docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)：当前板块 7 专项与候选血缘；
+5. [`artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)：官方 Pro 双合同开发配对技术 No-Go 的当前停止点；
+6. [`artifacts/README.md`](./artifacts/README.md)：正式评测资产、历史证据和本地过程文件入口；
+7. [`artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)：官方 Pro 方向与输出职责复杂度的前序根因对照；
+8. [`artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md`](./artifacts/generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)：v8r3r2 内容质量、双恢复与历史 Preview 证据。
 
 当前检索关键词：`GI-088`、`GI-087`、`板块 6`、`board6-calibration`、`board7b-working-task-v1`、`legacy + baseline`。GI-081、GI-083、GI-084 开发失败血缘、GI-085／086 No-Go、历史 `GI-066`、旧 Board 7/8 与 Batch B 候选统一从 `artifacts/README.md` 进入，并保持各自的诊断或历史证据身份。
 

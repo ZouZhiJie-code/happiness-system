@@ -1,6 +1,6 @@
 # 事件中心自我探索重构讨论地图
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
 文档状态：`事件中心 MVP 产品讨论与阶段边界持续有效；GI-067 / GI-068～080 已冻结；GI-066 真人实聊 No-Go 作为历史证据保留`
 
@@ -64,9 +64,9 @@ Daily Light 已完成事件中心 MVP 的产品方案讨论。产品将从五维
 
 事件中心专项技术方案统一存放在`docs/technical/interview-event-centered/`，按阶段编号命名。
 
-当前产品专项：[`板块 6｜生成式访谈质量评测 v1`](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)。板块 5 冻结输入见[`稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，冻结规则索引见[`04x｜GI-067 全局架构`](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)，评测交接见[`04x-07｜GI-074`](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)
+当前产品专项：[`板块 7｜模型主导语义判断的候选实现与验证`](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。板块 5 冻结输入见[`稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，板块 6 评测输入见[`生成式访谈质量评测 v1`](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，当前停止点见[`官方 Pro 双合同配对技术 No-Go`](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)。
 
-板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 的 GI-088 v8r2 控制意图、评测底座、最终初始化幂等与新 12 项 Preview run 已收口，当前停在 `0/12` 等待真人验收，板块 7 正式接入和板块 8 依次等待上游裁决。
+板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 的 Golden `32＋8` 和运行判尺已经形成。最新双合同开发配对因有效率与延迟门失败而停止，当前先选择下一单一主要因素；板块 8 等待新的板块 7 候选通过完整准入。
 
 每份阶段方案作为LeadAgent与Subagent共同实施的契约，保存公共接口、实施边界、开发顺序和验证证据；本地图负责跨阶段保存进度、决策、依赖、开发状态和验收结果。
 
