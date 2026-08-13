@@ -35,7 +35,14 @@ const gratitudeQuestionSubTargetSchema = z.enum([
 ]);
 const inferenceHypothesisKeySchema = z.enum(["seen_need", "gratitude_reason", "relationship_signal"]);
 const assistantQuestionStageIntentSchema = z.enum(["advance", "resume", "repair"]);
-const assistantQuestionSurfaceLevelSchema = z.enum(["default", "simplified", "concrete_anchor"]);
+const assistantQuestionSurfaceLevelSchema = z.enum(["default", "simplified", "concrete_anchor", "low_pressure"]);
+export const interviewRegenerationIntentSchema = z.enum([
+  "simplify",
+  "concretize",
+  "change_angle",
+  "deepen",
+  "lighten"
+]);
 const assistantTurnPhaseSchema = z.enum(["opening", "digging", "closing", "choice"]);
 const assistantChoiceKindSchema = z.enum(["event_complete", "dimension_redirect", "boundary_insufficient"]);
 const interviewEventStatusSchema = z.enum(["active", "ready_for_choice", "completed"]);
@@ -291,16 +298,47 @@ const interviewMessageSchema = z.object({
   inputMode: z.enum(["text", "voice"]).optional(),
   content: z.string(),
   assistantPayload: assistantTurnPayloadSchema.nullable().optional(),
+  branchSessionId: z.string().nullable().optional(),
+  responseVersion: z
+    .object({
+      groupId: z.string(),
+      version: z.number().int().positive(),
+      versionCount: z.number().int().positive(),
+      canRegenerate: z.boolean(),
+      canSwitch: z.boolean(),
+      disabledReason: z.string().nullable().optional(),
+      versions: z.array(
+        z.object({
+          messageId: z.string(),
+          branchSessionId: z.string(),
+          version: z.number().int().positive(),
+          active: z.boolean()
+        })
+      )
+    })
+    .nullable()
+    .optional(),
+  regenerationIntent: interviewRegenerationIntentSchema.nullable().optional(),
+  regeneratedFromMessageId: z.string().nullable().optional(),
   sequence: z.number().int().nonnegative(),
   createdAt: z.string()
 });
 
-const interviewUserTurnSchema = z.object({
+export const interviewUserTurnSchema = z.object({
   id: z.string(),
   clientTurnId: z.string(),
   sessionId: z.string(),
   activeEventId: z.string().nullable(),
-  action: z.enum(["reply", "continue_current_event", "next_event"]),
+  action: z.enum([
+    "reply",
+    "continue_current_event",
+    "next_event",
+    "regenerate_question",
+    "correct_understanding"
+  ]),
+  targetMessageId: z.string().nullable().optional(),
+  regenerationIntent: interviewRegenerationIntentSchema.nullable().optional(),
+  baseBranchSessionId: z.string().nullable().optional(),
   rawText: z.string().nullable(),
   inputMode: z.enum(["text", "voice"]).optional(),
   baseMessageSequence: z.number().int().min(-1),
@@ -429,6 +467,9 @@ const pendingDecisionSchema = z.discriminatedUnion("kind", [
 export const interviewSessionSchema = z.object({
   id: z.string(),
   dimension: interviewDimensionSchema,
+  conversationSchemaVersion: z.number().int().positive().default(1),
+  rootSessionId: z.string().optional(),
+  activeBranchSessionId: z.string().optional(),
   status: z.enum(["active", "paused", "completed", "abandoned"]),
   stage: interviewStageSchema,
   activeEventId: z.string().nullable(),
@@ -468,7 +509,8 @@ const respondReplyRequestSchema = z
     userMessage: z.string().optional(),
     inputMode: z.enum(["text", "voice"]).default("text"),
     clientTurnId: z.string().min(1).optional(),
-    baseMessageSequence: z.number().int().min(-1).optional()
+    baseMessageSequence: z.number().int().min(-1).optional(),
+    baseBranchSessionId: z.string().min(1).optional()
   })
   .superRefine((value, context) => {
     const rawText = value.rawText ?? value.userMessage ?? "";
@@ -505,7 +547,14 @@ const respondReplyRequestSchema = z
 const respondActionRequestFields = {
   sessionId: z.string(),
   clientTurnId: z.string().min(1).optional(),
-  baseMessageSequence: z.number().int().min(-1).optional()
+  baseMessageSequence: z.number().int().min(-1).optional(),
+  baseBranchSessionId: z.string().min(1).optional()
+};
+
+const branchAwareRespondActionRequestFields = {
+  ...respondActionRequestFields,
+  targetMessageId: z.string().min(1),
+  baseBranchSessionId: z.string().min(1)
 };
 
 export const respondInterviewRequestSchema = z.union([
@@ -523,11 +572,59 @@ export const respondInterviewRequestSchema = z.union([
     ...respondActionRequestFields
   }),
   z.object({
+    action: z.literal("regenerate_question"),
+    ...branchAwareRespondActionRequestFields,
+    intent: interviewRegenerationIntentSchema
+  }),
+  z
+    .object({
+      action: z.literal("correct_understanding"),
+      ...branchAwareRespondActionRequestFields,
+      rawText: z.string()
+    })
+    .superRefine((value, context) => {
+      if (!normalizeInterviewUserTurnText(value.rawText)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["rawText"],
+          message: "Correction text is required"
+        });
+      }
+
+      if (countInterviewReplyCharacters(value.rawText) > INTERVIEW_REPLY_MAX_LENGTH) {
+        context.addIssue({
+          code: z.ZodIssueCode.too_big,
+          path: ["rawText"],
+          maximum: INTERVIEW_REPLY_MAX_LENGTH,
+          inclusive: true,
+          type: "string",
+          message: `Correction text must contain at most ${INTERVIEW_REPLY_MAX_LENGTH} characters`
+        });
+      }
+    }),
+  z.object({
     action: z.literal("resume_turn"),
     sessionId: z.string(),
     clientTurnId: z.string().min(1)
   })
 ]);
+
+export const selectInterviewBranchRequestSchema = z.object({
+  sessionId: z.string().min(1),
+  targetMessageId: z.string().min(1),
+  baseBranchSessionId: z.string().min(1)
+});
+
+export const selectInterviewBranchResponseSchema = z.object({
+  session: interviewSessionSchema
+});
+
+export const previewInterviewBranchRequestSchema = selectInterviewBranchRequestSchema;
+
+export const previewInterviewBranchResponseSchema = z.object({
+  targetBranchSessionId: z.string().min(1),
+  session: interviewSessionSchema
+});
 
 export const respondInterviewResponseSchema = z.object({
   assistantMessage: z.string(),
@@ -603,6 +700,8 @@ export const updateJoyEntryResponseSchema = updateJournalEntryResponseSchema;
 
 export type StartInterviewRequest = z.infer<typeof startInterviewRequestSchema>;
 export type RespondInterviewRequest = z.infer<typeof respondInterviewRequestSchema>;
+export type SelectInterviewBranchRequest = z.infer<typeof selectInterviewBranchRequestSchema>;
+export type PreviewInterviewBranchRequest = z.infer<typeof previewInterviewBranchRequestSchema>;
 export type GenerateDraftRequest = z.infer<typeof generateDraftRequestSchema>;
 export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
 export type ReopenInterviewRequest = z.infer<typeof reopenInterviewRequestSchema>;

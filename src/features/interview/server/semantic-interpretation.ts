@@ -189,7 +189,7 @@ function buildJoyInterpretation(input: BuildDimensionSemanticInterpretationInput
     narrativePremise = "正文要写出表达为什么忽然顺了、亮了，而不是写成做完一件事。";
     closurePremise = "结尾收在什么样的表达状态会点亮自己，不要写成泛化成长口号。";
     antiFlatteningTargets = ["不要把它写成完成事项", "要写表达被点亮的感觉"];
-    appendUnique(titleCandidates, "表达被点亮", "把想法写顺");
+    appendUnique(titleCandidates, "把想法写顺", "写着写着顺了");
   } else if (valueImpact || /(帮助|有用|对别人有用|贡献|被需要|分享出去)/u.test(joined)) {
     themeKey = "value_felt";
     themeLabel = "感到自己有用";

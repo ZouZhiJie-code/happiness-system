@@ -21,6 +21,12 @@ export type InterviewIssueCode =
   | "INTERVIEW_TURN_NOT_FOUND"
   | "INTERVIEW_TURN_RETRY_REQUIRED"
   | "INTERVIEW_ACTION_UNSUPPORTED"
+  | "INTERVIEW_REGENERATION_UNAVAILABLE"
+  | "INTERVIEW_REGENERATION_INTENT_UNAVAILABLE"
+  | "INTERVIEW_REGENERATION_LIMIT_REACHED"
+  | "INTERVIEW_BRANCH_OUT_OF_DATE"
+  | "INTERVIEW_BRANCH_LOCKED_BY_JOURNAL"
+  | "INTERVIEW_REGENERATION_FAILED"
   | "ASSISTANT_ACTION_MISSING"
   | "INTERVIEW_DB_WRITE_FAILED"
   | "INTERVIEW_RESPONSE_SCHEMA_ERROR"
@@ -123,6 +129,48 @@ const issuePresets: Record<InterviewIssueCode, InterviewIssuePreset> = {
     resolution: "请刷新页面后重试。",
     retryable: true,
     action: "refresh"
+  },
+  INTERVIEW_REGENERATION_UNAVAILABLE: {
+    title: "当前问题暂不支持换问法",
+    message: "这条问题所属的访谈版本未开启重新生成功能。",
+    resolution: "请继续回答当前问题，后续新访谈会自动支持该功能。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_INTENT_UNAVAILABLE: {
+    title: "当前材料还不适合这样调整",
+    message: "已有内容暂时不足以支撑这个追问方向。",
+    resolution: "请选择另一种调整方式，或补充一句纠正理解。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_LIMIT_REACHED: {
+    title: "这个问题已经换过两次",
+    message: "当前问题组已经保留了三个版本。",
+    resolution: "你可以纠正理解、换个片段、整理当前内容或先停一下。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_BRANCH_OUT_OF_DATE: {
+    title: "访谈路径已经更新",
+    message: "你操作的版本已经不再是当前采用路径。",
+    resolution: "请刷新后从当前版本继续。",
+    retryable: true,
+    action: "refresh"
+  },
+  INTERVIEW_BRANCH_LOCKED_BY_JOURNAL: {
+    title: "这段历史已经进入日志",
+    message: "日志生成后，已经有后续回答的历史路径会保持稳定。",
+    resolution: "当前最新问题仍可换问法；也可以继续回答后再手动更新日志。",
+    retryable: false,
+    action: "none"
+  },
+  INTERVIEW_REGENERATION_FAILED: {
+    title: "这次换问法没有完成",
+    message: "系统暂时未能生成更合适的新版本，原问题已经保留。",
+    resolution: "请稍后重试，或使用“纠正理解”直接告诉我需要调整的地方。",
+    retryable: true,
+    action: "retry"
   },
   ASSISTANT_ACTION_MISSING: {
     title: "访谈流程异常",
