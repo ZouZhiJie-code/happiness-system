@@ -4,15 +4,15 @@
 
 文档状态：`生效中`
 
-当前板块：`板块 7｜官方 Pro 双合同配对开发技术 No-Go 收口`
+当前板块：`板块 7｜来源责任已闭环，速度继续 No-Go`
 
-当前讨论位置：`开发配对已封存为技术 No-Go｜完整组 53/64、精简组 38/64，两组延迟门失败`
+当前讨论位置：`来源责任重划零模型候选已封存｜15/15 通过，精简组反事实有效 53/64，延迟门继续失败`
 
-下一建议板块：`板块 7｜基于已分类失败和等待成本选择下一单一主要因素；新模型调用需建立新计划`
+下一建议板块：`板块 7｜暂停在当前证据；下一单一主要因素建议讨论 Pro 等待优化，D27、D28 模型调用另立版本并单独授权`
 
 Production 状态：`保持 legacy + baseline；optional + generative 仅为板块 8 待批准目标`
 
-本次同步范围：`官方 Pro 完整合同与可执行精简合同＋确定性状态投影开发配对已运行 126 次并触发技术 No-Go：完整组有效 53/64，精简组 38/64；两组 P50／P90／最长等待门失败，投影歧义／状态不变量失败／重复提交／状态污染均为 0。人工裁决源未生成，隐藏集未读取；Judge／Preview／Production 保持关闭`
+本次同步范围：`来源责任重划候选 2026-08-13.gi088-compact-source-responsibility-v1 已完成并封存；15 份 REQUIRED_EVIDENCE_MISSING 既有结果全部通过新规则，反例全拦截，投影歧义、状态不变量失败、重复提交和状态污染均为 0。精简组反事实有效从 38/64 更新为 53/64；沿用原延迟数据后 P50 32.085s、P90 54.127s、最长 60.003s，速度门继续失败。Provider／重试／恢复／Judge／隐藏集读取均为 0；板块 7 继续开放，板块 8 暂停，Production 保持原边界`
 
 新会话交接：[`GI-088｜板块 7 下一会话讨论交接`](./plans/2026-08-13-gi088-board7-next-session-handoff.md)
 
@@ -58,7 +58,7 @@ flowchart TD
 |---|---|---|
 | 5 | [稳定性、用户控制与交互收束](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md) | `产品决策已冻结；GI-075～080 六类规则完成 6/6；落地验证未启动` |
 | 6 | [生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) | `评测资产与判尺已形成；Golden 32＋8 独立封存，Judge 20＋20 后置` |
-| 7 | [模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) | `当前板块；双合同开发配对技术 No-Go 已封存，等待下一单一因素决策` |
+| 7 | [模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) | `当前板块；来源责任重划 15/15 已闭环，精简组反事实有效 53/64，速度继续 No-Go` |
 | 8 | [内部 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) | `暂停；本轮未产生架构胜出组或正式候选` |
 
 板块 5～8 新会话固定读取 `AGENTS.md → 访谈产品优化地图 → 本 Map → AI 产品工作方法 → 当前板块专项 → 当前专项明确链接的上游档案或历史证据`。方法论 `v1.0` 已冻结；板块 6～8 统一执行该方法，并保持 `GI-068～080` 关闭。
@@ -91,7 +91,7 @@ flowchart TD
 
 产品负责人确认并冻结 `GI-080｜成果／暂停后的自然收束协议`，状态为“已冻结·高置信度”，落地验证未启动。成果或暂停后由输入框承接自然继续；目标 MVP 不提供【继续聊】和独立【结束记录】按钮；【生成日志】成功时同时结束记录，失败时保留可恢复状态；页面跳转只保存和暂停。日志完成后的新记录继续按 GI-068 重新选择模式并保持内容隔离。
 
-GI-067 七个批次和板块 5 六类规则已经全部冻结。板块 5 当前进度为 `6/6`，方法 v1.0 已冻结。GI-081～087 的诊断、失败、能力校准和上下文资格审计继续作为历史输入。GI-088 v8r3r3 正式可靠性门 No-Go；随后根因对照确认官方 Pro 为当前质量可用模型方向，完整输出职责为重要放大因素。官方 Pro 双合同开发配对现已运行 `126` 次：完整组有效 `53/64`，精简组 `38/64`，两组延迟门失败，判定技术 No-Go；人工裁决源未生成，隐藏集未读取，板块 8 继续暂停。
+GI-067 七个批次和板块 5 六类规则已经全部冻结。板块 5 当前进度为 `6/6`，方法 v1.0 已冻结。GI-081～087 的诊断、失败、能力校准和上下文资格审计继续作为历史输入。GI-088 v8r3r3 正式可靠性门 No-Go；随后根因对照确认官方 Pro 为当前质量可用模型方向，完整输出职责为重要放大因素。官方 Pro 双合同开发配对运行 `126` 次：完整组有效 `53/64`，精简组原始有效 `38/64`。产品负责人随后选择来源责任重划为单一主要因素；零模型回放 `15/15` 通过，精简组反事实有效更新为 `53/64`，状态四项错误继续为 `0`。沿用原延迟后速度门仍失败；人工裁决源未生成，隐藏集未读取，板块 8 继续暂停。
 
 板块 6 首批判尺校准节点形成 `8` 张完整卡：`2` 张【帮我记】、`6` 张【陪我聊】，其中 `6` 个决策点、`2` 条完整轨迹。产品负责人已完成盲评；R1、R2、C1、C2、C4、C5、C6 共 `7` 张完成收口，最终分布为可直接使用 `2`、轻微问题 `4`、单例阻断 `1`。C3 因人工参考回应同时支持两种合理判断而保持开放，继续作为历史证据，不进入首批六题真实模型评测。
 
@@ -113,13 +113,13 @@ GI-083 v1 每个用户提交只使用 `deepseek-v4-flash` 一次，同时生成�
 
 当前[GI-083 v1 候选包](../artifacts/generative-interview-board7/2026-08-07-board7a-chat-e2e-single-v1/README.md)版本为 v1.1，指纹为 `2ceb7bb37e196f47dbd70fcd6ffaf0cf3b4c7727ae2e8721e62b593751dbbe46`。服务器只在 DeepSeek 官方认证和 `deepseek-v4-flash` 可用性检查通过后提供网页；启动、网页打开和点击开始保持生成调用 `0`。三条合成工程轨迹已完成 `5/5` 次真实请求，技术失败与程序拦截均为 `0`，并覆盖刷新恢复、终态封存和访问控制；两次额外情绪推断进入板块 6 质量证据。产品负责人真实轨迹仍未开始。v0 候选包继续作为运行前校正历史保存，模型调用 `0`。
 
-板块 6 当前评测输入已齐，Judge 20＋20 保持后置；板块 7 的官方 Pro 双合同开发配对已封存为技术 No-Go，当前没有架构胜出组，板块 8 继续等待新的板块 7 候选通过完整准入门。
+板块 6 当前评测输入已齐，Judge 20＋20 保持后置；板块 7 已完成来源责任重划零模型候选，机械来源责任闭环，速度继续 No-Go，架构胜出仍待验证。板块 8 继续等待新的板块 7 候选通过完整准入门。
 
 `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；其新会话自动进入规则由 GI-068 覆盖。DeepSeek 官方 Provider、可靠提交、日志闭环、性能和 Production 隔离继续有效。GI-066 的工程验证、官方预检、严格 `10×3` 和单角度自动 `8+2` 完整保留为历史技术证据，真人实聊 `No-Go` 裁决继续有效。
 
 最新两条真人事件进一步暴露提问策略的系统性问题：固定判断地图先于用户当前理解目标决定方向；来源筛选遗漏用户主动留下的重要线索；复合纠正撤销旧目标后未承接新的重点；缺少有效来源时仍会生成抽象兜底问题。代表结果包括重复索取已回答内容、忽略用户主动指出的“过去经历”线索，以及纠正后引入“判断发生变化”的错误前提。
 
-当前产品决策状态为“GI-067 / GI-068～074 已冻结·高置信度；GI-075、GI-076、GI-078 已冻结·中置信度；GI-077、GI-079、GI-080 已冻结·高置信度”，事件中心落地验证状态为“GI-068～080 未启动；GI-079 继承的可靠提交底座已发布并验证；GI-066 自动层证据保留、真人体验 No-Go”。官方 DeepSeek Pro、Thinking high 下的双合同开发配对已封存为技术 No-Go；状态 v2 投影四项结构错误为 0，但两组有效率和延迟均未满足开发门。正式胜出架构、版本和指纹仍待新的板块 7 候选验证与冻结。Production 继续保持 `legacy + baseline`，入口和运行配置维持安全档位。
+当前产品决策状态为“GI-067 / GI-068～074 已冻结·高置信度；GI-075、GI-076、GI-078 已冻结·中置信度；GI-077、GI-079、GI-080 已冻结·高置信度”，事件中心落地验证状态为“GI-068～080 未启动；GI-079 继承的可靠提交底座已发布并验证；GI-066 自动层证据保留、真人体验 No-Go”。官方 DeepSeek Pro、Thinking high 下的双合同开发配对已封存为技术 No-Go；来源责任重划零模型候选随后确认 `15/15` 通过，精简组反事实有效达到 `53/64`，状态 v2 投影四项结构错误继续为 `0`。速度仍未满足开发门。正式胜出架构、版本和指纹仍待新的板块 7 候选验证与冻结。Production 继续保持 `legacy + baseline`，入口和运行配置维持安全档位。
 
 当前工作方法：[生成式访谈 AI 产品工作方法 v1.0](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)。板块 5 冻结专项：[稳定性、用户控制与交互收束](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，GI-075～080 的完整行为、案例和交接保存在该专项。当前板块 6 入口：[生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)。上游冻结规则索引见 [04x｜GI-067 全局讨论架构](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)，评测交接见 [04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)，GI-068～074 的依据与案例保存在 04x-01～07 冻结决策档案。历史证据继续见 [04u｜GI-066 提问协议](./technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)、[04v｜GI-066 开发执行计划](./technical/interview-event-centered/04v-board8-gi066-development-execution-plan.md)、[候选血缘](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/candidate-lineage.md)、[10×3 报告](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-thought-stability/report.md)与[8+2 执行证据](../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/preview-execution-evidence.md)。
 
@@ -670,10 +670,10 @@ flowchart TD
 | 4｜成果与 AI 自主访谈策略 | **GI-067 / GI-068～074 已冻结·高置信度** | 高 | 七项落地验证均未启动 | **产品决策完成** | [04x 母文档](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 5｜稳定性、用户控制与交互收束 | **GI-075～080 六类规则已冻结；6/6** | GI-075、GI-076、GI-078 中；GI-077、GI-079、GI-080 高 | 产品决策完成；落地验证未启动 | **完成；交接板块 6** | [板块 5 专项](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 6｜生成式质量评测 | **GI-074 完整体系保持冻结；GI-081～083 保留诊断血缘；GI-084～087 失败、校准与审计证据已回填；GI-088 按批次迭代** | 高 | v8 `1/4 early_stopped` 获产品通过；v8r1 A1 控制误停只读保留；v8r2 #5 行政 No-Go；v8r3 两轮 No-Go 只读保留；Golden 32＋8 独立封存 | **本轮输入已齐；Judge 20＋20 后置** | [生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)、[GI-088 v8r3 Golden 8 证据](../artifacts/generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/README.md) |
-| 7｜模型提问策略与链路改造 | **官方 Pro 双合同开发配对技术 No-Go 已封存** | 高 | `126` 次调用；完整组有效 `53/64`、精简组 `38/64`，两组延迟门失败；投影状态四项错误为 `0`；人工裁决源未生成，隐藏集未读取 | **技术 No-Go；等待下一单一因素决策** | [07｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)、[双合同配对 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md) |
+| 7｜模型提问策略与链路改造 | **来源责任重划零模型候选已封存** | 高 | 复用父级 `15` 份来源缺失结果，模型调用 `0`；正向 `15/15`、反例全拦截、状态四项错误 `0`，精简组反事实有效 `53/64`；原延迟门继续失败 | **来源责任闭环；板块 7 开放，速度 No-Go，板块 8 暂停** | [07｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)、[来源责任重划封存证据](../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md) |
 | 8｜内部 Preview、验收与发布 | **`4＋2` 门已冻结；Production 继续 legacy + baseline** | 高 | v8r3r2 内容与兼容通过、等待失败；v8r3r3 未部署，新 Preview 与新 0/6 均未创建 | **暂停，等待板块 7** | [04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
 
-依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → GI-084～087 失败、校准与筛选 → GI-088 v1～v8r2 历史迭代 → v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链和工作台 → Golden 32＋8 → v8r3r2 EMPTY 双恢复与 4＋2 内容通过、等待失败 → v8r3r3 30/60 秒恢复正式可靠性 No-Go → 运行链根因对照封存 → 官方 Pro 完整合同与精简合同＋状态投影开发配对技术 No-Go”。Production 继续保持 `legacy + baseline`。
+依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → GI-084～087 失败、校准与筛选 → GI-088 v1～v8r2 历史迭代 → v8r3 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链和工作台 → Golden 32＋8 → v8r3r2 EMPTY 双恢复与 4＋2 内容通过、等待失败 → v8r3r3 30/60 秒恢复正式可靠性 No-Go → 运行链根因对照封存 → 官方 Pro 双合同开发配对技术 No-Go → 来源责任重划零模型候选 `15/15` 闭环 → 速度继续 No-Go”。Production 继续保持 `legacy + baseline`。
 
 ## 5. 板块任务书
 
@@ -1113,7 +1113,7 @@ GI-084 将正式能力资产收口为 Base Prompt v0、Interview Skill v0、最�
 
 **当前完成状态**
 
-GI-067 七个批次、GI-074 下游交接和 GI-075～080 六类交互合同已经冻结。v8r3r2 已完成 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、工作台、EMPTY 双恢复与 4＋2 内容验收；等待体验未达发布线。v8r3r3 的 30/60 秒竞速工程与真实库事务通过，正式离线可靠性门失败。后续运行链根因对照已确认官方 Pro 的模型档位稳定性为主因，完整状态输出职责为重要放大因素。官方 Pro 双合同开发配对实际调用 `126` 次，完整组 `53/64`、精简组 `38/64`，两组有效率和延迟门失败，判定技术 No-Go；投影歧义、状态不变量失败、重复提交和状态污染均为 `0`。板块 8 暂停接收新候选。
+GI-067 七个批次、GI-074 下游交接和 GI-075～080 六类交互合同已经冻结。v8r3r2 已完成 Interview Skill、Ark Flash、Foundation、【帮我记】兼容链、工作台、EMPTY 双恢复与 4＋2 内容验收；等待体验未达发布线。v8r3r3 的 30/60 秒竞速工程与真实库事务通过，正式离线可靠性门失败。后续运行链根因对照已确认官方 Pro 的模型档位稳定性为主因，完整状态输出职责为重要放大因素。官方 Pro 双合同开发配对实际调用 `126` 次，完整组 `53/64`、精简组原始 `38/64`。来源责任重划零模型候选复用其中 `15` 份结果并以 `15/15` 闭环，精简组反事实有效达到 `53/64`；投影歧义、状态不变量失败、重复提交和状态污染均为 `0`，原延迟门继续失败。板块 8 暂停接收新候选。
 
 **为什么进入开发前统一设计**
 
@@ -2975,6 +2975,7 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 
 | 日期 | 变化 | 影响 |
 |---|---|---|
+| `2026-08-13` | 产品负责人选择来源责任重划为单一主要因素；候选 `2026-08-13.gi088-compact-source-responsibility-v1` 复用父级精简组 `15` 份既有提案完成零模型回放 | 正向 `15/15`、反例全拦截、状态四项错误 `0`，精简组反事实有效达到 `53/64`；原延迟门继续失败。Provider、重试、恢复、Judge、隐藏集读取均为 `0`；板块 7 继续开放，板块 8 暂停，Production 保持 `legacy + baseline` |
 | `2026-08-11` | Ark 账户恢复后建立 v8r3r1 不可变正式评测；`96/96` 检查点形成可见结果 | 首次有效 `95/96`、自动恢复 `1` 次且成功、p50 `7.484s`、p90 `27.263s`、最大 `43.416s`，可靠性与延迟通过；`80` 份质量结果待人工裁决，两轮 Golden、Judge、Preview 与 `0/6` 均为 `0`；Production 保持 `legacy + baseline` |
 | `2026-08-11` | v8r3 完成 Interview Skill、Ark Flash、Foundation、问题价值复核、`4＋2`、【帮我记】兼容链、工作台和离线评测器；两轮正式离线候选完成 | 首轮 `98` 次调用暴露结构与校验缺口；修复后的第二轮 `96/96` 请求被 Ark `ACCOUNTOVERDUEERROR` 在生成前拒绝；累计 `194` 次，历史 No-Go；Judge、Preview deployment 与新 `0/6` 均为 `0` |
 | `2026-08-10` | v8r2 P0／P1、最终初始化幂等、全绿静态门、不可变版本、真实评测库和 Preview 运行时回读全部完成 | 行为 commit `e01c9ed5…e04d`、Execution fingerprint `55c0c9b0…34b34e` 与当前 deployment `dpl_CGXsLzU5ZaTX8PYFkt2hUzBwgskz` 形成正式证据；Vercel Linux 远程构建两套 Prisma Client，虚构账号登录返回 `401 INVALID_CREDENTIALS`，error logs 为 `0`；全新 run `e1dccbfd-d808-4706-8ddf-be5e254f4d2d` 为 `running / 0 of 12 / gate=pending / high_only / high / calls=0`，当前等待十二条真人轨迹；Production 保持 `legacy + baseline` |

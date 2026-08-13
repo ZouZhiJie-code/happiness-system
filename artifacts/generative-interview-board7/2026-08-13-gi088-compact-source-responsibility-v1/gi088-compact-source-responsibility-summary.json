@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "candidateVersion": "2026-08-13.gi088-compact-source-responsibility-v1",
+  "candidateFingerprint": "5367fea1e820951e402b7cd92c6f88cecd534af629493f523708cdf0823a69d8",
+  "policyFingerprint": "03b72dfbcf81c299f2047d6d07394d2576a26f78fff01666b5fac5c64ec506a9",
+  "reportFingerprint": "0241b07f661e3d7ed608b2588263371d0461197c63164ea4d4f5b722221770b5",
+  "privateReportSha256": "7a53fabaa6728d2317a052fbdb1b9b04837663b1ac559a9cd5d811369065162d",
+  "parent": {
+    "experimentVersion": "2026-08-12.gi088-pro-contract-projection-paired-v1",
+    "reportSha256": "99348b9a7e5402bb0e960db5d79d3e4ae5ab3bc19bda94e5e6c2e4ce9624597d",
+    "reportFingerprint": "eff57f9766a74562d47321d52f1ea99fe3b19fdfc0dc02e863f2fc267d3d7d0d",
+    "caseSetCommitment": "3c3a4ff55734cd99663adb9a38cc318238ae220cb1c6b5ce157f04382d44c613"
+  },
+  "replayRecordSetFingerprint": "69a1e07b50f4e034cc5a6683604b8d2bea0033a284b0fceb471592740311ac61",
+  "budget": {
+    "providerCalls": 0,
+    "retries": 0,
+    "recoveries": 0,
+    "judgeCalls": 0,
+    "hiddenDatasetReads": 0
+  },
+  "summary": {
+    "selectedCount": 15,
+    "passedCount": 15,
+    "failedCount": 0,
+    "parentCompactValidCount": 38,
+    "counterfactualCompactValidCount": 53,
+    "counterfactualCompactResultCount": 64,
+    "blockedPendingAuthorizationCount": 2,
+    "blockedPendingAuthorizationKeys": [
+      "GI088-V8R3-D27:checkpoint-1:attempt-2",
+      "GI088-V8R3-D28:checkpoint-1:attempt-1"
+    ],
+    "projectionAmbiguityCount": 0,
+    "stateInvariantFailureCount": 0,
+    "duplicateCommitCount": 0,
+    "statePollutionCount": 0,
+    "inheritedLatencyP50Ms": 32085,
+    "inheritedLatencyP90Ms": 54127,
+    "inheritedLatencyMaximumMs": 60003,
+    "latencyGatePassed": false
+  },
+  "decision": {
+    "status": "source_responsibility_closed_latency_no_go",
+    "board7": "open",
+    "board8": "paused",
+    "production": "legacy_baseline_unchanged",
+    "stopReason": "zero_model_source_gate_complete"
+  },
+  "runtimeFingerprintsUnchanged": true,
+  "privacy": {
+    "userMessageContent": "excluded",
+    "modelOutputBody": "excluded",
+    "hiddenReasoningBody": "excluded",
+    "apiKey": "excluded",
+    "upstreamRequestIdRaw": "excluded"
+  },
+  "summaryFingerprint": "8b82e21d5900c1f1609632321d6a0681930ac79f7d14a471fdcc8b318633d59e"
+}

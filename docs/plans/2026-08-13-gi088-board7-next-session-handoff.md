@@ -2,19 +2,39 @@
 
 最后更新：`2026-08-13`
 
-状态：`生效中｜官方 Pro 双合同开发配对技术 No-Go 已封存，等待下一单一主要因素决策`
+状态：`生效中｜来源责任重划零模型候选已封存，来源闭环、速度 No-Go`
 
 适用对象：`产品负责人、下一会话 Codex、后续板块 7 实施协作者`
 
-工作分支：`codex/gi088-v8r3r3-adaptive-recovery-30-60`
+工作分支：`codex/gi088-compact-source-responsibility-v1`
 
-运行时冻结提交：`71a6e0a7544a4d66770f6d8c330410a0a6940d6f`
+候选基线提交：`82807b31a4548aa3c080a3444e770dd9d649e5db`
 
 隔离工作树：`/private/tmp/gi088-v8r3-existing-20260811`
 
+## 0. 2026-08-13 执行结果
+
+产品负责人已把“来源责任重划”选为本轮唯一主要因素。候选 `2026-08-13.gi088-compact-source-responsibility-v1` 复用父级 `15` 份既有模型提案完成零模型回放，结果如下：
+
+- 来源正向门 `15/15`，反例全部被拦截；
+- 精简组反事实有效从 `38/64` 更新为 `53/64`；
+- 投影歧义、状态不变量失败、重复提交和状态污染均为 `0`；
+- 沿用父级延迟后 P50 `32.085s`、P90 `54.127s`、最长 `60.003s`，速度门继续失败；
+- Provider、重试、恢复、Judge、隐藏集读取、Preview 与 Production 变更均为 `0`；
+- D27、D28 两个被阻断检查点继续等待新版本、两次固定预算和独立模型调用授权。
+
+当前裁决为“来源责任闭环、板块 7 继续开放、板块 8 暂停”。下一单一主要因素建议讨论 Pro 等待优化。证据入口：[来源责任重划零模型候选](../../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)。
+
+分层结论：
+
+- 已确认事实：父级提案、输入状态、输出状态和原延迟保持一致；来源规则与反例门全部通过。
+- 产品判断：来源责任因素完成，后续模型调用和真人阶段继续等待单独授权。
+- Codex 评估：这组证据关闭了 `15` 份机械来源责任失败；架构胜出仍等待速度门、D27／D28 与后续质量证据。
+- 待验证假设：调整 Pro 的单一等待因素可以改善速度，同时保持语义质量与结构可靠性。
+
 ## 1. 新会话先记住这一句话
 
-板块 7 仍在解决“怎样让【陪我聊】稳定、及时地产生有价值回应”。最新双合同开发配对证明状态投影程序可靠，同时暴露模型语义合规和等待时间仍未达门；下一会话先完成失败归因，再只选择一个主要因素建立新候选。
+板块 7 已经关闭精简组最大单因“机械来源责任”，当前主要阻断转为等待体验；下一会话只讨论一个新的主要因素，优先评估 Pro 等待优化，并保持模型调用、真人审阅和隐藏准入关闭。
 
 ## 2. 当前处在哪一步
 
@@ -23,15 +43,16 @@ flowchart LR
     A["板块 5<br/>产品规则已冻结"] --> B["板块 6<br/>评测输入已形成"]
     B --> C["板块 7<br/>候选实现与验证"]
     C --> D["双合同开发配对<br/>技术 No-Go"]
-    D --> E["当前讨论<br/>选择下一单一主要因素"]
-    E --> F["新候选开发门"]
-    F --> G["人工质量与隐藏准入"]
+    D --> E["来源责任零模型回放<br/>15/15 闭环"]
+    E --> F["当前停止点<br/>速度 No-Go"]
+    F --> X["下一单一因素候选<br/>待产品确认"]
+    X --> G["人工质量与隐藏准入"]
     G --> H["板块 8<br/>私有 Preview 与真人验收"]
 ```
 
 - 板块 5：`GI-075～080` 六类规则已冻结。
 - 板块 6：Golden `32＋8`、开发集、隐藏准入和人工判尺已经形成；Judge `20＋20` 保持后置。
-- 板块 7：最新双合同开发配对触发技术 No-Go，当前没有架构胜出组。
+- 板块 7：来源责任重划已经闭环；速度门继续失败，架构胜出仍待验证。
 - 板块 8：暂停，等待新的板块 7 候选通过完整准入。
 - Production：继续使用 `legacy + baseline`。
 
@@ -107,7 +128,7 @@ flowchart LR
 ### 5.2 当前证据保持开放的结论
 
 - 完整合同与精简合同的产品质量没有完成对比，因为技术门前已停止。
-- 精简架构的职责边界仍可继续设计；当前精简合同本身未达到可用线。
+- 精简架构的机械来源职责已经闭环；完整产品质量和架构胜出继续开放。
 - 官方 Pro 的等待问题需要单独处理；当前证据无法证明合同调整足以达到 `20s / 40s / 60s`。
 - 板块 7 尚未获得关闭条件，板块 8 尚未获得新候选。
 
@@ -130,40 +151,20 @@ flowchart LR
 
 其中两条 `BLOCKED_BY_PRIOR_FAILURE` 来自精简组轨迹第一 checkpoint 的来源引用缺失，第二 checkpoint 按协议未调用 Provider。五份 Token usage 缺失全部对应 `60.003s` 硬截止，实际计费 Token 保持未知。
 
-## 7. 下一会话先讨论什么
+## 7. 来源责任归因已完成，下一会话只讨论速度因素
 
-### 第一步：零模型复核 37 个失败结果
+父级 `37` 个失败中的最大单因已经完成实证归因：精简组 `15` 次 `REQUIRED_EVIDENCE_MISSING` 属于机械来源责任重复提交。新规则只继承同一记录、有效任务中已经保存的来源；新增、修订、撤回认识，以及新追问、替换和返回目标继续要求模型选择本轮语义依据。正反验证均通过，归因关闭。
 
-先读取公开开发集和 `0600` 私有报告，对每次失败回答四个问题：
+仍开放的失败包括动作与价值门、理解回应／认识变化要求、超时、空内容，以及 D27、D28 两个受前序失败阻断的检查点。它们继续保留父级原始错误身份和归因。
 
-1. 模型理解错了用户当前共同任务，还是输出格式未满足合同？
-2. `ACTION_NOT_ALLOWED` 对应真实产品质量问题，还是评测允许动作过窄？
-3. `REQUIRED_EVIDENCE_MISSING` 中哪些来源可由程序唯一确定，哪些确实需要模型选择？
-4. 完整组的“理解回应／认识变化必填”是否符合当前产品规则，还是合同把表达形式变成了技术硬门？
+下一会话的推荐单一主要因素为“Pro 等待优化”：保持产品规则、来源策略、合同、Skill、数据集和状态投影不变，只选择一个运行等待因素，验证速度与语义质量、结构可靠性的取舍。形成执行候选前需要先确定：
 
-这一步只做归因，不修改 Prompt、Skill、合同、数据集或 Gate，也不调用模型。
+1. 唯一调整的等待因素及其用户体验目标；
+2. 新版本、指纹、固定调用预算和停止点；
+3. D27、D28 是否纳入同一预算，或继续作为独立两次调用；
+4. 速度改善后仍需保持的技术有效、结构错误和质量门。
 
-私有报告位置：
-
-`artifacts/local-runtime/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-ab/development-private-report.json`
-
-私有报告 SHA-256：
-
-`99348b9a7e5402bb0e960db5d79d3e4ae5ab3bc19bda94e5e6c2e4ce9624597d`
-
-### 第二步：只选择一个主要因素
-
-以下均为讨论候选，尚未冻结：
-
-| 讨论候选 | 解决的问题 | 核心风险 |
-|---|---|---|
-| 来源责任重新划分 | 程序自动附加能够唯一确定的当前用户消息来源；模型只选择修订、返回等真正需要语义判断的目标引用 | 自动附加范围过宽会把模型判断错误包装成合法状态 |
-| 动作与价值门对齐 | 复核 `ask / synthesize / acknowledge` 的允许范围，让低问题价值时的总结与承接得到一致判尺 | 放宽过度会隐藏真实的任务漂移或停止错误 |
-| Pro 等待优化 | 保持产品与合同不变，只调整一个运行因素验证速度与质量取舍 | 速度提升可能伴随语义质量或结构可靠性下降 |
-
-当前推荐先讨论“来源责任重新划分”。原因是精简组 `15` 次来源引用缺失是最大单因，程序投影链本身保持稳定，而且这项问题直接对应已经确认的第一性职责边界：程序接管可以唯一计算的机械工作，模型保留真正需要语义选择的引用。
-
-推荐只在 37 个失败逐项复核完成后冻结该方向，避免把真实语义遗漏误归为机械字段负担。
+动作与价值门对齐继续作为后续讨论候选，等待 Pro 速度因素得到独立结论后再考虑。
 
 ## 8. 新候选形成前的固定边界
 
@@ -181,8 +182,8 @@ flowchart LR
 
 当前分支和运行时冻结提交：
 
-- 分支：`codex/gi088-v8r3r3-adaptive-recovery-30-60`
-- 提交：`71a6e0a7544a4d66770f6d8c330410a0a6940d6f`
+- 分支：`codex/gi088-compact-source-responsibility-v1`
+- 候选基线提交：`82807b31a4548aa3c080a3444e770dd9d649e5db`
 
 关键实现：
 
@@ -193,6 +194,10 @@ flowchart LR
 - 执行入口：`scripts/run-gi088-pro-contract-projection-ab.ts`
 - 零模型专项：`tests/evals/gi088-pro-contract-projection-ab.test.ts`
 - 状态矩阵：`tests/unit/gi088-canonical-interview-state-v2.test.ts`
+- 来源责任规则：`evals/event-centered-generative/gi088-compact-source-responsibility-v1/source-responsibility.ts`
+- 来源责任回放：`evals/event-centered-generative/gi088-compact-source-responsibility-v1/replay.ts`
+- 来源责任执行入口：`scripts/run-gi088-compact-source-responsibility-v1.ts`
+- 来源责任专项：`tests/evals/gi088-compact-source-responsibility-v1.test.ts`
 
 运行时五层指纹在诊断前后保持不变：
 
@@ -211,8 +216,9 @@ flowchart LR
 5. [本文](./2026-08-13-gi088-board7-next-session-handoff.md)
 6. [板块 7 当前专项](../technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)
 7. [双合同配对技术 No-Go](../../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
-8. [机器可读公开摘要](../../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/gi088-pro-contract-projection-paired-summary.json)
-9. 需要逐项归因时，再读取本机 `0600` 私有报告。
+8. [来源责任重划零模型候选](../../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)
+9. [来源责任机器可读公开摘要](../../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/gi088-compact-source-responsibility-summary.json)
+10. 需要复核来源回执时，再读取本机 `0600` 私有报告。
 
 ## 11. 可直接复制到新会话的开场提示
 
@@ -224,19 +230,19 @@ flowchart LR
 4. docs/technical/interview-event-centered/00-generative-interview-ai-product-working-method.md
 5. docs/plans/2026-08-13-gi088-board7-next-session-handoff.md
 6. docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md
-7. artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md
+7. artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md
 
-当前任务是继续讨论 GI-088 板块 7。先用产品语言复述：当前双合同技术 No-Go 说明了什么、还不能说明什么、板块 7 距离交接板块 8 还差什么。然后只讨论一个问题：37 个失败应怎样归因，以及下一候选应选择哪一个主要因素。
+当前任务是继续讨论 GI-088 板块 7。先用产品语言复述：来源责任重划已经证明什么、速度 No-Go 还阻断什么、板块 7 距离交接板块 8 还差什么。然后只讨论一个问题：Pro 等待优化应选择哪一个单一运行因素，以及怎样设置最小验证门和停止点。
 
-先进行只读分析，不修改代码、不调用模型、不读取隐藏集、不运行 Judge、不部署 Preview、不改变 Production。把已冻结事实、产品判断、Codex 建议和待验证假设分开表达。Production 继续保持 legacy + baseline。
+先进行只读分析，模型调用、隐藏集、Judge、Preview 与 Production 变更保持关闭。把已冻结事实、产品判断、Codex 建议和待验证假设分开表达。D27、D28 继续等待新版本、固定两次预算和单独授权。Production 继续保持 legacy + baseline。
 ```
 
 ## 12. 本交接的停止点
 
 下一会话完成以下输出后暂停，由产品负责人决定是否写实施计划：
 
-1. 37 个失败的产品化根因分类；
-2. 当前合同与程序责任边界的复核；
-3. 一个主要因素的推荐方案、预期收益、风险和最小样本设计；
-4. 明确哪些旧证据可以复用，哪些必须重新运行；
+1. Pro 等待问题的用户体验目标与当前证据边界；
+2. 一个运行因素的推荐方案、预期收益、风险和最小样本设计；
+3. 明确哪些旧延迟与质量证据可以复用，哪些必须重新运行；
+4. D27、D28 的归属与两次固定预算安排；
 5. 新模型调用、隐藏准入、Preview 和 Production 的继续边界。

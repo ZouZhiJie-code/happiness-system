@@ -6,16 +6,17 @@
 
 ## 1. 当前状态
 
-### GI-088 板块 7 当前快照（2026-08-12）
+### GI-088 板块 7 当前快照（2026-08-13）
 
 - 官方 DeepSeek Pro 完整合同与可执行精简合同＋确定性状态投影的开发配对已封存为技术 No-Go；两组统一使用任务归属状态 v2、相同 Skill、数据、输入、Thinking high、JSON 和 `60s` 配置。
 - v8r3r2 的内容质量与兼容性继续只读有效；4 条【陪我聊】和 2 条【帮我记】通过，但 P90 `64.7s`、最长 `70.1s` 的等待体验未达到发布线。
 - v8r3r3 正式运行 `50/96` 的 No-Go 与随后 A～E 根因对照均已封存；根因对照入口为[模型运行链与输出合同根因对照](../artifacts/generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)。
 - 实际调用 `126` 次：完整组技术有效 `53/64`、精简组 `38/64`，两组有效率与延迟门均失败；状态投影四项错误为 `0`。人工裁决源未生成，隐藏集未读取，Judge、Preview 和 Production 变更均为 `0`。Production 继续 `legacy + baseline`。
+- 产品负责人选择来源责任重划为下一单一主要因素后，零模型候选复用精简组 `15` 份既有提案完成回放：`15/15` 通过，反例全部拦截，状态四项错误继续为 `0`，精简组反事实有效达到 `53/64`。沿用父级延迟后 P50 `32.085s`、P90 `54.127s`、最长 `60.003s`，速度继续 No-Go；Provider、重试、恢复、Judge 和隐藏集读取均为 `0`。
 
 - `GI-068～080` 保持关闭；
 - 生成式访谈工作方法 `v1.0` 已冻结；
-- 板块 6 当前输入已齐；板块 7 等待下一单一主要因素决策；板块 8 暂停；
+- 板块 6 当前输入已齐；板块 7 已关闭来源责任因素并暂停在速度 No-Go，下一单一主要因素建议讨论 Pro 等待优化；板块 8 暂停；
 - `GI-081` 六题真实输出与盲评已经完成，当前作为临时 Prompt 诊断基线；
 - `GI-083` v0/v1 保留一次调用透明诊断历史；产品负责人轨迹调用 `0`，v1.1 工程合成自测 `5/5` 次请求通过；
 - `GI-084` v0.1～v0.3 三轮回归均为 No-Go，v0.4 在运行前关闭；
@@ -38,7 +39,7 @@
 - v8r3 前两轮与旧 79.17% 可靠性 No-Go 继续保存为历史证据；v8r3r2 EMPTY 双恢复诊断最终可见完成率 `100%`、恢复结果人工裁决 `10/10` 可直接用，真人 `4＋2` 内容与兼容性通过，但等待体验未达到发布线；
 - Flash / Pro 已完成 3 组、6 次同请求对照：Flash `2/3` 可见有效、`1/3` 空正文；Pro `3/3` 返回可解析可见 JSON。火山 Ark Flash 同三例获得 `3/3` 可见正文、平均等待约 10.9 秒；这些结果作为 v7r2 与 v7r4 的模型平台归因证据保留；
 - v8r3r3 自适应并行恢复正式运行最终可见 `50/96`、最终保护 `46`，判定 `No-Go`；
-- 板块 7 已封存完整合同与精简合同＋状态投影配对技术 No-Go，板块 8 暂停；
+- 板块 7 已封存来源责任重划零模型候选，当前结论为“来源责任闭环、速度 No-Go”，板块 8 暂停；
 - Production 保持 `legacy + baseline`。
 
 ## 2. 新会话阅读顺序
@@ -50,7 +51,7 @@
 5. [板块 7 新会话交接](./plans/2026-08-13-gi088-board7-next-session-handoff.md)
 6. [板块 7 当前专项｜模型主导语义判断的候选实现与验证](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)
 7. [板块 6 评测输入｜生成式访谈质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
-8. [当前停止点｜官方 Pro 双合同配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
+8. [当前停止点｜来源责任重划零模型候选](../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)
 9. [评测资产总入口](../artifacts/README.md)
 
 ## 3. 按任务找文件
@@ -65,7 +66,8 @@
 ### 当前评测与真人裁决
 
 - 板块 6 人工校准：[首批 8 张卡入口](../artifacts/generative-interview-board6/2026-08-06/README.md)
-- GI-088 当前封存证据入口：[官方 Pro 双合同与状态投影配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
+- GI-088 当前封存证据入口：[来源责任重划零模型候选](../artifacts/generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)
+- GI-088 父级双合同证据：[官方 Pro 双合同与状态投影配对技术 No-Go](../artifacts/generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - GI-088 v8r3r1 历史证据：[账户恢复后运行门记录](../artifacts/generative-interview-board7/2026-08-11-gi088-v8r3r1-account-restored/README.md)
 - GI-088 v8r3 历史证据：[Interview Skill、Ark Flash 与两轮离线 No-Go](../artifacts/generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
 - GI-088 v8r2 历史底座与行政收口：[v8r2 评测底座加固证据](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)

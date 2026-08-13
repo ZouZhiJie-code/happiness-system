@@ -1,18 +1,19 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-13`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 官方 Pro 完整合同与精简合同＋状态投影配对开发验证已封存为技术 No-Go。实际调用 126 次，完整组有效 53/64、精简组 38/64，两组有效率与延迟门均失败；人工裁决源未生成，隐藏集未读取。Preview／Production 保持关闭，Production 继续 legacy + baseline。`
+当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 来源责任重划零模型候选已封存。复用父级精简组 15 份既有提案并以 15/15 通过，反例全拦截，状态四项错误为 0，精简组反事实有效达到 53/64；原延迟门继续失败。新模型、Judge 和隐藏调用均为 0，Preview／Production 保持关闭，Production 继续 legacy + baseline。`
 
-## GI-088 当前证据入口（2026-08-12）
+## GI-088 当前证据入口（2026-08-13）
 
+- [来源责任重划零模型候选：来源闭环、速度 No-Go](./generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)
 - [官方 Pro 完整合同与精简合同＋状态投影配对技术 No-Go](./generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - [模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
 - [v8r3r2 双恢复与板块 7 正式封存](./generative-interview-board7/2026-08-12-gi088-v8r3r2-empty-content-recovery-2/README.md)
 - [Golden 32＋8 独立替换裁决](./generative-interview-board7/2026-08-12-gi088-human-eval-v8r3-golden-eight-preview/gi088-v8r3-golden-eight-replacement-evidence.json)
 - [v8r3 Interview Skill、Ark Flash 与历史离线 No-Go](./generative-interview-board7/2026-08-11-gi088-human-eval-v8r3-skill-ark-flash/README.md)
-- v8r3r2 deployment／run 继续作为上一候选的只读证据；v8r3r3 与本次双合同配对均未创建 deployment 或 run。
+- v8r3r2 deployment／run 继续作为上一候选的只读证据；v8r3r3、双合同配对与来源责任零模型候选均未创建 deployment 或 run。
 
 ## 1. 为什么需要这份规则
 
@@ -37,6 +38,7 @@
 
 当前入口：
 
+- [GI-088 来源责任重划零模型候选：来源闭环、速度 No-Go](./generative-interview-board7/2026-08-13-gi088-compact-source-responsibility-v1/README.md)
 - [GI-088 官方 Pro 双合同与状态投影配对技术 No-Go](./generative-interview-board7/2026-08-12-gi088-pro-contract-projection-paired-v1/README.md)
 - [GI-088 模型运行链与输出合同根因对照](./generative-interview-board7/2026-08-12-gi088-runtime-contract-root-cause-diagnostic-v1/README.md)
 - [GI-088 v8r3r3 30/60 秒自适应恢复 No-Go](./generative-interview-board7/2026-08-12-gi088-v8r3r3-adaptive-recovery-30-60/README.md)
