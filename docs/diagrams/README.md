@@ -1,17 +1,22 @@
 # 访谈功能图谱
 
-最后更新：`2026-07-20`
+最后更新：`2026-07-21`
 
 这组图面向产品讨论。阅读顺序先看静态能力，再看动态时序，随后按具体节点下钻。
+
+跨会话讨论访谈优化时，先阅读[访谈产品优化地图](../interview-product-optimization-map.md)。它按用户结果划分五个核心模块，并标明模块依赖、衡量边界和当前讨论位置。
 
 ## 1. 总览
 
 | 图 | 回答的问题 | 文件 |
 |---|---|---|
+| 访谈产品优化地图 | 后续产品优化按哪些模块推进，模块之间怎样相互影响 | [PNG](./interview-product-optimization-map.png) · [Draw.io](./interview-product-optimization-map.drawio) |
 | 访谈功能架构图 | 当前访谈功能由哪些能力域组成 | [PNG](./interview-function-architecture.png) · [Draw.io](./interview-function-architecture.drawio) |
 | 访谈主链时序图 | 用户进入、回复、恢复、生成日志和保存时，各模块如何协作 | [PNG](./interview-feature-sequence.png) · [Draw.io](./interview-feature-sequence.drawio) |
 
 功能架构图只表达“有什么能力以及归属关系”。主链时序图只表达“这些角色按什么顺序协作”。
+
+正式追问的按意图重新生成已进入主链：目标消息通过检查点恢复可替代路径，活动分支决定后续访谈、日志和日历读取的内容。交互、版本与发布事实见 [按意图重新生成](../interview-response-regeneration.md)。
 
 本轮更新的主图同时保留了可直接导回 Draw.io 的内嵌源数据 PNG：
 
@@ -24,7 +29,7 @@
 
 | 主题 | 产品关注点 | 文件 |
 |---|---|---|
-| 意图识别 | 系统如何区分正常内容、边界、整理日志、问题修复等表达 | [PNG](./interview-intent-recognition-functional-architecture.png) · [Draw.io](./interview-intent-recognition-functional-architecture.drawio) |
+| 意图识别 | 系统如何区分正常内容、边界、整理日志、问题修复等表达，并通过 `legacy / shadow / enforce` 逐步启用 | [PNG](./interview-intent-recognition-functional-architecture.png) · [Draw.io](./interview-intent-recognition-functional-architecture.drawio) |
 | 槽位提取 | 用户原话怎样形成五维结构化事件档案 | [PNG](./interview-slot-extraction-functional-architecture.png) · [Draw.io](./interview-slot-extraction-functional-architecture.drawio) |
 | 证据校验与状态合并 | 候选槽位怎样经过确认、否认和状态合并 | [PNG](./interview-evidence-validation-state-merge.png) · [Draw.io](./interview-evidence-validation-state-merge.drawio) |
 | 动作决策 | 系统怎样决定继续追问、收束、转维度或提供选择 | [PNG](./interview-action-decision-architecture.png) · [Draw.io](./interview-action-decision-architecture.drawio) |

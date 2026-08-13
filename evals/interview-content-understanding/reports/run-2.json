@@ -1,0 +1,12 @@
+{
+  "run": 2,
+  "generatedAt": "2026-07-21T11:25:44.382Z",
+  "success": true,
+  "testFiles": 4,
+  "passedTestFiles": 4,
+  "failedTestFiles": 0,
+  "checks": 285,
+  "passedChecks": 285,
+  "failedChecks": 0,
+  "failedTests": []
+}

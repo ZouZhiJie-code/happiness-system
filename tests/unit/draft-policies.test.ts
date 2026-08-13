@@ -8,6 +8,7 @@ import {
   createFallbackDraft,
   runDraftQualityGate
 } from "@/features/interview/server/draft-policies";
+import { createEmptyTrustedUnderstandingState } from "@/features/interview/content-understanding";
 import type { InterviewEventRecord, InterviewSessionRecord, JoyEventBlock, JoySnapshot } from "@/types/interview";
 
 const partialJoySnapshot: JoySnapshot = {
@@ -489,6 +490,25 @@ describe("draft policies", () => {
     expect(title).not.toBe("象征意义");
   });
 
+  it("turns expression-themed joy into a natural diary title", () => {
+    const title = buildSemanticJournalTitle({
+      dimension: "joy",
+      snapshot: {
+        ...partialJoySnapshot,
+        event: "晚上写产品想法时，原本卡住的那一段突然写顺了",
+        joyMoment: "晚上写产品想法时，原本卡住的那一段突然写顺了",
+        whyItMattered: "脑子里的想法终于能清楚地表达出来",
+        joySource: "把想法写顺之后整个人都亮了起来",
+        feeling: "轻快",
+        stateShift: "从卡住变得轻快"
+      },
+      aiTitle: "表达被点亮"
+    });
+
+    expect(title).toBe("把想法写顺");
+    expect(title).not.toBe("表达被点亮");
+  });
+
   it("governs improvement titles with semantic candidates instead of event truncation or generic labels", () => {
     const meetingTitle = buildSemanticJournalTitle({
       dimension: "improvement",
@@ -609,6 +629,89 @@ describe("draft policies", () => {
     expect(profile.closingMode).toBe("stable_clue");
     expect(profile.toneBanSet).toContain("周报腔");
     expect(profile.toneBanSet).toContain("绩效总结");
+  });
+
+  it("builds journal material from active confirmed understanding after a conflict", () => {
+    const staleSnapshot: JoySnapshot = {
+      ...partialJoySnapshot,
+      joySource: "也许是因为被需要",
+      whyItMattered: "也许是因为被需要",
+      manualClue: "已经撤回的稳定规律",
+      selfPattern: "已经撤回的稳定规律"
+    };
+    const state = createEmptyTrustedUnderstandingState({
+      eventId: "event-1",
+      dimension: "joy"
+    });
+    state.appliedTurnIds = ["turn-1", "turn-2"];
+    state.materials = [
+      {
+        id: "turn-1:0",
+        kind: "reason",
+        text: "重新回到被陪伴接住的轻松里",
+        evidenceText: "重新回到被陪伴接住的轻松里",
+        evidenceStart: 0,
+        evidenceEnd: 14,
+        fields: ["joySource"],
+        status: "explicit_confirmed",
+        eventRelation: "current_detail",
+        relationship: null,
+        candidateDimension: null,
+        sourceTurnId: "turn-1",
+        sourceMessageSequence: 2,
+        supersedes: [],
+        relatedMaterialIds: [],
+        updatedByTurnId: "turn-1"
+      },
+      {
+        id: "turn-2:0",
+        kind: "reason",
+        text: "也许是因为被需要",
+        evidenceText: "也许是因为被需要",
+        evidenceStart: 0,
+        evidenceEnd: 9,
+        fields: ["joySource"],
+        status: "pending_inference",
+        eventRelation: "current_detail",
+        relationship: null,
+        candidateDimension: null,
+        sourceTurnId: "turn-2",
+        sourceMessageSequence: 4,
+        supersedes: [],
+        relatedMaterialIds: ["turn-1:0"],
+        updatedByTurnId: "turn-2"
+      },
+      {
+        id: "turn-0:0",
+        kind: "judgment",
+        text: "已经撤回的稳定规律",
+        evidenceText: "已经撤回的稳定规律",
+        evidenceStart: 0,
+        evidenceEnd: 10,
+        fields: ["manualClue"],
+        status: "retracted",
+        eventRelation: "current_detail",
+        relationship: null,
+        candidateDimension: null,
+        sourceTurnId: "turn-0",
+        sourceMessageSequence: 1,
+        supersedes: [],
+        relatedMaterialIds: [],
+        updatedByTurnId: "turn-2"
+      }
+    ];
+    const event = {
+      ...buildEvent(staleSnapshot),
+      understandingData: state
+    };
+    const brief = buildDraftBrief({
+      session: buildSession(staleSnapshot),
+      sourceEvents: [event]
+    });
+
+    expect(brief.emotionalCore).toBe("重新回到被陪伴接住的轻松里");
+    expect(brief.emotionalCore).not.toContain("被需要");
+    expect(brief.closingInsight).toBeNull();
   });
 
   it("rewrites awkward fulfillment closure titles into natural Chinese", () => {

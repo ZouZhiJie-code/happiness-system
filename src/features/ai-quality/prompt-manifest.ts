@@ -4,6 +4,7 @@ import type { AIChatMessage } from "@/server/services/ai/ai-provider";
 import type { InterviewDimension } from "@/types/interview";
 
 export const PROMPT_MANIFEST_VERSION = "2026-07-19.1";
+export const INTERVIEW_INTENT_EXTRACT_PROMPT_VERSION = "2026-07-21.trusted-understanding-v1";
 
 export type PromptEnvelope = {
   promptKey: string;

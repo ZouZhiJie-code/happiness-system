@@ -62,6 +62,7 @@ function createEnvelope(overrides: Partial<AskIntentEnvelope>): AskIntentEnvelop
   return {
     intent: "point_out_key_part",
     sourceTarget: "judgment_clue",
+    gratitudeSubTarget: null,
     dimension: "joy",
     anchorText: "收到扎根工程的赠礼",
     cognitiveLoad: "medium",

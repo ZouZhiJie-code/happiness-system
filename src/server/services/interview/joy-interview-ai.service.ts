@@ -1,14 +1,28 @@
 import type { AIRequestStage } from "@prisma/client";
+import type { ZodSchema } from "zod";
 
 import {
   createPromptEnvelope,
   getInterviewPromptKey,
+  INTERVIEW_INTENT_EXTRACT_PROMPT_VERSION,
   type PromptEnvelope
 } from "@/features/ai-quality/prompt-manifest";
+import {
+  mergeIntentAssessments,
+  type IntentAssessmentV1
+} from "@/features/interview/intent/intent-v1";
+import {
+  buildEffectiveUnderstandingView,
+  filterExtractedEvidenceByUnderstanding,
+  getContentUnderstandingMode,
+  parseTrustedUnderstandingState,
+  type ContentUnderstandingCandidate
+} from "@/features/interview/content-understanding";
 import {
   buildDraftBrief,
   buildDraftWritingProfile,
   createFallbackDraft,
+  projectDraftSourceEventsFromUnderstanding,
   runDraftQualityGate
 } from "@/features/interview/server/draft-policies";
 import { buildSemanticJournalTitle } from "@/features/interview/journal-title";
@@ -33,12 +47,14 @@ import {
   getStateShift,
   getValueImpact,
   isUsableJoyDelightSignature,
+  buildJoySnapshot,
   mergeJoySignals,
   type JoySignalFields
 } from "@/features/joy-interview/server/joy-interview-engine";
 import { assistantTurnPayloadSchema } from "@/features/joy-interview/schema/joy-interview.schema";
 import {
   fulfillmentExtractResultSchema,
+  createIntentAwareExtractResultSchema,
   gratitudeExtractResultSchema,
   improvementExtractResultSchema,
   joyDraftResultSchema,
@@ -78,6 +94,8 @@ import type {
 const ASSISTANT_SUMMARY_MARKER = "<<SUMMARY>>";
 const ASSISTANT_LEGACY_INSIGHT_MARKER = "<<INSIGHT>>";
 const ASSISTANT_QUESTION_MARKER = "<<QUESTION>>";
+const INTERVIEW_EXTRACT_TIMEOUT_MS = 12_000;
+const INTERVIEW_QUESTION_TIMEOUT_MS = 8_000;
 const assistantMarkers = [
   { marker: ASSISTANT_SUMMARY_MARKER, target: "summary" as const },
   { marker: ASSISTANT_LEGACY_INSIGHT_MARKER, target: "summary" as const },
@@ -187,10 +205,16 @@ function normalizeGratitudeKindAction(value: string | null | undefined) {
     return null;
   }
 
+  const quotedControlFollowedByAction = normalized.match(
+    /^(?:(?:对|跟|向)我说)?[“"]([^”"]*(?:结束|别再|不要再|先别|不用继续|别继续)[^”"]*)[”"][，,]?(?:然后|随后|接着|并且|而且|还|又)(.+)$/u
+  );
+  const actionText = quotedControlFollowedByAction?.[2] ?? normalized;
+
   return (
-    normalized
+    actionText
       .replace(/^(?:而是|不是|是真的|真的是)/u, "")
       .replace(/^她没有只说辛苦了[，,]?而是/u, "")
+      .replace(/[，,]?(?:我)?(?:很|特别|真的)?(?:感激|感谢|感动|暖心|安心|松了口气)$/u, "")
       .trim() || null
   );
 }
@@ -536,7 +560,146 @@ function normalizeExtractedFieldsForSession(input: {
   };
 }
 
-function getExtractResultSchema(dimension: InterviewDimension) {
+const CORRECTION_FIELD_KEYS: Record<
+  InterviewDimension,
+  Record<string, Array<keyof JoySignalFields>>
+> = {
+  joy: {
+    event: ["event", "joyMoment"],
+    joyMoment: ["event", "joyMoment"],
+    feeling: ["feeling", "stateShift"],
+    stateShift: ["feeling", "stateShift"],
+    whyItMattered: ["whyItMattered", "joySource"],
+    joySource: ["whyItMattered", "joySource"],
+    meaningNeed: ["meaningNeed"],
+    selfPattern: ["selfPattern", "manualClue"],
+    manualClue: ["selfPattern", "manualClue"],
+    delightSignature: ["delightSignature"],
+    happinessType: ["happinessType", "directionSignal"],
+    directionSignal: ["happinessType", "directionSignal"],
+    valueImpact: ["valueImpact"],
+    durability: ["durability"],
+    tags: ["tags"]
+  },
+  fulfillment: {
+    event: ["event", "joyMoment"],
+    experience: ["event", "joyMoment"],
+    feeling: ["feeling", "stateShift"],
+    progressEvidence: ["whyItMattered", "joySource"],
+    whyItMattered: ["whyItMattered", "joySource"],
+    fulfillmentType: ["happinessType", "directionSignal"],
+    happinessType: ["happinessType", "directionSignal"],
+    valueSignal: ["selfPattern", "manualClue"],
+    selfPattern: ["selfPattern", "manualClue"],
+    tags: ["tags"]
+  },
+  reflection: {
+    event: ["event", "joyMoment"],
+    trigger: ["event", "joyMoment"],
+    feeling: ["feeling", "stateShift"],
+    insight: ["whyItMattered", "joySource"],
+    whyItMattered: ["whyItMattered", "joySource"],
+    reflectionType: ["happinessType", "directionSignal"],
+    happinessType: ["happinessType", "directionSignal"],
+    viewpointShift: ["selfPattern", "manualClue"],
+    selfPattern: ["selfPattern", "manualClue"],
+    tags: ["tags"]
+  },
+  improvement: {
+    event: ["event", "joyMoment"],
+    situation: ["event", "joyMoment"],
+    feeling: ["feeling", "stateShift"],
+    improvementType: ["happinessType", "directionSignal"],
+    happinessType: ["happinessType", "directionSignal"],
+    improvementTrack: ["improvementTrack"],
+    stateAssessment: ["stateAssessment"],
+    frictionPoint: ["frictionPoint"],
+    repeatCondition: ["repeatCondition"],
+    controllableFactor: ["controllableFactor"],
+    nextAttempt: ["nextAttempt", "selfPattern", "manualClue"],
+    selfPattern: ["nextAttempt", "selfPattern", "manualClue"],
+    successSignal: ["successSignal"],
+    tags: ["tags"]
+  },
+  gratitude: {
+    event: ["event", "joyMoment", "gratitudeMoment"],
+    moment: ["event", "joyMoment", "gratitudeMoment"],
+    gratitudeMoment: ["event", "joyMoment", "gratitudeMoment"],
+    gratitudeTarget: ["gratitudeTarget"],
+    kindAction: ["kindAction"],
+    seenNeed: ["seenNeed"],
+    feeling: ["feeling", "stateShift", "innerEffect"],
+    innerEffect: ["feeling", "stateShift", "innerEffect"],
+    whyItMattered: ["whyItMattered", "joySource", "gratitudeReason"],
+    gratitudeReason: ["whyItMattered", "joySource", "gratitudeReason"],
+    happinessType: ["happinessType", "directionSignal", "gratitudeType"],
+    gratitudeType: ["happinessType", "directionSignal", "gratitudeType"],
+    selfPattern: ["selfPattern", "manualClue", "relationshipSignal"],
+    relationshipSignal: ["selfPattern", "manualClue", "relationshipSignal"],
+    reciprocityHint: ["reciprocityHint"],
+    tags: ["tags"]
+  }
+};
+
+function isTrustedCorrection(
+  intent: IntentAssessmentV1 | null | undefined,
+  trustedUnderstandingEnabled = getContentUnderstandingMode() === "enforce"
+) {
+  return Boolean(
+    intent &&
+      trustedUnderstandingEnabled &&
+      (intent.dialogueActs.includes("correct_previous") ||
+        intent.dialogueActs.includes("deny_hypothesis"))
+  );
+}
+
+function getTrustedCorrectionFields(input: {
+  dimension: InterviewDimension;
+  intent: IntentAssessmentV1 | null | undefined;
+  candidate: ContentUnderstandingCandidate | null;
+  evidence: JoySignalFields;
+  trustedUnderstandingEnabled?: boolean;
+}) {
+  if (!isTrustedCorrection(input.intent, input.trustedUnderstandingEnabled)) return [];
+
+  const candidateFields = input.candidate?.units.flatMap((unit) =>
+    unit.materialStatus !== "pending_inference" && unit.eventRelation === "current_detail"
+      ? unit.fields
+      : []
+  ) ?? [];
+  const evidenceFields = Object.entries(input.evidence).flatMap(([field, value]) =>
+    value !== null && value !== undefined && value !== "" ? [field] : []
+  );
+
+  return Array.from(new Set(candidateFields.length ? candidateFields : evidenceFields)).filter(
+    (field) => field in CORRECTION_FIELD_KEYS[input.dimension]
+  );
+}
+
+function clearCorrectedSnapshotFields(input: {
+  dimension: InterviewDimension;
+  snapshot: JoySnapshot;
+  fields: string[];
+}) {
+  if (!input.fields.length) return input.snapshot;
+
+  const nextFields = {
+    ...input.snapshot,
+    psychProfile: undefined
+  } as Record<string, unknown>;
+  delete nextFields.confidence;
+  delete nextFields.missingSlots;
+
+  for (const field of input.fields) {
+    for (const key of CORRECTION_FIELD_KEYS[input.dimension][field] ?? []) {
+      nextFields[key] = key === "tags" ? [] : null;
+    }
+  }
+
+  return buildJoySnapshot(nextFields as JoySignalFields);
+}
+
+function getEvidenceExtractResultSchema(dimension: InterviewDimension) {
   if (dimension === "improvement") {
     return improvementExtractResultSchema;
   }
@@ -546,6 +709,35 @@ function getExtractResultSchema(dimension: InterviewDimension) {
   }
 
   return dimension === "fulfillment" || dimension === "reflection" ? fulfillmentExtractResultSchema : joyExtractResultSchema;
+}
+
+function getExtractResultSchema(
+  dimension: InterviewDimension,
+  intentAware = false,
+  trustedUnderstandingEnabled = getContentUnderstandingMode() !== "legacy"
+) {
+  const evidenceSchema = getEvidenceExtractResultSchema(dimension);
+  return intentAware
+      ? createIntentAwareExtractResultSchema(
+        evidenceSchema,
+        trustedUnderstandingEnabled
+      )
+    : evidenceSchema;
+}
+
+function isIntentAwareExtractResult(
+  value: unknown
+): value is {
+  intent: IntentAssessmentV1;
+  evidence: JoySignalFields;
+  understanding?: ContentUnderstandingCandidate;
+} {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "intent" in value &&
+      "evidence" in value
+  );
 }
 
 function logAttempt(
@@ -615,6 +807,10 @@ export async function extractJoySnapshotWithAI(input: {
   signal?: AbortSignal;
   traceId?: string | null;
   requestId?: string | null;
+  intentAssessment?: IntentAssessmentV1 | null;
+  onIntentAssessment?: (assessment: IntentAssessmentV1) => Promise<void> | void;
+  onContentUnderstandingCandidate?: (candidate: ContentUnderstandingCandidate | null) => Promise<void> | void;
+  trustedUnderstandingEnabled?: boolean;
 }): Promise<JoySnapshot> {
   input.signal?.throwIfAborted();
   const fallbackSnapshot = extractJoySignals(input.session.dimension, input.userMessage, input.session.snapshot, {
@@ -635,8 +831,18 @@ export async function extractJoySnapshotWithAI(input: {
   );
   const provider = await getAIProvider("chat");
   const providerStatus = await getAIProviderStatus("chat");
+  const activeEvent = input.session.events.find((event) => event.id === input.session.activeEventId)
+    ?? input.session.events[input.session.events.length - 1];
+  const understandingState = input.trustedUnderstandingEnabled
+    ? parseTrustedUnderstandingState(activeEvent?.understandingData)
+    : null;
+  const understandingView = buildEffectiveUnderstandingView(
+    understandingState,
+    input.session.dimension
+  );
   const envelope = createPromptEnvelope({
     promptKey: getInterviewPromptKey("extract", input.session.dimension),
+    promptVersion: input.intentAssessment ? INTERVIEW_INTENT_EXTRACT_PROMPT_VERSION : undefined,
     messages: buildJoyExtractMessages({
       dimension: input.session.dimension,
       stage: input.session.stage,
@@ -644,24 +850,55 @@ export async function extractJoySnapshotWithAI(input: {
       lastAssistantQuestion: input.session.lastAssistantQuestion,
       userMessage: input.userMessage,
       snapshot: input.session.snapshot,
-      messages: input.session.messages
+      messages: input.session.messages,
+      intentCandidate: input.intentAssessment,
+      understandingContext: understandingState
+        ? {
+            activeMaterials: understandingView.progressMaterials.map((material) => ({
+              id: material.id,
+              text: material.text,
+              fields: material.fields
+            })),
+            pendingMaterials: understandingView.pendingMaterials.map((material) => ({
+              id: material.id,
+              text: material.text,
+              fields: material.fields
+            })),
+            openConflicts: understandingView.conflicts.map((conflict) => ({
+              id: conflict.id,
+              activeMaterialIds: conflict.activeMaterialIds,
+              candidateMaterialId: conflict.candidateMaterialId
+            }))
+          }
+        : null
     })
   });
-  const aiResult = await completeStructuredOutput({
+  const aiResult = await completeStructuredOutput<unknown>({
     provider,
     providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("EXTRACT_PROVIDER", providerStatus),
     stage: "extract",
-    schema: getExtractResultSchema(input.session.dimension),
+    schema: getExtractResultSchema(
+      input.session.dimension,
+      Boolean(input.intentAssessment),
+      input.trustedUnderstandingEnabled
+    ) as ZodSchema<unknown>,
     messages: envelope.messages,
     temperature: 0.15,
-    maxTokens: 500,
+    maxTokens: input.intentAssessment ? 1100 : 500,
+    maxAttempts: 1,
+    timeoutMs: INTERVIEW_EXTRACT_TIMEOUT_MS,
     signal: input.signal,
     onAttempt: (attempt) =>
       logAttempt(input.session.id, attempt, {
         traceId: input.traceId,
         requestId: input.requestId,
         envelope,
-        params: { temperature: 0.15, maxTokens: 500 }
+        params: {
+          temperature: 0.15,
+          maxTokens: input.intentAssessment ? 1100 : 500,
+          maxAttempts: 1,
+          timeoutMs: INTERVIEW_EXTRACT_TIMEOUT_MS
+        }
       })
   });
 
@@ -674,6 +911,14 @@ export async function extractJoySnapshotWithAI(input: {
       "AI extraction unavailable, fallback snapshot will be used."
     );
 
+    if (input.intentAssessment) {
+      await input.onIntentAssessment?.({
+        ...input.intentAssessment,
+        origin: "fallback",
+        reasonCodes: Array.from(new Set([...input.intentAssessment.reasonCodes, "extract_provider_fallback"]))
+      });
+    }
+
     return applyExplicitEvidenceRevisions({
       dimension: input.session.dimension,
       previousSnapshot: input.session.snapshot,
@@ -682,12 +927,58 @@ export async function extractJoySnapshotWithAI(input: {
     }).snapshot;
   }
 
+  const intentAwareResult =
+    input.intentAssessment && isIntentAwareExtractResult(aiResult) ? aiResult : null;
+  const understandingCandidate = intentAwareResult?.understanding ?? null;
+  const mergedIntentAssessment =
+    input.intentAssessment && intentAwareResult
+      ? mergeIntentAssessments({
+          rawText: input.userMessage,
+          deterministic: input.intentAssessment,
+          llm: intentAwareResult.intent
+        })
+      : input.intentAssessment;
+  await input.onContentUnderstandingCandidate?.(understandingCandidate);
+  const extractedEvidence = filterExtractedEvidenceByUnderstanding({
+    dimension: input.session.dimension,
+    evidence: (intentAwareResult ? intentAwareResult.evidence : aiResult) as JoySignalFields,
+    candidate: understandingCandidate,
+    mode: input.trustedUnderstandingEnabled ? "enforce" : undefined
+  });
+  const trustedCorrectionFields = getTrustedCorrectionFields({
+    dimension: input.session.dimension,
+    intent: mergedIntentAssessment,
+    candidate: understandingCandidate,
+    evidence: extractedEvidence,
+    trustedUnderstandingEnabled: input.trustedUnderstandingEnabled
+  });
+  const extractionBaseSnapshot = clearCorrectedSnapshotFields({
+    dimension: input.session.dimension,
+    snapshot: input.session.snapshot,
+    fields: trustedCorrectionFields
+  });
+  const correctionSafeFallbackSnapshot = clearCorrectedSnapshotFields({
+    dimension: input.session.dimension,
+    snapshot: stageAwareFallbackSnapshot,
+    fields: trustedCorrectionFields
+  });
+
+  if (input.intentAssessment && intentAwareResult) {
+    await input.onIntentAssessment?.(mergedIntentAssessment!);
+  } else if (input.intentAssessment) {
+    await input.onIntentAssessment?.({
+      ...input.intentAssessment,
+      origin: "fallback",
+      reasonCodes: Array.from(new Set([...input.intentAssessment.reasonCodes, "intent_output_missing"]))
+    });
+  }
+
   const aiSnapshot = mergeJoySignals(
-    input.session.snapshot,
+    extractionBaseSnapshot,
     normalizeExtractedFieldsForSession({
       dimension: input.session.dimension,
-      fields: aiResult,
-      existingSnapshot: input.session.snapshot,
+      fields: extractedEvidence,
+      existingSnapshot: trustedCorrectionFields.length ? null : input.session.snapshot,
       userMessage: input.userMessage
     })
   );
@@ -695,37 +986,37 @@ export async function extractJoySnapshotWithAI(input: {
   // Keep AI extraction authoritative, but backfill holes with the conservative rule-based extractor
   // so real-world "对我来说……才算数" style fulfillment replies can still close the loop.
   const mergedSnapshot = mergeJoySignals(aiSnapshot, {
-    event: aiSnapshot.event ? null : stageAwareFallbackSnapshot.event,
-    feeling: aiSnapshot.feeling ? null : stageAwareFallbackSnapshot.feeling,
-    whyItMattered: aiSnapshot.whyItMattered ? null : stageAwareFallbackSnapshot.whyItMattered,
-    happinessType: aiSnapshot.happinessType ? null : stageAwareFallbackSnapshot.happinessType,
-    selfPattern: aiSnapshot.selfPattern ? null : stageAwareFallbackSnapshot.selfPattern,
-    joyMoment: aiSnapshot.joyMoment ? null : stageAwareFallbackSnapshot.joyMoment,
-    joySource: aiSnapshot.joySource ? null : stageAwareFallbackSnapshot.joySource,
-    stateShift: aiSnapshot.stateShift ? null : stageAwareFallbackSnapshot.stateShift,
-    meaningNeed: aiSnapshot.meaningNeed ? null : stageAwareFallbackSnapshot.meaningNeed,
-    manualClue: aiSnapshot.manualClue ? null : stageAwareFallbackSnapshot.manualClue,
-    delightSignature: aiSnapshot.delightSignature ? null : stageAwareFallbackSnapshot.delightSignature,
-    directionSignal: aiSnapshot.directionSignal ? null : stageAwareFallbackSnapshot.directionSignal,
-    valueImpact: aiSnapshot.valueImpact ? null : stageAwareFallbackSnapshot.valueImpact,
-    durability: aiSnapshot.durability ? null : stageAwareFallbackSnapshot.durability,
-    improvementTrack: aiSnapshot.improvementTrack ? null : stageAwareFallbackSnapshot.improvementTrack,
-    stateAssessment: aiSnapshot.stateAssessment ? null : stageAwareFallbackSnapshot.stateAssessment,
-    frictionPoint: aiSnapshot.frictionPoint ? null : stageAwareFallbackSnapshot.frictionPoint,
-    repeatCondition: aiSnapshot.repeatCondition ? null : stageAwareFallbackSnapshot.repeatCondition,
-    controllableFactor: aiSnapshot.controllableFactor ? null : stageAwareFallbackSnapshot.controllableFactor,
-    nextAttempt: aiSnapshot.nextAttempt ? null : stageAwareFallbackSnapshot.nextAttempt,
-    successSignal: aiSnapshot.successSignal ? null : stageAwareFallbackSnapshot.successSignal,
-    gratitudeMoment: aiSnapshot.gratitudeMoment ? null : stageAwareFallbackSnapshot.gratitudeMoment,
-    gratitudeTarget: aiSnapshot.gratitudeTarget ? null : stageAwareFallbackSnapshot.gratitudeTarget,
-    kindAction: aiSnapshot.kindAction ? null : stageAwareFallbackSnapshot.kindAction,
-    seenNeed: aiSnapshot.seenNeed ? null : stageAwareFallbackSnapshot.seenNeed,
-    innerEffect: aiSnapshot.innerEffect ? null : stageAwareFallbackSnapshot.innerEffect,
-    gratitudeReason: aiSnapshot.gratitudeReason ? null : stageAwareFallbackSnapshot.gratitudeReason,
-    gratitudeType: aiSnapshot.gratitudeType ? null : stageAwareFallbackSnapshot.gratitudeType,
-    relationshipSignal: aiSnapshot.relationshipSignal ? null : stageAwareFallbackSnapshot.relationshipSignal,
-    reciprocityHint: aiSnapshot.reciprocityHint ? null : stageAwareFallbackSnapshot.reciprocityHint,
-    tags: stageAwareFallbackSnapshot.tags
+    event: aiSnapshot.event ? null : correctionSafeFallbackSnapshot.event,
+    feeling: aiSnapshot.feeling ? null : correctionSafeFallbackSnapshot.feeling,
+    whyItMattered: aiSnapshot.whyItMattered ? null : correctionSafeFallbackSnapshot.whyItMattered,
+    happinessType: aiSnapshot.happinessType ? null : correctionSafeFallbackSnapshot.happinessType,
+    selfPattern: aiSnapshot.selfPattern ? null : correctionSafeFallbackSnapshot.selfPattern,
+    joyMoment: aiSnapshot.joyMoment ? null : correctionSafeFallbackSnapshot.joyMoment,
+    joySource: aiSnapshot.joySource ? null : correctionSafeFallbackSnapshot.joySource,
+    stateShift: aiSnapshot.stateShift ? null : correctionSafeFallbackSnapshot.stateShift,
+    meaningNeed: aiSnapshot.meaningNeed ? null : correctionSafeFallbackSnapshot.meaningNeed,
+    manualClue: aiSnapshot.manualClue ? null : correctionSafeFallbackSnapshot.manualClue,
+    delightSignature: aiSnapshot.delightSignature ? null : correctionSafeFallbackSnapshot.delightSignature,
+    directionSignal: aiSnapshot.directionSignal ? null : correctionSafeFallbackSnapshot.directionSignal,
+    valueImpact: aiSnapshot.valueImpact ? null : correctionSafeFallbackSnapshot.valueImpact,
+    durability: aiSnapshot.durability ? null : correctionSafeFallbackSnapshot.durability,
+    improvementTrack: aiSnapshot.improvementTrack ? null : correctionSafeFallbackSnapshot.improvementTrack,
+    stateAssessment: aiSnapshot.stateAssessment ? null : correctionSafeFallbackSnapshot.stateAssessment,
+    frictionPoint: aiSnapshot.frictionPoint ? null : correctionSafeFallbackSnapshot.frictionPoint,
+    repeatCondition: aiSnapshot.repeatCondition ? null : correctionSafeFallbackSnapshot.repeatCondition,
+    controllableFactor: aiSnapshot.controllableFactor ? null : correctionSafeFallbackSnapshot.controllableFactor,
+    nextAttempt: aiSnapshot.nextAttempt ? null : correctionSafeFallbackSnapshot.nextAttempt,
+    successSignal: aiSnapshot.successSignal ? null : correctionSafeFallbackSnapshot.successSignal,
+    gratitudeMoment: aiSnapshot.gratitudeMoment ? null : correctionSafeFallbackSnapshot.gratitudeMoment,
+    gratitudeTarget: aiSnapshot.gratitudeTarget ? null : correctionSafeFallbackSnapshot.gratitudeTarget,
+    kindAction: aiSnapshot.kindAction ? null : correctionSafeFallbackSnapshot.kindAction,
+    seenNeed: aiSnapshot.seenNeed ? null : correctionSafeFallbackSnapshot.seenNeed,
+    innerEffect: aiSnapshot.innerEffect ? null : correctionSafeFallbackSnapshot.innerEffect,
+    gratitudeReason: aiSnapshot.gratitudeReason ? null : correctionSafeFallbackSnapshot.gratitudeReason,
+    gratitudeType: aiSnapshot.gratitudeType ? null : correctionSafeFallbackSnapshot.gratitudeType,
+    relationshipSignal: aiSnapshot.relationshipSignal ? null : correctionSafeFallbackSnapshot.relationshipSignal,
+    reciprocityHint: aiSnapshot.reciprocityHint ? null : correctionSafeFallbackSnapshot.reciprocityHint,
+    tags: correctionSafeFallbackSnapshot.tags
   });
 
   return applyExplicitEvidenceRevisions({
@@ -1063,6 +1354,7 @@ async function runAssistantQuestionAttempt(input: {
       messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
       signal: input.signal
     })) {
       responseText += chunk;
@@ -1073,6 +1365,7 @@ async function runAssistantQuestionAttempt(input: {
       messages: input.envelope.messages,
       temperature: 0.45,
       maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
       signal: input.signal
     });
 
@@ -1096,7 +1389,12 @@ async function runAssistantQuestionAttempt(input: {
       traceId: input.traceId,
       requestId: input.requestId,
       envelope: input.envelope,
-      params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
+      params: {
+        temperature: 0.45,
+        maxTokens: 500,
+        timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+        stream: input.stream
+      }
     });
 
     return null;
@@ -1114,7 +1412,12 @@ async function runAssistantQuestionAttempt(input: {
     traceId: input.traceId,
     requestId: input.requestId,
     envelope: input.envelope,
-    params: { temperature: 0.45, maxTokens: 500, stream: input.stream }
+    params: {
+      temperature: 0.45,
+      maxTokens: 500,
+      timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+      stream: input.stream
+    }
   });
 
   return segments;
@@ -1150,7 +1453,7 @@ async function requestAssistantReplySegments(
       messages: getQuestionMessages(input)
     })
   );
-  const attempts: boolean[] = onDelta && provider.stream ? [true, false] : [false];
+  const attempts: boolean[] = onDelta && provider.stream ? [true] : [false];
 
   for (const [attemptIndex, useStream] of attempts.entries()) {
     try {
@@ -1185,7 +1488,12 @@ async function requestAssistantReplySegments(
         traceId: input.traceId,
         requestId: input.requestId,
         envelope,
-        params: { temperature: 0.45, maxTokens: 500, stream: useStream }
+        params: {
+          temperature: 0.45,
+          maxTokens: 500,
+          timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+          stream: useStream
+        }
       });
     }
   }
@@ -1301,7 +1609,11 @@ function getActiveSessionEvent(session: InterviewSessionRecord) {
 }
 
 function getDraftSourceEvents(session: InterviewSessionRecord) {
-  const candidates = session.events.filter((event) =>
+  const projectedEvents = projectDraftSourceEventsFromUnderstanding(
+    session.dimension,
+    session.events
+  );
+  const candidates = projectedEvents.filter((event) =>
     Boolean(
       getJoyMoment(event.snapshot) ||
         getJoySource(event.snapshot) ||
@@ -1322,7 +1634,9 @@ function getDraftSourceEvents(session: InterviewSessionRecord) {
     )
   );
 
-  const fallbackEvent = getActiveSessionEvent(session);
+  const activeEvent = getActiveSessionEvent(session);
+  const fallbackEvent = projectedEvents.find((event) => event.id === activeEvent?.id)
+    ?? projectedEvents[projectedEvents.length - 1];
 
   return candidates.length ? candidates : fallbackEvent ? [fallbackEvent] : [];
 }

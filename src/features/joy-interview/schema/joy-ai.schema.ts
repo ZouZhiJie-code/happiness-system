@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { intentAssessmentV1Schema } from "@/features/interview/intent/intent-v1";
+import { contentUnderstandingCandidateSchema } from "@/features/interview/content-understanding";
 import { MAX_JOURNAL_TITLE_LENGTH } from "@/features/interview/journal-title";
 
 const nullableString = z.union([z.string(), z.null()]);
@@ -129,6 +131,21 @@ export const gratitudeExtractResultSchema = z
       });
     }
   });
+
+export function createIntentAwareExtractResultSchema<T extends z.ZodTypeAny>(
+  evidenceSchema: T,
+  requireUnderstanding = false
+) {
+  return z
+    .object({
+      intent: intentAssessmentV1Schema,
+      evidence: evidenceSchema,
+      understanding: requireUnderstanding
+        ? contentUnderstandingCandidateSchema
+        : contentUnderstandingCandidateSchema.optional()
+    })
+    .strict();
+}
 
 export const joyQuestionSchema = z
   .object({

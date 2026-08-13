@@ -3,7 +3,34 @@ import { randomUUID } from "node:crypto";
 
 import { getAssistantDisplayParts } from "@/features/joy-interview/assistant-turn";
 import { assessDimensionEvidence, canGenerateFromEvidence } from "@/features/interview/dimension-evidence";
+import {
+  applyTurnUnderstandingResult,
+  buildEffectiveUnderstandingView,
+  buildTrustedCorrectionAcknowledgement,
+  buildTrustedUnderstandingUpdate,
+  getContentUnderstandingMode,
+  isTurnUnderstandingV2Enabled,
+  parseTurnUnderstandingResult,
+  projectSnapshotFromTrustedUnderstanding,
+  shouldMoveAwayFromTarget,
+  shouldUseConcreteTargetQuestion,
+  TURN_UNDERSTANDING_RESULT_VERSION,
+  type ContentUnderstandingCandidate,
+  type TrustedUnderstandingState
+} from "@/features/interview/content-understanding";
+import {
+  assessUserTurnIntent,
+  decideUserTurn,
+  getInterviewIntentV2Mode,
+  INTERVIEW_INTENT_CLASSIFIER_VERSION,
+  parsePersistedIntentAssessment,
+  parsePersistedTurnDecision,
+  toLegacyUserTurnAssessment,
+  type IntentAssessmentV1,
+  type TurnDecisionV1
+} from "@/features/interview/intent/intent-v1";
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
+import { getInterviewDimensionConfig } from "@/features/interview/server/dimension-config";
 import {
   assessUserTurnMessage,
   deriveDepthReachedFromSnapshot,
@@ -43,10 +70,15 @@ import {
   cancelInterviewUserTurn,
   completeJoyInterviewSessionRecord,
   createJoyInterviewSession,
+  findInterviewEventUnderstandingState,
   findJoyInterviewSessionById,
+  forkInterviewBranchForCorrection,
   markInterviewUserTurnFailed,
+  markInterviewUserTurnAsCorrection,
   markJoyEntrySaved,
   pauseJoyInterviewSessionRecord,
+  persistInterviewUserTurnIntent,
+  persistInterviewUserTurnUnderstanding,
   reopenJoyInterviewSessionRecord,
   reserveInterviewUserTurn,
   resumeInterviewUserTurn,
@@ -54,6 +86,7 @@ import {
   saveJoyInterviewDraft,
   startNextInterviewEvent
 } from "@/server/repositories/joy-interview.repository";
+import type { PersistedInterviewUserTurnRecord } from "@/server/repositories/joy-interview.repository";
 import {
   appendGenerationTraceDecision,
   cancelGenerationTrace,
@@ -67,9 +100,11 @@ import {
   streamJoyAssistantTurn,
   generateJoyDraftWithAI
 } from "@/server/services/interview/joy-interview-ai.service";
+import { regenerateInterviewQuestion } from "@/server/services/interview/interview-regeneration.service";
 import { extractMemoriesFromSession } from "@/server/services/memory/memory-extraction.service";
 import { retrieveRelevantMemories } from "@/server/services/memory/memory-retrieval.service";
 import type {
+  AssistantQuestionTarget,
   AssistantQuestionSpec,
   AssistantTurnPayload,
   DraftCompletionMode,
@@ -80,6 +115,7 @@ import type {
   InterviewEventRecord,
   InterviewLens,
   InterviewMessage,
+  InterviewRegenerationIntent,
   InterviewSessionRecord,
   InterviewUserTurnAction,
   InterviewUserTurnRecord,
@@ -87,7 +123,7 @@ import type {
   JoySnapshot
 } from "@/types/interview";
 
-type InterviewRespondInput =
+type LinearInterviewRespondInput =
   | {
       userId: string;
       requestId?: string;
@@ -98,6 +134,7 @@ type InterviewRespondInput =
       inputMode: InputMode;
       clientTurnId?: string;
       baseMessageSequence?: number;
+      baseBranchSessionId?: string;
     }
   | {
       userId: string;
@@ -106,6 +143,7 @@ type InterviewRespondInput =
       sessionId: string;
       clientTurnId?: string;
       baseMessageSequence?: number;
+      baseBranchSessionId?: string;
     }
   | {
       userId: string;
@@ -114,6 +152,7 @@ type InterviewRespondInput =
       sessionId: string;
       clientTurnId?: string;
       baseMessageSequence?: number;
+      baseBranchSessionId?: string;
     }
   | {
       userId: string;
@@ -122,6 +161,7 @@ type InterviewRespondInput =
       sessionId: string;
       clientTurnId?: string;
       baseMessageSequence?: number;
+      baseBranchSessionId?: string;
     }
   | {
       userId: string;
@@ -129,6 +169,31 @@ type InterviewRespondInput =
       action: "resume_turn";
       sessionId: string;
       clientTurnId: string;
+    };
+
+type InterviewRespondInput =
+  | LinearInterviewRespondInput
+  | {
+      userId: string;
+      requestId?: string;
+      action: "regenerate_question";
+      sessionId: string;
+      targetMessageId: string;
+      intent: InterviewRegenerationIntent;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
+      baseBranchSessionId: string;
+    }
+  | {
+      userId: string;
+      requestId?: string;
+      action: "correct_understanding";
+      sessionId: string;
+      targetMessageId: string;
+      rawText: string;
+      clientTurnId?: string;
+      baseMessageSequence?: number;
+      baseBranchSessionId: string;
     };
 
 type StreamingPhase = "thinking" | "summary" | "question";
@@ -142,7 +207,7 @@ type InterviewDecisionProgressData =
     }
   | {
       kind: "dimension_redirect";
-      targetDimension: "improvement";
+      targetDimension: InterviewDimension;
       reason: string;
     }
   | {
@@ -309,6 +374,7 @@ interface PreparedInterviewTurnContext {
   userTurnId: string;
   clientTurnId: string;
   userMessageId: string | null;
+  understandingState?: TrustedUnderstandingState | null;
 }
 
 type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
@@ -316,7 +382,18 @@ type ResolvedPreparedInterviewTurn = PreparedInterviewTurnContext & {
   assistantAction: null;
 };
 
-function getCanonicalAction(action: InterviewRespondInput["action"]): CanonicalInterviewAction {
+interface CompletedInterviewResponse {
+  assistantMessage: string;
+  assistantTurn: AssistantTurnPayload | null;
+  sessionStatus: InterviewSessionRecord["status"];
+  turnCount: number;
+  snapshot: JoySnapshot;
+  snapshotData: InterviewSessionRecord["snapshotData"];
+  isReadyForDraft: boolean;
+  session: InterviewSessionRecord;
+}
+
+function getCanonicalAction(action: LinearInterviewRespondInput["action"]): CanonicalInterviewAction {
   if (action === "continue") {
     return "continue_current_event";
   }
@@ -499,6 +576,84 @@ function getLatestAssistantQuestionSpec(messages: InterviewMessage[]) {
   }
 
   return null;
+}
+
+function getAlternativeQuestionTarget(
+  currentTarget: AssistantQuestionTarget | null | undefined
+): AssistantQuestionTarget {
+  switch (currentTarget) {
+    case "event_anchor":
+      return "prior_assumption";
+    case "prior_assumption":
+      return "reaction_evidence";
+    case "reaction_evidence":
+      return "insight_evidence";
+    case "insight_evidence":
+      return "judgment_clue";
+    case "judgment_clue":
+    default:
+      return "event_anchor";
+  }
+}
+
+function applyTrustedUnderstandingQuestionPolicy(input: {
+  spec: AssistantQuestionSpec | null;
+  state?: TrustedUnderstandingState | null;
+  dimension: InterviewDimension;
+  stage: JoyInterviewStage;
+  snapshot: JoySnapshot;
+  enabled?: boolean;
+}) {
+  const enabled = input.enabled ?? getContentUnderstandingMode() === "enforce";
+  if (!input.spec || !enabled) return input.spec;
+  const target = input.spec.subTarget ?? input.spec.target;
+
+  if (shouldMoveAwayFromTarget(input.state, target)) {
+    const alternativeSpec = createQuestionSpec({
+      dimension: input.dimension,
+      stage: input.stage,
+      snapshot: input.snapshot,
+      stageIntent: input.spec.stageIntent,
+      target: getAlternativeQuestionTarget(input.spec.target),
+      surfaceLevel: "concrete_anchor"
+    });
+    if (input.dimension === "gratitude" && input.spec.subTarget) {
+      const alternativeSubTarget = ([
+        "kind_action",
+        "seen_need",
+        "gratitude_reason",
+        "relationship_signal"
+      ] as const).find(
+        (candidate) =>
+          candidate !== input.spec?.subTarget &&
+          !shouldMoveAwayFromTarget(input.state, candidate)
+      );
+
+      if (alternativeSubTarget) {
+        return {
+          ...alternativeSpec,
+          subTarget: alternativeSubTarget,
+          hypothesisKey: null,
+          repairCount: input.spec.repairCount
+        };
+      }
+    }
+
+    return {
+      ...alternativeSpec,
+      repairCount: input.spec.repairCount
+    };
+  }
+
+  if (shouldUseConcreteTargetQuestion(input.state, target)) {
+    return {
+      ...input.spec,
+      hypothesisKey: null,
+      surfaceLevel: "concrete_anchor" as const
+    };
+  }
+
+  return input.spec;
 }
 
 function normalizeQuestionText(value: string | null | undefined) {
@@ -912,8 +1067,41 @@ function questionTouchesGratitudeTarget(question: string, target: GratitudeQuest
     case "relationship_signal":
       return /(关系|值得珍惜|提醒|以后也想|这类回应)/u.test(normalized);
     case "kind_action":
-      return /(具体做了哪一下|帮到你的哪一下|做了什么)/u.test(normalized);
+      return /(具体.{0,8}(?:做了|帮了)|帮到你的哪一下|做了什么|哪(?:一)?个动作)/u.test(normalized);
   }
+}
+
+function hasAnsweredGratitudeTarget(snapshot: JoySnapshot, target: GratitudeQuestionSubTarget) {
+  if (snapshot.evidenceState?.targets[target] === "confirmed") {
+    return true;
+  }
+
+  switch (target) {
+    case "kind_action":
+      return Boolean(snapshot.kindAction);
+    case "seen_need":
+      return Boolean(snapshot.seenNeed);
+    case "gratitude_reason":
+      return Boolean(snapshot.gratitudeReason ?? snapshot.whyItMattered);
+    case "relationship_signal":
+      return Boolean(snapshot.relationshipSignal ?? snapshot.selfPattern);
+  }
+}
+
+function resolveFreshGratitudeQuestion(input: PreparedInterviewTurnContext) {
+  const spec = createQuestionSpec({
+    dimension: "gratitude",
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    stageIntent: input.assistantAction === "continue_current_event" ? "resume" : "advance"
+  });
+
+  return resolveQuestionFromSpec({
+    dimension: "gratitude",
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    spec
+  });
 }
 
 function createGratitudeActionFallbackQuestionSpec(previousSpec: AssistantQuestionSpec | null | undefined): AssistantQuestionSpec {
@@ -1430,6 +1618,49 @@ function buildRedirectAssistantTurn(reason: string, snapshot: JoySnapshot): Assi
     insight: "我先把这一轮停在这里，继续留在开心维度里硬找，收益已经不高了。",
     thinkingSummary: "",
     analysis: `当前轮次还没找到可信的开心片段，建议转去改进维度。原因：${reason}`,
+    question: "",
+    stateUpdate: {
+      turnPhase: "choice",
+      shouldEndDimension: true,
+      offerChoice: true,
+      choiceKind: "dimension_redirect",
+      choiceReason: reason
+    },
+    meta: {
+      depthReached: deriveDepthReachedFromSnapshot(snapshot)
+    }
+  };
+}
+
+function getRequestedDimension(message: string): InterviewDimension | null {
+  const normalized = message.replace(/\s+/gu, "");
+  const candidates: Array<[InterviewDimension, RegExp]> = [
+    ["joy", /(切到|换到|转到|更像)开心(?:维度)?/u],
+    ["fulfillment", /(切到|换到|转到|更像)充实(?:维度)?/u],
+    ["reflection", /(切到|换到|转到|更像)思考(?:维度)?/u],
+    ["improvement", /(切到|换到|转到|更像)改进(?:维度)?/u],
+    ["gratitude", /(切到|换到|转到|更像)感谢(?:维度)?/u]
+  ];
+  return candidates.find(([, pattern]) => pattern.test(normalized))?.[0] ?? null;
+}
+
+function buildRequestedDimensionRedirectTurn(
+  targetDimension: InterviewDimension,
+  snapshot: JoySnapshot
+): AssistantTurnPayload {
+  const labels: Record<InterviewDimension, string> = {
+    joy: "开心",
+    fulfillment: "充实",
+    reflection: "思考",
+    improvement: "改进",
+    gratitude: "感谢"
+  };
+  const reason = `你想把这段内容放到${labels[targetDimension]}维度继续。`;
+
+  return {
+    insight: reason,
+    thinkingSummary: "",
+    analysis: `用户明确请求切换到 ${targetDimension} 维度。`,
     question: "",
     stateUpdate: {
       turnPhase: "choice",
@@ -2241,6 +2472,36 @@ function applyQuestionGuard(
     }
   }
 
+  if (input.session.dimension === "gratitude") {
+    const freshQuestion = resolveFreshGratitudeQuestion(input);
+    const expectedSubTarget = freshQuestion.questionSpec.subTarget;
+    const gratitudeTargets: GratitudeQuestionSubTarget[] = [
+      "kind_action",
+      "seen_need",
+      "gratitude_reason",
+      "relationship_signal"
+    ];
+    const answeredTargets = gratitudeTargets.filter((target) =>
+      hasAnsweredGratitudeTarget(input.nextSnapshot, target)
+    );
+    const asksAnsweredTarget = answeredTargets.some(
+      (target) => target !== expectedSubTarget && questionTouchesGratitudeTarget(question, target)
+    );
+    const staleQuestionSpec = Boolean(
+      assistantTurn.questionSpec?.subTarget &&
+        assistantTurn.questionSpec.subTarget !== expectedSubTarget &&
+        hasAnsweredGratitudeTarget(input.nextSnapshot, assistantTurn.questionSpec.subTarget)
+    );
+
+    if ((asksAnsweredTarget || staleQuestionSpec) && freshQuestion.question) {
+      return {
+        ...assistantTurn,
+        question: freshQuestion.question,
+        questionSpec: freshQuestion.questionSpec
+      };
+    }
+  }
+
   const existingSpec = assistantTurn.questionSpec ?? input.questionSpec;
   const recentAssistantQuestions = input.session.messages
     .map((message) => getAssistantQuestionText(message))
@@ -2398,6 +2659,38 @@ function getNextEventOpeningQuestion(dimension: InterviewDimension) {
   }
 }
 
+function getPendingCandidateEvent(
+  state: TrustedUnderstandingState | null | undefined,
+  dimension: InterviewDimension
+) {
+  return state?.candidateEvents.find(
+    (candidate) =>
+      !candidate.revisited &&
+      (!candidate.candidateDimension || candidate.candidateDimension === dimension)
+  ) ?? null;
+}
+
+function getCandidateEventOpeningQuestion(input: {
+  dimension: InterviewDimension;
+  summary: string;
+}) {
+  const summary = input.summary.replace(/\s+/gu, " ").trim().slice(0, 72);
+  const lead = `你刚才还提到“${summary}”。我们接着聊这件：`;
+
+  switch (input.dimension) {
+    case "joy":
+      return `${lead}当时最让你开心的瞬间是什么？`;
+    case "fulfillment":
+      return `${lead}哪一步让你觉得事情真的往前走了？`;
+    case "reflection":
+      return `${lead}哪个细节让你开始重新想这件事？`;
+    case "improvement":
+      return `${lead}当时最想复盘的具体情境是什么？`;
+    case "gratitude":
+      return `${lead}当时对方具体做了什么？`;
+  }
+}
+
 async function createInterviewTurnTrace(input: {
   requestId?: string | null;
   session: InterviewSessionRecord;
@@ -2470,6 +2763,101 @@ async function appendEvidenceDecisionTrace(input: {
     turnAdvanced: input.turnAdvanced
   });
   return evidence;
+}
+
+function readPersistedIntent(turn: PersistedInterviewUserTurnRecord) {
+  const assessment = parsePersistedIntentAssessment(turn.intentAssessment);
+  const decision = parsePersistedTurnDecision(turn.intentDecision);
+
+  if (!assessment.success || !decision.success) {
+    return null;
+  }
+
+  return {
+    assessment: assessment.data,
+    decision: decision.data
+  };
+}
+
+async function appendIntentDecisionTrace(input: {
+  traceId: string;
+  userTurnId: string;
+  assessment: IntentAssessmentV1;
+  decision: TurnDecisionV1;
+  reusedAssessment: boolean;
+}) {
+  await appendGenerationTraceDecision(input.traceId, {
+    kind: "interview_intent_assessment",
+    userTurnId: input.userTurnId,
+    classifierVersion: input.assessment.version,
+    primaryControl: input.assessment.primaryControl,
+    controlSignals: input.assessment.controlSignals,
+    dialogueActs: input.assessment.dialogueActs,
+    contentPresence: input.assessment.content.presence,
+    referenceTarget: input.assessment.referenceTarget,
+    frustration: input.assessment.frustration,
+    confidence: input.assessment.confidence,
+    origin: input.assessment.origin,
+    reasonCodes: input.assessment.reasonCodes,
+    reusedAssessment: input.reusedAssessment
+  });
+  await appendGenerationTraceDecision(input.traceId, {
+    kind: "interview_turn_decision",
+    policyVersion: input.decision.version,
+    runExtraction: input.decision.runExtraction,
+    advanceTurn: input.decision.advanceTurn,
+    advanceRound: input.decision.advanceRound,
+    stopFollowUp: input.decision.stopFollowUp,
+    nextAction: input.decision.nextAction,
+    nextQuestionStyle: input.decision.nextQuestionStyle
+  });
+}
+
+async function persistAndTraceIntent(input: {
+  traceId: string;
+  turnId: string;
+  userId: string;
+  sessionId: string;
+  dimension: InterviewDimension;
+  assessment: IntentAssessmentV1;
+  decision: TurnDecisionV1;
+  reusedAssessment: boolean;
+  replaceExisting?: boolean;
+}) {
+  if (!input.reusedAssessment) {
+    await persistInterviewUserTurnIntent({
+      turnId: input.turnId,
+      classifierVersion: INTERVIEW_INTENT_CLASSIFIER_VERSION,
+      assessment: input.assessment,
+      decision: input.decision,
+      replaceExisting: input.replaceExisting
+    });
+  }
+
+  await appendIntentDecisionTrace({
+    traceId: input.traceId,
+    userTurnId: input.turnId,
+    assessment: input.assessment,
+    decision: input.decision,
+    reusedAssessment: input.reusedAssessment
+  });
+  await recordAnalyticsEvent({
+    eventName: "interview_intent_classified",
+    userId: input.userId,
+    sessionId: input.sessionId,
+    dedupeKey: `interview_intent_classified:${input.turnId}`,
+    properties: {
+      dimension: input.dimension,
+      classifierVersion: input.assessment.version,
+      primaryControl: input.assessment.primaryControl,
+      contentPresence: input.assessment.content.presence,
+      origin: input.assessment.origin,
+      mixedInput:
+        input.assessment.primaryControl !== "none" &&
+        input.assessment.content.presence === "clear",
+      reusedAssessment: input.reusedAssessment
+    }
+  });
 }
 
 function buildImmediateResponseFromSession(session: InterviewSessionRecord) {
@@ -2585,6 +2973,48 @@ function buildAssistantGenerationInput(input: PreparedInterviewTurnContext & {
   } as const;
 }
 
+function buildDeterministicFollowUpTurn(input: PreparedInterviewTurnContext & {
+  assistantAction: "reply" | "continue_current_event" | "repair_current_question";
+}) {
+  const questionSpec =
+    input.questionSpec ??
+    createQuestionSpec({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      stageIntent: input.assistantAction === "continue_current_event" ? "resume" : "advance"
+    });
+  const surfaced = resolveQuestionFromSpec({
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    spec: questionSpec
+  });
+
+  return {
+    insight: "",
+    thinkingSummary: buildFollowUpThinkingSummary({
+      dimension: input.session.dimension,
+      stage: input.nextStage,
+      snapshot: input.nextSnapshot,
+      assistantAction: input.assistantAction
+    }),
+    analysis: "当前信息目标由服务端问题规划器确定，并使用已提取证据生成低等待追问。",
+    question: surfaced.question,
+    questionSpec: surfaced.questionSpec,
+    stateUpdate: {
+      turnPhase: input.nextStage === "collect_event" ? "opening" : "digging",
+      shouldEndDimension: false,
+      offerChoice: false,
+      choiceKind: null,
+      choiceReason: ""
+    },
+    meta: {
+      depthReached: deriveDepthReachedFromSnapshot(input.nextSnapshot)
+    }
+  } satisfies AssistantTurnPayload;
+}
+
 function finalizeAssistantTurn(
   input: PreparedInterviewTurnContext,
   assistantTurn: AssistantTurnPayload
@@ -2592,6 +3022,42 @@ function finalizeAssistantTurn(
   const guardedAssistantTurn = applyQuestionGuard(input, assistantTurn);
   const fulfillmentGuardedAssistantTurn = applyFulfillmentQuestionGuard(input, guardedAssistantTurn);
   const fallbackAssistantTurn = applyAssistantTurnFallbacks(input, fulfillmentGuardedAssistantTurn);
+  const sourceQuestionSpec = fallbackAssistantTurn.questionSpec ?? input.questionSpec;
+  const trustedQuestionSpec = applyTrustedUnderstandingQuestionPolicy({
+    spec: sourceQuestionSpec,
+    state: input.understandingState,
+    dimension: input.session.dimension,
+    stage: input.nextStage,
+    snapshot: input.nextSnapshot,
+    enabled:
+      isTurnUnderstandingV2Enabled(input.session.userId) ||
+      getContentUnderstandingMode() === "enforce"
+  });
+  const trustedQuestionChanged = Boolean(
+    sourceQuestionSpec &&
+      trustedQuestionSpec &&
+      (
+        sourceQuestionSpec.target !== trustedQuestionSpec.target ||
+        sourceQuestionSpec.subTarget !== trustedQuestionSpec.subTarget ||
+        sourceQuestionSpec.hypothesisKey !== trustedQuestionSpec.hypothesisKey ||
+        sourceQuestionSpec.surfaceLevel !== trustedQuestionSpec.surfaceLevel
+      )
+  );
+  const understandingGuardedAssistantTurn = trustedQuestionChanged && trustedQuestionSpec
+    ? (() => {
+        const surfaced = resolveQuestionFromSpec({
+          dimension: input.session.dimension,
+          stage: input.nextStage,
+          snapshot: input.nextSnapshot,
+          spec: trustedQuestionSpec
+        });
+        return {
+          ...fallbackAssistantTurn,
+          question: surfaced.question,
+          questionSpec: surfaced.questionSpec
+        };
+      })()
+    : fallbackAssistantTurn;
   const evidenceRevisions = input.userMessage
     ? detectExplicitEvidenceRevisions({
         dimension: input.session.dimension,
@@ -2602,7 +3068,7 @@ function finalizeAssistantTurn(
     input.session.dimension === "fulfillment" &&
     evidenceRevisions.some((revision) => revision.field === "whyItMattered" && revision.action === "clear")
       ? {
-          ...fallbackAssistantTurn,
+          ...understandingGuardedAssistantTurn,
           question: "那这段先放下。今天还有哪个片段，留下了一点看得见的结果？想不到也可以直接说没有。",
           questionSpec: {
             target: "event_anchor" as const,
@@ -2612,18 +3078,26 @@ function finalizeAssistantTurn(
             repairCount: 0
           }
         }
-      : fallbackAssistantTurn;
+      : understandingGuardedAssistantTurn;
+  const trustedCorrectionAcknowledgement = (
+    isTurnUnderstandingV2Enabled(input.session.userId) ||
+    getContentUnderstandingMode() === "enforce"
+  )
+    ? buildTrustedCorrectionAcknowledgement(input.understandingState)
+    : null;
   const finalizedAssistantTurn = {
     ...revisionGuardedAssistantTurn,
     questionSpec: revisionGuardedAssistantTurn.questionSpec ?? input.questionSpec ?? null,
-    thinkingSummary: normalizeThinkingSummary({
-      dimension: input.session.dimension,
-      stage: input.nextStage,
-      snapshot: input.nextSnapshot,
-      assistantAction: input.assistantAction,
-      summary: revisionGuardedAssistantTurn.thinkingSummary,
-      userMessage: input.userMessage
-    })
+    thinkingSummary:
+      trustedCorrectionAcknowledgement ??
+      normalizeThinkingSummary({
+        dimension: input.session.dimension,
+        stage: input.nextStage,
+        snapshot: input.nextSnapshot,
+        assistantAction: input.assistantAction,
+        summary: revisionGuardedAssistantTurn.thinkingSummary,
+        userMessage: input.userMessage
+      })
   };
 
   if (input.assistantAction === "continue_current_event" || input.assistantAction === "repair_current_question") {
@@ -2685,25 +3159,40 @@ async function resolvePreparedInterviewTurn(
     ...input,
     assistantAction: input.assistantAction
   });
+  const usesDeterministicFollowUp = getInterviewIntentV2Mode() === "enforce";
 
-  // Fire-and-forget memory retrieval for prompt enrichment
-  const { formattedContext: memoryContext } = await retrieveRelevantMemories({
-    userId: input.session.userId,
-    dimension: input.session.dimension,
-    snapshot: input.nextSnapshot,
-    currentEventText: input.userMessage ?? undefined
-  }).catch(() => ({ formattedContext: null }));
+  const { formattedContext: memoryContext } = usesDeterministicFollowUp
+    ? { formattedContext: null }
+    : await retrieveRelevantMemories({
+        userId: input.session.userId,
+        dimension: input.session.dimension,
+        snapshot: input.nextSnapshot,
+        currentEventText: input.userMessage ?? undefined
+      }).catch(() => ({ formattedContext: null }));
   callbacks?.signal?.throwIfAborted();
 
   const enrichedInput = memoryContext
     ? { ...assistantInput, memoryContext }
     : assistantInput;
 
-  const generatedAssistantTurn = callbacks?.onDelta
-    ? await streamJoyAssistantTurn(enrichedInput, {
-        onDelta: async (delta) => callbacks.onDelta?.(delta)
-      }, { signal: callbacks.signal })
-    : await generateJoyAssistantTurn(enrichedInput);
+  const generatedAssistantTurn = usesDeterministicFollowUp
+    ? buildDeterministicFollowUpTurn({
+        ...input,
+        assistantAction: input.assistantAction
+      })
+    : callbacks?.onDelta
+      ? await streamJoyAssistantTurn(enrichedInput, {
+          onDelta: async (delta) => callbacks.onDelta?.(delta)
+        }, { signal: callbacks.signal })
+      : await generateJoyAssistantTurn(enrichedInput);
+
+  if (usesDeterministicFollowUp) {
+    await appendGenerationTraceDecision(input.generationTraceId, {
+      kind: "interview_follow_up_strategy",
+      strategy: "deterministic_question_protocol",
+      skippedQuestionModelCall: true
+    });
+  }
 
   callbacks?.signal?.throwIfAborted();
 
@@ -2720,7 +3209,12 @@ async function resolvePreparedInterviewTurn(
     });
   }
 
-  return finalized;
+  return usesDeterministicFollowUp
+    ? {
+        ...finalized,
+        outputOrigin: "deterministic"
+      }
+    : finalized;
 }
 
 async function getActiveInterviewSession(userId: string, sessionId: string) {
@@ -2838,6 +3332,10 @@ export async function pauseJoyInterviewSession(userId: string, sessionId: string
 
   const pausedSession = await pauseJoyInterviewSessionRecord(sessionId);
 
+  if (!pausedSession) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
   await recordAnalyticsEvent({
     eventName: "interview_session_paused",
     userId,
@@ -2878,7 +3376,7 @@ export async function completeJoyInterviewSession(userId: string, sessionId: str
 }
 
 async function prepareJoyInterviewResponseContext(
-  requestInput: InterviewRespondInput,
+  requestInput: LinearInterviewRespondInput,
   options?: {
     signal?: AbortSignal;
     onTurn?: (turn: InterviewUserTurnRecord) => Promise<void> | void;
@@ -2903,6 +3401,11 @@ async function prepareJoyInterviewResponseContext(
   }
 
   if (requestInput.action !== "resume_turn") {
+    const latestAssistantVersion = [...session.messages]
+      .reverse()
+      .find((message) => message.role === "assistant")
+      ?.responseVersion;
+    const regenerationLimitReached = (latestAssistantVersion?.versionCount ?? 0) >= 3;
     if (
       canonicalAction === "continue_current_event" &&
       session.pendingDecision?.eventId !== activeEvent.id
@@ -2912,6 +3415,7 @@ async function prepareJoyInterviewResponseContext(
 
     if (
       canonicalAction === "next_event" &&
+      !regenerationLimitReached &&
       (
         !session.pendingDecision ||
         session.pendingDecision.kind === "dimension_redirect" ||
@@ -2941,7 +3445,8 @@ async function prepareJoyInterviewResponseContext(
               ? requestInput.rawText ?? requestInput.userMessage
               : null,
           inputMode: requestInput.action === "reply" ? requestInput.inputMode : undefined,
-          baseMessageSequence: requestInput.baseMessageSequence
+          baseMessageSequence: requestInput.baseMessageSequence,
+          baseBranchSessionId: requestInput.baseBranchSessionId
         });
 
   await options?.onTurn?.(reservation.turn);
@@ -2950,7 +3455,18 @@ async function prepareJoyInterviewResponseContext(
     return buildImmediateResponseFromSession(reservation.session);
   }
 
-  canonicalAction = reservation.turn.action;
+  if (
+    reservation.turn.action !== "reply" &&
+    reservation.turn.action !== "correct_understanding" &&
+    reservation.turn.action !== "continue_current_event" &&
+    reservation.turn.action !== "next_event"
+  ) {
+    throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
+  }
+  canonicalAction =
+    reservation.turn.action === "correct_understanding"
+      ? "reply"
+      : getCanonicalAction(reservation.turn.action);
 
   if (requestInput.action === "resume_turn") {
     session = {
@@ -2970,8 +3486,15 @@ async function prepareJoyInterviewResponseContext(
     }
   }
 
-  const input: InterviewRespondInput =
-    reservation.turn.action === "reply"
+  const turnUnderstandingV2Enabled = isTurnUnderstandingV2Enabled(session.userId);
+  const configuredContentUnderstandingMode = getContentUnderstandingMode();
+  let previousUnderstandingState =
+    !turnUnderstandingV2Enabled && configuredContentUnderstandingMode === "legacy"
+      ? null
+      : await findInterviewEventUnderstandingState(activeEvent.id);
+
+  const input: LinearInterviewRespondInput =
+    reservation.turn.action === "reply" || reservation.turn.action === "correct_understanding"
       ? {
           userId: requestInput.userId,
           requestId: requestInput.requestId,
@@ -3003,6 +3526,9 @@ async function prepareJoyInterviewResponseContext(
       await markInterviewUserTurnFailed(reservation.turn.id, "SESSION_NOT_FOUND");
       throw new Error("SESSION_NOT_FOUND");
     }
+    if (resumedEvent.id !== activeEvent.id) {
+      previousUnderstandingState = await findInterviewEventUnderstandingState(resumedEvent.id);
+    }
     const trace = await createInterviewTurnTrace({
       requestId: input.requestId,
       session: resumedSession,
@@ -3010,6 +3536,21 @@ async function prepareJoyInterviewResponseContext(
       action: canonicalAction,
       userTurnId: reservation.turn.id,
       triggerMessageId: reservation.userMessageId
+    });
+
+    const resumeQuestionSpec = applyTrustedUnderstandingQuestionPolicy({
+      spec: createQuestionSpec({
+        dimension: resumedSession.dimension,
+        stage: resumedEvent.stage,
+        snapshot: resumedEvent.snapshot,
+        stageIntent: "resume",
+        previousSpec: getLatestAssistantQuestionSpec(resumedSession.messages)
+      }),
+      state: previousUnderstandingState,
+      dimension: resumedSession.dimension,
+      stage: resumedEvent.stage,
+      snapshot: resumedEvent.snapshot,
+      enabled: turnUnderstandingV2Enabled || configuredContentUnderstandingMode === "enforce"
     });
 
     return {
@@ -3036,13 +3577,8 @@ async function prepareJoyInterviewResponseContext(
       userTurnId: reservation.turn.id,
       clientTurnId: reservation.turn.clientTurnId,
       userMessageId: reservation.userMessageId,
-      questionSpec: createQuestionSpec({
-        dimension: resumedSession.dimension,
-        stage: resumedEvent.stage,
-        snapshot: resumedEvent.snapshot,
-        stageIntent: "resume",
-        previousSpec: getLatestAssistantQuestionSpec(resumedSession.messages)
-      })
+      questionSpec: resumeQuestionSpec,
+      understandingState: previousUnderstandingState
     } satisfies PreparedInterviewTurnContext;
   }
 
@@ -3050,19 +3586,52 @@ async function prepareJoyInterviewResponseContext(
     const pendingDecision = requestInput.action === "resume_turn"
       ? reservation.session.pendingDecision
       : session.pendingDecision;
+    const regenerationLimitReached =
+      (
+        [...session.messages]
+          .reverse()
+          .find((message) => message.role === "assistant")
+          ?.responseVersion?.versionCount ?? 0
+      ) >= 3;
 
     if (
-      !pendingDecision ||
-      pendingDecision.kind === "dimension_redirect" ||
-      !pendingDecision.actions.includes("next_event") ||
-      pendingDecision.eventId !== activeEvent.id
+      !regenerationLimitReached &&
+      (
+        !pendingDecision ||
+        pendingDecision.kind === "dimension_redirect" ||
+        !pendingDecision.actions.includes("next_event") ||
+        pendingDecision.eventId !== activeEvent.id
+      )
     ) {
       throw new Error("SESSION_NEXT_EVENT_UNAVAILABLE");
     }
 
-    const nextSession = await startNextInterviewEvent(session.id, getNextEventOpeningQuestion(session.dimension), {
+    const candidateEvent = turnUnderstandingV2Enabled || configuredContentUnderstandingMode === "enforce"
+      ? getPendingCandidateEvent(previousUnderstandingState, session.dimension)
+      : null;
+    const nextUnderstandingState = candidateEvent && previousUnderstandingState
+      ? {
+          ...previousUnderstandingState,
+          candidateEvents: previousUnderstandingState.candidateEvents.map((candidate) =>
+            candidate.id === candidateEvent.id ? { ...candidate, revisited: true } : candidate
+          )
+        }
+      : previousUnderstandingState;
+    const openingQuestion = candidateEvent
+      ? getCandidateEventOpeningQuestion({
+          dimension: session.dimension,
+          summary: candidateEvent.summary
+        })
+      : getNextEventOpeningQuestion(session.dimension);
+    const nextSession = await startNextInterviewEvent(session.id, openingQuestion, {
       requestId: input.requestId,
-      userTurnId: reservation.turn.id
+      userTurnId: reservation.turn.id,
+      ...(candidateEvent && nextUnderstandingState
+        ? {
+            understandingState: nextUnderstandingState,
+            candidateEventId: candidateEvent.id
+          }
+        : {})
     });
 
     if (!nextSession) {
@@ -3078,7 +3647,42 @@ async function prepareJoyInterviewResponseContext(
     throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
   }
 
-  const assessment = assessUserTurnMessage(input.userMessage);
+  const legacyAssessment = assessUserTurnMessage(input.userMessage);
+  const intentMode = getInterviewIntentV2Mode();
+  const contentUnderstandingMode = turnUnderstandingV2Enabled
+    ? "enforce"
+    : configuredContentUnderstandingMode;
+  const persistedUnderstandingResult = parseTurnUnderstandingResult(
+    reservation.turn.understandingResult
+  );
+  const baseDeterministicIntent = assessUserTurnIntent({
+    rawText: input.userMessage,
+    lastAssistantQuestion: getLatestAssistantQuestion(session.messages),
+    questionSpec: getLatestAssistantQuestionSpec(session.messages)
+  });
+  const persistedIntent = intentMode === "enforce" ? readPersistedIntent(reservation.turn) : null;
+  const shouldRecomputePersistedIntent =
+    intentMode === "enforce" &&
+    Boolean(reservation.turn.intentAssessedAt) &&
+    !persistedIntent;
+  const deterministicIntent: IntentAssessmentV1 = shouldRecomputePersistedIntent
+    ? {
+        ...baseDeterministicIntent,
+        reasonCodes: Array.from(
+          new Set([
+            ...baseDeterministicIntent.reasonCodes,
+            "intent_assessment_recomputed"
+          ])
+        )
+      }
+    : baseDeterministicIntent;
+  let intentAssessment = persistedIntent?.assessment ?? deterministicIntent;
+  let intentDecision = persistedIntent?.decision ?? decideUserTurn(intentAssessment);
+  let assessment =
+    intentMode === "enforce"
+      ? toLegacyUserTurnAssessment(input.userMessage, intentAssessment, intentDecision)
+      : legacyAssessment;
+  let intentTraceRecorded = false;
   const trace = await createInterviewTurnTrace({
     requestId: input.requestId,
     session,
@@ -3089,10 +3693,150 @@ async function prepareJoyInterviewResponseContext(
     userTurnId: reservation.turn.id,
     triggerMessageId: reservation.userMessageId
   });
+  const captureNonExtractedAnswerState = async (snapshot: JoySnapshot) => {
+    if (contentUnderstandingMode === "legacy") return previousUnderstandingState;
+    if (
+      persistedUnderstandingResult &&
+      persistedUnderstandingResult.eventId === activeEvent.id
+    ) {
+      return applyTurnUnderstandingResult({
+        previousState: previousUnderstandingState,
+        result: persistedUnderstandingResult
+      });
+    }
+    const update = buildTrustedUnderstandingUpdate({
+      eventId: activeEvent.id,
+      dimension: session.dimension,
+      userTurnId: reservation.turn.id,
+      sourceMessageSequence: reservation.turn.baseMessageSequence + 1,
+      rawText: input.userMessage,
+      intent: intentAssessment,
+      questionSpec: getLatestAssistantQuestionSpec(session.messages),
+      previousSnapshot: activeEvent.snapshot,
+      nextSnapshot: snapshot,
+      previousState: previousUnderstandingState,
+      candidate: null
+    });
+
+    if (
+      update.turn?.answerState === "unaddressed" &&
+      update.turn.updates.length === 0 &&
+      update.turn.operationRequests.length === 0 &&
+      update.turn.conflicts.length === 0 &&
+      update.turn.risks.length === 0
+    ) {
+      return previousUnderstandingState;
+    }
+
+    if (update.result && turnUnderstandingV2Enabled) {
+      await persistInterviewUserTurnUnderstanding({
+        turnId: reservation.turn.id,
+        version: TURN_UNDERSTANDING_RESULT_VERSION,
+        result: update.result
+      });
+    }
+
+    await appendGenerationTraceDecision(trace.id, {
+      kind: "interview_trusted_understanding",
+      version: update.state.version,
+      mode: contentUnderstandingMode,
+      extractionSkipped: true,
+      answerState: update.turn?.answerState ?? "unaddressed",
+      answeredTarget: update.turn?.answeredTarget ?? null,
+      targetResponses: update.turn?.targetResponses ?? [],
+      operationRequests: update.turn?.operationRequests ?? [],
+      updates: update.turn?.updates ?? [],
+      conflicts: update.turn?.conflicts ?? [],
+      journalMaterialsChanged: update.turn?.journalMaterialsChanged ?? false,
+      activeMaterialCount: update.activeMaterials.length,
+      candidateEventCount: update.state.candidateEvents.length,
+      candidateDimensions: update.state.candidateDimensions
+    });
+    return update.state;
+  };
+
+  if (intentMode === "shadow") {
+    await appendGenerationTraceDecision(trace.id, {
+      kind: "interview_intent_shadow_comparison",
+      classifierVersion: deterministicIntent.version,
+      legacyIntent: legacyAssessment.intent,
+      candidatePrimaryControl: deterministicIntent.primaryControl,
+      candidateContentPresence: deterministicIntent.content.presence,
+      candidateOrigin: deterministicIntent.origin,
+      reasonCodes: deterministicIntent.reasonCodes
+    });
+  }
+
+  if (intentMode === "enforce" && (persistedIntent || !intentDecision.runExtraction)) {
+    await persistAndTraceIntent({
+      traceId: trace.id,
+      turnId: reservation.turn.id,
+      userId: session.userId,
+      sessionId: session.id,
+      dimension: session.dimension,
+      assessment: intentAssessment,
+      decision: intentDecision,
+      reusedAssessment: Boolean(persistedIntent),
+      replaceExisting: shouldRecomputePersistedIntent
+    });
+    intentTraceRecorded = true;
+  }
+
   if (
-    assessment.intent === "draft_request" ||
-    isBoundaryIntent(assessment.intent) ||
-    assessment.intent === "conversation_feedback"
+    intentMode === "enforce" &&
+    intentDecision.nextAction === "switch_dimension" &&
+    !intentDecision.runExtraction
+  ) {
+    const targetDimension = getRequestedDimension(input.userMessage);
+
+    if (targetDimension && targetDimension !== session.dimension) {
+      const reason = `你想把这段内容放到${getInterviewDimensionConfig(targetDimension).label}维度继续。`;
+      const redirectUnderstandingState = await captureNonExtractedAnswerState(activeEvent.snapshot);
+      return {
+        session,
+        activeEvent,
+        nextSnapshot: activeEvent.snapshot,
+        nextTurnCount: session.turnCount,
+        nextEventTurnCount: activeEvent.totalMeaningfulReplyCount,
+        nextStage: activeEvent.stage,
+        nextEventStatus: "ready_for_choice",
+        nextProgressData: {
+          kind: "dimension_redirect",
+          targetDimension,
+          reason
+        },
+        isReadyForDraft: Boolean(session.journalEntry),
+        userMessage: input.userMessage,
+        inputMode: input.inputMode,
+        isMeaningfulReply: false,
+        coveredLenses: activeEvent.coveredLenses,
+        roundCoveredLenses: activeEvent.roundCoveredLenses,
+        roundMeaningfulReplyCount: activeEvent.roundMeaningfulReplyCount,
+        totalMeaningfulReplyCount: activeEvent.totalMeaningfulReplyCount,
+        assistantTurn: buildRequestedDimensionRedirectTurn(
+          targetDimension,
+          activeEvent.snapshot
+        ),
+        assistantAction: null,
+        generationTraceId: trace.id,
+        requestId: input.requestId ?? null,
+        outputOrigin: "deterministic",
+        userTurnId: reservation.turn.id,
+        clientTurnId: reservation.turn.clientTurnId,
+        userMessageId: reservation.userMessageId,
+        questionSpec: null,
+        understandingState: redirectUnderstandingState
+      } satisfies PreparedInterviewTurnContext;
+    }
+  }
+
+  if (
+    (
+      assessment.intent === "draft_request" ||
+      isBoundaryIntent(assessment.intent) ||
+      assessment.intent === "conversation_feedback"
+    ) &&
+    !assessment.shouldExtractSnapshot
   ) {
     const controlRevision = applyExplicitEvidenceRevisions({
       dimension: session.dimension,
@@ -3128,6 +3872,7 @@ async function prepareJoyInterviewResponseContext(
     });
     const canGenerate = canGenerateFromEvidence(evidence);
     const completionMode = evidence.completionMode ?? "user_override_partial";
+    const controlUnderstandingState = await captureNonExtractedAnswerState(controlSnapshot);
     const assistantTurn = canGenerate
       ? buildControlChoiceAssistantTurn({
           dimension: session.dimension,
@@ -3171,7 +3916,8 @@ async function prepareJoyInterviewResponseContext(
       userTurnId: reservation.turn.id,
       clientTurnId: reservation.turn.clientTurnId,
       userMessageId: reservation.userMessageId,
-      questionSpec: null
+      questionSpec: null,
+      understandingState: controlUnderstandingState
     } satisfies PreparedInterviewTurnContext;
   }
 
@@ -3186,6 +3932,7 @@ async function prepareJoyInterviewResponseContext(
       extractionSkipped: true,
       turnAdvanced: false
     });
+    const lowSignalUnderstandingState = await captureNonExtractedAnswerState(activeEvent.snapshot);
     return {
       session,
       activeEvent,
@@ -3211,7 +3958,8 @@ async function prepareJoyInterviewResponseContext(
       userTurnId: reservation.turn.id,
       clientTurnId: reservation.turn.clientTurnId,
       userMessageId: reservation.userMessageId,
-      questionSpec: null
+      questionSpec: null,
+      understandingState: lowSignalUnderstandingState
     } satisfies PreparedInterviewTurnContext;
   }
 
@@ -3226,6 +3974,7 @@ async function prepareJoyInterviewResponseContext(
       extractionSkipped: true,
       turnAdvanced: false
     });
+    const repairUnderstandingState = await captureNonExtractedAnswerState(activeEvent.snapshot);
     const previousSpec = getLatestAssistantQuestionSpec(session.messages);
     const nextRepairCount = (previousSpec?.repairCount ?? 0) + 1;
     const requestedSurfaceLevel =
@@ -3234,15 +3983,22 @@ async function prepareJoyInterviewResponseContext(
         : assessment.repairSignal === "switch_angle"
           ? "concrete_anchor"
           : "simplified";
-    const repairSpec = createQuestionSpec({
+    const repairSpec = applyTrustedUnderstandingQuestionPolicy({
+      spec: createQuestionSpec({
+        dimension: session.dimension,
+        stage: activeEvent.stage,
+        snapshot: activeEvent.snapshot,
+        stageIntent: "repair",
+        previousSpec,
+        surfaceLevel: requestedSurfaceLevel
+      }),
+      state: repairUnderstandingState,
       dimension: session.dimension,
       stage: activeEvent.stage,
       snapshot: activeEvent.snapshot,
-      stageIntent: "repair",
-      previousSpec,
-      surfaceLevel: requestedSurfaceLevel
+      enabled: turnUnderstandingV2Enabled || configuredContentUnderstandingMode === "enforce"
     });
-    const shouldEscalateRepair = repairSpec.repairCount >= 3;
+    const shouldEscalateRepair = Math.max(repairSpec?.repairCount ?? 0, nextRepairCount) >= 3;
 
     return {
       session,
@@ -3272,7 +4028,7 @@ async function prepareJoyInterviewResponseContext(
             dimension: session.dimension,
             stage: activeEvent.stage,
             snapshot: activeEvent.snapshot,
-            spec: repairSpec,
+            spec: repairSpec!,
             previousQuestion: getLatestAssistantQuestion(session.messages),
             hadReflectionSceneDenial: session.dimension === "reflection" && Boolean(findLatestReflectionSceneDenial(session.messages))
           }),
@@ -3283,20 +4039,66 @@ async function prepareJoyInterviewResponseContext(
       userTurnId: reservation.turn.id,
       clientTurnId: reservation.turn.clientTurnId,
       userMessageId: reservation.userMessageId,
-      questionSpec: shouldEscalateRepair ? null : repairSpec
+      questionSpec: shouldEscalateRepair ? null : repairSpec,
+      understandingState: repairUnderstandingState
     } satisfies PreparedInterviewTurnContext;
   }
 
-  const isMeaningfulReply = assessment.isMeaningful;
   let rawNextSnapshot: JoySnapshot;
+  let understandingCandidate: ContentUnderstandingCandidate | null = null;
   try {
-    rawNextSnapshot = assessment.shouldExtractSnapshot
+    const reusedUnderstandingState =
+      persistedUnderstandingResult && persistedUnderstandingResult.eventId === activeEvent.id
+        ? applyTurnUnderstandingResult({
+            previousState: previousUnderstandingState,
+            result: persistedUnderstandingResult
+          })
+        : null;
+    rawNextSnapshot = reusedUnderstandingState
+      ? projectSnapshotFromTrustedUnderstanding({
+          dimension: session.dimension,
+          snapshot: activeEvent.snapshot,
+          state: reusedUnderstandingState
+        })
+      : assessment.shouldExtractSnapshot
       ? await extractJoySnapshotWithAI({
           session,
           userMessage: input.userMessage,
           signal: options?.signal,
           traceId: trace.id,
-          requestId: input.requestId
+          requestId: input.requestId,
+          intentAssessment:
+            intentMode === "enforce" || contentUnderstandingMode !== "legacy"
+              ? intentAssessment
+              : undefined,
+          onIntentAssessment:
+            intentMode === "enforce" && !persistedIntent
+              ? async (refinedAssessment) => {
+                  intentAssessment = refinedAssessment;
+                  intentDecision = decideUserTurn(intentAssessment);
+                  assessment = toLegacyUserTurnAssessment(
+                    input.userMessage,
+                    intentAssessment,
+                    intentDecision
+                  );
+                  await persistAndTraceIntent({
+                    traceId: trace.id,
+                    turnId: reservation.turn.id,
+                    userId: session.userId,
+                    sessionId: session.id,
+                    dimension: session.dimension,
+                    assessment: intentAssessment,
+                    decision: intentDecision,
+                    reusedAssessment: false,
+                    replaceExisting: shouldRecomputePersistedIntent
+                  });
+                  intentTraceRecorded = true;
+                }
+              : undefined,
+          onContentUnderstandingCandidate: (candidate) => {
+            understandingCandidate = candidate;
+          },
+          trustedUnderstandingEnabled: turnUnderstandingV2Enabled || contentUnderstandingMode === "enforce"
         })
       : activeEvent.snapshot;
   } catch (error) {
@@ -3312,14 +4114,31 @@ async function prepareJoyInterviewResponseContext(
     }
     throw error;
   }
+
+  if (intentMode === "enforce" && !intentTraceRecorded) {
+    await persistAndTraceIntent({
+      traceId: trace.id,
+      turnId: reservation.turn.id,
+      userId: session.userId,
+      sessionId: session.id,
+      dimension: session.dimension,
+      assessment: intentAssessment,
+      decision: intentDecision,
+      reusedAssessment: Boolean(persistedIntent),
+      replaceExisting: shouldRecomputePersistedIntent
+    });
+    intentTraceRecorded = true;
+  }
+
   options?.signal?.throwIfAborted();
+  const isMeaningfulReply = assessment.isMeaningful;
   const revisedExtraction = applyExplicitEvidenceRevisions({
     dimension: session.dimension,
     previousSnapshot: activeEvent.snapshot,
     candidateSnapshot: rawNextSnapshot,
     message: input.userMessage
   });
-  const nextSnapshot =
+  let nextSnapshot =
     session.dimension === "gratitude"
       ? applyGratitudeEvidenceState({
           previous: activeEvent.snapshot,
@@ -3329,6 +4148,83 @@ async function prepareJoyInterviewResponseContext(
         })
       : revisedExtraction.snapshot;
   const evidenceRevisions = revisedExtraction.revisions;
+  const understandingUpdate =
+    contentUnderstandingMode === "legacy"
+      ? null
+      : persistedUnderstandingResult && persistedUnderstandingResult.eventId === activeEvent.id
+        ? {
+            state: applyTurnUnderstandingResult({
+              previousState: previousUnderstandingState,
+              result: persistedUnderstandingResult
+            }),
+            turn: null,
+            result: persistedUnderstandingResult,
+            activeMaterials: []
+          }
+        : buildTrustedUnderstandingUpdate({
+          eventId: activeEvent.id,
+          dimension: session.dimension,
+          userTurnId: reservation.turn.id,
+          sourceMessageSequence: reservation.turn.baseMessageSequence + 1,
+          rawText: input.userMessage,
+          intent: intentAssessment,
+          questionSpec: getLatestAssistantQuestionSpec(session.messages),
+          previousSnapshot: activeEvent.snapshot,
+          nextSnapshot,
+          previousState: previousUnderstandingState,
+          candidate: understandingCandidate
+        });
+  const understandingState = understandingUpdate?.state ?? previousUnderstandingState;
+
+  if (
+    understandingUpdate?.result &&
+    !persistedUnderstandingResult &&
+    turnUnderstandingV2Enabled
+  ) {
+    await persistInterviewUserTurnUnderstanding({
+      turnId: reservation.turn.id,
+      version: TURN_UNDERSTANDING_RESULT_VERSION,
+      result: understandingUpdate.result
+    });
+  }
+  if (understandingState && turnUnderstandingV2Enabled) {
+    nextSnapshot = projectSnapshotFromTrustedUnderstanding({
+      dimension: session.dimension,
+      snapshot: nextSnapshot,
+      state: understandingState
+    });
+  }
+
+  if (understandingUpdate) {
+    const effectiveView = buildEffectiveUnderstandingView(
+      understandingUpdate.state,
+      session.dimension
+    );
+    await appendGenerationTraceDecision(trace.id, {
+      kind: "interview_trusted_understanding",
+      version: understandingUpdate.state.version,
+      mode: contentUnderstandingMode,
+      answerState: understandingUpdate.turn?.answerState ?? "unaddressed",
+      answeredTarget: understandingUpdate.turn?.answeredTarget ?? null,
+      targetResponses:
+        understandingUpdate.turn?.targetResponses ??
+        understandingUpdate.result?.targetResponses ?? [],
+      operationRequests:
+        understandingUpdate.turn?.operationRequests ??
+        understandingUpdate.result?.operationRequests ?? [],
+      updates: understandingUpdate.turn?.updates ?? [],
+      conflicts:
+        understandingUpdate.turn?.conflicts ??
+        understandingUpdate.result?.conflicts ?? [],
+      journalMaterialsChanged:
+        understandingUpdate.turn?.journalMaterialsChanged ??
+        understandingUpdate.result?.journalMaterialsChanged ?? false,
+      reusedUnderstanding: Boolean(persistedUnderstandingResult),
+      activeMaterialCount: effectiveView.progressMaterials.length,
+      candidateEventCount: understandingUpdate.state.candidateEvents.length,
+      candidateDimensions: understandingUpdate.state.candidateDimensions
+    });
+  }
 
   if (evidenceRevisions.length) {
     await appendGenerationTraceDecision(trace.id, {
@@ -3347,6 +4243,77 @@ async function prepareJoyInterviewResponseContext(
     : activeEvent.roundCoveredLenses;
   const roundMeaningfulReplyCount = activeEvent.roundMeaningfulReplyCount + (assessment.shouldAdvanceRound ? 1 : 0);
   const totalMeaningfulReplyCount = nextEventTurnCount;
+
+  if (
+    intentMode === "enforce" &&
+    intentDecision.nextAction === "validate_and_wrap_up" &&
+    (
+      assessment.intent === "draft_request" ||
+      isBoundaryIntent(assessment.intent)
+    )
+  ) {
+    const currentEvidence = assessDimensionEvidence(session.dimension, nextSnapshot);
+    const existingEvidence = assessSessionDimensionEvidence(session);
+    const evidence = canGenerateFromEvidence(currentEvidence) ? currentEvidence : existingEvidence;
+    await appendEvidenceDecisionTrace({
+      traceId: trace.id,
+      detectedIntent: assessment.intent,
+      dimension: session.dimension,
+      snapshot: nextSnapshot,
+      decisionOrigin: "deterministic",
+      extractionSkipped: false,
+      turnAdvanced: assessment.shouldAdvanceTurn,
+      evidence
+    });
+    const canGenerate = canGenerateFromEvidence(evidence);
+    const completionMode = evidence.completionMode ?? "user_override_partial";
+
+    return {
+      session,
+      activeEvent,
+      nextSnapshot,
+      nextTurnCount,
+      nextEventTurnCount,
+      nextStage: "wrap_up",
+      nextEventStatus: "ready_for_choice",
+      nextProgressData: canGenerate
+        ? {
+            kind: "event_complete",
+            completionMode
+          }
+        : {
+            kind: "boundary_insufficient",
+            reason: "我不再继续追问细节了。"
+          },
+      isReadyForDraft: canGenerate,
+      userMessage: input.userMessage,
+      inputMode: input.inputMode,
+      isMeaningfulReply,
+      coveredLenses,
+      roundCoveredLenses,
+      roundMeaningfulReplyCount,
+      totalMeaningfulReplyCount,
+      assistantTurn: canGenerate
+        ? buildControlChoiceAssistantTurn({
+            dimension: session.dimension,
+            snapshot: nextSnapshot,
+            explorationRound: activeEvent.explorationRound,
+            completionMode,
+            intent: assessment.intent
+          })
+        : buildBoundaryInsufficientAssistantTurn(session.dimension, assessment.intent),
+      assistantAction: null,
+      generationTraceId: trace.id,
+      requestId: input.requestId ?? null,
+      outputOrigin: "deterministic",
+      userTurnId: reservation.turn.id,
+      clientTurnId: reservation.turn.clientTurnId,
+      userMessageId: reservation.userMessageId,
+      questionSpec: null,
+      understandingState
+    } satisfies PreparedInterviewTurnContext;
+  }
+
   const redirectReason = getImprovementRedirectReason({
     dimension: session.dimension,
     session,
@@ -3386,6 +4353,54 @@ async function prepareJoyInterviewResponseContext(
     decisionOrigin: shouldOfferChoiceNow || shouldOfferRedirectNow ? "deterministic" : "llm",
     extractionSkipped: !assessment.shouldExtractSnapshot,
     turnAdvanced: assessment.shouldAdvanceTurn
+  });
+  const baseNextQuestionSpec = shouldOfferChoiceNow || shouldOfferRedirectNow
+    ? null
+    : shouldPreserveReflectionConcreteInsightAfterRepair({
+          dimension: session.dimension,
+          stage: nextStage,
+          snapshot: nextSnapshot,
+          messages: session.messages,
+          userMessage: input.userMessage,
+          isMeaningfulReply
+        })
+      ? createQuestionSpec({
+          dimension: session.dimension,
+          stage: nextStage,
+          snapshot: nextSnapshot,
+          stageIntent: "advance",
+          target: "insight_evidence",
+          surfaceLevel: "concrete_anchor"
+        })
+      : intentMode === "enforce" &&
+          (intentAssessment.content.explicitAbsence || intentDecision.nextQuestionStyle !== "normal")
+        ? createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance",
+            target:
+              intentAssessment.content.explicitAbsence || intentDecision.nextQuestionStyle === "new_angle"
+                ? getAlternativeQuestionTarget(getLatestAssistantQuestionSpec(session.messages)?.target)
+                : undefined,
+            surfaceLevel:
+              intentDecision.nextQuestionStyle === "normal"
+                ? "default"
+                : "simplified"
+          })
+        : createQuestionSpec({
+            dimension: session.dimension,
+            stage: nextStage,
+            snapshot: nextSnapshot,
+            stageIntent: "advance"
+          });
+  const nextQuestionSpec = applyTrustedUnderstandingQuestionPolicy({
+    spec: baseNextQuestionSpec,
+    state: understandingState,
+    dimension: session.dimension,
+    stage: nextStage,
+    snapshot: nextSnapshot,
+    enabled: turnUnderstandingV2Enabled || configuredContentUnderstandingMode === "enforce"
   });
 
   return {
@@ -3428,34 +4443,59 @@ async function prepareJoyInterviewResponseContext(
     userTurnId: reservation.turn.id,
     clientTurnId: reservation.turn.clientTurnId,
     userMessageId: reservation.userMessageId,
-    questionSpec: shouldOfferChoiceNow || shouldOfferRedirectNow
-      ? null
-      : shouldPreserveReflectionConcreteInsightAfterRepair({
-            dimension: session.dimension,
-            stage: nextStage,
-            snapshot: nextSnapshot,
-            messages: session.messages,
-            userMessage: input.userMessage,
-            isMeaningfulReply
-          })
-        ? createQuestionSpec({
-            dimension: session.dimension,
-            stage: nextStage,
-            snapshot: nextSnapshot,
-            stageIntent: "advance",
-            target: "insight_evidence",
-            surfaceLevel: "concrete_anchor"
-          })
-        : createQuestionSpec({
-            dimension: session.dimension,
-            stage: nextStage,
-            snapshot: nextSnapshot,
-            stageIntent: "advance"
-          })
+    questionSpec: nextQuestionSpec,
+    understandingState
   } satisfies PreparedInterviewTurnContext;
 }
 
-export async function prepareJoyInterviewResponse(input: InterviewRespondInput) {
+export async function prepareJoyInterviewResponse(
+  input: InterviewRespondInput
+): Promise<ResolvedPreparedInterviewTurn | CompletedInterviewResponse> {
+  if (input.action === "regenerate_question") {
+    return regenerateInterviewQuestion(input);
+  }
+
+  if (input.action === "correct_understanding") {
+    await forkInterviewBranchForCorrection({
+      userId: input.userId,
+      sessionId: input.sessionId,
+      targetMessageId: input.targetMessageId,
+      baseBranchSessionId: input.baseBranchSessionId
+    });
+    try {
+      return await prepareJoyInterviewResponse({
+        userId: input.userId,
+        requestId: input.requestId,
+        action: "reply",
+        sessionId: input.sessionId,
+        userMessage: input.rawText,
+        rawText: input.rawText,
+        inputMode: "text",
+        clientTurnId: input.clientTurnId,
+        baseMessageSequence: undefined
+      });
+    } finally {
+      if (input.clientTurnId) {
+        await markInterviewUserTurnAsCorrection({
+          sessionId: input.sessionId,
+          clientTurnId: input.clientTurnId,
+          targetMessageId: input.targetMessageId,
+          baseBranchSessionId: input.baseBranchSessionId
+        });
+      }
+    }
+  }
+
+  if (input.action === "resume_turn") {
+    try {
+      return await regenerateInterviewQuestion(input);
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "INTERVIEW_ACTION_UNSUPPORTED") {
+        throw error;
+      }
+    }
+  }
+
   const acceptedTurnRef: { current: InterviewUserTurnRecord | null } = { current: null };
   let prepared;
 
@@ -3639,8 +4679,10 @@ export async function completeJoyInterviewResponse(
   try {
     updatedSession = await appendJoyInterviewTurn({
     sessionId: input.session.id,
+    expectedBranchSessionId: input.session.activeBranchSessionId ?? input.session.id,
     activeEventId: input.activeEvent.id,
-    userMessage: input.userMessage ?? undefined,
+	    userMessage: input.userMessage ?? undefined,
+	    marksRegenerationAnswered: input.isMeaningfulReply,
     inputMode: input.inputMode,
     assistantTurn: input.assistantTurn,
     snapshot: input.nextSnapshot,
@@ -3662,7 +4704,8 @@ export async function completeJoyInterviewResponse(
     generationTraceId: input.generationTraceId,
     requestId: input.requestId,
     outputOrigin: input.outputOrigin,
-    userTurnId: input.userTurnId
+    userTurnId: input.userTurnId,
+    understandingState: input.understandingState
     });
   } catch (error) {
     if (options?.signal?.aborted) {
@@ -3734,7 +4777,42 @@ export async function completeJoyInterviewResponse(
   };
 }
 
-export async function respondToJoyInterview(input: InterviewRespondInput) {
+export async function respondToJoyInterview(input: InterviewRespondInput): Promise<CompletedInterviewResponse> {
+  if (input.action === "regenerate_question") {
+    return regenerateInterviewQuestion(input);
+  }
+
+  if (input.action === "correct_understanding") {
+    await forkInterviewBranchForCorrection({
+      userId: input.userId,
+      sessionId: input.sessionId,
+      targetMessageId: input.targetMessageId,
+      baseBranchSessionId: input.baseBranchSessionId
+    });
+    try {
+      return await respondToJoyInterview({
+        userId: input.userId,
+        requestId: input.requestId,
+        action: "reply",
+        sessionId: input.sessionId,
+        userMessage: input.rawText,
+        rawText: input.rawText,
+        inputMode: "text",
+        clientTurnId: input.clientTurnId,
+        baseMessageSequence: undefined
+      });
+    } finally {
+      if (input.clientTurnId) {
+        await markInterviewUserTurnAsCorrection({
+          sessionId: input.sessionId,
+          clientTurnId: input.clientTurnId,
+          targetMessageId: input.targetMessageId,
+          baseBranchSessionId: input.baseBranchSessionId
+        });
+      }
+    }
+  }
+
   const prepared = await prepareJoyInterviewResponse(input);
 
   if ("assistantMessage" in prepared) {
@@ -3752,9 +4830,73 @@ export async function streamJoyInterviewResponse(
     onTurn?: (turn: InterviewUserTurnRecord) => Promise<void> | void;
   },
   options?: { signal?: AbortSignal }
-) {
+): Promise<CompletedInterviewResponse> {
   const signal = options?.signal;
   signal?.throwIfAborted();
+
+  if (input.action === "regenerate_question" || input.action === "resume_turn") {
+    await callbacks.onPhase("thinking");
+    try {
+      const result = await regenerateInterviewQuestion(input, {
+        signal,
+        onTurn: callbacks.onTurn
+      });
+      const visible = result.assistantTurn ? getVisibleAssistantText(result.assistantTurn) : null;
+      if (visible?.firstBubble) {
+        await callbacks.onPhase("summary");
+        await callbacks.onDelta({ target: "summary", text: visible.firstBubble });
+      }
+      if (visible?.question) {
+        await callbacks.onPhase("question");
+        await callbacks.onDelta({ target: "question", text: visible.question });
+      }
+      return result;
+    } catch (error) {
+      if (
+        input.action !== "resume_turn" ||
+        !(error instanceof Error) ||
+        error.message !== "INTERVIEW_ACTION_UNSUPPORTED"
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  if (input.action === "correct_understanding") {
+    await forkInterviewBranchForCorrection({
+      userId: input.userId,
+      sessionId: input.sessionId,
+      targetMessageId: input.targetMessageId,
+      baseBranchSessionId: input.baseBranchSessionId
+    });
+    try {
+      return await streamJoyInterviewResponse(
+        {
+          userId: input.userId,
+          requestId: input.requestId,
+          action: "reply",
+          sessionId: input.sessionId,
+          userMessage: input.rawText,
+          rawText: input.rawText,
+          inputMode: "text",
+          clientTurnId: input.clientTurnId,
+          baseMessageSequence: undefined
+        },
+        callbacks,
+        options
+      );
+    } finally {
+      if (input.clientTurnId) {
+        await markInterviewUserTurnAsCorrection({
+          sessionId: input.sessionId,
+          clientTurnId: input.clientTurnId,
+          targetMessageId: input.targetMessageId,
+          baseBranchSessionId: input.baseBranchSessionId
+        });
+      }
+    }
+  }
+
   const acceptedTurnRef: { current: InterviewUserTurnRecord | null } = { current: null };
   let prepared;
 

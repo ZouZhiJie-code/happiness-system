@@ -1,6 +1,10 @@
 import { buildDimensionSemanticInterpretation } from "@/features/interview/server/semantic-interpretation";
 import { assessDimensionEvidence } from "@/features/interview/dimension-evidence";
 import {
+  parseTrustedUnderstandingState,
+  projectSnapshotFromTrustedUnderstanding
+} from "@/features/interview/content-understanding";
+import {
   getDelightSignature,
   getDirectionSignal,
   getDurability,
@@ -478,17 +482,38 @@ export function resolveDraftCompletionMode(session: InterviewSessionRecord, sour
   return best?.completionMode ?? "user_override_partial";
 }
 
+export function projectDraftSourceEventsFromUnderstanding(
+  dimension: InterviewDimension,
+  sourceEvents: InterviewEventRecord[]
+) {
+  return sourceEvents.map((event) => {
+    const understandingState = parseTrustedUnderstandingState(event.understandingData);
+    if (!understandingState?.appliedTurnIds.length) return event;
+
+    return {
+      ...event,
+      snapshot: projectSnapshotFromTrustedUnderstanding({
+        dimension,
+        snapshot: event.snapshot,
+        state: understandingState
+      }),
+      snapshotData: undefined
+    };
+  });
+}
+
 export function buildDraftBrief(input: {
   session: InterviewSessionRecord;
   sourceEvents: InterviewEventRecord[];
   completionMode?: DraftCompletionMode;
 }) {
-  const completionMode = input.completionMode ?? resolveDraftCompletionMode(input.session, input.sourceEvents);
+  const sourceEvents = projectDraftSourceEventsFromUnderstanding(input.session.dimension, input.sourceEvents);
+  const completionMode = input.completionMode ?? resolveDraftCompletionMode(input.session, sourceEvents);
 
   if (input.session.dimension === "joy") {
     return buildJoyBrief({
       session: input.session,
-      sourceEvents: input.sourceEvents,
+      sourceEvents,
       completionMode
     });
   }
@@ -496,7 +521,7 @@ export function buildDraftBrief(input: {
   if (input.session.dimension === "fulfillment") {
     return buildFulfillmentBrief({
       session: input.session,
-      sourceEvents: input.sourceEvents,
+      sourceEvents,
       completionMode
     });
   }
@@ -504,7 +529,7 @@ export function buildDraftBrief(input: {
   if (input.session.dimension === "reflection") {
     return buildReflectionBrief({
       session: input.session,
-      sourceEvents: input.sourceEvents,
+      sourceEvents,
       completionMode
     });
   }
@@ -512,7 +537,7 @@ export function buildDraftBrief(input: {
   if (input.session.dimension === "improvement") {
     return buildImprovementBrief({
       session: input.session,
-      sourceEvents: input.sourceEvents,
+      sourceEvents,
       completionMode
     });
   }
@@ -520,13 +545,13 @@ export function buildDraftBrief(input: {
   if (input.session.dimension === "gratitude") {
     return buildGratitudeBrief({
       session: input.session,
-      sourceEvents: input.sourceEvents,
+      sourceEvents,
       completionMode
     });
   }
 
   return buildDefaultBrief({
     session: input.session,
-    sourceEvents: input.sourceEvents
+    sourceEvents
   });
 }

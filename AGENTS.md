@@ -4,7 +4,7 @@
 
 这是一个把“幸福日志”理论翻译成 AI 访谈产品的仓库。
 
-当前真实状态以 `2026-07-20` 的代码与生产修复结果为准：
+当前真实状态以 `2026-07-21` 的代码、生产部署与线上核心链路验证结果为准：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 是当前已经完成理论对齐深化的标品维度。
 - `improvement` 已完成理论规格、结构字段扩展、AI 抽取独立化、fallback 抽取、阶段推进、专属提问策略、完成标准执行、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -29,15 +29,22 @@
 - 历史 `choiceKind` assistant turn 在刷新 / 恢复后仍保留在 transcript 中；但只要当前正在显示 inline choice card，聊天记录里会先隐藏所有 choice turn，避免和卡片重复。只有当 live choice card 消失后，且某条历史 choice 最终停在 transcript 末尾时，它才会继续可见。
 - 访谈提交错误已经结构化，`respond/stream` 与 `respond` 会返回带 `code / title / message / resolution / retryable / action / requestId` 的 `issue`，前端展示原因、解决方案、错误码和 requestId。
 - 访谈回复当前采用“用户原话先持久化、AI 结果后完成”的两阶段提交：前端用 `sessionStorage` 保存输入草稿和待发 outbox，服务端用 `InterviewUserTurn` 保存 `clientTurnId / rawText / baseMessageSequence / status / attemptCount`；SSE `turn` 确认服务端已接收原话，失败或取消后 session hydrate 返回 `pendingUserTurn`，用户可点击“继续生成”用同一 `clientTurnId` 调用 `resume_turn`。
-- `20260720120000_add_interview_user_turn` migration 新增 `InterviewUserTurn`、相关枚举与 `InterviewMessage.userTurnId`。当前完整测试为 `174` 个测试文件、`1095` 个用例通过；`npx tsc --noEmit` 与 `npm run build` 均通过。
+- 访谈意图识别 v1 已完成全量发布：系统把“生成日志、停止追问、修正问题、跳过、切换片段、切换维度”和用户内容分开判断。正式与预览环境均采用当前识别策略，紧急高影响问题可以恢复到上一稳定处理版本。
+- `2026-07-21` 已完成模块二“本轮理解与事实更新”的生产上线。`InterviewUserTurn` 按回答保存本轮理解结果、协议版本和理解完成时间；`InterviewEvent.understandingData` 保存事件累计理解。系统按原话顺序保留全部操作要求，支持一轮多个回答目标、明确修正、含糊冲突、候选事件与候选维度；进度、下一问和日志统一读取生效材料。当前生产环境采用第二版理解协议，上一正式部署 `dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr` 和版本 `1` 保留快速恢复能力；模块二已完成，产品地图继续停留在模块二。
+- `20260720210000_add_interview_intent_assessment` migration 为 `InterviewUserTurn` 增加意图评估、决策、分类器版本与评估时间字段。意图评估属于内部运行记录，SSE 和 session hydrate 继续只暴露用户恢复所需字段。
+- `20260720120000_add_interview_user_turn` migration 新增 `InterviewUserTurn`、相关枚举与 `InterviewMessage.userTurnId`。模块二新增 `20260721120000_add_interview_trusted_understanding` 与 `20260721153000_add_interview_turn_understanding_result` 两项迁移。`2026-07-21` 当前完整测试为 `191` 个测试文件、`1711` 个用例通过；`npx tsc --noEmit` 与 `npm run build` 均通过。
+- `2026-07-21` 已完成“按意图重新生成”正式发布与线上验收：新会话可对正式追问选择简单、具体、换角度、深入或轻一点，也可纠正理解；每组回复最多三个版本，历史换问法通过活动分支保留原路径。加载状态只在目标回复气泡内呈现，操作区保留静态禁用入口。
+- `2026-07-21` 已完成访谈意图识别全量发布：`INT-EVAL-252` 内容边界已修正。模块二上线后的当前正式部署为 `dpl_CKPntUXFtyrqFSQW8eqGEvgKA8rZ`，主域名为 `https://dailylight.chat`；上一正式版本 `dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr` 保留为快速恢复入口。
 - `20260720153000_add_ai_optimization_review_reason` migration 为 `AIOptimizationCandidate` 新增 `reviewReason`，用于保留管理员拒绝候选的理由。
+- `/admin/ai-quality` 已完成生产工作台：首屏按待审核、待验证、待发布、观察中和历史记录分流；队列以“维度 · 具体问题”命名，右侧连续承接证据、方案、回复对照、验证和决策。影响服务用标准化后的具体 `issueKey` 计算“同一问题率”；未知问题各自保留标准化键，缺少问题码时页面显示“口径不足”。管理员时间统一固定为 `Asia/Shanghai`，避免服务端与浏览器水合文本不一致。
+- `2026-07-20` 已完成 UserTurn 可靠提交改造的 production 发布：两条 migration 均已应用，PR #36（`ce1e2afbefe98eb79a21faf3d02869fe377085f4`）已合并进 main，公开 smoke 和同 `clientTurnId` 重放校验通过。
 - `InterviewSession` 现在有显式 `entryDate`，日志归属日期不再默认等于 `startedAt`。
 - 普通 `/interview` 入口现在默认代表“今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”，避免用户误把旧日期会话当成当天记录。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不能再追同一字段，而要改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间；服务层会在最终落库前和流式输出前同时兜底，避免重复问题先漏给前端。
 - 访谈 repair 协议已收紧：当用户明确表示“看不懂 / 太抽象 / 换一个 / 说简单点”时，服务端会识别 `question_repair`，并对当前问题走纯服务端确定性重问，不再请求模型；repair 轮不会抽取 snapshot、不会增加 `turnCount`、不会推进 `roundMeaningfulReplyCount`、不会触发新的 `event_complete`。`reflection` 维度现在优先按 `event_anchor / prior_assumption / reaction_evidence / insight_evidence / judgment_clue` 的强约束模板重问；如果上一轮已经命中过“没有具体经历 / 对话”的 guard，repair 不能回到 scene question，而会自动落到“具体顾虑 / 画面 / 念头”类低压锚点。连续第 `3` 次 repair 会直接进入低压 choice，不再继续换问法。
 - 记录日历的 month/week/day 主链已落地：calendar 展示层读模型、calendar 聚合器、calendar repository、calendar service、`/api/calendar/day|week|month`、`/calendar` 月视图、周视图、日视图，以及回到 `/interview` 的 deep link 都已完成。日视图现在是某一天五维记录的统一阅读与分发入口。
 - calendar / 当天整合日志 / 月分析的按天查询现在统一走 `Asia/Shanghai` 的整天时间窗口，不再用单个归一化时间点做精确匹配；同一天任意时刻保存的维度日志都会归到正确 `entryDate`。
-- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物，访谈页顶部【完整日志】会按当前 `entryDate` 打开当天日志主区，只基于已保存维度日志生成章节合集；完整日志打开/生成与单维度日志生成都显示共享阶段进度、细进度轨和书页生长动效。完整日志工作区离开前会先保存未自动暂存的当天日志编辑；从完整日志切回访谈或切换访谈维度时，不会静默丢失 700ms autosave 触发前的输入，也不会让新维度被卡在完整日志工作区背后。
+- 当天整合日志已落地：`DailyJournalEntry` 独立承载日级成果物。桌面端从右侧「今日日志」面板底部的 `生成日志 / 更新日志 / 查看日志` 进入，移动端从对话区顶部的【完整日志】快捷按钮进入；生成或更新会基于当前 `entryDate` 已保存的维度日志整理章节、直接保存并打开当天日志工作区。完整日志工作区离开前会保存未自动暂存的编辑；从完整日志切回访谈或切换访谈维度时，会保留 700ms autosave 触发前的输入。
 - 当天整合日志的来源集合现在会随着同日新增 `saved` 维度日志、来源维度日志更新时间变化或来源不再是 `saved` 进入 `stale`；来源签名按“同一天每个维度最新一篇 `saved` 日志”计算，重新生成后章节集合会与当天真实 `saved` 维度重新对齐。
 - `SiteHeader` 现在是全宽暖色工具栏，中区承接 calendar 的 `month / week / day` 切换、前后翻段、回到今天和实时摘要；访谈维度条、calendar toolbar 和主导航都直接平铺，不再额外套内层方框；主导航当前页用贴近文字的暖棕实线下划线表达，选中项字号略大；访谈和 calendar 业务控制组用 `｜` 分隔。主导航不再包含【首页】项，点击左侧【Daily Light】品牌标识可返回首页。
 - 访谈页通过 header 主导航切换到日历、分析、画像、设置或首页时直接完成路由切换；刷新或关闭访谈页面时继续由 `beforeunload` 保存会话恢复标记并提供浏览器离开保护。
@@ -45,12 +52,14 @@
 - opening-only 空会话（只有 opening assistant、`turnCount = 0` 且没有用户回复）不再把 header 当前维度、calendar 当天状态或相关统计点亮成“进行中”；这类空开场 session 仍会保留在库里，但不会继续污染当天状态。
 - 如果当前 active choice 是 `boundary_insufficient` 或 `dimension_redirect`，header 当前选中维度的 live progress 会被压在 `88%` 以下，不再被历史 `draftGenerationUnlocked` 顶回 `90% ready`。
 - 首页当前是品牌广告页，主线为“在日常里照见自己 -> 回顾一天显露纹理 -> 五维认识自己 -> 日有所记，心有所归”；文案和图片位集中在 `src/content/homepage.ts`，图片按 section 配置，当前已接入 `public/homepage/*` 本地图片，图片区统一采用“单行标题 + 图片本体”的去卡片化布局，首页木纹背景改为上浅下深。
-- `/analysis?month=YYYY-MM&section=trends|dimensions|correlation|review` 记录分析页当前是单页四段纵向 scroll + 顶部锚点跳转；可选 `preset=week|month|custom` 与 `start/end` 控制量化趋势周期。`SiteHeader` 中区承接周期 preset、日期范围、四段 tab 和 contextual chip。`量化趋势` 段走 `GET /api/analysis/range`，展示周期摘要、总分柱线图、只读日志天数色块、8 要素雷达/棒棒糖，不带评分录入或热力点选 CTA。`五维全景` 仍走 `GET /api/analysis/month`；`关联 / 复盘` 仍是占位。旧 `overview|score|rhythm|insights` URL 会归一到 `trends|dimensions`。幸福 8 要素评分录入在 `/interview` 的「当天评分」工作区，不在分析页。
+- `/analysis?month=YYYY-MM&section=trends|dimensions` 记录分析页当前是量化趋势与五维记录两段纵向 scroll + 顶部锚点切换；可选 `preset=week|month|custom` 与 `start/end` 控制量化趋势周期。`SiteHeader` 中区承接周期 preset、日期范围、两段 tab 和 contextual chip。`量化趋势` 走 `GET /api/analysis/range`，展示周期摘要、总分柱线图、只读日志天数色块、8 要素雷达/棒棒糖；`五维记录` 走 `GET /api/analysis/month`。旧 `overview|score|rhythm` 归一到 `trends`，旧 `insights|correlation|review` 归一到 `dimensions`。幸福 8 要素评分录入在 `/interview` 的「当天评分」工作区。
 - analysis 的 `narrative-service.ts` 当前仍是确定性占位文本，不是最终 AI 叙事；五维段仍保留模板叙事与证据链接。
 - 全站前端壳层已经切到平铺工作台：根布局不再给页面额外包外距，首页、访谈、设置和 calendar 主体减少大圆角外框、重复模块间隙和卡片嵌套。
-- `2026-06-12` 起全站执行「单层卡片制」设计规范（`docs/design/ui-conventions.md`）：每页最多“1 个底板 + 1 层卡片”，卡片内禁再嵌套 border+bg 容器，分区用标题 / hairline 分隔线 / 留白；圆角三档 `12/20/28px`（`--radius-control / --radius-card / --radius-shell`）、边框两档 `--line-soft / --line-strong`，新代码禁手写 `border-[rgba(...)]` 等任意值。共享原语在 `src/components/ui/`（`Surface / Card / SectionHeading / Divider / ActionButton`）。分析页 4 个子视图（`analysis-shell.tsx` 已拆为 shell + 4 个 section 文件）、日历周/日视图、设置全家桶和管理员页面均已按此重构；访谈页与日历月视图本就是目标形态，未改动。
+- `2026-06-12` 起全站执行「单层卡片制」设计规范（`docs/design/ui-conventions.md`）：每页最多“1 个底板 + 1 层卡片”，卡片内禁再嵌套 border+bg 容器，分区用标题 / hairline 分隔线 / 留白；圆角三档 `12/20/28px`（`--radius-control / --radius-card / --radius-shell`）、边框两档 `--line-soft / --line-strong`，新代码禁手写 `border-[rgba(...)]` 等任意值。共享原语在 `src/components/ui/`（`Surface / Card / SectionHeading / Divider / ActionButton`）。分析页两段工作区、日历周/日视图、设置全家桶和管理员页面均已按此重构；访谈页与日历月视图保持各自的目标形态。
+- `2026-07-18` 起共享交互原语统一采用即时按下反馈与可打断运动：按钮约 `0.97`、大卡片约 `0.985`；`SlidingSegmentedControl` 使用无回弹 spring；`HorizontalPager` 可选 swipe，采用约 `10px` 原始位移判定、速度投影和边界阻尼；画像与分析启用 swipe。移动端 `SiteHeader` 上下文工具栏可横向滚动，日志书页使用底部 sheet 并支持拖动关闭；`ActionMenu` 与 `ConfirmDialog` 补齐方向键、焦点圈定与焦点恢复。全局响应 reduced motion、reduced transparency 和增强对比度偏好。
 - calendar 页面当前优先首屏工作区；桌面超量信息进入局部 pane 滚动，小屏月视图改为“月历主体在上 + 当天检查面板在下”的纵向工作台，不再依赖 `1040px` 横向滚动访问右侧面板。桌面月视图仍是“月历主体 + 当天检查面板”的双栏骨架，右侧提供 `查看当天` 日期级入口。
 - `SiteHeader` 现在会把真实 header 高度同步到 `--site-header-viewport-offset`；calendar / analysis / settings 这类首屏工作区会按“实际 header 高度之后的剩余视口”计算可用高度，不再假设顶部永远只有 `4rem`，因此小屏、多行 toolbar 或 header 换行时不会再因为 offset 写死而出现底部假留白或双滚动。
+- 访谈维度选择页的 `CalendarMainGate` 内容层会纵向伸展到可用视口，保证页面底部背景连续；相关修复已在生产部署中生效。
 - 月视图月格当前固定渲染 6 行 42 格，loading skeleton 也渲染同样的 42 格，保证加载前后高度一致。
 - 月视图当前已经切到“已保存结果优先”的可见语义：`1-4` 个已保存维度显示单字 `悦 / 实 / 思 / 改 / 谢`，五维都至少保存过一次时收束为 `已完成`；`进行中 / 混合状态` 不再作为月格里的可见文字标签。
 - 月视图当天检查面板当前显示 `待继续 / 已完成 / 完整日志` 三个 summary chip；`待继续` 按 `activeCount + draftCount` 投影，`完整日志` 显示 `未生成 / 可汇总 / 草稿 / 已保存 / 需更新`。过去空白日只显示轻空态，不再列出 5 个空维度；月查询失败时不会再把主区或右侧伪装成空白日，而是保留月历主体 + 当天检查的 split-pane 方框骨架，在左右 pane 内分别显示错误说明和重试动作。
@@ -67,27 +76,37 @@
 3. 用户在合适时机点击“生成日志”。
 4. 右侧只展示日志正文初稿，不展示结构化槽位。
 5. 用户可继续编辑并保存正式日志。
-6. 用户可点击顶部【完整日志】切到当天日志主区，生成、编辑并保存当天整合日志。
+6. 用户可通过今日日志面板的日级按钮进入当天日志主区，查看、编辑并保存当天整合日志；移动端提供【完整日志】快捷按钮。
 
 ## 2. 文档优先级
+
+讨论或优化访谈链路时，先读取 `docs/interview-product-optimization-map.md`，用其中的模块边界、依赖关系和当前讨论位置保持跨会话目标一致。
 
 如果文档之间有冲突，按以下顺序判断：
 1. 用户本轮最新指令
 2. 本文件 `AGENTS.md`
-3. `README.md`
-4. `docs/architecture.md`
-5. `docs/integration-guide.md`
-6. `docs/operator-runbook.md`
-7. `docs/theory/joy-alignment.md`
-8. `docs/theory/fulfillment-alignment.md`
-9. `docs/theory/reflection-alignment.md`
-10. `docs/theory/improvement-alignment.md`
-11. `docs/theory/gratitude-alignment.md`
-12. `docs/theory/dimension-draft-template.md`
-13. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
+3. `docs/interview-product-optimization-map.md`（访谈链路产品模块、依赖关系、衡量边界与讨论位置）
+4. `docs/interview-understanding-product-spec.md`（模块二产品目标、规则、边界、稳定产物与验收标准）
+5. `docs/interview-intent-evaluation-source-of-truth.md`（访谈意图评测、数据集与上线门槛）
+6. `README.md`
+7. `docs/architecture.md`
+8. `docs/integration-guide.md`
+9. `docs/operator-runbook.md`
+10. `docs/theory/joy-alignment.md`
+11. `docs/theory/fulfillment-alignment.md`
+12. `docs/theory/reflection-alignment.md`
+13. `docs/theory/improvement-alignment.md`
+14. `docs/theory/gratitude-alignment.md`
+15. `docs/theory/dimension-draft-template.md`
+16. `Tech_Design.md`（仅保留历史设计背景，不再是实时事实源）
 
 协作语言：
 - 默认用中文输出，除非用户明确要求使用其他语言，或需要保留代码、命令、错误信息、API 字段等原文。
+- 与用户讨论产品时，优先使用用户、场景、策略、状态、体验、指标和发布范围等产品语言。技术开关、代码字段、架构名词等内部表达统一翻译成中文语义；只有用户主动要求技术细节，或准确字段、命令和错误信息无法被自然语言替代时，才保留技术原文。这条规则适用于所有产品讨论，不局限于访谈链路。
+- 讨论访谈链路或汇报相关交付时，默认沿用产品地图的框架：当前模块位置 → 用户问题与模块目标 → 上游输入 → 核心设计 → 稳定产物 → 下游影响 → 衡量标准 → 当前结论与下一步。
+- 所有核心模块及其重要改造遵循“产品地图定位 → 深度产品讨论 → 输出完整产品规格 → 用户明确确认 → 审查实现差距 → 输出技术设计 → 开发与离线验收 → 小范围真实验证 → 更新地图状态”的顺序。
+- 产品规格获得用户明确确认前，不进入技术设计和业务开发；会话中新确认的产品规则先进入产品规格，再同步到技术文档和代码。
+- 技术文档必须逐条映射已确认的产品规则，不在技术设计阶段新增未经确认的产品决策；产品规格与旧实现发生冲突时，采用最新确认的产品规格。
 - 如果是 review / code review / 审查结果，必须先把 findings、严重级别、文件位置和结论翻译成中文再输出；除非用户明确要求保留英文原文。必要时可在中文后附英文原文，但默认先给中文版本。
 
 表达约束：
@@ -242,7 +261,7 @@ gratitude 理论翻译基线：
 - 如果用户打开的是一篇已经 `saved` 的维度日志：
   - 标题或正文一旦通过 `PUT /api/journal-entry/[id]` 自动暂存，会先回到 `draft`
   - 只有用户再次点击“保存修改”，这篇日志才会重新成为正式保存版本
-- 如果用户从维度日志面板切到顶部【完整日志】当天整合日志主区：
+- 如果用户从单维度日志书页切到今日日志面板的日级动作或移动端【完整日志】快捷入口：
   - 前端必须先复用日志面板关闭路径，保存未暂存编辑或取消正在生成的 draft，再切换主工作区。
 - 如果用户从完整日志主区返回访谈，或在完整日志主区切换访谈维度：
   - 前端必须先 flush 当天日志的 pending 编辑；保存失败或内容非法时留在完整日志主区并展示错误。
@@ -277,16 +296,16 @@ gratitude 理论翻译基线：
 - `src/app`
   - 页面与 API 入口。
 - `src/components`
- - 纯 UI 组件。
+  - 纯 UI 组件。
 - `src/components/ui`
- - 单层卡片制共享原语：`Surface`（页面底板）、`Card`（唯一卡片层）、`SectionHeading`、`Divider`、`ActionButton`；新页面禁止手写卡片样式，先扩展原语再使用。
+  - 单层卡片与交互共享原语：`Surface`、`Card`、`SectionHeading`、`Divider`、`ActionButton`、`SlidingSegmentedControl`、`HorizontalPager`、`ActionMenu`、`ConfirmDialog`；新页面优先扩展原语后复用。
 - `src/features/interview`
   - 多维度通用前端定义、schema、进度与维度元信息。
 - `src/features/calendar`
   - 纯展示层记录读模型：`CalendarDayRecord / CalendarWeekRecord / CalendarMonthRecord`
   - 以及 `day / week / month` 聚合器、header toolbar 投影 helper、月/周视图展示 helper、future/past 空白语义 helper 与 deep link/action helper。
 - `src/features/analysis`
-  - 记录分析的 `month=YYYY-MM`、`section=trends|dimensions|correlation|review`（旧 `overview|score|rhythm|insights` 自动映射）、`preset=week|month|custom` 与 `start/end` URL 归一化；`date-range.ts` 推导周期窗口；`aggregate-trends-range.ts` 与 `GET /api/analysis/range` 服务量化趋势读数台；`GET /api/analysis/month` 仍服务五维全景；`generateMonthNarrative` 占位叙事（预留 AI 接入口）。
+  - 记录分析的 `month=YYYY-MM`、`section=trends|dimensions`、`preset=week|month|custom` 与 `start/end` URL 归一化；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；`date-range.ts` 推导周期窗口；`aggregate-trends-range.ts` 与 `GET /api/analysis/range` 服务量化趋势读数台；`GET /api/analysis/month` 服务五维记录；`generateMonthNarrative` 保留占位叙事。
 - `src/content`
   - 首页文案、CTA 和图片位配置；当前首页配置在 `homepage.ts`。
 - `src/features/happiness-score`
@@ -301,7 +320,7 @@ gratitude 理论翻译基线：
   - `calendar-toolbar.tsx` 负责 `SiteHeader` 中区的 calendar 控制条与摘要展示。
   - month / week / day shell 当前都已经进入工作区壳层；month 桌面是双栏检查面板、小屏是上下堆叠工作台，week 是 7 天对比板，day 是五维紧凑操作台。
 - `src/components/analysis`
-  - 记录分析页壳：单页四段纵向 scroll（`analysis-trends-section` / `analysis-insights-section` / `analysis-correlation-section` / `analysis-review-section`）+ `use-analysis-section-spy` scroll spy；`analysis-toolbar.tsx` 在 `SiteHeader` 中区渲染周期 preset、日期范围、四段锚点 tab 与 contextual chip。量化趋势段为只读读数台；五维段仍用 `DimensionInsights`；关联/复盘为占位。legacy `analysis-overview-section` 等文件保留但 shell 不再引用。
+  - 记录分析页壳：`analysis-shell.tsx` 只挂载 `analysis-trends-section` 与 `analysis-insights-section` 两段，并由 `use-analysis-section-spy` 更新当前锚点；`analysis-toolbar.tsx` 在 `SiteHeader` 中区渲染周期 preset、日期范围、两段 tab 与 contextual chip。`analysis-correlation-section.tsx`、`analysis-review-section.tsx` 等历史占位文件当前未被 shell 引用。
 - `src/features/joy-interview`
   - joy-first 的 prompt、引擎、schema 与服务端逻辑。
   - 当前也承载 fulfillment / reflection / improvement / gratitude 的理论对齐分支。
@@ -353,12 +372,18 @@ gratitude 理论翻译基线：
   - 维度、状态、当前阶段、当前事件、最终日志引用。
   - `entryDate` 是日志归属日期真相；`startedAt` 只表示会话创建时间。
 - `InterviewEvent`
-  - 事件级状态、轮次、覆盖镜头、`snapshotData`、`progressData`。
+  - 事件级状态、轮次、覆盖镜头、`snapshotData`、`progressData` 与累计理解 `understandingData`。
 - `InterviewMessage`
-  - 全部可恢复对话消息。
+  - 全部可恢复对话消息；正式追问的 `responseGroupId / responseVersion` 维护版本组，`regenerationIntent / regeneratedFromMessageId / branchSessionId` 保留来源与路径。
 - `InterviewUserTurn`
   - 用户回复与选择动作的可恢复提交记录；同一会话内 `clientTurnId` 唯一。
   - 保存原话、提交时的消息位置、处理状态、尝试次数与错误码；`processing / failed / canceled` 会进入 session 的 `pendingUserTurn`。
+  - `intentAssessment / intentDecision / intentClassifierVersion / intentAssessedAt` 保存可回放的意图判断；当前识别策略参与正式决策。
+  - `understandingResult / understandingVersion / understoodAt` 保存本轮理解结果、协议版本和完成时间，支持恢复与同轮重放复用。
+- `InterviewBranchCheckpoint / AIResponseRegeneration`
+  - 前者保存正式追问处的可恢复会话状态；后者记录重新生成的原问题、候选、意图、Trace、耗时、状态与采用结果。
+- `InterviewSession`
+  - 新会话写入 `conversationSchemaVersion = 2`；根会话用 `activeBranchSessionId` 指向当前采用路径，分支通过 `rootSessionId / parentSessionId / forkMessageSequence` 继承此前对话。
 - `JoyInterviewSnapshot`
   - 历史兼容快照表，仍保留旧 joy 结构投影。
 - `JoyEntry`
@@ -400,6 +425,8 @@ gratitude 理论翻译基线：
 - `GET /api/interview/session/[id]`
 - `POST /api/interview/session/respond`
 - `POST /api/interview/session/respond/stream`
+- `POST /api/interview/session/branch/preview`
+- `POST /api/interview/session/branch/select`
 - `POST /api/interview/session/pause`
 - `POST /api/interview/session/complete`
 - `POST /api/interview/session/reopen`
@@ -451,6 +478,9 @@ gratitude 理论翻译基线：
 - `respond/stream` 的 SSE `error` 事件现在会带 `issue`；非流式 `respond` 错误 JSON 也带同一结构。
 - `respond/stream` 会在 AI 处理前发送 SSE `turn`，确认用户原话已经进入服务端持久状态；成功完成后再发送 `session`。
 - 普通回复请求优先使用 `rawText + clientTurnId + baseMessageSequence`；兼容旧客户端的 `userMessage`。失败或取消的提交使用 `action: resume_turn` 和原 `clientTurnId` 恢复。
+- 换问法使用 `action: regenerate_question`，提交 `targetMessageId / intent / clientTurnId / baseMessageSequence / baseBranchSessionId`；纠正理解使用 `action: correct_understanding` 与 `rawText`。SSE `version` 事件返回当前版本与活动分支；分支 preview 只读，select 才切换活动路径。
+- `INTERVIEW_REGENERATION_ENABLED=false` 可暂停新换问法与版本入口；版本 2 会话继续沿当前活动路径完成，已有分支、Trace 和质量记录保留。
+- 意图识别字段属于服务端内部记录，不加入 `turn` SSE 事件或公开 session 读模型。发布验证阶段可以记录策略对照；当前正式策略会参与访谈推进。
 - `respond/stream` 当前会在服务端累计 provider 候选输出，完成问题协议、重复保护、维度专项检查和 fallback 后，再分块发送最终摘要与问题；分块过程保持最终文本的空格和换行。
 - `/admin/analytics` 当前是管理员工作台，不向普通用户暴露；筛查和下钻主要通过 URL 查询参数驱动页面重新取数。
 - `draft/generate` 当前只支持单个 `sessionId`，虽然 schema 接受数组。
@@ -477,7 +507,7 @@ gratitude 理论翻译基线：
   - `GET /api/analysis/month?month=YYYY-MM` — 五维全景等按月聚合；返回 `month / logOverview / dailyCoverage / rhythmOverview / dimensionBreakdown / dimensions / insightsOverview / scoreOverview / scoreTrend / scoreRecords / editableDates / narrative` 等
   - `GET /api/analysis/range?preset=week|month|custom&startDate=&endDate=` — 量化趋势读数台；返回 `AnalysisTrendsRangeRecord`（`preset / startDate / endDate / logOverview / dailyCoverage / scoreOverview / scoreTrend`）
   - 只统计 `saved` 维度日志和 `saved` 当天整合日志；`stale` 整合日志在 read model 中仍按待更新处理
-- 页面当前为单页四段纵向 scroll + 顶部锚点 tab：`section=trends|dimensions|correlation|review`（旧 keys 自动映射）；`SiteHeader` 中区 `AnalysisToolbar` 渲染周期 preset、日期范围、四段 tab 与 contextual chip；tab 点击锚点跳转，滚动 scroll spy 更新 URL
+- 页面当前为量化趋势与五维记录两段纵向 scroll + 顶部锚点切换：`section=trends|dimensions`；旧 `overview|score|rhythm` 映射到 `trends`，旧 `insights|correlation|review` 映射到 `dimensions`；`SiteHeader` 中区 `AnalysisToolbar` 渲染周期 preset、日期范围、两段 tab 与 contextual chip，scroll spy 更新 URL
   - 缺失 `section` 时默认 `trends`；`preset` 缺省为 `month`
   - 量化趋势段只读，无评分录入与补漏 CTA；幸福 8 要素评分录入在 `/interview`「当天评分」工作区
   - `PUT /api/happiness-score` 允许保存所有非未来日期（Asia/Shanghai 口径）
@@ -527,8 +557,8 @@ gratitude 理论翻译基线：
 - `npm test`
 - `npx tsc --noEmit`
 
-截至 `2026-07-20`，验证基线为：
-- 当前工作区 `npm test`：`174` 个测试文件、`1095` 个测试通过
+截至 `2026-07-21`，验证基线为：
+- 当前工作区 `npm test`：`191` 个测试文件、`1711` 个测试通过
 - AI 质量发布与效果观察专项：`10` 个测试文件、`30` 个测试通过
 - `npm run lint`：通过，保留 `44` 条既有 warning
 - `npx tsc --noEmit`：通过
@@ -558,7 +588,7 @@ gratitude 理论翻译基线：
 - gratitude 日志正文已经完成理论对齐、质量门、fallback draft、标题治理和自动化验收样例，但仍需继续优化文风和产品完成度。
 - `interview.service.ts` 仍是 joy-first 的导出壳子，不是真正抽象后的通用引擎。
 - 语音转写仍未接入真实模型。
-- 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索、画像页面 `/profile`；但该功能当前由 `memoryEnabled` 设置项控制，默认关闭，且新测试文件存在类型兼容问题（TS2741 / TS2322），需要修复后才能完全通过回归。
+- 记忆系统（`feature/memory-vector-extension`）已合并进 main，包含 pgvector 向量嵌入、AI 提取、语义检索和画像页面 `/profile`；当前由 `memoryEnabled` 设置项控制，默认关闭。`2026-07-20` 的全量类型检查与测试基线均已通过。
 
 ## 10. 修改文档时的规则
 

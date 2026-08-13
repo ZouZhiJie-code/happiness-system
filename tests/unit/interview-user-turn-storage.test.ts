@@ -78,4 +78,43 @@ describe("interview UserTurn session storage", () => {
 
     expect(readUserTurnOutbox("session-1")).toBeNull();
   });
+
+  it("按活动分支保存换问法意图和目标消息", () => {
+    writeUserTurnOutbox({
+      clientTurnId: "client-regeneration-1",
+      sessionId: "session-1",
+      baseBranchSessionId: "branch-2",
+      action: "regenerate_question",
+      targetMessageId: "assistant-4",
+      regenerationIntent: "concretize",
+      rawText: null,
+      baseMessageSequence: 4,
+      status: "failed",
+      createdAt: "2026-07-20T00:00:00.000Z"
+    });
+
+    expect(readUserTurnOutbox("session-1", "branch-1")).toBeNull();
+    expect(readUserTurnOutbox("session-1", "branch-2")).toMatchObject({
+      action: "regenerate_question",
+      targetMessageId: "assistant-4",
+      regenerationIntent: "concretize"
+    });
+  });
+
+  it("拒绝缺少目标消息或有效意图的换问法恢复记录", () => {
+    const key = "hs-interview-user-turn-outbox::user-1::session-1::branch-2";
+    window.sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        clientTurnId: "client-regeneration-1",
+        sessionId: "session-1",
+        baseBranchSessionId: "branch-2",
+        action: "regenerate_question",
+        regenerationIntent: "unknown",
+        baseMessageSequence: 4
+      })
+    );
+
+    expect(readUserTurnOutbox("session-1", "branch-2")).toBeNull();
+  });
 });

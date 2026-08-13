@@ -645,6 +645,7 @@ export async function listAdminAnalyticsUsers(input: {
         userId: {
           in: userIds
         },
+        parentSessionId: null,
         entryDate: {
           gte: startAt,
           lt: endExclusive
@@ -770,7 +771,7 @@ export async function getAdminAnalyticsUserDetail(userId: string) {
       }
     }),
     prisma.interviewSession.findMany({
-      where: { userId },
+      where: { userId, parentSessionId: null },
       select: {
         id: true,
         dimension: true,

@@ -10,6 +10,11 @@ const {
   reopenJoyInterviewSessionRecord,
   reserveInterviewUserTurn,
   resumeInterviewUserTurn,
+  reserveInterviewRegeneration,
+  resumeInterviewRegeneration,
+  persistInterviewUserTurnIntent,
+  persistInterviewUserTurnUnderstanding,
+  findInterviewEventUnderstandingState,
   markInterviewUserTurnFailed,
   cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
@@ -25,6 +30,11 @@ const {
   reopenJoyInterviewSessionRecord: vi.fn(),
   reserveInterviewUserTurn: vi.fn(),
   resumeInterviewUserTurn: vi.fn(),
+  reserveInterviewRegeneration: vi.fn(),
+  resumeInterviewRegeneration: vi.fn(() => Promise.reject(new Error("INTERVIEW_ACTION_UNSUPPORTED"))),
+  persistInterviewUserTurnIntent: vi.fn(),
+  persistInterviewUserTurnUnderstanding: vi.fn(),
+  findInterviewEventUnderstandingState: vi.fn(),
   markInterviewUserTurnFailed: vi.fn(),
   cancelInterviewUserTurn: vi.fn(),
   resumeCurrentInterviewEvent: vi.fn(),
@@ -130,6 +140,11 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
   reopenJoyInterviewSessionRecord,
   reserveInterviewUserTurn,
   resumeInterviewUserTurn,
+  reserveInterviewRegeneration,
+  resumeInterviewRegeneration,
+  persistInterviewUserTurnIntent,
+  persistInterviewUserTurnUnderstanding,
+  findInterviewEventUnderstandingState,
   markInterviewUserTurnFailed,
   cancelInterviewUserTurn,
   resumeCurrentInterviewEvent,
@@ -270,6 +285,9 @@ function buildSession(overrides: Partial<InterviewSessionRecord> = {}): Intervie
 
 describe("prepareJoyInterviewResponse", () => {
   beforeEach(() => {
+    delete process.env.INTERVIEW_INTENT_V2_MODE;
+    delete process.env.INTERVIEW_UNDERSTANDING_VERSION;
+    delete process.env.INTERVIEW_UNDERSTANDING_V2_USER_IDS;
     appendJoyInterviewTurn.mockReset();
     completeJoyInterviewSessionRecord.mockReset();
     createJoyInterviewSession.mockReset();
@@ -279,6 +297,9 @@ describe("prepareJoyInterviewResponse", () => {
     reopenJoyInterviewSessionRecord.mockReset();
     reserveInterviewUserTurn.mockReset();
     resumeInterviewUserTurn.mockReset();
+    persistInterviewUserTurnIntent.mockReset();
+    persistInterviewUserTurnUnderstanding.mockReset();
+    findInterviewEventUnderstandingState.mockReset();
     markInterviewUserTurnFailed.mockReset();
     cancelInterviewUserTurn.mockReset();
     resumeCurrentInterviewEvent.mockReset();
@@ -306,6 +327,17 @@ describe("prepareJoyInterviewResponse", () => {
     appendGenerationTraceDecision.mockResolvedValue(undefined);
     cancelGenerationTrace.mockResolvedValue(undefined);
     failGenerationTrace.mockResolvedValue(undefined);
+    persistInterviewUserTurnIntent.mockResolvedValue({
+      intentAssessment: null,
+      intentDecision: null,
+      intentClassifierVersion: "interview-intent-v1",
+      intentAssessedAt: new Date()
+    });
+    persistInterviewUserTurnUnderstanding.mockResolvedValue({
+      understandingVersion: "turn-understanding-v2",
+      understoodAt: new Date()
+    });
+    findInterviewEventUnderstandingState.mockResolvedValue(null);
     reserveInterviewUserTurn.mockImplementation(
       async (input: {
         sessionId: string;
@@ -400,6 +432,66 @@ describe("prepareJoyInterviewResponse", () => {
     });
     expect(submittedAnalytics?.properties).not.toHaveProperty("rawText");
     expect(submittedAnalytics?.properties).not.toHaveProperty("userMessage");
+  });
+
+  it("uses and persists the second understanding protocol for a validation account", async () => {
+    process.env.INTERVIEW_UNDERSTANDING_VERSION = "1";
+    process.env.INTERVIEW_UNDERSTANDING_V2_USER_IDS = "user-1";
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    getNextStage.mockReturnValue("wrap_up");
+    extractJoySnapshotWithAI.mockImplementation(async (input: {
+      onContentUnderstandingCandidate?: (candidate: unknown) => void;
+    }) => {
+      input.onContentUnderstandingCandidate?.({
+        units: [{
+          kind: "judgment",
+          text: "被朋友真正理解的感觉",
+          evidenceText: "被朋友真正理解的感觉",
+          fields: ["meaningNeed"],
+          materialStatus: "explicit_confirmed",
+          eventRelation: "current_detail",
+          relationship: null,
+          candidateDimension: null,
+          historyRelation: "new",
+          relatedMaterialIds: []
+        }],
+        answerState: "answered",
+        answeredTarget: "current_question",
+        targetResponses: [{
+          target: "judgment_clue",
+          state: "answered",
+          evidenceText: "被朋友真正理解的感觉",
+          materialIndexes: [0]
+        }],
+        candidateDimensions: []
+      });
+      return baseSnapshot;
+    });
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "我想记住被朋友真正理解的感觉。",
+      inputMode: "text"
+    });
+
+    expect(findInterviewEventUnderstandingState).toHaveBeenCalledWith("event-1");
+    expect(extractJoySnapshotWithAI).toHaveBeenCalledWith(
+      expect.objectContaining({ trustedUnderstandingEnabled: true })
+    );
+    expect(persistInterviewUserTurnUnderstanding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        turnId: "turn-test",
+        version: "turn-understanding-v2",
+        result: expect.objectContaining({
+          version: "turn-understanding-v2",
+          turnId: "turn-test"
+        })
+      })
+    );
+    expect("assistantMessage" in result ? null : result.understandingState?.appliedTurnIds)
+      .toContain("turn-test");
   });
 
   it.each([
@@ -3022,6 +3114,96 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.assistantTurn.thinkingSummary).toContain("接住了");
   });
 
+  it("moves gratitude forward when the user already described the concrete help", async () => {
+    const previousSnapshot: JoySnapshot = {
+      event: null,
+      feeling: null,
+      whyItMattered: null,
+      happinessType: null,
+      selfPattern: null,
+      gratitudeMoment: null,
+      gratitudeTarget: null,
+      kindAction: null,
+      seenNeed: null,
+      innerEffect: null,
+      gratitudeReason: null,
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      confidence: 0.2,
+      missingSlots: ["gratitudeMoment", "kindAction", "seenNeed", "gratitudeReason", "relationshipSignal"]
+    };
+    const nextSnapshot: JoySnapshot = {
+      ...previousSnapshot,
+      event: "同事说项目先结束，然后主动帮我收尾",
+      gratitudeMoment: "同事说项目先结束，然后主动帮我收尾",
+      gratitudeTarget: "同事",
+      kindAction: "主动帮我收尾",
+      confidence: 0.78,
+      missingSlots: ["seenNeed", "gratitudeReason", "relationshipSignal"]
+    };
+
+    findJoyInterviewSessionById.mockResolvedValue(
+      buildSession({
+        dimension: "gratitude",
+        stage: "collect_event",
+        snapshot: previousSnapshot,
+        events: [
+          {
+            ...buildSession().events[0],
+            stage: "collect_event",
+            snapshot: previousSnapshot
+          }
+        ]
+      })
+    );
+    extractJoySnapshotWithAI.mockResolvedValue(nextSnapshot);
+    getNextStage.mockReturnValue("probe_reason");
+    generateJoyAssistantTurn.mockResolvedValue({
+      insight: "",
+      thinkingSummary: "同事主动帮你收尾，这份善意已经很具体了。",
+      analysis: "继续询问具体行动",
+      question: "对方具体做了什么，让你觉得这份感谢很重要？",
+      questionSpec: {
+        target: "insight_evidence",
+        subTarget: "kind_action",
+        hypothesisKey: null,
+        stageIntent: "advance",
+        surfaceLevel: "default",
+        anchorText: "同事说项目先结束，然后主动帮我收尾",
+        repairCount: 0
+      },
+      stateUpdate: {
+        turnPhase: "digging",
+        shouldEndDimension: false,
+        offerChoice: false,
+        choiceReason: ""
+      },
+      meta: {
+        depthReached: ["event", "reason"]
+      }
+    } satisfies AssistantTurnPayload);
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "同事对我说‘这个项目先结束吧’，然后主动帮我收尾，我很感激。",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an active gratitude response.");
+    }
+
+    expect(result.assistantTurn.question).toContain("哪一层需要或难处");
+    expect(result.assistantTurn.question).not.toMatch(/具体做了什么/u);
+    expect(result.assistantTurn.questionSpec).toMatchObject({
+      subTarget: "seen_need",
+      hypothesisKey: "seen_need"
+    });
+  });
+
   it("keeps a natural thinking summary when '我想' appears inside the user's own felt signal", async () => {
     const naturalSummary = "被朋友稳稳接住之后，“我想把这种能放心聊开的关系留住”这层心意更清楚了。";
 
@@ -5599,6 +5781,237 @@ describe("prepareJoyInterviewResponse", () => {
     expect(result.nextSnapshot.whyItMattered).toBeNull();
     expect(result.nextProgressData).toMatchObject({ kind: "boundary_insufficient" });
     expect(result.isReadyForDraft).toBe(false);
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+  });
+
+  it("extracts mixed content before honoring a draft request in intent v2 enforce mode", async () => {
+    process.env.INTERVIEW_INTENT_V2_MODE = "enforce";
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+    extractJoySnapshotWithAI.mockResolvedValue({
+      ...baseSnapshot,
+      meaningNeed: "被理解对我很重要"
+    });
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "被理解对我很重要，直接生成日志吧",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected an intent-v2 control turn.");
+    }
+    expect(extractJoySnapshotWithAI).toHaveBeenCalledTimes(1);
+    expect(extractJoySnapshotWithAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intentAssessment: expect.objectContaining({
+          primaryControl: "generate_draft",
+          content: expect.objectContaining({ presence: "clear" })
+        }),
+        onIntentAssessment: expect.any(Function)
+      })
+    );
+    expect(result.nextProgressData).toMatchObject({ kind: "event_complete" });
+    expect(result.nextTurnCount).toBe(4);
+    expect(persistInterviewUserTurnIntent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        turnId: "turn-test",
+        classifierVersion: "interview-intent-v1",
+        assessment: expect.objectContaining({
+          primaryControl: "generate_draft"
+        }),
+        decision: expect.objectContaining({
+          runExtraction: true,
+          nextAction: "validate_and_wrap_up"
+        })
+      })
+    );
+    expect(appendGenerationTraceDecision).toHaveBeenCalledWith(
+      "trace-1",
+      expect.objectContaining({
+        kind: "interview_intent_assessment",
+        primaryControl: "generate_draft"
+      })
+    );
+  });
+
+  it("uses the deterministic follow-up protocol in enforce mode after the single extraction call", async () => {
+    process.env.INTERVIEW_INTENT_V2_MODE = "enforce";
+    const gratitudeSnapshot: JoySnapshot = {
+      event: "同事主动帮我把项目收尾",
+      feeling: "松了一口气",
+      whyItMattered: null,
+      happinessType: "支持回应型",
+      selfPattern: null,
+      gratitudeMoment: "同事主动帮我把项目收尾",
+      gratitudeTarget: "同事",
+      kindAction: "主动帮我把项目收尾",
+      seenNeed: null,
+      innerEffect: "松了一口气",
+      gratitudeReason: null,
+      gratitudeType: "支持回应型",
+      relationshipSignal: null,
+      reciprocityHint: null,
+      confidence: 0.78,
+      missingSlots: ["seenNeed", "gratitudeReason", "relationshipSignal"]
+    };
+    const session = buildSession({
+      dimension: "gratitude",
+      stage: "collect_event",
+      snapshot: {
+        ...gratitudeSnapshot,
+        event: null,
+        gratitudeMoment: null,
+        gratitudeTarget: null,
+        kindAction: null,
+        innerEffect: null,
+        feeling: null
+      }
+    });
+
+    findJoyInterviewSessionById.mockResolvedValue(session);
+    extractJoySnapshotWithAI.mockResolvedValue(gratitudeSnapshot);
+    getNextStage.mockReturnValue("probe_reason");
+    appendJoyInterviewTurn.mockResolvedValue(
+      buildSession({
+        dimension: "gratitude",
+        stage: "probe_reason",
+        snapshot: gratitudeSnapshot,
+        turnCount: 4
+      })
+    );
+
+    const result = await streamJoyInterviewResponse(
+      {
+        userId: "user-1",
+        action: "reply",
+        sessionId: "session-ready",
+        userMessage: "同事主动帮我把项目收尾，我一下松了口气。",
+        inputMode: "text"
+      },
+      {
+        onPhase: () => undefined,
+        onDelta: () => undefined
+      }
+    );
+
+    expect(extractJoySnapshotWithAI).toHaveBeenCalledTimes(1);
+    expect(streamJoyAssistantTurn).not.toHaveBeenCalled();
+    expect(generateJoyAssistantTurn).not.toHaveBeenCalled();
+    expect(retrieveRelevantMemories).not.toHaveBeenCalled();
+    expect(result.assistantTurn?.question).toContain("哪一层需要或难处");
+    expect(appendGenerationTraceDecision).toHaveBeenCalledWith(
+      "trace-1",
+      expect.objectContaining({
+        kind: "interview_follow_up_strategy",
+        strategy: "deterministic_question_protocol",
+        skippedQuestionModelCall: true
+      })
+    );
+  });
+
+  it("reuses a persisted intent assessment when resuming the same user turn", async () => {
+    process.env.INTERVIEW_INTENT_V2_MODE = "enforce";
+    const session = buildSession();
+    const persistedAssessment = {
+      version: "interview-intent-v1",
+      primaryControl: "repair_question",
+      controlSignals: ["repair_question"],
+      dialogueActs: [],
+      content: {
+        presence: "none",
+        evidenceText: null,
+        explicitAbsence: false,
+        answeredTarget: null
+      },
+      referenceTarget: "current_question",
+      frustration: "none",
+      confidence: 0.96,
+      origin: "deterministic",
+      reasonCodes: ["explicit_repair_request"]
+    };
+    const persistedDecision = {
+      version: "interview-turn-policy-v1",
+      runExtraction: false,
+      advanceTurn: false,
+      advanceRound: false,
+      stopFollowUp: false,
+      nextAction: "repair_question",
+      nextQuestionStyle: "simplified"
+    };
+    findJoyInterviewSessionById.mockResolvedValue(session);
+    resumeInterviewUserTurn.mockResolvedValue({
+      kind: "reserved",
+      turn: {
+        id: "turn-resume",
+        clientTurnId: "client-resume",
+        sessionId: session.id,
+        activeEventId: session.activeEventId,
+        action: "reply",
+        rawText: "说简单点",
+        inputMode: "text",
+        baseMessageSequence: 0,
+        status: "processing",
+        attemptCount: 2,
+        errorCode: null,
+        intentAssessment: persistedAssessment,
+        intentClassifierVersion: "interview-intent-v1",
+        intentDecision: persistedDecision,
+        intentAssessedAt: "2026-07-20T00:03:00.000Z",
+        createdAt: "2026-07-20T00:01:00.000Z",
+        updatedAt: "2026-07-20T00:03:00.000Z",
+        completedAt: null
+      },
+      userMessageId: "user-turn-message",
+      session
+    });
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "resume_turn",
+      sessionId: session.id,
+      clientTurnId: "client-resume"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected a resumed repair turn.");
+    }
+    expect(persistInterviewUserTurnIntent).not.toHaveBeenCalled();
+    expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
+    expect(appendGenerationTraceDecision).toHaveBeenCalledWith(
+      "trace-1",
+      expect.objectContaining({
+        kind: "interview_intent_assessment",
+        primaryControl: "repair_question",
+        reusedAssessment: true
+      })
+    );
+    expect(result.nextTurnCount).toBe(session.turnCount);
+  });
+
+  it("turns an explicit dimension switch into a deterministic redirect choice", async () => {
+    process.env.INTERVIEW_INTENT_V2_MODE = "enforce";
+    findJoyInterviewSessionById.mockResolvedValue(buildSession());
+
+    const result = await prepareJoyInterviewResponse({
+      userId: "user-1",
+      action: "reply",
+      sessionId: "session-ready",
+      userMessage: "这段更像感谢维度",
+      inputMode: "text"
+    });
+
+    if ("assistantMessage" in result || !result.assistantTurn) {
+      throw new Error("Expected a dimension redirect turn.");
+    }
+    expect(result.nextProgressData).toEqual({
+      kind: "dimension_redirect",
+      targetDimension: "gratitude",
+      reason: "你想把这段内容放到感谢维度继续。"
+    });
+    expect(result.assistantTurn.stateUpdate.choiceKind).toBe("dimension_redirect");
     expect(extractJoySnapshotWithAI).not.toHaveBeenCalled();
   });
 

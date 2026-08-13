@@ -5,11 +5,13 @@ const {
   buildDraftBrief,
   buildDraftWritingProfile,
   createFallbackDraft,
+  projectDraftSourceEventsFromUnderstanding,
   runDraftQualityGate
 } = vi.hoisted(() => ({
   buildDraftBrief: vi.fn(),
   buildDraftWritingProfile: vi.fn(),
   createFallbackDraft: vi.fn(),
+  projectDraftSourceEventsFromUnderstanding: vi.fn((_: unknown, events: unknown[]) => events),
   runDraftQualityGate: vi.fn()
 }));
 
@@ -52,6 +54,7 @@ vi.mock("@/features/interview/server/draft-policies", () => ({
   buildDraftBrief,
   buildDraftWritingProfile,
   createFallbackDraft,
+  projectDraftSourceEventsFromUnderstanding,
   runDraftQualityGate
 }));
 
@@ -97,6 +100,7 @@ import {
   fulfillmentExtractResultSchema,
   improvementExtractResultSchema
 } from "@/features/joy-interview/schema/joy-ai.schema";
+import { assessUserTurnIntent } from "@/features/interview/intent/intent-v1";
 
 function buildSession(overrides: Partial<InterviewSessionRecord> = {}): InterviewSessionRecord {
   const snapshot: JoySnapshot = {
@@ -413,6 +417,11 @@ describe("generateJoyAssistantTurn", () => {
       anchorText: "今天看完一个项目复盘",
       repairCount: 1
     });
+    expect(provider.complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timeoutMs: 8_000
+      })
+    );
   });
 
   it("uses the structured judgment-clue path for fulfillment fallback turns when AI generation is unavailable", async () => {
@@ -794,6 +803,187 @@ describe("extractJoySnapshotWithAI", () => {
         tags: []
       }).success
     ).toBe(true);
+  });
+
+  it("returns intent and evidence from one extract call", async () => {
+    const session = buildSession();
+    const deterministic = assessUserTurnIntent({
+      rawText: "被理解对我很重要，直接生成日志吧",
+      lastAssistantQuestion: session.lastAssistantQuestion,
+      questionSpec: {
+        target: "insight_evidence",
+        stageIntent: "advance",
+        surfaceLevel: "default",
+        repairCount: 0
+      }
+    });
+    const onIntentAssessment = vi.fn();
+    completeStructuredOutput.mockResolvedValue({
+      intent: {
+        ...deterministic,
+        origin: "llm",
+        confidence: 0.95
+      },
+      evidence: {
+        meaningNeed: "被理解对我很重要",
+        tags: []
+      }
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "被理解对我很重要，直接生成日志吧",
+      intentAssessment: deterministic,
+      onIntentAssessment
+    });
+
+    expect(snapshot.meaningNeed).toBe("被理解对我很重要");
+    expect(onIntentAssessment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        primaryControl: "generate_draft",
+        origin: "hybrid"
+      })
+    );
+    expect(completeStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "extract",
+        temperature: 0.15,
+        maxTokens: 1100,
+        maxAttempts: 1,
+        timeoutMs: 12_000
+      })
+    );
+  });
+
+  it("replaces a richer old field when the user explicitly corrects it", async () => {
+    const previousMode = process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE;
+    process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE = "legacy";
+    try {
+      const session = buildSession();
+      const rawText = "刚才说错了，不是反转的好笑，是那种很荒诞的停顿让我笑";
+      const deterministic = assessUserTurnIntent({
+        rawText,
+        lastAssistantQuestion: session.lastAssistantQuestion,
+        questionSpec: {
+          target: "insight_evidence",
+          stageIntent: "advance",
+          surfaceLevel: "default",
+          repairCount: 0
+        }
+      });
+      completeStructuredOutput.mockResolvedValue({
+        intent: {
+          ...deterministic,
+          origin: "llm",
+          confidence: 0.98
+        },
+        evidence: {
+          joySource: "那种很荒诞的停顿让我笑",
+          tags: []
+        },
+        understanding: {
+          units: [
+            {
+              kind: "correction",
+              text: "开心来自那种很荒诞的停顿",
+              evidenceText: "那种很荒诞的停顿让我笑",
+              fields: ["joySource"],
+              materialStatus: "explicit_confirmed",
+              eventRelation: "current_detail",
+              relationship: null,
+              candidateDimension: null
+            }
+          ],
+          answerState: "answered",
+          answeredTarget: "current_question",
+          candidateDimensions: []
+        }
+      });
+
+      const snapshot = await extractJoySnapshotWithAI({
+        session,
+        userMessage: rawText,
+        intentAssessment: deterministic,
+        trustedUnderstandingEnabled: true
+      });
+
+      expect(snapshot.joySource).toBe("那种很荒诞的停顿让我笑");
+      expect(snapshot.joySource).not.toBe(session.snapshot.joySource);
+    } finally {
+      if (previousMode === undefined) delete process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE;
+      else process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE = previousMode;
+    }
+  });
+
+  it("keeps pending inference and candidate events out of the current snapshot", async () => {
+    const previousMode = process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE;
+    process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE = "legacy";
+    try {
+      const session = buildSession();
+      const rawText = "我也说不清原因，晚上倒是还去河边散步了";
+      const deterministic = assessUserTurnIntent({
+        rawText,
+        lastAssistantQuestion: session.lastAssistantQuestion,
+        questionSpec: {
+          target: "insight_evidence",
+          stageIntent: "advance",
+          surfaceLevel: "default",
+          repairCount: 0
+        }
+      });
+      completeStructuredOutput.mockResolvedValue({
+        intent: {
+          ...deterministic,
+          origin: "llm",
+          confidence: 0.95
+        },
+        evidence: {
+          joyMoment: "晚上去河边散步",
+          joySource: "可能是因为被认可",
+          tags: []
+        },
+        understanding: {
+          units: [
+            {
+              kind: "reason",
+              text: "可能是因为被认可",
+              evidenceText: null,
+              fields: ["joySource"],
+              materialStatus: "pending_inference",
+              eventRelation: "current_detail",
+              relationship: null,
+              candidateDimension: null
+            },
+            {
+              kind: "event",
+              text: "晚上去河边散步",
+              evidenceText: "晚上倒是还去河边散步了",
+              fields: ["joyMoment"],
+              materialStatus: "explicit_confirmed",
+              eventRelation: "candidate_event",
+              relationship: null,
+              candidateDimension: "joy"
+            }
+          ],
+          answerState: "unaddressed",
+          answeredTarget: null,
+          candidateDimensions: ["joy"]
+        }
+      });
+
+      const snapshot = await extractJoySnapshotWithAI({
+        session,
+        userMessage: rawText,
+        intentAssessment: deterministic,
+        trustedUnderstandingEnabled: true
+      });
+
+      expect(snapshot.joyMoment).toBe(session.snapshot.joyMoment);
+      expect(snapshot.joySource).toBe(session.snapshot.joySource);
+    } finally {
+      if (previousMode === undefined) delete process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE;
+      else process.env.INTERVIEW_CONTENT_UNDERSTANDING_MODE = previousMode;
+    }
   });
 
   it("preserves an explicitly stated stable manual clue while keeping optional signals conservative", async () => {
@@ -1634,6 +1824,43 @@ describe("extractJoySnapshotWithAI", () => {
     expect(snapshot.seenNeed).toContain("需要具体帮助");
     expect(snapshot.gratitudeReason).toContain("稳稳接住了我的慌乱");
     expect(snapshot.relationshipSignal).toContain("尊重边界");
+  });
+
+  it("keeps the concrete help action separate from quoted conversation control", async () => {
+    const session = buildSession({
+      dimension: "gratitude",
+      stage: "collect_event",
+      turnCount: 0,
+      snapshot: {
+        event: null,
+        feeling: null,
+        whyItMattered: null,
+        happinessType: null,
+        selfPattern: null,
+        confidence: 0.2,
+        missingSlots: ["gratitudeMoment", "kindAction", "seenNeed", "gratitudeReason", "relationshipSignal"]
+      }
+    });
+    completeStructuredOutput.mockResolvedValue({
+      gratitudeMoment: "同事说项目先结束，然后主动帮我收尾",
+      gratitudeTarget: "同事",
+      kindAction: "对我说“这个项目先结束吧，别再追了”，然后主动帮我收尾，我很感激",
+      seenNeed: null,
+      innerEffect: "我很感激",
+      gratitudeReason: null,
+      gratitudeType: null,
+      relationshipSignal: null,
+      reciprocityHint: null,
+      tags: []
+    });
+
+    const snapshot = await extractJoySnapshotWithAI({
+      session,
+      userMessage: "同事对我说“这个项目先结束吧，别再追了”，然后主动帮我收尾，我很感激。"
+    });
+
+    expect(snapshot.kindAction).toBe("主动帮我收尾");
+    expect(snapshot.gratitudeMoment).toContain("项目先结束");
   });
 });
 
