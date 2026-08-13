@@ -3,6 +3,7 @@ import {
   PrismaClient,
   type AIRequestStage,
   type InterviewDimension as PrismaInterviewDimension,
+  type InterviewRegenerationIntent as PrismaInterviewRegenerationIntent,
   type InterviewUserTurnStatus as PrismaInterviewUserTurnStatus,
   type InputMode,
   type InterviewSessionStatus,
@@ -26,6 +27,10 @@ import {
   getTodayEntryDate,
   parseEntryDateInput
 } from "@/features/interview/entry-date";
+import {
+  INTERVIEW_USER_TURN_LEASE_MS,
+  isInterviewUserTurnLeaseExpired
+} from "@/features/interview/user-turn";
 import { isDraftGenerationUnlocked } from "@/features/joy-interview/server/interview-progress";
 import {
   buildJoySnapshot,
@@ -38,7 +43,9 @@ import type {
   InterviewDimension,
   InterviewEventRecord,
   InterviewLens,
+  InterviewMessage,
   InterviewSessionRecord,
+  InterviewRegenerationIntent,
   InterviewUserTurnAction,
   InterviewUserTurnRecord,
   JournalEntryRecord,
@@ -49,6 +56,10 @@ import type {
 } from "@/types/interview";
 
 const unresolvedUserTurnStatuses: PrismaInterviewUserTurnStatus[] = ["processing", "failed", "canceled"];
+
+function isInterviewRegenerationEnabled() {
+  return process.env.INTERVIEW_REGENERATION_ENABLED !== "false";
+}
 
 const interviewSessionInclude = {
   activeEvent: true,
@@ -71,9 +82,13 @@ const interviewSessionInclude = {
   },
   userTurns: {
     where: {
-      status: {
-        in: unresolvedUserTurnStatuses
-      }
+      OR: [
+        { status: "processing" },
+        {
+          status: { in: ["failed", "canceled"] },
+          action: { not: "regenerate_question" }
+        }
+      ] as Prisma.InterviewUserTurnWhereInput[]
     },
     orderBy: {
       createdAt: "desc"
@@ -101,6 +116,7 @@ type DatabaseClient = PrismaClient | Prisma.TransactionClient;
 type InterviewSessionWithRelations = Prisma.InterviewSessionGetPayload<{
   include: typeof interviewSessionInclude;
 }>;
+type EffectiveInterviewMessage = InterviewSessionWithRelations["messages"][number];
 type SnapshotRecord = NonNullable<InterviewSessionWithRelations["snapshots"][number]>;
 type EventRecord = NonNullable<InterviewSessionWithRelations["events"][number]>;
 type JoyEntryRecord = NonNullable<InterviewSessionWithRelations["joyEntry"]>;
@@ -114,6 +130,9 @@ function mapInterviewUserTurn(
     sessionId: turn.sessionId,
     activeEventId: turn.activeEventId,
     action: turn.action,
+    targetMessageId: turn.targetMessageId,
+    regenerationIntent: turn.regenerationIntent,
+    baseBranchSessionId: turn.baseBranchSessionId,
     rawText: turn.rawText,
     inputMode: turn.inputMode ?? undefined,
     baseMessageSequence: turn.baseMessageSequence,
@@ -687,6 +706,9 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
     id: session.id,
     userId: session.userId,
     dimension: session.dimension,
+    conversationSchemaVersion: session.conversationSchemaVersion,
+    rootSessionId: session.rootSessionId ?? session.id,
+    activeBranchSessionId: session.activeBranchSessionId ?? session.id,
     status: session.status,
     stage: activeEvent?.stage ?? session.stage,
     activeEventId: activeEvent?.id ?? null,
@@ -699,6 +721,28 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
       inputMode: message.inputMode ?? undefined,
       content: message.content,
       assistantPayload: message.role === "assistant" ? parseAssistantTurnPayload(message.content) : null,
+      branchSessionId: message.branchSessionId ?? message.sessionId,
+      responseVersion:
+        message.role === "assistant" && message.responseGroupId && message.responseVersion
+          ? {
+              groupId: message.responseGroupId,
+              version: message.responseVersion,
+              versionCount: message.responseVersion,
+              canRegenerate: session.conversationSchemaVersion >= 2,
+              canSwitch: message.responseVersion > 1,
+              disabledReason: null,
+              versions: [
+                {
+                  messageId: message.id,
+                  branchSessionId: message.branchSessionId ?? message.sessionId,
+                  version: message.responseVersion,
+                  active: true
+                }
+              ]
+            }
+          : null,
+      regenerationIntent: message.regenerationIntent,
+      regeneratedFromMessageId: message.regeneratedFromMessageId,
       sequence: message.sequence,
       createdAt: message.createdAt.toISOString()
     })),
@@ -727,6 +771,325 @@ function mapInterviewSession(session: InterviewSessionWithRelations): InterviewS
       pendingDecision: mappedSession.pendingDecision
     })
   };
+}
+
+async function resolveInterviewSessionRoute(database: DatabaseClient, sessionId: string) {
+  const requested = await database.interviewSession.findUnique({
+    where: { id: sessionId },
+    select: {
+      id: true,
+      userId: true,
+      rootSessionId: true,
+      activeBranchSessionId: true,
+      conversationSchemaVersion: true
+    }
+  });
+
+  if (!requested) {
+    return null;
+  }
+
+  const rootId = requested.rootSessionId ?? requested.id;
+  const root =
+    rootId === requested.id
+      ? requested
+      : await database.interviewSession.findUnique({
+          where: { id: rootId },
+          select: {
+            id: true,
+            userId: true,
+            rootSessionId: true,
+            activeBranchSessionId: true,
+            conversationSchemaVersion: true
+          }
+        });
+
+  if (!root) {
+    return null;
+  }
+
+  return {
+    rootId: root.id,
+    activeBranchSessionId: root.activeBranchSessionId ?? root.id,
+    conversationSchemaVersion: root.conversationSchemaVersion,
+    userId: root.userId
+  };
+}
+
+async function resolveEffectiveInterviewMessages(
+  database: DatabaseClient,
+  branchSessionId: string
+): Promise<InterviewSessionWithRelations["messages"]> {
+  const chain: Array<{
+    id: string;
+    parentSessionId: string | null;
+    forkMessageSequence: number | null;
+    messages: InterviewSessionWithRelations["messages"];
+  }> = [];
+  let cursor: string | null = branchSessionId;
+
+  while (cursor) {
+    const branch: {
+      id: string;
+      parentSessionId: string | null;
+      forkMessageSequence: number | null;
+      messages: EffectiveInterviewMessage[];
+    } | null = await database.interviewSession.findUnique({
+      where: { id: cursor },
+      select: {
+        id: true,
+        parentSessionId: true,
+        forkMessageSequence: true,
+        messages: {
+          orderBy: { sequence: "asc" },
+          include: {
+            userTurn: {
+              select: {
+                clientTurnId: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!branch) {
+      break;
+    }
+
+    chain.push(branch);
+    cursor = branch.parentSessionId;
+  }
+
+  let messages: InterviewSessionWithRelations["messages"] = [];
+  for (const branch of chain.reverse()) {
+    if (branch.forkMessageSequence !== null) {
+      messages = messages.filter((message) => message.sequence < branch.forkMessageSequence!);
+    }
+    messages = [...messages, ...branch.messages].sort((left, right) => left.sequence - right.sequence);
+  }
+
+  return messages;
+}
+
+async function resolveEffectiveInterviewMessagesForRoot(
+  database: DatabaseClient,
+  rootSessionId: string,
+  branchSessionId: string
+): Promise<InterviewSessionWithRelations["messages"]> {
+  const branches = await database.interviewSession.findMany({
+    where: {
+      OR: [
+        { id: rootSessionId },
+        { rootSessionId }
+      ]
+    },
+    select: {
+      id: true,
+      parentSessionId: true,
+      forkMessageSequence: true
+    }
+  });
+  const branchesById = new Map(branches.map((branch) => [branch.id, branch]));
+  const chain: typeof branches = [];
+  let cursor: string | null = branchSessionId;
+
+  while (cursor) {
+    const branch = branchesById.get(cursor);
+    if (!branch) return [];
+    chain.push(branch);
+    cursor = branch.parentSessionId;
+  }
+
+  if (chain.at(-1)?.id !== rootSessionId) {
+    return [];
+  }
+
+  const branchIds = chain.map((branch) => branch.id);
+  const branchMessages = await database.interviewMessage.findMany({
+    where: {
+      sessionId: { in: branchIds }
+    },
+    orderBy: [
+      { sessionId: "asc" },
+      { sequence: "asc" }
+    ],
+    include: {
+      userTurn: {
+        select: {
+          clientTurnId: true
+        }
+      }
+    }
+  });
+  const messagesByBranch = new Map<string, InterviewSessionWithRelations["messages"]>();
+
+  for (const message of branchMessages) {
+    const messages = messagesByBranch.get(message.sessionId) ?? [];
+    messages.push(message);
+    messagesByBranch.set(message.sessionId, messages);
+  }
+
+  let messages: InterviewSessionWithRelations["messages"] = [];
+  for (const branch of chain.reverse()) {
+    if (branch.forkMessageSequence !== null) {
+      messages = messages.filter((message) => message.sequence < branch.forkMessageSequence!);
+    }
+    messages = [...messages, ...(messagesByBranch.get(branch.id) ?? [])].sort(
+      (left, right) => left.sequence - right.sequence
+    );
+  }
+
+  return messages;
+}
+
+async function mapActiveInterviewSession(input: {
+  root: InterviewSessionWithRelations;
+  active: InterviewSessionWithRelations;
+  effectiveMessages: InterviewSessionWithRelations["messages"];
+}, database: DatabaseClient = prisma): Promise<InterviewSessionRecord> {
+  const mapped = mapInterviewSession({
+    ...input.active,
+    messages: input.effectiveMessages,
+    joyEntry: input.root.joyEntry
+  });
+  const activeMessageIds = new Set(input.effectiveMessages.map((message) => message.id));
+  const responseGroupIds = input.effectiveMessages.flatMap((message) =>
+    message.responseGroupId ? [message.responseGroupId] : []
+  );
+  const versions = responseGroupIds.length
+    ? await database.interviewMessage.findMany({
+        where: {
+          responseGroupId: {
+            in: Array.from(new Set(responseGroupIds))
+          }
+        },
+        orderBy: [{ responseGroupId: "asc" }, { responseVersion: "asc" }]
+      })
+    : [];
+  const versionsByGroup = new Map<string, typeof versions>();
+
+  for (const version of versions) {
+    if (!version.responseGroupId) continue;
+    const group = versionsByGroup.get(version.responseGroupId) ?? [];
+    group.push(version);
+    versionsByGroup.set(version.responseGroupId, group);
+  }
+
+  const latestAssistantSequence = Math.max(
+    -1,
+    ...input.effectiveMessages
+      .filter((message) => message.role === "assistant")
+      .map((message) => message.sequence)
+  );
+  const journalLocked = Boolean(input.root.joyEntry);
+  const messages = mapped.messages.map((message) => {
+    const payload = message.assistantPayload;
+    const groupId = message.responseVersion?.groupId;
+
+    if (
+      input.root.conversationSchemaVersion < 2 ||
+      !isInterviewRegenerationEnabled() ||
+      message.role !== "assistant" ||
+      !payload?.question ||
+      payload.stateUpdate.offerChoice ||
+      !groupId
+    ) {
+      return {
+        ...message,
+        responseVersion: null
+      };
+    }
+
+    const groupVersions = versionsByGroup.get(groupId) ?? [];
+    const versionCount = groupVersions.length;
+    const lockedByJournal = journalLocked && message.sequence < latestAssistantSequence;
+    const limitReached = versionCount >= 3;
+
+    return {
+      ...message,
+      responseVersion: {
+        groupId,
+        version: message.responseVersion?.version ?? 1,
+        versionCount,
+        canRegenerate:
+          isInterviewRegenerationEnabled() &&
+          input.root.conversationSchemaVersion >= 2 &&
+          !lockedByJournal &&
+          !limitReached,
+        canSwitch: versionCount > 1 && !lockedByJournal,
+        disabledReason:
+          !isInterviewRegenerationEnabled()
+            ? "换问法功能当前已暂停"
+            : input.root.conversationSchemaVersion < 2
+            ? "旧访谈会继续沿用原有流程"
+            : lockedByJournal
+              ? "这段历史已经进入日志"
+              : limitReached
+                ? "这个问题已经保留了三个版本"
+                : null,
+        versions: groupVersions.map((version) => ({
+          messageId: version.id,
+          branchSessionId: version.branchSessionId ?? version.sessionId,
+          version: version.responseVersion ?? 1,
+          active: activeMessageIds.has(version.id)
+        }))
+      }
+    };
+  });
+
+  return {
+    ...mapped,
+    id: input.root.id,
+    rootSessionId: input.root.id,
+    activeBranchSessionId: input.active.id,
+    conversationSchemaVersion: input.root.conversationSchemaVersion,
+    messages,
+    journalEntry: mapJournalEntry(input.root.joyEntry, input.root.dimension),
+    startedAt: input.root.startedAt.toISOString()
+  };
+}
+
+async function readInterviewBranchProjection(input: {
+  database?: DatabaseClient;
+  rootSessionId: string;
+  branchSessionId: string;
+  userId?: string;
+}) {
+  const database = input.database ?? prisma;
+  const rootPromise = database.interviewSession.findUnique({
+    where: { id: input.rootSessionId },
+    include: interviewSessionInclude
+  });
+  const activePromise = input.branchSessionId === input.rootSessionId
+    ? rootPromise
+    : database.interviewSession.findUnique({
+        where: { id: input.branchSessionId },
+        include: interviewSessionInclude
+      });
+  const effectiveMessagesPromise = resolveEffectiveInterviewMessagesForRoot(
+    database,
+    input.rootSessionId,
+    input.branchSessionId
+  );
+  const [root, active, effectiveMessages] = await Promise.all([
+    rootPromise,
+    activePromise,
+    effectiveMessagesPromise
+  ]);
+
+  if (
+    !root ||
+    !active ||
+    (input.userId && root.userId !== input.userId) ||
+    active.userId !== root.userId ||
+    (active.rootSessionId ?? active.id) !== root.id ||
+    effectiveMessages.length === 0
+  ) {
+    return null;
+  }
+
+  return mapActiveInterviewSession({ root, active, effectiveMessages }, database);
 }
 
 async function ensureInterviewEvents(database: DatabaseClient, sessionId: string) {
@@ -822,12 +1185,52 @@ export async function createJoyInterviewSession(
   const assistantMessageId = randomUUID();
   const generationTraceId = randomUUID();
 
+  const checkpointWrite = prisma.interviewBranchCheckpoint?.create
+    ? prisma.interviewBranchCheckpoint.create({
+        data: {
+          sessionId,
+          messageId: assistantMessageId,
+          schemaVersion: 1,
+          sessionState: toJsonValue({
+            status: "active",
+            stage: "collect_event",
+            activeEventId,
+            turnCount: 0,
+            lastAssistantQuestion: openingQuestion,
+            draftSummary: null
+          }),
+          eventsState: toJsonValue([
+            {
+              id: activeEventId,
+              sequence: 1,
+              status: "active",
+              stage: "collect_event",
+              explorationRound: 1,
+              coveredLenses: [],
+              roundCoveredLenses: [],
+              roundMeaningfulReplyCount: 0,
+              totalMeaningfulReplyCount: 0,
+              startMessageSequence: 0,
+              snapshotData: emptySnapshotData,
+              progressData: null,
+              confidence: emptyEvidence.confidence,
+              missingSlots: emptyEvidence.missingSlots,
+              draftSummary: null
+            }
+          ])
+        }
+      })
+    : null;
+
   await prisma.$transaction([
     prisma.interviewSession.create({
       data: {
         id: sessionId,
         userId,
         dimension: dimension as PrismaInterviewDimension,
+        conversationSchemaVersion: 2,
+        rootSessionId: sessionId,
+        activeBranchSessionId: sessionId,
         status: "active",
         stage: "collect_event",
         entryDate: resolvedEntryDate,
@@ -877,6 +1280,9 @@ export async function createJoyInterviewSession(
         id: assistantMessageId,
         sessionId,
         generationTraceId,
+        responseGroupId: assistantMessageId,
+        responseVersion: 1,
+        branchSessionId: sessionId,
         role: "assistant",
         content: serializeAssistantTurnPayload(openingAssistantTurn),
         sequence: 0
@@ -910,7 +1316,8 @@ export async function createJoyInterviewSession(
       data: {
         activeEventId
       }
-    })
+    }),
+    ...(checkpointWrite ? [checkpointWrite] : [])
   ]);
 
   const session = await prisma.interviewSession.findUnique({
@@ -926,17 +1333,1193 @@ export async function createJoyInterviewSession(
 }
 
 export async function findJoyInterviewSessionById(sessionId: string, userId?: string) {
-  const session = await ensureInterviewEvents(prisma, sessionId);
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+
+  if (!route || (userId && route.userId !== userId)) {
+    return null;
+  }
+
+  const root = await ensureInterviewEvents(prisma, route.rootId);
+  const active =
+    route.activeBranchSessionId === route.rootId
+      ? root
+      : await ensureInterviewEvents(prisma, route.activeBranchSessionId);
+
+  if (!root || !active) {
+    return null;
+  }
+
+  const effectiveMessages = await resolveEffectiveInterviewMessages(prisma, active.id);
+
+  return mapActiveInterviewSession({ root, active, effectiveMessages });
+}
+
+export type ReservedInterviewRegeneration = {
+  kind: "reserved" | "completed";
+  turn: PersistedInterviewUserTurnRecord;
+  regenerationId: string;
+  generationTraceId: string;
+  session: InterviewSessionRecord;
+  targetMessage: InterviewMessage;
+};
+
+export async function reserveInterviewRegeneration(input: {
+  userId: string;
+  sessionId: string;
+  targetMessageId: string;
+  intent: InterviewRegenerationIntent;
+  clientTurnId: string;
+  baseMessageSequence?: number;
+  baseBranchSessionId: string;
+}): Promise<ReservedInterviewRegeneration> {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (route.conversationSchemaVersion < 2) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  if (!isInterviewRegenerationEnabled()) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  const existingRootTurn = await prisma.interviewUserTurn.findFirst({
+    where: {
+      clientTurnId: input.clientTurnId,
+      action: "regenerate_question",
+      session: {
+        userId: input.userId,
+        OR: [
+          { id: route.rootId },
+          { rootSessionId: route.rootId }
+        ]
+      }
+    }
+  });
+
+  if (existingRootTurn) {
+    const existingRegeneration = await prisma.aIResponseRegeneration.findUnique({
+      where: { userTurnId: existingRootTurn.id }
+    });
+
+    if (!existingRegeneration?.generatedTraceId) {
+      throw new Error("INTERVIEW_REGENERATION_FAILED");
+    }
+
+    if (existingRootTurn.status === "processing") {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    if (existingRootTurn.status !== "completed") {
+      throw new Error("INTERVIEW_TURN_RETRY_REQUIRED");
+    }
+
+    const [session, sourceMessage] = await Promise.all([
+      findJoyInterviewSessionById(route.rootId, input.userId),
+      prisma.interviewMessage.findUnique({
+        where: { id: existingRegeneration.sourceMessageId },
+        select: { responseGroupId: true }
+      })
+    ]);
+    const targetMessage = session?.messages.find(
+      (message) =>
+        message.responseVersion?.groupId === sourceMessage?.responseGroupId &&
+        message.responseVersion?.versions.some((version) => version.active)
+    );
+
+    if (!session || !targetMessage) {
+      throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+    }
+
+    return {
+      kind: "completed",
+      turn: mapStandaloneInterviewUserTurn(existingRootTurn),
+      regenerationId: existingRegeneration.id,
+      generationTraceId: existingRegeneration.generatedTraceId,
+      session,
+      targetMessage
+    };
+  }
+
+  if (route.activeBranchSessionId !== input.baseBranchSessionId) {
+    throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+  }
+
+  const effectiveMessages = await resolveEffectiveInterviewMessages(prisma, route.activeBranchSessionId);
+  const target = effectiveMessages.find((message) => message.id === input.targetMessageId);
+  const targetPayload =
+    target?.role === "assistant" ? parseAssistantTurnPayload(target.content) : null;
+
+  if (!target || !targetPayload?.question || targetPayload.stateUpdate.offerChoice || !target.responseGroupId) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  const latestSequence = effectiveMessages[effectiveMessages.length - 1]?.sequence ?? -1;
+  const requestedBaseSequence = input.baseMessageSequence ?? latestSequence;
+
+  if (requestedBaseSequence !== latestSequence) {
+    throw new Error("INTERVIEW_TURN_OUT_OF_DATE");
+  }
+
+  const [root, checkpoint, versionCount] = await Promise.all([
+    prisma.interviewSession.findUnique({
+      where: { id: route.rootId },
+      include: { joyEntry: true }
+    }),
+    prisma.interviewBranchCheckpoint.findUnique({
+      where: { messageId: target.id }
+    }),
+    prisma.interviewMessage.count({
+      where: { responseGroupId: target.responseGroupId }
+    })
+  ]);
+
+  if (!root || !checkpoint) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  if (versionCount >= 3) {
+    throw new Error("INTERVIEW_REGENERATION_LIMIT_REACHED");
+  }
+
+  const latestAssistantSequence = Math.max(
+    -1,
+    ...effectiveMessages
+      .filter((message) => message.role === "assistant")
+      .map((message) => message.sequence)
+  );
+  if (root.joyEntry && target.sequence < latestAssistantSequence) {
+    throw new Error("INTERVIEW_BRANCH_LOCKED_BY_JOURNAL");
+  }
+
+  const result = await prisma.$transaction(async (database) => {
+    const existingTurn = await database.interviewUserTurn.findUnique({
+      where: {
+        sessionId_clientTurnId: {
+          sessionId: route.activeBranchSessionId,
+          clientTurnId: input.clientTurnId
+        }
+      }
+    });
+
+    if (existingTurn) {
+      const regeneration = await database.aIResponseRegeneration.findUnique({
+        where: { userTurnId: existingTurn.id }
+      });
+
+      if (!regeneration) {
+        throw new Error("INTERVIEW_REGENERATION_FAILED");
+      }
+
+      if (existingTurn.status === "completed") {
+        return {
+          kind: "completed" as const,
+          turn: existingTurn,
+          regeneration
+        };
+      }
+
+      if (existingTurn.status === "processing") {
+        throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+      }
+
+      throw new Error("INTERVIEW_TURN_RETRY_REQUIRED");
+    }
+
+    const unresolvedTurn = await database.interviewUserTurn.findFirst({
+      where: {
+        sessionId: route.activeBranchSessionId,
+        OR: [
+          { status: "processing" },
+          {
+            status: { in: ["failed", "canceled"] },
+            action: { not: "regenerate_question" }
+          }
+        ]
+      },
+      select: { id: true }
+    });
+
+    if (unresolvedTurn) {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    const turn = await database.interviewUserTurn.create({
+      data: {
+        clientTurnId: input.clientTurnId,
+        sessionId: route.activeBranchSessionId,
+        activeEventId: root.activeEventId,
+        action: "regenerate_question",
+        targetMessageId: target.id,
+        regenerationIntent: input.intent,
+        baseBranchSessionId: input.baseBranchSessionId,
+        baseMessageSequence: requestedBaseSequence,
+        status: "processing"
+      }
+    });
+    const generationTraceId = randomUUID();
+    await database.aIGenerationTrace.create({
+      data: {
+        id: generationTraceId,
+        userId: route.userId,
+        sessionId: route.activeBranchSessionId,
+        dimension: root.dimension,
+        artifactType: "interview_turn",
+        triggerMessageId: target.id,
+        status: "pending",
+        contextSnapshot: toJsonValue({
+          action: "regenerate_question",
+          rootSessionId: route.rootId,
+          sourceBranchSessionId: route.activeBranchSessionId,
+          targetMessageId: target.id,
+          intent: input.intent,
+          sourceTraceId: target.generationTraceId
+        }),
+        pipelineDecisions: toJsonValue([])
+      }
+    });
+    await database.aIResponseRegeneration.updateMany({
+      where: {
+        branchSessionId: route.activeBranchSessionId,
+        status: "completed",
+        replacedAt: null
+      },
+      data: {
+        replacedAt: new Date()
+      }
+    });
+    const regeneration = await database.aIResponseRegeneration.create({
+      data: {
+        rootSessionId: route.rootId,
+        branchSessionId: route.activeBranchSessionId,
+        targetMessageId: target.id,
+        sourceMessageId: target.id,
+        sourceTraceId: target.generationTraceId,
+        generatedTraceId: generationTraceId,
+        userTurnId: turn.id,
+        intent: input.intent,
+        status: "processing"
+      }
+    });
+
+    return {
+      kind: "reserved" as const,
+      turn,
+      regeneration
+    };
+  });
+  const session = await findJoyInterviewSessionById(route.rootId, input.userId);
 
   if (!session) {
-    return null;
+    throw new Error("SESSION_NOT_FOUND");
   }
 
-  if (userId && session.userId !== userId) {
-    return null;
+  const targetMessage =
+    session.messages.find((message) => message.id === target.id) ??
+    session.messages.find(
+      (message) =>
+        message.responseVersion?.groupId === target.responseGroupId &&
+        message.responseVersion?.versions.some((version) => version.active)
+    );
+
+  if (!targetMessage) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
   }
 
-  return mapInterviewSession(session);
+  return {
+    kind: result.kind,
+    turn: mapStandaloneInterviewUserTurn(result.turn),
+    regenerationId: result.regeneration.id,
+    generationTraceId: result.regeneration.generatedTraceId!,
+    session,
+    targetMessage
+  };
+}
+
+export async function resumeInterviewRegeneration(input: {
+  userId: string;
+  sessionId: string;
+  clientTurnId: string;
+}): Promise<ReservedInterviewRegeneration> {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("INTERVIEW_TURN_NOT_FOUND");
+  }
+
+  const result = await prisma.$transaction(async (database) => {
+    const turn = await database.interviewUserTurn.findFirst({
+      where: {
+        clientTurnId: input.clientTurnId,
+        action: "regenerate_question",
+        session: {
+          userId: input.userId,
+          OR: [
+            { id: route.rootId },
+            { rootSessionId: route.rootId }
+          ]
+        }
+      }
+    });
+
+    if (!turn) {
+      throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
+    }
+
+    const regeneration = await database.aIResponseRegeneration.findUnique({
+      where: { userTurnId: turn.id }
+    });
+
+    if (!regeneration?.generatedTraceId) {
+      throw new Error("INTERVIEW_REGENERATION_FAILED");
+    }
+
+    if (turn.status === "completed" && regeneration.status === "completed") {
+      return {
+        kind: "completed" as const,
+        turn,
+        regeneration
+      };
+    }
+
+    if (route.activeBranchSessionId !== regeneration.branchSessionId) {
+      throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+    }
+
+    if (turn.status === "processing" && !isInterviewUserTurnLeaseExpired(turn)) {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    const staleProcessingCutoff = new Date(Date.now() - INTERVIEW_USER_TURN_LEASE_MS);
+    const updated = await database.interviewUserTurn.updateMany({
+      where: {
+        id: turn.id,
+        OR: [
+          { status: { in: ["failed", "canceled"] } },
+          {
+            status: "processing",
+            updatedAt: { lte: staleProcessingCutoff }
+          }
+        ]
+      },
+      data: {
+        status: "processing",
+        attemptCount: { increment: 1 },
+        errorCode: null,
+        completedAt: null
+      }
+    });
+
+    if (updated.count !== 1) {
+      throw new Error("INTERVIEW_TURN_IN_PROGRESS");
+    }
+
+    await database.aIResponseRegeneration.update({
+      where: { id: regeneration.id },
+      data: {
+        status: "processing",
+        errorCode: null
+      }
+    });
+    await database.aIGenerationTrace.update({
+      where: { id: regeneration.generatedTraceId },
+      data: {
+        status: "pending",
+        errorCode: null,
+        failedAt: null,
+        completedAt: null
+      }
+    });
+    const updatedTurn = await database.interviewUserTurn.findUnique({
+      where: { id: turn.id }
+    });
+
+    if (!updatedTurn) {
+      throw new Error("INTERVIEW_TURN_NOT_FOUND");
+    }
+
+    return {
+      kind: "reserved" as const,
+      turn: updatedTurn,
+      regeneration
+    };
+  });
+  const [session, sourceMessage] = await Promise.all([
+    findJoyInterviewSessionById(route.rootId, input.userId),
+    prisma.interviewMessage.findUnique({
+      where: { id: result.regeneration.sourceMessageId },
+      select: { responseGroupId: true }
+    })
+  ]);
+  const targetMessage =
+    session?.messages.find((message) => message.id === result.regeneration.sourceMessageId) ??
+    session?.messages.find(
+      (message) =>
+        message.responseVersion?.groupId === sourceMessage?.responseGroupId &&
+        message.responseVersion?.versions.some((version) => version.active)
+    );
+
+  if (!session || !targetMessage) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  return {
+    kind: result.kind,
+    turn: mapStandaloneInterviewUserTurn(result.turn),
+    regenerationId: result.regeneration.id,
+    generationTraceId: result.regeneration.generatedTraceId!,
+    session,
+    targetMessage
+  };
+}
+
+function readCheckpointRecord(value: unknown) {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function readCheckpointEvents(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((event): event is Record<string, unknown> => Boolean(event && typeof event === "object"))
+    : [];
+}
+
+function checkpointString(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
+function checkpointStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function checkpointNumber(value: unknown, fallback = 0) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function checkpointDate(value: unknown) {
+  return typeof value === "string" || value instanceof Date ? new Date(value) : undefined;
+}
+
+export async function completeInterviewRegeneration(input: {
+  userId: string;
+  sessionId: string;
+  regenerationId: string;
+  userTurnId: string;
+  targetMessageId: string;
+  intent: InterviewRegenerationIntent;
+  assistantTurn: AssistantTurnPayload;
+  candidates: unknown;
+  selectedCandidate: number;
+  checks: unknown;
+  requestId?: string | null;
+  outputOrigin: "llm" | "deterministic" | "fallback";
+  latencyMs: number;
+}) {
+  const assistantMessageId = randomUUID();
+  const childSessionId = randomUUID();
+
+  const rootId = await prisma.$transaction(async (database) => {
+    const regeneration = await database.aIResponseRegeneration.findUnique({
+      where: { id: input.regenerationId }
+    });
+
+    if (
+      !regeneration ||
+      regeneration.userTurnId !== input.userTurnId ||
+      !regeneration.generatedTraceId
+    ) {
+      throw new Error("INTERVIEW_REGENERATION_FAILED");
+    }
+    const generationTraceId = regeneration.generatedTraceId;
+
+    if (regeneration.status === "completed" && regeneration.generatedMessageId) {
+      return regeneration.rootSessionId;
+    }
+
+    const target = await database.interviewMessage.findUnique({
+      where: { id: input.targetMessageId }
+    });
+
+    if (!target?.responseGroupId) {
+      throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+    }
+
+    const [root, sourceBranch, checkpoint, versionCount] = await Promise.all([
+      database.interviewSession.findUnique({ where: { id: regeneration.rootSessionId } }),
+      database.interviewSession.findUnique({ where: { id: regeneration.branchSessionId } }),
+      database.interviewBranchCheckpoint.findUnique({ where: { messageId: input.targetMessageId } }),
+      database.interviewMessage.count({
+        where: { responseGroupId: target.responseGroupId }
+      })
+    ]);
+
+    if (!root || !sourceBranch || !target?.responseGroupId || !checkpoint) {
+      throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+    }
+
+    if (root.userId !== input.userId || root.activeBranchSessionId !== sourceBranch.id) {
+      throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+    }
+
+    if (versionCount >= 3) {
+      throw new Error("INTERVIEW_REGENERATION_LIMIT_REACHED");
+    }
+
+    const sessionState = readCheckpointRecord(checkpoint.sessionState);
+    const checkpointEvents = readCheckpointEvents(checkpoint.eventsState);
+    const eventIdMap = new Map<string, string>();
+
+    for (const event of checkpointEvents) {
+      const previousId = checkpointString(event.id);
+      if (previousId) {
+        eventIdMap.set(previousId, randomUUID());
+      }
+    }
+
+    const previousActiveEventId = checkpointString(sessionState.activeEventId);
+    const activeEventId =
+      (previousActiveEventId ? eventIdMap.get(previousActiveEventId) : null) ??
+      eventIdMap.values().next().value ??
+      null;
+    const stage =
+      sessionState.stage === "collect_event" ||
+      sessionState.stage === "probe_reason" ||
+      sessionState.stage === "probe_pattern" ||
+      sessionState.stage === "wrap_up" ||
+      sessionState.stage === "finalize"
+        ? sessionState.stage
+        : sourceBranch.stage;
+    const status =
+      sessionState.status === "active" ||
+      sessionState.status === "paused" ||
+      sessionState.status === "completed" ||
+      sessionState.status === "abandoned"
+        ? sessionState.status
+        : "active";
+
+    await database.interviewSession.create({
+      data: {
+        id: childSessionId,
+        userId: root.userId,
+        dimension: root.dimension,
+        conversationSchemaVersion: 2,
+        rootSessionId: root.id,
+        parentSessionId: sourceBranch.id,
+        forkMessageSequence: target.sequence,
+        forkedFromMessageId: target.id,
+        branchDepth: sourceBranch.branchDepth + 1,
+        status,
+        stage,
+        turnCount: checkpointNumber(sessionState.turnCount, sourceBranch.turnCount),
+        entryDate: root.entryDate,
+        startedAt: root.startedAt,
+        pausedAt: status === "paused" ? root.pausedAt : null,
+        completedAt: status === "completed" ? root.completedAt : null,
+        lastAssistantQuestion: input.assistantTurn.question,
+        draftSummary: checkpointString(sessionState.draftSummary),
+        snapshots: {
+          create: [
+            {
+              version: 0,
+              event: null,
+              feeling: null,
+              whyItMattered: null,
+              happinessType: null,
+              selfPattern: null,
+              confidence: null,
+              missingSlots: []
+            }
+          ]
+        }
+      }
+    });
+
+    if (checkpointEvents.length > 0) {
+      await database.interviewEvent.createMany({
+        data: checkpointEvents.map((event, index) => {
+          const previousId = checkpointString(event.id);
+          return {
+            id: (previousId ? eventIdMap.get(previousId) : null) ?? randomUUID(),
+            sessionId: childSessionId,
+            sequence: checkpointNumber(event.sequence, index + 1),
+            status:
+              event.status === "active" || event.status === "ready_for_choice" || event.status === "completed"
+                ? event.status
+                : "active",
+            stage:
+              event.stage === "collect_event" ||
+              event.stage === "probe_reason" ||
+              event.stage === "probe_pattern" ||
+              event.stage === "wrap_up" ||
+              event.stage === "finalize"
+                ? event.stage
+                : stage,
+            explorationRound: checkpointNumber(event.explorationRound, 1),
+            coveredLenses: checkpointStringArray(event.coveredLenses),
+            roundCoveredLenses: checkpointStringArray(event.roundCoveredLenses),
+            roundMeaningfulReplyCount: checkpointNumber(event.roundMeaningfulReplyCount),
+            totalMeaningfulReplyCount: checkpointNumber(event.totalMeaningfulReplyCount),
+            startMessageSequence: checkpointNumber(event.startMessageSequence),
+            event: checkpointString(event.event),
+            feeling: checkpointString(event.feeling),
+            whyItMattered: checkpointString(event.whyItMattered),
+            happinessType: checkpointString(event.happinessType),
+            selfPattern: checkpointString(event.selfPattern),
+            snapshotData:
+              event.snapshotData === null || event.snapshotData === undefined
+                ? Prisma.JsonNull
+                : toJsonValue(event.snapshotData),
+            progressData:
+              event.progressData === null || event.progressData === undefined
+                ? Prisma.JsonNull
+                : toJsonValue(event.progressData),
+            confidence: typeof event.confidence === "number" ? event.confidence : null,
+            missingSlots: checkpointStringArray(event.missingSlots),
+            draftSummary: checkpointString(event.draftSummary),
+            startedAt: checkpointDate(event.startedAt),
+            completedAt: checkpointDate(event.completedAt)
+          };
+        })
+      });
+    }
+
+    if (activeEventId) {
+      await database.interviewSession.update({
+        where: { id: childSessionId },
+        data: { activeEventId }
+      });
+    }
+
+    await database.aIGenerationTrace.update({
+      where: { id: generationTraceId },
+      data: {
+        requestId: input.requestId ?? null,
+        sessionId: childSessionId,
+        artifactId: assistantMessageId,
+        artifactVersion: 1,
+        triggerMessageId: target.id,
+        status: "completed",
+        outputOrigin: input.outputOrigin,
+        contextSnapshot: toJsonValue({
+          action: "regenerate_question",
+          rootSessionId: root.id,
+          sourceBranchSessionId: sourceBranch.id,
+          targetMessageId: target.id,
+          intent: input.intent
+        }),
+        finalOutput: toJsonValue(input.assistantTurn),
+        pipelineDecisions: toJsonValue([
+          {
+            kind: "intent_regeneration",
+            intent: input.intent,
+            selectedCandidate: input.selectedCandidate,
+            checks: input.checks
+          }
+        ]),
+        completedAt: new Date()
+      }
+    });
+    await database.interviewMessage.create({
+      data: {
+        id: assistantMessageId,
+        sessionId: childSessionId,
+        userTurnId: input.userTurnId,
+        generationTraceId,
+        responseGroupId: target.responseGroupId,
+        responseVersion: versionCount + 1,
+        regenerationIntent: input.intent,
+        regeneratedFromMessageId: target.id,
+        branchSessionId: childSessionId,
+        role: "assistant",
+        content: serializeAssistantTurnPayload(input.assistantTurn),
+        sequence: target.sequence
+      }
+    });
+    await database.interviewBranchCheckpoint.create({
+      data: {
+        sessionId: childSessionId,
+        messageId: assistantMessageId,
+        schemaVersion: checkpoint.schemaVersion,
+        sessionState: toJsonValue({
+          ...sessionState,
+          activeEventId,
+          lastAssistantQuestion: input.assistantTurn.question
+        }),
+        eventsState: toJsonValue(
+          checkpointEvents.map((event) => ({
+            ...event,
+            id:
+              (checkpointString(event.id) ? eventIdMap.get(checkpointString(event.id)!) : null) ??
+              randomUUID()
+          }))
+        )
+      }
+    });
+    await database.interviewUserTurn.update({
+      where: { id: input.userTurnId },
+      data: {
+        status: "completed",
+        errorCode: null,
+        completedAt: new Date()
+      }
+    });
+    await database.aIResponseRegeneration.update({
+      where: { id: input.regenerationId },
+      data: {
+        branchSessionId: childSessionId,
+        generatedMessageId: assistantMessageId,
+        generatedTraceId: generationTraceId,
+        candidates: toJsonValue(input.candidates),
+        selectedCandidate: input.selectedCandidate,
+        checks: toJsonValue(input.checks),
+        status: "completed",
+        latencyMs: input.latencyMs,
+        completedAt: new Date(),
+        errorCode: null
+      }
+    });
+    await database.interviewSession.update({
+      where: { id: root.id },
+      data: {
+        activeBranchSessionId: childSessionId
+      }
+    });
+
+    return root.id;
+  });
+
+  const session = await findJoyInterviewSessionById(rootId, input.userId);
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  return session;
+}
+
+export async function failInterviewRegeneration(input: {
+  regenerationId: string;
+  userTurnId: string;
+  errorCode: string;
+  canceled?: boolean;
+}) {
+  const regeneration = await prisma.aIResponseRegeneration.findUnique({
+    where: { id: input.regenerationId },
+    select: { generatedTraceId: true }
+  });
+  const writes: Prisma.PrismaPromise<unknown>[] = [
+    prisma.aIResponseRegeneration.updateMany({
+      where: {
+        id: input.regenerationId,
+        status: "processing"
+      },
+      data: {
+        status: input.canceled ? "canceled" : "failed",
+        errorCode: input.errorCode
+      }
+    }),
+    prisma.interviewUserTurn.updateMany({
+      where: {
+        id: input.userTurnId,
+        status: "processing"
+      },
+      data: {
+        status: input.canceled ? "canceled" : "failed",
+        errorCode: input.errorCode
+      }
+    })
+  ];
+
+  if (regeneration?.generatedTraceId) {
+    writes.push(
+      prisma.aIGenerationTrace.updateMany({
+        where: {
+          id: regeneration.generatedTraceId,
+          status: "pending"
+        },
+        data: {
+          status: input.canceled ? "canceled" : "failed",
+          errorCode: input.errorCode,
+          failedAt: new Date()
+        }
+      })
+    );
+  }
+
+  await prisma.$transaction(writes);
+}
+
+async function resolveInterviewBranchSelection(input: {
+  userId: string;
+  sessionId: string;
+  targetMessageId: string;
+  baseBranchSessionId: string;
+}) {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (route.activeBranchSessionId !== input.baseBranchSessionId) {
+    throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+  }
+
+  const [target, root, effectiveMessages] = await Promise.all([
+    prisma.interviewMessage.findUnique({
+      where: { id: input.targetMessageId },
+      include: {
+        session: {
+          select: {
+            rootSessionId: true,
+            id: true
+          }
+        }
+      }
+    }),
+    prisma.interviewSession.findUnique({
+      where: { id: route.rootId },
+      select: { joyEntry: { select: { id: true } } }
+    }),
+    resolveEffectiveInterviewMessagesForRoot(
+      prisma,
+      route.rootId,
+      route.activeBranchSessionId
+    )
+  ]);
+  const targetRootId = target?.session.rootSessionId ?? target?.session.id;
+
+  if (!target || target.role !== "assistant" || targetRootId !== route.rootId) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  const latestAssistantSequence = Math.max(
+    -1,
+    ...effectiveMessages
+      .filter((message) => message.role === "assistant")
+      .map((message) => message.sequence)
+  );
+  if (root?.joyEntry && target.sequence < latestAssistantSequence) {
+    throw new Error("INTERVIEW_BRANCH_LOCKED_BY_JOURNAL");
+  }
+
+  const targetBranchSessionId = target.branchSessionId ?? target.sessionId;
+
+  return {
+    route,
+    targetBranchSessionId
+  };
+}
+
+export async function previewInterviewBranch(input: {
+  userId: string;
+  sessionId: string;
+  targetMessageId: string;
+  baseBranchSessionId: string;
+}) {
+  const selection = await resolveInterviewBranchSelection(input);
+  const session = await readInterviewBranchProjection({
+    rootSessionId: selection.route.rootId,
+    branchSessionId: selection.targetBranchSessionId,
+    userId: input.userId
+  });
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  return {
+    targetBranchSessionId: selection.targetBranchSessionId,
+    session
+  };
+}
+
+export async function selectInterviewBranch(input: {
+  userId: string;
+  sessionId: string;
+  targetMessageId: string;
+  baseBranchSessionId: string;
+}) {
+  const selection = await resolveInterviewBranchSelection(input);
+  const { route, targetBranchSessionId } = selection;
+
+  if (targetBranchSessionId === route.activeBranchSessionId) {
+    const currentSession = await readInterviewBranchProjection({
+      rootSessionId: route.rootId,
+      branchSessionId: targetBranchSessionId,
+      userId: input.userId
+    });
+
+    if (!currentSession) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    return currentSession;
+  }
+  await prisma.$transaction([
+    prisma.interviewSession.update({
+      where: { id: route.rootId },
+      data: {
+        activeBranchSessionId: targetBranchSessionId
+      }
+    }),
+    prisma.aIResponseRegeneration.updateMany({
+      where: {
+        rootSessionId: route.rootId,
+        generatedMessageId: {
+          not: null
+        },
+        branchSessionId: route.activeBranchSessionId
+      },
+      data: {
+        switchedBackAt: new Date()
+      }
+    })
+  ]);
+
+  const session = await readInterviewBranchProjection({
+    rootSessionId: route.rootId,
+    branchSessionId: targetBranchSessionId,
+    userId: input.userId
+  });
+
+  if (!session) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  return session;
+}
+
+export async function forkInterviewBranchForCorrection(input: {
+  userId: string;
+  sessionId: string;
+  targetMessageId: string;
+  baseBranchSessionId: string;
+}) {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  const activeBranch = await prisma.interviewSession.findUnique({
+    where: { id: route.activeBranchSessionId }
+  });
+
+  if (
+    route.activeBranchSessionId !== input.baseBranchSessionId &&
+    !(
+      activeBranch?.parentSessionId === input.baseBranchSessionId &&
+      activeBranch.forkedFromMessageId === input.targetMessageId
+    )
+  ) {
+    throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+  }
+
+  if (
+    activeBranch?.parentSessionId === input.baseBranchSessionId &&
+    activeBranch.forkedFromMessageId === input.targetMessageId
+  ) {
+    return findJoyInterviewSessionById(route.rootId, input.userId);
+  }
+
+  const effectiveMessages = await resolveEffectiveInterviewMessages(prisma, route.activeBranchSessionId);
+  const target = effectiveMessages.find((message) => message.id === input.targetMessageId);
+  const targetPayload =
+    target?.role === "assistant" ? parseAssistantTurnPayload(target.content) : null;
+
+  if (!target || !targetPayload?.question || targetPayload.stateUpdate.offerChoice) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  const [root, sourceBranch, checkpoint] = await Promise.all([
+    prisma.interviewSession.findUnique({
+      where: { id: route.rootId },
+      include: { joyEntry: true }
+    }),
+    prisma.interviewSession.findUnique({
+      where: { id: route.activeBranchSessionId }
+    }),
+    prisma.interviewBranchCheckpoint.findUnique({
+      where: { messageId: target.id }
+    })
+  ]);
+
+  if (!root || !sourceBranch || !checkpoint) {
+    throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
+  }
+
+  const latestAssistantSequence = Math.max(
+    -1,
+    ...effectiveMessages
+      .filter((message) => message.role === "assistant")
+      .map((message) => message.sequence)
+  );
+  if (root.joyEntry && target.sequence < latestAssistantSequence) {
+    throw new Error("INTERVIEW_BRANCH_LOCKED_BY_JOURNAL");
+  }
+
+  const sessionState = readCheckpointRecord(checkpoint.sessionState);
+  const checkpointEvents = readCheckpointEvents(checkpoint.eventsState);
+  const childSessionId = randomUUID();
+  const eventIdMap = new Map<string, string>();
+
+  for (const event of checkpointEvents) {
+    const previousId = checkpointString(event.id);
+    if (previousId) eventIdMap.set(previousId, randomUUID());
+  }
+
+  const previousActiveEventId = checkpointString(sessionState.activeEventId);
+  const activeEventId =
+    (previousActiveEventId ? eventIdMap.get(previousActiveEventId) : null) ??
+    eventIdMap.values().next().value ??
+    null;
+  const stage =
+    sessionState.stage === "collect_event" ||
+    sessionState.stage === "probe_reason" ||
+    sessionState.stage === "probe_pattern" ||
+    sessionState.stage === "wrap_up" ||
+    sessionState.stage === "finalize"
+      ? sessionState.stage
+      : sourceBranch.stage;
+
+  await prisma.$transaction(async (database) => {
+    const currentRoot = await database.interviewSession.findUnique({
+      where: { id: root.id },
+      select: { activeBranchSessionId: true }
+    });
+
+    if (currentRoot?.activeBranchSessionId !== sourceBranch.id) {
+      throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+    }
+
+    await database.interviewSession.create({
+      data: {
+        id: childSessionId,
+        userId: root.userId,
+        dimension: root.dimension,
+        conversationSchemaVersion: 2,
+        rootSessionId: root.id,
+        parentSessionId: sourceBranch.id,
+        forkMessageSequence: target.sequence + 1,
+        forkedFromMessageId: target.id,
+        branchDepth: sourceBranch.branchDepth + 1,
+        status: "active",
+        stage,
+        turnCount: checkpointNumber(sessionState.turnCount, sourceBranch.turnCount),
+        entryDate: root.entryDate,
+        startedAt: root.startedAt,
+        lastAssistantQuestion: targetPayload.question,
+        draftSummary: checkpointString(sessionState.draftSummary),
+        snapshots: {
+          create: [
+            {
+              version: 0,
+              event: null,
+              feeling: null,
+              whyItMattered: null,
+              happinessType: null,
+              selfPattern: null,
+              confidence: null,
+              missingSlots: []
+            }
+          ]
+        }
+      }
+    });
+
+    if (checkpointEvents.length > 0) {
+      await database.interviewEvent.createMany({
+        data: checkpointEvents.map((event, index) => ({
+          id:
+            (checkpointString(event.id)
+              ? eventIdMap.get(checkpointString(event.id)!)
+              : null) ?? randomUUID(),
+          sessionId: childSessionId,
+          sequence: checkpointNumber(event.sequence, index + 1),
+          status:
+            event.status === "active" ||
+            event.status === "ready_for_choice" ||
+            event.status === "completed"
+              ? event.status
+              : "active",
+          stage:
+            event.stage === "collect_event" ||
+            event.stage === "probe_reason" ||
+            event.stage === "probe_pattern" ||
+            event.stage === "wrap_up" ||
+            event.stage === "finalize"
+              ? event.stage
+              : stage,
+          explorationRound: checkpointNumber(event.explorationRound, 1),
+          coveredLenses: checkpointStringArray(event.coveredLenses),
+          roundCoveredLenses: checkpointStringArray(event.roundCoveredLenses),
+          roundMeaningfulReplyCount: checkpointNumber(event.roundMeaningfulReplyCount),
+          totalMeaningfulReplyCount: checkpointNumber(event.totalMeaningfulReplyCount),
+          startMessageSequence: checkpointNumber(event.startMessageSequence),
+          event: checkpointString(event.event),
+          feeling: checkpointString(event.feeling),
+          whyItMattered: checkpointString(event.whyItMattered),
+          happinessType: checkpointString(event.happinessType),
+          selfPattern: checkpointString(event.selfPattern),
+          snapshotData:
+            event.snapshotData === null || event.snapshotData === undefined
+              ? Prisma.JsonNull
+              : toJsonValue(event.snapshotData),
+          progressData:
+            event.progressData === null || event.progressData === undefined
+              ? Prisma.JsonNull
+              : toJsonValue(event.progressData),
+          confidence: typeof event.confidence === "number" ? event.confidence : null,
+          missingSlots: checkpointStringArray(event.missingSlots),
+          draftSummary: checkpointString(event.draftSummary),
+          startedAt: checkpointDate(event.startedAt),
+          completedAt: checkpointDate(event.completedAt)
+        }))
+      });
+    }
+
+    if (activeEventId) {
+      await database.interviewSession.update({
+        where: { id: childSessionId },
+        data: { activeEventId }
+      });
+    }
+
+    await database.interviewSession.update({
+      where: { id: root.id },
+      data: { activeBranchSessionId: childSessionId }
+    });
+  });
+
+  return findJoyInterviewSessionById(root.id, input.userId);
+}
+
+export async function markInterviewUserTurnAsCorrection(input: {
+  sessionId: string;
+  clientTurnId: string;
+  targetMessageId: string;
+  baseBranchSessionId: string;
+}) {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route) return;
+
+  await prisma.interviewUserTurn.updateMany({
+    where: {
+      sessionId: route.activeBranchSessionId,
+      clientTurnId: input.clientTurnId
+    },
+    data: {
+      action: "correct_understanding",
+      targetMessageId: input.targetMessageId,
+      baseBranchSessionId: input.baseBranchSessionId
+    }
+  });
 }
 
 interface ReserveInterviewUserTurnInput {
@@ -945,21 +2528,31 @@ interface ReserveInterviewUserTurnInput {
   activeEventId: string | null;
   clientTurnId: string;
   action: InterviewUserTurnAction;
+  targetMessageId?: string | null;
+  regenerationIntent?: PrismaInterviewRegenerationIntent | null;
+  baseBranchSessionId?: string | null;
   rawText: string | null;
   inputMode?: InputMode;
   baseMessageSequence?: number;
 }
 
+export type PersistedInterviewUserTurnRecord = InterviewUserTurnRecord & {
+  intentAssessment?: unknown;
+  intentClassifierVersion?: string | null;
+  intentDecision?: unknown;
+  intentAssessedAt?: string | null;
+};
+
 export type ReserveInterviewUserTurnResult =
   | {
       kind: "reserved";
-      turn: InterviewUserTurnRecord;
+      turn: PersistedInterviewUserTurnRecord;
       userMessageId: string | null;
       session: InterviewSessionRecord;
     }
   | {
       kind: "completed";
-      turn: InterviewUserTurnRecord;
+      turn: PersistedInterviewUserTurnRecord;
       userMessageId: string | null;
       session: InterviewSessionRecord;
     };
@@ -970,19 +2563,30 @@ function mapStandaloneInterviewUserTurn(turn: {
   sessionId: string;
   activeEventId: string | null;
   action: InterviewUserTurnAction;
+  targetMessageId?: string | null;
+  regenerationIntent?: PrismaInterviewRegenerationIntent | null;
+  baseBranchSessionId?: string | null;
   rawText: string | null;
   inputMode: InputMode | null;
   baseMessageSequence: number;
   status: InterviewUserTurnRecord["status"];
   attemptCount: number;
   errorCode: string | null;
+  intentAssessment?: unknown;
+  intentClassifierVersion?: string | null;
+  intentDecision?: unknown;
+  intentAssessedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   completedAt: Date | null;
-}): InterviewUserTurnRecord {
+}): PersistedInterviewUserTurnRecord {
   return {
     ...turn,
     inputMode: turn.inputMode ?? undefined,
+    intentAssessment: turn.intentAssessment,
+    intentClassifierVersion: turn.intentClassifierVersion ?? null,
+    intentDecision: turn.intentDecision,
+    intentAssessedAt: turn.intentAssessedAt?.toISOString() ?? null,
     createdAt: turn.createdAt.toISOString(),
     updatedAt: turn.updatedAt.toISOString(),
     completedAt: turn.completedAt?.toISOString() ?? null
@@ -992,9 +2596,20 @@ function mapStandaloneInterviewUserTurn(turn: {
 export async function reserveInterviewUserTurn(
   input: ReserveInterviewUserTurnInput
 ): Promise<ReserveInterviewUserTurnResult> {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("SESSION_NOT_FOUND");
+  }
+
+  if (input.baseBranchSessionId && input.baseBranchSessionId !== route.activeBranchSessionId) {
+    throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+  }
+
+  const physicalSessionId = route.activeBranchSessionId;
   const result = await prisma.$transaction(async (database) => {
       const session = await database.interviewSession.findUnique({
-        where: { id: input.sessionId },
+        where: { id: physicalSessionId },
         select: { id: true, userId: true }
       });
 
@@ -1005,7 +2620,7 @@ export async function reserveInterviewUserTurn(
       const existingTurn = await database.interviewUserTurn.findUnique({
         where: {
           sessionId_clientTurnId: {
-            sessionId: input.sessionId,
+            sessionId: physicalSessionId,
             clientTurnId: input.clientTurnId
           }
         },
@@ -1035,10 +2650,14 @@ export async function reserveInterviewUserTurn(
 
       const unresolvedTurn = await database.interviewUserTurn.findFirst({
         where: {
-          sessionId: input.sessionId,
-          status: {
-            in: ["processing", "failed", "canceled"]
-          }
+          sessionId: physicalSessionId,
+          OR: [
+            { status: "processing" },
+            {
+              status: { in: ["failed", "canceled"] },
+              action: { not: "regenerate_question" }
+            }
+          ]
         },
         select: { id: true }
       });
@@ -1047,11 +2666,8 @@ export async function reserveInterviewUserTurn(
         throw new Error("INTERVIEW_TURN_IN_PROGRESS");
       }
 
-      const latestMessage = await database.interviewMessage.findFirst({
-        where: { sessionId: input.sessionId },
-        orderBy: { sequence: "desc" },
-        select: { sequence: true }
-      });
+      const effectiveMessages = await resolveEffectiveInterviewMessages(database, physicalSessionId);
+      const latestMessage = effectiveMessages[effectiveMessages.length - 1];
       const currentBaseMessageSequence = latestMessage?.sequence ?? -1;
       const requestedBaseMessageSequence = input.baseMessageSequence ?? currentBaseMessageSequence;
 
@@ -1065,9 +2681,12 @@ export async function reserveInterviewUserTurn(
         data: {
           id: turnId,
           clientTurnId: input.clientTurnId,
-          sessionId: input.sessionId,
+          sessionId: physicalSessionId,
           activeEventId: input.activeEventId,
           action: input.action,
+          targetMessageId: input.targetMessageId,
+          regenerationIntent: input.regenerationIntent,
+          baseBranchSessionId: input.baseBranchSessionId,
           rawText: input.rawText,
           inputMode: input.inputMode,
           baseMessageSequence: requestedBaseMessageSequence,
@@ -1079,8 +2698,9 @@ export async function reserveInterviewUserTurn(
         await database.interviewMessage.create({
           data: {
             id: userMessageId,
-            sessionId: input.sessionId,
+            sessionId: physicalSessionId,
             userTurnId: turnId,
+            branchSessionId: physicalSessionId,
             role: "user",
             inputMode: input.inputMode,
             content: input.rawText,
@@ -1103,7 +2723,7 @@ export async function reserveInterviewUserTurn(
       const duplicateTurn = await prisma.interviewUserTurn.findUnique({
         where: {
           sessionId_clientTurnId: {
-            sessionId: input.sessionId,
+            sessionId: physicalSessionId,
             clientTurnId: input.clientTurnId
           }
         },
@@ -1149,11 +2769,17 @@ export async function resumeInterviewUserTurn(input: {
   sessionId: string;
   clientTurnId: string;
 }): Promise<ReserveInterviewUserTurnResult> {
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (!route || route.userId !== input.userId) {
+    throw new Error("INTERVIEW_TURN_NOT_FOUND");
+  }
+
   const result = await prisma.$transaction(async (database) => {
     const turn = await database.interviewUserTurn.findUnique({
       where: {
         sessionId_clientTurnId: {
-          sessionId: input.sessionId,
+          sessionId: route.activeBranchSessionId,
           clientTurnId: input.clientTurnId
         }
       },
@@ -1180,16 +2806,27 @@ export async function resumeInterviewUserTurn(input: {
       };
     }
 
-    if (turn.status === "processing") {
+    if (turn.status === "processing" && !isInterviewUserTurnLeaseExpired(turn)) {
       throw new Error("INTERVIEW_TURN_IN_PROGRESS");
     }
 
+    const staleProcessingCutoff = new Date(Date.now() - INTERVIEW_USER_TURN_LEASE_MS);
     const updateResult = await database.interviewUserTurn.updateMany({
       where: {
         id: turn.id,
-        status: {
-          in: ["failed", "canceled"]
-        }
+        OR: [
+          {
+            status: {
+              in: ["failed", "canceled"]
+            }
+          },
+          {
+            status: "processing",
+            updatedAt: {
+              lte: staleProcessingCutoff
+            }
+          }
+        ]
       },
       data: {
         status: "processing",
@@ -1230,6 +2867,89 @@ export async function resumeInterviewUserTurn(input: {
     userMessageId: result.userMessageId,
     session
   };
+}
+
+export async function persistInterviewUserTurnIntent(input: {
+  turnId: string;
+  classifierVersion: string;
+  assessment: unknown;
+  decision: unknown;
+  replaceExisting?: boolean;
+}) {
+  const existing = await prisma.interviewUserTurn.findUnique({
+    where: { id: input.turnId },
+    select: {
+      intentAssessment: true,
+      intentClassifierVersion: true,
+      intentDecision: true,
+      intentAssessedAt: true
+    }
+  });
+
+  if (!existing) {
+    throw new Error("INTERVIEW_TURN_NOT_FOUND");
+  }
+
+  if (existing.intentAssessedAt && !input.replaceExisting) {
+    return existing;
+  }
+
+  const assessedAt = new Date();
+  if (existing.intentAssessedAt && input.replaceExisting) {
+    return prisma.interviewUserTurn.update({
+      where: { id: input.turnId },
+      data: {
+        intentAssessment: toJsonValue(input.assessment),
+        intentClassifierVersion: input.classifierVersion,
+        intentDecision: toJsonValue(input.decision),
+        intentAssessedAt: assessedAt
+      },
+      select: {
+        intentAssessment: true,
+        intentClassifierVersion: true,
+        intentDecision: true,
+        intentAssessedAt: true
+      }
+    });
+  }
+
+  const updateResult = await prisma.interviewUserTurn.updateMany({
+    where: {
+      id: input.turnId,
+      intentAssessedAt: null
+    },
+    data: {
+      intentAssessment: toJsonValue(input.assessment),
+      intentClassifierVersion: input.classifierVersion,
+      intentDecision: toJsonValue(input.decision),
+      intentAssessedAt: assessedAt
+    }
+  });
+
+  if (updateResult.count === 1) {
+    return {
+      intentAssessment: input.assessment,
+      intentClassifierVersion: input.classifierVersion,
+      intentDecision: input.decision,
+      intentAssessedAt: assessedAt
+    };
+  }
+
+  const persisted = await prisma.interviewUserTurn.findUnique({
+    where: { id: input.turnId },
+    select: {
+      intentAssessment: true,
+      intentClassifierVersion: true,
+      intentDecision: true,
+      intentAssessedAt: true
+    }
+  });
+
+  if (!persisted?.intentAssessedAt) {
+    throw new Error("INTERVIEW_INTENT_PERSIST_FAILED");
+  }
+
+  return persisted;
 }
 
 export async function markInterviewUserTurnFailed(turnId: string, errorCode: string) {
@@ -1290,8 +3010,10 @@ export async function cancelInterviewUserTurnByClientId(input: {
 
 interface AppendJoyInterviewTurnInput {
   sessionId: string;
+  expectedBranchSessionId?: string | null;
   activeEventId: string;
   userMessage?: string;
+  marksRegenerationAnswered?: boolean;
   inputMode?: InputMode;
   assistantTurn: AssistantTurnPayload;
   snapshot: JoySnapshot;
@@ -1314,13 +3036,24 @@ interface AppendJoyInterviewTurnInput {
 }
 
 export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput) {
-  const existing = await ensureInterviewEvents(prisma, input.sessionId);
+  const route = await resolveInterviewSessionRoute(prisma, input.sessionId);
+
+  if (
+    input.expectedBranchSessionId &&
+    route?.activeBranchSessionId !== input.expectedBranchSessionId
+  ) {
+    throw new Error("INTERVIEW_BRANCH_OUT_OF_DATE");
+  }
+
+  const physicalSessionId = route?.activeBranchSessionId ?? input.sessionId;
+  const existing = await ensureInterviewEvents(prisma, physicalSessionId);
 
   if (!existing) {
     return null;
   }
 
-  const nextSequence = existing.messages.length;
+  const effectiveMessages = await resolveEffectiveInterviewMessages(prisma, physicalSessionId);
+  const nextSequence = (effectiveMessages[effectiveMessages.length - 1]?.sequence ?? -1) + 1;
   const nextSnapshotVersion = (existing.snapshots[0]?.version ?? -1) + 1;
   const serializedAssistantTurn = serializeAssistantTurnPayload(input.assistantTurn);
   const assistantQuestion = getAssistantDisplayParts(input.assistantTurn).question;
@@ -1358,8 +3091,9 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
   if (shouldCreateUserMessage && input.userMessage) {
     messagesToCreate.push({
       id: userMessageId ?? undefined,
-      sessionId: input.sessionId,
+      sessionId: physicalSessionId,
       userTurnId: input.userTurnId ?? undefined,
+      branchSessionId: physicalSessionId,
       role: "user",
       inputMode: input.inputMode,
       content: input.userMessage,
@@ -1369,9 +3103,12 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
 
   messagesToCreate.push({
     id: assistantMessageId,
-    sessionId: input.sessionId,
+    sessionId: physicalSessionId,
     userTurnId: input.userTurnId ?? undefined,
     generationTraceId,
+    responseGroupId: assistantMessageId,
+    responseVersion: 1,
+    branchSessionId: physicalSessionId,
     role: "assistant",
     content: serializedAssistantTurn,
     sequence: nextSequence + (shouldCreateUserMessage ? 1 : 0)
@@ -1397,7 +3134,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
           id: generationTraceId,
           requestId: input.requestId ?? null,
           userId: existing.userId,
-          sessionId: input.sessionId,
+          sessionId: physicalSessionId,
           dimension: existing.dimension,
           artifactType: "interview_turn",
           artifactId: assistantMessageId,
@@ -1408,8 +3145,8 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
           contextSnapshot: toJsonValue({
             action: input.userMessage ? "reply" : "continue_current_event",
             userMessage: input.userMessage ?? null,
-            messageIds: existing.messages.map((message) => message.id),
-            messages: existing.messages.map((message) => ({
+            messageIds: effectiveMessages.map((message) => message.id),
+            messages: effectiveMessages.map((message) => ({
               id: message.id,
               role: message.role,
               sequence: message.sequence,
@@ -1440,7 +3177,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
     prisma.interviewMessage.createMany({ data: messagesToCreate }),
     prisma.joyInterviewSnapshot.create({
       data: {
-        sessionId: input.sessionId,
+        sessionId: physicalSessionId,
         version: nextSnapshotVersion,
         event: legacyProjection.event,
         feeling: legacyProjection.feeling,
@@ -1474,7 +3211,7 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
       }
     }),
     prisma.interviewSession.update({
-      where: { id: input.sessionId },
+      where: { id: physicalSessionId },
       data: {
         turnCount: input.nextTurnCount,
         stage: input.nextStage,
@@ -1484,23 +3221,75 @@ export async function appendJoyInterviewTurn(input: AppendJoyInterviewTurnInput)
         completedAt: input.completedAt
       }
     }),
-    ...(turnCompletionWrite ? [turnCompletionWrite] : [])
+    ...(turnCompletionWrite ? [turnCompletionWrite] : []),
+    prisma.interviewBranchCheckpoint.create({
+      data: {
+        sessionId: physicalSessionId,
+        messageId: assistantMessageId,
+        schemaVersion: 1,
+        sessionState: toJsonValue({
+          status: input.nextStatus,
+          stage: input.nextStage,
+          activeEventId: input.activeEventId,
+          turnCount: input.nextTurnCount,
+          lastAssistantQuestion: assistantQuestion,
+          draftSummary: input.draftSummary
+        }),
+        eventsState: toJsonValue(
+          existing.events.map((event) =>
+            event.id === input.activeEventId
+              ? {
+                  ...event,
+                  status: input.eventStatus,
+                  stage: input.nextStage,
+                  coveredLenses: input.coveredLenses,
+                  roundCoveredLenses: input.roundCoveredLenses,
+                  roundMeaningfulReplyCount: input.roundMeaningfulReplyCount,
+                  totalMeaningfulReplyCount: input.totalMeaningfulReplyCount,
+                  event: legacyProjection.event,
+                  feeling: legacyProjection.feeling,
+                  whyItMattered: legacyProjection.whyItMattered,
+                  happinessType: legacyProjection.happinessType,
+                  selfPattern: legacyProjection.selfPattern,
+                  snapshotData: evidence.snapshotData,
+                  progressData: input.progressData,
+                  confidence: evidence.confidence,
+                  missingSlots: evidence.missingSlots,
+                  draftSummary: input.draftSummary,
+                  completedAt: input.eventStatus === "completed" ? (input.completedAt ?? new Date()) : null
+                }
+              : event
+          )
+        )
+      }
+    }),
+    ...(input.userMessage && input.marksRegenerationAnswered
+      ? [
+          prisma.aIResponseRegeneration.updateMany({
+            where: {
+              branchSessionId: physicalSessionId,
+              status: "completed",
+              answeredAt: null,
+              replacedAt: null,
+              switchedBackAt: null,
+              downvotedAt: null,
+              abandonedAt: null
+            },
+            data: {
+              answeredAt: new Date()
+            }
+          })
+        ]
+      : [])
   ]);
 
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: input.sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? input.sessionId, existing.userId);
 }
 
 export async function resumeCurrentInterviewEvent(sessionId: string) {
-  const existing = await ensureInterviewEvents(prisma, sessionId);
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const physicalSessionId = route?.activeBranchSessionId ?? sessionId;
+  const existing = await ensureInterviewEvents(prisma, physicalSessionId);
 
   if (!existing?.activeEventId) {
     return null;
@@ -1525,16 +3314,7 @@ export async function resumeCurrentInterviewEvent(sessionId: string) {
     }
   });
 
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? sessionId, existing.userId);
 }
 
 export async function startNextInterviewEvent(
@@ -1542,7 +3322,9 @@ export async function startNextInterviewEvent(
   openingQuestion: string,
   options?: { requestId?: string | null; userTurnId?: string | null }
 ) {
-  const existing = await ensureInterviewEvents(prisma, sessionId);
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const physicalSessionId = route?.activeBranchSessionId ?? sessionId;
+  const existing = await ensureInterviewEvents(prisma, physicalSessionId);
 
   if (!existing) {
     return null;
@@ -1559,6 +3341,8 @@ export async function startNextInterviewEvent(
   const assistantTurn = createOpeningAssistantTurnPayload(openingQuestion);
   const assistantMessageId = randomUUID();
   const generationTraceId = randomUUID();
+  const effectiveMessages = await resolveEffectiveInterviewMessages(prisma, physicalSessionId);
+  const nextMessageSequence = (effectiveMessages[effectiveMessages.length - 1]?.sequence ?? -1) + 1;
 
   const writes: Prisma.PrismaPromise<unknown>[] = [];
 
@@ -1578,7 +3362,7 @@ export async function startNextInterviewEvent(
     prisma.interviewEvent.create({
       data: {
         id: nextEventId,
-        sessionId,
+        sessionId: physicalSessionId,
         sequence: nextSequence,
         status: "active",
         stage: "collect_event",
@@ -1587,7 +3371,7 @@ export async function startNextInterviewEvent(
         roundCoveredLenses: [],
         roundMeaningfulReplyCount: 0,
         totalMeaningfulReplyCount: 0,
-        startMessageSequence: existing.messages.length,
+        startMessageSequence: nextMessageSequence,
         event: emptySnapshot.event,
         feeling: emptySnapshot.feeling,
         whyItMattered: emptySnapshot.whyItMattered,
@@ -1603,7 +3387,7 @@ export async function startNextInterviewEvent(
         id: generationTraceId,
         requestId: options?.requestId ?? null,
         userId: existing.userId,
-        sessionId,
+        sessionId: physicalSessionId,
         dimension: existing.dimension,
         artifactType: "interview_turn",
         artifactId: assistantMessageId,
@@ -1612,7 +3396,7 @@ export async function startNextInterviewEvent(
         outputOrigin: "deterministic",
         contextSnapshot: toJsonValue({
           kind: "next_event_opening",
-          messageIds: existing.messages.map((message) => message.id),
+          messageIds: effectiveMessages.map((message) => message.id),
           previousEventId: existing.activeEventId,
           nextEventId
         }),
@@ -1624,16 +3408,19 @@ export async function startNextInterviewEvent(
     prisma.interviewMessage.create({
       data: {
         id: assistantMessageId,
-        sessionId,
+        sessionId: physicalSessionId,
         userTurnId: options?.userTurnId ?? undefined,
         generationTraceId,
+        responseGroupId: assistantMessageId,
+        responseVersion: 1,
+        branchSessionId: physicalSessionId,
         role: "assistant",
         content: serializeAssistantTurnPayload(assistantTurn),
-        sequence: existing.messages.length
+        sequence: nextMessageSequence
       }
     }),
     prisma.interviewSession.update({
-      where: { id: sessionId },
+      where: { id: physicalSessionId },
       data: {
         activeEventId: nextEventId,
         stage: "collect_event",
@@ -1651,21 +3438,49 @@ export async function startNextInterviewEvent(
             }
           })
         ]
-      : [])
+      : []),
+    prisma.interviewBranchCheckpoint.create({
+      data: {
+        sessionId: physicalSessionId,
+        messageId: assistantMessageId,
+        schemaVersion: 1,
+        sessionState: toJsonValue({
+          status: "active",
+          stage: "collect_event",
+          activeEventId: nextEventId,
+          turnCount: existing.turnCount,
+          lastAssistantQuestion: openingQuestion,
+          draftSummary: existing.draftSummary
+        }),
+        eventsState: toJsonValue([
+          ...existing.events.map((event) => ({
+            ...event,
+            status: event.id === existing.activeEventId ? "completed" : event.status,
+            completedAt: event.id === existing.activeEventId ? new Date() : event.completedAt
+          })),
+          {
+            id: nextEventId,
+            sequence: nextSequence,
+            status: "active",
+            stage: "collect_event",
+            explorationRound: 1,
+            coveredLenses: [],
+            roundCoveredLenses: [],
+            roundMeaningfulReplyCount: 0,
+            totalMeaningfulReplyCount: 0,
+            startMessageSequence: nextMessageSequence,
+            snapshotData: emptyEvidence.snapshotData,
+            progressData: null,
+            confidence: emptyEvidence.confidence,
+            missingSlots: emptyEvidence.missingSlots
+          }
+        ])
+      }
+    })
   );
 
   await prisma.$transaction(writes);
-
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? sessionId, existing.userId);
 }
 
 export async function saveJoyInterviewDraft(
@@ -1827,21 +3642,22 @@ export async function saveJoyInterviewDraft(
     })
   ]);
 
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
+  if ((existing.conversationSchemaVersion ?? 1) < 2) {
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      include: interviewSessionInclude
+    });
+    return session ? mapInterviewSession(session) : null;
   }
 
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(sessionId, existing.userId);
 }
 
 export async function reopenJoyInterviewSessionRecord(sessionId: string) {
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const physicalSessionId = route?.activeBranchSessionId ?? sessionId;
   const existing = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
+    where: { id: physicalSessionId },
     include: interviewSessionInclude
   });
 
@@ -1849,8 +3665,10 @@ export async function reopenJoyInterviewSessionRecord(sessionId: string) {
     return null;
   }
 
-  await prisma.interviewSession.update({
-    where: { id: sessionId },
+  await prisma.interviewSession.updateMany({
+    where: {
+      id: { in: Array.from(new Set([route?.rootId ?? sessionId, physicalSessionId])) }
+    },
     data: {
       status: "active",
       stage: existing.stage === "finalize" ? "wrap_up" : existing.stage,
@@ -1859,48 +3677,52 @@ export async function reopenJoyInterviewSessionRecord(sessionId: string) {
     }
   });
 
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? sessionId, existing.userId);
 }
 
 export async function pauseJoyInterviewSessionRecord(sessionId: string) {
   const pausedAt = new Date();
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const ids = Array.from(new Set([route?.rootId ?? sessionId, route?.activeBranchSessionId ?? sessionId]));
 
-  const session = await prisma.interviewSession.update({
-    where: { id: sessionId },
+  await prisma.interviewSession.updateMany({
+    where: { id: { in: ids } },
     data: {
       status: "paused",
       pausedAt,
       completedAt: null
+    }
+  });
+  await prisma.aIResponseRegeneration.updateMany({
+    where: {
+      branchSessionId: route?.activeBranchSessionId ?? sessionId,
+      status: "completed",
+      answeredAt: null,
+      abandonedAt: null
     },
-    include: interviewSessionInclude
+    data: {
+      abandonedAt: pausedAt
+    }
   });
 
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? sessionId, route?.userId);
 }
 
 export async function completeJoyInterviewSessionRecord(sessionId: string) {
   const completedAt = new Date();
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const ids = Array.from(new Set([route?.rootId ?? sessionId, route?.activeBranchSessionId ?? sessionId]));
 
-  const session = await prisma.interviewSession.update({
-    where: { id: sessionId },
+  await prisma.interviewSession.updateMany({
+    where: { id: { in: ids } },
     data: {
       status: "completed",
       completedAt,
       pausedAt: null
-    },
-    include: interviewSessionInclude
+    }
   });
 
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(route?.rootId ?? sessionId, route?.userId);
 }
 
 export async function updateJoyEntry(entryId: string, draftEntry: JoyEntryDraft) {
@@ -2008,8 +3830,11 @@ export async function updateJournalEntryContent(entryId: string, input: { title?
 }
 
 export async function markJoyEntrySaved(sessionId: string) {
+  const route = await resolveInterviewSessionRoute(prisma, sessionId);
+  const rootSessionId = route?.rootId ?? sessionId;
+  const activeBranchSessionId = route?.activeBranchSessionId ?? sessionId;
   const existing = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
+    where: { id: rootSessionId },
     include: interviewSessionInclude
   });
 
@@ -2020,16 +3845,16 @@ export async function markJoyEntrySaved(sessionId: string) {
   const savedAt = new Date();
   const writes: Prisma.PrismaPromise<unknown>[] = [
     prisma.joyEntry.update({
-      where: { sessionId },
+      where: { sessionId: rootSessionId },
       data: {
         status: "saved",
         savedAt,
         updatedAt: savedAt,
-        linkedSessionIds: [sessionId]
+        linkedSessionIds: [rootSessionId]
       }
     }),
     prisma.interviewSession.update({
-      where: { id: sessionId },
+      where: { id: rootSessionId },
       data: {
         status: "completed",
         stage: "finalize",
@@ -2041,10 +3866,26 @@ export async function markJoyEntrySaved(sessionId: string) {
     })
   ];
 
-  if (existing.activeEventId) {
+  if (activeBranchSessionId !== rootSessionId) {
+    writes.push(
+      prisma.interviewSession.update({
+        where: { id: activeBranchSessionId },
+        data: {
+          status: "completed",
+          stage: "finalize",
+          pausedAt: null,
+          completedAt: savedAt,
+          draftSummary: existing.joyEntry.selfPattern ?? existing.joyEntry.whyItMattered ?? existing.joyEntry.event
+        }
+      })
+    );
+  }
+
+  const activeBranch = await ensureInterviewEvents(prisma, activeBranchSessionId);
+  if (activeBranch?.activeEventId) {
     writes.push(
       prisma.interviewEvent.update({
-        where: { id: existing.activeEventId },
+        where: { id: activeBranch.activeEventId },
         data: {
           status: "completed",
           completedAt: savedAt
@@ -2055,16 +3896,7 @@ export async function markJoyEntrySaved(sessionId: string) {
 
   await prisma.$transaction(writes);
 
-  const session = await prisma.interviewSession.findUnique({
-    where: { id: sessionId },
-    include: interviewSessionInclude
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  return mapInterviewSession(session);
+  return findJoyInterviewSessionById(rootSessionId, existing.userId);
 }
 
 interface CreateAIRequestLogInput {

@@ -5,11 +5,16 @@ import {
   type AIOptimizationCandidateView
 } from "@/components/admin/admin-ai-quality-shell";
 import { getAIOptimizationCandidates, getAIOptimizationRuns } from "@/server/services/ai-quality/ai-iteration.service";
+import { getInterviewRegenerationMetrics } from "@/server/services/ai-quality/interview-regeneration-analytics.service";
 import { requireAdminPage } from "@/server/services/auth/auth-page-guard";
 
 export default async function AdminAIQualityPage() {
   await requireAdminPage("/admin/ai-quality");
-  const [candidates, runs] = await Promise.all([getAIOptimizationCandidates(), getAIOptimizationRuns(10)]);
+  const [candidates, runs, regenerationMetrics] = await Promise.all([
+    getAIOptimizationCandidates(),
+    getAIOptimizationRuns(10),
+    getInterviewRegenerationMetrics()
+  ]);
   const view = candidates.map<AIOptimizationCandidateView>((candidate) => ({
     id: candidate.id,
     path: candidate.path,
@@ -53,6 +58,11 @@ export default async function AdminAIQualityPage() {
     <div className="min-h-0 flex-1">
       <AdminAIQualityShell
         candidates={view}
+        regenerationMetrics={{
+          ...regenerationMetrics,
+          periodStart: regenerationMetrics.periodStart.toISOString(),
+          periodEnd: regenerationMetrics.periodEnd.toISOString()
+        }}
         runs={runs.map((run) => ({
           id: run.id,
           status: run.status,

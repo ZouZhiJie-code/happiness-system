@@ -1864,6 +1864,11 @@ body::after {
   background: rgba(255, 249, 240, 0.98);
 }
 
+.interview-regeneration-popover {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
 .ui-action-menu-item {
   display: block;
   width: 100%;
@@ -1913,6 +1918,7 @@ body::after {
   .liquid-composer,
   .journal-generation-overlay,
   .ui-action-menu-panel,
+  .interview-regeneration-popover,
   [role="dialog"] {
     background-color: #fff9ef;
     backdrop-filter: none;
@@ -1931,6 +1937,7 @@ body::after {
   .site-header-frosted,
   .ui-card,
   .ui-action-menu-panel,
+  .interview-regeneration-popover,
   [role="dialog"] {
     border-color: var(--line-strong);
   }

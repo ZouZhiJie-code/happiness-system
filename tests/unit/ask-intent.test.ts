@@ -157,6 +157,31 @@ describe("planAskIntentEnvelope", () => {
     expectEnvelopeShape(envelope, "point_out_key_part");
   });
 
+  it("anchors gratitude follow-up to the concrete help action", () => {
+    const snapshot = createSnapshot({
+      event: "同事对我说项目先结束，然后主动帮我收尾",
+      gratitudeMoment: "同事对我说项目先结束，然后主动帮我收尾",
+      gratitudeTarget: "同事",
+      kindAction: "主动帮我收尾",
+      seenNeed: null
+    });
+    const spec = createQuestionSpec({
+      dimension: "gratitude",
+      stage: "probe_reason",
+      snapshot,
+      stageIntent: "advance"
+    });
+
+    const envelope = planAskIntentEnvelope({
+      dimension: "gratitude",
+      snapshot,
+      spec
+    });
+
+    expect(spec.subTarget).toBe("seen_need");
+    expect(envelope.anchorText).toBe("主动帮我收尾");
+  });
+
   it("is callable from question protocol without changing question rendering paths", () => {
     const snapshot = createSnapshot({
       event: "刷视频逃避主动思考下一步",

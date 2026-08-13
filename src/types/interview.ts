@@ -41,7 +41,13 @@ export type GratitudeQuestionSubTarget =
   | "relationship_signal";
 export type InferenceHypothesisKey = "seen_need" | "gratitude_reason" | "relationship_signal";
 export type AssistantQuestionStageIntent = "advance" | "resume" | "repair";
-export type AssistantQuestionSurfaceLevel = "default" | "simplified" | "concrete_anchor";
+export type AssistantQuestionSurfaceLevel = "default" | "simplified" | "concrete_anchor" | "low_pressure";
+export type InterviewRegenerationIntent =
+  | "simplify"
+  | "concretize"
+  | "change_angle"
+  | "deepen"
+  | "lighten";
 export type InterviewLens =
   | "event_detail"
   | "felt_experience"
@@ -109,11 +115,33 @@ export interface InterviewMessage {
   inputMode?: InputMode;
   content: string;
   assistantPayload?: AssistantTurnPayload | null;
+  branchSessionId?: string | null;
+  responseVersion?: {
+    groupId: string;
+    version: number;
+    versionCount: number;
+    canRegenerate: boolean;
+    canSwitch: boolean;
+    disabledReason?: string | null;
+    versions: Array<{
+      messageId: string;
+      branchSessionId: string;
+      version: number;
+      active: boolean;
+    }>;
+  } | null;
+  regenerationIntent?: InterviewRegenerationIntent | null;
+  regeneratedFromMessageId?: string | null;
   sequence: number;
   createdAt: string;
 }
 
-export type InterviewUserTurnAction = "reply" | "continue_current_event" | "next_event";
+export type InterviewUserTurnAction =
+  | "reply"
+  | "continue_current_event"
+  | "next_event"
+  | "regenerate_question"
+  | "correct_understanding";
 export type InterviewUserTurnStatus = "processing" | "completed" | "failed" | "canceled";
 
 export interface InterviewUserTurnRecord {
@@ -122,6 +150,9 @@ export interface InterviewUserTurnRecord {
   sessionId: string;
   activeEventId: string | null;
   action: InterviewUserTurnAction;
+  targetMessageId?: string | null;
+  regenerationIntent?: InterviewRegenerationIntent | null;
+  baseBranchSessionId?: string | null;
   rawText: string | null;
   inputMode?: InputMode;
   baseMessageSequence: number;
@@ -561,6 +592,9 @@ export interface InterviewSessionRecord {
   id: string;
   userId: string;
   dimension: InterviewDimension;
+  conversationSchemaVersion?: number;
+  rootSessionId?: string;
+  activeBranchSessionId?: string;
   status: InterviewSessionStatus;
   stage: InterviewStage;
   activeEventId: string | null;
