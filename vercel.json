@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "pnpm exec prisma generate && pnpm exec prisma generate --schema prisma/evaluation/schema.prisma && pnpm run build",
+  "installCommand": "npm ci",
+  "buildCommand": "npx prisma generate && npx prisma generate --schema prisma/evaluation/schema.prisma && npm run build",
   "crons": [
     {
       "path": "/api/cron/ai-quality/evaluate?limit=100",

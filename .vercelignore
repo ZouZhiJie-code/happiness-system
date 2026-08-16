@@ -16,6 +16,7 @@ interview-*.png
 # Private journal evaluation workbench is kept local to its review workflow;
 # the Daily Light Preview only needs the product-facing interview/journal paths.
 src/app/admin/journal-evaluation
+src/app/api/admin/journal-evaluation
 src/components/journal-evaluation
 src/app/api/local/gi088-v8r3
 src/app/api/preview

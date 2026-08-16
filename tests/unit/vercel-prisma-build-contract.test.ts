@@ -9,14 +9,16 @@ describe("Vercel Prisma build contract", () => {
       readFileSync(resolve(process.cwd(), "vercel.json"), "utf8")
     ) as {
       framework?: string;
+      installCommand?: string;
       buildCommand?: string;
     };
 
     expect(config.framework).toBe("nextjs");
+    expect(config.installCommand).toBe("npm ci");
     expect(config.buildCommand?.split("&&").map((command) => command.trim())).toEqual([
-      "pnpm exec prisma generate",
-      "pnpm exec prisma generate --schema prisma/evaluation/schema.prisma",
-      "pnpm run build"
+      "npx prisma generate",
+      "npx prisma generate --schema prisma/evaluation/schema.prisma",
+      "npm run build"
     ]);
   });
 });
