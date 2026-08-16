@@ -498,6 +498,40 @@ describe("journal daily entry generation service", () => {
     });
   });
 
+  it("preserves the current manual paragraph when records changed after the last save", async () => {
+    const currentEntry = entry({
+      contentRevision: 2,
+      savedRevision: 1,
+      content: "旧记录段落。\n\n我想保留的人工补充。",
+      paragraphs: [
+        { text: "旧记录段落。", sourceRecordIds: ["record-1"] },
+        { text: "我想保留的人工补充。", sourceRecordIds: [] }
+      ],
+      sourceVersions: [{ recordId: "record-1", contentRevision: 1 }]
+    });
+    const harness = setup({
+      view: {
+        entryDate,
+        sourceRecords: [source("record-1", 2, "记录已经更新。")],
+        sourceSignature: "v2|updated-record",
+        entry: currentEntry
+      },
+      saved: savedRevision({
+        contentRevision: 1,
+        content: "旧记录段落。",
+        paragraphs: [{ text: "旧记录段落。", sourceRecordIds: ["record-1"] }],
+        sourceVersions: [{ recordId: "record-1", contentRevision: 1 }]
+      })
+    });
+
+    const result = await harness.service.update({ userId, entryDate });
+
+    expect(result.paragraphs).toEqual([
+      { text: "我想保留的人工补充。", sourceRecordIds: [] },
+      { text: "记录已经更新。", sourceRecordIds: ["record-1"] }
+    ]);
+  });
+
   it("requires a previously deleted record again when that record has changed", () => {
     const plan = buildJournalDailyUpdatePlan({
       sourceRecords: [source("record-1"), source("record-2", 2, "第二条已经更新")],

@@ -59,7 +59,11 @@ export async function updateJournalPeriodReport(input: {
   const response = await fetch(`/api/journal/period/${encodeURIComponent(input.reportId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input)
+    body: JSON.stringify({
+      expectedContentRevision: input.expectedContentRevision,
+      title: input.title,
+      content: input.content
+    })
   });
   await assertSuccessful(response, "JOURNAL_PERIOD_UPDATE_FAILED");
   const payload = (await response.json()) as JournalPeriodReportRecord | { report: JournalPeriodReportRecord };
@@ -73,7 +77,7 @@ export async function saveJournalPeriodReport(input: {
   const response = await fetch(`/api/journal/period/${encodeURIComponent(input.reportId)}/save`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input)
+    body: JSON.stringify({ expectedContentRevision: input.expectedContentRevision })
   });
   await assertSuccessful(response, "JOURNAL_PERIOD_SAVE_FAILED");
   const payload = (await response.json()) as JournalPeriodReportRecord | { report: JournalPeriodReportRecord };

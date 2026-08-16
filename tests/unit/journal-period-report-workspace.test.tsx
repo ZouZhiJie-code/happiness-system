@@ -70,9 +70,8 @@ describe("JournalPeriodReportWorkspace", () => {
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "周记归档" })).toBeInTheDocument();
     expect(screen.getByText("本周主线")).toBeInTheDocument();
-    expect(screen.getByTestId("journal-period-sources")).not.toHaveAttribute("open");
-    fireEvent.click(screen.getByText("查看来源"));
-    expect(screen.getByRole("heading", { name: "5 月 6 日" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "按天回看" })).toBeInTheDocument();
+    expect(screen.getByText("5 月 6 日")).toBeInTheDocument();
     expect(screen.getByText("把演示稳稳讲完")).toBeInTheDocument();
     expect(screen.getAllByText("需更新").length).toBeGreaterThan(0);
 
@@ -88,7 +87,7 @@ describe("JournalPeriodReportWorkspace", () => {
     fireEvent.click(previousArchive);
     expect(onSelectArchive).toHaveBeenCalledWith(expect.objectContaining({ id: "week-previous" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "把演示稳稳讲完" }));
+    fireEvent.click(screen.getByRole("button", { name: "打开把演示稳稳讲完" }));
     expect(onOpenSource).toHaveBeenCalledWith(expect.objectContaining({ id: "daily-1" }));
   });
 
@@ -118,10 +117,9 @@ describe("JournalPeriodReportWorkspace", () => {
     expect(screen.queryByRole("heading", { name: "月记归档" })).not.toBeInTheDocument();
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(screen.getByText("本月线索")).toBeInTheDocument();
-    expect(screen.getByTestId("journal-period-sources")).not.toHaveAttribute("open");
-    fireEvent.click(screen.getByText("查看来源"));
-    expect(screen.getByRole("heading", { name: "5 月 4 日—5 月 10 日" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "编辑" }));
+    expect(screen.getByRole("heading", { name: "按周回看" })).toBeInTheDocument();
+    expect(screen.getByText("5 月 4 日—5 月 10 日")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "编辑月记" }));
     fireEvent.change(screen.getByRole("textbox", { name: "月记标题" }), { target: { value: "五月的稳定感" } });
     fireEvent.change(screen.getByRole("textbox", { name: "月记正文" }), { target: { value: "我把一周周的记录留了下来。 " } });
     await act(async () => {

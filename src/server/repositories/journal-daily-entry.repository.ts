@@ -13,6 +13,7 @@ import type {
   JournalDailyEntryRevisionRecord,
   JournalDailyEntrySourceSnapshot,
   JournalDailyJournalView,
+  JournalLegacyHistoryItem,
   JournalDailyParagraphDocument,
   JournalDailySourceEntry,
   JournalDailyWritingMaterial,
@@ -26,6 +27,14 @@ type SourceDatabaseClient = Pick<Prisma.TransactionClient, "journalEventEntry">;
 type StoredJournalDailyEntry = Prisma.JournalDailyEntryGetPayload<Record<never, never>>;
 type StoredJournalDailyEntryRevision = Prisma.JournalDailyEntryRevisionGetPayload<Record<never, never>>;
 type StoredJournalDailyEntryGeneration = Prisma.JournalDailyEntryGenerationGetPayload<Record<never, never>>;
+
+const LEGACY_DIMENSION_ORDER = [
+  "joy",
+  "fulfillment",
+  "reflection",
+  "improvement",
+  "gratitude"
+] as const;
 
 function toJsonValue(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -549,13 +558,86 @@ export async function getJournalDailyEntry(userId: string, entryDate: string) {
   return mapJournalDailyEntry(await findJournalDailyEntryByDateWithClient(prisma, userId, entryDate));
 }
 
+async function listJournalLegacyHistory(
+  userId: string,
+  entryDate: string
+): Promise<JournalLegacyHistoryItem[]> {
+  const { startAt, endExclusive } = getEntryDateRangeBounds(entryDate);
+  const [daily, dimensions] = await Promise.all([
+    prisma.dailyJournalEntry.findFirst({
+      where: { userId, status: "saved", date: { gte: startAt, lt: endExclusive } },
+      select: {
+        id: true,
+        date: true,
+        title: true,
+        content: true,
+        savedAt: true,
+        updatedAt: true
+      }
+    }),
+    prisma.joyEntry.findMany({
+      where: {
+        userId,
+        status: "saved",
+        date: { gte: startAt, lt: endExclusive },
+        session: { mode: "dimension_legacy", dimension: { not: null } }
+      },
+      select: {
+        id: true,
+        date: true,
+        title: true,
+        content: true,
+        savedAt: true,
+        updatedAt: true,
+        session: { select: { dimension: true } }
+      },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }]
+    })
+  ]);
+  const latestByDimension = new Map<string, (typeof dimensions)[number]>();
+  for (const item of dimensions) {
+    if (item.session.dimension && !latestByDimension.has(item.session.dimension)) {
+      latestByDimension.set(item.session.dimension, item);
+    }
+  }
+  const history: JournalLegacyHistoryItem[] = [];
+  if (daily) {
+    history.push({
+      id: daily.id,
+      kind: "daily_journal",
+      entryDate: formatEntryDate(daily.date),
+      title: daily.title,
+      content: daily.content,
+      dimension: null,
+      savedAt: serializeDate(daily.savedAt),
+      updatedAt: daily.updatedAt.toISOString()
+    });
+  }
+  for (const dimension of LEGACY_DIMENSION_ORDER) {
+    const item = latestByDimension.get(dimension);
+    if (!item) continue;
+    history.push({
+      id: item.id,
+      kind: "dimension_entry",
+      entryDate: formatEntryDate(item.date),
+      title: item.title,
+      content: item.content,
+      dimension,
+      savedAt: serializeDate(item.savedAt),
+      updatedAt: item.updatedAt.toISOString()
+    });
+  }
+  return history;
+}
+
 function buildJournalDailyJournalView(input: {
   entryDate: string;
   entry: StoredJournalDailyEntry | null;
   sources: JournalDailySourceEntry[];
   latestGeneration: StoredJournalDailyEntryGeneration | null;
+  legacyHistory: JournalLegacyHistoryItem[];
 }): JournalDailyJournalView {
-  const { entryDate, entry, sources, latestGeneration } = input;
+  const { entryDate, entry, sources, latestGeneration, legacyHistory } = input;
   const sourceSignature = getSourceSignature(sources);
   const collection = sources.length === 0
     ? ({ kind: "empty" } as const)
@@ -584,6 +666,7 @@ function buildJournalDailyJournalView(input: {
   return {
     entryDate,
     savedSources: sources,
+    legacyHistory,
     pendingSaveEntryIds: [],
     sourceSignature,
     collection,
@@ -596,17 +679,19 @@ function buildJournalDailyJournalView(input: {
 }
 
 async function readJournalDailyJournalProjection(userId: string, entryDate: string) {
-  const [entry, sourceProjections, latestGeneration] = await Promise.all([
+  const [entry, sourceProjections, latestGeneration, legacyHistory] = await Promise.all([
     findJournalDailyEntryByDateWithClient(prisma, userId, entryDate),
     listCurrentJournalEventEntryProjectionsForDailyJournalWithClient(prisma, userId, entryDate),
-    findLatestGenerationWithClient(prisma, userId, entryDate)
+    findLatestGenerationWithClient(prisma, userId, entryDate),
+    listJournalLegacyHistory(userId, entryDate)
   ]);
   return {
     journalView: buildJournalDailyJournalView({
       entryDate,
       entry,
       sources: sourceProjections.map((projection) => projection.source),
-      latestGeneration
+      latestGeneration,
+      legacyHistory
     }),
     sourceWritingMaterials: sourceProjections.map((projection) => ({
       entryId: projection.source.entryId,

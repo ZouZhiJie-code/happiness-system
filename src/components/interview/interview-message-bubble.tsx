@@ -39,8 +39,8 @@ export function InterviewMessageBubble({
         aria-live={live ? "polite" : undefined}
         className={`w-fit rounded-[var(--radius-card)] px-4 py-2.5 font-ui text-[15px] font-normal leading-[26px] ${
           isAssistant
-            ? "max-w-[min(70%,42.5rem)] bg-[var(--header-surface-strong)] text-ink"
-            : "max-w-[min(66%,38.75rem)] bg-[var(--paper-soft)] text-ink"
+            ? "max-w-[min(72%,48rem)] bg-[var(--header-surface-strong)] text-ink"
+            : "max-w-[min(68%,44rem)] bg-[var(--paper-soft)] text-ink"
         }`}
       >
         <p className="whitespace-pre-wrap">{bubbleContent}</p>

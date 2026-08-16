@@ -50,7 +50,8 @@ export const eventCenteredSessionIdentitySchema = z.object({
 
 export const startEventCenteredSessionRequestSchema = z.object({
   entryDate: entryDateSchema,
-  recordMode: z.enum(["capture", "chat"]).optional()
+  recordMode: z.enum(["capture", "chat"]),
+  clientOperationId: z.string().trim().min(1).max(120)
 });
 
 export const reserveEventCenteredTurnRequestSchema = z.object({

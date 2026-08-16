@@ -54,6 +54,17 @@ export interface JournalDailyWritingMaterial {
   basedOnContentRevision: number;
 }
 
+export type JournalLegacyHistoryItem = {
+  id: string;
+  kind: "daily_journal" | "dimension_entry";
+  entryDate: string;
+  title: string;
+  content: string;
+  dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude" | null;
+  savedAt: string | null;
+  updatedAt: string;
+};
+
 /**
  * Existing event-centred daily entries used schemaVersion 1.  The reader keeps
  * accepting it so the new journal page can preserve old candidate data while
@@ -159,6 +170,7 @@ export type JournalDailyDisplayStatus =
 export interface JournalDailyJournalView {
   entryDate: string;
   savedSources: JournalDailySourceEntry[];
+  legacyHistory: JournalLegacyHistoryItem[];
   pendingSaveEntryIds: string[];
   sourceSignature: string;
   collection: JournalDailySourceCollection;

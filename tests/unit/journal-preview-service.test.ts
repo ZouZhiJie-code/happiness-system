@@ -108,6 +108,7 @@ describe("Daily Light journal fixed Preview service", () => {
     expect(updated.preview.resultKind).toBe("fixed_update_sample");
     expect(updated.preview.modelCalls).toBe(0);
     expect(updated.entry.content).toContain("我的手动补充。");
+    expect(updated.entry.content).toContain("我补充了一句。");
     expect(updated.entry.status).toBe("modified");
 
     await service.saveDailyEntry({
@@ -144,5 +145,62 @@ describe("Daily Light journal fixed Preview service", () => {
     expect(reset.record.contentRevision).toBe(1);
     expect(reset.record.content).toBe(day.record.content);
     expect(reset.view.displayStatus).toBe("saved");
+  });
+
+  it("rejects cross-case, cross-session and late update requests", async () => {
+    const service = createJournalPreviewService();
+    const first = await service.createSession("user-1");
+    const second = await service.createSession("user-1");
+    const editable = first.cases.find((candidate) => candidate.caseId === "v7r4-a1")!;
+    const other = first.cases.find((candidate) => candidate.caseId === "v7r2-a2")!;
+    const baseline = await service.readDay("user-1", first.sessionId, editable.caseId, editable.entryDate);
+
+    await expect(service.updateRecord({
+      userId: "user-1",
+      sessionId: first.sessionId,
+      caseId: editable.caseId,
+      entryId: other.eventEntryId,
+      expectedContentRevision: 1,
+      title: "跨案例",
+      content: "这次请求必须被拒绝。"
+    })).rejects.toThrow("JOURNAL_PREVIEW_ENTRY_NOT_FOUND");
+    await expect(service.readDay(
+      "user-2",
+      first.sessionId,
+      editable.caseId,
+      editable.entryDate
+    )).rejects.toThrow("JOURNAL_PREVIEW_SESSION_NOT_FOUND");
+
+    const edited = await service.updateRecord({
+      userId: "user-1",
+      sessionId: first.sessionId,
+      caseId: editable.caseId,
+      entryId: editable.eventEntryId,
+      expectedContentRevision: 1,
+      title: baseline.record.title,
+      content: `${baseline.record.content}\n\n新的卡片内容。`
+    });
+    await service.saveRecord({
+      userId: "user-1",
+      sessionId: first.sessionId,
+      caseId: editable.caseId,
+      entryId: editable.eventEntryId,
+      expectedContentRevision: edited.contentRevision
+    });
+    await expect(service.generateDaily({
+      userId: "user-1",
+      sessionId: first.sessionId,
+      caseId: editable.caseId,
+      task: "update",
+      expectedSourceSignature: baseline.view.sourceSignature,
+      expectedContentRevision: baseline.view.entry!.contentRevision
+    })).rejects.toThrow("JOURNAL_PREVIEW_SOURCE_CHANGED");
+
+    await expect(service.readDay(
+      "user-1",
+      second.sessionId,
+      editable.caseId,
+      editable.entryDate
+    )).resolves.toMatchObject({ view: { displayStatus: "saved" } });
   });
 });

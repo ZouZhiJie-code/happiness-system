@@ -28,7 +28,7 @@ import {
 import { JournalArchiveWorkspaceFallback } from "./journal-archive-workspace-fallback";
 
 function periodLabel(kind: JournalPeriodKind, date: string) {
-  return kind === "week" ? "本周周记" : formatCalendarMonthLabel(date);
+  return kind === "week" ? formatCalendarWeekLabel(date) : formatCalendarMonthLabel(date);
 }
 
 function rangeLabel(view: JournalPeriodReportView) {
@@ -38,6 +38,7 @@ function rangeLabel(view: JournalPeriodReportView) {
 
 function materialHref(material: JournalPeriodMaterial) {
   if (material.kind === "weekly_report") return buildCalendarHref({ view: "week", date: material.startDate });
+  if (material.kind === "legacy_daily_report") return buildCalendarHref({ view: "day", date: material.startDate });
   return buildCalendarHref({ view: "day", date: material.startDate });
 }
 

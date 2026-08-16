@@ -41,6 +41,16 @@ export type EventCenteredDialogueWorkspaceAction =
   | { action: "generate_event_journal" }
   | { action: "exit_event" };
 
+export type EventCenteredDialogueIssue = {
+  code?: string;
+  title: string;
+  message: string;
+  resolution?: string;
+  retryable?: boolean;
+  action?: string;
+  requestId?: string;
+};
+
 export type EventCenteredDialogueWorkspaceViewProps = {
   session: EventCenteredWorkspaceSession;
   entryDate: string;
@@ -52,6 +62,8 @@ export type EventCenteredDialogueWorkspaceViewProps = {
   readOnly?: boolean;
   canCreateEvent?: boolean;
   showCompletionHandoff?: boolean;
+  /** 外层已提供跨日期会话侧栏时，隐藏旧的当天片段栏。 */
+  showRecordRail?: boolean;
   /** 视觉验收可切到 local，真实访谈默认继续读写反馈接口。 */
   feedbackMode?: AIResponseFeedbackMode;
   /** 可选受控草稿；父层可把它与可靠 outbox 绑定。 */
@@ -66,12 +78,14 @@ export type EventCenteredDialogueWorkspaceViewProps = {
     summary: string;
     response: string;
   } | null;
-  error?: { title: string; message: string } | null;
+  error?: EventCenteredDialogueIssue | null;
   onAction: (action: EventCenteredDialogueWorkspaceAction) => Promise<void> | void;
   onSelectTab?: (rootSessionId: string) => void;
   onCreateEvent?: () => void;
   /** 零写入视觉稿可在本地切换到日记；真实链路继续使用标准地址。 */
   onOpenJournal?: () => void;
+  /** 根据结构化错误给出的恢复动作，刷新当前会话并保留已提交内容。 */
+  onResolveIssue?: () => void | Promise<void>;
   onComposerDraftChange?: (draft: string) => void;
 };
 
@@ -241,14 +255,49 @@ export function AssistantMessageGroup({
   );
 }
 
+function IssueAssistantMessage({
+  issue,
+  busy = false,
+  entryDate,
+  onResolve
+}: {
+  issue: EventCenteredDialogueIssue;
+  busy?: boolean;
+  entryDate: string;
+  onResolve?: () => void | Promise<void>;
+}) {
+  const content = [issue.message, issue.resolution].filter(Boolean).join("\n");
+  const canRefresh = issue.action === "refresh" && onResolve;
+  const canOpenJournal = issue.action === "open_journal";
+  const status = (
+    <div className="flex flex-wrap items-center gap-2">
+      <span>{issue.title}</span>
+      {issue.requestId ? <span className="text-[var(--text-faint)]">请求标识 {issue.requestId}</span> : null}
+      {canRefresh ? (
+        <ActionButton type="button" variant="secondary" disabled={busy} onClick={() => void onResolve()}>
+          刷新到最新记录
+        </ActionButton>
+      ) : canOpenJournal ? (
+        <Link href={buildCalendarHref({ view: "day", date: entryDate })} className={actionButtonClass("secondary")}>
+          查看当天日记
+        </Link>
+      ) : null}
+    </div>
+  );
+
+  return <AssistantMessageGroup question={content} status={status} />;
+}
+
 function AssistantMessage({
   message,
   busy,
+  showActions,
   feedbackMode,
   onAction
 }: {
   message: EventCenteredWorkspaceMessage;
   busy: boolean;
+  showActions: boolean;
   feedbackMode: AIResponseFeedbackMode;
   onAction: EventCenteredDialogueWorkspaceViewProps["onAction"];
 }) {
@@ -256,7 +305,7 @@ function AssistantMessage({
   const regenerationAction = message.responseVersion ? (
     <EventCenteredRegenerationControls message={message} busy={busy} onAction={onAction} />
   ) : null;
-  const actions = message.generationTraceId ? (
+  const actions = !showActions || payload?.responseKind === "opening" ? null : message.generationTraceId ? (
     <div className="flex items-start gap-1">
       <AIResponseFeedback traceId={message.generationTraceId} compact mode={feedbackMode} />
       {regenerationAction}
@@ -269,6 +318,10 @@ function AssistantMessage({
 
   if (!payload) {
     return <AssistantMessageGroup question={message.content} actions={actions} />;
+  }
+
+  if (payload.responseKind === "opening") {
+    return <AssistantMessageGroup question={payload.naturalResponse || message.content} />;
   }
 
   return (
@@ -302,7 +355,7 @@ function CheckpointNote({
   return (
     <div
       data-testid={`event-centered-${kind}-checkpoint`}
-      className="mx-auto w-full max-w-[60rem] pb-2"
+      className="w-full max-w-[70rem] pb-2"
     >
       <InterviewMessageBubble
         role="assistant"
@@ -312,7 +365,7 @@ function CheckpointNote({
         live
       />
       {!thoughtOnly && (isFirst ? actionAllowed(session, "select_exploration_angle") : showAngles) ? (
-        <div className="max-w-[42.5rem]">
+        <div className="max-w-[48rem]">
           <AngleChooser
             session={session}
             busy={busy}
@@ -418,7 +471,7 @@ function FocusSelectionNote({
   return (
     <div className="w-full py-2">
       <InterviewMessageBubble role="assistant" content="先选一件想聊的事" />
-      <div className="mt-2 grid max-w-[42.5rem] gap-2">
+      <div className="mt-2 grid max-w-[48rem] gap-2">
         {session.dialogue.focusOptions.map((option) => (
           <ActionButton
             key={option.id}
@@ -456,7 +509,7 @@ export function EventCenteredStartWorkspaceView({
   busy?: boolean;
   pendingRecordMode?: "capture" | "chat" | null;
   readOnly?: boolean;
-  error?: { title: string; message: string } | null;
+  error?: EventCenteredDialogueIssue | null;
   onStart: (recordMode: "capture" | "chat") => void | Promise<void>;
   onSelectTab?: (rootSessionId: string) => void;
 }) {
@@ -505,18 +558,30 @@ export function EventCenteredStartWorkspaceView({
           查看 {entryDateLabel} 日记
         </Link>
       </aside> : null}
-      <section className="flex min-h-0 flex-col" aria-label={`开始 ${entryDateLabel} 的记录`}>
+      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col" aria-label={`开始 ${entryDateLabel} 的记录`}>
         <header className="shrink-0 px-4 py-4 md:px-6">
-          <div className="mx-auto w-full max-w-[60rem]">
-            <p className="text-[13px] font-medium text-[var(--text-dim)]">访谈</p>
+          <div className="w-full max-w-[70rem]">
+            <p className="text-[13px] font-medium text-[var(--text-dim)]">记录</p>
             <h1 className="mt-1 font-ui text-2xl font-semibold tracking-tight text-ink">新记录</h1>
             <p className="mt-1 text-[13px] text-[var(--text-dim)]">{entryDateLabel}</p>
           </div>
         </header>
         <div className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6">
-          <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-2 pb-5">
+          <div className="flex w-full max-w-[70rem] flex-col gap-2 pb-32">
             <InterviewMessageBubble content={prompt} role="assistant" />
-            <div className="grid max-w-[42.5rem] gap-2 pt-1 sm:grid-cols-2" aria-label="选择记录方式">
+            <div className="grid max-w-[70rem] gap-2 pt-1 sm:grid-cols-2" aria-label="选择记录方式">
+                <button
+                  type="button"
+                  disabled={busy || readOnly}
+                  aria-busy={pendingRecordMode === "chat"}
+                  onClick={() => void onStart("chat")}
+                  className="group min-h-[5rem] rounded-[var(--radius-control)] bg-[var(--paper-deep)] px-4 py-3 text-left text-[var(--paper-main)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="block text-base font-semibold">陪我聊</span>
+                  <span className="mt-1 block text-sm leading-6 opacity-80">
+                    {pendingRecordMode === "chat" ? "正在准备…" : "我来问，你来说"}
+                  </span>
+                </button>
                 <button
                   type="button"
                   disabled={busy || readOnly}
@@ -526,29 +591,17 @@ export function EventCenteredStartWorkspaceView({
                 >
                   <span className="block text-base font-semibold text-ink">帮我记</span>
                   <span className="mt-1 block text-sm leading-6 text-[var(--text-dim)]">
-                    {pendingRecordMode === "capture" ? "正在准备…" : "说下来，我帮你整理"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || readOnly}
-                  aria-busy={pendingRecordMode === "chat"}
-                  onClick={() => void onStart("chat")}
-                  className="group min-h-[5rem] rounded-[var(--radius-control)] bg-[var(--paper-soft)] px-4 py-3 text-left transition-colors hover:bg-[var(--amber-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="block text-base font-semibold text-ink">陪我聊</span>
-                  <span className="mt-1 block text-sm leading-6 text-[var(--text-dim)]">
-                    {pendingRecordMode === "chat" ? "正在准备…" : "从一件事聊开"}
+                    {pendingRecordMode === "capture" ? "正在准备…" : "你来说，我在听"}
                   </span>
                 </button>
             </div>
-            {error ? <div role="alert"><AssistantMessageGroup question={error.message} status={error.title} /></div> : null}
+            {error ? <div role="alert"><IssueAssistantMessage issue={error} entryDate={entryDate} /></div> : null}
           </div>
         </div>
-        <div className="shrink-0 px-3 py-3 md:px-5">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-5 pt-8 md:px-6">
           <div
             data-testid="event-centered-start-composer"
-            className="relative mx-auto flex w-full max-w-[60rem] items-end gap-2 rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-2 py-1.5 md:px-2.5"
+            className="liquid-composer pointer-events-auto relative flex w-full max-w-[70rem] items-end gap-2 rounded-[var(--radius-card)] px-2 py-1.5 md:px-2.5"
           >
             <label className="sr-only" htmlFor="event-centered-start-input">输入当前事件</label>
             <textarea
@@ -556,13 +609,13 @@ export function EventCenteredStartWorkspaceView({
               rows={1}
               disabled
               placeholder="先选择一种记录方式"
-              className="min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 font-ui text-[15px] leading-[26px] text-ink outline-none placeholder:text-[var(--text-dim)] disabled:cursor-not-allowed disabled:opacity-70"
+              className="relative z-[1] min-h-[2.75rem] w-full resize-none bg-transparent px-4 py-2 pr-16 font-ui text-[15px] leading-[26px] text-ink outline-none placeholder:text-[var(--text-dim)] disabled:cursor-not-allowed disabled:opacity-70"
             />
             <button
               type="button"
               disabled
               aria-label="发送"
-              className="absolute right-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-[var(--paper-deep)] text-[var(--paper-main)] opacity-40"
+              className="absolute right-2 top-1/2 z-[1] grid size-11 -translate-y-1/2 place-items-center rounded-full bg-[var(--paper-deep)] text-[var(--paper-main)] opacity-40"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 15.5v-9" />
@@ -635,6 +688,7 @@ export function EventCenteredDialogueWorkspaceView({
   readOnly = false,
   canCreateEvent = false,
   showCompletionHandoff = false,
+  showRecordRail = true,
   feedbackMode = "remote",
   composerDraft,
   optimisticUserMessage = null,
@@ -644,11 +698,14 @@ export function EventCenteredDialogueWorkspaceView({
   onSelectTab,
   onCreateEvent,
   onOpenJournal,
+  onResolveIssue,
   onComposerDraftChange
 }: EventCenteredDialogueWorkspaceViewProps) {
   const [localComposerDraft, setLocalComposerDraft] = useState("");
+  const [composerDockHeight, setComposerDockHeight] = useState(0);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const messageViewportRef = useRef<HTMLDivElement>(null);
+  const composerDockRef = useRef<HTMLFormElement>(null);
   const keepLatestMessageVisibleRef = useRef(true);
   const allTabs = useMemo(() => {
     if (tabs.some((tab) => tab.rootSessionId === session.rootSessionId)) return tabs;
@@ -671,7 +728,12 @@ export function EventCenteredDialogueWorkspaceView({
   const checkpoint = session.dialogue.checkpoint;
   const allowReply = actionAllowed(session, "reply");
   const isAngleSelectionCheckpoint = checkpoint?.kind === "first" && !allowReply;
-  const actionBusy = busy || readOnly;
+  const abandoned = session.sessionStatus === "abandoned" || session.eventStatus === "abandoned";
+  const completed = !abandoned &&
+    session.sessionStatus === "completed" &&
+    session.eventStatus === "completed";
+  const terminal = completed || abandoned;
+  const actionBusy = busy || readOnly || terminal;
   const isCaptureMode = recordMode === "capture";
   const entryDateLabel = formatEntryDateLabel(entryDate);
   const activeTab = allTabs.find((tab) => tab.rootSessionId === activeTabId) ?? allTabs[0];
@@ -679,6 +741,17 @@ export function EventCenteredDialogueWorkspaceView({
   const activeComposerDraft = composerDraft ?? localComposerDraft;
   const streamFailed = streamPreview?.phase === "recovery_failed";
   const streamRetrying = streamPreview?.phase === "provider_retry_1";
+  const latestUnansweredAssistantId = useMemo(() => {
+    if (terminal || readOnly) return null;
+    let latestUserSequence = -1;
+    for (const message of session.messages) {
+      if (message.role === "user") latestUserSequence = Math.max(latestUserSequence, message.sequence);
+    }
+    const candidates = session.messages.filter((message) =>
+      message.role === "assistant" && message.sequence > latestUserSequence
+    );
+    return candidates.at(-1)?.id ?? null;
+  }, [readOnly, session.messages, terminal]);
   const setComposerDraft = (next: string) => {
     if (composerDraft === undefined) setLocalComposerDraft(next);
     onComposerDraftChange?.(next);
@@ -735,20 +808,30 @@ export function EventCenteredDialogueWorkspaceView({
     streamPreview?.summary
   ]);
 
-  if (showCompletionHandoff && canCreateEvent) {
-    return (
-      <EventCompletionHandoff
-        entryDate={entryDate}
-        busy={busy}
-        onCreateEvent={onCreateEvent}
-        onOpenJournal={onOpenJournal}
-      />
-    );
-  }
+  useEffect(() => {
+    const dock = composerDockRef.current;
+    if (!dock || isAngleSelectionCheckpoint) {
+      setComposerDockHeight(0);
+      return;
+    }
+
+    const updateHeight = () => setComposerDockHeight(dock.getBoundingClientRect().height);
+    updateHeight();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, [checkpoint, isAngleSelectionCheckpoint]);
+
+  const messageBottomClearance = isAngleSelectionCheckpoint
+    ? 24
+    : Math.max(128, Math.ceil(composerDockHeight) + 24);
 
   return (
-    <Surface className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
-      <aside className="min-h-0 border-b border-[var(--line-soft)] bg-[var(--header-surface)] px-4 py-5 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6" aria-label="当天片段">
+    <Surface className={showRecordRail
+      ? "grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 lg:grid-cols-[18rem_minmax(0,1fr)]"
+      : "flex min-h-0 flex-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0"}>
+      {showRecordRail ? <aside className="min-h-0 border-b border-[var(--line-soft)] bg-[var(--header-surface)] px-4 py-5 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6" aria-label="当天片段">
         <p className="text-sm font-semibold text-ink">当天片段</p>
         <p className="mt-1 text-xs leading-5 text-[var(--text-dim)]">{entryDateLabel}</p>
         <div role="tablist" aria-label="当天事件" className="mt-5 grid gap-2">
@@ -797,15 +880,15 @@ export function EventCenteredDialogueWorkspaceView({
             查看 {entryDateLabel} 日记
           </Link>
         )}
-      </aside>
+      </aside> : null}
       <section
         id={dialoguePanelId}
         role="tabpanel"
         aria-labelledby={activeTab ? `event-centered-tab-${activeTab.rootSessionId}` : undefined}
-        className="flex min-h-0 flex-col"
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col"
       >
         <header className="shrink-0 px-4 py-4 md:px-6">
-          <div className="mx-auto w-full max-w-[60rem]">
+          <div className="w-full max-w-[70rem]">
             <p className="text-[13px] font-medium text-[var(--text-dim)]">
               {isCaptureMode ? "帮我记" : "陪我聊"}
             </p>
@@ -823,12 +906,17 @@ export function EventCenteredDialogueWorkspaceView({
           ref={messageViewportRef}
           data-testid="event-centered-message-viewport"
           className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6"
+          style={{ scrollPaddingBottom: messageBottomClearance }}
           onScroll={(event) => {
             const viewport = event.currentTarget;
             keepLatestMessageVisibleRef.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 96;
           }}
         >
-          <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-4 pb-5">
+          <div
+            data-testid="event-centered-message-track"
+            className="flex w-full max-w-[70rem] flex-col gap-4"
+            style={{ paddingBottom: messageBottomClearance }}
+          >
             {session.messages.map((message) => message.role === "user" ? (
               <InterviewMessageBubble
                 key={message.id}
@@ -840,6 +928,7 @@ export function EventCenteredDialogueWorkspaceView({
                 key={message.id}
                 message={message}
                 busy={actionBusy}
+                showActions={!isCaptureMode && message.id === latestUnansweredAssistantId}
                 feedbackMode={feedbackMode}
                 onAction={onAction}
               />
@@ -879,7 +968,58 @@ export function EventCenteredDialogueWorkspaceView({
               <RecoveryNote session={session} busy={actionBusy} onAction={onAction} />
             ) : error ? (
               <div role="alert">
-                <AssistantMessageGroup question={error.message} status={error.title} />
+                <IssueAssistantMessage
+                  issue={error}
+                  busy={actionBusy}
+                  entryDate={entryDate}
+                  onResolve={onResolveIssue}
+                />
+              </div>
+            ) : null}
+            {completed ? (
+              <div
+                data-testid="event-centered-completion-inline"
+                data-newly-completed={showCompletionHandoff ? "true" : undefined}
+                className="pt-1"
+              >
+                <InterviewMessageBubble
+                  role="assistant"
+                  content={`已记下\n这件事已经放进 ${formatCompactEntryDateLabel(entryDate)}的记录`}
+                />
+                <div className="mt-2 flex max-w-[48rem] items-center gap-2 pl-1">
+                  {onOpenJournal ? (
+                    <ActionButton type="button" variant="primary" onClick={onOpenJournal}>
+                      查看 {formatCompactEntryDateLabel(entryDate)}日记
+                    </ActionButton>
+                  ) : (
+                    <Link
+                      href={buildCalendarHref({ view: "day", date: entryDate })}
+                      className={actionButtonClass("primary")}
+                    >
+                      查看 {formatCompactEntryDateLabel(entryDate)}日记
+                    </Link>
+                  )}
+                  {canCreateEvent && onCreateEvent ? (
+                    <ActionButton type="button" variant="secondary" disabled={busy} onClick={onCreateEvent}>
+                      新建记录
+                    </ActionButton>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            {abandoned ? (
+              <div data-testid="event-centered-abandoned-inline" className="pt-1">
+                <InterviewMessageBubble
+                  role="assistant"
+                  content="这条空记录已结束\n还没有形成记录卡，可以新建一条记录。"
+                />
+                {canCreateEvent && onCreateEvent ? (
+                  <div className="mt-2 flex max-w-[48rem] items-center gap-2 pl-1">
+                    <ActionButton type="button" variant="primary" disabled={busy} onClick={onCreateEvent}>
+                      新建记录
+                    </ActionButton>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -896,23 +1036,32 @@ export function EventCenteredDialogueWorkspaceView({
           </div>
         ) : (
           <form
-            className="shrink-0 px-3 py-3 md:px-5"
+            ref={composerDockRef}
+            data-testid="event-centered-composer-dock"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-5 pt-8 md:px-6"
             onSubmit={(event) => {
               event.preventDefault();
               void submitReply();
             }}
           >
             {checkpoint ? (
-              <CheckpointNote
-                kind={checkpoint.kind}
-                session={session}
-                busy={actionBusy}
-                onAction={onAction}
-              />
+              <div className="pointer-events-auto w-full max-w-[70rem]">
+                <CheckpointNote
+                  kind={checkpoint.kind}
+                  session={session}
+                  busy={actionBusy}
+                  onAction={onAction}
+                />
+              </div>
             ) : null}
             <div
               data-testid="event-centered-composer"
-              className="relative mx-auto flex w-full max-w-[60rem] items-end gap-2 rounded-[var(--radius-card)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-2 py-1.5 transition-colors focus-within:border-[var(--line-strong)] md:px-2.5"
+              title={completed
+                ? "这条记录已经完成，如需继续，请新建一条记录。"
+                : abandoned
+                  ? "这条空记录已经结束，如需记录，请新建一条记录。"
+                  : undefined}
+              className="liquid-composer pointer-events-auto relative flex w-full max-w-[70rem] items-end gap-2 rounded-[var(--radius-card)] px-2 py-1.5 outline-none ring-[var(--line-strong)] transition-shadow focus-within:ring-1 md:px-2.5"
             >
               <label className="sr-only" htmlFor="event-centered-dialogue-input">输入当前事件</label>
               <textarea
@@ -928,16 +1077,20 @@ export function EventCenteredDialogueWorkspaceView({
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder={session.dialogue.phase === "event_focus_clarification"
+                placeholder={completed
+                  ? "这条记录已经完成，如需继续，请新建一条记录。"
+                  : abandoned
+                    ? "这条空记录已经结束，如需记录，请新建一条记录。"
+                  : session.dialogue.phase === "event_focus_clarification"
                   ? "用一句话说，你想先记录哪一件…"
                   : allowReply ? "把此刻想补充的话说给我听…" : "这一段已经收好，可以选择下一步"}
-                className="max-h-44 min-h-[2.25rem] w-full resize-none bg-transparent px-4 py-1.5 pr-20 font-ui text-[15px] leading-[26px] text-ink outline-none transition placeholder:text-[var(--text-dim)] disabled:cursor-wait disabled:opacity-55"
+                className="relative z-[1] max-h-44 min-h-[2.75rem] w-full resize-none bg-transparent px-4 py-2 pr-16 font-ui text-[15px] leading-[26px] text-ink outline-none transition placeholder:text-[var(--text-dim)] disabled:cursor-wait disabled:opacity-55"
               />
               <button
                 type="submit"
                 disabled={actionBusy || !allowReply || !activeComposerDraft.trim()}
                 aria-label="发送"
-                className="absolute right-3 top-1/2 inline-flex h-9 min-w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--paper-deep)] px-3 text-sm text-[var(--paper-main)] transition-transform hover:-translate-y-[calc(50%+1px)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute right-2 top-1/2 z-[1] grid size-11 -translate-y-1/2 place-items-center rounded-full bg-[var(--paper-deep)] text-sm text-[var(--paper-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10 15.5v-9" />

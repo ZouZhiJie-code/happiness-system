@@ -215,6 +215,7 @@ async function readCurrentSourceFingerprintWithClient(
     eventId: string;
     activeBranchSessionId: string;
     baseMessageSequence: number;
+    returnTurnId?: string | null;
   }
 ) {
   const [route, factProjection, angleProjection] = await Promise.all([
@@ -237,6 +238,18 @@ async function readCurrentSourceFingerprintWithClient(
   if ((route.path.messages.at(-1)?.sequence ?? 0) !== input.baseMessageSequence) {
     return null;
   }
+  const messageRows = await database.interviewMessage.findMany({
+    where: { id: { in: route.path.messages.map((message) => message.id) } },
+    select: { id: true, userTurnId: true }
+  });
+  const internalReturnMessageIds = new Set(
+    messageRows
+      .filter((message) => input.returnTurnId && message.userTurnId === input.returnTurnId)
+      .map((message) => message.id)
+  );
+  const sourceMessageIds = route.path.messages
+    .map((message) => message.id)
+    .filter((messageId) => !internalReturnMessageIds.has(messageId));
   const eligibleOutcomeIds = new Set(angleProjection.logEligibleOutcomeIds);
   const sourceAngleOutcomeIds = JOURNAL_EVENT_ANGLES.flatMap((angle) => {
     const outcome = angleProjection.outcomesByAngle[angle];
@@ -246,7 +259,7 @@ async function readCurrentSourceFingerprintWithClient(
     eventId: input.eventId,
     activeBranchSessionId: input.activeBranchSessionId,
     baseMessageSequence: input.baseMessageSequence,
-    sourceMessageIds: route.path.messages.map((message) => message.id),
+    sourceMessageIds,
     sourceFactIds: factProjection.effectiveFactIds,
     deprioritizedFactIds: factProjection.deprioritizedFactIds,
     explorationFactIds: factProjection.explorationFactIds,
@@ -296,7 +309,7 @@ async function settleRecordCardReturnWithClient(
       mode: "event_centered",
       OR: [{ id: event.rootSessionId }, { rootSessionId: event.rootSessionId }]
     },
-    data: { status: "completed", completedAt: now }
+    data: { status: "completed", completedAt: now, lastActivityAt: now }
   });
 }
 
@@ -326,6 +339,46 @@ async function findEntryForEvent(
     },
     include: entryInclude
   });
+}
+
+async function confirmRecordCardForReturnWithClient(
+  database: DatabaseClient,
+  input: MaterializeJournalEventEntryCardInput
+) {
+  const existing = await findEntryForEvent(database, input.userId, input.eventId);
+  if (!existing) throw new Error("EVENT_JOURNAL_ENTRY_NOT_FOUND");
+  if (
+    existing.status === "saved" &&
+    existing.savedRevision === existing.contentRevision &&
+    existing.savedAt
+  ) {
+    return existing;
+  }
+
+  const update = await database.journalEventEntry.updateMany({
+    where: {
+      id: existing.id,
+      contentRevision: existing.contentRevision
+    },
+    data: {
+      status: "saved",
+      savedRevision: existing.contentRevision,
+      savedAt: new Date(),
+      generatedByTurnId: existing.generatedByTurnId ?? input.returnTurnId ?? null
+    }
+  });
+  if (update.count !== 1) throw new Error("EVENT_STATE_CHANGED");
+
+  const saved = await findEntryForEvent(database, input.userId, input.eventId);
+  if (
+    !saved ||
+    saved.status !== "saved" ||
+    saved.savedRevision !== saved.contentRevision ||
+    !saved.savedAt
+  ) {
+    throw new Error("EVENT_STATE_CHANGED");
+  }
+  return saved;
 }
 
 async function findGenerationForOperation(
@@ -641,8 +694,7 @@ export async function materializeJournalEventEntryCard(
   assertPositiveInteger(input.baseMessageSequence, "EVENT_OPERATION_INVALID");
 
   const finishExisting = async () => prisma.$transaction(async (database) => {
-    const existing = await findEntryForEvent(database, input.userId, input.eventId);
-    if (!existing) throw new Error("EVENT_JOURNAL_ENTRY_NOT_FOUND");
+    const existing = await confirmRecordCardForReturnWithClient(database, input);
     await settleRecordCardReturnWithClient(database, input);
     return mapEntry(existing);
   });
@@ -651,8 +703,9 @@ export async function materializeJournalEventEntryCard(
     return await prisma.$transaction(async (database) => {
       const existing = await findEntryForEvent(database, input.userId, input.eventId);
       if (existing) {
+        const confirmed = await confirmRecordCardForReturnWithClient(database, input);
         await settleRecordCardReturnWithClient(database, input);
-        return mapEntry(existing);
+        return mapEntry(confirmed);
       }
 
       const route = await getEventCenteredRouteWithClient(database, {
@@ -678,19 +731,20 @@ export async function materializeJournalEventEntryCard(
         ),
         database.interviewMessage.findMany({
           where: { id: { in: route.path.messages.map((message) => message.id) } },
-          select: { id: true, role: true, sequence: true, content: true }
+          select: { id: true, userTurnId: true, role: true, sequence: true, content: true }
         })
       ]);
       const messagesById = new Map(messageRows.map((message) => [message.id, message]));
-      const sourceMessages = route.path.messages.map((message) => {
+      const sourceMessages = route.path.messages.flatMap((message) => {
         const stored = messagesById.get(message.id);
         if (!stored) throw new Error("EVENT_STATE_CHANGED");
-        return {
+        if (input.returnTurnId && stored.userTurnId === input.returnTurnId) return [];
+        return [{
           id: stored.id,
           role: stored.role,
           sequence: stored.sequence,
           content: stored.content
-        };
+        }];
       });
       const logEligibleIds = new Set(angleProjection.logEligibleOutcomeIds);
       const angleOutcomes = JOURNAL_EVENT_ANGLES.flatMap((angle) => {
@@ -734,22 +788,24 @@ export async function materializeJournalEventEntryCard(
       const currentFingerprint = await readCurrentSourceFingerprintWithClient(database, {
         eventId: input.eventId,
         activeBranchSessionId: input.activeBranchSessionId,
-        baseMessageSequence: input.baseMessageSequence
+        baseMessageSequence: input.baseMessageSequence,
+        returnTurnId: input.returnTurnId
       });
       if (currentFingerprint !== sourceFingerprint) throw new Error("EVENT_STATE_CHANGED");
 
+      const savedAt = new Date();
       const created = await database.journalEventEntry.create({
         data: {
           id: randomUUID(),
           eventId: input.eventId,
           sourceBranchSessionId: input.activeBranchSessionId,
-          generatedByTurnId: null,
+          generatedByTurnId: input.returnTurnId ?? null,
           currentGenerationTraceId: null,
           generationId: null,
           title: draft.title,
           content: draft.content,
           occurredAtText: draft.occurredAtText,
-          status: "draft",
+          status: "saved",
           generationOrigin: "deterministic",
           generationVersion: 1,
           sourceMessageSequence: input.baseMessageSequence,
@@ -759,7 +815,9 @@ export async function materializeJournalEventEntryCard(
           sourceFingerprint,
           sourceSnapshot: toJsonValue(sourceSnapshot),
           contentRevision: 1,
-          editedAt: null
+          savedRevision: 1,
+          editedAt: null,
+          savedAt
         },
         include: entryInclude
       });
@@ -896,7 +954,7 @@ export async function completeJournalEventEntryGeneration(
         mode: "event_centered",
         OR: [{ id: event.rootSessionId }, { rootSessionId: event.rootSessionId }]
       },
-      data: { status: "completed", completedAt: now }
+      data: { status: "completed", completedAt: now, lastActivityAt: now }
     });
     const generationUpdate = await database.journalEventEntryGeneration.updateMany({
       where: { id: generation.id, status: "processing" },

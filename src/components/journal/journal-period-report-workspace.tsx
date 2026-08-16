@@ -4,9 +4,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { ActionButton, Surface, actionButtonClass } from "@/components/ui";
+import {
+  ActionButton,
+  ReadingDocument,
+  StatusBadge,
+  Surface,
+  actionButtonClass,
+  type StatusTone
+} from "@/components/ui";
 import { getCalendarWeekRange } from "@/features/calendar/view-state";
 import { cn } from "@/lib/utils";
+import { JournalTimeline, JournalTimelineItem } from "./journal-timeline";
 
 /**
  * 周报、月报共用的展示状态。它刻意与服务端实现解耦，使前端可以先使用演示数据，
@@ -23,7 +31,11 @@ export type JournalPeriodReportDisplayStatus =
 
 export type JournalPeriodReportKind = "week" | "month";
 
-export type JournalPeriodReportSourceKind = "weekly_report" | "daily_report" | "event_card";
+export type JournalPeriodReportSourceKind =
+  | "weekly_report"
+  | "daily_report"
+  | "legacy_daily_report"
+  | "event_card";
 
 export interface JournalPeriodArchiveItem {
   id: string;
@@ -172,13 +184,23 @@ function reportNoun(kind: JournalPeriodReportKind) {
 function sourceKindLabel(kind: JournalPeriodReportSourceKind) {
   if (kind === "weekly_report") return "周记";
   if (kind === "daily_report") return "日记";
+  if (kind === "legacy_daily_report") return "历史日记";
   return "片段";
 }
 
-function statusBadgeClass(status: JournalPeriodReportDisplayStatus) {
-  if (status === "saved") return "bg-[var(--moss-soft)] text-[var(--text-main)]";
-  if (status === "stale" || status === "update_failed") return "bg-[var(--amber-soft)] text-[var(--text-main)]";
-  return "bg-[var(--header-surface-strong)] text-[var(--text-dim)]";
+function periodStatusTone(status: JournalPeriodReportDisplayStatus): StatusTone {
+  if (status === "saved") return "success";
+  if (status === "draft") return "warning";
+  if (status === "stale") return "stale";
+  if (status === "update_failed") return "error";
+  if (status === "generating") return "info";
+  return "neutral";
+}
+
+function isGeneratedPeriodTitle(title: string, kind: JournalPeriodReportKind) {
+  const normalized = title.replace(/\s+/gu, "").trim();
+  if (kind === "month") return /^\d{4}年\d{1,2}月(?:记录|月记)?$/u.test(normalized);
+  return /^\d{1,2}月\d{1,2}日[—–-]\d{1,2}日(?:周记)?$/u.test(normalized);
 }
 
 function ActionMessage({ children, error = false }: { children: ReactNode; error?: boolean }) {
@@ -191,38 +213,18 @@ function ActionMessage({ children, error = false }: { children: ReactNode; error
 
 function OutlineState({
   view,
-  pending,
-  onAction,
   actionError
 }: {
   view: JournalPeriodReportWorkspaceView;
-  pending: boolean;
-  onAction: () => void;
   actionError: string | null;
 }) {
   const copy = STATUS_COPY[view.displayStatus];
-  const noun = reportNoun(view.kind);
-  const canAct = view.displayStatus !== "blank" && view.displayStatus !== "generating";
-  const actionLabel = view.displayStatus === "ungenerated"
-    ? `生成${noun}`
-    : view.displayStatus === "stale"
-      ? `更新${noun}`
-      : copy.action;
 
   return (
     <div className="flex min-h-[24rem] flex-col items-center justify-center px-6 py-12 text-center md:px-12">
       <h2 className="font-display text-2xl text-[var(--text-main)] md:text-3xl">{copy.title}</h2>
       <p className="mt-3 max-w-md text-sm leading-7 text-[var(--text-dim)]">{view.emptyDescription?.trim() || copy.description}</p>
       {actionError ? <div className="mt-5"><ActionMessage error>{actionError}</ActionMessage></div> : null}
-      {view.displayStatus === "blank" && view.emptyActionHref ? (
-        <Link href={view.emptyActionHref} className={actionButtonClass("primary", "mt-7 min-w-36")}>
-          去记一天
-        </Link>
-      ) : canAct ? (
-        <ActionButton type="button" variant="primary" className="mt-7 min-w-36" onClick={onAction} disabled={pending}>
-          {pending ? "正在处理" : actionLabel || `生成${noun}`}
-        </ActionButton>
-      ) : null}
     </div>
   );
 }
@@ -261,9 +263,9 @@ function PeriodArchiveRail({
               <span className="block truncate text-sm font-medium">{item.label}</span>
               <span className="mt-0.5 block text-xs text-[var(--text-faint)]">{item.rangeLabel}</span>
             </span>
-            <span className={cn("shrink-0 rounded-full px-2 py-1 text-[0.68rem]", statusBadgeClass(item.status))}>
+            <StatusBadge tone={periodStatusTone(item.status)} className="shrink-0">
               {STATUS_COPY[item.status].badge}
-            </span>
+            </StatusBadge>
           </button>
         )) : <p className="py-4 text-sm leading-6 text-[var(--text-dim)]">{fallback}</p>}
       </div>
@@ -307,7 +309,7 @@ function buildSourceGroups(view: JournalPeriodReportWorkspaceView) {
   return [...groups.values()].sort((left, right) => left.key.localeCompare(right.key));
 }
 
-function SourceList({
+function PeriodTimeline({
   view,
   onOpenSource
 }: {
@@ -318,49 +320,74 @@ function SourceList({
   const heading = view.kind === "week" ? "按天回看" : "按周回看";
 
   return (
-    <details className="mt-8" data-testid="journal-period-sources">
-      <summary className="cursor-pointer rounded-[var(--radius-control)] px-1 py-2 text-[var(--text-main)] outline-none marker:text-[var(--text-faint)] focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]">
-        <span className="ml-2 font-ui text-sm font-semibold">查看来源</span>
-        <span className="ml-3 text-xs text-[var(--text-faint)]">{view.sources.length} 份素材</span>
-      </summary>
-      <div className="mt-5 space-y-8">
-        <h2 className="font-ui text-xl font-semibold text-[var(--text-main)]">{heading}</h2>
-        {groups.length > 0 ? groups.map((group) => (
-          <section key={group.key} aria-label={group.label}>
-            <h3 className="text-sm font-semibold text-[var(--text-main)]">{group.label}</h3>
-            <div className="mt-3 space-y-5">
+    <JournalTimeline
+      title={heading}
+      countLabel={`${view.sources.length} 份素材`}
+      className="mt-8"
+      empty={<p className="py-10 text-sm leading-6 text-[var(--text-dim)]">这里还没有素材。</p>}
+      ariaLabel={`${reportNoun(view.kind)}时间轴`}
+    >
+      {groups.map((group) => {
+        const onlySource = group.sources.length === 1 ? group.sources[0] : null;
+        const sourceStatus = onlySource ? sourceKindLabel(onlySource.kind) : `${group.sources.length} 份`;
+        const rowAction = onlySource && onOpenSource ? () => onOpenSource(onlySource) : undefined;
+        return (
+          <JournalTimelineItem
+            key={group.key}
+            anchor={group.label}
+            dateTime={group.key.match(/^\d{4}-\d{2}-\d{2}$/u) ? group.key : undefined}
+            href={onlySource?.href}
+            onClick={onlySource?.href ? undefined : rowAction}
+            ariaLabel={onlySource ? `打开${onlySource.title?.trim() || onlySource.label}` : undefined}
+            status={<StatusBadge tone={onlySource?.kind === "event_card" ? "info" : "success"}>{sourceStatus}</StatusBadge>}
+          >
+            <div className="space-y-4">
               {group.sources.map((source) => {
                 const sourceTitle = source.title?.trim() || source.label;
+                const interactiveInside = group.sources.length > 1 && Boolean(onOpenSource || source.href);
+                const label = (
+                  <>
+                    <span className="text-base font-semibold leading-6 text-[var(--text-main)]">{sourceTitle}</span>
+                    {source.excerpt?.trim() ? (
+                      <span className="mt-1 block line-clamp-3 text-sm leading-6 text-[var(--text-dim)]">{source.excerpt}</span>
+                    ) : null}
+                  </>
+                );
+                if (!interactiveInside) return <article key={source.id}>{label}</article>;
+                if (source.href) {
+                  return (
+                    <Link
+                      key={source.id}
+                      href={source.href}
+                      className="block min-h-11 rounded-[var(--radius-control)] py-2 outline-none hover:text-[var(--color-action)] focus-visible:ring-2 focus-visible:ring-[var(--color-action)]"
+                    >
+                      {label}
+                    </Link>
+                  );
+                }
                 return (
-                  <article key={source.id} className="grid grid-cols-[4rem_minmax(0,1fr)] gap-3 sm:grid-cols-[5rem_minmax(0,1fr)]">
-                    <p className="pt-0.5 text-xs font-medium text-[var(--text-faint)]">{sourceKindLabel(source.kind)}</p>
-                    <div className="min-w-0">
-                      {onOpenSource ? (
-                        <button
-                          type="button"
-                          onClick={() => onOpenSource(source)}
-                          className="text-left text-sm font-semibold leading-6 text-[var(--text-main)] outline-none hover:text-[var(--paper-deep)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
-                        >
-                          {sourceTitle}
-                        </button>
-                      ) : <h4 className="text-sm font-semibold leading-6 text-[var(--text-main)]">{sourceTitle}</h4>}
-                      {source.excerpt?.trim() ? <p className="mt-1 line-clamp-3 text-sm leading-6 text-[var(--text-dim)]">{source.excerpt}</p> : null}
-                    </div>
-                  </article>
+                  <button
+                    key={source.id}
+                    type="button"
+                    onClick={() => onOpenSource?.(source)}
+                    className="block min-h-11 w-full rounded-[var(--radius-control)] py-2 text-left outline-none hover:text-[var(--color-action)] focus-visible:ring-2 focus-visible:ring-[var(--color-action)]"
+                  >
+                    {label}
+                  </button>
                 );
               })}
             </div>
-          </section>
-        )) : <p className="text-sm leading-6 text-[var(--text-dim)]">这里还没有素材。</p>}
-      </div>
-    </details>
+          </JournalTimelineItem>
+        );
+      })}
+    </JournalTimeline>
   );
 }
 
 function MetricStrip({ metrics }: { metrics: JournalPeriodReportMetric[] }) {
   if (metrics.length === 0) return null;
   return (
-    <dl className="mt-8 flex flex-wrap gap-x-8 gap-y-4" aria-label="本期记录概览">
+    <dl className="flex flex-wrap gap-x-8 gap-y-4" aria-label="本期记录概览">
       {metrics.map((metric) => (
         <div key={`${metric.label}-${metric.value}`} className="min-w-24">
           <dt className="text-xs text-[var(--text-faint)]">{metric.label}</dt>
@@ -377,60 +404,39 @@ function ReportCanvas({
   editing,
   draft,
   autosaveState,
-  savePending,
   error,
-  onBeginEdit,
-  onCancelEdit,
-  onChangeDraft,
-  onSave
+  onChangeDraft
 }: {
   view: JournalPeriodReportWorkspaceView;
   editing: boolean;
   draft: Draft;
   autosaveState: AutosaveState;
-  savePending: boolean;
   error: string | null;
-  onBeginEdit: () => void;
-  onCancelEdit: () => void;
   onChangeDraft: (draft: Draft) => void;
-  onSave: () => void;
 }) {
   const report = view.report;
   const summaryHeading = view.summary?.heading || (view.kind === "week" ? "本周主线" : "本月线索");
+  const showReportTitle = report ? !isGeneratedPeriodTitle(report.title, view.kind) : false;
 
   if (!report) return null;
 
   return (
-    <article className="period-report-canvas py-5 md:py-7 xl:py-9" data-testid="journal-period-report-canvas">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          {editing ? (
-            <label className="block">
-              <span className="sr-only">{reportNoun(view.kind)}标题</span>
-              <input
-                aria-label={`${reportNoun(view.kind)}标题`}
-                value={draft.title}
-                maxLength={16}
-                onChange={(event) => onChangeDraft({ ...draft, title: event.target.value })}
-                className="w-full border-b border-[var(--line-strong)] bg-transparent pb-2 font-display text-2xl text-[var(--text-main)] outline-none focus:border-[var(--paper-deep)] md:text-[1.75rem]"
-              />
-            </label>
-          ) : <h2 className="font-display text-2xl leading-tight text-[var(--text-main)] md:text-[1.75rem]">{report.title}</h2>}
-          {report.updatedLabel ? <p className="mt-3 text-xs text-[var(--text-faint)]">{report.updatedLabel}</p> : null}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {editing ? (
-            <>
-              <ActionButton type="button" variant="ghost" onClick={onCancelEdit} disabled={savePending}>取消编辑</ActionButton>
-              <ActionButton type="button" variant="primary" onClick={onSave} disabled={savePending || !draft.title.trim() || !draft.content.trim()}>
-                {savePending ? "正在保存" : `保存${reportNoun(view.kind)}`}
-              </ActionButton>
-            </>
-          ) : (
-            <ActionButton type="button" variant="secondary" onClick={onBeginEdit}>编辑</ActionButton>
-          )}
-        </div>
-      </div>
+    <div className="period-report-canvas" data-testid="journal-period-report-canvas">
+      {editing ? (
+        <label className="block max-w-[72ch]">
+          <span className="sr-only">{reportNoun(view.kind)}标题</span>
+          <input
+            aria-label={`${reportNoun(view.kind)}标题`}
+            value={draft.title}
+            maxLength={16}
+            onChange={(event) => onChangeDraft({ ...draft, title: event.target.value })}
+            className="w-full border-b border-[var(--line-strong)] bg-transparent pb-2 font-display text-2xl text-[var(--text-main)] outline-none focus:border-[var(--paper-deep)] md:text-[1.75rem]"
+          />
+        </label>
+      ) : showReportTitle ? (
+        <h2 className="font-display text-2xl leading-tight text-[var(--text-main)] md:text-[1.75rem]">{report.title}</h2>
+      ) : null}
+      {report.updatedLabel ? <p className="mt-3 font-ui text-[13px] text-[var(--text-dim)]">{report.updatedLabel}</p> : null}
 
       {view.displayStatus === "stale" || view.displayStatus === "update_failed" ? (
         <p className="mt-5 text-sm leading-6 text-[var(--paper-deep)]">
@@ -448,7 +454,7 @@ function ReportCanvas({
               rows={14}
               maxLength={12000}
               onChange={(event) => onChangeDraft({ ...draft, content: event.target.value })}
-              className="w-full max-w-[72ch] resize-y bg-transparent text-base leading-8 text-[var(--text-main)] outline-none placeholder:text-[var(--text-faint)] focus-visible:ring-2 focus-visible:ring-[var(--amber-soft)]"
+              className="w-full max-w-[72ch] resize-y bg-transparent font-body text-base leading-8 text-[var(--text-main)] outline-none placeholder:text-[var(--text-faint)] focus-visible:ring-2 focus-visible:ring-[var(--amber-soft)]"
               placeholder="写下这一段时间里值得留住的事。"
             />
           </label>
@@ -463,17 +469,15 @@ function ReportCanvas({
         </section>
       ) : null}
 
-      <MetricStrip metrics={view.metrics ?? []} />
-
       {editing ? (
-        <div className="mt-7 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs text-[var(--text-faint)]">
+        <div className="mt-7 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 font-ui text-[13px] text-[var(--text-dim)]">
           <span aria-live="polite">
             {autosaveState === "saving" ? "正在暂存" : autosaveState === "saved" ? "已暂存" : autosaveState === "error" ? "暂存失败，仍可手动保存" : "编辑内容会自动暂存"}
           </span>
         </div>
       ) : null}
       {error ? <div className="mt-3"><ActionMessage error>{error}</ActionMessage></div> : null}
-    </article>
+    </div>
   );
 }
 
@@ -571,10 +575,54 @@ export function JournalPeriodReportWorkspace({
     }
   };
 
+  const cancelEditing = () => {
+    setDraft(initialDraft);
+    setEditing(false);
+    setError(null);
+  };
+  const documentActions = view.displayStatus === "generating" ? (
+    <ActionButton type="button" variant="primary" disabled aria-live="polite">
+      正在生成
+    </ActionButton>
+  ) : editing ? (
+    <>
+      <ActionButton type="button" variant="ghost" onClick={cancelEditing} disabled={savePending}>
+        取消编辑
+      </ActionButton>
+      <ActionButton
+        type="button"
+        variant="primary"
+        onClick={() => void save()}
+        disabled={savePending || !draft.title.trim() || !draft.content.trim()}
+      >
+        {savePending ? "正在保存" : `保存${noun}`}
+      </ActionButton>
+    </>
+  ) : report ? (
+    <>
+      <ActionButton type="button" variant="secondary" onClick={() => { setEditing(true); setError(null); }}>
+        编辑{noun}
+      </ActionButton>
+      {view.displayStatus === "stale" || view.displayStatus === "update_failed" ? (
+        <ActionButton type="button" variant="primary" onClick={() => void runAction()} disabled={actionPending}>
+          {actionPending ? "正在处理" : view.displayStatus === "update_failed" ? "重试更新" : `更新${noun}`}
+        </ActionButton>
+      ) : null}
+    </>
+  ) : view.displayStatus === "blank" && view.emptyActionHref ? (
+    <Link href={view.emptyActionHref} className={actionButtonClass("primary")}>
+      去记一天
+    </Link>
+  ) : view.displayStatus !== "blank" ? (
+    <ActionButton type="button" variant="primary" onClick={() => void runAction()} disabled={actionPending}>
+      {actionPending ? "正在处理" : view.displayStatus === "ungenerated" ? `生成${noun}` : copy.action || `生成${noun}`}
+    </ActionButton>
+  ) : null;
+
   return (
     <Surface
       tone="calendar"
-      className={cn("calendar-workspace journal-period-report-workspace min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0", className)}
+      className={cn("calendar-workspace journal-period-report-workspace h-full min-h-0 rounded-none border-x-0 border-t-0", className)}
       data-testid={`journal-${view.kind}-report-workspace`}
       aria-busy={view.displayStatus === "generating" || actionPending ? "true" : "false"}
     >
@@ -585,50 +633,32 @@ export function JournalPeriodReportWorkspace({
         {showArchiveRail ? <PeriodArchiveRail kind={view.kind} archives={view.archives} onSelectArchive={onSelectArchive} /> : null}
         <main className="min-h-0 overflow-y-auto px-4 py-5 md:px-7 md:py-7 xl:px-10 xl:py-9" aria-label={`${noun}画布`}>
           <div className="mx-auto max-w-5xl">
-            <header className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium tracking-[0.14em] text-[var(--text-faint)]">{noun}</p>
-                <h1 className="mt-2 font-display text-[1.75rem] leading-tight text-[var(--text-main)] md:text-[2rem]">{view.periodLabel}</h1>
-                <p className="mt-2 text-sm text-[var(--text-dim)]">{view.rangeLabel}</p>
-              </div>
-              <span className={cn("mt-1 rounded-full px-3 py-1.5 text-xs font-medium", statusBadgeClass(view.displayStatus))}>
-                {copy.badge}
-              </span>
-            </header>
-
-            {report ? (
-              <>
-                <div className="mt-7">
-                  <ReportCanvas
-                    view={view}
-                    editing={editing}
-                    draft={draft}
-                    autosaveState={autosaveState}
-                    savePending={savePending}
-                    error={error}
-                    onBeginEdit={() => { setEditing(true); setError(null); }}
-                    onCancelEdit={() => { setDraft(initialDraft); setEditing(false); setError(null); }}
-                    onChangeDraft={setDraft}
-                    onSave={() => void save()}
-                  />
-                </div>
-                {view.displayStatus === "stale" || view.displayStatus === "update_failed" ? (
-                  <div className="mt-4 flex flex-wrap justify-end gap-2">
-                    <ActionButton type="button" variant="primary" onClick={() => void runAction()} disabled={actionPending}>
-                      {actionPending ? "正在处理" : `更新${noun}`}
-                    </ActionButton>
-                  </div>
-                ) : null}
-                <SourceList view={view} onOpenSource={onOpenSource} />
-              </>
-            ) : (
-              <>
-                <section className="mt-7" aria-label={`${noun}状态`}>
-                  <OutlineState view={view} pending={actionPending} onAction={() => void runAction()} actionError={error} />
+            <ReadingDocument
+              ariaLabel={`${noun}正文`}
+              title={view.periodLabel}
+              meta={view.rangeLabel.trim() && view.rangeLabel.trim() !== view.periodLabel.trim()
+                ? `${noun} · ${view.rangeLabel}`
+                : noun}
+              status={<StatusBadge tone={periodStatusTone(view.displayStatus)}>{copy.badge}</StatusBadge>}
+              actions={documentActions}
+              footer={report ? <MetricStrip metrics={view.metrics ?? []} /> : null}
+            >
+              {report ? (
+                <ReportCanvas
+                  view={view}
+                  editing={editing}
+                  draft={draft}
+                  autosaveState={autosaveState}
+                  error={error}
+                  onChangeDraft={setDraft}
+                />
+              ) : (
+                <section aria-label={`${noun}状态`}>
+                  <OutlineState view={view} actionError={error} />
                 </section>
-                {view.sources.length > 0 ? <SourceList view={view} onOpenSource={onOpenSource} /> : null}
-              </>
-            )}
+              )}
+            </ReadingDocument>
+            <PeriodTimeline view={view} onOpenSource={onOpenSource} />
           </div>
         </main>
       </div>

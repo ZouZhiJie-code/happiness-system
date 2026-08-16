@@ -66,6 +66,7 @@ function buildView(displayStatus: JournalDailyDisplayStatus, options?: { empty?:
   return {
     entryDate: "2026-05-02",
     savedSources: sources,
+    legacyHistory: [],
     pendingSaveEntryIds: [],
     sourceSignature: "source-signature-1",
     collection: sources.length === 0 ? { kind: "empty" } : { kind: "single_entry", entryId: "record-1" },
@@ -109,7 +110,7 @@ describe("journal day workspace", () => {
     expect(await screen.findByText("当天片段")).toBeInTheDocument();
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(screen.getByText("把演示稳稳讲完")).toBeInTheDocument();
-    expect(screen.getByText("累计 3 次")).toBeInTheDocument();
+    expect(screen.queryByText("累计 3 次")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "帮我记" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "陪我聊" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "生成日记" })).toBeInTheDocument();
@@ -133,6 +134,40 @@ describe("journal day workspace", () => {
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(screen.getByText("下午的演示顺利落地。", { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "编辑日记" })).toBeInTheDocument();
+  });
+
+  it("keeps saved legacy journals and dimensions in a collapsed read-only history", () => {
+    const view = buildView("saved");
+    view.legacyHistory = [
+      {
+        id: "legacy-daily-1",
+        kind: "daily_journal",
+        entryDate: "2026-05-02",
+        title: "旧版完整日记",
+        content: "这是当天原有的完整日志内容。",
+        dimension: null,
+        savedAt: "2026-05-02T05:00:00.000Z",
+        updatedAt: "2026-05-02T05:00:00.000Z"
+      },
+      {
+        id: "legacy-joy-1",
+        kind: "dimension_entry",
+        entryDate: "2026-05-02",
+        title: "一件开心的小事",
+        content: "这是原开心维度的记录。",
+        dimension: "joy",
+        savedAt: "2026-05-02T06:00:00.000Z",
+        updatedAt: "2026-05-02T06:00:00.000Z"
+      }
+    ];
+
+    render(<JournalDayWorkspaceView entryDate="2026-05-02" view={view} />);
+
+    const history = screen.getByText("历史记录 · 2").closest("details");
+    expect(history).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByText("历史记录 · 2"));
+    expect(screen.getByText("这是当天原有的完整日志内容。")).toBeVisible();
+    expect(screen.getByText("开心记录")).toBeVisible();
   });
 
   it("keeps the same day canvas while a journal is generating", () => {
@@ -177,6 +212,17 @@ describe("journal day workspace", () => {
           updatedAt: "2026-05-02T05:00:00.000Z"
         });
       }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return jsonResponse({
+          ...source,
+          title: "把演示稳稳讲完",
+          content: "这是自动保存后的记录正文。",
+          contentRevision: 2,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z",
+          updatedAt: "2026-05-02T05:01:00.000Z"
+        });
+      }
       return jsonResponse({}, 404);
     }) as typeof fetch;
 
@@ -199,7 +245,20 @@ describe("journal day workspace", () => {
     );
     expect(await screen.findByText("内容已自动保存")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "完成编辑" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1/save",
+      expect.objectContaining({ method: "POST" })
+    ));
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument());
+  });
+
+  it("keeps fixed read-only cases readable without edit actions", () => {
+    render(<JournalDayWorkspaceView entryDate="2026-05-02" view={buildView("saved")} readOnly />);
+
+    expect(screen.getByText("下午的演示顺利落地。", { exact: false })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "编辑日记" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "编辑内容" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "查看原话" })).toBeInTheDocument();
   });
 
   it("auto-saves a daily draft and uses the explicit save endpoint for 保存日记", async () => {
@@ -282,6 +341,62 @@ describe("journal day workspace", () => {
     global.fetch = vi.fn(async () => jsonResponse(buildView(status))) as typeof fetch;
     render(<JournalDayWorkspace entryDate="2026-05-02" />);
     expect(await screen.findByText(badge)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: action })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: action })).toHaveClass("ui-status-action");
+    expect(screen.getByRole("button", { name: "编辑日记" })).toBeInTheDocument();
+  });
+
+  it("keeps the update progress visible while the action is busy", () => {
+    render(
+      <JournalDayWorkspaceView
+        entryDate="2026-05-02"
+        view={buildView("stale")}
+        dailyBusy
+      />
+    );
+
+    const action = screen.getByRole("button", { name: "正在更新" });
+    expect(action).toBeDisabled();
+    expect(action).toHaveAttribute("data-busy", "true");
+    expect(action).toHaveTextContent("正在更新");
+  });
+
+  it("uses one open reading surface and suppresses the deterministic date title", () => {
+    const view = buildView("saved");
+    view.entry = { ...view.entry!, title: "2026年5月2日 周六" };
+    const { container } = render(<JournalDayWorkspaceView entryDate="2026-05-02" view={view} />);
+
+    expect(screen.getByRole("heading", { name: "5月2日周六" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "2026年5月2日 周六" })).not.toBeInTheDocument();
+    expect(container.querySelector("[aria-label='日记正文']")).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector("[aria-label='日记正文']")).not.toHaveClass("ui-card");
+    expect(screen.getByText("当天片段")).toBeInTheDocument();
+  });
+
+  it("keeps a manually edited daily stale until its changed record source is updated", async () => {
+    const staleView = buildView("stale");
+    const modified = {
+      ...staleView.entry!,
+      content: `${staleView.entry!.content}\n\n我的人工补充。`,
+      status: "modified" as const,
+      contentRevision: 2,
+      sourceSignature: "source-signature-before-record-change"
+    };
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) return jsonResponse(staleView);
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") return jsonResponse(modified);
+      return jsonResponse({}, 404);
+    }) as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑日记" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "日记正文" }), {
+      target: { value: modified.content }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "退出编辑" }));
+
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "日记正文" })).not.toBeInTheDocument());
+    expect(screen.getByText("需更新")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
   });
 });

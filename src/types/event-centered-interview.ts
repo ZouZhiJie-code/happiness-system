@@ -140,6 +140,31 @@ export interface EventCenteredSessionTabRecord {
   status: "active" | "completed" | "generating" | "abandoned";
 }
 
+export type EventCenteredSessionLifecycle =
+  | "blank"
+  | "unfinished"
+  | "completed"
+  | "abandoned";
+
+export interface EventCenteredSessionListItem {
+  rootSessionId: string;
+  entryDate: string;
+  recordMode: "capture" | "chat";
+  title: string;
+  startedAt: string;
+  lastActivityAt: string;
+  lifecycle: EventCenteredSessionLifecycle;
+  hasUserMessage: boolean;
+  readOnly: boolean;
+}
+
+export interface EventCenteredSessionListView {
+  items: EventCenteredSessionListItem[];
+  unfinishedCount: number;
+  unfinishedLimit: 2;
+  nextCursor: string | null;
+}
+
 export interface EventCenteredWorkspacePendingTurn extends EventCenteredTurnConfirmation {
   action: EventCenteredUserAction;
   activeEventId: string | null;

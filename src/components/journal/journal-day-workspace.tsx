@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
-import { ActionButton, Card, Surface, actionButtonClass } from "@/components/ui";
+import {
+  ActionButton,
+  ReadingDocument,
+  StatusAction,
+  StatusBadge,
+  Surface,
+  actionButtonClass,
+  type StatusTone
+} from "@/components/ui";
 import { formatCalendarDayLabel } from "@/features/calendar/view-state";
 import { JournalArchiveWorkspaceFallback } from "./journal-archive-workspace-fallback";
 import type {
@@ -19,9 +27,12 @@ import {
   replaceJournalSourceEntry,
   requestJournalDailyGeneration,
   saveJournalDailyEntry,
+  saveJournalRecord,
   updateJournalDailyEntry,
-  updateJournalRecord
+  updateJournalRecord,
+  type JournalClientRequestContext
 } from "./journal-client";
+import { JournalTimeline, JournalTimelineItem } from "./journal-timeline";
 
 export type JournalDayOriginalState =
   | { status: "loading"; text: "" }
@@ -114,11 +125,13 @@ function sourceModeLabel(source: JournalDailySourceEntry) {
   return source.sourceMode === "capture" ? "帮我记" : "陪我聊";
 }
 
-function statusBadgeClass(status: JournalDailyDisplayStatus) {
-  if (status === "saved") return "bg-[var(--moss-soft)] text-[var(--text-main)]";
-  if (status === "update_failed") return "bg-[var(--paper-soft)] text-[var(--text-main)]";
-  return "bg-[var(--amber-soft)] text-[var(--text-main)]";
-}
+const LEGACY_DIMENSION_LABELS = {
+  joy: "开心",
+  fulfillment: "充实",
+  reflection: "思考",
+  improvement: "改进",
+  gratitude: "感谢"
+} as const;
 
 function dailyStatusLabel(status: JournalDailyDisplayStatus) {
   if (status === "generating") return "生成中";
@@ -127,6 +140,43 @@ function dailyStatusLabel(status: JournalDailyDisplayStatus) {
   if (status === "stale") return "需更新";
   if (status === "update_failed") return "更新失败";
   return "未生成";
+}
+
+function dailyStatusTone(status: JournalDailyDisplayStatus): StatusTone {
+  if (status === "saved") return "success";
+  if (status === "draft") return "warning";
+  if (status === "stale") return "stale";
+  if (status === "update_failed") return "error";
+  if (status === "generating") return "info";
+  return "neutral";
+}
+
+function isGeneratedDailyDateTitle(title: string | null | undefined) {
+  if (!title) return false;
+  return /^\d{4}年\d{1,2}月\d{1,2}日\s*(?:(?:周|星期)[一二三四五六日天])?$/u.test(title.trim());
+}
+
+function UpdateStatusAction({
+  status,
+  busy,
+  onGenerate
+}: {
+  status: Extract<JournalDailyDisplayStatus, "stale" | "update_failed">;
+  busy: boolean;
+  onGenerate: () => void;
+}) {
+  const idleLabel = dailyStatusLabel(status);
+  const actionLabel = status === "stale" ? "更新日记" : "重试更新";
+  return (
+    <StatusAction
+      onClick={onGenerate}
+      busy={busy}
+      busyLabel="正在更新"
+      statusLabel={idleLabel}
+      actionLabel={actionLabel}
+      tone={status === "stale" ? "stale" : "error"}
+    />
+  );
 }
 
 function JournalLoadingState() {
@@ -145,6 +195,7 @@ function RecordTimelineCard({
   busy,
   autosaveStatus,
   error,
+  readOnly,
   onToggleOriginal,
   onBeginEdit,
   onChangeEdit,
@@ -157,6 +208,7 @@ function RecordTimelineCard({
   busy: boolean;
   autosaveStatus: JournalDayAutosaveStatus;
   error: string | null;
+  readOnly: boolean;
   onToggleOriginal: () => void;
   onBeginEdit: () => void;
   onChangeEdit: (draft: JournalDayRecordEditDraft) => void;
@@ -165,19 +217,12 @@ function RecordTimelineCard({
   const originalOpen = Boolean(original);
 
   return (
-    <li className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 md:grid-cols-[4.25rem_minmax(0,1fr)] md:gap-4">
-      <time
-        dateTime={source.recordedAt}
-        className="pt-5 text-right text-sm font-semibold tabular-nums text-[var(--text-dim)]"
-      >
-        {formatRecordTime(source.recordedAt)}
-      </time>
-      <div className="relative pl-4">
-        <span
-          aria-hidden="true"
-          className="absolute left-0 top-6 size-2 -translate-x-1/2 rounded-full bg-[var(--paper-deep)]"
-        />
-        <article className="py-5 md:py-6">
+    <JournalTimelineItem
+      anchor={formatRecordTime(source.recordedAt)}
+      dateTime={source.recordedAt}
+      status={<StatusBadge tone="info">{sourceModeLabel(source)}</StatusBadge>}
+    >
+      <article>
           {editing && editDraft ? (
             <div className="space-y-4">
               <label className="block">
@@ -230,19 +275,9 @@ function RecordTimelineCard({
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-semibold leading-6 text-[var(--text-main)]">{source.title}</h3>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[var(--text-dim)]">{source.content}</p>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-[var(--amber-soft)] px-2.5 py-1 text-xs text-[var(--text-dim)]">
-                    {sourceModeLabel(source)}
-                  </span>
-                  <span className="rounded-full bg-[var(--amber-soft)] px-2.5 py-1 text-xs text-[var(--text-dim)]">
-                    累计 {source.recordCount} 次
-                  </span>
-                </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold leading-6 text-[var(--text-main)]">{source.title}</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[var(--text-dim)]">{source.content}</p>
               </div>
 
               <p className="mt-3 text-xs text-[var(--text-faint)]">{formatOccurredAt(source.occurredAt)}</p>
@@ -270,15 +305,16 @@ function RecordTimelineCard({
                 >
                   {originalOpen ? "收起原话" : "查看原话"}
                 </ActionButton>
-                <ActionButton type="button" variant="ghost" onClick={onBeginEdit}>
-                  编辑内容
-                </ActionButton>
+                {!readOnly ? (
+                  <ActionButton type="button" variant="ghost" onClick={onBeginEdit}>
+                    编辑内容
+                  </ActionButton>
+                ) : null}
               </div>
             </>
           )}
-        </article>
-      </div>
-    </li>
+      </article>
+    </JournalTimelineItem>
   );
 }
 
@@ -288,8 +324,10 @@ function DailyPrimaryAction({
   editing,
   busy,
   canSave,
+  readOnly,
   onGenerate,
   onBeginEdit,
+  onExitEdit,
   onSaveEdit
 }: {
   entryDate: string;
@@ -297,10 +335,13 @@ function DailyPrimaryAction({
   editing: boolean;
   busy: boolean;
   canSave: boolean;
+  readOnly: boolean;
   onGenerate: () => void;
   onBeginEdit: () => void;
+  onExitEdit: () => void;
   onSaveEdit: () => void;
 }) {
+  if (readOnly) return null;
   if (view.savedSources.length === 0) {
     return (
       <Link
@@ -313,6 +354,13 @@ function DailyPrimaryAction({
   }
 
   if (editing) {
+    if (view.displayStatus === "stale" || view.displayStatus === "update_failed") {
+      return (
+        <ActionButton type="button" variant="primary" onClick={onExitEdit} disabled={busy || !canSave}>
+          {busy ? "正在暂存" : "完成修改"}
+        </ActionButton>
+      );
+    }
     return (
       <ActionButton type="button" variant="primary" onClick={onSaveEdit} disabled={busy || !canSave}>
         {busy ? "正在保存" : "保存日记"}
@@ -342,6 +390,17 @@ function DailyPrimaryAction({
       <ActionButton type="button" variant="secondary" onClick={onBeginEdit}>
         {copy.actionLabel}
       </ActionButton>
+    );
+  }
+
+  if (view.displayStatus === "stale" || view.displayStatus === "update_failed") {
+    return (
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <UpdateStatusAction status={view.displayStatus} busy={busy} onGenerate={onGenerate} />
+        <ActionButton type="button" variant="ghost" onClick={onBeginEdit}>
+          编辑日记
+        </ActionButton>
+      </div>
     );
   }
 
@@ -380,7 +439,9 @@ function DayArchiveRail({
           >
             <span className="block text-xs text-[var(--text-faint)]">{formatCalendarDayLabel(item.entryDate)}</span>
             <span className="mt-1 block truncate text-sm font-medium text-[var(--text-main)]">{item.title}</span>
-            <span className="mt-1 block text-xs text-[var(--text-dim)]">{dailyStatusLabel(item.displayStatus)}</span>
+            <StatusBadge tone={dailyStatusTone(item.displayStatus)} className="mt-2">
+              {dailyStatusLabel(item.displayStatus)}
+            </StatusBadge>
           </Link>
         ))}
       </nav>
@@ -403,6 +464,7 @@ export interface JournalDayWorkspaceViewProps {
   dailyAutosaveStatus?: JournalDayAutosaveStatus;
   dailyBusy?: boolean;
   dailyError?: string | null;
+  readOnly?: boolean;
   onSelectArchive?: (item: JournalDayArchiveItem) => void;
   onToggleOriginal?: (source: JournalDailySourceEntry) => void;
   onBeginRecordEdit?: (source: JournalDailySourceEntry) => void;
@@ -434,6 +496,7 @@ export function JournalDayWorkspaceView({
   dailyAutosaveStatus = "idle",
   dailyBusy = false,
   dailyError = null,
+  readOnly = false,
   onSelectArchive,
   onToggleOriginal,
   onBeginRecordEdit,
@@ -446,6 +509,11 @@ export function JournalDayWorkspaceView({
   onSaveDailyEdit
 }: JournalDayWorkspaceViewProps) {
   const statusCopy = JOURNAL_STATUS_COPY[view.displayStatus];
+  const entryTitle = view.entry?.title?.trim() || "";
+  const showEntryTitle = Boolean(entryTitle) && !isGeneratedDailyDateTitle(entryTitle);
+  const statusIsUpdateAction = !readOnly && !dailyEdit && (
+    view.displayStatus === "stale" || view.displayStatus === "update_failed"
+  );
   const showArchiveRail = archives.length >= 2;
   const sortedSources = useMemo(
     () =>
@@ -459,7 +527,7 @@ export function JournalDayWorkspaceView({
   return (
     <Surface
       tone="calendar"
-      className="calendar-workspace h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0"
+      className="calendar-workspace h-full min-h-0 rounded-none border-x-0 border-t-0"
       data-testid="journal-day-workspace"
       aria-busy={loading || view.displayStatus === "generating" ? "true" : "false"}
     >
@@ -470,26 +538,59 @@ export function JournalDayWorkspaceView({
         {showArchiveRail ? <DayArchiveRail archives={archives} onSelectArchive={onSelectArchive} /> : null}
         <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-7 md:py-7 xl:px-10 xl:py-9" aria-label="日记画布">
           <div className="mx-auto max-w-5xl">
-            <header>
-              <h1 className="font-display text-[1.75rem] leading-tight text-[var(--text-main)] md:text-[2rem]">
-                {formatCalendarDayLabel(entryDate)}
-              </h1>
-            </header>
-
-            <Card as="article" className="mt-7 p-5 md:p-7 xl:p-9" aria-label="日记正文">
-              <header className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-2xl leading-tight text-[var(--text-main)] md:text-[1.75rem]">
-                    {view.entry?.title || statusCopy.title}
-                  </h2>
-                </div>
-                <span className={`rounded-full px-3 py-1.5 text-xs ${statusBadgeClass(view.displayStatus)}`}>
+            <ReadingDocument
+              ariaLabel="日记正文"
+              title={formatCalendarDayLabel(entryDate)}
+              meta="日记"
+              status={!statusIsUpdateAction ? (
+                <StatusBadge tone={dailyStatusTone(view.displayStatus)}>
                   {dailyStatusLabel(view.displayStatus)}
-                </span>
-              </header>
-
+                </StatusBadge>
+              ) : null}
+              actions={(
+                <DailyPrimaryAction
+                  entryDate={entryDate}
+                  view={view}
+                  editing={Boolean(dailyEdit)}
+                  busy={dailyBusy}
+                  canSave={Boolean(dailyEdit?.title.trim() && dailyEdit.content.trim())}
+                  readOnly={readOnly}
+                  onGenerate={() => onGenerate?.()}
+                  onBeginEdit={() => onBeginDailyEdit?.()}
+                  onExitEdit={() => onExitDailyEdit?.()}
+                  onSaveEdit={() => onSaveDailyEdit?.()}
+                />
+              )}
+              sources={view.legacyHistory.length > 0 ? (
+                <details>
+                  <summary className="min-h-11 cursor-pointer list-none rounded-[var(--radius-control)] py-2 font-ui text-sm font-medium text-[var(--text-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)]">
+                    历史记录 · {view.legacyHistory.length}
+                  </summary>
+                  <div className="mt-5 space-y-7">
+                    {view.legacyHistory.map((item) => (
+                      <article key={`${item.kind}:${item.id}`}>
+                        <p className="text-xs text-[var(--text-dim)]">
+                          {item.kind === "daily_journal"
+                            ? "旧版完整日记"
+                            : `${item.dimension ? LEGACY_DIMENSION_LABELS[item.dimension] : "旧版"}记录`}
+                        </p>
+                        <h3 className="mt-1 font-display text-xl text-[var(--text-main)]">{item.title}</h3>
+                        <p className="mt-3 max-w-[72ch] whitespace-pre-wrap font-body text-[15px] leading-7 text-[var(--text-main)]">
+                          {item.content}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            >
+              {showEntryTitle ? (
+                <h2 className="mb-6 font-display text-2xl leading-tight text-[var(--text-main)] md:text-[1.75rem]">
+                  {entryTitle}
+                </h2>
+              ) : null}
               {view.entry ? (
-                <div id="journal-daily-preview" className="mt-7 scroll-mt-28">
+                <div id="journal-daily-preview" className="scroll-mt-28">
                   {dailyEdit ? (
                     <div className="space-y-4">
                       <label className="block">
@@ -508,7 +609,7 @@ export function JournalDayWorkspaceView({
                           maxLength={12000}
                           rows={14}
                           onChange={(event) => onChangeDailyEdit?.({ ...dailyEdit, content: event.target.value })}
-                          className="mt-1.5 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm leading-7 text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)]"
+                          className="mt-1.5 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 font-body text-[15px] leading-7 text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)]"
                         />
                       </label>
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -533,57 +634,44 @@ export function JournalDayWorkspaceView({
                   )}
                 </div>
               ) : (
-                <p className="mt-4 text-sm leading-7 text-[var(--text-dim)]">{statusCopy.description}</p>
+                <div className="py-12 text-center font-ui">
+                  <h2 className="text-xl font-semibold text-[var(--text-main)]">{statusCopy.title}</h2>
+                  <p className="mt-3 text-sm leading-7 text-[var(--text-dim)]">{statusCopy.description}</p>
+                </div>
               )}
 
               {loadError ? <p role="alert" className="mt-4 text-sm text-[var(--paper-deep)]">页面刷新暂时失败，当前内容仍可继续查看。</p> : null}
               {dailyError ? <p role="alert" className="mt-4 text-sm text-[var(--paper-deep)]">{dailyError}</p> : null}
-
-              <div className="mt-7 flex justify-end">
-                <DailyPrimaryAction
-                  entryDate={entryDate}
-                  view={view}
-                  editing={Boolean(dailyEdit)}
-                  busy={dailyBusy}
-                  canSave={Boolean(dailyEdit?.title.trim() && dailyEdit.content.trim())}
-                  onGenerate={() => onGenerate?.()}
-                  onBeginEdit={() => onBeginDailyEdit?.()}
-                  onSaveEdit={() => onSaveDailyEdit?.()}
-                />
-              </div>
-            </Card>
-
-            <section className="mt-10 pb-8" aria-label="当天片段">
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <h2 className="font-ui text-xl font-semibold text-[var(--text-main)]">当天片段</h2>
-                <span className="text-xs text-[var(--text-faint)]">{sortedSources.length} 条</span>
-              </div>
-              {sortedSources.length === 0 ? (
+            </ReadingDocument>
+            <JournalTimeline
+              title="当天片段"
+              countLabel={`${sortedSources.length} 条`}
+              className="mt-8"
+              empty={(
                 <div className="py-12 text-center">
                   <h3 className="text-lg font-semibold text-[var(--text-main)]">这一天还没有片段</h3>
                   <p className="mt-2 text-sm leading-7 text-[var(--text-dim)]">从这里开始记录这一天。</p>
                 </div>
-              ) : (
-                <ol className="relative mt-4 space-y-2 before:absolute before:bottom-8 before:left-[4.25rem] before:top-8 before:w-px before:bg-[var(--line-soft)] md:before:left-[5rem]">
-                  {sortedSources.map((source) => (
-                    <RecordTimelineCard
-                      key={source.entryId}
-                      source={source}
-                      original={originals[source.entryId]}
-                      editing={recordEdit?.entryId === source.entryId}
-                      editDraft={recordEdit?.entryId === source.entryId ? recordEdit : null}
-                      busy={recordBusy && recordEdit?.entryId === source.entryId}
-                      autosaveStatus={recordEdit?.entryId === source.entryId ? recordAutosaveStatus : "idle"}
-                      error={recordEdit?.entryId === source.entryId ? recordError : null}
-                      onToggleOriginal={() => onToggleOriginal?.(source)}
-                      onBeginEdit={() => onBeginRecordEdit?.(source)}
-                      onChangeEdit={(draft) => onChangeRecordEdit?.(draft)}
-                      onSaveEdit={() => onSaveRecordEdit?.()}
-                    />
-                  ))}
-                </ol>
               )}
-            </section>
+            >
+              {sortedSources.map((source) => (
+                <RecordTimelineCard
+                  key={source.entryId}
+                  source={source}
+                  original={originals[source.entryId]}
+                  editing={recordEdit?.entryId === source.entryId}
+                  editDraft={recordEdit?.entryId === source.entryId ? recordEdit : null}
+                  busy={recordBusy && recordEdit?.entryId === source.entryId}
+                  autosaveStatus={recordEdit?.entryId === source.entryId ? recordAutosaveStatus : "idle"}
+                  error={recordEdit?.entryId === source.entryId ? recordError : null}
+                  readOnly={readOnly}
+                  onToggleOriginal={() => onToggleOriginal?.(source)}
+                  onBeginEdit={() => onBeginRecordEdit?.(source)}
+                  onChangeEdit={(draft) => onChangeRecordEdit?.(draft)}
+                  onSaveEdit={() => onSaveRecordEdit?.()}
+                />
+              ))}
+            </JournalTimeline>
           </div>
         </main>
       </div>
@@ -591,7 +679,21 @@ export function JournalDayWorkspaceView({
   );
 }
 
-export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
+export interface JournalDayWorkspaceProps {
+  entryDate: string;
+  requestContext?: JournalClientRequestContext;
+  readOnly?: boolean;
+  archives?: JournalDayArchiveItem[];
+  onSelectArchive?: (item: JournalDayArchiveItem) => void;
+}
+
+export function JournalDayWorkspace({
+  entryDate,
+  requestContext,
+  readOnly = false,
+  archives = [],
+  onSelectArchive
+}: JournalDayWorkspaceProps) {
   const calendarChrome = useCalendarChromeOptional();
   const finishCalendarEntryLoading = calendarChrome?.finishCalendarEntryLoading;
   const viewRef = useRef<JournalDailyJournalView | null>(null);
@@ -624,7 +726,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     }
     setLoadError(false);
 
-    void fetchJournalDay(entryDate, controller.signal)
+    void fetchJournalDay(entryDate, controller.signal, requestContext)
       .then((nextView) => {
         viewRef.current = nextView;
         setView(nextView);
@@ -640,7 +742,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
       });
 
     return () => controller.abort();
-  }, [entryDate, finishCalendarEntryLoading, refreshNonce]);
+  }, [entryDate, finishCalendarEntryLoading, refreshNonce, requestContext]);
 
   useEffect(() => {
     if (view?.displayStatus !== "generating") return;
@@ -660,7 +762,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
 
     setOriginals((current) => ({ ...current, [source.entryId]: { status: "loading", text: "" } }));
     try {
-      const text = await fetchJournalRecordOriginal(source.entryId);
+      const text = await fetchJournalRecordOriginal(source.entryId, requestContext);
       setOriginals((current) => ({ ...current, [source.entryId]: { status: "ready", text } }));
     } catch {
       setOriginals((current) => ({ ...current, [source.entryId]: { status: "error", text: "" } }));
@@ -673,7 +775,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     setRecordEdit({ entryId: source.entryId, title: source.title, content: source.content });
   }
 
-  async function persistRecordDraft(draft: JournalDayRecordEditDraft) {
+  const persistRecordDraft = useCallback(async (draft: JournalDayRecordEditDraft) => {
     if (recordAutosavePromiseRef.current) {
       await recordAutosavePromiseRef.current;
     }
@@ -692,7 +794,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
         expectedContentRevision: source.contentRevision,
         title,
         content
-      });
+      }, requestContext);
       const next = replaceJournalSourceEntry(currentView, source.entryId, {
         title: updated.title,
         content: updated.content,
@@ -710,7 +812,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     } finally {
       recordAutosavePromiseRef.current = null;
     }
-  }
+  }, [requestContext]);
 
   useEffect(() => {
     if (!recordEdit || !view) return;
@@ -726,7 +828,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
       });
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [recordEdit, view]);
+  }, [persistRecordDraft, recordEdit, view]);
 
   async function finishRecordEdit() {
     if (!recordEdit?.title.trim() || !recordEdit.content.trim()) return;
@@ -734,6 +836,23 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     setRecordError(null);
     try {
       await persistRecordDraft(recordEdit);
+      const currentView = viewRef.current;
+      const currentSource = currentView?.savedSources.find((item) => item.entryId === recordEdit.entryId);
+      if (!currentView || !currentSource) return;
+      const saved = await saveJournalRecord({
+        entryId: currentSource.entryId,
+        expectedContentRevision: currentSource.contentRevision
+      }, requestContext);
+      const next = replaceJournalSourceEntry(currentView, currentSource.entryId, {
+        title: saved.title,
+        content: saved.content,
+        contentRevision: saved.contentRevision,
+        savedRevision: saved.savedRevision,
+        savedAt: saved.savedAt,
+        updatedAt: saved.updatedAt
+      });
+      viewRef.current = next;
+      setView(next);
       setRecordEdit(null);
       setRecordAutosaveStatus("idle");
     } catch {
@@ -751,7 +870,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     setDailyEdit({ title: view.entry.title, content: view.entry.content });
   }
 
-  async function persistDailyDraft(draft: JournalDayEditDraft) {
+  const persistDailyDraft = useCallback(async (draft: JournalDayEditDraft) => {
     if (dailyAutosavePromiseRef.current) {
       await dailyAutosavePromiseRef.current;
     }
@@ -770,12 +889,13 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
         expectedContentRevision: currentEntry.contentRevision,
         title,
         content
-      });
+      }, requestContext);
+      const sourceChanged = updated.sourceSignature !== currentView.sourceSignature;
       const nextView: JournalDailyJournalView = {
         ...currentView,
         entry: updated,
-        freshness: updated.status,
-        displayStatus: "draft"
+        freshness: sourceChanged ? "stale" : updated.status,
+        displayStatus: sourceChanged ? "stale" : "draft"
       };
       viewRef.current = nextView;
       setView(nextView);
@@ -787,7 +907,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     } finally {
       dailyAutosavePromiseRef.current = null;
     }
-  }
+  }, [requestContext]);
 
   useEffect(() => {
     if (!dailyEdit || !view?.entry) return;
@@ -802,7 +922,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
       });
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [dailyEdit, view?.entry]);
+  }, [dailyEdit, persistDailyDraft, view?.entry]);
 
   async function saveDailyEdit() {
     if (!dailyEdit?.title.trim() || !dailyEdit.content.trim()) return;
@@ -815,7 +935,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
       const saved = await saveJournalDailyEntry({
         entryId: currentEntry.id,
         expectedContentRevision: currentEntry.contentRevision
-      });
+      }, requestContext);
       const currentView = viewRef.current;
       if (currentView) {
         const nextView: JournalDailyJournalView = {
@@ -866,7 +986,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
         task: view.displayStatus === "ungenerated" ? "generate" : "update",
         sourceSignature: view.sourceSignature,
         contentRevision: view.entry?.contentRevision ?? null
-      });
+      }, requestContext);
       const next = { ...view, displayStatus: "generating" as const };
       viewRef.current = next;
       setView(next);
@@ -886,6 +1006,8 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
     <JournalDayWorkspaceView
       entryDate={entryDate}
       view={view}
+      archives={archives}
+      readOnly={readOnly}
       loading={loading}
       loadError={loadError}
       originals={originals}
@@ -897,6 +1019,7 @@ export function JournalDayWorkspace({ entryDate }: { entryDate: string }) {
       dailyAutosaveStatus={dailyAutosaveStatus}
       dailyBusy={dailyBusy}
       dailyError={dailyError}
+      onSelectArchive={onSelectArchive}
       onToggleOriginal={(source) => void toggleOriginal(source)}
       onBeginRecordEdit={beginRecordEdit}
       onChangeRecordEdit={setRecordEdit}

@@ -430,6 +430,9 @@ model UserSettings {
 model InterviewSession {
   id                            String                                     @id @default(cuid())
   userId                        String
+  startOperationId              String?
+  sidebarTitle                  String?                                    @db.VarChar(80)
+  lastActivityAt                DateTime                                   @default(now())
   mode                          InterviewSessionMode                       @default(dimension_legacy)
   recordMode                    InterviewRecordMode?
   dimension                     InterviewDimension?
@@ -485,6 +488,8 @@ model InterviewSession {
 
   @@index([userId, status])
   @@index([userId, entryDate])
+  @@unique([userId, startOperationId])
+  @@index([userId, mode, status, lastActivityAt])
   @@index([rootSessionId, branchDepth])
   @@index([parentSessionId])
   @@index([activeBranchSessionId])

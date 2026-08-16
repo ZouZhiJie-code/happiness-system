@@ -1,20 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { ActionButton, Surface } from "@/components/ui";
+import { ActionButton, AppToast, Surface } from "@/components/ui";
 import {
   EventCenteredDialogueWorkspaceView,
   EventCenteredStartWorkspaceView,
-  type EventCenteredDialogueTab,
   type EventCenteredDialogueWorkspaceAction
 } from "@/components/interview/event-centered/event-centered-dialogue-workspace-view";
 import { useEventCenteredInterviewChromeOptional } from "@/components/interview/event-centered/event-centered-interview-chrome-context";
+import { EventCenteredSessionSidebar } from "@/components/interview/event-centered/event-centered-session-sidebar";
 import {
   createEventCenteredClientTurnId,
   EventCenteredWorkspaceRequestError,
   ensureBoard8Gi066ReviewSession,
-  getEventCenteredSessionTabs,
+  getEventCenteredSessionList,
   getEventCenteredWorkspace,
   respondInEventCenteredWorkspace,
   startEventCenteredWorkspace,
@@ -28,12 +28,16 @@ import {
   writeEventCenteredWorkspaceOutbox,
   type EventCenteredWorkspaceOutboxRecord
 } from "@/features/interview/event-centered/workspace-storage";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import type {
   EventCenteredRespondRequest,
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
+import type { EventCenteredSessionListView } from "@/types/event-centered-interview";
 
 const EVENT_CENTERED_MODE = "event-centered";
+const UNFINISHED_LIMIT_TOAST = "你还有 2 条记录没有完成，先完成其中一条，再新建记录。";
+const UNFINISHED_LIMIT_TOAST_DURATION_MS = 3_000;
 
 export type EventCenteredWorkspaceHrefOptions = {
   entryDate: string;
@@ -58,7 +62,7 @@ export function buildEventCenteredWorkspaceHref({
   return `/interview?${params.toString()}`;
 }
 
-type WorkspaceNotice = Pick<EventCenteredWorkspaceIssue, "title" | "message">;
+type WorkspaceNotice = EventCenteredWorkspaceIssue;
 
 type StreamPreview = {
   phase: string | null;
@@ -68,21 +72,32 @@ type StreamPreview = {
 
 function toWorkspaceNotice(error: unknown): WorkspaceNotice {
   if (error instanceof EventCenteredWorkspaceRequestError) {
-    return { title: error.issue.title, message: error.issue.message };
+    return error.issue;
   }
   return {
+    code: "EVENT_CENTERED_WORKSPACE_FAILED",
     title: "这一步暂时没有完成",
-    message: "你的输入会继续留在这里。请稍后继续，或刷新到最新对话。"
+    message: "你的输入会继续留在这里。",
+    resolution: "请稍后继续，或刷新到最新对话。",
+    retryable: true,
+    action: "refresh"
   };
 }
 
-async function getEventTabs(entryDate: string): Promise<EventCenteredDialogueTab[]> {
-  try {
-    return await getEventCenteredSessionTabs(entryDate);
-  } catch {
-    return [];
-  }
+function isWorkspaceActionAllowed(
+  workspace: EventCenteredWorkspaceSession,
+  action: EventCenteredDialogueWorkspaceAction
+) {
+  if (action.action === "generate_event_journal") return true;
+  return workspace.dialogue.allowedActions.some((allowedAction) => allowedAction === action.action);
 }
+
+const EMPTY_SESSION_LIST: EventCenteredSessionListView = {
+  items: [],
+  unfinishedCount: 0,
+  unfinishedLimit: 2,
+  nextCursor: null
+};
 
 function updateWorkspaceAddress(input: {
   entryDate: string;
@@ -192,7 +207,9 @@ export function EventCenteredInterviewWorkspace({
 }) {
   const [requestedSessionId, setRequestedSessionId] = useState(initialSessionId);
   const [workspace, setWorkspace] = useState<EventCenteredWorkspaceSession | null>(null);
-  const [tabs, setTabs] = useState<EventCenteredDialogueTab[]>([]);
+  const [sessionList, setSessionList] = useState<EventCenteredSessionListView>(EMPTY_SESSION_LIST);
+  const [showNewRecord, setShowNewRecord] = useState(false);
+  const [newRecordEntryDate, setNewRecordEntryDate] = useState(entryDate);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState<WorkspaceNotice | null>(null);
   const [busy, setBusy] = useState(false);
@@ -203,6 +220,8 @@ export function EventCenteredInterviewWorkspace({
   const [outbox, setOutbox] = useState<EventCenteredWorkspaceOutboxRecord | null>(null);
   const [completionHandoffSessionId, setCompletionHandoffSessionId] = useState<string | null>(null);
   const [previewAuthReady, setPreviewAuthReady] = useState(!previewAuth);
+  const [showUnfinishedLimitToast, setShowUnfinishedLimitToast] = useState(false);
+  const unfinishedLimitToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consumedRecordModeKeyRef = useRef<string | null>(null);
   // 访谈工作区也会被独立评审壳层复用；没有全站导航时继续保持可渲染。
   const interviewChrome = useEventCenteredInterviewChromeOptional();
@@ -211,33 +230,50 @@ export function EventCenteredInterviewWorkspace({
     ? "flex h-[calc(100dvh-var(--site-header-viewport-offset))] min-h-0 flex-col"
     : "flex min-h-0 flex-1 flex-col";
 
-  const refreshTabs = useCallback(async () => {
-    const nextTabs = await getEventTabs(entryDate);
-    setTabs(nextTabs);
-  }, [entryDate]);
+  const refreshSessions = useCallback(async () => {
+    const nextList = await getEventCenteredSessionList({ limit: 30 });
+    setSessionList(nextList);
+    return nextList;
+  }, []);
+
+  const presentUnfinishedLimitToast = useCallback(() => {
+    if (unfinishedLimitToastTimerRef.current) clearTimeout(unfinishedLimitToastTimerRef.current);
+    setShowUnfinishedLimitToast(true);
+    unfinishedLimitToastTimerRef.current = setTimeout(() => {
+      setShowUnfinishedLimitToast(false);
+      unfinishedLimitToastTimerRef.current = null;
+    }, UNFINISHED_LIMIT_TOAST_DURATION_MS);
+  }, []);
+
+  useEffect(() => () => {
+    if (unfinishedLimitToastTimerRef.current) clearTimeout(unfinishedLimitToastTimerRef.current);
+  }, []);
 
   const loadWorkspace = useCallback(async (sessionId?: string | null) => {
-    if (!sessionId && !writeEnabled) {
-      setWorkspace(null);
-      setNotice({
-        title: "事件记录当前处于只读状态",
-        message: "已有事件可以通过日历或原链接继续阅读。"
-      });
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     if (sessionId) setSwitchingSession(true);
     setNotice(null);
     try {
       if (!sessionId) {
-        setWorkspace(null);
-        await refreshTabs();
+        const nextList = await refreshSessions();
+        const recoverable = nextList.items.find((item) =>
+          item.lifecycle === "unfinished" || item.lifecycle === "blank"
+        );
+        if (recoverable) {
+          const nextWorkspace = await getEventCenteredWorkspace(recoverable.rootSessionId);
+          setWorkspace(nextWorkspace);
+          setRequestedSessionId(nextWorkspace.rootSessionId);
+          setShowNewRecord(false);
+        } else {
+          setWorkspace(null);
+          setShowNewRecord(true);
+        }
         return;
       }
       const nextWorkspace = await getEventCenteredWorkspace(sessionId);
       setWorkspace(nextWorkspace);
-      await refreshTabs();
+      setShowNewRecord(false);
+      await refreshSessions();
     } catch (error) {
       setWorkspace(null);
       setNotice(toWorkspaceNotice(error));
@@ -245,7 +281,7 @@ export function EventCenteredInterviewWorkspace({
       setLoading(false);
       setSwitchingSession(false);
     }
-  }, [refreshTabs, writeEnabled]);
+  }, [refreshSessions]);
 
   const startEvent = useCallback(async (recordMode: "capture" | "chat") => {
     if (busy || !writeEnabled) return;
@@ -254,28 +290,42 @@ export function EventCenteredInterviewWorkspace({
     setCompletionHandoffSessionId(null);
     setNotice(null);
     try {
-      const nextWorkspace = await startEventCenteredWorkspace(entryDate, recordMode);
+      const nextWorkspace = await startEventCenteredWorkspace(newRecordEntryDate, recordMode);
       setWorkspace(nextWorkspace);
       setRequestedSessionId(nextWorkspace.rootSessionId);
+      setShowNewRecord(false);
       setDraft("");
       setOutbox(null);
       if (syncAddress) {
         updateWorkspaceAddress({
-          entryDate,
+          entryDate: nextWorkspace.entryDate,
           sessionId: nextWorkspace.rootSessionId
         });
       }
-      await refreshTabs();
+      await refreshSessions();
     } catch (error) {
-      setNotice(toWorkspaceNotice(error));
+      const nextNotice = toWorkspaceNotice(error);
+      if (nextNotice.code === "EVENT_CENTERED_UNFINISHED_LIMIT_REACHED") {
+        presentUnfinishedLimitToast();
+        setNotice(null);
+        try {
+          await refreshSessions();
+        } catch {
+          // 上限提示已给出；列表会在下一次打开或操作时继续同步。
+        }
+      } else {
+        setNotice(nextNotice);
+      }
     } finally {
       setBusy(false);
       setPendingRecordMode(null);
     }
-  }, [busy, entryDate, refreshTabs, syncAddress, writeEnabled]);
+  }, [busy, newRecordEntryDate, presentUnfinishedLimitToast, refreshSessions, syncAddress, writeEnabled]);
 
   useEffect(() => {
     setRequestedSessionId(initialSessionId);
+    setNewRecordEntryDate(entryDate);
+    setShowNewRecord(false);
     setDraft("");
     setCompletionHandoffSessionId(null);
   }, [entryDate, initialSessionId]);
@@ -331,6 +381,7 @@ export function EventCenteredInterviewWorkspace({
 
   useEffect(() => {
     if (previewAuth && !previewAuthReady) return;
+    if (showNewRecord) return;
     if (requestedSessionId) {
       // 创建记录后 workspace 已经是最新结果，等待后续刷新时不要再发起一次读取。
       if (workspace?.rootSessionId === requestedSessionId) return;
@@ -347,8 +398,16 @@ export function EventCenteredInterviewWorkspace({
       void startEvent(initialRecordMode);
       return;
     }
+    if (entryDate !== getTodayEntryDate()) {
+      setWorkspace(null);
+      setNewRecordEntryDate(entryDate);
+      setShowNewRecord(true);
+      setLoading(false);
+      void refreshSessions().catch((error) => setNotice(toWorkspaceNotice(error)));
+      return;
+    }
     void loadWorkspace(null);
-  }, [entryDate, initialRecordMode, loadWorkspace, previewAuth, previewAuthReady, requestedSessionId, startEvent, workspace?.rootSessionId]);
+  }, [entryDate, initialRecordMode, loadWorkspace, previewAuth, previewAuthReady, refreshSessions, requestedSessionId, showNewRecord, startEvent, workspace?.rootSessionId]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -358,10 +417,10 @@ export function EventCenteredInterviewWorkspace({
   useEffect(() => {
     if (!workspace || !syncAddress) return;
     updateWorkspaceAddress({
-      entryDate,
+      entryDate: workspace.entryDate,
       sessionId: workspace.rootSessionId
     });
-  }, [entryDate, syncAddress, workspace]);
+  }, [syncAddress, workspace]);
 
   const canCreateEvent = Boolean(
     writeEnabled &&
@@ -371,6 +430,18 @@ export function EventCenteredInterviewWorkspace({
 
   const performAction = useCallback(async (action: EventCenteredDialogueWorkspaceAction) => {
     if (!workspace || busy || switchingSession || !writeEnabled) return;
+    if (!isWorkspaceActionAllowed(workspace, action)) {
+      const issue: EventCenteredWorkspaceIssue = {
+        code: "INTERVIEW_ACTION_UNSUPPORTED",
+        title: "当前对话已经更新",
+        message: "这个操作已经不适用于当前记录。",
+        resolution: "请刷新到最新对话后继续。",
+        retryable: true,
+        action: "refresh"
+      };
+      setNotice(issue);
+      throw new EventCenteredWorkspaceRequestError(issue);
+    }
     const scope = scopeForWorkspace(workspace);
     const reusable = canReuseOutbox({ outbox, workspace, action }) ? outbox : null;
     const request = requestForAction({
@@ -415,16 +486,18 @@ export function EventCenteredInterviewWorkspace({
       setWorkspace(nextWorkspace);
       if (
         action.action === "exit_event" &&
-        (nextWorkspace.sessionStatus === "completed" || nextWorkspace.sessionStatus === "abandoned") &&
-        (nextWorkspace.eventStatus === "completed" || nextWorkspace.eventStatus === "abandoned")
+        nextWorkspace.sessionStatus === "completed" &&
+        nextWorkspace.eventStatus === "completed"
       ) {
         setCompletionHandoffSessionId(nextWorkspace.rootSessionId);
+      } else if (action.action === "exit_event") {
+        setCompletionHandoffSessionId(null);
       }
       setStreamPreview(null);
       setNotice(null);
       clearEventCenteredWorkspaceOutbox(scope);
       setOutbox(null);
-      await refreshTabs();
+      await refreshSessions();
     } catch (error) {
       setNotice(toWorkspaceNotice(error));
       if (accepted) {
@@ -439,7 +512,7 @@ export function EventCenteredInterviewWorkspace({
                 response: ""
               }
             : null);
-          await refreshTabs();
+          await refreshSessions();
           return;
         } catch {
           setStreamPreview((current) => ({
@@ -463,13 +536,16 @@ export function EventCenteredInterviewWorkspace({
     } finally {
       setBusy(false);
     }
-  }, [busy, outbox, refreshTabs, switchingSession, workspace, writeEnabled]);
+  }, [busy, outbox, refreshSessions, switchingSession, workspace, writeEnabled]);
 
   const handleViewAction = useCallback(async (action: EventCenteredDialogueWorkspaceAction) => {
     if (action.action === "generate_event_journal") {
       setNotice({
+        code: "EVENT_JOURNAL_MOVED_TO_DAILY",
         title: "这件事会留在当天",
-        message: "回到日记后，可以和当天的其他记录一起整理。"
+        message: "回到日记后，可以和当天的其他记录一起整理。",
+        retryable: false,
+        action: "open_journal"
       });
       return;
     }
@@ -485,6 +561,38 @@ export function EventCenteredInterviewWorkspace({
     }
   }, [performAction]);
 
+  const handleComposerDraftChange = useCallback((nextDraft: string) => {
+    setDraft(nextDraft);
+    if (workspace) writeEventCenteredComposerDraft(scopeForWorkspace(workspace), nextDraft);
+  }, [workspace]);
+
+  const beginNewRecord = useCallback((targetEntryDate = getTodayEntryDate()) => {
+    if (sessionList.unfinishedCount >= sessionList.unfinishedLimit) {
+      presentUnfinishedLimitToast();
+      return;
+    }
+    setWorkspace(null);
+    setRequestedSessionId(null);
+    setShowNewRecord(true);
+    setNewRecordEntryDate(targetEntryDate);
+    setCompletionHandoffSessionId(null);
+    setDraft("");
+    setOutbox(null);
+    setStreamPreview(null);
+    setNotice(null);
+    if (syncAddress) updateWorkspaceStartAddress(targetEntryDate);
+    void refreshSessions();
+  }, [presentUnfinishedLimitToast, refreshSessions, sessionList.unfinishedCount, sessionList.unfinishedLimit, syncAddress]);
+
+  const selectSession = useCallback((rootSessionId: string) => {
+    if (busy || switchingSession || rootSessionId === workspace?.rootSessionId) return;
+    setShowNewRecord(false);
+    setCompletionHandoffSessionId(null);
+    setRequestedSessionId(rootSessionId);
+    setNotice(null);
+    setDraft("");
+  }, [busy, switchingSession, workspace?.rootSessionId]);
+
   useEffect(() => {
     if (!setInterviewChromeState) return;
     if (!workspace) {
@@ -492,20 +600,23 @@ export function EventCenteredInterviewWorkspace({
       return () => setInterviewChromeState(null);
     }
 
-    const hasUserMessage = workspace.messages.some((message) => message.role === "user") || Boolean(outbox?.request.rawText);
-    const completed = workspace.sessionStatus === "completed" || workspace.sessionStatus === "abandoned";
+    const completed = workspace.sessionStatus === "completed" && workspace.eventStatus === "completed";
+    const abandoned = workspace.sessionStatus === "abandoned" || workspace.eventStatus === "abandoned";
+    const terminal = completed || abandoned;
     const canComplete = Boolean(
       writeEnabled &&
-      !completed &&
-      hasUserMessage &&
+      !terminal &&
+      workspace.messages.some((message) => message.role === "user") &&
       workspace.dialogue.allowedActions.includes("exit_event")
     );
     setInterviewChromeState({
       recordMode: workspace.recordMode ?? initialRecordMode ?? "chat",
       entryDate: workspace.entryDate,
       progress: workspace.dialogue.progress,
-      hasUserMessage,
+      hasUserMessage: workspace.messages.some((message) => message.role === "user") || Boolean(outbox?.request.rawText),
       canComplete,
+      completed,
+      abandoned,
       busy: busy || switchingSession,
       onComplete: canComplete ? () => { void handleViewAction({ action: "exit_event" }); } : null
     });
@@ -513,83 +624,104 @@ export function EventCenteredInterviewWorkspace({
     return () => setInterviewChromeState(null);
   }, [busy, handleViewAction, initialRecordMode, outbox?.request.rawText, setInterviewChromeState, switchingSession, workspace, writeEnabled]);
 
-  const handleComposerDraftChange = useCallback((nextDraft: string) => {
-    setDraft(nextDraft);
-    if (workspace) writeEventCenteredComposerDraft(scopeForWorkspace(workspace), nextDraft);
-  }, [workspace]);
-
-  const returnToRecordModeSelection = useCallback(() => {
-    setWorkspace(null);
-    setRequestedSessionId(null);
-    setCompletionHandoffSessionId(null);
-    setDraft("");
-    setOutbox(null);
-    setStreamPreview(null);
-    setNotice(null);
-    if (syncAddress) updateWorkspaceStartAddress(entryDate);
-    void refreshTabs();
-  }, [entryDate, refreshTabs, syncAddress]);
-
   const loadingMessage = requestedSessionId
-    ? "正在恢复这件事…"
+    ? "正在恢复记录…"
     : initialRecordMode
-      ? "正在准备新的记录…"
-      : "正在打开访谈…";
+      ? "正在准备…"
+      : "正在打开记录…";
+
+  const dialogueTabs = sessionList.items.map((item) => ({
+    rootSessionId: item.rootSessionId,
+    label: item.title,
+    status: item.lifecycle === "completed"
+      ? "completed" as const
+      : item.lifecycle === "abandoned"
+        ? "abandoned" as const
+        : item.lifecycle === "blank"
+          ? "blank" as const
+          : "active" as const
+  }));
+  const renderWithSidebar = (content: ReactNode) => (
+    <>
+      <div
+        data-testid="event-centered-workspace-layout"
+        className={workspaceLayoutClass}
+      >
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <EventCenteredSessionSidebar
+            items={sessionList.items}
+            activeSessionId={workspace?.rootSessionId ?? null}
+            unfinishedCount={sessionList.unfinishedCount}
+            unfinishedLimit={sessionList.unfinishedLimit}
+            busy={busy || switchingSession}
+            onNew={() => beginNewRecord()}
+            onLimitReached={presentUnfinishedLimitToast}
+            onSelect={selectSession}
+          />
+          <div className="relative flex min-w-0 min-h-0 flex-1 flex-col">
+            {content}
+            {switchingSession && workspace ? (
+              <div className="absolute inset-0 z-30 grid place-items-center bg-[var(--color-workspace)]" aria-busy="true">
+                <p role="status" className="rounded-[var(--radius-control)] bg-[var(--color-content)] px-4 py-3 font-ui text-sm text-[var(--text-dim)] shadow-sm">
+                  正在打开记录…
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      {showUnfinishedLimitToast ? (
+        <AppToast
+          placement="below-header"
+          message={UNFINISHED_LIMIT_TOAST}
+          testId="event-centered-unfinished-limit-toast"
+        />
+      ) : null}
+    </>
+  );
 
   if (loading && !workspace) {
     if (!requestedSessionId && !initialRecordMode) {
-      return (
-        <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
-          <EventCenteredStartWorkspaceView
-            entryDate={entryDate}
-            tabs={tabs}
-            busy
-            onStart={(recordMode) => void startEvent(recordMode)}
-          />
-        </div>
+      return renderWithSidebar(
+        <EventCenteredStartWorkspaceView
+          entryDate={newRecordEntryDate}
+          busy
+          onStart={(recordMode) => void startEvent(recordMode)}
+        />
       );
     }
-    return (
-      <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
-        <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0">
-          <p role="status" className="font-ui text-sm text-[var(--text-dim)]">{loadingMessage}</p>
-        </Surface>
-      </div>
+    return renderWithSidebar(
+      <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0">
+        <p role="status" className="font-ui text-sm text-[var(--text-dim)]">{loadingMessage}</p>
+      </Surface>
     );
   }
 
-  if (!workspace && writeEnabled && !requestedSessionId) {
-    return (
-      <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
-        <EventCenteredStartWorkspaceView
-          entryDate={entryDate}
-          tabs={tabs}
-          busy={busy || switchingSession}
-          pendingRecordMode={pendingRecordMode}
-          error={notice}
-          onStart={(recordMode) => void startEvent(recordMode)}
-          onSelectTab={(rootSessionId) => {
-            if (busy || switchingSession) return;
-            setCompletionHandoffSessionId(null);
-            setRequestedSessionId(rootSessionId);
-            setNotice(null);
-          }}
-        />
-      </div>
+  if (!workspace && showNewRecord) {
+    return renderWithSidebar(
+      <EventCenteredStartWorkspaceView
+        entryDate={newRecordEntryDate}
+        busy={busy || switchingSession}
+        pendingRecordMode={pendingRecordMode}
+        readOnly={!writeEnabled || sessionList.unfinishedCount >= sessionList.unfinishedLimit}
+        error={notice ?? (sessionList.unfinishedCount >= sessionList.unfinishedLimit ? {
+          title: "先完成一条记录",
+          message: `最多同时保留 ${sessionList.unfinishedLimit} 条未完成记录。`
+        } : null)}
+        onStart={(recordMode) => void startEvent(recordMode)}
+      />
     );
   }
 
   if (!workspace) {
-    return (
-      <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
-        <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0 p-6">
-          <div role="alert" className="max-w-lg text-center font-ui">
-            <p className="font-medium text-ink">{notice?.title ?? "暂时无法打开事件记录"}</p>
-            <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">{notice?.message ?? "请稍后重试。"}</p>
-            {writeEnabled ? <ActionButton className="mt-4" onClick={() => void loadWorkspace(requestedSessionId)}>再试一次</ActionButton> : null}
-          </div>
-        </Surface>
-      </div>
+    return renderWithSidebar(
+      <Surface className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0 p-6">
+        <div role="alert" className="max-w-lg text-center font-ui">
+          <p className="font-medium text-ink">{notice?.title ?? "暂时无法打开记录"}</p>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">{notice?.message ?? "请稍后重试。"}</p>
+          {writeEnabled ? <ActionButton className="mt-4" onClick={() => void loadWorkspace(requestedSessionId)}>再试一次</ActionButton> : null}
+        </div>
+      </Surface>
     );
   }
 
@@ -605,33 +737,27 @@ export function EventCenteredInterviewWorkspace({
       }
     : null;
 
-  return (
-    <div data-testid="event-centered-workspace-layout" className={workspaceLayoutClass}>
-      <EventCenteredDialogueWorkspaceView
+  return renderWithSidebar(
+    <EventCenteredDialogueWorkspaceView
         session={workspace}
-        entryDate={entryDate}
+        entryDate={workspace.entryDate}
         recordMode={workspace.recordMode ?? initialRecordMode ?? "chat"}
-        tabs={tabs}
+        tabs={dialogueTabs}
+        showRecordRail={false}
         activeTabId={workspace.rootSessionId}
         busy={busy || switchingSession}
-        readOnly={!writeEnabled || workspace.sessionStatus === "abandoned" || workspace.eventStatus === "abandoned"}
+        readOnly={!writeEnabled || workspace.sessionStatus !== "active" || workspace.eventStatus === "completed" || workspace.eventStatus === "abandoned"}
         canCreateEvent={canCreateEvent}
         showCompletionHandoff={completionHandoffSessionId === workspace.rootSessionId}
         composerDraft={draft}
         optimisticUserMessage={optimisticUserMessage}
         streamPreview={streamPreview}
         error={notice}
+        onResolveIssue={() => void loadWorkspace(workspace.rootSessionId)}
         onComposerDraftChange={handleComposerDraftChange}
         onAction={handleViewAction}
-        onCreateEvent={returnToRecordModeSelection}
-        onSelectTab={(rootSessionId) => {
-          if (rootSessionId === workspace.rootSessionId) return;
-          setCompletionHandoffSessionId(null);
-          setRequestedSessionId(rootSessionId);
-          setNotice(null);
-          setDraft("");
-        }}
+        onCreateEvent={() => beginNewRecord()}
+        onSelectTab={selectSession}
       />
-    </div>
   );
 }

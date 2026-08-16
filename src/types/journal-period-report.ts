@@ -10,7 +10,11 @@ export type JournalPeriodReportGenerationStatus =
   | "canceled";
 
 /** A concrete, readable source used by a weekly or monthly report. */
-export type JournalPeriodMaterialKind = "daily_report" | "weekly_report" | "event_card";
+export type JournalPeriodMaterialKind =
+  | "daily_report"
+  | "legacy_daily_report"
+  | "weekly_report"
+  | "event_card";
 
 export interface JournalPeriodRange {
   kind: JournalPeriodKind;

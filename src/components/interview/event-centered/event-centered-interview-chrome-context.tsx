@@ -10,6 +10,8 @@ export type EventCenteredInterviewChromeState = {
   progress: EventCenteredProgressItem[];
   hasUserMessage: boolean;
   canComplete: boolean;
+  completed?: boolean;
+  abandoned?: boolean;
   busy: boolean;
   onComplete: (() => void) | null;
 };

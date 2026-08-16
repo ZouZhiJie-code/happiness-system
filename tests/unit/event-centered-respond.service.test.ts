@@ -143,9 +143,10 @@ import {
 
 const now = "2026-07-22T12:00:00.000Z";
 
-function identity() {
+function identity(recordMode: "capture" | "chat" = "chat") {
   return {
     mode: "event_centered" as const,
+    recordMode,
     rootSessionId: "root-1",
     activeBranchSessionId: "branch-1",
     eventId: "event-1",
@@ -191,6 +192,13 @@ function workspaceData(overrides: Record<string, unknown> = {}) {
     journalEntry: null,
     ...overrides
   };
+}
+
+function captureWorkspaceData(overrides: Record<string, unknown> = {}) {
+  return workspaceData({
+    identity: identity("capture"),
+    ...overrides
+  });
 }
 
 function formalWorkspaceData(overrides: Record<string, unknown> = {}) {
@@ -305,82 +313,6 @@ function assistantPayload(overrides: Record<string, unknown> = {}) {
     checkpoint: { kind: "first" as const, outcome: null },
     angleOutcome: null,
     ...overrides
-  };
-}
-
-function generativeRepairTurn(input: {
-  angle: "feeling" | "thought" | "relationship" | "action";
-  target: string;
-  question: string;
-  deep?: boolean;
-}) {
-  const expectedUnderstandingDelta = "从当前问题退回一个具体时刻，补足同一目标需要的可描述材料";
-  return {
-    understanding: {
-      eventBoundary: "current_event" as const,
-      coreEventIdentifiable: true,
-      answerStatus: "unknown" as const,
-      factDeltas: [],
-      correctionOrBoundary: null,
-      tentativeInterpretation: null,
-      eventOptions: []
-    },
-    semanticPlan: {
-      action: "ask" as const,
-      activeAngle: input.angle,
-      outcomeAssessment: {
-        state: "needs_more" as const,
-        origin: null,
-        basis: "当前抽象入口暂时说不清，仍有一次具体材料入口",
-        supportEvidenceRefs: [],
-        missingUnderstanding: expectedUnderstandingDelta
-      },
-      evidenceRefs: [],
-      insightKind: null,
-      selectedTargetId: input.target,
-      expectedUnderstandingDelta,
-      tentativeInterpretation: null,
-      stopReason: null,
-      cognitiveAction: "anchor_specific" as const,
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      realizationContract: {
-        responseCore: input.question,
-        summaryAnchors: ["暂时说不清"]
-      }
-    },
-    visibleTurn: {
-      thinkingSummary: "这部分暂时说不清，可以先回到一个具体时刻。",
-      responseKind: "question" as const,
-      question: input.question,
-      insight: null,
-      honestLimit: null
-    },
-    decision: {
-      turnAction: "ask" as const,
-      cognitiveAction: "anchor_specific" as const,
-      selectedTarget: input.target,
-      evidenceRefs: [],
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      expectedValue: expectedUnderstandingDelta,
-      stopReason: null,
-      outcomeCandidate: null
-    },
-    reply: {
-      naturalUnderstanding: "这部分暂时说不清，可以先回到一个具体时刻。",
-      question: input.question
-    }
   };
 }
 
@@ -657,6 +589,126 @@ beforeEach(() => {
 });
 
 describe("event-centered respond service", () => {
+  it("帮我记首条真实表达只可靠保存并返回单段自然承接", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData());
+    const deltas: Array<[string, string]> = [];
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest(), {
+      onDelta: (target, value) => {
+        deltas.push([target, value]);
+      }
+    });
+
+    expect(result.assistantPayload).toEqual({
+      naturalUnderstanding: "",
+      naturalResponse: "好，这段已经记下了。",
+      responseKind: "acknowledgement",
+      questionSpec: null,
+      checkpoint: null,
+      angleOutcome: null
+    });
+    expect(deltas).toEqual([["response", "好，这段已经记下了。"]]);
+    expect(mocks.understand).not.toHaveBeenCalled();
+    expect(mocks.realize).not.toHaveBeenCalled();
+    expect(mocks.generateOnce).not.toHaveBeenCalled();
+    expect(mocks.generatePlan).not.toHaveBeenCalled();
+    expect(mocks.generateVisible).not.toHaveBeenCalled();
+    expect(mocks.commit).toHaveBeenCalledWith(expect.objectContaining({
+      facts: [],
+      pendingClaim: null,
+      snapshotData: expect.objectContaining({
+        phase: "event_recording",
+        reflectionReady: false,
+        activeAngle: null,
+        currentQuestion: null,
+        currentQuestionIntent: null,
+        focusOptions: []
+      }),
+      trace: expect.objectContaining({
+        outputOrigin: "deterministic",
+        contextSnapshot: expect.objectContaining({ recordMode: "capture" }),
+        pipelineDecisions: [expect.objectContaining({
+          kind: "event_centered_capture_zero_question",
+          questionSpec: null
+        })]
+      })
+    }));
+  });
+
+  it("帮我记在尚未形成事件时允许提交第一条真实表达", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData({
+      identity: {
+        ...identity("capture"),
+        eventId: null,
+        branchStateId: null,
+        eventStatus: null,
+        journalEvent: null
+      }
+    }));
+
+    await expect(
+      respondEventCenteredInterview("user-1", replyRequest())
+    ).resolves.toMatchObject({
+      assistantPayload: {
+        naturalResponse: "好，这段已经记下了。",
+        questionSpec: null
+      }
+    });
+  });
+
+  it("帮我记在首条表达后只开放继续记录和完成记录", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData({
+      messages: [
+        ...captureWorkspaceData().messages,
+        {
+          id: "capture-user-1",
+          branchSessionId: "branch-1",
+          role: "user" as const,
+          content: "今天开会时我主动说明了延期风险。",
+          rawText: "今天开会时我主动说明了延期风险。",
+          sequence: 1,
+          userTurnId: "turn-capture-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+
+    const workspace = await getEventCenteredInterviewWorkspace("user-1", "root-1");
+
+    expect(workspace?.dialogue.allowedActions).toEqual(["reply", "exit_event"]);
+  });
+
+  it.each([
+    ["correct_understanding", { rawText: "我想纠正一下", targetMessageId: "opening-1" }],
+    ["select_current_event", { optionId: "event-option-1" }],
+    ["select_exploration_angle", { angle: "thought" }],
+    ["continue_exploration", { angle: "thought" }],
+    ["regenerate_response", {
+      targetMessageId: "opening-1",
+      regenerationIntent: "simplify"
+    }],
+    ["switch_response_version", {
+      targetMessageId: "opening-1",
+      targetBranchSessionId: "branch-2"
+    }],
+    ["resume_turn", {}],
+    ["exit_event", { rawText: "完成记录" }]
+  ] as const)("帮我记在当前状态拒绝未开放动作 %s", async (action, fields) => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData());
+
+    await expect(respondEventCenteredInterview("user-1", {
+      ...replyRequest(),
+      ...fields,
+      action
+    })).rejects.toThrow("INTERVIEW_ACTION_UNSUPPORTED");
+
+    expect(mocks.reserveAction).not.toHaveBeenCalled();
+    expect(mocks.regenerateVersion).not.toHaveBeenCalled();
+    expect(mocks.selectVersion).not.toHaveBeenCalled();
+  });
+
   it("GI-066 正式回合由判断地图、系统选题和冻结表达两段完成", async () => {
     mocks.generativeEnabled.mockReturnValue(true);
     mocks.thoughtOnly.mockReturnValue(true);

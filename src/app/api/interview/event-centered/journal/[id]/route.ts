@@ -43,8 +43,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (isAuthenticationRequiredError(error)) {
       return NextResponse.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
     }
+    const code = error instanceof Error ? error.message : "EVENT_JOURNAL_ENTRY_READ_FAILED";
+    if (code.startsWith("JOURNAL_PREVIEW_")) {
+      return NextResponse.json({ error: code }, { status: journalPreviewStatusFor(code) });
+    }
     console.error("EVENT_JOURNAL_ENTRY_READ_FAILED", error);
-    return NextResponse.json({ error: "EVENT_JOURNAL_ENTRY_READ_FAILED" }, { status: 500 });
+    return NextResponse.json({ error: code }, { status: statusFor(code) });
   }
 }
 

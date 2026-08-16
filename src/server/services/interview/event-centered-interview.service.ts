@@ -118,6 +118,7 @@ import {
   selectEventCenteredResponseVersion
 } from "@/server/services/interview/event-centered-response-version.service";
 import type {
+  EventCenteredAllowedAction,
   EventCenteredAssistantPayload,
   EventCenteredDialogueState,
   EventCenteredRespondRequest,
@@ -140,7 +141,14 @@ import type {
   JournalEventFactWrite
 } from "@/types/journal-event-understanding";
 
-const EVENT_CENTERED_OPENING = "先从这件事开始吧。刚刚发生了什么？";
+export const EVENT_CENTERED_OPENINGS = [
+  "先从这件事开始吧。刚刚发生了什么？",
+  "想从哪件事说起？先讲讲当时发生了什么。",
+  "从你最想说的那一部分开始吧。",
+  "先说一个具体的时刻。那时发生了什么？",
+  "这件事里，哪个瞬间最留在你脑海里？",
+  "把这件事慢慢说给我听就好。"
+] as const;
 
 type GI066ThoughtExecution = {
   mapUpdate: ThoughtMapProviderOutput;
@@ -186,7 +194,8 @@ function classifyEventCenteredGenerationFailure(code: string) {
 export function startEventCenteredInterview(
   userId: string,
   entryDate = getTodayEntryDate(),
-  recordMode: "capture" | "chat" | null = null
+  recordMode: "capture" | "chat" | null = null,
+  clientOperationId: string | null = null
 ) {
   assertEventCenteredWriteAllowed({
     entryDate,
@@ -197,7 +206,8 @@ export function startEventCenteredInterview(
     userId,
     entryDate,
     recordMode,
-    openingQuestion: EVENT_CENTERED_OPENING
+    clientOperationId,
+    openingQuestions: EVENT_CENTERED_OPENINGS
   });
 }
 
@@ -230,6 +240,55 @@ function emptyAngleProjection(): JournalEventAngleProjection {
     reopenedAngles: [],
     repairs: []
   };
+}
+
+function hasEventCenteredUserExpression(
+  messages: EventCenteredInterviewWorkspaceData["messages"]
+) {
+  return messages.some((message) =>
+    message.role === "user" && Boolean((message.rawText ?? message.content).trim())
+  );
+}
+
+function hasPendingFactClarification(snapshotData: unknown) {
+  if (!snapshotData || typeof snapshotData !== "object" || Array.isArray(snapshotData)) {
+    return false;
+  }
+  return Boolean(
+    (snapshotData as Record<string, unknown>).pendingFactRevisionClarification
+  );
+}
+
+function getWorkspaceAllowedActions(input: {
+  data: EventCenteredInterviewWorkspaceData;
+  state: EventCenteredDialogueState;
+  pendingFactClarification?: boolean;
+  pendingAngleRepair?: boolean;
+}): EventCenteredAllowedAction[] {
+  let allowedActions = getEventCenteredAllowedActions({
+    state: input.state,
+    eventStatus: input.data.identity.eventStatus,
+    hasPendingTurn: Boolean(input.data.pendingTurn)
+  });
+  if (input.pendingFactClarification || input.pendingAngleRepair) {
+    allowedActions = allowedActions.filter(
+      (action) => action === "reply" || action === "exit_event"
+    );
+  }
+  if (input.data.identity.recordMode !== "capture") return allowedActions;
+
+  if (
+    input.data.identity.eventStatus !== null &&
+    input.data.identity.eventStatus !== "active"
+  ) return [];
+  if (input.data.pendingTurn) {
+    return allowedActions.filter(
+      (action) => action === "resume_turn" || action === "exit_event"
+    );
+  }
+  return hasEventCenteredUserExpression(input.data.messages)
+    ? ["reply", "exit_event"]
+    : ["reply"];
 }
 
 export async function getEventCenteredInterviewWorkspace(
@@ -297,14 +356,12 @@ export async function getEventCenteredInterviewWorkspace(
     }];
   });
   const currentRun = state.activeAngle ? state.angleRuns[state.activeAngle] : null;
-  let allowedActions = getEventCenteredAllowedActions({
+  const allowedActions = getWorkspaceAllowedActions({
+    data,
     state,
-    eventStatus: data.identity.eventStatus,
-    hasPendingTurn: Boolean(data.pendingTurn)
+    pendingFactClarification: Boolean(factProjection?.pendingClarification),
+    pendingAngleRepair: angleProjection.repairPendingAngles.length > 0
   });
-  if (factProjection?.pendingClarification || angleProjection.repairPendingAngles.length > 0) {
-    allowedActions = allowedActions.filter((action) => action === "reply" || action === "exit_event");
-  }
   const outcomes = angleProjection.completedAngles.flatMap((angle) => {
     const outcome = angleProjection.outcomesByAngle[angle];
     return outcome
@@ -1522,6 +1579,16 @@ export async function respondEventCenteredInterview(
   const before = await getEventCenteredInterviewWorkspaceData(userId, request.rootSessionId);
   timing.initialWorkspaceReadMs = elapsedMs(initialWorkspaceStartedAt);
   if (!before) throw new Error("SESSION_NOT_FOUND");
+  const stateBeforeRequest = parseEventCenteredDialogueState(before.snapshotData);
+  const currentAllowedActions = getWorkspaceAllowedActions({
+    data: before,
+    state: stateBeforeRequest,
+    pendingFactClarification: hasPendingFactClarification(before.snapshotData),
+    pendingAngleRepair: stateBeforeRequest.repairPendingAngles.length > 0
+  });
+  if (!currentAllowedActions.includes(request.action)) {
+    throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
+  }
   if (request.action === "regenerate_response") {
     if (
       !request.targetMessageId ||
@@ -1661,7 +1728,7 @@ export async function respondEventCenteredInterview(
   }
   timing.turnReservationPersistenceMs = elapsedMs(reservationStartedAt);
   await options?.onTurn?.(reservation);
-  const stateBeforeTurn = parseEventCenteredDialogueState(before.snapshotData);
+  const stateBeforeTurn = stateBeforeRequest;
   const turnContext: EventCenteredTurnContext = {
     workspace: before,
     state: stateBeforeTurn,
@@ -1734,6 +1801,119 @@ export async function respondEventCenteredInterview(
     options?.signal?.throwIfAborted();
     await options?.onPhase?.("understanding");
     const state = turnContext.state;
+    if (
+      before.identity.recordMode === "capture" &&
+      effectiveRequest.action === "reply"
+    ) {
+      const rawText = reservation.turn.rawText.trim();
+      const responsePayload: EventCenteredAssistantPayload = {
+        naturalUnderstanding: "",
+        naturalResponse: "好，这段已经记下了。",
+        responseKind: "acknowledgement",
+        questionSpec: null,
+        checkpoint: null,
+        angleOutcome: null
+      };
+      const nextState = structuredClone(state);
+      nextState.phase = "event_recording";
+      nextState.reflectionReady = false;
+      nextState.activeAngle = null;
+      nextState.lastCompletedAngle = null;
+      nextState.currentQuestion = null;
+      nextState.currentQuestionIntent = null;
+      nextState.focusOptions = [];
+      nextState.pendingUnderstandingClaimId = null;
+      nextState.currentMicrogoal = null;
+
+      await options?.onPhase?.("responding");
+      await options?.onDelta?.("response", responsePayload.naturalResponse);
+      timing.visibleResponseReadyMs = elapsedMs(responseStartedAt);
+      await options?.onPhase?.("committing");
+      const writeCommitStartedAt = Date.now();
+      await commitEventCenteredTurnUnderstanding({
+        userId,
+        eventId: reservation.eventId,
+        activeBranchSessionId: reservation.activeBranchSessionId,
+        branchStateId: reservation.branchStateId,
+        userTurnId: reservation.turn.id,
+        assistantMessage: {
+          id: randomUUID(),
+          content: serializeEventCenteredAssistantPayload(responsePayload),
+          lastAssistantQuestion: null
+        },
+        facts: [],
+        pendingClaim: null,
+        focusSummary: rawText.slice(0, 240) || "这段已经记下",
+        snapshotData: nextState,
+        trace: {
+          requestId: options?.requestId ?? null,
+          outputOrigin: "deterministic",
+          contextSnapshot: {
+            strategyMode: "capture",
+            recordMode: "capture",
+            phase: state.phase,
+            currentQuestionTarget: null,
+            recentContextMessageIds: before.messages.slice(-6).map((message) => message.id)
+          },
+          finalOutput: {
+            assistant: responsePayload
+          },
+          pipelineDecisions: [{
+            kind: "event_centered_capture_zero_question",
+            recordMode: "capture",
+            questionSpec: null
+          }]
+        },
+        checks: {
+          eventBoundaryPassed: true,
+          factsHaveUserSource: true,
+          visibleUnderstandingMatchesClaim: true,
+          unsupportedClaimCount: 0
+        },
+        angleOutcome: null,
+        angleRepairResolutions: []
+      });
+      timing.writeCommitMs = elapsedMs(writeCommitStartedAt);
+      const finalWorkspaceStartedAt = Date.now();
+      const workspace = await getEventCenteredInterviewWorkspace(
+        userId,
+        request.rootSessionId
+      );
+      timing.finalWorkspaceRecoveryMs = elapsedMs(finalWorkspaceStartedAt);
+      if (!workspace) throw new Error("SESSION_NOT_FOUND");
+      timing.interactiveReadyMs = elapsedMs(responseStartedAt);
+      await recordEventCenteredAnalyticsEvent({
+        eventName: "event_centered_response_completed",
+        userId,
+        dedupeKey: `event_centered_response_completed:${reservation.turn.id}`,
+        rootSessionId: reservation.rootSessionId,
+        journalEventId: reservation.eventId,
+        requestId: options?.requestId ?? null,
+        entryDate: before.identity.entryDate,
+        stage: nextState.phase,
+        angle: null,
+        requestedStrategy: "capture",
+        effectiveStrategy: "capture",
+        generativeAttempted: false,
+        deterministicControlAction: "capture_acknowledgement",
+        eventRecordingRecognition: true,
+        attemptCount: 0,
+        latencyMs: timing.interactiveReadyMs,
+        visibleResponseReadyMs: timing.visibleResponseReadyMs,
+        interactiveReadyMs: timing.interactiveReadyMs,
+        initialWorkspaceReadMs: timing.initialWorkspaceReadMs,
+        turnReservationPersistenceMs: timing.turnReservationPersistenceMs,
+        factsAndOutcomesReadMs: null,
+        semanticModelMs: null,
+        visibleResponseModelMs: null,
+        modelMs: 0,
+        nonModelMs: timing.interactiveReadyMs,
+        writeCommitMs: timing.writeCommitMs,
+        finalWorkspaceRecoveryMs: timing.finalWorkspaceRecoveryMs
+      });
+      await options?.onPhase?.("complete");
+      return { workspace, assistantPayload: responsePayload };
+    }
     const answeredQuestionContext = resolveCurrentQuestionContext(
       before,
       state.currentQuestion

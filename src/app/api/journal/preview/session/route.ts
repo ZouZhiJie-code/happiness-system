@@ -20,6 +20,26 @@ function errorResponse(error: unknown) {
   return NextResponse.json({ error: code }, { status: journalPreviewStatusFor(code) });
 }
 
+export async function GET(request: Request) {
+  try {
+    assertJournalPreviewSessionRequest(request);
+    const user = await requireCurrentUserFromRequest(request);
+    const sessionId = request.headers.get("x-daily-light-preview-session")?.trim();
+    if (!sessionId) {
+      return NextResponse.json({ error: "JOURNAL_PREVIEW_SESSION_REQUIRED" }, { status: 400 });
+    }
+    return NextResponse.json(journalPreviewService.readSession(user.id, sessionId), {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "X-Daily-Light-Preview": "fixed-six-v1",
+        "X-Daily-Light-Preview-Model-Calls": "0"
+      }
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     assertJournalPreviewSessionRequest(request);

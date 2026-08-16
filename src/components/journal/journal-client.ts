@@ -15,6 +15,20 @@ export class JournalClientError extends Error {
   }
 }
 
+export interface JournalClientRequestContext {
+  headers?: Record<string, string>;
+}
+
+function requestHeaders(
+  context: JournalClientRequestContext | undefined,
+  options: { json?: boolean } = {}
+) {
+  return {
+    ...(context?.headers ?? {}),
+    ...(options.json ? { "Content-Type": "application/json" } : {})
+  };
+}
+
 async function readErrorCode(response: Response, fallback: string) {
   const payload = (await response.json().catch(() => null)) as { error?: unknown } | null;
   return typeof payload?.error === "string" ? payload.error : fallback;
@@ -26,9 +40,14 @@ async function assertSuccessful(response: Response, fallbackCode: string) {
   }
 }
 
-export async function fetchJournalDay(entryDate: string, signal?: AbortSignal) {
+export async function fetchJournalDay(
+  entryDate: string,
+  signal?: AbortSignal,
+  context?: JournalClientRequestContext
+) {
   const response = await fetch(`/api/journal/day?entryDate=${encodeURIComponent(entryDate)}`, {
     cache: "no-store",
+    headers: requestHeaders(context),
     signal
   });
   await assertSuccessful(response, "JOURNAL_DAY_READ_FAILED");
@@ -40,10 +59,10 @@ export async function requestJournalDailyGeneration(input: {
   task: "generate" | "update";
   sourceSignature: string;
   contentRevision: number | null;
-}) {
+}, context?: JournalClientRequestContext) {
   const response = await fetch("/api/journal/daily/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: requestHeaders(context, { json: true }),
     body: JSON.stringify({
       entryDate: input.entryDate,
       task: input.task,
@@ -60,10 +79,10 @@ export async function updateJournalDailyEntry(input: {
   expectedContentRevision: number;
   title: string;
   content: string;
-}) {
+}, context?: JournalClientRequestContext) {
   const response = await fetch(`/api/journal/daily/${encodeURIComponent(input.entryId)}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: requestHeaders(context, { json: true }),
     body: JSON.stringify({
       title: input.title,
       content: input.content,
@@ -78,10 +97,10 @@ export async function updateJournalDailyEntry(input: {
 export async function saveJournalDailyEntry(input: {
   entryId: string;
   expectedContentRevision: number;
-}) {
+}, context?: JournalClientRequestContext) {
   const response = await fetch(`/api/journal/daily/${encodeURIComponent(input.entryId)}/save`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: requestHeaders(context, { json: true }),
     body: JSON.stringify({ expectedContentRevision: input.expectedContentRevision })
   });
   await assertSuccessful(response, "JOURNAL_DAILY_SAVE_FAILED");
@@ -94,12 +113,12 @@ export async function updateJournalRecord(input: {
   expectedContentRevision: number;
   title: string;
   content: string;
-}) {
+}, context?: JournalClientRequestContext) {
   const response = await fetch(
     `/api/interview/event-centered/journal/${encodeURIComponent(input.entryId)}`,
     {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: requestHeaders(context, { json: true }),
       body: JSON.stringify({
         title: input.title,
         content: input.content,
@@ -111,10 +130,29 @@ export async function updateJournalRecord(input: {
   return (await response.json()) as JournalEventEntryRecord;
 }
 
-export async function fetchJournalRecordOriginal(entryId: string) {
+export async function saveJournalRecord(input: {
+  entryId: string;
+  expectedContentRevision: number;
+}, context?: JournalClientRequestContext) {
+  const response = await fetch(
+    `/api/interview/event-centered/journal/${encodeURIComponent(input.entryId)}/save`,
+    {
+      method: "POST",
+      headers: requestHeaders(context, { json: true }),
+      body: JSON.stringify({ expectedContentRevision: input.expectedContentRevision })
+    }
+  );
+  await assertSuccessful(response, "JOURNAL_RECORD_SAVE_FAILED");
+  return (await response.json()) as JournalEventEntryRecord;
+}
+
+export async function fetchJournalRecordOriginal(
+  entryId: string,
+  context?: JournalClientRequestContext
+) {
   const response = await fetch(
     `/api/interview/event-centered/journal/${encodeURIComponent(entryId)}`,
-    { cache: "no-store" }
+    { cache: "no-store", headers: requestHeaders(context) }
   );
   await assertSuccessful(response, "JOURNAL_RECORD_ORIGINAL_READ_FAILED");
   const entry = (await response.json()) as JournalEventEntryRecord;
@@ -129,6 +167,7 @@ export function replaceJournalSourceEntry(
   view: JournalDailyJournalView,
   entryId: string,
   nextEntry: Pick<JournalDailySourceEntry, "title" | "content" | "contentRevision" | "updatedAt">
+    & Partial<Pick<JournalDailySourceEntry, "savedRevision" | "savedAt">>
 ): JournalDailyJournalView {
   return {
     ...view,

@@ -173,6 +173,23 @@ export async function claimJournalDayModeInTransaction(
   const existing = await findJournalDayOwnership(database, input.userId, entryDate);
 
   if (existing) {
+    if (
+      input.mode === "event_centered" &&
+      (existing.primaryMode === "dimension_legacy" || existing.status === "mixed")
+    ) {
+      const migrated = await database.journalDayOwnership.update({
+        where: { id: existing.id },
+        data: {
+          primaryMode: "event_centered",
+          status: "clean",
+          claimedBySessionId: input.claimedBySessionId ?? existing.claimedBySessionId,
+          lastAssertedAt: now,
+          mixedAt: null,
+          mixedReason: null
+        }
+      });
+      return { kind: "claimed", ownership: mapJournalDayMode(migrated) };
+    }
     const result = toClaimedMode(existing, input.mode, false);
     if (result.kind === "existing") {
       const updated = await database.journalDayOwnership.update({

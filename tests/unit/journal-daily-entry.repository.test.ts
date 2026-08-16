@@ -8,6 +8,8 @@ const { mockPrisma, state } = vi.hoisted(() => {
   const state = {
     eventEntries: [] as any[],
     dailyEntries: [] as any[],
+    legacyDailyEntries: [] as any[],
+    legacyDimensionEntries: [] as any[],
     revisions: [] as any[],
     generations: [] as any[],
     traces: [] as any[],
@@ -83,6 +85,26 @@ const { mockPrisma, state } = vi.hoisted(() => {
       applyData(entry, data);
       return { count: 1 };
     })
+  };
+  mockPrisma.dailyJournalEntry = {
+    findFirst: vi.fn(async ({ where }: any) =>
+      state.legacyDailyEntries.find((entry) =>
+        entry.userId === where.userId &&
+        entry.status === where.status &&
+        entry.date >= where.date.gte &&
+        entry.date < where.date.lt
+      ) ?? null
+    )
+  };
+  mockPrisma.joyEntry = {
+    findMany: vi.fn(async ({ where }: any) =>
+      state.legacyDimensionEntries.filter((entry) =>
+        entry.userId === where.userId &&
+        entry.status === where.status &&
+        entry.date >= where.date.gte &&
+        entry.date < where.date.lt
+      )
+    )
   };
   mockPrisma.journalDailyEntryRevision = {
     create: vi.fn(async ({ data }: any) => {
@@ -297,6 +319,8 @@ describe("journal daily entry repository", () => {
   beforeEach(() => {
     state.eventEntries.splice(0);
     state.dailyEntries.splice(0);
+    state.legacyDailyEntries.splice(0);
+    state.legacyDimensionEntries.splice(0);
     state.revisions.splice(0);
     state.generations.splice(0);
     state.traces.splice(0);

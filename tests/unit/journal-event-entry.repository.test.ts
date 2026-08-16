@@ -50,7 +50,29 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
       const entry = state.entries.find((candidate) => matchesWhere(candidate, where));
       return entry ? hydrateEntry(entry) : null;
     }),
+    findMany: vi.fn(async ({ where, orderBy }: any) => {
+      const entries = state.entries
+        .filter((candidate) => {
+          const event = state.events.find((item) => item.id === candidate.eventId);
+          if (!event) return false;
+          if (where.event?.userId && event.userId !== where.event.userId) return false;
+          if (where.event?.status?.not && event.status === where.event.status.not) return false;
+          if (where.event?.entryDate?.gte && event.entryDate < where.event.entryDate.gte) return false;
+          if (where.event?.entryDate?.lt && event.entryDate >= where.event.entryDate.lt) return false;
+          return true;
+        })
+        .map(hydrateEntry);
+      if (Array.isArray(orderBy)) {
+        entries.sort((left, right) =>
+          left.event.daySequence - right.event.daySequence || left.id.localeCompare(right.id)
+        );
+      }
+      return entries;
+    }),
     create: vi.fn(async ({ data }: any) => {
+      if (state.entries.some((entry) => entry.eventId === data.eventId)) {
+        throw Object.assign(new Error("unique conflict"), { code: "P2002" });
+      }
       const entry = {
         ...data,
         savedRevision: data.savedRevision ?? null,
@@ -76,6 +98,18 @@ const { state, mockPrisma, mocks } = vi.hoisted(() => {
       entry.updatedAt = now();
       return { count: 1 };
     })
+  };
+  mockPrisma.journalDailyEntry = {
+    findUnique: vi.fn(async () => null)
+  };
+  mockPrisma.journalDailyEntryGeneration = {
+    findFirst: vi.fn(async () => null)
+  };
+  mockPrisma.dailyJournalEntry = {
+    findFirst: vi.fn(async () => null)
+  };
+  mockPrisma.joyEntry = {
+    findMany: vi.fn(async () => [])
   };
   mockPrisma.journalEventEntryGeneration = {
     findFirst: vi.fn(async ({ where }: any) =>
@@ -241,7 +275,12 @@ vi.mock("@/server/repositories/journal-event-understanding.repository", () => ({
   confirmPendingUnderstandingClaimWithClient:
     mocks.confirmPendingUnderstandingClaimWithClient
 }));
+vi.mock("@/server/services/auth/current-user.service", () => ({
+  requireCurrentUserFromRequest: vi.fn(async () => ({ id: "user-1" })),
+  isAuthenticationRequiredError: () => false
+}));
 
+import { GET as readJournalDay } from "@/app/api/journal/day/route";
 import {
   buildJournalEventEntrySourceFingerprint,
   cancelJournalEventEntryGeneration,
@@ -264,7 +303,9 @@ function seedActiveEvent() {
     rootSessionId: "root-1",
     entryDate: new Date("2026-07-22T00:00:00.000Z"),
     daySequence: 1,
-    status: "active"
+    status: "active",
+    startedAt: new Date("2026-07-22T00:00:00.000Z"),
+    rootSession: { recordMode: "chat" }
   });
   state.sessions.push(
     { id: "root-1", rootSessionId: "root-1", status: "active" },
@@ -295,6 +336,12 @@ describe("journal event entry repository", () => {
     ]) {
       values.splice(0);
     }
+    state.messages.splice(
+      0,
+      state.messages.length,
+      { id: "message-1", role: "user", sequence: 1, content: "我和同事有一次误会。" },
+      { id: "message-2", role: "assistant", sequence: 2, content: "听起来这件事让你很在意。" }
+    );
     vi.clearAllMocks();
     seedActiveEvent();
   });
@@ -434,13 +481,17 @@ describe("journal event entry repository", () => {
 
     expect(first).toMatchObject({
       eventId,
-      status: "draft",
+      generatedByTurnId: "return-turn-1",
+      status: "saved",
+      contentRevision: 1,
+      savedRevision: 1,
       generationOrigin: "deterministic",
       title: "我和同事有一次误会",
       content: "我和同事有一次误会。",
       sourceMessageIds: ["message-1", "message-2"],
       sourceFactIds: ["fact-1"]
     });
+    expect(first.savedAt).not.toBeNull();
     expect(replay).toEqual(first);
     expect(state.entries).toHaveLength(1);
     expect(state.generations).toHaveLength(0);
@@ -453,6 +504,152 @@ describe("journal event entry repository", () => {
     expect(state.turns.find((turn) => turn.id === "return-turn-1")).toMatchObject({
       status: "completed",
       errorCode: null
+    });
+  });
+
+  it("keeps the internal finish action out of a capture card source and visible content", async () => {
+    state.messages.splice(
+      0,
+      state.messages.length,
+      { id: "message-capture", role: "user", sequence: 1, content: "今天把联调案例跑通了。", userTurnId: "capture-turn" },
+      { id: "message-ack", role: "assistant", sequence: 2, content: "好，这段已经记下了。", userTurnId: null },
+      { id: "message-exit", role: "user", sequence: 3, content: "退出这件事", userTurnId: "return-turn-capture" }
+    );
+    state.turns.push({
+      id: "return-turn-capture",
+      journalEventId: eventId,
+      action: "exit_event",
+      status: "processing"
+    });
+    const emptyFactProjection = {
+      facts: [],
+      effectiveFactIds: [],
+      deprioritizedFactIds: [],
+      explorationFactIds: [],
+      invalidatedFactIds: [],
+      pendingClarification: null
+    };
+    mocks.getEffectiveJournalEventFactProjectionWithClient
+      .mockResolvedValueOnce(emptyFactProjection)
+      .mockResolvedValueOnce(emptyFactProjection);
+
+    const card = await materializeJournalEventEntryCard({
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      baseMessageSequence: 3,
+      returnTurnId: "return-turn-capture"
+    });
+
+    expect(card).toMatchObject({
+      title: "今天把联调案例跑通了",
+      content: "今天把联调案例跑通了。",
+      sourceMessageIds: ["message-capture", "message-ack"]
+    });
+    expect(card.content).not.toContain("退出这件事");
+  });
+
+  it.each(["capture", "chat"] as const)(
+    "makes a confirmed %s card visible to the journal day GET immediately",
+    async (recordMode) => {
+      state.events[0].rootSession.recordMode = recordMode;
+      state.turns.push({
+        id: "return-turn-day-read",
+        journalEventId: eventId,
+        action: "exit_event",
+        status: "processing"
+      });
+
+      const card = await materializeJournalEventEntryCard({
+        userId,
+        eventId,
+        activeBranchSessionId: branchSessionId,
+        baseMessageSequence: 2,
+        returnTurnId: "return-turn-day-read"
+      });
+      const response = await readJournalDay(
+        new Request("http://localhost/api/journal/day?entryDate=2026-07-22")
+      );
+      const day = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(card).toMatchObject({ status: "saved", savedRevision: 1 });
+      expect(day.savedSources).toEqual([
+        expect.objectContaining({
+          entryId: card.id,
+          eventId,
+          entryDate: "2026-07-22",
+          sourceMode: recordMode,
+          contentRevision: 1,
+          savedRevision: 1
+        })
+      ]);
+      expect(day.pendingSaveEntryIds).toEqual([]);
+    }
+  );
+
+  it("keeps one confirmed card when finish is replayed concurrently", async () => {
+    state.turns.push({
+      id: "return-turn-concurrent",
+      journalEventId: eventId,
+      action: "exit_event",
+      status: "processing"
+    });
+    const input = {
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      baseMessageSequence: 2,
+      returnTurnId: "return-turn-concurrent"
+    };
+
+    const [first, second] = await Promise.all([
+      materializeJournalEventEntryCard(input),
+      materializeJournalEventEntryCard(input)
+    ]);
+
+    expect(second).toEqual(first);
+    expect(first).toMatchObject({ status: "saved", savedRevision: 1 });
+    expect(state.entries).toHaveLength(1);
+    expect(state.turns.find((turn) => turn.id === "return-turn-concurrent")).toMatchObject({
+      status: "completed"
+    });
+  });
+
+  it("leaves an opening-only event empty for the service to abandon", async () => {
+    state.messages.splice(0, state.messages.length, {
+      id: "opening-only",
+      role: "assistant",
+      sequence: 1,
+      content: "今天想怎么记？"
+    });
+    mocks.getEffectiveJournalEventFactProjectionWithClient.mockResolvedValueOnce({
+      facts: [],
+      effectiveFactIds: [],
+      deprioritizedFactIds: [],
+      explorationFactIds: [],
+      invalidatedFactIds: [],
+      pendingClarification: null
+    });
+    state.turns.push({
+      id: "return-turn-empty",
+      journalEventId: eventId,
+      action: "exit_event",
+      status: "processing"
+    });
+
+    await expect(materializeJournalEventEntryCard({
+      userId,
+      eventId,
+      activeBranchSessionId: branchSessionId,
+      baseMessageSequence: 1,
+      returnTurnId: "return-turn-empty"
+    })).rejects.toThrow("EVENT_RECORD_CARD_SOURCE_INSUFFICIENT");
+
+    expect(state.entries).toHaveLength(0);
+    expect(state.events[0]).toMatchObject({ status: "active" });
+    expect(state.turns.find((turn) => turn.id === "return-turn-empty")).toMatchObject({
+      status: "processing"
     });
   });
 

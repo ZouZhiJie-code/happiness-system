@@ -471,11 +471,14 @@ export function createJournalDailyEntryGenerationService(
           entryId: view.entry.id
         })
       : null;
+    const currentEntryBaseline = task === "update" && view.entry
+      ? currentEntryAsInternalBaseline(view.entry)
+      : null;
     const savedRevision = task === "update" && view.entry
-      ? latestUserSavedRevision ??
-        (view.entry.savedRevision === null
-          ? currentEntryAsInternalBaseline(view.entry)
-          : null)
+      ? latestUserSavedRevision &&
+        latestUserSavedRevision.contentRevision >= view.entry.contentRevision
+        ? latestUserSavedRevision
+        : currentEntryBaseline
       : null;
     if (task === "update" && !savedRevision) {
       throw new JournalDailyGenerationError("JOURNAL_DAILY_SAVED_BASE_REQUIRED");

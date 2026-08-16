@@ -389,6 +389,7 @@ function buildView(state: MutablePreviewCase): JournalDailyJournalView {
   return {
     entryDate: state.fixture.entryDate,
     savedSources: [sourceEntry],
+    legacyHistory: [],
     pendingSaveEntryIds: [],
     sourceSignature: currentSourceSignature,
     collection: { kind: "single_entry", entryId: source.id },
@@ -484,6 +485,10 @@ class JournalPreviewService {
       cases
     });
     return this.sessionView(this.sessions.get(sessionId)!);
+  }
+
+  readSession(userId: string, sessionId: string): JournalPreviewSessionView {
+    return this.sessionView(this.session(userId, sessionId));
   }
 
   private session(userId: string, sessionId: string) {
@@ -737,13 +742,17 @@ class JournalPreviewService {
   }
 
   private buildFixedUpdateParagraphs(state: MutablePreviewCase) {
-    const baseline = state.fixture.baselineDaily.paragraphs.paragraphs;
     const baselineContent = state.fixture.baselineDaily.content.trim();
     const currentContent = state.daily.content.trim();
     const manualAddition = currentContent.startsWith(baselineContent)
       ? currentContent.slice(baselineContent.length).trim()
       : currentContent === baselineContent ? "" : currentContent;
-    const paragraphs = baseline.map((paragraph) => ({ ...paragraph, sourceRecordIds: [state.record.id] }));
+    // 固定回放只包含一张记录卡。更新稿直接采用这张卡片的当前版本，
+    // 再承接用户在原日记末尾追加的内容，避免旧段落和新卡片重复出现。
+    const paragraphs = [{
+      text: state.record.content,
+      sourceRecordIds: [state.record.id]
+    }];
     if (manualAddition) paragraphs.push({ text: manualAddition, sourceRecordIds: [state.record.id] });
     return paragraphs;
   }

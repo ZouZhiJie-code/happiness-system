@@ -28,6 +28,7 @@ import type {
 type PeriodDatabaseClient = Pick<
   Prisma.TransactionClient,
   | "journalDailyEntry"
+  | "dailyJournalEntry"
   | "journalEventEntry"
   | "journalPeriodReport"
   | "journalPeriodReportRevision"
@@ -368,6 +369,29 @@ function materialFromDaily(entry: {
   };
 }
 
+function materialFromLegacyDaily(entry: {
+  id: string;
+  date: Date;
+  title: string;
+  content: string;
+  updatedAt: Date;
+  sourceEntryIds: string[];
+}): JournalPeriodMaterial {
+  const entryDate = formatEntryDate(entry.date);
+  return {
+    sourceId: `legacy-daily:${entry.id}`,
+    kind: "legacy_daily_report",
+    title: entry.title,
+    content: entry.content,
+    contentRevision: Math.floor(entry.updatedAt.getTime() / 1000),
+    updatedAt: entry.updatedAt.toISOString(),
+    startDate: entryDate,
+    endDate: entryDate,
+    sourceEventIds: [],
+    upstreamSourceIds: entry.sourceEntryIds.map((id) => `legacy-dimension:${id}`)
+  };
+}
+
 function materialFromWeekly(entry: {
   id: string;
   periodStart: Date;
@@ -408,7 +432,7 @@ async function listPeriodMaterialsWithClient(
   period: JournalPeriodRange
 ): Promise<JournalPeriodMaterial[]> {
   const { startAt, endExclusive } = getEntryDateRangeBounds(period.startDate, period.endDate);
-  const [dailyEntries, eventEntries] = await Promise.all([
+  const [dailyEntries, legacyDailyEntries, eventEntries] = await Promise.all([
     database.journalDailyEntry.findMany({
       where: { userId, status: "saved", entryDate: { gte: startAt, lt: endExclusive } },
       select: {
@@ -423,6 +447,18 @@ async function listPeriodMaterialsWithClient(
         sourceSignature: true
       },
       orderBy: [{ entryDate: "asc" }, { id: "asc" }]
+    }),
+    database.dailyJournalEntry.findMany({
+      where: { userId, status: "saved", date: { gte: startAt, lt: endExclusive } },
+      select: {
+        id: true,
+        date: true,
+        title: true,
+        content: true,
+        updatedAt: true,
+        sourceEntryIds: true
+      },
+      orderBy: [{ date: "asc" }, { id: "asc" }]
     }),
     database.journalEventEntry.findMany({
       where: {
@@ -454,6 +490,9 @@ async function listPeriodMaterialsWithClient(
       validDailyByDate.set(date, daily);
     }
   }
+  const legacyDailyByDate = new Map(
+    legacyDailyEntries.map((entry) => [formatEntryDate(entry.date), entry] as const)
+  );
 
   const weeklyMaterials: JournalPeriodMaterial[] = [];
   const datesCoveredByWeekly = new Set<string>();
@@ -513,6 +552,11 @@ async function listPeriodMaterialsWithClient(
       add(materialFromDaily(savedDaily));
       continue;
     }
+    const legacyDaily = legacyDailyByDate.get(date);
+    if (legacyDaily) {
+      add(materialFromLegacyDaily(legacyDaily));
+      continue;
+    }
     (eventsByDate.get(date) ?? []).forEach((eventEntry) => add(materialFromEvent(eventEntry)));
   }
 
@@ -541,7 +585,9 @@ function buildStatistics(materials: JournalPeriodMaterial[]) {
   const dates = new Set(materials.flatMap((source) => enumerateDates(source.startDate, source.endDate)));
   return {
     materialCount: materials.length,
-    dailyReportCount: materials.filter((source) => source.kind === "daily_report").length,
+    dailyReportCount: materials.filter((source) =>
+      source.kind === "daily_report" || source.kind === "legacy_daily_report"
+    ).length,
     weeklyReportCount: materials.filter((source) => source.kind === "weekly_report").length,
     eventCardCount: materials.filter((source) => source.kind === "event_card").length,
     coveredDayCount: dates.size
@@ -847,7 +893,9 @@ export async function updateJournalPeriodReport(
           allowUnmappedParagraphs: true,
           requireFullCoverage: false
         })
-      : reconcileManualParagraphs(previous, input.content, sourceIds);
+      : input.content.trim() === existing.content.trim()
+        ? previous
+        : reconcileManualParagraphs(previous, input.content, sourceIds);
     const nextRevision = existing.contentRevision + 1;
     const updated = await database.journalPeriodReport.updateMany({
       where: { id: existing.id, userId: input.userId, contentRevision: existing.contentRevision },

@@ -159,6 +159,31 @@ describe("事件中心对话工作台呈现层", () => {
     expect(screen.getByTestId("ai-feedback-trace-1")).toBeInTheDocument();
   });
 
+  it("开场引导不显示赞踩、重新生成或版本切换", () => {
+    const opening = buildSession({
+      messages: [{
+        ...buildSession().messages[0],
+        generationTraceId: "trace-opening-1",
+        assistantPayload: {
+          ...buildSession().messages[0].assistantPayload!,
+          naturalUnderstanding: "",
+          naturalResponse: "从你最想说的那一部分开始吧。",
+          responseKind: "opening",
+          questionSpec: null
+        }
+      }]
+    });
+    opening.messages[0]!.assistantPayload!.naturalUnderstanding = "我在听。";
+    const { container } = render(<EventCenteredDialogueWorkspaceView session={opening} entryDate="2026-07-22" onAction={vi.fn()} />);
+
+    expect(screen.getByText("从你最想说的那一部分开始吧。")).toBeVisible();
+    expect(container.querySelectorAll('[data-message-role="assistant"]')).toHaveLength(1);
+    expect(screen.queryByText("我在听。")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ai-feedback-trace-opening-1")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+  });
+
   it("跟随帮我记入口显示对应的记录模式", () => {
     render(
       <EventCenteredDialogueWorkspaceView
@@ -173,11 +198,37 @@ describe("事件中心对话工作台呈现层", () => {
     expect(screen.queryByText("陪我聊")).not.toBeInTheDocument();
   });
 
+  it("帮我记的确定性保存回执不显示生成反馈或重新生成", () => {
+    const captureSession = buildSession({
+      messages: [{
+        ...buildSession().messages[0],
+        generationTraceId: "trace-capture-1"
+      }]
+    });
+
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={captureSession}
+        entryDate="2026-07-22"
+        recordMode="capture"
+        onAction={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ai-feedback-trace-capture-1")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
+  });
+
   it("将理解和提问依次放进两个同款 AI 气泡，并只保留一组回复操作", () => {
-    const assistant = { ...buildSession().messages[0], generationTraceId: "trace-combined-1" };
+    const assistant = {
+      ...buildSession().messages[0],
+      id: "assistant-latest",
+      sequence: 3,
+      generationTraceId: "trace-combined-1"
+    };
     const withTrace = buildSession({
       messages: [
-        assistant,
         {
           id: "user-short",
           role: "user",
@@ -188,7 +239,8 @@ describe("事件中心对话工作台呈现层", () => {
           assistantPayload: null,
           responseVersion: null,
           createdAt: "2026-07-22T08:01:00.000Z"
-        }
+        },
+        assistant
       ]
     });
     const { container } = render(
@@ -211,7 +263,7 @@ describe("事件中心对话工作台呈现层", () => {
     expect(assistantBubbles[0].parentElement).toHaveClass("justify-start");
     const userBubble = container.querySelector('[data-message-role="user"]');
     expect(userBubble).toHaveTextContent("123");
-    expect(userBubble).toHaveClass("max-w-[min(66%,38.75rem)]", "text-[15px]", "leading-[26px]");
+    expect(userBubble).toHaveClass("max-w-[min(68%,44rem)]", "text-[15px]", "leading-[26px]");
     expect(userBubble?.parentElement).toHaveClass("justify-end");
     expect(screen.getAllByTestId("ai-feedback-trace-combined-1")).toHaveLength(1);
     expect(screen.getByTestId("ai-feedback-trace-combined-1")).toHaveAttribute("data-feedback-mode", "local");
@@ -242,18 +294,23 @@ describe("事件中心对话工作台呈现层", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "重新生成" })).toHaveFocus());
   });
 
-  it("用等权入口和已确认文案开始当天记录，并让历史日期保持准确", () => {
+  it("以陪我聊为主入口开始当天记录，并让历史日期保持准确", () => {
     const onStart = vi.fn();
     const { rerender } = render(
       <EventCenteredStartWorkspaceView entryDate={getTodayEntryDate()} onStart={onStart} />
     );
 
-    const capture = screen.getByRole("button", { name: /帮我记.*说下来，我帮你整理/u });
-    const chat = screen.getByRole("button", { name: /陪我聊.*从一件事聊开/u });
+    const chat = screen.getByRole("button", { name: /陪我聊.*我来问，你来说/u });
+    const capture = screen.getByRole("button", { name: /帮我记.*你来说，我在听/u });
     expect(screen.getByRole("heading", { name: "新记录" })).toHaveClass("font-ui");
     expect(screen.getByText("今天想怎么记？").closest('[data-message-role="assistant"]')).toBeVisible();
     expect(screen.getByPlaceholderText("先选择一种记录方式")).toBeDisabled();
-    expect(capture.className).toBe(chat.className);
+    expect(chat).toHaveClass("bg-[var(--paper-deep)]", "text-[var(--paper-main)]");
+    expect(capture).toHaveClass("bg-[var(--paper-soft)]");
+    const startComposer = screen.getByTestId("event-centered-start-composer");
+    expect(startComposer).toHaveClass("pointer-events-auto");
+    expect(startComposer).not.toHaveClass("mx-auto");
+    expect(startComposer.parentElement).toHaveClass("absolute", "pointer-events-none");
 
     rerender(
       <EventCenteredStartWorkspaceView
@@ -313,7 +370,7 @@ describe("事件中心对话工作台呈现层", () => {
     expect(within(bubbles[1] as HTMLElement).getByRole("button", { name: "继续生成" })).toBeInTheDocument();
   });
 
-  it("完成后只承接查看具体日期日记和再记一件", () => {
+  it("完成后保留原对话并进入只读状态，承接对应日期日记和新记录", () => {
     const onCreateEvent = vi.fn();
     render(
       <EventCenteredDialogueWorkspaceView
@@ -326,29 +383,114 @@ describe("事件中心对话工作台呈现层", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: "已记下" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "已记下" })).toHaveClass("text-[2rem]", "font-ui");
-    expect(screen.getByText("这件事已经放进 7月22日的记录")).toBeVisible();
+    expect(screen.getByText("我会先贴着这件事来听。")).toBeVisible();
+    expect(screen.getByTestId("event-centered-completion-inline")).toHaveTextContent("已记下");
+    expect(screen.getByTestId("event-centered-completion-inline")).toHaveTextContent("这件事已经放进 7月22日的记录");
     expect(screen.queryByText(/今天/u)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看 7月22日日记" })).toHaveAttribute(
       "href",
       "/calendar?view=day&date=2026-07-22"
     );
-    fireEvent.click(screen.getByRole("button", { name: "再记一件" }));
+    fireEvent.click(screen.getByRole("button", { name: "新建记录" }));
     expect(onCreateEvent).toHaveBeenCalledOnce();
-    expect(screen.getByTestId("event-centered-completion-handoff")).toBeVisible();
-    expect(screen.queryByRole("complementary", { name: "当天片段" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("tablist", { name: "当天事件" })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("输入当前事件")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("输入当前事件")).toBeDisabled();
+    expect(screen.getByLabelText("输入当前事件")).toHaveAttribute(
+      "placeholder",
+      "这条记录已经完成，如需继续，请新建一条记录。"
+    );
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
   });
 
-  it("输入区使用无渐变、无光晕的暖色单层样式", () => {
-    render(<EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={vi.fn()} />);
+  it("空记录结束后说明未形成记录卡，并且不会显示完成成功反馈", () => {
+    const onCreateEvent = vi.fn();
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({
+          sessionStatus: "abandoned",
+          eventStatus: "abandoned",
+          journalEvent: {
+            ...buildSession().journalEvent!,
+            status: "abandoned",
+            abandonedAt: "2026-07-22T09:00:00.000Z"
+          },
+          dialogue: { ...buildSession().dialogue, allowedActions: [] }
+        })}
+        entryDate="2026-07-22"
+        showRecordRail={false}
+        canCreateEvent
+        onAction={vi.fn()}
+        onCreateEvent={onCreateEvent}
+      />
+    );
+
+    expect(screen.getByTestId("event-centered-abandoned-inline")).toHaveTextContent("这条空记录已结束");
+    expect(screen.getByTestId("event-centered-abandoned-inline")).toHaveTextContent("还没有形成记录卡");
+    expect(screen.queryByTestId("event-centered-completion-inline")).not.toBeInTheDocument();
+    expect(screen.queryByText("已记下")).not.toBeInTheDocument();
+    expect(screen.queryByText(/已经放进/u)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /查看.*日记/u })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "新建记录" }));
+    expect(onCreateEvent).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("输入当前事件")).toHaveAttribute(
+      "placeholder",
+      "这条空记录已经结束，如需记录，请新建一条记录。"
+    );
+  });
+
+  it("在错误气泡中保留恢复说明、请求标识和唯一刷新动作", () => {
+    const onResolveIssue = vi.fn();
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession()}
+        entryDate="2026-07-22"
+        error={{
+          code: "INTERVIEW_TURN_OUT_OF_DATE",
+          title: "当前对话已经更新",
+          message: "这条回复对应的是较早的对话位置。",
+          resolution: "请刷新页面查看最新问题，再重新发送。",
+          requestId: "ir_request_1",
+          retryable: true,
+          action: "refresh"
+        }}
+        onAction={vi.fn()}
+        onResolveIssue={onResolveIssue}
+      />
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("这条回复对应的是较早的对话位置。");
+    expect(alert).toHaveTextContent("请刷新页面查看最新问题，再重新发送。");
+    expect(alert).toHaveTextContent("请求标识 ir_request_1");
+    fireEvent.click(within(alert).getByRole("button", { name: "刷新到最新记录" }));
+    expect(onResolveIssue).toHaveBeenCalledOnce();
+    expect(within(alert).getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("输入区复用生产悬浮透明材质，并让会话主区占满剩余宽度", () => {
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession()}
+        entryDate="2026-07-22"
+        showRecordRail={false}
+        onAction={vi.fn()}
+      />
+    );
 
     const composer = screen.getByTestId("event-centered-composer");
-    expect(composer).toHaveClass("bg-[var(--header-surface-strong)]", "border-[var(--line-soft)]");
-    expect(composer).not.toHaveClass("liquid-composer");
-    expect(composer.className).not.toMatch(/gradient|shadow|drop-shadow/u);
+    expect(composer).toHaveClass("liquid-composer", "max-w-[70rem]", "pointer-events-auto");
+    expect(composer).not.toHaveClass("mx-auto");
+    expect(composer).not.toHaveClass("bg-[var(--header-surface-strong)]", "border-[var(--line-soft)]");
+    expect(screen.getByTestId("event-centered-composer-dock")).toHaveClass(
+      "absolute",
+      "pointer-events-none"
+    );
+    expect(screen.getByTestId("event-centered-composer-dock")).not.toHaveClass("shrink-0");
+    expect(screen.getByTestId("event-centered-message-track")).toHaveStyle({ paddingBottom: "128px" });
+    expect(screen.getByTestId("event-centered-message-viewport")).toHaveStyle({ scrollPaddingBottom: "128px" });
+    expect(screen.getByTestId("event-centered-message-track")).not.toHaveClass("mx-auto", "pb-32", "pb-64");
+    expect(screen.getByRole("tabpanel")).toHaveClass("min-w-0", "flex-1");
+    expect(screen.getByRole("button", { name: "发送" })).toHaveClass("size-11");
   });
 
   it("新回复自动保持可见，用户主动回看历史后停止抢动滚动位置", () => {

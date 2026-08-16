@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   createSession: vi.fn(),
+  readSession: vi.fn(),
   resetSession: vi.fn(),
   readDay: vi.fn(),
   readRecord: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock("@/server/services/auth/current-user.service", () => ({
 vi.mock("@/server/services/journal-preview/service", () => ({
   journalPreviewService: {
     createSession: mocks.createSession,
+    readSession: mocks.readSession,
     resetSession: mocks.resetSession,
     readDay: mocks.readDay,
     readRecord: mocks.readRecord,
@@ -46,7 +48,10 @@ vi.mock("@/server/services/journal-daily-entry", async (importOriginal) => {
   };
 });
 
-import { POST as createPreviewSession } from "@/app/api/journal/preview/session/route";
+import {
+  GET as restorePreviewSession,
+  POST as createPreviewSession
+} from "@/app/api/journal/preview/session/route";
 import { GET as readJournalDay } from "@/app/api/journal/day/route";
 import { POST as generateDailyJournal } from "@/app/api/journal/daily/generate/route";
 import { PATCH as updateDailyJournal } from "@/app/api/journal/daily/[id]/route";
@@ -77,6 +82,25 @@ describe("Daily Light fixed Preview API contract", () => {
     expect(response.status).toBe(200);
     expect(mocks.createSession).toHaveBeenCalledWith("user-1");
     expect((await response.json()).modelCalls).toBe(0);
+  });
+
+  it("restores the same isolated session after a browser refresh", async () => {
+    mocks.readSession.mockReturnValue({
+      mode: "fixed-six-v1",
+      sessionId: "preview-session",
+      cases: [{ caseId: "v7r4-a1" }],
+      modelCalls: 0
+    });
+    const response = await restorePreviewSession(new Request("http://127.0.0.1/api/journal/preview/session", {
+      headers: {
+        "x-daily-light-preview": "fixed-six-v1",
+        "x-daily-light-preview-session": "preview-session"
+      }
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.readSession).toHaveBeenCalledWith("user-1", "preview-session");
+    expect(response.headers.get("x-daily-light-preview-model-calls")).toBe("0");
   });
 
   it("keeps the day endpoint response compatible with JournalDailyJournalView", async () => {
