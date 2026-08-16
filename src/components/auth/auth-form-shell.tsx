@@ -2,7 +2,6 @@
 
 import React, { type ReactNode } from "react";
 
-import { StatusPill } from "@/components/shared/status-pill";
 import { cn } from "@/lib/utils";
 
 interface AuthFormShellProps {
@@ -18,22 +17,31 @@ export function AuthFormShell({ eyebrow, title, description, footer, children, c
   return (
     <section
       className={cn(
-        "page-shell min-h-[calc(100dvh-var(--site-header-viewport-offset))] rounded-none border-x-0 border-t-0 px-5 py-6 md:px-8 md:py-8 xl:px-10",
+        "min-h-[calc(100dvh-var(--site-header-viewport-offset))] bg-[var(--color-canvas)] px-5 py-10 text-[var(--color-ink)] md:px-8 md:py-14 xl:px-10",
         className
       )}
     >
-      <div className="relative z-10 mx-auto grid w-full max-w-[72rem] gap-8 lg:grid-cols-[minmax(19rem,0.9fr)_minmax(24rem,0.9fr)] lg:items-start">
-        <div className="max-w-[36rem]">
-          <StatusPill label={eyebrow} tone="warm" />
-          <p className="archive-label mt-6">账户体系</p>
-          <h1 className="mt-5 text-balance font-display text-5xl leading-[0.96] text-ink md:text-6xl">{title}</h1>
-          <p className="mt-4 text-pretty text-sm leading-8 text-ink/76">{description}</p>
-          {footer ? <div className="mt-6 text-pretty text-sm leading-7 text-[#5a4632]">{footer}</div> : null}
+      <div className="mx-auto grid w-full max-w-[64rem] overflow-hidden rounded-[var(--radius-reading)] border border-[var(--line-soft)] bg-[var(--color-workspace)] lg:grid-cols-[minmax(18rem,0.86fr)_minmax(24rem,1.14fr)]">
+        <div className="flex min-h-[18rem] flex-col justify-between bg-[var(--color-sidebar)] p-7 md:p-9 lg:min-h-[36rem]">
+          <div>
+            <p className="text-[13px] font-medium tracking-[0.1em] text-[var(--color-action)]">DAILY LIGHT</p>
+            <p className="mt-5 max-w-[18rem] font-serif text-[26px] leading-[1.45] text-[var(--color-ink)]">
+              从一句话开始，留下一份日记。
+            </p>
+          </div>
+          <p className="mt-10 max-w-[20rem] text-[13px] leading-6 text-[var(--color-muted)]">
+            你的记录会跟随当前账户保存，方便以后继续写、继续看。
+          </p>
         </div>
 
-        <div className="paper-panel min-h-0 rounded-[28px] p-5 md:p-6">{children}</div>
+        <div className="p-6 md:p-9 lg:p-12">
+          <p className="text-[13px] font-medium tracking-[0.08em] text-[var(--color-action)]">{eyebrow}</p>
+          <h1 className="mt-3 text-balance text-[32px] font-semibold leading-tight text-[var(--color-ink)]">{title}</h1>
+          <p className="mt-3 max-w-[32rem] text-pretty text-[15px] leading-7 text-[var(--color-muted)]">{description}</p>
+          {footer ? <div className="mt-3 text-pretty text-[13px] leading-6 text-[var(--color-muted)]">{footer}</div> : null}
+          <div className="mt-8">{children}</div>
+        </div>
       </div>
     </section>
   );
 }
-

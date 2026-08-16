@@ -78,51 +78,75 @@ describe("site header journal toolbar", () => {
     expect(screen.queryByRole("link", { name: "日历" })).not.toBeInTheDocument();
   });
 
-  it("renders a journal month toolbar without the historical model switch", () => {
+  it("uses the three confirmed product destinations", () => {
     renderWithCalendarChrome(<SiteHeader />);
-    const toolbar = screen.getByTestId("journal-toolbar");
-    expect(within(toolbar).getByTestId("journal-period-display")).toHaveTextContent("2026年5月");
-    const viewSwitcher = within(toolbar).getByRole("group", { name: "切换日记视图" });
-    expect(within(viewSwitcher).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
-      "切换到日视图",
-      "切换到周视图",
-      "切换到月视图"
+    const navigation = screen.getByRole("navigation", { name: "主要导航" });
+
+    expect(within(navigation).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "记录",
+      "日记",
+      "认识自己"
     ]);
-    expect(within(toolbar).queryByRole("button", { name: "切换到事件记录" })).not.toBeInTheDocument();
+    expect(within(navigation).getByRole("link", { name: "记录" })).toHaveAttribute("href", "/interview");
+    expect(within(navigation).getByRole("link", { name: "认识自己" })).toHaveAttribute(
+      "href",
+      "/insights?section=trends"
+    );
+    expect(within(navigation).queryByRole("link", { name: "分析" })).not.toBeInTheDocument();
+    expect(within(navigation).queryByRole("link", { name: "画像" })).not.toBeInTheDocument();
+    expect(within(navigation).queryByRole("link", { name: "设置" })).not.toBeInTheDocument();
   });
 
-  it("switches views while preserving the selected date", () => {
+  it("opens the accessible account menu and restores focus with Escape", async () => {
     renderWithCalendarChrome(<SiteHeader />);
-    const toolbar = screen.getByTestId("journal-toolbar");
-    fireEvent.click(within(toolbar).getByRole("button", { name: "切换到周视图" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-02", { scroll: false });
+    const trigger = screen.getByRole("button", { name: "打开账户菜单" });
+
+    fireEvent.click(trigger);
+    const menu = await screen.findByRole("menu");
+    expect(menu).toHaveAccessibleName("打开账户菜单");
+    expect(within(menu).getByRole("menuitem", { name: "设置" })).toHaveAttribute("href", "/settings");
+    expect(within(menu).getByRole("menuitem", { name: "隐私政策" })).toHaveAttribute("href", "/legal/privacy");
+    expect(within(menu).getByRole("menuitem", { name: "用户协议" })).toHaveAttribute("href", "/legal/terms");
+    expect(within(menu).getByRole("menuitem", { name: "退出登录" })).toBeInTheDocument();
+
+    fireEvent.keyDown(menu, { key: "Escape" });
+    await waitFor(() => expect(menu).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
   });
 
-  it("uses week navigation labels and moves by seven days", () => {
-    mockSearchParams.value.view = "week";
-    mockSearchParams.value.date = "2026-05-07";
+  it("shows an in-place message when logout fails", async () => {
     renderWithCalendarChrome(<SiteHeader />);
-    const toolbar = screen.getByTestId("journal-toolbar");
-    expect(within(toolbar).getByTestId("journal-period-display")).toHaveTextContent("5月4日 - 10日");
-    fireEvent.click(within(toolbar).getByRole("button", { name: "下一周" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith("/calendar?view=week&date=2026-05-14", { scroll: false });
+    fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
+    const menu = await screen.findByRole("menu");
+
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "退出登录" }));
+
+    expect(await screen.findByTestId("account-menu-error")).toHaveTextContent("退出失败，请稍后再试");
+    expect(global.fetch).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
   });
 
-  it("returns to today without changing the active view", () => {
-    mockSearchParams.value.view = "day";
-    mockSearchParams.value.date = "2026-05-01";
-    renderWithCalendarChrome(<SiteHeader />);
-    fireEvent.click(within(screen.getByTestId("journal-toolbar")).getByRole("button", { name: "回到今天" }));
-    expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=day&date=${getTodayEntryDate()}`, { scroll: false });
+  it("keeps public authentication actions separate from product navigation", () => {
+    renderWithCalendarChrome(<SiteHeader authenticated={false} />);
+
+    expect(screen.getByRole("navigation", { name: "账户入口" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "登录" })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "创建账户" })).toHaveAttribute("href", "/register");
+    expect(screen.queryByRole("navigation", { name: "主要导航" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /账户菜单/u })).not.toBeInTheDocument();
   });
 
-  it("does not query historical calendar summaries from the journal toolbar", () => {
+  it("keeps journal period controls out of the global header", () => {
     renderWithCalendarChrome(<SiteHeader />);
-    fireEvent.pointerEnter(within(screen.getByTestId("journal-toolbar")).getByRole("button", { name: "切换到周视图" }));
+    expect(screen.queryByTestId("journal-toolbar")).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "切换日记视图" })).not.toBeInTheDocument();
+  });
+
+  it("does not query journal data from the global header", () => {
+    renderWithCalendarChrome(<SiteHeader />);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("shows the journal toolbar optimistically when entering from interview", async () => {
+  it("keeps interview context in the header until the route changes", () => {
     mockPathname.value = "/interview";
     mockSearchParams.value = {
       dimension: "joy",
@@ -133,11 +157,7 @@ describe("site header journal toolbar", () => {
     };
     renderWithCalendarChrome(<SiteHeader />);
     expect(screen.getByTestId("interview-dimension-bar")).toBeInTheDocument();
-    const journalLink = screen.getByRole("link", { name: "日记" });
-    journalLink.addEventListener("click", (event) => event.preventDefault());
-    fireEvent.click(journalLink);
-    expect(await screen.findByTestId("journal-toolbar")).toBeInTheDocument();
-    expect(screen.queryByTestId("interview-dimension-bar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("journal-toolbar")).not.toBeInTheDocument();
   });
 
   it("keeps the shared header sticky and synchronizes its measured height", async () => {
@@ -164,11 +184,8 @@ describe("site header journal toolbar", () => {
     });
   });
 
-  it("keeps the analysis navigation anchored to the current month", () => {
+  it("opens the new self-understanding workspace from the shared navigation", () => {
     renderWithCalendarChrome(<SiteHeader />);
-    expect(screen.getByRole("link", { name: "分析" })).toHaveAttribute(
-      "href",
-      `/analysis?month=${getTodayEntryDate().slice(0, 7)}`
-    );
+    expect(screen.getByRole("link", { name: "认识自己" })).toHaveAttribute("href", "/insights?section=trends");
   });
 });

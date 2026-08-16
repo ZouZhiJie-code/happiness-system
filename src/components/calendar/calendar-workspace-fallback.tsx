@@ -3,12 +3,26 @@
 import { getCalendarLoadingLabel } from "@/features/calendar/accessibility";
 import type { CalendarView } from "@/features/calendar/view-state";
 import { JournalArchiveWorkspaceFallback } from "@/components/journal/journal-archive-workspace-fallback";
+import { JournalWorkspaceFrame } from "@/components/journal/journal-workspace-frame";
+import { useSearchParams } from "next/navigation";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 
 /**
  * 保留旧导入路径，统一把日历进入态投影为新的日报/周报/月报归档工作区骨架。
  */
 export function CalendarWorkspaceFallback({ view = "month" }: { view?: CalendarView }) {
-  return <JournalArchiveWorkspaceFallback view={view} testId={`calendar-${view}-workspace-fallback`} />;
+  const searchParams = useSearchParams();
+  const normalized = normalizeCalendarSearchParams({
+    view,
+    date: searchParams.get("date"),
+    today: getTodayEntryDate()
+  });
+  return (
+    <JournalWorkspaceFrame activeView={view} date={normalized.date}>
+      <JournalArchiveWorkspaceFallback view={view} testId={`calendar-${view}-workspace-fallback`} />
+    </JournalWorkspaceFrame>
+  );
 }
 
 export function CalendarMonthGridSkeleton() {

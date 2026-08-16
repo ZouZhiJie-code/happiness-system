@@ -22,7 +22,7 @@ describe("ActionMenu", () => {
 
     const edit = screen.getByRole("menuitem", { name: /编辑.*修改当前内容/u });
     const remove = screen.getByRole("menuitem", { name: "删除" });
-    expect(edit).toHaveFocus();
+    await waitFor(() => expect(edit).toHaveFocus());
 
     fireEvent.keyDown(screen.getByRole("menu", { name: "日志动作" }), { key: "ArrowDown" });
     expect(remove).toHaveFocus();

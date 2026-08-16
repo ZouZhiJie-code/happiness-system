@@ -1,126 +1,192 @@
-# UI 设计规范：单层卡片与流动交互
+# UI 工程规范：Daily Light 目标工作台
 
-最后更新：`2026-08-12`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-13`
+- 权威入口：[Daily Light Design System](../../DESIGN.md)
 
-本文件是 **[DESIGN.md](../../DESIGN.md) 的工程实现附录**：容器层级、圆角/边框 token、共享原语与交互验收基线。创意方向与页面形态以 DESIGN.md 为准；`docs/plans/` 中的设计稿保留历史决策过程。
+状态：`第二轮视觉基线已验收并于 2026-08-13 发布 Production；字体与色阶增强候选已否决并封存`
 
-本规范约束全站产品界面的视觉容器结构，包含访谈消息区、日记、日历、分析、设置和管理员页面。首页品牌区按营销叙事单独处理。
+本文件只承载工程必须遵守的尺寸、状态、组件、键盘和无障碍规则。视觉世界与页面设计合同见 [DESIGN.md](../../DESIGN.md)，旧页面规则见 [legacy-compatibility.md](./legacy-compatibility.md)，规则去向见 [design-rule-reconciliation.md](./design-rule-reconciliation.md)。
 
-## 1. 层级预算（核心规则）
+## 1. 容器与层级
 
-每个页面最多两层视觉容器：
+- 每个页面只保留一个工作台底板。
+- 可交互单元或需要独立阅读边界的数据块可以使用一层内容面。
+- 内容面内部通过标题、留白和开放列表分组。
+- 分隔线只用于重复列表行、表格或明确操作边界。
+- 日记、周记、月记统一使用 `ReadingDocument`；事件与周期回看统一使用 `JournalTimeline`。
+- 普通内容、消息和阅读面无阴影；菜单、弹窗和悬浮输入框可以使用轻阴影。
 
-1. **底板（Surface）**：每页只有一个，承载页面环境和必要边界。对应 `page-shell` / `calendar-shell` 全局类。
-2. **卡片（Card）**：底板之内最多一层。卡片内部禁止再出现任何带 `border + 背景色` 的容器；内部分区只允许：
-   - 文字层级（标题字号/字重/颜色）
-   - 留白（spacing）
-   - chip / badge / pill（小型行内标签，不算容器层）
-   - `InlineStatus` / `SourceDrawer` 这类承担明确交互职责的紧凑原语
+## 2. 颜色映射
 
-Divider 只用于重复列表、表格或相邻操作区的明确边界。标题、空状态、说明文案和普通内容段落通过字号与留白分组。
+视觉色板以 [DESIGN.md](../../DESIGN.md) 为唯一事实源。代码使用以下语义变量映射：
 
-被废弃的中间层：`paper-sheet` 包裹内容区、`calendar-panel` 作为 shell 与 card 之间的过渡层、`calendar-card-muted` 作为卡片内子卡。日记与周期报告正文使用单一 `ReadingSurface`。
+| 语义 | CSS 变量 |
+| --- | --- |
+| 画布 | `--color-canvas` |
+| 工作区 | `--color-workspace` |
+| 内容面 | `--color-content` |
+| 侧栏 | `--color-sidebar` |
+| 正文 | `--color-ink` |
+| 主动作 | `--color-action` |
+| 辅助文字 | `--text-dim` |
+| 默认边界 | `--line-soft` |
+| 强调边界 | `--line-strong` |
 
-## 2. 卡片资格
+- 业务组件引用语义变量或共享原语，不直接写入业务色值。
+- 核心文字达到 `4.5:1`；大号文字达到 `3:1`；核心图标与控件边界达到 `3:1`。
+- `--text-faint` 只服务重复或装饰信息，状态、时间和操作说明使用可读辅助文字。
 
-只有以下两类元素才允许成为卡片：
+## 3. 字体与字号
 
-- **可点击单元**：日历天卡、评分要素按钮、热力日格、维度操作行等，需要 hover/focus 反馈的交互实体。
-- **需要从背景突出的数据单元**：如评分趋势图、维度洞察卡这类需要边界感的独立内容块。
-
-纯信息分组（说明文案、配置摘要、统计列表、表单分区）不配卡片，使用 `SectionHeading + 留白` 表达。重复列表项之间可以使用 Divider。
-
-## 3. 圆角档位（3 档）
-
-| 档位 | 值 | 用途 | CSS 变量 |
+| 层级 | 尺寸 | 最低行高 | 用途 |
 | --- | --- | --- | --- |
-| control | `12px` | 按钮、输入件、小型可点 tile、卡片内图表容器 | `--radius-control` |
-| card | `20px` | 唯一卡片层、消息、阅读面 | `--radius-card` |
-| shell | `28px` | 页面底板、对话框 | `--radius-shell` |
+| 页面标题 | 大桌面 `32px`、紧凑桌面 `28px` | `1.2` | 每个主画布唯一标题 |
+| 分区标题 | `20px` | `1.35` | 主要内容板块 |
+| 条目标题 | `16px` | `1.5` | 会话、事件和归档标题 |
+| 正文 | `15px` | `26px` | 对话、工作台与报告正文 |
+| 辅助信息 | `13px` | `1.5` | 日期、状态补充和短说明 |
 
-chip、badge 和紧凑筛选项可以使用 `rounded-full`。按钮统一使用 control 档。禁止新增 `rounded-[14px/16px/18px/22px/24px/26px/30px]` 等中间值。
+- 工作台、导航、聊天、输入和状态使用 `font-ui`。
+- `ReadingDocument` 标题使用 `font-display`，正文使用 `font-body`。
+- 长文正文宽度控制在 `65–75ch`。
+- 页面说明最多一句；空状态最多两句。
 
-## 4. 边框与阴影档位
+## 4. 圆角、边界与深度
 
-- 边框 2 档：`--line-soft`（默认）/ `--line-strong`（选中、强调态）。
-- 阴影：普通内容、消息、阅读面与静态卡片无阴影；交互卡片 hover 最多 `shadow-sm`；菜单和对话框等浮层按层级使用轻阴影。禁止手写 `shadow-[...]` 任意值。
+| 语义 | 值 | CSS 变量 |
+| --- | --- | --- |
+| 控件 | `10px` | `--radius-control` |
+| 消息 | `16px` | `--radius-card` |
+| 阅读面 | `20px` | `--radius-reading` |
+| 页面底板／弹窗 | `20px` | `--radius-shell` |
 
-## 5. 颜色
+- 状态胶囊和紧凑分段项可以使用完整圆角。
+- 默认边界使用 `--line-soft`，选中和强调使用 `--line-strong`。
+- 深度只通过单一手段表达：普通内容用边界，浮层用阴影。
 
-暖纸色系全部保留。新代码禁止手写 `border-[rgba(...)]` / `bg-[rgba(...)]` 任意值，必须引用：
+## 5. 点击热区与状态
 
-- CSS 变量：`--paper-main`、`--text-main`、`--text-dim`、`--text-faint`、`--line-soft`、`--line-strong`、`--amber` 等（见 `globals.css :root`）。
-- Tailwind 命名色：`ink / sand / clay / paper / ember / line` 等（见 `tailwind.config.ts`）。
-- 共享原语组件内封装的语义 class。
+- 主要按钮、图标按钮、菜单项、分段导航项、反馈操作和侧栏控制热区至少 `44 × 44px`。
+- 可见图标或圆形可以小于热区，热区必须持续覆盖相同位置。
+- `StatusBadge` 最小宽度 `64px`、文字居中；较长状态按内容扩展。
+- `StatusAction` 与对应 `StatusBadge` 占用相同位置和最小宽度，hover、focus 和 busy 期间保持几何稳定。
+- 页面只保留一个主动作；busy 状态持续显示清楚文字，不因 hover 或 focus 隐藏。
+- 禁用控件仍提供可读原因；需要点击后解释限制时使用 `aria-disabled` 并保留事件处理。
 
-维度色（悦/实/思/改/谢）继续由 `src/features/calendar/presentation.ts` 投影，属于既有 token，不受本条限制。
-
-## 6. 共享原语（src/components/ui/）
+## 6. 共享原语
 
 | 组件 | 职责 |
 | --- | --- |
-| `Surface` | 页面底板，吸收 `page-shell` / `calendar-shell` 差异 |
-| `Card` | 唯一卡片原语，`interactive` 态自带 hover/focus-visible |
-| `PageHeading` | 页面唯一主标题；工作台用 UI 字体，日记和报告可选 display |
-| `SectionHeading` | 20px 分区标题或 16px 条目标题，不自动附加装饰线 |
-| `InlineStatus` | 与当前操作贴近的加载、成功、提醒和失败状态 |
-| `ReadingSurface` | 日记与周期报告的单一阅读面，正文使用 body 衬线 |
-| `SourceDrawer` | 按需展开来源与生成细节 |
-| `Divider` | 重复列表、表格或明确操作区的边界，横/竖两向 |
-| `ActionButton` | primary / secondary / ghost 三态按钮 |
-| `SlidingSegmentedControl` | 带滑块的 segmented 切换；变体 `soft / calendar / admin / underline` |
-| `HorizontalPager` | 横向分页内容轨，与 segmented 联动；按需开启 `swipeable` 与 `onRequestChange` |
-| `DimensionStatusDot` | 访谈维度状态灯（灰 / 黄呼吸 / 红 / 绿） |
-| `ActionMenu` | 自适应上下展开、方向键导航与焦点恢复 |
-| `ConfirmDialog` | 焦点圈定、Escape、危险操作安全初始焦点与焦点恢复 |
+| `WorkspaceSidebar` | 侧栏表面、宽度、折叠状态和内容插槽 |
+| `useWorkspaceSidebarController` | 双向拖拽、键盘调整、首屏恢复和持久化 |
+| `ChatMessageGroup` | AI 双气泡、用户气泡和单组操作 |
+| `FloatingComposer` | 悬浮输入材质、动态占位和环境偏好回退 |
+| `ReadingDocument` | 日记、周记、月记统一阅读结构 |
+| `JournalTimeline` | 日／周／月开放式时间轴和可达链接 |
+| `StatusBadge / StatusAction` | 等宽状态与原位动作 |
+| `InlineStatus / EmptyState / Skeleton` | 稳定位置的加载、错误、空白和恢复 |
+| `ActionButton / IconButton / Field` | 统一按钮和表单热区 |
+| `SegmentedNavigation` | URL 驱动的紧凑分段导航 |
+| `Menu / Dialog / Tooltip / Toast` | 基于 Base UI 的复杂交互 |
 
-页面组件不再手写卡片样式；需要新形态时先扩展原语，再使用。
+页面先使用现有原语；新增重复形态时扩展共享原语。
 
-## 7. 字体与字号
+## 7. 工作台侧栏
 
-- 工作台、导航、聊天、按钮、输入、状态与工具信息默认继承 `font-ui`。
-- 日记和周期报告标题显式选择 `font-display`；正文由 `ReadingSurface` 使用 `font-body`。
-- 页面标题：紧凑桌面 `28px`，大桌面 `32px`；每个主画布只保留一个。
-- 分区标题：`20px`；条目标题：`16px`；正文：`15px`；辅助信息：`13px`。
-- 标题下最多保留一句说明；状态文案只表达当前结果与下一步动作。
+访谈和日记侧栏使用同一控制合同：
 
-## 8. 即时反馈
+| 状态 | 宽度 |
+| --- | --- |
+| 收起 | `64px` |
+| 最小展开 | `240px` |
+| 默认展开 | `280px` |
+| 最大展开 | `460px` |
+| 收起／展开阈值 | `208px` |
 
-- `ActionButton`、header 动作、交互卡片、导航项和日历格统一提供 pointer-down 反馈。
-- 按钮缩放约 `0.97`，大卡片缩放约 `0.985`；disabled / `aria-disabled` 保持静止。
-- 反馈只使用 `transform / opacity / color / box-shadow`，避免触发布局重排。
-- `button` 与主要交互原语统一使用 `touch-action: manipulation`，横向分页容器使用 `touch-action: pan-y`。
+### 7.1 拖拽
 
-## 9. 动效原语
+- 拖拽区在展开和收起状态持续存在。
+- 收起状态向右拖动，跨过 `208px` 后展开，并继续跟随指针到 `460px`。
+- 展开状态向左拖动，跨过 `208px` 后收起到 `64px`。
+- 拖动过程更新内存布局；指针松开后持久化展开宽度与折叠状态。
+- 侧栏收起期间保留上次展开宽度，再次展开时恢复。
+- 双击拖拽区恢复 `280px` 并展开。
 
-滑块与分页动效统一走共享原语，禁止各页手写 thumb / track transition。
+### 7.2 键盘
 
-| 场景 | 控件 | 内容区 |
-| --- | --- | --- |
-| 分析页 8 要素雷达/棒棒糖 | `SlidingSegmentedControl` soft | `HorizontalPager` |
-| 日历 日/周/月 | `SlidingSegmentedControl` calendar | URL 整页切换（不做 pager） |
-| 画像 三 tab | `SlidingSegmentedControl` underline | `HorizontalPager` |
-| 访谈五维 | `SlidingSegmentedControl` admin + `DimensionStatusDot` | 保留业务状态切换；按页面配置决定是否使用 pager |
-| 管理员 复盘/监控 | `SlidingSegmentedControl` admin | URL replace（不做 pager） |
+- `ArrowLeft / ArrowRight` 每次调整 `16px`。
+- `Home` 到最小边界；收起状态保持可通过 `ArrowRight` 或 `End` 展开。
+- `End` 到 `460px`。
+- 折叠按钮具有明确可访问名称、`aria-expanded` 和 `aria-controls`。
+- 分隔拖拽区使用 `role="separator"`、`aria-orientation="vertical"` 与实时数值。
 
-动效参数：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；拖动释放使用约 `10px` 原始位移判定、1:1 跟手、速度投影和轻微边界阻尼。`prefers-reduced-motion: reduce` 时关闭拖动，并把 spring 收敛为约 `160ms` 的短缓动；弹层使用短透明度过渡。样式类前缀：`.ui-segmented-control*`、`.ui-horizontal-pager*`（见 `globals.css`）。
+### 7.3 稳定性
 
-## 10. 响应式工具栏与弹层
+- 本地折叠状态和宽度在首屏绘制前恢复；恢复完成前关闭宽度过渡。
+- 侧栏列表使用 `scrollbar-gutter: stable`。
+- 会话和归档切换保持侧栏与主区骨架，加载提示使用覆盖层。
+- 连续切换会话时侧栏可见宽度变化控制在 `1px` 以内。
+- 折叠控制使用 `44px` 热区、约 `28px` 可见圆形，并固定在侧栏边界，避免遮挡主按钮。
 
-- 小于 `1024px` 时，`SiteHeader` 使用“品牌与主导航 + 上下文工具栏”两行布局。
-- 上下文工具栏使用横向滚动和左右渐隐边缘；选中的分析段落和 segmented 项在溢出时滚入可见区域。
-- 日志书页桌面从右侧进入；移动端从底部进入，并支持向下拖动关闭。
-- `ActionMenu` 根据触发点上下空间自动翻转；支持 ArrowUp / ArrowDown / Home / End / Escape。
-- `ConfirmDialog` 圈定 Tab 焦点，关闭后恢复触发元素焦点；危险操作默认聚焦取消按钮。
+## 8. 对话工作台
 
-## 11. 环境偏好
+- 标题、消息轨道和输入框最大宽度统一为 `1120px`。
+- AI 气泡靠左，最大 `768px / 72%`。
+- 用户气泡靠右，最大 `704px / 68%`。
+- `1024px` 视口使用侧栏外全部可用宽度，主区左右至少保留 `24px`。
+- 理解与提问是两个连续 AI 气泡，统一 `15px / 26px`、常规字重、同一背景和圆角。
+- 同一次回复只在第二个气泡下显示一组操作。
+- 开场固定话术不显示反馈、重新生成和版本切换。
+- 输入框和错误／恢复提示的实际高度写入滚动容器底部占位，最后一条消息始终可完整滚入视口。
+- 悬浮输入框是记录页唯一透明模糊内容面。
 
-- `prefers-reduced-motion: reduce`：关闭平滑滚动、横向拖动和缩放按压，spring 改为短缓动，弹层保留短透明度过渡。
-- `prefers-reduced-transparency: reduce`：顶栏、输入区、菜单和弹窗改用近实色背景，关闭 blur。
-- `prefers-contrast: more`：提升 `--line-soft / --line-strong / --text-dim / --text-faint` 对比度。
-- 工具文字、状态和图表标签使用系统 UI 字体；新增或调整的核心控制字号最低 `13px`，非关键刻度与装饰标记可按空间单独评估。
+## 9. 日／周／月时间轴
 
-## 12. 例外
+- 时间轴放在 `ReadingDocument` 正文下方，作为独立板块。
+- 统一行结构：时间锚点、标题与摘要、右侧状态。
+- 日视图使用 `HH:mm`；周视图使用具体日期；月视图使用周日期范围。
+- 行为链接使用标准 `/calendar?view=...&date=...` 或对应记录地址。
+- 同一来源只进入一行；周和月按照后端已经去重的材料顺序渲染。
+- 周优先日记、缺少时回退事件；月优先周记、缺少时回退日记或事件。
+- 默认页面不重复展示来源抽屉；旧五维历史继续留在独立折叠区。
 
-- 首页品牌广告页：营销排版，不受层级预算约束。
-- 模态对话框（如删除确认）：算 shell 档，内部同样适用"卡片内禁再嵌套"规则。
+## 10. 分段导航
+
+- `SegmentedNavigation` 用于「认识自己」趋势／画像／记忆。
+- 当前项使用暖色滑块背景，一级导航继续使用文字下划线，两者保持清楚区分。
+- 每一项是标准站内链接，保留完整 URL 和浏览器打开方式。
+- `ArrowLeft / ArrowRight` 在相邻项间移动焦点；`Home / End` 到首尾；`Enter / Space` 激活当前项。
+- 大桌面位于页面标题右侧，紧凑桌面在标题下方换行。
+- 趋势周期选择留在内容区，使用更轻的小型控件。
+
+## 11. 加载、错误与焦点
+
+- 加载使用固定几何的 skeleton 或覆盖层；状态文字出现和消失不推动正文。
+- `role="status"` 用于非打断提示，`role="alert"` 用于需要立即关注的失败。
+- 错误说明包含问题、影响和唯一恢复动作。
+- 所有表单错误通过 `aria-describedby` 与字段关联，字段同步 `aria-invalid`。
+- 菜单和弹窗关闭后把焦点还给触发控件；页面切换后的焦点落在新页面标题或保留在明确的导航触发点。
+- 页面不得通过任意子元素聚焦强制滚动整个窗口。
+
+## 12. 环境偏好与缩放
+
+- `prefers-reduced-motion: reduce`：关闭平滑滚动、按压缩放和侧栏宽度动画，保留即时状态变化。
+- `prefers-reduced-transparency: reduce`：顶部栏、输入区、菜单和弹窗使用近实色背景并关闭 blur。
+- `prefers-contrast: more`：增强正文、辅助文字、图标和边界对比度。
+- `200%` 缩放时保持内容顺序、键盘可达和无横向页面溢出；局部数据表可以使用明确的横向滚动容器。
+- `1440 × 900` 与 `1024 × 768` 是本轮桌面验收尺寸。
+
+## 13. 检查与发布门
+
+每次重要视觉调整需要完成：
+
+1. 两种桌面尺寸截图。
+2. 键盘全链路和焦点恢复。
+3. `200%` 缩放。
+4. 减少动态、减少透明度和增强对比度。
+5. 视觉回归、无障碍检查、专项与全量测试、类型检查、构建、Prisma 校验和差异检查。
+6. 明确区分零写入 Preview、隔离测试环境与 Production。
+
+自动化结果和截图属于 Preview 证据。Production 切换需要产品负责人独立授权。

@@ -11,6 +11,11 @@ import {
 
 export class AuthenticationError extends Error {}
 
+type CurrentUser = {
+  id: string;
+  username: string;
+};
+
 export function isAuthenticationRequiredError(error: unknown): error is AuthenticationError | Error {
   return (
     error instanceof AuthenticationError ||
@@ -67,7 +72,9 @@ async function runAuthSessionSideEffect(action: () => Promise<unknown>, context:
   }
 }
 
-export async function getCurrentUserFromSessionToken(rawToken: string | null) {
+export async function getCurrentUserFromSessionToken(
+  rawToken: string | null
+): Promise<CurrentUser | null> {
   if (!rawToken) {
     return null;
   }
@@ -103,15 +110,23 @@ export async function getCurrentUserFromSessionToken(rawToken: string | null) {
   }
 }
 
-export async function getCurrentUserFromRequest(request: Request) {
+export async function getCurrentUserFromRequest(
+  request: Request
+): Promise<CurrentUser | null> {
   const rawToken = readCookie(request, AUTH_COOKIE_NAME);
   return getCurrentUserFromSessionToken(rawToken);
 }
 
-export async function requireCurrentUserFromRequest(request: Request) {
-  const user = await getCurrentUserFromRequest(request);
+export async function requireCurrentUserFromRequest(request: Request): Promise<CurrentUser> {
+  const rawToken = readCookie(request, AUTH_COOKIE_NAME);
 
-  if (!user) {
+  if (rawToken === null) {
+    throw new AuthenticationError("AUTHENTICATION_REQUIRED");
+  }
+
+  const user = await getCurrentUserFromSessionToken(rawToken);
+
+  if (user === null) {
     throw new AuthenticationError("AUTHENTICATION_REQUIRED");
   }
 

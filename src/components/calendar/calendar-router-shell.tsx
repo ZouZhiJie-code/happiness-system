@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useCalendarChrome } from "@/components/calendar/calendar-chrome-context";
 import { JournalDayWorkspace } from "@/components/journal/journal-day-workspace";
 import { JournalPeriodReportContainer } from "@/components/journal/journal-period-report-container";
+import { JournalWorkspaceFrame } from "@/components/journal/journal-workspace-frame";
 import { normalizeCalendarSearchParams } from "@/features/calendar/view-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 
@@ -18,13 +19,15 @@ export function CalendarRouterShell() {
     date: searchParams.get("date"),
     today: getTodayEntryDate()
   });
-  if (activeView === "day") {
-    return <JournalDayWorkspace key={`journal-day-${normalizedSearch.date}`} entryDate={normalizedSearch.date} />;
-  }
-
-  if (activeView === "week") {
-    return <JournalPeriodReportContainer key={`journal-week-${normalizedSearch.date}`} kind="week" anchorDate={normalizedSearch.date} />;
-  }
-
-  return <JournalPeriodReportContainer key={`journal-month-${normalizedSearch.date}`} kind="month" anchorDate={normalizedSearch.date} />;
+  return (
+    <JournalWorkspaceFrame activeView={activeView} date={normalizedSearch.date}>
+      {activeView === "day" ? (
+        <JournalDayWorkspace key={`journal-day-${normalizedSearch.date}`} entryDate={normalizedSearch.date} />
+      ) : activeView === "week" ? (
+        <JournalPeriodReportContainer key={`journal-week-${normalizedSearch.date}`} kind="week" anchorDate={normalizedSearch.date} />
+      ) : (
+        <JournalPeriodReportContainer key={`journal-month-${normalizedSearch.date}`} kind="month" anchorDate={normalizedSearch.date} />
+      )}
+    </JournalWorkspaceFrame>
+  );
 }

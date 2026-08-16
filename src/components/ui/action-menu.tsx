@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Menu } from "@base-ui/react/menu";
+import { useId, useState, type ReactNode } from "react";
 
-import { ActionButton, type ActionButtonVariant } from "@/components/ui/action-button";
+import { actionButtonClass, type ActionButtonVariant } from "@/components/ui/action-button";
 import { cn } from "@/lib/utils";
 
 export type ActionMenuSurface = "default" | "calendar";
@@ -32,6 +32,9 @@ type ActionMenuProps = {
   showDisclosure?: boolean;
 };
 
+/**
+ * 全站动作菜单。方向键、Home、End、Esc、视口翻转和焦点恢复由 Base UI 统一处理。
+ */
 export function ActionMenu({
   triggerLabel,
   triggerBusyLabel = "处理中...",
@@ -48,159 +51,59 @@ export function ActionMenu({
   triggerClassName,
   showDisclosure = true
 }: ActionMenuProps) {
-  const menuId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [placement, setPlacement] = useState<"top" | "bottom">("top");
-  const reduceMotion = useReducedMotion();
-
-  const closeMenu = useCallback((restoreFocus = false) => {
-    setMenuOpen(false);
-    if (restoreFocus) {
-      window.requestAnimationFrame(() => triggerRef.current?.focus());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        closeMenu();
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeMenu(true);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [closeMenu, menuOpen]);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const menu = menuRef.current;
-    const root = rootRef.current;
-    if (menu && root) {
-      const rootRect = root.getBoundingClientRect();
-      const menuHeight = menu.getBoundingClientRect().height;
-      setPlacement(rootRect.top >= menuHeight + 12 ? "top" : "bottom");
-    }
-
-    itemRefs.current[0]?.focus();
-  }, [menuOpen]);
-
-  function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    const enabledItems = itemRefs.current.filter((item): item is HTMLButtonElement => Boolean(item));
-    if (enabledItems.length === 0) return;
-
-    const currentIndex = enabledItems.indexOf(document.activeElement as HTMLButtonElement);
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      enabledItems[(currentIndex + 1 + enabledItems.length) % enabledItems.length].focus();
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      enabledItems[(currentIndex - 1 + enabledItems.length) % enabledItems.length].focus();
-    } else if (event.key === "Home") {
-      event.preventDefault();
-      enabledItems[0].focus();
-    } else if (event.key === "End") {
-      event.preventDefault();
-      enabledItems[enabledItems.length - 1].focus();
-    }
-  }
+  const [open, setOpen] = useState(false);
+  const menuLabelId = useId();
+  const unavailable = disabled || isBusy;
 
   return (
-    <div ref={rootRef} className="relative" data-testid={testId}>
-      <ActionButton
-        ref={triggerRef}
-        type="button"
-        variant={variant}
-        aria-haspopup="menu"
-        aria-label={triggerAriaLabel}
-        aria-expanded={menuOpen}
-        aria-controls={menuId}
-        disabled={disabled || isBusy}
-        title={disabled ? (disabledReason ?? undefined) : undefined}
-        className={triggerClassName}
-        onClick={() => {
-          if (disabled || isBusy) {
-            return;
-          }
-
-          setMenuOpen((current) => !current);
-        }}
-      >
-        {isBusy ? triggerBusyLabel : triggerLabel}
-        {!isBusy && showDisclosure ? (
-          <span aria-hidden="true" className="text-[0.68rem] leading-none opacity-70">
-            ▾
-          </span>
-        ) : null}
-      </ActionButton>
-
-      <AnimatePresence>
-        {menuOpen ? (
-          <motion.div
-            ref={menuRef}
-            id={menuId}
-            role="menu"
-            aria-label={menuAriaLabel}
-            aria-orientation="vertical"
-            onKeyDown={handleMenuKeyDown}
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: placement === "top" ? 6 : -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: placement === "top" ? 6 : -6, scale: 0.97 }}
-            transition={reduceMotion ? { duration: 0.1 } : { type: "spring", bounce: 0, duration: 0.28 }}
-            className={cn(
-              "ui-action-menu-panel absolute z-20",
-              placement === "top" ? "bottom-[calc(100%+0.45rem)] origin-bottom" : "top-[calc(100%+0.45rem)] origin-top",
-              align === "end" ? "right-0" : "left-0",
-              surface === "calendar" && "ui-action-menu-panel--calendar"
-            )}
+    <div className="relative" data-testid={testId}>
+      <Menu.Root open={open} onOpenChange={setOpen} disabled={unavailable}>
+        <Menu.Trigger
+          className={actionButtonClass(variant, triggerClassName)}
+          aria-label={triggerAriaLabel}
+          title={disabled ? (disabledReason ?? undefined) : undefined}
+        >
+          {isBusy ? triggerBusyLabel : triggerLabel}
+          {!isBusy && showDisclosure ? (
+            <span aria-hidden="true" className="text-[13px] leading-none opacity-70">
+              ▾
+            </span>
+          ) : null}
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner
+            className="ui-action-menu-positioner"
+            side="top"
+            sideOffset={7}
+            align={align}
+            collisionPadding={12}
           >
-            {items.map((item, index) => (
-              <button
-                key={item.id}
-                ref={(node) => {
-                  itemRefs.current[index] = node;
-                }}
-                type="button"
-                role="menuitem"
-                tabIndex={index === 0 ? 0 : -1}
-                className="ui-action-menu-item"
-                onClick={() => {
-                  closeMenu(true);
-                  item.onSelect();
-                }}
-              >
-                <span className="block font-medium">{item.label}</span>
-                {item.description ? (
-                  <span className="mt-0.5 block text-xs leading-5 text-[var(--text-dim)]">
-                    {item.description}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+            <Menu.Popup
+              className={cn(
+                "ui-action-menu-panel",
+                surface === "calendar" && "ui-action-menu-panel--calendar"
+              )}
+              aria-labelledby={menuLabelId}
+            >
+              <span id={menuLabelId} className="sr-only">{menuAriaLabel}</span>
+              {items.map((item) => (
+                <Menu.Item
+                  key={item.id}
+                  className="ui-action-menu-item"
+                  onClick={() => item.onSelect()}
+                >
+                  <span className="block font-medium">{item.label}</span>
+                  {item.description ? (
+                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--text-dim)]">
+                      {item.description}
+                    </span>
+                  ) : null}
+                </Menu.Item>
+              ))}
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
     </div>
   );
 }

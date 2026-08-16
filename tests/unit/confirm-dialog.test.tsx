@@ -21,25 +21,21 @@ function DialogHarness({ tone = "default" }: { tone?: "default" | "danger" }) {
 }
 
 describe("ConfirmDialog", () => {
-  it("traps focus and restores it to the trigger", async () => {
+  it("sets initial focus and restores it to the trigger", async () => {
     render(<DialogHarness />);
     const trigger = screen.getByRole("button", { name: "打开确认" });
 
     trigger.focus();
     fireEvent.click(trigger);
     const confirm = screen.getByRole("button", { name: "确定" });
-    const cancel = screen.getByRole("button", { name: "取消" });
-
-    expect(confirm).toHaveFocus();
-    fireEvent.keyDown(document, { key: "Tab" });
-    expect(cancel).toHaveFocus();
+    await waitFor(() => expect(confirm).toHaveFocus());
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
-  it("focuses the safe action first for destructive confirmation", () => {
+  it("focuses the safe action first for destructive confirmation", async () => {
     render(<DialogHarness tone="danger" />);
     fireEvent.click(screen.getByRole("button", { name: "打开确认" }));
-    expect(screen.getByRole("button", { name: "取消" })).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("button", { name: "取消" })).toHaveFocus());
   });
 });

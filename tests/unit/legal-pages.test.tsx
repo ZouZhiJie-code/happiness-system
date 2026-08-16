@@ -9,18 +9,20 @@ describe("legal pages", () => {
     render(<TermsPage />);
 
     expect(screen.getByRole("heading", { level: 1, name: "用户协议" })).toBeInTheDocument();
-    expect(screen.getByText("账号与使用")).toBeInTheDocument();
-    expect(screen.getByText("日志内容与使用边界")).toBeInTheDocument();
-    expect(screen.getByText("注销与服务调整")).toBeInTheDocument();
+    expect(screen.getByText("账户与使用")).toBeInTheDocument();
+    expect(screen.getByText("你提交的内容")).toBeInTheDocument();
+    expect(screen.getByText("删除账号")).toBeInTheDocument();
+    expect(screen.getByText(/你可以随时在“设置”中删除账号/)).toBeInTheDocument();
+    expect(screen.queryByText(/后续开放/)).not.toBeInTheDocument();
   });
 
   test("privacy page explains collected data, AI processing, and deletion", () => {
     render(<PrivacyPage />);
 
     expect(screen.getByRole("heading", { level: 1, name: "隐私政策" })).toBeInTheDocument();
-    expect(screen.getByText("我们会收集哪些信息")).toBeInTheDocument();
-    expect(screen.getByText("AI 处理与第三方服务")).toBeInTheDocument();
-    expect(screen.getByText("保存、删除与联系")).toBeInTheDocument();
+    expect(screen.getByText("保存哪些内容")).toBeInTheDocument();
+    expect(screen.getByText("怎样使用这些内容")).toBeInTheDocument();
+    expect(screen.getByText("删除账号和数据")).toBeInTheDocument();
+    expect(screen.getByText(/你可以在“设置”中删除账号/)).toBeInTheDocument();
   });
 });
-

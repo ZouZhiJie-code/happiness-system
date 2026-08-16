@@ -8,7 +8,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { AnalysisToolbar } from "@/components/analysis/analysis-toolbar";
 import { useCalendarChromeOptional } from "@/components/calendar/calendar-chrome-context";
 import { EventCenteredInterviewHeader } from "@/components/shared/site-header/event-centered-interview-header";
-import { JournalToolbar } from "@/components/journal/journal-toolbar";
 import { HeaderToolbarDivider } from "@/components/shared/header-toolbar-primitives";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { isInterviewDimension } from "@/features/interview/dimensions";
@@ -19,7 +18,8 @@ import { useSiteHeaderViewportOffset } from "./site-header/use-site-header-viewp
 
 const headerPlainContextByPath: Partial<Record<string, { title: string; subtitle: string }>> = {
   "/settings": { title: "设置", subtitle: "账号与偏好" },
-  "/profile": { title: "画像", subtitle: "长期记忆与洞察" }
+  "/insights": { title: "认识自己", subtitle: "趋势、画像与记忆" },
+  "/profile": { title: "认识自己", subtitle: "记录中的我" }
 };
 
 function resolveHeaderPlainContext(pathname: string) {
@@ -52,7 +52,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement | null>(null);
   const todayCalendarHref = `/calendar?view=day&date=${getTodayEntryDate()}`;
-  const todayAnalysisHref = `/analysis?month=${getTodayEntryDate().slice(0, 7)}`;
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
   const interviewMode = searchParams.get("mode");
@@ -70,9 +69,9 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
     );
   const isInterviewPage = pathname === "/interview" && isInterviewWorkspace && !isEnteringCalendar;
   const shouldReserveHeaderSpace = false;
-  const isCalendarPage = pathname === "/calendar" || isEnteringCalendar;
   const isAnalysisPage = pathname === "/analysis";
   const headerPlainContext = resolveHeaderPlainContext(pathname);
+  const hasHeaderContext = isEventCenteredInterviewPage || isInterviewPage || isAnalysisPage || Boolean(headerPlainContext);
 
   useSiteHeaderViewportOffset(headerRef);
 
@@ -81,7 +80,7 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
       {shouldReserveHeaderSpace ? <div aria-hidden="true" className="h-[var(--site-header-viewport-offset,4rem)] w-full" /> : null}
       <header
         ref={headerRef}
-        className="site-header-frosted sticky top-0 z-50 isolate w-full px-3 md:px-6"
+        className="site-header-frosted sticky top-0 isolate w-full px-3 md:px-6"
       >
       <div className="relative z-10 grid min-h-[var(--site-header-frame-min-height)] grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] lg:gap-3">
         <Link
@@ -102,21 +101,19 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
           <p className="hidden whitespace-nowrap font-display text-[1.08rem] text-ink min-[360px]:block">Daily Light</p>
         </Link>
         <HeaderToolbarDivider className="hidden lg:flex" />
-        <div className="site-header-context-scroll col-span-2 row-start-2 flex min-h-[var(--site-header-lane-min-height)] min-w-0 items-center overflow-x-auto pb-0.5 lg:col-span-1 lg:row-auto lg:overflow-x-hidden lg:pb-0">
+        {hasHeaderContext ? <div className="site-header-context-scroll col-span-2 row-start-2 flex min-h-[var(--site-header-lane-min-height)] min-w-0 items-center overflow-x-auto pb-0.5 lg:col-span-1 lg:row-auto lg:overflow-x-hidden lg:pb-0">
           {isEventCenteredInterviewPage && !isEnteringCalendar ? <EventCenteredInterviewHeader /> : null}
           {isInterviewPage ? <InterviewHeaderToolbar isAdmin={isAdmin} /> : null}
-          {isCalendarPage ? <JournalToolbar /> : null}
           {isAnalysisPage ? <AnalysisToolbar /> : null}
           {headerPlainContext ? (
             <HeaderPlainContext title={headerPlainContext.title} subtitle={headerPlainContext.subtitle} />
           ) : null}
-        </div>
+        </div> : <div aria-hidden="true" className="hidden lg:block" />}
         <HeaderToolbarDivider className="hidden lg:flex" />
         <SiteHeaderNav
           authenticated={authenticated}
           pathname={pathname}
           todayCalendarHref={todayCalendarHref}
-          todayAnalysisHref={todayAnalysisHref}
         />
       </div>
       </header>

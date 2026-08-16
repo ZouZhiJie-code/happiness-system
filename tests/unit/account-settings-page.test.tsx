@@ -48,7 +48,7 @@ describe("account settings page", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/login?next=%2Fsettings%2Faccount");
   });
 
-  it("renders the account settings workspace for authenticated users", async () => {
+  it("redirects authenticated users to the account section in settings", async () => {
     mockCookies.mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: "raw-session-token" })
     });
@@ -59,16 +59,8 @@ describe("account settings page", () => {
 
     const page = await AccountSettingsPage();
 
-    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(mockRedirect).toHaveBeenCalledWith("/settings#account");
     expect(mockGetCurrentUserFromSessionToken).toHaveBeenCalledWith("raw-session-token");
-    expect(page).toMatchObject({
-      props: {
-        user: {
-          id: "user-1",
-          username: "daily_light_01"
-        }
-      }
-    });
-    expect(page).toBeTruthy();
+    expect(page).toBeNull();
   });
 });

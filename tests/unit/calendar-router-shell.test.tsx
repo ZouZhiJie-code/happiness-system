@@ -50,30 +50,42 @@ function OptimisticWeekTrigger() {
 describe("journal router shell", () => {
   beforeEach(() => {
     mockSearchParams.value = { view: null, date: "2026-05-02" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ kind: "day", selectedKey: "2026-05-02", items: [], monthDates: [] })
+    })));
   });
 
-  it("opens the selected date in day view when the url has no explicit view", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opens the selected date in day view when the url has no explicit view", async () => {
     render(<Harness />);
     expect(screen.getByTestId("journal-day-workspace")).toHaveTextContent("day:2026-05-02");
+    expect(await screen.findByText("还没有可回看的记录。")).toBeInTheDocument();
   });
 
-  it("keeps month view on the journal record model", () => {
+  it("keeps month view on the journal record model", async () => {
     mockSearchParams.value = { view: "month", date: "2026-05-02" };
     render(<Harness />);
     expect(screen.getByTestId("journal-month-report-workspace")).toHaveTextContent("month:2026-05-02");
+    expect(await screen.findByText("还没有可回看的记录。")).toBeInTheDocument();
   });
 
-  it("keeps week view on the journal record model", () => {
+  it("keeps week view on the journal record model", async () => {
     mockSearchParams.value = { view: "week", date: "2026-05-07" };
     render(<Harness />);
     expect(screen.getByTestId("journal-week-report-workspace")).toHaveTextContent("week:2026-05-07");
+    expect(await screen.findByText("还没有可回看的记录。")).toBeInTheDocument();
   });
 
-  it("renders an optimistic week view before the url updates", () => {
+  it("renders an optimistic week view before the url updates", async () => {
     mockSearchParams.value = { view: "month", date: "2026-05-02" };
     render(<Harness><OptimisticWeekTrigger /></Harness>);
     fireEvent.click(screen.getByRole("button", { name: "切换周视图" }));
     expect(screen.getByTestId("journal-week-report-workspace")).toBeInTheDocument();
     expect(screen.queryByTestId("journal-month-report-workspace")).not.toBeInTheDocument();
+    expect(await screen.findByText("还没有可回看的记录。")).toBeInTheDocument();
   });
 });

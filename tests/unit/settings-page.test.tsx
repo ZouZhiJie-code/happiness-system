@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 
 const { mockCookies } = vi.hoisted(() => ({
@@ -33,14 +32,6 @@ vi.mock("@/server/repositories/admin-analytics.repository", () => ({
   recordAnalyticsEvent: mockRecordAnalyticsEvent
 }));
 
-vi.mock("@/components/joy/settings-form", () => ({
-  SettingsForm: () => <div data-testid="settings-form-stub">settings form stub</div>
-}));
-
-vi.mock("@/components/ai-feedback/ai-quality-consent-settings", () => ({
-  AIQualityConsentSettings: () => <div data-testid="ai-quality-consent-settings-stub">quality settings stub</div>
-}));
-
 import SettingsPage from "@/app/settings/page";
 
 describe("settings page", () => {
@@ -49,7 +40,7 @@ describe("settings page", () => {
     vi.unstubAllEnvs();
   });
 
-  it("renders a logout action for a regular user and keeps admin analytics hidden", async () => {
+  it("shows account and legal actions for a regular user while keeping logout in the account menu", async () => {
     mockCookies.mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: "raw-session-token" })
     });
@@ -61,11 +52,12 @@ describe("settings page", () => {
     render(await SettingsPage());
 
     expect(mockRedirect).not.toHaveBeenCalled();
-    expect(screen.getByTestId("settings-form-stub")).toBeInTheDocument();
-    expect(screen.getByText("daily_light_01")).toBeInTheDocument();
-    expect(screen.getByTestId("settings-form-stub")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "退出当前账号" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "管理员数据分析" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("daily_light_01")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "删除账号" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "隐私政策" })).toHaveAttribute("href", "/legal/privacy");
+    expect(screen.getByRole("link", { name: "用户协议" })).toHaveAttribute("href", "/legal/terms");
+    expect(screen.queryByText("退出登录")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "内部工具" })).not.toBeInTheDocument();
   });
 
   it("shows the admin analytics entry for admin users", async () => {
@@ -80,8 +72,8 @@ describe("settings page", () => {
 
     render(await SettingsPage());
 
-    expect(screen.getByRole("link", { name: "管理员数据分析" })).toHaveAttribute("href", "/admin/analytics");
-    expect(screen.getByRole("link", { name: "AI 运行配置中心" })).toHaveAttribute("href", "/settings/ai-runtime");
-    expect(screen.getByRole("link", { name: "AI 质量改进中心" })).toHaveAttribute("href", "/admin/ai-quality");
+    expect(screen.getByRole("link", { name: "数据分析" })).toHaveAttribute("href", "/admin/analytics");
+    expect(screen.getByRole("link", { name: "AI 运行配置" })).toHaveAttribute("href", "/settings/ai-runtime");
+    expect(screen.getByRole("link", { name: "AI 质量改进" })).toHaveAttribute("href", "/admin/ai-quality");
   });
 });

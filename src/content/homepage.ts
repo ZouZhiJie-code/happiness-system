@@ -4,116 +4,76 @@ export interface HomepageVisualConfig {
   src?: string | null;
 }
 
-export interface HomepageDimensionStory {
-  dimension: "joy" | "fulfillment" | "reflection" | "improvement" | "gratitude";
-  badge: string;
+export interface HomepageStep {
+  number: string;
   title: string;
   body: string;
-  example: string;
 }
 
 export const homepageContent = {
   hero: {
-    eyebrow: "AI Daily Journal",
-    title: "Daily Light",
-    lead: "不用想格式，也不用总结自己。说出今天的一个片段，Daily Light 会顺着你的话追问必要细节，再整理成你可以确认、编辑和保存的日志。",
-    signals: ["一句话开始", "AI 访谈你的一天", "自动生成日志"],
+    title: "从一句话开始，留下一份日记",
+    lead:
+      "想留下一件事时，直接说就好。Daily Light 会从这件事继续问，陪你慢慢说清楚；想快速记下，也可以直接说给它听。记录会放进当天，之后可以整理成日记。",
+    primaryCta: "开始记录",
     visual: {
-      title: "一张写给日常的纸",
-      alt: "一张在暖色光线中展开的日志页面示意图",
+      title: "晨光里的日记",
+      alt: "暖色晨光落在摊开的日记本上",
       src: "/homepage/hero.png"
-    },
-    primaryCta: "开始今天的记录"
-  },
-  pain: {
-    title: "很多经历不是没有意义，只是当时来不及读懂",
-    lead: "忙了一天却很难写下回忆，想感谢却不想写成客套话，想改进又不想被说教。Daily Light 把这些细小片段留在合适的位置。",
-    bullets: [
-      "开心来得快，离开得也快，常常还没来得及看清自己为什么被点亮。",
-      "忙碌很满，分量却未必说得清，结束时只剩一句“今天好累”。",
-      "关系、判断和选择，常常在事后才显出它们真正改变了什么。"
-    ],
-    visual: {
-      title: "那些没来得及说清的日子",
-      alt: "层叠的纸张与笔记，表达许多经历没有被读懂",
-      src: "/homepage/pain.png"
     }
   },
-  journal: {
-    title: "从一句日常片段，到一篇可以留下的日志",
-    lead: "产品主线很简单：你说发生了什么，AI 帮你问清关键处，最后生成正文草稿。结构化线索留在系统内部，用户只面对对话和日志。",
+  demo: {
+    title: "一次记录，会这样留下来",
+    capture: {
+      title: "帮我记",
+      description: "你来说，我在听"
+    },
+    chat: {
+      title: "陪我聊",
+      description: "我来问，你来说"
+    },
+    conversation: {
+      user: "下班路上吹到一阵很舒服的晚风。",
+      understanding: "那阵晚风让你从一天的紧绷里慢了下来。",
+      question: "你是在什么时候意识到，自己今天一直绷着？"
+    },
+    event: {
+      time: "19:40",
+      title: "下班路上吹到很舒服的晚风",
+      body: "走到路口时忽然慢了下来，今天第一次觉得整个人松了一点。"
+    },
+    journal: {
+      date: "8月13日 星期四",
+      body: "下班路上吹到一阵很舒服的晚风。我在路口慢下来，才发现今天一直绷着。那几分钟很短，却让我重新感觉到了自己的节奏。"
+    }
+  },
+  flow: {
+    title: "记录可以很轻，回看时依然完整",
+    lead: "每次只处理眼前这一件事。完成后，它会回到当天，和其他记录一起组成日记。",
     steps: [
       {
-        title: "说出一个片段",
-        body: "不用分类，也不用写完整。先把真实发生过的那一段说出来。"
+        number: "01",
+        title: "说下此刻想记的事",
+        body: "一句话就能开始。想继续说清楚，选择陪我聊；想快速留下，选择帮我记。"
       },
       {
-        title: "顺着你的话继续问",
-        body: "系统根据当前维度追问真正需要补齐的细节，不把访谈变成表格问卷。"
+        number: "02",
+        title: "留下当天的记录卡",
+        body: "每件完成的记录都会带着时间回到当天，之后还能继续查看。"
       },
       {
-        title: "整理成可确认的日志",
-        body: "先生成一份正文草稿，再由你继续编辑、确认和保存。"
+        number: "03",
+        title: "整理成日记",
+        body: "在日记页把当天的记录整理成正文，也可以继续编辑自己的表达。"
       }
-    ],
-    visual: {
-      title: "从片段到日志",
-      alt: "对话片段整理成日志草稿的产品叙事示意图",
-      src: "/homepage/Journal.png"
-    }
+    ] satisfies HomepageStep[]
   },
-  dimensions: {
-    title: "五种记录，五条认识自己的路",
-    lead: "每个维度都对应一种自我理解的入口，帮你把一天里不同类型的经验，落回可以回看的线索。",
+  review: {
+    title: "日记留下来，日子也有了来处",
+    lead: "按日、周、月回看，过去发生过的事会慢慢显出自己的脉络。",
     visual: {
-      title: "把线索落回自己",
-      alt: "打开的日志与植物标本，作为五种记录的整体背景",
-      src: "/homepage/summary.png"
-    },
-    items: [
-      {
-        dimension: "joy",
-        badge: "悦",
-        title: "开心",
-        body: "看见自己会被什么点亮。",
-        example: "今天什么时候让你感到很开心？"
-      },
-      {
-        dimension: "fulfillment",
-        badge: "实",
-        title: "充实",
-        body: "留下今天没有白过的证据。",
-        example: "哪件事让你觉得今天算数？"
-      },
-      {
-        dimension: "reflection",
-        badge: "思",
-        title: "思考",
-        body: "把一个判断的来路写清楚。",
-        example: "今天有什么新的判断依据？"
-      },
-      {
-        dimension: "improvement",
-        badge: "改",
-        title: "改进",
-        body: "找到下一次可以轻轻动一下的地方。",
-        example: "之后怎么做可以变得更好？"
-      },
-      {
-        dimension: "gratitude",
-        badge: "谢",
-        title: "感谢",
-        body: "看见关系里被回应到的需要。",
-        example: "谁回应了你一个真实需要？"
-      }
-    ] satisfies HomepageDimensionStory[]
-  },
-  summary: {
-    title: "今天写下的片段，会慢慢连成你自己的线索",
-    lead: "日历负责回到某一天，完整日志负责收束当天，月度分析和幸福 8 要素评分负责看见长期变化。",
-    visual: {
-      title: "把片段连成线索",
-      alt: "日志、日历和评分线索被整理成长线的示意图",
+      title: "一本可以长期回看的日记",
+      alt: "暖色纸页上展开的日记与日历",
       src: "/homepage/Journal.png"
     }
   }

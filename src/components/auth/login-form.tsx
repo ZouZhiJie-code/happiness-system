@@ -53,14 +53,14 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
     <form className="grid gap-5" method="post" action="/api/auth/login" onSubmit={handleSubmit}>
       {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
       <div className="grid gap-2">
-        <label htmlFor="login-username" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
+        <label htmlFor="login-username" className="text-[13px] font-medium text-[var(--color-ink)]">
           用户名
         </label>
         <input
           id="login-username"
           name="username"
           autoComplete="username"
-          className="min-h-12 rounded-[18px] border border-[rgba(115,77,39,0.18)] bg-white/70 px-4 py-3 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(168,124,69,0.4)]"
+          className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--color-content)] px-4 py-3 text-[15px] text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--line-strong)]"
           value={username}
           onFocus={onInteraction}
           onChange={(event) => setUsername(event.target.value)}
@@ -68,13 +68,13 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           aria-invalid={touched.username && !usernameValid}
           aria-describedby="login-username-help"
         />
-        <p id="login-username-help" className={`text-xs leading-5 ${touched.username && !usernameValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        <p id="login-username-help" className={`text-[13px] leading-5 ${touched.username && !usernameValid ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>
           {touched.username && !usernameValid ? "请输入 3–24 位中文、字母、数字或下划线。" : "3–24 位，支持中文、字母、数字和下划线。"}
         </p>
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="login-password" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
+        <label htmlFor="login-password" className="text-[13px] font-medium text-[var(--color-ink)]">
           密码
         </label>
         <input
@@ -82,7 +82,7 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           name="password"
           type="password"
           autoComplete="current-password"
-          className="min-h-12 rounded-[18px] border border-[rgba(115,77,39,0.18)] bg-white/70 px-4 py-3 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(168,124,69,0.4)]"
+          className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--color-content)] px-4 py-3 text-[15px] text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--line-strong)]"
           value={password}
           onFocus={onInteraction}
           onChange={(event) => setPassword(event.target.value)}
@@ -90,7 +90,7 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           aria-invalid={touched.password && !passwordValid}
           aria-describedby="login-password-help"
         />
-        <p id="login-password-help" className={`text-xs leading-5 ${touched.password && !passwordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        <p id="login-password-help" className={`text-[13px] leading-5 ${touched.password && !passwordValid ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>
           {touched.password && !passwordValid ? "请输入 8–72 位密码。" : "密码长度为 8–72 位。"}
         </p>
       </div>
@@ -98,12 +98,12 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
       <div className="grid gap-3">
         <button
           type="submit"
-          className="wood-chip min-h-12 rounded-full px-5 py-3 text-sm tracking-[0.12em] transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-12 rounded-[var(--radius-control)] bg-[var(--color-action)] px-5 py-3 text-[15px] font-semibold text-[var(--color-content)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ink)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canSubmit}
         >
           {submitting ? "登录中…" : "登录并继续"}
         </button>
-        <p className="text-xs leading-6 text-[var(--text-faint)]">
+        <p className="text-[13px] leading-6 text-[var(--color-muted)]">
           登录即表示你已阅读并同意
           <Link href="/legal/terms" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
             《用户协议》
@@ -112,9 +112,9 @@ export function LoginForm({ onSubmit, onInteraction, nextPath = null }: LoginFor
           <Link href="/legal/privacy" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
             《隐私政策》
           </Link>
-          ，并知悉服务会使用对话、AI 生成内容及反馈进行质量评估与持续改进。
+          。
         </p>
-        <p className="text-pretty text-sm leading-7 text-[#5a4632]">
+        <p className="text-pretty text-sm leading-7 text-[var(--color-muted)]">
           请使用注册时保存的密码。还没有账户？
           <Link href={registerHref} className="ml-1 underline underline-offset-4">
             去注册

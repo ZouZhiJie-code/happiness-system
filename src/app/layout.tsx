@@ -16,8 +16,8 @@ import { isAdminUsername } from "@/server/services/auth/admin-access";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Daily Light | 在日常里照见自己",
-  description: "用 AI 访谈和幸福日志整理每日开心、充实、思考、改进与感谢，帮助你更理解自己的喜悦、牵挂与抉择。",
+  title: "Daily Light | 从一句话开始，留下一份日记",
+  description: "说下一件想留下的事，Daily Light 会帮你记进当天，并整理成可以回看的日记。",
   icons: {
     icon: [{ url: "/brand/happiness-logo.png", type: "image/png" }],
     apple: [{ url: "/brand/happiness-logo.png", sizes: "1254x1254", type: "image/png" }]
@@ -31,7 +31,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="font-body text-ink antialiased">
+      <body className="font-ui text-ink antialiased">
         <Suspense fallback={null}>
           <AnalysisChromeProvider>
             <CalendarChromeProvider>
