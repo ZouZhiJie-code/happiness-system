@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-relationship-claim-status-probe-v1",
+  "status": "complete",
+  "decision": "technical_blocked",
+  "completedAt": "2026-08-16T14:23:28.956Z",
+  "planFingerprint": "20f845bf68af645892b35ff99bcc1a158bfbf60357c156431331e4a30cd298e0",
+  "probeSetFingerprint": "c5a1413068c11a43490ea0f2610b49368ac1d05006a21da17eb21ec4fabac323",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "datasetVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+  "datasetFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+  "parentCandidateFingerprint": "14eeb577533a4f90127887695f78f71f660e78e5d6588da65a0cea66ccdd1dc9",
+  "candidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+  "policyFingerprint": "7b72e3180633fb114ea266bf5bcf437126690176a7df851fe1d6a81e0d45067c",
+  "evidenceHashes": {
+    "startCardSha256": "56f90abe4d45da3aa005ed41c634f8825ba04ef8b7257c2b75ec45a9d66e10de",
+    "authorizationSha256": "65513b12f57a432eab1fdf670e5805adaacf28ef87e57ef33052539d39ce41a6"
+  },
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "hardTimeoutMs": 120000,
+    "concurrency": 1,
+    "retries": 0,
+    "callBudget": 2,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000
+  },
+  "budget": {
+    "authorized": 2,
+    "consumed": 2,
+    "retries": 0
+  },
+  "technicalSummary": {
+    "valid": 0,
+    "technicalFailures": 2,
+    "contractFailures": 0,
+    "http200": 2,
+    "latencyMedianMs": 45387,
+    "latencyP90Ms": 46627
+  },
+  "contentSummary": {
+    "evaluable": 0,
+    "passed": 0,
+    "failed": 0,
+    "notEvaluable": 2
+  },
+  "targetSummary": {
+    "real13": "not_evaluable",
+    "cf02": "not_evaluable"
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-13",
+      "principleId": "QR-08",
+      "technicalStatus": "technical_failure",
+      "httpStatus": 200,
+      "responseModel": null,
+      "latencyMs": 45387,
+      "responseHash": null,
+      "responseLength": 0,
+      "validationIssueCount": 0,
+      "errorCode": "TIMEOUT",
+      "claimSummary": {
+        "declared": 0,
+        "userStated": 0,
+        "hypothesesToConfirm": 0,
+        "usageCounts": null
+      },
+      "contentStatus": "not_evaluable",
+      "findingCategory": "technical_stability",
+      "findingCode": "BODY_IDLE_TIMEOUT_NO_CONTENT"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-CF-02",
+      "principleId": "QR-08",
+      "technicalStatus": "technical_failure",
+      "httpStatus": 200,
+      "responseModel": null,
+      "latencyMs": 46627,
+      "responseHash": null,
+      "responseLength": 0,
+      "validationIssueCount": 0,
+      "errorCode": "TIMEOUT",
+      "claimSummary": {
+        "declared": 0,
+        "userStated": 0,
+        "hypothesesToConfirm": 0,
+        "usageCounts": null
+      },
+      "contentStatus": "not_evaluable",
+      "findingCategory": "technical_stability",
+      "findingCode": "BODY_IDLE_TIMEOUT_NO_CONTENT"
+    }
+  ],
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "reviewRationale": 0,
+    "hiddenReasoning": 0,
+    "upstreamRequestIds": 0
+  },
+  "excluded": {
+    "judgeCalls": 0,
+    "hiddenSetReads": 0,
+    "databaseChanges": 0,
+    "humanPreviewSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "stopPoint": "two_results_and_codex_content_decision_complete"
+}

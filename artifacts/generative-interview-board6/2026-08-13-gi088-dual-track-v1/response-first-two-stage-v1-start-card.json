@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-two-stage-v1",
+  "status": "local_candidate_validated_zero_call",
+  "productDecision": "同时优化用户首个有用回应等待与模型完整处理耗时；先回应后整理可以进入独立候选，Prompt、Skill、模型与程序职责同步重划。",
+  "scope": "response_first_two_stage_local_candidate_and_zero_call_responsibility_audit",
+  "candidate": {
+    "parentCandidateVersion": "2026-08-16.gi088-relationship-claim-status-v1",
+    "parentCandidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+    "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+    "productRuntimeChanged": false
+  },
+  "bindings": {
+    "evaluationStandardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "candidateSourceSha256": "3dfc2324a2cb67403408aa7b8eb27ff4fbf8dd8a428046149d1585ad540e6498",
+    "testSourceSha256": "52af6a7bf728d40589767f644e0151824858009a3802ad27a182ae59ba2ded99",
+    "inspectSourceSha256": "f91b38cffad9790853755f475eec870659a4b8f45dcedbcb0ca949eefc6062dd",
+    "caseInspectSourceSha256": "9bd6560e15c11e8a07411375b01880fb137c33892547fff14e84ee466f0f6905",
+    "planSha256AtValidation": "585287ac9d26d105adf4aae0698f5bfd0320e29afe759fd0d07a227de408d6da"
+  },
+  "runtimeCandidate": {
+    "visibleResponse": {
+      "model": "deepseek-v4-pro",
+      "thinking": "enabled",
+      "reasoningEffort": "low",
+      "responseFormat": "json_object",
+      "modelOutputFields": 2
+    },
+    "structuredSemantics": {
+      "model": "deepseek-v4-pro",
+      "thinking": "enabled",
+      "reasoningEffort": "high",
+      "responseFormat": "json_object",
+      "modelOutputFields": 12
+    },
+    "recentMessageWindow": 8,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "validation": {
+    "targetedTests": "9/9",
+    "typecheck": "passed",
+    "targetedEslint": "passed",
+    "candidateInspection": "passed",
+    "privateCaseProjectionInspection": "passed_counts_and_fingerprints_only",
+    "result": "local_contract_and_state_machine_valid_real_latency_and_semantic_quality_pending"
+  },
+  "executionBoundary": {
+    "providerCalls": 0,
+    "judgeCalls": 0,
+    "hiddenSetReads": 0,
+    "databaseChanges": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "stopPoint": "local_candidate_audit_tests_and_public_zero_call_evidence_sealed"
+}

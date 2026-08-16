@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-contract-burden-ab-v1",
+  "status": "sealed_directional_result",
+  "completedAt": "2026-08-16T16:08:37.878Z",
+  "planFingerprint": "95c920d837984314ed92be810f1618b4c1b12f545c0265ae836024d4475d03be",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "dataset": {
+    "version": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "fingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "reviewPacketFingerprint": "14e978dd3590d58ce837b6fffe51fddfbca1b81da0e68390f19babe2579b1982"
+  },
+  "case": {
+    "caseId": "RPR-CF-02",
+    "principleId": "QR-08",
+    "caseFingerprint": "fded342a8385302a8a8b4dd0cffb29f9604ffd6070033310546c07aefa42d9cd",
+    "candidateInputFingerprint": "c75c322807a0b7605cc945fc5cd58ebb8e5a1bae3a2b78dee2e1a9939c70c163",
+    "userPayloadSha256": "667e503e0f9852681947833fbb8ff5201db54d04f4b09cfcd5f763aeff52c97c",
+    "userPayloadLength": 600
+  },
+  "changedFactor": "prompt_skill_and_output_contract_workload_bundle_only",
+  "fixedFactors": {
+    "sameFullUserPayload": true,
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "json_object",
+    "provider": "api.deepseek.com",
+    "providerDefaultMaxTokens": true,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "arms": {
+    "A": {
+      "label": "current_full_prompt_skill_output_contract",
+      "candidateVersion": "2026-08-16.gi088-relationship-claim-status-v1",
+      "candidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+      "systemPromptSha256": "6fae07ee9415dad4a2b651d170f339a8a458236c48c7e4bc160559c6e6dafdf0",
+      "systemPromptLength": 9128,
+      "outputContractSha256": "5aeef43a34d6d33cccfa49c9b5acd4475b6062d03ac1697dc48f69590901a483",
+      "outputContractLength": 3293,
+      "requestFingerprint": "a9890b5cefb52231809ae9c86b32e9d67afa9c0b65f0158ccb91a6f2298eae93"
+    },
+    "B": {
+      "label": "response_first_visible_prompt_skill_output_contract",
+      "candidateVersion": "2026-08-16.gi088-response-first-two-stage-v1",
+      "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+      "systemPromptSha256": "912df133e35982c39a3e21c0399922b48e15c77c3c4b6db4c3f5835e6ddcc7f5",
+      "systemPromptLength": 478,
+      "outputContractSha256": "6ed840a4fd87a9e6aa83b234eb32452f13d66dcae52c7bddda3c7ee032f89691",
+      "outputContractLength": 162,
+      "requestFingerprint": "859a2b95c89c9b9c58bccbd42efb7966013d273015301ae9229c6b82c92c5430"
+    }
+  },
+  "sequence": [
+    {
+      "order": 1,
+      "runLabel": "A1",
+      "arm": "A",
+      "requestFingerprint": "a9890b5cefb52231809ae9c86b32e9d67afa9c0b65f0158ccb91a6f2298eae93"
+    },
+    {
+      "order": 2,
+      "runLabel": "B1",
+      "arm": "B",
+      "requestFingerprint": "859a2b95c89c9b9c58bccbd42efb7966013d273015301ae9229c6b82c92c5430"
+    },
+    {
+      "order": 3,
+      "runLabel": "B2",
+      "arm": "B",
+      "requestFingerprint": "859a2b95c89c9b9c58bccbd42efb7966013d273015301ae9229c6b82c92c5430"
+    },
+    {
+      "order": 4,
+      "runLabel": "A2",
+      "arm": "A",
+      "requestFingerprint": "a9890b5cefb52231809ae9c86b32e9d67afa9c0b65f0158ccb91a6f2298eae93"
+    }
+  ],
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "firstUsefulGateMs": 45000,
+    "fullVisibleGateMs": 60000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "callBudget": 4
+  },
+  "evidenceHashes": {
+    "startCardSha256": "8fef9c011613f24108e5d5d5812d2c991bbb84645c9151bba5bf4d552e8a30ce",
+    "authorizationSha256": "bc81768fcb09bc8983c195fc74d7da9b2752f3c27e953acc42373383248f641e",
+    "runnerFileSha256": "6fc64501d085b1001a124f74ed9a417924af4a40dbdb10bfe78d5423ae38a6ba"
+  },
+  "modelCheck": {
+    "httpStatus": 200,
+    "targetModelAvailable": true,
+    "modelListHash": "487df5b8f4a096e095dd4095596accd286d62a30f0eb2e8f2cc847b005b50121"
+  },
+  "preflightErrorCode": null,
+  "budget": {
+    "requested": 4,
+    "authorized": 4,
+    "consumed": 4,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technicalSummary": {
+    "valid": 4,
+    "contractFailures": 0,
+    "technicalFailures": 0,
+    "http200": 4,
+    "firstUsefulGatePassed": 4,
+    "fullVisibleGatePassed": 4
+  },
+  "runs": [
+    {
+      "order": 1,
+      "runLabel": "A1",
+      "arm": "A",
+      "status": "valid",
+      "requestFingerprint": "a9890b5cefb52231809ae9c86b32e9d67afa9c0b65f0158ccb91a6f2298eae93",
+      "candidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "headersLatencyMs": 377,
+      "bodyLatencyMs": 21453,
+      "totalLatencyMs": 21830,
+      "firstUsefulAtMs": 21830,
+      "fullVisibleAtMs": 21830,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "452ffca67e5a6854c886ec90c170eb8d91f3770509bff3197d0962052f8ce4da",
+      "responseLength": 1333,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false,
+      "finishReason": "stop",
+      "reasoningPresent": true,
+      "reasoningTokens": 1565,
+      "tokenUsage": {
+        "promptTokens": 4448,
+        "completionTokens": 2028,
+        "totalTokens": 6476,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 4448
+      }
+    },
+    {
+      "order": 2,
+      "runLabel": "B1",
+      "arm": "B",
+      "status": "valid",
+      "requestFingerprint": "859a2b95c89c9b9c58bccbd42efb7966013d273015301ae9229c6b82c92c5430",
+      "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "headersLatencyMs": 225,
+      "bodyLatencyMs": 3609,
+      "totalLatencyMs": 3834,
+      "firstUsefulAtMs": 3834,
+      "fullVisibleAtMs": 3834,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "3228c2c9b2c0bcdefb281c61f47fa2c76a2cef5d80961856c6716d16644eeb92",
+      "responseLength": 181,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false,
+      "finishReason": "stop",
+      "reasoningPresent": true,
+      "reasoningTokens": 74,
+      "tokenUsage": {
+        "promptTokens": 487,
+        "completionTokens": 164,
+        "totalTokens": 651,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 487
+      }
+    },
+    {
+      "order": 3,
+      "runLabel": "B2",
+      "arm": "B",
+      "status": "valid",
+      "requestFingerprint": "859a2b95c89c9b9c58bccbd42efb7966013d273015301ae9229c6b82c92c5430",
+      "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "headersLatencyMs": 277,
+      "bodyLatencyMs": 6897,
+      "totalLatencyMs": 7174,
+      "firstUsefulAtMs": 7174,
+      "fullVisibleAtMs": 7174,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "42fa78c093b1257666663148bd7537753d56d93ab49710f5f25cf6349b5b34d0",
+      "responseLength": 216,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false,
+      "finishReason": "stop",
+      "reasoningPresent": true,
+      "reasoningTokens": 247,
+      "tokenUsage": {
+        "promptTokens": 487,
+        "completionTokens": 381,
+        "totalTokens": 868,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 103
+      }
+    },
+    {
+      "order": 4,
+      "runLabel": "A2",
+      "arm": "A",
+      "status": "valid",
+      "requestFingerprint": "a9890b5cefb52231809ae9c86b32e9d67afa9c0b65f0158ccb91a6f2298eae93",
+      "candidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "headersLatencyMs": 303,
+      "bodyLatencyMs": 31082,
+      "totalLatencyMs": 31385,
+      "firstUsefulAtMs": 31385,
+      "fullVisibleAtMs": 31385,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "625cdd6a12682f6e0a42b2fec2d14a6433387615f1ea94901cf6e726569bb4ed",
+      "responseLength": 1391,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false,
+      "finishReason": "stop",
+      "reasoningPresent": true,
+      "reasoningTokens": 2282,
+      "tokenUsage": {
+        "promptTokens": 4448,
+        "completionTokens": 2776,
+        "totalTokens": 7224,
+        "promptCacheHitTokens": 4352,
+        "promptCacheMissTokens": 96
+      }
+    }
+  ],
+  "notRun": [],
+  "decision": "visible_contract_directional_support",
+  "decisionChecks": {
+    "decision": "visible_contract_directional_support",
+    "complete": true,
+    "nonLatencyTechnicalFailure": false,
+    "pairDeltasMs": {
+      "A1MinusB1": 17996,
+      "A2MinusB2": 24211
+    },
+    "strongDirection": false,
+    "directionalSupport": true,
+    "sharedSlow": false,
+    "allPass": true
+  },
+  "semanticQuality": "not_evaluated",
+  "nextStep": "validate_visible_stage_semantic_fidelity_before_product_integration",
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "hiddenReasoningText": 0,
+    "upstreamRequestIds": 0,
+    "exposed": "identity_fingerprints_timing_status_and_counts_only"
+  },
+  "excluded": {
+    "judgeCalls": 0,
+    "hiddenSetReads": 0,
+    "databaseChanges": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "stopPoint": "four_results_or_first_non_latency_technical_failure_no_automatic_followup"
+}

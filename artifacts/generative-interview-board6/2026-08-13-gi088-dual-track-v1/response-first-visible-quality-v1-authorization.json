@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-visible-quality-v1",
+  "status": "authorized",
+  "authorizedBy": "product_owner",
+  "authorizationSource": "current_session_explicit_implement_plan_authorization",
+  "planFingerprint": "729ed2da26f692b4ea553a3be4689c7de017875b141031f9e85906277f4f8a0c",
+  "startCardSha256": "bc06dd7abdb97fb5c0ce53277f0d4de14d1bb5902d8ece12542f326d79b84ec1",
+  "providerCallsAuthorized": 6,
+  "retriesAuthorized": 0,
+  "recoveryAuthorized": 0,
+  "fallbackAuthorized": 0
+}

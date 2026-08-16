@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-contract-burden-ab-v1",
+  "planFingerprint": "95c920d837984314ed92be810f1618b4c1b12f545c0265ae836024d4475d03be",
+  "startCardSha256": "8fef9c011613f24108e5d5d5812d2c991bbb84645c9151bba5bf4d552e8a30ce",
+  "status": "authorized",
+  "authorizedAt": "2026-08-16T16:06:43Z",
+  "authorizedBy": "product_owner",
+  "authorizationSource": "current_session_explicit_provider_call_authorization",
+  "sequence": ["A", "B", "B", "A"],
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "firstUsefulGateMs": 45000,
+    "fullVisibleGateMs": 60000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "callBudget": 4
+  },
+  "executionBoundary": {
+    "providerCallsAuthorized": 4,
+    "providerCallsConsumedBeforeRun": 0,
+    "retriesAuthorized": 0,
+    "recoveryAuthorized": 0,
+    "fallbackAuthorized": 0,
+    "judgeCallsAuthorized": 0,
+    "hiddenSetReadsAuthorized": 0,
+    "databaseChangesAuthorized": 0,
+    "previewChangesAuthorized": 0,
+    "productionChangesAuthorized": 0,
+    "commitsAuthorized": 0,
+    "pushesAuthorized": 0,
+    "deploymentsAuthorized": 0
+  },
+  "stopPoint": "four_results_or_first_non_latency_technical_failure"
+}

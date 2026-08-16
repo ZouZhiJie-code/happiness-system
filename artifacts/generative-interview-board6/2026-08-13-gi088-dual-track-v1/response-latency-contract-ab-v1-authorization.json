@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-latency-contract-ab-v1",
+  "planFingerprint": "d09a2f0d87395d085c2facd117c5d238b0d76d5575b3ad715d0538f312ac752d",
+  "startCardSha256": "ae4bbf4ffd45b51afea106fbf7b72bf7c8e780911376c83bfd0816c32fbb3857",
+  "scope": "single_case_contract_latency_directional_probe",
+  "status": "authorized",
+  "authorizedAt": "2026-08-16T15:16:51Z",
+  "authorizedBy": "product_owner",
+  "authorizationSource": "followup_explicit_provider_call_authorization",
+  "caseId": "RPR-CF-02",
+  "sequence": ["A", "B", "B", "A"],
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "callBudget": 4
+  },
+  "executionBoundary": {
+    "providerCallsAuthorized": 4,
+    "providerCallsConsumedBeforeRun": 0,
+    "retriesAuthorized": 0,
+    "recoveryAuthorized": 0,
+    "fallbackAuthorized": 0,
+    "judgeCallsAuthorized": 0,
+    "hiddenSetReadsAuthorized": 0,
+    "databaseChangesAuthorized": 0,
+    "previewChangesAuthorized": 0,
+    "productionChangesAuthorized": 0,
+    "commitsAuthorized": 0,
+    "pushesAuthorized": 0,
+    "deploymentsAuthorized": 0
+  },
+  "stopPoint": "four_results_or_first_non_latency_technical_failure"
+}

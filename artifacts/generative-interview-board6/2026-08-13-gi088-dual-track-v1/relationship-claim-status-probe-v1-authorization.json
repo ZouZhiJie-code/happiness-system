@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-relationship-claim-status-probe-v1",
+  "planFingerprint": "20f845bf68af645892b35ff99bcc1a158bfbf60357c156431331e4a30cd298e0",
+  "probeSetFingerprint": "c5a1413068c11a43490ea0f2610b49368ac1d05006a21da17eb21ec4fabac323",
+  "scope": "two_target_case_semantic_probe",
+  "status": "authorized",
+  "authorizedAt": "2026-08-16T14:15:49Z",
+  "authorizedBy": "product_owner",
+  "authorizationSource": "current_session_explicit_authorization",
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "hardTimeoutMs": 120000,
+    "concurrency": 1,
+    "retries": 0,
+    "callBudget": 2
+  },
+  "cases": [
+    "RPR-REAL-13",
+    "RPR-CF-02"
+  ],
+  "executionBoundary": {
+    "judgeCalls": 0,
+    "hiddenSetReads": 0,
+    "databaseChanges": 0,
+    "humanPreviewSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "stopPoint": "two_results_and_codex_content_decision"
+}

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-two-stage-v1",
+  "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+  "status": "zero_call_audit_complete_real_effect_pending",
+  "historicalEvidence": {
+    "proLowFullDevelopment": {
+      "p50Ms": 19886,
+      "p90Ms": 30955,
+      "maxMs": 38554,
+      "speedGate": "passed",
+      "technicalDecision": "no_go_due_to_empty_content_source_omission_and_action_violation"
+    },
+    "fullVsCompactContract": {
+      "providerCalls": 126,
+      "fullP50Ms": 35042,
+      "compactP50Ms": 32085,
+      "fullP90Ms": 50215,
+      "compactP90Ms": 54127,
+      "speedDecision": "both_no_go",
+      "mainCompactFailure": "15_source_reference_omissions",
+      "sourceResponsibilityReplay": "15_of_15_passed_after_program_inheritance"
+    },
+    "contractAb20260816": {
+      "sequence": ["A", "B", "B", "A"],
+      "latencyMs": [22687, 26423, 49455, 33370],
+      "decision": "inconclusive_mixed_direction"
+    }
+  },
+  "currentRuntimeFacts": {
+    "existingTwoCallOrder": "semantic_plan_first_then_visible_response",
+    "userImpact": "现有 two_call 会先等待结构化计划，再生成可见回应，因此不能承担先回应体验。",
+    "existingSseTransport": "ready_to_emit_summary_and_response_delta_before_final_session",
+    "existingClientPreview": "ready_to_render_delta_while_request_remains_open",
+    "requiredRuntimeChange": "reverse_to_visible_response_first_then_background_structure_and_persist_recoverable_pending_state"
+  },
+  "staticPromptAndContractAudit": {
+    "currentSingleStage": {
+      "systemPromptChars": 9128,
+      "modelOutputFields": 14
+    },
+    "visibleStage": {
+      "systemPromptChars": 478,
+      "modelOutputFields": 2
+    },
+    "structuredStage": {
+      "systemPromptChars": 7262,
+      "modelOutputFields": 12
+    }
+  },
+  "rprCf02RequestProjection": {
+    "caseId": "RPR-CF-02",
+    "caseFingerprint": "fded342a8385302a8a8b4dd0cffb29f9604ffd6070033310546c07aefa42d9cd",
+    "candidateInputFingerprint": "c75c322807a0b7605cc945fc5cd58ebb8e5a1bae3a2b78dee2e1a9939c70c163",
+    "conversationMessages": 2,
+    "currentSingleStageRequestChars": 9728,
+    "visibleStageRequestChars": 996,
+    "structuredStageRequestChars": 8282,
+    "combinedTwoStageRequestChars": 9278,
+    "visibleStageReductionPercent": 89.762,
+    "combinedTwoStageReductionPercent": 4.626,
+    "evidenceBoundary": "character_count_association_only_no_new_latency_conclusion"
+  },
+  "responsibilitySplit": {
+    "prompt": [
+      "定义每一段对用户产生的结果与范围",
+      "写清用户控制与证据边界",
+      "冻结第一段可见文字",
+      "定义精确输出合同，不承载运行时状态逻辑"
+    ],
+    "skill": [
+      "排列语义检查步骤",
+      "检查事实、假设与关系解释的详细程度",
+      "选择一个低负担回答目标",
+      "返回前检查可见语言"
+    ],
+    "model": [
+      "理解用户最新含义",
+      "区分用户已明确事实与待确认假设",
+      "判断焦点、阶段、认识变化与下一问",
+      "选择新语义来源并生成自然表达"
+    ],
+    "program": [
+      "选择有限近期上下文并投影当前状态",
+      "生成编号并继承、合并、去重历史来源",
+      "执行动作边界、状态迁移、字段默认值与幂等预算",
+      "先保存用户原话，合成两段结果并支持后台失败恢复"
+    ]
+  },
+  "rootCauseAssessment": {
+    "confirmed": [
+      "主要等待发生在响应头之后的正文生成阶段。",
+      "Pro High 是长期慢底座，Low 的历史速度收益已经成立。",
+      "现有单段完整 JSON 会让用户等到所有结构字段完成才看到正文。",
+      "现有产品 two_call 顺序为先语义、后可见，仍会把第一段等待放在用户面前。"
+    ],
+    "directional": [
+      "新合同负担可能放大延迟，但四次同期 A/B 尚未形成稳定单独归因。",
+      "第一段请求字符缩小约 89.8%，具备降低首个回应等待的明确结构方向。"
+    ],
+    "stillOpen": [
+      "字符数减少能转化为多少真实首个正文时间。",
+      "供应商时段波动占本次 22.687 至 49.455 秒差异的比例。",
+      "第二段 Pro High 与结构化语义本身各自承担多少总耗时。"
+    ]
+  },
+  "risks": [
+    "第一段显示前的程序门可以检查结构、问句数量和内部语言泄漏，无法替代语义真实性判断。",
+    "近期窗口固定为 8 条消息，需要用长对话检查是否遗漏关键纠正与用户边界。",
+    "第二段继续使用 Pro High，后台总耗时仍可能较长。",
+    "两段各一次调用会增加调用次数；整体请求字符在本题只下降约 4.6%，总速度需要真实证据。"
+  ],
+  "nextSingleFactor": {
+    "identityProposal": "2026-08-16.gi088-visible-contract-burden-ab-v1",
+    "question": "在同一 Pro Low、同一输入、同一 Provider 和同一时段下，第一段可见合同是否显著快于当前完整合同。",
+    "sequence": ["A", "B", "B", "A"],
+    "armA": "current_relationship_claim_status_full_contract_with_reasoning_low",
+    "armB": "response_first_visible_only_contract_with_reasoning_low",
+    "fixedUserPayload": "current_full_turn_payload_for_both_arms",
+    "callBudgetRequested": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "status": "prepared_not_authorized",
+    "decisionBoundary": "only_latency_attribution_no_semantic_or_product_acceptance"
+  },
+  "executionBoundary": {
+    "modelCalls": 0,
+    "judgeCalls": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  }
+}

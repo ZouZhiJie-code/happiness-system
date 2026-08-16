@@ -1,0 +1,250 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-latency-contract-ab-v1",
+  "status": "sealed_directional_result",
+  "completedAt": "2026-08-16T15:21:16.379Z",
+  "planFingerprint": "d09a2f0d87395d085c2facd117c5d238b0d76d5575b3ad715d0538f312ac752d",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "datasetVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+  "datasetFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+  "case": {
+    "caseId": "RPR-CF-02",
+    "principleId": "QR-08",
+    "caseFingerprint": "fded342a8385302a8a8b4dd0cffb29f9604ffd6070033310546c07aefa42d9cd",
+    "candidateInputFingerprint": "c75c322807a0b7605cc945fc5cd58ebb8e5a1bae3a2b78dee2e1a9939c70c163",
+    "userPromptSha256": "667e503e0f9852681947833fbb8ff5201db54d04f4b09cfcd5f763aeff52c97c"
+  },
+  "arms": {
+    "A": {
+      "label": "previous_event_relationship_explanation_candidate",
+      "candidateVersion": "2026-08-16.gi088-unconfirmed-event-relationship-explanation-binding-v1",
+      "candidateFingerprint": "14eeb577533a4f90127887695f78f71f660e78e5d6588da65a0cea66ccdd1dc9",
+      "policyFingerprint": "f9cea1c29cc8623a328dfa79c2702e0cc071c6c06aefcea5a05ef289c3810374",
+      "candidateFileSha256": "e49421981a8464d5b1fc165acf0417ca297631e3c124fcd10721beabb2a231f3",
+      "systemPromptSha256": "d94efa5d9e56d3a3b394fdd821395517298ac277ae87deb8f9511aa5ae911fb0",
+      "systemPromptLength": 7469,
+      "outputContractSha256": "35ca4ffc13baa131b72244427a0789c6fe86c8f2606c07c5e20386c2919ae218",
+      "outputContractLength": 2408,
+      "requestFingerprint": "477e47936c3a14c6b313a1f7dc490bc9bbb088c6bd964d514261003dbe2d6d54"
+    },
+    "B": {
+      "label": "relationship_claim_status_candidate",
+      "candidateVersion": "2026-08-16.gi088-relationship-claim-status-v1",
+      "candidateFingerprint": "1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc",
+      "policyFingerprint": "7b72e3180633fb114ea266bf5bcf437126690176a7df851fe1d6a81e0d45067c",
+      "candidateFileSha256": "0a091dcf808af479c5bbc3288da31e3e070cb90a15c925a490518315d61904c1",
+      "systemPromptSha256": "6fae07ee9415dad4a2b651d170f339a8a458236c48c7e4bc160559c6e6dafdf0",
+      "systemPromptLength": 9128,
+      "outputContractSha256": "5aeef43a34d6d33cccfa49c9b5acd4475b6062d03ac1697dc48f69590901a483",
+      "outputContractLength": 3293,
+      "requestFingerprint": "c864b3c2ae33b952d8fb99786a7d05d649bdf12af899fce643af0c0055910f01"
+    }
+  },
+  "sequence": [
+    {
+      "order": 1,
+      "runLabel": "A1",
+      "arm": "A",
+      "requestFingerprint": "477e47936c3a14c6b313a1f7dc490bc9bbb088c6bd964d514261003dbe2d6d54"
+    },
+    {
+      "order": 2,
+      "runLabel": "B1",
+      "arm": "B",
+      "requestFingerprint": "c864b3c2ae33b952d8fb99786a7d05d649bdf12af899fce643af0c0055910f01"
+    },
+    {
+      "order": 3,
+      "runLabel": "B2",
+      "arm": "B",
+      "requestFingerprint": "c864b3c2ae33b952d8fb99786a7d05d649bdf12af899fce643af0c0055910f01"
+    },
+    {
+      "order": 4,
+      "runLabel": "A2",
+      "arm": "A",
+      "requestFingerprint": "477e47936c3a14c6b313a1f7dc490bc9bbb088c6bd964d514261003dbe2d6d54"
+    }
+  ],
+  "inputHashes": {
+    "datasetReceiptSha256": "b650328e02886730c93f0093fcd357e3b964f1007698ff62022439a8e51f8a6f",
+    "privateCasesSha256": "391e735110d274ded276827895a4027927dcbd16aef327042753b075a0fa8190",
+    "armACandidateFileSha256": "e49421981a8464d5b1fc165acf0417ca297631e3c124fcd10721beabb2a231f3",
+    "armBCandidateFileSha256": "0a091dcf808af479c5bbc3288da31e3e070cb90a15c925a490518315d61904c1",
+    "providerFileSha256": "75650cd9a1d8c2079a24afa2cd35a40e9c61e8951b97cf12d656732655cd7133",
+    "semanticDeltaFileSha256": "b7ffb90bbe3b426c87d2f1c78a25d62d42a9369b09b9654f46ee7a69e65d41a7",
+    "stageTransitionFileSha256": "1c8657e4473993d335eb9435e3110419769e7228965d47dad19dcea337ff0326",
+    "runnerFileSha256": "f004173335f872541dbcbb4f3daa63d8bf54225d5d8335d14c299cd27493bccb",
+    "finalizerFileSha256": "4cdd37553e9996b5a3f445398a3f2df15b36494f44961b45b3328706d655d91f",
+    "immutableManifestSha256": "42510166933d482a4ce2ea616a101ea354c16c73b833f09212ee3559eab4009d",
+    "behaviorManifestSha256": "90e56ba00a34b160ea7d836e306f3dd2dc8f09ab435f71881b76f17eddec3c67"
+  },
+  "evidenceHashes": {
+    "startCardSha256": "ae4bbf4ffd45b51afea106fbf7b72bf7c8e780911376c83bfd0816c32fbb3857",
+    "authorizationSha256": "d32f8ed36a2476e301352d48bc58d3f72a1606e051353b208dd4fd8c92589589"
+  },
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "callBudget": 4
+  },
+  "productDecision": {
+    "firstUsefulGateMs": 45000,
+    "fullVisibleGateMs": 60000,
+    "twoStageDirectionAccepted": true,
+    "isolatedRunnerIsEndToEndEvidence": false
+  },
+  "modelCheck": {
+    "httpStatus": 200,
+    "targetModelAvailable": true,
+    "modelListHash": "487df5b8f4a096e095dd4095596accd286d62a30f0eb2e8f2cc847b005b50121"
+  },
+  "budget": {
+    "authorized": 4,
+    "consumed": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "notRun": 0
+  },
+  "technicalSummary": {
+    "valid": 4,
+    "contractFailures": 0,
+    "technicalFailures": 0,
+    "deadlineTimeouts": 0,
+    "http200": 4,
+    "firstUsefulGatePassed": 3,
+    "fullVisibleGatePassed": 4
+  },
+  "runs": [
+    {
+      "order": 1,
+      "runLabel": "A1",
+      "arm": "A",
+      "status": "valid",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "latencyMs": 22687,
+      "headersLatencyMs": 398,
+      "bodyLatencyMs": 22289,
+      "totalLatencyMs": 22687,
+      "firstUsefulAtMs": 22687,
+      "fullVisibleAtMs": 22687,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "48ae71281c74f17771a06b312f0df049b6a75afcb51c583a52ffe2d5d396c62d",
+      "responseLength": 910,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false
+    },
+    {
+      "order": 2,
+      "runLabel": "B1",
+      "arm": "B",
+      "status": "valid",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "latencyMs": 26423,
+      "headersLatencyMs": 394,
+      "bodyLatencyMs": 26029,
+      "totalLatencyMs": 26423,
+      "firstUsefulAtMs": 26423,
+      "fullVisibleAtMs": 26423,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "dbedc71ce580cd9549aa7c0299c74bdb7a298b40be70653acf66343a6ea92514",
+      "responseLength": 1332,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false
+    },
+    {
+      "order": 3,
+      "runLabel": "B2",
+      "arm": "B",
+      "status": "valid",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "latencyMs": 49455,
+      "headersLatencyMs": 301,
+      "bodyLatencyMs": 49153,
+      "totalLatencyMs": 49455,
+      "firstUsefulAtMs": 49455,
+      "fullVisibleAtMs": 49455,
+      "firstUsefulGatePassed": false,
+      "fullVisibleGatePassed": true,
+      "responseHash": "34c4b9a852f6edd7162f5b9f4e30d809d8f58823dbd04917181d0059b32e759d",
+      "responseLength": 1555,
+      "validationIssueCount": 0,
+      "errorCode": null,
+      "deadlineTimeout": false
+    },
+    {
+      "order": 4,
+      "runLabel": "A2",
+      "arm": "A",
+      "status": "valid",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-pro",
+      "latencyMs": 33370,
+      "headersLatencyMs": 403,
+      "bodyLatencyMs": 32967,
+      "totalLatencyMs": 33370,
+      "firstUsefulAtMs": 33370,
+      "fullVisibleAtMs": 33370,
+      "firstUsefulGatePassed": true,
+      "fullVisibleGatePassed": true,
+      "responseHash": "1df9ff5598785c7cd9037abc6dad865deb3d2c27a4f171bc633e1723f01ea386",
+      "responseLength": 1006,
+      "validationIssueCount": 1,
+      "errorCode": null,
+      "deadlineTimeout": false
+    }
+  ],
+  "notRun": [],
+  "conclusion": "pending_deterministic_directional_finalization",
+  "semanticQuality": "not_evaluated",
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "hiddenReasoning": 0,
+    "upstreamRequestIds": 0
+  },
+  "excluded": {
+    "judgeCalls": 0,
+    "hiddenSetReads": 0,
+    "databaseChanges": 0,
+    "humanPreviewSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "finalizedAt": "2026-08-16T15:21:23.163Z",
+  "decision": "inconclusive_mixed_direction",
+  "pairDeltasMs": {
+    "B1MinusA1": 3736,
+    "B2MinusA2": 16085
+  },
+  "decisionChecks": {
+    "complete": true,
+    "nonLatencyTechnicalFailure": false,
+    "strongContractDirection": false,
+    "contractDirection": false,
+    "allExceedFirstGate": false,
+    "allPassFirstGate": false
+  },
+  "nextStep": "review_mixed_direction_and_choose_one_new_factor_without_automatic_calls",
+  "stopPoint": "sealed_after_four_call_budget_or_technical_stop_no_automatic_followup"
+}
