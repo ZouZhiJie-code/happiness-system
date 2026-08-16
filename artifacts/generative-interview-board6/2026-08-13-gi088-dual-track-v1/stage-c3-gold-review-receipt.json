@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-13.gi088-stage-c3-gold-review-v1",
+  "status": "ready_for_product_owner_gold_review",
+  "decisionBoundary": "supports_only_product_owner_gold_health_check_before_judge_v2",
+  "itemCount": 14,
+  "composition": {
+    "c2Disagreements": 11,
+    "stableDirectUseControls": 2,
+    "stableBlockerControls": 1
+  },
+  "blindReview": {
+    "randomOrder": true,
+    "opaqueIds": true,
+    "sourceIdentifierLeaks": 0,
+    "historicalLabelsShownPerItem": 0,
+    "modelConfigurationShownPerItem": 0,
+    "historicalReasonsShownPerItem": 0,
+    "technicalResultsShownPerItem": 0
+  },
+  "privacy": {
+    "reviewBodyPublicFiles": 0,
+    "reviewBodyGitTrackedFiles": 0,
+    "privateDirectoryIgnoredByGit": true,
+    "browserNetworkDependencies": 0
+  },
+  "executionBoundary": {
+    "judgeModelCalls": 0,
+    "businessModelCalls": 0,
+    "hiddenCalibrationAuthoring": 0,
+    "independentAdmissionResults": 0,
+    "humanEvaluationSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "fingerprints": {
+    "pack": "892655781f955428bd20042000252a540630f93b29f766ebd2bb7d285cc467fe",
+    "goldMappingSource": "82903b1ed3e83e4f629a776bc54fb788abc08fa4dbe76c89bb42fe96fb865452",
+    "blindPackageSource": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696"
+  },
+  "nextStop": "wait_for_product_owner_to_export_14_card_decisions"
+}

@@ -556,10 +556,10 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     render(<Gi088EvaluationWorkbench />);
 
     fireEvent.click(await screen.findByRole("button", { name: "安全终止当前任务" }));
-    fireEvent.change(screen.getByLabelText("终止原因（必填）"), {
+    fireEvent.change(await screen.findByLabelText("终止原因（必填）"), {
       target: { value: "页面故障阻断本项，保留现有证据。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "确认终止当前任务" }));
+    fireEvent.click(await screen.findByRole("button", { name: "确认终止当前任务" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));

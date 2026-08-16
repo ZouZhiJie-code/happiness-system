@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 
 import {
   createBoard7bWorkingTaskV1InitialSemanticState,
@@ -608,6 +609,38 @@ function taskCompletedFor(state: Gi088BatchState, task: Gi088TaskState) {
 
 function taskAborted(task: Gi088TaskState) {
   return Boolean(task.aborted) || task.branches.high.status === "aborted";
+}
+
+function pristineTrajectory(
+  trajectory: Gi088Trajectory,
+  branch: Gi088BranchKey
+) {
+  return trajectory.branch === branch &&
+    trajectory.status === "not_started" &&
+    trajectory.messages.length === 0 &&
+    trajectory.turns.length === 0 &&
+    trajectory.pendingTurnId === null &&
+    trajectory.technicalError === null &&
+    trajectory.review === null &&
+    trajectory.startedAt === null &&
+    trajectory.completedAt === null &&
+    !trajectory.abortedAt &&
+    !trajectory.abortReason &&
+    isDeepStrictEqual(
+      trajectory.semanticState,
+      createBoard7bWorkingTaskV1InitialSemanticState()
+    );
+}
+
+function pristineTask(state: Gi088BatchState, task: Gi088TaskState) {
+  return task.initialUserMessage === null &&
+    task.activeBranch === ((state.evaluationMode ?? "paired") === "high_only"
+      ? "high"
+      : "off") &&
+    task.comparison === null &&
+    !task.aborted &&
+    pristineTrajectory(task.branches.off, "off") &&
+    pristineTrajectory(task.branches.high, "high");
 }
 
 function firstOpenTaskId(state: Gi088BatchState) {
@@ -3721,7 +3754,29 @@ export class Gi088EvaluationFoundationService {
     const remainingTaskIds = state.tasks
       .filter((task) => !taskCompletedFor(state, task) && !taskAborted(task))
       .map((task) => task.taskId);
-    if (completedTaskIds.length === 0 || remainingTaskIds.length === 0) {
+    const administrativeRedesignStop =
+      input.reasonCode === "evaluation_system_redesign_before_first_call";
+    const [calls, interventions, revisions] = administrativeRedesignStop
+      ? await Promise.all([
+          this.store.listCalls(run.id),
+          this.store.listProgramInterventions(run.id),
+          this.store.listReviewRevisions(run.id)
+        ])
+      : [[], [], []];
+    const administrativeRedesignScopeValid =
+      administrativeRedesignStop &&
+      reason === "evaluation_system_redesign_before_first_call" &&
+      completedTaskIds.length === 0 &&
+      remainingTaskIds.length === state.tasks.length &&
+      state.tasks.every((task) => pristineTask(state, task)) &&
+      calls.length === 0 &&
+      interventions.length === 0 &&
+      revisions.length === 0;
+    const regularScopeValid =
+      !administrativeRedesignStop &&
+      completedTaskIds.length > 0 &&
+      remainingTaskIds.length > 0;
+    if (!administrativeRedesignScopeValid && !regularScopeValid) {
       throw new Gi088EvaluationError("GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED");
     }
     const terminalAt = this.now();

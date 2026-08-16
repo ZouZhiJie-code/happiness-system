@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "authorizationVersion": "2026-08-13.gi088-stage-c3-stop1-v1",
+  "authorizedAt": "2026-08-13",
+  "status": "waiting_product_owner_gold_decisions",
+  "decisionSupported": "determine_whether_the_product_gold_and_ruler_are_ready_for_judge_v2_zero_call_asset_building",
+  "currentScope": {
+    "c2DisagreementCards": 11,
+    "stableDirectUseControls": 2,
+    "stableBlockerControls": 1,
+    "productOwnerBlindReview": true,
+    "zeroCallAssetChecks": true
+  },
+  "closedScope": {
+    "judgeModelCalls": true,
+    "businessModelCalls": true,
+    "hiddenCalibrationSetAuthoring": true,
+    "independentAdmission": true,
+    "humanPreview": true,
+    "productionChanges": true
+  },
+  "historicalEvidencePolicy": "stage_c2_remains_technical_blocked_and_old_outputs_enter_new_scoring_zero",
+  "firstStop": "reached_private_14_card_review_pack_and_content_free_receipt_ready_wait_for_product_owner_decisions",
+  "nextAuthorization": "after_gold_freeze_authorize_judge_v2_zero_call_assets_then_request_plus_thinking_calls_separately"
+}

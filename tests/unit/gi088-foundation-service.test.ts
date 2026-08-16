@@ -1523,6 +1523,55 @@ describe("GI-088 v8r2 evaluation foundation service", () => {
     expect(exported).not.toContain("hiddenReasoning");
   });
 
+  it("只允许零调用零评价的空白运行按评测体系重构原因行政封存", async () => {
+    const { store, service, getProvider } = serviceWith();
+    const created = await createRun(service, "owner-redesign-stop");
+
+    await expect(service.earlyStop({
+      ownerUserId: "owner-redesign-stop",
+      runId: created.runId,
+      reasonCode: "other",
+      reason: "普通提前结束不能作用于零项空白运行。",
+      confirmation: true,
+      clientOperationId: "regular-empty-stop"
+    })).rejects.toMatchObject({
+      code: "GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED"
+    });
+
+    const stopped = await service.earlyStop({
+      ownerUserId: "owner-redesign-stop",
+      runId: created.runId,
+      reasonCode: "evaluation_system_redesign_before_first_call",
+      reason: "evaluation_system_redesign_before_first_call",
+      confirmation: true,
+      clientOperationId: "administrative-redesign-stop"
+    });
+
+    expect(stopped.batch).toMatchObject({
+      status: "early_stopped",
+      completedTaskCount: 0,
+      readOnly: true,
+      earlyStop: {
+        reasonCode: "evaluation_system_redesign_before_first_call",
+        reason: "evaluation_system_redesign_before_first_call",
+        completedTaskIds: []
+      }
+    });
+    expect(stopped.batch.earlyStop?.remainingTaskIds).toHaveLength(12);
+    expect(stopped.tasks.every((task) => task.status === "not_run")).toBe(true);
+    expect(await store.listCalls(created.runId)).toHaveLength(0);
+    expect(await store.listReviewRevisions(created.runId)).toHaveLength(0);
+    expect(await store.listProgramInterventions(created.runId)).toHaveLength(0);
+    expect(getProvider).not.toHaveBeenCalled();
+
+    const exported = await service.exportRun({
+      ownerUserId: "owner-redesign-stop",
+      runId: created.runId
+    });
+    expect(exported.receipt.recordCounts.calls).toBe(0);
+    expect(exported.receipt.recordCounts.reviewRevisions).toBe(0);
+  });
+
   it("旧 execution fingerprint 只读，可查看和导出且保持零调用", async () => {
     const seedStore = new Gi088MemoryFoundationStore();
     const seed = serviceWith({ store: seedStore });

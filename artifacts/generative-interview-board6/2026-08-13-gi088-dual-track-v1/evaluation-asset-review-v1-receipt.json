@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-16.gi088-evaluation-asset-review-v1",
+  "generatedAt": "2026-08-16T10:34:28.370Z",
+  "status": "withdrawn_incomplete_real_conversation_evidence_catalog_snapshot_only",
+  "supersededBy": "real-conversation-review-v2-receipt.json",
+  "withdrawalReason": "70 项目录混入场景摘要、规则与未运行蓝图，缺少真实用户原话和 AI 当时回答，不能作为 70/70 可裁决证据。",
+  "purpose": "产品负责人审查现有评测题目是否真实、清楚、可复现、可稳定判断，并适合承担当前证据职责。",
+  "reviewItemCount": 70,
+  "assetCounts": {
+    "hard_boundary": 24,
+    "development": 28,
+    "hidden_v2": 12,
+    "preview_4_plus_2": 6
+  },
+  "evidenceLayerCounts": {
+    "bottom_line": 26,
+    "local_action": 36,
+    "complete_trajectory": 4,
+    "user_experience": 4
+  },
+  "explicitModeCounts": {
+    "chat": 10,
+    "capture": 6,
+    "mixed": 2,
+    "unspecified": 52
+  },
+  "factualCompleteness": {
+    "concreteRuntimeInputs": 12,
+    "sourceRecorded": 70,
+    "privacyRecorded": 70,
+    "lineageRecorded": 70
+  },
+  "sourceFingerprints": {
+    "hardBoundary24": "c86d2074ad589a3ead3b0d30b18b2981c404d81db82803713712780e3692b641",
+    "development28": "54d0f66feecc9b9e58e220a9bd180d129fb3a005039f384b37a9f5910909fef5",
+    "hiddenV2Body": "d08ca3229e8e68a5a8f23317e56e79180fa1eedbd21205852004ea390683f112",
+    "preview4Plus2Specification": "6a19ec6d487b09392c08c18d4c0b363cc3dc2cf86ca008f44f6557eab393717a"
+  },
+  "reviewPacketFingerprint": "d70740f04ba76d9482260aada1ff17555b25f719342ef0f2c83f2973c659f1bd",
+  "privateHtmlFingerprint": "1545ad212d1e04f8ffa19a69c80a8610359fedd01ce70af31ef6a54adb694520",
+  "publicContentBoundary": {
+    "hiddenTitles": 0,
+    "hiddenStories": 0,
+    "hiddenInputs": 0,
+    "hiddenScoringAnchors": 0,
+    "productOwnerDecisions": 0,
+    "codexOpinions": 0
+  },
+  "hiddenV2Role": "product_review_and_development_regression_material",
+  "futureIndependentAdmissionDataset": "hidden_v3_required",
+  "executionBoundary": {
+    "businessModelCalls": 0,
+    "judgeModelCalls": 0,
+    "databaseChanges": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "conclusionBoundary": {
+    "supported": "仅支持回看当时汇总的 70 项资产目录，不再支持产品裁决。",
+    "unsupported": [
+      "候选质量",
+      "Judge 资格",
+      "独立准入",
+      "真人 Preview 结果",
+      "发布资格"
+    ]
+  }
+}

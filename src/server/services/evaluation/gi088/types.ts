@@ -68,6 +68,7 @@ export type Gi088EarlyStopReasonCode =
   | "sufficient_evidence"
   | "technical_friction"
   | "mixed"
+  | "evaluation_system_redesign_before_first_call"
   | "other";
 
 export type Gi088EarlyStop = {

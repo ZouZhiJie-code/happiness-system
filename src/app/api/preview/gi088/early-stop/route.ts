@@ -13,6 +13,7 @@ const inputSchema = z
       "sufficient_evidence",
       "technical_friction",
       "mixed",
+      "evaluation_system_redesign_before_first_call",
       "other"
     ]),
     reason: z.string().trim().min(1).max(2_000),

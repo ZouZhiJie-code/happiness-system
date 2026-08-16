@@ -3029,6 +3029,41 @@ describe("GI-088 Preview evaluation service", () => {
     );
   });
 
+  it("兼容服务只允许全空白批次按评测体系重构原因行政封存", async () => {
+    const { provider } = validProvider();
+    const service = new Gi088EvaluationService({
+      store: new Gi088MemoryStore(),
+      getProvider: () => provider
+    });
+
+    const stopped = await service.earlyStop({
+      ownerUserId: "owner-administrative-redesign-stop",
+      reasonCode: "evaluation_system_redesign_before_first_call",
+      reason: "evaluation_system_redesign_before_first_call"
+    });
+
+    expect(stopped.batch).toMatchObject({
+      status: "early_stopped",
+      completedTaskCount: 0,
+      earlyStop: {
+        reasonCode: "evaluation_system_redesign_before_first_call",
+        reason: "evaluation_system_redesign_before_first_call",
+        completedTaskIds: []
+      }
+    });
+    expect(stopped.batch.earlyStop?.remainingTaskIds).toHaveLength(
+      GI088_TASKS.length
+    );
+    expect(stopped.tasks.every((task) => task.status === "not_run")).toBe(true);
+
+    const exported = await service.export("owner-administrative-redesign-stop");
+    expect(exported.completion).toMatchObject({
+      status: "early_stopped",
+      completedTaskIds: []
+    });
+    expect(exported.completion.notRunTaskIds).toHaveLength(GI088_TASKS.length);
+  });
+
   it("提前结束拒绝任何残留活动或运行痕迹的剩余任务", async () => {
     const { provider } = validProvider();
     const store = new Gi088MemoryStore();

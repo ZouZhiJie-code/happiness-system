@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>GI-088 历史真实金标库</title>
+  <style>
+    :root{color-scheme:light;--page:#f3f5f7;--paper:#fff;--ink:#172033;--muted:#667085;--line:#d8dee7;--line-strong:#aab5c4;--teal:#0d5b57;--teal-soft:#e5f2f0;--blue:#335c91;--blue-soft:#e9eff8;--amber:#a75b16;--amber-soft:#fff2df;--rose:#9c3348;--rose-soft:#fae9ed;--violet:#6251a0;--violet-soft:#eeeafb;--shadow:0 14px 40px rgba(23,32,51,.08);--display:"Songti SC","STSong",serif;--body:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--mono:"SFMono-Regular",Consolas,monospace}
+    *{box-sizing:border-box}
+    html{background:var(--page);scroll-behavior:smooth}
+    body{margin:0;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;background:linear-gradient(90deg,rgba(51,92,145,.035) 1px,transparent 1px) 0 0/36px 36px,var(--page)}
+    button,input,select{font:inherit}
+    button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #f5a623;outline-offset:2px}
+    .topbar{min-height:104px;padding:22px 28px;display:grid;grid-template-columns:minmax(300px,1fr) auto;gap:24px;align-items:end;background:#172033;color:#fff;border-bottom:4px solid var(--teal)}
+    .eyebrow{font:700 11px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#9dcac5}
+    h1{margin:6px 0 2px;font:700 clamp(26px,3vw,42px)/1.06 var(--display);letter-spacing:.015em}
+    .subtitle{margin:0;color:#ced6e3;max-width:760px}
+    .top-stats{display:flex;gap:1px;background:#43506a;border:1px solid #43506a}
+    .top-stat{min-width:88px;padding:10px 13px;background:#202b41;text-align:right}
+    .top-stat strong{display:block;font:700 22px/1 var(--mono)}
+    .top-stat span{display:block;margin-top:5px;color:#aeb8c9;font-size:11px}
+    .tabs{display:flex;gap:2px;padding:0 28px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:12}
+    .tab{appearance:none;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--muted);padding:14px 18px 12px;cursor:pointer;font-weight:650}
+    .tab[aria-selected="true"]{color:var(--teal);border-bottom-color:var(--teal)}
+    .tab-hint{margin-left:auto;align-self:center;color:var(--muted);font:12px var(--mono)}
+    .workspace{display:grid;grid-template-columns:270px minmax(430px,1fr) 330px;min-height:calc(100vh - 161px)}
+    .rail{background:#edf0f4;border-right:1px solid var(--line);padding:18px 14px;min-width:0}
+    .rail-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 12px}
+    .rail-head strong{font:700 15px var(--display)}
+    .rail-head span{font:12px var(--mono);color:var(--muted)}
+    .filters{display:grid;gap:8px;margin-bottom:15px}
+    .field{display:grid;gap:4px}
+    .field label{font-size:11px;font-weight:700;color:var(--muted)}
+    .field input,.field select{width:100%;min-height:38px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;color:var(--ink);padding:7px 9px}
+    .case-list{display:grid;gap:7px;max-height:calc(100vh - 340px);overflow:auto;padding:2px 4px 32px 2px}
+    .case-row{appearance:none;width:100%;border:1px solid transparent;border-left:4px solid transparent;border-radius:3px;background:transparent;text-align:left;padding:10px 9px;cursor:pointer;color:var(--ink)}
+    .case-row:hover{background:rgba(255,255,255,.7);border-color:var(--line)}
+    .case-row.active{background:#fff;border-color:var(--line);border-left-color:var(--teal);box-shadow:0 4px 14px rgba(23,32,51,.06)}
+    .case-kicker{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font:10px var(--mono);text-transform:uppercase}
+    .case-title{display:block;margin-top:5px;font-weight:700;line-height:1.35}
+    .case-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+    .mini{padding:2px 5px;border:1px solid var(--line);background:#f7f8fa;font-size:10px;color:var(--muted)}
+    .content{min-width:0;background:var(--paper);border-right:1px solid var(--line)}
+    .evidence-head{padding:26px 30px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#fff 0%,#f7faf9 100%)}
+    .breadcrumb{color:var(--muted);font:11px var(--mono);letter-spacing:.04em}
+    .evidence-head h2{margin:7px 0 10px;font:700 clamp(24px,2.4vw,34px)/1.18 var(--display)}
+    .chips{display:flex;gap:7px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;min-height:27px;padding:4px 8px;border:1px solid var(--line);border-radius:2px;background:#f7f8fa;font-size:11px;font-weight:650;color:#4a5568}
+    .chip.direct_use{background:var(--teal-soft);border-color:#aad2cc;color:var(--teal)}
+    .chip.minor_issue{background:var(--amber-soft);border-color:#ebc792;color:var(--amber)}
+    .chip.quality_failure{background:var(--rose-soft);border-color:#e6b3be;color:var(--rose)}
+    .chip.single_case_blocker{background:var(--violet-soft);border-color:#c6bceb;color:var(--violet)}
+    .compare-trigger{margin-left:auto;appearance:none;border:1px solid var(--teal);border-radius:3px;background:#fff;color:var(--teal);padding:5px 9px;font-weight:700;cursor:pointer}
+    .compare-trigger[disabled]{display:none}
+    .transcript{position:relative;padding:26px 34px 70px 58px;max-width:880px;margin:0 auto}
+    .transcript::before{content:"";position:absolute;top:28px;bottom:70px;left:32px;width:2px;background:linear-gradient(var(--teal),#c7d1dc 80%,transparent)}
+    .message{position:relative;margin:0 0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:4px;background:#fff;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 2px 8px rgba(23,32,51,.035)}
+    .message::before{content:"";position:absolute;left:-32px;top:17px;width:11px;height:11px;border:3px solid var(--page);border-radius:50%;background:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+    .message.assistant{margin-right:8%;background:#f5f8fc;border-left:3px solid var(--blue)}
+    .message.assistant::before{background:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+    .message.user{margin-left:8%;background:#f1f8f6;border-left:3px solid var(--teal)}
+    .speaker{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;color:var(--muted);font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+    .empty-response{padding:20px;border:1px dashed var(--rose);background:var(--rose-soft);color:var(--rose)}
+    .aside{min-width:0;background:#f8f9fb;padding:22px 18px}
+    .aside-card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--ink);padding:17px;margin-bottom:14px;box-shadow:0 4px 18px rgba(23,32,51,.04)}
+    .aside-card h3{margin:0 0 10px;font:700 17px var(--display)}
+    .verdict{font:700 22px/1.2 var(--display);margin:8px 0}
+    .reason{margin:12px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+    .meta-table{display:grid;grid-template-columns:minmax(96px,.7fr) minmax(0,1.3fr);border-top:1px solid var(--line);font-size:12px}
+    .meta-table dt,.meta-table dd{margin:0;padding:8px 0;border-bottom:1px solid var(--line)}
+    .meta-table dt{color:var(--muted)}
+    .meta-table dd{font-family:var(--mono);overflow-wrap:anywhere}
+    .status-bars{display:grid;gap:7px}
+    .status-row{display:grid;grid-template-columns:minmax(110px,1fr) auto;gap:10px;align-items:center;font-size:12px}
+    .status-row strong{font-family:var(--mono)}
+    .boundary{padding:12px;border-left:3px solid var(--amber);background:var(--amber-soft);font-size:12px;color:#65411d}
+    .compare-view{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px;background:#eef2f5}
+    .compare-column{min-width:0;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+    .compare-column .evidence-head{padding:18px}
+    .compare-column .transcript{padding:18px 20px 40px 44px;font-size:13px}
+    .compare-column .transcript::before{left:22px}
+    .compare-column .message{margin-left:0;margin-right:0;padding:11px}
+    .compare-review{padding:15px 18px;border-top:1px solid var(--line);background:#fbfcfd}
+    .section-page{display:none;padding:30px;max-width:1160px;margin:0 auto}
+    .section-page.active{display:block}
+    .ruler-intro,.identity-intro{display:grid;grid-template-columns:1.5fr 1fr;gap:24px;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+    .section-page h2{margin:0;font:700 clamp(28px,3vw,42px)/1.12 var(--display)}
+    .section-page .lead{margin:8px 0 0;color:var(--muted);font-size:16px}
+    .draft-stamp{align-self:start;border:2px solid var(--amber);padding:12px;color:var(--amber);font:700 12px var(--mono);transform:rotate(-1.5deg);background:var(--amber-soft)}
+    .ruler-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .ruler-card{border:1px solid var(--line);border-top:4px solid var(--teal);background:#fff;padding:19px;min-width:0}
+    .ruler-card h3{margin:0 0 8px;font:700 20px var(--display)}
+    .ruler-card .question{color:#3d4c61}
+    .ruler-card .decision{padding:11px 12px;border-left:3px solid var(--teal);background:#f1f7f5;color:#27394a;line-height:1.6}
+    .quote{margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--blue);background:var(--blue-soft);font-size:13px}
+    .quote-source{display:block;margin-top:6px;color:var(--muted);font:10px var(--mono)}
+    .identity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .identity-card{border:1px solid var(--line);background:#fff;padding:16px;min-width:0}
+    .identity-card strong{display:block;font:700 24px var(--mono);color:var(--teal)}
+    .identity-card span{color:var(--muted);font-size:12px}
+    .identity-full{grid-column:1/-1}
+    .mono{font-family:var(--mono);overflow-wrap:anywhere}
+    .empty-list{padding:20px 10px;color:var(--muted);text-align:center}
+    @media(max-width:1220px){.workspace{grid-template-columns:250px minmax(0,1fr)}.aside{grid-column:2;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:14px}.aside-card{margin:0}.content{border-right:0}.case-list{max-height:calc(100vh - 320px)}}
+    @media(max-width:820px){.topbar{grid-template-columns:1fr;padding:18px}.top-stats{overflow:auto}.top-stat{min-width:78px}.tabs{padding:0 10px;overflow:auto}.tab{padding:12px 10px;white-space:nowrap}.tab-hint{display:none}.workspace{display:block}.rail{border-right:0;border-bottom:1px solid var(--line)}.case-list{max-height:290px}.content{border-right:0}.aside{display:block;padding:14px}.aside-card{margin-bottom:12px}.transcript{padding:22px 18px 50px 46px}.transcript::before{left:24px}.message{margin-left:0!important;margin-right:0!important}.compare-view{grid-template-columns:1fr;padding:10px}.ruler-intro,.identity-intro{grid-template-columns:1fr}.ruler-list,.identity-grid{grid-template-columns:1fr}.section-page{padding:22px 14px}.identity-full{grid-column:auto}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    @media(prefers-contrast:more){:root{--line:#778397;--line-strong:#46536a;--muted:#455066}.message,.aside-card,.ruler-card{box-shadow:none}}
+    @media print{.topbar,.tabs,.rail,.compare-trigger{display:none!important}.workspace{display:block}.aside{display:block;background:#fff}.content{border:0}.transcript{max-width:none}.section-page{display:block!important;page-break-before:always}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">GI-088 · Historical evidence ledger</div>
+      <h1>历史真实金标库</h1>
+      <p class="subtitle">完整保留真实用户输入、AI 当时回答和产品负责人原评价。页面只读，用于恢复事实与提炼质量标准。</p>
+    </div>
+    <div class="top-stats" aria-label="数据规模">
+      <div class="top-stat"><strong id="topicCount">14</strong><span>真实话题</span></div>
+      <div class="top-stat"><strong id="conversationCount">22</strong><span>运行分支</span></div>
+      <div class="top-stat"><strong id="messageCount">183</strong><span>对话消息</span></div>
+      <div class="top-stat"><strong id="turnCount">88</strong><span>运行轮次</span></div>
+    </div>
+  </header>
+  <nav class="tabs" aria-label="金标库视图">
+    <button class="tab" data-tab="archive" aria-selected="true">真实对话档案</button>
+    <button class="tab" data-tab="ruler" aria-selected="false">质量判尺草案</button>
+    <button class="tab" data-tab="identity" aria-selected="false">数据身份与边界</button>
+    <span class="tab-hint">↑↓ 切换对话 · C 对照 · / 搜索</span>
+  </nav>
+
+  <main>
+    <section id="archive" class="tab-panel">
+      <div class="workspace">
+        <aside class="rail" aria-label="历史对话目录">
+          <div class="rail-head"><strong>14 个话题</strong><span id="visibleCount">22 / 22</span></div>
+          <div class="filters">
+            <div class="field"><label for="search">搜索话题或原评价</label><input id="search" type="search" placeholder="输入关键词"></div>
+            <div class="field"><label for="labelFilter">历史标签</label><select id="labelFilter"><option value="all">全部标签</option><option value="direct_use">可直接使用</option><option value="minor_issue">轻微问题</option><option value="quality_failure">质量失败</option><option value="single_case_blocker">单例阻断</option></select></div>
+            <div class="field"><label for="integrityFilter">运行状态</label><select id="integrityFilter"><option value="all">全部运行状态</option><option value="all_turns_valid">全程正常</option><option value="contains_recovery_or_failure">含拦截、恢复或失败</option><option value="no_substantive_ai_response">未产生有效主题回答</option></select></div>
+          </div>
+          <div id="caseList" class="case-list"></div>
+        </aside>
+        <section id="content" class="content" aria-live="polite"></section>
+        <aside id="aside" class="aside" aria-label="历史评价与运行身份"></aside>
+      </div>
+    </section>
+    <section id="ruler" class="section-page tab-panel"></section>
+    <section id="identity" class="section-page tab-panel"></section>
+  </main>
+
+  <script>
+    const data=__GI088_HISTORICAL_REAL_GOLD__;
+    const labels={direct_use:"可直接使用",minor_issue:"轻微问题",quality_failure:"质量失败",single_case_blocker:"单例阻断"};
+    const integrityLabels={all_turns_valid:"全程正常",contains_recovery_or_failure:"含拦截、恢复或失败",no_substantive_ai_response:"未产生有效主题回答"};
+    const branchLabels={off:"普通模式",high:"思考模式"};
+    const statusLabels={valid:"正常",protected_failure:"程序拦截",technical_failure:"技术失败",complete_after_auto_recovery:"自动恢复后完成"};
+    const $=s=>document.querySelector(s);
+    const $$=s=>Array.from(document.querySelectorAll(s));
+    const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    let activeId=data.conversations[0].conversationId;
+    let filtered=[...data.conversations];
+    let compareMode=false;
+
+    function topicOf(id){return data.topics.find(topic=>topic.topicId===id)}
+    function conversationOf(id){return data.conversations.find(item=>item.conversationId===id)}
+    function labelChip(item){return `<span class="chip ${item.historicalReview.label}">${esc(labels[item.historicalReview.label])}</span>`}
+    function messageMarkup(message,index){return `<article class="message ${message.role}"><div class="speaker"><span>${message.role==="user"?"用户原话":"AI 当时的回答"}</span><span>${String(index+1).padStart(2,"0")}</span></div>${esc(message.content)}</article>`}
+    function statusMarkup(item){const rows=Object.entries(item.statusCounts).map(([status,count])=>`<div class="status-row"><span>${esc(statusLabels[status]||status)}</span><strong>${count}</strong></div>`).join("");return rows||`<div class="status-row"><span>无轮次记录</span><strong>0</strong></div>`}
+    function renderList(){
+      const search=$("#search").value.trim().toLowerCase();
+      const label=$("#labelFilter").value;
+      const integrity=$("#integrityFilter").value;
+      filtered=data.conversations.filter(item=>{
+        const hay=[item.topicTitle,item.historicalReview.reason,item.sourceIdentity.sourceLabel,item.taskId].join(" ").toLowerCase();
+        return (!search||hay.includes(search))&&(label==="all"||item.historicalReview.label===label)&&(integrity==="all"||item.evidenceIntegrity===integrity);
+      });
+      $("#visibleCount").textContent=`${filtered.length} / ${data.conversations.length}`;
+      if(filtered.length&&!filtered.some(item=>item.conversationId===activeId))activeId=filtered[0].conversationId;
+      $("#caseList").innerHTML=filtered.length?filtered.map(item=>`<button class="case-row ${item.conversationId===activeId?"active":""}" data-id="${esc(item.conversationId)}"><span class="case-kicker"><span>${esc(item.topicId)} · ${esc(branchLabels[item.branchMode]||item.branchMode)}</span><span>${item.turnCount} 轮</span></span><span class="case-title">${esc(item.topicTitle)}</span><span class="case-meta"><span class="mini">${esc(labels[item.historicalReview.label])}</span><span class="mini">${esc(integrityLabels[item.evidenceIntegrity])}</span></span></button>`).join(""):`<div class="empty-list">当前筛选下没有对话</div>`;
+      $$(".case-row").forEach(button=>button.addEventListener("click",()=>{activeId=button.dataset.id;compareMode=false;renderAll()}));
+    }
+    function renderConversation(item){
+      const pair=data.conversations.filter(candidate=>candidate.topicId===item.topicId);
+      const hasResponse=item.messages.some((message,index)=>message.role==="assistant"&&item.messages.slice(0,index).some(previous=>previous.role==="user"));
+      $("#content").innerHTML=`<header class="evidence-head"><div class="breadcrumb">${esc(item.topicId)} · ${esc(item.sourceIdentity.sourceLabel)} · ${esc(item.taskId)} / ${esc(item.branchMode)}</div><h2>${esc(item.topicTitle)}</h2><div class="chips">${labelChip(item)}<span class="chip">${esc(branchLabels[item.branchMode]||item.branchMode)}</span><span class="chip">${esc(integrityLabels[item.evidenceIntegrity])}</span><span class="chip">${item.messageCount} 条消息 · ${item.turnCount} 个轮次</span><button id="compareTrigger" class="compare-trigger" ${pair.length>1?"":"disabled"}>并排看两个版本</button></div></header><div class="transcript">${item.messages.map(messageMarkup).join("")}${hasResponse?"":`<div class="empty-response"><strong>运行事实：</strong>用户表达之后没有产生可见的主题回答。这条材料承担失败现场证据。</div>`}</div>`;
+      const trigger=$("#compareTrigger");if(trigger)trigger.addEventListener("click",()=>{compareMode=true;renderDetail()});
+      renderAside(item);
+    }
+    function renderAside(item){
+      $("#aside").innerHTML=`<section class="aside-card"><div class="eyebrow">原评价 · 保持不变</div><h3>产品负责人当时的判断</h3><div class="verdict">${esc(labels[item.historicalReview.label])}</div><p class="reason">${esc(item.historicalReview.reason)}</p><dl class="meta-table"><dt>评价时间</dt><dd>${esc(item.historicalReview.reviewedAt)}</dd><dt>评价权威</dt><dd>产品负责人亲评</dd></dl></section><section class="aside-card"><h3>运行状态分账</h3><div class="status-bars">${statusMarkup(item)}</div><div class="boundary" style="margin-top:13px">历史总评原样保留。内容表现、程序拦截和技术故障分别展示，避免用一个标签覆盖全部事实。</div></section><section class="aside-card"><h3>来源身份</h3><dl class="meta-table"><dt>运行版本</dt><dd>${esc(item.sourceIdentity.evaluationVersion)}</dd><dt>运行编号</dt><dd>${esc(item.sourceIdentity.runId)}</dd><dt>分支编号</dt><dd>${esc(item.branchId)}</dd><dt>候选指纹</dt><dd>${esc(item.sourceIdentity.candidateFingerprint)}</dd><dt>内容指纹</dt><dd>${esc(item.conversationFingerprint)}</dd></dl></section>`;
+    }
+    function compareColumn(item){return `<article class="compare-column"><header class="evidence-head"><div class="breadcrumb">${esc(branchLabels[item.branchMode]||item.branchMode)} · ${esc(item.sourceIdentity.evaluationVersion)}</div><h2>${esc(item.topicTitle)}</h2><div class="chips">${labelChip(item)}<span class="chip">${esc(integrityLabels[item.evidenceIntegrity])}</span></div></header><div class="transcript">${item.messages.map(messageMarkup).join("")}</div><div class="compare-review"><strong>历史原评价</strong><p>${esc(item.historicalReview.reason)}</p></div></article>`}
+    function renderCompare(item){const pair=data.conversations.filter(candidate=>candidate.topicId===item.topicId);$("#content").innerHTML=`<header class="evidence-head"><div class="breadcrumb">${esc(item.topicId)} · 同一真实话题的两个历史运行</div><h2>${esc(item.topicTitle)}｜并排对照</h2><div class="chips"><button id="closeCompare" class="compare-trigger">返回单条档案</button></div></header><div class="compare-view">${pair.map(compareColumn).join("")}</div>`;$("#aside").innerHTML=`<section class="aside-card"><div class="eyebrow">统计原则</div><h3>一个话题，两次运行</h3><p>覆盖统计只计算一个真实话题；候选表现保留两个独立运行分支。</p></section>`;$("#closeCompare").addEventListener("click",()=>{compareMode=false;renderDetail()})}
+    function renderDetail(){const item=conversationOf(activeId);if(!item)return;if(compareMode)renderCompare(item);else renderConversation(item)}
+    function renderAll(){renderList();renderDetail()}
+    function renderRuler(){
+      $("#ruler").innerHTML=`<div class="ruler-intro"><div><div class="eyebrow">Product quality ruler · confirmed</div><h2>从历史评价里长出来的质量标准</h2><p class="lead">九条原则已经由产品负责人确认。QR-04 已按最新产品判断纠正；历史案例标签和原理由保持不变。</p></div><div class="draft-stamp">当前判尺 v1.1｜已确认<br>仍等待历史数据完整性确认</div></div><div class="ruler-list">${data.qualityRulerDraft.principles.map(principle=>`<article class="ruler-card"><div class="eyebrow">${esc(principle.principleId)}</div><h3>${esc(principle.title)}</h3><p class="question">${esc(principle.productQuestion)}</p>${principle.currentProductStandard?`<p class="decision"><strong>当前产品标准：</strong>${esc(principle.currentProductStandard)}</p>`:""}${principle.historicalEvidenceBoundary?`<p class="decision"><strong>历史证据边界：</strong>${esc(principle.historicalEvidenceBoundary)}</p>`:""}${principle.evidence.map(evidence=>`<blockquote class="quote">“${esc(evidence.quote)}”<span class="quote-source">${esc(evidence.conversationId||evidence.comparisonId)} · 历史原评价</span></blockquote>`).join("")}</article>`).join("")}</div>`;
+    }
+    function renderIdentity(){const c=data.identity.counts;$("#identity").innerHTML=`<div class="identity-intro"><div><div class="eyebrow">Dataset identity · immutable</div><h2>这批数据能说明什么</h2><p class="lead">它恢复过去的真实表现和产品判断，支持质量标准与回归建设。当前候选、Judge、准入和发布仍需新的独立证据。</p></div><div class="draft-stamp">私有原文｜本机离线<br>公开区仅保留数量、状态与指纹</div></div><div class="identity-grid"><div class="identity-card"><strong>${c.sources}</strong><span>确认的历史运行来源</span></div><div class="identity-card"><strong>${c.topics}</strong><span>真实话题，承担覆盖统计</span></div><div class="identity-card"><strong>${c.conversations}</strong><span>运行分支，承担候选历史表现</span></div><div class="identity-card"><strong>${c.localActionReviews}</strong><span>历史逐轮动作判断</span></div><div class="identity-card"><strong>${c.comparisons}</strong><span>普通／思考模式比较理由</span></div><div class="identity-card"><strong>0</strong><span>生成案例、Judge 卡和 Codex 评价</span></div><div class="identity-card identity-full"><span>数据集指纹</span><p class="mono">${esc(data.identity.datasetFingerprint)}</p><span>结论边界</span><p>${esc(data.identity.supportedDecision)}</p><p><strong>当前不支持：</strong>${data.identity.unsupportedDecisions.map(esc).join("、")}</p></div></div>`}
+    function openTab(name){$$(".tab").forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.tab===name)));$$(".tab-panel").forEach(panel=>{panel.style.display=panel.id===name?(name==="archive"?"block":"block"):"none";panel.classList.toggle("active",panel.id===name)});if(name==="ruler")renderRuler();if(name==="identity")renderIdentity()}
+    $$(".tab").forEach(tab=>tab.addEventListener("click",()=>openTab(tab.dataset.tab)));
+    [$("#search"),$("#labelFilter"),$("#integrityFilter")].forEach(control=>control.addEventListener("input",()=>{compareMode=false;renderAll()}));
+    document.addEventListener("keydown",event=>{
+      if(event.target.matches("input,select"))return;
+      if(event.key==="/"){event.preventDefault();$("#search").focus();return}
+      if(["1","2","3"].includes(event.key)){openTab({"1":"archive","2":"ruler","3":"identity"}[event.key]);return}
+      if(event.key.toLowerCase()==="c"){const item=conversationOf(activeId);if(item&&data.conversations.filter(candidate=>candidate.topicId===item.topicId).length>1){compareMode=!compareMode;renderDetail()}return}
+      if(event.key==="Escape"&&compareMode){compareMode=false;renderDetail();return}
+      if(!["ArrowDown","ArrowUp"].includes(event.key)||!filtered.length)return;
+      event.preventDefault();const index=Math.max(0,filtered.findIndex(item=>item.conversationId===activeId));const next=event.key==="ArrowDown"?Math.min(filtered.length-1,index+1):Math.max(0,index-1);activeId=filtered[next].conversationId;compareMode=false;renderAll();document.querySelector(`[data-id="${activeId}"]`)?.scrollIntoView({block:"nearest"});
+    });
+    $("#topicCount").textContent=data.identity.counts.topics;$("#conversationCount").textContent=data.identity.counts.conversations;$("#messageCount").textContent=data.identity.counts.messages;$("#turnCount").textContent=data.identity.counts.turns;
+    openTab("archive");renderAll();
+  </script>
+</body>
+</html>

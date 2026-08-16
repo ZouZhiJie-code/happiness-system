@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-16.gi088-historical-real-gold-v1.1",
+  "generatedAt": "2026-08-16T11:15:07.810Z",
+  "status": "historical_real_gold_v1_1_ruler_confirmed_waiting_data_completeness_confirmation",
+  "counts": {
+    "sources": 5,
+    "topics": 14,
+    "pairedTopics": 8,
+    "conversations": 22,
+    "messages": 183,
+    "turns": 88,
+    "localActionReviews": 24,
+    "comparisons": 8,
+    "labels": {
+      "quality_failure": 8,
+      "direct_use": 7,
+      "single_case_blocker": 3,
+      "minor_issue": 4
+    },
+    "evidenceIntegrity": {
+      "contains_recovery_or_failure": 14,
+      "all_turns_valid": 6,
+      "no_substantive_ai_response": 2
+    },
+    "turnStatuses": {
+      "valid": 71,
+      "protected_failure": 13,
+      "technical_failure": 2,
+      "complete_after_auto_recovery": 2
+    }
+  },
+  "sourceCount": 5,
+  "sourceFingerprints": {
+    "gi088-v1": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "gi088-v6": "73e83d47e93204229b78aaf3aaf72b7e9c4344294659c0a608f5c28433b94393",
+    "gi088-v7r4": "c5bcaaa92a870f6b1082a4978b4bc6d41048b0a6dae1a06656f2439ebb930334",
+    "gi088-v8": "a031676df904967d0ad0cd760947766fc619fedec86e42167a7f6df7b3ac59e8",
+    "gi088-v8r1": "b5908e82cd9ce7b89d9899ef00c6d96adec6e25c8a68eb80fbc4646a29e7f4bf"
+  },
+  "duplicateSnapshotsIncluded": 0,
+  "formalGoldContamination": {
+    "judgeCards": 0,
+    "gi086FixedContexts": 0,
+    "board7PresetCases": 0,
+    "hiddenV2": 0,
+    "counterfactuals": 0,
+    "syntheticCases": 0,
+    "codexReviews": 0
+  },
+  "qualityChecks": {
+    "branchesWithSourceIdentityAndReview": 22,
+    "topicsWithLineage": 14,
+    "immutableHistoricalLabels": 22,
+    "qualityRulerPrinciplesWithHistoricalEvidence": 9,
+    "qualityRulerPrinciplesProductOwnerConfirmed": 9,
+    "correctedHistoricalInterpretations": 1,
+    "rescoringControls": 0,
+    "externalRequests": 0,
+    "businessModelCalls": 0,
+    "judgeCalls": 0,
+    "databaseChanges": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "datasetFingerprint": "d84dc1bcc3c75b6d5d4f7f4b9634be0139c07cd6f7804f7079ef8faf17110dba",
+  "privateHtmlFingerprint": "e8cde87cb6574852b185b59d04e0bb23e9a65f91c02572d8d17bd1215cc52011",
+  "publicContentBoundary": {
+    "userUtterances": 0,
+    "aiResponses": 0,
+    "historicalReviewReasons": 0,
+    "localReviewNotes": 0
+  },
+  "conclusionBoundary": {
+    "supported": "过去出现过哪些真实表现、产品负责人当时怎样评价、哪些经验可以沉淀为质量标准与长期回归证据。",
+    "unsupported": [
+      "当前候选质量",
+      "Judge 资格",
+      "独立准入",
+      "真人 Preview 结果",
+      "发布资格"
+    ]
+  }
+}

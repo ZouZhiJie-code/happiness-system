@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+  "generatedAt": "2026-08-16T13:22:19.974Z",
+  "status": "sealed_30_of_30_ready_for_event_relationship_retest",
+  "datasetFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+  "reviewPacketFingerprint": "14e978dd3590d58ce837b6fffe51fddfbca1b81da0e68390f19babe2579b1982",
+  "privateHtmlFingerprint": "f01fd744d7287083edfb98e34a0439633cddcfa5addd0ff5d3d9c2876f0e6249",
+  "sourceDatasetVersion": "2026-08-16.gi088-historical-real-gold-v1.1",
+  "sourceDatasetFingerprint": "d84dc1bcc3c75b6d5d4f7f4b9634be0139c07cd6f7804f7079ef8faf17110dba",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "sourceHashes": {
+    "standard": {
+      "sha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60"
+    },
+    "identity": {
+      "sha256": "cb010fb36e2b99c86b0fdf8f908e42bd9b66616cd26ae130ab07c519c8c384ac"
+    },
+    "library": {
+      "sha256": "7aec8850433191d11c416adde07ef9e03af4acf041113b25b0f899c60e6069eb"
+    },
+    "judgments": {
+      "sha256": "bdb773193cca7700987f643a6b68b5496973658103bb7f550597f736a7ef8359"
+    },
+    "ruler": {
+      "sha256": "922bd8c61653cda0551bd32ef228b8ce512640163b818ecd2795a45584f1fab3"
+    }
+  },
+  "counts": {
+    "cases": 30,
+    "realCheckpoints": 22,
+    "counterfactuals": 8,
+    "topics": 14,
+    "sourceBranches": 22,
+    "principles": 9,
+    "sentinels": 9
+  },
+  "ruleCoverage": {
+    "QR-01": {
+      "title": "抓住用户真正关心的重点",
+      "primaryCases": 3,
+      "realPrimaryCases": 2,
+      "counterfactualPrimaryCases": 1,
+      "sentinelCaseId": "RPR-REAL-06"
+    },
+    "QR-02": {
+      "title": "追问带来新的材料",
+      "primaryCases": 2,
+      "realPrimaryCases": 2,
+      "counterfactualPrimaryCases": 0,
+      "sentinelCaseId": "RPR-REAL-10"
+    },
+    "QR-03": {
+      "title": "避免重复索取已经说清楚的内容",
+      "primaryCases": 2,
+      "realPrimaryCases": 1,
+      "counterfactualPrimaryCases": 1,
+      "sentinelCaseId": "RPR-REAL-05"
+    },
+    "QR-04": {
+      "title": "保持一个主回答方向，允许两个彼此相关的问题",
+      "primaryCases": 4,
+      "realPrimaryCases": 2,
+      "counterfactualPrimaryCases": 2,
+      "sentinelCaseId": "RPR-CF-07"
+    },
+    "QR-05": {
+      "title": "表达自然、有人味且负担合适",
+      "primaryCases": 2,
+      "realPrimaryCases": 2,
+      "counterfactualPrimaryCases": 0,
+      "sentinelCaseId": "RPR-REAL-18"
+    },
+    "QR-06": {
+      "title": "接住纠正并按用户要求继续",
+      "primaryCases": 3,
+      "realPrimaryCases": 1,
+      "counterfactualPrimaryCases": 2,
+      "sentinelCaseId": "RPR-REAL-19"
+    },
+    "QR-07": {
+      "title": "正确理解继续、停止和结束",
+      "primaryCases": 4,
+      "realPrimaryCases": 3,
+      "counterfactualPrimaryCases": 1,
+      "sentinelCaseId": "RPR-REAL-22"
+    },
+    "QR-08": {
+      "title": "保持独立事件的边界",
+      "primaryCases": 3,
+      "realPrimaryCases": 2,
+      "counterfactualPrimaryCases": 1,
+      "sentinelCaseId": "RPR-REAL-13"
+    },
+    "QR-09": {
+      "title": "技术稳定性属于完整体验",
+      "primaryCases": 7,
+      "realPrimaryCases": 7,
+      "counterfactualPrimaryCases": 0,
+      "sentinelCaseId": "RPR-REAL-08"
+    }
+  },
+  "publicContentBoundary": {
+    "privateSensitiveCases": 30,
+    "publicUserUtterances": 0,
+    "publicAiResponses": 0,
+    "publicHistoricalReviewReasons": 0,
+    "publicUpstreamIds": 0
+  },
+  "executionBoundary": {
+    "externalRequests": 0,
+    "businessModelCalls": 0,
+    "judgeCalls": 0,
+    "candidateChanges": 0,
+    "databaseChanges": 0,
+    "independentAdmissionRuns": 0,
+    "previewChanges": 0,
+    "productionChanges": 0
+  },
+  "reviewGate": {
+    "currentReviewed": 30,
+    "requiredReviewed": 30,
+    "formalExport": "passed_30_of_30_complete",
+    "datasetSeal": "passed_30_of_30_approved",
+    "inheritedV1_1Approvals": 29,
+    "productOwnerDirectApprovals": 1,
+    "decisionLedgerFingerprint": "a1392cbdfa741fa2a4fd684f469908479ca146f3fe136af41b417b3ac325d7e1"
+  },
+  "conclusionBoundary": {
+    "supported": "30 条开发回归题目已完成来源、覆盖与产品语义复核，可用于事件关系解释 10 题复测。",
+    "unsupported": [
+      "当前模型能力",
+      "独立准入",
+      "真人 Preview",
+      "发布资格"
+    ]
+  }
+}

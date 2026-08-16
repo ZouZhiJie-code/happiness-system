@@ -2099,6 +2099,7 @@ export class Gi088EvaluationService {
       input.reasonCode !== "sufficient_evidence" &&
       input.reasonCode !== "technical_friction" &&
       input.reasonCode !== "mixed" &&
+      input.reasonCode !== "evaluation_system_redesign_before_first_call" &&
       input.reasonCode !== "other"
     ) {
       throw new Gi088EvaluationError("GI088_EARLY_STOP_REASON_CODE_INVALID", 400);
@@ -2113,13 +2114,23 @@ export class Gi088EvaluationService {
       firstRemainingIndex < 0 ? state.tasks : state.tasks.slice(0, firstRemainingIndex);
     const remaining =
       firstRemainingIndex < 0 ? [] : state.tasks.slice(firstRemainingIndex);
-    if (
-      state.activeTaskId !== null ||
-      completed.length === 0 ||
-      remaining.length === 0 ||
-      completed.some((task) => !isCompletedTaskBoundary(state, task)) ||
-      remaining.some((task) => !isPristineTask(state, task))
-    ) {
+    const administrativeRedesignStop =
+      input.reasonCode === "evaluation_system_redesign_before_first_call";
+    const administrativeRedesignScopeValid =
+      administrativeRedesignStop &&
+      reason === "evaluation_system_redesign_before_first_call" &&
+      state.activeTaskId === null &&
+      completed.length === 0 &&
+      remaining.length === state.tasks.length &&
+      remaining.every((task) => isPristineTask(state, task));
+    const regularScopeValid =
+      !administrativeRedesignStop &&
+      state.activeTaskId === null &&
+      completed.length > 0 &&
+      remaining.length > 0 &&
+      completed.every((task) => isCompletedTaskBoundary(state, task)) &&
+      remaining.every((task) => isPristineTask(state, task));
+    if (!administrativeRedesignScopeValid && !regularScopeValid) {
       throw new Gi088EvaluationError("GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED", 409);
     }
     const stoppedAt = this.now();
@@ -2151,20 +2162,32 @@ export class Gi088EvaluationService {
     const remainingBoundaryTasks = firstRemainingIndex < 0
       ? []
       : batch.state.tasks.slice(firstRemainingIndex);
+    const administrativeRedesignStop =
+      batch.state.earlyStop?.reasonCode ===
+        "evaluation_system_redesign_before_first_call" &&
+      batch.state.earlyStop.reason ===
+        "evaluation_system_redesign_before_first_call";
     const terminalScopeValid = batch.status === "sealed"
       ? batch.state.activeTaskId === null &&
         batch.state.tasks.every((task) =>
           isCompletedTaskBoundary(batch.state, task)
         )
-      : batch.state.activeTaskId === null &&
-        completedBoundaryTasks.length > 0 &&
-        remainingBoundaryTasks.length > 0 &&
-        completedBoundaryTasks.every((task) =>
-          isCompletedTaskBoundary(batch.state, task)
-        ) &&
-        remainingBoundaryTasks.every((task) =>
-          isPristineTask(batch.state, task)
-        );
+      : administrativeRedesignStop
+        ? batch.state.activeTaskId === null &&
+          completedBoundaryTasks.length === 0 &&
+          remainingBoundaryTasks.length === batch.state.tasks.length &&
+          remainingBoundaryTasks.every((task) =>
+            isPristineTask(batch.state, task)
+          )
+        : batch.state.activeTaskId === null &&
+          completedBoundaryTasks.length > 0 &&
+          remainingBoundaryTasks.length > 0 &&
+          completedBoundaryTasks.every((task) =>
+            isCompletedTaskBoundary(batch.state, task)
+          ) &&
+          remainingBoundaryTasks.every((task) =>
+            isPristineTask(batch.state, task)
+          );
     if (
       batch.state.status !== batch.status ||
       !persistedTerminalAt ||

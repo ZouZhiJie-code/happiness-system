@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src data:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>GI-088 真实问题回归集 v1</title>
+  <style>
+    :root{color-scheme:light;--ink:#202522;--muted:#69716c;--paper:#fffdf8;--workspace:#f1eee7;--line:#ded9cf;--sage:#315f4c;--sage-soft:#e5efe9;--gold:#8b6217;--gold-soft:#f6ecd6;--danger:#9c3f36;--danger-soft:#f8e7e3;--steel:#465d70;--steel-soft:#e7edf1}
+    *{box-sizing:border-box}body{margin:0;background:var(--workspace);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}.top{display:flex;align-items:center;gap:18px;padding:17px 22px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.brand{display:flex;align-items:center;gap:12px}.seal{width:45px;height:45px;border-radius:14px;background:var(--ink);color:#fff;display:grid;place-items:center;font:bold 12px/1 ui-monospace,monospace}.eyebrow{font:11px/1.2 ui-monospace,monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.top h1{font-size:18px;margin:3px 0 0}.private{font-size:12px;color:var(--gold);background:var(--gold-soft);padding:5px 8px;border-radius:999px}.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}.btn,button,select,input,textarea{font:inherit}.btn,button{border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 11px;cursor:pointer}.btn:hover,button:hover{border-color:#9da39f}.primary{background:var(--ink)!important;color:#fff!important;border-color:var(--ink)!important}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}.metric{background:var(--paper);padding:13px 18px}.metric strong{display:block;font:700 18px/1.2 ui-monospace,monospace}.metric small{color:var(--muted)}.layout{display:grid;grid-template-columns:310px minmax(460px,1fr) 370px;min-height:calc(100vh - 140px)}.list,.review{background:var(--paper);overflow:auto;max-height:calc(100vh - 140px);position:sticky;top:140px}.list{border-right:1px solid var(--line)}.review{border-left:1px solid var(--line)}.tools{padding:13px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,253,248,.96);z-index:4}.tools input,.tools select{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px}.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.case-list{padding:8px}.case-row{display:grid;width:100%;text-align:left;gap:5px;margin:0 0 5px;padding:11px;border-color:transparent;background:transparent}.case-row:hover{background:#f4f2ec}.case-row.active{background:var(--sage-soft);border-color:#9bb3a7}.row-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.case-id{font:11px/1 ui-monospace,monospace;color:var(--muted)}.case-title{font-size:14px;line-height:1.4}.dot{width:8px;height:8px;border-radius:50%;background:#b8bdb9}.dot.done{background:#2c7755}.dot.edit{background:#c48725}.chips{display:flex;gap:5px;flex-wrap:wrap}.chip{font:10px/1 ui-monospace,monospace;padding:4px 6px;border-radius:999px;background:var(--steel-soft);color:var(--steel)}.chip.gold{background:var(--gold-soft);color:var(--gold)}.content{padding:22px;min-width:0}.case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding-bottom:15px;border-bottom:1px solid var(--line)}.case-head h2{font-size:21px;margin:0 0 6px}.meta{color:var(--muted);font-size:12px;line-height:1.6}.section{margin:20px 0}.section h3{font-size:14px;margin:0 0 10px}.callout{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--paper);font-size:13px;line-height:1.65}.callout.warning{background:var(--gold-soft);border-color:#dcc492}.callout.danger{background:var(--danger-soft);border-color:#e2b8b2}.transcript{display:grid;gap:9px}.message{max-width:86%;padding:11px 13px;border-radius:14px;font-size:13px;line-height:1.65;white-space:pre-wrap}.message.user{justify-self:end;background:var(--sage-soft);border-bottom-right-radius:4px}.message.assistant{justify-self:start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}.role{display:block;font:10px/1 ui-monospace,monospace;color:var(--muted);margin-bottom:6px}.risk-list{margin:0;padding-left:20px;font-size:13px;line-height:1.7}.review-inner{padding:18px 17px 90px}.review h2{font-size:17px;margin:0 0 6px}.intro{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:15px}.question{border-top:1px solid var(--line);padding:13px 0}.question strong{display:block;font-size:13px;margin-bottom:8px}.radio-grid{display:flex;gap:6px;flex-wrap:wrap}.radio-grid label{font-size:12px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}.radio-grid input{margin:0 4px 0 0}.note{width:100%;min-height:95px;border:1px solid var(--line);border-radius:9px;padding:9px;resize:vertical}.savebar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 17px;background:rgba(255,253,248,.97);border-top:1px solid var(--line)}.savebar button{flex:1}.error{color:var(--danger);font-size:12px;min-height:18px;margin-top:8px}.empty{padding:45px;text-align:center;color:var(--muted)}.hidden{display:none!important}#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9px;padding:9px 13px;opacity:0;pointer-events:none;transition:.15s;z-index:30}#toast.show{opacity:1}
+    @media(max-width:1150px){.layout{grid-template-columns:270px 1fr}.review{grid-column:1/-1;position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}.metrics{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:760px){.top{align-items:flex-start;flex-direction:column}.top-actions{margin-left:0}.metrics{grid-template-columns:1fr 1fr}.layout{display:block}.list{position:static;max-height:330px;border-right:0}.content{padding:16px}.message{max-width:94%}.filter-grid{grid-template-columns:1fr}.case-head{display:block}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><div class="seal">GI<br>088</div><div><div class="eyebrow">Real problem regression · v1</div><h1>真实问题回归集</h1></div></div>
+    <span class="private">本机私有</span>
+    <div class="top-actions">
+      <button class="btn" id="importButton">导入草稿</button>
+      <button class="btn" id="draftButton">导出草稿</button>
+      <button class="btn primary" id="finalButton">完成并导出</button>
+      <input class="hidden" id="importInput" type="file" accept="application/json">
+    </div>
+  </header>
+  <section class="metrics">
+    <div class="metric"><strong id="caseCount">30</strong><small>全部待确认题目</small></div>
+    <div class="metric"><strong id="realCount">22</strong><small>真实历史检查点</small></div>
+    <div class="metric"><strong id="cfCount">8</strong><small>单变量相邻题</small></div>
+    <div class="metric"><strong id="sentinelCount">9</strong><small>质量标准哨兵</small></div>
+    <div class="metric"><strong id="progressCount">0 / 30</strong><small>已完成逐条确认</small></div>
+  </section>
+  <main class="layout">
+    <aside class="list">
+      <div class="tools">
+        <input id="searchInput" type="search" placeholder="搜索题目或话题">
+        <div class="filter-grid">
+          <select id="ruleFilter" aria-label="质量标准"><option value="all">全部标准</option></select>
+          <select id="originFilter" aria-label="来源"><option value="all">全部来源</option><option value="real_historical_checkpoint">真实历史</option><option value="single_variable_counterfactual">相邻题</option></select>
+          <select id="statusFilter" aria-label="评审状态"><option value="all">全部状态</option><option value="unreviewed">待确认</option><option value="in_progress">填写中</option><option value="complete">已完成</option></select>
+          <select id="sentinelFilter" aria-label="快速哨兵"><option value="all">全部题目</option><option value="sentinel">只看哨兵</option></select>
+        </div>
+      </div>
+      <div class="case-list" id="caseList"></div>
+    </aside>
+    <article class="content" id="caseContent"></article>
+    <aside class="review" id="reviewPanel"></aside>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const packet=__GI088_REAL_PROBLEM_REGRESSION_PACKET__;
+    const storageKey="daily-light:gi088-real-problem-regression:"+packet.reviewPacketFingerprint;
+    const requiredFields=["sourceFidelity","checkpointRepresentativeness","rubricAlignment","expectedDirection","finalDisposition"];
+    const labels={
+      real_historical_checkpoint:"真实历史",single_variable_counterfactual:"相邻题",
+      approve:"通过",revise:"需修改",exclude:"排除",pass:"符合",
+      QR01:"抓住重点",QR02:"带来新材料",QR03:"避免重复",QR04:"一个回答方向",QR05:"自然与负担",QR06:"接住纠正",QR07:"继续与停止",QR08:"事件边界",QR09:"技术体验"
+    };
+    const initialReview=packet.initialReview||null;
+    let state={activeId:packet.cases[0].caseId,answers:initialReview?.answers||{},savedAnswers:JSON.parse(JSON.stringify(initialReview?.answers||{})),revisions:initialReview?.revisions||{},filters:{search:"",rule:"all",origin:"all",status:"all",sentinel:"all"}};
+    try{const saved=JSON.parse(localStorage.getItem(storageKey)||"null");if(saved&&saved.reviewPacketFingerprint===packet.reviewPacketFingerprint)state={...state,...saved};}catch(_error){}
+    function esc(value){return String(value??"").replace(/[&<>"']/g,function(char){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char];});}
+    function rubricLabel(id){const item=packet.ruleCoverage[id];return id+"｜"+(item?item.title:(labels[id.replace("-","")]||id));}
+    function answerFor(id){if(!state.answers[id])state.answers[id]={sourceFidelity:"",checkpointRepresentativeness:"",rubricAlignment:"",expectedDirection:"",finalDisposition:"",note:"",reviewedAt:""};return state.answers[id];}
+    function missingFields(answer){const missing=requiredFields.filter(field=>!answer[field]);if(["revise","exclude"].includes(answer.finalDisposition)&&String(answer.note||"").trim().length<4)missing.push("note");return missing;}
+    function itemStatus(id){const answer=state.answers[id];if(!answer)return"unreviewed";if(missingFields(answer).length===0)return"complete";return Object.values(answer).some(Boolean)?"in_progress":"unreviewed";}
+    function persist(message){localStorage.setItem(storageKey,JSON.stringify({...state,reviewPacketFingerprint:packet.reviewPacketFingerprint}));if(message)toast(message);renderProgress();}
+    function toast(message){const node=document.getElementById("toast");node.textContent=message;node.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>node.classList.remove("show"),1400);}
+    function filteredCases(){const q=state.filters.search.trim().toLowerCase();return packet.cases.filter(item=>{
+      if(q&&!([item.caseId,item.title,item.topicTitle,item.evaluation.primaryPrincipleId].join(" ").toLowerCase().includes(q)))return false;
+      if(state.filters.rule!=="all"&&item.evaluation.primaryPrincipleId!==state.filters.rule)return false;
+      if(state.filters.origin!=="all"&&item.originKind!==state.filters.origin)return false;
+      if(state.filters.status!=="all"&&itemStatus(item.caseId)!==state.filters.status)return false;
+      if(state.filters.sentinel==="sentinel"&&!item.evaluation.sentinel)return false;
+      return true;
+    });}
+    function renderProgress(){const count=packet.cases.filter(item=>itemStatus(item.caseId)==="complete").length;document.getElementById("progressCount").textContent=count+" / "+packet.cases.length;}
+    function renderFilters(){const select=document.getElementById("ruleFilter");if(select.options.length===1){Object.keys(packet.ruleCoverage).forEach(id=>{const option=document.createElement("option");option.value=id;option.textContent=rubricLabel(id);select.append(option);});}document.getElementById("searchInput").value=state.filters.search;select.value=state.filters.rule;document.getElementById("originFilter").value=state.filters.origin;document.getElementById("statusFilter").value=state.filters.status;document.getElementById("sentinelFilter").value=state.filters.sentinel;}
+    function renderList(){const items=filteredCases();const list=document.getElementById("caseList");if(!items.length){list.innerHTML='<div class="empty">当前筛选下没有题目</div>';return;}if(!items.some(item=>item.caseId===state.activeId))state.activeId=items[0].caseId;list.innerHTML=items.map(item=>{
+      const status=itemStatus(item.caseId);const answer=state.answers[item.caseId];const dot=status==="complete"?(answer&&answer.finalDisposition==="approve"?"done":"edit"):"";
+      return '<button class="case-row '+(item.caseId===state.activeId?"active":"")+'" data-id="'+esc(item.caseId)+'"><span class="row-top"><span class="case-id">'+esc(item.caseId)+'</span><span class="dot '+dot+'"></span></span><span class="case-title">'+esc(item.title)+'</span><span class="chips"><span class="chip">'+esc(item.evaluation.primaryPrincipleId)+'</span><span class="chip">'+esc(labels[item.originKind])+'</span>'+(item.evaluation.sentinel?'<span class="chip gold">哨兵</span>':"")+'</span></button>';
+    }).join("");list.querySelectorAll("[data-id]").forEach(button=>button.addEventListener("click",()=>{state.activeId=button.dataset.id;persist();renderAll();}));}
+    function activeCase(){return packet.cases.find(item=>item.caseId===state.activeId)||packet.cases[0];}
+    function renderContent(){const item=activeCase();const counter=item.counterfactual?'<div class="callout warning"><strong>单变量变化</strong><br>'+esc(item.counterfactual.changedVariable)+'<br><small>由 Codex 改写用户侧一个变量；Daily Light 参考答案：未编写；需产品负责人确认。</small></div>':"";
+      const messages=item.candidateInput.messages.map(message=>'<div class="message '+esc(message.role)+'"><span class="role">'+(message.role==="user"?"用户":"历史上下文中的 AI")+'</span>'+esc(message.content)+'</div>').join("");
+      document.getElementById("caseContent").innerHTML='<div class="case-head"><div><h2>'+esc(item.title)+'</h2><div class="meta">'+esc(item.caseId)+' · '+esc(item.topicId)+' · '+esc(item.source.conversationId)+' · 第 '+esc(item.source.targetTurnNumber)+' 轮</div></div><div class="chips"><span class="chip">'+esc(rubricLabel(item.evaluation.primaryPrincipleId))+'</span>'+(item.evaluation.sentinel?'<span class="chip gold">快速哨兵</span>':"")+'</div></div>'+counter+
+      '<section class="section"><h3>未来给候选的固定输入</h3><div class="transcript">'+messages+'</div><div class="callout warning" style="margin-top:10px">历史目标回答已经从候选输入中排除。这里展示的上一轮 AI 内容仅属于固定上下文。</div></section>'+
+      '<section class="section"><h3>当前可接受方向</h3><div class="callout">'+esc(item.evaluation.expectedBehaviorRange)+'</div></section>'+
+      '<section class="section"><h3>需要避免的风险</h3><ul class="risk-list">'+item.evaluation.prohibitedRisks.map(risk=>'<li>'+esc(risk)+'</li>').join("")+'</ul></section>'+
+      '<section class="section"><h3>历史目标证据（只供审题）</h3><div class="callout '+(item.historicalEvidence.targetStatus==="valid"?"":"danger")+'"><strong>当时状态：</strong>'+esc(item.historicalEvidence.targetStatus)+'<br><strong>当时 AI 结果：</strong><br>'+esc(item.historicalEvidence.targetVisibleText||"无可见内容")+'<br><br><strong>产品负责人原总评：</strong>'+esc(item.historicalEvidence.historicalOverallLabel)+'<br>'+esc(item.historicalEvidence.historicalOverallReason)+'</div></section>'+
+      '<section class="section"><h3>新旧判尺边界</h3><div class="callout warning">'+esc(item.historicalEvidence.interpretationBoundary)+'</div></section>';
+    }
+    const reviewQuestions=[
+      ["sourceFidelity","1. 来源和上下文是否忠实？"],
+      ["checkpointRepresentativeness","2. 这个关键时刻是否能代表历史问题？"],
+      ["rubricAlignment","3. 主要质量标准是否映射准确？"],
+      ["expectedDirection","4. 可接受方向和风险边界是否合理？"]
+    ];
+    function radioField(name,title,answer){return '<div class="question"><strong>'+esc(title)+'</strong><div class="radio-grid"><label><input type="radio" name="'+name+'" value="pass" '+(answer[name]==="pass"?"checked":"")+'>符合</label><label><input type="radio" name="'+name+'" value="revise" '+(answer[name]==="revise"?"checked":"")+'>需修改</label></div></div>';}
+    function renderReview(){const item=activeCase();const answer=answerFor(item.caseId);const panel=document.getElementById("reviewPanel");panel.innerHTML='<div class="review-inner"><h2>逐条确认</h2><p class="intro">确认题目质量。当前页面不评模型能力，也不把历史回答当作唯一标准答案。</p>'+reviewQuestions.map(([name,title])=>radioField(name,title,answer)).join("")+'<div class="question"><strong>5. 最终处置</strong><div class="radio-grid"><label><input type="radio" name="finalDisposition" value="approve" '+(answer.finalDisposition==="approve"?"checked":"")+'>通过</label><label><input type="radio" name="finalDisposition" value="revise" '+(answer.finalDisposition==="revise"?"checked":"")+'>需修改</label><label><input type="radio" name="finalDisposition" value="exclude" '+(answer.finalDisposition==="exclude"?"checked":"")+'>排除</label></div></div><div class="question"><strong>修改意见或备注</strong><textarea class="note" id="noteInput" placeholder="选择需修改或排除时必填">'+esc(answer.note)+'</textarea><div class="error" id="reviewError"></div></div></div><div class="savebar"><button id="previousButton">上一条</button><button class="primary" id="saveButton">保存并下一条</button></div>';
+      panel.querySelectorAll('input[type="radio"]').forEach(input=>input.addEventListener("change",()=>{answer[input.name]=input.value;answer.reviewedAt=new Date().toISOString();persist();renderList();}));
+      document.getElementById("noteInput").addEventListener("input",event=>{answer.note=event.target.value;answer.reviewedAt=new Date().toISOString();persist();});
+      document.getElementById("previousButton").addEventListener("click",()=>move(-1));document.getElementById("saveButton").addEventListener("click",saveAndNext);
+    }
+    function move(delta){const items=filteredCases();const index=items.findIndex(item=>item.caseId===state.activeId);if(index<0)return;state.activeId=items[(index+delta+items.length)%items.length].caseId;persist();renderAll();}
+    function saveAndNext(){const item=activeCase();const answer=answerFor(item.caseId);const missing=missingFields(answer);if(missing.length){document.getElementById("reviewError").textContent="请补充完整后保存。";return;}const prior=state.savedAnswers[item.caseId];if(prior&&JSON.stringify(prior)!==JSON.stringify(answer)){state.revisions[item.caseId]=state.revisions[item.caseId]||[];state.revisions[item.caseId].push(prior);}state.savedAnswers[item.caseId]=JSON.parse(JSON.stringify(answer));persist("已保存 "+item.caseId);move(1);}
+    function renderAll(){renderFilters();renderList();renderContent();renderReview();renderProgress();}
+    function canonicalize(value){if(Array.isArray(value))return value.map(canonicalize);if(value&&typeof value==="object")return Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,item])=>[key,canonicalize(item)]));return value;}
+    async function sha256Text(value){const bytes=new TextEncoder().encode(value);const digest=await crypto.subtle.digest("SHA-256",bytes);return Array.from(new Uint8Array(digest)).map(byte=>byte.toString(16).padStart(2,"0")).join("");}
+    function decisionDocument(status){const document={schemaVersion:"1.0",datasetVersion:packet.datasetVersion,reviewPacketFingerprint:packet.reviewPacketFingerprint,status,reviewerRole:initialReview?.reviewerRole||"product_owner",updatedAt:new Date().toISOString(),answers:state.answers,revisions:state.revisions};if(status==="complete"){const approvedCaseIds=packet.cases.filter(item=>document.answers[item.caseId]&&document.answers[item.caseId].finalDisposition==="approve").map(item=>item.caseId);const reviseCaseIds=packet.cases.filter(item=>document.answers[item.caseId]&&document.answers[item.caseId].finalDisposition==="revise").map(item=>item.caseId);const excludeCaseIds=packet.cases.filter(item=>document.answers[item.caseId]&&document.answers[item.caseId].finalDisposition==="exclude").map(item=>item.caseId);const changesRequired=reviseCaseIds.length+excludeCaseIds.length>0;document.reviewOutcome={approvedCaseIds,reviseCaseIds,excludeCaseIds,sealStatus:changesRequired?"revision_or_replacement_required":"ready_to_seal",nextAction:changesRequired?"revise_or_replace_cases_and_generate_new_review_packet_fingerprint":"seal_confirmed_dataset"};}return document;}
+    function download(filename,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=filename;link.click();URL.revokeObjectURL(url);}
+    async function exportDocument(final){const incomplete=packet.cases.filter(item=>itemStatus(item.caseId)!=="complete");if(final&&incomplete.length){state.activeId=incomplete[0].caseId;persist();renderAll();toast("还有 "+incomplete.length+" 条未完成");return;}const doc=decisionDocument(final?"complete":"draft");doc.decisionLedgerFingerprint=await sha256Text(JSON.stringify(canonicalize(doc)));download(final?"gi088-real-problem-regression-v1.2-decisions.json":"gi088-real-problem-regression-v1.2-draft.json",JSON.stringify(doc,null,2)+"\n","application/json");if(final){const approved=doc.reviewOutcome.approvedCaseIds.length;const changeCount=doc.reviewOutcome.reviseCaseIds.length+doc.reviewOutcome.excludeCaseIds.length;const markdown=["# GI-088 真实问题回归集 v1.2｜产品确认摘要","","- 评审包指纹：`"+packet.reviewPacketFingerprint+"`","- 完成：`30/30`","- 通过：`"+approved+"/30`","- 修订或替换：`"+changeCount+"`","- 数据封存门：`"+(approved===30?"可申请封存":"等待修订或替换")+"`",changeCount?"- 后续动作：修订或替换对应案例，随后生成新的评审包指纹并重新确认。":"- 后续动作：可进入事件关系解释复测。",""].join("\n");download("gi088-real-problem-regression-v1.2-review-summary.md",markdown,"text/markdown");}toast(final?"正式裁决已导出":"草稿已导出");}
+    async function importDraft(file){const doc=JSON.parse(await file.text());if(doc.reviewPacketFingerprint!==packet.reviewPacketFingerprint)throw new Error("评审包指纹不一致");state.answers=doc.answers||{};state.revisions=doc.revisions||{};state.savedAnswers=JSON.parse(JSON.stringify(state.answers));persist("草稿已导入");renderAll();}
+    document.getElementById("searchInput").addEventListener("input",event=>{state.filters.search=event.target.value;persist();renderList();});
+    [["ruleFilter","rule"],["originFilter","origin"],["statusFilter","status"],["sentinelFilter","sentinel"]].forEach(([id,key])=>document.getElementById(id).addEventListener("change",event=>{state.filters[key]=event.target.value;persist();renderList();}));
+    document.getElementById("draftButton").addEventListener("click",()=>exportDocument(false).catch(error=>toast(String(error))));document.getElementById("finalButton").addEventListener("click",()=>exportDocument(true).catch(error=>toast(String(error))));document.getElementById("importButton").addEventListener("click",()=>document.getElementById("importInput").click());document.getElementById("importInput").addEventListener("change",event=>{const file=event.target.files&&event.target.files[0];if(file)importDraft(file).catch(error=>toast(error.message));event.target.value="";});
+    document.getElementById("caseCount").textContent=packet.counts.cases;document.getElementById("realCount").textContent=packet.counts.realCheckpoints;document.getElementById("cfCount").textContent=packet.counts.counterfactuals;document.getElementById("sentinelCount").textContent=packet.counts.sentinels;renderAll();
+  </script>
+</body>
+</html>
