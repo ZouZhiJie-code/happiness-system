@@ -1,6 +1,9 @@
 # Integration Guide
 
-最后更新：`2026-08-12`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[项目知识导航](./README.md)
 
 本文记录当前可调用的 HTTP 合同。历史设计与阶段验收记录保存在 `docs/plans/`，系统分层见 `docs/architecture.md`。
 
@@ -20,9 +23,9 @@
 - `INTERVIEW_EVENT_CENTERED_MODE` 控制入口与写入范围：`legacy`、`optional`、`event_centered`、`event_recovery`。
 - `INTERVIEW_EVENT_CENTERED_STRATEGY` 控制提问链路：`baseline` 或 `generative`。生产默认使用 `baseline`。
 - `EVENT_CENTERED_GENERATIVE_MODEL` 用于候选链路独立锁定模型；新事件中心候选固定为 `deepseek-v4-flash`，共享五维聊天模型继续由 `DEEPSEEK_MODEL` 提供。
-- `EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
-- Board 8 批准前，Production 保持 `legacy + baseline`；已有事件与日志继续可读。
-- GI-066 自动技术证据已经封存，最新真人体验裁决为 `No-Go`，候选失效。`GI-067 / GI-068～080` 产品规则已冻结；板块 6 正在建设正式评测资产。GI-081 已归档为临时 Prompt 诊断基线，GI-088 v1～v7r4 保留历史证据；v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，原 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效调用只读保留。v8r2 已完成 P0／P1、最终初始化幂等、不可变版本和全绿静态门；行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，两套 Prisma Client 由 Vercel Linux 远程构建，登录存储与 error logs 验收通过；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项 Thinking high 真人验收。真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除；Production 接入保持关闭并使用 `legacy + baseline`。
+- `EVENT_CENTERED_JUDGE_QWEN_*`、`EVENT_CENTERED_JUDGE_*`、`DEEPSEEK_JUDGE_*` 和 `DEEPSEEK_*` 评测凭据只用于本地或隔离评测；不要放入浏览器、公开 API 参数、Trace 或生产请求。
+- Production 当前使用 `event_centered + baseline`；`legacy + baseline` 保留为回退与历史运行身份，已有事件与日志继续可读。
+- GI-067 / GI-068～080 产品规则已冻结。GI-088 阶段 C2 的 Plus 双 No-Go、Max 技术阻断和阶段 C3 的 14 张私有盲评包保留历史身份；当前执行 70 项本机离线评测资产审题，等待产品负责人逐项裁决。Judge、独立准入、真人 Preview 和 `generative` 发布继续关闭。
 
 ## 2. 路由速查
 
@@ -65,7 +68,7 @@
 | `GET` | `/api/interview/event-centered/session/[id]` | 读取事件中心工作区、消息、检查点和 `allowedActions` |
 | `POST` | `/api/interview/event-centered/session/turn` | 显式预留一条用户原话并返回可靠回合确认；供兼容客户端和受控测试使用 |
 | `POST` | `/api/interview/event-centered/session/respond/stream` | 执行两段式理解/表达，SSE 返回 `turn / phase / delta / session / error` |
-| `POST` | `/api/interview/event-centered/journal/generate` | 冻结来源并生成事件日志草稿；生成位置由 `allowedActions` 控制 |
+| `POST` | `/api/interview/event-centered/journal/generate` | 历史事件日志生成兼容入口；当前网页端完成记录使用 `exit_event` 形成记录卡 |
 | `GET` | `/api/interview/event-centered/journal/[id]` | 读取事件日志及当前内容版本 |
 | `PATCH` | `/api/interview/event-centered/journal/[id]` | 自动暂存标题和正文；要求 `expectedContentRevision` |
 | `POST` | `/api/interview/event-centered/journal/[id]/save` | 将当前草稿按版本号正式保存 |
@@ -81,7 +84,8 @@
 ```json
 {
   "entryDate": "2026-08-12",
-  "recordMode": "capture"
+  "recordMode": "capture",
+  "clientOperationId": "browser-operation-id"
 }
 ```
 
@@ -361,7 +365,11 @@ Content-Type: application/json
 ```
 
 ```json
-{"entryDate":"2026-08-02"}
+{
+  "entryDate": "2026-08-02",
+  "recordMode": "chat",
+  "clientOperationId": "browser-operation-id"
+}
 ```
 
 发送一轮用户原话时，主界面直接调用 SSE 接口；服务端会在同一请求内完成可靠预留和用户原话持久化。需要显式预留的兼容客户端或受控测试可以单独调用：
@@ -389,9 +397,23 @@ Accept: text/event-stream
 
 不要对同一条用户原话同时调用 `/session/turn` 和 `/session/respond/stream`，以免创建重复预留。正常回合的 SSE 顺序包含 `turn -> phase / delta -> session`；`turn` 表示原话已写入，`session` 表示本轮助手回应和会话状态已提交。页面刷新或生成中断后，使用同一 `clientTurnId` 继续生成，不重复保存用户原话。
 
+当前网页端用 `exit_event` 完成一条记录：
+
+```json
+{
+  "action": "exit_event",
+  "rootSessionId": "root-session-cuid",
+  "clientTurnId": "browser-generated-id",
+  "baseBranchSessionId": "active-branch-cuid",
+  "baseMessageSequence": 8
+}
+```
+
+完成结果应幂等形成当天记录卡，并返回 `/calendar?view=day&date=YYYY-MM-DD`。记录卡自动成为当天可用素材，今日日记的生成和更新继续由日记页负责。完整联调门与验收顺序见[Daily Light 端到端联调总交接](./plans/2026-08-12-daily-light-end-to-end-integration-handoff.md)。
+
 历史候选使用“第一段理解与计划、第二段用户表达”的两段式合同，并保留 deterministic baseline 兼容路径。`GI-067 / GI-068～080` 已冻结目标产品职责和稳定性输入：产品协议固定结果和硬边界，Interview Skill / Prompt 承载方法与案例，大模型自主判断回应，程序执行确定性保护，Trace、Evals 与真人 Preview 共同验收。GI-081 的一次调用／两阶段结构只承担六题离线诊断；正式调用次数、字段、状态结构和失败处理由板块 7 在板块 6 正式资产完成后确定，并同步更新本节。可靠原话保存、同一 `clientTurnId` 续接、结构化错误和 Trace 继续有效。
 
-事件日志生成由工作区 `allowedActions` 控制：
+历史事件日志生成兼容入口继续由工作区 `allowedActions` 控制：
 
 ```text
 POST /api/interview/event-centered/journal/generate
@@ -406,7 +428,7 @@ POST /api/interview/event-centered/journal/generate
 }
 ```
 
-生成后，桌面端打开右侧日志书页，移动端打开底部 sheet。编辑使用：
+该入口保留历史候选与受控测试用途。当前网页端在日记页读取和编辑记录卡，接口继续使用：
 
 ```text
 GET   /api/interview/event-centered/journal/{id}
@@ -784,11 +806,11 @@ npm run build
 git diff --check
 ```
 
-`--mode=rules` 只回归确定性规则；真实模型回放、Judge 和用户质量判断需要单独授权。Production 保持 `legacy + baseline`，不得把评测 key 或 Judge 开关放入生产请求路径。
+`--mode=rules` 只回归确定性规则；真实模型回放、Judge 和用户质量判断需要单独授权。Production 当前使用 `event_centered + baseline`，不得把评测 key 或 Judge 开关放入生产请求路径。
 
 ### 10.2 GI-088 真人交互开发评测
 
-当前候选版本名为 `2026-08-10.gi088-human-eval-v8r2-foundation-hardening`，服务版本为 `2026-08-10.gi088-evaluation-foundation-service-v8r2`。最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`。当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。运行配置保持官方 `deepseek-v4-pro`、Thinking high、`json_object` 与 `provider_default`。页面任务说明、目标触发提示和人工判尺只对评测人可见，不进入模型上下文。v1～v8r1 的批次、双分支、错误、恢复和导出继续只读兼容；当前等待产品负责人完成 12 项真人验收。
+v8r2 候选和服务版本继续作为历史工作台合同。`2026-08-13` 阶段 B 审计确认 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=1 / early_stopped / 0/12 / gate=pending / calls=0`；同一评测版本共有 5 个历史 run。当前正式评测入口为[阶段 C3 双轨资产](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)，以下 v8r2 API 继续用于解释历史能力和未来运行器复用边界。
 
 v8r2 API 以 `runId` 明确一次真人运行：
 
@@ -817,7 +839,7 @@ npm run eval:gi088:probe:empty:inspect
 npm run eval:gi088:probe:thinking:inspect
 ```
 
-空内容 response format 真实探针已使用精确指纹、独立授权 UUID 和 `6` 次预算完成，零重试、零降级；移除参数候选 No-Go。Thinking 模式探针也已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`；high 与 disabled 均为 `2/2 valid`，high 未复现空内容，主要影响因素未确认。历史诊断以 [`GI-088 v2 diagnostic`](../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v2-diagnostic/README.md) 为准；v8r1 事故与部署快照见 [`GI-088 v8r1 最终 12 项`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)。v8r2 当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；两套 Prisma Client 已在 Vercel Linux 远程构建，登录存储验收通过。全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、调用 `0`、真人提交 `0` 和质量未评价只作为脱敏排除记录。当前结构、证据和发布边界见 [`GI-088 v8r2 证据包`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
+空内容与 Thinking 探针继续承担历史模型归因证据。v8r2 的 Preview deployment、Execution fingerprint 和初始化 `running 0/12` 均按 `2026-08-10` 快照解释；当前 run 血缘见[阶段 B 审计](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/run-history-audit.json)。
 
 ## 11. 通用错误语义
 

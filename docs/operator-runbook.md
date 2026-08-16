@@ -1,8 +1,13 @@
 # Operator Runbook
 
-最后更新：`2026-08-12`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[项目知识导航](./README.md)
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
+
+评测现状：GI-088 当前执行 70 项本机离线评测资产审题，等待产品负责人逐项裁决；旧 C3 的 14 张私有盲评包保留历史身份，当前入口为[GI-088 评测资产与 Handoff](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)。Judge、独立准入和真人 Preview 继续关闭；下文 v8r2 Preview 操作只承担历史工作台合同说明。
 
 ## 1. 环境变量
 
@@ -14,7 +19,7 @@
 | `AI_RUNTIME_CONFIG_SECRET` | 用于加密数据库里 AI provider API Key 的主密钥；推荐用 `openssl rand -base64 32` 生成 |
 | `AI_PROVIDER` | 当前产品与候选统一使用 `openai`，对应 DeepSeek 官方 API 的 OpenAI 兼容接口；Ark 只保留历史兼容代码 |
 | `INTERVIEW_INTENT_V2_MODE` | 访谈意图识别发布档位：`legacy` 保持既有决策，`shadow` 记录新旧对照，`enforce` 启用新决策。当前 Production 与 Preview 均使用 `enforce`，`legacy` 保留为 P0 问题的即时回退档位 |
-| `INTERVIEW_EVENT_CENTERED_MODE` | 事件中心入口档位：`legacy` 保持五维入口为默认并允许读取已有事件；`optional` 保持五维默认入口并展示“从一件事开始”且允许事件写入；`event_centered` 以事件中心为默认入口并允许事件写入；`event_recovery` 仅保留已有事件的恢复阅读，关闭事件新增与修改。板块 8 Preview 使用 `optional`，Production 默认保持 `legacy`；生成式问题触发条件发布时保留 `optional` 并切换策略。 |
+| `INTERVIEW_EVENT_CENTERED_MODE` | 事件中心入口档位：`legacy` 保持五维入口为默认并允许读取已有事件；`optional` 保持五维默认入口并展示“从一件事开始”且允许事件写入；`event_centered` 以事件中心为默认入口并允许事件写入；`event_recovery` 仅保留已有事件的恢复阅读，关闭事件新增与修改。Production 当前使用 `event_centered`；`legacy` 保留为紧急回退档位。 |
 | `INTERVIEW_EVENT_CENTERED_STRATEGY` | 事件中心内部提问策略：`baseline` 使用现有确定性提问链路，`generative` 使用同一模型的两段式结构化链路（第一段语义判断、第二段用户表达）。默认 `baseline`；板块 8 Preview 使用 `optional + generative`，生成式质量或稳定性触发回退时切换 `optional + baseline`；数据、隐私、来源或恢复主链风险切换 `event_recovery + baseline`，读路径受影响时切换 `legacy + baseline`。 |
 | `EVENT_CENTERED_GENERATIVE_MODEL` | 事件中心新候选固定使用 `deepseek-v4-flash`；只在受控 Preview 或候选验证中设置，Production 保持空值直到 Board 8 明确批准。 |
 | `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED` | 本地固定六案例零模型回放开关；仅在 `localhost` / `127.0.0.1` 且显式设置 `I_UNDERSTAND` 时生效，远程 UI Preview 与 Production 不使用。 |
@@ -22,6 +27,10 @@
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY` | 离线 Judge 专用 API Key；仅本地或隔离评测使用，不提交仓库、不注入客户端或生产请求。缺省时可按代码顺序兼容 `DEEPSEEK_JUDGE_API_KEY` 或回放 key。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL` | 离线 Judge 模型名，必须显式提供；兼容别名为 `DEEPSEEK_JUDGE_MODEL`。策略回放的 `DEEPSEEK_MODEL` 不会自动充当 Judge 模型。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL` | 离线 Judge 的 OpenAI-compatible base URL；兼容 `DEEPSEEK_JUDGE_BASE_URL`，最后可复用 `DEEPSEEK_BASE_URL`。只记录 host 元数据。 |
+| `EVENT_CENTERED_JUDGE_QWEN_API_KEY` | GI-088 新 Judge 校准专用私密 API Key；阶段 C 授权前保持空值。 |
+| `EVENT_CENTERED_JUDGE_QWEN_BASE_URL` | 千问 Judge 的 OpenAI-compatible base URL；报告只保留 host。 |
+| `EVENT_CENTERED_JUDGE_QWEN_MODEL` | 经 20 张卡校准后冻结的 Judge 模型版本。 |
+| `EVENT_CENTERED_JUDGE_QWEN_THINKING_MODE` | Judge 普通／思考模式身份；两种模式完成同组校准后再选择。 |
 | `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL` | DeepSeek 官方 API 的候选/目标聊天配置。API key 仅进入运行或评测进程内 provider，不写入报告和 Trace；模型名与 base URL host 可写入安全元数据。共享运行时切换后才用于官方预检。 |
 | `INTERVIEW_REGENERATION_ENABLED` | 回复“换个问法”开关；`true` 开放新会话的重新生成与版本切换，`false` 让版本 2 会话沿当前路径继续完成 |
 | `DEEPSEEK_API_KEY` | DeepSeek 官方 API 候选/目标聊天 Provider 的 API Key；发布到共享运行时前需要单独授权 |
@@ -41,6 +50,9 @@
 
 - 唯一生产主域名：`https://dailylight.chat`
 - `APP_URL`：`https://dailylight.chat`
+- 当前 Production deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`
+- 当前入口与策略：`event_centered + baseline`
+- 上一正式 deployment `dpl_ATtwPhXLvmHURAutRzKyimNSWyir` 与 `legacy + baseline` 保留为紧急回退点
 - `https://www.dailylight.chat`：兼容入口
 - `dlight.cc.cd`：已于 `2026-07-20` 移除并废弃
 
@@ -79,6 +91,11 @@ EVENT_CENTERED_EVALUATION_TIMEOUT_MS="18000"
 EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY=""
 EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL="deepseek-v4-pro"
 EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL="https://api.deepseek.com"
+# 阶段 C 获独立授权并完成 20 张卡校准前保持空值
+EVENT_CENTERED_JUDGE_QWEN_API_KEY=""
+EVENT_CENTERED_JUDGE_QWEN_BASE_URL=""
+EVENT_CENTERED_JUDGE_QWEN_MODEL=""
+EVENT_CENTERED_JUDGE_QWEN_THINKING_MODE=""
 # GI-088 私有 Preview 评测（完整契约见 .env.preview.example）
 EVALUATION_DATABASE_URL="" # 专属 Preview 物理库的 gi088_evaluation_v0 schema
 EVALUATION_POSTGRES_HOST=""
@@ -424,7 +441,7 @@ http://127.0.0.1:3000/api/dev/acceptance-login?token=local-ai-quality-acceptance
 
 ### 2.10 事件中心 MVP 冒烟
 
-事件中心写入需要 `INTERVIEW_EVENT_CENTERED_MODE=optional` 或 `event_centered`。本地验证时建议使用独立数据库或本地测试账号；Production 保持 `legacy + baseline`，不在本节直接切换生产环境变量。
+事件中心写入需要 `INTERVIEW_EVENT_CENTERED_MODE=optional` 或 `event_centered`。本地验证时建议使用独立数据库或本地测试账号；Production 当前使用 `event_centered + baseline`，不在本节直接切换生产环境变量。
 
 最小事件闭环：
 
@@ -465,11 +482,11 @@ http://127.0.0.1:3010/preview/board8-gi066-review
 
 页面顶部应显示 `openai · api.deepseek.com · deepseek-v4-flash`、候选 `5.65.0` 和语义产物 `v17`。该批次最新真人裁决为 `No-Go`，候选失效，剩余人工任务停止。工作台只用于历史证据回看，不承担 GI-067 裁决。
 
-GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录内模式保持和结束后新记录重选；新工作台继续等待板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束规则，板块 6 正式评测资产，以及板块 7 新候选和 Provider 预检；板块 8 将使用两模式 `4＋2` 进行真人验收。Production 继续保持 `legacy + baseline`。
+GI-067 / GI-068～074 已冻结产品规则和评测方法。该段记录历史评测推进关系；Daily Light 产品主链当前已发布 `event_centered + baseline`，GI-088 和 `generative` 策略仍需完成独立评测与发布授权。
 
-### 2.12 GI-088 私有真人评测工作台
+### 2.12 GI-088 历史私有工作台与阶段 B 资产
 
-当前证据包与后续真人验收入口为 [`GI-088 v8r2 评测底座加固资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v8r1 A1 已确认控制意图误停的单例阻断；其原 run 保持只读。v8r2 的 P0／P1、八项开门差额、最终初始化幂等、全绿静态门、不可变行为 commit 与 Execution fingerprint 均已收口；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，两套 Prisma Client 已在 Vercel Linux 远程构建并通过登录存储验收，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+v8r2 的 P0／P1、工作台与不可变证据继续保存在[历史底座包](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。阶段 B 审计确认目标 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已于 `2026-08-11` 封存为 `ordinal=2 / revision=1 / early_stopped / 0/12 / gate=pending / calls=0`；同一 evaluationVersion 共有 5 个 run，本轮写入 0。新评测运行先完成总规范启动门和阶段 B 差距，不沿用下列历史工作台作为准入入口。
 
 - `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
 - `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
@@ -506,7 +523,7 @@ Preview 发布上传源码并交给 Vercel Linux 远程构建；[vercel.json](..
 - typed error catalog 检查失败：先补齐 store／service 错误的 HTTP 状态、中文原因、保存情况和恢复动作，再开放 Preview。
 - 导出：只接受终态 run；首次导出冻结 payload 与 receipt，后续下载直接返回同一快照；客户端重算 canonical payload SHA256 后再标记收据验证成功。
 
-访问最终 v8r2 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。最终 deployment 为 `dpl_YRUQitffCQH264xiksHpLMviQZLy`，URL 为 `https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。该 deployment 使用修复源码 commit `0a993afad1248e67a2863456d2c35b774bb2130f` 在 Vercel Linux 远程生成两套 Prisma Client；虚构账号登录验收已返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`，并确认由绑定最终指纹的新 `clientOperationId` 创建。旧预发布零内容 run 已行政 `early_stopped` 并作为脱敏排除记录。Production 的 GI-088 页面和接口继续统一返回 `404`。
+v8r2 Preview deployment、URL、指纹和 `2026-08-10` 初始化回读继续按历史证据解释。当前 run 状态以阶段 B 的[运行血缘审计](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/run-history-audit.json)为准。Production 的 GI-088 页面和接口继续统一返回 `404`。
 
 事件日志生成故障处理：
 
@@ -822,7 +839,7 @@ npm test
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - 旧 UI Preview 网页端高保真专项：`8` 个测试文件、`36/36` 个测试通过，作为历史工程证据保留
 - `npm run typecheck`、`npm run lint`、`npm test`、`npm run build` 与 `git diff --check` 以当前分支最近一次完整验证记录为准
-- 旧远程 Vercel UI Preview 构建状态为 `Ready`；当前新前端仍在构建，尚未完成产品验收
+- `2026-08-12` 旧远程 Vercel UI Preview 构建状态为 `Ready`；`2026-08-13` 新前端完成第二轮验收并进入 Production，当前产品主链使用 `event_centered + baseline`
 - 日志生成评测资产的结构验证、隔离检查和 mock/静态单测单独记录；真实模型调用、远程数据库写入和真人提交需要独立授权
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
@@ -846,7 +863,7 @@ npm test
 
 #### Daily Light 旧 UI Preview 历史工程证据（2026-08-12）
 
-以下独立 UI Preview 已部署完成，作为当前新前端的工程联调参考：
+以下独立 UI Preview 已于 `2026-08-12` 部署完成，后来作为新前端的工程联调参考；当前仅承担历史工程证据职责：
 
 ```text
 https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
@@ -863,7 +880,7 @@ Preview 使用独立验收数据库，环境为 `INTERVIEW_EVENT_CENTERED_MODE=e
 4. 打开 day / week / month 三个 `/calendar` 地址，确认加载、错误、空状态和有数据时都保留归档侧栏 + 报告画布骨架。
 5. 在 `1440×900` 与 `1024×768` 两个桌面尺寸各刷新一次，确认顶部进度、输入区和报告主动作仍可见；保存后再次刷新，确认状态和内容恢复。
 
-浏览器核验已覆盖空工作台、访谈启动、事件保存和日报/周报/月报结构。当前新前端完成产品验收后，再接入固定六案例 Preview；真实模型质量评测、正式 `dev28＋hidden12` 和 Production 发布沿后续阶段单独处理。
+浏览器核验已覆盖空工作台、访谈启动、事件保存和日报/周报/月报结构。该旧 UI Preview 继续作为历史工程证据；`2026-08-13` 新前端已完成第二轮验收并进入 Production。真实模型质量评测、正式 `dev28＋hidden12` 和生成式能力发布沿后续阶段单独处理。
 
 以 `docs/vercel-preview-production-lane.md` 为 source of truth，按 preview 是否受保护分流：
 
@@ -1268,6 +1285,32 @@ v1 在两类失败下都提供“结束并评价当前技术失败”。手动�
 - `409` 且提示版本冲突：重新读取报告，合并需要保留的正文后使用最新 `expectedContentRevision` 自动暂存或保存。
 - 生成中刷新页面：读取 `latestGeneration`，状态恢复为 `generating / draft / stale / update_failed` 之一；重复点击使用同一个客户端操作编号，不应产生重复报告。
 - 日报、周报或月报显示空状态：先核对 `Asia/Shanghai` 日期范围和有效事件卡片 / 已保存上层报告来源，再判断是否确实没有可汇总素材。
+
+### 7.16 本地 Next.js 构建长时间停在 `compile`
+
+`2026-08-12` 的本地事故记录显示：同机完整 Webpack 构建历史约为 `38.1s`，Turbopack 构建约为 `21s`；异常 Webpack 构建约为 `1371.9s`，并持续停在 `buildStage=compile`。本地评测入口和私有评测素材会显著扩大服务端文件追踪图，异常停留点集中在 `node-file-trace` 或 Webpack 持久缓存处理阶段。完整证据、归因边界与后续建议见[本地 Next.js 构建性能事故记录](./maintenance/2026-08-12-local-next-build-performance-incident.md)。
+
+处理顺序：
+
+1. 构建约 `3min` 仍停在同一阶段时，记录 `next`／`jest-worker` 子进程 CPU、内存、磁盘读写，以及 `.next` 的体积、最近修改时间和 diagnostics 阶段。
+2. 间隔约 `30s` 执行两次 macOS“取样进程”。
+3. 连续 `5min` 内日志、diagnostics、`.next` 体积和最近修改时间均无变化，且进程样本保持相同热点时，按严重性能退化处理并停止继续等待。
+4. 停止并行测试、构建和评测任务；将 `.next` 改名备份，再做一次冷缓存 Webpack 构建。
+5. 冷缓存仍复现时，使用 Webpack profile 与 Next.js 内存诊断：
+
+```bash
+NEXT_WEBPACK_LOGGING=profile-server,infrastructure \
+  pnpm exec next build --debug --experimental-debug-memory-usage
+```
+
+诊断对照优先使用与 CI 一致的 Node 20，并分别从系统终端和 Codex 任务运行同一命令。Node LTS、包管理器与唯一锁文件的长期统一需要单独确认和验证。
+
+验证边界：
+
+- `next build --turbopack` 用于本地联调快速反馈。该事故发生在 Next.js 15.5；当前 `package.json` 已使用 Next.js 16.3.0，重新诊断时按当前版本验证，不沿用当时的 Beta 判断。
+- 本地 `next build` 用于 Webpack 兼容性和完整本地输入诊断。
+- Vercel 源码构建用于远程 Linux 发布产物与 Preview `READY` 验证；`.vercelignore` 排除的本地评测输入不包含在该结论中。
+- macOS 本机构建产物继续不进入 `vercel deploy --prebuilt`。
 
 ## 8. 关键日志与定位点
 

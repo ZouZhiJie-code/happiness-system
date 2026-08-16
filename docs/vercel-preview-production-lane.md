@@ -1,13 +1,16 @@
 # Vercel Preview / Production Lane
 
-最后更新：`2026-08-12`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[项目知识导航](./README.md)
 
 ## 当前生产域名
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
-- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，Vercel Linux 远程生成两套 Prisma Client 后，登录存储与 error logs 验收通过；新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `running 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项真人验收。质量与发布未裁决，约 `200` 轮以上容量优化继续排除。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
+- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。GI-088 当前执行 70 项本机离线评测资产审题，旧 C3 的 14 张盲评包保留历史身份；Judge、独立准入和真人 Preview 继续关闭，v8r2 Preview deployment 只承担历史工程证据。当前评测入口见[GI-088 评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)。Daily Light 产品主链已发布 `event_centered + baseline`，`generative` 策略继续关闭。
 - `2026-07-21` 历史生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
 - `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。
@@ -63,6 +66,35 @@
 - 当前批次还没有直接证据证明 `xingfuxitong` 已启用该能力；依赖这条路径前，必须额外验证项目设置里的 `Automatically expose System Environment Variables` 开关，以及部署运行时是否能读到 `VERCEL=1`
 - preview 数据库必须和本地库、生产库隔离
 
+#### 2026-08-13 Daily Light 第二轮验收基线功能 Preview
+
+```text
+URL: https://xingfuxitong-c4kyn9g7b-zouzhijies-projects.vercel.app
+deployment: dpl_6kchvcJ5BF3CZ9PkjU3genevBXcz
+status: READY
+```
+
+- 产品负责人已确认第二轮视觉基线；后续字体与色阶增强候选已否决，当前 deployment 使用恢复后的验收基线。
+- 远程 Linux 源码构建使用 Next.js `16.3.0` 通过；Production 运行依赖审计为 `0`。
+- 首页、记录、日记、认识自己和视觉验收页通过受保护 deployment 的远程回读，均返回 `HTTP 200`。
+- 固定六案例、真实访谈与日志闭环沿端到端总控完成隔离验证；Production 数据库、域名、模式和 deployment 均未切换。
+- 该 Preview 已完成独立验收并退出当前发布入口；Production 发布事实见下节。
+
+#### 2026-08-13 Daily Light 第二轮验收基线 Production
+
+```text
+URL: https://dailylight.chat
+deployment: dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2
+status: READY
+mode: event_centered + baseline
+```
+
+- 产品负责人已单独授权正式发布；五条新增迁移已应用，数据库状态为最新。
+- 首页、记录、日记和认识自己页面回读为 `HTTP 200`；匿名私有接口返回 `401`，登录态会话列表、日记、归档、周记、趋势和画像只读接口返回 `HTTP 200`。
+- 首次部署发现的认证空值保护问题已在无缓存重建中修复并复验。
+- 上一正式 deployment `dpl_ATtwPhXLvmHURAutRzKyimNSWyir` 与 `legacy + baseline` 保留为即时回退点。
+- GI-088、生成式访谈策略、模型质量专项和旧链路清理继续使用独立授权门。
+
 #### 2026-08-12 Daily Light 旧 UI Preview 历史工程证据
 
 这版访谈与日记页面使用独立 UI Preview，现作为历史工程证据保留，并与 GI-088 私有评测 Preview 分开记录：
@@ -78,11 +110,13 @@ status: Ready
 - 验收入口：`/interview?mode=event-centered&entryDate=2026-08-12`、`/calendar?view=day|week|month&date=2026-08-12`。
 - 远程 Vercel Linux 构建为 `Ready`，浏览器已核验当天空工作台、访谈启动、事件保存、日报/周报/月报结构；专项测试 `36/36`、类型检查、Lint 和差异检查通过。
 - Production `https://dailylight.chat` 的代码、数据库、环境变量和事件中心开关保持不变；本 UI Preview 不承担模型质量评测或 Production 发布授权。
-- 当前新前端处于构建中，等待产品负责人验收；通过后再接入固定六案例 Preview。
+- 以上为 `2026-08-12` 旧 UI Preview 的历史验收快照；`2026-08-13` 新前端已完成第二轮验收并进入 Production。固定六案例与生成式能力继续走各自的独立评测和授权链。
 
 #### 2026-08-09～10 GI-088 私有评测 Preview
 
-- 当前真人验收与正式证据入口为 [`GI-088 v8r2 资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成评测底座加固任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)；v8r1 事故与部署快照继续见 [`v8r1 历史资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)；
+本节全部为 `2026-08-09～10` 的历史 Preview 证据。当前 GI-088 状态从[生成式访谈重构总 Map](./generative-interview-refactor-map.md)和[阶段 C3 当前入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)读取。
+
+- 当时真人验收与正式证据入口为 [`GI-088 v8r2 资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成评测底座加固任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)；v8r1 事故与部署快照继续见 [`v8r1 历史资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)；
 - 访问链路依次通过 Vercel Deployment Protection、Daily Light 应用登录和 `ADMIN_USERNAMES ∩ GI088_EVALUATOR_USERNAMES`；
 - 应用登录与评测数据共用一个专属 Preview 物理库，分别使用 `gi088_app_preview`、`gi088_evaluation_v0` schema，两者均不指向 Production；
 - `GI088_EVALUATION_ENABLED` 只在该 Preview 设为 `I_UNDERSTAND`；模型请求还要求作用域与当前执行指纹精确匹配；
@@ -91,7 +125,7 @@ status: Ready
 - v2 diagnostic 已完成评测底座与两轮空内容诊断；response format 探针按精确授权完成 `6/6`，移除参数候选 No-Go；Thinking 模式探针按精确授权完成 `4/4`，high 与 disabled 均有效，主要影响因素未确认。产品负责人随后停止继续复现 DeepSeek 内部原因，确认 v3 使用 Thinking high 可见答案自动恢复。v3 deployment 为 `dpl_6ByMq3r9E8LvyTwZh3R87usLpro3`，执行指纹 `3b79fe68…70d23b`；A1 双轨迹完成后批次在 `1/12` 提前结束，消费 `8/40`。本组空内容与自动恢复均为 `0`，两边第 4 轮共同命中回答机会边界。v4 阶段 2→3 自然转场候选已完成本地静态验证，执行指纹 `0206fd34…b1d0a`；产品负责人已授权私有 Preview、新批次和最坏 `40` 次调用，deployment `dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV` 已 Ready。登录与 `0/12` 空白批次回读通过，模型调用仍为 `0`，可以开始 A1。浏览器标签修正版 `dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV` 已 Ready，并绑定固定别名 `xingfuxitong-gi088-v4-stage-transition.vercel.app`；当前已登录批次继续使用首次 deployment。Production 继续保持 `legacy + baseline`。
 - v5 High-only 候选完成私有 Preview 与 `0/12` 空白批次回读，未发生真人模型调用。v6 取消新轮次的单问号程序拦截与自动整理，保留问号观测并要求所有可见 ask 在结束轨迹前完成人工分类；当前共 `4` 项、活动分支仅 `high`、执行指纹 `a5042e97…c094d`、最坏调用预算 `48`。deployment `dpl_5Rq7gTnovApDY97b4pg8k7YJf33r` 已 Ready，固定入口为 `xingfuxitong-gi088-v6-single-focus.vercel.app`；专用评测库批次 `37517d91-a258-423a-bb26-a58c97357e68` 回读为 `0/4`、模型调用 `0`。v5 与更早 Preview 保持只读，Production 继续保持 `legacy + baseline`。
 - v8 批次 `cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60` 以 `1/4 early_stopped` 收口并获产品通过。v8r1 deployment `dpl_HPBafL2QmHd6UsUXQ8kWVbUvKJAQ` 目标为 Preview，状态 `READY`；页面为 `https://xingfuxitong-5l1ns4sci-zouzhijies-projects.vercel.app/preview/gi088-evaluation`。部署创建时，专用评测库 run `5123d795-5c19-408d-9b98-7767eaa7892c` 回读为 `running 0/12`、模型调用 `0`，执行指纹 `40da54f2…bf8f82`；随后 A1 真人运行确认控制意图误停的单例阻断。兼容迁移后只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均有效。该 Preview 与原 run 保持历史只读，Production 继续保持 `legacy + baseline`。
-- v8r2 最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，URL 为 `https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`；部署源码修复 commit 为 `0a993afad1248e67a2863456d2c35b774bb2130f`，Vercel Linux 远程构建生成主库与评测库两套 Prisma Client。虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`。初始化已使用绑定最终指纹的新 `clientOperationId`。旧预发布零内容 run 已行政 `early_stopped`，其零调用、零真人和质量未评测只作为脱敏排除记录。Production 保持 `legacy + baseline`。
+- v8r2 最终行为 commit、Execution fingerprint 和 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 继续作为 `2026-08-10` 历史工程证据。初始化时 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0 of 12`；阶段 B 实时审计将当前历史状态更新为 `revision=1 / early_stopped / 0 of 12 / gate=pending / calls=0`。Production 保持 `legacy + baseline`。
 
 #### 2026-07-21 访谈意图独立验收环境（历史记录）
 

@@ -1,299 +1,156 @@
 # 当前阶段 Handoff
 
-最后更新：`2026-08-12`
+- 文档职责：当前执行交接
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[项目知识导航](./README.md)
 
-## 1. 交接结论
+## 1. 当前交接结论
 
-Daily Light 已具备完整的五维访谈、维度日志、当天整合日志、日历、分析、账户、管理员分析和 AI 质量闭环。事件中心已具备事件级会话、可靠提交、失败恢复、Trace 与事件日志闭环，当前生产主域名为：
+产品负责人授权的[工作区提交收口](./maintenance/2026-08-16-workspace-commit-consolidation.md)已完成：当前可公开、可追溯成果已整理为六个本地提交，GI-088 以候选、待验证、发布关闭的阶段检查点进入版本历史。推送、PR、迁移、部署、删除和清场继续关闭。
 
-```text
-https://dailylight.chat
-```
+产品负责人已确认并授权实施[两段式质量、后台提速与本地接入](./plans/2026-08-16-gi088-two-stage-quality-optimization-and-local-integration.md)。本轮按三本条件账执行：首段质量 `6` 次、后台职责 A/B `4` 次、选定后台合同质量 `6` 次，最大 `16` 次；并发 1，重试、恢复和降级均为 0。任一门失败后停止，剩余额度记为 `not_run`。
 
-`2026-08-11` 产品负责人已确认下一轮网页端体验交接：每条【帮我记】或【陪我聊】记录完成后形成当天时间线事件卡片；用户只在日记页一键生成、查看或更新唯一的今日日记。访谈页不展示日志生成或更新。当前新前端处于构建中，等待产品负责人验收；`2026-08-12` 的旧 UI Preview、页面实现和测试结果作为历史工程证据保留。模型评测和 Production 继续沿用既有授权边界。
+第一门真实调用已经完成。身份 `2026-08-16.gi088-response-first-visible-quality-v1` 使用 Pro Low 串行执行 `RPR-REAL-06 / 19 / 22 / 13 / 18` 与 12 消息公开合成长上下文题 `RFT-CX-01`；HTTP 200、合同有效、45 秒有用回应门和 60 秒完整正文门均为 `6/6`，调用消耗 `6/6`，重试、恢复和降级均为 `0`。
 
-日志成果专项已经完成 9 条真人轨迹的今日日记 Prompt v3 评价，9/9 通过当前人工门槛；其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归，记录卡 v3 的证据范围限定为这 6 条。`dev28＋hidden12` 与 Judge 20 槽位已经形成未执行骨架，私有正文、真人身份映射和隐藏集填充继续留在本地；当前先等待新前端产品验收，再开展固定六案例页面联调和正式评测运行。完整结论见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
+六题总耗时依次为 `7.080 / 24.517 / 21.739 / 16.446 / 13.255 / 15.355` 秒。当前停在产品负责人私有六卡裁决；内容质量仍为待验证。裁决通过前，后台 A/B 为 `0/4`、后续后台质量账为 `0/6`，页面接入保持关闭。公开技术证据见[首段质量技术回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-technical-receipt.json)。
 
-## 1.1 2026-08-12 旧 UI Preview 历史工程证据
+两段式页面方向已确认：发送后立即显示动态“正在思考”气泡，首段正文在同一气泡原位替换；后台整理期间输入框保持锁定，完成后解锁；从发送到输入框重新可用目标为 60 秒。首版计划复用 `InterviewUserTurn.eventOperationData` 保存冻结回应检查点，不新增 Prisma 表或字段。
 
-这组旧候选结果用于后续新前端联调参考，不代表当前新前端已通过产品验收：
+产品负责人已确认 GI-088 的双目标：`45` 秒内出现针对用户内容的有用回应、`60` 秒内完成可见回答，同时继续压缩模型完整处理耗时。两段式本地候选和可见合同负担 A/B 均已完成；首段可见合同形成稳定速度改善方向，语义忠实度与页面体验待验证。
 
-- `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 在当天没有会话时先展示“当天工作台”空状态；用户点击【帮我记】或【陪我聊】后才创建会话，已有事件按日期隔离恢复。
-- 三阶段进度、当前阶段和保存状态进入顶部导航上下文区域；聊天正文保留给消息与输入框。
-- “理解”和“提问”统一使用 dailylight.chat 的 AI 气泡；用户气泡、输入框、焦点、发送和键盘行为沿用现有访谈样式。
-- 每条 AI 回复提供赞、踩和重新生成；重新生成菜单包含“更简单一点 / 更具体一点 / 换一个角度”，支持版本切换、Esc 关闭和焦点恢复。
-- `/calendar` 的 day / week / month 统一采用归档侧栏 + 报告画布；加载、错误和空状态使用同一骨架，日报、周报和月报接入真实合同。
+最新运行身份为 `2026-08-16.gi088-visible-contract-burden-ab-v1`，计划指纹 `95c920d8…d03be`，启动卡 SHA-256 `8fef9c01…a30ce`。固定 RPR-CF-02、`deepseek-v4-pro`、Thinking Low、同一完整用户载荷和 `json_object`，按 `A-B-B-A` 串行比较：A 为当前完整 Prompt／Skill／输出合同，B 为第一段可见 Prompt／Skill／输出合同。响应头上限 `15` 秒，正文与总观察上限 `60` 秒；并发 `1`，重试、恢复和降级均为 `0`。
 
-历史独立 UI Preview：
+四次均为 HTTP 200、合同有效，且通过 45 秒和 60 秒门。A1／B1／B2／A2 总耗时为 `21.830 / 3.834 / 7.174 / 31.385` 秒；两组成对改善为 `17.996 / 24.211` 秒，均超过预设 10 秒门，裁决 `visible_contract_directional_support`。完整合同 A 与可见合同 B 的中位总耗时为 `26.608 / 5.504` 秒，本时段约缩短 `79.3%`。
 
-```text
-https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
-deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417 (Ready)
-```
+A 每次 Prompt 为 `4,448` Token，隐藏思考为 `1,565～2,282` Token；B 每次 Prompt 为 `487` Token，隐藏思考为 `74～247` Token。响应头只占 `0.225～0.377` 秒，主要差异位于正文阶段。这支持“收窄首段 Prompt、Skill 与输出合同工作负担”是有效速度方向；四次数据无法继续拆分三者各自贡献，也不承担第一段语义质量、程序职责迁移或页面端到端结论。
 
-历史页面入口：
+本地实施已经完成。身份为 `2026-08-16.gi088-response-first-two-stage-v1`，候选指纹 `e806843d…bac96`。第一段使用 Pro Low，只生成自然理解与自然回应；第二段使用 Pro High，只生成结构化语义，程序直接合成第一段文字。程序承担关系解释编号、历史来源继承、允许动作、状态迁移、字段补齐、幂等、预算、保存和恢复。模型保留用户含义、事实与假设、当前焦点、认识增量和自然措辞判断。
 
-```text
-/interview?mode=event-centered&entryDate=2026-08-12
-/calendar?view=day&date=2026-08-12
-/calendar?view=week&date=2026-08-12
-/calendar?view=month&date=2026-08-12
-```
+零调用审计显示：当前单段、第一段和第二段系统提示分别为 `9,128 / 478 / 7,262` 字符，模型字段分别为 `14 / 2 / 12`。RPR-CF-02 当前单段请求为 `9,728` 字符；第一段为 `996` 字符，减少约 `89.8%`；两段合计 `9,278` 字符，减少约 `4.6%`。专项测试 `9/9`、现有 SSE 客户端测试 `12/12`、类型检查和定向 ESLint 通过。
 
-Preview 使用独立验收数据库，`INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`，GI-088 评测开关关闭；Production `https://dailylight.chat` 保持现行版本和配置。
-
-历史验证记录：高保真改动专项 `36/36` 通过，TypeScript 类型检查、Lint（0 errors）和差异检查通过；远程 Vercel Preview 构建为 `Ready`，并完成了空工作台、访谈启动、事件保存、日报/周报/月报结构的浏览器核验。当前新前端完成产品验收后，再按固定六案例 Preview 契约开展新一轮页面联调。
+本阶段的本地候选、职责审计、合成数据自动验证、公开零调用证据和 4 次 Provider 诊断结果均已封存。产品运行入口和数据库保持原状，Judge、隐藏集、Preview、Production、推送和部署继续为 `0`；候选与证据已进入本地阶段检查点 `30cfc03`。执行入口为[先回应后整理与职责重划实施计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md)。
 
-AI 质量链路已经从“收集案例”推进到“验证候选、全量发布、按版本观察七天、支持人工回滚”。访谈意图识别已于 `2026-07-21` 全量启用；小流量阶段的运营重点是持续收集真实用户 Trace 与反馈，优先记录意图识别问题，并由管理员按需运行评估和候选生成，再对通过验证的候选执行发布。
+历史证据已重新接入当前判断：Pro Low 的完整开发速度 P50／P90／最长为 `19.886 / 30.955 / 38.554` 秒，速度门通过，同时因空正文、来源遗漏和动作违规形成技术 No-Go；完整合同与精简合同＋程序投影的 `126` 次对照中，P50 为 `35.042 / 32.085` 秒，两组仍未通过速度门，精简组主要暴露来源责任重复。当前无需重复 High／Low 对照，也不能把减少 Prompt 字数单独当成速度结论。
 
-事件中心当前采用“理清想法”单角度 MVP。GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 已通过，继续作为历史技术证据；最新真人实聊因提问目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效，剩余人工批次停止。
+上一轮第一个单因素为合同 A/B：只使用 RPR-CF-02，上一事件关系解释候选为 A，`relationship_claim_status_v1` 为 B，按 `A-B-B-A` 串行。模型固定 `deepseek-v4-pro`、Thinking high 与 `json_object`；响应头上限 15 秒，首个有效正文门 45 秒，正文与总观察上限 60 秒；预算 4、并发 1、重试／恢复／降级均为 0。
 
-`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；GI-081 已归档为临时 Prompt 诊断基线，GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 继续保存诊断、恢复、状态、平台和真人证据。v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人裁决为 `通过 / direct_use / target triggered`；Codex 保留“礼貌回应＋明确停止”多一次调用的轻微问题。v8r1 A1 随后确认控制误停单例阻断，其原 run 按 `running`、A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid` 只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；行为 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 与 READY Preview 已形成。全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，当前等待 12 项真人验收。旧预发布零内容 run 已行政停止并脱敏排除。候选质量、板块 7 正式接入、板块 8 与发布范围均未裁决；约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
-
-## 2. 当前生产事实
+诊断与四次合同 A/B 已完成。新身份为 `2026-08-16.gi088-response-latency-contract-ab-v1`，计划指纹为 `d09a2f0d…ac752d`；授权与消耗均为 `4/4`，重试／恢复／降级为 `0`。A1、B1、B2、A2 总耗时分别为 `22.687 / 26.423 / 49.455 / 33.370` 秒，45 秒门通过 `3/4`，60 秒门通过 `4/4`。
 
-- 唯一生产主域名：`https://dailylight.chat`
-- 兼容入口：`https://www.dailylight.chat`
-- `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
-- Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
-- `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
-- `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
-- `2026-07-21` 已完成访谈意图识别全量发布：正式环境采用 `enforce`，上一正式版本 `dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc` 与 `legacy` 档位共同保留为 P0 问题的即时回退入口。
-- `2026-07-20` 已合并 UserTurn 可靠提交改造（PR #36，`ce1e2afbefe98eb79a21faf3d02869fe377085f4`）；`InterviewUserTurn` 与 AI 候选审核理由两条 migration 已应用到 production，公开 smoke 和同 `clientTurnId` 的重放校验通过。
-- 访谈维度选择页的内容层会完整伸展到可用视口，页面底部背景保持连续。
-- 本地验收快捷登录在 production 返回 `404`
-- 生产公开 smoke 已覆盖首页、登录、注册、协议页和 session
-- AI 质量效果接口在未登录状态返回 `401`
+两次 B 均慢于配对 A，差值分别为 `3.736` 秒和 `16.085` 秒；只有一组达到预设的 10 秒方向门。裁决已封存为 `inconclusive_mixed_direction`：新增合同负担仍有弱方向迹象，当前证据无法确认为单独原因。四次额度耗尽；本轮已选择可见合同负担作为下一单因素。
 
-部署和域名操作以 `docs/vercel-preview-production-lane.md` 为事实源。
+产品负责人已确认并完成下一单因素 `relationship_claim_status_v1` 的零调用实现。模型必须逐条区分“用户已明确”的关系解释与“待确认假设”；程序阻止待确认假设进入工作任务、认识变化和陈述式理解。候选与两题探针专项测试 `10/10`、类型检查和定向 ESLint 通过。
 
-## 3. 已完成产品能力
+两题真实探针已经完成：身份 `2026-08-16.gi088-relationship-claim-status-probe-v1`，题目为 RPR-REAL-13 与 RPR-CF-02，预算 `2/2`、并发 `1`、重试 `0`。鉴权与目标模型检查通过；两次请求均获得 HTTP 200，随后在 45 秒正文等待门超时，正文长度均为 0。
 
-### 3.1 五维访谈与日志
+上一轮裁决为 `technical_blocked`：技术有效 `0/2`、内容可评价 `0/2`。当前证据无法判断 `relationship_claim_status_v1` 是否修复语义问题，完整 10 题开发回归继续关闭。产品负责人已否定“只提高正文等待上限”的方向；当前从[先回应后整理与职责重划实施计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md)恢复。
 
-- `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化
-- 五维均具备专属抽取、fallback、阶段推进、完成标准、正文生成、质量门和短标题治理
-- 用户停止边界与自然语言日志整理意图优先处理
-- `question_repair` 走服务端确定性重问，并避免重复回卷
-- `thinkingSummary`、正文、标题和质量门共享服务端语义解释层
-- stitched 多事件日志保留完整 supporting moments
-- 访谈回复、维度日志和当天整合日志均可恢复与保存
-- 用户回复采用两阶段持久化：`InterviewUserTurn` 先保存原话和提交位置，AI 处理成功后再完成本轮；失败或取消后，页面可用同一 `clientTurnId` 继续生成
-- 访谈意图识别 v1 已完成全量启用：`legacy` 保持既有决策，`shadow` 记录新旧判断对照，`enforce` 让新决策参与访谈推进。Production 与 Preview 当前均采用 `enforce`；`legacy` 作为 P0 问题的即时回退档位。
-- 事件中心已交付事件级会话、可靠原话提交、用户气泡即时显示、失败续接、退出记录回看和事件日志闭环；历史四角度数据与代码继续兼容。
-- `GI-065` 的“理清想法”单角度验证目标继续约束【陪我聊】；新记录由用户在【帮我记】与【陪我聊】之间明确选择。`GI-067 / GI-068～074` 已冻结目标产品规则，兼容两段式链路和历史 baseline 能力仍只代表既有实现，新候选等待板块 5～7。
-- 事件日志支持来源快照、标题/正文编辑、自动暂存、正式保存、刷新恢复和当天事件标签重开；事件中心反馈通过 `generationTraceId` 连接现有 AI 质量链路。
-- 按意图重新生成已完成正式发布：新会话的正式追问支持简单、具体、换角度、深入、轻一点与纠正理解；每组最多保留三个版本，历史换问法通过分支保留原对话，日志边界锁定已存在后续回答的历史路径。
-- 重新生成的加载、替换和版本切换都发生在目标回复原位置。纠正理解支持 `Enter` 提交、`Shift + Enter` 换行；操作区维持静态禁用入口，气泡承担唯一加载状态。
-- 访谈页站内 header 导航直接完成路由切换；浏览器刷新或关闭访谈页面时继续通过 `beforeunload` 保存会话恢复标记并提供离开保护
+`2026-08-16.gi088-event-relationship-explanation-retest-v1` 已完成。回归集 v1.2 只修订 RPR-REAL-13 判尺，模型输入保持不变；独立候选复测原 9 题和 RPR-CF-02，预算 `10/10`、重试 `0`。HTTP 200 与技术有效均为 `10/10`，内容通过 `9/10`。
 
-`improvement` 与 `gratitude` 的自动化验收样例已齐备，后续仍可继续进行端到端产品文风打磨。
+RPR-CF-02 通过，说明模型能够继承用户明确表达的关系；原通过题无内容退化。RPR-REAL-13 仍把“被支使、外面更自在、外面更轻松”等待确认解释写成已成立认识，因此该单因素形成 `factor_no_go`，不进入 Judge、独立准入、真人 Preview 或发布。
 
-### 3.2 日历、分析与画像
+`2026-08-16.gi088-real-problem-regression-v1.1` 已完成 6 条修订并封存 `30/30`：24 条未修案例指纹保持不变，6 条生成新指纹。随后 `2026-08-16.gi088-real-problem-sentinel-baseline-v1` 使用 v8r2 候选完成 9 条真实模型基线，预算 `9/9`、重试 `0`。结果为 HTTP 200 `9/9`、技术有效 `7/9`、可评价内容 `6/7` 通过、端到端 `6/9`。
 
-- `/calendar` 支持 month / week / day 三层记录工作台
-- 天级数据统一按 `Asia/Shanghai` 整天窗口归档
-- `/analysis` 使用 `trends / dimensions` 两段纵向滚动结构；历史 `overview / score / rhythm` 归一到 `trends`，历史 `insights / correlation / review` 归一到 `dimensions`
-- 幸福 8 要素评分入口位于访谈页当天评分工作区
-- `/profile` 支持记忆库、画像合成和演变视图
-- 记忆系统由 `memoryEnabled` 控制，默认关闭
-- 共享交互体验已收口：按钮与交互卡片有即时按下反馈，segmented 使用可重定向 spring，画像与分析支持横向 swipe，移动端日志书页支持拖动关闭，菜单与确认弹窗具备完整键盘和焦点管理
+下一单因素 `relationship_claim_status_v1` 已完成静态门；两题真实探针停在技术阻断，语义裁决保持开放。
 
-### 3.3 管理员能力
+当前执行入口：[GI-088 先回应后整理与长等待根因证据](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)
 
-- `/admin/analytics` 支持总览、候选用户和内容级下钻
-- `/settings/ai-runtime` 支持 AI 配置草稿、测试、发布、历史和回滚
-- 管理员权限统一由 `ADMIN_USERNAMES` 白名单控制
-- 内容级查看统一写入 `AdminAuditLog`
-- Prisma `P1001 / P1017 / P2024` 等临时连接问题在管理员只读路径中会重试一次，并投影为友好错误状态
+文档治理两阶段及授权清理已经完成。全部文档、证据包和工作区变化均已机械枚举，重复入口已原位压缩，[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)已封存；现有代码成果继续保持只读保护。
 
-## 4. AI 质量闭环现状
+`CL-01～CL-11` 已执行，`CL-12～CL-13` 和独立成果继续保护。本地提交收口已完成；推送、PR 和部署继续关闭。
 
-### 4.1 用户侧
+## 2. 当前产品与发布边界
 
-- 访谈回复和日志统一使用赞、踩图标
-- 赞与踩均支持专属标签和自由文本
-- 点赞允许空提交，点踩要求标签或文本
-- 再次点击已保存图标会撤回反馈
-- 反馈当前状态与 revision 历史均绑定 `Trace_ID`
-- 质量改进默认参与，注册和登录会维护政策版本与审计时间
-- 兼容退出请求返回 `409 AI_QUALITY_PARTICIPATION_REQUIRED`
+- 正式域名：`https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
+- 当前用户路径：`首页 → 记录 → 日记 → 认识自己`。
+- 当前网页端主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。
+- 仓库当前批准的 Production 策略：`event_centered + baseline`；`legacy + baseline` 保留为回退与历史运行身份。
+- GI-088 历史真实金标库 v1.1 已交付：14 个真实话题、22 个历史运行分支及产品负责人原评价已恢复；9 条判尺已确认，旧 70 项审题包和 12 项返工包保留历史身份，不再要求重复评分。
+- 模型调用、Judge、隐藏校准集、独立准入、真人 Preview、生成式能力发布、数据库迁移与 Production 变更继续使用各自授权门。
 
-### 4.2 自动化侧
+部署编号、回退 marker 和历史发布证据由 [Vercel 发布主线](./vercel-preview-production-lane.md)承担；生成式访谈状态和冻结决策由[生成式访谈重构总 Map](./generative-interview-refactor-map.md)承担。
 
-- 每个用户可见生成物绑定 `AIGenerationTrace`
-- 每次模型调用绑定 `AIRequestLog`
-- 每条 Trace 运行规则评估，高风险和稳定抽样进入 LLM Judge
-- `AIEvaluation` 保存评分与扣分原因
-- `AICase` 保存 Goodcase / Badcase / Review 分类
-- 手动运行先评估最多 20 条待处理 Trace，再扫描最近 7 天案例
-- 定时任务继续执行每日评估和每周聚类
-- 候选使用 `dedupeKey` 防止相同证据重复生成
+## 3. 本轮目标、验证门与停止点
 
-### 4.3 发布侧
+### 当前目标
 
-- 候选路径：System Prompt、Few-shot、Engineering
-- System Prompt 和 Few-shot 要求管理员批准并完成回放验证
-- `AIOptimizationValidation` 保存目标和回归案例结果
-- `AIPromptRelease.validationId` 绑定发布采用的验证记录
-- System Prompt Trace 使用 `+opt:{candidateId}` 归因
-- Few-shot Trace 使用 `+fs:{fingerprint}` 归因
-- 全量发布和回滚均由管理员确认
-- 审核页面采用“状态摘要 + 候选队列 + 连续审核区”工作台；退回调整要求填写 `4–300` 字原因，并在历史记录中保留处理人、时间和理由
+独立的“先回应、后整理”两段式候选、职责审计和首段速度方向证据已经封存。第一段六题已取得 `6/6` 技术有效与速度门通过，当前等待产品负责人判断语义忠实度与 8 条近期上下文窗口；通过后再执行第二段 Pro High 后台职责 A/B。
 
-### 4.4 效果复盘
+### 验证门
 
-- 基线读取发布前 7 天
-- 观察期最长 7 天
-- 回滚或同路径新版本发布会提前截止当前窗口
-- 指标覆盖生成数、赞踩、同一问题、严重问题、失败和延迟；同一问题按标准化后的具体问题键计算，缺少问题码时显示“口径不足”
-- 页面结论包括继续观察、低样本、人工复核、建议保留和建议回滚
-- 管理员可查看脱敏“需关注”与“正向反馈”真实对话
+1. 第一段合同只允许自然理解与自然回应，结构化任务、认识状态、关系使用位置和记录字段保持在第二段；
+2. 第二段只返回结构化语义，程序直接合成第一段可见文字，并通过当前候选的来源、状态和关系解释校验；
+3. 程序职责覆盖确定性字段、历史来源继承、动作和状态不变量、幂等、预算、保存与恢复；模型职责保留新语义和自然表达；
+4. 自动测试覆盖两段顺序、第一段先可见、第二段合成、来源和状态保护、第二段失败后的可恢复状态、合同严格性和公开内容边界；
+5. 零调用审计记录 Prompt／Skill／合同字符数、字段数和职责迁移，只形成结构关联证据；新的速度结论等待固定候选后的真实调用；
+6. 本阶段完成本地候选、审计、测试和公开回执后停止，产品运行入口、数据库、Preview 与 Production 保持原状态。
 
-完整规则见 `docs/ai-quality-loop.md`。
+上一轮实际结果：候选指纹 `1f60ca82…569cc`，策略指纹 `7b72e318…067c`；两题探针计划指纹 `20f845bf…98e0`，集合指纹 `c5a14130…c323`。模型调用 `2/2`、重试 `0`；HTTP 200 `2/2`，正文等待超时 `2/2`，技术有效与内容可评价均为 `0/2`，裁决 `technical_blocked`。
 
-访谈功能的产品架构、主链时序和逐节点图解统一收录在 [访谈功能图谱](./diagrams/README.md)。
+当前增量验证：响应等待 A/B 的启动卡、运行器、封存器与 `15/15` 专项测试已完成；授权与实际调用 `4/4`，HTTP 200 与合同有效正文 `4/4`，45 秒门 `3/4`，60 秒门 `4/4`。候选、产品入口、数据库、Preview 与 Production 保持原状。[公开结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-latency-contract-ab-v1-receipt.json)和[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-latency-contract-ab-v1-result-handoff.md)承担当前裁决与停止点证据。
 
-## 5. 数据与迁移
+本轮本地验证：两段式专项 `9/9`、现有 SSE 客户端 `12/12`、类型检查与定向 ESLint 通过。候选指纹 `e806843d…bac96`；[公开启动卡](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-two-stage-v1-start-card.json)、[职责审计](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-two-stage-v1-responsibility-audit.json)与[零调用交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-two-stage-v1-handoff.md)已封存。
 
-AI 质量迁移顺序：
+本轮真实速度验证：可见合同负担 A/B 专项 `4/4` 通过；授权与消耗 `4/4`，重试／恢复／降级 `0`；HTTP 200、合同有效、45 秒门和 60 秒门均为 `4/4`。裁决、Token 与公开边界见[公开结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/visible-contract-burden-ab-v1-receipt.json)和[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/visible-contract-burden-ab-v1-handoff.md)。
 
-- `20260719010000_add_ai_generation_trace`
-- `20260719020000_add_ai_evaluation`
-- `20260719030000_add_ai_feedback_and_consent`
-- `20260719040000_add_ai_optimization_engine`
-- `20260719050000_default_ai_quality_and_candidate_dedupe`
-- `20260719060000_add_ai_candidate_validation`
-- `20260720010000_bind_prompt_release_validation`
-- `20260720153000_add_ai_optimization_review_reason`
+结束验证：新运行器 `4/4`、两段式候选 `9/9`、现有 SSE 客户端 `12/12`，合计 `25/25`；类型检查与定向规则检查通过；JSON、私有权限、公开内容边界和差异格式通过；`docs:check` 为 `24` 份核心文档、`799` 条本地链接、`1` 个当前执行入口。
 
-访谈用户提交恢复迁移：
+上一轮 10 题复测验证：专项与历史金标回归 `35/35` 通过；完整 ESLint 为 `0` 个错误、`44` 个既有警告。全量测试 `3313` 条通过、`10` 条跳过；一条并行运行时超时的日志扩展评审测试单独复跑后 `6/6` 通过。README 运维命令契约已在本轮补齐，定向测试恢复通过。
 
-- `20260720120000_add_interview_user_turn`
-- `20260720210000_add_interview_intent_assessment`
-- `20260720223000_add_interview_response_regeneration`
+本次工作区提交收口的最终验证：`docs:check` 检查 `24` 份核心文档、`809` 条本地链接和 `1` 个当前执行入口；Lint 为 `0` 个错误、`44` 个既有警告；类型检查、Prisma 校验、README 运维契约测试和差异格式检查通过。全量测试为 `3365` 条通过、`10` 条跳过、`1` 条并行状态交叉影响失败；对应测试文件单独复跑 `12/12` 通过。生产构建通过并生成 `77` 个页面，保留 `16` 条评测脚本动态文件访问的构建追踪警告，后续按工具链优化项处理。
 
-第一条 migration 新增 `InterviewUserTurn`、动作与状态枚举、`InterviewMessage.userTurnId`，并建立同会话 `clientTurnId` 唯一约束和待处理状态索引。第二条 migration 为同一提交记录增加意图评估、决策、分类器版本与评估时间，支持安全重放和分阶段发布。
+### 停止点
 
-第三条 migration 为会话、消息和用户动作增加回复版本与分支字段，并新增 `InterviewBranchCheckpoint` 和 `AIResponseRegeneration`。它已于 `2026-07-21` 应用到 production；当前 production 数据库有 30 条 migration。
-
-`2026-07-20` 已完成生产数据安全清理：
-
-- 固定验收管理员账号已删除
-- 固定验收 Trace、反馈、评估、案例、候选、运行和审计记录已删除
-- 真实用户候选与业务数据得到保留
-- `npm run acceptance:ai-quality:seed` 已增加远程数据库保护
-
-事件中心 MVP 复用现有 `InterviewSession`、`InterviewEvent`、`JournalEventEntry`、`AIGenerationTrace` 和 `AnalyticsEvent`；本轮实现没有新增数据库表或 migration。事件中心日志接口为：
-
-- `POST /api/interview/event-centered/session/start`
-- `GET /api/interview/event-centered/session/[id]`
-- `POST /api/interview/event-centered/session/respond/stream`
-- `POST /api/interview/event-centered/session/turn`
-- `POST /api/interview/event-centered/journal/generate`
-- `GET/PATCH /api/interview/event-centered/journal/[id]`
-- `POST /api/interview/event-centered/journal/[id]/save`
-
-验收脚本规则：
-
-- 默认只写本地数据库
-- 远程隔离测试库要求 `ALLOW_REMOTE_AI_QUALITY_ACCEPTANCE_SEED=I_UNDERSTAND`
-- production 环境主动终止
-
-## 6. 验证基线
-
-最近一次已记录的全量代码验证来自 `2026-08-04` GI-066 阻断修复候选：
-
-- 全量测试：`268` 个测试文件、`2541/2541` 个用例通过
-- 严格 `10×3`：动作、方向和完整无问题均为 `30/30`，重复选题错误 `0`
-- 自动 `8+2`：主链 `8/8`、日志闭环 `8/8`、两条冒烟通过、运行降级 `0`
-- `npm run lint`：`0 error / 46 warnings`，警告为仓库既有基线
-- `npx tsc --noEmit`、生产构建、Prisma validate、隔离库 migrate status 和差异检查通过
-
-该快照只证明 GI-066 当时候选的技术状态。最新真人体验 `No-Go` 已使候选失效；GI-067 新候选需要重新完成对应验证。
-
-AI 质量发布与效果观察专项验证：
-
-- `10` 个测试文件
-- `30` 个测试通过
-- 覆盖验证门、System Prompt/Few-shot 归因、七天窗口、结论规则、证据分页、审计、确认弹窗、骨架、空态和错误重试
-
-流动交互专项回归入口：
-
-- 流动交互专项历史回归：`7` 个测试文件、`50` 个测试通过；当前总量以全量快照与事件中心专项为准
-- `tests/unit/sliding-segmented-control.test.tsx`
-- `tests/unit/horizontal-pager.test.tsx`
-- `tests/unit/action-menu.test.tsx`
-- `tests/unit/confirm-dialog.test.tsx`
-- `tests/unit/site-header-calendar.test.tsx`
-- `tests/unit/site-header-analysis.test.tsx`
-- `tests/unit/analysis-shell.test.tsx`
-
-## 7. 下一步运行主线
-
-### 7.0 当前交付顺序
-
-0. Daily Light 新前端正在构建；完成产品验收后接入固定六案例 Preview，验证五条只读回放和 v7r4 A1 编辑更新流程。`dev28＋hidden12` 与 Judge 20 保持未执行骨架，页面 Preview 通过后再启动填充、运行和准入；Production 继续等待独立决策。
-1. v8r1 run 保持只读；专用评测库快照已经确认 A1 完成、A2 活动、两次 Provider 调用均有效。完整用户内容继续只保存在私有运行目录。
-2. v8r2 已在同一个开发周期收口高精度控制决策、调用结果落账、陈旧快照保护、人工证据治理、run 生命周期、工作台恢复和八项 Preview 开门差额。
-3. 最终初始化幂等、全量验证、行为清单、不可变 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 和私有 Preview 已收口；当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。
-4. 当前工作流暂停等待产品负责人完成 12 项 Thinking high 真人验收。旧预发布 v8r2 零内容 run 已行政 `early_stopped` 并作为脱敏排除记录；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
-
-### 7.1 上线后收集真实反馈
-
-1. 生产流量继续统一进入 `https://dailylight.chat`；事件中心在获得板块 8 授权后按 `optional + generative` 开放。
-2. 前 `10` 次有效事件会话逐条审计，观察事件中心回复和日志的赞踩、标签与文本。
-3. 确认 Trace、反馈、事件漏斗和 Prompt 版本血缘持续写入。
-4. 记录生成式降级、重复追问、修正理解、停止后追问、未完成表达和日志来源异常；P0 问题出现 1 条即进入修复与回退判断，P1 问题按语义家族归类后排期。
-
-### 7.2 生成与验证候选
-
-1. 管理员进入 `/admin/ai-quality`，先处理事件中心真实案例中的高频共同根因。
-2. 先按待发布、待验证、待审核查看候选；需要补充数据时点击“检查最近回复”。
-3. 阅读问题的通俗说明、背景、证据与回复对照。
-4. 批准证据充分的候选。
-5. 执行回放验证，并检查目标案例与正向回归案例。
-
-### 7.3 发布与七天复盘
-
-1. 对通过验证的候选执行“全量应用”；需要调整时退回并记录原因。
-2. 核对新 Trace 的 `+opt` 或 `+fs` 版本标记。
-3. 在效果观察区查看绝对数量、比例和真实案例。
-4. 严重问题触发时优先人工回滚到 `legacy + baseline`。
-5. 事件中心累计 `30` 次有效事件会话后，每轮只挑选一个真实共同根因进入候选验证；原工作集、隐藏集、准入集和完整轨迹保留为重大变更回归资产。
-6. 七天结束后根据“建议保留 / 人工复核 / 建议回滚”做最终决定。
-
-## 8. 仍需持续关注
-
-- 板块 5 已冻结 GI-075～080 六类规则，落地验证仍待板块 7 正式候选承接。
-- 板块 6 的 GI-088 v8r2 意图控制、评测底座、最终初始化幂等、不可变版本和 `READY` Preview 已收口；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 `12` 项 Thinking high 独立最终评测。真人质量与发布未裁决，板块 7 正式接入和板块 8 继续等待。
-- GI-066 自动层通过、真人体验 `No-Go` 和候选失效三类状态继续分开保存；Production 授权前保持 `legacy + baseline`。
-- 小流量下样本增长较慢，低于 5 条时以真实对话判断为主
-- Few-shot 依赖持续有效的点赞与 85 分以上评估
-- Engineering 候选需要进入正常研发、测试和部署流程
-- `improvement / gratitude` 继续安排真实用户端到端文风验收
-- 记忆系统默认关闭，启用前需要确认 embedding 配置与隐私口径
-- 日历、访谈和分析仍有少量 `0.64–0.68rem` 的遗留辅助标签；后续触及对应区域时按 `0.75rem` 核心控制基线逐步收口
-- `/api/transcribe` 仍为 stub
-
-## 9. Canonical 文档
-
-- 项目事实与协作约束：`AGENTS.md`
-- 快速入口与命令：`README.md`
-- 系统分层和数据流：`docs/architecture.md`
-- HTTP 接口合同：`docs/integration-guide.md`
-- 运维、迁移和冒烟：`docs/operator-runbook.md`
-- AI 质量完整规则：`docs/ai-quality-loop.md`
-- Vercel 与生产域名：`docs/vercel-preview-production-lane.md`
-- 生成式访谈当前状态与依赖：`docs/generative-interview-refactor-map.md`
-- GI-067 七批次架构与冻结结论：`docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md`
-- GI-074 评测体系与下游交接：`docs/technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md`
-- GI-088 当前真人验收与正式证据：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
-- GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
-- GI-088 v8r2 执行结果：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.result.md`
-- GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
-- 事件中心公共产品协议：`docs/technical/interview-event-centered/04-four-angle-common-interview-protocol.md`
-- 历史板块 7 Preview 候选：`docs/technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md`
-- 前端设计规范：`DESIGN.md`、`docs/design/ui-conventions.md`
-- 五维理论：`docs/theory/*.md`
+`2026-08-16.gi088-response-first-visible-quality-v1` 已完成模型调用，预算与消耗 `6/6`、重试／恢复／降级 `0`；技术与速度门 `6/6` 通过。当前停止点是产品负责人完成私有六卡内容裁决。裁决通过前，后台职责 A/B、选定后台合同质量账和本地页面接入保持关闭；本地阶段检查点已提交，Preview、Production、推送和部署继续使用各自授权门。
+
+## 4. 当前工作区血缘
+
+- 当前分支：`codex/daily-light-journal-integration-20260812`
+- 基线 HEAD：`47c858ad56839eaf03adda5ddc4b4b6905cae3b6`
+- `2026-08-16` 本次提交收口基线：展开未跟踪目录后 `366` 个文件；内容指纹 `7ed6642d…cdf`、路径指纹 `28b7176d…141`，连续两次一致
+- 收口过程中并行完成首段六题验证，新增 `6` 份公开脚本／测试／回执；连同本轮任务记录，最终覆盖 `373` 个唯一变化路径
+- 六个本地提交：`07326c7`、`33ffea2`、`ed8c36d`、`a13ed6c`、`30cfc03` 和本治理记录所在提交
+- 暂存区与公开工作区：收口完成后为空
+- Git 当前只登记主工作区；`.worktrees/model-eval-metrics-discussion/` 作为未登记的独立成果目录继续保护
+- 项目内当前 `758` 份私有文件和 `120` 个私有目录继续保持 Git 隔离；私有正文未进入公开提交
+
+上一轮治理的固定快照、处置依据和历史指纹继续由[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)承担。本轮按[工作区提交收口记录](./maintenance/2026-08-16-workspace-commit-consolidation.md)整理产品代码、测试、正式证据和治理文档；私有材料、本地运行证据、生成缓存和独立工作区继续保护。
+
+## 5. 当前开放事项
+
+| 事项 | 当前状态 | 下一步 |
+|---|---|---|
+| 文档治理两阶段 | 已完成 | 结论与台账保持现役 |
+| 工作区提交收口 | 已完成 | 六个本地提交、验证结果与保留项已封存；推送和发布另行授权 |
+| GI-088 等待问题知识收口 | 已完成 | 当前从[先回应后整理与职责重划计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md)恢复 |
+| 历史证据压缩与工作区完整分类 | 已完成 | 从最终治理记录恢复处置依据 |
+| 可再生缓存与运行残留 | `CL-01～CL-11` 已完成 | 系统废纸篓保留恢复窗口；容量释放由后续清空废纸篓完成 |
+| 本轮重新生成的本地缓存 | `.next` 约 `257M`、`tsconfig.tsbuildinfo` 约 `496K` | 已列入清场预览；等待本次完整汇报后的明确确认 |
+| `model-eval-metrics-discussion` 独立成果 | 受保护、待判断 | 另行决定继续隔离，或新开任务审阅集成 |
+| `local-runtime` 独立运行证据 | 受保护、待判断 | 新开任务判断唯一价值与正式入口 |
+| prunable worktree 登记 | 已完成 | 失效登记已清理，分支与提交保持保护 |
+| GI-088 历史真实金标库 v1.1 | 数据完整性与 9 条判尺已确认 | 作为真实问题回归集 v1 的冻结来源，指纹 `d84dc1bc…10dba` |
+| GI-088 真实问题回归集 v1.1 | 已封存 30/30 | 作为当前开发回归题库，保持指纹与私有正文隔离 |
+| GI-088 事件关系解释 10 题复测 | 已完成；技术 10/10、内容 9/10、`factor_no_go` | 作为 relationship_claim_status_v1 的父失败证据；产品入口保持不变 |
+| GI-088 关系解释状态候选 | 两题探针 `technical_blocked`；HTTP 200 2/2、技术有效 0/2 | 语义状态保持未知，等待可见合同负担 A/B 后再决定候选范围 |
+| GI-088 响应等待合同 A/B | 父证据已完成 4/4；裁决 `inconclusive_mixed_direction` | 当前由可见合同负担 A/B 的新证据接续 |
+| GI-088 先回应后整理与职责重划 | 首段六题技术与速度门 `6/6` 通过，内容待裁决 | 产品负责人完成私有六卡裁决；通过后才进入后台职责 A/B |
+
+## 6. 下一会话阅读顺序
+
+1. [先回应后整理与职责重划实施计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md)
+2. [AGENTS.md](../AGENTS.md)
+3. [项目知识导航](./README.md)
+4. 涉及生成式访谈状态时读取[生成式访谈重构总 Map](./generative-interview-refactor-map.md)
+5. 涉及评测规则时读取[AI 评测总规范](./ai-evaluation-standard.md)和当前专项
+6. 需要核对历史根因时读取[GI-088 全链路复盘](./retrospectives/2026-08-10-gi088-end-to-end-iteration-retrospective.md)
+7. 最后读取当前专项明确链接的[证据包](../artifacts/README.md)
+
+## 7. 稳定合同入口
+
+- 产品定位：[PRODUCT.md](../PRODUCT.md)
+- 设计合同：[DESIGN.md](../DESIGN.md)
+- 系统结构：[architecture.md](./architecture.md)
+- HTTP 合同：[integration-guide.md](./integration-guide.md)
+- 本地运行与排障：[operator-runbook.md](./operator-runbook.md)
+- Preview、Production 与回退：[vercel-preview-production-lane.md](./vercel-preview-production-lane.md)

@@ -1,12 +1,18 @@
 # GI-088 v8r2 评测底座加固证据包
 
+## 2026-08-13 现状更正
+
+本目录保存 `2026-08-10` 的工程底座与初始化快照。阶段 B 实时审计确认 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已于 `2026-08-11` 封存为 `early_stopped / 0 of 12 / gate=pending / calls=0`，revision 为 `1`；同一 evaluationVersion 共有 `5` 个历史 run。阶段 B 保留原封存原因和全部历史记录，本轮数据库写入 `0`。
+
+当前评测入口已切换到 [GI-088 阶段 B 双轨资产](../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)。下文的 `running 0/12`、“下一步完成 12 项”等表述均为当时快照，继续用于解释 v8r2 底座形成过程，不再代表当前运行状态或准入计划。
+
 ## 为什么停在 `0/12`
 
 v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全绿静态门、不可变版本和 Preview 部署。运行时打包已改为 Vercel Linux 远程生成两套 Prisma Client，登录存储初始化验证通过。新的 High-only 批次已经以零模型调用初始化并回读为 `running 0/12`。下一步需要产品负责人完成 12 项 Thinking high 真人轨迹，自动技术通过继续只承担开门证据。
 
 预发布阶段发现的 high-only 指标投影缺陷已在最终不可变 commit 中修正。旧预发布部署与旧初始化 run 已行政退役，正式当前证据只引用本目录记录的新版本。
 
-## 当前状态
+## 2026-08-10 初始化快照
 
 - 评测版本：`2026-08-10.gi088-human-eval-v8r2-foundation-hardening`
 - 不可变 commit：`5281bc53f2b04be9c31adb6d7f4710ac818883a8`
@@ -14,12 +20,12 @@ v8r2 已完成 P0／P1 底座加固、真实评测库验证、历史兼容、全
 - Preview deployment：`dpl_YRUQitffCQH264xiksHpLMviQZLy`
 - Preview URL：`https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`
 - 运行时验收：虚构账号登录返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`
-- 当前 run：`b816d468-e3c3-4459-a822-04f95b1e78cd`
+- 初始化目标 run：`b816d468-e3c3-4459-a822-04f95b1e78cd`
 - 批次状态：`running / 0 of 12 / gate=pending / high_only / high`
 - 运行配置：`deepseek-v4-pro / Thinking high / json_object / provider_default`
 - 初始化模型调用：`0`
 - Production：继续保持 `legacy + baseline`
-- 当前停止点：等待产品负责人完成全新 12 项 Thinking high 真人验收
+- 当时停止点：等待产品负责人完成全新 12 项 Thinking high 真人验收
 
 ## 已验证结果
 

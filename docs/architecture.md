@@ -1,6 +1,11 @@
 # Architecture
 
-最后更新：`2026-08-12`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[项目知识导航](./README.md)
+
+评测架构现状：GI-088 阶段 B 已建立开发、硬边界、Judge 校准、独立准入蓝图与统一身份，v8r2 工作台和 API 继续作为历史工程底座。当前执行 70 项本机离线评测资产审题；旧 C3 的 14 张私有盲评包保留历史身份，后续启动门以[GI-088 当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)为准。
 
 ## 1. 系统概览
 
@@ -18,7 +23,7 @@
 截至 `2026-08-02`，`joy / fulfillment / reflection / improvement / gratitude` 是已经完成理论对齐深化的五个标品维度。
 
 技术栈：
-- 前端：Next.js 15、React 19、TypeScript、Tailwind、Zustand
+- 前端：Next.js 16、React 19、TypeScript、Tailwind、Zustand
 - 后端：Next.js Route Handlers + service layer
 - 数据库：PostgreSQL + Prisma + pgvector（记忆系统向量嵌入）
 - AI：provider adapter + structured output 校验
@@ -424,7 +429,7 @@
 
 ### 3.6.1 Daily Light 旧 UI Preview 的历史工作区结构
 
-`2026-08-12` 旧 UI Preview 曾按以下边界完成工程收口；这些结构继续作为当前新前端的联调参考，产品验收和 Production 授权保持开放：
+`2026-08-12` 旧 UI Preview 曾按以下边界完成工程收口；这些结构后来作为新前端的联调参考。`2026-08-13` 新前端已完成第二轮验收并进入 Production，以下内容继续承担历史工程证据职责：
 
 - 事件中心入口以 `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 为标准地址；当天没有会话时只渲染空工作台，点击【帮我记】或【陪我聊】后才调用会话创建接口
 - `recordMode` 随会话启动请求保存，刷新时按 `entryDate` 恢复同一天的事件；事件完成后进入当天事件卡片，卡片来源变化会推动引用它的报告进入 `stale`
@@ -723,9 +728,11 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 - `INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`：现有确定性提问链路。
 - `INTERVIEW_EVENT_CENTERED_STRATEGY=generative`：事件中心两段式生成链路，失败时仍可回退到 baseline。
 
-事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
+事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，历史独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。GI-088 后续千问 Judge 使用独立的 `EVENT_CENTERED_JUDGE_QWEN_API_KEY / EVENT_CENTERED_JUDGE_QWEN_BASE_URL / EVENT_CENTERED_JUDGE_QWEN_MODEL / EVENT_CENTERED_JUDGE_QWEN_THINKING_MODE` 合同，阶段 C 获授权并完成校准前保持空值。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
 
-当前产品状态（`2026-08-10`）：GI-066 的自动技术通过和真人 `No-Go` 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。板块 6 继续资产化评测；GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 保留历史证据，v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，其 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效 Provider 调用只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，运行配置为 `deepseek-v4-pro / Thinking high / json_object / provider_default`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、零调用、零真人和质量未评测只作为脱敏排除记录。当前工作流暂停等待产品负责人完成 12 项真人验收；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除在本轮范围外。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
+阶段 B 历史状态快照（`2026-08-13`）：GI-066 的自动技术通过和真人 `No-Go` 继续作为历史证据。`GI-067 / GI-068～080`、生成式访谈方法 `v1.0` 与项目级评测总规范 `v1.0` 已冻结。GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 保留历史证据，v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，其 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效 Provider 调用只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 曾为 `READY`。阶段 B 实时审计确认目标 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已于 `2026-08-11` 封存为 `ordinal=2 / revision=1 / early_stopped / 0/12 / gate=pending / calls=0`；同一 evaluationVersion 共有 5 个历史 run，阶段 B 写入 `0`。开发 28、硬边界 24、Judge 20 与隐藏 12 能力蓝图已经建档并通过结构校验；当时等待 7 张 Judge 私有卡脱敏、4 张旧口径卡判断轴复核和隐藏正文建设。真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除在本轮范围外。板块 7 正式接入与板块 8 继续等待；当时 Production 使用 `legacy + baseline`。
+
+当前评测状态（`2026-08-16` 文档治理复核）：GI-088 评测资产可视化审题包 v1 已确认、实施中，70 项本机离线材料等待产品负责人裁决；旧 C3 的 14 张盲评包保留历史身份，Judge、独立准入、真人 Preview 和生成式发布保持关闭。Daily Light 当前 Production 使用 `event_centered + baseline`，`legacy + baseline` 保留为应急回退与历史运行身份。当前状态以[生成式访谈总 Map](./generative-interview-refactor-map.md)及其[当前评测资产](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)为准。
 
 ### 5.8 GI-088 私有 Preview 评测运行器
 
@@ -750,7 +757,7 @@ v8r2 继续使用官方 `deepseek-v4-pro`、Thinking high 与 `json_object`。�
 
 控制意图使用版本化的多通道决策：用户内容与继续、停止、生成、纠正、跳过和切换等控制动作分别保存，动作携带说话人、目标、否定、转述、证据片段和优先级。只有指向当前访谈、由用户本人直接表达且满足高精度门的停止动作可以由程序执行；模糊负担表达继续进入正常访谈。当前实现已完成停止误判主链回归；明确继续已作为独立 `continue_interview` 候选进入 Trace，并可撤销同一句中更早的停止、生成或切换动作。程序介入全部进入 `Gi088ProgramIntervention` 并等待人工复核。
 
-八项 Preview 开门差额已经实现并验证：明确继续写入 Trace；Provider preflight 失败先保存原话和 no-call Turn；单次请求身份完整落账；`finalization_failed` 由 session 只读对账；首次导出冻结快照并供重复下载逐字节复用；技术阻断评价绑定同轨迹失败事实；完整错误目录映射到 typed issue；operation event 严格校验 run／task／turn 血缘，Public session 提供真实 run revision。`POST /compare` 继续作为历史兼容占位。最终初始化已验证每次创建新 run 使用新的 `clientOperationId`，避免旧终态 run 被幂等重放。最终 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，线上 Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，只作为脱敏排除记录。历史 v1 的 off/high 双分支、旧错误码和旧导出继续按其冻结版本只读解释。当前证据包见 [v8r2 资产入口](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
+八项 Preview 开门差额已经实现并验证：明确继续写入 Trace；Provider preflight 失败先保存原话和 no-call Turn；单次请求身份完整落账；`finalization_failed` 由 session 只读对账；首次导出冻结快照并供重复下载逐字节复用；技术阻断评价绑定同轨迹失败事实；完整错误目录映射到 typed issue；operation event 严格校验 run／task／turn 血缘，Public session 提供真实 run revision。`POST /compare` 继续作为历史兼容占位。最终初始化已验证每次创建新 run 使用新的 `clientOperationId`，避免旧终态 run 被幂等重放。最终 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 曾为 `READY`，线上 Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；目标 run 的 `2026-08-10` 初始化快照为 `ordinal=2 / revision=0 / running / 0/12`，`2026-08-13` 实时审计状态为 `revision=1 / early_stopped / 0/12 / gate=pending / calls=0`。阶段 B 保留原封存原因和全部历史记录。历史 v1 的 off/high 双分支、旧错误码和旧导出继续按其冻结版本只读解释。当前评测资产见[阶段 B 双轨资产](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)，历史底座见[v8r2 资产入口](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
 
 ## 6. joy 维度为什么是当前标品
 

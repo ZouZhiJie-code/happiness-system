@@ -1,10 +1,10 @@
 # 事件中心重构 LeadAgent 协作与交付机制
 
-最后更新：`2026-08-09`
+最后更新：`2026-08-13`
 
-文档状态：`协作与交付机制继续有效；当前接管点已更新为 GI-088 v1`
+文档状态：`协作与交付机制继续有效；当前接管点已更新为 GI-088 阶段 B 停止点`
 
-当前接管点：`板块 5 已冻结 GI-075～080；板块 6 继续资产化评测；GI-088 v1 已在 8/12 主动提前结束并完成首批复盘，Thinking 模式探针 4/4 completed inconclusive，EMPTY_CONTENT 继续开放；板块 7 正式接入与板块 8 继续等待`
+当前接管点：`板块 5 已冻结 GI-075～080；项目级评测总规范 v1.0 已冻结；GI-088 阶段 B 已完成开发 28、硬边界 24、Judge 20 和隐藏 12 能力蓝图的结构校验。当前等待 4 张旧口径 Judge 卡裁决，以及私有脱敏、隐藏正文和 Judge 调用的后续独立授权；板块 7 正式接入与板块 8 继续等待`
 
 当前状态源：[`生成式访谈重构总 Map`](../../generative-interview-refactor-map.md)；当前开放问题源：[`板块 6 专项`](./04j-generative-quality-evaluation-v1.md)；板块 5 冻结输入：[`稳定性、用户控制与交互收束`](./05-board5-stability-user-control-and-interaction-scope.md)；评测交接：[`04x-07｜GI-074`](./04x-07-evaluation-preview-and-handoff.md)
 

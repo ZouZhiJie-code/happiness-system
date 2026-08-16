@@ -1,12 +1,164 @@
-# GI-088 双轨评测资产｜阶段 B 与 B2 交付
+# GI-088 评测资产｜先回应后整理与长等待根因当前入口
 
-版本：`2026-08-13.gi088-dual-track-stage-b2-v1`
+- 文档职责：证据索引
+- 文档状态：现役
+- 最后核验：`2026-08-16`
+- 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-状态：`阶段 C2 technical_blocked；Plus 普通与思考 No-Go，Max 质量结论保留，当前无可推荐 Judge 配置`
+版本：`2026-08-16.gi088-response-first-visible-quality-v1`
+
+状态：`首段六题技术有效、45 秒门和 60 秒门均为 6/6；等待产品负责人私有六卡内容裁决，页面体验与后续结构化阶段保持待验证`
 
 适用总规范：[Daily Light AI 评测总规范 v1.0](../../../docs/ai-evaluation-standard.md)
 
 当前专项：[生成式访谈质量评测 v1](../../../docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
+
+## 0. 当前任务
+
+产品负责人确认用户先得到回应与模型完整处理变快同时推进。本地候选已经把顺序改为第一段 Pro Low 生成自然回应，第二段 Pro High 完成结构化语义；程序合成两段并负责关系编号、历史来源、状态、幂等、保存和恢复。
+
+- 候选身份：`2026-08-16.gi088-response-first-two-stage-v1`
+- 候选指纹：`e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96`
+- 系统提示与字段：当前单段 `9128 / 14`；第一段 `478 / 2`；第二段 `7262 / 12`
+- RPR-CF-02 请求投影：当前单段 `9728` 字符；第一段 `996` 字符，减少约 `89.8%`；两段合计 `9278` 字符，减少约 `4.6%`
+- 验证：两段式专项 `9/9`、现有 SSE 客户端 `12/12`、类型检查与定向 ESLint 通过
+- 第一门结果：身份 `2026-08-16.gi088-response-first-visible-quality-v1`；Provider 调用与技术有效 `6/6`，45 秒门和 60 秒门 `6/6`，等待产品负责人内容裁决
+- 执行边界：Judge、隐藏集、数据库、Preview、Production、推送和部署均为 `0`；候选与公开证据已进入本地阶段检查点 `30cfc03`
+- [两段式公开启动卡](./response-first-two-stage-v1-start-card.json)
+- [Prompt／Skill／模型／程序职责审计](./response-first-two-stage-v1-responsibility-audit.json)
+- [两段式零调用交接](./response-first-two-stage-v1-handoff.md)
+- [首段六题公开启动卡](./response-first-visible-quality-v1-start-card.json)
+- [首段六题技术回执](./response-first-visible-quality-v1-technical-receipt.json)
+- [首段六题产品评审交接](./response-first-visible-quality-v1-handoff.md)
+
+可见合同负担 A/B 已固定 RPR-CF-02、Pro Low 和同一完整用户输入，按 `A-B-B-A` 比较当前完整合同 A 与第一段可见合同 B。授权与消耗 `4/4`，裁决 `visible_contract_directional_support`。
+
+## 0.1 可见合同负担 A/B 当前结果
+
+- 运行身份：`2026-08-16.gi088-visible-contract-burden-ab-v1`
+- 计划指纹：`95c920d837984314ed92be810f1618b4c1b12f545c0265ae836024d4475d03be`
+- 总耗时：A1／B1／B2／A2 为 `21.830 / 3.834 / 7.174 / 31.385` 秒
+- 配对改善：`A1-B1=17.996s`；`A2-B2=24.211s`
+- 技术结果：HTTP 200、合同有效、45 秒门和 60 秒门均为 `4/4`
+- 负担证据：A 每次 Prompt `4,448` Token、隐藏思考 `1,565～2,282` Token；B 每次 Prompt `487` Token、隐藏思考 `74～247` Token
+- 裁决：`visible_contract_directional_support`；完整合同 A 与首段可见合同 B 的中位总耗时为 `26.608 / 5.504` 秒
+- 验证：新运行器 `4/4`、两段式候选 `9/9`、现有 SSE 客户端 `12/12`；类型、规则、JSON、公开边界、私有权限、文档链接与差异格式通过
+- 边界：语义质量为 `not_evaluated`；本轮不拆分 Prompt、Skill、字段和输出长度各自贡献
+- [可见合同负担启动卡](./visible-contract-burden-ab-v1-start-card.json)
+- [可见合同负担授权卡](./visible-contract-burden-ab-v1-authorization.json)
+- [可见合同负担公开结果](./visible-contract-burden-ab-v1-receipt.json)
+- [可见合同负担结果交接](./visible-contract-burden-ab-v1-handoff.md)
+
+## 0.2 响应等待合同 A/B 父证据
+
+产品负责人已确认日常速度门和首轮单因素。当前固定 RPR-CF-02，上一事件关系解释候选为 A，`relationship_claim_status_v1` 为 B，按 `A-B-B-A` 串行；模型、Thinking high、`json_object`、输入、Provider、超时与运行时段保持一致。
+
+- 诊断身份：`2026-08-16.gi088-response-latency-contract-ab-v1`
+- 计划指纹：`d09a2f0d87395d085c2facd117c5d238b0d76d5575b3ad715d0538f312ac752d`
+- 产品速度门：首个有效正文 `45s`；完整可见回答 `60s`
+- 运行上限：响应头 `15s`；正文与总观察 `60s`
+- 预算：授权与实际调用 `4/4`；重试／恢复／降级均为 `0`
+- 结果：A1／B1／B2／A2 为 `22.687 / 26.423 / 49.455 / 33.370` 秒；45 秒门 `3/4`，60 秒门 `4/4`
+- 裁决：两次 B 均较慢，配对差值为 `3.736 / 16.085` 秒；只有一组达到 10 秒方向门，合同单独归因保持开放
+- 静态验证：专项测试 `15/15`，类型检查、定向 ESLint、JSON、公开内容边界和只读授权门回读通过
+- [响应等待合同 A/B 公开启动卡](./response-latency-contract-ab-v1-start-card.json)
+- [响应等待合同 A/B 授权卡](./response-latency-contract-ab-v1-authorization.json)
+- [响应等待合同 A/B 零调用交接](./response-latency-contract-ab-v1-handoff.md)
+- [响应等待合同 A/B 技术回执](./response-latency-contract-ab-v1-technical-receipt.json)
+- [响应等待合同 A/B 公开结果](./response-latency-contract-ab-v1-receipt.json)
+- [响应等待合同 A/B 结果交接](./response-latency-contract-ab-v1-result-handoff.md)
+
+产品负责人已按上方计划指纹独立授权 4 次 Provider 调用，授权 SHA 为 `d32f8ed3…89589`。A-B-B-A 已执行并在额度耗尽后停止；语义质量保持 `not_evaluated`。页面端到端速度、两段式体验、Judge、独立准入、真人 Preview 与发布继续使用各自证据和授权门。
+
+## 0.3 关系解释状态候选与两题探针父证据
+
+`relationship_claim_status_v1` 的零调用候选和程序校验已经完成。模型需要逐条声明关系解释属于 `user_stated` 或 `hypothesis_to_confirm`，并列出使用位置；程序阻止待确认假设进入工作任务、认识变化和陈述式理解。
+
+- 候选版本：`2026-08-16.gi088-relationship-claim-status-v1`
+- 父候选指纹：`14eeb577533a4f90127887695f78f71f660e78e5d6588da65a0cea66ccdd1dc9`
+- 候选指纹：`1f60ca82a6f12fb554efc780a3dc215b57fc1bf77599279ccf4ad570dee569cc`
+- 策略指纹：`7b72e3180633fb114ea266bf5bcf437126690176a7df851fe1d6a81e0d45067c`
+- 静态结果：候选与探针专项测试 `10/10`；相关历史链路合计 `32/32`，类型检查、定向 ESLint、JSON、文档链接、公开内容隐私和差异格式检查通过
+- 探针身份：`2026-08-16.gi088-relationship-claim-status-probe-v1`
+- 探针题目：`RPR-REAL-13`、`RPR-CF-02`
+- 授权预算：`2/2`；并发 `1`；重试 `0`
+- 运行结果：鉴权与目标模型检查通过；HTTP 200 `2/2`，正文等待超时 `2/2`，技术有效 `0/2`，内容可评价 `0/2`
+- 裁决：`technical_blocked`；当前证据不判断语义通过或失败
+- [两题探针启动卡](./relationship-claim-status-probe-v1-start-card.json)
+- [两题探针授权卡](./relationship-claim-status-probe-v1-authorization.json)
+- [两题探针技术回执](./relationship-claim-status-probe-v1-technical-receipt.json)
+- [两题探针公开回执](./relationship-claim-status-probe-v1-receipt.json)
+- [两题探针结果交接](./relationship-claim-status-probe-v1-result-handoff.md)
+
+两题尚未形成可评价结果，完整 10 题开发回归继续关闭。产品负责人已否定“只提高正文等待上限”的方向；用户速度门和首轮单因素已经确认，当前状态以上方响应等待合同 A/B 启动卡为准。
+
+以下事件关系解释 10 题复测继续承担父失败证据。
+
+当前任务修正 RPR-REAL-13 的评价边界：用户已经表达的“外面与回家存在感受差异”可以继承；“更轻松、没负担、被支使”等具体原因和心理解释需要用户原话支持或先向用户确认。独立候选已复测原 9 道哨兵和 RPR-CF-02，预算 10/10、重试 0。HTTP 200 与技术有效均为 10/10，内容通过 9/10。
+
+RPR-CF-02 通过，原通过题无退化；RPR-REAL-13 仍把“被支使、外面更自在、外面更轻松”等待确认解释写入已成立认识，裁决为 `factor_no_go`。该结果随后推动 `relationship_claim_status_v1`，其当前状态以上方两题探针结果为准。
+
+- 回归集 v1.2 数据指纹：`cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1`
+- 新候选指纹：`14eeb577533a4f90127887695f78f71f660e78e5d6588da65a0cea66ccdd1dc9`
+- 复测集合指纹：`4025192536c22cad7004a0471cfcf274069fdfb369cdb3c968a8d2dbfb7e9d1e`
+- [回归集 v1.2 公开回执](./real-problem-regression-v1.2-receipt.json)
+- [回归集 v1.2 交接](./real-problem-regression-v1.2-handoff.md)
+- [10 题复测公开回执](./event-relationship-explanation-retest-v1-receipt.json)
+- [10 题复测交接](./event-relationship-explanation-retest-v1-handoff.md)
+- 私有复测报告：`.private/event-relationship-explanation-retest-v1/final-report.json`
+
+以下 v1.1 与 9 题基线内容继续承担本轮父证据。
+
+当前任务已修正 6 条题目并继承 24 条通过结论，回归集达到 30/30。模型基线使用 v8r2 候选 `0d5f91c0…efd6`、`deepseek-v4-pro`、Thinking high，实际调用 9 次、重试 0；Codex 已按每题主要质量标准完成内容评审。本轮停在基线报告和一个单因素建议。
+
+- 回归集 v1.1 数据指纹：`f036425de2d60f9af81424bc2528ac80a3dd25be654888d6a3ed0865ab73dded`
+- 回归集 v1.1 评审包指纹：`54b0c91aa9be3da5084113390e4799cf775d4f39a4b041732fce6f48b1846522`
+- 30 条评审：`30/30` 通过；24 条继承产品负责人批量结论，6 条由 Codex 按委托复核
+- 9 题基线：HTTP 200 `9/9`；技术有效 `7/9`；可评价内容 `6/7`；端到端 `6/9`
+- 内容失败：`RPR-REAL-13`，模型把两个事件之间的关系和原因说得过于确定
+- 技术失败：2 次 HTTP 200 后无可用正文，其中 1 次空内容、1 次正文读取超时
+- 下一单因素：`relationship_claim_status_v1`
+- [回归集 v1.1 公开回执](./real-problem-regression-v1.1-receipt.json)
+- [回归集 v1.1 交接](./real-problem-regression-v1.1-handoff.md)
+- [9 题基线公开回执](./real-problem-sentinel-baseline-v1-receipt.json)
+- [9 题基线交接](./real-problem-sentinel-baseline-v1-handoff.md)
+- 私有评审入口：`.private/real-problem-regression-v1.1/index.html`
+- 私有基线报告：`.private/real-problem-sentinel-baseline-v1/final-report.json`
+
+本轮已把历史真实金标库 v1.1 转成开发回归题库并完成 30/30 封存：每个历史运行分支提取 1 条固定检查点，共 22 条；再从真实母题建立 8 条用户侧单变量相邻案例，共 30 条。相邻案例不编写 Daily Light 标准回答。
+
+- 运行身份：`2026-08-16.gi088-real-problem-regression-v1.1`
+- 来源指纹：`d84dc1bcc3c75b6d5d4f7f4b9634be0139c07cd6f7804f7079ef8faf17110dba`
+- 总规范 SHA：`08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60`
+- 私有评审资产：`.private/real-problem-regression-v1.1/`
+- 数据集指纹：`f036425de2d60f9af81424bc2528ac80a3dd25be654888d6a3ed0865ab73dded`
+- 评审包指纹：`54b0c91aa9be3da5084113390e4799cf775d4f39a4b041732fce6f48b1846522`
+- 当前结果：`30/30 已确认并封存；9 题基线已完成`
+
+- [真实问题回归集 v1.1 公开回执](./real-problem-regression-v1.1-receipt.json)
+- [真实问题回归集 v1.1 交接说明](./real-problem-regression-v1.1-handoff.md)
+- 私有本机评审入口：`.private/real-problem-regression-v1.1/index.html`
+
+- [历史真实金标库无内容回执](./historical-real-gold-v1-receipt.json)
+- [历史真实金标库交接说明](./historical-real-gold-v1-handoff.md)
+- 私有本机入口：`.private/historical-real-gold-v1/index.html`
+- v2 历史入口：`.private/real-conversation-review-v2/index.html`（已停止逐份重新裁决）
+- v1 历史入口：`.private/evaluation-asset-review-v1/index.html`（只作错误交付历史快照）
+
+隐藏 v2 当前按产品审题与开发回归材料管理；未来正式独立准入需要建设语义不同的隐藏 v3。旧 C3 的 14 张盲评包和历史回执保持原身份，不进入本轮裁决。
+
+执行边界：历史基线真实模型调用 `9`，事件关系复测 `10`，关系状态探针 `2`，响应等待父合同 A/B `4`，可见合同负担 A/B `4`，本地两段式候选 `0`；Judge、数据库、独立准入、真人 Preview 与 Production 变更均为 `0`。可见合同负担额度已耗尽；下一步语义忠实度验证继续等待独立范围和授权。
+
+本轮验证结果：专项与历史金标回归 `35/35`、类型检查、定向 ESLint、JSON、`docs:check`、隐私、权限和 `git diff --check` 通过；完整 ESLint 为 `0` 个错误、`44` 个既有警告。全量测试 `3313` 条通过、`10` 条跳过；一条并行运行时超时的日志扩展评审测试单独复跑后 `6/6` 通过；另有 `1` 条本轮开始前已存在的 README 运维词条冒烟失败，单独复跑仍失败。
+
+v1 历史交付：
+
+- 私有本机入口：`.private/evaluation-asset-review-v1/index.html`（仅作资产目录历史快照，产品评审暂停）
+- [公开无内容回执](./evaluation-asset-review-v1-receipt.json)
+- [评审包交接说明](./evaluation-asset-review-v1-handoff.md)
+- 评审包指纹：`d70740f0…591f1bd`
+
+当前数据原则：只认产品负责人亲自提交的历史评价；统计覆盖按 14 个话题计算，候选历史表现按 22 个运行分支计算。Judge 卡、固定语境、预设案例、隐藏题、反事实、合成案例和 Codex 评价不进入正式历史金标。
 
 ## 1. 为什么要重建
 
@@ -33,7 +185,7 @@ flowchart LR
 |---|---:|---|---|
 | [开发挑战集](./development-challenge-28.json) | 28 | 发现问题、单变量修复、长期回归 | 可用 |
 | [硬边界回归](./hard-boundary-regression-24.json) | 24 | 控制、安全、纠正、来源、事件隔离和恢复 | 可用 |
-| [Judge 校准集](./judge-calibration-20.json) | 20＋退出卡 2 | 四档各 5 张，校准 Judge | v2 已分离技术与内容轴；7 张最小脱敏载荷、盲测包和金标映射已在私有区完成 |
+| [Judge 开发集](./judge-calibration-20.json) | 20＋退出卡 2 | C3 判尺重构与 Judge v2 开发 | 原 Judge 20 已转为开发身份；14 张人工金标体检等待产品负责人裁决 |
 | [独立准入蓝图](./independent-admission-blueprint-12.json) | 12 | 8 个标准化案例、4 条完整轨迹 | blueprint-v2 与私有正文均已冻结；正文 12/12、授权 2/2、泄漏 0，尚未授权运行 |
 | [案例身份证合同](./case-identity.schema.json) | 1 | 统一案例来源、风险、隐私和身份 | 可用 |
 | [数据集身份证合同](./dataset-identity.schema.json) | 1 | 统一用途、覆盖、限制和修订史 | 可用 |
@@ -75,13 +227,13 @@ flowchart LR
 阶段 B 与 B2 当前已证明：
 
 1. 两条集合轨道的身份、数量、来源和用途已经分开；
-2. 开发 28 与硬边界 24 可以进入候选开发和零调用回归；
+2. 开发 28 与硬边界 24 已具备完整目录身份；当前只有 8 项找到可绑定的真实对话证据，其余自包含运行输入和稳定判定方式继续待补；
 3. Judge 20 v2 达到四档各 5 张，技术与内容判断轴已经分开，私有脱敏和盲测隔离已经通过；
 4. 隐藏 12 的覆盖、模式、运行次数、授权、撤回和独立建设规则已经明确；
 5. 公开蓝图未包含隐藏故事、人物、对话、输入或评分答案；
 6. 当前实施保持模型调用、人工提交、Preview 和 Production 变更为 `0`。
 
-当前结论继续保持在这个范围内：阶段 B2 资产已就绪；阶段 C 只形成技术阻断，Judge 是否合格仍待完整证据；当前候选质量、独立准入、真人 Preview 和发布资格继续开放。
+当前结论继续保持在这个范围内：历史真实金标库已经恢复 14 个真实话题、22 个运行分支及产品负责人原评价；旧 70 项资产目录、12 项返工包和 C3 14 张方案保留历史身份，不再要求重复评分。阶段 B2 资产血缘保留，阶段 C2 保持技术阻断。Judge 是否合格、当前候选质量、独立准入、真人 Preview 和发布资格继续关闭并等待对应证据。
 
 ## 6. 阶段 C 执行结果
 
@@ -119,3 +271,36 @@ C2 修复了响应丢失、跨模式补跑串账、单卡失败后整组停止�
 - 全程 `64` 次调用、`4` 次技术补跑、已知费用 `0.584052` 元。
 
 阶段 C2 整体终态为 `technical_blocked`，当前无 Judge 配置获得上岗资格。公开证据见[阶段 C2 回执](./stage-c2-calibration-receipt.json)和[阶段 C2 Handoff](./stage-c2-handoff.md)。阶段 C 历史回执和旧 14 份结果保持原身份，C2 重用数量为 `0`。
+
+## 10. 阶段 C3 第一停止点
+
+C2 的 11 张关键分歧、2 张稳定可直接使用对照和 1 张稳定单例阻断对照已经形成全新随机编号盲评包。评审页面逐张隐藏旧编号、旧标签、模型配置、历史理由和技术结果，只要求产品负责人回答用户目标、阻断、核心目标、信息增益和修复范围。
+
+- [C3 当前授权与关闭边界](./stage-c3-authorization.json)
+- [C3 产品判尺 v1](./stage-c3-product-ruler-v1.md)
+- [C3 无内容盲评回执](./stage-c3-gold-review-receipt.json)
+- [C3 第一停止点 Handoff](./stage-c3-handoff.md)
+
+私有评审入口位于 `.private/judge-calibration-v3/product-owner-blind-review.html`。当前包 `14/14`、来源标识泄漏 `0`、私有正文进入 Git 或公开文件 `0`、业务模型与 Judge 调用 `0`。第一停止点已经达到，等待产品负责人完成 14 张裁决后再冻结金标。
+
+## 11. 当前真实对话证据审题包 v2
+
+本节保留错误纠正过程的历史身份。v2 的逐份重新裁决流程已经停止，现役入口为本 README 顶部的历史真实金标库 v1。
+
+本机离线页面分为三个区：12 份“可以直接评”的真实对话、54 项“材料待补”的原资产、8 项“当前范围外”的【帮我记】或跨模式资产。可评区中的用户与 AI 使用不同气泡，目标回答单独突出；历史人工标签、理由、后来形成的金标依据和来源身份从页面打开时直接可见。
+
+验证结果：12/12 均含用户原话和真实 AI 输出，候选／运行身份与内容指纹完整率 100%；摘要、蓝图、人工参考回答和范围外材料进入可评区均为 0；专项测试 `5/5`，类型检查、项目构建和差异检查通过；外部请求、模型调用、Judge 调用、数据库、Preview 与 Production 变更均为 0。
+
+Codex 已尝试将当前应用内浏览器从 v1 切换到新的本机 `file://` 页面，浏览器安全策略阻止了该自动跳转。页面文件和离线功能已经生成；产品负责人需要点击本 README 的私有本机入口打开。此项记录为交付入口限制，不改写上述数据完整性结论。
+
+本包只支持逐份决定真实对话与历史金标的去向。候选质量、Judge 资格、独立准入、真人 Preview 和发布资格继续待验证。隐藏 v2 当前作为产品审题与开发回归材料，未来正式准入另建隐藏 v3。
+
+## 12. 当前历史真实金标库 v1
+
+5 份产品负责人确认的历史运行已经恢复为一套私有只读事实库：14 个真实话题、22 个运行分支、183 条消息、88 个轮次、24 个逐轮判断和 8 个模式比较理由。标签分布为可直接使用 7、轻微问题 4、质量失败 8、单例阻断 3。
+
+运行事实分账为：全程正常 6、含拦截／恢复／失败 14、未产生有效主题回答 2；具体轮次包含正常 71、程序拦截 13、技术失败 2、自动恢复后完成 2。历史评价保持原样，内容表现和技术体验分别展示。
+
+离线页面支持完整对话浏览、来源追溯、标签与运行状态筛选、同一话题的普通／思考并排对照，以及 9 条已经确认的质量判尺。QR-04 明确允许两个彼此相关的问题，并把当时程序拦截与当前内容判尺分开呈现。页面只读，重新评分入口为 0。
+
+公开证据见[历史真实金标库回执](./historical-real-gold-v1-receipt.json)，交接与停止点见[历史真实金标库 Handoff](./historical-real-gold-v1-handoff.md)。

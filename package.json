@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "docs:check": "node scripts/check-document-governance.mjs",
+    "docs:inventory": "node scripts/generate-document-governance-inventory.mjs",
     "audit:vercel-env": "node scripts/vercel-env-audit.mjs",
     "build": "next build",
     "postinstall": "prisma generate && prisma generate --schema prisma/evaluation/schema.prisma",

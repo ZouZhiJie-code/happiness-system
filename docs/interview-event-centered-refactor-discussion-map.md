@@ -4,9 +4,9 @@
 
 文档状态：`事件中心 MVP 产品讨论与阶段边界持续有效；GI-067 / GI-068～080 已冻结；GI-066 真人实聊 No-Go 作为历史证据保留`
 
-当前讨论位置：`板块 6／7B｜GI-088 v8r2 全新 0/12 Thinking high 真人验收`
+当前讨论位置：`板块 6｜GI-088 阶段 B 双轨资产已校验，阶段 C 待授权`
 
-当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 正在建立 GI-074 正式评测资产。GI-081～GI-088 v8r1 分别保留诊断、恢复、平台、状态和真人事故证据；v8r1 A1 控制误停单例阻断及原 run 只读保留。v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、P0／P1、八项 Preview 开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；Preview 已 READY，run b816d468…e78cd 为 running 0/12、gate pending、high_only/high、calls 0。当前暂停等待 12 项真人验收；质量、板块 7 正式接入、板块 8 与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+当前有效口径：`板块 4 已完成 GI-067 七批次产品决策；板块 5 已冻结 GI-075～080 六类规则；板块 6 的 GI-088 阶段 B 已形成开发 28、硬边界 24、Judge 20 和隐藏 12 能力蓝图。实时审计确认 run b816d468…e78cd 已封存为 early_stopped 0/12、gate pending、calls 0，本轮写入 0。当前等待 Judge 私有脱敏、4 张旧口径卡判断轴复核、隐藏正文和模型调用授权；质量、板块 7 正式接入、板块 8 与发布未裁决，Production 保持 legacy + baseline`
 
 历史阶段记录（`2026-08-04`及更早）：`原有 Batch B 讨论、版本基线、评测结果和候选交接继续保留作为决策过程与历史证据；当前状态与依赖以生成式专项 Map 为准，当前评测与开放问题以板块 6 专项为准，板块 5 专项作为冻结输入，评测交接以 04x-07 为准`
 
@@ -70,7 +70,7 @@ Daily Light 已完成事件中心 MVP 的产品方案讨论。产品将从五维
 
 当前产品专项：[`板块 6｜生成式访谈质量评测 v1`](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)。板块 5 冻结输入见[`稳定性、用户控制与交互收束`](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)，冻结规则索引见[`04x｜GI-067 全局架构`](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)，评测交接见[`04x-07｜GI-074`](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)
 
-板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 的 GI-088 v8r2 控制意图、评测底座、最终初始化幂等与新 12 项 Preview run 已收口，当前停在 `0/12` 等待真人验收，板块 7 正式接入和板块 8 依次等待上游裁决。
+板块 7 历史候选交接继续见[`04o｜板块 7 MVP Preview 候选交接`](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)，公共产品协议继续见[`04-four-angle-common-interview-protocol.md`](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md)。板块 5 的计数、修复、回复版本、焦点纠正、失败恢复与交互收束已冻结；板块 6 当前停在阶段 B 差距处理和阶段 C 授权门，板块 7 正式接入和板块 8 依次等待上游裁决。
 
 每份阶段方案作为LeadAgent与Subagent共同实施的契约，保存公共接口、实施边界、开发顺序和验证证据；本地图负责跨阶段保存进度、决策、依赖、开发状态和验收结果。
 
