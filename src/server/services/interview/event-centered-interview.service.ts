@@ -2,10 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import {
-  getEventCenteredAllowedActions,
-  getEventCenteredCheckpoint,
   getEventCenteredCurrentQuestionIntent,
-  getEventCenteredProgress,
   parseEventCenteredAssistantPayload,
   parseEventCenteredDialogueState,
   serializeEventCenteredAssistantPayload
@@ -54,13 +51,8 @@ import type {
 } from "@/features/interview/event-centered/thought-ai-contract";
 import {
   assertEventCenteredWriteAllowed,
-  getEventCenteredProductScope,
   isEventCenteredThoughtOnlyScope
 } from "@/features/interview/event-centered-release";
-import {
-  getAssistantDisplayParts,
-  parseAssistantTurnPayload
-} from "@/features/joy-interview/assistant-turn";
 import {
   abandonJournalEvent,
   consumeEventCenteredGenerativePlanCheckpoint,
@@ -69,7 +61,6 @@ import {
   getEventCenteredInterviewWorkspaceData,
   getEventCenteredSessionIdentity,
   persistEventCenteredGenerativePlanCheckpoint,
-  reserveEventCenteredUserAction,
   reserveEventCenteredUserTurn,
   startEventCenteredInterviewSession
 } from "@/server/repositories/event-centered-interview.repository";
@@ -77,8 +68,7 @@ import { materializeJournalEventEntryCard } from "@/server/repositories/journal-
 import { recordEventCenteredAnalyticsEvent } from "@/server/services/interview/event-centered-analytics.service";
 import {
   getEffectiveJournalEventAngleProjection,
-  getEffectiveJournalEventAngleProjectionForPath,
-  getEffectiveJournalEventWorkspaceProjectionsForPath
+  getEffectiveJournalEventAngleProjectionForPath
 } from "@/server/repositories/journal-event-angle-outcome.repository";
 import {
   applyJournalEventFactRevision,
@@ -117,20 +107,29 @@ import {
   regenerateEventCenteredResponseVersion,
   selectEventCenteredResponseVersion
 } from "@/server/services/interview/event-centered-response-version.service";
+import {
+  getEffectiveEventCenteredOperation,
+  getEventCenteredResumeAttemptContext,
+  reserveEventCenteredRespondTurn,
+  resumeEventCenteredRespondTurn,
+  type EventCenteredUserOperation
+} from "@/server/services/interview/event-centered-reliable-turn.service";
+import {
+  getEventCenteredWorkspaceMessageDisplayText,
+  getEventCenteredWorkspaceAllowedActions,
+  hasPendingEventCenteredFactClarification,
+  projectEventCenteredInterviewWorkspace
+} from "@/server/services/interview/event-centered-workspace-projection.service";
 import type {
-  EventCenteredAllowedAction,
   EventCenteredAssistantPayload,
   EventCenteredDialogueState,
-  EventCenteredRespondRequest,
-  EventCenteredWorkspaceSession
+  EventCenteredRespondRequest
 } from "@/types/event-centered-dialogue";
 import type {
   EventCenteredInterviewWorkspaceData,
-  EventCenteredOperationData,
   ReserveEventCenteredTurnResult
 } from "@/types/event-centered-interview";
 import {
-  JOURNAL_EVENT_ANGLES,
   type JournalEventAngleOutcomeDraft,
   type JournalEventAngleProjection,
   type JournalEventAngleRepairResolutionInput
@@ -215,220 +214,11 @@ export function getEventCenteredInterview(userId: string, sessionId: string) {
   return getEventCenteredSessionIdentity(userId, sessionId);
 }
 
-function displayWorkspaceMessage(message: EventCenteredInterviewWorkspaceData["messages"][number]) {
-  if (message.role !== "assistant") return message.rawText ?? message.content;
-  const eventPayload = parseEventCenteredAssistantPayload(message.content);
-  if (eventPayload) {
-    if (eventPayload.presentation === "hidden") return "";
-    return [eventPayload.naturalUnderstanding, eventPayload.naturalResponse]
-      .filter(Boolean)
-      .join("\n");
-  }
-  const legacyPayload = parseAssistantTurnPayload(message.content);
-  return legacyPayload ? getAssistantDisplayParts(legacyPayload).combinedText : message.content;
-}
-
-function emptyAngleProjection(): JournalEventAngleProjection {
-  return {
-    outcomesByAngle: {},
-    completedAngles: [],
-    availableAngles: ["feeling", "thought", "relationship", "action"],
-    invalidatedOutcomeIds: [],
-    deprioritizedOutcomeIds: [],
-    logEligibleOutcomeIds: [],
-    repairPendingAngles: [],
-    reopenedAngles: [],
-    repairs: []
-  };
-}
-
-function hasEventCenteredUserExpression(
-  messages: EventCenteredInterviewWorkspaceData["messages"]
-) {
-  return messages.some((message) =>
-    message.role === "user" && Boolean((message.rawText ?? message.content).trim())
-  );
-}
-
-function hasPendingFactClarification(snapshotData: unknown) {
-  if (!snapshotData || typeof snapshotData !== "object" || Array.isArray(snapshotData)) {
-    return false;
-  }
-  return Boolean(
-    (snapshotData as Record<string, unknown>).pendingFactRevisionClarification
-  );
-}
-
-function getWorkspaceAllowedActions(input: {
-  data: EventCenteredInterviewWorkspaceData;
-  state: EventCenteredDialogueState;
-  pendingFactClarification?: boolean;
-  pendingAngleRepair?: boolean;
-}): EventCenteredAllowedAction[] {
-  let allowedActions = getEventCenteredAllowedActions({
-    state: input.state,
-    eventStatus: input.data.identity.eventStatus,
-    hasPendingTurn: Boolean(input.data.pendingTurn)
-  });
-  if (input.pendingFactClarification || input.pendingAngleRepair) {
-    allowedActions = allowedActions.filter(
-      (action) => action === "reply" || action === "exit_event"
-    );
-  }
-  if (input.data.identity.recordMode !== "capture") return allowedActions;
-
-  if (
-    input.data.identity.eventStatus !== null &&
-    input.data.identity.eventStatus !== "active"
-  ) return [];
-  if (input.data.pendingTurn) {
-    return allowedActions.filter(
-      (action) => action === "resume_turn" || action === "exit_event"
-    );
-  }
-  return hasEventCenteredUserExpression(input.data.messages)
-    ? ["reply", "exit_event"]
-    : ["reply"];
-}
-
 export async function getEventCenteredInterviewWorkspace(
   userId: string,
   sessionId: string
-): Promise<EventCenteredWorkspaceSession | null> {
-  const data = await getEventCenteredInterviewWorkspaceData(userId, sessionId);
-  if (!data) return null;
-  const state = parseEventCenteredDialogueState(data.snapshotData);
-  const workspaceProjections = data.identity.eventId
-    ? await getEffectiveJournalEventWorkspaceProjectionsForPath({
-        eventId: data.identity.eventId,
-        messageIds: data.messages.map((message) => message.id),
-        snapshotData: data.snapshotData
-      })
-    : null;
-  const angleProjection = workspaceProjections?.angleProjection ?? emptyAngleProjection();
-  const factProjection = workspaceProjections?.factProjection ?? null;
-  const pathMessageIds = new Set(data.messages.map((message) => message.id));
-  const versionGroups = new Map<string, typeof data.responseVersions>();
-  for (const version of data.responseVersions) {
-    if (!version.responseGroupId) continue;
-    const group = versionGroups.get(version.responseGroupId) ?? [];
-    group.push(version);
-    versionGroups.set(version.responseGroupId, group);
-  }
-  const messages = data.messages.flatMap((message) => {
-    const assistantPayload = message.role === "assistant"
-      ? parseEventCenteredAssistantPayload(message.content)
-      : null;
-    if (assistantPayload?.presentation === "hidden") return [];
-    const group = message.responseGroupId
-      ? versionGroups.get(message.responseGroupId) ?? []
-      : [];
-    return [{
-      id: message.id,
-      role: message.role,
-      content: displayWorkspaceMessage(message),
-      rawText: message.rawText ?? displayWorkspaceMessage(message),
-      sequence: message.sequence,
-      userTurnId: message.userTurnId,
-      clientTurnId: message.clientTurnId,
-      generationTraceId: message.generationTraceId ?? null,
-      assistantPayload,
-      responseVersion: message.role === "assistant" && message.responseGroupId
-        ? {
-            groupId: message.responseGroupId,
-            version: message.responseVersion ?? 1,
-            versionCount: Math.max(1, group.length),
-            canRegenerate:
-              data.identity.eventStatus === "active" &&
-              group.length < 3 &&
-              data.messages.at(-1)?.id === message.id &&
-              Boolean(assistantPayload?.questionSpec),
-            canSwitch: group.length > 1,
-            versions: group.map((version) => ({
-              messageId: version.id,
-              branchSessionId: version.branchSessionId,
-              version: version.responseVersion ?? 1,
-              active: pathMessageIds.has(version.id)
-            }))
-          }
-        : null,
-      createdAt: message.createdAt
-    }];
-  });
-  const currentRun = state.activeAngle ? state.angleRuns[state.activeAngle] : null;
-  const allowedActions = getWorkspaceAllowedActions({
-    data,
-    state,
-    pendingFactClarification: Boolean(factProjection?.pendingClarification),
-    pendingAngleRepair: angleProjection.repairPendingAngles.length > 0
-  });
-  const outcomes = angleProjection.completedAngles.flatMap((angle) => {
-    const outcome = angleProjection.outcomesByAngle[angle];
-    return outcome
-      ? [{ angle, kind: outcome.kind, statement: outcome.statement }]
-      : [];
-  });
-  const closedAngles = JOURNAL_EVENT_ANGLES.filter(
-    (angle) => state.angleRuns[angle]?.status === "closed"
-  );
-  const productScope = getEventCenteredProductScope();
-  const availableAngles = angleProjection.availableAngles.filter(
-    (angle) => !closedAngles.includes(angle) &&
-      (productScope === "thought_only" ? angle === "thought" : true)
-  );
-  const journalStatus = data.identity.eventStatus === "generating"
-    ? "generating" as const
-    : data.journalEntry?.status === "saved"
-      ? "saved" as const
-      : data.journalEntry
-        ? "draft" as const
-        : "not_generated" as const;
-
-  return {
-    ...data.identity,
-    messages,
-    dialogue: {
-      productScope,
-      phase: state.phase,
-      activeAngle: state.activeAngle,
-      questionOpportunityCount: currentRun?.questionOpportunityCount ?? 0,
-      focusOptions: state.focusOptions,
-      completedAngles: angleProjection.completedAngles,
-      availableAngles,
-      closedAngles,
-      reopenedAngles: angleProjection.reopenedAngles,
-      outcomes,
-      checkpoint: getEventCenteredCheckpoint(
-        state,
-        state.lastCompletedAngle
-          ? angleProjection.outcomesByAngle[state.lastCompletedAngle]?.statement ?? null
-          : null
-      ),
-      allowedActions,
-      progress: getEventCenteredProgress(state)
-    },
-    recovery: {
-      pendingTurn: data.pendingTurn
-        ? {
-            id: data.pendingTurn.id,
-            clientTurnId: data.pendingTurn.clientTurnId,
-            sessionId: data.pendingTurn.sessionId,
-            rawText: data.pendingTurn.rawText,
-            inputMode: data.pendingTurn.inputMode,
-            baseMessageSequence: data.pendingTurn.baseMessageSequence,
-            status: data.pendingTurn.status,
-            createdAt: data.pendingTurn.createdAt,
-            errorCode: data.pendingTurn.errorCode,
-            attemptCount: data.pendingTurn.attemptCount
-          }
-        : null
-    },
-    journal: {
-      status: journalStatus,
-      entryId: data.journalEntry?.id ?? null,
-      eventStatus: data.identity.eventStatus
-    }
-  };
+) {
+  return projectEventCenteredInterviewWorkspace(userId, sessionId);
 }
 
 export function acceptEventCenteredUserTurn(input: {
@@ -894,127 +684,6 @@ function responseAcknowledgesCorrection(value: string) {
   return /(?:刚才|之前|前面).{0,12}(?:理解|判断|说法).{0,8}(?:需要改|不准确|不对|撤回)|(?:按|根据)你.{0,10}(?:纠正|更正|更准确)|你.{0,8}(?:纠正|更正)(?:了)?|(?:这里|现在)(?:应|要)?改成|我.{0,8}(?:理解错|听错|弄错)/u.test(
     value
   );
-}
-
-function actionOperationData(
-  input: EventCenteredRespondRequest
-): EventCenteredOperationData | null {
-  if (input.action === "select_current_event") {
-    return {
-      kind: "select_current_event",
-      optionId: input.optionId!,
-      displayText: input.rawText || input.optionId
-    };
-  }
-  if (input.action === "select_exploration_angle") {
-    return {
-      kind: "select_exploration_angle",
-      angle: input.angle!,
-      displayText: input.rawText
-    };
-  }
-  if (input.action === "continue_exploration") {
-    return {
-      kind: "continue_exploration",
-      angle: input.angle,
-      displayText: input.rawText
-    };
-  }
-  if (input.action === "exit_event") {
-    return { kind: "exit_event", reason: input.rawText, displayText: input.rawText };
-  }
-  return null;
-}
-
-async function reserveRespondTurn(input: {
-  userId: string;
-  request: EventCenteredRespondRequest;
-}): Promise<ReserveEventCenteredTurnResult> {
-  const request = input.request;
-  if (
-    request.baseBranchSessionId === undefined ||
-    request.baseMessageSequence === undefined
-  ) {
-    throw new Error("EVENT_STATE_CHANGED");
-  }
-  if (request.action === "reply" || request.action === "correct_understanding") {
-    return reserveEventCenteredUserAction({
-      userId: input.userId,
-      rootSessionId: request.rootSessionId,
-      clientTurnId: request.clientTurnId,
-      baseBranchSessionId: request.baseBranchSessionId,
-      baseMessageSequence: request.baseMessageSequence,
-      action: request.action,
-      rawText: request.rawText ?? "",
-      inputMode: request.inputMode ?? "text",
-      targetMessageId: request.action === "correct_understanding"
-        ? request.targetMessageId
-        : undefined
-    });
-  }
-  if (request.action === "select_current_event") {
-    const operation = actionOperationData(request) as Extract<
-      EventCenteredOperationData,
-      { kind: "select_current_event" }
-    >;
-    return reserveEventCenteredUserAction({
-      userId: input.userId,
-      rootSessionId: request.rootSessionId,
-      clientTurnId: request.clientTurnId,
-      baseBranchSessionId: request.baseBranchSessionId,
-      baseMessageSequence: request.baseMessageSequence,
-      action: request.action,
-      rawText: request.rawText || request.optionId,
-      inputMode: request.inputMode ?? "text",
-      eventOperationData: operation
-    });
-  }
-  if (request.action === "select_exploration_angle") {
-    return reserveEventCenteredUserAction({
-      userId: input.userId,
-      rootSessionId: request.rootSessionId,
-      clientTurnId: request.clientTurnId,
-      baseBranchSessionId: request.baseBranchSessionId,
-      baseMessageSequence: request.baseMessageSequence,
-      action: request.action,
-      inputMode: request.inputMode ?? "text",
-      eventOperationData: actionOperationData(request) as Extract<
-        EventCenteredOperationData,
-        { kind: "select_exploration_angle" }
-      >
-    });
-  }
-  if (request.action === "continue_exploration") {
-    return reserveEventCenteredUserAction({
-      userId: input.userId,
-      rootSessionId: request.rootSessionId,
-      clientTurnId: request.clientTurnId,
-      baseBranchSessionId: request.baseBranchSessionId,
-      baseMessageSequence: request.baseMessageSequence,
-      action: request.action,
-      inputMode: request.inputMode ?? "text",
-      eventOperationData: actionOperationData(request) as Extract<
-        EventCenteredOperationData,
-        { kind: "continue_exploration" }
-      >
-    });
-  }
-  if (request.action === "exit_event") {
-    return reserveEventCenteredUserAction({
-      userId: input.userId,
-      rootSessionId: request.rootSessionId,
-      clientTurnId: request.clientTurnId,
-      baseBranchSessionId: request.baseBranchSessionId,
-      baseMessageSequence: request.baseMessageSequence,
-      action: request.action,
-      inputMode: request.inputMode ?? "text",
-      eventOperationData: actionOperationData(request) as Extract<
-        EventCenteredOperationData,
-        { kind: "exit_event" }
-      >
-    });
-  }
-  throw new Error("INTERVIEW_REGENERATION_UNAVAILABLE");
 }
 
 function resolveCurrentQuestionContext(
@@ -1546,17 +1215,6 @@ async function rejectPendingHypothesisDecision(input: {
   });
 }
 
-function effectiveOperation(action: EventCenteredRespondRequest["action"]): EventCenteredUserOperation {
-  if (action === "select_current_event") return "select_current_event";
-  if (action === "select_exploration_angle") return "select_exploration_angle";
-  if (action === "continue_exploration") return "continue_exploration";
-  if (action === "exit_event") return "exit_event";
-  if (action === "correct_understanding") return "correct_understanding";
-  if (action === "regenerate_response") return "regenerate_response";
-  if (action === "resume_turn") return "resume_failed_turn";
-  return "content_reply";
-}
-
 export async function respondEventCenteredInterview(
   userId: string,
   request: EventCenteredRespondRequest,
@@ -1580,10 +1238,11 @@ export async function respondEventCenteredInterview(
   timing.initialWorkspaceReadMs = elapsedMs(initialWorkspaceStartedAt);
   if (!before) throw new Error("SESSION_NOT_FOUND");
   const stateBeforeRequest = parseEventCenteredDialogueState(before.snapshotData);
-  const currentAllowedActions = getWorkspaceAllowedActions({
+  const currentAllowedActions = getEventCenteredWorkspaceAllowedActions({
     data: before,
     state: stateBeforeRequest,
-    pendingFactClarification: hasPendingFactClarification(before.snapshotData),
+    pendingFactClarification:
+      hasPendingEventCenteredFactClarification(before.snapshotData),
     pendingAngleRepair: stateBeforeRequest.repairPendingAngles.length > 0
   });
   if (!currentAllowedActions.includes(request.action)) {
@@ -1692,13 +1351,7 @@ export async function respondEventCenteredInterview(
       if (!current) throw new Error("SESSION_NOT_FOUND");
       return { workspace: current, assistantPayload: null };
     }
-    resumeAnalyticsContext = {
-      turnId: pending.id,
-      attemptCount:
-        pending.status === "failed" || pending.status === "canceled"
-          ? pending.attemptCount + 1
-          : pending.attemptCount
-    };
+    resumeAnalyticsContext = getEventCenteredResumeAttemptContext(pending);
     await recordEventCenteredAnalyticsEvent({
       eventName: "event_centered_resume_started",
       userId,
@@ -1713,58 +1366,16 @@ export async function respondEventCenteredInterview(
       attemptCount: resumeAnalyticsContext.attemptCount
     });
     try {
-      resumedGenerativeCheckpoint = await getEventCenteredGenerativePlanCheckpoint({
+      const resumed = await resumeEventCenteredRespondTurn({
         userId,
-        rootSessionId: before.identity.rootSessionId,
-        activeBranchSessionId: before.identity.activeBranchSessionId,
-        clientTurnId: request.clientTurnId
+        workspace: before,
+        clientTurnId: request.clientTurnId,
+        expectedTurnId: resumeAnalyticsContext.turnId,
+        expectedAttemptCount: resumeAnalyticsContext.attemptCount
       });
-      const resumedTurn = await resumeEventCenteredTurnUnderstanding({
-        userId,
-        activeBranchSessionId: before.identity.activeBranchSessionId,
-        clientTurnId: request.clientTurnId
-      });
-      if (
-        resumedTurn.id !== resumeAnalyticsContext.turnId ||
-        resumedTurn.attemptCount !== resumeAnalyticsContext.attemptCount
-      ) {
-        throw new Error("EVENT_STATE_CHANGED");
-      }
-      const userMessage = before.messages.find((message) => message.userTurnId === pending.id);
-      if (!before.identity.eventId || !before.identity.branchStateId || !userMessage) {
-        throw new Error("EVENT_STATE_CHANGED");
-      }
-      const operation = resumedGenerativeCheckpoint?.operationData ?? pending.eventOperationData;
-      effectiveRequest = {
-        action: pending.action,
-        rootSessionId: before.identity.rootSessionId,
-        clientTurnId: pending.clientTurnId,
-        baseBranchSessionId: pending.baseBranchSessionId ?? before.identity.activeBranchSessionId,
-        baseMessageSequence: pending.baseMessageSequence,
-        rawText: pending.rawText,
-        inputMode: pending.inputMode,
-        angle: operation?.kind === "select_exploration_angle" ? operation.angle : undefined,
-        optionId: operation?.kind === "select_current_event" ? operation.optionId : undefined,
-        targetMessageId: pending.targetMessageId ?? undefined
-      };
-      reservation = {
-        kind: "existing",
-        eventId: before.identity.eventId,
-        rootSessionId: before.identity.rootSessionId,
-        activeBranchSessionId: before.identity.activeBranchSessionId,
-        branchStateId: before.identity.branchStateId,
-        userMessageId: userMessage.id,
-        turn: {
-          id: pending.id,
-          clientTurnId: pending.clientTurnId,
-          sessionId: pending.sessionId,
-          rawText: pending.rawText,
-          inputMode: pending.inputMode,
-          baseMessageSequence: pending.baseMessageSequence,
-          status: "processing",
-          createdAt: pending.createdAt
-        }
-      };
+      resumedGenerativeCheckpoint = resumed.resumedGenerativeCheckpoint;
+      effectiveRequest = resumed.effectiveRequest;
+      reservation = resumed.reservation;
     } catch (error) {
       await recordResumeTerminal("failed", resumeErrorCode(error));
       throw error;
@@ -1783,10 +1394,13 @@ export async function respondEventCenteredInterview(
       await assertEventCenteredOperationAllowed({
         eventId: before.identity.eventId,
         activeBranchSessionId: before.identity.activeBranchSessionId,
-        operation: effectiveOperation(effectiveRequest.action)
+        operation: getEffectiveEventCenteredOperation(effectiveRequest.action)
       });
     }
-    reservation = await reserveRespondTurn({ userId, request: effectiveRequest });
+    reservation = await reserveEventCenteredRespondTurn({
+      userId,
+      request: effectiveRequest
+    });
   }
   timing.turnReservationPersistenceMs = elapsedMs(reservationStartedAt);
   try {
@@ -2525,7 +2139,7 @@ export async function respondEventCenteredInterview(
       keepsCurrentEventBoundary
     ) {
       const confirmation = await confirmEventCenteredUnderstandingAfterIntent({
-        operation: effectiveOperation(effectiveRequest.action),
+        operation: getEffectiveEventCenteredOperation(effectiveRequest.action),
         userTurnId: reservation.turn.id,
         activeBranchSessionId: reservation.activeBranchSessionId
       });
@@ -2859,7 +2473,7 @@ export async function respondEventCenteredInterview(
       payload: responsePayloadForQuality,
       previousAssistantResponses: before.messages
         .filter((message) => message.role === "assistant")
-        .map(displayWorkspaceMessage),
+        .map(getEventCenteredWorkspaceMessageDisplayText),
       adviceRequested: Boolean(decision.adviceRequest),
       pendingHypothesisStatement: decision.unsupportedHypothesis?.statement ?? null,
       firstCheckpointUnderstanding: firstCheckpointPresentation?.understanding ?? null
@@ -3252,19 +2866,6 @@ export async function respondEventCenteredInterview(
   }
 }
 
-export type EventCenteredUserOperation =
-  | "content_reply"
-  | "select_current_event"
-  | "select_exploration_angle"
-  | "continue_exploration"
-  | "generate_event_journal"
-  | "correct_understanding"
-  | "regenerate_response"
-  | "switch_response_version"
-  | "repair_question"
-  | "exit_event"
-  | "resume_failed_turn";
-
 const confirmingOperations = new Set<EventCenteredUserOperation>([
   "content_reply",
   "select_current_event",
@@ -3330,3 +2931,5 @@ export {
   markEventCenteredTurnUnderstandingFailed,
   resumeEventCenteredTurnUnderstanding
 };
+
+export type { EventCenteredUserOperation } from "@/server/services/interview/event-centered-reliable-turn.service";

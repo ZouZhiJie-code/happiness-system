@@ -3020,6 +3020,15 @@ describe("event-centered respond service", () => {
       attemptCount: 2,
       errorCode: "RESUME_WRITE_FAILED"
     }));
+    const resumeStartedCallIndex = mocks.recordAnalytics.mock.calls.findIndex(
+      ([input]) => input.eventName === "event_centered_resume_started"
+    );
+    expect(
+      mocks.recordAnalytics.mock.invocationCallOrder[resumeStartedCallIndex]
+    ).toBeLessThan(mocks.getPlanCheckpoint.mock.invocationCallOrder[0]!);
+    expect(mocks.getPlanCheckpoint.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.resume.mock.invocationCallOrder[0]!
+    );
   });
 
   it("返回当天会用已保存表达形成确定性事件卡片，不触发 AI", async () => {
