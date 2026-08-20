@@ -191,3 +191,11 @@
 - Codex 评估：成功工作区 JSON、并发恢复结果、单卡与幂等行为已有单元、真实 PostgreSQL、全量回归和零模型 E2E 四层保护。后续若调整恢复计数，需要单独定义用户价值、数据库语义、指标基线和回退门。
 - 待验证假设：当前纯拆分在远程 CI 与隔离 Preview 中继续保持 API、SSE、错误码、事件顺序、幂等键和数据库结果兼容；Stage 2 阻断解除并完成 Production 发布后，至少 24 小时／20 次内部有效回应的观察门可支持线上判断。
 - 当前处理状态：本地门已通过；PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿、远程零模型 E2E 均 `11/11`，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready。本次公开回执提交后的最终 head 远程门待验证，PR 合并与 Production 保持 pending／blocked；正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
+
+## PEH-031｜Stage 4 第一批 Preview smoke 受 TLS 传输阻断
+
+- 已确认事实：PR #45 head `b004f38` 对应 Preview `dpl_7uHdBKXy9RvZhbWVWrEXWq3jYZAG` 为 Ready。受控 smoke 只尝试一次匿名 `GET /api/interview/event-centered/sessions?limit=1`，非 verbose 请求在 TLS 握手发生 `SSL_ERROR_SYSCALL`；应用响应 `0`、重试 `0`。登录、登录态、事件中心列表读取和最小 session start 均为 `not_run`。
+- 产品判断：Preview Ready 与产品冒烟分开记录；当前冒烟状态为 `transport_blocked`，Production 继续关闭，已通过的本地与远程工程证据保持原运行身份。
+- Codex 评估：该失败发生在应用收到请求前，当前证据支持本机／上游传输链路阻断，暂不支持产品权限或主链回归归因。账号、权限、环境变量、代码和 deployment 配置均保持原值。
+- 待验证假设：稳定网络／线路下，同一 Preview 可完成匿名保护、登录、列表读取和最小 session start；成功读回后再核对 `AIRequestLog` 增量。
+- 当前处理状态：业务写入 `0`、模型端点请求 `0`、Production 访问 `0`；`AIRequestLog` 增量因缺少合法只读路径记为 `unconfirmed`。本轮按停止门结束，零重试；最终回执 head 只进入 CI 与 Preview Ready 门，产品 smoke 继续保持 `transport_blocked`。

@@ -113,7 +113,7 @@
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
 | 3. Golden Set v2 | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭 |
-| 4. 主链重构 | 第一批初始远程门与 Preview Ready 通过·最终回执头待验证·Production blocked | PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready；公开回执提交中 |
+| 4. 主链重构 | 第一批工程门通过·Preview smoke transport_blocked·最终回执头待验证·Production blocked | PR #45 工程门保持通过；`b004f38` Preview Ready，受控匿名请求在到达应用前发生 TLS `SSL_ERROR_SYSCALL`，其余 smoke 按停止门 `not_run` |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
@@ -188,4 +188,6 @@
 - 已确认兼容边界：公开 API、SSE、错误码、事件顺序、幂等键、数据库结构和产品行为不变。并发恢复当前保留 `resumeAttemptCount=2`，由 characterization 明确记录，后续修复需要独立行为变更门。
 - PR #45 初始 head `0a1471daa99c5a8cc870b87975afc63b999632ea` 的 push run `32361400473` 与 pull request run `32361466403` 均在 attempt 1 全绿、重试 `0`。两套常规门均为 `374` 个文件通过／`17` 个跳过、`3301` 条用例通过／`95` 条跳过、build `77/77`、Lint `0 errors / 43 warnings`。
 - 两套远程零模型 E2E 均为 `11/11`、`AIRequestLog=0`、12 条 Trace；临时 Schema `daily_light_e2e_mt1epstb_86372d7789` 与 `daily_light_e2e_mt1er2wm_42327172f6` 均已删除。Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` 为 Ready，target 为 `preview`。
-- 当前停止点：本次公开回执提交后的最终 head 远程 CI／Preview 待验证，PR 合并保持 pending。任一核心远程回归或 Preview 构建失败即暂停本批。Production 继续受 Stage 2 管理员成功读取、日记更新人工保护、传输链路与发布观察门约束，本批保持 Production blocked；回退方式为撤销本批纯拆分提交并保持正式域名指向阶段 1 deployment。
+- `b004f38b22b7d18e77fb4deb21389a30ba80d86e` 对应 Preview `dpl_7uHdBKXy9RvZhbWVWrEXWq3jYZAG` 为 Ready。受控 smoke 仅执行一次匿名 `GET /api/interview/event-centered/sessions?limit=1`，本机传输链路在 TLS 握手发生 `SSL_ERROR_SYSCALL`；应用响应 `0`、重试 `0`。匿名保护为 `technical_blocked`；登录、登录态、事件中心列表读取和最小 session start 均为 `not_run`。
+- 该次 smoke 的业务写入 `0`、模型端点请求 `0`、Production 访问 `0`；`AIRequestLog` 增量因缺少合法只读路径记为 `unconfirmed`。账号、权限、环境变量、代码和 deployment 配置变更均为 `0`；Preview Ready 只承担构建与部署事实，产品冒烟继续单独记账，详见 `PEH-031`。
+- 当前停止点：本次 transport 回执提交后的最终 head 两套 CI 与 Preview Ready 待验证，PR 合并保持 pending。Production 继续受 Stage 2 管理员成功读取、日记更新人工保护、传输链路与发布观察门约束，本批保持 Production blocked；回退方式为撤销本批纯拆分提交并保持正式域名指向阶段 1 deployment。

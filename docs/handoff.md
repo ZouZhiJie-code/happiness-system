@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分的初始远程门与 Preview Ready 已通过，最终公开回执 head 待验证，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分的工程门通过，Preview smoke 因 TLS 传输阻断，最终公开回执 head 待验证，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -31,7 +31,8 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 定向回归 `59/59`、隔离 PostgreSQL `2/2`、全量 `3301` 条、零模型 E2E `11/11` 本地通过；`AIRequestLog=0`，12 条 Trace，临时数据库与 E2E Schema 残留均为 `0`。类型、Lint、build `77/77`、两套 Prisma、文档与差异检查通过。
 - 成功工作区 JSON 和同一失败回合并发恢复已经 characterization；两个恢复竞争者仅一个进入下游，当前 `resumeAttemptCount=2` 作为继承债务保持。API、SSE、错误码、事件顺序、幂等键、数据库结构和产品行为保持兼容。
 - PR #45 初始 head `0a1471d` 的 push run `32361400473` 与 pull request run `32361466403` 均在 attempt 1 全绿、重试 `0`；两套远程零模型 E2E 均 `11/11`、`AIRequestLog=0`、12 条 Trace、临时 Schema 已删除。Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready。
-- 当前状态为“初始远程门与 Preview Ready 通过／最终公开回执 head 待验证／Production blocked”。PR 合并保持 pending；Production 继续受 Stage 2 与观察门约束。远程核心回归或 Preview 构建失败即暂停并撤销本批纯拆分提交。
+- `b004f38` Preview `dpl_7uHdBKXy9RvZhbWVWrEXWq3jYZAG` Ready；受控 smoke 的唯一匿名请求在 TLS 握手发生 `SSL_ERROR_SYSCALL`，应用响应 `0`、重试 `0`。匿名保护 `technical_blocked`，登录、登录态、列表读取与最小 session start 均 `not_run`；业务写入、模型端点请求、Production 访问均 `0`，`AIRequestLog` 增量 `unconfirmed`。
+- 当前状态为“工程门通过／Preview smoke transport_blocked／最终公开回执 head 待验证／Production blocked”。PR 合并保持 pending；Production 继续受 Stage 2 与观察门约束。远程核心回归或 Preview 构建失败即暂停并撤销本批纯拆分提交。
 
 阶段 3 本地候选事实：
 
