@@ -1,0 +1,139 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T03",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "guided_reflection",
+    "activeAngle": "thought",
+    "lastCompletedAngle": null,
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": null,
+    "currentMicrogoal": null
+  },
+  "facts": [],
+  "recentTurns": [],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "visibleResponse": null,
+      "finalAction": null,
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 201,
+          "tokenUsage": {
+            "promptTokens": 2561,
+            "completionTokens": 378,
+            "totalTokens": 2939,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 641
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户自己拒绝了某个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我明明自己拒绝了\"\n      },\n      {\n        \"statement\": \"看到同事接手后感到羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"看到同事接手还是很羡慕\"\n      },\n      {\n        \"statement\": \"用户怀疑自己是否选错了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"感觉自己是不是选错了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"判断依据\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解用户当前判断（选错了）是基于什么具体事实或衡量标准\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝了机会，但看到同事接手后感到羡慕，这让你怀疑自己是否选错了。\",\n    \"question\": \"是什么具体的事实或标准让你现在觉得可能选错了？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 156,
+          "tokenUsage": {
+            "promptTokens": 2597,
+            "completionTokens": 379,
+            "totalTokens": 2976,
+            "promptCacheHitTokens": 1664,
+            "promptCacheMissTokens": 933
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户自己拒绝了某个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我明明自己拒绝了\"\n      },\n      {\n        \"statement\": \"看到同事接手后感到羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"看到同事接手还是很羡慕\"\n      },\n      {\n        \"statement\": \"用户怀疑自己是否选错了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"感觉自己是不是选错了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"当前判断与具体事实的连接\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解用户当前判断（选错了）是基于什么具体事实或衡量标准\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝了机会，但看到同事接手后感到羡慕，这让你怀疑自己是不是选错了。\",\n    \"question\": \"具体是哪一点让你觉得可能选错了？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6753,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5158,
+          "completionTokens": 757,
+          "totalTokens": 5915,
+          "promptCacheHitTokens": 3584,
+          "promptCacheMissTokens": 1574
+        },
+        "estimatedCost": 0.00044235520000000003
+      },
+      "validationIssues": [
+        "deterministic_correction_must_take_priority",
+        "deterministic_correction_must_be_recorded"
+      ],
+      "runtimeError": "MODEL_OUTPUT_UNAVAILABLE"
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "runtime_incomplete",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

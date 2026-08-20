@@ -76,14 +76,14 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <label htmlFor="register-username" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
+        <label htmlFor="register-username" className="text-[13px] font-medium text-[var(--color-ink)]">
           用户名
         </label>
         <input
           id="register-username"
           name="username"
           autoComplete="username"
-          className="min-h-12 rounded-[18px] border border-[rgba(115,77,39,0.18)] bg-white/70 px-4 py-3 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(168,124,69,0.4)]"
+          className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--color-content)] px-4 py-3 text-[15px] text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--line-strong)]"
           value={username}
           onFocus={() => {
             setLocalError(null);
@@ -94,13 +94,13 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
           aria-invalid={touched.username && !usernameValid}
           aria-describedby="register-username-help"
         />
-        <p id="register-username-help" className={`text-xs leading-5 ${touched.username && !usernameValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        <p id="register-username-help" className={`text-[13px] leading-5 ${touched.username && !usernameValid ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>
           {touched.username && !usernameValid ? "请输入 3–24 位中文、字母、数字或下划线。" : "3–24 位，支持中文、字母、数字和下划线。"}
         </p>
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="register-password" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
+        <label htmlFor="register-password" className="text-[13px] font-medium text-[var(--color-ink)]">
           密码
         </label>
         <input
@@ -108,7 +108,7 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
           name="password"
           type="password"
           autoComplete="new-password"
-          className="min-h-12 rounded-[18px] border border-[rgba(115,77,39,0.18)] bg-white/70 px-4 py-3 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(168,124,69,0.4)]"
+          className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--color-content)] px-4 py-3 text-[15px] text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--line-strong)]"
           value={password}
           onFocus={() => {
             setLocalError(null);
@@ -119,13 +119,13 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
           aria-invalid={touched.password && !passwordValid}
           aria-describedby="register-password-help"
         />
-        <p id="register-password-help" className={`text-xs leading-5 ${touched.password && !passwordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        <p id="register-password-help" className={`text-[13px] leading-5 ${touched.password && !passwordValid ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>
           {touched.password && !passwordValid ? "请输入 8–72 位密码。" : "8–72 位。当前账户使用用户名与密码登录，请妥善保存。"}
         </p>
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="register-confirm-password" className="font-mono text-[0.7rem] tracking-[0.22em] text-[#6a5e53]">
+        <label htmlFor="register-confirm-password" className="text-[13px] font-medium text-[var(--color-ink)]">
           确认密码
         </label>
         <input
@@ -133,7 +133,7 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
-          className="min-h-12 rounded-[18px] border border-[rgba(115,77,39,0.18)] bg-white/70 px-4 py-3 text-sm text-[#2f2217] outline-none transition-colors focus:border-[rgba(168,124,69,0.4)]"
+          className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--color-content)] px-4 py-3 text-[15px] text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--line-strong)]"
           value={confirmPassword}
           onFocus={() => {
             setLocalError(null);
@@ -144,17 +144,17 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
           aria-invalid={touched.confirmPassword && !confirmPasswordValid}
           aria-describedby="register-confirm-password-help"
         />
-        <p id="register-confirm-password-help" className={`text-xs leading-5 ${touched.confirmPassword && !confirmPasswordValid ? "text-[#8a5440]" : "text-[var(--text-faint)]"}`}>
+        <p id="register-confirm-password-help" className={`text-[13px] leading-5 ${touched.confirmPassword && !confirmPasswordValid ? "text-[var(--color-danger)]" : "text-[var(--color-muted)]"}`}>
           {touched.confirmPassword && !confirmPasswordValid ? "两次输入的密码需要保持一致。" : "再次输入密码，确认内容一致。"}
         </p>
       </div>
 
-      <div className="rounded-[22px] border border-[rgba(115,77,39,0.14)] bg-[rgba(255,249,239,0.44)] p-4">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm leading-7 text-[#4c3d30]">
+      <div className="rounded-[var(--radius-control)] bg-[var(--color-sidebar)] p-4">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm leading-7 text-[var(--color-ink)]">
           <label className="flex items-center gap-3">
             <input
               type="checkbox"
-              className="size-4 accent-[#d89d59]"
+              className="size-4 accent-[var(--color-action)]"
               checked={acceptedAgreements}
               onChange={(event) => setAcceptedAgreements(event.target.checked)}
             />
@@ -167,7 +167,7 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
               <Link href="/legal/privacy" target="_blank" rel="noreferrer" className="mx-1 underline underline-offset-4">
                 《隐私政策》
               </Link>
-              ，并知悉服务会使用对话、AI 生成内容及反馈进行质量评估与持续改进。
+              。
             </span>
           </label>
         </div>
@@ -176,12 +176,12 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
       <div className="grid gap-3">
         <button
           type="submit"
-          className="wood-chip min-h-12 rounded-full px-5 py-3 text-sm tracking-[0.12em] transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-12 rounded-[var(--radius-control)] bg-[var(--color-action)] px-5 py-3 text-[15px] font-semibold text-[var(--color-content)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ink)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canSubmit || submitting}
         >
           {submitting ? "创建中…" : "创建账户"}
         </button>
-        <p className="text-pretty text-sm leading-7 text-[#5a4632]">
+        <p className="text-pretty text-sm leading-7 text-[var(--color-muted)]">
           已经有账户了？
           <Link href={loginHref} className="ml-1 underline underline-offset-4">
             去登录
@@ -190,7 +190,7 @@ export function RegisterForm({ onSubmit, error, onInteraction, nextPath = null }
       </div>
 
       {mergedError ? (
-        <p role="alert" className="text-sm leading-7 text-[#8a5440]">
+        <p role="alert" className="text-sm leading-7 text-[var(--color-danger)]">
           {mergedError}
         </p>
       ) : null}

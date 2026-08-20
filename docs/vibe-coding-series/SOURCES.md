@@ -50,6 +50,21 @@
 - `0b35c13`，2026-07-23，冻结 Batch C 的成果契约。
 - `3a1c547`，2026-07-23，完成 Batch C 成果体验、评测样本、规则和运行器。
 
+### 生成式访谈评测实战
+
+- [板块 6 首批 8 张校准卡](../../artifacts/generative-interview-board6/2026-08-06/README.md)
+- [GI-081 临时 Prompt 下的真实输出诊断](../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/README.md)
+- [GI-084 到 GI-087 候选血缘入口](../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/README.md)
+- [GI-088 v0 人交互开发评测](../../artifacts/generative-interview-board7/2026-08-08-gi088-human-eval-v0/README.md)
+- [GI-088 v1 八项真人批次](../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)
+- [GI-088 v2 到 v7 诊断与恢复血缘入口](../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/README.md)
+- [GI-088 v7r1 到 v8 平台、状态与问前决策血缘](../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8-question-decision-pro/README.md)
+- [GI-088 v8r1 最终 12 项独立验收](../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)
+- [GI-088 v8r2 意图控制与评测底座加固](../ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
+- [GI-088 v0 到 v8r1 端到端详细复盘](../retrospectives/2026-08-10-gi088-end-to-end-iteration-retrospective.md)
+- [生成式访谈总 Map](../generative-interview-refactor-map.md)
+- [板块 6 生成质量评测专项](../technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
+
 ## 口径说明
 
 - 模型评估文档中的 60 条用例，属于首版五维基线设计。

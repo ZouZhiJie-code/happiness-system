@@ -76,10 +76,16 @@ const evidenceSummarySchema = z
     evidenceRefs: z.array(strictString.max(120)).min(1).max(30)
   })
   .strict();
-const stateItemSchema = evidenceSummarySchema
+const stateEvidenceSummarySchema = z
+  .object({
+    summary: strictString.max(1_000),
+    evidenceRefs: z.array(strictString.max(120)).min(1).max(400)
+  })
+  .strict();
+const stateItemSchema = stateEvidenceSummarySchema
   .extend({ stateId: strictString.max(160) })
   .strict();
-const workingTaskStateSchema = evidenceSummarySchema
+const workingTaskStateSchema = stateEvidenceSummarySchema
   .extend({ taskRef: strictString.max(160) })
   .strict();
 const nextInquiryStateSchema = z
@@ -87,14 +93,14 @@ const nextInquiryStateSchema = z
     inquiryId: strictString.max(160),
     answerTarget: strictString.max(1_000),
     taskEffect: strictString.max(1_000),
-    evidenceRefs: z.array(strictString.max(120)).min(1).max(30)
+    evidenceRefs: z.array(strictString.max(120)).min(1).max(400)
   })
   .strict();
 const invalidatedItemSchema = z
   .object({
     stateId: strictString.max(160),
     summary: strictString.max(1_000),
-    evidenceRefs: z.array(strictString.max(120)).min(1).max(30),
+    evidenceRefs: z.array(strictString.max(120)).min(1).max(400),
     invalidatedByMessageId: strictString.max(120),
     invalidationReason: strictString.max(500)
   })
@@ -111,7 +117,7 @@ const pendingOpportunitySchema = z
     stage: stageSchema,
     answerTarget: strictString.max(1_000),
     taskEffect: strictString.max(1_000),
-    evidenceRefs: z.array(strictString.max(120)).min(1).max(30)
+    evidenceRefs: z.array(strictString.max(120)).min(1).max(400)
   })
   .strict();
 const answerOpportunityLedgerSchema = z

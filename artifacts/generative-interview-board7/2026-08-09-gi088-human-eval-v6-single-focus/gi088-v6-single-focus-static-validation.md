@@ -36,9 +36,9 @@
 
 ## 4. Preview 回读
 
-- deployment `redacted-deployment-id` 状态为 `READY`；
+- deployment `dpl_5Rq7gTnovApDY97b4pg8k7YJf33r` 状态为 `READY`；
 - 固定入口为 `https://xingfuxitong-gi088-v6-single-focus.vercel.app/preview/gi088-evaluation`；
-- 专用评测库批次 `redacted-operational-id` 为 `high_only`、`0/4`，活动分支只有 `high`；
+- 专用评测库批次 `37517d91-a258-423a-bb26-a58c97357e68` 为 `high_only`、`0/4`，活动分支只有 `high`；
 - 评测版本、执行指纹和任务数回读一致，创建批次模型调用为 `0`；
 - Preview 未登录 session 返回 `401`，登录页完整保留评测回跳地址；
 - Production 页面与 session API 均返回 `404`。

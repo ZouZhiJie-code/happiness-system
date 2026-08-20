@@ -6,11 +6,16 @@ import {
   Gi088AccessError
 } from "./access";
 import {
-  GI088_EVALUATION_MODE,
   createGi088ExecutionFingerprint
 } from "./candidate";
-import { createGi088PrismaStore } from "./prisma-store";
-import { Gi088EvaluationError, Gi088EvaluationService } from "./service";
+import { createGi088PrismaFoundationStore } from "./foundation-prisma-store";
+import { Gi088EvaluationFoundationService } from "./foundation-service";
+import { Gi088FoundationStoreError } from "./foundation-store";
+import {
+  GI088_ERROR_CATALOG,
+  Gi088EvaluationError,
+  createGi088EvaluationIssue
+} from "./errors";
 import { isAuthenticationRequiredError } from "@/server/services/auth/current-user.service";
 
 function errorMessage(code: string) {
@@ -27,6 +32,8 @@ function errorMessage(code: string) {
     GI088_MODEL_CALL_AUTHORIZATION_REQUIRED: "当前候选指纹尚未获得模型调用授权。",
     GI088_ARK_API_KEY_MISSING: "当前 Preview 尚未配置 GI-088 使用的火山 Ark 凭证。",
     GI088_ARK_BASE_URL_MISMATCH: "当前 Preview 的火山 Ark 地址与候选冻结配置不一致。",
+    GI088_DEEPSEEK_API_KEY_MISSING: "当前 Preview 尚未配置 GI-088 使用的 DeepSeek 官方凭证。",
+    GI088_DEEPSEEK_BASE_URL_MISMATCH: "当前 Preview 的 DeepSeek 地址与官方候选配置不一致。",
     GI088_HIGH_ONLY_EVALUATION: "当前批次只运行 Thinking high 轨迹。",
     GI088_COMPARISON_NOT_REQUIRED: "当前批次只运行 Thinking high，无需分支对照。",
     GI088_QUESTION_REVIEWS_REQUIRED: "请先完成 Trace 中全部可见提问的逐轮分类，再结束当前轨迹。",
@@ -45,19 +52,47 @@ function gi088ErrorPayload(error: unknown) {
   let retryable = false;
   if (error instanceof Gi088EvaluationError) {
     ({ code, status, retryable } = error);
+  } else if (error instanceof Gi088FoundationStoreError) {
+    const mapped = error.code.split(":")[0];
+    if (
+      mapped === "GI088_OPERATION_PAYLOAD_CONFLICT" ||
+      mapped === "GI088_RUN_NOT_FOUND" ||
+      mapped === "GI088_RUN_READ_ONLY" ||
+      mapped === "GI088_STORED_FINGERPRINT_MISMATCH" ||
+      mapped === "GI088_CONCURRENT_UPDATE"
+    ) {
+      const issue = createGi088EvaluationIssue(mapped);
+      ({ code, status, retryable } = issue);
+    }
   } else if (error instanceof Gi088AccessError) {
     ({ code, status } = error);
   } else if (isAuthenticationRequiredError(error)) {
     code = "AUTHENTICATION_REQUIRED";
     status = 401;
   }
+  const catalogIssue = code in GI088_ERROR_CATALOG
+    ? createGi088EvaluationIssue(
+        code as Parameters<typeof createGi088EvaluationIssue>[0]
+      )
+    : null;
+  const issue = error instanceof Gi088EvaluationError
+    ? error.issue
+    : catalogIssue ?? {
+        code,
+        message: errorMessage(code),
+        dataSaved: "unknown" as const,
+        impact: "request" as const,
+        action: "read_latest_state" as const,
+        retryable,
+        status
+      };
   return {
     code,
     status,
     retryable,
     payload: {
-      error: { code, message: errorMessage(code), retryable },
-      issue: { code, message: errorMessage(code), retryable }
+      error: issue,
+      issue
     }
   };
 }
@@ -76,14 +111,13 @@ export async function withGi088Evaluation(
   request: Request,
   action: (context: {
     ownerUserId: string;
-    service: Gi088EvaluationService;
+    service: Gi088EvaluationFoundationService;
   }) => Promise<unknown>
 ) {
   try {
     const user = await requireGi088EvaluationRequest(request);
-    const service = new Gi088EvaluationService({
-      store: createGi088PrismaStore(),
-      evaluationMode: GI088_EVALUATION_MODE
+    const service = new Gi088EvaluationFoundationService({
+      store: createGi088PrismaFoundationStore()
     });
     return NextResponse.json(
       await action({ ownerUserId: user.id, service }),
@@ -98,21 +132,26 @@ export async function withGi088EvaluationStream(
   request: Request,
   action: (context: {
     ownerUserId: string;
-    service: Gi088EvaluationService;
+    service: Gi088EvaluationFoundationService;
     emit: (event: unknown) => void;
   }) => Promise<unknown>
 ) {
   try {
     const user = await requireGi088EvaluationRequest(request);
-    const service = new Gi088EvaluationService({
-      store: createGi088PrismaStore(),
-      evaluationMode: GI088_EVALUATION_MODE
+    const service = new Gi088EvaluationFoundationService({
+      store: createGi088PrismaFoundationStore()
     });
     const encoder = new TextEncoder();
+    let closed = false;
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         const emit = (event: unknown) => {
-          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+          } catch {
+            closed = true;
+          }
         };
         void action({ ownerUserId: user.id, service, emit })
           .then((session) => emit({ type: "session", session }))
@@ -123,7 +162,20 @@ export async function withGi088EvaluationStream(
             }
             emit({ type: "error", ...payload });
           })
-          .finally(() => controller.close());
+          .finally(() => {
+            if (closed) return;
+            try {
+              controller.close();
+            } catch {
+              // The request lifecycle owns cancellation. Service execution
+              // continues so an accepted turn can finish its ledger commit.
+            } finally {
+              closed = true;
+            }
+          });
+      },
+      cancel() {
+        closed = true;
       }
     });
     return new Response(stream, {

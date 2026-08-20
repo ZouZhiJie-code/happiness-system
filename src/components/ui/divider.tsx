@@ -5,7 +5,7 @@ interface DividerProps {
   className?: string;
 }
 
-/** hairline 分隔线：卡片内与底板上的标准分区手段。 */
+/** hairline 分隔线：只用于重复列表、表格或相邻操作区的明确边界。 */
 export function Divider({ orientation = "horizontal", className }: DividerProps) {
   if (orientation === "vertical") {
     return <span aria-hidden className={cn("ui-hairline--vertical", className)} />;

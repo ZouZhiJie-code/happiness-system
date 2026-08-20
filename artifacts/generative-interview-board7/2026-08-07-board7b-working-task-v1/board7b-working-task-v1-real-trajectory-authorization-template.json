@@ -1,0 +1,27 @@
+{
+  "template": true,
+  "authorizationVersion": "2026-08-07.board7b-working-task-real-trajectory-authorization-v1",
+  "decision": "pending",
+  "candidateVersion": "2026-08-07.board7b-working-task-v1",
+  "candidateFingerprint": "e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa",
+  "workbenchExecutionFingerprint": "965682241f8fd2b95c87466bd8ab3f0368626af24fe8989406008bbac5205802",
+  "regressionRunFingerprint": "REGRESSION_RUN_FINGERPRINT_PENDING",
+  "regressionRawResultFingerprint": "REGRESSION_RAW_RESULT_FINGERPRINT_PENDING",
+  "regressionResultFingerprint": "REGRESSION_RESULT_FINGERPRINT_PENDING",
+  "productDecisionRecordFingerprint": "PRODUCT_DECISION_RECORD_FINGERPRINT_PENDING",
+  "sixCaseDecision": {
+    "completedCases": 0,
+    "unresolvedTechnicalFailures": null,
+    "invalidStructureOrSourceFailures": null,
+    "singleCaseBlocks": null,
+    "realTrajectory": "pending"
+  },
+  "authorizationId": null,
+  "authorizationScope": "one_real_trajectory_after_six_case_product_review",
+  "authorizedTrajectoryBudget": 0,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": null,
+  "approvedAt": null,
+  "productionChangeAuthorized": false,
+  "confirmationText": "等待六题运行完成、Codex 初评和产品负责人逐题裁决后，针对固定候选、六题运行证据、裁决证据与工作台执行指纹单独授权一条真人轨迹。"
+}

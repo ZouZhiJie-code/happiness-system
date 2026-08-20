@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const inputSchema = z
   .object({
+    runId: z.string().uuid(),
     reasonCode: z.enum([
       "sufficient_evidence",
       "technical_friction",
@@ -15,7 +16,8 @@ const inputSchema = z
       "other"
     ]),
     reason: z.string().trim().min(1).max(2_000),
-    confirmation: z.literal(true)
+    confirmation: z.literal(true),
+    clientOperationId: z.string().trim().min(1).max(160)
   })
   .strict();
 
@@ -27,8 +29,11 @@ export async function POST(request: Request) {
     }
     return service.earlyStop({
       ownerUserId,
+      runId: parsed.data.runId,
       reasonCode: parsed.data.reasonCode,
-      reason: parsed.data.reason
+      reason: parsed.data.reason,
+      confirmation: true,
+      clientOperationId: parsed.data.clientOperationId
     });
   });
 }

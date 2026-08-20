@@ -1,0 +1,53 @@
+{
+  "probeVersion": "board7-event-journal-mvp-probe-v1",
+  "scopeFingerprint": "28578566815bdf22b013cf41af64cb880f443e85bb86cbad1a0788a1521314b9",
+  "approvalPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-02/board7-event-journal-mvp-probe-approval.json",
+  "budgetPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-02/board7-event-journal-mvp-probe-budget.json",
+  "model": "deepseek-v4-flash",
+  "promptVersion": "2026-08-02.event-journal-mvp-v1",
+  "runtime": {
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "thinking": "disabled"
+  },
+  "outcome": "quality_fallback",
+  "technicalComplete": true,
+  "technicalAttempts": 1,
+  "latencyMs": 1763,
+  "attempts": [
+    {
+      "stage": "generate",
+      "attempt": 1,
+      "provider": "volcengine-ark",
+      "success": true,
+      "latencyMs": 776,
+      "tokenUsage": {
+        "promptTokens": 362,
+        "completionTokens": 57,
+        "totalTokens": 419,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 362
+      },
+      "errorCode": null,
+      "responseText": "{\"title\":\"项目汇报后的放松\",\"content\":\"今天下午做完项目汇报，走出会议室时我突然松了口气。这几天一直担心汇报时讲不清楚，真正结束以后才发现肩膀放松了。\\n\\n我看见的：汇报真正结束后，持续绷着的身体才放松下来。\"}"
+    }
+  ],
+  "candidate": {
+    "title": "项目汇报后的放松",
+    "content": "今天下午做完项目汇报，走出会议室时我突然松了口气。这几天一直担心汇报时讲不清楚，真正结束以后才发现肩膀放松了。\n\n我看见的：汇报真正结束后，持续绷着的身体才放松下来。"
+  },
+  "candidateGroundingAccepted": false,
+  "candidateGroundingIssues": [
+    "title_without_source_anchor",
+    "paragraph_without_source_anchor"
+  ],
+  "finalOrigin": "fallback",
+  "finalDraft": {
+    "title": "下午做完项目汇报",
+    "content": "今天下午做完项目汇报，走出会议室时我突然松了口气。\n\n这几天一直担心汇报时讲不清楚。\n\n汇报真正结束以后肩膀放松了。\n\n我看见的\n\n汇报真正结束后，持续绷着的身体才放松下来。"
+  },
+  "finalGroundingAccepted": true,
+  "finalGroundingIssues": [],
+  "generatedAt": "2026-08-02T10:59:41.682Z"
+}

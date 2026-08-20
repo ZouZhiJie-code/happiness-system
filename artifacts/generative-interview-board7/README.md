@@ -1,44 +1,100 @@
 # Board 7 评测与候选资产索引
 
-最后更新：`2026-08-10`
+- 文档职责：证据索引
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`生成式访谈重构总 Map`](../../docs/generative-interview-refactor-map.md)
 
-当前状态：`v7 两条真人连续轨迹已封存；v7r1 Prefix 兼容 No-Go；v7r2 Ark Flash 本地实现与自动验证通过，等待 Preview 回读和 0/2 空白批次`
+最后更新：`2026-08-10`
 
 ## 当前入口
 
-- [GI-088 v7r2｜Thinking high Ark Flash](./2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)
+[GI-088｜v8r2 评测底座加固与最终 12 项真人验收](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+
+状态：`v8r1 A1 控制误停及原 run 只读保留；v8r2 commit 5281bc53…883a8、FP 96f1a022…cfd0c、全绿静态门与 READY Preview 已形成，run b816d468…e78cd 为 running 0/12、gate pending、high_only/high、calls 0；当前等待 12 项真人验收，质量与发布未裁决，约 200 轮以上容量优化排除，Production 保持 legacy + baseline`
+
+当前迭代证据：
+
+- [v8r2 评测底座加固、Preview 与新 0/12 run](./2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)
+- [v8r2 已完成实施合同](../../docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)
+- [v2 diagnostic 运行器说明](./2026-08-09-gi088-human-eval-v2-diagnostic/README.md)
+- [v2 diagnostic manifest](./2026-08-09-gi088-human-eval-v2-diagnostic/gi088-human-eval-v2-diagnostic-manifest.json)
+- [v2 diagnostic 静态验证](./2026-08-09-gi088-human-eval-v2-diagnostic/gi088-v2-diagnostic-static-validation.md)
+- [v3 恢复候选说明](./2026-08-09-gi088-human-eval-v3-empty-recovery/README.md)
+- [v3 恢复候选 manifest](./2026-08-09-gi088-human-eval-v3-empty-recovery/gi088-human-eval-v3-empty-recovery-manifest.json)
+- [v3 恢复候选静态验证](./2026-08-09-gi088-human-eval-v3-empty-recovery/gi088-v3-empty-recovery-static-validation.md)
+- [v4 阶段转场候选说明](./2026-08-09-gi088-human-eval-v4-stage-transition/README.md)
+- [v4 阶段转场 manifest](./2026-08-09-gi088-human-eval-v4-stage-transition/gi088-human-eval-v4-stage-transition-manifest.json)
+- [v4 阶段转场静态验证](./2026-08-09-gi088-human-eval-v4-stage-transition/gi088-v4-stage-transition-static-validation.md)
+- [v5 High-only 候选说明](./2026-08-09-gi088-human-eval-v5-high-reliability/README.md)
+- [v5 High-only manifest](./2026-08-09-gi088-human-eval-v5-high-reliability/gi088-human-eval-v5-high-reliability-manifest.json)
+- [v5 High-only 静态验证](./2026-08-09-gi088-human-eval-v5-high-reliability/gi088-v5-high-reliability-static-validation.md)
+- [v6 单一回答焦点候选说明](./2026-08-09-gi088-human-eval-v6-single-focus/README.md)
+- [v6 单一回答焦点 manifest](./2026-08-09-gi088-human-eval-v6-single-focus/gi088-human-eval-v6-single-focus-manifest.json)
+- [v6 单一回答焦点静态验证](./2026-08-09-gi088-human-eval-v6-single-focus/gi088-v6-single-focus-static-validation.md)
+- [v7 连续性底座候选说明](./2026-08-09-gi088-human-eval-v7-continuity-baseline/README.md)
+- [v7 连续性底座 manifest](./2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-human-eval-v7-continuity-baseline-manifest.json)
+- [v7 连续性底座静态验证](./2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-v7-continuity-static-validation.md)
+- [当前唯一问题台账](./2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)
+- [v7r1 Prefix 续写候选说明](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/README.md)
+- [v7r1 manifest](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-human-eval-v7r1-visible-continuation-manifest.json)
+- [v7r1 静态验证](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-v7r1-visible-continuation-static-validation.md)
+- [v7r1 Flash / Pro 模型对照结果](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-flash-pro-model-comparison-v1-result.json)
+- [v7r1 Flash / Pro 模型对照结论](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-flash-pro-model-comparison-v1-decision.md)
+- [v7r1 火山 Ark Flash 平台探针结果](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-ark-flash-platform-probe-v1-result.json)
+- [v7r1 火山 Ark E1 等待校正结果](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-ark-e1-timeout-correction-v1-result.json)
+- [v7r1 火山 Ark Flash 平台对照结论](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-ark-flash-platform-probe-v1-decision.md)
+- [v7r2 Ark Flash 候选说明](./2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)
 - [v7r2 manifest](./2026-08-10-gi088-human-eval-v7r2-ark-flash/gi088-human-eval-v7r2-ark-flash-manifest.json)
 - [v7r2 静态验证](./2026-08-10-gi088-human-eval-v7r2-ark-flash/gi088-v7r2-ark-flash-static-validation.md)
+- [v7r3 确定性状态候选说明](./2026-08-10-gi088-human-eval-v7r3-deterministic-state/README.md)
+- [v7r3 manifest](./2026-08-10-gi088-human-eval-v7r3-deterministic-state/gi088-human-eval-v7r3-deterministic-state-manifest.json)
+- [v7r3 零模型回放](./2026-08-10-gi088-human-eval-v7r3-deterministic-state/gi088-v7r3-zero-call-replay.md)
+- [v7r4 官方 V4 Pro 候选说明](./2026-08-10-gi088-human-eval-v7r4-pro/README.md)
+- [v7r4 manifest](./2026-08-10-gi088-human-eval-v7r4-pro/gi088-human-eval-v7r4-pro-manifest.json)
+- [v7r4 静态验证](./2026-08-10-gi088-human-eval-v7r4-pro/gi088-v7r4-pro-static-validation.md)
+- [v7r4 真人评测脱敏收口](./2026-08-10-gi088-human-eval-v7r4-pro/gi088-v7r4-human-eval-closure-summary.md)
+- [v8 候选说明](./2026-08-10-gi088-human-eval-v8-question-decision-pro/README.md)
+- [v8 manifest](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-human-eval-v8-question-decision-pro-manifest.json)
+- [v8 静态验证](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-question-decision-static-validation.md)
+- [v8 真人验收脱敏收口](./2026-08-10-gi088-human-eval-v8-question-decision-pro/gi088-v8-human-eval-closure-summary.md)
+- [v8r1 最终 12 项候选、部署快照与 A1 阻断](./2026-08-10-gi088-human-eval-v8r1-final12/README.md)
+- [v8r1 manifest](./2026-08-10-gi088-human-eval-v8r1-final12/gi088-human-eval-v8r1-final12-manifest.json)
+- [v8r1 静态验证](./2026-08-10-gi088-human-eval-v8r1-final12/gi088-v8r1-final12-static-validation.md)
+- [空内容配对探针 manifest](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)
+- [空内容配对探针脱敏结果](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-result.json)
+- [空内容配对探针裁决](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-decision.md)
+- [空内容 Thinking 模式探针 manifest](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-manifest.json)
+- [空内容 Thinking 模式探针脱敏结果](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-result.json)
+- [空内容 Thinking 模式探针裁决](./2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-decision.md)
 
-当前候选固定使用 Ark REST `deepseek-v4-flash-ga-260731`、Thinking high 与 `json_object`。本地实现和自动验证已经通过；Preview 部署、页面回读和 `running 0/2` 空白批次仍待完成。Production 继续保持 `legacy + baseline`。
+v1 复盘入口：
 
-## 直接上游证据
+- [8/12 提前结束与只读封存核验](./2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-batch-seal-audit.md)
+- [产品负责人真人体验评价](./2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-product-review.md)
+- [Codex 独立九维初评](./2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-codex-review.md)
+- [Bad Case 总账](./2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-bad-case-ledger.json)
+- [整批复盘与下一主要影响因素](./2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-batch-reconciliation.md)
 
-- [v7 连续性底座封存结论](./2026-08-09-gi088-human-eval-v7-continuity-baseline/README.md)
-- [v7 连续性静态验证](./2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-v7-continuity-static-validation.md)
-- [v7r1 Prefix 兼容 No-Go](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/README.md)
-- [v7r1 manifest](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-human-eval-v7r1-visible-continuation-manifest.json)
-- [Flash / Pro 脱敏聚合结果](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-flash-pro-model-comparison-v1-result.json)
-- [Flash / Pro 对照结论](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-flash-pro-model-comparison-v1-decision.md)
-- [Ark Flash 平台对照结论](./2026-08-10-gi088-human-eval-v7r1-visible-continuation/gi088-ark-flash-platform-probe-v1-decision.md)
+## 诊断历史入口
 
-## GI-088 历史候选
+- [GI-088 v0｜1600 Token 上限与技术失败恢复历史](./2026-08-08-gi088-human-eval-v0/README.md)
+- [GI-081｜六题真实输出 A/B 诊断基线](./2026-08-06-board7a-real-output-ab-v1/README.md)
+- [GI-086｜DeepSeek Thinking 能力校准](./2026-08-07-board7b-thinking-capability-v1/README.md)
+- [GI-085｜semantic-frame-first v1 回归结果与根因](./2026-08-07-board7b-semantic-frame-v1/README.md)
+- [GI-087｜“共同任务＋当前探查”历史候选与上下文资格审计](./2026-08-07-board7b-working-task-v1/README.md)
+- [GI-083 v1｜真实用户直连一次调用诊断候选](./2026-08-07-board7a-chat-e2e-single-v1/README.md)
+- [GI-083 v0｜运行前事实卡诊断候选](./2026-08-06-board7a-chat-e2e-single-v0/README.md)
+- [GI-084 v0｜初始正式资产候选](./2026-08-07-board7b-prompt-skill-v0/README.md)
+- `GI-084 v0.1～v0.3`：三轮授权回归与 No-Go 证据；`v0.4`：运行前关闭、模型调用 `0`。
 
-- [v6 单一回答焦点](./2026-08-09-gi088-human-eval-v6-single-focus/README.md)
-- [v5 High-only 可靠性](./2026-08-09-gi088-human-eval-v5-high-reliability/README.md)
-- [v4 阶段转场](./2026-08-09-gi088-human-eval-v4-stage-transition/README.md)
-- [v3 空正文恢复](./2026-08-09-gi088-human-eval-v3-empty-recovery/README.md)
-- [v2 diagnostic](./2026-08-09-gi088-human-eval-v2-diagnostic/README.md)
-- [v1 真人交互开发评测集](./2026-08-09-gi088-human-eval-v1/README.md)
-- [v0 运行器与 Token 上限失败历史](./2026-08-08-gi088-human-eval-v0/README.md)
+## 历史目录
 
-这些目录只公开版本说明、脱敏 manifest、最终裁决、静态验证和聚合探针结论。公开副本会把可关联运行记录的 UUID 替换为 `redacted-operational-id`；包含真人逐字输入、Trace 定位符或完整请求的 manifest、运行计划、脚本和测试持续留在 `artifacts/local-runtime/`。
+- `2026-07-28/`：早期生成质量诊断、候选迭代、人工 review 与回归报告；
+- `2026-07-29/`：单次／两段架构比较、问题修复和跨角度 smoke；
+- `2026-07-30/`、`2026-08-01/`：后续候选与兼容诊断；
+- `2026-08-02/`：历史 MVP Preview 候选、四角度 smoke、恢复和事件日志验证。
 
-## 实现血缘
+这些目录保存候选形成过程与失败证据。当前产品事实继续以总 Map、板块 5 冻结输入和板块 6 当前专项为准。
 
-- [GI-084 基础 Prompt 与 Interview Skill](./2026-08-07-board7b-prompt-skill-v0/README.md)
-- [GI-085 semantic-frame-first](./2026-08-07-board7b-semantic-frame-v1/README.md)
-- [GI-086 Thinking 能力校准说明](./2026-08-07-board7b-thinking-capability-v1/README.md)
-- GI-087 的公开包只保留 Prompt、Skill、输出合同、manifest 和来源规则；真实历史摘录、真人结果与逐字输入留在本机受控目录。
-
-历史候选继续承担回归和归因职责。当前产品事实以总 Map 与 v7r2 入口为准。
+检索词：`architecture-ab`、`semantic-frame`、`mvp-quality-repair`、`baseline-recovery`、`historical Board 7`。

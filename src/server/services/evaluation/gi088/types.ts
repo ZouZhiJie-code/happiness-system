@@ -8,6 +8,8 @@ import type {
   AIProviderDiagnostics
 } from "@/server/services/ai/ai-provider";
 import type { Gi088SemanticDeltaOutput } from "@/server/services/evaluation/gi088/semantic-delta";
+import type { Gi088StateMaintenance } from "@/server/services/evaluation/gi088/deterministic-state";
+import type { Gi088EvaluationMetrics as Gi088CalculatedEvaluationMetrics } from "@/server/services/evaluation/gi088/metrics";
 
 export type Gi088BranchKey = "off" | "high";
 export type Gi088EvaluationMode = "paired" | "high_only";
@@ -17,13 +19,44 @@ export type Gi088TrajectoryStatus =
   | "running"
   | "technical_failure"
   | "protected_failure"
+  | "aborted"
   | "completed";
 export type Gi088TaskStatus =
   | "ready"
   | "locked"
   | "active"
   | "completed"
+  | "aborted"
   | "not_run";
+
+export type Gi088GateStatus =
+  | "pending"
+  | "no_go"
+  | "ready_for_final_review"
+  | "legacy_unknown";
+
+export type Gi088GateReasonCode =
+  | "single_case_blocker"
+  | "quality_failure"
+  | "protected_failure"
+  | "final_technical_failure"
+  | "multiple_independent_tasks"
+  | "target_not_triggered"
+  | "duplicate_message"
+  | "manual_third_generation"
+  | "aborted_with_partial_evidence"
+  | "program_intervention_false_positive"
+  | "program_intervention_uncertain"
+  | "question_review_uncertain"
+  | "question_review_incomplete";
+
+export type Gi088GateReason = {
+  code: Gi088GateReasonCode;
+  sourceType: "technical_fact" | "current_human_conclusion";
+  sourceId: string;
+  detail: string;
+  createdAt: string;
+};
 
 export type Gi088TargetTrigger =
   | "triggered"
@@ -63,7 +96,8 @@ export type Gi088RecoveryTrigger =
   | "EMPTY_CONTENT"
   | "TIMEOUT"
   | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-  | "ASK_QUESTION_COUNT_INVALID:2";
+  | "ASK_QUESTION_COUNT_INVALID:2"
+  | "UNAUTHORIZED_PAUSE";
 
 export type Gi088TurnRecovery = {
   status: Gi088RecoveryStatus;
@@ -74,6 +108,7 @@ export type Gi088TurnRecovery = {
   manualRetryCount: number;
   manualRetryCallId: string | null;
   eligibleAt: string;
+  automaticDeadlineAt?: string | null;
   startedAt: string | null;
   completedAt: string | null;
 };
@@ -85,18 +120,21 @@ export type Gi088QuestionReviewClassification =
   | "uncertain";
 
 export type Gi088QuestionReview = {
-  classification: Gi088QuestionReviewClassification;
+  questionPresence?: "present" | "absent" | "uncertain";
+  classification?: Gi088QuestionReviewClassification;
   note: string;
   reviewedAt: string;
 };
 
 export type Gi088QuestionObservation = {
+  questionPresence?: "present" | "absent" | "uncertain";
   questionMarkCount: number;
   reviewCandidate:
     | "none"
     | "zero_question_mark"
     | "multiple_question_marks";
   review: Gi088QuestionReview | null;
+  observationFingerprint?: string;
 };
 
 export type Gi088CallEffectiveConfig = {
@@ -117,6 +155,7 @@ export type Gi088CallEffectiveConfig = {
   visiblePrefix?: "{" | null;
   requestHashScope?: "full" | "redacted_hidden_reasoning";
   sharedDeadlineMs?: number | null;
+  remainingSharedDeadlineMs?: number | null;
   recoveryPolicyVersion?: string | null;
 };
 
@@ -138,6 +177,18 @@ export type Gi088Call = {
   retryTrigger: Gi088RecoveryTrigger | null;
   retryOrdinal: number | null;
   effectiveConfig: Gi088CallEffectiveConfig;
+  ledgerStatus?:
+    | "reserved"
+    | "dispatched"
+    | "provider_succeeded"
+    | "provider_failed"
+    | "finalized"
+    | "interrupted_unknown_dispatch"
+    | "finalization_failed"
+    | "superseded";
+  executionDeadlineAt?: string | null;
+  automaticDeadlineAt?: string | null;
+  finalizationError?: string | null;
 };
 
 export type Gi088Turn = {
@@ -164,6 +215,15 @@ export type Gi088Turn = {
   calls: Gi088Call[];
   recovery: Gi088TurnRecovery | null;
   questionObservation?: Gi088QuestionObservation | null;
+  stateMaintenance?: Gi088StateMaintenance | null;
+  activeCallId?: string | null;
+  baseAssistantMessageId?: string | null;
+  failedOutputDiagnostic?: {
+    errorCode: string;
+    responseHash: string | null;
+    validationIssues: string[];
+  } | null;
+  controlDecision?: unknown;
 };
 
 export type Gi088TrajectoryReview = {
@@ -190,6 +250,8 @@ export type Gi088Trajectory = {
   review: Gi088TrajectoryReview | null;
   startedAt: string | null;
   completedAt: string | null;
+  abortedAt?: string | null;
+  abortReason?: string | null;
 };
 
 export type Gi088Comparison = {
@@ -204,6 +266,11 @@ export type Gi088TaskState = {
   activeBranch: Gi088BranchKey;
   branches: Record<Gi088BranchKey, Gi088Trajectory>;
   comparison: Gi088Comparison | null;
+  aborted?: {
+    reason: string;
+    abortedAt: string;
+    turnId: string | null;
+  } | null;
 };
 
 export type Gi088BatchState = {
@@ -230,7 +297,46 @@ export type Gi088StoredBatch = {
   createdAt: Date;
   updatedAt: Date;
   sealedAt: Date | null;
+  runOrdinal?: number;
+  gateStatus?: Gi088GateStatus;
+  gateReasons?: Gi088GateReason[];
 };
+
+export type Gi088ProgramInterventionReviewOutcome =
+  | "correct"
+  | "false_positive"
+  | "uncertain";
+
+export type Gi088ProgramIntervention = {
+  id: string;
+  taskId: string;
+  branch: Gi088BranchKey;
+  turnId: string | null;
+  callId: string | null;
+  interventionType: string;
+  originalAction: string | null;
+  effectiveAction: string;
+  evidenceSpan: string | null;
+  observationFingerprint: string;
+  reviewOutcome: Gi088ProgramInterventionReviewOutcome | null;
+  reviewReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+export type Gi088ReviewRevision = {
+  id: string;
+  subjectType: string;
+  subjectId: string;
+  oldValue: unknown;
+  newValue: unknown;
+  reason: string;
+  actorUserId?: never;
+  clientOperationId: string;
+  createdAt: string;
+};
+
+export type Gi088EvaluationMetrics = Gi088CalculatedEvaluationMetrics;
 
 export type Gi088PublicSession = {
   evaluation: {
@@ -241,6 +347,20 @@ export type Gi088PublicSession = {
     candidateFingerprint: string;
     executionFingerprint: string;
     model: string;
+    serviceVersion?: string;
+    behaviorManifestVersion?: string;
+    behaviorManifestSha256?: string;
+    datasetFingerprint?: string;
+    runnerFingerprint?: string;
+    experienceFingerprint?: string;
+    config?: {
+      thinking: "enabled";
+      reasoningEffort: "high";
+      responseFormat: "json_object";
+      maxTokensPolicy: "provider_default";
+      timeoutMs: number;
+      routeMaxDurationSeconds: number;
+    };
   };
   batch: {
     id: string;
@@ -254,6 +374,15 @@ export type Gi088PublicSession = {
       reviewedTrajectoryCount: number;
       totalTrajectoryCount: number;
     };
+    runId?: string;
+    runOrdinal?: number;
+    gate?: {
+      status: Gi088GateStatus;
+      reasons: Gi088GateReason[];
+      frozen: boolean;
+    };
+    readOnly?: boolean;
+    readOnlyReason?: string | null;
   };
   tasks: Array<{
     id: string;
@@ -291,9 +420,27 @@ export type Gi088PublicSession = {
           providerCallsRemaining: number | null;
           maximumProviderCallsPerTrajectory: number | null;
         };
+        dialogueAnchor?: {
+          lastAssistantMessageId: string | null;
+          lastCommittedTurnId: string | null;
+        };
+        reviewSnapshotFingerprint?: string;
       }
     >;
     comparison: Gi088Comparison | null;
     readOnly: boolean;
+    reviewSnapshot?: {
+      fingerprint: string;
+      trajectoryReview: Gi088TrajectoryReview | null;
+      questionReviews: Array<{
+        turnId: string;
+        observationFingerprint: string;
+        review: Gi088QuestionReview | null;
+      }>;
+      programInterventions: Gi088ProgramIntervention[];
+    };
   };
+  metrics?: Gi088EvaluationMetrics;
+  programInterventions?: Gi088ProgramIntervention[];
+  reviewRevisions?: Gi088ReviewRevision[];
 };

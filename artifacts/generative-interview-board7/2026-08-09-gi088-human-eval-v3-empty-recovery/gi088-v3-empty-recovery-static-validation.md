@@ -43,8 +43,8 @@
 
 ## 4. 私有 Preview 零调用验收
 
-- deployment：`redacted-deployment-id`；
-- 评测入口：`https://xingfuxitong-fpxzwohws-example-team.vercel.app/preview/gi088-evaluation`；
+- deployment：`dpl_6ByMq3r9E8LvyTwZh3R87usLpro3`；
+- 评测入口：`https://xingfuxitong-fpxzwohws-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
 - Preview 页面：`200`；
 - 未登录 Preview session API：`401`；
 - Production 页面与 session API：`404 / 404`；

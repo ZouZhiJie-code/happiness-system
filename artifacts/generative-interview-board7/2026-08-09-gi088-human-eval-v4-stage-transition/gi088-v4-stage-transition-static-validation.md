@@ -47,11 +47,11 @@
 
 - v4 实际只完成 A1 的 off/high 两条轨迹；A2 未开始；
 - 最坏模型调用预算为 `40`，实际消费 `10`；
-- 新 Preview deployment：`redacted-deployment-id`，状态为 `Ready`；
-- 私有入口：`https://xingfuxitong-ncy2wcta8-example-team.vercel.app/preview/gi088-evaluation`；
+- 新 Preview deployment：`dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV`，状态为 `Ready`；
+- 私有入口：`https://xingfuxitong-ncy2wcta8-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
 - 新评测批次：v4 独立批次已于 `2026-08-09T16:30:13.282Z` 以 `1/12 early_stopped` 进入只读终态；
 - 登录回读：页面显示 `BATCH EARLY STOPPED`、A1 已完成、A2～A6-R 共 11 项未执行；
-- 浏览器标签文字修正版 deployment `redacted-deployment-id` 已 Ready，并绑定固定别名 `https://xingfuxitong-gi088-v4-stage-transition.vercel.app`；当前已登录评测继续使用首次 deployment；
+- 浏览器标签文字修正版 deployment `dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV` 已 Ready，并绑定固定别名 `https://xingfuxitong-gi088-v4-stage-transition.vercel.app`；当前已登录评测继续使用首次 deployment；
 - 模型调用：`10`；
 - Production 变化：`0`，继续保持 `legacy + baseline`。
 

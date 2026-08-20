@@ -1,0 +1,292 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T02",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "deep_companionship",
+    "activeAngle": "feeling",
+    "lastCompletedAngle": "feeling",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [
+          "specific_sound_or_moment"
+        ],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": {
+      "opportunityNumber": 1,
+      "angle": "feeling",
+      "target": "specific_sound_or_moment",
+      "surfaceLevel": "open_anchor",
+      "repairCount": 0,
+      "assistantMessageId": null,
+      "cognitiveAction": "anchor_specific"
+    },
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.20.0",
+    "currentMicrogoal": {
+      "id": "microgoal:feeling:specific_sound_or_moment",
+      "angle": "feeling",
+      "statement": "找到昨晚一个具体声音或时刻，以及它带来的身体反应",
+      "questionCount": 1,
+      "status": "active",
+      "evidenceRefs": [
+        "T02-fact-1",
+        "T02-fact-2"
+      ]
+    }
+  },
+  "facts": [
+    {
+      "id": "T02-fact-1",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "终于一个人住了，我很兴奋",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-1",
+          "factId": "T02-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "终于一个人住了，我很兴奋",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-2",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "昨晚每个声音都让我立刻醒过来",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-2",
+          "factId": "T02-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "昨晚每个声音都让我立刻醒过来",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "终于一个人住了，我很兴奋，但昨晚每个声音都让我立刻醒过来。",
+      "assistantUnderstanding": "你既兴奋能一个人住，又发现昨晚每个声音都会让你立刻醒过来。",
+      "assistantQuestion": "昨晚哪个声音或时刻让你醒得最明显？"
+    }
+  ],
+  "currentQuestion": "昨晚哪个声音或时刻让你醒得最明显？",
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "终于一个人住了，我很兴奋，但昨晚每个声音都让我立刻醒过来。",
+      "visibleResponse": "你既兴奋能一个人住，又发现昨晚每个声音都会让你立刻醒过来。\n昨晚哪个声音或时刻让你醒得最明显？",
+      "finalAction": "ask",
+      "selectedTarget": "specific_sound_or_moment",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T02-fact-1",
+        "T02-fact-2"
+      ],
+      "factDeltas": [
+        {
+          "id": "T02-fact-1",
+          "statement": "终于一个人住了，我很兴奋",
+          "quote": "终于一个人住了，我很兴奋"
+        },
+        {
+          "id": "T02-fact-2",
+          "statement": "昨晚每个声音都让我立刻醒过来",
+          "quote": "昨晚每个声音都让我立刻醒过来"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:feeling:specific_sound_or_moment",
+        "angle": "feeling",
+        "statement": "找到昨晚一个具体声音或时刻，以及它带来的身体反应",
+        "questionCount": 1,
+        "status": "active",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 568,
+          "tokenUsage": {
+            "promptTokens": 2832,
+            "completionTokens": 376,
+            "totalTokens": 3208,
+            "promptCacheHitTokens": 2176,
+            "promptCacheMissTokens": 656
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"终于一个人住了，我很兴奋\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"终于一个人住了，我很兴奋\"\n      },\n      {\n        \"statement\": \"昨晚每个声音都让我立刻醒过来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"昨晚每个声音都让我立刻醒过来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"specific_sound_or_moment\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"start\",\n      \"statement\": \"找到昨晚一个具体声音或时刻，以及它带来的身体反应\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"获得一个具体触发（声音或时刻）和对应的身体反应，为连接感受做准备\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你既兴奋能一个人住，又发现昨晚每个声音都会让你立刻醒过来\",\n    \"question\": \"昨晚哪个声音或时刻让你醒得最明显？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3694,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2832,
+          "completionTokens": 376,
+          "totalTokens": 3208,
+          "promptCacheHitTokens": 2176,
+          "promptCacheMissTokens": 656
+        },
+        "estimatedCost": 0.0002032128
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 2,
+      "rawText": "最明显的是电梯门突然响，我心跳一下就快了。",
+      "visibleResponse": null,
+      "finalAction": null,
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [],
+      "microgoal": {
+        "id": "microgoal:feeling:specific_sound_or_moment",
+        "angle": "feeling",
+        "statement": "找到昨晚一个具体声音或时刻，以及它带来的身体反应",
+        "questionCount": 1,
+        "status": "active",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 433,
+          "tokenUsage": {
+            "promptTokens": 3013,
+            "completionTokens": 291,
+            "totalTokens": 3304,
+            "promptCacheHitTokens": 2176,
+            "promptCacheMissTokens": 837
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"电梯门突然响让我心跳一下就快了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最明显的是电梯门突然响，我心跳一下就快了。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"elevator_door_heart_racing\",\n    \"evidenceRefs\": [\"T02-fact-2\", \"new:1\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"确认电梯门响与心跳加快之间的直接联系，完成具体触发与身体状态的连接\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"电梯门突然响让你心跳一下就快了，那个声音和身体的反应连得很紧。\",\n    \"question\": \"那一刻除了心跳加快，身体还有哪里跟着动了吗？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 402,
+          "tokenUsage": {
+            "promptTokens": 3054,
+            "completionTokens": 321,
+            "totalTokens": 3375,
+            "promptCacheHitTokens": 2048,
+            "promptCacheMissTokens": 1006
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"电梯门突然响让我心跳一下就快了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"电梯门突然响，我心跳一下就快了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"trace_change\",\n    \"selectedTarget\": \"heartbeat_change_moment\",\n    \"evidenceRefs\": [\"T02-fact-2\", \"new:1\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"找到电梯门响后心跳变化的具体转折时刻\",\n      \"supportEvidenceRefs\": [\"T02-fact-2\", \"new:1\"]\n    },\n    \"expectedValue\": \"确认心跳加快之后何时开始平复或持续\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"电梯门突然响让你心跳一下就快了，之后你注意到它什么时候慢慢平复下来的吗？\",\n    \"question\": \"之后大概过了多久，你感觉心跳开始慢慢平复？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7031,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 6067,
+          "completionTokens": 612,
+          "totalTokens": 6679,
+          "promptCacheHitTokens": 4224,
+          "promptCacheMissTokens": 1843
+        },
+        "estimatedCost": 0.00044120720000000006
+      },
+      "validationIssues": [
+        "understanding_contains_question"
+      ],
+      "runtimeError": "MODEL_OUTPUT_UNAVAILABLE"
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "runtime_incomplete",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "receiptVersion": "2026-08-13.gi088-stage-b2-validation-v1",
+  "status": "public_and_judge_private_pass_hidden_private_pending",
+  "decisionSupported": "Judge 20 v2、私有盲测隔离、7 张脱敏载荷和隐藏 blueprint-v2 的建设是否符合 B2 合同。",
+  "decisionNotSupported": [
+    "是否已经具备申请阶段 C Judge 校准授权的全部条件",
+    "Judge 是否合格",
+    "当前候选是否达到独立准入门",
+    "是否进入真人 Preview 或发布"
+  ],
+  "checksPassed": {
+    "judgeActiveCards": 20,
+    "judgeRetiredCards": 2,
+    "judgeLabelDistribution": {"direct_use":5,"minor_issue":5,"quality_failure":5,"single_case_blocker":5},
+    "privateJudgePayloadsRedacted": 7,
+    "blindPackageItems": 20,
+    "blindForbiddenKeyLeaks": 0,
+    "blindOriginalIdLeaks": 0,
+    "criticalBlockerCoverage": ["stop", "correction", "fabrication", "event_boundary", "false_stop"],
+    "hiddenBlueprintCases": 12,
+    "hiddenBlueprintStructure": {"standardized":8,"completeTrajectory":4},
+    "standardizedModeDistribution": {"capture":2,"chat":6},
+    "completeTrajectoryModeDistribution": {"capture":2,"chat":2},
+    "plannedResultModeDistribution": {"capture":8,"chat":20},
+    "privateFilesTrackedByGit": 0
+  },
+  "privateReadiness": {
+    "realTopicSlots": 2,
+    "realTopicsAuthorized": 0,
+    "hiddenBodiesReady": 0,
+    "requiredHiddenBodies": 12,
+    "exactDuplicateCount": null,
+    "unresolvedSemanticLeakageCount": null,
+    "hiddenDatasetSha256": null
+  },
+  "remainingConditions": [
+    "产品负责人在本机私有填写表补充两条低敏真实话题并完成四项逐题授权",
+    "全新独立任务建设并冻结 12 条隐藏正文",
+    "正文完成后对开发 28、硬边界 24 和 Judge 20 做精确与近义泄漏检查",
+    "生成私有隐藏数据集指纹并更新无正文公开回执"
+  ],
+  "fingerprints": {
+    "judgeCalibration20V2": "5b4dd8d8b1afd3ea0ec73e37889ea87b0ccf39fe51eb7cd68f9f4074ec2f8dea",
+    "independentAdmissionBlueprintV2": "34420e57d6ac4df61bbacc33e529dd5e63757a44e41a197cee342990579b5826",
+    "judgeBlindPackage": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "judgeGoldMapping": "82903b1ed3e83e4f629a776bc54fb788abc08fa4dbe76c89bb42fe96fb865452",
+    "realTopicIntake": "902701141ad3cffb6e626476d17d4cba4e45627bc69c12a147211726b5f4bcea",
+    "stageB2Validator": "2d3942cbd2c37c215ae1278c7555e41fbcf25809b9fda697e21d350869026a7d"
+  },
+  "executionBoundary": {
+    "businessModelCalls": 0,
+    "judgeModelCalls": 0,
+    "humanEvaluationSubmissions": 0,
+    "previewChanges": 0,
+    "productionChanges": 0,
+    "productionState": "legacy_plus_baseline"
+  }
+}

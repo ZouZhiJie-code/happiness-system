@@ -65,12 +65,10 @@ vi.mock("@/components/interview/interview-shell", () => ({
   InterviewShell: mockInterviewShell
 }));
 
-import AnalysisPage from "@/app/analysis/page";
 import AdminAnalyticsPage from "@/app/admin/analytics/page";
 import CalendarPage from "@/app/calendar/page";
 import InterviewPage from "@/app/interview/page";
 import LoginPage from "@/app/login/page";
-import ProfilePage from "@/app/profile/page";
 import RegisterPage from "@/app/register/page";
 import SettingsPage from "@/app/settings/page";
 import AccountSettingsPage from "@/app/settings/account/page";
@@ -167,9 +165,7 @@ describe("auth page guards", () => {
     mockGetCurrentUserFromSessionToken.mockResolvedValue(null);
 
     await InterviewPage({});
-    await CalendarPage();
-    await AnalysisPage();
-    await ProfilePage();
+    await CalendarPage({});
     await SettingsPage();
     await AccountSettingsPage();
     await AdminAnalyticsPage({
@@ -178,11 +174,22 @@ describe("auth page guards", () => {
 
     expect(mockRedirect).toHaveBeenNthCalledWith(1, "/login?next=%2Finterview");
     expect(mockRedirect).toHaveBeenNthCalledWith(2, "/login?next=%2Fcalendar");
-    expect(mockRedirect).toHaveBeenNthCalledWith(3, "/login?next=%2Fanalysis");
-    expect(mockRedirect).toHaveBeenNthCalledWith(4, "/login?next=%2Fprofile");
-    expect(mockRedirect).toHaveBeenNthCalledWith(5, "/login?next=%2Fsettings");
-    expect(mockRedirect).toHaveBeenNthCalledWith(6, "/login?next=%2Fsettings%2Faccount");
-    expect(mockRedirect).toHaveBeenNthCalledWith(7, "/login?next=%2Fadmin%2Fanalytics");
+    expect(mockRedirect).toHaveBeenNthCalledWith(3, "/login?next=%2Fsettings");
+    expect(mockRedirect).toHaveBeenNthCalledWith(4, "/login?next=%2Fsettings%2Faccount");
+    expect(mockRedirect).toHaveBeenNthCalledWith(5, "/login?next=%2Fadmin%2Fanalytics");
+  });
+
+  it("preserves the selected journal view and date through login", async () => {
+    mockCookies.mockResolvedValue(mockCookieStore());
+    mockGetCurrentUserFromSessionToken.mockResolvedValue(null);
+
+    await CalendarPage({
+      searchParams: Promise.resolve({ view: "week", date: "2026-08-13" })
+    });
+
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/login?next=%2Fcalendar%3Fview%3Dweek%26date%3D2026-08-13"
+    );
   });
 
   it("allows authenticated visitors into private pages", async () => {
@@ -192,19 +199,17 @@ describe("auth page guards", () => {
       username: "daily_light_01"
     });
 
-    const page = await InterviewPage({
-      searchParams: Promise.resolve({ dimension: "joy" })
-    });
+    const page = await InterviewPage({});
 
     expect(mockGetCurrentUserFromSessionToken).toHaveBeenCalledWith("session-token");
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(page).toBeTruthy();
-    expect(findPropInReactTree(page, "showAIRuntimeSummary")).toBe(false);
+    expect(findPropInReactTree(page, "initialSessionId")).toBeNull();
     expect(mockRecordAnalyticsEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventName: "private_page_viewed",
         userId: "user-1",
-        dedupeKey: "private_page_viewed:user-1:/interview?dimension=joy"
+        dedupeKey: "private_page_viewed:user-1:/interview"
       })
     );
   });
@@ -256,7 +261,7 @@ describe("auth page guards", () => {
     expect(page).toBeTruthy();
   });
 
-  it("enables the interview AI runtime summary for authenticated admins", async () => {
+  it("opens the same event-centered interview workspace for authenticated admins", async () => {
     vi.stubEnv("ADMIN_USERNAMES", "admin_user");
     mockCookies.mockResolvedValue(mockCookieStore("session-token"));
     mockGetCurrentUserFromSessionToken.mockResolvedValue({
@@ -264,12 +269,11 @@ describe("auth page guards", () => {
       username: "admin_user"
     });
 
-    const page = await InterviewPage({
-      searchParams: Promise.resolve({ dimension: "joy" })
-    });
+    const page = await InterviewPage({});
 
     expect(page).toBeTruthy();
-    expect(findPropInReactTree(page, "showAIRuntimeSummary")).toBe(true);
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(findPropInReactTree(page, "initialSessionId")).toBeNull();
   });
 
   it("redirects authenticated visitors away from login and register using next when provided", async () => {

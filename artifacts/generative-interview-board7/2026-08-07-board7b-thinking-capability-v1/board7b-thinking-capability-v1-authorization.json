@@ -1,0 +1,23 @@
+{
+  "template": false,
+  "authorizationVersion": "2026-08-07.board7b-thinking-capability-authorization-v1",
+  "decision": "approved",
+  "candidateVersion": "2026-08-07.board7b-thinking-capability-v1",
+  "runnerVersion": "2026-08-07.board7b-thinking-capability-runner-v1",
+  "candidateFingerprint": "fe2b306cb8172523b0b64f72bf1d41107d798d9f25e8eda0710f9260c96deb4d",
+  "sourceCandidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "datasetFingerprint": "29b1e9e16100047af446981d955b990535b7b1749d0705725ed4409ba98bbb99",
+  "requestSetFingerprint": "f2d84e97b7171e7d1b742769663337fa679c24542e1fa365c44bd627d72fa81e",
+  "evaluationPolicyFingerprint": "4d1194750b89cfee1f8b297ebd0ac58a7d158dac10aa4a1b64ee60adc20aba06",
+  "executionFingerprint": "f958b16c629a29fee3137e5cc82a37e47aafba6f7781198f7ccbfbdbe05dafc4",
+  "authorizationId": "434c21d5-4e11-4a0a-a3ec-2ee9fe2ae91c",
+  "authorizationScope": "eight_call_thinking_capability_probe",
+  "plannedModelCallBudget": 8,
+  "authorizedModelCallBudget": 8,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": "product_owner_conversation",
+  "approvedAt": "2026-08-08T01:48:21.000Z",
+  "productionChangeAuthorized": false,
+  "confirmationText": "我已核对 GI-086 候选、数据、八次请求、评测口径与执行指纹；授权该指纹执行 8 次 DeepSeek 隔离调用。",
+  "authorizationDigest": "0a93bbca0e397e9d8a943ef5f35573e8ab26448908a3ad5eb292d92f02df5d6d"
+}

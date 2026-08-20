@@ -1,0 +1,716 @@
+{
+  "reportVersion": "board8.candidate-aware.v2",
+  "generatedAt": "2026-08-03T05:03:08.952Z",
+  "window": {
+    "productionEnabledAt": "2026-08-03T00:00:00.000Z",
+    "observedUntil": "2026-08-04T00:00:00.000Z"
+  },
+  "selection": {
+    "rule": "first_content_after_window_then_root_session_dedupe",
+    "mode": "preview",
+    "candidateStartedAt": "2026-08-03T00:00:00.000Z",
+    "candidateStrategyVersion": "5.51.0",
+    "rootSessionFilterApplied": true,
+    "requested": 8,
+    "selected": 8,
+    "complete": true
+  },
+  "funnel": {
+    "event_centered_entry_exposed": 19,
+    "event_centered_entry_opened": 18,
+    "event_centered_first_content_submitted": 8,
+    "event_centered_response_completed": 32,
+    "event_centered_checkpoint_reached": 20,
+    "event_journal_generation_started": 8,
+    "event_journal_generated": 8,
+    "event_journal_saved": 8,
+    "event_centered_turn_fallback": 8,
+    "event_centered_session_abandoned": 0
+  },
+  "latency": {
+    "sampleCount": 32,
+    "medianMs": 3003,
+    "p90Ms": 8517,
+    "releaseBand": "pass"
+  },
+  "fallback": {
+    "total": 8,
+    "attemptedGenerativeTurnCount": 20,
+    "deterministicControlCount": 12,
+    "runtimeFallbackCount": 8,
+    "errorCodeDistribution": {
+      "ask_requires_single_question": 1,
+      "INVALID_SCHEMA": 6,
+      "thinking_summary_must_acknowledge_correction": 1
+    },
+    "maxConsecutive": 3,
+    "recent20EligibleTurns": 20,
+    "recent20FallbackCount": 8,
+    "recent20FallbackRate": 0.4
+  },
+  "journal": {
+    "generatedSessions": 8,
+    "savedSessions": 8,
+    "savedWithin24Hours": 8,
+    "savedWithin24HoursRate": 1,
+    "consecutiveUnrecoveredFailures": 0,
+    "aiAcceptedSessions": 7,
+    "titleRepairedSessions": 1,
+    "fullTextFallbackSessions": 1
+  },
+  "rollbackSignals": {
+    "firstTenFallbackThresholdReached": true,
+    "recent20FallbackRateThresholdReached": true,
+    "journalFailureThresholdReached": false
+  },
+  "sessions": [
+    {
+      "sequence": 1,
+      "rootSessionId": "b1eed7e6-c824-4060-bb67-d2681ecfe9b7",
+      "firstContentSubmittedAt": "2026-08-03T04:12:50.065Z",
+      "entryDate": "2026-07-19",
+      "source": "baseline",
+      "angle": "feeling",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 2,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 2,
+      "attemptedGenerativeTurnCount": 2,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 2,
+      "generativeErrorCodes": [
+        "ask_requires_single_question",
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 6012,
+        "p90Ms": 11645,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "7b28e295-fdf2-4dbb-8b95-646a58459fa4",
+        "entryId": "ea8c2ca8-9d9b-4fe0-8faf-203e31152bae",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:13:11.185Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:13:01.664Z",
+          "stage": "interview_turn",
+          "errorCode": "ask_requires_single_question",
+          "traceId": "4a0cd392-6a62-4108-9170-3993776d7ff7"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:13:01.680Z",
+          "stage": "visible",
+          "errorCode": "ask_requires_single_question",
+          "traceId": null
+        },
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:13:07.790Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "37fe77cf-ae21-4fc2-ae5e-d9ee9b06b867"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:13:07.802Z",
+          "stage": "semantic",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "4a0cd392-6a62-4108-9170-3993776d7ff7",
+        "b239c6ea-030e-4585-b4af-a34aeb41c2ef",
+        "37fe77cf-ae21-4fc2-ae5e-d9ee9b06b867",
+        "aca7af23-d7eb-4fb4-92b6-6a879ad12ad3"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 2,
+      "rootSessionId": "c5dd5fad-6294-448c-b2ed-9b76af72bb65",
+      "firstContentSubmittedAt": "2026-08-03T04:13:11.554Z",
+      "entryDate": "2026-07-20",
+      "source": "mixed",
+      "angle": "feeling",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "deterministicControlCount": 2,
+      "runtimeFallbackCount": 1,
+      "generativeErrorCodes": [
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 3003,
+        "p90Ms": 11386,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "fdc934aa-393b-4d92-a20b-e5b76677357c",
+        "entryId": "02b90a71-5df8-4035-9e2b-c4418a941eb3",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:13:36.637Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:13:20.018Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "a9e4dda0-5508-4bbd-9f21-6599d4d85852"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:13:20.036Z",
+          "stage": "semantic",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "a9e4dda0-5508-4bbd-9f21-6599d4d85852",
+        "fd8c0cc1-c2be-478a-9c81-e29c04d6262e",
+        "5160951d-1fd1-491a-ab32-1606dfd552c9",
+        "9d4e51b7-75c9-4375-93ac-05acdd10fa2d",
+        "528c5521-ff7d-4e1e-825a-7a9b87ff3da6",
+        "e6fee9b7-fc9e-46a3-ad00-3eab1bd86652"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 3,
+      "rootSessionId": "bfa023a9-925e-4bee-b9f8-9711cfd47d0f",
+      "firstContentSubmittedAt": "2026-08-03T04:53:46.553Z",
+      "entryDate": "2026-07-27",
+      "source": "baseline",
+      "angle": "thought",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 2,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 2,
+      "attemptedGenerativeTurnCount": 2,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 2,
+      "generativeErrorCodes": [
+        "INVALID_SCHEMA",
+        "thinking_summary_must_acknowledge_correction"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 5417,
+        "p90Ms": 8586,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "7c858671-7cee-417b-bbac-6e0a2c117c57",
+        "entryId": "27dfad78-2ae9-441f-9145-af73396f68b8",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:54:04.187Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:53:55.071Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "0c43ce79-1a14-474a-971e-c426c9650db4"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:53:55.094Z",
+          "stage": "visible",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        },
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:54:00.624Z",
+          "stage": "interview_turn",
+          "errorCode": "thinking_summary_must_acknowledge_correction",
+          "traceId": "15e24fd2-04cd-41d7-9fc3-91bb4ae68741"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:54:00.635Z",
+          "stage": "visible",
+          "errorCode": "thinking_summary_must_acknowledge_correction",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "0c43ce79-1a14-474a-971e-c426c9650db4",
+        "5e9954c2-d689-4407-a9c1-0f6ce85f417a",
+        "e2c264b0-940f-4244-b959-97f3bf961b05",
+        "15e24fd2-04cd-41d7-9fc3-91bb4ae68741",
+        "82c554b3-9bef-48a7-872c-6dace3028558"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 4,
+      "rootSessionId": "7c3a0197-30eb-491d-be85-88d3788fd8e9",
+      "firstContentSubmittedAt": "2026-08-03T04:54:05.099Z",
+      "entryDate": "2026-07-28",
+      "source": "generative",
+      "angle": "thought",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 0,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 0,
+      "attemptedGenerativeTurnCount": 3,
+      "deterministicControlCount": 2,
+      "runtimeFallbackCount": 0,
+      "generativeErrorCodes": [],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 2553,
+        "p90Ms": 4347,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "68912fdd-51ab-4273-a217-5ccc1983b46e",
+        "entryId": "aea239bb-82ef-4f2d-9937-c6b75942b0ca",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:54:17.964Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [],
+      "traceIds": [
+        "2c0cfa92-f53c-4c32-9a2a-4ccdd2b66419",
+        "5233b258-028b-43f3-b2f2-a6e3ec149b08",
+        "203b8568-6bb5-4da0-9493-f1596ca7e666",
+        "64ae5ed1-562e-4d9e-bcc3-0a6eca5adaf9",
+        "7cdf14c1-8c17-4d8b-a631-fa92a9784585",
+        "41a7fc43-e2fa-4b2a-aac6-13040898bb84"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 5,
+      "rootSessionId": "c30d0993-109e-46c5-ad7f-b720bdbc6871",
+      "firstContentSubmittedAt": "2026-08-03T04:54:18.204Z",
+      "entryDate": "2026-07-29",
+      "source": "mixed",
+      "angle": "relationship",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "attemptedGenerativeTurnCount": 2,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "generativeErrorCodes": [
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 3328,
+        "p90Ms": 8456,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "325e7031-7adc-4364-bdae-276528314003",
+        "entryId": "9c5f5c9f-9fee-4f5d-a15e-ba12e7897ac5",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:54:32.354Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:54:26.617Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "c6fddee1-891f-447e-922d-f3df63f9d0f8"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:54:26.631Z",
+          "stage": "visible",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "c6fddee1-891f-447e-922d-f3df63f9d0f8",
+        "5381f5ce-94d7-4260-9515-1c7abc2cd11e",
+        "3deee128-5cf4-4e47-be2e-89452ff37fa7",
+        "d466e0bf-5630-4c91-b3a9-4f75e0e87ccb"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 6,
+      "rootSessionId": "b43a074a-074e-454f-89dd-53e73a32d604",
+      "firstContentSubmittedAt": "2026-08-03T04:54:32.598Z",
+      "entryDate": "2026-07-30",
+      "source": "generative",
+      "angle": "relationship",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 0,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 0,
+      "attemptedGenerativeTurnCount": 3,
+      "deterministicControlCount": 2,
+      "runtimeFallbackCount": 0,
+      "generativeErrorCodes": [],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 3017,
+        "p90Ms": 5435,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "86067773-d234-4fab-af1e-b6b9affbd460",
+        "entryId": "a46b7446-f592-4fc2-aaa8-4a679093bbbd",
+        "generationOrigin": "fallback",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:54:51.839Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": false,
+        "titleRepaired": false,
+        "fullTextFallback": true
+      },
+      "failures": [],
+      "traceIds": [
+        "48bdd6e8-163f-4146-a66f-648c9603ddbe",
+        "8999a2ab-d41c-4487-a966-94221bb1c89e",
+        "b207b1e1-cf78-4777-b94e-4ec8adb53b07",
+        "b5410d97-8e70-43f7-9c19-681753a6a7ad",
+        "5309c15f-6b8b-477b-8b81-955d2e0c4926",
+        "c5a74b94-7be4-430b-8a06-29f190a8e4f7"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 7,
+      "rootSessionId": "5e07086f-94c5-41d9-94e5-2b6a7399fa66",
+      "firstContentSubmittedAt": "2026-08-03T04:54:52.086Z",
+      "entryDate": "2026-07-31",
+      "source": "mixed",
+      "angle": "action",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "attemptedGenerativeTurnCount": 2,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "generativeErrorCodes": [
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 2970,
+        "p90Ms": 6611,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "d1b53b72-ed52-43d2-a8d2-4a08b50deead",
+        "entryId": "dac18cc7-1bb0-4b19-8ba6-caf898f12e69",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:55:03.913Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": true,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:54:58.648Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "3f5dfc6a-250b-4c51-a87e-3545397acc62"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:54:58.666Z",
+          "stage": "semantic",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "3f5dfc6a-250b-4c51-a87e-3545397acc62",
+        "e741a964-0369-4a93-abdd-25132ef93cf9",
+        "be4eaf6f-193a-4db7-a7a5-dfb0116b6512",
+        "9bc3da35-530c-49ca-8570-85f7fa84978d"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 8,
+      "rootSessionId": "4b4d72c8-ad35-4fcb-9212-fdec4cffaeb1",
+      "firstContentSubmittedAt": "2026-08-03T04:57:04.695Z",
+      "entryDate": "2026-08-01",
+      "source": "mixed",
+      "angle": "action",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "deterministicControlCount": 2,
+      "runtimeFallbackCount": 1,
+      "generativeErrorCodes": [
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 2887,
+        "p90Ms": 5855,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "da5f2d6c-cb7b-4795-932d-4d955447dabd",
+        "entryId": "a0c68025-0c72-4968-a524-f9d92f419a37",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-03T04:57:21.512Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-03T04:57:10.509Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "f1cc8920-e10d-4179-8e55-ff896b1163a0"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-03T04:57:10.523Z",
+          "stage": "semantic",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "f1cc8920-e10d-4179-8e55-ff896b1163a0",
+        "51a8d236-706e-42ae-bb90-3b0987401de2",
+        "c1d8c0d9-5003-4cbb-888b-60ba32c56273",
+        "2fe1f727-d174-4945-8b6d-c06acc59cc05",
+        "3255cfaa-443f-4087-999f-b4fbb849e2a4",
+        "1c2597f8-2f5e-44e6-bfff-8688c698c343"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "privacy": {
+    "contentFieldsExcluded": true,
+    "excludedFields": [
+      "用户原话",
+      "AI 全文",
+      "事件日志标题与正文",
+      "Trace contextSnapshot",
+      "Trace finalOutput",
+      "模型请求与响应正文"
+    ]
+  }
+}

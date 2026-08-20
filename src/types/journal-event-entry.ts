@@ -47,6 +47,7 @@ export interface JournalEventEntryRecord {
   generationId: string | null;
   title: string;
   content: string;
+  occurredAtText: string | null;
   status: JournalEventEntryStatus;
   generationOrigin: AIOutputOrigin;
   generationVersion: number;
@@ -114,6 +115,7 @@ export interface CompleteJournalEventEntryGenerationInput {
   sourceFingerprint: string;
   title: string;
   content: string;
+  occurredAtText?: string | null;
   outputOrigin: AIOutputOrigin;
   qualityChecks: {
     sourceGrounded: boolean;
@@ -140,4 +142,19 @@ export interface SaveJournalEventEntryInput {
   userId: string;
   entryId: string;
   expectedContentRevision: number;
+}
+
+/**
+ * 用户结束当前记录时创建的时间线卡片。
+ *
+ * 它与旧的“生成事件日志”共用来源、版本和编辑合同，但整个过程只整理已经
+ * 保存的用户表达与有效事实，不触发模型调用。
+ */
+export interface MaterializeJournalEventEntryCardInput {
+  userId: string;
+  eventId: string;
+  activeBranchSessionId: string;
+  baseMessageSequence: number;
+  /** 结束/返回当天这一次可靠提交；卡片创建成功后一起结算，便于刷新重放。 */
+  returnTurnId?: string | null;
 }

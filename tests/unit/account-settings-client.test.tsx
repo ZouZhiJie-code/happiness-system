@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
 import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 
-const locationState = { href: "http://localhost/settings/account" };
+const locationState = { href: "http://localhost/settings/account", replace: vi.fn() };
 
 vi.stubGlobal("location", locationState);
 
@@ -14,16 +14,10 @@ describe("account settings client", () => {
   beforeEach(() => {
     window.localStorage.clear();
     locationState.href = "http://localhost/settings/account";
+    locationState.replace.mockReset();
   });
 
-  it("clears local auth context and interview cache on logout", async () => {
-    window.localStorage.setItem(authLocalUserIdStorageKey, "user-1");
-    window.localStorage.setItem(`${interviewSessionStorageKey}::user-1`, JSON.stringify({ joy: { sessionId: "session-1" } }));
-
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ authenticated: false, user: null }), { status: 200 })) as typeof fetch;
-
+  it("keeps logout in the account menu so settings has one account exit path", async () => {
     render(
       <AccountSettingsClient
         user={{
@@ -33,14 +27,9 @@ describe("account settings client", () => {
       />
     );
 
-    await screen.findByText("daily_light_01");
-    fireEvent.click(screen.getByRole("button", { name: "退出登录" }));
-
-    await waitFor(() => {
-      expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
-    });
-    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
-    expect(locationState.href).toBe("/login");
+    expect(await screen.findByText("daily_light_01")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "退出登录" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "删除账号" })).toBeInTheDocument();
   });
 
   it("clears local auth context and interview cache on account deletion", async () => {
@@ -69,6 +58,6 @@ describe("account settings client", () => {
       expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
     });
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
-    expect(locationState.href).toBe("/register");
+    expect(locationState.replace).toHaveBeenCalledWith("/");
   });
 });

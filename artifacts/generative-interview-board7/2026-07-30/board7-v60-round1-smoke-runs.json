@@ -1,0 +1,1651 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": null,
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "caseId": "SMK-F-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": "ai_synthesized",
+      "outcomeClass": "ai_synthesized",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "看见高兴的身体反应与紧张的身体反应先后出现，形成时间上的连接。",
+      "stopReason": "已形成一条新的感受关系：高兴与紧张先后出现。",
+      "latencyMs": 4059,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 564,
+          "tokenUsage": {
+            "promptTokens": 3339,
+            "completionTokens": 499,
+            "totalTokens": 3838,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 2955
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"看到录用两个字先笑了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看到‘录用’两个字我先笑了\"\n      },\n      {\n        \"statement\": \"读到下周一入职时胸口突然紧了一下\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"往下读到下周一入职时，胸口突然紧了一下\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"ai_synthesized\",\n      \"basis\": \"用户先笑了，随后读到入职时间胸口发紧，两个身体反应先后不同，形成时间差关系。\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见高兴的身体反应与紧张的身体反应先后出现，形成时间上的连接。\",\n    \"tentativeInterpretation\": {\n      \"statement\": \"高兴先出现，紧张随后出现，两种身体反应在时间上先后连接。\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"stopReason\": \"已形成一条新的感受关系：高兴与紧张先后出现。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"看到录用通知时，你先笑了，随后读到入职时间胸口发紧——高兴和紧张先后出现，两种身体反应在时间上连接起来。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4060,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3339,
+          "completionTokens": 499,
+          "totalTokens": 3838,
+          "promptCacheHitTokens": 384,
+          "promptCacheMissTokens": 2955
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "7fc94d024767a2509407c9862c8f9284cf54d9de626d37e64f59aef7840ad6fe"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "caseId": "SMK-T-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。"
+        },
+        "angleOutcome": {
+          "angle": "thought",
+          "kind": "insight",
+          "statement": "开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-T-ASK-fact-1",
+        "SMK-T-ASK-fact-2",
+        "SMK-T-ASK-fact-3",
+        "new:1"
+      ],
+      "expectedQuestionValue": "用户已经说清：开头一句的局部表达决定了整体专业感，即使其他部分被认可也无法弥补。",
+      "stopReason": "用户已明确说出判断关系，形成成果。",
+      "latencyMs": 4030,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 198,
+          "tokenUsage": {
+            "promptTokens": 3428,
+            "completionTokens": 496,
+            "totalTokens": 3924,
+            "promptCacheHitTokens": 384,
+            "promptCacheMissTokens": 3044
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户认为开头那句太绕导致整份提案不专业，即使数据和结论被认可\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"因为它就在开头。数据和结论他都说可以，可我一看到开头那句，还是觉得后面做得再好也救不回来。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出开头那句太绕是整份提案不专业的触发点，即使数据和结论被认可也无法挽回整体印象。\",\n      \"supportEvidenceRefs\": [\"SMK-T-ASK-fact-1\", \"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-ASK-fact-1\", \"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\", \"new:1\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清：开头一句的局部表达决定了整体专业感，即使其他部分被认可也无法弥补。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已明确说出判断关系，形成成果。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"开头那句‘太绕’之所以让整份提案显得不专业，是因为它位于开头，决定了第一印象；即使数据和结论被认可，也无法挽回整体专业感。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4030,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3428,
+          "completionTokens": 496,
+          "totalTokens": 3924,
+          "promptCacheHitTokens": 384,
+          "promptCacheMissTokens": 3044
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "934a8a06273a9767b3486b2d12ceadf1406213e9faf2c932866788811ef97ef2"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "caseId": "SMK-R-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你提到并列写法更让你停住，但还没说清最介意哪一点。这里先看它怎样影响你觉得自己在项目中的位置。",
+        "naturalResponse": "看到你和丽莎被写在同一句时，你最担心别人会怎样理解你们各自在项目里的角色？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "relationship",
+          "target": "message_discomfort_anchor",
+          "opportunityNumber": 2,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "anchor_specific"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你提到并列写法更让你停住，但还没说清最介意哪一点。这里先看它怎样影响你觉得自己在项目中的位置。",
+        "userResponse": "看到你和丽莎被写在同一句时，你最担心别人会怎样理解你们各自在项目里的角色？",
+        "responseKind": "question",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你提到并列写法更让你停住，但还没说清最介意哪一点。这里先看它怎样影响你觉得自己在项目中的位置。\n看到你和丽莎被写在同一句时，你最担心别人会怎样理解你们各自在项目里的角色？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "ask",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-R-ASK-fact-2",
+        "new:1"
+      ],
+      "expectedQuestionValue": "并列写法如何影响用户在项目中的位置或贡献呈现",
+      "stopReason": null,
+      "latencyMs": 3368,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 200,
+          "tokenUsage": {
+            "promptTokens": 3426,
+            "completionTokens": 437,
+            "totalTokens": 3863,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2146
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户更在意并列写法但尚未说清具体影响\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那种并在一起的写法更让我停住，只是我还说不清最介意哪一点\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"needs_more\",\n      \"origin\": null,\n      \"basis\": \"用户确认并列写法是主要不适点，但尚未说清具体影响\",\n      \"supportEvidenceRefs\": [\"SMK-R-ASK-fact-2\", \"new:1\"],\n      \"missingUnderstanding\": \"并列写法让用户感到什么具体影响\"\n    },\n    \"evidenceRefs\": [\"SMK-R-ASK-fact-2\", \"new:1\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"message_discomfort_anchor\",\n    \"expectedUnderstandingDelta\": \"并列写法如何影响用户在项目中的位置或贡献呈现\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你提到并列写法更让你停住，但还没说清最介意哪一点。这里先看它怎样影响你觉得自己在项目中的位置。\",\n    \"responseKind\": \"question\",\n    \"question\": \"看到你和丽莎被写在同一句时，你最担心别人会怎样理解你们各自在项目里的角色？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3368,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3426,
+          "completionTokens": 437,
+          "totalTokens": 3863,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2146
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "7afbed53f8754ab06d98aec866ea7dfd72144db5a694d6b6be5fd96dba66a4ad"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "caseId": "SMK-A-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": "ai_synthesized",
+      "outcomeClass": "ai_synthesized",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-A-ASK-fact-2",
+        "new:1",
+        "new:3"
+      ],
+      "expectedQuestionValue": "整理看板保护了推进感，代价是回避了投诉。",
+      "stopReason": "形成有证据的认识进展",
+      "latencyMs": 4146,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 113,
+          "tokenUsage": {
+            "promptTokens": 3399,
+            "completionTokens": 610,
+            "totalTokens": 4009,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2119
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"整理完更不想点开投诉\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"不是，整理完我更不想点开它。\"\n      },\n      {\n        \"statement\": \"看板越整齐越有事情在推进的感觉\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看板越整齐，我越有事情已经在推进的感觉\"\n      },\n      {\n        \"statement\": \"客户投诉到下班仍未打开\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那条投诉到下班都没打开。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"ai_synthesized\",\n      \"basis\": \"整理看板带来推进感，但用户更不想打开投诉，两者形成张力：整理行为在保护一种‘事情在推进’的感觉，同时回避了真正需要处理的投诉。\",\n      \"supportEvidenceRefs\": [\"SMK-A-ASK-fact-2\", \"new:1\", \"new:3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-A-ASK-fact-2\", \"new:1\", \"new:3\"],\n    \"insightKind\": \"tension\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"整理看板保护了推进感，代价是回避了投诉。\",\n    \"tentativeInterpretation\": {\n      \"statement\": \"整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。\",\n      \"supportEvidenceRefs\": [\"SMK-A-ASK-fact-2\", \"new:1\", \"new:3\"]\n    },\n    \"stopReason\": \"形成有证据的认识进展\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"整理看板让你获得事情在推进的感觉，同时回避了那条投诉——整理行为在保护一种掌控感，代价是投诉被搁置。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4146,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3399,
+          "completionTokens": 610,
+          "totalTokens": 4009,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2119
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "ce0fc01202f01023a1e96e9333f92468a2118277d6ca11ab905b94211a12f844"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "caseId": "SMK-F-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-F-USER-fact-1",
+        "SMK-F-USER-fact-2",
+        "SMK-F-USER-fact-3",
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "用户已区分两种感受各自的对象：舍不得回应同行关系，放松回应行程负担。",
+      "stopReason": "用户已说清感受关系，继续追问无新增理解。",
+      "latencyMs": 4670,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 1166,
+          "tokenUsage": {
+            "promptTokens": 3418,
+            "completionTokens": 585,
+            "totalTokens": 4003,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2138
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"舍不得的是以后不能每天和她一起走路\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"舍不得的是以后不能每天和她一起走路\"\n      },\n      {\n        \"statement\": \"松口气的是终于不用每天赶三四个地方\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"松口气的是终于不用每天赶三四个地方\"\n      },\n      {\n        \"statement\": \"两种感觉各有各的对象\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"两种感觉各有各的对象\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出两种感受各有对象，且分别对应不同部分：舍不得对应不能每天同行，放松对应不用赶多个地点。\",\n      \"supportEvidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分两种感受各自的对象：舍不得回应同行关系，放松回应行程负担。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清感受关系，继续追问无新增理解。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"舍不得和放松同时成立，因为它们分别回应告别同行的人与结束赶路的负担，并不互相否定。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4670,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3418,
+          "completionTokens": 585,
+          "totalTokens": 4003,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2138
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "417c970108d1a60e8a4ac79896edcd096b2f9a90c8bcdc55e05eee5d06cd1403"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-DEEP:ask",
+          "CAL-FEELING-DEEP:user-articulated",
+          "CAL-FEELING-DEEP:ai-synthesized",
+          "CAL-FEELING-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "caseId": "SMK-T-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。"
+        },
+        "angleOutcome": {
+          "angle": "thought",
+          "kind": "insight",
+          "statement": "你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-T-USER-fact-1",
+        "SMK-T-USER-fact-2",
+        "SMK-T-USER-fact-3"
+      ],
+      "expectedQuestionValue": "用户已经区分了‘马上回复’与‘负责’的关系，并承认任务完成不影响该标准。",
+      "stopReason": "用户已说清判断标准，形成成果。",
+      "latencyMs": 3362,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 277,
+          "tokenUsage": {
+            "promptTokens": 3385,
+            "completionTokens": 445,
+            "totalTokens": 3830,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2105
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把马上回复当成负责的唯一证明\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我一直把‘马上回复’当成负责的唯一证明\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出判断标准：把马上回复当成负责的唯一证明，且任务完成不影响该标准。\",\n      \"supportEvidenceRefs\": [\"SMK-T-USER-fact-1\", \"SMK-T-USER-fact-2\", \"SMK-T-USER-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-USER-fact-1\", \"SMK-T-USER-fact-2\", \"SMK-T-USER-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经区分了‘马上回复’与‘负责’的关系，并承认任务完成不影响该标准。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清判断标准，形成成果。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"你发现，自己把‘马上回复’当成了负责的唯一证明，即使事情按时完成，这个标准也没有改变。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3362,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3385,
+          "completionTokens": 445,
+          "totalTokens": 3830,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2105
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "8fe1e233ecfb0223dc93f61a8ec67c7506c5aa31ccbee297d168766beef58344"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:ask",
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "caseId": "SMK-R-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。"
+        },
+        "angleOutcome": {
+          "angle": "relationship",
+          "kind": "insight",
+          "statement": "借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-R-USER-fact-1",
+        "SMK-R-USER-fact-2",
+        "SMK-R-USER-fact-3",
+        "new:1"
+      ],
+      "expectedQuestionValue": "用户已说清支持与控制的分界在于决定权归属，形成当前事件内的关系认识。",
+      "stopReason": "用户已说清互动对自己的意义，形成有证据的认识进展。",
+      "latencyMs": 3501,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 304,
+          "tokenUsage": {
+            "promptTokens": 3458,
+            "completionTokens": 468,
+            "totalTokens": 3926,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2178
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户认为支持和控制的区别是最后谁来决定钱怎么用\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"支持和控制的区别是最后谁来决定钱怎么用\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出支持和控制的区别在于最后谁来决定钱怎么用，结合之前哥哥借钱和每天查看开支的事实，形成了完整的关系认识。\",\n      \"supportEvidenceRefs\": [\"SMK-R-USER-fact-1\", \"SMK-R-USER-fact-2\", \"SMK-R-USER-fact-3\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-USER-fact-1\", \"SMK-R-USER-fact-2\", \"SMK-R-USER-fact-3\", \"new:1\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已说清支持与控制的分界在于决定权归属，形成当前事件内的关系认识。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清互动对自己的意义，形成有证据的认识进展。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"借钱接住了你，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3501,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3458,
+          "completionTokens": 468,
+          "totalTokens": 3926,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2178
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "1dd74b34bbaedde5d7540fc4ad6fddabfb52a46da8ac8142c2a79e7a4c73dedc"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-DEEP:ask",
+          "CAL-RELATIONSHIP-DEEP:user-articulated",
+          "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+          "CAL-RELATIONSHIP-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "caseId": "SMK-A-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-A-USER-fact-1",
+        "SMK-A-USER-fact-2",
+        "SMK-A-USER-fact-3"
+      ],
+      "expectedQuestionValue": "用户明确说出整理的作用：让自己觉得已经开始工作，但实际替代了写第一段，导致报告空白。",
+      "stopReason": "用户已经说清整理的作用：提供工作开始的错觉，但替代了实际写作，导致报告空白。",
+      "latencyMs": 3669,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 304,
+          "tokenUsage": {
+            "promptTokens": 3384,
+            "completionTokens": 538,
+            "totalTokens": 3922,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2104
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"整理让用户觉得自己已经开始工作了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"整理让我觉得自己已经开始工作了\"\n      },\n      {\n        \"statement\": \"整理一直替代着写第一段\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"它其实一直替代着写第一段\"\n      },\n      {\n        \"statement\": \"桌面清空后报告仍空白\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"桌面清空了，报告还是空白\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出整理的作用：让自己觉得已经开始工作，但实际替代了写第一段，导致报告空白。\",\n      \"supportEvidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n    \"insightKind\": \"function\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": null,\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已经说清整理的作用：提供工作开始的错觉，但替代了实际写作，导致报告空白。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"整理桌面让你产生了已经开始工作的感觉，但它实际上替代了写第一段，结果桌面干净了，报告还是空白。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3669,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3384,
+          "completionTokens": 538,
+          "totalTokens": 3922,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2104
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "dd064170ecc2c97aee580324520f76e0a0f244f700cd3e80917e175bed5072c4"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-GUIDED:ask",
+          "CAL-ACTION-GUIDED:user-articulated",
+          "CAL-ACTION-GUIDED:ai-synthesized",
+          "CAL-ACTION-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": "ai_synthesized",
+      "outcomeClass": "ai_synthesized",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-F-AI-fact-1",
+        "new:1"
+      ],
+      "expectedQuestionValue": "看见身体放松与听到结果不同步，而是与取下监测夹关联",
+      "stopReason": "已形成一条此前未明说的感受关系：身体放松与听到结果不同步",
+      "latencyMs": 3724,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 127,
+          "tokenUsage": {
+            "promptTokens": 3355,
+            "completionTokens": 496,
+            "totalTokens": 3851,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2075
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"护士取下监测夹后用户靠回椅背并摊开手\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"护士把手指上的夹子取下来，我才靠回椅背，手也摊开了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"ai_synthesized\",\n      \"basis\": \"用户描述了听到结果时身体未放松，以及护士取下夹子后身体才放松，两个事实形成时间差关系\",\n      \"supportEvidenceRefs\": [\"SMK-F-AI-fact-1\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-F-AI-fact-1\", \"new:1\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见身体放松与听到结果不同步，而是与取下监测夹关联\",\n    \"tentativeInterpretation\": {\n      \"statement\": \"身体放松不是发生在听到结果正常时，而是发生在护士取下监测夹之后\",\n      \"supportEvidenceRefs\": [\"SMK-F-AI-fact-1\", \"new:1\"]\n    },\n    \"stopReason\": \"已形成一条此前未明说的感受关系：身体放松与听到结果不同步\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"听到结果正常时身体没有马上放松，直到护士取下手指上的夹子，你才靠回椅背、摊开手。身体放松和听到结果并不同步，而是和取下监测夹连在一起。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3724,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3355,
+          "completionTokens": 496,
+          "totalTokens": 3851,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2075
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "40188d0da7e36f24f2d214982f5407ecd6ac7465a255aea9bcc063c9da238ed4"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "caseId": "SMK-T-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。"
+        },
+        "angleOutcome": {
+          "angle": "thought",
+          "kind": "insight",
+          "statement": "不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": true,
+      "seriousBoundaryErrors": [
+        "outcome_origin_misattribution"
+      ],
+      "evidenceUsed": [
+        "SMK-T-AI-fact-1",
+        "SMK-T-AI-fact-2",
+        "SMK-T-AI-fact-3"
+      ],
+      "expectedQuestionValue": "用户已区分限时与不限时表现差异，并识别出时间压力和反复读题是影响正确率的关键因素",
+      "stopReason": "用户已主动完成区分并说清判断依据",
+      "latencyMs": 4083,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 148,
+          "tokenUsage": {
+            "promptTokens": 3435,
+            "completionTokens": 600,
+            "totalTokens": 4035,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2155
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"不限时做同一类题我能到九十分\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"不限时做同一类题我能到九十分\"\n      },\n      {\n        \"statement\": \"这次四十五分钟限时只得六十二\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"这次四十五分钟限时只得六十二\"\n      },\n      {\n        \"statement\": \"错题几乎都在第四十分钟以后，那时我会反复读题\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"错题几乎都在第四十分钟以后，那时我会反复读题\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确区分了限时与不限时的成绩差异，并指出时间压力和反复读题是出错原因，形成了对基础判断的新认识\",\n      \"supportEvidenceRefs\": [\"SMK-T-AI-fact-1\", \"SMK-T-AI-fact-2\", \"SMK-T-AI-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-AI-fact-1\", \"SMK-T-AI-fact-2\", \"SMK-T-AI-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分限时与不限时表现差异，并识别出时间压力和反复读题是影响正确率的关键因素\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已主动完成区分并说清判断依据\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"不限时能做到九十分，限时却只有六十二，而且错题集中在最后二十分钟反复读题的时候——这说明你的基础本身不差，差的是时间压力下反复确认的习惯影响了答题节奏。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4083,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3435,
+          "completionTokens": 600,
+          "totalTokens": 4035,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2155
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "2f286a5fa6ebc9a5334c49d546989eb3b76501e5c269ed6facc57829bc84aadf"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "caseId": "SMK-R-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。"
+        },
+        "angleOutcome": {
+          "angle": "relationship",
+          "kind": "insight",
+          "statement": "同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": "ai_synthesized",
+      "outcomeClass": "ai_synthesized",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "SMK-R-AI-fact-1",
+        "SMK-R-AI-fact-2",
+        "SMK-R-AI-fact-3"
+      ],
+      "expectedQuestionValue": "形成用户在同一协作中同时被帮助和被排除的位置张力",
+      "stopReason": "AI综合形成用户尚未明说的位置张力，符合停止条件",
+      "latencyMs": 5004,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 320,
+          "tokenUsage": {
+            "promptTokens": 3421,
+            "completionTokens": 660,
+            "totalTokens": 4081,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2141
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"同事整理幻灯片为用户节省时间\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他把整套幻灯片都排好了，确实省了我很多时间\"\n      },\n      {\n        \"statement\": \"同事未经确认调整议程\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可议程也被他改过\"\n      },\n      {\n        \"statement\": \"用户负责的讨论项未进入议程且用户未发言\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我负责的讨论项直接没排进去，会上我就一直没开口\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"ai_synthesized\",\n      \"basis\": \"用户确认同事帮忙整理幻灯片节省时间，同时未经确认调整议程导致用户负责的讨论项被排除，用户未发言。两个事实共同指向用户在协作中的位置变化：被帮助的同时也被排除在议程决策之外。\",\n      \"supportEvidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n    \"insightKind\": \"tension\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"形成用户在同一协作中同时被帮助和被排除的位置张力\",\n    \"tentativeInterpretation\": {\n      \"statement\": \"同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。\",\n      \"supportEvidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"]\n    },\n    \"stopReason\": \"AI综合形成用户尚未明说的位置张力，符合停止条件\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"同事帮你节省了时间，却也改变了议程让你无法参与自己负责的部分；你在这次协作里同时体验到了被帮助和被排除。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5004,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3421,
+          "completionTokens": 660,
+          "totalTokens": 4081,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2141
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "210a418eef18998c34f25431b8948fab4f4b1d85bb1c9761fc42142ee1bd0561"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "caseId": "SMK-A-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 4385,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 304,
+          "tokenUsage": {
+            "promptTokens": 3373,
+            "completionTokens": 583,
+            "totalTokens": 3956,
+            "promptCacheHitTokens": 1280,
+            "promptCacheMissTokens": 2093
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把二十多张卡片重新排了优先级并统一颜色，越排越清楚\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把二十多张卡片都重新排了优先级，颜色也统一了，越排越清楚\"\n      },\n      {\n        \"statement\": \"客户投诉一直压在最下面，用户到下班都没点开\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"只有那条客户投诉一直压在最下面，我到下班都没点开\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"needs_more\",\n      \"origin\": null,\n      \"basis\": \"用户描述了整理看板获得清晰感，以及投诉未被打开的事实，但尚未说明整理动作在当时替用户做了什么（保护、维持或避免什么）。\",\n      \"supportEvidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": \"整理看板这个动作在当时替用户做了什么——是维持秩序感、避免面对投诉，还是其他功能？\"\n    },\n    \"evidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\", \"new:1\", \"new:2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"task_board_function\",\n    \"expectedUnderstandingDelta\": \"理解整理看板这个动作在当时替用户做了什么（保护、维持或避免什么）。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"connect_clues\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"整理看板让你获得了清晰的秩序感，但那条投诉一直没点开。这里先看整理这个动作在当时替你做了什么——是维持了掌控感，还是暂时避开了投诉带来的压力？\",\n    \"responseKind\": \"question\",\n    \"question\": \"反复整理看板时，这个动作在当时替你做了什么？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4385,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3373,
+          "completionTokens": 583,
+          "totalTokens": 3956,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2093
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "repeated_question"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v60",
+          "resolvedPromptHash": "0187c014d64141cf60bf6fdfb6c345b0da3f92b6f79823eb6ab22bdbc028585a"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "codexGate": {
+    "stage": "smoke",
+    "reviewLevel": "codex",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 11,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 1,
+    "seriousBoundaryErrors": 1,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  },
+  "productGate": {
+    "stage": "smoke",
+    "reviewLevel": "product_owner",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 11,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 1,
+    "seriousBoundaryErrors": 1,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  }
+}

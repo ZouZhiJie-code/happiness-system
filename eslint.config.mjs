@@ -1,17 +1,21 @@
 import { FlatCompat } from "@eslint/eslintrc";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypeScript from "eslint-config-next/typescript";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const configDirectory = path.dirname(fileURLToPath(import.meta.url));
 const compat = new FlatCompat({
-  baseDirectory: __dirname
+  baseDirectory: configDirectory
 });
 
-const nextLintCompat = compat.extends("next/core-web-vitals", "next/typescript");
+const nextLintConfig = Array.isArray(nextCoreWebVitals) && Array.isArray(nextTypeScript)
+  ? [...nextCoreWebVitals, ...nextTypeScript]
+  : compat.extends("next/core-web-vitals", "next/typescript");
 
-export default [
+const config = [
   {
+    name: "daily-light/ignores",
     ignores: [
       "**/node_modules/**",
       "**/dist/**",
@@ -22,5 +26,16 @@ export default [
       "next-env.d.ts"
     ]
   },
-  ...nextLintCompat
+  ...nextLintConfig,
+  {
+    name: "daily-light/rule-exceptions",
+    rules: {
+      "react-hooks/error-boundaries": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off"
+    }
+  }
 ];
+
+export default config;

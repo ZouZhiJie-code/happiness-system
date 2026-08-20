@@ -1,0 +1,208 @@
+{
+  "singleRuns": [
+    {
+      "runId": "SMK-F-PARTIAL-ASK-R1",
+      "review": {
+        "initialVerdict": "borderline",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "answer_burden",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "用户刚明确说空的部分还说不清，后续问题仍用‘对应哪一部分’的抽象形式重问，只缩小了范围，没有提供更容易回答的新入口。",
+        "finalVerdict": null,
+        "rootCause": "partial_answer_reasked_without_easier_entry",
+        "resolution": "边缘按未通过；需要为 partly_answered 提供新的低负担入口。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "expression_naturalness",
+        "visibleEvidence": "问题准确追问专业判断标准，思路开头只剩‘你提到“提案的”’这一残片，用户无法看见模型怎样根据本轮回答形成提问意图。",
+        "finalVerdict": null,
+        "rootCause": "broken_summary_recovery_anchor",
+        "resolution": "失败；需要保证思路层完整呈现本轮新增线索和提问价值。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "answer_burden",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "用户刚说自己分不清进入房间和移动物品哪一点更介意，回应又把同两项组成二选一，回答入口没有变化。",
+        "finalVerdict": null,
+        "rootCause": "repeated_forced_choice",
+        "resolution": "失败；需要响应 partly_answered 状态并更换认知入口。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-A-PARTIAL-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "target_selection",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "思路指向这次申请材料里提纲替代正文开始的哪一步，正式问题却转向‘通常会先做什么’，扩大成一般写作习惯。",
+        "finalVerdict": null,
+        "rootCause": "target_shift_to_generic_hypothetical",
+        "resolution": "失败；问题需要保持当前事件范围并对应已选目标。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-F-CLOSED-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "用户只说读到入职日期时胸口紧了一下，回应将其命名为‘紧张’，并形成两种感受分别对应不同部分的解释，超过 user_articulated 的忠实整理范围。",
+        "finalVerdict": null,
+        "rootCause": "user_outcome_strengthened_by_ai_synthesis",
+        "resolution": "失败；用户成果需要保留身体感受原词，新增感受标签应归入 AI 综合。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实保留‘马上回复是负责的唯一证明’以及‘按时完成仍被该标准排除’，没有添加评价或替代解释。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-R-CLOSED-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": "expression_naturalness",
+        "visibleEvidence": "用户明确说未提前确认也介意，只是并列写法更先、更强；回应用排他表达抹掉同时成立的另一条线索，并把用户第一人称直接带进 AI 口吻。",
+        "finalVerdict": null,
+        "rootCause": "coexisting_evidence_erased",
+        "resolution": "失败；需要保留两条同时成立的证据及其轻重顺序。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": ["fact_error"]
+    },
+    {
+      "runId": "SMK-A-CLOSED-R1",
+      "review": {
+        "initialVerdict": "borderline",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "第一句忠实保留推进感与投诉未打开，第二句把用户说出的体验改写成‘整理的功能’，从实际效果推进到功能解释。",
+        "finalVerdict": null,
+        "rootCause": "effect_reframed_as_function",
+        "resolution": "边缘按未通过；user_articulated 成果需要收紧到用户已经表达的关系。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "结果正常时仍坐得很直，监测夹取下后才靠回椅背并摊开手，证据已足以形成时间差关系；回应仍追问两个动作是先后还是其他关系。",
+        "finalVerdict": null,
+        "rootCause": "observable_relation_misclassified_as_user_gap",
+        "resolution": "失败；应直接 complete 并形成 ai_synthesized 成果。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "回应把三项事实连接成新的时间压力解释，结构化来源却标成 user_articulated；结尾对知识基础的排除也强于现有证据。",
+        "finalVerdict": null,
+        "rootCause": "ai_synthesis_misattributed_to_user",
+        "resolution": "失败；可见综合需收紧结论强度，成果来源必须记录为 ai_synthesized。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "幻灯片省时、负责内容未进入议程、会上没有发言三项结果已经明确；回应仍要求用户解释省时与未发言之间的实际联系。",
+        "finalVerdict": null,
+        "rootCause": "parallel_observable_impacts_misclassified_as_causal_gap",
+        "resolution": "失败；应直接 complete 并呈现帮助与参与机会退出的并存关系。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T14:41:33Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "answer_burden",
+        "visibleEvidence": "用户已说清整理使卡片越来越清楚，投诉仍压在最下面且到下班都没点开；回应继续问投诉在用户面前是什么状态。",
+        "finalVerdict": null,
+        "rootCause": "known_observable_result_reasked",
+        "resolution": "失败；应直接 pause 并综合清晰感与关键任务推进分离。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "severeErrors": []
+    }
+  ]
+}

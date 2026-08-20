@@ -70,7 +70,7 @@
   },
   "latestRegression": {
     "runFingerprint": "1ccb38aaedb19f60043a9f1b385f18d2dce0c5e564d4563337899ed1d646a0fb",
-    "authorizationId": "redacted-operational-id",
+    "authorizationId": "1eca419d-979b-43bd-9324-0bd6e00d0e79",
     "authorizationStatus": "consumed_once",
     "modelCalls": 8,
     "valid": 7,

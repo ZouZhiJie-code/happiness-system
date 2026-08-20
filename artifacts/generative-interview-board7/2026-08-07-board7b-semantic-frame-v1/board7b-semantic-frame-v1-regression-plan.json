@@ -1,0 +1,29 @@
+{
+  "planVersion": "2026-08-07.board7b-semantic-frame-regression-v1",
+  "candidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "runnerVersion": "2026-08-07.board7b-semantic-frame-runner-v1",
+  "datasetVersion": "2026-08-07.board7b-semantic-frame-regression-inputs-v1",
+  "datasetFingerprint": "e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1",
+  "requestSetFingerprint": "56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71",
+  "evaluationPolicyFingerprint": "3d7204f4e8d5f2d29c1f92b6054a66c4e05134aa2772ae357af4a24c85cfc669",
+  "executionFingerprint": "23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4",
+  "plannedCalls": 8,
+  "authorizedCalls": 0,
+  "distribution": {
+    "knownDevelopmentRegression": 2,
+    "freshRelationshipTransfer": 4,
+    "counterfactual": 2
+  },
+  "passCriteria": {
+    "knownDevelopmentRegression": "2/2",
+    "freshRelationshipTransfer": "4/4",
+    "counterfactual": "2/2",
+    "validStructureAndSource": "8/8",
+    "ordinaryQualityFailures": 0,
+    "singleCaseBlocks": 0
+  },
+  "qualityRetries": 0,
+  "automaticTechnicalRetries": 0,
+  "realTrajectoryAfterPass": "requires_separate_authorization"
+}

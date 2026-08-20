@@ -14,7 +14,7 @@ type ErrorField =
   | "contextUnderstanding"
   | "frustration";
 
-export interface IntentReviewCase {
+interface IntentReviewCase {
   id: string;
   severity: string;
   category: string;
@@ -40,7 +40,7 @@ export interface IntentReviewCase {
   };
 }
 
-export interface IntentReviewPacket {
+interface IntentReviewPacket {
   packetVersion: string;
   generatedAt: string;
   datasetVersion: string;

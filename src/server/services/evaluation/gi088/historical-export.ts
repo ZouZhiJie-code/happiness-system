@@ -20,7 +20,6 @@ function isCompletedTrajectory(trajectory: Gi088Trajectory) {
     trajectory.completedAt !== null &&
     trajectory.turns.length > 0;
 }
-
 function isCompletedTask(state: Gi088BatchState, task: Gi088TaskState) {
   return (state.evaluationMode ?? "paired") === "high_only"
     ? isCompletedTrajectory(task.branches.high)

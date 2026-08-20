@@ -1,0 +1,33 @@
+{
+  "approvalType": "board7_mvp_baseline_recovery_run",
+  "approvalVersion": "board7-mvp-baseline-recovery-v1-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-02T10:53:48Z",
+  "confirmationText": "PLEASE IMPLEMENT THIS PLAN：同回合生成式失败后使用同一条已保存用户原话和上一份已提交状态运行 baseline；四角度基本体验需要得到最终用户回应",
+  "taskId": "codex-board7-mvp-baseline-recovery-2026-08-02",
+  "scopeFingerprint": "195c787d9896abd417b1b3117058f40f9112bbf296601f268b7964fc687f621c",
+  "datasetVersion": "2026-08-02.board7-mvp-baseline-recovery-v1",
+  "parentScopeFingerprint": "65052d7dbe9cec8d6ad71922808b87d3b3d762295d15ef981425dd4171c72eb3",
+  "caseFingerprint": "05aa512f72c985116f17c921a0381059f785707f3d6596a1debc2d1e3a0c3ddb",
+  "caseIds": [
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01"
+  ],
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "architecture": "baseline",
+    "thinking": "disabled"
+  },
+  "requestBudget": {
+    "plannedCases": 2,
+    "stagesPerCase": 2,
+    "nominalGenerationRequests": 4,
+    "generationRequestsMax": 8,
+    "maxTechnicalAttemptsPerStage": 2
+  },
+  "model": "deepseek-v4-flash"
+}

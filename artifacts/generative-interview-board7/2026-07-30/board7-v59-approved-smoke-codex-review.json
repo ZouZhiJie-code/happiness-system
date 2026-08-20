@@ -1,0 +1,243 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "sourceRunArtifact": "board7-v59-approved-smoke-network-retry-runs.json",
+  "reviewedBy": "codex",
+  "reviewedAt": "2026-07-30T08:54:59Z",
+  "summary": {
+    "total": 12,
+    "pass": 5,
+    "borderline": 0,
+    "fail": 7,
+    "byOutcomeClass": {
+      "ask": {
+        "pass": 1,
+        "borderline": 0,
+        "fail": 3,
+        "total": 4
+      },
+      "user_articulated": {
+        "pass": 4,
+        "borderline": 0,
+        "fail": 0,
+        "total": 4
+      },
+      "ai_synthesized": {
+        "pass": 0,
+        "borderline": 0,
+        "fail": 4,
+        "total": 4
+      }
+    },
+    "technicalFailures": [
+      "SMK-T-ASK-R1",
+      "SMK-A-ASK-R1",
+      "SMK-A-AI-R1"
+    ],
+    "severeErrors": [
+      {
+        "runId": "SMK-R-AI-R1",
+        "code": "source_misattribution",
+        "evidence": "模型把自己综合出的‘帮助和排除同时出现’标成 user_articulated。"
+      }
+    ],
+    "gateConclusion": "fail"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "思路准确承接先笑、后胸口发紧的变化，问题只区分这一刻的具体感受；问题带有低负担选项，同时保留‘别的感觉’作为开放出口。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "系统拦截后未形成用户可见回应。模型一边选择继续提问，一边写入只能用于成果收束的试探解释；思路与目标也未通过事实锚点和方向一致性检查。",
+        "finalVerdict": null,
+        "rootCause": "提问计划混入了成果解释，ask 动作、内部解释和用户可见思路三层互相冲突。",
+        "resolution": "提问轮只保留已经确认的局部事实与尚缺的判断规则，并围绕‘开头怎样影响后续阅读’形成一个可回答问题。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "answer_burden",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "‘自己的贡献在项目里处于什么位置’属于抽象分析语言，用户需要先理解‘位置’的含义才能作答，也偏离了‘并列写法最介意哪一点’这一直接缺口。",
+        "finalVerdict": null,
+        "rootCause": "关系角度把具体措辞过早翻译成了‘位置/贡献呈现’等产品内部概念。",
+        "resolution": "继续围绕并列写法本身追问一个具体差异，例如它让用户担心两个人的贡献会被怎样理解。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "系统拦截后未形成用户可见回应。模型已经识别用户在纠正旧理解，却又把纠正当成需要停止提问的边界，同时在思路和问题中提前植入‘保护、避免、压力或不确定’等未确认动机。",
+        "finalVerdict": null,
+        "rootCause": "纠正状态、用户停止边界和可继续探索的方向被混为一类；问题生成又提前给出了动机答案。",
+        "resolution": "撤回旧理解后，沿用户已说的‘推进感与投诉未打开并存’追问投诉中最难面对的具体内容或后果。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接舍不得与朋友同行、放松与停止赶行程两个用户结论，没有加入新的动机、收益或长期判断。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应准确整理‘马上回复是负责的唯一证明’与‘按时完成仍不算’之间的用户判断规则，没有评价该标准对错或提出替代标准。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应保留借钱的实际支持、持续查看开支带来的控制感和最终决定权这一用户明确分界，没有推断哥哥的动机。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接整理带来的开始感、整理替代下笔和报告仍为空白，没有贴标签或添加空泛收益。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "两条证据已经足以连接‘口头安全信息先到、身体在设备移除后才松开’，模型仍继续追问放松或释然的感受标签，新增价值低于直接形成认识。",
+        "finalVerdict": null,
+        "rootCause": "成果判断把可直接综合的身体变化关系继续当作感受词缺口。",
+        "resolution": "直接形成‘知道结果安全和身体真正解除警戒并不同步，设备取下才成为身体的结束信号’这一事件内综合并完成。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "answer_burden",
+        "visibleEvidence": "不限时高分、限时低分和错误集中在末段已经形成清晰证据关系；模型仍要求用户在‘时间压力’与‘知识漏洞’之间二选一，既延长已可收束的对话，也把可能同时存在的因素强行拆开。",
+        "finalVerdict": null,
+        "rootCause": "深聊成果门仍等待用户亲自命名结论，模型未直接承担证据综合。",
+        "resolution": "直接形成‘这次低分更能说明限时后段的发挥变化，单凭它不足以代表基础水平’这一可修正认识并暂停。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "manualSevereErrors": [
+        "source_misattribution"
+      ],
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "回应连接了节省时间、讨论项未进入议程和用户未开口，并新增‘帮助和排除同时出现’这一解释；模型却把该成果标记为 user_articulated，构成严重来源误判。",
+        "finalVerdict": null,
+        "rootCause": "成果来源判断把用户提供事实与 AI 对事实形成的关系解释混为一类。",
+        "resolution": "保留该综合方向时必须标为 ai_synthesized，并继续允许用户纠正‘排除’这一较强解释。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:54:59Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "系统以 repeated_question 拦截后未形成用户可见回应。模型再次询问‘整理看板替你做了什么’，与上一问目标和表述近乎相同，也未按案例要求直接综合现有两条证据。",
+        "finalVerdict": null,
+        "rootCause": "模型把已经收集到的行为对照继续当作待问缺口，成果判断与重复检查共同暴露了问停决策偏保守。",
+        "resolution": "连接整理带来的清晰秩序与投诉持续留在行动之外，形成一次 AI 综合并暂停。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

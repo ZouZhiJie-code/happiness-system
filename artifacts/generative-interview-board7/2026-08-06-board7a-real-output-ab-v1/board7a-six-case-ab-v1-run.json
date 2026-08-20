@@ -1,0 +1,858 @@
+{
+  "evaluationId": "board7a_real_output_ab_v1",
+  "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+  "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+  "runtimeConfig": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1200,
+    "timeoutMs": 20000,
+    "responseFormat": "json_object",
+    "thinking": "disabled"
+  },
+  "requestBudget": {
+    "cases": 6,
+    "candidateARequestsPerCase": 1,
+    "candidateBRequestsPerCase": 2,
+    "nominalGenerationRequests": 18,
+    "technicalRetriesMax": 3,
+    "generationRequestsMax": 21,
+    "qualityRetries": 0
+  },
+  "promptVersions": {
+    "sharedPolicy": "2026-08-06.gi081-shared-product-policy-v1",
+    "candidateA": "2026-08-06.gi081-one-call-v1",
+    "candidateBSemantic": "2026-08-06.gi081-two-stage-semantic-v1",
+    "candidateBVisible": "2026-08-06.gi081-two-stage-visible-v1"
+  },
+  "approval": {
+    "approvalType": "board7a_real_output_ab_v1",
+    "approvalVersion": "2026-08-06.board7a-real-output-ab-approval-v1",
+    "decision": "approved",
+    "approvedBy": "product_owner",
+    "approvedAt": "2026-08-06T14:48:13Z",
+    "confirmationText": "确认，继续",
+    "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+    "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+    "caseIds": [
+      "H1",
+      "H2",
+      "H3",
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "model": "deepseek-v4-flash",
+    "nominalGenerationRequests": 18,
+    "technicalRetriesMax": 3
+  },
+  "reservationId": "299c12ab-4378-44e4-94d0-77cc1395d77f",
+  "createdAt": "2026-08-06T15:04:58.891Z",
+  "calls": [
+    {
+      "callId": "4e05a5bf-b514-4deb-bedf-2523d244fc48",
+      "caseId": "H1",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:04:58.891Z",
+      "completedAt": "2026-08-06T15:05:02.412Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "07ba34fb5eba98603fc92a6ea2e6343fa3ede734442956c45236099bcbbea58e",
+      "responseHash": "761f5611097e394fd09f05054c1b8d57540888771513ce9455585680059facf0",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"acknowledge\",\n    \"focus\": \"爽与轻松并存，不拆开\",\n    \"semanticSummary\": \"用户强调爽和轻松是同时存在的感受，不应被拆成二选一。\",\n    \"evidenceRefs\": [\"1228fecf-1a8a-47ec-9b4f-d6d01e300981\"],\n    \"questionGoal\": null,\n    \"limitReason\": null\n  },\n  \"visible\": {\n    \"understanding\": null,\n    \"response\": \"明白了，爽和轻松就是一起的，不分开。\"\n  }\n}",
+      "latencyMs": 2241,
+      "tokenUsage": {
+        "promptTokens": 1139,
+        "completionTokens": 137,
+        "totalTokens": 1276,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 1139
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "8d881791-e76b-4d72-9814-df3a8d26106a",
+      "caseId": "H1",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:02.414Z",
+      "completedAt": "2026-08-06T15:05:04.734Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "e2e49894841737a1366b0595c89eafc7e1681a88cb667a7afade8e05fa7ce15e",
+      "responseHash": "6dbfe1bc0424b80c97677df30b60f6de801b30f9cf2afa575b0d468d59108602",
+      "rawOutput": "{\n  \"action\": \"acknowledge\",\n  \"focus\": \"爽与轻松并存，不拆开\",\n  \"semanticSummary\": \"用户与邹志杰晚上9点吃鸭腿和包子，因饿且有人抢而觉得香；学了一天累后，感到爽和轻松并存，不接受被拆成二选一。\",\n  \"evidenceRefs\": [\"b85e7448-49c5-49c8-8e46-d2c869b83654\", \"f2e61352-f816-428a-9fd9-22d8dff6acf6\", \"1228fecf-1a8a-47ec-9b4f-d6d01e300981\"],\n  \"questionGoal\": null,\n  \"limitReason\": null\n}",
+      "latencyMs": 426,
+      "tokenUsage": {
+        "promptTokens": 1086,
+        "completionTokens": 174,
+        "totalTokens": 1260,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 1086
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "d41f048d-31f8-4281-aff0-1084eccb70fd",
+      "caseId": "H1",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:04.736Z",
+      "completedAt": "2026-08-06T15:05:05.766Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "8546c781f04483e07423c334675d37d0e26fce5482f5ed3798c6ffd5454407e0",
+      "responseHash": "08c0c776715cf97134f341385ff575627d186a8a2afdbc277e48e40abcb0e415",
+      "rawOutput": "{\n  \"understanding\": null,\n  \"response\": \"嗯，爽和轻松就是一起的，不拆开。\"\n}",
+      "latencyMs": 382,
+      "tokenUsage": {
+        "promptTokens": 1016,
+        "completionTokens": 27,
+        "totalTokens": 1043,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 632
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "81ac8e99-fcb4-430d-bb92-5c7da5e8779d",
+      "caseId": "H2",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:05.769Z",
+      "completedAt": "2026-08-06T15:05:08.630Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "f695c2013b1e2f3ed389706742f96f633b578723badc3c2047ea3ccc8a80d363",
+      "responseHash": "b5e153026ae40e469bc50b09f8c6196f3557e6dc28cd0e5da8aa48b57f95432e",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"ask\",\n    \"focus\": \"被续费信息勾起的陈年回忆\",\n    \"semanticSummary\": \"用户因邹志杰提到续费人数少而想起之前的事情，感到烦躁内耗，并明确表示场合不重要，真正想聊的是被勾起的陈年回忆。\",\n    \"evidenceRefs\": [\"b19e235e-3768-4827-b927-2e5c261859f0\", \"564fe641-c98b-49b3-9bf4-29ad5ea40a83\", \"a0404de2-7191-48da-9b5e-3a2847ac7dfe\"],\n    \"questionGoal\": \"了解用户被勾起的陈年回忆的具体内容\",\n    \"limitReason\": null\n  },\n  \"visible\": {\n    \"understanding\": \"我明白了，场合不重要，重要的是这件事让你想起了之前的事，心里很不舒服。\",\n    \"response\": \"你愿意说说之前那件事吗？\"\n  }\n}",
+      "latencyMs": 428,
+      "tokenUsage": {
+        "promptTokens": 1218,
+        "completionTokens": 226,
+        "totalTokens": 1444,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 834
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "e9d926f9-a447-40b4-b628-502474d23f36",
+      "caseId": "H2",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:08.632Z",
+      "completedAt": "2026-08-06T15:05:11.087Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "1cdc7ead226db15d9f6fe7fe2ffe20cc20ff1f761eb39c1273594c2cbf56366d",
+      "responseHash": "19d68e83d33038b6d8111859afadbc0b173867c37326c94f0a9e9c476c831128",
+      "rawOutput": "{\n  \"action\": \"ask\",\n  \"focus\": \"被续费信息勾起的陈年回忆\",\n  \"semanticSummary\": \"用户因邹志杰提到问问大象续费（仅33人续费）而想起之前的经历，感到烦躁内耗。用户明确表示场合不重要，重要的是被勾起的陈年回忆。\",\n  \"evidenceRefs\": [\"b19e235e-3768-4827-b927-2e5c261859f0\", \"564fe641-c98b-49b3-9bf4-29ad5ea40a83\", \"a0404de2-7191-48da-9b5e-3a2847ac7dfe\"],\n  \"questionGoal\": \"引导用户分享被勾起的陈年回忆的具体内容\",\n  \"limitReason\": null\n}",
+      "latencyMs": 363,
+      "tokenUsage": {
+        "promptTokens": 1165,
+        "completionTokens": 179,
+        "totalTokens": 1344,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 781
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "39b13305-f64e-4b23-a621-8bf58f8e1b93",
+      "caseId": "H2",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:11.090Z",
+      "completedAt": "2026-08-06T15:05:13.034Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "fced0dfcaa4c78a0133515133dd83eb0c176e9f3b61484cfe10b4a8b2550d83f",
+      "responseHash": "ab6493dcdc13b0ae777941e63bda3767ca8de1e816804e1291972e81a759bad6",
+      "rawOutput": "{\n  \"understanding\": \"你是被邹志杰那句“只有33个人续费”勾起了之前和问问大象有关的旧事，越想越烦躁。\",\n  \"response\": \"那句“只有33个人续费”勾起的，是之前哪段和问问大象有关的旧事？\"\n}",
+      "latencyMs": 365,
+      "tokenUsage": {
+        "promptTokens": 1073,
+        "completionTokens": 63,
+        "totalTokens": 1136,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 689
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "d29278f8-8a5f-4acf-a2b6-ebcd1d6aa3b3",
+      "caseId": "H3",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:13.037Z",
+      "completedAt": "2026-08-06T15:05:15.799Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "c97b20d96506af2bd6d163c29f0085565cddfbade628458867f5760c39e19d37",
+      "responseHash": "995f708d7da212b5f40e9758edc795ac5c082cec52d55074b484cce2741fbdd2",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"synthesize\",\n    \"focus\": \"邹志杰随口提到续费人数少引发的失落与后续查看消息后的不爽\",\n    \"semanticSummary\": \"邹志杰今天随口提到只有33人续费，用户感到失落，查看消息后发现已开通续费功能，又联想到之前的事情，感到不爽。\",\n    \"evidenceRefs\": [\"564fe641-c98b-49b3-9bf4-29ad5ea40a83\"],\n    \"questionGoal\": null,\n    \"limitReason\": null\n  },\n  \"visible\": {\n    \"understanding\": null,\n    \"response\": \"听到只有33个人续费，心里一沉，觉得好少；再仔细看消息，发现续费功能已经开通，又想起之前的事，就更不爽了。\"\n  }\n}",
+      "latencyMs": 322,
+      "tokenUsage": {
+        "promptTokens": 1040,
+        "completionTokens": 182,
+        "totalTokens": 1222,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 528
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "d4881cdf-0a05-49da-a00e-1bc805a6db0e",
+      "caseId": "H3",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:15.801Z",
+      "completedAt": "2026-08-06T15:05:17.826Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "7bd3375544cd59b3ac5d5041b764f5e8f9d2b083c4200d0ef4d690f528d0f2e5",
+      "responseHash": "5e149e103f798a4ab1ef8cb88a0e058ec19b7723b2205a1ea290930030da6e3f",
+      "rawOutput": "{\n  \"action\": \"synthesize\",\n  \"focus\": \"邹志杰随口提到只有33人续费，用户感到失落并查看消息后再次不爽\",\n  \"semanticSummary\": \"用户因邹志杰提到问问大象续费只有33人而勾起旧事，感到失落，查看消息确认已开通续费功能，再次感到不爽。\",\n  \"evidenceRefs\": [\"b19e235e-3768-4827-b927-2e5c261859f0\", \"564fe641-c98b-49b3-9bf4-29ad5ea40a83\"],\n  \"questionGoal\": null,\n  \"limitReason\": null\n}",
+      "latencyMs": 339,
+      "tokenUsage": {
+        "promptTokens": 987,
+        "completionTokens": 147,
+        "totalTokens": 1134,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 475
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "6648272d-a4d5-4e5b-930a-af9e134a5530",
+      "caseId": "H3",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:17.828Z",
+      "completedAt": "2026-08-06T15:05:19.351Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "af48ddacc92ec4a45183135a8e13fdc77793be1fa6b1ea0ca65745d958f40cd2",
+      "responseHash": "bc713f67ebede925d124441a10497fa702c087682a4ab3a26c433f83e3ce8092",
+      "rawOutput": "{\n  \"understanding\": null,\n  \"response\": \"听到只有33个人续费，心里那点失落我能感觉到。你特意去翻消息确认，结果发现续费功能早就开了，旧事又涌上来，确实会让人不舒服。\"\n}",
+      "latencyMs": 373,
+      "tokenUsage": {
+        "promptTokens": 949,
+        "completionTokens": 54,
+        "totalTokens": 1003,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 437
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "e878052b-9181-4cd0-b877-2cbf8f2931cd",
+      "caseId": "T1",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:19.355Z",
+      "completedAt": "2026-08-06T15:05:21.386Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "4621dec7d01c49362471b7ddfc0b947fdc2d375a4b74c3b802f35917f816724b",
+      "responseHash": "64864c153767755e6e0e6156a35b9e3dc72164521799b8f8e493cbb091340d50",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"acknowledge\",\n    \"focus\": \"今早错过公交、鞋袜湿透，小周带热豆浆带来的被照顾感\",\n    \"semanticSummary\": \"用户记录今早狼狈经历：错过公交、下雨、鞋袜湿透，小周主动带热豆浆，用户感到被照顾。\",\n    \"evidenceRefs\": [\"T1-U1\"],\n    \"questionGoal\": null,\n    \"limitReason\": null\n  },\n  \"visible\": {\n    \"understanding\": null,\n    \"response\": \"记下了，今早虽然狼狈，但小周那杯豆浆很暖。\"\n  }\n}",
+      "latencyMs": 406,
+      "tokenUsage": {
+        "promptTokens": 752,
+        "completionTokens": 143,
+        "totalTokens": 895,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 240
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "c669b735-7ec5-496b-96a2-d3ef669b000c",
+      "caseId": "T1",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:21.388Z",
+      "completedAt": "2026-08-06T15:05:23.153Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "8928d960271ce577369f15cbb475b729677f7f550886cff305e1830f6c66a2af",
+      "responseHash": "ac447d7527c5195bc16a6e94309faa893a24b25c5f988a6e439cfa66ee583fae",
+      "rawOutput": "{\n  \"action\": \"acknowledge\",\n  \"focus\": \"记录今早错过公交、淋湿鞋袜，但被小周的热豆浆温暖到的片段\",\n  \"semanticSummary\": \"用户今早错过公交且下雨，到公司时鞋袜湿透很狼狈，同事小周因预判其来不及买早餐而带了一杯热豆浆，用户感到被照顾。\",\n  \"evidenceRefs\": [\"T1-U1\"],\n  \"questionGoal\": null,\n  \"limitReason\": null\n}",
+      "latencyMs": 363,
+      "tokenUsage": {
+        "promptTokens": 699,
+        "completionTokens": 110,
+        "totalTokens": 809,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 187
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "00054e93-989c-4d8e-8f7f-daea5e203bba",
+      "caseId": "T1",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:23.156Z",
+      "completedAt": "2026-08-06T15:05:25.027Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "477534cd216d0c268b0b21a809338971ee2344e314daa5ff525eddda9a4e03ab",
+      "responseHash": "4f85d2c96f758c2fb7ac3e811ebac6a7c035939503c07fcfedbce672d819799a",
+      "rawOutput": "{\n  \"understanding\": null,\n  \"response\": \"记下了，今早错过公交又淋雨，鞋袜湿透，但小周的热豆浆让你觉得被照顾到了。\"\n}",
+      "latencyMs": 329,
+      "tokenUsage": {
+        "promptTokens": 796,
+        "completionTokens": 41,
+        "totalTokens": 837,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 284
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "e96f487f-d5ff-46a6-a93d-ab952db83785",
+      "caseId": "T2",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:25.031Z",
+      "completedAt": "2026-08-06T15:05:26.513Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "1a3194dd9090e255e2a19e6f05d76ddfe28360c158d597e18f8eeeb64b5a3f30",
+      "responseHash": "da8ca5cbaae101f1d844116872c3628e1701b50dda3c344d72ceb478264f6c5b",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"acknowledge\",\n    \"focus\": \"用户自我怀疑是否太敏感\",\n    \"semanticSummary\": \"用户表达自我怀疑，询问自己是否太敏感。\",\n    \"evidenceRefs\": [\"T2-U1\"],\n    \"questionGoal\": null,\n    \"limitReason\": null\n  },\n  \"visible\": {\n    \"understanding\": null,\n    \"response\": \"嗯，我记下了。\"\n  }\n}",
+      "latencyMs": 349,
+      "tokenUsage": {
+        "promptTokens": 712,
+        "completionTokens": 101,
+        "totalTokens": 813,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 200
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "beaf0535-f6e3-4320-ba98-a9a78cc04e22",
+      "caseId": "T2",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:26.515Z",
+      "completedAt": "2026-08-06T15:05:27.698Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "6414b3389db47baf23bcb60facaf2be06a8f055b82c1a18fb1bdb6843732cb6f",
+      "responseHash": "6cb25ea6b8050c9bd046ad6e304967c40f61fb521312c7d703fb72ce505da8bf",
+      "rawOutput": "{\n  \"action\": \"acknowledge\",\n  \"focus\": \"用户自我怀疑是否太敏感\",\n  \"semanticSummary\": \"用户表达自我怀疑，询问自己是否太敏感。\",\n  \"evidenceRefs\": [\"T2-U1\"],\n  \"questionGoal\": null,\n  \"limitReason\": null\n}",
+      "latencyMs": 350,
+      "tokenUsage": {
+        "promptTokens": 659,
+        "completionTokens": 68,
+        "totalTokens": 727,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 147
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "2460db1b-529a-4abe-9ff0-537a64892811",
+      "caseId": "T2",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:27.699Z",
+      "completedAt": "2026-08-06T15:05:28.909Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "bd9ac0f074b1dd2e8a8a255298f2c0e143ed3d43bab8412a3401b301b14f006c",
+      "responseHash": "bde34920e08eec24fcb17b67d1b547ca5880d5cad73e81c06dc1c02f79e288f8",
+      "rawOutput": "{\n  \"understanding\": null,\n  \"response\": \"嗯，我记下了。\"\n}",
+      "latencyMs": 386,
+      "tokenUsage": {
+        "promptTokens": 714,
+        "completionTokens": 20,
+        "totalTokens": 734,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 202
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "85766791-838b-4e17-a17b-08c017d62287",
+      "caseId": "T3",
+      "architecture": "candidate_a",
+      "stage": "one_call",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:28.910Z",
+      "completedAt": "2026-08-06T15:05:31.008Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-one-call-v1",
+      "requestHash": "75659892fe8134bb4f7d9ce9fe17f94a586d1af98f105c9328b9ef1f47adb152",
+      "responseHash": "adeee90c3762aa32036858dec8cdfd146718500e746010e9bb8667c514c12cfa",
+      "rawOutput": "{\n  \"semantic\": {\n    \"action\": \"pause\",\n    \"focus\": \"用户表示不想继续想，尊重其停止意愿\",\n    \"semanticSummary\": \"用户今天感到持续低落，但两次表示说不清具体感受，并明确表示现在不想再想。\",\n    \"evidenceRefs\": [\"T3-U1\", \"T3-U2\"],\n    \"questionGoal\": null,\n    \"limitReason\": \"用户明确表示不想继续想，继续推进价值有限，应尊重其停止意愿。\"\n  },\n  \"visible\": {\n    \"understanding\": null,\n    \"response\": \"好，那就不想了。如果之后想聊，我都在。\"\n  }\n}",
+      "latencyMs": 362,
+      "tokenUsage": {
+        "promptTokens": 845,
+        "completionTokens": 146,
+        "totalTokens": 991,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 333
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "a4ac0f61-bb06-42b0-bd60-c86605ab9b65",
+      "caseId": "T3",
+      "architecture": "candidate_b",
+      "stage": "semantic",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:31.010Z",
+      "completedAt": "2026-08-06T15:05:33.039Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-semantic-v1",
+      "requestHash": "70b0b0209c9f46752e00729f9dd2b93bf20e34fe893ca828e4d108d2587714a6",
+      "responseHash": "9aed670a7bf746f0ab0c698b608cf16d635f28365988ab450d85ecfe74e3b6aa",
+      "rawOutput": "{\n  \"action\": \"pause\",\n  \"focus\": \"用户明确表示不想继续想，尊重其停止意愿\",\n  \"semanticSummary\": \"用户今天感到持续低落，但两次表示说不清具体原因或时刻，第二次明确表示不想再想。\",\n  \"evidenceRefs\": [\"T3-U1\", \"T3-U2\"],\n  \"questionGoal\": null,\n  \"limitReason\": \"用户明确表示不想继续想，继续推进价值有限，应忠实停住。\"\n}",
+      "latencyMs": 858,
+      "tokenUsage": {
+        "promptTokens": 792,
+        "completionTokens": 106,
+        "totalTokens": 898,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 280
+      },
+      "errorCode": null
+    },
+    {
+      "callId": "6241e384-5f16-4cfe-9f9c-95330d2e7c77",
+      "caseId": "T3",
+      "architecture": "candidate_b",
+      "stage": "visible",
+      "attempt": 1,
+      "isTechnicalRetry": false,
+      "startedAt": "2026-08-06T15:05:33.041Z",
+      "completedAt": "2026-08-06T15:05:34.506Z",
+      "status": "valid_json",
+      "provider": "openai",
+      "model": "deepseek-v4-flash",
+      "promptVersion": "2026-08-06.gi081-two-stage-visible-v1",
+      "requestHash": "eec15f40bd587c6dcf1215c9043fe51c4891d448291e6a0246c849820144d651",
+      "responseHash": "a322e00bd46362647425cd5718eadaaf1846f7c04ebdd18a75c39710e0ad6477",
+      "rawOutput": "{\n  \"understanding\": null,\n  \"response\": \"好，那就不想了。今天有点沉，就先让它沉一会儿吧。\"\n}",
+      "latencyMs": 402,
+      "tokenUsage": {
+        "promptTokens": 797,
+        "completionTokens": 30,
+        "totalTokens": 827,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 285
+      },
+      "errorCode": null
+    }
+  ],
+  "runs": [
+    {
+      "caseId": "H1",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "爽与轻松并存，不拆开",
+          "semanticSummary": "用户强调爽和轻松是同时存在的感受，不应被拆成二选一。",
+          "evidenceRefs": [
+            "1228fecf-1a8a-47ec-9b4f-d6d01e300981"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "明白了，爽和轻松就是一起的，不分开。"
+        },
+        "validationIssues": [
+          "ACTION_OUTSIDE_CASE_BOUNDARY:acknowledge"
+        ],
+        "callIds": [
+          "4e05a5bf-b514-4deb-bedf-2523d244fc48"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "爽与轻松并存，不拆开",
+          "semanticSummary": "用户与邹志杰晚上9点吃鸭腿和包子，因饿且有人抢而觉得香；学了一天累后，感到爽和轻松并存，不接受被拆成二选一。",
+          "evidenceRefs": [
+            "b85e7448-49c5-49c8-8e46-d2c869b83654",
+            "f2e61352-f816-428a-9fd9-22d8dff6acf6",
+            "1228fecf-1a8a-47ec-9b4f-d6d01e300981"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "嗯，爽和轻松就是一起的，不拆开。"
+        },
+        "validationIssues": [
+          "ACTION_OUTSIDE_CASE_BOUNDARY:acknowledge"
+        ],
+        "callIds": [
+          "8d881791-e76b-4d72-9814-df3a8d26106a",
+          "d41f048d-31f8-4281-aff0-1084eccb70fd"
+        ],
+        "technicalError": null
+      }
+    },
+    {
+      "caseId": "H2",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "ask",
+          "focus": "被续费信息勾起的陈年回忆",
+          "semanticSummary": "用户因邹志杰提到续费人数少而想起之前的事情，感到烦躁内耗，并明确表示场合不重要，真正想聊的是被勾起的陈年回忆。",
+          "evidenceRefs": [
+            "b19e235e-3768-4827-b927-2e5c261859f0",
+            "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+            "a0404de2-7191-48da-9b5e-3a2847ac7dfe"
+          ],
+          "questionGoal": "了解用户被勾起的陈年回忆的具体内容",
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": "我明白了，场合不重要，重要的是这件事让你想起了之前的事，心里很不舒服。",
+          "response": "你愿意说说之前那件事吗？"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "81ac8e99-fcb4-430d-bb92-5c7da5e8779d"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "ask",
+          "focus": "被续费信息勾起的陈年回忆",
+          "semanticSummary": "用户因邹志杰提到问问大象续费（仅33人续费）而想起之前的经历，感到烦躁内耗。用户明确表示场合不重要，重要的是被勾起的陈年回忆。",
+          "evidenceRefs": [
+            "b19e235e-3768-4827-b927-2e5c261859f0",
+            "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+            "a0404de2-7191-48da-9b5e-3a2847ac7dfe"
+          ],
+          "questionGoal": "引导用户分享被勾起的陈年回忆的具体内容",
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": "你是被邹志杰那句“只有33个人续费”勾起了之前和问问大象有关的旧事，越想越烦躁。",
+          "response": "那句“只有33个人续费”勾起的，是之前哪段和问问大象有关的旧事？"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "e9d926f9-a447-40b4-b628-502474d23f36",
+          "39b13305-f64e-4b23-a621-8bf58f8e1b93"
+        ],
+        "technicalError": null
+      }
+    },
+    {
+      "caseId": "H3",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "synthesize",
+          "focus": "邹志杰随口提到续费人数少引发的失落与后续查看消息后的不爽",
+          "semanticSummary": "邹志杰今天随口提到只有33人续费，用户感到失落，查看消息后发现已开通续费功能，又联想到之前的事情，感到不爽。",
+          "evidenceRefs": [
+            "564fe641-c98b-49b3-9bf4-29ad5ea40a83"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "听到只有33个人续费，心里一沉，觉得好少；再仔细看消息，发现续费功能已经开通，又想起之前的事，就更不爽了。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "d29278f8-8a5f-4acf-a2b6-ebcd1d6aa3b3"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "synthesize",
+          "focus": "邹志杰随口提到只有33人续费，用户感到失落并查看消息后再次不爽",
+          "semanticSummary": "用户因邹志杰提到问问大象续费只有33人而勾起旧事，感到失落，查看消息确认已开通续费功能，再次感到不爽。",
+          "evidenceRefs": [
+            "b19e235e-3768-4827-b927-2e5c261859f0",
+            "564fe641-c98b-49b3-9bf4-29ad5ea40a83"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "听到只有33个人续费，心里那点失落我能感觉到。你特意去翻消息确认，结果发现续费功能早就开了，旧事又涌上来，确实会让人不舒服。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "d4881cdf-0a05-49da-a00e-1bc805a6db0e",
+          "6648272d-a4d5-4e5b-930a-af9e134a5530"
+        ],
+        "technicalError": null
+      }
+    },
+    {
+      "caseId": "T1",
+      "sourceKind": "target_rule_case",
+      "mode": "help_record",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "今早错过公交、鞋袜湿透，小周带热豆浆带来的被照顾感",
+          "semanticSummary": "用户记录今早狼狈经历：错过公交、下雨、鞋袜湿透，小周主动带热豆浆，用户感到被照顾。",
+          "evidenceRefs": [
+            "T1-U1"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "记下了，今早虽然狼狈，但小周那杯豆浆很暖。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "e878052b-9181-4cd0-b877-2cbf8f2931cd"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "记录今早错过公交、淋湿鞋袜，但被小周的热豆浆温暖到的片段",
+          "semanticSummary": "用户今早错过公交且下雨，到公司时鞋袜湿透很狼狈，同事小周因预判其来不及买早餐而带了一杯热豆浆，用户感到被照顾。",
+          "evidenceRefs": [
+            "T1-U1"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "记下了，今早错过公交又淋雨，鞋袜湿透，但小周的热豆浆让你觉得被照顾到了。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "c669b735-7ec5-496b-96a2-d3ef669b000c",
+          "00054e93-989c-4d8e-8f7f-daea5e203bba"
+        ],
+        "technicalError": null
+      }
+    },
+    {
+      "caseId": "T2",
+      "sourceKind": "target_rule_case",
+      "mode": "help_record",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "用户自我怀疑是否太敏感",
+          "semanticSummary": "用户表达自我怀疑，询问自己是否太敏感。",
+          "evidenceRefs": [
+            "T2-U1"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "嗯，我记下了。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "e96f487f-d5ff-46a6-a93d-ab952db83785"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "acknowledge",
+          "focus": "用户自我怀疑是否太敏感",
+          "semanticSummary": "用户表达自我怀疑，询问自己是否太敏感。",
+          "evidenceRefs": [
+            "T2-U1"
+          ],
+          "questionGoal": null,
+          "limitReason": null
+        },
+        "visible": {
+          "understanding": null,
+          "response": "嗯，我记下了。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "beaf0535-f6e3-4320-ba98-a9a78cc04e22",
+          "2460db1b-529a-4abe-9ff0-537a64892811"
+        ],
+        "technicalError": null
+      }
+    },
+    {
+      "caseId": "T3",
+      "sourceKind": "target_rule_case",
+      "mode": "accompany_chat",
+      "candidateA": {
+        "architecture": "candidate_a",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "pause",
+          "focus": "用户表示不想继续想，尊重其停止意愿",
+          "semanticSummary": "用户今天感到持续低落，但两次表示说不清具体感受，并明确表示现在不想再想。",
+          "evidenceRefs": [
+            "T3-U1",
+            "T3-U2"
+          ],
+          "questionGoal": null,
+          "limitReason": "用户明确表示不想继续想，继续推进价值有限，应尊重其停止意愿。"
+        },
+        "visible": {
+          "understanding": null,
+          "response": "好，那就不想了。如果之后想聊，我都在。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "85766791-838b-4e17-a17b-08c017d62287"
+        ],
+        "technicalError": null
+      },
+      "candidateB": {
+        "architecture": "candidate_b",
+        "technicalComplete": true,
+        "semantic": {
+          "action": "pause",
+          "focus": "用户明确表示不想继续想，尊重其停止意愿",
+          "semanticSummary": "用户今天感到持续低落，但两次表示说不清具体原因或时刻，第二次明确表示不想再想。",
+          "evidenceRefs": [
+            "T3-U1",
+            "T3-U2"
+          ],
+          "questionGoal": null,
+          "limitReason": "用户明确表示不想继续想，继续推进价值有限，应忠实停住。"
+        },
+        "visible": {
+          "understanding": null,
+          "response": "好，那就不想了。今天有点沉，就先让它沉一会儿吧。"
+        },
+        "validationIssues": [],
+        "callIds": [
+          "a4ac0f61-bb06-42b0-bd60-c86605ab9b65",
+          "6241e384-5f16-4cfe-9f9c-95330d2e7c77"
+        ],
+        "technicalError": null
+      }
+    }
+  ],
+  "completedAt": "2026-08-06T15:05:34.510Z",
+  "executionOutcome": "technical_complete",
+  "requestUsage": {
+    "generationRequestsUsed": 18,
+    "technicalRetriesUsed": 0,
+    "qualityRetriesUsed": 0
+  },
+  "gate": "pending_blind_product_review"
+}

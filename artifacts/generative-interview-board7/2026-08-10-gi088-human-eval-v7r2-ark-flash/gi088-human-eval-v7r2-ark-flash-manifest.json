@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "status": "ready_for_preview_deploy_and_blank_batch",
+  "status": "sealed_2_of_2_reliability_no_go",
   "evaluation": {
     "id": "gi088_human_eval_v7r2_ark_flash",
     "version": "2026-08-10.gi088-human-eval-v7r2-ark-flash",
@@ -76,18 +76,38 @@
     "diffCheck": "passed",
     "inspectModelGenerationCalls": 0
   },
+  "humanEvaluation": {
+    "status": "sealed",
+    "completedTaskCount": 2,
+    "totalTaskCount": 2,
+    "userSubmissions": 15,
+    "providerCalls": 20,
+    "firstCallDirectSuccesses": 10,
+    "automaticRecoverySuccesses": 3,
+    "finalProtectedFailures": 2,
+    "manualRetryTurns": 1,
+    "targetTriggeredTasks": ["A1", "A2"],
+    "productOwnerQuality": {
+      "A1": "minor_issue",
+      "A2": "minor_issue"
+    },
+    "confirmedRootCause": "working_task_lineage_was_model_maintained_and_required_full_history_repetition",
+    "traceAnchors": ["A1_U8", "A2_U7"],
+    "reliabilityGate": "no_go"
+  },
   "preview": {
-    "deployed": false,
-    "deploymentId": null,
-    "deploymentUrl": null,
-    "evaluationPageUrl": null,
-    "pageReadbackStatus": null,
-    "newBatchCreated": false,
-    "batchId": null,
-    "batchStatus": null,
-    "completedTaskCount": 0,
+    "deployed": true,
+    "deploymentId": "dpl_HDemGjQPpMhTFhj5fw8Yq8iehpwX",
+    "deploymentUrl": "https://xingfuxitong-8p5uc4ng7-zouzhijies-projects.vercel.app",
+    "evaluationPageUrl": "https://xingfuxitong-8p5uc4ng7-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "pageReadbackStatus": 200,
+    "newBatchCreated": true,
+    "batchId": "c10c8c25-b3f9-4bfb-a02a-c5c0a44c303c",
+    "batchStatus": "sealed",
+    "completedTaskCount": 2,
     "totalTaskCount": 2,
     "expectedInitialBatchStatus": "running_0_of_2",
+    "finalBatchStatus": "sealed_2_of_2",
     "modelCallsDuringBatchInitialization": 0
   },
   "production": {

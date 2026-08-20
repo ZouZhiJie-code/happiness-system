@@ -206,6 +206,10 @@ export function getAdminAnalyticsFunnelLabel(
     | "firstReply"
     | "draftGenerated"
     | "journalSaved"
+    | "openedDay"
+    | "firstContentSubmitted"
+    | "completeResponseReceived"
+    | "eventCardSaved"
     | "dailyJournalGenerated"
     | "dailyJournalSaved"
 ) {
@@ -224,10 +228,18 @@ export function getAdminAnalyticsFunnelLabel(
       return "生成维度草稿";
     case "journalSaved":
       return "保存维度日志";
+    case "openedDay":
+      return "打开当天记录";
+    case "firstContentSubmitted":
+      return "首次提交内容";
+    case "completeResponseReceived":
+      return "获得完整回应";
+    case "eventCardSaved":
+      return "保存事件卡";
     case "dailyJournalGenerated":
-      return "生成完整日志";
+      return "生成今日日记";
     case "dailyJournalSaved":
-      return "保存完整日志";
+      return "保存今日日记";
   }
 }
 

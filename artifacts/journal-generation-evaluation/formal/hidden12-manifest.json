@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "split_id": "hidden12",
+  "status": "slots_only_no_case_content",
+  "expected_case_count": 12,
+  "visibility": "hidden_until_candidate_and_dev28_freeze",
+  "iteration_use": "forbidden",
+  "content_policy": {
+    "tracked_case_content": false,
+    "private_materialization_root": "../.private/formal/hidden12/",
+    "source_group_assignment": "assign_only_when_each independent story is collected or authored",
+    "leak_response": "invalidate affected slot and replace with a new independent slot"
+  },
+  "composition": {
+    "new_private_human": 3,
+    "post_freeze_independent_synthetic": 9
+  },
+  "slots": [
+    { "slot_id": "hidden-real-01", "kind": "new_private_human", "synthetic": false, "source_group_id": null, "content_status": "intentionally_unfilled", "eligibility": "全新真人故事；未进入 dev28、Prompt、规则或候选迭代", "collection_timing": "to_be_scheduled", "materialized_path": null },
+    { "slot_id": "hidden-real-02", "kind": "new_private_human", "synthetic": false, "source_group_id": null, "content_status": "intentionally_unfilled", "eligibility": "全新真人故事；未进入 dev28、Prompt、规则或候选迭代", "collection_timing": "to_be_scheduled", "materialized_path": null },
+    { "slot_id": "hidden-real-03", "kind": "new_private_human", "synthetic": false, "source_group_id": null, "content_status": "intentionally_unfilled", "eligibility": "全新真人故事；未进入 dev28、Prompt、规则或候选迭代", "collection_timing": "to_be_scheduled", "materialized_path": null },
+
+    { "slot_id": "hidden-synth-01", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-02", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-03", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-04", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-05", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-06", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-07", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-08", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null },
+    { "slot_id": "hidden-synth-09", "kind": "post_freeze_independent_synthetic", "synthetic": true, "source_group_id": null, "content_status": "intentionally_unfilled", "creation_timing": "after_candidate_and_dev28_freeze", "independence": "不得改写或派生 dev28 故事", "materialized_path": null }
+  ]
+}

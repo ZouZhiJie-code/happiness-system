@@ -67,6 +67,7 @@ const EXECUTION_SOURCE_PATHS = [
   "node_modules/zod/package.json"
 ] as const;
 const EXECUTION_SOURCE_DIRECTORIES = ["src/server/services/ai"] as const;
+const OPTIONAL_PACKAGE_MANAGER_METADATA = "node_modules/.modules.yaml";
 const KEYCHAIN_ACCOUNT = "board7a";
 const KEYCHAIN_SERVICE = "com.dailylight.local-eval.deepseek";
 const execFileAsync = promisify(execFile);
@@ -430,10 +431,30 @@ export async function createBoard7bWorkingTaskV1ExecutionFingerprint(input: {
   ).flat();
   const sourcePaths = [...new Set([...fixedPaths, ...directoryPaths])].sort();
   const sources = await Promise.all(
-    sourcePaths.map(async (path) => ({
-      path: relative(workspaceRoot, path),
-      sha256: sha256(await readFile(path, "utf8"))
-    }))
+    sourcePaths.map(async (path) => {
+      const sourcePath = relative(workspaceRoot, path);
+      try {
+        return {
+          path: sourcePath,
+          sha256: sha256(await readFile(path, "utf8"))
+        };
+      } catch (error) {
+        if (
+          sourcePath === OPTIONAL_PACKAGE_MANAGER_METADATA &&
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          return {
+            path: sourcePath,
+            sha256: null,
+            availability: "unavailable_in_current_package_manager" as const
+          };
+        }
+        throw error;
+      }
+    })
   );
   return sha256(
     JSON.stringify({

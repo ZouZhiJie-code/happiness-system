@@ -1,0 +1,391 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": {
+    "model": "deepseek-v4-flash",
+    "currency": "USD",
+    "inputPerMillion": 0.14,
+    "cacheHitInputPerMillion": 0.0028,
+    "outputPerMillion": 0.28,
+    "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+    "effectiveDate": "2026-07-29"
+  },
+  "singleRuns": [
+    {
+      "runId": "AB-FG-01-R1",
+      "caseId": "AB-FG-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "evidenceUsed": [
+        "AB-FG-01-fact-2",
+        "AB-FG-01-fact-3",
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "看见事情结束与身体结束并不同步：猫回来时身体仍紧绷，听见它正常进食后才真正放松。",
+      "stopReason": "引导复盘形成了一条有证据、超出原话复述的感受认识增量：身体放松滞后于事件结束。",
+      "latencyMs": 5425,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 1569,
+          "tokenUsage": {
+            "promptTokens": 1963,
+            "completionTokens": 567,
+            "totalTokens": 2530,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 1963
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"门一开我就把它抱住了，可手还一直攥着\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"门一开我就把它抱住了，可手还一直攥着\"\n      },\n      {\n        \"statement\": \"直到听见它像平时一样咔嚓咔嚓吃猫粮，我才坐到地上，整个人软下来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"直到听见它像平时一样咔嚓咔嚓吃猫粮，我才坐到地上，整个人软下来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户描述了身体从紧绷到放松的完整过程，且放松的触发点是听见猫正常进食，形成了事件结束与身体结束不同步的认识增量。\",\n      \"supportEvidenceRefs\": [\"AB-FG-01-fact-2\", \"AB-FG-01-fact-3\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-FG-01-fact-2\", \"AB-FG-01-fact-3\", \"new:1\", \"new:2\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见事情结束与身体结束并不同步：猫回来时身体仍紧绷，听见它正常进食后才真正放松。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"引导复盘形成了一条有证据、超出原话复述的感受认识增量：身体放松滞后于事件结束。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"猫回来时你的身体还绷着，直到听见它像平时一样吃猫粮，你才真正坐下来放松——事情结束和身体结束并不同步。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5426,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 1963,
+          "completionTokens": 567,
+          "totalTokens": 2530,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 1963
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00043358000000000003
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "5ea2b7b94dca13ebcc6f9d8da629355ca70e232b49f60310f03869b353767f13"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:ready",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-TD-01-R1",
+      "caseId": "AB-TD-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 5071,
+      "runtimeError": "[\n  {\n    \"code\": \"too_big\",\n    \"maximum\": 6,\n    \"type\": \"array\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"Array must contain at most 6 element(s)\",\n    \"path\": [\n      \"semanticPlan\",\n      \"microgoalDelta\",\n      \"supportEvidenceRefs\"\n    ]\n  },\n  {\n    \"code\": \"too_big\",\n    \"maximum\": 6,\n    \"type\": \"array\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"Array must contain at most 6 element(s)\",\n    \"path\": [\n      \"decision\",\n      \"microgoalDelta\",\n      \"supportEvidenceRefs\"\n    ]\n  },\n  {\n    \"code\": \"too_big\",\n    \"maximum\": 6,\n    \"type\": \"array\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"Array must contain at most 6 element(s)\",\n    \"path\": [\n      \"decision\",\n      \"outcomeCandidate\",\n      \"supportEvidenceRefs\"\n    ]\n  }\n]",
+      "attempts": 0,
+      "attemptDetails": [],
+      "metrics": {
+        "latencyMs": 5071,
+        "attempts": 0,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "unavailable",
+        "angleCard": "unavailable",
+        "fewShot": "unavailable",
+        "examples": []
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-RG-01-R1",
+      "caseId": "AB-RG-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 5748,
+      "runtimeError": "[\n  {\n    \"code\": \"too_big\",\n    \"maximum\": 6,\n    \"type\": \"array\",\n    \"inclusive\": true,\n    \"exact\": false,\n    \"message\": \"Array must contain at most 6 element(s)\",\n    \"path\": [\n      \"decision\",\n      \"outcomeCandidate\",\n      \"supportEvidenceRefs\"\n    ]\n  }\n]",
+      "attempts": 0,
+      "attemptDetails": [],
+      "metrics": {
+        "latencyMs": 5748,
+        "attempts": 0,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "unavailable",
+        "angleCard": "unavailable",
+        "fewShot": "unavailable",
+        "examples": []
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-AD-01-R1",
+      "caseId": "AB-AD-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "evidenceUsed": [
+        "AB-AD-01-fact-1",
+        "AB-AD-01-fact-2",
+        "AB-AD-01-fact-3",
+        "AB-AD-01-fact-4"
+      ],
+      "expectedQuestionValue": "记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。",
+      "stopReason": "用户明确表达了记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。",
+      "latencyMs": 4237,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 391,
+          "tokenUsage": {
+            "promptTokens": 2003,
+            "completionTokens": 608,
+            "totalTokens": 2611,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 1491
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把每个人的话整理成清单\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把每个人的话都记成清单\"\n      },\n      {\n        \"statement\": \"记笔记后讨论不再互相抢话\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"大家确实不再抢着说\"\n      },\n      {\n        \"statement\": \"用户借记笔记没有表达自己的反对意见\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"记笔记也让我有理由一直不说自己不同意\"\n      },\n      {\n        \"statement\": \"最终无人知道用户立场\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最后清单很完整，却没人知道我的立场\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确表达了记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。\",\n      \"supportEvidenceRefs\": [\"AB-AD-01-fact-1\", \"AB-AD-01-fact-2\", \"AB-AD-01-fact-3\", \"AB-AD-01-fact-4\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-AD-01-fact-1\", \"AB-AD-01-fact-2\", \"AB-AD-01-fact-3\", \"AB-AD-01-fact-4\"],\n    \"insightKind\": \"tension\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4237,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2003,
+          "completionTokens": 608,
+          "totalTokens": 2611,
+          "promptCacheHitTokens": 512,
+          "promptCacheMissTokens": 1491
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0003804136
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "ea278c3704b8f315ec6b53674f0743a0693ee2b9b10cf0fcdadf614e19a60307"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:ready",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

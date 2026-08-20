@@ -20,13 +20,13 @@
 
 | 配置 | 结果 | 请求 UUID | 冒烟 deployment | Token 与推理摘要 | Provider 耗时 |
 |---|---|---|---|---|---:|
-| Thinking 关闭 | `valid`，`finishReason=stop` | `redacted-operational-id` | `redacted-deployment-id` | 总 Token `2553`；reasoning `false / 0` 字符；推理 Token 未返回 | `369ms` |
-| Thinking high | `valid`，`finishReason=stop` | `redacted-operational-id` | `redacted-deployment-id` | 总 Token `3377`；reasoning `true / 2971` 字符；推理 Token `722` | `411ms` |
+| Thinking 关闭 | `valid`，`finishReason=stop` | `b1389fce-5488-45ac-b300-f6ce3c52f132` | `dpl_5CZN1qAUPBrtssXtFZ1HkpmmKVJg` | 总 Token `2553`；reasoning `false / 0` 字符；推理 Token 未返回 | `369ms` |
+| Thinking high | `valid`，`finishReason=stop` | `bb756d3c-af07-4072-9bb5-8e88209a2167` | `dpl_CWoVyTmxKZUgUFUMhrGbtAGDnz5f` | 总 Token `3377`；reasoning `true / 2971` 字符；推理 Token `722` | `411ms` |
 
 ## 当前授权边界
 
-- 技术冒烟结束后的 disabled deployment：`redacted-deployment-id`，保留为历史检查点；
-- 历史 formal batch deployment：`redacted-deployment-id`；当时访问地址：`https://xingfuxitong-34pbcz5so-example-team.vercel.app/preview/gi088-evaluation`；
+- 技术冒烟结束后的 disabled deployment：`dpl_5pmHL14RkQyXqATbZSFHwAqThegz`，保留为历史检查点；
+- 历史 formal batch deployment：`dpl_EhDcw5vVpHbLzAPFQp9wXJ2aNCiW`；当时访问地址：`https://xingfuxitong-34pbcz5so-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
 - v0.5 两臂冒烟授权已经消费，后续新增冒烟需要绑定新授权、对应 arm 和全新 UUID；
 - 同一授权重复提交只读回原记录，不产生第二次 Provider 调用；
 - 技术失败、结构保护失败和进程中断都会消费该 UUID；

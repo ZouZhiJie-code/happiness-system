@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -249,12 +249,7 @@ function reviewedRuns() {
   return applyGenerativeV70RootVisibleProbeReviews(runs, passReviews(runs));
 }
 
-const hasPrivateHistoricalArtifacts = [
-  GENERATIVE_V70_ROOT_VISIBLE_PROBE_ARTIFACT_PATHS.json,
-  GENERATIVE_V70_ROOT_VISIBLE_PROBE_ARTIFACT_PATHS.budget
-].every(existsSync);
-
-describe.skipIf(!hasPrivateHistoricalArtifacts)("board 7 Provider v70/v70 root-visible probe", () => {
+describe("board 7 Provider v70/v70 root-visible probe", () => {
   it("冻结数据集、案例顺序、案例指纹和两个最小规则", () => {
     expect(GENERATIVE_V70_ROOT_VISIBLE_PROBE_DATASET_VERSION).toBe(
       "2026-08-01.board7-provider-v70-root-visible-probe-v1"

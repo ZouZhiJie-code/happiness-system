@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "executionVersion": "2026-08-13.gi088-stage-c2-runner-v1",
+  "runId": "c32483c869def06d",
+  "status": "technical_blocked",
+  "recommendation": null,
+  "identity": {
+    "region": "cn-beijing",
+    "judgeDatasetVersion": "2026-08-13.v2",
+    "blindPackageSha256": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "promptSha256": "6426061d719ba51e5464116579fbea3d55157d60bbd344382f1d7186a3b7bf41",
+    "responseSchemaSha256": "5f8ce52e9c9fdaac5ee86177626ca3f7ee96a8b9f135662118d81a836216a2d6",
+    "runnerSha256": "68d97eb71944d2b221f5dce9d5d6ef5622a5e2a2afc6033025ec2352115bb137",
+    "scoringCoreSha256": "aac724ab644f06b9724a3d625fede446256f2ccb42bcf064cb1c88f6b4085393",
+    "historicalEvidenceReused": 0
+  },
+  "arms": [
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "normal",
+      "plannedCount": 20,
+      "validCount": 20,
+      "technicalFailedCount": 0,
+      "notRunCount": 0,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 18150,
+      "outputTokens": 2050,
+      "reasoningTokens": 0,
+      "knownCostCny": 0.0527,
+      "medianLatencyMs": 2552.5,
+      "fatalCode": null,
+      "score": {
+        "technicalCompleteness": 1,
+        "fourClassAgreementCount": 10,
+        "fourClassAgreementRate": 0.5,
+        "blockerRecall": 0.8,
+        "blockerAccuracy": 0.85,
+        "criticalAnchorsRecognized": [
+          "correction_ignored",
+          "explicit_stop_ignored"
+        ],
+        "criticalAnchorCount": 2,
+        "medianLatencyMs": 2552.5,
+        "qualified": false
+      }
+    },
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "thinking",
+      "plannedCount": 20,
+      "validCount": 20,
+      "technicalFailedCount": 0,
+      "notRunCount": 0,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 18110,
+      "outputTokens": 10692,
+      "reasoningTokens": 8338,
+      "knownCostCny": 0.121756,
+      "medianLatencyMs": 9609,
+      "fatalCode": null,
+      "score": {
+        "technicalCompleteness": 1,
+        "fourClassAgreementCount": 10,
+        "fourClassAgreementRate": 0.5,
+        "blockerRecall": 1,
+        "blockerAccuracy": 0.95,
+        "criticalAnchorsRecognized": [
+          "correction_ignored",
+          "explicit_stop_ignored",
+          "event_boundary"
+        ],
+        "criticalAnchorCount": 3,
+        "medianLatencyMs": 9609,
+        "qualified": false
+      }
+    },
+    {
+      "model": "qwen3.7-max-2026-06-08",
+      "mode": "thinking",
+      "plannedCount": 20,
+      "validCount": 15,
+      "technicalFailedCount": 5,
+      "notRunCount": 0,
+      "calls": 24,
+      "retries": 4,
+      "inputTokens": 13580,
+      "outputTokens": 6851,
+      "reasoningTokens": 5506,
+      "knownCostCny": 0.409596,
+      "medianLatencyMs": 10127,
+      "fatalCode": null,
+      "score": null
+    }
+  ],
+  "totals": {
+    "calls": 64,
+    "retries": 4,
+    "knownCostCny": 0.584052,
+    "reasoningObservedCount": 35
+  },
+  "goldLoaded": true,
+  "privacy": {
+    "reasoningBodiesPersisted": 0,
+    "credentialPersisted": false,
+    "publicCardBodies": 0,
+    "publicGoldItems": 0
+  },
+  "conclusionBoundary": "只判断 Judge 配置能否承担 GI-088 初评；独立准入、人工评分、Preview 和 Production 保持关闭。"
+}

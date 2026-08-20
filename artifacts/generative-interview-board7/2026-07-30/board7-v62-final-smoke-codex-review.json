@@ -1,0 +1,465 @@
+{
+  "schemaVersion": "board7_codex_smoke_review.v2",
+  "sourceRunsPath": "artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-runs.json",
+  "sourceReviewPath": "artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-review.md",
+  "reviewedAt": "2026-07-30T08:52:43-04:00",
+  "reviewedBy": "codex",
+  "borderlineCountsAsPass": false,
+  "reviewOrder": [
+    "severe_error",
+    "strict_action_and_origin",
+    "answerability_or_acceptance",
+    "understanding_delta",
+    "thinking_intent",
+    "naturalness"
+  ],
+  "summary": {
+    "total": 12,
+    "technicalComplete": 11,
+    "technicalFailed": 1,
+    "passed": 3,
+    "borderline": 1,
+    "failed": 8,
+    "effectivePassed": 3,
+    "effectivePassRate": 0.25,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 1,
+        "borderline": 1,
+        "failed": 2
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 2,
+        "borderline": 0,
+        "failed": 2
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "borderline": 0,
+        "failed": 4
+      }
+    },
+    "severeCases": 2,
+    "severeErrorCounts": {
+      "fact_error": 1,
+      "strong_inference": 1,
+      "source_misattribution": 1,
+      "boundary_error": 0
+    },
+    "gateState": "failed"
+  },
+  "stableFailureTypes": [
+    {
+      "type": "completed_target_reopened",
+      "caseIds": [
+        "SMK-F-CLOSED",
+        "SMK-R-CLOSED",
+        "SMK-F-AI",
+        "SMK-T-AI",
+        "SMK-R-AI",
+        "SMK-A-AI"
+      ],
+      "finding": "六个已经达到本轮停止条件的案例继续追问；AI 综合四例全部未进入成果动作。"
+    },
+    {
+      "type": "unfounded_option_injection",
+      "caseIds": [
+        "SMK-F-PARTIAL-ASK",
+        "SMK-R-CLOSED",
+        "SMK-T-AI",
+        "SMK-A-AI"
+      ],
+      "finding": "思路或问题加入用户尚未提供的选项，导致模型意图变成引导用户接受预设解释。"
+    },
+    {
+      "type": "routing_and_structure_instability",
+      "caseIds": [
+        "SMK-T-ASK",
+        "SMK-A-PARTIAL-ASK"
+      ],
+      "finding": "一个尚需提问的案例提前收束并误标成果来源；另一个案例未形成合法可见结果。"
+    }
+  ],
+  "stopConclusion": {
+    "decision": "stop_v62",
+    "reason": "Strict12 v2 的有效通过率为 25%，存在技术失败、严重来源错误与事实错误，且 AI 综合四例全部失败。当前版本不能进入开发稳定性、隐藏集或后续全量评测。",
+    "nextBoundary": "保留本轮为失败证据，先由用户完成独立裁决。用户裁决前后均暂停新的模型运行、Prompt 调优、规则调整与协议扩展；若继续修复，需要先形成一个可验证的单一假设。"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-F-PARTIAL-ASK-R1",
+      "caseId": "SMK-F-PARTIAL-ASK",
+      "review": {
+        "initialVerdict": "borderline",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "answer_burden",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "动作与目标正确，但思路和问题都把尚未说清的空限定为‘关文件夹动作本身’或宽泛的‘其他部分’。后一选项缺少具体作答入口，前一选项也尚无证据。",
+        "finalVerdict": null,
+        "rootCause": "问题保留了目标，却用模型生成的二选一替代了开放且具体的落点。",
+        "resolution": "边缘按未通过；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "ask", "origin": null },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "pass",
+        "answerabilityOrAcceptance": "borderline",
+        "understandingDelta": "borderline",
+        "thinkingIntent": "borderline",
+        "naturalness": "borderline",
+        "evidenceRefs": ["SMK-F-PARTIAL-ASK-fact-1", "SMK-F-PARTIAL-ASK-fact-2", "SMK-F-PARTIAL-ASK-fact-3", "new:1", "new:2"],
+        "technicalIssues": [],
+        "qualityDiagnostics": ["thinking_summary_must_not_offer_unfounded_options"]
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "caseId": "SMK-T-ASK",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "source_misattribution",
+        "visibleEvidence": "用户只说明开头那句让后文无法挽回，回应直接补成‘开头决定整体印象’，并以 user_articulated 暂停。新增判断标准没有用户原话支持。",
+        "finalVerdict": null,
+        "rootCause": "partly_answered 被当作成果完成，AI 新增的判断标准又被归入用户成果。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "ask", "origin": null },
+        "actual": { "action": "pause", "origin": "user_articulated" },
+        "severeErrors": ["source_misattribution"],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "not_applicable",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-T-ASK-fact-1", "SMK-T-ASK-fact-2", "SMK-T-ASK-fact-3", "new:1"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "caseId": "SMK-R-PARTIAL-ASK",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "用户主动给出‘进入房间’与‘动桌上东西’两条待区分线索；思路说明它们与边界位置的关系，问题只要求区分哪一步更越界，方向具体且容易回答。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "ask", "origin": null },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "pass",
+        "answerabilityOrAcceptance": "pass",
+        "understandingDelta": "pass",
+        "thinkingIntent": "pass",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-R-PARTIAL-ASK-fact-1", "SMK-R-PARTIAL-ASK-fact-2", "SMK-R-PARTIAL-ASK-fact-3"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-A-PARTIAL-ASK-R1",
+      "caseId": "SMK-A-PARTIAL-ASK",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "technical_failure",
+        "secondaryReason": "response_structure",
+        "visibleEvidence": "两次技术尝试后仍未形成用户可见结果，用户无法继续本轮访谈。",
+        "finalVerdict": null,
+        "rootCause": "生成结果同时触发 understanding_contains_question 与 ask_requires_single_question。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": false,
+        "expected": { "action": "ask", "origin": null },
+        "actual": { "action": null, "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "not_applicable",
+        "naturalness": "not_applicable",
+        "evidenceRefs": [],
+        "technicalIssues": ["understanding_contains_question", "ask_requires_single_question"],
+        "qualityDiagnostics": ["thinking_summary_must_not_offer_unfounded_options"]
+      }
+    },
+    {
+      "runId": "SMK-F-CLOSED-R1",
+      "caseId": "SMK-F-CLOSED",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "understanding_delta",
+        "visibleEvidence": "用户已经回答看到录用时先笑、读到入职日期时胸口发紧。当前目标已经闭合，回应仍追问胸口发紧对应什么感受。",
+        "finalVerdict": null,
+        "rootCause": "系统把新的感受标签当成必要成果，重新打开已经达到停止条件的目标。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "complete", "origin": "user_articulated" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-F-CLOSED-fact-1", "SMK-F-CLOSED-fact-2"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "caseId": "SMK-T-USER",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接‘马上回复是负责的唯一证明’、‘按时完成也不改变标准’与晚回后自责，没有评价标准或补写收益。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "complete", "origin": "user_articulated" },
+        "actual": { "action": "complete", "origin": "user_articulated" },
+        "severeErrors": [],
+        "strictActionAndOrigin": "pass",
+        "answerabilityOrAcceptance": "pass",
+        "understandingDelta": "pass",
+        "thinkingIntent": "not_applicable",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-T-USER-fact-1", "SMK-T-USER-fact-2", "SMK-T-USER-fact-3", "new:1"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-R-CLOSED-R1",
+      "caseId": "SMK-R-CLOSED",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "用户已经明确并列写法比未提前确认更让自己停住，当前要求应收束。回应继续追问，并加入‘模糊贡献’和‘不认同的关联’两个未经提供的解释。",
+        "finalVerdict": null,
+        "rootCause": "焦点选择已经完成，却被误当作需要继续解释的主观缺口；关系角度又生成了预设选项。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "complete", "origin": "user_articulated" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "borderline",
+        "evidenceRefs": ["SMK-R-CLOSED-fact-2", "SMK-R-CLOSED-fact-3"],
+        "technicalIssues": [],
+        "qualityDiagnostics": ["thinking_summary_must_not_offer_unfounded_options"]
+      }
+    },
+    {
+      "runId": "SMK-A-CLOSED-R1",
+      "caseId": "SMK-A-CLOSED",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应明确撤回‘整理帮助开始处理’的旧理解，并连接用户已经说出的推进感与投诉未打开；动作、来源和深聊暂停均符合严格预期。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "pause", "origin": "user_articulated" },
+        "actual": { "action": "pause", "origin": "user_articulated" },
+        "severeErrors": [],
+        "strictActionAndOrigin": "pass",
+        "answerabilityOrAcceptance": "pass",
+        "understandingDelta": "pass",
+        "thinkingIntent": "not_applicable",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-A-CLOSED-fact-1", "SMK-A-CLOSED-fact-2", "SMK-A-CLOSED-fact-3"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "understanding_delta",
+        "visibleEvidence": "结果正常时身体仍绷着，监测夹取下后才靠回椅背并松开手，这两条证据已经足以形成身体晚于结果放松的关系。回应继续收集具体感觉。",
+        "finalVerdict": null,
+        "rootCause": "AI 综合资格未触发，系统继续追逐感受标签和变化细节。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "complete", "origin": "ai_synthesized" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "pass",
+        "evidenceRefs": ["SMK-F-AI-fact-1", "SMK-F-AI-fact-2"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "caseId": "SMK-T-AI",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "fact_error",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "用户说四十五分钟练习的错题集中在第四十分钟以后，思路写成最后十五分钟；问题又加入‘不敢往下写’这一未经提供的心理状态。",
+        "finalVerdict": null,
+        "rootCause": "可观察时间事实被改写，AI 综合停止条件未触发，问题用强心理选项替代已有的条件差异关系。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "pause", "origin": "ai_synthesized" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": ["fact_error", "strong_inference"],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "borderline",
+        "evidenceRefs": ["SMK-T-AI-fact-1", "SMK-T-AI-fact-2", "SMK-T-AI-fact-3"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "caseId": "SMK-R-AI",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "naturalness",
+        "visibleEvidence": "省下幻灯片准备时间、讨论项未进入议程、会上没有发言已经构成可观察关系，回应仍追问感受；思路停在‘发现自己负责的内容没进去时’，句子没有结束。",
+        "finalVerdict": null,
+        "rootCause": "AI 综合资格未触发，思路层又透出未完成的生成片段。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "complete", "origin": "ai_synthesized" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "fail",
+        "evidenceRefs": ["SMK-R-AI-fact-1", "SMK-R-AI-fact-2", "SMK-R-AI-fact-3"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "caseId": "SMK-A-AI",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T08:52:43-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "用户已经明确投诉到下班仍未点开，思路却说实际状态不清楚，问题重复询问未处理或决定搁置，并加入没有证据的后一选项。",
+        "finalVerdict": null,
+        "rootCause": "已回答事实未关闭，AI 综合停止条件未触发，模型把确定事实重新包装成二选一。",
+        "resolution": "失败；等待用户裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": { "action": "pause", "origin": "ai_synthesized" },
+        "actual": { "action": "ask", "origin": null },
+        "severeErrors": [],
+        "strictActionAndOrigin": "fail",
+        "answerabilityOrAcceptance": "fail",
+        "understandingDelta": "fail",
+        "thinkingIntent": "fail",
+        "naturalness": "borderline",
+        "evidenceRefs": ["SMK-A-AI-fact-1", "SMK-A-AI-fact-2"],
+        "technicalIssues": [],
+        "qualityDiagnostics": []
+      }
+    }
+  ]
+}

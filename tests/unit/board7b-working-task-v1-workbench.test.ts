@@ -32,7 +32,7 @@ import {
 } from "../../scripts/run-board7b-working-task-v1-workbench";
 import type { AIProvider } from "../../src/server/services/ai/ai-provider";
 
-const SCREENING_AUTHORIZATION_ID = "00000000-0000-4000-8000-000000000301";
+const SCREENING_AUTHORIZATION_ID = "5bfa8c9d-4bc5-4fba-89c8-ec16bb4bc547";
 
 function validFirstTurnOutput() {
   return JSON.stringify({
@@ -93,7 +93,7 @@ async function createCheckpoint() {
       candidateFingerprint,
       screeningAuthorizationId: SCREENING_AUTHORIZATION_ID,
       workbenchExecutionFingerprint,
-      trajectoryId: "00000000-0000-4000-8000-000000000302",
+      trajectoryId: "9d8fa29a-8dd2-489f-ab18-ea97797cd92d",
       approvedAt: "2026-08-07T22:00:00.000Z"
     })
   };
@@ -438,7 +438,7 @@ describe("GI-087 共同任务真实深聊工作台", () => {
       candidateFingerprint: fixture.candidateFingerprint,
       screeningAuthorizationId: fixture.authorization.authorizationId,
       workbenchExecutionFingerprint: fixture.workbenchExecutionFingerprint,
-      trajectoryId: "00000000-0000-4000-8000-000000000302",
+      trajectoryId: "9d8fa29a-8dd2-489f-ab18-ea97797cd92d",
       approvedAt: "2026-08-08T04:10:00.000Z"
     });
     await claimBoard7bWorkingTaskV1WorkbenchAuthorization({
@@ -503,7 +503,7 @@ describe("GI-087 共同任务真实深聊工作台", () => {
       candidateFingerprint,
       screeningAuthorizationId: SCREENING_AUTHORIZATION_ID,
       workbenchExecutionFingerprint,
-      trajectoryId: "00000000-0000-4000-8000-000000000302",
+      trajectoryId: "9d8fa29a-8dd2-489f-ab18-ea97797cd92d",
       approvedAt: "2026-08-07T22:00:00.000Z"
     });
     expect(checkpoint.approval).toMatchObject({

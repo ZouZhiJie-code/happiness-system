@@ -1,8 +1,13 @@
 # Happiness-system-codex
 
+- 文档职责：项目入口
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/README.md`](./docs/README.md)
+
 一个把“幸福日志”理论翻译成 AI 访谈产品的 Next.js 应用。
 
-截至 `2026-08-09`，这个仓库的真实状态是：
+截至 `2026-08-12`，这个仓库的真实状态是：
 - 已有 `joy / fulfillment / reflection / improvement / gratitude` 五个维度的通用访谈壳子。
 - `joy / fulfillment / reflection / improvement / gratitude` 已完成理论对齐深化，是当前五个标品维度。
 - `improvement` 已完成理论规格、数据结构扩展、AI 抽取独立化、fallback 抽取、访谈阶段推进、专属提问策略、完整 / partial 收束、正文生成、质量门、fallback draft、标题治理和自动化验收样例。
@@ -28,13 +33,14 @@
 - 管理员分析链路已接入事件埋点和内容查看审计：`AnalyticsEvent` 记录注册、登录、进入私有页、访谈推进、日志生成/保存、完整日志生成/保存、评分保存等事件，`AdminAuditLog` 记录管理员查看会话/日志正文的行为
 - 当前唯一生产主域名是 `https://dailylight.chat`；`dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并正式废弃，后续生产部署、验收与回调统一使用 `dailylight.chat`。
 - 访谈维度选择页通过 `CalendarMainGate` 的内容层纵向伸展完整承接可用视口，页面底部背景保持连续，修复内容区结束后露出全局木色背景的断层问题。
-- Production 与现有五维链路继续使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`，共享模型由 `DEEPSEEK_MODEL` 提供。GI-088 v7r2 受控 Preview 候选使用火山 Ark REST `deepseek-v4-flash-ga-260731`，其独立 Provider、评测 schema 和访问开关只服务私有评测。Production 继续保持 `legacy + baseline`，Ark 评测配置不进入生产运行链路。
+- 当前产品与事件中心候选的聊天 Provider 统一使用 DeepSeek 官方 API 的 OpenAI 兼容接口：运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`；共享五维聊天模型由 `DEEPSEEK_MODEL` 提供。通用事件中心环境变量继续以 `deepseek-v4-flash` 作为兼容默认值，GI-088 v8r1 与 v8r2 私有评测候选使用独立的 `deepseek-v4-pro` 运行策略。Ark 适配器与 `VOLCENGINE_ARK_*` 变量只保留历史兼容代码；旧 Ark 探针和账务错误归入历史证据，不代表当前运行配置。
 - 生成式访谈事件中心已经具备事件级会话、可靠提交、失败恢复、Trace、事件日志生成编辑保存重开和发布隔离底座。`GI-065` 已把新会话产品范围收口为“理清想法”单角度，感受、关系和行动继续保留历史数据与代码兼容，新会话入口保持隐藏。
-- `GI-067 / GI-068～074`、`GI-075～080` 和方法 `v1.0` 继续冻结。板块 6 正在建设正式评测资产；GI-087 保留为 GI-088 基础候选。GI-088 v1～v6 继续承担分阶段历史证据；v7 两条 Thinking high 真人连续性轨迹已封存，v7r1 Prefix 兼容路线已判定 No-Go。当前 v7r2 已完成 Ark Flash 本地实现、定向自动验证与 Production build，等待受控 Preview 页面回读和 `0/2` 空白批次；v8 继续等待 v7r2 真人可靠性门。Production 继续保持 `legacy + baseline`。
+- `GI-067 / GI-068～074`、`GI-075～080` 和方法 `v1.0` 继续冻结。板块 6 正在建设正式评测资产；GI-087 保留为 GI-088 基础候选。GI-088 v1～v7r4 的真人结果、探针、提前结束、恢复、连续性和平台对照继续承担历史证据。v8 在 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口并获产品通过。v8r1 A1 控制误停形成单例阻断；其历史 run 只读保持 A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。v8r2 的 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿验证已收口；最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview 已 `READY`，全新 High-only run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已零调用初始化并停在 `running 0/12 / gate=pending / high`，等待 12 项真人验收。旧预发布 v8r2 run 已行政停止并排除正式当前态。质量、板块 7 正式接入、板块 8 和发布范围均未裁决。约 `200` 轮以上容量优化继续排除，Production 保持 `legacy + baseline`。
+- v8r2 私有评测 schema 在原批次表之外新增调用账本、幂等操作、程序介入、人工修订、操作事件和不可变导出快照；`runOrdinal` 支持同一冻结候选的多次独立运行。旧 run 数据和旧 JSON 继续只读兼容，Production 数据库不进入本次迁移范围。
 - 事件中心日志支持生成、编辑、700ms 自动暂存、正式保存、刷新恢复和通过当天事件标签重新打开；事件日志接口、Trace、反馈和九类漏斗埋点已接入，未新增数据库迁移。
 - GI-066 使用 DeepSeek 官方 API 完成严格 `10×3` 与单角度自动 `8+2`，这些结果保留为历史技术证据；最新真人实聊因目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效。Production 继续保持 `legacy + baseline`。
 - 同一轮 production 排障中，已补齐 `20260521120000_add_admin_analytics_tables` migration，修复了 live 注册路径因 `AnalyticsEvent` 表缺失而出现的 `REGISTER_FAILED`。
-- 普通 `/interview` 入口现在默认代表”今天的新记录入口”：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate === 今天` 时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示”当前记录日期：YYYY-MM-DD”。
+- 普通 `/interview` 入口现在默认代表当前日期的新记录入口：本地按维度缓存的 session 和当前页面已经挂载的 live session，都只有在 `entryDate` 等于运行时日期时才会被自动恢复；显式带 `entryDate` 的 deep link 仍只会恢复同一天的 session。访谈页正文区会显示“当前记录日期：YYYY-MM-DD”。
 - 记忆系统（用户画像）已合并进 main：支持 pgvector 向量嵌入、AI 自动从访谈中提取用户模式、语义检索注入访谈 prompt、独立 `/profile` 页面查看和编辑画像；该功能由 `memoryEnabled` 设置项控制，默认关闭。
 - `reflection` 在 `continue_current_event` 场景里新增了防回卷约束：如果上一轮已经问过“具体经历 / 对话”，且用户明确回答没有，继续深聊时不会再追同一字段，而会改问更低压的具体锚点，比如某个顾虑、画面、比较时刻或选择瞬间。
 - 访谈 repair 协议已升级成稳定的服务端闭环：当用户输入“看不懂 / 太抽象 / 换一个 / 说简单点”等修问题表达时，系统会识别 `question_repair`，直接在服务端对当前问题做确定性重问，不再请求模型；repair 轮不会增加 `turnCount`、不会改写 snapshot、不会推进 round，也不会贡献新的完成进度。`reflection` 维度现在有专属 repair 模板，并且在用户已明确说“没有某段具体经历 / 对话”后，不会再回卷到 scene question。连续第 `3` 次 repair 会进入低压 choice，让用户改为“只补一句 / 换一个片段 / 先退出”。
@@ -74,6 +80,9 @@
 - `gratitude` 的 `stitched_moments` supporting-scene 质量门现在只接受仍保留明确照顾动作和足够场景锚点的自然压缩：把“请我吃冰淇淋，还问要不要喝水”写成“请我吃冰，还问我渴不渴”仍可通过，但“后来她想吃冰，我陪她去买了”这类语义反转会继续被拦住。
 - `respond/stream` 会先缓冲模型候选问题，完成服务端协议检查、纠偏和 fallback 后，再分块发送最终摘要与问题；用户流式阶段看到的文本与最终保存的助手消息保持一致。
 - `respond/stream` 在 repair 模式下不再依赖模型流式输出：服务端会直接返回确定性 `turn -> summary -> question -> session` 事件序列，不会先进入 provider `thinking` 流程。
+- 当前新前端处于构建中，等待产品负责人验收。`2026-08-12` 形成的旧 UI Preview、页面实现和专项验证保留为历史工程证据，不代表当前新前端已通过产品验收。
+- 日报、周报、月报继续使用真实保存恢复链路；今日日记已有 `JournalDailyEntry / JournalDailyEntryRevision / JournalDailyEntryGeneration` 合同与 `/api/journal/day`、`/api/journal/daily*` 接口，周报/月报已有 `JournalPeriodReport / JournalPeriodReportRevision / JournalPeriodReportGeneration` 合同与 `/api/journal/period*` 接口。新前端验收后再按 [`Daily Light 隔离 Preview 联调契约`](docs/plans/2026-08-12-daily-light-journal-preview-contract.md)开展页面联调，Production 继续保持当前版本。
+- `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED=I_UNDERSTAND` 仅开启本地固定六案例零模型回放，远程 UI Preview 与 Production 继续走真实数据库链路。
 
 ## 当前产品状态
 
@@ -108,6 +117,8 @@
 - `DailyHappinessScore` 独立数据模型、Prisma migration、zod schema、repository 映射、`PUT /api/happiness-score` 保存接口、访谈页独立评分工作区；分析页趋势段为只读读数台
 - `/calendar -> /interview` 的 `sessionId / entryDate / panel` 深链
 - `/calendar -> /interview` 的 `mode=daily-journal` 深链会打开当天整合日志主区，且不会启动或创建新的维度访谈 session；点击“回到访谈”会先保存当天日志 pending 编辑，再移除 `mode` 并恢复所选日期的正常访谈 hydrate
+- 事件中心默认空工作台与记录模式入口：`/interview?mode=event-centered&entryDate=YYYY-MM-DD`；会话创建请求可携带 `recordMode=capture|chat`
+- 日报、周报、月报归档工作区：日报读取 `GET /api/journal/day`，周报/月报读取 `GET /api/journal/period?kind=week|month&date=YYYY-MM-DD`
 - joy 理论对齐基线文档：`docs/theory/joy-alignment.md`
 - fulfillment 理论对齐基线文档：`docs/theory/fulfillment-alignment.md`
 - reflection 理论对齐基线文档：`docs/theory/reflection-alignment.md`
@@ -133,15 +144,15 @@ npm install
 复制 `.env.example` 到 `.env.local`，至少保证这些字段存在：
 
 ```bash
-DATABASE_URL="postgresql://app_user@localhost:5432/happiness_system_codex?schema=public"
-DIRECT_URL="postgresql://app_user@localhost:5432/happiness_system_codex?schema=public"
+DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_RUNTIME_CONFIG_SECRET=""            # 用 openssl rand -base64 32 生成；用于加密数据库里的 provider API Key
 AI_PROVIDER="openai"                    # 当前聊天 Provider：DeepSeek 官方 API 的 OpenAI 兼容接口
 INTERVIEW_INTENT_V2_MODE="enforce"      # enforce 是当前正式行为；legacy 保留为即时回退档位
 INTERVIEW_REGENERATION_ENABLED="true"   # false 时暂停“换个问法”与版本入口；已有会话继续沿当前路径完成
 INTERVIEW_EVENT_CENTERED_MODE="legacy"  # legacy / optional / event_centered / event_recovery
 INTERVIEW_EVENT_CENTERED_STRATEGY="baseline" # 仅板块 8 Preview 才考虑 generative
-EVENT_CENTERED_GENERATIVE_MODEL="deepseek-v4-flash" # 新事件中心候选固定模型；仅受控 Preview 使用
+EVENT_CENTERED_GENERATIVE_MODEL="deepseek-v4-flash" # 通用事件中心兼容默认值；GI-088 v8r1／v8r2 使用独立 V4 Pro 运行策略
 DEEPSEEK_API_KEY=""                     # 当前聊天 Provider 的 key
 DEEPSEEK_MODEL="deepseek-v4-pro"
 DEEPSEEK_BASE_URL="https://api.deepseek.com"
@@ -205,7 +216,7 @@ npx prisma db push
 如果你是在已有本地数据的库上首次同步账户体系，且注册时报 `User.username does not exist` 或 `db push` 无法为 `User` 新增必填认证字段，请先执行：
 
 ```bash
-psql -h localhost -p 5432 -d happiness_system_codex -U example-user -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
 ```
 
 执行完这条 migration 后，再继续 `npx prisma db push` 或直接启动开发服务器。
@@ -257,7 +268,7 @@ npm run dev
 为依据。后续新增案例、调整门槛或改变发布流程时，先更新该文档的当前阶段、决策记录和新输入记录。
 
 ```bash
-npx tsc --noEmit
+npm run typecheck
 npm test
 ```
 
@@ -265,7 +276,7 @@ npm test
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
 - GI-066 阻断修复候选：`npm test` = `268` 个测试文件、`2541/2541` 个用例通过；该候选随后因真人体验 `No-Go` 失效，数据只作为历史技术证据。
 - `npm run lint` 通过，`0 error`，保留 `46` 条仓库既有 warning
-- `npx tsc --noEmit` 通过
+- `npm run typecheck` 通过；该命令先生成 Next.js 路由类型，再执行 `tsc --noEmit`
 - `npm run build` 通过，保留既有 ESLint warnings
 - `npx prisma validate`、隔离库 migrate status 与 `git diff --check` 通过
 - GI-066 严格 `10×3`：动作、方向和完整无问题均为 `30/30`，重复选题错误 `0`
@@ -287,7 +298,7 @@ npm test
 - 当前 `product-smoke.mjs` 只自动覆盖最小 `auth/session/start/invalid_entry_date`
 - 更深的 `joy -> draft generate -> draft save` 仍属于 controller 手工 deep-chain 补证，不是该脚本当前自动化覆盖
 - 事件中心专项命令包括 `npm run eval:event-centered:batch-b` 与 `npm run eval:event-centered:generative`；板块 7 的四角度 smoke、baseline recovery 和事件日志探针使用 `scripts/run-board7-*.ts`，证据集中在 `artifacts/generative-interview-board7/2026-08-02/`
-- 事件中心当前产品状态以 [`生成式访谈重构总 Map`](docs/generative-interview-refactor-map.md) 为准；板块 6 当前评测资产与开放校准见 [`04j｜生成式质量评测 v1`](docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，当前迭代入口见 [`GI-088 v7r2 Ark Flash`](artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)，v1 的 8/12 脱敏复盘见 [`GI-088 真人交互开发评测集 v1`](artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)，GI-087 基线合同见 [`Board 7B working-task v1 Base Prompt`](artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-base-prompt-v1.md)，GI-086 能力校准历史见 [`Board 7B Thinking capability v1`](artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/README.md)，GI-085 回归结果与根因见 [`Board 7B semantic-frame v1`](artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/README.md)，板块 5 冻结输入见 [`板块 5 专项`](docs/technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)；七批次冻结规则索引见 [`04x 全局架构`](docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)。GI-066 历史候选与自动证据见 [`04u｜GI-066`](docs/technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)；板块 8 生产授权边界见 [`04p`](docs/technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)
+- 事件中心当前产品状态以 [`生成式访谈重构总 Map`](docs/generative-interview-refactor-map.md) 为准；板块 6 当前评测资产与开放校准见 [`04j｜生成式质量评测 v1`](docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)，当前真人验收与正式证据入口见 [`GI-088 v8r2 评测底座加固资产`](artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，已完成实施合同见 [`GI-088 v8r2 评测底座加固任务`](docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)，v8r1 事故与部署快照见 [`GI-088 v8r1 最终 12 项`](artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)，v1 的 8/12 复盘见 [`GI-088 真人交互开发评测集 v1`](artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)，GI-087 候选基线与上下文资格审计见 [`Board 7B working-task v1`](artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/README.md)，GI-086 能力校准历史见 [`Board 7B Thinking capability v1`](artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/README.md)，GI-085 回归结果与根因见 [`Board 7B semantic-frame v1`](artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/README.md)，板块 5 冻结输入见 [`板块 5 专项`](docs/technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)；七批次冻结规则索引见 [`04x 全局架构`](docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)。GI-066 历史候选与自动证据见 [`04u｜GI-066`](docs/technical/interview-event-centered/04u-board8-gi066-thought-only-question-strategy.md)；板块 8 生产授权边界见 [`04p`](docs/technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md)
 - production URL contract 与 AI provider 诊断 lane 走 `docs/vercel-preview-production-lane.md` 里的 `runtime-env-readback.mjs + /api/debug/runtime-env`；它和公开 smoke 分开，默认保持关闭，只在短时验证窗口中临时打开
 - `/api/transcribe` 当前仍是关闭态，不纳入公开预发布能力面
 
@@ -301,7 +312,7 @@ npm run smoke:public -- http://127.0.0.1:3000
 npm run acceptance:ai-quality:seed
 node scripts/product-smoke.mjs joy 2026-05-19
 node scripts/runtime-env-readback.mjs https://your-target-host runtime
-npx tsc --noEmit
+npm run typecheck
 npx prisma db push
 npx prisma migrate deploy
 ```
@@ -309,6 +320,7 @@ npx prisma migrate deploy
 ## 文档导航
 
 - 新会话五分钟导航：`docs/README.md`
+- 网页端访谈、事件卡片与今日日记设计交接：`docs/plans/2026-08-11-daily-light-journal-page-frontend-handoff.md`
 - 项目级 agent 说明：`AGENTS.md`
 - 设计系统总纲：`DESIGN.md`（创意方向、页面形态、Do/Don't）
 - 容器与 token 工程规范：`docs/design/ui-conventions.md`（DESIGN.md 附录）
@@ -322,9 +334,11 @@ npx prisma migrate deploy
 - 评测资产总入口：`artifacts/README.md`
 - 生成式访谈当前状态与讨论位置：`docs/generative-interview-refactor-map.md`
 - 板块 6 当前评测与校准：`docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md`
-- GI-088 当前迭代入口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md`
+- GI-088 当前真人验收与正式证据入口：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
+- GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
+- GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
 - GI-088 v1 历史真人复盘：`artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md`
-- GI-087 “共同任务＋当前探查”公开基线合同：`artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-base-prompt-v1.md`
+- GI-087 “共同任务＋当前探查”候选基线与 GI-088 上下文资格审计：`artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/README.md`
 - GI-086 DeepSeek Thinking 能力校准历史：`artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/README.md`
 - GI-085 semantic-frame-first v1 回归结果与根因：`artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/README.md`
 - 板块 5 冻结产品输入：`docs/technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md`
@@ -362,7 +376,7 @@ npx prisma migrate deploy
 - `src/features/calendar/toolbar.ts` 负责把当前 `view/date` 投影成 header 标题、前后翻段和摘要 chip。
 - `fulfillment`、`reflection`、`improvement` 与 `gratitude` 已在 joy-first 服务壳子内完成理论对齐。
 - `/api/transcribe` 当前只是占位接口，返回模拟 transcript。
-- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0～v6 保留 Token、恢复、阶段转场和单一回答焦点的分阶段证据；v7 两条 Thinking high 连续性轨迹已封存，v7r1 Prefix 兼容路线 No-Go。v7r2 Ark Flash 已通过本地实现与自动验证，当前等待受控 Preview 回读、`0/2` 空白批次和两条真人连续轨迹。v8 与板块 8 继续等待这一可靠性门。GI-066 自动技术证据和真人 `No-Go` 继续作为历史证据保留。Production 保持 `legacy + baseline`。
+- 事件中心板块 4 已冻结 `GI-067 / GI-068～074`，板块 5 已冻结 `GI-075～080` 六类规则。GI-088 v0 的 `1600` Token 上限失败继续作为历史证据；v1 已在 `8/12` 主动提前结束并完成首批复盘；空内容 response format 探针完成 `6/6` 并拒绝移除参数候选。Thinking 模式探针完成 `4/4`，因 high 未复现空内容而形成 inconclusive，根因继续开放。板块 7 正式接入继续等待板块 6，板块 8 等待新候选验证后执行两模式 `4＋2` 真人验收与 Go/No-Go。GI-066 自动技术证据和真人 `No-Go` 继续作为历史证据保留。Production 保持 `legacy + baseline`。
 - `/api/journal-entry/[id]` 是当前日志编辑主路由，`/api/joy-entry/[id]` 只是兼容别名。
 - `/api/daily-journal*` 是当天整合日志的查询、生成、草稿更新和保存接口。
 - `/api/interview/session/start` 现在支持可选 `entryDate: YYYY-MM-DD`，session hydrate 也会返回 `entryDate`。

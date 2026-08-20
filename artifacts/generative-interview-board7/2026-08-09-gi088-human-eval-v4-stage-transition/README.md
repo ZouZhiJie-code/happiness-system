@@ -61,7 +61,7 @@ v3 A1 的 Thinking 关闭与 Thinking high 两条真人轨迹都在第 4 次用�
 - TypeScript、相关文件 ESLint、Prisma schema、Next.js production build 与 `git diff --check` 通过。
 - `npm run eval:gi088:inspect` 输出 `modelGenerationCalls=0`。
 
-公开详细记录见 [静态验证](./gi088-v4-stage-transition-static-validation.md)；含批次定位符的 manifest 留在本地受控资产中。
+详细记录见 [manifest](./gi088-human-eval-v4-stage-transition-manifest.json) 与 [静态验证](./gi088-v4-stage-transition-static-validation.md)。
 
 ## 7. 下一停止点
 
@@ -72,7 +72,7 @@ v3 A1 的 Thinking 关闭与 Thinking high 两条真人轨迹都在第 4 次用�
 - off 与 high 各出现一次 `ASK_QUESTION_COUNT_INVALID:2`。这说明双问题与 Thinking 开关无稳定对应关系。
 - 已确认超时近端根因：两次失败均已在约 `0.43s` 收到 HTTP 200 响应头，正文持续生成到本地 30 秒总截止后被主动中止；连接建立正常，30 秒阈值缺少 high 延迟校准依据。
 - 产品负责人判断：当前证据足以停止 v4。Codex 初评：阶段转场候选已获得单例真人支持；双问题和等待阈值进入下一候选，转场质量仍需作为回归项保留。
-- 批次 `redacted-operational-id` 已于 `2026-08-09T16:30:13.282Z` 以 `mixed` 原因完成 `early_stopped`；A1 已完成，其余 11 项明确标记为未执行，revision 为 `24`。
+- 批次 `7d6f66b2-65a0-4975-a66f-277ebdf5102c` 已于 `2026-08-09T16:30:13.282Z` 以 `mixed` 原因完成 `early_stopped`；A1 已完成，其余 11 项明确标记为未执行，revision 为 `24`。
 
 ### 历史计划
 
@@ -83,13 +83,13 @@ v3 A1 的 Thinking 关闭与 Thinking high 两条真人轨迹都在第 4 次用�
 
 两项均执行 off/high，共 `4` 条轨迹；最坏模型调用预算为 `40`。产品负责人已针对执行指纹 `0206fd34…b1d0a` 授权私有 Preview、新评测批次与这 40 次最坏调用预算。
 
-- Preview deployment：`redacted-deployment-id`；
-- 访问地址：`https://xingfuxitong-ncy2wcta8-example-team.vercel.app/preview/gi088-evaluation`；
+- Preview deployment：`dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV`；
+- 访问地址：`https://xingfuxitong-ncy2wcta8-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
 - Vercel 状态：`Ready`，target 为 `preview`；
 - 页面已通过 Deployment Protection 并到达 Daily Light 登录页；未登录 session API 为 `401`；
 - Production session API 保持 `404`；
 - 产品负责人已在新部署完成登录；工作台已按 v4 创建独立 `0/12` 空白批次，状态为 `BATCH IN PROGRESS`，A1 为待开始；
 - 页面完整执行指纹回读为 `0206fd34f57f2a8e6c4c5401a172bcfda526e702bf6081e197324054a47b1d0a`；
 - 实际模型调用为 `10/40`，没有继续执行 A2；
-- 首次 deployment 的浏览器标签沿用旧 `v2 Diagnostic` 文字，页面正文、任务和指纹均为 v4。标签修正版 deployment `redacted-deployment-id` 已 Ready，并绑定固定别名 `https://xingfuxitong-gi088-v4-stage-transition.vercel.app`；该别名等待首次登录，当前真人评测继续使用上方已登录地址；
+- 首次 deployment 的浏览器标签沿用旧 `v2 Diagnostic` 文字，页面正文、任务和指纹均为 v4。标签修正版 deployment `dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV` 已 Ready，并绑定固定别名 `https://xingfuxitong-gi088-v4-stage-transition.vercel.app`；该别名等待首次登录，当前真人评测继续使用上方已登录地址；
 - v3 的 `1/12` 与 v4 的 `1/12` 结果均保持只读，Production 继续保持 `legacy + baseline`。

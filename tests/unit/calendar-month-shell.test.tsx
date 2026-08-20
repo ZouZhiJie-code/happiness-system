@@ -328,7 +328,7 @@ describe("calendar month shell", () => {
     };
   });
 
-  it("normalizes missing search params to today", async () => {
+  it("normalizes missing search params to today's journal day view", async () => {
     mockSearchParams.value = {
       view: null,
       date: null
@@ -338,7 +338,7 @@ describe("calendar month shell", () => {
     render(<CalendarMonthShell />);
 
     await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=month&date=${getTodayEntryDate()}`, { scroll: false });
+      expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=day&date=${getTodayEntryDate()}`, { scroll: false });
     });
   });
 
@@ -540,18 +540,24 @@ describe("calendar month shell", () => {
     render(<CalendarMonthShell />);
 
     const primaryError = await screen.findByTestId("calendar-month-primary-error");
-    const secondaryError = screen.getByTestId("calendar-month-secondary-error");
+    const workspace = screen.getByTestId("calendar-month-workspace");
 
     fireEvent.click(within(primaryError).getByRole("button", { name: "重新加载" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
+      expect(workspace).toHaveAttribute("aria-busy", "false");
+      expect(screen.queryByText("正在读取本月记录。")).not.toBeInTheDocument();
+      expect(screen.getByTestId("calendar-month-secondary-error")).toBeInTheDocument();
+    }, { timeout: 5_000 });
 
     fireEvent.click(within(screen.getByTestId("calendar-month-secondary-error")).getByRole("button", { name: "重新加载" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(3);
-    });
+      expect(workspace).toHaveAttribute("aria-busy", "false");
+      expect(screen.queryByText("正在读取本月记录。")).not.toBeInTheDocument();
+      expect(screen.getByTestId("calendar-month-primary-error")).toBeInTheDocument();
+    }, { timeout: 5_000 });
   });
 });

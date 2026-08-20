@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "capturedAt": "2026-08-13T12:56:49Z",
+  "result": "GI088_DUAL_TRACK_ASSET_VALIDATION_PASS",
+  "checksPassed": ["dataset_identity","case_identity","counts_and_distribution","unique_case_ids","source_files","counterfactual_parent_and_single_variable","judge_balance_and_private_payload_presence","judge_route_and_human_review_protocol","hidden_blueprint_no_body_fields","hidden_story_family_isolation","independent_admission_aggregation_and_absolute_gate","planned_result_count"],
+  "counts": {"development":28,"hardBoundary":24,"judgeCalibration":20,"hiddenBlueprint":12,"independentAdmissionPlannedResults":28},
+  "knownGaps": {"judgeCardsRequiringPrivateRedaction":7,"judgeCardsRequiringQualityAxisReconfirmation":4,"hiddenBodiesPending":12},
+  "executionBoundary": {"modelCalls":0,"humanEvaluationSubmissions":0,"previewChanges":0,"productionChanges":0},
+  "fingerprints": {
+    "development":{"file":"development-challenge-28.json","sha256":"54d0f66feecc9b9e58e220a9bd180d129fb3a005039f384b37a9f5910909fef5"},
+    "hardBoundary":{"file":"hard-boundary-regression-24.json","sha256":"c86d2074ad589a3ead3b0d30b18b2981c404d81db82803713712780e3692b641"},
+    "judge":{"file":"judge-calibration-20.json","sha256":"ee73d93018c57a77f2c059e2939760597d5bc5d6480e4ee44a95317ec3949a27"},
+    "hiddenBlueprint":{"file":"independent-admission-blueprint-12.json","sha256":"90b67529636c89d8ae7d5d9452f5776a805bdd917ffc875fa3112b7425c2b8cf"},
+    "caseSchema":{"file":"case-identity.schema.json","sha256":"abe93c8569502cd9f9bf5f154592afb119af1dee6d5d97b529c1c72c3c20a310"},
+    "datasetSchema":{"file":"dataset-identity.schema.json","sha256":"11d0075b43374ff8bc5963babac1f65a8cba7476e09fca0f8596dc129b4af84c"},
+    "runSchema":{"file":"run-identity.schema.json","sha256":"8ba36fc5ab21786ab6233e996ebce6837c3fbfc2ffef32a17dd20e3e560c80ea"}
+  }
+}

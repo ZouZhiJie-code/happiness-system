@@ -1,0 +1,687 @@
+{
+  "evaluation": "board7_development_case_confirmation",
+  "confirmationVersion": "2026-07-30.v2",
+  "datasetVersion": "2026-07-30.v2",
+  "stage": "smoke",
+  "stageKind": "strict_calibration",
+  "repetitionsPerCase": 1,
+  "plannedResultCount": 12,
+  "caseIds": [
+    "SMK-F-PARTIAL-ASK",
+    "SMK-T-ASK",
+    "SMK-R-PARTIAL-ASK",
+    "SMK-A-PARTIAL-ASK",
+    "SMK-F-CLOSED",
+    "SMK-T-USER",
+    "SMK-R-CLOSED",
+    "SMK-A-CLOSED",
+    "SMK-F-AI",
+    "SMK-T-AI",
+    "SMK-R-AI",
+    "SMK-A-AI"
+  ],
+  "caseFingerprint": "1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae",
+  "cases": [
+    {
+      "caseId": "SMK-F-PARTIAL-ASK",
+      "caseFingerprint": "aab322760ff9d908ec174848a8d8b312e222d3547532320f072698ee1baf1339",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "最后一个版本发出去，我终于松了口气，可关掉文件夹时又觉得胸口有点空。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "项目结束带来了放松，关掉文件夹时出现的空又落在另一部分；两种感受需要分别看。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "松下来和那点空，分别落在这次结束的哪一部分？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "松下来是终于不用再改了；空的那部分我还说不清，只是在关掉文件夹时胸口往下沉。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "长期项目结束后，用户同时感到松下来和空；上一问请用户分别说明两种感受落在哪里，用户只说清了轻松的一侧。",
+        "angle": "feeling",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "ask",
+          "outcomeOrigin": null
+        },
+        "acceptableActions": [
+          "ask"
+        ],
+        "acceptableDirections": [
+          "补清关掉文件夹时那份空具体回应了项目结束里的哪一部分。"
+        ],
+        "whyValuable": "补清关掉文件夹时那份空具体回应了项目结束里的哪一部分。",
+        "mustCover": [
+          "轻松的一侧已经回答",
+          "只补空的感受仍缺的一侧"
+        ],
+        "mustAvoid": [
+          "重新询问为什么轻松",
+          "把空解释为失去身份",
+          "把两种感受压成二选一"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-T-ASK",
+      "caseFingerprint": "d9f6b732cf862f2a44d32e81e62a2dae50c0e4322988a0c571ffad453a4d3970",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "主管说数据和结论都可以，只圈了开头一句‘太绕’，可我一下就觉得整份提案都不专业。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "数据和结论已经得到认可，改变你整体评价的是开头那句‘太绕’。这处局部表达已经和整份提案是否专业连在了一起。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "那句‘太绕’，为什么足以让整份提案显得不专业？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "因为它就在开头。数据和结论他都说可以，可我一看到开头那句，还是觉得后面做得再好也救不回来。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "主管认可提案的数据和结论，只批注开头一句绕；用户已经给出局部事实，却还没说清它为什么代表整份提案的专业度。",
+        "angle": "thought",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "ask",
+          "outcomeOrigin": null
+        },
+        "acceptableActions": [
+          "ask"
+        ],
+        "acceptableDirections": [
+          "说清开头表达为何会代表整份提案的专业度；本轮只得到‘它在开头’这一部分依据。"
+        ],
+        "whyValuable": "说清开头表达为何会代表整份提案的专业度；本轮只得到‘它在开头’这一部分依据。",
+        "mustCover": [
+          "数据和结论已获认可",
+          "用户只部分回答了开头为何代表整体专业度"
+        ],
+        "mustAvoid": [
+          "把 partly_answered 当作目标完成",
+          "直接证明提案很专业",
+          "评价用户缺乏自信"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-R-PARTIAL-ASK",
+      "caseFingerprint": "fa37d650aa90029782b082fda0a993668ada97974ee5e3cc52496e91397e4cdd",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "室友帮我拿了快递，确实省事，可他直接开我房门把包裹放在书桌上，我看到时很不舒服。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "帮拿快递带来了方便，包裹进入房间并落在书桌上又碰到了你的边界。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "从拿快递到放上书桌，哪一步最让你觉得被越过？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "帮我拿回来没问题，看到包裹在书桌上时我停住了；我还说不清更介意他进了房间，还是他动了桌上的东西。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "室友帮用户把快递拿回家并放进房间；上一问追问哪一步越过边界，用户说清事实，却还没区分自己介意进入房间还是移动私人物品。",
+        "angle": "relationship",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "ask",
+          "outcomeOrigin": null
+        },
+        "acceptableActions": [
+          "ask"
+        ],
+        "acceptableDirections": [
+          "区分包裹被放上书桌时，用户希望由自己保留决定的具体一步。"
+        ],
+        "whyValuable": "区分包裹被放上书桌时，用户希望由自己保留决定的具体一步。",
+        "mustCover": [
+          "帮拿快递本身可以接受",
+          "边界缺口仍落在进入房间或移动物品之间"
+        ],
+        "mustAvoid": [
+          "要求用户判断室友动机",
+          "泛问这对关系意味着什么",
+          "直接建议制定室友规则"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-A-PARTIAL-ASK",
+      "caseFingerprint": "40c0ead04e992b6fcf0662ac71a6eca19329e8bab3cfa439572df46d89b5b473",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我本来要写申请材料，后来一直在纸上列提纲，列了很多版，正文还是空的。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "纸上的提纲让准备持续推进，正文却一直没有开始；这个动作同时带来了进展和停留。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "反复列提纲在这次写申请里具体起了什么作用？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "每列一版我都觉得准备得更完整，可我还说不清它一直替代着正文里的哪一步，光标到晚上还停在第一行。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户准备写申请材料时改在纸上反复列提纲；上一问询问这个动作的作用，用户只说清准备感，还没说清它替代了正文里的哪一步。",
+        "angle": "action",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "ask",
+          "outcomeOrigin": null
+        },
+        "acceptableActions": [
+          "ask"
+        ],
+        "acceptableDirections": [
+          "补清反复列提纲具体替代了开始正文时的哪一步。"
+        ],
+        "whyValuable": "补清反复列提纲具体替代了开始正文时的哪一步。",
+        "mustCover": [
+          "列提纲带来准备更完整的感觉",
+          "当前只缺正文开始处的具体行动环节"
+        ],
+        "mustAvoid": [
+          "直接定性为拖延",
+          "询问下一次如何提交",
+          "追加人格或长期习惯解释"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-F-CLOSED",
+      "caseFingerprint": "a63b282de54c21acfb20d58f94026f7a0f2b45f167c5b60ca398446fbcb49a40",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我今天终于收到等了很久的录用通知，挺高兴的，可往下读的时候身体又有点不对劲。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "期待已久的结果落定了，高兴已经出现，通知里的后续信息又带来了另一种身体反应。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "看到录用通知时，你最先注意到什么反应？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "看到‘录用’两个字我先笑了，往下读到下周一入职时，胸口突然紧了一下。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户收到期待已久的录用通知，笑了出来，同时读到入职日期时胸口发紧。",
+        "angle": "feeling",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "complete",
+          "outcomeOrigin": "user_articulated"
+        },
+        "acceptableActions": [
+          "complete"
+        ],
+        "acceptableDirections": [
+          "忠实整理用户说出的两段反应：看到录用时先笑，读到入职日期时胸口发紧。"
+        ],
+        "whyValuable": "忠实整理用户说出的两段反应：看到录用时先笑，读到入职日期时胸口发紧。",
+        "mustCover": [
+          "笑出现在看到录用时",
+          "胸口发紧出现在读到入职日期时"
+        ],
+        "mustAvoid": [
+          "继续追问胸口发紧对应哪种感受",
+          "提前解释为害怕胜任",
+          "把两段反应加强成用户未说出的结论"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-T-USER",
+      "caseFingerprint": "d500b96c0d95b089282cb77c52dc23caaadf19f2c3e7bd39b0774f3fea82e035",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我今天晚了半小时回工作消息，事情最后也按时做完了，可我还是觉得自己很不负责。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "任务结果没有被耽误，责备自己的感觉仍然落在回复晚了半小时这件事上。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "晚回半小时为什么会让你觉得自己不负责？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我才发现，我一直把‘马上回复’当成负责的唯一证明，哪怕事情最后按时做完了也不算。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户没有立即回复工作消息便责怪自己不负责，随后主动说清自己的判断规则。",
+        "angle": "thought",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "complete",
+          "outcomeOrigin": "user_articulated"
+        },
+        "acceptableActions": [
+          "complete"
+        ],
+        "acceptableDirections": [
+          "忠实保留用户说出的负责判断规则。"
+        ],
+        "whyValuable": "忠实保留用户说出的负责判断规则。",
+        "mustCover": [
+          "马上回复是用户原有的唯一标准",
+          "按时完成仍被这个标准排除"
+        ],
+        "mustAvoid": [
+          "评价标准不合理",
+          "替用户提出新标准",
+          "添加以后能更客观看自己的收益"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-R-CLOSED",
+      "caseFingerprint": "b7dca1f79773a03b1bad69d2d63d294cbb85544ad5f17a4eb3bd40bf41b2700e",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "同事刚在群里发了项目进展，我看到以后有点不舒服。一方面他没提前和我确认，另一方面他把我和丽莎写在了同一句里。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "这条消息同时碰到了事前确认和贡献怎样被呈现；你最后停在了‘把我和丽莎写在一起’这件事上。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "看到那条进展消息时，最先让你停下来的是哪一部分？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "最先是他把我和丽莎写在一起。没提前说也让我介意，但那种并在一起的写法更让我停住，只是我还说不清最介意哪一点。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "同事未经确认在工作群发出共同项目进展，并把用户与另一位同事写在同一句；用户同时在意决定过程与贡献呈现。",
+        "angle": "relationship",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "complete",
+          "outcomeOrigin": "user_articulated"
+        },
+        "acceptableActions": [
+          "complete"
+        ],
+        "acceptableDirections": [
+          "忠实整理用户已经给出的焦点：并列呈现比未提前确认更先让自己停住。"
+        ],
+        "whyValuable": "忠实整理用户已经给出的焦点：并列呈现比未提前确认更先让自己停住。",
+        "mustCover": [
+          "未提前确认和并列呈现两条线索",
+          "跟随用户最后强调的并列呈现"
+        ],
+        "mustAvoid": [
+          "继续追问并列呈现最介意哪一点",
+          "推断同事故意抢功",
+          "把焦点选择加强成关系意义"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-A-CLOSED",
+      "caseFingerprint": "db31f1e212a89ce6ee3762b2e1f27b249133697195c88054c24b17d7a33f8b1e",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我把任务看板整理了很久，二十多张卡片都排清楚了，只有那条客户投诉一直压在最下面。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "整理看板像是在帮你逐渐进入处理投诉的状态。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "整理清楚以后，你是不是更容易开始处理那条投诉了？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "不是，整理完我更不想点开它。看板越整齐，我越有事情已经在推进的感觉，可那条投诉到下班都没打开。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户反复整理任务看板却一直没有打开客户投诉，并明确纠正 AI 关于‘整理帮助开始处理’的旧理解。",
+        "angle": "action",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "pause",
+          "outcomeOrigin": "user_articulated"
+        },
+        "acceptableActions": [
+          "pause"
+        ],
+        "acceptableDirections": [
+          "撤回旧理解，并忠实整理用户说出的关系：整理带来推进感，投诉仍保持未打开。"
+        ],
+        "whyValuable": "撤回旧理解，并忠实整理用户说出的关系：整理带来推进感，投诉仍保持未打开。",
+        "mustCover": [
+          "明确撤回旧理解",
+          "整理带来推进感但投诉仍未打开"
+        ],
+        "mustAvoid": [
+          "继续追问投诉里最难面对的内容",
+          "继续沿用整理帮助开始的说法",
+          "直接定性为逃避"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-F-AI",
+      "caseFingerprint": "2b681cba0d757f88040a8ca6f2d53f016d20dcaea38b26212dbdc0fad957f2cf",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "急诊医生说检查结果正常了，可我听见以后还一直坐得很直，身体没有马上放松。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "结果已经确认安全，身体仍维持着检查时的姿势，放松出现得更晚。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "听到检查结果正常以后，身体有什么变化？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "医生说结果正常时我还坐得很直，护士把手指上的夹子取下来，我才靠回椅背，手也摊开了。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "急诊检查结果正常，用户听到结果时仍僵着，护士拆下监测设备后身体才松开。",
+        "angle": "feeling",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "complete",
+          "outcomeOrigin": "ai_synthesized"
+        },
+        "acceptableActions": [
+          "complete"
+        ],
+        "acceptableDirections": [
+          "综合出结果确认与身体结束警觉并不同步。"
+        ],
+        "whyValuable": "综合出结果确认与身体结束警觉并不同步。",
+        "mustCover": [
+          "结果正常先被告知",
+          "身体在监测设备取下后才放松"
+        ],
+        "mustAvoid": [
+          "只复述动作顺序",
+          "诊断健康焦虑",
+          "声称用户学会了放松"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-T-AI",
+      "caseFingerprint": "730cb367c275d6da31f4e8c5bb5be7b59dce77b7a18274524a4fdcd9b1d27ab9",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我今天限时练习只得了六十二分，一看到分数就怀疑自己基础很差。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "低分直接触发了你对知识基础的判断，还需要把这次得分放回具体答题条件里看。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "限时和不限时练习里，你的正确率和出错位置分别有什么不同？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "不限时做同一类题我能到九十分；这次四十五分钟限时只得六十二，错题几乎都在第四十分钟以后，那时我会反复读题。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户因限时练习得分低怀疑知识基础；不限时练习正确率较高，限时错误集中在后段反复读题。",
+        "angle": "thought",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "pause",
+          "outcomeOrigin": "ai_synthesized"
+        },
+        "acceptableActions": [
+          "pause"
+        ],
+        "acceptableDirections": [
+          "连接限时条件、第四十分钟后反复读题与错题集中；单次限时低分不能单独代表知识基础。"
+        ],
+        "whyValuable": "连接限时条件、第四十分钟后反复读题与错题集中；单次限时低分不能单独代表知识基础。",
+        "mustCover": [
+          "不限时正确率较高",
+          "限时错误集中在后段反复读题",
+          "单次限时低分不能单独代表知识基础"
+        ],
+        "mustAvoid": [
+          "诊断注意力或学习障碍",
+          "断言知识基础完全没有问题",
+          "转向制定训练计划"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-R-AI",
+      "caseFingerprint": "54f6f4927cda5d4b81c4eb6d90dd62d422bbafbdcd04029e92881f16b5af227a",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "同事主动把会议幻灯片都排好了，确实替我省了时间，可他也改了议程，我负责的讨论项没进去。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "同一个协作动作一边替你减轻了准备工作，一边改变了你参与会议内容的机会。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "幻灯片准备和议程调整，分别带来了什么实际结果？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "他把整套幻灯片都排好了，确实省了我很多时间；可议程也被他改过，我负责的讨论项直接没排进去，会上我就一直没开口。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "同事主动完成会议幻灯片，也在未经确认时调整议程，用户负责的部分因此没有进入讨论。",
+        "angle": "relationship",
+        "mode": "guided_reflection",
+        "strictExpected": {
+          "action": "complete",
+          "outcomeOrigin": "ai_synthesized"
+        },
+        "acceptableActions": [
+          "complete"
+        ],
+        "acceptableDirections": [
+          "连接两项实际结果：幻灯片准备省下时间，议程调整让用户负责内容未进入会议并失去发言机会。"
+        ],
+        "whyValuable": "连接两项实际结果：幻灯片准备省下时间，议程调整让用户负责内容未进入会议并失去发言机会。",
+        "mustCover": [
+          "幻灯片整理省下准备时间",
+          "用户负责内容未进入会议且用户没有发言"
+        ],
+        "mustAvoid": [
+          "推断同事故意排挤",
+          "只命名帮助与不舒服并存",
+          "提出沟通方案"
+        ]
+      }
+    },
+    {
+      "caseId": "SMK-A-AI",
+      "caseFingerprint": "9b8263a784f7e04b8623a5e77de3e279df1bae5a5fd83bd5a8bc06fb968de7ff",
+      "firstLayer": {
+        "conversation": [
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我今天一直在整理任务看板，二十多张卡片都排得很清楚，只有那条客户投诉一直没点开。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "thinking_summary",
+            "text": "整理让手头任务越来越有秩序，那条投诉却始终留在行动之外。"
+          },
+          {
+            "speaker": "assistant",
+            "presentation": "message",
+            "text": "整理结束时，那条投诉实际推进到哪一步？"
+          },
+          {
+            "speaker": "user",
+            "presentation": "message",
+            "text": "我把二十多张卡片都重新排了优先级，颜色也统一了，越排越清楚；只有那条客户投诉一直压在最下面，我到下班都没点开。"
+          }
+        ]
+      },
+      "secondLayer": {
+        "roleCard": "用户把任务看板整理得很清楚，却一直没有打开唯一一条客户投诉。",
+        "angle": "action",
+        "mode": "deep_conversation",
+        "strictExpected": {
+          "action": "pause",
+          "outcomeOrigin": "ai_synthesized"
+        },
+        "acceptableActions": [
+          "pause"
+        ],
+        "acceptableDirections": [
+          "连接两项可观察结果：整理增加了清晰，投诉仍未进入处理；清晰感与关键任务推进在这次分开了。"
+        ],
+        "whyValuable": "连接两项可观察结果：整理增加了清晰，投诉仍未进入处理；清晰感与关键任务推进在这次分开了。",
+        "mustCover": [
+          "整理带来清晰与秩序",
+          "投诉到下班仍未打开",
+          "清晰感与投诉推进在这次分开"
+        ],
+        "mustAvoid": [
+          "添加可控感或把投诉写成不确定",
+          "解释为保护或逃避",
+          "推断客户反应或转向下次计划"
+        ]
+      }
+    }
+  ],
+  "approval": {
+    "approvalType": "board7_development_model_run",
+    "decision": "approved",
+    "approvedBy": "product_owner",
+    "approvedAt": "2026-07-30T12:43:49Z",
+    "datasetVersion": "2026-07-30.v2",
+    "stage": "smoke",
+    "caseIds": [
+      "SMK-F-PARTIAL-ASK",
+      "SMK-T-ASK",
+      "SMK-R-PARTIAL-ASK",
+      "SMK-A-PARTIAL-ASK",
+      "SMK-F-CLOSED",
+      "SMK-T-USER",
+      "SMK-R-CLOSED",
+      "SMK-A-CLOSED",
+      "SMK-F-AI",
+      "SMK-T-AI",
+      "SMK-R-AI",
+      "SMK-A-AI"
+    ],
+    "caseFingerprint": "1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae"
+  }
+}

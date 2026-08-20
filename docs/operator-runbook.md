@@ -1,6 +1,11 @@
 # Operator Runbook
 
-最后更新：`2026-08-10`
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/README.md`](./README.md)
+
+最后更新：`2026-08-12`
 
 本文记录本地启动、数据库同步、测试命令与高频故障排查。
 
@@ -12,11 +17,12 @@
 |---|---|
 | `DATABASE_URL` | PostgreSQL 连接串 |
 | `AI_RUNTIME_CONFIG_SECRET` | 用于加密数据库里 AI provider API Key 的主密钥；推荐用 `openssl rand -base64 32` 生成 |
-| `AI_PROVIDER` | Production 与现有五维链路使用 `openai`，对应 DeepSeek 官方 API 的 OpenAI 兼容接口；GI-088 v7r2 受控 Preview 使用独立 Ark REST Provider，不改变 Production 运行配置 |
+| `AI_PROVIDER` | 当前产品与候选统一使用 `openai`，对应 DeepSeek 官方 API 的 OpenAI 兼容接口；Ark 只保留历史兼容代码 |
 | `INTERVIEW_INTENT_V2_MODE` | 访谈意图识别发布档位：`legacy` 保持既有决策，`shadow` 记录新旧对照，`enforce` 启用新决策。当前 Production 与 Preview 均使用 `enforce`，`legacy` 保留为 P0 问题的即时回退档位 |
 | `INTERVIEW_EVENT_CENTERED_MODE` | 事件中心入口档位：`legacy` 保持五维入口为默认并允许读取已有事件；`optional` 保持五维默认入口并展示“从一件事开始”且允许事件写入；`event_centered` 以事件中心为默认入口并允许事件写入；`event_recovery` 仅保留已有事件的恢复阅读，关闭事件新增与修改。板块 8 Preview 使用 `optional`，Production 默认保持 `legacy`；生成式问题触发条件发布时保留 `optional` 并切换策略。 |
 | `INTERVIEW_EVENT_CENTERED_STRATEGY` | 事件中心内部提问策略：`baseline` 使用现有确定性提问链路，`generative` 使用同一模型的两段式结构化链路（第一段语义判断、第二段用户表达）。默认 `baseline`；板块 8 Preview 使用 `optional + generative`，生成式质量或稳定性触发回退时切换 `optional + baseline`；数据、隐私、来源或恢复主链风险切换 `event_recovery + baseline`，读路径受影响时切换 `legacy + baseline`。 |
 | `EVENT_CENTERED_GENERATIVE_MODEL` | 事件中心新候选固定使用 `deepseek-v4-flash`；只在受控 Preview 或候选验证中设置，Production 保持空值直到 Board 8 明确批准。 |
+| `DAILY_LIGHT_JOURNAL_PREVIEW_ENABLED` | 本地固定六案例零模型回放开关；仅在 `localhost` / `127.0.0.1` 且显式设置 `I_UNDERSTAND` 时生效，远程 UI Preview 与 Production 不使用。 |
 | `EVENT_CENTERED_EVALUATION_TIMEOUT_MS` | 事件中心离线策略回放与 Judge 的超时，范围 `1000–90000ms`，默认 `18000ms`；缺省时兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。不影响线上访谈超时。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY` | 离线 Judge 专用 API Key；仅本地或隔离评测使用，不提交仓库、不注入客户端或生产请求。缺省时可按代码顺序兼容 `DEEPSEEK_JUDGE_API_KEY` 或回放 key。 |
 | `EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL` | 离线 Judge 模型名，必须显式提供；兼容别名为 `DEEPSEEK_JUDGE_MODEL`。策略回放的 `DEEPSEEK_MODEL` 不会自动充当 Judge 模型。 |
@@ -53,8 +59,8 @@
 当前默认本地值示例：
 
 ```bash
-DATABASE_URL="postgresql://app_user@localhost:5432/happiness_system_codex?schema=public"
-DIRECT_URL="postgresql://app_user@localhost:5432/happiness_system_codex?schema=public"
+DATABASE_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
+DIRECT_URL="postgresql://zouzhijie@localhost:5432/happiness_system_codex?schema=public"
 AI_RUNTIME_CONFIG_SECRET=""
 AI_PROVIDER="openai"
 INTERVIEW_INTENT_V2_MODE="enforce"
@@ -147,7 +153,7 @@ npx prisma generate
 先执行：
 
 ```bash
-psql -h localhost -p 5432 -d happiness_system_codex -U example-user -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260516233200_add_auth_session_and_user_credentials/migration.sql
 ```
 
 然后再执行：
@@ -165,7 +171,7 @@ npx prisma db push
 先执行：
 
 ```bash
-psql -h localhost -p 5432 -d happiness_system_codex -U example-user -f prisma/migrations/20260521120000_add_admin_analytics_tables/migration.sql
+psql -h localhost -p 5432 -d happiness_system_codex -U zouzhijie -f prisma/migrations/20260521120000_add_admin_analytics_tables/migration.sql
 ```
 
 然后再执行：
@@ -201,6 +207,22 @@ npx prisma generate
 ```
 
 这条 migration 为候选记录补充管理员拒绝理由字段；审核候选时拒绝动作要求填写 `4–300` 字原因。
+
+如果今日日记接口出现 `JournalDailyEntry does not exist`、`JournalDailyEntryRevision does not exist` 或 `JournalDailyEntryGeneration does not exist`，执行：
+
+```bash
+psql "$DIRECT_URL" -f prisma/migrations/20260810180000_add_journal_daily_generation_system/migration.sql
+npx prisma generate
+```
+
+如果周报/月报接口出现 `JournalPeriodReport does not exist`、`JournalPeriodReportRevision does not exist` 或 `JournalPeriodReportGeneration does not exist`，继续执行：
+
+```bash
+psql "$DIRECT_URL" -f prisma/migrations/20260811100000_add_journal_period_reports/migration.sql
+npx prisma generate
+```
+
+两条 migration 分别新增今日日记和周期报告的版本、来源与生成操作记录。Preview 或其他测试环境先备份并确认 `DIRECT_URL` 指向隔离的目标库，再执行 `npx prisma migrate deploy`；网页端 UI Preview 使用独立验收库，Production migration 需要单独授权。
 
 ### 2.3 记忆系统依赖（可选）
 
@@ -250,6 +272,8 @@ psql "$DIRECT_URL" -c '\d "DailyHappinessScore"'
 - `JoyEntry_userId_status_date_idx`
 - `DailyJournalEntry_userId_date_idx`
 - `DailyHappinessScore_userId_date_idx`
+- `JournalPeriodReport_userId_periodKind_periodStart_key`
+- `JournalPeriodReportGeneration_userId_periodKind_periodStart_clientOperationId_key`
 - `MemoryFact.embedding` 列存在，且 `\dx` 能看到 `vector` extension
 
 如果需要直接确认 auth session 生命周期逻辑，可执行：
@@ -428,7 +452,7 @@ npm run dev
 ```bash
 npm test -- tests/evals/event-centered-mvp-journal-closure.test.tsx tests/unit/event-centered-release.test.ts
 npm run eval:event-centered:batch-b -- --mode=rules --all
-npx tsc --noEmit
+npm run typecheck
 npm run lint
 npm run build
 git diff --check
@@ -450,14 +474,13 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 
 ### 2.12 GI-088 私有真人评测工作台
 
-当前本地运行器是 `2026-08-10.gi088-human-eval-v7r2-ark-flash`，只用于板块 6／7 开发评测；v1～v7r1 保留为只读历史证据。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
+当前证据包与后续真人验收入口为 [`GI-088 v8r2 评测底座加固资产`](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成任务](./ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v8r1 A1 已确认控制意图误停的单例阻断；其原 run 保持只读。v8r2 的 P0／P1、八项开门差额、最终初始化幂等、全绿静态门、不可变行为 commit 与 Execution fingerprint 均已收口；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，两套 Prisma Client 已在 Vercel Linux 远程构建并通过登录存储验收，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。当前暂停等待 12 项 Thinking high 真人验收；质量与发布未裁决，约 `200` 轮以上容量优化继续排除。运行前先从 [`.env.preview.example`](../.env.preview.example) 复核完整环境契约，并确认：
 
 - `DATABASE_URL` 与 `EVALUATION_DATABASE_URL` 指向同一个专属 Preview 物理库，分别使用 `gi088_app_preview` 和 `gi088_evaluation_v0` schema；
 - `ADMIN_USERNAMES` 与 `GI088_EVALUATOR_USERNAMES` 同时命中评测人；
 - `GI088_EVALUATION_ENABLED=I_UNDERSTAND`；
-- `VOLCENGINE_ARK_API_KEY` 只注入受控 Preview 服务端，`VOLCENGINE_ARK_BASE_URL` 保持 v7r2 冻结端点，密钥不写入仓库、Trace 或评测资产；
-- 正式批次只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
-- off／high 技术冒烟分别使用 `smoke_off`、`smoke_high` 及全新 UUID，不写入正式批次。
+- 正式 run 只使用 `GI088_MODEL_CALL_SCOPE=batch` 和当前精确执行指纹；
+- v8r2 仅开放 Thinking high；历史 off/high 冒烟及探针授权继续只读，新的模型探针不属于本轮开门步骤。
 
 静态检查：
 
@@ -465,12 +488,30 @@ GI-067 / GI-068～074 已冻结产品规则和评测方法。GI-068 固定记录
 npm run prisma:gi088:generate
 npm run prisma:gi088:validate
 npm run eval:gi088:inspect
-npm run eval:gi088:probe:prefix:inspect
+npm run typecheck
+git diff --check
 ```
 
-两个 inspect 命令只重算当前资产、执行指纹和合成 Prefix 兼容合同，不产生模型请求。空内容、Thinking、官方 Flash / Pro 和 Ark Flash 对照均是已封存的历史授权；它们的真人 Trace 重放入口、turn/call 定位符和运行清单留在 `artifacts/local-runtime/`，公开仓库只保留脱敏聚合结论。任何新探针需要全新静态清单、指纹、授权 ID 和独立预算。独立 schema 部署使用 `npm run prisma:gi088:deploy`，命令还要求 `GI088_EVALUATION_SCHEMA_DEPLOY=I_UNDERSTAND`；每次部署前核对目标为 Preview 专属库。
+`eval:gi088:inspect` 只重算资产、指纹和血缘，不产生模型请求。v8r2 已完成主要零模型回归、真实评测库集成、历史兼容、全量测试、typecheck、ESLint、两套 Prisma validate、Production build、Preview build、行为清单与 diff check；最终结果与线上回读已经统一进入 v8r2 资产目录。
 
-访问 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。工作台页面和 `GET /api/preview/gi088/session` 应显示同一执行指纹、与当前 manifest 一致的任务状态及完成数；Production 的页面、session 和 smoke 路由均应返回 `404`。本次同步截止点的 v7r2 manifest 状态为 `ready_for_preview_deploy_and_blank_batch`，Preview deployment、页面回读、新批次与批次 ID 均保持空值，预期首次回读为 `running_0_of_2`且初始化模型调用为 `0`。
+Preview 发布上传源码并交给 Vercel Linux 远程构建；[vercel.json](../vercel.json) 会在 `next build` 前重新生成主库与评测库两套 Prisma Client。macOS 本机 `vercel build` 产物只用于本地检查，不进入 `vercel deploy --prebuilt`，避免把本机 Prisma engine 带入 Linux 运行时。
+
+独立 schema 部署使用 `npm run prisma:gi088:deploy`，命令要求 `GI088_EVALUATION_SCHEMA_DEPLOY=I_UNDERSTAND`，并在调用前核对目标为 Preview 专属库。迁移 `20260810180000_add_v8r2_foundation_hardening` 增加 run ordinal、gate、调用账本、幂等操作、程序介入、人工修订、操作事件和导出快照；它会替换旧的 owner+version 唯一约束，同时保留旧数据和旧 JSON。兼容迁移后的只读回读确认 v8r1 原 run 仍为 `runOrdinal=1`、`running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。
+
+故障处理：
+
+- `GI088_TURN_OUT_OF_DATE` 或 `GI088_REVIEW_SNAPSHOT_OUT_OF_DATE`：读取最新状态，保留草稿，重新阅读后确认；本次模型调用为零。
+- `GI088_PROVIDER_PREFLIGHT_FAILED`：用户原话已保存，调用账本不计 dispatched；修复配置后按页面动作继续。
+- `GI088_CALL_FINALIZATION_FAILED`：读取最新状态完成稳定失败收口，确认 pending 和 operation 已退出处理中；已经落账的 Provider 结果继续保留，读取过程不调用模型。`GI088_RESULT_PERSISTENCE_UNKNOWN`：停止自动模型重调，等待数据库恢复后按调用截止对账。
+- 生成期间刷新或断线：页面每两秒只读轮询 pending turn；服务端按调用截止与共享恢复截止收口。
+- 当前项阻断：使用“终止当前任务并保留部分证据”；该项进入 aborted、gate 进入 no_go，后续任务仍可继续采集。
+- 历史指纹不匹配：进入只读查看和导出；创建新 run 需要当前候选与新 `clientOperationId`。
+- v8r2 开门合同 `GI088_TECHNICAL_FAILURE_EVIDENCE_REQUIRED`：轨迹中缺少可支持“技术失败阻断”的冻结事实，重新选择准确的目标触发结论。
+- v8r2 开门合同 `GI088_OPERATION_EVENT_LINEAGE_INVALID`：客户端事件引用了不属于当前 run 的 task 或 turn；读取最新 run 后重新上报，聊天与评价数据保持不变。
+- typed error catalog 检查失败：先补齐 store／service 错误的 HTTP 状态、中文原因、保存情况和恢复动作，再开放 Preview。
+- 导出：只接受终态 run；首次导出冻结 payload 与 receipt，后续下载直接返回同一快照；客户端重算 canonical payload SHA256 后再标记收据验证成功。
+
+访问最终 v8r2 Preview 时先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录。最终 deployment 为 `dpl_YRUQitffCQH264xiksHpLMviQZLy`，URL 为 `https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。该 deployment 使用修复源码 commit `0a993afad1248e67a2863456d2c35b774bb2130f` 在 Vercel Linux 远程生成两套 Prisma Client；虚构账号登录验收已返回 `401 INVALID_CREDENTIALS`，deployment error logs 为 `0`。当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 已回读为 `ordinal=2 / revision=0 / running / 0 of 12 / gate=pending / high_only / high / calls=0`，并确认由绑定最终指纹的新 `clientOperationId` 创建。旧预发布零内容 run 已行政 `early_stopped` 并作为脱敏排除记录。Production 的 GI-088 页面和接口继续统一返回 `404`。
 
 事件日志生成故障处理：
 
@@ -776,19 +817,18 @@ gratitude 目前完成了理论规格、结构字段扩展、AI 抽取独立化�
 ## 5. 测试命令
 
 ```bash
-npx tsc --noEmit
+npm run typecheck
 npm test
 ```
 
-截至 `2026-07-20`，当前基线是：
+`npm run typecheck` 会先执行 `next typegen`，再执行 `tsc --noEmit`。`next-env.d.ts` 由 Next.js 自动生成并保留在本地忽略范围；`.firecrawl/` 只保存本地研究缓存，正式结论进入来源文档、评测报告或复盘。
+
+截至 `2026-08-12`，当前验证口径是：
 - `npm test`（Vitest）以主仓测试集为准；真实文件数与测试数以最近一次全量绿灯记录为准
-- `npx tsc --noEmit` 以最近一次回归结果为准
-- `npm run lint` / `npm run build` 是否通过，以最近一次回归结果为准
-- 当前工作区验证（`2026-07-21`）：`npm test` = `187` 个测试文件、`1392` 个测试通过
-- AI 质量发布与效果观察专项验证：`10` 个测试文件、`30` 个测试通过
-- `npm run lint` 通过，保留 `44` 条既有 warning
-- `npx tsc --noEmit` 通过
-- `npm run build` 通过，保留既有 ESLint warnings
+- 旧 UI Preview 网页端高保真专项：`8` 个测试文件、`36/36` 个测试通过，作为历史工程证据保留
+- `npm run typecheck`、`npm run lint`、`npm test`、`npm run build` 与 `git diff --check` 以当前分支最近一次完整验证记录为准
+- 旧远程 Vercel UI Preview 构建状态为 `Ready`；当前新前端仍在构建，尚未完成产品验收
+- 日志生成评测资产的结构验证、隔离检查和 mock/静态单测单独记录；真实模型调用、远程数据库写入和真人提交需要独立授权
 - Vitest 当前默认只扫描 `tests/**/*.test.{ts,tsx}`，并排除 `.worktrees/**` 与 `.claude/worktrees/**`，避免历史 worktree 测试噪声污染主仓回归
 
 ## 6. 托管平台主线
@@ -808,6 +848,27 @@ npm test
 - production / preview URL 合同 runtime 直读脚本：`scripts/runtime-env-readback.mjs`
 
 ### 6.1 Preview 部署后最小检查
+
+#### Daily Light 旧 UI Preview 历史工程证据（2026-08-12）
+
+以下独立 UI Preview 已部署完成，作为当前新前端的工程联调参考：
+
+```text
+https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
+deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417 (Ready)
+```
+
+Preview 使用独立验收数据库，环境为 `INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`，`GI088_EVALUATION_ENABLED` 关闭；`.vercelignore` 已排除私有评测页面、评测接口与本地评测脚本。Production `https://dailylight.chat` 保持当前版本、数据库和开关。
+
+历史验收清单：
+
+1. 打开 `/interview?mode=event-centered&entryDate=2026-08-12`，确认无会话时看到当天工作台空状态；点击【帮我记】或【陪我聊】后才开始记录。
+2. 确认三阶段进度位于顶部导航上下文区，聊天区只显示消息和输入框；理解、提问与用户消息使用统一的 dailylight.chat 气泡体系。
+3. 在 AI 回复下方依次验证赞、踩、重新生成；打开菜单后验证“更简单一点 / 更具体一点 / 换一个角度”、键盘方向键、Esc 关闭和焦点回到触发按钮。
+4. 打开 day / week / month 三个 `/calendar` 地址，确认加载、错误、空状态和有数据时都保留归档侧栏 + 报告画布骨架。
+5. 在 `1440×900` 与 `1024×768` 两个桌面尺寸各刷新一次，确认顶部进度、输入区和报告主动作仍可见；保存后再次刷新，确认状态和内容恢复。
+
+浏览器核验已覆盖空工作台、访谈启动、事件保存和日报/周报/月报结构。当前新前端完成产品验收后，再接入固定六案例 Preview；真实模型质量评测、正式 `dev28＋hidden12` 和 Production 发布沿后续阶段单独处理。
 
 以 `docs/vercel-preview-production-lane.md` 为 source of truth，按 preview 是否受保护分流：
 
@@ -1204,6 +1265,14 @@ printf '%s\n' "$INTERVIEW_EVENT_CENTERED_MODE" "$INTERVIEW_EVENT_CENTERED_STRATE
 - `protected_failure`：Provider 已返回最终内容，结构、来源或“单轮一问”等确定性边界未通过。原始结果和校验问题保留，状态不合并进正式对话。
 
 v1 在两类失败下都提供“结束并评价当前技术失败”。手动重试每次都会新增一次模型请求，适合偶发网络、超时或 Provider 抖动。相同参数已稳定复现的预算耗尽直接保留失败并评价，避免消费额外请求。
+
+### 7.15 周报/月报读取或保存失败
+
+- `JournalPeriodReport does not exist`：按第 2.2 节应用 `20260811100000_add_journal_period_reports`，再执行 `npx prisma generate`。
+- `409` 且提示来源变化：先重新读取 `/api/journal/period`，确认新的 `sourceSignature`，再由页面使用“更新”动作生成；用户手工编辑内容会保留在当前草稿版本。
+- `409` 且提示版本冲突：重新读取报告，合并需要保留的正文后使用最新 `expectedContentRevision` 自动暂存或保存。
+- 生成中刷新页面：读取 `latestGeneration`，状态恢复为 `generating / draft / stale / update_failed` 之一；重复点击使用同一个客户端操作编号，不应产生重复报告。
+- 日报、周报或月报显示空状态：先核对 `Asia/Shanghai` 日期范围和有效事件卡片 / 已保存上层报告来源，再判断是否确实没有可汇总素材。
 
 ## 8. 关键日志与定位点
 

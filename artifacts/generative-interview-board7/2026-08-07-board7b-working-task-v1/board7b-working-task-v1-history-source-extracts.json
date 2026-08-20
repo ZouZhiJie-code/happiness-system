@@ -1,0 +1,52 @@
+{
+  "extractVersion": "2026-08-07.board7b-working-task-history-source-extracts-v1",
+  "sourceClass": "local_isolated_real_trajectory",
+  "productionDataUsed": false,
+  "origin": {
+    "runFingerprint": "07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1",
+    "trajectoryId": "7c46bbbb-5cbe-4b77-a521-283f42587329",
+    "originReadbackPath": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7a-chat-e2e-single-v1/run-07e01b161e08c9392131135922c597a91e5be2bfbd115bc0731f45db6c9f97a1/checkpoint.json"
+  },
+  "checkpoints": [
+    {
+      "caseId": "AUT1",
+      "messages": [
+        {
+          "id": "A0",
+          "role": "assistant",
+          "content": "此刻你想聊点什么？"
+        },
+        {
+          "id": "U1",
+          "role": "user",
+          "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。"
+        }
+      ]
+    },
+    {
+      "caseId": "AUT2",
+      "messages": [
+        {
+          "id": "A0",
+          "role": "assistant",
+          "content": "此刻你想聊点什么？"
+        },
+        {
+          "id": "U1",
+          "role": "user",
+          "content": "最近在准备秋招，我现在是剩下窗口期也就一个月左右，要决定我的一个毕业的工作了，但我现在还是很纠结的。因为我在考虑到底去什么样的公司？去什么样的行业？做什么样的业务？由于我的实践尝试实在是太少了，所以只能继续去类似开盲盒的形式。做一些尝试和判断。而且我现在还在去准备一些作品集，以保证我能够通过简历筛选。所以我无论是从远来看。我要去怎样的公司？行业业务还是从进来看我能不能找到工作，都对我来说还是比较焦急的。"
+        },
+        {
+          "id": "A1",
+          "role": "assistant",
+          "content": "你提到秋招窗口期只剩一个月，既要决定公司、行业和业务方向，又要准备作品集通过筛选，确实两头都压着。\n\n你现在最纠结的是先定方向，还是先保证能拿到 offer？"
+        },
+        {
+          "id": "U2",
+          "role": "user",
+          "content": "我现在主要还是先拿 offer 吧，所以我在准备一些作品集。"
+        }
+      ]
+    }
+  ]
+}

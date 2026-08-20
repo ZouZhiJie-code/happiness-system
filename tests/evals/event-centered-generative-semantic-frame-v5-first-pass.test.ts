@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -29,12 +29,6 @@ import {
 } from "@/features/interview/event-centered/generative-evaluation-runner";
 
 const now = "2026-08-02T12:00:00.000Z";
-const privateArtifactRoot =
-  "artifacts/generative-interview-board7/2026-08-02";
-const hasPrivateHistoricalArtifacts = [
-  `${privateArtifactRoot}/board7-provider-v72-semantic-frame-first-pass-budget-v2.json`,
-  `${privateArtifactRoot}/board7-provider-v72-semantic-frame-first-pass-v2-approval.json`
-].every(existsSync);
 
 function approval(): GenerativeSemanticFrameV5FirstPassApproval {
   return {
@@ -107,7 +101,7 @@ function settle(input: {
   });
 }
 
-describe.skipIf(!hasPrivateHistoricalArtifacts)("Provider v72 六例首轮独立运行门（历史资产）", () => {
+describe("Provider v72 六例首轮独立运行门（历史资产）", () => {
   it("冻结新候选、六例和独立授权，拒绝旧账本身份", () => {
     const budget = createGenerativeSemanticFrameV5FirstPassPendingBudget();
     expect(budget.status).toBe("pending");

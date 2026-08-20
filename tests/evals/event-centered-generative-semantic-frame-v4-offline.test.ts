@@ -54,13 +54,6 @@ const reviewedV70Path =
 const v70BudgetPath =
   "artifacts/generative-interview-board7/2026-08-01/board7-provider-v70-root-visible-probe-budget.json";
 const productionEnvPath = ".env.production.example";
-const hasPrivateHistoricalArtifacts = [
-  recoveryV3Path,
-  reviewedV70Path,
-  v70BudgetPath,
-  GENERATIVE_SEMANTIC_FRAME_V4_FIRST_PASS_BUDGET_ARTIFACT_PATH,
-  GENERATIVE_SEMANTIC_FRAME_V4_OFFLINE_CONFIRMATION_ARTIFACT_PATH
-].every(existsSync);
 
 type MutableOfflineDataset = {
   cases: Array<Record<string, unknown>>;
@@ -146,7 +139,7 @@ function approvedFirstPass() {
   };
 }
 
-describe.skipIf(!hasPrivateHistoricalArtifacts)("semanticFrame v4 离线确认包", () => {
+describe("semanticFrame v4 离线确认包", () => {
   it("冻结六类新案例、候选版本和零预算离线门", () => {
     expect(GENERATIVE_SEMANTIC_FRAME_V4_OFFLINE_DATASET.datasetVersion).toBe(
       GENERATIVE_SEMANTIC_FRAME_V4_OFFLINE_DATASET_VERSION

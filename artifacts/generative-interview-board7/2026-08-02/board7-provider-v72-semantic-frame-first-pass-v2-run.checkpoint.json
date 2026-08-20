@@ -1,0 +1,1638 @@
+{
+  "evaluation": "board7_provider_v72_semantic_frame_first_pass",
+  "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+  "scopeFingerprint": "c8a0ae419917585067db55832b117b5076af37aabc5be5c5f7ec79e89cea29a1",
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "maxTechnicalRetriesPerStage": 1,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "reservationId": "59668cb4-2996-48ec-8b7b-69f6b839c678",
+  "approvalPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-approval.json",
+  "createdAt": "2026-08-02T08:32:45Z",
+  "runs": [
+    {
+      "caseId": "SF4-F-READY-01",
+      "angle": "feeling",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "origin": "user_articulated",
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "experience",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            }
+          ],
+          "relation": null
+        },
+        "questionIntent": null,
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "completion",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "触壁摘镜",
+            "笑和肩膀放松",
+            "松快"
+          ],
+          "mustAvoid": [
+            "继续追问",
+            "训练建议",
+            "克服恐惧",
+            "长期能力",
+            "semanticFrame 或 unit 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "真正游完以后，你最先有什么变化？",
+        "currentUserText": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了。那一刻就是松快。",
+        "conversationContext": [
+          {
+            "user": "我给自己定了今天连续游十个来回的目标，前九个来回都在数呼吸。",
+            "assistantUnderstanding": "你一直靠数呼吸把自己带到最后一个来回。",
+            "assistantQuestion": "真正游完以后，你最先有什么变化？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "手碰到池壁那一下，我摘下泳镜"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "才发现自己在笑，肩膀也松了"
+          },
+          {
+            "ref": "new:3",
+            "source": "current_user",
+            "quote": "那一刻就是松快"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "feeling",
+            "currentQuestionTarget": "ten_laps_first_experience_change",
+            "planPromptHash": "922305d226e725fba5caf1887af661c5306a8a0e4bdd0023d042125dace8b712",
+            "semanticPlanHash": "48b9529e973417d78d4be1585155596cf3fe51366a8db48cf08451b95349e948"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+              },
+              {
+                "statement": "肩膀也松了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "肩膀也松了"
+              },
+              {
+                "statement": "那一刻就是松快",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "那一刻就是松快"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "experience",
+                "evidenceRefs": [
+                  "new:2",
+                  "new:3"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了、那一刻就是松快",
+            "evidenceRefs": [
+              "new:1",
+              "new:2",
+              "new:3"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "feeling",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了、那一刻就是松快",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2",
+              "new:3"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了、那一刻就是松快",
+            "tentativeInterpretation": null,
+            "stopReason": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了、那一刻就是松快",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了、那一刻就是松快",
+              "summaryAnchors": [
+                "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑",
+              "sourceText": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+            },
+            {
+              "ref": "new:2",
+              "statement": "肩膀也松了",
+              "sourceText": "肩膀也松了"
+            },
+            {
+              "ref": "new:3",
+              "statement": "那一刻就是松快",
+              "sourceText": "那一刻就是松快"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-FEELING-GUIDED:user-articulated",
+            "CAL-FEELING-GUIDED:ai-synthesized",
+            "CAL-FEELING-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "922305d226e725fba5caf1887af661c5306a8a0e4bdd0023d042125dace8b712"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 371,
+            "tokenUsage": {
+              "promptTokens": 3437,
+              "completionTokens": 383,
+              "totalTokens": 3820,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 3437
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"手碰到池壁那一下，我摘下泳镜，才发现自己在笑\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"手碰到池壁那一下，我摘下泳镜，才发现自己在笑\"\n      },\n      {\n        \"statement\": \"肩膀也松了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"肩膀也松了\"\n      },\n      {\n        \"statement\": \"那一刻就是松快\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那一刻就是松快\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\"\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"event\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"experience\",\n        \"evidenceRefs\": [\"new:2\", \"new:3\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"coexistence\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 3523
+    },
+    {
+      "caseId": "SF4-T-ASK-01",
+      "angle": "thought",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "needs_more",
+        "action": "ask",
+        "origin": null,
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "judgment",
+              "evidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            }
+          ],
+          "relation": null
+        },
+        "questionIntent": {
+          "gap": "停止调整版画位置的具体视觉依据",
+          "answerSource": {
+            "kind": "sensory_detail",
+            "evidenceRefs": [
+              "new:1"
+            ],
+            "anchorQuote": "退到门口再看时"
+          }
+        },
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "question",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "required",
+          "mainField": "question",
+          "mustCover": [
+            "已在门口回看时停手",
+            "问题落到当时看到的一处具体画面或位置"
+          ],
+          "mustAvoid": [
+            "重复询问什么标准或为什么",
+            "提供高度、光线、边距、留白等候选答案",
+            "替用户解释成舒服或平衡",
+            "暴露 gap、answerSource 或 evidenceRefs"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "这个位置更符合你心里的什么标准？",
+        "currentUserText": "我只知道退到门口再看时就不想继续挪了，可具体是哪一处让我停手，我还说不清。",
+        "conversationContext": [
+          {
+            "user": "我把一幅小版画挂到客厅墙上，上下挪了好几次，最后贴在现在这个位置。",
+            "assistantUnderstanding": "你已经停在一个位置，但决定停手的视觉依据还没有说清。",
+            "assistantQuestion": "这个位置更符合你心里的什么标准？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "退到门口再看时就不想继续挪了"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "具体是哪一处让我停手，我还说不清"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "thought",
+            "currentQuestionTarget": "print_wall_position_visual_standard",
+            "planPromptHash": "3b005ad7cfccb7396e7e30edde562a4f4b280c9f54c7ae856670f348670ced03",
+            "semanticPlanHash": "8d2ab09513a9861bafa9a42d10a1607a5f4e219e97039b10e2e038b0f2278268"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "partly_answered",
+            "factDeltas": [
+              {
+                "statement": "退到门口再看时就不想继续挪了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "退到门口再看时就不想继续挪了"
+              },
+              {
+                "statement": "具体是哪一处让我停手，我还说不清",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "具体是哪一处让我停手，我还说不清"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "needs_more",
+          "decisionOrigin": null,
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "judgment",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": {
+            "gap": "补清停手时具体观察到的视觉特征",
+            "answerSource": {
+              "kind": "sensory_detail",
+              "evidenceRefs": [
+                "new:1"
+              ],
+              "anchorQuote": "退到门口再看时就不想继续挪了"
+            }
+          },
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "退到门口再看时就不想继续挪了，同时具体是哪一处让我停手，我还说不清",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": {
+            "goal": "补清停手时具体观察到的视觉特征",
+            "answerEntry": "从“退到门口再看时就不想继续挪了”里的感官细节继续确认",
+            "evidenceRefs": [
+              "new:1"
+            ]
+          },
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "ask",
+            "activeAngle": "thought",
+            "outcomeAssessment": {
+              "state": "needs_more",
+              "origin": null,
+              "basis": "退到门口再看时就不想继续挪了，同时具体是哪一处让我停手，我还说不清",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": "补清停手时具体观察到的视觉特征"
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": null,
+            "selectedTargetId": "v4:c541d319436e200f",
+            "expectedUnderstandingDelta": "补清停手时具体观察到的视觉特征",
+            "tentativeInterpretation": null,
+            "stopReason": null,
+            "cognitiveAction": "anchor_specific",
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "补清停手时具体观察到的视觉特征",
+              "summaryAnchors": [
+                "退到门口再看时就不想继续挪了"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "退到门口再看时就不想继续挪了",
+              "sourceText": "退到门口再看时就不想继续挪了"
+            },
+            {
+              "ref": "new:2",
+              "statement": "具体是哪一处让我停手，我还说不清",
+              "sourceText": "具体是哪一处让我停手，我还说不清"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-THOUGHT-GUIDED:user-articulated",
+            "CAL-THOUGHT-GUIDED:ai-synthesized",
+            "CAL-THOUGHT-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "3b005ad7cfccb7396e7e30edde562a4f4b280c9f54c7ae856670f348670ced03"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 583,
+            "tokenUsage": {
+              "promptTokens": 3363,
+              "completionTokens": 397,
+              "totalTokens": 3760,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 3363
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"退到门口再看时就不想继续挪了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"退到门口再看时就不想继续挪了\"\n      },\n      {\n        \"statement\": \"具体是哪一处让我停手，我还说不清\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"具体是哪一处让我停手，我还说不清\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"needs_more\",\n    \"origin\": null\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"event\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"judgment\",\n        \"evidenceRefs\": [\"new:2\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"coexistence\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": {\n    \"gap\": \"补清停手时具体观察到的视觉特征\",\n    \"answerSource\": {\n      \"kind\": \"sensory_detail\",\n      \"evidenceRefs\": [\"new:1\"],\n      \"anchorQuote\": \"退到门口再看时就不想继续挪了\"\n    }\n  },\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 3989
+    },
+    {
+      "caseId": "SF4-R-COEXIST-01",
+      "angle": "relationship",
+      "mode": "deep_conversation",
+      "expected": {
+        "state": "ready",
+        "action": "pause",
+        "origin": "user_articulated",
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "experience",
+              "evidenceRefs": [
+                "new:1",
+                "new:3"
+              ]
+            },
+            {
+              "id": "u2",
+              "role": "experience",
+              "evidenceRefs": [
+                "new:2",
+                "new:3"
+              ]
+            }
+          ],
+          "relation": {
+            "type": "coexistence",
+            "fromUnitId": "u1",
+            "toUnitId": "u2"
+          }
+        },
+        "questionIntent": null,
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "pause",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "数拍带来的帮助",
+            "当众停音乐带来的压力",
+            "两边同时成立"
+          ],
+          "mustAvoid": [
+            "强迫排序或二选一",
+            "推测舞伴动机",
+            "关系去留建议",
+            "只保留其中一侧",
+            "coexistence 或 unit 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "这两种做法分别让你处在什么状态？",
+        "currentUserText": "我跟不上时，他会在旁边数拍，我就能接回节奏；可我只要错一步，他就当着大家把音乐喊停，我会一下很紧。帮到我和让我有压力，这两边都是真的。",
+        "conversationContext": [
+          {
+            "user": "我最近和固定舞伴练一段新的组合，他在排练时会用两种很不一样的方式带我。",
+            "assistantUnderstanding": "同一段排练里，他的不同做法可能同时带来帮助和压力。",
+            "assistantQuestion": "这两种做法分别让你处在什么状态？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "他会在旁边数拍，我就能接回节奏"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "他就当着大家把音乐喊停，我会一下很紧"
+          },
+          {
+            "ref": "new:3",
+            "source": "current_user",
+            "quote": "帮到我和让我有压力，这两边都是真的"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "deep_companionship",
+            "activeAngle": "relationship",
+            "currentQuestionTarget": "dance_partner_two_experiences",
+            "planPromptHash": "4188a531ea993a44ce3c71a74804c7e94ab5c38d201897d747d113d401fb0476",
+            "semanticPlanHash": "e7d4ab0b2136aa8abec2604cd3231f018ed25c25cb1ab81c1f5730085702b6e4"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "我跟不上时，他会在旁边数拍，我就能接回节奏"
+              },
+              {
+                "statement": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧"
+              },
+              {
+                "statement": "帮到我和让我有压力，这两边都是真的",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "帮到我和让我有压力，这两边都是真的"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "result",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "pause",
+            "activeAngle": "relationship",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "tentativeInterpretation": null,
+            "stopReason": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "cognitiveAction": null,
+            "microgoalDelta": {
+              "operation": "complete",
+              "statement": "理解舞伴两种排练做法分别带来的体验",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "realizationContract": {
+              "responseCore": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "summaryAnchors": [
+                "我跟不上时，他会在旁边数拍，我就能接回节奏"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏",
+              "sourceText": "我跟不上时，他会在旁边数拍，我就能接回节奏"
+            },
+            {
+              "ref": "new:2",
+              "statement": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "sourceText": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-RELATIONSHIP-DEEP:user-articulated",
+            "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+            "CAL-RELATIONSHIP-DEEP:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "4188a531ea993a44ce3c71a74804c7e94ab5c38d201897d747d113d401fb0476"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 405,
+            "tokenUsage": {
+              "promptTokens": 3457,
+              "completionTokens": 418,
+              "totalTokens": 3875,
+              "promptCacheHitTokens": 1152,
+              "promptCacheMissTokens": 2305
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"我跟不上时，他会在旁边数拍，我就能接回节奏\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我跟不上时，他会在旁边数拍，我就能接回节奏\"\n      },\n      {\n        \"statement\": \"可我只要错一步，他就当着大家把音乐喊停，我会一下很紧\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可我只要错一步，他就当着大家把音乐喊停，我会一下很紧\"\n      },\n      {\n        \"statement\": \"帮到我和让我有压力，这两边都是真的\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"帮到我和让我有压力，这两边都是真的\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\"\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"event\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"result\",\n        \"evidenceRefs\": [\"new:2\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"coexistence\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 4613
+    },
+    {
+      "caseId": "SF4-A-EFFECT-01",
+      "angle": "action",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "origin": "ai_synthesized",
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "change",
+              "evidenceRefs": [
+                "SF4-A-EFFECT-01-fact-2",
+                "new:1"
+              ]
+            },
+            {
+              "id": "u2",
+              "role": "result",
+              "evidenceRefs": [
+                "new:2"
+              ]
+            }
+          ],
+          "relation": {
+            "type": "change_effect",
+            "fromUnitId": "u1",
+            "toUnitId": "u2"
+          }
+        },
+        "questionIntent": null,
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "completion",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "横排三页乐谱",
+            "手没有离开琴键",
+            "连续弹完三页并少掉原先翻谱中断"
+          ],
+          "mustAvoid": [
+            "未来练习计划",
+            "提高专注力或效率",
+            "形成习惯",
+            "把成果归属写成用户已经说出的结论",
+            "change_effect 或 unit 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "昨晚再练时，手和三页曲子的连续性分别是什么样？",
+        "currentUserText": "三页还横排在谱架上。昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了。",
+        "conversationContext": [
+          {
+            "user": "这首曲子有三页，我之前每次到第二页末尾都要把手拿开翻谱，后面就会断。后来我把三页复印出来，横排在谱架上。",
+            "assistantUnderstanding": "你已经改变了乐谱的摆放方式，正在观察昨晚实际练习发生了什么。",
+            "assistantQuestion": "昨晚再练时，手和三页曲子的连续性分别是什么样？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "SF4-A-EFFECT-01-fact-2",
+            "source": "trusted_fact",
+            "quote": "我把三页复印出来，横排在谱架上"
+          },
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "三页还横排在谱架上"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "action",
+            "currentQuestionTarget": "horizontal_score_observable_results",
+            "planPromptHash": "b5a9d5a58b740c31c2ca9dad31b787f127d7712ea58ced255f5f913402aa3667",
+            "semanticPlanHash": "8fa1b300d2594f1a0dfed4000a6ed4fd2b84f141ef340f1b9945e42221eef550"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "三页还横排在谱架上",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "三页还横排在谱架上"
+              },
+              {
+                "statement": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "change",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "action",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "tentativeInterpretation": null,
+            "stopReason": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "summaryAnchors": [
+                "三页还横排在谱架上"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "三页还横排在谱架上",
+              "sourceText": "三页还横排在谱架上"
+            },
+            {
+              "ref": "new:2",
+              "statement": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "sourceText": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-ACTION-GUIDED:user-articulated",
+            "CAL-ACTION-GUIDED:ai-synthesized",
+            "CAL-ACTION-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "b5a9d5a58b740c31c2ca9dad31b787f127d7712ea58ced255f5f913402aa3667"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 382,
+            "tokenUsage": {
+              "promptTokens": 3428,
+              "completionTokens": 340,
+              "totalTokens": 3768,
+              "promptCacheHitTokens": 1152,
+              "promptCacheMissTokens": 2276
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"三页还横排在谱架上\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"三页还横排在谱架上\"\n      },\n      {\n        \"statement\": \"昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\"\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"event\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"change\",\n        \"evidenceRefs\": [\"new:2\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"coexistence\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 6080
+    },
+    {
+      "caseId": "SF4-CORRECTION-READY-01",
+      "angle": "action",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "origin": "user_articulated",
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "change",
+              "evidenceRefs": [
+                "new:1"
+              ]
+            },
+            {
+              "id": "u2",
+              "role": "result",
+              "evidenceRefs": [
+                "new:3"
+              ]
+            },
+            {
+              "id": "u3",
+              "role": "scope",
+              "evidenceRefs": [
+                "new:2",
+                "new:4"
+              ]
+            }
+          ],
+          "relation": {
+            "type": "change_effect",
+            "fromUnitId": "u1",
+            "toUnitId": "u2"
+          }
+        },
+        "questionIntent": null,
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "completion",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "挂钩间距拉开",
+            "直射亮带移到墙边且屏幕不再反光",
+            "光仍能进来且房间没有变暗"
+          ],
+          "mustAvoid": [
+            "保留排密挂钩或房间变暗的旧理解",
+            "继续追问旧问题",
+            "把你理解反了写进成果",
+            "扩展成长期环境偏好",
+            "correction 或 unit 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "房间暗下来以后，最先改善的是哪一处？",
+        "currentUserText": "你理解反了。我把挂钩间距拉开了，光还是能进来。变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光。我想保留的是把直射光挪开，房间没有变暗。",
+        "conversationContext": [
+          {
+            "user": "下午在书房时，窗户那边一直晃眼。我把窗帘挂钩重新排了一遍，现在舒服多了。",
+            "assistantUnderstanding": "你把挂钩排得更密，让书房的光线暗下来，所以不再晃眼。",
+            "assistantQuestion": "房间暗下来以后，最先改善的是哪一处？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "我把挂钩间距拉开了"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "光还是能进来"
+          },
+          {
+            "ref": "new:3",
+            "source": "current_user",
+            "quote": "桌面上那条直射的亮带移到了墙边，屏幕不再反光"
+          },
+          {
+            "ref": "new:4",
+            "source": "current_user",
+            "quote": "我想保留的是把直射光挪开，房间没有变暗"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "action",
+            "currentQuestionTarget": "curtain_darker_first_improvement",
+            "planPromptHash": "87738a9fa2b3d0d2b08ee23a00c0d483b5efbf51441db96de739436c669c309b",
+            "semanticPlanHash": "bf0e0d7f01fca4e67b12f2aeb05366fc63d8eccddecf0cba64183f6307cc4b83"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "我把挂钩间距拉开了，光还是能进来",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "我把挂钩间距拉开了，光还是能进来"
+              },
+              {
+                "statement": "变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光"
+              },
+              {
+                "statement": "我想保留的是把直射光挪开，房间没有变暗",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "我想保留的是把直射光挪开，房间没有变暗"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "change",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "result",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "change_effect",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "我把挂钩间距拉开了，光还是能进来，对应的结果是变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "action",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "我把挂钩间距拉开了，光还是能进来，对应的结果是变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "我把挂钩间距拉开了，光还是能进来，对应的结果是变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+            "tentativeInterpretation": null,
+            "stopReason": "我把挂钩间距拉开了，光还是能进来，对应的结果是变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "我把挂钩间距拉开了，光还是能进来，对应的结果是变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+              "summaryAnchors": [
+                "我把挂钩间距拉开了，光还是能进来"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "我把挂钩间距拉开了，光还是能进来",
+              "sourceText": "我把挂钩间距拉开了，光还是能进来"
+            },
+            {
+              "ref": "new:2",
+              "statement": "变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光",
+              "sourceText": "变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-ACTION-GUIDED:user-articulated",
+            "CAL-ACTION-GUIDED:ai-synthesized",
+            "CAL-ACTION-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "87738a9fa2b3d0d2b08ee23a00c0d483b5efbf51441db96de739436c669c309b"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 825,
+            "tokenUsage": {
+              "promptTokens": 3358,
+              "completionTokens": 460,
+              "totalTokens": 3818,
+              "promptCacheHitTokens": 1152,
+              "promptCacheMissTokens": 2206
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"correction\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"我把挂钩间距拉开了，光还是能进来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把挂钩间距拉开了，光还是能进来\"\n      },\n      {\n        \"statement\": \"变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"变化是桌面上那条直射的亮带移到了墙边，屏幕不再反光\"\n      },\n      {\n        \"statement\": \"我想保留的是把直射光挪开，房间没有变暗\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我想保留的是把直射光挪开，房间没有变暗\"\n      }\n    ],\n    \"correctionOrBoundary\": {\n      \"kind\": \"correction\",\n      \"reason\": \"用户纠正了之前关于窗帘调整的理解，指出实际是拉开间距而非排密，且效果是移动亮带而非变暗。\"\n    },\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\",\n    \"origin\": \"user_articulated\"\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"change\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"result\",\n        \"evidenceRefs\": [\"new:2\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"change_effect\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 5044
+    },
+    {
+      "caseId": "SF4-LIMITED-01",
+      "angle": "thought",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "limited",
+        "action": "honest_limit",
+        "origin": null,
+        "semanticFrame": null,
+        "questionIntent": null,
+        "limitReason": {
+          "kind": "insufficient_evidence",
+          "evidenceRefs": [
+            "new:1",
+            "new:2",
+            "new:3"
+          ]
+        },
+        "visibleQuality": {
+          "responseKind": "honest_limit",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "honestLimit",
+          "mustCover": [
+            "目前只能确认日历上的“终于”",
+            "缺少足以还原当天事件的证据"
+          ],
+          "mustAvoid": [
+            "继续追问同一批线索",
+            "把“终于”解释成任何具体事件或情绪",
+            "建议编造或补写回忆",
+            "insufficient_evidence 或 limitReason 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "你能从那天留下的照片、消息或地点想起一点吗？",
+        "currentUserText": "照片和消息我都查过了，什么也对不上。我连那天去了哪里都想不起来，只剩日历上‘终于’这两个字。",
+        "conversationContext": [
+          {
+            "user": "我翻到三个月前的纸质日历，那个周五被我圈了三遍，旁边只写了‘终于’。但我完全想不起发生过什么。",
+            "assistantUnderstanding": "现在只剩日期和‘终于’两个字，还缺少能确认当天事情的线索。",
+            "assistantQuestion": "你能从那天留下的照片、消息或地点想起一点吗？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "照片和消息我都查过了，什么也对不上"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "我连那天去了哪里都想不起来"
+          },
+          {
+            "ref": "new:3",
+            "source": "current_user",
+            "quote": "只剩日历上‘终于’这两个字"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "thought",
+            "currentQuestionTarget": "calendar_day_recoverable_context",
+            "planPromptHash": "115c1050bc1d214895f93a2b39eaf6dc9bde646b9638569c09d7567b10eab5ff",
+            "semanticPlanHash": "e207208e8dafc0cb4d14a117eba0c65732d7fafaafca8013fb7ebe985de4d86f"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": false,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "照片和消息我都查过了，什么也对不上",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "照片和消息我都查过了，什么也对不上"
+              },
+              {
+                "statement": "我连那天去了哪里都想不起来",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "我连那天去了哪里都想不起来"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "limited",
+          "decisionOrigin": null,
+          "semanticFrame": null,
+          "providerQuestionIntent": null,
+          "providerLimitReason": {
+            "kind": "insufficient_evidence",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "understandingCard": null,
+          "questionIntent": null,
+          "limitReason": "当前材料不足以形成可靠认识",
+          "semanticPlan": {
+            "action": "honest_limit",
+            "activeAngle": "thought",
+            "outcomeAssessment": {
+              "state": "limited",
+              "origin": null,
+              "basis": "当前材料不足以形成可靠认识",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "scope_only",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": null,
+            "tentativeInterpretation": null,
+            "stopReason": "当前材料不足以形成可靠认识",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "当前材料不足以形成可靠认识",
+              "summaryAnchors": [
+                "照片和消息我都查过了，什么也对不上"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "照片和消息我都查过了，什么也对不上",
+              "sourceText": "照片和消息我都查过了，什么也对不上"
+            },
+            {
+              "ref": "new:2",
+              "statement": "我连那天去了哪里都想不起来",
+              "sourceText": "我连那天去了哪里都想不起来"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-THOUGHT-GUIDED:user-articulated",
+            "CAL-THOUGHT-GUIDED:ai-synthesized",
+            "CAL-THOUGHT-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "115c1050bc1d214895f93a2b39eaf6dc9bde646b9638569c09d7567b10eab5ff"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 496,
+            "tokenUsage": {
+              "promptTokens": 3396,
+              "completionTokens": 245,
+              "totalTokens": 3641,
+              "promptCacheHitTokens": 1152,
+              "promptCacheMissTokens": 2244
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": false,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"照片和消息我都查过了，什么也对不上\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"照片和消息我都查过了，什么也对不上\"\n      },\n      {\n        \"statement\": \"我连那天去了哪里都想不起来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我连那天去了哪里都想不起来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"limited\",\n    \"origin\": null\n  },\n  \"semanticFrame\": null,\n  \"questionIntent\": null,\n  \"limitReason\": {\n    \"kind\": \"insufficient_evidence\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"]\n  }\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_REQUEST_ERROR",
+          "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": null,
+            "errorCode": "INVALID_REQUEST_ERROR",
+            "errorMessage": "{\"error\":{\"message\":\"Prompt must contain the word 'json' in some form to use 'response_format' of type 'json_object'.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+          }
+        ]
+      },
+      "terminalStatus": "visible_failed",
+      "latencyMs": 3536
+    }
+  ],
+  "inProgress": null
+}

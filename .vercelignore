@@ -3,6 +3,7 @@
 .omx
 .git
 .next
+.next-dev
 node_modules
 coverage
 artifacts
@@ -11,3 +12,20 @@ docs/diagrams
 *.drawio
 *.drawio.png
 interview-*.png
+
+# Private journal evaluation workbench is kept local to its review workflow;
+# the Daily Light Preview only needs the product-facing interview/journal paths.
+src/app/admin/journal-evaluation
+src/app/api/admin/journal-evaluation
+src/components/journal-evaluation
+src/app/api/local/gi088-v8r3
+src/app/api/preview
+src/app/preview/board8-gi058-review
+src/app/preview/board8-gi059-review
+src/app/preview/board8-gi064-review
+src/app/preview/board8-gi065-review
+src/app/preview/board8-gi066-review
+src/app/preview/gi088-evaluation
+scripts/finalize-golden-eight-replacements.ts
+scripts/journal-generation-eval/run-gi088-human-extension-record-review-admission.ts
+scripts/journal-generation-eval/run-gi088-human-extension-record-review-admission-cli.ts

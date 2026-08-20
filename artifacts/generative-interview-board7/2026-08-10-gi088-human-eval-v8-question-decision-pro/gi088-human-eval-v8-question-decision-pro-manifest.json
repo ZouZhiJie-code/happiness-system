@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "status": "human_verified_1_of_4_early_stopped_product_pass",
+  "evaluation": {
+    "id": "gi088_human_eval_v8_question_decision_pro",
+    "version": "2026-08-10.gi088-human-eval-v8-question-decision-pro",
+    "serviceVersion": "2026-08-10.gi088-question-decision-service-v8",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.3",
+    "statePolicyVersion": "2026-08-10.gi088-deterministic-state-maintenance-v2",
+    "questionDecisionSkillVersion": "2026-08-10.gi088-question-decision-skill-v1",
+    "recoveryPolicyVersion": "2026-08-10.gi088-shared-recovery-deadline-v2",
+    "effectiveCandidateFingerprint": "7d449eed837897caa1f8b61c48410118177dad695d4cd2319823d4a359d12230",
+    "datasetFingerprint": "8b1713b43b76d33ec07fe43ee50eafba7a4236eea5ee765bc87f1c82a3517cff",
+    "executionFingerprint": "39857f0d7f7e38a36c8d05622bb71d06ab5ba8513baaf8fefa404d3247d3791a"
+  },
+  "inherits": {
+    "evaluationVersion": "2026-08-10.gi088-human-eval-v7r4-pro",
+    "executionFingerprint": "945d0bf5a0de783c0e831a2f8f988f81a48289f3ef355c5a3bb7eaebf4a92b98",
+    "humanResult": "no_go",
+    "modelDecision": "keep_official_deepseek_v4_pro"
+  },
+  "runtime": {
+    "provider": "openai_compatible_rest",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000,
+    "automaticChainDeadlineMs": 90000,
+    "manualRetryHardTimeoutMs": 60000,
+    "hiddenReasoningPersistence": "forbidden"
+  },
+  "tasks": [
+    "A1_continue_after_zero_question_then_stop",
+    "A2_avoid_reasking_answered_content",
+    "A3_concrete_stage3_deepening",
+    "A4_decision_support"
+  ],
+  "batch": {
+    "id": "cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60",
+    "status": "early_stopped",
+    "completedTaskCount": 1,
+    "totalTasks": 4,
+    "activeBranches": ["high"],
+    "initializationModelGenerationCalls": 0,
+    "terminalAt": "2026-08-10T11:30:59.852Z",
+    "completedTaskIds": ["A1"],
+    "notRunTaskIds": ["A2", "A3", "A4"]
+  },
+  "preview": {
+    "deploymentId": "dpl_BBdWoWMXN3BQummXmCw2cCioxx9N",
+    "url": "https://xingfuxitong-8easi3ups-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "readyState": "READY",
+    "pageReadbackHttpStatus": 200,
+    "pageMarkers": ["GI-088", "v8", "统一问前决策"]
+  },
+  "humanAcceptance": {
+    "minimumUserSubmissions": 12,
+    "maximumProviderCallsPerUserSubmission": 3,
+    "plannedWorstCaseCalls": 36,
+    "maximumCallsWhenPassing": 13,
+    "actualUserSubmissions": 10,
+    "actualProviderCalls": 10,
+    "firstCallValidCount": 10,
+    "automaticRecoveries": 0,
+    "manualRetries": 0,
+    "programProtections": 0,
+    "visibleQuestionReviews": {
+      "sameFocusLowBurden": 7,
+      "sameFocusHeavy": 0,
+      "multipleIndependentTasks": 0,
+      "uncertain": 0
+    },
+    "productOwnerDecision": "pass_direct_use_target_triggered",
+    "codexInitialAssessment": "core_pass_with_one_unnecessary_polite_stop_call"
+  },
+  "closure": {
+    "privateExportSha256": "a031676df904967d0ad0cd760947766fc619fedec86e42167a7f6df7b3ac59e8",
+    "confirmedRootCause": "polite acknowledgement and explicit stop were split into separate segments; the acknowledgement was treated as substantive content, so the turn used the mixed-stop path",
+    "nextEvaluationVersion": "2026-08-10.gi088-human-eval-v8r1-final12"
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

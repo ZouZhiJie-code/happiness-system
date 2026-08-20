@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0",
+  "status": "ready_for_product_owner_human_evaluation_0_of_12",
+  "evaluation": {
+    "id": "gi088_human_eval_v8r2_foundation_hardening",
+    "version": "2026-08-10.gi088-human-eval-v8r2-foundation-hardening",
+    "serviceVersion": "2026-08-10.gi088-evaluation-foundation-service-v8r2",
+    "mode": "high_only",
+    "activeBranches": [
+      "high"
+    ],
+    "taskCount": 12,
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "maxTokensPolicy": "provider_default",
+    "routeMaxDurationSeconds": 120
+  },
+  "versions": {
+    "controlDecision": "2026-08-10.interview-control-decision-v2",
+    "intentClassifier": "2026-08-10.interview-intent-v2",
+    "deterministicState": "2026-08-10.gi088-deterministic-state-maintenance-v2.2",
+    "semanticDelta": "2026-08-10.gi088-semantic-delta-contract-v2.4",
+    "questionDecision": "2026-08-10.gi088-question-decision-skill-v1.1",
+    "sharedRecoveryDeadline": "2026-08-10.gi088-shared-recovery-deadline-v3",
+    "evaluationStore": "2026-08-10.gi088-evaluation-store-v2",
+    "metrics": "2026-08-10.gi088-evaluation-metrics-v1",
+    "programInterventionReview": "2026-08-10.gi088-program-intervention-review-v1",
+    "readonlyExport": "2026-08-10.gi088-readonly-export-v0.6",
+    "behaviorManifest": "2026-08-10.gi088-behavior-manifest-v1"
+  },
+  "immutableEvidence": {
+    "commit": "5281bc53f2b04be9c31adb6d7f4710ac818883a8",
+    "behaviorBuildId": "cfGovtoHY1ZF9Mk6RTvZa",
+    "behaviorManifestSha256": "e38e5798e635c8100d804de4953ae2cd3d726a38926ae8a4ea1661537dc6f222",
+    "behaviorManifestFileSha256": "90e56ba00a34b160ea7d836e306f3dd2dc8f09ab435f71881b76f17eddec3c67",
+    "behaviorFileCount": 65,
+    "layerFingerprints": {
+      "candidate": "a83f235db2711c2adca02af8fac54d83d2d6559c04ac5b4d57f2b52ed5edb179",
+      "dataset": "775442a568152748455bb51de2d232d41d6964be7cb17ace8f1d9df5b98044ac",
+      "runner": "1943497a658d882aeb6682a49c2d9c90a11f6b3a1a8736f9f16c7ef8327539bb",
+      "experience": "b98dc88431ea5feb1a614593f2c3b996f144d6a493c156b707e26bb55ea4a744"
+    },
+    "effectiveCandidateFingerprint": "0d5f91c0142df15035cd665a4a782f5207c4df48ef242e072452653c77b2efd6",
+    "datasetFingerprint": "191f648089ef6749024425ead17903995b307f1936cc6fc2ccef1aaaac7625cf",
+    "executionFingerprint": "96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c",
+    "dependencyLockSha256": {
+      "package-lock.json": "8585f543c7208d28460d9b99ff547f9f5cd3f59a782cb756ebe5c61fbdc6c4c7",
+      "pnpm-lock.yaml": "24c3849ec4cd11ede0642f8ace9504d494840ca7b6e519e8954e3953fa423af6",
+      "pnpm-workspace.yaml": "4b16caf9c94750df6aa0719e21bc8859b4f5fd81b5d68944318f9c9e05bcf7aa"
+    }
+  },
+  "validation": {
+    "vitest": {
+      "passedFiles": 308,
+      "skippedFiles": 1,
+      "failedFiles": 0,
+      "passedTests": 2929,
+      "skippedTests": 9,
+      "failedTests": 0
+    },
+    "typecheck": "passed",
+    "fullLint": {
+      "errors": 0,
+      "preexistingWarnings": 46
+    },
+    "targetLint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "mainPrismaValidate": "passed",
+    "evaluationPrismaValidate": "passed",
+    "productionBuild": "passed",
+    "previewBuild": "passed",
+    "behaviorManifest": "passed",
+    "controlZeroModelReplay": "passed",
+    "historicalCompatibilityVersionCount": 13,
+    "historicalCompatibility": "passed"
+  },
+  "realEvaluationDatabase": {
+    "migrationsApplied": 4,
+    "migrationsTotal": 4,
+    "transactionCasesPassed": 3,
+    "transactionCasesTotal": 3,
+    "caseDurationsSeconds": [
+      42.216,
+      12.48,
+      12.704
+    ],
+    "residueCount": 0
+  },
+  "preview": {
+    "deploymentId": "dpl_YRUQitffCQH264xiksHpLMviQZLy",
+    "url": "https://xingfuxitong-iqddtq6e2-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "state": "READY",
+    "deploymentSourceFixCommit": "0a993afad1248e67a2863456d2c35b774bb2130f",
+    "workspaceCherryPickCommit": "483c613723693d576bd16da4fa4cf4b5795fe2e2",
+    "runtimePackaging": "vercel_remote_linux_build_generated_both_prisma_clients",
+    "loginStorageAcceptance": {
+      "syntheticInvalidAccountStatus": 401,
+      "errorCode": "INVALID_CREDENTIALS",
+      "deploymentErrorLogCount": 0
+    },
+    "anonymousGetStatus": 302,
+    "cacheControl": "no-store",
+    "robots": "noindex",
+    "coreRouteMaxDurationSeconds": {
+      "start": 120,
+      "turn": 120,
+      "retry": 120
+    }
+  },
+  "runtimePackagingIncident": {
+    "status": "resolved_and_verified",
+    "affectedDeploymentId": "dpl_2NscP95yaRMqzHbd2X9F5X9hzBQ9",
+    "affectedUrl": "https://xingfuxitong-l9c7fwtjm-zouzhijies-projects.vercel.app",
+    "symptom": "POST_login_503_AUTH_STORAGE_NOT_READY",
+    "databaseQueryStarted": false,
+    "confirmedRootCause": "local_prebuilt_artifact_contained_only_darwin_arm64_prisma_engines",
+    "resolution": "generate_both_prisma_clients_before_vercel_remote_linux_build",
+    "verification": "synthetic_invalid_account_login_returned_401_INVALID_CREDENTIALS_and_deployment_error_logs_were_zero"
+  },
+  "run": {
+    "id": "b816d468-e3c3-4459-a822-04f95b1e78cd",
+    "ordinal": 2,
+    "revision": 0,
+    "collectionStatus": "running",
+    "completedTaskCount": 0,
+    "totalTaskCount": 12,
+    "gateStatus": "pending",
+    "mode": "high_only",
+    "activeBranches": [
+      "high"
+    ],
+    "activeTaskId": null,
+    "providerCallCount": 0
+  },
+  "metrics": {
+    "allCountMetrics": 0,
+    "rates": null,
+    "targetCoverage": {
+      "reviewedTrajectoryCount": 0,
+      "totalTrajectoryCount": 12
+    },
+    "unreviewedTrajectoryCount": 0
+  },
+  "historicalCompatibility": {
+    "v8r1StateSha256Before": "5cecacceb73e37557e142ade0ceff582772d6895acaf2e5a9d8e634f9fcbae91",
+    "v8r1StateSha256After": "5cecacceb73e37557e142ade0ceff582772d6895acaf2e5a9d8e634f9fcbae91",
+    "publicSessionRawOutput": "removed",
+    "readonlyExportVisibleRawAndReview": "preserved",
+    "hiddenReasoning": "removed"
+  },
+  "safety": {
+    "modelProbeCalls": 0,
+    "humanContentSubmissions": 0,
+    "productionChanged": false,
+    "productionMode": "legacy + baseline",
+    "hiddenReasoningPersisted": false,
+    "capacityOptimizationAboveApproximately200Turns": "excluded"
+  }
+}

@@ -1,0 +1,445 @@
+{
+  "envelopeVersion": "board7-v64-development-run-envelope.1",
+  "evaluation": "board7_mvp_development",
+  "confirmationVersion": "2026-07-30.v5",
+  "datasetVersion": "2026-07-30.v3",
+  "stage": "smoke",
+  "caseIds": [
+    "SMK-R-PARTIAL-ASK",
+    "SMK-F-AI"
+  ],
+  "caseFingerprint": "79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f",
+  "candidateVersions": {
+    "prompt": "2026-07-30.event-centered-generative-v65",
+    "strategy": "5.46.0",
+    "angleCard": "2.12.0",
+    "fewShot": "quality-patterns.2026-07-30.v25"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 2,
+    "architecture": "one_call",
+    "thinking": "disabled"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "caseId": "SMK-R-PARTIAL-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你确认了进入房间和移动桌上物品两件事都让你觉得被越过，但暂时分不出哪件更重。这里先看这两件事是否都触碰了你的边界，它关系到你希望室友在哪些环节先问你。",
+        "naturalResponse": "进入房间和移动桌上物品，这两件事是否都触碰了你希望先被问的边界？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "deep_companionship",
+          "angle": "relationship",
+          "target": "room_boundary_decision_step",
+          "opportunityNumber": 2,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "differentiate"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你确认了进入房间和移动桌上物品两件事都让你觉得被越过，但暂时分不出哪件更重。这里先看这两件事是否都触碰了你的边界，它关系到你希望室友在哪些环节先问你。",
+        "userResponse": "进入房间和移动桌上物品，这两件事是否都触碰了你希望先被问的边界？",
+        "responseKind": "question",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你确认了进入房间和移动桌上物品两件事都让你觉得被越过，但暂时分不出哪件更重。这里先看这两件事是否都触碰了你的边界，它关系到你希望室友在哪些环节先问你。\n进入房间和移动桌上物品，这两件事是否都触碰了你希望先被问的边界？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "ask",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "fact_02",
+        "new:1"
+      ],
+      "expectedQuestionValue": "确认进入房间和移动桌上物品是否两项都触碰边界",
+      "stopReason": null,
+      "latencyMs": 10037,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 517,
+          "tokenUsage": {
+            "promptTokens": 4605,
+            "completionTokens": 559,
+            "totalTokens": 5164,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 4605
+          },
+          "errorCode": "OUTPUT_VALIDATION_FAILED",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户接受室友帮忙拿快递\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"帮我拿回来没问题。\"\n      },\n      {\n        \"statement\": \"用户明确说进入房间和移动桌上物品两件事都让自己觉得被越过\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他进了房间、也动了桌上的东西，这两件事都让我觉得被越过\"\n      },\n      {\n        \"statement\": \"用户无法排列两件事的轻重\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我现在分不出哪件更重。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出进入房间和移动桌上物品两件事都让自己觉得被越过，且无法排列轻重，已满足minimumAnswerScope（明确其中一项或两项都触碰边界）。\",\n      \"supportEvidenceRefs\": [\"fact_02\", \"fact_03\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"fact_01\", \"fact_02\", \"fact_03\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户确认进入房间和移动桌上物品两件事都触碰了边界，且暂时无法区分轻重。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"帮你拿快递省了事，但包裹直接进房间、落在书桌上，这两步都让你觉得被越过。你现在分不出哪件更重，但两件事都碰到了你的边界——进入房间和移动桌上物品，都是你希望先被询问的。\",\n    \"honestLimit\": null\n  }\n}",
+          "errorMessage": "user_articulated_origin_adds_unstated_relation"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 398,
+          "tokenUsage": {
+            "promptTokens": 4650,
+            "completionTokens": 444,
+            "totalTokens": 5094,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 4650
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户无法排列两件事的轻重\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"boundary_answer\",\n        \"quote\": \"我现在分不出哪件更重\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"needs_more\",\n      \"origin\": null,\n      \"basis\": \"用户已确认两件事都触碰边界，但未明确其中一项或两项都触碰边界，minimumAnswerScope未满足\",\n      \"supportEvidenceRefs\": [\"fact_02\", \"new:1\"],\n      \"missingUnderstanding\": \"用户是否认为进入房间和移动桌上物品两项都触碰边界\"\n    },\n    \"evidenceRefs\": [\"fact_02\", \"new:1\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"room_boundary_decision_step\",\n    \"expectedUnderstandingDelta\": \"确认进入房间和移动桌上物品是否两项都触碰边界\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"differentiate\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你确认了进入房间和移动桌上物品两件事都让你觉得被越过，但暂时分不出哪件更重。这里先看这两件事是否都触碰了你的边界，它关系到你希望室友在哪些环节先问你。\",\n    \"responseKind\": \"question\",\n    \"question\": \"进入房间和移动桌上物品，这两件事是否都触碰了你希望先被问的边界？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 10038,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 9255,
+          "completionTokens": 1003,
+          "totalTokens": 10258,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 9255
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00157654
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v65",
+          "resolvedPromptHash": "6768aa412a2983c6ba3d0ebc3a74570d1838443a493de1e1cf03994ecd0d113d"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v65",
+          "resolvedPromptHash": "3408e78f4c27c43b5d54e7ed2f379e31fa65b0ff6df938b8344e069c59fe6197"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "fail",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-RELATIONSHIP-DEEP:ask",
+          "CAL-RELATIONSHIP-DEEP:user-articulated",
+          "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+          "CAL-RELATIONSHIP-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T17:46:55Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "用户已明确进入房间和移动桌上物品两件事都越界，并且当前无法排序轻重；问题再次确认两件事是否都触碰边界，重复索取用户刚刚给出的同一事实。",
+        "finalVerdict": "fail",
+        "rootCause": "user_articulated_boundary_ready_but_same_fact_reconfirmed",
+        "resolution": "失败；应忠实整理两件事都越过边界且无需排序，形成 user_articulated 成果并暂停当前微目标。",
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-30T17:46:55Z"
+      },
+      "runFingerprint": "64dc2a1f2da485998761c1e0c5fab91fd585adb79657073b364e0f4bbbca5757"
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "结果告知时你坐得很直，取下夹子后你靠回椅背、手摊开了。这两个节点之间",
+        "naturalResponse": "从结果告知到取下夹子，你的身体是怎样一步步变化的？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "feeling",
+          "target": "body_release_change",
+          "opportunityNumber": 2,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "trace_change"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "结果告知时你坐得很直，取下夹子后你靠回椅背、手摊开了。这两个节点之间",
+        "userResponse": "从结果告知到取下夹子，你的身体是怎样一步步变化的？",
+        "responseKind": "question",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "结果告知时你坐得很直，取下夹子后你靠回椅背、手摊开了。这两个节点之间\n从结果告知到取下夹子，你的身体是怎样一步步变化的？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "ask",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "fact_01",
+        "fact_02"
+      ],
+      "expectedQuestionValue": "用户连接结果告知时的身体状态与取下夹子后的放松，形成先后或条件关系。",
+      "stopReason": null,
+      "latencyMs": 9829,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": false,
+          "latencyMs": 345,
+          "tokenUsage": {
+            "promptTokens": 4524,
+            "completionTokens": 501,
+            "totalTokens": 5025,
+            "promptCacheHitTokens": 1664,
+            "promptCacheMissTokens": 2860
+          },
+          "errorCode": "OUTPUT_VALIDATION_FAILED",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"医生告知检查结果正常时用户仍坐得很直\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"医生说结果正常时，我坐得很直\"\n      },\n      {\n        \"statement\": \"护士取下监测夹后用户靠回椅背并摊开手\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"护士取下夹子后，我靠回椅背，手摊开了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"needs_more\",\n      \"origin\": null,\n      \"basis\": \"用户提供了两个节点的事实，但尚未连接结果告知与身体放松的先后或条件关系，minimumAnswerScope未满足\",\n      \"supportEvidenceRefs\": [\"fact_01\", \"fact_02\"],\n      \"missingUnderstanding\": \"结果告知时身体状态与后续放松节点之间的具体关系\"\n    },\n    \"evidenceRefs\": [\"fact_01\", \"fact_02\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"body_release_change\",\n    \"expectedUnderstandingDelta\": \"获得一条具体材料，帮助连接结果告知时坐直与后续放松之间的过渡\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"trace_change\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"结果告知时你坐得很直，取下夹子后才靠回椅背。这两个状态之间发生了什么？回到取下夹子的那一刻，最先出现的一个身体变化是什么？\",\n    \"responseKind\": \"question\",\n    \"question\": \"护士取下夹子时，你身体最先出现的一个变化是什么？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}",
+          "errorMessage": "understanding_contains_question"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 365,
+          "tokenUsage": {
+            "promptTokens": 4562,
+            "completionTokens": 517,
+            "totalTokens": 5079,
+            "promptCacheHitTokens": 1664,
+            "promptCacheMissTokens": 2898
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"医生告知检查结果正常时用户仍坐得很直\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"医生说结果正常时，我坐得很直，双手放在膝盖上。\"\n      },\n      {\n        \"statement\": \"护士取下监测夹后用户靠回椅背并摊开手\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"护士取下夹子后，我靠回椅背，手摊开了。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"needs_more\",\n      \"origin\": null,\n      \"basis\": \"用户提供了结果告知和取下夹子两个节点的身体状态，但尚未连接这两个节点之间的先后或条件关系，minimumAnswerScope未满足。\",\n      \"supportEvidenceRefs\": [\"fact_01\", \"fact_02\"],\n      \"missingUnderstanding\": \"结果告知时身体状态与后续放松节点之间的先后或条件关系\"\n    },\n    \"evidenceRefs\": [\"fact_01\", \"fact_02\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"body_release_change\",\n    \"expectedUnderstandingDelta\": \"用户连接结果告知时的身体状态与取下夹子后的放松，形成先后或条件关系。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"trace_change\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"结果告知时你坐得很直，取下夹子后你靠回椅背、手摊开了。这两个节点之间，身体是怎样从紧绷到放松的？\",\n    \"responseKind\": \"question\",\n    \"question\": \"从结果告知到取下夹子，你的身体是怎样一步步变化的？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9829,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 9086,
+          "completionTokens": 1018,
+          "totalTokens": 10104,
+          "promptCacheHitTokens": 3328,
+          "promptCacheMissTokens": 5758
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0011004784000000001
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v65",
+          "resolvedPromptHash": "d3191c8999c3d1caf9fb939adc60fe83259dc6612ce67bf05e907c3a34ab4333"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v65",
+          "resolvedPromptHash": "4537dc8c22915f7b128c55fe4bd9b4f1389e636455f0d585138930b64a41f63f"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "fail",
+      "versions": {
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T17:46:55Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "结果告知时坐得很直，以及取下夹子后靠回椅背、手摊开，两个身体节点已经完整提供；问题再次要求用户描述两个节点之间的身体变化。",
+        "finalVerdict": "fail",
+        "rootCause": "ai_synthesis_ready_but_completed_change_reasked",
+        "resolution": "失败；应连接两个身体节点形成 ai_synthesized 认识并完成，停止继续收集同一变化关系。",
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-30T17:46:55Z"
+      },
+      "runFingerprint": "00610f7451c7440e274eee2377d817c6e254c40e2f57c01b7807f02cd27ae4ca"
+    }
+  ],
+  "providerRuntimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": null,
+  "codexGate": {
+    "stage": "smoke",
+    "reviewLevel": "codex",
+    "total": 2,
+    "expectedTotal": 12,
+    "technicalComplete": 2,
+    "reviewable": 2,
+    "reviewed": 2,
+    "pendingReview": 0,
+    "humanFailed": 2,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 0,
+        "passed": 0,
+        "reviewable": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 1,
+        "passed": 0,
+        "reviewable": 1,
+        "reviewed": 1
+      },
+      "ai_synthesized": {
+        "total": 1,
+        "passed": 0,
+        "reviewable": 1,
+        "reviewed": 1
+      }
+    },
+    "distributionMatches": false,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [
+      {
+        "reason": "ask_stop_timing",
+        "caseIds": [
+          "SMK-R-PARTIAL-ASK",
+          "SMK-F-AI"
+        ]
+      }
+    ],
+    "gateState": "blocked_pending_review"
+  },
+  "productGate": {
+    "stage": "smoke",
+    "reviewLevel": "product_owner",
+    "total": 2,
+    "expectedTotal": 12,
+    "technicalComplete": 2,
+    "reviewable": 2,
+    "reviewed": 2,
+    "pendingReview": 0,
+    "humanFailed": 2,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 0,
+        "passed": 0,
+        "reviewable": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 1,
+        "passed": 0,
+        "reviewable": 1,
+        "reviewed": 1
+      },
+      "ai_synthesized": {
+        "total": 1,
+        "passed": 0,
+        "reviewable": 1,
+        "reviewed": 1
+      }
+    },
+    "distributionMatches": false,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [
+      {
+        "reason": "ask_stop_timing",
+        "caseIds": [
+          "SMK-R-PARTIAL-ASK",
+          "SMK-F-AI"
+        ]
+      }
+    ],
+    "gateState": "blocked_pending_review"
+  },
+  "commandOutcome": {
+    "status": "failed_human_gate",
+    "exitCode": 1
+  },
+  "budget": null
+}

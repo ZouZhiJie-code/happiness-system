@@ -18,10 +18,11 @@ const config: Config = {
         line: "#9a7650"
       },
       boxShadow: {
-        soft: "0 26px 80px rgba(126, 88, 45, 0.16)",
+        soft: "0 4px 14px rgba(126, 88, 45, 0.1)",
         glow: "0 0 0 1px rgba(190, 140, 83, 0.16), 0 18px 48px rgba(190, 140, 83, 0.2)"
       },
       fontFamily: {
+        ui: ["ui-sans-serif", "-apple-system", "BlinkMacSystemFont", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "sans-serif"],
         display: ["Baskerville", "Iowan Old Style", "Times New Roman", "Songti SC", "serif"],
         body: ["Charter", "Georgia", "PingFang SC", "Hiragino Sans GB", "serif"],
         mono: ["IBM Plex Mono", "SFMono-Regular", "Menlo", "monospace"]

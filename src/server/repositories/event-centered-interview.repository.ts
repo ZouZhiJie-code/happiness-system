@@ -1,4 +1,4 @@
-import { Prisma, type InputMode } from "@prisma/client";
+import { Prisma, type InputMode, type InterviewUserTurnAction } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 
 import { formatEntryDate, parseEntryDateInput } from "@/features/interview/entry-date";
@@ -9,13 +9,13 @@ import {
 } from "@/features/interview/event-centered/dialogue-state";
 import { prisma } from "@/server/db/prisma";
 import {
-  claimJournalDayModeInTransaction,
-  resolveJournalDayMode
+  claimJournalDayModeInTransaction
 } from "@/server/repositories/journal-day-mode.repository";
 import type {
   EventCenteredInterviewWorkspaceData,
   EventCenteredOperationData,
   EventCenteredSessionIdentity,
+  EventCenteredSessionListView,
   EventCenteredSessionTabRecord,
   EventCenteredTurnConfirmation,
   EventCenteredUserAction,
@@ -29,6 +29,20 @@ import type {
 type DatabaseClient = Prisma.TransactionClient;
 
 const EVENT_CENTERED_SCHEMA_VERSION = 4 as const;
+export const EVENT_CENTERED_UNFINISHED_LIMIT = 2 as const;
+const EVENT_CENTERED_BLANK_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+export class EventCenteredUnfinishedLimitReachedError extends Error {
+  readonly code = "EVENT_CENTERED_UNFINISHED_LIMIT_REACHED" as const;
+
+  constructor(
+    readonly unfinishedCount: number,
+    readonly unfinishedLimit: typeof EVENT_CENTERED_UNFINISHED_LIMIT
+  ) {
+    super("EVENT_CENTERED_UNFINISHED_LIMIT_REACHED");
+    this.name = "EventCenteredUnfinishedLimitReachedError";
+  }
+}
 
 export const EVENT_CENTERED_GENERATIVE_PLAN_CHECKPOINT_KIND =
   "generative_semantic_plan_checkpoint" as const;
@@ -90,7 +104,11 @@ type StoredWorkspaceMessage = {
   regenerationIntent: "simplify" | "concretize" | "change_angle" | "deepen" | "lighten" | null;
   regeneratedFromMessageId: string | null;
   createdAt: Date;
-  userTurn: { rawText: string | null; clientTurnId: string } | null;
+  userTurn: {
+    rawText: string | null;
+    clientTurnId: string;
+    action: InterviewUserTurnAction;
+  } | null;
 };
 
 function isUniqueConflict(error: unknown) {
@@ -344,7 +362,7 @@ async function resolveEffectiveMessagePath(
       regenerationIntent: true,
       regeneratedFromMessageId: true,
       createdAt: true,
-      userTurn: { select: { rawText: true, clientTurnId: true } }
+      userTurn: { select: { rawText: true, clientTurnId: true, action: true } }
     }
   });
   const messagesByBranch = new Map<string, StoredWorkspaceMessage[]>();
@@ -367,18 +385,76 @@ async function resolveEffectiveMessagePath(
   return messages;
 }
 
-async function findEventCenteredRootByDate(userId: string, entryDate: Date) {
-  return prisma.interviewSession.findFirst({
+async function findEventCenteredRootByOperation(
+  database: typeof prisma | DatabaseClient,
+  userId: string,
+  startOperationId: string
+) {
+  return database.interviewSession.findFirst({
     where: {
       userId,
-      entryDate,
+      startOperationId,
       mode: "event_centered",
-      parentSessionId: null,
-      status: "active"
+      parentSessionId: null
     },
-    orderBy: { startedAt: "desc" },
     select: { id: true }
   });
+}
+
+function buildEventCenteredSidebarTitle(rawText: string) {
+  const normalized = rawText
+    .replace(/[\r\n\t]+/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim()
+    .replace(/^[，。！？、；：,.!?;:\s]+|[，。！？、；：,.!?;:\s]+$/gu, "");
+  if (!normalized) return null;
+  const characters = Array.from(normalized);
+  return characters.slice(0, 20).join("");
+}
+
+async function expireBlankEventCenteredRoots(
+  database: typeof prisma | DatabaseClient,
+  userId: string,
+  now = new Date()
+) {
+  const cutoff = new Date(now.getTime() - EVENT_CENTERED_BLANK_EXPIRY_MS);
+  await database.interviewSession.updateMany({
+    where: {
+      userId,
+      mode: "event_centered",
+      parentSessionId: null,
+      status: { in: ["active", "paused"] },
+      journalEvent: { is: null },
+      startedAt: { lt: cutoff }
+    },
+    data: {
+      status: "abandoned",
+      completedAt: now,
+      lastActivityAt: now
+    }
+  });
+}
+
+type EventCenteredSessionCursor = { lastActivityAt: string; rootSessionId: string };
+
+function encodeSessionCursor(cursor: EventCenteredSessionCursor) {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function decodeSessionCursor(value: string | null | undefined): EventCenteredSessionCursor | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<EventCenteredSessionCursor>;
+    if (
+      typeof parsed.lastActivityAt !== "string" ||
+      Number.isNaN(new Date(parsed.lastActivityAt).getTime()) ||
+      typeof parsed.rootSessionId !== "string" ||
+      !parsed.rootSessionId
+    ) return null;
+    return parsed as EventCenteredSessionCursor;
+  } catch {
+    return null;
+  }
 }
 
 async function resolveEventCenteredRoute(
@@ -414,6 +490,8 @@ async function resolveEventCenteredRoute(
       id: true,
       userId: true,
       entryDate: true,
+      recordMode: true,
+      sidebarTitle: true,
       status: true,
       conversationSchemaVersion: true,
       activeBranchSessionId: true,
@@ -469,6 +547,7 @@ function toSessionIdentity(
 
   return {
     mode: "event_centered",
+    recordMode: route.root.recordMode,
     rootSessionId: route.root.id,
     activeBranchSessionId: route.activeBranch.id,
     eventId: event?.id ?? null,
@@ -516,15 +595,119 @@ export async function listEventCenteredSessionTabsByDate(
   }));
 }
 
+export async function listEventCenteredSessions(input: {
+  userId: string;
+  limit?: number;
+  cursor?: string | null;
+  now?: Date;
+}): Promise<EventCenteredSessionListView> {
+  const limit = Math.min(50, Math.max(1, input.limit ?? 30));
+  const now = input.now ?? new Date();
+  const cursor = decodeSessionCursor(input.cursor);
+  if (input.cursor && !cursor) throw new Error("INVALID_SESSION_CURSOR");
+
+  await expireBlankEventCenteredRoots(prisma, input.userId, now);
+
+  const cursorFilter: Prisma.InterviewSessionWhereInput | undefined = cursor
+    ? {
+        OR: [
+          { lastActivityAt: { lt: new Date(cursor.lastActivityAt) } },
+          {
+            lastActivityAt: new Date(cursor.lastActivityAt),
+            id: { lt: cursor.rootSessionId }
+          }
+        ]
+      }
+    : undefined;
+
+  const [rows, unfinishedCount] = await Promise.all([
+    prisma.interviewSession.findMany({
+      where: {
+        userId: input.userId,
+        mode: "event_centered",
+        parentSessionId: null,
+        ...(cursorFilter ? { AND: [cursorFilter] } : {})
+      },
+      orderBy: [{ lastActivityAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      select: {
+        id: true,
+        entryDate: true,
+        recordMode: true,
+        sidebarTitle: true,
+        startedAt: true,
+        lastActivityAt: true,
+        status: true,
+        journalEvent: {
+          select: {
+            status: true,
+            entry: { select: { title: true } }
+          }
+        }
+      }
+    }),
+    prisma.interviewSession.count({
+      where: {
+        userId: input.userId,
+        mode: "event_centered",
+        parentSessionId: null,
+        status: { in: ["active", "paused"] }
+      }
+    })
+  ]);
+
+  const hasNextPage = rows.length > limit;
+  const pageRows = hasNextPage ? rows.slice(0, limit) : rows;
+  const items = pageRows.map((row) => {
+    const completed = row.status === "completed" || row.journalEvent?.status === "completed";
+    const abandoned = row.status === "abandoned" || row.journalEvent?.status === "abandoned";
+    const hasUserMessage = Boolean(row.sidebarTitle || row.journalEvent);
+    const lifecycle = completed
+      ? "completed" as const
+      : abandoned
+        ? "abandoned" as const
+        : hasUserMessage
+          ? "unfinished" as const
+          : "blank" as const;
+    return {
+      rootSessionId: row.id,
+      entryDate: formatEntryDate(row.entryDate),
+      recordMode: row.recordMode ?? "chat" as const,
+      title: row.journalEvent?.entry?.title.trim() || row.sidebarTitle?.trim() || "新记录",
+      startedAt: row.startedAt.toISOString(),
+      lastActivityAt: row.lastActivityAt.toISOString(),
+      lifecycle,
+      hasUserMessage,
+      readOnly: lifecycle === "completed" || lifecycle === "abandoned"
+    };
+  });
+  const last = pageRows.at(-1);
+
+  return {
+    items,
+    unfinishedCount,
+    unfinishedLimit: EVENT_CENTERED_UNFINISHED_LIMIT,
+    nextCursor: hasNextPage && last
+      ? encodeSessionCursor({
+          lastActivityAt: last.lastActivityAt.toISOString(),
+          rootSessionId: last.id
+        })
+      : null
+  };
+}
+
 export async function getEventCenteredInterviewWorkspaceData(
   userId: string,
   sessionId: string
 ): Promise<EventCenteredInterviewWorkspaceData | null> {
   const route = await resolveEventCenteredRoute(prisma, userId, sessionId);
   if (!route) return null;
+  const visibleMessages = route.effectiveMessages.filter(
+    (message) => message.userTurn?.action !== "exit_event"
+  );
 
   const responseGroupIds = Array.from(new Set(
-    route.effectiveMessages.flatMap((message) =>
+    visibleMessages.flatMap((message) =>
       message.responseGroupId ? [message.responseGroupId] : []
     )
   ));
@@ -591,7 +774,7 @@ export async function getEventCenteredInterviewWorkspaceData(
             regenerationIntent: true,
             regeneratedFromMessageId: true,
             createdAt: true,
-            userTurn: { select: { rawText: true, clientTurnId: true } }
+            userTurn: { select: { rawText: true, clientTurnId: true, action: true } }
           }
         })
       : []
@@ -599,7 +782,7 @@ export async function getEventCenteredInterviewWorkspaceData(
 
   return {
     identity: toSessionIdentity(route),
-    messages: route.effectiveMessages.map(mapWorkspaceMessage),
+    messages: visibleMessages.map(mapWorkspaceMessage),
     responseVersions: responseVersions.map(mapWorkspaceMessage),
     snapshotData: branchState?.snapshotData ?? null,
     pendingTurn: pendingTurn ? mapPendingTurn(pendingTurn) : null,
@@ -619,18 +802,16 @@ export async function getEventCenteredInterviewWorkspaceData(
 export async function startEventCenteredInterviewSession(input: {
   userId: string;
   entryDate: string;
-  openingQuestion: string;
+  recordMode?: "capture" | "chat" | null;
+  clientOperationId?: string | null;
+  openingQuestion?: string;
+  openingQuestions?: readonly string[];
 }): Promise<EventCenteredSessionIdentity> {
   const entryDate = parseEntryDateInput(input.entryDate);
-  const dayMode = await resolveJournalDayMode(input.userId, input.entryDate);
-  if (dayMode.kind === "mixed") {
-    throw new Error(dayMode.code);
-  }
-  if (dayMode.kind === "clean" && dayMode.ownership.primaryMode !== "event_centered") {
-    throw new Error("JOURNAL_DAY_MODE_CONFLICT");
-  }
-  const existing = await findEventCenteredRootByDate(input.userId, entryDate);
-
+  const startOperationId = input.clientOperationId?.trim() || null;
+  const existing = startOperationId
+    ? await findEventCenteredRootByOperation(prisma, input.userId, startOperationId)
+    : null;
   if (existing) {
     const identity = await getEventCenteredSessionIdentity(input.userId, existing.id);
     if (identity) return identity;
@@ -640,22 +821,74 @@ export async function startEventCenteredInterviewSession(input: {
   const branchStateId = randomUUID();
   const assistantMessageId = randomUUID();
   const dialogueState = createInitialEventCenteredDialogueState();
-  const assistantTurn = {
-    naturalUnderstanding: "",
-    naturalResponse: input.openingQuestion,
-    responseKind: "opening" as const,
-    questionSpec: null,
-    checkpoint: null,
-    angleOutcome: null
-  };
+  const openingQuestions = (input.openingQuestions ?? [])
+    .map((question) => question.trim())
+    .filter(Boolean);
+  const fallbackOpeningQuestion = input.openingQuestion?.trim() || openingQuestions[0];
+  if (!fallbackOpeningQuestion) throw new Error("EVENT_CENTERED_OPENING_REQUIRED");
 
+  let createdOrReplayedSessionId: string = sessionId;
   try {
-    await prisma.$transaction([
-      prisma.interviewSession.create({
+    createdOrReplayedSessionId = await prisma.$transaction(async (database) => {
+      await database.$queryRaw(
+        Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${input.userId} FOR UPDATE`
+      );
+
+      if (startOperationId) {
+        const replay = await findEventCenteredRootByOperation(
+          database,
+          input.userId,
+          startOperationId
+        );
+        if (replay) return replay.id;
+      }
+
+      const now = new Date();
+      await expireBlankEventCenteredRoots(database, input.userId, now);
+      const unfinishedCount = await database.interviewSession.count({
+        where: {
+          userId: input.userId,
+          mode: "event_centered",
+          parentSessionId: null,
+          status: { in: ["active", "paused"] }
+        }
+      });
+      if (unfinishedCount >= EVENT_CENTERED_UNFINISHED_LIMIT) {
+        throw new EventCenteredUnfinishedLimitReachedError(
+          unfinishedCount,
+          EVENT_CENTERED_UNFINISHED_LIMIT
+        );
+      }
+
+      const existingRootCount = openingQuestions.length > 0
+        ? await database.interviewSession.count({
+            where: {
+              userId: input.userId,
+              mode: "event_centered",
+              parentSessionId: null
+            }
+          })
+        : 0;
+      const openingQuestion = openingQuestions.length > 0
+        ? openingQuestions[existingRootCount % openingQuestions.length]!
+        : fallbackOpeningQuestion;
+      const assistantTurn = {
+        naturalUnderstanding: "",
+        naturalResponse: openingQuestion,
+        responseKind: "opening" as const,
+        questionSpec: null,
+        checkpoint: null,
+        angleOutcome: null
+      };
+
+      await database.interviewSession.create({
         data: {
           id: sessionId,
           userId: input.userId,
+          startOperationId,
+          lastActivityAt: now,
           mode: "event_centered",
+          recordMode: input.recordMode ?? "chat",
           dimension: null,
           conversationSchemaVersion: EVENT_CENTERED_SCHEMA_VERSION,
           rootSessionId: sessionId,
@@ -663,10 +896,10 @@ export async function startEventCenteredInterviewSession(input: {
           status: "active",
           stage: "collect_event",
           entryDate,
-          lastAssistantQuestion: input.openingQuestion
+          lastAssistantQuestion: openingQuestion
         }
-      }),
-      prisma.interviewEvent.create({
+      });
+      await database.interviewEvent.create({
         data: {
           id: branchStateId,
           sessionId,
@@ -678,12 +911,12 @@ export async function startEventCenteredInterviewSession(input: {
           progressData: Prisma.JsonNull,
           missingSlots: []
         }
-      }),
-      prisma.interviewSession.update({
+      });
+      await database.interviewSession.update({
         where: { id: sessionId },
         data: { activeEventId: branchStateId }
-      }),
-      prisma.interviewMessage.create({
+      });
+      await database.interviewMessage.create({
         data: {
           id: assistantMessageId,
           sessionId,
@@ -694,8 +927,8 @@ export async function startEventCenteredInterviewSession(input: {
           content: serializeEventCenteredAssistantPayload(assistantTurn),
           sequence: 0
         }
-      }),
-      prisma.interviewBranchCheckpoint.create({
+      });
+      await database.interviewBranchCheckpoint.create({
         data: {
           sessionId,
           messageId: assistantMessageId,
@@ -706,7 +939,7 @@ export async function startEventCenteredInterviewSession(input: {
             stage: "collect_event",
             activeEventId: branchStateId,
             turnCount: 0,
-            lastAssistantQuestion: input.openingQuestion,
+            lastAssistantQuestion: openingQuestion,
             draftSummary: null
           },
           eventsState: [
@@ -720,19 +953,24 @@ export async function startEventCenteredInterviewSession(input: {
             }
           ]
         }
-      })
-    ]);
+      });
+      return sessionId;
+    });
   } catch (error) {
     if (!isUniqueConflict(error)) throw error;
-
-    const winner = await findEventCenteredRootByDate(input.userId, entryDate);
+    if (!startOperationId) throw error;
+    const winner = await findEventCenteredRootByOperation(
+      prisma,
+      input.userId,
+      startOperationId
+    );
     if (!winner) throw error;
     const identity = await getEventCenteredSessionIdentity(input.userId, winner.id);
     if (!identity) throw error;
     return identity;
   }
 
-  const identity = await getEventCenteredSessionIdentity(input.userId, sessionId);
+  const identity = await getEventCenteredSessionIdentity(input.userId, createdOrReplayedSessionId);
   if (!identity) throw new Error("SESSION_CREATE_FAILED");
   return identity;
 }
@@ -959,6 +1197,17 @@ export async function reserveEventCenteredUserAction(
           inputMode: input.inputMode ?? null,
           content: resolveActionMessageContent(input),
           sequence: input.baseMessageSequence + 1
+        }
+      });
+
+      const sidebarTitle = currentRoute.root.sidebarTitle
+        ? null
+        : buildEventCenteredSidebarTitle(input.rawText ?? "");
+      await database.interviewSession.update({
+        where: { id: currentRoute.root.id },
+        data: {
+          lastActivityAt: new Date(),
+          ...(sidebarTitle ? { sidebarTitle } : {})
         }
       });
 
@@ -1524,7 +1773,8 @@ async function abandonActiveJournalEvent(input: {
       },
       data: {
         status: "abandoned",
-        completedAt: now
+        completedAt: now,
+        lastActivityAt: now
       }
     });
 

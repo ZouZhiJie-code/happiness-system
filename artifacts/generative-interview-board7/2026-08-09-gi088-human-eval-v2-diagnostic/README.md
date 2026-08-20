@@ -48,9 +48,9 @@ DeepSeek 官方文档说明 JSON Output 偶尔可能返回空内容，并建议�
 - 探针指纹：`7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65`；
 - 当前进度：`6/6`；
 - 当前授权：`已消费`；
-- 运行清单含私有 turn/call 定位符，继续保留在本地受控资产中。
+- 运行清单：[空内容配对探针 manifest](../2026-08-09-gi088-human-eval-v1/gi088-empty-content-response-format-probe-v1-manifest.json)。
 
-运行器私有清单保留在本地，公开自动检查见 [静态验证记录](./gi088-v2-diagnostic-static-validation.md)。
+运行器清单见 [v2 diagnostic manifest](./gi088-human-eval-v2-diagnostic-manifest.json)，自动检查见 [静态验证记录](./gi088-v2-diagnostic-static-validation.md)。
 
 实际结果如下：
 
@@ -80,7 +80,7 @@ disabled 只承担因果诊断，产品负责人已确认产品候选继续保�
 - 当前状态：`completed_inconclusive_no_empty_reproduction_4_of_4`；
 - 当前模型调用：`4/4`；
 - 探针指纹：`7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498`；
-- 运行清单含私有 turn/call 定位符，继续保留在本地受控资产中。
+- 运行清单：[Thinking 模式探针 manifest](../2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-manifest.json)。
 
 实际四条输出全部有效：E1 high／disabled 与 E3 high／disabled 均为 `valid`。请求血缘 `4/4` 匹配，自动重试、质量重试、fallback、超时和取消均为 `0`。disabled 达到 `2/2 valid`，high 同样达到 `2/2 valid`，未出现预设要求的 high `EMPTY_CONTENT`，因此 Thinking 主要影响因素未确认。
 

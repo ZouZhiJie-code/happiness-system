@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "recipe_set_id": "journal-daily-eval-dev28-derived-v1",
+  "status": "recipe_only_not_materialized",
+  "recipe_count": 9,
+  "privacy_rule": "配方可跟踪；父案例内容、参数值和物化结果只写入 .private/formal/dev28-derived/。",
+  "assignment_rule": "每个配方绑定一个 dev-real 父案例。正式冻结前必须先做私有适用性检查；不适用时只允许调整父案例绑定并留下变更记录。",
+  "recipes": [
+    {
+      "recipe_id": "derive-01-append-new-record",
+      "derived_case_id": "dev-derived-01",
+      "parent_case_id": "dev-real-01",
+      "purpose": "已有今日日志加入一条同日新记录",
+      "input_layers": ["current_journal", "new_records"],
+      "parameter_placeholders": ["existing_committed_version", "new_record_card"],
+      "must_invariants": ["旧稿已确认事实保留", "新记录来源可追溯", "新旧内容共同进入更新稿"],
+      "p0_blockers": ["旧事实丢失", "新记录无来源", "覆盖用户编辑"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-01.json"
+    },
+    {
+      "recipe_id": "derive-02-preserve-user-replace",
+      "derived_case_id": "dev-derived-02",
+      "parent_case_id": "dev-real-02",
+      "purpose": "用户手动替换旧稿表达后再加入新记录",
+      "input_layers": ["current_journal", "user_edits", "new_records"],
+      "parameter_placeholders": ["replace_target", "replacement_text", "new_record_card"],
+      "must_invariants": ["用户替换后的语义保留", "被替换旧表达退出", "新记录来源可追溯"],
+      "p0_blockers": ["用户替换丢失", "旧表达复活", "新内容覆盖编辑"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-02.json"
+    },
+    {
+      "recipe_id": "derive-03-preserve-user-delete",
+      "derived_case_id": "dev-derived-03",
+      "parent_case_id": "dev-real-03",
+      "purpose": "用户删除旧稿内容后再生成更新稿",
+      "input_layers": ["current_journal", "user_edits", "new_records"],
+      "parameter_placeholders": ["delete_target", "new_record_card"],
+      "must_invariants": ["被删除语义持续退出", "未删除事实保留", "新记录来源可追溯"],
+      "p0_blockers": ["删除内容复活", "相邻未删除事实损坏"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-03.json"
+    },
+    {
+      "recipe_id": "derive-04-late-correction",
+      "derived_case_id": "dev-derived-04",
+      "parent_case_id": "dev-real-04",
+      "purpose": "后续记录修正已有事实",
+      "input_layers": ["current_journal", "new_records"],
+      "parameter_placeholders": ["old_claim_selector", "corrected_claim", "correction_source"],
+      "must_invariants": ["新事实进入记录卡与今日日志", "旧事实退出所有可见正文", "修正来源保留"],
+      "p0_blockers": ["旧事实复活", "新旧事实并存", "修正来源断链"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-04.json"
+    },
+    {
+      "recipe_id": "derive-05-merge-same-event",
+      "derived_case_id": "dev-derived-05",
+      "parent_case_id": "dev-real-05",
+      "purpose": "两条记录属于同一事件并应合并",
+      "input_layers": ["new_records"],
+      "parameter_placeholders": ["first_record_card", "same_event_followup_card"],
+      "must_invariants": ["两条来源都保留", "同一事件形成一个连贯段落", "补充事实不被重复写成新事件"],
+      "p0_blockers": ["来源遗漏", "同一事件错误拆分导致事实冲突"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-05.json"
+    },
+    {
+      "recipe_id": "derive-06-separate-similar-events",
+      "derived_case_id": "dev-derived-06",
+      "parent_case_id": "dev-real-06",
+      "purpose": "地点或人物相似的两个独立事件保持分开",
+      "input_layers": ["new_records"],
+      "parameter_placeholders": ["first_event_card", "similar_but_independent_event_card"],
+      "must_invariants": ["两个事件分别成段", "时间与结果不串写", "各自来源独立"],
+      "p0_blockers": ["错误合并", "跨事件人物时间事实串写"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-06.json"
+    },
+    {
+      "recipe_id": "derive-07-preserve-uncertainty",
+      "derived_case_id": "dev-derived-07",
+      "parent_case_id": "dev-real-07",
+      "purpose": "待确认认识在更新中继续保留不确定性",
+      "input_layers": ["current_journal", "new_records"],
+      "parameter_placeholders": ["uncertain_claim", "allowed_qualifiers", "supporting_record_card"],
+      "must_invariants": ["待确认主题可见", "限定词保留", "不升级为确定因果"],
+      "p0_blockers": ["把猜测写成事实", "补造原因或结论"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-07.json"
+    },
+    {
+      "recipe_id": "derive-08-chronological-order",
+      "derived_case_id": "dev-derived-08",
+      "parent_case_id": "dev-real-08",
+      "purpose": "输入顺序与发生顺序不同时按事实时间组织",
+      "input_layers": ["new_records"],
+      "parameter_placeholders": ["later_event_received_first", "earlier_event_received_later", "time_sources"],
+      "must_invariants": ["事实时间正确", "两个事件来源保留", "输入先后不覆盖发生先后"],
+      "p0_blockers": ["时间错误", "事件内容错位"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-08.json"
+    },
+    {
+      "recipe_id": "derive-09-failed-update-preserves-draft",
+      "derived_case_id": "dev-derived-09",
+      "parent_case_id": "dev-real-09",
+      "purpose": "更新生成失败时保留已提交旧稿",
+      "input_layers": ["current_journal", "new_records", "runtime_snapshot"],
+      "parameter_placeholders": ["committed_version_id", "failed_attempt_id", "new_record_card"],
+      "must_invariants": ["旧稿继续可见", "失败半成品不落库", "新记录仍可后续重试"],
+      "p0_blockers": ["旧稿受损", "半成品覆盖", "用户输入丢失"],
+      "materialized_path": "../.private/formal/dev28-derived/dev-derived-09.json"
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "reportVersion": "board8.candidate-aware.v4",
+  "generatedAt": "2026-08-04T05:16:12.775Z",
+  "window": {
+    "productionEnabledAt": "2026-08-04T05:00:00.000Z",
+    "observedUntil": "2026-08-04T05:16:12.753Z"
+  },
+  "selection": {
+    "rule": "first_content_after_window_then_root_session_dedupe",
+    "mode": "preview",
+    "candidateStartedAt": "2026-08-04T05:15:09.692Z",
+    "candidateStrategyVersion": "5.61.0",
+    "rootSessionFilterApplied": true,
+    "requested": 10,
+    "selected": 1,
+    "complete": false
+  },
+  "funnel": {
+    "event_centered_entry_exposed": 0,
+    "event_centered_entry_opened": 0,
+    "event_centered_first_content_submitted": 1,
+    "event_centered_response_completed": 7,
+    "event_centered_checkpoint_reached": 3,
+    "event_journal_generation_started": 1,
+    "event_journal_generated": 1,
+    "event_journal_saved": 1,
+    "event_centered_turn_fallback": 1,
+    "event_centered_session_abandoned": 0
+  },
+  "latency": {
+    "sampleCount": 7,
+    "medianMs": 3789,
+    "p90Ms": 8349,
+    "releaseBand": "pass"
+  },
+  "interactiveLatency": {
+    "sampleCount": 7,
+    "medianMs": 3835,
+    "p90Ms": 8382,
+    "releaseBand": "pass"
+  },
+  "modelLatency": {
+    "sampleCount": 5,
+    "medianMs": 4219,
+    "p90Ms": 8316,
+    "releaseBand": "pass"
+  },
+  "nonModelLatency": {
+    "sampleCount": 5,
+    "medianMs": 66,
+    "p90Ms": 81,
+    "releaseBand": "pass"
+  },
+  "fallback": {
+    "total": 1,
+    "eventRecordingTurnCount": 1,
+    "attemptedGenerativeTurnCount": 5,
+    "generativeRepairCount": 0,
+    "localDeterministicRepairCount": 2,
+    "deterministicControlCount": 1,
+    "runtimeFallbackCount": 1,
+    "providerAttemptCount": 9,
+    "deterministicAttemptCount": 2,
+    "errorCodeDistribution": {
+      "SEMANTIC_FRAME_EVIDENCE_REF_UNTRACEABLE": 1
+    },
+    "maxConsecutive": 1,
+    "recent20EligibleTurns": 5,
+    "recent20FallbackCount": 1,
+    "recent20FallbackRate": 0.2
+  },
+  "journal": {
+    "generatedSessions": 1,
+    "savedSessions": 1,
+    "savedWithin24Hours": 1,
+    "savedWithin24HoursRate": 1,
+    "consecutiveUnrecoveredFailures": 0,
+    "aiAcceptedSessions": 1,
+    "titleRepairedSessions": 0,
+    "fullTextFallbackSessions": 0
+  },
+  "rollbackSignals": {
+    "firstTenFallbackThresholdReached": false,
+    "recent20FallbackRateThresholdReached": false,
+    "journalFailureThresholdReached": false
+  },
+  "sessions": [
+    {
+      "sequence": 1,
+      "rootSessionId": "cb5f32cb-9e97-416b-a46c-6dcf5788144b",
+      "firstContentSubmittedAt": "2026-08-04T05:15:09.746Z",
+      "entryDate": "2026-08-03",
+      "source": "mixed",
+      "angle": "feeling",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second",
+        "deep_pause"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 7,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 5,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 2,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 9,
+      "deterministicAttemptCount": 2,
+      "generativeErrorCodes": [
+        "SEMANTIC_FRAME_EVIDENCE_REF_UNTRACEABLE"
+      ],
+      "responseLatency": {
+        "sampleCount": 7,
+        "medianMs": 3789,
+        "p90Ms": 8349,
+        "releaseBand": "pass"
+      },
+      "interactiveLatency": {
+        "sampleCount": 7,
+        "medianMs": 3835,
+        "p90Ms": 8382,
+        "releaseBand": "pass"
+      },
+      "modelLatency": {
+        "sampleCount": 5,
+        "medianMs": 4219,
+        "p90Ms": 8316,
+        "releaseBand": "pass"
+      },
+      "nonModelLatency": {
+        "sampleCount": 5,
+        "medianMs": 66,
+        "p90Ms": 81,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "3bbbb27d-9f4f-4574-9301-a49f688a4d42",
+        "entryId": "8cf4a37f-6364-4dc5-8ca2-5db017cb1fb8",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T05:15:39.134Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T05:15:25.446Z",
+          "stage": "interview_turn",
+          "errorCode": "SEMANTIC_FRAME_EVIDENCE_REF_UNTRACEABLE",
+          "traceId": "c9983052-934e-4f74-b677-1394f6da46b6"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T05:15:25.452Z",
+          "stage": "semantic",
+          "errorCode": "SEMANTIC_FRAME_EVIDENCE_REF_UNTRACEABLE",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "1534e0c4-c435-4a88-a21e-43860b231fb4",
+        "74095b79-4862-45ae-b1de-e1413620d761",
+        "039b1859-3b95-4861-9aae-0ece0da0f9d0",
+        "10b9a0c7-96d5-44b1-a724-e8c22c580798",
+        "c9983052-934e-4f74-b677-1394f6da46b6",
+        "d507523f-6e4b-4ce6-88f1-b31178d092f9",
+        "cbee3bc5-a179-4241-aa85-1e6c6f8c9c69",
+        "40ef19e7-3720-4947-9c0f-a93a1d0e8600"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "privacy": {
+    "contentFieldsExcluded": true,
+    "excludedFields": [
+      "用户原话",
+      "AI 全文",
+      "事件日志标题与正文",
+      "Trace contextSnapshot",
+      "Trace finalOutput",
+      "模型请求与响应正文"
+    ]
+  }
+}

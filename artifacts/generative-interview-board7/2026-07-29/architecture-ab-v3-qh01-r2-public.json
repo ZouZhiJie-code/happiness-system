@@ -1,0 +1,449 @@
+{
+  "comparison": "blind_pair",
+  "checkpoint": {
+    "runtimeVersion": "2026-07-29.board7-architecture-checkpoint-v3",
+    "datasetVersion": "2026-07-29.v3",
+    "caseIds": [
+      "AB-TG-01",
+      "AB-RD-01"
+    ],
+    "repetitions": 2,
+    "runtimeConfig": {
+      "model": "deepseek-v4-flash",
+      "temperature": 0.2,
+      "maxTokens": 1500,
+      "timeoutMs": 12000,
+      "maxRequestsPerTurn": 2
+    },
+    "pricingSnapshot": {
+      "model": "deepseek-v4-flash",
+      "currency": "USD",
+      "inputPerMillion": 0.14,
+      "cacheHitInputPerMillion": 0.0028,
+      "outputPerMillion": 0.28,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+      "effectiveDate": "2026-07-29"
+    },
+    "pricingFingerprint": "eae27769f8ad86988d4149bf711e9c455f7c40cf81170999b4b44495297da274",
+    "candidateVersions": {
+      "strategy": "5.38.0",
+      "angleCard": "2.7.0",
+      "fewShot": "quality-patterns.2026-07-29.v18"
+    },
+    "completed": true,
+    "updatedAt": "2026-07-29T13:13:21.819Z",
+    "pairs": [
+      {
+        "pairId": "ARCH-AB-TG-01-R1",
+        "caseId": "AB-TG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "e0656dda19e7bf0d247b492ac7576cf9df64c9c544665c9b88f2ba6dff9a3fb7",
+        "pairFingerprint": "7422b6bad08fca3c5d3467b6b86e587bd8fa811f20b091a2a0af5333972ae5d0",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你明确说亲手收拾才算勤快，即使保洁完成了、时间也腾出来了，你还是用这个标准否定自己。",
+            "userResponse": "你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你明确说亲手收拾才算勤快，即使保洁完成了、时间也腾出来了，你还是用这个标准否定自己。\n你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。\n成果：你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。\n这一段已经有了线索：你衡量勤快时，亲手收拾比实际效果更有分量，即使保洁完成、时间腾出，你仍用‘不算勤快’否定自己。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到亲手收拾比家已收拾好更能体现勤快，这个区分很清晰，可以在这里停一下。",
+            "userResponse": "你衡量勤快时，亲手劳动比家已收拾好更有分量。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你衡量勤快时，亲手劳动比家已收拾好更有分量。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你衡量勤快时，亲手劳动比家已收拾好更有分量。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到亲手收拾比家已收拾好更能体现勤快，这个区分很清晰，可以在这里停一下。\n你衡量勤快时，亲手劳动比家已收拾好更有分量。\n成果：你衡量勤快时，亲手劳动比家已收拾好更有分量。\n这一段已经有了线索：你衡量勤快时，亲手劳动比家已收拾好更有分量。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TG-01-R2",
+        "caseId": "AB-TG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "e0656dda19e7bf0d247b492ac7576cf9df64c9c544665c9b88f2ba6dff9a3fb7",
+        "pairFingerprint": "24abfe4a33ab6d1c0fd4e10ef278dec7cdfd9173327ff75b591c93274faa8c7d",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到亲手收拾才算勤快，而结果效率不算，这让我看到你衡量勤快时更看重亲自参与的过程。",
+            "userResponse": "你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到亲手收拾才算勤快，而结果效率不算，这让我看到你衡量勤快时更看重亲自参与的过程。\n你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。\n成果：你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。\n这一段已经有了线索：你衡量勤快时，亲手收拾比结果效率更有分量，规则与结果之间存在张力。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到亲手收拾才算勤快，即使保洁让家里干净了，这个标准仍然让你觉得自己懒。我理解你衡量勤快时，亲手做比结果更重要。",
+            "userResponse": "你衡量勤快时，亲手收拾比家里已经干净更有分量。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你衡量勤快时，亲手收拾比家里已经干净更有分量。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你衡量勤快时，亲手收拾比家里已经干净更有分量。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到亲手收拾才算勤快，即使保洁让家里干净了，这个标准仍然让你觉得自己懒。我理解你衡量勤快时，亲手做比结果更重要。\n你衡量勤快时，亲手收拾比家里已经干净更有分量。\n成果：你衡量勤快时，亲手收拾比家里已经干净更有分量。\n这一段已经有了线索：你衡量勤快时，亲手收拾比家里已经干净更有分量。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R1",
+        "caseId": "AB-RD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "0c5730a8679ade1c7a10892c0f1ea3a9cfaa37c3cab909d97f5a675e01910541",
+        "pairFingerprint": "e1ff0494967d453123006fb79b97973774732cb82c641cefdfc6c7638b4ea419",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "INVALID_SCHEMA",
+            "semanticPlan.realizationContract.responseCore:too_big"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到姐姐送饭回应了事情层，但她放下就走、不问近况，这让你感到关系层没有被回应。这些线索已经能对上，可以在这里停一下。",
+            "userResponse": "在你期待的照顾里，姐姐送饭回应了事情层，但她放下就走、不问近况，决定你是否感到关系层也被回应。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到姐姐送饭回应了事情层，但她放下就走、不问近况，这让你感到关系层没有被回应。这些线索已经能对上，可以在这里停一下。\n在你期待的照顾里，姐姐送饭回应了事情层，但她放下就走、不问近况，决定你是否感到关系层也被回应。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R2",
+        "caseId": "AB-RD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "0c5730a8679ade1c7a10892c0f1ea3a9cfaa37c3cab909d97f5a675e01910541",
+        "pairFingerprint": "d780afbab020bb393a12bf2bbb3318451b9b4404154280c0c7281fca1fe6b419",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到姐姐连续几天送饭并减轻你的负担，这些线索已经能对上你期待的照顾里，送饭回应了事情层，但有没有被问近况决定你是否感到关系层也被回应。",
+            "userResponse": "在你期待的照顾里，送饭回应了事情层，但有没有被问近况决定你是否感到关系层也被回应。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到姐姐连续几天送饭并减轻你的负担，这些线索已经能对上你期待的照顾里，送饭回应了事情层，但有没有被问近况决定你是否感到关系层也被回应。\n在你期待的照顾里，送饭回应了事情层，但有没有被问近况决定你是否感到关系层也被回应。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你既感到温暖又觉得没有被真正看见，送饭照顾了日程，但缺少询问近况让你觉得关系层面没有被回应。",
+            "userResponse": "在你期待的照顾里，送饭回应了事情层，但有没有被询问近况决定了你是否感到关系层也被回应。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你既感到温暖又觉得没有被真正看见，送饭照顾了日程，但缺少询问近况让你觉得关系层面没有被回应。\n在你期待的照顾里，送饭回应了事情层，但有没有被询问近况决定了你是否感到关系层也被回应。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "initialReviewedBy": null,
+          "initialReviewedAt": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      }
+    ]
+  }
+}

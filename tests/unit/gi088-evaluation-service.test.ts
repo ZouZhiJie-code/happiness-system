@@ -5,6 +5,10 @@ import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { parseGi088SemanticDeltaOutput } from "../../src/server/services/evaluation/gi088/semantic-delta";
+import {
+  createGi088EvaluationIssue,
+  type Gi088ErrorCode
+} from "../../src/server/services/evaluation/gi088/errors";
 
 import {
   GI088_ASSET_SOURCE_SHA256,
@@ -19,6 +23,11 @@ import {
   GI088_EVALUATION_ID_V6,
   GI088_EVALUATION_ID_V7,
   GI088_EVALUATION_ID_V7R1,
+  GI088_EVALUATION_ID_V7R2,
+  GI088_EVALUATION_ID_V7R3,
+  GI088_EVALUATION_ID_V7R4,
+  GI088_EVALUATION_ID_V8,
+  GI088_EVALUATION_ID_V8R1,
   GI088_EVALUATION_VERSION,
   GI088_EVALUATION_VERSION_V1,
   GI088_EVALUATION_VERSION_V2,
@@ -28,6 +37,11 @@ import {
   GI088_EVALUATION_VERSION_V6,
   GI088_EVALUATION_VERSION_V7,
   GI088_EVALUATION_VERSION_V7R1,
+  GI088_EVALUATION_VERSION_V7R2,
+  GI088_EVALUATION_VERSION_V7R3,
+  GI088_EVALUATION_VERSION_V7R4,
+  GI088_EVALUATION_VERSION_V8,
+  GI088_EVALUATION_VERSION_V8R1,
   GI088_GI087_CANDIDATE_FINGERPRINT,
   GI088_GOVERNED_EVALUATION_VERSIONS,
   GI088_SERVICE_VERSION,
@@ -39,6 +53,11 @@ import {
   GI088_SERVICE_VERSION_V6,
   GI088_SERVICE_VERSION_V7,
   GI088_SERVICE_VERSION_V7R1,
+  GI088_SERVICE_VERSION_V7R2,
+  GI088_SERVICE_VERSION_V7R3,
+  GI088_SERVICE_VERSION_V7R4,
+  GI088_SERVICE_VERSION_V8,
+  GI088_SERVICE_VERSION_V8R1,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
   createGi088DatasetFingerprint,
@@ -84,6 +103,22 @@ import {
   type AIProvider,
   type AIProviderDiagnostics
 } from "../../src/server/services/ai/ai-provider";
+
+async function expectGi088EvaluationError(
+  promise: Promise<unknown>,
+  code: Gi088ErrorCode
+) {
+  const expected = createGi088EvaluationIssue(code);
+  await expect(promise).rejects.toMatchObject({
+    name: "Gi088EvaluationError",
+    message: expected.message,
+    code,
+    issue: {
+      code,
+      message: expected.message
+    }
+  });
+}
 
 function firstTurnOutput() {
   return JSON.stringify({
@@ -328,11 +363,56 @@ async function reachStageTransitionViolation(input: {
 }
 
 describe("GI-088 Preview evaluation service", () => {
-  it("把 v7r2 Ark Flash 候选与历史 v1 至 v7r1 分开版本化并保留治理范围", () => {
+  it("把当前 v8r2 与 v8r1、v8 及全部历史版本分开治理", () => {
     expect({
       id: GI088_EVALUATION_ID,
       version: GI088_EVALUATION_VERSION,
       serviceVersion: GI088_SERVICE_VERSION
+    }).toEqual({
+      id: "gi088_human_eval_v8r2_foundation_hardening",
+      version: "2026-08-10.gi088-human-eval-v8r2-foundation-hardening",
+      serviceVersion: "2026-08-10.gi088-evaluation-foundation-service-v8r2"
+    });
+    expect({
+      id: GI088_EVALUATION_ID_V8R1,
+      version: GI088_EVALUATION_VERSION_V8R1,
+      serviceVersion: GI088_SERVICE_VERSION_V8R1
+    }).toEqual({
+      id: "gi088_human_eval_v8r1_final12",
+      version: "2026-08-10.gi088-human-eval-v8r1-final12",
+      serviceVersion: "2026-08-10.gi088-question-decision-service-v8r1"
+    });
+    expect({
+      id: GI088_EVALUATION_ID_V8,
+      version: GI088_EVALUATION_VERSION_V8,
+      serviceVersion: GI088_SERVICE_VERSION_V8
+    }).toEqual({
+      id: "gi088_human_eval_v8_question_decision_pro",
+      version: "2026-08-10.gi088-human-eval-v8-question-decision-pro",
+      serviceVersion: "2026-08-10.gi088-question-decision-service-v8"
+    });
+    expect({
+      id: GI088_EVALUATION_ID_V7R4,
+      version: GI088_EVALUATION_VERSION_V7R4,
+      serviceVersion: GI088_SERVICE_VERSION_V7R4
+    }).toEqual({
+      id: "gi088_human_eval_v7r4_pro",
+      version: "2026-08-10.gi088-human-eval-v7r4-pro",
+      serviceVersion: "2026-08-10.gi088-pro-service-v7r4"
+    });
+    expect({
+      id: GI088_EVALUATION_ID_V7R3,
+      version: GI088_EVALUATION_VERSION_V7R3,
+      serviceVersion: GI088_SERVICE_VERSION_V7R3
+    }).toEqual({
+      id: "gi088_human_eval_v7r3_deterministic_state",
+      version: "2026-08-10.gi088-human-eval-v7r3-deterministic-state",
+      serviceVersion: "2026-08-10.gi088-deterministic-state-service-v7r3"
+    });
+    expect({
+      id: GI088_EVALUATION_ID_V7R2,
+      version: GI088_EVALUATION_VERSION_V7R2,
+      serviceVersion: GI088_SERVICE_VERSION_V7R2
     }).toEqual({
       id: "gi088_human_eval_v7r2_ark_flash",
       version: "2026-08-10.gi088-human-eval-v7r2-ark-flash",
@@ -419,6 +499,11 @@ describe("GI-088 Preview evaluation service", () => {
       GI088_EVALUATION_VERSION_V6,
       GI088_EVALUATION_VERSION_V7,
       GI088_EVALUATION_VERSION_V7R1,
+      GI088_EVALUATION_VERSION_V7R2,
+      GI088_EVALUATION_VERSION_V7R3,
+      GI088_EVALUATION_VERSION_V7R4,
+      GI088_EVALUATION_VERSION_V8,
+      GI088_EVALUATION_VERSION_V8R1,
       GI088_EVALUATION_VERSION
     ]);
     expect(createGi088EffectiveCandidateFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
@@ -426,27 +511,27 @@ describe("GI-088 Preview evaluation service", () => {
     expect(createGi088ExecutionFingerprint()).toMatch(/^[a-f0-9]{64}$/u);
   });
 
-  it("2 项连续性任务都具备独立触发提示与判定标准", () => {
-    expect(GI088_TASKS).toHaveLength(2);
-    expect(new Set(GI088_TASKS.map((task) => task.id)).size).toBe(2);
+  it("最终 12 项都具备独立触发提示与判定标准", () => {
+    expect(GI088_TASKS).toHaveLength(12);
+    expect(new Set(GI088_TASKS.map((task) => task.id)).size).toBe(12);
     for (const task of GI088_TASKS) {
       expect(task.targetTriggerPrompt.trim().length).toBeGreaterThan(20);
       expect(task.criterion.trim().length).toBeGreaterThan(20);
     }
   });
 
-  it("v7r2 只启用 Ark Flash Thinking high 并关闭新 Prefix 续写", () => {
+  it("v8r2 继续只启用官方 DeepSeek V4 Pro Thinking high", () => {
     expect(GI088_CONFIGS.high).toMatchObject({
-      baseUrlHost: "ark.cn-beijing.volces.com",
-      model: "deepseek-v4-flash-ga-260731",
+      baseUrlHost: "api.deepseek.com",
+      model: "deepseek-v4-pro",
       thinking: "enabled",
       reasoningEffort: "high",
       responseFormat: "json_object",
       activeInEvaluation: true
     });
     expect(GI088_TIMEOUT_POLICY).toMatchObject({
-      headersTimeoutMs: 60_000,
-      bodyIdleTimeoutMs: 60_000,
+      headersTimeoutMs: 15_000,
+      bodyIdleTimeoutMs: 45_000,
       hardTimeoutMs: 60_000
     });
   });
@@ -589,6 +674,22 @@ describe("GI-088 Preview evaluation service", () => {
       host: "example.com",
       database: "dailylight"
     });
+    expect(
+      validateGi088EvaluationDatabaseUrl({
+        ...env,
+        EVALUATION_DATABASE_URL: "",
+        EVALUATION_POSTGRES_HOST: "",
+        EVALUATION_DATABASE_URL_UNPOOLED:
+          "postgresql://preview:test@direct.example.com/dailylight",
+        EVALUATION_PGHOST_UNPOOLED: "direct.example.com",
+        DATABASE_URL:
+          "postgresql://preview:test@direct.example.com/dailylight?schema=gi088_app_preview"
+      })
+    ).toEqual({
+      schema: "gi088_evaluation_v0",
+      host: "direct.example.com",
+      database: "dailylight"
+    });
     expect(parseGi088EvaluatorUsernames(env)).toEqual([
       "product_owner",
       "reviewer"
@@ -627,15 +728,15 @@ describe("GI-088 Preview evaluation service", () => {
         ...env,
         GI088_MODEL_CALL_SCOPE: "smoke_off",
         GI088_AUTHORIZED_EXECUTION_FINGERPRINT: "fingerprint",
-        GI088_SMOKE_AUTHORIZATION_ID: "00000000-0000-4000-8000-000000000101"
+        GI088_SMOKE_AUTHORIZATION_ID: "7c55dfa1-aa16-41d0-bc4a-f217c91e0797"
       })
-    ).toBe("00000000-0000-4000-8000-000000000101");
+    ).toBe("7c55dfa1-aa16-41d0-bc4a-f217c91e0797");
     expect(() =>
       requireGi088SmokeAuthorization("high", "fingerprint", {
         ...env,
         GI088_MODEL_CALL_SCOPE: "smoke_off",
         GI088_AUTHORIZED_EXECUTION_FINGERPRINT: "fingerprint",
-        GI088_SMOKE_AUTHORIZATION_ID: "00000000-0000-4000-8000-000000000101"
+        GI088_SMOKE_AUTHORIZATION_ID: "7c55dfa1-aa16-41d0-bc4a-f217c91e0797"
       })
     ).toThrow("GI088_MODEL_CALL_AUTHORIZATION_REQUIRED");
     expect(() =>
@@ -667,7 +768,7 @@ describe("GI-088 Preview evaluation service", () => {
     ).toThrow("GI088_PREVIEW_APP_DATABASE_IDENTITY_MISMATCH");
   });
 
-  it("读取工作台创建 2 项进度且保持模型调用为 0", async () => {
+  it("读取工作台创建 12 项进度且保持模型调用为 0", async () => {
     const { provider } = validProvider();
     const service = new Gi088EvaluationService({
       store: new Gi088MemoryStore(),
@@ -677,9 +778,9 @@ describe("GI-088 Preview evaluation service", () => {
     expect(session.batch).toMatchObject({
       status: "running",
       completedTaskCount: 0,
-      totalTasks: 2
+      totalTasks: 12
     });
-    expect(session.tasks).toHaveLength(2);
+    expect(session.tasks).toHaveLength(12);
     expect(session.tasks[0].status).toBe("ready");
     expect(session.tasks[0]).toMatchObject({
       targetTriggerPrompt: GI088_TASKS[0].targetTriggerPrompt,
@@ -702,7 +803,7 @@ describe("GI-088 Preview evaluation service", () => {
       mode: "high_only",
       activeBranches: ["high"]
     });
-    expect(initial.batch.targetCoverage.totalTrajectoryCount).toBe(2);
+    expect(initial.batch.targetCoverage.totalTrajectoryCount).toBe(12);
     await expect(service.startOff({
       ownerUserId: "owner-high-only",
       taskId: "A1",
@@ -1050,6 +1151,189 @@ describe("GI-088 Preview evaluation service", () => {
     expect(hardProvider.complete).toHaveBeenCalledTimes(1);
   });
 
+  it("自动恢复从首次调用起共享 90 秒，第二次调用只获得剩余时间", async () => {
+    let currentTime = new Date("2026-08-10T12:00:00.000Z");
+    let recoveryParams: AICompletionParams | null = null;
+    let calls = 0;
+    const provider: AIProvider = {
+      name: "fake-shared-deadline",
+      complete: vi.fn(async (params) => {
+        calls += 1;
+        if (calls === 1) {
+          currentTime = new Date(currentTime.getTime() + 45_000);
+          throw new AIProviderError("body stalled", "TIMEOUT", 504, {
+            finishReason: null,
+            reasoningPresent: null,
+            reasoningLength: null,
+            reasoningTokens: null,
+            latencyMs: 45_000,
+            tokenUsage: null,
+            timeoutStage: "body",
+            abortSource: "deadline",
+            totalLatencyMs: 45_000
+          });
+        }
+        recoveryParams = params;
+        return {
+          content: firstTurnOutput(),
+          latencyMs: 10,
+          provider: "fake-shared-deadline",
+          tokenUsage: null
+        };
+      })
+    };
+    const service = new Gi088EvaluationService({
+      store: new Gi088MemoryStore(),
+      getProvider: () => provider,
+      evaluationMode: "high_only",
+      now: () => currentTime
+    });
+    const failed = await service.startHigh({
+      ownerUserId: "owner-shared-deadline",
+      taskId: "A1",
+      initialUserMessage: "我想继续看清这件事。",
+      clientTurnId: "shared-deadline-u1"
+    });
+    const failedTurn = failed.activeTask!.branches.high.turns[0]!;
+    expect(failedTurn.recovery).toMatchObject({
+      status: "eligible",
+      automaticDeadlineAt: "2026-08-10T12:01:30.000Z"
+    });
+
+    const recovered = await service.retry({
+      ownerUserId: "owner-shared-deadline",
+      taskId: "A1",
+      branch: "high",
+      turnId: failedTurn.id,
+      trigger: "automatic_timeout"
+    });
+    expect(recoveryParams).toMatchObject({
+      timeoutMs: 45_000,
+      hardTimeoutMs: 45_000,
+      headersTimeoutMs: 15_000,
+      bodyIdleTimeoutMs: 45_000
+    });
+    expect(recovered.activeTask!.branches.high.turns[0]!.calls[1])
+      .toMatchObject({
+        effectiveConfig: expect.objectContaining({
+          sharedDeadlineMs: 90_000,
+          remainingSharedDeadlineMs: 45_000,
+          hardTimeoutMs: 45_000
+        })
+      });
+  });
+
+  it("90 秒额度耗尽后零调用进入人工再次生成", async () => {
+    let currentTime = new Date("2026-08-10T13:00:00.000Z");
+    const provider: AIProvider = {
+      name: "fake-expired-shared-deadline",
+      complete: vi.fn(async () => {
+        currentTime = new Date(currentTime.getTime() + 90_000);
+        throw new AIProviderError("body stalled", "TIMEOUT", 504, {
+          finishReason: null,
+          reasoningPresent: null,
+          reasoningLength: null,
+          reasoningTokens: null,
+          latencyMs: 90_000,
+          tokenUsage: null,
+          timeoutStage: "body",
+          abortSource: "deadline",
+          totalLatencyMs: 90_000
+        });
+      })
+    };
+    const service = new Gi088EvaluationService({
+      store: new Gi088MemoryStore(),
+      getProvider: () => provider,
+      evaluationMode: "high_only",
+      now: () => currentTime
+    });
+    const failed = await service.startHigh({
+      ownerUserId: "owner-expired-shared-deadline",
+      taskId: "A1",
+      initialUserMessage: "我想继续聊清楚。",
+      clientTurnId: "expired-deadline-u1"
+    });
+    const turnId = failed.activeTask!.branches.high.turns[0]!.id;
+    const expired = await service.retry({
+      ownerUserId: "owner-expired-shared-deadline",
+      taskId: "A1",
+      branch: "high",
+      turnId,
+      trigger: "automatic_timeout"
+    });
+    expect(provider.complete).toHaveBeenCalledTimes(1);
+    expect(expired.activeTask!.branches.high.turns[0]!.recovery).toMatchObject({
+      status: "manual_available",
+      automaticRetryCount: 0
+    });
+  });
+
+  it("两个标签页同时申请恢复只产生一次 Provider 调用", async () => {
+    let calls = 0;
+    let markRecoveryStarted!: () => void;
+    const recoveryStarted = new Promise<void>((resolve) => {
+      markRecoveryStarted = resolve;
+    });
+    let finishRecovery!: (
+      value: Awaited<ReturnType<AIProvider["complete"]>>
+    ) => void;
+    const pendingRecovery = new Promise<
+      Awaited<ReturnType<AIProvider["complete"]>>
+    >((resolve) => {
+      finishRecovery = resolve;
+    });
+    const provider: AIProvider = {
+      name: "fake-concurrent-v8-recovery",
+      complete: vi.fn(async () => {
+        calls += 1;
+        if (calls === 1) {
+          throw new AIProviderError("empty", "EMPTY_CONTENT");
+        }
+        markRecoveryStarted();
+        return pendingRecovery;
+      })
+    };
+    const service = new Gi088EvaluationService({
+      store: new Gi088MemoryStore(),
+      getProvider: () => provider,
+      evaluationMode: "high_only"
+    });
+    const failed = await service.startHigh({
+      ownerUserId: "owner-concurrent-v8-recovery",
+      taskId: "A1",
+      initialUserMessage: "我想继续聊这件事。",
+      clientTurnId: "concurrent-v8-u1"
+    });
+    const turnId = failed.activeTask!.branches.high.turns[0]!.id;
+    const request = {
+      ownerUserId: "owner-concurrent-v8-recovery",
+      taskId: "A1",
+      branch: "high" as const,
+      turnId,
+      trigger: "automatic_empty_content" as const
+    };
+    const first = service.retry(request);
+    const second = service.retry(request);
+    await recoveryStarted;
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+    finishRecovery({
+      content: firstTurnOutput(),
+      latencyMs: 10,
+      provider: "fake-concurrent-v8-recovery",
+      tokenUsage: null
+    });
+    await Promise.all([first, second]);
+    const finalSession = await service.getSession(
+      "owner-concurrent-v8-recovery"
+    );
+    expect(finalSession.activeTask!.branches.high.turns[0]).toMatchObject({
+      status: "complete_after_auto_recovery",
+      recovery: { status: "recovered", automaticRetryCount: 1 }
+    });
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
   it("默认 Provider 路径缺少批次指纹授权时在持久化和调用前停止", async () => {
     const previousScope = process.env.GI088_MODEL_CALL_SCOPE;
     const previousFingerprint = process.env.GI088_AUTHORIZED_EXECUTION_FINGERPRINT;
@@ -1158,19 +1442,19 @@ describe("GI-088 Preview evaluation service", () => {
     const batchStore = new Gi088MemoryStore();
     const off = await runGi088TechnicalSmoke({
       arm: "off",
-      authorizationId: "00000000-0000-4000-8000-000000000101",
+      authorizationId: "7c55dfa1-aa16-41d0-bc4a-f217c91e0797",
       store: smokeStore,
       getProvider: () => provider
     });
     const offDuplicate = await runGi088TechnicalSmoke({
       arm: "off",
-      authorizationId: "00000000-0000-4000-8000-000000000101",
+      authorizationId: "7c55dfa1-aa16-41d0-bc4a-f217c91e0797",
       store: smokeStore,
       getProvider: () => provider
     });
     const high = await runGi088TechnicalSmoke({
       arm: "high",
-      authorizationId: "00000000-0000-4000-8000-000000000102",
+      authorizationId: "6428e588-ae62-4b2f-92de-3615e85ba084",
       store: smokeStore,
       getProvider: () => provider
     });
@@ -1222,7 +1506,7 @@ describe("GI-088 Preview evaluation service", () => {
     };
     const record = await runGi088TechnicalSmoke({
       arm: "high",
-      authorizationId: "00000000-0000-4000-8000-000000000103",
+      authorizationId: "81810ea5-84ee-4587-9d93-0b93ac890c55",
       store: new Gi088MemoryTechnicalSmokeStore(),
       getProvider: () => provider
     });
@@ -1279,7 +1563,7 @@ describe("GI-088 Preview evaluation service", () => {
     };
     const record = await runGi088TechnicalSmoke({
       arm: "high",
-      authorizationId: "00000000-0000-4000-8000-000000000104",
+      authorizationId: "8c84c720-f2ac-4b92-8914-ae4434d2c19d",
       store: new Gi088MemoryTechnicalSmokeStore(),
       getProvider: () => provider
     });
@@ -1323,15 +1607,16 @@ describe("GI-088 Preview evaluation service", () => {
       clientTurnId: "second"
     });
     expect(provider.complete).toHaveBeenCalledTimes(2);
-    await expect(
+    await expectGi088EvaluationError(
       service.submitTurn({
         ownerUserId: "owner-3",
         taskId: "A1",
         branch: "off",
         content: "同一个幂等 ID 被换成另一段内容。",
         clientTurnId: "second"
-      })
-    ).rejects.toThrow("GI088_IDEMPOTENCY_PAYLOAD_MISMATCH");
+      }),
+      "GI088_IDEMPOTENCY_PAYLOAD_MISMATCH"
+    );
     expect(provider.complete).toHaveBeenCalledTimes(2);
     const session = await service.getSession("owner-3");
     expect(session.activeTask?.branches.off.messages.filter((m) => m.role === "user")).toHaveLength(2);
@@ -1588,9 +1873,10 @@ describe("GI-088 Preview evaluation service", () => {
       ]
     });
     await service.retry(request);
-    await expect(
-      service.retry({ ...request, trigger: "automatic_empty_content" })
-    ).rejects.toThrow("GI088_TECHNICAL_RETRY_LIMIT_REACHED");
+    await expectGi088EvaluationError(
+      service.retry({ ...request, trigger: "automatic_empty_content" }),
+      "GI088_TECHNICAL_RETRY_LIMIT_REACHED"
+    );
     expect(targetCalls).toHaveLength(5);
   });
 
@@ -1895,15 +2181,16 @@ describe("GI-088 Preview evaluation service", () => {
       "manual_available"
     );
     expect(provider.complete).toHaveBeenCalledTimes(3);
-    await expect(
+    await expectGi088EvaluationError(
       service.retry({
         ownerUserId: "owner-empty-exhausted",
         taskId: "A1",
         branch: "high",
         turnId,
         trigger: "manual"
-      })
-    ).rejects.toThrow("GI088_TECHNICAL_RETRY_LIMIT_REACHED");
+      }),
+      "GI088_TECHNICAL_RETRY_LIMIT_REACHED"
+    );
     expect(provider.complete).toHaveBeenCalledTimes(3);
   });
 
@@ -2399,15 +2686,16 @@ describe("GI-088 Preview evaluation service", () => {
         quality: "quality_failure"
       }
     });
-    await expect(
+    await expectGi088EvaluationError(
       service.retry({
         ownerUserId: "owner-technical-review",
         taskId: "A1",
         branch: "off",
         turnId,
         trigger: "manual"
-      })
-    ).rejects.toThrow("GI088_TECHNICAL_RETRY_UNAVAILABLE");
+      }),
+      "GI088_TECHNICAL_RETRY_UNAVAILABLE"
+    );
     expect(provider.complete).toHaveBeenCalledTimes(1);
   });
 
@@ -2471,7 +2759,7 @@ describe("GI-088 Preview evaluation service", () => {
       provider: "fake-hanging",
       tokenUsage: null
     });
-    await expect(inFlight).rejects.toThrow("GI088_CONCURRENT_UPDATE");
+    await expectGi088EvaluationError(inFlight, "GI088_CONCURRENT_UPDATE");
   });
 
   it("结构保护失败保留证据、禁止技术重试并允许产品裁决", async () => {
@@ -2500,15 +2788,16 @@ describe("GI-088 Preview evaluation service", () => {
       pendingTurnId: null,
       technicalError: null
     });
-    await expect(
+    await expectGi088EvaluationError(
       service.retry({
         ownerUserId: "owner-5",
         taskId: "A1",
         branch: "off",
         turnId,
         trigger: "manual"
-      })
-    ).rejects.toThrow("GI088_TECHNICAL_RETRY_UNAVAILABLE");
+      }),
+      "GI088_TECHNICAL_RETRY_UNAVAILABLE"
+    );
     const reviewed = await service.endTrajectory({
       ownerUserId: "owner-5",
       taskId: "A1",
@@ -2534,15 +2823,18 @@ describe("GI-088 Preview evaluation service", () => {
       clientTurnId: "trigger-evidence-off"
     });
 
-    await expect(service.endTrajectory({
-      ownerUserId: "owner-trigger-evidence",
-      taskId: "A1",
-      branch: "off",
-      feeling: "same",
-      quality: "minor_issue",
-      targetTrigger: "blocked_by_technical_failure",
-      reason: "尝试在缺少技术证据时标记技术阻断。"
-    })).rejects.toThrow("GI088_TARGET_TRIGGER_TECHNICAL_EVIDENCE_REQUIRED");
+    await expectGi088EvaluationError(
+      service.endTrajectory({
+        ownerUserId: "owner-trigger-evidence",
+        taskId: "A1",
+        branch: "off",
+        feeling: "same",
+        quality: "minor_issue",
+        targetTrigger: "blocked_by_technical_failure",
+        reason: "尝试在缺少技术证据时标记技术阻断。"
+      }),
+      "GI088_TARGET_TRIGGER_TECHNICAL_EVIDENCE_REQUIRED"
+    );
 
     await expect(service.endTrajectory({
       ownerUserId: "owner-trigger-evidence",
@@ -2559,7 +2851,7 @@ describe("GI-088 Preview evaluation service", () => {
     });
   });
 
-  it("保留期清理覆盖 v1 至 v7r2 全部批次与 GI-088 全部历史冒烟", () => {
+  it("保留期清理覆盖 v1 至 v8r2 全部批次与 GI-088 全部历史冒烟", () => {
     const selection = createGi088RetentionSelection();
     expect(selection).toEqual({
       batchWhere: {
@@ -2573,6 +2865,11 @@ describe("GI-088 Preview evaluation service", () => {
             GI088_EVALUATION_VERSION_V6,
             GI088_EVALUATION_VERSION_V7,
             GI088_EVALUATION_VERSION_V7R1,
+            GI088_EVALUATION_VERSION_V7R2,
+            GI088_EVALUATION_VERSION_V7R3,
+            GI088_EVALUATION_VERSION_V7R4,
+            GI088_EVALUATION_VERSION_V8,
+            GI088_EVALUATION_VERSION_V8R1,
             GI088_EVALUATION_VERSION
           ]
         }
@@ -2639,11 +2936,14 @@ describe("GI-088 Preview evaluation service", () => {
       getProvider: () => provider
     });
 
-    await expect(service.earlyStop({
-      ownerUserId: "owner-early-stop",
-      reasonCode: "mixed",
-      reason: "当前证据充分，同时技术问题已经影响评测体验。"
-    })).rejects.toThrow("GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED");
+    await expectGi088EvaluationError(
+      service.earlyStop({
+        ownerUserId: "owner-early-stop",
+        reasonCode: "mixed",
+        reason: "当前证据充分，同时技术问题已经影响评测体验。"
+      }),
+      "GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED"
+    );
 
     await service.startOff({
       ownerUserId: "owner-early-stop",
@@ -2651,11 +2951,14 @@ describe("GI-088 Preview evaluation service", () => {
       initialUserMessage: "我想用第一项真实话题完成本批检查。",
       clientTurnId: "early-stop-a1-off"
     });
-    await expect(service.earlyStop({
-      ownerUserId: "owner-early-stop",
-      reasonCode: "mixed",
-      reason: "当前还在任务内部。"
-    })).rejects.toThrow("GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED");
+    await expectGi088EvaluationError(
+      service.earlyStop({
+        ownerUserId: "owner-early-stop",
+        reasonCode: "mixed",
+        reason: "当前还在任务内部。"
+      }),
+      "GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED"
+    );
 
     await service.endTrajectory({
       ownerUserId: "owner-early-stop",
@@ -2694,7 +2997,7 @@ describe("GI-088 Preview evaluation service", () => {
       targetCoverage: {
         triggeredTrajectoryCount: 1,
         reviewedTrajectoryCount: 2,
-        totalTrajectoryCount: 4
+        totalTrajectoryCount: 24
       }
     });
     expect(stopped.batch.sealedAt).toBe(stopped.batch.earlyStop?.stoppedAt);
@@ -2711,16 +3014,19 @@ describe("GI-088 Preview evaluation service", () => {
       terminalAt: stopped.batch.sealedAt,
       completedTaskIds: ["A1"]
     });
-    expect(exported.completion.notRunTaskIds).toHaveLength(1);
+    expect(exported.completion.notRunTaskIds).toHaveLength(
+      GI088_TASKS.length - 1
+    );
     expect(exported.batch.tasks[1].status).toBe("not_run");
-    await expect(
+    await expectGi088EvaluationError(
       service.startOff({
         ownerUserId: "owner-early-stop",
         taskId: "A2",
         initialUserMessage: "终态后不能继续。",
         clientTurnId: "after-early-stop"
-      })
-    ).rejects.toThrow("GI088_BATCH_ALREADY_EARLY_STOPPED");
+      }),
+      "GI088_BATCH_ALREADY_EARLY_STOPPED"
+    );
   });
 
   it("提前结束拒绝任何残留活动或运行痕迹的剩余任务", async () => {
@@ -2743,11 +3049,14 @@ describe("GI-088 Preview evaluation service", () => {
       sealedAt: null
     })).toBe(true);
 
-    await expect(service.earlyStop({
-      ownerUserId: "owner-pristine-boundary",
-      reasonCode: "sufficient_evidence",
-      reason: "剩余任务存在残留状态时不能提前结束。"
-    })).rejects.toThrow("GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED");
+    await expectGi088EvaluationError(
+      service.earlyStop({
+        ownerUserId: "owner-pristine-boundary",
+        reasonCode: "sufficient_evidence",
+        reason: "剩余任务存在残留状态时不能提前结束。"
+      }),
+      "GI088_EARLY_STOP_TASK_BOUNDARY_REQUIRED"
+    );
   });
 
   it("存储层拒绝状态、终态时间和提前结束记录不一致", async () => {
@@ -2806,8 +3115,10 @@ describe("GI-088 Preview evaluation service", () => {
       sealedAt: stored!.sealedAt
     })).toBe(true);
 
-    await expect(service.export("owner-corrupt-export"))
-      .rejects.toThrow("GI088_BATCH_TERMINAL_STATE_MISMATCH");
+    await expectGi088EvaluationError(
+      service.export("owner-corrupt-export"),
+      "GI088_BATCH_TERMINAL_STATE_MISMATCH"
+    );
   });
 
   it("历史评价缺少任务触发字段时只读投影为 legacy_unknown", async () => {
@@ -2853,7 +3164,7 @@ describe("GI-088 Preview evaluation service", () => {
     });
   });
 
-  it("假 Provider 完整走通 2 项、4 条配对轨迹、封存与只读导出", async () => {
+  it("假 Provider 完整走通 12 项、24 条配对轨迹、封存与只读导出", async () => {
     const { provider } = validProvider();
     const service = new Gi088EvaluationService({
       store: new Gi088MemoryStore(),
@@ -2875,19 +3186,20 @@ describe("GI-088 Preview evaluation service", () => {
             reason: "开启组的承接更自然。"
           })
         ).resolves.toMatchObject({ activeTask: null });
-        await expect(
+        await expectGi088EvaluationError(
           service.compare({
             ownerUserId: "owner-6",
             taskId: task.id,
             preference: "off_better",
             reason: "试图覆盖已经保存的裁决。"
-          })
-        ).rejects.toThrow("GI088_COMPARISON_ALREADY_RECORDED");
+          }),
+          "GI088_COMPARISON_ALREADY_RECORDED"
+        );
       }
     }
-    expect(provider.complete).toHaveBeenCalledTimes(4);
+    expect(provider.complete).toHaveBeenCalledTimes(GI088_TASKS.length * 2);
     const beforeSeal = await service.getSession("owner-6");
-    expect(beforeSeal.batch.completedTaskCount).toBe(2);
+    expect(beforeSeal.batch.completedTaskCount).toBe(12);
     const sealed = await service.seal("owner-6");
     expect(sealed.batch.status).toBe("sealed");
     const exported = await service.export("owner-6");
@@ -2897,20 +3209,21 @@ describe("GI-088 Preview evaluation service", () => {
       completedTaskIds: GI088_TASKS.map((task) => task.id),
       notRunTaskIds: []
     });
-    expect(exported.batch.tasks).toHaveLength(2);
+    expect(exported.batch.tasks).toHaveLength(12);
     expect(exported.batch.tasks.every((task) => task.status === "completed")).toBe(true);
     expect(
       exported.batch.tasks[0].branches.off.turns[0].calls[0].rawFinalOutput
     ).toBe(firstTurnOutput());
     expect(JSON.stringify(exported)).not.toContain("reasoning_content");
     expect(exported.evaluation.configs).toEqual(GI088_CONFIGS);
-    await expect(
+    await expectGi088EvaluationError(
       service.startOff({
         ownerUserId: "owner-6",
         taskId: "A1",
         initialUserMessage: "封存后不应继续。",
         clientTurnId: "after-seal"
-      })
-    ).rejects.toThrow("GI088_BATCH_ALREADY_SEALED");
+      }),
+      "GI088_BATCH_ALREADY_SEALED"
+    );
   });
 });

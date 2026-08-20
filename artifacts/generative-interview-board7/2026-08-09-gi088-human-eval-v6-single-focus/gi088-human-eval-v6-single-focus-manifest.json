@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0",
+  "status": "early_stopped_2_of_4_single_focus_human_verified_pass",
+  "evaluation": {
+    "id": "gi088_human_eval_v6_single_focus",
+    "version": "2026-08-09.gi088-human-eval-v6-single-focus",
+    "serviceVersion": "2026-08-09.gi088-single-focus-service-v6",
+    "ruleVersion": "2026-08-09.gi088-single-answer-focus-v1",
+    "mode": "high_only",
+    "activeBranches": ["high"],
+    "taskCount": 4,
+    "effectiveCandidateFingerprint": "4cd9f6202778a0b1f6c18ed56e6869f78f3fdde8350afd689a08b9fabe3fb0ee",
+    "datasetFingerprint": "91b62d9124f8ff351a76d1b0e7fdc1da8d1818952d1779da93e2015f10b70aea",
+    "executionFingerprint": "a5042e9700f09b7d9d5a9746e87091e9ed8b4cc0cee4e7741435ce7badfc094d"
+  },
+  "lineage": {
+    "previousEvaluationVersion": "2026-08-09.gi088-human-eval-v5-high-reliability",
+    "previousBatchId": "60cf7e22-9183-466a-889f-a446baefa92d",
+    "previousBatchStatus": "running_readonly_0_of_12",
+    "previousModelCalls": 0,
+    "v5Disposition": "historical_overcorrection_preserved_readonly",
+    "preservedRegression": [
+      "thinking_high_only",
+      "empty_content_auto_recovery",
+      "stage_aware_timeout_recovery",
+      "stage_2_to_3_natural_transition"
+    ]
+  },
+  "decisionLedger": {
+    "productOwnerJudgment": "control_one_independent_answer_task_and_allow_multiple_question_sentences_within_one_coherent_answer_focus",
+    "codexInitialAssessment": "reasonable_with_prompt_prevention_programmatic_structural_protection_and_mandatory_human_turn_review",
+    "confirmedBoundary": "question_mark_count_is_observation_only_and_no_independent_per_turn_judge_exists",
+    "pendingHypothesis": "single_focus_prompt_reduces_independent_multi_task_questions_without_making_language_mechanical"
+  },
+  "singleFocusPolicy": {
+    "version": "2026-08-09.gi088-single-answer-focus-v1",
+    "oneAnswerTarget": true,
+    "multipleQuestionSentencesAllowed": true,
+    "questionMarkCountBlocksAsk": false,
+    "questionMarkCountBlocksNonAsk": true,
+    "automaticSingleQuestionRecoveryEnabled": false,
+    "independentPerTurnJudge": false,
+    "allVisibleAskTurnsRequireHumanReview": true,
+    "reviewClassifications": [
+      "same_focus_low_burden",
+      "same_focus_heavy",
+      "multiple_independent_tasks",
+      "uncertain"
+    ]
+  },
+  "recoveryAccounting": {
+    "maximumAutomaticRetriesPerTurn": 1,
+    "maximumProviderCallsPerTurnAcrossAllRecoveryTypes": 2,
+    "maximumProviderCallsPerTrajectory": 12,
+    "exactWorstCaseBatchCalls": 48,
+    "thirdCallAllowed": false,
+    "fallbackToThinkingDisabled": false,
+    "fallbackToOff": false
+  },
+  "automaticValidation": {
+    "targetedTestFiles": 10,
+    "targetedTestsPassed": 152,
+    "targetedTestsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "humanEvaluation": {
+    "batchId": "37517d91-a258-423a-bb26-a58c97357e68",
+    "status": "early_stopped",
+    "completedTaskIds": ["A1", "A2"],
+    "notRunTaskIds": ["A3", "A4"],
+    "visibleAskCount": 11,
+    "questionReview": {
+      "sameFocusLowBurden": 9,
+      "sameFocusHeavy": 2,
+      "multipleIndependentTasks": 0,
+      "uncertain": 0
+    },
+    "providerCalls": 17,
+    "emptyContent": 0,
+    "bodyTimeoutAutoRecovered": 1,
+    "productOwnerDecision": "single_focus_pass_and_early_stop",
+    "codexInitialAssessment": "main_factor_resolved_keep_question_mark_observation_and_human_review",
+    "confirmedRootCause": "v5_question_mark_count_was_an_overcorrection_of_answer_burden",
+    "nextValidatedProblem": "full_state_contract_continuity_and_burden_reference",
+    "privateExport": {
+      "exportVersion": "2026-08-09.gi088-readonly-export-v0.4",
+      "relativePath": "artifacts/local-runtime/gi088/2026-08-09-gi088-human-eval-v6-single-focus/gi088-v6-2-of-4-private-export.json",
+      "bytes": 295042,
+      "sha256": "73e83d47e93204229b78aaf3aaf72b7e9c4344294659c0a608f5c28433b94393",
+      "directoryMode": "0700",
+      "fileMode": "0600",
+      "committed": false
+    },
+    "failureLineage": [
+      {
+        "taskId": "A1",
+        "turnId": "99ba2324-9df7-439e-b62d-3f077c3848b0",
+        "callId": "12e923c3-c206-427f-908b-f3286da93706",
+        "code": "OUTPUT_SCHEMA_INVALID:semantic.burdenSignal:unrecognized_keys"
+      },
+      {
+        "taskId": "A2",
+        "turnId": "02ab24a0-4179-434f-b160-80be5822a24c",
+        "callId": "2f4d8907-97d1-4668-b062-ebb84ac93375",
+        "code": "TIMEOUT",
+        "outcome": "complete_after_auto_recovery"
+      }
+    ]
+  },
+  "preview": {
+    "deployed": true,
+    "deploymentId": "dpl_5Rq7gTnovApDY97b4pg8k7YJf33r",
+    "readyState": "READY",
+    "historicalUrlAtEvaluation": "https://xingfuxitong-gi088-v6-single-focus.vercel.app/preview/gi088-evaluation",
+    "aliasDisposition": "advanced_to_v7_after_v6_closure",
+    "newBatchCreated": true,
+    "batchReadback": {
+      "batchId": "37517d91-a258-423a-bb26-a58c97357e68",
+      "status": "early_stopped",
+      "completedTaskCount": 2,
+      "totalTaskCount": 4,
+      "evaluationMode": "high_only",
+      "activeBranches": ["high"],
+      "executionFingerprintVerified": true,
+      "modelCalls": 17
+    },
+    "browserReadback": {
+      "newHostnameApplicationLoginRequired": true,
+      "loginRedirectPreservesEvaluationPath": true,
+      "browserLeftAtLoginPage": true,
+      "unauthenticatedSessionHttpStatus": 401
+    },
+    "modelCallsConsumed": 17
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline",
+    "previewPageHttpStatus": 404,
+    "previewSessionHttpStatus": 404
+  }
+}

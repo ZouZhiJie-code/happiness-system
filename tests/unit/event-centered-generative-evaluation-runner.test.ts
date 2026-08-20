@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -813,9 +813,7 @@ describe("event-centered generative v64 execution identity", () => {
     }
   });
 
-  it.skipIf(!existsSync(
-    "artifacts/generative-interview-board7/2026-07-30/board7-gi009-two-call-minimal-approval.json"
-  ))("GI-009 架构实验需要独立产品批准和六项控制", () => {
+  it("GI-009 架构实验需要独立产品批准和六项控制", () => {
     const confirmation = createGenerativeCaseConfirmationPackage({ stage: "smoke" });
     const approval = {
       approvalType: "board7_gi009_two_call_minimal_experiment",

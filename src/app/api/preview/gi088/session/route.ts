@@ -4,8 +4,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const taskId = new URL(request.url).searchParams.get("taskId");
+  const params = new URL(request.url).searchParams;
+  const runId = params.get("runId") ?? "";
+  const taskId = params.get("taskId");
   return withGi088Evaluation(request, ({ ownerUserId, service }) =>
-    service.getSession(ownerUserId, taskId)
+    service.getSession({ ownerUserId, runId, taskId })
   );
 }

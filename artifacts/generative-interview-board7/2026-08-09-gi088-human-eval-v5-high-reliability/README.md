@@ -64,10 +64,10 @@ Vercel 官方要求函数时长高于应用自己的执行时间；Node 的 `Abo
 
 私有 Preview 已完成部署并回读独立 `0/12` 批次。Codex 模型调用为 `0`；产品负责人登录后可以直接从 A1 开始 High-only 真人测试。
 
-- Preview deployment：`redacted-deployment-id`；
+- Preview deployment：`dpl_3Xg4C1G28szDN2movRngGe2mPFDY`；
 - 固定入口：`https://xingfuxitong-gi088-v5-high-reliability.vercel.app/preview/gi088-evaluation`；
 - Vercel 状态：`READY`；
-- 批次：`redacted-operational-id`，`running`、revision `0`、`0/12`；
+- 批次：`60cf7e22-9183-466a-889f-a446baefa92d`，`running`、revision `0`、`0/12`；
 - 评测模式：`high_only`，活动分支只有 `high`；off 仅作为旧 JSON 结构的不可操作空槽位，调用数为 `0`；
 - 页面与 session 未登录访问均返回 `302` 登录跳转；浏览器已停留在 Daily Light 登录页；
 - Production 页面和 session API 均为 `404`，继续保持 `legacy + baseline`。

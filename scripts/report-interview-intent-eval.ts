@@ -1,5 +1,6 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import seedDatasetJson from "../evals/interview-intent/v1/seed-cases.json";
+import formalVariantsJson from "../evals/interview-intent/v1/formal-variants.json";
+import blindDatasetJson from "../evals/interview-intent/v1/blind-cases.json";
 
 import {
   interviewIntentBlindDatasetSchema,
@@ -10,24 +11,6 @@ import {
   buildFormalInterviewIntentDataset,
   evaluateInterviewIntentDataset
 } from "../src/features/interview/intent/evaluation-runner";
-
-async function readPrivateDataset(fileName: string) {
-  const filePath = resolve(process.cwd(), "evals/interview-intent/v1", fileName);
-  try {
-    return JSON.parse(await readFile(filePath, "utf8")) as unknown;
-  } catch (error) {
-    throw new Error(
-      `Missing private interview-intent dataset: ${fileName}. Restore the controlled local dataset before running this command.`,
-      { cause: error }
-    );
-  }
-}
-
-const [seedDatasetJson, formalVariantsJson, blindDatasetJson] = await Promise.all([
-  readPrivateDataset("seed-cases.json"),
-  readPrivateDataset("formal-variants.json"),
-  readPrivateDataset("blind-cases.json")
-]);
 
 const seedDataset = interviewIntentEvalDatasetSchema.parse(seedDatasetJson);
 const variantSet = interviewIntentEvalVariantSetSchema.parse(formalVariantsJson);

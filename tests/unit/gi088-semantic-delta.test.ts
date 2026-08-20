@@ -5,6 +5,7 @@ import {
   type Board7bWorkingTaskV1TurnInput
 } from "../../evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1";
 import {
+  GI088_SEMANTIC_DELTA_CONTRACT_VERSION,
   applyGi088SemanticDeltaValidatedResult,
   parseGi088SemanticDeltaOutput,
   validateGi088SemanticDeltaOutput,
@@ -114,14 +115,40 @@ function acknowledge(
   };
 }
 
-describe("GI-088 v7r1 semantic delta contract", () => {
+describe("GI-088 v8r2 semantic delta contract", () => {
   it("生效输出合同只定义变化字段并移除旧输出字段", () => {
     const assets = getGi088CandidateAssets();
+    expect(GI088_SEMANTIC_DELTA_CONTRACT_VERSION).toBe(
+      "2026-08-10.gi088-semantic-delta-contract-v2.4"
+    );
     expect(assets.outputContract).toContain('"understandingChange"');
     expect(assets.outputContract).toContain('"burdenSignalChange"');
     expect(assets.outputContract).not.toContain("understandingDelta");
     expect(assets.outputContract).not.toContain('"burdenSignal"');
     expect(assets.systemPrompt).not.toContain("understandingDelta");
+    expect(assets.outputContract).toContain("UNAUTHORIZED_PAUSE");
+  });
+
+  it("只有明确停止当前访谈的控制决定允许 pause", () => {
+    const firstState = applyGi088SemanticDeltaValidatedResult({
+      input: initialInput(),
+      output: firstAdd()
+    });
+    const input = nextInput(firstState, "这部分我说清楚了，不过我还想继续聊。");
+    const output = acknowledge(input, { kind: "none" });
+    output.semantic.action = "pause";
+    output.semantic.pauseReason = "content_sufficient";
+
+    expect(validateGi088SemanticDeltaOutput({
+      input,
+      output,
+      controlDecisionFinalAction: "none"
+    })).toContain("UNAUTHORIZED_PAUSE");
+    expect(validateGi088SemanticDeltaOutput({
+      input,
+      output,
+      controlDecisionFinalAction: "stop_follow_up"
+    })).not.toContain("UNAUTHORIZED_PAUSE");
   });
   it("由程序生成新增认识和负担信号编号，并原子提交", () => {
     const input = initialInput();

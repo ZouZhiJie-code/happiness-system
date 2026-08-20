@@ -1,15 +1,22 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   EventCenteredDialogueWorkspaceView,
+  EventCenteredStartWorkspaceView,
   type EventCenteredDialogueWorkspaceAction
 } from "@/components/interview/event-centered/event-centered-dialogue-workspace-view";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import type { EventCenteredWorkspaceSession } from "@/types/event-centered-dialogue";
 
 vi.mock("@/components/ai-feedback/ai-response-feedback", () => ({
-  AIResponseFeedback: ({ traceId }: { traceId: string }) => (
-    <div data-testid={`ai-feedback-${traceId}`}>反馈</div>
+  AIResponseFeedback: ({ traceId, leadingAction, mode }: { traceId: string; leadingAction?: ReactNode; mode?: string }) => (
+    <div data-testid={`ai-feedback-${traceId}`} data-feedback-mode={mode}>
+      {leadingAction}
+      <button type="button">赞</button>
+      <button type="button">踩</button>
+    </div>
   )
 }));
 
@@ -35,44 +42,42 @@ function buildSession(overrides: Partial<EventCenteredWorkspaceSession> = {}): E
       completedAt: null,
       abandonedAt: null
     },
-    messages: [
-      {
-        id: "opening-1",
-        role: "assistant",
-        content: "先从这件事开始吧。",
-        rawText: "",
-        sequence: 1,
-        userTurnId: null,
-        assistantPayload: {
-          naturalUnderstanding: "我会先贴着这件事来听。",
-          naturalResponse: "刚刚发生了什么？",
-          responseKind: "question",
-          questionSpec: {
-            phase: "event_recording",
-            angle: null,
-            target: "事件锚点",
-            opportunityNumber: 1,
-            surfaceLevel: "open_anchor",
-            anchorText: null,
-            repairCount: 0
-          },
-          checkpoint: null,
-          angleOutcome: null
+    messages: [{
+      id: "opening-1",
+      role: "assistant",
+      content: "先从这件事开始吧。",
+      rawText: "",
+      sequence: 1,
+      userTurnId: null,
+      assistantPayload: {
+        naturalUnderstanding: "我会先贴着这件事来听。",
+        naturalResponse: "刚刚发生了什么？",
+        responseKind: "question",
+        questionSpec: {
+          phase: "event_recording",
+          angle: null,
+          target: "事件锚点",
+          opportunityNumber: 1,
+          surfaceLevel: "open_anchor",
+          anchorText: null,
+          repairCount: 0
         },
-        responseVersion: {
-          groupId: "group-1",
-          version: 1,
-          versionCount: 2,
-          canRegenerate: true,
-          canSwitch: true,
-          versions: [
-            { messageId: "opening-1", branchSessionId: "branch-1", version: 1, active: true },
-            { messageId: "opening-2", branchSessionId: "branch-2", version: 2, active: false }
-          ]
-        },
-        createdAt: "2026-07-22T08:00:00.000Z"
-      }
-    ],
+        checkpoint: null,
+        angleOutcome: null
+      },
+      responseVersion: {
+        groupId: "group-1",
+        version: 1,
+        versionCount: 2,
+        canRegenerate: true,
+        canSwitch: true,
+        versions: [
+          { messageId: "opening-1", branchSessionId: "branch-1", version: 1, active: true },
+          { messageId: "opening-2", branchSessionId: "branch-2", version: 2, active: false }
+        ]
+      },
+      createdAt: "2026-07-22T08:00:00.000Z"
+    }],
     dialogue: {
       phase: "event_recording",
       activeAngle: null,
@@ -83,7 +88,7 @@ function buildSession(overrides: Partial<EventCenteredWorkspaceSession> = {}): E
       reopenedAngles: [],
       outcomes: [],
       checkpoint: null,
-      allowedActions: ["reply", "correct_understanding", "regenerate_response", "switch_response_version"],
+      allowedActions: ["reply", "correct_understanding", "regenerate_response", "switch_response_version", "exit_event"],
       progress: [
         { id: "record", label: "轻量记录", status: "current", percent: 50, detail: "正在记录" },
         { id: "reflect", label: "引导复盘", status: "upcoming", percent: 0, detail: "等待开启" },
@@ -96,437 +101,433 @@ function buildSession(overrides: Partial<EventCenteredWorkspaceSession> = {}): E
   };
 }
 
-function renderView(session = buildSession(), options?: {
-  journalOpen?: boolean;
-  onJournalOpenChange?: (open: boolean) => void;
-  canCreateEvent?: boolean;
-}) {
-  const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
-  const onCreateEvent = vi.fn();
-  const rendered = render(
-    <EventCenteredDialogueWorkspaceView
-      session={session}
-      entryDate="2026-07-22"
-      onAction={onAction}
-      onCreateEvent={onCreateEvent}
-      canCreateEvent={options?.canCreateEvent ?? true}
-      journalOpen={options?.journalOpen}
-      onJournalOpenChange={options?.onJournalOpenChange}
-    />
-  );
-  return { onAction, onCreateEvent, ...rendered };
-}
-
 describe("事件中心对话工作台呈现层", () => {
-  it("当前事件仍在进行时，直接说明新建下一件的完成条件", () => {
-    renderView(buildSession(), { canCreateEvent: false });
-
-    expect(screen.getByTestId("event-centered-next-event-blocker")).toHaveTextContent(
-      "这件事还在进行中。生成当前事件日志后，就可以记录下一件。"
-    );
-    expect(screen.getByRole("button", { name: "记下一件事" })).toBeDisabled();
-  });
-
-  it("让顶部事件标签支持左右、首尾键切换，并关联当前对话面板", () => {
+  it("将当天片段放进侧栏，支持键盘切换并返回对应日期的日报", () => {
     const onSelectTab = vi.fn();
-    const tabs = [
-      { rootSessionId: "root-1", label: "事件 1", status: "active" as const },
-      { rootSessionId: "root-2", label: "事件 2", status: "completed" as const },
-      { rootSessionId: "root-3", label: "事件 3", status: "abandoned" as const }
-    ];
-    const result = render(
+    render(
       <EventCenteredDialogueWorkspaceView
         session={buildSession()}
         entryDate="2026-07-22"
-        tabs={tabs}
+        tabs={[
+          { rootSessionId: "root-1", label: "会议后的松一口气", status: "active" },
+          { rootSessionId: "root-2", label: "下班路上的小事", status: "completed" }
+        ]}
         activeTabId="root-1"
         onAction={vi.fn()}
         onSelectTab={onSelectTab}
       />
     );
 
-    const first = screen.getByRole("tab", { name: /事件 1/u });
-    const second = screen.getByRole("tab", { name: /事件 2/u });
-    const third = screen.getByRole("tab", { name: /事件 3/u });
-    first.focus();
-
+    const first = screen.getByRole("tab", { name: /会议后的松一口气/u });
+    const second = screen.getByRole("tab", { name: /下班路上的小事/u });
+    expect(screen.getByRole("complementary", { name: "当天片段" })).toBeInTheDocument();
     expect(first).toHaveAttribute("aria-controls", "event-centered-dialogue-panel-root-1");
-    expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", "event-centered-tab-root-1");
-
     fireEvent.keyDown(first, { key: "ArrowRight" });
     expect(second).toHaveFocus();
-    expect(onSelectTab).toHaveBeenLastCalledWith("root-2");
-
-    result.rerender(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        tabs={tabs}
-        activeTabId="root-2"
-        onAction={vi.fn()}
-        onSelectTab={onSelectTab}
-      />
-    );
-
-    fireEvent.keyDown(second, { key: "End" });
-    expect(third).toHaveFocus();
-    expect(onSelectTab).toHaveBeenLastCalledWith("root-3");
-
-    result.rerender(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        tabs={tabs}
-        activeTabId="root-3"
-        onAction={vi.fn()}
-        onSelectTab={onSelectTab}
-      />
-    );
-
-    fireEvent.keyDown(third, { key: "Home" });
-    expect(first).toHaveFocus();
-    expect(onSelectTab).toHaveBeenLastCalledWith("root-1");
-
-    result.rerender(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        tabs={tabs}
-        activeTabId="root-1"
-        onAction={vi.fn()}
-        onSelectTab={onSelectTab}
-      />
-    );
-
-    fireEvent.keyDown(first, { key: "ArrowLeft" });
-    expect(third).toHaveFocus();
-    expect(onSelectTab).toHaveBeenLastCalledWith("root-3");
+    expect(onSelectTab).toHaveBeenCalledWith("root-2");
+    expect(screen.getByRole("link", { name: "查看 7 月 22 日 日记" })).toHaveAttribute("href", "/calendar?view=day&date=2026-07-22");
   });
 
-  it("打开日志后移入日志区域，收起时回到日志入口", async () => {
-    const onJournalOpenChange = vi.fn();
-    const result = renderView(buildSession(), { onJournalOpenChange });
-    const trigger = screen.getByRole("button", { name: "当前事件日志" });
-    trigger.focus();
-    fireEvent.click(trigger);
-    expect(onJournalOpenChange).toHaveBeenCalledWith(true);
+  it("由输入框承接自然修正，并移除回复版本与事件日志快捷入口", async () => {
+    const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
+    render(<EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={onAction} />);
 
-    result.rerender(
+    fireEvent.change(screen.getByLabelText("输入当前事件"), { target: { value: "我想换个角度说这件事" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    expect(onAction).toHaveBeenCalledWith({ action: "reply", rawText: "我想换个角度说这件事" });
+    await waitFor(() => expect(screen.getByLabelText("输入当前事件")).toHaveValue(""));
+
+    expect(screen.queryByRole("button", { name: "换个问法" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "纠正理解" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "问得轻一点" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "生成事件日志" })).not.toBeInTheDocument();
+  });
+
+  it("标题区只保留记录信息，把暂停动作交给顶部导航", () => {
+    render(<EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={vi.fn()} />);
+
+    const title = screen.getByRole("heading", { name: "事件 1" });
+    expect(title).toHaveClass("font-ui");
+    expect(title.parentElement).toHaveTextContent("7 月 22 日 · 事件记录");
+    expect(screen.queryByTestId("event-centered-next-event-blocker")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "暂存当前片段" })).not.toBeInTheDocument();
+  });
+
+  it("在有生成 Trace 时保留反馈入口", () => {
+    const withTrace = buildSession({ messages: [{ ...buildSession().messages[0], generationTraceId: "trace-1" }] });
+    render(<EventCenteredDialogueWorkspaceView session={withTrace} entryDate="2026-07-22" onAction={vi.fn()} />);
+    expect(screen.getByTestId("ai-feedback-trace-1")).toBeInTheDocument();
+  });
+
+  it("开场引导不显示赞踩、重新生成或版本切换", () => {
+    const opening = buildSession({
+      messages: [{
+        ...buildSession().messages[0],
+        generationTraceId: "trace-opening-1",
+        assistantPayload: {
+          ...buildSession().messages[0].assistantPayload!,
+          naturalUnderstanding: "",
+          naturalResponse: "从你最想说的那一部分开始吧。",
+          responseKind: "opening",
+          questionSpec: null
+        }
+      }]
+    });
+    opening.messages[0]!.assistantPayload!.naturalUnderstanding = "我在听。";
+    const { container } = render(<EventCenteredDialogueWorkspaceView session={opening} entryDate="2026-07-22" onAction={vi.fn()} />);
+
+    expect(screen.getByText("从你最想说的那一部分开始吧。")).toBeVisible();
+    expect(container.querySelectorAll('[data-message-role="assistant"]')).toHaveLength(1);
+    expect(screen.queryByText("我在听。")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ai-feedback-trace-opening-1")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+  });
+
+  it("跟随帮我记入口显示对应的记录模式", () => {
+    render(
       <EventCenteredDialogueWorkspaceView
         session={buildSession()}
         entryDate="2026-07-22"
+        recordMode="capture"
         onAction={vi.fn()}
-        journalOpen
-        onJournalOpenChange={onJournalOpenChange}
       />
     );
 
-    const journal = screen.getByRole("complementary", { name: "当前事件日志" });
-    await waitFor(() => expect(journal).toHaveFocus());
-    expect(screen.getByRole("button", { name: "当前事件日志" })).toHaveAttribute("aria-controls", "event-centered-journal-panel");
-
-    fireEvent.click(screen.getByRole("button", { name: "收起" }));
-    expect(onJournalOpenChange).toHaveBeenLastCalledWith(false);
-    expect(screen.getByRole("button", { name: "当前事件日志" })).toHaveFocus();
+    expect(screen.getByText("帮我记")).toBeInTheDocument();
+    expect(screen.queryByText("陪我聊")).not.toBeInTheDocument();
   });
 
-  it("采用对话内纸笺方案呈现三段进度、事件标签，点击后展开真实日志入口", () => {
-    const onJournalOpenChange = vi.fn();
-    const result = renderView(buildSession(), { onJournalOpenChange });
+  it("帮我记的确定性保存回执不显示生成反馈或重新生成", () => {
+    const captureSession = buildSession({
+      messages: [{
+        ...buildSession().messages[0],
+        generationTraceId: "trace-capture-1"
+      }]
+    });
 
-    expect(screen.getByRole("tab", { name: /事件 1/u })).toBeInTheDocument();
-    expect(screen.getByTestId("event-centered-dialogue-progress")).toHaveTextContent("1 · 轻量记录");
-    expect(screen.getByTestId("event-centered-dialogue-progress")).toHaveTextContent("2 · 引导复盘");
-    expect(screen.getByTestId("event-centered-dialogue-progress")).toHaveTextContent("3 · 深入探索");
-    expect(screen.queryByRole("complementary", { name: "当前事件日志" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "当前事件日志" }));
-    expect(onJournalOpenChange).toHaveBeenCalledWith(true);
-
-    result.rerender(
+    render(
       <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
+        session={captureSession}
         entryDate="2026-07-22"
+        recordMode="capture"
         onAction={vi.fn()}
-        journalOpen
-        onJournalOpenChange={onJournalOpenChange}
       />
     );
-    expect(screen.getByRole("complementary", { name: "当前事件日志" })).toHaveTextContent("把这件事收进日志");
+
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ai-feedback-trace-capture-1")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
   });
 
-  it("仅在 assistant 消息带生成 Trace 时展示质量反馈入口", () => {
+  it("将理解和提问依次放进两个同款 AI 气泡，并只保留一组回复操作", () => {
+    const assistant = {
+      ...buildSession().messages[0],
+      id: "assistant-latest",
+      sequence: 3,
+      generationTraceId: "trace-combined-1"
+    };
     const withTrace = buildSession({
       messages: [
-        { ...buildSession().messages[0], generationTraceId: "trace-1" },
         {
-          ...buildSession().messages[0],
-          id: "legacy-assistant-2",
+          id: "user-short",
+          role: "user",
+          content: "123",
+          rawText: "123",
           sequence: 2,
-          content: "这是一条历史兼容回复。",
+          userTurnId: "turn-short",
           assistantPayload: null,
           responseVersion: null,
-          generationTraceId: "trace-2"
-        }
+          createdAt: "2026-07-22T08:01:00.000Z"
+        },
+        assistant
       ]
     });
-    const { rerender } = render(
+    const { container } = render(
       <EventCenteredDialogueWorkspaceView
         session={withTrace}
         entryDate="2026-07-22"
+        feedbackMode="local"
         onAction={vi.fn()}
       />
     );
-    expect(screen.getByTestId("ai-feedback-trace-1")).toBeInTheDocument();
-    expect(screen.getByTestId("ai-feedback-trace-2")).toBeInTheDocument();
+
+    const assistantBubbles = container.querySelectorAll('[data-message-role="assistant"]');
+    expect(assistantBubbles).toHaveLength(2);
+    expect(assistantBubbles[0]).toHaveTextContent("我会先贴着这件事来听。");
+    expect(assistantBubbles[0]).not.toHaveTextContent("刚刚发生了什么？");
+    expect(assistantBubbles[1]).toHaveTextContent("刚刚发生了什么？");
+    expect(assistantBubbles[0].className).toBe(assistantBubbles[1].className);
+    expect(assistantBubbles[0]).toHaveClass("text-[15px]", "leading-[26px]", "font-normal");
+    expect(assistantBubbles[1]).toHaveClass("text-[15px]", "leading-[26px]", "font-normal");
+    expect(assistantBubbles[0].parentElement).toHaveClass("justify-start");
+    const userBubble = container.querySelector('[data-message-role="user"]');
+    expect(userBubble).toHaveTextContent("123");
+    expect(userBubble).toHaveClass("max-w-[min(68%,44rem)]", "text-[15px]", "leading-[26px]");
+    expect(userBubble?.parentElement).toHaveClass("justify-end");
+    expect(screen.getAllByTestId("ai-feedback-trace-combined-1")).toHaveLength(1);
+    expect(screen.getByTestId("ai-feedback-trace-combined-1")).toHaveAttribute("data-feedback-mode", "local");
+    const actions = screen.getByRole("group", { name: "回复操作" });
+    expect(within(actions).getAllByRole("button").slice(0, 3).map((button) => button.getAttribute("aria-label") || button.textContent)).toEqual([
+      "赞",
+      "踩",
+      "重新生成"
+    ]);
+  });
+
+  it("重生成入口不依赖 Trace，并从循环图标打开三个轻量方向", async () => {
+    const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
+    render(<EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={onAction} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "重新生成" }));
+    expect(screen.getByRole("menu", { name: "选择重新生成方向" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /更简单一点/u })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /更具体一点/u })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /换一个角度/u })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: /更具体一点/u }));
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith({
+      action: "regenerate_response",
+      targetMessageId: "opening-1",
+      regenerationIntent: "concretize"
+    }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "重新生成" })).toHaveFocus());
+  });
+
+  it("以陪我聊为主入口开始当天记录，并让历史日期保持准确", () => {
+    const onStart = vi.fn();
+    const { rerender } = render(
+      <EventCenteredStartWorkspaceView entryDate={getTodayEntryDate()} onStart={onStart} />
+    );
+
+    const chat = screen.getByRole("button", { name: /陪我聊.*我来问，你来说/u });
+    const capture = screen.getByRole("button", { name: /帮我记.*你来说，我在听/u });
+    expect(screen.getByRole("heading", { name: "新记录" })).toHaveClass("font-ui");
+    expect(screen.getByText("今天想怎么记？").closest('[data-message-role="assistant"]')).toBeVisible();
+    expect(screen.getByPlaceholderText("先选择一种记录方式")).toBeDisabled();
+    expect(chat).toHaveClass("bg-[var(--paper-deep)]", "text-[var(--paper-main)]");
+    expect(capture).toHaveClass("bg-[var(--paper-soft)]");
+    const startComposer = screen.getByTestId("event-centered-start-composer");
+    expect(startComposer).toHaveClass("pointer-events-auto");
+    expect(startComposer).not.toHaveClass("mx-auto");
+    expect(startComposer.parentElement).toHaveClass("absolute", "pointer-events-none");
+
+    rerender(
+      <EventCenteredStartWorkspaceView
+        entryDate={getTodayEntryDate()}
+        busy
+        pendingRecordMode="capture"
+        onStart={onStart}
+      />
+    );
+    expect(screen.getByRole("button", { name: /帮我记.*正在准备…/u })).toHaveAttribute("aria-busy", "true");
+
+    rerender(<EventCenteredStartWorkspaceView entryDate="2026-07-22" onStart={onStart} />);
+    expect(screen.getByText("7 月 22 日想怎么记？").closest('[data-message-role="assistant"]')).toBeVisible();
+    expect(screen.queryByText("今天")).not.toBeInTheDocument();
+  });
+
+  it("让生成中的理解与提问沿用同一气泡，并把失败恢复留在第二个气泡内", () => {
+    const { container, rerender } = render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({ messages: [] })}
+        entryDate="2026-07-22"
+        streamPreview={{ phase: "understanding", summary: "我听见你刚才松了一口气。", response: "" }}
+        onAction={vi.fn()}
+      />
+    );
+
+    let bubbles = container.querySelectorAll('[data-message-role="assistant"]');
+    expect(bubbles).toHaveLength(1);
+    expect(bubbles[0]).toHaveTextContent("我听见你刚才松了一口气。");
+    expect(screen.queryByText("正在整理下一步")).not.toBeInTheDocument();
+
+    rerender(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({ messages: [] })}
+        entryDate="2026-07-22"
+        streamPreview={{ phase: "responding", summary: "我听见你刚才松了一口气。", response: "" }}
+        onAction={vi.fn()}
+      />
+    );
+    bubbles = container.querySelectorAll('[data-message-role="assistant"]');
+    expect(bubbles).toHaveLength(2);
+    expect(bubbles[1]).toHaveTextContent("正在回复…");
+    expect(bubbles[0].className).toBe(bubbles[1].className);
+
+    rerender(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({ messages: [], dialogue: { ...buildSession().dialogue, allowedActions: ["resume_turn"] } })}
+        entryDate="2026-07-22"
+        streamPreview={{ phase: "recovery_failed", summary: "我听见你刚才松了一口气。", response: "" }}
+        onAction={vi.fn()}
+      />
+    );
+    bubbles = container.querySelectorAll('[data-message-role="assistant"]');
+    expect(bubbles).toHaveLength(2);
+    expect(bubbles[0]).toHaveTextContent("我听见你刚才松了一口气。");
+    expect(bubbles[1]).toHaveTextContent("这段话已保存，回复还没完成");
+    expect(within(bubbles[1] as HTMLElement).getByRole("button", { name: "继续生成" })).toBeInTheDocument();
+  });
+
+  it("完成后保留原对话并进入只读状态，承接对应日期日记和新记录", () => {
+    const onCreateEvent = vi.fn();
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({ sessionStatus: "completed", eventStatus: "completed" })}
+        entryDate="2026-07-22"
+        canCreateEvent
+        showCompletionHandoff
+        onAction={vi.fn()}
+        onCreateEvent={onCreateEvent}
+      />
+    );
+
+    expect(screen.getByText("我会先贴着这件事来听。")).toBeVisible();
+    expect(screen.getByTestId("event-centered-completion-inline")).toHaveTextContent("已记下");
+    expect(screen.getByTestId("event-centered-completion-inline")).toHaveTextContent("这件事已经放进 7月22日的记录");
+    expect(screen.queryByText(/今天/u)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看 7月22日日记" })).toHaveAttribute(
+      "href",
+      "/calendar?view=day&date=2026-07-22"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "新建记录" }));
+    expect(onCreateEvent).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("输入当前事件")).toBeDisabled();
+    expect(screen.getByLabelText("输入当前事件")).toHaveAttribute(
+      "placeholder",
+      "这条记录已经完成，如需继续，请新建一条记录。"
+    );
+    expect(screen.queryByRole("group", { name: "回复操作" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "重新生成" })).not.toBeInTheDocument();
+  });
+
+  it("空记录结束后说明未形成记录卡，并且不会显示完成成功反馈", () => {
+    const onCreateEvent = vi.fn();
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({
+          sessionStatus: "abandoned",
+          eventStatus: "abandoned",
+          journalEvent: {
+            ...buildSession().journalEvent!,
+            status: "abandoned",
+            abandonedAt: "2026-07-22T09:00:00.000Z"
+          },
+          dialogue: { ...buildSession().dialogue, allowedActions: [] }
+        })}
+        entryDate="2026-07-22"
+        showRecordRail={false}
+        canCreateEvent
+        onAction={vi.fn()}
+        onCreateEvent={onCreateEvent}
+      />
+    );
+
+    expect(screen.getByTestId("event-centered-abandoned-inline")).toHaveTextContent("这条空记录已结束");
+    expect(screen.getByTestId("event-centered-abandoned-inline")).toHaveTextContent("还没有形成记录卡");
+    expect(screen.queryByTestId("event-centered-completion-inline")).not.toBeInTheDocument();
+    expect(screen.queryByText("已记下")).not.toBeInTheDocument();
+    expect(screen.queryByText(/已经放进/u)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /查看.*日记/u })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "新建记录" }));
+    expect(onCreateEvent).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("输入当前事件")).toHaveAttribute(
+      "placeholder",
+      "这条空记录已经结束，如需记录，请新建一条记录。"
+    );
+  });
+
+  it("在错误气泡中保留恢复说明、请求标识和唯一刷新动作", () => {
+    const onResolveIssue = vi.fn();
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession()}
+        entryDate="2026-07-22"
+        error={{
+          code: "INTERVIEW_TURN_OUT_OF_DATE",
+          title: "当前对话已经更新",
+          message: "这条回复对应的是较早的对话位置。",
+          resolution: "请刷新页面查看最新问题，再重新发送。",
+          requestId: "ir_request_1",
+          retryable: true,
+          action: "refresh"
+        }}
+        onAction={vi.fn()}
+        onResolveIssue={onResolveIssue}
+      />
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("这条回复对应的是较早的对话位置。");
+    expect(alert).toHaveTextContent("请刷新页面查看最新问题，再重新发送。");
+    expect(alert).toHaveTextContent("请求标识 ir_request_1");
+    fireEvent.click(within(alert).getByRole("button", { name: "刷新到最新记录" }));
+    expect(onResolveIssue).toHaveBeenCalledOnce();
+    expect(within(alert).getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("输入区复用生产悬浮透明材质，并让会话主区占满剩余宽度", () => {
+    render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession()}
+        entryDate="2026-07-22"
+        showRecordRail={false}
+        onAction={vi.fn()}
+      />
+    );
+
+    const composer = screen.getByTestId("event-centered-composer");
+    expect(composer).toHaveClass("liquid-composer", "max-w-[70rem]", "pointer-events-auto");
+    expect(composer).not.toHaveClass("mx-auto");
+    expect(composer).not.toHaveClass("bg-[var(--header-surface-strong)]", "border-[var(--line-soft)]");
+    expect(screen.getByTestId("event-centered-composer-dock")).toHaveClass(
+      "absolute",
+      "pointer-events-none"
+    );
+    expect(screen.getByTestId("event-centered-composer-dock")).not.toHaveClass("shrink-0");
+    expect(screen.getByTestId("event-centered-message-track")).toHaveStyle({ paddingBottom: "128px" });
+    expect(screen.getByTestId("event-centered-message-viewport")).toHaveStyle({ scrollPaddingBottom: "128px" });
+    expect(screen.getByTestId("event-centered-message-track")).not.toHaveClass("mx-auto", "pb-32", "pb-64");
+    expect(screen.getByRole("tabpanel")).toHaveClass("min-w-0", "flex-1");
+    expect(screen.getByRole("button", { name: "发送" })).toHaveClass("size-11");
+  });
+
+  it("新回复自动保持可见，用户主动回看历史后停止抢动滚动位置", () => {
+    const requestFrame = vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined);
+    const { rerender } = render(
+      <EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={vi.fn()} />
+    );
+    const viewport = screen.getByTestId("event-centered-message-viewport");
+    Object.defineProperty(viewport, "scrollHeight", { configurable: true, value: 900 });
+    Object.defineProperty(viewport, "clientHeight", { configurable: true, value: 300 });
 
     rerender(
       <EventCenteredDialogueWorkspaceView
         session={buildSession()}
         entryDate="2026-07-22"
+        streamPreview={{ phase: "understanding", summary: "我听见了。", response: "" }}
         onAction={vi.fn()}
       />
     );
-    expect(screen.queryByTestId("ai-feedback-trace-1")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("ai-feedback-trace-2")).not.toBeInTheDocument();
-  });
+    expect(viewport.scrollTop).toBe(900);
 
-  it("把输入、问题修复、纠正和回复版本交给外部回调", async () => {
-    const { onAction } = renderView();
-
-    fireEvent.change(screen.getByLabelText("输入当前事件"), { target: { value: "我想补充一个细节" } });
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
-    expect(onAction).toHaveBeenCalledWith({ action: "reply", rawText: "我想补充一个细节" });
-    await waitFor(() => expect(screen.getByLabelText("输入当前事件")).toHaveValue(""));
-
-    fireEvent.click(screen.getByRole("button", { name: "换个问法" }));
-    fireEvent.click(screen.getByRole("button", { name: /更简单一点/u }));
-    expect(onAction).toHaveBeenCalledWith({
-      action: "regenerate_response",
-      targetMessageId: "opening-1",
-      regenerationIntent: "simplify"
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "纠正理解" }));
-    fireEvent.change(screen.getByLabelText("纠正 AI 对这段话的理解"), { target: { value: "我在意的是等待的感觉" } });
-    fireEvent.click(screen.getByRole("button", { name: "提交纠正" }));
-    expect(onAction).toHaveBeenCalledWith({
-      action: "correct_understanding",
-      rawText: "我在意的是等待的感觉",
-      targetMessageId: "opening-1"
-    });
-    await waitFor(() => expect(screen.queryByLabelText("纠正 AI 对这段话的理解")).not.toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole("button", { name: "2" }));
-    expect(onAction).toHaveBeenCalledWith({
-      action: "switch_response_version",
-      targetMessageId: "opening-2",
-      targetBranchSessionId: "branch-2"
-    });
-  });
-
-  it("只用双循环图标呈现换个问法，并提供悬浮、聚焦、触屏和读屏名称", () => {
-    const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
-    const result = render(
+    viewport.scrollTop = 0;
+    fireEvent.scroll(viewport);
+    rerender(
       <EventCenteredDialogueWorkspaceView
         session={buildSession()}
         entryDate="2026-07-22"
-        onAction={onAction}
-      />
-    );
-    const trigger = screen.getByRole("button", { name: "换个问法" });
-    const tooltip = screen.getByRole("tooltip", { name: "换个问法" });
-
-    expect(trigger).toHaveTextContent("");
-    expect(trigger).toHaveAttribute("aria-describedby", tooltip.id);
-    expect(tooltip).toHaveClass("group-hover:opacity-100", "group-focus-within:opacity-100");
-    trigger.focus();
-    expect(trigger).toHaveFocus();
-
-    fireEvent.click(trigger);
-    expect(screen.getByRole("group", { name: "问题修复方式" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: /更具体一点/u }));
-    expect(onAction).toHaveBeenCalledWith({
-      action: "regenerate_response",
-      targetMessageId: "opening-1",
-      regenerationIntent: "concretize"
-    });
-
-    result.rerender(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        busy
-        onAction={onAction}
-      />
-    );
-    expect(screen.getByRole("button", { name: "换个问法" })).toBeDisabled();
-  });
-
-  it("把待发送用户气泡放在 AI 等待状态之前", () => {
-    render(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        optimisticUserMessage={{
-          clientTurnId: "client-pending-1",
-          rawText: "我刚刚已经回答了这个问题。",
-          status: "submitting"
-        }}
-        streamPreview={{ phase: "understanding", summary: "", response: "" }}
+        streamPreview={{ phase: "responding", summary: "我听见了。", response: "接下来想问你一件事。" }}
         onAction={vi.fn()}
       />
     );
-
-    const bubble = screen.getByTestId("event-centered-optimistic-user-message");
-    const aiWaiting = screen.getByRole("status");
-    expect(bubble).toHaveTextContent("我刚刚已经回答了这个问题。");
-    expect(bubble.compareDocumentPosition(aiWaiting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("在可靠确认前保留输入，失败后继续保留，并避开中文输入法组合提交", async () => {
-    const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => Promise<void>>();
-    onAction.mockRejectedValueOnce(new Error("暂时失败"));
-    render(
-      <EventCenteredDialogueWorkspaceView
-        session={buildSession()}
-        entryDate="2026-07-22"
-        onAction={onAction}
-      />
-    );
-    const input = screen.getByLabelText("输入当前事件");
-    fireEvent.change(input, { target: { value: "输入法还在组合" } });
-    fireEvent.keyDown(input, { key: "Enter", keyCode: 229, isComposing: true });
-    expect(onAction).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
-    await waitFor(() => expect(onAction).toHaveBeenCalledWith({ action: "reply", rawText: "输入法还在组合" }));
-    await waitFor(() => expect(input).toHaveValue("输入法还在组合"));
-
-    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
-    expect(onAction).toHaveBeenCalledTimes(1);
-  });
-
-  it("纠正理解提交失败时保留原文，并以服务端允许动作关闭未开放的版本和角度操作", async () => {
-    const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => Promise<void>>();
-    onAction.mockRejectedValueOnce(new Error("暂时失败"));
-    const session = buildSession({
-      dialogue: {
-        ...buildSession().dialogue,
-        phase: "checkpoint_one",
-        checkpoint: { kind: "first", outcome: "先处理眼前的澄清。" },
-        allowedActions: ["reply", "correct_understanding", "exit_event"]
-      }
-    });
-    render(
-      <EventCenteredDialogueWorkspaceView
-        session={session}
-        entryDate="2026-07-22"
-        onAction={onAction}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "纠正理解" }));
-    const correction = screen.getByLabelText("纠正 AI 对这段话的理解");
-    fireEvent.change(correction, { target: { value: "我实际在意的是被催促" } });
-    fireEvent.click(screen.getByRole("button", { name: "提交纠正" }));
-    await waitFor(() => expect(onAction).toHaveBeenCalledWith({
-      action: "correct_understanding",
-      rawText: "我实际在意的是被催促",
-      targetMessageId: "opening-1"
-    }));
-    expect(correction).toHaveValue("我实际在意的是被催促");
-    expect(screen.getByRole("button", { name: "2" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "感受" })).not.toBeInTheDocument();
-  });
-
-  it("第一检查点只保留平等角度，后续检查点继续保留日志和恢复", () => {
-    const checkpoint = buildSession({
-      dialogue: {
-        ...buildSession().dialogue,
-        phase: "checkpoint_one",
-        checkpoint: { kind: "first", outcome: "这件事的轮廓已经清楚。" },
-        allowedActions: ["select_exploration_angle", "exit_event"]
-      }
-    });
-    const { onAction } = renderView(checkpoint);
-
-    expect(screen.getByTestId("event-centered-first-checkpoint")).toHaveTextContent(
-      "我先把这件事和你在意的部分记住了。选一个角度开始。"
-    );
-    expect(screen.getByTestId("event-centered-first-checkpoint")).not.toHaveTextContent(
-      "这件事的轮廓已经清楚。"
-    );
-    fireEvent.click(screen.getByRole("button", { name: "感受" }));
-    expect(onAction).toHaveBeenCalledWith({ action: "select_exploration_angle", angle: "feeling" });
-    expect(screen.queryByLabelText("输入当前事件")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "生成事件日志" })).not.toBeInTheDocument();
-
-    const second = buildSession({
-      dialogue: {
-        ...buildSession().dialogue,
-        phase: "checkpoint_two",
-        checkpoint: { kind: "second", outcome: "已经看见一个可靠线索。" },
-        allowedActions: ["continue_exploration", "reply", "resume_turn", "generate_event_journal"]
-      },
-      recovery: {
-        pendingTurn: {
-          id: "turn-1",
-          clientTurnId: "client-1",
-          sessionId: "branch-1",
-          rawText: "这段话还想补充",
-          inputMode: "text",
-          baseMessageSequence: 3,
-          status: "failed",
-          createdAt: "2026-07-22T08:10:00.000Z",
-          errorCode: "AI_RETRYABLE",
-          attemptCount: 1
-        }
-      }
-    });
-    const recoveryAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
-    render(
-      <EventCenteredDialogueWorkspaceView
-        session={second}
-        entryDate="2026-07-22"
-        onAction={recoveryAction}
-      />
-    );
-    expect(screen.getByTestId("event-centered-second-checkpoint")).toHaveTextContent(
-      "这一段先到这里。继续输入会沿刚才的方向深入。"
-    );
-    expect(screen.getByTestId("event-centered-second-checkpoint")).not.toHaveTextContent(
-      "已经看见一个可靠线索。"
-    );
-    expect(screen.queryByRole("button", { name: "继续深入" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "生成事件日志" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "换个角度" }));
-    expect(screen.getAllByRole("button", { name: "感受" }).at(-1)).toBeDisabled();
-    expect(screen.getByText("这段话已经收到")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "继续生成" }));
-    expect(recoveryAction).toHaveBeenCalledWith({ action: "resume_turn" });
-  });
-
-  it("两件并列事件提供两个低压力选择，选择时只提交对应原话摘录", () => {
-    const focus = buildSession({
-      dialogue: {
-        ...buildSession().dialogue,
-        phase: "event_focus_clarification",
-        focusOptions: [
-          { id: "focus-1", label: "下午会议被临时取消", sourceText: "下午会议被临时取消" },
-          { id: "focus-2", label: "晚上和朋友的误会", sourceText: "晚上和朋友的误会" }
-        ],
-        allowedActions: ["reply", "select_current_event", "exit_event"]
-      }
-    });
-    const { onAction } = renderView(focus);
-
-    expect(screen.getByText("先选一件")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "晚上和朋友的误会" }));
-    expect(onAction).toHaveBeenCalledWith({
-      action: "select_current_event",
-      optionId: "focus-2",
-      rawText: "晚上和朋友的误会"
-    });
-    expect(screen.getByText(/都不贴切时/u)).toBeVisible();
+    expect(viewport.scrollTop).toBe(0);
+    requestFrame.mockRestore();
+    cancelFrame.mockRestore();
   });
 });

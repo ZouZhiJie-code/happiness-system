@@ -8,16 +8,21 @@ export const dynamic = "force-dynamic";
 
 const inputSchema = z
   .object({
+    runId: z.string().uuid(),
     taskId: z.string().trim().min(1).max(20),
     branch: z.literal("high"),
     turnId: z.string().uuid(),
+    questionPresence: z.enum(["present", "absent", "uncertain"]),
     classification: z.enum([
       "same_focus_low_burden",
       "same_focus_heavy",
       "multiple_independent_tasks",
       "uncertain"
-    ]),
-    note: z.string().trim().max(1_000).default("")
+    ]).optional(),
+    note: z.string().trim().max(1_000).default(""),
+    observationFingerprint: z.string().length(64),
+    clientOperationId: z.string().trim().min(1).max(160),
+    revisionReason: z.string().trim().min(1).max(1_000).optional()
   })
   .strict();
 

@@ -27,12 +27,12 @@ GI-081 六题使用了未经产品负责人提前确认的临时 Prompt，适合
 
 ## 文件入口
 
-- 运行确认（本机历史证据，公开精简包未收录：`board7a-chat-e2e-single-v0-confirmation.md`）
+- [运行确认](./board7a-chat-e2e-single-v0-confirmation.md)
 - [基础 Prompt v0](./board7a-chat-e2e-single-v0-base-prompt.md)
 - [Interview Skill v0](./board7a-chat-e2e-single-v0-interview-skill.md)
 - [结构与程序校验](./board7a-chat-e2e-single-v0-structure.md)
 - [事实卡模板](./board7a-chat-e2e-single-v0-user-fact-card-template.json)
-- 批准模板（本机历史证据，公开精简包未收录：`board7a-chat-e2e-single-v0-approval-template.json`）
+- [批准模板](./board7a-chat-e2e-single-v0-approval-template.json)
 - [脱敏裁决模板](./board7a-chat-e2e-single-v0-redacted-review-template.md)
 - [候选清单与指纹](./board7a-chat-e2e-single-v0-manifest.json)
 

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   reserveAction: vi.fn(),
   reserveTurn: vi.fn(),
   abandon: vi.fn(),
+  materializeRecordCard: vi.fn(),
   angleProjection: vi.fn(),
   workspaceProjections: vi.fn(),
   factProjection: vi.fn(),
@@ -65,6 +66,10 @@ vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
   reserveEventCenteredUserAction: mocks.reserveAction,
   reserveEventCenteredUserTurn: mocks.reserveTurn,
   startEventCenteredInterviewSession: vi.fn()
+}));
+
+vi.mock("@/server/repositories/journal-event-entry.repository", () => ({
+  materializeJournalEventEntryCard: mocks.materializeRecordCard
 }));
 
 vi.mock("@/server/services/interview/event-centered-analytics.service", () => ({
@@ -138,9 +143,10 @@ import {
 
 const now = "2026-07-22T12:00:00.000Z";
 
-function identity() {
+function identity(recordMode: "capture" | "chat" = "chat") {
   return {
     mode: "event_centered" as const,
+    recordMode,
     rootSessionId: "root-1",
     activeBranchSessionId: "branch-1",
     eventId: "event-1",
@@ -186,6 +192,13 @@ function workspaceData(overrides: Record<string, unknown> = {}) {
     journalEntry: null,
     ...overrides
   };
+}
+
+function captureWorkspaceData(overrides: Record<string, unknown> = {}) {
+  return workspaceData({
+    identity: identity("capture"),
+    ...overrides
+  });
 }
 
 function formalWorkspaceData(overrides: Record<string, unknown> = {}) {
@@ -300,82 +313,6 @@ function assistantPayload(overrides: Record<string, unknown> = {}) {
     checkpoint: { kind: "first" as const, outcome: null },
     angleOutcome: null,
     ...overrides
-  };
-}
-
-function generativeRepairTurn(input: {
-  angle: "feeling" | "thought" | "relationship" | "action";
-  target: string;
-  question: string;
-  deep?: boolean;
-}) {
-  const expectedUnderstandingDelta = "从当前问题退回一个具体时刻，补足同一目标需要的可描述材料";
-  return {
-    understanding: {
-      eventBoundary: "current_event" as const,
-      coreEventIdentifiable: true,
-      answerStatus: "unknown" as const,
-      factDeltas: [],
-      correctionOrBoundary: null,
-      tentativeInterpretation: null,
-      eventOptions: []
-    },
-    semanticPlan: {
-      action: "ask" as const,
-      activeAngle: input.angle,
-      outcomeAssessment: {
-        state: "needs_more" as const,
-        origin: null,
-        basis: "当前抽象入口暂时说不清，仍有一次具体材料入口",
-        supportEvidenceRefs: [],
-        missingUnderstanding: expectedUnderstandingDelta
-      },
-      evidenceRefs: [],
-      insightKind: null,
-      selectedTargetId: input.target,
-      expectedUnderstandingDelta,
-      tentativeInterpretation: null,
-      stopReason: null,
-      cognitiveAction: "anchor_specific" as const,
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      realizationContract: {
-        responseCore: input.question,
-        summaryAnchors: ["暂时说不清"]
-      }
-    },
-    visibleTurn: {
-      thinkingSummary: "这部分暂时说不清，可以先回到一个具体时刻。",
-      responseKind: "question" as const,
-      question: input.question,
-      insight: null,
-      honestLimit: null
-    },
-    decision: {
-      turnAction: "ask" as const,
-      cognitiveAction: "anchor_specific" as const,
-      selectedTarget: input.target,
-      evidenceRefs: [],
-      microgoalDelta: input.deep
-        ? {
-            operation: "continue" as const,
-            statement: expectedUnderstandingDelta,
-            supportEvidenceRefs: []
-          }
-        : null,
-      expectedValue: expectedUnderstandingDelta,
-      stopReason: null,
-      outcomeCandidate: null
-    },
-    reply: {
-      naturalUnderstanding: "这部分暂时说不清，可以先回到一个具体时刻。",
-      question: input.question
-    }
   };
 }
 
@@ -592,8 +529,14 @@ beforeEach(() => {
   mocks.getPlanCheckpoint.mockResolvedValue(null);
   mocks.discardPlanCheckpoint.mockResolvedValue(null);
   mocks.recordAnalytics.mockResolvedValue(undefined);
+  mocks.materializeRecordCard.mockResolvedValue({ id: "record-card-1" });
   mocks.getWorkspaceData.mockResolvedValue(workspaceData());
   mocks.reserveAction.mockResolvedValue(reservation());
+  mocks.resume.mockResolvedValue({
+    ...reservation().turn,
+    status: "processing",
+    attemptCount: 2
+  });
   mocks.angleProjection.mockResolvedValue(angleProjection());
   mocks.factProjection.mockResolvedValue(factProjection());
   mocks.workspaceProjections.mockResolvedValue({
@@ -651,6 +594,126 @@ beforeEach(() => {
 });
 
 describe("event-centered respond service", () => {
+  it("帮我记首条真实表达只可靠保存并返回单段自然承接", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData());
+    const deltas: Array<[string, string]> = [];
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest(), {
+      onDelta: (target, value) => {
+        deltas.push([target, value]);
+      }
+    });
+
+    expect(result.assistantPayload).toEqual({
+      naturalUnderstanding: "",
+      naturalResponse: "好，这段已经记下了。",
+      responseKind: "acknowledgement",
+      questionSpec: null,
+      checkpoint: null,
+      angleOutcome: null
+    });
+    expect(deltas).toEqual([["response", "好，这段已经记下了。"]]);
+    expect(mocks.understand).not.toHaveBeenCalled();
+    expect(mocks.realize).not.toHaveBeenCalled();
+    expect(mocks.generateOnce).not.toHaveBeenCalled();
+    expect(mocks.generatePlan).not.toHaveBeenCalled();
+    expect(mocks.generateVisible).not.toHaveBeenCalled();
+    expect(mocks.commit).toHaveBeenCalledWith(expect.objectContaining({
+      facts: [],
+      pendingClaim: null,
+      snapshotData: expect.objectContaining({
+        phase: "event_recording",
+        reflectionReady: false,
+        activeAngle: null,
+        currentQuestion: null,
+        currentQuestionIntent: null,
+        focusOptions: []
+      }),
+      trace: expect.objectContaining({
+        outputOrigin: "deterministic",
+        contextSnapshot: expect.objectContaining({ recordMode: "capture" }),
+        pipelineDecisions: [expect.objectContaining({
+          kind: "event_centered_capture_zero_question",
+          questionSpec: null
+        })]
+      })
+    }));
+  });
+
+  it("帮我记在尚未形成事件时允许提交第一条真实表达", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData({
+      identity: {
+        ...identity("capture"),
+        eventId: null,
+        branchStateId: null,
+        eventStatus: null,
+        journalEvent: null
+      }
+    }));
+
+    await expect(
+      respondEventCenteredInterview("user-1", replyRequest())
+    ).resolves.toMatchObject({
+      assistantPayload: {
+        naturalResponse: "好，这段已经记下了。",
+        questionSpec: null
+      }
+    });
+  });
+
+  it("帮我记在首条表达后只开放继续记录和完成记录", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData({
+      messages: [
+        ...captureWorkspaceData().messages,
+        {
+          id: "capture-user-1",
+          branchSessionId: "branch-1",
+          role: "user" as const,
+          content: "今天开会时我主动说明了延期风险。",
+          rawText: "今天开会时我主动说明了延期风险。",
+          sequence: 1,
+          userTurnId: "turn-capture-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+
+    const workspace = await getEventCenteredInterviewWorkspace("user-1", "root-1");
+
+    expect(workspace?.dialogue.allowedActions).toEqual(["reply", "exit_event"]);
+  });
+
+  it.each([
+    ["correct_understanding", { rawText: "我想纠正一下", targetMessageId: "opening-1" }],
+    ["select_current_event", { optionId: "event-option-1" }],
+    ["select_exploration_angle", { angle: "thought" }],
+    ["continue_exploration", { angle: "thought" }],
+    ["regenerate_response", {
+      targetMessageId: "opening-1",
+      regenerationIntent: "simplify"
+    }],
+    ["switch_response_version", {
+      targetMessageId: "opening-1",
+      targetBranchSessionId: "branch-2"
+    }],
+    ["resume_turn", {}],
+    ["exit_event", { rawText: "完成记录" }]
+  ] as const)("帮我记在当前状态拒绝未开放动作 %s", async (action, fields) => {
+    mocks.getWorkspaceData.mockResolvedValue(captureWorkspaceData());
+
+    await expect(respondEventCenteredInterview("user-1", {
+      ...replyRequest(),
+      ...fields,
+      action
+    })).rejects.toThrow("INTERVIEW_ACTION_UNSUPPORTED");
+
+    expect(mocks.reserveAction).not.toHaveBeenCalled();
+    expect(mocks.regenerateVersion).not.toHaveBeenCalled();
+    expect(mocks.selectVersion).not.toHaveBeenCalled();
+  });
+
   it("GI-066 正式回合由判断地图、系统选题和冻结表达两段完成", async () => {
     mocks.generativeEnabled.mockReturnValue(true);
     mocks.thoughtOnly.mockReturnValue(true);
@@ -2840,6 +2903,7 @@ describe("event-centered respond service", () => {
         }
       ]
     }));
+    mocks.resume.mockResolvedValue({ ...pending, status: "processing", attemptCount: 2 });
 
     await respondEventCenteredInterview("user-1", {
       action: "resume_turn",
@@ -2852,9 +2916,138 @@ describe("event-centered respond service", () => {
     }));
     expect(mocks.commit.mock.calls.at(-1)?.[0].userTurnId).toBe("turn-1");
     expect(mocks.reserveAction).toHaveBeenCalledTimes(1);
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_started",
+      dedupeKey: "event_centered_resume_started:turn-1:2",
+      attemptCount: 2
+    }));
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_completed",
+      dedupeKey: "event_centered_resume_completed:turn-1:2",
+      attemptCount: 2
+    }));
   });
 
-  it("退出事件完成可靠动作并进入 abandon，不触发 AI", async () => {
+  it("records a failed resume attempt without changing the reliable turn identity", async () => {
+    const pending = {
+      ...reservation().turn,
+      status: "failed" as const,
+      action: "reply" as const,
+      baseBranchSessionId: "branch-1",
+      eventOperationData: null,
+      errorCode: "AI_TEMPORARY_FAILURE",
+      attemptCount: 1
+    };
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      pendingTurn: pending,
+      messages: [
+        ...workspaceData().messages,
+        {
+          id: "user-message-1",
+          branchSessionId: "branch-1",
+          role: "user",
+          content: pending.rawText,
+          rawText: pending.rawText,
+          sequence: 1,
+          userTurnId: "turn-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+    mocks.resume.mockResolvedValue({ ...pending, status: "processing", attemptCount: 2 });
+    mocks.understand.mockRejectedValueOnce(new Error("AI_TEMPORARY_FAILURE"));
+
+    await expect(respondEventCenteredInterview("user-1", {
+      action: "resume_turn",
+      rootSessionId: "root-1",
+      clientTurnId: "client-1"
+    })).rejects.toThrow("AI_TEMPORARY_FAILURE");
+
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_failed",
+      dedupeKey: "event_centered_resume_failed:turn-1:2",
+      attemptCount: 2,
+      errorCode: "AI_TEMPORARY_FAILURE"
+    }));
+  });
+
+  it("records started and failed when reliable-turn resume itself fails", async () => {
+    const pending = {
+      ...reservation().turn,
+      status: "failed" as const,
+      action: "reply" as const,
+      baseBranchSessionId: "branch-1",
+      eventOperationData: null,
+      errorCode: "REQUEST_CANCELED",
+      attemptCount: 1
+    };
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      pendingTurn: pending,
+      messages: [
+        ...workspaceData().messages,
+        {
+          id: "user-message-1",
+          branchSessionId: "branch-1",
+          role: "user",
+          content: pending.rawText,
+          rawText: pending.rawText,
+          sequence: 1,
+          userTurnId: "turn-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+    mocks.resume.mockRejectedValueOnce(new Error("RESUME_WRITE_FAILED"));
+
+    await expect(respondEventCenteredInterview("user-1", {
+      action: "resume_turn",
+      rootSessionId: "root-1",
+      clientTurnId: "client-1"
+    })).rejects.toThrow("RESUME_WRITE_FAILED");
+
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_started",
+      dedupeKey: "event_centered_resume_started:turn-1:2",
+      attemptCount: 2
+    }));
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_failed",
+      dedupeKey: "event_centered_resume_failed:turn-1:2",
+      attemptCount: 2,
+      errorCode: "RESUME_WRITE_FAILED"
+    }));
+  });
+
+  it("返回当天会用已保存表达形成确定性事件卡片，不触发 AI", async () => {
+    await respondEventCenteredInterview("user-1", replyRequest({
+      action: "exit_event",
+      rawText: "先退出"
+    }));
+
+    expect(mocks.materializeRecordCard).toHaveBeenCalledWith({
+      userId: "user-1",
+      eventId: "event-1",
+      activeBranchSessionId: "branch-1",
+      baseMessageSequence: 2,
+      returnTurnId: "turn-1"
+    });
+    expect(mocks.abandon).not.toHaveBeenCalled();
+    expect(mocks.recordAnalytics).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_session_abandoned"
+    }));
+    expect(mocks.understand).not.toHaveBeenCalled();
+    expect(mocks.commit).not.toHaveBeenCalled();
+  });
+
+  it("只有开场且还未表达时保持轻量退出，不创建虚假的事件卡片", async () => {
+    mocks.materializeRecordCard.mockRejectedValueOnce(
+      new Error("EVENT_RECORD_CARD_SOURCE_INSUFFICIENT")
+    );
+
     await respondEventCenteredInterview("user-1", replyRequest({
       action: "exit_event",
       rawText: "先退出"
@@ -2866,8 +3059,6 @@ describe("event-centered respond service", () => {
       stage: "event_recording",
       angle: null
     }));
-    expect(mocks.understand).not.toHaveBeenCalled();
-    expect(mocks.commit).not.toHaveBeenCalled();
   });
 
   it("同一可靠 turn 的完成重放不重复提交 first_content 埋点", async () => {

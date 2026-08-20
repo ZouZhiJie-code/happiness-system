@@ -34,6 +34,13 @@ describe("journal daily entry persistence", () => {
     ),
     "utf8"
   );
+  const recordCardUpgrade = readFileSync(
+    resolve(
+      process.cwd(),
+      "prisma/migrations/20260810180000_add_journal_daily_generation_system/migration.sql"
+    ),
+    "utf8"
+  );
   const model = prismaBlock(schema, "model", "JournalDailyEntry");
   const table = migrationTableBlock(migration, "JournalDailyEntry");
 
@@ -52,7 +59,7 @@ describe("journal daily entry persistence", () => {
     );
   });
 
-  it("requires at least two paired saved event-entry sources and a durable source snapshot", () => {
+  it("keeps paired sources and upgrades the minimum from two saved entries to one current record", () => {
     expect(model).toMatch(/sourceEntryIds\s+String\[\]\s+@default\(\[\]\)/u);
     expect(model).toMatch(/sourceEventIds\s+String\[\]\s+@default\(\[\]\)/u);
     expect(model).toMatch(/sourceSignature\s+String/u);
@@ -60,6 +67,12 @@ describe("journal daily entry persistence", () => {
 
     expect(table).toContain(
       'CONSTRAINT "JournalDailyEntry_source_count_check" CHECK (cardinality("sourceEntryIds") >= 2)'
+    );
+    expect(recordCardUpgrade).toContain(
+      'DROP CONSTRAINT "JournalDailyEntry_source_count_check"'
+    );
+    expect(recordCardUpgrade).toContain(
+      'CHECK (cardinality("sourceEntryIds") >= 1)'
     );
     expect(table).toContain(
       'CONSTRAINT "JournalDailyEntry_source_pair_count_check" CHECK (cardinality("sourceEntryIds") = cardinality("sourceEventIds"))'

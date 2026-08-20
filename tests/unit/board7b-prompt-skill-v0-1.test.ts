@@ -170,15 +170,29 @@ describe("GI-084 v0.1 冻结规则分流与提问策略", () => {
     });
   });
 
-  it("公开清单将真人逐字回归计划保留在本机受控目录", async () => {
-    const manifest = JSON.parse(
+  it("八次隐藏回归严格保持 4 个秋招决策点和 4 个迁移案例", async () => {
+    const plan = JSON.parse(
       await readFile(
-        resolve(PACKAGE_DIRECTORY, "board7b-prompt-skill-v0.1-manifest.json"),
+        resolve(PACKAGE_DIRECTORY, "board7b-prompt-skill-v0.1-regression-plan.json"),
         "utf8"
       )
-    ) as { nonModelAssets: { regressionPlan: string } };
+    ) as {
+      plannedCalls: number;
+      authorizedCalls: number;
+      groups: Array<{
+        repetitions: number;
+        steps?: unknown[];
+        cases?: unknown[];
+      }>;
+    };
+    const plannedCalls = plan.groups.reduce(
+      (total, group) =>
+        total + group.repetitions * ((group.steps ?? group.cases) ?? []).length,
+      0
+    );
 
-    expect(manifest.nonModelAssets.regressionPlan).toBe("local-runtime-only");
+    expect(plannedCalls).toBe(8);
+    expect(plan).toMatchObject({ plannedCalls: 8, authorizedCalls: 0 });
   });
 
   it("网页开始保持零调用，每次用户提交只产生一个模型请求", async () => {
@@ -186,7 +200,7 @@ describe("GI-084 v0.1 冻结规则分流与提问策略", () => {
     const candidateFingerprint = createBoard7bPromptSkillV01CandidateFingerprint(assets);
     const checkpoint = createBoard7bPromptSkillV01Checkpoint({
       candidateFingerprint,
-      trajectoryId: "00000000-0000-4000-8000-000000000201",
+      trajectoryId: "8e02c0e6-4e0f-4c83-84f6-8ec0d7cb8507",
       approvedAt: "2026-08-07T12:00:00.000Z"
     });
     const provider = providerReturning(validFirstTurnOutput());

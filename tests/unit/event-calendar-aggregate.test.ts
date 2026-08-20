@@ -58,8 +58,8 @@ function buildDailyJournal(
     sourceEntryIds: ["entry-1", "entry-2"],
     sourceEventIds: ["event-1", "event-2"],
     sourceSignature: buildJournalDailySourceSignature([
-      { eventId: "event-1", entryId: "entry-1", daySequence: 1, savedRevision: 1 },
-      { eventId: "event-2", entryId: "entry-2", daySequence: 2, savedRevision: 1 }
+      { entryId: "entry-1", daySequence: 1, contentRevision: 1 },
+      { entryId: "entry-2", daySequence: 2, contentRevision: 1 }
     ]),
     contentRevision: 1,
     savedRevision: 1,
@@ -116,7 +116,7 @@ describe("aggregateEventCalendarDay", () => {
     expect(result.primaryAction).toBe("view_generation_state");
   });
 
-  it("把已完成事件的草稿或修改日志标记为待保存", () => {
+  it("把记录卡当前版本直接纳入日记来源，无需额外保存", () => {
     const result = aggregateEventCalendarDay({
       date: "2026-07-22",
       events: [buildEvent({ status: "completed", completedAt: "2026-07-22T10:00:00.000Z" })],
@@ -126,11 +126,12 @@ describe("aggregateEventCalendarDay", () => {
     expect(result.events[0]?.state).toBe("modified");
     expect(result.overallStatus).toBe("draft");
     expect(result.pendingSaveEntryCount).toBe(1);
-    expect(result.dailyJournal.pendingSave).toBe(true);
+    expect(result.dailyJournal.pendingSave).toBe(false);
+    expect(result.dailyJournal.actions).toContain("generate_daily_journal");
     expect(result.primaryAction).toBe("continue_event_entry_editing");
   });
 
-  it("一篇有效已保存日志直接指向该事件日志", () => {
+  it("一张记录即可生成今日日记", () => {
     const result = aggregateEventCalendarDay({
       date: "2026-07-22",
       events: [buildEvent({ status: "completed", completedAt: "2026-07-22T10:00:00.000Z" })],
@@ -140,11 +141,12 @@ describe("aggregateEventCalendarDay", () => {
     expect(result.overallStatus).toBe("completed");
     expect(result.savedEntryCount).toBe(1);
     expect(result.dailyJournal.collection).toBe("single_entry");
-    expect(result.dailyJournal.directEntryId).toBe("entry-1");
+    expect(result.dailyJournal.directEntryId).toBeNull();
+    expect(result.dailyJournal.actions).toContain("generate_daily_journal");
     expect(result.primaryAction).toBe("view_event_entry");
   });
 
-  it("多篇保存来源发生变化时标记需更新，并在存在待保存日志时阻塞更新", () => {
+  it("任一记录卡当前版本变化后立即标记需更新", () => {
     const events = [
       buildEvent({ status: "completed", completedAt: "2026-07-22T10:00:00.000Z" }),
       buildEvent({
@@ -185,9 +187,9 @@ describe("aggregateEventCalendarDay", () => {
 
     expect(result.dailyJournal.collection).toBe("multiple_entries");
     expect(result.dailyJournal.freshness).toBe("stale");
-    expect(result.dailyJournal.pendingSaveEntryIds).toEqual(["entry-3"]);
-    expect(result.dailyJournal.updateBlockedByPendingSave).toBe(true);
-    expect(result.dailyJournal.actions).toEqual([]);
+    expect(result.dailyJournal.pendingSaveEntryIds).toEqual([]);
+    expect(result.dailyJournal.updateBlockedByPendingSave).toBe(false);
+    expect(result.dailyJournal.actions).toContain("update_daily_journal");
   });
 
   it("来源过期且没有待保存日志时提供更新完整日志动作", () => {

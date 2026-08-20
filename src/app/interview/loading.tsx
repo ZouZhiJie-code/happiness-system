@@ -7,7 +7,7 @@ export default function InterviewLoading() {
       aria-busy="true"
       role="status"
     >
-      <span className="sr-only">正在打开访谈</span>
+      <span className="sr-only">正在打开记录</span>
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="h-3 w-28 animate-pulse rounded-full bg-[rgba(150,109,66,0.16)]" />
         <div className="flex flex-1 flex-col justify-end gap-3 pb-2">

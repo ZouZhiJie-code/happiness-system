@@ -22,7 +22,7 @@ type ActionButtonProps<T extends ElementType> = {
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "className">;
 
 /**
- * 三态动作按钮：primary（暖棕渐变）/ secondary（描边纸面）/ ghost（下划线文字）。
+ * 三态动作按钮：primary（暖墨纯色）/ secondary（浅纸面）/ ghost（轻量文字）。
  */
 function ActionButtonInner<T extends ElementType = "button">({
   as,

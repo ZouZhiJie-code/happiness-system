@@ -30,9 +30,9 @@ GI-067 历史重构入口：[04w｜“理清想法”提问策略第一性原理
 
 历史入口决策：`GI-055｜复盘默认路径、角度选择与第一检查点`、GI-056 的来源证据契约以及 GI-057 的事件记录分流继续保留为历史和兼容证据。Production 继续保持 `legacy + baseline`。
 
-GI-057 工程验证与独立 Preview 已完成。8 条主链和 8 条日志闭环完成，自动发布门因 3 次运行降级、50.877 秒中位等待、77.999 秒 P90 和一条需要重新选择角度的轨迹裁决为 No-Go。候选血缘、脱敏执行证据与只读报告见 GI-057 候选目录（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`） 和 Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+GI-057 工程验证与独立 Preview 已完成。8 条主链和 8 条日志闭环完成，自动发布门因 3 次运行降级、50.877 秒中位等待、77.999 秒 P90 和一条需要重新选择角度的轨迹裁决为 No-Go。候选血缘、脱敏执行证据与只读报告见 [GI-057 候选目录](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/preview-execution-evidence.md) 和 [Board8 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/board8-preview-candidate-audit.md)。
 
-GI-058 已完成候选实现、定向验证、DeepSeek 官方 API 最小预检与完整 `8+2` 独立 Preview。策略 `5.56.0` 完成 8 条产品主链、8 条日志闭环、第一检查点、角度关闭恢复和五维默认入口冒烟；正式生成式回合最终 baseline `2/11`、最大连续 `1`，完整文本可见 P90 `6.64s`、可继续操作 P90 `6.71s`，日志 LLM 接受 `8/8`、全文 fallback `0`。这些内容保留为当时的技术通过证据。旧 Ark 配置的 `403 AccountOverdueError` 继续作为历史失效证据。证据见 GI-058 候选目录（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`） 和 Provider 前置检查（本机历史证据，公开精简包未收录：`provider-preflight.md`）。Production 继续保持 `legacy + baseline`。
+GI-058 已完成候选实现、定向验证、DeepSeek 官方 API 最小预检与完整 `8+2` 独立 Preview。策略 `5.56.0` 完成 8 条产品主链、8 条日志闭环、第一检查点、角度关闭恢复和五维默认入口冒烟；正式生成式回合最终 baseline `2/11`、最大连续 `1`，完整文本可见 P90 `6.64s`、可继续操作 P90 `6.71s`，日志 LLM 接受 `8/8`、全文 fallback `0`。这些内容保留为当时的技术通过证据。旧 Ark 配置的 `403 AccountOverdueError` 继续作为历史失效证据。证据见 [GI-058 候选目录](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/preview-execution-evidence.md)、[Board8 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/board8-preview-candidate-audit.md) 和 [Provider 前置检查](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/provider-preflight.md)。Production 继续保持 `legacy + baseline`。
 
 GI-058 的技术通过记录随后经产品负责人逐条人工体验裁决为 `No-Go`，候选失效。GI-059 已实现提问思路分工、深聊至少一轮有效问答、实质增量、用户成果隐藏完成、AI 新关系单次展示和双事件反应绑定；其脚本化候选因最终 baseline `10/17`、最大连续 `5`、双延迟 P90 约 `25.4s` 保留为自动发布门 `No-Go` 的历史证据。
 
@@ -110,13 +110,13 @@ GI-059 历史候选：策略 `5.57.0`、角度卡 `2.15.0`、Few-shot `quality-p
 
 感受与行动由生成式链路直接形成回应；想法与关系使用当前确定性 baseline 形成最终回应。两例降级都保留用户原话、阶段与问停结果。
 
-证据：四角度运行报告（本机历史证据，公开精简包未收录：`board7-mvp-four-angle-smoke-v1-report.md`）、Codex 初评（本机历史证据，公开精简包未收录：`board7-mvp-four-angle-smoke-v1-codex-review.md`）、用户可见回放（本机历史证据，公开精简包未收录：`board7-mvp-four-angle-smoke-v1-user-visible-replay.md`）。
+证据：[四角度运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-report.md)、[Codex 初评](../../../artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-codex-review.md)、[用户可见回放](../../../artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-user-visible-replay.md)。
 
 ### 3.2 事件日志探针
 
 事件日志闭环 `1/1` 通过。真实模型返回合法草稿，来源质量门发现其表达超出冻结来源，系统采用安全基础版本；最终用户可见日志来源门通过。该探针验证了“模型生成—来源检查—安全基础版本—用户可见成果”的完整收束。
 
-证据：事件日志真实模型探针（本机历史证据，公开精简包未收录：`board7-event-journal-mvp-probe-report.md`）。
+证据：[事件日志真实模型探针](../../../artifacts/generative-interview-board7/2026-08-02/board7-event-journal-mvp-probe-report.md)。
 
 ### 3.3 自动验证
 
@@ -149,7 +149,7 @@ GI-059 历史候选：策略 `5.57.0`、角度卡 `2.15.0`、Few-shot `quality-p
 4. 获得产品负责人明确批准后，人工切换 Production 到 `optional + generative`。
 5. 完成线上冒烟、告警检查和首批 `10` 次有效事件会话审计。
 
-GI-055 历史执行结果见 Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）：`8/8` 主链完成，`8/8` 日志闭环完成，速度门通过；旧报告最近 `20` 个可评回合生成式降级率 `80%`。该统计混入控制动作与历史回合，按 GI-056 标记为历史口径。GI-056 历史候选的独立 Preview 已完成，结果见 候选血缘与脱敏执行记录（本机历史证据，公开精简包未收录：`candidate-lineage.md`）；生成式候选未达发布门，事件主链进入 `optional + baseline` 条件路径。
+GI-055 历史执行结果见 [Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-02-preview/preview-execution-evidence.md)：`8/8` 主链完成，`8/8` 日志闭环完成，速度门通过；旧报告最近 `20` 个可评回合生成式降级率 `80%`。该统计混入控制动作与历史回合，按 GI-056 标记为历史口径。GI-056 历史候选的独立 Preview 已完成，结果见 [候选血缘与脱敏执行记录](../../../artifacts/generative-interview-board8/2026-08-03-gi056-candidate/candidate-lineage.md)；生成式候选未达发布门，事件主链进入 `optional + baseline` 条件路径。
 
 Production 当前继续运行 `legacy + baseline`。板块 8 未明确批准前，`optional + generative` 只代表目标档位，不代表已生效配置。
 

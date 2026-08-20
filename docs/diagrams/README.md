@@ -45,10 +45,10 @@
 
 节点六至节点十另有文字事实说明：
 
-- 节点六：上下文与 Prompt（本机历史证据，公开精简包未收录：`analysis.md`）
-- 节点七：模型生成（本机历史证据，公开精简包未收录：`analysis.md`）
-- 节点八：服务端检查与输出控制（本机历史证据，公开精简包未收录：`analysis.md`）
-- 节点九：前端流式接收与展示（本机历史证据，公开精简包未收录：`analysis.md`）
-- 节点十：状态落库与恢复（本机历史证据，公开精简包未收录：`analysis.md`）
+- [节点六：上下文与 Prompt](../../artifacts/interview-nodes/node6/analysis.md)
+- [节点七：模型生成](../../artifacts/interview-nodes/node7/analysis.md)
+- [节点八：服务端检查与输出控制](../../artifacts/interview-nodes/node8/analysis.md)
+- [节点九：前端流式接收与展示](../../artifacts/interview-nodes/node9/analysis.md)
+- [节点十：状态落库与恢复](../../artifacts/interview-nodes/node10/analysis.md)
 
 这些说明用于产品理解，代码与 [系统架构文档](../architecture.md) 继续作为当前事实源。

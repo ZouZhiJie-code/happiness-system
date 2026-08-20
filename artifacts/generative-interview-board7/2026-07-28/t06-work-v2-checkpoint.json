@@ -1,0 +1,138 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T06",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "deep_companionship",
+    "activeAngle": "relationship",
+    "lastCompletedAngle": "relationship",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": null,
+    "currentMicrogoal": null
+  },
+  "facts": [],
+  "recentTurns": [],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "他会上说得很直接，我很难堪，可会后又认真帮我改了很久。",
+      "visibleResponse": null,
+      "finalAction": null,
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 256,
+          "tokenUsage": {
+            "promptTokens": 2567,
+            "completionTokens": 343,
+            "totalTokens": 2910,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 775
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他会上说得很直接，我很难堪\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他会上说得很直接，我很难堪\"\n      },\n      {\n        \"statement\": \"会后又认真帮我改了很久\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可会后又认真帮我改了很久\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"surface_tension\",\n    \"selectedTarget\": \"会上直接与会后帮助的对比\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解用户如何看待这种前后不一致的互动，以及它触动了用户对关系位置的哪部分期待\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"他会上让你难堪，会后却又认真帮你，这种反差让你有些困惑\",\n    \"question\": \"这种反差让你更在意的是他会上对你的态度，还是会后愿意花时间帮你这件事？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 143,
+          "tokenUsage": {
+            "promptTokens": 2621,
+            "completionTokens": 383,
+            "totalTokens": 3004,
+            "promptCacheHitTokens": 1664,
+            "promptCacheMissTokens": 957
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他在会上说得很直接，让我很难堪\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他会上说得很直接，我很难堪\"\n      },\n      {\n        \"statement\": \"他会后又认真帮我改了很久\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又认真帮我改了很久\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"surface_tension\",\n    \"selectedTarget\": \"互动矛盾感受\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"探索用户对同一人既让自己难堪又帮助自己的矛盾感受\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"理解用户如何协调这种矛盾互动，以及它触及了用户对关系的哪种期待或边界\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"他会上让你难堪，会后却认真帮你，这两种做法放在同一个人身上让你感到矛盾。\",\n    \"question\": \"这种矛盾让你更在意他会上对你的态度，还是会后对你的帮助？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7360,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5188,
+          "completionTokens": 726,
+          "totalTokens": 5914,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 1732
+        },
+        "estimatedCost": 0.00045543680000000004
+      },
+      "validationIssues": [
+        "opening_question_must_anchor_before_comparison"
+      ],
+      "runtimeError": "MODEL_OUTPUT_UNAVAILABLE"
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "runtime_incomplete",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

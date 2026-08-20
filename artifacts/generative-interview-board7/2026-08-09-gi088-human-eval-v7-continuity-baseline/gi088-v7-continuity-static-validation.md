@@ -35,9 +35,9 @@
 
 ## 4. Preview 与隔离回读
 
-- deployment：`redacted-deployment-id`，`READY`；
+- deployment：`dpl_J5Z8B61j5GxycUNcxr1buPjkfQ8T`，`READY`；
 - 固定入口：`https://xingfuxitong-gi088-v7-continuity.vercel.app/preview/gi088-evaluation`；
-- 批次：`redacted-operational-id`，`running`、`0/2`、revision `0`；
+- 批次：`542af23d-ba18-4ee7-bb89-c1250481f0b9`，`running`、`0/2`、revision `0`；
 - 页面标题、Thinking high 单轨迹、“本轨迹不设上限”和执行指纹已回读一致；
 - 候选、数据集和执行指纹均通过精确校验；
 - Codex 模型调用 `0`；

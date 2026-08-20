@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "evaluation_id": "journal-daily-eval-v1",
+  "status": "skeleton_only_unexecuted",
+  "authorization_boundary": {
+    "model_calls": false,
+    "database_connections": false,
+    "preview_or_production_writes": false,
+    "release_authorized": false
+  },
+  "dataset": {
+    "total_case_count": 40,
+    "development_split": {
+      "split_id": "dev28",
+      "case_count": 28,
+      "composition": {
+        "tracked_synthetic_seed": 10,
+        "private_human_trajectory": 9,
+        "private_derived_case": 9
+      },
+      "manifest": "dev28-manifest.json"
+    },
+    "independent_admission_split": {
+      "split_id": "hidden12",
+      "case_count": 12,
+      "composition": {
+        "new_private_human_placeholder": 3,
+        "post_freeze_independent_synthetic_placeholder": 9
+      },
+      "manifest": "hidden12-manifest.json",
+      "content_visibility": "hidden_until_candidate_and_dev28_freeze"
+    }
+  },
+  "derived_case_recipes": {
+    "recipe_count": 9,
+    "manifest": "derived-recipes.json",
+    "materialized_outputs": "../.private/formal/dev28-derived/"
+  },
+  "judge_calibration": {
+    "packet_count": 20,
+    "manifest": "judge-calibration-20-manifest.json",
+    "materialized_packets": "../.private/formal/judge-calibration/"
+  },
+  "gates": "gate-protocol.md",
+  "isolation": {
+    "web_origin": "loopback_only",
+    "database_schema": "journal_daily_eval",
+    "data_area": "artifacts/journal-generation-evaluation/.private/formal/",
+    "remote_override": false
+  }
+}

@@ -24,6 +24,50 @@ import {
   GI088_SEMANTIC_DELTA_VALIDATION_RULES,
   applyGi088SemanticDeltaAssets
 } from "@/server/services/evaluation/gi088/semantic-delta";
+import {
+  GI088_DETERMINISTIC_STATE_POLICY_VERSION,
+  GI088_DETERMINISTIC_STATE_RULES
+} from "@/server/services/evaluation/gi088/deterministic-state";
+import {
+  GI088_QUESTION_DECISION_RULES,
+  GI088_QUESTION_DECISION_SKILL_APPENDIX,
+  GI088_QUESTION_DECISION_SKILL_VERSION,
+  applyGi088QuestionDecisionAssets
+} from "@/server/services/evaluation/gi088/question-decision";
+import {
+  GI088_BEHAVIOR_MANIFEST,
+  createGi088BehaviorLayerFingerprint,
+  createGi088BehaviorManifestSha256,
+  createGi088CanonicalJson,
+  type Gi088BehaviorManifest
+} from "@/server/services/evaluation/gi088/behavior-manifest";
+import {
+  GI088_BEHAVIOR_MANIFEST_VERSION,
+  GI088_CONTROL_DECISION_VERSION_V8R2,
+  GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
+  GI088_EVALUATION_ID_V8R2,
+  GI088_EVALUATION_METRICS_VERSION_V8R2,
+  GI088_EVALUATION_STORE_VERSION_V8R2,
+  GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
+  GI088_INTENT_CLASSIFIER_VERSION_V8R2,
+  GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
+  GI088_QUESTION_DECISION_SKILL_VERSION_V8R2,
+  GI088_READONLY_EXPORT_VERSION_V8R2,
+  GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
+  GI088_SERVICE_VERSION_V8R2,
+  GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
+  GI088_V8R2_VERSION_MANIFEST
+} from "@/server/services/evaluation/gi088/version-manifest";
+
+export {
+  GI088_EVALUATION_ID_V8R1,
+  GI088_EVALUATION_ID_V8R2,
+  GI088_EVALUATION_VERSION_V8R1,
+  GI088_EVALUATION_VERSION_V8R2,
+  GI088_SERVICE_VERSION_V8R1,
+  GI088_SERVICE_VERSION_V8R2
+} from "@/server/services/evaluation/gi088/version-manifest";
 
 export const GI088_EVALUATION_ID_V1 = "gi088_human_eval_v1" as const;
 export const GI088_EVALUATION_VERSION_V1 =
@@ -80,16 +124,43 @@ export const GI088_EVALUATION_VERSION_V7R1 =
 export const GI088_SERVICE_VERSION_V7R1 =
   "2026-08-10.gi088-visible-continuation-service-v7r1" as const;
 
-export const GI088_EVALUATION_ID =
+export const GI088_EVALUATION_ID_V7R2 =
   "gi088_human_eval_v7r2_ark_flash" as const;
-export const GI088_EVALUATION_VERSION =
+export const GI088_EVALUATION_VERSION_V7R2 =
   "2026-08-10.gi088-human-eval-v7r2-ark-flash" as const;
-export const GI088_SERVICE_VERSION =
+export const GI088_SERVICE_VERSION_V7R2 =
   "2026-08-10.gi088-ark-flash-service-v7r2" as const;
+
+export const GI088_EVALUATION_ID_V7R3 =
+  "gi088_human_eval_v7r3_deterministic_state" as const;
+export const GI088_EVALUATION_VERSION_V7R3 =
+  "2026-08-10.gi088-human-eval-v7r3-deterministic-state" as const;
+export const GI088_SERVICE_VERSION_V7R3 =
+  "2026-08-10.gi088-deterministic-state-service-v7r3" as const;
+
+export const GI088_EVALUATION_ID_V7R4 =
+  "gi088_human_eval_v7r4_pro" as const;
+export const GI088_EVALUATION_VERSION_V7R4 =
+  "2026-08-10.gi088-human-eval-v7r4-pro" as const;
+export const GI088_SERVICE_VERSION_V7R4 =
+  "2026-08-10.gi088-pro-service-v7r4" as const;
+
+export const GI088_EVALUATION_ID_V8 =
+  "gi088_human_eval_v8_question_decision_pro" as const;
+export const GI088_EVALUATION_VERSION_V8 =
+  "2026-08-10.gi088-human-eval-v8-question-decision-pro" as const;
+export const GI088_SERVICE_VERSION_V8 =
+  "2026-08-10.gi088-question-decision-service-v8" as const;
+
+export const GI088_EVALUATION_ID = GI088_EVALUATION_ID_V8R2;
+export const GI088_EVALUATION_VERSION = GI088_EVALUATION_VERSION_V8R2;
+export const GI088_SERVICE_VERSION = GI088_SERVICE_VERSION_V8R2;
 export const GI088_EVALUATION_MODE = "high_only" as const;
 export const GI088_ACTIVE_BRANCHES = ["high"] as const;
 export const GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY = null;
 export const GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION = 3 as const;
+export const GI088_V7R3_EXECUTION_FINGERPRINT =
+  "f3f112e73be9579a635a339c07225a03d8771765aca554796e21410cf4fefda7" as const;
 
 export const GI088_GOVERNED_EVALUATION_VERSIONS = [
   GI088_EVALUATION_VERSION_V1,
@@ -100,6 +171,11 @@ export const GI088_GOVERNED_EVALUATION_VERSIONS = [
   GI088_EVALUATION_VERSION_V6,
   GI088_EVALUATION_VERSION_V7,
   GI088_EVALUATION_VERSION_V7R1,
+  GI088_EVALUATION_VERSION_V7R2,
+  GI088_EVALUATION_VERSION_V7R3,
+  GI088_EVALUATION_VERSION_V7R4,
+  GI088_EVALUATION_VERSION_V8,
+  GI088_EVALUATION_VERSION_V8R1,
   GI088_EVALUATION_VERSION
 ] as const;
 export const GI088_FIXED_OPENING = "此刻你想聊点什么？" as const;
@@ -163,13 +239,45 @@ export const GI088_ARK_FLASH_RUNTIME_POLICY = {
   hiddenReasoningPersistence: "forbidden"
 } as const;
 
-export const GI088_TIMEOUT_POLICY = {
+export const GI088_DEEPSEEK_PRO_RUNTIME_POLICY = {
+  version: "2026-08-10.gi088-deepseek-pro-runtime-v1",
+  transport: "openai_compatible_rest",
+  endpoint: "/chat/completions",
+  apiKeyEnv: "DEEPSEEK_API_KEY",
+  baseUrl: "https://api.deepseek.com",
+  baseUrlHost: "api.deepseek.com",
+  model: "deepseek-v4-pro",
+  thinking: "enabled",
+  reasoningEffort: "high",
+  responseFormat: "json_object",
+  hiddenReasoningPersistence: "forbidden"
+} as const;
+
+export const GI088_V7R3_TIMEOUT_POLICY = {
   version: "2026-08-10.gi088-ark-high-timeout-policy-v1",
   headersTimeoutMs: 60_000,
   bodyIdleTimeoutMs: 60_000,
   hardTimeoutMs: 60_000,
   routeMaxDurationSeconds: 75,
   longWaitNoticeAfterMs: 10_000
+} as const;
+
+export const GI088_TIMEOUT_POLICY = {
+  version: "2026-08-10.gi088-deepseek-pro-timeout-policy-v1",
+  headersTimeoutMs: 15_000,
+  bodyIdleTimeoutMs: 45_000,
+  hardTimeoutMs: 60_000,
+  routeMaxDurationSeconds: 120,
+  longWaitNoticeAfterMs: 10_000
+} as const;
+
+export const GI088_SHARED_RECOVERY_DEADLINE_POLICY = {
+  version: GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
+  automaticChainDeadlineMs: 90_000,
+  maximumSingleCallMs: 60_000,
+  manualRetryHardTimeoutMs: 60_000,
+  manualRetryStartsNewDeadline: true,
+  automaticRecoveryAfterManualRetry: false
 } as const;
 
 export const GI088_TIMEOUT_RECOVERY_POLICY = {
@@ -197,9 +305,18 @@ export const GI088_MANUAL_RECOVERY_POLICY = {
   preservesOriginalUserMessageAndSemanticState: true
 } as const;
 
+export const GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION =
+  "2026-08-10.gi088-stage-transition-recovery-instruction-v2" as const;
+export const GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION =
+  "当前阶段的新回答机会已经用尽。先吸收最新回答；用户未明确停止时，进入能够继续当前共同任务的深化阶段，并只提出一个有价值、具体、低负担的问题。不得自主暂停。" as const;
+
 export const GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY = {
   ...GI088_STAGE_TRANSITION_RECOVERY_POLICY,
-  eligibleBranches: GI088_ACTIVE_BRANCHES
+  version: "2026-08-10.gi088-stage-transition-auto-recovery-v2",
+  eligibleBranches: GI088_ACTIVE_BRANCHES,
+  recoveryInstructionVersion:
+    GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION,
+  recoveryInstruction: GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION
 } as const;
 
 export const GI088_ASSET_SOURCE_SHA256 = {
@@ -237,8 +354,8 @@ export const GI088_CONFIGS = {
     key: "high",
     label: "Thinking 开启 · high",
     provider: "openai",
-    baseUrlHost: GI088_ARK_FLASH_RUNTIME_POLICY.baseUrlHost,
-    model: GI088_ARK_FLASH_RUNTIME_POLICY.model,
+    baseUrlHost: GI088_DEEPSEEK_PRO_RUNTIME_POLICY.baseUrlHost,
+    model: GI088_DEEPSEEK_PRO_RUNTIME_POLICY.model,
     thinking: "enabled",
     temperature: null,
     effectiveTemperature: null,
@@ -453,32 +570,285 @@ export const GI088_V6_TASKS = [
   }
 ] as const satisfies readonly Gi088EvaluationTaskDefinition[];
 
-export const GI088_TASKS = [
+export const GI088_V8R1_TASKS = [
   {
     id: "A1",
-    capabilityId: "correction_state_revision_and_continuity",
-    title: "纠正后承接并继续",
+    capabilityId: "continue_after_zero_question_and_polite_stop",
+    title: "继续推进与礼貌停聊",
     instruction:
-      "围绕一件真实内容自然交流，在形成一条认识后明确纠正 AI 的理解，并继续回答，观察修正、承接、状态提交和后续对话是否连贯。",
+      "围绕一件真实内容交流；当 AI 出现一次零问题的承接或总结后继续补充，待 AI 重新推进至少一轮后用礼貌表达结束。",
     targetTriggerPrompt:
-      "请带入一件真实想聊的事；形成一条认识后，明确指出其中一处不准确并说明真实情况，然后继续交流至少一轮。",
+      "请带入一件真实想聊的事；遇到 AI 没有继续提问时，明确表达继续意愿并补充真实内容；继续至少一轮后说“很好，就聊到这吧”。",
     criterion:
-      "Thinking high 准确引用并修订现有认识；旧认识不再继续生效，新状态、可见承接和当前任务一次提交，后续对话沿修订后的方向继续。",
-    repeatOf: "A4"
+      "用户继续表达且仍存在会改变认识的具体未解部分时，AI 先承接再提出一个低负担问题；礼貌词与明确停止的组合由程序零调用提交暂停。",
+    repeatOf: null
   },
   {
     id: "A2",
-    capabilityId: "natural_long_conversation_continuity",
-    title: "自然长聊与连续体验",
+    capabilityId: "avoid_reasking_answered_content",
+    title: "已有答案后的下一步",
     instruction:
-      "选择一件值得多聊的真实内容，按自己的节奏持续交流，体验无限轮次、滚动、输入、评价和真实失败恢复。",
+      "选择一件真实内容，并对当前问题给出清楚答案；观察 AI 是否吸收已有答案，再从仍未解决的部分继续，而不重复追问。",
     targetTriggerPrompt:
-      "请用一件此刻真实且愿意多聊的内容开始，持续到你觉得认识充分或自然想停；无需刻意凑轮次。",
+      "请把 AI 当前问题回答得尽量明确；如果同一部分已经说清，继续补充相邻内容，观察 AI 怎样选择下一步。",
     criterion:
-      "整条 Thinking high 轨迹不设调用次数上限；已有认识不重复追加，负担信号保持正确，长聊中的输入、回看、回到最新、评价和恢复均连续可用。",
-    repeatOf: "A3"
+      "AI 不重复询问已有明确答案；存在有价值未解部分时只推进一个新回答目标，内容已经充分时自然总结或暂停。",
+    repeatOf: null
+  },
+  {
+    id: "A3",
+    capabilityId: "concrete_stage3_deepening",
+    title: "阶段 3 具体深化",
+    instruction:
+      "带入一件值得多聊的真实内容，形成一条认识后继续打开一个具体未解部分，观察 AI 能否进入阶段 3 并持续深化。",
+    targetTriggerPrompt:
+      "请持续真实回答；形成一条认识后，主动补充同一焦点下仍没想清的一点，并继续至少一轮。",
+    criterion:
+      "阶段 3 围绕用户最新打开的未解部分动态推进；下一问有最新来源、会改变认识并提供具体低负担入口，不受数字轮次上限影响。",
+    repeatOf: null
+  },
+  {
+    id: "A4",
+    capabilityId: "decision_support_stays_on_choice",
+    title: "现实选择与决策支持",
+    instruction:
+      "带入一个正在面对的现实选择，说明两边的顾虑或取舍，观察 AI 是否持续服务当前选择。",
+    targetTriggerPrompt:
+      "请使用一个真实选择开始交流，并逐步说出会影响选择的条件、担心或代价。",
+    criterion:
+      "AI 的承接与问题持续帮助用户看清当前选择的条件、取舍或下一步；避免退化为泛化情绪来源、人格或长期模式探索。",
+    repeatOf: null
+  },
+  {
+    id: "A5",
+    capabilityId: "correction_revises_state_and_continues",
+    title: "纠正后修订并继续",
+    instruction:
+      "在一段真实交流中明确纠正一次 AI 的理解，并说明真实方向，观察认识修订、共同任务和下一问是否一起更新。",
+    targetTriggerPrompt:
+      "请带入一件真实内容；当 AI 形成一条理解后，明确指出其中一处不准确，并补充你的真实意思，然后继续至少一轮。",
+    criterion:
+      "AI 使用 revise 修订已有认识，以最新用户原话更新共同任务和下一步；旧错误不再出现在后续可见回应或有效状态中。",
+    repeatOf: null
+  },
+  {
+    id: "A6",
+    capabilityId: "unclear_or_refusal_respects_boundary",
+    title: "说不清或拒答的边界",
+    instruction:
+      "在收到一个真实问题后表达说不清或拒绝回答，观察 AI 能否降低负担、尊重边界并自然决定继续或暂停。",
+    targetTriggerPrompt:
+      "请先带入一件真实内容；在收到一个问题后明确说一次“我现在说不清”或“这个我不想回答”，再观察 AI 的承接。",
+    criterion:
+      "AI 不施压、不重复原问题；只有存在同目标的具体低负担入口时最多再问一次，否则以零问题承接或暂停。",
+    repeatOf: null
+  },
+  {
+    id: "A7",
+    capabilityId: "independent_topics_remain_separate",
+    title: "独立事件保持分离",
+    instruction:
+      "同时带入两件互不相关的真实事情并明确它们彼此独立，观察 AI 是否选择一个入口并保留另一件事。",
+    targetTriggerPrompt:
+      "请在第一轮同时讲两件真实事情，并明确说明它们互相独立或没有关系；后续按 AI 选择的一个入口继续回答。",
+    criterion:
+      "AI 不替用户建立两件事之间的关系；当前只推进一项，另一项作为独立可返回任务保留，认识与来源不跨任务混合。",
+    repeatOf: null
+  },
+  {
+    id: "A8",
+    capabilityId: "complex_input_keeps_single_answer_focus",
+    title: "复杂输入保持单一焦点",
+    instruction:
+      "带入包含多条线索、人物或时间范围的真实复杂内容，观察 AI 是否只推进一个能够连贯回答的目标。",
+    targetTriggerPrompt:
+      "请带入一件包含多个相关线索、人物、时间或可能方向的真实复杂内容；按自然方式回答，并逐轮判断回答负担。",
+    criterion:
+      "每轮只建立一个 nextInquiry.answerTarget；所有问句能由一段连贯回答覆盖，不打开需要分别组织答案的独立任务。",
+    repeatOf: null
+  },
+  {
+    id: "A9",
+    capabilityId: "sufficient_content_synthesizes_or_pauses",
+    title: "内容充分后自然收住",
+    instruction:
+      "围绕一件真实内容逐步回答；当当前问题已经说清且没有继续打开新部分时，观察 AI 是否自然总结或暂停。",
+    targetTriggerPrompt:
+      "请使用一件新的真实话题持续回答；当你觉得当前部分已经说清时，给出完整答案并暂时不增加新的未解内容。",
+    criterion:
+      "已有认识且当前内容充分时，AI 以 synthesize、acknowledge 或 pause 自然收住并保持零问题，不重复追问已明确答案。",
+    repeatOf: null
+  },
+  {
+    id: "A10",
+    capabilityId: "mixed_content_and_stop_commits_pause",
+    title: "补充内容后立即停止",
+    instruction:
+      "在同一条回复里补充一项真实新内容并明确停止，观察程序能否最多调用一次吸收内容并最终暂停。",
+    targetTriggerPrompt:
+      "请先聊一件真实内容；之后在同一条回复中补充一个会影响当前认识的新事实，并明确说今天先聊到这里。",
+    criterion:
+      "原话先保存，模型最多调用一次吸收新增内容；程序最终强制暂停、清空下一问并只提交一条可见停止回应。",
+    repeatOf: null
+  },
+  {
+    id: "A11",
+    capabilityId: "switch_and_return_preserves_lineage",
+    title: "切换后返回原任务",
+    instruction:
+      "先聊一件真实内容，再打开第二件独立内容，随后明确返回第一件事，观察两条任务和来源能否保持连续。",
+    targetTriggerPrompt:
+      "请先带入一件真实内容；形成当前任务后补充第二件独立事情，之后明确说想回到第一件事继续聊。",
+    criterion:
+      "新任务、保留任务和返回动作使用正确血缘；返回后只合并原任务历史来源与最新消息，不混入第二件事的来源。",
+    repeatOf: null
+  },
+  {
+    id: "A12",
+    capabilityId: "long_conversation_continuity",
+    title: "自然长聊连续性",
+    instruction:
+      "选择一件值得多聊的真实内容，至少完成八次用户提交，观察认识、来源、阶段、滚动和最终停止的连续体验。",
+    targetTriggerPrompt:
+      "请带入一件愿意持续聊的真实内容，按自然节奏至少提交八次；过程中可补充或纠正，最后明确结束。",
+    criterion:
+      "轨迹不受总轮次上限中断；每轮状态与来源连续、问题保持单一焦点，长聊结束时正确暂停且不产生重复消息。",
+    repeatOf: null
   }
 ] as const satisfies readonly Gi088EvaluationTaskDefinition[];
+
+export const GI088_TASKS = [
+  {
+    ...GI088_V8R1_TASKS[0],
+    capabilityId: "event_fatigue_continues_until_explicit_stop",
+    title: "事件内沟通负担不误停",
+    instruction:
+      "围绕一次与奶奶沟通的真实内容交流；在事件叙述中明确说“跟奶奶解释很累”，继续真实回答至少一轮，最后明确停止当前访谈。",
+    targetTriggerPrompt:
+      "请带入一次与奶奶沟通的真实经历，并明确说“跟奶奶解释很累”，同时表达仍想继续聊；继续至少一轮后再明确说“今天先聊到这里”。",
+    criterion:
+      "“跟奶奶解释很累”只作为事件内容和沟通负担，程序与模型都保持访谈开放并继续一个低负担问题；只有最后明确停止当前访谈时，程序才提交暂停。"
+  },
+  {
+    ...GI088_V8R1_TASKS[1],
+    criterion:
+      "AI 不重复询问已有明确答案；吸收答案后只推进一个有价值的新回答目标。用户没有明确停止时继续保持访谈开放。"
+  },
+  GI088_V8R1_TASKS[2],
+  GI088_V8R1_TASKS[3],
+  GI088_V8R1_TASKS[4],
+  {
+    ...GI088_V8R1_TASKS[5],
+    capabilityId: "unclear_or_refusal_keeps_interview_open",
+    title: "说不清或拒答后保持开放",
+    instruction:
+      "在收到一个真实问题后表达说不清或拒绝回答，观察 AI 能否降低负担、换入口并保持访谈开放；继续回答一轮后再明确停止。",
+    targetTriggerPrompt:
+      "请先带入一件真实内容；在收到一个问题后明确说一次“我现在说不清”或“这个我不想回答”，随后体验一个更低负担的新入口，最后再明确停止当前访谈。",
+    criterion:
+      "AI 不施压、不重复原问题，也不自主暂停；它降低负担、换具体入口或更换当前问题，并只推进一个回答目标。只有用户最后明确停止时才暂停。"
+  },
+  GI088_V8R1_TASKS[6],
+  GI088_V8R1_TASKS[7],
+  {
+    ...GI088_V8R1_TASKS[8],
+    capabilityId: "sufficient_content_still_finds_valuable_question",
+    title: "内容较充分时继续寻找价值",
+    instruction:
+      "围绕一件真实内容逐步回答；当当前部分已经较充分时保持继续意愿，观察 AI 是否仍能找到一个有认识增量、具体且低负担的下一问。",
+    targetTriggerPrompt:
+      "请使用一件新的真实话题持续回答；当你觉得当前部分已经说清时，给出完整答案，同时明确还想继续聊，体验 AI 的下一问后再明确停止。",
+    criterion:
+      "已有认识且内容较充分时，AI 可以先自然总结，但必须继续提出一个会改变当前认识、具体且低负担的问题；用户明确停止前不得输出 pause。"
+  },
+  GI088_V8R1_TASKS[9],
+  GI088_V8R1_TASKS[10],
+  GI088_V8R1_TASKS[11]
+] as const satisfies readonly Gi088EvaluationTaskDefinition[];
+
+export const GI088_HISTORICAL_DATASET_FINGERPRINTS = {
+  [GI088_EVALUATION_VERSION_V1]:
+    "93c9808b6f805caea801eeb06d8d0bac46d35a08df68257d74c03cdfc1774e29",
+  [GI088_EVALUATION_VERSION_V2]:
+    "ab74f00de4fb07315045ac5f2d7aff58fc9d8585fe3a00cf18cb2e6d724c7052",
+  [GI088_EVALUATION_VERSION_V3]:
+    "6f3f3cf8c28d1dc72ad2a330a5a22014961dda5ba29b6be189fcb2329cf734ca",
+  [GI088_EVALUATION_VERSION_V4]:
+    "064f042b0fdf592b2f3ebfac413f1c7001f99828bf0347505c9ef12d00d493c0",
+  [GI088_EVALUATION_VERSION_V5]:
+    "cc6d81be13babc91c57a588c31407ba7afad1238cf9465eab96de20cf825075e",
+  [GI088_EVALUATION_VERSION_V6]:
+    "91b62d9124f8ff351a76d1b0e7fdc1da8d1818952d1779da93e2015f10b70aea",
+  [GI088_EVALUATION_VERSION_V7]:
+    "a3f7c40632ca5c87fbbf8e018f5b3585eaba8919b2bb085da4058deef88e17c5",
+  [GI088_EVALUATION_VERSION_V7R1]:
+    "6753507247d257de1fef9105c7aa4e8102b749f91512130942b1a2507158f44e",
+  [GI088_EVALUATION_VERSION_V7R2]:
+    "ea2d42c59850222bed72b59213263bed21d9660fb6d21937af533d5800e88a6c",
+  [GI088_EVALUATION_VERSION_V7R3]:
+    "5ac0fc2da0be2fb4038d00c60b7f793f2d6b5802caed025805a796fab5c670cb",
+  [GI088_EVALUATION_VERSION_V7R4]:
+    "0ebccea51837785b610efc3a87074fd5ef997dc4627d993b77669d3327bb9c34",
+  [GI088_EVALUATION_VERSION_V8]:
+    "8b1713b43b76d33ec07fe43ee50eafba7a4236eea5ee765bc87f1c82a3517cff",
+  [GI088_EVALUATION_VERSION_V8R1]:
+    "0ca2452690aa9e89b2414689bb7c96294a4fa9283359c01f3a45ca1c4b7478a7"
+} as const;
+
+export const GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R2 = {
+  feeling: ["better", "same", "worse"],
+  quality: [
+    "direct_use",
+    "minor_issue",
+    "quality_failure",
+    "single_case_blocker"
+  ],
+  targetTrigger: [
+    "triggered",
+    "not_triggered",
+    "blocked_by_technical_failure"
+  ],
+  targetTriggerRequired: true,
+  reasonRequired: true,
+  allVisibleAskTurnsRequireHumanClassification: true,
+  questionReviewClassifications: [
+    "same_focus_low_burden",
+    "same_focus_heavy",
+    "multiple_independent_tasks",
+    "uncertain"
+  ],
+  allProgramInterventionsRequireHumanClassification: true,
+  programInterventionClassifications: [
+    "correct",
+    "false_positive",
+    "uncertain"
+  ]
+} as const;
+
+export const GI088_DATASET_MACHINE_GATE_V8R2 = {
+  requiredTargetTriggerCount: 12,
+  totalTaskCount: 12,
+  minimumDirectUseCount: 9,
+  maximumMinorIssueCount: 3,
+  requiredZeroCounts: [
+    "quality_failure",
+    "single_case_blocker",
+    "protected_failure",
+    "final_technical_failure",
+    "duplicate_message",
+    "manual_third_generation",
+    "program_false_positive",
+    "multiple_independent_tasks",
+    "EMPTY_CONTENT"
+  ],
+  minimumFirstVisibleSuccessRate: 0.9,
+  maximumAutomaticRecoveryCount: 1,
+  automaticRecoveryDeadlineMs: 90_000,
+  maximumConsecutiveRecoveryCount: 0,
+  visibleQuestionReviewCoverage: 1,
+  programInterventionReviewCoverage: 1,
+  productOwnerFinalDecisionRequired: true
+} as const;
 
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
@@ -571,16 +941,25 @@ export function getGi088CandidateAssets(): Board7bWorkingTaskV1Assets {
       "\n\n"
     )
   });
-  return applyGi088SemanticDeltaAssets(
-    applyGi088SingleFocusAssets(stageTransitionAssets)
+  return applyGi088QuestionDecisionAssets(
+    applyGi088SemanticDeltaAssets(
+      applyGi088SingleFocusAssets(stageTransitionAssets)
+    )
   );
 }
 
-export function createGi088EffectiveCandidateFingerprint() {
+export function createGi088EffectiveCandidateFingerprint(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
   const baseAssets = getGi088BaseCandidateAssets();
   const effectiveAssets = getGi088CandidateAssets();
   return sha256(
-    JSON.stringify({
+    createGi088CanonicalJson({
+      fingerprintLayer: "candidate",
+      behaviorLayerFingerprint: createGi088BehaviorLayerFingerprint(
+        "candidate",
+        behaviorManifest
+      ),
       baseCandidateFingerprint:
         createBoard7bWorkingTaskV1CandidateFingerprint(baseAssets),
       outputContractClarificationVersion:
@@ -612,13 +991,31 @@ export function createGi088EffectiveCandidateFingerprint() {
         ])
       ),
       semanticDeltaValidationRules: GI088_SEMANTIC_DELTA_VALIDATION_RULES,
+      questionDecisionSkillVersion: GI088_QUESTION_DECISION_SKILL_VERSION,
+      questionDecisionSkillAppendixSha256: sha256(
+        GI088_QUESTION_DECISION_SKILL_APPENDIX
+      ),
+      questionDecisionRules: GI088_QUESTION_DECISION_RULES,
+      modelVisibleRecoveryInstructions: {
+        emptyContent: {
+          version: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION_VERSION,
+          content: GI088_EMPTY_CONTENT_RECOVERY_INSTRUCTION
+        },
+        stageTransition: {
+          version:
+            GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION_VERSION,
+          content: GI088_V8R2_STAGE_TRANSITION_RECOVERY_INSTRUCTION
+        }
+      },
       effectiveCandidateFingerprint:
         createBoard7bWorkingTaskV1CandidateFingerprint(effectiveAssets)
     })
   );
 }
 
-export function verifyGi088CandidateSnapshot() {
+export function verifyGi088CandidateSnapshot(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
   const actualSourceHashes = {
     basePrompt: sha256(snapshot.basePrompt),
     interviewSkillSource: sha256(snapshot.interviewSkillSource),
@@ -668,71 +1065,43 @@ export function verifyGi088CandidateSnapshot() {
       ])
     ),
     semanticDeltaValidationRules: GI088_SEMANTIC_DELTA_VALIDATION_RULES,
-    effectiveCandidateFingerprint: createGi088EffectiveCandidateFingerprint()
+    deterministicStatePolicyVersion:
+      GI088_DETERMINISTIC_STATE_POLICY_VERSION,
+    deterministicStateRules: GI088_DETERMINISTIC_STATE_RULES,
+    questionDecisionSkillVersion: GI088_QUESTION_DECISION_SKILL_VERSION,
+    questionDecisionSkillAppendixSha256: sha256(
+      GI088_QUESTION_DECISION_SKILL_APPENDIX
+    ),
+    questionDecisionRules: GI088_QUESTION_DECISION_RULES,
+    behaviorManifestVersion: behaviorManifest.version,
+    behaviorManifestSha256:
+      createGi088BehaviorManifestSha256(behaviorManifest),
+    effectiveCandidateFingerprint:
+      createGi088EffectiveCandidateFingerprint(behaviorManifest)
   };
 }
 
-export function createGi088ExecutionFingerprint() {
-  const verified = verifyGi088CandidateSnapshot();
+export function createGi088DatasetFingerprint(
+  evaluationVersion: string = GI088_EVALUATION_VERSION,
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
+  if (evaluationVersion !== GI088_EVALUATION_VERSION) {
+    const historical = GI088_HISTORICAL_DATASET_FINGERPRINTS[
+      evaluationVersion as keyof typeof GI088_HISTORICAL_DATASET_FINGERPRINTS
+    ];
+    if (!historical) {
+      throw new Error(`GI088_DATASET_VERSION_UNSUPPORTED:${evaluationVersion}`);
+    }
+    return historical;
+  }
   return sha256(
-    JSON.stringify({
-      evaluationId: GI088_EVALUATION_ID,
-      evaluationVersion: GI088_EVALUATION_VERSION,
-      serviceVersion: GI088_SERVICE_VERSION,
-      gi087CandidateFingerprint: verified.baseCandidateFingerprint,
-      effectiveCandidateFingerprint: verified.effectiveCandidateFingerprint,
-      outputContractClarificationVersion:
-        verified.outputContractClarificationVersion,
-      outputContractClarificationSha256:
-        verified.outputContractClarificationSha256,
-      stageTransitionPolicyVersion: verified.stageTransitionPolicyVersion,
-      stageTransitionAppendixHashes:
-        verified.stageTransitionAppendixHashes,
-      stageTransitionValidationRules:
-        verified.stageTransitionValidationRules,
-      singleFocusPolicyVersion: verified.singleFocusPolicyVersion,
-      singleFocusAppendixHashes: verified.singleFocusAppendixHashes,
-      semanticDeltaContractVersion: verified.semanticDeltaContractVersion,
-      semanticDeltaAppendixHashes: verified.semanticDeltaAppendixHashes,
-      semanticDeltaValidationRules: verified.semanticDeltaValidationRules,
-      datasetFingerprint: createGi088DatasetFingerprint(),
-      assetSourceHashes: verified.actualSourceHashes,
-      evaluationMode: GI088_EVALUATION_MODE,
-      activeBranches: GI088_ACTIVE_BRANCHES,
-      configs: { high: GI088_CONFIGS.high },
-      timeoutPolicy: GI088_TIMEOUT_POLICY,
-      timeoutRecovery: GI088_TIMEOUT_RECOVERY_POLICY,
-      emptyContentRecovery: GI088_EMPTY_CONTENT_RECOVERY_POLICY,
-      runtimePolicy: GI088_ARK_FLASH_RUNTIME_POLICY,
-      stageTransitionRecovery: GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
-      manualRecovery: GI088_MANUAL_RECOVERY_POLICY,
-      singleFocusReview: {
-        allVisibleAskTurnsRequireHumanClassification: true,
-        questionMarkCountIsObservationalOnly: true,
-        classifications: [
-          "same_focus_low_burden",
-          "same_focus_heavy",
-          "multiple_independent_tasks",
-          "uncertain"
-        ]
-      },
-      maximumProviderCallsPerTrajectory:
-        GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY,
-      maximumProviderCallsPerUserSubmission:
-        GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
-      technicalSmoke: {
-        opening: GI088_FIXED_OPENING,
-        userMessage: GI088_SMOKE_USER_MESSAGE
-      },
-      tasks: GI088_TASKS
-    })
-  );
-}
-
-export function createGi088DatasetFingerprint() {
-  return sha256(
-    JSON.stringify({
-      datasetVersion: GI088_EVALUATION_VERSION,
+    createGi088CanonicalJson({
+      fingerprintLayer: "dataset",
+      behaviorLayerFingerprint: createGi088BehaviorLayerFingerprint(
+        "dataset",
+        behaviorManifest
+      ),
+      datasetVersion: evaluationVersion,
       evaluationMode: GI088_EVALUATION_MODE,
       tasks: GI088_TASKS,
       order: GI088_TASKS.map((task) => task.id),
@@ -744,29 +1113,129 @@ export function createGi088DatasetFingerprint() {
         branchOrder: GI088_ACTIVE_BRANCHES,
         branchContextsAreIndependent: true
       },
-      productOwnerReview: {
-        feeling: ["better", "same", "worse"],
-        quality: [
-          "direct_use",
-          "minor_issue",
-          "quality_failure",
-          "single_case_blocker"
-        ],
-        targetTrigger: [
-          "triggered",
-          "not_triggered",
-          "blocked_by_technical_failure"
-        ],
-        targetTriggerRequired: true,
-        reasonRequired: true,
-        allVisibleAskTurnsRequireHumanClassification: true,
-        questionReviewClassifications: [
-          "same_focus_low_burden",
-          "same_focus_heavy",
-          "multiple_independent_tasks",
-          "uncertain"
-        ]
+      productOwnerReview: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R2,
+      machineGate: GI088_DATASET_MACHINE_GATE_V8R2
+    })
+  );
+}
+
+export function createGi088RunnerFingerprint(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
+  return sha256(
+    createGi088CanonicalJson({
+      fingerprintLayer: "runner",
+      behaviorLayerFingerprint: createGi088BehaviorLayerFingerprint(
+        "runner",
+        behaviorManifest
+      ),
+      versions: {
+        controlDecision: GI088_CONTROL_DECISION_VERSION_V8R2,
+        intentClassifier: GI088_INTENT_CLASSIFIER_VERSION_V8R2,
+        deterministicState:
+          GI088_DETERMINISTIC_STATE_POLICY_VERSION_V8R2,
+        semanticDelta: GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2,
+        questionDecision: GI088_QUESTION_DECISION_SKILL_VERSION_V8R2,
+        sharedRecoveryDeadline:
+          GI088_SHARED_RECOVERY_DEADLINE_VERSION_V8R2,
+        evaluationStore: GI088_EVALUATION_STORE_VERSION_V8R2
+      },
+      deterministicStateRules: GI088_DETERMINISTIC_STATE_RULES,
+      semanticDeltaValidationRules: GI088_SEMANTIC_DELTA_VALIDATION_RULES,
+      stageTransitionValidationRules:
+        GI088_STAGE_TRANSITION_VALIDATION_RULES,
+      timeoutPolicy: GI088_TIMEOUT_POLICY,
+      timeoutRecovery: GI088_TIMEOUT_RECOVERY_POLICY,
+      sharedRecoveryDeadline: GI088_SHARED_RECOVERY_DEADLINE_POLICY,
+      emptyContentRecovery: GI088_EMPTY_CONTENT_RECOVERY_POLICY,
+      stageTransitionRecovery: GI088_ACTIVE_STAGE_TRANSITION_RECOVERY_POLICY,
+      manualRecovery: GI088_MANUAL_RECOVERY_POLICY,
+      maximumProviderCallsPerTrajectory:
+        GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY,
+      maximumProviderCallsPerUserSubmission:
+        GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
+    })
+  );
+}
+
+export function createGi088ExperienceFingerprint(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
+  return sha256(
+    createGi088CanonicalJson({
+      fingerprintLayer: "experience",
+      behaviorLayerFingerprint: createGi088BehaviorLayerFingerprint(
+        "experience",
+        behaviorManifest
+      ),
+      versions: {
+        metrics: GI088_EVALUATION_METRICS_VERSION_V8R2,
+        programInterventionReview:
+          GI088_PROGRAM_INTERVENTION_REVIEW_VERSION_V8R2,
+        readonlyExport: GI088_READONLY_EXPORT_VERSION_V8R2
+      },
+      reviewContract: GI088_DATASET_PRODUCT_OWNER_REVIEW_V8R2,
+      metricGateContract: GI088_DATASET_MACHINE_GATE_V8R2
+    })
+  );
+}
+
+export function createGi088ExecutionFingerprint(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
+  return sha256(
+    createGi088CanonicalJson({
+      fingerprintLayer: "execution",
+      versionManifest: GI088_V8R2_VERSION_MANIFEST,
+      behaviorManifestVersion: GI088_BEHAVIOR_MANIFEST_VERSION,
+      behaviorManifestSha256:
+        createGi088BehaviorManifestSha256(behaviorManifest),
+      fingerprints: {
+        candidate: createGi088EffectiveCandidateFingerprint(behaviorManifest),
+        dataset: createGi088DatasetFingerprint(
+          GI088_EVALUATION_VERSION,
+          behaviorManifest
+        ),
+        runner: createGi088RunnerFingerprint(behaviorManifest),
+        experience: createGi088ExperienceFingerprint(behaviorManifest)
+      },
+      frozenRuntime: {
+        evaluationId: GI088_EVALUATION_ID,
+        evaluationVersion: GI088_EVALUATION_VERSION,
+        serviceVersion: GI088_SERVICE_VERSION,
+        evaluationMode: GI088_EVALUATION_MODE,
+        activeBranches: GI088_ACTIVE_BRANCHES,
+        highConfig: GI088_CONFIGS.high,
+        runtimePolicy: GI088_DEEPSEEK_PRO_RUNTIME_POLICY,
+        timeoutPolicy: GI088_TIMEOUT_POLICY,
+        maximumProviderCallsPerTrajectory:
+          GI088_MAXIMUM_PROVIDER_CALLS_PER_TRAJECTORY,
+        maximumProviderCallsPerUserSubmission:
+          GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION
       }
     })
   );
+}
+
+export function createGi088FingerprintBundle(
+  behaviorManifest: Gi088BehaviorManifest = GI088_BEHAVIOR_MANIFEST
+) {
+  return {
+    behaviorManifestVersion: behaviorManifest.version,
+    behaviorManifestSha256:
+      createGi088BehaviorManifestSha256(behaviorManifest),
+    candidateFingerprint:
+      createGi088EffectiveCandidateFingerprint(behaviorManifest),
+    datasetFingerprint: createGi088DatasetFingerprint(
+      GI088_EVALUATION_VERSION,
+      behaviorManifest
+    ),
+    runnerFingerprint: createGi088RunnerFingerprint(behaviorManifest),
+    experienceFingerprint: createGi088ExperienceFingerprint(behaviorManifest),
+    executionFingerprint: createGi088ExecutionFingerprint(behaviorManifest)
+  };
+}
+
+export function createGi088V7r3ExecutionFingerprint() {
+  return GI088_V7R3_EXECUTION_FINGERPRINT;
 }

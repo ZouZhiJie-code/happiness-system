@@ -99,4 +99,25 @@ describe("event-centered analytics service", () => {
       dedupeKey: "event_journal_saved:entry-1:1"
     })).resolves.toBeUndefined();
   });
+
+  it("records resume attempts with the reliable turn identity and attempt number", async () => {
+    await recordEventCenteredAnalyticsEvent({
+      eventName: "event_centered_resume_started",
+      userId: "user-1",
+      rootSessionId: "root-1",
+      journalEventId: "event-1",
+      requestId: "request-1",
+      attemptCount: 2,
+      dedupeKey: "event_centered_resume_started:turn-1:2"
+    });
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_started",
+      userId: "user-1",
+      sessionId: "root-1",
+      requestId: "request-1",
+      dedupeKey: "event_centered_resume_started:turn-1:2",
+      properties: expect.objectContaining({ attemptCount: 2 })
+    }));
+  });
 });

@@ -56,7 +56,7 @@ DeepSeek 官方说明 JSON Output 偶发返回空正文。v7r1 保留模型、Th
 - [Manifest](./gi088-human-eval-v7r1-visible-continuation-manifest.json) 记录版本、指纹、恢复分账、探针和部署回读。
 - [静态验证](./gi088-v7r1-visible-continuation-static-validation.md) 记录自动测试、类型、Lint、Prisma、构建、探针和差异检查。
 - Prefix 兼容探针固定 1 次合成调用，重试与降级均为 0，只保存安全诊断。
-- v8 统一问前决策继续等待后续可靠性候选通过真人门。
+- v8 统一问前决策继续等待 v7r1 真人可靠性门。
 
 ## 6. 兼容探针裁决
 
@@ -85,4 +85,4 @@ DeepSeek 官方说明 JSON Output 偶发返回空正文。v7r1 保留模型、Th
 - 三条请求可见正文 `3/3`，`EMPTY_CONTENT=0/3`；
 - 与官方 Pro 同为 `3/3` 可见正文，等待明显更短。
 
-当前 Codex 初评调整为：`火山 Ark Flash 是下一真人候选的综合最优选择`。接入方式采用 REST Chat Completions 与仓库现有 TypeScript OpenAI-compatible Provider，非流式响应头等待与总时长统一为 60 秒。公开证据只保留脱敏聚合数据与[平台对照结论](./gi088-ark-flash-platform-probe-v1-decision.md)；关联真人 Call、Turn、原始请求与模型输出继续留在本机受控目录。Preview、评测建批和 Production 均未变化。
+当前 Codex 初评调整为：`火山 Ark Flash 是下一真人候选的综合最优选择`。接入方式采用 REST Chat Completions 与仓库现有 TypeScript OpenAI-compatible Provider，非流式响应头等待与总时长统一为 60 秒。完整脱敏结果见 [主探针结果](./gi088-ark-flash-platform-probe-v1-result.json)、[E1 校正结果](./gi088-ark-e1-timeout-correction-v1-result.json) 与[平台对照结论](./gi088-ark-flash-platform-probe-v1-decision.md)。Preview、评测建批和 Production 均未变化。

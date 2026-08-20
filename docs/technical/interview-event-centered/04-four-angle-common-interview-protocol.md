@@ -423,9 +423,9 @@ GI-064 以 DeepSeek 官方 API 在独立 Preview 完成 `8/8` 主链、`8/8` 日
 
 `3.29.0` 的结构与规则检查通过，但 24 条工作单轮经用户逐条裁决后只有 3 条通过、1 条边缘、20 条失败。结果证明原协议容易把事实复述当成成果，也容易生成抽象、浅层和低价值问题。原冻结内容自本节起作为历史基线；本节是当前产品校准方向。
 
-失败证据：候选 3.29.0 用户裁决与失败重置（本机历史证据，公开精简包未收录：`candidate-v3290-failure-reset-report.md`）。
+失败证据：[候选 3.29.0 用户裁决与失败重置](../../../artifacts/generative-interview-board7/2026-07-29/candidate-v3290-failure-reset-report.md)。
 
-`2026-08-02` 的 v71 首轮运行中，感受场景里用户已明确说出“松快”，语义兼容层却因使用两条证据和一条关系将成果标为 `ai_synthesized`。v72 随后把成果来源放回第一段直接判断，系统停止根据语义结构猜测。v71 证据见 首轮运行报告（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-report.md`），v72 输入见离线确认包（本机历史证据，公开精简包未收录：`semantic-frame-v5-offline-case-confirmation.md`）。
+`2026-08-02` 的 v71 首轮运行中，感受场景里用户已明确说出“松快”，语义兼容层却因使用两条证据和一条关系将成果标为 `ai_synthesized`。v72 随后把成果来源放回第一段直接判断，系统停止根据语义结构猜测。v71 证据见 [首轮运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v71-semantic-frame-first-pass-report.md)，v72 输入见[离线确认包](../../../artifacts/generative-interview-board7/2026-08-02/semantic-frame-v5-offline-case-confirmation.md)。
 
 ### `2026-08-02` v72 六例结果与板块 4 局部重新打开
 
@@ -437,11 +437,11 @@ v72 六个全新场景已完成首轮真实模型运行。第一段均返回合�
 2. **纠正信号的强制优先级**：用户出现“你理解反了”等明确纠正时，第一段必须先撤回旧理解、记录纠正内容，再判断当前成果和问停状态。该优先级需要进入可执行规格与案例。
 3. **必要证据的强制携带**：会限制、修正或补全主意思的并存内容，以及 `limited` 场景中唯一仍可确认的证据，必须随语义结果保留。遗漏会直接改变成果含义或诚实收束的可信度。
 
-以上三项是本轮重新打开的校准问题，当前保持开放。用户纠正、拒绝和停止的体验优先级，AI 综合的当前事件边界，单一问题和次数上限继续有效。本轮同时出现三类独立产品根因，依据运行停止条件暂停新的模型调用和单变量修正。证据见 v72 原始运行报告（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-report.md`）与Codex 双层评审（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）。
+以上三项是本轮重新打开的校准问题，当前保持开放。用户纠正、拒绝和停止的体验优先级，AI 综合的当前事件边界，单一问题和次数上限继续有效。本轮同时出现三类独立产品根因，依据运行停止条件暂停新的模型调用和单变量修正。证据见 [v72 原始运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-report.md)与[Codex 双层评审](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)。
 
 后续 `B7-QH-01` 第三轮中，两种调用架构的技术结构合计达到 `8/8`，Codex 对真实用户可见结果初评只有通过 `1`、边缘 `1`、失败 `6`。该证据推动产品依次确认用户主动说清当前提问目标后的停止规则、AI 综合的证据关系上限和 ask 唯一触发条件；当前转入剩余规则审计。
 
-执行证据：B7-QH-01 第 3 轮 Codex 初评（本机历史证据，公开精简包未收录：`architecture-ab-v3-qh01-r3-codex-review.md`）。
+执行证据：[B7-QH-01 第 3 轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-codex-review.md)。
 
 ### `2026-07-30` 问停边界同步（GI-039）
 
@@ -484,7 +484,7 @@ Provider v3 的六个全新场景完成首批双层评审：技术完整 `6/6`�
 
 用户回应中的“你 / 我”视角一致性属于表达质量，交由板块 6 人工判尺；首批停止时该项进入第二段表达规则复核。
 
-证据：v3 首批评审后报告（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-reviewed-report.md`）、v3 首批逐条裁决（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-codex-review.json`）。
+证据：[v3 首批评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-reviewed-report.md)、[v3 首批逐条裁决](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-codex-review.json)。
 
 ### `2026-08-01` 具体作答入口与 AI 对话人称重新冻结（GI-039 / GI-041 / GI-045）
 
@@ -505,7 +505,7 @@ Provider v3 的六个全新场景完成首批双层评审：技术完整 `6/6`�
 
 根因定位为第二段 Few-shot 的嵌套包装层与根级输出契约冲突。离线当时候选升级为第一段 Prompt `2026-08-01.event-centered-generative-v70-understanding-card`、第二段 Prompt `2026-08-01.event-centered-generative-v70-visible`；策略 `5.48.0`、Few-shot `quality-patterns.2026-08-01.v27`、角度卡 `2.12.0` 与语义产物 `event-centered-semantic-plan.v3` 保持不变。源头修复定向验证 `132/132`、最终事件中心 `38` 个测试文件 `734/734` 与 TypeScript 类型检查通过，v70/v70 当时尚待真实模型验证。
 
-证据：run-1 原始结果（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-run-1.json`）、run-1 报告（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-run-1-report.md`）、恢复评审后结果（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-recovery-1-reviewed.json`）、恢复评审后报告（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-recovery-1-reviewed-report.md`）、预算审计（本机历史证据，公开精简包未收录：`board7-provider-v31-repair-probe-budget.json`）。
+证据：[run-1 原始结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1.json)、[run-1 报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1-report.md)、[恢复评审后结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed.json)、[恢复评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed-report.md)、[预算审计](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v31-repair-probe-budget.json)。
 
 ### 每轮用户可见输出
 

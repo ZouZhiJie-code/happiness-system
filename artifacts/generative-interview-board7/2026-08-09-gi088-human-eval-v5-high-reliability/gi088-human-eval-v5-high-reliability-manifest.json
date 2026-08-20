@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "1.0",
+  "status": "ready_for_product_owner_login_and_high_only_evaluation_0_of_12",
+  "evaluation": {
+    "id": "gi088_human_eval_v5_high_reliability",
+    "version": "2026-08-09.gi088-human-eval-v5-high-reliability",
+    "serviceVersion": "2026-08-09.gi088-high-reliability-service-v5",
+    "mode": "high_only",
+    "activeBranches": ["high"],
+    "effectiveCandidateFingerprint": "40335e6aa4166d63132f75b66c8c298cdc405a34e73b3cfd13b0e8aa556aab93",
+    "datasetFingerprint": "cc6d81be13babc91c57a588c31407ba7afad1238cf9465eab96de20cf825075e",
+    "executionFingerprint": "6dd8ed0723c78bb2f4481c25a988f2a6765a868be13e1387187dcf37bf6cfefd"
+  },
+  "lineage": {
+    "previousEvaluationVersion": "2026-08-09.gi088-human-eval-v4-stage-transition",
+    "previousExecutionFingerprint": "0206fd34f57f2a8e6c4c5401a172bcfda526e702bf6081e197324054a47b1d0a",
+    "previousBatchId": "7d6f66b2-65a0-4975-a66f-277ebdf5102c",
+    "previousBatchStatus": "early_stopped_readonly_1_of_12",
+    "previousModelCalls": 10,
+    "preservedRegression": [
+      "stage_2_to_3_natural_transition",
+      "stage_3_dynamic_question_stopping",
+      "empty_content_auto_recovery"
+    ]
+  },
+  "decisionLedger": {
+    "productOwnerJudgment": "retain_thinking_high_only_and_solve_timeout_and_double_question_independently",
+    "codexInitialAssessment": "stage_aware_timeout_and_single_visible_question_contract_are_independently_attributable_with_shared_two_call_cap",
+    "confirmedRootCause": {
+      "timeout": "local_30000ms_hard_total_aborted_body_read_after_http_200_headers",
+      "doubleQuestion": "model_emitted_two_independently_answerable_interrogatives_despite_one_question_contract"
+    },
+    "pendingHypothesis": {
+      "timeout": "15s_headers_45s_body_idle_60s_hard_total_prevents_healthy_generation_truncation",
+      "doubleQuestion": "strong_visible_sentence_contract_reduces_first_call_double_question_to_zero"
+    }
+  },
+  "timeoutPolicy": {
+    "version": "2026-08-09.gi088-high-timeout-policy-v1",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000,
+    "routeMaxDurationSeconds": 75,
+    "longWaitNoticeAfterMs": 10000,
+    "automaticRetryEligibleStages": ["headers", "body"],
+    "hardTotalAutomaticRetry": false
+  },
+  "singleQuestionPolicy": {
+    "version": "2026-08-09.gi088-single-visible-question-v1",
+    "visibleQuestionMaximum": 1,
+    "visibleQuestionMarkMaximum": 1,
+    "understandingMustBeDeclarative": true,
+    "examplesAndOptionsMustBeFoldedIntoSameQuestion": true,
+    "automaticRecoveryTrigger": "ASK_QUESTION_COUNT_INVALID:2"
+  },
+  "recoveryAccounting": {
+    "maximumAutomaticRetriesPerTurn": 1,
+    "maximumProviderCallsPerTurnAcrossAllRecoveryTypes": 2,
+    "thirdCallAllowed": false,
+    "fallbackToThinkingDisabled": false,
+    "fallbackToOff": false,
+    "lineageFields": ["parentCallId", "retryTrigger", "retryOrdinal", "effectiveConfig"],
+    "assistantCommitsOnSuccess": 1,
+    "semanticStateCommitsOnSuccess": 1
+  },
+  "automaticValidation": {
+    "testFiles": 5,
+    "testsPassed": 101,
+    "testsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "preview": {
+    "deployed": true,
+    "deploymentId": "dpl_3Xg4C1G28szDN2movRngGe2mPFDY",
+    "readyState": "READY",
+    "url": "https://xingfuxitong-gi088-v5-high-reliability.vercel.app/preview/gi088-evaluation",
+    "newBatchCreated": true,
+    "batchReadback": {
+      "batchId": "60cf7e22-9183-466a-889f-a446baefa92d",
+      "status": "running",
+      "revision": 0,
+      "completedTaskCount": 0,
+      "totalTaskCount": 12,
+      "evaluationMode": "high_only",
+      "activeBranches": ["high"],
+      "activeTaskId": null,
+      "executionFingerprintVerified": true,
+      "modelCalls": 0
+    },
+    "browserReadback": {
+      "dailyLightLoginRequiredOnNewHostname": true,
+      "browserLeftAtLoginPage": true,
+      "unauthenticatedPageHttpStatus": 302,
+      "unauthenticatedSessionHttpStatus": 302
+    },
+    "modelCallsConsumed": 0
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline",
+    "previewPageHttpStatus": 404,
+    "previewSessionHttpStatus": 404
+  }
+}

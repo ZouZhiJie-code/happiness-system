@@ -14,11 +14,11 @@ Production：`保持 legacy + baseline；本轮未执行生产切换、部署或
 
 上游失效候选：[04r｜GI-058 发布阻断修复与真实性能校准](./04r-board8-gi058-release-blocking-repair-and-performance-calibration.md)
 
-历史脚本化证据：GI-059 DeepSeek 官方 API 8+2 r4（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
+历史脚本化证据：[GI-059 DeepSeek 官方 API 8+2 r4](../../../artifacts/generative-interview-board8/2026-08-03-gi059-scripted-deepseek-official-preview-r4/board8-preview-candidate-audit.md)
 
 后续可靠性专项：[04t｜GI-060–GI-064 运行可靠性修复与人工实聊准备](./04t-board8-gi060-to-gi064-reliability-repair-and-human-preview.md)
 
-历史候选证据：GI-064 自动发布门（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
+历史候选证据：[GI-064 自动发布门](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/board8-audit/board8-preview-candidate-audit.md)
 
 ## 0. GI-059 规则的历史采用状态
 
@@ -115,8 +115,8 @@ GI-060–GI-064 随后围绕运行可靠性、来源占位符隔离和审计分�
 
 证据：
 
-- Board8 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
-- Board8 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）
+- [Board8 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi059-scripted-deepseek-official-preview-r4/board8-preview-candidate-audit.md)
+- [Board8 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi059-scripted-deepseek-official-preview-r4/board8-preview-candidate-audit.json)
 
 ## 6. 历史下游复核记录
 

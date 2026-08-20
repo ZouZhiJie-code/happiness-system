@@ -1,8 +1,9 @@
-export type AppToastPlacement = "center" | "upper-center";
+export type AppToastPlacement = "center" | "upper-center" | "below-header";
 
 const PLACEMENT_CLASS: Record<AppToastPlacement, string> = {
   center: "items-center justify-center",
-  "upper-center": "items-start justify-center pt-[32vh]"
+  "upper-center": "items-start justify-center pt-[32vh]",
+  "below-header": "items-start justify-center pt-[calc(var(--site-header-viewport-offset)+0.75rem)]"
 };
 
 export function AppToast({
@@ -17,11 +18,11 @@ export function AppToast({
   return (
     <div
       aria-live="polite"
-      className={`pointer-events-none fixed inset-0 z-50 flex px-4 ${PLACEMENT_CLASS[placement]}`}
+      className={`ui-app-toast pointer-events-none fixed inset-0 flex px-4 ${PLACEMENT_CLASS[placement]}`}
     >
       <div
         data-testid={testId}
-        className="max-w-[min(100%,22rem)] rounded-[20px] border border-[rgba(119,79,40,0.18)] bg-[rgba(46,35,25,0.92)] px-5 py-2.5 text-center text-sm leading-snug text-[rgba(255,245,230,0.96)] shadow-[0_18px_42px_rgba(46,35,25,0.28)]"
+        className="max-w-[min(100%,28rem)] rounded-[var(--radius-control)] border border-[var(--toast-border)] bg-[var(--toast-surface)] px-5 py-2.5 text-center text-sm leading-snug text-[var(--toast-text)] shadow-[var(--toast-shadow)]"
       >
         {message}
       </div>

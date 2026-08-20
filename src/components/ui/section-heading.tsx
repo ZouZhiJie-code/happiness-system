@@ -1,32 +1,46 @@
-import type { ReactNode } from "react";
+import type { ElementType, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
 interface SectionHeadingProps {
-  title: string;
+  title: ReactNode;
   /** 标题右侧的轻提示文字 */
-  hint?: string;
+  hint?: ReactNode;
   /** 标题下方的一句说明 */
-  description?: string;
+  description?: ReactNode;
   /** 行尾动作区（按钮 / 链接 / chip） */
   actions?: ReactNode;
+  /** section 为 20px 分区标题，item 为 16px 条目标题 */
+  size?: "section" | "item";
+  /** 按页面语义选择 h2 / h3 / h4，视觉层级由 size 控制 */
+  headingAs?: "h2" | "h3" | "h4";
   className?: string;
 }
 
 /**
- * 眉题式分组标题：替代"再包一层卡片"的信息分组方式。
+ * 内容分区标题：使用字号、字重和留白建立层级，不自动附加装饰线。
  */
-export function SectionHeading({ title, hint, description, actions, className }: SectionHeadingProps) {
+export function SectionHeading({
+  title,
+  hint,
+  description,
+  actions,
+  size = "section",
+  headingAs = "h2",
+  className
+}: SectionHeadingProps) {
+  const Heading = headingAs as ElementType;
+
   return (
-    <div className={cn("flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1", className)}>
+    <div className={cn("ui-section-heading", className)} data-size={size}>
       <div className="min-w-0">
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-sm font-semibold tracking-wide text-[#46331f]">{title}</h3>
-          {hint ? <span className="text-xs text-[var(--text-faint)]">{hint}</span> : null}
+        <div className="ui-section-heading__line">
+          <Heading className="ui-section-heading__title">{title}</Heading>
+          {hint ? <span className="ui-section-heading__hint">{hint}</span> : null}
         </div>
-        {description ? <p className="mt-0.5 text-xs leading-5 text-[var(--text-dim)]">{description}</p> : null}
+        {description ? <p className="ui-section-heading__description">{description}</p> : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="ui-section-heading__actions">{actions}</div> : null}
     </div>
   );
 }

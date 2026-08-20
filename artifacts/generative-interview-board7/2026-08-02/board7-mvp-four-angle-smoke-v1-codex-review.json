@@ -1,0 +1,60 @@
+{
+  "reviewVersion": "board7-mvp-four-angle-smoke-v1-codex-review-v1",
+  "reviewedBy": "codex",
+  "reviewedAt": "2026-08-02T10:57:28Z",
+  "generativeInternal": {
+    "technicalComplete": 2,
+    "total": 4,
+    "fallbackRequired": 2
+  },
+  "finalProductChain": {
+    "visibleResponseAvailable": 4,
+    "total": 4,
+    "understandable": 4,
+    "answerableAsk": 1,
+    "answerableAskTotal": 1,
+    "severeFactErrors": 0,
+    "crossEventErrors": 0,
+    "boundaryErrors": 0,
+    "strongInferenceErrors": 0,
+    "mvpGate": "pass_with_preview_observations"
+  },
+  "latencyClosure": {
+    "previousWorstCaseSeconds": 88,
+    "recoveryProbeElapsedSeconds": 66,
+    "decision": "生成式耗尽技术尝试后立即使用 baseline 确定性理解、问停和安全表达，不再追加模型请求",
+    "additionalProviderRequestsAfterGenerativeFailure": 0,
+    "defaultBaselineRetryPolicyChanged": false
+  },
+  "cases": [
+    {
+      "caseId": "SF4-F-READY-01",
+      "generativeStatus": "complete",
+      "finalRoute": "generative",
+      "finalVerdict": "pass_with_observation",
+      "observation": "用户明确说出的松快未进入最终成果回应"
+    },
+    {
+      "caseId": "SF4-T-ASK-01",
+      "generativeStatus": "semantic_failed",
+      "finalRoute": "deterministic_baseline",
+      "finalVerdict": "pass_with_observation",
+      "observation": "最终问题可回答，长复述、后台观察口吻和目标贴合度需要观察"
+    },
+    {
+      "caseId": "SF4-R-COEXIST-01",
+      "generativeStatus": "visible_failed",
+      "finalRoute": "deterministic_baseline",
+      "finalVerdict": "pass_with_observation",
+      "observation": "完整保留关系两侧，确定性承接复述偏长"
+    },
+    {
+      "caseId": "SF4-A-EFFECT-01",
+      "generativeStatus": "complete",
+      "finalRoute": "generative",
+      "finalVerdict": "pass_with_observation",
+      "observation": "内部成果来源误判且可见回应只并列事实，未形成作用关系"
+    }
+  ],
+  "decision": "四角度最小体验门通过；停止本轮运行，进入 Preview 候选的其他验收项"
+}

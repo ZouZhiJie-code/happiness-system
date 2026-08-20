@@ -33,8 +33,8 @@ v1 只调整两项运行与恢复能力：
 
 ## 3. 运行结果
 
-- Preview deployment：`redacted-deployment-id`；
-- 访问地址：`https://xingfuxitong-5vak37bgb-example-team.vercel.app/preview/gi088-evaluation`；
+- Preview deployment：`dpl_9VjwswqWK9QUoojXXKNs5BWjBvCS`；
+- 访问地址：`https://xingfuxitong-5vak37bgb-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
 - 访问顺序：先通过 Vercel Deployment Protection，再使用 Daily Light 应用账号登录；
 - 登录与 session 只读验收：通过；
 - 当前批次：A1～A8 完成，`8/12`；A2-R、A3-R、A4-R、A6-R 未开始；
@@ -57,13 +57,19 @@ Codex 独立初评：high 同样在 A1～A5、A8 显示内容优势；`16/16` �
 
 E1／E3 × high／disabled 的 Thinking 模式配对探针随后按精确指纹完成 `4/4`，重试与降级均为 `0`。四条输出全部有效：high `2/2 valid`、disabled `2/2 valid`，两条历史空内容请求在 high 侧都未复现失败。预设 Thinking 定向支持门因此未通过，Thinking 作为主要影响因素仍未确认；产品基线继续保留 high 与 JSON mode，当前问题继续停留在 `EMPTY_CONTENT`，暂不进入 TIMEOUT 或真人复测。
 
-## 5. 公开证据入口
+## 5. 证据入口
 
-- 真人逐字内容、逐轨迹评价、完整 Bad Case 与原始模型输出保存在本机受控目录；公开仓库只保留上述脱敏数量和结论。
+- [8/12 提前结束与只读封存核验](./gi088-human-eval-v1-batch-seal-audit.md)
+- [产品负责人真人体验评价](./gi088-human-eval-v1-product-review.md)
+- [Codex 独立九维初评与阻断检查](./gi088-human-eval-v1-codex-review.md)
+- [Bad Case 总账](./gi088-human-eval-v1-bad-case-ledger.json)
+- [整批复盘与下一主要影响因素](./gi088-human-eval-v1-batch-reconciliation.md)
 - [运行清单](./gi088-human-eval-v1-manifest.json)
 - [运行器验证记录](./gi088-runner-validation.md)
+- [空内容配对探针 manifest](./gi088-empty-content-response-format-probe-v1-manifest.json)
 - [空内容配对探针脱敏结果](./gi088-empty-content-response-format-probe-v1-result.json)
 - [空内容配对探针裁决](./gi088-empty-content-response-format-probe-v1-decision.md)
+- [空内容 Thinking 模式探针 manifest](./gi088-empty-content-thinking-mode-probe-v1-manifest.json)
 - [空内容 Thinking 模式探针脱敏结果](./gi088-empty-content-thinking-mode-probe-v1-result.json)
 - [空内容 Thinking 模式探针裁决](./gi088-empty-content-thinking-mode-probe-v1-decision.md)
 - [v2 diagnostic 评测底座与当前停止点](../2026-08-09-gi088-human-eval-v2-diagnostic/README.md)

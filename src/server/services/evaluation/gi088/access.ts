@@ -6,6 +6,34 @@ import {
 export const GI088_EVALUATION_ENABLE_VALUE = "I_UNDERSTAND" as const;
 export const GI088_EVALUATION_SCHEMA = "gi088_evaluation_v0" as const;
 
+function normalizedSecretValue(value: string | undefined) {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === '""' || trimmed === "''" ? "" : trimmed;
+}
+
+export function resolveGi088EvaluationDatabaseUrl(
+  env: NodeJS.ProcessEnv = process.env
+) {
+  const expectedSchema =
+    env.GI088_EVALUATION_DATABASE_SCHEMA?.trim() || GI088_EVALUATION_SCHEMA;
+  const source =
+    normalizedSecretValue(env.EVALUATION_DATABASE_URL) ||
+    normalizedSecretValue(env.EVALUATION_DATABASE_URL_UNPOOLED);
+  if (!source) {
+    throw new Gi088AccessError("GI088_EVALUATION_DATABASE_URL_MISSING", 503);
+  }
+  let url: URL;
+  try {
+    url = new URL(source);
+  } catch {
+    throw new Gi088AccessError("GI088_EVALUATION_DATABASE_URL_INVALID", 503);
+  }
+  if (!url.searchParams.get("schema")) {
+    url.searchParams.set("schema", expectedSchema);
+  }
+  return url.toString();
+}
+
 export class Gi088AccessError extends Error {
   constructor(
     readonly code: string,
@@ -38,8 +66,7 @@ export function isGi088EvaluatorUsername(
 export function validateGi088EvaluationDatabaseUrl(
   env: NodeJS.ProcessEnv = process.env
 ) {
-  const source = env.EVALUATION_DATABASE_URL?.trim();
-  if (!source) throw new Gi088AccessError("GI088_EVALUATION_DATABASE_URL_MISSING", 503);
+  const source = resolveGi088EvaluationDatabaseUrl(env);
   let url: URL;
   try {
     url = new URL(source);
@@ -52,13 +79,21 @@ export function validateGi088EvaluationDatabaseUrl(
     throw new Gi088AccessError("GI088_EVALUATION_DATABASE_SCHEMA_MISMATCH", 503);
   }
   const expectedHost = env.EVALUATION_POSTGRES_HOST?.trim().toLowerCase();
+  const expectedUnpooledHost = env.EVALUATION_PGHOST_UNPOOLED
+    ?.trim()
+    .toLowerCase();
   const expectedDatabase = env.EVALUATION_POSTGRES_DATABASE?.trim();
-  if (!expectedHost || !expectedDatabase) {
+  if ((!expectedHost && !expectedUnpooledHost) || !expectedDatabase) {
     throw new Gi088AccessError("GI088_EVALUATION_DATABASE_IDENTITY_MISSING", 503);
   }
+  const allowedHosts = new Set(
+    [expectedHost, expectedUnpooledHost].filter(
+      (value): value is string => Boolean(value)
+    )
+  );
   const actualDatabase = decodeURIComponent(url.pathname.replace(/^\//u, ""));
   if (
-    url.hostname.toLowerCase() !== expectedHost ||
+    !allowedHosts.has(url.hostname.toLowerCase()) ||
     actualDatabase !== expectedDatabase
   ) {
     throw new Gi088AccessError("GI088_EVALUATION_DATABASE_IDENTITY_MISMATCH", 503);
@@ -74,7 +109,7 @@ export function validateGi088EvaluationDatabaseUrl(
     const appSchema = appUrl.searchParams.get("schema");
     const appDatabase = decodeURIComponent(appUrl.pathname.replace(/^\//u, ""));
     if (
-      appUrl.hostname.toLowerCase() !== expectedHost ||
+      !allowedHosts.has(appUrl.hostname.toLowerCase()) ||
       appDatabase !== expectedDatabase
     ) {
       throw new Gi088AccessError("GI088_PREVIEW_APP_DATABASE_IDENTITY_MISMATCH", 503);
@@ -83,7 +118,11 @@ export function validateGi088EvaluationDatabaseUrl(
       throw new Gi088AccessError("GI088_PREVIEW_APP_DATABASE_SCHEMA_MISMATCH", 503);
     }
   }
-  return { schema: expectedSchema, host: expectedHost, database: expectedDatabase };
+  return {
+    schema: expectedSchema,
+    host: url.hostname.toLowerCase(),
+    database: expectedDatabase
+  };
 }
 
 export function canOpenGi088Evaluation(env: NodeJS.ProcessEnv = process.env) {

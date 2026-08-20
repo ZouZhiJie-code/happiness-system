@@ -12,20 +12,19 @@ import type {
   Gi088EvaluationStore
 } from "@/server/services/evaluation/gi088/store";
 import { isGi088BatchPersistenceCoherent } from "@/server/services/evaluation/gi088/store";
+import { resolveGi088EvaluationDatabaseUrl } from "@/server/services/evaluation/gi088/access";
 
 const globalForGi088 = globalThis as typeof globalThis & {
   __gi088EvaluationPrisma__?: PrismaClient;
 };
 
 export function getGi088PrismaClient() {
-  if (!process.env.EVALUATION_DATABASE_URL?.trim()) {
-    throw new Error("GI088_EVALUATION_DATABASE_URL_MISSING");
-  }
+  const databaseUrl = resolveGi088EvaluationDatabaseUrl(process.env);
   const client =
     globalForGi088.__gi088EvaluationPrisma__ ??
     new PrismaClient({
       datasources: {
-        db: { url: process.env.EVALUATION_DATABASE_URL }
+        db: { url: databaseUrl }
       },
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"]
     });
@@ -80,10 +79,9 @@ export class Gi088PrismaStore implements Gi088EvaluationStore {
   }
 
   async findByOwnerAndVersion(ownerUserId: string, evaluationVersion: string) {
-    const value = await this.client.gi088EvaluationBatch.findUnique({
-      where: {
-        ownerUserId_evaluationVersion: { ownerUserId, evaluationVersion }
-      }
+    const value = await this.client.gi088EvaluationBatch.findFirst({
+      where: { ownerUserId, evaluationVersion },
+      orderBy: [{ runOrdinal: "desc" }, { createdAt: "desc" }]
     });
     return value ? toStoredBatch(value) : null;
   }

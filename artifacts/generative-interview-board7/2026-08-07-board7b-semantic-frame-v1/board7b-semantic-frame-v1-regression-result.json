@@ -1,0 +1,118 @@
+{
+  "resultVersion": "2026-08-07.board7b-semantic-frame-regression-result-v1",
+  "reviewIdentity": "codex_independent_initial_review",
+  "productOwnerQualitativeReview": "pending",
+  "candidateVersion": "2026-08-07.board7b-semantic-frame-v1",
+  "candidateFingerprint": "fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88",
+  "datasetFingerprint": "e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1",
+  "requestSetFingerprint": "56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71",
+  "evaluationPolicyFingerprint": "3d7204f4e8d5f2d29c1f92b6054a66c4e05134aa2772ae357af4a24c85cfc669",
+  "executionFingerprint": "23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4",
+  "runFingerprint": "1ccb38aaedb19f60043a9f1b385f18d2dce0c5e564d4563337899ed1d646a0fb",
+  "authorization": {
+    "authorizationId": "1eca419d-979b-43bd-9324-0bd6e00d0e79",
+    "authorizationDigest": "3a5b86beff30d7761529c2c2cfd90c976c71cbb611afe35b0c560cedb6c1b59d",
+    "status": "consumed_once",
+    "authorizedCalls": 8,
+    "productionChangeAuthorized": false
+  },
+  "execution": {
+    "startedAt": "2026-08-07T11:46:16.654Z",
+    "completedAt": "2026-08-07T11:46:41.248Z",
+    "attemptedCalls": 8,
+    "modelCalls": 8,
+    "valid": 7,
+    "protectedFailures": 1,
+    "modelContractFailures": 0,
+    "technicalFailures": 0,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0,
+    "promptTokens": 20772,
+    "completionTokens": 2369,
+    "totalTokens": 23141,
+    "latencyMs": {
+      "min": 211,
+      "max": 598,
+      "average": 302
+    }
+  },
+  "gate": {
+    "knownDevelopmentRegression": "1/2",
+    "freshRelationshipTransfer": "1/4",
+    "counterfactual": "2/2",
+    "validStructureAndSource": "7/8",
+    "ordinaryQualityFailures": 4,
+    "singleCaseBlocks": 0,
+    "decision": "no_go_for_real_trajectory"
+  },
+  "cases": [
+    {
+      "callNumber": 1,
+      "caseId": "D1-autumn-open-known-regression",
+      "runtimeStatus": "valid",
+      "qualityDecision": "ordinary_quality_failure",
+      "primaryReason": "关系焦点被收窄为强迫二选一"
+    },
+    {
+      "callNumber": 2,
+      "caseId": "D2-autumn-priority-known-regression",
+      "runtimeStatus": "valid",
+      "qualityDecision": "pass",
+      "primaryReason": "吸收先拿 offer 的优先级并沿作品集继续具体化"
+    },
+    {
+      "callNumber": 3,
+      "caseId": "N1-course-relocation-transfer-1",
+      "runtimeStatus": "protected_failure",
+      "qualityDecision": "ordinary_quality_failure",
+      "primaryReason": "模型输出两个问句，程序按单轮一问正确拦截",
+      "errorCode": "PROGRAM_PROTECTION_REJECTED",
+      "validationIssues": [
+        "ASK_QUESTION_COUNT_INVALID:2"
+      ]
+    },
+    {
+      "callNumber": 4,
+      "caseId": "N1-course-relocation-transfer-2",
+      "runtimeStatus": "valid",
+      "qualityDecision": "pass",
+      "primaryReason": "保留课程与外调关系并只询问一个可回答的概率判断"
+    },
+    {
+      "callNumber": 5,
+      "caseId": "N2-project-study-transfer-1",
+      "runtimeStatus": "valid",
+      "qualityDecision": "ordinary_quality_failure",
+      "primaryReason": "把关系探索压缩成两个预设原因，其中一项缺少用户来源"
+    },
+    {
+      "callNumber": 6,
+      "caseId": "N2-project-study-transfer-2",
+      "runtimeStatus": "valid",
+      "qualityDecision": "ordinary_quality_failure",
+      "primaryReason": "openPart 漂移到项目单侧并丢失申请材料的影响关系"
+    },
+    {
+      "callNumber": 7,
+      "caseId": "F1-independent-content-counterfactual",
+      "runtimeStatus": "valid",
+      "qualityDecision": "pass",
+      "primaryReason": "接受两件事互相独立并把先聊哪件交给用户"
+    },
+    {
+      "callNumber": 8,
+      "caseId": "F2-user-defers-one-side-counterfactual",
+      "runtimeStatus": "valid",
+      "qualityDecision": "pass",
+      "primaryReason": "执行用户边界并只沿工作机会形成新焦点"
+    }
+  ],
+  "rootCause": {
+    "confirmedImprovement": "八题均建立了与用户材料一致的焦点，焦点层较 v0.3 明显改善",
+    "remainingFailure": "关系焦点进入 openPart 后仍会被压成优先级二选一、单侧倾向或模型预设类别",
+    "protectedFailureAttribution": "model_output",
+    "nextDecision": "先讨论关系焦点与 openPart 的职责和不变量，再建立新候选"
+  },
+  "localEvidenceRelativePath": "artifacts/local-runtime/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/regression-1ccb38aaedb19f60043a9f1b385f18d2dce0c5e564d4563337899ed1d646a0fb/raw-results.json",
+  "production": "legacy + baseline"
+}

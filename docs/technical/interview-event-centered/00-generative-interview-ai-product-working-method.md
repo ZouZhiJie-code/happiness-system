@@ -28,6 +28,8 @@ Production：`继续保持 legacy + baseline`
 
 评测决策档案：[04x-07｜GI-074 生成式访谈评测体系与下游交接协议](./04x-07-evaluation-preview-and-handoff.md)
 
+方法形成复盘：[板块 5 与 AI 产品工作方法实操复盘](./00a-generative-interview-ai-product-working-method-retrospective.md)
+
 > 本文规定板块 5～8 怎样读取事实、讨论产品、形成证据并完成交接。它不新增或重开 GI-068～074 的产品结论，也不授权生产代码、生产配置、Prompt、API、数据库、模型调用或运行开关变更。
 
 ## 0. 关键概念与首次定义

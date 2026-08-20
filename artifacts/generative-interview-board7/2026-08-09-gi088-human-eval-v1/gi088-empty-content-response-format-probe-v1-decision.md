@@ -74,4 +74,4 @@ DeepSeek 官方 JSON Output 文档确认两点：Prompt 需要明确 JSON 并提
 
 若 disabled `2/2 valid` 且 high 至少一次 `EMPTY_CONTENT`，只形成“Thinking 获得主要影响因素的定向支持，可进入 high-compatible 修复候选”。通用根因继续开放；high 的 Schema failure 不计作空内容支持，任何非 `EMPTY_CONTENT` 技术失败会让对应配对不可判。未形成该方向组合时，本轮继续保留为未确认。
 
-后续 Thinking 模式探针已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`：high 与 disabled 均为 `2/2 valid`，high 未复现空内容，Thinking 主要影响因素未确认。完整脱敏数据见 [结果 JSON](./gi088-empty-content-response-format-probe-v1-result.json)，下一轮见 [Thinking 探针裁决](./gi088-empty-content-thinking-mode-probe-v1-decision.md)；含 turn/call 定位符的两份运行 manifest 留在本地受控资产中。
+后续 Thinking 模式探针已按精确指纹 `7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498` 完成 `4/4`：high 与 disabled 均为 `2/2 valid`，high 未复现空内容，Thinking 主要影响因素未确认。完整脱敏数据见 [结果 JSON](./gi088-empty-content-response-format-probe-v1-result.json)，本探针运行计划见 [探针 manifest](./gi088-empty-content-response-format-probe-v1-manifest.json)，下一轮见 [Thinking 模式探针 manifest](./gi088-empty-content-thinking-mode-probe-v1-manifest.json)与[Thinking 探针裁决](./gi088-empty-content-thinking-mode-probe-v1-decision.md)。

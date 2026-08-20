@@ -37,12 +37,12 @@
 - Effective candidate 指纹：`58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884`。
 - 数据集指纹：`73be5280bfcd5626fbec2fe743c5d7d6b03221df6107b8d20ebfacc91d2c50d1`。
 - 当前执行指纹：`3bea0a9e01205a8a2cf6723b35cffc4272cf44da5cee077d0c0609fee45d4113`。
-- 历史 formal batch Preview 部署：`redacted-deployment-id`；当时访问地址为 `https://xingfuxitong-34pbcz5so-example-team.vercel.app/preview/gi088-evaluation`。
+- 历史 formal batch Preview 部署：`dpl_EhDcw5vVpHbLzAPFQp9wXJ2aNCiW`；当时访问地址为 `https://xingfuxitong-34pbcz5so-zouzhijies-projects.vercel.app/preview/gi088-evaluation`。
 - 隔离验收：应用登录、session、A1 关闭组程序保护状态读回与 Production page／session／smoke `404` 均通过；当前作用域为 `batch`。
 - 当时运行检查点：A1 关闭组首轮正式调用 `1` 次并触发 `ASK_QUESTION_COUNT_INVALID:2`；页面恢复部署新增模型调用 `0`。
 - 历史冒烟：v0.3 off `valid`，v0.3 high `EMPTY_CONTENT`，v0.4 high 因 `burdenSignal` 无信号对象和空证据被严格 Schema 拦截；三条记录继续保留。
-- v0.5 冒烟：off 请求 `redacted-operational-id` 为 `valid`；high 请求 `redacted-operational-id` 为 `valid`。累计技术冒烟 DeepSeek 调用 `5`，其中 v0.5 调用 `2`；正式真人评测调用 `1`。
-- 数据审计：v0.4 空批次 `redacted-operational-id` 经核验为 `0` 消息、`0` 回合、revision `0`，定向删除 `1` 条；冒烟记录完整保留。
+- v0.5 冒烟：off 请求 `b1389fce-5488-45ac-b300-f6ce3c52f132` 为 `valid`；high 请求 `bb756d3c-af07-4072-9bb5-8e88209a2167` 为 `valid`。累计技术冒烟 DeepSeek 调用 `5`，其中 v0.5 调用 `2`；正式真人评测调用 `1`。
+- 数据审计：v0.4 空批次 `a12756bb-024a-4135-b727-ac13db13a1db` 经核验为 `0` 消息、`0` 回合、revision `0`，定向删除 `1` 条；冒烟记录完整保留。
 - 技术冒烟：v0.5 off、high 已逐臂完成并封存；严格 Schema、零自动重试和失败保留继续生效。
 - 正式真人评测：v0 已停止并保留原始批次；v1 从全新 `0/12` 批次开始。
 - Production 发布、线上 Prompt、公共 API、生产数据库、配置和运行开关：继续关闭。

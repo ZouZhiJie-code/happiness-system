@@ -1,0 +1,245 @@
+{
+  "schemaVersion": "board7_codex_first8_review.v1",
+  "sourceRunsPath": "artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-runs.json",
+  "sourceConfirmationPath": "artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v3.json",
+  "qualityCalibrationVersion": "2026-07-30.v3",
+  "reviewedAt": "2026-07-30T10:34:52-04:00",
+  "reviewedBy": "codex",
+  "scope": "Strict12 前 8 条：4 ask + 4 user_articulated",
+  "borderlineCountsAsPass": false,
+  "reviewOrder": [
+    "action_and_origin",
+    "thinking_intent",
+    "question_value_and_answerability",
+    "repetition_and_burden",
+    "user_outcome_fidelity",
+    "naturalness"
+  ],
+  "summary": {
+    "total": 8,
+    "technicalComplete": 8,
+    "passed": 1,
+    "borderline": 2,
+    "failed": 5,
+    "effectivePassed": 1,
+    "effectivePassRate": 0.125,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "borderline": 1,
+        "failed": 3
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 1,
+        "borderline": 1,
+        "failed": 2
+      }
+    },
+    "gateState": "failed"
+  },
+  "crossCaseFindings": [
+    {
+      "type": "thinking_intent_not_rendered",
+      "caseIds": ["SMK-T-ASK", "SMK-R-PARTIAL-ASK"],
+      "finding": "两条思路摘要退化为不完整或过泛的事实碎片，用户无法从思路层看见为什么要问后续问题。"
+    },
+    {
+      "type": "partial_answer_reasked_without_easier_entry",
+      "caseIds": ["SMK-F-PARTIAL-ASK", "SMK-R-PARTIAL-ASK"],
+      "finding": "用户已经明确说不清后，问题仍沿原抽象问法或原二选一重问，回答负担没有降低。"
+    },
+    {
+      "type": "user_outcome_strengthened",
+      "caseIds": ["SMK-F-CLOSED", "SMK-A-CLOSED"],
+      "finding": "用户成果的核心证据得到保留，但回应又加入新的感受标签或功能解释，超出忠实整理边界。"
+    }
+  ],
+  "singleRuns": [
+    {
+      "runId": "SMK-F-PARTIAL-ASK-R1",
+      "caseId": "SMK-F-PARTIAL-ASK",
+      "expected": { "action": "ask", "origin": null },
+      "actual": { "action": "ask", "origin": null },
+      "visibleTurn": {
+        "thinkingSummary": "你说了轻松来自不用再改，而空的那部分胸口往下沉。这里先沿着后者，看胸口下沉的空落对应项目结束的哪一部分。",
+        "response": "胸口往下沉的那部分空，对应项目结束的哪一部分？"
+      },
+      "verdict": "borderline",
+      "primaryReason": "answer_burden",
+      "secondaryReason": "repetition",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "thinkingIntent": "pass",
+        "questionValue": "pass",
+        "answerability": "borderline",
+        "repetition": "borderline",
+        "naturalness": "pass"
+      },
+      "reason": "动作与缺口正确，思路也说明当前只沿空落继续。用户刚明确说空的部分说不清，后续问题仍用‘对应哪一部分’的抽象形式重问，只缩小了范围，没有提供更容易回答的新入口。",
+      "rootCause": "partial_answer_reasked_without_easier_entry",
+      "resolution": "边缘按未通过，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "caseId": "SMK-T-ASK",
+      "expected": { "action": "ask", "origin": null },
+      "actual": { "action": "ask", "origin": null },
+      "visibleTurn": {
+        "thinkingSummary": "你提到“提案的”。这一点关系到你说清开头太绕具体破坏了哪条专业判断标准。",
+        "response": "开头那句‘太绕’，具体破坏了专业提案的哪条标准？"
+      },
+      "verdict": "fail",
+      "primaryReason": "thinking_intent",
+      "secondaryReason": "naturalness",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "thinkingIntent": "fail",
+        "questionValue": "pass",
+        "answerability": "pass",
+        "repetition": "pass",
+        "naturalness": "fail"
+      },
+      "reason": "问题准确追问专业判断标准，方向和负担都合格。思路开头只剩‘提案的’这一残片，既不构成自然理解，也没有展示模型如何从用户本轮回答更新判断，破坏了双层展示体验。",
+      "rootCause": "broken_summary_recovery_anchor",
+      "resolution": "失败，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "caseId": "SMK-R-PARTIAL-ASK",
+      "expected": { "action": "ask", "origin": null },
+      "actual": { "action": "ask", "origin": null },
+      "visibleTurn": {
+        "thinkingSummary": "你提到“室友”。这一点关系到你明确进入房间或移动桌上物品中哪一步更希望被询问。",
+        "response": "是室友直接开你房门，还是他把包裹放到书桌上，哪一步更让你觉得应该先问过你？"
+      },
+      "verdict": "fail",
+      "primaryReason": "repetition",
+      "secondaryReason": "answer_burden",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "thinkingIntent": "fail",
+        "questionValue": "borderline",
+        "answerability": "fail",
+        "repetition": "fail",
+        "naturalness": "borderline"
+      },
+      "reason": "用户刚说自己分不清进入房间和移动物品哪一点更介意，回应又把同两项组成二选一，回答入口没有变化。思路只抓到‘室友’这一泛化主体，也没有说明本轮新信息怎样改变理解。",
+      "rootCause": "repeated_forced_choice",
+      "resolution": "失败，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-A-PARTIAL-ASK-R1",
+      "caseId": "SMK-A-PARTIAL-ASK",
+      "expected": { "action": "ask", "origin": null },
+      "actual": { "action": "ask", "origin": null },
+      "visibleTurn": {
+        "thinkingSummary": "你提到每列一版都让准备更完整，但正文第一行始终没动。这一点关系到提纲具体替代了正文开始时的哪一步。",
+        "response": "如果直接开始写正文，你通常会先做什么？"
+      },
+      "verdict": "fail",
+      "primaryReason": "target_selection",
+      "secondaryReason": "context_scope",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "thinkingIntent": "pass",
+        "questionValue": "fail",
+        "answerability": "pass",
+        "repetition": "pass",
+        "naturalness": "pass"
+      },
+      "reason": "思路准确指出当前事件只缺提纲替代正文开始的哪一步，正式问题却转向‘通常会先做什么’。用户回答后更可能得到一般写作流程，无法确认这次申请材料里实际被替代的动作，问题偏离已选目标。",
+      "rootCause": "target_shift_to_generic_hypothetical",
+      "resolution": "失败，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-F-CLOSED-R1",
+      "caseId": "SMK-F-CLOSED",
+      "expected": { "action": "complete", "origin": "user_articulated" },
+      "actual": { "action": "complete", "origin": "user_articulated" },
+      "visibleTurn": {
+        "thinkingSummary": null,
+        "response": "看到录用通知时，你先笑了，读到下周一入职时胸口才紧了一下。高兴和紧张分别对应通知的不同部分。"
+      },
+      "verdict": "fail",
+      "primaryReason": "user_outcome_strengthening",
+      "secondaryReason": "source_mixing",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "userOutcomeFidelity": "fail",
+        "strengthening": "fail",
+        "naturalness": "pass"
+      },
+      "reason": "前两句事实顺序忠实。用户只说胸口紧了一下，回应将其命名为‘紧张’，并进一步形成两种感受分别对应不同部分的解释。该新增标签与关系超出 user_articulated 的忠实整理范围。",
+      "rootCause": "user_outcome_strengthened_by_ai_synthesis",
+      "resolution": "失败，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "caseId": "SMK-T-USER",
+      "expected": { "action": "complete", "origin": "user_articulated" },
+      "actual": { "action": "complete", "origin": "user_articulated" },
+      "visibleTurn": {
+        "thinkingSummary": null,
+        "response": "你一直把‘马上回复’当成负责的唯一证明，即使事情按时做完，晚回半小时仍然让你觉得自己不负责。"
+      },
+      "verdict": "pass",
+      "primaryReason": null,
+      "secondaryReason": null,
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "userOutcomeFidelity": "pass",
+        "strengthening": "pass",
+        "naturalness": "pass"
+      },
+      "reason": "回应忠实保留‘马上回复是负责的唯一证明’以及‘按时完成仍被该标准排除’，没有评价标准、补写替代解释或添加空泛收益。",
+      "rootCause": null,
+      "resolution": null
+    },
+    {
+      "runId": "SMK-R-CLOSED-R1",
+      "caseId": "SMK-R-CLOSED",
+      "expected": { "action": "complete", "origin": "user_articulated" },
+      "actual": { "action": "complete", "origin": "user_articulated" },
+      "visibleTurn": {
+        "thinkingSummary": null,
+        "response": "你最先停住的是同事把我和丽莎写在同一句里——不是没提前确认，而是那种并列的写法让你更在意。"
+      },
+      "verdict": "fail",
+      "primaryReason": "coexisting_evidence_erased",
+      "secondaryReason": "naturalness",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "userOutcomeFidelity": "fail",
+        "strengthening": "borderline",
+        "naturalness": "fail"
+      },
+      "reason": "用户明确说未提前确认也介意，只是并列写法更先、更强。回应用‘不是……而是……’改成排他关系，抹掉同时成立的另一条线索；‘把我和丽莎’也把用户第一人称直接带进 AI 口吻。",
+      "rootCause": "coexisting_evidence_erased",
+      "resolution": "失败，等待用户裁决。"
+    },
+    {
+      "runId": "SMK-A-CLOSED-R1",
+      "caseId": "SMK-A-CLOSED",
+      "expected": { "action": "pause", "origin": "user_articulated" },
+      "actual": { "action": "pause", "origin": "user_articulated" },
+      "visibleTurn": {
+        "thinkingSummary": null,
+        "response": "整理看板带来事情正在推进的感觉，但投诉到下班仍未打开。整理的功能是获得推进感，而不是处理投诉。"
+      },
+      "verdict": "borderline",
+      "primaryReason": "user_outcome_strengthening",
+      "secondaryReason": "action_function_inference",
+      "dimensions": {
+        "actionAndOrigin": "pass",
+        "userOutcomeFidelity": "borderline",
+        "strengthening": "borderline",
+        "naturalness": "pass"
+      },
+      "reason": "第一句完整撤回旧理解，并忠实保留推进感与投诉未打开。第二句把用户说出的体验改写成‘整理的功能’，从实际效果推进到功能解释；在 user_articulated 成果里存在轻度加强。",
+      "rootCause": "effect_reframed_as_function",
+      "resolution": "边缘按未通过，等待用户裁决。"
+    }
+  ]
+}

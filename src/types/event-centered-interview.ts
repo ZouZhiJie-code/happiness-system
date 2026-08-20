@@ -13,6 +13,8 @@ export interface JournalEventIdentity {
 
 export interface EventCenteredSessionIdentity {
   mode: "event_centered";
+  /** 记录方式用于访谈顶部上下文；历史会话缺省按陪我聊兼容。 */
+  recordMode?: "capture" | "chat" | null;
   rootSessionId: string;
   activeBranchSessionId: string;
   eventId: string | null;
@@ -136,6 +138,31 @@ export interface EventCenteredSessionTabRecord {
   rootSessionId: string;
   label: string;
   status: "active" | "completed" | "generating" | "abandoned";
+}
+
+export type EventCenteredSessionLifecycle =
+  | "blank"
+  | "unfinished"
+  | "completed"
+  | "abandoned";
+
+export interface EventCenteredSessionListItem {
+  rootSessionId: string;
+  entryDate: string;
+  recordMode: "capture" | "chat";
+  title: string;
+  startedAt: string;
+  lastActivityAt: string;
+  lifecycle: EventCenteredSessionLifecycle;
+  hasUserMessage: boolean;
+  readOnly: boolean;
+}
+
+export interface EventCenteredSessionListView {
+  items: EventCenteredSessionListItem[];
+  unfinishedCount: number;
+  unfinishedLimit: 2;
+  nextCursor: string | null;
 }
 
 export interface EventCenteredWorkspacePendingTurn extends EventCenteredTurnConfirmation {

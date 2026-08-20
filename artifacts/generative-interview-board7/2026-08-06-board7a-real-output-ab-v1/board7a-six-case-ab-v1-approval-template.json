@@ -1,0 +1,21 @@
+{
+  "approvalType": "board7a_real_output_ab_v1",
+  "approvalVersion": "2026-08-06.board7a-real-output-ab-approval-v1",
+  "decision": "pending",
+  "approvedBy": "product_owner",
+  "approvedAt": "",
+  "confirmationText": "",
+  "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+  "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+  "caseIds": [
+    "H1",
+    "H2",
+    "H3",
+    "T1",
+    "T2",
+    "T3"
+  ],
+  "model": "deepseek-v4-flash",
+  "nominalGenerationRequests": 18,
+  "technicalRetriesMax": 3
+}

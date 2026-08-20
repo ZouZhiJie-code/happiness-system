@@ -5,6 +5,7 @@ import {
   isAuthenticationRequiredError,
   requireCurrentUserFromRequest
 } from "@/server/services/auth/current-user.service";
+import { readJournalPreviewRequest } from "@/server/services/journal-preview/request";
 import { generateJournalEventEntry } from "@/server/services/interview/journal-event-entry.service";
 
 function statusFor(code: string) {
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
+    if (readJournalPreviewRequest(request)) {
+      return NextResponse.json({ error: "JOURNAL_PREVIEW_MODEL_CALL_DISABLED" }, { status: 409 });
+    }
     const result = await generateJournalEventEntry({
       userId: user.id,
       ...parsed.data,

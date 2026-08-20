@@ -1,0 +1,67 @@
+{
+  "ledgerVersion": "board7-provider-v31-repair-probe-budget-v1",
+  "datasetVersion": "2026-08-01.board7-provider-v31-repair-probe-v1",
+  "caseFingerprint": "dace7ba2a3847246749a1d5f4e05a724654a791ecc8cc6807f40f2889fad9e47",
+  "runLimit": 1,
+  "entries": [
+    {
+      "reservationId": "056d21bd-c880-46e2-b2d3-1447443ba6f1",
+      "candidateVersions": {
+        "prompt": "two_call:2026-08-01.event-centered-generative-v69-understanding-card+2026-08-01.event-centered-generative-v69-visible",
+        "strategy": "5.48.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-08-01.v27",
+        "semanticArtifact": "event-centered-semantic-plan.v3",
+        "repairProbe": "provider-v3.1-repair-probe-v1"
+      },
+      "reservedAt": "2026-08-01T10:11:59.593Z",
+      "completedAt": "2026-08-01T10:12:24.088Z",
+      "status": "completed",
+      "runEnvelopeFingerprint": "b239a2032dc7ed7ef70f20b1e76c7d8d2d6440f0b6aef7f7e585c64a70d0f4fe",
+      "error": null,
+      "gateAudit": {
+        "auditedAt": "2026-08-01T10:12:24.090Z",
+        "runEnvelopeFingerprint": "b239a2032dc7ed7ef70f20b1e76c7d8d2d6440f0b6aef7f7e585c64a70d0f4fe",
+        "semanticPassed": 0,
+        "visiblePassed": 0,
+        "severeErrors": 0,
+        "failureReasons": [
+          "ask_stop_timing",
+          "technical:TIMEOUT"
+        ],
+        "decision": "stop"
+      },
+      "recoveryAudit": {
+        "recoveryVersion": "board7-provider-v31-repair-probe-recovery-v1",
+        "recoveryId": "5a486a15-8f20-40bb-be61-27eae67f4c49",
+        "sourceReservationId": "056d21bd-c880-46e2-b2d3-1447443ba6f1",
+        "sourceEnvelopeFingerprint": "b239a2032dc7ed7ef70f20b1e76c7d8d2d6440f0b6aef7f7e585c64a70d0f4fe",
+        "sourceFailedRunFingerprint": "fc44ee05a35a4f58f2aaba65265d644fb476c5dc866aece121f330eda8da7f6f",
+        "candidateVersions": {
+          "prompt": "two_call:2026-08-01.event-centered-generative-v70-understanding-card+2026-08-01.event-centered-generative-v69-visible",
+          "strategy": "5.48.0",
+          "angleCard": "2.12.0",
+          "fewShot": "quality-patterns.2026-08-01.v27",
+          "semanticArtifact": "event-centered-semantic-plan.v3",
+          "repairProbe": "provider-v3.1-repair-probe-v1"
+        },
+        "recoveredCaseIds": [
+          "V31-RP-R-VOICE-01"
+        ],
+        "preservedRunIds": [
+          "V31-RP-T-ENTRY-01-R1"
+        ],
+        "reservedAt": "2026-08-01T10:39:11.053Z",
+        "completedAt": "2026-08-01T10:39:17.594Z",
+        "reviewedAt": "2026-08-01T10:42:24.968Z",
+        "status": "completed",
+        "recoveredRunFingerprint": "456de6207a212e42c91811902af346704f2bdb0ca4ebad0959a926a393419758",
+        "recoveryEnvelopeFingerprint": "c74872ec076267bbc0d30917d7aa6795008b3a32dd20983c4321ec91eea4e7c8",
+        "technicalComplete": false,
+        "attempts": 3,
+        "error": null,
+        "gateDecision": "stop"
+      }
+    }
+  ]
+}

@@ -2,10 +2,17 @@ import {
   buildAdminAnalyticsDrilldownHref,
   buildAdminAnalyticsRangePresetHrefs,
   buildAdminAnalyticsViewHref,
+  getAdminAnalyticsFunnelLabel,
   normalizeAdminAnalyticsSearchParams
 } from "@/features/admin-analytics/view-state";
 
 describe("admin analytics view state", () => {
+  it("labels the current product funnel in user-facing language", () => {
+    expect(getAdminAnalyticsFunnelLabel("openedDay")).toBe("打开当天记录");
+    expect(getAdminAnalyticsFunnelLabel("eventCardSaved")).toBe("保存事件卡");
+    expect(getAdminAnalyticsFunnelLabel("dailyJournalSaved")).toBe("保存今日日记");
+  });
+
   it("defaults to review with dynamic last-30-day range", () => {
     const result = normalizeAdminAnalyticsSearchParams({}, "2026-05-21");
 

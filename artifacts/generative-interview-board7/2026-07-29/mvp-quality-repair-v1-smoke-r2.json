@@ -1,0 +1,545 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": {
+    "model": "deepseek-v4-flash",
+    "currency": "USD",
+    "inputPerMillion": 0.14,
+    "cacheHitInputPerMillion": 0.0028,
+    "outputPerMillion": 0.28,
+    "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+    "effectiveDate": "2026-07-29"
+  },
+  "singleRuns": [
+    {
+      "runId": "AB-FG-01-R1",
+      "caseId": "AB-FG-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。"
+        },
+        "angleOutcome": {
+          "angle": "feeling",
+          "kind": "insight",
+          "statement": "你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "想法",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：想法 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "evidenceUsed": [
+        "AB-FG-01-fact-2",
+        "AB-FG-01-fact-3",
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "看见身体放松与猫恢复正常行为之间的连接",
+      "stopReason": "用户已经清晰描述了身体从紧绷到放松的完整过程，形成了超出原话复述的认识增量：身体放松依赖于猫恢复正常行为的信号。",
+      "latencyMs": 5215,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 1127,
+          "tokenUsage": {
+            "promptTokens": 1963,
+            "completionTokens": 568,
+            "totalTokens": 2531,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 43
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"门一开我就把它抱住了，可手还一直攥着\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"门一开我就把它抱住了，可手还一直攥着\"\n      },\n      {\n        \"statement\": \"直到听见它像平时一样咔嚓咔嚓吃猫粮，我才坐到地上，整个人软下来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"直到听见它像平时一样咔嚓咔嚓吃猫粮，我才坐到地上，整个人软下来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户描述了从抱住猫时手仍攥着，到听见猫正常吃猫粮后身体才软下来的完整变化，形成了身体放松与猫恢复正常行为之间的连接。\",\n      \"supportEvidenceRefs\": [\"AB-FG-01-fact-2\", \"AB-FG-01-fact-3\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-FG-01-fact-2\", \"AB-FG-01-fact-3\", \"new:1\", \"new:2\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见身体放松与猫恢复正常行为之间的连接\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已经清晰描述了身体从紧绷到放松的完整过程，形成了超出原话复述的认识增量：身体放松依赖于猫恢复正常行为的信号。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"你抱住猫时手还攥着，直到听见它像平时一样吃猫粮，身体才真正软下来——身体的放松不是靠抱住它，而是靠听见它恢复了正常行为。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5215,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 1963,
+          "completionTokens": 568,
+          "totalTokens": 2531,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 43
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00017043600000000005
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [
+        "visible_turn_must_not_erase_coexisting_evidence"
+      ],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "5ea2b7b94dca13ebcc6f9d8da629355ca70e232b49f60310f03869b353767f13"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:ready",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-TD-01-R1",
+      "caseId": "AB-TD-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。"
+        },
+        "angleOutcome": {
+          "angle": "thought",
+          "kind": "insight",
+          "statement": "你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "关系",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 关系 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "evidenceUsed": [
+        "AB-TD-01-fact-1",
+        "AB-TD-01-fact-2",
+        "AB-TD-01-fact-3",
+        "AB-TD-01-fact-4",
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "用户已区分坏结果与坏决定，并确认选择依据，形成认识进展",
+      "stopReason": "用户主动区分坏结果与坏决定，并说明选择依据，形成有证据的认识进展",
+      "latencyMs": 5086,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 289,
+          "tokenUsage": {
+            "promptTokens": 2026,
+            "completionTokens": 615,
+            "totalTokens": 2641,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 106
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户查回去才发现这趟车过去一个月九成准点\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我查回去才发现这趟车过去一个月九成准点\"\n      },\n      {\n        \"statement\": \"当时选它其实有依据\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"当时选它其实有依据\"\n      },\n      {\n        \"statement\": \"当天晚点是坏结果，不等于当时做了一个坏决定\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"当天晚点是坏结果，可不等于我当时做了一个坏决定\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户主动区分坏结果与坏决定，并说明选择依据，形成有证据的认识进展\",\n      \"supportEvidenceRefs\": [\"AB-TD-01-fact-1\", \"AB-TD-01-fact-2\", \"AB-TD-01-fact-3\", \"AB-TD-01-fact-4\", \"new:1\", \"new:2\", \"new:3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-TD-01-fact-1\", \"AB-TD-01-fact-2\", \"AB-TD-01-fact-3\", \"AB-TD-01-fact-4\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分坏结果与坏决定，并确认选择依据，形成认识进展\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"你区分了坏结果和坏决定：当时依据九成准点率选择是合理的，晚点是结果而非判断错误。这个区分让你能更准确地评估自己的决策质量。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5086,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2026,
+          "completionTokens": 615,
+          "totalTokens": 2641,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 106
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00019241600000000002
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "89ee45493d423e5ba9eb33189e4855a3320bf4edd6d8d6e88a983c015d793312"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:ready",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-RG-01-R1",
+      "caseId": "AB-RG-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。"
+        },
+        "angleOutcome": {
+          "angle": "relationship",
+          "kind": "insight",
+          "statement": "你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "行动"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 行动\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "complete",
+      "evidenceUsed": [
+        "AB-RG-01-fact-1",
+        "AB-RG-01-fact-2",
+        "AB-RG-01-fact-3",
+        "new:1",
+        "new:2",
+        "new:3",
+        "new:4"
+      ],
+      "expectedQuestionValue": "用户已形成认识：帮助与不舒服同时存在，核心落差在于朋友未经询问披露私事，侵犯了用户对个人信息的控制权，这与用户对关系互惠的期待相冲突。",
+      "stopReason": "用户已清晰表达互动与期待的落差，形成聚焦用户的关系认识增量，符合引导复盘完成条件。",
+      "latencyMs": 5460,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 273,
+          "tokenUsage": {
+            "promptTokens": 1997,
+            "completionTokens": 699,
+            "totalTokens": 2696,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 77
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"前辈后来真的给了用户几个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那个前辈后来真的给了我几个机会\"\n      },\n      {\n        \"statement\": \"朋友开口就说用户刚被裁\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"朋友开口就说我刚被裁\"\n      },\n      {\n        \"statement\": \"用户希望朋友先问自己能不能讲\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我希望他至少先问我能不能讲\"\n      },\n      {\n        \"statement\": \"用户认为这件事应由自己决定怎么说\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"这件事应该由我决定怎么说\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户已明确说出帮助与不舒服的具体细节，并表达了对自己披露权的期待，形成了互动与期待落差的认识增量。\",\n      \"supportEvidenceRefs\": [\"AB-RG-01-fact-1\", \"AB-RG-01-fact-2\", \"AB-RG-01-fact-3\", \"new:1\", \"new:2\", \"new:3\", \"new:4\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-RG-01-fact-1\", \"AB-RG-01-fact-2\", \"AB-RG-01-fact-3\", \"new:1\", \"new:2\", \"new:3\", \"new:4\"],\n    \"insightKind\": \"meaning\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已形成认识：帮助与不舒服同时存在，核心落差在于朋友未经询问披露私事，侵犯了用户对个人信息的控制权，这与用户对关系互惠的期待相冲突。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已清晰表达互动与期待的落差，形成聚焦用户的关系认识增量，符合引导复盘完成条件。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"你既感谢朋友带来的实际机会，又在意他未经询问就说出你刚失业的事——你希望由自己决定如何披露私事。这份不舒服不是不领情，而是期待在关系里保留对自己信息的控制权。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5460,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 1997,
+          "completionTokens": 699,
+          "totalTokens": 2696,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 77
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00021187600000000003
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [
+        "visible_turn_must_not_erase_coexisting_evidence"
+      ],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "d7f6aa6cf3532a842032a40d57d88b42c372981ad54e92c279bd37f6d5bebc11"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:ready",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "AB-AD-01-R1",
+      "caseId": "AB-AD-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "evidenceUsed": [
+        "AB-AD-01-fact-1",
+        "AB-AD-01-fact-2",
+        "AB-AD-01-fact-3",
+        "AB-AD-01-fact-4"
+      ],
+      "expectedQuestionValue": "用户通过记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了保护秩序与自我表达之间的取舍。",
+      "stopReason": "用户明确表达了记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。",
+      "latencyMs": 4124,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 281,
+          "tokenUsage": {
+            "promptTokens": 2003,
+            "completionTokens": 627,
+            "totalTokens": 2630,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 83
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把每个人的话整理成清单\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把每个人的话都记成清单\"\n      },\n      {\n        \"statement\": \"记笔记后讨论不再互相抢话\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"大家确实不再抢着说\"\n      },\n      {\n        \"statement\": \"用户借记笔记没有表达自己的反对意见\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"记笔记也让我有理由一直不说自己不同意\"\n      },\n      {\n        \"statement\": \"最终无人知道用户立场\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最后清单很完整，却没人知道我的立场\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"ready\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确表达了记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了取舍。\",\n      \"supportEvidenceRefs\": [\"AB-AD-01-fact-1\", \"AB-AD-01-fact-2\", \"AB-AD-01-fact-3\", \"AB-AD-01-fact-4\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"AB-AD-01-fact-1\", \"AB-AD-01-fact-2\", \"AB-AD-01-fact-3\", \"AB-AD-01-fact-4\"],\n    \"insightKind\": \"tension\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户通过记笔记保护了讨论秩序，但代价是隐藏了自己的反对意见，形成了保护秩序与自我表达之间的取舍。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"你通过记笔记保护了讨论的秩序，但代价是隐藏了自己的反对意见——你保护了秩序，却失去了表达立场的机会。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4124,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2003,
+          "completionTokens": 627,
+          "totalTokens": 2630,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 83
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00019255600000000003
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v57",
+          "resolvedPromptHash": "ea278c3704b8f315ec6b53674f0743a0693ee2b9b10cf0fcdadf614e19a60307"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.41.0",
+        "angleCard": "2.8.0",
+        "fewShot": "quality-patterns.2026-07-29.v20",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:ready",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

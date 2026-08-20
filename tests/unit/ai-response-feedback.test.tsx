@@ -18,6 +18,7 @@ const journalTags = {
 describe("AIResponseFeedback", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -101,5 +102,27 @@ describe("AIResponseFeedback", () => {
 
     await waitFor(() => expect(screen.getByRole("button", { name: "赞" })).toHaveAttribute("aria-pressed", "false"));
     expect(global.fetch).toHaveBeenCalledWith("/api/ai-feedback/trace-existing", { method: "DELETE" });
+  });
+
+  it("在本地视觉模式切换赞踩，全程不访问反馈接口", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AIResponseFeedback traceId="visual-trace" mode="local" />);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const upvote = screen.getByRole("button", { name: "赞" });
+    const downvote = screen.getByRole("button", { name: "踩" });
+    fireEvent.click(upvote);
+    expect(upvote).toHaveAttribute("aria-pressed", "true");
+    expect(downvote).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(downvote);
+    expect(upvote).toHaveAttribute("aria-pressed", "false");
+    expect(downvote).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(downvote);
+    expect(downvote).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: "提交反馈" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

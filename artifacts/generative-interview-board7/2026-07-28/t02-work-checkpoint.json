@@ -1,0 +1,576 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T02",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "checkpoint_two",
+    "activeAngle": null,
+    "lastCompletedAngle": "feeling",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [
+          "兴奋与惊醒的触发连接",
+          "兴奋与惊醒的并列关系",
+          "惊醒与声音的具体触发"
+        ],
+        "askedTargets": [
+          "兴奋与惊醒的触发连接",
+          "兴奋与惊醒的并列关系",
+          "惊醒与声音的具体触发"
+        ],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.2.0",
+    "currentMicrogoal": {
+      "id": "microgoal:feeling:兴奋与惊醒的触发连接",
+      "angle": "feeling",
+      "statement": "把惊醒状态与具体声音触发连接起来",
+      "questionCount": 3,
+      "status": "completed",
+      "evidenceRefs": [
+        "T02-fact-1",
+        "T02-fact-2",
+        "T02-fact-3",
+        "T02-fact-4"
+      ]
+    }
+  },
+  "facts": [
+    {
+      "id": "T02-fact-1",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "终于一个人住了，我很兴奋",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-1",
+          "factId": "T02-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "终于一个人住了，我很兴奋",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-2",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "昨晚每个声音都让我立刻醒过来",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-2",
+          "factId": "T02-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "昨晚每个声音都让我立刻醒过来",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-3",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "兴奋归兴奋，一听见声音还是会醒",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-3",
+          "factId": "T02-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "兴奋归兴奋，一听见声音还是会醒",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-4",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-4",
+      "createdByRevisionId": null,
+      "statement": "我更留意被声音打断的感觉",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_preference",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-4",
+          "factId": "T02-fact-4",
+          "sourceTurnId": "evaluation-turn-4",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-4",
+          "role": "direct_expression",
+          "quote": "我更留意被声音打断的感觉",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-5",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-5",
+      "createdByRevisionId": null,
+      "statement": "兴奋本身不会让我醒",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-5",
+          "factId": "T02-fact-5",
+          "sourceTurnId": "evaluation-turn-5",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-5",
+          "role": "direct_expression",
+          "quote": "兴奋本身不会让我醒",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-6",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-6",
+      "createdByRevisionId": null,
+      "statement": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-6",
+          "factId": "T02-fact-6",
+          "sourceTurnId": "evaluation-turn-6",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-6",
+          "role": "direct_expression",
+          "quote": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T02-fact-7",
+      "eventId": "evaluation-event-T02",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-7",
+      "createdByRevisionId": null,
+      "statement": "电梯提示音一响，心跳就会加快",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T02-7",
+          "factId": "T02-fact-7",
+          "sourceTurnId": "evaluation-turn-7",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-7",
+          "role": "direct_expression",
+          "quote": "一响我心跳就会加快",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "终于一个人住了，我很兴奋，但昨晚每个声音都让我立刻醒过来。",
+      "assistantUnderstanding": "你既兴奋于独居，又被每个声音惊醒。",
+      "assistantQuestion": "那种惊醒，和你的兴奋之间有什么具体的联系吗？"
+    },
+    {
+      "user": "我也说不上来，兴奋归兴奋，一听见声音还是会醒。",
+      "assistantUnderstanding": "你感到兴奋，但一有声音就会醒，两者同时存在却似乎没有直接联系。",
+      "assistantQuestion": "这两种状态同时出现时，你更留意的是兴奋本身，还是被声音打断的感觉？"
+    },
+    {
+      "user": "我更留意被声音打断的感觉，兴奋本身不会让我醒。",
+      "assistantUnderstanding": "你更在意的是被声音打断的感觉，兴奋本身不会让你醒。",
+      "assistantQuestion": "那些声音里，有没有哪一种最让你立刻醒过来？"
+    },
+    {
+      "user": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。",
+      "assistantUnderstanding": "电梯到这一层的提示音一响，你的心跳就会加快。",
+      "assistantQuestion": null
+    }
+  ],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "终于一个人住了，我很兴奋，但昨晚每个声音都让我立刻醒过来。",
+      "visibleResponse": "你既兴奋于独居，又被每个声音惊醒。\n那种惊醒，和你的兴奋之间有什么具体的联系吗？",
+      "finalAction": "ask",
+      "selectedTarget": "兴奋与惊醒的触发连接",
+      "cognitiveAction": "connect_clues",
+      "evidenceUsed": [
+        "T02-fact-1",
+        "T02-fact-2"
+      ],
+      "factDeltas": [
+        {
+          "id": "T02-fact-1",
+          "statement": "终于一个人住了，我很兴奋",
+          "quote": "终于一个人住了，我很兴奋"
+        },
+        {
+          "id": "T02-fact-2",
+          "statement": "昨晚每个声音都让我立刻醒过来",
+          "quote": "昨晚每个声音都让我立刻醒过来"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:feeling:兴奋与惊醒的触发连接",
+        "angle": "feeling",
+        "statement": "把兴奋状态与惊醒的具体触发连接起来",
+        "questionCount": 1,
+        "status": "active",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 220,
+          "tokenUsage": {
+            "promptTokens": 2576,
+            "completionTokens": 357,
+            "totalTokens": 2933,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 656
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"终于一个人住了，我很兴奋\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"终于一个人住了，我很兴奋\"\n      },\n      {\n        \"statement\": \"昨晚每个声音都让我立刻醒过来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"昨晚每个声音都让我立刻醒过来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"兴奋与惊醒的触发连接\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"start\",\n      \"statement\": \"把兴奋状态与惊醒的具体触发连接起来\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"理解兴奋与惊醒之间的具体触发关系\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你既兴奋于独居，又被每个声音惊醒\",\n    \"question\": \"那种惊醒，和你的兴奋之间有什么具体的联系吗？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3391,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2576,
+          "completionTokens": 357,
+          "totalTokens": 2933,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 656
+        },
+        "estimatedCost": 0.00019717600000000002
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 2,
+      "rawText": "我也说不上来，兴奋归兴奋，一听见声音还是会醒。",
+      "visibleResponse": "你感到兴奋，但一有声音就会醒，两者同时存在却似乎没有直接联系。\n这两种状态同时出现时，你更留意的是兴奋本身，还是被声音打断的感觉？",
+      "finalAction": "ask",
+      "selectedTarget": "兴奋与惊醒的并列关系",
+      "cognitiveAction": "connect_clues",
+      "evidenceUsed": [
+        "T02-fact-1",
+        "T02-fact-2",
+        "T02-fact-3"
+      ],
+      "factDeltas": [
+        {
+          "id": "T02-fact-3",
+          "statement": "兴奋归兴奋，一听见声音还是会醒",
+          "quote": "兴奋归兴奋，一听见声音还是会醒"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:feeling:兴奋与惊醒的触发连接",
+        "angle": "feeling",
+        "statement": "把兴奋状态与惊醒的具体触发连接起来",
+        "questionCount": 2,
+        "status": "active",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2",
+          "T02-fact-3"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 231,
+          "tokenUsage": {
+            "promptTokens": 2762,
+            "completionTokens": 300,
+            "totalTokens": 3062,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 970
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"兴奋归兴奋，一听见声音还是会醒\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"兴奋归兴奋，一听见声音还是会醒\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"兴奋与惊醒的并列关系\",\n    \"evidenceRefs\": [\"T02-fact-1\", \"T02-fact-2\", \"new:1\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解兴奋与惊醒如何同时存在，而非因果连接\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你感到兴奋，但一有声音就会醒，两者同时存在却似乎没有直接联系。\",\n    \"question\": \"这两种状态同时出现时，你更留意的是兴奋本身，还是被声音打断的感觉？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3166,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2762,
+          "completionTokens": 300,
+          "totalTokens": 3062,
+          "promptCacheHitTokens": 1792,
+          "promptCacheMissTokens": 970
+        },
+        "estimatedCost": 0.00022481760000000003
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 3,
+      "rawText": "我更留意被声音打断的感觉，兴奋本身不会让我醒。",
+      "visibleResponse": "你更在意的是被声音打断的感觉，兴奋本身不会让你醒。\n那些声音里，有没有哪一种最让你立刻醒过来？",
+      "finalAction": "ask",
+      "selectedTarget": "惊醒与声音的具体触发",
+      "cognitiveAction": "connect_clues",
+      "evidenceUsed": [
+        "T02-fact-2",
+        "T02-fact-4"
+      ],
+      "factDeltas": [
+        {
+          "id": "T02-fact-4",
+          "statement": "我更留意被声音打断的感觉",
+          "quote": "我更留意被声音打断的感觉"
+        },
+        {
+          "id": "T02-fact-5",
+          "statement": "兴奋本身不会让我醒",
+          "quote": "兴奋本身不会让我醒"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:feeling:兴奋与惊醒的触发连接",
+        "angle": "feeling",
+        "statement": "把惊醒状态与具体声音触发连接起来",
+        "questionCount": 3,
+        "status": "active",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2",
+          "T02-fact-3",
+          "T02-fact-4"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 211,
+          "tokenUsage": {
+            "promptTokens": 2895,
+            "completionTokens": 390,
+            "totalTokens": 3285,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 1103
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"我更留意被声音打断的感觉\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_preference\",\n        \"quote\": \"我更留意被声音打断的感觉\"\n      },\n      {\n        \"statement\": \"兴奋本身不会让我醒\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"兴奋本身不会让我醒\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"声音打断与惊醒的触发连接\",\n    \"evidenceRefs\": [\"T02-fact-2\", \"new:1\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"把兴奋状态与惊醒的具体触发连接起来\",\n      \"supportEvidenceRefs\": [\"T02-fact-1\", \"T02-fact-2\", \"T02-fact-3\", \"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"理解被声音打断的感觉如何具体触发惊醒\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你更在意的是被声音打断的感觉，而不是兴奋本身让你醒\",\n    \"question\": \"那些声音具体是怎样打断你的？是突然响起，还是你一直留意着它们？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 146,
+          "tokenUsage": {
+            "promptTokens": 2914,
+            "completionTokens": 362,
+            "totalTokens": 3276,
+            "promptCacheHitTokens": 1664,
+            "promptCacheMissTokens": 1250
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"我更留意被声音打断的感觉\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_preference\",\n        \"quote\": \"我更留意被声音打断的感觉\"\n      },\n      {\n        \"statement\": \"兴奋本身不会让我醒\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"兴奋本身不会让我醒\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"惊醒与声音的具体触发\",\n    \"evidenceRefs\": [\"T02-fact-2\", \"new:1\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"把惊醒状态与具体声音触发连接起来\",\n      \"supportEvidenceRefs\": [\"T02-fact-2\", \"new:1\"]\n    },\n    \"expectedValue\": \"明确哪种声音或情境最直接触发惊醒\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你更在意的是被声音打断的感觉，兴奋本身不会让你醒。\",\n    \"question\": \"那些声音里，有没有哪一种最让你立刻醒过来？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6669,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5809,
+          "completionTokens": 752,
+          "totalTokens": 6561,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2353
+        },
+        "estimatedCost": 0.0005496568000000001
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 4,
+      "rawText": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。",
+      "visibleResponse": "电梯到这一层的提示音一响，你的心跳就会加快。\n这条线索先停在这里，你可以决定是否继续。",
+      "finalAction": "pause",
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [
+        {
+          "id": "T02-fact-6",
+          "statement": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。",
+          "quote": "最明显的是电梯到这一层时的提示音，一响我心跳就会加快。"
+        },
+        {
+          "id": "T02-fact-7",
+          "statement": "电梯提示音一响，心跳就会加快",
+          "quote": "一响我心跳就会加快"
+        }
+      ],
+      "microgoal": {
+        "id": "microgoal:feeling:兴奋与惊醒的触发连接",
+        "angle": "feeling",
+        "statement": "把惊醒状态与具体声音触发连接起来",
+        "questionCount": 3,
+        "status": "completed",
+        "evidenceRefs": [
+          "T02-fact-1",
+          "T02-fact-2",
+          "T02-fact-3",
+          "T02-fact-4"
+        ]
+      },
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 219,
+          "tokenUsage": {
+            "promptTokens": 3036,
+            "completionTokens": 388,
+            "totalTokens": 3424,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 1116
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"最明显的是电梯到这一层时的提示音，一响我心跳就会加快。\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最明显的是电梯到这一层时的提示音，一响我心跳就会加快。\"\n      },\n      {\n        \"statement\": \"电梯提示音一响，心跳就会加快\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"一响我心跳就会加快\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"complete\",\n    \"cognitiveAction\": null,\n    \"selectedTarget\": null,\n    \"evidenceRefs\": [],\n    \"microgoalDelta\": null,\n    \"expectedValue\": null,\n    \"stopReason\": \"具体触发（电梯提示音）与身体状态（心跳加快）已建立可信联系，满足最低成果。\",\n    \"outcomeCandidate\": {\n      \"angle\": \"feeling\",\n      \"statement\": \"电梯到这一层的提示音让用户心跳加快，将具体触发与身体状态连接起来。\",\n      \"supportEvidenceRefs\": [\"T02-fact-2\", \"new:1\", \"new:2\"]\n    }\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"电梯到这一层的提示音一响，你的心跳就会加快。\",\n    \"question\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3181,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 3036,
+          "completionTokens": 388,
+          "totalTokens": 3424,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 1116
+        },
+        "estimatedCost": 0.000270256
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "具体触发（电梯提示音）与身体状态（心跳加快）已建立可信联系，满足最低成果。",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

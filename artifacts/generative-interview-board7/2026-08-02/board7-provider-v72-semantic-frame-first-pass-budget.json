@@ -1,0 +1,93 @@
+{
+  "ledgerVersion": "board7-provider-v72-semantic-frame-first-pass-budget-v1",
+  "status": "aborted",
+  "scopeFingerprint": "7fdeac24757870f363bd1dc8ea5a74364478aa747ea96e24542d1c16c5dbaf38",
+  "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01",
+    "SF4-CORRECTION-READY-01",
+    "SF4-LIMITED-01"
+  ],
+  "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "maxTechnicalRetriesPerStage": 1,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "runLimit": 1,
+  "requestBudget": {
+    "plannedCases": 6,
+    "stagesPerCase": 2,
+    "nominalGenerationRequests": 12,
+    "generationRequestsMax": 24,
+    "readOnlyModelsPreflightMax": 1
+  },
+  "runPolicy": {
+    "firstPassOnly": true,
+    "continueAfterCaseTechnicalFailure": true,
+    "validLowQualityRetryAllowed": false,
+    "automaticSecondRoundAllowed": false,
+    "promptTuningAllowed": false,
+    "hiddenSetRunAllowed": false,
+    "workSetRunAllowed": false
+  },
+  "approval": {
+    "approvalType": "board7_provider_v72_semantic_frame_first_pass_run",
+    "approvalVersion": "board7-provider-v72-semantic-frame-first-pass-approval-v1",
+    "decision": "approved",
+    "approvedBy": "product_owner",
+    "approvedAt": "2026-08-02T08:32:45Z",
+    "confirmationText": "没问题，继续；确认并授权冻结六例首轮真实模型验证",
+    "taskId": "codex-board7-v72-semantic-frame-first-pass-2026-08-02",
+    "budgetVersion": "board7-provider-v72-semantic-frame-first-pass-budget-v1",
+    "scopeFingerprint": "7fdeac24757870f363bd1dc8ea5a74364478aa747ea96e24542d1c16c5dbaf38",
+    "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+    "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+    "caseIds": [
+      "SF4-F-READY-01",
+      "SF4-T-ASK-01",
+      "SF4-R-COEXIST-01",
+      "SF4-A-EFFECT-01",
+      "SF4-CORRECTION-READY-01",
+      "SF4-LIMITED-01"
+    ],
+    "candidateVersions": {
+      "strategy": "5.50.0",
+      "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+      "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+      "fewShot": "quality-patterns.2026-08-02.v29",
+      "semanticArtifact": "event-centered-semantic-plan.v5",
+      "angleCard": "2.12.0"
+    },
+    "model": "deepseek-v4-flash"
+  },
+  "reservation": {
+    "reservationId": "28499dfe-602f-4cb7-93f8-f42fcefe26e2",
+    "runOrdinal": 1,
+    "reservedAt": "2026-08-02T08:34:09.458Z",
+    "completedAt": "2026-08-02T08:34:09.459Z",
+    "status": "aborted",
+    "preflightRequests": 0,
+    "attempts": [],
+    "caseTerminals": [],
+    "executionOutcome": null,
+    "runEnvelopeFingerprint": null,
+    "error": "EVENT_CENTERED_GENERATIVE_EVAL_MODEL_MISMATCH:要求 deepseek-v4-flash，当前为 ep-20260409114701-cgfm2"
+  }
+}

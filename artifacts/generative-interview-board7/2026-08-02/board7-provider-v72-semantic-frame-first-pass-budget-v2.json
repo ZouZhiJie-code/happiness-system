@@ -1,0 +1,295 @@
+{
+  "ledgerVersion": "board7-provider-v72-semantic-frame-first-pass-budget-v2",
+  "status": "completed",
+  "scopeFingerprint": "c8a0ae419917585067db55832b117b5076af37aabc5be5c5f7ec79e89cea29a1",
+  "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01",
+    "SF4-CORRECTION-READY-01",
+    "SF4-LIMITED-01"
+  ],
+  "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "maxTechnicalRetriesPerStage": 1,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "runLimit": 1,
+  "requestBudget": {
+    "plannedCases": 6,
+    "stagesPerCase": 2,
+    "nominalGenerationRequests": 12,
+    "generationRequestsMax": 24,
+    "readOnlyModelsPreflightMax": 1
+  },
+  "runPolicy": {
+    "firstPassOnly": true,
+    "replacesInfrastructureVoidBudget": "board7-provider-v72-semantic-frame-first-pass-budget-v1",
+    "replacedBudgetProviderRequests": 0,
+    "continueAfterCaseTechnicalFailure": true,
+    "validLowQualityRetryAllowed": false,
+    "automaticSecondRoundAllowed": false,
+    "promptTuningAllowed": false,
+    "hiddenSetRunAllowed": false,
+    "workSetRunAllowed": false
+  },
+  "approval": {
+    "approvalType": "board7_provider_v72_semantic_frame_first_pass_run",
+    "approvalVersion": "board7-provider-v72-semantic-frame-first-pass-approval-v2",
+    "decision": "approved",
+    "approvedBy": "product_owner",
+    "approvedAt": "2026-08-02T08:32:45Z",
+    "confirmationText": "没问题，继续；确认并授权冻结六例首轮真实模型验证",
+    "taskId": "codex-board7-v72-semantic-frame-first-pass-2026-08-02-infrastructure-recovery",
+    "budgetVersion": "board7-provider-v72-semantic-frame-first-pass-budget-v2",
+    "scopeFingerprint": "c8a0ae419917585067db55832b117b5076af37aabc5be5c5f7ec79e89cea29a1",
+    "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+    "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+    "caseIds": [
+      "SF4-F-READY-01",
+      "SF4-T-ASK-01",
+      "SF4-R-COEXIST-01",
+      "SF4-A-EFFECT-01",
+      "SF4-CORRECTION-READY-01",
+      "SF4-LIMITED-01"
+    ],
+    "candidateVersions": {
+      "strategy": "5.50.0",
+      "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+      "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+      "fewShot": "quality-patterns.2026-08-02.v29",
+      "semanticArtifact": "event-centered-semantic-plan.v5",
+      "angleCard": "2.12.0"
+    },
+    "model": "deepseek-v4-flash"
+  },
+  "reservation": {
+    "reservationId": "59668cb4-2996-48ec-8b7b-69f6b839c678",
+    "runOrdinal": 1,
+    "reservedAt": "2026-08-02T08:37:40.299Z",
+    "completedAt": "2026-08-02T08:38:08.050Z",
+    "status": "completed",
+    "preflightRequests": 1,
+    "attempts": [
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:37:41.255Z",
+        "settledAt": "2026-08-02T08:37:44.192Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:44.207Z",
+        "settledAt": "2026-08-02T08:37:44.485Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:44.489Z",
+        "settledAt": "2026-08-02T08:37:44.771Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:37:44.777Z",
+        "settledAt": "2026-08-02T08:37:48.144Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:48.147Z",
+        "settledAt": "2026-08-02T08:37:48.487Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:48.490Z",
+        "settledAt": "2026-08-02T08:37:48.765Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:37:48.768Z",
+        "settledAt": "2026-08-02T08:37:52.394Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:52.397Z",
+        "settledAt": "2026-08-02T08:37:53.087Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:53.091Z",
+        "settledAt": "2026-08-02T08:37:53.379Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:37:53.385Z",
+        "settledAt": "2026-08-02T08:37:57.731Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:57.734Z",
+        "settledAt": "2026-08-02T08:37:58.790Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:37:58.791Z",
+        "settledAt": "2026-08-02T08:37:59.463Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-CORRECTION-READY-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:37:59.466Z",
+        "settledAt": "2026-08-02T08:38:03.562Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-CORRECTION-READY-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:38:03.564Z",
+        "settledAt": "2026-08-02T08:38:04.231Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-CORRECTION-READY-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:38:04.235Z",
+        "settledAt": "2026-08-02T08:38:04.508Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-LIMITED-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T08:38:04.513Z",
+        "settledAt": "2026-08-02T08:38:07.464Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-LIMITED-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:38:07.466Z",
+        "settledAt": "2026-08-02T08:38:07.759Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-LIMITED-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T08:38:07.761Z",
+        "settledAt": "2026-08-02T08:38:08.047Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      }
+    ],
+    "caseTerminals": [
+      {
+        "caseId": "SF4-F-READY-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:37:44.773Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:37:48.766Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:37:53.381Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:37:59.464Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-CORRECTION-READY-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:38:04.509Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      },
+      {
+        "caseId": "SF4-LIMITED-01",
+        "status": "visible_failed",
+        "completedAt": "2026-08-02T08:38:08.048Z",
+        "errorCode": "INVALID_REQUEST_ERROR"
+      }
+    ],
+    "executionOutcome": "technical_failed",
+    "runEnvelopeFingerprint": "1fd555199c92638656f40403eb8fe82863920d122c5ffe0ada88560967be9cc5",
+    "error": null
+  }
+}

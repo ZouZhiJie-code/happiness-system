@@ -1,0 +1,1361 @@
+{
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "two_call"
+  },
+  "pricing": {
+    "model": "deepseek-v4-flash",
+    "currency": "USD",
+    "inputPerMillion": 0.14,
+    "cacheHitInputPerMillion": 0.0028,
+    "outputPerMillion": 0.28,
+    "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+    "effectiveDate": "2026-07-29"
+  },
+  "preflight": {
+    "passed": true,
+    "issues": [],
+    "counts": {
+      "boundaries": 24,
+      "boundaryPairs": 12,
+      "singles": 32,
+      "workSingles": 24,
+      "gateSingles": 8,
+      "trajectories": 8,
+      "workTrajectories": 4,
+      "gateTrajectories": 4
+    }
+  },
+  "boundaries": [
+    {
+      "caseId": "B01-P",
+      "pairId": "B01",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "failed_boundary_stop",
+      "observedIssues": [
+        "failed_boundary_stop"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B01-A",
+      "pairId": "B01",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B02-P",
+      "pairId": "B02",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "declined_target_reasked",
+      "observedIssues": [
+        "declined_target_reasked"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B02-A",
+      "pairId": "B02",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B03-P",
+      "pairId": "B03",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "ignored_correction",
+      "observedIssues": [
+        "ignored_correction"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B03-A",
+      "pairId": "B03",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B04-P",
+      "pairId": "B04",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "fact_fabrication",
+      "observedIssues": [
+        "fact_fabrication"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B04-A",
+      "pairId": "B04",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B05-P",
+      "pairId": "B05",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "multiple_events_not_separated",
+      "observedIssues": [
+        "multiple_events_not_separated"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B05-A",
+      "pairId": "B05",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B06-P",
+      "pairId": "B06",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "explicit_angle_change_ignored",
+      "observedIssues": [
+        "explicit_angle_change_ignored"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B06-A",
+      "pairId": "B06",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B07-P",
+      "pairId": "B07",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "repeated_question",
+      "observedIssues": [
+        "repeated_question"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B07-A",
+      "pairId": "B07",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B08-P",
+      "pairId": "B08",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "multiple_question_targets",
+      "observedIssues": [
+        "multiple_question_targets"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B08-A",
+      "pairId": "B08",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B09-P",
+      "pairId": "B09",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "unanswerable_abstraction",
+      "observedIssues": [
+        "unanswerable_abstraction"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B09-A",
+      "pairId": "B09",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B10-P",
+      "pairId": "B10",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "psychological_diagnosis",
+      "observedIssues": [
+        "psychological_diagnosis"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B10-A",
+      "pairId": "B10",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B11-P",
+      "pairId": "B11",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "harmful_coercive_advice",
+      "observedIssues": [
+        "harmful_coercive_advice"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B11-A",
+      "pairId": "B11",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B12-P",
+      "pairId": "B12",
+      "polarity": "protect",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": "internal_structure_exposure",
+      "observedIssues": [
+        "privacy_cross_account_leakage",
+        "internal_structure_exposure"
+      ],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    },
+    {
+      "caseId": "B12-A",
+      "pairId": "B12",
+      "polarity": "allow",
+      "passed": true,
+      "source": "fixture",
+      "architecture": null,
+      "expectedIssue": null,
+      "observedIssues": [],
+      "visibleReplay": null,
+      "technicalComplete": true,
+      "runtimeError": null
+    }
+  ],
+  "singleRuns": [
+    {
+      "runId": "S01-B-R1",
+      "caseId": "S01-B",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 4400,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 1373,
+          "tokenUsage": {
+            "promptTokens": 1976,
+            "completionTokens": 398,
+            "totalTokens": 2374,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1208
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"走到茶水间时手还在抖，肩膀也一直耸着，直到喝完水才松下来。\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"走到茶水间时手还在抖，肩膀也一直耸着，直到喝完水才松下来。\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\", \"fact-3\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见事情结束与身体结束并不同步：汇报在主管说结束时已经结束，但身体直到喝完水、肩膀松下来才结束紧绷。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"已形成有证据的感受认识增量：事件节点（汇报结束）与身体状态变化（手抖、肩膀紧→喝完水放松）之间的时间差已经明确，符合 minimumOutcome 要求。\",\n    \"cognitiveAction\": null,\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"汇报先在流程上结束，身体又晚了一会儿才结束紧绷。\",\n      \"summaryAnchors\": [\"主管说汇报整体很顺利\", \"走到茶水间时手还在抖，肩膀也一直耸着\", \"直到喝完水才松下来\"]\n    }\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4400,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 1976,
+          "completionTokens": 398,
+          "totalTokens": 2374,
+          "promptCacheHitTokens": 768,
+          "promptCacheMissTokens": 1208
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0002827104
+      },
+      "validationIssues": [
+        "relational_insight_core_must_cover_both_anchors"
+      ],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "fbab760fb0bda96490c1c13c50aea847c3c87cc27906800de602da293b0d844a"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-FEELING-GUIDED"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S02-A-R1",
+      "caseId": "S02-A",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你生气是因为临时取消，但几分钟后松口气直接指向了‘不用硬撑出门’这个具体解脱。我想继续确认这份松口气是否直接冲着‘不用硬撑’来的。",
+        "naturalResponse": "发现不用硬撑着出门时，松口气是直接冲着‘不用硬撑’来的吗？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "deep_companionship",
+          "angle": "feeling",
+          "target": "relief_trigger",
+          "opportunityNumber": 2,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "anchor_specific"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你生气是因为临时取消，但几分钟后松口气直接指向了‘不用硬撑出门’这个具体解脱。我想继续确认这份松口气是否直接冲着‘不用硬撑’来的。",
+        "userResponse": "发现不用硬撑着出门时，松口气是直接冲着‘不用硬撑’来的吗？",
+        "responseKind": "question",
+        "outcome": null,
+        "checkpoint": null,
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "continue_exploration"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "继续深入"
+        ]
+      },
+      "visibleResponse": "你生气是因为临时取消，但几分钟后松口气直接指向了‘不用硬撑出门’这个具体解脱。我想继续确认这份松口气是否直接冲着‘不用硬撑’来的。\n发现不用硬撑着出门时，松口气是直接冲着‘不用硬撑’来的吗？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-1",
+        "fact-2",
+        "fact-3"
+      ],
+      "expectedQuestionValue": "确认松口气是否直接关联到‘不用硬撑出门’这个具体解脱，还是另有原因。",
+      "stopReason": null,
+      "latencyMs": 5003,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 280,
+          "tokenUsage": {
+            "promptTokens": 1932,
+            "completionTokens": 363,
+            "totalTokens": 2295,
+            "promptCacheHitTokens": 640,
+            "promptCacheMissTokens": 1292
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"看到消息的第一下是生气\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看到消息的第一下是生气\"\n      },\n      {\n        \"statement\": \"过了几分钟才发现今晚不用硬撑着出门\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"过了几分钟才发现今晚不用硬撑着出门\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\", \"fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"relief_trigger\",\n    \"expectedUnderstandingDelta\": \"确认松口气是否直接关联到‘不用硬撑出门’这个具体解脱，还是另有原因。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"发现不用硬撑着出门时，松口气是直接冲着‘不用硬撑’来的吗？\",\n      \"summaryAnchors\": [\"不用硬撑着出门\", \"松口气\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 304,
+          "tokenUsage": {
+            "promptTokens": 1218,
+            "completionTokens": 98,
+            "totalTokens": 1316,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 1218
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你生气是因为临时取消，但几分钟后松口气直接指向了‘不用硬撑出门’这个具体解脱。我想继续确认这份松口气是否直接冲着‘不用硬撑’来的。\",\n  \"responseKind\": \"question\",\n  \"question\": \"发现不用硬撑着出门时，松口气是直接冲着‘不用硬撑’来的吗？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5003,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3150,
+          "completionTokens": 461,
+          "totalTokens": 3611,
+          "promptCacheHitTokens": 640,
+          "promptCacheMissTokens": 2510
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00048227200000000006
+      },
+      "validationIssues": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "5095b04413d9c9111ddd6e92c6ad07a88b4889b27c4e3eade76154951981d432"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "095c45fce63fe17d2dfe60cc9b93677b10235baf0815fbce6dfe27324d19beaf"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-FEELING-DEEP"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S03-A-R1",
+      "caseId": "S03-A",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你连续三晚先处理工作消息，这让你觉得自己没自制力。我想确认你判断有自制力的标准是什么。",
+        "naturalResponse": "连续三晚先处理工作消息，这让你觉得自己没自制力，那你认为有自制力的人会怎么做？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "thought",
+          "target": "judgment_standard",
+          "opportunityNumber": 2,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "anchor_specific"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你连续三晚先处理工作消息，这让你觉得自己没自制力。我想确认你判断有自制力的标准是什么。",
+        "userResponse": "连续三晚先处理工作消息，这让你觉得自己没自制力，那你认为有自制力的人会怎么做？",
+        "responseKind": "question",
+        "outcome": null,
+        "checkpoint": null,
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你连续三晚先处理工作消息，这让你觉得自己没自制力。我想确认你判断有自制力的标准是什么。\n连续三晚先处理工作消息，这让你觉得自己没自制力，那你认为有自制力的人会怎么做？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-2",
+        "fact-3"
+      ],
+      "expectedQuestionValue": "用户用连续三晚先处理工作消息作为没自制力的依据，我想知道用户认为‘有自制力’的标准是什么——是必须优先打开课程，还是其他行为模式？",
+      "stopReason": null,
+      "latencyMs": 5424,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 280,
+          "tokenUsage": {
+            "promptTokens": 1836,
+            "completionTokens": 375,
+            "totalTokens": 2211,
+            "promptCacheHitTokens": 640,
+            "promptCacheMissTokens": 1196
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"连续三晚想打开课程\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"连续三晚想打开\"\n      },\n      {\n        \"statement\": \"每晚先处理工作消息\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"每晚先处理工作消息\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"thought\",\n    \"evidenceRefs\": [\"fact-2\", \"fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"judgment_standard\",\n    \"expectedUnderstandingDelta\": \"用户用连续三晚先处理工作消息作为没自制力的依据，我想知道用户认为‘有自制力’的标准是什么——是必须优先打开课程，还是其他行为模式？\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"连续三晚先处理工作消息，这让你觉得自己没自制力，那你认为有自制力的人会怎么做？\",\n      \"summaryAnchors\": [\"连续三晚先处理工作消息\", \"没自制力\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 357,
+          "tokenUsage": {
+            "promptTokens": 1239,
+            "completionTokens": 88,
+            "totalTokens": 1327,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 1239
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你连续三晚先处理工作消息，这让你觉得自己没自制力。我想确认你判断有自制力的标准是什么。\",\n  \"responseKind\": \"question\",\n  \"question\": \"连续三晚先处理工作消息，这让你觉得自己没自制力，那你认为有自制力的人会怎么做？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 5424,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3075,
+          "completionTokens": 463,
+          "totalTokens": 3538,
+          "promptCacheHitTokens": 640,
+          "promptCacheMissTokens": 2435
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.000472332
+      },
+      "validationIssues": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "8ec6be3c03dd5918476246aed4f3ee9bbb8814c72fd80c636c86fc3fb843f04a"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "d1ef25067c889e72724454c438998b7230d18ea4907fb013a3c15517cd0db97e"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-THOUGHT-GUIDED"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S04-B-R1",
+      "caseId": "S04-B",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你发现没人看和没进步不是一回事，真正让你继续画的是能否做出以前做不到的东西。我想继续确认，当数据差和能力突破同时存在时，你判断自己有没有天分会更看重哪一边。",
+        "naturalResponse": "数据差和做出新效果同时存在时，你判断自己有没有天分时会更看重哪一边？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "deep_companionship",
+          "angle": "thought",
+          "target": "tension_between_evidence",
+          "opportunityNumber": 3,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "surface_tension"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你发现没人看和没进步不是一回事，真正让你继续画的是能否做出以前做不到的东西。我想继续确认，当数据差和能力突破同时存在时，你判断自己有没有天分会更看重哪一边。",
+        "userResponse": "数据差和做出新效果同时存在时，你判断自己有没有天分时会更看重哪一边？",
+        "responseKind": "question",
+        "outcome": null,
+        "checkpoint": null,
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "continue_exploration"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "继续深入"
+        ]
+      },
+      "visibleResponse": "你发现没人看和没进步不是一回事，真正让你继续画的是能否做出以前做不到的东西。我想继续确认，当数据差和能力突破同时存在时，你判断自己有没有天分会更看重哪一边。\n数据差和做出新效果同时存在时，你判断自己有没有天分时会更看重哪一边？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-1",
+        "fact-2"
+      ],
+      "expectedQuestionValue": "用户如何看待‘数据差’和‘能力突破’同时存在时对‘天分’判断的影响",
+      "stopReason": null,
+      "latencyMs": 4653,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 298,
+          "tokenUsage": {
+            "promptTokens": 1870,
+            "completionTokens": 370,
+            "totalTokens": 2240,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1102
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户曾把关注数据等同于进步\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我发现自己把没人看等同于没进步\"\n      },\n      {\n        \"statement\": \"用户更看重能否完成过去做不到的效果\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"真正让我继续画的其实是能不能做出以前做不到的东西\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"thought\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"tension_between_evidence\",\n    \"expectedUnderstandingDelta\": \"用户如何看待‘数据差’和‘能力突破’同时存在时对‘天分’判断的影响\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"surface_tension\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"数据差和做出新效果同时存在时，你判断自己有没有天分时会更看重哪一边？\",\n      \"summaryAnchors\": [\"没人看等同于没进步\", \"能不能做出以前做不到的东西\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 280,
+          "tokenUsage": {
+            "promptTokens": 1223,
+            "completionTokens": 105,
+            "totalTokens": 1328,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 711
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你发现没人看和没进步不是一回事，真正让你继续画的是能否做出以前做不到的东西。我想继续确认，当数据差和能力突破同时存在时，你判断自己有没有天分会更看重哪一边。\",\n  \"responseKind\": \"question\",\n  \"question\": \"数据差和做出新效果同时存在时，你判断自己有没有天分时会更看重哪一边？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4653,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3093,
+          "completionTokens": 475,
+          "totalTokens": 3568,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 1813
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.000390404
+      },
+      "validationIssues": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "ebdc7d5a82893d10cbe1721a4bcbd1716027dc6c1619c761e94b2e176f1441fb"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "2904b401ca5c96d8dc6877ac950a0fc78885c349ba801295ed2f26c4ea1fd651"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-THOUGHT-DEEP"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S05-B-R1",
+      "caseId": "S05-B",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你明确希望发送前共同确认，同事没做到这一点，我想确认这件事是否让你对和他一起工作的信任或安全感产生了变化。",
+        "naturalResponse": "同事没有提前说就发出，这件事有没有让你对和他一起工作的信任或安全感产生什么变化？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "relationship",
+          "target": "trust_change",
+          "opportunityNumber": 3,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "trace_change"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你明确希望发送前共同确认，同事没做到这一点，我想确认这件事是否让你对和他一起工作的信任或安全感产生了变化。",
+        "userResponse": "同事没有提前说就发出，这件事有没有让你对和他一起工作的信任或安全感产生什么变化？",
+        "responseKind": "question",
+        "outcome": null,
+        "checkpoint": null,
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你明确希望发送前共同确认，同事没做到这一点，我想确认这件事是否让你对和他一起工作的信任或安全感产生了变化。\n同事没有提前说就发出，这件事有没有让你对和他一起工作的信任或安全感产生什么变化？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-1",
+        "fact-2",
+        "fact-3",
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "用户回答将揭示：同事未经确认就发出材料，是否让用户对同事的信任或合作安全感产生了变化。",
+      "stopReason": null,
+      "latencyMs": 4680,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 278,
+          "tokenUsage": {
+            "promptTokens": 1984,
+            "completionTokens": 430,
+            "totalTokens": 2414,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1216
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户期待发送前共同确认\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我期待的是发出去前至少让我看一眼\"\n      },\n      {\n        \"statement\": \"材料包含用户负责部分\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"因为里面也有我负责的部分\"\n      },\n      {\n        \"statement\": \"用户想保留共同确认的位置\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我想保留共同确认的位置\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\", \"fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"trust_change\",\n    \"expectedUnderstandingDelta\": \"用户回答将揭示：同事未经确认就发出材料，是否让用户对同事的信任或合作安全感产生了变化。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"trace_change\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"同事没有提前说就发出，这件事有没有让你对和他一起工作的信任或安全感产生什么变化？\",\n      \"summaryAnchors\": [\"同事没有提前说\", \"保留共同确认的位置\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 742,
+          "tokenUsage": {
+            "promptTokens": 1231,
+            "completionTokens": 87,
+            "totalTokens": 1318,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 719
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你明确希望发送前共同确认，同事没做到这一点，我想确认这件事是否让你对和他一起工作的信任或安全感产生了变化。\",\n  \"responseKind\": \"question\",\n  \"question\": \"同事没有提前说就发出，这件事有没有让你对和他一起工作的信任或安全感产生什么变化？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4680,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3215,
+          "completionTokens": 517,
+          "totalTokens": 3732,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 1935
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00041924400000000004
+      },
+      "validationIssues": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "6965fd7479b20f0964658a3176c9cb8d1c9878f777135a0603267c4d6edff50e"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "7c9094a0f17d2a54cdb92d947dd0e28815829847b5c2a83a537d092aee0152c9"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S06-A-R1",
+      "caseId": "S06-A",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 4697,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 285,
+          "tokenUsage": {
+            "promptTokens": 2182,
+            "completionTokens": 356,
+            "totalTokens": 2538,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1414
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"家人连续三天替用户安排晚饭\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"连续三天替我约好晚饭\"\n      },\n      {\n        \"statement\": \"家人未经确认答应亲戚周末来访\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"直接答应了亲戚周末来家里\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\", \"fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"impact_on_trust_or_position\",\n    \"expectedUnderstandingDelta\": \"看见关心替代询问时，用户对关系位置或信任的具体影响\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"test_understanding\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"她替你答应的那一刻，你最想拿回哪一部分决定权？\",\n      \"summaryAnchors\": [\"连续三天替我约好晚饭\", \"直接答应了亲戚周末来家里\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 282,
+          "tokenUsage": {
+            "promptTokens": 1214,
+            "completionTokens": 99,
+            "totalTokens": 1313,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 702
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"她连续三天替你约好晚饭，还直接答应了亲戚周末来家里，这些安排确实带着关心，也越过了询问。我想继续确认，在她替你答应的那一刻，你最想拿回哪一部分决定权。\",\n  \"responseKind\": \"question\",\n  \"question\": \"她替你答应的那一刻，你最想拿回哪一部分决定权？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4697,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3396,
+          "completionTokens": 455,
+          "totalTokens": 3851,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 2116
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00042722400000000003
+      },
+      "validationIssues": [
+        "thinking_summary_must_not_repeat_main_response"
+      ],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "94369aee53099d24c751cf99d30f9f4ad8532f860ea00e653bf147960a3a1478"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "7e1983c002306de494e078897df4c738e805e0fdf3910bb725ecfa566d09d9c1"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-RELATIONSHIP-DEEP"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S07-B-R1",
+      "caseId": "S07-B",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你回完消息后，推荐视频把你带走了四十分钟。我想从第一个推荐视频出现的那一刻，理解继续刷在当时为你发挥了什么作用。",
+        "naturalResponse": "回完消息准备放下手机时，是什么感觉让你又点开了第一个推荐视频？",
+        "responseKind": "question",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "action",
+          "target": "action_function",
+          "opportunityNumber": 3,
+          "surfaceLevel": "open_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "anchor_specific"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你回完消息后，推荐视频把你带走了四十分钟。我想从第一个推荐视频出现的那一刻，理解继续刷在当时为你发挥了什么作用。",
+        "userResponse": "回完消息准备放下手机时，是什么感觉让你又点开了第一个推荐视频？",
+        "responseKind": "question",
+        "outcome": null,
+        "checkpoint": null,
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你回完消息后，推荐视频把你带走了四十分钟。我想从第一个推荐视频出现的那一刻，理解继续刷在当时为你发挥了什么作用。\n回完消息准备放下手机时，是什么感觉让你又点开了第一个推荐视频？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-2",
+        "fact-3"
+      ],
+      "expectedQuestionValue": "理解继续刷视频在当时为用户发挥了什么作用，比如缓解了什么或保护了什么。",
+      "stopReason": null,
+      "latencyMs": 4666,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 339,
+          "tokenUsage": {
+            "promptTokens": 1865,
+            "completionTokens": 349,
+            "totalTokens": 2214,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1097
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"推荐视频触发继续浏览\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看见推荐视频就顺着刷下去了\"\n      },\n      {\n        \"statement\": \"第二次锁屏前已继续浏览四十分钟\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"第二次锁屏前已经过了四十分钟\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"evidenceRefs\": [\"fact-2\", \"fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"action_function\",\n    \"expectedUnderstandingDelta\": \"理解继续刷视频在当时为用户发挥了什么作用，比如缓解了什么或保护了什么。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"回完消息准备放下手机时，是什么感觉让你又点开了第一个推荐视频？\",\n      \"summaryAnchors\": [\"推荐视频\", \"顺着刷下去\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 274,
+          "tokenUsage": {
+            "promptTokens": 1219,
+            "completionTokens": 87,
+            "totalTokens": 1306,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 707
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你回完消息后，推荐视频把你带走了四十分钟。我想从第一个推荐视频出现的那一刻，理解继续刷在当时为你发挥了什么作用。\",\n  \"responseKind\": \"question\",\n  \"question\": \"回完消息准备放下手机时，是什么感觉让你又点开了第一个推荐视频？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4666,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3084,
+          "completionTokens": 436,
+          "totalTokens": 3520,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 1804
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00037822400000000003
+      },
+      "validationIssues": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "46dc55a044bd1eff11c48d4d9b7b9c69610e0b5d2483a533c6b254da99179d14"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "d2b246b0886648a4f239a71ca2bcedb5d522bf78697d9c56274c01b48dd3251f"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-ACTION-GUIDED"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "S08-B-R1",
+      "caseId": "S08-B",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 4509,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 296,
+          "tokenUsage": {
+            "promptTokens": 1893,
+            "completionTokens": 312,
+            "totalTokens": 2205,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1125
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"当时准确代表自己比报名结果更优先\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"准确代表自己压过了报名结果\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"evidenceRefs\": [\"fact-1\", \"fact-2\", \"fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"self_representation_protection\",\n    \"expectedUnderstandingDelta\": \"理解反复修改是在保护怎样的自我表达，具体是哪句话或哪层意思让用户觉得‘这不是我’\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\",\n    \"microgoalDelta\": null,\n    \"realizationContract\": {\n      \"responseCore\": \"那段介绍里，具体是哪句话或哪层意思让你觉得‘这不是我’？\",\n      \"summaryAnchors\": [\"准确代表自己\", \"不认的介绍\"]\n    }\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 281,
+          "tokenUsage": {
+            "promptTokens": 1229,
+            "completionTokens": 95,
+            "totalTokens": 1324,
+            "promptCacheHitTokens": 512,
+            "promptCacheMissTokens": 717
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"thinkingSummary\": \"你反复修改是为了让介绍准确代表自己，最后宁愿错过也不交不认可的版本。我想继续确认，那段介绍里具体是哪句话或哪层意思让你觉得‘这不是我’。\",\n  \"responseKind\": \"question\",\n  \"question\": \"那段介绍里，具体是哪句话或哪层意思让你觉得‘这不是我’？\",\n  \"insight\": null,\n  \"honestLimit\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4509,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3122,
+          "completionTokens": 407,
+          "totalTokens": 3529,
+          "promptCacheHitTokens": 1280,
+          "promptCacheMissTokens": 1842
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.00037542400000000007
+      },
+      "validationIssues": [
+        "thinking_summary_must_not_repeat_main_response"
+      ],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "c16953befc98c7b80a6cd5248227659e02cbbc2e0d708daaccbd76e57a667cb4"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v23",
+          "resolvedPromptHash": "10b0d0b17f769aaa51e629b96bc192bc90461428fdddf12a446007be8e97d98e"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.8.0",
+        "angleCard": "2.4.0",
+        "fewShot": "quality-calibration.2026-07-29.v3",
+        "examples": [
+          "CAL-ACTION-DEEP"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "trajectories": [],
+  "gate": {
+    "total": 8,
+    "technicalComplete": 5,
+    "reviewed": 0,
+    "pendingReview": 8,
+    "productPassed": 0,
+    "productFailed": 0,
+    "gateState": "fail"
+  }
+}

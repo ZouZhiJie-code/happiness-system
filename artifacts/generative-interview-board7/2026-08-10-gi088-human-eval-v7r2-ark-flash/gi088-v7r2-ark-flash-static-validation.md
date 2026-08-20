@@ -2,7 +2,7 @@
 
 验证日期：`2026-08-10`
 
-状态：`本地自动验证与 Production build 通过；等待 Preview 部署和 0/2 回读`
+状态：`本地自动验证、Production build、Preview 部署与 0/2 回读均通过`
 
 ## 1. 指纹与运行配置
 
@@ -34,12 +34,13 @@
 - `git diff --check`：通过；
 - `npm run eval:gi088:inspect`：通过，模型调用 `0`。
 
-## 4. 待完成的 Preview 回读
+## 4. Preview 回读
 
-- 部署当前 v7r2 候选到受控 Preview；
-- 通过部署保护和应用权限回读评测页面；
-- 初始化 `running 0/2` 空白批次；
-- 确认初始化模型调用为 `0`；
-- 确认 Production 页面、接口、运行模式与数据保持原状。
+- Preview deployment：`dpl_HDemGjQPpMhTFhj5fw8Yq8iehpwX`；
+- 评测页面：`https://xingfuxitong-8p5uc4ng7-zouzhijies-projects.vercel.app/preview/gi088-evaluation`；
+- 部署保护通道页面回读：HTTP `200`；
+- 批次：`c10c8c25-b3f9-4bfb-a02a-c5c0a44c303c`；
+- 批次状态：`running 0/2`；
+- 初始化模型调用：`0`。
 
-当前停止点为完成上述 Preview 回读，再交由产品负责人执行两条 Thinking high 真人轨迹。Production 环境、Production 模型与正式用户数据保持当前状态。
+当前停止点为产品负责人完成两条 Thinking high 真人轨迹。Production 环境、Production 模型与正式用户数据保持当前状态。

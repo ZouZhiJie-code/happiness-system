@@ -36,8 +36,13 @@ describe("auth local helpers", () => {
 
   it("normalizes unsafe redirect targets back to the interview page", () => {
     expect(normalizeAuthRedirectPath("/analysis?month=2026-05")).toBe("/analysis?month=2026-05");
+    expect(normalizeAuthRedirectPath("/calendar?view=week&date=2026-08-13#sources")).toBe(
+      "/calendar?view=week&date=2026-08-13#sources"
+    );
     expect(normalizeAuthRedirectPath("https://evil.example")).toBe("/interview");
     expect(normalizeAuthRedirectPath("//evil.example")).toBe("/interview");
+    expect(normalizeAuthRedirectPath("/\\evil.example")).toBe("/interview");
+    expect(normalizeAuthRedirectPath("/login?next=%2Fsettings")).toBe("/interview");
     expect(normalizeAuthRedirectPath(null)).toBe("/interview");
   });
 });

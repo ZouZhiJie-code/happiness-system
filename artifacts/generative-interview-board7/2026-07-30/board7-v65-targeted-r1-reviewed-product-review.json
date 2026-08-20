@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "board7_v65_targeted_delegated_product_review.v1",
+  "sourceRunsPath": "artifacts/generative-interview-board7/2026-07-30/board7-v65-targeted-r1-runs.json",
+  "reviewDelegation": {
+    "delegatedBy": "product_owner",
+    "delegatedTo": "codex",
+    "delegatedAt": "2026-07-30T17:46:55Z",
+    "statement": "产品负责人在本轮明确委托 Codex 代为完成 v65 定向 R1 最终验收；Codex 初评与产品负责人最终裁决采用同一严格判尺。"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "runFingerprint": "64dc2a1f2da485998761c1e0c5fab91fd585adb79657073b364e0f4bbbca5757",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T17:46:55Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "用户已明确进入房间和移动桌上物品两件事都越界，并且当前无法排序轻重；问题再次确认两件事是否都触碰边界，重复索取用户刚刚给出的同一事实。",
+        "finalVerdict": "fail",
+        "rootCause": "user_articulated_boundary_ready_but_same_fact_reconfirmed",
+        "resolution": "失败；应忠实整理两件事都越过边界且无需排序，形成 user_articulated 成果并暂停当前微目标。",
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-30T17:46:55Z"
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "runFingerprint": "00610f7451c7440e274eee2377d817c6e254c40e2f57c01b7807f02cd27ae4ca",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T17:46:55Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "结果告知时坐得很直，以及取下夹子后靠回椅背、手摊开，两个身体节点已经完整提供；问题再次要求用户描述两个节点之间的身体变化。",
+        "finalVerdict": "fail",
+        "rootCause": "ai_synthesis_ready_but_completed_change_reasked",
+        "resolution": "失败；应连接两个身体节点形成 ai_synthesized 认识并完成，停止继续收集同一变化关系。",
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-30T17:46:55Z"
+      },
+      "severeErrors": []
+    }
+  ]
+}

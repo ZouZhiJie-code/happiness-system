@@ -73,6 +73,7 @@ import {
   reserveEventCenteredUserTurn,
   startEventCenteredInterviewSession
 } from "@/server/repositories/event-centered-interview.repository";
+import { materializeJournalEventEntryCard } from "@/server/repositories/journal-event-entry.repository";
 import { recordEventCenteredAnalyticsEvent } from "@/server/services/interview/event-centered-analytics.service";
 import {
   getEffectiveJournalEventAngleProjection,
@@ -117,6 +118,7 @@ import {
   selectEventCenteredResponseVersion
 } from "@/server/services/interview/event-centered-response-version.service";
 import type {
+  EventCenteredAllowedAction,
   EventCenteredAssistantPayload,
   EventCenteredDialogueState,
   EventCenteredRespondRequest,
@@ -139,7 +141,14 @@ import type {
   JournalEventFactWrite
 } from "@/types/journal-event-understanding";
 
-const EVENT_CENTERED_OPENING = "先从这件事开始吧。刚刚发生了什么？";
+export const EVENT_CENTERED_OPENINGS = [
+  "先从这件事开始吧。刚刚发生了什么？",
+  "想从哪件事说起？先讲讲当时发生了什么。",
+  "从你最想说的那一部分开始吧。",
+  "先说一个具体的时刻。那时发生了什么？",
+  "这件事里，哪个瞬间最留在你脑海里？",
+  "把这件事慢慢说给我听就好。"
+] as const;
 
 type GI066ThoughtExecution = {
   mapUpdate: ThoughtMapProviderOutput;
@@ -182,7 +191,12 @@ function classifyEventCenteredGenerationFailure(code: string) {
   return "content_check" as const;
 }
 
-export function startEventCenteredInterview(userId: string, entryDate = getTodayEntryDate()) {
+export function startEventCenteredInterview(
+  userId: string,
+  entryDate = getTodayEntryDate(),
+  recordMode: "capture" | "chat" | null = null,
+  clientOperationId: string | null = null
+) {
   assertEventCenteredWriteAllowed({
     entryDate,
     today: getTodayEntryDate()
@@ -191,7 +205,9 @@ export function startEventCenteredInterview(userId: string, entryDate = getToday
   return startEventCenteredInterviewSession({
     userId,
     entryDate,
-    openingQuestion: EVENT_CENTERED_OPENING
+    recordMode,
+    clientOperationId,
+    openingQuestions: EVENT_CENTERED_OPENINGS
   });
 }
 
@@ -224,6 +240,55 @@ function emptyAngleProjection(): JournalEventAngleProjection {
     reopenedAngles: [],
     repairs: []
   };
+}
+
+function hasEventCenteredUserExpression(
+  messages: EventCenteredInterviewWorkspaceData["messages"]
+) {
+  return messages.some((message) =>
+    message.role === "user" && Boolean((message.rawText ?? message.content).trim())
+  );
+}
+
+function hasPendingFactClarification(snapshotData: unknown) {
+  if (!snapshotData || typeof snapshotData !== "object" || Array.isArray(snapshotData)) {
+    return false;
+  }
+  return Boolean(
+    (snapshotData as Record<string, unknown>).pendingFactRevisionClarification
+  );
+}
+
+function getWorkspaceAllowedActions(input: {
+  data: EventCenteredInterviewWorkspaceData;
+  state: EventCenteredDialogueState;
+  pendingFactClarification?: boolean;
+  pendingAngleRepair?: boolean;
+}): EventCenteredAllowedAction[] {
+  let allowedActions = getEventCenteredAllowedActions({
+    state: input.state,
+    eventStatus: input.data.identity.eventStatus,
+    hasPendingTurn: Boolean(input.data.pendingTurn)
+  });
+  if (input.pendingFactClarification || input.pendingAngleRepair) {
+    allowedActions = allowedActions.filter(
+      (action) => action === "reply" || action === "exit_event"
+    );
+  }
+  if (input.data.identity.recordMode !== "capture") return allowedActions;
+
+  if (
+    input.data.identity.eventStatus !== null &&
+    input.data.identity.eventStatus !== "active"
+  ) return [];
+  if (input.data.pendingTurn) {
+    return allowedActions.filter(
+      (action) => action === "resume_turn" || action === "exit_event"
+    );
+  }
+  return hasEventCenteredUserExpression(input.data.messages)
+    ? ["reply", "exit_event"]
+    : ["reply"];
 }
 
 export async function getEventCenteredInterviewWorkspace(
@@ -291,14 +356,12 @@ export async function getEventCenteredInterviewWorkspace(
     }];
   });
   const currentRun = state.activeAngle ? state.angleRuns[state.activeAngle] : null;
-  let allowedActions = getEventCenteredAllowedActions({
+  const allowedActions = getWorkspaceAllowedActions({
+    data,
     state,
-    eventStatus: data.identity.eventStatus,
-    hasPendingTurn: Boolean(data.pendingTurn)
+    pendingFactClarification: Boolean(factProjection?.pendingClarification),
+    pendingAngleRepair: angleProjection.repairPendingAngles.length > 0
   });
-  if (factProjection?.pendingClarification || angleProjection.repairPendingAngles.length > 0) {
-    allowedActions = allowedActions.filter((action) => action === "reply" || action === "exit_event");
-  }
   const outcomes = angleProjection.completedAngles.flatMap((angle) => {
     const outcome = angleProjection.outcomesByAngle[angle];
     return outcome
@@ -1516,6 +1579,16 @@ export async function respondEventCenteredInterview(
   const before = await getEventCenteredInterviewWorkspaceData(userId, request.rootSessionId);
   timing.initialWorkspaceReadMs = elapsedMs(initialWorkspaceStartedAt);
   if (!before) throw new Error("SESSION_NOT_FOUND");
+  const stateBeforeRequest = parseEventCenteredDialogueState(before.snapshotData);
+  const currentAllowedActions = getWorkspaceAllowedActions({
+    data: before,
+    state: stateBeforeRequest,
+    pendingFactClarification: hasPendingFactClarification(before.snapshotData),
+    pendingAngleRepair: stateBeforeRequest.repairPendingAngles.length > 0
+  });
+  if (!currentAllowedActions.includes(request.action)) {
+    throw new Error("INTERVIEW_ACTION_UNSUPPORTED");
+  }
   if (request.action === "regenerate_response") {
     if (
       !request.targetMessageId ||
@@ -1580,6 +1653,37 @@ export async function respondEventCenteredInterview(
   let resumedGenerativeCheckpoint: Awaited<
     ReturnType<typeof getEventCenteredGenerativePlanCheckpoint>
   > = null;
+  let resumeAnalyticsContext: { turnId: string; attemptCount: number } | null = null;
+  let resumeTerminalRecorded = false;
+  const resumeErrorCode = (error: unknown) =>
+    options?.signal?.aborted
+      ? "REQUEST_CANCELED"
+      : error instanceof EventCenteredGenerationBlockedError
+        ? error.detailCode
+        : error instanceof Error
+          ? error.message
+          : "EVENT_TURN_FAILED";
+  const recordResumeTerminal = async (
+    outcome: "completed" | "failed",
+    errorCode?: string | null
+  ) => {
+    if (!resumeAnalyticsContext || resumeTerminalRecorded) return;
+    resumeTerminalRecorded = true;
+    await recordEventCenteredAnalyticsEvent({
+      eventName: `event_centered_resume_${outcome}`,
+      userId,
+      dedupeKey: `event_centered_resume_${outcome}:${resumeAnalyticsContext.turnId}:${resumeAnalyticsContext.attemptCount}`,
+      rootSessionId: before.identity.rootSessionId,
+      journalEventId: before.identity.eventId,
+      requestId: options?.requestId ?? null,
+      entryDate: before.identity.entryDate,
+      source: "resume",
+      stage: stateBeforeRequest.phase,
+      angle: stateBeforeRequest.activeAngle,
+      attemptCount: resumeAnalyticsContext.attemptCount,
+      errorCode: errorCode ?? null
+    });
+  };
   const reservationStartedAt = Date.now();
   if (request.action === "resume_turn") {
     const pending = before.pendingTurn;
@@ -1588,52 +1692,83 @@ export async function respondEventCenteredInterview(
       if (!current) throw new Error("SESSION_NOT_FOUND");
       return { workspace: current, assistantPayload: null };
     }
-    resumedGenerativeCheckpoint = await getEventCenteredGenerativePlanCheckpoint({
-      userId,
-      rootSessionId: before.identity.rootSessionId,
-      activeBranchSessionId: before.identity.activeBranchSessionId,
-      clientTurnId: request.clientTurnId
-    });
-    await resumeEventCenteredTurnUnderstanding({
-      userId,
-      activeBranchSessionId: before.identity.activeBranchSessionId,
-      clientTurnId: request.clientTurnId
-    });
-    const userMessage = before.messages.find((message) => message.userTurnId === pending.id);
-    if (!before.identity.eventId || !before.identity.branchStateId || !userMessage) {
-      throw new Error("EVENT_STATE_CHANGED");
-    }
-    const operation = resumedGenerativeCheckpoint?.operationData ?? pending.eventOperationData;
-    effectiveRequest = {
-      action: pending.action,
-      rootSessionId: before.identity.rootSessionId,
-      clientTurnId: pending.clientTurnId,
-      baseBranchSessionId: pending.baseBranchSessionId ?? before.identity.activeBranchSessionId,
-      baseMessageSequence: pending.baseMessageSequence,
-      rawText: pending.rawText,
-      inputMode: pending.inputMode,
-      angle: operation?.kind === "select_exploration_angle" ? operation.angle : undefined,
-      optionId: operation?.kind === "select_current_event" ? operation.optionId : undefined,
-      targetMessageId: pending.targetMessageId ?? undefined
+    resumeAnalyticsContext = {
+      turnId: pending.id,
+      attemptCount:
+        pending.status === "failed" || pending.status === "canceled"
+          ? pending.attemptCount + 1
+          : pending.attemptCount
     };
-    reservation = {
-      kind: "existing",
-      eventId: before.identity.eventId,
+    await recordEventCenteredAnalyticsEvent({
+      eventName: "event_centered_resume_started",
+      userId,
+      dedupeKey: `event_centered_resume_started:${resumeAnalyticsContext.turnId}:${resumeAnalyticsContext.attemptCount}`,
       rootSessionId: before.identity.rootSessionId,
-      activeBranchSessionId: before.identity.activeBranchSessionId,
-      branchStateId: before.identity.branchStateId,
-      userMessageId: userMessage.id,
-      turn: {
-        id: pending.id,
+      journalEventId: before.identity.eventId,
+      requestId: options?.requestId ?? null,
+      entryDate: before.identity.entryDate,
+      source: "resume",
+      stage: stateBeforeRequest.phase,
+      angle: stateBeforeRequest.activeAngle,
+      attemptCount: resumeAnalyticsContext.attemptCount
+    });
+    try {
+      resumedGenerativeCheckpoint = await getEventCenteredGenerativePlanCheckpoint({
+        userId,
+        rootSessionId: before.identity.rootSessionId,
+        activeBranchSessionId: before.identity.activeBranchSessionId,
+        clientTurnId: request.clientTurnId
+      });
+      const resumedTurn = await resumeEventCenteredTurnUnderstanding({
+        userId,
+        activeBranchSessionId: before.identity.activeBranchSessionId,
+        clientTurnId: request.clientTurnId
+      });
+      if (
+        resumedTurn.id !== resumeAnalyticsContext.turnId ||
+        resumedTurn.attemptCount !== resumeAnalyticsContext.attemptCount
+      ) {
+        throw new Error("EVENT_STATE_CHANGED");
+      }
+      const userMessage = before.messages.find((message) => message.userTurnId === pending.id);
+      if (!before.identity.eventId || !before.identity.branchStateId || !userMessage) {
+        throw new Error("EVENT_STATE_CHANGED");
+      }
+      const operation = resumedGenerativeCheckpoint?.operationData ?? pending.eventOperationData;
+      effectiveRequest = {
+        action: pending.action,
+        rootSessionId: before.identity.rootSessionId,
         clientTurnId: pending.clientTurnId,
-        sessionId: pending.sessionId,
+        baseBranchSessionId: pending.baseBranchSessionId ?? before.identity.activeBranchSessionId,
+        baseMessageSequence: pending.baseMessageSequence,
         rawText: pending.rawText,
         inputMode: pending.inputMode,
-        baseMessageSequence: pending.baseMessageSequence,
-        status: "processing",
-        createdAt: pending.createdAt
-      }
-    };
+        angle: operation?.kind === "select_exploration_angle" ? operation.angle : undefined,
+        optionId: operation?.kind === "select_current_event" ? operation.optionId : undefined,
+        targetMessageId: pending.targetMessageId ?? undefined
+      };
+      reservation = {
+        kind: "existing",
+        eventId: before.identity.eventId,
+        rootSessionId: before.identity.rootSessionId,
+        activeBranchSessionId: before.identity.activeBranchSessionId,
+        branchStateId: before.identity.branchStateId,
+        userMessageId: userMessage.id,
+        turn: {
+          id: pending.id,
+          clientTurnId: pending.clientTurnId,
+          sessionId: pending.sessionId,
+          rawText: pending.rawText,
+          inputMode: pending.inputMode,
+          baseMessageSequence: pending.baseMessageSequence,
+          status: "processing",
+          createdAt: pending.createdAt
+        }
+      };
+    } catch (error) {
+      await recordResumeTerminal("failed", resumeErrorCode(error));
+      throw error;
+    }
   } else {
     if (request.action === "select_current_event") {
       const state = parseEventCenteredDialogueState(before.snapshotData);
@@ -1654,8 +1789,13 @@ export async function respondEventCenteredInterview(
     reservation = await reserveRespondTurn({ userId, request: effectiveRequest });
   }
   timing.turnReservationPersistenceMs = elapsedMs(reservationStartedAt);
-  await options?.onTurn?.(reservation);
-  const stateBeforeTurn = parseEventCenteredDialogueState(before.snapshotData);
+  try {
+    await options?.onTurn?.(reservation);
+  } catch (error) {
+    await recordResumeTerminal("failed", resumeErrorCode(error));
+    throw error;
+  }
+  const stateBeforeTurn = stateBeforeRequest;
   const turnContext: EventCenteredTurnContext = {
     workspace: before,
     state: stateBeforeTurn,
@@ -1669,26 +1809,55 @@ export async function respondEventCenteredInterview(
   };
 
   if (reservation.turn.status === "completed") {
-    const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
-    if (!workspace) throw new Error("SESSION_NOT_FOUND");
-    return { workspace, assistantPayload: null };
+    try {
+      const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
+      if (!workspace) throw new Error("SESSION_NOT_FOUND");
+      await recordResumeTerminal("completed");
+      return { workspace, assistantPayload: null };
+    } catch (error) {
+      await recordResumeTerminal("failed", resumeErrorCode(error));
+      throw error;
+    }
   }
   if (effectiveRequest.action === "exit_event") {
-    await abandonJournalEvent(userId, reservation.eventId, reservation.turn.id);
-    await recordEventCenteredAnalyticsEvent({
-      eventName: "event_centered_session_abandoned",
-      userId,
-      dedupeKey: `event_centered_session_abandoned:${reservation.eventId}`,
-      rootSessionId: reservation.rootSessionId,
-      journalEventId: reservation.eventId,
-      requestId: options?.requestId ?? null,
-      entryDate: before.identity.entryDate,
-      stage: stateBeforeTurn.phase,
-      angle: stateBeforeTurn.activeAngle
-    });
-    const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
-    if (!workspace) throw new Error("SESSION_NOT_FOUND");
-    return { workspace, assistantPayload: null };
+    try {
+      try {
+        await materializeJournalEventEntryCard({
+          userId,
+          eventId: reservation.eventId,
+          activeBranchSessionId: reservation.activeBranchSessionId,
+          // `exit_event` 已先以可靠用户回合写入；卡片需要绑定这条返回动作
+          // 之后的完整来源快照，才能通过并发版本校验。
+          baseMessageSequence: reservation.turn.baseMessageSequence + 1,
+          returnTurnId: reservation.turn.id
+        });
+      } catch (error) {
+        // Opening-only records do not form a timeline card. They keep the
+        // established abandonment behavior so calendar views remain truthful.
+        if (!(error instanceof Error) || error.message !== "EVENT_RECORD_CARD_SOURCE_INSUFFICIENT") {
+          throw error;
+        }
+        await abandonJournalEvent(userId, reservation.eventId, reservation.turn.id);
+        await recordEventCenteredAnalyticsEvent({
+          eventName: "event_centered_session_abandoned",
+          userId,
+          dedupeKey: `event_centered_session_abandoned:${reservation.eventId}`,
+          rootSessionId: reservation.rootSessionId,
+          journalEventId: reservation.eventId,
+          requestId: options?.requestId ?? null,
+          entryDate: before.identity.entryDate,
+          stage: stateBeforeTurn.phase,
+          angle: stateBeforeTurn.activeAngle
+        });
+      }
+      const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
+      if (!workspace) throw new Error("SESSION_NOT_FOUND");
+      await recordResumeTerminal("completed");
+      return { workspace, assistantPayload: null };
+    } catch (error) {
+      await recordResumeTerminal("failed", resumeErrorCode(error));
+      throw error;
+    }
   }
   if (
     effectiveRequest.action === "reply" &&
@@ -1711,6 +1880,120 @@ export async function respondEventCenteredInterview(
     options?.signal?.throwIfAborted();
     await options?.onPhase?.("understanding");
     const state = turnContext.state;
+    if (
+      before.identity.recordMode === "capture" &&
+      effectiveRequest.action === "reply"
+    ) {
+      const rawText = reservation.turn.rawText.trim();
+      const responsePayload: EventCenteredAssistantPayload = {
+        naturalUnderstanding: "",
+        naturalResponse: "好，这段已经记下了。",
+        responseKind: "acknowledgement",
+        questionSpec: null,
+        checkpoint: null,
+        angleOutcome: null
+      };
+      const nextState = structuredClone(state);
+      nextState.phase = "event_recording";
+      nextState.reflectionReady = false;
+      nextState.activeAngle = null;
+      nextState.lastCompletedAngle = null;
+      nextState.currentQuestion = null;
+      nextState.currentQuestionIntent = null;
+      nextState.focusOptions = [];
+      nextState.pendingUnderstandingClaimId = null;
+      nextState.currentMicrogoal = null;
+
+      await options?.onPhase?.("responding");
+      await options?.onDelta?.("response", responsePayload.naturalResponse);
+      timing.visibleResponseReadyMs = elapsedMs(responseStartedAt);
+      await options?.onPhase?.("committing");
+      const writeCommitStartedAt = Date.now();
+      await commitEventCenteredTurnUnderstanding({
+        userId,
+        eventId: reservation.eventId,
+        activeBranchSessionId: reservation.activeBranchSessionId,
+        branchStateId: reservation.branchStateId,
+        userTurnId: reservation.turn.id,
+        assistantMessage: {
+          id: randomUUID(),
+          content: serializeEventCenteredAssistantPayload(responsePayload),
+          lastAssistantQuestion: null
+        },
+        facts: [],
+        pendingClaim: null,
+        focusSummary: rawText.slice(0, 240) || "这段已经记下",
+        snapshotData: nextState,
+        trace: {
+          requestId: options?.requestId ?? null,
+          outputOrigin: "deterministic",
+          contextSnapshot: {
+            strategyMode: "capture",
+            recordMode: "capture",
+            phase: state.phase,
+            currentQuestionTarget: null,
+            recentContextMessageIds: before.messages.slice(-6).map((message) => message.id)
+          },
+          finalOutput: {
+            assistant: responsePayload
+          },
+          pipelineDecisions: [{
+            kind: "event_centered_capture_zero_question",
+            recordMode: "capture",
+            questionSpec: null
+          }]
+        },
+        checks: {
+          eventBoundaryPassed: true,
+          factsHaveUserSource: true,
+          visibleUnderstandingMatchesClaim: true,
+          unsupportedClaimCount: 0
+        },
+        angleOutcome: null,
+        angleRepairResolutions: []
+      });
+      timing.writeCommitMs = elapsedMs(writeCommitStartedAt);
+      const finalWorkspaceStartedAt = Date.now();
+      const workspace = await getEventCenteredInterviewWorkspace(
+        userId,
+        request.rootSessionId
+      );
+      timing.finalWorkspaceRecoveryMs = elapsedMs(finalWorkspaceStartedAt);
+      if (!workspace) throw new Error("SESSION_NOT_FOUND");
+      timing.interactiveReadyMs = elapsedMs(responseStartedAt);
+      await recordEventCenteredAnalyticsEvent({
+        eventName: "event_centered_response_completed",
+        userId,
+        dedupeKey: `event_centered_response_completed:${reservation.turn.id}`,
+        rootSessionId: reservation.rootSessionId,
+        journalEventId: reservation.eventId,
+        requestId: options?.requestId ?? null,
+        entryDate: before.identity.entryDate,
+        stage: nextState.phase,
+        angle: null,
+        requestedStrategy: "capture",
+        effectiveStrategy: "capture",
+        generativeAttempted: false,
+        deterministicControlAction: "capture_acknowledgement",
+        eventRecordingRecognition: true,
+        attemptCount: 0,
+        latencyMs: timing.interactiveReadyMs,
+        visibleResponseReadyMs: timing.visibleResponseReadyMs,
+        interactiveReadyMs: timing.interactiveReadyMs,
+        initialWorkspaceReadMs: timing.initialWorkspaceReadMs,
+        turnReservationPersistenceMs: timing.turnReservationPersistenceMs,
+        factsAndOutcomesReadMs: null,
+        semanticModelMs: null,
+        visibleResponseModelMs: null,
+        modelMs: 0,
+        nonModelMs: timing.interactiveReadyMs,
+        writeCommitMs: timing.writeCommitMs,
+        finalWorkspaceRecoveryMs: timing.finalWorkspaceRecoveryMs
+      });
+      await options?.onPhase?.("complete");
+      await recordResumeTerminal("completed");
+      return { workspace, assistantPayload: responsePayload };
+    }
     const answeredQuestionContext = resolveCurrentQuestionContext(
       before,
       state.currentQuestion
@@ -2304,6 +2587,7 @@ export async function respondEventCenteredInterview(
         await options?.onDelta?.("response", correctionResult.payload.naturalResponse);
         const workspace = await getEventCenteredInterviewWorkspace(userId, request.rootSessionId);
         if (!workspace) throw new Error("SESSION_NOT_FOUND");
+        await recordResumeTerminal("completed");
         return { workspace, assistantPayload: correctionResult.payload };
       }
       revisionApplied = correctionResult.kind === "revised";
@@ -2955,18 +3239,15 @@ export async function respondEventCenteredInterview(
       finalWorkspaceRecoveryMs: timing.finalWorkspaceRecoveryMs
     });
     await options?.onPhase?.("complete");
+    await recordResumeTerminal("completed");
     return { workspace, assistantPayload: responsePayload };
   } catch (error) {
+    const errorCode = resumeErrorCode(error);
     await markEventCenteredTurnUnderstandingFailed(
       reservation.turn.id,
-      options?.signal?.aborted
-        ? "REQUEST_CANCELED"
-        : error instanceof EventCenteredGenerationBlockedError
-          ? error.detailCode
-          : error instanceof Error
-            ? error.message
-            : "EVENT_TURN_FAILED"
+      errorCode
     );
+    await recordResumeTerminal("failed", errorCode);
     throw error;
   }
 }

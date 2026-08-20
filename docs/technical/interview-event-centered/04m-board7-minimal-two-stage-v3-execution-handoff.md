@@ -655,7 +655,7 @@ Provider v3
 
 终局批次使用数据集 `2026-08-01.board7-provider-v70-root-visible-probe-v1`，案例指纹 `59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414`，批准卡指纹 `e4e4c7bbdab7d4c88a5257d92b1008487ffbb13efb4295177f3d03a0e2e7c94f`；两例各运行一次，共完成 `1` 次只读预检与 `4` 次生成请求。想法案例为 `fail / fail`（`answer_entry_burden / question_value`），行动边界案例为 `borderline / borderline`（`understanding_incomplete`，按失败计），严重错误 `0`。两例累计耗时 `9,640ms`、估算成本 `0.0012035688`，预算一批已耗尽，终局评审包指纹为 `eb347dd807f3d4d452f0c46454e270f4933c20cd8355fbef7946107b2ba70ac0`。历史 v69、v63 及更早结果继续保留。
 
-证据：终局运行报告（本机历史证据，公开精简包未收录：`provider-v70-root-visible-probe-run-1-report.md`）、终局结构化结果（本机历史证据，公开精简包未收录：`provider-v70-root-visible-probe-run-1.json`）、独立预算账本（本机历史证据，公开精简包未收录：`board7-provider-v70-root-visible-probe-budget.json`）。
+证据：[终局运行报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1-report.md)、[终局结构化结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1.json)、[独立预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v70-root-visible-probe-budget.json)。
 
 ## 18. 参考材料
 

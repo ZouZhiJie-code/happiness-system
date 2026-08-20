@@ -1,0 +1,213 @@
+{
+  "evaluation": "board7_mvp_baseline_recovery",
+  "datasetVersion": "2026-08-02.board7-mvp-baseline-recovery-v1",
+  "caseFingerprint": "05aa512f72c985116f17c921a0381059f785707f3d6596a1debc2d1e3a0c3ddb",
+  "scopeFingerprint": "195c787d9896abd417b1b3117058f40f9112bbf296601f268b7964fc687f621c",
+  "model": "deepseek-v4-flash",
+  "status": "completed",
+  "startedAt": "2026-08-02T10:54:29.869Z",
+  "completedAt": "2026-08-02T10:55:35.796Z",
+  "ledger": {
+    "scopeFingerprint": "195c787d9896abd417b1b3117058f40f9112bbf296601f268b7964fc687f621c",
+    "status": "completed",
+    "requests": [
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "understanding",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "understanding",
+        "attemptIndex": 2
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "response",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "response",
+        "attemptIndex": 2
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "understanding",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "understanding",
+        "attemptIndex": 2
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "response",
+        "attemptIndex": 1
+      }
+    ]
+  },
+  "results": [
+    {
+      "caseId": "SF4-T-ASK-01",
+      "visibleReplay": {
+        "thinkingSummary": "我先记住你刚才说的这部分：我只知道退到门口再看时就不想继续挪了，可具体是哪一处让我停手，我还说不清。",
+        "userResponse": "你提到“用户上下调整一幅小版画多次后停在当前墙面位置”。当时脑子里最先冒出来的具体念头是什么？",
+        "responseKind": "question",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "我先记住你刚才说的这部分：我只知道退到门口再看时就不想继续挪了，可具体是哪一处让我停手，我还说不清。\n你提到“用户上下调整一幅小版画多次后停在当前墙面位置”。当时脑子里最先冒出来的具体念头是什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "attempts": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "TIMEOUT",
+          "errorMessage": "AI request timed out."
+        },
+        {
+          "stage": "extract",
+          "attempt": 2,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "TIMEOUT",
+          "errorMessage": "AI request timed out."
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "OUTPUT_TRUNCATED",
+          "errorMessage": "Model output reached the token limit before completion."
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "OUTPUT_TRUNCATED",
+          "errorMessage": "Model output reached the token limit before completion."
+        }
+      ],
+      "metrics": {
+        "latencyMs": 0,
+        "attempts": 4,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "runtimeError": null,
+      "technicalComplete": true
+    },
+    {
+      "caseId": "SF4-R-COEXIST-01",
+      "visibleReplay": {
+        "thinkingSummary": "他数拍帮你接回节奏是真的，当众喊停让你紧张也是真的，两边你都记在心里。",
+        "userResponse": "好，我听到了。",
+        "responseKind": "acknowledgement",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "generate_event_journal"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "生成日志"
+        ]
+      },
+      "visibleResponse": "他数拍帮你接回节奏是真的，当众喊停让你紧张也是真的，两边你都记在心里。\n好，我听到了。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 生成日志",
+      "finalAction": "pause",
+      "attempts": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "TIMEOUT",
+          "errorMessage": "AI request timed out."
+        },
+        {
+          "stage": "extract",
+          "attempt": 2,
+          "provider": "volcengine-ark:board7-mvp-baseline-recovery",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "OUTPUT_TRUNCATED",
+          "errorMessage": "Model output reached the token limit before completion."
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 389,
+          "tokenUsage": {
+            "promptTokens": 718,
+            "completionTokens": 316,
+            "totalTokens": 1034,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 718
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"naturalUnderstanding\": \"他数拍帮你接回节奏是真的，当众喊停让你紧张也是真的，两边你都记在心里。\",\n  \"naturalResponse\": \"好，我听到了。\",\n  \"hypothesisStatement\": null,\n  \"outcomeStatement\": null\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 389,
+        "attempts": 3,
+        "tokenUsage": {
+          "promptTokens": 718,
+          "completionTokens": 316,
+          "totalTokens": 1034,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 718
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "runtimeError": null,
+      "technicalComplete": true
+    }
+  ],
+  "error": null,
+  "gate": "pending_codex_review"
+}

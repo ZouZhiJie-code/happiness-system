@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "split_id": "dev28",
+  "status": "skeleton_partially_resolved",
+  "expected_case_count": 28,
+  "counting_rule": "每个 case_id 计一个日级案例；同一真人故事的派生样本沿用父案例 source_group_id。",
+  "privacy_rule": "真人轨迹与派生内容仅在 .private/formal/ 解析或物化，正式清单只保存定位元数据与配方引用。",
+  "composition": {
+    "seed": 10,
+    "human": 9,
+    "derived": 9
+  },
+  "cases": [
+    { "case_id": "seed-01-simple-event", "role": "seed", "source_group_id": "sg-seed-01-simple-event", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-02-multiple-events", "role": "seed", "source_group_id": "sg-seed-02-multiple-events", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-03-cross-session-same-event", "role": "seed", "source_group_id": "sg-seed-03-cross-session-same-event", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-04-similar-separate-events", "role": "seed", "source_group_id": "sg-seed-04-similar-separate-events", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-05-feeling-without-event", "role": "seed", "source_group_id": "sg-seed-05-feeling-without-event", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-06-atomic-confirmation", "role": "seed", "source_group_id": "sg-seed-06-atomic-confirmation", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-07-weak-response", "role": "seed", "source_group_id": "sg-seed-07-weak-response", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-08-correction", "role": "seed", "source_group_id": "sg-seed-08-correction", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-09-deleted-content", "role": "seed", "source_group_id": "sg-seed-09-deleted-content", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+    { "case_id": "seed-10-update-failure", "role": "seed", "source_group_id": "sg-seed-10-update-failure", "synthetic": true, "privacy": "tracked_synthetic", "content_status": "resolved_in_seed_cases" },
+
+    { "case_id": "dev-real-01", "role": "human", "source_group_id": "sg-gi088-v8-question-decision-pro", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v8-download", "completed_trajectory_ordinal": 1 } },
+    { "case_id": "dev-real-02", "role": "human", "source_group_id": "sg-gi088-v7-continuity-baseline", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7-download", "completed_trajectory_ordinal": 1 } },
+    { "case_id": "dev-real-03", "role": "human", "source_group_id": "sg-gi088-v7-continuity-baseline", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7-download", "completed_trajectory_ordinal": 2 } },
+    { "case_id": "dev-real-04", "role": "human", "source_group_id": "sg-gi088-v7r2-ark-flash", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7r2-download", "completed_trajectory_ordinal": 1 } },
+    { "case_id": "dev-real-05", "role": "human", "source_group_id": "sg-gi088-v7r2-ark-flash", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7r2-download", "completed_trajectory_ordinal": 2 } },
+    { "case_id": "dev-real-06", "role": "human", "source_group_id": "sg-gi088-v7r4-pro", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7r4-download", "completed_trajectory_ordinal": 1 } },
+    { "case_id": "dev-real-07", "role": "human", "source_group_id": "sg-gi088-v7r4-pro", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v7r4-download", "completed_trajectory_ordinal": 2 } },
+    { "case_id": "dev-real-08", "role": "human", "source_group_id": "sg-gi088-v6-single-focus", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v6-local", "completed_trajectory_ordinal": 1 } },
+    { "case_id": "dev-real-09", "role": "human", "source_group_id": "sg-gi088-v6-single-focus", "synthetic": false, "privacy": "private_local_only", "content_status": "resolve_from_private_import", "private_source_ref": { "source_id": "src-v6-local", "completed_trajectory_ordinal": 2 } },
+
+    { "case_id": "dev-derived-01", "role": "derived", "source_group_id": "sg-gi088-v8-question-decision-pro", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-01", "recipe_id": "derive-01-append-new-record" },
+    { "case_id": "dev-derived-02", "role": "derived", "source_group_id": "sg-gi088-v7-continuity-baseline", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-02", "recipe_id": "derive-02-preserve-user-replace" },
+    { "case_id": "dev-derived-03", "role": "derived", "source_group_id": "sg-gi088-v7-continuity-baseline", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-03", "recipe_id": "derive-03-preserve-user-delete" },
+    { "case_id": "dev-derived-04", "role": "derived", "source_group_id": "sg-gi088-v7r2-ark-flash", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-04", "recipe_id": "derive-04-late-correction" },
+    { "case_id": "dev-derived-05", "role": "derived", "source_group_id": "sg-gi088-v7r2-ark-flash", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-05", "recipe_id": "derive-05-merge-same-event" },
+    { "case_id": "dev-derived-06", "role": "derived", "source_group_id": "sg-gi088-v7r4-pro", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-06", "recipe_id": "derive-06-separate-similar-events" },
+    { "case_id": "dev-derived-07", "role": "derived", "source_group_id": "sg-gi088-v7r4-pro", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-07", "recipe_id": "derive-07-preserve-uncertainty" },
+    { "case_id": "dev-derived-08", "role": "derived", "source_group_id": "sg-gi088-v6-single-focus", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-08", "recipe_id": "derive-08-chronological-order" },
+    { "case_id": "dev-derived-09", "role": "derived", "source_group_id": "sg-gi088-v6-single-focus", "synthetic": true, "derived_from_private": true, "privacy": "private_local_only", "content_status": "recipe_only_not_materialized", "parent_case_id": "dev-real-09", "recipe_id": "derive-09-failed-update-preserves-draft" }
+  ]
+}

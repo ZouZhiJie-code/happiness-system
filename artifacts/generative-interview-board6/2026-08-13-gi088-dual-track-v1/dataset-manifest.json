@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "manifestVersion": "2026-08-13.gi088-dual-track-stage-b2-v1",
+  "status": "stage_b2_ready_stage_c_historical_technical_blocked_stage_c2_technical_blocked",
+  "standardVersion": "Daily Light AI 评测总规范 v1.0",
+  "specialtyRef": "docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md",
+  "decisionSupportedNow": "阶段 B2 资产就绪；阶段 C2 已确认 Plus 普通和思考均不具备上岗资格，Max 因 15/20 技术证据形成技术阻断，当前无可推荐 Judge 配置。",
+  "decisionNotSupportedNow": ["Max 在完整 20 张证据下是否合格", "当前候选是否达到独立准入门", "是否进入真人 Preview", "是否发布"],
+  "assets": [
+    {"datasetId":"gi088-development-challenge-28","version":"2026-08-13.v1","file":"development-challenge-28.json","sha256":"54d0f66feecc9b9e58e220a9bd180d129fb3a005039f384b37a9f5910909fef5","count":28,"status":"ready_for_development_use"},
+    {"datasetId":"gi088-hard-boundary-regression-24","version":"2026-08-13.v1","file":"hard-boundary-regression-24.json","sha256":"c86d2074ad589a3ead3b0d30b18b2981c404d81db82803713712780e3692b641","count":24,"status":"ready_for_zero_call_and_candidate_regression"},
+    {"datasetId":"gi088-judge-calibration-20","version":"2026-08-13.v2","file":"judge-calibration-20.json","sha256":"5b4dd8d8b1afd3ea0ec73e37889ea87b0ccf39fe51eb7cd68f9f4074ec2f8dea","count":20,"retiredCount":2,"privateRedactedPayloadCount":7,"status":"stage_c2_plus_normal_and_thinking_no_go_max_incomplete"},
+    {"datasetId":"gi088-independent-admission-blueprint-12","version":"2026-08-13.blueprint-v2","file":"independent-admission-blueprint-12.json","sha256":"34420e57d6ac4df61bbacc33e529dd5e63757a44e41a197cee342990579b5826","count":12,"plannedResults":28,"captureResults":8,"chatResults":20,"status":"public_blueprint_and_private_bodies_frozen_not_authorized_for_run"}
+  ],
+  "contracts": [
+    {"name":"case_identity","file":"case-identity.schema.json","sha256":"abe93c8569502cd9f9bf5f154592afb119af1dee6d5d97b529c1c72c3c20a310"},
+    {"name":"dataset_identity","file":"dataset-identity.schema.json","sha256":"11d0075b43374ff8bc5963babac1f65a8cba7476e09fca0f8596dc129b4af84c"},
+    {"name":"run_identity","file":"run-identity.schema.json","sha256":"8ba36fc5ab21786ab6233e996ebce6837c3fbfc2ffef32a17dd20e3e560c80ea"},
+    {"name":"independent_hidden_authoring_handoff","file":"independent-hidden-authoring-handoff.md","sha256":"d2c161fe28541edce7f14cc629c8bdc558b1419f35b8f8dcff96de507dc50ee5"},
+    {"name":"stage_b2_validator","file":"../../../scripts/validate-gi088-stage-b2-assets.ts","sha256":"2d3942cbd2c37c215ae1278c7555e41fbcf25809b9fda697e21d350869026a7d"}
+  ],
+  "privateEvidenceFingerprints": {
+    "judgeBlindPackageSha256": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "judgeGoldMappingSha256": "82903b1ed3e83e4f629a776bc54fb788abc08fa4dbe76c89bb42fe96fb865452",
+    "realTopicIntakeSha256": "8f2470cb1c62b048d44e73bc19cbb2e77f7470095c2cb557100602b6696dd3b4",
+    "hiddenDatasetCanonicalSha256": "b7ce89418e70d9aabc038adb8e7e589f7dd4c7036ebbde209b42ae8e8f12ca11",
+    "hiddenDatasetFileSha256": "d08ca3229e8e68a5a8f23317e56e79180fa1eedbd21205852004ea390683f112",
+    "leakageAuditSha256": "82518092e46136067a736c9fa02420318e41777c298e301f8a0220c9f3a921ff",
+    "publicContentExposure": "hashes_and_counts_only"
+  },
+  "runDispositionEvidence": {"file":"run-disposition-readback.json","result":"historical_terminal_preserved","databaseWrites":0},
+  "stageCCalibrationEvidence": {"file":"stage-c-calibration-receipt.json","sha256":"ea4486c1c2fe3b75101211be188ecbfc74519b64342b8c14d5a61f505a40b650","handoff":"stage-c-handoff.md","handoffSha256":"dceca02d8052555c5352ab217d52403dcd7f9059f59101ee7cc424e739cc4a56","result":"technical_blocked","calls":19,"technicalRetries":4,"costCny":0.092062,"plusNormalValid":0,"plusThinkingValid":14,"maxCalls":0,"qualityConclusion":"withheld"},
+  "stageC2CalibrationEvidence": {"authorization":"stage-c2-authorization.json","authorizationSha256":"2ac47b2457b1c323134add8fb34087bd1e47152378766293e83512a21cf4d562","file":"stage-c2-calibration-receipt.json","sha256":"81548b1fd5af776aabe1dc48f0ed7364b824f1d162f68506b0d93710d5094f87","handoff":"stage-c2-handoff.md","handoffSha256":"b0861e043674b097dedca8b82080e009935bfc40625f2c03a8dc96aa6c78e4db","result":"technical_blocked","calls":64,"technicalRetries":4,"costCny":0.584052,"plusNormalValid":20,"plusNormalResult":"no_go","plusThinkingValid":20,"plusThinkingResult":"no_go","maxThinkingValid":15,"maxResult":"technical_blocked","historicalEvidenceReused":0},
+  "runHistoryEvidence": {"file":"run-history-audit.json","sameVersionRunCount":5,"databaseWrites":0},
+  "validationEvidence": {"file":"independent-admission-validation-receipt.json","sha256":"641f644192164a15d716c98e2eed80c60bd757caed71f120de0158605e13e8fd","result":"frozen_private_assets_ready","historicalStageB2PendingReceipt":"stage-b2-validation-receipt.json","historicalStageBReceipt":"asset-validation-receipt.json","historicalStageBAcceptance":"stage-b-acceptance.md"},
+  "remainingConditions": [],
+  "executionBoundary": {"businessModelCalls":0,"judgeModelCallsStageC":19,"judgeModelCallsStageC2":64,"humanEvaluationSubmissions":0,"independentAdmissionResults":0,"previewChanges":0,"productionChanges":0,"productionState":"legacy_plus_baseline"}
+}

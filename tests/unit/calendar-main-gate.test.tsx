@@ -33,9 +33,22 @@ function BeginCalendarEntryButton() {
 describe("calendar main gate", () => {
   beforeEach(() => {
     mockPathname.value = "/interview";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        kind: "month",
+        selectedKey: "2026-08",
+        items: [],
+        monthDates: []
+      })
+    }));
   });
 
-  it("covers page children with calendar skeleton overlay while entering calendar", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("covers page children with calendar skeleton overlay while entering calendar", async () => {
     render(
       <CalendarChromeProvider>
         <BeginCalendarEntryButton />
@@ -55,6 +68,7 @@ describe("calendar main gate", () => {
     expect(screen.getByTestId("calendar-main-gate-overlay")).toBeInTheDocument();
     expect(screen.getByTestId("calendar-month-workspace-fallback")).toBeInTheDocument();
     expect(screen.getByTestId("interview-main-content").parentElement).toHaveAttribute("aria-hidden", "true");
+    expect(await screen.findByText("还没有可回看的记录。")).toBeInTheDocument();
   });
 
   it("renders children when not entering calendar", () => {

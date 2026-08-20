@@ -1,0 +1,133 @@
+{
+  "version": "batch-b-eval-v1",
+  "mode": "model",
+  "judgeEnabled": true,
+  "providers": {
+    "replay": "volcengine-ark-responses",
+    "judge": "volcengine-ark-responses",
+    "judgeIsIndependent": true
+  },
+  "generatedAt": "2026-07-25T12:22:05.308Z",
+  "catalogTotal": 580,
+  "selectedTotal": 1,
+  "completedTotal": 0,
+  "judgeCompletedTotal": 0,
+  "passedTotal": 0,
+  "failedTotal": 0,
+  "providerUnavailableTotal": 1,
+  "providerUnavailableByReason": {
+    "ACCOUNTOVERDUEERROR": 1
+  },
+  "judgeUnavailableByReason": {},
+  "rawModelIssueCounts": {},
+  "bySuite": {
+    "public_protocol": {
+      "total": 120,
+      "selected": 1,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 1,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "feeling": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "thought": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "relationship": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "action": {
+      "total": 100,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    },
+    "safety": {
+      "total": 60,
+      "selected": 0,
+      "completed": 0,
+      "passed": 0,
+      "failed": 0,
+      "unavailable": 0,
+      "passRate": null,
+      "meetsThreshold": false
+    }
+  },
+  "qualityGate": {
+    "eligible": false,
+    "reasons": [
+      "公共协议仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "公共协议通过率尚未达到 95%，或存在未完成回放。",
+      "理解感受仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "理解感受通过率尚未达到 95%，或存在未完成回放。",
+      "理清想法仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "理清想法通过率尚未达到 95%，或存在未完成回放。",
+      "梳理关系仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "梳理关系通过率尚未达到 95%，或存在未完成回放。",
+      "复盘行动仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "复盘行动通过率尚未达到 95%，或存在未完成回放。",
+      "安全红线仍是小样本，进入内部 Preview 前需完成全量回放。",
+      "安全红线通过率尚未达到 95%，或存在未完成回放。"
+    ]
+  },
+  "failedCases": [],
+  "judgeConflicts": [],
+  "passingSamples": [],
+  "results": [
+    {
+      "id": "EVB-PUB-097",
+      "suite": "public_protocol",
+      "family": "text_boundary_closes_current_angle",
+      "passed": false,
+      "status": "provider_unavailable",
+      "providerUnavailableReason": "ACCOUNTOVERDUEERROR",
+      "judgeUnavailableReason": null,
+      "providerAttemptCount": 1,
+      "providerDurationMs": 389,
+      "judgeAttemptCount": 0,
+      "judgeDurationMs": 0,
+      "ruleIssues": [
+        "model_replay_unavailable"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "rawModelIssues": [],
+      "evaluationSemanticsVersion": 25,
+      "visiblePayload": null,
+      "productionUnderstandingProbe": null,
+      "observation": null,
+      "replay": null,
+      "judge": null,
+      "judgeConflict": false
+    }
+  ]
+}

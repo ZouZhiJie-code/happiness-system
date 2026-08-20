@@ -106,7 +106,7 @@ GI-058 已完成真实性能双指标、回合上下文复用、canonical hash�
 
 GI-058 历史裁决：`技术通过、人工体验 No-Go；候选失效`。Production 保持 `legacy + baseline`，本轮未执行 Production 部署、开关切换或数据库迁移。
 
-详见 [04r｜GI-058 专项](./04r-board8-gi058-release-blocking-repair-and-performance-calibration.md)、GI-058 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、Board8 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`） 和 Provider 前置检查（本机历史证据，公开精简包未收录：`provider-preflight.md`）。
+详见 [04r｜GI-058 专项](./04r-board8-gi058-release-blocking-repair-and-performance-calibration.md)、[GI-058 候选血缘](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/preview-execution-evidence.md)、[Board8 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/board8-preview-candidate-audit.md) 和 [Provider 前置检查](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/provider-preflight.md)。
 
 ## GI-059 产品规则与历史候选
 
@@ -116,7 +116,7 @@ DeepSeek 官方 API 脚本化 `8+2` 已完成：主轨迹 `8/8`、日志闭环 `
 
 GI-059 的脚本化候选保持历史 `No-Go`。其产品规则随后由 GI-064 承接运行稳定性修复，并最终由 GI-066 重开为单角度策略。Production 继续保持 `legacy + baseline`。
 
-详见 [04s｜GI-059 专项](./04s-board8-gi059-question-thinking-deep-completion-and-real-experience-reverification.md)和当前 Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+详见 [04s｜GI-059 专项](./04s-board8-gi059-question-thinking-deep-completion-and-real-experience-reverification.md)和[当前 Board8 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi059-scripted-deepseek-official-preview-r4/board8-preview-candidate-audit.md)。
 
 ## GI-060–064 历史候选
 
@@ -128,7 +128,7 @@ GI-064 最终脚本化 `8+2` 已完成：`8/8` 主链、`8/8` 日志闭环、第
 
 GI-066 改变了提问策略、完成标准、模型职责和评测方式，GI-064 原人工实聊计划停止。该候选不再承担当前 Preview 或 Production 授权证据。
 
-详见 [04t｜GI-060–064 专项](./04t-board8-gi060-to-gi064-reliability-repair-and-human-preview.md)、GI-064 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）和Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+详见 [04t｜GI-060–064 专项](./04t-board8-gi060-to-gi064-reliability-repair-and-human-preview.md)、[GI-064 候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/preview-execution-evidence.md)和[Board8 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/board8-audit/board8-preview-candidate-audit.md)。
 
 范围说明：下文 GI-050–064 的四角度覆盖、baseline 条件路径和八条人工实聊继续作为历史决策与证据保留。`GI-065` 继续定义 `thought_only` 单角度范围；GI-066 的 `10×3 → 单角度 8+2` 与真人 No-Go 作为历史证据；当前验收判尺由 GI-074 覆盖。正式复盘继续不使用 baseline 计作生成式成功。
 
@@ -241,7 +241,7 @@ GI-066 候选曾使用本机独立数据库完成自动 Preview。历史初始�
 - 模型：`deepseek-v4-flash`。
 - 温度：`0.2`。
 - thinking：关闭。
-- 历史候选血缘：详见 GI-066 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）；Provider 为 `openai`（DeepSeek 官方 API），API 地址 `https://api.deepseek.com`，逻辑模型名 `deepseek-v4-flash`。
+- 历史候选血缘：详见 [GI-066 候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi066-scripted-deepseek-official-preview-v8/candidate-lineage.md)；Provider 为 `openai`（DeepSeek 官方 API），API 地址 `https://api.deepseek.com`，逻辑模型名 `deepseek-v4-flash`。
 
 模型、Prompt、策略、角度卡、语义产物或共用入口与提问决策任一发生变化，原 Preview 结果失效，按 `GI-054` 重跑。
 
@@ -281,7 +281,7 @@ GI-066 候选曾使用本机独立数据库完成自动 Preview。历史初始�
 
 GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v2 的 Preview 结果因此失效，不可计入当前发布门。包含 GI-055 的候选已经从头完成 `8` 条计分轨迹和两条冒烟；此前失败记录与 v2 历史记录继续保留，不覆盖人工裁决。
 
-历史执行证据：修复后候选 v2 Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、只读 JSON 审计（本机历史证据，公开精简包未收录：`board8-production-first10-audit.json`）、只读 Markdown 审计（本机历史证据，公开精简包未收录：`board8-production-first10-audit.md`）。
+历史执行证据：[修复后候选 v2 Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-02-repaired-candidate-v2/preview-execution-evidence.md)、[只读 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-02-repaired-candidate-v2/board8-production-first10-audit.json)、[只读 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-02-repaired-candidate-v2/board8-production-first10-audit.md)。
 
 #### GI-055 候选执行结果（历史证据，口径已失效）
 
@@ -299,7 +299,7 @@ GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v
 
 历史 Go/No-Go：`No-Go / 暂不授权 Production`。该结果继续保留，不能替代后续候选的 Preview 裁决。
 
-历史脱敏证据：GI-055 Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、旧只读 JSON 审计（本机历史证据，公开精简包未收录：`board8-production-first10-audit.json`）、旧只读 Markdown 审计（本机历史证据，公开精简包未收录：`board8-production-first10-audit.md`）。GI-056 历史候选记录见候选血缘与执行状态（本机历史证据，公开精简包未收录：`candidate-lineage.md`）和只读审计报告。
+历史脱敏证据：[GI-055 Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-02-preview/preview-execution-evidence.md)、[旧只读 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-02-preview/board8-production-first10-audit.json)、[旧只读 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-02-preview/board8-production-first10-audit.md)。GI-056 历史候选记录见[候选血缘与执行状态](../../../artifacts/generative-interview-board8/2026-08-03-gi056-candidate/candidate-lineage.md)和只读审计报告。
 
 #### GI-056 执行记录（历史候选）｜2026-08-03
 
@@ -326,7 +326,7 @@ GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v
 
 失败恢复证据保留：一条行动深聊轨迹在先回答后触发 `EVENT_ANGLE_ALREADY_COMPLETED`，随后以进入深聊后立即明确停止的路径复验通过。该失败暴露了深聊目标完成与后续回答之间的状态冲突，已进入下一轮修复输入。
 
-候选血缘与脱敏执行记录：GI-056 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）；只读 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）；只读 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。人工内容裁决字段继续留空，完整内容保留在受控 Preview 数据库。
+候选血缘与脱敏执行记录：[GI-056 候选血缘](../../../artifacts/generative-interview-board8/2026-08-03-gi056-candidate/candidate-lineage.md)；[只读 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi056-candidate/board8-preview-candidate-audit.json)；[只读 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi056-candidate/board8-preview-candidate-audit.md)。人工内容裁决字段继续留空，完整内容保留在受控 Preview 数据库。
 
 #### GI-057 独立 Preview 结果与裁决｜2026-08-03
 
@@ -338,7 +338,7 @@ GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v
 - Board8 v3 报告：正式生成式尝试 `12` 次，确定性控制动作 `10` 次，事件记录入口回合 `16` 次，真实运行降级 `3` 次，最大连续 `2` 次；日志 AI 接受 `8/8`、标题修复 `0`、全文安全回退 `0`。
 - 回应等待中位数 `50.877s`、P90 `77.999s`，均超过 GI-051 条件发布线；运行降级也超过最多 `2` 次。自动发布门裁决：`No-Go`。
 - 感受 2 在明确停止后需要重新选择角度，按 GI-051 记录为轨迹失败；首条事件回合的数据库冷启动事务超时已通过将相关事务超时提升至 `60s` 修复，后续日志闭环全部完成。
-- 脱敏执行证据见 Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`），只读报告见 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`） 和 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+- 脱敏执行证据见 [Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/preview-execution-evidence.md)，只读报告见 [JSON 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/board8-preview-candidate-audit.json) 和 [Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/board8-preview-candidate-audit.md)。
 - 当时板块 8 状态：`产品决策重开；GI-057 独立 Preview 自动发布门 No-Go`。Production 继续保持 `legacy + baseline`。
 
 #### GI-058 实现与独立 Preview 结果｜2026-08-03
@@ -349,7 +349,7 @@ GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v
 - Board8 历史候选审计：正式生成式回合 `11`，最终 baseline `2`，最大连续降级 `1`，定向修复后通过 `1`，局部确定性修复 `1`；完整文本可见中位数 `0.04s`、P90 `6.64s`，可继续操作中位数 `0.09s`、P90 `6.71s`。这些指标均在当时 GI-051 的技术发布门内。
 - 该候选使用 DeepSeek 官方 API（`openai` 兼容适配器，`https://api.deepseek.com`）。旧 Ark `/models` 与最小聊天请求返回的 HTTP `403 AccountOverdueError` 只保留为历史工程证据。
 - GI-058 最终状态：`技术发布门通过；人工体验 No-Go；候选失效`。Production 继续保持 `legacy + baseline`。
-- 证据见 GI-058 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、Board8 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`） 和 Provider 前置检查（本机历史证据，公开精简包未收录：`provider-preflight.md`）。
+- 证据见 [GI-058 候选血缘](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/preview-execution-evidence.md)、[Board8 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/board8-preview-candidate-audit.json) 和 [Provider 前置检查](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/provider-preflight.md)。
 
 #### GI-059 实现与脚本化独立 Preview 结果｜2026-08-03
 
@@ -357,7 +357,7 @@ GI-055 改变了事件入口、第一检查点和选角度后的首问决策，v
 - DeepSeek 官方 API 脚本化 `8+2` 完成：主链 `8/8`、日志闭环 `8/8`、第一检查点和旧五维冒烟通过，四条深聊均完成至少一轮有效问答；日志 AI 接受 `8/8`，全文 fallback `0`。
 - Board8 历史候选审计：正式生成式回合 `17`，最终 baseline `10`，最大连续降级 `5`；完整文本可见中位数 `0.05s`、P90 `25.39s`，可继续操作中位数 `0.09s`、P90 `25.42s`。模型耗时 P90 `27.77s`，非模型耗时 P90 `0.08s`。
 - 自动发布门裁决：`No-Go`。生成式降级超过累计 `2`，双延迟 P90 超过条件线 `20s`。人工实聊工作台保留给下一份通过自动发布门的冻结候选使用。
-- Production 全程保持 `legacy + baseline`。证据见 [GI-059 专项](./04s-board8-gi059-question-thinking-deep-completion-and-real-experience-reverification.md)和Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+- Production 全程保持 `legacy + baseline`。证据见 [GI-059 专项](./04s-board8-gi059-question-thinking-deep-completion-and-real-experience-reverification.md)和[Board8 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi059-scripted-deepseek-official-preview-r4/board8-preview-candidate-audit.md)。
 
 以下第 5～7 节保留 GI-050～064 的旧 `8＋2` 执行口径，用于历史追溯和回归选材。下一候选统一执行本文顶部的 GI-074 两模式 `4＋2` 门；旧 `8/8`、`6/8`、baseline `≤2/8` 和历史性能线不参与当前授权。
 

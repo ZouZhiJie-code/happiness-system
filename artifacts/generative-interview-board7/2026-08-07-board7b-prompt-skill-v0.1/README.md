@@ -8,7 +8,7 @@
 - `conduct-daily-light-thinking-interview/SKILL.md`：共同聚焦、形成认识、动态深入和决策支持方法。
 - `board7b-semantic-result-v0.md`：原样沿用的 v0 结构合同。
 - `board7b-gi068-080-rule-coverage-v0.1.md`：不进入模型的冻结规则分流表。
-- 八次隐藏回归的逐字输入与执行计划保留在本机受控目录；公开包只保留裁决和聚合结果。
+- `board7b-prompt-skill-v0.1-regression-plan.json`：八次隐藏回归计划，当前授权预算为 0。
 - `board7b-prompt-skill-v0.1-manifest.json`：候选指纹、状态和边界。
 
 ## 8 次回归结果

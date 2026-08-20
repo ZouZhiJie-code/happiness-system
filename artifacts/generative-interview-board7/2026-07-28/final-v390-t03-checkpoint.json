@@ -1,0 +1,346 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T03",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "guided_reflection",
+    "activeAngle": "thought",
+    "lastCompletedAngle": null,
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "active",
+        "questionOpportunityCount": 2,
+        "currentOutcomeId": null,
+        "answeredTargets": [
+          "拒绝时的具体事实"
+        ],
+        "askedTargets": [
+          "拒绝时的具体事实",
+          "羡慕的具体部分"
+        ],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": {
+      "opportunityNumber": 2,
+      "angle": "thought",
+      "target": "羡慕的具体部分",
+      "surfaceLevel": "open_anchor",
+      "repairCount": 0,
+      "assistantMessageId": null,
+      "cognitiveAction": "anchor_specific"
+    },
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.9.0",
+    "currentMicrogoal": null
+  },
+  "facts": [
+    {
+      "id": "T03-fact-1",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "用户拒绝了一个机会",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-1",
+          "factId": "T03-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "我明明自己拒绝了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-2",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "看到同事接手后感到羡慕",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-2",
+          "factId": "T03-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "看到同事接手还是很羡慕",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-3",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "用户怀疑自己是否选错了",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_interpretation",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-3",
+          "factId": "T03-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "感觉自己是不是选错了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-4",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-4",
+      "createdByRevisionId": null,
+      "statement": "用户当时手上有两个项目都在赶进度",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-4",
+          "factId": "T03-fact-4",
+          "sourceTurnId": "evaluation-turn-4",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-4",
+          "role": "direct_expression",
+          "quote": "我当时手上有两个项目都在赶进度",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-5",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-5",
+      "createdByRevisionId": null,
+      "statement": "用户觉得再带团队会撑不住",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_interpretation",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-5",
+          "factId": "T03-fact-5",
+          "sourceTurnId": "evaluation-turn-5",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-5",
+          "role": "direct_expression",
+          "quote": "所以觉得再带团队会撑不住",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "assistantUnderstanding": "你拒绝那个机会时，是依据一项具体事实或衡量标准做出的决定。",
+      "assistantQuestion": "当时支撑你拒绝的一项具体情况是什么？"
+    },
+    {
+      "user": "我当时手上有两个项目都在赶进度，所以觉得再带团队会撑不住。",
+      "assistantUnderstanding": "你拒绝时是因为项目压力，但现在看到同事接手后感到羡慕，让你怀疑自己的选择。",
+      "assistantQuestion": "看到同事接手时，你具体羡慕的是哪一部分？"
+    }
+  ],
+  "currentQuestion": "看到同事接手时，你具体羡慕的是哪一部分？",
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "visibleResponse": "你拒绝那个机会时，是依据一项具体事实或衡量标准做出的决定。\n当时支撑你拒绝的一项具体情况是什么？",
+      "finalAction": "ask",
+      "selectedTarget": "拒绝时的具体事实",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T03-fact-1"
+      ],
+      "factDeltas": [
+        {
+          "id": "T03-fact-1",
+          "statement": "用户拒绝了一个机会",
+          "quote": "我明明自己拒绝了"
+        },
+        {
+          "id": "T03-fact-2",
+          "statement": "看到同事接手后感到羡慕",
+          "quote": "看到同事接手还是很羡慕"
+        },
+        {
+          "id": "T03-fact-3",
+          "statement": "用户怀疑自己是否选错了",
+          "quote": "感觉自己是不是选错了"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 306,
+          "tokenUsage": {
+            "promptTokens": 2729,
+            "completionTokens": 357,
+            "totalTokens": 3086,
+            "promptCacheHitTokens": 896,
+            "promptCacheMissTokens": 1833
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户拒绝了一个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我明明自己拒绝了\"\n      },\n      {\n        \"statement\": \"看到同事接手后感到羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"看到同事接手还是很羡慕\"\n      },\n      {\n        \"statement\": \"用户怀疑自己是否选错了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"感觉自己是不是选错了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"拒绝时的具体事实\",\n    \"evidenceRefs\": [\"new:1\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"明确支撑拒绝决定的一项具体事实或衡量点\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝那个机会时，是依据一项具体事实或衡量标准做出的决定。\",\n    \"question\": \"当时支撑你拒绝的一项具体情况是什么？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3103,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2729,
+          "completionTokens": 357,
+          "totalTokens": 3086,
+          "promptCacheHitTokens": 896,
+          "promptCacheMissTokens": 1833
+        },
+        "estimatedCost": 0.0003590888
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 2,
+      "rawText": "我当时手上有两个项目都在赶进度，所以觉得再带团队会撑不住。",
+      "visibleResponse": "你拒绝时是因为项目压力，但现在看到同事接手后感到羡慕，让你怀疑自己的选择。\n看到同事接手时，你具体羡慕的是哪一部分？",
+      "finalAction": "ask",
+      "selectedTarget": "羡慕的具体部分",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T03-fact-2",
+        "T03-fact-4",
+        "T03-fact-5"
+      ],
+      "factDeltas": [
+        {
+          "id": "T03-fact-4",
+          "statement": "用户当时手上有两个项目都在赶进度",
+          "quote": "我当时手上有两个项目都在赶进度"
+        },
+        {
+          "id": "T03-fact-5",
+          "statement": "用户觉得再带团队会撑不住",
+          "quote": "所以觉得再带团队会撑不住"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 242,
+          "tokenUsage": {
+            "promptTokens": 2921,
+            "completionTokens": 345,
+            "totalTokens": 3266,
+            "promptCacheHitTokens": 1024,
+            "promptCacheMissTokens": 1897
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户当时手上有两个项目都在赶进度\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我当时手上有两个项目都在赶进度\"\n      },\n      {\n        \"statement\": \"用户觉得再带团队会撑不住\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"所以觉得再带团队会撑不住\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"羡慕的具体部分\",\n    \"evidenceRefs\": [\"T03-fact-2\", \"new:1\", \"new:2\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"明确用户羡慕同事接手后的哪一部分，从而将当前怀疑与具体事实连接\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝时是因为项目压力，但现在看到同事接手后感到羡慕，让你怀疑自己的选择。\",\n    \"question\": \"看到同事接手时，你具体羡慕的是哪一部分？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 2850,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2921,
+          "completionTokens": 345,
+          "totalTokens": 3266,
+          "promptCacheHitTokens": 1024,
+          "promptCacheMissTokens": 1897
+        },
+        "estimatedCost": 0.0003650472000000001
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": true,
+  "completed": false,
+  "completionReason": null,
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

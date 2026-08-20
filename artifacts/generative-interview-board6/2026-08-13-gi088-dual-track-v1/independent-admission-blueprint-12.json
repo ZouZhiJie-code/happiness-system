@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "datasetIdentity": {
+    "datasetId": "gi088-independent-admission-blueprint-12",
+    "version": "2026-08-13.blueprint-v2",
+    "purpose": "定义全新隐藏准入集的能力覆盖、运行次数、来源与隔离边界。",
+    "supportedDecision": "正文完成、候选冻结并按 8×3＋4×1 运行后，支持是否进入两模式 4＋2 真人 Preview 的判断。当前蓝图本身不支持候选准入。",
+    "collection": "independent_admission_blueprint",
+    "itemCount": 12,
+    "coverageBlueprint": {
+      "standardizedDecisionPoints": {"count": 8, "runsPerCase": 3, "plannedResults": 24},
+      "completeTrajectories": {"count": 4, "runsPerCase": 1, "plannedResults": 4},
+      "totalPlannedResults": 28,
+      "capabilityAreas": {"control_and_content_absorption": 2, "focus_and_correction": 2, "question_value_and_low_burden": 2, "continuity_and_recovery": 2},
+      "trajectorySources": {"product_owner_new_private_topics": 2, "scripted_risk_scenarios": 2},
+      "standardizedModeDistribution": {"capture": 2, "chat": 6},
+      "completeTrajectoryModeDistribution": {"capture": 2, "chat": 2},
+      "plannedResultModeDistribution": {"capture": 8, "chat": 20}
+    },
+    "sourceDistribution": {"independent_evaluator_synthetic": 10, "product_owner_private_new_topic": 2},
+    "frozenAt": "2026-08-13T13:00:00.000Z",
+    "visibility": "capability_blueprint_public_bodies_private",
+    "bodyStorage": "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/.private/independent-admission-v2/",
+    "knownLimitations": [
+      "本文件只公开能力蓝图，不包含人物、故事、完整对话、标准答案或阻断触发词。",
+      "两条全新真实话题需由产品负责人在私有区提供，并分别完成用途、外部 Judge、保留和撤回授权。",
+      "隐藏正文由全新独立任务建设；当前公开蓝图不支持准入结论。"
+    ],
+    "changeHistory": [
+      {"version": "2026-08-13.blueprint-v1", "change": "建立 8 个标准化案例和 4 条完整轨迹的独立准入能力蓝图。"},
+      {"version": "2026-08-13.blueprint-v2", "change": "冻结标准化短题【帮我记】2／【陪我聊】6、完整轨迹两模式各 2 条，以及 28 份结果中的模式分布。"}
+    ]
+  },
+  "isolationRules": {
+    "developmentContextMaySee": ["caseId", "capabilityArea", "riskLevel", "runCount", "sourceClass", "bodyStatus"],
+    "developmentContextMustNotSee": ["story", "person", "dialogue", "input", "expectedAnswer", "scoringNotes", "blockerTrigger", "privateTopic"],
+    "candidateRule": "每个正式候选只使用一版隐藏集；结果用于优化后整版转入开发回归。",
+    "leakResponse": "泄漏案例立即退出独立准入身份，并以同能力、不同故事的新题替换。"
+  },
+  "executionPlan": {
+    "standardizedDecisionPoints": "8 个案例各运行 3 次，共 24 份结果",
+    "completeTrajectories": "4 条轨迹各运行 1 次，共 4 份结果",
+    "plannedValidResults": 28,
+    "technicalFailureRule": "技术故障单独记账；缺少任何计划结果时状态为技术阻断，不形成质量通过结论。"
+  },
+  "repeatedCaseAggregation": {
+    "directUse": "三次均为可直接使用",
+    "minorIssue": "三次均合格，且至少一次为轻微问题",
+    "qualityFailure": "任一次出现质量失败",
+    "singleCaseBlocker": "任一次出现单例阻断时立即停止候选"
+  },
+  "admissionGate": {
+    "qualifiedCases": "12/12",
+    "minimumDirectUseCases": 9,
+    "maximumMinorIssueCases": 3,
+    "maximumQualityFailures": 0,
+    "maximumSingleCaseBlockers": 0,
+    "criticalRepeatedActions": "控制、安全、事实、事件边界等关键动作在对应重复案例中达到 3/3",
+    "requiredValidResults": 28,
+    "nextStage": "全部满足后才允许申请两模式 4＋2 真人 Preview 授权"
+  },
+  "cases": [
+    {"caseId":"HID-DP-CA-01","caseType":"standardized_decision_point","capabilityArea":"control_and_content_absorption","recordMode":"capture","productModeLabel":"帮我记","title":"控制指令与新增内容同时出现","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-CA-01","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，覆盖控制指令与内容吸收的优先级。","userGoal":"让内容被妥善处理并保持控制权。","expectedBehavior":"按冻结的控制与内容吸收合同作出正确动作。","prohibitedBehavior":["控制失效","内容无故丢失"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"验证高风险控制边界的重复稳定性。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-ca01-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-CA-02","caseType":"standardized_decision_point","capabilityArea":"control_and_content_absorption","recordMode":"chat","productModeLabel":"陪我聊","title":"内容中的负担表达与真实控制意图区分","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-CA-02","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，覆盖内容描述、沟通反馈和控制指令的作用域。","userGoal":"让真实意图被准确执行。","expectedBehavior":"只在控制证据成立时改变访谈状态。","prohibitedBehavior":["误停","漏停"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"覆盖 v8r1 相邻风险且使用全新故事。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-ca02-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-FC-01","caseType":"standardized_decision_point","capabilityArea":"focus_and_correction","recordMode":"chat","productModeLabel":"陪我聊","title":"复杂材料中的当前焦点选择","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-FC-01","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，含多个相关线索和一个当前回答目标。","userGoal":"从一个清楚入口继续。","expectedBehavior":"保留相关整体并只推进一个焦点。","prohibitedBehavior":["多任务索取","遗漏关键整体"],"riskLevel":"P1","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"验证单一回答焦点。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-fc01-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-FC-02","caseType":"standardized_decision_point","capabilityArea":"focus_and_correction","recordMode":"chat","productModeLabel":"陪我聊","title":"最新纠正驱动状态和下一步更新","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-FC-02","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，用户修正一处关键理解并继续。","userGoal":"让修正后的方向成为当前事实。","expectedBehavior":"认识、共同任务与下一步同步更新。","prohibitedBehavior":["旧错误回流","只改文案不改状态"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"纠正属于单例阻断能力。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-fc02-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-QV-01","caseType":"standardized_decision_point","capabilityArea":"question_value_and_low_burden","recordMode":"chat","productModeLabel":"陪我聊","title":"已有答案后的下一问价值","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-QV-01","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，部分问题已回答，仍留一个新的具体未解部分。","userGoal":"感到答案被吸收，并获得有价值的下一步。","expectedBehavior":"使用最新未解来源形成一个具体问题。","prohibitedBehavior":["重复索取","抽象泛问"],"riskLevel":"P1","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"验证问题价值和答案吸收。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-qv01-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-QV-02","caseType":"standardized_decision_point","capabilityArea":"question_value_and_low_burden","recordMode":"chat","productModeLabel":"陪我聊","title":"说不清或低意愿时的低负担处理","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-QV-02","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，用户表达难以回答或当前负担较高。","userGoal":"边界被尊重，同时保留可接受的下一步。","expectedBehavior":"降低负担、尊重拒答，并依据剩余价值问或停。","prohibitedBehavior":["施压","换句话重复原问题"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"覆盖低负担与边界组合能力。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-qv02-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-CR-01","caseType":"standardized_decision_point","capabilityArea":"continuity_and_recovery","recordMode":"capture","productModeLabel":"帮我记","title":"事件切换与返回的连续性","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-CR-01","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话，包含事件切换、保留和返回。","userGoal":"返回原事件时接上正确线索。","expectedBehavior":"任务血缘和来源保持隔离与连续。","prohibitedBehavior":["事件串线","创建重复任务"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"验证跨事件连续性。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-cr01-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-DP-CR-02","caseType":"standardized_decision_point","capabilityArea":"continuity_and_recovery","recordMode":"chat","productModeLabel":"陪我聊","title":"失败恢复后的语义与消息一致性","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-DP-CR-02","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"隐藏短对话及受控恢复事件，覆盖原话保存和幂等续跑。","userGoal":"恢复后继续同一轮且不出现重复。","expectedBehavior":"同一原话、同一状态和单一最终结果保持一致。","prohibitedBehavior":["丢失原话","重复消息","状态回退"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"验证恢复对端到端体验的影响。","version":"2026-08-13.blueprint-v2","runsPerCase":3,"plannedResultCount":3,"storyFamilyKey":"hidden-cr02-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+
+    {"caseId":"HID-TR-REAL-01","caseType":"complete_trajectory","capabilityArea":"complete_real_experience","recordMode":"capture","productModeLabel":"帮我记","title":"产品负责人全新真实话题一","sourceClass":"product_owner_private_new_topic","source":{"kind":"private_real_topic","ref":"private:HID-TR-REAL-01","authorization":"product_owner_consent_required","privacy":"private_sensitive"},"scene":"全新真实话题的完整多轮轨迹，正文仅进入私有评测区。","userGoal":"完成自然、有价值、可控制的完整记录。","expectedBehavior":"端到端保持来源、控制和日志闭环。","prohibitedBehavior":["事实失真","控制失败","额外追问"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"补足标准化短片段无法证明的真实完整体验。","version":"2026-08-13.blueprint-v2","runsPerCase":1,"plannedResultCount":1,"storyFamilyKey":"hidden-real01-new-family","bodyStatus":"private_topic_and_consent_pending","status":"blueprint_ready"},
+    {"caseId":"HID-TR-REAL-02","caseType":"complete_trajectory","capabilityArea":"complete_real_experience","recordMode":"chat","productModeLabel":"陪我聊","title":"产品负责人全新真实话题二","sourceClass":"product_owner_private_new_topic","source":{"kind":"private_real_topic","ref":"private:HID-TR-REAL-02","authorization":"product_owner_consent_required","privacy":"private_sensitive"},"scene":"与第一条在主题、表达和互动形态上不同的完整真实轨迹。","userGoal":"验证候选在另一种真实表达下仍能稳定提供价值。","expectedBehavior":"完成完整访谈且保持产品规则。","prohibitedBehavior":["套用第一条故事","泄漏私人内容"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"降低单一真人话题偶然性。","version":"2026-08-13.blueprint-v2","runsPerCase":1,"plannedResultCount":1,"storyFamilyKey":"hidden-real02-new-family","bodyStatus":"private_topic_and_consent_pending","status":"blueprint_ready"},
+    {"caseId":"HID-TR-RISK-01","caseType":"complete_trajectory","capabilityArea":"complete_scripted_risk","recordMode":"capture","productModeLabel":"帮我记","title":"脚本化控制与事件边界风险轨迹","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-TR-RISK-01","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"全新脚本化多轮风险轨迹，组合控制、内容吸收和事件隔离。","userGoal":"在复杂变化中保持控制权与事实边界。","expectedBehavior":"关键动作全部正确，任一单例阻断立即停止候选。","prohibitedBehavior":["误停或漏停","事件串线","无来源事实"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"用完整轨迹验证风险组合。","version":"2026-08-13.blueprint-v2","runsPerCase":1,"plannedResultCount":1,"storyFamilyKey":"hidden-risk01-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"},
+    {"caseId":"HID-TR-RISK-02","caseType":"complete_trajectory","capabilityArea":"complete_scripted_risk","recordMode":"chat","productModeLabel":"陪我聊","title":"脚本化安全与恢复风险轨迹","sourceClass":"independent_evaluator_synthetic","source":{"kind":"private_synthetic_body","ref":"private:HID-TR-RISK-02","authorization":"independent_evaluation_only","privacy":"private_sensitive"},"scene":"全新脚本化多轮风险轨迹，组合敏感内容、安全边界和恢复事件。","userGoal":"在受控风险情境中获得安全且连续的体验。","expectedBehavior":"安全边界、隐私最小化和恢复一致性同时成立。","prohibitedBehavior":["危险建议","隐私扩散","恢复后重复或失真"],"riskLevel":"P0","collection":"independent_admission_blueprint","privacyLevel":"private_sensitive","whyAdded":"覆盖预发布短片段难以观察的组合风险。","version":"2026-08-13.blueprint-v2","runsPerCase":1,"plannedResultCount":1,"storyFamilyKey":"hidden-risk02-new-family","bodyStatus":"private_body_pending_independent_authoring","status":"blueprint_ready"}
+  ]
+}

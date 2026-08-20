@@ -11,9 +11,10 @@ import {
   type Board7bWorkingTaskV1SemanticState,
   type Board7bWorkingTaskV1TurnInput
 } from "../../../../../evals/event-centered-generative/board7b-working-task-v1/board7b-working-task-v1";
+import { GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2 } from "@/server/services/evaluation/gi088/version-manifest";
 
 export const GI088_SEMANTIC_DELTA_CONTRACT_VERSION =
-  "2026-08-10.gi088-semantic-delta-contract-v2.1" as const;
+  GI088_SEMANTIC_DELTA_CONTRACT_VERSION_V8R2;
 
 export const GI088_SEMANTIC_DELTA_VALIDATION_RULES = [
   "UNDERSTANDING_CHANGE_IS_NONE_ADD_OR_REVISE",
@@ -24,11 +25,15 @@ export const GI088_SEMANTIC_DELTA_VALIDATION_RULES = [
   "PROGRAM_GENERATES_NEW_STATE_IDS",
   "NON_ASK_VISIBLE_UNDERSTANDING_IS_ALLOWED",
   "NON_ASK_VISIBLE_RESPONSE_REMAINS_QUESTION_FREE",
+  "CONTINUE_AND_RETURN_ONLY_SUBMIT_CURRENT_TURN_EVIDENCE",
+  "PROGRAM_MERGES_WORKING_TASK_EVIDENCE_LINEAGE",
+  "PROGRAM_COMPLETES_DETERMINISTIC_TASK_AND_INQUIRY_SOURCES",
+  "PAUSE_REQUIRES_EXPLICIT_CURRENT_INTERVIEW_STOP_CONTROL",
   "STATE_VISIBLE_AND_TASK_COMMIT_ATOMICALLY"
 ] as const;
 
 export const GI088_SEMANTIC_DELTA_APPENDICES = {
-  basePrompt: `每轮读取完整当前状态，只输出这一轮真正发生的变化。已有认识没有变化时使用 \`understandingChange=none\`；新增认识使用 \`add\`；用户纠正已有认识时使用 \`revise\` 并引用现有 \`stateId\`。负担信号同样使用 \`unchanged / set / clear\`。新编号由程序生成，模型不能编造编号。`,
+  basePrompt: `每轮读取完整当前状态，只输出这一轮真正发生的变化。已有认识没有变化时使用 \`understandingChange=none\`；新增认识使用 \`add\`；用户纠正已有认识时使用 \`revise\` 并引用现有 \`stateId\`。负担信号同样使用 \`unchanged / set / clear\`。\`workingTask.continuity\` 为 \`continue\` 或 \`return\` 时，\`evidenceRefs\` 只提交本轮新增来源，历史来源由程序合并。新编号由程序生成，模型不能编造编号。`,
   interviewSkill: `## 本轮语义变化
 
 1. 先读取 \`semanticContext.understandings\` 和 \`burdenSignal\`，再判断本轮是否真的发生变化。
@@ -36,8 +41,9 @@ export const GI088_SEMANTIC_DELTA_APPENDICES = {
 3. 用户纠正、收窄或替换一条已有认识时使用 \`understandingChange.revise\`，\`targetRef\` 必须来自当前认识列表。
 4. 已有认识仍然成立且本轮没有新增认识时使用 \`understandingChange.none\`，不要重复写一遍。
 5. 负担信号保持原样时使用 \`burdenSignalChange.unchanged\`；出现新的明确负担时使用 \`set\`；用户解除或否定原负担时使用 \`clear\`。
-6. \`acknowledge / synthesize / pause\` 可以在 \`visible.understanding\` 中自然承接用户，但可见回应保持零问题。`,
-  outputContract: `# Daily Light 单轮结果合同｜semantic-delta v2.1
+6. \`acknowledge / synthesize\` 可以在 \`visible.understanding\` 中自然承接用户，但可见回应保持零问题。\`pause\` 只在 \`controlDecision.finalAction=stop_follow_up\` 时合法。
+7. \`workingTask\` 继续或返回时只提交本轮新增来源；不要复制历史来源，程序会按原顺序补齐并去重。`,
+  outputContract: `# Daily Light 单轮结果合同｜semantic-delta v2.4
 
 只输出一个合法 JSON 对象，字段必须与下面结构完全一致：
 
@@ -87,12 +93,12 @@ export const GI088_SEMANTIC_DELTA_APPENDICES = {
 
 - 所有 \`evidenceRefs\` 只引用当前记录中的用户消息。
 - \`revise.targetRef\` 只能引用当前认识；新增编号由程序生成。
-- 初次建立或真正切换任务使用 \`new\`；继续当前任务使用 \`continue\`；返回保留任务使用 \`return\`。
+- 初次建立或真正切换任务使用 \`new\`；继续当前任务使用 \`continue\`；返回保留任务使用 \`return\`。\`continue / return\` 的 \`evidenceRefs\` 只填写本轮新增来源，程序负责合并历史来源、去重并保持顺序。
 - 当前任务切换或清空时，旧任务必须进入 \`invalidatedRefs\` 或 \`returnableTaskDelta.preserveRefs\`，两者互斥。
 - \`ask\` 必须填写 \`workingTask / nextInquiry / answerOpportunity\`。所有问句服务同一个 \`nextInquiry.answerTarget\`，用户可以用一段连贯回答覆盖。
 - \`nextInquiry.answerTarget\` 是可见提问的直接来源；\`taskEffect\` 说明回答怎样更新共同任务，不预设答案。
 - \`acknowledge / synthesize / pause\` 的 \`nextInquiry\` 和 \`answerOpportunity\` 为 null，可使用 \`visible.understanding\` 自然承接，\`visible.response\` 保持零问题。
-- \`pause\` 必须填写 \`pauseReason\`；其他动作的 \`pauseReason\` 为 null。
+- \`pause\` 必须同时满足 \`controlDecision.finalAction=stop_follow_up\` 并填写 \`pauseReason\`；缺少明确停止控制时输出 \`pause\` 会触发 \`UNAUTHORIZED_PAUSE\`。其他动作的 \`pauseReason\` 为 null。
 - 所有字段在同一个 JSON 对象中一次输出。`
 } as const;
 
@@ -114,6 +120,21 @@ const nextInquirySchema = z
     answerTarget: strictString.max(1_000),
     taskEffect: strictString.max(1_000),
     evidenceRefs: z.array(strictString.max(120)).min(1).max(30)
+  })
+  .strict();
+const recoverableWorkingTaskSchema = z
+  .object({
+    summary: strictString.max(1_000),
+    evidenceRefs: z.array(strictString.max(120)).max(30).optional().default([]),
+    continuity: z.enum(["new", "continue", "return"]),
+    targetRef: strictString.max(160).nullable()
+  })
+  .strict();
+const recoverableNextInquirySchema = z
+  .object({
+    answerTarget: strictString.max(1_000),
+    taskEffect: strictString.max(1_000),
+    evidenceRefs: z.array(strictString.max(120)).max(30).optional().default([])
   })
   .strict();
 const returnableTaskDeltaSchema = z
@@ -153,6 +174,35 @@ export const gi088SemanticDeltaOutputSchema = z
         invalidatedRefs: z.array(strictString.max(160)).max(100),
         returnableTaskDelta: returnableTaskDeltaSchema,
         nextInquiry: nextInquirySchema.nullable(),
+        answerOpportunity: z.enum(["new", "reuse"]).nullable(),
+        burdenSignalChange: burdenSignalChangeSchema,
+        pauseReason: strictString.max(500).nullable()
+      })
+      .strict(),
+    visible: z
+      .object({
+        understanding: strictString.max(1_000).nullable(),
+        response: strictString.max(2_000)
+      })
+      .strict()
+  })
+  .strict();
+
+const gi088SemanticDeltaCandidateOutputSchema = z
+  .object({
+    semantic: z
+      .object({
+        stage: z.enum([
+          "engage_focus",
+          "explore_clarify",
+          "deepen_integrate"
+        ]),
+        action: z.enum(["acknowledge", "ask", "synthesize", "pause"]),
+        workingTask: recoverableWorkingTaskSchema.nullable(),
+        understandingChange: understandingChangeSchema,
+        invalidatedRefs: z.array(strictString.max(160)).max(100),
+        returnableTaskDelta: returnableTaskDeltaSchema,
+        nextInquiry: recoverableNextInquirySchema.nullable(),
         answerOpportunity: z.enum(["new", "reuse"]).nullable(),
         burdenSignalChange: burdenSignalChangeSchema,
         pauseReason: strictString.max(500).nullable()
@@ -209,6 +259,18 @@ export function parseGi088SemanticDeltaOutput(content: string) {
   );
 }
 
+export function parseGi088SemanticDeltaCandidateOutput(content: string) {
+  return gi088SemanticDeltaCandidateOutputSchema.parse(
+    JSON.parse(content.trim()) as unknown
+  ) as Gi088SemanticDeltaOutput;
+}
+
+export function assertGi088SemanticDeltaOutput(
+  output: Gi088SemanticDeltaOutput
+) {
+  return gi088SemanticDeltaOutputSchema.parse(output);
+}
+
 export function toBoard7bWorkingTaskV1CompatibilityOutput(
   input: Board7bWorkingTaskV1TurnInput,
   output: Gi088SemanticDeltaOutput
@@ -249,6 +311,15 @@ export function toBoard7bWorkingTaskV1CompatibilityOutput(
 export function validateGi088SemanticDeltaOutput(input: {
   input: Board7bWorkingTaskV1TurnInput;
   output: Gi088SemanticDeltaOutput;
+  deterministicStateMaintenance?: boolean;
+  controlDecisionFinalAction?:
+    | "none"
+    | "stop_follow_up"
+    | "generate_draft"
+    | "repair_question"
+    | "skip_question"
+    | "switch_event"
+    | "switch_dimension";
 }) {
   const compatibility = toBoard7bWorkingTaskV1CompatibilityOutput(
     input.input,
@@ -257,7 +328,13 @@ export function validateGi088SemanticDeltaOutput(input: {
   const issues = validateBoard7bWorkingTaskV1Output({
     input: input.input,
     output: compatibility
-  }).filter((issue) => issue !== "NON_ASK_VISIBLE_UNDERSTANDING_MUST_BE_NULL");
+  }).filter(
+    (issue) =>
+      issue !== "NON_ASK_VISIBLE_UNDERSTANDING_MUST_BE_NULL" &&
+      (!input.deterministicStateMaintenance ||
+        (issue !== "CONTINUE_WORKING_TASK_MUST_RETAIN_EVIDENCE_LINEAGE" &&
+          issue !== "RETURN_WORKING_TASK_MUST_RETAIN_EVIDENCE_LINEAGE"))
+  );
   const understanding = input.output.semantic.understandingChange;
   const burden = input.output.semantic.burdenSignalChange;
   if (understanding.kind === "revise") {
@@ -280,6 +357,13 @@ export function validateGi088SemanticDeltaOutput(input: {
     )
   ) {
     issues.push("BURDEN_UNCHANGED_INVALIDATION_CONFLICT");
+  }
+  if (
+    input.controlDecisionFinalAction !== undefined &&
+    input.output.semantic.action === "pause" &&
+    input.controlDecisionFinalAction !== "stop_follow_up"
+  ) {
+    issues.push("UNAUTHORIZED_PAUSE");
   }
   return [...new Set(issues)];
 }

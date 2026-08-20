@@ -1,0 +1,38 @@
+{
+  "packetVersion": "intent-independent-review-v1",
+  "datasetVersion": "intent-eval-v1.8-external-sealed",
+  "completedAt": "2026-07-21T07:04:31.010Z",
+  "completedCount": 24,
+  "total": 24,
+  "reviews": [
+    { "id": "INT-EVAL-229", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-230", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-231", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-232", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-233", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-234", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-235", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-236", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-237", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-238", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-239", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-240", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-241", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-242", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-243", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-244", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-245", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-246", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-247", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-248", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-249", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-250", "verdict": "correct", "errorFields": [], "reason": "" },
+    { "id": "INT-EVAL-251", "verdict": "correct", "errorFields": [], "reason": "" },
+    {
+      "id": "INT-EVAL-252",
+      "verdict": "incorrect",
+      "errorFields": ["contentBoundary"],
+      "reason": "用户说的是“我想说的是……”\n这里是省略号，里面没有具体内容，所以里面没有有效内容"
+    }
+  ]
+}

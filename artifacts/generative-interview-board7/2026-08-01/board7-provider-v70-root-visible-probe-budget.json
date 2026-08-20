@@ -1,0 +1,50 @@
+{
+  "ledgerVersion": "board7-provider-v70-root-visible-probe-budget-v1",
+  "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+  "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414",
+  "runLimit": 1,
+  "entries": [
+    {
+      "reservationId": "24c7b515-d0d8-44bc-ad39-ade5f54581ae",
+      "candidateVersions": {
+        "prompt": "two_call:2026-08-01.event-centered-generative-v70-understanding-card+2026-08-01.event-centered-generative-v70-visible",
+        "strategy": "5.48.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-08-01.v27",
+        "semanticArtifact": "event-centered-semantic-plan.v3",
+        "rootVisibleProbe": "provider-v70-root-visible-probe-v1"
+      },
+      "approval": {
+        "approvalType": "board7_provider_v70_root_visible_probe_run",
+        "approvalVersion": "board7-provider-v70-root-visible-probe-approval-v1",
+        "decision": "approved",
+        "approvedBy": "product_owner",
+        "approvedAt": "2026-08-01T14:42:38Z",
+        "confirmationText": "确认",
+        "taskId": "codex-board7-v70-root-visible-probe-2026-08-01",
+        "approvalCardFingerprint": "e4e4c7bbdab7d4c88a5257d92b1008487ffbb13efb4295177f3d03a0e2e7c94f",
+        "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+        "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414"
+      },
+      "reservedAt": "2026-08-01T14:43:44.844Z",
+      "completedAt": "2026-08-01T14:43:54.490Z",
+      "status": "completed",
+      "runEnvelopeFingerprint": "63c32313e7fac4dc368bd36a060e1887fcb1f14e48face1c65faace720ea165e",
+      "error": null,
+      "gateAudit": {
+        "auditedAt": "2026-08-01T14:52:38.661Z",
+        "runEnvelopeFingerprint": "63c32313e7fac4dc368bd36a060e1887fcb1f14e48face1c65faace720ea165e",
+        "reviewedEnvelopeFingerprint": "eb347dd807f3d4d452f0c46454e270f4933c20cd8355fbef7946107b2ba70ac0",
+        "semanticPassed": 0,
+        "visiblePassed": 0,
+        "severeErrors": 0,
+        "failureReasons": [
+          "answer_entry_burden",
+          "question_value",
+          "understanding_incomplete"
+        ],
+        "decision": "stop"
+      }
+    }
+  ]
+}

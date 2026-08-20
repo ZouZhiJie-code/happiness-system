@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dailylight.chat/schemas/journal-generation-evaluation-case-v2.json",
+  "title": "Daily Light 两层日志生成离线评测案例",
+  "type": "object",
+  "required": [
+    "case_id",
+    "title",
+    "scenario",
+    "source_group_id",
+    "source_file_sha256",
+    "record_type",
+    "synthetic",
+    "transcript",
+    "record_cards",
+    "daily_input",
+    "candidates"
+  ],
+  "$defs": {
+    "anyOfRule": {
+      "type": "object",
+      "required": ["rule_id", "any_of"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "any_of": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    "sourceRule": {
+      "type": "object",
+      "required": ["rule_id", "record_card_refs", "source_refs"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "record_card_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "source_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      },
+      "additionalProperties": false
+    },
+    "runtimeSnapshot": {
+      "type": "object",
+      "required": ["generation_status", "last_committed_version_id", "visible_version_id", "overwrite_attempted"],
+      "properties": {
+        "generation_status": { "enum": ["success", "failure"] },
+        "last_committed_version_id": { "type": ["string", "null"] },
+        "visible_version_id": { "type": ["string", "null"] },
+        "overwrite_attempted": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "case_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "scenario": { "type": "string", "minLength": 1 },
+    "source_group_id": { "type": "string", "minLength": 1 },
+    "source_file_sha256": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        { "type": "null" }
+      ]
+    },
+    "record_type": { "enum": ["trajectory", "derived"] },
+    "synthetic": { "type": "boolean" },
+    "transcript": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["message_id", "role", "content"],
+        "properties": {
+          "message_id": { "type": "string" },
+          "role": { "enum": ["user", "assistant"] },
+          "content": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "record_cards": {
+      "description": "记录卡中间层的期望规则；每张卡都独立约束必须保留、禁止写入、事实修正、有效认识与来源。",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["record_card_id", "event_id", "source_refs", "must", "forbidden", "correction", "valid_insight"],
+        "properties": {
+          "record_card_id": { "type": "string" },
+          "event_id": { "type": "string" },
+          "source_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "must": { "type": "array", "items": { "$ref": "#/$defs/anyOfRule" } },
+          "forbidden": { "type": "array", "items": { "$ref": "#/$defs/anyOfRule" } },
+          "correction": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["rule_id", "old_any_of", "new_any_of"],
+              "properties": {
+                "rule_id": { "type": "string" },
+                "old_any_of": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                "new_any_of": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "valid_insight": { "type": "array", "items": { "$ref": "#/$defs/anyOfRule" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "daily_input": {
+      "description": "当日日志合并层的输入与期望规则。",
+      "type": "object",
+      "required": [
+        "current_journal",
+        "user_edits",
+        "new_records",
+        "must",
+        "forbidden",
+        "uncertainty",
+        "merge_separate",
+        "order",
+        "source",
+        "preserve_committed_on_failure"
+      ],
+      "properties": {
+        "current_journal": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["version_id", "title", "paragraphs"],
+              "properties": {
+                "version_id": { "type": "string" },
+                "title": { "type": "string" },
+                "paragraphs": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "user_edits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["edit_id", "operation", "target", "content", "source_refs"],
+            "properties": {
+              "edit_id": { "type": "string" },
+              "operation": { "enum": ["add", "replace", "delete"] },
+              "target": { "type": "string" },
+              "content": { "type": "string" },
+              "source_refs": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          }
+        },
+        "new_records": { "type": "array", "items": { "type": "string" } },
+        "must": { "type": "array", "items": { "$ref": "#/$defs/anyOfRule" } },
+        "forbidden": { "type": "array", "items": { "$ref": "#/$defs/anyOfRule" } },
+        "uncertainty": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "topic_any_of", "qualifier_any_of"],
+            "properties": {
+              "rule_id": { "type": "string" },
+              "topic_any_of": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "qualifier_any_of": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "merge_separate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "relation", "left_record_card_id", "right_record_card_id"],
+            "properties": {
+              "rule_id": { "type": "string" },
+              "relation": { "enum": ["merge", "separate"] },
+              "left_record_card_id": { "type": "string" },
+              "right_record_card_id": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "before_record_card_id", "after_record_card_id"],
+            "properties": {
+              "rule_id": { "type": "string" },
+              "before_record_card_id": { "type": "string" },
+              "after_record_card_id": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "source": { "type": "array", "items": { "$ref": "#/$defs/sourceRule" } },
+        "preserve_committed_on_failure": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "record_cards", "daily_output"],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "record_cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["record_card_id", "event_id", "text", "insight", "source_refs"],
+              "properties": {
+                "record_card_id": { "type": "string" },
+                "event_id": { "type": "string" },
+                "text": { "type": "string" },
+                "insight": { "type": "string" },
+                "source_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "daily_output": {
+            "type": "object",
+            "required": ["title", "paragraphs", "runtime_snapshot"],
+            "properties": {
+              "title": { "type": "string" },
+              "paragraphs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["paragraph_id", "text", "source_refs", "record_card_refs"],
+                  "properties": {
+                    "paragraph_id": { "type": "string" },
+                    "text": { "type": "string" },
+                    "source_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                    "record_card_refs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runtime_snapshot": { "$ref": "#/$defs/runtimeSnapshot" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

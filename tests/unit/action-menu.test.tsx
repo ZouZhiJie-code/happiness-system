@@ -10,7 +10,7 @@ describe("ActionMenu", () => {
         triggerLabel="打开菜单"
         menuAriaLabel="日志动作"
         items={[
-          { id: "edit", label: "编辑", onSelect: () => undefined },
+          { id: "edit", label: "编辑", description: "修改当前内容", onSelect: () => undefined },
           { id: "delete", label: "删除", onSelect: () => undefined }
         ]}
       />
@@ -20,11 +20,15 @@ describe("ActionMenu", () => {
     trigger.focus();
     fireEvent.click(trigger);
 
-    const edit = screen.getByRole("menuitem", { name: "编辑" });
+    const edit = screen.getByRole("menuitem", { name: /编辑.*修改当前内容/u });
     const remove = screen.getByRole("menuitem", { name: "删除" });
-    expect(edit).toHaveFocus();
+    await waitFor(() => expect(edit).toHaveFocus());
 
     fireEvent.keyDown(screen.getByRole("menu", { name: "日志动作" }), { key: "ArrowDown" });
+    expect(remove).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu", { name: "日志动作" }), { key: "Home" });
+    expect(edit).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu", { name: "日志动作" }), { key: "End" });
     expect(remove).toHaveFocus();
 
     fireEvent.keyDown(document, { key: "Escape" });
