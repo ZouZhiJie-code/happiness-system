@@ -512,7 +512,7 @@ describe("EventCenteredInterviewWorkspace", () => {
 
     render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
     fireEvent.click(await screen.findByRole("button", { name: "重新生成" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /更简单一点/u }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /更简单一点/u }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("这个操作已经不适用于当前记录。");
     expect(fetchMock.mock.calls.some(([input]) => String(input) === "/api/interview/event-centered/session/respond/stream")).toBe(false);

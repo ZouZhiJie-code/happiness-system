@@ -367,9 +367,15 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
   it("turn 同时提交 runId、同一 operation/turn ID 与所见 assistant anchor", async () => {
     const value = evaluationSession();
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse(value))
-      .mockResolvedValueOnce(jsonResponse(value));
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/api/preview/gi088/runs") return jsonResponse(value);
+      if (url === "/api/preview/gi088/turn") return jsonResponse(value);
+      if (url === "/api/preview/gi088/operation-events") {
+        return jsonResponse({ recorded: true });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
@@ -378,9 +384,14 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
-    expect(fetchMock.mock.calls[1]![0]).toBe("/api/preview/gi088/turn");
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input) === "/api/preview/gi088/turn"
+    )).toHaveLength(1));
+    const turnCall = fetchMock.mock.calls.find(([input]) =>
+      String(input) === "/api/preview/gi088/turn"
+    );
+    expect(turnCall).toBeDefined();
+    const body = JSON.parse(String((turnCall![1] as RequestInit).body));
     expect(body).toMatchObject({
       runId: "run-1",
       taskId: "A1",
@@ -388,6 +399,13 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       baseAssistantMessageId: "a1-high"
     });
     expect(body.clientOperationId).toBe(body.clientTurnId);
+    expect(fetchMock.mock.calls.some(([input, init]) =>
+      String(input) === "/api/preview/gi088/runs" &&
+      (init as RequestInit | undefined)?.method === undefined
+    )).toBe(true);
+    await waitFor(() => expect(screen.getByLabelText("继续自然交流"))
+      .toHaveValue(""));
+    expect(screen.getByLabelText("当前运行")).toHaveValue("run-1");
   });
 
   it("客户端在发请求前拦截旧 off 分支、缺失 U1 与缺失 assistant anchor", async () => {
