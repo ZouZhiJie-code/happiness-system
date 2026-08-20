@@ -125,9 +125,10 @@ function validEnvelope(value: unknown): value is Gi088ClientExportEnvelope {
 async function sha256Hex(bytes: Uint8Array) {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle) return null;
-  const digestInput = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(digestInput).set(bytes);
-  const digest = await subtle.digest("SHA-256", digestInput);
+  const digest = await subtle.digest(
+    "SHA-256",
+    bytes as Uint8Array<ArrayBuffer>
+  );
   return [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
