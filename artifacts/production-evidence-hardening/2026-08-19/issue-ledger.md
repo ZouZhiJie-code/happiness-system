@@ -199,3 +199,11 @@
 - Codex 评估：该失败发生在应用收到请求前，当前证据支持本机／上游传输链路阻断，暂不支持产品权限或主链回归归因。账号、权限、环境变量、代码和 deployment 配置均保持原值。
 - 待验证假设：稳定网络／线路下，同一 Preview 可完成匿名保护、登录、列表读取和最小 session start；成功读回后再核对 `AIRequestLog` 增量。
 - 当前处理状态：业务写入 `0`、模型端点请求 `0`、Production 访问 `0`；`AIRequestLog` 增量因缺少合法只读路径记为 `unconfirmed`。本轮按停止门结束，零重试；最终回执 head 只进入 CI 与 Preview Ready 门，产品 smoke 继续保持 `transport_blocked`。
+
+## PEH-032｜Stage 4 第一批合并后画像测试夹具时间竞争
+
+- 已确认事实：PR #45 合入 main merge `548fda5` 后，唯一 main push run `32363542406` 在 attempt 1 的画像兜底用例失败：期望最近事实为 `fact 0`，实际为 `fact 1`；类型检查与零模型 E2E `11/11` 通过，构建和 Lint 随前序失败跳过。Stage 4 合并差异与画像文件交集为 `0`；合并前后画像测试与产品服务的 Git blob 分别保持 `4d031387` 与 `f84c5b21`。
+- 产品判断：本项归入测试隔离与确定性问题，Stage 4 后端产品行为、画像产品逻辑和缓存合同保持原值；Production 继续使用阶段 1 deployment，Stage 4 Production 继续关闭。
+- Codex 评估：旧夹具在循环中为每条事实调用实时 `new Date()`，产品逻辑再按 `updatedAt` 选择最近事实；高负载下循环跨越毫秒边界会使 `fact 1` 或 `fact 2` 成为真实最新项。精确用例单跑、完整文件和随机顺序可通过，并发进程压力可稳定暴露同类漂移；仓储与 Prisma 均为模块 mock，当前证据不支持缓存未清理或全局状态污染归因。
+- 待验证假设：只把测试夹具的 `createdAt / updatedAt` 固定为 `fact 0` 最新的确定性顺序，即可消除调度敏感性，同时继续验证产品按时间选择最新事实的既有合同。
+- 当前处理状态：最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。独立热修 PR、远程双 CI 与合并后 main CI 待验证，全部保持零重跑停止门。

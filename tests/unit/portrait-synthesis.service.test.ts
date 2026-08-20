@@ -69,9 +69,16 @@ function buildFact(overrides?: Partial<MemoryFact>): MemoryFact {
 }
 
 function buildPortraitData(factCount: number) {
-  const facts = Array.from({ length: factCount }, (_, i) =>
-    buildFact({ id: `mem-${i}`, summary: `fact ${i}` })
-  );
+  const latestFactTimestamp = Date.parse("2026-05-01T00:00:00.000Z");
+  const facts = Array.from({ length: factCount }, (_, i) => {
+    const timestamp = new Date(latestFactTimestamp - i * 1_000);
+    return buildFact({
+      id: `mem-${i}`,
+      summary: `fact ${i}`,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    });
+  });
   return {
     facts,
     calendarSummary: {
