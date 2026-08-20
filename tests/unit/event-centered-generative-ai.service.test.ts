@@ -638,6 +638,48 @@ describe("event-centered generative architecture", () => {
     );
   });
 
+  it("完整回应隔离策略固定快速参数，并把最近八轮交给同一次生成", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue(completeTurn());
+    const recentTurns = Array.from({ length: 10 }, (_, index) => ({
+      user: `完整回应历史用户-${index}`,
+      assistantUnderstanding: `完整回应历史承接-${index}`,
+      assistantQuestion: `完整回应历史问题-${index}`
+    }));
+
+    const result = await generateEventCenteredTurnOnceAI(baseInput({
+      completeResponseFirst: true,
+      recentTurns,
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000
+    }));
+
+    expect(result.architecture).toBe("one_call");
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1"
+    );
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledOnce();
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        temperature: 0.2,
+        maxAttempts: 1,
+        maxTokens: 1_280,
+        timeoutMs: 45_000,
+        thinking: "disabled",
+        responseFormat: "json_object"
+      })
+    );
+    const serializedPrompt = mocks.completeStructuredOutput.mock.calls[0]?.[0].messages
+      .map((message: { content: string }) => message.content)
+      .join("\n");
+    expect(serializedPrompt).toContain("【完整回应优先 v1.1】");
+    expect(serializedPrompt).toContain('"visibleResponseMode":"complete_response_v1_1"');
+    expect(serializedPrompt).not.toContain("完整回应历史用户-0");
+    expect(serializedPrompt).not.toContain("完整回应历史用户-1");
+    expect(serializedPrompt).toContain("完整回应历史用户-2");
+    expect(serializedPrompt).toContain("完整回应历史用户-9");
+  });
+
   it("唯一分流顺序先判断用户成果和 AI 综合，再考虑继续提问", async () => {
     mocks.completeStructuredOutput.mockResolvedValue(completeTurn());
 

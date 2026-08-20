@@ -1,0 +1,406 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-complete-response-first-quality-v1",
+  "planFingerprint": "cdf125f577cae51dd653b95382dce3b5b93a209fb2a9315344903e27df5699e9",
+  "candidateFingerprint": "cb541c25d5750cd000155f88430f364f2053f860cf89acda2154025763769513",
+  "datasetFingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+  "stages": {
+    "development": "complete",
+    "regression": "complete"
+  },
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopReason": null,
+  "reservations": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "requestFingerprint": "af3d0ebb77833c17dfa78877dce44a77f95372de660c8b28cf393b5e488cc9ca",
+      "status": "completed"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "requestFingerprint": "152b1436f291f28f2b41f3753d82a5dca080c8999d21a301b3c52d64de317b71",
+      "status": "completed"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "requestFingerprint": "df09eaac61d1a4120713bb13f3899c677c5c23c14fa76ff3a33760ced90d2298",
+      "status": "completed"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "requestFingerprint": "01836ee2d8d1c4f906d90b3c9ab39bfa6d870ee073891d26768c0ce99b0f7907",
+      "status": "completed"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "requestFingerprint": "3e9bf7a568a876e1cc9206cf5fcb8e336005bce1ca1aa1a671f81e8b30e1072b",
+      "status": "completed"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "requestFingerprint": "e923bec400f5006f5c4817f212b06e427c028c718b5efb9cb06a268732760114",
+      "status": "completed"
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "requestFingerprint": "b5a0b99924ba1aa0e0ce26b6c2f40f24144be883743f002f2525a42ef608f3c6",
+      "status": "completed"
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "requestFingerprint": "2ab5b3f232e4c824bc75ff289a4cb0f585a25da957b0503c254d1ab8e3428fa8",
+      "status": "completed"
+    }
+  ],
+  "medianLatencyMs": 3087,
+  "results": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "af3d0ebb77833c17dfa78877dce44a77f95372de660c8b28cf393b5e488cc9ca",
+      "responseHash": "97dc598d8cda914031ad070cbc41773742197c67a5763a60f7aa2b880b473044",
+      "responseLength": 118,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 118,
+        "paragraphCount": 2,
+        "questionMarkCount": 1
+      },
+      "totalLatencyMs": 3896,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 882,
+        "completionTokens": 75,
+        "totalTokens": 957,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 882
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "152b1436f291f28f2b41f3753d82a5dca080c8999d21a301b3c52d64de317b71",
+      "responseHash": "21ac268274a58c4addb06ae54ed8106c9965a93eb0b303b42277b0744e6767aa",
+      "responseLength": 71,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 71,
+        "paragraphCount": 1,
+        "questionMarkCount": 0
+      },
+      "totalLatencyMs": 2608,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 893,
+        "completionTokens": 41,
+        "totalTokens": 934,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 893
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "df09eaac61d1a4120713bb13f3899c677c5c23c14fa76ff3a33760ced90d2298",
+      "responseHash": "b5d1da3a6bbe96f74045b3a5701ac499b6af1aaab53dbc7c35212b8dbcebe471",
+      "responseLength": 101,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 101,
+        "paragraphCount": 2,
+        "questionMarkCount": 1
+      },
+      "totalLatencyMs": 2597,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 853,
+        "completionTokens": 62,
+        "totalTokens": 915,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 341
+      }
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "01836ee2d8d1c4f906d90b3c9ab39bfa6d870ee073891d26768c0ce99b0f7907",
+      "responseHash": "a6a95317f9f935dac481a9951eba7f54d1f6fd877b1da3a8bb564d95d89de4a0",
+      "responseLength": 84,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 84,
+        "paragraphCount": 1,
+        "questionMarkCount": 1
+      },
+      "totalLatencyMs": 3320,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 790,
+        "completionTokens": 56,
+        "totalTokens": 846,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 278
+      }
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "3e9bf7a568a876e1cc9206cf5fcb8e336005bce1ca1aa1a671f81e8b30e1072b",
+      "responseHash": "d6c6917dd565966417ca43eec4805de60ccf1c58447033f55ec00346cbf6277c",
+      "responseLength": 102,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 102,
+        "paragraphCount": 1,
+        "questionMarkCount": 0
+      },
+      "totalLatencyMs": 2597,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 820,
+        "completionTokens": 59,
+        "totalTokens": 879,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 308
+      }
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "e923bec400f5006f5c4817f212b06e427c028c718b5efb9cb06a268732760114",
+      "responseHash": "63a59a99a840d41e9a7d57a86398771152e5acfdcfa23b82cafc8773f66fe3fe",
+      "responseLength": 72,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 72,
+        "paragraphCount": 1,
+        "questionMarkCount": 0
+      },
+      "totalLatencyMs": 2853,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 779,
+        "completionTokens": 45,
+        "totalTokens": 824,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 267
+      }
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "b5a0b99924ba1aa0e0ce26b6c2f40f24144be883743f002f2525a42ef608f3c6",
+      "responseHash": "168a67a50dcc118416f01795a1d0e6256e6b44b5bf713e4913ec1bb29eb65ed1",
+      "responseLength": 286,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 286,
+        "paragraphCount": 3,
+        "questionMarkCount": 0
+      },
+      "totalLatencyMs": 5460,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1870,
+        "completionTokens": 163,
+        "totalTokens": 2033,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 1358
+      }
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "2ab5b3f232e4c824bc75ff289a4cb0f585a25da957b0503c254d1ab8e3428fa8",
+      "responseHash": "bd5f8e72ff791bd0cfd5856a51bc5c15dc3b2fa5c4481d8a01a41c7b4cd15a67",
+      "responseLength": 372,
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "technicalChecks": {
+        "http200": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "hard45sPassed": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "characterCount": 372,
+        "paragraphCount": 4,
+        "questionMarkCount": 2
+      },
+      "totalLatencyMs": 6976,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1314,
+        "completionTokens": 219,
+        "totalTokens": 1533,
+        "promptCacheHitTokens": 512,
+        "promptCacheMissTokens": 802
+      }
+    }
+  ],
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

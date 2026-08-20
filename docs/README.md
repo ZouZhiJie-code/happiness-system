@@ -2,7 +2,7 @@
 
 - 文档职责：知识导航
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[当前阶段 Handoff](./handoff.md)
 
 这份导航帮助产品负责人和 Codex 在五分钟内找到当前事实、当前任务、授权边界、实施说明与证据。它只保留路由和一屏状态，详细事实由对应权威文档承担。
@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 回应优先 v2.9 真实 CONTINUE Low＋High 已完成 `2/2`：纯时间 `5852ms` 通过，High 状态合同失败使整体技术门为 `false`；Low Codex 初评 `minor`，Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`。后续 `4 not_run`；页面、Preview 与 Production 边界保持不变。
+- GI-088 完整回应优先 v1.1 生产合同复验已完成 `8/8`，八次均 HTTP 200／stop、15 秒内且未截断；旧完整状态合同仅 `2/8` 有效，两个有效输出都只复述后结束，质量 No-Go。当前进入 v1.2 最小生产合同，新预算 `0/8`、结果待验证；Production 保持 `event_centered + baseline`。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。
@@ -43,6 +43,11 @@
 
 | 需要回答的问题 | 权威入口 |
 |---|---|
+| 完整回应优先 v1.1 八题技术结果与 Codex 初评 | [完整回应优先 v1.1 离线结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md) |
+| v1.1 生产旧合同为何 No-Go、v1.2 为什么改成最少状态 | [v1.1 生产合同交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[v1.2 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
+| v1.1 怎样在完整回应前先选择尚未回答的新信息目标 | [完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md) |
+| 完整回应优先 v1 的技术、速度和两项质量失败 | [完整回应优先 v1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md) |
+| 为什么停止 Low＋High 双可见职责并建立完整回应负责人 | [完整回应优先架构重置](./plans/2026-08-19-gi088-complete-response-first-architecture-reset.md) |
 | 现在正在做什么、停在哪里 | [当前阶段 Handoff](./handoff.md) |
 | 回应优先 v2.9 怎样用真实父状态验证纠正后继续 | [v2.9 真实纠正后继续验证](./plans/2026-08-19-gi088-response-first-v2-9-causal-continuation-gate.md) |
 | 回应优先 v2.9 真实纠正后继续实际结果 | [v2.9 真实纠正后继续结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md) |

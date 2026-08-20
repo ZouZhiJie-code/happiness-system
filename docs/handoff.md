@@ -2,18 +2,28 @@
 
 - 文档职责：当前执行交接
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[项目知识导航](./README.md)
 
 ## 1. 当前交接结论
 
-GI-088 回应优先当前状态为：**v2.9 真实 CONTINUE Low＋High 已完成 `2/2`。Low 合同有效、`3967ms`，Codex 初评 `minor`；High HTTP 200／stop／完整 JSON、`1885ms`，但缺少覆盖判断和新开放任务，状态合同失败。纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`；Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`，后续 `4 not_run`。** 页面、Preview 与发布均为 `not_run`；Production 保持 `event_centered + baseline`。
+GI-088 已进入[完整回应优先 v1.2 最小生产合同](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md)。v1.1 生产合同复验已经完成 `8/8` 调用：八题均 HTTP 200、`finishReason=stop`、15 秒内且未截断，中位 `7757ms`、最长 `10843ms`；只有 `2/8` 通过旧完整状态合同，这两条都只复述用户结论后结束，质量 No-Go。其余六条被事实数量、事件边界、状态字段或来源合同拒绝。
+
+v1.2 只改变一个主要因素：同一次调用先生成用户看到的完整回应，只附带本回合事实、问题、停止和纠正的最少状态；程序再把这些字段确定性映射为现有事实写入、当前问题、状态和 Trace。模型、Thinking、Temperature、`1280` Token、八题、速度门、单气泡与原子提交保持固定。新预算为 `8` 次，隔离策略为 `complete_response_v1_2`。Production 在产品负责人页面验收前继续使用 `event_centered + baseline`。
+
+GI-088 完整回应优先 v1.1 已完成。运行身份 `2026-08-19.gi088-complete-response-first-v1-1-quality-v1` 按 `3` 条开发题＋`5` 条冻结回归题消费 `8/8`；八题均为 `technical_valid / stop`，中位耗时 `3406ms`、最长 `4621ms`，`1280` Token 上限未触发截断。重试、恢复和回退均为 `0`。
+
+Codex 原文初评为 `7 pass / 1 minor / 0 fail`。唯一 minor 是硬门长上下文题 `RPR-REAL-21`：问题把“看到互动的当下”和“独处后来”并列；用户原文已经表明看到互动后立即出现落差和自我否定，因此第一项部分重复，独处后是否延续仍有一点新增。产品负责人最终裁决仍为 `pending`，当前状态为 `awaiting_product_review`，暂不宣称离线 Go。公开结果见[完整回应优先 v1.1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json)。
+
+v1.1 候选身份为 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`。唯一变化是生成完整回应前先选择一项完整原文尚未回答、会带来实际新进展的信息目标；继续或深挖进入新层，负担但未停止时提供低负担入口，每轮最多一处有依据且可纠正的解释与一个主问题。
+
+当前只需按“完整相关原文 → 实际 AI 输出 → Codex 初评”交付八题，等待产品负责人逐题裁决。页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 继续使用 `event_centered + baseline`。
 
 v2.9 候选身份为 `2026-08-19.gi088-response-first-v2-9-separated-open-gap-high`，运行族为 `2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1`。本轮只处理一个概念根因：把用户原文已经支持的认识与仍待共同弄清的开放目标分开，并在生成问题前完成当前分支全部用户消息的覆盖判断。
 
 新离线总上限为 `7` 次，并按产品停止门拆成独立冻结身份。纠正题 High 已完成 `1/1`；真实 CONTINUE Low＋High 已完成 `2/2`；其余四题 `4 not_run`。本轮 Low Token 为 `1309/124/1433`，High 为 `2166/89/2255`，均完整返回且未触发 Token 截断。
 
-当前停止点：`RPR-REAL-19-CONTINUE` 产品裁决 `fail`，No-Go 已封存。High 没有覆盖判断、开放任务、问题或可见追加，post-state 保持不变；`RPR-LC-21` 等后续四题保持 `not_run`，不预同步新候选。
+v2.9 停止点：`RPR-REAL-19-CONTINUE` 产品裁决 `fail`，No-Go 已封存。High 没有覆盖判断、开放任务、问题或可见追加，post-state 保持不变；后续四题保持 `not_run`，不转入新候选预算。
 
 v2.8 候选身份为 `2026-08-19.gi088-response-first-v2-8-correction-persistence-high`，运行身份为 `2026-08-19.gi088-response-first-v2-8-correction-persistence-high-quality-v1`。唯一主要因素是 High 增加 audit-first 的显式纠正状态持久化：在可见追加和问题审计前，先判断本轮纠正是否需要进入主线、认识与旧状态失效，并提交与该声明一致的状态变化。
 
@@ -182,18 +192,20 @@ RPR-CF-02 通过，说明模型能够继承用户明确表达的关系；原通�
 
 ### 当前目标
 
-完成回应优先 v2.9 真实 CONTINUE 两调用探针：确认纠正首题的已知认识能否自然推进为尚未回答的开放目标，并避开原文已有答案。
+完成 v1.1 离线结果封存，并把八题完整原文、实际输出和 Codex 初评交付产品负责人裁决。
 
 ### 本轮验证结果
 
-1. v2.9 首题 HTTP 200、目标模型正确、`finishReason=stop`、JSON 与状态合同有效，校验问题为 `0`。
-2. High `3325ms`、冻结 Low `3341ms`、观察两段 `6666ms`；45 秒目标与 60 秒硬门均通过。
-3. prompt `1981`、completion `151`、总计 `2132`；Thinking 关闭，`4000` Token 上限未触发。
-4. High 把 `U3` 支持的纠正保存为一条认识并标记 `A2` 被替代；`workingTask=null`、`nextInquiry=null`。
-5. 用户只看到产品已通过的冻结 Low；High 可见理解为空、问题为 `0`。Codex 初评与产品负责人裁决均为 `pass`。
-6. 纠正身份消费 `1/1`；真实 CONTINUE 身份消费 `2/2`，后续运行族额度 `4 not_run`。
-7. 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline`。
-8. 真实 CONTINUE 已完成 `2/2`：Low 有效、`3967ms`、Codex `minor`；High HTTP 200／stop／完整 JSON、`1885ms`，三项状态合同失败；纯时间 `5852ms` 通过，整体技术门 `false`；Codex 与产品均裁决完整回合 `fail`。
+1. v1.1 开发 `3/3` 与回归 `5/5` 全部完成；`8/8 technical_valid / stop`，重试、恢复和回退 `0`。
+2. 八题中位耗时 `3406ms`、最长 `4621ms`；中位 6 秒、单例 15 秒与硬 45 秒门全部通过。
+3. 最高 completion 为 `93/1280`，本批次未触发 Token 截断。
+4. Codex 初评 `RPR-REAL-01 / 05 / 11 / 13 / 22 / CF-03 / REAL-19` 为 pass。
+5. Codex 初评 `RPR-REAL-21` 为 minor：第一项部分重复用户已说明的触发时刻，第二项仍有一点信息增量。
+6. Codex 合计 `7 pass / 1 minor / 0 fail`；产品负责人最终裁决 `pending`。
+7. 当前状态为 `awaiting_product_review`，暂不宣称离线 Go。
+8. 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline`。
+
+以下内容继续承担更早候选的历史验证证据。
 
 上一轮实际结果：候选指纹 `1f60ca82…569cc`，策略指纹 `7b72e318…067c`；两题探针计划指纹 `20f845bf…98e0`，集合指纹 `c5a14130…c323`。模型调用 `2/2`、重试 `0`；HTTP 200 `2/2`，正文等待超时 `2/2`，技术有效与内容可评价均为 `0/2`，裁决 `technical_blocked`。
 
@@ -211,7 +223,7 @@ RPR-CF-02 通过，说明模型能够继承用户明确表达的关系；原通�
 
 ### 停止点
 
-v2.9 真实 CONTINUE 的 Low → High 已完成，产品负责人裁决 `fail`，本轮 No-Go。`RPR-LC-21` 等后续四题保持 `not_run`，页面与 Preview 保持 `not_run`，Production 保持 `event_centered + baseline`。冻结计划保留运行前状态，执行后状态以[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md)为准。
+v1.1 离线批次已经完成，当前停止在产品负责人八题原文复核。裁决前保持 `awaiting_product_review`；页面与 Preview 保持 `not_run`，Production 保持 `event_centered + baseline`。
 
 ## 4. 当前工作区血缘
 
@@ -248,19 +260,21 @@ v2.9 真实 CONTINUE 的 Low → High 已完成，产品负责人裁决 `fail`�
 | GI-088 回应优先 v2.5 | 首题 HTTP 200 后在 High `60.013s` 以 0 字符正文超时，语义未评价；`1/6`、其余 `5 not_run` | 保留技术 No-Go 历史，作为 v2.6 的父失败证据 |
 | GI-088 回应优先 v2.6 | 首题合同有效；两段 `60.009s` 超硬门 `9ms`；Codex 初评 fail，产品裁决 pending；新账 `1/6` | 首题速度门 No-Go；等待产品负责人语义裁决，后续方案保持开放 |
 | GI-088 回应优先 v2.7／v2.8／v2.8.1 | v2.7 速度通过但纠正未保存；v2.8 保存纠正但状态职责 minor；v2.8.1 产品 fail | 保留为 v2.9 的直接父证据 |
-| GI-088 回应优先 v2.9 | 纠正首题产品 pass；真实 CONTINUE `2/2`，Low Codex minor、High 合同 fail，Codex 与产品均裁决完整回合 fail；后续 `4 not_run` | No-Go / stop；不预同步新候选 |
+| GI-088 回应优先 v2.9 | 纠正首题产品 pass；真实 CONTINUE `2/2`，Low Codex minor、High 合同 fail，Codex 与产品均裁决完整回合 fail；后续 `4 not_run` | 历史 No-Go；作为完整回应优先的父证据保存 |
+| GI-088 完整回应优先 v1 | 技术与正文合同 `8/8`，中位 `3087ms`、最长 `6976ms`；Codex 两题 fail，质量 No-Go；产品裁决 pending | 公开结果与阶段账已封存；由 v1.1 单因素接续 |
+| GI-088 完整回应优先 v1.1 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；Codex `7 pass / 1 minor / 0 fail`；产品裁决 pending | 当前 awaiting product review；逐题交付原文、输出和初评，裁决前不进入页面 |
 | GI-088 先回应后整理与职责重划 | 板块 7 当前运行合同 v1 已整理；旧 A/B 身份受废弃规则污染，正式归因无效 | 作为回应优先 v2 的上游速度与职责历史证据 |
 
 ## 6. 下一会话阅读顺序
 
-1. [回应优先 v2.9 真实纠正后继续结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md)
+1. [完整回应优先 v1.1 离线结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)
 2. [AGENTS.md](../AGENTS.md)
 3. [项目知识导航](./README.md)
 4. 涉及生成式访谈状态时读取[生成式访谈重构总 Map](./generative-interview-refactor-map.md)
 5. 涉及评测规则时读取[AI 评测总规范](./ai-evaluation-standard.md)和当前专项
 6. 需要核对历史根因时读取[GI-088 全链路复盘](./retrospectives/2026-08-10-gi088-end-to-end-iteration-retrospective.md)
 7. 最后读取当前专项明确链接的[证据包](../artifacts/README.md)
-8. 需要核对执行计划时读取[v2.9 真实纠正后继续验证](./plans/2026-08-19-gi088-response-first-v2-9-causal-continuation-gate.md)；需要核对父状态时读取[v2.9 纠正首题结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-correction-gate-v1-handoff.md)与受控私有评审材料
+8. 需要核对方法时读取[完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)，需要核对父结果时读取[完整回应优先 v1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md)
 
 ## 7. 稳定合同入口
 

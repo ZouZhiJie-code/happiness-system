@@ -14,6 +14,7 @@ import {
 import { GENERATIVE_MVP_SMOKE_CASES } from "@/features/interview/event-centered/generative-quality-calibration";
 import {
   getEventCenteredStrategyMode,
+  isCompleteResponseFirstEventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 
@@ -150,10 +151,18 @@ describe("event-centered generative strategy assets", () => {
     expect(getEventCenteredGenerativeMode("event_recording")).toBeNull();
   });
 
-  it("策略开关默认 baseline，只有显式 generative 才打开", () => {
+  it("策略开关默认 baseline，并区分历史 generative 与完整回应隔离策略", () => {
     expect(getEventCenteredStrategyMode({})).toBe("baseline");
     expect(getEventCenteredStrategyMode({ INTERVIEW_EVENT_CENTERED_STRATEGY: "GENERATIVE" }))
       .toBe("generative");
+    expect(getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "COMPLETE_RESPONSE_V1_1"
+    })).toBe("complete_response_v1_1");
     expect(isGenerativeEventCenteredStrategyEnabled("generative")).toBe(true);
+    expect(isGenerativeEventCenteredStrategyEnabled("complete_response_v1_1")).toBe(true);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled("complete_response_v1_1"))
+      .toBe(true);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled("generative"))
+      .toBe(false);
   });
 });

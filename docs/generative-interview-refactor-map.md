@@ -2,26 +2,73 @@
 
 - 文档职责：总 Map
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[访谈产品优化总 Map](./interview-product-optimization-map.md)
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 v2.9 真实 CONTINUE 2/2 完成；High 合同失败，Codex 与产品均 fail，No-Go / stop；后续 4 not_run`
+当前讨论位置：`GI-088 完整回应优先 v1.1 生产合同复验 2/8 有效并 No-Go；v1.2 最小生产合同实施中；Production baseline`
 
-下一建议板块：`本轮 No-Go 已封存；后续四题、页面与 Preview 保持 not_run，不预同步新候选`
+下一建议板块：`完成 v1.2 最小生产合同 3＋5 复验；质量门通过后部署隔离 Preview 交付真实页面验收`
 
-当前专项：[回应优先 v2.9 真实纠正后继续验证](./plans/2026-08-19-gi088-response-first-v2-9-causal-continuation-gate.md)；执行后结果以[公开交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md)为准
+当前专项：[完整回应优先 v1.2 最小生产合同](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v2.9 真实 CONTINUE 2/2；纯时间 5852ms 通过，整体技术门因 High 合同失败为 false；Codex 与产品均 fail，No-Go，后续 4 not_run`
+本次同步范围：`封存 v1.1 生产合同复验 8/8 调用、2/8 合同有效和质量 No-Go；新增 v1.2 最小生产合同、8 次预算与 Preview 停止门`
 
 网页端实现同步：第二轮验收基线已于 `2026-08-13` 发布 Production，项目主链使用 `event_centered + baseline`；GI-088 真人评测、模型质量裁决和生成式能力发布继续沿本 Map 的既有流程推进。
 
 日志成果关联：日志生成专项复用了 GI-088 的 9 条真人轨迹作为评测素材。今日日记 Prompt v3 的真人证据覆盖 9 条，其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归；这项结果只更新上层产品总 Map 的“日志成果与确认”模块，不改变 GI-088 访谈候选以及板块 6/7/8 的当前状态。阶段总结见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
+
+## 2026-08-20｜GI-088 完整回应优先 v1.2 最小生产合同实施卡
+
+| 项目 | 本轮确认值 |
+|---|---|
+| 当前专项 | [完整回应优先 v1.2 最小生产合同](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
+| 父证据 | v1.1 生产合同复验调用 `8/8`；全部 HTTP 200／stop／15 秒内且未截断；合同仅 `2/8` 有效，中位 `7757ms`、最长 `10843ms`；两个有效输出均只复述后结束，质量 No-Go |
+| 架构选择 | 同一次调用先生成唯一完整可见回应，只附带本回合事实、问题、停止和纠正的最少状态；程序确定性映射为现有写入与 Trace |
+| 隔离策略 | `INTERVIEW_EVENT_CENTERED_STRATEGY=complete_response_v1_2`；Production 保持 `event_centered + baseline` |
+| 运行条件 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、一次尝试、45 秒硬门 |
+| 验证 | 同一 `3＋5` 生产合同复验；专项与全量工程验证；隔离 Preview 最多 `15` 次 |
+| 当前状态 | `已确认·实施中`；v1.2 代码、生产合同复验、Preview 与发布结果待验证 |
+| 停止点 | 真实页面交产品负责人验收；通过前不切换 Production |
+
+v1.1 生产合同 No-Go 证据见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-receipt.json)和[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-stage-ledger-v1.json)。
+
+## 2026-08-19｜GI-088 完整回应优先 v1.1 离线结果卡
+
+| 项目 | 本轮确认值 |
+|---|---|
+| 当前专项 | [完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md) |
+| 父结果 | v1 `8/8` 技术与正文合同有效；中位 `3087ms`、最长 `6976ms`；`1280` Token 未截断；Codex 两题 fail、质量 No-Go；产品裁决 pending |
+| 候选与运行身份 | `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`；`2026-08-19.gi088-complete-response-first-v1-1-quality-v1` |
+| 唯一变化 | 写回应前选择一项完整原文尚未回答、会带来实际新进展的信息目标 |
+| 对话方法 | 继续／深挖进入新层；负担但未停止时提供低负担入口；最多一处有依据且可纠正的解释和一个主问题；明确停止零问题 |
+| 固定因素 | 单一可见回应负责人、完整 conversation、只读状态、`deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token 与正文合同保持不变 |
+| 数据与预算 | 同一 `3` 条开发题＋`5` 条冻结回归题；预算消费 `8/8`，重试／恢复／回退 `0` |
+| 速度门 | 完整可见回应中位不高于 `6s`、单例不高于 `15s`；硬超时 `45s` |
+| 质量门 | `0 fail`、最多 `1 minor`；纠正、继续、控制和长上下文硬场景全部 pass |
+| 技术结果 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断 |
+| Codex 初评 | `7 pass / 1 minor / 0 fail`；硬门长上下文题 `RPR-REAL-21` minor |
+| 当前状态 | `awaiting_product_review`；产品负责人裁决 pending，暂不宣称离线 Go |
+| 公开证据 | [结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)、[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json) |
+| 发布边界 | 页面、提交、推送、部署、Preview 和 Production 变更均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+## 2026-08-19｜GI-088 完整回应优先 v1 结果卡
+
+| 项目 | 本轮结果 |
+|---|---|
+| 候选与运行身份 | `2026-08-19.gi088-complete-response-first-v1`；`2026-08-19.gi088-complete-response-first-quality-v1` |
+| 调用 | 开发 `3/3`＋回归 `5/5`，合计 `8/8`；重试／恢复／回退 `0` |
+| 技术与速度 | 技术与正文合同 `8/8`；中位 `3087ms`、最长 `6976ms`；八题均 `finishReason=stop`，`1280` Token 未截断 |
+| Codex 初评 | `RPR-REAL-22 fail`：非停止负担缺少低负担继续入口并新增前提；`RPR-REAL-21 fail`：复述用户刚给结论，没有进入新层 |
+| 产品负责人裁决 | `pending`；继续按完整原文与实际输出逐例裁决 |
+| 质量结论 | v1 `No-Go`；共同归因为生成前没有先选择尚未回答的新信息目标 |
+| 公开证据 | [结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md)、[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-stage-ledger-v1.json) |
+| 发布边界 | 页面、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
 
 ## 2026-08-19｜GI-088 v2.9 真实纠正后继续实施卡
 
@@ -1194,11 +1241,11 @@ flowchart TD
 | 3｜公共成果、证据与收束边界 | **公共来源、安全和成果边界继续冻结** | 高 | GI-066 成果投影作为历史证据；GI-067 发生边界冲突时复核 | **按冲突复核** | [04w｜GI-067](./technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md)、[四角度公共协议](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md) |
 | 4｜成果与 AI 自主访谈策略 | **GI-067 / GI-068～074 已冻结·高置信度** | 高 | 七项落地验证均未启动 | **产品决策完成** | [04x 母文档](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 5｜稳定性、用户控制与交互收束 | **GI-075～080 六类规则已冻结；6/6** | GI-075、GI-076、GI-078 中；GI-077、GI-079、GI-080 高 | 产品决策完成；落地验证未启动 | **完成；交接板块 6** | [板块 5 专项](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
-| 6｜生成式质量评测 | **GI-074 体系、总规范 v1.0 与新产品判尺身份并行保留** | 高 | v2.9 真实 CONTINUE `2/2`；High 合同 fail，Codex 与产品均 fail，No-Go，后续 `4 not_run` | **当前 No-Go 已封存** | [当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
-| 7｜模型提问策略与链路改造 | **回应优先 v2.9 真实 CONTINUE No-Go** | 中 | 当前身份 `2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1` 已完成 `2/2`；High 合同 fail，产品 fail，后续 `4 not_run` | **停止；不预同步新候选** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
+| 6｜生成式质量评测 | **GI-074 体系、总规范 v1.0 与新产品判尺身份并行保留** | 高 | 完整回应优先 v1.1 `8/8 technical_valid / stop`；Codex `7 pass / 1 minor / 0 fail`，产品裁决 pending | **awaiting product review** | [当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
+| 7｜模型提问策略与链路改造 | **完整回应优先 v1.1 新信息目标** | 中 | 中位 `3406ms`、最长 `4621ms`，1280 Token 未截断；长上下文硬题 Codex minor | **等待产品负责人逐题裁决** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
 | 8｜内部 Preview、验收与发布 | **历史 GI-066 真人 No-Go；新 `4＋2` 门已冻结** | 高 | v2.8.1 No-Go；页面接入与 Preview `0/15 not_run` | **等待板块 6、7 后续新方案与质量裁决** | [04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
 
-依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3 High Token 截断与状态合同 No-Go → v2.4 状态对齐通过、重复追问 No-Go → v2.5 首题技术超时、语义未评价 → v2.6 首题速度 No-Go → v2.7 关闭 Thinking 后速度通过、纠正未保存 → v2.8 纠正保存通过、状态职责 Codex minor、产品裁决 minor → v2.8.1 产品 fail、No-Go → v2.9 纠正首题产品 pass → 真实 CONTINUE High 合同失败、Codex 与产品均 fail、No-Go”。Production 当前使用 `event_centered + baseline`。
+依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3 High Token 截断与状态合同 No-Go → v2.4 状态对齐通过、重复追问 No-Go → v2.5 首题技术超时、语义未评价 → v2.6 首题速度 No-Go → v2.7 关闭 Thinking 后速度通过、纠正未保存 → v2.8 纠正保存通过、状态职责 Codex minor、产品裁决 minor → v2.8.1 产品 fail、No-Go → v2.9 纠正首题产品 pass → 真实 CONTINUE High 合同失败、Codex 与产品均 fail、No-Go → 完整回应优先 v1 技术 `8/8`、Codex 两题 fail、质量 No-Go → v1.1 技术 `8/8`、Codex `7 pass / 1 minor / 0 fail`、等待产品负责人复核”。Production 当前使用 `event_centered + baseline`。
 
 ## 5. 板块任务书
 
@@ -3500,6 +3547,9 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 
 | 日期 | 变化 | 影响 |
 |---|---|---|
+| `2026-08-20` | 完整回应优先 v1.1 离线批次完成，等待产品复核 | `8/8 technical_valid / stop`，中位 `3406ms`、最长 `4621ms`，1280 Token 未截断；Codex `7 pass / 1 minor / 0 fail`，长上下文硬题 minor；产品裁决 pending，页面与 Preview not_run |
+| `2026-08-19` | 完整回应优先 v1.1 新信息目标进入实施 | 新候选 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`；新运行 `2026-08-19.gi088-complete-response-first-v1-1-quality-v1`；同一 `3＋5` 新预算 `0/8`，结果待验证，Production baseline |
+| `2026-08-19` | 完整回应优先 v1 完成并质量 No-Go | 技术与正文合同 `8/8`，中位 `3087ms`、最长 `6976ms`，`1280` Token 未截断；Codex 初评 RPR-REAL-22 与 RPR-REAL-21 fail，产品裁决 pending；页面与 Preview not_run |
 | `2026-08-19` | 回应优先 v2.9 真实 CONTINUE 产品 fail／No-Go | Low＋High `2/2`；Low `3967ms`、Codex minor；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放任务，三项合同失败；纯时间 `5852ms` 通过，整体技术门 false，Codex 与产品均 fail，后续 `4 not_run` |
 | `2026-08-19` | 回应优先 v2.9 纠正首题产品 `pass`，真实 CONTINUE 进入实施 | 新身份 `2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1` 预算 Low＋High `0/2`；继承父实际气泡与 post-state，U4 保持冻结；后续 `4 not_run` |
 | `2026-08-19` | 回应优先 v2.9 纠正首题完成 | High `1/1`，HTTP 200／stop、合同有效、`3325ms`，观察两段 `6666ms`；保存 `U3` 纠正认识且开放任务为空，High 可见问题 `0`。Codex 与产品负责人均裁决 pass，随后进入真实 CONTINUE |

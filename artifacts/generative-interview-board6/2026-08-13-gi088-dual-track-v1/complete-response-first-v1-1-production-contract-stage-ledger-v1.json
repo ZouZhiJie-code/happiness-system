@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-1-production-contract-quality-v1",
+  "status": "no_go",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 7757,
+    "maxLatencyMs": 10843
+  },
+  "contract": {
+    "valid": 2,
+    "failed": 6
+  },
+  "quality": {
+    "codexDecision": "no_go",
+    "productOwnerDecision": "pending",
+    "reason": "two_valid_outputs_only_restate_and_stop; six_outputs_rejected_by_full_state_contract"
+  },
+  "next": {
+    "candidate": "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope",
+    "status": "confirmed_in_progress",
+    "budgetAuthorized": 8
+  },
+  "release": {
+    "pageDeployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

@@ -1,0 +1,480 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-1-production-contract-quality-v1",
+  "planFingerprint": "98cf2a1727baa2412e9aa0ac195f440f8d6f6e51e7172eb0d6b4d733cdc042c3",
+  "candidateFingerprint": "b9a651dd9be6eab1a65ebb1aabc6e0bb83504fe711bf1d99fe54a5d21082b525",
+  "datasetFingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+  "stages": {
+    "development": "complete",
+    "regression": "complete"
+  },
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopReason": null,
+  "medianLatencyMs": 7757,
+  "maxLatencyMs": 10843,
+  "results": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "6d8246fa38eea5a11bd65fdcac20f0f945e34ae8347bbfa15587254b4a92a869",
+      "responseHash": "c31cd6cefa582ef659f8746d4a9583814fce8b41eef5ce1d5350bb7c8b01f36b",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": "pause",
+        "visibleCharacterCount": 34,
+        "paragraphCount": 1,
+        "questionMarkCount": 0,
+        "visibleHash": "b865f25602820aa43bf9ce30bc411b2b51f9c5887b816b56a36ed1a2b77b05ed",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 6931,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4813,
+        "completionTokens": 483,
+        "totalTokens": 5296,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 4813
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "status": "contract_failure",
+      "requestFingerprint": "729801a76e0ccf46d6a34cd3b5a416627b72e00c8c307cb89a5effb85cedb8e5",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "PRIVATE_DETAIL_SHA256:f6725ed1a5460cbfc25012e98bd3f09a669e4edcb51026ac4ed6284895c2b8f6",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "PRODUCTION_CONTRACT_FAILURE",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 8074,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4886,
+        "completionTokens": 591,
+        "totalTokens": 5477,
+        "promptCacheHitTokens": 0,
+        "promptCacheMissTokens": 4886
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "915bf8a827e38b84e148599ba1d013f3bcfdb0e9efcfba5f31142516bd6e98a8",
+      "responseHash": "9a1378de2bcedbebde3fe899dac148c182dc2c221ebe4b11c694ec2440884eda",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": "pause",
+        "visibleCharacterCount": 25,
+        "paragraphCount": 1,
+        "questionMarkCount": 0,
+        "visibleHash": "e4ce89dabad93c1f4a754c975be7521b9d3d7bde8fcf7375466b25ae33d00060",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 4984,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4833,
+        "completionTokens": 380,
+        "totalTokens": 5213,
+        "promptCacheHitTokens": 1920,
+        "promptCacheMissTokens": 2913
+      }
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "30bedb99c1ac825b1ac329357e83b805190a732311306483b573c8d6ad5f4e2b",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "PRIVATE_DETAIL_SHA256:99ff61ac44f6b6b5a1758348f9333d72c8e35b3f8f016257ed1f38394d82a7c0",
+        "PRIVATE_DETAIL_SHA256:f6725ed1a5460cbfc25012e98bd3f09a669e4edcb51026ac4ed6284895c2b8f6",
+        "PRIVATE_DETAIL_SHA256:25dc969b65dc4e9e5e0443730344bf3451abb6a01080e71818a6f5c1357aabb1",
+        "PRIVATE_DETAIL_SHA256:7fd9292f3c8d6afa2c8328e3c083ecb859cb1cd0e6972a818db9e33055483d9b",
+        "PRIVATE_DETAIL_SHA256:19acc5ebff921abeb992e0db5e0f9aec8f402cd87754c25b86c7979394351185",
+        "PRIVATE_DETAIL_SHA256:bb5d03455e4f6299eefb82023c137a3402e99a19022195531c177c4003e81177",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "PRODUCTION_CONTRACT_FAILURE",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 10843,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4803,
+        "completionTokens": 819,
+        "totalTokens": 5622,
+        "promptCacheHitTokens": 1920,
+        "promptCacheMissTokens": 2883
+      }
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "f5f16ae3e6b254c5f37827deaa6dda5d6f99bf8ce3b6ed683a32a85cb8f52eab",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:a59d456cd7a08f433ad434d5bacf79896693f970c49ec4dbaa00e6184dc5108c",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 10406,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4833,
+        "completionTokens": 885,
+        "totalTokens": 5718,
+        "promptCacheHitTokens": 3968,
+        "promptCacheMissTokens": 865
+      }
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "a3bbdcefdbe06cd31eaa275412a68763154a73c5afe6dd237c3fd69615d27c5c",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "PRIVATE_DETAIL_SHA256:725e35fe3842e97e893cadb33cd15664025b4dac5c7962613c0b0f32648d4ed6",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "PRODUCTION_CONTRACT_FAILURE",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 7440,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 4805,
+        "completionTokens": 570,
+        "totalTokens": 5375,
+        "promptCacheHitTokens": 1920,
+        "promptCacheMissTokens": 2885
+      }
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "e242ce29f0ac52edd97b701537b9c6cf44ace6c5f150bc6f6f45b1f67a110175",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "PRIVATE_DETAIL_SHA256:360c8afac217799fc4268499e46ae104c7e5421978aceefa0ccc6aea5a2b59a0",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "PRODUCTION_CONTRACT_FAILURE",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 7
+      },
+      "totalLatencyMs": 8946,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 5628,
+        "completionTokens": 706,
+        "totalTokens": 6334,
+        "promptCacheHitTokens": 3968,
+        "promptCacheMissTokens": 1660
+      }
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "8fedd0b4d6e6e45651ff6cefde8ce7905a9757ea40e22148346966bf14521631",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "PRIVATE_DETAIL_SHA256:9483b00929354e8135a5f3403eb014056de282bcbd62ebc002990c8435128458",
+        "PRIVATE_DETAIL_SHA256:99ff61ac44f6b6b5a1758348f9333d72c8e35b3f8f016257ed1f38394d82a7c0",
+        "PRIVATE_DETAIL_SHA256:f6725ed1a5460cbfc25012e98bd3f09a669e4edcb51026ac4ed6284895c2b8f6",
+        "PRIVATE_DETAIL_SHA256:dfb94864c3487949b6c62ba5e8fffef1f8ab78249eab2f15c4564f36414fe89e",
+        "PRODUCTION_TURN_NULL"
+      ],
+      "errorCode": "PRODUCTION_CONTRACT_FAILURE",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": "json_object",
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "action": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 3
+      },
+      "totalLatencyMs": 7086,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 5069,
+        "completionTokens": 385,
+        "totalTokens": 5454,
+        "promptCacheHitTokens": 1920,
+        "promptCacheMissTokens": 3149
+      }
+    }
+  ],
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

@@ -2,12 +2,12 @@
 
 - 文档职责：证据索引
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`v2.9 真实纠正后继续 No-Go＋v2.8.1 No-Go 父证据`
+版本：`完整回应优先 v1.1 生产旧合同 No-Go；v1.2 最小生产合同实施中`
 
-状态：`v2.9 真实 CONTINUE Low＋High 2/2 完成；纯时间 5852ms 通过，High 合同失败使整体技术门为 false；Low Codex minor，Codex 与产品均裁决完整回合 fail，本轮 No-Go；后续 4 not_run。页面、Preview 与发布 not_run；Production baseline`
+状态：`v1.1 生产合同复验 8/8 请求完成、2/8 合同有效，质量 No-Go；v1.2 最小生产合同 0/8、结果待验证；页面、Preview 与发布 not_run；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -17,7 +17,27 @@
 
 ## 0. 当前任务
 
-当前结果入口为[回应优先 v2.9 真实纠正后继续结果交接](./response-first-v2-9-causal-continuation-gate-v1-handoff.md)。冻结计划继续保存运行前输入字节；执行结果确认 High 没有形成覆盖判断或开放目标。公开区只保存身份、指纹、状态和数量，私有正文继续隔离。
+当前父结果见[v1.1 生产合同交接](./complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[回执](./complete-response-first-v1-1-production-contract-quality-v1-receipt.json)和[阶段账](./complete-response-first-v1-1-production-contract-stage-ledger-v1.json)。v1.1 纯文本[结果交接](./complete-response-first-v1-1-quality-v1-handoff.md)继续承担语义方法父证据；公开区只保存身份、指纹、状态和数量，私有正文继续隔离。
+
+### 完整回应优先当前任务
+
+- 父候选／运行：`2026-08-19.gi088-complete-response-first-v1`／`2026-08-19.gi088-complete-response-first-quality-v1`
+- 父结果：技术与正文合同 `8/8`；中位 `3087ms`、最长 `6976ms`；Codex 初评 RPR-REAL-22 与 RPR-REAL-21 fail，v1 质量 No-Go，产品裁决 pending
+- 当前候选：`2026-08-19.gi088-complete-response-first-v1-1-new-information-target`
+- 当前运行：`2026-08-19.gi088-complete-response-first-v1-1-quality-v1`
+- 当前唯一变化：把旧完整事件中心输出收缩为完整回应与本回合最少状态；v1.1 的未答新增信息目标方法保持不变
+- 数据与预算：同一 `3＋5`；预算已消费 `8/8`，并发 1，重试、恢复、回退 0
+- 技术结果：`8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断
+- 质量状态：Codex `7 pass / 1 minor / 0 fail`；`RPR-REAL-21` minor；产品裁决 pending
+- [v1.1 公开启动卡](./complete-response-first-v1-1-quality-v1-start-card.json)
+- [v1.1 公开回执](./complete-response-first-v1-1-quality-v1-receipt.json)
+- [v1.1 结果交接](./complete-response-first-v1-1-quality-v1-handoff.md)
+- [v1.1 阶段账](./complete-response-first-v1-1-stage-ledger-v1.json)
+- [v1 公开启动卡](./complete-response-first-quality-v1-start-card.json)
+- [v1 公开回执](./complete-response-first-quality-v1-receipt.json)
+- [v1 结果交接](./complete-response-first-quality-v1-handoff.md)
+- [v1 阶段账](./complete-response-first-stage-ledger-v1.json)
+- 发布边界：产品验收前 Production 保持 `event_centered + baseline`
 
 ### 回应优先 v2.9 当前任务
 

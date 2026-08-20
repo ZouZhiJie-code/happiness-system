@@ -5,6 +5,7 @@ import type {
 import { createInitialEventCenteredDialogueState } from "@/features/interview/event-centered/dialogue-state";
 import { resolveEventCenteredFocusOptions } from "@/features/interview/event-centered/event-focus-options";
 import { EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION } from "@/features/interview/event-centered/generative-strategy";
+import { composeEventCenteredCompleteResponse } from "@/features/interview/event-centered/complete-response-first";
 import type {
   EventCenteredPolicyOutcomeDraft,
   EventCenteredTurnPolicyResult
@@ -432,11 +433,12 @@ export function applyGenerativeEventCenteredTurnPolicy(input: {
   rawText: string;
   turn: EventCenteredGenerativeTurn;
   facts?: JournalEventFactRecord[];
+  strategyVersion?: string;
 }): EventCenteredTurnPolicyResult {
   const state = cloneState(input.state);
   const thoughtOnly = isEventCenteredThoughtOnlyScope();
   state.strategyMode = "generative";
-  state.strategyVersion = EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION;
+  state.strategyVersion = input.strategyVersion ?? EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION;
   const angle = thoughtOnly
     ? "thought" as const
     : angleForTurn({ state, selectedAngle: input.selectedAngle });
@@ -786,6 +788,7 @@ export function applyGenerativeEventCenteredTurnPolicy(input: {
 export function createGenerativeEventCenteredPayload(input: {
   turn: EventCenteredGenerativeTurn;
   policy: EventCenteredTurnPolicyResult;
+  completeResponseFirst?: boolean;
 }): EventCenteredAssistantPayload {
   const semanticPlan = input.turn.semanticPlan as
     | EventCenteredGenerativeTurn["semanticPlan"]
@@ -794,12 +797,13 @@ export function createGenerativeEventCenteredPayload(input: {
   const thoughtTransition = isEventCenteredThoughtOnlyScope() &&
     input.policy.directive.responseKind === "transition";
   const hiddenUserCompletion = Boolean(
+    !input.completeResponseFirst &&
     !thoughtTransition &&
     (action === "complete" || action === "pause") &&
     semanticPlan?.outcomeAssessment?.origin === "user_articulated" &&
     input.policy.directive.angleOutcome
   );
-  return {
+  const payload: EventCenteredAssistantPayload = {
     naturalUnderstanding: thoughtTransition
       ? input.turn.visibleTurn?.insight ??
         input.turn.semanticPlan.expectedUnderstandingDelta ??
@@ -824,5 +828,16 @@ export function createGenerativeEventCenteredPayload(input: {
     checkpoint: input.policy.directive.checkpoint,
     angleOutcome: input.policy.directive.angleOutcome,
     presentation: hiddenUserCompletion ? "hidden" : "visible"
+  };
+  if (!input.completeResponseFirst || payload.presentation === "hidden") return payload;
+
+  return {
+    ...payload,
+    naturalUnderstanding: "",
+    naturalResponse: composeEventCenteredCompleteResponse(
+      input.turn,
+      payload.naturalResponse
+    ),
+    presentation: "visible"
   };
 }

@@ -2,14 +2,14 @@
 
 - 文档职责：当前专项
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`回应优先 v2.2 factual-low 产品裁决 6/6 通过；v2.9 真实 CONTINUE 2/2，Low Codex minor、High 合同 fail，Codex 与产品均裁决完整回合 fail，No-Go，后续 4 not_run`
+落地验证状态：`v1.1 生产合同复验 8/8 调用、2/8 合同有效并质量 No-Go；v1.2 最小生产合同已确认·实施中；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；生成式候选入口与发布授权保持关闭`
+Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_2 合同、接入与 Preview 待验证`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -24,6 +24,40 @@ Production：`项目主链保持 event_centered + baseline；生成式候选入�
 板块 8 交接：[Preview、Go/No-Go 与 Production 授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
 > 本文是生成式访谈实现层的唯一当前入口。当前职责和现行规则只在这里维护；总 Map、Handoff、评测文档和问题台账只保存状态、证据与本页链接。GI-081～088 的诊断过程统一归入历史证据。
+
+## 完整回应优先 v1.2 最小生产合同卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope` |
+| 当前专项 | [v1.2 最小生产合同](../../plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
+| 父结果 | v1.1 生产合同调用 `8/8`，全部 HTTP 200／stop／15 秒内；合同仅 `2/8` 有效，两个有效输出均只复述后结束；质量 No-Go |
+| 可见责任 | `response` 是模型唯一可见正文，页面只显示一个气泡；问句只作为该正文中可核对的一部分 |
+| 状态责任 | 同一输出只提交最多四条本轮事实、一个问题或停止动作、可选纠正引用；程序确定性映射后原子提交 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
+| 隔离与兼容 | 新策略 `complete_response_v1_2`；`baseline`、历史 `generative` 与 v1.1 证据保持兼容；无需数据库迁移 |
+| 质量门 | 接入后重新运行相同 `3＋5`；每题展示完整相关原文和实际输出；页面 Preview 最多 `15` 次 |
+| 当前状态 | `已确认·实施中`；代码、8 题结果和 Preview 待验证，Production baseline |
+
+## 完整回应优先 v1.1 离线结果卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1 一次调用完整返回 `8/8`，中位 `3087ms`、最长 `6976ms`；RPR-REAL-22 缺低负担入口并新增前提，RPR-REAL-21 复述用户刚给结论，Codex 两题 fail，质量 No-Go；产品裁决 pending |
+| 产品决策 | 生成完整回应前先选择一个尚未回答的新信息目标，用户明确继续时进入新层，负担但未停止时保留低负担入口，明确停止时零追问 |
+| 候选与运行身份 | `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`；`2026-08-19.gi088-complete-response-first-v1-1-quality-v1` |
+| 可见职责 | 一次调用拥有全部可见表达权；Low 与 High 可见追加退出当前实现 |
+| 状态职责 | 生产首版复用 `one_call`，最小状态与回复原子提交；页面只展示 `naturalResponse` 一个气泡 |
+| 唯一变化 | 模型在组织回应前先选一个未答新增信息目标；每轮最多一处有依据且可纠正的解释与一个主问题 |
+| 模型 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、零重试／恢复／回退 |
+| 提问原则 | 检查意图、问过与答过的信息、预期增量和回答负担；问题数量只观察，主问题只服务一个新增信息目标 |
+| 评测 | 同一 `3＋5` 已完成 `8/8`；重试／恢复／回退 `0`；结果逐条交付原文与实际输出 |
+| 技术结果 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断 |
+| Codex 初评 | `7 pass / 1 minor / 0 fail`；硬门长上下文题 `RPR-REAL-21` minor |
+| 当前状态 | `awaiting_product_review`；产品负责人裁决 pending，暂不宣称离线 Go |
+| 当前状态 | `已确认·实施中`；真实运行、页面、Preview 和发布待验证 |
+
+当前专项：[完整回应优先 v1.1 新信息目标](../../plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)。v1.1 结果见[公开交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json)。
 
 ## 1. 当前运行合同
 

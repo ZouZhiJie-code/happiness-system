@@ -1,13 +1,152 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-19.gi088-current-issue-ledger-v83",
-  "status": "response_first_v2_9_causal_continuation_product_fail_no_go",
-  "currentQueueStage": "response_first_v2_9_causal_continuation_stopped",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v88",
+  "status": "complete_response_first_v1_2_minimal_envelope_in_progress",
+  "currentQueueStage": "complete_response_first_v1_2_minimal_state_contract",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
     "privacyBoundary": "私有正文只在受控对话或私有评审界面展示；公开证据继续保存脱敏状态、指标与数量。",
     "effectiveFrom": "2026-08-17"
+  },
+  "completeResponseFirstV1": {
+    "status": "technical_valid_codex_quality_no_go_product_pending",
+    "confirmedFact": "完整回应优先 v1 已完成开发 3/3 与回归 5/5。技术与正文合同 8/8 有效，中位耗时 3087ms、最长 6976ms；八题均 finishReason=stop，最高 completion 219/1280，本次未截断。预算消费 8/8，重试、恢复和回退均为 0。",
+    "productJudgment": "产品负责人最终裁决 pending；继续按完整相关用户输入、实际 AI 输出与 Codex 初评依据逐例裁决。",
+    "codexAssessment": "RPR-REAL-22 fail：用户表达负担但未要求停止，回应没有提供低负担继续入口，并增加用户未提供的前提。RPR-REAL-21 fail：回应复述用户刚给结论，没有进入新的信息层。v1 质量门 No-Go。",
+    "openHypotheses": [
+      "v1 的两个质量失败是否都由生成前没有选择尚未回答的新信息目标造成。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-complete-response-first-v1",
+      "runIdentity": "2026-08-19.gi088-complete-response-first-quality-v1",
+      "developmentCases": 3,
+      "frozenRegressionCases": 5,
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-complete-response-first-architecture-reset.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-stage-ledger-v1.json",
+      "privateReview": "git_ignored_controlled_directory"
+    },
+    "stopPoint": "v1_quality_no_go_product_pending_v1_1_uses_independent_identity_and_budget"
+  },
+  "completeResponseFirstV11": {
+    "status": "technical_valid_codex_seven_pass_one_minor_awaiting_product_review",
+    "confirmedFact": "v1.1 已完成开发 3/3 与回归 5/5，8/8 technical_valid / stop；中位 3406ms、最长 4621ms，1280 Token 未截断。预算消费 8/8，重试、恢复和回退均为 0。",
+    "productJudgment": "产品负责人裁决 pending；按完整相关用户输入、实际 AI 输出与 Codex 初评逐例裁决，裁决前暂不宣称离线 Go。",
+    "codexAssessment": "RPR-REAL-01、05、11、13、22、CF-03、REAL-19 pass；RPR-REAL-21 minor：第一选项部分重复原文已说明的即时触发，独处后是否延续仍有一点新增。合计 7 pass / 1 minor / 0 fail。",
+    "openHypotheses": [
+      "产品负责人是否接受 RPR-REAL-21 的部分重复为 minor。",
+      "八题产品裁决完成后，v1.1 是否满足离线质量 Go。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-complete-response-first-v1-1-new-information-target",
+      "runIdentity": "2026-08-19.gi088-complete-response-first-v1-1-quality-v1",
+      "developmentCases": 3,
+      "frozenRegressionCases": 5,
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "fixedFactors": {
+      "model": "deepseek-v4-pro",
+      "thinking": "disabled",
+      "reasoningEffort": "omitted",
+      "temperature": 0.2,
+      "maxTokens": 1280,
+      "input": "same_full_conversation_and_read_only_semantic_state",
+      "dataset": "same_three_development_plus_five_regression",
+      "questionMarkCount": "observation_only"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "wait_for_product_owner_eight_case_review_before_offline_go_or_page_integration"
+  },
+  "completeResponseFirstV11Integration": {
+    "status": "production_contract_quality_no_go",
+    "confirmedFact": "v1.1 生产合同复验已完成开发 3/3 与回归 5/5。八次请求均 HTTP 200、finishReason=stop、Thinking 关闭、15 秒内且未截断；中位 7757ms、最长 10843ms。旧完整状态合同只有 2/8 有效，其余 6/8 合同失败。",
+    "productJudgment": "隔离页面接入继续不替代产品语义裁决；本轮合同和 Codex 质量门已经 No-Go，Production 保持 baseline。",
+    "codexAssessment": "两个合同有效输出均只复述用户已经给出的结论后结束，没有新增理解或继续入口。其余六条原始可见文字中存在接近可用的回应，但整条结果被事实数量、事件边界、状态字段或来源合同拒绝。旧完整状态合同压过了单一可见回应负责人的语义方法。",
+    "openHypotheses": [
+      "收缩到本回合最少状态后，纯文本 v1.1 的质量能否在生产合同中恢复。"
+    ],
+    "execution": {
+      "identity": "2026-08-20.gi088-complete-response-first-v1-1-page-integration-preview-v1",
+      "strategy": "complete_response_v1_1",
+      "architecture": "one_call_atomic_state_and_visible_response",
+      "productionContractCases": 8,
+      "previewCallBudget": 15,
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "contractValid": 2,
+      "contractFailed": 6,
+      "pageIntegration": "local_unreleased_candidate_only",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-1-page-integration-preview.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-stage-ledger-v1.json"
+    },
+    "stopPoint": "v1_1_production_contract_no_go_superseded_by_v1_2_minimal_envelope"
+  },
+  "completeResponseFirstV12": {
+    "status": "confirmed_in_progress_results_pending",
+    "confirmedFact": "v1.1 纯文本候选保持 7 pass / 1 minor / 0 fail 的 Codex 初评方向；生产旧合同 8 次请求稳定完成但仅 2/8 合同有效，证明当前主要阻力位于输出合同与状态职责。",
+    "productJudgment": "继续推进到隔离页面验收；语义质量仍逐题展示完整相关用户输入与实际 AI 输出，由产品负责人最终裁决；验收前 Production 保持 baseline。",
+    "codexAssessment": "首个单因素是把完整事件中心模型输出收缩为完整 response 与本回合最少状态。模型负责自然回应和少量语义提取，程序负责来源、问题一致性、状态映射和原子写入。",
+    "openHypotheses": [
+      "最小 envelope 能否把八题合同有效率从 2/8 提升到 8/8。",
+      "增加少量事实与控制字段后，中位可见耗时能否回到 6 秒内。",
+      "确定性状态映射能否支持刷新、恢复、纠正和继续回合。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope",
+      "strategy": "complete_response_v1_2",
+      "architecture": "one_call_complete_response_plus_minimal_state",
+      "callsAuthorized": 8,
+      "callsConsumed": 0,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "previewCallBudget": 15,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md"
+    },
+    "stopPoint": "complete_v1_2_engineering_and_eight_case_production_contract_gate_before_preview"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",
@@ -1876,6 +2015,7 @@
     }
   ],
   "currentQueue": [
+    "RF-NEW-INFORMATION-TARGET-01",
     "V8R1-CTRL-01",
     "V8R2-TXN-01",
     "V8R2-SNAPSHOT-01",
@@ -1891,6 +2031,50 @@
     "V6-QD-01"
   ],
   "issues": [
+    {
+      "issueId": "RF-COMPLETE-OWNER-01",
+      "title": "Low 与 High 双可见职责使明确继续请求落为空转",
+      "productOwnerJudgment": "完整可见回应由一次调用独立负责；v1.1 已完成离线批次，当前等待八题产品裁决。",
+      "codexInitialAssessment": "v1.1 已完成 8/8 技术有效；Codex 初评 7 pass / 1 minor / 0 fail，单一可见回应负责人保持稳定。",
+      "confirmedRootCause": "v2.9 暴露的双可见职责冲突已由完整回应优先架构处理。v1 当前剩余根因收敛为生成正文前没有先选择完整原文尚未回答的新信息目标。",
+      "hypotheses": [
+        "v1.1 先选择未答新增信息目标后，可以保留完整承接并稳定产生新进展。",
+        "现有 one_call 原子提交链路可以继续降低首版生产接入和恢复风险。"
+      ],
+      "priority": "P0",
+      "status": "v1_1_eight_of_eight_awaiting_product_review",
+      "trace": [
+        "docs/plans/2026-08-19-gi088-complete-response-first-architecture-reset.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-stage-ledger-v1.json",
+        "docs/plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md"
+      ],
+      "targetVersion": "2026-08-19.gi088-complete-response-first-v1-1-new-information-target"
+    },
+    {
+      "issueId": "RF-NEW-INFORMATION-TARGET-01",
+      "title": "完整回应生成前未选择未答新增信息目标",
+      "productOwnerJudgment": "v1.1 产品裁决 pending；八题按完整原文与实际输出逐例复核，裁决前保持 awaiting_product_review。",
+      "codexInitialAssessment": "v1.1 中父失败 RPR-REAL-22 已初评 pass；RPR-REAL-21 从 fail 改善为 minor，剩余问题是第一选项部分重复已知即时触发，第二选项仍有一点新增。",
+      "confirmedRootCause": "两个失败都发生在技术完整、速度通过的正文中，共同指向回应目标选择：模型生成前没有先找出完整上下文中尚未回答、能够带来新进展的信息。",
+      "hypotheses": [
+        "先选未答信息目标可以同时减少原地复述和过早收束。",
+        "继续或深挖进入新层、负担但未停止时提供低负担入口，可以兑现用户当前意图。",
+        "最多一处可纠正解释和一个主问题可以控制用户回答负担。"
+      ],
+      "priority": "P0",
+      "status": "v1_1_eight_of_eight_codex_seven_pass_one_minor_product_pending",
+      "trace": [
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-receipt.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-stage-ledger-v1.json",
+        "docs/plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md",
+        "docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json"
+      ],
+      "targetVersion": "2026-08-19.gi088-complete-response-first-v1-1-new-information-target"
+    },
     {
       "issueId": "RF-V281-LINEAGE-01",
       "title": "CONTINUE 旧路径无法证明真实两段式连续因果",

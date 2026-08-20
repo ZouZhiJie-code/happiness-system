@@ -2,14 +2,14 @@
 
 - 文档职责：当前专项
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 
 产品决策状态：`GI-074 完整评测体系已冻结·高置信度；GI-075～080 保持关闭；GI-081～083 保留诊断血缘；GI-084～086 保留失败与校准证据；GI-087 原六题完成上下文资格审计；GI-088 已确认`
 
 置信度：`高`
 
-落地验证状态：`回应优先 v2.2 Low 产品裁决 6/6 通过；v2.9 真实 CONTINUE 2/2，Low Codex minor、High 合同 fail，Codex 与产品均裁决完整回合 fail，No-Go，后续 4 not_run`
+落地验证状态：`完整回应优先 v1.1 技术与正文合同 8/8；Codex 7 pass / 1 minor / 0 fail，产品裁决 pending，当前 awaiting_product_review`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -24,6 +24,25 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 板块 7 当前入口：[模型主导语义判断的候选实现与验证](./07-board7-model-led-semantic-implementation.md)
 
 当前 Prompt、Interview Skill、模型、程序和产品负责人的职责，以及单一回答焦点与重复追问规则，只在板块 7 当前入口维护。本页保留 QR-04 判尺、运行身份、指标、质量结果和历史证据。
+
+## 完整回应优先 v1.1 离线结果卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1 技术与正文合同 `8/8`；中位 `3087ms`、最长 `6976ms`；RPR-REAL-22 与 RPR-REAL-21 经 Codex 初评 fail，质量 No-Go；产品裁决 pending |
+| 产品决策 | 先选一项尚未回答、会带来新进展的信息目标，再生成完整回应，能否修复非停止负担无入口与长上下文原地复述 |
+| 候选与运行身份 | `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`；`2026-08-19.gi088-complete-response-first-v1-1-quality-v1` |
+| 唯一变化 | 生成前选择一个未答新增信息目标；继续／深挖进入新层，负担但未停止时给低负担入口，最多一处可纠正解释与一个主问题 |
+| 数据与预算 | 同一 `3` 条开发题＋`5` 条冻结回归题；预算消费 `8/8`，重试／恢复／回退 `0` |
+| 运行 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、并发 1、重试／恢复／回退 0 |
+| 评审顺序 | 完整相关原文 → 实际 AI 输出 → 技术指标 → Codex 初评与逐项依据 → 产品负责人裁决 |
+| 停止规则 | 普通质量失败继续完成当前批次；来源漂移、隐私、忽略停止或纠正、严重编造、预算失控和连续技术故障立即停止 |
+| 通过门 | 硬场景全 pass；总计 `0 fail`、最多 `1 minor`；中位不高于 `6s`、单例不高于 `15s` |
+| 技术结果 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断 |
+| Codex 初评 | `7 pass / 1 minor / 0 fail`；硬门长上下文题 `RPR-REAL-21` minor |
+| 当前状态 | `awaiting_product_review`；产品负责人裁决 pending，暂不宣称离线 Go |
+
+当前专项：[完整回应优先 v1.1 新信息目标](../../plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)。v1.1 结果见[公开交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json)。
 
 ## 回应优先 v2.9 已知认识／开放目标分离实施卡｜2026-08-19
 

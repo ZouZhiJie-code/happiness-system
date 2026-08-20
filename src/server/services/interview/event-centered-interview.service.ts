@@ -22,7 +22,13 @@ import {
   createGenerativeEventCenteredPayload,
   toEventCenteredUnderstandingDecision
 } from "@/features/interview/event-centered/generative-turn-policy";
-import { isGenerativeEventCenteredStrategyEnabled } from "@/features/interview/event-centered/generative-release";
+import {
+  isCompleteResponseFirstEventCenteredStrategyEnabled,
+  isGenerativeEventCenteredStrategyEnabled
+} from "@/features/interview/event-centered/generative-release";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME
+} from "@/features/interview/event-centered/complete-response-first";
 import {
   EVENT_CENTERED_ANGLE_CARD_VERSION,
   EVENT_CENTERED_FEW_SHOT_VERSION,
@@ -1059,7 +1065,10 @@ function resolveCurrentQuestionContext(
   return { text: null, targetMismatch: foundOtherQuestion };
 }
 
-function recentGenerativeTurns(data: EventCenteredInterviewWorkspaceData) {
+function recentGenerativeTurns(
+  data: EventCenteredInterviewWorkspaceData,
+  limit = 3
+) {
   const turns: Array<{
     user: string;
     assistantUnderstanding: string;
@@ -1085,7 +1094,7 @@ function recentGenerativeTurns(data: EventCenteredInterviewWorkspaceData) {
     });
     latestUser = null;
   }
-  return turns.slice(-3);
+  return turns.slice(-Math.max(1, limit));
 }
 
 function generativeAngleForTurn(input: {
@@ -1950,6 +1959,8 @@ export async function respondEventCenteredInterview(
       effectiveRequest.action === "continue_exploration";
     const thoughtOnly = isEventCenteredThoughtOnlyScope();
     const generativeEnabled = isGenerativeEventCenteredStrategyEnabled();
+    const completeResponseFirstEnabled =
+      isCompleteResponseFirstEventCenteredStrategyEnabled();
     const thoughtControl = thoughtOnly
       ? gi066ThoughtControl({ action: effectiveRequest.action, rawText })
       : "none" as const;
@@ -2026,8 +2037,10 @@ export async function respondEventCenteredInterview(
       ? "baseline"
       : deterministicUnableAnswerHandling
         ? "baseline"
-      : generativeEnabled
-        ? "generative"
+      : completeResponseFirstEnabled
+        ? "complete_response_v1_1"
+        : generativeEnabled
+          ? "generative"
         : "baseline";
     const generativeAngle = autoEnterThought
       ? "thought" as const
@@ -2057,8 +2070,8 @@ export async function respondEventCenteredInterview(
       effectiveRequest.action === "reply" &&
       !state.currentQuestion &&
       state.currentMicrogoal?.status !== "active";
-    const requestedGenerativeArchitecture =
-      options?.generativeArchitecture ?? "two_call";
+    const requestedGenerativeArchitecture = options?.generativeArchitecture ??
+      (completeResponseFirstEnabled ? "one_call" : "two_call");
     if (
       generativeEnabled &&
       generativeAttempted &&
@@ -2095,7 +2108,7 @@ export async function respondEventCenteredInterview(
       currentQuestionCognitiveAction: state.currentQuestion?.cognitiveAction ?? null,
       correctionRequested: effectiveRequest.action === "correct_understanding",
       facts: factProjection.facts,
-      recentTurns: recentGenerativeTurns(before),
+      recentTurns: recentGenerativeTurns(before, completeResponseFirstEnabled ? 8 : 3),
       askedTargets: generativeRun?.askedTargets ?? [],
       answeredTargets: generativeRun?.answeredTargets ?? [],
       deniedTargets: generativeRun?.deniedTargets ?? [],
@@ -2117,6 +2130,14 @@ export async function respondEventCenteredInterview(
             supportFactIds: priorAngleOutcome.facts.map((fact) => fact.factId)
           }
         : null,
+      completeResponseFirst: completeResponseFirstEnabled,
+      ...(completeResponseFirstEnabled
+        ? {
+            maxTokens: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxTokens,
+            maxAttempts: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxAttempts,
+            timeoutMs: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.timeoutMs
+          }
+        : {}),
       onRetry: async ({ attempt }) => {
         if (attempt === 1) await options?.onPhase?.("provider_retry_1");
       },
@@ -2575,7 +2596,10 @@ export async function respondEventCenteredInterview(
           selectedAngle: effectiveRequest.angle,
           rawText,
           facts: factProjection.facts,
-          turn: effectiveGenerativeTurn
+          turn: effectiveGenerativeTurn,
+          strategyVersion: completeResponseFirstEnabled
+            ? generativeResult?.strategyVersion
+            : undefined
         })
         : decideEventCenteredTurnPolicy({
           state,
@@ -2672,7 +2696,8 @@ export async function respondEventCenteredInterview(
         ? {
           payload: createGenerativeEventCenteredPayload({
             turn: effectiveGenerativeTurn,
-            policy
+            policy,
+            completeResponseFirst: completeResponseFirstEnabled
           }),
           outputOrigin: "llm" as const,
           attempts: [],

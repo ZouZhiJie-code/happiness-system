@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   markFailed: vi.fn(),
   resume: vi.fn(),
   generativeEnabled: vi.fn(() => false),
+  completeResponseFirstEnabled: vi.fn(() => false),
   thoughtOnly: vi.fn(() => false),
   generateOnce: vi.fn(),
   generatePlan: vi.fn(),
@@ -52,7 +53,9 @@ vi.mock("@/features/interview/event-centered-release", () => ({
 }));
 
 vi.mock("@/features/interview/event-centered/generative-release", () => ({
-  isGenerativeEventCenteredStrategyEnabled: mocks.generativeEnabled
+  isGenerativeEventCenteredStrategyEnabled: mocks.generativeEnabled,
+  isCompleteResponseFirstEventCenteredStrategyEnabled:
+    mocks.completeResponseFirstEnabled
 }));
 
 vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
@@ -363,6 +366,64 @@ function completedGenerativeTurn() {
   };
 }
 
+function askingGenerativeTurn() {
+  return {
+    understanding: {
+      eventBoundary: "current_event" as const,
+      coreEventIdentifiable: true,
+      answerStatus: "answered" as const,
+      factDeltas: [],
+      correctionOrBoundary: null,
+      tentativeInterpretation: null,
+      eventOptions: []
+    },
+    semanticPlan: {
+      action: "ask" as const,
+      activeAngle: "feeling" as const,
+      outcomeAssessment: {
+        state: "needs_more" as const,
+        origin: null,
+        basis: "当前仍需分清两种感受各自出现的时刻",
+        supportEvidenceRefs: ["fact-1"],
+        missingUnderstanding: "两种感受先后出现的具体时刻"
+      },
+      evidenceRefs: ["fact-1"],
+      insightKind: null,
+      selectedTargetId: "feeling_timing",
+      expectedUnderstandingDelta: "分清紧张和期待分别在什么时刻出现",
+      tentativeInterpretation: null,
+      stopReason: null,
+      cognitiveAction: "differentiate" as const,
+      microgoalDelta: null,
+      realizationContract: {
+        responseCore: "分清紧张和期待出现的时刻",
+        summaryAnchors: []
+      }
+    },
+    visibleTurn: {
+      thinkingSummary: "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。",
+      responseKind: "question" as const,
+      question: "听到名字的那一刻，哪一种感觉先冒出来？",
+      insight: null,
+      honestLimit: null
+    },
+    decision: {
+      turnAction: "ask" as const,
+      cognitiveAction: "differentiate" as const,
+      selectedTarget: "feeling_timing",
+      evidenceRefs: ["fact-1"],
+      microgoalDelta: null,
+      expectedValue: "分清紧张和期待分别在什么时刻出现",
+      stopReason: null,
+      outcomeCandidate: null
+    },
+    reply: {
+      naturalUnderstanding: "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。",
+      question: "听到名字的那一刻，哪一种感觉先冒出来？"
+    }
+  };
+}
+
 function semanticPlanArtifact() {
   const turn = completedGenerativeTurn();
   return {
@@ -509,6 +570,7 @@ function visibleStageResult(input: { turn?: ReturnType<typeof completedGenerativ
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.generativeEnabled.mockReturnValue(false);
+  mocks.completeResponseFirstEnabled.mockReturnValue(false);
   mocks.thoughtOnly.mockReturnValue(false);
   mocks.generateOnce.mockResolvedValue(null);
   mocks.generatePlan.mockResolvedValue(null);
@@ -1040,6 +1102,81 @@ describe("event-centered respond service", () => {
           generativeDecision: {
             turnAction: "complete"
           }
+        }
+      }
+    });
+  });
+
+  it("完整回应隔离策略默认使用 one_call 并只发送一个可见气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstEnabled.mockReturnValue(true);
+    mocks.generateOnce.mockResolvedValue({
+      turn: askingGenerativeTurn(),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.generative_turn",
+        promptVersion: "v1.1",
+        resolvedPromptHash: "hash-v1.1"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call"
+    });
+    const deltas: Array<[string, string]> = [];
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest(), {
+      onDelta: (target, value) => {
+        deltas.push([target, value]);
+      }
+    });
+
+    expect(mocks.generateOnce).toHaveBeenCalledOnce();
+    expect(mocks.generatePlan).not.toHaveBeenCalled();
+    expect(mocks.generateVisible).not.toHaveBeenCalled();
+    expect(mocks.generateOnce).toHaveBeenCalledWith(expect.objectContaining({
+      completeResponseFirst: true,
+      maxTokens: 1280,
+      maxAttempts: 1,
+      timeoutMs: 45_000
+    }));
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse:
+        "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。\n\n" +
+        "听到名字的那一刻，哪一种感觉先冒出来？",
+      presentation: "visible"
+    });
+    expect(deltas).toEqual([
+      ["summary", ""],
+      ["response",
+        "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。\n\n" +
+        "听到名字的那一刻，哪一种感觉先冒出来？"]
+    ]);
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      snapshotData: {
+        strategyMode: "generative",
+        strategyVersion:
+          "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1"
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_1",
+          effectiveStrategy: "generative",
+          generativeArchitecture: "one_call"
         }
       }
     });

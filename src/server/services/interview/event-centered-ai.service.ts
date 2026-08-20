@@ -42,6 +42,10 @@ import {
   GENERATIVE_QUALITY_CALIBRATION_CARDS,
   GENERATIVE_QUALITY_CALIBRATION_VERSION
 } from "@/features/interview/event-centered/generative-quality-calibration";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_METHOD,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_VERSION
+} from "@/features/interview/event-centered/complete-response-first";
 import { isEventCenteredThoughtOnlyScope } from "@/features/interview/event-centered-release";
 import { createPromptEnvelope } from "@/features/ai-quality/prompt-manifest";
 import type { AIProvider } from "@/server/services/ai/ai-provider";
@@ -191,6 +195,8 @@ export type EventCenteredGenerativeGenerationInput = {
     statement: string;
     supportFactIds: string[];
   } | null;
+  /** 隔离 v1.1：同一调用负责完整可见回应，并继续提交最小状态。 */
+  completeResponseFirst?: boolean;
   provider?: AIProvider | null;
   maxTokens?: number;
   maxAttempts?: number;
@@ -1385,6 +1391,9 @@ function buildGenerativeTurnMessages(input: EventCenteredGenerativeGenerationInp
   const userSemanticSignals = getUserSemanticSignals(input.rawText);
   const systemRules = [
     "你负责完成事件中心访谈的一次完整回合。只输出 JSON，最外层直接且仅包含 understanding、semanticPlan、visibleTurn。",
+    ...(input.completeResponseFirst
+      ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_METHOD
+      : []),
     "event_recording 阶段只记录当前事件事实与用户个人反应，activeAngle 固定为 null，禁止生成角度成果、成果关系或角度 outcome；只在事件事实与个人反应共同具备时交给系统进入第一检查点。",
     "1. 用户停止、纠正和拒绝优先；这些控制一旦成立，立即执行对应边界。",
     "2. 先把 effectiveFacts 与本轮 factDeltas 合并，再判断 outcomeAssessment 和 action。factDeltas.quote 必须逐字来自 rawText；已有事实引用 id，本轮事实引用 new:N。",
@@ -1404,8 +1413,15 @@ function buildGenerativeTurnMessages(input: EventCenteredGenerativeGenerationInp
     "5a. 多条线索先选最可能改变当前目标理解的方向；价值接近时跟随用户最后强调的重点。关系角度用具体互动询问用户自己的边界或判断；禁止‘处于什么位置、意味着什么、进入什么判断’等抽象分析表达。",
     "6. deniedTargets 和用户明确拒绝的语义方向退出候选。askedTargets 只记录历史，answeredTargets 记录已经取得的具体答案；目标编号和已问历史都不能单独触发继续或停止。只有当前问题与预期答案都明确重复时才算重复。",
     "7. 一次只问一个目标；禁止抽象元语言、强迫二选一和低价值细节收集。",
-    "9. ask 固定先呈现一至两句 thinkingSummary，再呈现一个问题。thinkingSummary 说明 AI 此刻怎样理解用户问题，指出关键矛盾、关系或认识缺口，并解释下一问聚焦该方向的原因；正式问题单独提供作答入口。",
-    "9a. thinkingSummary 与问题分工表达。禁止引用或同义复述用户原话、事实罗列、问题改写、答案预告、第一人称动作叙述、候选列表、内部评分、回答提示、未经证实的动机和结果。纠正时只说明理解已按新信息调整。",
+    ...(input.completeResponseFirst
+      ? [
+          "9. ask 时 thinkingSummary 与 question 将在页面合成一个气泡。thinkingSummary 使用一至两句自然承接或可纠正理解，question 只提供一个围绕新增信息目标的作答入口；两者读起来必须是一条连贯回应。",
+          "9a. thinkingSummary 可以简短自然转述当前有效意思，但不能完整复述用户刚说完的内容、再次承接上一轮已经承接的纠正、罗列事实或预告问题答案。不要使用内部分析语气、候选列表、未经确认的动机和结果。"
+        ]
+      : [
+          "9. ask 固定先呈现一至两句 thinkingSummary，再呈现一个问题。thinkingSummary 说明 AI 此刻怎样理解用户问题，指出关键矛盾、关系或认识缺口，并解释下一问聚焦该方向的原因；正式问题单独提供作答入口。",
+          "9a. thinkingSummary 与问题分工表达。禁止引用或同义复述用户原话、事实罗列、问题改写、答案预告、第一人称动作叙述、候选列表、内部评分、回答提示、未经证实的动机和结果。纠正时只说明理解已按新信息调整。"
+        ]),
     "10. 引导复盘形成成果用 complete；深度聊天形成认识进展用 pause；停止轮只呈现一段 insight 或 honestLimit，thinkingSummary=null。",
     "11. 材料有限、用户边界成立或继续提问价值有限时用 honest_limit，只说明当前范围，不制造认识。",
     "12. 严格遵守角度卡、allowedActions、anchorEvidenceGate、单一问题、事实可追溯、安全边界和三问上限。anchorEvidenceGate 只有三项 ask 条件同时成立时生效。认识类型只取 distinction、connection、tension、meaning、function、scope_only。",
@@ -1460,7 +1476,10 @@ function buildGenerativeTurnMessages(input: EventCenteredGenerativeGenerationInp
           currentMicrogoal: input.microgoal,
           priorAngleOutcome: input.priorAngleOutcome ?? null,
           deepQuestionAnswerCount: input.microgoal?.answerCount ?? 0,
-          recentTurns: input.recentTurns.slice(-3),
+          visibleResponseMode: input.completeResponseFirst
+            ? "complete_response_v1_1"
+            : "split_summary_and_response",
+          recentTurns: input.recentTurns.slice(input.completeResponseFirst ? -8 : -3),
           effectiveFacts: input.facts.map((fact) => ({
             id: fact.id,
             statement: fact.statement,
@@ -1886,6 +1905,7 @@ function failedGenerativeResult(input: {
   qualityDiagnostics?: string[];
   fewShotIds: string[];
   architecture: EventCenteredGenerativeArchitecture;
+  strategyVersion?: string;
 }): EventCenteredGenerativeGenerationResult {
   return {
     turn: null,
@@ -1895,7 +1915,7 @@ function failedGenerativeResult(input: {
     promptLineage: input.promptLineage,
     validationIssues: input.validationIssues,
     qualityDiagnostics: input.qualityDiagnostics ?? [],
-    strategyVersion: EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION,
+    strategyVersion: input.strategyVersion ?? EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION,
     angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
     fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
     fewShotIds: input.fewShotIds,
@@ -3098,6 +3118,9 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
     "ask_summary_already_answers_question",
     "ask_question_only_requests_known_fact"
   ]);
+  const strategyVersion = input.completeResponseFirst
+    ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_VERSION
+    : EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION;
   let retryIssues: string[] = [];
   let retryErrorCode: "ACTION_CONTENT_CONFLICT" | "OUTPUT_VALIDATION_FAILED" | null = null;
 
@@ -3151,7 +3174,8 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
         promptLineage,
         validationIssues: attemptIssues(attempts),
         fewShotIds,
-        architecture: "one_call"
+        architecture: "one_call",
+        strategyVersion
       });
     }
 
@@ -3171,7 +3195,8 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
         promptLineage,
         validationIssues: schemaIssues,
         fewShotIds,
-        architecture: "one_call"
+        architecture: "one_call",
+        strategyVersion
       });
     }
     const systemManaged = withSystemManagedMicrogoalDelta(input, parsedGenerated.data);
@@ -3228,7 +3253,8 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
         validationIssues: partitionedValidation.hardIssues,
         qualityDiagnostics: partitionedValidation.qualityDiagnostics,
         fewShotIds,
-        architecture: "one_call"
+        architecture: "one_call",
+        strategyVersion
       });
     }
 
@@ -3240,7 +3266,7 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
       promptLineage,
       validationIssues: [],
       qualityDiagnostics: partitionedValidation.qualityDiagnostics,
-      strategyVersion: EVENT_CENTERED_GENERATIVE_STRATEGY_VERSION,
+      strategyVersion,
       angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
       fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
       fewShotIds,
@@ -3254,7 +3280,8 @@ async function generateOneCall(input: EventCenteredGenerativeGenerationInput & {
     promptLineage,
     validationIssues: attemptIssues(attempts),
     fewShotIds,
-    architecture: "one_call"
+    architecture: "one_call",
+    strategyVersion
   });
 }
 

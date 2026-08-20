@@ -1,4 +1,11 @@
-export type EventCenteredStrategyMode = "baseline" | "generative";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY
+} from "@/features/interview/event-centered/complete-response-first";
+
+export type EventCenteredStrategyMode =
+  | "baseline"
+  | "generative"
+  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
 
 type EventCenteredStrategyEnvironment = {
   INTERVIEW_EVENT_CENTERED_STRATEGY?: string;
@@ -14,13 +21,22 @@ export function getEventCenteredStrategyMode(
   const configured = env
     ? env.INTERVIEW_EVENT_CENTERED_STRATEGY
     : process.env["INTERVIEW_EVENT_CENTERED_STRATEGY"];
-  return configured?.trim().toLowerCase() === "generative"
-    ? "generative"
-    : "baseline";
+  const normalized = configured?.trim().toLowerCase();
+  if (normalized === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY) {
+    return EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
+  }
+  return normalized === "generative" ? "generative" : "baseline";
 }
 
 export function isGenerativeEventCenteredStrategyEnabled(
   mode = getEventCenteredStrategyMode()
 ) {
-  return mode === "generative";
+  return mode === "generative" ||
+    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
+}
+
+export function isCompleteResponseFirstEventCenteredStrategyEnabled(
+  mode = getEventCenteredStrategyMode()
+) {
+  return mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
 }

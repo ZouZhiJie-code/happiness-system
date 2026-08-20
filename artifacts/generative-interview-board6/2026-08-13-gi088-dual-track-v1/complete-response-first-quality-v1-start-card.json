@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-complete-response-first-quality-v1",
+  "status": "ready",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "candidateIdentity": {
+    "version": "2026-08-19.gi088-complete-response-first-v1",
+    "runtime": {
+      "provider": "openai",
+      "baseUrlHost": "api.deepseek.com",
+      "model": "deepseek-v4-pro",
+      "thinking": "disabled",
+      "temperature": 0.2,
+      "maxTokens": 1280,
+      "headersTimeoutMs": 15000,
+      "bodyIdleTimeoutMs": 45000,
+      "hardTimeoutMs": 45000,
+      "concurrency": 1,
+      "retries": 0,
+      "recovery": 0,
+      "fallback": 0
+    },
+    "systemPromptFingerprint": "9446b72506ae337e34dec57321511703c00dfcfd60aa364cd83bece9983ef530",
+    "candidateFingerprint": "cb541c25d5750cd000155f88430f364f2053f860cf89acda2154025763769513",
+    "changedFactor": "single_complete_visible_response_owner_v1",
+    "productRuntimeChanged": false,
+    "modelCalls": 0
+  },
+  "dataset": {
+    "version": "2026-08-19.gi088-complete-response-first-eight-full-context-v1",
+    "fingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+    "sourceVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "sourceFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "privacyLevel": "private_sensitive",
+    "developmentCount": 3,
+    "regressionCount": 5
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "bd813c06a6acbef1fe917f87af53d5464ef9c2317463dc86c2d060630f9bc23b",
+      "modelInputFingerprint": "806a1c7134d866699d1a431ac62642477164ce406148f8cc798d5ce044de36cf",
+      "requestFingerprint": "af3d0ebb77833c17dfa78877dce44a77f95372de660c8b28cf393b5e488cc9ca"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "e202adf9abe595f6f5413543901397a3335b1a623bb2416f9e941d45432654e1",
+      "modelInputFingerprint": "3042252eb8bc76c5e092583eac75cd00fe92c7f751eeacd7ec88508fa721c8b5",
+      "requestFingerprint": "152b1436f291f28f2b41f3753d82a5dca080c8999d21a301b3c52d64de317b71"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "5d0e7754e534304896f2212c317b8db55691b4c062128b6f022be8fbc675339c",
+      "modelInputFingerprint": "87f91786f69211124c815718c34c32105883d7616d2f2c27f023523d4917bf89",
+      "requestFingerprint": "df09eaac61d1a4120713bb13f3899c677c5c23c14fa76ff3a33760ced90d2298"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+      "modelInputFingerprint": "a11d5f8e7547101a2e3f20caeebb3d8276d3c17ca4447bf1adf6e13b27c2573e",
+      "requestFingerprint": "01836ee2d8d1c4f906d90b3c9ab39bfa6d870ee073891d26768c0ce99b0f7907"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+      "modelInputFingerprint": "74fed62068d550dad61d6bdfe5b22c493d33ed1cedddec405504b3ede5aa3ec0",
+      "requestFingerprint": "3e9bf7a568a876e1cc9206cf5fcb8e336005bce1ca1aa1a671f81e8b30e1072b"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "ea1f6d699f46f4e71a585452e14a5ef2f3c5562741dd78ff9dce482b2090488e",
+      "modelInputFingerprint": "8358877fdea6b81798f606580c7d0c6798d98119e88113243937f769e66d6619",
+      "requestFingerprint": "e923bec400f5006f5c4817f212b06e427c028c718b5efb9cb06a268732760114"
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "caeb002aa3cb9e266059a98989ca6da3d1ab8e7d1ee20169c49c60a7d0a16e7c",
+      "modelInputFingerprint": "985c5a6de632cdf91c98f11f2282cd48e08cca287ac24d40684894c00fdc0b32",
+      "requestFingerprint": "b5a0b99924ba1aa0e0ce26b6c2f40f24144be883743f002f2525a42ef608f3c6"
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "6385f5687671aabb0decfe3bcd3e9b81b2d58b8f5713e505f068b46d93137048",
+      "modelInputFingerprint": "f47b8aeb45a4f15aa23878d53871573a6e6f7c7f3c9161079c45b878cc3faca8",
+      "requestFingerprint": "2ab5b3f232e4c824bc75ff289a4cb0f585a25da957b0503c254d1ab8e3428fa8"
+    }
+  ],
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "disabled",
+    "temperature": 0.2,
+    "maxTokens": 1280,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 45000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 8,
+    "development": 3,
+    "regression": 5,
+    "callsPerCase": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopPolicy": {
+    "ordinarySemanticQualityStopsCalls": false,
+    "consecutiveTechnicalFailures": 2,
+    "severeProgramGateFailure": 1,
+    "regressionRequiresDevelopmentTechnicalGate": true,
+    "productDecisionStoredInPrivateReview": true
+  },
+  "publicBoundary": {
+    "startAndReceiptContainUserOrModelBody": false,
+    "onlyIdentifiersHashesMetricsAndSafeCodes": true
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "executionPlanSha256": "ff51c48a16e599b657976756172fac45a870689a056fcf1bfff1ade793dd6107",
+    "candidateSha256": "16f0391da133c04d54b1bb046a019383a2c709584ff617b8dc21f9086f058277",
+    "fixturesSha256": "4b668a3feee85c5020505e771e7194efcf078baf585950c8f2a70343222521b6",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "be30a6e86f0752a0775ee235eae06e4398b70d82e281952cb64e4ac7e9da6036"
+  },
+  "planFingerprint": "cdf125f577cae51dd653b95382dce3b5b93a209fb2a9315344903e27df5699e9"
+}

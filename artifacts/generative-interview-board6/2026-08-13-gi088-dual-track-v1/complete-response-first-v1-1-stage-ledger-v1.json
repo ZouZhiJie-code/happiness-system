@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-complete-response-first-v1-1-stage-ledger-v1",
+  "status": "awaiting_product_review",
+  "candidate": "2026-08-19.gi088-complete-response-first-v1-1-new-information-target",
+  "runIdentity": "2026-08-19.gi088-complete-response-first-v1-1-quality-v1",
+  "dataset": {
+    "identity": "2026-08-19.gi088-complete-response-first-eight-full-context-v1",
+    "fingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+    "development": 3,
+    "regression": 5
+  },
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "disabled",
+    "temperature": 0.2,
+    "maxTokens": 1280,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technicalResult": {
+    "technicalValid": 8,
+    "finishStop": 8,
+    "medianLatencyMs": 3406,
+    "maxLatencyMs": 4621,
+    "maxCompletionTokens": 93,
+    "tokenLimit": 1280,
+    "truncated": 0,
+    "promptTokens": 9217,
+    "completionTokens": 453,
+    "totalTokens": 9670,
+    "actualBilledCost": "not_available_in_provider_receipt"
+  },
+  "codexReview": {
+    "status": "complete_awaiting_product_review",
+    "pass": 7,
+    "minor": 1,
+    "fail": 0,
+    "minorCase": "RPR-REAL-21",
+    "minorReason": "用户原文已表明看到互动后立即出现落差和自我否定，问题的第一选项部分重复；独处后是否延续仍有一点新增信息。",
+    "privateReview": "git_ignored_mode_0600",
+    "responseHashBinding": "8_of_8"
+  },
+  "productOwnerReview": {
+    "status": "pending",
+    "requiredEvidenceOrder": "full_relevant_input_then_actual_ai_output_then_codex_review"
+  },
+  "qualityDecision": "awaiting_product_review",
+  "release": {
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "productionChange": "not_run",
+    "productionStrategy": "event_centered_baseline"
+  },
+  "evidence": {
+    "startCard": "complete-response-first-v1-1-quality-v1-start-card.json",
+    "receipt": "complete-response-first-v1-1-quality-v1-receipt.json",
+    "handoff": "complete-response-first-v1-1-quality-v1-handoff.md",
+    "privateCodexReview": ".private/complete-response-first-v1-1-quality-v1/codex-review.json"
+  },
+  "stopPoint": "wait_for_product_owner_eight_case_review_before_offline_go_or_page_integration"
+}
