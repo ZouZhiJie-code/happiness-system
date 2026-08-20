@@ -14,7 +14,7 @@
 | [数据口径 v2 证据](./analytics-contract-v2/README.md) | Production 已发布·核心回验通过·管理员成功读取 pending | 已封存最终 CI、Preview、只读数据库对账、正式域名核心 smoke 和线上日志；公开回执保持零正文 |
 | [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；产品源码 `0`，Production 继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` |
 | [Golden Set v2](./golden-set-v2/README.md) | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭，Production 正文读取 `0`、模型调用 `0` |
-| 主链重构证据 | 第一批已确认·实施中·本地门通过·远程与 Preview 待验证 | 后端纯拆分代码边界 `5` 文件；定向 `59/59`、PostgreSQL `2/2`、全量 `3301` 条、零模型 E2E `11/11` 通过；保留 `resumeAttemptCount=2` 债务，Production blocked |
+| 主链重构证据 | 第一批初始远程门与 Preview Ready 通过·最终回执头待验证·Production blocked | PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿、远程 E2E `11/11`；Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready，保留 `resumeAttemptCount=2` 债务 |
 | [月度洞察 Go/No-Go](./monthly-insight-v1/README.md) | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；真实用户月 `0`、模型调用 `0`，Production 继续使用确定性 `AnalysisNarrative` |
 
 ## 隐私边界

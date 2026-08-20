@@ -113,7 +113,7 @@
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
 | 3. Golden Set v2 | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭 |
-| 4. 主链重构 | 第一批已确认·实施中·本地门通过·远程与 Preview 待验证 | 后端纯拆分代码边界 `5` 文件；定向 `59/59`、PostgreSQL `2/2`、全量 `3301` 条、零模型 E2E `11/11` 本地通过；Production blocked |
+| 4. 主链重构 | 第一批初始远程门与 Preview Ready 通过·最终回执头待验证·Production blocked | PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready；公开回执提交中 |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
@@ -179,11 +179,13 @@
 - 最终本地门：定向回归 `14` 个文件、`119/119` 通过；全量回归 `374` 个文件、`3300` 条用例通过，`17` 个文件、`94` 条用例按既有条件跳过，失败 `0`；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 违规 `0`、临时 Schema 残留 `0`。Lint `0 errors / 43 inherited warnings`，类型检查、Production build `77/77`、两套 Prisma、文档、敏感扫描与差异检查通过。Prisma Schema、依赖锁文件和 CI 配置差异为 `0`；`package.json` 只增加本地 `test:stage3:consent-postgres` 脚本入口。
 - 当前停止点：正文开关继续关闭；Preview、Production、真实逐例正文、样本导出、人工评审、第 10／30 条产品裁决均为 `not_run`。完整轨迹为 `0/30`，Production 正文读取与模型调用均为 `0`；下一门为分支推送／PR、远程 CI 和隔离 Preview 裁决。
 
-### 阶段 4 第一批本地发布门｜2026-08-20
+### 阶段 4 第一批本地与初始远程发布门｜2026-08-20
 
 - 发布线已安全重基线到 `origin/main@ef7bf94cfd41e16430c32dae96a5d2b58f6071a2`，完整继承 Stage 3 与 Stage 5；当前三个实现／合同提交为 `768f9d5`、`aeb1d82`、`98b10de`，旧 Stage 2 重复血缘带入数为 `0`。
 - 代码差异严格收敛为 `5` 个文件：拆出可靠回合服务与工作区投影服务，原编排服务只保留组合职责；单元合同冻结成功工作区 JSON，PostgreSQL 合同冻结同一失败回合的并发恢复结果。
 - 本地工程门通过：定向回归 `59/59`；隔离 PostgreSQL `2/2`，`AIRequestLog=0`，临时数据库删除后残留 `0`；全量回归 `374` 个文件、`3301` 条用例通过，`17` 个文件、`95` 条用例按既有条件跳过，失败 `0`。
 - 零模型 E2E `11/11`，`AIRequestLog=0`、12 条 Trace，临时 Schema 删除后残留 `0`；类型、Lint `0 errors / 43 inherited warnings`、Production build `77/77`、两套 Prisma、文档与差异检查全部通过。
 - 已确认兼容边界：公开 API、SSE、错误码、事件顺序、幂等键、数据库结构和产品行为不变。并发恢复当前保留 `resumeAttemptCount=2`，由 characterization 明确记录，后续修复需要独立行为变更门。
-- 当前停止点：分支推送、PR 远程 CI 与 Preview Ready 待验证；任一远程核心回归或 Preview 构建失败即暂停本批。Production 继续受 Stage 2 管理员成功读取、日记更新人工保护、传输链路与发布观察门约束，本批保持 Production blocked；回退方式为撤销本批纯拆分提交并保持正式域名指向阶段 1 deployment。
+- PR #45 初始 head `0a1471daa99c5a8cc870b87975afc63b999632ea` 的 push run `32361400473` 与 pull request run `32361466403` 均在 attempt 1 全绿、重试 `0`。两套常规门均为 `374` 个文件通过／`17` 个跳过、`3301` 条用例通过／`95` 条跳过、build `77/77`、Lint `0 errors / 43 warnings`。
+- 两套远程零模型 E2E 均为 `11/11`、`AIRequestLog=0`、12 条 Trace；临时 Schema `daily_light_e2e_mt1epstb_86372d7789` 与 `daily_light_e2e_mt1er2wm_42327172f6` 均已删除。Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` 为 Ready，target 为 `preview`。
+- 当前停止点：本次公开回执提交后的最终 head 远程 CI／Preview 待验证，PR 合并保持 pending。任一核心远程回归或 Preview 构建失败即暂停本批。Production 继续受 Stage 2 管理员成功读取、日记更新人工保护、传输链路与发布观察门约束，本批保持 Production blocked；回退方式为撤销本批纯拆分提交并保持正式域名指向阶段 1 deployment。

@@ -190,4 +190,4 @@
 - 产品判断：第一批以降低主链维护风险、保持用户可见行为和所有公开合同兼容为目标；并发恢复尝试次数作为继承债务显式封存，本批保持现状。
 - Codex 评估：成功工作区 JSON、并发恢复结果、单卡与幂等行为已有单元、真实 PostgreSQL、全量回归和零模型 E2E 四层保护。后续若调整恢复计数，需要单独定义用户价值、数据库语义、指标基线和回退门。
 - 待验证假设：当前纯拆分在远程 CI 与隔离 Preview 中继续保持 API、SSE、错误码、事件顺序、幂等键和数据库结果兼容；Stage 2 阻断解除并完成 Production 发布后，至少 24 小时／20 次内部有效回应的观察门可支持线上判断。
-- 当前处理状态：本地门已通过，远程 CI 与 Preview Ready 待验证。任一核心远程回归或 Preview 构建失败即暂停；Production 保持 blocked，正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
+- 当前处理状态：本地门已通过；PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿、远程零模型 E2E 均 `11/11`，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready。本次公开回执提交后的最终 head 远程门待验证，PR 合并与 Production 保持 pending／blocked；正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
