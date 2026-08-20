@@ -1,7 +1,7 @@
 # GI-088｜完整回应优先 v1.6 隔离 Preview 验收
 
 - 文档职责：当前专项
-- 文档状态：已确认·实施中
+- 文档状态：待确认
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈总 Map](../generative-interview-refactor-map.md)
 
@@ -47,6 +47,18 @@
 
 严重来源错误、忽略明确停止、可见气泡被后台改写、重复消费、Production 配置变化或持续技术失败立即停止 Preview。普通自然度与提问质量由产品负责人按原文裁决。
 
-## 5. 当前停止点
+## 5. 实际结果
 
-Preview 部署和技术冒烟完成后，等待产品负责人真实体验裁决。通过后可按同一提交直接进入 Production 发布准备；Production 切换仍需保存当前 deployment、环境快照、数据库备份和一键 baseline 回退证据。
+- 提交 `3c564ffdef87ccd46bf7932bd210c23d77c30f12` 已推送，隔离部署 `dpl_D2fEAPidG2tpWGHQBV56ncryxe12` 为 Ready；Preview 地址为 <https://xingfuxitong-idch4sa4l-zouzhijies-projects.vercel.app>。
+- 当前分支的三个 Preview 变量已绑定 `event_centered + complete_response_v1_6 + deepseek-v4-pro`，Production 配置保持 baseline。
+- 页面、账户、登录、会话、开始记录和非法日期校验通过；非法日期稳定返回 `400 / INVALID_START_REQUEST`。
+- 受控真实回合的可见模型耗时 `2854ms`，完整回应 `4026ms` 就绪，completion `44/1280`；Codex 初评 `pass`，产品负责人裁决 pending。
+- 后台 `3341ms` 完成 2 条事实和 2 条逐字来源，零可见写权限，气泡未变化。
+- 同一 `clientTurnId` 重放复用原 Turn、气泡、Trace 与消息序号；数据库 `attemptCount=1`，新增模型调用 `0`。
+- 真人可见预算消费 `2/15`，剩余 `13`；后台调用 `2`；重试、恢复调用和回退均为 `0`。
+
+公开结果见[Preview 验收交接](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
+
+## 6. 当前停止点
+
+当前为 `Preview Ready / awaiting_product_acceptance`。等待产品负责人真实体验裁决。通过后可按同一提交直接进入 Production 发布准备；Production 切换仍需保存当前 deployment、环境快照、数据库备份和一键 baseline 回退证据。

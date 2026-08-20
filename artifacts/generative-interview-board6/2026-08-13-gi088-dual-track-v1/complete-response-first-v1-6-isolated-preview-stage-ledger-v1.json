@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-isolated-preview-v1",
+  "frozenExecutionPlanSha256": "288659eec0c5eee00e6d5efffc21cfcac98a06d773163fc3479e1a207a820bf6",
+  "finalPlanSha256": "e7222f34063f31ab504d6c519f20ea51f71f7c09a165b77621984567bdc64091",
+  "status": "preview_ready_awaiting_product_acceptance",
+  "deployment": {
+    "id": "dpl_D2fEAPidG2tpWGHQBV56ncryxe12",
+    "url": "https://xingfuxitong-idch4sa4l-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "status": "ready",
+    "branch": "codex/gi088-response-first-v2-20260816",
+    "gitCommitSha": "3c564ffdef87ccd46bf7932bd210c23d77c30f12"
+  },
+  "runtime": {
+    "mode": "event_centered",
+    "strategy": "complete_response_v1_6",
+    "visibleModel": "deepseek-v4-pro",
+    "backgroundModel": "deepseek-v4-pro",
+    "branchRuntimeSha256": "0622d6288ebf4ebf90a8d934ef7884e7c47cdd9b17aac8cbd890ff72b28249d2",
+    "productionStrategy": "event_centered_baseline"
+  },
+  "budget": {
+    "authorizedVisibleCalls": 15,
+    "consumedVisibleCalls": 2,
+    "remainingVisibleCalls": 13,
+    "backgroundCalls": 2,
+    "duplicateReplayProviderCalls": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "smoke": {
+    "page": "passed_200",
+    "account": "passed_200",
+    "login": "passed_200",
+    "session": "passed_200",
+    "start": "passed_200",
+    "invalidEntryDate": "passed_400_INVALID_START_REQUEST",
+    "summarySha256": "c6be7b368905c553f9d3c82d914012ec768c8c8fa0b96921c237d929d36397e6",
+    "deploymentErrorLogCount": 0,
+    "localCliTlsTransient": "observed_then_retry_passed_before_app_request"
+  },
+  "controlledSemanticTurn": {
+    "rootSessionId": "3acb5477-ca66-4f30-8662-bf13e692ef48",
+    "visibleTraceId": "3d717c6d-81b5-4984-a014-f6c5e3e6d70f",
+    "assistantMessageId": "a2a76205-01eb-47fa-845d-c91dcdca1e0a",
+    "inputSha256": "1178abf077f66f01f4070fd4d2b329ca610ca347b6616945dd147fb93458bd31",
+    "outputSha256": "7d99c4a10edb625e7e34cdb249b7d290bf86320f083b82fc63e49fef95710ffb",
+    "requestedStrategy": "complete_response_v1_6",
+    "effectiveStrategy": "complete_response_v1_6",
+    "providerAttemptCount": 1,
+    "visibleResponseModelMs": 2854,
+    "visibleResponseReadyMs": 4026,
+    "completionTokens": 44,
+    "maxTokens": 1280,
+    "streamError": null,
+    "codexDecision": "pass",
+    "productOwnerDecision": "pending"
+  },
+  "background": {
+    "traceId": "62e1ff8b-dbfa-4094-91b7-18186ae686f9",
+    "status": "completed",
+    "latencyMs": 3341,
+    "completionTokens": 243,
+    "factDeltaCount": 2,
+    "evidenceCount": 2,
+    "correctionCount": 0,
+    "sourceContractPassed": true,
+    "visibleWritePermission": false,
+    "visibleBubbleChanged": false
+  },
+  "idempotency": {
+    "rootSessionId": "efb41360-cdcd-42f3-b54b-0e615936ed03",
+    "summarySha256": "c8a7fff1f35066fb29a576ce7c57bf9cc1c5c8c8b969e4a94ba0688efc4d1856",
+    "firstKind": "reserved",
+    "replayKind": "existing",
+    "sameTurn": true,
+    "sameAssistantMessage": true,
+    "sameVisibleTrace": true,
+    "sameMessageSequence": true,
+    "turnAttemptCount": 1,
+    "extraTraceAfterReplay": 0,
+    "passed": true
+  },
+  "evidence": {
+    "privateReviewSha256": "5e17b2d707ce050171ae8d744d1af068ebc10ff656475ee339054671549e909b",
+    "publicBodyStored": false,
+    "privateMode": "0600"
+  },
+  "quality": {
+    "technicalPreviewGatePassed": true,
+    "codexControlledTurnDecision": "pass",
+    "productOwnerDecision": "pending",
+    "previewGatePassed": false,
+    "productionGatePassed": false
+  },
+  "release": {
+    "commit": "3c564ffdef87ccd46bf7932bd210c23d77c30f12",
+    "push": "completed",
+    "previewDeploy": "ready",
+    "production": "event_centered_baseline"
+  },
+  "next": {
+    "required": "product_owner_real_page_acceptance",
+    "passPath": "production_release_snapshot_backup_switch_online_regression",
+    "stopPoint": "before_production_change"
+  }
+}

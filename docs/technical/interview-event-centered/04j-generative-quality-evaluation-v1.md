@@ -9,7 +9,7 @@
 
 置信度：`高`
 
-落地验证状态：`v1.7 新案例续跑 10/10 技术有效；当前分支隔离 Preview 实施中；Production baseline`
+落地验证状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；等待产品负责人真人验收；Production baseline`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -32,9 +32,11 @@ Production 状态：`项目主链使用 event_centered + baseline；当前分支
 | 当前专项 | [v1.6 隔离 Preview 验收](../../plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
 | 进入依据 | 新八题可见与后台全部技术有效，Codex 零 fail；两处可见 minor 进入真实页面裁决 |
 | 隔离配置 | 当前分支使用 `event_centered + complete_response_v1_6`、`deepseek-v4-pro`；Production baseline |
-| 工程状态 | 正式 Provider 与离线模型一致；来源对齐进入正式后台链路；全量 `3666` 条测试及构建门通过 |
-| 验收预算 | 最多 `15` 次可见回应；后台按实际回合独立记账 |
-| 停止点 | Preview 技术冒烟完成后交产品负责人真实体验；通过后进入 Production 发布准备 |
+| 工程状态 | 正式 Provider 与离线模型一致；来源对齐进入正式后台链路；全量 `3666` 条测试及构建门通过；部署 Ready |
+| Preview 技术结果 | 首条可见内容 `4026ms` 就绪、Codex `pass`；后台完成 2 条逐字来源且气泡冻结；重复提交新增模型调用 `0` |
+| 验收预算 | 最多 `15` 次可见回应；已消费 `2`、剩余 `13`；后台按实际回合独立记账 |
+| 当前状态 | `Preview Ready / awaiting_product_acceptance` |
+| 停止点 | 产品负责人真实体验裁决；通过后进入 Production 发布准备 |
 
 ## 完整回应优先 v1.7 后台来源标点对齐启动卡｜2026-08-20
 

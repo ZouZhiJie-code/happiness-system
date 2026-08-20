@@ -7,15 +7,15 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 v1.7 新案例续跑 10/10 技术有效；Codex 可见 6 pass / 2 minor、后台 8 pass，产品裁决 pending；Production baseline`
+当前讨论位置：`GI-088 complete_response_v1_6 隔离 Preview Ready；首条真实完整回应 Codex pass，后台与重复提交技术门通过，等待产品负责人真人验收；Production baseline`
 
-下一建议板块：`部署隔离 complete_response_v1_6 Preview；在真实页面裁决离线 minor、连续回合与恢复体验`
+下一建议板块：`产品负责人在隔离 Preview 验收自然回应、继续／深挖、纠正、停止、连续回合与刷新；通过后进入 Production 发布准备`
 
 当前专项：[完整回应优先 v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`继承 v1.7 10/10 技术结果；补齐 Pro 模型与来源对齐的正式链路一致性；部署隔离 Preview，Production baseline`
+本次同步范围：`隔离 Preview 部署与技术冒烟已完成；首条真实回应、后台事实和重复提交证据已封存；真人验收 pending，Production baseline`
 
 ## 2026-08-20｜GI-088 v1.6 隔离 Preview 验收实施卡
 
@@ -26,7 +26,9 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 隔离配置 | 当前分支 Preview 使用 `event_centered + complete_response_v1_6`、`deepseek-v4-pro`；Production baseline |
 | 工程补齐 | 正式可见 Provider 与离线 Pro 模型一致；v1.7 来源对齐进入后台解析和写入链路 |
 | 验收范围 | 普通、继续深挖、关系、纠正、停止、连续回合、后台晚到、刷新与重复提交；可见预算最多 `15` 次 |
-| 当前状态 | `已确认·实施中`；提交、推送、Preview 部署与真实体验待验证，Production baseline |
+| 实际技术结果 | 部署 Ready；页面与基础接口通过；首条可见内容 `4026ms` 就绪、Codex `pass`；后台完成且气泡冻结；重复提交新增模型调用 `0` |
+| 当前状态 | `Preview Ready / awaiting_product_acceptance`；可见预算 `2/15`，Production baseline |
+| 公开证据 | [Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)、[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json) |
 
 ## 2026-08-20｜GI-088 v1.7 后台来源标点对齐实施卡
 
@@ -1368,11 +1370,11 @@ flowchart TD
 | 3｜公共成果、证据与收束边界 | **公共来源、安全和成果边界继续冻结** | 高 | GI-066 成果投影作为历史证据；GI-067 发生边界冲突时复核 | **按冲突复核** | [04w｜GI-067](./technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md)、[四角度公共协议](./technical/interview-event-centered/04-four-angle-common-interview-protocol.md) |
 | 4｜成果与 AI 自主访谈策略 | **GI-067 / GI-068～074 已冻结·高置信度** | 高 | 七项落地验证均未启动 | **产品决策完成** | [04x 母文档](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 5｜稳定性、用户控制与交互收束 | **GI-075～080 六类规则已冻结；6/6** | GI-075、GI-076、GI-078 中；GI-077、GI-079、GI-080 高 | 产品决策完成；落地验证未启动 | **完成；交接板块 6** | [板块 5 专项](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
-| 6｜生成式质量评测 | **GI-074 体系、总规范 v1.0 与新产品判尺身份并行保留** | 高 | v1.7 新案例可见与后台全部技术有效，Codex 零 fail；真实页面裁决两处 minor | **隔离 Preview 验收** | [当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
-| 7｜模型提问策略与链路改造 | **完整回应优先 v1.6 单一可见负责人＋后台事实整理** | 中 | 正式链路与离线 Pro 模型和来源对齐一致；全量工程门通过 | **当前分支 Preview 实施中** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
-| 8｜内部 Preview、验收与发布 | **隔离 complete_response_v1_6 Preview 验收** | 高 | 当前分支配置、推送和部署实施中；最多 `15` 次真人可见调用 | **Production baseline** | [v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
+| 6｜生成式质量评测 | **GI-074 体系、总规范 v1.0 与新产品判尺身份并行保留** | 高 | 离线新案例 Codex 零 fail；Preview 首条真实完整回应 Codex pass | **产品负责人真人验收** | [当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
+| 7｜模型提问策略与链路改造 | **完整回应优先 v1.6 单一可见负责人＋后台事实整理** | 中 | 正式链路、Pro 模型、来源对齐、后台冻结与重复提交均完成 Preview 验证 | **Preview Ready** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
+| 8｜内部 Preview、验收与发布 | **隔离 complete_response_v1_6 Preview 验收** | 高 | 部署 Ready；真人可见预算 `2/15`；等待产品裁决 | **Production baseline** | [Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
 
-依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3～v2.9 暴露两段可见职责冲突并 No-Go → 完整回应优先 v1 技术 `8/8`、Codex 两题 fail → v1.1～v1.6 收敛到单一可见负责人＋后台事实整理 → v1.7 新案例技术全通过、Codex 零 fail → 当前分支隔离 Preview 实施中”。Production 当前使用 `event_centered + baseline`。
+依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3～v2.9 暴露两段可见职责冲突并 No-Go → 完整回应优先 v1 技术 `8/8`、Codex 两题 fail → v1.1～v1.6 收敛到单一可见负责人＋后台事实整理 → v1.7 新案例技术全通过、Codex 零 fail → 隔离 Preview 技术门通过并等待真人验收”。Production 当前使用 `event_centered + baseline`。
 
 ## 5. 板块任务书
 

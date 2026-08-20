@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v102",
-  "status": "complete_response_first_v1_6_isolated_preview_implementing",
-  "currentQueueStage": "complete_response_first_v1_6_isolated_preview_predeployment",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v103",
+  "status": "complete_response_first_v1_6_preview_ready_awaiting_product_acceptance",
+  "currentQueueStage": "complete_response_first_v1_6_isolated_preview_product_acceptance",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -426,13 +426,13 @@
     "stopPoint": "product_owner_original_text_review_before_isolated_preview"
   },
   "completeResponseFirstV16IsolatedPreview": {
-    "status": "confirmed_implementing_results_pending",
-    "confirmedFact": "离线 v1.6 可见候选与后台事实候选均使用 deepseek-v4-pro；正式后台 Provider 已固定 Pro，但正式可见事件 Provider 的历史合同仍只接受 Flash。v1.7 来源标点对齐已离线验证，正式后台服务仍调用旧解析与校验入口。两处属于部署一致性缺口，真实 Preview 前必须补齐。",
-    "productJudgment": "新八题零 fail，两处 minor 进入真实页面裁决；继续部署隔离 Preview，Production 保持 baseline。",
-    "codexAssessment": "正式链路必须与已评测候选使用同一模型和来源方法。只为 complete_response_v1_6 选择 Pro，历史 Flash 候选保持原身份；后台服务在解析后先执行确定性来源对齐，再沿原合同校验和写入。",
+    "status": "preview_ready_awaiting_product_acceptance",
+    "confirmedFact": "隔离 Preview 已部署并 Ready。当前分支使用 event_centered + complete_response_v1_6 + deepseek-v4-pro；Production baseline。首条真实完整回应模型耗时 2854ms、可见内容 4026ms 就绪；后台 3341ms 完成 2 条事实与 2 条逐字来源且未改写气泡。同一 clientTurnId 重放复用原 Turn、气泡与 Trace，新增模型调用 0。真人可见预算 2/15。",
+    "productJudgment": "隔离 Preview 已具备真人验收条件；产品负责人在真实页面裁决自然回应、继续／深挖、纠正、停止、连续回合与刷新体验。Production 保持 baseline。",
+    "codexAssessment": "受控真实回合初评 pass；回应忠实承接完成、轻松与再次拖延担忧，并通过询问本次成功条件兑现往下想一层。技术冒烟、后台来源、气泡冻结和重复提交均通过。",
     "openHypotheses": [
-      "真实页面中首条完整回应能否继续保持约五秒并兑现明确继续、纠正和停止。",
-      "后台任务晚到、刷新和重复提交能否保持单气泡冻结、零重复模型调用和顺序写入。",
+      "产品负责人连续体验中，完整回应能否持续兑现明确继续、纠正和停止。",
+      "刷新、长对话和后台晚到在真人操作中能否保持稳定体验。",
       "REAL-15 与 REAL-20 的离线 minor 在真人连续体验中是否影响可用性。"
     ],
     "execution": {
@@ -441,15 +441,23 @@
       "visibleModel": "deepseek-v4-pro",
       "backgroundModel": "deepseek-v4-pro",
       "visibleAcceptanceBudget": 15,
-      "preview": "not_run",
+      "visibleCallsConsumed": 2,
+      "visibleCallsRemaining": 13,
+      "backgroundCalls": 2,
+      "duplicateReplayProviderCalls": 0,
+      "deploymentId": "dpl_D2fEAPidG2tpWGHQBV56ncryxe12",
+      "preview": "ready_awaiting_product_acceptance",
       "productionStrategy": "event_centered_baseline"
     },
     "evidence": {
       "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md",
       "offlineHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-handoff.md",
-      "offlineStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json"
+      "offlineStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json",
+      "previewHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md",
+      "previewStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
     },
-    "stopPoint": "deploy_isolated_preview_then_product_owner_real_page_acceptance"
+    "stopPoint": "product_owner_real_page_acceptance_before_production_change"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",
@@ -2337,15 +2345,15 @@
     {
       "issueId": "RF-COMPLETE-OWNER-01",
       "title": "Low 与 High 双可见职责使明确继续请求落为空转",
-      "productOwnerJudgment": "完整可见回应由一次调用独立负责；v1.1 已完成离线批次，当前等待八题产品裁决。",
-      "codexInitialAssessment": "v1.1 已完成 8/8 技术有效；Codex 初评 7 pass / 1 minor / 0 fail，单一可见回应负责人保持稳定。",
+      "productOwnerJudgment": "完整可见回应由一次调用独立负责；当前隔离 Preview 已达到 Preview Ready，等待真人验收。",
+      "codexInitialAssessment": "离线新案例零 fail；Preview 首条真实完整回应 pass，后台和重复提交技术门通过，单一可见回应负责人保持稳定。",
       "confirmedRootCause": "v2.9 暴露的双可见职责冲突已由完整回应优先架构处理。v1 当前剩余根因收敛为生成正文前没有先选择完整原文尚未回答的新信息目标。",
       "hypotheses": [
         "v1.1 先选择未答新增信息目标后，可以保留完整承接并稳定产生新进展。",
         "现有 one_call 原子提交链路可以继续降低首版生产接入和恢复风险。"
       ],
       "priority": "P0",
-      "status": "v1_1_eight_of_eight_awaiting_product_review",
+      "status": "complete_response_v1_6_preview_ready_awaiting_product_acceptance",
       "trace": [
         "docs/plans/2026-08-19-gi088-complete-response-first-architecture-reset.md",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",
@@ -2357,8 +2365,8 @@
     {
       "issueId": "RF-NEW-INFORMATION-TARGET-01",
       "title": "完整回应生成前未选择未答新增信息目标",
-      "productOwnerJudgment": "v1.1 产品裁决 pending；八题按完整原文与实际输出逐例复核，裁决前保持 awaiting_product_review。",
-      "codexInitialAssessment": "v1.1 中父失败 RPR-REAL-22 已初评 pass；RPR-REAL-21 从 fail 改善为 minor，剩余问题是第一选项部分重复已知即时触发，第二选项仍有一点新增。",
+      "productOwnerJudgment": "离线零 fail 后进入真实页面；当前等待产品负责人按实际输入与输出完成 Preview 验收。",
+      "codexInitialAssessment": "Preview 首条真实回应选择了原文未回答的成功条件作为新目标，初评 pass；跨场景稳定性继续由真人连续体验验证。",
       "confirmedRootCause": "两个失败都发生在技术完整、速度通过的正文中，共同指向回应目标选择：模型生成前没有先找出完整上下文中尚未回答、能够带来新进展的信息。",
       "hypotheses": [
         "先选未答信息目标可以同时减少原地复述和过早收束。",
@@ -2366,7 +2374,7 @@
         "最多一处可纠正解释和一个主问题可以控制用户回答负担。"
       ],
       "priority": "P0",
-      "status": "v1_1_eight_of_eight_codex_seven_pass_one_minor_product_pending",
+      "status": "complete_response_v1_6_preview_ready_awaiting_product_acceptance",
       "trace": [
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-receipt.json",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",

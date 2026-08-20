@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.6 隔离 Preview 验收实施中`
+版本：`完整回应优先 v1.6 隔离 Preview Ready`
 
-状态：`v1.7 新调用 10/10 完成；八条可见与八条后台技术有效；当前分支隔离 Preview 实施中；Production baseline`
+状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；重复提交零新增模型调用；等待产品负责人真人验收；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -22,9 +22,11 @@
 ### 完整回应优先当前任务
 
 - 当前专项：[v1.6 隔离 Preview 验收](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)
-- 当前状态：正式链路与离线 Pro 模型、v1.7 来源对齐规则已一致；全量工程门通过；当前分支配置、推送和隔离部署实施中
-- 验收预算：最多 `15` 次可见回应；覆盖普通表达、深挖、关系、纠正、停止、连续回合、后台晚到与恢复
+- 当前状态：部署 Ready；正式链路与离线 Pro 模型、v1.7 来源对齐规则一致；页面、首条回应、后台事实和重复提交技术门通过；产品裁决 pending
+- 验收预算：最多 `15` 次可见回应；已消费 `2`、剩余 `13`；覆盖普通表达、深挖、关系、纠正、停止、连续回合、后台晚到与恢复
 - 发布边界：Production 继续使用 `event_centered + baseline`
+- [隔离 Preview 验收交接](./complete-response-first-v1-6-isolated-preview-v1-handoff.md)
+- [隔离 Preview 阶段账](./complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)
 
 - 当前专项：[v1.7 后台来源标点对齐](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md)
 - 当前运行：`2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1`
@@ -74,7 +76,7 @@
 - [v1 公开回执](./complete-response-first-quality-v1-receipt.json)
 - [v1 结果交接](./complete-response-first-quality-v1-handoff.md)
 - [v1 阶段账](./complete-response-first-stage-ledger-v1.json)
-- 发布边界：当前分支隔离 Preview 实施中；Production 切换待真人验收，继续保持 `event_centered + baseline`
+- 发布边界：当前分支隔离 Preview Ready；Production 切换待真人验收，继续保持 `event_centered + baseline`
 
 ### 回应优先 v2.9 当前任务
 

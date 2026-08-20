@@ -7,7 +7,13 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)。v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
+GI-088 当前执行[v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)。隔离 Preview 已部署到 <https://xingfuxitong-idch4sa4l-zouzhijies-projects.vercel.app>，部署 `dpl_D2fEAPidG2tpWGHQBV56ncryxe12` 为 Ready。当前分支使用 `event_centered + complete_response_v1_6 + deepseek-v4-pro`，Production 保持 `event_centered + baseline`。
+
+技术冒烟已经通过。受控真实回合的可见模型耗时 `2854ms`、完整可见回应 `4026ms` 就绪、completion `44/1280`，Codex 初评 `pass`；后台 `3341ms` 完成 2 条事实与 2 条逐字来源，气泡保持冻结。第二个技术回合验证同一 `clientTurnId` 重复提交：首次为 `reserved`，重放为 `existing`，Turn、气泡、Trace 和消息序号相同，数据库 `attemptCount=1`，新增模型调用 `0`。真人可见预算消费 `2/15`、剩余 `13`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
+
+当前状态为 `Preview Ready / awaiting_product_acceptance`。产品负责人需要在真实页面裁决自然回应、继续／深挖、纠正、停止／少问、连续回合和刷新体验；通过后进入 Production 发布准备。
+
+v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
 
 v1.7 只允许程序在汉字、数字、字母等实质字符连续、逐字、唯一匹配时对齐空白和标点，最终保存的证据仍从用户原文截取。上一失败原始结果的确定性重放通过；本次八条后台新输出均直接返回逐字引用，实际对齐 `0` 次。可见中位 `3273.5ms`、最长 `4916ms`；后台中位 `6429ms`、最长 `13363ms`，最高 completion `1102/1600`。
 
@@ -31,7 +37,7 @@ Codex 原文初评为 `7 pass / 1 minor / 0 fail`。唯一 minor 是硬门长上
 
 v1.1 候选身份为 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`。唯一变化是生成完整回应前先选择一项完整原文尚未回答、会带来实际新进展的信息目标；继续或深挖进入新层，负担但未停止时提供低负担入口，每轮最多一处有依据且可纠正的解释与一个主问题。
 
-当前继续补齐正式链路与离线候选的一致性，分组提交并部署隔离 Preview。真人验收直接覆盖离线待裁决项、单气泡完整回应、连续回合、后台晚到与恢复。Production 切换保持 `not_run`；Production 继续使用 `event_centered + baseline`。
+正式链路与离线候选的一致性、提交、推送和隔离 Preview 部署均已完成。当前停止在真人验收；Production 切换保持 `not_run`，Production 继续使用 `event_centered + baseline`。
 
 v2.9 候选身份为 `2026-08-19.gi088-response-first-v2-9-separated-open-gap-high`，运行族为 `2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1`。本轮只处理一个概念根因：把用户原文已经支持的认识与仍待共同弄清的开放目标分开，并在生成问题前完成当前分支全部用户消息的覆盖判断。
 
