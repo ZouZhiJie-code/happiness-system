@@ -484,6 +484,115 @@ describe("journal day workspace", () => {
   });
 
   it.each([
+    { responseOrder: "refresh-first", caseName: "刷新先返回、记录保存后返回" },
+    { responseOrder: "save-first", caseName: "记录保存先返回、刷新后返回" }
+  ] as const)("keeps a saved daily stale across real workspace refresh/save races: $caseName", async ({ responseOrder }) => {
+    const initialView = buildView("saved");
+    const recordPatchDeferred = createDeferredResponse();
+    const dayRefreshDeferred = createDeferredResponse();
+    const recordSaveDeferred = createDeferredResponse();
+    const recordContent = "真实页面交错请求更新后的记录正文。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const savedRecord = {
+      ...updatedRecord,
+      savedRevision: 2,
+      savedAt: "2026-05-02T05:01:00.000Z"
+    };
+    const refreshedStaleView: JournalDailyJournalView = {
+      ...initialView,
+      savedSources: [savedRecord],
+      sourceSignature: "source-signature-2",
+      freshness: "stale",
+      displayStatus: "stale"
+    };
+    let initialDayServed = false;
+    let markRecordSaveStarted!: () => void;
+    const recordSaveStarted = new Promise<void>((resolve) => {
+      markRecordSaveStarted = resolve;
+    });
+
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) {
+        if (!initialDayServed) {
+          initialDayServed = true;
+          return Promise.resolve(jsonResponse(initialView));
+        }
+        return dayRefreshDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        markRecordSaveStarted();
+        return recordSaveDeferred.promise;
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑内容" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "正文" }), {
+      target: { value: recordContent }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "完成编辑" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1",
+      expect.objectContaining({ method: "PATCH" })
+    ));
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await recordSaveStarted;
+    });
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input).startsWith("/api/journal/day")
+    )).toHaveLength(2));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/journal/day?entryDate=2026-05-02",
+      expect.objectContaining({ cache: "no-store" })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1/save",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ expectedContentRevision: 2 })
+      })
+    );
+
+    if (responseOrder === "refresh-first") {
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+      await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+      await act(async () => {
+        recordSaveDeferred.resolve(jsonResponse(savedRecord));
+      });
+    } else {
+      await act(async () => {
+        recordSaveDeferred.resolve(jsonResponse(savedRecord));
+      });
+      await waitFor(() => expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument());
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+    }
+
+    await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
+    expect(screen.getByText(recordContent)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument();
+  });
+
+  it.each([
     { responseOrder: "daily-first", caseName: "日记响应先返回、记录响应后返回" },
     { responseOrder: "record-first", caseName: "记录响应先返回、日记响应后返回" }
   ] as const)("merges interleaved record and daily edits: $caseName", async ({ responseOrder }) => {
