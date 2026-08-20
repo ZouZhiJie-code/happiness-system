@@ -3,7 +3,7 @@
 - 证据类型：公开脱敏工程回执
 - 验证状态：本地完整三连跑通过
 - 对应提交：`be98237`
-- 当前发布线状态：已合入 main，Preview 通过至“需更新”，两测试文件本地修复门通过、远程待验证，Production blocked
+- 当前发布线状态：已合入 main，Preview 通过至“需更新”，热修复首轮远程门通过、最终文档 head 待验证，Production blocked
 - Preview／Production：本回执不承担发布证明
 
 ## 为什么保留这份回执
@@ -32,9 +32,11 @@ main push run `32337995170` 的零模型 E2E 为 `11/11`，常规测试出现一
 
 首次本地修复后的全量运行在 `361/377` 文件进度处出现第二类单次时序失败：跨日期会话界面标题已经切换为所选记录，地址栏更新 effect 尚未完成。该精确用例的旧版随后完成 `50/50 P4`，仍按实际失败证据修复为同时等待地址栏 `sessionId` 与 `entryDate`；修复后再次完成 `50/50 P4`。GI payload 用例继续覆盖用户真实首次选择“包含提问”的路径，fake digest 只承担测试替身；该用例完成 `50/50 P4`，完整 GI 文件完成 `20/20 P4`，两个工作区混合压力为 `270/270 P4`。
 
-当前热修复提交 `0e5907b` 只改两个测试文件，产品源码变更 `0`。当前代码连续三轮全量均为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；相关四文件 `40/40`。类型检查、目标与全量 Lint、构建 `77/77`、Prisma、文档与差异检查均通过。零模型浏览器回归为 `11/11`，`AIRequestLog=0`、12 条 Trace 的模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。本地工程门已通过，远程结果待验证。
+当前热修复提交 `0e5907b` 只改两个测试文件，产品源码变更 `0`。当前代码连续三轮全量均为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；相关四文件 `40/40`。类型检查、目标与全量 Lint、构建 `77/77`、Prisma、文档与差异检查均通过。零模型浏览器回归为 `11/11`，`AIRequestLog=0`、12 条 Trace 的模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。
 
-当前发布结论为 `已合入 main / Preview 通过至需更新 / 本地修复门通过、远程待验证 / Production blocked`。Stage 2 Production 等待阶段 1 管理员成功读取、Preview 日记更新与人工修改保护、以及 `PEH-023` 远程验证完成。机器可读边界见 [`preview-gate-receipt.json`](./preview-gate-receipt.json)。
+PR #43 初始 head `9ca5de2` 的 push run `32342959894` 与 pull request run `32342989092` 均在 attempt 1 成功，重试为 `0`。两套常规门各为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过，构建 `77/77`；两套零模型 E2E 各为 `11/11`、`AIRequestLog=0`、12 条 Trace，隔离 Schema 均已删除。Preview `dpl_Fi6fKBfesct1Z1jeNthe5NfHMkvH` 为 Ready。当前只新增本段公开回执，最终文档 head 仍需一套全新零重试 CI。
+
+当前发布结论为 `已合入 main / Preview 通过至需更新 / 首轮远程门通过、最终文档 head 待验证 / Production blocked`。Stage 2 Production 等待阶段 1 管理员成功读取、Preview 日记更新与人工修改保护、以及 `PEH-023` 最终 head 验证完成。机器可读边界见 [`preview-gate-receipt.json`](./preview-gate-receipt.json)。
 
 ## 本地三连跑结果
 

@@ -2,7 +2,7 @@
   "receiptVersion": "2026-08-20.stage2-preview-gate.v2",
   "sealedOn": "2026-08-20",
   "privacyClass": "public_zero_body",
-  "status": "merged_preview_update_partial_ci_fix_local_pass_remote_pending_production_blocked",
+  "status": "merged_preview_update_partial_ci_fix_initial_remote_pass_final_docs_pending_production_blocked",
   "identity": {
     "pullRequest": 41,
     "headSha": "e7e15416b491585865f67b48cff447eaf3c38a86",
@@ -187,7 +187,33 @@
         "temporarySchemaResidualCount": 0
       }
     },
-    "remoteVerification": "pending"
+    "remoteVerification": {
+      "initialHeadSha": "9ca5de20a8b2ad830dace611a559b1cc4efdfc66",
+      "pushRunId": 32342959894,
+      "pullRequestRunId": 32342989092,
+      "attempts": 1,
+      "retries": 0,
+      "conclusion": "success",
+      "testFilesPassedPerRun": 361,
+      "testFilesSkippedPerRun": 16,
+      "testsPassedPerRun": 3216,
+      "testsSkippedPerRun": 82,
+      "build": "passed_77_of_77_each",
+      "zeroModelE2e": {
+        "tests": "passed_11_of_11_each",
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "pushSchema": "daily_light_e2e_mt16pl5c_a7a62cc7a7",
+        "pullRequestSchema": "daily_light_e2e_mt16q8j6_7e45c3f23f",
+        "temporarySchemasDropped": true
+      },
+      "preview": {
+        "deploymentId": "dpl_Fi6fKBfesct1Z1jeNthe5NfHMkvH",
+        "state": "READY",
+        "url": "https://xingfuxitong-p7juqhbux-zouzhijies-projects.vercel.app"
+      },
+      "finalDocsOnlyHead": "pending"
+    }
   },
   "releaseBoundary": {
     "production": "blocked",

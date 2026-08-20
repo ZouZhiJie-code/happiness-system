@@ -107,7 +107,7 @@
 |---|---|---|
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
-| 2. 零模型 E2E | 已合入 main·Preview 通过至需更新·本地修复门通过·远程待验证·Production blocked | PR #41 合入 `77de8d1`；编辑／保存／需更新通过，日记更新与人工保护待跑；`PEH-023` 本地工程门通过，远程结果待验证 |
+| 2. 零模型 E2E | 已合入 main·Preview 通过至需更新·首轮远程门通过·最终文档 head 待验证·Production blocked | PR #41 合入 `77de8d1`；编辑／保存／需更新通过，日记更新与人工保护待跑；`PEH-023` 首轮远程门通过，最终 head 待验证 |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | 待验证 | 数据源差异已入账，候选尚未运行 |
@@ -147,7 +147,7 @@
 - Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready；人工 smoke 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。
 - 首次编辑因验收标题 17 字超过 UI 16 字合同而返回预期结构化 `400`；纠正前的首次重新登录在应用收到请求前遇到 Vercel CLI TLS 阻断。最终 Preview `dpl_5okCGtSkeA7h6uCQUAWv9ur5UtHG` 已通过编辑、保存和来源变化后的“需更新”；调用日记更新前再次受到 TLS 阻断，日记更新与更新后人工片段保护保持 `not_run`，详见 `PEH-022`。
 - PR #41 最终 head `553d488` 的 push run `32337508459` 与 pull request run `32337511943` 均成功，随后合入 main merge `77de8d1`。本次合并只生成 Preview，Production 继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
-- 当前结论为 `已合入 main / Preview 通过至需更新 / 本地修复门通过、远程待验证 / Production blocked`；Production 等待 `PEH-020`、`PEH-022` 与 `PEH-023` 同时完成。
+- 当前结论为 `已合入 main / Preview 通过至需更新 / 首轮远程门通过、最终文档 head 待验证 / Production blocked`；Production 等待 `PEH-020`、`PEH-022` 与 `PEH-023` 同时完成。
 
 ### 阶段 2 合并后 CI 问题封存｜2026-08-20
 
@@ -155,5 +155,5 @@
 - Stage 5 同一提交的 push run `32338658277` 全绿；PR run `32338697673` attempt 1 的 test job `96333218076` 在同一测试文件等待结构化错误 `GI088_TURN_OUT_OF_DATE`，单例 `30.174s` 后失败，failed-only attempt 2 已主动取消。本项按测试同步波动入账，不改写 Stage 5 产品结论。
 - 首次本地修复后的全量运行在 `361/377` 文件进度处出现跨日期会话单次时序失败：界面标题已经更新，地址栏 effect 尚未完成。旧版精确用例随后 `50/50 P4` 通过，仍按实际失败修复为等待 `sessionId` 与 `entryDate` 同时更新；修复后精确用例再次 `50/50 P4` 通过。
 - GI payload 保持用户首次选择“包含提问”的真实路径，fake digest 只作为测试替身；payload 精确用例 `50/50 P4`、完整 GI 文件 `20/20 P4` 通过。
-- `PEH-023` 本地工程门已通过。最小修复范围固定为 `tests/unit/gi088-evaluation-workbench.test.tsx` 与 `tests/unit/event-centered-interview-workspace.test.tsx`，产品源码变更 `0`；当前代码连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E 为 `11/11`、`AIRequestLog=0`、12 条 Trace 模型调用违规 `0`、临时 Schema 残留 `0`。push／pull request 两套远程 CI 结果待验证。
+- `PEH-023` 本地工程门已通过。最小修复范围固定为 `tests/unit/gi088-evaluation-workbench.test.tsx` 与 `tests/unit/event-centered-interview-workspace.test.tsx`，产品源码变更 `0`；当前代码连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E 为 `11/11`、`AIRequestLog=0`、12 条 Trace 模型调用违规 `0`、临时 Schema 残留 `0`。PR #43 初始 head 的 push／pull request 两套 CI 均在 attempt 1 成功、重试 `0`，Preview Ready；最终文档 head 待全新 CI。
 - 原始本地三连跑 [`receipt.json`](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/receipt.json) 与阶段 1 Production 回执继续保留各自运行身份。

@@ -132,4 +132,4 @@
 - 产品判断：本项按工程发布门处理，Stage 5 产品结论继续使用其隔离评测证据。Stage 2 Production 等待两个测试文件完成远程复核。
 - Codex 评估：远程两次波动集中于 GI-088 工作台的条件控件和结构化错误等待；本地全量门进一步暴露跨日期会话标题与地址 effect 的时序差。最小修复边界为 `tests/unit/gi088-evaluation-workbench.test.tsx` 与 `tests/unit/event-centered-interview-workspace.test.tsx`，产品源码变更为 `0`。
 - 待验证假设：GI 路径使用确定性测试替身并保持真实首次选择，跨日期用例等待地址栏两个字段完成后，可以在重试为 `0` 的本地全量门和 push／pull request 两套远程 CI 中稳定通过。
-- 当前处理状态：`本地工程门通过·远程待验证`。两个精确用例、GI 完整文件、混合压力、连续三轮全量、类型检查、Lint、构建、Prisma 和零模型 E2E 均通过；远程 push／pull request 结果待验证，当前不写入远程全绿结论。
+- 当前处理状态：`本地与首轮远程门通过·最终文档 head 待验证`。两个精确用例、GI 完整文件、混合压力、连续三轮全量、类型检查、Lint、构建、Prisma 和零模型 E2E 均通过；PR #43 初始 head 的 push／pull request 两套 CI 均在 attempt 1 成功、重试 `0`，Preview Ready。当前新增公开回执，最终文档 head 待一套全新 CI，尚不写入最终全绿结论。
