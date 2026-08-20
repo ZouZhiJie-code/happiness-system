@@ -2,14 +2,14 @@
 
 - 文档职责：当前执行交接
 - 文档状态：已确认·实施中
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[`DL-PROD-20260819`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-最后更新：`2026-08-19`
+最后更新：`2026-08-20`
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施，当前结果状态为 `待验证`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 的远程 CI、Preview 行为和只读数据库对账已通过，当前状态为 `Preview Ready / Production 待发布`；其余阶段继续按专项记录推进。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -20,7 +20,14 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 正式 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`
 - Production 模式：`event_centered + baseline`
 
-实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区发现“计划快照 pending／现场文档 pass”的状态冲突，原文件、分支和私有现场继续保留，检查点提交等待事实确认；该冲突不开放新的模型调用，也不改变本轮 Production 范围。
+阶段 1 发布前证据：
+
+- 数据合同实现 `7bbe285`，发布验证头 `51925b6`，PR #40 CI run `32331657275` 成功；CI 原始日志为 `3205 passed / 82 skipped / 0 failed`。
+- Preview deployment `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A` 已通过管理员、匿名、普通用户、空态、错误态和旧链展开区验收。
+- `2026-07-22..2026-08-20` 的六步漏斗 Preview API 与独立 SQL 均为 `6 / 5 / 5 / 1 / 1 / 1`，差异为 `0`；数据库事务只读，正文读取、业务写入和临时秘密残留均为 `0`。
+- 留存与质量保留本轮独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，本轮不声明新的留存与质量 API 逐字段回读。Production 发布和正式域名回验继续待执行，回退目标为 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。完整证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+
+实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 
 ## 1. 交接结论
 

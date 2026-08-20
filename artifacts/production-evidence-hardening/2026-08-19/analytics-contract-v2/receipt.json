@@ -1,0 +1,157 @@
+{
+  "receiptVersion": "2026-08-20.analytics-contract-v2-preview-db-ci.v1",
+  "sealedOn": "2026-08-20",
+  "privacyClass": "public_zero_body",
+  "status": {
+    "engineeringVerification": "passed",
+    "preview": "passed",
+    "databaseReconciliation": "passed",
+    "production": "pending"
+  },
+  "identity": {
+    "implementationCommit": "7bbe285d10403130f7b596f1109f1313fab006a6",
+    "verificationHead": "51925b61406f9feddad31008be46bb6b35f4a10d",
+    "pullRequest": 40,
+    "previewDeploymentId": "dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A"
+  },
+  "ci": {
+    "runId": 32331657275,
+    "url": "https://github.com/ZouZhiJie-code/happiness-system/actions/runs/32331657275",
+    "conclusion": "success",
+    "headSha": "51925b61406f9feddad31008be46bb6b35f4a10d",
+    "checks": {
+      "typecheck": "passed",
+      "tests": "passed",
+      "build": "passed",
+      "lint": "passed"
+    },
+    "testFiles": {
+      "passed": 359,
+      "skipped": 16,
+      "failed": 0
+    },
+    "testCases": {
+      "passed": 3205,
+      "skipped": 82,
+      "failed": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 44
+    }
+  },
+  "preview": {
+    "deploymentId": "dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A",
+    "smoke": {
+      "administrator": "passed",
+      "anonymousProtection": "passed",
+      "ordinaryUserProtection": "passed",
+      "emptyState": "passed",
+      "errorState": "passed",
+      "legacySection": "passed"
+    }
+  },
+  "reconciliation": {
+    "range": {
+      "startDate": "2026-07-22",
+      "endDate": "2026-08-20",
+      "timezone": "Asia/Shanghai"
+    },
+    "funnel": [
+      {
+        "key": "openedDay",
+        "apiCount": 6,
+        "independentSqlCount": 6,
+        "difference": 0
+      },
+      {
+        "key": "firstContentSubmitted",
+        "apiCount": 5,
+        "independentSqlCount": 5,
+        "difference": 0
+      },
+      {
+        "key": "completeResponseReceived",
+        "apiCount": 5,
+        "independentSqlCount": 5,
+        "difference": 0
+      },
+      {
+        "key": "eventCardSaved",
+        "apiCount": 1,
+        "independentSqlCount": 1,
+        "difference": 0
+      },
+      {
+        "key": "dailyJournalGenerated",
+        "apiCount": 1,
+        "independentSqlCount": 1,
+        "difference": 0
+      },
+      {
+        "key": "dailyJournalSaved",
+        "apiCount": 1,
+        "independentSqlCount": 1,
+        "difference": 0
+      }
+    ],
+    "retentionIndependentSql": {
+      "cohortUsers": 2,
+      "eligibility": {
+        "d1": 2,
+        "d7": 2,
+        "d30": 0
+      },
+      "returnToRecordRate": {
+        "d1": 0.5,
+        "d7": 0.5,
+        "d30": 0
+      },
+      "repeatSaveRate": {
+        "d7": 0,
+        "d30": 0
+      }
+    },
+    "qualityIndependentSql": {
+      "counts": {
+        "completedResponses": 26,
+        "fallbackTurns": 0,
+        "startedSessions": 17,
+        "abandonedSessions": 0,
+        "resumeStarted": 0,
+        "resumeCompleted": 0,
+        "resumeFailed": 0
+      },
+      "firstVisibleLatencyMs": {
+        "p50": 1085,
+        "p95": 2512
+      },
+      "fullInteractionLatencyMs": {
+        "p50": 2119,
+        "p95": 3653
+      },
+      "staleJournals": {
+        "stale": 1,
+        "existing": 3,
+        "rate": 0.3333333333333333
+      }
+    }
+  },
+  "databaseSafety": {
+    "transactionReadOnly": "on",
+    "userBodyReads": 0,
+    "businessWrites": 0,
+    "temporarySecretResidue": 0
+  },
+  "verificationBoundary": {
+    "existingPreviewApiSmoke": "passed",
+    "laterPreviewApiReread": "blocked_by_deployment_protection_or_tls",
+    "newRetentionApiFieldByFieldRereadClaimed": false,
+    "newQualityApiFieldByFieldRereadClaimed": false
+  },
+  "production": {
+    "status": "pending",
+    "currentDeploymentId": "dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2",
+    "rollbackDeploymentId": "dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2"
+  }
+}
