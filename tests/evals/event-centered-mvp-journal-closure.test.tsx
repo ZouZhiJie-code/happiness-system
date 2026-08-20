@@ -234,11 +234,11 @@ describe("Daily Light 两种记录模式自动化闭环", () => {
     expect(screen.getAllByText("会议结束后，我一下放松了。")).toHaveLength(1);
     if (recordMode === "capture") {
       expect(screen.getByTestId("event-centered-record-save-context")).toHaveTextContent("原话已保存");
-      expect(screen.getByText("好，这段已经记下了。")).toBeVisible();
+      expect(await screen.findByText("好，这段已经记下了。")).toBeVisible();
       expect(screen.queryByText("当时最让你放松的是什么？")).not.toBeInTheDocument();
     } else {
-      expect(screen.getByText("我听见这口气终于松下来了。")).toBeVisible();
-      expect(screen.getByText("当时最让你放松的是什么？")).toBeVisible();
+      expect(await screen.findByText("我听见这口气终于松下来了。")).toBeVisible();
+      expect(await screen.findByText("当时最让你放松的是什么？")).toBeVisible();
     }
 
     fireEvent.click(await screen.findByRole("button", { name: "完成记录" }));
