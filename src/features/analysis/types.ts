@@ -171,7 +171,13 @@ export type AnalysisInsightCardType = "trend" | "correlation" | "anomaly" | "pat
 export interface AnalysisInsightCardItem {
   type: AnalysisInsightCardType;
   title: string;
+  /** Candidate-only separation between direct observation and interpretation. */
+  observation?: string;
+  inference?: string | null;
+  actionQuestion?: string | null;
   evidence: string;
+  /** Stable source ids used by isolated, evidence-grounded candidates. */
+  evidenceRefs?: string[];
   linkedDates: string[];
 }
 

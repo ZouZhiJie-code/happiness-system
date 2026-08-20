@@ -47,11 +47,11 @@
 
 ## PEH-006｜月度分析当前数据源与 Production 主链不一致
 
-- 已确认事实：`/analysis` 的旧月度聚合主要读取 `JoyEntry + DailyJournalEntry`；Production 的事件中心月度成果由 `JournalPeriodReport`、`JournalDailyEntry` 和 `JournalEventEntry` 承担。
-- 产品判断：月度个性化洞察只评估当前 Production 用户实际可见的月度材料。
-- Codex 评估：直接在现有 `AnalysisNarrative` 占位层接模型会评到旧链数据，应先增加当前成果物的确定性材料投影。
-- 待验证假设：`JournalPeriodReport` 现有 material precedence 足以承接候选输入，无需原始完整对话。
-- 当前处理状态：阶段 5 前置实现项；候选模型调用保持 `0`。
+- 已确认事实：候选已从 `JournalPeriodReport` 的周报、今日日记、旧日记和事件卡去重结果建立确定性材料投影；旧五维 `/analysis` 聚合未进入候选输入。6 条合成边界夹具的输入与输出合同全部通过，其中 2 条低数据量用例验证 Provider 调用为 `0`，其余 4 条候选调用保持 `not_run`；真实用户月 `0`，模型调用 `0`。
+- 产品判断：月度个性化洞察只评估当前 Production 用户实际可见的月度材料；本轮证据支持 `No-Go / insufficient_evidence`，Production 继续使用确定性 `AnalysisNarrative`。
+- Codex 评估：当前成果物投影、低数据量门、来源日期合同和调用上限已经形成隔离候选；样本级外部评测授权与已发布 Chat Provider 冻结指纹尚未齐备，当前证据无法支持产品接入。
+- 待验证假设：未来取得 `external_monthly_eval` 样本级授权并冻结新的运行身份后，最多 6 个真实用户月可以完成逐例产品裁决；该假设不影响本轮 No-Go 完成状态。
+- 当前处理状态：阶段 5 已完成评估并封存 `No-Go / insufficient_evidence`；真实用户月 `0`、模型调用 `0`、Production 接入关闭。证据见[月度洞察公开回执](./monthly-insight-v1/README.md)。
 
 ## PEH-007｜Production 源码快照缺少文档治理命令
 
@@ -130,7 +130,8 @@
 - 已确认事实：PR #41 已合入 main merge `77de8d1`，正式域名继续指向阶段 1 Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。main run `32337995170` 的零模型 E2E 为 `11/11`；常规测试在 `tests/unit/gi088-evaluation-workbench.test.tsx:508` 等待“同一焦点，容易回答”时单例 `10.176s` 失败，随后构建与 Lint 跳过。Stage 5 同一提交的 push run `32338658277` 全绿；PR run `32338697673` attempt 1 的 test job `96333218076` 在同一文件 `:686` 等待 `GI088_TURN_OUT_OF_DATE`，单例 `30.174s` 后失败；failed-only attempt 2 已主动取消。上述数据来自对应 Job 日志。
 - 已确认事实（首轮本地与远程热修复）：首次修复后的全量运行在 `361/377` 文件进度处，`tests/unit/event-centered-interview-workspace.test.tsx` 的跨日期会话用例发生一次时序失败；所选会话标题已经更新，地址栏 effect 尚未完成。旧版精确用例随后完成 `50/50 P4`，仍按这次实际失败修复为等待地址栏 `sessionId=root-2` 与 `entryDate=2026-07-21` 同时更新；修复后精确用例再次完成 `50/50 P4`。GI payload 已恢复用户首次选择“包含提问”的真实路径，fake digest 只承担测试替身；该 payload 完成 `50/50 P4`，完整 GI 文件完成 `20/20 P4`。PR #43 初始 head `9ca5de2` 的 push／pull request 两套 CI 均在 attempt 1 成功。
 - 已确认事实（最终文档 head 暴露的第二个时序源）：head `c897d7a` 只改 8 份文档。push run `32343781979` 全绿；pull request run `32343785173` 的 E2E 为 `11/11`，常规测试在同一结构化错误用例等待 `30.194s` 后失败，构建与 Lint 跳过。只读随机顺序复现确认，草稿恢复 effect 的合法 `/operation-events` 请求会在特定调度下抢占按“第 1／2／3 次调用”配置的响应，随后真正的 `/turn` 或 `/start-task` 获得另一份预设结果。
-- 产品判断：本项按工程发布门处理，Stage 5 产品结论继续使用其隔离评测证据。Stage 2 Production 等待两个测试文件完成远程复核。
+- 已确认事实（最终远程门与 main 合并）：PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿，重试为 `0`；两套 E2E 均为 `11/11`。PR #43 已合入 main merge `795417d`，main push run `32346808393` 的常规测试与零模型 E2E 均全绿。正式域名继续指向阶段 1 Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- 产品判断：本项按工程发布门完成，Stage 5 产品结论继续使用其隔离评测证据。Stage 2 Production 继续等待 `PEH-020` 与 `PEH-022`。
 - Codex 评估：跨日期地址同步与 GI 请求替身是两类独立测试观察问题。GI 的确定性摘要已排除真实 WebCrypto 性能影响；第二轮修复继续保留真实 outbox、幂等键、409 解析和恢复动作，只把两条用例的响应替身改为按接口地址分流，并分别验证目标提交次数。
-- 待验证假设：按接口地址分流后，后台观测请求的先后顺序不再改变 `/start-task`、`/turn` 与 `/session` 的业务响应；新 head 可以在重试为 `0` 的本地全量门和 push／pull request 两套远程 CI 中稳定通过。
-- 当前处理状态：`第二轮本地工程门通过·远程待验证`。随机顺序 seed 1～50、8 并发共 `750/750` 通过；两条精确场景 100 轮、12 并发共 `200/200` 通过，未知请求与重复目标请求均为 `0`，原失败 seed 24 已通过。连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败；类型检查、Lint、构建 `77/77`、Prisma、文档和差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 模型违规 `0`、临时 Schema 残留 `0`。新 head 的 push／pull request 两套远程门待执行。
+- 待验证假设：Stage 2 Production 的剩余验收只保留管理员成功读取与日记更新后的人工片段保护，分别由 `PEH-020` 与 `PEH-022` 承担。
+- 当前处理状态：`远程工程门与 main CI 已通过·PEH-023 完成`。随机顺序 seed 1～50、8 并发共 `750/750` 通过；两条精确场景 100 轮、12 并发共 `200/200` 通过，未知请求与重复目标请求均为 `0`，原失败 seed 24 已通过。连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败；类型检查、Lint、构建 `77/77`、Prisma、文档和差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 模型违规 `0`、临时 Schema 残留 `0`。PR #43 final head 两套远程门与合入后的 main CI 均全绿，Production 保持 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。

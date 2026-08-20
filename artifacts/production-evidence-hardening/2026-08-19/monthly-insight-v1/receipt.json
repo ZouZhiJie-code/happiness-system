@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "DL-MONTHLY-INSIGHT-V1-20260819",
+  "status": "completed_no_go",
+  "productionNarrative": "deterministic_unchanged",
+  "synthetic": {
+    "planned": 6,
+    "zeroCallCases": 2,
+    "candidateCallCases": 4,
+    "contractValidated": 6,
+    "deterministicZeroCallVerified": 2,
+    "candidateCallsNotRun": 4,
+    "executedCandidateCalls": 0
+  },
+  "privateRealMonths": {
+    "authorized": 0,
+    "executed": 0,
+    "maximum": 6
+  },
+  "calls": {
+    "consumed": 0,
+    "maximum": 12,
+    "retry": 0,
+    "concurrency": 1,
+    "maximumCompletionTokens": 1200
+  },
+  "decision": "No-Go",
+  "decisionReason": "insufficient_evidence",
+  "runtimeIdentity": {
+    "publishedRuntimeChecksum": "not_frozen",
+    "model": "not_frozen"
+  },
+  "productOwnerCaseReviews": {
+    "completed": 0,
+    "status": "not_run"
+  },
+  "productionIntegration": "closed",
+  "candidateManifest": "evals/monthly-insight-v1/manifest.json"
+}
